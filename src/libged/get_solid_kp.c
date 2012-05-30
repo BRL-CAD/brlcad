@@ -1,7 +1,7 @@
 /*                    G E T _ S O L I D _ K P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,11 +70,14 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    }
 	case ID_PIPE:
 	    {
+#if 0
 		struct rt_pipe_internal *pipeip;
 		struct wdb_pipept *pipe_seg;
+#endif
 		bu_vls_printf(gedp->ged_result_str,
 			      "getting origin of PIPE temporarily disabled");
 		return GED_ERROR;
+#if 0
 		pipeip = (struct rt_pipe_internal *)ip->idb_ptr;
 
 		RT_PIPE_CK_MAGIC(pipeip);
@@ -82,6 +85,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		pipe_seg = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
 		VMOVE(mpt, pipe_seg->pp_coord);
 		break;
+#endif
 	    }
 	case ID_METABALL:
 	    {
@@ -105,16 +109,16 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		int good_vert = 0;
 
 		RT_ARBN_CK_MAGIC(arbn);
-		for (i=0; i<arbn->neqn; i++) {
-		    for (j=i+1; j<arbn->neqn; j++) {
-			for (k=j+1; k<arbn->neqn; k++) {
+		for (i = 0; i < arbn->neqn; i++) {
+		    for (j = i + 1; j < arbn->neqn; j++) {
+			for (k = j + 1; k < arbn->neqn; k++) {
 			    if (!bn_mkpoint_3planes(mpt, arbn->eqn[i],
 						    arbn->eqn[j],
 						    arbn->eqn[k])) {
 				size_t l;
 
 				good_vert = 1;
-				for (l=0; l<arbn->neqn; l++) {
+				for (l = 0; l < arbn->neqn; l++) {
 				    if (l == i || l == j || l == k)
 					continue;
 
@@ -129,8 +133,6 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 				if (good_vert)
 				    break;
 			    }
-			    if (good_vert)
-				break;
 			}
 			if (good_vert)
 			    break;
@@ -350,7 +352,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 
 		if (extr->skt && extr->skt->verts) {
 		    VJOIN2(mpt, extr->V, extr->skt->verts[0][0], extr->u_vec,
-			   extr->skt->verts[0][2], extr->v_vec);
+			   extr->skt->verts[0][1], extr->v_vec);
 		} else {
 		    VMOVE(mpt, extr->V);
 		}

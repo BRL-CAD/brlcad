@@ -1,7 +1,7 @@
 /*                     P H O T O N M A P . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2011 United States Government as represented by
+ * Copyright (c) 2002-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -365,7 +365,7 @@ void
 GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 {
     struct phong_specific *phong_sp;
-    struct bu_vls matparm;
+    struct bu_vls matparm = BU_VLS_INIT_ZERO;
 
     phong_sp = (struct phong_specific*)bu_malloc(sizeof(struct phong_specific), "phong specific");
 
@@ -383,13 +383,13 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 	phong_sp->refrac_index = 1.0;
 	phong_sp->extinction = 0.0;
 	/*
-	  BU_GETSTRUCT(phong_sp, phong_specific);
+	  BU_GET(phong_sp, struct phong_specific);
 	  memcpy(phong_sp, &phong_defaults, sizeof(struct phong_specific));
 	*/
 	MS += 7;
-	bu_vls_init(&matparm);
 	bu_vls_printf(&matparm, "%s", MS);
-	bu_struct_parse(&matparm, phong_parse, (char *)phong_sp);
+	if (bu_struct_parse(&matparm, phong_parse, (char *)phong_sp) < 0) 
+	  bu_log("Warning - bu_struct_parse failure (matparm, phone_parse, material = plastic) in GetMaterial!\n");
 	bu_vls_free(&matparm);
 
 	/* bu_log("string: %s\n", MS);*/
@@ -419,13 +419,13 @@ GetMaterial(char *MS, vect_t spec, fastf_t *refi, fastf_t *transmit)
 	phong_sp->extinction = 0.0;
 
 	/*
-	  BU_GETSTRUCT(phong_sp, phong_specific);
+	  BU_GET(phong_sp, struct phong_specific);
 	  memcpy(phong_sp, &phong_defaults, sizeof(struct phong_specific));
 	*/
 	MS += 5; /* move pointer past "pm " (3 characters) */
-	bu_vls_init(&matparm);
 	bu_vls_printf(&matparm, "%s", MS);
-	bu_struct_parse(&matparm, phong_parse, (char *)phong_sp);
+	if (bu_struct_parse(&matparm, phong_parse, (char *)phong_sp) < 0)
+	  bu_log("Warning - bu_struct_parse failure (matparm, phone_parse, material = glass) in GetMaterial!\n");
 	bu_vls_free(&matparm);
 
 	/* bu_log("string: %s\n", MS);*/
@@ -1168,7 +1168,7 @@ LoadFile(char *pmfile)
 {
     size_t ret;
     FILE *FH;
-    int I1, i;
+    int I1 = 0, i;
     short S1;
     char C1;
 
@@ -1176,53 +1176,80 @@ LoadFile(char *pmfile)
     if (FH) {
 	bu_log("  Reading Irradiance Cache File...\n");
 	ret = fread(&S1, sizeof(short), 1, FH);
-	if (ret != 1)
+	if (ret != 1) {
+ 	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (endian)\n");
+	    return 0;
+	}
 
 	bu_log("endian: %d\n", S1);
 
 	ret = fread(&S1, sizeof(short), 1, FH);
-	if (ret != 1)
+	if (ret != 1) {
+ 	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (revision)\n");
+	    return 0;
+	}
 	bu_log("revision: %d\n", S1);
 
 	ret = fread(&ScaleFactor, sizeof(double), 1, FH);
-	if (ret != 1)
+	if (ret != 1) {
+ 	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (scale factor)\n");
+	    return 0;
+	}
 	bu_log("Scale Factor: %.3f\n", ScaleFactor);
 
 	/* Read in Map Type */
 	ret = fread(&C1, sizeof(char), 1, FH);
-	if (ret != 1)
+	if (ret != 1) {
+ 	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (map type)\n");
+	    return 0;
+	}
 	ret = fread(&I1, sizeof(int), 1, FH);
-	if (ret != 1)
+	if (ret != 1 || I1 < 0 || I1 > INT_MAX) {
+ 	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (map type)\n");
+	    return 0;
+	}
 
 	Initialize(PM_GLOBAL, I1);
 	bu_log("Reading Global: %d\n", I1);
 	for (i = 0; i < I1; i++) {
 	    ret = fread(&Emit[PM_GLOBAL][i], sizeof(struct Photon), 1, FH);
-	    if (ret != 1)
+	    if (ret != 1) {
+ 	        fclose(FH);
 		bu_log("Error reading irradiance cache file (global)\n");
 	    /* bu_log("Pos: [%.3f, %.3f, %.3f], Power: [%.3f, %.3f, %.3f]\n", Emit[PM_GLOBAL][i].Pos[0], Emit[PM_GLOBAL][i].Pos[1], Emit[PM_GLOBAL][i].Pos[2], Emit[PM_GLOBAL][i].Power[0], Emit[PM_GLOBAL][i].Power[1], Emit[PM_GLOBAL][i].Power[2]);*/
 	    /* bu_log("Pos: [%.3f, %.3f, %.3f], Irrad: [%.3f, %.3f, %.3f]\n", Emit[PM_GLOBAL][i].Pos[0], Emit[PM_GLOBAL][i].Pos[1], Emit[PM_GLOBAL][i].Pos[2], Emit[PM_GLOBAL][i].Irrad[0], Emit[PM_GLOBAL][i].Irrad[1], Emit[PM_GLOBAL][i].Irrad[2]);*/
+		return 0;
+	    }
 	}
 
 	ret = fread(&C1, sizeof(char), 1, FH);
-	if (ret != 1)
+	if (ret != 1) {
+ 	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (C1)\n");
+	    return 0;
+	}
 
 	ret = fread(&I1, sizeof(int), 1, FH);
-	if (ret != 1)
+	if (ret != 1 || I1 < 0 || I1 > INT_MAX) {
+ 	    fclose(FH);
 	    bu_log("Error reading irradiance cache file (l1)\n");
+	    return 0;
+	}
 
 	Initialize(PM_CAUSTIC, I1);
 	bu_log("Reading Caustic: %d\n", I1);
 	for (i = 0; i < I1; i++) {
 	    ret = fread(&Emit[PM_CAUSTIC][i], sizeof(struct Photon), 1, FH);
-	    if (ret != 1)
+	    if (ret != 1) {
+ 	        fclose(FH);
 		bu_log("Error reading irradiance cache file (caustic)\n");
+		return 0;
+	    }
 	}
 
 	PMap[PM_GLOBAL]->StoredPhotons = PMap[PM_GLOBAL]->MaxPhotons;
@@ -1547,31 +1574,6 @@ HeapDown(struct PhotonSearch *S, int ind)
 	/* bu_log("SWAP_D: %.3f, %.3f :: %d, %d :: %d\n", S->List[c].Dist, S->List[ind].Dist, c, ind, S->Found);*/
     }
     HeapDown(S, c);
-}
-
-
-void
-Push(struct PhotonSearch *S, struct PSN P)
-{
-    S->List[S->Found] = P;
-    HeapUp(S, S->Found++);
-    /*
-      for (i = 0; i < S->Found; i++)
-      bu_log("Push[%d]: %.3f :: %d, %d\n", i, S->List[i].Dist, S->Found, S->Max);
-    */
-}
-
-
-void
-Pop(struct PhotonSearch *S)
-{
-    S->Found--;
-    S->List[0] = S->List[S->Found];
-    HeapDown(S, 0);
-    /*
-      for (i = 0; i < S->Found; i++)
-      bu_log("Pop [%d]: %.3f :: %d, %d\n", i, S->List[i].Dist, S->Found, S->Max);
-    */
 }
 
 

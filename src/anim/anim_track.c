@@ -1,7 +1,7 @@
 /*                    A N I M _ T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -466,7 +466,7 @@ main(int argc, char *argv[])
 	fprintf(stderr, "Track: Could not open file %s.\n", *(argv+bu_optind));
 	return 0;
     }
-    num_wheels = -1;
+
     if (one_radius) {
 	while (!feof(stream)) {
 	    count = fscanf(stream, "%*f %*f %*f");

@@ -1,7 +1,7 @@
 /*                         D E P T H . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2011 United States Government as represented by
+ * Copyright (c) 2007-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,10 +35,9 @@ void
 render_depth_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
 {
     struct tie_id_s id;
-    adrt_mesh_t *mesh;
 
     /* Visualize ray depth, must put ray->depth++ hack into bsp for this to be of any use */
-    if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL)))
+    if (tie_work(tie, ray, &id, render_hit, NULL) != NULL)
 	*pixel[0] = 0.0075 * ray->kdtree_depth;
 }
 

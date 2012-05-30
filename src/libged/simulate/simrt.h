@@ -1,7 +1,7 @@
 /*                       S I M R T . H
  * BRL-CAD
  *
- * Copyright (c) 2011 United States Government as represented by
+ * Copyright (c) 2011-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,10 +29,12 @@
 
 #if defined __cplusplus
 
-/* If the functions in this header have C linkage, this
- * will specify linkage for all C++ language compilers */
-extern "C" {
+    /* If the functions in this header have C linkage, this
+     * will specify linkage for all C++ language compilers */
+    extern "C" {
 #endif
+
+/*#include "common.h"*/
 
 /* System Headers */
 #include <stdlib.h>
@@ -63,48 +65,46 @@ extern "C" {
  */
 #define MAX_NORMALS 10
 
+
 /*
- * This structure is a single node of a circularly linked list
+ * This structure is a single node of an array
  * of overlap regions: similar to the one in nirt/usrfrmt.h
  */
 struct overlap {
-	int index;
-	struct application *ap;
-	struct partition *pp;
-	struct region *reg1;
-	struct region *reg2;
-	fastf_t in_dist;
-	fastf_t out_dist;
-	point_t in_point;
-	point_t out_point;
-	vect_t in_normal;
-	vect_t out_normal;
-	struct overlap *forw;
-	struct overlap *backw;
+    int index;
+    struct application *ap;
+    struct partition *pp;
+    struct region *reg1;
+    struct region *reg2;
+    fastf_t in_dist;
+    fastf_t out_dist;
+    point_t in_point;
+    point_t out_point;
+    vect_t in_normal, out_normal;
+    struct soltab *insol, *outsol;
+    struct curvature incur, outcur;
 };
 
 
 /*
- * This structure is a single node of a circularly linked list
+ * This structure is a single node of an array
  * of hit regions, similar to struct hit from raytrace.h
  */
 struct hit_reg {
-	int index;
-	struct application *ap;
-	struct partition *pp;
-	const char *reg_name;
-	struct soltab *in_stp;
-	struct soltab *out_stp;
-	fastf_t in_dist;
-	fastf_t out_dist;
-	point_t in_point;
-	point_t out_point;
-	vect_t in_normal;
-	vect_t out_normal;
-	struct curvature cur;
-	int	hit_surfno;			/**< @brief solid-specific surface indicator */
-	struct hit_reg *forw;
-	struct hit_reg *backw;
+    int index;
+    struct application *ap;
+    struct partition *pp;
+    const char *reg_name;
+    struct soltab *in_stp;
+    struct soltab *out_stp;
+    fastf_t in_dist;
+    fastf_t out_dist;
+    point_t in_point;
+    point_t out_point;
+    vect_t in_normal;
+    vect_t out_normal;
+    struct curvature cur;
+    int	hit_surfno;			/**< @brief solid-specific surface indicator */
 };
 
 
@@ -113,22 +113,32 @@ struct hit_reg {
  * regions), through shooting rays
  */
 struct rayshot_results{
-	vect_t force;
+
+	/* Was an overlap detected ? in that case no point in using air gap
+	 * It may happen that an object is not sufficiently close to the object it
+	 * intends to strike, i.e. the gap between them is not <= TOL, so the air gap
+	 * info can't be used to create contact pairs. In the next iteration the object
+	 * moves so far that it has overlapped(i.e. penetrated) the target,
+	 * so air gap still can't be used, thus the below flag detects any overlap and
+	 * enables the logic for creating contact pairs using overlap info.
+	 *
+	 * Also rt_result.overlap_found is set to FALSE, before even a single
+     * ray is shot and its value is valid across all the different ray shots,
+     * so if an overlap has been detected in a ray, all subsequent air gap processing is
+     * skipped.
+	 */
+	int overlap_found;
+
+	/* The vector sum of the normals over the surface in the overlap region for A & B*/
+	vect_t resultant_normal_A;
+	vect_t resultant_normal_B;
+
+	/* List of normals added to a resultant so far, used to prevent adding a normal again */
 	vect_t normals[MAX_NORMALS];
 	int num_normals;
 
-	/* Results of shooting rays towards -ve x-axis : xr means x rays */
-	point_t xr_min_x;  /* the min X found while shooting x rays & rltd y,z*/
-	point_t xr_max_x;  /* the max X found while shooting x rays & rltd y,z*/
-	point_t xr_min_y_in, xr_min_y_out;  /* the min y where overlap was found & the z co-ord for it*/
-	point_t xr_max_y_in, xr_max_y_out;  /* the max y where overlap was still found */
-	point_t xr_min_z_in;  /* the min z where overlap was found & the y co-ord for it*/
-	point_t xr_max_z_in;  /* the max z where overlap was still found */
+	/* The following members are used while shooting rays parallel to the resultant normal */
 
-	/* Results of shooting rays down y axis */
-
-
-	/* Results of shooting rays down z axis */
 
 };
 
@@ -142,7 +152,9 @@ struct rayshot_results{
  * contact pairs.
  */
 int
-create_contact_pairs(struct sim_manifold *mf, vect_t overlap_min, vect_t overlap_max);
+create_contact_pairs(struct sim_manifold *mf,
+					 struct simulation_params *sim_params,
+					 vect_t overlap_min, vect_t overlap_max);
 
 
 /**
@@ -156,9 +168,9 @@ create_contact_pairs(struct sim_manifold *mf, vect_t overlap_min, vect_t overlap
  * as well, to prevent memory leaks, before a new set manifolds are created.
  */
 int
-generate_forces(struct simulation_params *sim_params,
-		struct rigid_body *rbA,
-		struct rigid_body *rbB);
+generate_manifolds(struct simulation_params *sim_params,
+				   struct rigid_body *rbA,
+				   struct rigid_body *rbB);
 
 
 /**
@@ -169,19 +181,11 @@ cleanup_lists(void);
 
 
 /**
- * Checks if the normal already exists in the list of normals
- * encountered while raytracing
- */
-int
-exists_normal(vect_t n);
-
-
-/**
  * Gets the exact overlap volume between 2 AABBs
  */
 int
 get_overlap(struct rigid_body *rbA, struct rigid_body *rbB, vect_t overlap_min,
-	vect_t overlap_max);
+	    vect_t overlap_max);
 
 
 /**
@@ -216,7 +220,9 @@ if_overlap(struct application *ap, struct partition *pp, struct region *reg1,
  * overlap global list
  */
 int
-shoot_ray(struct rt_i *rtip, point_t pt, point_t dir);
+shoot_ray(struct rt_i *rtip,
+		  point_t pt,
+		  point_t dir);
 
 
 /**
@@ -224,17 +230,40 @@ shoot_ray(struct rt_i *rtip, point_t pt, point_t dir);
  */
 int
 shoot_x_rays(struct sim_manifold *current_manifold,
-	 struct simulation_params *sim_params,
-	 vect_t overlap_min,
-	 vect_t overlap_max);
+	         struct simulation_params *sim_params,
+	         vect_t overlap_min,
+	         vect_t overlap_max);
 
 
 /**
- * Replaces characters in a vls that are not allowed for a prim/comb name
- * with a '$'
+ * Shoots a grid of rays down y axis
  */
-void
-clear_bad_chars(struct bu_vls *vp);
+int
+shoot_y_rays(struct sim_manifold *current_manifold,
+	     struct simulation_params *sim_params,
+	     vect_t overlap_min,
+	     vect_t overlap_max);
+
+
+/**
+ * Shoots a grid of rays down z axis
+ */
+int
+shoot_z_rays(struct sim_manifold *current_manifold,
+	     struct simulation_params *sim_params,
+	     vect_t overlap_min,
+	     vect_t overlap_max);
+
+
+/*
+ * Shoots a circular bunch of rays from B towards A along resultant_normal_B
+ *
+ */
+int
+shoot_normal_rays(struct sim_manifold *current_manifold,
+	     	 	 struct simulation_params *sim_params,
+	     	 	 vect_t overlap_min,
+	     	 	 vect_t overlap_max);
 
 
 /**
@@ -242,15 +271,45 @@ clear_bad_chars(struct bu_vls *vp);
  * for x-rays
  */
 int
-traverse_xray_lists(struct simulation_params *sim_params,
+traverse_xray_lists(struct sim_manifold *current_manifold,
+					struct simulation_params *sim_params,
+					point_t pt, point_t dir);
+
+
+/**
+ * Traverse the hit list and overlap list, drawing the ray segments
+ * for y-rays
+ */
+int
+traverse_yray_lists(
+		struct sim_manifold *current_manifold,
+		struct simulation_params *sim_params,
 		point_t pt, point_t dir);
 
 
 /**
- * Initializes the simulation scene for raytracing
+ * Traverse the hit list and overlap list, drawing the ray segments
+ * for z-rays
  */
 int
-init_raytrace(struct simulation_params *sim_params);
+traverse_zray_lists(
+		struct sim_manifold *current_manifold,
+		struct simulation_params *sim_params,
+		point_t pt, point_t dir);
+
+
+/**
+ * Traverse the hit list and overlap list, drawing the ray segments
+ * for normal rays
+ */
+int
+traverse_normalray_lists(
+		struct sim_manifold *current_manifold,
+		struct simulation_params *sim_params,
+		point_t pt,
+		point_t dir,
+		vect_t overlap_min,
+		vect_t overlap_max);
 
 
 /**
@@ -261,7 +320,7 @@ int
 init_rayshot_results(void);
 
 #if defined __cplusplus
-}   /* matches the linkage specification at the beginning. */
+    }   /* matches the linkage specification at the beginning. */
 #endif
 
 

@@ -1,7 +1,7 @@
 /*                            C V . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2011 United States Government as represented by
+ * Copyright (c) 1991-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "bio.h"
 
@@ -57,6 +58,8 @@ genptr_t obuf;
 int
 main(int argc, char **argv)
 {
+    char *in_pat;
+    char *out_pat;
     int m;
     int n;
 
@@ -65,8 +68,24 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    in_cookie = bu_cv_cookie(argv[1]);
-    out_cookie = bu_cv_cookie(argv[2]);
+    in_pat = argv[1];
+    if (BU_STR_EQUAL(in_pat, ""))
+	in_pat = "huc";
+    if (strlen(in_pat) > 4 || strlen(in_pat) < 1) {
+	fprintf(stderr, "cv: unrecognized input pattern\n");
+	return 1;
+    }
+
+    out_pat = argv[2];
+    if (BU_STR_EQUAL(out_pat, ""))
+	out_pat = "nuc";
+    if (strlen(out_pat) > 4 || strlen(out_pat) < 1) {
+	fprintf(stderr, "cv: unrecognized output pattern\n");
+	return 1;
+    }
+
+    in_cookie = bu_cv_cookie(in_pat);
+    out_cookie = bu_cv_cookie(out_pat);
 
     if (argc >= 5) {
 	if ((outfp = fopen(argv[4], "w")) == NULL) {

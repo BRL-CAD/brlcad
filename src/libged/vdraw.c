@@ -1,7 +1,7 @@
 /*                         V D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -124,8 +124,9 @@
  *        vdraw write i|next c x y z
  */
 static int
-vdraw_write(struct ged *gedp, int argc, const char *argv[])
+vdraw_write(void *data, int argc, const char *argv[])
 {
+    struct ged *gedp = (struct ged *)data;
     size_t idx;
     unsigned long uind = 0;
     struct bn_vlist *vp, *cp;
@@ -203,6 +204,12 @@ vdraw_write(struct ged *gedp, int argc, const char *argv[])
 	idx = uind;
     }
 
+    /* This should never happen. Adding this to silence covarity. */
+    if (idx >= BN_VLIST_CHUNK) {
+	bu_vls_printf(gedp->ged_result_str, "vdraw: vlist chunk size exceeded!\n");
+	return GED_ERROR;
+    }
+
     if (sscanf(argv[3], "%d", &(cp->cmd[idx])) < 1) {
 	bu_vls_printf(gedp->ged_result_str, "vdraw: cmd not an integer\n");
 	return GED_ERROR;
@@ -231,8 +238,9 @@ vdraw_write(struct ged *gedp, int argc, const char *argv[])
  *        vdraw insert i c x y z
  */
 int
-vdraw_insert(struct ged *gedp, int argc, const char *argv[])
+vdraw_insert(void *data, int argc, const char *argv[])
 {
+    struct ged *gedp = (struct ged *)data;
     struct bn_vlist *vp, *cp, *wp;
     size_t i;
     size_t idx;
@@ -301,7 +309,7 @@ vdraw_insert(struct ged *gedp, int argc, const char *argv[])
 	vp = wp;
     }
 
-    for (i=vp->nused-1; i>idx; i--) {
+    for (i = vp->nused - 1; i > idx; i--) {
 	vp->cmd[i] = vp->cmd[i-1];
 	VMOVE(vp->pt[i], vp->pt[i-1]);
     }
@@ -322,8 +330,9 @@ vdraw_insert(struct ged *gedp, int argc, const char *argv[])
  *        vdraw delete i|last|all
  */
 int
-vdraw_delete(struct ged *gedp, int argc, const char *argv[])
+vdraw_delete(void *data, int argc, const char *argv[])
 {
+    struct ged *gedp = (struct ged *)data;
     struct bn_vlist *vp, *wp;
     size_t i;
     unsigned long uind = 0;
@@ -377,12 +386,15 @@ vdraw_delete(struct ged *gedp, int argc, const char *argv[])
 	uind -= vp->nused;
     }
 
-    if ((size_t)uind >= vp->nused) {
+    /* make sure we start in a valid delete range */
+    if ((size_t)uind >= vp->nused || uind >= BN_VLIST_CHUNK) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: delete out of range\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
     for (i = (size_t)uind; i < vp->nused - 1; i++) {
+	if (i >= BN_VLIST_CHUNK-1)
+	    break;
 	vp->cmd[i] = vp->cmd[i+1];
 	VMOVE(vp->pt[i], vp->pt[i+1]);
     }
@@ -396,7 +408,9 @@ vdraw_delete(struct ged *gedp, int argc, const char *argv[])
 	vp->cmd[BN_VLIST_CHUNK-1] = wp->cmd[0];
 	VMOVE(vp->pt[BN_VLIST_CHUNK-1], wp->pt[0]);
 
-	for (i=0; i< wp->nused - 1; i++) {
+	for (i = 0; i < wp->nused - 1; i++) {
+	    if (i >= BN_VLIST_CHUNK-1)
+		break;
 	    wp->cmd[i] = wp->cmd[i+1];
 	    VMOVE(wp->pt[i], wp->pt[i+1]);
 	}
@@ -420,8 +434,9 @@ vdraw_delete(struct ged *gedp, int argc, const char *argv[])
  *        vdraw read i|color|length|name
  */
 static int
-vdraw_read(struct ged *gedp, int argc, const char *argv[])
+vdraw_read(void *data, int argc, const char *argv[])
 {
+    struct ged *gedp = (struct ged *)data;
     struct bn_vlist *vp;
     unsigned long uind = 0;
     int length;
@@ -479,7 +494,8 @@ vdraw_read(struct ged *gedp, int argc, const char *argv[])
 	uind -= vp->nused;
     }
 
-    if ((size_t)uind >= vp->nused) {
+    /* The comparison to BN_VLIST_CHUNK is to silence covarity */
+    if ((size_t)uind >= vp->nused || uind >= BN_VLIST_CHUNK) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: read out of range\n", argv[0], argv[1]);
 	return GED_ERROR;
     }
@@ -497,8 +513,9 @@ vdraw_read(struct ged *gedp, int argc, const char *argv[])
  *        vdraw send
  */
 static int
-vdraw_send(struct ged *gedp, int argc, const char *argv[])
+vdraw_send(void *data, int argc, const char *argv[])
 {
+    struct ged *gedp = (struct ged *)data;
     struct directory *dp;
     char solid_name [RT_VDRW_MAXNAME+RT_VDRW_PREFIX_LEN+1];
     int idx;
@@ -545,8 +562,9 @@ vdraw_send(struct ged *gedp, int argc, const char *argv[])
  *        vdraw params color|name
  */
 static int
-vdraw_params(struct ged *gedp, int argc, const char *argv[])
+vdraw_params(void *data, int argc, const char *argv[])
 {
+    struct ged *gedp = (struct ged *)data;
     struct vd_curve *rcp;
     unsigned long rgb;
     static const char *usage = "color|name args";
@@ -573,7 +591,7 @@ vdraw_params(struct ged *gedp, int argc, const char *argv[])
     if (argv[2][0] == 'n') {
 	/* check for conflicts with existing vlists*/
 	for (BU_LIST_FOR(rcp, vd_curve, &gedp->ged_gdp->gd_headVDraw)) {
-	    if (!strncmp(rcp->vdc_name, argv[2], RT_VDRW_MAXNAME)) {
+	    if (!bu_strncmp(rcp->vdc_name, argv[2], RT_VDRW_MAXNAME)) {
 		bu_vls_printf(gedp->ged_result_str, "%s %s: name %.40s is already in use\n", argv[0], argv[1], argv[2]);
 		return GED_ERROR;
 	    }
@@ -594,8 +612,9 @@ vdraw_params(struct ged *gedp, int argc, const char *argv[])
  *        vdraw open [name]
  */
 static int
-vdraw_open(struct ged *gedp, int argc, const char *argv[])
+vdraw_open(void *data, int argc, const char *argv[])
 {
+    struct ged *gedp = (struct ged *)data;
     struct vd_curve *rcp;
     struct bn_vlist *vp;
     char temp_name[RT_VDRW_MAXNAME+1];
@@ -620,7 +639,7 @@ vdraw_open(struct ged *gedp, int argc, const char *argv[])
 
     gedp->ged_gdp->gd_currVHead = (struct vd_curve *) NULL;
     for (BU_LIST_FOR(rcp, vd_curve, &gedp->ged_gdp->gd_headVDraw)) {
-	if (!strncmp(rcp->vdc_name, temp_name, RT_VDRW_MAXNAME)) {
+	if (!bu_strncmp(rcp->vdc_name, temp_name, RT_VDRW_MAXNAME)) {
 	    gedp->ged_gdp->gd_currVHead = rcp;
 	    break;
 	}
@@ -628,7 +647,7 @@ vdraw_open(struct ged *gedp, int argc, const char *argv[])
 
     if (!gedp->ged_gdp->gd_currVHead) {
 	/* create new entry */
-	BU_GETSTRUCT(rcp, vd_curve);
+	BU_GET(rcp, struct vd_curve);
 	BU_LIST_APPEND(&gedp->ged_gdp->gd_headVDraw, &(rcp->l));
 
 	bu_strlcpy(rcp->vdc_name, temp_name, RT_VDRW_MAXNAME);
@@ -661,20 +680,16 @@ vdraw_open(struct ged *gedp, int argc, const char *argv[])
  *        vdraw vlist delete name
  */
 static int
-vdraw_vlist(struct ged *gedp, int argc, const char *argv[])
+vdraw_vlist(void *data, int argc, const char *argv[])
 {
+    struct ged *gedp = (struct ged *)data;
     struct vd_curve *rcp, *rcp2;
     static const char *usage = "list\n\tdelete name";
 
-    /* must be wanting help */
-    if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
+    /* must be needing help */
+    if (argc < 3 || argc > 4) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argc>0?argv[0]:"vdraw", argc>1?argv[1]:"vlist", usage);
 	return GED_HELP;
-    }
-
-    if (argc < 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return GED_ERROR;
     }
 
     switch  (argv[2][0]) {
@@ -686,13 +701,9 @@ vdraw_vlist(struct ged *gedp, int argc, const char *argv[])
 
 	    return GED_OK;
 	case 'd':
-	    if (argc < 3) {
-		bu_vls_printf(gedp->ged_result_str, "%s %s: need name of vlist to delete", argv[0], argv[1]);
-		return GED_ERROR;
-	    }
 	    rcp2 = (struct vd_curve *)NULL;
 	    for (BU_LIST_FOR(rcp, vd_curve, &gedp->ged_gdp->gd_headVDraw)) {
-		if (!strncmp(rcp->vdc_name, argv[3], RT_VDRW_MAXNAME)) {
+		if (!bu_strncmp(rcp->vdc_name, argv[3], RT_VDRW_MAXNAME)) {
 		    rcp2 = rcp;
 		    break;
 		}
@@ -719,26 +730,26 @@ vdraw_vlist(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-/**
- * view draw command table
- */
-static struct bu_cmdtab vdraw_cmds[] = {
-    {"write",		vdraw_write},
-    {"insert",		vdraw_insert},
-    {"delete",		vdraw_delete},
-    {"read",		vdraw_read},
-    {"send",		vdraw_send},
-    {"params",		vdraw_params},
-    {"open",		vdraw_open},
-    {"vlist",		vdraw_vlist},
-    {(char *)0,		(int (*)())0 }
-};
-
-
 static int
 vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 {
-    struct bu_cmdtab *ctp;
+    int ret;
+
+    /**
+     * view draw command table
+     */
+    static struct bu_cmdtab vdraw_cmds[] = {
+	{"write",		vdraw_write},
+	{"insert",		vdraw_insert},
+	{"delete",		vdraw_delete},
+	{"read",		vdraw_read},
+	{"send",		vdraw_send},
+	{"params",		vdraw_params},
+	{"open",		vdraw_open},
+	{"vlist",		vdraw_vlist},
+	{(char *)0,		(int (*)())0 }
+    };
+
     static const char *usage = "write|insert|delete|read|send|params|open|vlist [args]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -754,12 +765,9 @@ vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    for (ctp = vdraw_cmds; ctp->ct_name != (char *)0; ctp++) {
-	if (ctp->ct_name[0] == argv[1][0] &&
-	    BU_STR_EQUAL(ctp->ct_name, argv[1])) {
-	    return (*ctp->ct_func)(gedp, argc, argv);
-	}
-    }
+
+    if (bu_cmd(vdraw_cmds, argc, argv, 1, gedp, &ret) == BRLCAD_OK)
+	return ret;
 
     bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 

@@ -1,7 +1,7 @@
 /*                        D M - R T G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2011 United States Government as represented by
+ * Copyright (c) 1988-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -115,6 +115,7 @@ struct dm dm_rtgl = {
     rtgl_endDList,
     rtgl_drawDList,
     rtgl_freeDLists,
+    rtgl_genDLists,
     Nu_int0, /* display to image function */
     Nu_void,
     0,
@@ -135,9 +136,9 @@ struct dm dm_rtgl = {
     1.0, /* aspect ratio */
     0,
     {0, 0},
-    {0, 0, 0, 0, 0},		/* bu_vls path name*/
-    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
-    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
+    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
     {GED_MIN, GED_MIN, GED_MIN}, /* clipmin */
@@ -234,8 +235,8 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     XDevice *dev = NULL;
     XEventClass e_class[15];
     XInputClassInfo *cip;
-    struct bu_vls str;
-    struct bu_vls init_proc_vls;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     Display *tmp_dpy = (Display *)NULL;
     struct dm *dmp = (struct dm *)NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
@@ -245,7 +246,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_GETSTRUCT(dmp, dm);
+    BU_GET(dmp, struct dm);
     if (dmp == DM_NULL) {
 	return DM_NULL;
     }
@@ -272,7 +273,6 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     bu_vls_init(&dmp->dm_pathName);
     bu_vls_init(&dmp->dm_tkName);
     bu_vls_init(&dmp->dm_dName);
-    bu_vls_init(&init_proc_vls);
 
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
@@ -377,11 +377,10 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = tkwin;
 	} else {
-	    struct bu_vls top_vls;
+	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&top_vls);
-	    bu_vls_printf(&top_vls, "%*s", cp - bu_vls_addr(&dmp->dm_pathName),
-			  bu_vls_addr(&dmp->dm_pathName));
+	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
+
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top =
 		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
 	    bu_vls_free(&top_vls);
@@ -403,7 +402,6 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     bu_vls_printf(&dmp->dm_tkName, "%s",
 		  (char *)Tk_Name(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
 
-    bu_vls_init(&str);
     bu_vls_printf(&str, "_init_dm %V %V\n",
 		  &init_proc_vls,
 		  &dmp->dm_pathName);
@@ -921,9 +919,8 @@ rtgl_drawEnd(struct dm *dmp)
 
     if (dmp->dm_debugLevel) {
 	int error;
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "ANY ERRORS?\n");
 
 	while ((error = glGetError())!=0) {
@@ -975,11 +972,10 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     }
 
     if (dmp->dm_debugLevel) {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	bu_log("rtgl_loadMatrix()\n");
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
 	bu_vls_printf(&tmp_vls, "transformation matrix = \n");
 	bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);
@@ -1114,7 +1110,7 @@ addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char fl
     VJOIN1(point, app->a_ray.r_pt, hit->hit_dist, app->a_ray.r_dir);
 
     /* hack fix for bad tgc surfaces */
-    if (strncmp("rec", soltab->st_meth->ft_label, 3) == 0 || strncmp("tgc", soltab->st_meth->ft_label, 3) == 0) {
+    if (bu_strncmp("rec", soltab->st_meth->ft_label, 3) == 0 || bu_strncmp("tgc", soltab->st_meth->ft_label, 3) == 0) {
 
 	/* correct invalid surface number */
 	if (hit->hit_surfno < 1 || hit->hit_surfno > 3) {
@@ -1151,12 +1147,12 @@ addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char fl
 	VMOVE(bin->color, partColor);
 
 	/* create bin list head */
-	BU_GETSTRUCT(bin->list, ptInfoList);
+	BU_GET(bin->list, struct ptInfoList);
 	head = &(bin->list->l);
 	BU_LIST_INIT(head);
 
 	/* add first list item */
-	BU_GETSTRUCT(rtgljob.currItem, ptInfoList);
+	BU_GET(rtgljob.currItem, struct ptInfoList);
 	BU_LIST_PUSH(head, rtgljob.currItem);
 	rtgljob.currItem->used = 0;
 
@@ -1173,7 +1169,7 @@ addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char fl
 	/* if list item is full, create a new item */
 	if (rtgljob.currItem->used == PT_ARRAY_SIZE) {
 
-	    BU_GETSTRUCT(rtgljob.currItem, ptInfoList);
+	    BU_GET(rtgljob.currItem, struct ptInfoList);
 	    BU_LIST_PUSH(head, rtgljob.currItem);
 	    rtgljob.currItem->used = 0;
 	}
@@ -1194,14 +1190,13 @@ addInfo(struct application *app, struct hit *hit, struct soltab *soltab, char fl
 
 /* add all hit point info to info list */
 HIDDEN int
-recordHit(struct application *app, struct partition *partH, struct seg *segs)
+recordHit(struct application *app, struct partition *partH, struct seg *UNUSED(segs))
 {
     struct partition *part;
     struct soltab *soltab;
     float *partColor;
 
     RT_CK_APPLICATION(app);
-    RT_CK_SEG(segs);
 
     /* add all hit points */
     for (part = partH->pt_forw; part != partH; part = part->pt_forw) {
@@ -1215,7 +1210,7 @@ recordHit(struct application *app, struct partition *partH, struct seg *segs)
 	/* add "out" hit point info (unless half-space) */
 	soltab = part->pt_inseg->seg_stp;
 
-	if (strncmp("half", soltab->st_meth->ft_label, 4) != 0) {
+	if (bu_strncmp("half", soltab->st_meth->ft_label, 4) != 0) {
 
 	    addInfo(app, part->pt_outhit, soltab, part->pt_outflip, partColor);
 	}
@@ -1458,7 +1453,7 @@ shootGrid(struct jobList *jobs, vect_t min, vect_t max, double maxSpan, int pixe
 	    /* make new job if needed */
 	    if (rtgljob.currJob->used == JOB_ARRAY_SIZE) {
 
-		BU_GETSTRUCT(rtgljob.currJob, jobList);
+		BU_GET(rtgljob.currJob, struct jobList);
 		BU_LIST_PUSH(&(jobs->l), rtgljob.currJob);
 		rtgljob.currJob->used = 0;
 	    }
@@ -1838,7 +1833,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 	/* initialize job list */
 	BU_LIST_INIT(&(jobs.l));
 
-	BU_GETSTRUCT(rtgljob.currJob, jobList);
+	BU_GET(rtgljob.currJob, struct jobList);
 	BU_LIST_PUSH(&(jobs.l), rtgljob.currJob);
 	rtgljob.currJob->used = 0;
 
@@ -2090,7 +2085,7 @@ rtgl_drawLine3D(struct dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
  *
  */
 HIDDEN int
-rtgl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+rtgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
 	return TCL_ERROR;
@@ -2724,7 +2719,7 @@ rtgl_beginDList(struct dm *dmp, unsigned int list)
 	return TCL_ERROR;
     }
 
-    glNewList(dmp->dm_displaylist + list, GL_COMPILE);
+    glNewList((GLuint)list, GL_COMPILE);
     return TCL_OK;
 }
 
@@ -2740,14 +2735,10 @@ rtgl_endDList(struct dm *dmp)
 }
 
 
-int
+void
 rtgl_drawDList(struct dm *dmp, unsigned int list)
 {
-    if (dmp->dm_debugLevel)
-	bu_log("rtgl_drawDList()\n");
-
-    glCallList(dmp->dm_displaylist + list);
-    return TCL_OK;
+    glCallList((GLuint)list);
 }
 
 
@@ -2764,8 +2755,25 @@ rtgl_freeDLists(struct dm *dmp, unsigned int list, int range)
 	return TCL_ERROR;
     }
 
-    glDeleteLists(dmp->dm_displaylist + list, (GLsizei)range);
+    glDeleteLists((GLuint)list, (GLsizei)range);
     return TCL_OK;
+}
+
+
+int
+rtgl_genDLists(struct dm *dmp, size_t range)
+{
+    if (dmp->dm_debugLevel)
+	bu_log("rtgl_freeDLists()\n");
+
+    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+	bu_log("rtgl_freeDLists: Couldn't make context current\n");
+	return TCL_ERROR;
+    }
+
+    return glGenLists((GLsizei)range);
 }
 
 

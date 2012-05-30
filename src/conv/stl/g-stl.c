@@ -1,7 +1,7 @@
 /*                         G - S T L . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2011 United States Government as represented by
+ * Copyright (c) 2003-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ static FILE *fp;			/* Output file pointer */
 static int bfd;				/* Output binary file descriptor */
 static struct db_i *dbip;
 static struct model *the_model;
-static struct bu_vls file_name;		/* file name built from region name */
+static struct bu_vls file_name = BU_VLS_INIT_ZERO;		/* file name built from region name */
 static struct rt_tess_tol ttol;		/* tesselation tolerance in mm */
 static struct bn_tol tol;		/* calculation tolerance */
 static struct db_tree_state tree_state;	/* includes tol & model */
@@ -137,7 +137,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	    if ((bfd=open(bu_vls_addr(&file_name), O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) < 0)
 	    {
 		perror("g-stl");
-		bu_log("ERROR: Cannot open binary output file (%s) for writing\n", bu_vls_addr(&file_name));
+		bu_exit(1, "ERROR: Cannot open binary output file (%s) for writing\n", bu_vls_addr(&file_name));
 	    }
 
 	    if (!region_name) {
@@ -363,7 +363,6 @@ main(int argc, char *argv[])
 		break;
 	    case 'm':
 		output_directory = bu_optarg;
-		bu_vls_init(&file_name);
 		break;
 	    case 'r':		/* Relative tolerance. */
 		ttol.rel = atof(bu_optarg);

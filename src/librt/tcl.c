@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2011 United States Government as represented by
+ * Copyright (c) 1997-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -138,10 +138,8 @@ void
 rt_tcl_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 {
     static const char xyz[4] = "XYZ";
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     size_t i;
-
-    bu_vls_init(&str);
 
     switch (cutp->cut_type) {
 	case CUT_CUTNODE:
@@ -222,9 +220,9 @@ rt_tcl_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char
 	return TCL_ERROR;
     }
 
-    RT_CK_AP_TCL(interp, ap);
+    RT_CK_APPLICATION(ap);
     rtip = ap->a_rt_i;
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     n = atoi(argv[2]);
     if (rt_tcl_parse_ray(interp, &ap->a_ray, &argv[3]) == TCL_ERROR)
@@ -253,7 +251,7 @@ rt_tcl_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char
 void
 rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int flipflag)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     vect_t norm;
     struct soltab *stp;
     const struct directory *dp;
@@ -268,7 +266,6 @@ rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int 
     RT_HIT_NORMAL(norm, hitp, stp, rayp, flipflag);
     RT_CURVATURE(&crv, hitp, flipflag, stp);
 
-    bu_vls_init(&str);
     bu_vls_printf(&str, " {dist %g point {", hitp->hit_dist);
     bn_encode_vect(&str, hitp->hit_point);
     bu_vls_printf(&str, "} normal {");
@@ -377,9 +374,9 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 	idx = 2;
     }
 
-    RT_CK_AP_TCL(interp, ap);
+    RT_CK_APPLICATION(ap);
     rtip = ap->a_rt_i;
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     if (rt_tcl_parse_ray(interp, &ap->a_ray, &argv[idx]) == TCL_ERROR)
 	return TCL_ERROR;
@@ -413,9 +410,9 @@ rt_tcl_rt_onehit(ClientData clientData, Tcl_Interp *interp, int argc, const char
 	return TCL_ERROR;
     }
 
-    RT_CK_AP_TCL(interp, ap);
+    RT_CK_APPLICATION(ap);
     rtip = ap->a_rt_i;
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     if (argc == 3) {
 	ap->a_onehit = atoi(argv[2]);
@@ -446,9 +443,9 @@ rt_tcl_rt_no_bool(ClientData clientData, Tcl_Interp *interp, int argc, const cha
 	return TCL_ERROR;
     }
 
-    RT_CK_AP_TCL(interp, ap);
+    RT_CK_APPLICATION(ap);
     rtip = ap->a_rt_i;
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     if (argc == 3) {
 	ap->a_no_booleans = atoi(argv[2]);
@@ -480,9 +477,9 @@ rt_tcl_rt_check(ClientData clientData, Tcl_Interp *interp, int argc, const char 
 	return TCL_ERROR;
     }
 
-    RT_CK_AP_TCL(interp, ap);
+    RT_CK_APPLICATION(ap);
     rtip = ap->a_rt_i;
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     rt_ck(rtip);
 
@@ -502,7 +499,7 @@ rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (argc < 2 || argc > 4) {
 	Tcl_AppendResult(interp,
@@ -513,9 +510,9 @@ rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 	return TCL_ERROR;
     }
 
-    RT_CK_AP_TCL(interp, ap);
+    RT_CK_APPLICATION(ap);
     rtip = ap->a_rt_i;
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     if (argc >= 3 && !rtip->needprep) {
 	Tcl_AppendResult(interp,
@@ -531,7 +528,6 @@ rt_tcl_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
     if (argc >= 3) rt_prep_parallel(rtip, 1);
 
     /* Now, describe the current state */
-    bu_vls_init(&str);
     bu_vls_printf(&str, "hasty_prep %d dont_instance %d useair %d needprep %d",
 		  rtip->rti_hasty_prep,
 		  rtip->rti_dont_instance,
@@ -574,11 +570,9 @@ rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *c
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int val;
     const char *usage = "[vname [val]]";
-
-    bu_vls_init(&str);
 
     if (argc < 2 || argc > 4) {
 	bu_vls_printf(&str, "%s %s: %s", argv[0], argv[1], usage);
@@ -588,9 +582,9 @@ rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *c
 	return TCL_ERROR;
     }
 
-    RT_CK_AP_TCL(interp, ap);
+    RT_CK_APPLICATION(ap);
     rtip = ap->a_rt_i;
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     /* Return a list of the settable variables and their values */
     if (argc == 2) {
@@ -611,17 +605,17 @@ rt_tcl_rt_set(ClientData clientData, Tcl_Interp *interp, int argc, const char *c
 	return TCL_ERROR;
     }
 
-    if (argv[2][0] == 'o' && !strncmp(argv[2], "onehit", 6)) {
+    if (argv[2][0] == 'o' && !bu_strncmp(argv[2], "onehit", 6)) {
 	if (argc == 3)
 	    val = ap->a_onehit;
 	else
 	    ap->a_onehit = val;
-    } else if (argv[2][0] == 'n' && !strncmp(argv[2], "no_bool", 7)) {
+    } else if (argv[2][0] == 'n' && !bu_strncmp(argv[2], "no_bool", 7)) {
 	if (argc == 3)
 	    val = ap->a_no_booleans;
 	else
 	    ap->a_no_booleans = val;
-    } else if (argv[2][0] == 'b' && !strncmp(argv[2], "bot_reverse_normal_disabled", 27)) {
+    } else if (argv[2][0] == 'b' && !bu_strncmp(argv[2], "bot_reverse_normal_disabled", 27)) {
 	if (argc == 3)
 	    val = ap->a_bot_reverse_normal_disabled;
 	else
@@ -701,7 +695,7 @@ rt_tcl_rt(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
 union tree *
 db_tcl_tree_parse(Tcl_Interp *interp, const char *str, struct resource *resp)
 {
-    struct bu_vls logstr;
+    struct bu_vls logstr = BU_VLS_INIT_ZERO;
     union tree *tp;
 
     if (!resp) {
@@ -709,7 +703,6 @@ db_tcl_tree_parse(Tcl_Interp *interp, const char *str, struct resource *resp)
     }
     RT_CK_RESOURCE(resp);
 
-    bu_vls_init(&logstr);
     tp = db_tree_parse(&logstr, str, resp);
     Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)NULL);
     bu_vls_free(&logstr);

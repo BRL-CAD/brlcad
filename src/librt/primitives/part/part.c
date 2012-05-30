@@ -1,7 +1,7 @@
 /*                          P A R T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -295,7 +295,7 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
 
-    BU_GETSTRUCT(part, part_specific);
+    BU_GET(part, struct part_specific);
     stp->st_specific = (genptr_t)part;
     part->part_int = *pip;			/* struct copy */
     pip = &part->part_int;

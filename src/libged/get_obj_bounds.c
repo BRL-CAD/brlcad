@@ -1,7 +1,7 @@
 /*                         G E T _ O B J _ B O U N D S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -105,6 +105,7 @@ _ged_get_obj_bounds(struct ged *gedp,
     for (i = 0; i < argc; i++) {
 	vect_t reg_min, reg_max;
 	const char *reg_name;
+	size_t name_len;
 
 	/* check if input name is a region */
 	for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
@@ -112,38 +113,8 @@ _ged_get_obj_bounds(struct ged *gedp,
 	    if (*argv[i] != '/' && *reg_name == '/')
 		reg_name++;
 
-	    if (BU_STR_EQUAL(reg_name, argv[i]))
-		goto found;
-	}
-	goto not_found;
-
-    found:
-	if (regp != REGION_NULL) {
-	    /* input name was a region */
-	    if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
-		bu_vls_printf(gedp->ged_result_str, "rt_bound_tree failed for %s\n", regp->reg_name);
-		rt_free_rti(rtip);
-		return TCL_ERROR;
-	    }
-	    VMINMAX(rpp_min, rpp_max, reg_min);
-	    VMINMAX(rpp_min, rpp_max, reg_max);
-	} else {
-	    size_t name_len;
-	not_found:
-
-	    /* input name may be a group, need to check all regions under
-	     * that group
-	     */
-	    name_len = strlen(argv[i]);
-	    for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
-		reg_name = regp->reg_name;
-		if (*argv[i] != '/' && *reg_name == '/')
-		    reg_name++;
-
-		if (strncmp(argv[i], reg_name, name_len))
-		    continue;
-
-		/* This is part of the group */
+	    if (BU_STR_EQUAL(reg_name, argv[i])) {
+		/* input name was a region */
 		if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
 		    bu_vls_printf(gedp->ged_result_str, "rt_bound_tree failed for %s\n", regp->reg_name);
 		    rt_free_rti(rtip);
@@ -151,8 +122,34 @@ _ged_get_obj_bounds(struct ged *gedp,
 		}
 		VMINMAX(rpp_min, rpp_max, reg_min);
 		VMINMAX(rpp_min, rpp_max, reg_max);
+
+		goto found;
 	    }
 	}
+
+	/* input name may be a group, need to check all regions under
+	 * that group
+	 */
+	name_len = strlen(argv[i]);
+	for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+	    reg_name = regp->reg_name;
+	    if (*argv[i] != '/' && *reg_name == '/')
+		reg_name++;
+
+	    if (bu_strncmp(argv[i], reg_name, name_len))
+		continue;
+
+	    /* This is part of the group */
+	    if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
+		bu_vls_printf(gedp->ged_result_str, "rt_bound_tree failed for %s\n", regp->reg_name);
+		rt_free_rti(rtip);
+		return TCL_ERROR;
+	    }
+	    VMINMAX(rpp_min, rpp_max, reg_min);
+	    VMINMAX(rpp_min, rpp_max, reg_max);
+	}
+
+    found:;
     }
 
     rt_free_rti(rtip);
@@ -208,7 +205,7 @@ get_objpath_mat(struct ged *gedp,
 	gtdp->gtd_objpos = argc;
 
 	/* build directory pointer array for desired path */
-	for (i=0; i<gtdp->gtd_objpos; i++) {
+	for (i = 0; i < gtdp->gtd_objpos; i++) {
 	    if ((gtdp->gtd_obj[i] =
 		 db_lookup(gedp->ged_wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "get_objpath_mat: Failed to find %s", argv[pos_in+i]);
@@ -218,7 +215,7 @@ get_objpath_mat(struct ged *gedp,
     }
 
     MAT_IDN(gtdp->gtd_xform);
-    _ged_trace(gtdp->gtd_obj[0], 0, bn_mat_identity, gtdp);
+    _ged_trace(gtdp->gtd_obj[0], 0, bn_mat_identity, gtdp, 1);
 
     return GED_OK;
 }
@@ -258,12 +255,13 @@ _ged_get_obj_bounds2(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    BU_GETSTRUCT(stp, soltab);
+    BU_GET(stp, struct soltab);
     stp->l.magic = RT_SOLTAB_MAGIC;
     stp->l2.magic = RT_SOLTAB2_MAGIC;
     stp->st_dp = dp;
     MAT_IDN(imat);
     stp->st_matp = imat;
+    stp->st_meth = intern.idb_meth;
 
     /* Get bounds from internal object */
     VMOVE(stp->st_min, rpp_min);

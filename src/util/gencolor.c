@@ -1,7 +1,7 @@
 /*                      G E N C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ int
 main(int argc, char **argv)
 {
     int i, len, times;
-    long count;
+    int32_t count;
     unsigned char *bp;
 
     if (argc < 1 || isatty(fileno(stdout))) {
@@ -56,8 +56,10 @@ main(int argc, char **argv)
     }
 
     count = -1;
-    if (argc > 1 && strncmp(argv[1], "-r", 2) == 0) {
+    if (argc > 1 && bu_strncmp(argv[1], "-r", 2) == 0) {
 	count = atoi(&argv[1][2]);
+	if (count > INT32_MAX)
+	    count = INT32_MAX;
 	argv++;
 	argc--;
     }

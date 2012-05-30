@@ -1,7 +1,7 @@
 /*                       P A T C H - G . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2011 United States Government as represented by
+ * Copyright (c) 1989-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -976,8 +976,6 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     /* glue all the faces of the new shell together */
     s = BU_LIST_FIRST(shell, &r->s_hd);
     for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
-	if (!fu)
-	    continue;
 	NMG_CK_FACEUSE(fu);
 	if (fu->orientation == OT_SAME)
 	    bu_ptbl_ins(&faces, (long *)fu);
@@ -3590,12 +3588,16 @@ main(int argc, char **argv)
 
 	    if ((stop=fscanf(gfp, "%4d", &num)) == 1) {
 		size_t ret;
-		ret = fscanf(gfp, "%16s %16s", nm[num].ug, nm[num].lg); /* NAMESIZE */
-		if (ret < 2)
+		if (num < 0 || num > 9999) {
+		   bu_log("num value out of range!\n");
+		} else {
+		  ret = fscanf(gfp, "%16s %16s", nm[num].ug, nm[num].lg); /* NAMESIZE */
+		  if (ret < 2)
 		    bu_log("Unexpected error reading label file\n");
 
-		while ((fgetc(gfp)) != '\n')
+		  while ((fgetc(gfp)) != '\n')
 		    ;
+		}
 	    } else {
 		if (stop == EOF) {
 		    done = 0;

@@ -8,7 +8,9 @@ bin_SCRIPTS = \
 	cray.sh \
 	facetall.sh \
 	indent.sh \
+	ios-icons.sh \
 	news2tracker.sh \
+	orbit.sh \
 	pixinfo.sh \
 	pixread.sh \
 	pixwrite.sh \
@@ -34,7 +36,6 @@ EXTRA_DIST = \
 	make_bz2.sh \
 	make_tgz.sh \
 	make_zip.sh \
-	orbit.sh \
 	shtool \
 	template.sh \
 	ws.sh \

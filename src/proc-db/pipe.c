@@ -1,7 +1,7 @@
 /*                          P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -178,7 +178,7 @@ Names(void)
 	    if (!cable) /* Inner elbow */
 		Make_name(ptr->elbflu, inform, name, nummer);
 	}
-	if (torus || mitre)	/* Make cutting solid name */
+	if ((torus || mitre) && !sphere)	/* Make cutting solid name */
 	    Make_name(ptr->cut, cutform, name, nummer);
 
 	/* Make region names */
@@ -721,6 +721,9 @@ main(int argc, char **argv)
 	    done=1;
 	}
     }
+    if (radius < SMALL_FASTF)
+	radius = SMALL_FASTF;
+
     radius=k*radius;
     wall=k*wall;
 

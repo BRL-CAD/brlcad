@@ -1,7 +1,7 @@
 /*                          P R E P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -75,7 +75,7 @@ rt_new_rti(struct db_i *dbip)
 	BU_LIST_INIT(&rt_g.rtg_vlfree);
     }
 
-    BU_GETSTRUCT(rtip, rt_i);
+    BU_GET(rtip, struct rt_i);
     rtip->rti_magic = RTI_MAGIC;
     for (i=0; i < RT_DBNHASH; i++) {
 	BU_LIST_INIT(&(rtip->rti_solidheads[i]));
@@ -1370,9 +1370,11 @@ unprep_reg_start(struct db_tree_state *tsp,
     if (comb) RT_CK_COMB(comb);
 
     /* Ignore "air" regions unless wanted */
+    if (tsp) {
     if (tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0) {
 	tsp->ts_rtip->rti_air_discards++;
 	return -1;	/* drop this region */
+    }
     }
     return 0;
 }

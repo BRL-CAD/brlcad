@@ -127,3 +127,10 @@ macro (RESOLVE_INCLUDES INCS COMPILE_LINE)
   list (REMOVE_DUPLICATES _incs_found)
   set (${INCS} "${_incs_found}")
 endmacro (RESOLVE_INCLUDES)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

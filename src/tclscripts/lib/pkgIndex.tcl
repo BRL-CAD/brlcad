@@ -8,4 +8,5 @@
 # script is sourced, the variable $dir must contain the
 # full path name of this file's directory.
 
+package ifneeded cadwidgets::RtImage 1.0 [list source [file join $dir RtImage.tcl]]
 package ifneeded cadwidgets::Ged 1.0 [list source [file join $dir Ged.tcl]]

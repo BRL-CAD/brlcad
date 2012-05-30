@@ -1,7 +1,7 @@
 /*                        S H _ P R J . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -96,9 +96,9 @@ struct prj_specific {
  */
 HIDDEN void img_source_hook(const struct bu_structparse *UNUSED(ip), const char *sp_name, genptr_t base, char *UNUSED(p)) {
     struct img_specific *imageSpecific = (struct img_specific *)base;
-    if (strncmp(sp_name, "file", 4) == 0) {
+    if (bu_strncmp(sp_name, "file", 4) == 0) {
 	imageSpecific->i_datasrc=IMG_SRC_FILE;
-    } else if (strncmp(sp_name, "obj", 3) == 0) {
+    } else if (bu_strncmp(sp_name, "obj", 3) == 0) {
 	imageSpecific->i_datasrc=IMG_SRC_OBJECT;
     } else {
 	imageSpecific->i_datasrc=IMG_SRC_AUTO;
@@ -278,7 +278,7 @@ orient_hook(register const struct bu_structparse *UNUSED(sdp), register const ch
      * copy the parameters from the "head" into the new
      * img_specific struct
      */
-    BU_GETSTRUCT(img_new, img_specific);
+    BU_GET(img_new, struct img_specific);
     memcpy(img_new, img_sp, sizeof(struct img_specific));
     BU_LIST_MAGIC_SET(&img_new->l, IMG_MAGIC);
     BU_CK_VLS(&img_sp->i_name);
@@ -385,7 +385,7 @@ struct bu_structparse img_parse_tab[] = {
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 struct bu_structparse img_print_tab[] = {
-    {"%p",	bu_byteoffset(img_parse_tab[0]), "img_parse_tab", 0, BU_STRUCTPARSE_FUNC_NULL , NULL, NULL },
+    {"%p", 1, "img_parse_tab", bu_byteoffset(img_parse_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	4, "i_plane",		IMG_AO(i_plane),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
@@ -434,7 +434,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
     struct prj_specific *prj_sp;
     struct img_specific *img_sp;
 
-    struct bu_vls parameter_data;
+    struct bu_vls parameter_data = BU_VLS_INIT_ZERO;
     struct bu_mapped_file *parameter_file;
 
     /* check the arguments */
@@ -447,7 +447,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 	       rp->reg_name, bu_vls_addr(matparm));
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(prj_sp, prj_specific);
+    BU_GET(prj_sp, struct prj_specific);
     *dpp = prj_sp;
 
     prj_sp->magic = prj_MAGIC;
@@ -472,7 +472,6 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
      * argument string considered the parameter data.
      */
 
-    bu_vls_init(&parameter_data);
     parameter_file = bu_open_mapped_file(bu_vls_addr(matparm), (char *)NULL);
 
     if (parameter_file) {

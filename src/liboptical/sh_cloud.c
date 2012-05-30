@@ -1,7 +1,7 @@
 /*                      S H _ C L O U D . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -122,7 +122,7 @@ cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t
     register struct cloud_specific *cp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(cp, cloud_specific);
+    BU_GET(cp, struct cloud_specific);
     *dpp = cp;
 
     cp->cl_thresh = 0.35;

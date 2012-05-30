@@ -20,15 +20,14 @@
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>listeval</command>    
-       <arg choice="opt" rep="norepeat"><replaceable>path</replaceable></arg>
+       <arg choice="opt" rep="norepeat">-t</arg>
+       <arg choice="req" rep="norepeat"><replaceable>path</replaceable></arg>
      </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
   
-  <para>Combinations may include transformation matrices to be applied to their members. A
- 	<emphasis>path</emphasis> through a series of <emphasis>combinations</emphasis> and ending with a 	primitive shape represents that <emphasis>primitive shape</emphasis> with the transformations accumulated 	through the path applied to it. The <command>listeval</command> command displays primitive shape parameters 	after applying the accumulated transformations from the indicated <emphasis>path</emphasis>. If the 	specified <emphasis>path</emphasis> does not end at a <emphasis> primitive shape</emphasis>, then all 	possible paths from the indicated <emphasis>path</emphasis> to any <emphasis>primitive shape</emphasis> 	will be evaluated and displayed.
-  </para>
+  <para>Combinations may include transformation matrices to be applied to their members. A <emphasis>path</emphasis> through a series of <emphasis>combinations</emphasis> and ending with a primitive shape represents that <emphasis>primitive shape</emphasis> with the transformations accumulated through the path applied to it. The <command>listeval</command> command displays primitive shape parameters after applying the accumulated transformations from the indicated <emphasis>path</emphasis>. If the specified <emphasis>path</emphasis> does not end at a <emphasis>primitive shape</emphasis>, then all possible paths from the indicated <emphasis>path</emphasis> to any <emphasis>primitive shape</emphasis> will be evaluated and displayed. The -t option forces a shorter (ie terse) list of primitive shape parameters. This option is useful for primitives with potentially long parameter lists, such as BOTs.</para>
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>

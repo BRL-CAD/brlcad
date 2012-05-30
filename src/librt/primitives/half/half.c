@@ -1,7 +1,7 @@
 /*                          H A L F . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -84,7 +84,7 @@ rt_hlf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* Process a HALFSPACE, which is represented as a normal vector,
      * and a distance.
      */
-    BU_GETSTRUCT(halfp, half_specific);
+    BU_GET(halfp, struct half_specific);
     stp->st_specific = (genptr_t)halfp;
 
     VMOVE(halfp->half_eqn, hip->eqn);
@@ -706,6 +706,7 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	VSCALE(hip->eqn, hip->eqn, f);
 	hip->eqn[W] *= f;
     }
+
     return 0;			/* OK */
 }
 

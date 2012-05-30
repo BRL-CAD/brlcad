@@ -1,31 +1,35 @@
-SET(RTTHERM_INCLUDE_DIRS
-	${FB_INCLUDE_DIRS}
-	${OPTICAL_INCLUDE_DIRS}
-	${GED_INCLUDE_DIRS}
-	${MULTISPECTRAL_INCLUDE_DIRS}
-	${OPTICAL_INCLUDE_DIRS}
-	)
+set(RTTHERM_INCLUDE_DIRS
+  ${FB_INCLUDE_DIRS}
+  ${OPTICAL_INCLUDE_DIRS}
+  ${GED_INCLUDE_DIRS}
+  ${MULTISPECTRAL_INCLUDE_DIRS}
+  ${OPTICAL_INCLUDE_DIRS}
+  )
 LIST(REMOVE_DUPLICATES RTTHERM_INCLUDE_DIRS)
 include_directories(${RTTHERM_INCLUDE_DIRS})
 
-IF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_TK)
-	FOREACH(xlib ${X11_LIBRARIES})
-		SET(RTTHERM_XLIBS "${RTTHERM_XLIBS} ${xlib}")
-	ENDFOREACH(xlib ${X11_LIBRARIES})
-	BRLCAD_ADDEXEC(ssampview "spectrum.c ssampview.c" "libfb liboptical ${TCL_TK_LIBRARY} ${RTTHERM_XLIBS}")
-ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_TK)
+if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
+  BRLCAD_ADDEXEC(ssampview "spectrum.c;ssampview.c" "libfb;libmultispectral;${TCL_TK_LIBRARY};${X11_LIBRARIES}")
+endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
 
-BRLCAD_ADDEXEC(rttherm "spectrum.c viewtherm.c" "libged libfb librttherm libmultispectral liboptical")
+BRLCAD_ADDEXEC(rttherm "spectrum.c;viewtherm.c" "libfb;libged;librttherm;libmultispectral")
 SET_TARGET_PROPERTIES(rttherm PROPERTIES COMPILE_DEFINITIONS "RT_MULTISPECTRAL")
-INSTALL(PROGRAMS ssampview.tcl DESTINATION ${BIN_DIR})
+install(PROGRAMS ssampview.tcl DESTINATION ${BIN_DIR})
 
-BRLCAD_ADDEXEC(ssamp-bw ssamp-bw.c "liboptical")
+BRLCAD_ADDEXEC(ssamp-bw ssamp-bw.c libmultispectral)
 
 set(rttherm_MANS
   rttherm.1
   ssamp-bw.1
-)
+  )
 ADD_MAN_PAGES(1 rttherm_MANS)
 
 CMAKEFILES(pixtest.c ssampview.tcl std_day_1km.dat test.sh)
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

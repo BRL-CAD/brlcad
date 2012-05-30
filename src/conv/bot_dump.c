@@ -1,7 +1,7 @@
 /*                       B O T _ D U M P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,9 +41,11 @@ main(int argc, char *argv[])
 {
     int i, j;
     int db_index;
-    char c;
+    int c;
     const char **av;
     struct ged *gedp;
+
+    bu_setprogname(argv[0]);
 
     bu_optind = 1;
 

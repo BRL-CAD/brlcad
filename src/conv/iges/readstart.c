@@ -1,7 +1,7 @@
 /*                     R E A D S T A R T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ void
 Readstart()
 {
 
-    int i=0, done=0;
+    int i = 0, done = 0;
 
     while (!done) {
 	if (Readrec(++i))

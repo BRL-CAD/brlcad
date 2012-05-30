@@ -1,7 +1,7 @@
 /*                    R I N G W O R L D . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2011 United States Government as represented by
+ * Copyright (c) 2011-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -136,7 +136,7 @@ main(int argc, char *argv[])
 	}
     }
 
-    if (bu_file_exists(outfile))
+    if (bu_file_exists(outfile, NULL))
 	bu_exit(EXIT_FAILURE, "ERROR: %s already exists.  Remove file and try again.", outfile);
 
     bu_log("Writing ringworld out to [%s]\n", outfile);

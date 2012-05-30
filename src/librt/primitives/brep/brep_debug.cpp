@@ -1,7 +1,7 @@
 /*                     B R E P _ D E B U G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2011 United States Government as represented by
+ * Copyright (c) 2007-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,6 +43,7 @@
 
 #include "raytrace.h"
 #include "rtgeom.h"
+#include "wdb.h"
 
 #define fastf_t double
 
@@ -50,6 +51,7 @@
 extern "C" {
 #endif
     RT_EXPORT extern int brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
+    RT_EXPORT extern int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep);
 #ifdef __cplusplus
 }
 #endif
@@ -271,8 +273,8 @@ plotleaf3d(BBNode* bb)
 	    uv[0].y = v;
 	    uv[1].x = u+uinc;
 	    uv[1].y = v+vinc;
-	    trim1_status = bb->isTrimmed(uv[0], trimBR, closesttrim1);
-	    trim2_status = bb->isTrimmed(uv[1], trimBR, closesttrim2);
+	    trim1_status = bb->isTrimmed(uv[0], &trimBR, closesttrim1);
+	    trim2_status = bb->isTrimmed(uv[1], &trimBR, closesttrim2);
 
 	    if (((trim1_status != 1) || (fabs(closesttrim1) < BREP_EDGE_MISS_TOLERANCE)) &&
 		((trim2_status != 1) || (fabs(closesttrim2) < BREP_EDGE_MISS_TOLERANCE))) {
@@ -924,7 +926,7 @@ brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
 	//return -1;
-    }
+    } else {
     if (index == -1) {
 	for (index = 0; index < brep->m_F.Count(); index++) {
 	    ON_BrepFace& face = brep->m_F[index];
@@ -944,6 +946,7 @@ brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_
     }
 
     bu_vls_printf(vls, ON_String(wstr).Array());
+    }
     return 0;
 }
 
@@ -958,7 +961,7 @@ brep_trim_direction_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
 	//return -1;
-    }
+    } else {
     if (index == -1) {
 	for (index = 0; index < brep->m_F.Count(); index++) {
 	    ON_BrepFace& face = brep->m_F[index];
@@ -974,6 +977,7 @@ brep_trim_direction_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
     }
 
     bu_vls_printf(vls, ON_String(wstr).Array());
+    }
     return 0;
 }
 
@@ -988,7 +992,7 @@ brep_surface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_i
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
 	//return -1;
-    }
+    } else {
     if (index == -1) {
 	for (index = 0; index < brep->m_S.Count(); index++) {
 	    ON_Surface *surf = brep->m_S[index];
@@ -1001,7 +1005,7 @@ brep_surface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_i
     }
 
     bu_vls_printf(vls, ON_String(wstr).Array());
-
+    }
     return 0;
 }
 
@@ -1016,7 +1020,7 @@ brep_surface_normal_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
 	//return -1;
-    }
+    } else {
     if (index == -1) {
 	for (index = 0; index < brep->m_S.Count(); index++) {
 	    ON_Surface *surf = brep->m_S[index];
@@ -1031,6 +1035,7 @@ brep_surface_normal_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
     }
 
     bu_vls_printf(vls, ON_String(wstr).Array());
+    }
     return 0;
 }
 
@@ -1045,7 +1050,7 @@ brep_surface_knot_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
 	//return -1;
-    }
+    } else {
     if (index == -1) {
 	for (index = 0; index < brep->m_S.Count(); index++) {
 	    ON_Surface *surf = brep->m_S[index];
@@ -1058,6 +1063,7 @@ brep_surface_knot_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
     }
 
     bu_vls_printf(vls, ON_String(wstr).Array());
+    }
     return 0;
 }
 
@@ -1072,7 +1078,7 @@ brep_edge3d_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_in
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
 	//return -1;
-    }
+    } else {
     if (index == -1) {
 	int num_curves = brep->m_C3.Count();
 	for (index = 0; index < num_curves; index++) {
@@ -1086,6 +1092,7 @@ brep_edge3d_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_in
     }
 
     bu_vls_printf(vls, ON_String(wstr).Array());
+    }
     return 0;
 }
 
@@ -1100,7 +1107,7 @@ brep_trim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_inte
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
 	//return -1;
-    }
+    } else {
     if (index == -1) {
 	int num_trims = brep->m_T.Count();
 	for (index = 0; index < num_trims; index++) {
@@ -1113,6 +1120,7 @@ brep_trim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_inte
     }
 
     bu_vls_printf(vls, ON_String(wstr).Array());
+    }
     return 0;
 }
 
@@ -1626,7 +1634,7 @@ int brep_isosurface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
 	//return -1;
-    }
+    } else {
     if (index == -1) {
 	for (index = 0; index < brep->m_F.Count(); index++) {
 	    ON_BrepFace& face = brep->m_F[index];
@@ -1655,6 +1663,7 @@ int brep_isosurface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
     }
 
     bu_vls_printf(vls, ON_String(wstr).Array());
+    }
     return 0;
 }
 
@@ -1669,7 +1678,7 @@ brep_surfaceleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
 	//return -1;
-    }
+    } else {
     if (index == -1) {
 	for (index = 0; index < brep->m_F.Count(); index++) {
 	    ON_BrepFace& face = brep->m_F[index];
@@ -1686,6 +1695,7 @@ brep_surfaceleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
     }
 
     bu_vls_printf(vls, ON_String(wstr).Array());
+    }
     return 0;
 }
 
@@ -1700,7 +1710,7 @@ brep_trimleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep
     if (brep == NULL || !brep->IsValid(&tl)) {
 	bu_log("brep is NOT valid");
 	//return -1;
-    }
+    } else {
     if (index == -1) {
 	for (index = 0; index < brep->m_F.Count(); index++) {
 	    ON_BrepFace& face = brep->m_F[index];
@@ -1717,6 +1727,7 @@ brep_trimleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep
     }
 
     bu_vls_printf(vls, ON_String(wstr).Array());
+    }
     return 0;
 }
 
@@ -1740,6 +1751,22 @@ plot_usage(struct bu_vls *vls)
     bu_vls_printf(vls, "\tplot F [index] - plot specific BREP 'face'\n");
 }
 
+int
+brep_conversion(struct rt_db_internal* intern, ON_Brep** brep)
+{
+    *brep = ON_Brep::New();
+    struct bn_tol tol;
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = BN_TOL_DIST;
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = SMALL_FASTF;
+    tol.para = 1.0 - tol.perp;
+    if(intern->idb_meth->ft_brep == NULL) {
+	return -1;
+    }
+    intern->idb_meth->ft_brep(brep, intern, &tol);
+    return 0;
+}
 
 int
 brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag)
@@ -1781,68 +1808,112 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 	} else if (argc >= 4) {
 	    const char *part = argv[3];
 	    int index = -1;
+	    int startindex = -1;
+	    int endindex = -1;
 	    int plotres = 100;
 	    if (argc == 6) {
 		const char *strres = argv[5];
 		plotres = atoi(strres);
 	    }
 	    if (argc >= 5) {
-		const char *strindex = argv[4];
-		if (BU_STR_EQUAL(strindex, "all")) {
-		    index = -1;
+		const char *str = argv[4];
+		if (BU_STR_EQUAL(str, "all")) {
+		    index = startindex = endindex = -1;
 		} else {
-		    index = atoi(strindex);
+		    const char *dash = strchr(str, '-');
+		    if (dash) {
+			struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
+			bu_vls_strcpy(&tmpstr, str);
+			bu_vls_trunc(&tmpstr, dash - str);
+			startindex = atoi(bu_vls_addr(&tmpstr));
+			bu_vls_strcpy(&tmpstr, ++dash);
+			endindex = atoi(bu_vls_addr(&tmpstr));
+			bu_vls_free(&tmpstr);
+		    } else {
+			startindex = atoi(str);
+			endindex = startindex;
+		    }
+		    index = startindex;
 		}
 	    }
 	    if (BU_STR_EQUAL(part, "S")) {
 		snprintf(commtag, 64, "_BC_S_");
-		ret = brep_surface_plot(vls, bs, bi, vbp, index, plotres);
-	    } else if (BU_STR_EQUAL(part, "E")) {
-		snprintf(commtag, 64, "_BC_EE_");
-		ret = brep_isosurface_plot(vls, bs, bi, vbp, index, plotres);
-	    } else if (BU_STR_EQUAL(part, "EE")) {
-		snprintf(commtag, 64, "_BC_EE_");
-		int index1 = index;
-		int index2 = plotres;
-		for (int i=index1; i <= index2; i++) {
-		    ret = brep_isosurface_plot(vls, bs, bi, vbp, i, 3);
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_surface_plot(vls, bs, bi, vbp, i, plotres);
+		}
+	    } else if (BU_STR_EQUAL(part, "I")) {
+		snprintf(commtag, 64, "_BC_I_");
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_isosurface_plot(vls, bs, bi, vbp, i, plotres);
 		}
 	    } else if (BU_STR_EQUAL(part, "SN")) {
 		snprintf(commtag, 64, "_BC_SN_");
-		ret = brep_surface_normal_plot(vls, bs, bi, vbp, index, plotres);
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_surface_normal_plot(vls, bs, bi, vbp, i,
+			    plotres);
+		}
 	    } else if (BU_STR_EQUAL(part, "KN")) {
 		snprintf(commtag, 64, "_BC_KN_");
-		ret = brep_surface_knot_plot(vls, bs, bi, vbp, index);
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_surface_knot_plot(vls, bs, bi, vbp, i);
+		}
 	    } else if (BU_STR_EQUAL(part, "F")) {
 		snprintf(commtag, 64, "_BC_F_");
-		ret = brep_facetrim_plot(vls, bs, bi, vbp, index, plotres, true);
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_facetrim_plot(vls, bs, bi, vbp, i, plotres,
+			    true);
+		}
 	    } else if (BU_STR_EQUAL(part, "F2d")) {
 		snprintf(commtag, 64, "_BC_F2d_");
-		ret = brep_facetrim_plot(vls, bs, bi, vbp, index, plotres, false);
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_facetrim_plot(vls, bs, bi, vbp, i, plotres,
+			    false);
+		}
 	    } else if (BU_STR_EQUAL(part, "SBB")) {
 		snprintf(commtag, 64, "_BC_SBB_");
-		ret = brep_surfaceleafs_plot(vls, bs, bi, vbp, true, index, plotres);
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_surfaceleafs_plot(vls, bs, bi, vbp, true, i,
+			    plotres);
+		}
 	    } else if (BU_STR_EQUAL(part, "SBB2d")) {
 		snprintf(commtag, 64, "_BC_SBB2d_");
-		ret = brep_surfaceleafs_plot(vls, bs, bi, vbp, false, index, plotres);
-	    }  else if (BU_STR_EQUAL(part, "TD")) {
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_surfaceleafs_plot(vls, bs, bi, vbp, false, i,
+			    plotres);
+		}
+	    } else if (BU_STR_EQUAL(part, "TD")) {
 		snprintf(commtag, 64, "_BC_TD_");
-		ret = brep_trim_direction_plot(vls, bs, bi, vbp, index, plotres);
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_trim_direction_plot(vls, bs, bi, vbp, i,
+			    plotres);
+		}
 	    } else if (BU_STR_EQUAL(part, "T")) {
 		snprintf(commtag, 64, "_BC_T_");
-		ret = brep_trim_plot(vls, bs, bi, vbp, index, plotres, true);
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_trim_plot(vls, bs, bi, vbp, i, plotres, true);
+		}
 	    } else if (BU_STR_EQUAL(part, "T2d")) {
 		snprintf(commtag, 64, "_BC_T2d_");
-		ret = brep_trim_plot(vls, bs, bi, vbp, index, plotres, false);
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_trim_plot(vls, bs, bi, vbp, i, plotres, false);
+		}
 	    } else if (BU_STR_EQUAL(part, "TBB")) {
 		snprintf(commtag, 64, "_BC_TBB_");
-		ret = brep_trimleafs_plot(vls, bs, bi, vbp, true, index, plotres);
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_trimleafs_plot(vls, bs, bi, vbp, true, i,
+			    plotres);
+		}
 	    } else if (BU_STR_EQUAL(part, "TBB2d")) {
 		snprintf(commtag, 64, "_BC_TBB2d_");
-		ret = brep_trimleafs_plot(vls, bs, bi, vbp, false, index, plotres);
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_trimleafs_plot(vls, bs, bi, vbp, false, i,
+			    plotres);
+		}
 	    } else if (BU_STR_EQUAL(part, "E")) {
 		snprintf(commtag, 64, "_BC_E_");
-		ret = brep_edge3d_plot(vls, bs, bi, vbp, index, plotres);
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_edge3d_plot(vls, bs, bi, vbp, i, plotres);
+		}
 	    }
 	}
     }

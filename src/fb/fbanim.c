@@ -1,7 +1,7 @@
 /*                        F B A N I M . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "bselect.h"
 #include "bio.h"
 
 #ifdef HAVE_SYS_TIME_H
@@ -136,6 +137,10 @@ main(int argc, char **argv)
 	}
     }
     nframes = atoi(argv[bu_optind+1]);
+    if (nframes < 0 || nframes >= INT_MAX - 1) {
+	bu_log("ERROR: Invalid number of frames");
+	return 1;
+    }
     if ( bu_optind+2 >= argc )
 	fps = 8;
     else

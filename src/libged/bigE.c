@@ -1,7 +1,7 @@
 /*                          B I G E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2011 United States Government as represented by
+ * Copyright (c) 1997-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -117,7 +117,7 @@ add_solid(const struct directory *dp,
     int id;
     int solid_is_plate_mode_bot=0;
 
-    BU_GETUNION(eptr, E_tree);
+    BU_GET(eptr, union E_tree);
     eptr->magic = E_TREE_MAGIC;
 
     id = rt_db_get_internal(&intern, dp, dgcdp->gedp->ged_wdbp->dbip, mat, &rt_uniresource);
@@ -162,7 +162,7 @@ add_solid(const struct directory *dp,
     }
 
     /* get the soltab stuff */
-    BU_GETSTRUCT(eptr->l.stp, soltab);
+    BU_GET(eptr->l.stp, struct soltab);
     eptr->l.stp->l.magic = RT_SOLTAB_MAGIC;
     eptr->l.stp->l2.magic = RT_SOLTAB2_MAGIC;
     eptr->l.stp->st_dp = dp;
@@ -239,7 +239,7 @@ build_etree(union tree *tp,
 	case OP_UNION:
 	case OP_SUBTRACT:
 	case OP_INTERSECT:
-	    BU_GETUNION(eptr, E_tree);
+	    BU_GET(eptr, union E_tree);
 	    eptr->magic = E_TREE_MAGIC;
 	    eptr->n.op = tp->tr_op;
 	    eptr->n.left = build_etree(tp->tr_b.tb_left, dgcdp);
@@ -253,8 +253,7 @@ build_etree(union tree *tp,
 	    break;
 	case OP_DB_LEAF:
 	    if ((dp=db_lookup(dgcdp->gedp->ged_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
-		eptr->l.m = (struct model *)NULL;
-		break;
+	      break;
 	    }
 	    eptr = add_solid(dp, tp->tr_l.tl_mat, dgcdp);
 	    eptr->l.op = tp->tr_op;
@@ -262,7 +261,7 @@ build_etree(union tree *tp,
 	    break;
 	case OP_NOP:
 	    /* add a NULL solid */
-	    BU_GETUNION(eptr, E_tree);
+	    BU_GET(eptr, union E_tree);
 	    eptr->magic = E_TREE_MAGIC;
 	    eptr->l.m = (struct model *)NULL;
 	    break;
@@ -1035,7 +1034,7 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ge
 
     memset(&rd, 0, sizeof(struct ray_data));
 
-    BU_GETSTRUCT(rd.seghead, seg);
+    BU_GET(rd.seghead, struct seg);
     BU_LIST_INIT(&rd.seghead->l);
 
     mid_dist = (segp->seg_in.hit_dist + segp->seg_out.hit_dist) / 2.0;
@@ -1138,7 +1137,7 @@ shoot_and_plot(point_t start_pt,
 
     memset(&rd, 0, sizeof(struct ray_data));
 
-    BU_GETSTRUCT(rd.seghead, seg);
+    BU_GET(rd.seghead, struct seg);
     BU_LIST_INIT(&rd.seghead->l);
 
     VMOVE(rp.r_pt, start_pt);
@@ -1480,9 +1479,7 @@ Eplot(union E_tree *eptr,
 
 		    f2 = fu2->f_p;
 
-		    if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt,
-					   f1->min_pt, f1->max_pt,
-					   tol))
+		    if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt, f1->min_pt, f1->max_pt, tol->dist))
 			continue;
 
 		    NMG_GET_FU_PLANE(pl2, fu2);
@@ -1569,7 +1566,7 @@ Eplot(union E_tree *eptr,
 		    VUNITIZE(dir);
 		    max_dist = dists1[1];
 		    max_hit = 1;
-		    for (i=2; i<hit_count1; i++) {
+		    for (i = 2; i < hit_count1; i++) {
 			VSUB2(vdiff, hits1[i], start_pt);
 			dists1[i] = MAGNITUDE(vdiff);
 			if (VDOT(dir, vdiff) < 0.0)
@@ -1591,7 +1588,7 @@ Eplot(union E_tree *eptr,
 		    done = 0;
 		    while (!done) {
 			done = 1;
-			for (i=1; i<hit_count1; i++) {
+			for (i = 1; i < hit_count1; i++) {
 			    if (dists1[i-1] > dists1[i]) {
 				fastf_t tmp;
 				point_t tmp_pt;
@@ -1612,7 +1609,7 @@ Eplot(union E_tree *eptr,
 		    min_hit = -1;
 		    max_dist = -min_dist;
 		    max_hit = -1;
-		    for (i=0; i<hit_count2; i++) {
+		    for (i = 0; i < hit_count2; i++) {
 			VSUB2(vdiff, hits2[i], start_pt);
 			dists2[i] = MAGNITUDE(vdiff);
 			if (VDOT(dir, vdiff) < 0.0)
@@ -1630,7 +1627,7 @@ Eplot(union E_tree *eptr,
 		    done = 0;
 		    while (!done) {
 			done = 1;
-			for (i=1; i<hit_count2; i++) {
+			for (i = 1; i < hit_count2; i++) {
 			    if (dists2[i-1] > dists2[i]) {
 				fastf_t tmp;
 				point_t tmp_pt;
@@ -1652,7 +1649,7 @@ Eplot(union E_tree *eptr,
 		    BU_LIST_INIT(A);
 		    BU_LIST_INIT(B);
 
-		    for (i=1; i<hit_count1; i += 2) {
+		    for (i = 1; i < hit_count1; i += 2) {
 			fastf_t diff;
 
 			diff = dists1[i] - dists1[i-1];
@@ -1670,7 +1667,7 @@ Eplot(union E_tree *eptr,
 			BU_LIST_APPEND(A, &aseg->l);
 		    }
 
-		    for (i=1; i<hit_count2; i += 2) {
+		    for (i = 1; i < hit_count2; i += 2) {
 			fastf_t diff;
 
 			diff = dists2[i] - dists2[i-1];
@@ -1763,7 +1760,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
     VSETALL(max, -MAX_FASTF);
     VSETALL(min, MAX_FASTF);
 
-    for (i=0; i<BU_PTBL_END(&dgcdp->leaf_list); i++) {
+    for (i = 0; i < BU_PTBL_END(&dgcdp->leaf_list); i++) {
 	union E_tree *tp;
 
 	tp = (union E_tree *)BU_PTBL_GET(&dgcdp->leaf_list, i);
@@ -1781,7 +1778,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	return;
     }
 
-    for (i=0; i<BU_PTBL_END(&dgcdp->leaf_list); i++) {
+    for (i = 0; i < BU_PTBL_END(&dgcdp->leaf_list); i++) {
 	union E_tree *tp;
 	struct vertex *v[8];
 	struct vertex **vp[4];
@@ -1811,7 +1808,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	r = nmg_mrsv(tp->l.m);
 	s = BU_LIST_FIRST(shell, &r->s_hd);
 
-	for (j=0; j<8; j++)
+	for (j = 0; j < 8; j++)
 	    v[j] = (struct vertex *)NULL;
 
 	vp[0] = &v[0];
@@ -1996,7 +1993,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	nmg_close_shell(s, tol);
 	nmg_rebound(tp->l.m, tol);
 
-	BU_GETSTRUCT(pg, rt_pg_internal);
+	BU_GET(pg, struct rt_pg_internal);
 
 	if (!nmg_to_poly(tp->l.m, pg, tol)) {
 	    bu_free((char *)pg, "rt_pg_internal");
@@ -2053,7 +2050,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	bu_log("Error at start of 'E'\n");
 
-    BU_GETSTRUCT(dgcdp, _ged_client_data);
+    BU_GET(dgcdp, struct _ged_client_data);
     dgcdp->gedp = gedp;
     dgcdp->do_polysolids = 0;
     dgcdp->wireframe_color_override = 0;
@@ -2170,7 +2167,6 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    ged_color_soltab(&gedp->ged_gdp->gd_headDisplay);
     (void)time(&dgcdp->etime);
 
     /* free leaf_list */

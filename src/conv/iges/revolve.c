@@ -1,7 +1,7 @@
 /*                       R E V O L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -218,8 +218,8 @@ revolve(int entityno)
 
     /* Eliminate last struct if not used */
     if (trcptr->name[0] == '\0') {
-	trcptr->prev->next = NULL;
-	bu_free((char *)trcptr, "Revolve: trcptr");
+      if (trcptr->prev) trcptr->prev->next = NULL;
+      bu_free((char *)trcptr, "Revolve: trcptr");
     }
 
     if (dir[entityno]->form == 1) {
@@ -329,7 +329,7 @@ revolve(int entityno)
 	    VJOIN1(pts[1], pts[0], (-2.0*rmax), startdir);
 	    VJOIN1(pts[2], pts[1], rmax, pdir);
 	    VJOIN1(pts[3], pts[0], rmax, pdir);
-	    for (i=0; i<4; i++) {
+	    for (i = 0; i < 4; i++) {
 		VJOIN1(pts[i+4], pts[i], (hmax-hmin), adir);
 	    }
 	}
@@ -356,7 +356,7 @@ revolve(int entityno)
 	    VJOIN1(pts[2], pts[0], len, enddir);
 
 	    /* Calculate top vertices */
-	    for (i=0; i<4; i++) {
+	    for (i = 0; i < 4; i++) {
 		VJOIN1(pts[i+4], pts[i], (hmax-hmin), adir);
 	    }
 	}

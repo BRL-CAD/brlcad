@@ -1,7 +1,7 @@
 /*                   O B J _ V S H O T . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2011 United States Government as represented by
+ * Copyright (c) 2010-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, s
     if (!stp || !rp || n < 1)
 	return -1;
 
-    for (i = 0; i > n; i++) {
+    for (i = 0; i < n; i++) {
 	if (stp[i]) RT_CK_SOLTAB(stp[i]);
 	if (rp[i]) RT_CK_RAY(rp[i]);
     }

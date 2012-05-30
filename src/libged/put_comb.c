@@ -1,7 +1,7 @@
 /*                         P U T _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -183,6 +183,9 @@ restore_comb(struct ged *gedp, struct directory *dp, const char *oldname)
     const char *av[4];
     char *name;
 
+    if (!gedp || !dp || !oldname)
+	return;
+
     /* get rid of previous comb */
     name = bu_strdup(dp->d_namep);
 
@@ -247,12 +250,12 @@ count_nodes(struct ged *gedp, char *line)
 	 * If this token is not a boolean operator, then it must be the start
 	 * of a matrix which we will skip.
 	 */
-	if (ptr && !((*ptr == 'u' || *ptr == '-' || *ptr=='+') &&
+	if (ptr && !((*ptr == 'u' || *ptr == '-' || *ptr == '+') &&
 		     *(ptr+1) == '\0')) {
 	    int k;
 
-	    /* skip past matrix, k=1 because we already have the first value */
-	    for (k=1; k<16; k++) {
+	    /* skip past matrix, k = 1 because we already have the first value */
+	    for (k = 1; k < 16; k++) {
 		ptr = strtok((char *)NULL, _delims);
 		if (!ptr) {
 		    bu_vls_printf(gedp->ged_result_str, "expecting a matrix\n");
@@ -286,7 +289,7 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
     int tree_index = 0;
     union tree *tp;
     matp_t matrix;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     char *str;
 
     if (imstr == (char *)NULL)
@@ -302,7 +305,7 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
     ptr = strchr(str, '\n');
     if (ptr != NULL)
 	*ptr = '\0';
-    bu_vls_init(&vls);
+
     while (line != (char *)NULL) {
 	int n;
 
@@ -314,7 +317,7 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
 	    bu_free(str, "dealloc bu_strdup str");
 	    return GED_ERROR;
 	} else if (n > 0) {
-	    BU_GETSTRUCT(llp, line_list);
+	    BU_GET(llp, struct line_list);
 	    BU_LIST_INSERT(&HeadLines.l, &llp->l);
 	    llp->line = line;
 
@@ -388,7 +391,7 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
 
 		matrix = (matp_t)bu_calloc(16, sizeof(fastf_t), "red: matrix");
 		matrix[0] = atof(ptr);
-		for (k=1; k<16; k++) {
+		for (k = 1; k < 16; k++) {
 		    ptr = strtok((char *)NULL, _delims);
 		    if (!ptr) {
 			bu_log("incomplete matrix for member %s - No changes made\n", name);
@@ -420,13 +423,14 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
 		    rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
 		    break;
 		default:
-		    bu_log("unrecognized relation (assume UNION)\n");
-		case 'u':
+		    if (relation != 'u') {
+			bu_log("unrecognized relation (assume UNION)\n");
+		    }
 		    rt_tree_array[tree_index].tl_op = OP_UNION;
 		    break;
 	    }
 
-	    BU_GETUNION(tp, tree);
+	    BU_GET(tp, union tree);
 	    RT_TREE_INIT(tp);
 	    rt_tree_array[tree_index].tl_tree = tp;
 	    tp->tr_l.tl_op = OP_DB_LEAF;
@@ -535,7 +539,9 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	comb->tree = NULL;
     } else {
 	/* make an empty combination structure */
-	BU_GETSTRUCT(comb, rt_comb_internal);
+	BU_GET(comb, struct rt_comb_internal);
+	if (comb == NULL)
+	    bu_bomb("Unable to allocate comb memory");
 	RT_COMB_INTERNAL_INIT(comb);
     }
 
@@ -588,11 +594,11 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	comb->inherit = 0;
 
     if (put_tree_into_comb(gedp, comb, dp, argv[1], new_name, argv[offset + 4]) == GED_ERROR) {
-	if (comb) {
+	if (comb && dp) {
 	    restore_comb(gedp, dp, saved_name);
 	    bu_vls_printf(gedp->ged_result_str, "%s: \toriginal restored\n", argv[0]);
 	}
-	(void)unlink(_ged_tmpfil);
+	bu_file_delete(_ged_tmpfil);
 	return GED_ERROR;
     } else if (save_comb_flag) {
 	/* eliminate the temporary combination */
@@ -604,7 +610,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	(void)ged_kill(gedp, 2, (const char **)av);
     }
 
-    (void)unlink(_ged_tmpfil);
+    bu_file_delete(_ged_tmpfil);
     return GED_OK;
 }
 

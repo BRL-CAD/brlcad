@@ -1,7 +1,7 @@
 /*                        T Y P E I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -609,7 +609,7 @@ booleanize(const char *answer)
 
     ap = noes[idx];
     while (ap && ap[0] != '\0') {
-	if ((strcasecmp(ap, answer) == 0)) {
+	if (BU_STR_EQUIV(ap, answer)) {
 	    return 0;
 	}
 	idx++;
@@ -689,7 +689,7 @@ ebm_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 {
     struct rt_ebm_internal *ebm;
 
-    BU_GETSTRUCT(ebm, rt_ebm_internal);
+    BU_GET(ebm, struct rt_ebm_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_EBM;
     intern->idb_meth = &rt_functab[ID_EBM];
@@ -716,7 +716,7 @@ submodel_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_inter
 {
     struct rt_submodel_internal *sip;
 
-    BU_GETSTRUCT(sip, rt_submodel_internal);
+    BU_GET(sip, struct rt_submodel_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_SUBMODEL;
     intern->idb_meth = &rt_functab[ID_SUBMODEL];
@@ -742,7 +742,7 @@ dsp_in_v4(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
 {
     struct rt_dsp_internal *dsp;
 
-    BU_GETSTRUCT(dsp, rt_dsp_internal);
+    BU_GET(dsp, struct rt_dsp_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_DSP;
     intern->idb_meth = &rt_functab[ID_DSP];
@@ -779,7 +779,7 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
 {
     struct rt_dsp_internal *dsp;
 
-    BU_GETSTRUCT(dsp, rt_dsp_internal);
+    BU_GET(dsp, struct rt_dsp_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_DSP;
     intern->idb_meth = &rt_functab[ID_DSP];
@@ -839,7 +839,7 @@ hf_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 {
     struct rt_hf_internal *hf;
 
-    BU_GETSTRUCT(hf, rt_hf_internal);
+    BU_GET(hf, struct rt_hf_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_HF;
     intern->idb_meth = &rt_functab[ID_HF];
@@ -900,7 +900,7 @@ vol_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 {
     struct rt_vol_internal *vol;
 
-    BU_GETSTRUCT(vol, rt_vol_internal);
+    BU_GET(vol, struct rt_vol_internal);
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_VOL;
     intern->idb_meth = &rt_functab[ID_VOL];
@@ -998,14 +998,14 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     bot->thickness = (fastf_t *)NULL;
     bot->face_mode = (struct bu_bitv *)NULL;
 
-    for (i=0; i<num_verts; i++) {
+    for (i = 0; i < num_verts; i++) {
 	bot->vertices[i*3] = atof(argv[7+i*3]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	bot->vertices[i*3+1] = atof(argv[8+i*3]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	bot->vertices[i*3+2] = atof(argv[9+i*3]) * gedp->ged_wdbp->dbip->dbi_local2base;
     }
 
     arg_count = 7 + num_verts*3;
-    for (i=0; i<num_faces; i++) {
+    for (i = 0; i < num_faces; i++) {
 	bot->faces[i*3] = atoi(argv[arg_count + i*3]);
 	bot->faces[i*3+1] = atoi(argv[arg_count + i*3 + 1]);
 	bot->faces[i*3+2] = atoi(argv[arg_count + i*3 + 2]);
@@ -1015,7 +1015,7 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 	arg_count = 7 + num_verts*3 + num_faces*3;
 	bot->thickness = (fastf_t *)bu_calloc(num_faces, sizeof(fastf_t), "bot thickness");
 	bot->face_mode = bu_bitv_new(num_faces);
-	for (i=0; i<num_faces; i++) {
+	for (i = 0; i < num_faces; i++) {
 	    int j;
 
 	    j = atoi(argv[arg_count + i*2]);
@@ -1066,7 +1066,7 @@ arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     arbn->eqn = (plane_t *)bu_calloc(arbn->neqn, sizeof(plane_t), "arbn planes");
 
     /* Normal is unscaled, should have unit length; d is scaled */
-    for (i=0; i<arbn->neqn; i++) {
+    for (i = 0; i < arbn->neqn; i++) {
 	arbn->eqn[i][X] = atof(argv[4+i*4]);
 	arbn->eqn[i][Y] = atof(argv[4+i*4+1]);
 	arbn->eqn[i][Z] = atof(argv[4+i*4+2]);
@@ -1114,7 +1114,7 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     pipeip = (struct rt_pipe_internal *)intern->idb_ptr;
     pipeip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
     BU_LIST_INIT(&pipeip->pipe_segs_head);
-    for (i=4; i<argc; i+= 6) {
+    for (i = 4; i < argc; i += 6) {
 	struct wdb_pipept *pipept;
 
 	pipept = (struct wdb_pipept *)bu_malloc(sizeof(struct wdb_pipept), "wdb_pipept");
@@ -1254,8 +1254,8 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     total_points = arip->ncurves * arip->pts_per_curve;
 
     arip->curves = (fastf_t **)bu_malloc(
-	(arip->ncurves+1) * sizeof(fastf_t **), "ars curve ptrs");
-    for (i=0; i < arip->ncurves+1; i++) {
+	(arip->ncurves+1) * sizeof(fastf_t *), "ars curve ptrs");
+    for (i = 0; i < arip->ncurves+1; i++) {
 	/* Leave room for first point to be repeated */
 	arip->curves[i] = (fastf_t *)bu_malloc(
 	    (arip->pts_per_curve+1) * sizeof(point_t),
@@ -1268,14 +1268,14 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     arip->curves[0][2] = atof(argv[7]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
     /* The first point is duplicated across the first curve */
-    for (i=1; i < arip->pts_per_curve; ++i) {
+    for (i = 1; i < arip->pts_per_curve; ++i) {
 	VMOVE(arip->curves[0]+3*i, arip->curves[0]);
     }
 
     cv = 1;
     axis = 0;
     /* scan each of the other points we've already got */
-    for (i=8; i < (size_t)argc && i < total_points * ELEMENTS_PER_POINT; ++i) {
+    for (i = 8; i < (size_t)argc && i < total_points * ELEMENTS_PER_POINT; ++i) {
 	arip->curves[cv][axis] = atof(argv[i]) * gedp->ged_wdbp->dbip->dbi_local2base;
 	if (++axis >= arip->pts_per_curve * ELEMENTS_PER_POINT) {
 	    axis = 0;
@@ -1284,7 +1284,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     }
 
     /* The first point is duplicated across the last curve */
-    for (i=1; i < arip->pts_per_curve; ++i) {
+    for (i = 1; i < arip->pts_per_curve; ++i) {
 	VMOVE(arip->curves[ncurves_minus_one]+3*i,
 	      arip->curves[ncurves_minus_one]);
     }
@@ -2415,7 +2415,7 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
      * MORE points than the value in the num_points field if it's all on one
      * line. Is that a bug, or a feature?
      */
-    for (i=6; i<argc; i+= 4) {
+    for (i = 6; i < argc; i += 4) {
 	struct wdb_metaballpt *metaballpt;
 
 	metaballpt = (struct wdb_metaballpt *)bu_malloc(sizeof(struct wdb_metaballpt), "wdb_metaballpt");
@@ -2552,18 +2552,18 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     type = RT_PNT_TYPE_PNT;
     if (hasColor) {
 	/* R G B */
-	type |= RT_PNT_TYPE_COL;
+	type = (rt_pnt_type)((int)type | (int)RT_PNT_TYPE_COL);
 	valuesPerPoint += 3;
     }
     if (hasScale) {
 	/* scale value */
-	type |= RT_PNT_TYPE_SCA;
+	type = (rt_pnt_type)((int)type | (int)RT_PNT_TYPE_SCA);
 	valuesPerPoint += 1;
     }
     if (oriented) {
 	/* vector */
 	valuesPerPoint += ELEMENTS_PER_VECT;
-	type |= RT_PNT_TYPE_NRM;
+	type = (rt_pnt_type)((int)type | (int)RT_PNT_TYPE_NRM);
     }
 
     /* reset argc/argv to be just point data */
@@ -2592,8 +2592,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     /* prompt for X, Y, Z of points */
     if ((unsigned long)argc < numPoints * (unsigned long)valuesPerPoint) {
 	int nextAsk = nextPrompt + 6;
-	struct bu_vls vls;
-	bu_vls_init(&vls);
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	switch (type) {
 	    case RT_PNT_TYPE_PNT:
@@ -2659,35 +2658,35 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     /* empty list head */
     switch (type) {
 	case RT_PNT_TYPE_PNT:
-	    BU_GETSTRUCT(headPoint, pnt);
+	    BU_GET(headPoint, struct pnt);
 	    BU_LIST_INIT(&(((struct pnt *)headPoint)->l));
 	    break;
 	case RT_PNT_TYPE_COL:
-	    BU_GETSTRUCT(headPoint, pnt_color);
+	    BU_GET(headPoint, struct pnt_color);
 	    BU_LIST_INIT(&(((struct pnt_color *)headPoint)->l));
 	    break;
 	case RT_PNT_TYPE_SCA:
-	    BU_GETSTRUCT(headPoint, pnt_scale);
+	    BU_GET(headPoint, struct pnt_scale);
 	    BU_LIST_INIT(&(((struct pnt_scale *)headPoint)->l));
 	    break;
 	case RT_PNT_TYPE_NRM:
-	    BU_GETSTRUCT(headPoint, pnt_normal);
+	    BU_GET(headPoint, struct pnt_normal);
 	    BU_LIST_INIT(&(((struct pnt_normal *)headPoint)->l));
 	    break;
 	case RT_PNT_TYPE_COL_SCA:
-	    BU_GETSTRUCT(headPoint, pnt_color_scale);
+	    BU_GET(headPoint, struct pnt_color_scale);
 	    BU_LIST_INIT(&(((struct pnt_color_scale *)headPoint)->l));
 	    break;
 	case RT_PNT_TYPE_COL_NRM:
-	    BU_GETSTRUCT(headPoint, pnt_color_normal);
+	    BU_GET(headPoint, struct pnt_color_normal);
 	    BU_LIST_INIT(&(((struct pnt_color_normal *)headPoint)->l));
 	    break;
 	case RT_PNT_TYPE_SCA_NRM:
-	    BU_GETSTRUCT(headPoint, pnt_scale_normal);
+	    BU_GET(headPoint, struct pnt_scale_normal);
 	    BU_LIST_INIT(&(((struct pnt_scale_normal *)headPoint)->l));
 	    break;
 	case RT_PNT_TYPE_COL_SCA_NRM:
-	    BU_GETSTRUCT(headPoint, pnt_color_scale_normal);
+	    BU_GET(headPoint, struct pnt_color_scale_normal);
 	    BU_LIST_INIT(&(((struct pnt_color_scale_normal *)headPoint)->l));
 	    break;
     }
@@ -2700,14 +2699,14 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 	/* bu_log("%d: [%s, %s, %s]\n", ((i-5)/3)+1, argv[i], argv[i+1], argv[i+2]); */
 	switch (type) {
 	    case RT_PNT_TYPE_PNT:
-		BU_GETSTRUCT(point, pnt);
+		BU_GET(point, struct pnt);
 		((struct pnt *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
 		BU_LIST_PUSH(&(((struct pnt *)headPoint)->l), &((struct pnt *)point)->l);
 		break;
 	    case RT_PNT_TYPE_COL:
-		BU_GETSTRUCT(point, pnt_color);
+		BU_GET(point, struct pnt_color);
 		((struct pnt_color *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt_color *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt_color *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
@@ -2718,7 +2717,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		BU_LIST_PUSH(&(((struct pnt_color *)headPoint)->l), &((struct pnt_color *)point)->l);
 		break;
 	    case RT_PNT_TYPE_SCA:
-		BU_GETSTRUCT(point, pnt_scale);
+		BU_GET(point, struct pnt_scale);
 		((struct pnt_scale *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt_scale *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt_scale *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
@@ -2726,7 +2725,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		BU_LIST_PUSH(&(((struct pnt_scale *)headPoint)->l), &((struct pnt_scale *)point)->l);
 		break;
 	    case RT_PNT_TYPE_NRM:
-		BU_GETSTRUCT(point, pnt_normal);
+		BU_GET(point, struct pnt_normal);
 		((struct pnt_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
@@ -2736,7 +2735,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		BU_LIST_PUSH(&(((struct pnt_normal *)headPoint)->l), &((struct pnt_normal *)point)->l);
 		break;
 	    case RT_PNT_TYPE_COL_SCA:
-		BU_GETSTRUCT(point, pnt_color_scale);
+		BU_GET(point, struct pnt_color_scale);
 		((struct pnt_color_scale *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt_color_scale *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt_color_scale *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
@@ -2748,7 +2747,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		BU_LIST_PUSH(&(((struct pnt_color_scale *)headPoint)->l), &((struct pnt_color_scale *)point)->l);
 		break;
 	    case RT_PNT_TYPE_COL_NRM:
-		BU_GETSTRUCT(point, pnt_color_normal);
+		BU_GET(point, struct pnt_color_normal);
 		((struct pnt_color_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt_color_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt_color_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
@@ -2762,7 +2761,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		BU_LIST_PUSH(&(((struct pnt_color_normal *)headPoint)->l), &((struct pnt_color_normal *)point)->l);
 		break;
 	    case RT_PNT_TYPE_SCA_NRM:
-		BU_GETSTRUCT(point, pnt_scale_normal);
+		BU_GET(point, struct pnt_scale_normal);
 		((struct pnt_scale_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt_scale_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt_scale_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
@@ -2773,7 +2772,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 		BU_LIST_PUSH(&(((struct pnt_scale_normal *)headPoint)->l), &((struct pnt_scale_normal *)point)->l);
 		break;
 	    case RT_PNT_TYPE_COL_SCA_NRM:
-		BU_GETSTRUCT(point, pnt_color_scale_normal);
+		BU_GET(point, struct pnt_color_scale_normal);
 		((struct pnt_color_scale_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
 		((struct pnt_color_scale_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
 		((struct pnt_color_scale_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
@@ -2930,7 +2929,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	nvals = 3*1 + 1;
 	menu = p_half;
 	fn_in = half_in;
-    } else if (strncmp(argv[2], "arb", 3) == 0) {
+    } else if (bu_strncmp(argv[2], "arb", 3) == 0) {
 	int n = atoi(&argv[2][3]);
 
 	if (n < 4 || 8 < n) {

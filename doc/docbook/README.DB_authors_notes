@@ -153,44 +153,63 @@ course, be sure to also use those names in the SVG file.
 MARKS FOR ITEMIZED LIST
 -----------------------
 
-For better looking list markers use the 'override' attribute for the
-<listitem>,
-e.g.,
-
-  <listitem override='disc'>        <!-- a small black dot    -->
-  ...
-  <listitem override='smallcircle'> <!-- a small white circle -->
-
-Other list symbols defined in the brlcad stylesheets:
+Itemized list symbols defined in the docbook/fo stylesheets that work with the
+current BRL-CAD environment:
 
   <xsl:choose>
     <xsl:when test="$itemsymbol='none'"></xsl:when>
     <xsl:when test="$itemsymbol='disc'">&#x2022;</xsl:when>
-    <xsl:when test="$itemsymbol='bullet'">&#x25CF;</xsl:when>
+    <xsl:when test="$itemsymbol='bullet'">&#x2022;</xsl:when>
     <xsl:when test="$itemsymbol='endash'">&#x2013;</xsl:when>
     <xsl:when test="$itemsymbol='emdash'">&#x2014;</xsl:when>
-    <!-- Some of these may work in your XSL-FO processor and fonts -->
 
     <xsl:when test="$itemsymbol='square'">&#x25A0;</xsl:when>
     <xsl:when test="$itemsymbol='box'">&#x25A0;</xsl:when>
+    <xsl:when test="$itemsymbol='smallblacksquare'">&#x25AA;</xsl:when>
     <xsl:when test="$itemsymbol='circle'">&#x25CB;</xsl:when>
     <xsl:when test="$itemsymbol='opencircle'">&#x25CB;</xsl:when>
+
     <xsl:when test="$itemsymbol='whitesquare'">&#x25A1;</xsl:when>
-
-    <!-- these two are not in Linux Libertine: -->
     <xsl:when test="$itemsymbol='smallwhitesquare'">&#x25AB;</xsl:when>
-    <xsl:when test="$itemsymbol='smallblacksquare'">&#x25AA;</xsl:when>
-
     <xsl:when test="$itemsymbol='round'">&#x25CF;</xsl:when>
     <xsl:when test="$itemsymbol='blackcircle'">&#x25CF;</xsl:when>
-    <xsl:when test="$itemsymbol='smallcircle'">&#x25E6;</xsl:when>
+    <xsl:when test="$itemsymbol='whitebullet'">&#x25E6;</xsl:when>
+
     <xsl:when test="$itemsymbol='triangle'">&#x2023;</xsl:when>
     <xsl:when test="$itemsymbol='point'">&#x203A;</xsl:when>
-    <!--    
-    <xsl:when test="$itemsymbol='hand'"><fo:inline
-                         font-family="Wingdings 2">A</fo:inline></xsl:when>
-    -->
     <xsl:otherwise>&#x25CF;</xsl:otherwise><!-- bullet -->
+  </xsl:choose>
+
+The default marks for html nested itemized lists are:
+
+  disc
+    circle
+      square
+
+and they appear as small marks in html.  Note that html only
+recognizes those mark names so we acdept those defaults and they look
+okay.
+
+For pdf, the same mark names appear too large and we have customized
+the defaults marks as follows:
+
+<xsl:template name="next.itemsymbol">
+  <xsl:param name="itemsymbol" select="'default'"/>
+  <xsl:choose>
+    <!-- Change this list if you want to change the order of symbols -->
+    <xsl:when test="$itemsymbol = 'bullet'">whitebullet</xsl:when>
+    <xsl:when test="$itemsymbol = 'whitebullet'">smallblacksquare</xsl:when>
+    <xsl:otherwise>bullet</xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
+
+For non-default pdf list markers modify the 'mark' attribute for the
+<itemizedlist>, e.g.,
+
+  <itemizedlist mark='bullet'>        <!-- a small black dot    -->
+  ...
+  <itemizedlist mark='whitebullet'>   <!-- a small white circle -->
 
 
 EPS AND OTHER GRAPHICS
@@ -204,6 +223,11 @@ Use scribus (http://www.scribus.net) to convert eps to svg.
 
 Use gimp (http://www.gimp.org) to scale or edit png images.
 
+To center an image in html, use css:
+
+  div.mediaobject {
+    text-align: center;
+  }
 
 A TEMPLATE FOR A FORMAL FIGURE AND INCLUDED IMAGES
 --------------------------------------------------

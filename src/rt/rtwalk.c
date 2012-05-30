@@ -1,7 +1,7 @@
 /*                        R T W A L K . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2011 United States Government as represented by
+ * Copyright (c) 1987-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,7 +69,7 @@ point_t		goal_point;
 
 vect_t		dir_prev_step;		/* Dir used on last step */
 point_t		pt_prev_step;
-vect_t		norm_prev_step = {0, 0, 0};
+vect_t		norm_prev_step = VINIT_ZERO;
 
 vect_t		norm_cur_try;		/* normal vector at current hit pt */
 point_t		hit_cur_try;

@@ -1,7 +1,7 @@
 /*                         B O T _ M E R G E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     bots = bu_calloc(sizeof(struct rt_bot_internal), argc, "bot internal");
 
     /* create a new bot */
-    BU_GETSTRUCT(bots[0], rt_bot_internal);
+    BU_GET(bots[0], struct rt_bot_internal);
     bots[0]->mode = 0;
     bots[0]->orientation = RT_BOT_UNORIENTED;
     bots[0]->bot_flags = 0;
@@ -80,7 +80,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
 
 
     /* read in all the bots */
-    for (idx=1, i=2; i < argc; i++) {
+    for (idx = 1, i = 2; i < argc; i++) {
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    continue;
 	}
@@ -107,7 +107,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     if (idx == 1) return GED_ERROR;
 
 
-    for (i=1; i < idx; i++) {
+    for (i = 1; i < idx; i++) {
 	/* check for surface normals */
 	if (bots[0]->mode) {
 	    if (bots[0]->mode != bots[i]->mode) {
@@ -140,7 +140,7 @@ ged_bot_merge(struct ged *gedp, int argc, const char *argv[])
     avail_face = 0;
 
 
-    for (i=1; i < idx; i++) {
+    for (i = 1; i < idx; i++) {
 	/* copy the vertices */
 	memcpy(&bots[0]->vertices[3*avail_vert], bots[i]->vertices, bots[i]->num_vertices*3*sizeof(fastf_t));
 

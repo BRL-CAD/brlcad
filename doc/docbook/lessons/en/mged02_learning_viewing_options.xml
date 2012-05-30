@@ -137,7 +137,7 @@
 	As detailed in the following table, this information contains four groups
 	of viewing data about the Graphics Window.
 	
-	<table frame="all"><info><title>Viewing Data at the Bottom of the Command Window</title></info>
+	<table frame="all"><title>Viewing Data at the Bottom of the Command Window</title>
 	<tgroup cols="5" align="center" colsep="1" rowsep="1">
 	  <colspec colname="c1"/>
 	  <colspec colname="c2"/>
@@ -579,7 +579,8 @@
 	functions.
       </para>
       
-      <table frame="all"><info><title>Shift Grip Keys and Effects</title></info>
+      <table frame="all">
+	<title>Shift Grip Keys and Effects</title>
 	
 	<tgroup cols="5" align="center" colsep="1" rowsep="1">
 	  <colspec colname="c1"/>

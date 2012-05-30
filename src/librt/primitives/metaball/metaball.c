@@ -1,7 +1,7 @@
 /*			G _ M E T A B A L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -80,7 +80,7 @@ int rt_metaball_lookup_type_id(const char *name)
 {
     int i = 0;
     while (metaballnames[i++])
-	if (!strncmp(metaballnames[i], name, 4))
+	if (!bu_strncmp(metaballnames[i], name, 4))
 	    return i;
     return -1;
 }
@@ -354,9 +354,7 @@ int
 rt_metaball_find_intersection(point_t *intersect, const struct rt_metaball_internal *mb, const point_t *a, const point_t *b, fastf_t step, const fastf_t finalstep)
 {
     point_t mid;
-    const point_t *midp;
-
-    midp = (const point_t *)&mid;
+    const point_t *midp = (const point_t *)&mid;
 
     VADD2(mid, *a, *b);
     VSCALE(mid, mid, 0.5);
@@ -383,6 +381,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     int retval = 0;
     fastf_t step, distleft;
     point_t p, inc;
+    const point_t *cp = (const point_t *)&p;
 
     /* switching behavior to retain old code for performance and correctness
      * comparisons. */
@@ -399,7 +398,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     VSCALE(inc, rp->r_dir, step); /* assume it's normalized and we want to creep at step */
 
     /* walk back out of the solid */
-    while(rt_metaball_point_value((const point_t *)&p, mb) >= mb->threshold) {
+    while(rt_metaball_point_value(cp, mb) >= mb->threshold) {
 #if SHOOTALGO == 2
 	fhin = -1;
 #endif
@@ -427,7 +426,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 
 	    distleft -= step;
 	    VADD2(p, p, inc);
-	    in = rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold;
+	    in = rt_metaball_point_value(cp, mb) > mb->threshold;
 	    if (mb_stat == 1)
 		if ( !in )
 		    if (step<=mb->finalstep) {
@@ -467,7 +466,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 	    VMOVE(lastpoint, p);
 	    VADD2(p, p, inc);
 	    if (mb_stat == 1) {
-		if (rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold) {
+		if (rt_metaball_point_value(cp, mb) < mb->threshold) {
 		    point_t intersect, delta;
 		    const point_t *pA = (const point_t *)&lastpoint;
 		    const point_t *pB = (const point_t *)&p;
@@ -483,7 +482,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 			return retval;
 		}
 	    } else {
-		if (rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold) {
+		if (rt_metaball_point_value(cp, mb) > mb->threshold) {
 		    point_t intersect, delta;
 		    const point_t *pA = (const point_t *)&lastpoint;
 		    const point_t *pB = (const point_t *)&p;
@@ -732,7 +731,7 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
     if (mat == NULL) mat = bn_mat_identity;
     for (i=1; i<=metaball_count*5; i+=5) {
 	/* Apply modeling transformations */
-	BU_GETSTRUCT(mbpt, wdb_metaballpt);
+	BU_GET(mbpt, struct wdb_metaballpt);
 	mbpt->l.magic = WDB_METABALLPT_MAGIC;
 	MAT4X3PNT(mbpt->coord, mat, &buf[i]);
 	mbpt->fldstr = buf[i+3] / mat[15];
@@ -886,7 +885,7 @@ rt_metaball_add_point (struct rt_metaball_internal *mb, const point_t *loc, cons
 {
     struct wdb_metaballpt *mbpt;
 
-    BU_GETSTRUCT(mbpt, wdb_metaballpt);
+    BU_GET(mbpt, struct wdb_metaballpt);
     mbpt->l.magic = WDB_METABALLPT_MAGIC;
     VMOVE(mbpt->coord, *loc);
     mbpt->fldstr = fldstr;
@@ -964,12 +963,10 @@ rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
     pend = pts + strlen(pts);
 
     while(1) {
-	point_t loc;
-	const point_t *locp;
-	fastf_t fldstr, goo;
 	int len;
-
-	locp = (const point_t *)&loc;
+	fastf_t fldstr, goo;
+	point_t loc;
+	const point_t *locp = (const point_t *)&loc;
 
 	while( pts < pend && *pts != '{' ) ++pts;
 	if(pts >= pend) break;

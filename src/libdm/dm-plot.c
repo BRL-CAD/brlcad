@@ -1,7 +1,7 @@
 /*                       D M - P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -138,11 +138,10 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 	obj = Tcl_DuplicateObj(obj);
 
     if (((struct plot_vars *)dmp->dm_vars.priv_vars)->debug) {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	Tcl_AppendStringsToObj(obj, "plot_loadMatrix()\n", (char *)NULL);
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
 	bu_vls_printf(&tmp_vls, "transformation matrix = \n");
 	bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);
@@ -206,9 +205,12 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_START:
+		case BN_VLIST_TRI_VERTNORM:
 		    continue;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_TRI_MOVE:
 		    /* Move, not draw */
 		    if (dmp->dm_perspective > 0) {
 			/* cannot apply perspective transformation to
@@ -230,6 +232,8 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_POLY_END:
 		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_TRI_DRAW:
+		case BN_VLIST_TRI_END:
 		    /* draw */
 		    if (dmp->dm_perspective > 0) {
 			/* cannot apply perspective transformation to
@@ -243,6 +247,7 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				pt_prev = pt;
 				continue;
 			    } else {
+                                if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -252,9 +257,11 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				alpha = (dist_prev - delta) / (dist_prev - dist);
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(fin, plotmat, tmp_pt);
+                                }
 			    }
 			} else {
 			    if (dist_prev <= 0.0) {
+				if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -265,6 +272,7 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(last, plotmat, tmp_pt);
 				MAT4X3PNT(fin, plotmat, *pt);
+                                }
 			    } else {
 				MAT4X3PNT(fin, plotmat, *pt);
 			    }
@@ -320,7 +328,7 @@ plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_
 	if (!data) {
 	    return TCL_ERROR;
 	} else {
-	    vp = callback_function(data);
+	    (void)callback_function(data);
 	}
     }
     return TCL_OK;
@@ -403,7 +411,7 @@ plot_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 
 
 HIDDEN int
-plot_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+plot_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
 	return TCL_ERROR;
@@ -524,6 +532,7 @@ struct dm dm_plot = {
     plot_debug,
     Nu_int0,
     Nu_int0,
+    Nu_void,
     Nu_int0,
     Nu_int0,
     Nu_int0, /* display to image function */
@@ -579,7 +588,7 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
     struct dm *dmp;
     Tcl_Obj *obj;
 
-    BU_GETSTRUCT(dmp, dm);
+    BU_GET(dmp, struct dm);
     if (dmp == DM_NULL)
 	return DM_NULL;
 
@@ -587,7 +596,7 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
     dmp->dm_interp = interp;
 
     dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct plot_vars), "plot_open: plot_vars");
-    BU_GETSTRUCT(dmp->dm_vars.priv_vars, plot_vars);
+    BU_GET(dmp->dm_vars.priv_vars, struct plot_vars);
     if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
 	bu_free((genptr_t)dmp, "plot_open: dmp");
 	return DM_NULL;

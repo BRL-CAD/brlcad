@@ -1,7 +1,7 @@
 /*                         E R A S E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
     int flag_A_attr=0;
     int flag_o_nonunique=1;
     int last_opt=0;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     static const char *usage = "[[-r] | [[-o] -A attribute=value]] [object(s)]";
     const char *cmdName = argv[0];
 
@@ -69,8 +69,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
     ++argv;
 
     /* check args for options */
-    bu_vls_init(&vls);
-    for (i=0; i<(size_t)argc; i++) {
+    for (i = 0; i < (size_t)argc; i++) {
 	char *ptr_A=NULL;
 	char *ptr_o=NULL;
 
@@ -153,7 +152,7 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_free(&vls);
 	    return TCL_OK;
 	}
-	for (i=0; i<BU_PTBL_LEN(tbl); i++) {
+	for (i = 0; i < BU_PTBL_LEN(tbl); i++) {
 	    struct directory *dp;
 
 	    dp = (struct directory *)BU_PTBL_GET(tbl, i);
@@ -264,6 +263,12 @@ ged_erasePathFromDisplay(struct ged *gedp,
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	if (BU_STR_EQUAL(path, bu_vls_addr(&gdlp->gdl_path))) {
+
+	    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
+		(*gedp->ged_free_vlist_callback)(BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,
+						 BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist -
+						 BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist + 1);
+
 	    /* Free up the solids list associated with this display list */
 	    while (BU_LIST_WHILE(sp, solid, &gdlp->gdl_headSolid)) {
 		dp = FIRST_SOLID(sp);
@@ -292,6 +297,9 @@ ged_erasePathFromDisplay(struct ged *gedp,
 		nsp = BU_LIST_PNEXT(solid, sp);
 
 		if (db_full_path_match_top(&subpath, &sp->s_fullpath)) {
+		    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
+			(*gedp->ged_free_vlist_callback)(sp->s_dlist, 1);
+
 		    BU_LIST_DEQUEUE(&sp->l);
 		    FREE_SOLID(sp, &_FreeSolid.l);
 		    need_split = 1;
@@ -329,7 +337,8 @@ ged_erasePathFromDisplay(struct ged *gedp,
 
 
 HIDDEN void
-eraseAllSubpathsFromSolidList(struct ged_display_list *gdlp,
+eraseAllSubpathsFromSolidList(struct ged *gedp,
+			      struct ged_display_list *gdlp,
 			      struct db_full_path *subpath,
 			      const int skip_first)
 {
@@ -340,6 +349,9 @@ eraseAllSubpathsFromSolidList(struct ged_display_list *gdlp,
     while (BU_LIST_NOT_HEAD(sp, &gdlp->gdl_headSolid)) {
 	nsp = BU_LIST_PNEXT(solid, sp);
 	if (db_full_path_subset(&sp->s_fullpath, subpath, skip_first)) {
+	    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
+		(*gedp->ged_free_vlist_callback)(sp->s_dlist, 1);
+
 	    BU_LIST_DEQUEUE(&sp->l);
 	    FREE_SOLID(sp, &_FreeSolid.l);
 	}
@@ -399,7 +411,7 @@ _ged_eraseAllNamesFromDisplay(struct ged *gedp,
 	    struct db_full_path subpath;
 
 	    if (db_string_to_path(&subpath, gedp->ged_wdbp->dbip, name) == 0) {
-		eraseAllSubpathsFromSolidList(gdlp, &subpath, skip_first);
+		eraseAllSubpathsFromSolidList(gedp, gdlp, &subpath, skip_first);
 		db_free_full_path(&subpath);
 	    }
 	}
@@ -428,6 +440,9 @@ _ged_eraseFirstSubpath(struct ged *gedp,
 	if (db_full_path_subset(&sp->s_fullpath, subpath, skip_first)) {
 	    int ret;
 	    int full_len = sp->s_fullpath.fp_len;
+
+	    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
+		(*gedp->ged_free_vlist_callback)(sp->s_dlist, 1);
 
 	    sp->s_fullpath.fp_len = full_len - 1;
 	    db_dup_full_path(&dup_path, &sp->s_fullpath);
@@ -517,6 +532,11 @@ _ged_freeDisplayListItem (struct ged *gedp,
 {
     struct solid *sp;
     struct directory *dp;
+
+    if (gedp->ged_free_vlist_callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
+	(*gedp->ged_free_vlist_callback)(BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,
+					 BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist -
+					 BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist + 1);
 
     /* Free up the solids list associated with this display list */
     while (BU_LIST_WHILE(sp, solid, &gdlp->gdl_headSolid)) {

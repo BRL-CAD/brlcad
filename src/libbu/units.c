@@ -1,7 +1,7 @@
 /*                         U N I T S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -252,7 +252,7 @@ bu_units_strings_vls()
     struct bu_vls *vlsp;
     double prev_val = 0.0;
 
-    BU_GETSTRUCT(vlsp, bu_vls);
+    BU_GET(vlsp, struct bu_vls);
     bu_vls_init(vlsp);
     for (tp=bu_units_length_tab; tp->name[0]; tp++) {
 	if (ZERO(prev_val - tp->val))

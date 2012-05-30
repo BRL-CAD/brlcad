@@ -1,7 +1,7 @@
 /*                           E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,9 +26,9 @@ ell(entityno)
     int entityno;
 {
 
-    fastf_t xscale=0.0;
-    fastf_t yscale=0.0;
-    fastf_t zscale=0.0;
+    fastf_t xscale = 0.0;
+    fastf_t yscale = 0.0;
+    fastf_t zscale = 0.0;
     point_t v;			/* the vertex */
     vect_t xdir;			/* a unit vector */
     vect_t xvec;			/* vector along x-axis */

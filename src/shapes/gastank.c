@@ -1,7 +1,7 @@
 /*                       G A S T A N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,9 +43,11 @@ main(int argc, char **argv)
 {
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26];		/* Mged file create. */
-    double hgt, wid, dpt;	/* Height, width, & depth of gas tank. */
-    double rds;			/* Radius of the corner of gas tank. */
+    char filemged[26] = {0};	/* Mged file create. */
+    double hgt=0;       	/* Height, width, & depth of gas tank. */
+    double wid=0;
+    double dpt=0;
+    double rds=0;		/* Radius of the corner of gas tank. */
     point_t pts[8];		/* Points for arb8. */
     point_t bs;			/* Base of cylinder. */
     vect_t ht;			/* Height of cylinder. */
@@ -61,7 +63,7 @@ main(int argc, char **argv)
     char solnam[9];		/* Solid name. */
     char regnam[9];		/* Region name. */
     char grpnam[5];		/* Group name. */
-    int numtnk;			/* Number of gas tanks to be created */
+    int numtnk=0;		/* Number of gas tanks to be created */
 				/* (<=26). */
 
     struct wmember comb;	/* Used to make regions. */
@@ -107,28 +109,51 @@ main(int argc, char **argv)
 	(void)printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	}
+	if (BU_STR_EQUAL(filemged, ""))
+	    bu_strlcpy(filemged, "gastank.g", sizeof(filemged));
 
 	/* Find the number of gas tanks to create. */
 	(void)printf("Enter the number of gas tanks to create (26 max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%d", &numtnk);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
-	if (numtnk > 26) numtnk = 26;
+	    numtnk = 1;
+	}
+	if (numtnk < 1)
+	    numtnk = 1;
+	if (numtnk > 26)
+	    numtnk = 26;
 
 	/* Find the dimensions of the gas tanks. */
 	(void)printf("Enter the height, width, and depth of the gas tank.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf %lf %lf", &hgt, &wid, &dpt);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    hgt = 1000.0;
+	    wid = 1000.0;
+	    dpt = 1000.0;
+	}
+	if (hgt < SMALL_FASTF)
+	    hgt = SMALL_FASTF;
+	if (wid < SMALL_FASTF)
+	    wid = SMALL_FASTF;
+	if (dpt < SMALL_FASTF)
+	    dpt = SMALL_FASTF;
+
 	(void)printf("Enter the radius of the corners.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &rds);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    rds = 10.0;
+	}
+	if (rds < SMALL_FASTF)
+	    rds = SMALL_FASTF;
     }							/* END # 3 */
 
     /* If there are arguments get answers from arguments. */

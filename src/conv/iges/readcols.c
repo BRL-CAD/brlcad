@@ -1,7 +1,7 @@
 /*                      R E A D C O L S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ Readcols(char *id, int cols)
 
     tmp = id;
 
-    for (i=0; i<cols; i++)
+    for (i = 0; i < cols; i++)
 	*tmp++ = card[counter++];
 }
 

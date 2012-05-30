@@ -1,7 +1,7 @@
 /*             O B J _ P A R S E R _ S T A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2010-2011 United States Government as represented by
+ * Copyright (c) 2010-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,9 +45,9 @@ inline bool operator<(const obj_polygonal_attributes_t &lhs,
 }
 
 
-namespace arl {
-namespace obj_parser {
-namespace detail {
+namespace cad {
+namespace gcv {
+namespace obj {
 
 typedef void *parser_type;
 
@@ -343,8 +343,8 @@ struct basic_parser_state {
 /**
  *  Composition object for dealing with lex/lacc reentrant interface.
  *
- *  Lifetime is only until the parse completion of a single file and 
- *  it's includes.
+ *  Lifetime is only until the parse completion of a single file and
+ *  its includes.
  */
 template<typename PrecisionT,
 	 typename charT=char,
@@ -437,7 +437,7 @@ void set_working_groupset(basic_parser_extra<PrecisionT, charT, traits,
 
     extra.parser_state.working_stringset.clear();
 
-    extra.parser_state.working_polyattributes.groupset_index = 
+    extra.parser_state.working_polyattributes.groupset_index =
 	extra.parser_state.current_groupset;
 
     extra.parser_state.polyattributes_dirty = true;
@@ -598,7 +598,7 @@ void set_working_materiallib(basic_parser_extra<PrecisionT, charT, traits,
 
     extra.parser_state.working_stringset.clear();
 
-    extra.parser_state.working_polyattributes.materiallibset_index = 
+    extra.parser_state.working_polyattributes.materiallibset_index =
 	extra.parser_state.current_materiallib;
 
     extra.parser_state.polyattributes_dirty = true;
@@ -718,7 +718,7 @@ void set_working_texmaplib(basic_parser_extra<PrecisionT, charT, traits,
 
     extra.parser_state.working_stringset.clear();
 
-    extra.parser_state.working_polyattributes.texmaplibset_index = 
+    extra.parser_state.working_polyattributes.texmaplibset_index =
 	extra.parser_state.current_texmaplib;
 
     extra.parser_state.polyattributes_dirty = true;
@@ -841,7 +841,8 @@ template<typename PrecisionT,
 	 typename Allocator>
 basic_parser_extra<PrecisionT, charT, traits, Allocator>::
 basic_parser_extra(basic_parser_type *p, contents_type *c)
-: basic_parser(p)
+: parser(NULL)
+, basic_parser(p)
 , contents(c)
 {
     parser_state.working_stringset.insert("default");
@@ -911,9 +912,9 @@ typedef basic_obj_contents<float, char> objFileContents;
 typedef basic_obj_parser<char> objParser;
 typedef basic_parser_extra<float, char> objCombinedState;
 
-} /* namespace detail */
-} /* namespace obj_parser */
-} /* namespace arl */
+} /* namespace obj */
+} /* namespace gcv */
+} /* namespace cad */
 
 
 #endif

@@ -1,7 +1,7 @@
 dnl                    C O N F I G U R E . A C
 dnl BRL-CAD
 dnl
-dnl Copyright (c) 2004-2011 United States Government as represented by
+dnl Copyright (c) 2004-2012 United States Government as represented by
 dnl the U.S. Army Research Laboratory.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -99,6 +99,37 @@ AC_REVISION($Revision$)
 
 AC_CONFIG_AUX_DIR([misc])
 AC_CONFIG_MACRO_DIR([m4])
+
+echo "
+*************************************************************
+* WARNING * WARNING * WARNING * WARNING * WARNING * WARNING *
+*************************************************************
+
+DEPRECATION NOTICE:
+
+  BRL-CAD's build system is being migrated from the GNU Autotools
+  Autoconf+Automake+Libtool trio to CMake.  As such, running configure
+  is no longer necessary.
+
+  This script along with the rest of the GNU Autotools build system is
+  a deprecated interface (see doc/deprecation.txt for details) subject
+  to removal in a future release of BRL-CAD and may not result in a
+  complete build.
+
+  That said, we plan to maintain a configure script wrapper around the
+  CMake build for compatibility so your existing options still work as
+  expected.  (The autogen.sh script is still going away.)
+
+  Please read INSTALL for new build instructions.
+"
+i=0
+while test $i -lt 10 ; do
+    sleep 1
+    echo -n "."
+    i=`expr $i + 1`
+done
+echo "done.  You've been duly warned.  Proceeding with old build."
+echo
 
 # keep track of cmd-line options for later
 BC_ARG0="$0"
@@ -283,9 +314,6 @@ BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit]
 # force enable/disable building of openNURBS
 BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [auto])
 
-# force enable/disable building of NIST STEP Class Libraries
-BC_ARG_ENABLE([build_step], [step-build], [Build the included STEP Class Libraries], [no])
-
 # force enable/disable building of termlib
 BC_ARG_ENABLE([build_termlib], [termlib-build], [Build the included termlib library], [auto])
 
@@ -303,6 +331,9 @@ BC_ARG_ENABLE([build_itcl], [itcl-build], [Build the included incrTcl], [auto])
 
 # force enable/disable building of iwidgets
 BC_ARG_ENABLE([build_iwidgets], [iwidgets-install], [Install the included iwidgets], [auto])
+
+# tkhtml
+BC_ARG_ENABLE([build_tkhtml], [tkhtml-build], [Build the included tkhtml], [yes])
 
 # tkpng
 BC_ARG_ENABLE([build_tkpng], [tkpng-build], [Build the included tkpng], [auto])
@@ -326,7 +357,7 @@ BC_ARG_ENABLE([build_ug], [unigraphics-build], [Enable compilation of Unigraphic
 BC_ARG_ENABLE([install_geometry], [models-install], [Enable installation of example geometry models], [yes])
 
 # enable building Docbook documentation
-BC_ARG_ENABLE([build_docs], [documentation], [Enable compilation and installation of extra documentation], [auto])
+#BC_ARG_ENABLE([build_docs], [documentation], [Enable compilation and installation of extra documentation], [auto])
 
 # optimized
 BC_ARG_ENABLE([use_optimized], [optimized], [Enable optimized compilation], [no])
@@ -423,9 +454,9 @@ BC_ARG_ALIAS([build_strict], [strict-compile])
 BC_ARG_ALIAS([build_strict], [strict-compile-flags])
 
 # Docbook documentation (help uses documentation)
-BC_ARG_ALIAS([build_docs], [documentation-install])
-BC_ARG_ALIAS([build_docs], [docs])
-BC_ARG_ALIAS([build_docs], [docs-install])
+#BC_ARG_ALIAS([build_docs], [documentation-install])
+#BC_ARG_ALIAS([build_docs], [docs])
+#BC_ARG_ALIAS([build_docs], [docs-install])
 
 # 64-bit compilation (help uses 64bit-build)
 BC_ARG_ALIAS([build_64bit], [64bit])
@@ -467,12 +498,6 @@ BC_ARG_ALIAS([build_opennurbs], [libopennurbs-build])
 BC_ARG_ALIAS([build_opennurbs], [open-nurbs])
 BC_ARG_ALIAS([build_opennurbs], [open-nurbs-build])
 
-# aliases to force building NIST STEP Class Libraries (help uses step-build)
-BC_ARG_ALIAS([build_step], [step])
-BC_ARG_ALIAS([build_step], [steplibs])
-BC_ARG_ALIAS([build_step], [libstep-build])
-BC_ARG_ALIAS([build_step], [libstep])
-
 # aliases to force building tcl (help uses tcl-build)
 BC_ARG_ALIAS([build_tcl], [tcl])
 BC_ARG_ALIAS([build_tcl], [libtcl])
@@ -505,6 +530,9 @@ BC_ARG_ALIAS([build_itcl], [incrtcl-build])
 # aliases to force building iwidgets (help uses iwidgets-install)
 BC_ARG_ALIAS([build_iwidgets], [iwidgets])
 BC_ARG_ALIAS([build_iwidgets], [iwidgets-build])
+
+# aliases to force building tkhtml (help uses tkhtml-build)
+BC_ARG_ALIAS([build_tkhtml], [tkhtml])
 
 # aliases to force building tktable (help uses tktable-build)
 BC_ARG_ALIAS([build_tktable], [tktable])
@@ -669,6 +697,9 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_iwidgets_set" = "xno" ; then
 		bc_build_iwidgets="$set_everything"
 	fi
+	if test "x$bc_build_tkhtml" = "xno" ; then
+		bc_build_tkhtml="$set_everything"
+	fi
 	if test "x$bc_build_tkpng_set" = "xno" ; then
 		bc_build_tkpng="$set_everything"
 	fi
@@ -760,8 +791,8 @@ AC_MSG_RESULT($bc_build_runtime_debug)
 AC_MSG_CHECKING(whether to use strict compiler options)
 AC_MSG_RESULT($bc_build_strict)
 
-AC_MSG_CHECKING(whether to compile and install Docbook documentation)
-AC_MSG_RESULT($bc_build_docs)
+#AC_MSG_CHECKING(whether to compile and install Docbook documentation)
+#AC_MSG_RESULT($bc_build_docs)
 
 AC_MSG_CHECKING(whether to compile in 64-bit mode)
 AC_MSG_RESULT($bc_build_64bit)
@@ -781,9 +812,6 @@ AC_MSG_RESULT($bc_build_urt)
 AC_MSG_CHECKING(whether to build the openNURBS library)
 AC_MSG_RESULT($bc_build_opennurbs)
 
-AC_MSG_CHECKING(whether to build the NIST Step Class libraries)
-AC_MSG_RESULT($bc_build_step)
-
 AC_MSG_CHECKING(whether to build the Tcl library)
 AC_MSG_RESULT($bc_build_tcl)
 
@@ -798,6 +826,9 @@ AC_MSG_RESULT($bc_build_itcl)
 
 AC_MSG_CHECKING(whether to install the iwidgets library)
 AC_MSG_RESULT($bc_build_iwidgets)
+
+AC_MSG_CHECKING(whether to build the tkhtml library)
+AC_MSG_RESULT($bc_build_tkhtml)
 
 AC_MSG_CHECKING(whether to build the tktable library)
 AC_MSG_RESULT($bc_build_tktable)
@@ -928,6 +959,14 @@ if test "x$bc_build_progress" != "xyes" ; then
 	LIBTOOL="$LIBTOOL --silent"
     fi
 fi
+
+## xsltproc is needed for docbook processing, fop is needed for pdf generation
+#xsltproc_works=no
+#fop_works=no
+#if test "x$bc_build_docs" != "xno" ; then
+#    AC_PATH_PROG(XSLTPROC, xsltproc)
+#    AC_PATH_PROG(APACHEFOP, fop)
+#fi
 
 dnl Libtool may need AR so try to find it
 AC_PATH_PROG(AR, ar, [], $PATH:/usr/bin:/usr/local/bin:/usr/ccs/bin)
@@ -2323,68 +2362,6 @@ dnl *********************************
 
 BC_CONFIGURE_STAGE([services], [8 of 9])
 
-dnl *** check for bison/yacc or flex/lex ***
-# scanner and parser are optionally needed for mged and other tools
-# that utilize a parser.  if both are found, provide a make var so we
-# can conditionally compile the parsers.
-build_parsers=no
-if test "x$ac_cv_prog_LEX" != "x" ; then
-    if test "x$ac_cv_prog_YACC" != "x" ; then
-	# we have both
-	build_parsers=yes
-    else
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_WARN([A YACC-style parser was not found so dependant portions of the package])
-	AC_MSG_WARN([(various MGED commands and STEP conversion support) will be disabled.])
-	AC_MSG_NOTICE([Installation of GNU Bison or Yacc before continuing is recommended.])
-	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	sleep 5
-    fi
-else
-    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-    if test "x$ac_cv_prog_YACC" != "x" ; then
-	AC_MSG_WARN([A LEX-style scanner was not found so dependant portions of the package])
-	AC_MSG_WARN([(various MGED commands and STEP conversion support) will be disabled.])
-	AC_MSG_NOTICE([Installation of GNU Flex or Lex before continuing is recommended.])
-    else
-	AC_MSG_WARN([Neither a YACC-style parser or a LEX-style scanner was found.])
-	AC_MSG_WARN([Dependant portions of the package will be disabled.])
-	AC_MSG_NOTICE([Installation of Bison/Yacc and Flex/Lex before continuing is recommended.])
-    fi
-    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-    sleep 5
-fi
-#if test "x$build_parsers" = "xyes" ; then
-     # test for modern features in lex
-     #echo "%option reentrant bison-bridge" >> lex.l
-     #echo "%%" >> lex.l
-     #$LEX lex.l > /dev/null 2>&1
-     #ret=$?
-     #rm -f lex.l
-     #if test "x${ret}" != "x0" ; then
-	#build_parsers=no
-	#AC_MSG_WARN([The LEX-style scanner found does not support features required by])
-	#AC_MSG_WARN([BRL-CAD's LEX code.  Various MGED commands and geometry conversion])
-	#AC_MSG_WARN([routines will be disabled.])
-	#AC_MSG_NOTICE([Installation of a modern GNU Flex before continuing is recommended.])
-     #fi
-#fi
-
-AC_MSG_CHECKING([whether we have the essentials to make parsers])
-if test "x$build_parsers" = "xyes" ; then
-    AC_MSG_RESULT(yes)
-    AC_DEFINE(BC_WITH_PARSERS, 1, [Define to enable compilation of parsers])
-else
-    AC_MSG_RESULT(no)
-    if test "x$bc_build_step" = "xyes" ; then
-	AC_MSG_NOTICE([STEP was enabled, but no system lexer/parser was found])
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_NOTICE([Try adding --disable-step-build])
-	AC_MSG_ERROR([*** Building STEP support was enabled, yet no system lexer/parser was found ***])
-    fi
-    bc_build_step="no"
-fi
-
 dnl *** libpng ***
 png_works=no
 AC_MSG_CHECKING(for portable network graphics functionality)
@@ -2704,33 +2681,14 @@ AC_MSG_CHECKING(whether to build the included openNURBS library)
 OPENNURBS=""
 OPENNURBS_CPPFLAGS='-I${top_srcdir}/src/other/openNURBS ${LIBZ_CPPFLAGS}'
 if test "x$build_brlcad_opennurbs" = "xyes" ; then
-    OPENNURBS='${top_builddir}/src/other/openNURBS/libopenNURBS.la ${LIBSTDCXX}'
+    OPENNURBS='${top_builddir}/src/other/openNURBS/libopenNURBS.la ${LIBSTDCXX} ${LIBZ}'
     AC_MSG_RESULT(yes)
 else
-    OPENNURBS="$LIBOPENNURBS $LIBSTDCXX $LIBZ"	# produces "  " if we didn't find OpenNURBS
+    OPENNURBS="$LIBOPENNURBS ${LIBSTDCXX} ${LIBZ}"	# produces "  " if we didn't find OpenNURBS
     AC_MSG_RESULT(no)
 fi
 AC_SUBST(OPENNURBS)
 AC_SUBST(OPENNURBS_CPPFLAGS)
-
-dnl *** NIST STEP Class Libraries ***
-dnl figure out whether we need to build NIST STEP Class Libraries
-STEP_VERSION="3.2.0"
-AC_SUBST(STEP_VERSION)
-AC_MSG_CHECKING(whether to build NIST Step Class Libraries)
-STEP_CPPFLAGS='-I${top_srcdir}/src/other/step/include -I${top_srcdir}/src/other/step/src/cleditor -I${top_srcdir}/src/other/step/src/clstepcore -I${top_srcdir}/src/other/step/src/clutils -I${top_srcdir}/src/other/step/src/cldai -I${top_srcdir}/src/other/step/src/test'
-if test ! "x$bc_build_step" = "xno" ; then
-    STEP=""
-    build_brlcad_step=yes
-    AC_MSG_RESULT(no)
-else
-    build_brlcad_step=no
-    STEP=""
-    AC_MSG_RESULT(no)
-fi
-AC_SUBST(STEP)
-AC_SUBST(STEP_CPPFLAGS)
-
 
 dnl *** Tcl ***
 dnl See if libtcl seems to work
@@ -3176,6 +3134,17 @@ IWIDGETS_VERSION="4.0.1"
 AC_DEFINE_UNQUOTED([IWIDGETS_VERSION], "$IWIDGETS_VERSION", "Version of iWidgets")
 AC_SUBST(IWIDGETS_VERSION)
 
+
+dnl *** tkhtml ***
+dnl figure out whether we need to build tkhtml
+AC_MSG_CHECKING(whether to build tkhtml)
+if test ! "x$bc_build_tkhtml" = "xno" ; then
+    build_brlcad_tkhtml=yes
+    AC_MSG_RESULT(yes)
+else
+    build_brlcad_tkhtml=no
+    AC_MSG_RESULT(no)
+fi
 
 dnl *** tktable ***
 dnl figure out whether we need to build tktable
@@ -3757,6 +3726,42 @@ if test "x$dials_and_buttons" = "xyes" ; then
 fi
 AC_MSG_RESULT($dials_and_buttons)
 
+
+#dnl *** Docbook functionality ***
+#docbook_processing=no
+#docbook_pdf_processing=no
+#if test "x$bc_build_docs" != "xno" ; then
+#    if test "x$bc_build_docs" = "xyes" ; then
+#	if test "x$XSLTPROC" = "x" ; then
+#	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+#	    AC_MSG_WARN([Extra documentation is enabled but xsltproc was not found])
+#	    AC_MSG_ERROR([*** Don't know how to generate documentation without xsltproc ***])
+#	fi
+#    fi
+#fi
+
+# test for this outside of bc_build_docs so vars get set properly
+#if test "x$XSLTPROC" = "x" ; then
+#    XSLTPROC=:
+#else
+#    if test "x$APACHEFOP" = "x" ; then
+#	docbook_processing="yes (man/html only)"
+#	docbook_pdf_processing="no"
+#	APACHEFOP=:
+#    else
+#        docbook_processing="yes (man/html/pdf)"
+#	docbook_pdf_processing="yes"
+#	# set FOP_OPTS to avoid dock bounce on osX
+#	APACHEFOP="FOP_OPTS=-Djava.awt.headless=true $APACHEFOP"
+#    fi
+#fi
+#AC_SUBST(XSLTPROC)
+#AC_SUBST(APACHEFOP)
+#AC_MSG_CHECKING(for Docbook processing functionality)
+#AC_MSG_RESULT($docbook_processing)
+#AC_MSG_CHECKING(for Docbook pdf generation functionality)
+#AC_MSG_RESULT($docbook_pdf_processing)
+
 # XXX nasty temp hack for backwards cake compatibility. code needs to be fixed.
 if test "x$host_os" = "xirix6.5" ; then
     # XXX the code that relies on this will be going away, but until then..
@@ -3802,6 +3807,7 @@ AM_CONDITIONAL(BUILD_TK, [test "x$build_brlcad_tk" = "xyes"])
 AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
 AM_CONDITIONAL(BUILD_ITK, [test "x$build_brlcad_itk" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
+AM_CONDITIONAL(BUILD_TKHTML, [test "x$build_brlcad_tkhtml" = "xyes"])
 AM_CONDITIONAL(BUILD_TKTABLE, [test "x$build_brlcad_tktable" = "xyes"])
 AM_CONDITIONAL(BUILD_TKPNG, [test "x$build_brlcad_tkpng" = "xyes"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
@@ -3810,7 +3816,6 @@ AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_OPENNURBS, [test "x$build_brlcad_opennurbs" = "xyes"])
 AM_CONDITIONAL(BUILD_BOOST, [test "x$ac_cv_header_limits" = "xyes" && test "x$ac_cv_header_istream" = "xyes"])
-AM_CONDITIONAL(BUILD_STEP, [test "x$build_brlcad_step" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_TNT, [test "x$build_brlcad_tnt" = "xyes"])
 AM_CONDITIONAL(BUILD_JOVE, [test "x$build_brlcad_jove" = "xyes"])
@@ -3831,6 +3836,8 @@ AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
 
+#AM_CONDITIONAL(BUILD_DOCS, [test "x$docbook_processing" != "xno"])
+#AM_CONDITIONAL(BUILD_PDF_DOCS, [test "x$docbook_pdf_processing" != "xno"])
 AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
@@ -3918,18 +3925,6 @@ TIE='${top_builddir}/src/adrt/libtie.la'
 WDB='${top_builddir}/src/libwdb/libwdb.la'
 BRLCAD='${top_builddir}/src/libbrlcad.la'
 
-STEPCORE='${top_builddir}/src/other/step/src/clstepcore/libstepcore.la'
-STEPDAI='${top_builddir}/src/other/step/src/cldai/libstepdai.la'
-STEPEDITOR='${top_builddir}/src/other/step/src/cleditor/libstepeditor.la'
-STEPUTILS='${top_builddir}/src/other/step/src/clutils/libsteputils.la'
-STEPEXPRESS='${top_builddir}/src/other/step/src/express/libexpress.la'
-STEPEXPPP='${top_builddir}/src/other/step/src/exppp/libexppp.la'
-STEP_LIBS="${STEPCORE} ${STEPDAI} ${STEPEDITOR} ${STEPUTILS} ${STEPEXPRESS}"
-STEP_FEDEX='${top_builddir}/src/other/step/src/express/fedex'
-STEP_FEDEX_PLUS='${top_builddir}/src/other/step/src/fedex_plus/fedex_plus'
-STEP_EXPPP='${top_builddir}/src/other/step/src/exppp/exppp'
-STEP_AP203='${top_srcdir}/src/other/step/data/ap203/203wseds.exp'
-
 ORLE_LIBS=
 PKG_LIBS="${LIBSOCKET} ${LIBNSL} ${LIBNETWORK}"
 SYSV_LIBS=
@@ -3942,7 +3937,7 @@ BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
 RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
 ICV_LIBS="{BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GCV_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
-GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX} ${ANALYZE}"
+GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${ICV} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX} ${ANALYZE}"
 WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS} ${TCL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
 OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
@@ -3985,18 +3980,6 @@ AC_SUBST(TERMIO)
 AC_SUBST(TIE)
 AC_SUBST(WDB)
 AC_SUBST(BRLCAD)
-
-AC_SUBST(STEPCORE)
-AC_SUBST(STEPDAI)
-AC_SUBST(STEPEDITOR)
-AC_SUBST(STEPUTILS)
-AC_SUBST(STEPEXPRESS)
-AC_SUBST(STEPEXPPP)
-AC_SUBST(STEP_LIBS)
-AC_SUBST(STEP_FEDEX)
-AC_SUBST(STEP_FEDEX_PLUS)
-AC_SUBST(STEP_EXPPP)
-AC_SUBST(STEP_AP203)
 
 AC_SUBST(ANALYZE_LIBS)
 AC_SUBST(BN_LIBS)
@@ -4077,9 +4060,15 @@ fi
 dnl configure enigma
 AC_CONFIG_SUBDIRS([misc/enigma])
 
-dnl configure step
-if test "x$build_brlcad_step" = "xyes" ; then
-    AC_CONFIG_SUBDIRS([src/other/step])
+dnl configure tkhtml
+if test "x$build_brlcad_tkhtml" = "xyes" ; then
+    ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
+    # this is a hack to all tkhtml to see when the tk headers are in odd
+    # places. it seems to ignore the CPPFLAGS in it's configure phase.
+    if test ! "x$TKINCDIR" = "x" ; then
+	    ac_configure_args="$ac_configure_args --with-tkinclude=$TKINCDIR"
+    fi
+    AC_CONFIG_SUBDIRS([src/other/tkhtml])
 fi
 
 dnl configure tktable
@@ -4167,7 +4156,8 @@ AC_CONFIG_FILES([
 	src/conv/Makefile
 	src/conv/iges/Makefile
 	src/conv/intaval/Makefile
-	src/conv/step/Makefile
+	src/conv/raw/Makefile
+	src/conv/vdeck/Makefile
 	src/external/Makefile
 	src/external/Cubit/Makefile
 	src/external/ProEngineer/Makefile
@@ -4190,7 +4180,6 @@ AC_CONFIG_FILES([
 	src/libfb/Makefile
 	src/libfft/Makefile
 	src/libgcv/Makefile
-	src/libgcv/wfobj/Makefile
 	src/libged/Makefile
 	src/libicv/Makefile
 	src/libmultispectral/Makefile
@@ -4279,7 +4268,6 @@ AC_CONFIG_FILES([
 	src/tclscripts/swidgets/scripts/Makefile
 	src/tclscripts/util/Makefile
 	src/util/Makefile
-	src/vdeck/Makefile
 	src/vfont/Makefile
 ])
 
@@ -4371,6 +4359,7 @@ AC_MSG_RESULT([Build Tcl ............................: $build_brlcad_tcl])
 AC_MSG_RESULT([Build Tk .............................: $build_brlcad_tk])
 AC_MSG_RESULT([Build Itcl/Itk .......................: $build_brlcad_itcl])
 AC_MSG_RESULT([Build IWidgets .......................: $build_brlcad_iwidgets])
+AC_MSG_RESULT([Build tkhtml .........................: $build_brlcad_tkhtml])
 AC_MSG_RESULT([Build tkpng ..........................: $build_brlcad_tkpng])
 AC_MSG_RESULT([Build libpng .........................: $build_brlcad_png])
 AC_MSG_RESULT([Build libregex .......................: $build_brlcad_regex])
@@ -4379,7 +4368,6 @@ AC_MSG_RESULT([Build termlib ........................: $build_brlcad_termlib])
 AC_MSG_RESULT([Build Utah Raster Toolkit.............: $build_brlcad_urt])
 AC_MSG_RESULT([Build Template Numerical Toolkit......: $build_brlcad_tnt])
 AC_MSG_RESULT([Build openNURBS.......................: $build_brlcad_opennurbs])
-AC_MSG_RESULT([Build NIST STEP Class Libraries.......: $build_brlcad_step])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([X11 support (optional)................: $build_against_x11])
 AC_MSG_RESULT([OpenGL support (optional).............: $build_against_opengl])
@@ -4399,10 +4387,15 @@ AC_MSG_RESULT([])
 AC_MSG_RESULT([Only build benchmark suite ...........: $bc_only_benchmark])
 AC_MSG_RESULT([Only build librtserver ...............: $bc_only_rts])
 AC_MSG_RESULT([Install example geometry models ......: $bc_install_geometry])
+#AC_MSG_RESULT([Install extra docs ...................: $docbook_processing])
 AC_MSG_RESULT([])
 if test "x$time_elapsed" != "xunknown" ; then
 AC_MSG_RESULT([Elapsed configuration time ...........: $time_elapsed])
 fi
+AC_MSG_RESULT([---])
+AC_MSG_RESULT([DEPRECATION WARNING:  If you didn't see any of our previous warnings,])
+AC_MSG_RESULT([                      this build system is deprecated and scheduled])
+AC_MSG_RESULT([                      for removal.  See INSTALL for new instructions.])
 AC_MSG_RESULT([---])
 AC_MSG_RESULT([$0 complete, type 'make' to begin building])
 AC_MSG_RESULT([])

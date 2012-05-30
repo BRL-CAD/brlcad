@@ -1,17 +1,22 @@
 #Include directories needed by liborle users
-SET(ORLE_INCLUDE_DIRS
-	${BRLCAD_BINARY_DIR}/include
-	${BRLCAD_SOURCE_DIR}/include
-	)
-BRLCAD_INCLUDE_DIRS(ORLE_INCLUDE_DIRS)
-
+set(ORLE_INCLUDE_DIRS
+  ${BRLCAD_BINARY_DIR}/include
+  ${BRLCAD_SOURCE_DIR}/include
+  )
 # local includes
-include_directories(${UTAHRLE_INCLUDE_DIR})
+set(ORLE_LOCAL_INCLUDE_DIRS ${UTAHRLE_INCLUDE_DIR})
 
-set(LIBORLE_SOURCES rle.c)
+BRLCAD_LIB_INCLUDE_DIRS(orle ORLE_INCLUDE_DIRS ORLE_LOCAL_INCLUDE_DIRS)
 
-BRLCAD_ADDLIB(liborle "${LIBORLE_SOURCES}" "NONE")
+BRLCAD_ADDLIB(liborle rle.c "NONE")
 SET_TARGET_PROPERTIES(liborle PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
-ADD_MAN_PAGE(3 liborle.3)
+ADD_MAN_PAGES(3 liborle.3)
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

@@ -1,7 +1,7 @@
 /*                R E A D _ E D G E _ L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,7 +56,7 @@ Read_edge_list(struct iges_edge_use *edge)
     edge_list->i_edge = (struct iges_edge *)bu_calloc(edge_list->no_of_edges, sizeof(struct iges_edge) ,
 						      "Read_edge_list: iges_edge");
 
-    for (i=0; i<edge_list->no_of_edges; i++) {
+    for (i = 0; i < edge_list->no_of_edges; i++) {
 	Readint(&edge_list->i_edge[i].curve_de, "");
 	Readint(&edge_list->i_edge[i].start_vert_de, "");
 	Readint(&edge_list->i_edge[i].start_vert_index, "");

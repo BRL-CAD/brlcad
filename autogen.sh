@@ -1,7 +1,7 @@
 #!/bin/sh
 #                        a u t o g e n . s h
 #
-# Copyright (c) 2005-2011 United States Government as represented by
+# Copyright (c) 2005-2012 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -380,6 +380,35 @@ case "x`echo 'tail' | tail -n 1 2>&1`" in
     *xtail*) TAIL_N="n " ;;
     *) TAIL_N="" ;;
 esac
+
+
+echo "
+*************************************************************
+* WARNING * WARNING * WARNING * WARNING * WARNING * WARNING *
+*************************************************************
+
+DEPRECATION NOTICE:
+
+  BRL-CAD's build system is being migrated from the GNU Autotools
+  Autoconf+Automake+Libtool trio to CMake.  As such, running this
+  bootstrap script is no longer necessary.
+
+  This script along with the rest of the GNU Autotools build system is
+  a deprecated interface (see doc/deprecation.txt for details) subject
+  to removal in a future release of BRL-CAD and may not result in a
+  complete build.
+
+  Please read INSTALL for new build instructions.
+"
+i=0
+while [ $i -lt 10 ] ; do
+    sleep 1
+    echo $ECHO_N "." $ECHO_C
+    i=`expr $i + 1`
+done
+echo "done.  You've been duly warned.  Proceeding with old build."
+echo
+
 
 VERBOSE_ECHO=:
 ECHO=:

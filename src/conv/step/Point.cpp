@@ -1,7 +1,7 @@
 /*                 Point.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,55 +35,55 @@
 string Point::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Point::Create);
 
 Point::Point() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 Point::Point(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
+    step = sw;
+    id = step_id;
 }
 
 Point::~Point() {
 }
 
 bool
-Point::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+Point::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !GeometricRepresentationItem::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
-		return false;
-	}
-	return true;
+    if ( !GeometricRepresentationItem::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
+	return false;
+    }
+    return true;
 }
 
 void
 Point::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-	GeometricRepresentationItem::Print(level+1);
+    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    GeometricRepresentationItem::Print(level+1);
 }
 STEPEntity *
-Point::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		Point *object = new Point(sw,sse->STEPfile_id);
+Point::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	Point *object = new Point(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 // Local Variables:

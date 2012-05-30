@@ -1,7 +1,7 @@
 /*                      R E A D T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,11 +36,11 @@ Readtree(mat_t *matp)
 
     Freestack();
     Readint(&length, "");
-    for (i=0; i<length; i++) {
+    for (i = 0; i < length; i++) {
 	Readint(&op, "");
 	if (op < 0) {
 	    /* This is an operand */
-	    BU_GETUNION(ptr, tree);
+	    BU_GET(ptr, union tree);
 	    RT_TREE_INIT(ptr);
 	    ptr->tr_l.tl_op = OP_DB_LEAF;
 	    k = ((-op)-1)/2;
@@ -66,7 +66,7 @@ Readtree(mat_t *matp)
 	    Push(ptr);
 	} else {
 	    /* This is an operator */
-	    BU_GETUNION(ptr, tree);
+	    BU_GET(ptr, union tree);
 	    RT_TREE_INIT(ptr);
 	    switch (op) {
 		case 1:

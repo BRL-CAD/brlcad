@@ -89,8 +89,7 @@ EXTRA_DIST = \
 	$(man_MANS) \
 	getopt.c \
 	CMakeLists.txt \
-	CMake/ResolveCompilerPaths.cmake \
-	CMake/UTAH_CheckFunctions.cmake
+	CMake
 
 include $(top_srcdir)/misc/Makefile.defs
 

@@ -1,7 +1,7 @@
 /*                         S A V E V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -129,15 +129,17 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 	perror(argv[1]);
 	return GED_ERROR;
     }
-    (void)bu_fchmod(fp, 0755);	/* executable */
+    (void)bu_fchmod(fileno(fp), 0755);	/* executable */
 
     if (!gedp->ged_wdbp->dbip->dbi_filename) {
 	bu_log("Error: geometry file is not specified\n");
+	fclose(fp);
 	return GED_ERROR;
     }
 
-    if (!bu_file_exists(gedp->ged_wdbp->dbip->dbi_filename)) {
+    if (!bu_file_exists(gedp->ged_wdbp->dbip->dbi_filename, NULL)) {
 	bu_log("Error: %s does not exist\n", gedp->ged_wdbp->dbip->dbi_filename);
+	fclose(fp);
 	return GED_ERROR;
     }
 
@@ -153,16 +155,16 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     (void)fprintf(fp, "#!/bin/sh\n%s -M ", rtcmd);
     if (gedp->ged_gvp->gv_perspective > 0)
 	(void)fprintf(fp, "-p%g ", gedp->ged_gvp->gv_perspective);
-    for (i=2; i < argc; i++)
+    for (i = 2; i < argc; i++)
 	(void)fprintf(fp, "%s ", argv[i]);
 
-    if (strncmp(rtcmd, "nirt", 4) != 0)
+    if (bu_strncmp(rtcmd, "nirt", 4) != 0)
 	(void)fprintf(fp, "\\\n -o %s\\\n $*\\\n", outpix);
 
     if (inputg[0] == '\0') {
 	snprintf(inputg, 255, "%s", gedp->ged_wdbp->dbip->dbi_filename);
     }
-    (void)fprintf(fp, " %s\\\n ", inputg);
+    (void)fprintf(fp, " '%s'\\\n ", inputg);
 
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {

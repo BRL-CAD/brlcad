@@ -1,7 +1,7 @@
 /*                          T P K G . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2011 United States Government as represented by
+ * Copyright (c) 2006-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -276,7 +276,7 @@ run_client(const char *server, int port, const char *file)
 
     /* send the file data to the server */
     while (!feof(fp) && !ferror(fp)) {
-	bytes = fread(buffer, 1, 2048, fp);
+	bytes = fread(buffer, 1, TPKG_BUFSIZE, fp);
 	bu_log("Read %ld bytes from %s\n", bytes, file);
 
 	if (bytes > 0) {
@@ -359,7 +359,9 @@ main(int argc, char *argv[]) {
 	}
 
 	/* ignore broken pipes */
+#ifdef SIGPIPE
 	(void)signal(SIGPIPE, SIG_IGN);
+#endif
 
 	/* fire up the server */
 	bu_log("Listening on port %d\n", port);
@@ -381,7 +383,7 @@ main(int argc, char *argv[]) {
     file = *argv++;
 
     /* make sure the file exists */
-    if (!bu_file_exists(file)) {
+    if (!bu_file_exists(file, NULL)) {
 	bu_log("File does not exist: %s\n", file);
 	bu_bomb("Need a file to transfer\n");
     }

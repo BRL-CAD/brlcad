@@ -1,7 +1,7 @@
 /*                       P C P A R A M E T E R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
  */
 
 Parameter::Parameter(VCSet & vcs, std::string n)
-    : vcset(vcs), name(n)
+    : type(0), vcset(vcs), name(n), Variables()
 {}
 
 Parameter::iterator makeIterator(Parameter::Varlist::iterator i)

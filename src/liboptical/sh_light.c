@@ -1,7 +1,7 @@
 /*                      S H _ L I G H T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2011 United States Government as represented by
+ * Copyright (c) 1998-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -308,7 +308,7 @@ ray_setup(struct application *ap,
 	  point_t span)
 {
     int face;
-    point_t pt = {0.0, 0.0, 0.0};
+    point_t pt = VINIT_ZERO;
     static int idx = 0;
 
     /* pick a face of the bounding RPP at which we will start the ray */
@@ -509,8 +509,9 @@ light_gen_sample_pts(struct application *upap,
     ap.a_logoverlap = upap->a_logoverlap;
     ap.a_uptr = (genptr_t)lsp;
 
-    /* get the bounding box of the light source */
-    rt_bound_tree(lsp->lt_rp->reg_treetop, tree_min, tree_max);
+    /* get the bounding box of the light source 
+     * Return if we can't get the bounding tree dimensions */
+    if (rt_bound_tree(lsp->lt_rp->reg_treetop, tree_min, tree_max) < 0) return;
 
     if (rdebug & RDEBUG_LIGHT) {
 	bu_log("\tlight bb (%g %g %g), (%g %g %g)\n",
@@ -604,7 +605,7 @@ light_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 
     BU_CK_VLS(matparm);
 
-    BU_GETSTRUCT(lsp, light_specific);
+    BU_GET(lsp, struct light_specific);
     BU_LIST_INIT_MAGIC(&(lsp->l), LIGHT_MAGIC);
 
     lsp->lt_intensity = 1.0;	/* Lumens */
@@ -1848,7 +1849,7 @@ light_maker(int num, mat_t v2m)
 	    MAT4X3PNT(tmp, v2m, pt); bu_log("Q %g %g %g\n", V3ARGS(tmp));
 	}
 
-	BU_GETSTRUCT(lsp, light_specific);
+	BU_GET(lsp, struct light_specific);
 	BU_LIST_INIT_MAGIC(&(lsp->l), LIGHT_MAGIC);
 
 #ifdef RT_MULTISPECTRAL

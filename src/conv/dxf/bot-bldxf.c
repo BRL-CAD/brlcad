@@ -1,7 +1,7 @@
 /*                     B O T - B L D X F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -145,8 +145,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, size_t faceidx, int vidx[4])
      * this is probably a bogus face, and something bad has happened
      */
     if ((size_t)vnum[0] > bot->num_vertices-1) {
-	fprintf(stderr, "Bounds error %lu > %lu\n", (long unsigned int)vnum[0], (long unsigned int)bot->num_vertices-1);
-	abort();
+	bu_exit(1, "ERROR: Invalid %lu > %lu bounds.  Something bad has happened.\n", (long unsigned int)vnum[0], (long unsigned int)bot->num_vertices-1);
     }
 
 
@@ -573,8 +572,11 @@ int main(int ac, char *av[])
 
 		sub_av = &dirp->d_namep;
 
-		db_walk_tree(rtip->rti_dbip, 1, (const char **)sub_av, 1,
-			     &init_state, r_start, r_end, l_func, &my_bot);
+		if (db_walk_tree(rtip->rti_dbip, 1, (const char **)sub_av, 1,
+			     &init_state, r_start, r_end, l_func, &my_bot) < 0) {
+		  fprintf(stderr, "db_walk_tree failed on %s\n", *sub_av);
+		  continue;
+		}
 
 		RT_BOT_CK_MAGIC(&my_bot);
 		write_dxf(&my_bot, av[arg_count]);

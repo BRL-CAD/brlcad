@@ -1,7 +1,7 @@
 /*                  W I N D O W _ F R A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2011 United States Government as represented by
+ * Copyright (c) 2009-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,11 +44,13 @@ main(int argc, char **argv)
 {
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26];		/* Mged file create. */
-    double hgt, wid, dpt;	/* Height, width, & depth of outside window */
+    char filemged[26] = {0};	/* Mged file create. */
+    double hgt = 0.0;       	/* Height, width, & depth of outside window */
+    double wid = 0.0;
+    double dpt = 0.0;
     /* frame. */
-    double rds;			/* Radius of the corner of window frame. */
-    double isw;			/* Width of frame itself. */
+    double rds = 0.0;		/* Radius of the corner of window frame. */
+    double isw = 0.0;			/* Width of frame itself. */
     point_t pts[8];		/* Eight points of arb8. */
     point_t bs;			/* Base of rcc. */
     vect_t ht;			/* Height of rcc. */
@@ -59,7 +61,7 @@ main(int argc, char **argv)
     char solnam[9];		/* Solid name. */
     char regnam[8];		/* Region name. */
     char grpnam[5];		/* Group name. */
-    int numwin;			/* Number of windows to be created (<=26). */
+    int numwin = 0;		/* Number of windows to be created (<=26). */
 
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
@@ -105,34 +107,61 @@ main(int argc, char **argv)
 	(void)printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	}
+	if (BU_STR_EQUAL(filemged, ""))
+	    bu_strlcpy(filemged, "window_frame.g", sizeof(filemged));
 
 	/* Find the number of window frames to create. */
 	(void)printf("Enter the number of window frames to create (26 max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%d", &numwin);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    numwin = 1;
+	}
+	if (numwin < 1)
+	    numwin = 1;
+	if (numwin > 26)
+	    numwin = 26;
 
 	/* Find the dimensions of the window frames. */
 	(void)printf("Enter the height, width, and depth of the window frame.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf %lf %lf", &hgt, &wid, &dpt);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    hgt = 1618.0; /* golden ratio */
+	    wid = 1000.0;
+	    dpt = 100.0;
+	}
+	if (hgt < SMALL_FASTF)
+	    hgt = SMALL_FASTF;
+	if (wid < SMALL_FASTF)
+	    wid = SMALL_FASTF;
+	if (dpt < SMALL_FASTF)
+	    dpt = SMALL_FASTF;
 
 	(void)printf("Enter the radius of the corner.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &rds);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    rds = 5.0;
+	}
+	if (rds < SMALL_FASTF)
+	    rds = SMALL_FASTF;
 
 	(void)printf("Enter the actual width of the window frame.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &isw);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    isw = 100.0;
+	}
+	if (isw < SMALL_FASTF)
+	    isw = SMALL_FASTF;
     }							/* END # 3 */
 
     /* If there are arguments get answers from arguments. */

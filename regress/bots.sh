@@ -1,7 +1,8 @@
+#!/bin/sh
 #                        B O T S . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2011 United States Government as represented by
+# Copyright (c) 2008-2012 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,7 +44,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. $1/regress/library.sh
+. "$1/regress/library.sh"
 
 MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then

@@ -1,7 +1,7 @@
 /*                    P O P U L A T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2011 United States Government as represented by
+ * Copyright (c) 2007-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ pop_init (struct population *p, int size)
     p->child  = bu_malloc(sizeof(struct individual) * size, "child");
     p->size = size;
     p->db_c = p->db_p = DBI_NULL;
-    p->name = bu_malloc(sizeof(char **) * size, "names");
+    p->name = bu_malloc(sizeof(char *) * size, "names");
 
 #define SEED 33
     /* init in main() bn_rand_init(randomer, SEED);*/
@@ -99,7 +99,7 @@ pop_spawn (struct population *p)
     p->db_p->dbi_wdbp = wdb_dbopen(p->db_p, RT_WDB_TYPE_DB_DISK);
 
     for (i = 0; i < p->size; i++) {
-	p->name[i] = bu_malloc(sizeof(char *) * 256, "name");
+	p->name[i] = bu_malloc(sizeof(char) * 256, "name");
 	snprintf(p->name[i], 256, "ind%.3d", i);
 
 	BU_LIST_INIT(&wm_hd.l);
@@ -491,7 +491,8 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
 	    if ((dp = db_diradd(dbi_c, child2_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == RT_DIR_NULL)
 		bu_exit(EXIT_FAILURE, "Failed to add new individual to child database");
-	    rt_db_put_internal(dp, dbi_c, &in2, resp);
+	    if (rt_db_put_internal(dp, dbi_c, &in2, resp) < 0)
+		bu_exit(EXIT_FAILURE, "Database write failure");
 	    rt_db_free_internal(&in2);
 
 	    break;
@@ -524,7 +525,8 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
     if ((dp=db_diradd(dbi_c, child1_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == RT_DIR_NULL) {
 	bu_exit(EXIT_FAILURE, "Failed to add new individual to child database");
     }
-    rt_db_put_internal(dp, dbi_c,  &in1, resp);
+    if (rt_db_put_internal(dp, dbi_c,  &in1, resp) < 0)
+      bu_exit(EXIT_FAILURE, "Database write failure");
     rt_db_free_internal(&in1);
 }
 

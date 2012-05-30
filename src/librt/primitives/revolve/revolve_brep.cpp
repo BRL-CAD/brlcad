@@ -1,7 +1,7 @@
 /*                    R E V O L V E _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ extern "C" {
 }
 
 
-void FindLoops(ON_Brep **b, const ON_Line* revaxis) {
+void FindLoops(ON_Brep **b, const ON_Line* revaxis, const fastf_t ang) {
     ON_3dPoint ptmatch, ptterminate, pstart, pend;
 
     int *curvearray;
@@ -117,23 +117,21 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis) {
     }
 
     for (int i = 0; i < loopcount ; i++) {
-	ON_PolyCurve* poly_curve = NULL;
+	ON_PolyCurve* poly_curve = new ON_PolyCurve();
 	for (int j = 0; j < allsegments.Count(); j++) {
 	    if (curvearray[j] == i) {
-		if (!poly_curve) {
-		    poly_curve = new ON_PolyCurve();
-		    poly_curve->Append(allsegments[j]);
-		} else {
-		    poly_curve->Append(allsegments[j]);
-		}
+		 poly_curve->Append(allsegments[j]);
 	    }
 	}
+
 	ON_NurbsCurve *revcurve = ON_NurbsCurve::New();
 	poly_curve->GetNurbForm(*revcurve);
 	ON_RevSurface* revsurf = ON_RevSurface::New();
 	revsurf->m_curve = revcurve;
 	revsurf->m_axis = *revaxis;
+	revsurf->m_angle = ON_Interval(0, ang);
 	ON_BrepFace *face = (*b)->NewFace(*revsurf);
+
 	if (i == largest_loop_index) {
 	    (*b)->FlipFace(*face);
 	}
@@ -145,7 +143,7 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis) {
  * R T _ R E V O L V E _ B R E P
  */
 extern "C" void
-rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
+rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_db_internal *tmp_internal = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "allocate structure");
     RT_DB_INTERNAL_INIT(tmp_internal);
@@ -156,13 +154,19 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
     RT_REVOLVE_CK_MAGIC(rip);
     eip = rip->skt;
     RT_SKETCH_CK_MAGIC(eip);
-
+    
     ON_3dPoint plane_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
 
+    bool full_revolve = true;
+    if (rip->ang < 2*ON_PI && rip->ang > 0)
+	full_revolve = false;
+
     //  Find plane in 3 space corresponding to the sketch.
 
-    plane_origin = ON_3dPoint(eip->V);
+    vect_t startpoint;
+    VADD2(startpoint, rip->v3d, rip->r);
+    plane_origin = ON_3dPoint(startpoint);
     plane_x_dir = ON_3dVector(eip->u_vec);
     plane_y_dir = ON_3dVector(eip->v_vec);
     const ON_Plane* sketch_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
@@ -198,7 +202,8 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 		if (csg->radius < 0) { {
 		    ON_3dPoint cntrpt = (*b)->m_V[csg->end].Point();
 		    ON_3dPoint edgept = (*b)->m_V[csg->start].Point();
-		    ON_Circle* c3dcirc = new ON_Circle(cntrpt, cntrpt.DistanceTo(edgept));
+		    ON_Plane* cplane = new ON_Plane(cntrpt, plane_x_dir, plane_y_dir);
+		    ON_Circle* c3dcirc = new ON_Circle(*cplane, cntrpt.DistanceTo(edgept));
 		    ON_Curve* c3d = new ON_ArcCurve((const ON_Circle)*c3dcirc);
 		    c3d->SetDomain(0.0, 1.0);
 		    (*b)->m_C3.Append(c3d);
@@ -228,11 +233,74 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 	}
     }
 
+    vect_t endpoint;
+    VADD2(endpoint, rip->v3d, rip->axis3d);
+    const ON_Line& revaxis = ON_Line(ON_3dPoint(rip->v3d), ON_3dPoint(endpoint));
 
-    const ON_Line& revaxis = ON_Line(ON_3dPoint(rip->v3d), ON_3dPoint(rip->axis3d));
+    FindLoops(b, &revaxis, rip->ang);
 
-    FindLoops(b, &revaxis);
+    // Create the two boundary surfaces, if it's not a full revolution
+    if (!full_revolve) {
+	// First, deduce the transformation matrices to calculate the position of the end surface
+	// The transformation matrices are to rotate an arbitrary point around an arbitrary axis
+	// Let the point A = (x, y, z), the rotation axis is p1p2 = (x2,y2,z2)-(x1,y1,z1) = (a,b,c)
+	// Then T1 is to translate p1 to the origin
+	// Rx is to rotate p1p2 around the X axis to the plane XOZ
+	// Ry is to rotate p1p2 around the Y axis to be coincident to Z axis
+	// Rz is to rotate A with the angle around Z axis (the new p1p2)
+	// RxInv, RyInv, T1Inv are the inverse transformation of Rx, Ry, T1, respectively.
+	// The whole transformation is A' = A*T1*Rx*Ry*Rz*Ry*Inv*Rx*Inv = A*R
+	vect_t end_plane_origin, end_plane_x_dir, end_plane_y_dir;
+	mat_t R;
+	MAT_IDN(R);
+	mat_t T1, Rx, Ry, Rz, RxInv, RyInv, T1Inv;
+	MAT_IDN(T1);
+	VSET(&T1[12], -rip->v3d[0], -rip->v3d[1], -rip->v3d[2]);
+	MAT_IDN(Rx);
+	fastf_t v = sqrt(rip->axis3d[1]*rip->axis3d[1]+rip->axis3d[2]*rip->axis3d[2]);
+	VSET(&Rx[4], 0, rip->axis3d[2]/v, rip->axis3d[1]/v);
+	VSET(&Rx[8], 0, -rip->axis3d[1]/v, rip->axis3d[2]/v);
+	MAT_IDN(Ry);
+	fastf_t u = MAGNITUDE(rip->axis3d);
+	VSET(&Ry[0], v/u, 0, -rip->axis3d[0]/u);
+	VSET(&Ry[8], rip->axis3d[0]/u, 0, v/u);
+	MAT_IDN(Rz);
+	fastf_t C, S;
+	C = cos(rip->ang);
+	S = sin(rip->ang);
+	VSET(&Rz[0], C, S, 0);
+	VSET(&Rz[4], -S, C, 0);
+	bn_mat_inv(RxInv, Rx);
+	bn_mat_inv(RyInv, Ry);
+	bn_mat_inv(T1Inv, T1);
+	mat_t temp;
+	bn_mat_mul4(temp, T1, Rx, Ry, Rz);
+	bn_mat_mul4(R, temp, RyInv, RxInv, T1Inv);
+	VEC3X3MAT(end_plane_origin, plane_origin, R);
+	VADD2(end_plane_origin, end_plane_origin, &R[12]);
+	VEC3X3MAT(end_plane_x_dir, plane_x_dir, R);
+	VEC3X3MAT(end_plane_y_dir, plane_y_dir, R);
 
+	// Create the start and end surface with rt_sketch_brep()
+	struct rt_sketch_internal sketch;
+	sketch = *(rip->skt);
+	ON_Brep *b1 = ON_Brep::New();
+	VMOVE(sketch.V, plane_origin);
+	VMOVE(sketch.u_vec, plane_x_dir);
+	VMOVE(sketch.v_vec, plane_y_dir);
+	tmp_internal->idb_ptr = (genptr_t)(&sketch);
+	rt_sketch_brep(&b1, tmp_internal, tol);
+	(*b)->Append(*b1->Duplicate());
+
+	ON_Brep *b2 = ON_Brep::New();
+	VMOVE(sketch.V, end_plane_origin);
+	VMOVE(sketch.u_vec, end_plane_x_dir);
+	VMOVE(sketch.v_vec, end_plane_y_dir);
+	tmp_internal->idb_ptr = (genptr_t)(&sketch);
+	rt_sketch_brep(&b2, tmp_internal, tol);
+	(*b)->Append(*b2->Duplicate());
+	(*b)->FlipFace((*b)->m_F[(*b)->m_F.Count()-1]);
+    }
     bu_free(tmp_internal, "free temporary rt_db_internal");
 }
 

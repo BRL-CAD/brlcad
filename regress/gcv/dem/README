@@ -1,0 +1,37 @@
+Test file hawaii-c.tar.gz is originally from the U. S. Geologic Survey  
+1:250,000-scale Digital Elevation Models (DEM) archive.
+Original URI: http://dds.cr.usgs.gov/pub/data/DEM/250/H/hawaii-c.gz
+
+Retrieved January 13, 2012
+
+Background from http://dds.cr.usgs.gov/pub/data/DEM/250/250DEMREADME1.txt
+
+A digital elevation model (DEM) consists of an array of elevations for 
+ground positions that are usually at regularly spaced intervals.
+
+The 1-degree DEM provides coverage in 1- by 1-degree blocks and is 
+available for all of the contiguous United States, Hawaii, and most of Alaska.  
+
+The 1-degree DEM consists of a regular array of elevations referenced 
+horizontally on the geographic coordinate (latitude/longitude) system 
+of the World Geodetic System 1984 Datum.  Elevation data located on the 
+degree lines (all four sides) correspond with the same profiles on 
+adjoining DEM blocks.
+
+Elevations are in meters relative to mean sea level.  Spacing of the 
+elevations along and between each profile is 3 arc-seconds with 1,201 
+elevations per profile.  The only exceptions are DEMs in Alaska, where 
+the spacing and number of elevations per profile varies depending on the 
+latitudinal location of the DEM.  Latitudes between 50 and 70 degrees 
+north have spacings at 6 arc-seconds with 601 elevations per profile 
+and latitudes greater than 70 degrees north have spacings at 9 
+arc-seconds with 401 elevations per profile.
+
+Local files:
+
+hawaii-c.tar.bz2 - hawaii-c.gz re-compressed using the tar/bzip2 compression method.
+
+hawaii-c-control.tar.bz2 is the dsp primitive produced by a working run of dem-g,
+used as control with which to test the result.  The .g file is not compared because
+it is almost guaranteed to be different due to the inclusion of the dsp file path
+embedded in the .g database.  Compressed with tar/bzip2

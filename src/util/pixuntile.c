@@ -1,7 +1,7 @@
 /*                     P I X U N T I L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -108,7 +108,7 @@ main(int argc, char **argv)
     int i, y;
     char ibuf[1024*3] = {0};
     char name[80] = {0};
-    FILE *f[8];
+    FILE *f[8] = {NULL};
     size_t ret;
 
     if (!get_args(argc, argv)) {

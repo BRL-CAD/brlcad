@@ -2053,7 +2053,7 @@ X24_getmem(FBIO *ifp)
     char *mem = NULL;
     int pixsize;
     int size;
-    int new = 0;
+    int isnew = 0;
 
     FB_CK_FBIO(ifp);
 
@@ -2092,7 +2092,7 @@ X24_getmem(FBIO *ifp)
 		if ((xi->xi_shmid = shmget(SHMEM_KEY, size, 0)) < 0) {
 		    /* No existing one, create a new one */
 		    xi->xi_shmid = shmget(SHMEM_KEY, size, IPC_CREAT|0666);
-		    new = 1;
+		    isnew = 1;
 		}
 
 		if (xi->xi_shmid < 0) {
@@ -2126,7 +2126,7 @@ using private memory instead, errno %d\n", errno);
 store\n  Run shell command 'limit datasize unlmited' and try again.\n", size);
 		return -1;
 	    }
-	    new = 1;
+	    isnew = 1;
 	    break;
     }
 
@@ -2134,11 +2134,11 @@ store\n  Run shell command 'limit datasize unlmited' and try again.\n", size);
     xi->xi_mem = (unsigned char *) mem + sizeof (*xi->xi_rgb_cmap);
 
     /* Clear memory frame buffer to black */
-    if (new) {
+    if (isnew) {
 	memset(mem, 0, size);
     }
 
-    return new;
+    return isnew;
 }
 
 
@@ -2427,7 +2427,7 @@ X24_zapmem()
 #endif
 
 #ifdef HAVE_SYS_MMAN_H
-    unlink(BS_NAME);
+    bu_file_delete(BS_NAME);
 #endif
 #ifdef HAVE_SYS_SHM_H
     if ((shmid = shmget(SHMEM_KEY, 0, 0)) < 0) {
@@ -2498,7 +2498,7 @@ X24_destroy(struct xinfo *xi)
  * X 2 4 _ O P E N
  */
 HIDDEN int
-X24_open(FBIO *ifp, char *file, int width, int height)
+X24_open(FBIO *ifp, const char *file, int width, int height)
 {
     struct xinfo *xi;
 
@@ -2520,13 +2520,13 @@ X24_open(FBIO *ifp, char *file, int width, int height)
     mode = MODE1_LINGERING;
 
     if (file != NULL) {
-	register char *cp;
+	const char *cp;
 	char modebuf[80];
 	char *mp;
 	int alpha;
 	struct modeflags *mfp;
 
-	if (strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
+	if (bu_strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
 	    /* How did this happen?? */
 	    mode = 0;
 	} else {
@@ -2917,7 +2917,7 @@ _X24_open_existing(FBIO *ifp, Display *dpy, Window win, Window cwinp, Colormap c
 
 
 int
-X24_open_existing(FBIO *ifp, int argc, char **argv)
+X24_open_existing(FBIO *ifp, int argc, const char **argv)
 {
     Display *dpy;
     Window win;

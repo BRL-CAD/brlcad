@@ -1,7 +1,7 @@
 /*                         S O L I D . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ struct solid  {
 
 #define GET_SOLID(p, fp) { \
 	if (BU_LIST_IS_EMPTY(fp)) { \
-		BU_GETSTRUCT(p, solid); \
+		BU_GET(p, struct solid); \
 		db_full_path_init(&(p)->s_fullpath); \
 	} else { \
 		p = BU_LIST_NEXT(solid, fp); \

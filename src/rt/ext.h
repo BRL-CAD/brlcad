@@ -1,7 +1,7 @@
 /*                           E X T . H
  * BRL-CAD
  *
- * Copyright (c) 1989-2011 United States Government as represented by
+ * Copyright (c) 1989-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ extern int save_overlaps;		/* flag for setting rti_save_overlaps */
 extern mat_t model2view;
 extern mat_t view2model;
 extern struct application APP;
-extern struct bu_image_file *bif;
+extern struct icv_image_file *bif;
 extern vect_t left_eye_delta;
 extern vect_t left_eye_delta;
 

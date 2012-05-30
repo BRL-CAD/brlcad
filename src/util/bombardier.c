@@ -1,7 +1,7 @@
 /*                    B O M B A R D I E R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2011 United States Government as represented by
+ * Copyright (c) 2007-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -155,9 +155,9 @@ static void
 load_file(const char *filename)
 {
     FILE *fp = NULL;
-    struct bu_vls buffer;
+    struct bu_vls buffer = BU_VLS_INIT_ZERO;
 
-    if (!bu_file_exists(filename)) {
+    if (!bu_file_exists(filename, NULL)) {
 	return;
     }
 
@@ -168,9 +168,8 @@ load_file(const char *filename)
 	return;
     }
 
-    bu_vls_init(&buffer);
     if (!report) {
-	BU_GETSTRUCT(report, bu_vls);
+	BU_GET(report, struct bu_vls);
 	bu_vls_init(report);
 	atexit(_free_report_memory);
     }
@@ -210,8 +209,8 @@ static int
 init(Tcl_Interp *interp)
 {
     char *c;
-    struct bu_vls appname;
-    struct bu_vls crash_reporter;
+    struct bu_vls appname = BU_VLS_INIT_ZERO;
+    struct bu_vls crash_reporter = BU_VLS_INIT_ZERO;
 
     /* locate brl-cad specific scripts (or uninstalled tcl/tk stuff) */
     tclcad_auto_path(interp);
@@ -233,12 +232,10 @@ init(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
-    bu_vls_init(&appname);
-
     /* try to pull the command name from the report */
     c = bu_vls_addr(report);
     while (c[0] != '\0') {
-	if (strncmp(c, "Command:", 8) == 0) {
+	if (bu_strncmp(c, "Command:", 8) == 0) {
 	    c+=8;
 	    while (c[0] != '\0' && isspace(c[0])) {
 		c++;
@@ -266,7 +263,6 @@ init(Tcl_Interp *interp)
     }
 
     /* FIXME: why are we stashing this in a variable? */
-    bu_vls_init(&crash_reporter);
     init_crash_reporter(&crash_reporter);
     Tcl_SetVar(interp, "script", bu_vls_addr(&crash_reporter), 0);
     bu_vls_free(&crash_reporter);
@@ -295,7 +291,7 @@ main(int argc, char *argv[])
 
     /* load all file arguments into our buffer */
     while (argc > 1) {
-	if (!bu_file_exists(argv[1])) {
+	if (!bu_file_exists(argv[1], NULL)) {
 	    bu_log("WARNING: Log file [%s] does not exist\n", argv[1]);
 	} else {
 	    bu_log("Processing %s\n", argv[1]);

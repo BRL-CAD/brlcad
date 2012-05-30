@@ -1,7 +1,7 @@
 /*                            U I . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -734,6 +734,7 @@ McolorFile(HmItem *itemp)
     };
     Input *ip = input;
     FILE *colorfp;
+
     if (getInput(ip))
 	bu_strlcpy(colorfile, ip->buffer, LNBUFSZ);
     else
@@ -751,6 +752,7 @@ McolorFile(HmItem *itemp)
     logCmd(scrbuf);
     notify("Reading ident-to-color mappings", NOTIFY_APPEND);
     readColors(&colorids, colorfp);
+    fclose(colorfp);
     notify(NULL, NOTIFY_DELETE);
     return;
 }
@@ -1033,7 +1035,7 @@ MgedFile(HmItem *itemp)
     if (getInput(ip))
 	bu_strlcpy(gedfile, ip->buffer, LNBUFSZ);
 
-    if (!bu_file_exists(gedfile)) {
+    if (!bu_file_exists(gedfile, NULL)) {
 	(void) snprintf(scrbuf, LNBUFSZ, 
 			"Unable to find file \"%s\"",
 			gedfile);
@@ -1408,17 +1410,18 @@ MreadCmdFile(HmItem *UNUSED(itemp))
     Input *ip = input;
     char cmdfile[LNBUFSZ];
     FILE *cmdfp;
-    if (getInput(ip))
-	bu_strlcpy(cmdfile, ip->buffer, LNBUFSZ);
-    if ((cmdfp = fopen(cmdfile, "rb")) == NULL) {
+    if (getInput(ip)) {
+      bu_strlcpy(cmdfile, ip->buffer, LNBUFSZ);
+      if ((cmdfp = fopen(cmdfile, "rb")) == NULL) {
 	(void) snprintf(scrbuf, LNBUFSZ, 
-			"Read access denied for \"%s\"",
-			cmdfile);
+	    "Read access denied for \"%s\"",
+	    cmdfile);
 	warning(scrbuf);
 	return;
+      }
+      readBatchInput(cmdfp);
+      (void) fclose(cmdfp);
     }
-    readBatchInput(cmdfp);
-    (void) fclose(cmdfp);
     return;
 }
 
@@ -1528,29 +1531,35 @@ MwriteCmdFile(HmItem *UNUSED(itemp))
     };
     Input *ip = input;
     char cmdfile[LNBUFSZ];
-    FILE *cmdfp;
-    FILE *inpfp;
-    if (getInput(ip))
-	bu_strlcpy(cmdfile, ip->buffer, LNBUFSZ);
-    if ((cmdfp = fopen(cmdfile, "wb")) == NULL) {
+    FILE *cmdfp = NULL;
+    FILE *inpfp = NULL;
+    if (getInput(ip)) {
+      bu_strlcpy(cmdfile, ip->buffer, LNBUFSZ);
+      if ((cmdfp = fopen(cmdfile, "wb")) == NULL) {
 	(void) snprintf(scrbuf, LNBUFSZ, 
-			"Write access denied for \"%s\"",
-			cmdfile);
+	    "Write access denied for \"%s\"",
+	    cmdfile);
 	warning(scrbuf);
 	return;
+      }
     }
+
     if ((inpfp = fopen(tmpfname, "rb")) == NULL) {
 	(void) snprintf(scrbuf, LNBUFSZ, 
 			"Read access denied for \"%s\"",
 			tmpfname);
 	warning(scrbuf);
-	(void) fclose(cmdfp);
+	if (cmdfp)
+	    (void)fclose(cmdfp);
 	return;
     }
     while (bu_fgets(scrbuf, LNBUFSZ, inpfp) != NULL)
 	fputs(scrbuf, cmdfp);
-    (void) fclose(cmdfp);
+
+    if (cmdfp)
+	(void) fclose(cmdfp);
     (void) fclose(inpfp);
+
     return;
 }
 

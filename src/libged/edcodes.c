@@ -1,7 +1,7 @@
 /*                         E D C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ edcodes_reg_compare(const void *p1, const void *p2)
 HIDDEN int edcodes_collect_regnames(struct ged *, struct directory *, int);
 
 HIDDEN void
-edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
+edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3, genptr_t UNUSED(user_ptr4))
 {
     int ret;
     int *pathpos;
@@ -124,7 +124,7 @@ edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
     }
 
     if (comb->tree) {
-	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, edcodes_traverse_node, (genptr_t)&pathpos, (genptr_t)gedp, (genptr_t)&status);
+	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, edcodes_traverse_node, (genptr_t)&pathpos, (genptr_t)gedp, (genptr_t)&status, (genptr_t)NULL);
     }
 
     intern.idb_meth->ft_ifree(&intern);
@@ -149,28 +149,11 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     char tmpfil[MAXPATHLEN] = {0};
     const char *editstring = NULL;
 
-    static const char *usage = "[-i|-n|-r] object(s)";
+    static const char *usage = "[-i|-n|-r|-E editor] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* First, grab the editstring off of the argv list */
-
-    bu_optind = 1;
-    /* First, grab the editstring off of the argv list */
-    while ((c = bu_getopt(argc, (char * const *)argv, "E:")) != -1) {
-	switch (c) {
-	    case 'E' :
-		editstring = bu_optarg;
-		break;
-	    default :
-		break;
-	}
-    }
-
-    argc -= bu_optind - 1;
-    argv += bu_optind - 1;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -182,8 +165,11 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, (char * const *)argv, "inr")) != -1) {
-	switch(c) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "E:inr")) != -1) {
+	switch (c) {
+	    case 'E' :
+		editstring = bu_optarg;
+		break;
 	    case 'i':
 		sort_by_ident = 1;
 		break;
@@ -201,8 +187,8 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
+    argc -= bu_optind - 1;
+    argv += bu_optind - 1;
 
     if (nflag) {
 	struct directory *dp;
@@ -235,13 +221,13 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
     av[i] = NULL;
 
+    (void)fclose(fp);
+
     if (ged_wcodes(gedp, argc + 1, (const char **)av) == GED_ERROR) {
-	(void)unlink(tmpfil);
+	bu_file_delete(tmpfil);
 	bu_free((genptr_t)av, "ged_edcodes av");
 	return GED_ERROR;
     }
-
-    (void)fclose(fp);
 
     if (sort_by_ident || sort_by_region) {
 	char **line_array;
@@ -252,7 +238,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
 	if ((f_srt=fopen(tmpfil, "r+")) == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: Failed to open temp file for sorting\n", argv[0]);
-	    (void)unlink(tmpfil);
+	    bu_file_delete(tmpfil);
 	    return GED_ERROR;
 	}
 
@@ -281,7 +267,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
 	/* rewrite the temp file using the sorted lines */
 	rewind(f_srt);
-	for (j=0; j<line_count; j++) {
+	for (j = 0; j < line_count; j++) {
 	    fprintf(f_srt, "%s", line_array[j]);
 	    bu_free(line_array[j], "ged_edcodes line array element");
 	}
@@ -296,7 +282,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     } else
 	status = GED_ERROR;
 
-    unlink(tmpfil);
+    bu_file_delete(tmpfil);
     bu_free((genptr_t)av, "ged_edcodes av");
     return status;
 }

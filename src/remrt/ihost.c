@@ -1,7 +1,7 @@
 /*                         I H O S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -140,7 +140,7 @@ make_default_host(const char* name)
 {
     struct ihost	*ihp;
 
-    BU_GETSTRUCT( ihp, ihost );
+    BU_GET(ihp, struct ihost);
     ihp->l.magic = IHOST_MAGIC;
 
     /* Make private copy of host name -- callers have static buffers */

@@ -1,7 +1,7 @@
 /*                      R A Y T R A C E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,17 +49,16 @@
 __BEGIN_DECLS
 
 #ifndef RT_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef RT_EXPORT_DLL
-#      define RT_EXPORT __declspec(dllexport)
-#    else
-#      define RT_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(RT_DLL_EXPORTS) && defined(RT_DLL_IMPORTS)
+#    error "Only RT_DLL_EXPORTS or RT_DLL_IMPORTS can be defined, not both."
+#  elif defined(RT_DLL_EXPORTS)
+#    define RT_EXPORT __declspec(dllexport)
+#  elif defined(RT_DLL_IMPORTS)
+#    define RT_EXPORT __declspec(dllimport)
 #  else
 #    define RT_EXPORT
 #  endif
 #endif
-
 
 /**
  * D E B U G
@@ -344,6 +343,7 @@ struct curvature {
     fastf_t	crv_c2;		/**< @brief curvature in other direction */
 };
 #define CURVE_NULL	((struct curvature *)0)
+#define RT_CURVATURE_INIT_ZERO { VINIT_ZERO, 0.0, 0.0 }
 
 /**
  * Use this macro after having computed the normal, to compute the
@@ -530,7 +530,7 @@ struct soltab {
  * NOTE: must update the non-geometric object id's below the
  * ADD_BELOW_HERE marker
  */
-#define	ID_MAX_SOLID	42	/**< @brief Maximum defined ID_xxx for solids */
+#define	ID_MAX_SOLID	43	/**< @brief Maximum defined ID_xxx for solids */
 
 /*
  * Non-geometric objects
@@ -549,8 +549,9 @@ struct soltab {
 #define ID_HYP		38	/**< @brief Hyperboloid of one sheet */
 #define ID_REVOLVE	40	/**< @brief Solid of Revolutin */
 #define ID_PNTS         41      /**< @brief Collection of Points */
+#define ID_ANNOTATION   42      /**< @brief Annotation */
 
-#define ID_MAXIMUM	42	/**< @brief Maximum defined ID_xxx value */
+#define ID_MAXIMUM	43	/**< @brief Maximum defined ID_xxx value */
 
 /**
  * M A T E R _ I N F O
@@ -835,9 +836,7 @@ struct db_i {
 };
 #define DBI_NULL ((struct db_i *)0)
 #define RT_CHECK_DBI(_p) BU_CKMAG(_p, DBI_MAGIC, "struct db_i")
-#define RT_CHECK_DBI_TCL(_interp, _p) BU_CKMAG_TCL(_interp, _p, DBI_MAGIC, "struct db_i")
 #define RT_CK_DBI(_p) RT_CHECK_DBI(_p)
-#define RT_CK_DBI_TCL(_interp, _p) RT_CHECK_DBI_TCL(_interp, _p)
 
 
 /**
@@ -978,8 +977,6 @@ struct rt_comb_internal {
 };
 #define RT_CHECK_COMB(_p) BU_CKMAG(_p, RT_COMB_MAGIC, "rt_comb_internal")
 #define RT_CK_COMB(_p) RT_CHECK_COMB(_p)
-#define RT_CHECK_COMB_TCL(_interp, _p) BU_CKMAG_TCL(interp, _p, RT_COMB_MAGIC, "rt_comb_internal")
-#define RT_CK_COMB_TCL(_interp, _p) RT_CHECK_COMB_TCL(_interp, _p)
 
 /**
  * initialize an rt_comb_internal to empty.
@@ -1043,8 +1040,6 @@ struct rt_binunif_internal {
 };
 #define RT_CHECK_BINUNIF(_p) BU_CKMAG(_p, RT_BINUNIF_INTERNAL_MAGIC, "rt_binunif_internal")
 #define RT_CK_BINUNIF(_p) RT_CHECK_BINUNIF(_p)
-#define RT_CHECK_BINUNIF_TCL(_interp, _p) BU_CKMAG_TCL(interp, _p, RT_BINUNIF_MAGIC, "rt_binunif_internal")
-#define RT_CK_BINUNIF_TCL(_interp, _p) RT_CHECK_BINUNIF_TCL(_interp, _p)
 
 
 /**
@@ -1237,7 +1232,7 @@ union tree {
  * magic number is set to RT_TREE_MAGIC and all other members are
  * zero-initialized.
  *
- * This is a malloc-efficient replacement for BU_GETUNION(tp, tree).
+ * This is a malloc-efficient replacement for BU_GET(tp, union tree).
  * Previously used tree nodes are stored in the provided resource
  * pointer (during RT_FREE_TREE) as a single-linked list using the
  * tb_left field.  Requests for new nodes are pulled first from that
@@ -1249,7 +1244,7 @@ union tree {
 	    (_tp)->tr_b.tb_left = TREE_NULL;		 \
 	    (_res)->re_tree_get++;			 \
 	} else {					 \
-	    BU_GETUNION(_tp, tree);			 \
+	    BU_GET(_tp, union tree);			 \
 	    (_res)->re_tree_malloc++;			 \
 	}						 \
 	RT_TREE_INIT((_tp));				 \
@@ -1326,9 +1321,7 @@ struct rt_wdb {
 
 
 #define RT_CHECK_WDB(_p) BU_CKMAG(_p, RT_WDB_MAGIC, "rt_wdb")
-#define RT_CHECK_WDB_TCL(_interp, _p) BU_CKMAG_TCL(_interp, _p, RT_WDB_MAGIC, "rt_wdb")
 #define RT_CK_WDB(_p) RT_CHECK_WDB(_p)
-#define RT_CK_WDB_TCL(_interp, _p) RT_CHECK_WDB_TCL(_interp, _p)
 #define RT_WDB_NULL		((struct rt_wdb *)NULL)
 #define RT_WDB_TYPE_DB_DISK			2
 #define RT_WDB_TYPE_DB_DISK_APPEND_ONLY		3
@@ -1726,7 +1719,6 @@ struct application_bundle
 #define RT_AFN_NULL	((int (*)(struct application *, struct partition *, struct region *, struct region *, struct partition *))NULL)
 #define RT_CK_AP(_p) BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_CK_APPLICATION(_p) BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
-#define RT_CK_AP_TCL(_interp, _p) BU_CKMAG_TCL(_interp, _p, RT_AP_MAGIC, "struct application")
 #define RT_APPLICATION_INIT(_p) { \
 	memset((char *)(_p), 0, sizeof(struct application)); \
 	(_p)->a_magic = RT_AP_MAGIC; \
@@ -1884,9 +1876,7 @@ struct rt_i {
 #define RTI_NULL	((struct rt_i *)0)
 
 #define RT_CHECK_RTI(_p) BU_CKMAG(_p, RTI_MAGIC, "struct rt_i")
-#define RT_CHECK_RTI_TCL(_interp, _p) BU_CKMAG_TCL(_interp, _p, RTI_MAGIC, "struct rt_i")
 #define RT_CK_RTI(_p) RT_CHECK_RTI(_p)
-#define RT_CK_RTI_TCL(_interp, _p) RT_CHECK_RTI_TCL(_interp, _p)
 
 #define	RT_PART_NUBSPT	0
 #define RT_PART_NUGRID	1
@@ -2451,6 +2441,10 @@ RT_EXPORT extern int rt_gen_circular_grid(struct xrays *ray_bundle,
 RT_EXPORT extern int rt_shootray(struct application *ap);
 /* Shoot a bundle of rays */
 RT_EXPORT extern int rt_shootrays(struct application_bundle *bundle);
+/* Shoot a ray, returning the partition list */
+RT_EXPORT extern struct partition *rt_shootray_simple(struct application *ap,
+						      point_t origin,
+						      vect_t direction);
 /* Get expr tree for object */
 RT_EXPORT extern void rt_free_soltab(struct soltab   *stp);
 RT_EXPORT extern int rt_gettree(struct rt_i *rtip,
@@ -2880,9 +2874,9 @@ RT_EXPORT extern int db5_decode_signed(size_t			*lenp,
 				       const unsigned char	*cp,
 				       int			format);
 
-RT_EXPORT extern int db5_decode_length(size_t			*lenp,
-				       const unsigned char	*cp,
-				       int			format);
+RT_EXPORT extern size_t db5_decode_length(size_t *lenp,
+					  const unsigned char *cp,
+					  int format);
 
 RT_EXPORT extern int db5_select_length_encoding(size_t len);
 
@@ -3048,11 +3042,35 @@ RT_EXPORT extern void db_conversions(struct db_i *,
 RT_EXPORT extern int db_v4_get_units_code(const char *str);
 
 /* db5_scan.c */
+
+/**
+ * A generic routine to determine the type of the database, (v4 or v5)
+ * and to invoke the appropriate db_scan()-like routine to build the
+ * in-memory directory.
+ *
+ * It is the caller's responsibility to close the database in case of
+ * error.
+ *
+ * Called from rt_dirbuild() and other places directly where a
+ * raytrace instance is not required.
+ *
+ * Returns -
+ * 0 OK
+ * -1 failure
+ */
 RT_EXPORT extern int db_dirbuild(struct db_i *dbip);
 RT_EXPORT extern struct directory *db5_diradd(struct db_i *dbip,
 					      const struct db5_raw_internal *rip,
 					      off_t laddr,
 					      genptr_t client_data);
+
+/**
+ * Scan a v5 database, sending each object off to a handler.
+ *
+ * Returns -
+ * 0 Success
+ * -1 Fatal Error
+ */
 RT_EXPORT extern int db5_scan(struct db_i *dbip,
 			      void (*handler)(struct db_i *,
 					      const struct db5_raw_internal *,
@@ -3251,7 +3269,8 @@ RT_EXPORT extern void db_tree_funcleaf(struct db_i		*dbip,
 				       void		(*leaf_func)(),
 				       genptr_t		user_ptr1,
 				       genptr_t		user_ptr2,
-				       genptr_t		user_ptr3);
+				       genptr_t		user_ptr3,
+				       genptr_t		user_ptr4);
 RT_EXPORT extern int db_follow_path(struct db_tree_state *tsp,
 				    struct db_full_path *total_path,
 				    const struct db_full_path *new_path,
@@ -4128,20 +4147,6 @@ RT_EXPORT extern void nmg_pl_lu_around_eu(const struct edgeuse *eu);
 RT_EXPORT extern void nmg_pr_fus_in_fg(const uint32_t *fg_magic);
 
 /* From nmg_misc.c */
-RT_EXPORT extern int rt_dist_pt3_line3(fastf_t		*dist,
-				       point_t		pca,
-				       const point_t	a,
-				       const point_t	p,
-				       const vect_t	dir,
-				       const struct bn_tol *tol);
-
-RT_EXPORT extern int rt_dist_line3_line3(fastf_t dist[2],
-					 const point_t p1,
-					 const point_t p2,
-					 const vect_t d1,
-					 const vect_t d2,
-					 const struct bn_tol *tol);
-
 RT_EXPORT extern int nmg_snurb_calc_lu_uv_orient(const struct loopuse *lu);
 RT_EXPORT extern void nmg_snurb_fu_eval(const struct faceuse *fu,
 					const fastf_t u,
@@ -4239,7 +4244,6 @@ RT_EXPORT extern void nmg_stash_model_to_file(const char *filename,
 RT_EXPORT extern int nmg_unbreak_region_edges(uint32_t *magic_p);
 RT_EXPORT extern void nmg_vlist_to_eu(struct bu_list *vlist,
 				      struct shell *s);
-/* rt_dist_pt3_line3 */
 RT_EXPORT extern int nmg_mv_shell_to_region(struct shell *s,
 					    struct nmgregion *r);
 RT_EXPORT extern int nmg_find_isect_faces(const struct vertex *new_v,
@@ -4328,6 +4332,9 @@ RT_EXPORT extern int nmg_edge_collapse(struct model *m,
 				       const fastf_t tol_coll,
 				       const fastf_t min_angle);
 
+/* From nmg_copy.c */
+RT_EXPORT extern struct model *nmg_clone_model(const struct model *original);
+
 /* bot.c */
 RT_EXPORT extern int rt_bot_edge_in_list(const int v1,
 					 const int v2,
@@ -4352,7 +4359,7 @@ RT_EXPORT extern int rt_bot_vertex_fuse(struct rt_bot_internal *bot);
 RT_EXPORT extern int rt_bot_face_fuse(struct rt_bot_internal *bot);
 RT_EXPORT extern int rt_bot_condense(struct rt_bot_internal *bot);
 RT_EXPORT extern int rt_bot_smooth(struct rt_bot_internal *bot,
-				   char *bot_name,
+				   const char *bot_name,
 				   struct db_i *dbip,
 				   fastf_t normal_tolerance_angle);
 RT_EXPORT extern int rt_bot_flip(struct rt_bot_internal *bot);
@@ -5329,7 +5336,7 @@ RT_EXPORT extern int db5_standardize_attribute(const char *attr);
  * PRIVATE: this is new API and should be considered private for the
  * time being.
  */
-RT_EXPORT extern void db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_value_set *avs, const char *name);
+RT_EXPORT extern void db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_value_set *avs, struct directory *dp);
 /**
  * PRIVATE: this is new API and should be considered private for the
  * time being.

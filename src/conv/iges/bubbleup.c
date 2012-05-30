@@ -1,7 +1,7 @@
 /*                      B U B B L E U P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ Bubbleup(root)
     struct node *root;
 {
     struct node *Copytree(), *Pop(), *ptr, *ptra, *ptrb, *ptrc, *ptr1, *ptr2;
-    int op, retval=1;
+    int op, retval = 1;
 
     ptr = root;
     while (1) {

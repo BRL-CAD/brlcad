@@ -1,7 +1,7 @@
 /*                       T I M E R 4 2 . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -233,14 +233,13 @@ psecs(long int l, struct bu_vls *vp)
 double
 rt_read_timer(char *str, int len)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     double cpu;
     int todo;
 
     if (!str)
 	return rt_get_timer((struct bu_vls *)0, (double *)0);
 
-    bu_vls_init(&vls);
     cpu = rt_get_timer(&vls, (double *)0);
     todo = bu_vls_strlen(&vls);
 

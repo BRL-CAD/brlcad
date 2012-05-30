@@ -1,7 +1,7 @@
 /*                          E X T R . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2011 United States Government as represented by
+ * Copyright (c) 2000-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ mk_extrusion(
 {
     struct rt_extrude_internal *extr;
 
-    BU_GETSTRUCT(extr, rt_extrude_internal);
+    BU_GET(extr, struct rt_extrude_internal);
     extr->magic = RT_EXTRUDE_INTERNAL_MAGIC;
     extr->sketch_name = bu_strdup(sketch_name);
     VMOVE(extr->V, V);

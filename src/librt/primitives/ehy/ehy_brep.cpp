@@ -1,7 +1,7 @@
 /*                    E H Y _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,6 +41,30 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(eip);
+
+    // Check the parameters
+    if (!NEAR_ZERO(VDOT(eip->ehy_Au, eip->ehy_H), RT_DOT_TOL)) {
+	bu_log("rt_ehy_brep: Au and H are not perpendicular!\n");
+	return;
+    }
+
+    if (!NEAR_EQUAL(MAGNITUDE(eip->ehy_Au), 1.0, RT_LEN_TOL)) {
+	bu_log("rt_ehy_brep: Au not a unit vector!\n");
+	return;
+    }
+
+    if (MAGNITUDE(eip->ehy_H) < RT_LEN_TOL
+	|| eip->ehy_c < RT_LEN_TOL
+	|| eip->ehy_r1 < RT_LEN_TOL
+	|| eip->ehy_r2 < RT_LEN_TOL) {
+	bu_log("rt_ehy_brep: not all dimensions positive!\n");
+	return;
+    }
+
+    if (eip->ehy_r2 > eip->ehy_r1) {
+	bu_log("rt_ehy_brep: semi-minor axis cannot be longer than semi-major axis!\n");
+	return;
+    }
 
     point_t p1_origin;
     ON_3dPoint plane1_origin, plane2_origin;
@@ -137,21 +161,47 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     ON_NurbsSurface *ehycurvedsurf = ON_NurbsSurface::New();
     hyp_surf->GetNurbForm(*ehycurvedsurf, 0.0);
 
-    // Last but not least, scale the control points of the
-    // resulting surface to map to the shorter axis.
+    // Transformations
 
     for (int i = 0; i < ehycurvedsurf->CVCount(0); i++) {
 	for (int j = 0; j < ehycurvedsurf->CVCount(1); j++) {
 	    point_t cvpt;
 	    ON_4dPoint ctrlpt;
 	    ehycurvedsurf->GetCV(i, j, ctrlpt);
+
+	    // Scale the control points of the
+	    // resulting surface to map to the shorter axis.
 	    VSET(cvpt, ctrlpt.x, ctrlpt.y * eip->ehy_r2/eip->ehy_r1, ctrlpt.z);
+
+	    // Rotate according to the directions of Au and H
+	    vect_t Hu;
+	    mat_t R;
+	    point_t new_cvpt;
+
+	    VSCALE(Hu, eip->ehy_H, 1/MAGNITUDE(eip->ehy_H));
+	    MAT_IDN(R);
+	    VMOVE(&R[0], eip->ehy_Au);
+	    VMOVE(&R[4], y_dir);
+	    VMOVE(&R[8], Hu);
+	    VEC3X3MAT(new_cvpt, cvpt, R);
+	    VMOVE(cvpt, new_cvpt);
+
+	    // Translate according to V
+	    vect_t scale_v;
+	    VSCALE(scale_v, eip->ehy_V, ctrlpt.w);
+	    VADD2(cvpt, cvpt, scale_v);
+
 	    ON_4dPoint newpt = ON_4dPoint(cvpt[0], cvpt[1], cvpt[2], ctrlpt.w);
 	    ehycurvedsurf->SetCV(i, j, newpt);
 	}
     }
 
     (*b)->m_S.Append(ehycurvedsurf);
+    int surfindex = (*b)->m_S.Count();
+    ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
+    (*b)->FlipFace(face);
+    int faceindex = (*b)->m_F.Count();
+    (*b)->NewOuterLoop(faceindex-1);
 }
 
 

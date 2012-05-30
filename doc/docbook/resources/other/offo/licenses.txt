@@ -1,0 +1,224 @@
+
+      Licenses of FOP XML Hyphenation Patterns
+
+The project ‘Objects For Formatting Objects’ (OFFO) hosts hyphenation
+pattern files in the XML format used by the Formatting Object Processor
+Apache Fop <http://xmlgraphics.apache.org/fop/>. All files were obtained
+by conversion of existing hyphenation pattern files for the typesetting
+program TeX. The hyphenation pattern files come with a variety of
+licenses, according to the license of the TeX hyphenation pattern file
+from which they are derived. All files hosted by the OFFO project come
+with an OSI-approved Open Source license, or were placed in the Public
+Domain by their authors. Below we list for each hyphenation pattern file
+the applicable license, and we provide a link to the text of the
+license. It is the responsibility of the user to read the license
+carefully and decide whether the intended usage complies with it. If it
+does not for one or more hyphenation pattern files, you cannot use those
+files. This is especially important if you intend to include the files
+with a distributed (software) package, or if you intend to use the files
+in a commercial application. See FOP's audit page
+<http://wiki.apache.org/xmlgraphics-fop/FOPAudits/March2003>, section
+'Hyphenation pattern issues', in the FOP Wiki for additional information.
+
+
+        Licenses
+
+ 
+Czech hyphenation patterns
+File name: 	cs.xml
+Original file name: 	czhyph.tex
+<http://www.ctan.org/tex-archive/language/hyphenation/czhyph.tex>
+License: 	GNU General Public License <http://www.fsf.org/copyleft/gpl.html>
+ 
+Danish hyphenation patterns
+File name: 	da.xml
+Original file names: 	dkhyphen.tex
+<http://www.ctan.org/tex-archive/language/hyphenation/dkhyphen/dkhyphen.tex>,
+dkcommon.tex
+<http://www.ctan.org/tex-archive/language/hyphenation/dkhyphen/dkcommon.tex>,
+dkspecial.tex
+<http://www.ctan.org/tex-archive/language/hyphenation/dkhyphen/dkspecial.tex>
+
+License: 	Apache License, Version 2.0
+<http://www.apache.org/licenses/LICENSE-2.0>
+Note: 	The original file contains no license. The ASF has obtained a
+grant from the author to distribute this file under the Apache license.
+ 
+New German hyphenation patterns
+File name: 	de_DR.xml
+Original file name: 	dehyphn.tex
+<http://www.ctan.org/tex-archive/language/hyphenation/dehyphn.tex>
+License: 	LaTeX Project Public License
+<http://mirror.ctan.org/macros/latex/base/lppl.txt>
+Restrictions: 	Do not publish a modified version under the above
+mentioned original file name.
+ 
+German traditional hyphenation patterns
+File name: 	de.xml
+Original file name: 	dehypht.tex
+<http://www.ctan.org/tex-archive/language/hyphenation/dehypht.tex>
+License: 	LaTeX Project Public License
+<http://mirror.ctan.org/macros/latex/base/lppl.txt>
+Restrictions: 	Do not publish a modified version under the above
+mentioned original file name.
+ 
+Greek hyphenation patterns
+File name: 	el.xml
+Original file name: 	GRMTex.tex, of which GRMhyph4.tex
+<http://www.ctan.org/tex-archive/hyphenation/elhyphen/GRMhyph4.tex> is
+probably the fourth version.
+License: 	LaTeX Project Public License
+<http://mirror.ctan.org/macros/latex/base/lppl.txt>
+Restrictions: 	Do not publish a modified version under the above
+mentioned original file name.
+ 
+English hyphenation patterns
+File name: 	en_GB.xml
+Original file name: 	ukhyphen.tex
+<http://www.ctan.org/tex-archive/language/hyphenation/ukhyphen.tex>
+License: 	This file of hyphenation patterns may be freely distributed
+Restriction: 	These hyphenation patterns may not be changed in any way
+ 
+US English hyphenation patterns
+File name: 	en.xml
+Original file name: 	Probably hyphen.tex
+<http://www.ctan.org/tex-archive/systems/knuth/lib/hyphen.tex>
+License: 	D.E. Knuth's TeX license (no longer available at CTAN)
+Note: 	These are TeX's original hyphenation patterns.
+ 
+US English hyphenation patterns, version 2
+File name: 	en_US.xml
+Original file name: 	Probably ushyph2.tex
+<http://www.ctan.org/tex-archive/language/hyphenation/ushyph2.tex>
+License: 	D.E. Knuth's TeX license
+<http://www.ctan.org/tex-archive/systems/knuth/lib/README>, and the
+additional condition: ‘Can be used freely for non-commercial purposes’
+Note: 	The additional license condition is applicable to G.D.C. Kuiken's
+additional patterns at the bottom of the file.
+ 
+Spanish hyphenation patterns
+File name: 	es.xml
+Original file name: 	spanish.lh <http://snark.ptc.spbu.ru/~uwe/lout/>
+License: 	‘You can use this software for any purpose. You cannot delete
+this copyright notice. If you change this software, you must include
+comments explaining who, when and why.’
+License: 	GNU General Public License <http://www.fsf.org/copyleft/gpl.html>
+Note: 	The first license applies to the original TeX file. The second
+license applies to the changes made when the file was included in the
+Lout software; the changes concern the encoding, not the patterns
+themselves.
+ 
+Finnish hyphenation patterns
+File name: 	fi.xml
+Original file name: 	fihyph.tex
+<http://www.ctan.org/tex-archive/language/hyphenation/fihyph.tex>
+License: 	‘Patterns may be freely distributed’
+ 
+French hyphenation patterns
+File name: 	fr.xml
+Original file name: 	french.lh <http://snark.ptc.spbu.ru/~uwe/lout/>,
+itself derived from an earlier version of frhyph.tex
+<http://www.ctan.org/tex-archive/language/hyphenation/frhyph.tex>
+License: 	GNU General Public License <http://www.fsf.org/copyleft/gpl.html>
+Note: 	The file itself carries no license information. The Lout package
+is published under the GPL.
+ 
+Hungarian hyphenation patterns
+File name: 	hu.xml
+Original file name: 	huhyph.tex
+<http://www.ctan.org/tex-archive/language/hyphenation/huhyph.tex>
+License: 	The file contains no license information
+ 
+Italian hyphenation patterns
+File name: 	it.xml
+Original file name: 	ithyph.tex
+<http://www.ctan.org/tex-archive/language/hyphenation/ithyph.tex>
+License: 	Apache License, Version 2.0
+<http://www.apache.org/licenses/LICENSE-2.0>
+Note: 	The file mentions that use of the original work was granted (to
+FOP, under the Apache license?) by the author. The original file is
+available under the LaTeX Project Public License
+<http://mirror.ctan.org/macros/latex/base/lppl.txt>.
+ 
+Latin hyphenation patterns
+File name: 	la.xml
+License: 	Apache License, Version 2.0
+<http://www.apache.org/licenses/LICENSE-2.0>
+Note: 	The Latin hyphenation patterns were derived from the Italian
+<#it> hyphenation patterns.
+ 
+Dutch hyphenation patterns
+File name: 	nl.xml
+Original file name: 	nehyph.tex
+<http://www.ctan.org/tex-archive/language/hyphenation/nehyph.tex>
+License: 	LaTeX Project Public License
+<http://mirror.ctan.org/macros/latex/base/lppl.txt>
+Restrictions: 	Do not publish a modified version under the above
+mentioned original file name.
+ 
+Norwegian hyphenation patterns
+File name: 	no.xml
+Original file name: 	nohyphb.tex <http://www.uio.no/~runekl/nohyphb.tex>
+License: 	GNU General Public License <http://www.fsf.org/copyleft/gpl.html>
+ 
+Polish hyphenation patterns
+File name: 	pl.xml
+Original file name: 	plhyph.tex
+<http://www.ctan.org/tex-archive/language/hyphenation/plhyph.tex>
+License: 	D.E. Knuth's TeX license
+<http://www.ctan.org/tex-archive/systems/knuth/lib/README>
+Note: 	The file says: ‘This macro file belongs to the public domain
+under the conditions specified by the author of TeX’.
+ 
+Portuguese hyphenation patterns
+File name: 	pt.xml
+License: 	Apache License, Version 2.0
+<http://www.apache.org/licenses/LICENSE-2.0>
+ 
+Russian hyphenation patterns
+File name: 	ru.xml
+Original file name: 	brhyphen.tex (URL unknown)
+License: 	Apache License, Version 2.0
+<http://www.apache.org/licenses/LICENSE-2.0>
+Note: 	The original file is in the public domain. It was taken from the
+CyrTUG-EmTeX distribution.
+ 
+Slovak hyphenation patterns
+File name: 	sk.xml
+Original file name: 	skhyphen.tex
+<http://ftp.fi.muni.cz/pub/tex/local/cstug/olsak/csplain/skhyphen.tex?N=A>
+License: 	GNU General Public License <http://www.fsf.org/copyleft/gpl.html>
+ 
+Swedish hyphenation patterns
+File name: 	se.xml
+Original file name: 	sehyphen.tex
+<http://www.ctan.org/tex-archive/language/hyphenation/sehyph.tex>
+License: 	LaTeX Project Public License
+<http://www.latex-project.org/lppl.txt>, either version 1.2 of this
+license or (at your option) any later version
+ 
+Turkish hyphenation patterns
+File name: 	tr.xml
+Original file name: 	trhyphen.tex (URL unknown)
+License: 	Unknown
+Note: 	Because the license of this file is unknown, it is not included
+in the OFFO distribution. Information about the license is most welcome.
+
+All original TeX hyphenation pattern files which can be found on CTAN
+<http://www.ctan.org/tex-archive/language/hyphenation/>, can also be
+found at http://www.uni-koeln.de/ftp/tex/languages/hyphenation/.
+
+The Lout distribution can also be found at Sourceforge
+<http://sourceforge.net/projects/lout/>.
+
+All OSI-approved licenses can also be found at the OSI website
+<http://opensource.org/licenses>.
+
+<http://sourceforge.net/>	Copyright © 2004–2010 OFFO
+<http://opensource.org/licenses> All rights reserved.
+- Last Published: 10/29/2010 09:10:28
+Send feedback about the website to the OFFO project maintainers
+<http://sourceforge.net/sendmessage.php?touser=1071219&subject=Feedback
+about OFFO%C2%A0hyphenation/old-patterns/licenses.html>
+	
+

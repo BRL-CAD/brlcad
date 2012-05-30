@@ -1,7 +1,7 @@
 /*                     F B S T R E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -276,7 +276,7 @@ main(int argc, char **argv)
     }
 
     if (dst_file == NULL)
-	dst_file = getenv("FB_FILE");	/* needed for later strcmp */
+	dst_file = getenv("FB_FILE");
 
     /* Figure out what scale factors to use before messing up size info. */
 

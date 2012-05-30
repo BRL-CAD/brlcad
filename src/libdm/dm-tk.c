@@ -1,7 +1,7 @@
 /*                          D M - T K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2011 United States Government as represented by
+ * Copyright (c) 1988-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -251,11 +251,13 @@ tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
-
 		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_START:
+		case BN_VLIST_TRI_VERTNORM:
 		    continue;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_TRI_MOVE:
 		    /* Move, not draw */
 		    if (dmp->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
@@ -287,6 +289,8 @@ tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_POLY_END:
 		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_TRI_DRAW:
+		case BN_VLIST_TRI_END:
 		    /* draw */
 		    if (dmp->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
@@ -307,6 +311,7 @@ tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				pt_prev = pt;
 				continue;
 			    } else {
+				if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -316,9 +321,11 @@ tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				alpha = (dist_prev - delta) / (dist_prev - dist);
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, tmp_pt);
+                                }
 			    }
 			} else {
 			    if (dist_prev <= 0.0) {
+                                if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -332,6 +339,7 @@ tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				lpnt[1] *= 2047 * dmp->dm_aspect;
 				lpnt[2] *= 2047;
 				MAT4X3PNT(pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
+                                }
 			    } else {
 				MAT4X3PNT(pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
 			    }
@@ -454,7 +462,7 @@ tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t 
 	if (!data) {
 	    return TCL_ERROR;
 	} else {
-	    vp = callback_function(data);
+	    (void)callback_function(data);
 	}
     }
     return TCL_OK;
@@ -558,7 +566,7 @@ tk_drawLine3D(struct dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
 
 
 HIDDEN int
-tk_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+tk_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || (npoints > 0 && !points))
 	return TCL_ERROR;
@@ -827,6 +835,7 @@ struct dm dm_tk = {
     tk_debug,
     Nu_int0,
     Nu_int0,
+    Nu_void,
     Nu_int0,
     Nu_int0,
     Nu_int0, /* display to image function */
@@ -849,9 +858,9 @@ struct dm dm_tk = {
     1.0, /* aspect ratio */
     0,
     {0, 0},
-    {0, 0, 0, 0, 0},		/* bu_vls path name*/
-    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
-    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
+    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
@@ -887,8 +896,8 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     int make_square = -1;
     XGCValues gcv;
 
-    struct bu_vls str;
-    struct bu_vls init_proc_vls;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     struct dm *dmp = (struct dm *)NULL;
     Tk_Window tkwin;
     Display *dpy = (Display *)NULL;
@@ -901,7 +910,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_GETSTRUCT(dmp, dm);
+    BU_GET(dmp, struct dm);
     if (dmp == DM_NULL)
 	return DM_NULL;
 
@@ -924,7 +933,6 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     bu_vls_init(&dmp->dm_pathName);
     bu_vls_init(&dmp->dm_tkName);
     bu_vls_init(&dmp->dm_dName);
-    bu_vls_init(&init_proc_vls);
 
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
@@ -967,11 +975,10 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = tkwin;
 	} else {
-	    struct bu_vls top_vls;
+	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&top_vls);
-	    bu_vls_printf(&top_vls, "%*s", cp - bu_vls_addr(&dmp->dm_pathName),
-			  bu_vls_addr(&dmp->dm_pathName));
+	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
+
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top =
 		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
 	    bu_vls_free(&top_vls);
@@ -992,7 +999,6 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     bu_vls_printf(&dmp->dm_tkName, "%s",
 		  (char *)Tk_Name(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
 
-    bu_vls_init(&str);
     bu_vls_printf(&str, "_init_dm %V %V\n",
 		  &init_proc_vls,
 		  &dmp->dm_pathName);

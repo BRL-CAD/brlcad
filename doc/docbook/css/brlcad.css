@@ -63,11 +63,7 @@ div.orderedlist li {
 }
 
 div.mediaobject {
-/*
-margin-left: auto;
-margin-right: auto;
-width: 8.5in;
-*/
+  text-align: center;
 }
 
 /*

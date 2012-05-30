@@ -1,7 +1,7 @@
 /*                  N M G _ R T _ I S E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1078,13 +1078,7 @@ isect_ray_vertexuse(struct ray_data *rd, struct vertexuse *vu_p)
     ray_hit_vertex(rd, vu_p, NMG_VERT_UNKNOWN);
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
-	bu_log(" Ray hits vertex, dist %g (priv=x%x, v magic=x%x)\n",
-	       myhit->hit.hit_dist,
-	       myhit->hit.hit_private,
-	       vu_p->v_p->magic);
-
-	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-	    nmg_rt_print_hitlist(rd->hitmiss[NMG_HIT_LIST]);
+	nmg_rt_print_hitlist(rd->hitmiss[NMG_HIT_LIST]);
     }
 
     return 1;
@@ -1180,9 +1174,7 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
     struct edgeuse *eu_p;
     struct edgeuse *fu_eu;
     vect_t edge_left;
-    vect_t eu_vec;
     vect_t norm;
-    int faces_found;
     vect_t r_dir_unit;
 
     VMOVE(r_dir_unit, rd->rp->r_dir);
@@ -1206,13 +1198,11 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
 
     s = nmg_find_s_of_eu(eu);
 
-    faces_found = 0;
     eu_p = eu->e_p->eu_p;
     do {
 	fu=nmg_find_fu_of_eu(eu_p);
 	if (fu) {
 	    fu_eu = eu_p;
-	    faces_found = 1;
 	    if (fu->orientation == OT_OPPOSITE &&
 		fu->fumate_p->orientation == OT_SAME) {
 		fu = fu->fumate_p;
@@ -1220,21 +1210,21 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
 	    }
 	    if (fu->orientation != OT_SAME) {
 		bu_log("%s[%d]: I can't seem to find an OT_SAME faceuse\nThis must be a `dangling' face.  I'll skip it\n", __FILE__, __LINE__);
-		goto next_edgeuse;
+		continue;
 	    }
 
 	    if (fu->s_p != s)
-		goto next_edgeuse;
+		continue;
 
 	    if (nmg_find_eu_leftvec(edge_left, eu_p)) {
 		bu_log("edgeuse not part of faceuse");
-		goto next_edgeuse;
+		continue;
 	    }
 
 	    if (! (NMG_3MANIFOLD &
 		   NMG_MANIFOLDS(rd->manifolds, fu->f_p))) {
 		bu_log("This is not a 3-Manifold face.  I'll skip it\n");
-		goto next_edgeuse;
+		continue;
 	    }
 
 	    cos_angle = VDOT(edge_left, r_dir_unit);
@@ -1260,29 +1250,13 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
 		    bu_log("New outb cos_angle %g\n", outb_cos_angle);
 	    }
 	}
-    next_edgeuse:	eu_p = eu_p->eumate_p->radial_p;
-    } while (eu_p != eu->e_p->eu_p);
+    } while ((eu_p = eu_p->eumate_p->radial_p) != eu->e_p->eu_p);
 
     if (!inb_fu || !outb_fu) {
-	return;
-    }
-
-    if (!faces_found) {
 	/* we hit a wire edge */
 	myhit->in_out = HMG_HIT_ANY_ANY;
 	myhit->hit.hit_private = (genptr_t)eu;
 	myhit->inbound_use = myhit->outbound_use = (long *)eu;
-
-	eu_p = BU_LIST_PNEXT_CIRC(edgeuse, eu);
-	VSUB2(eu_vec, eu->vu_p->v_p->vg_p->coord,
-	      eu_p->vu_p->v_p->vg_p->coord);
-	VCROSS(edge_left, eu_vec, r_dir_unit);
-	VCROSS(myhit->inbound_norm, eu_vec, edge_left);
-	if (VDOT(myhit->inbound_norm, r_dir_unit) > SMALL_FASTF) {
-	    VREVERSE(myhit->inbound_norm, myhit->inbound_norm);
-	}
-	VMOVE(myhit->outbound_norm, myhit->inbound_norm);
-
 	return;
     }
 
@@ -2293,7 +2267,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 	}
         dist *= MAGNITUDE(rd->rp->r_dir);
 	VJOIN1(hit_pt, rd->rp->r_pt, dist, r_dir_unit);
-	if (V3PT_OUT_RPP_TOL(hit_pt, fp->min_pt, fp->max_pt, rd->tol)) {
+	if (V3PT_OUT_RPP_TOL(hit_pt, fp->min_pt, fp->max_pt, rd->tol->dist)) {
 	    NMG_GET_HITMISS(myhit, rd->ap);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 	    myhit->hit.hit_private = (genptr_t)fu_p->f_p;
@@ -2707,7 +2681,16 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
 	BU_LIST_INIT(&rt_uniresource.re_nmgfree);
 
     rd.rd_m = nmg_find_model(&s->l.magic);
-    rd.manifolds = nmg_manifolds(rd.rd_m);
+
+    /* If there is a manifolds list attached to the model structure
+     * then use it, otherwise create a manifolds list to be used once
+     * in this function and then freed in this function.
+     */
+    if (rd.rd_m->manifolds) {
+        rd.manifolds = rd.rd_m->manifolds;
+    } else {
+        rd.manifolds = nmg_manifolds(rd.rd_m);
+    }
 
     if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
 	struct faceuse *fu;
@@ -2815,8 +2798,18 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
     /* free the hitmiss table */
     bu_free((char *)rd.hitmiss, "free nmg geom hit list");
 
-    /* free the manifold table */
-    bu_free((char *)rd.manifolds, "free manifolds table");
+    if (!rd.rd_m->manifolds) {
+        /* If there is no manfolds list attached to the model
+         * structure then the list was created here (within
+         * nmg_class_ray_vs_shell) and should be freed here.
+         * If there is a manifold list attached to the model
+         * structure then it was created in the nmg_bool
+         * function and should be freed in the nmg_bool
+         * function.
+         */
+        bu_free((char *)rd.manifolds, "free local manifolds table");
+	rd.manifolds = NULL; /* sanity */
+    }
 
     if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
 	bu_log("nmg_class_ray_vs_shell() returns %s(%d)\n",

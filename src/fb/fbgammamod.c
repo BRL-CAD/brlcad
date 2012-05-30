@@ -1,7 +1,7 @@
 /*                    F B G A M M A M O D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -72,6 +72,8 @@ do_file(void)
 
     if ( (ofp = fopen( output_file, "wb" )) == NULL )  {
 	perror(output_file);
+        fclose(ifp);
+        bu_free(output_file, "output_file");
 	bu_exit(2, NULL);
     }
     bu_free(output_file, "output_file");
@@ -93,6 +95,8 @@ do_file(void)
 	i = map.cm_blue[getc(ifp)];
 	putc( i, ofp );
     }
+    fclose(ifp);
+    fclose(ofp);
 }
 
 /*

@@ -1,7 +1,7 @@
 /*                           T O R . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
 int
 torus(int entityno)
 {
-    fastf_t rad=0.0;
-    fastf_t rad2=0.0;	/* radius of disc */
+    fastf_t rad = 0.0;
+    fastf_t rad2 = 0.0;	/* radius of disc */
     point_t center;		/* center point of torus */
     vect_t hdir;		/* direction in which to grow height */
     fastf_t x_1;

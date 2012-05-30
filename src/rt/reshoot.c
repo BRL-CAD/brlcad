@@ -1,7 +1,7 @@
 /*                     S H O T L I N E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -163,17 +163,14 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
     struct shot *sh = (struct shot *)ap->a_uptr;
     int status = 0;
     struct reg_hit *rh;
-    struct bu_vls v;
-    struct bu_vls result;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
+    struct bu_vls result = BU_VLS_INIT_ZERO;
     struct valstruct {
 	double val;
     } vs;
     static struct bu_structparse val_sp[] = {
 	{"%f", 1, "val", bu_offsetof(struct valstruct, val), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     };
-
-    bu_vls_init(&v);
-    bu_vls_init(&result);
 
     /* examine each partition until we get back to the head */
     rh = BU_LIST_FIRST(reg_hit, &sh->regions);
@@ -186,7 +183,9 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	 */
 	bu_vls_trunc(&v, 0);
 	bu_vls_printf(&v, "val=%g", pp->pt_inhit->hit_dist);
-	bu_struct_parse(&v, val_sp, (const char *)&vs);
+	if (bu_struct_parse(&v, val_sp, (const char *)&vs) < 0) {
+	  bu_log("Warning - bu_struct_parse failure in reshoot.c, function hit\n");
+	}
 
 	if (!EQUAL(vs.val, rh->indist)) {
 	    bu_vls_printf(&result, "\tinhit mismatch %g %g\n", pp->pt_inhit->hit_dist, rh->indist);
@@ -195,8 +194,9 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 
 	bu_vls_trunc(&v, 0);
 	bu_vls_printf(&v, "val=%g", pp->pt_outhit->hit_dist);
-	bu_struct_parse(&v, val_sp, (const char *)&vs);
-
+	if (bu_struct_parse(&v, val_sp, (const char *)&vs) < 0) {
+	  bu_log("Warning - bu_struct_parse failure in reshoot.c, function hit\n");
+	}
 
 	if (!EQUAL(vs.val, rh->outdist)) {
 	    bu_vls_printf(&result, "\touthit mismatch %g %g\n", pp->pt_outhit->hit_dist, rh->outdist);
@@ -315,9 +315,8 @@ main(int argc, char **argv)
     char idbuf[2048] = {0};	/* First ID record info */
 
     int status = 0;
-    struct bu_vls buf;
+    struct bu_vls buf = BU_VLS_INIT_ZERO;
     struct shot sh;
-
 
     progname = argv[0];
 
@@ -357,10 +356,6 @@ main(int argc, char **argv)
      */
     rt_prep_parallel(rtip, 1);
 
-
-    bu_vls_init(&buf);
-
-
     memset((void *)&sh, 0, sizeof(sh));
     BU_LIST_INIT(&sh.regions);
 
@@ -392,7 +387,9 @@ main(int argc, char **argv)
 	    default:
 	    {
 		struct reg_hit *rh = bu_calloc(1, sizeof (struct reg_hit), "");
-
+		BU_VLS_INIT(&rh->regname);
+		BU_VLS_INIT(&rh->in_primitive);
+		BU_VLS_INIT(&rh->out_primitive);
 
 		if (bu_struct_parse(&buf, reg_sp, (const char *)rh)) {
 		    bu_log("Error parsing region %s\nSkipping to next line\n",

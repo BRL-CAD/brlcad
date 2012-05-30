@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -400,7 +400,8 @@ _ged_dir_getspace(struct db_i *dbip,
 extern void _ged_trace(struct directory *dp,
 		       int pathpos,
 		       const mat_t old_xlate,
-		       struct _ged_trace_data *gtdp);
+		       struct _ged_trace_data *gtdp,
+		       int verbose);
 
 /* defined in translate_extrude.c */
 extern int _ged_translate_extrude(struct ged *gedp,

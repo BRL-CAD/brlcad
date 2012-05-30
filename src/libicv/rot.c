@@ -1,7 +1,7 @@
 /*                           R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -434,6 +434,7 @@ icv_rot(int argc, char **argv)
     }
 
 done:
+    fclose(ifp);
     bu_free(buffer, "buffer");
     bu_free(obuf, "obuf");
 

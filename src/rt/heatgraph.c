@@ -1,7 +1,7 @@
 /*                      H E A T G R A P H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -340,9 +340,11 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *fb
 	    }
  	}
     }
-    zoomH = fb_getheight(fbp) / height;
-    zoomW = fb_getwidth(fbp) / width;
-    (void)fb_view(fbp, width/2, height/2, zoomH, zoomW);
+    if (fbp != FBIO_NULL) {
+      zoomH = fb_getheight(fbp) / height;
+      zoomW = fb_getwidth(fbp) / width;
+      (void)fb_view(fbp, width/2, height/2, zoomH, zoomW);
+    }
 }
 
 

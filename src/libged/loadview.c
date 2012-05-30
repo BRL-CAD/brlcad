@@ -1,7 +1,7 @@
 /*                         L O A D V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -120,7 +120,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* make sure the file exists */
-    if (!bu_file_exists(argv[1])) {
+    if (!bu_file_exists(argv[1], NULL)) {
 	bu_log("Error: File %s does not exist\n", argv[1]);
 	return GED_ERROR;
     }
@@ -147,7 +147,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	if (ret != 1)
 	    bu_log("Failed to read buffer\n");
 
-	if (strncmp(buffer, "-p", 2)==0) {
+	if (bu_strncmp(buffer, "-p", 2)==0) {
 	    /* we found perspective */
 
 	    buffer[0]=' ';
@@ -156,7 +156,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	    /* bu_log("perspective=%d\n", perspective);*/
 	    gedp->ged_gvp->gv_perspective = perspective;
 
-	} else if (strncmp(buffer, "$*", 2)==0) {
+	} else if (bu_strncmp(buffer, "$*", 2)==0) {
 	    /* the next read is the file name, the objects come
 	     * after that
 	     */
@@ -184,7 +184,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 
 		/* restore state before leaving */
 		gedp->ged_gvp->gv_perspective = prevPerspective;
-
+		fclose(fp);
 		return GED_ERROR;
 	    }
 
@@ -199,10 +199,10 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 		bu_log("Failed to read object names\n");
 
 	    /* bu_log("OBJECTS=%s\n", objects);*/
-	    while ((!feof(fp)) && (strncmp(objects, "\\", 1)!=0)) {
+	    while ((!feof(fp)) && (bu_strncmp(objects, "\\", 1)!=0)) {
 
 		/* clean off the single quotes... */
-		if (strncmp(objects, "'", 1)==0) {
+		if (bu_strncmp(objects, "'", 1)==0) {
 		    objects[0]=' ';
 		    memset(objects+strlen(objects)-1, ' ', 1);
 		    sscanf(objects, "%10000s", objects);
@@ -222,7 +222,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* end iteration over reading in listed objects */
-	} else if (strncmp(buffer, "<<EOF", 5)==0) {
+	} else if (bu_strncmp(buffer, "<<EOF", 5)==0) {
 	    char *cmdBuffer = NULL;
 	    /* we are almost done .. read in the view commands */
 
@@ -327,7 +327,7 @@ _ged_cm_vrot(int argc, char **argv)
 
     if (argc < 17)
 	return -1;
-    for (i=0; i<16; i++)
+    for (i = 0; i < 16; i++)
 	_ged_viewrot[i] = atof(argv[i+1]);
     /* Processing is deferred until ged_cm_end() */
     return 0;
@@ -343,7 +343,7 @@ _ged_cm_orientation(int argc, char **argv)
     if (argc < 4)
 	return -1;
 
-    for (i=0; i<4; i++)
+    for (i = 0; i < 4; i++)
 	quat[i] = atof(argv[i+1]);
     quat_quat2mat(_ged_viewrot, quat);
 

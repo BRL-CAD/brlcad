@@ -25,7 +25,8 @@ sample_applicationsdir=$(SAMPLE_APPLICATIONS_DIR)
 sample_applications_DATA = tpkg.c
 
 EXTRA_DIST = \
-	CMakeLists.txt
+	CMakeLists.txt \
+	example
 
 DEPENDS = src/libbu
 

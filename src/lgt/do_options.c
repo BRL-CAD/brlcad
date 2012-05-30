@@ -1,7 +1,7 @@
 /*                    D O _ O P T I O N S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -543,10 +543,14 @@ f_Buffer(char **args)
     {
 	HMitem	*itemptr;
 	if (! tty)
-	{
-	    bu_log("pixel buffering command (%c): missing arg.\n",
-		   *args[0]);
+	{   
+	  if (args == NULL) {
+	    bu_log("f_Buffer - no args!\n");
 	    return	-1;
+	  }
+	  if (args[0])
+	    bu_log("pixel buffering command (%c): missing arg.\n", *args[0]);
+	  return	-1;
 	}
 	if ((itemptr = hmenuhit(&buffer_hmenu, 1, TOP_SCROLL_WIN))
 	    != (HMitem *) 0
@@ -600,9 +604,13 @@ f_Debug(char **args)
 	HMitem	*itemptr;
 	if (! tty)
 	{
-	    bu_log("debug command (%c): missing argument.\n",
-		   *args[0]);
+	  if (args == NULL) {
+	    bu_log("f_Debug - no args!\n");
 	    return	-1;
+	  }
+	  if (args[0])
+	    bu_log("debug command (%c): missing argument.\n", *args[0]);
+	  return	-1;
 	}
 	if ((itemptr = hmenuhit(&debug_hmenu, 1, TOP_SCROLL_WIN))
 	    != (HMitem *) 0
@@ -704,17 +712,19 @@ f_Batch()
     batch_com[6] = script;
     batch_com[7] = NULL;
 
-    if (make_Script(script) == -1)
+    if (make_Script(script) == -1) {
+	fclose(fp);
 	return	-1;
+    }
 
     (void) exec_Shell(batch_com);
     if (fp) {
 	fclose(fp);
 	fp = NULL;
     }
-    (void) unlink(script);
+    bu_file_delete(script);
 
-    return	1;
+    return 1;
 }
 
 
@@ -749,7 +759,7 @@ f_Batch()
 void
 pt_Select(int x, int y, int *xp, int *yp, int *originp)
 {
-    char		*args[3];
+    char		*args[5] = {NULL, NULL, NULL, NULL, NULL};
     char		buf1[5], buf2[5];
 
     args[1] = buf1;
@@ -1091,7 +1101,7 @@ f_Cursor_Module()
 				    fastf_t		scale;
 				    fastf_t		x_translate, y_translate;
 				    static char	buf[5];
-				    static char	*ar[3];
+				    static char	*ar[5] = {NULL, NULL, NULL, NULL, NULL};
 				    dx = mx - xx0;
 				    dx = abs(dx);
 				    dy = my - yy0;
@@ -1227,7 +1237,8 @@ f_Animate()
 	    bu_log("Illegal input (%s).\n", input_ln);
 	    return	-1;
 	}
-	ready_Output_Device(0);
+	if (! ready_Output_Device(0)) 
+	  return -1;
 	(void) signal(SIGINT, abort_RT);
 	for (frame_no = 0; ! user_interrupt; frame_no++)
 	{
@@ -1236,7 +1247,7 @@ f_Animate()
 	    if (frame_no == noframes)
 		frame_no = 0;
 	    (void) sprintf(suffixptr, ".%04d", frame_no);
-	    if (!bu_file_exists(movie_file))
+	    if (!bu_file_exists(movie_file, NULL))
 		continue;
 	    if ((movie_fbiop = fb_open(movie_file, grid_sz, grid_sz)) == FBIO_NULL)
 	    {
@@ -1650,8 +1661,10 @@ f_Rd_Raw_IR(char **args)
 	bu_log("Can not open \"%s\" for reading.\n", ir_file);
 	return	-1;
     }
-    if (! ready_Output_Device(0))
+    if (! ready_Output_Device(0)) {
+	fclose(ir_fp);
 	return	0;
+    }
     prnt_Event("Reading IR data...");
     if (! read_IR(ir_fp))
     {
@@ -1709,7 +1722,7 @@ f_Movie()
 {
     int		ret = TRUE;
     char		buf[10];
-    char		*locargs[3];
+    char		*locargs[5] = {NULL, NULL, NULL, NULL, NULL};
     /* Will use 'grid_sz' to control resolution. */
     force_cellsz = FALSE;
     (void) sprintf(prompt,
@@ -2417,9 +2430,13 @@ f_IRmodule(char **args)
 	HMitem	*itemptr;
 	if (! tty)
 	{
-	    bu_log("IR module command (%c): missing argument\n",
-		   *args[0]);
-	    return	-1;
+	  if (args == NULL) {
+	    bu_log("f_IRmodule - no args!\n");
+	    return      -1;
+	  }
+	  if (args[0])
+	    bu_log("IR module command (%c): missing argument.\n", *args[0]);
+	  return        -1;
 	}
 	if ((itemptr = hmenuhit(&irflags_hmenu, 1, TOP_SCROLL_WIN))
 	    != (HMitem *) 0
@@ -2464,8 +2481,10 @@ f_Rd_IR_Db(char **args)
 	bu_log("Can not open \"%s\" for reading.\n", ir_db_file);
 	return	-1;
     }
-    if (! ready_Output_Device(0))
+    if (! ready_Output_Device(0)) {
+	fclose(ir_fp);
 	return	-1;
+    }
     prnt_Event("Reading IR data base...");
     if (! read_Trie(ir_fp))
     {
@@ -2700,8 +2719,10 @@ f_Key_Frame(char **args)
 		    save_view_flag = FALSE;
 		    return	1;
 		}
-    if (! read_Frame(svkey_fp))
-	return	-1;
+    if (svkey_fp == NULL)
+	return -1;
+    if (!read_Frame(svkey_fp))
+	return -1;
 
     /* Compute view-to-model rotation matrix. */
     MAT_IDN(to_eye);
@@ -3026,13 +3047,15 @@ f_Exec_Shell(char **args)
 {
     int	i;
     int	exit_status;
+    char **stashed_args = NULL;
     if (args == NULL)
     {
-	if ((args = (char **) malloc(sizeof(char *)*2)) == (char **) 0)
+	if ((args = (char **) malloc(sizeof(char *)*3)) == (char **) 0)
 	{
-	    Malloc_Bomb(sizeof(char *)*2);
+	    Malloc_Bomb(sizeof(char *)*3);
 	    return	-1;
 	}
+	stashed_args = args;
 	args[0] = "!";
 	args[1] = NULL;
     }
@@ -3046,13 +3069,19 @@ exec_start :
 	{
 	    if (get_Input(input_ln, BUFSIZ, "Command line : ") == NULL
 		||	(args[0] = strtok(input_ln, " \t")) == NULL
-		)
+		) {
+		if(stashed_args)
+		    free(stashed_args);
 		return	-1;
+	    }
 	    for (i = 1; args[i-1] != NULL; ++i)
 		args[i] = strtok((char *) NULL, " \t");
 	}
-	else
+	else {
+	    if(stashed_args)
+		free(stashed_args);
 	    return	-1;
+	}
     }
     else
 	if ((args[0])[1] != '\0')
@@ -3088,6 +3117,8 @@ exec_start :
 	}
 	(void) f_Redraw();
     }
+    if(stashed_args)
+	free(stashed_args);
     return	1;
 }
 
@@ -3588,7 +3619,7 @@ pars_Argv(int argc, char **argv)
     /* Initialize terminal I/O. */
     if ((tty = isatty(0)))
     {
-	setbuf(stdout, malloc(BUFSIZ));
+	setlinebuf(stdout);
 	InitTermCap(stdout);
 	li = LI;	/* Default window size from termcap. */
 	co = CO;

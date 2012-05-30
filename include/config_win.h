@@ -1,7 +1,7 @@
 /*                          C O N F I G _ W I N . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -181,6 +181,7 @@ typedef int pid_t;
 typedef int socklen_t;
 typedef unsigned int gid_t;
 typedef unsigned int uid_t;
+typedef int mode_t;
 
 
 /*

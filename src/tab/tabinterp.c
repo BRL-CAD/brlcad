@@ -1,7 +1,7 @@
 /* T A B I N T E R P . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2011 United States Government as represented by
+ * Copyright (c) 1988-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -170,7 +170,7 @@ cm_file(int argc, char **argv)
     fastf_t *times;
     auto double d;
     int errors = 0;
-    struct bu_vls buf;	/* unlimited size input line buffer */
+    struct bu_vls buf = BU_VLS_INIT_ZERO;	/* unlimited size input line buffer */
 
     file = argv[1];
     if ((fp = fopen(file, "r")) == NULL) {
@@ -195,7 +195,6 @@ cm_file(int argc, char **argv)
     cnum = (int *)bu_malloc(argc * sizeof(int), "cnum[]");
     nwords = argc - 1;
     iwords = (char **)bu_malloc((nwords+1) * sizeof(char *), "iwords[]");
-    bu_vls_init(&buf);
 
     /* Retained dynamic memory */
     times = (fastf_t *)bu_malloc(nlines * sizeof(fastf_t), "times");
@@ -268,10 +267,10 @@ cm_file(int argc, char **argv)
 	    chan[cnum[i]].c_ival[line] = d;
 	}
     }
-    fclose(fp);
 
     /* Free intermediate dynamic memory */
  out:
+    fclose(fp);
     bu_free((char *)cnum, "cnum[]");
     bu_free((char *)iwords, "iwords[]");
     bu_vls_free(&buf);
@@ -585,13 +584,12 @@ linear_interpolate(struct chan *chp, fastf_t *times)
  * multiplying the time by a constant.
  */
 HIDDEN void
-rate_interpolate(struct chan *chp, fastf_t *times)
+rate_interpolate(struct chan *chp, fastf_t *UNUSED(times))
 {
     int t;		/* output time index */
     double ival;
     double rate;
 
-    times = times; /* quell warning */
     if (chp->c_ilen != 2) {
 	bu_log("rate_interpolate:  only 2 points (ival & rate) may be specified\n");
 	return;
@@ -609,14 +607,13 @@ rate_interpolate(struct chan *chp, fastf_t *times)
  *
  */
 HIDDEN void
-accel_interpolate(struct chan *chp, fastf_t *times)
+accel_interpolate(struct chan *chp, fastf_t *UNUSED(times))
 {
     int t;		/* output time index */
     double ival;
     double mul;
     double scale;
 
-    times = times; /* quell warning */
     if (chp->c_ilen != 2) {
 	bu_log("accel_interpolate:  only 2 points (ival & mul) may be specified\n");
 	return;
@@ -884,7 +881,7 @@ spline(struct chan *chp, fastf_t *times)
 	    D2yi = (end*v+rrr[i]-hi1*D2yi1-s*D2yn1)/
 		(diag[i]+corr);
 	    if (end) D2yn1 = D2yi;
-	    if (i>1) {
+	    if (i>=1) {
 		a = 2*(hi+hi1);
 		if (i==1) a += konst*hi;
 		if (i==chp->c_ilen-2) a += konst*hi1;

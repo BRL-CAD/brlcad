@@ -1,7 +1,7 @@
 /*                 BSplineCurveWithKnots.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,124 +35,126 @@
 string BSplineCurveWithKnots::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)BSplineCurveWithKnots::Create);
 
 static const char *Knot_type_string[] = {
-	"uniform_knots",
-	"unspecified",
-	"quasi_uniform_knots",
-	"piecewise_bezier_knots",
-	"unset"
+    "uniform_knots",
+    "unspecified",
+    "quasi_uniform_knots",
+    "piecewise_bezier_knots",
+    "unset"
 };
 
 BSplineCurveWithKnots::BSplineCurveWithKnots() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
+    knot_spec = Knot_type_unset;
 }
 
 BSplineCurveWithKnots::BSplineCurveWithKnots(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
+    step = sw;
+    id = step_id;
+    knot_spec = Knot_type_unset;
 }
 
 BSplineCurveWithKnots::~BSplineCurveWithKnots() {
 }
 
 bool
-BSplineCurveWithKnots::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+BSplineCurveWithKnots::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+    step=sw;
+    id = sse->STEPfile_id;
 
-	// load base class attributes
-	if ( !BSplineCurve::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << std::endl;
-		return false;
+    // load base class attributes
+    if ( !BSplineCurve::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << std::endl;
+	return false;
+    }
+
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
+
+    if (knot_multiplicities.empty()) {
+	STEPattribute *attr = step->getAttribute(sse,"knot_multiplicities");
+
+	if (attr) {
+	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
+	    IntNode *in = (IntNode *)sa->GetHead();
+
+	    while ( in != NULL) {
+		knot_multiplicities.push_back(in->value);
+		in = (IntNode *)in->NextNode();
+	    }
+	} else {
+	    std::cout << CLASSNAME << ": Error loading BSplineCurveWithKnots(knot_multiplicities)." << std::endl;
+	    return false;
 	}
+    }
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
+    if (knots.empty()) {
+	STEPattribute *attr = step->getAttribute(sse,"knots");
+	if (attr) {
+	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
+	    RealNode *rn = (RealNode *)sa->GetHead();
 
-	if (knot_multiplicities.empty()) {
-		STEPattribute *attr = step->getAttribute(sse,"knot_multiplicities");
-
-		if (attr) {
-			STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
-			IntNode *in = (IntNode *)sa->GetHead();
-
-			while ( in != NULL) {
-				knot_multiplicities.push_back(in->value);
-				in = (IntNode *)in->NextNode();
-			}
-		} else {
-			std::cout << CLASSNAME << ": Error loading BSplineCurveWithKnots(knot_multiplicities)." << std::endl;
-			return false;
-		}
+	    while ( rn != NULL) {
+		knots.push_back(rn->value);
+		rn = (RealNode *)rn->NextNode();
+	    }
+	} else {
+	    std::cout << CLASSNAME << ": Error loading BSplineCurveWithKnots(knots)." << std::endl;
+	    return false;
 	}
+    }
 
-	if (knots.empty()) {
-		STEPattribute *attr = step->getAttribute(sse,"knots");
-		if (attr) {
-			STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
-			RealNode *rn = (RealNode *)sa->GetHead();
+    knot_spec = (Knot_type)step->getEnumAttribute(sse,"knot_spec");
+    if (knot_spec > Knot_type_unset)
+	knot_spec = Knot_type_unset;
 
-			while ( rn != NULL) {
-				knots.push_back(rn->value);
-				rn = (RealNode *)rn->NextNode();
-			}
-		} else {
-			std::cout << CLASSNAME << ": Error loading BSplineCurveWithKnots(knots)." << std::endl;
-			return false;
-		}
-	}
-
-	knot_spec = (Knot_type)step->getEnumAttribute(sse,"knot_spec");
-	if (knot_spec > Knot_type_unset)
-		knot_spec = Knot_type_unset;
-
-	return true;
+    return true;
 }
 
 void
 BSplineCurveWithKnots::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Attributes:" << std::endl;
-	TAB(level+1); std::cout << "knot_multiplicities:";
-	LIST_OF_INTEGERS::iterator ii;
-	for(ii=knot_multiplicities.begin();ii!=knot_multiplicities.end();ii++) {
-		std::cout << " " << (*ii);
-	}
-	std::cout << std::endl;
+    TAB(level); std::cout << "Attributes:" << std::endl;
+    TAB(level+1); std::cout << "knot_multiplicities:";
+    LIST_OF_INTEGERS::iterator ii;
+    for(ii=knot_multiplicities.begin();ii!=knot_multiplicities.end();ii++) {
+	std::cout << " " << (*ii);
+    }
+    std::cout << std::endl;
 
-	TAB(level+1); std::cout << "knots:";
-	LIST_OF_REALS::iterator ir;
-	for(ir=knots.begin();ir!=knots.end();ir++) {
-		std::cout << " " << (*ir);
-	}
-	std::cout << std::endl;
+    TAB(level+1); std::cout << "knots:";
+    LIST_OF_REALS::iterator ir;
+    for(ir=knots.begin();ir!=knots.end();ir++) {
+	std::cout << " " << (*ir);
+    }
+    std::cout << std::endl;
 
-	TAB(level+1); std::cout << "knot_spec:" << Knot_type_string[knot_spec] << std::endl;
+    TAB(level+1); std::cout << "knot_spec:" << Knot_type_string[knot_spec] << std::endl;
 
-	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-	BSplineCurve::Print(level+1);
+    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    BSplineCurve::Print(level+1);
 }
 
 STEPEntity *
-BSplineCurveWithKnots::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		BSplineCurveWithKnots *object = new BSplineCurveWithKnots(sw,sse->STEPfile_id);
+BSplineCurveWithKnots::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	BSplineCurveWithKnots *object = new BSplineCurveWithKnots(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw,sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw,sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 // Local Variables:

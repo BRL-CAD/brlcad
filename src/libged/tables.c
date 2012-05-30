@@ -1,7 +1,7 @@
 /*                         T A B L E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@ tables_check(char *a, char *b)
 
 
 HIDDEN int
-tables_sol_number(const matp_t *matrix, char *name, int *old, long *numsol)
+tables_sol_number(const matp_t matrix, char *name, int *old, long *numsol)
 {
     int i;
     struct identt idbuf1, idbuf2;
@@ -81,9 +81,9 @@ tables_sol_number(const matp_t *matrix, char *name, int *old, long *numsol)
 
     memset(&idbuf1, 0, sizeof(struct identt));
     bu_strlcpy(idbuf1.i_name, name, sizeof(idbuf1.i_name));
-    MAT_COPY(idbuf1.i_mat, *matrix);
+    MAT_COPY(idbuf1.i_mat, matrix);
 
-    for (i=0; i<*numsol; i++) {
+    for (i = 0; i < *numsol; i++) {
 	(void)lseek(rd_idfd, i*(long)sizeof identt, 0);
 	readval = read(rd_idfd, &idbuf2, sizeof identt);
 
@@ -164,7 +164,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 	(void)fprintf(tabptr, " %-4ld %4ld %4ld %4ld %4ld  ",
 		      *numreg, comb->region_id, comb->aircode, comb->GIFTmater,
 		      comb->los);
-	for (k=0; k<BU_PTBL_LEN(cur_path); k++) {
+	for (k = 0; k < BU_PTBL_LEN(cur_path); k++) {
 	    struct directory *path_dp;
 
 	    path_dp = (struct directory *)BU_PTBL_GET(cur_path, k);
@@ -176,7 +176,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 	if (flag == ID_TABLE)
 	    goto out;
 
-	for (i=0; i<actual_count; i++) {
+	for (i = 0; i < actual_count; i++) {
 	    char op;
 	    int nsoltemp=0;
 	    struct rt_db_internal sol_intern;
@@ -220,11 +220,11 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 			bu_log("Could not import %s\n", tree_list[i].tl_tree->tr_l.tl_name);
 			nsoltemp = 0;
 		    }
-		    nsoltemp = tables_sol_number((const matp_t *)&temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
+		    nsoltemp = tables_sol_number((matp_t)temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
 		    (void)fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
 		}
 	    } else {
-		nsoltemp = tables_sol_number((const matp_t *)old_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
+		nsoltemp = tables_sol_number((matp_t)old_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
 		(void)fprintf(tabptr, "   %c [%d] ", op, nsoltemp);
 		continue;
 	    }
@@ -237,8 +237,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 
 	    if (!old && (sol_dp->d_flags & RT_DIR_SOLID)) {
 		/* if we get here, we must be looking for a solid table */
-		struct bu_vls tmp_vls;
-		bu_vls_init(&tmp_vls);
+		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 		if (!rt_functab[sol_intern.idb_type].ft_describe ||
 		    rt_functab[sol_intern.idb_type].ft_describe(&tmp_vls, &sol_intern, 1, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip) < 0) {
@@ -256,7 +255,7 @@ tables_new(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, con
 	bu_ptbl_ins(cur_path, (long *)dp);
 	cur_length = BU_PTBL_END(cur_path);
 
-	for (i=0; i<actual_count; i++) {
+	for (i = 0; i < actual_count; i++) {
 	    struct directory *nextdp;
 	    mat_t new_mat;
 
@@ -293,8 +292,8 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     static const char sortcmd_orig[] = "sort -n +1 -2 -o /tmp/ord_id ";
     static const char sortcmd_long[] = "sort --numeric --key=2, 2 --output /tmp/ord_id ";
     static const char catcmd[] = "cat /tmp/ord_id >> ";
-    struct bu_vls tmp_vls;
-    struct bu_vls cmd;
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
     struct bu_ptbl cur_path;
     int flag;
     int status;
@@ -323,9 +322,6 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-
-    bu_vls_init(&tmp_vls);
-    bu_vls_init(&cmd);
     bu_ptbl_init(&cur_path, 8, "f_tables: cur_path");
 
     status = GED_OK;
@@ -388,7 +384,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     (void)fprintf(tabptr, "7 -2         target units : %s\n",
 		  bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base));
     (void)fprintf(tabptr, "8 -1         objects      :");
-    for (i=2; i<argc; i++) {
+    for (i = 2; i < argc; i++) {
 	if ((i%8) == 0)
 	    (void)fprintf(tabptr, "\n                           ");
 	(void)fprintf(tabptr, " %s", argv[i]);
@@ -396,7 +392,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     (void)fprintf(tabptr, "\n\n");
 
     /* make the tables */
-    for (i=2; i<argc; i++) {
+    for (i = 2; i < argc; i++) {
 	struct directory *dp;
 
 	bu_ptbl_reset(&cur_path);
@@ -409,7 +405,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "Summary written in: %s\n", argv[1]);
 
     if (flag == SOL_TABLE || flag == REG_TABLE) {
-	(void)unlink("/tmp/mged_discr\0");
+	bu_file_delete("/tmp/mged_discr\0");
 	(void)fprintf(tabptr, "\n\nNumber Primitives = %ld  Number Regions = %ld\n",
 		      numsol, numreg);
 
@@ -447,7 +443,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 	if (ret != 0)
 	    bu_log("WARNING: cat failure detected\n");
 
-	(void)unlink("/tmp/ord_id\0");
+	bu_file_delete("/tmp/ord_id\0");
     }
 
 end:

@@ -1,7 +1,7 @@
 /*                         A T T R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,8 +36,8 @@
 int
 _ged_cmpattr(const void *p1, const void *p2)
 {
-    return bu_strcmp((char * const)((struct bu_attribute_value_pair *)p1)->name,
-		     (char * const)((struct bu_attribute_value_pair *)p2)->name);
+    return bu_strcmp(((struct bu_attribute_value_pair *)p1)->name,
+		     ((struct bu_attribute_value_pair *)p2)->name);
 }
 
 
@@ -183,9 +183,8 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    if (!old_val) {
 		(void)bu_avs_add(&avs, argv[i], argv[i+1]);
 	    } else {
-		struct bu_vls vls;
+		struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&vls);
 		bu_vls_strcat(&vls, old_val);
 		bu_vls_strcat(&vls, argv[i+1]);
 		bu_avs_add_vls(&avs, argv[i], &vls);
@@ -283,7 +282,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		while (*c) {
 		    bu_vls_putc(gedp->ged_result_str, *c);
 		    if (*c == '\n') {
-			for (k=0; k<tabs1; k++) {
+			for (k = 0; k < tabs1; k++) {
 			    bu_vls_putc(gedp->ged_result_str, '\t');
 			}
 		    }

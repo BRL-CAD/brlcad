@@ -1,7 +1,7 @@
 /*                       S U M M A R Y . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,17 +25,15 @@ void
 Summary()
 {
     int i;
-    int indep_entities=0;
+    int indep_entities = 0;
 
     bu_log("Summary of entity types found:\n");
-    for (i=0; i<=ntypes; i++)
-    {
+    for (i = 0; i <= ntypes; i++) {
 	if (typecount[i].count != 0)
 	    bu_log("%10d %s (type %d)\n", typecount[i].count, typecount[i].name, typecount[i].type);
     }
 
-    for (i=0; i<totentities; i++)
-    {
+    for (i = 0; i < totentities; i++) {
 	int subord;
 
 	subord = (dir[i]->status/10000)%100;
@@ -51,7 +49,7 @@ Zero_counts()
 {
     int i;
 
-    for (i=0; i<=ntypes; i++)
+    for (i = 0; i <= ntypes; i++)
 	typecount[i].count = 0;
 }
 

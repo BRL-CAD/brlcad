@@ -1,7 +1,7 @@
 /*                        N M G _ C K . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -148,9 +148,6 @@ nmg_veg(const uint32_t *eg)
     for (BU_LIST_FOR(eu2, bu_list, &((struct edge_g_lseg *)eg)->eu_hd2)) {
 	struct edgeuse *eu;
 
-	if (eu2 == NULL) {
-	    bu_bomb("nmg_veg null eu2\n");
-	}
 	eu = BU_LIST_MAIN_PTR(edgeuse, eu2, l2);
 	NMG_CK_EDGEUSE(eu);
 	if (eu->g.magic_p == eg) continue;
@@ -1589,7 +1586,7 @@ nmg_ck_closed_region(const struct nmgregion *r, const struct bn_tol *tol)
 void
 nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struct faceuse *fu2, const struct bn_tol *tol)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     struct faceuse *fu;
     struct vertexuse *vu;
     fastf_t dist1, dist2;
@@ -1613,7 +1610,6 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
     }
 
     if (!found1 || !found2) {
-	bu_vls_init(&str);
 	bu_vls_printf(&str, "nmg_ck_v_in_2fus: vertex %p not used in", (void *)vp);
 	if (!found1)
 	    bu_vls_printf(&str, " faceuse %p", (void *)fu1);
@@ -1629,7 +1625,6 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
     dist2 = DIST_PT_PLANE(vp->vg_p->coord, n2);
 
     if (!NEAR_ZERO(dist1, tol->dist) || !NEAR_ZERO(dist2, tol->dist)) {
-	bu_vls_init(&str);
 	bu_vls_printf(&str, "nmg_ck_v_in_2fus: vertex %p (%g %g %g) not in plane of" ,
 		      (void *)vp, V3ARGS(vp->vg_p->coord));
 	if (!NEAR_ZERO(dist1, tol->dist))

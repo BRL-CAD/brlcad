@@ -1,7 +1,7 @@
 /*                    S H _ P L A S T I C . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2011 United States Government as represented by
+ * Copyright (c) 1998-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -105,7 +105,7 @@ phong_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
     register struct phong_specific *pp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(pp, phong_specific);
+    BU_GET(pp, struct phong_specific);
     *dpp = pp;
 
     pp->magic = PL_MAGIC;
@@ -138,7 +138,7 @@ mirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
     register struct phong_specific *pp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(pp, phong_specific);
+    BU_GET(pp, struct phong_specific);
     *dpp = pp;
 
     pp->magic = PL_MAGIC;
@@ -171,7 +171,7 @@ glass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
     register struct phong_specific *pp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(pp, phong_specific);
+    BU_GET(pp, struct phong_specific);
     *dpp = pp;
 
     pp->magic = PL_MAGIC;
@@ -309,6 +309,9 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 
     if (!ps || ps->magic != PL_MAGIC)
 	bu_bomb("phong_render: bad magic\n");
+
+    if (pp == NULL)
+	bu_bomb("phong_render: bad partiton\n");
 
     if (rdebug&RDEBUG_SHADE)
 	bu_struct_print("phong_render", phong_parse, (char *)ps);
@@ -450,7 +453,7 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 		}
 		/* Get Obj Hit Point For Attenuation */
 #ifndef RT_MULTISPECTRAL
-		if (pp && PM_Activated) {
+		if (PM_Activated) {
 		    VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir)
 			dist= sqrt((pt[0]-lp->lt_pos[0])*(pt[0]-lp->lt_pos[0]) + (pt[1]-lp->lt_pos[1])*(pt[1]-lp->lt_pos[1]) + (pt[2]-lp->lt_pos[2])*(pt[2]-lp->lt_pos[2]))/1000.0;
 		    dist= (1.0/(0.1 + 1.0*dist + 0.01*dist*dist));

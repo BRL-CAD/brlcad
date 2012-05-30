@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2011 United States Government as represented by
+ * Copyright (c) 1999-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,9 @@ extern struct dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
 extern struct dm *ps_open(Tcl_Interp *interp, int argc, const char *argv[]);
 
 #ifdef DM_X
+#  if defined(HAVE_TK)
 extern struct dm *X_open_dm();
+#  endif
 #endif /* DM_X */
 
 #ifdef DM_TK
@@ -47,9 +49,11 @@ extern struct dm *tk_open_dm();
 #endif /* DM_TK */
 
 #ifdef DM_OGL
+#  if defined(HAVE_TK)
 extern struct dm *ogl_open();
 extern void ogl_fogHint();
 extern int ogl_share_dlist();
+#  endif
 #endif /* DM_OGL */
 
 #ifdef DM_RTGL
@@ -68,10 +72,19 @@ extern int wgl_share_dlist();
 HIDDEN struct dm *
 Nu_open(Tcl_Interp *interp, int argc, const char *argv[])
 {
-    if (interp || argc < 0 || !argv)
+    struct dm *dmp;
+
+    if (argc < 0 || !argv)
 	return DM_NULL;
 
-    return DM_NULL;
+    BU_GET(dmp, struct dm);
+    if (dmp == DM_NULL)
+	return DM_NULL;
+
+    *dmp = dm_Null;
+    dmp->dm_interp = interp;
+
+    return dmp;
 }
 
 
@@ -86,16 +99,20 @@ dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
 	case DM_TYPE_PS:
 	    return ps_open(interp, argc, argv);
 #ifdef DM_X
+#  if defined(HAVE_TK)
 	case DM_TYPE_X:
 	    return X_open_dm(interp, argc, argv);
+#  endif
 #endif
 #ifdef DM_TK
 	case DM_TYPE_TK:
 	    return tk_open_dm(interp, argc, argv);
 #endif
 #ifdef DM_OGL
+#  if defined(HAVE_TK)
 	case DM_TYPE_OGL:
 	    return ogl_open(interp, argc, argv);
+#  endif
 #endif
 #ifdef DM_RTGL
 	case DM_TYPE_RTGL:
@@ -135,8 +152,10 @@ dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
 
     switch (dmp1->dm_type) {
 #ifdef DM_OGL
+#  if defined(HAVE_TK)
 	case DM_TYPE_OGL:
 	    return ogl_share_dlist(dmp1, dmp2);
+#  endif
 #endif
 #ifdef DM_RTGL
 	case DM_TYPE_RTGL:
@@ -191,9 +210,11 @@ dm_fogHint(struct dm *dmp, int fastfog)
 
     switch (dmp->dm_type) {
 #ifdef DM_OGL
+#  if defined(HAVE_TK)
 	case DM_TYPE_OGL:
 	    ogl_fogHint(dmp, fastfog);
 	    return;
+#  endif
 #endif
 #ifdef DM_RTGL
 	case DM_TYPE_RTGL:

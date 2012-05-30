@@ -1,7 +1,7 @@
 /*                 BSplineCurveWithKnots.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,23 +39,20 @@ private:
 protected:
 	LIST_OF_INTEGERS knot_multiplicities;
 	LIST_OF_REALS knots;
-	//TODO: fix YAYA references
-#ifdef YAYA
-    Knot_type knot_spec;
-#else
-    int knot_spec;
-#endif
+
+
+	Knot_type knot_spec;
 
 public:
 	BSplineCurveWithKnots();
 	virtual ~BSplineCurveWithKnots();
 	BSplineCurveWithKnots(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual void Print(int level);
 
 	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
 };
 
 #endif /* BSPLINECURVEWITHKNOTS_H_ */

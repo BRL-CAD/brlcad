@@ -1,7 +1,7 @@
 /*                         E N F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2011 United States Government as represented by
+ * Copyright (c) 2001-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -225,12 +225,10 @@ Usage(void)
 void
 Make_brlcad_names( struct obj_info *part )
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     int count=0;
     char *tmp_name, *ptr;
     Tcl_HashEntry *hash_entry=NULL;
-
-    bu_vls_init( &vls );
 
     if ( use_part_name_hash ) {
 	hash_entry = Tcl_FindHashEntry( &htbl, part->obj_name );
@@ -396,17 +394,17 @@ Part_import( int id_start )
     part->obj_type = PART_TYPE;
     part->obj_id = id_start;
     while ( bu_fgets( line, MAX_LINE_SIZE, fd_in ) ) {
-	if ( !strncmp( line, "PartName", 8 ) ) {
+	if ( !bu_strncmp( line, "PartName", 8 ) ) {
 	    line[strlen( line ) - 1] = '\0';
 	    part->obj_name = bu_strdup( &line[9] );
 	    lower_case( part->obj_name );
 	    Make_brlcad_names( part );
-	} else if ( !strncmp( line, "FaceCount", 9 ) ) {
+	} else if ( !bu_strncmp( line, "FaceCount", 9 ) ) {
 	    surf_count = atoi( &line[10] );
 	    if ( surf_count == 0 ) {
 		last_surf = 1;
 	    }
-	} else if ( !strncmp( line, "EndPartId", 9 ) ) {
+	} else if ( !bu_strncmp( line, "EndPartId", 9 ) ) {
 	    /* found end of part, check id */
 	    id_end = atoi( &line[10] );
 	    if ( id_end != id_start )
@@ -414,7 +412,7 @@ Part_import( int id_start )
 	    if ( last_surf ) {
 		break;
 	    }
-	} else if ( !strncmp( line, "FaceRGB", 7 ) ) {
+	} else if ( !bu_strncmp( line, "FaceRGB", 7 ) ) {
 	    /* get face color */
 	    char *ptr;
 
@@ -424,11 +422,11 @@ Part_import( int id_start )
 		rgb[i] = atof( ptr );
 		ptr = strtok( (char *)NULL, " \t" );
 	    }
-	} else if ( !strncmp( line, "Facet", 5 ) ) {
+	} else if ( !bu_strncmp( line, "Facet", 5 ) ) {
 	    /* read a triangle */
 	    VSETALL( tri, -1 );
 	    corner_index = -1;
-	} else if ( !strncmp( line, "Face", 4 ) ) {
+	} else if ( !bu_strncmp( line, "Face", 4 ) ) {
 	    /* start of a surface */
 	    int surf_no;
 
@@ -436,14 +434,14 @@ Part_import( int id_start )
 	    if ( surf_no == surf_count ) {
 		last_surf = 1;
 	    }
-	} else if ( !strncmp( line, "TriangleCount", 13 ) ) {
+	} else if ( !bu_strncmp( line, "TriangleCount", 13 ) ) {
 	    /* get number of triangles for this surface */
-	} else if ( !strncmp( line, "Verticies", 9 ) ) {
+	} else if ( !bu_strncmp( line, "Verticies", 9 ) ) {
 	    /* get vertex list for this triangle */
-	} else if ( !strncmp( line, "Vertex", 6 ) ) {
+	} else if ( !bu_strncmp( line, "Vertex", 6 ) ) {
 	    /* get a vertex */
-	    char *ptr;
-	    double v[3];
+	    char *ptr = NULL;
+	    vect_t v = VINIT_ZERO;
 
 	    i = 7;
 	    while ( !isspace( line[i] ) && line[i] != '\0' )
@@ -459,9 +457,9 @@ Part_import( int id_start )
 		    add_triangle( tri );
 		}
 	    }
-	} else if ( !strncmp( line, "Normal", 6 ) ) {
+	} else if ( !bu_strncmp( line, "Normal", 6 ) ) {
 	    /* get a vertex normal */
-	} else if ( !strncmp( line, "PointCount", 10 ) ) {
+	} else if ( !bu_strncmp( line, "PointCount", 10 ) ) {
 	    /* get number of vertices for this surface */
 	} else
 	    bu_exit( 1, "ERROR: unrecognized line encountered while processing part id %d:\n%s\n", id_start, line );
@@ -530,14 +528,14 @@ Assembly_import( int id_start )
     this_assem->part_count = 0;
     this_assem->members = NULL;
     while ( bu_fgets( line, MAX_LINE_SIZE, fd_in ) ) {
-	if ( !strncmp( line, "AssemblyName", 12 ) ) {
+	if ( !bu_strncmp( line, "AssemblyName", 12 ) ) {
 	    line[strlen( line ) - 1] = '\0';
 	    this_assem->obj_name = bu_strdup( &line[13] );
 	    lower_case( this_assem->obj_name );
 	    DO_INDENT;
 	    bu_log( "Start of assembly %s (id = %d)\n", this_assem->obj_name, id_start );
 	    indent_level += indent_delta;
-	} else if ( !strncmp( line, "PartId", 6 ) ) {
+	} else if ( !bu_strncmp( line, "PartId", 6 ) ) {
 	    /* found a member part */
 	    member_id = atoi( &line[7] );
 	    member = Part_import( member_id );
@@ -549,7 +547,7 @@ Assembly_import( int id_start )
 		this_assem->part_count * sizeof( struct obj_info *),
 		"this_assem->members" );
 	    this_assem->members[this_assem->part_count-1] = member;
-	} else if ( !strncmp( line, "AssemblyId", 10 ) ) {
+	} else if ( !bu_strncmp( line, "AssemblyId", 10 ) ) {
 	    /* found a member assembly */
 	    member_id = atoi( &line[11] );
 	    member = Assembly_import( member_id );
@@ -559,7 +557,7 @@ Assembly_import( int id_start )
 		this_assem->part_count * sizeof( struct obj_info *),
 		"this_assem->members" );
 	    this_assem->members[this_assem->part_count-1] = member;
-	} else if ( !strncmp( line, "EndAssemblyId", 13 ) ) {
+	} else if ( !bu_strncmp( line, "EndAssemblyId", 13 ) ) {
 	    /* found end of assembly, make sure it is this one */
 	    id_end = atoi( &line[14] );
 	    if ( id_end != id_start )
@@ -605,12 +603,14 @@ main( int argc, char *argv[] )
     char line[MAX_LINE_SIZE];
     char *input_file, *output_file;
     FILE *fd_parts;
-    struct obj_info **top_level_assems=NULL;
-    int top_level_assem_count=0;
-    int curr_top_level=-1;
+    struct obj_info **top_level_assems = NULL;
+    int top_level_assem_count = 0;
+    int curr_top_level = -1;
     fastf_t tmp;
     int id;
     int c;
+
+    bu_setprogname(argv[0]);
 
     local_tol = 0.0005;
     local_tol_sq = local_tol * local_tol;
@@ -680,10 +680,10 @@ main( int argc, char *argv[] )
 
     /* finally, start processing the input */
     while ( bu_fgets( line, MAX_LINE_SIZE, fd_in ) ) {
-	if ( !strncmp( line, "FileName", 8 ) ) {
+	if ( !bu_strncmp( line, "FileName", 8 ) ) {
 	    bu_log( "Converting facets originally from %s",
 		    &line[9] );
-	} else if ( !strncmp( line, "TopAssemblies", 13 ) ) {
+	} else if ( !bu_strncmp( line, "TopAssemblies", 13 ) ) {
 	    bu_log( "Top level assemblies: %s", &line[14] );
 	    top_level_assem_count = atoi( &line[14] );
 	    if ( top_level_assem_count < 1 ) {
@@ -693,9 +693,9 @@ main( int argc, char *argv[] )
 								  sizeof( struct obj_info * ),
 								  "top_level_assems" );
 	    }
-	} else if ( !strncmp( line, "PartCount", 9 ) ) {
+	} else if ( !bu_strncmp( line, "PartCount", 9 ) ) {
 	    bu_log( "Part count: %s", &line[10] );
-	} else if ( !strncmp( line, "AssemblyId", 10 ) ) {
+	} else if ( !bu_strncmp( line, "AssemblyId", 10 ) ) {
 	    id = atoi( &line[11] );
 	    curr_top_level++;
 	    if ( curr_top_level >= top_level_assem_count ) {
@@ -709,7 +709,7 @@ main( int argc, char *argv[] )
 								   "top_level_assems" );
 	    }
 	    top_level_assems[curr_top_level] = Assembly_import( id );
-	} else if ( !strncmp( line, "PartId", 6 ) ) {
+	} else if ( !bu_strncmp( line, "PartId", 6 ) ) {
 	    /* found a top-level part */
 	    id = atoi( &line[7] );
 	    (void)Part_import( id );

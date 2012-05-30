@@ -1,7 +1,7 @@
 # Minimum required version of CMake
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 IF(COMMAND CMAKE_POLICY)
-	CMAKE_POLICY(SET CMP0003 NEW)
+  CMAKE_POLICY(SET CMP0003 NEW)
 ENDIF(COMMAND CMAKE_POLICY)
 
 # Set CMake project name
@@ -15,49 +15,47 @@ SET(PACKAGE_BUGREPORT "re2c-general@lists.sourceforge.net")
 SET(PACKAGE_STRING "${PACKAGE} ${VERSION}")
 SET(PACKAGE_TARNAME ${PACKAGE})
 SET(PACKAGE_VERSION ${VERSION})
+SET(PACKAGE_RELEASE 1)
 
 INCLUDE_DIRECTORIES(
-	${CMAKE_CURRENT_BINARY_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}
-	)
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  )
 
-SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
-find_package(YACC)
+SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/CMake")
+find_package(LEMON)
+if(NOT COMMAND LEMON_TARGET)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/LEMON_Util.cmake)
+endif(NOT COMMAND LEMON_TARGET)
 
-IF(YACC_EXECUTABLE)
-	YACC_TARGET(re2cParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cc COMPILE_FLAGS "-d")
-	SET(YACC_PARSER_SRCS ${YACC_re2cParser_OUTPUTS})
-ELSE(YACC_EXECUTABLE)
-	SET(YACC_PARSER_SRCS bootstrap/parser.cc)
-	INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/bootstrap)
-ENDIF(YACC_EXECUTABLE)
+LEMON_TARGET(re2cParse parser.yy parser.cc parser_tokens.h)
 
 SET(re2c_common_SRCS
-	code.cc
-	dfa.cc
-	main.cc
-	${YACC_PARSER_SRCS}
-	actions.cc
-	substr.cc
-	translate.cc
-	mbo_getopt.cc
-	)
+  code.cc
+  dfa.cc
+  main.cc
+  ${LEMON_re2cParse_OUTPUT_SOURCE}
+  actions.cc
+  substr.cc
+  translate.cc
+  mbo_getopt.cc
+  )
 
 SET(re2c_HDRS
-	basics.h
-	dfa.h
-	globals.h
-	ins.h
-	parser.h
-	re.h
-	scanner.h
-	substr.h
-	token.h
-	mbo_getopt.h
-	code.h
-	stream_lc.h
-	code_names.h
-	)
+  basics.h
+  dfa.h
+  globals.h
+  ins.h
+  re2c_parser.h
+  re.h
+  scanner.h
+  substr.h
+  token.h
+  mbo_getopt.h
+  code.h
+  stream_lc.h
+  code_names.h
+  )
 
 SET(STDC_HEADERS 1)
 INCLUDE(CheckIncludeFile)
@@ -86,34 +84,44 @@ CHECK_TYPE_SIZE(short SIZEOF_SHORT)
 configure_file(config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 add_definitions(-DHAVE_CONFIG_H)
 
+
 SET(re2c_bootstrap_SRCS
-	${re2c_common_SRCS}
-	bootstrap/scanner.cc
-	)
+  ${re2c_common_SRCS}
+  bootstrap/scanner.cc
+  )
+SET_SOURCE_FILES_PROPERTIES(bootstrap/scanner.cc PROPERTIES OBJECT_DEPENDS ${LEMON_re2cParse_OUTPUT_HEADER})
 
 add_executable(re2c_bootstrap ${re2c_bootstrap_SRCS})
 
+# Need to link against stl library with some compilers.
+target_link_libraries(re2c_bootstrap "${STDCXX_LIBRARIES}")
+
+if(TARGET_RUNTIME_OUTPUT_DIRECTORY)
+  set_target_properties(re2c_bootstrap PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TARGET_RUNTIME_OUTPUT_DIRECTORY}")
+  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+    set_target_properties(re2c_bootstrap PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER} "${TARGET_RUNTIME_OUTPUT_DIRECTORY}")
+  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+endif(TARGET_RUNTIME_OUTPUT_DIRECTORY)
+IF(${LEMON_EXECUTABLE_TARGET})
+  add_dependencies(re2c_bootstrap ${LEMON_EXECUTABLE_TARGET})
+ENDIF(${LEMON_EXECUTABLE_TARGET})
+
 ADD_CUSTOM_COMMAND(
-	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc
-	COMMAND re2c_bootstrap -bi -o ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc	${CMAKE_CURRENT_SOURCE_DIR}/scanner.re
-	DEPENDS re2c_bootstrap
-	)
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc
+  COMMAND re2c_bootstrap -bi -o ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc	${CMAKE_CURRENT_SOURCE_DIR}/scanner.re
+  DEPENDS re2c_bootstrap 
+  )
 
 SET(re2c_SRCS
-	${re2c_common_SRCS}
-	${CMAKE_CURRENT_BINARY_DIR}/scanner.cc
-	)
+  ${re2c_common_SRCS}
+  ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc
+  )
 
 add_executable(re2c ${re2c_SRCS})
 
+# Need to link against stl library with some compilers.
+target_link_libraries(re2c "${STDCXX_LIBRARIES}")
+
 configure_file(README.in ${CMAKE_CURRENT_BINARY_DIR}/README)
 configure_file(run_tests.sh.in ${CMAKE_CURRENT_BINARY_DIR}/run_tests.sh @ONLY)
-
-	#	man_MANS     = re2c.1
-
-#CXXFLAGS     = -O2 -Wall -Wno-unused -Wno-parentheses -Wno-deprecated
-#CXXFLAGS     = -ggdb -fno-inline -O2 -Wall -Wextra -pedantic -Wconversion -Wpointer-arith -Wwrite-strings -Wredundant-decls -Werror -Wunused-function -DPEDANTIC
-
-#RE2CFLAGS    = -bi
-
-#CLEANFILES   = parser.cc y.tab.c y.tab.h scanner.cc re2c.1 .version htdocs/manual.html

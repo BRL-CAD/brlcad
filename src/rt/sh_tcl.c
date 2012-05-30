@@ -1,7 +1,7 @@
 /*                        S H _ T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2011 United States Government as represented by
+ * Copyright (c) 1997-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -73,7 +73,7 @@ sh_directchange_rgb(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
     b = atoi(argv[3+2]) / 255.;
 
     rtip = (struct rt_i *)atol(argv[1]);
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     if ( rtip->needprep )  {
 	Tcl_AppendResult(interp, "rt_prep() hasn't been called yet, error.\n", NULL);
@@ -123,9 +123,9 @@ int
 sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct rt_i	*rtip;
-    struct region	*regp;
+    struct region *regp;
     struct directory *dp;
-    struct bu_vls	shader;
+    struct bu_vls shader = BU_VLS_INIT_ZERO;
 
     if ( argc < 4 )  {
 	Tcl_AppendResult(interp, "Usage: sh_directchange_shader $rtip comb shader_arg(s)\n", NULL);
@@ -133,7 +133,7 @@ sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int ar
     }
 
     rtip = (struct rt_i *)atol(argv[1]);
-    RT_CK_RTI_TCL(interp, rtip);
+    RT_CK_RTI(rtip);
 
     if ( rtip->needprep )  {
 	Tcl_AppendResult(interp, "rt_prep() hasn't been called yet, error.\n", NULL);
@@ -145,7 +145,6 @@ sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int ar
 	return TCL_ERROR;
     }
 
-    bu_vls_init(&shader);
     bu_vls_from_argv(&shader, argc-3, argv+3);
     bu_vls_trimspace(&shader);
 

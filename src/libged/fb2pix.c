@@ -1,7 +1,7 @@
 /*                        F B 2 P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -101,7 +101,7 @@ get_args(int argc, char **argv)
 			  file_name);
 	    return 0;
 	}
-	(void)bu_fchmod(outfp, 0444);
+	(void)bu_fchmod(fileno(outfp), 0444);
     }
 
     if (argc > ++bu_optind)

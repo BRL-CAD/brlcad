@@ -1,7 +1,7 @@
 /*                   V I E W P O I N T - G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -91,6 +91,8 @@ main(int argc, char **argv)
     struct shell *s;
     struct faceuse *fu;
     struct wmember reg_head;
+
+    bu_setprogname(argv[0]);
 
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;

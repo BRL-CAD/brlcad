@@ -1,7 +1,7 @@
 /*                       G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2011 United States Government as represented by
+ * Copyright (c) 1989-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -161,9 +161,7 @@ rt_generic_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
     }
 
     if (attr == (char *)0) {
-	struct bu_vls str;
-
-	bu_vls_init(&str);
+	struct bu_vls str = BU_VLS_INIT_ZERO;
 
 	/* Print out solid type and all attributes */
 	bu_vls_printf(logstr, "%s", ftp->ft_label);

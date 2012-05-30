@@ -1,7 +1,7 @@
 /*                          P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -74,9 +74,8 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
     CHECK_DBI_NULL;
 
     if (argc < 1 || 2 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help area");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -109,9 +108,8 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    if (!sp->s_Eflag && sp->s_soldash != 0) {
-		struct bu_vls vls;
+		struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "help area");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
@@ -126,10 +124,9 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	Tcl_AppendResult(interp, "Tolerance is ", argv[1], "\n", (char *)NULL);
 	tol_ptr = argv[1];
     } else {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	double tol = 0.0005;
 
-	bu_vls_init(&tmp_vls);
 	sprintf(tol_str, "%e", tol);
 	tol_ptr = tol_str;
 	bu_vls_printf(&tmp_vls, "Auto-tolerance is %s\n", tol_str);
@@ -210,15 +207,20 @@ f_area(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 		    switch (*cmd) {
 			case BN_VLIST_POLY_START:
 			case BN_VLIST_POLY_VERTNORM:
+			case BN_VLIST_TRI_START:
+		        case BN_VLIST_TRI_VERTNORM:
 			    continue;
 			case BN_VLIST_POLY_MOVE:
 			case BN_VLIST_LINE_MOVE:
+		        case BN_VLIST_TRI_MOVE:
 			    /* Move, not draw */
 			    MAT4X3VEC(last, view_state->vs_gvp->gv_rotation, *pt);
 			    continue;
 			case BN_VLIST_POLY_DRAW:
 			case BN_VLIST_POLY_END:
 			case BN_VLIST_LINE_DRAW:
+		        case BN_VLIST_TRI_DRAW:
+		        case BN_VLIST_TRI_END:
 			    /* draw.  */
 			    MAT4X3VEC(fin, view_state->vs_gvp->gv_rotation, *pt);
 			    break;

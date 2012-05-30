@@ -1,7 +1,7 @@
 /*                       S H _ T E X T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2011 United States Government as represented by
+ * Copyright (c) 1998-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,8 +56,6 @@ struct txt_specific {
 #define TX_O(m) bu_offsetof(struct txt_specific, m)
 #define TX_AO(m) bu_offsetofarray(struct txt_specific, m)
 
-struct region env_region;  /* initialized in the app code view handler */
-
 
 HIDDEN void txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value);
 HIDDEN void txt_source_hook(const struct bu_structparse *ip, const char *sp_name, genptr_t base, char *p);
@@ -91,9 +89,9 @@ HIDDEN void
 txt_source_hook(const struct bu_structparse *UNUSED(ip), const char *sp_name, genptr_t base, char *UNUSED(p))
 {
     struct txt_specific *textureSpecific = (struct txt_specific *)base;
-    if (strncmp(sp_name, "file", 4)==0) {
+    if (bu_strncmp(sp_name, "file", 4)==0) {
 	textureSpecific->tx_datasrc=TXT_SRC_FILE;
-    } else if (strncmp(sp_name, "obj", 3)==0) {
+    } else if (bu_strncmp(sp_name, "obj", 3)==0) {
 	textureSpecific->tx_datasrc=TXT_SRC_OBJECT;
     } else {
 	textureSpecific->tx_datasrc=TXT_SRC_AUTO;
@@ -612,11 +610,10 @@ txt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
     int pixelbytes = 3;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(tp, txt_specific);
+    BU_GET(tp, struct txt_specific);
     *dpp = tp;
 
     bu_vls_init(&tp->tx_name);
-    /* !?! tp->tx_name[0] = '\0';*/
 
     /* defaults */
     tp->tx_w = tp->tx_n = -1;
@@ -747,7 +744,7 @@ ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *
     register struct ckr_specific *ckp;
 
     /* Default will be white and black checkers */
-    BU_GETSTRUCT(ckp, ckr_specific);
+    BU_GET(ckp, struct ckr_specific);
     *dpp = ckp;
     ckp->ckr_a[0] = ckp->ckr_a[1] = ckp->ckr_a[2] = 255;
     ckp->ckr_b[0] = ckp->ckr_b[1] = ckp->ckr_b[2] = 0;
@@ -980,7 +977,7 @@ envmap_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *UNUSE
  */
 /* VARARGS */
 int
-mlib_zero()
+mlib_zero(struct application *UNUSED(a), const struct partition *UNUSED(b), struct shadework *UNUSED(c), genptr_t UNUSED(d))
 {
     return 0;
 }
@@ -994,7 +991,7 @@ mlib_zero()
  */
 /* VARARGS */
 int
-mlib_one()
+mlib_one(struct region *UNUSED(a), struct bu_vls *UNUSED(b), genptr_t *UNUSED(c), const struct mfuncs *UNUSED(d), struct rt_i *UNUSED(e))
 {
     return 1;
 }
@@ -1005,7 +1002,12 @@ mlib_one()
  */
 /* VARARGS */
 void
-mlib_void()
+mlib_void(struct region *UNUSED(a), genptr_t UNUSED(b))
+{
+}
+
+static void
+mlib_void2(genptr_t UNUSED(b))
 {
 }
 
@@ -1013,10 +1015,10 @@ struct mfuncs txt_mfuncs[] = {
     {MF_MAGIC,	"texture",	0,	MFI_UV,		0,	txt_setup,	txt_render,	txt_print,	txt_free },
     {MF_MAGIC,	"bwtexture",	0,	MFI_UV,		0,	txt_setup,	bwtxt_render,	txt_print,	txt_free },
     {MF_MAGIC,	"checker",	0,	MFI_UV,		0,	ckr_setup,	ckr_render,	ckr_print,	ckr_free },
-    {MF_MAGIC,	"testmap",	0,	MFI_UV,		0,	mlib_one,	tstm_render,	mlib_void,	mlib_void },
-    {MF_MAGIC,	"fakestar",	0,	0,		0,	mlib_one,	star_render,	mlib_void,	mlib_void },
+    {MF_MAGIC,	"testmap",	0,	MFI_UV,		0,	mlib_one,	tstm_render,	mlib_void,	mlib_void2 },
+    {MF_MAGIC,	"fakestar",	0,	0,		0,	mlib_one,	star_render,	mlib_void,	mlib_void2 },
     {MF_MAGIC,	"bump",		0,	MFI_UV|MFI_NORMAL, 0,	txt_setup,	bmp_render,	txt_print,	txt_free },
-    {MF_MAGIC,	"envmap",	0,	0,		0,	envmap_setup,	mlib_zero,	mlib_void,	mlib_void },
+    {MF_MAGIC,	"envmap",	0,	0,		0,	envmap_setup,	mlib_zero,	mlib_void,	mlib_void2 },
     {0,		(char *)0,	0,	0,		0,	0,		0,		0,		0 }
 };
 

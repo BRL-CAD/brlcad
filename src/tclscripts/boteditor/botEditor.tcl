@@ -255,6 +255,7 @@ if {[catch {
 
     set _ $prefix
 
+    proc ::adjust {args} {eval $BotEditor::_ adjust $args}
     proc ::bb {args} {eval $BotEditor::_ bb $args}
     proc ::bot {args} {eval $BotEditor::_ bot $args}
     proc ::bot_condense {args} {eval $BotEditor::_ bot_condense $args}

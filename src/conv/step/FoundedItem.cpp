@@ -1,7 +1,7 @@
 /*                 FoundedItem.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,48 +34,48 @@
 string FoundedItem::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)FoundedItem::Create);
 
 FoundedItem::FoundedItem() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 FoundedItem::FoundedItem(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
+    step = sw;
+    id = step_id;
 }
 
 FoundedItem::~FoundedItem() {
 }
 
 bool
-FoundedItem::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+FoundedItem::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+    step=sw;
+    id = sse->STEPfile_id;
 
-	return true;
+    return true;
 }
 
 void
 FoundedItem::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 }
 STEPEntity *
-FoundedItem::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		FoundedItem *object = new FoundedItem(sw,sse->STEPfile_id);
+FoundedItem::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	FoundedItem *object = new FoundedItem(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 // Local Variables:

@@ -1,7 +1,7 @@
 /*                           E H Y . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -297,7 +297,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(r
     stp->st_id = ID_EHY;		/* set soltab ID */
     stp->st_meth = &rt_functab[ID_EHY];
 
-    BU_GETSTRUCT(ehy, ehy_specific);
+    BU_GET(ehy, struct ehy_specific);
     stp->st_specific = (genptr_t)ehy;
 
     /* make unit vectors in A, H, and BxH directions */

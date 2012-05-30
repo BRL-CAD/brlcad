@@ -1,12 +1,12 @@
-SET(MGED_INCLUDE_DIRS
-	${TCLCAD_INCLUDE_DIRS}
-	${GED_INCLUDE_DIRS}
-	${WDB_INCLUDE_DIRS}
-	${DM_INCLUDE_DIRS}
-	${BU_INCLUDE_DIRS}
-	${TERMIO_INCLUDE_DIRS}
-	${CMAKE_CURRENT_SOURCE_DIR}
-	)
+set(MGED_INCLUDE_DIRS
+  ${TCLCAD_INCLUDE_DIRS}
+  ${GED_INCLUDE_DIRS}
+  ${WDB_INCLUDE_DIRS}
+  ${DM_INCLUDE_DIRS}
+  ${BU_INCLUDE_DIRS}
+  ${TERMIO_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  )
 LIST(REMOVE_DUPLICATES MGED_INCLUDE_DIRS)
 include_directories(${MGED_INCLUDE_DIRS})
 
@@ -17,54 +17,50 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/other/tcl/unix
   ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
   ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
-)
+  )
 
-IF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
-	ADD_SUBDIRECTORY(points)
-	SET(MGED_EXTRA_LIBS libpoints)
-ENDIF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
+if(LEX_EXECUTABLE AND YACC_EXECUTABLE)
+  add_subdirectory(points)
+  set(MGED_EXTRA_LIBS libpoints)
+else(LEX_EXECUTABLE AND YACC_EXECUTABLE)
+  CMAKEFILES(points)
+endif(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 
 
 # process.h in points dir makes Windows unhappy,
 # and the TERMLIB_INCLUDE_DIR isn't set there
-IF(NOT WIN32)
-	include_directories(
-		${CMAKE_CURRENT_SOURCE_DIR}/points
-		${TERMLIB_INCLUDE_DIR}
-		)
-ENDIF(NOT WIN32)
+if(NOT WIN32)
+  include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}/points
+    ${TERMLIB_INCLUDE_DIR}
+    )
+endif(NOT WIN32)
 
-IF(WIN32 AND BRLCAD-ENABLE_OPENGL)
-  SET(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-wgl.c")
-  SET(MGED_DEFINES "${MGED_DEFINES} -DDM_WGL -DIF_WGL")
-ENDIF(WIN32 AND BRLCAD-ENABLE_OPENGL)
+if(WIN32 AND BRLCAD_ENABLE_OPENGL)
+  set(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-wgl.c")
+endif(WIN32 AND BRLCAD_ENABLE_OPENGL)
 
-IF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
-  SET(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-ogl.c")
-  SET(MGED_DEFINES "${MGED_DEFINES} -DDM_OGL -DIF_OGL")
-ENDIF(BRLCAD-ENABLE_X11 AND BRLCAD-ENABLE_OPENGL)
+if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
+  set(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-ogl.c")
+endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
-IF(BRLCAD-ENABLE_X11)
-  SET(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-X.c")
-  SET(MGED_DEFINES "${MGED_DEFINES} -DDM_X -DIF_X")
-ENDIF(BRLCAD-ENABLE_X11)
+if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
+  set(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-X.c")
+endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
 
-#IF(BRLCAD-ENABLE_TK)
-#  SET(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-tk.c")
-#  SET(MGED_DEFINES "${MGED_DEFINES} -DDM_TK -DIF_TK")
-#ENDIF(BRLCAD-ENABLE_TK)
+#if(BRLCAD_ENABLE_TK)
+#  set(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-tk.c")
+#endif(BRLCAD_ENABLE_TK)
 
-IF(BRLCAD-ENABLE_RTGL)
-  SET(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-rtgl.c")
-  SET(MGED_DEFINES "${MGED_DEFINES} -DDM_RTGL -DIF_RTGL")
-ENDIF(BRLCAD-ENABLE_RTGL)
+if(BRLCAD_ENABLE_RTGL)
+  set(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-rtgl.c")
+endif(BRLCAD_ENABLE_RTGL)
 
 add_definitions(
-  ${MGED_DEFINES}
   ${C99_FLAG}
-)
+  )
 
-SET(MGED_SOURCES
+set(MGED_SOURCES
   adc.c
   animedit.c
   arbs.c
@@ -94,7 +90,6 @@ SET(MGED_SOURCES
   facedef.c
   fbserv.c
   grid.c
-  hideline.c
   history.c
   mater.c
   menu.c
@@ -119,62 +114,78 @@ SET(MGED_SOURCES
   usepen.c
   utility1.c
   vparse.c
-)
-IF(NOT WIN32)
-	SET(MGED_SOURCES ${MGED_SOURCES} vrlink.c)
-ENDIF(NOT WIN32)
+  )
+if(NOT WIN32)
+  set(MGED_SOURCES ${MGED_SOURCES} vrlink.c)
+endif(NOT WIN32)
 
-IF(NOT WIN32)
-	BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm libtermio ${MGED_EXTRA_LIBS} ${ITCL_LIBRARY} ${ITK_LIBRARY}")
-ELSE(NOT WIN32)
-	BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad libged libwdb libdm ${ITCL_LIBRARY} ${ITK_LIBRARY} ws2_32.lib opengl32.lib")
-ENDIF(NOT WIN32)
-IF(${ITCL_LIBRARY} MATCHES "itcl")
-	ADD_DEPENDENCIES(mged itcl)
-ENDIF(${ITCL_LIBRARY} MATCHES "itcl")
-IF(${ITK_LIBRARY} MATCHES "itk")
-	ADD_DEPENDENCIES(mged itk)
-ENDIF(${ITK_LIBRARY} MATCHES "itk")
-IF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
-	SET_TARGET_PROPERTIES(mged PROPERTIES COMPILE_FLAGS "-DBC_WITH_PARSER")
-ENDIF(LEX_EXECUTABLE AND YACC_EXECUTABLE)
+if(NOT WIN32)
+  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad;libged;libwdb;libdm;libtermio;${MGED_EXTRA_LIBS};${ITCL_LIBRARY};${ITK_LIBRARY}")
+else(NOT WIN32)
+  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad;libged;libwdb;libdm;${ITCL_LIBRARY};${ITK_LIBRARY};ws2_32.lib;opengl32.lib")
+endif(NOT WIN32)
+if(${ITCL_LIBRARY} MATCHES "itcl")
+  ADD_DEPENDENCIES(mged itcl)
+endif(${ITCL_LIBRARY} MATCHES "itcl")
+if(${ITK_LIBRARY} MATCHES "itk")
+  ADD_DEPENDENCIES(mged itk)
+endif(${ITK_LIBRARY} MATCHES "itk")
+if(LEX_EXECUTABLE AND YACC_EXECUTABLE)
+  SET_TARGET_PROPERTIES(mged PROPERTIES COMPILE_FLAGS "-DBC_WITH_PARSER")
+endif(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 
-BRLCAD_ADDEXEC(cad_boundp cad_boundp.c "libbu ${M_LIBRARY}")
+# mged depends on the creation/installation of all the
+# tclscripts.
+foreach(item ${pkgIndex_target_list})
+  ADD_DEPENDENCIES(mged ${item})
+endforeach(item ${pkgIndex_target_list})
+foreach(item ${tclIndex_target_list})
+  ADD_DEPENDENCIES(mged ${item})
+endforeach(item ${tclIndex_target_list})
+
+BRLCAD_ADDEXEC(cad_boundp cad_boundp.c "libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(cad_parea cad_parea.c libbu)
 
-IF(WIN32)
-	configure_file(mged.bat ${CMAKE_BINARY_DIR}/bin/mged.bat COPYONLY)
-	INSTALL(PROGRAMS mged.bat DESTINATION bin)
-ENDIF(WIN32)
+if(WIN32)
+  configure_file(mged.bat ${CMAKE_BINARY_DIR}/bin/mged.bat COPYONLY)
+  install(PROGRAMS mged.bat DESTINATION bin)
+endif(WIN32)
 
-SET(mged_MANS
+set(mged_MANS
   cad_boundp.1
   cad_parea.1
-)
+  )
 ADD_MAN_PAGES(1 mged_MANS)
 set(mged_ignore_files
-	bool_rewrite.c
-	cmd.h
-	comb_bool.h
-	comb_bool_parse.y
-	comb_bool_scan.l
-	dm-rtgl.c
-	dm-tk.c
-	dm-wgl.c
-	fbserv.h
-	htmlLibraryUi.h
-	joints.h
-	menu.h
-	mgdev.h
-	mged.bat
-	mged.h
-	mged_dm.h
-	qray.h
-	red.c
-	scroll.h
-	sedit.h
-	titles.h
-)
+  bool_rewrite.c
+  cmd.h
+  comb_bool.h
+  comb_bool_parse.y
+  comb_bool_scan.l
+  dm-rtgl.c
+  dm-tk.c
+  dm-wgl.c
+  fbserv.h
+  htmlLibraryUi.h
+  joints.h
+  menu.h
+  mgdev.h
+  mged.bat
+  mged.h
+  mged_dm.h
+  qray.h
+  red.c
+  scroll.h
+  sedit.h
+  titles.h
+  )
 CMAKEFILES(${mged_ignore_files})
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

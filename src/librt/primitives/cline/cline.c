@@ -1,7 +1,7 @@
 /*                         C L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2011 United States Government as represented by
+ * Copyright (c) 2000-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -126,7 +126,7 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_CLINE_CK_MAGIC(cline_ip);
     if (rtip) RT_CK_RTI(rtip);
 
-    BU_GETSTRUCT(cline, cline_specific);
+    BU_GET(cline, struct cline_specific);
     cline->thickness = cline_ip->thickness;
     cline->radius = cline_ip->radius;
     VMOVE(cline->V, cline_ip->v);
@@ -1073,7 +1073,7 @@ rt_cline_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, 
 {
     struct rt_cline_internal *cli =
 	(struct rt_cline_internal *)intern->idb_ptr;
-    fastf_t *new;
+    fastf_t *newval;
 
     RT_CK_DB_INTERNAL(intern);
     RT_CLINE_CK_MAGIC(cli);
@@ -1082,15 +1082,15 @@ rt_cline_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, 
 	int array_len=3;
 
 	if (*argv[0] == 'V') {
-	    new = cli->v;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
+	    newval = cli->v;
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (*argv[0] == 'H') {
-	    new = cli->h;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
+	    newval = cli->h;
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for point\n");
 		return BRLCAD_ERROR;

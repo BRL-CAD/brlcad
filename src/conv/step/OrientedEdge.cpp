@@ -1,7 +1,7 @@
 /*                 OrientedEdge.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,95 +35,102 @@
 string OrientedEdge::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)OrientedEdge::Create);
 
 OrientedEdge::OrientedEdge() {
-	step = NULL;
-	id = 0;
-	edge_element = NULL;
+    step = NULL;
+    id = 0;
+    edge_element = NULL;
+    orientation = BUnset;
 }
 
 OrientedEdge::OrientedEdge(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
-	edge_element = NULL;
+    step = sw;
+    id = step_id;
+    edge_element = NULL;
+    orientation = BUnset;
 }
 
 OrientedEdge::~OrientedEdge() {
-	edge_element = NULL;
+    edge_element = NULL;
 }
 
 bool
-OrientedEdge::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+OrientedEdge::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+    step=sw;
+    id = sse->STEPfile_id;
 
 
-	if ( !Edge::Load(sw,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
-		return false;
-	}
+    if ( !Edge::Load(sw,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
+	return false;
+    }
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
 
-	orientation = step->getBooleanAttribute(sse,"orientation");
+    orientation = step->getBooleanAttribute(sse,"orientation");
 
-	if (edge_element == NULL) {
-		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"edge_element");
-		if (entity) {
-			edge_element = dynamic_cast<Edge *>(Factory::CreateObject(sw,entity));
-			if (orientation == BTrue) {
-				edge_start = edge_element->GetEdgeStart();
-				edge_end = edge_element->GetEdgeEnd();
-			} else {
-				edge_start = edge_element->GetEdgeEnd();
-				edge_end = edge_element->GetEdgeStart();
-			}
+    if (edge_element == NULL) {
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"edge_element");
+	if (entity) {
+	    edge_element = dynamic_cast<Edge *>(Factory::CreateObject(sw,entity));
+	    if (edge_element != NULL) {
+		if (orientation == BTrue) {
+		    edge_start = edge_element->GetEdgeStart();
+		    edge_end = edge_element->GetEdgeEnd();
 		} else {
-			std::cerr << CLASSNAME << ": Error loading entity attribute 'edge_element'." << std::endl;
-			return false;
+		    edge_start = edge_element->GetEdgeEnd();
+		    edge_end = edge_element->GetEdgeStart();
 		}
+	    } else {
+		std::cerr << CLASSNAME << ": Error loading entity attribute 'edge_element'." << std::endl;
+		return false;
+	    }
+	} else {
+	    std::cerr << CLASSNAME << ": Error loading entity attribute 'edge_element'." << std::endl;
+	    return false;
 	}
+    }
 
-	return true;
+    return true;
 }
 
 void
 OrientedEdge::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Attributes:" << std::endl;
-	TAB(level+1); std::cout << "edge_element:" << std::endl;
-	edge_element->Print(level+1);
-	TAB(level+1); std::cout << "orientation:" << step->getBooleanString((Boolean)orientation) << std::endl;
+    TAB(level); std::cout << "Attributes:" << std::endl;
+    TAB(level+1); std::cout << "edge_element:" << std::endl;
+    edge_element->Print(level+1);
+    TAB(level+1); std::cout << "orientation:" << step->getBooleanString((Boolean)orientation) << std::endl;
 
 }
 
 STEPEntity *
-OrientedEdge::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		OrientedEdge *object = new OrientedEdge(sw,sse->STEPfile_id);
+OrientedEdge::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	OrientedEdge *object = new OrientedEdge(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 bool
 OrientedEdge::OrientWithEdge() {
-	if ((Boolean)orientation == BTrue) {
-		return true;
-	}
-	return false;
+    if ((Boolean)orientation == BTrue) {
+	return true;
+    }
+    return false;
 }
 
 // Local Variables:

@@ -1,7 +1,8 @@
+#!/bin/sh
 #                   R E P O S I T O R Y . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2011 United States Government as represented by
+# Copyright (c) 2008-2012 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,36 +47,47 @@ fi
 
 FAILED=0
 
-
-# make sure nobody includes bio.h in a public header
-echo "running bio.h public header check..."
-
-if test ! -f "${TOPSRC}/include/bio.h" ; then
-    echo "Unable to find include/bio.h, aborting"
-    exit 1
-fi
-FOUND="`grep '[^f]bio.h' ${TOPSRC}/include/*.h | grep -v 'include/bio.h'`"
-if test "x$FOUND" = "x" ; then
-    echo "-> bio.h check succeeded"
-else
-    echo "-> bio.h check FAILED"
-    FAILED="`expr $FAILED + 1`"
-fi
-
-
-# make sure common.h is always included first
-echo "running common.h inclusion order check..."
-
 if test ! -f "${TOPSRC}/include/common.h" ; then
     echo "Unable to find include/common.h, aborting"
     exit 1
 fi
 
-COMMONFILES="`find ${TOPSRC}/src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -exec grep -n -I -e '#[[:space:]]*include' {} /dev/null \; | grep '\"common.h\"' | sed 's/:.*//g'`"
-COMMONFILES2="`find ${TOPSRC}/include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -exec grep -n -I -e '#[[:space:]]*include' {} /dev/null \; | grep '\"common.h\"' | sed 's/:.*//g'`"
+# get a source and header file list so we only walk the sources onces
+
+SRCFILES="`find ${TOPSRC}/src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*src/libpkg.*' -not -regex '.*/shapelib/.*'`"
+
+INCFILES="`find ${TOPSRC}/include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*pkg.h'`"
+
+
+###
+# TEST: make sure nobody includes private headers like bio.h in a public header
+echo "running public header private header checks..."
+
+for i in bio.h bin.h bselect.h ; do
+    if test ! -f "${TOPSRC}/include/$i" ; then
+	echo "Unable to find include/$i, aborting"
+	exit 1
+    fi
+    FOUND="`grep '[^f]${i}' $INCFILES /dev/null | grep -v 'include/${i}'`"
+    
+    if test "x$FOUND" = "x" ; then
+	echo "-> $i header check succeeded"
+    else
+	echo "-> $i header check FAILED"
+	FAILED="`expr $FAILED + 1`"
+    fi
+done
+
+
+###
+# TEST: make sure common.h is always included first
+echo "running common.h inclusion order check..."
+
+COMMONSRCS="`grep -n -I -e '#[[:space:]]*include' $SRCFILES /dev/null | grep '\"common.h\"' | sed 's/:.*//g'`"
+COMMONINCS="`grep -n -I -e '#[[:space:]]*include' $INCFILES /dev/null | grep '\"common.h\"' | sed 's/:.*//g'`"
 
 FOUND=
-for file in $COMMONFILES $COMMONFILES2 ; do
+for file in $COMMONSRCS $COMMONINCS ; do
     if test -f "`echo $file | sed 's/\.c$/\.l/g'`" ; then
 	continue
     fi
@@ -85,7 +97,7 @@ for file in $COMMONFILES $COMMONFILES2 ; do
 	    # not a BRL-CAD file (or it's lexer-generated) , so skip it
 	    continue
 	fi
-	echo "Header (common.h) out of order: $MATCH"
+	echo "ERROR: Header (common.h) out of order: $MATCH"
 	FOUND=1
     fi
 done
@@ -97,24 +109,8 @@ else
 fi
 
 
-# make sure every configure option is documented
-echo "running option documentation check..."
-FOUND=
-for i in `grep ARG_ENABLE ${TOPSRC}/configure.ac | sed 's/[^,]*,\([^,]*\).*/\1/' | awk '{print $1}' | sed 's/\[\(.*\)\]/\1/g'` ; do
-    if test "x`grep "enable-$i" ${TOPSRC}/INSTALL`" = "x" ; then
-	echo "--enable-$i is not documented in INSTALL"
-	FOUND=1
-    fi
-done
-if test "x$FOUND" = "x" ; then
-    echo "-> option documentation check succeeded"
-else
-    echo "-> option documentation check FAILED (non-fatal)"
-    FAILED="`expr $FAILED + 1`"
-fi
-
-
-# make sure there isn't a per-target CPPFLAGS in a Makefile.am
+###
+# TEST: make sure there isn't a per-target CPPFLAGS in a Makefile.am
 # support for per-target CPPFLAGS wasn't added until automake 1.7
 echo "running CPPFLAGS check..."
 
@@ -131,13 +127,64 @@ for file in $AMFILES ; do
 	# skip commented lines
 	continue
     fi
-    echo "Target-specific CPPFLAGS found in $file"
+    echo "ERROR: Target-specific CPPFLAGS found in $file"
     FOUND=1
 done
 if test "x$FOUND" = "x" ; then
     echo "-> cppflags check succeeded"
 else
     echo "-> cppflags check FAILED"
+    FAILED="`expr $FAILED + 1`"
+fi
+
+
+###
+# TEST: make sure consistent API standards are being used, using libbu
+# functions where they replace or wrap a standard C function
+echo "running API usage check"
+
+# 1800 - printf
+# 360 - free
+# 203 - malloc
+# 89 - calloc
+# 21 - realloc
+FOUND=
+for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy strlcpy strcmp strcasecmp stricmp strncmp strncasecmp stricmp unlink rmdir remove ; do
+    echo "Searching for $func ..."
+    MATCH="`grep -n -e [^a-zA-Z0-9_]$func\( $INCFILES $SRCFILES /dev/null`"
+
+    # handle implementation exceptions
+    MATCH="`echo \"$MATCH\" \
+| sed 's/.*\/bomb\.c:.*abort.*//g' \
+| sed 's/.*\/bu\.h.*//' \
+| sed 's/.*\/cursor\.c.*//g' \
+| sed 's/.*\/db\.h.*strncpy.*//' \
+| sed 's/.*\/file\.c:.*remove.*//' \
+| sed 's/.*\/str\.c:.*strcasecmp.*//' \
+| sed 's/.*\/str\.c:.*strcmp.*//' \
+| sed 's/.*\/str\.c:.*strlcat.*//' \
+| sed 's/.*\/str\.c:.*strlcpy.*//' \
+| sed 's/.*\/str\.c:.*strncasecmp.*//' \
+| sed 's/.*\/str\.c:.*strncat.*//' \
+| sed 's/.*\/str\.c:.*strncmp.*//' \
+| sed 's/.*\/str\.c:.*strncpy.*//' \
+| sed 's/.*\/test_dirname\.c:.*dirname.*//' \
+| sed 's/.*\/ttcp.c:.*//' \
+| sed 's/.*\/vls\.c:.*strncpy.*//' \
+| sed '/^$/d' \
+`"
+
+    if test "x$MATCH" != "x" ; then
+	echo "ERROR: Found `echo \"$MATCH\" | wc -l | awk '{print $1}'` instances of $func ..."
+	echo "$MATCH"
+	FOUND=1
+    fi
+done
+
+if test "x$FOUND" = "x" ; then
+    echo "-> API usage check succeeded"
+else
+    echo "-> API usage check FAILED"
     FAILED="`expr $FAILED + 1`"
 fi
 

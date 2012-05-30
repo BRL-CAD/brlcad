@@ -160,6 +160,7 @@ librt_nil_la_SOURCES = \
 	primitives/nmg/nmg_brep.cpp \
 	primitives/nmg/nmg_ck.c \
 	primitives/nmg/nmg_class.c \
+	primitives/nmg/nmg_copy.c \
 	primitives/nmg/nmg_eval.c \
 	primitives/nmg/nmg_extrude.c \
 	primitives/nmg/nmg_fcut.c \
@@ -308,7 +309,6 @@ EXTRA_DIST = \
 	brep_test.cpp \
 	columnparse.c \
 	namegen.c \
-	pmalloc.c \
 	primitives/bot/g_bot_include.c \
 	primitives/bot/tie.c \
 	primitives/bot/tie_kdtree.c \

@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2011 United States Government as represented by
+ * Copyright (c) 1998-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -266,6 +266,9 @@ Cad_AppInit(Tcl_Interp *interp)
 	bu_log("Go_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
+
+    /* initialize command history objects */
+    Cho_Init(interp);
 
 #ifdef BWISH
     if ((tkwin = Tk_MainWindow(interp)) == NULL)

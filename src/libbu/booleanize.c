@@ -1,7 +1,7 @@
 /*                    B O O L E A N I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2011 United States Government as represented by
+ * Copyright (c) 2010-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ bu_str_true(const char *str)
 {
     long val;
     size_t len;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     const char *newstr;
     char *endptr;
 
@@ -41,7 +41,6 @@ bu_str_true(const char *str)
     if (!str)
 	return 0;
 
-    bu_vls_init(&vls);
     bu_vls_strcpy(&vls, str);
     bu_vls_trimspace(&vls);
     newstr = bu_vls_addr(&vls);
@@ -67,7 +66,7 @@ bu_str_true(const char *str)
 
     /* variant of "0" (e.g., 000) */
     val = strtol(newstr, &endptr, 10);
-    if (val == 0 && errno != EINVAL && endptr == '\0') {
+    if (val == 0 && errno != EINVAL && *endptr == '\0') {
 	bu_vls_free(&vls);
 	return 0;
     }
@@ -94,7 +93,7 @@ bu_str_true(const char *str)
 
     /* variant of "1" (e.g., 001) */
     val = strtol(newstr, &endptr, 10);
-    if (val == 1 && errno != EINVAL && endptr == '\0') {
+    if (val == 1 && errno != EINVAL && *endptr == '\0') {
 	bu_vls_free(&vls);
 	return 1;
     }

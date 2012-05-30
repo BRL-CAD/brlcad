@@ -2,7 +2,7 @@
 .\"                    C O M G E O M - G . 1
 .\" BRL-CAD
 .\"
-.\" Copyright (c) 2005-2011 United States Government as represented by
+.\" Copyright (c) 2005-2012 United States Government as represented by
 .\" the U.S. Army Research Laboratory.
 .\"
 .\" Redistribution and use in source (Docbook format) and 'compiled'
@@ -79,14 +79,14 @@ This can be selected by specifying the
 flag (debug level 1).
 .PP
 The units used in a COMGEOM file are specified on a header record.
-The units of an MGED database are always milimeters.
+The units of an MGED database are always millimeters.
 .I comgeom-g
 performs automatic units conversion using the built-in units conversion
 feature of
 \fIlibwdb\fR(3).
 .SH EXAMPLE
 .I
-comgeom-g < file.cg > file.g
+comgeom-g -d1 -v4 file.cg file.g
 .SH DIAGNOSTICS
 The diagnostics are intended to be self-explanatory.
 Familiarity with GIFT COMGEOM terminology will be helpful.

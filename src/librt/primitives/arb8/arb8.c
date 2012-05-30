@@ -1,7 +1,7 @@
 /*                           A R B . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -88,7 +88,7 @@ struct aface {
 struct arb_specific  {
     int arb_nmfaces;		/* number of faces */
     struct oface *arb_opt;	/* pointer to optional info */
-    struct aface arb_face[4];	/* May really be up to [6] faces */
+    struct aface arb_face[6];	/* May really be up to [6] faces */
 };
 
 
@@ -1244,7 +1244,7 @@ rt_arb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "arb external");
+    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "arb external");
     rec = (union record *)ep->ext_buf;
 
     rec->s.s_id = ID_SOLID;
@@ -1817,16 +1817,15 @@ rt_arb_3face_intersect(
 int
 rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 		   struct rt_arb_internal *arb,
-		   int type,
+		   int cgtype,
 		   plane_t planes[6],
 		   const struct bn_tol *tol)
 {
     register int i, p1, p2, p3;
+    int type = cgtype - ARB4; /* ARB4 at location 0, ARB5 at 1, etc */
 
     RT_ARB_CK_MAGIC(arb);
     BN_CK_TOL(tol);
-
-    type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
 
     for (i=0; i<6; i++) {
 	if (rt_arb_faces[type][i*4] == -1)

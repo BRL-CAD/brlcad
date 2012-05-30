@@ -2,7 +2,14 @@
 this_dir = tclscripts/mged
 tcldir = $(BRLCAD_DATA)/$(this_dir)
 
+#if BUILD_DOCS
+#doc_scripts = man.tcl
+#else
+doc_scripts =
+#endif
+
 scripties = \
+	$(doc_scripts) \
 	accel.tcl \
 	adc.tcl \
 	anim.tcl \
@@ -42,10 +49,12 @@ scripties = \
 	garbage_collect.tcl \
 	get_regions.tcl \
 	grid.tcl \
+	grouper.tcl \
 	help.tcl \
 	helpdevel.tcl \
 	icreate.tcl \
 	illum.tcl \
+	lc.tcl \
 	lgt_mat.tcl \
 	list.tcl \
 	make_solid.tcl \
@@ -141,6 +150,7 @@ BUILT_SOURCES = \
 EXTRA_DIST = \
 	$(dist_tcl_DATA) \
 	rrmb.tcl \
+	man.tcl \
 	$(tcl_SCRIPTS) \
 	CMakeLists.txt
 

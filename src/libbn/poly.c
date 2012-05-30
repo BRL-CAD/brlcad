@@ -1,7 +1,7 @@
 /*                          P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -534,10 +534,9 @@ bn_pr_poly(const char *title, register const struct bn_poly *eqn)
 {
     register size_t n;
     register size_t exponent;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     char buf[48];
 
-    bu_vls_init(&str);
     bu_vls_extend(&str, 196);
     bu_vls_strcat(&str, title);
     snprintf(buf, 48, " polynomial, degree = %lu\n", (long unsigned int)eqn->dgr);

@@ -1,9 +1,10 @@
 lib_LTLIBRARIES = libicv.la
 noinst_LTLIBRARIES = libicv_nil.la
 
-AM_CPPFLAGS = ${TCL_CPPFLAGS}
+AM_CPPFLAGS = ${TCL_CPPFLAGS} ${PNG_CPPFLAGS}
 
 libicv_nil_la_SOURCES = \
+	fileformat.c \
 	rot.c
 
 EXTRA_DIST = \

@@ -1,7 +1,7 @@
 /*                        D B 5 _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include "bin.h"
 
 #include "bu.h"
@@ -113,9 +114,10 @@ db5_select_length_encoding(size_t len)
  * Returns -
  * The number of bytes of input that were decoded.
  */
-int
+size_t
 db5_decode_length(size_t *lenp, const unsigned char *cp, int format)
 {
+    *lenp = 0;
     switch (format) {
 	case DB5HDR_WIDTHCODE_8BIT:
 	    *lenp = (*cp);
@@ -353,8 +355,9 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     struct db5_ondisk_header header;
     unsigned char lenbuf[8];
     int count = 0;
-    int used;
+    size_t used;
     size_t want, got;
+    size_t dlen;
     unsigned char *cp;
 
     if (fread((unsigned char *)&header, sizeof header, 1, fp) != 1) {
@@ -380,36 +383,51 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	    count = 8;
     }
     if (fread(lenbuf, count, 1, fp)  != 1) {
+	perror("fread");
 	bu_log("db5_get_raw_internal_fp(): fread lenbuf error\n");
 	return -2;
     }
-    used += db5_decode_length(&rip->object_length, lenbuf, rip->h_object_width);
+
+    dlen = db5_decode_length(&rip->object_length, lenbuf, rip->h_object_width);
+    if (dlen < 1 || dlen > sizeof(size_t)) {
+	bu_log("db5_get_raw_internal_fp(): Error decoding object length (got %zd)\n", dlen);
+	return -1;
+    }
+    used += dlen;
+    if ( rip->object_length > UINTPTR_MAX>>3 ) {
+	bu_log("db5_get_raw_internal_fp():  bad length read\n");
+	return -1;
+    }
     rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
-    if ((size_t)rip->object_length < sizeof(struct db5_ondisk_header)) {
+    if (rip->object_length < sizeof(struct db5_ondisk_header) || rip->object_length < used) {
 	bu_log("db5_get_raw_internal_fp(): object_length=%ld is too short, database is corrupted\n",
 	       rip->object_length);
 	return -1;
     }
 
     /* Now that we finally know how large the object is, get it all */
+#if 1
+    rip->buf = (unsigned char *)bu_pool_get((size_t)rip->object_length);
+#else
     rip->buf = (unsigned char *)bu_malloc(rip->object_length, "raw v5 object");
+#endif
 
     *((struct db5_ondisk_header *)rip->buf) = header;	/* struct copy */
     memcpy(rip->buf+sizeof(header), lenbuf, count);
 
-    cp = rip->buf+used;
-    want = rip->object_length-used;
-    BU_ASSERT_LONG(want, >, 0);
+    cp = rip->buf + used;
+    want = rip->object_length - used;
+
     if ((got = fread(cp, 1, want, fp)) != want) {
-	bu_log("db5_get_raw_internal_fp(), want=%ld, got=%ld, database is too short\n",
+	bu_log("db5_get_raw_internal_fp(): Database is too short, want=%ld, got=%ld\n",
 	       want, got);
 	return -2;
     }
 
     /* Verify trailing magic number */
     if (rip->buf[rip->object_length-1] != DB5HDR_MAGIC2) {
-	bu_log("db5_get_raw_internal_fp() bad magic2 -- database has become corrupted.\n expected x%x, got x%x\n",
+	bu_log("db5_get_raw_internal_fp(): bad magic2 -- database has become corrupted.\n expected x%x, got x%x\n",
 	       DB5HDR_MAGIC2, rip->buf[rip->object_length-1]);
 	return -2;
     }
@@ -600,7 +618,7 @@ db5_export_object3(
 
     /* Finally, go back to the header and write the actual object length */
     cp = ((unsigned char *)out->ext_buf) + sizeof(struct db5_ondisk_header);
-    cp = db5_encode_length(cp, togo>>3, h_width);
+    (void)db5_encode_length(cp, togo>>3, h_width);
 
     out->ext_nbytes = togo;
     BU_ASSERT_LONG(out->ext_nbytes, >=, 8);
@@ -640,7 +658,7 @@ db5_make_free_object_hdr(struct bu_external *ep, size_t length)
 	DB5HDR_HFLAGS_DLI_FREE_STORAGE;
 
     cp = ((unsigned char *)ep->ext_buf) + sizeof(struct db5_ondisk_header);
-    cp = db5_encode_length(cp, length>>3, h_width);
+    db5_encode_length(cp, length>>3, h_width);
 }
 
 
@@ -675,7 +693,7 @@ db5_make_free_object(struct bu_external *ep, size_t length)
 	DB5HDR_HFLAGS_DLI_FREE_STORAGE;
 
     cp = ((unsigned char *)ep->ext_buf) + sizeof(struct db5_ondisk_header);
-    cp = db5_encode_length(cp, length>>3, h_width);
+    db5_encode_length(cp, length>>3, h_width);
 
     cp = ((unsigned char *)ep->ext_buf) + length-1;
     *cp = DB5HDR_MAGIC2;
@@ -871,7 +889,7 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     }
 
     /* Second, obtain storage for final object */
-    if (ep->ext_nbytes != dp->d_len || dp->d_addr == RT_DIR_PHONY_ADDR) {
+    if (ep->ext_nbytes != dp->d_len || (size_t)dp->d_addr == (size_t)RT_DIR_PHONY_ADDR) {
 	if (db5_realloc(dbip, dp, ep) < 0) {
 	    bu_log("db_put_external(%s) db_realloc5() failed\n", dp->d_namep);
 	    return -5;
@@ -1165,13 +1183,12 @@ db5_import_color_table(char *cp)
 int
 db5_put_color_table(struct db_i *dbip)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     int ret;
 
     RT_CK_DBI(dbip);
     BU_ASSERT_LONG(dbip->dbi_version, ==, 5);
 
-    bu_vls_init(&str);
     db5_export_color_table(&str, dbip);
 
     ret = db5_update_attribute(DB5_GLOBAL_OBJECT_NAME,
@@ -1204,6 +1221,7 @@ db5_get_attributes(const struct db_i *dbip, struct bu_attribute_value_set *avs, 
     RT_CK_DIR(dp);
 
     BU_EXTERNAL_INIT(&ext);
+    BU_AVS_INIT(avs);
 
     if (db_get_external(&ext, dp, dbip) < 0)
 	return -1;		/* FAIL */

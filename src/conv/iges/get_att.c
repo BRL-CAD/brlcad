@@ -1,7 +1,7 @@
 /*                       G E T _ A T T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ Get_att()
     int i, j;
     char *str;
 
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	/* Look for attribute definitions */
 	if (dir[i]->type == 322) {
 	    /* look for form 0 only */
@@ -47,7 +47,7 @@ Get_att()
 	    }
 
 	    Readname(&str, "");
-	    if (!strncmp(str, "BRLCAD", 6) || !strncmp(str, "BRL-CAD", 7)) {
+	    if (!bu_strncmp(str, "BRLCAD", 6) || !bu_strncmp(str, "BRL-CAD", 7)) {
 		/* this is what we have been looking for */
 		brlcad_att_de = 2*i+1;
 		return;

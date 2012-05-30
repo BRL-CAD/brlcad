@@ -1,7 +1,7 @@
 /*                 T I E N E T _ M A S T E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2011 United States Government as represented by
+ * Copyright (c) 2002-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -205,8 +205,8 @@ void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char
     TIENET_BUFFER_INIT(tienet_master_result_buffer_comp);
 #endif
 
-    strncpy(tienet_master_list, list, sizeof(tienet_master_list));
-    strncpy(tienet_master_exec, exec, sizeof(tienet_master_exec));
+    bu_strlcpy(tienet_master_list, list, sizeof(tienet_master_list));
+    bu_strlcpy(tienet_master_exec, exec, sizeof(tienet_master_exec));
 
     /* Copy version key to validate slaves of correct version are connecting */
     tienet_master_ver_key = ver_key;

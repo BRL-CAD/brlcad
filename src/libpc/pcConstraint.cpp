@@ -1,7 +1,7 @@
 /*                       P C C O N S T R A I N T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include "pcVCSet.h"
 #include "pc.h"
 
-ConstraintInterface::ConstraintInterface(pc_constrnt *c)
+ConstraintInterface::ConstraintInterface(pc_constrnt *c) : a(NULL), fp_(NULL), nargs_(0), dimension_(0)
 {
     if (c) {
 	nargs_ = c->data.cf.nargs;

@@ -1,7 +1,7 @@
 /*                  A N I M _ C A S C A D E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -164,7 +164,7 @@ main (int argc, char *argv[])
 {
     int val;
     fastf_t elapsed, yaw1, pitch1, roll1, yaw2, pitch2, roll2;
-    vect_t cen1, cen2, cen_ans, ang_ans, rad_ang_ans, rotated;
+    vect_t cen1, cen2, cen_ans, ang_ans, rad_ang_ans, rotated = VINIT_ZERO;
     mat_t m_rot1, m_rot2, m_ans;
     int one_time, read_cen1, read_cen2, read_rot1, read_rot2;
 
@@ -273,7 +273,7 @@ main (int argc, char *argv[])
 	    VADD2(cen_ans, rotated, cen1);
 	    bn_mat_mul(m_ans, m_rot1, m_rot2);
 	}
-	anim_mat2ypr(rad_ang_ans, m_ans);
+	anim_mat2ypr(m_ans, rad_ang_ans);
 	VSCALE(ang_ans, rad_ang_ans, RAD2DEG);
 
 	if (print_time) {

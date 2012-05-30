@@ -1,7 +1,7 @@
 /*                        R T G E O M . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,10 +83,10 @@ struct rt_tgc_internal {
  */
 struct rt_ell_internal  {
     uint32_t magic;
-    point_t	v;
-    vect_t	a;
-    vect_t	b;
-    vect_t	c;
+    point_t	v;      /**< @brief center point */
+    vect_t	a;      /**< @brief axis a radial length */
+    vect_t	b;      /**< @brief axis b radial length */
+    vect_t	c;      /**< @brief axis c radial length */
 };
 #define RT_ELL_CK_MAGIC(_p)	BU_CKMAG(_p, RT_ELL_INTERNAL_MAGIC, "rt_ell_internal")
 
@@ -226,11 +226,12 @@ struct rt_nurb_internal {
 /* ID_BREP */
 struct rt_brep_internal {
     uint32_t magic;
+
     ON_Brep* brep; /**< @brief  An openNURBS brep object containing the solid */
 };
 
 #define RT_BREP_CK_MAGIC( _p) BU_CKMAG(_p, RT_BREP_INTERNAL_MAGIC, "rt_brep_internal");
-#define RT_BREP_TEST_MAGIC( _p) ((_p) && (*((unsigned long *)(_p)) == (unsigned long)(RT_BREP_INTERNAL_MAGIC)))
+#define RT_BREP_TEST_MAGIC( _p) ((_p) && (*((uint32_t *)(_p)) == (uint32_t)(RT_BREP_INTERNAL_MAGIC)))
 
 
 /*
@@ -436,7 +437,7 @@ struct rt_eto_internal {
 struct rt_dsp_internal{
     uint32_t magic;
 #define dsp_file dsp_name 		/**< @brief for backwards compatibility */
-    struct bu_vls dsp_name;	/**< @brief  name of data file */
+    struct bu_vls dsp_name;	/**< TODO: make this a pointer, name of data file */
 
     /* NOTE: dsp_xcnt/dsp_ycnt cannot be size_t until rel8 as they are
      * written out to disk via bu_vls_struct_print() as 32-bit ints.
@@ -779,6 +780,32 @@ struct rt_pnts_internal {
     void *point;
 };
 #define RT_PNTS_CK_MAGIC(_p)     BU_CKMAG(_p, RT_PNTS_INTERNAL_MAGIC, "rt_pnts_internal")
+
+/*
+ *	ID_ANNOTATION
+ *
+ * Annotations are used to provide labels in-scene when viewing geometry.  Leaders connect labels
+ * to geometry objects or fixed points in space.
+ *
+ */
+
+struct rt_annotation_internal
+{
+    uint32_t magic;
+    point_t		V;			/**< @brief  vertex, start and end point of loop to be extruded */
+    vect_t		h;			/**< @brief  extrusion vector, may not be in (u_vec X v_vec) plane */
+    vect_t		u_vec;			/**< @brief  vector in U parameter direction */
+    vect_t		v_vec;			/**< @brief  vector in V parameter direction */
+    int			view_aligned;
+    struct bu_vls 	label;			/**< @brief  either user supplied labels, format strings, or empty */
+    struct rt_sketch_internal	*skt;		/**< @brief  pointer to sketch holding label decoration (if any) - same plane as text plane */
+};
+
+/**
+ * Note that the u_vec and v_vec are not unit vectors, their magnitude
+ * and direction are used for scaling and rotation.
+ */
+#define RT_ANNOTATION_CK_MAGIC(_p)	BU_CKMAG(_p, RT_ANNOTATION_INTERNAL_MAGIC, "rt_annotation_internal")
 
 
 __END_DECLS

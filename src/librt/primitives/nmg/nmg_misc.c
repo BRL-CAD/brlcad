@@ -1,7 +1,7 @@
 /*                      N M G _ M I S C . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -303,7 +303,6 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
     struct edgeuse *eu, *eu1;
     struct vertexuse *vu;
     struct vertex *v1, *v2;
-    int bottommost=0;
 
     if (rt_g.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_find_top_face_in_dir(s = x%x, dir=%d, flags = x%x)\n", s, dir, flags);
@@ -327,16 +326,10 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
 		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
 		    NMG_CK_EDGEUSE(eu);
-		    if (bottommost) {
-			if (eu->vu_p->v_p->vg_p->coord[dir] < extreme_value) {
-			    extreme_value = eu->vu_p->v_p->vg_p->coord[dir];
-			    vp_top = eu->vu_p->v_p;
-			}
-		    } else {
-			if (eu->vu_p->v_p->vg_p->coord[dir] > extreme_value) {
-			    extreme_value = eu->vu_p->v_p->vg_p->coord[dir];
-			    vp_top = eu->vu_p->v_p;
-			}
+
+		    if (eu->vu_p->v_p->vg_p->coord[dir] > extreme_value) {
+			extreme_value = eu->vu_p->v_p->vg_p->coord[dir];
+			vp_top = eu->vu_p->v_p;
 		    }
 		}
 	    }
@@ -407,18 +400,11 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 	}
 
 	/* check against current maximum slope */
-	if (bottommost) {
-	    if (edge[dir] < extreme_slope) {
-		extreme_slope = edge[dir];
-		e_top = eu->e_p;
-	    }
-	} else {
-	    if (edge[dir] > extreme_slope) {
-		if (rt_g.NMG_debug & DEBUG_BASIC)
-		    bu_log("New top edge!\n");
-		extreme_slope = edge[dir];
-		e_top = eu->e_p;
-	    }
+	if (edge[dir] > extreme_slope) {
+	    if (rt_g.NMG_debug & DEBUG_BASIC)
+		bu_log("New top edge!\n");
+	    extreme_slope = edge[dir];
+	    e_top = eu->e_p;
 	}
     }
     if (e_top == (struct edge *)NULL) {
@@ -440,10 +426,7 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 
     /* now find the face containing edge between v1 nad v2
        with "left-pointing vector" having the most extreme slope */
-    if (bottommost)
-	extreme_slope = MAX_FASTF;
-    else
-	extreme_slope = (-MAX_FASTF);
+    extreme_slope = (-MAX_FASTF);
 
     for (BU_LIST_FOR (vu, vertexuse, &v1->vu_hd)) {
 	vect_t left;
@@ -508,18 +491,11 @@ nmg_find_top_face_in_dir(const struct shell *s, int dir, long int *flags)
 	}
 
 	/* check against current most extreme slope */
-	if (bottommost) {
-	    if (left[dir] < extreme_slope) {
-		extreme_slope = left[dir];
-		f_top = fu->f_p;
-	    }
-	} else {
-	    if (left[dir] > extreme_slope) {
-		if (rt_g.NMG_debug & DEBUG_BASIC)
-		    bu_log("new f_top\n");
-		extreme_slope = left[dir];
-		f_top = fu->f_p;
-	    }
+	if (left[dir] > extreme_slope) {
+	    if (rt_g.NMG_debug & DEBUG_BASIC)
+		bu_log("new f_top\n");
+	    extreme_slope = left[dir];
+	    f_top = fu->f_p;
 	}
     }
 
@@ -646,7 +622,7 @@ nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, const s
     /* look for voids */
     for (BU_LIST_FOR (void_s, shell, &r->s_hd)) {
 	struct face *void_f;
-	int wrong_void=0;
+	/* int wrong_void=0; */
 	vect_t normal;
 
 	if (void_s == outer_shell)
@@ -755,9 +731,11 @@ nmg_assoc_void_shells(const struct nmgregion *r, struct bu_ptbl *shells, const s
 		 }
 		*/
 	    }
+	    /*
 	    if (wrong_void) {
 		continue;
 	    }
+	    */
 
 	    /* This void shell belongs with shell outer_s
 	     * add it to the list of shells */
@@ -1498,6 +1476,8 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
     fu = fu_in;
     NMG_CK_FACEUSE(fu);
 
+    HSETALL(pl, 0.0); /* sanity */
+
     /* find an OT_SAME loop to use for calculating general direction of normal */
     for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
 	if (!got_dir && BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
@@ -1510,8 +1490,10 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 	loop_count++;
     }
 
-    if (!got_dir)
-	return 1;
+    if (!got_dir) {
+	failed = 1;
+	goto out;
+    }
 
     f = fu->f_p;
     NMG_CK_FACE(f);
@@ -1531,7 +1513,8 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 	/* if this face geometry only has one loop using it, just use Newell's method */
 	if (loop_count < 2) {
 	    HMOVE(pl, old_pl);
-	    return 0;
+	    failed = 0;
+	    goto out;
 	}
 
 	nmg_tabulate_face_g_verts(&verts, fg);
@@ -1540,7 +1523,8 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 	/* If this faceuse only has one loop, just use Newell's method */
 	if (loop_count < 2) {
 	    HMOVE(pl, old_pl);
-	    return 0;
+	    failed = 0;
+	    goto out;
 	}
 
 	nmg_vertex_tabulate(&verts, &fu->l.magic);
@@ -1555,13 +1539,14 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 	if (fu->orientation != OT_SAME) {
 	    bu_log("nmg_calc_face_plane: fu x%x has no OT_SAME use\n", fu);
 	    bu_ptbl_free(&verts);
-	    return 1;
+	    failed = 1;
+	    goto out;
 	}
     }
 
     /* build matrix */
     MAT_ZERO(matrix);
-    VSET(vsum, 0.0, 0.0, 0.0);
+    VSETALL(vsum, 0.0);
 
     one_over_vertex_count = 1.0/(double)(BU_PTBL_END(&verts));
 
@@ -1612,8 +1597,9 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 	pl[H] = VDOT(pl, vsum);
 
 	/* make sure it points in the correct direction */
-	if (VDOT(pl, old_pl) < 0.0)
+	if (VDOT(pl, old_pl) < -SMALL_FASTF) {
 	    HREVERSE(pl, pl);
+	}
     } else {
 	struct vertex *v, *v0;
 	int x_same=1;
@@ -1638,15 +1624,12 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 		break;
 	}
 
-	/* FIXME: VSET on an plane_t?  what about [H] (which we add to
-	 * later below)?
-	 */
 	if (x_same) {
-	    VSET(pl, 1.0, 0.0, 0.0);
+	    HSET(pl, 1.0, 0.0, 0.0, 0.0);
 	} else if (y_same) {
-	    VSET(pl, 0.0, 1.0, 0.0);
+	    HSET(pl, 0.0, 1.0, 0.0, 0.0);
 	} else if (z_same) {
-	    VSET(pl, 0.0, 0.0, 1.0);
+	    HSET(pl, 0.0, 0.0, 1.0, 0.0);
 	}
 
 	if (x_same || y_same || z_same) {
@@ -1657,13 +1640,15 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
 	    pl[H] = VDOT(pl, vsum);
 
 	    /* make sure it points in the correct direction */
-	    if (VDOT(pl, old_pl) < 0.0)
+	    if (VDOT(pl, old_pl) < -SMALL_FASTF) {
 		HREVERSE(pl, pl);
+	    }
 	} else {
 	    bu_log("nmg_calc_face_plane: Cannot calculate plane for fu x%x\n", fu);
 	    nmg_pr_fu_briefly(fu, (char *)NULL);
 	    bu_log("%d verts\n", BU_PTBL_END(&verts));
 	    failed = 1;
+	    goto out;
 	}
     }
 
@@ -1686,7 +1671,12 @@ nmg_calc_face_plane(struct faceuse *fu_in, fastf_t *pl)
     pl[H] += (max_dist + min_dist)/2.0;
 
     bu_ptbl_free(&verts);
+
+    failed = 0;
+
+out:
     return failed;
+
 }
 
 
@@ -1807,163 +1797,6 @@ nmg_model_area(const struct model *m)
 
 
 /**
- * R T _ D I S T _ L I N E 3 _ L I N E 3
- *
- * Calculate closest approach of two lines
- *
- * returns:
- *	-2 -> lines are parallel and do not intersect
- *	-1 -> lines are parallel and collinear
- *	 0 -> lines intersect
- *	 1 -> lines do not intersect
- * For return values less than zero, dist is not set.
- * For return valuse of 0 or 1, dist[0] is the distance
- * from p1 in the d1 direction to the point of closest
- * approach for that line.  Similar for the second line.
- * d1 and d2 must be unit direction vectors.
- *
- * XXX How is this different from bn_isect_line3_line3() ?
- * XXX Why are the calling sequences just slightly different?
- * XXX Can we pick the better one, and get rid of the other one?
- * XXX If not, can we document how they differ?
- */
-int
-rt_dist_line3_line3(fastf_t *dist, const fastf_t *p1, const fastf_t *d1, const fastf_t *p2, const fastf_t *d2, const struct bn_tol *tol)
-{
-    fastf_t d1_d2;
-    point_t a1, a2;
-    vect_t a1_to_a2;
-    vect_t p2_to_p1;
-    fastf_t min_dist;
-    fastf_t tol_dist_sq;
-    fastf_t tol_dist;
-
-    BN_CK_TOL(tol);
-
-    if (tol->dist > 0.0)
-	tol_dist = tol->dist;
-    else
-	tol_dist = 0.0005;
-
-    if (tol->dist_sq > 0.0)
-	tol_dist_sq = tol->dist_sq;
-    else
-	tol_dist_sq = tol_dist * tol_dist;
-
-    if (!NEAR_EQUAL(MAGSQ(d1), 1.0, tol_dist_sq)) {
-	bu_log("rt_dist_line3_line3: non-unit length direction vector (%f %f %f)\n", V3ARGS(d1));
-	bu_bomb("rt_dist_line3_line3\n");
-    }
-
-    if (!NEAR_EQUAL(MAGSQ(d2), 1.0, tol_dist_sq)) {
-	bu_log("rt_dist_line3_line3: non-unit length direction vector (%f %f %f)\n", V3ARGS(d2));
-	bu_bomb("rt_dist_line3_line3\n");
-    }
-
-    d1_d2 = VDOT(d1, d2);
-
-    if (BN_VECT_ARE_PARALLEL(d1_d2, tol)) {
-	if (bn_dist_line3_pt3(p1, d1, p2) > tol_dist)
-	    return -2; /* parallel, but not collinear */
-	else
-	    return -1; /* parallel and collinear */
-    }
-
-    VSUB2(p2_to_p1, p1, p2);
-    dist[0] = (d1_d2 * VDOT(p2_to_p1, d2) - VDOT(p2_to_p1, d1))/(1.0 - d1_d2 * d1_d2);
-    dist[1] = dist[0] * d1_d2 + VDOT(p2_to_p1, d2);
-
-    VJOIN1(a1, p1, dist[0], d1);
-    VJOIN1(a2, p2, dist[1], d2);
-
-    VSUB2(a1_to_a2, a2, a1);
-    min_dist = MAGNITUDE(a1_to_a2);
-    if (min_dist < tol_dist)
-	return 0;
-    else
-	return 1;
-}
-
-
-/**
- * R T _ D I S T _ L I N E 3 _ L S E G 3
- *
- * calculate intersection or closest approach of a line and a line
- * segement.
- *
- * returns:
- *	-2 -> line and line segment are parallel and collinear.
- *	-1 -> line and line segment are parallel, not collinear.
- *	 0 -> intersection between points a and b.
- *	 1 -> intersection outside a and b.
- *	 2 -> closest approach is between a and b.
- *	 3 -> closest approach is outside a and b.
- *
- * dist[0] is actual distance from p in d direction to
- * closest portion of segment.
- * dist[1] is ratio of distance from a to b (0.0 at a, and 1.0 at b),
- * dist[1] may be less than 0 or greater than 1.
- * For return values less than 0, closest approach is defined as
- * closest to point p.
- * Direction vector, d, must be unit length.
- *
- * XXX This should be moved to libbn/plane.c
- * XXX probably renamed as bn_dist_line3_line3().
- */
-int
-rt_dist_line3_lseg3(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
-{
-    vect_t a_to_b;
-    vect_t a_dir;
-    fastf_t len_ab;
-    int outside_segment;
-    int ret;
-
-    BN_CK_TOL(tol);
-
-    VSUB2(a_to_b, b, a);
-    len_ab = MAGNITUDE(a_to_b);
-    VSCALE(a_dir, a_to_b, (1.0/len_ab));
-
-    ret = rt_dist_line3_line3(dist, p, d, a, a_dir, tol);
-
-    if (ret < 0) {
-	vect_t to_a, to_b;
-	fastf_t dist_to_a, dist_to_b;
-
-	VSUB2(to_a, a, p);
-	VSUB2(to_b, b, p);
-	dist_to_a = VDOT(to_a, d);
-	dist_to_b = VDOT(to_b, d);
-
-	if (dist_to_a <= dist_to_b) {
-	    dist[0] = dist_to_a;
-	    dist[1] = 0.0;
-	} else {
-	    dist[0] = dist_to_b;
-	    dist[1] = 1.0;
-	}
-	return ret;
-    }
-
-    if (dist[1] >= (-tol->dist) && dist[1] <= len_ab + tol->dist) {
-	/* intersect or closest approach between a and b */
-	outside_segment = 0;
-	dist[1] = dist[1]/len_ab;
-	if (dist[1] < 0.0)
-	    dist[1] = 0.0;
-	if (dist[1] > 1.0)
-	    dist[1] = 1.0;
-    } else {
-	outside_segment = 1;
-	dist[1] = dist[1]/len_ab;
-    }
-
-    return 2*ret + outside_segment;
-}
-
-
-/**
  * N M G _ P U R G E _ U N W A N T E D _ I N T E R S E C T I O N _ P O I N T S
  *
  * Make sure that the list of intersection points doesn't contain any
@@ -2070,8 +1903,7 @@ nmg_purge_unwanted_intersection_points(struct bu_ptbl *vert_list, fastf_t *mag_l
 		       nmg_orientation(fu2lu->orientation));
 	    }
 
-	    if (V3RPP_OVERLAP_TOL(fu2lg->min_pt, fu2lg->max_pt,
-				  lg->min_pt, lg->max_pt, tol)) {
+	    if (V3RPP_OVERLAP_TOL(fu2lg->min_pt, fu2lg->max_pt, lg->min_pt, lg->max_pt, tol->dist)) {
 		overlap = 1;
 		break;
 	    }
@@ -2239,7 +2071,7 @@ nmg_count_shell_kids(const struct model *m, size_t *total_faces, size_t *total_w
     for (BU_LIST_FOR (r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR (s, shell, &r->s_hd)) {
 	    if (s->vu_p) {
-		total_points++;
+		(*total_points)++;
 		continue;
 	    }
 	    for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
@@ -2548,14 +2380,12 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 	    /* OK, so we have to do this one little-by-little */
 	    start_idx = -1;
 	    end_idx = -1;
-	    while (!found_face) {
+
+	    if (!found_face) {
+
 		/* refresh the vertex list */
 		(void)bu_ptbl_reset(&vert_tbl);
 
-		if (end_idx == 0) {
-		    give_up_on_face = 1;
-		    break;
-		}
 		start_idx++;
 		end_idx = start_idx + 1;
 		if (end_idx == loop_size)
@@ -2585,8 +2415,6 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 		    bu_ptbl_ins(&vert_tbl, (long *)&eu2->vu_p->v_p);
 		    edges_used++;
 		}
-
-		found_face = 1;
 	    }
 
 	    if (give_up_on_face) {
@@ -2834,6 +2662,11 @@ nmg_dup_shell(struct shell *s, long int ***trans_tbl, const struct bn_tol *tol)
 		    NMG_INDEX_ASSIGN((*trans_tbl), new_fu->f_p, (long *)fu->f_p);
 		}
 	    }
+
+	    /* make sure it's not a face without a loop before proceeding */
+	    if (!new_fu)
+		continue;
+
 	    if (fu->f_p->g.plane_p) {
 		/* Do it this way if you expect to change the normals */
 		plane_t n;
@@ -4785,79 +4618,6 @@ nmg_unbreak_region_edges(uint32_t *magic_p)
 
 
 /**
- * R T _ D I S T _ P T 3 _ L I N E 3
- *
- * Find the distance from a point P to a line described by the
- * endpoint A and direction dir, and the point of closest approach
- * (PCA).
- @code
- 			P
- 		       *
- 		      /.
- 		     / .
- 		    /  .
- 		   /   . (dist)
- 		  /    .
- 		 /     .
- 		*------*-------->
- 		A      PCA    dir
- @endcode
- * There are three distinct cases, with these return codes -
- *   0 => P is within tolerance of point A.  *dist = 0, pca=A.
- *   1 => P is within tolerance of line.  *dist = 0, pca=computed.
- *   2 => P is "above/below" line.  *dist=|PCA-P|, pca=computed.
- *
- * XXX For efficiency, a version of this routine that provides the
- * XXX distance squared would be faster.
- * XXX This should be moved into libbn/plane.c,
- * XXX probably named bn_dist_pt3_line3().
- */
-int
-rt_dist_pt3_line3(fastf_t *dist, fastf_t *pca, const fastf_t *a, const fastf_t *dir, const fastf_t *p, const struct bn_tol *tol)
-{
-    vect_t AtoP;	/* P-A */
-    vect_t unit_dir;	/* unitized dir vector */
-    fastf_t A_P_sq;	/* |P-A|**2 */
-    fastf_t t;		/* distance along ray of projection of P */
-    fastf_t dsq;	/* sqaure of distance from p to line */
-
-    if (rt_g.NMG_debug & DEBUG_BASIC)
-	bu_log("rt_dist_pt3_line3(a=(%f %f %f), dir=(%f %f %f), p=(%f %f %f)\n" ,
-	       V3ARGS(a), V3ARGS(dir), V3ARGS(p));
-
-    BN_CK_TOL(tol);
-
-    /* Check proximity to endpoint A */
-    VSUB2(AtoP, p, a);
-    if ((A_P_sq = MAGSQ(AtoP)) < tol->dist_sq) {
-	/* P is within the tol->dist radius circle around A */
-	VMOVE(pca, a);
-	*dist = 0.0;
-	return 0;
-    }
-
-    VMOVE(unit_dir, dir);
-    VUNITIZE(unit_dir);
-
-    /* compute distance (in actual units) along line to PROJECTION of
-     * point p onto the line: point pca
-     */
-    t = VDOT(AtoP, unit_dir);
-
-    VJOIN1(pca, a, t, unit_dir);
-    if ((dsq = A_P_sq - t*t) < tol->dist_sq) {
-	/* P is within tolerance of the line */
-	*dist = 0.0;
-	return 1;
-    } else {
-	/* P is off line */
-	*dist = sqrt(dsq);
-	return 2;
-    }
-}
-
-
-/**
  * N M G _ M V _ S H E L L _ T O _ R E G I O N
  *
  * Move a shell from one nmgregion to another.  Will bomb if shell and
@@ -5449,7 +5209,7 @@ nmg_get_edge_lines(struct vertex *new_v, struct bu_ptbl *int_faces, const struct
 		bu_bomb("Can't find plane intersection\n");
 	    }
 	    /* Make the start point at closest approach to old vertex */
-	    (void)rt_dist_pt3_line3(&dist, start, start, dir, new_v->vg_p->coord, tol);
+	    (void)bn_dist_pt3_line3(&dist, start, start, dir, new_v->vg_p->coord, tol);
 
 	    /* Make sure the calculated direction is away from the vertex */
 	    if (VDOT(eu_dir, dir) < 0.0)
@@ -5557,7 +5317,7 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
 
 	/* if we found another edge, calculate its intersection with the edge */
 	if (other_fus != edge_fus) {
-	    if (!rt_dist_line3_line3(dist, edge_fus->start, edge_fus->dir, other_fus->start, other_fus->dir, tol)) {
+	    if (!bn_dist_line3_line3(dist, edge_fus->start, edge_fus->dir, other_fus->start, other_fus->dir, tol)) {
 		if (rt_g.NMG_debug & DEBUG_BASIC)
 		    bu_log("Edge #%d intersects edge #%d at dist = %f\n", edge_no, next_edge_no, dist[0]);
 		if (NEAR_ZERO(dist[0], tol->dist))
@@ -5583,7 +5343,7 @@ nmg_get_max_edge_inters(const struct vertex *new_v, struct bu_ptbl *int_faces, c
 	}
 
 	if (other_fus != edge_fus) {
-	    if (rt_dist_line3_line3(dist, edge_fus->start, edge_fus->dir, other_fus->start, other_fus->dir, tol) >= 0) {
+	    if (bn_dist_line3_line3(dist, edge_fus->start, edge_fus->dir, other_fus->start, other_fus->dir, tol) >= 0) {
 		if (rt_g.NMG_debug & DEBUG_BASIC)
 		    bu_log("Edge #%d intersects edge #%d at dist = %f\n", edge_no, prev_edge_no, dist[0]);
 		if (NEAR_ZERO(dist[0], tol->dist))
@@ -5747,6 +5507,8 @@ nmg_split_edges_at_pts(const struct vertex *new_v, struct bu_ptbl *int_faces, co
 	struct edgeuse *new_eu;
 
 	i_fus = (struct intersect_fus *)BU_PTBL_GET(int_faces, edge_no);
+	if(i_fus == NULL)
+	    continue;
 
 	/* skip edges between two loops of same face, for now */
 	if (i_fus->fu[0] && i_fus->fu[1] && i_fus->fu[0]->f_p == i_fus->fu[1]->f_p)
@@ -6511,7 +6273,7 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
 	VSCALE(j_dir, j_dir, (1.0/max_dist1))
 
 	    /* check if these two edges intersect or pass near each other */
-	    if ((ret_val=rt_dist_line3_line3(dist, i_start->vg_p->coord, i_dir ,
+	    if ((ret_val=bn_dist_line3_line3(dist, i_start->vg_p->coord, i_dir ,
 					     j_start->vg_p->coord, j_dir, tol)) >= 0)
 	    {
 		if (rt_g.NMG_debug & DEBUG_BASIC) {
@@ -6623,10 +6385,11 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
     /* first check for edges that cross both adjacent edges */
     if (BU_PTBL_END(int_faces) > 2) {
 	for (edge_no=0; edge_no<BU_PTBL_END(int_faces); edge_no++) {
+	    int nmg_continue = 0;
 	    int next_edge_no, prev_edge_no;
 	    struct intersect_fus *edge_fus;
 	    struct intersect_fus *next_fus, *prev_fus;
-	    fastf_t dist1, dist2;
+	    fastf_t dist1 = 0, dist2;
 	    point_t pt1, pt2;
 
 	    edge_fus = (struct intersect_fus *)BU_PTBL_GET(int_faces, edge_no);
@@ -6645,7 +6408,7 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
 	    if (next_fus->vp && (!edge_fus->free_edge || !next_fus->free_edge))
 		dist1 = nmg_dist_to_cross(edge_fus, next_fus, pt1, tol);
 	    else
-		dist1 = (-1.0);
+		nmg_continue = 1;
 
 	    /* look at previous edge */
 	    prev_edge_no = edge_no - 1;
@@ -6658,11 +6421,10 @@ nmg_fix_crossed_loops(struct vertex *new_v, struct bu_ptbl *int_faces, const str
 	    if (prev_fus->vp && (!edge_fus->free_edge || !prev_fus->free_edge))
 		dist2 = nmg_dist_to_cross(edge_fus, prev_fus, pt2, tol);
 	    else
-		dist2 = (-1.0);
+		nmg_continue = 1;
 
 	    /* if no intersections, continue */
-	    if (dist1 < tol->dist || dist2 < tol->dist)
-		continue;
+	    if (nmg_continue) continue;
 
 	    if (rt_g.NMG_debug & DEBUG_BASIC) {
 		bu_log("fus=x%x, prev=x%x, next=x%x, dist1=%f, dist2=%f\n",
@@ -6863,7 +6625,7 @@ nmg_calc_new_v(struct vertex *new_v, const struct bu_ptbl *int_faces, const stru
 
 	fus = (struct intersect_fus *)BU_PTBL_GET(int_faces, i);
 
-	(void) rt_dist_pt3_line3(&dist, fus->start, fus->start, fus->dir, new_v->vg_p->coord, tol);
+	(void)bn_dist_pt3_line3(&dist, fus->start, fus->start, fus->dir, new_v->vg_p->coord, tol);
     }
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
@@ -7508,7 +7270,8 @@ nmg_vlist_to_wire_edges(struct shell *s, const struct bu_list *vhead)
     const struct bn_vlist *vp;
     struct edgeuse *eu;
     struct vertex *v1, *v2;
-    point_t pt1, pt2;
+    point_t pt1 = VINIT_ZERO;
+    point_t pt2 = VINIT_ZERO;
 
     NMG_CK_SHELL(s);
     NMG_CK_LIST(vhead);
@@ -7529,12 +7292,14 @@ nmg_vlist_to_wire_edges(struct shell *s, const struct bu_list *vhead)
 	    switch(vp->cmd[i]) {
 		case BN_VLIST_LINE_MOVE:
 		case BN_VLIST_POLY_MOVE:
+		case BN_VLIST_TRI_MOVE:
 		    v1 = (struct vertex *)NULL;
 		    v2 = (struct vertex *)NULL;
 		    VMOVE(pt2, vp->pt[i]);
 		    break;
 		case BN_VLIST_LINE_DRAW:
 		case BN_VLIST_POLY_DRAW:
+		case BN_VLIST_TRI_DRAW:
 		    VSUB2(edge_vec, pt2, vp->pt[i]);
 		    if (VNEAR_ZERO(edge_vec, SMALL_FASTF))
 			break;
@@ -7552,6 +7317,8 @@ nmg_vlist_to_wire_edges(struct shell *s, const struct bu_list *vhead)
 		    break;
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_POLY_END:
+		case BN_VLIST_TRI_START:
+		case BN_VLIST_TRI_END:
 		    break;
 	    }
 	}
@@ -8758,7 +8525,7 @@ nmg_make_faces_within_tol(struct shell *s, const struct bn_tol *tol)
 
 	/* check if all the vertices for this face lie on the plane */
 	if (nmg_ck_fu_verts(fu, fu->f_p, tol)) {
-	    plane_t pl;
+	    plane_t pl = HINIT_ZERO; /* sanity */
 
 	    /* Need to triangulate this face */
 	    nmg_triangulate_fu(fu, tol);
@@ -8775,7 +8542,7 @@ nmg_make_faces_within_tol(struct shell *s, const struct bn_tol *tol)
     }
 
     for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
-	plane_t pl;
+	plane_t pl = HINIT_ZERO; /* sanity */
 
 	if (fu->orientation != OT_SAME)
 	    continue;
@@ -9564,7 +9331,7 @@ nmg_to_arb(const struct model *m, struct rt_arb_internal *arb_int)
     struct vertex *v;
     struct edgeuse *eu_start;
     struct faceuse *fu1;
-    struct bu_ptbl tab;
+    struct bu_ptbl tab = BU_PTBL_INIT_ZERO;
     int face_verts;
     int i, j;
     int found;
@@ -9828,7 +9595,7 @@ nmg_to_tgc(
     fastf_t sum_top_r_sq;
     fastf_t ave_top_r_sq;
     fastf_t top_r;
-    plane_t top_pl;
+    plane_t top_pl = HINIT_ZERO;
     plane_t base_pl;
     vect_t plv_1, plv_2;
 
@@ -9919,7 +9686,8 @@ nmg_to_tgc(
     /* This looks like a good candidate,
      * Calculate center of base and top faces
      */
-
+    
+    if (fu_base) {
     vert_count = 0;
     VSETALL(sum, 0.0);
     lu = BU_LIST_FIRST(loopuse, &fu_base->lu_hd);
@@ -10030,6 +9798,8 @@ nmg_to_tgc(
     VSCALE(tgc_int->d, plv_2, top_r);
 
     tgc_int->magic = RT_TGC_INTERNAL_MAGIC;
+
+    }
 
     return 1;
 }
@@ -10353,9 +10123,9 @@ nmg_simplify_shell_edges(struct shell *s, const struct bn_tol *tol)
 		VSUB2(dir_next, vg3->coord, vg2->coord);
 
 		skip = 1;
-		if (rt_dist_pt3_line3(&dist, pca, vg1->coord, dir_eu, vg3->coord, tol) < 2)
+		if (bn_dist_pt3_line3(&dist, pca, vg1->coord, dir_eu, vg3->coord, tol) < 2)
 		    skip = 0;
-		else if (rt_dist_pt3_line3(&dist, pca, vg2->coord, dir_next, vg1->coord, tol) < 2)
+		else if (bn_dist_pt3_line3(&dist, pca, vg2->coord, dir_next, vg1->coord, tol) < 2)
 		    skip = 0;
 
 		if (skip) {
@@ -11254,7 +11024,8 @@ nmg_bot(struct shell *s, const struct bn_tol *tol)
 void
 nmg_vlist_to_eu(struct bu_list *vlist, struct shell *s)
 {
-    point_t pt1, pt2;
+    point_t pt1 = VINIT_ZERO;
+    point_t pt2 = VINIT_ZERO;
     struct bn_vlist *vp;
     struct edgeuse *eu;
     struct vertex *v=NULL;
@@ -11286,9 +11057,8 @@ nmg_vlist_to_eu(struct bu_list *vlist, struct shell *s)
 		    if (polyStartV == NULL) polyStartV = eu->vu_p->v_p;
 		    break;
 		case BN_VLIST_POLY_END:
-		    if (v != NULL &&  polyStartV != NULL) {
-			eu = nmg_me(v, polyStartV, s);
-		    }
+		    if (v != NULL &&  polyStartV != NULL)
+			nmg_me(v, polyStartV, s);
 		    break;
 		case BN_VLIST_POLY_START:
 		    polyStartV = NULL;

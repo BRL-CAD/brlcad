@@ -28,8 +28,6 @@ EXTRA_DIST = \
 	ChangeLog \
 	license.terms \
 	CMakeLists.txt \
-	CMake/FindTCL.cmake \
-	CMake/FindX11.cmake \
-	CMake/FindZLIB.cmake
+	CMake
 
 include $(top_srcdir)/misc/Makefile.defs

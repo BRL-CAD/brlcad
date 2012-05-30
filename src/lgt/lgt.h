@@ -1,7 +1,7 @@
 /*                           L G T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@
 
 /* Guess whether or not a frame buffer name is a disk file. (XXX) */
 #define DiskFile(fil)	(*fil != '\0'\
-			&& strncmp(fil, "/dev", 4 ) != 0 \
+			&& bu_strncmp(fil, "/dev", 4 ) != 0 \
 			&& strchr( fil, ':' ) == (char *)NULL)
 
 /* Values for grid type. */

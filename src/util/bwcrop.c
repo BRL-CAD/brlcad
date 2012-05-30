@@ -1,7 +1,7 @@
 /*                        B W C R O P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ size_t scanlen;			/* length of infile scanlines */
 size_t buflines;		/* Number of lines held in buffer */
 int buf_start = -1000;		/* First line in buffer */
 
-float xnum, ynum;		/* Number of pixels in new file */
+unsigned long xnum, ynum;	/* Number of pixels in new file */
 float ulx, uly, urx, ury, lrx, lry, llx, lly;	/* Corners of original file */
 
 FILE *ifp, *ofp;
@@ -104,10 +104,13 @@ fill_buffer(int y)
 int
 main(int argc, char **argv)
 {
-    float row, col, x1, y1, x2, y2, x, y;
+    float x1, y1, x2, y2, x, y;
+    size_t row, col;
     size_t yindex;
     char value;
     size_t ret;
+
+    int atoival;
 
     if (argc < 3) {
 	bu_exit(1, "%s", usage);
@@ -120,18 +123,74 @@ main(int argc, char **argv)
     }
 
     if (argc == 14) {
-	scanlen = atoi(argv[3]);
-	xnum = atoi(argv[4]);
-	ynum = atoi(argv[5]);
-	ulx = atoi(argv[6]);
-	uly = atoi(argv[7]);
-	urx = atoi(argv[8]);
-	ury = atoi(argv[9]);
-	lrx = atoi(argv[10]);
-	lry = atoi(argv[11]);
-	llx = atoi(argv[12]);
-	lly = atoi(argv[13]);
+	if (argv[3])
+	    scanlen = atoi(argv[3]);
+	else
+	    return 1;
+
+	if (argv[4]) {
+	    atoival = atoi(argv[4]);
+	    if (atoival < 0)
+		atoival = 0;
+	    if (atoival > INT_MAX-1)
+		atoival = INT_MAX-1;
+	    xnum = atoival;
+	} else {
+	    return 1;
+	}
+
+	if (argv[5]) {
+	    atoival = atoi(argv[5]);
+	    if (atoival < 0)
+		atoival = 0;
+	    if (atoival > INT_MAX-1)
+		atoival = INT_MAX-1;
+	    ynum = atoival;
+	} else {
+	    return 1;
+	}
+
+	if (argv[6])
+	    ulx = atoi(argv[6]);
+	else
+	    return 1;
+
+	if (argv[7])
+	    uly = atoi(argv[7]);
+	else
+	    return 1;
+
+	if (argv[8])
+	    urx = atoi(argv[8]);
+	else
+	    return 1;
+
+	if (argv[9])
+	    ury = atoi(argv[9]);
+	else
+	    return 1;
+
+	if (argv[10])
+	    lrx = atoi(argv[10]);
+	else
+	    return 1;
+
+	if (argv[11])
+	    lry = atoi(argv[11]);
+	else
+	    return 1;
+
+	if (argv[12])
+	    llx = atoi(argv[12]);
+	else
+	    return 1;
+
+	if (argv[13])
+	    lly = atoi(argv[13]);
+	else
+	    return 1;
     } else {
+	float xval, yval;
 	unsigned long len;
 	/* Get info */
 	printf("Scanline length in input file: ");
@@ -143,28 +202,43 @@ main(int argc, char **argv)
 	    bu_exit(4, "bwcrop: scanlen = %zu, don't be ridiculous\n", scanlen);
 	}
 	printf("Line Length and Number of scan lines (in new file)?: ");
-	ret = scanf("%f%f", &xnum, &ynum);
-	if (ret != 1)
+	ret = scanf("%f%f", &xval, &yval);
+	if (ret != 2) {
 	    perror("scanf");
+	}
+
+	/* sanitize */
+	if (xval < 1)
+	    xval = 1;
+	if (xval > INT_MAX-1)
+	    xval = INT_MAX-1;
+	xnum = xval;
+
+	/* sanitize */
+	if (yval < 1)
+	    yval = 1;
+	if (yval > INT_MAX-1)
+	    yval = INT_MAX-1;
+	ynum = yval;
 
 	printf("Upper left corner in input file (x, y)?: ");
 	ret = scanf("%f%f", &ulx, &uly);
-	if (ret != 1)
+	if (ret != 2)
 	    perror("scanf");
 
 	printf("Upper right corner (x, y)?: ");
 	ret = scanf("%f%f", &urx, &ury);
-	if (ret != 1)
+	if (ret != 2)
 	    perror("scanf");
 
 	printf("Lower right (x, y)?: ");
 	ret = scanf("%f%f", &lrx, &lry);
-	if (ret != 1)
+	if (ret != 2)
 	    perror("scanf");
 
 	printf("Lower left (x, y)?: ");
 	ret = scanf("%f%f", &llx, &lly);
-	if (ret != 1)
+	if (ret != 2)
 	    perror("scanf");
     }
 
@@ -182,16 +256,16 @@ main(int argc, char **argv)
     /* Move all points */
     for (row = 0; row < ynum; row++) {
 	/* calculate left point of row */
-	x1 = ((ulx-llx)/(ynum-1)) * row + llx;
-	y1 = ((uly-lly)/(ynum-1)) * row + lly;
+	x1 = ((ulx-llx)/(fastf_t)(ynum-1)) * (fastf_t)row + llx;
+	y1 = ((uly-lly)/(fastf_t)(ynum-1)) * (fastf_t)row + lly;
 	/* calculate right point of row */
-	x2 = ((urx-lrx)/(ynum-1)) * row + lrx;
-	y2 = ((ury-lry)/(ynum-1)) * row + lry;
+	x2 = ((urx-lrx)/(fastf_t)(ynum-1)) * (fastf_t)row + lrx;
+	y2 = ((ury-lry)/(fastf_t)(ynum-1)) * (fastf_t)row + lry;
 
 	for (col = 0; col < xnum; col++) {
 	    /* calculate point along row */
-	    x = ((x2-x1)/(xnum-1)) * col + x1;
-	    y = ((y2-y1)/(xnum-1)) * col + y1;
+	    x = ((x2-x1)/(fastf_t)(xnum-1)) * (fastf_t)col + x1;
+	    y = ((y2-y1)/(fastf_t)(xnum-1)) * (fastf_t)col + y1;
 
 	    /* Make sure we are in the buffer */
 	    yindex = round(y) - buf_start;

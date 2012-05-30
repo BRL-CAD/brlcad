@@ -1,7 +1,7 @@
 /*                         W H I C H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -89,7 +89,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
     BU_LIST_INIT(&headIdName.l);
 
     /* Build list of id_to_names */
-    for (j=1; j<argc; j++) {
+    for (j = 1; j < argc; j++) {
 	int n;
 	int start, end;
 	int range;
@@ -104,7 +104,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 
 		/* id not found */
 		if (BU_LIST_IS_HEAD(itnp, &headIdName.l)) {
-		    BU_GETSTRUCT(itnp, _ged_id_to_names);
+		    BU_GET(itnp, struct _ged_id_to_names);
 		    itnp->id = start;
 		    BU_LIST_INSERT(&headIdName.l, &itnp->l);
 		    BU_LIST_INIT(&itnp->headName.l);
@@ -129,7 +129,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 
 		    /* id not found */
 		    if (BU_LIST_IS_HEAD(itnp, &headIdName.l)) {
-			BU_GETSTRUCT(itnp, _ged_id_to_names);
+			BU_GET(itnp, struct _ged_id_to_names);
 			itnp->id = id;
 			BU_LIST_INSERT(&headIdName.l, &itnp->l);
 			BU_LIST_INIT(&itnp->headName.l);
@@ -156,7 +156,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 		if ((!isAir && comb->region_id == itnp->id) ||
 		    (isAir && comb->aircode == itnp->id)) {
 		    /* add region name to our name list for this region */
-		    BU_GETSTRUCT(inp, _ged_id_names);
+		    BU_GET(inp, struct _ged_id_names);
 		    bu_vls_init(&inp->name);
 		    bu_vls_strcpy(&inp->name, dp->d_namep);
 		    BU_LIST_INSERT(&itnp->headName.l, &inp->l);

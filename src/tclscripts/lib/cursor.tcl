@@ -1,7 +1,7 @@
 #                      C U R S O R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2006-2011 United States Government as represented by
+# Copyright (c) 2006-2012 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -49,7 +49,10 @@ proc SetWaitCursor {_w} {
     }
 
     $_w configure -cursor watch
-    ::update idletasks
+
+    # This is broken on Windows
+    #::update idletasks
+    ::update
 }
 
 # PROCEDURE: SetNormalCursor

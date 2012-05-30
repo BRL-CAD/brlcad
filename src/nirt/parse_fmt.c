@@ -1,7 +1,7 @@
 /*                     P A R S E _ F M T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -190,7 +190,7 @@ format_output (const char* buffer, com_table* ctp, struct rt_i *UNUSED(rtip))
 	    }
 	    break;
 	default:
-	    if (strncmp(bp, "default", 7) == 0) {
+	    if (bu_strncmp(bp, "default", 7) == 0) {
 		use_defaults = 1;
 		break;
 	    }
@@ -684,7 +684,7 @@ direct_output(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 	new_dest = bu_malloc(strlen(buffer + i)+1, "new_dest");
 
 	snprintf(new_dest, j-i+1, "%s", buffer + i);
-	if (bu_file_exists(new_dest)) {
+	if (bu_file_exists(new_dest, NULL)) {
 	    fprintf(stderr, "File %s already exists.\n", new_dest);
 	    return;
 	}
@@ -752,17 +752,13 @@ state_file(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 
 
 void
-dump_state(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
+dump_state(const char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *UNUSED(rtip))
 {
     char *c;
     static const char fmt_char[] = {'r', 'h', 'p', 'f', 'm', 'o', 'g'};
     FILE *sfPtr;
     int f;
     outitem *oip;		/* Pointer into list of output items */
-
-    /* quellage */
-    buffer = buffer;
-    ctp = ctp;
 
     if ((sfPtr = fopen(sf_name, "wb")) == NULL) {
 	fprintf(stderr, "Cannot open statefile '%s'\n", sf_name);
@@ -804,13 +800,9 @@ dump_state(const char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 
 
 void
-load_state(char *buffer, com_table *ctp, struct rt_i *rtip)
+load_state(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
 {
     FILE *sfPtr;
-
-    /* quellage */
-    buffer = buffer;
-    ctp = ctp;
 
     if ((sfPtr = fopen(sf_name, "rb")) == NULL) {
 	fprintf(stderr, "Cannot open statefile '%s'\n", sf_name);

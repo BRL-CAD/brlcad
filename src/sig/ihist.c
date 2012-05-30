@@ -1,7 +1,7 @@
 /*                         I H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
     long i, bit;
     int	n;
     int	max, min;
-    long	num, levels=0;
+    long num, levels=0;
 
     while ( argc > 1 ) {
 	if ( BU_STR_EQUAL( argv[1], "-v" ) ) {
@@ -61,11 +61,19 @@ int main(int argc, char **argv)
     }
 
     num = 0;
+    memset(values, 0, sizeof(values));
+    memset(ibuf, 0, sizeof(ibuf));
     zerop = &values[32768];
+
     while ( (n = fread(ibuf, 2, 1024, stdin)) > 0 ) {
 	num += n;
 	for ( i = 0; i < n; i++ ) {
-	    zerop[ ibuf[i] ] ++;
+	    long idx = ibuf[i];
+	    if (idx < 0)
+		idx = 0;
+	    if (idx > LONG_MAX-1)
+		idx = LONG_MAX-1;
+	    zerop[idx]++;
 	}
     }
     printf( "%ld values\n", num );

@@ -1,7 +1,7 @@
 /*                     C S G B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@
 #include "wdb.h"
 
 
-#define OBJ_BREP
 /* without OBJ_BREP, this entire procedural example is disabled */
 #ifdef OBJ_BREP
 
@@ -47,12 +46,13 @@ void
 write_out(struct rt_wdb* fp, struct rt_db_internal *ip, const char *name, struct bn_tol *tol)
 {
     ON_Brep* brep = NULL;
-
-    std::string bname = name;
-    bname += ".brep";
+    std::string bname;
 
     if (!fp || !ip || !name)
 	return;
+
+    bname = name;
+    bname += ".brep";
 
     /* write the object in implicit form */
     struct bu_external ext;
@@ -89,7 +89,7 @@ main(int argc, char** argv)
 
     bn_tol tol;
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = SMALL_FASTF;
     tol.para = 1.0 - tol.perp;
@@ -500,6 +500,8 @@ main(int argc, char** argv)
     revolve.magic = RT_REVOLVE_INTERNAL_MAGIC;
     VSET(revolve.v3d, -2000.0, 0.0, 0.0);
     VSET(revolve.axis3d, 0.0, 1.0, 0.0);
+    VSET(revolve.r, 100.0, 0.0, 100.0);
+    revolve.ang = 1.0;
     BU_VLS_INIT(&revolve.sketch_name);
     bu_vls_strcat(&revolve.sketch_name, "sketch");
     revolve.skt = &skt;

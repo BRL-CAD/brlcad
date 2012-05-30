@@ -1,7 +1,7 @@
 /*                           G C V . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,12 +31,12 @@
 __BEGIN_DECLS
 
 #ifndef GCV_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef GCV_EXPORT_DLL
-#      define GCV_EXPORT __declspec(dllexport)
-#    else
-#      define GCV_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(GCV_DLL_EXPORTS) && defined(GCV_DLL_IMPORTS)
+#    error "Only GCV_DLL_EXPORTS or GCV_DLL_IMPORTS can be defined, not both."
+#  elif defined(GCV_DLL_EXPORTS)
+#    define GCV_EXPORT __declspec(dllexport)
+#  elif defined(GCV_DLL_IMPORTS)
+#    define GCV_EXPORT __declspec(dllimport)
 #  else
 #    define GCV_EXPORT
 #  endif

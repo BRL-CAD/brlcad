@@ -1,7 +1,7 @@
 /*                     I F _ R E M O T E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -74,7 +74,7 @@ static struct pkg_switch pkgswitch[] = {
 
 /* True if the non-null string s is all digits */
 HIDDEN int
-numeric(register char *s)
+numeric(const char *s)
 {
     if (s == (char *)0 || *s == 0)
 	return 0;
@@ -105,7 +105,7 @@ numeric(register char *s)
  * Return -1 on error, else 0.
  */
 static int
-parse_file(char *file, char *host, int *portp, char *device, int length)
+parse_file(const char *file, char *host, int *portp, char *device, int length)
 /* input file spec */
 /* host part */
 /* port number */
@@ -207,7 +207,7 @@ rem_log(char *msg)
  * then the devname (or NULL if default).
  */
 HIDDEN int
-rem_open(register FBIO *ifp, register char *file, int width, int height)
+rem_open(register FBIO *ifp, const char *file, int width, int height)
 {
     size_t i;
     struct pkg_conn *pc;

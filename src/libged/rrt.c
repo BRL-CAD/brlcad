@@ -1,7 +1,7 @@
 /*                         R R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ ged_rrt(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
-    for (i=1; i < argc; i++)
+    for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
 

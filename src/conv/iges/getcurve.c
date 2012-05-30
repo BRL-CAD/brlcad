@@ -1,7 +1,7 @@
 /*                      G E T C U R V E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 	    ptr = (*curv_pts);
 
 	    /* Read first point */
-	    for (i=0; i<3; i++)
+	    for (i = 0; i < 3; i++)
 		Readcnv(&pt1[i], "");
 	    MAT4X3PNT(ptr->pt, *dir[curve]->rot, pt1);
 
@@ -75,7 +75,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 	    ptr = ptr->next;
 
 	    /* Read second point */
-	    for (i=0; i<3; i++)
+	    for (i = 0; i < 3; i++)
 		Readcnv(&pt1[i], "");
 	    MAT4X3PNT(ptr->pt, *dir[curve]->rot, pt1);
 	    ptr->next = NULL;
@@ -147,7 +147,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 	    ptr = ptr->next;
 	    ptr->prev = prev;
 	    VMOVE(tmp, start);
-	    for (i=1; i<npts; i++) {
+	    for (i = 1; i < npts; i++) {
 		rx = tmp[X] - center[X];
 		ry = tmp[Y] - center[Y];
 		tmp[X] = center[X] + rx*cosdel - ry*sindel;
@@ -203,7 +203,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 							     "Getcurve: curv_pts");
 		    ptr = (*curv_pts);
 		    ptr->prev = NULL;
-		    for (i=0; i<ntuples; i++) {
+		    for (i = 0; i < ntuples; i++) {
 			Readcnv(&pt1[X], "");
 			Readcnv(&pt1[Y], "");
 			pt1[Z] = common_z;
@@ -234,7 +234,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 							     "Getcurve: curv_pts");
 		    ptr = (*curv_pts);
 		    ptr->prev = NULL;
-		    for (i=0; i<ntuples; i++) {
+		    for (i = 0; i < ntuples; i++) {
 			Readcnv(&pt1[X], "");
 			Readcnv(&pt1[Y], "");
 			Readcnv(&pt1[Z], "");
@@ -279,6 +279,8 @@ Getcurve(int curve, struct ptlist **curv_pts)
 	    Readint(&i, "");	/* Skip over continuity */
 	    splroot = (struct spline *)bu_malloc(sizeof(struct spline),
 						 "Getcurve: splroot");
+	    if (splroot == NULL)
+		bu_exit(1, "Failed to allocate spline memory\n");
 	    splroot->start = NULL;
 	    Readint(&splroot->ndim, ""); /* 2->planar, 3->3d */
 	    Readint(&splroot->nsegs, ""); /* Number of segments */
@@ -286,7 +288,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 
 	    /* start a linked list of segments */
 	    seg = splroot->start;
-	    for (i=0; i<splroot->nsegs; i++) {
+	    for (i = 0; i < splroot->nsegs; i++) {
 		if (seg == NULL) {
 		    seg = (struct segment *)bu_malloc(sizeof(struct segment),
 						      "Getcurve: seg");
@@ -305,12 +307,12 @@ Getcurve(int curve, struct ptlist **curv_pts)
 
 	    /* read coefficients for polynomials */
 	    seg = splroot->start;
-	    for (i=0; i<splroot->nsegs; i++) {
-		for (j=0; j<4; j++)
+	    for (i = 0; i < splroot->nsegs; i++) {
+		for (j = 0; j < 4; j++)
 		    Readflt(&seg->cx[j], ""); /* x coeff's */
-		for (j=0; j<4; j++)
+		for (j = 0; j < 4; j++)
 		    Readflt(&seg->cy[j], ""); /* y coeff's */
-		for (j=0; j<4; j++)
+		for (j = 0; j < 4; j++)
 		    Readflt(&seg->cz[j], ""); /* z coeff's */
 		seg = seg->next;
 	    }
@@ -328,7 +330,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 	    while (seg != NULL) {
 		/* plot 9 points per segment (This should
 		   be replaced by some logic) */
-		for (i=0; i<9; i++) {
+		for (i = 0; i < 9; i++) {
 		    a = (fastf_t)i/(8.0)*(seg->tmax-seg->tmin);
 		    tmp[0] = splinef(seg->cx, a);
 		    tmp[1] = splinef(seg->cy, a);
@@ -337,7 +339,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		    else
 			tmp[2] = seg->cz[0];
 		    MAT4X3PNT(ptr->pt, *dir[curve]->rot, tmp);
-		    for (j=0; j<3; j++)
+		    for (j = 0; j < 3; j++)
 			ptr->pt[j] *= conv_factor;
 		    npts++;
 		    prev = ptr;
@@ -353,16 +355,15 @@ Getcurve(int curve, struct ptlist **curv_pts)
 	    ptr->next = NULL;
 
 	    /* free the used memory */
-	    if (splroot != NULL) {
-		seg = splroot->start;
-		while (seg != NULL) {
-		    seg1 = seg;
-		    seg = seg->next;
-		    bu_free((char *)seg1, "Getcurve: seg1");
-		}
-		bu_free((char *)splroot, "Getcurve: splroot");
-		splroot = NULL;
+	    seg = splroot->start;
+	    while (seg != NULL) {
+		seg1 = seg;
+		seg = seg->next;
+		bu_free((char *)seg1, "Getcurve: seg1");
 	    }
+	    bu_free((char *)splroot, "Getcurve: splroot");
+	    splroot = NULL;
+
 	    break;
 	}
 	case 104: {
@@ -391,7 +392,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 
 	    /* read common z-coordinate */
 	    Readflt(&v1[2], "");
-	    v2[2]=v1[2];
+	    v2[2] = v1[2];
 
 	    /* read start point */
 	    Readflt(&v1[0], "");
@@ -421,9 +422,9 @@ Getcurve(int curve, struct ptlist **curv_pts)
 	    a = A*C - B*B/4.0;
 	    if (fabs(a) < 1.0  && fabs(a) > TOL) {
 		a = fabs(A);
-		if (fabs(B)<a && !ZERO(B))
+		if (fabs(B) < a && !ZERO(B))
 		    a = fabs(B);
-		if (fabs(C)<a)
+		if (fabs(C) < a)
 		    a = fabs(C);
 		A = A/a;
 		B = B/a;
@@ -529,7 +530,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		    /* middle points */
 		    b = cos(theta);
 		    c = sin(theta);
-		    for (i=1; i<num_points-1; i++) {
+		    for (i = 1; i < num_points-1; i++) {
 			r1 = t1 + dpi*i;
 			tmp[0] = xc + a*r1*r1*b - r1*c;
 			tmp[1] = yc + a*r1*r1*c + r1*b;
@@ -547,7 +548,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		    tmp[0] = v2[0];
 		    tmp[1] = v2[1];
 		    MAT4X3PNT(ptr->pt, *dir[curve]->rot, tmp);
-		    for (j=0; j<3; j++)
+		    for (j = 0; j < 3; j++)
 			ptr->pt[j] *= conv_factor;
 		    npts++;
 		    ptr->next = NULL;
@@ -585,7 +586,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		       the start and terminate points to match
 		       the simpler curve (A1, C1, and F1 coeff's)	*/
 
-		    for (i=0; i<16; i++)
+		    for (i = 0; i < 16; i++)
 			rot1[i] = idn[i];
 		    MAT_DELTAS(rot1, -xc, -yc, 0.0);
 		    MAT4X3PNT(tmp, rot1, v1);
@@ -640,7 +641,13 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		    MAT_DELTAS(rot1, xc, yc, 0.0);
 		    rot1[1] = (-rot1[1]);
 		    rot1[4] = (-rot1[4]);
+#if defined(USE_BN_MULT_)
+                    /* o <= a X b */
+                    bn_mat_mul(rot2, *(dir[curve]->rot), rot1);
+#else
+                    /* a X b => o */
 		    Matmult(*(dir[curve]->rot), rot1, rot2);
+#endif
 
 		    /* calculate start point */
 		    (*curv_pts) = (struct ptlist *)bu_malloc(sizeof(struct ptlist),
@@ -659,7 +666,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		    ptr->prev = prev;
 
 		    /* middle points */
-		    for (i=1; i<num_points; i++) {
+		    for (i = 1; i < num_points; i++) {
 			point_t tmp2 = {0.0, 0.0, 0.0};
 
 			theta = alpha + (double)i/(double)num_points*beta;
@@ -706,14 +713,14 @@ Getcurve(int curve, struct ptlist **curv_pts)
 
 	    Readint(&ncurves, "");
 	    curvptr = (int *)bu_calloc(ncurves, sizeof(int), "Getcurve: curvptr");
-	    for (i=0; i<ncurves; i++) {
+	    for (i = 0; i < ncurves; i++) {
 		Readint(&curvptr[i], "");
 		curvptr[i] = (curvptr[i]-1)/2;
 	    }
 
 	    npts = 0;
 	    (*curv_pts) = NULL;
-	    for (i=0; i<ncurves; i++) {
+	    for (i = 0; i < ncurves; i++) {
 		npts += Getcurve(curvptr[i], &tmp_ptr);
 		if ((*curv_pts) == NULL)
 		    (*curv_pts) = tmp_ptr;
@@ -762,23 +769,23 @@ Getcurve(int curve, struct ptlist **curv_pts)
 	    Readint(&prop3, "");
 	    Readint(&prop4, "");
 
-	    n = k-m+1;
-	    a = n+2*m;
+	    n = k - m + 1;
+	    a = n + 2 * m;
 
 	    t = (fastf_t *)bu_calloc(a+1, sizeof(fastf_t), "Getcurve: spline t");
-	    for (i=0; i<a+1; i++)
+	    for (i = 0; i < a+1; i++)
 		Readflt(&t[i], "");
 	    Knot(a+1, t);
 
 	    w = (fastf_t *)bu_calloc(k+1, sizeof(fastf_t), "Getcurve: spline w");
-	    for (i=0; i<k+1; i++)
+	    for (i = 0; i < k+1; i++)
 		Readflt(&w[i], "");
 
 	    cntrl_pts = (point_t *)bu_calloc(k+1, sizeof(point_t), "Getcurve: spline cntrl_pts");
-	    for (i=0; i<k+1; i++) {
+	    for (i = 0; i < k+1; i++) {
 		fastf_t tmp;
 
-		for (j=0; j<3; j++) {
+		for (j = 0; j < 3; j++) {
 		    Readcnv(&tmp, "");
 		    cntrl_pts[i][j] = tmp;
 		}

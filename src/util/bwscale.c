@@ -1,7 +1,7 @@
 /*                       B W S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -379,7 +379,7 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 	    }
 	    *op++ = (int)(sum / (pxlen * pylen));
 	    if (op > (outbuf+scanlen))
-		abort();
+		bu_bomb("unexpected buffer overrun");
 	}
 	ret = fwrite(outbuf, 1, ox, ofp);
 	if (ret != (size_t)ox) 

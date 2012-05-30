@@ -1,7 +1,7 @@
 /*                        D O D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -196,6 +196,8 @@ mged_bound_solid(struct solid *sp)
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_START:
+		case BN_VLIST_TRI_VERTNORM:
 		    /* Has normal vector, not location */
 		    break;
 		case BN_VLIST_LINE_MOVE:
@@ -203,6 +205,10 @@ mged_bound_solid(struct solid *sp)
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_POLY_END:
+		case BN_VLIST_TRI_MOVE:
+		case BN_VLIST_TRI_DRAW:
+		case BN_VLIST_TRI_END:
+		case BN_VLIST_POINT_DRAW:
 		    V_MIN(xmin, (*pt)[X]);
 		    V_MAX(xmax, (*pt)[X]);
 		    V_MIN(ymin, (*pt)[Y]);
@@ -212,9 +218,8 @@ mged_bound_solid(struct solid *sp)
 		    break;
 		default:
 		    {
-			struct bu_vls tmp_vls;
+			struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-			bu_vls_init(&tmp_vls);
 			bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", *cmd);
 			Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
 			bu_vls_free(&tmp_vls);
@@ -251,11 +256,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
     if (!existing_sp) {
 	/* Handling a new solid */
 	GET_SOLID(sp, &MGED_FreeSolid.l);
-	/* NOTICE:  The structure is dirty & not initialized for you! */
-
-	/* Grab the last display list */
-	gdlp = BU_LIST_PREV(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	sp->s_dlist = BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist + 1;
+	sp->s_dlist = 0;
     } else {
 	/* Just updating an existing solid.
 	 * 'tsp' and 'pathpos' will not be used
@@ -302,10 +303,11 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	sp->s_soldash = dashflag;
 	sp->s_Eflag = 0;	/* This is a solid */
 	db_dup_full_path(&sp->s_fullpath, pathp);
-	sp->s_regionid = tsp->ts_regionid;
+	if (tsp)
+	  sp->s_regionid = tsp->ts_regionid;
     }
 
-    createDListALL(sp);
+    createDListAll(sp);
 
     /* Solid is successfully drawn */
     if (!existing_sp) {
@@ -399,7 +401,7 @@ mged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp,
     }
 
     /* Indicate success by returning something other than TREE_NULL */
-    BU_GETUNION(curtree, tree);
+    BU_GET(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
 
@@ -459,7 +461,8 @@ mged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
     dp = db_lookup(tsp->ts_dbip, tp->tr_l.tl_name, LOOKUP_NOISY);
     if (!dp)
 	return 0;	/* proceed as usual */
-    if (tsp->ts_mat) {
+
+    if (!bn_mat_is_identity(tsp->ts_mat)) {
 	if (tp->tr_l.tl_mat) {
 	    matp = xform;
 	    bn_mat_mul(xform, tsp->ts_mat, tp->tr_l.tl_mat);
@@ -473,6 +476,7 @@ mged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 	    matp = (matp_t)NULL;
 	}
     }
+
     if (rt_db_get_internal(&intern, dp, tsp->ts_dbip, matp, &rt_uniresource) < 0)
 	return 0;	/* proceed as usual */
 
@@ -791,9 +795,8 @@ drawtrees(int argc, const char *argv[], int kind)
 		break;
 	    default:
 		{
-		    struct bu_vls vls;
+		    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-		    bu_vls_init(&vls);
 		    bu_vls_printf(&vls, "help %s", argv[0]);
 		    Tcl_Eval(INTERP, bu_vls_addr(&vls));
 		    bu_vls_free(&vls);
@@ -1134,11 +1137,8 @@ invent_solid(
     /* Solid successfully drawn, add to linked list of solid structs */
     BU_LIST_APPEND(gdlp->gdl_headSolid.back, &sp->l);
 
-    /* Grab the last display list */
-    gdlp = BU_LIST_PREV(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-    sp->s_dlist = BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist + 1;
-
-    createDListALL(sp);
+    sp->s_dlist = 0;
+    createDListAll(sp);
 
     return 0;		/* OK */
 }
@@ -1152,9 +1152,8 @@ add_solid_path_to_result(
     Tcl_Interp *interp,
     struct solid *sp)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&str);
     db_path_to_vls(&str, &sp->s_fullpath);
     Tcl_AppendResult(interp, bu_vls_addr(&str), " ", NULL);
     bu_vls_free(&str);
@@ -1180,9 +1179,8 @@ cmd_redraw_vlist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, co
     CHECK_DBI_NULL;
 
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help redraw_vlist");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);

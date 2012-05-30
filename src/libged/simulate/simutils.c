@@ -1,7 +1,7 @@
 /*                         S I M U T I L S . C
  * BRL-CAD
  *
- * Copyright (c) 2011 United States Government as represented by
+ * Copyright (c) 2011-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -85,7 +85,7 @@ print_manifold_list(struct rigid_body *rb)
     for (i=0; i<rb->num_bt_manifolds; i++) {
 
 	bu_log("--Manifold %d between %s & %s has %d contacts--\n",
-	       i+1,
+		   i+1,
 	       rb->bt_manifold[i].rbA->rb_namep,
 	       rb->bt_manifold[i].rbB->rb_namep,
 	       rb->bt_manifold[i].num_contacts);
@@ -114,6 +114,66 @@ print_command(char* cmd_args[], int argc)
 }
 
 
+HIDDEN int
+find_solid(struct db_i *dbip,
+	 struct rt_comb_internal *comb,
+	 union tree *comb_leaf,
+	 genptr_t object)
+{
+    char *obj_name;
+
+    if (dbip) RT_CK_DBI(dbip);
+    if (comb) RT_CK_COMB(comb);
+    RT_CK_TREE(comb_leaf);
+
+    obj_name = (char *)object;
+    if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, obj_name))
+    	return FOUND;
+    else
+    	return NOT_FOUND;
+}
+
+
+int
+check_tree_funcleaf(
+    struct db_i *dbip,
+    struct rt_comb_internal *comb,
+    union tree *comb_tree,
+    int (*leaf_func)(),
+    genptr_t user_ptr1)
+{
+	int rv = NOT_FOUND;
+
+	RT_CK_DBI(dbip);
+
+    if (!comb_tree)
+	return NOT_FOUND;
+
+    RT_CK_TREE(comb_tree);
+
+    switch (comb_tree->tr_op) {
+	case OP_DB_LEAF:
+	    rv = (*leaf_func)(dbip, comb, comb_tree, user_ptr1);
+	    break;
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_left, leaf_func, user_ptr1);
+	    if(rv == NOT_FOUND)
+	    	rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_right, leaf_func, user_ptr1);
+	    break;
+	default:
+	    bu_log("check_tree_funcleaf: bad op %d\n", comb_tree->tr_op);
+	    bu_bomb("check_tree_funcleaf: bad op\n");
+	    break;
+    }
+
+    return rv;
+}
+
+
+
 int
 kill(struct ged *gedp, char *name)
 {
@@ -122,17 +182,17 @@ kill(struct ged *gedp, char *name)
 
     /* Check if the duplicate already exists, and kill it if so */
     if (db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_log("kill: WARNING \"%s\" exists, deleting it\n", name);
-	cmd_args[0] = bu_strdup("kill");
-	cmd_args[1] = bu_strdup(name);
-	cmd_args[2] = (char *)0;
+		/* bu_log("kill: WARNING \"%s\" exists, deleting it\n", name); */
+		cmd_args[0] = bu_strdup("kill");
+		cmd_args[1] = bu_strdup(name);
+		cmd_args[2] = (char *)0;
 
-	if (ged_kill(gedp, argc, (const char **)cmd_args) != GED_OK) {
-	    bu_log("kill: ERROR Could not delete existing \"%s\"\n", name);
-	    return GED_ERROR;
-	}
+		if (ged_kill(gedp, argc, (const char **)cmd_args) != GED_OK) {
+			bu_log("kill: ERROR Could not delete existing \"%s\"\n", name);
+			return GED_ERROR;
+		}
 
-	bu_free_array(argc, cmd_args, "kill: free cmd_args");
+		bu_free_array(argc, cmd_args, "kill: free cmd_args");
     }
 
     return GED_OK;
@@ -243,7 +303,7 @@ line(struct ged *gedp, char* name, point_t from, point_t to,
 
     cmd_args[19] = (char *)0;
 
-    print_command(cmd_args, 19);
+    /* print_command(cmd_args, 19); */
 
     rv = ged_in(gedp, argc, (const char **)cmd_args);
     if (rv != GED_OK) {
@@ -328,7 +388,6 @@ arrow(struct ged *gedp, char* name, point_t from, point_t to)
     }
 
     bu_free_array(argc, cmd_args, "arrow: free cmd_args");
-    bu_vls_free(&arrow_line_vls);
 
     add_to_comb(gedp, name, prefixed_arrow_line);
 
@@ -366,7 +425,6 @@ arrow(struct ged *gedp, char* name, point_t from, point_t to)
     }
 
     bu_free_array(argc, cmd_args, "apply_material: free cmd_args");
-    bu_vls_free(&arrow_head_vls);
 
     add_to_comb(gedp, name, prefixed_arrow_head);
 
@@ -494,10 +552,6 @@ make_rpp(struct ged *gedp, vect_t min, vect_t max, char* name)
 
     rv = ged_in(gedp, argc, (const char **)cmd_args);
     if (rv != GED_OK) {
-	if (kill(gedp, name) != GED_OK) {
-	    bu_log("line: ERROR Could not delete existing \"%s\"\n", name);
-	    return GED_ERROR;
-	}
 	bu_log("make_rpp: WARNING Could not insert RPP %s (%f, %f, %f):(%f, %f, %f)\n",
 	       name, V3ARGS(min), V3ARGS(max));
 	return GED_ERROR;
@@ -656,8 +710,9 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 	prefixed_name = BU_VLS_INIT_ZERO,
 	prefixed_reg_name = BU_VLS_INIT_ZERO,
 	prefixed_normal_name = BU_VLS_INIT_ZERO;
-    vect_t scaled_normal;
-    point_t from, to;
+    vect_t scaled_normal = VINIT_ZERO;
+    point_t from = VINIT_ZERO;
+    point_t to = VINIT_ZERO;
 
     for (i=0; i<rb->num_bt_manifolds; i++) {
 

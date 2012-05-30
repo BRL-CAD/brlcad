@@ -1,7 +1,7 @@
 /*                       R E A D C N V . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ Readcnv(inum, id)
     char *id;
     fastf_t *inum;
 {
-    int i=(-1), done=0, lencard;
+    int i = (-1), done = 0, lencard;
     char num[80];
 
     if (card[counter] == eof) {

@@ -1,7 +1,7 @@
 /*                       E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -118,7 +118,7 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
 	return -1;
     }
     
-    BU_GETSTRUCT(extr, extrude_specific);
+    BU_GET(extr, struct extrude_specific);
    
     VMOVE(extr->unit_h, eip->h);
     VUNITIZE(extr->unit_h);
@@ -361,7 +361,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 	return -1;
     }
 
-    BU_GETSTRUCT(extr, extrude_specific);
+    BU_GET(extr, struct extrude_specific);
     stp->st_specific = (genptr_t)extr;
 
     VMOVE(extr->unit_h, eip->h);
@@ -602,8 +602,11 @@ get_quadrant(fastf_t *v, fastf_t *local_x, fastf_t *local_y, fastf_t *vx, fastf_
 }
 
 
+/*
+ * TODO: seems appropriate to make this into a proper libbn function
+ */
 static int
-isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *center, fastf_t *ra, fastf_t *rb)
+isect_line2_ellipse(vect2d_t dist, const vect2d_t ray_start, const vect2d_t ray_dir, const vect2d_t center, const vect2d_t ra, const vect2d_t rb)
 {
     fastf_t a, b, c;
     point2d_t pmc;
@@ -621,8 +624,8 @@ isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t
     rb_sq = V2DOT(rb, rb);
     rb_4 = rb_sq * rb_sq;
     if (ra_4 <= SMALL_FASTF || rb_4 <= SMALL_FASTF) {
-	bu_log("ray (%g %g %g) -> (%g %g %g), semi-axes  = (%g %g %g) and (%g %g %g), center = (%g %g %g)\n",
-	       V3ARGS(ray_start), V3ARGS(ray_dir), V3ARGS(ra), V3ARGS(rb), V3ARGS(center));
+	bu_log("ray (%g %g) -> (%g %g), semi-axes  = (%g %g) and (%g %g), center = (%g %g)\n",
+	       V2ARGS(ray_start), V2ARGS(ray_dir), V2ARGS(ra), V2ARGS(rb), V2ARGS(center));
 	bu_bomb("ERROR: isect_line2_ellipse: semi-axis length is too small!\n");
     }
 
@@ -648,12 +651,16 @@ isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t
 }
 
 
+/*
+ * TODO: seems appropriate to make this into a proper libbn function
+ */
 static int
-isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *center, fastf_t *ra, fastf_t *rb, fastf_t *norm, fastf_t *start, fastf_t *end, int orientation)
+isect_line_earc(vect2d_t dist, const vect_t ray_start, const vect_t ray_dir, const vect_t center, const vect_t ra, const vect_t rb, const vect_t norm, const vect_t start, const vect_t end, int orientation)
 
 
     /* 0 -> ccw, !0 -> cw */
 {
+    int i;
     int dist_count;
     vect_t local_x, local_y, local_z;
     fastf_t vx, vy;
@@ -661,7 +668,6 @@ isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *ce
     fastf_t sx, sy;
     int quad_start, quad_end, quad_pt;
     point2d_t to_pt, pt;
-    int i;
 
     dist_count = isect_line2_ellipse(dist, ray_start, ray_dir, center, ra, rb);
 
@@ -803,10 +809,11 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     size_t i, j, k;
     long counter;
     fastf_t dist_top, dist_bottom, to_bottom=0;
-    fastf_t dist[2];
+    vect2d_t dist = V2INIT_ZERO;
     fastf_t dot_pl1, dir_dot_z;
     point_t tmp, tmp2;
-    point_t ray_start, ray_dir, ray_dir_unit;	/* 2D */
+    point_t ray_start;			/* 2D */
+    vect_t ray_dir, ray_dir_unit;	/* 2D */
     struct rt_curve *crv;
     struct hit hits[MAX_HITS];
     fastf_t dists_before[MAX_HITS];
@@ -824,8 +831,8 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     point2d_t *intercept;
     point2d_t *normal = NULL;
     point2d_t ray_perp;
-    vect_t ra = V2INIT_ZERO;
-    vect_t rb = V2INIT_ZERO;
+    vect_t ra = VINIT_ZERO; /* 2D */
+    vect_t rb = VINIT_ZERO; /* 2D */
 
     crv = &extr->crv;
 
@@ -919,6 +926,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		csg = (struct carc_seg *)lng;
 		{
 		    fastf_t radius;
+		    point_t center = VINIT_ZERO;
 
 		    if (csg->radius <= 0.0) {
 			/* full circle */
@@ -931,12 +939,14 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 			VSCALE(ra, extr->rot_axis, radius);
 			VSCALE(rb, extr->perp, radius);
 
-			dist_count = isect_line2_ellipse(dist, ray_start, ray_dir, extr->verts[csg->end], ra, rb);
+			VSET(center, extr->verts[csg->end][X], extr->verts[csg->end][Y], 0.0);
+			dist_count = isect_line2_ellipse(dist, ray_start, ray_dir, center, ra, rb);
 			MAT4X3PNT(tmp, extr->irot, extr->verts[csg->end]); /* used later in hit->vpriv */
 		    } else {
 			VSCALE(ra, extr->rot_axis, csg->radius);
 			VSCALE(rb, extr->perp, csg->radius);
-			dist_count = isect_line_earc(dist, ray_start, ray_dir, extr->verts[csg->center], ra, rb, extr->pl1_rot, extr->verts[csg->start], extr->verts[csg->end], csg->orientation);
+			VSET(center, extr->verts[csg->center][X], extr->verts[csg->center][Y], 0.0);
+			dist_count = isect_line_earc(dist, ray_start, ray_dir, center, ra, rb, extr->pl1_rot, extr->verts[csg->start], extr->verts[csg->end], csg->orientation);
 			MAT4X3PNT(tmp, extr->irot, extr->verts[csg->center]); /* used later in hit->vpriv */
 		    }
 		}
@@ -1621,21 +1631,22 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 {
     int i, j;
     int code;
-    point2d_t norm;
+    vect_t norm;
     fastf_t dist[2];
 
     vect_t s2m, tmp_dir;
     fastf_t s2m_len_sq, len_sq, tmp_len, cross_z;
 
-    point2d_t ra = V2INIT_ZERO;
-    point2d_t rb = V2INIT_ZERO;
+    vect_t ra = VINIT_ZERO;
+    vect_t rb = VINIT_ZERO;
     point2d_t start2d = V2INIT_ZERO;
     point2d_t end2d = V2INIT_ZERO;
     point2d_t mid_pt = V2INIT_ZERO;
     point2d_t center2d = V2INIT_ZERO;
 
-    norm[0] = -dir[1];
-    norm[1] = dir[0];
+    norm[X] = -dir[Y];
+    norm[Y] = dir[X];
+    norm[Z] = 0.0;
 
     for (i=0; i<BU_PTBL_END(loop); i++) {
 	uint32_t *lng;
@@ -1733,8 +1744,10 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    radius = sqrt(MAG2SQ(diff));
 		    ra[X] = radius;
 		    ra[Y] = 0.0;
+		    ra[Z] = 0.0;
 		    rb[X] = 0.0;
 		    rb[Y] = radius;
+		    rb[Z] = 0.0;
 		    code = isect_line2_ellipse(dist, pta, dir, ip->verts[csg->end],
 					       ra, rb);
 
@@ -1756,6 +1769,8 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    }
 
 		} else {
+		    point_t center = VINIT_ZERO;
+
 		    V2MOVE(start2d, ip->verts[csg->start]);
 		    V2MOVE(end2d, ip->verts[csg->end]);
 		    mid_pt[0] = (start2d[0] + end2d[0]) * 0.5;
@@ -1784,11 +1799,11 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
 		    if (!(cross_z > 0.0 && csg->center_is_left))
 			V2JOIN1(center2d, mid_pt, -tmp_len, tmp_dir);
 
-		    ra[X] = radius;
-		    ra[Y] = 0.0;
-		    rb[X] = 0.0;
-		    rb[Y] = radius;
-		    code = isect_line_earc(dist, pta, dir, center2d, ra, rb,
+		    VSET(ra, radius, 0.0, 0.0);
+		    VSET(rb, 0.0, radius, 0.0);
+		    VSET(center, center2d[X], center2d[Y], 0.0);
+
+		    code = isect_line_earc(dist, pta, dir, center, ra, rb,
 					   norm, ip->verts[csg->start], ip->verts[csg->end],
 					   csg->orientation);
 		    if (code <= 0)
@@ -2134,7 +2149,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     if (!BU_LIST_IS_INITIALIZED(&rt_g.rtg_vlfree)) {
 	BU_LIST_INIT(&rt_g.rtg_vlfree);
     }
-    for (i=0; i<(size_t)BU_PTBL_END(outer_loop); i++) {
+    for (i=0; outer_loop && i<(size_t)BU_PTBL_END(outer_loop); i++) {
 	genptr_t seg;
 
 	seg = (genptr_t)BU_PTBL_GET(outer_loop, i);
@@ -2698,7 +2713,7 @@ int
 rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_extrude_internal *extr;
-    fastf_t *new;
+    fastf_t *newval;
     fastf_t len;
 
     RT_CK_DB_INTERNAL(intern);
@@ -2709,21 +2724,21 @@ rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 	int array_len=3;
 
 	if (*argv[0] == 'V') {
-	    new = extr->V;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) != array_len) {
+	    newval = extr->V;
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) != array_len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (*argv[0] == 'H') {
-	    new = extr->h;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
+	    newval = extr->h;
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (*argv[0] == 'A') {
-	    new = extr->u_vec;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
+	    newval = extr->u_vec;
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
@@ -2734,8 +2749,8 @@ rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 	    VUNITIZE(extr->v_vec);
 	    VSCALE(extr->v_vec, extr->v_vec, len);
 	} else if (*argv[0] == 'B') {
-	    new = extr->v_vec;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) != array_len) {
+	    newval = extr->v_vec;
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) != array_len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
 	    }

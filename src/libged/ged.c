@@ -1,7 +1,7 @@
 /*                       G E D . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2011 United States Government as represented by
+ * Copyright (c) 2000-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -129,13 +129,13 @@ ged_init(struct ged *gedp)
     BU_LIST_INIT(&gedp->l);
     gedp->ged_wdbp = RT_WDB_NULL;
 
-    BU_GETSTRUCT(gedp->ged_log, bu_vls);
+    BU_GET(gedp->ged_log, struct bu_vls);
     bu_vls_init(gedp->ged_log);
 
-    BU_GETSTRUCT(gedp->ged_result_str, bu_vls);
+    BU_GET(gedp->ged_result_str, struct bu_vls);
     bu_vls_init(gedp->ged_result_str);
 
-    BU_GETSTRUCT(gedp->ged_gdp, ged_drawable);
+    BU_GET(gedp->ged_gdp, struct ged_drawable);
     BU_LIST_INIT(&gedp->ged_gdp->gd_headDisplay);
     BU_LIST_INIT(&gedp->ged_gdp->gd_headVDraw);
     BU_LIST_INIT(&gedp->ged_gdp->gd_headRunRt.l);
@@ -255,6 +255,9 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     struct rt_wdb *wdbp;
     struct mater *save_materp = MATER_NULL;
 
+    if (filename == NULL)
+      return GED_NULL;
+
     save_materp = rt_material_head();
     rt_new_material_head(MATER_NULL);
 
@@ -289,14 +292,14 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	if (dbip == DBI_NULL) {
 	    int i;
 
-	    BU_GETSTRUCT(dbip, db_i);
+	    BU_GET(dbip, struct db_i);
 	    dbip->dbi_eof = (off_t)-1L;
 	    dbip->dbi_fp = NULL;
 	    dbip->dbi_mf = NULL;
 	    dbip->dbi_read_only = 0;
 
 	    /* Initialize fields */
-	    for (i=0; i<RT_DBNHASH; i++) {
+	    for (i = 0; i <RT_DBNHASH; i++) {
 		dbip->dbi_Head[i] = RT_DIR_NULL;
 	    }
 
@@ -332,7 +335,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	}
     }
 
-    BU_GETSTRUCT(gedp, ged);
+    BU_GET(gedp, struct ged);
     GED_INIT(gedp, wdbp);
 
     return gedp;
@@ -355,7 +358,7 @@ _ged_open_dbip(const char *filename, int existing_only)
 	/*
 	 * Check to see if we can access the database
 	 */
-	if (bu_file_exists(filename) && !bu_file_readable(filename)) {
+	if (bu_file_exists(filename, NULL) && !bu_file_readable(filename)) {
 	    bu_log("_ged_open_dbip: %s is not readable", filename);
 
 	    return DBI_NULL;
@@ -395,16 +398,12 @@ _ged_print_node(struct ged *gedp,
     struct rt_comb_internal *comb;
     unsigned aflag = (flags & _GED_TREE_AFLAG);
     unsigned cflag = (flags & _GED_TREE_CFLAG);
-    struct bu_vls tmp_str;
+    struct bu_vls tmp_str = BU_VLS_INIT_ZERO;
 
     /* cflag = don't show shapes, so return if this is not a combination */
     if (cflag && !(dp->d_flags & RT_DIR_COMB)) {
 	return;
     }
-
-    /* need another string for aflag */
-    if (aflag)
-	bu_vls_init(&tmp_str);
 
     /* set up spacing from the left margin */
     for (i = 0; i < pathpos; i++) {
@@ -538,7 +537,7 @@ _ged_print_node(struct ged *gedp,
 	    if ((nextdp = db_lookup(gedp->ged_wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
 		size_t j;
 
-		for (j=0; j<pathpos+1; j++)
+		for (j = 0; j < pathpos+1; j++)
 		    bu_vls_printf(gedp->ged_result_str, "\t");
 
 		bu_vls_printf(gedp->ged_result_str, "%c ", op);

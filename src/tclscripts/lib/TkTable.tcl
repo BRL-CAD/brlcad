@@ -1,7 +1,7 @@
 #                     T K T A B L E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2011 United States Government as represented by
+# Copyright (c) 1998-2012 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -43,6 +43,7 @@
 	method setTableCol {_col _val}
 	method setTableVal {_index _val}
 	method selectSingleRow {_row}
+	method unselectRow {_row}
 	method updateTitleCol {}
 	method width {args}
     }
@@ -309,13 +310,17 @@
 
     # Turn off previously selected row
     if {$mSingleSelectRow} {
-	setTableVal $mSingleSelectRow,0 ""
-	$itk_component(table) tag cell {} $mSingleSelectRow,0
+	unselectRow $mSingleSelectRow
     }
 
     setTableVal $_row,0 "*"
     $itk_component(table) tag cell select_col $_row,0
     set mSingleSelectRow $_row
+}
+
+::itcl::body cadwidgets::TkTable::unselectRow {_row} {
+    setTableVal $_row,0 ""
+    $itk_component(table) tag cell {} $_row,0
 }
 
 ::itcl::body cadwidgets::TkTable::updateTitleCol {} {
@@ -440,6 +445,10 @@
 	    } else {
 		setTableVal $index "*"
 		$itk_component(table) tag cell select_col $index
+	    }
+
+	    if {$itk_option(-dataCallback) != ""} {
+		catch {$itk_option(-dataCallback)}
 	    }
 	} else {
 	    set mDoBreak 0

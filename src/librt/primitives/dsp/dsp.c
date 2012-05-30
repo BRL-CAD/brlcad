@@ -1,7 +1,7 @@
 /*                           D S P . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2011 United States Government as represented by
+ * Copyright (c) 1999-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,6 +71,16 @@
 
 #define DIM_BB_CHILDREN 4
 #define NUM_BB_CHILDREN (DIM_BB_CHILDREN*DIM_BB_CHILDREN)
+
+#define IMPORT_FAIL(_s) \
+    if (dsp_ip) { \
+	bu_log("rt_dsp_import4(%d) '%V' %s\n", __LINE__, &dsp_ip->dsp_name, _s); \
+	bu_free((char *)dsp_ip, "rt_dsp_import4: dsp_ip"); \
+    } \
+    ip->idb_type = ID_NULL; \
+    ip->idb_ptr = (genptr_t)NULL; \
+    return -2
+
 
 struct dsp_rpp {
     unsigned short dsp_min[3];
@@ -620,14 +630,11 @@ rt_dsp_print(register const struct soltab *stp)
 {
     register const struct dsp_specific *dsp =
 	(struct dsp_specific *)stp->st_specific;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 
     RT_DSP_CK_MAGIC(dsp);
     BU_CK_VLS(&dsp->dsp_i.dsp_name);
-
-    bu_vls_init(&vls);
-    BU_CK_VLS(&vls);
 
     bu_vls_printf(&vls, "\n---------db version: %d----------\n",
 		  db_version(stp->st_rtip->rti_dbip));
@@ -907,7 +914,7 @@ rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
     }
 
 
-    BU_GETSTRUCT(dsp, dsp_specific);
+    BU_GET(dsp, struct dsp_specific);
 
     /* this works ok, because the mapped file keeps track of the
      * number of uses.  However, the binunif interface does not.
@@ -1039,7 +1046,7 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
 
-    BU_GETSTRUCT(dsp, dsp_specific);
+    BU_GET(dsp, struct dsp_specific);
     stp->st_specific = (genptr_t) dsp;
 
     /* this works ok, because the mapped file keeps track of the
@@ -1814,6 +1821,9 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     point_t bbmin, bbmax;
     double dot, dot2;
 
+    for(x=0;x<4;x++)
+	memset(hits+x, 0, sizeof(struct hit));
+    x=0;
 
     dlog("isect_ray_cell_top\n");
     DSP_BB_CK(dsp_bb);
@@ -2913,9 +2923,8 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     len = MAGNITUDE(t);
 
     if (RT_G_DEBUG & DEBUG_HF) {
-	struct bu_vls str;
+	struct bu_vls str = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&str);
 	bu_vls_printf(&str, "dsp_gourand%02d.pl", plot_file_num++);
 	bu_log("plotting normals in %s", bu_vls_addr(&str));
 	fd = fopen(bu_vls_addr(&str), "w");
@@ -4022,7 +4031,9 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    if (lu->orientation != OT_UNSPEC) continue;
 	    nmg_lu_reorient(lu);
 	}
-	nmg_kill_cracks(s);
+	if (!nmg_kill_cracks(s))
+	    return -1;
+
 	for (BU_LIST_FOR(lu, loopuse, &base_fu->lu_hd)) {
 	    nmg_split_touchingloops(lu, tol);
 	}
@@ -4030,7 +4041,9 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    if (lu->orientation != OT_UNSPEC) continue;
 	    nmg_lu_reorient(lu);
 	}
-	nmg_kill_cracks(s);
+	if (!nmg_kill_cracks(s))
+	    return -1;
+
 	for (BU_LIST_FOR(lu, loopuse, &base_fu->lu_hd)) {
 	    nmg_join_touchingloops(lu);
 	}
@@ -4038,7 +4051,8 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    if (lu->orientation != OT_UNSPEC) continue;
 	    nmg_lu_reorient(lu);
 	}
-	nmg_kill_cracks(s);
+	if (!nmg_kill_cracks(s))
+	    return -1;
     }
 
     /* Mark edges as real */
@@ -4125,7 +4139,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
     size_t got;
     int ret;
 
-    BU_GETSTRUCT(dsp_ip->dsp_bip, rt_db_internal);
+    BU_GET(dsp_ip->dsp_bip, struct rt_db_internal);
 
     ret = rt_retrieve_binunif (dsp_ip->dsp_bip, dbip, bu_vls_addr(&dsp_ip->dsp_name));
     if (ret)
@@ -4232,9 +4246,7 @@ dsp_get_data(struct rt_dsp_internal *dsp_ip, const mat_t mat, const struct db_i 
 	   bu_vls_addr(&dsp_ip->dsp_name));
 
     dsp_ip->dsp_mp = (struct bu_mapped_file *)NULL;
-    dsp_ip->dsp_buf = bu_calloc(sizeof(short),
-				dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt,
-				"dsp fake data");
+    dsp_ip->dsp_buf = NULL;
 
     return 1;
 }
@@ -4251,20 +4263,10 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 {
     struct rt_dsp_internal *dsp_ip;
     union record *rp;
-    struct bu_vls str;
-
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_import4_v4()\n");
-
-
-#define IMPORT_FAIL(_s) \
-	bu_log("rt_dsp_import4(%d) '%s' %s\n", __LINE__, \
-	       bu_vls_addr(&dsp_ip->dsp_name), _s);\
-	bu_free((char *)dsp_ip, "rt_dsp_import4: dsp_ip"); \
-	ip->idb_type = ID_NULL; \
-	ip->idb_ptr = (genptr_t)NULL; \
-	return -2
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -4299,15 +4301,13 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     MAT_IDN(dsp_ip->dsp_stom);
     MAT_IDN(dsp_ip->dsp_mtos);
 
-    bu_vls_init(&str);
     bu_vls_strcpy(&str, rp->ss.ss_args);
     if (bu_struct_parse(&str, rt_dsp_parse, (char *)dsp_ip) < 0) {
 	if (BU_VLS_IS_INITIALIZED(&str)) bu_vls_free(&str);
 	IMPORT_FAIL("parse error");
     }
 
-
-    /* Validate parameters */
+    /* validate size */
     if (dsp_ip->dsp_xcnt == 0 || dsp_ip->dsp_ycnt == 0) {
 	IMPORT_FAIL("zero dimension on map");
     }
@@ -4344,7 +4344,7 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_dsp_internal *dsp_ip;
     struct rt_dsp_internal dsp;
     union record *rec;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -4367,7 +4367,6 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
      */
     dsp.dsp_stom[15] *= local2mm;
 
-    bu_vls_init(&str);
     bu_vls_struct_print(&str, rt_dsp_ptab, (char *)&dsp);
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_export4_v4(%s)\n", bu_vls_addr(&str));
@@ -4412,6 +4411,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     ip->idb_meth = &rt_functab[ID_DSP];
     dsp_ip = ip->idb_ptr = bu_malloc(sizeof(struct rt_dsp_internal), "rt_dsp_internal");
     memset(dsp_ip, 0, sizeof(*dsp_ip));
+    BU_VLS_INIT(&dsp_ip->dsp_name);
 
     dsp_ip->magic = RT_DSP_INTERNAL_MAGIC;
 
@@ -4420,19 +4420,23 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     dsp_ip->dsp_xcnt = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
-    if (dsp_ip->dsp_xcnt < 2) {
-	bu_log("%s:%d DSP X dimension (%zu) < 2 \n",
+    if (dsp_ip->dsp_xcnt < 1) {
+	bu_log("%s:%d DSP X dimension (%zu) < 1 \n",
 	       __FILE__, __LINE__,
 	       dsp_ip->dsp_xcnt);
     }
 
-
     dsp_ip->dsp_ycnt = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
-    if (dsp_ip->dsp_ycnt < 2) {
-	bu_log("%s:%d DSP X dimension (%zu) < 2 \n",
+    if (dsp_ip->dsp_ycnt < 1) {
+	bu_log("%s:%d DSP Y dimension (%zu) < 1 \n",
 	       __FILE__, __LINE__,
 	       dsp_ip->dsp_ycnt);
+    }
+
+    /* validate size */
+    if (dsp_ip->dsp_xcnt == 0 || dsp_ip->dsp_ycnt == 0) {
+	IMPORT_FAIL("zero dimension on map");
     }
 
     /* convert matrix */
@@ -4458,7 +4462,6 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	    break;
     }
 
-
     dsp_ip->dsp_cuttype = *cp;
     cp++;
     switch (dsp_ip->dsp_cuttype) {
@@ -4472,7 +4475,6 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 		   dsp_ip->dsp_cuttype, dsp_ip->dsp_cuttype);
 	    break;
     }
-
 
     /* convert name of data location */
     bu_vls_init(&dsp_ip->dsp_name);
@@ -4603,12 +4605,10 @@ rt_dsp_describe(struct bu_vls *str,
 {
     register struct rt_dsp_internal *dsp_ip =
 	(struct rt_dsp_internal *)ip->idb_ptr;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (resp) RT_CK_RESOURCE(resp);
     if (db_ip) RT_CK_DBI(db_ip);
-
-    bu_vls_init(&vls);
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_describe()\n");
@@ -4786,6 +4786,7 @@ rt_dsp_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
     switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
 	    sp = rt_dsp_ptab;
+	    break;
 	case RT_DSP_SRC_FILE:
 	case RT_DSP_SRC_OBJ:
 	    sp = fake_dsp_printab;
@@ -4824,6 +4825,7 @@ rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
     switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
 	    sp = rt_dsp_ptab;
+	    break;
 	case RT_DSP_SRC_FILE:
 	case RT_DSP_SRC_OBJ:
 	    sp = fake_dsp_printab;

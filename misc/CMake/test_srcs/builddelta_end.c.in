@@ -90,8 +90,8 @@ int main(void) {
   printtime(tdiff);
   printf("\n---\n");
 
-  printf("Run 'make install' to begin installation into ${CMAKE_INSTALL_PREFIX}\n");
-  printf("Run 'make benchmark' to run the BRL-CAD Benchmark Suite\n");
+  printf("${INSTALL_LINE}.\n");
+  printf("${BENCHMARK_LINE}.\n");
   printf("\n");
 
   return 0;

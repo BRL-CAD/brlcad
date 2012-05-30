@@ -1,7 +1,7 @@
 /*                 RationalQuasiUniformCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,56 +34,56 @@
 string RationalQuasiUniformCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RationalQuasiUniformCurve::Create);
 
 RationalQuasiUniformCurve::RationalQuasiUniformCurve() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 RationalQuasiUniformCurve::RationalQuasiUniformCurve(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
+    step = sw;
+    id = step_id;
 }
 
 RationalQuasiUniformCurve::~RationalQuasiUniformCurve() {
 }
 
 bool
-RationalQuasiUniformCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+RationalQuasiUniformCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+    step=sw;
+    id = sse->STEPfile_id;
 
-	// load base class attributes (no need to add quasi here has no additional attributes)
-	if ( !RationalBSplineCurve::Load(sw,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << std::endl;
-		return false;
-	}
+    // load base class attributes (no need to add quasi here has no additional attributes)
+    if ( !RationalBSplineCurve::Load(sw,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << std::endl;
+	return false;
+    }
 
-	return true;
+    return true;
 }
 
 void
 RationalQuasiUniformCurve::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	RationalBSplineCurve::Print(level);
+    RationalBSplineCurve::Print(level);
 }
 STEPEntity *
-RationalQuasiUniformCurve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		RationalQuasiUniformCurve *object = new RationalQuasiUniformCurve(sw,sse->STEPfile_id);
+RationalQuasiUniformCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	RationalQuasiUniformCurve *object = new RationalQuasiUniformCurve(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw,sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw,sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 // Local Variables:

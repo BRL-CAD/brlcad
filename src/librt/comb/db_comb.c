@@ -1,7 +1,7 @@
 /*                       D B _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2011 United States Government as represented by
+ * Copyright (c) 1996-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -267,8 +267,8 @@ rt_comb_import4(
 	    tp->tr_l.tl_op = OP_DB_LEAF;
 
 	    /* bu_strlcpy not safe here, buffer size mismatch */
-	    strncpy(namebuf, rp[j+1].M.m_instname, NAMESIZE);
-	    namebuf[NAMESIZE] = '\0'; /* sanity */
+	    memset(namebuf, 0, NAMESIZE+1);
+	    memcpy(namebuf, rp[j+1].M.m_instname, sizeof(rp[j+1].M.m_instname));
 
 	    tp->tr_l.tl_name = bu_strdup(namebuf);
 
@@ -323,7 +323,7 @@ rt_comb_import4(
     ip->idb_type = ID_COMBINATION;
     ip->idb_meth = &rt_functab[ID_COMBINATION];
 
-    BU_GETSTRUCT(comb, rt_comb_internal);
+    BU_GET(comb, struct rt_comb_internal);
     RT_COMB_INTERNAL_INIT(comb);
 
     comb->tree = tree;
@@ -380,21 +380,27 @@ rt_comb_import4(
 	comb->rgb[2] = rp[0].c.c_rgb[2];
     }
     if (rp[0].c.c_matname[0] != '\0') {
-	char shader_str[94];
+#define MAX_SS 128
+	char shader_str[MAX_SS];
 
-	memset(shader_str, 0, 94);
+	memset(shader_str, 0, MAX_SS);
 
 	/* copy shader info to a static string */
-	strncpy(shader_str,  rp[0].c.c_matname, 32);
-	shader_str[32] = '\0'; /* c_matname is a buffer, bu_strlcpy not safe here */
 
-	strcat(shader_str, " ");
+	/* write shader name.  c_matname is a buffer, bu_strlcpy not
+	 * safe here.
+	 */
+	memcpy(shader_str, rp[0].c.c_matname, sizeof(rp[0].c.c_matname));
 
-	/* c_matparm is a buffer, bu_strlcpy not safe here */
-	strncat(shader_str, rp[0].c.c_matparm, 32);
+	bu_strlcat(shader_str, " ", MAX_SS);
+
+	/* write shader parameters.  c_matparm is a buffer, bu_strlcpy
+	 * not safe here.
+	 */
+	memcpy(shader_str+strlen(shader_str), rp[0].c.c_matparm, sizeof(rp[0].c.c_matparm));
 
 	/* convert to TCL format and place into comb->shader */
-	if (bu_shader_to_tcl_list(shader_str, &comb->shader)) {
+	if (bu_shader_to_list(shader_str, &comb->shader)) {
 	    bu_log("rt_comb_import4: Error: Cannot convert following shader to TCL format:\n");
 	    bu_log("\t%s\n", shader_str);
 	    bu_vls_free(&comb->shader);
@@ -434,7 +440,7 @@ rt_comb_export4(
     union record *rp;
     size_t j;
     char *endp;
-    struct bu_vls tmp_vls;
+    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);
@@ -496,6 +502,7 @@ rt_comb_export4(
 	}
 
 	NAMEMOVE(tp->tr_l.tl_name, rp[j+1].M.m_instname);
+	rp[j+1].M.m_instname[NAMESIZE-1] = '\0'; /* sanity */
 
 	if (tp->tr_l.tl_mat) {
 	    flip_dbmat_mat(rp[j+1].M.m_mat, tp->tr_l.tl_mat);
@@ -534,8 +541,6 @@ rt_comb_export4(
 	rp[0].c.c_rgb[1] = comb->rgb[1];
 	rp[0].c.c_rgb[2] = comb->rgb[2];
     }
-
-    bu_vls_init(&tmp_vls);
 
     /* convert TCL list format shader to keyword=value format */
     if (bu_shader_to_key_eq(bu_vls_addr(&comb->shader), &tmp_vls)) {
@@ -943,6 +948,7 @@ db_wrap_v4_external(struct bu_external *op, const char *name)
 
     rec = (union record *)op->ext_buf;
     NAMEMOVE(name, rec->s.s_name);
+    rec->s.s_name[NAMESIZE-1] = '\0';
 }
 
 

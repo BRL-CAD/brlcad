@@ -27,6 +27,7 @@ brlcadinclude_wanted = \
 	bot.h \
 	brep.h \
 	brlcad.h \
+	brlcad.i \
 	cmd.h \
 	db.h \
 	db5.h \
@@ -50,11 +51,13 @@ brlcadinclude_wanted = \
 	fbserv_obj.h \
 	fft.h \
 	gcv.h \
+	icv.h \
 	libtermio.h \
 	light.h \
 	mater.h \
 	nmg.h \
 	nurb.h \
+	obj.h \
 	optical.h \
 	orle.h \
 	photonmap.h \
@@ -79,9 +82,10 @@ brlcadinclude_wanted = \
 # headers used by multiple packages but still considered private.
 # public headers should NOT include these headers.
 noinst_HEADERS = \
-	brlcad_version.h \
 	bin.h \
 	bio.h \
+	brlcad_version.h \
+	bselect.h \
 	conf.h \
 	fbmsg.h \
 	sysv.h

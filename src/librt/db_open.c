@@ -1,7 +1,7 @@
 /*                       D B _ O P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2011 United States Government as represented by
+ * Copyright (c) 1988-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -77,6 +77,8 @@ db_open(const char *name, const char *mode)
     register int i;
     char **argv;
 
+    if ( name == NULL ) return DBI_NULL;
+
     if (RT_G_DEBUG & DEBUG_DB) {
 	bu_log("db_open(%s, %s)\n", name, mode);
     }
@@ -113,7 +115,7 @@ db_open(const char *name, const char *mode)
 	    return dbip;
 	}
 
-	BU_GETSTRUCT(dbip, db_i);
+	BU_GET(dbip, struct db_i);
 	dbip->dbi_mf = mfp;
 	dbip->dbi_eof = (off_t)mfp->buflen;
 	dbip->dbi_inmem = mfp->buf;
@@ -132,7 +134,7 @@ db_open(const char *name, const char *mode)
     } else {
 	/* Read-write mode */
 
-	BU_GETSTRUCT(dbip, db_i);
+	BU_GET(dbip, struct db_i);
 	dbip->dbi_eof = (off_t)-1L;
 
 	if ((dbip->dbi_fp = fopen(name, "r+b")) == NULL) {
@@ -172,7 +174,7 @@ db_open(const char *name, const char *mode)
 #if !defined(_WIN32) || defined(__CYGWIN__)
     /* If not a full path */
     if (argv[1][0] != '/') {
-	struct bu_vls fullpath;
+	struct bu_vls fullpath = BU_VLS_INIT_ZERO;
 
 	bu_free((genptr_t)argv[1], "db_open: argv[1]");
 	argv[1] = getcwd((char *)NULL, (size_t)MAXPATHLEN);
@@ -197,7 +199,6 @@ db_open(const char *name, const char *mode)
 	    return DBI_NULL;
 	}
 
-	bu_vls_init(&fullpath);
 	bu_vls_printf(&fullpath, "%s/%s", argv[1], name);
 	dbip->dbi_filename = bu_strdup(bu_vls_addr(&fullpath));
 	bu_vls_free(&fullpath);
@@ -255,6 +256,8 @@ db_create(const char *name, int version)
     FILE *fp;
     struct db_i *dbip;
     int result;
+
+    if ( name == NULL ) return DBI_NULL;
 
     if (RT_G_DEBUG & DEBUG_DB)
 	bu_log("db_create(%s, %d)\n", name, version);

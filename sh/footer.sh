@@ -2,7 +2,7 @@
 #                       F O O T E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2011 United States Government as represented by
+# Copyright (c) 2004-2012 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -228,6 +228,13 @@ case $FILE in
 	wrap=0
 	commentchar="#"
 	;;
+    *.cmake.in )
+	echo "$FILE is a CMake template file"
+	mode="cmake"
+	wrap=0
+	commentchar="#"
+	indentation=2
+	;;
     *.in )
 	echo "$FILE is an Autoconf template file"
 	mode="autoconf"
@@ -272,6 +279,20 @@ case $FILE in
 	mode_vars="lisp-indent-offset"
 	wrap=0
 	commentchar=";;"
+	;;
+    *.cmake )
+	echo "$FILE is a CMake build file"
+	mode="cmake"
+	wrap=0
+	commentchar="#"
+	indentation=2
+	;;
+    *CMakeLists.txt )
+	echo "$FILE is a CMake build file"
+	mode="cmake"
+	wrap=0
+	commentchar="#"
+	indentation=2
 	;;
     *.[0-9] )
 	echo "$FILE is a manual page"

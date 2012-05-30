@@ -1,7 +1,7 @@
 /*                   I F _ T E M P L A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,7 +56,7 @@
 
 
 HIDDEN int
-DEVNAME_open(FBIO *ifp, char *file, int width, int height)
+DEVNAME_open(FBIO *ifp, const char *file, int width, int height)
 {
     FB_CK_FBIO(ifp);
     return 0;

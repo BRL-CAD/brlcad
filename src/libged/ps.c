@@ -1,7 +1,7 @@
 /*                         P S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -136,9 +136,12 @@ ps_draw_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_START:
+		case BN_VLIST_TRI_VERTNORM:
 		    continue;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_TRI_MOVE:
 		    /* Move, not draw */
 		    if (gedp->ged_gvp->gv_perspective > 0) {
 			/* cannot apply perspective transformation to
@@ -160,6 +163,8 @@ ps_draw_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_POLY_END:
 		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_TRI_DRAW:
+		case BN_VLIST_TRI_END:
 		    /* draw */
 		    if (gedp->ged_gvp->gv_perspective > 0) {
 			/* cannot apply perspective transformation to
@@ -173,6 +178,7 @@ ps_draw_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 				pt_prev = pt;
 				continue;
 			    } else {
+				if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -182,9 +188,11 @@ ps_draw_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 				alpha = (dist_prev - delta) / (dist_prev - dist);
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(fin, psmat, tmp_pt);
+				}
 			    }
 			} else {
 			    if (dist_prev <= 0.0) {
+				if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -195,6 +203,7 @@ ps_draw_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(last, psmat, tmp_pt);
 				MAT4X3PNT(fin, psmat, *pt);
+				}
 			    } else {
 				MAT4X3PNT(fin, psmat, *pt);
 			    }
@@ -225,7 +234,7 @@ ps_draw_body(struct ged *gedp, FILE *fp)
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
-    mat_t new;
+    mat_t newmat;
     matp_t mat;
     mat_t perspective_mat;
     struct solid *sp;
@@ -249,8 +258,8 @@ ps_draw_body(struct ged *gedp, FILE *fp)
 	    ged_deering_persp_mat(perspective_mat, l, h, gedp->ged_gvp->gv_eye_pos);
 	}
 
-	bn_mat_mul(new, perspective_mat, mat);
-	mat = new;
+	bn_mat_mul(newmat, perspective_mat, mat);
+	mat = newmat;
     }
 
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
@@ -289,9 +298,9 @@ int
 ged_ps(struct ged *gedp, int argc, const char *argv[])
 {
     FILE *fp;
-    struct bu_vls creator;
-    struct bu_vls font;
-    struct bu_vls title;
+    struct bu_vls creator = BU_VLS_INIT_ZERO;
+    struct bu_vls title = BU_VLS_INIT_ZERO;
+    struct bu_vls font = BU_VLS_INIT_ZERO;
     fastf_t scale = ps_default_scale;
     int linewidth = 4;
     int xoffset = 0;
@@ -316,9 +325,6 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Initialize var defaults */
-    bu_vls_init(&font);
-    bu_vls_init(&title);
-    bu_vls_init(&creator);
     bu_vls_printf(&font, "Courier");
     bu_vls_printf(&title, "No Title");
     bu_vls_printf(&creator, "LIBGED ps");

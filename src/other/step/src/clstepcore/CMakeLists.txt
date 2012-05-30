@@ -5,10 +5,7 @@ set(LIBSTEPCORE_SRCS
     STEPattribute.cc
     STEPattribute.inline.cc
     sdai.cc
-    sdaiEnum.cc
-    sdaiString.cc
     sdaiSelect.cc
-    sdaiBinary.cc
     STEPaggregate.cc
     STEPundefined.cc
     STEPattributeList.cc
@@ -37,14 +34,9 @@ SET(LIBSTEPCORE_PRIVATE_HDRS
     ExpDict.h
     read_func.h
     Registry.h
-    scl_osschema.h
     sdaiApplication_instance.h
-    sdaiBinary.h
-    sdaiEnum.h
     sdai.h
     sdaiSelect.h
-    sdaiString.h
-    Select.h
     SingleLinkList.h
     STEPaggregate.h
     STEPattribute.h
@@ -60,11 +52,7 @@ include_directories(
     ${SCL_SOURCE_DIR}/src/clutils
 )
 
-add_definitions(
-    -DHAVE_CONFIG_H
-)
-
-SCL_ADDLIB(stepcore "${LIBSTEPCORE_SRCS}" "express steputils")
+SCL_ADDLIB(stepcore "${LIBSTEPCORE_SRCS}" "express;steputils;stepdai")
 if(APPLE)
    set_target_properties(stepcore PROPERTIES LINK_FLAGS "-flat_namespace -undefined suppress")
 endif(APPLE)

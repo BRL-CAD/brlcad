@@ -1,7 +1,7 @@
 /*                      S H _ S T A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -73,7 +73,7 @@ ext_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 
 {
     struct bu_mapped_file *parameter_file;
-    struct bu_vls parameter_data;
+    struct bu_vls parameter_data = BU_VLS_INIT_ZERO;
     char *filename;
     int status;
 
@@ -88,7 +88,6 @@ ext_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 	bu_bomb("ext_setup()\n");
     }
 
-    bu_vls_init(&parameter_data);
     bu_vls_strncpy(&parameter_data, (char *)parameter_file->buf,
 		   parameter_file->buflen);
 
@@ -121,7 +120,7 @@ sh_stk_dosetup(char *cp, struct region *rp, genptr_t *dpp, struct mfuncs **mpp, 
 {
     register struct mfuncs *mfp;
     register struct mfuncs *mfp_new;
-    struct bu_vls arg;
+    struct bu_vls arg = BU_VLS_INIT_ZERO;
     char matname[32];
     int ret;
     int i;
@@ -178,7 +177,6 @@ retry:
 found:
     *mpp = mfp;
     *dpp = (char *)0;
-    bu_vls_init(&arg);
     if (*cp != '\0')
 	bu_vls_strcat(&arg, ++cp);
     if (rdebug&RDEBUG_MATERIAL)
@@ -220,7 +218,7 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
     BU_CK_VLS(matparm);
     RT_CK_RTI(rtip);
 
-    BU_GETSTRUCT(sp, stk_specific);
+    BU_GET(sp, struct stk_specific);
     *dpp = sp;
 
     /*bu_struct_parse(matparm, sh_stk_parse, (char *)sp);*/
@@ -265,7 +263,7 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
     }
 
     /* Request only those input bits needed by subordinate shaders */
-    BU_GETSTRUCT(mfp, mfuncs);
+    BU_GET(mfp, struct mfuncs);
     memcpy((char *)mfp, (char *)rp->reg_mfuncs, sizeof(*mfp));
     mfp->mf_inputs = inputs;
     rp->reg_mfuncs = (genptr_t)mfp;
@@ -290,6 +288,11 @@ sh_stk_render(struct application *ap, const struct partition *pp, struct shadewo
     int i;
     int ret_status = 0;
     char tmp[128];
+
+    if(sp == NULL) {
+	bu_log("sh_stk_render: Null pointer\n");
+	return 0;
+    }
 
     for (i = 0; i < 16 && sp->mfuncs[i] != NULL; i++) {
 	if (rdebug&RDEBUG_SHADE) {
@@ -322,6 +325,11 @@ sh_stk_print(register struct region *rp, genptr_t dp)
 	(struct stk_specific *)dp;
     int i;
 
+    if(sp == NULL) {
+	bu_log("sh_stk_print: Null pointer\n");
+	return;
+    }
+
     bu_log("~~~~starting stack print\n");
 
     for (i = 0; i < 16 && sp->mfuncs[i] != NULL; i++) {
@@ -346,6 +354,9 @@ sh_stk_free(genptr_t cp)
     register struct stk_specific *sp =
 	(struct stk_specific *)cp;
     int i;
+
+    if(sp == NULL)
+	return;
 
     for (i = 0; i < 16 && sp->mfuncs[i] != NULL; i++) {
 	if (sp && sp->mfuncs[i] && sp->mfuncs[i]->mf_free) {

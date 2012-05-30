@@ -1,7 +1,7 @@
 /*                          F H O R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -383,6 +383,10 @@ int main(int argc, char **argv)
 
     if ( argc > 1 ) {
 	size = atoi( argv[1] );
+	if (size < 0)
+	    size = 0;
+	if (size > INT_MAX-1)
+	    size = INT_MAX-1;
     }
 
     if ( isatty(fileno(stdin)) ) {

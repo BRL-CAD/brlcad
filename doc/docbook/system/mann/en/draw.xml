@@ -25,7 +25,8 @@
     <arg choice="opt" rep="norepeat">-s</arg>
     <arg choice="opt" rep="norepeat">-A -o<replaceable>attribute name/value pairs</replaceable></arg>
     <arg choice="opt" rep="norepeat">-C#/#/#</arg>
-    <arg choice="opt" rep="norepeat"><replaceable>objects</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>-m1</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg>
 
   </cmdsynopsis>
 </refsynopsisdiv>
@@ -53,6 +54,14 @@
 	name/value pairs, and only objects having the specified attributes and values are
 	to be displayed. The default (without <emphasis>-o</emphasis>) is that only objects having all the
 	specified attribute name/value pairs will be displayed.
+</para>
+</listitem>
+<listitem>
+<para>
+         The <emphasis>-m1</emphasis> option will display BOTs shaded if the display manager is OpenGL and the
+         zbuffer and lighting is enabled. To enable these settings, from the MGED GUI, choose
+         "Modes/Display Manager/OpenGL", "Misc/Z-buffer" and "Misc/Lighting". If the zbuffer and lighting is
+         already enabled, toggle them off then back on to ensure they are enabled.
 </para>
 </listitem>
 </itemizedlist>

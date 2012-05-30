@@ -1,7 +1,7 @@
 /*               R E N D E R _ I N T E R N A L . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2011 United States Government as represented by
+ * Copyright (c) 2007-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,12 +27,12 @@
 #include "tie.h"
 
 #ifndef RENDER_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef RENDER_EXPORT_DLL
-#      define RENDER_EXPORT __declspec(dllexport)
-#    else
-#      define RENDER_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(RENDER_DLL_EXPORTS) && defined(RENDER_DLL_IMPORTS)
+#    error "Only RENDER_DLL_EXPORTS or RENDER_DLL_IMPORTS can be defined, not both."
+#  elif defined(RENDER_DLL_EXPORTS)
+#    define RENDER_EXPORT __declspec(dllexport)
+#  elif defined(RENDER_DLL_IMPORTS)
+#    define RENDER_EXPORT __declspec(dllimport)
 #  else
 #    define RENDER_EXPORT
 #  endif

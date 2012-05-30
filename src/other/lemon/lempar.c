@@ -319,9 +319,12 @@ static void yy_destructor(
 */
 static int yy_pop_parser_stack(yyParser *pParser){
   YYCODETYPE yymajor;
-  yyStackEntry *yytos = &pParser->yystack[pParser->yyidx];
+  yyStackEntry *yytos;
 
   if( pParser->yyidx<0 ) return 0;
+
+  yytos = &pParser->yystack[pParser->yyidx];
+
 #ifndef NDEBUG
   if( yyTraceFILE && pParser->yyidx>=0 ){
     fprintf(yyTraceFILE,"%sPopping %s\n",
@@ -560,14 +563,23 @@ static void yy_reduce(
   yyStackEntry *yymsp;            /* The top of the parser's stack */
   int yysize;                     /* Amount to pop the stack */
   ParseARG_FETCH;
+
   yymsp = &yypParser->yystack[yypParser->yyidx];
+
+  if( yyruleno>=0 ) {
 #ifndef NDEBUG
-  if( yyTraceFILE && yyruleno>=0 
-        && yyruleno<(int)(sizeof(yyRuleName)/sizeof(yyRuleName[0])) ){
-    fprintf(yyTraceFILE, "%sReduce [%s].\n", yyTracePrompt,
-      yyRuleName[yyruleno]);
-  }
+      if ( yyruleno<(int)(sizeof(yyRuleName)/sizeof(yyRuleName[0]))) {
+         if (yyTraceFILE) {
+      fprintf(yyTraceFILE, "%sReduce [%s].\n", yyTracePrompt,
+              yyRuleName[yyruleno]);
+    }
+   }
 #endif /* NDEBUG */
+  } else {
+    /* invalid rule number range */
+    return;
+  }
+
 
   /* Silence complaints from purify about yygotominor being uninitialized
   ** in some cases when it is copied into the stack after the following

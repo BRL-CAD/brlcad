@@ -1,7 +1,7 @@
 /*                     N M G _ C L A S S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,12 +52,14 @@
 #include "plot3.h"
 
 
-extern int nmg_class_nothing_broken;
+#define MAX_DIR_TRYS 10
 
 /* XXX These should go the way of the dodo bird. */
 #define INSIDE 32
 #define ON_SURF 64
 #define OUTSIDE 128
+
+extern int nmg_class_nothing_broken;
 
 /* Structure for keeping track of how close a point/vertex is to
  * its potential neighbors.
@@ -441,7 +443,7 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
 	HPRINT("\tplane eqn", peqn);
     }
 
-    if (V3PT_OUT_RPP_TOL(pt, lg->min_pt, lg->max_pt, tol)) {
+    if (V3PT_OUT_RPP_TOL(pt, lg->min_pt, lg->max_pt, tol->dist)) {
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 	    bu_log("\tPoint is outside loop RPP\n");
 	}
@@ -589,7 +591,7 @@ again:
 
 
 /* Ray direction vectors for Jordan curve algorithm */
-static const point_t nmg_good_dirs[10] = {
+static const point_t nmg_good_dirs[MAX_DIR_TRYS] = {
 #if 1
     {3, 2, 1},	/* Normally the first dir */
 #else
@@ -637,7 +639,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
     vect_t region_diagonal;
     fastf_t region_diameter;
     int class = 0;
-    vect_t projection_dir;
+    vect_t projection_dir = VINIT_ZERO;
     int try=0;
     struct xray rp;
     fastf_t model_bb_max_width;
@@ -652,7 +654,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 	bu_log("nmg_class_pt_s(): pt=(%g, %g, %g), s=x%x\n",
 	       V3ARGS(pt), s);
     }
-    if (V3PT_OUT_RPP_TOL(pt, s->sa_p->min_pt, s->sa_p->max_pt, tol)) {
+    if (V3PT_OUT_RPP_TOL(pt, s->sa_p->min_pt, s->sa_p->max_pt, tol->dist)) {
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 	    bu_log("nmg_class_pt_s(): OUT, point not in RPP\n");
 	}
@@ -683,7 +685,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 		 * short circuit everything.
 		 */
 		class = nmg_class_pt_fu_except(pt, fu, (struct loopuse *)0,
-			(void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, tol);
+					       (void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, tol);
 		if (class == NMG_CLASS_AonBshared) {
 		    bu_bomb("nmg_class_pt_s(): function nmg_class_pt_fu_except returned AonBshared when it can only return AonBanti\n");
 		}
@@ -733,13 +735,14 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
     /* Choose an unlikely direction */
     try = 0;
 retry:
-    {
-	const point_t *pp = &nmg_good_dirs[try];
-	VMOVE(projection_dir, *pp);
+    if (try < MAX_DIR_TRYS) {
+	projection_dir[X] = nmg_good_dirs[try][X];
+	projection_dir[Y] = nmg_good_dirs[try][Y];
+	projection_dir[Z] = nmg_good_dirs[try][Z];
     }
 
-    if (++try > 10) {
-	goto out; /* only nmg_good_dirs to try (10) */
+    if (++try >= MAX_DIR_TRYS) {
+	goto out; /* only nmg_good_dirs to try */
     }
 
     VUNITIZE(projection_dir);
@@ -873,7 +876,7 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, char **classlist, const st
     if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 	if ((sv = nmg_find_pt_in_shell(sB, pt, tol))) {
 	    bu_log("vu=x%x, v=x%x, sv=x%x, pt=(%g, %g, %g)\n",
-		    vu, vu->v_p, sv, V3ARGS(pt));
+		   vu, vu->v_p, sv, V3ARGS(pt));
 	    bu_bomb("class_vu_vs_s(): logic error, vertex topology not shared properly\n");
 	}
     }
@@ -968,7 +971,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struc
      * then the edge is outside the shell. also both vertices
      * of the edge are outside the shell.
      */
-    if (!V3RPP_OVERLAP_TOL(e_min_pt, e_max_pt, s->sa_p->min_pt, s->sa_p->max_pt, tol)) {
+    if (!V3RPP_OVERLAP_TOL(e_min_pt, e_max_pt, s->sa_p->min_pt, s->sa_p->max_pt, tol->dist)) {
         NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
         NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->vu_p->v_p);
         NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->eumate_p->vu_p->v_p);
@@ -1600,67 +1603,74 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, const struc
 
     /* loop is collection of edgeuses */
     seen_error = 0;
-retry:
-    in = outside = on = 0;
-    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	/* Classify each edgeuse */
-	class = class_eu_vs_s(eu, s, classlist, tol);
-	switch (class) {
-	    case INSIDE		: ++in;
-		break;
-	    case OUTSIDE	: ++outside;
-		break;
-	    case ON_SURF	: ++on;
-		break;
-	    default		: bu_bomb("class_lu_vs_s(): bad class for edgeuse\n");
+
+    do {
+
+	in = outside = on = 0;
+	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	    /* Classify each edgeuse */
+	    class = class_eu_vs_s(eu, s, classlist, tol);
+	    switch (class) {
+		case INSIDE		: ++in;
+		    break;
+		case OUTSIDE	: ++outside;
+		    break;
+		case ON_SURF	: ++on;
+		    break;
+		default		: bu_bomb("class_lu_vs_s(): bad class for edgeuse\n");
+	    }
 	}
-    }
-
-    if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-	bu_log("class_lu_vs_s: Loopuse edges in:%d on:%d out:%d\n", in, on, outside);
-    }
-
-    if (in > 0 && outside > 0) {
-	FILE *fp;
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-	    char buf[128];
-	    static int num;
-	    long *b;
-	    struct model *m;
-
-	    m = nmg_find_model(lu->up.magic_p);
-	    b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
-	    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-		if (NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p))
-		    nmg_euprint("In:  edgeuse", eu);
-		else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], eu->e_p))
-		    nmg_euprint("Out: edgeuse", eu);
-		else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], eu->e_p))
-		    nmg_euprint("OnShare:  edgeuse", eu);
-		else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AonBanti], eu->e_p))
-		    nmg_euprint("OnAnti:  edgeuse", eu);
-		else
-		    nmg_euprint("BAD: edgeuse", eu);
-	    }
-	    sprintf(buf, "badloop%d.pl", num++);
-	    if ((fp=fopen(buf, "wb")) != NULL) {
-		nmg_pl_lu(fp, lu, b, 255, 255, 255);
-		nmg_pl_s(fp, s);
-		fclose(fp);
-		bu_log("wrote %s\n", buf);
-	    }
-	    nmg_pr_lu(lu, "");
-	    nmg_stash_model_to_file("class.g", nmg_find_model((uint32_t *)lu), "class_ls_vs_s: loop transits plane of shell/face?");
-	    bu_free((char *)b, "nmg_pl_lu flag[]");
+	    bu_log("class_lu_vs_s: Loopuse edges in:%d on:%d out:%d\n", in, on, outside);
 	}
 
-	if (seen_error > 3) {
-	    bu_bomb("class_lu_vs_s(): loop transits plane of shell/face?\n");
+	if (in > 0 && outside > 0) {
+	    FILE *fp;
+
+	    if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+		char buf[128];
+		static int num;
+		long *b;
+		struct model *m;
+
+		m = nmg_find_model(lu->up.magic_p);
+		b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_pl_lu flag[]");
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		    if (NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p))
+			nmg_euprint("In:  edgeuse", eu);
+		    else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], eu->e_p))
+			nmg_euprint("Out: edgeuse", eu);
+		    else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], eu->e_p))
+			nmg_euprint("OnShare:  edgeuse", eu);
+		    else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AonBanti], eu->e_p))
+			nmg_euprint("OnAnti:  edgeuse", eu);
+		    else
+			nmg_euprint("BAD: edgeuse", eu);
+		}
+		sprintf(buf, "badloop%d.pl", num++);
+		if ((fp=fopen(buf, "wb")) != NULL) {
+		    nmg_pl_lu(fp, lu, b, 255, 255, 255);
+		    nmg_pl_s(fp, s);
+		    fclose(fp);
+		    bu_log("wrote %s\n", buf);
+		}
+		nmg_pr_lu(lu, "");
+		nmg_stash_model_to_file("class.g", nmg_find_model((uint32_t *)lu), "class_ls_vs_s: loop transits plane of shell/face?");
+		bu_free((char *)b, "nmg_pl_lu flag[]");
+	    }
+
+	    if (seen_error > 3) {
+		bu_bomb("class_lu_vs_s(): loop transits plane of shell/face?\n");
+	    }
+	    seen_error++;
+	    continue;
 	}
-	seen_error++;
-	goto retry;
-    }
+
+	/* in <=0 || outside <= 0 so were good */
+	break;
+
+    } while (1);
 
     if (outside > 0) {
 	NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], lu->l_p);

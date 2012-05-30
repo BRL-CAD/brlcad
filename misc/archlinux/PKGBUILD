@@ -1,37 +1,3 @@
-#                     P K G B U I L D
-# BRL-CAD
-#
-# Copyright (c) 2007-2011 United States Government as represented by
-# the U.S. Army Research Laboratory.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-# 1. Redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer.
-#
-# 2. Redistributions in binary form must reproduce the above
-# copyright notice, this list of conditions and the following
-# disclaimer in the documentation and/or other materials provided
-# with the distribution.
-#
-# 3. The name of the author may not be used to endorse or promote
-# products derived from this software without specific prior written
-# permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
-# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 ###
 #
 # This is the BRL-CAD package file for Arch Linux.
@@ -40,45 +6,55 @@
 #
 ###
 pkgname=brlcad
-pkgdesc="An extensive Constructive Solid Geometry (CSG) modeling system."
+pkgdesc="An extensive 3D solid modeling CAD system."
 _major=$(cat ../../include/conf/MAJOR)
 _minor=$(cat ../../include/conf/MINOR)
 _patch=$(cat ../../include/conf/PATCH)
 pkgver=$_major.$_minor.$_patch
 pkgrel=1
 url="http://brlcad.org"
-license=('custom:BDL' 'BSD' 'LGPL')
-install=brlcad.install
+license=('LGPL' 'BSD' 'custom:BDL')
 arch=('i686' 'x86_64')
+install=$pkgname.install
 makedepends=('bc' 'libxslt')
-optdepends=('tkhtml3: For man page browsing in mged.')
-depends=('boost' 'flex' 'libgl' 'libpng' 'mesa' 'tk>=8.5' 'zlib')
+depends=('boost' 'flex' 'libgl' 'libpng' 'mesa' 'tk' 'zlib')
+
+optdepends=(
+    'fop: for building pdf documentation'
+)
 
 options=('!libtool' '!strip' 'docs')
-source=('brlcad.sh')
-md5sums=('451f65ed85b1364cc7a0bfa93192d93b')
+
+_pkgprefix=/opt/$pkgname
 
 build() {
-    cd $startdir/../../
+    mkdir $srcdir/build
+    cd $srcdir/build
 
-    # Uncomment the next line if building from SVN fetched sources.
-    #./autogen.sh
-    ./configure --prefix=/opt/brlcad
-    make || return 1
-    make DESTDIR=$startdir/pkg install || return 1
+    cmake $startdir/../../ \
+    -DCMAKE_INSTALL_PREFIX=${_pkgprefix} \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBRLCAD_ENABLE_STRICT=OFF
 
-    mkdir -p $startdir/pkg/etc/profile.d
-    install -m755 $startdir/src/brlcad.sh $startdir/pkg/etc/profile.d
-
-    mkdir -p $startdir/pkg/usr/share/licenses/$pkgname
-    cp $startdir/../../doc/legal/bdl.txt \
-        $startdir/pkg/usr/share/licenses/$pkgname
-
+    make
 }
 
-# Local Variables:
-# tab-width: 8
-# mode: sh
-# indent-tabs-mode: t
-# End:
-# ex: shiftwidth=4 tabstop=8
+package() {
+    cd $srcdir/build
+
+    make DESTDIR=$pkgdir install
+
+    mkdir -p $pkgdir/etc/profile.d
+    echo "export PATH=\$PATH:$_pkgprefix/bin" > $pkgdir/etc/profile.d/$pkgname.sh
+    chmod 755 $pkgdir/etc/profile.d/$pkgname.sh
+
+    mkdir -p $pkgdir/usr/share/licenses/$pkgname
+    cp $srcdir/../../doc/legal/bdl.txt \
+        $pkgdir/usr/share/licenses/$pkgname
+    cp $srcdir/../../doc/legal/bsd.txt \
+        $pkgdir/usr/share/licenses/$pkgname
+
+    mkdir -p $pkgdir/etc/ld.so.conf.d
+    echo ${_pkgprefix}/lib > $pkgdir/etc/ld.so.conf.d/$pkgname.conf
+}
+

@@ -2,7 +2,7 @@
 #                         A R C H E R
 # BRL-CAD
 #
-# Copyright (c) 2002-2011 United States Government as represented by
+# Copyright (c) 2002-2012 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 #    Main for Archer.
 #
 #\
-ARCHER_HOME=`dirname $0`/..
+ARCHER_HOME=`dirname "$0"`/..
 #\
 export ARCHER_HOME
 # restart using bwish \
@@ -38,7 +38,7 @@ WISH="bwish"
 #\
 for ish in bwish bwish_d ; do
 # see if we're installed \
-    if test -f ${ARCHER_HOME}/bin/$ish ; then
+    if test -f "${ARCHER_HOME}/bin/$ish" ; then
 #\
 	WISH="${ARCHER_HOME}/bin/$ish"
 #\
@@ -46,7 +46,7 @@ for ish in bwish bwish_d ; do
 #\
     fi
 # see if we're not installed yet \
-    if test -f ${ARCHER_HOME}/bwish/$ish ; then
+    if test -f "${ARCHER_HOME}/bwish/$ish" ; then
 #\
 	WISH="${ARCHER_HOME}/bwish/$ish"
 #\
@@ -56,7 +56,7 @@ for ish in bwish bwish_d ; do
 #\
 done
 #\
-exec $WISH $0 $@
+exec "$WISH" "$0" "$@"
 
 # If we're running from a build directory but an installed BRL-CAD
 # already exists in the configured install path, all tcl scripts 
@@ -71,11 +71,11 @@ exec $WISH $0 $@
 # installed file will be loaded instead of the edited version.  
 # Warn if it looks like this situation is occurring by checking 
 # the root path against the argv0 path.
-set check_root_dir [bu_brlcad_root bin]
-set check_bin_dir [file normalize [file dirname [file normalize $argv0]]]
+set check_root_dir [file normalize [bu_brlcad_root bin]]
+set check_bin_dir [file dirname [file normalize $argv0]]
 set dir_same [string compare $check_root_dir $check_bin_dir]
 if {!$dir_same == 0} {
-    puts "WARNING - bu_brlcad_root is set to [file dirname $check_root_dir], but binary being run is located in [file dirname $check_bin_dir].  This probably means you are running [file tail $argv0] from a non-install directory with BRL-CAD already present in [file dirname $check_root_dir] - be aware that .tcl files from [file dirname $check_root_dir] will be loaded INSTEAD OF local files. Tcl script changes made to source files for testing purposes will not be loaded, even though [file tail $argv0] will most likely 'work'.  To test local changes, either clear [file dirname $check_root_dir], specify a different (empty) install prefix while building, or manually set the BRLCAD_ROOT environment variable."
+    puts "WARNING - bu_brlcad_root is set to [file dirname $check_root_dir], but binary being run is located in [file dirname $check_bin_dir].  This probably means you are running [file tail $argv0] from a non-install directory with BRL-CAD already present in [file dirname $check_root_dir] - be aware that .tcl files from [file dirname $check_root_dir] will be loaded INSTEAD OF local files. Tcl script changes made to source files for testing purposes will not be loaded, even though [file tail $argv0] will most likely 'work'.  To test local changes, either clear [file dirname $check_root_dir], specify a different install prefix (i.e. a directory *without* BRL-CAD installed) while building, or manually set the BRLCAD_ROOT environment variable."
 }
 
 # Itk's default class doesn't keep the menu, but Archer needs it - redefine itk:Toplevel
@@ -188,7 +188,7 @@ proc createSplashScreen {} {
     $::ArcherCore::splash center
     update idletasks
     $::ArcherCore::splash activate
-    after 3000 destroySplashScreen; # 3 more sec
+    after 1500 destroySplashScreen; # 1.5 more sec
     update
 }
 

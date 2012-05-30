@@ -1,7 +1,7 @@
 /*                         C O P Y E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -103,12 +103,12 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* Accumulate the matrices */
-	_ged_trace(gtd.gtd_obj[0], 0, start_mat, &gtd);
+	_ged_trace(gtd.gtd_obj[0], 0, start_mat, &gtd, 1);
 
 	if (gtd.gtd_prflag == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "PATH:  ");
 
-	    for (i=0; i<gtd.gtd_objpos; i++)
+	    for (i = 0; i < gtd.gtd_objpos; i++)
 		bu_vls_printf(gedp->ged_result_str, "/%s", gtd.gtd_obj[i]->d_namep);
 
 	    bu_vls_printf(gedp->ged_result_str, "  NOT FOUND\n");

@@ -1,7 +1,7 @@
 /*                         P R E V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <time.h>
+#include "bselect.h"
 #include "bio.h"
 
 #include "cmd.h"
@@ -139,7 +140,6 @@ ged_cm_end(int UNUSED(argc), char **UNUSED(argv))
 
 	(void)ged_zap(_ged_current_gedp, 1, av);
 	_ged_drawtrees(_ged_current_gedp, _ged_current_gedp->ged_gdp->gd_rt_cmd_len, (const char **)&_ged_current_gedp->ged_gdp->gd_rt_cmd[1], preview_mode, (struct _ged_client_data *)0);
-	ged_color_soltab(&_ged_current_gedp->ged_gdp->gd_headDisplay);
     }
 
     if (_ged_current_gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
@@ -249,7 +249,7 @@ ged_loadframe(struct ged *gedp, FILE *fp)
 	    }
 	}
 
-	if (cmd[0] == 'e' && strncmp(cmd, "end", 3) == 0) {
+	if (cmd[0] == 'e' && bu_strncmp(cmd, "end", 3) == 0) {
 	    end = 1;
 	}
 
@@ -286,8 +286,8 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     vect_t temp;
     char **vp;
     size_t args = 0;
-    struct bu_vls extension;
-    struct bu_vls name;
+    struct bu_vls extension = BU_VLS_INIT_ZERO;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
     char *dot;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -389,8 +389,6 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 
     if (image_name) {
 	/* parse file name and possible extension */
-	bu_vls_init(&name);
-	bu_vls_init(&extension);
 	if ((dot = strrchr(image_name, '.')) != (char *) NULL) {
 	    bu_vls_strncpy(&name, image_name, dot - image_name);
 	    bu_vls_strcpy(&extension, dot);
@@ -401,11 +399,9 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     }
     while (ged_loadframe(gedp, fp) == GED_OK) {
 	if (image_name) {
-	    struct bu_vls fullname;
+	    struct bu_vls fullname = BU_VLS_INIT_ZERO;
 	    const char *screengrab_args[3];
 	    int screengrab_argc = 0;
-
-	    bu_vls_init(&fullname);
 
 	    screengrab_args[screengrab_argc++] = "screengrab";
 

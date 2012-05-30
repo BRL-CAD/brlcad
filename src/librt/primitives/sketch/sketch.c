@@ -1,7 +1,7 @@
 /*                        S K E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2015,8 +2015,10 @@ rt_copy_sketch(const struct rt_sketch_internal *sketch_ip)
 
     if (out->vert_count)
 	out->verts = (point2d_t *)bu_calloc(out->vert_count, sizeof(point2d_t), "out->verts");
-    for (i=0; i<out->vert_count; i++)
+
+    for (i=0; sketch_ip->verts && i<out->vert_count; i++) {
 	V2MOVE(out->verts[i], sketch_ip->verts[i]);
+    }
 
     crv_out = &out->curve;
     if (crv_out)
@@ -2343,7 +2345,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 {
     struct rt_sketch_internal *skt;
     int ret, array_len;
-    fastf_t *new;
+    fastf_t *newval;
 
     RT_CK_DB_INTERNAL(intern);
     skt = (struct rt_sketch_internal *)intern->idb_ptr;
@@ -2351,25 +2353,25 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 
     while (argc >= 2) {
 	if (BU_STR_EQUAL(argv[0], "V")) {
-	    new = skt->V;
+	    newval = skt->V;
 	    array_len = 3;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (BU_STR_EQUAL(argv[0], "A")) {
-	    new = skt->u_vec;
+	    newval = skt->u_vec;
 	    array_len = 3;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (BU_STR_EQUAL(argv[0], "B")) {
-	    new = skt->v_vec;
+	    newval = skt->v_vec;
 	    array_len = 3;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;

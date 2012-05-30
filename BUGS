@@ -15,8 +15,22 @@ on-going issues.
 Recent Bugs
 -----------
 
-* report that running "attach X" and trying to draw something causes
-  mged -c to crash.  verified in quick testing.
+* mged 'joint' hold command isn't working. looks like the fp_names
+  book-keeping is fuxored or the db_lookup is returning NULL (or isn't
+  yet performed).
+
+* idents command is reporting a bogus region count in the region
+  ouptut table listing (first column).
+
+* yacc 1.9 will not output a header if a path is given to the -o
+  option.  yacc should be run from the binary directory instead of the
+  source directory so that the command may be simply yacc -d -o
+  points_parse.c ${CMAKE_SOURCE_DIRECTORY}/points_parse.y
+
+* TIE seems to be corrupting the application structure during shot().
+  see m1151 with ambient occlusion patch (butler).  may also be
+  ignoring the onehit flag and returning a hit for segments behind the
+  ray?  return value from shot() seems wrong.
 
 * src/librt/primitives/bot/g_bot_include.c:rt_bot_bbox() routine isn't
   calculating the bbox correctly
@@ -89,7 +103,12 @@ Recent Bugs
   to read in a script that uses gets on stdin.  it just hangs until
   muliple sigint's are received.
 
-* menu invocation seems to be broken again (ArchLinux)
+* invoking mged from a system menu seems to be broken.  reported by a
+  reliable ArchLinux user.  probably exhibits cross-platform on KDE,
+  GNOME, or XFCE (but original environment is unknown).  the bug is
+  undoubtedly related to mged's interactive and stdin/stdout input
+  detection where mged thinks it's being scripted (beginning on or
+  about mged.c:1150)
 
 * Report of copy/paste not working with Tk on Windows Vista - does
   work on Windows XP.
@@ -273,9 +292,6 @@ Recent Bugs
   on freebsd using xfce and metacity (single display, 1680x1050 res).
   dm shows up just fine.
 
-* wireframe is failing to draw when framebuffer is displayed (underlay
-  or overlay) in mged.  problem is specific to dm-ogl (dm-x is fine).
-
 * g2asc of a v4 is apparently writing out the wrong s_cgtypes and
   otherwise parsing v4 .g files incorrectly
 
@@ -288,9 +304,6 @@ Recent Bugs
 
 * rt is consuming 100% CPU in fb_close() on a lingering ogl
   framebuffer waiting to close.  needs to sleep or select for a while.
-
-* report of mged being locked up on startup taking full cpu, works
-  fine with with -c with X dm.
 
 * MGED File->Preferences->Fonts results in error "named font "button
   _font" doesn't exist on Linux.

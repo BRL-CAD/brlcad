@@ -1,7 +1,7 @@
 /*                     T A N K I L L - G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -157,6 +157,8 @@ main(int argc, char **argv)
     int group_len[100];
     int all_len=0;
 
+    bu_setprogname(argv[0]);
+
     /* Set defaults */
 
     /* FIXME: These need to be improved */
@@ -307,7 +309,7 @@ main(int argc, char **argv)
 		    face_verts[i] = &verts[i+vert_no].vp;
 
 		/* make a face */
-		fu = nmg_cmface( s, face_verts, 3 );
+		(void)nmg_cmface( s, face_verts, 3 );
 
 		/* make sure any duplicate vertices get the same vertex pointer */
 		for (; vert1 < vert_no+3; vert1++ )

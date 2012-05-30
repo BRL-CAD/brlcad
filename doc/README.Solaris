@@ -1,13 +1,44 @@
 BRL-CAD on Solaris README
 =========================
+In recent years, there have been a variety of Solaris-style operating
+systems that have appeared, following Sun's open-source release of
+OpenSolaris.  OpenSolaris itself doesn't seem to be especially active, but
+another derivative system called OpenIndiana has appeared, based on the
+illumos kernel - the Solaris file will be the place to add any notes
+needed to build on such derivative systems, as well as Solaris proper.
+
+Kitware does not provide a pre-compiled binary for CMake on Solaris
+type systems.  To bootstrap from the source code, try the following:
+
+(You probably want to use gmake and gcc/g++ for this...)
+
+1.  Download the source from http://www.cmake.org/cmake/resources/software.html
+2.  unzip the tarball: gunzip cmake-X.Y.Z.tar.gz
+3.  open the tarball: tar -xvf cmake-X.Y.Z.tar
+4.  cd cmake-X.Y.Z
+5.  CXX=g++ ./bootstrap -prefix=/home/user/cmake-install (or your preferred directory)
+6.  gmake
+7.  gmake install
+
+Then (if you installed to somewhere other than a system dir) add the
+bin directory to your path:
+
+csh:  setenv PATH /home/user/cmake-install/bin:$PATH
+bash: export PATH=/home/user/cmake-install/bin:$PATH
+
+From there, you should be good to build BRL-CAD.  The most recent tests
+of the Sun Studio compiler suggest that there are issues to resolve,
+so (unless you want to fix those issues, which would be welcome!) you
+probably want to use the GCC compiler suite to build BRL-CAD as well:
+
+CC=gcc CXX=g++ cmake ../brlcad
 
 If while compiling you encounter an error "Text relocation remains
 against symbol" along with some number of lines following, it usually
 means that the build has attempted to link a static system library
 into a shared library being compiled (e.g. attempting to link a system
 libz.a into the png library distributed in src/other/libpng being
-compiled as libpng.so).
-
-The fix/workaround is pretty simple.  Either install a shared verison
-of the system library (e.g. libz.so) or run configure with the
--mimpure-text linker option: ./configure LDFLAGS=-mimpure-text
+compiled as libpng.so).  If this happens, it likely indicates a problem
+with the CMake build logic and should be reported as a bug - you may also
+need to install a shared version of the library.  Another possibility 
+would be to add -mipure-text to the linker flags.

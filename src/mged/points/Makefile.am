@@ -25,7 +25,7 @@ BUILT_SOURCES = \
 	points_parse.h \
 	points_scan.c
 
-DISTCLEANFILES = $(BUILT_SOURCES) CMakeLists.txt
+DISTCLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST = CMakeLists.txt
 

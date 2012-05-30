@@ -1,7 +1,7 @@
 /*                       G E T F O N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <string.h>
 #include <stdio.h>
 
 #include "fb.h"
@@ -39,6 +40,9 @@ get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
     struct header lochdr;
     static char	fname[FONTNAMESZ];
 
+    /* Initialize vfont */
+    memset(&font, 0, sizeof(struct vfont));
+
     if (fontname == NULL)
 	fontname = FONTNAME;
 
@@ -51,13 +55,13 @@ get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
 	    bu_strlcpy(fname, fontname, sizeof(fname));
     } else
 	bu_strlcpy(fname, fontname, sizeof(fname));
-    
+
     /* Open the file and read in the header information. */
     font.ffdes = fopen(fname, "rb");
     if (font.ffdes == NULL) {
 	if (vfont_log)
 	    vfont_log("Error opening font file '%s'\n", fname);
-	    
+
 	font.ffdes = NULL;
 	return font;
     }
@@ -74,7 +78,7 @@ get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
     SWAB(lochdr.maxx);
     SWAB(lochdr.maxy);
     SWAB(lochdr.xtend);
-    
+
     if (lochdr.magic != 0436) {
 	if (vfont_log)
 	    vfont_log("Not a font file \"%s\": magic=0%o\n", fname, (int)lochdr.magic);
@@ -82,7 +86,7 @@ get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
 	return font;
     }
     font.hdr = lochdr;
-    
+
     /* Read in the directory for the font. */
     if (fread((char *) font.dir, (int)sizeof(struct dispatch), 256, font.ffdes) != 256) {
 	if (vfont_log)

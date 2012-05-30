@@ -11,8 +11,9 @@
 
 <refnamediv xml:id="name">
   <refname>e_command</refname>
-  <refpurpose>Adds the objects in the argument list to the display list so that they
-	will appear on the <emphasis>MGED</emphasis> display. This is a synonym for the <command>draw</command> 	command.
+  <refpurpose>Adds the objects in the argument list to the display list so
+  that they will appear on the <emphasis>MGED</emphasis> display. This is a
+  synonym for the <command>draw</command> command.
    </refpurpose>
 </refnamediv>
 
@@ -24,25 +25,37 @@
     <arg choice="opt" rep="norepeat">-s</arg>
     <arg choice="opt" rep="norepeat">-A -o<replaceable>attribute name/value pairs</replaceable></arg>
     <arg choice="opt" rep="norepeat">-C#/#/#</arg>
-    <arg choice="opt" rep="norepeat"><replaceable>objects</replaceable></arg> 
+    <arg choice="opt" rep="norepeat"><replaceable>-m1</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg> 
  </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
   
-  <para> Adds the objects in the argument list to the display list so that they
-	will appear on the <emphasis>MGED</emphasis> display. This is a synonym for the <command>draw</command> 	command; see that entry for a full list of options. The <emphasis>-C</emphasis>option provides the user 
-	a way to specify a color that overrides all other color specifications including combination colors and
-	region-id-based colors. The <emphasis>-A</emphasis> and <emphasis>-o</emphasis> options allow the user to 	select objects by attribute. The <emphasis>-s</emphasis> specifies that subtracted and intersected objects 	should be drawn with solid lines rather than dot-dash lines.  
-  </para>
+ <para> Adds the objects in the argument list to the display list so that
+ they will appear on the <emphasis>MGED</emphasis> display. This is a
+ synonym for the <command>draw</command> command; see that entry for a full
+ list of options. The <emphasis>-C</emphasis> option provides the user a way
+ to specify a color that overrides all other color specifications including
+ combination colors and region-id-based colors. The <emphasis>-A</emphasis>
+ and <emphasis>-o</emphasis> options allow the user to select objects by
+ attribute. The <emphasis>-s</emphasis> specifies that subtracted and
+ intersected objects should be drawn with solid lines rather than dot-dash
+ lines. The <emphasis>-m1</emphasis> option will display BOTs shaded if the
+ display manager is OpenGL and the zbuffer and lighting is enabled. To
+ enable these settings, from the MGED GUI, choose
+ "Modes/Display Manager/OpenGL", "Misc/Z-buffer" and "Misc/Lighting".
+ If the zbuffer and lighting is already enabled, toggle them off then back
+ on to ensure they are enabled.</para>
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
   
-  <para>The following examples show the use of the <command>e</command> command to draw particular objects, 
-	to specify color, to draw with shape lines rather than dot-dash lines, and to limit the objects to be drawn
- to those having specific attribute names and value pairs.
-  </para>
+  <para>The following examples show the use of the <command>e</command>
+  command to draw particular objects, to specify color, to draw with shape
+  lines rather than dot-dash lines, and to limit the objects to be drawn to
+  those having specific attribute names and value pairs.</para>
+
   <example><info><title>Draw specific objects in the <emphasis>MGED</emphasis> display.</title></info>
     
     <variablelist>

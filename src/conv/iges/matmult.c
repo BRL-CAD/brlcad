@@ -1,7 +1,7 @@
 /*                       M A T M U L T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,21 +24,43 @@
 
 #include "vmath.h"
 
+/*
+ * FIXME: candidate for refactoring--see src/libbn/mat.c for a substitute
+ *
+ * Used in:
+ *
+ *   convassem.c
+ *   convinst.c
+ *   evalxform.c
+ *   getcurve.c
+ *
+ * Declared in:
+ *
+ *   iges_struct.h
+ *
+ */
+
+#if !defined(USE_BN_MULT_)
+/* a X b => o */
 void Matmult(mat_t a, mat_t b, mat_t c)
 {
     mat_t tmp;
     int i, j, k;
 
-    for (i=0; i<4; i++)
-	for (j=0; j<4; j++) {
+    for (i = 0; i < 4; i++) {
+	for (j = 0; j < 4; j++) {
 	    tmp[i*4+j] = 0.0;
-	    for (k=0; k<4; k++)
+	    for (k = 0; k < 4; k++)
 		tmp[i*4+j] += a[i*4+k] * b[k*4+j];
 	}
-    for (i=0; i<4; i++)
-	for (j=0; j<4; j++)
+    }
+
+    for (i = 0; i < 4; i++) {
+	for (j = 0; j < 4; j++)
 	    c[i*4+j] = tmp[i*4+j];
+    }
 }
+#endif /* #if !defined(USE_BN_MULT_) */
 
 
 /*

@@ -1,7 +1,7 @@
 /*                      I F _ D E B U G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include "fb.h"
 
 HIDDEN int
-deb_open(FBIO *ifp, char *file, int width, int height)
+deb_open(FBIO *ifp, const char *file, int width, int height)
 {
     FB_CK_FBIO(ifp);
     if (file == (char *)NULL)
@@ -52,7 +52,7 @@ deb_open(FBIO *ifp, char *file, int width, int height)
 
     /* set debug bit vector */
     if (file != NULL) {
-	char *cp;
+	const char *cp;
 	for (cp = file; *cp != '\0' && !isdigit(*cp); cp++)
 	    ;
 	sscanf(cp, "%d", &ifp->if_debug);

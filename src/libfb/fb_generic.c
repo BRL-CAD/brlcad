@@ -1,7 +1,7 @@
 /*                    F B _ G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,7 +56,23 @@ extern int wgl_close_existing(FBIO *ifp);
 	   __FILE__, __LINE__, _bytes_)
 
 
-static int fb_totally_numeric(register char *s);
+/**
+ * True if the non-null string s is all digits
+ */
+static int
+fb_totally_numeric(const char *s)
+{
+    if (s == (char *)0 || *s == 0)
+	return 0;
+
+    while (*s) {
+	if (*s < '0' || *s > '9')
+	    return 0;
+	s++;
+    }
+
+    return 1;
+}
 
 
 /**
@@ -128,7 +144,7 @@ FBIO *_if_list[] = {
  * F B _ O P E N
  */
 FBIO *
-fb_open(char *file, int width, int height)
+fb_open(const char *file, int width, int height)
 {
     register FBIO *ifp;
     int i;
@@ -143,7 +159,7 @@ fb_open(char *file, int width, int height)
     }
     if (file == NULL || *file == '\0') {
 	/* No name given, check environment variable first.	*/
-	if ((file = (char *)getenv("FB_FILE")) == NULL || *file == '\0') {
+	if ((file = (const char *)getenv("FB_FILE")) == NULL || *file == '\0') {
 	    /* None set, use first device as default */
 	    *ifp = *(_if_list[0]);	/* struct copy */
 	    file = ifp->if_name;
@@ -162,7 +178,7 @@ fb_open(char *file, int width, int height)
      */
     i = 0;
     while (_if_list[i] != (FBIO *)NULL) {
-	if (strncmp(file, _if_list[i]->if_name,
+	if (bu_strncmp(file, _if_list[i]->if_name,
 		    strlen(_if_list[i]->if_name)) == 0) {
 	    /* found it, copy its struct in */
 	    *ifp = *(_if_list[i]);
@@ -173,7 +189,7 @@ fb_open(char *file, int width, int height)
 
     /* Not in list, check special interfaces or disk files */
     /* "/dev/" protection! */
-    if (strncmp(file, "/dev/", 5) == 0) {
+    if (bu_strncmp(file, "/dev/", 5) == 0) {
 	fb_log("fb_open: no such device \"%s\".\n", file);
 	free((void *) ifp);
 	return FBIO_NULL;
@@ -255,7 +271,7 @@ fb_close_existing(FBIO *ifp)
 
 #ifdef IF_X
     {
-	if (strcasecmp(ifp->if_name, X24_interface.if_name) == 0) {
+	if (BU_STR_EQUIV(ifp->if_name, X24_interface.if_name)) {
 	    int status = -1;
 	    if ((status = X24_close_existing(ifp)) <= -1) {
 		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
@@ -273,7 +289,7 @@ fb_close_existing(FBIO *ifp)
 
 #ifdef IF_WGL
     {
-	if (strcasecmp(ifp->if_name, wgl_interface.if_name) == 0) {
+	if (BU_STR_EQUIV(ifp->if_name, wgl_interface.if_name)) {
 	    int status = -1;
 	    if ((status = wgl_close_existing(ifp)) <= -1) {
 		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
@@ -290,7 +306,7 @@ fb_close_existing(FBIO *ifp)
 
 #ifdef IF_OGL
     {
-	if (strcasecmp(ifp->if_name, ogl_interface.if_name) == 0) {
+	if (BU_STR_EQUIV(ifp->if_name, ogl_interface.if_name)) {
 	    int status = -1;
 	    if ((status = ogl_close_existing(ifp)) <= -1) {
 		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
@@ -307,7 +323,7 @@ fb_close_existing(FBIO *ifp)
 
 #ifdef IF_RTGL
     {
-	if (strcasecmp(ifp->if_name, ogl_interface.if_name) == 0) {
+	if (BU_STR_EQUIV(ifp->if_name, ogl_interface.if_name)) {
 	    int status = -1;
 	    if ((status = ogl_close_existing(ifp)) <= -1) {
 		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
@@ -324,7 +340,7 @@ fb_close_existing(FBIO *ifp)
 
 #ifdef IF_TK
     {
-	if (strcasecmp(ifp->if_name, tk_interface.if_name) == 0) {
+	if (BU_STR_EQUIV(ifp->if_name, tk_interface.if_name)) {
 	    /* may need to close_existing here at some point */
 	    if (ifp->if_pbase != PIXEL_NULL)
 		free((void *)ifp->if_pbase);
@@ -371,25 +387,6 @@ fb_genhelp(void)
     }
 
     return 0;
-}
-
-
-/**
- * True if the non-null string s is all digits
- */
-static int
-fb_totally_numeric(register char *s)
-{
-    if (s == (char *)0 || *s == 0)
-	return 0;
-
-    while (*s) {
-	if (*s < '0' || *s > '9')
-	    return 0;
-	s++;
-    }
-
-    return 1;
 }
 
 
@@ -695,7 +692,7 @@ fb_read_fd(FBIO *ifp, int fd, int file_width, int file_height, int file_xoff, in
 		fb_skip_bytes(fd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 	}
     }
-
+    free(scanline);
     return BRLCAD_OK;
 }
 

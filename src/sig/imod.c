@@ -1,7 +1,7 @@
 /*                          I M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -109,13 +109,17 @@ get_args(int argc, char **argv)
 	    return 0;
 	file_name = "-";
     } else {
+	char *ifname;
 	file_name = argv[bu_optind];
-	if ( freopen(file_name, "r", stdin) == NULL )  {
+	ifname = bu_realpath(file_name, NULL);
+	if ( freopen(ifname, "r", stdin) == NULL )  {
 	    (void)fprintf( stderr,
-			   "bwmod: cannot open \"%s\" for reading\n",
-			   file_name );
+			   "bwmod: cannot open \"%s(canonical %s)\" for reading\n",
+			   file_name,ifname);
+	    bu_free(ifname,"ifname alloc from bu_realpath");
 	    return 0;
 	}
+	bu_free(ifname,"ifname alloc from bu_realpath");
     }
 
     if ( argc > ++bu_optind )
@@ -173,11 +177,23 @@ int main(int argc, char **argv)
     clip_high = clip_low = 0;
 
     while ( (n=fread(iobuf, sizeof(*iobuf), BUFLEN, stdin)) > 0) {
+
 	/* translate */
 	for (p=iobuf, q= &iobuf[n]; p < q; ++p) {
 	    i = *p + 32768;
-	    if (mapbuf[i] > 32767) { ++clip_high; *p = 32767; }
-	    else if (mapbuf[i] < -32768) { ++clip_low; *p = -32768; }
+	    if (i < 0)
+		i = 0;
+	    if (i > (int)(sizeof(mapbuf)/sizeof(mapbuf[0]))-1)
+		i = (int)(sizeof(mapbuf)/sizeof(mapbuf[0]))-1;
+
+	    if (mapbuf[i] > 32767) {
+		++clip_high;
+		*p = 32767;
+	    } else if (mapbuf[i] < -32768) {
+		++clip_low;
+		*p = -32768;
+	    }
+
 	    else *p = (short)mapbuf[i];
 	}
 	/* output */

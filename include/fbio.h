@@ -1,7 +1,7 @@
 /*                         F B I O . H
  * BRL-CAD
  *
- * Copyright (c) 2005-2011 United States Government as represented by
+ * Copyright (c) 2005-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,20 +28,24 @@
 #ifndef __FBIO_H__
 #define __FBIO_H__
 
+#include "common.h"
+
+#include "bu.h"
+
+
 #define FB_ARGS(args) args
 
 #ifndef FB_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef FB_EXPORT_DLL
-#      define FB_EXPORT __declspec(dllexport)
-#    else
-#      define FB_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(FB_DLL_EXPORTS) && defined(FB_DLL_IMPORTS)
+#    error "Only FB_DLL_EXPORTS or FB_DLL_IMPORTS can be defined, not both."
+#  elif defined(FB_DLL_EXPORTS)
+#    define FB_EXPORT __declspec(dllexport)
+#  elif defined(FB_DLL_IMPORTS)
+#    define FB_EXPORT __declspec(dllimport)
 #  else
 #    define FB_EXPORT
 #  endif
 #endif
-
 
 /**
  * R G B p i x e l
@@ -75,8 +79,6 @@ typedef struct {
 #define COLORMAP_NULL (ColorMap *) 0
 #define FBIO_NULL (FBIO *) 0
 
-#define FB_CK_FBIO(_p) FB_CKMAG(_p, FB_MAGIC, "FBIO")
-
 
 /**
  * F B I O
@@ -90,7 +92,7 @@ typedef struct {
 typedef struct FBIO_ {
     uint32_t if_magic;
     /* Static information: per device TYPE.	*/
-    int (*if_open)FB_ARGS((struct FBIO_ *ifp, char *file, int _width, int _height));			/**< @brief open device */
+    int (*if_open)FB_ARGS((struct FBIO_ *ifp, const char *file, int _width, int _height));		/**< @brief open device */
     int (*if_close)FB_ARGS((struct FBIO_ *ifp));							/**< @brief close device */
     int (*if_clear)FB_ARGS((struct FBIO_ *ifp, unsigned char *pp));					/**< @brief clear device */
     int (*if_read)FB_ARGS((struct FBIO_ *ifp, int x, int y, unsigned char *pp, size_t count));		/**< @brief read pixels */
@@ -141,6 +143,11 @@ typedef struct FBIO_ {
 	size_t l;
     } u1, u2, u3, u4, u5, u6;
 } FBIO;
+
+/**
+ * assert the integrity of an FBIO struct.
+ */
+#define FB_CK_FBIO(_p) BU_CKMAG(_p, FB_MAGIC, "FBIO")
 
 /* declare all the possible interfaces */
 #ifdef IF_REMOTE

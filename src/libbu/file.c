@@ -1,7 +1,7 @@
 /*                         F I L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@
 
 
 int
-bu_file_exists(const char *path)
+bu_file_exists(const char *path, int *fd)
 {
     struct stat sbuf;
 
@@ -65,6 +65,16 @@ bu_file_exists(const char *path)
 	}
 	/* FAIL */
 	return 0;
+    }
+
+    /* capture file descriptor if requested */
+    if (fd) {
+	*fd = open(path, O_RDONLY);
+	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
+	    bu_log("YES\n");
+	}
+	/* OK */
+	return 1;
     }
 
     /* does it exist as a filesystem entity? */
@@ -97,7 +107,7 @@ bu_same_file(const char *fn1, const char *fn2)
 	return 0;
     }
 
-    if (!bu_file_exists(fn1) || !bu_file_exists(fn2)) {
+    if (!bu_file_exists(fn1, NULL) || !bu_file_exists(fn2, NULL)) {
 	return 0;
     }
 
@@ -266,6 +276,7 @@ bu_file_symbolic(const char *path)
 int
 bu_file_delete(const char *path)
 {
+    int fd = 0;
     int ret = 0;
     int retry = 0;
     struct stat sb;
@@ -275,7 +286,7 @@ bu_file_delete(const char *path)
 	|| BU_STR_EQUAL(path, "")
 	|| BU_STR_EQUAL(path, ".")
 	|| BU_STR_EQUAL(path, "..")
-	|| !bu_file_exists(path))
+	|| !bu_file_exists(path, &fd))
     {
 	return 0;
     }
@@ -286,32 +297,33 @@ bu_file_delete(const char *path)
 	    /* second pass, try to force deletion by changing file
 	     * permissions (similar to rm -f).
 	     */
-	    if (stat(path, &sb) == -1) {
+	    if (fstat(fd, &sb) == -1) {
 		break;
 	    }
-	    chmod(path, (sb.st_mode|S_IRWXU));
+	    bu_fchmod(fd, (sb.st_mode|S_IRWXU));
 	}
 
 	ret = (remove(path) == 0) ? 0 : 1;
 
     } while (ret == 0 && retry < 2);
+    close(fd);
 
     /* all boils down to whether the file still exists, not whether
      * remove thinks it succeeded.
      */
-    if (bu_file_exists(path)) {
+    if (bu_file_exists(path, &fd)) {
 	/* failure */
 	if (retry > 1) {
 	    /* restore original file permission */
-	    chmod(path, sb.st_mode);
+	    bu_fchmod(fd, sb.st_mode);
 	}
+	close(fd);
 	return 0;
     } else {
 	/* deleted */
 	return 1;
     }
 }
-
 
 /*
  * Local Variables:

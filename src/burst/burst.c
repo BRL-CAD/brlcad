@@ -1,7 +1,7 @@
 /*                         B U R S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -222,7 +222,7 @@ exitCleanly(int code)
     if (tty)
 	closeUi(); /* keep screen straight */
     (void) fclose(tmpfp);
-    if (unlink(tmpfname) == -1)
+    if (!bu_file_delete(tmpfname))
 	locPerror(tmpfname);
     exit(code);
 }

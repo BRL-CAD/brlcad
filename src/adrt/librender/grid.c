@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2011 United States Government as represented by
+ * Copyright (c) 2007-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,12 +37,11 @@ void
 render_grid_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *ray, vect_t *pixel)
 {
 	struct tie_id_s id;
-	adrt_mesh_t *m;
 	vect_t vec;
 	tfloat angle;
 
 
-	if ((m = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {
+	if (tie_work(tie, ray, &id, render_hit, NULL) != NULL) {
 		/* if X or Y lie in the grid paint it white else make it gray */
 		if (fabs(GRID*id.pos[0] - (int)(GRID*id.pos[0])) < 0.2*LINE || fabs(GRID*id.pos[1] - (int)(GRID*id.pos[1])) < 0.2*LINE) {
 			*pixel[0] = (tfloat)0.9;

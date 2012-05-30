@@ -1,7 +1,7 @@
 /*                       G - S A T . C P P
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -105,9 +105,6 @@ tree *booltree_evaluate(tree *tp, resource *resp);
 string infix_to_postfix(string str);
 void tokenize(const string& str, vector<string>& tokens, const string& delimiters);
 
-/* declarations to support use of getopt() system call */
-extern char *optarg;
-extern int optind, opterr, getopt(int, char *const *, const char *);
 
 char *usage_msg = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 char *options = "t:a:n:o:r:vx:X:";
@@ -191,7 +188,7 @@ main(int argc, char *argv[])
 
     /* Open BRL-CAD database */
     /* Scan all the records in the database and build a directory */
-    rtip=rt_dirbuild(argv[optind], idbuf, sizeof(idbuf));
+    rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf));
 
     if ( rtip == RTI_NULL) {
 	usage( "rt_dirbuild failure\n" );
@@ -205,13 +202,13 @@ main(int argc, char *argv[])
     init_state.ts_ttol = &ttol;
     bu_avs_init(&init_state.ts_attrs, 1, "avs in tree_state");
 
-    optind++;
+    bu_optind++;
 
     /* Walk the trees named on the command line
      * outputting combinations and primitives
      */
     int walk_tree_status;
-    for ( i = optind ; i < argc ; i++ ) {
+    for ( i = bu_optind ; i < argc ; i++ ) {
 	struct directory *dp;
 
 	dp = db_lookup( rtip->rti_dbip, argv[i], LOOKUP_QUIET );
@@ -337,8 +334,6 @@ main(int argc, char *argv[])
     CGMApp::instance()->shutdown();
 
     cout << "Number of primitives processed: " << g_body_cnt << endl;
-    cout << "GOT HERE!" << endl;
-    abort(); /* !!! should not need this */
 
     return 0;
 }
@@ -369,30 +364,30 @@ int parse_args( int ac, char **av )
     else
 	++prog_name;
 
-    /* Turn off getopt's error messages */
-    opterr = 0;
+    /* Turn off bu_getopt error messages */
+    bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ( (c = getopt( ac, av, options ) ) != EOF ) {
+    while ( (c = bu_getopt( ac, av, options ) ) != EOF ) {
 
 	switch (c) {
 	    case 't':               /* calculational tolerance */
-		tol.dist = atof( optarg );
+		tol.dist = atof( bu_optarg );
 		tol.dist_sq = tol.dist * tol.dist;
 	    case 'o':               /* Output file name */
 		/* grab output file name */
-		output_file = optarg;
+		output_file = bu_optarg;
 		break;
 	    case 'v':               /* verbosity */
 		verbose++;
 		break;
 	    case 'x':               /* librt debug flag */
-		sscanf( optarg, "%x", &rt_g.debug );
+		sscanf( bu_optarg, "%x", &rt_g.debug );
 		bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 		bu_log("\n");
 		break;
 	    case 'X':               /* NMG debug flag */
-		sscanf( optarg, "%x", &rt_g.NMG_debug );
+		sscanf( bu_optarg, "%x", &rt_g.NMG_debug );
 		bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
 		bu_log("\n");
 		break;
@@ -403,7 +398,7 @@ int parse_args( int ac, char **av )
 
     }
 
-    return optind;
+    return bu_optind;
 }
 
 
@@ -427,7 +422,7 @@ region_start ( db_tree_state *tsp,
 {
     rt_comb_internal *comb;
     directory *dp;
-    bu_vls str;
+    bu_vls str = BU_VLS_INIT_ZERO;
     ostringstream ostr;
     string infix, postfix;
 
@@ -442,8 +437,6 @@ region_start ( db_tree_state *tsp,
     /* here is where the conversion should be done */
     cout << "* Here is where the conversion should be done *" << endl;
     printf( "Write this region (name=%s) as a part in your format:\n", dp->d_namep );
-
-    bu_vls_init( &str );
 
     describe_tree( combp->tree, &str );
 
@@ -502,7 +495,8 @@ void
 describe_tree(  tree *tree,
 		bu_vls *str)
 {
-    bu_vls left, right;
+    bu_vls left = BU_VLS_INIT_ZERO;
+    bu_vls right = BU_VLS_INIT_ZERO;
     char *union_op = " u ";
     char *subtract_op = " - ";
     char *intersect_op = " + ";
@@ -545,8 +539,6 @@ describe_tree(  tree *tree,
 	case OP_XOR:		/* exclusive "or" operator node */
 	    op = xor_op;
     binary:				/* common for all binary nodes */
-	    bu_vls_init( &left );
-	    bu_vls_init( &right );
 	    describe_tree( tree->tr_b.tb_left, &left );
 	    describe_tree( tree->tr_b.tb_right, &right );
 	    bu_vls_putc( str, '(' );

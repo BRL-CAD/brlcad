@@ -1,7 +1,7 @@
 /*                 FaceBound.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,65 +36,69 @@
 string FaceBound::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)FaceBound::Create);
 
 FaceBound::FaceBound() {
-	step = NULL;
-	id = 0;
-	bound = NULL;
-	inner = true;
+    step = NULL;
+    id = 0;
+    bound = NULL;
+    inner = true;
+	ON_face_index=-1;
+	orientation = BUnset;
 }
 
 FaceBound::FaceBound(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
-	bound = NULL;
-	inner = true;
+    step = sw;
+    id = step_id;
+    bound = NULL;
+    inner = true;
+	ON_face_index=-1;
+	orientation = BUnset;
 }
 
 FaceBound::~FaceBound() {
-	bound = NULL;
+    bound = NULL;
 }
 
 bool
-FaceBound::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+FaceBound::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+    step=sw;
+    id = sse->STEPfile_id;
 
-	// load base class attributes
-	if ( !TopologicalRepresentationItem::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
-		return false;
+    // load base class attributes
+    if ( !TopologicalRepresentationItem::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
+	return false;
+    }
+
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
+
+    if (bound == NULL) {
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"bound");
+	if (entity) {
+	    bound = dynamic_cast<Loop*>(Factory::CreateObject(sw,entity));
+	} else {
+	    std::cerr << CLASSNAME << ": Error loading 'bound' entity." << std::endl;
+	    return false;
 	}
+    }
+    orientation = step->getBooleanAttribute(sse,"orientation");
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
-
-	if (bound == NULL) {
-		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"bound");
-		if (entity) {
-			bound = dynamic_cast<Loop*>(Factory::CreateObject(sw,entity));
-		} else {
-			std::cerr << CLASSNAME << ": Error loading 'bound' entity." << std::endl;
-			return false;
-		}
-	}
-	orientation = step->getBooleanAttribute(sse,"orientation");
-
-	return true;
+    return true;
 }
 
 void
 FaceBound::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Attributes:" << std::endl;
-	TAB(level+1); std::cout << "bound:" << std::endl;
-	bound->Print(level+1);
+    TAB(level); std::cout << "Attributes:" << std::endl;
+    TAB(level+1); std::cout << "bound:" << std::endl;
+    bound->Print(level+1);
 
-	TAB(level+1); std::cout << "orientation:" << step->getBooleanString((Boolean)orientation) << std::endl;
+    TAB(level+1); std::cout << "orientation:" << step->getBooleanString((Boolean)orientation) << std::endl;
 
-	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-	TopologicalRepresentationItem::Print(level+1);
+    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    TopologicalRepresentationItem::Print(level+1);
 }
 
 bool
@@ -106,22 +110,22 @@ FaceBound::Oriented() {
 }
 
 STEPEntity *
-FaceBound::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		FaceBound *object = new FaceBound(sw,sse->STEPfile_id);
+FaceBound::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	FaceBound *object = new FaceBound(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 // Local Variables:

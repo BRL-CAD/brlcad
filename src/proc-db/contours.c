@@ -1,7 +1,7 @@
 /*                      C O N T O U R S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 
 int x, y, z;
 int npts;
-char name[128];
+char name[128] = {0};
 
 int
 main(int argc, char *argv[])
@@ -46,6 +46,18 @@ main(int argc, char *argv[])
     pl_3space(stdout, -32768,  -32768,  -32768, 32767, 32767, 32767);
     while (!feof(stdin)) {
 	if (scanf("%d %d %128s", &npts, &z, name) != 3)  break;
+	if(npts < 0) {
+	    bu_log("Negative # of pts\n");
+	    return -1;
+	}
+	if (npts >= INT_MAX) {
+	    bu_log("Too many points\n");
+	    return -1;
+	}
+	if (npts < 0) {
+	    npts = 0;
+	}
+
 	for (i=0; i<npts; i++) {
 	    if (scanf("%d %d", &x, &y) != 2)
 		fprintf(stderr, "bad xy\n");

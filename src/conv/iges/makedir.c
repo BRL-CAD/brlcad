@@ -1,7 +1,7 @@
 /*                       M A K E D I R . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ void
 Makedir()
 {
 
-    int found, i, saverec, entcount=(-1), paramptr=0, paramguess=0;
+    int found, i, saverec, entcount = (-1), paramptr = 0, paramguess = 0;
     char str[9];
 
     str[8] = '\0';
@@ -127,7 +127,7 @@ Makedir()
 	/* Look for entity type in list and incrememt that count */
 
 	found = 0;
-	for (i=0; i<ntypes; i++) {
+	for (i = 0; i < ntypes; i++) {
 	    if (typecount[i].type == dir[entcount]->type) {
 		typecount[i].count++;
 		found = 1;

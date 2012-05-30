@@ -1,7 +1,7 @@
 /*                         W C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ HIDDEN int wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, s
 
 
 HIDDEN void
-wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
+wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3, genptr_t UNUSED(user_ptr4))
 {
     FILE *fp;
     size_t *pathpos;
@@ -103,7 +103,7 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
 		comb->aircode,
 		comb->GIFTmater,
 		comb->los);
-	for (i=0; i < pathpos; i++)
+	for (i =0 ; i < pathpos; i++)
 	    fprintf(fp, "/%s", path[i]->d_namep);
 	fprintf(fp, "/%s\n", dp->d_namep);
 	intern.idb_meth->ft_ifree(&intern);
@@ -117,7 +117,7 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
 	}
 	path[pathpos] = dp;
 	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, wcodes_printnode,
-			 (genptr_t)fp, (genptr_t)&pathpos, (genptr_t)gedp);
+			 (genptr_t)fp, (genptr_t)&pathpos, (genptr_t)gedp, (genptr_t)gedp);
     }
 
     intern.idb_meth->ft_ifree(&intern);

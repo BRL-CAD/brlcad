@@ -21,6 +21,7 @@
 #
 # This is the main script for the RaytraceWizard.
 #
+package provide RaytraceWizard 1.0
 
 #
 # Extend Autopath
@@ -174,14 +175,6 @@ namespace eval RaytraceWizard {
 	# command line, use it and proceed. Otherwise, spin up the
 	# gui, select the database page, and wait for the database
 	# file to be specified.
-	#
-	if { [llength $args] > 0 } {
-	    set ::RtWizard::wizard_state(dbFile) [ lindex $args 0 ]
-	    if { ! [file exists $::RtWizard::wizard_state(dbFile)] } {
-		set ::RtWizard::wizard_state(dbFile) ""
-	    }
-	}
-
 	if { [string length $::RtWizard::wizard_state(dbFile)] == 0 } {
 	    #
 	    # select the database page
@@ -251,7 +244,6 @@ namespace eval RaytraceWizard {
 if {[info exists argv]} {
     RaytraceWizard::main $argv
 }
-
 
 # Local Variables:
 # mode: Tcl

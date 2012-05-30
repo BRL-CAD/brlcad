@@ -1,7 +1,7 @@
 /*                     E V A L X F O R M . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ Evalxform()
     mat_t rot;
 
 
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	/* loop through all entities */
 	/* skip non-transformation entities */
 	if (dir[i]->type != 124 && dir[i]->type != 700)
@@ -69,18 +69,24 @@ Evalxform()
 		xform = dir[xform]->trans;
 	    }
 
-	    for (j=0; j<16; j++)
+	    for (j = 0; j < 16; j++)
 		rot[j] = (*identity)[j];
 
 	    ptr_root = ptr;
 	    while (ptr != NULL) {
 		if (!dir[ptr->index]->referenced) {
+#if defined(USE_BN_MULT_)
+                    /* a <= a X b */
+                    bn_mat_mul2(rot, *dir[ptr->index]->rot);
+#else
+                    /* a X b => o */
 		    Matmult(rot, *dir[ptr->index]->rot, rot);
-		    for (j=0; j<16; j++)
+#endif
+		    for (j = 0; j < 16; j++)
 			(*dir[ptr->index]->rot)[j] = rot[j];
 		    dir[ptr->index]->referenced++;
 		} else {
-		    for (j=0; j<16; j++)
+		    for (j = 0; j < 16; j++)
 			rot[j] = (*dir[ptr->index]->rot)[j];
 		}
 		ptr = ptr->prev;
@@ -97,7 +103,7 @@ Evalxform()
     }
 
     /* set matrices for all other entities */
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	/* skip xform entities */
 	if (dir[i]->type == 124 || dir[i]->type == 700)
 	    continue;

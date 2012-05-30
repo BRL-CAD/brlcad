@@ -1,7 +1,7 @@
 #                     A R C H E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2011 United States Government as represented by
+# Copyright (c) 2002-2012 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -450,6 +450,8 @@ package provide Archer 1.0
 	buildObjAttrView
 	buildObjEditView
 	buildObjToolView
+	buildSelectTransparencyDialog
+	buildSelectGroupDialog
 
 	# set initial toggle variables
 	set mVPaneToggle3 $mVPaneFraction3
@@ -497,8 +499,11 @@ package provide Archer 1.0
     Load ""
 
     if {!$mViewOnly} {
+	pushPerspectiveSettings
 	pushZClipSettings
     }
+
+    gedCmd dlist_on $mDisplayListMode
 
 
     bind [namespace tail $this] <Configure> [::itcl::code $this handleConfigure]
@@ -2141,7 +2146,7 @@ proc Archer::get_html_data {helpfile} {
 
 proc Archer::get_html_man_data {cmdname} {
     global archer_help_data
-    set help_fd [open [file join [bu_brlcad_data "html"] mann en $cmdname.html]]
+    set help_fd [open [file join [bu_brlcad_data "doc/html"] mann en $cmdname.html]]
     set archer_help_data [read $help_fd]
     close $help_fd
 }
@@ -2164,7 +2169,7 @@ proc Archer::html_help_display {me} {
     if {[catch {regexp {(home://blank)(.+)} $origurl match prefix tempurl} msg]} {
 	tk_messageBox -message "html_help_display: regexp failed, msg - $msg"
     }
-    set url [bu_brlcad_data "html"]
+    set url [bu_brlcad_data "doc/html"]
     append url $tempurl
     get_html_data $url
     $htmlviewer reset
@@ -2173,7 +2178,7 @@ proc Archer::html_help_display {me} {
 
 
 proc Archer::mkHelpTkImage {file} {
-    set fullpath [file join [bu_brlcad_data "html"] manuals mged $file]
+    set fullpath [file join [bu_brlcad_data "doc/html"] manuals mged $file]
     set name [image create photo -file $fullpath]
     return [list $name [list image delete $name]]
 }
@@ -2217,8 +2222,8 @@ proc title_node_handler {node} {
     set tlparent [$itk_component(archerHelp) childsite]
 
 
-    if {[file exists [file join [bu_brlcad_data "html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]] &&
-        [file exists [file join [bu_brlcad_data "html"] toc.html]] } {
+    if {[file exists [file join [bu_brlcad_data "doc/html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]] &&
+        [file exists [file join [bu_brlcad_data "doc/html"] toc.html]] } {
 
 	# Table of Contents
 	itk_component add archerHelpToC {
@@ -2231,7 +2236,7 @@ proc title_node_handler {node} {
 	set docstoclist [::hv3::hv3 $docstoc.htmlview -width 250 -requestcmd Archer::html_help_display]
 	set docstochtml [$docstoclist html]
 	$docstochtml configure -parsemode html 
-	set help_fd [lindex [list [file join [bu_brlcad_data "html"] toc.html]] 0]
+	set help_fd [lindex [list [file join [bu_brlcad_data "doc/html"] toc.html]] 0]
 	get_html_data $help_fd
 	$docstochtml parse $archer_help_data
 
@@ -2259,7 +2264,7 @@ proc title_node_handler {node} {
 	set htmlviewer [$hv3htmlviewer html]
 	$htmlviewer configure -parsemode html
 	$htmlviewer configure -imagecmd Archer::mkHelpTkImage
-	set help_fd [lindex [list [file join [bu_brlcad_data "html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]] 0]
+	set help_fd [lindex [list [file join [bu_brlcad_data "doc/html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]] 0]
 	get_html_data $help_fd
 	$htmlviewer parse $archer_help_data
 
@@ -2283,6 +2288,22 @@ proc title_node_handler {node} {
     } {}
 
     set parent $itk_component(displayF)
+
+    itk_component add perspectiveL {
+	::ttk::label $parent.perspectiveL \
+	    -anchor se \
+	    -text "Perspective Angle:"
+    } {}
+    itk_component add perspectiveS {
+	::scale $parent.perspectiveS \
+	    -showvalue 1 \
+	    -orient horizontal \
+	    -from 0.0 \
+	    -to 175.0 \
+	    -resolution 5 \
+	    -variable [::itcl::scope mPerspectivePref] \
+	    -command [::itcl::code $this updatePerspective]
+    }
 
     itk_component add zclipFrontL {
 	::ttk::label $parent.zclipFrontL \
@@ -2400,6 +2421,13 @@ proc title_node_handler {node} {
 	    -value $LIGHT_MODE_FRONT_AND_BACK_LIGHT \
 	    -variable [::itcl::scope mLightingModePref]
     } {}
+
+    itk_component add dlistModeCB {
+	::ttk::checkbutton $parent.dlistModeCB \
+	    -text "Use Display Lists" \
+	    -variable [::itcl::scope mDisplayListModePref]
+    } {}
+
     set i 0
     grid $itk_component(lightModeFrontRB) -row $i -sticky nsew
     incr i
@@ -2411,6 +2439,9 @@ proc title_node_handler {node} {
     grid columnconfigure $itk_component(lightModeF) 0 -weight 1
 
     set i 0
+    grid $itk_component(perspectiveL) -column 0 -row $i -sticky se
+    grid $itk_component(perspectiveS) -column 1 -row $i -sticky ew
+    incr i
     grid $itk_component(zclipBackL) -column 0 -row $i -sticky se
     grid $itk_component(zclipBackS) -column 1 -row $i -sticky ew
     incr i
@@ -2425,9 +2456,10 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(lightModeL) -column 0 -row $i -sticky ne
     grid $itk_component(lightModeF) -column 1 -row $i -sticky ew
-
     incr i
+    grid $itk_component(dlistModeCB) -columnspan 2 -column 0 -row $i -sticky sw
     grid rowconfigure $parent $i -weight 1
+
     grid columnconfigure $parent 1 -weight 1
 
     set i 0
@@ -2455,6 +2487,13 @@ proc title_node_handler {node} {
 	fbbcolor \
 	mFBBackgroundColorPref \
 	"FB Background Color:" \
+	$mColorListNoTriple
+
+    buildComboBox $itk_component(generalF) \
+	fboverlayColor \
+	fbocolor \
+	mFBOverlayColorPref \
+	"FB Overlay Color:" \
 	$mColorListNoTriple
 
     buildComboBox $itk_component(generalF) \
@@ -2518,6 +2557,24 @@ proc title_node_handler {node} {
 	    -textvariable [::itcl::scope mTreeAttrColumnsPref]
     } {}
 
+    itk_component add selGroupL {
+	::ttk::label $itk_component(generalF).selGroupL \
+	    -anchor e \
+	    -text "Selection Group"
+    } {}
+    itk_component add selGroupE {
+	::ttk::entry $itk_component(generalF).selGroupE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mCompSelectGroupPref]
+    } {}
+
+    buildComboBox $itk_component(generalF) \
+	selGroupMode \
+	selgroupmode \
+	mCompSelectModePref \
+	"Comp Select Mode:" \
+	$COMP_SELECT_MODE_NAMES
+
     itk_component add affectedTreeNodesModeCB {
 	::ttk::checkbutton $itk_component(generalF).affectedTreeNodesModeCB \
 	    -text "Highlight Affected Tree/List Nodes" \
@@ -2536,6 +2593,18 @@ proc title_node_handler {node} {
 	    -text "All Affected Nodes Highlighted (List View Only)" \
 	    -variable [::itcl::scope mEnableListViewAllAffectedPref] \
 	    -command [::itcl::code $this listViewAllAffectedCallback]
+    } {}
+
+    itk_component add doRtEdgeCB {
+	::ttk::checkbutton $itk_component(generalF).doRtEdgeCB \
+	    -text "Do Rtedge" \
+	    -variable [::itcl::scope mDoRtEdgePref]
+    } {}
+
+    itk_component add doRtEdgeOverlayCB {
+	::ttk::checkbutton $itk_component(generalF).doRtEdgeOverlayCB \
+	    -text "Do Rtedge Overlay" \
+	    -variable [::itcl::scope mDoRtEdgeOverlayPref]
     } {}
 
     if {$ArcherCore::inheritFromToplevel} {
@@ -2572,6 +2641,9 @@ proc title_node_handler {node} {
     grid $itk_component(fbbackgroundColorL) -column 0 -row $i -sticky ne
     grid $itk_component(fbbackgroundColorF) -column 1 -row $i -sticky ew
     incr i
+    grid $itk_component(fboverlayColorL) -column 0 -row $i -sticky ne
+    grid $itk_component(fboverlayColorF) -column 1 -row $i -sticky ew
+    incr i
     grid $itk_component(fontsizeL) -column 0 -row $i -sticky e
     grid $itk_component(fontsizeF) -column 1 -row $i -sticky ew
     incr i
@@ -2589,6 +2661,12 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(treeAttrsL) -column 0 -row $i -sticky e
     grid $itk_component(treeAttrsE) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(selGroupL) -column 0 -row $i -sticky e
+    grid $itk_component(selGroupE) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(selGroupModeL) -column 0 -row $i -sticky e
+    grid $itk_component(selGroupModeF) -column 1 -row $i -sticky ew
     incr i
     set i [buildOtherGeneralPreferences $i]
     grid $itk_component(affectedTreeNodesModeCB) \
@@ -2609,6 +2687,19 @@ proc title_node_handler {node} {
 	-column 0 \
 	-row $i \
 	-sticky sw
+    incr i
+    grid $itk_component(doRtEdgeCB) \
+	-columnspan 2 \
+	-column 0 \
+	-row $i \
+	-sticky sw
+    incr i
+    grid $itk_component(doRtEdgeOverlayCB) \
+	-columnspan 2 \
+	-column 0 \
+	-row $i \
+	-sticky sw
+
     if {$ArcherCore::inheritFromToplevel} {
 	incr i
 	grid $itk_component(sepCmdWinCB) \
@@ -2617,6 +2708,7 @@ proc title_node_handler {node} {
 	    -row $i \
 	    -sticky sw
     }
+
     incr i
     grid $itk_component(bigEMenuItemCB) \
 	-columnspan 2 \
@@ -3293,7 +3385,7 @@ proc title_node_handler {node} {
 
     pack $itk_component(preferenceTabs) -expand yes -fill both
 
-    wm geometry $itk_component(preferencesDialog) 450x500
+    wm geometry $itk_component(preferencesDialog) 450x580
 }
 
 
@@ -3432,10 +3524,10 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this doAe -90 0]
     $itk_component(${_prefix}stdviewsmenu) add command \
 	-label "Top" \
-	-command [::itcl::code $this doAe 0 90]
+	-command [::itcl::code $this doAe 270 90]
     $itk_component(${_prefix}stdviewsmenu) add command \
 	-label "Bottom" \
-	-command [::itcl::code $this doAe 0 -90]
+	-command [::itcl::code $this doAe 270 -90]
     $itk_component(${_prefix}stdviewsmenu) add separator
     $itk_component(${_prefix}stdviewsmenu) add command \
 	-label "35, 25" \
@@ -3589,6 +3681,7 @@ proc title_node_handler {node} {
     bind $itk_component(${_prefix}modesmenu) <<MenuSelect>> [::itcl::code $this modesMenuStatusCB %W]
     bind $itk_component(${_prefix}activepanemenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
     bind $itk_component(${_prefix}comppickmenu) <<MenuSelect>> [::itcl::code $this modesMenuStatusCB %W]
+    bind $itk_component(${_prefix}compselectmenu) <<MenuSelect>> [::itcl::code $this modesMenuStatusCB %W]
     bind $itk_component(${_prefix}helpmenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
 
     bind $itk_component(${_prefix}raytracemenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
@@ -3670,7 +3763,7 @@ proc title_node_handler {node} {
     #    bind $itk_component(aboutDialog) <FocusOut> "raise $itk_component(aboutDialog)"
 
     $itk_component(aboutDialog) center [namespace tail $this]
-    ::update
+    ::update idletasks
     $itk_component(aboutDialog) activate
 }
 
@@ -3943,56 +4036,73 @@ proc title_node_handler {node} {
 	    set op ""
 	}
 
-	switch -- $op {
+	switch -- $op \
 	    "Active Pane" {
 		set mStatusStr ""
-	    }
+	    } \
 	    "Quad View" {
 		set mStatusStr "Toggle between single and multiple geometry pane mode"
-	    }
+	    } \
 	    "View Axes" {
 		set mStatusStr "Hide/Show view axes"
-	    }
+	    } \
 	    "Model Axes" {
 		set mStatusStr "Hide/Show model axes"
-	    }
+	    } \
 	    "Ground Plane" {
 		set mStatusStr "Hide/Show ground plane"
-	    }
+	    } \
 	    "Primitive Labels" {
 		set mStatusStr "Hide/Show primitive labels"
-	    }
+	    } \
 	    "Viewing Parameters" {
 		set mStatusStr "Hide/Show viewing parameters"
-	    }
+	    } \
 	    "Scale" {
 		set mStatusStr "Hide/Show view scale"
-	    }
+	    } \
 	    "Lighting" {
 		set mStatusStr "Toggle lighting on/off "
-	    }
+	    } \
 	    "Tree Select" {
 		set mStatusStr "Select the picked object in the hierarchy tree."
-	    }
+	    } \
 	    "Get Object Name" {
 		set mStatusStr "Get the name of the picked object."
-	    }
+	    } \
 	    "Erase Object" {
 		set mStatusStr "Erase the picked object."
-	    }
+	    } \
 	    "Bot Flip" {
 		set mStatusStr "Flip the picked object if it's a bot."
-	    }
+	    } \
 	    "Bot Split" {
 		set mStatusStr "Split the picked object if it's a bot."
-	    }
+	    } \
 	    "Bot Sync" {
 		set mStatusStr "Sync the picked object if it's a bot."
-	    }
+	    } \
+	    [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_LIST_MODE] {
+		set mStatusStr "Returns a list of the selected components"
+	    } \
+	    [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_LIST_PARTIAL_MODE] {
+		set mStatusStr "Returns a list of the partially selected components"
+	    } \
+	    [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_ADD_MODE] {
+		set mStatusStr "Add the selected components to the specified group"
+	    } \
+	    [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_ADD_PARTIAL_MODE] {
+		set mStatusStr "Add the partially selected components to the specified group"
+	    } \
+	    [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_MODE] {
+		set mStatusStr "Remove the selected components from the specified group"
+	    } \
+	    [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE] {
+		set mStatusStr "Remove the partially selected components from the specified group"
+	    } \
 	    default {
 		set mStatusStr ""
 	    }
-	}
     }
 }
 
@@ -4109,6 +4219,7 @@ proc title_node_handler {node} {
 	gedCmd rt_end_callback [::itcl::code $this rtEndCallback]
     } else {
 	$itk_component(primaryToolbar) itemconfigure toggle_fb -state disabled
+	$itk_component(primaryToolbar) itemconfigure toggle_fb_mode -state disabled
 	$itk_component(primaryToolbar) itemconfigure raytrace -state disabled
 	$itk_component(primaryToolbar) itemconfigure clear_fb -state disabled
     }
@@ -4789,9 +4900,9 @@ proc title_node_handler {node} {
     $itk_component(menubar) menuconfigure .display.standard.starboard \
 	-command [::itcl::code $this doAe -90 0]
     $itk_component(menubar) menuconfigure .display.standard.top \
-	-command [::itcl::code $this doAe 0 90]
+	-command [::itcl::code $this doAe 270 90]
     $itk_component(menubar) menuconfigure .display.standard.bottom \
-	-command [::itcl::code $this doAe 0 -90]
+	-command [::itcl::code $this doAe 270 -90]
     $itk_component(menubar) menuconfigure .display.standard.35, 25 \
 	-command [::itcl::code $this doAe 35 25]
     $itk_component(menubar) menuconfigure .display.standard.45, 45 \
@@ -4860,6 +4971,21 @@ proc title_node_handler {node} {
 		    -helpstr "Sync the picked object if it's a bot."
 		radiobutton bflip -label "Bot Flip" \
 		    -helpstr "Flip the picked object if it's a bot."
+	    }
+	    cascade compselect -label "Comp Select Mode" -menu {
+
+		radiobutton selectlist -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_LIST_MODE] \
+		    -helpstr "Returns a list of the selected components."
+		radiobutton selectlistp -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_LIST_PARTIAL_MODE] \
+		    -helpstr "Returns a list of the partially selected components."
+		radiobutton selectgroupadd -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_ADD_MODE] \
+		    -helpstr "Adds the selected components to a group."
+		radiobutton selectgroupadd -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_ADD_PARTIAL_MODE] \
+		    -helpstr "Adds the selected components to a group."
+		radiobutton selectgroupadd -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_MODE] \
+		    -helpstr "Remove the selected components from group."
+		radiobutton selectgroupadd -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE] \
+		    -helpstr "Remove the selected components from group."
 	    }
 	    checkbutton quad -label "Quad View" \
 		-helpstr "Toggle between single and quad display."
@@ -4932,6 +5058,31 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this initCompPick] \
 	-value $COMP_PICK_BOT_FLIP_MODE \
 	-variable [::itcl::scope mCompPickMode]
+
+    $itk_component(menubar) menuconfigure .modes.compselect.selectlist \
+	-command [::itcl::code $this initCompSelect] \
+	-value $COMP_SELECT_LIST_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(menubar) menuconfigure .modes.compselect.selectlistp \
+	-command [::itcl::code $this initCompSelect] \
+	-value $COMP_SELECT_LIST_PARTIAL_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(menubar) menuconfigure .modes.compselect.selectgroupadd \
+	-command [::itcl::code $this initCompSelect] \
+	-value $COMP_SELECT_GROUP_ADD_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(menubar) menuconfigure .modes.compselect.selectgroupaddp \
+	-command [::itcl::code $this initCompSelect] \
+	-value $COMP_SELECT_GROUP_ADD_PARTIAL_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(menubar) menuconfigure .modes.compselect.selectgroupremove \
+	-command [::itcl::code $this initCompSelect] \
+	-value $COMP_SELECT_GROUP_REMOVE_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(menubar) menuconfigure .modes.compselect.selectgroupremovep \
+	-command [::itcl::code $this initCompSelect] \
+	-value $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE \
+	-variable [::itcl::scope mCompSelectMode]
 
     $itk_component(menubar) menuconfigure .modes.quad \
 	-command [::itcl::code $this doMultiPane] \
@@ -5153,6 +5304,44 @@ proc title_node_handler {node} {
 	-value $COMP_PICK_BOT_FLIP_MODE \
 	-variable [::itcl::scope mCompPickMode]
 
+    itk_component add ${_prefix}compselectmenu {
+	menu $itk_component(${_prefix}modesmenu).${_prefix}compselectmenu \
+	    -tearoff 0
+    } {
+	keep -background
+    }
+
+    $itk_component(${_prefix}compselectmenu) add radiobutton \
+	-command [::itcl::code $this initCompSelect] \
+	-label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_LIST_MODE] \
+	-value $COMP_SELECT_LIST_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(${_prefix}compselectmenu) add radiobutton \
+	-command [::itcl::code $this initCompSelect] \
+	-label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_LIST_PARTIAL_MODE] \
+	-value $COMP_SELECT_LIST_PARTIAL_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(${_prefix}compselectmenu) add radiobutton \
+	-command [::itcl::code $this initCompSelect] \
+	-label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_ADD_MODE] \
+	-value $COMP_SELECT_GROUP_ADD_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(${_prefix}compselectmenu) add radiobutton \
+	-command [::itcl::code $this initCompSelect] \
+	-label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_ADD_PARTIAL_MODE] \
+	-value $COMP_SELECT_GROUP_ADD_PARTIAL_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(${_prefix}compselectmenu) add radiobutton \
+	-command [::itcl::code $this initCompSelect] \
+	-label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_MODE] \
+	-value $COMP_SELECT_GROUP_REMOVE_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(${_prefix}compselectmenu) add radiobutton \
+	-command [::itcl::code $this initCompSelect] \
+	-label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE] \
+	-value $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+
     $itk_component(${_prefix}modesmenu) add cascade \
 	-label "Active Pane" \
 	-menu $itk_component(${_prefix}activepanemenu) \
@@ -5160,6 +5349,9 @@ proc title_node_handler {node} {
     $itk_component(${_prefix}modesmenu) add cascade \
 	-label "Comp Pick Mode" \
 	-menu $itk_component(${_prefix}comppickmenu)
+    $itk_component(${_prefix}modesmenu) add cascade \
+	-label "Comp Select Mode" \
+	-menu $itk_component(${_prefix}compselectmenu)
     $itk_component(${_prefix}modesmenu) add checkbutton \
 	-label "Quad View" \
 	-offvalue 0 \
@@ -5612,6 +5804,8 @@ proc title_node_handler {node} {
     $itk_component(ged) init_button_no_op 2
     set ::GeometryEditFrame::mEditLastTransMode $OBJECT_TRANSLATE_MODE
 
+putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFrame::mEditCommand"
+
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
 
@@ -5692,7 +5886,12 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::endObjTranslate {_dm _obj _mx _my} {
     $itk_component(ged) pane_idle_mode $_dm
-    handleObjCenter $_dm $_obj $_mx $_my 
+
+    set ocenter [gedCmd ocenter $_obj]
+    set vcenter [gedCmd pane_m2v_point $_dm $ocenter]
+    set screen [gedCmd pane_view2screen $_dm $vcenter]
+
+    handleObjCenter $_dm $_obj [lindex $screen 0] [lindex $screen 1]
     endObjCenter $_obj
 }
 
@@ -7332,11 +7531,13 @@ proc title_node_handler {node} {
 
 ::itcl::body Archer::applyDisplayPreferences {} {
     updateDisplaySettings
-    doLighting
 }
 
 
 ::itcl::body Archer::applyDisplayPreferencesIfDiff {} {
+    set rflag 0
+    $itk_component(ged) refresh_off
+
     if {$mZClipBackMaxPref != $mZClipBackMax ||
 	$mZClipFrontMaxPref != $mZClipFrontMax ||
 	$mZClipBackPref != $mZClipBack ||
@@ -7345,12 +7546,32 @@ proc title_node_handler {node} {
 	set mZClipFrontMax $mZClipFrontMaxPref
 	set mZClipBack $mZClipBackPref
 	set mZClipFront $mZClipFrontPref
-	updateDisplaySettings
+
+	updateZClipPlanes 0
+	set rflag 1
+    }
+
+    if {$mPerspectivePref != $mPerspective} {
+	set mPerspective $mPerspectivePref
+	updatePerspective 0
+	set rflag 1
     }
 
     if {$mLightingModePref != $mLightingMode} {
 	set mLightingMode $mLightingModePref
 	doLighting
+	set rflag 1
+    }
+
+    if {$mDisplayListModePref != $mDisplayListMode} {
+	set mDisplayListMode $mDisplayListModePref
+	gedCmd dlist_on $mDisplayListMode
+	set rflag 1
+    }
+
+    $itk_component(ged) refresh_on
+    if {$rflag} {
+	$itk_component(ged) refresh_all
     }
 }
 
@@ -7367,6 +7588,9 @@ proc title_node_handler {node} {
 
     backgroundColor $mBackgroundColor
     $itk_component(rtcntrl) configure -color [cadwidgets::Ged::get_rgb_color $mFBBackgroundColor]
+    $itk_component(rtcntrl) configure -overlay_fg_color [cadwidgets::Ged::get_rgb_color $mFBOverlayColor]
+    $itk_component(rtcntrl) configure -do_rtedge $mDoRtEdge
+    $itk_component(rtcntrl) configure -do_rtedge_overlay $mDoRtEdgeOverlay
     gedCmd configure -measuringStickColor $mMeasuringStickColor
     gedCmd configure -measuringStickMode $mMeasuringStickMode
     gedCmd configure -primitiveLabelColor $mPrimitiveLabelColor
@@ -7402,6 +7626,18 @@ proc title_node_handler {node} {
 
     if {$mFBBackgroundColor != $mFBBackgroundColorPref} {
 	set mFBBackgroundColor $mFBBackgroundColorPref
+    }
+
+    if {$mFBOverlayColor != $mFBOverlayColorPref} {
+	set mFBOverlayColor $mFBOverlayColorPref
+    }
+
+    if {$mDoRtEdge != $mDoRtEdgePref} {
+	set mDoRtEdge $mDoRtEdgePref
+    }
+
+    if {$mDoRtEdgeOverlay != $mDoRtEdgeOverlayPref} {
+	set mDoRtEdgeOverlay $mDoRtEdgeOverlayPref
     }
 
     if {$mDisplayFontSize != $mDisplayFontSizePref} {
@@ -7503,6 +7739,16 @@ proc title_node_handler {node} {
     set units [gedCmd units -s]
     if {$units != $mDbUnits} {
 	units $mDbUnits
+    }
+
+    if {$mCompSelectGroupPref != $mCompSelectGroup} {
+	set mCompSelectGroup $mCompSelectGroupPref
+    }
+
+    # Convert mCompSelectModePref to an integer
+    set cselmodepref [lsearch $COMP_SELECT_MODE_NAMES $mCompSelectModePref]
+    if {$cselmodepref != $mCompSelectMode} {
+	set mCompSelectMode $cselmodepref
     }
 }
 
@@ -7898,17 +8144,33 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::cancelPreferences {} {
+    set rflag 0
+    $itk_component(ged) refresh_off
 
     # Handling special case for zclip prefences (i.e. put zclip planes back where they were)
     if {$mZClipBackMaxPref != $mZClipBackMax ||
 	$mZClipFrontMaxPref != $mZClipFrontMax ||
 	$mZClipBackPref != $mZClipBack ||
 	$mZClipFrontPref != $mZClipFront} {
+
 	set mZClipBackMaxPref $mZClipBackMax
 	set mZClipFrontMaxPref $mZClipFrontMax
 	set mZClipBackPref $mZClipBack
 	set mZClipFrontPref $mZClipFront
-	updateDisplaySettings
+
+	updateZClipPlanes 0
+	set rflag 1
+    }
+
+    if {$mPerspectivePref != $mPerspective} {
+	set mPerspectivePref $mPerspective
+	updatePerspective 0
+	set rflag 1
+    }
+
+    $itk_component(ged) refresh_on
+    if {$rflag} {
+	$itk_component(ged) refresh_all
     }
 }
 
@@ -7918,6 +8180,7 @@ proc title_node_handler {node} {
     set mBindingModePref $mBindingMode
     set mEnableBigEPref $mEnableBigE
     set mFBBackgroundColorPref $mFBBackgroundColor
+    set mFBOverlayColorPref $mFBOverlayColor
     set mDisplayFontSizePref $mDisplayFontSize
     set mMeasuringStickColorPref $mMeasuringStickColor
     set mMeasuringStickModePref $mMeasuringStickMode
@@ -7930,6 +8193,12 @@ proc title_node_handler {node} {
     set mEnableAffectedNodeHighlightPref $mEnableAffectedNodeHighlight
     set mSeparateCommandWindowPref $mSeparateCommandWindow
     set mDbUnits [gedCmd units -s]
+    set mDoRtEdgePref $mDoRtEdge
+    set mDoRtEdgeOverlayPref $mDoRtEdgeOverlay
+    set mCompSelectGroupPref $mCompSelectGroup
+
+    # Convert mCompSelectMode to a string for the preferences panel
+    set mCompSelectModePref [lindex $COMP_SELECT_MODE_NAMES $mCompSelectMode]
 
     set mGridAnchorXPref [lindex $mGridAnchor 0]
     set mGridAnchorYPref [lindex $mGridAnchor 1]
@@ -7967,11 +8236,14 @@ proc title_node_handler {node} {
     set mModelAxesTickColorPref $mModelAxesTickColor
     set mModelAxesTickMajorColorPref $mModelAxesTickMajorColor
 
+    set mPerspectivePref $mPerspective
+
     set mZClipBackMaxPref $mZClipBackMax
     set mZClipFrontMaxPref $mZClipFrontMax
     set mZClipBackPref $mZClipBack
     set mZClipFrontPref $mZClipFront
     set mLightingModePref $mLightingMode
+    set mDisplayListModePref $mDisplayListMode
 
     $itk_component(preferencesDialog) center [namespace tail $this]
     ::update
@@ -8070,6 +8342,7 @@ proc title_node_handler {node} {
     puts $_pfile "set mBindingMode $mBindingMode"
     puts $_pfile "set mEnableBigE $mEnableBigE"
     puts $_pfile "set mFBBackgroundColor \"$mFBBackgroundColor\""
+    puts $_pfile "set mFBOverlayColor \"$mFBOverlayColor\""
     puts $_pfile "set mDisplayFontSize \"$mDisplayFontSize\""
     puts $_pfile "set mMeasuringStickColor \"$mMeasuringStickColor\""
     puts $_pfile "set mMeasuringStickMode $mMeasuringStickMode"
@@ -8080,7 +8353,11 @@ proc title_node_handler {node} {
     puts $_pfile "set mEnableListView $mEnableListView"
     puts $_pfile "set mEnableListViewAllAffected $mEnableListViewAllAffected"
     puts $_pfile "set mEnableAffectedNodeHighlight $mEnableAffectedNodeHighlight"
+    puts $_pfile "set mDoRtEdge $mDoRtEdge"
+    puts $_pfile "set mDoRtEdgeOverlay $mDoRtEdgeOverlay"
     puts $_pfile "set mSeparateCommandWindow $mSeparateCommandWindow"
+    puts $_pfile "set mCompSelectGroup $mCompSelectGroup"
+    puts $_pfile "set mCompSelectMode $mCompSelectMode"
 
     puts $_pfile "set mGridAnchor \"$mGridAnchor\""
     puts $_pfile "set mGridColor \"$mGridColor\""
@@ -8115,11 +8392,13 @@ proc title_node_handler {node} {
     puts $_pfile "set mModelAxesTickMajorColor \"$mModelAxesTickMajorColor\""
 
     puts $_pfile "set mLastSelectedDir \"$mLastSelectedDir\""
+    puts $_pfile "set mPerspective $mPerspective"
     puts $_pfile "set mZClipBackMax $mZClipBackMax"
     puts $_pfile "set mZClipFrontMax $mZClipFrontMax"
     puts $_pfile "set mZClipBack $mZClipBack"
     puts $_pfile "set mZClipFront $mZClipFront"
     puts $_pfile "set mLightingMode $mLightingMode"
+    puts $_pfile "set mDisplayListMode $mDisplayListMode"
 
     puts $_pfile "set mHPaneFraction1 $mHPaneFraction1"
     puts $_pfile "set mHPaneFraction2 $mHPaneFraction2"

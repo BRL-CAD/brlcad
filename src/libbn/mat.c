@@ -1,7 +1,7 @@
 /*                           M A T . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2011 United States Government as represented by
+ * Copyright (c) 1996-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -176,7 +176,7 @@ bn_mat_mul(register mat_t o, register const mat_t a, register const mat_t b)
  * o = i * o
  *
  * A convenience wrapper for bn_mat_mul() to update a matrix in place.
- * The arugment ordering is confusing either way.
+ * The argument ordering is confusing either way.
  */
 void
 bn_mat_mul2(register const mat_t i, register mat_t o)
@@ -847,7 +847,7 @@ bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
     /* Verify that it worked */
     MAT4X3VEC(test_to, m, unit_from);
     dot = VDOT(unit_to, test_to);
-    if (dot < 0.98 || dot > 1.02) {
+    if (UNLIKELY(dot < 0.98 || dot > 1.02)) {
 	bu_log("bn_mat_fromto() ERROR!  from (%g, %g, %g) to (%g, %g, %g) went to (%g, %g, %g), dot=%g?\n",
 	       V3ARGS(from),
 	       V3ARGS(to),
@@ -1036,8 +1036,8 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
     register fastf_t f;
     register int i;
 
-    if (NEAR_ZERO(MAGSQ(in), SQRT_SMALL_FASTF)) {
-	bu_log("bn_vec_ortho(): zero magnitude input vector %lf %lf %lf\n", V3ARGS(in));
+    if (UNLIKELY(NEAR_ZERO(MAGSQ(in), SQRT_SMALL_FASTF))) {
+	bu_log("bn_vec_ortho(): zero magnitude input vector %g %g %g\n", V3ARGS(in));
 	VSETALL(out, 0);
 	return;
     }
@@ -1059,8 +1059,8 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
 	k = Y;
     }
     f = hypot(in[j], in[k]);
-    if (ZERO(f)) {
-	bu_log("bn_vec_ortho(): zero hypot on %lf %lf %lf\n", V3ARGS(in));
+    if (UNLIKELY(ZERO(f))) {
+	bu_log("bn_vec_ortho(): zero hypot on %g %g %g\n", V3ARGS(in));
 	VSETALL(out, 0);
 	return;
     }

@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -87,9 +87,8 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     BU_LIST_INIT(&head);
 
     if (argc < 1 || 27 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help track");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -410,7 +409,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 
     /* drive dummy arb8 */
     for (i=0; i<24; i++)
-	sol.s_name[i] = 0.0;
+	sol.s_values[i] = 0.0;
     crname(solname, 8, sizeof(solname));
     bu_strlcpy(sol.s_name, solname, NAMESIZE+1);
     sol.s_type = ID_ARB8;
@@ -593,7 +592,7 @@ wrobj(char name[], int flags)
 	    {
 		struct rt_arb_internal *arb;
 
-		BU_GETSTRUCT(arb, rt_arb_internal);
+		BU_GET(arb, struct rt_arb_internal);
 
 		arb->magic = RT_ARB_INTERNAL_MAGIC;
 
@@ -611,7 +610,7 @@ wrobj(char name[], int flags)
 	    {
 		struct rt_tgc_internal *tgc;
 
-		BU_GETSTRUCT(tgc, rt_tgc_internal);
+		BU_GET(tgc, struct rt_tgc_internal);
 
 		tgc->magic = RT_TGC_INTERNAL_MAGIC;
 

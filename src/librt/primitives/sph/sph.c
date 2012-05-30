@@ -1,7 +1,7 @@
 /*                           S P H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -106,8 +106,8 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     /* Validate that |A|, |B|, and |C| are nearly equal */
-    if (fabs(magsq_a - magsq_b) > 0.0001
-	|| fabs(magsq_a - magsq_c) > 0.0001) {
+    if (!EQUAL(magsq_a, magsq_b)
+	|| !EQUAL(magsq_a, magsq_c)) {
 	return 1;		/* ELL, not SPH */
     }
 
@@ -143,7 +143,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_meth = &rt_functab[ID_SPH];
 
     /* Solid is OK, compute constant terms now */
-    BU_GETSTRUCT(sph, sph_specific);
+    BU_GET(sph, struct sph_specific);
     stp->st_specific = (genptr_t)sph;
 
     VMOVE(sph->sph_V, eip->v);

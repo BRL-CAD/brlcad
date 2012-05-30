@@ -1,7 +1,7 @@
 /*                           W D B . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2011 United States Government as represented by
+ * Copyright (c) 2000-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,6 +57,8 @@ wdb_fopen_v(const char *filename, int version)
 {
     struct db_i *dbip;
 
+    if ( filename == NULL ) return RT_WDB_NULL;
+
     if (rt_uniresource.re_magic != RESOURCE_MAGIC) {
 	rt_init_resource(&rt_uniresource, 0, NULL);
     }
@@ -71,6 +73,7 @@ wdb_fopen_v(const char *filename, int version)
 struct rt_wdb *
 wdb_fopen(const char *filename)
 {
+    if ( filename == NULL ) return RT_WDB_NULL;
     return wdb_fopen_v(filename, 5);
 }
 
@@ -104,7 +107,7 @@ wdb_dbopen(struct db_i *dbip, int mode)
     if (rt_uniresource.re_magic != RESOURCE_MAGIC)
 	rt_init_resource(&rt_uniresource, 0, NULL);
 
-    BU_GETSTRUCT(wdbp, rt_wdb);
+    BU_GET(wdbp, struct rt_wdb);
     wdb_init(wdbp, dbip, mode);
 
     return wdbp;
@@ -127,7 +130,8 @@ wdb_import(struct rt_wdb *wdbp,	struct rt_db_internal *internp,	const char *name
 {
     struct directory *dp;
 
-    if ((dp = db_lookup(wdbp->dbip, name, LOOKUP_QUIET)) == RT_DIR_NULL)
+    dp = db_lookup(wdbp->dbip, name, LOOKUP_QUIET);
+    if (dp  == RT_DIR_NULL)
 	return -4;
 
     return rt_db_get_internal(internp, dp, wdbp->dbip, mat, &rt_uniresource);
@@ -216,11 +220,13 @@ wdb_export_external(
 	    break;
 
 	case RT_WDB_TYPE_DB_INMEM_APPEND_ONLY:
-	    if ((dp = db_lookup(wdbp->dbip, name, 0)) != RT_DIR_NULL) {
+	    dp = db_lookup(wdbp->dbip, name, 0);
+	    if (dp != RT_DIR_NULL) {
 		bu_log("wdb_export_external(%s): ERROR, that name is already in use, and APPEND_ONLY mode has been specified.\n", name);
 		return -3;
 	    }
-	    if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type)) == RT_DIR_NULL) {
+	    dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type);
+	    if (dp == RT_DIR_NULL) {
 		bu_log("wdb_export_external(%s): db_diradd error\n",
 		       name);
 		return -3;
@@ -231,8 +237,10 @@ wdb_export_external(
 	    break;
 
 	case RT_WDB_TYPE_DB_INMEM:
-	    if ((dp = db_lookup(wdbp->dbip, name, 0)) == RT_DIR_NULL) {
-		if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type)) == RT_DIR_NULL) {
+	    dp = db_lookup(wdbp->dbip, name, 0);
+	    if (dp == RT_DIR_NULL) {
+		dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type);
+		if (dp == RT_DIR_NULL) {
 		    bu_log("wdb_export_external(%s): db_diradd error\n", name);
 		    bu_free_external(ep);
 		    return -3;
@@ -479,7 +487,7 @@ wdb_import_from_path2(struct bu_vls *logstr, struct rt_db_internal *ip, const ch
 
 	MAT_COPY(matp, ts.ts_mat);
 
-	if (dp_curr || ret < 0) {
+	if (!dp_curr || ret < 0) {
 	    bu_vls_printf(logstr, "wdb_import_from_path: '%s' is a bad path\n", path);
 	    return BRLCAD_ERROR;
 	}

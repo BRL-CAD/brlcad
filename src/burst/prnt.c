@@ -1,7 +1,7 @@
 /*                          P R N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -141,7 +141,7 @@ notify(char *str, int mode)
     static int lastlen = -1;
     int len;
     static char buf[LNBUFSZ] = { 0 };
-    char *p='\0';
+    char *p = NULL;
     if (! tty)
 	return 0;
     switch (mode) {
@@ -160,8 +160,9 @@ notify(char *str, int mode)
 	if (p > buf)
 	    *p++ = NOTIFY_DELIM;
 	bu_strlcpy(p, str, LNBUFSZ);
-    } else
-	*p = NUL;
+    } else {
+        if (p) *p = NUL;
+    }
     (void) ScMvCursor(PROMPT_X, PROMPT_Y);
     len = strlen(buf);
     if (len > 0) {

@@ -16,10 +16,6 @@ package require Itk
     constructor {bot args} {}
 
     public {
-	common TYPE_SURFACE 1
-	common TYPE_VOLUME 2
-	common TYPE_PLATE 3
-
 	method update {bot}
     }
 
@@ -42,7 +38,7 @@ package require Itk
 
     # add tab panes to container frame
     itk_component add tpane {
-	TypePane $itk_component(main).typePane $bot
+	PropertiesPane $itk_component(main).propertiesPane $bot
     } {}
     itk_component add gpane {
 	GeometryPane $itk_component(main).geometryPane $bot
@@ -59,7 +55,7 @@ package require Itk
         -text Geometry \
 	-sticky nw
     $itk_component(nb) add $itk_component(tpane) \
-        -text Type \
+        -text Properties \
 	-sticky nw
 }
 
@@ -74,69 +70,90 @@ package require Itk
     set ::${itk_interior}Radio [bot get type $bot]
 }
 
-::itcl::class TypePane {
+::itcl::class PropertiesPane {
     inherit itk::Widget
 
-    constructor {bot args} {
-	eval itk_initialize $args
+    constructor {bot args} {}
 
-	# make container frame
-	itk_component add main {
-	    ttk::frame $itk_interior.typePaneFrame
-	} {}
-
-	# add layout frames to container frame
-	itk_component add cframe {
-	    ttk::frame $itk_component(main).contentFrame \
-	        -padding 5
-	} {}
-	itk_component add sframe {
-	    ttk::frame $itk_component(main).springFrame
-	} {}
-
-	# add radio widgets to content frame
-	set ::${itk_interior}Radio 0
-	itk_component add surfRadio {
-	    ttk::radiobutton $itk_component(cframe).surfaceRadio \
-	        -text Surface \
-		-value $BotPropertyBox::TYPE_SURFACE \
-		-variable ::${itk_interior}Radio
-	} {}
-	itk_component add volRadio {
-	    ttk::radiobutton $itk_component(cframe).volumeRadio \
-	        -text Volume \
-		-value $BotPropertyBox::TYPE_VOLUME \
-		-variable ${itk_interior}Radio
-	} {}
-	itk_component add plateRadio {
-	    ttk::radiobutton $itk_component(cframe).plateRadio \
-	        -text Plate \
-		-value $BotPropertyBox::TYPE_PLATE \
-		-variable ${itk_interior}Radio
-	} {}
-
-	# select appropriate radio
-	set ::${itk_interior}Radio [bot get type $bot]
-	
-	# disabling for now
-        $itk_component(surfRadio) configure -state disabled
-        $itk_component(volRadio) configure -state disabled
-        $itk_component(plateRadio) configure -state disabled
-
-	# display container frame
-	pack $itk_component(main) -expand yes -fill both
-
-	# display layout frames in container frame
-	grid $itk_component(cframe) -row 0 -column 0
-	grid $itk_component(sframe) -row 1 -column 0 -sticky news
-	grid rowconfigure $itk_component(main) 1 -weight 1
-	grid columnconfigure $itk_component(main) 0 -weight 1
-
-	# display widgets in content frame - no expansion
-	grid $itk_component(surfRadio) -row 0 -column 0 -sticky nw
-	grid $itk_component(volRadio) -row 1 -column 0 -sticky nw
-	grid $itk_component(plateRadio) -row 2 -column 0 -sticky nw
+    public {
+	method updateMode {}
+	method updateOrientation {}
     }
+
+    private {
+	variable bot
+    }
+}
+
+::itcl::body PropertiesPane::constructor {b args} {
+    eval itk_initialize $args
+
+    set bot $b
+
+    # make container frame
+    itk_component add main {
+	ttk::frame $itk_interior.propertiesPaneFrame
+    } {}
+
+    # add layout frames to container frame
+    itk_component add cframe {
+	ttk::frame $itk_component(main).contentFrame \
+	    -padding 5
+    } {}
+    itk_component add sframe {
+	ttk::frame $itk_component(main).springFrame
+    } {}
+
+    # add mode combo box and label
+    itk_component add modeLabel {
+	ttk::label $itk_component(cframe).modeLabel -text { Mode }
+    } {}
+    itk_component add modeCombo {
+	ttk::combobox $itk_component(cframe).modeCombo \
+	    -values {Surface Volume Plate {Plate No Cos}} \
+	    -state readonly
+    } {}
+
+    # keep bot's mode synced with combo selection
+    $itk_component(modeCombo) current [expr [bot get type $bot] - 1]
+    bind $itk_component(modeCombo) <<ComboboxSelected>> "$this updateMode"
+
+    # add orientation combo box and label
+    itk_component add orientLabel {
+	ttk::label $itk_component(cframe).orientLabel -text { Orientation }
+    } {}
+    itk_component add orientCombo {
+	ttk::combobox $itk_component(cframe).orientCombo \
+	    -values {Unoriented {CCW (RH)} {CW (LH)}} \
+	    -state readonly
+    } {}
+
+    # keep bot's orientation synced with combo selection
+    $itk_component(orientCombo) current [expr [bot get orientation $bot] - 1]
+    bind $itk_component(orientCombo) <<ComboboxSelected>> "$this updateOrientation"
+
+    # display container frame
+    pack $itk_component(main) -expand yes -fill both
+
+    # display layout frames in container frame
+    grid $itk_component(cframe) -row 0 -column 0
+    grid $itk_component(sframe) -row 1 -column 0 -sticky news
+    grid rowconfigure $itk_component(main) 1 -weight 1
+    grid columnconfigure $itk_component(main) 0 -weight 1
+
+    # display widgets in content frame
+    grid $itk_component(modeLabel) -row 0 -column 0 -sticky ne -pady 2
+    grid $itk_component(modeCombo) -row 0 -column 1 -sticky nw -pady 2
+    grid $itk_component(orientLabel) -row 1 -column 0 -sticky ne -pady 2
+    grid $itk_component(orientCombo) -row 1 -column 1 -sticky nw -pady 2
+}
+
+::itcl::body PropertiesPane::updateMode {} {
+    adjust $bot mode [expr [$itk_component(modeCombo) current] + 1]
+}
+
+::itcl::body PropertiesPane::updateOrientation {} {
+    adjust $bot orient [expr [$itk_component(orientCombo) current] + 1]
 }
 
 ::itcl::class GeometryPane {

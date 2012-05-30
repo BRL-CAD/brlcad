@@ -3,42 +3,47 @@ include_directories(${BU_INCLUDE_DIRS})
 add_definitions(
   -DHAVE_CONFIG_H
   -DBRLCADBUILD
+  -DCONSOLE
 )
-
-IF(MSVC)
-	add_definitions(
-		-DCONSOLE
-		-DBRLCAD_DLL
-		)
-ENDIF(MSVC)
 
 BRLCAD_ADDEXEC(pixcmp pixcmp.c libbu)
 
 configure_file(run.sh ${CMAKE_BINARY_DIR}/bin/benchmark COPYONLY)
-INSTALL(PROGRAMS ${CMAKE_BINARY_DIR}/bin/benchmark DESTINATION ${BIN_DIR})
+install(PROGRAMS ${CMAKE_BINARY_DIR}/bin/benchmark DESTINATION ${BIN_DIR})
+foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+  configure_file(run.sh ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/bin/benchmark COPY_ONLY)
+endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 
-FILE(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake "MESSAGE(\"---\")\n")
-FILE(APPEND ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake "MESSAGE(\"Run 'make benchmark-clean' in the bench directory to delete the logic\")\n")
-FILE(APPEND ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake "MESSAGE(\"and image files generated during the benchmark analysis.\")\n")
+file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake "message(\"---\")\n")
+file(APPEND ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake "message(\"Run 'make benchmark-clean' in the bench directory to delete the logic\")\n")
+file(APPEND ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake "message(\"and image files generated during the benchmark analysis.\")\n")
 
-SET(bench_MANS
+set(bench_MANS
   benchmark.1
   pixcmp.1
 )
 ADD_MAN_PAGES(1 bench_MANS)
 CMAKEFILES(lgt.sh run.sh try.sh viewdiff.sh Makefile.am)
 
-IF(SH_EXEC)
-	ADD_CUSTOM_TARGET(benchmark
+if(SH_EXEC)
+	add_custom_target(benchmark
 		COMMAND ${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark run
 		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CMakeTmp/benchmsg.cmake
-		DEPENDS rt pixcmp
+		DEPENDS rt pixcmp BENCHMARK_PIX_cp PIX_LOG_cp
 		)
-	ADD_DEPENDENCIES(benchmark bldg391.g m35.g moss.g sphflake.g star.g world.g)
-	ADD_CUSTOM_TARGET(benchmark-clean
+	add_dependencies(benchmark bldg391.g m35.g moss.g sphflake.g star.g world.g)
+	add_custom_target(benchmark-clean
 		${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark clean
 		)
-	ADD_CUSTOM_TARGET(benchmark-clobber
+	add_custom_target(benchmark-clobber
 		${SH_EXEC} ${CMAKE_BINARY_DIR}/bin/benchmark clobber
 		)
-ENDIF(SH_EXEC)
+endif(SH_EXEC)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

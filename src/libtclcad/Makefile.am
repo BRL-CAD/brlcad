@@ -29,10 +29,11 @@ DM_TK_CFLAGS =
 endif
 
 libtclcad_la_SOURCES = \
+	cmdhist_obj.c \
 	tclcad.c \
 	tclcadAutoPath.c \
-	tkImgFmtPIX.c \
-	tclcad_obj.c
+	tclcad_obj.c \
+	tkImgFmtPIX.c
 
 libtclcad_la_CFLAGS = \
 	${STD_C99_FLAGS} \
@@ -55,7 +56,8 @@ libtclcad_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
 libtclcad_la_LIBADD = ${TCLCAD_LIBS}
 
 EXTRA_DIST = \
-	CMakeLists.txt
+	CMakeLists.txt \
+	tclcad_private.h
 
 DEPENDS = src/libdm src/libged src/other/incrTcl
 

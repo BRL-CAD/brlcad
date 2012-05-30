@@ -1,7 +1,7 @@
 /*                        T C L C A D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,12 +41,12 @@
 __BEGIN_DECLS
 
 #ifndef TCLCAD_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef TCLCAD_EXPORT_DLL
-#      define TCLCAD_EXPORT __declspec(dllexport)
-#    else
-#      define TCLCAD_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(TCLCAD_DLL_EXPORTS) && defined(TCLCAD_DLL_IMPORTS)
+#    error "Only TCLCAD_DLL_EXPORTS or TCLCAD_DLL_IMPORTS can be defined, not both."
+#  elif defined(TCLCAD_DLL_EXPORTS)
+#    define TCLCAD_EXPORT __declspec(dllexport)
+#  elif defined(TCLCAD_DLL_IMPORTS)
+#    define TCLCAD_EXPORT __declspec(dllimport)
 #  else
 #    define TCLCAD_EXPORT
 #  endif
@@ -67,13 +67,46 @@ __BEGIN_DECLS
 #define TCLCAD_PROTATE_MODE 12
 #define TCLCAD_PSCALE_MODE 13
 #define TCLCAD_PTRANSLATE_MODE 14
-#define TCLCAD_RECTANGLE_MODE 15
-#define TCLCAD_MOVE_PIPE_POINT_MODE 16
+#define TCLCAD_POLY_CIRCLE_MODE 15
+#define TCLCAD_POLY_CONTOUR_MODE 16
+#define TCLCAD_POLY_ELLIPSE_MODE 17
+#define TCLCAD_POLY_RECTANGLE_MODE 18
+#define TCLCAD_POLY_SQUARE_MODE 19
+#define TCLCAD_RECTANGLE_MODE 20
+#define TCLCAD_MOVE_PIPE_POINT_MODE 21
+#define TCLCAD_DATA_MOVE_OBJECT_MODE 22
+#define TCLCAD_DATA_MOVE_POINT_MODE 23
 
 #define TCLCAD_OBJ_FB_MODE_OFF 0
 #define TCLCAD_OBJ_FB_MODE_UNDERLAY 1
 #define TCLCAD_OBJ_FB_MODE_INTERLAY 2
 #define TCLCAD_OBJ_FB_MODE_OVERLAY  3
+
+struct ged_dm_view {
+    struct bu_list		l;
+    struct bu_vls		gdv_callback;
+    struct bu_vls		gdv_name;
+    struct ged_view		*gdv_view;
+    struct dm			*gdv_dmp;
+    struct fbserv_obj		gdv_fbs;
+    struct ged_obj		*gdv_gop;
+};
+
+struct ged_obj {
+    struct ged		*go_gedp;
+    struct ged_dm_view	go_head_views;
+    struct bu_vls	go_name;
+    struct bu_observer	go_observers;
+    struct bu_vls	go_more_args_callback;
+    struct bu_vls	go_rt_end_callback;
+    struct bu_vls	*go_prim_label_list;
+    int			go_prim_label_list_size;
+    int			go_refresh_on;
+    int			go_dlist_on;
+    Tcl_Interp		*interp;
+};
+#define GED_OBJ_NULL ((struct ged_obj *)0)
+
 
 struct tclcad_obj {
     struct bu_list	l;
@@ -97,8 +130,38 @@ TCLCAD_EXPORT extern int to_open_tcl(ClientData UNUSED(clientData),
 TCLCAD_EXPORT extern struct application *to_rt_gettrees_application(struct ged *gedp,
 								    int argc,
 								    const char *argv[]);
+TCLCAD_EXPORT extern void go_refresh(struct ged_obj *gop,
+				  struct ged_dm_view *gdvp);
+TCLCAD_EXPORT extern void go_refresh_draw(struct ged_obj *gop,
+					  struct ged_dm_view *gdvp,
+					  int restore_zbuffer);
+
+/* defined in cmdhist_obj.c */
+TCLCAD_EXPORT extern int Cho_Init(Tcl_Interp *interp);
+
+/**
+ * Open a command history object.
+ *
+ * USAGE:
+ * ch_open name
+ */
+TCLCAD_EXPORT extern int cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
 
 
+/**
+ * This is a convenience routine for registering an array of commands
+ * with a Tcl interpreter. Note - this is not intended for use by
+ * commands with associated state (i.e. ClientData).  The interp is
+ * passed to the bu_cmdtab function as clientdata instead of the
+ * bu_cmdtab entry.
+ *
+ * @param interp - Tcl interpreter wherein to register the commands
+ * @param cmds	 - commands and related function pointers
+ *
+ * @return
+ * void
+ */
+BU_EXPORT extern void tclcad_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds);
 
 __END_DECLS
 

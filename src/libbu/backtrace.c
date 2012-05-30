@@ -1,7 +1,7 @@
 /*                     B A C K T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2011 United States Government as represented by
+ * Copyright (c) 2007-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,9 +39,7 @@
 #ifdef HAVE_PROCESS_H
 #  include <process.h>
 #endif
-#ifdef HAVE_SYS_SELECT_H
-#  include <sys/select.h>
-#endif
+#include "bselect.h"
 #include "bio.h"
 
 /* common headers */
@@ -209,11 +207,11 @@ backtrace(char * const *args, int fd)
 			} else {
 			    position++;
 			}
-			if (strncmp(buffer, "No locals", 9) == 0) {
+			if (bu_strncmp(buffer, "No locals", 9) == 0) {
 			    /* skip it */
-			} else if (strncmp(buffer, "No symbol table", 15) == 0) {
+			} else if (bu_strncmp(buffer, "No symbol table", 15) == 0) {
 			    /* skip it */
-			} else if (strncmp(buffer, "Detaching", 9) == 0) {
+			} else if (bu_strncmp(buffer, "Detaching", 9) == 0) {
 			    /* done processing backtrace output */
 			    processing_bt = 0;
 			} else if (processing_bt == 1) {
@@ -362,7 +360,7 @@ bu_backtrace(FILE *fp)
 	struct timeval start, end;
 	gettimeofday(&start, NULL);
 	gettimeofday(&end, NULL);
-	while ((interrupt_wait == 0) && (end.tv_sec - start.tv_sec < 60)) {
+	while ((interrupt_wait == 0) && (end.tv_sec - start.tv_sec < 45 /* seconds */)) {
 	    /* do nothing, wait for debugger to attach but don't wait too long */;
 	    gettimeofday(&end, NULL);
 	    sleep(1);

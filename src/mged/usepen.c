@@ -1,7 +1,7 @@
 /*                        U S E P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -103,9 +103,8 @@ f_aip(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     struct solid *sp;
 
     if (argc < 1 || 2 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helpdevel aip");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -236,13 +235,11 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     char *cp;
     size_t j;
     int illum_only = 0;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     CHECK_DBI_NULL;
 
     if (argc < 2 || 3 < argc) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help matpick");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -256,9 +253,6 @@ f_matpick(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     }
 
     if (argc != 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help matpick");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -372,12 +366,12 @@ f_mouse(
     int ypos;
 
     if (argc < 4 || 4 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help M");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
+
 	return TCL_ERROR;
     }
 

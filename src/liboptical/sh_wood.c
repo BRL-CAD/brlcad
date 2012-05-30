@@ -252,7 +252,7 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
      */
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(wd, wood_specific);
+    BU_GET(wd, struct wood_specific);
     *dpp = wd;
 
     /*

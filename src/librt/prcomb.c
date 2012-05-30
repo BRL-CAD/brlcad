@@ -1,7 +1,7 @@
 /*                        P R C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2011 United States Government as represented by
+ * Copyright (c) 1996-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,7 +60,6 @@ main(int argc, char *argv[])
     struct rt_comb_internal *comb;
     mat_t identity_mat;
     int i;
-    struct bu_vls file;
 
     bu_debug = BU_DEBUG_MEM_CHECK | BU_DEBUG_COREDUMP;
 
@@ -70,7 +69,6 @@ main(int argc, char *argv[])
     }
 
     MAT_IDN(identity_mat);
-    bu_vls_init(&file);
 
     if ((dbip = db_open(argv[1], "r")) == NULL) {
 	fprintf(stderr, "Cannot open %s\n", argv[1]);
@@ -128,8 +126,7 @@ main(int argc, char *argv[])
 
 	/* Compact way */
 	{
-	    struct bu_vls str;
-	    bu_vls_init(&str);
+	    struct bu_vls str = BU_VLS_INIT_ZERO;
 	    rt_pr_tree_vls(&str, comb->tree);
 	    bu_log("%s\n", bu_vls_addr(&str));
 	    bu_vls_free(&str);

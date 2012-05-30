@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2011 United States Government as represented by
+ * Copyright (c) 1987-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -157,7 +157,7 @@ rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab 
     for (; tp->ct_cmd != (char *)0; tp++) {
 	if (cmd_args[0][0] != tp->ct_cmd[0] ||
 	    /* the length of "n" is not significant, just needs to be big enough */
-	    strncmp(cmd_args[0], tp->ct_cmd, MAXWORDS) != 0)
+	   bu_strncmp(cmd_args[0], tp->ct_cmd, MAXWORDS) != 0)
 	    continue;
 	if ((nwords >= tp->ct_min)
 	    && ((tp->ct_max < 0) || (nwords <= tp->ct_max)))

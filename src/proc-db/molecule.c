@@ -1,7 +1,7 @@
 /*                      M O L E C U L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -122,6 +122,10 @@ read_data(void)
 		ret = scanf("%d", &i);
 		if (ret == 0)
 		    perror("scanf");
+		if (i < 0 || i >= 50) {
+		    fprintf(stderr, "Atom index value %d is out of bounds [0,50)\n", i);
+		    return;
+		}
 		ret = scanf("%128s", atom_list[i].a_name);
 		if (ret == 0)
 		    perror("scanf");
@@ -170,6 +174,7 @@ read_data(void)
 		    perror("scanf");
 		(void)make_bond(b_1, b_2);
 		break;
+	    default:
 	    case (4):
 		return;
 	}

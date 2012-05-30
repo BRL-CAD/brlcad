@@ -1,7 +1,7 @@
 /*                       C O N V E R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,13 +33,16 @@ bu_cv_cookie(const char *in)			/* input format */
     const char *p;
     int collector;
     int result = 0x0000;	/* zero/one channel, Net, unsigned, char, clip */
+    int val;
 
     if (UNLIKELY(!in)) return 0;
     if (UNLIKELY(!*in)) return 0;
-
+    if (UNLIKELY(strlen(in) > 4 || strlen(in) < 1)) return 0;
 
     collector = 0;
-    for (p=in; *p && isdigit(*p); ++p) collector = collector*10 + (*p - '0');
+    for (p=in, val = *p; val>0 && val<CHAR_MAX && isdigit(val); ++p, val = *p)
+	collector = collector*10 + (val - '0');
+
     if (collector > 255) {
 	collector = 255;
     } else if (collector == 0) {
@@ -63,13 +66,16 @@ bu_cv_cookie(const char *in)			/* input format */
 	/* could be 'signed' or 'short' */
 	const char *p2;
 	p2 = p+1;
-	if (*p2 && (islower(*p2) || isdigit(*p2))) {
+	val = *p2;
+	if (*p2 && val>0 && val<CHAR_MAX && (islower(val) || isdigit(val))) {
 	    result |= CV_SIGNED_MASK;
 	    ++p;
 	}
     }
 
-    if (!*p) return 0;
+    if (!*p)
+	return 0;
+
     switch (*p) {
 	case 'c':
 	case '8':
@@ -251,7 +257,6 @@ bu_cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int cou
 int
 bu_cv_optimize(register int cookie)
 {
-    static int Endian = END_NOTSET;
     int fmt;
 
     if (cookie & CV_HOST_MASK)
@@ -259,33 +264,6 @@ bu_cv_optimize(register int cookie)
 
     /* This is a network format request */
     fmt  =  cookie & CV_TYPE_MASK;
-
-    /* Run time check:  which kind of integers does this machine have? */
-    if (Endian == END_NOTSET) {
-	volatile size_t soli = sizeof(long int);
-	unsigned long int testval = 0;
-	register int i;
-	for (i=0; i<4; i++) {
-	    ((char *)&testval)[i] = i+1;
-	}
-
-	if (soli == 8) {
-	    Endian = END_CRAY;	/* is this good enough? */
-	    if (((testval >> 31) >> 1) == 0x01020304) {
-		Endian = END_BIG; /* XXX 64bit */
-	    } else if (testval == 0x04030201) {
-		Endian = END_LITTLE;	/* 64 bit */
-	    } else {
-		bu_bomb("bu_cv_optimize: can not tell endian of host.\n");
-	    }
-	} else if (testval == 0x01020304) {
-	    Endian = END_BIG;
-	} else if (testval == 0x04030201) {
-	    Endian = END_LITTLE;
-	} else if (testval == 0x02010403) {
-	    Endian = END_ILL;
-	}
-    }
 
     switch (fmt) {
 	case CV_D:
@@ -297,7 +275,7 @@ bu_cv_optimize(register int cookie)
 	case CV_32:
 	case CV_64:
 	    /* host is big-endian, so is network */
-	    if (Endian == END_BIG)
+	    if (bu_byteorder() == BU_BIG_ENDIAN)
 		cookie |= CV_HOST_MASK;
 	    return cookie;
     }
@@ -392,10 +370,11 @@ bu_cv_ntohul(register long unsigned int *out, size_t size, register genptr_t in,
     if (limit < count) count = limit;
 
     for (i=0; i<count; i++) {
-	*out++ = ((unsigned char *)in)[0] << 24 |
-	    ((unsigned char *)in)[1] << 16 |
-	    ((unsigned char *)in)[2] <<  8 |
-	    ((unsigned char *)in)[3];
+	*out++ = 
+	    (unsigned long)((unsigned char *)in)[0] << 24 |
+	    (unsigned long)((unsigned char *)in)[1] << 16 |
+	    (unsigned long)((unsigned char *)in)[2] <<  8 |
+	    (unsigned long)((unsigned char *)in)[3];
 	in = ((char *)in) + 4;
     }
     return count;
@@ -851,11 +830,6 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	     */
 	    if (outIsHost != CV_HOST_MASK) {
 		switch (outfmt) {
-		    case CV_D:
-			(void) htond((unsigned char *)out,
-				     (unsigned char *)from,
-				     work_count);
-			break;
 		    case CV_16 | CV_SIGNED_MASK:
 			(void) bu_cv_htonss(out, bufsize, (short int *)from, work_count);
 			break;
@@ -867,6 +841,10 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 			break;
 		    case CV_32:
 			(void) bu_cv_htonul(out, bufsize, (unsigned long int *)from, work_count);
+			break;
+		    case CV_D:
+		    default:
+			/* do nothing */
 			break;
 		}
 	    }

@@ -1,12 +1,10 @@
-#if !(defined(__CENTERLINE__) || defined(lint))
-static char rcsid[] = "$Id: symbol.c,v 1.6 1997/01/21 19:19:51 dar Exp $";
-#endif
 
-/************************************************************************
-** Module:	Symbol
-** Description:	This module implements the Symbol abstraction.  
+
+/** **********************************************************************
+** Module:  Symbol \file symbol.c
+** This module implements the Symbol abstraction.
 ** Constants:
-**	SYMBOL_NULL	- the null Symbol
+**  SYMBOL_NULL - the null Symbol
 **
 ************************************************************************/
 
@@ -38,28 +36,20 @@ static char rcsid[] = "$Id: symbol.c,v 1.6 1997/01/21 19:19:51 dar Exp $";
 
 struct freelist_head SYMBOL_fl;
 
-/*
-** Procedure:	SYMBOLinitialize
-** Parameters:	-- none --
-** Returns:	void
-** Description:	Initialize the Symbol module
-*/
-
-void
-SYMBOLinitialize()
-{
-	MEMinitialize(&SYMBOL_fl,sizeof(struct Symbol_),100,100);
+/** Initialize the Symbol module */
+void SYMBOLinitialize() {
+    MEMinitialize( &SYMBOL_fl, sizeof( struct Symbol_ ), 100, 100 );
 }
 
-Symbol *
-SYMBOLcreate(name,line,filename)
-char *name;
-int line;
-char *filename;
-{
-	Symbol *sym = SYMBOL_new();
-	sym->name = name;
-	sym->line = line;
-	sym->filename = current_filename;
-	return sym;
+Symbol * SYMBOLcreate( char * name, int line, char * filename ) {
+    Symbol * sym = SYMBOL_new();
+    sym->name = name;
+    sym->line = line;
+    sym->filename = filename; /* NOTE this used the global 'current_filename',
+                               * instead of 'filename'. This func is only
+                               * called in two places, and both calls use
+                               * 'current_filename'. Changed this to avoid
+                               * potential future headaches. (MAP, Jan 12)
+                               */
+    return sym;
 }

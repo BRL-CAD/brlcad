@@ -1,7 +1,7 @@
 /*                         D X F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -310,7 +310,7 @@ get_layer()
 	    max_layers += 5;
 	    layers = (struct layer **)bu_realloc( layers, max_layers*sizeof( struct layer *), "layers" );
 	    for ( i=0; i<5; i++ ) {
-		BU_GETSTRUCT( layers[max_layers-i-1], layer );
+		BU_GET(layers[max_layers-i-1], struct layer);
 	    }
 	}
 	curr_layer = next_layer++;
@@ -388,54 +388,54 @@ process_unknown_code( int code )
 	    printf( "%s\n", line );
 	    break;
 	case 0:		/* text string */
-	    if ( !strncmp( line, "SECTION", 7 ) ) {
+	    if ( !bu_strncmp( line, "SECTION", 7 ) ) {
 		curr_state->state = UNKNOWN_SECTION;
 		break;
-	    } else if ( !strncmp( line, "ENDSEC", 6 ) ) {
+	    } else if ( !bu_strncmp( line, "ENDSEC", 6 ) ) {
 		curr_state->state = UNKNOWN_SECTION;
 		break;
 	    }
 	    break;
 	case 2:		/* name */
-	    if ( !strncmp( line, "HEADER", 6 ) ) {
+	    if ( !bu_strncmp( line, "HEADER", 6 ) ) {
 		curr_state->state = HEADER_SECTION;
 		if ( verbose ) {
 		    bu_log( "Change state to %d\n", curr_state->state );
 		}
 		break;
-	    } else if ( !strncmp( line, "CLASSES", 7 ) ) {
+	    } else if ( !bu_strncmp( line, "CLASSES", 7 ) ) {
 		curr_state->state = CLASSES_SECTION;
 		if ( verbose ) {
 		    bu_log( "Change state to %d\n", curr_state->state );
 		}
 		break;
-	    } else if ( !strncmp( line, "TABLES", 6 ) ) {
+	    } else if ( !bu_strncmp( line, "TABLES", 6 ) ) {
 		curr_state->state = TABLES_SECTION;
 		curr_state->sub_state = UNKNOWN_TABLE_STATE;
 		if ( verbose ) {
 		    bu_log( "Change state to %d\n", curr_state->state );
 		}
 		break;
-	    } else if ( !strncmp( line, "BLOCKS", 6 ) ) {
+	    } else if ( !bu_strncmp( line, "BLOCKS", 6 ) ) {
 		curr_state->state = BLOCKS_SECTION;
 		if ( verbose ) {
 		    bu_log( "Change state to %d\n", curr_state->state );
 		}
 		break;
-	    } else if ( !strncmp( line, "ENTITIES", 8 ) ) {
+	    } else if ( !bu_strncmp( line, "ENTITIES", 8 ) ) {
 		curr_state->state = ENTITIES_SECTION;
 		curr_state->sub_state =UNKNOWN_ENTITY_STATE;
 		if ( verbose ) {
 		    bu_log( "Change state to %d\n", curr_state->state );
 		}
 		break;
-	    } else if ( !strncmp( line, "OBJECTS", 7 ) ) {
+	    } else if ( !bu_strncmp( line, "OBJECTS", 7 ) ) {
 		curr_state->state = OBJECTS_SECTION;
 		if ( verbose ) {
 		    bu_log( "Change state to %d\n", curr_state->state );
 		}
 		break;
-	    } else if ( !strncmp( line, "THUMBNAILIMAGE", 14 ) ) {
+	    } else if ( !bu_strncmp( line, "THUMBNAILIMAGE", 14 ) ) {
 		curr_state->state = THUMBNAILIMAGE_SECTION;
 		if ( verbose ) {
 		    bu_log( "Change state to %d\n", curr_state->state );
@@ -458,16 +458,16 @@ process_header_code( int code )
 	    printf( "%s\n", line );
 	    break;
 	case 0:		/* text string */
-	    if ( !strncmp( line, "SECTION", 7 ) ) {
+	    if ( !bu_strncmp( line, "SECTION", 7 ) ) {
 		curr_state->state = UNKNOWN_SECTION;
 		break;
-	    } else if ( !strncmp( line, "ENDSEC", 6 ) ) {
+	    } else if ( !bu_strncmp( line, "ENDSEC", 6 ) ) {
 		curr_state->state = UNKNOWN_SECTION;
 		break;
 	    }
 	    break;
 	case 9:		/* variable name */
-	    if ( !strncmp( line, "$INSUNITS", 9 ) ) {
+	    if ( !bu_strncmp( line, "$INSUNITS", 9 ) ) {
 		int_ptr = &units;
 	    } else if ( BU_STR_EQUAL( line, "$CECOLOR" ) ) {
 		int_ptr = &color_by_layer;
@@ -495,10 +495,10 @@ process_classes_code( int code )
 	    printf( "%s\n", line );
 	    break;
 	case 0:		/* text string */
-	    if ( !strncmp( line, "SECTION", 7 ) ) {
+	    if ( !bu_strncmp( line, "SECTION", 7 ) ) {
 		curr_state->state = UNKNOWN_SECTION;
 		break;
-	    } else if ( !strncmp( line, "ENDSEC", 6 ) ) {
+	    } else if ( !bu_strncmp( line, "ENDSEC", 6 ) ) {
 		curr_state->state = UNKNOWN_SECTION;
 		break;
 	    }
@@ -533,10 +533,10 @@ process_tables_unknown_code( int code )
 		curr_color = 0;
 		curr_state->sub_state = UNKNOWN_TABLE_STATE;
 		break;
-	    } else if ( !strncmp( line, "SECTION", 7 ) ) {
+	    } else if ( !bu_strncmp( line, "SECTION", 7 ) ) {
 		curr_state->state = UNKNOWN_SECTION;
 		break;
-	    } else if ( !strncmp( line, "ENDSEC", 6 ) ) {
+	    } else if ( !bu_strncmp( line, "ENDSEC", 6 ) ) {
 		curr_state->state = UNKNOWN_SECTION;
 		break;
 	    }
@@ -602,18 +602,18 @@ process_blocks_code( int code )
 	    printf( "%s\n", line );
 	    break;
 	case 0:		/* text string */
-	    if ( !strncmp( line, "SECTION", 7 ) ) {
+	    if ( !bu_strncmp( line, "SECTION", 7 ) ) {
 		curr_state->state = UNKNOWN_SECTION;
 		break;
-	    } else if ( !strncmp( line, "ENDSEC", 6 ) ) {
+	    } else if ( !bu_strncmp( line, "ENDSEC", 6 ) ) {
 		curr_state->state = UNKNOWN_SECTION;
 		break;
 	    } else if ( BU_STR_EQUAL( line, "ENDBLK" ) ) {
 		curr_block = NULL;
 		break;
-	    } else if ( !strncmp( line, "BLOCK", 5 ) ) {
+	    } else if ( !bu_strncmp( line, "BLOCK", 5 ) ) {
 		/* start of a new block */
-		BU_GETSTRUCT( curr_block, block_list );
+		BU_GET(curr_block, struct block_list);
 		curr_block->offset = ftell( dxf );
 		BU_LIST_INSERT( &(block_head), &(curr_block->l) );
 		break;
@@ -630,7 +630,7 @@ process_blocks_code( int code )
 	    }
 	    break;
 	case 5:		/* block handle */
-	    if ( curr_block && curr_block->handle == NULL ) {
+	    if ( curr_block && BU_STR_EMPTY(curr_block->handle)) {
 		len = strlen( line );
 		if ( len > 16 ) {
 		    len = 16;
@@ -810,7 +810,7 @@ process_entities_polyline_code( int code )
 	    break;
 	case 0:		/* text string */
 	    get_layer();
-	    if ( !strncmp( line, "SEQEND", 6 ) ) {
+	    if ( !bu_strncmp( line, "SEQEND", 6 ) ) {
 		/* build any polyline meshes here */
 		if ( polyline_flag & POLY_3D_MESH ) {
 		    if ( polyline_vert_indices_count == 0 ) {
@@ -917,7 +917,7 @@ process_entities_polyline_code( int code )
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strncmp( line, "VERTEX", 6 ) ) {
+	    } else if ( !bu_strncmp( line, "VERTEX", 6 ) ) {
 		if ( verbose)
 		    bu_log( "Found a POLYLINE VERTEX\n" );
 		curr_state->sub_state = POLYLINE_VERTEX_ENTITY_STATE;
@@ -967,13 +967,13 @@ process_entities_unknown_code( int code )
 	    printf( "%s\n", line );
 	    break;
 	case 0:		/* text string */
-	    if ( !strncmp( line, "SECTION", 7 ) ) {
+	    if ( !bu_strncmp( line, "SECTION", 7 ) ) {
 		curr_state->state = UNKNOWN_SECTION;
 		break;
-	    } else if ( !strncmp( line, "ENDSEC", 6 ) ) {
+	    } else if ( !bu_strncmp( line, "ENDSEC", 6 ) ) {
 		curr_state->state = UNKNOWN_SECTION;
 		break;
-	    } else if ( !strncmp( line, "POLYLINE", 8 ) ) {
+	    } else if ( !bu_strncmp( line, "POLYLINE", 8 ) ) {
 		if ( verbose)
 		    bu_log( "Found a POLYLINE\n" );
 		curr_state->sub_state = POLYLINE_ENTITY_STATE;
@@ -981,7 +981,7 @@ process_entities_unknown_code( int code )
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strncmp( line, "LWPOLYLINE", 10 ) ) {
+	    } else if ( !bu_strncmp( line, "LWPOLYLINE", 10 ) ) {
 		if ( verbose)
 		    bu_log( "Found a LWPOLYLINE\n" );
 		curr_state->sub_state = LWPOLYLINE_ENTITY_STATE;
@@ -989,7 +989,7 @@ process_entities_unknown_code( int code )
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strncmp( line, "3DFACE", 6 ) ) {
+	    } else if ( !bu_strncmp( line, "3DFACE", 6 ) ) {
 		curr_state->sub_state = FACE3D_ENTITY_STATE;
 		if ( verbose ) {
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
@@ -1025,7 +1025,7 @@ process_entities_unknown_code( int code )
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strncmp( line, "LINE", 4 ) ) {
+	    } else if ( !bu_strncmp( line, "LINE", 4 ) ) {
 		curr_state->sub_state = LINE_ENTITY_STATE;
 		if ( verbose ) {
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
@@ -1073,10 +1073,10 @@ process_entities_unknown_code( int code )
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
 		}
 		break;
-	    } else if ( !strncmp( line, "VIEWPORT", 8 ) ) {
+	    } else if ( !bu_strncmp( line, "VIEWPORT", 8 ) ) {
 		/* not a useful entity, just ignore it */
 		break;
-	    } else if ( !strncmp( line, "INSERT", 6 ) ) {
+	    } else if ( !bu_strncmp( line, "INSERT", 6 ) ) {
 		curr_state->sub_state = INSERT_ENTITY_STATE;
 		if ( verbose ) {
 		    bu_log( "sub_state changed to %d\n", curr_state->sub_state );
@@ -1127,7 +1127,7 @@ process_insert_entities_code( int code )
 
     if ( !new_state ) {
 	insert_init( &ins );
-	BU_GETSTRUCT( new_state, state_data );
+	BU_GET(new_state, struct state_data);
 	*new_state = *curr_state;
 	if ( verbose ) {
 	    bu_log( "Created a new state for INSERT\n" );
@@ -2210,14 +2210,14 @@ process_mtext_entities_code( int code )
     switch ( code ) {
 	case 3:
 	    if (!vls) {
-		BU_GETSTRUCT(vls, bu_vls);
+		BU_GET(vls, struct bu_vls);
 		bu_vls_init(vls);
 	    }
 	    bu_vls_strcat(vls, line);
 	    break;
 	case 1:
 	    if (!vls) {
-		BU_GETSTRUCT(vls, bu_vls);
+		BU_GET(vls, struct bu_vls);
 		bu_vls_init(vls);
 	    }
 	    bu_vls_strcat(vls, line);
@@ -2442,7 +2442,7 @@ process_dimension_entities_code( int code )
 	    if ( block_name != NULL  ) {
 		/* insert this dimension block */
 		get_layer();
-		BU_GETSTRUCT( new_state, state_data );
+		BU_GET(new_state, struct state_data);
 		*new_state = *curr_state;
 		if ( verbose ) {
 		    bu_log( "Created a new state for DIMENSION\n" );
@@ -2936,10 +2936,10 @@ process_objects_code( int code )
 	    printf( "%s\n", line );
 	    break;
 	case 0:		/* text string */
-	    if ( !strncmp( line, "SECTION", 7 ) ) {
+	    if ( !bu_strncmp( line, "SECTION", 7 ) ) {
 		curr_state->state = UNKNOWN_SECTION;
 		break;
-	    } else if ( !strncmp( line, "ENDSEC", 6 ) ) {
+	    } else if ( !bu_strncmp( line, "ENDSEC", 6 ) ) {
 		curr_state->state = UNKNOWN_SECTION;
 		break;
 	    }
@@ -2957,10 +2957,10 @@ process_thumbnail_code( int code )
 	    printf( "%s\n", line );
 	    break;
 	case 0:		/* text string */
-	    if ( !strncmp( line, "SECTION", 7 ) ) {
+	    if ( !bu_strncmp( line, "SECTION", 7 ) ) {
 		curr_state->state = UNKNOWN_SECTION;
 		break;
-	    } else if ( !strncmp( line, "ENDSEC", 6 ) ) {
+	    } else if ( !bu_strncmp( line, "ENDSEC", 6 ) ) {
 		curr_state->state = UNKNOWN_SECTION;
 		break;
 	    }
@@ -3007,7 +3007,7 @@ nmg_wire_edges_to_sketch( struct model *m )
 		} else {
 		    eu1 = eu->eumate_p;
 		}
-		BU_GETSTRUCT( lseg, line_seg );
+		BU_GET(lseg, struct line_seg);
 		lseg->magic = CURVE_LSEG_MAGIC;
 		v = eu->vu_p->v_p;
 		lseg->start = Add_vert( V3ARGS(v->vg_p->coord), vr, tol_sq );
@@ -3067,7 +3067,7 @@ readcodes()
 	return ERROR_FLAG;
     }
 
-    if ( !strncmp( line, "EOF", 3 ) ) {
+    if ( !bu_strncmp( line, "EOF", 3 ) ) {
 	return EOF_FLAG;
     }
 
@@ -3219,7 +3219,7 @@ main( int argc, char *argv[] )
     BU_LIST_INIT( &state_stack );
 
     /* create initial state */
-    BU_GETSTRUCT( curr_state, state_data );
+    BU_GET(curr_state, struct state_data);
     curr_state->file_offset = 0;
     curr_state->state = UNKNOWN_SECTION;
     curr_state->sub_state = UNKNOWN_ENTITY_STATE;
@@ -3231,7 +3231,7 @@ main( int argc, char *argv[] )
     curr_layer = 0;
     layers = (struct layer **)bu_calloc( 5, sizeof( struct layer *), "layers" );
     for ( i=0; i<max_layers; i++ ) {
-	BU_GETSTRUCT( layers[i], layer );
+	BU_GET(layers[i], struct layer);
     }
     layers[0]->name = bu_strdup( "noname" );
     layers[0]->color_number = 7;	/* default white */
@@ -3352,10 +3352,9 @@ main( int argc, char *argv[] )
 
 	if ( BU_LIST_NON_EMPTY( &head ) ) {
 	    unsigned char *tmp_rgb;
-	    struct bu_vls comb_name;
+	    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
 
 	    tmp_rgb = &rgb[layers[i]->color_number*3];
-	    bu_vls_init( &comb_name );
 	    bu_vls_printf( &comb_name, "%s.c.%d", layers[i]->name, i );
 	    if ( mk_comb( out_fp, bu_vls_addr( &comb_name ), &head, 1, NULL, NULL,
 			  tmp_rgb, 1, 0, 1, 100, 0, 0, 0 ) ) {
@@ -3369,10 +3368,9 @@ main( int argc, char *argv[] )
 
 
     if ( BU_LIST_NON_EMPTY( &head_all ) ) {
-	struct bu_vls top_name;
+	struct bu_vls top_name = BU_VLS_INIT_ZERO;
 	int count=0;
 
-	bu_vls_init(&top_name);
 	bu_vls_strcpy( &top_name, "all" );
 	while ( db_lookup( out_fp->dbip, bu_vls_addr( &top_name ), LOOKUP_QUIET ) != RT_DIR_NULL ) {
 	    count++;

@@ -1,7 +1,7 @@
 /*                         B O T _ S Y N C . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ ged_bot_sync(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    for (i=1; i < argc; ++i) {
+    for (i = 1; i < argc; ++i) {
 	/* Skip past any path elements */
 	char *obj = bu_basename(argv[i]);
 

@@ -1,7 +1,7 @@
 /*                     S H A P E F A C T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -117,8 +117,8 @@ int main(int argc, char **argv)
     int ians;		/*  Answer of question.  */
     double strtpt[3];	/*  Starting point of ray.  */
     double strtdir[3];	/*  Starting direction.  */
-    double loops;	/*  Number of rays fired.  */
-    double r;		/*  Variable in loops.  */
+    size_t loops;	/*  Number of rays fired.  */
+    size_t r;		/*  Variable in loops.  */
     int i, j, k;		/*  Variable in loops.  */
     long seed;		/*  Initial seed for random number generator.  */
     double denom;	/*  Denominator.  */
@@ -172,9 +172,9 @@ int main(int argc, char **argv)
 	(void)printf("Enter type of file to be written (0=>regular or ");
 	(void)printf("1=>generic).  ");
 	(void)fflush(stdout);
-	ret = scanf("%d", &itype);
+	ret = scanf("%1d", &itype);
 	if (ret == 0)
-	    perror("scanf");
+	    bu_exit(-1, "scanf failure when reading file type");
 	if (itype != 1) itype = 0;
 
 	/*  Enter names of files to be used.  */
@@ -182,14 +182,14 @@ int main(int argc, char **argv)
 	(void)fflush(stderr);
 	ret = scanf("%15s", outfile);
 	if (ret == 0)
-	    perror("scanf");
+	    bu_exit(-1, "scanf failure when reading output file name");
 
 	/*  Read name of the error file to be written.  */
 	(void)printf("Enter the name of the error file (15 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%15s", errfile);
 	if (ret == 0)
-	    perror("scanf");
+	    bu_exit(-1, "scanf failure when reading error file name");
 
 	/*  Enter name of region # & name file to be read.  */
 	{
@@ -198,7 +198,7 @@ int main(int argc, char **argv)
 	    (void)fflush(stdout);
 	    ret = scanf("%15s", rnnfile);
 	    if (ret == 0)
-		perror("scanf");
+	      bu_exit(-1, "scanf failure when reading region # + name file");
 	}
 
 	/*  Check if dump is to occur.  */
@@ -206,32 +206,36 @@ int main(int argc, char **argv)
 	(void)printf("Do you want to dump intermediate shape factors to ");
 	(void)printf("screen (0-no, 1-yes)?  ");
 	(void)fflush(stdout);
-	ret = scanf("%d", &idump);
+	ret = scanf("%1d", &idump);
 	if (ret == 0)
-	    perror("scanf");
+	  bu_exit(-1, "scanf failure - intermediate shape factors setting");
 
 	/*  Find number of rays to be fired.  */
 	(void)fprintf(stderr, "Enter number of rays to be fired.  ");
 	(void)fflush(stderr);
-	ret = scanf("%lf", &loops);
+	ret = scanf("%llu", (unsigned long long *)&loops);
 	if (ret == 0)
-	    perror("scanf");
+	  bu_exit(-1, "scanf failure - number of rays to be fired");
+
+	/* clamp loops */
+	if (loops > UINT32_MAX)
+	    loops = UINT32_MAX;
 
 	/*  Set seed for random number generator.  */
 	seed = 1;
 	(void)fprintf(stderr, "Do you wish to enter your own seed (0) or ");
 	(void)fprintf(stderr, "use the default of 1 (1)?  ");
 	(void)fflush(stderr);
-	ret = scanf("%d", &ians);
+	ret = scanf("%1d", &ians);
 	if (ret == 0)
-	    perror("scanf");
+	  bu_exit(-1, "scanf failure - seed use setting");
 	if (ians == 0)
 	{
 	    (void)fprintf(stderr, "Enter unsigned integer seed.  ");
 	    (void)fflush(stderr);
 	    ret = scanf("%ld", &seed);
 	    if (ret == 0)
-		perror("scanf");
+	      bu_exit(-1, "scanf failure - seed");
 	}
 	msr = bn_unif_init(seed, 0);
 	bu_log("seed initialized\n");
@@ -530,8 +534,8 @@ int main(int argc, char **argv)
 
 	    if (EQUAL(r, (dump - 1.0)))
 	    {
-		(void)printf("%f rays have been fired in forward direction.\n",
-			     (r+1));
+		(void)printf("%llu rays have been fired in forward direction.\n",
+			     (unsigned long long)(r+1));
 		(void)fflush(stdout);
 		if (idump == 1)
 		{
@@ -569,7 +573,7 @@ int main(int argc, char **argv)
 	    /*
 	     *	  info[i].engarea = info[i].allvrays * areabs / loops / 2.;
 	     */
-	    info[i].engarea = info[i].allvrays * areabs / loops;
+	    info[i].engarea = info[i].allvrays * areabs / (double)loops;
 
 	    /*  Put area into square meters.  */
 	    info[i].engarea *= 1.e-6;
@@ -666,7 +670,7 @@ int main(int argc, char **argv)
 	if (itype == 0)
 	{
 	    fp = fopen(outfile, "wb");
-	    (void)fprintf(fp, "Number of forward rays fired:  %f\n\n", loops);
+	    (void)fprintf(fp, "Number of forward rays fired:  %llu\n\n", (unsigned long long)loops);
 	    (void)fflush(fp);
 
 	    /*  Print out structure.  */

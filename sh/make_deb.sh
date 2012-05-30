@@ -2,7 +2,7 @@
 #                     M A K E _ D E B . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2011 United States Government as represented by
+# Copyright (c) 2005-2012 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@ if test -z $1 ;then
     echo
     echo "Options:"
     echo "  -b       build the Debian binary package (deb file)"
-    echo "  -s *     build the Debian source package"
+    echo "  -s *     build the Debian source packages"
     echo "  -t       as second argument: test for all prerequisites"
     echo
     echo "           * (use with a clean brlcad tree)"
@@ -68,7 +68,7 @@ fi
 
 # unknown parameter
 if test "$1" != "-s" && test "$1" != "-b" ; then
-    ferror "Unknown first argument '$!'." "Exiting..."
+    ferror "Unknown first argument '$1'." "Exiting..."
 fi
 
 # check for test
@@ -125,8 +125,6 @@ if test "$1" = "-b" ;then
     fcheck build-essential
     fcheck make 
     fcheck cmake x
-    fcheck libtool x
-    fcheck bc x
     fcheck sed x
     fcheck bison x
     fcheck flex x
@@ -155,7 +153,7 @@ CDATE=`date -R`
 CFILE="debian/changelog"
 RELEASE="0"
 
-NJOBS=`getconf _NPROCESSORS_ONLN | sed "s/.*/&*2-1/" | bc`
+NJOBS=`getconf _NPROCESSORS_ONLN`
 if test ! $NJOBS -gt 0 2>/dev/null ;then
     NJOBS=1
 fi

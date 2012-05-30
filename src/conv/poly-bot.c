@@ -1,7 +1,7 @@
 /*                      P O L Y - B O T . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2011 United States Government as represented by
+ * Copyright (c) 2000-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,6 +65,8 @@ main(int argc, char **argv)
     int i;
     int num_rec;
     int first=1;
+
+    bu_setprogname(argv[0]);
 
     ifp = stdin;
     ofp = stdout;

@@ -1,7 +1,7 @@
 /*                         E R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,14 +21,6 @@
  *
  *  Ray Tracing library and Framebuffer library, error handling routines.
  *
- *  Functions -
- *	bu_bomb		Called upon fatal RT library error.
- *	bu_log		Called to log RT library events.
- *	fb_log		Called to log FB library events.
- *
- *	Idea originated by Mike John Muuss
- *
- *	Author:		Gary S. Moss
  */
 
 #include "common.h"
@@ -62,7 +54,7 @@ bu_bomb(const char *str)
     prnt_Timer( "DUMP" );
     if ( pix_buffered == B_PAGE )
 	(void) fb_flush( fbiop ); /* Write out buffered image.	*/
-    (void) abort();			  /* Should dump.		*/
+    bu_exit(1, NULL);
 }
 
 void

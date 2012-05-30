@@ -16,8 +16,9 @@ a) during a major release (e.g. going from 7.*.* to 8.*.*)
 
 b) during a minor release provided the change was publicly announced
    as deprecated beforehand AND sufficient deprecation warning was
-   given via either i) three minor releases included the deprecation
-   notice, or ii) three months passed since deprecation
+   given via i) two minor releases included the deprecation notice,
+   and ii) at least three months (90 days) have passed since the
+   deprecation was announced
 
 c) during a minor release provided there still exists an equivalent
    alternative interface that will not impose an undue burden on users
@@ -35,6 +36,24 @@ Where feasible, interfaces should be visibly marked as deprecated
 either during compile-time with #warning pre-processor declarations or
 during run-time with print statements.
 
+Example: Say we decided during 7.50.3 development to remove
+rt_shootray() from our API without a replacement that would qualify as
+"minimally impacting".  We'd annotate the deprecation here, mark the
+function as DEPRECATED in the API header, and post the 7.50.4 release.
+The soonest that function could be removed would be in the 7.54.0
+release during 7.53 development.  It could NOT be removed in 7.54.2
+since it's a patch version, prior to the 7.54 release line, nor even
+during 7.54.0 if less than 90 days had passed since 7.50.6 was posted.
+
+When it is finally removed, remove its entry in the DEPRECATED section
+and move it to the OBSOLETE section under the version entry in which
+it was removed.  Make sure the entry has a reference to the version
+in which the item was first classified as deprecated.  See the %S
+entry for an example.
+
+DEPRECATED/OBSOLETE Items
+-------------------------
+
 The items listed below are interfaces that are deprecated or obsolete,
 categorized by the release in which the change was made.  If the
 change involved a rename/removal of a routine, both the original and
@@ -45,16 +64,19 @@ new names should be listed for reference.
 * DEPRECATED *
 **************
 
+
+7.22
+----
+mged
+	em, e_muves, l_muves, lm, read_muves, and t_muves MUVES-specific commands [deprecated 7.22]
+
 7.20
 ----
-
-liborle 
+liborle
         remove liborle and the tools using it, fb-orle, orle-fb, orle-pix and
 	pix-orle [deprecated 7.20]
-
 tclscripts/lib
         Mged, Database, Db, Dm, Drawable, Display, QuadDisplay, View -> Ged [deprecated 7.20]
-
 librt
         bspline primitive [deprecated 7.20]
         poly primitive [deprecated 7.20]
@@ -70,7 +92,6 @@ raytrace.h
 
 7.18
 ----
-
 raytrace.h rt_comb_internal members
         region_id -> region_id attribute [deprecated 7.18]
         aircode -> air attribute [deprecated 7.18]
@@ -186,7 +207,6 @@ include/raytrace.h
 	DIR_* -> RT_DIR_* [deprecated 7.14]
 include/bu.h
         bu_fopen_uniq -> fopen [deprecated 7.14]
-	%S format specifier -> %V format specifier for bu_vls [deprecated 7.14]
 mged
 	tops -g -u -> now default behavior [deprecated 7.14]
 	-n option -> -c option [deprecated 7.14]
@@ -223,6 +243,11 @@ include/raytrace.h
 ************
 * OBSOLETE *
 ************
+
+7.22.0
+------
+include/bu.h
+	%S format specifier -> %V format specifier for bu_vls [deprecated 7.14]
 
 7.20.2
 ------
@@ -797,3 +822,46 @@ s/BU_LIST_MAGIC_WRONG/!BU_LIST_MAGIC_EQUAL/g
 
 s/nmg_moveeu/nmg_je/g
 	function has been renamed
+
+7.22
+----
+
+s/rt_dist_pt3_line3/bn_dist_pt3_line3/g
+s/rt_dist_line3_line3/bn_dist_line3_line3/g
+s/rt_dist_line3_lseg3/bn_dist_line3_lseg3/g
+        functions moved from librt to libbn [7.21]
+s/bu_tcl_setup/Bu_Init/g
+        removed bu_tcl_setup() in favor of Bu_Init() [7.21]
+s/bu_tcl_([^(]*)\([^,]*?[[:space:]]*,[^,]*?[[:space:]]*,(.*)/bu_\1(\2/g
+        removed all bu_tcl_*() functions, leaving off interp and using native bu function [7.21]
+s/bu_badmagic_tcl\([^,]*?[[:space:]]*,(.*)/bu_badmagic(\1/g
+        removed bu_badmagic_tcl() in favor of bu_badmagic() [7.21]
+s/(.*)_CK(.*)_TCL\([^,]*?[[:space:]]*,(.*)/\1_CK\2(\3/g
+        removed all *_CK*_TCL() macros (e.g., BU_CKMAG_TCL, RT_CK_DBI_TCL, etc) in favor of non-TCL macros [7.21]
+s/bu_image/icv_image/g
+	moved bu_image* functions to libicv as icv_image* [7.21]
+s/BU_IMAGE/ICV_IMAGE/g
+	moved BU_IMAGE* macros to icv.h as ICV_IMAGE* [7.21]
+s/bu_cmd\(([^,]*?),[[:space:]]*([^,]*?),[[:space:]]*([^,]*?),[[:space:]]*([^,)]*?),[[:space:]]*([^)]*?)\)/bu_cmd(\4, \2, \3, \5, \1, NULL)/g
+	inputs then outputs.  swapped bu_cmd's 4th parameter to 1st, 1st to 5th, and added a new return value hook last. [7.21]
+s/V3(.*)_TOL\(([^,]*,)([^,]*,)([^,]*,)([^)]*)\)/V3\1_TOL(\1\2\3(\4)->dist)/g
+        V3RPP_OVERLAP_TOL(), V3PT_IN_RPP_TOL(), and V3PT_OUT_RPP_TOL() tol parameter changed to value [7.21]
+s/BU_GETSTRUCT\([[:space:]]*([^,)]+,)[[:space:]]*([^)]+)[[:space:]]*\)/BU_GET(\1 struct \2)/g
+	BU_GETSTRUCT(ptr, struct_type) changed to BU_GET(ptr, struct struct_t) [7.21]
+s/BU_GETUNION\([[:space:]]*([^,)]+,)[[:space:]]*([^)]+)[[:space:]]*\)/BU_GET(\1 union \2)/g
+s/BU_GETTYPE\([[:space:]]*([^,)]+,)[[:space:]]*([^)]+)[[:space:]]*\)/BU_GET(\1 \2)/g
+	BU_GETUNION() and BU_GETTYPE() macros changed to BU_GET() [7.21]
+s/CMD_NULL/BU_CMD_NULL/g
+s/CMDHIST/BU_CMDHIST/g
+        prefix the cmd.h defines with BU_ since they are part of libbu [7.21]
+s/bu_shader_to_tcl_list/bu_shader_to_list/g
+        renamed as it applies to any list in {} form, tcl or otherwise [7.21]
+s/bu_(add|delete|call)_hook/bu_hook_\1/g
+        renamed hook functions to be consistent with other libbu API [7.21]
+s/bu_file_exists\(([^)]*)\)/bu_file_exists(\1, NULL)/g
+	new file descriptor parameter added [7.21]
+s/bu_list_path\(([^,]*),([^,]*),[[:space:]]([^)]*)\)/bu_dir_list(\1,\2, &(\3))/g
+s/bu_count_path(.*)\);/bu_dir_list\1, NULL);/g
+	made bu_dir_list() return the number of entries [7.21]
+s/bu_strcmpm\((.*),([^,]*)\)/bu_strcmp(\1)/g
+        no use for label paramter, convert to bu_strcmp() [7.21]

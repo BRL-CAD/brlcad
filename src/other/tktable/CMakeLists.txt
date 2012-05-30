@@ -7,50 +7,50 @@ ENDIF(COMMAND CMAKE_POLICY)
 # set CMake project name
 PROJECT(TKTABLE)
 
-SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMake)
+SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 find_package(TCL)
 find_package(X11)
 
 include_directories(
-		  ${CMAKE_CURRENT_SOURCE_DIR}/src
-		  ${CMAKE_CURRENT_BINARY_DIR}
-		  ${TCL_INCLUDE_DIRS}
-		  ${TK_INCLUDE_PATH}
-		  ${X11_INCLUDE_DIR}
-		  )
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${TCL_INCLUDE_DIRS}
+  ${TK_INCLUDE_PATH}
+  ${X11_INCLUDE_DIR}
+  )
 
 SET(TKTABLE_PKGNAME Tktable)
 SET(TKTABLE_PKGVERSION "2.10")
 
 # Windows specific flags
 IF(WIN32)
-	SET(TKTABLE_CFLAGS "${TKTABLE_CFLAGS} -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL")
-	SET(TKTABLE_CFLAGS "${TKTABLE_CFLAGS} -Dinline=__inline -DBUILD_Tktable")
-	SET(TKTABLE_CFLAGS "${TKTABLE_CFLAGS} -DTBL_COMMAND=\"table\" -DTBL_RUNTIME=\"tkTable.tcl\" -DTBL_RUNTIME_DIR=\"\"")
+  SET(TKTABLE_CFLAGS "${TKTABLE_CFLAGS} -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL")
+  SET(TKTABLE_CFLAGS "${TKTABLE_CFLAGS} -Dinline=__inline -DBUILD_Tktable")
+  SET(TKTABLE_CFLAGS "${TKTABLE_CFLAGS} -DTBL_COMMAND=\"table\" -DTBL_RUNTIME=\"tkTable.tcl\" -DTBL_RUNTIME_DIR=\"\"")
 ENDIF(WIN32)
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TKTABLE_CFLAGS}")
 
 ADD_CUSTOM_COMMAND(
-		  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
-		  COMMAND ${TCL_TCLSH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/misc/tkTable_header.tcl ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new
-		  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
-		  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new
-		  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_SOURCE_DIR}/misc/tkTable_header.tcl ${TCL_TCLSH_EXECUTABLE}
-)
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
+  COMMAND ${TCL_TCLSH_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/misc/tkTable_header.tcl ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_SOURCE_DIR}/misc/tkTable_header.tcl ${TCL_TCLSH_EXECUTABLE}
+  )
 ADD_CUSTOM_TARGET(tktable_header_gen ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h)
 
 SET(TKTABLE_SRCS
-	generic/tkTable.c
-	generic/tkTableCell.c
-	generic/tkTableCellSort.c
-	generic/tkTableCmds.c
-	generic/tkTableEdit.c
-	#generic/tkTablePs.c
-	generic/tkTableTag.c
-	generic/tkTableUtil.c
-	generic/tkTableWin.c
-)
+  generic/tkTable.c
+  generic/tkTableCell.c
+  generic/tkTableCellSort.c
+  generic/tkTableCmds.c
+  generic/tkTableEdit.c
+  #generic/tkTablePs.c
+  generic/tkTableTag.c
+  generic/tkTableUtil.c
+  generic/tkTableWin.c
+  )
 
 SET(TKTABLE_CFG_H_FILE ${CMAKE_CURRENT_BINARY_DIR}/tktable_cfg.h.tmp)
 FILE(WRITE ${TKTABLE_CFG_H_FILE} "/**** Variables for Tktable build - replaces -D options ****/\n")
@@ -64,30 +64,33 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/t
 
 
 add_definitions(
-	-DSTDC_HEADERS=1
-	-DCMAKE_HEADERS=1
-	)
+  -DSTDC_HEADERS=1
+  -DCMAKE_HEADERS=1
+  )
 
 add_library(Tktable SHARED ${TKTABLE_SRCS})
 add_dependencies(Tktable tktable_header_gen)
 target_link_libraries(Tktable ${TCL_LIBRARY} ${TCL_TK_LIBRARY} ${X11_LIBRARIES})
 SET_TARGET_PROPERTIES(Tktable PROPERTIES VERSION ${TKTABLE_PKGVERSION})
-install(TARGETS Tktable DESTINATION ${LIB_DIR})
+install(TARGETS Tktable 
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR})
 
 # Create the pkgIndex.tcl file.
-GET_TARGET_PROPERTY(TKTABLE_LIBLOCATION Tktable LOCATION_${CMAKE_BUILD_TYPE})
-GET_FILENAME_COMPONENT(TKTABLE_LIBNAME ${TKTABLE_LIBLOCATION} NAME)
-FILE(WRITE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl "package ifneeded ${TKTABLE_PKGNAME} ${TKTABLE_PKGVERSION} [list load [file join $dir .. .. ${LIB_DIR} ${TKTABLE_LIBNAME}] ${TKTABLE_PKGNAME}]")
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl DESTINATION lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION})
-
-FILE(WRITE ${CMAKE_BINARY_DIR}/lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION}/pkgIndex.tcl "package ifneeded ${TKTABLE_PKGNAME} ${TKTABLE_PKGVERSION} [list load [file join $dir ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} ${TKTABLE_LIBNAME}] ${TKTABLE_PKGNAME}]")
+TCL_PKGINDEX(Tktable ${TKTABLE_PKGNAME} ${TKTABLE_PKGVERSION})
 
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/README.txt DESTINATION lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION})
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/license.txt DESTINATION lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION})
 
 SET(TKTABLE_MISC
-	library/tkTable.tcl
-	library/tktable.py
-	)
+  library/tkTable.tcl
+  library/tktable.py
+  )
 FILE(COPY ${TKTABLE_MISC} DESTINATION ${CMAKE_BINARY_DIR}/lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION})
+foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+  FILE(COPY ${TKTABLE_MISC} DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION})
+endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+
 INSTALL(FILES ${TKTABLE_MISC} DESTINATION lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION})

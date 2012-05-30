@@ -1,7 +1,7 @@
 /*                         R C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -128,11 +128,13 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 			      "The in-memory table of contents may not match the status of the on-disk\ndatabase.  The on-disk database should still be intact.  For safety, \nyou should exit now, and resolve the I/O problem, before continuing.\n");
 
 		rt_db_free_internal(&intern);
+		fclose(fp);
 		return GED_ERROR;
 	    }
 	}
 
     }
+    fclose(fp);
 
     return GED_OK;
 }

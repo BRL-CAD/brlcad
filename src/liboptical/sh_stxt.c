@@ -1,7 +1,7 @@
 /*                       S H _ S T X T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -170,7 +170,7 @@ stxt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 {
     register struct stxt_specific *stp;
 
-    BU_GETSTRUCT(stp, stxt_specific);
+    BU_GET(stp, struct stxt_specific);
     *dpp = stp;
 
     /** Set up defaults **/

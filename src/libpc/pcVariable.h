@@ -1,7 +1,7 @@
 /*                    P C V A R I A B L E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -320,14 +320,17 @@ void Domain<T>::intersectInterval(Interval<T> t)
     } else {
 	typename std::list<Interval<T> >::iterator i = this->Interv.begin();
 	while (i != Interv.end() && i->getHigh() < t.getLow())
-	    Interv.erase(i++);
-	i->setLow(t.getLow());
+	    i=Interv.erase(i);
+	if (i != Interv.end())
+	    i->setLow(t.getLow());
 	i = Interv.end();
 	i--;
 	while (i != Interv.begin() && i->getLow() > t.getHigh())
 	    Interv.erase(i--);
-	i->setHigh(t.getHigh());
-	i->setStep(t.getStep());
+	if (i != Interv.end()) {
+	    i->setHigh(t.getHigh());
+	    i->setStep(t.getStep());
+	}
     }
 }
 template<class T>

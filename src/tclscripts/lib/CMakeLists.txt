@@ -1,4 +1,4 @@
-SET(lib_TCLSCRIPTS
+set(lib_TCLSCRIPTS
 	Accordian.tcl
 	CellPlot.tcl
 	ColorEntry.tcl
@@ -16,6 +16,7 @@ SET(lib_TCLSCRIPTS
 	ModelAxesControl.tcl
 	QuadDisplay.tcl
 	RtControl.tcl
+	RtImage.tcl
 	Splash.tcl
 	Table.tcl
 	TableView.tcl
@@ -30,3 +31,10 @@ tclIndex_BUILD(lib tclscripts/lib)
 
 CMAKEFILES(pkgIndex.tcl tclIndex)
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

@@ -1,7 +1,7 @@
 /*                  O R I E N T _ L O O P S . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -115,9 +115,9 @@ Orient_face_loops(fu)
     struct faceuse *fu;
 {
     struct loopuse *lu;
-    struct loopuse *lu_outer=NULL;
+    struct loopuse *lu_outer = NULL;
     struct loop_list *lptr;
-    int orient=OT_SAME;
+    int orient = OT_SAME;
 
     NMG_CK_FACEUSE(fu);
     if (fu->orientation != OT_SAME)

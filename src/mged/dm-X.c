@@ -1,7 +1,7 @@
 /*                          D M - X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -98,9 +98,7 @@ static int
 X_dm(int argc, const char *argv[])
 {
     if (BU_STR_EQUAL(argv[0], "set")) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	if (argc < 2) {
 	    /* Bare set command, print out current settings */
@@ -108,14 +106,18 @@ X_dm(int argc, const char *argv[])
 	} else if (argc == 2) {
 	    bu_vls_struct_item_named(&vls, X_vparse, argv[1], (const char *)dmp, COMMA);
 	} else {
-	    struct bu_vls tmp_vls;
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
+	    int ret;
 
-	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
 	    bu_vls_putc(&tmp_vls, '\"');
-	    bu_struct_parse(&tmp_vls, X_vparse, (char *)dmp);
+	    ret = bu_struct_parse(&tmp_vls, X_vparse, (char *)dmp);
 	    bu_vls_free(&tmp_vls);
+	    if (ret < 0) { 
+	      bu_vls_free(&vls);
+	      return TCL_ERROR;
+	    }
 	}
 
 	Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
@@ -133,7 +135,7 @@ X_dm_init(struct dm_list *o_dm_list,
 	  int argc,
 	  const char *argv[])
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     dm_var_init(o_dm_list);
 
@@ -158,7 +160,6 @@ X_dm_init(struct dm_list *o_dm_list,
 
     (void)DM_CONFIGURE_WIN(dmp, 0);
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
     Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);

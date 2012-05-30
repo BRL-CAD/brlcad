@@ -1,7 +1,7 @@
 /*                        V R L I N K . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2011 United States Government as represented by
+ * Copyright (c) 1992-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -116,7 +116,7 @@ vr_input_hook(void)
 void
 vr_viewpoint_hook(void)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     static struct bu_vls *old_str = NULL;
     quat_t orient;
 
@@ -126,10 +126,9 @@ vr_viewpoint_hook(void)
     }
 
     if (!old_str) {
-	BU_GETSTRUCT(old_str, bu_vls);
+	BU_GET(old_str, struct bu_vls);
 	bu_vls_init(old_str);
     }
-    bu_vls_init(&str);
 
     quat_mat2quat(orient, view_state->vs_gvp->gv_rotation);
 
@@ -172,20 +171,15 @@ vr_viewpoint_hook(void)
 int
 f_vrmgr(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     const char *role;
 
     if (argc < 3) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help vrmgr");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
+	bu_vls_printf(&str, "help vrmgr");
+	Tcl_Eval(interp, bu_vls_addr(&str));
+	bu_vls_free(&str);
 	return TCL_ERROR;
     }
-
-    bu_vls_init(&str);
 
     if (vrmgr != PKC_NULL) {
 	Tcl_AppendResult(interp, "Closing link to VRmgr ",
@@ -283,9 +277,10 @@ void
 ph_vlist(struct pkg_conn *UNUSED(pc), char *buf)
 {
     struct bu_list vhead;
-    struct bu_vls name;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&name);
+    if(buf == NULL)
+	bu_bomb("ph_vlist: buf is null");
 
     BU_LIST_INIT(&vhead);
 

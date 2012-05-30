@@ -1,7 +1,7 @@
 /*                        M A K E _ P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2011 United States Government as represented by
+ * Copyright (c) 2009-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -110,13 +110,11 @@ compare_char(const char *a, const char *b)
 int
 str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_result_str)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     char *temp_string = (char *)NULL;
     size_t idx = 0;
     size_t format_string_length = 0;
     int ret = GED_OK;
-
-    bu_vls_init(&str);
 
     if ((format_string == (char *)NULL) || (pnt_type == (rt_pnt_type *)NULL)) {
 	bu_vls_printf(ged_result_str, "NULL pointer(s) passed to function 'str2type'.\n");
@@ -175,12 +173,10 @@ str2type(const char *format_string, rt_pnt_type *pnt_type, struct bu_vls *ged_re
 int
 str2mm(const char *units_string, double *conv_factor, struct bu_vls *ged_result_str)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     double tmp_value = 0.0;
     char *endp = (char *)NULL;
     int ret = GED_OK;
-
-    bu_vls_init(&str);
 
     if ((units_string == (char *)NULL) || (conv_factor == (double *)NULL)) {
 	bu_vls_printf(ged_result_str, "NULL pointer(s) passed to function 'str2mm'.\n");
@@ -270,7 +266,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 				  /* it is expected that the character representation of a double will never exceed this size string */
     char *endp = (char *)NULL;
 
-    struct bu_vls format_string;
+    struct bu_vls format_string = BU_VLS_INIT_ZERO;
     size_t format_string_index = 0;
 
     unsigned int num_doubles_per_point = 0;
@@ -349,7 +345,6 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    bu_vls_init(&format_string);
     bu_vls_strcat(&format_string, argv[3]);
     bu_vls_trimspace(&format_string);
 
@@ -371,42 +366,42 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
     /* empty list head */
     switch (type) {
 	case RT_PNT_TYPE_PNT:
-	    BU_GETSTRUCT(headPoint, pnt);
+	    BU_GET(headPoint, struct pnt);
 	    BU_LIST_INIT(&(((struct pnt *)headPoint)->l));
 	    num_doubles_per_point = 3;
 	    break;
 	case RT_PNT_TYPE_COL:
-	    BU_GETSTRUCT(headPoint, pnt_color);
+	    BU_GET(headPoint, struct pnt_color);
 	    BU_LIST_INIT(&(((struct pnt_color *)headPoint)->l));
 	    num_doubles_per_point = 6;
 	    break;
 	case RT_PNT_TYPE_SCA:
-	    BU_GETSTRUCT(headPoint, pnt_scale);
+	    BU_GET(headPoint, struct pnt_scale);
 	    BU_LIST_INIT(&(((struct pnt_scale *)headPoint)->l));
 	    num_doubles_per_point = 4;
 	    break;
 	case RT_PNT_TYPE_NRM:
-	    BU_GETSTRUCT(headPoint, pnt_normal);
+	    BU_GET(headPoint, struct pnt_normal);
 	    BU_LIST_INIT(&(((struct pnt_normal *)headPoint)->l));
 	    num_doubles_per_point = 6;
 	    break;
 	case RT_PNT_TYPE_COL_SCA:
-	    BU_GETSTRUCT(headPoint, pnt_color_scale);
+	    BU_GET(headPoint, struct pnt_color_scale);
 	    BU_LIST_INIT(&(((struct pnt_color_scale *)headPoint)->l));
 	    num_doubles_per_point = 7;
 	    break;
 	case RT_PNT_TYPE_COL_NRM:
-	    BU_GETSTRUCT(headPoint, pnt_color_normal);
+	    BU_GET(headPoint, struct pnt_color_normal);
 	    BU_LIST_INIT(&(((struct pnt_color_normal *)headPoint)->l));
 	    num_doubles_per_point = 9;
 	    break;
 	case RT_PNT_TYPE_SCA_NRM:
-	    BU_GETSTRUCT(headPoint, pnt_scale_normal);
+	    BU_GET(headPoint, struct pnt_scale_normal);
 	    BU_LIST_INIT(&(((struct pnt_scale_normal *)headPoint)->l));
 	    num_doubles_per_point = 7;
 	    break;
 	case RT_PNT_TYPE_COL_SCA_NRM:
-	    BU_GETSTRUCT(headPoint, pnt_color_scale_normal);
+	    BU_GET(headPoint, struct pnt_color_scale_normal);
 	    BU_LIST_INIT(&(((struct pnt_color_scale_normal *)headPoint)->l));
 	    num_doubles_per_point = 10;
 	    break;
@@ -427,28 +422,28 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 	/* allocate memory for single point structure for current point-cloud type */
 	switch (type) {
 	    case RT_PNT_TYPE_PNT:
-		BU_GETSTRUCT(point, pnt);
+		BU_GET(point, struct pnt);
 		break;
 	    case RT_PNT_TYPE_COL:
-		BU_GETSTRUCT(point, pnt_color);
+		BU_GET(point, struct pnt_color);
 		break;
 	    case RT_PNT_TYPE_SCA:
-		BU_GETSTRUCT(point, pnt_scale);
+		BU_GET(point, struct pnt_scale);
 		break;
 	    case RT_PNT_TYPE_NRM:
-		BU_GETSTRUCT(point, pnt_normal);
+		BU_GET(point, struct pnt_normal);
 		break;
 	    case RT_PNT_TYPE_COL_SCA:
-		BU_GETSTRUCT(point, pnt_color_scale);
+		BU_GET(point, struct pnt_color_scale);
 		break;
 	    case RT_PNT_TYPE_COL_NRM:
-		BU_GETSTRUCT(point, pnt_color_normal);
+		BU_GET(point, struct pnt_color_normal);
 		break;
 	    case RT_PNT_TYPE_SCA_NRM:
-		BU_GETSTRUCT(point, pnt_scale_normal);
+		BU_GET(point, struct pnt_scale_normal);
 		break;
 	    case RT_PNT_TYPE_COL_SCA_NRM:
-		BU_GETSTRUCT(point, pnt_color_scale_normal);
+		BU_GET(point, struct pnt_color_scale_normal);
 		break;
 	}
 
@@ -492,7 +487,8 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 			return GED_ERROR;
 		    }
 		} else {
-		    if ((temp_char_ptr = strchr("0123456789.+-eE", buf)) != NULL) {
+		    temp_char_ptr = strchr("0123456789.+-eE", buf);
+		    if (temp_char_ptr != NULL) {
 			/* character read is part of a double */
 			current_character_double = 1;
 		    } else {
@@ -502,6 +498,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 
 		if (previous_character_double && current_character_double) {
 		    if (temp_string_index >= temp_string_size) {
+			fclose(fp);
 			bu_vls_printf(gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
 			bu_vls_printf(gedp->ged_result_str, "String representing double too large, exceeds '%d' character limit. ", temp_string_size - 1);
 			report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double,
@@ -516,6 +513,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 
 		if (previous_character_double && !current_character_double) {
 		    if (temp_string_index >= temp_string_size) {
+			fclose(fp);
 			bu_vls_printf(gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
 			bu_vls_printf(gedp->ged_result_str, "String representing double too large, exceeds '%d' character limit. ", temp_string_size - 1);
 			report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double,
@@ -530,6 +528,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 		    if (format != '?') {
 			temp_double = strtod(temp_string, &endp);
 			if (!((endp != temp_string) && (*endp == '\0'))) {
+			    fclose(fp);
 			    bu_vls_printf(gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
 			    bu_vls_printf(gedp->ged_result_str, "Unable to convert string '%s' to double. ", temp_string);
 			    report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double,

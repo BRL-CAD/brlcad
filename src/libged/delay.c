@@ -1,7 +1,7 @@
 /*                         D E L A Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,10 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#ifdef HAVE_SYS_SELECT_H
-#  include <sys/select.h>
-#endif
-
+#include "bselect.h"
 #include "bio.h"
 
 #include "./ged_private.h"

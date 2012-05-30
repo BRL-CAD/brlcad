@@ -1,7 +1,7 @@
 /*                        B R L C A D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
  *  Convenience header for the core BRL-CAD libraries
  *
  *  This header includes the headers provided by libbu, libbn, libwdb,
- *  and librt.  It may be used in leu of including all of the
+ *  and librt.  It may be used in lieu of including all of the
  *  individual headers.
  *
  */

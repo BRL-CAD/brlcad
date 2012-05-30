@@ -15,12 +15,7 @@ EXTRA_DIST = \
 	tests \
 	win \
 	CMakeLists.txt \
-	CMake/CheckCFileRuns.cmake \
-	CMake/CheckPrototypeExists.cmake \
-	CMake/CheckSystemFunctionality.cmake \
-	CMake/ResolveCompilerPaths.cmake \
-	CMake/ac_std_funcs.cmake \
-	CMake/tcl.cmake
+	CMake
 
 DISTCLEANFILES = pkgIndex.tcl
 

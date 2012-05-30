@@ -45,7 +45,7 @@
 	lighting model. Select the plastic shader and set the color to a medium
 	shade of green. The dialog in the Command Window should appear as follows:
 	
-	<command><prompt>mged&gt;</prompt> mater mug.r[Enter]</command>
+	<userinput><prompt>mged&gt;</prompt> mater mug.r[Enter]</userinput>
       </para>
       
       <literallayout class="normal">

@@ -1,7 +1,7 @@
 /*                       P I X - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2011 United States Government as represented by
+ * Copyright (c) 1998-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,10 +33,9 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
+#include <zlib.h>
+#include <png.h>
 #include "bio.h"
-
-#include "zlib.h"
-#include "png.h"
 
 #include "bu.h"
 #include "vmath.h"

@@ -1,7 +1,7 @@
 /*                A N I M _ H A R D T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -313,6 +313,9 @@ main(int argc, char *argv[])
     FILE *stream;
     int last_frame;
 
+    VSETALL(p1, 0.0);
+    VSETALL(p2, 0.0);
+    VSETALL(p3, 0.0);
     VSETALL(zero, 0.0);
     VSETALL(to_track, 0.0);
     VSETALL(centroid, 0.0);
@@ -345,7 +348,7 @@ main(int argc, char *argv[])
 	fprintf(stderr, "Anim_hardtrack: Could not open file %s.\n", *(argv+bu_optind));
 	return 0;
     }
-    num_wheels = -1;
+
     if (!ZERO(radius)) {
 	while (!feof(stream)) {
 	    count = fscanf(stream, "%*f %*f %*f");

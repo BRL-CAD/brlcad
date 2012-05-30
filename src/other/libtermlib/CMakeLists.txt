@@ -1,32 +1,48 @@
 IF(NOT MSVC)
 
-SET(LIBTERMLIB_PRIVATE_HDRS
-	termcap.h
-)
+  SET(LIBTERMLIB_PRIVATE_HDRS
+    termcap.h
+    )
 
 
-SET(LIBTERM_SOURCES
-	termcap.c
-	tgoto.c
-	tputs.c
-)
+  SET(LIBTERM_SOURCES
+    termcap.c
+    tgoto.c
+    tputs.c
+    )
 
-add_definitions(
-   -DCM_N
-	-DCM_GT
-	-DCM_B
-	-DCM_D
-	-DB_TERMCAP=\"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/etc/termcap\"
-)
+  add_definitions(
+    -DCM_N
+    -DCM_GT
+    -DCM_B
+    -DCM_D
+    -DB_TERMCAP=\"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/etc/termcap\"
+    )
 
-add_library(termlib SHARED ${LIBTERM_SOURCES})
-INSTALL(TARGETS termlib DESTINATION ${LIB_DIR})
+  add_library(termlib SHARED ${LIBTERM_SOURCES})
+  install(TARGETS termlib
+	  RUNTIME DESTINATION ${BIN_DIR}
+	  LIBRARY DESTINATION ${LIB_DIR}
+	  ARCHIVE DESTINATION ${LIB_DIR})
 
-add_library(termlib-static STATIC ${LIBTERM_SOURCES})
-INSTALL(TARGETS termlib-static ARCHIVE DESTINATION ${LIB_DIR})
-SET_TARGET_PROPERTIES(termlib-static PROPERTIES OUTPUT_NAME "termlib")
+  add_library(termlib-static STATIC ${LIBTERM_SOURCES})
+  install(TARGETS termlib-static
+	  RUNTIME DESTINATION ${BIN_DIR}
+	  LIBRARY DESTINATION ${LIB_DIR}
+	  ARCHIVE DESTINATION ${LIB_DIR})
+  
+  SET_TARGET_PROPERTIES(termlib-static PROPERTIES OUTPUT_NAME "termlib")
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/termcap.src ${CMAKE_BINARY_DIR}/${DATA_DIR}/etc/termcap COPYONLY)
-INSTALL(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/etc/termcap DESTINATION ${DATA_DIR}/etc)
+  if (NOT CMAKE_CONFIGURATION_TYPES)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/termcap.src ${CMAKE_BINARY_DIR}/${DATA_DIR}/etc/termcap COPYONLY)
+    INSTALL(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/etc/termcap DESTINATION ${DATA_DIR}/etc)
+  else (NOT CMAKE_CONFIGURATION_TYPES)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/termcap.src ${CMAKE_BINARY_DIR}/${CFG_TYPE_UPPER}/${DATA_DIR}/etc/termcap COPYONLY)
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	 INSTALL(FILES ${CMAKE_BINARY_DIR}/\${BUILD_TYPE}/${DATA_DIR}/etc/termcap DESTINATION ${DATA_DIR}/etc)
+  endif (NOT CMAKE_CONFIGURATION_TYPES)
+
 
 ENDIF(NOT MSVC)

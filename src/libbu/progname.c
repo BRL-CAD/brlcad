@@ -1,7 +1,7 @@
 /*                      P R O G N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ static char bu_progname[MAXPATHLEN] = {0};
  * be acquired/set.
  */
 HIDDEN const char *
-_bu_ipwd()
+progname_ipwd()
 {
     /* private stash */
     static const char *ipwd = NULL;
@@ -105,13 +105,13 @@ _bu_ipwd()
 
 
 HIDDEN const char *
-_bu_argv0(void)
+progname_argv0(void)
 {
     /* private stash */
     static const char *argv0 = NULL;
 
     /* FIXME: this is temporary until bu_getcwd() is working. */
-    (void)_bu_ipwd();
+    (void)progname_ipwd();
 
     if (bu_argv0_buffer[0] != '\0') {
 	argv0 = bu_argv0_buffer;
@@ -125,7 +125,7 @@ _bu_argv0(void)
 #endif
 
     if (!argv0) {
-	argv0 = "(unknown)";
+	argv0 = "(BRL-CAD)";
     }
 
     return argv0;
@@ -137,10 +137,10 @@ bu_argv0_full_path(void)
 {
     static char buffer[MAXPATHLEN] = {0};
 
-    const char *argv0 = _bu_argv0();
+    const char *argv0 = progname_argv0();
 
     /* FIXME: this is temporary until bu_getcwd() is working. */
-    const char *ipwd = _bu_ipwd();
+    const char *ipwd = progname_ipwd();
 
     const char *which = bu_which(argv0);
 
@@ -163,7 +163,7 @@ bu_argv0_full_path(void)
 
     /* running from relative dir */
     snprintf(buffer, MAXPATHLEN, "%s%c%s", ipwd, BU_DIR_SEPARATOR, argv0);
-    if (bu_file_exists(buffer)) {
+    if (bu_file_exists(buffer, NULL)) {
 	return buffer;
     }
 
@@ -183,7 +183,7 @@ bu_getprogname(void) {
 #endif
 
     if (!name) {
-	name = _bu_argv0();
+	name = progname_argv0();
     }
 
     tmp_basename = bu_basename(name);
@@ -214,7 +214,7 @@ bu_setprogname(const char *argv0)
     }
 
     /* FIXME: this is temporary until bu_getcwd() is working. */
-    (void)_bu_ipwd();
+    (void)progname_ipwd();
 
     return;
 }
@@ -224,7 +224,7 @@ bu_setprogname(const char *argv0)
 const char *
 bu_argv0(void)
 {
-    return _bu_argv0();
+    return progname_argv0();
 }
 
 

@@ -1,7 +1,7 @@
 /*                         S E T _ T R A N S P A R E N C Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -96,6 +96,9 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
 
 	    /* found a match */
 	    sp->s_transparency = transparency;
+
+	    if (gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
+		(*gedp->ged_create_vlist_callback)(sp);
 	}
 
 	gdlp = next_gdlp;

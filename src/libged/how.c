@@ -1,7 +1,7 @@
 /*                         H O W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -136,9 +136,7 @@ _ged_build_dpp(struct ged *gedp,
     int ac;
     const char **av;
     const char **av_orig = NULL;
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     /*
      * First, build an array of the object's path components.

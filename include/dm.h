@@ -1,7 +1,7 @@
 /*                          D M . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,17 +38,16 @@
 #  include "fbserv_obj.h"
 #endif
 
-
 #ifndef DM_EXPORT
-#if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#  ifdef DM_EXPORT_DLL
+#  if defined(DM_DLL_EXPORTS) && defined(DM_DLL_IMPORTS)
+#    error "Only DM_DLL_EXPORTS or DM_DLL_IMPORTS can be defined, not both."
+#  elif defined(DM_DLL_EXPORTS)
 #    define DM_EXPORT __declspec(dllexport)
-#  else
+#  elif defined(DM_DLL_IMPORTS)
 #    define DM_EXPORT __declspec(dllimport)
+#  else
+#    define DM_EXPORT
 #  endif
-#else
-#  define DM_EXPORT
-#endif
 #endif
 
 #define DM_NULL (struct dm *)NULL
@@ -246,8 +245,9 @@ struct dm {
     int (*dm_debug)();		/**< @brief Set DM debug level */
     int (*dm_beginDList)();
     int (*dm_endDList)();
-    int (*dm_drawDList)();
+    void (*dm_drawDList)();
     int (*dm_freeDLists)();
+    int (*dm_genDLists)();
     int (*dm_getDisplayImage)(struct dm *dmp, unsigned char **image);
     void (*dm_reshape)();
     unsigned long dm_id;          /**< @brief window id */
@@ -288,25 +288,6 @@ struct dm {
 };
 
 
-/**
- * D M _ O B J
- *@brief
- * A display manager object is used for interacting with a display manager.
- */
-struct dm_obj {
-    struct bu_list l;
-    struct bu_vls dmo_name;		/**< @brief display manager object name/cmd */
-    struct dm *dmo_dmp;		/**< @brief display manager pointer */
-#ifdef USE_FBSERV
-    struct fbserv_obj dmo_fbs;		/**< @brief fbserv object */
-#endif
-    struct bu_observer dmo_observers;		/**< @brief fbserv observers */
-    mat_t viewMat;
-    int (*dmo_drawLabelsHook)();
-    void *dmo_drawLabelsHookClientData;
-};
-
-
 #define DM_OPEN(_interp, _type, _argc, _argv) dm_open(_interp, _type, _argc, _argv)
 #define DM_CLOSE(_dmp) _dmp->dm_close(_dmp)
 #define DM_DRAW_BEGIN(_dmp) _dmp->dm_drawBegin(_dmp)
@@ -316,7 +297,7 @@ struct dm_obj {
 #define DM_DRAW_STRING_2D(_dmp, _str, _x, _y, _size, _use_aspect) _dmp->dm_drawString2D(_dmp, _str, _x, _y, _size, _use_aspect)
 #define DM_DRAW_LINE_2D(_dmp, _x1, _y1, _x2, _y2) _dmp->dm_drawLine2D(_dmp, _x1, _y1, _x2, _y2)
 #define DM_DRAW_LINE_3D(_dmp, _pt1, _pt2) _dmp->dm_drawLine3D(_dmp, _pt1, _pt2)
-#define DM_DRAW_LINES_3D(_dmp, _npoints, _points) _dmp->dm_drawLines3D(_dmp, _npoints, _points)
+#define DM_DRAW_LINES_3D(_dmp, _npoints, _points, _sflag) _dmp->dm_drawLines3D(_dmp, _npoints, _points, _sflag)
 #define DM_DRAW_POINT_2D(_dmp, _x, _y) _dmp->dm_drawPoint2D(_dmp, _x, _y)
 #define DM_DRAW_POINT_3D(_dmp, _pt) _dmp->dm_drawPoint3D(_dmp, _pt)
 #define DM_DRAW_POINTS_3D(_dmp, _npoints, _points) _dmp->dm_drawPoints3D(_dmp, _npoints, _points)
@@ -335,8 +316,9 @@ struct dm_obj {
 #define DM_DEBUG(_dmp, _lvl) _dmp->dm_debug(_dmp, _lvl)
 #define DM_BEGINDLIST(_dmp, _list) _dmp->dm_beginDList(_dmp, _list)
 #define DM_ENDDLIST(_dmp) _dmp->dm_endDList(_dmp)
-#define DM_DRAWDLIST(_dmp, _list) _dmp->dm_drawDList(_dmp, _list)
+#define DM_DRAWDLIST(_dmp, _list) _dmp->dm_drawDList(_list)
 #define DM_FREEDLISTS(_dmp, _list, _range) _dmp->dm_freeDLists(_dmp, _list, _range)
+#define DM_GEN_DLISTS(_dmp, _range) _dmp->dm_genDLists(_dmp, _range)
 #define DM_GET_DISPLAY_IMAGE(_dmp, _image) _dmp->dm_getDisplayImage(_dmp, _image)
 
 DM_EXPORT extern struct dm dm_Null;
@@ -411,7 +393,7 @@ DM_EXPORT extern void dm_draw_grid(struct dm *dmp,
 /* labels.c */
 DM_EXPORT extern int dm_draw_labels(struct dm *dmp,
 				    struct rt_wdb *wdbp,
-				    char *name,
+				    const char *name,
 				    mat_t viewmat,
 				    int *labelsColor,
 				    int (*labelsHook)(),
@@ -444,7 +426,7 @@ DM_EXPORT extern const char *dm_version(void);
     HIDDEN int _dmtype##_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect); \
     HIDDEN int _dmtype##_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2); \
     HIDDEN int _dmtype##_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2); \
-    HIDDEN int _dmtype##_drawLines3D(struct dm *dmp, int npoints, point_t *points); \
+    HIDDEN int _dmtype##_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag); \
     HIDDEN int _dmtype##_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y); \
     HIDDEN int _dmtype##_drawPoint3D(struct dm *dmp, point_t point); \
     HIDDEN int _dmtype##_drawPoints3D(struct dm *dmp, int npoints, point_t *points); \

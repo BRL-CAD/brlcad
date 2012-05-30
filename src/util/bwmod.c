@@ -1,7 +1,7 @@
 /*                         B W M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -145,13 +145,17 @@ get_args(int argc, char **argv)
 	    return 0;
 	file_name = "-";
     } else {
+	char *ifname;
 	file_name = argv[bu_optind];
-	if (freopen(file_name, "rb", stdin) == NULL) {
+	ifname = bu_realpath(file_name, NULL);
+	if (freopen(ifname, "rb", stdin) == NULL) {
 	    (void)fprintf(stderr,
-			  "bwmod: cannot open \"%s\" for reading\n",
-			  file_name);
+			  "bwmod: cannot open \"%s(canonical %s)\" for reading\n",
+			  file_name,ifname);
+	    bu_free(ifname,"ifname alloc from bu_realpath");
 	    return 0;
 	}
+	bu_free(ifname,"ifname alloc from bu_realpath");
     }
     
     if (argc > ++bu_optind)
@@ -251,6 +255,8 @@ int main(int argc, char **argv)
 	/* translate */
 	for (p = ibuf, q = &ibuf[n]; p < q; ++p) {
 	    long i = *p;
+	    if (i < 0)
+		i = 0;
 	    if (i >= MAPBUFLEN)
 		*p = i = MAPBUFLEN;
 

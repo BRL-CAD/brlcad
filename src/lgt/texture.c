@@ -1,7 +1,7 @@
 /*                       T E X T U R E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -122,6 +122,7 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 	 != ITEMS_WIDE*hgt )
     {
 	bu_log( "Read of icon texture map failed.\n" );
+        fclose(iconfp);
 	return	NULL;
     }
     iconp =	(struct icon_texture *) bu_malloc( sizeof( struct icon_texture ), "iconp" );

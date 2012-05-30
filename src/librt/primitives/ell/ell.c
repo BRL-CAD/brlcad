@@ -1,7 +1,7 @@
 /*                           E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -185,8 +185,7 @@ rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 
     /* Try a shortcut - if this is a sphere, the calculation simpifies */
     /* Check whether |A|, |B|, and |C| are nearly equal */
-    if (!(fabs(magsq_a - magsq_b) > 0.0001
-		|| fabs(magsq_a - magsq_c) > 0.0001)) {
+    if (EQUAL(magsq_a, magsq_b) && EQUAL(magsq_a, magsq_c)) {
 	fastf_t sph_rad = sqrt(magsq_a);
 	(*min)[X] = eip->v[X] - sph_rad;
 	(*max)[X] = eip->v[X] + sph_rad;
@@ -320,7 +319,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     /* Solid is OK, compute constant terms now */
-    BU_GETSTRUCT(ell, ell_specific);
+    BU_GET(ell, struct ell_specific);
     stp->st_specific = (genptr_t)ell;
 
     VMOVE(ell->ell_V, eip->v);
@@ -1704,19 +1703,19 @@ rt_ell_params(struct pc_pc_set *UNUSED(pcs), const struct rt_db_internal *UNUSED
     pcs->ps = bu_calloc(pcs->n_params, sizeof (struct pc_param), "pc_param");
     pcs->cs = bu_calloc(pcs->n_constraints, sizeof (struct pc_constrnt), "pc_constrnt");
 
-    strcpy(pcs->ps[0].pname, "V");
+    bu_vls_strcpy(&(pcs->ps[0].name), "V");
     pcs->ps[0].ptype = pc_point;
     pcs->ps[0].pval.pointp = (pointp_t) &(eip->v);
 
-    strcpy(pcs->ps[1].pname, "A");
+    bu_vls_strcpy(&(pcs->ps[1].name), "A");
     pcs->ps[1].ptype = pc_vector;
     pcs->ps[1].pval.vectorp = (vectp_t) &(eip->a);
 
-    strcpy(pcs->ps[2].pname, "B");
+    bu_vls_strcpy(&(pcs->ps[2].name), "B");
     pcs->ps[2].ptype = pc_vector;
     pcs->ps[2].pval.vectorp = (vectp_t)  &(eip->b);
 
-    strcpy(pcs->ps[3].pname, "C");
+    bu_vls_strcpy(&(pcs->ps[3].name), "C");
     pcs->ps[3].ptype = pc_value;
     pcs->ps[3].pval.vectorp = (vectp_t) &(eip->c);
 #endif
@@ -1761,6 +1760,115 @@ ell_angle(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
     } else
 	return(acos(VDOT(p0, p1)
 		    / (MAGNITUDE(p0) * MAGNITUDE(p1))));
+}
+
+
+/**
+ * R T _ E L L _ V O L U M E
+ *
+ * Computes volume of a ellipsoid.
+ */
+void
+rt_ell_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    fastf_t mag_a, mag_b, mag_c;
+    struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    mag_a = MAGNITUDE(eip->a);
+    mag_b = MAGNITUDE(eip->b);
+    mag_c = MAGNITUDE(eip->c);
+    *volume = (4.0/3.0) * M_PI * mag_a*mag_b*mag_c;
+}
+
+
+/**
+ * R T _ E L L _ C E N T R O I D
+ *
+ * Computes centroid of an ellipsoid
+ */
+void
+rt_ell_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+    VMOVE(*cent,eip->v);
+}
+
+
+/**
+ * E L L _ O B L Used to calculate surface area for Oblate spheroids
+ */
+HIDDEN void
+ell_obl(fastf_t a, fastf_t c, fastf_t *ell_sfa)
+{
+    fastf_t e, e2, a2, c2;
+    a2 = a * a;
+    c2 = c * c;
+    e2 = 1.0 - (c2 / a2);
+    e = sqrt(e2);
+    *ell_sfa = (2.0 * M_PI * a2) + (M_PI * (c2 / e) * log((1.0 + e) / (1.0 - e)));
+}
+
+
+/**
+ * E L L _ P R O Used to calculate surface area for Prolate spheroids
+ */
+HIDDEN void
+ell_pro(fastf_t a, fastf_t c, fastf_t *ell_sfa)
+{
+    fastf_t e, e2, a2, c2;
+    a2 = a * a;
+    c2 = c * c;
+    e2 = 1.0 - (a2 / c2);
+    e = sqrt(e2);
+    *ell_sfa = (2.0 * M_PI * a2) + (2.0 * M_PI * ((a * c) / e) * asin(e));
+}
+
+
+/*
+* R T _ E L L _ S F A
+*
+* Used to calculate and return surface area of an ellipsoid
+*/
+int
+rt_ell_sfa(struct rt_db_internal *ip, fastf_t *ell_sfa)
+{
+    fastf_t mag_a, mag_b, mag_c;
+
+    struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    mag_a = MAGNITUDE(eip->a);
+    mag_b = MAGNITUDE(eip->b);
+    mag_c = MAGNITUDE(eip->c);
+
+    if (EQUAL(mag_a, mag_c)) {
+	if (EQUAL(mag_a, mag_b)) {
+	    *ell_sfa = 4.0 * M_PI * mag_a * mag_a; /* Sphere */
+	} else if (mag_b < mag_a) {
+	    ell_obl(mag_a, mag_b, ell_sfa); /* Oblate with A=C, and A<B */
+	} else if (mag_b > mag_a) {
+	    ell_pro(mag_a, mag_b, ell_sfa); /* Prolate with A=C, and A>B */
+	}
+    } else if (EQUAL(mag_a, mag_b)) {
+	if (mag_c < mag_a) {
+	    ell_obl(mag_a, mag_c, ell_sfa); /* Oblate with A=B, and A>C */
+	} else if (mag_c > mag_a) {
+	    ell_pro(mag_a, mag_c, ell_sfa); /* Prolate with A=B, and A<C */
+	}
+    } else if (EQUAL(mag_b, mag_c)) {
+	if (mag_a < mag_b) {
+	    ell_obl(mag_b, mag_a, ell_sfa); /* Oblate with B=C, and B>A */
+	} else if (mag_a > mag_b) {
+	    ell_pro(mag_b, mag_a, ell_sfa); /* Prolate with B=C, and B<A */
+	}
+    } else {
+	return 1; /* a != b != c Triaxial Ellipsoid, function can't solve */
+    }
+
+    return 0; /* OK */
+
 }
 
 

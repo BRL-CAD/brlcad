@@ -1,7 +1,7 @@
 /*                      D B 5 _ S C A N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup db5 */
-/** @{ */
-/** @file librt/db5_scan.c
- *
- * Scan a v5 database, sending each object off to a handler.
- *
- */
 
 #include "common.h"
 
@@ -38,13 +31,6 @@
 #include "raytrace.h"
 
 
-/**
- * D B 5 _ S C A N
- *
- * Returns -
- * 0 Success
- * -1 Fatal Error
- */
 int
 db5_scan(
     struct db_i *dbip,
@@ -106,7 +92,11 @@ db5_scan(
 	    (*handler)(dbip, &raw, addr, client_data);
 	    nrec++;
 	    if (raw.buf) {
+#if 1
+                bu_pool_put((void *)raw.buf, (size_t)raw.object_length);
+#else
 		bu_free(raw.buf, "raw v5 object");
+#endif 
 		raw.buf = NULL;
 	    }
 	}
@@ -136,11 +126,10 @@ db_diradd5(
 {
     struct directory **headp;
     register struct directory *dp;
-    struct bu_vls local;
+    struct bu_vls local = BU_VLS_INIT_ZERO;
 
     RT_CK_DBI(dbip);
 
-    bu_vls_init(&local);
     bu_vls_strcpy(&local, name);
     if (db_dircheck(dbip, &local, 0, &headp) < 0) {
 	bu_vls_free(&local);
@@ -205,7 +194,7 @@ db5_diradd(struct db_i *dbip,
 {
     struct directory **headp;
     register struct directory *dp;
-    struct bu_vls local;
+    struct bu_vls local = BU_VLS_INIT_ZERO;
 
     RT_CK_DBI(dbip);
 
@@ -213,7 +202,6 @@ db5_diradd(struct db_i *dbip,
 	bu_log("WARNING: db5_diradd() received non-NULL client_data\n");
     }
 
-    bu_vls_init(&local);
     bu_vls_strcpy(&local, (const char *)rip->name.ext_buf);
     if (db_dircheck(dbip, &local, 0, &headp) < 0) {
 	bu_vls_free(&local);
@@ -279,9 +267,7 @@ db5_diradd(struct db_i *dbip,
 }
 
 
-/**
- * D B 5 _ D I R A D D _ H A N D L E R
- *
+/*
  * In support of db5_scan, add a named entry to the directory.
  */
 HIDDEN void
@@ -314,22 +300,6 @@ db5_diradd_handler(
 }
 
 
-/**
- * D B _ D I R B U I L D
- *
- * A generic routine to determine the type of the database, (v4 or v5)
- * and to invoke the appropriate db_scan()-like routine to build the
- * in-memory directory.
- *
- * It is the caller's responsibility to close the database in case of
- * error.
- *
- * Called from rt_dirbuild(), and g_submodel.c
- *
- * Returns -
- * 0 OK
- * -1 failure
- */
 int
 db_dirbuild(struct db_i *dbip)
 {
@@ -477,7 +447,6 @@ db_version(struct db_i *dbip)
 }
 
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -1,7 +1,7 @@
 /*                 BSplineSurface.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,29 +43,22 @@ protected:
 	int u_degree;
 	int v_degree;
 	LIST_OF_LIST_OF_POINTS *control_points_list;
-#ifdef YAYA
 	B_spline_surface_form surface_form;
 	Logical u_closed;
 	Logical v_closed;
 	Logical self_intersect;
-#else
-	int surface_form;
-	int u_closed;
-	int v_closed;
-	int self_intersect;
-#endif
 
 public:
 	BSplineSurface();
 	virtual ~BSplineSurface();
 	BSplineSurface(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual void Print(int level);
 	string Form();
 
 	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
 };
 
 #endif /* BSPLINESURFACE_H_ */

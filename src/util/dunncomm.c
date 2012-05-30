@@ -1,7 +1,7 @@
 /*                      D U N N C O M M . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,6 +39,7 @@
 #  include <sys/ioctl_compat.h>
 #  define OCRNL 0000010
 #endif
+#include "bselect.h"
 #include "bio.h"
 
 /*
@@ -111,16 +112,15 @@ dunnopen(void)
     /* open the camera device */
 
 #ifdef HAVE_TERMIOS_H
-    if ((fd = open("/dev/camera", O_RDWR | O_NONBLOCK)) < 0)
+	if ((fd = open("/dev/camera", O_RDWR | O_NONBLOCK)) < 0)
 #else
 	if ((fd = open("/dev/camera", O_RDWR | O_NDELAY)) < 0)
 #endif
 	{
-	    close(fd);
 	    bu_exit(10, "\007dunnopen: can't open /dev/camera\n");
 	}
 #ifdef HAVE_TERMIOS_H
-    if (tcgetattr(fd, &tty) < 0)
+	if (tcgetattr(fd, &tty) < 0)
 #else
 	if (ioctl(fd, TCGETA, &tty) < 0)
 #endif

@@ -1,7 +1,7 @@
 /*                          I F _ X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2011 United States Government as represented by
+ * Copyright (c) 1988-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -525,7 +525,7 @@ x_setup(FBIO *ifp, int width, int height)
 
 
 HIDDEN int
-X_open_fb(FBIO *ifp, char *file, int width, int height)
+X_open_fb(FBIO *ifp, const char *file, int width, int height)
 {
     int fd;
     int mode;
@@ -543,13 +543,13 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
     mode = MODE_1LINGERING;
 
     if (file != NULL) {
-	register char *cp;
+	const char *cp;
 	char modebuf[80];
 	char *mp;
 	int alpha;
 	struct modeflags *mfp;
 
-	if (strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
+	if (bu_strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
 	    /* How did this happen?? */
 	    mode = 0;
 	} else {
@@ -639,10 +639,13 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
     }
     if ((bitbuf = (unsigned char *)calloc(1, (width*height)/8)) == NULL) {
 	fb_log("X_open_fb: bitbuf malloc failed\n");
+        free(bytebuf);
 	return -1;
     }
     if ((scanbuf = (unsigned char *)calloc(1, width)) == NULL) {
 	fb_log("X_open_fb: scanbuf malloc failed\n");
+        free(bytebuf);
+        free(bitbuf);
 	return -1;
     }
     XI(ifp)->bytebuf = bytebuf;
@@ -1157,7 +1160,7 @@ X_wmap(FBIO *ifp, const ColorMap *cmp)
     /* Hack to save it into a file - this may go away */
     if (is_linear) {
 	/* no file => linear map */
-	(void) unlink(TMP_FILE);
+	bu_file_delete(TMP_FILE);
     } else {
 	/* save map for later */
 	i=creat(TMP_FILE, 0666);
@@ -1177,8 +1180,9 @@ X_wmap(FBIO *ifp, const ColorMap *cmp)
     if (XI(ifp)->depth != 8)
 	return 0;	/* no X colormap allocated - XXX */
 
-    /* If MODE_2_8BIT, load it in the real window colormap */
-    if ((XI(ifp)->mode&MODE_2MASK) == MODE_2_8BIT) {
+    /* If MODE_2_8BIT, load it in the real window colormap.  If
+     * is_linear is true, cmp will not be populated - do nothing. */
+    if ((XI(ifp)->mode&MODE_2MASK) == MODE_2_8BIT && !is_linear) {
 	for (i = 0; i < 256; i++) {
 	    /* Both sides expect 16-bit left-justified maps */
 	    color_defs[i].pixel = i;
@@ -1372,14 +1376,14 @@ x_make_cursor(FBIO *ifp)
     XSetWindowAttributes xswa;
 
     if (ifp) {
-	FB_CK_FBIO(ifp);
-    }
+      FB_CK_FBIO(ifp);
 
-    xswa.save_under = True;
-    XI(ifp)->curswin = XCreateWindow(XI(ifp)->dpy, XI(ifp)->win,
-				     ifp->if_xcenter, ifp->if_ycenter, 1, 1, 3,
-				     CopyFromParent, InputOutput, CopyFromParent,
-				     CWSaveUnder, &xswa);
+      xswa.save_under = True;
+      XI(ifp)->curswin = XCreateWindow(XI(ifp)->dpy, XI(ifp)->win,
+	  ifp->if_xcenter, ifp->if_ycenter, 1, 1, 3,
+	  CopyFromParent, InputOutput, CopyFromParent,
+	  CWSaveUnder, &xswa);
+    }
     return 0;
 }
 

@@ -1,7 +1,7 @@
 /*                           P K G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,7 +67,6 @@
 #endif
 
 
-
 /* Not all systems with "BSD Networking" include UNIX Domain sockets */
 #ifdef HAVE_SYS_UN_H
 #  include <sys/un.h>		/* UNIX Domain sockets */
@@ -88,6 +87,25 @@
 
 #include <errno.h>
 #include "pkg.h"
+
+
+/* compatibility for pedantic bug/limitation in gcc 4.6.2, need to
+ * mark macros as extensions else they may emit "ISO C forbids
+ * braced-groups within expressions" warnings.
+ */
+#if defined(__extension__) && GCC_PREREQ(4, 6) && !GCC_PREREQ(4, 7)
+
+#  if defined(FD_SET) && defined(__FD_SET)
+#    undef FD_SET
+#    define FD_SET(x, y) __extension__ __FD_SET((x), (y))
+#  endif
+
+#  if defined(FD_ISSET) && defined(__FD_ISSET)
+#    undef FD_ISSET
+#    define FD_ISSET(x, y) __extension__ __FD_ISSET((x), (y))
+#  endif
+
+#endif /* __extension__ */
 
 
 /* XXX is this really necessary?  the _read() and _write()
@@ -320,9 +338,9 @@ _pkg_ck_debug(void)
 	place = buf;
     }
     /* Named file must exist and be writeable */
-    if (stat(place, &sbuf) != 0)
-	return;
     if ((_pkg_debug = fopen(place, "a")) == NULL)
+	return;
+    if (fstat(fileno(_pkg_debug), &sbuf) < 0)
 	return;
 
     /* Log version number of this code */
@@ -416,6 +434,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 	/* UNIX Domain socket, port = pathname */
 	sunhim.sun_family = AF_UNIX;
 	strncpy(sunhim.sun_path, service, sizeof(sunhim.sun_path));
+	sunhim.sun_path[sizeof(sunhim.sun_path) - 1] = '\0';
 	addr = (struct sockaddr *) &sunhim;
 	addrlen = strlen(sunhim.sun_path) + 2;
 	goto ready;
@@ -533,6 +552,9 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     int on = 1;
 #endif
 
+    if (service == NULL) 
+      return -1;
+
     _pkg_ck_debug();
     if (_pkg_debug) {
 	_pkg_timestamp();
@@ -600,9 +622,10 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     memset((char *)&sinme, 0, sizeof(sinme));
 
 #  ifdef HAVE_SYS_UN_H
-    if (service != NULL && service[0] == '/') {
+    if (service[0] == '/') {
 	/* UNIX Domain socket */
 	strncpy(sunme.sun_path, service, sizeof(sunme.sun_path));
+	sunme.sun_path[sizeof(sunme.sun_path) - 1] = '\0';
 	sunme.sun_family = AF_UNIX;
 	addr = (struct sockaddr *) &sunme;
 	addrlen = strlen(sunme.sun_path) + 2;
@@ -1468,10 +1491,15 @@ pkg_bwaitfor (int type, struct pkg_conn *pc)
 	return (char *)0;
 
     /* Read the whole message into the dynamic buffer */
-    if ((i = _pkg_inget(pc, pc->pkc_buf, pc->pkc_len)) != pc->pkc_len) {
+    if (pc->pkc_buf != (char *)0) {
+      if ((i = _pkg_inget(pc, pc->pkc_buf, pc->pkc_len)) != pc->pkc_len) {
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
-		 "pkg_bwaitfor: _pkg_inget %ld gave %ld\n", (long)pc->pkc_len, (long)i);
+	    "pkg_bwaitfor: _pkg_inget %ld gave %ld\n", (long)pc->pkc_len, (long)i);
 	(pc->pkc_errlog)(_pkg_errbuf);
+      } 
+    } else {
+      snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_bwaitfor: tried to read from null pc->pkc_buf!\n");
+      return (char *)0;
     }
     tmpbuf = pc->pkc_buf;
     pc->pkc_buf = (char *)0;

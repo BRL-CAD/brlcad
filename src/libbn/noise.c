@@ -1,7 +1,7 @@
 /*                         N O I S E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -469,8 +469,6 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
 	    etbl = (struct fbm_spec *)bu_calloc(etbl_size = 10,
 						sizeof(struct fbm_spec),
 						"spectral weights table");
-
-	if (!etbl) abort();
     }
 
     /* set up the next available table */

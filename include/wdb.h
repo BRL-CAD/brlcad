@@ -1,7 +1,7 @@
 /*                           W D B . H
  * BRL-CAD
  *
- * Copyright (c) 1988-2011 United States Government as represented by
+ * Copyright (c) 1988-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,12 +44,12 @@
 __BEGIN_DECLS
 
 #ifndef WDB_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef WDB_EXPORT_DLL
-#      define WDB_EXPORT __declspec(dllexport)
-#    else
-#      define WDB_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(WDB_DLL_EXPORTS) && defined(WDB_DLL_IMPORTS)
+#    error "Only WDB_DLL_EXPORTS or WDB_DLL_IMPORTS can be defined, not both."
+#  elif defined(WDB_DLL_EXPORTS)
+#    define WDB_EXPORT __declspec(dllexport)
+#  elif defined(WDB_DLL_IMPORTS)
+#    define WDB_EXPORT __declspec(dllimport)
 #  else
 #    define WDB_EXPORT
 #  endif
@@ -73,6 +73,8 @@ struct wmember {
     mat_t wm_mat;	/**< @brief  FIXME: Should be a matp_t */
     char *wm_name;
 };
+#define WMEMBER_INIT_ZERO { BU_LIST_INIT_ZERO, 0, MAT_INIT_IDN, NULL }
+#define WMEMBER_INIT(x) { BU_LIST_INIT(&((x)->l)); (x)->wm_op = 0; MAT_IDN((x)->wm_mat); (x)->wm_name = NULL; }
 #define WMEMBER_NULL	((struct wmember *)0)
 #define WDB_CK_WMEMBER(_p)	BU_CKMAG(_p, WMEMBER_MAGIC, "wmember" );
 

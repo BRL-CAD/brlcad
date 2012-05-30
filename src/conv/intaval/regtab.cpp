@@ -1,7 +1,7 @@
 /*                    R E G T A B . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,10 +27,12 @@
  *	IABG mbH (Germany)
  */
 
+/* interface header */
+#include "regtab.h"
+
 #include <map>
 #include <iostream>
 
-#include "regtab.h"
 #include "glob.h"
 
 
@@ -43,7 +45,7 @@ int readMaterials(FILE *fp)
    char name[20];
    int mat;
 
-   if (fgets(title, LINELEN, fp) == NULL)
+   if (bu_fgets(title, LINELEN, fp) == NULL)
       return 1;
 
    char descr[LINELEN];

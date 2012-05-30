@@ -144,76 +144,6 @@ the location of this file.
         <!-- <value>ascii-hex</value> -->
       </filterList>
 
-      <fonts>
-
-
-        <!-- free fonts ============================================== -->
-        <font kerning="yes" 
-          embed-url="@srcdir@/resources/other/fonts/stix/STIXGeneral-Regular.ttf">
-          <font-triplet name="STIXGeneral" style="normal" weight="normal"/>
-        </font>
-        <font kerning="yes" 
-          embed-url="@srcdir@/resources/other/fonts/stix/STIXGeneral-Bold.ttf">
-          <font-triplet name="STIXGeneral" style="normal" weight="bold"/>
-        </font>
-        <font kerning="yes" 
-          embed-url="@srcdir@/resources/other/fonts/stix/STIXGeneral-Italic.ttf">
-          <font-triplet name="STIXGeneral" style="italic" weight="normal"/>
-        </font>
-        <font kerning="yes" 
-          embed-url="@srcdir@/resources/other/fonts/stix/STIXGeneral-BoldItalic.ttf">
-          <font-triplet name="STIXGeneral" style="italic" weight="bold"/>
-        </font>
-
-        <font kerning="yes" 
-          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans.ttf">
-          <font-triplet name="DejaVuLGCSans" style="normal" weight="normal"/>
-        </font>
-
-        <font kerning="yes" 
-          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans-Bold.ttf">
-          <font-triplet name="DejaVuLGCSans" style="normal" weight="bold"/>
-        </font>
-
-        <font kerning="yes" 
-          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans-Bold.ttf">
-          <font-triplet name="DejaVuLGCSans" style="normal" weight="700"/>
-        </font>
-
-        <font kerning="yes" 
-          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans-Oblique.ttf">
-          <font-triplet name="DejaVuLGCSans" style="oblique" weight="normal"/>
-        </font>
-
-        <font kerning="yes" 
-          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans-BoldOblique.ttf">
-          <font-triplet name="DejaVuLGCSans" style="oblique" weight="bold"/>
-        </font>
-
-        <font kerning="yes" 
-          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono.ttf">
-          <font-triplet name="DejaVuLGCSansMono" style="normal" weight="normal"/>
-        </font>
-
-        <font kerning="yes" 
-          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono-Bold.ttf">
-          <font-triplet name="DejaVuLGCSansMono" style="normal" weight="bold"/>
-        </font>
-
-        <font kerning="yes" 
-          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono-Bold.ttf">
-          <font-triplet name="DejaVuLGCSansMono" style="normal" weight="700"/>
-        </font>
-
-        <font kerning="yes" 
-          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono-Oblique.ttf">
-          <font-triplet name="DejaVuLGCSansMono" style="oblique" weight="normal"/>
-        </font>
-
-        <font kerning="yes" 
-          embed-url="@srcdir@/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono-BoldOblique.ttf">
-          <font-triplet name="DejaVuLGCSansMono" style="oblique" weight="bold"/>
-        </font>
 
         <!-- embedded fonts -->
         <!--
@@ -240,6 +170,76 @@ the location of this file.
 
         -->
 
+      <fonts>
+
+
+        <!-- free fonts ============================================== -->
+        <font kerning="yes" 
+          embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/stix/STIXGeneral-Regular.ttf">
+          <font-triplet name="STIXGeneral" style="normal" weight="normal"/>
+        </font>
+        <font kerning="yes" 
+          embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/stix/STIXGeneral-Bold.ttf">
+          <font-triplet name="STIXGeneral" style="normal" weight="bold"/>
+        </font>
+        <font kerning="yes" 
+          embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/stix/STIXGeneral-Italic.ttf">
+          <font-triplet name="STIXGeneral" style="italic" weight="normal"/>
+        </font>
+        <font kerning="yes" 
+          embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/stix/STIXGeneral-BoldItalic.ttf">
+          <font-triplet name="STIXGeneral" style="italic" weight="bold"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans.ttf">
+          <font-triplet name="DejaVuLGCSans" style="normal" weight="normal"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans-Bold.ttf">
+          <font-triplet name="DejaVuLGCSans" style="normal" weight="bold"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans-Bold.ttf">
+          <font-triplet name="DejaVuLGCSans" style="normal" weight="700"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans-Oblique.ttf">
+          <font-triplet name="DejaVuLGCSans" style="oblique" weight="normal"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSans-BoldOblique.ttf">
+          <font-triplet name="DejaVuLGCSans" style="oblique" weight="bold"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono.ttf">
+          <font-triplet name="DejaVuLGCSansMono" style="normal" weight="normal"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono-Bold.ttf">
+          <font-triplet name="DejaVuLGCSansMono" style="normal" weight="bold"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono-Bold.ttf">
+          <font-triplet name="DejaVuLGCSansMono" style="normal" weight="700"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono-Oblique.ttf">
+          <font-triplet name="DejaVuLGCSansMono" style="oblique" weight="normal"/>
+        </font>
+
+        <font kerning="yes" 
+          embed-url="@CMAKE_BINARY_DIR@/doc/docbook/resources/other/fonts/dejavu-lgc/ttf/DejaVuLGCSansMono-BoldOblique.ttf">
+          <font-triplet name="DejaVuLGCSansMono" style="oblique" weight="bold"/>
+        </font>
 
       </fonts>
 

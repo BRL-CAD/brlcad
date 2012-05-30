@@ -1,7 +1,7 @@
 /*                          P T B L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,7 +70,7 @@ bu_ptbl_ins(struct bu_ptbl *b, long int *p)
 
     if ((size_t)b->end >= b->blen) {
 	b->buffer = (long **)bu_realloc((char *)b->buffer,
-					sizeof(p)*(b->blen *= 4),
+					sizeof(long *)*(b->blen *= 4),
 					"bu_ptbl.buffer[] (ins)");
     }
 
@@ -242,8 +242,8 @@ bu_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
 
     BU_CK_PTBL(tbl);
 
-    bu_log("%s: bu_ptbl array with %d entries\n",
-	   title, tbl->end);
+    bu_log("%s: bu_ptbl array with %ld entries\n",
+	   title, (long int)tbl->end);
 
     if (!verbose)
 	return;

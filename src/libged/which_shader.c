@@ -1,7 +1,7 @@
 /*                         W H I C H _ S H A D E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ ged_which_shader(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    for (j=1; j<myArgc; j++) {
+    for (j = 1; j < myArgc; j++) {
 
 	if (!sflag)
 	    bu_vls_printf(gedp->ged_result_str, "Combination[s] with shader %s:\n", myArgv[j]);

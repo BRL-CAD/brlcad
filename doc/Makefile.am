@@ -221,7 +221,7 @@ man_MANS = \
 EXTRA_DIST = \
 	$(documentation_DATA) \
 	$(man_MANS) \
-        docbook \
+	docbook \
 	STARTERS \
 	pad_file.xml.in \
 	CMakeLists.txt

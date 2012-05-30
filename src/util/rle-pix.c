@@ -1,7 +1,7 @@
 /*                       R L E - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -130,7 +130,7 @@ get_args(int argc, char **argv)
 	infile = "-";
     }
     if (argv[bu_optind] != NULL) {
-	if (bu_file_exists(argv[bu_optind])) {
+	if (bu_file_exists(argv[bu_optind], NULL)) {
 	    bu_exit(1, "rle-pix: \"%s\" already exists.\n", argv[bu_optind]);
 	}
 	if ((outfp = fopen(argv[bu_optind], "w")) == NULL) {

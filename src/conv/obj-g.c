@@ -1,7 +1,7 @@
 /*                     O B J - G . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2011 United States Government as represented by
+ * Copyright (c) 2010-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,47 +62,67 @@
 #include "obj_parser.h"
 #include "tri_face.h"
 
-static char *usage =
-    "Usage: %s [options] input.obj output.g\n\n"
+static void
+usage(const char *argv0)
+{
 
-    "  -c\t\tContinue processing on nmg-bomb. Conversion will fall-back to\n"
-    "\t\tnative bot mode if a fatal error occurs when using the nmg or\n"
-    "\t\tbot via nmg modes.\n"
-    "  -d\t\tOutput debug info to stderr.\n"
-    "  -g grouping\tSelect which OBJ face grouping is used to create BRL-CAD\n"
-    "\t\tprimitives:\n"
-    "\t\t\tg = group (default)\n"
-    "\t\t\tm = material\n"
-    "\t\t\tn = none\n"
-    "\t\t\to = object\n"
-    "\t\t\tt = texture\n"
-    "  -h mm\t\tThickness used when a bot is not a closed volume and it's\n"
-    "\t\tconverted as a plate or plate-nocos bot.\n"
-    "  -i\t\tIgnore the normals defined in the input file when using native\n"
-    "\t\tbot conversion mode.\n"
-    "  -m mode\tSelect the conversion mode:\n"
-    "\t\t\tb = native bot (default)\n"
-    "\t\t\tn = nmg\n"
-    "\t\t\tv = bot via nmg\n"
-    "  -o type\tSelect the type used for bots that aren't closed volumes:\n"
-    "\t\t\tn = plate nocos\n"
-    "\t\t\tp = plate\n"
-    "\t\t\ts = surface (default)\n"
-    "  -p\t\tCreates a plot/overlay (.pl) file of open edges for bots that\n"
-    "\t\taren't closed volumes. <bot_name>.pl will be created in the\n"
-    "\t\tcurrent directory and will overwrite any exisiting file with the\n"
-    "\t\tsame name.\n"
-    "  -t mm\t\tDistance tolerance. Two vertices are considered to be the same\n"
-    "\t\tif they are within this distance of one another. Default is\n"
-    "\t\t.0005mm. You should not change this value without setting the\n"
-    "\t\traytracer tolerance to match it.\n"
-    "  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
-    "\t\tYou can also provide a custom conversion factor from file units\n"
-    "\t\tto mm.\n"
-    "  -v\t\tOut verbose user info to stderr. Each occurrance of this option\n"
-    "\t\tin the option list increases the verbosity level.\n"
-    "  -x flag\tSpecify rt debug flag bits (see raytrace.h).\n"
-    "  -X flag\tSpecify nmg debug flag bits (see nmg.h).\n";
+    bu_log("Usage: %s [options] input.obj output.g\n\n", argv0);
+
+    bu_log("  -c\t\tContinue processing on nmg-bomb. Conversion will fall-back to\n"
+	   "\t\tnative bot mode if a fatal error occurs when using the nmg or\n"
+	   "\t\tbot via nmg modes.\n"
+	);
+
+    bu_log("  -d\t\tOutput debug info to stderr.\n"
+	   "  -g grouping\tSelect which OBJ face grouping is used to create BRL-CAD\n"
+	   "\t\tprimitives:\n"
+	   "\t\t\tg = group (default)\n"
+	   "\t\t\tm = material\n"
+	   "\t\t\tn = none\n"
+	   "\t\t\to = object\n"
+	   "\t\t\tt = texture\n"
+	);
+
+    bu_log("  -h mm\t\tThickness used when a bot is not a closed volume and it's\n"
+	   "\t\tconverted as a plate or plate-nocos bot.\n"
+	   "  -i\t\tIgnore the normals defined in the input file when using native\n"
+	   "\t\tbot conversion mode.\n"
+	   "  -m mode\tSelect the conversion mode:\n"
+	   "\t\t\tb = native bot (default)\n"
+	   "\t\t\tn = nmg\n"
+	   "\t\t\tv = bot via nmg\n"
+	);
+
+    bu_log("  -o type\tSelect the type used for bots that aren't closed volumes:\n"
+	   "\t\t\tn = plate nocos\n"
+	   "\t\t\tp = plate\n"
+	   "\t\t\ts = surface (default)\n"
+	   "  -p\t\tCreates a plot/overlay (.pl) file of open edges for bots that\n"
+	   "\t\taren't closed volumes. <bot_name>.pl will be created in the\n"
+	   "\t\tcurrent directory and will overwrite any exisiting file with the\n"
+	   "\t\tsame name.\n"
+	   "  -r orient\tSelect the bot orientation mode:\n"
+	   "\t\t\t1 = unoriented (default)\n"
+	   "\t\t\t2 = ccw\n"
+	   "\t\t\t3 = cw\n"
+	);
+
+    bu_log("  -t mm\t\tDistance tolerance. Two vertices are considered to be the same\n"
+	   "\t\tif they are within this distance of one another. Default is\n"
+	   "\t\t.0005mm. You should not change this value without setting the\n"
+	   "\t\traytracer tolerance to match it.\n"
+	   "  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
+	   "\t\tYou can also provide a custom conversion factor from file units\n"
+	   "\t\tto mm.\n"
+	);
+
+    bu_log("  -v\t\tOut verbose user info to stderr. Each occurrence of this option\n"
+	   "\t\tin the option list increases the verbosity level (two levels currently).\n"
+	   "  -x flag\tSpecify rt debug flag bits (see raytrace.h).\n"
+	   "  -X flag\tSpecify nmg debug flag bits (see nmg.h).\n"
+	);
+}
+
 
 /* global definition */
 size_t *tmp_ptr = NULL;
@@ -1098,7 +1118,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 	    switch (face_type) {
 		case FACE_V:
 		    (*gfi)->index_arr_faces =
-			(void *)bu_calloc((*gfi)->max_faces, sizeof(arr_1D_t),
+			(void *)bu_calloc((*gfi)->max_faces, sizeof(size_t const *),
 					  "index_arr_faces");
 
 		    index_arr_faces_1D = (arr_1D_t)((*gfi)->index_arr_faces);
@@ -1106,14 +1126,14 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 		case FACE_TV:
 		case FACE_NV:
 		    (*gfi)->index_arr_faces =
-			(void *)bu_calloc((*gfi)->max_faces, sizeof(arr_2D_t),
+			(void *)bu_calloc((*gfi)->max_faces, sizeof(size_t const (*)[2]),
 					  "index_arr_faces");
 
 		    index_arr_faces_2D = (arr_2D_t)((*gfi)->index_arr_faces);
 		    break;
 		case FACE_TNV:
 		    (*gfi)->index_arr_faces =
-			(void *)bu_calloc((*gfi)->max_faces, sizeof(arr_3D_t),
+			(void *)bu_calloc((*gfi)->max_faces, sizeof(size_t const (*)[3]),
 					  "index_arr_faces");
 
 		    index_arr_faces_3D = (arr_3D_t)((*gfi)->index_arr_faces);
@@ -1149,7 +1169,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 		    case FACE_V:
 			(*gfi)->index_arr_faces =
 			    (void *)bu_realloc(index_arr_faces_1D,
-					       sizeof(arr_1D_t) * (*gfi)->max_faces,
+					       sizeof(size_t const *) * (*gfi)->max_faces,
 					       "index_arr_faces");
 
 			index_arr_faces_1D =
@@ -1160,7 +1180,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 		    case FACE_NV:
 			(*gfi)->index_arr_faces =
 			    (void *)bu_realloc(index_arr_faces_2D,
-					       sizeof(arr_2D_t) * (*gfi)->max_faces,
+					       sizeof(size_t const (*)[2]) * (*gfi)->max_faces,
 					       "index_arr_faces");
 
 			index_arr_faces_2D =
@@ -1170,9 +1190,8 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 		    case FACE_TNV:
 			(*gfi)->index_arr_faces =
 			    (void *)bu_realloc(index_arr_faces_3D,
-					       sizeof(arr_3D_t) * (*gfi)->max_faces,
+					       sizeof(size_t const (*)[3]) * (*gfi)->max_faces,
 					       "index_arr_faces");
-
 			index_arr_faces_3D =
 			    (arr_3D_t)((*gfi)->index_arr_faces);
 
@@ -1374,31 +1393,38 @@ populate_triangle_indexes(struct ga_t *ga,
 
     fu = make_faceuse_from_face(facePoints, numFacePoints);
 
-    /* do simple or robust triangulation based on whether face is concave or convex */
-    if (nmg_lu_is_convex(BU_LIST_FIRST(loopuse, &fu->lu_hd), tol)) {
+    /* only try triangulation if face is well-formed enough to yield a faceuse */
+    if (fu != NULL) {
 
-	/* compute number of new triangles to create */
-	if (gfi->num_vertices_arr[face_idx] > 3) {
-	    num_new_tri = gfi->num_vertices_arr[face_idx] - 2;
+	/* do simple or robust triangulation based on whether face is concave or convex */
+	if (nmg_lu_is_convex(BU_LIST_FIRST(loopuse, &fu->lu_hd), tol)) {
+
+	    /* compute number of new triangles to create */
+	    if (gfi->num_vertices_arr[face_idx] > 3) {
+		num_new_tri = gfi->num_vertices_arr[face_idx] - 2;
+	    } else {
+		num_new_tri = 1;
+	    }
+
+	    /* create triangles that all start at the first face vertex */
+	    triFaces = (int*)bu_malloc(num_new_tri * POINTS_PER_FACE * sizeof(int),
+		"triFaces");
+
+	    for (vert_idx = 0; vert_idx < num_new_tri; vert_idx++) {
+		triFaces[vert_idx * ELEMENTS_PER_POINT + X] = 0;
+		triFaces[vert_idx * ELEMENTS_PER_POINT + Y] = vert_idx + 1;
+		triFaces[vert_idx * ELEMENTS_PER_POINT + Z] = vert_idx + 2;
+	    }
+
+	    nmg_km(fu->s_p->r_p->m_p);
 	} else {
-	    num_new_tri = 1;
-	}
-
-	/* create triangles that all start at the first face vertex */
-	triFaces = (int*)bu_malloc(num_new_tri * POINTS_PER_FACE * sizeof(int),
-	    "triFaces");
-
-	for (vert_idx = 0; vert_idx < num_new_tri; vert_idx++) {
-	    triFaces[vert_idx * ELEMENTS_PER_POINT + X] = 0;
-	    triFaces[vert_idx * ELEMENTS_PER_POINT + Y] = vert_idx + 1;
-	    triFaces[vert_idx * ELEMENTS_PER_POINT + Z] = vert_idx + 2;
-	}
+	    triangulateFace(&triFaces, &num_new_tri, facePoints, numFacePoints, *tol);
+	} 
     } else {
-	triangulateFace(&triFaces, &num_new_tri, facePoints, numFacePoints, *tol);
+	num_new_tri = 0;
     }
 
     bu_free(facePoints, "facePoints");
-    nmg_km(fu->s_p->r_p->m_p);
 
     /* if needed, increase size of 'ti->index_arr_tri' array */
     if ((ti->num_tri + num_new_tri) >= ti->max_tri) {
@@ -2305,12 +2331,14 @@ fuse_vertex(struct ga_t *ga,
     num_unique_texture_vertex_index_list = num_index_list;
 
     if (debug) {
-	for (idx1 = 0 ; idx1 < num_index_list ; idx1++) {
-	    bu_log("non-unique sorted vertex_index_list[idx1] = (%zu)\n",
-		   vertex_index_list[idx1]);
+	if (vertex_index_list && (num_index_list > 0)) {
+	    for (idx1 = 0 ; idx1 < num_index_list ; idx1++) {
+		bu_log("non-unique sorted vertex_index_list[idx1] = (%zu)\n",
+			vertex_index_list[idx1]);
+	    }
+	    bu_log("num non-unique sorted vertex_index_list[idx1] = (%zu)\n",
+		num_index_list);
 	}
-	bu_log("num non-unique sorted vertex_index_list[idx1] = (%zu)\n",
-	       num_index_list);
     }
 
     /* remove duplicates from lists and return a sorted list, pass in
@@ -2331,7 +2359,7 @@ fuse_vertex(struct ga_t *ga,
 				   &num_unique_texture_vertex_index_list);
     }
 
-    if (debug) {
+    if (debug && vertex_index_list && (num_unique_vertex_index_list > 0)) {
 	for (idx1 = 0 ; idx1 < num_unique_vertex_index_list ; idx1++) {
 	    bu_log("unique sorted vertex_index_list[idx1] = (%zu)\n",
 		   vertex_index_list[idx1]);
@@ -2449,7 +2477,7 @@ test_closure(struct ga_t *ga,
     vect_t pnt1;
     vect_t pnt2;
 
-    struct bu_vls plot_file_name;
+    struct bu_vls plot_file_name = BU_VLS_INIT_ZERO;
 
     max_edges += max_edges_increment;
     edges = (edge_arr_2D_t)bu_calloc(max_edges * 2, sizeof(size_t), "edges");
@@ -2520,7 +2548,6 @@ test_closure(struct ga_t *ga,
 			   ga->vert_list[previous_edge[1]][2] * conv_factor);
 		}
 		if ((plot_mode == PLOT_ON) && (open_edges == 0)) {
-		    bu_vls_init(&plot_file_name);
 		    bu_vls_sprintf(&plot_file_name, "%s.%zu.%d.o.pl",
 				   bu_vls_addr(gfi->raw_grouping_name), (long unsigned)gfi->grouping_index + 1,
 				   gfi->face_type);
@@ -2604,6 +2631,7 @@ output_to_bot(struct ga_t *ga,
 	      int texture_mode,              /* PROC_TEX, IGNR_TEX */
 	      int normal_mode,               /* PROC_NORM, IGNR_NORM */
 	      unsigned char bot_output_mode, /* RT_BOT_PLATE, RT_BOT_PLATE_NOCOS, RT_BOT_SOLID, RT_BOT_SURFACE */
+	      char bot_orientation,
 	      int face_test_type)
 {
     struct ti_t ti;              /* triangle indices structure */
@@ -2712,14 +2740,14 @@ output_to_bot(struct ga_t *ga,
     /* write bot to ".g" file */
     if (ti.tri_type == FACE_NV || ti.tri_type == FACE_TNV) {
 	ret = mk_bot_w_normals(outfp, bu_vls_addr(gfi->primitive_name),
-			       ti.bot_mode, RT_BOT_UNORIENTED,
+			       ti.bot_mode, bot_orientation,
 			       RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS,
 			       ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
 			       ti.bot_faces, ti.bot_thickness, ti.bot_face_mode,
 			       ti.bot_num_normals, ti.bot_normals, ti.bot_face_normals);
     } else {
 	ret = mk_bot(outfp, bu_vls_addr(gfi->primitive_name), ti.bot_mode,
-		     RT_BOT_UNORIENTED, 0, ti.bot_num_vertices, ti.bot_num_faces,
+		     bot_orientation, 0, ti.bot_num_vertices, ti.bot_num_faces,
 		     ti.bot_vertices, ti.bot_faces, ti.bot_thickness,
 		     ti.bot_face_mode);
     }
@@ -2811,6 +2839,8 @@ output_to_nmg(struct ga_t *ga,
     size_t num_faces_killed = 0; /* number of degenerate faces killed in the current shell */
 
     m = nmg_mm();
+    if(m == NULL)
+	return -1;
     r = nmg_mrsv(m);
     s = BU_LIST_FIRST(shell, &r->s_hd);
     NMG_CK_MODEL(m);
@@ -2821,6 +2851,8 @@ output_to_nmg(struct ga_t *ga,
     bu_ptbl_init(&faces, 64, " &faces ");
 
     verts = (struct vertex **)bu_calloc(gfi->tot_vertices, sizeof(struct vertex *), "verts");
+    if(verts == NULL)
+	bu_bomb("Unable to allocation vertex struct\n");
     memset((void *)verts, 0, sizeof(struct vertex *) * gfi->tot_vertices);
 
     /* begin bomb protection */
@@ -3095,12 +3127,10 @@ output_to_nmg(struct ga_t *ga,
 int
 str2mm(const char *units_string, fastf_t *conv_factor)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     fastf_t tmp_value = 0.0;
     char *endp = (char *)NULL;
     int ret = 0;
-
-    bu_vls_init(&str);
 
     if ((units_string == (char *)NULL) || (conv_factor == (fastf_t *)NULL)) {
 	bu_log("NULL pointer(s) passed to function 'str2mm'.\n");
@@ -3142,16 +3172,19 @@ process_b_mode_option(struct ga_t *ga,
 		      int plot_mode,         /* PLOT_OFF, PLOT_ON */
 		      /* RT_BOT_SURFACE, RT_BOT_PLATE, RT_BOT_PLATE_NOCOS */
 		      unsigned char open_bot_output_mode,
+		      char bot_orientation,
 		      int face_test_type)    /* TEST_ALL, TEST_NUM_VERT */
 {
     (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_EQUAL);
     (void)retest_grouping_faces(ga, gfi, conv_factor, face_test_type, tol);
     if (!test_closure(ga, gfi, conv_factor, plot_mode, face_test_type, tol)) {
 	(void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
-			    IGNR_TEX, normal_mode, RT_BOT_SOLID, face_test_type);
+			    IGNR_TEX, normal_mode, RT_BOT_SOLID,
+			    bot_orientation, face_test_type);
     } else {
 	(void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
-			    IGNR_TEX, normal_mode, open_bot_output_mode, face_test_type);
+			    IGNR_TEX, normal_mode, open_bot_output_mode,
+			    bot_orientation, face_test_type);
     }
 }
 
@@ -3185,6 +3218,7 @@ process_nv_mode_option(struct ga_t *ga,
 		       /* output_to_nmg (nmg or bot-via-nmg) face_test_type
 			* TEST_ALL, TEST_NUM_VERT
 			*/
+		       char bot_orientation,
 		       int nmg_face_test_type,
 		       /* output_to_bot (i.e. native) face_test_type
 			* TEST_ALL, TEST_NUM_VERT
@@ -3204,10 +3238,12 @@ process_nv_mode_option(struct ga_t *ga,
 			  native_face_test_type, tol))
 	{
 	    (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
-				IGNR_TEX, IGNR_NORM, RT_BOT_SOLID, native_face_test_type);
+				IGNR_TEX, IGNR_NORM, RT_BOT_SOLID, bot_orientation,
+				native_face_test_type);
 	} else {
 	    (void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
 				IGNR_TEX, IGNR_NORM, open_bot_output_mode,
+				bot_orientation,
 				native_face_test_type);
 	}
     }
@@ -3229,8 +3265,8 @@ int
 main(int argc, char **argv)
 {
     char *prog = *argv;
-    static char *input_file_name;    /* input file name */
-    static char *brlcad_file_name;   /* output file name */
+    struct bu_vls input_file_name = BU_VLS_INIT_ZERO;  /* input file name */
+    struct bu_vls brlcad_file_name = BU_VLS_INIT_ZERO; /* output file name */
     struct rt_wdb *fd_out;	     /* Resulting BRL-CAD file */
     int ret_val = 0;
     FILE *my_stream;
@@ -3259,7 +3295,6 @@ main(int argc, char **argv)
     fastf_t conv_factor = 0.0;
     fastf_t bot_thickness = 0.0;
     int user_bot_thickness_flag = 0;
-    int user_open_bot_output_mode_flag = 0;
     time_t start_time;
     time_t end_time;
     time_t elapsed_time;
@@ -3267,6 +3302,9 @@ main(int argc, char **argv)
     time_t overall_end_time;
     time_t overall_elapsed_time;
     struct tm *timep;
+    char bot_orientation = RT_BOT_UNORIENTED;
+
+    bu_setprogname(argv[0]);
 
     /* set default conv factor */
     str2mm("m", &conv_factor);
@@ -3287,10 +3325,13 @@ main(int argc, char **argv)
     tol->para = 1 - tol->perp;
 
     if (argc < 2) {
-	bu_exit(1, usage, argv[0]);
+        bu_vls_free(&input_file_name);
+        bu_vls_free(&brlcad_file_name);
+	usage(argv[0]);
+	bu_exit(1, NULL);
     }
 
-    while ((c = bu_getopt(argc, argv, "cpidx:X:vt:h:m:u:g:o:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "cpidx:X:vt:h:m:u:g:o:r:")) != -1) {
 	switch (c) {
 	    case 'c': /* continue processing on nmg bomb */
 		cont_on_nmg_bomb_flag = 1;
@@ -3326,6 +3367,8 @@ main(int argc, char **argv)
 		dist_tmp = (double)atof(bu_optarg);
 		if (dist_tmp <= 0.0) {
 		    bu_log("Distance tolerance must be greater then zero.\n");
+                    bu_vls_free(&input_file_name);
+                    bu_vls_free(&brlcad_file_name);
 		    bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
 		}
 		tol->dist = dist_tmp;
@@ -3350,6 +3393,8 @@ main(int argc, char **argv)
 			break;
 		    default:
 			bu_log("Invalid mode option '%c'.\n", bu_optarg[0]);
+                        bu_vls_free(&input_file_name);
+                        bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
 				argv[0]);
 			break;
@@ -3357,6 +3402,8 @@ main(int argc, char **argv)
 		break;
 	    case 'u': /* units */
 		if (str2mm(bu_optarg, &conv_factor)) {
+                    bu_vls_free(&input_file_name);
+                    bu_vls_free(&brlcad_file_name);
 		    bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
 		}
 		break;
@@ -3371,6 +3418,8 @@ main(int argc, char **argv)
 			break;
 		    default:
 			bu_log("Invalid grouping option '%c'.\n", bu_optarg[0]);
+                        bu_vls_free(&input_file_name);
+                        bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
 				argv[0]);
 			break;
@@ -3380,39 +3429,62 @@ main(int argc, char **argv)
 		switch (bu_optarg[0]) {
 		    case 's': /* surface bot */
 			open_bot_output_mode = RT_BOT_SURFACE;
-			user_open_bot_output_mode_flag = 1;
 			break;
 		    case 'p': /* plate bot */
 			open_bot_output_mode = RT_BOT_PLATE;
-			user_open_bot_output_mode_flag = 1;
 			break;
 		    case 'n': /* plate bot nocos */
 			open_bot_output_mode = RT_BOT_PLATE_NOCOS;
-			user_open_bot_output_mode_flag = 1;
 			break;
 		    default:
 			bu_log("Invalid open surface 'native-bot' output bot "
 			       "type '%c'.\n", bu_optarg[0]);
+                        bu_vls_free(&input_file_name);
+                        bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
 				argv[0]);
 			break;
 		}
 		break;
+	    case 'r':
+		switch(bu_optarg[0]) {
+		    case '1':
+			bot_orientation = RT_BOT_UNORIENTED;
+			break;
+		    case '2':
+			bot_orientation = RT_BOT_CCW;
+			break;
+		    case '3':
+			bot_orientation = RT_BOT_CW;
+			break;
+		    default:
+			bu_log("Invalid bot orientation type '%c'.\n",
+				bu_optarg[0]);
+                        bu_vls_free(&input_file_name);
+                        bu_vls_free(&brlcad_file_name);
+			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
+				argv[0]);
+		}
+		break;
 	    default:
 		bu_log("Invalid option '%c'.\n", c);
+                bu_vls_free(&input_file_name);
+                bu_vls_free(&brlcad_file_name);
 		bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
 		break;
 	}
     }
 
     if (argc - bu_optind != 2) {
+        bu_vls_free(&input_file_name);
+        bu_vls_free(&brlcad_file_name);
 	bu_exit(EXIT_FAILURE, "Invalid number of arguments.\nType '%s' for "
 		"usage.\n", argv[0]);
     }
 
-    input_file_name = argv[bu_optind];
+    bu_vls_sprintf(&input_file_name, "%s", argv[bu_optind]);
     bu_optind++;
-    brlcad_file_name = argv[bu_optind];
+    bu_vls_sprintf(&brlcad_file_name, "%s", argv[bu_optind]);
 
     /* if plate bots were selected as the open bot output type but the
      * user did not specify plate bot thickness, abort since thickness
@@ -3422,6 +3494,8 @@ main(int argc, char **argv)
 				       || (open_bot_output_mode == RT_BOT_PLATE_NOCOS)))
     {
 	bu_log("'plate_thickness' was not specified but is required\n");
+        bu_vls_free(&input_file_name);
+        bu_vls_free(&brlcad_file_name);
 	bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
     }
 
@@ -3520,18 +3594,22 @@ main(int argc, char **argv)
 	bu_log("\tDebug messages disabled\n");
     }
 
-    bu_log("\tInput file name (%s)\n", input_file_name);
-    bu_log("\tOutput file name (%s)\n\n", brlcad_file_name);
+    bu_log("\tInput file name (%s)\n", bu_vls_addr(&input_file_name));
+    bu_log("\tOutput file name (%s)\n\n", bu_vls_addr(&brlcad_file_name));
 
-    if ((my_stream = fopen(input_file_name, "r")) == NULL) {
-	bu_log("Cannot open input file (%s)\n", input_file_name);
+    if ((my_stream = fopen(bu_vls_addr(&input_file_name), "r")) == NULL) {
+	bu_log("Cannot open input file (%s)\n", bu_vls_addr(&input_file_name));
 	perror(prog);
+        bu_vls_free(&input_file_name);
+        bu_vls_free(&brlcad_file_name);
 	return EXIT_FAILURE;
     }
 
-    if ((fd_out = wdb_fopen(brlcad_file_name)) == NULL) {
-	bu_log("Cannot create new BRL-CAD file (%s)\n", brlcad_file_name);
+    if ((fd_out = wdb_fopen(bu_vls_addr(&brlcad_file_name))) == NULL) {
+	bu_log("Cannot create new BRL-CAD file (%s)\n", bu_vls_addr(&brlcad_file_name));
 	perror(prog);
+        bu_vls_free(&input_file_name);
+        bu_vls_free(&brlcad_file_name);
 	bu_exit(1, NULL);
     }
 
@@ -3553,6 +3631,8 @@ main(int argc, char **argv)
 	}
 
 	perror(prog);
+        bu_vls_free(&input_file_name);
+        bu_vls_free(&brlcad_file_name);
 	return EXIT_FAILURE;
     }
 
@@ -3578,6 +3658,8 @@ main(int argc, char **argv)
 	    bu_log("Unable to close file.\n");
 	}
 
+        bu_vls_free(&input_file_name);
+        bu_vls_free(&brlcad_file_name);
 	return EXIT_FAILURE;
     }
 
@@ -3603,7 +3685,7 @@ main(int argc, char **argv)
 			case 'b':
 			    process_b_mode_option(&ga, gfi, fd_out, conv_factor,
 						  tol, bot_thickness, normal_mode, plot_mode,
-						  open_bot_output_mode,
+						  open_bot_output_mode, bot_orientation,
 						  native_face_test_type);
 			    break;
 			case 'n':
@@ -3611,7 +3693,8 @@ main(int argc, char **argv)
 			    stop_processing_flag = process_nv_mode_option(&ga,
 									  gfi, fd_out, conv_factor, tol,
 									  bot_thickness, nmg_output_mode, plot_mode,
-									  open_bot_output_mode, nmg_face_test_type,
+									  open_bot_output_mode, bot_orientation,
+									  nmg_face_test_type,
 									  native_face_test_type,
 									  cont_on_nmg_bomb_flag);
 			    break;
@@ -3659,13 +3742,15 @@ main(int argc, char **argv)
 			switch (mode_option) {
 			    case 'b':
 				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-						      normal_mode, plot_mode, open_bot_output_mode, native_face_test_type);
+						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
+						      native_face_test_type);
 				break;
 			    case 'n':
 			    case 'v':
 				stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
 									      tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
-									      nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag);
+									      bot_orientation, nmg_face_test_type, native_face_test_type,
+									      cont_on_nmg_bomb_flag);
 				break;
 			}
 
@@ -3704,13 +3789,15 @@ main(int argc, char **argv)
 			switch (mode_option) {
 			    case 'b':
 				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-						      normal_mode, plot_mode, open_bot_output_mode, native_face_test_type);
+						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
+						      native_face_test_type);
 				break;
 			    case 'n':
 			    case 'v':
 				stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
 									      tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
-									      nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag);
+									      bot_orientation, nmg_face_test_type, native_face_test_type,
+									      cont_on_nmg_bomb_flag);
 				break;
 			}
 
@@ -3749,12 +3836,14 @@ main(int argc, char **argv)
 			switch (mode_option) {
 			    case 'b':
 				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-						      normal_mode, plot_mode, open_bot_output_mode, native_face_test_type);
+						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation, 
+						      native_face_test_type);
 				break;
 			    case 'n':
 			    case 'v':
 				stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
 									      tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
+									      bot_orientation,
 									      nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag);
 				break;
 			}
@@ -3794,12 +3883,14 @@ main(int argc, char **argv)
 			switch (mode_option) {
 			    case 'b':
 				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-						      normal_mode, plot_mode, open_bot_output_mode, native_face_test_type);
+						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
+						      native_face_test_type);
 				break;
 			    case 'n':
 			    case 'v':
 				stop_processing_flag = process_nv_mode_option(&ga, gfi, fd_out, conv_factor,
 									      tol, bot_thickness, nmg_output_mode, plot_mode, open_bot_output_mode,
+									      bot_orientation,
 									      nmg_face_test_type, native_face_test_type, cont_on_nmg_bomb_flag);
 				break;
 			}
@@ -3850,6 +3941,8 @@ main(int argc, char **argv)
     if (fclose(my_stream) != 0) {
 	bu_log("Unable to close file.\n");
 	perror(prog);
+        bu_vls_free(&input_file_name);
+        bu_vls_free(&brlcad_file_name);
 	return EXIT_FAILURE;
     }
 
@@ -3866,6 +3959,8 @@ main(int argc, char **argv)
 
     bu_log("End time %s", asctime(localtime(&overall_end_time)));
 
+    bu_vls_free(&input_file_name);
+    bu_vls_free(&brlcad_file_name);
     return 0;
 }
 

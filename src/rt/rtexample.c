@@ -1,7 +1,7 @@
 /*                     R T E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -99,7 +99,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
     struct soltab *stp;
 
     /* will contain surface curvature information at the entry */
-    struct curvature cur;
+    struct curvature cur = RT_CURVATURE_INIT_ZERO;
 
     /* will contain our hit point coordinate */
     point_t pt;
@@ -227,7 +227,7 @@ main(int argc, char **argv)
      */
     static struct rt_i *rtip;
 
-    /* optional parameter to rt_dirbuild() what can be used to capture
+    /* optional parameter to rt_dirbuild() that can be used to capture
      * a title if the geometry database has one set.
      */
     char title[1024] = {0};
@@ -270,7 +270,7 @@ main(int argc, char **argv)
 
     /* This next call gets the database ready for ray tracing.  This
      * causes some values to be precomputed, sets up space
-     * partitioning, computes boudning volumes, etc.
+     * partitioning, computes bounding volumes, etc.
      */
     rt_prep_parallel(rtip, 1);
 

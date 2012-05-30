@@ -1,7 +1,7 @@
 /*                         P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -75,11 +75,6 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (argc < 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
     /* Process any options */
     Three_D = 1;				/* 3-D w/color, by default */
     Z_clip = 0;				/* NO Z clipping, by default*/
@@ -116,8 +111,7 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
     if (argv[1][0] == '|') {
-	struct bu_vls str;
-	bu_vls_init(&str);
+	struct bu_vls str = BU_VLS_INIT_ZERO;
 	bu_vls_strcpy(&str, &argv[1][1]);
 	while ((++argv)[1] != (char *)0) {
 	    bu_vls_strcat(&str, " ");
@@ -225,15 +219,20 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 		    switch (*cmd) {
 			case BN_VLIST_POLY_START:
 			case BN_VLIST_POLY_VERTNORM:
+			case BN_VLIST_TRI_START:
+			case BN_VLIST_TRI_VERTNORM:
 			    continue;
 			case BN_VLIST_POLY_MOVE:
 			case BN_VLIST_LINE_MOVE:
+			case BN_VLIST_TRI_MOVE:
 			    /* Move, not draw */
 			    MAT4X3PNT(last, gedp->ged_gvp->gv_model2view, *pt);
 			    continue;
+			case BN_VLIST_LINE_DRAW:
 			case BN_VLIST_POLY_DRAW:
 			case BN_VLIST_POLY_END:
-			case BN_VLIST_LINE_DRAW:
+			case BN_VLIST_TRI_DRAW:
+			case BN_VLIST_TRI_END:
 			    /* draw */
 			    MAT4X3PNT(fin, gedp->ged_gvp->gv_model2view, *pt);
 			    VMOVE(start, last);

@@ -2,7 +2,7 @@
 #                       H E A D E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2011 United States Government as represented by
+# Copyright (c) 2004-2012 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -254,6 +254,11 @@ case $FILE in
 	echo "$FILE is an Emacs Lisp file"
 	wrap=0
 	commentprefix=";;"
+	;;
+    *.cmake )
+	echo "$FILE is a CMake build file"
+	wrap=0
+	commentprefix="#"
 	;;
     *.[0-9] )
 	echo "$FILE is a manual page"

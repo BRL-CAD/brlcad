@@ -1,7 +1,7 @@
 /*                       F I R P A S S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -2345,7 +2345,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *UNUSED(se
     struct partition *pp;
     struct hit *hitp;
     struct soltab *stp;
-    struct curvature cur;
+    struct curvature cur = RT_CURVATURE_INIT_ZERO;
 
     double enterpt[3];	/*  Point where ray enters.  */
     double distance;	/*  Distance between where point enters  */

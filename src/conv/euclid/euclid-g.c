@@ -1,7 +1,7 @@
 /*                      E U C L I D - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ struct vlist {
     struct vertex	*vt[MAX_PTS_PER_FACE];
 };
 
-void euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout);
+int euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout);
 int find_vert(struct vlist *vert, int nv, fastf_t x, fastf_t y, fastf_t z);
 int store_vert(struct vlist *vert, int *nv, fastf_t x, fastf_t y, fastf_t z);
 int read_euclid_face(int *lst, int *ni, FILE *fp, struct vlist *vert, int *nv);
@@ -130,6 +130,9 @@ main(int argc, char **argv)
     char		title[BRLCAD_TITLE_LENGTH];	/* BRL-CAD database title */
     int	c;
     int i;
+    int ret;
+
+    bu_setprogname(argv[0]);
 
     fpin = stdin;
     efile = NULL;
@@ -216,11 +219,11 @@ main(int argc, char **argv)
     for ( i=0; i<11; i++ )
 	bu_ptbl_init( &groups[i], 64, " &groups[i] ");
 
-    euclid_to_brlcad(fpin, fpout);
+    ret = euclid_to_brlcad(fpin, fpout);
 
     fclose(fpin);
     wdb_close(fpout);
-    return 0;
+    return ret;
 }
 
 /*
@@ -379,19 +382,31 @@ build_groups(struct rt_wdb *fpout)
  *		A, B, C, D are the facet's plane equation coefficients and
  *		<A B C> is an outward pointing surface normal.
  */
-void
+int
 euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 {
     char	str[80] = {0};
     int	reg_id = -1;
 
     /* skip first string in file (what is it??) */
-    if ( fscanf( fpin, "%80s", str ) == EOF )
-	bu_exit(1, "Failed on first attempt to read input" );
+    if ( fscanf( fpin, "%80s", str ) == EOF ) {
+	bu_log("ERROR: Failed on first attempt to read input" );
+	return 1;
+    }
 
     /* Id of first region. */
     if (fscanf(fpin, "%d", &reg_id) != 1) {
-	bu_exit(1, "euclid_to_brlcad: no region id\n");
+	bu_log("euclid_to_brlcad: no region id\n");
+	return 2;
+    }
+
+    if(reg_id <= -INT_MAX) {
+	bu_log("ERROR: Magnitude of negative region_id too large.\n");
+	return 3;
+    }
+    if(reg_id >= INT_MAX) {
+	bu_log("region_id too large.\n");
+	return 4;
     }
 
     /* Convert each region to an individual nmg. */
@@ -402,6 +417,37 @@ euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 
     /* Build groups based on idents */
     build_groups( fpout );
+
+    return 0;
+}
+
+/* Kill the cracks in region's next shell.
+ * Return 1 if the region is empty.
+ * Return 0 otherwise.
+ */
+static int
+kill_cracks_in_next_shell(struct nmgregion *r)
+{
+    struct shell *s = NULL;
+
+    if (BU_LIST_IS_EMPTY(&r->s_hd)) {
+	/* region is empty (no next shell) */
+	return 1;
+    }
+
+    /* kill cracks in next shell */
+    s = BU_LIST_FIRST(shell, &r->s_hd);
+    if (nmg_kill_cracks(s)) {
+
+	/* shell is now empty, remove it from the region */
+	if (nmg_ks(s)) {
+
+	    /* removing shell made region empty */
+	    return 1;
+	}
+    }
+
+    return 0;
 }
 
 
@@ -525,20 +571,10 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	return cur_id;
     }
 
-    /* kill cracks */
-    s = BU_LIST_FIRST( shell, &r->s_hd );
-    if ( nmg_kill_cracks( s ) )
-    {
-	if ( nmg_ks( s ) )
-	{
-	    nmg_km( m );
-	    m = (struct model *)0;
-	}
-	s = (struct shell *)0;
-    }
-
-    if ( !m )
+    if (kill_cracks_in_next_shell(r)) {
+	nmg_km(m);
 	return cur_id;
+    }
 
     if ( RT_G_DEBUG&DEBUG_MEM_FULL )
 	bu_prmem( "Before assoc face geom:\n" );
@@ -590,39 +626,19 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 	bu_log( "nmg_s_join_touchingloops( %p )\n", (void *)s );
     nmg_s_join_touchingloops( s, &tol );
 
-    /* kill cracks */
-    s = BU_LIST_FIRST( shell, &r->s_hd );
-    if ( nmg_kill_cracks( s ) )
-    {
-	if ( nmg_ks( s ) )
-	{
-	    nmg_km( m );
-	    m = (struct model *)0;
-	}
-	s = (struct shell *)0;
-    }
-
-    if ( !m )
+    if (kill_cracks_in_next_shell(r)) {
+	nmg_km(m);
 	return cur_id;
+    }
 
     if ( debug )
 	bu_log( "nmg_s_split_touchingloops( %p )\n", (void *)s );
     nmg_s_split_touchingloops( s, &tol);
 
-    /* kill cracks */
-    s = BU_LIST_FIRST( shell, &r->s_hd );
-    if ( nmg_kill_cracks( s ) )
-    {
-	if ( nmg_ks( s ) )
-	{
-	    nmg_km( m );
-	    m = (struct model *)0;
-	}
-	s = (struct shell *)0;
-    }
-
-    if ( !m )
+    if (kill_cracks_in_next_shell(r)) {
+	nmg_km(m);
 	return cur_id;
+    }
 
     /* verify face plane calculations */
     if ( debug )

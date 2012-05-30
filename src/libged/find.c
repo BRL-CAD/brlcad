@@ -1,7 +1,7 @@
 /*                         F I N D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,8 @@ find_ref(struct db_i *dbip,
 	 union tree *comb_leaf,
 	 genptr_t object,
 	 genptr_t comb_name_ptr,
-	 genptr_t user_ptr3)
+	 genptr_t user_ptr3,
+	 genptr_t UNUSED(user_ptr4))
 {
     char *obj_name;
     char *comb_name;
@@ -113,14 +114,15 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
-	    for (k=1; k<argc; k++)
+	    for (k = 1; k < argc; k++)
 		db_tree_funcleaf(gedp->ged_wdbp->dbip,
 				 comb,
 				 comb->tree,
 				 find_ref,
 				 (genptr_t)argv[k],
 				 (genptr_t)dp->d_namep,
-				 (genptr_t)gedp);
+				 (genptr_t)gedp,
+				 (genptr_t)NULL);
 
 	    rt_db_free_internal(&intern);
 	}

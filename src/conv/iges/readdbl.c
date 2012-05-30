@@ -1,7 +1,7 @@
 /*                       R E A D D B L . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 void
 Readdbl(double *inum, char *id)
 {
-    int i=(-1), done=0, lencard;
+    int i = (-1), done = 0, lencard;
     char num[80];
 
     if (card[counter] == eof) {

@@ -1,16 +1,10 @@
-if BUILD_STEP
-STEPDIR=step
-else !BUILD_STEP
-STEPDIR=
-endif
-
 IGESDIR=iges
 INTAVALDIR=intaval
+RAWDIR=raw
 
 EXTRA_DIST = \
 	CMakeLists.txt \
 	Formats.csv \
-	comgeom/try.sh \
 	dbclean.sh \
 	g-xxx.c \
 	g-xxx_facets.c \
@@ -39,12 +33,17 @@ else !ONLY_BENCHMARK
 
 SUBDIRS = \
 	${IGESDIR} \
-	${INTAVALDIR}
-	${STEPDIR}
+	${INTAVALDIR} \
+	${RAWDIR} \
+	vdeck
 
 DIST_SUBDIRS = \
 	iges \
 	intaval \
+	raw \
+	vdeck
+
+EXTRA_DIST = \
 	step
 
 bin_PROGRAMS = \
@@ -371,7 +370,6 @@ walk_example_LDADD = ${RT}
 dist_bin_SCRIPTS = intaval-g.py
 
 noinst_HEADERS = \
-	comgeom/3d.h \
 	dxf/dxf.h \
 	patch/patch-g.h \
 	shp/shapelib/shapefil.h

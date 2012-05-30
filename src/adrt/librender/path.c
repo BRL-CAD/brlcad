@@ -1,7 +1,7 @@
 /*                          P A T H . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2011 United States Government as represented by
+ * Copyright (c) 2007-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,6 +69,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
     render_path_t *rd;
 
     VSETALL(new_pix, 0);
+    VSETALL(T, 0);
 
     rd = (render_path_t *)render->data;
 

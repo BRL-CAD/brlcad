@@ -1,7 +1,7 @@
 /*                        F B - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2011 United States Government as represented by
+ * Copyright (c) 1998-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,17 +29,11 @@
 
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <zlib.h>
+#include <png.h>
 #include "bio.h"
+#include "bin.h"
 
-#ifdef HAVE_WINSOCK_H
-#  include <winsock.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
-#include "zlib.h"
-#include "png.h"
 #include "bu.h"
 #include "fb.h"
 
@@ -117,7 +111,7 @@ get_args(int argc, char **argv)
 	    bu_log("fb-png: cannot open \"%s\" for writing\n", file_name);
 	    return 0;
 	}
-	(void)bu_fchmod(outfp, 0444);
+	(void)bu_fchmod(fileno(outfp), 0444);
     }
 
     if (argc > ++bu_optind)

@@ -1,7 +1,7 @@
 /*                         B O T _ D U M P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,6 +42,7 @@
 
 #include "mater.h"
 #include "solid.h"
+#include "obj.h"
 
 #include "./ged_private.h"
 
@@ -79,7 +80,7 @@ struct _ged_obj_material {
 
 static int using_dbot_dump;
 struct bu_list HeadObjMaterials;
-struct bu_vls obj_materials_file;
+struct bu_vls obj_materials_file = BU_VLS_INIT_ZERO;
 FILE *obj_materials_fp;
 int num_obj_materials;
 int curr_obj_red;
@@ -130,7 +131,7 @@ get_obj_material(int red, int green, int blue, fastf_t transparency)
 	}
     }
 
-    BU_GETSTRUCT(gomp, _ged_obj_material);
+    BU_GET(gomp, struct _ged_obj_material);
     BU_LIST_APPEND(&HeadObjMaterials, &gomp->l);
     gomp->r = red;
     gomp->g = green;
@@ -559,7 +560,7 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 	flt_ptr += 3;
 
 	htonf(vert_buffer, (const unsigned char *)flts, 12);
-	for (j=0; j<12; j++) {
+	for (j = 0; j < 12; j++) {
 	    lswap((unsigned int *)&vert_buffer[j*4]);
 	}
 	ret = write(fd, vert_buffer, 50);
@@ -577,9 +578,8 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 
     if (output_directory) {
 	char *cp;
-	struct bu_vls file_name;
+	struct bu_vls file_name = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&file_name);
 	bu_vls_strcpy(&file_name, output_directory);
 	bu_vls_putc(&file_name, '/');
 	cp = dp->d_namep;
@@ -682,26 +682,34 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 
 	bu_vls_free(&file_name);
     } else {
-	if (binary && output_type == OTYPE_STL) {
-	    total_faces += bot->num_faces;
-	    write_bot_stl_binary(bot, fd, dp->d_namep);
-	} else {
-	    switch (output_type) {
-		case OTYPE_DXF:
-		    write_bot_dxf(bot, fp, dp->d_namep);
-		    break;
-		case OTYPE_OBJ:
-		    write_bot_obj(bot, fp, dp->d_namep);
-		    break;
-		case OTYPE_SAT:
-		    write_bot_sat(bot, fp, dp->d_namep);
-		    break;
-		case OTYPE_STL:
-		default:
-		    write_bot_stl(bot, fp, dp->d_namep);
-		    break;
-	    }
+      if (binary && output_type == OTYPE_STL) {
+	total_faces += bot->num_faces;
+	write_bot_stl_binary(bot, fd, dp->d_namep);
+      } else if (binary && output_type != OTYPE_STL) {
+	bu_log("Unsupported binary file type - only STL is currently supported\n");
+	return;
+      } else {
+	/* If we get to this point, we need fp - check for it */
+	if (fp) {
+	switch (output_type) {
+	  case OTYPE_DXF:
+	    write_bot_dxf(bot, fp, dp->d_namep);
+	    break;
+	  case OTYPE_OBJ:
+	    write_bot_obj(bot, fp, dp->d_namep);
+	    break;
+	  case OTYPE_SAT:
+	    write_bot_sat(bot, fp, dp->d_namep);
+	    break;
+	  case OTYPE_STL:
+	  default:
+	    write_bot_stl(bot, fp, dp->d_namep);
+	    break;
 	}
+	} else {
+	  bu_log("bot_dump: non-binay file requested but fp is NULL!\n");
+	}
+      }
     }
 }
 
@@ -759,7 +767,7 @@ bot_dump_leaf(struct db_tree_state *tsp,
 static int
 bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 {
-    char c;
+    int c;
 
     output_type = OTYPE_STL;
     binary = 0;
@@ -963,7 +971,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	    if (dp->d_flags & RT_DIR_COMB) continue;
 
 	    /* get the internal form */
-	    i=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, mat, &rt_uniresource);
+	    i = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, mat, &rt_uniresource);
 	    if (i < 0) {
 		fprintf(stderr, "%s: rt_get_internal failure %d on %s\n", cmd_name, i, dp->d_namep);
 		continue;
@@ -985,7 +993,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	struct _ged_bot_dump_client_data *gbdcdp;
 
 	av[1] = (char *)0;
-	BU_GETSTRUCT(gbdcdp, _ged_bot_dump_client_data);
+	BU_GET(gbdcdp, struct _ged_bot_dump_client_data);
 	gbdcdp->gedp = gedp;
 	gbdcdp->fp = fp;
 	gbdcdp->fd = fd;
@@ -1258,7 +1266,7 @@ data_dump(struct ged *gedp, FILE *fp)
 	case OTYPE_OBJ:
 	    if (output_directory) {
 		char *cp;
-		struct bu_vls filepath;
+		struct bu_vls filepath = BU_VLS_INIT_ZERO;
 		FILE *data_fp;
 
 		cp = strrchr(output_directory, '/');
@@ -1272,7 +1280,6 @@ data_dump(struct ged *gedp, FILE *fp)
 		    return GED_ERROR;
 		}
 
-		bu_vls_init(&filepath);
 		bu_vls_printf(&filepath, "%s/%s_data.obj", output_directory, cp);
 
 		if ((data_fp=fopen(bu_vls_addr(&filepath), "wb+")) == NULL) {
@@ -1285,8 +1292,13 @@ data_dump(struct ged *gedp, FILE *fp)
 		write_data_obj(gedp, data_fp);
 		fclose(data_fp);
 	    } else
-		write_data_obj(gedp, fp);
-	    break;
+		if (fp) {
+		  write_data_obj(gedp, fp);
+		} else {
+		  bu_vls_printf(gedp->ged_result_str, "data_dump: bad FILE fp\n");
+		  return GED_ERROR;
+		}
+		break;
 	case OTYPE_SAT:
 	    break;
 	case OTYPE_STL:
@@ -1420,7 +1432,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 
 		{
 		    char *cp;
-		    struct bu_vls filepath;
+		    struct bu_vls filepath = BU_VLS_INIT_ZERO;
 
 		    cp = strrchr(output_directory, '/');
 		    if (!cp)
@@ -1433,10 +1445,9 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 			return GED_ERROR;
 		    }
 
-		    bu_vls_init(&obj_materials_file);
+		    bu_vls_trunc(&obj_materials_file, 0);
 		    bu_vls_printf(&obj_materials_file, "%s.mtl", cp);
 
-		    bu_vls_init(&filepath);
 		    bu_vls_printf(&filepath, "%s/%V", output_directory, &obj_materials_file);
 
 		    if ((obj_materials_fp=fopen(bu_vls_addr(&filepath), "wb+")) == NULL) {
@@ -1463,7 +1474,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
     } else if (output_type == OTYPE_OBJ) {
 	char *cp;
 
-	bu_vls_init(&obj_materials_file);
+	bu_vls_trunc(&obj_materials_file, 0);
 
 	cp = strrchr(output_file, '.');
 	if (!cp)
@@ -1480,6 +1491,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	if ((obj_materials_fp=fopen(bu_vls_addr(&obj_materials_file), "wb+")) == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: failed to open %V\n", cmd_name, &obj_materials_file);
 	    bu_vls_free(&obj_materials_file);
+	    fclose(fp);
 	    return GED_ERROR;
 	}
 

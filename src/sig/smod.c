@@ -1,7 +1,7 @@
 /*                          S M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 #define MULT 2
 #define ABS 3
 #define POW 4
-#define BUFLEN (8192*2)	/* usually 2 pages of memory, 16KB */
+#define BUFLEN 65536
 
 
 char *progname = "(noname)";
@@ -50,9 +50,9 @@ char *progname = "(noname)";
 int numop = 0;		/* number of operations */
 int op[256];		/* operations */
 double val[256];		/* arguments to operations */
-short mapbuf[65536];		/* translation buffer/lookup table */
-unsigned char clip_h[256];	/* map of values which clip high */
-unsigned char clip_l[256];	/* map of values which clip low */
+short mapbuf[BUFLEN];		/* translation buffer/lookup table */
+unsigned char clip_h[BUFLEN];	/* map of values which clip high */
+unsigned char clip_l[BUFLEN];	/* map of values which clip low */
 
 
 int
@@ -111,13 +111,17 @@ get_args(int argc, char *argv[])
 	    return 0;
 	file_name = "-";
     } else {
+	char *ifname;
 	file_name = argv[bu_optind];
-	if (freopen(file_name, "r", stdin) == NULL) {
+	ifname = bu_realpath(file_name, NULL);
+	if (freopen(ifname, "r", stdin) == NULL) {
 	    (void)fprintf(stderr,
-			  "bwmod: cannot open \"%s\" for reading\n",
-			  file_name);
+			  "bwmod: cannot open \"%s(canonical %s)\" for reading\n",
+			  file_name,ifname);
+	    bu_free(ifname,"ifname alloc from bu_realpath");
 	    return 0;
 	}
+	bu_free(ifname,"ifname alloc from bu_realpath");
     }
 
     if (argc > ++bu_optind)
@@ -186,9 +190,24 @@ main(int argc, char *argv[])
     while ((n=fread(iobuf, sizeof(*iobuf), BUFLEN, stdin)) > 0) {
 	/* translate */
 	for (j=0; j < n; ++j) {
-	    iobuf[j] = mapbuf[iobuf[j] + 32768];
-	    if (clip_h[j]) clip_high++;
-	    else if (clip_l[j]) clip_low++;
+	    long idx = j;
+	    long mdx;
+	    if (idx < 0)
+		idx = 0;
+	    if (idx > BUFLEN-1)
+		idx = BUFLEN-1;
+	    mdx = iobuf[idx] + 32768;
+	    if (mdx < 0)
+		mdx = 0;
+	    if (mdx > BUFLEN-1)
+		mdx = BUFLEN-1;
+
+	    iobuf[idx] = mapbuf[mdx];
+
+	    if (clip_h[idx])
+		clip_high++;
+	    else if (clip_l[idx])
+		clip_low++;
 	}
 	/* output */
 	if (fwrite(iobuf, sizeof(*iobuf), n, stdout) != n) {

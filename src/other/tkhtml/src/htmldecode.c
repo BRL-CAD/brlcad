@@ -30,7 +30,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-static char const rcsid[] = "@(#) $Id$";
+static char const rcsid[] = "@(#) $Id: htmldecode.c,v 1.9 2008/01/09 06:49:37 danielk1977 Exp $";
 
 
 #include "html.h"
@@ -258,7 +258,7 @@ HtmlEncode(
         }
     }
 
-    Tcl_SetObjResult(interp, Tcl_NewStringObj(zOut, iOut));
+    Tcl_SetObjResult(interp, Tcl_NewStringObj((const char *)zOut, iOut));
     return TCL_OK;
 }
 

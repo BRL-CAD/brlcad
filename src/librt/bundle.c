@@ -1,7 +1,7 @@
 /*                        B U N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include "bio.h"
 
@@ -121,6 +122,8 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     struct rt_i *rtip;
     const int debug_shoot = RT_G_DEBUG & DEBUG_SHOOT;
 
+    memset(&ss, 0, sizeof(struct rt_shootray_status));
+
     RT_AP_CHECK(ap);
     if (ap->a_magic) {
 	RT_CK_AP(ap);
@@ -200,7 +203,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     bu_bitv_clear(solidbits);
 
     if (BU_LIST_IS_EMPTY(&resp->re_region_ptbl)) {
-	BU_GETSTRUCT(regionbits, bu_ptbl);
+	BU_GET(regionbits, struct bu_ptbl);
 	bu_ptbl_init(regionbits, 7, "rt_shootray_bundle() regionbits ptbl");
     } else {
 	regionbits = BU_LIST_FIRST(bu_ptbl, &resp->re_region_ptbl);
@@ -698,12 +701,12 @@ bundle_hit(register struct application *ap, struct partition *PartHeadp, struct 
 	/*
 	 * setup partition collection
 	 */
-	BU_GETSTRUCT(bundle->list, partition_list);
+	BU_GET(bundle->list, struct partition_list);
 	BU_LIST_INIT(&(bundle->list->l));
     }
 
     /* add a new partition to list */
-    BU_GETSTRUCT(new_shotline, partition_list);
+    BU_GET(new_shotline, struct partition_list);
 
     /* steal partition list */
     BU_LIST_INIT_MAGIC((struct bu_list *)&new_shotline->PartHeadp, PT_HD_MAGIC);

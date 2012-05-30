@@ -1,7 +1,7 @@
 /*                         R T S R V . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,6 +45,7 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
+#include "bselect.h"
 #include "bio.h"
 
 #ifdef VMIN
@@ -57,6 +58,7 @@
 #include "raytrace.h"
 #include "pkg.h"
 #include "fb.h"
+#include "icv.h"
 
 #include "../rt/rtuif.h"
 #include "../rt/ext.h"
@@ -111,7 +113,7 @@ static int	avail_cpus;		/* # of cpus avail on this system */
 
 int	save_overlaps=0;
 
-struct bu_image_file *bif = NULL;
+struct icv_image_file *bif = NULL;
 
 /*
  * Package Handlers.
@@ -397,7 +399,7 @@ ph_enqueue(struct pkg_conn *pc, char *buf)
 
     if ( debug )  fprintf(stderr, "ph_enqueue: %s\n", buf );
 
-    BU_GETSTRUCT( lp, pkg_queue );
+    BU_GET(lp, struct pkg_queue);
     lp->type = pc->pkc_type;
     lp->buf = buf;
     BU_LIST_INSERT( &WorkHead, &lp->l );
@@ -840,8 +842,7 @@ bu_bomb(const char *str)
 
     if (debug)  fprintf(stderr, "\n%s\n", str);
     fflush(stderr);
-    if ( RT_G_DEBUG || rt_g.NMG_debug || bu_debug || debug )
-	abort();	/* should dump */
+
     bu_exit(12, NULL);
 }
 

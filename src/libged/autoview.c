@@ -1,7 +1,7 @@
 /*                         A U T O V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ ged_autoview(struct ged *gedp, int argc, const char *argv[])
     vect_t sqrt_small;
 
     /* less than or near zero uses default, 0.5 model scale == 2.0 view factor */
-    fastf_t factor = -1.0; 
+    fastf_t factor = -1.0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);

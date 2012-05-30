@@ -1,7 +1,7 @@
 /*                S I M C O L L I S I O N A L G O . H
  * BRL-CAD
  *
- * Copyright (c) 2011 United States Government as represented by
+ * Copyright (c) 2011-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,14 +55,15 @@ class btRTCollisionAlgorithm : public btActivatingCollisionAlgorithm
     btPersistentManifold* m_manifoldPtr;
 
 public:
+
+    btRTCollisionAlgorithm(btPersistentManifold* mf, const btCollisionAlgorithmConstructionInfo& ci, btCollisionObject* body0, btCollisionObject* body1);
+
     btRTCollisionAlgorithm(const btCollisionAlgorithmConstructionInfo& ci)
 	: btActivatingCollisionAlgorithm(ci) {}
 
     virtual void processCollision (btCollisionObject* body0, btCollisionObject* body1, const btDispatcherInfo& dispatchInfo, btManifoldResult* resultOut);
 
     virtual btScalar calculateTimeOfImpact(btCollisionObject* body0, btCollisionObject* body1, const btDispatcherInfo& dispatchInfo, btManifoldResult* resultOut);
-
-    btRTCollisionAlgorithm(btPersistentManifold* mf, const btCollisionAlgorithmConstructionInfo& ci, btCollisionObject* body0, btCollisionObject* body1);
 
     virtual ~btRTCollisionAlgorithm();
 

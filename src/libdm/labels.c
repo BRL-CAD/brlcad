@@ -1,7 +1,7 @@
 /*                          L A B E L S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2011 United States Government as represented by
+ * Copyright (c) 1998-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -559,7 +559,7 @@ dm_label_primitive(struct rt_wdb *wdbp,
 int
 dm_draw_labels(struct dm *dmp,
 	       struct rt_wdb *wdbp,
-	       char *name,
+	       const char *name,
 	       mat_t viewmat,
 	       int *labelsColor,
 	       int (*labelsHook)(),
@@ -588,12 +588,17 @@ dm_draw_labels(struct dm *dmp,
     ts.ts_resp = &rt_uniresource;
     MAT_IDN(ts.ts_mat);
 
-    if (db_follow_path_for_state(&ts, &path, name, 1))
-	return BRLCAD_OK;
+    if (db_follow_path_for_state(&ts, &path, name, 1)) {
+      db_free_full_path(&path);
+      return BRLCAD_OK;
+    } 
 
     dp = DB_FULL_PATH_CUR_DIR(&path);
 
-    rt_db_get_internal(&intern, dp, wdbp->dbip, ts.ts_mat, &rt_uniresource);
+    if (rt_db_get_internal(&intern, dp, wdbp->dbip, ts.ts_mat, &rt_uniresource) < 0) {
+      db_free_full_path(&path);
+      return BRLCAD_ERROR;
+    }
 
     dm_label_primitive(wdbp, pl, MAX_PL, viewmat, &intern);
 

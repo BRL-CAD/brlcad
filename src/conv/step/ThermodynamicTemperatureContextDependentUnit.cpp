@@ -1,7 +1,7 @@
 /*                 ThermodynamicTemperatureContextDependentUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,64 +34,64 @@
 string ThermodynamicTemperatureContextDependentUnit::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)ThermodynamicTemperatureContextDependentUnit::Create);
 
 ThermodynamicTemperatureContextDependentUnit::ThermodynamicTemperatureContextDependentUnit() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 ThermodynamicTemperatureContextDependentUnit::ThermodynamicTemperatureContextDependentUnit(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
+    step = sw;
+    id = step_id;
 }
 
 ThermodynamicTemperatureContextDependentUnit::~ThermodynamicTemperatureContextDependentUnit() {
 }
 
 bool
-ThermodynamicTemperatureContextDependentUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+ThermodynamicTemperatureContextDependentUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+    step=sw;
+    id = sse->STEPfile_id;
 
 
-	// load base class attributes
-	if ( !ThermodynamicTemperatureUnit::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
-		return false;
-	}
-	if ( !ContextDependentUnit::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
-		return false;
-	}
+    // load base class attributes
+    if ( !ThermodynamicTemperatureUnit::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
+	return false;
+    }
+    if ( !ContextDependentUnit::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
+	return false;
+    }
 
-	return true;
+    return true;
 }
 
 void
 ThermodynamicTemperatureContextDependentUnit::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-	ThermodynamicTemperatureUnit::Print(level+1);
-	ContextDependentUnit::Print(level+1);
+    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    ThermodynamicTemperatureUnit::Print(level+1);
+    ContextDependentUnit::Print(level+1);
 
 }
 STEPEntity *
-ThermodynamicTemperatureContextDependentUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		ThermodynamicTemperatureContextDependentUnit *object = new ThermodynamicTemperatureContextDependentUnit(sw,sse->STEPfile_id);
+ThermodynamicTemperatureContextDependentUnit::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	ThermodynamicTemperatureContextDependentUnit *object = new ThermodynamicTemperatureContextDependentUnit(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 // Local Variables:

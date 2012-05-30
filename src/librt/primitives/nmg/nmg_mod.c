@@ -1,7 +1,7 @@
 /*                       N M G _ M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2011 United States Government as represented by
+ * Copyright (c) 1991-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -98,24 +98,14 @@ nmg_merge_regions(struct nmgregion *r1, struct nmgregion *r2, const struct bn_to
 void
 nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const int simplify)
 {
-    struct model *m;
-    int len;
-    char *flags1;
-    char *flags2;
-    struct faceuse *fu1;
-    struct faceuse *fu2;
-    struct face *f1;
-    struct face *f2;
-    struct face_g_plane *fg1;
-    struct face_g_plane *fg2;
+    char *flags;
+    register struct faceuse *fu1, *fu2;
+    register struct face *f1, *f2;
+    struct faceuse *prev_fu;
+    struct face_g_plane *fg1, *fg2;
 
-    NMG_CK_SHELL(s);
-    m = nmg_find_model(&s->l.magic);
-    len = sizeof(char) * m->maxindex * 2;
-    flags1 = (char *)bu_calloc(sizeof(char), m->maxindex * 2,
-			       "nmg_shell_coplanar_face_merge flags1[]");
-    flags2 = (char *)bu_calloc(sizeof(char), m->maxindex * 2,
-			       "nmg_shell_coplanar_face_merge flags2[]");
+    flags = (char *)bu_calloc(sizeof(char), (s->r_p->m_p->maxindex) * 2,
+                              "nmg_shell_coplanar_face_merge flags[]");
 
     /* Visit each face in the shell */
     for (BU_LIST_FOR(fu1, faceuse, &s->fu_hd)) {
@@ -123,50 +113,45 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 
 	if (BU_LIST_NEXT_IS_HEAD(fu1, &s->fu_hd)) break;
 	f1 = fu1->f_p;
-	NMG_CK_FACE(f1);
-	if (NMG_INDEX_TEST(flags1, f1)) continue;
-	NMG_INDEX_SET(flags1, f1);
+
+	if (NMG_INDEX_TEST(flags, f1)) continue;
+	NMG_INDEX_SET(flags, f1);
 
 	fg1 = f1->g.plane_p;
-	NMG_CK_FACE_G_PLANE(fg1);
-	NMG_GET_FU_PLANE(n1, fu1);
 
 	/* For this face, visit all remaining faces in the shell. */
 	/* Don't revisit any faces already considered. */
-	memcpy(flags2, flags1, len);
 	for (fu2 = BU_LIST_NEXT(faceuse, &fu1->l);
 	     BU_LIST_NOT_HEAD(fu2, &s->fu_hd);
 	     fu2 = BU_LIST_NEXT(faceuse, &fu2->l)
 	    ) {
-	    register fastf_t dist;
 	    plane_t n2;
 
 	    f2 = fu2->f_p;
-	    NMG_CK_FACE(f2);
 
-	    if (NMG_INDEX_TEST(flags2, f2)) continue;
-
-	    NMG_INDEX_SET(flags2, f2);
+	    if (NMG_INDEX_TEST(flags, f2)) continue;
+	    NMG_INDEX_SET(flags, f2);
 
 	    fg2 = f2->g.plane_p;
-	    NMG_CK_FACE_G_PLANE(fg2);
 
 	    if (fu2->fumate_p == fu1 || fu1->fumate_p == fu2)
 		bu_bomb("nmg_shell_coplanar_face_merge() mate confusion\n");
 
 	    /* See if face geometry is shared & same direction */
 	    if (fg1 != fg2 || f1->flip != f2->flip) {
+                register fastf_t dist;
 		/* If plane equations are different, done */
 
-		NMG_GET_FU_PLANE(n2, fu2);
-
                 /* test if the bounding boxes of the faceuse overlap */
-                if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol)) {
+                if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol->dist)) {
 		    continue;
                 }
 
+	        NMG_GET_FU_PLANE(n1, fu1);
+		NMG_GET_FU_PLANE(n2, fu2);
+
 		/* compare the distance between the faceuse planes at their center */
-		dist = fabs(n1[W] - n2[W]);
+                dist = n1[W] - n2[W];
 		if (!NEAR_ZERO(dist, tol->dist)) {
                     continue;
                 }
@@ -189,31 +174,23 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 	     * shared fg topology.  Move everything into fu1, and kill
 	     * now empty faceuse, fumate, and face
 	     */
-	    {
-		struct faceuse *prev_fu;
-		prev_fu = BU_LIST_PREV(faceuse, &fu2->l);
-		/* The prev_fu can never be the head */
-		if (BU_LIST_IS_HEAD(prev_fu, &s->fu_hd))
-		    bu_bomb("prev is head?\n");
 
-		nmg_jf(fu1, fu2);
-
-		fu2 = prev_fu;
-	    }
+            prev_fu = BU_LIST_PREV(faceuse, &fu2->l);
+            nmg_jf(fu1, fu2);
+            fu2 = prev_fu;
 
 	    /* There is now the option of simplifying the face, by
 	     * removing unnecessary edges.
 	     */
 	    if (simplify) {
 		struct loopuse *lu;
-
 		for (BU_LIST_FOR(lu, loopuse, &fu1->lu_hd))
 		    nmg_simplify_loop(lu);
 	    }
 	}
     }
-    bu_free((char *)flags1, "nmg_shell_coplanar_face_merge flags1[]");
-    bu_free((char *)flags2, "nmg_shell_coplanar_face_merge flags2[]");
+
+    bu_free((char *)flags, "nmg_shell_coplanar_face_merge flags[]");
 
     nmg_shell_a(s, tol);
 
@@ -1453,7 +1430,7 @@ nmg_gluefaces(struct faceuse **fulist, int n, const struct bn_tol *tol)
     struct shell *s;
     struct loopuse *lu;
     struct edgeuse *eu;
-    int i;
+    register int i;
     int f_no;		/* Face number */
 
     NMG_CK_FACEUSE(fulist[0]);
@@ -1465,7 +1442,6 @@ nmg_gluefaces(struct faceuse **fulist, int n, const struct bn_tol *tol)
 	register struct faceuse *fu;
 
 	fu = fulist[i];
-	NMG_CK_FACEUSE(fu);
 	if (fu->s_p != s) {
 	    bu_log("nmg_gluefaces() in %s at %d. faceuses don't share parent\n",
 		   __FILE__, __LINE__);
@@ -1475,7 +1451,6 @@ nmg_gluefaces(struct faceuse **fulist, int n, const struct bn_tol *tol)
 
     for (i=0; i < n; ++i) {
 	for (BU_LIST_FOR(lu, loopuse, &fulist[i]->lu_hd)) {
-	    NMG_CK_LOOPUSE(lu);
 
 	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		continue;
@@ -1486,7 +1461,6 @@ nmg_gluefaces(struct faceuse **fulist, int n, const struct bn_tol *tol)
 		    register struct edgeuse *eu2;
 
 		    for (BU_LIST_FOR(lu2, loopuse, &fulist[f_no]->lu_hd)) {
-			NMG_CK_LOOPUSE(lu2);
 			if (BU_LIST_FIRST_MAGIC(&lu2->down_hd) != NMG_EDGEUSE_MAGIC)
 			    continue;
 			for (BU_LIST_FOR(eu2, edgeuse, &lu2->down_hd)) {
@@ -1973,7 +1947,7 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
 	    break;
 	case NMG_FACE_G_SNURB_MAGIC: {
 	    struct face_g_snurb *old = fu->f_p->g.snurb_p;
-	    struct face_g_snurb *new;
+	    struct face_g_snurb *newface;
 	    /* Create a new, duplicate snurb */
 	    nmg_face_g_snurb(new_fu,
 			     old->order[0], old->order[1],
@@ -1982,12 +1956,12 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
 			     old->s_size[0], old->s_size[1],
 			     old->pt_type,
 			     NULL);
-	    new = new_fu->f_p->g.snurb_p;
+	    newface = new_fu->f_p->g.snurb_p;
 	    /* Copy knots */
-	    memcpy(new->u.knots, old->u.knots, old->u.k_size*sizeof(fastf_t));
-	    memcpy(new->v.knots, old->v.knots, old->v.k_size*sizeof(fastf_t));
+	    memcpy(newface->u.knots, old->u.knots, old->u.k_size*sizeof(fastf_t));
+	    memcpy(newface->v.knots, old->v.knots, old->v.k_size*sizeof(fastf_t));
 	    /* Copy mesh */
-	    memcpy(new->ctl_points, old->ctl_points,
+	    memcpy(newface->ctl_points, old->ctl_points,
 		   old->s_size[0] * old->s_size[1] *
 		   RT_NURB_EXTRACT_COORDS(old->pt_type) *
 		   sizeof(fastf_t));

@@ -1,12 +1,10 @@
-/* $Id$ */
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
 #include <sstream>
 #include "scanner.h"
-#include "parser.h"
-#include "parser.hh"
-/*#include "y.tab.h"*/
+#include "re2c_parser.h"
+#include "parser_tokens.h"
 #include "globals.h"
 #include "dfa.h"
 
@@ -248,9 +246,7 @@ scan:
 					goto code;
 				}
 
-	":" / "=>"	{
-					RETURN(*tok);
-				}
+":" / "=>"	{ RETURN(COLON); } 
 
 	":="		{
 					cur = cursor;
@@ -323,10 +319,21 @@ scan:
 				}
 	"<!"		{
 					RETURN(SETUP);
-				}
-	[<>,()|=;/\\]	{
-					RETURN(*tok);
-				}
+			}
+[<>,()|=;/\\] {
+    switch (*tok) {
+	case '<': RETURN(LESS_THAN);
+	case '>': RETURN(GREATER_THAN);
+	case ',': RETURN(COMMA);
+	case '(': RETURN(LEFT_PAREN);
+	case ')': RETURN(RIGHT_PAREN);
+	case '|': RETURN(VERTICAL_BAR);
+	case '=': RETURN(EQUALS);
+	case ';': RETURN(SEMICOLON);
+	case '/': RETURN(SLASH);
+	case '\\': RETURN(BACKSLASH);
+    }
+}
 
 	"*"			{
 					yylval.op = *tok;
@@ -570,7 +577,7 @@ config:
 	"=" space*	{
 					iscfg = 2;
 					cur = cursor;
-					RETURN('=');
+					RETURN(EQUALS);
 				}
 	any			{
 					fatal("missing '='");

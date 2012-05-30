@@ -1,7 +1,7 @@
 /*                     S T E P - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -96,10 +96,11 @@ main(int argc, char *argv[])
     argv += bu_optind;
 
     /* check our inputs/outputs */
-    if (bu_file_exists(output_file)) {
-	bu_exit(1, "ERROR: refusing to overwrite existing \"%s\" file", output_file);
+    if (bu_file_exists(output_file, NULL)) {
+	bu_exit(1, "ERROR: refusing to overwrite existing output file:\"%s\". Please remove file or change output file name and try again.", output_file);
     }
-    if (!bu_file_exists(argv[0]) && !BU_STR_EQUAL(argv[0], "-")) {
+
+    if (!bu_file_exists(argv[0], NULL) && !BU_STR_EQUAL(argv[0], "-")) {
 	bu_exit(2, "ERROR: unable to read input \"%s\" STEP file", argv[0]);
     }
 

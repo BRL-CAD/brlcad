@@ -1,7 +1,7 @@
 /*                      V I E W E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2011 United States Government as represented by
+ * Copyright (c) 2001-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -93,6 +93,7 @@
 #include "raytrace.h"
 #include "fb.h"
 #include "bu.h"
+#include "icv.h"
 
 #include "./rtuif.h"
 #include "./ext.h"
@@ -226,7 +227,7 @@ static int antialias = 0;
 static int both_sides = 0;
 
 
-struct bu_vls occlusion_objects;
+struct bu_vls occlusion_objects = BU_VLS_INIT_ZERO;
 struct rt_i *occlusion_rtip = NULL;
 struct application **occlusion_apps;
 
@@ -454,6 +455,16 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	    bu_exit(EXIT_FAILURE, "rtedge: could not open database.\n");
 	RT_CK_DBI(dbip);
 
+#if 0
+	/* FIXME: calling this when db_open()'s mapped file doesn't
+	 * fail will cause duplicate directory entries.  need to make
+	 * sure db_dirbuild rebuilds from scratch or only updates
+	 * existing entries when they exist.
+	 */
+	if (db_dirbuild(dbip) < 0)
+	    bu_exit(EXIT_FAILURE, "rtedge: could not read database.\n");
+#endif
+
 	occlusion_rtip = rt_new_rti(dbip); /* clones dbip */
 
 	for (i=0; i < MAX_PSW; i++) {
@@ -571,9 +582,6 @@ view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
 {
     int i;
 
-    if (outputfile)
-	bif = bu_image_save_open(outputfile, BU_IMAGE_AUTO, width, height, 3);
-
     /*
      * Per_processor_chuck specifies the number of pixels rendered per
      * each pass of a worker. By making this value equal to the width
@@ -689,7 +697,7 @@ view_eol(struct application *ap)
 	    bu_exit(EXIT_FAILURE, "rtedge: error reading from framebuffer.\n");
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
-	for (i=0; i<per_processor_chunk; ++i) {
+	for (i = 0; i < per_processor_chunk; ++i) {
 	    /*
 	     * Is this pixel an edge?
 	     */
@@ -810,7 +818,7 @@ view_eol(struct application *ap)
 	 * Write to a file.
 	 */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	bu_image_save_writeline(bif, ap->a_y, scanline[cpu]);
+	icv_image_save_writeline(bif, ap->a_y, scanline[cpu]);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
     if (fbp == FBIO_NULL && outputfile == NULL)
@@ -839,7 +847,7 @@ void view_cleanup(struct rt_i *UNUSED(rtip))
  */
 void view_end(struct application *UNUSED(ap)) { 
     if (bif)
-	bu_image_save_close(bif); 
+	icv_image_save_close(bif); 
     bif = NULL;
 }
 
@@ -1389,7 +1397,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 
 
 void application_init(void) {
-    bu_vls_init(&occlusion_objects);
+    bu_vls_trunc(&occlusion_objects, 0);
 }
 
 

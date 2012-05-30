@@ -1,7 +1,7 @@
 /*                          A Z E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -175,8 +175,9 @@ main (int argc, char **argv)
 		Round = 1;
 		break;
 	    default:
-		fprintf(stderr, "Bad option '-%c'\n", Ch);
-	    case '?':
+		if (Ch != '?') {
+		    fprintf(stderr, "Bad option '-%c'\n", Ch);
+		}
 		PrintUsage();
 	}
 

@@ -1,7 +1,7 @@
 /*                         G Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -436,7 +436,7 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
     if (i == 2) {
 	*val = a;
 	for (; cvt->name[0] != '\0';) {
-	    if (!strncmp(cvt->name, units_string, 256)) {
+	    if (!bu_strncmp(cvt->name, units_string, 256)) {
 		goto found_units;
 	    } else {
 		cvt++;
@@ -730,7 +730,7 @@ parse_args(int ac, char *av[])
 		    }
 
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "Units: ");
-		    for (i=0; i < 3; i++) {
+		    for (i = 0; i < 3; i++) {
 			bu_vls_printf(_ged_current_gedp->ged_result_str, " %s: %s", dim[i], units[i]->name);
 		    }
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "\n");
@@ -771,6 +771,7 @@ get_densities_from_file(char *name)
 
     if (stat(name, &sb)) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "Could not read file - %s\n", name);
+	fclose(fp);
 	return GED_ERROR;
     }
 
@@ -1461,7 +1462,7 @@ find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
 	*p = '\0';
     }
 
-    for (i=0; i < num_objects; i++) {
+    for (i = 0; i < num_objects; i++) {
 	if (BU_STR_EQUAL(obj_rpt[i].o_name, str)) {
 	    bu_free(str, "");
 	    return i;
@@ -1523,7 +1524,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
      * specified on the command line
      */
     obj_tbl = bu_calloc(sizeof(struct per_obj_data), num_objects, "report tables");
-    for (i=0; i < num_objects; i++) {
+    for (i = 0; i < num_objects; i++) {
 	obj_tbl[i].o_name = (char *)av[start+i];
 	obj_tbl[i].o_len = bu_calloc(num_views, sizeof(double), "o_len");
 	obj_tbl[i].o_lenDensity = bu_calloc(num_views, sizeof(double), "o_lenDensity");
@@ -1538,7 +1539,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
     reg_tbl = bu_calloc(rtip->nregions, sizeof(struct per_region_data), "per_region_data");
 
 
-    for (i=0, BU_LIST_FOR (regp, region, &(rtip->HeadRegion)), i++) {
+    for (i = 0, BU_LIST_FOR (regp, region, &(rtip->HeadRegion)), i++) {
 	regp->reg_udata = &reg_tbl[i];
 
 	reg_tbl[i].r_lenDensity = bu_calloc(num_views, sizeof(double), "r_lenDensity");
@@ -1654,7 +1655,7 @@ options_prep(struct rt_i *rtip, vect_t span)
 	if (ZERO(weight_tolerance - 1.0)) {
 	    double max_den = 0.0;
 	    int i;
-	    for (i=0; i < num_densities; i++) {
+	    for (i = 0; i < num_densities; i++) {
 		if (densities[i].grams_per_cu_mm > max_den)
 		    max_den = densities[i].grams_per_cu_mm;
 	    }
@@ -1729,7 +1730,7 @@ view_reports(struct cstate *state)
 	int view;
 
 	/* for each object, compute the volume for all views */
-	for (obj=0; obj < num_objects; obj++) {
+	for (obj = 0; obj < num_objects; obj++) {
 	    double val;
 	    /* compute volume of object for given view */
 	    view = state->curr_view;
@@ -1752,7 +1753,7 @@ view_reports(struct cstate *state)
 	int obj;
 	int view = state->curr_view;
 
-	for (obj=0; obj < num_objects; obj++) {
+	for (obj = 0; obj < num_objects; obj++) {
 	    double grams_per_cu_mm = obj_tbl[obj].o_lenDensity[view] *
 		(state->area[view] / state->shots[view]);
 
@@ -1794,7 +1795,7 @@ weight_volume_terminate(struct cstate *state)
 	/* for each object, compute the weight for all views */
 	int obj;
 
-	for (obj=0; obj < num_objects; obj++) {
+	for (obj = 0; obj < num_objects; obj++) {
 	    int view = 0;
 	    if (verbose)
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "object %d\n", obj);
@@ -1846,7 +1847,7 @@ weight_volume_terminate(struct cstate *state)
 	int obj;
 
 	/* for each object, compute the volume for all views */
-	for (obj=0; obj < num_objects; obj++) {
+	for (obj = 0; obj < num_objects; obj++) {
 
 	    /* compute volume of object for given view */
 	    int view = 0;
@@ -2010,7 +2011,7 @@ terminate_check(struct cstate *state)
     }
 
     for (view=0; view < num_views; view++) {
-	for (obj=0; obj < num_objects; obj++) {
+	for (obj = 0; obj < num_objects; obj++) {
 	    VSCALE(&obj_tbl[obj].o_moi[view*3], &obj_tbl[obj].o_moi[view*3], 0.25);
 	    VSCALE(&obj_tbl[obj].o_poi[view*3], &obj_tbl[obj].o_poi[view*3], 0.25);
 	}
@@ -2041,7 +2042,7 @@ summary_reports(struct cstate *state)
 
     if (analysis_flags & ANALYSIS_WEIGHT) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "Weight:\n");
-	for (obj=0; obj < num_objects; obj++) {
+	for (obj = 0; obj < num_objects; obj++) {
 	    avg_mass = 0.0;
 
 	    for (view=0; view < num_views; view++) {
@@ -2076,7 +2077,7 @@ summary_reports(struct cstate *state)
 		 * inertia for the current object.
 		 */
 		if (analysis_flags & ANALYSIS_MOMENTS) {
-		    struct bu_vls title;
+		    struct bu_vls title = BU_VLS_INIT_ZERO;
 		    mat_t tmat; /* total mat */
 
 		    MAT_ZERO(tmat);
@@ -2114,7 +2115,6 @@ summary_reports(struct cstate *state)
 		    tmat[8] = tmat[2];
 		    tmat[9] = tmat[6];
 
-		    bu_vls_init(&title);
 		    bu_vls_printf(&title, "For the Moments and Products of Inertia For %s", obj_tbl[obj].o_name);
 		    bn_mat_print_vls(bu_vls_addr(&title), tmat, _ged_current_gedp->ged_result_str);
 		    bu_vls_free(&title);
@@ -2239,7 +2239,7 @@ summary_reports(struct cstate *state)
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "Volume:\n");
 
 	/* print per-object */
-	for (obj=0; obj < num_objects; obj++) {
+	for (obj = 0; obj < num_objects; obj++) {
 	    avg_mass = 0.0;
 
 	    for (view=0; view < num_views; view++)
@@ -2403,14 +2403,16 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
      * that the user wants included in the ray trace.
      */
     for (; arg_count < argc; arg_count++) {
-	if (rt_gettree(rtip, argv[arg_count]) < 0)
+	if (rt_gettree(rtip, argv[arg_count]) < 0) {
 	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[arg_count]);
+	    return GED_ERROR;
+	}
     }
 
     /* Initialize all the per-CPU memory resources.  The number of
      * processors can change at runtime, init them all.
      */
-    for (i=0; i < max_cpus; i++) {
+    for (i = 0; i < max_cpus; i++) {
 	rt_init_resource(&resource[i], i, rtip);
 	bn_rand_init(resource[i].re_randptr, i);
     }
@@ -2562,7 +2564,7 @@ aborted:
     bu_free(state.m_moi, "m_moi");
     bu_free(state.m_poi, "m_poi");
 
-    for (i=0; i < num_objects; i++) {
+    for (i = 0; i < num_objects; i++) {
 	bu_free(obj_tbl[i].o_len, "o_len");
 	bu_free(obj_tbl[i].o_lenDensity, "o_lenDensity");
 	bu_free(obj_tbl[i].o_volume, "o_volume");
@@ -2574,7 +2576,7 @@ aborted:
     bu_free(obj_tbl, "object table");
     obj_tbl = NULL;
 
-    for (i=0, BU_LIST_FOR (regp, region, &(rtip->HeadRegion)), i++) {
+    for (i = 0, BU_LIST_FOR (regp, region, &(rtip->HeadRegion)), i++) {
 	bu_free(reg_tbl[i].r_lenDensity, "r_lenDensity");
 	bu_free(reg_tbl[i].r_len, "r_len");
 	bu_free(reg_tbl[i].r_volume, "r_volume");

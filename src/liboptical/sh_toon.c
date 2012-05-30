@@ -1,7 +1,7 @@
 /*                        S H _ T O O N . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2011 United States Government as represented by
+ * Copyright (c) 2010-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@ struct bu_structparse toon_print_tab[] = {
 
 };
 struct bu_structparse toon_parse_tab[] = {
-    {"%p",	bu_byteoffset(toon_print_tab[0]), "toon_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%p", 1, "toon_print_tab", bu_byteoffset(toon_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -129,7 +129,7 @@ toon_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 	bu_log("toon_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(toon_sp, toon_specific);
+    BU_GET(toon_sp, struct toon_specific);
     *dpp = toon_sp;
 
     /* initialize the default values for the shader */

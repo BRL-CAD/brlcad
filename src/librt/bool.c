@@ -1,7 +1,7 @@
 /*                          B O O L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -763,7 +763,8 @@ rt_tree_max_raynum(register const union tree *tp, register const struct partitio
 void
 rt_fastgen_vol_vol_overlap(struct region **fr1, struct region **fr2, const struct partition *pp)
 {
-    struct bu_ptbl sl1, sl2;
+    struct bu_ptbl sl1 = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl sl2 = BU_PTBL_INIT_ZERO;
     const struct seg *s1 = (const struct seg *)NULL;
     const struct seg *s2 = (const struct seg *)NULL;
     fastf_t s1_in_dist;
@@ -1235,7 +1236,7 @@ rt_default_logoverlap(struct application *ap, const struct partition *pp, const 
     static long count = 0; /* Not PARALLEL, shouldn't hurt */
     register fastf_t depth;
     size_t i;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     RT_CK_AP(ap);
     RT_CK_PT(pp);
@@ -1251,7 +1252,6 @@ rt_default_logoverlap(struct application *ap, const struct partition *pp, const 
      * Print all verbiage in one call to bu_log(),
      * so that messages will be grouped together in parallel runs.
      */
-    bu_vls_init(&str);
     bu_vls_extend(&str, 80*8);
     bu_vls_putc(&str, '\n');
 

@@ -1,7 +1,7 @@
 /*                  S T E P E N T I T Y . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2011 United States Government as represented by
+ * Copyright (c) 2009-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,9 +29,9 @@
 
 STEPEntity::STEPEntity()
 {
-	step=NULL;
-	id=0;
-	ON_id = -1;
+    step=NULL;
+    id=0;
+    ON_id = -1;
 }
 
 
@@ -43,13 +43,13 @@ STEPEntity::~STEPEntity()
 int
 STEPEntity::STEPid()
 {
-	return id;
+    return id;
 }
 
 
 STEPWrapper *STEPEntity::Step()
 {
-	return step;
+    return step;
 }
 
 

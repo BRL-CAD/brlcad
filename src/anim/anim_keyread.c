@@ -1,7 +1,7 @@
 /*                  A N I M _ K E Y R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -105,7 +105,7 @@ main(int argc, char *argv[])
     fastf_t time, viewsize;
     int count;
 
-    fastf_t eyept[3], viewrot[16], angle[3], quat[4];
+    fastf_t eyept[3] = {0.0}, viewrot[16] = {0.0}, angle[3] = {0.0}, quat[4] = {0.0};
 
     if (!get_args(argc, argv))
 	fprintf(stderr, "anim_keyread: get_args error");
@@ -130,7 +130,7 @@ main(int argc, char *argv[])
 
 	if (mode==YPR) {
 	    anim_v_unpermute(viewrot);
-	    c = anim_mat2ypr(angle, viewrot);
+	    c = anim_mat2ypr(viewrot, angle);
 	    if (c==ERROR1)
 		fprintf(stderr, "Warning: yaw and roll arbitrarily defined at time = %f.\n", time);
 	    else if (c==ERROR2)
@@ -139,7 +139,7 @@ main(int argc, char *argv[])
 		VSCALE(angle, angle, RAD2DEG);
 	    printf("%.10g\t%.10g\t%.10g\n", angle[0], angle[1], angle[2]);
 	} else if (mode==XYZ) {
-	    c = anim_mat2zyx(angle, viewrot);
+	    c = anim_mat2zyx(viewrot, angle);
 	    if (c==ERROR1)
 		fprintf(stderr, "Warning: x and z rotations arbitrarily defined at time = %f.\n", time);
 	    else if (c==ERROR2)

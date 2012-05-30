@@ -1,7 +1,7 @@
 /*                        V S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -175,7 +175,7 @@ rt_vshootray(struct application *ap)
     bu_bitv_clear(solidbits);
 
     if (BU_LIST_IS_EMPTY(&ap->a_resource->re_region_ptbl)) {
-	BU_GETSTRUCT(regionbits, bu_ptbl);
+	BU_GET(regionbits, struct bu_ptbl);
 	bu_ptbl_init(regionbits, 7, "rt_shootray() regionbits ptbl");
     } else {
 	regionbits = BU_LIST_FIRST(bu_ptbl, &ap->a_resource->re_region_ptbl);
@@ -355,8 +355,13 @@ freeup:
 	    FREE_PT(newpp, ap->a_resource);
 	}
     }
+
     /* Segs can't be freed until after a_hit() has returned */
-    RT_FREE_SEG_LIST(HeadSeg, ap->a_resource);
+#if 0
+    /* FIXME: depends on commented out code above */
+    if (HeadSeg)
+	RT_FREE_SEG_LIST(HeadSeg, ap->a_resource);
+#endif
 
 out:
     bu_free((char *)ary_stp, "*ary_stp[]");

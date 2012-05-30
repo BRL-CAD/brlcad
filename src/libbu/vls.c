@@ -1,7 +1,7 @@
 /*                           V L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
+#include <assert.h>
 
 #ifdef HAVE_STDINT_H
 #   include <stdint.h>
@@ -33,6 +34,7 @@
 
 #include "bu.h"
 
+#include "./vls_internals.h"
 
 /* non-published globals */
 extern const char bu_vls_message[];
@@ -43,12 +45,8 @@ extern const char bu_strdup_message[];
 /* minimum initial allocation size */
 static const unsigned int _VLS_ALLOC_MIN = 32;
 
-/* minimum vls allocation increment size */
-static const size_t _VLS_ALLOC_STEP = 128;
-
 /* minimum vls buffer allocation size */
 static const unsigned int _VLS_ALLOC_READ = 4096;
-
 
 void
 bu_vls_init(struct bu_vls *vp)
@@ -131,7 +129,14 @@ bu_vls_extend(struct bu_vls *vp, unsigned int extra)
     if (extra < _VLS_ALLOC_MIN)
 	extra = _VLS_ALLOC_MIN;
 
-    /* first time allocation */
+    /* first time allocation.
+     *
+     * performance testing using a static buffer indicated an
+     * approximate 25% gain by avoiding this first allocation but not
+     * worth the complexity involved (e.g., extending the struct or
+     * hijacking vls_str) and it'd be error-prone whenever the vls
+     * implementation changes.
+     */
     if (vp->vls_max <= 0 || vp->vls_str == (char *)0) {
 	vp->vls_str = (char *)bu_malloc((size_t)extra, bu_vls_message);
 	vp->vls_max = extra;
@@ -267,8 +272,8 @@ bu_vls_strdup(const struct bu_vls *vp)
 
     len = bu_vls_strlen(vp);
     str = bu_malloc(len+1, bu_strdup_message);
-    strncpy(str, bu_vls_addr(vp), len);
-    str[len] = '\0'; /* sanity */
+    bu_strlcpy(str, bu_vls_addr(vp), len+1);
+
     return str;
 }
 
@@ -280,7 +285,7 @@ bu_vls_strgrab(struct bu_vls *vp)
 
     BU_CK_VLS(vp);
 
-    if (vp->vls_offset != 0) {
+    if (vp->vls_offset != 0 || !vp->vls_str) {
 	str = bu_vls_strdup(vp);
 	bu_vls_free(vp);
 	return str;
@@ -476,7 +481,7 @@ bu_vls_strncmp(struct bu_vls *s1, struct bu_vls *s2, size_t n)
 	bu_vls_extend(s2, 1);
     }
 
-    return strncmp(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset, n);
+    return bu_strncmp(s1->vls_str+s1->vls_offset, s2->vls_str+s2->vls_offset, n);
 }
 
 
@@ -614,7 +619,6 @@ bu_vls_gets(struct bu_vls *vp, FILE *fp)
     return endlen;
 }
 
-
 void
 bu_vls_putc(struct bu_vls *vp, int c)
 {
@@ -626,7 +630,6 @@ bu_vls_putc(struct bu_vls *vp, int c)
     vp->vls_str[vp->vls_offset + vp->vls_len++] = (char)c;
     vp->vls_str[vp->vls_offset + vp->vls_len] = '\0'; /* force null termination */
 }
-
 
 void
 bu_vls_trimspace(struct bu_vls *vp)
@@ -643,407 +646,6 @@ bu_vls_trimspace(struct bu_vls *vp)
 	   isspace(*bu_vls_addr(vp)))
 	bu_vls_nibble(vp, 1);
 }
-
-void
-bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
-{
-    const char *sp; /* start pointer */
-    const char *ep; /* end pointer */
-    int len;
-
-#define LONG_INT 0x001
-#define FIELDLEN 0x002
-#define SHORTINT 0x004
-#define LLONGINT 0x008
-#define SHHRTINT 0x010
-#define INTMAX_T 0x020
-#define PTRDIFFT 0x040
-#define SIZETINT 0x080
-
-    int flags;
-    int fieldlen = -1;
-    int left_justify = 0;
-
-    char fbuf[64] = {0}; /* % format buffer */
-    char buf[BUFSIZ] = {0};
-
-    if (UNLIKELY(!vls || !fmt || fmt[0] == '\0')) {
-	/* nothing to print to or from */
-	return;
-    }
-
-    BU_CK_VLS(vls);
-
-    bu_vls_extend(vls, (unsigned int)_VLS_ALLOC_STEP);
-
-    sp = fmt;
-    while (*sp) {
-	/* Initial state:  just printing chars */
-	fmt = sp;
-	while (*sp != '%' && *sp)
-	    sp++;
-
-	if (sp != fmt)
-	    bu_vls_strncat(vls, fmt, (size_t)(sp-fmt));
-
-	if (*sp == '\0')
-	    break;
-
-	/* Saw a percent sign, find end of fmt specifier */
-
-	flags = 0;
-	ep = sp;
-	while (*ep) {
-	    ++ep;
-	    if (*ep == ' ' || *ep == '#' || *ep == '+' || *ep == '.' || isdigit(*ep)) {
-		continue;
-	    } else if (*ep == '-') {
-		left_justify = 1;
-	    } else if (*ep == 'l' || *ep == 'U' || *ep == 'O') {
-		if (flags & LONG_INT) {
-		    flags ^= LONG_INT;
-		    flags |= LLONGINT;
-		} else {
-		    flags |= LONG_INT;
-		}
-	    } else if (*ep == '*') {
-		fieldlen = va_arg(ap, int);
-		flags |= FIELDLEN;
-	    } else if (*ep == 'h') {
-		if (flags & SHORTINT) {
-		    flags ^= SHORTINT;
-		    flags |= SHHRTINT;
-		} else {
-		    flags |= SHORTINT;
-		}
-	    } else if (*ep == 'j') {
-		flags |= INTMAX_T;
-	    } else if (*ep == 't') {
-		flags |= PTRDIFFT;
-	    } else if (*ep == 'z') {
-		flags |= SIZETINT;
-	    } else
-		/* Anything else must be the end of the fmt specifier */
-		break;
-	}
-
-	/* libc left-justifies if there's a '-' char, even if the
-	 * value is already negative so no need to check current value
-	 * of left_justify.
-	 */
-	if (fieldlen < 0) {
-	    fieldlen = -fieldlen;
-	    left_justify = 1;
-	}
-
-	/* Copy off the format string */
-	len = ep-sp+1;
-	if ((size_t)len > sizeof(fbuf))
-	    len = sizeof(fbuf);
-	/* intentionally avoid bu_strlcpy here since the source field
-	 * may be legitimately truncated.  FIXME: verify that claim.
-	 */
-	strncpy(fbuf, sp, (size_t)len);
-	fbuf[len] = '\0'; /* sanity */
-
-#ifndef HAVE_C99_FORMAT_SPECIFIERS
-	/* if the format string uses the %z width specifier, we need
-	 * to replace it with something more palatable to this busted
-	 * compiler.
-	 */
-
-	if (flags & SIZETINT) {
-	    char *fp = fbuf;
-	    while (*fp) {
-		if (*fp == '%') {
-		    /* found the next format specifier */
-		    while (*fp) {
-			fp++;
-			/* possible characters that can preceed the
-			 * field length character (before the type).
-			 */
-			if (isdigit(*fp)
-			    || *fp == '$'
-			    || *fp == '#'
-			    || *fp == '+'
-			    || *fp == '.'
-			    || *fp == '-'
-			    || *fp == '*') {
-			    continue;
-			}
-			if (*fp == 'z') {
-			    /* assume MSVC replacing instances of %z
-			     * with %I (capital i) until we encounter
-			     * anything different.
-			     */
-			    *fp = 'I';
-			}
-
-			break;
-		    }
-		    if (*fp == '\0') {
-			break;
-		    }
-		}
-		fp++;
-	    }
-	}
-#endif
-
-	/* Grab parameter from arg list, and print it */
-	switch (*ep) {
-	    case 's':
-		{
-		    char *str;
-
-		    str = va_arg(ap, char *);
-		    if (str) {
-			if (flags & FIELDLEN) {
-			    int stringlen = (int)strlen(str);
-
-			    if (stringlen >= fieldlen)
-				bu_vls_strncat(vls, str, (size_t)fieldlen);
-			    else {
-				struct bu_vls padded;
-				int i;
-
-				bu_vls_init(&padded);
-				if (left_justify)
-				    bu_vls_strcat(&padded, str);
-				for (i = 0; i < fieldlen - stringlen; ++i)
-				    bu_vls_putc(&padded, ' ');
-				if (!left_justify)
-				    bu_vls_strcat(&padded, str);
-				bu_vls_vlscat(vls, &padded);
-			    }
-			} else {
-			    bu_vls_strcat(vls, str);
-			}
-		    }  else  {
-			if (flags & FIELDLEN)
-			    bu_vls_strncat(vls, "(null)", (size_t)fieldlen);
-			else
-			    bu_vls_strcat(vls, "(null)");
-		    }
-		}
-		break;
-	    case 'S': /* XXX - DEPRECATED [7.14] */
-		printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
-		/* fall through */
-	    case 'V':
-		{
-		    struct bu_vls *vp;
-
-		    vp = va_arg(ap, struct bu_vls *);
-		    if (vp) {
-			BU_CK_VLS(vp);
-			if (flags & FIELDLEN) {
-			    int stringlen = bu_vls_strlen(vp);
-
-			    if (stringlen >= fieldlen)
-				bu_vls_strncat(vls, bu_vls_addr(vp), (size_t)fieldlen);
-			    else {
-				struct bu_vls padded;
-				int i;
-
-				bu_vls_init(&padded);
-				if (left_justify)
-				    bu_vls_vlscat(&padded, vp);
-				for (i = 0; i < fieldlen - stringlen; ++i)
-				    bu_vls_putc(&padded, ' ');
-				if (!left_justify)
-				    bu_vls_vlscat(&padded, vp);
-				bu_vls_vlscat(vls, &padded);
-			    }
-			} else {
-			    bu_vls_vlscat(vls, vp);
-			}
-		    }  else  {
-			if (flags & FIELDLEN)
-			    bu_vls_strncat(vls, "(null)", (size_t)fieldlen);
-			else
-			    bu_vls_strcat(vls, "(null)");
-		    }
-		}
-		break;
-	    case 'e':
-	    case 'E':
-	    case 'f':
-	    case 'g':
-	    case 'G':
-		/* All floating point ==> "double" */
-		{
-		    double d;
-
-		    d = va_arg(ap, double);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, d);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, d);
-		}
-		bu_vls_strcat(vls, buf);
-		break;
-	    case 'o':
-	    case 'u':
-	    case 'x':
-		if (flags & LONG_INT) {
-		    /* Unsigned long int */
-		    unsigned long l;
-
-		    l = va_arg(ap, unsigned long);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, l);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, l);
-		} else if (flags & LLONGINT) {
-		    /* Unsigned long long int */
-		    unsigned long long ll;
-
-		    ll = va_arg(ap, unsigned long long);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, ll);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, ll);
-		} else if (flags & SHORTINT || flags & SHHRTINT) {
-		    /* unsigned short int */
-		    unsigned short int sh;
-		    sh = (unsigned short int)va_arg(ap, int);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, sh);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, sh);
-		} else if (flags & INTMAX_T) {
-		    intmax_t im;
-		    im = va_arg(ap, intmax_t);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, im);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, im);
-		} else if (flags & PTRDIFFT) {
-		    ptrdiff_t pd;
-		    pd = va_arg(ap, ptrdiff_t);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, pd);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, pd);
-		} else if (flags & SIZETINT) {
-		    size_t st;
-		    st = va_arg(ap, size_t);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, st);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, st);
-		} else {
-		    /* Regular unsigned int */
-		    unsigned int j;
-
-		    j = (unsigned int)va_arg(ap, unsigned int);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, j);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, j);
-		}
-		bu_vls_strcat(vls, buf);
-		break;
-	    case 'd':
-	    case 'i':
-		if (flags & LONG_INT) {
-		    /* Long int */
-		    long l;
-
-		    l = va_arg(ap, long);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, l);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, l);
-		} else if (flags & LLONGINT) {
-		    /* Long long int */
-		    long long ll;
-
-		    ll = va_arg(ap, long long);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, ll);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, ll);
-		} else if (flags & SHORTINT || flags & SHHRTINT) {
-		    /* short int */
-		    short int sh;
-		    sh = (short int)va_arg(ap, int);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, sh);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, sh);
-		} else if (flags & INTMAX_T) {
-		    intmax_t im;
-		    im = va_arg(ap, intmax_t);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, im);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, im);
-		} else if (flags & PTRDIFFT) {
-		    ptrdiff_t pd;
-		    pd = va_arg(ap, ptrdiff_t);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, pd);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, pd);
-		} else if (flags & SIZETINT) {
-		    size_t st;
-		    st = va_arg(ap, size_t);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, st);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, st);
-		} else {
-		    /* Regular int */
-		    int j;
-
-		    j = va_arg(ap, int);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, j);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, j);
-		}
-		bu_vls_strcat(vls, buf);
-		break;
-	    case 'n':
-	    case 'p':
-		/* all pointer == "void *" */
-		{
-		    void *vp;
-		    vp = (void *)va_arg(ap, void *);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, vp);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, vp);
-		}
-		bu_vls_strcat(vls, buf);
-		break;
-	    case '%':
-		bu_vls_putc(vls, '%');
-		break;
-	    default:  /* Something weird, maybe %c */
-		{
-		    int j;
-
-		    /* We hope, whatever it is, it fits in an int and the resulting
-		       stringlet is smaller than sizeof(buf) bytes */
-
-		    j = va_arg(ap, int);
-		    if (flags & FIELDLEN)
-			snprintf(buf, BUFSIZ, fbuf, fieldlen, j);
-		    else
-			snprintf(buf, BUFSIZ, fbuf, j);
-		}
-		bu_vls_strcat(vls, buf);
-		break;
-	}
-	sp = ep+1;
-    }
-
-    va_end(ap);
-}
-
 
 void
 bu_vls_printf(struct bu_vls *vls, const char *fmt, ...)
@@ -1116,13 +718,12 @@ bu_vls_print_positions_used(const struct bu_vls *vp)
 void
 bu_vls_detab(struct bu_vls *vp)
 {
-    struct bu_vls src;
+    struct bu_vls src = BU_VLS_INIT_ZERO;
     char *cp;
     int used;
 
     BU_CK_VLS(vp);
 
-    bu_vls_init(&src);
     bu_vls_vlscatzap(&src, vp);	/* make temporary copy of src */
     bu_vls_extend(vp, (unsigned int)bu_vls_strlen(&src) + (unsigned int)_VLS_ALLOC_STEP);
 

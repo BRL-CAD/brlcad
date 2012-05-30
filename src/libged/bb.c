@@ -1,7 +1,7 @@
-/*                         B B S I Z E . C
+/*                         B B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -114,7 +114,6 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: bb %s", usage);
 	return GED_HELP;
     }
-
 
     VSETALL(rpp_min, MAX_FASTF);
     VSETALL(rpp_max, -MAX_FASTF);

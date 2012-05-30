@@ -1,7 +1,7 @@
 /*                     V I E W T H E R M . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2011 United States Government as represented by
+ * Copyright (c) 1996-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -63,8 +63,6 @@
 extern int viewshade(struct application *app,
 		     const struct partition *pp,
 		     struct shadework *swp);
-
-extern void multispectral_shader_init(struct mfuncs **headp);
 
 /* XXX Move to raytrace.h when routine goes into LIBRT */
 extern double rt_pixel_footprint(const struct application *app,
@@ -680,7 +678,7 @@ view_init(struct application *UNUSED(app), char *UNUSED(file), char *UNUSED(obj)
 {
     bu_log("%s", brlcad_ident(title));
 
-    multispectral_shader_init(&mfHead);	/* in libmultispectral/init.c */
+    optical_shader_init(&mfHead);	/* in libmultispectral/init.c */
 
     bu_struct_print("rttherm variables", view_parse, NULL);
 
@@ -707,7 +705,7 @@ void
 view_2init(struct application *app, char *framename)
 {
     size_t i;
-    struct bu_vls name;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
 
     app->a_refrac_index = 1.0;	/* RI_AIR -- might be water? */
     app->a_cumlen = 0.0;
@@ -734,7 +732,6 @@ view_2init(struct application *app, char *framename)
     }
 
     /* Extra 2nd file! Write out spectrum info */
-    bu_vls_init(&name);
     bu_vls_printf(&name, "%s.spect", framename ? framename : "RTTHERM");
     bn_table_write(bu_vls_addr(&name), spectrum);
     bu_log("Wrote %s\n", bu_vls_addr(&name));

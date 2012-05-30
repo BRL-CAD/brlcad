@@ -1,7 +1,7 @@
 /*                          R T I F . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2011 United States Government as represented by
+ * Copyright (c) 1988-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -75,7 +75,7 @@ cmd_rt(ClientData UNUSED(clientData),
 
     /* skip past _mged_ */
     if (argv[0][0] == '_' && argv[0][1] == 'm' &&
-	strncmp(argv[0], "_mged_", 6) == 0)
+	bu_strncmp(argv[0], "_mged_", 6) == 0)
 	argv[0] += 6;
 
     if (BU_STR_EQUAL(argv[0], "rtcheck"))
@@ -116,9 +116,8 @@ cmd_rrt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     CHECK_DBI_NULL;
 
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help rrt");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -189,10 +188,10 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     struct directory *dp = NULL;
     struct ged_display_list *gdlp = NULL;
     struct ged_display_list *next_gdlp = NULL;
-    vect_t eye_model = {0.0, 0.0, 0.0};
-    vect_t sav_center = {0.0, 0.0, 0.0};
-    vect_t sav_start = {0.0, 0.0, 0.0};
-    vect_t xlate = {0.0, 0.0, 0.0};
+    vect_t eye_model = VINIT_ZERO;
+    vect_t sav_center = VINIT_ZERO;
+    vect_t sav_start = VINIT_ZERO;
+    vect_t xlate = VINIT_ZERO;
 
     /* static due to setjmp */
     static int mode = 0;
@@ -201,9 +200,8 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     CHECK_DBI_NULL;
 
     if (argc < 2 || 3 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help rmats");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -301,12 +299,17 @@ work:
 			switch (*cmd) {
 			    case BN_VLIST_POLY_START:
 			    case BN_VLIST_POLY_VERTNORM:
+			    case BN_VLIST_TRI_START:
+			    case BN_VLIST_TRI_VERTNORM:
 				break;
 			    case BN_VLIST_LINE_MOVE:
 			    case BN_VLIST_LINE_DRAW:
 			    case BN_VLIST_POLY_MOVE:
 			    case BN_VLIST_POLY_DRAW:
 			    case BN_VLIST_POLY_END:
+			    case BN_VLIST_TRI_MOVE:
+			    case BN_VLIST_TRI_DRAW:
+			    case BN_VLIST_TRI_END:
 				VADD2(*pt, *pt, xlate);
 				break;
 			}
@@ -332,12 +335,17 @@ work:
 		    switch (*cmd) {
 			case BN_VLIST_POLY_START:
 			case BN_VLIST_POLY_VERTNORM:
+			case BN_VLIST_TRI_START:
+			case BN_VLIST_TRI_VERTNORM:
 			    break;
 			case BN_VLIST_LINE_MOVE:
 			case BN_VLIST_LINE_DRAW:
 			case BN_VLIST_POLY_MOVE:
 			case BN_VLIST_POLY_DRAW:
 			case BN_VLIST_POLY_END:
+			case BN_VLIST_TRI_MOVE:
+			case BN_VLIST_TRI_DRAW:
+			case BN_VLIST_TRI_END:
 			    VADD2(*pt, *pt, xlate);
 			    break;
 		    }
@@ -369,7 +377,7 @@ f_nirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 
     /* skip past _mged_ */
     if (argv[0][0] == '_' && argv[0][1] == 'm' &&
-	strncmp(argv[0], "_mged_", 6) == 0)
+	bu_strncmp(argv[0], "_mged_", 6) == 0)
 	argv[0] += 6;
 
     Tcl_DStringInit(&ds);
@@ -411,7 +419,7 @@ f_vnirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
     /* skip past _mged_ */
     if (argv[0][0] == '_' && argv[0][1] == 'm' &&
-	strncmp(argv[0], "_mged_", 6) == 0)
+	bu_strncmp(argv[0], "_mged_", 6) == 0)
 	argv[0] += 6;
 
     Tcl_DStringInit(&ds);

@@ -1,7 +1,7 @@
 /*                         R E A D _ D R A . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -226,8 +226,13 @@ void readPipe
 
     if (form.id == 1)
 	form.npts = 2;
-    else
+    else {
 	is >> form.npts;
+        if (form.npts > MAX_NPTS) {
+	   bu_log("Bad form.npts count in readPipe!\n");
+	   return;
+        }
+    }
 
     for (size_t i = 0; i<form.npts; ++i)
 	is >> form.pt[i][0] >> form.pt[i][1] >> form.pt[i][2];
@@ -370,7 +375,7 @@ void conv
     if (is) {
 	writeTitle(wdbp, title);
 
-	Form form = {0};
+	Form form = {0, 0, 0, 0, {{{0}}}, {0, 0, 0}, 0, 0, 0, 0};
 	bool translatedShape = false;
 	int  id;
 

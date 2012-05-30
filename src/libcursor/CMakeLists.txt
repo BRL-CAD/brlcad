@@ -1,13 +1,20 @@
-IF(HAVE_TERMLIB)
-	SET(TERMLIB_INCLUDE_DIRS
-		${BRLCAD_BINARY_DIR}/include
-		${BRLCAD_SOURCE_DIR}/include
-		${TERMLIB_INCLUDE_DIR}
-		)
-	BRLCAD_INCLUDE_DIRS(TERMLIB_INCLUDE_DIRS)
+if(HAVE_TERMLIB)
+  set(TERMLIB_INCLUDE_DIRS
+    ${BRLCAD_BINARY_DIR}/include
+    ${BRLCAD_SOURCE_DIR}/include
+    ${TERMLIB_INCLUDE_DIR}
+    )
+  BRLCAD_LIB_INCLUDE_DIRS(termlib TERMLIB_INCLUDE_DIRS "")
 
-	BRLCAD_ADDLIB(libcursor cursor.c "${TERMLIB_LIBRARY}")
-	SET_TARGET_PROPERTIES(libcursor PROPERTIES VERSION 19.0.1 SOVERSION 19)
-	ADD_MAN_PAGE(3 libcursor.3)
-	CMAKEFILES(Makefile.am)
-ENDIF(HAVE_TERMLIB)
+  BRLCAD_ADDLIB(libcursor cursor.c "${TERMLIB_LIBRARY}")
+  SET_TARGET_PROPERTIES(libcursor PROPERTIES VERSION 19.0.1 SOVERSION 19)
+  ADD_MAN_PAGES(3 libcursor.3)
+  CMAKEFILES(Makefile.am)
+endif(HAVE_TERMLIB)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

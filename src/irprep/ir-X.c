@@ -1,7 +1,7 @@
 /*                          I R - X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -371,8 +371,7 @@ main(void)
 	(void)fflush(stdout);
 	ret = scanf("%25s", file);
 	if (ret == 0) {
-	    perror("scanf");
-	    break;
+	  bu_exit(EXIT_FAILURE, "ir-X - scanf failure - no file to work with!!\n");
 	}
 	fpr = fopen(file, "rb");
     }
@@ -520,7 +519,7 @@ main(void)
 	    {
 		if (array[color[j][i]].more == 0)
 		{
-		    if (lstarr < (MAXARR + EXTRA) )
+		    if (lstarr < (MAXCOL + EXTRA) )
 		    {
 			array[color[j][i]].more = lstarr;
 			k = lstarr;

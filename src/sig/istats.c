@@ -1,7 +1,7 @@
 /*                        I S T A T S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -115,11 +115,14 @@ int main(int ac, char *av[])
      */
     arg_index = parse_args(ac, av, progname);
     if (arg_index < ac) {
+	char *ifname = bu_realpath(av[arg_index], NULL);
 	/* open file of shorts */
-	if (freopen(av[arg_index], "r", stdin) == (FILE *)NULL) {
-	    perror(av[arg_index]);
+	if (freopen(ifname, "r", stdin) == (FILE *)NULL) {
+	    perror(ifname);
+	    bu_free(ifname,"ifname alloc from bu_realpath");
 	    return -1;
 	}
+	bu_free(ifname,"ifname alloc from bu_realpath");
     } else if (isatty((int)fileno(stdin))) {
 	usage(progname);
     }

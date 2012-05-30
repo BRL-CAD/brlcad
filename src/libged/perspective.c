@@ -1,7 +1,7 @@
 /*                         P E R S P E C T I V E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,13 +60,14 @@ ged_perspective(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	gedp->ged_gvp->gv_perspective = perspective;
-#if 1
-	/* This way works, with reasonable Z-clipping */
-	ged_persp_mat(gedp->ged_gvp->gv_pmat, gedp->ged_gvp->gv_perspective,
-		      1.0, 0.01, 1.0e10, 1.0);
-#else
-	ged_mike_persp_mat(gedp->ged_gvp->gv_pmat, gedp->ged_gvp->gv_eye_pos);
-#endif
+
+	if (SMALL_FASTF < gedp->ged_gvp->gv_perspective) {
+	    ged_persp_mat(gedp->ged_gvp->gv_pmat, gedp->ged_gvp->gv_perspective,
+			  (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
+	} else {
+	    MAT_COPY(gedp->ged_gvp->gv_pmat, bn_mat_identity);
+	}
+
 	ged_view_update(gedp->ged_gvp);
 
 	return GED_OK;

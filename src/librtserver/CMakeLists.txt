@@ -7,12 +7,19 @@ set(RTSERVER_INCLUDE_DIRS
 	${RT_INCLUDE_DIRS}
 	${JNI_INCLUDE_DIRS}
 	)
-BRLCAD_INCLUDE_DIRS(RTSERVER_INCLUDE_DIRS)
+BRLCAD_LIB_INCLUDE_DIRS(rtserver RTSERVER_INCLUDE_DIRS "")
 
-BRLCAD_ADDLIB(rtserver rtserver.c "librt libbn libbu ${WINSOCK_LIB} ${ZLIB_LIBRARY}")
+BRLCAD_ADDLIB(rtserver rtserver.c "librt;libbn;libbu;${WINSOCK_LIB};${ZLIB_LIBRARY}")
 set_target_properties(rtserver PROPERTIES VERSION 20.0.1 SOVERSION 20)
 set_target_properties(rtserver PROPERTIES SUFFIX ".jnilib")
 
-add_executable(rtserverTest rtserverTest.c)
-target_link_libraries(rtserverTest libbu rtserver)
+BRLCAD_ADDEXEC(rtserverTest rtserverTest.c "libbu;rtserver" NO_INSTALL)
+
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

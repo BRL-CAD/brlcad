@@ -1,7 +1,7 @@
 /*                        N M G _ M K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -231,11 +231,10 @@
  *
  * Method:
  *
- * Use NMG_BU_GETSTRUCT to allocate memory and then set all
- * components.  NMG_BU_GETSTRUCT is used instead of the standard
- * GET_name because all of the GET_name macros expect a model pointer
- * to get the maxindex from.  So here we use NMG_BU_GETSTRUCT so that
- * we can set the maxindex and index by hand.
+ * Use BU_GET() to allocate memory and then set all components.
+ * BU_GET() is used instead of the standard GET_*() macros because
+ * they all expect a model pointer to get the maxindex from.  Here we
+ * simply set maxindex to 1.
  *
  * N.B.:
  *
@@ -249,12 +248,13 @@ nmg_mm(void)
 {
     struct model *m;
 
-    BU_GETSTRUCT(m, model);
+    BU_GET(m, struct model);
 
     BU_LIST_INIT(&m->r_hd);
     m->index = 0;
     m->maxindex = 1;
     m->magic = NMG_MODEL_MAGIC;	/* Model Structure is GOOD */
+    m->manifolds = (char *)NULL;
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_mm() returns model 0x%p\n", m);
@@ -1180,10 +1180,12 @@ nmg_kvu(struct vertexuse *vu)
 	    bu_bomb("nmg_kvu() killing vertexuse of unknown parent?\n");
     }
 
-    FREE_VERTEXUSE(vu);
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_kvu(vu=0x%p) ret=%d\n", vu, ret);
     }
+
+    FREE_VERTEXUSE(vu);
+
     return ret;
 }
 
@@ -1281,12 +1283,15 @@ nmg_kfu(struct faceuse *fu1)
 	bu_bomb("nmg_kfu() faceuse mate not in parent shell?\n");
     BU_LIST_DEQUEUE(&fu2->l);
 
-    FREE_FACEUSE(fu1);
-    FREE_FACEUSE(fu2);
     ret = nmg_shell_is_empty(s);
+
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_kfu(fu1=0x%p) fu2=0x%p ret=%d\n", fu1, fu2, ret);
     }
+
+    FREE_FACEUSE(fu1);
+    FREE_FACEUSE(fu2);
+
     return ret;
 }
 
@@ -1367,11 +1372,13 @@ nmg_klu(struct loopuse *lu1)
 	FREE_LOOP_G(lu1->l_p->lg_p);
     }
     FREE_LOOP(lu1->l_p);
-    FREE_LOOPUSE(lu1);
-    FREE_LOOPUSE(lu2);
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_klu(lu1=0x%p) lu2=0x%p ret=%d\n", lu1, lu2, ret);
     }
+
+    FREE_LOOPUSE(lu1);
+    FREE_LOOPUSE(lu2);
+
     return ret;
 }
 
@@ -1553,6 +1560,10 @@ nmg_keu(register struct edgeuse *eu1)
 	(void)nmg_kvu(eu2->vu_p);
     }
 
+    if (rt_g.NMG_debug & DEBUG_BASIC) {
+	bu_log("nmg_keu(eu1=0x%p) eu2=0x%p ret=%d\n", eu1, eu2, ret);
+    }
+
     FREE_EDGEUSE(eu1);
     FREE_EDGEUSE(eu2);
 
@@ -1561,9 +1572,6 @@ nmg_keu(register struct edgeuse *eu1)
 	NMG_CK_EDGEUSE(e->eu_p);
     }
 
-    if (rt_g.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_keu(eu1=0x%p) eu2=0x%p ret=%d\n", eu1, eu2, ret);
-    }
     return ret;
 }
 
@@ -1606,10 +1614,11 @@ nmg_ks(struct shell *s)
 	FREE_SHELL_A(s->sa_p);
     }
 
-    FREE_SHELL(s);
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_ks(s=0x%p)\n", s);
     }
+
+    FREE_SHELL(s);
 
     if (r && BU_LIST_IS_EMPTY(&r->s_hd))
 	return 1;
@@ -1649,10 +1658,12 @@ nmg_kr(struct nmgregion *r)
     if (r->ra_p) {
 	FREE_REGION_A(r->ra_p);
     }
-    FREE_REGION(r);
+
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_kr(r=0x%p)\n", r);
     }
+
+    FREE_REGION(r);
 
     if (m && BU_LIST_IS_EMPTY(&m->r_hd)) {
 	m->maxindex = 1;	/* Reset when last region is killed */
@@ -1678,10 +1689,16 @@ nmg_km(struct model *m)
     while (BU_LIST_NON_EMPTY(&m->r_hd))
 	(void)nmg_kr(BU_LIST_FIRST(nmgregion, &m->r_hd));
 
-    FREE_MODEL(m);
+    if (m->manifolds) {
+        bu_free((char *)m->manifolds, "free manifolds table");
+        m->manifolds = (char *)NULL;
+    }
+
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_km(m=0x%p)\n", m);
     }
+
+    FREE_MODEL(m);
 }
 
 
@@ -2668,6 +2685,7 @@ int
 nmg_demote_lu(struct loopuse *lu1)
 {
     struct edgeuse *eu1;
+    size_t tmp;
     struct shell *s;
     int ret_val;
 
@@ -2710,10 +2728,11 @@ nmg_demote_lu(struct loopuse *lu1)
     if (BU_LIST_NON_EMPTY(&lu1->lumate_p->down_hd))
 	bu_bomb("nmg_demote_lu: loopuse mates don't have same # of edges\n");
 
+    tmp = (size_t)lu1;
     ret_val = nmg_klu(lu1);
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_demote_lu(lu=0x%p) returns %d\n", lu1, ret_val);
+	bu_log("nmg_demote_lu(lu=%x) returns %d\n", tmp, ret_val);
     }
 
     return ret_val;
@@ -2736,6 +2755,7 @@ nmg_demote_eu(struct edgeuse *eu)
     struct shell *s;
     struct vertex *v;
     int ret_val;
+    size_t tmp;
 
     if (*eu->up.magic_p != NMG_SHELL_MAGIC)
 	bu_bomb("nmg_demote_eu() up is not shell\n");
@@ -2752,12 +2772,13 @@ nmg_demote_eu(struct edgeuse *eu)
     if (!nmg_is_vertex_a_selfloop_in_shell(v, s))
 	(void)nmg_mlv(&s->l.magic, v, OT_SAME);
 
+    tmp = (size_t)eu;
     (void)nmg_keu(eu);
 
     ret_val = nmg_shell_is_empty(s);
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_demote_eu(eu=0x%p) returns %d\n", eu, ret_val);
+	bu_log("nmg_demote_eu(eu=%x) returns %d\n", tmp, ret_val);
     }
 
     return ret_val;
@@ -3008,11 +3029,12 @@ nmg_jv(register struct vertex *v1, register struct vertex *v2)
 	    FREE_VERTEX_G(v2->vg_p);
 	}
     }
-    FREE_VERTEX(v2);
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_jv(v1=0x%p, v2=0x%p)\n", v1, v2);
     }
+
+    FREE_VERTEX(v2);
 }
 
 

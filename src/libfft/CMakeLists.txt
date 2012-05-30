@@ -1,48 +1,47 @@
 # Include directories needed by libfft users
-SET(FFT_INCLUDE_DIRS
-	${BRLCAD_BINARY_DIR}/include
-	${BRLCAD_SOURCE_DIR}/include
-	)
-BRLCAD_INCLUDE_DIRS(FFT_INCLUDE_DIRS)
+set(FFT_INCLUDE_DIRS
+  ${BRLCAD_BINARY_DIR}/include
+  ${BRLCAD_SOURCE_DIR}/include
+  )
 
 # local directories
-include_directories(
-	${CMAKE_CURRENT_SOURCE_DIR}
-)
+set(FFT_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
-ADD_EXECUTABLE(fftc fftc.c splitditc.c)
+BRLCAD_LIB_INCLUDE_DIRS(fft FFT_INCLUDE_DIRS FFT_LOCAL_INCLUDE_DIRS)
+
+add_executable(fftc fftc.c splitditc.c)
 target_link_libraries(fftc ${M_LIBRARY})
 
-ADD_EXECUTABLE(ifftc ifftc.c ditsplitc.c)
+add_executable(ifftc ifftc.c ditsplitc.c)
 target_link_libraries(ifftc ${M_LIBRARY})
 
 # 512 and 1024 are tough in optimized compiles, don't
 # go that high until there's a demonstrated need. Only
 # use in BRL-CAD right now is 256.
-SET(FFT_NUMLIST "16;32;64;128;256")
-SET(FFT_GEN_SRCS "")
+set(FFT_NUMLIST "16;32;64;128;256")
+set(FFT_GEN_SRCS "")
 
-FOREACH(filenum ${FFT_NUMLIST})
-  ADD_CUSTOM_COMMAND(
+foreach(filenum ${FFT_NUMLIST})
+  add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/rfft${filenum}.c
     COMMAND fftc ${filenum} > ${CMAKE_CURRENT_BINARY_DIR}/rfft${filenum}.c
     DEPENDS fftc
-  )
-  SET(FFT_GEN_SRCS "${FFT_GEN_SRCS};${CMAKE_CURRENT_BINARY_DIR}/rfft${filenum}.c")
-  ADD_CUSTOM_COMMAND(
+    )
+  set(FFT_GEN_SRCS "${FFT_GEN_SRCS};${CMAKE_CURRENT_BINARY_DIR}/rfft${filenum}.c")
+  add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/irfft${filenum}.c
     COMMAND ifftc ${filenum} > ${CMAKE_CURRENT_BINARY_DIR}/irfft${filenum}.c
     DEPENDS ifftc
-  )
-  SET(FFT_GEN_SRCS "${FFT_GEN_SRCS};${CMAKE_CURRENT_BINARY_DIR}/irfft${filenum}.c")
-ENDFOREACH(filenum ${FFT_NUMLIST})
+    )
+  set(FFT_GEN_SRCS "${FFT_GEN_SRCS};${CMAKE_CURRENT_BINARY_DIR}/irfft${filenum}.c")
+endforeach(filenum ${FFT_NUMLIST})
 
-SET(LIBFFT_SRCS
+set(LIBFFT_SRCS
   fftfast.c
   splitdit.c
   ditsplit.c
   ${FFT_GEN_SRCS}
-)
+  )
 
 BRLCAD_ADDLIB(libfft "${LIBFFT_SRCS}" "${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libfft PROPERTIES LINKER_LANGUAGE C)
@@ -51,3 +50,10 @@ SET_TARGET_PROPERTIES(libfft PROPERTIES VERSION 19.0.1 SOVERSION 19)
 add_executable(fftest fftest.c)
 target_link_libraries(fftest libfft ${M_LIBRARY})
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

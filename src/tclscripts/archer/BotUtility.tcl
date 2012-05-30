@@ -1,7 +1,7 @@
 #                B O T U T I L I T Y . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2011 United States Government as represented by
+# Copyright (c) 2002-2012 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -132,7 +132,11 @@ if {[catch {
 #     Lets user pick what bot they want to edit by displaying a combobox
 #     populated with the elements of the bots list argument.
 #
-::itcl::body BotUtility::selectBot {bots} {    
+::itcl::body BotUtility::selectBot {bots} {
+
+    # Sort the list of bots
+    set bots [lsort -dictionary $bots]
+
     # create container frame
     itk_component add sframe {
 	ttk::frame $itk_interior.selectFrame

@@ -1,7 +1,7 @@
 /*                         D C O N V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,9 +47,9 @@ void	rfft();
 void	irfft256();
 void	irfft();
 
-double	savebuffer[MAXM-1];
-double	xbuf[2*MAXM];
-double	ibuf[2*MAXM];		/* impulse response */
+double	savebuffer[MAXM];
+double	xbuf[2 * (MAXM + 1)];
+double	ibuf[2 * (MAXM + 1)];		/* impulse response */
 
 
 /*
@@ -130,8 +130,11 @@ int main(int argc, char **argv)
 	    /* pad the end with zero's */
 	    memset((char *)&xbuf[M-1+i], 0, (L-i)*sizeof(*savebuffer));
 	}
-	memcpy(xbuf, savebuffer, (M-1)*sizeof(*savebuffer));
-	memcpy(savebuffer, &xbuf[L], (M-1)*sizeof(*savebuffer));
+
+	/* shift contents of savebuffer left */
+#define COPY_SIZE ((M - 1) * sizeof(*savebuffer))
+	memcpy(xbuf, savebuffer, COPY_SIZE);
+	memcpy(savebuffer, &xbuf[L], COPY_SIZE);
 
 	/*xform( xbuf, N );*/
 	if ( N == 256 )

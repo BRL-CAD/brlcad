@@ -863,7 +863,8 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
     if( fpSHP == NULL )
     {
         psHooks->Error( "Failed to create file .shp file." );
-        return( NULL );
+	free( pszBasename );
+	return( NULL );
     }
 
     sprintf( pszFullname, "%s.shx", pszBasename );
@@ -871,6 +872,7 @@ SHPCreateLL( const char * pszLayer, int nShapeType, SAHooks *psHooks )
     if( fpSHX == NULL )
     {
         psHooks->Error( "Failed to create file .shx file." );
+	free( pszBasename );
         return( NULL );
     }
 
@@ -1060,6 +1062,9 @@ SHPCreateObject( int nSHPType, int nShapeId, int nParts,
             calloc(sizeof(int), psObject->nParts);
         psObject->panPartType = (int *)
             malloc(sizeof(int) * psObject->nParts);
+
+	if(psObject->panPartStart == NULL || psObject->panPartType == NULL)
+	    bu_bomb("Failed to allocate memory for object");
 
         psObject->panPartStart[0] = 0;
         psObject->panPartType[0] = SHPP_RING;

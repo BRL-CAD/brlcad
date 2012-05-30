@@ -1,7 +1,7 @@
 /*                    R E A D M A T R I X . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,23 +41,23 @@ Readmatrix(int xform, mat_t rot)
     Readint(&i, "");
     if (i != 124 && i != 700) {
 	bu_log("Error in transformation parameter data at P%d\n", xform);
-	for (j=0; j<16; j++)
+	for (j = 0; j < 16; j++)
 	    rot[j] = (*identity)[j];
 	return;
     } else if (i == 124) {
-	for (i=0; i<12; i++) {
+	for (i = 0; i < 12; i++) {
 	    if (!((i+1)%4)) /* convert translation */
 		Readcnv(&rot[i], "");
 	    else	/* Don't convert rotations */
 		Readflt(&rot[i], "");
 	}
-	for (i=12; i<15; i++)
+	for (i = 12; i < 15; i++)
 	    rot[i] = 0.0;
 	rot[15] = 1.0;
 
     } else {
-	for (i=0; i<15; i++) {
-	    if (!((i+1)%4)) /* convert translation */
+	for (i = 0; i < 15; i++) {
+	    if (!((i+1) % 4)) /* convert translation */
 		Readcnv(&rot[i], "");
 	    else	/* Don't convert rotations */
 		Readflt(&rot[i], "");

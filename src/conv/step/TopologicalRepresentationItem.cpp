@@ -1,7 +1,7 @@
 /*                 TopologicalRepresentationItem.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,65 +34,65 @@
 string TopologicalRepresentationItem::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)TopologicalRepresentationItem::Create);
 
 TopologicalRepresentationItem::TopologicalRepresentationItem() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 TopologicalRepresentationItem::TopologicalRepresentationItem(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
+    step = sw;
+    id = step_id;
 }
 
 TopologicalRepresentationItem::~TopologicalRepresentationItem() {
 }
 
 bool
-TopologicalRepresentationItem::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+TopologicalRepresentationItem::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+    step=sw;
+    id = sse->STEPfile_id;
 
-	// load base class attributes
-	if ( !RepresentationItem::Load(step,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::RepresentationItem." << std::endl;
-		return false;
-	}
+    // load base class attributes
+    if ( !RepresentationItem::Load(step,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::RepresentationItem." << std::endl;
+	return false;
+    }
 
-	return true;
+    return true;
 }
 
 void
 TopologicalRepresentationItem::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-	RepresentationItem::Print(level+1);
+    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    RepresentationItem::Print(level+1);
 }
 
 STEPEntity *
-TopologicalRepresentationItem::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		TopologicalRepresentationItem *object = new TopologicalRepresentationItem(sw,sse->STEPfile_id);
+TopologicalRepresentationItem::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	TopologicalRepresentationItem *object = new TopologicalRepresentationItem(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 bool
 TopologicalRepresentationItem::LoadONBrep(ON_Brep *brep)
 {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
-	return false;
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
+    return false;
 }
 
 

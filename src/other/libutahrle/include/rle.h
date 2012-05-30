@@ -47,12 +47,12 @@
 #endif
 
 #ifndef RLE_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef RLE_EXPORT_DLL
-#      define RLE_EXPORT __declspec(dllexport)
-#    else
-#      define RLE_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(RLE_DLL_EXPORTS) && defined(RLE_DLL_IMPORTS)
+#    error "Only RLE_DLL_EXPORTS or RLE_DLL_IMPORTS can be defined, not both."
+#  elif defined(RLE_DLL_EXPORTS)
+#    define RLE_EXPORT __declspec(dllexport)
+#  elif defined(RLE_DLL_IMPORTS)
+#    define RLE_EXPORT __declspec(dllimport)
 #  else
 #    define RLE_EXPORT
 #  endif

@@ -1,7 +1,7 @@
 /*                      N M G _ F C U T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2011 United States Government as represented by
+ * Copyright (c) 2007-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1022,10 +1022,6 @@ nmg_compare_2_wedges(double a, double b, double c, double d)
 
     if (a_eq_d) {
 	/* We know c <= d, d==a, a <= b */
-	if (b_eq_c) {
-	    ret = WEDGE2_IDENTICAL;
-	    goto out;
-	}
 	if (a_eq_b) {
 	    ret = WEDGE2_AB_IN_CD;
 	} else if (c_eq_d) {
@@ -1353,6 +1349,7 @@ nmg_face_vu_compare(const void *aa, const void *bb)
 		    bu_bomb("nmg_face_vu_compare() WEDGE_ON 1?\n");
 	    }
 	    break;
+
 	case WEDGE_LEFT:
 	    switch (b->wedge_class) {
 		case WEDGE_LEFT:
@@ -1376,6 +1373,9 @@ nmg_face_vu_compare(const void *aa, const void *bb)
 		    nmg_pr_vu_stuff(b);
 		    bu_bomb("nmg_face_vu_compare() WEDGE_ON 2?\n");
 	    }
+	    bu_log("nmg_face_vu_compare: Unhandled wedge class: %d\n", b->wedge_class);
+	    break;
+
 	case WEDGE_CROSS:
 	    switch (b->wedge_class) {
 		case WEDGE_LEFT:
@@ -1398,6 +1398,9 @@ nmg_face_vu_compare(const void *aa, const void *bb)
 		    nmg_pr_vu_stuff(b);
 		    bu_bomb("nmg_face_vu_compare() WEDGE_ON 3?\n");
 	    }
+	    bu_log("nmg_face_vu_compare: Unhandled wedge class: %d\n", b->wedge_class);
+	    break;
+
 	case WEDGE_RIGHT:
 	    switch (b->wedge_class) {
 		case WEDGE_LEFT:
@@ -1420,6 +1423,8 @@ nmg_face_vu_compare(const void *aa, const void *bb)
 		    nmg_pr_vu_stuff(b);
 		    bu_bomb("nmg_face_vu_compare() WEDGE_ON 4?\n");
 	    }
+	    bu_log("nmg_face_vu_compare: Unhandled wedge class: %d\n", b->wedge_class);
+	    break;
     }
  out:
     if (rt_g.NMG_debug&DEBUG_VU_SORT) {
@@ -3816,10 +3821,10 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 	case NMG_ACTION_ERROR:
     bomb:
 	    {
-		struct bu_vls str;
+		struct bu_vls str = BU_VLS_INIT_ZERO;
 
 		bu_log("nmg_face_state_transition: got action=ERROR\n");
-		bu_vls_init(&str);
+
 		bu_vls_printf(&str, "nmg_face_state_transition(vu %p, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
 			      (void *)vu, pos,
 			      nmg_state_names[old_state], nmg_v_assessment_names[assessment],
@@ -3884,7 +3889,6 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 	    for (e_pos = pos-1; e_pos >= 0; e_pos--) {
 		prev_vu = rs->vu[e_pos];
 		NMG_CK_VERTEXUSE(prev_vu);
-		prev_lu = nmg_find_lu_of_vu(prev_vu);
 		/* lu is lone vert loop; l_p is distinct from prev_lu->l_p */
 		if (*prev_vu->up.magic_p == NMG_EDGEUSE_MAGIC)
 		    break;

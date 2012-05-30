@@ -1,7 +1,7 @@
 #                        R E D . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2011 United States Government as represented by
+# Copyright (c) 2008-2012 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. $1/regress/library.sh
+. "$1/regress/library.sh"
 
 MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
@@ -188,7 +188,8 @@ cat > red.edit.sh <<EOF
 cat \$REDFILE > \$1
 EOF
 chmod u+rwx red.edit.sh
-EDITOR=./red.edit.sh
+EDITOR="./red.edit.sh"
+export EDITOR
 
 
 # write out our initial unedited objects, verify sanity
@@ -359,7 +360,7 @@ should_be_different $SAMPLE $REDFILE.new
 cat $REDFILE.new | sed 's/255.255.255//g' > $REDFILE.test
 should_be_same $SAMPLE $REDFILE.test
 
-init "Changing color to safe with comma delimeter" red.color.delim.out
+init "Changing color to safe with comma delimiter" red.color.delim.out
 cat $SAMPLE | sed 's/color.*=.*/color = 255,255,255/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new

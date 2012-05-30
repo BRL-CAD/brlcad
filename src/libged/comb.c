@@ -1,7 +1,7 @@
 /*                  C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -99,8 +99,6 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    GED_DB_LOOKUP(gedp, dp, comb_name, LOOKUP_QUIET, GED_ERROR);
-
     return GED_OK;
 }
 
@@ -149,7 +147,7 @@ _ged_combadd(struct ged *gedp,
 
 	GED_DB_DIRADD(gedp, dp, combname, -1, 0, flags, (genptr_t)&intern.idb_type, 0);
 
-	BU_GETSTRUCT(comb, rt_comb_internal);
+	BU_GET(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
 
 	intern.idb_ptr = (genptr_t)comb;
@@ -221,8 +219,9 @@ _ged_combadd(struct ged *gedp,
 	    tree_list[node_count - 1].tl_op = OP_SUBTRACT;
 	    break;
 	default:
-	    bu_vls_printf(gedp->ged_result_str, "unrecognized relation (assume UNION)\n");
-	case 'u':
+	    if (relation != 'u') {
+		bu_vls_printf(gedp->ged_result_str, "unrecognized relation (assume UNION)\n");
+	    }
 	    tree_list[node_count - 1].tl_op = OP_UNION;
 	    break;
     }

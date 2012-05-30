@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2011 United States Government as represented by
+ * Copyright (c) 2005-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@
 #endif
 
 /* ISST functions */
-TIE_EXPORT extern int (Issttcltk_Init)(Tcl_Interp *interp);
+RT_EXPORT extern int (Issttcltk_Init)(Tcl_Interp *interp);
 
 void resize_isst(struct isst_s *);
 
@@ -125,11 +125,9 @@ isst_load_g(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
     char **argv;
     int argc;
     double az, el;
-    struct bu_vls tclstr;
+    struct bu_vls tclstr = BU_VLS_INIT_ZERO;
     vect_t vec;
     Togl   *togl;
-
-    bu_vls_init(&tclstr);    
 
     if (objc < 4) {
         Tcl_WrongNumArgs(interp, 1, objv, "load_g pathname object");
@@ -142,7 +140,7 @@ isst_load_g(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
 
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
-    argv = (char **)malloc(sizeof(char *) * (strlen(Tcl_GetString(objv[3]) + 1)));	/* allocate way too much. */
+    argv = (char **)malloc(sizeof(char *) * (strlen(Tcl_GetString(objv[3])) + 1));	/* allocate way too much. */
     argc = bu_argv_from_string(argv, strlen(Tcl_GetString(objv[3])), Tcl_GetString(objv[3]));
     
     load_g(isst->tie, Tcl_GetString(objv[2]), argc, (const char **)argv, &(isst->meshes));
@@ -185,8 +183,7 @@ list_geometry(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_O
     static struct db_i *dbip;
     struct directory *dp;   
     int i;
-    struct bu_vls tclstr;
-    bu_vls_init(&tclstr);
+    struct bu_vls tclstr = BU_VLS_INIT_ZERO;
 
     if (objc < 3) {
         Tcl_WrongNumArgs(interp, 1, objv, "file varname");
@@ -387,6 +384,7 @@ render_mode(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
     /* pack the 'rest' into buf - probably should use a vls for this*/
+    buf[0] = '\0';
 
     isst->dirty = 1;
 
@@ -557,9 +555,7 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
     double x, y;
     double az, el;
     double mag_pos, mag_focus;
-    struct bu_vls tclstr;
-    bu_vls_init(&tclstr);    
-
+    struct bu_vls tclstr = BU_VLS_INIT_ZERO;
 
     if (objc < 4) {
         Tcl_WrongNumArgs(interp, 1, objv, "pathName x y");
@@ -625,46 +621,12 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
     return TCL_OK;
 }
 
+/* this function needs to be Isst_Init() for fbsd and mac, but may need to be
+ * Issttcltk_Init on other platforms (I'm looking at you, windows). Needs more
+ * investigation.
+ */
 int
 Isst_Init(Tcl_Interp *interp)
-{
-    if (Tcl_PkgProvide(interp, "isst", "0.1") != TCL_OK) {
-        return TCL_ERROR;
-    }
-
-    /* 
-     * Initialize Tcl and the Togl widget module.
-     */
-    if (Tcl_InitStubs(interp, "8.1", 0) == NULL
-	|| Togl_InitStubs(interp, "2.0", 0) == NULL) {
-        return TCL_ERROR;
-    }
-
-    /* 
-     * Specify the C callback functions for widget creation, display,
-     * and reshape.
-     */
-    Tcl_CreateObjCommand(interp, "isst_init", isst_init, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "isst_zap", isst_zap, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "refresh_ogl", paint_window, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "reshape", reshape, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "load_g", isst_load_g, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "list_g", list_geometry, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "idle", idle, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "aetolookat", aetolookat, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "aerotate", aerotate, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "walk", move_walk, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "strafe", move_strafe, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "float", move_float, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "reset", zero_view, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "set_resolution", set_resolution, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "render_mode", render_mode, NULL, NULL);
-
-    return TCL_OK;
-}
-
-int
-Issttcltk_Init(Tcl_Interp *interp)
 {
     if (Tcl_PkgProvide(interp, "isst", "0.1") != TCL_OK) {
         return TCL_ERROR;

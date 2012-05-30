@@ -1,7 +1,7 @@
 /*                         O F F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -202,6 +202,8 @@ int main(int argc, char **argv)
 {
     FILE *fpin;
     struct rt_wdb *fpout;
+
+    bu_setprogname(argv[0]);
 
     tol.magic = BN_TOL_MAGIC;	/* Copied from proc-db/nmgmodel.c */
     tol.dist = 0.01;

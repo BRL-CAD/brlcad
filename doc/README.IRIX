@@ -5,26 +5,21 @@ Building on IRIX is one of the most tricky platforms to support
 without installing up-to-date compilation tools.  That said, the build
 has and should work just fine with either the MIPSPro or GCC
 compilers.  The best performance is usually achieved with the MIPSPro
-compiler, whereas GCC will compile faster with less fuss.  For
-convenience, here are some example compilation scenarios:
+compiler, whereas GCC will compile faster with less fuss. 
 
-For IRIX 32-bit unoptimized /usr/brlcad build:
-	export SGI_ABI=-n32
-	./configure CC=cc
-
-For IRIX 64-bit unoptimized /usr/brlcad build:
-	export SGI_ABI=-64
-	./configure CC=cc CFLAGS=-64 LDFLAGS=-64 --enable-64bit-build
-
-For IRIX 32-bit optimized production release build:
-	export SGI_ABI=-n32
-	./configure CC=cc --enable-optimized --enable-everything --prefix=/usr/brlcad/rel-MAJOR.MINOR.PATCH/mips32
-
-For IRIX 64-bit optimized production release build:
-	export SGI_ABI=-64
-	./configure CC=cc CFLAGS=-64 LDFLAGS=-64 --enable-64bit-build --enable-optimized --enable-everything --prefix=/usr/brlcad/rel-MAJOR.MINOR.PATCH/mips64
+Kitware provides CMake binaries for IRIX64 platforms:
+http://www.cmake.org/cmake/resources/software.html
 
 
+Parallel building
+-----------------
+For parallel compilation on IRIX, the -P option enables parallel 
+build mode and the PARALLEL environment variable sets the number 
+of CPUs (default is two):
+
+PARALLEL=4 make -P
+
+ 
 Potential problems you may encounter
 ------------------------------------
 
@@ -46,32 +41,12 @@ Symptom: GCC crashes during compilation with internal errors
 
 Description:  Certain versions of the gcc compiler are known to crash
 with internal error messages, for example on src/mged/animedit.c, when
-using --enable-optimized (i.e. -O3).
+using optimization flags (i.e. -O3).
 
 Workaround: Compile in whatever directory is failing with -O0 instead:
 	cd src/mged
-	make CFLAGS="-O0"
+	sed -i "s/ -O3 / -O0 /g" CMakeFiles/mged.dir/flags.make
+	make
 	cd ../..
 	make
-
----
-
-Symptom: Linker reports symbol(s) missing
-
-Description: Depending on how libraries are set up for compilation,
-libtool convenience libraries may result in unresolved symbols during
-compilation.  The specific problem is that the .al libtool archive
-convenience library (not to be confused with usual .la libtool
-archives) that is listed as a LIBADD inclusion results in having
-symbols embedded with a .l tag instead of .lo or .o, causing the
-libtool script to erroneously leave those .l files (that should have
-been .lo libtool object files) and their associated symbols out of the
-compilation.  (e.g. nmg_rt_isect.l, nurb_reverse.l, and wdb_comb_std.l)
-
-Workaround: Either rerun autogen.sh so that the libtool wrapper script
-is rebuilt (being sure to have the latest libtool, automake, and
-autoconf installed), edit the Makefile.am files so that the
-convenience library objects files are directly listed on the LIBADD,
-or compile static (--disable-shared).
-
 

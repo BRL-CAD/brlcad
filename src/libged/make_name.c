@@ -1,7 +1,7 @@
 /*                        M A K E _ N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,9 +29,10 @@
 int
 ged_make_name(struct ged *gedp, int argc, const char *argv[])
 {
-    struct bu_vls obj_name;
+    struct bu_vls obj_name = BU_VLS_INIT_ZERO;
     char *cp, *tp;
     static int i = 0;
+    int new_i;
     int len;
     static const char *usage = "template | -s [num]";
 
@@ -52,26 +53,25 @@ ged_make_name(struct ged *gedp, int argc, const char *argv[])
 	case 2:
 	    if (!BU_STR_EQUAL(argv[1], "-s"))
 		break;
-	    else {
-		i = 0;
+
+	    i = 0;
+	    return GED_OK;
+
+	case 3:
+
+	    if ((BU_STR_EQUAL(argv[1], "-s"))
+		&& (sscanf(argv[2], "%d", &new_i) == 1)) {
+		i = new_i;
 		return GED_OK;
 	    }
-	case 3:
-	    {
-		int new_i;
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    return GED_ERROR;
 
-		if ((BU_STR_EQUAL(argv[1], "-s"))
-		    && (sscanf(argv[2], "%d", &new_i) == 1)) {
-		    i = new_i;
-		    return GED_OK;
-		}
-	    }
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
     }
 
-    bu_vls_init(&obj_name);
     for (cp = (char *)argv[1], len = 0; *cp != '\0'; ++cp, ++len) {
 	if (*cp == '@') {
 	    if (*(cp + 1) == '@')

@@ -1,7 +1,7 @@
 /*                         Q U O T E . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2011 United States Government as represented by
+ * Copyright (c) 2010-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -76,7 +76,7 @@ bu_vls_decode(struct bu_vls *vp, const char *str)
     int dquote = 0;
     int escape = 0;
 
-    struct bu_vls quotebuf;
+    struct bu_vls quotebuf = BU_VLS_INIT_ZERO;
 
     if (UNLIKELY(!str))
 	return empty;
@@ -84,8 +84,6 @@ bu_vls_decode(struct bu_vls *vp, const char *str)
     BU_CK_VLS(vp);
 
     skip = bu_vls_strlen(vp);
-
-    bu_vls_init(&quotebuf);
 
     for (; *str != '\0'; str++) {
 	if (escape) {
@@ -128,7 +126,7 @@ bu_vls_decode(struct bu_vls *vp, const char *str)
     }
 
     if (dquote) {
-	/* we got to the end of the input string whilte still inside a
+	/* we got to the end of the input string while still inside a
 	 * double-quote.  have to assume the quote is regular content.
 	 */
 	bu_vls_putc(vp, DQUOTE);

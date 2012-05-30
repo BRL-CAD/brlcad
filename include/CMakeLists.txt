@@ -1,4 +1,4 @@
-SET(brlcadinclude_required
+set(brlcadinclude_required
 	${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h
 	RtServerImpl.h
 	bn.h
@@ -14,16 +14,17 @@ SET(brlcadinclude_required
 	rtserver.h
 	tclcad.h
 )
-IF(WIN32)
-	SET(brlcadinclude_required ${brlcadinclude_required} ${CMAKE_CURRENT_BINARY_DIR}/config_win_cmake.h)
-ENDIF(WIN32)
+if(WIN32)
+	set(brlcadinclude_required ${brlcadinclude_required} ${CMAKE_CURRENT_BINARY_DIR}/config_win_cmake.h)
+endif(WIN32)
 
-SET(brlcadinclude_wanted
+set(brlcadinclude_wanted
 	analyze.h
 	anim.h
 	bot.h
 	brep.h
 	brlcad.h
+	brlcad.i
 	cmd.h
 	db.h
 	db5.h
@@ -47,11 +48,13 @@ SET(brlcadinclude_wanted
 	fbserv_obj.h
 	fft.h
 	gcv.h
+	icv.h
 	libtermio.h
 	light.h
 	mater.h
 	nmg.h
 	nurb.h
+        obj.h
 	optical.h
 	orle.h
 	photonmap.h
@@ -77,30 +80,38 @@ SET(brlcadinclude_wanted
 
 # headers used by multiple packages but still considered private.
 # public headers should NOT include these headers.
-SET(brlcadnoinst_HEADERS
-	brlcad_version.h
+set(brlcadnoinst_HEADERS
 	bin.h
 	bio.h
+	brlcad_version.h
+	bselect.h
 	conf.h
 	fbmsg.h
 	sysv.h
 )
 
-SET(brlcadinclude_misc
+set(brlcadinclude_misc
 	conf
 	config_win.h
 	config_win_cmake.h.in
 	)
 
-INSTALL(FILES ${brlcadinclude_required} DESTINATION include/brlcad)
+install(FILES ${brlcadinclude_required} DESTINATION include/brlcad)
 
 
-IF(NOT BRLCAD-BUILD_BENCHMARK_ONLY AND NOT BRLCAD-BUILD_RTSERVER_ONLY)
-	INSTALL(FILES ${brlcadinclude_wanted} DESTINATION include/brlcad)
-ENDIF(NOT BRLCAD-BUILD_BENCHMARK_ONLY AND NOT BRLCAD-BUILD_RTSERVER_ONLY)
+if(NOT BRLCAD_BUILD_BENCHMARK_ONLY AND NOT BRLCAD_BUILD_RTSERVER_ONLY)
+	install(FILES ${brlcadinclude_wanted} DESTINATION include/brlcad)
+endif(NOT BRLCAD_BUILD_BENCHMARK_ONLY AND NOT BRLCAD_BUILD_RTSERVER_ONLY)
 
 CMAKEFILES(${brlcadinclude_required})
 CMAKEFILES(${brlcadinclude_wanted})
 CMAKEFILES(${brlcadnoinst_HEADERS})
 CMAKEFILES(${brlcadinclude_misc})
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

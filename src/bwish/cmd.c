@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2011 United States Government as represented by
+ * Copyright (c) 1998-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,10 +51,9 @@ HIDDEN struct bu_cmdhist *currHist;
 /***************************** BWISH/BTCLSH COMMANDS *****************************/
 
 HIDDEN int
-cmd_quit(ClientData UNUSED(clientData),
-	 Tcl_Interp *UNUSED(interp),
+cmd_quit(void *UNUSED(clientData),
 	 int argc,
-	 char **argv)
+	 const char **argv)
 {
     int status;
 
@@ -152,12 +151,13 @@ timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
  * Prints out the command history, either to bu_log or to a file.
  */
 int
-cmd_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+cmd_history(void *clientData, int argc, const char **argv)
 {
+    Tcl_Interp *interp = (Tcl_Interp *)clientData;
     FILE *fp;
     int with_delays = 0;
     struct bu_cmdhist *hp, *hp_prev;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     struct timeval tvdiff;
 
     if (argc < 1 || 4 < argc) {
@@ -195,7 +195,6 @@ cmd_history(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **
 	++argv;
     }
 
-    bu_vls_init(&str);
     for (BU_LIST_FOR(hp, bu_cmdhist, &(histHead.l))) {
 	bu_vls_trunc(&str, 0);
 	hp_prev = BU_LIST_PREV(bu_cmdhist, &(hp->l));
@@ -277,12 +276,11 @@ history_next(void)
 
 
 int
-cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+cmd_hist(void *clientData, int argc, const char **argv)
 {
+    Tcl_Interp *interp = (Tcl_Interp *)clientData;
     struct bu_vls *vp;
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (argc < 2) {
 	Tcl_AppendResult(interp, "hist command\n\troutine for maintaining command history", (char *)0);
@@ -346,14 +344,24 @@ cmd_hist(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **arg
 }
 
 
-HIDDEN struct bu_cmdtab bwish_cmds[] =
+static int
+wrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    {"exit",		cmd_quit},
-    {"history",		cmd_history},
-    {"hist",		cmd_hist},
-    {"q",		cmd_quit},
-    {(char *)NULL,	CMD_NULL}
-};
+    struct bu_cmdtab *ctp = (struct bu_cmdtab *)data;;
+
+    return ctp->ct_func(interp, argc, argv);
+}
+
+
+static void
+register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
+{
+    struct bu_cmdtab *ctp = NULL;
+
+    for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	(void)Tcl_CreateCommand(interp, ctp->ct_name, wrapper_func, (ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
+    }
+}
 
 
 #ifdef BWISH
@@ -363,11 +371,20 @@ HIDDEN struct bu_cmdtab bwish_cmds[] =
 extern Tk_PhotoImageFormat tkImgFmtPIX;
 #endif
 
+
 int
 cmdInit(Tcl_Interp *interp)
 {
+    static struct bu_cmdtab bwish_cmds[] = {
+	{"exit",	cmd_quit},
+	{"history",	cmd_history},
+	{"hist",	cmd_hist},
+	{"q",		cmd_quit},
+	{(char *)NULL,	BU_CMD_NULL}
+    };
+
     /* Register bwish/btclsh commands */
-    bu_register_cmds(interp, bwish_cmds);
+    register_cmds(interp, bwish_cmds);
 
 #ifdef BWISH
     /* Add pix format for images */

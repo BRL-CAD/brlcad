@@ -1,7 +1,7 @@
 /*                     D B 5 _ T Y P E S . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2011 United States Government as represented by
+ * Copyright (c) 2000-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -504,7 +504,7 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 
 
 void
-db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_value_set *avs, const char *name)
+db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_value_set *avs, struct directory *dp)
 {
     int ret;
     size_t i;
@@ -512,8 +512,8 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
     /*double attr_float_val;*/
     char *endptr = NULL;
     int color[3] = {-1, -1, -1};
-    struct bu_vls newval;
-    bu_vls_init(&newval);
+    struct bu_vls newval = BU_VLS_INIT_ZERO;
+    char *name = dp->d_namep;
 
     /* check inputs */
     RT_CK_COMB(comb);
@@ -522,8 +522,12 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
     bu_vls_sprintf(&newval, "%s", bu_avs_get(avs, db5_standard_attribute(ATTR_REGION)));
     bu_vls_trimspace(&newval);
     if (bu_str_true(bu_vls_addr(&newval))) {
+	/* set region bit */
+	dp->d_flags |= RT_DIR_REGION;  
 	comb->region_flag = 1;
     } else {
+	/* unset region bit */
+	dp->d_flags &= ~RT_DIR_REGION;  
 	comb->region_flag = 0;
     }
 
@@ -643,11 +647,10 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
 void
 db5_sync_comb_to_attr(struct bu_attribute_value_set *avs, const struct rt_comb_internal *comb)
 {
-    struct bu_vls newval;
+    struct bu_vls newval = BU_VLS_INIT_ZERO;
 
     /* check inputs */
     RT_CK_COMB(comb);
-    bu_vls_init(&newval);
 
     /* Region */
     if (comb->region_flag) {

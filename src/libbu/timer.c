@@ -1,7 +1,7 @@
 /*                           T I M E R . C
  * BRL-CAD
  *
- * Copyright (c) 2011 United States Government as represented by
+ * Copyright (c) 2011-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  * Copyright (c) Tim Riker
  *
@@ -24,30 +24,36 @@
 #include <time.h>
 #include "bio.h"
 
-#  ifdef HAVE_SYS_TIME_H
-#     include <sys/time.h>
-#  endif
-#  ifdef HAVE_SYS_TYPES_H
-#     include <sys/types.h>
-#  endif
-#  ifdef HAVE_SCHED_H
-#    include <sched.h>
-#  endif
-#if defined(_WIN32)
-#  include <mmsystem.h>
-#endif /* !defined(_WIN32) */
+#ifdef HAVE_WINDOWS_H
+#  include <windows.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#  include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#  include <sys/types.h>
+#endif
+#ifdef HAVE_SCHED_H
+#  include <sched.h>
+#endif
 
 #include "bu.h"
 
-int64_t bu_gettime(void)
+
+int64_t
+bu_gettime(void)
 {
-#if !defined(_WIN32)
+#ifdef HAVE_SYS_TIME_H
+
     struct timeval nowTime;
 
     gettimeofday(&nowTime, NULL);
     return ((int64_t)nowTime.tv_sec * (int64_t)1000000
 	    + (int64_t)nowTime.tv_usec);
-#else /* !defined(_WIN32) */
+
+#else /* HAVE_SYS_TIME_H */
+#  ifdef HAVE_WINDOWS_H
+
     LARGE_INTEGER count;
 	static LARGE_INTEGER freq = {0};
 
@@ -64,10 +70,14 @@ int64_t bu_gettime(void)
 
     return 1e6*count.QuadPart/freq.QuadPart;
 
-#endif /* !defined(_WIN32) */
-
-    bu_log("This should never happen.\n");
+#  else /* HAVE_WINDOWS_H */
+#    warning "bu_gettime() implementation missing for this machine type"
+    bu_log("timer.c: WARNING, no gettime implementation for this machine type.\n");
     return -1;
+
+#  endif /* HAVE_WINDOWS_H */
+#endif /* HAVE_SYS_TIME_H */
+
 }
 
 /*

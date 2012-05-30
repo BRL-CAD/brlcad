@@ -1,7 +1,7 @@
 /*                           R E D . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2011 United States Government as represented by
+ * Copyright (c) 1992-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -104,9 +104,8 @@ count_nodes(char *line)
 	relation = (*ptr);
 
 	if (relation != '+' && relation != 'u' && relation != '-') {
-	    struct bu_vls tmp_vls;
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, " %c is not a legal operator\n", relation);
 	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);

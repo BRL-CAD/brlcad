@@ -1,7 +1,7 @@
 /*                          H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -96,12 +96,10 @@ bu_hist_range(register struct bu_hist *hp, fastf_t low, fastf_t high)
 
 
 /**
- * _ B U _ H I S T _ P R _ S U P P R E S S
- *
  * Allows caller control over zero-suppression feature.
  */
 HIDDEN void
-_bu_hist_pr_suppress(register const struct bu_hist *histp, const char *title, int zero_suppress)
+hist_pr_suppress(register const struct bu_hist *histp, const char *title, int zero_suppress)
 {
     register int i;
     long maxcount;
@@ -172,7 +170,7 @@ _bu_hist_pr_suppress(register const struct bu_hist *histp, const char *title, in
 void
 bu_hist_pr(register const struct bu_hist *histp, const char *title)
 {
-    _bu_hist_pr_suppress(histp, title, 1);
+    hist_pr_suppress(histp, title, 1);
 }
 
 

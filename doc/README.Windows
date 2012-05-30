@@ -1,28 +1,48 @@
 BRL-CAD on Windows README
 =========================
 
-Compilation of BRL-CAD under Windows is performed in one of three
-ways.  The first and usually most readily attainable build process is
-to install BRL-CAD under the Mingw or Cygwin compatibility
-environments where the build steps are the same as on the other
-platforms (documented in the INSTALL file).
+The "standard" way to build BRL-CAD on Windows is to use the 
+Microsoft Visual C++ compiler and CMake.  The latest versions of both
+(as of this writing, VS 2010 and CMake 2.8.6) are recommended.  If
+generating an installer, the NullSoft NSIS tool is also required.
 
-The second approach is to compile using MSVC 8 (2005) using the build
-files in the misc/win32-msvc8 directory.  The main brlcad.sln solution
-file is in the brlcad directory.  This approach will compile the vast
-majority of the package and is the method utilized when making a
-binary release of BRL-CAD for Windows.  This will compile 'mged',
-'rt', most of the converters, many of the other geometry analysis
-tools, and more.  In all, it compiles all of the BRL-CAD libraries and
-about half of the available BRL-CAD utilities.
+In principle, BRL-CAD can be built using CMake and environments like
+Cygwin and/or Mingw/Msys, but using the new setup that is largely
+untested.  Bug reports welcome.
 
-The third approach is to compile using CMake using the build files
-in the misc/win32-msvc directory.  This approach, however, will ONLY
-currently build the core libraries together with their C++ interface
-in rt^3 and is intended for 3rd party applications that link against
-BRL-CAD as a geometry engine or ray-trace library.
+To build with CMake and Visual C++, the first step is to obtain 
+the BRL-CAD sources and create a build directory (in principle 
+it is not *REQUIRED* to have a separate build directory, but 
+with Windows and Visual Studio this is the only tested configuration.)
+Once those are available, run the CMake gui and specify the
+source and build directories.
 
-Special thanks to Jonathan Bonomo for the Windows installer that uses
-the Nullsoft Scriptable Install System (i.e. NSIS) that replaces the
-former InstallShield installer.  The NSIS scripts files are in
-misc/nsis/.
+Once CMake has the correct directories, press the Configure button.
+If this is the first time running Configure with this build directory,
+CMake will pop up a dialog asking you to select a generator.  Look
+for your version of Visual Studio and select it.  Configuration should
+now proceed.
+
+It is normal for configuration to be a long process on Windows.  Once
+it is complete, you should see a list of red highlighted entires appear
+in the CMake window.  Change any settings that appear to need changing
+and press Configure again.  The second pass should be shorter.  If no
+new red lines appear, the configuration is complete.
+
+The final CMake step, after completing Configuration, is to press the
+Generate button to generate the Visual Studio project files in the
+build directory.  Once this is done, close CMake.
+
+Navigate to your build directory - you should see a BRLCAD solution
+file for Visual Studio.  Double-click that file, and Visual Studio
+should launch.  It will load the targets (a default configuration of
+BRL-CAD on Windows will generate over 800 of them) and a large
+list of targets will appear.  To build everything (what you normally
+want to do) look for a targed named ALL_BUILD.  Start compiling that
+target.
+
+Once compilation is successfully complete, you may want to produce 
+an NSIS installer.  If so, locate a target named PACKAGE and run
+it.  The end result should be an exe file capable of installing
+BRL-CAD.
+

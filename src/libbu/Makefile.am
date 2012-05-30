@@ -2,15 +2,18 @@
 lib_LTLIBRARIES = libbu.la
 noinst_LTLIBRARIES = libbu_nil.la
 
-#	test_file
 noinst_PROGRAMS = \
 	test_basename \
+	test_booleanize \
+	test_ctype \
 	test_dirname \
-	test_htond \
+	test_escape \
 	test_progname \
 	test_quote \
 	test_timer \
-	test_vls
+	test_vls_vprintf \
+	test_sscanf \
+	test_bitv
 
 libbu_nil_la_SOURCES = \
 	argv.c \
@@ -24,14 +27,15 @@ libbu_nil_la_SOURCES = \
 	brlcad_path.c \
 	cmd.c \
 	cmdhist.c \
-	cmdhist_obj.c \
 	color.c \
 	convert.c \
 	crashreport.c \
+	ctype.c \
 	dirent.c \
 	dirname.c \
 	dlfcn.c \
 	endian.c \
+	escape.c \
 	fchmod.c \
 	fgets.c \
 	file.c \
@@ -45,7 +49,6 @@ libbu_nil_la_SOURCES = \
 	hook.c \
 	htond.c \
 	htonf.c \
-	image.c \
 	interrupt.c \
 	ispar.c \
 	kill.c \
@@ -60,6 +63,7 @@ libbu_nil_la_SOURCES = \
 	observer.c \
 	parallel.c \
 	parse.c \
+	pool.c \
 	printb.c \
 	process.c \
 	progname.c \
@@ -75,8 +79,10 @@ libbu_nil_la_SOURCES = \
 	rb_rotate.c \
 	rb_search.c \
 	rb_walk.c \
+	realpath.c \
 	semaphore.c \
 	simd.c \
+	sscanf.c \
 	str.c \
 	tcl.c \
 	temp.c \
@@ -86,6 +92,7 @@ libbu_nil_la_SOURCES = \
 	vfont.c \
 	vlb.c \
 	vls.c \
+	vls_vprintf.c \
 	whereis.c \
 	which.c \
 	xdr.c
@@ -96,13 +103,18 @@ libbu_la_LIBADD = \
 	libbu_nil.la \
 	${BU_LIBS}
 
-# test_file_SOURCES = test_file.c
-# test_file_LDADD = \
-# 	libbu.la \
-# 	${BU_LIBS}
+test_booleanize_SOURCES = test_booleanize.c
+test_booleanize_LDADD = \
+	libbu.la \
+	${BU_LIBS}
 
-test_htond_SOURCES = test_htond.c
-test_htond_LDADD = \
+test_bitv_SOURCES = test_bitv.c
+test_bitv_LDADD = \
+	libbu.la \
+	${BU_LIBS}
+
+test_ctype_SOURCES = test_ctype.c
+test_ctype_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
@@ -113,6 +125,11 @@ test_timer_LDADD = \
 
 test_basename_SOURCES = test_basename.c
 test_basename_LDADD = \
+	libbu.la \
+	${BU_LIBS}
+
+test_escape_SOURCES = test_escape.c
+test_escape_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
@@ -131,26 +148,31 @@ test_quote_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
-test_vls_SOURCES = test_vls.c
-test_vls_LDADD = \
+test_vls_vprintf_SOURCES = test_vls_vprintf.c
+test_vls_vprintf_LDADD = \
+	libbu.la \
+	${BU_LIBS}
+
+test_sscanf_SOURCES = test_sscanf.c
+test_sscanf_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
 noinst_HEADERS = \
-	rb_internals.h
+	rb_internals.h \
+	vls_internals.h
 
 man_MANS = \
 	htond.3 \
-	libbu.3 \
 	redblack.3
 
 EXTRA_DIST = \
 	$(man_MANS) \
+	uce-dirent.h \
 	CMakeLists.txt
 
 AM_CPPFLAGS = \
 	-DPREFIX=\"$(prefix)\" \
-	-I${top_srcdir}/src/other/uce-dirent \
 	${PNG_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
 	${LIBZ_CPPFLAGS}

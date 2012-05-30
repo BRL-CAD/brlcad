@@ -27,127 +27,141 @@
 
 #include <IV-2_6/_enter.h>
 
-class EntityDescriptorBlock : public MonoScene
-{
-public:
+class EntityDescriptorBlock : public MonoScene {
+    public:
 
-protected:
-    const EntityDescriptor *ed;
+    protected:
+        const EntityDescriptor * ed;
 
-    ButtonState *typeMsg;
+        ButtonState * typeMsg;
 
-    BoldMessage *name;
+        BoldMessage * name;
 
-    ButtonState *attrBS;
-    StringBrowser *attrListBrowser;
-    const AttrDescriptorList *attrList;
-    
-    ButtonState *subtypeBS;
-    StringBrowser *subtypeListBrowser;
-    const EntityDescriptorList *subtypeList;
+        ButtonState * attrBS;
+        StringBrowser * attrListBrowser;
+        const AttrDescriptorList * attrList;
 
-    ButtonState *openCloseBS;
-    CheckBox *openCloseBut;
-    int lastCloseVal;
+        ButtonState * subtypeBS;
+        StringBrowser * subtypeListBrowser;
+        const EntityDescriptorList * subtypeList;
 
-    VBox *bodyBox;
-    HBox *attrSubtypeBox;
+        ButtonState * openCloseBS;
+        CheckBox * openCloseBut;
+        int lastCloseVal;
 
-private:
+        VBox * bodyBox;
+        HBox * attrSubtypeBox;
 
-public:
-    EntityDescriptorBlock() { }
-    EntityDescriptorBlock (const EntityDescriptor *e, 
-			  int maxAttrLen = 30, int maxSubtypeLen = 30);
-    EntityDescriptorBlock (const EntityDescriptor *e, ButtonState *typeMessage,
-			  int maxAttrLen = 30, int maxSubtypeLen = 30);
-    ~EntityDescriptorBlock() { }
+    private:
 
-    const EntityDescriptor *EntityDesc() const { return ed; }
+    public:
+        EntityDescriptorBlock() { }
+        EntityDescriptorBlock( const EntityDescriptor * e,
+                               int maxAttrLen = 30, int maxSubtypeLen = 30 );
+        EntityDescriptorBlock( const EntityDescriptor * e, ButtonState * typeMessage,
+                               int maxAttrLen = 30, int maxSubtypeLen = 30 );
+        ~EntityDescriptorBlock() { }
+
+        const EntityDescriptor * EntityDesc() const {
+            return ed;
+        }
 //    void EntityDesc(EntityDescriptor *e) { ed = e; }
 
-    virtual void Update();
+        virtual void Update();
 
-protected:
+    protected:
 
-private:
-    Interactor *Body();
-    void Init (const EntityDescriptor *e, ButtonState *typeMessage,
-	      int maxAttrLen = 30, int maxSubtypeLen = 30);
+    private:
+        Interactor * Body();
+        void Init( const EntityDescriptor * e, ButtonState * typeMessage,
+                   int maxAttrLen = 30, int maxSubtypeLen = 30 );
 
 };
 
 class EntityDescBlockList;
 
-class EntityDescBlockNode : public SingleLinkNode
-{
-    friend EntityDescBlockList;
-    
-  private:
-  protected:
-    EntityDescriptorBlock * edBlock;
-  public:
-    char *ClassName () { return "EntityDescBlockNode"; }
+class EntityDescBlockNode : public SingleLinkNode {
+        friend EntityDescBlockList;
 
-    EntityDescriptorBlock *EDBlock()         { return edBlock; }
-    void EDBlock(EntityDescriptorBlock *edb) { edBlock = edb; }
+    private:
+    protected:
+        EntityDescriptorBlock * edBlock;
+    public:
+        char * ClassName() {
+            return "EntityDescBlockNode";
+        }
 
-    EntityDescBlockNode() { edBlock = 0; }
-    EntityDescBlockNode(EntityDescriptorBlock *edb) { edBlock = edb; }
-    ~EntityDescBlockNode() { }
+        EntityDescriptorBlock * EDBlock()         {
+            return edBlock;
+        }
+        void EDBlock( EntityDescriptorBlock * edb ) {
+            edBlock = edb;
+        }
+
+        EntityDescBlockNode() {
+            edBlock = 0;
+        }
+        EntityDescBlockNode( EntityDescriptorBlock * edb ) {
+            edBlock = edb;
+        }
+        ~EntityDescBlockNode() { }
 };
 
-class EntityDescBlockList : public SingleLinkList
-{
-  private:
-  protected:
-  public:
-    EntityDescBlockList()  { }
-    ~EntityDescBlockList() { } 
-    char *ClassName () { return "EntityDescBlockList"; }
+class EntityDescBlockList : public SingleLinkList {
+    private:
+    protected:
+    public:
+        EntityDescBlockList()  { }
+        ~EntityDescBlockList() { }
+        char * ClassName() {
+            return "EntityDescBlockList";
+        }
 
-    virtual SingleLinkNode * NewNode () { return new EntityDescBlockNode; } 
-    EntityDescBlockNode * PrependNode (EntityDescriptorBlock * edb);
-    void PrependNode (EntityDescBlockNode * node)
-    {
-	if (head) {
-	    node->next = head;
-	    head = node;
-	}
-	else head = tail = node;
-    }
+        virtual SingleLinkNode * NewNode() {
+            return new EntityDescBlockNode;
+        }
+        EntityDescBlockNode * PrependNode( EntityDescriptorBlock * edb );
+        void PrependNode( EntityDescBlockNode * node ) {
+            if( head ) {
+                node->next = head;
+                head = node;
+            } else {
+                head = tail = node;
+            }
+        }
 };
 
-class StepEntityDescriptor : public VBox
-{
-private:
+class StepEntityDescriptor : public VBox {
+    private:
 
-protected:
-    EntityDescBlockList *edbList;
-    PushButton *close;
-    ButtonState *closeBS;
-    const EntityDescriptor *entDesc;
+    protected:
+        EntityDescBlockList * edbList;
+        PushButton * close;
+        ButtonState * closeBS;
+        const EntityDescriptor * entDesc;
 
-    StringDisplay *strDisp;
-    ButtonState *strDispBS;
+        StringDisplay * strDisp;
+        ButtonState * strDispBS;
 
-public:
-    StepEntityDescriptor(const EntityDescriptor *ed);
-    ~StepEntityDescriptor() { }
-    
-    const EntityDescriptor * EntityDesc() { return entDesc; }
+    public:
+        StepEntityDescriptor( const EntityDescriptor * ed );
+        ~StepEntityDescriptor() { }
 
-    void Insert(EntityDescriptorBlock *edb);
-    void Insert(Interactor *i);
-    virtual void Update();
+        const EntityDescriptor * EntityDesc() {
+            return entDesc;
+        }
 
-    char *LongestAttrInBlock (const EntityDescriptor *entity);
-    char *FindLongestAttribute ();
+        void Insert( EntityDescriptorBlock * edb );
+        void Insert( Interactor * i );
+        virtual void Update();
 
-    char *LongestSubtNameInBlock (const EntityDescriptor *entity);
-    char *FindLongestSubtName ();
+        char * LongestAttrInBlock( const EntityDescriptor * entity );
+        char * FindLongestAttribute();
 
-    boolean IsMapped ();
+        char * LongestSubtNameInBlock( const EntityDescriptor * entity );
+        char * FindLongestSubtName();
+
+        boolean IsMapped();
 
 };
 

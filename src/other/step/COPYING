@@ -1,3 +1,48 @@
+Modifications to the original NIST code are (C)opyright by their 
+respective authors. Unless otherwise specified, they are copyright
+on the date those changes were committed to whichever repository 
+they were committed to first (i.e. BRL-CAD on SourceForge.net, 
+mpictor/StepClassLibrary on github, etc).
+
+Modifications which were first commited to the repository on github
+are licensed under the 3-clause BSD license below. Changes committed
+to BRL-CAD either contain license information mentioning BRL-CAD 
+near the top of the file, or are licensed under the same terms that
+NIST used.
+
+********************************************************************
+3-clause BSD license:
+
+Copyright (c) <date committed>, <copyright holder>
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * Neither the name of the <organization> nor the
+      names of its contributors may be used to endorse or promote products
+      derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+********************************************************************
+
+
+********************************************************************
+                    ORIGINAL NIST TEXT FOLLOWS
+********************************************************************
 
 This software was produced by the National Institute of Standards and 
 Technology (NIST), an agency of the U.S. government, and by statute is 

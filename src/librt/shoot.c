@@ -1,7 +1,7 @@
 /*                         S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2011 United States Government as represented by
+ * Copyright (c) 2000-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -249,12 +249,14 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	 * distance in mm.  This will prevent doing microscopic
 	 * models.
 	 */
+
 	t0 = ssp->box_start;
 	/* NB: can't compute px, py, pz here since t0 may advance in
 	 * the following statement!
 	 */
 
-    top:		switch (curcut->cut_type) {
+    top:
+	switch (curcut->cut_type) {
 	    case CUT_NUGRIDNODE: {
 		/*********************************************************
 		 * NOTE: This portion implements Gigante's non-uniform 3-D
@@ -270,7 +272,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		register const union cutter *nu_grid =
 		    curcut->nugn.nu_grid;
 
-		if (ssp->lastcell == CUTTER_NULL) {
+		if (ssp->lastcell == CUTTER_NULL || ssp->lastcell->cut_type != CUT_NUGRIDNODE) {
 		    /* We have just started into this NUgrid.  We must
 		     * find our location and set up the NUgrid traversal
 		     * state variables.
@@ -331,20 +333,26 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		     * the NUgrid array.
 		     */
 
-		again:				t0 = ssp->tv[out_axis];
+		nugrid_again:
+		    t0 = ssp->tv[out_axis];
 		    if (ssp->rstep[out_axis] > 0) {
 			if (++(ssp->igrid[out_axis]) >=
 			    nu_cells_per_axis[out_axis]) {
 			    cutp = CUTTER_NULL;
 			    break;
 			}
-			cutp += nu_stepsize[out_axis];
+
+			if (cutp != CUTTER_NULL && cutp != ssp->curcut) {
+			    cutp += nu_stepsize[out_axis];
+			}
 		    } else {
 			if (--(ssp->igrid[out_axis]) < 0) {
 			    cutp = CUTTER_NULL;
 			    break;
 			}
-			cutp -= nu_stepsize[out_axis];
+			if (cutp != CUTTER_NULL && cutp != ssp->curcut) {
+			    cutp -= nu_stepsize[out_axis];
+			}
 		    }
 
 		    /* Update t advancement value for this axis */
@@ -371,7 +379,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		    cutp->bn.bn_len <= 0 &&
 		    cutp->bn.bn_piecelen <= 0) {
 		    ++ssp->resp->re_nempty_cells;
-		    goto again;
+		    goto nugrid_again;
 		}
 
 		ssp->out_axis = out_axis;
@@ -388,9 +396,12 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 			   cutp->cut_type==CUT_BOXNODE?"box":
 			   cutp->cut_type==CUT_NUGRIDNODE?"nu":
 			   "?");
-		break; }
+		break;
+	    } /* CUT_NUGRIDNODE */
+
 	    case CUT_CUTNODE:
 		/* fall through */
+
 	    case CUT_BOXNODE:
 		/*********************************************************
 		 * NOTE: This portion implements Muuss' non-uniform binary
@@ -618,7 +629,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	    case CUT_NUGRIDNODE: {
 		struct rt_shootray_status *old;
 
-		BU_GETSTRUCT(old, rt_shootray_status);
+		BU_GET(old, struct rt_shootray_status);
 		*old = *ssp;	/* struct copy */
 
 		/* Descend into node */
@@ -807,63 +818,63 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
     sprintf(buf, "cell%d.pl", fnum++);
     fp = fopen(buf, "wb");
     if (fp == NULL) {
-	perror(buf);
-    }
+      perror(buf);
+    } else {
+      /* green box for model RPP */
+      pl_color(fp, 0, 100, 0);
 
-    /* green box for model RPP */
-    pl_color(fp, 0, 100, 0);
+      /* Plot the model RPP, to provide some context */
+      pdv_3space(fp, rtip->rti_pmin, rtip->rti_pmax);
+      pdv_3box(fp, rtip->rti_pmin, rtip->rti_pmax);
 
-    /* Plot the model RPP, to provide some context */
-    pdv_3space(fp, rtip->rti_pmin, rtip->rti_pmax);
-    pdv_3box(fp, rtip->rti_pmin, rtip->rti_pmax);
-
-    /* Plot the outline of this one cell */
-    pl_color(fp, 80, 80, 250);
-    switch (cutp->cut_type) {
+      /* Plot the outline of this one cell */
+      pl_color(fp, 80, 80, 250);
+      switch (cutp->cut_type) {
 	case CUT_BOXNODE:
-	    pdv_3box(fp, cutp->bn.bn_min, cutp->bn.bn_max);
-	    break;
+	  pdv_3box(fp, cutp->bn.bn_min, cutp->bn.bn_max);
+	  break;
 	default:
-	    bu_log("cut_type = %d\n", cutp->cut_type);
-	    bu_bomb("Unknown cut_type\n");
-    }
+	  bu_log("cut_type = %d\n", cutp->cut_type);
+	  bu_bomb("Unknown cut_type\n");
+      }
 
-    if (cutp->bn.bn_len > 0) {
+      if (cutp->bn.bn_len > 0) {
 	/* Plot every solid listed in this cell */
 	stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
 	for (; stpp >= cutp->bn.bn_list; stpp--) {
-	    register struct soltab *stp = *stpp;
+	  register struct soltab *stp = *stpp;
 
-	    rt_plot_solid(fp, rtip, stp, ap->a_resource);
+	  rt_plot_solid(fp, rtip, stp, ap->a_resource);
 	}
-    }
+      }
 
-    /* Plot interval of ray in box, in green */
-    pl_color(fp, 100, 255, 200);
-    rt_3move_raydist(fp, &ap->a_ray, ssp->box_start);
-    rt_3cont_raydist(fp, &ap->a_ray, ssp->box_end);
+      /* Plot interval of ray in box, in green */
+      pl_color(fp, 100, 255, 200);
+      rt_3move_raydist(fp, &ap->a_ray, ssp->box_start);
+      rt_3cont_raydist(fp, &ap->a_ray, ssp->box_end);
 
-    if (bu_list_len(waiting_segs_hd) <= 0) {
+      if (bu_list_len(waiting_segs_hd) <= 0) {
 	/* No segments, just plot the whole ray */
 	pl_color(fp, 255, 255, 0);	/* yellow -- no segs */
 	rt_3move_raydist(fp, &ap->a_ray, ssp->model_start);
 	rt_3cont_raydist(fp, &ap->a_ray, ssp->box_start);
 	rt_3move_raydist(fp, &ap->a_ray, ssp->box_end);
 	rt_3cont_raydist(fp, &ap->a_ray, ssp->model_end);
-    } else {
+      } else {
 	/* Plot the segments awaiting boolweave. */
 	struct seg *segp;
 
 	for (BU_LIST_FOR(segp, seg, waiting_segs_hd)) {
-	    RT_CK_SEG(segp);
-	    pl_color(fp, 255, 0, 0);	/* red */
-	    rt_3move_raydist(fp, &ap->a_ray, segp->seg_in.hit_dist);
-	    rt_3cont_raydist(fp, &ap->a_ray, segp->seg_out.hit_dist);
+	  RT_CK_SEG(segp);
+	  pl_color(fp, 255, 0, 0);	/* red */
+	  rt_3move_raydist(fp, &ap->a_ray, segp->seg_in.hit_dist);
+	  rt_3cont_raydist(fp, &ap->a_ray, segp->seg_out.hit_dist);
 	}
-    }
+      }
 
-    fclose(fp);
-    bu_log("wrote %s\n", buf);
+      fclose(fp);
+      bu_log("wrote %s\n", buf);
+    }
 }
 
 
@@ -1009,7 +1020,7 @@ rt_shootray(register struct application *ap)
     bu_bitv_clear(solidbits);
 
     if (BU_LIST_IS_EMPTY(&resp->re_region_ptbl)) {
-	BU_GETSTRUCT(regionbits, bu_ptbl);
+	BU_GET(regionbits, struct bu_ptbl);
 	bu_ptbl_init(regionbits, 7, "rt_shootray() regionbits ptbl");
     } else {
 	regionbits = BU_LIST_FIRST(bu_ptbl, &resp->re_region_ptbl);
@@ -1628,6 +1639,8 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     struct rt_i *rtip;
     const int debug_shoot = RT_G_DEBUG & DEBUG_SHOOT;
 
+    memset(&ss, 0, sizeof(struct rt_shootray_status));
+
     RT_AP_CHECK(ap);
     if (ap->a_magic) {
 	RT_CK_AP(ap);
@@ -1884,6 +1897,80 @@ rt_add_res_stats(register struct rt_i *rtip, register struct resource *resp)
 
     /* Zero out resource totals, so repeated calls are not harmful */
     rt_zero_res_stats(resp);
+}
+
+static int
+rt_shootray_simple_hit(struct application *a, struct partition *PartHeadp, struct seg *UNUSED(s))
+{
+    struct partition *p = NULL, *c = NULL, *pp;
+
+    for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
+	if(p) {
+	    c->pt_forw = bu_malloc(sizeof(struct partition), "shootray simple");
+	    c->pt_forw->pt_back = c;
+	    c = c->pt_forw;
+	} else {
+	    c = p = bu_malloc(sizeof(struct partition), "shootray simple");
+	    c->pt_forw = NULL;
+	    c->pt_back = NULL;
+	}
+	/* partial deep copy of  the partition */
+	c->pt_magic = pp->pt_magic;
+	c->pt_inseg = NULL;
+	c->pt_inhit = bu_malloc(sizeof(struct hit), "shootray simple inhit");
+	c->pt_inhit->hit_magic = pp->pt_inhit->hit_magic;
+	c->pt_inhit->hit_dist = pp->pt_inhit->hit_dist;
+	c->pt_inhit->hit_surfno = pp->pt_inhit->hit_surfno;
+	c->pt_outseg = NULL;
+	c->pt_outhit = bu_malloc(sizeof(struct hit), "shootray simple inhit");
+	c->pt_outhit->hit_magic = pp->pt_outhit->hit_magic;
+	c->pt_outhit->hit_dist = pp->pt_outhit->hit_dist;
+	c->pt_outhit->hit_surfno = pp->pt_outhit->hit_surfno;
+	c->pt_regionp = pp->pt_regionp;
+	c->pt_inflip = pp->pt_inflip;
+	c->pt_outflip = pp->pt_outflip;
+	c->pt_overlap_reg = NULL;
+    }
+    a->a_uptr = p;
+    return 0;
+}
+
+static int
+rt_shootray_simple_miss(struct application *a)
+{
+    a->a_uptr = NULL;
+    return 0;
+}
+
+/**
+ * Shoot a single ray and return the partition list. Handles callback issues.
+ *
+ * Note that it calls malloc(), therefore should NOT be used if performance
+ * matters.
+ */
+struct partition *
+rt_shootray_simple(struct application *a, point_t origin, vect_t direction)
+{
+    int (*hit)(struct application *, struct partition *, struct seg *);
+    int (*miss)(struct application *);
+    void (*logoverlap)(struct application *, const struct partition *, const struct bu_ptbl *, const struct partition *);
+
+    hit = a->a_hit;
+    miss = a->a_miss;
+    logoverlap = a->a_logoverlap;
+
+    a->a_logoverlap = rt_silent_logoverlap;
+    a->a_hit = rt_shootray_simple_hit;
+    a->a_miss = rt_shootray_simple_miss;
+    VMOVE(a->a_ray.r_pt, origin);
+    VMOVE(a->a_ray.r_dir, direction);
+    rt_shootray(a);
+
+    a->a_hit = hit;
+    a->a_miss = miss;
+    a->a_logoverlap = logoverlap;
+
+    return (struct partition *)a->a_uptr;
 }
 
 

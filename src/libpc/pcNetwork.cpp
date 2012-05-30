@@ -1,7 +1,7 @@
 /*                    P C N E T W O R K . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,12 +31,15 @@
 /** Default Constructor */
 template<class T>
 BinaryNetwork<T>::BinaryNetwork()
+  : v(), e()
 {
 }
 
 
 template<class T>
-BinaryNetwork<T>::BinaryNetwork(std::vector<Variable<T> *> V, std::vector<Constraint *> C) {
+BinaryNetwork<T>::BinaryNetwork(std::vector<Variable<T> *> V, std::vector<Constraint *> C)
+ : v(), e()
+{
     typename std::vector<Variable<T> *>::iterator i = V.begin();
     typename std::vector<Constraint *>::iterator j = C.begin();
 
@@ -55,6 +58,7 @@ BinaryNetwork<T>::BinaryNetwork(std::vector<Variable<T> *> V, std::vector<Constr
 /** BinaryNetwork construction from VCSet */
 template<class T>
 BinaryNetwork<T>::BinaryNetwork(VCSet & vcset)
+ : v(), e()
 {
     std::list<VariableAbstract *>::iterator i;
     std::list<Constraint *>::iterator j;

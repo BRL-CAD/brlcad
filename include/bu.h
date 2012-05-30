@@ -1,7 +1,7 @@
 /*                            B U . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,6 @@
 /** @defgroup data Data Management */
 /**   @defgroup cmd Command History */
 /**   @defgroup conv Data Conversion */
-/**   @defgroup image Image Management */
 /**   @defgroup getopt Command-line Option Parsing*/
 /**   @defgroup hton Network Byte-order Conversion */
 /**   @defgroup hist Histogram Handling */
@@ -54,20 +53,30 @@
  *
  * Main header file for the BRL-CAD Utility Library, LIBBU.
  *
- * This library provides several layers of low-level utility routines,
- * providing features that make coding much easier.
+ * The two letters "BU" stand for "BRL-CAD" and "Utility".  This
+ * library provides several layers of low-level utility routines,
+ * providing features that make cross-platform coding easier.
  *
  * Parallel processing support:  threads, sempahores, parallel-malloc.
  * Consolidated logging support:  bu_log(), bu_exit(), and bu_bomb().
  *
  * The intention is that these routines are general extensions to the
  * data types offered by the C language itself, and to the basic C
- * runtime support provided by the system LIBC.
+ * runtime support provided by the system LIBC.  All routines in LIBBU
+ * are designed to be "parallel-safe" (sometimes called "mp-safe" or
+ * "thread-safe" if parallelism is via threading) to greatly ease code
+ * development for multiprocessor systems.
  *
  * All of the data types provided by this library are defined in bu.h;
  * none of the routines in this library will depend on data types
  * defined in other BRL-CAD header files, such as vmath.h.  Look for
  * those routines in LIBBN.
+ *
+ * All truly fatal errors detected by the library use bu_bomb() to
+ * exit with a status of 12.  The LIBBU variants of system calls
+ * (e.g., bu_malloc()) do not return to the caller (unless there's a
+ * bomb hook defined) unless they succeed, thus sparing the programmer
+ * from constantly having to check for NULL return codes.
  *
  */
 #ifndef __BU_H__
@@ -81,12 +90,12 @@
 __BEGIN_DECLS
 
 #ifndef BU_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef BU_EXPORT_DLL
-#      define BU_EXPORT __declspec(dllexport)
-#    else
-#      define BU_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(BU_DLL_EXPORTS) && defined(BU_DLL_IMPORTS)
+#    error "Only BU_DLL_EXPORTS or BU_DLL_IMPORTS can be defined, not both."
+#  elif defined(BU_DLL_EXPORTS)
+#    define BU_EXPORT __declspec(dllexport)
+#  elif defined(BU_DLL_IMPORTS)
+#    define BU_EXPORT __declspec(dllimport)
 #  else
 #    define BU_EXPORT
 #  endif
@@ -161,18 +170,19 @@ __BEGIN_DECLS
 /**
  * shorthand declaration of a printf-style functions
  */
-#define __BU_ATTR_FORMAT12 __attribute__ ((__format__ (__printf__, 1, 2)))
-#define __BU_ATTR_FORMAT23 __attribute__ ((__format__ (__printf__, 2, 3)))
+#define _BU_ATTR_PRINTF12 __attribute__ ((__format__ (__printf__, 1, 2)))
+#define _BU_ATTR_PRINTF23 __attribute__ ((__format__ (__printf__, 2, 3)))
+#define _BU_ATTR_SCANF23 __attribute__ ((__format__ (__scanf__, 2, 3)))
 
 /**
  * shorthand declaration of a function that doesn't return
  */
-#define __BU_ATTR_NORETURN __attribute__ ((__noreturn__))
+#define _BU_ATTR_NORETURN __attribute__ ((__noreturn__))
 
 /**
  * shorthand declaration of a function that should always be inline
  */
-#define __BU_ATTR_ALWAYS_INLINE __attribute__ ((always_inline))
+#define _BU_ATTR_ALWAYS_INLINE __attribute__ ((always_inline))
 
 /**
  *  If we're compiling strict, turn off "format string vs arguments"
@@ -181,12 +191,14 @@ __BEGIN_DECLS
  *  strict checking.
  */
 #if defined(STRICT_FLAGS)
-#  undef __BU_ATTR_FORMAT12
-#  undef __BU_ATTR_FORMAT23
-#  undef __BU_ATTR_NORETURN
-#  define __BU_ATTR_FORMAT12
-#  define __BU_ATTR_FORMAT23
-#  define __BU_ATTR_NORETURN
+#  undef _BU_ATTR_PRINTF12
+#  undef _BU_ATTR_PRINTF23
+#  undef _BU_ATTR_SCANF23
+#  undef _BU_ATTR_NORETURN
+#  define _BU_ATTR_PRINTF12
+#  define _BU_ATTR_PRINTF23
+#  define _BU_ATTR_SCANF23
+#  define _BU_ATTR_NORETURN
 #endif
 
 
@@ -224,28 +236,21 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 /**
- * Handy memory allocator macro
+ * Handy dynamic memory allocator macro.  Allocated memory is
+ * automatically initialized to zero and guaranteed (else bu_bomb()).
  *
- * @def BU_GETSTRUCT(ptr, struct_type)
- * Acquire storage for a given struct_type.
- * e.g., BU_GETSTRUCT(ptr, structname);
- *
- * @def BU_GETUNION(ptr, union_type)
- * Allocate storage for a union
+ * Memory acquired with BU_GET() should be returned with BU_PUT().
  */
-#define BU_GETSTRUCT(_p, _str) \
-    _p = (struct _str *)bu_calloc(1, sizeof(struct _str), #_str " (getstruct)" BU_FLSTR)
-#define BU_GETUNION(_p, _unn) \
-    _p = (union _unn *)bu_calloc(1, sizeof(union _unn), #_unn " (getunion)" BU_FLSTR)
-
+#define BU_GET(_ptr, _type) _ptr = (_type *)bu_calloc(1, sizeof(_type), #_type " (BU_GET) " BU_FLSTR)
 
 /**
- * Acquire storage for a given TYPE, eg, BU_GETTYPE(ptr, typename);
- * Equivalent to BU_GETSTRUCT, except without the 'struct' Useful
- * for typedef'ed objects.
+ * Handy dynamic memory deallocator macro.  Deallocated memory has the
+ * first byte zero'd for sanity (and potential early detection of
+ * double-free crashing code) and the pointer is set to NULL.
+ *
+ * Memory acquired with BU_GET() should be returned with BU_PUT().
  */
-#define BU_GETTYPE(_p, _type) \
-    _p = (_type *)bu_calloc(1, sizeof(_type), #_type " (gettype)")
+#define BU_PUT(_ptr, _type) (uint8_t)(*(_ptr)) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " BU_FLSTR); _ptr = NULL
 
 
 /**
@@ -637,6 +642,51 @@ BU_EXPORT extern size_t bu_cv_htonul(genptr_t,
 #define IND_ILL    3
 #define IND_CRAY   4
 
+/*----------------------------------------------------------------------*/
+/** @file libbu/badmagic.c
+ *
+ * Magic checking functions.
+ *
+ */
+
+/**
+ * B U _ C K M A G
+ *
+ * Macros to check and validate a structure pointer, given that the
+ * first entry in the structure is a magic number. ((void)(1?0:((_ptr), void(), 0)))
+ */
+#ifdef NO_BOMBING_MACROS
+#  define BU_CKMAG(_ptr, _magic, _str) IGNORE((_ptr))
+#else
+#  define BU_CKMAG(_ptr, _magic, _str) { \
+        uintptr_t _ptrval = (uintptr_t)(_ptr); \
+        if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
+            bu_badmagic((uint32_t *)(_ptr), (uint32_t)_magic, _str, __FILE__, __LINE__); \
+        } \
+    }
+#endif
+
+
+/**
+ * b u _ b a d m a g i c
+ *
+ *  Support routine for BU_CKMAG macro.
+ */
+BU_EXPORT extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line);
+
+
+/**
+ * b u _ i d e n t i f y _ m a g i c
+ *
+ * Given a number which has been found in the magic number field of a
+ * structure (which is typically the first entry), determine what kind
+ * of structure this magic number pertains to.  This is called by the
+ * macro BU_CK_MAGIC() to provide a "hint" as to what sort of pointer
+ * error might have been made.
+ */
+BU_EXPORT extern const char *bu_identify_magic(uint32_t magic);
+
+
 
 /*----------------------------------------------------------------------*/
 /** @file libbu/endian.c
@@ -719,13 +769,13 @@ BU_EXPORT extern bu_endian_t bu_byteorder(void);
  struct my_structure *my_list = NULL;
 
  // allocate and initialize your list head
- BU_GETSTRUCT(my_list, my_structure);
+ BU_GET(my_list, struct my_structure);
  BU_LIST_INIT(&(my_list->l));
  my_list->my_data = -1;
 
  // add a new element to your list
  struct my_structure *new_entry;
- BU_GETSTRUCT(new_entry, my_structure);
+ BU_GET(new_entry, struct my_structure);
  new_entry->my_data = rand();
  BU_LIST_PUSH(&(my_list->l), &(new_entry->l));
 
@@ -965,25 +1015,25 @@ typedef struct bu_list bu_list_t;
  * Boolean test to see if current list element is the head
  */
 #define BU_LIST_IS_HEAD(p, hp)	\
-    (((struct bu_list *)(p)) == (hp))
+    (((struct bu_list *)(p)) == (struct bu_list *)(hp))
 #define BU_LIST_NOT_HEAD(p, hp)	\
-    (((struct bu_list *)(p)) != (hp))
+    (!BU_LIST_IS_HEAD(p, hp))
 
 /**
  * Boolean test to see if previous list element is the head
  */
 #define BU_LIST_PREV_IS_HEAD(p, hp)\
-    (((struct bu_list *)(p))->back == (hp))
+    (((struct bu_list *)(p))->back == (struct bu_list *)(hp))
 #define BU_LIST_PREV_NOT_HEAD(p, hp)\
-    (((struct bu_list *)(p))->back != (hp))
+    (!BU_LIST_PREV_IS_HEAD(p, hp))
 
 /**
  * Boolean test to see if the next list element is the head
  */
 #define BU_LIST_NEXT_IS_HEAD(p, hp)	\
-    (((struct bu_list *)(p))->forw == (hp))
+    (((struct bu_list *)(p))->forw == (struct bu_list *)(hp))
 #define BU_LIST_NEXT_NOT_HEAD(p, hp)	\
-    (((struct bu_list *)(p))->forw != (hp))
+    (!BU_LIST_NEXT_IS_HEAD(p, hp))
 
 #define BU_LIST_EACH(hp, p, type) \
     for ((p)=(type *)BU_LIST_FIRST(bu_list, hp); \
@@ -1023,7 +1073,7 @@ typedef struct bu_list bu_list_t;
  */
 #define BU_LIST_FOR_CIRC(p, structure, hp)	\
     (p)=BU_LIST_PNEXT_CIRC(structure, hp); \
-       (p) && (p) != (hp); \
+       (p) && BU_LIST_NOT_HEAD(p, hp); \
        (p)=BU_LIST_PNEXT_CIRC(structure, p)
 
 /**
@@ -1714,9 +1764,6 @@ typedef struct bu_hook_list bu_hook_list_t;
 #define BU_HOOK_LIST_IS_INITIALIZED(_p) (((struct bu_hook_list *)(_p) != BU_HOOK_LIST_NULL) && LIKELY((_p)->l.magic == BU_HOOK_LIST_MAGIC))
 
 
-/** list of callbacks to call during bu_bomb, used by mged. */
-BU_EXPORT extern struct bu_hook_list bu_bomb_hook_list;
-
 /*----------------------------------------------------------------------*/
 /** @addtogroup avs */
 /** @ingroup container */
@@ -1829,6 +1876,10 @@ typedef struct bu_attribute_value_set bu_avs_t;
  *
  @brief
  * Variable Length Strings
+ *
+ * This structure provides support for variable length strings,
+ * freeing the programmer from concerns about having character arrays
+ * large enough to hold strings.
  *
  * Assumption:  libc-provided sprintf() function is safe to use in parallel,
  * on parallel systems.
@@ -2056,7 +2107,13 @@ BU_EXPORT extern int bu_debug;
  * The "bu_structparse" struct describes one element of a structure.
  * Collections of these are combined to describe entire structures (or at
  * least those portions for which parse/print/import/export support is
- * desired.  For example:
+ * desired.
+ *
+ * Provides a convenient way of describing a C data structure, and
+ * reading and writing it in both human-readable ASCII and efficient
+ * binary forms.
+ *
+ * For example:
  *
  @code
 
@@ -2245,9 +2302,28 @@ typedef struct bu_color bu_color_t;
  * The data structures and constants for red-black trees.
  *
  * Many of these routines are based on the algorithms in chapter 13 of
- * T. H. Cormen, C. E. Leiserson, and R. L. Rivest, "_Introduction to
- * algorithms", MIT Press, Cambridge, MA, 1990.
+ * Thomas H. Cormen, Charles E. Leiserson, and Ronald L. Rivest,
+ * "Introduction to Algorithms", MIT Press, Cambridge, MA, 1990.
  *
+ * FIXME:  check implementation given the following note:
+ *
+ * Note that the third edition was published in 2009 and the book
+ * has had significant updates since the first edition.  Quoting the
+ * authors in the preface:  "The way we delete a node from binary search
+ * trees (which includes red-black trees) now guarantees that the node
+ * requested for deletion is the node that is actually deleted.  In the
+ * first two editions, in certain cases, some other node would be
+ * deleted, with its contents moving into the node passed to the
+ * deletion procedure.  With our new way to delete nodes, if other
+ * components of a program maintain pointers to nodes in the tree, they
+ * will not mistakenly end up with stale pointers to nodes that have
+ * been deleted."
+ *
+ * The implementation of balanced binary red-black tree operations
+ * provides all the basic dynamic set operations (e.g., insertion,
+ * deletion, search, minimum, maximum, predecessor, and successor) and
+ * order-statistic operations (i.e., select and rank) with optimal
+ * O(log(n)) performance while sorting on multiple keys.
  */
 
 /**
@@ -2462,7 +2538,7 @@ typedef struct bu_observer bu_observer_t;
  */
 struct bu_cmdtab {
     char *ct_name;
-    int (*ct_func)();
+    int (*ct_func)(void *data, int argc, const char *argv[]);
 };
 
 
@@ -2663,6 +2739,16 @@ BU_EXPORT extern struct bu_bitv *bu_bitv_dup(const struct bu_bitv *bv);
 BU_EXPORT extern int bu_backtrace(FILE *fp);
 
 /**
+ * Adds a hook to the list of bu_bomb hooks.  The top (newest) one of these
+ * will be called with its associated client data and a string to be
+ * processed.  Typically, these hook functions will display the output
+ * (possibly in an X window) or record it.
+ *
+ * NOTE: The hook functions are all non-PARALLEL.
+ */
+BU_EXPORT extern void bu_bomb_add_hook(bu_hook_t func, genptr_t clientdata);
+
+/**
  * Abort the running process.
  *
  * The bu_bomb routine is called on a fatal error, generally where no
@@ -2696,7 +2782,7 @@ BU_EXPORT extern int bu_backtrace(FILE *fp);
  * This routine should never return unless there is a bu_setjmp
  * handler registered.
  */
-BU_EXPORT extern void bu_bomb(const char *str) __BU_ATTR_NORETURN;
+BU_EXPORT extern void bu_bomb(const char *str) _BU_ATTR_NORETURN;
 
 /**
  * Semi-graceful termination of the application that doesn't cause a
@@ -2710,7 +2796,7 @@ BU_EXPORT extern void bu_bomb(const char *str) __BU_ATTR_NORETURN;
  *
  * This routine should never return.
  */
-BU_EXPORT extern void bu_exit(int status, const char *fmt, ...) __BU_ATTR_NORETURN __BU_ATTR_FORMAT23;
+BU_EXPORT extern void bu_exit(int status, const char *fmt, ...) _BU_ATTR_NORETURN _BU_ATTR_PRINTF23;
 
 /** @file libbu/crashreport.c
  *
@@ -2800,12 +2886,13 @@ BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb);
 /**
  * Returns truthfully whether the given file path exists or not.  An
  * empty or NULL path name is treated as a non-existent file and, as
- * such, will return false.
+ * such, will return false.  If fd is non-NULL, it will be set to an
+ * open file descriptor for the provided path.
  *
  * @return >0 The given filename exists.
  * @return 0 The given filename does not exist.
  */
-BU_EXPORT extern int bu_file_exists(const char *path);
+BU_EXPORT extern int bu_file_exists(const char *path, int *fd);
 
 /**
  * Returns truthfully as to whether the two provided filenames are the
@@ -2895,6 +2982,14 @@ BU_EXPORT extern int bu_file_delete(const char *path);
  */
 BU_EXPORT extern size_t bu_file_glob(const char *pattern, char ***matches);
 
+/**
+ * Call canonicalization routines to both expand and validate
+ * a path name.  
+ *
+ * returns a pointer to the canonical path.  Caller must free
+ * the path.
+ */
+BU_EXPORT extern char * bu_file_path_canonicalize(const char *path);
 
 /** @file libbu/fnmatch.c
  *
@@ -2913,7 +3008,7 @@ BU_EXPORT extern size_t bu_file_glob(const char *pattern, char ***matches);
 
 /**
  * Function fnmatch() as specified in POSIX 1003.2-1992, section B.6.
- * Compares a filename or pathname to a pattern.
+ * Compares a string filename or pathname to a pattern.
  *
  * Returns 0 if a match is found or BU_FNMATCH_NOMATCH otherwise.
  *
@@ -2928,14 +3023,31 @@ BU_EXPORT extern int bu_fnmatch(const char *pattern, const char *pathname, int f
  */
 
 /**
- * Count number of files in directory whose type matches substr
+ * Returns the number of directory entries for a given path matching
+ * an optional glob pattern.  If the caller provides a pointer to an
+ * argv-style 'files' array, this function will allocate the array
+ * with dynamically allocated strings for any matching file(s).
+ *
+ * It is the caller's responsibility to free a non-NULL 'files' array
+ * with bu_free_argv().
  */
-BU_EXPORT extern int bu_count_path(char *path, char *substr);
+BU_EXPORT extern size_t bu_dir_list(const char *path, const char *pattern, char ***files);
+
+
+/** @file libbu/realpath.c
+ *
+ */
 
 /**
- * Return array with filenames with suffix matching substr
+ * Call canonicalization routines to both expand and validate
+ * a path name.  
+ *
+ * Returns a pointer to the canonical path. If resolved_path is
+ * NULL, caller is responsible for freeing the returned path
+ * via bu_free.  If supplying a result string, the string must hold
+ * at least MAXPATHLEN characters.
  */
-BU_EXPORT extern void bu_list_path(char *path, char *substr, char **filearray);
+BU_EXPORT extern char * bu_realpath(const char *path, char *resolved_path);
 
 
 /** @file libbu/brlcad_path.c
@@ -3125,7 +3237,7 @@ DEPRECATED BU_EXPORT extern FILE *bu_fopen_uniq(const char *outfmt, const char *
   fclose(fp); // optional, auto-closed on exit
   ...
   fp = bu_temp_file(NULL, 0); // don't need file name
-  fchmod(fileno(fp), 0777);
+  bu_fchmod(fileno(fp), 0777);
   ...
   rewind(fp);
   while (fputc(0, fp) == 0);
@@ -3142,7 +3254,7 @@ BU_EXPORT extern FILE *bu_temp_file(char *filepath, size_t len);
 /** @file libbu/getopt.c
  *
  * @brief
- * Special re-entrant version of getopt.
+ * Special portable re-entrant version of getopt.
  *
  * Everything is prefixed with bu_, to distinguish it from the various
  * getopt routines found in libc.
@@ -3192,6 +3304,7 @@ BU_EXPORT extern int bu_getopt(int nargc, char * const nargv[], const char *ostr
 /** @{ */
 
 /* hist.c */
+/* These are a set of data histogramming routines. */
 
 /**
  */
@@ -3209,7 +3322,7 @@ BU_EXPORT extern void bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t m
 BU_EXPORT extern void bu_hist_range(struct bu_hist *hp, fastf_t low, fastf_t high);
 
 /**
- * The original command history interface.
+ * Print a histogram.
  */
 BU_EXPORT extern void bu_hist_pr(const struct bu_hist *histp, const char *title);
 
@@ -3416,13 +3529,13 @@ BU_EXPORT extern void bu_ck_list_magic(const struct bu_list *hd,
  *
  */
 BU_EXPORT extern void bu_hook_list_init(struct bu_hook_list *hlp);
-BU_EXPORT extern void bu_add_hook(struct bu_hook_list *hlp,
+BU_EXPORT extern void bu_hook_add(struct bu_hook_list *hlp,
 				  bu_hook_t func,
 				  genptr_t clientdata);
-BU_EXPORT extern void bu_delete_hook(struct bu_hook_list *hlp,
+BU_EXPORT extern void bu_hook_delete(struct bu_hook_list *hlp,
 				     bu_hook_t func,
 				     genptr_t clientdata);
-BU_EXPORT extern void bu_call_hook(struct bu_hook_list *hlp,
+BU_EXPORT extern void bu_hook_call(struct bu_hook_list *hlp,
 				   genptr_t buf);
 
 /** @} */
@@ -3487,7 +3600,7 @@ BU_EXPORT extern void bu_log_indent_vls(struct bu_vls *v);
 /**
  * Adds a hook to the list of bu_log hooks.  The top (newest) one of these
  * will be called with its associated client data and a string to be
- * processed.  Typcially, these hook functions will display the output
+ * processed.  Typically, these hook functions will display the output
  * (possibly in an X window) or record it.
  *
  * NOTE: The hook functions are all non-PARALLEL.
@@ -3507,13 +3620,61 @@ BU_EXPORT extern void bu_putchar(int c);
 
 /**
  * The routine is primarily called to log library events.
+ *
+ * The function is essentially a semaphore-protected version of
+ * fprintf(stderr) with optional logging hooks and automatic
+ * indentation options.
  */
-BU_EXPORT extern void bu_log(const char *, ...) __BU_ATTR_FORMAT12;
+BU_EXPORT extern void bu_log(const char *, ...) _BU_ATTR_PRINTF12;
 
 /**
  * Log a library event in the Standard way, to a specified file.
  */
-BU_EXPORT extern void bu_flog(FILE *, const char *, ...) __BU_ATTR_FORMAT23;
+BU_EXPORT extern void bu_flog(FILE *, const char *, ...) _BU_ATTR_PRINTF23;
+
+/**
+ * Custom vsscanf which wraps the system sscanf, and is wrapped by bu_sscanf.
+ *
+ * bu_vsscanf differs notably from the underlying system sscanf in that:
+ *
+ *  - A maximum field width is required for unsuppressed %s and %[...]
+ *    conversions. If a %s or %[...] conversion is encountered which does
+ *    not include a maximum field width, the routine bombs in order to avoid
+ *    an accidental buffer overrun.
+ *
+ *  - %V and %#V have been added as valid conversions. Both expect a pointer to
+ *    a struct bu_vls as their argument.
+ *   
+ *    %V is comparable to %[^]. It instructs bu_vsscanf to read arbitrary
+ *    characters from the source and store them in the vls buffer. The default
+ *    maximum field width is infinity.
+ *
+ *    %#V is comparable to %s. It instructs bu_vsscanf to skip leading
+ *    whitespace, and then read characters from the source and store them in the
+ *    vls buffer until the next whitespace character is encountered. The default
+ *    maximum field width is infinity.
+ *
+ *  - 0 is always a valid field width for unsuppressed %c, %s, and %[...]
+ *    conversions and causes '\0' to be written to the supplied char*
+ *    argument.
+ *
+ *  - a/e/f/g and A/E/F/G are always synonyms for float conversion.
+ *
+ *  - The C99 conversions hh[diouxX], z[diouxX], and t[diouxX] are always
+ *    supported.
+ *
+ * This routine has an associated test program named test_sscanf, which
+ * compares its behavior to the system sscanf.
+ */
+BU_EXPORT extern int bu_vsscanf(const char *src, const char *fmt, va_list ap);
+
+/**
+ * Initializes the va_list, then calls bu_vsscanf.
+ *
+ * This routine has an associated test program named test_sscanf, which
+ * compares its behavior to the system sscanf.
+ */
+BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_SCANF23;
 
 /** @} */
 
@@ -3524,6 +3685,10 @@ BU_EXPORT extern void bu_flog(FILE *, const char *, ...) __BU_ATTR_FORMAT23;
  *
  * @brief
  * Parallel-protected debugging-enhanced wrapper around system malloc().
+ *
+ * Provides a parallel-safe interface to the system memory allocator
+ * with standardized error checking, optional memory-use logging, and
+ * optional run-time pointer and memory corruption testing.
  *
  * The bu_malloc() routines can't use bu_log() because that uses the
  * bu_vls() routines which depend on bu_malloc().  So it goes direct
@@ -3707,6 +3872,12 @@ BU_EXPORT extern char *bu_basename(const char *path);
 /** @{ */
 
 /**
+ * Provides a standardized interface for acquiring the entire contents
+ * of an existing file mapped into the current address space, using
+ * the virtual memory capabilities of the operating system (such as
+ * mmap()) where available, or by allocating sufficient dynamic memory
+ * and reading the entire file.
+ *
  * If the file can not be opened, as descriptive an error message as
  * possible will be printed, to simplify code handling in the caller.
  *
@@ -3790,8 +3961,7 @@ BU_EXPORT extern int bu_process_id();
  *
  * routines for parallel processing
  *
- * Machine-specific routines for parallel processing.
- * Primarily calling functions in multiple threads on multiple CPUs.
+ * Machine-specific routines for portable parallel processing.
  *
  */
 
@@ -4010,25 +4180,24 @@ BU_EXPORT extern int bu_key_eq_to_key_val(const char *in,
 /**
  * Take an old v4 shader specification of the form
  *
- * shadername arg1=value1 arg2=value2 color=1/2/3
+ *   shadername arg1=value1 arg2=value2 color=1/2/3
  *
- * and convert it into the v5 Tcl-list form
+ * and convert it into the v5 {} list form
  *
- * shadername {arg1 value1 arg2 value2 color 1/2/3}
+ *   shadername {arg1 value1 arg2 value2 color 1/2/3}
  *
  * Note -- the input string is smashed with nulls.
  *
  * Note -- the v5 version is used everywhere internally, and in v5
  * databases.
  *
- *
  * @return 1 error
  * @return 0 OK
  */
-BU_EXPORT extern int bu_shader_to_tcl_list(const char *in,
-					   struct bu_vls *vls);
+BU_EXPORT extern int bu_shader_to_list(const char *in, struct bu_vls *vls);
 
 /**
+ *
  */
 BU_EXPORT extern int bu_shader_to_key_eq(const char *in, struct bu_vls *vls);
 
@@ -4084,8 +4253,8 @@ BU_EXPORT extern void bu_structparse_get_terse_form(struct bu_vls *logstr,
  * @param desc - structure description
  * @param base - base addr of users struct
  *
- * @retval TCL_OK if successful,
- * @retval TCL_ERROR on failure
+ * @retval BRLCAD_OK if successful,
+ * @retval BRLCAD_ERROR on failure
  */
 BU_EXPORT extern int bu_structparse_argv(struct bu_vls *str,
 					 int argc,
@@ -4170,6 +4339,18 @@ BU_EXPORT extern void bu_printb(const char *s,
 /** @addtogroup ptbl */
 /** @ingroup container */
 /** @{ */
+/**
+ * This collection of routines implements a "pointer table" data
+ * structure providing a convenient mechanism for managin a collection
+ * of pointers to objects.  This is useful where the size of the array
+ * is not known in advance and may change with time.  It's convenient
+ * to be able to write code that can say "remember this object", and
+ * then later on iterate through the collection of remembered objects.
+ *
+ * When combined with the concept of placing "magic numbers" as the
+ * first field of each data structure, the pointers to the objects
+ * become automatically typed.
+ */
 
 /**
  * Initialize struct & get storage for table.
@@ -4586,7 +4767,7 @@ BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visi
  * semaphore implementation
  *
  * Machine-specific routines for parallel processing.  Primarily for
- * handling semaphores for critical sections.
+ * handling semaphores to protect critical sections of code.
  *
  * The new paradigm: semaphores are referred to, not by a pointer, but
  * by a small integer.  This module is now responsible for obtaining
@@ -4737,10 +4918,9 @@ BU_EXPORT extern void bu_vls_free(struct bu_vls *vp);
  */
 BU_EXPORT extern void bu_vls_vlsfree(struct bu_vls *vp);
 /**
- * Make an "ordinary" string copy of a vls string.  Storage for the
- * regular string is acquired using malloc.
- *
- * The source string is not affected.
+ * Return a dynamic copy of a vls.  Memory for the string being
+ * returned is acquired using bu_malloc() implying the caller must
+ * bu_free() the returned string.
  */
 BU_EXPORT extern char *bu_vls_strdup(const struct bu_vls *vp);
 
@@ -4882,7 +5062,7 @@ BU_EXPORT extern void bu_vls_trimspace(struct bu_vls *vp);
  * %V is a pointer to a (struct bu_vls *) string.
  *
  * This routine appends to the given vls similar to how vprintf
- * appends to stdout (see bu_vls_vsprintf for overwriting the vls).
+ * appends to stdout (see bu_vls_printf for overwriting the vls).
  */
 BU_EXPORT extern void bu_vls_vprintf(struct bu_vls *vls,
 				     const char *fmt,
@@ -4892,7 +5072,7 @@ BU_EXPORT extern void bu_vls_vprintf(struct bu_vls *vls,
  * Initializes the va_list, then calls the above bu_vls_vprintf.
  */
 BU_EXPORT extern void bu_vls_printf(struct bu_vls *vls,
-				    const char *fmt, ...) __BU_ATTR_FORMAT23;
+				    const char *fmt, ...) _BU_ATTR_PRINTF23;
 
 /**
  * Format a string into a vls, setting the vls to the given print
@@ -4904,7 +5084,7 @@ BU_EXPORT extern void bu_vls_printf(struct bu_vls *vls,
  * %V is a pointer to a (struct bu_vls *) string.
  */
 BU_EXPORT extern void bu_vls_sprintf(struct bu_vls *vls,
-				     const char *fmt, ...) __BU_ATTR_FORMAT23;
+				     const char *fmt, ...) _BU_ATTR_PRINTF23;
 
 /**
  * Efficiently append 'cnt' spaces to the current vls.
@@ -5093,29 +5273,175 @@ BU_EXPORT extern char *bu_strdupm(const char *cp, const char *label);
 #define bu_strdup(s) bu_strdupm(s, BU_FLSTR)
 
 /**
- * Compares two strings more gracefully as standard library's strcmp().
- * It accepts NULL as valid input values and considers "" and NULL as equal.
- *
- * bu_strcmp() is a macro that includes the current file name and line
- * number that can be used when bu debugging is enabled.
- *
+ * Compares two strings for equality.  It performs the comparison more
+ * robustly than the standard library's strcmp() function by defining
+ * consistent behavior for NULL and empty strings.  It accepts NULL as
+ * valid input values and considers "" and NULL as equal.  Returns 0
+ * if the strings match.
  */
-BU_EXPORT extern int bu_strcmpm(const char *string1, const char *string2, const char *label);
-#define bu_strcmp(s1, s2) bu_strcmpm((s1), (s2), BU_FLSTR)
+BU_EXPORT extern int bu_strcmp(const char *string1, const char *string2);
+
+/**
+ * Compares two strings for equality.  No more than n-characters are
+ * compared.  It performs the comparison more robustly than the
+ * standard library's strncmp() function by defining consistent
+ * behavior for NULL and empty strings.  It accepts NULL as valid
+ * input values and considers "" and NULL as equal.  Returns 0 if the
+ * strings match.
+ */
+BU_EXPORT extern int bu_strncmp(const char *string1, const char *string2, size_t n);
+
+/**
+ * Compares two strings for equality without regard for the case in
+ * the string.  It performs the comparison more robustly than the
+ * standard strcasecmp()/stricmp() function by defining consistent
+ * behavior for NULL and empty strings.  It accepts NULL as valid
+ * input values and considers "" and NULL as equal.  Returns 0 if the
+ * strings match.
+ */
+BU_EXPORT extern int bu_strcasecmp(const char *string1, const char *string2);
+
+/**
+ * Compares two strings for equality without regard for the case in
+ * the string.  No more than n-characters are compared.  It performs
+ * the comparison more robustly than the standard
+ * strncasecmp()/strnicmp() function by defining consistent behavior
+ * for NULL and empty strings.  It accepts NULL as valid input values
+ * and considers "" and NULL as equal.  Returns 0 if the strings
+ * match.
+ */
+BU_EXPORT extern int bu_strncasecmp(const char *string1, const char *string2, size_t n);
 
 /**
  * BU_STR_EMPTY() is a convenience macro that tests a string for
  * emptiness, i.e. "" or NULL.
  */
-#define BU_STR_EMPTY(s) (bu_strcmpm((s), "", BU_FLSTR) == 0)
+#define BU_STR_EMPTY(s) (bu_strcmp((s), "") == 0)
 
 /**
  * BU_STR_EQUAL() is a convenience macro for testing two
- * null-terminaed strings for equality, i.e. A == B, and is equivalent
- * to (bu_strcmp(s1, s2) == 0) returning true if the strings match and
- * false if they do not.
+ * null-terminated strings for equality.  It is equivalent to
+ * (bu_strcmp(s1, s2) == 0) whereby NULL strings are allowed and
+ * equivalent to an empty string.  Evaluates true when the strings
+ * match and false if they do not.
  */
-#define BU_STR_EQUAL(s1, s2) (bu_strcmpm((s1), (s2), BU_FLSTR) == 0)
+#define BU_STR_EQUAL(s1, s2) (bu_strcmp((s1), (s2)) == 0)
+
+/**
+ * BU_STR_EQUIV() is a convenience macro that compares two
+ * null-terminated strings for equality without regard for case.  Two
+ * strings are equivalent if they are a case-insensitive match.  NULL
+ * strings are allowed and equivalent to an empty string.  Evaluates
+ * true if the strings are similar and false if they are not.
+ */
+#define BU_STR_EQUIV(s1, s2) (bu_strcasecmp((s1), (s2)) == 0)
+
+
+/** @file escape.c
+ *
+ * These routines implement support for escaping and unescaping
+ * generalized strings that may represent filesystem paths, URLs,
+ * object lists, and more.
+ *
+ */
+
+/**
+ * Escapes an input string with preceeding '\'s for any characters
+ * defined in the 'expression' string.  The input string is written to the
+ * specified output buffer of 'size' capacity.  The input and output
+ * pointers may overlap or be the same memory (assuming adequate space
+ * is available).  If 'output' is NULL, then dynamic memory will be
+ * allocated and returned.
+ *
+ * The 'expression' parameter is a regular "bracket expression"
+ * commonly used in globbing and POSIX regular expression character
+ * matching.  An expression can be either a matching list (default) or
+ * a non-matching list (starting with a circumflex '^' character).
+ * For example, "abc" matches any of the characters 'a', 'b', or 'c'.
+ * Specifying a non-matching list expression matches any character
+ * except for the ones listed after the circumflex.  For example,
+ * "^abc" matches any character except 'a', 'b', or 'c'.
+ *
+ * Backslash escape sequences are not allowed (e.g., \t or \x01) as
+ * '\' will be matched literally.
+ *
+ * A range expression consists of two characters separated by a hyphen
+ * and will match any single character between the two characters.
+ * For example, "0-9a-c" is equivalent to "0123456789abc".  To match a
+ * '-' dash literally, include it as the last or first (after any '^')
+ * character within the expression.
+ *
+ * The expression may also contain named character classes but only
+ * for ASCII input strings:
+ *
+ * [:alnum:] Alphanumeric characters: a-zA-Z0-9
+ * [:alpha:] Alphabetic characters: a-zA-Z
+ * [:blank:] Space and TAB characters
+ * [:cntrl:] Control characters: ACSII 0x00-0X7F
+ * [:digit:] Numeric characters: 0-9
+ * [:graph:] Characters that are both printable and visible: ASCII 0x21-0X7E
+ * [:lower:] Lowercase alphabetic characters: a-z
+ * [:print:] Visible and space characters (not control characters): ASCII 0x20-0X7E
+ * [:punct:] Punctuation characters (not letters, digits, control, or space): ][!"#$%&'()*+,./:;<=>?@^_`{|}~-\
+ * [:upper:] Uppercase alphabetic characters: A-Z
+ * [:xdigit:] Hexadecimal digits: a-fA-F0-9
+ * [:word:] (non-POSIX) Alphanumeric plus underscore: a-zA-Z0-9_
+ *
+ * A non-NULL output string is always returned.  This allows
+ * expression chaining and embedding as function arguments but care
+ * should be taken to free the dynamic memory beging returned when
+ * 'output' is NULL.
+ *
+ * If output 'size' is inadequate for holding the escaped input
+ * string, bu_bomb() is called.
+ *
+ * Example:
+ *   char *result;
+ *   char buf[128];
+ *   result = bu_str_escape("my fair lady", " ", buf, 128);
+ *   :: result == buf == "my\ fair\ lady"
+ *   result = bu_str_escape(buf, "\", NULL, 0);
+ *   :: result == "my\\ fair\\ lady"
+ *   :: buf == "my\ fair\ lady"
+ *   bu_free(result, "bu_str_escape");
+ *   result = bu_str_escape(buf, "a-zA-Z", buf, 128);
+ *   :: result == buf == "\m\y\ \f\a\i\r\ \l\a\d\y"
+ *
+ * This function should be thread safe and re-entrant if the
+ * input/output buffers are not shared (and strlen() is threadsafe).
+ */
+BU_EXPORT extern char *bu_str_escape(const char *input, const char *expression, char *output, size_t size);
+
+/**
+ * Removes one level of '\' escapes from an input string.  The input
+ * string is written to the specified output buffer of 'size'
+ * capacity.  The input and output pointers may overlap or be the same
+ * memory.  If 'output' is NULL, then dynamic memory will be allocated
+ * and returned.
+ *
+ * A non-NULL output string is always returned.  This allows
+ * expression chaining and embedding as function arguments but care
+ * should be taken to free the dynamic memory beging returned when
+ * 'output' is NULL.
+ *
+ * If output 'size' is inadequate for holding the unescaped input
+ * string, bu_bomb() is called.
+ *
+ * Example:
+ *   char *result;
+ *   char buf[128];
+ *   result = bu_str_unescape("\m\y\\ \f\a\i\r\\ \l\a\d\y", buf, 128);
+ *   :: result == buf == "my\ fair\ lady"
+ *   result = bu_str_unescape(buf, NULL, 0);
+ *   :: result == "my fair lady"
+ *   :: buf == "my\ fair\ lady"
+ *   bu_free(result, "bu_str_unescape");
+ *
+ * This function should be thread safe and re-entrant if the
+ * input/output buffers are not shared (and strlen() is threadsafe).
+ */
+BU_EXPORT extern char *bu_str_unescape(const char *input, char *output, size_t size);
+
 
 /** @} */
 
@@ -5286,7 +5612,7 @@ DEPRECATED BU_EXPORT extern unsigned char *bu_plonglong(unsigned char *msgp, uin
  * runs a given command, calling the corresponding observer callback
  * if it matches.
  */
-BU_EXPORT extern int bu_observer_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]);
+BU_EXPORT extern int bu_observer_cmd(void *clientData, int argc, const char *argv[]);
 
 /**
  * Notify observers.
@@ -5298,361 +5624,6 @@ BU_EXPORT extern void bu_observer_notify(Tcl_Interp *interp, struct bu_observer 
  */
 BU_EXPORT extern void bu_observer_free(struct bu_observer *);
 
-/** @file libbu/tcl.c
- *
- * Tcl interfaces to all the LIBBU Basic BRL-CAD Utility routines.
- *
- * Remember that in MGED you need to say "set glob_compat_mode 0" to
- * get [] to work with TCL semantics rather than MGED glob semantics.
- *
- */
-
-/**
- * Convert the "form" of a bu_structparse table into a TCL result
- * string, with parameter-name data-type pairs:
- *
- * V {%f %f %f} A {%f %f %f}
- *
- * A different routine should build a more general 'form', along the
- * lines of:
- *
- * {V {%f %f %f} default {help}} {A {%f %f %f} default# {help}}
- *
- * @param interp tcl interpreter
- * @param sp structparse table
- *
- * 	@return
- * 	void
- */
-BU_EXPORT extern void bu_tcl_structparse_get_terse_form(Tcl_Interp *interp,
-							const struct bu_structparse *sp);
-
-/**
- * Support routine for db adjust and db put.  Much like the bu_struct_parse routine
- * which takes its input as a bu_vls. This routine, however, takes the arguments
- * as lists, a more Tcl-friendly method. Also knows about the Tcl result string,
- * so it can make more informative error messages.
- *
- * Operates on argv[0] and argv[1], then on argv[2] and argv[3], ...
- *
- *
- * @param interp	- tcl interpreter
- * @param argc	- number of elements in argv
- * @param argv	- contains the keyword-value pairs
- * @param desc	- structure description
- * @param base	- base addr of users struct
- *
- * 	@retval TCL_OK if successful,
- * @retval TCL_ERROR on failure
- */
-BU_EXPORT extern int bu_tcl_structparse_argv(Tcl_Interp *interp,
-					     int argc,
-					     const char **argv,
-					     const struct bu_structparse *desc,
-					     char *base);
-
-/**
- * A tcl wrapper for bu_mem_barriercheck.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern int bu_tcl_mem_barriercheck(ClientData clientData,
-					     Tcl_Interp *interp,
-					     int argc,
-					     const char **argv);
-
-/**
- * A tcl wrapper for bu_ck_malloc_ptr.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern int bu_tcl_ck_malloc_ptr(ClientData clientData,
-					  Tcl_Interp *interp,
-					  int argc,
-					  const char **argv);
-
-/**
- * A tcl wrapper for bu_malloc_len_roundup.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern int bu_tcl_malloc_len_roundup(ClientData clientData,
-					       Tcl_Interp *interp,
-					       int argc,
-					       const char **argv);
-
-/**
- * A tcl wrapper for bu_prmem. Prints map of
- * memory currently in use, to stderr.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern int bu_tcl_prmem(ClientData clientData,
-				  Tcl_Interp *interp,
-				  int argc,
-				  const char **argv);
-
-/**
- * A tcl wrapper for bu_vls_printb.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern int bu_tcl_printb(ClientData clientData,
-				   Tcl_Interp *interp,
-				   int argc,
-				   const char **argv);
-
-/**
- * Given arguments of alternating keywords and values and a specific
- * keyword ("Iwant"), return the value associated with that keyword.
- *
- * example: bu_get_value_by_keyword Iwant az 35 elev 25 temp 9.6
- *
- * If only one argument is given after the search keyword, it is
- * interpreted as a list in the same format.
- *
- * example: bu_get_value_by_keyword Iwant {az 35 elev 25 temp 9.6}
- *
- * Search order is left-to-right, only first match is returned.
- *
- * Sample use:
- * bu_get_value_by_keyword V8 [concat type [.inmem get box.s]]
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern int bu_tcl_get_value_by_keyword(ClientData clientData,
-						 Tcl_Interp *interp,
-						 int argc,
-						 const char **argv);
-
-/**
- * Given arguments of alternating keywords and values, establish local
- * variables named after the keywords, with the indicated
- * values. Returns in interp a list of the variable names that were
- * assigned to. This lets you detect at runtime what assignments were
- * actually performed.
- *
- * example: bu_get_all_keyword_values az 35 elev 25 temp 9.6
- *
- * This is much faster than writing this in raw Tcl 8 as:
- *
- * foreach {keyword value} $list {
- * 	set $keyword $value
- * 	lappend retval $keyword
- * }
- *
- * If only one argument is given it is interpreted as a list in the
- * same format.
- *
- * example:  bu_get_all_keyword_values {az 35 elev 25 temp 9.6}
- *
- * For security reasons, the name of the local variable assigned to is
- * that of the input keyword with "key_" prepended.  This prevents a
- * playful user from overriding variables inside the function,
- * e.g. loop iterator "i", etc.  This could be even worse when called
- * in global context.
- *
- * Processing order is left-to-right, rightmost value for a repeated
- * keyword will be the one used.
- *
- * Sample use:
- * bu_get_all_keyword_values [concat type [.inmem get box.s]]
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern int bu_tcl_get_all_keyword_values(ClientData clientData,
-						   Tcl_Interp *interp,
-						   int argc,
-						   const char **argv);
-
-/**
- * A tcl wrapper for bu_rgb_to_hsv.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern int bu_tcl_rgb_to_hsv(ClientData clientData,
-				       Tcl_Interp *interp,
-				       int argc,
-				       const char **argv);
-
-/**
- * A tcl wrapper for bu_hsv_to_rgb.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern int bu_tcl_hsv_to_rgb(ClientData clientData,
-				       Tcl_Interp *interp,
-				       int argc,
-				       const char **argv);
-
-/**
- * Converts key=val to "key val" pairs.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern int bu_tcl_key_eq_to_key_val(ClientData clientData,
-					      Tcl_Interp *interp,
-					      int argc,
-					      const char **argv);
-
-/**
- * Converts a shader string to a tcl list.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern int bu_tcl_shader_to_key_val(ClientData clientData,
-					      Tcl_Interp *interp,
-					      int argc,
-					      const char **argv);
-
-/**
- * Converts "key value" pairs to key=value.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern int bu_tcl_key_val_to_key_eq(ClientData clientData,
-					      Tcl_Interp *interp,
-					      int argc,
-					      const char **argv);
-
-/**
- * Converts a shader tcl list into a shader string.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern int bu_tcl_shader_to_key_eq(ClientData clientData,
-					     Tcl_Interp *interp,
-					     int argc,
-					     const char **argv);
-
-/**
- * bu_tcl_brlcad_root
- *
- * A tcl wrapper for bu_brlcad_root.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern int bu_tcl_brlcad_root(ClientData clientData,
-					Tcl_Interp *interp,
-					int argc,
-					const char **argv);
-
-/**
- * bu_tcl_brlcad_data
- *
- * A tcl wrapper for bu_brlcad_data.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern int bu_tcl_brlcad_data(ClientData clientData,
-					Tcl_Interp *interp,
-					int argc,
-					const char **argv);
-
-/**
- * bu_tcl_units_conversion
- *
- * A tcl wrapper for bu_units_conversion.
- *
- * @param clientData	- associated data/state
- * @param interp	- tcl interpreter in which this command was registered.
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern int bu_tcl_units_conversion(ClientData clientData,
-					     Tcl_Interp *interp,
-					     int argc,
-					     const char **argv);
-
-/**
- * bu_tcl_setup
- *
- * Add all the supported Tcl interfaces to LIBBU routines to the list
- * of commands known by the given interpreter.
- *
- * @param interp	- tcl interpreter in which this command was registered.
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
-BU_EXPORT extern void bu_tcl_setup(Tcl_Interp *interp);
-
 /**
  * Bu_Init
  *
@@ -5661,9 +5632,9 @@ BU_EXPORT extern void bu_tcl_setup(Tcl_Interp *interp);
  *
  * @param interp	- tcl interpreter in which this command was registered.
  *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
+ * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
  */
-BU_EXPORT extern int Bu_Init(Tcl_Interp *interp);
+BU_EXPORT extern int Bu_Init(void *interp);
 
 
 /** @} */
@@ -5990,103 +5961,6 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_next(struct bu_hash_record *r
 
 /** @} */
 
-/** @addtogroup image */
-/** @ingroup data */
-/** @{ */
-/** @file libbu/image.c
- *
- * image save/load routines
- *
- * save or load images in a variety of formats.
- *
- */
-
-enum {
-    BU_IMAGE_AUTO,
-    BU_IMAGE_AUTO_NO_PIX,
-    BU_IMAGE_PIX,
-    BU_IMAGE_BW,
-    BU_IMAGE_ALIAS,
-    BU_IMAGE_BMP,
-    BU_IMAGE_CI,
-    BU_IMAGE_ORLE,
-    BU_IMAGE_PNG,
-    BU_IMAGE_PPM,
-    BU_IMAGE_PS,
-    BU_IMAGE_RLE,
-    BU_IMAGE_SPM,
-    BU_IMAGE_SUN,
-    BU_IMAGE_YUV
-};
-
-
-struct bu_image_file {
-    uint32_t magic;
-    char *filename;
-    int fd;
-    int format;			/* BU_IMAGE_* */
-    int width, height, depth;	/* pixel, pixel, byte */
-    unsigned char *data;
-    unsigned long flags;
-};
-typedef struct bu_image_file bu_image_file_t;
-#define BU_IMAGE_FILE_NULL ((struct bu_image_file *)0)
-
-/**
- * asserts the integrity of a bu_image_file struct.
- */
-#define BU_CK_IMAGE_FILE(_i) BU_CKMAG(_i, BU_IMAGE_FILE_MAGIC, "bu_image_file")
-
-/**
- * initializes a bu_image_file struct without allocating any memory.
- */
-#define BU_IMAGE_FILE_INIT(_i) { \
-	(_i)->magic = BU_IMAGE_FILE_MAGIC; \
-	(_i)->filename = NULL; \
-	(_i)->fd = (_i)->format = (_i)->width = (_i)->height = (_i)->depth = 0; \
-	(_i)->data = NULL; \
-	(_i)->flags = 0; \
-    }
-
-/**
- * macro suitable for declaration statement initialization of a
- * bu_image_file struct.  does not allocate mmeory.
- */
-#define BU_IMAGE_FILE_INIT_ZERO { BU_IMAGE_FILE_MAGIC, NULL, 0, 0, 0, 0, 0, NULL, 0 }
-
-/**
- * returns truthfully whether a bu_image_file has been initialized.
- */
-#define BU_IMAGE_FILE_IS_INITIALIZED(_i) (((struct bu_image_file *)(_i) != BU_IMAGE_FILE_NULL) && LIKELY((_i)->magic == BU_IMAGE_FILE_MAGIC))
-
-
-BU_EXPORT extern struct bu_image_file *bu_image_save_open(const char *filename,
-							  int format,
-							  int width,
-							  int height,
-							  int depth);
-
-BU_EXPORT extern int bu_image_save_writeline(struct bu_image_file *bif,
-					     int y,
-					     unsigned char *data);
-
-BU_EXPORT extern int bu_image_save_writepixel(struct bu_image_file *bif,
-					      int x,
-					      int y,
-					      unsigned char *data);
-
-BU_EXPORT extern int bu_image_save_close(struct bu_image_file *bif);
-
-BU_EXPORT extern int bu_image_save(unsigned char *data,
-				   int width,
-				   int height,
-				   int depth,
-				   char *filename,
-				   int filetype);
-
-/** @} */
-/* end image utilities */
-
 /** @addtogroup file */
 /** @ingroup io */
 /** @{ */
@@ -6097,8 +5971,11 @@ BU_EXPORT extern int bu_image_save(unsigned char *data,
  */
 
 /**
+ * Portable wrapper for setting a file descriptor's permissions ala
+ * fchmod().
  */
-BU_EXPORT extern int bu_fchmod(FILE *fp, unsigned long pmode);
+BU_EXPORT extern int bu_fchmod(int fd, unsigned long pmode);
+
 
 /** @file libbu/argv.c
  *
@@ -6275,6 +6152,20 @@ BU_EXPORT extern int bu_dlclose(void *handle);
 BU_EXPORT extern const char *bu_dlerror();
 
 /** @} file */
+
+/**
+ * Definitions for memory pool "get" and "free" functions.
+ */
+BU_EXPORT extern void *bu_pool_get(size_t elem_byte_size);
+BU_EXPORT extern void bu_pool_put(void *ptr, size_t elem_byte_size);
+
+/** @file libbu/ctype.c
+ *
+ * Routines for checking ctypes.
+ *
+ */
+BU_EXPORT extern int bu_str_isprint(const char *cp);
+
 
 
 __END_DECLS

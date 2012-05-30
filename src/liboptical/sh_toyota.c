@@ -1,7 +1,7 @@
 /*                     S H _ T O Y O T A . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2011 United States Government as represented by
+ * Copyright (c) 1992-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@
 
 /* Local information */
 struct toyota_specific {
-    fastf_t lambda;		/* Wavelength of light (nm).		*/
+    fastf_t wavelength;		/* Wavelength of light (nm).		*/
     fastf_t alpha, beta;	/* Coefficients of turbidity.		*/
     int weather;	/* CLEAR_SKY, MEDIUM_SKY, OVERCAST_SKY */
     fastf_t sun_sang;	/* Solid angle of sun from ground.	*/
@@ -148,7 +148,7 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     register struct toyota_specific *tp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(tp, toyota_specific);
+    BU_GET(tp, struct toyota_specific);
     *dpp = tp;
 
     /* Sun was at 44.35 degrees above horizon. */
@@ -209,11 +209,11 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     }
     fclose(fp);
 
-    if (strncmp("glass", tp->material, 5) == 0) {
+    if (bu_strncmp("glass", tp->material, 5) == 0) {
 	tp->glass = 1;
     } else if (tp->material[0] == '/') {
 	char *cp = strrchr(tp->material, '/')+1;
-	if (strncmp("glass", cp, 5) == 0)
+	if (bu_strncmp("glass", cp, 5) == 0)
 	    tp->glass = 1;
     } else {
 	tp->glass = 0;
@@ -234,7 +234,7 @@ tmirror_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr
     register struct toyota_specific *pp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(pp, toyota_specific);
+    BU_GET(pp, struct toyota_specific);
     *dpp = pp;
 
     /* use function, fn(lambda), describing spectral */
@@ -256,7 +256,7 @@ tglass_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     register struct toyota_specific *pp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(pp, toyota_specific);
+    BU_GET(pp, struct toyota_specific);
     *dpp = pp;
 
     /* use function, fn(lambda), describing spectral */
@@ -301,15 +301,11 @@ fastf_t
 air_mass(fastf_t air_gamma)
 /* Solar altitude off horizon (degrees). */
 {
-    fastf_t m;
-
     if (air_gamma <= 0.) {
-	bu_log("air_mass: sun altitude of %g degrees ignored.\n");
-	m = 0.;
-    } else
-	m = 1./(sin(air_gamma*DEG2RAD)
-		+ 0.1500*pow((air_gamma + 3.885), -1.253));
-    return m;
+	bu_log("air_mass: sun altitude of %g degrees ignored.\n", air_gamma);
+	return 0;
+    }
+    return 1.0/(sin(air_gamma*DEG2RAD) + 0.1500*pow((air_gamma + 3.885), -1.253));
 }
 
 
@@ -1828,8 +1824,8 @@ absorp_coeff(fastf_t lambda, char *material)
 
 {
     char mfile[80];
-    fastf_t a, l,
-	absorp, absorp_h, absorp_l, lambda_h, lambda_l;
+    fastf_t a, l, absorp, absorp_h, absorp_l, lambda_h, lambda_l;
+    fastf_t abso1, lamb1, lamb2, lambrat;
     FILE *fp;
     int n;
 
@@ -1842,8 +1838,10 @@ absorp_coeff(fastf_t lambda, char *material)
     }
 
     /* Find "nearby" values of lambda, absorption for interpolation. */
-    if ((n = fscanf(fp, "%lf %lf", &l, &a)) != 2 || lambda + MIKE_TOL < l)
+    if ((n = fscanf(fp, "%lf %lf", &l, &a)) != 2 || lambda + MIKE_TOL < l) {
+	fclose(fp);
 	return -1.;
+    }
     lambda_l = l;
     absorp_l = a;
 
@@ -1852,18 +1850,23 @@ absorp_coeff(fastf_t lambda, char *material)
 	lambda_l = l;
 	absorp_l = a;
     }
-    if (n != 2)
+    if (n != 2) {
+	fclose(fp);
 	return -1.;
-    else {
+    } else {
 	lambda_h = l;
 	absorp_h = a;
     }
 
     fclose(fp);
 
-    absorp = (absorp_h - absorp_l)*(lambda - lambda_l)
-	/(lambda_h - lambda_l) + absorp_l;
-
+    /* double casts to avoid coverity overflow warning */
+    abso1 = (double)absorp_h - (double)absorp_l;
+    lamb1 = (double)lambda - (double)lambda_l;
+    lamb2 = (double)lambda_h - (double)lambda_l;
+    lambrat = (double)lamb1 / (double)lamb2;
+    absorp = (double)abso1 * (double)lambrat;
+    absorp += (double)absorp_l;
     return absorp;
 }
 
@@ -2309,7 +2312,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 
     swp->sw_color[0] = swp->sw_color[1] = swp->sw_color[2] = 0;
 
-    ts->lambda = 450;	/* XXX nm */
+    ts->wavelength = 450;	/* XXX nm */
 
     i_refl = 0.;
     /* Consider effects of light source (>1 doesn't make sense really). */
@@ -2345,9 +2348,9 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 	/* Direct sunlight contribution. */
 	direct_sunlight =
 	    1./M_PI
-	    * reflectance(ts->lambda, acos(i_dot_n)*bn_radtodeg,
+	    * reflectance(ts->wavelength, acos(i_dot_n)*bn_radtodeg,
 			  ts->refl, ts->refl_lines)
-	    * sun_radiance(ts->lambda, ts->alpha, ts->beta,
+	    * sun_radiance(ts->wavelength, ts->alpha, ts->beta,
 			   sun_alt, ts->sun_sang)
 	    * sun_dot_n
 	    * ts->sun_sang;
@@ -2360,7 +2363,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 	    pdv_3line(stdout, swp->sw_hit.hit_point, work);
 	}
 	t_vl = 0; /* XXX Was uninitialized variable */
-	refl_radiance = skylight_spectral_dist(ts->lambda,
+	refl_radiance = skylight_spectral_dist(ts->wavelength,
 					       ts->Zenith, Reflected, Sun, ts->weather, t_vl);
 
 	/* Regularly reflected light contribution. */
@@ -2369,7 +2372,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 	i_refl +=
 	    direct_sunlight
 	    + specular_light
-	    + background_light(ts->lambda, ts, Reflected, Sun,
+	    + background_light(ts->wavelength, ts, Reflected, Sun,
 			       t_vl, swp);
 
 	/* Regularly transmitted light contribution. */
@@ -2391,14 +2394,14 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 		    -cos(theta), swp->sw_hit.hit_normal);
 	    VUNITIZE(Transmitted);
 	    trans_radiance = skylight_spectral_dist(
-		ts->lambda, ts->Zenith, Transmitted,
+		ts->wavelength, ts->Zenith, Transmitted,
 		Sun, ts->weather, t_vl);
 
 	    dist = 1;	/* XXX what distance to use? */
 	    transmitted_light =
 		(1 - f)
 		* trans_radiance
-		* exp(-absorp_coeff(ts->lambda, ts->material)
+		* exp(-absorp_coeff(ts->wavelength, ts->material)
 		      /* NEED THIS STILL! */		      * dist);
 	    i_refl += transmitted_light;
 	}
@@ -2407,7 +2410,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 
 	/* WHERE DOES THIS GO??  NOT HERE.  SO WHERE DOES i_refl GO THEN. */
 	/* Convert wavelength and radiance into RGB triple. */
-	lambda_to_rgb(ts->lambda, i_refl, swp->sw_color);
+	lambda_to_rgb(ts->wavelength, i_refl, swp->sw_color);
     }
 
     /* Turn off colorview()'s handling of reflect/refract */

@@ -1,7 +1,7 @@
 /*                        R P A T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -217,10 +217,10 @@ main(int argc, char **argv)
 	    case '3':	/* FASTGEN3 format?? */
 		fast3 = 1;
 		break;
-	    default:
-		fprintf( stderr, "Illegal option (%c)\n", c );
 	    case '?':
 		bu_exit(1, "%s", usage );
+	    default:
+		bu_exit(1, "Illegal option (%c)\n%s", c, usage );
 	}
     }
 

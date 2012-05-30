@@ -1,7 +1,7 @@
 /*             S U R F A C E I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2011 United States Government as represented by
+ * Copyright (c) 2009-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -249,7 +249,7 @@ Curve_Compare_end(const ON_Curve **a, const ON_Curve **b)
  *
  * @brief create a new unintialized Face_X_Event
  */
-Face_X_Event::Face_X_Event()
+Face_X_Event::Face_X_Event() : face1(NULL), face2(NULL), curve1(NULL), curve2(NULL)
 {}
 
 
@@ -720,7 +720,7 @@ GetStartPointsInternal(
 	return_value = false;
 	for (i = 0; i < 4; i++) {
 	    for (j = 0; j < 4; j++) {
-		return_value = return_value && GetStartPointsInternal(Parts1[i], Parts2[j], start_points1, start_points2, tol);
+		return_value &= GetStartPointsInternal(Parts1[i], Parts2[j], start_points1, start_points2, tol);
 	    }
 	}
     }

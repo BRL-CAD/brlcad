@@ -1,7 +1,7 @@
 /*                          A X E S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2011 United States Government as represented by
+ * Copyright (c) 1998-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -105,7 +105,7 @@ dm_draw_data_axes(struct dm *dmp,
 	VMOVE(points[j], ptB);
     }
 
-    DM_DRAW_LINES_3D(dmp, npoints, points);
+    DM_DRAW_LINES_3D(dmp, npoints, points, 0);
     bu_free((genptr_t)points, "data axes points");
 
     /* Restore the line attributes */

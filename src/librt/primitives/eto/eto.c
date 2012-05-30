@@ -1,7 +1,7 @@
 /*                           E T O . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2011 United States Government as represented by
+ * Copyright (c) 1992-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -234,7 +234,7 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_ETO_CK_MAGIC(tip);
 
     /* Solid is OK, compute constant terms now */
-    BU_GETSTRUCT(eto, eto_specific);
+    BU_GET(eto, struct eto_specific);
     stp->st_specific = (genptr_t)eto;
 
     eto->eto_r = tip->eto_r;
@@ -762,7 +762,7 @@ make_ellipse4(struct rt_pt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_
     int n;
     point_t mpt, p0, p1;
     vect_t norm_line, norm_ell;
-    struct rt_pt_node *new;
+    struct rt_pt_node *newpt;
 
     /* endpoints of segment approximating ellipse */
     VMOVE(p0, pts->p);
@@ -788,16 +788,16 @@ make_ellipse4(struct rt_pt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_
     /* split segment at widest point if not within error tolerances */
     if (dist > dtol || theta0 > ntol || theta1 > ntol) {
 	/* split segment */
-	new = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-	VMOVE(new->p, mpt);
-	new->next = pts->next;
-	pts->next = new;
+	newpt = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+	VMOVE(newpt->p, mpt);
+	newpt->next = pts->next;
+	pts->next = newpt;
 	/* keep track of number of pts added */
 	n = 1;
 	/* recurse on first new segment */
 	n += make_ellipse4(pts, a, b, dtol, ntol);
 	/* recurse on second new segment */
-	n += make_ellipse4(new, a, b, dtol, ntol);
+	n += make_ellipse4(newpt, a, b, dtol, ntol);
     } else
 	n  = 0;
     return n;

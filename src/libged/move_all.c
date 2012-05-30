@@ -1,7 +1,7 @@
 /*                         M O V E _ A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -185,11 +185,9 @@ move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 	for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
 	    int first = 1;
 	    int found = 0;
-	    struct bu_vls new_path;
+	    struct bu_vls new_path = BU_VLS_INIT_ZERO;
 	    char *dupstr = strdup(bu_vls_addr(&gdlp->gdl_path));
 	    char *tok = strtok(dupstr, "/");
-
-	    bu_vls_init(&new_path);
 
 	    while (tok) {
 		if (BU_STR_EQUAL(tok, old)) {
@@ -259,7 +257,7 @@ move_all_file(struct ged *gedp, int nflag, const char *file)
 int
 ged_move_all(struct ged *gedp, int argc, const char *argv[])
 {
-    char c;
+    int c;
     int fflag = 0;
     int nflag = 0;
     static const char *usage = "[-n] {-f <mapping_file>|<from> <to>}";

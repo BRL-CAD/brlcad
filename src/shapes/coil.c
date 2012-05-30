@@ -1,7 +1,7 @@
 /*                          C O I L . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2011 United States Government as represented by
+ * Copyright (c) 2009-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -98,12 +98,10 @@ cap_squared_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, stru
 {
     fastf_t pipe_bend, coil_radius;
     point_t origin, height, pnt1, pnt2, pnt4, pnt6, pnt8;
-    struct bu_vls str1;
+    struct bu_vls str1 = BU_VLS_INIT_ZERO;
 
     coil_radius = mean_outer_diameter/2 - wire_diameter/2;
     pipe_bend = coil_radius;
-
-    bu_vls_init(&str1);
 
     *need_subtraction += 1;
 
@@ -144,8 +142,6 @@ cap_squared_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, stru
 	bu_vls_free(&str1);
 	return starting_pitch + pitch + sin(D2R(helix_angle))*coil_radius;
     }
-    bu_vls_free(&str1);
-    return 0;
 }
 
 
@@ -154,12 +150,10 @@ cap_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, struct wmemb
 {
     fastf_t coil_radius, pipe_bend, center_height;
     point_t origin, height, pnt1, pnt2, pnt4, pnt6, pnt8;
-    struct bu_vls str1;
+    struct bu_vls str1 = BU_VLS_INIT_ZERO;
 
     coil_radius = mean_outer_diameter/2 - wire_diameter/2;
     pipe_bend = coil_radius;
-
-    bu_vls_init(&str1);
 
     *need_subtraction += 1;
 
@@ -205,8 +199,6 @@ cap_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, struct wmemb
 	bu_vls_free(&str1);
 	return pitch+starting_pitch;
     }
-    bu_vls_free(&str1);
-    return 0;
 }
 
 
@@ -247,7 +239,7 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
 	struct coil_data_t *s_data;
     struct coil_data_t *e_data;
     struct coil_data_t *cd;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     BU_LIST_INIT(&coil.l);
     BU_LIST_INIT(&coil_subtractions.l);
@@ -255,8 +247,6 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
 
     s_data = BU_LIST_FIRST(coil_data_t, &(*sections));
     e_data = BU_LIST_LAST(coil_data_t, &(*sections));
-
-    bu_vls_init(&str);
 
     last_pitch_pt = 0;
 
@@ -403,9 +393,8 @@ int
 main(int ac, char *av[])
 {
     struct rt_wdb *db_fp = NULL;
-    struct bu_vls coil_type;
-    struct bu_vls name;
-    struct bu_vls str;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     fastf_t mean_outer_diameter, wire_diameter, overall_length, nominal_length;
     fastf_t helix_angle, pitch;
 
@@ -415,12 +404,6 @@ main(int ac, char *av[])
     int nt; /* Number of turns */
     int start_cap_type, end_cap_type;
     int lhf; /* Winding flag */
-
-    bu_vls_init(&str);
-    bu_vls_init(&coil_type);
-    bu_vls_init(&name);
-    bu_vls_trunc(&coil_type, 0);
-    bu_vls_trunc(&name, 0);
 
     BU_LIST_INIT(&sections);
 
@@ -486,16 +469,16 @@ main(int ac, char *av[])
     /* If hard clamping the length, have to check some things and maybe clamp some values */
 
     if (!ZERO(overall_length)) {
- 	bu_log("NOTE:  Length clamping overrides other specified values. If supplied values are\n"
- 	       "inconsistent with specified length, they will be overriden in this order:\n\n"
- 	       "When Shrinking:  pitch, number of turns, wire diameter\n"
- 	       "When Expanding:  number of turns, pitch\n\n");
- 
- 	/* broken up for c90 and readability */
- 	bu_log("Currently, this override order is independent of whether the value is supplied\n"
- 	       "by the user or calculated internally.  That is, there is no preference for \n"
- 	       "protecting user specified properties.  Moreover, length clamping will NOT \n"
- 	       "override explicit section specification with -S\n");
+	bu_log("NOTE:  Length clamping overrides other specified values. If supplied values are\n"
+	       "inconsistent with specified length, they will be overriden in this order:\n\n"
+	       "When Shrinking:  pitch, number of turns, wire diameter\n"
+	       "When Expanding:  number of turns, pitch\n\n");
+
+	/* broken up for c90 and readability */
+	bu_log("Currently, this override order is independent of whether the value is supplied\n"
+	       "by the user or calculated internally.  That is, there is no preference for \n"
+	       "protecting user specified properties.  Moreover, length clamping will NOT \n"
+	       "override explicit section specification with -S\n");
 
         if (coil_data) {
 	if (start_cap_type != 0 || end_cap_type != 0) {
@@ -545,14 +528,14 @@ main(int ac, char *av[])
 
     /* Create file name if supplied, else use "string.g" */
     if (av[bu_optind]) {
-	if (!bu_file_exists(av[bu_optind])) {
+	if (!bu_file_exists(av[bu_optind], NULL)) {
 	    db_fp = wdb_fopen(av[bu_optind]);
 	} else {
 	    bu_exit(-1, "Error - refusing to overwrite pre-existing file %s", av[bu_optind]);
 	}
     }
     if (!av[bu_optind]) {
-	if (!bu_file_exists(DEFAULT_COIL_FILENAME)) {
+	if (!bu_file_exists(DEFAULT_COIL_FILENAME, NULL)) {
 	    db_fp = wdb_fopen(DEFAULT_COIL_FILENAME);
 	} else {
 	    bu_exit(-1, "Error - no filename supplied and coil.g exists.");

@@ -1,7 +1,7 @@
 /*                    C O N V S O L I D S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,11 +32,11 @@ void
 Convsolids()
 {
 
-    int i, totsolids=0, conv=0;
+    int i, totsolids = 0, conv = 0;
 
     bu_log("\n\nConverting solid entities:\n");
 
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	switch (dir[i]->type) {
 	    case 150:
 		totsolids++;

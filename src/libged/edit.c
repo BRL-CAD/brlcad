@@ -1,7 +1,7 @@
 /*                         E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -463,7 +463,7 @@ struct edit_arg {
 #define EDIT_COORD_Z 	0x04
 #define EDIT_COORDS_ALL (EDIT_COORD_X | EDIT_COORD_Y | EDIT_COORD_Z)
 
-/* edit_arg flags of coordinates that are already set; only used by 
+/* edit_arg flags of coordinates that are already set; only used by
  * edit_str[s]_to_arg(). Ignored by edit() */
 /* FIXME: these shouldn't be edit_arg flags... edit_strs_to_arg()
  * should just pass edit_str_to_arg() references to automatic vars */
@@ -574,7 +574,7 @@ struct edit_cmd_tab {
 };
 
 
-/* 
+/*
  * Argument builder/helper functions
  */
 
@@ -619,7 +619,7 @@ edit_arg_postfix_new(struct edit_arg *head)
 {
     struct edit_arg *arg;
 
-    BU_GETSTRUCT(arg, edit_arg);
+    BU_GET(arg, struct edit_arg);
     edit_arg_postfix(head, arg);
     edit_arg_init(arg);
     return arg;
@@ -644,7 +644,7 @@ edit_arg_duplicate_in_place(struct edit_arg *const dest,
     dest->coords_used = src->coords_used;
     dest->type = src->type;
     if (src->object) {
-	BU_GETSTRUCT(dest->object, db_full_path);
+	BU_GET(dest->object, struct db_full_path);
 	db_full_path_init(dest->object);
 	db_dup_full_path(dest->object, src->object);
     }
@@ -666,7 +666,7 @@ edit_arg_duplicate_in_place(struct edit_arg *const dest,
 HIDDEN void
 edit_arg_duplicate(struct edit_arg **dest, const struct edit_arg *src)
 {
-    BU_GETSTRUCT(*dest, edit_arg);
+    BU_GET(*dest, struct edit_arg);
     edit_arg_duplicate_in_place(*dest, src);
 }
 
@@ -831,9 +831,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 
 	GED_DB_GET_INTERNAL(gedp, &intern, d, (fastf_t *)NULL,
 			    &rt_uniresource, GED_ERROR);
-	if (_ged_get_solid_keypoint(gedp, leaf_deltas, &intern,
-	                            (const fastf_t *const)gtd.gtd_xform) ==
-	    GED_ERROR) {
+	if (_ged_get_solid_keypoint(gedp, leaf_deltas, &intern, (const fastf_t *)gtd.gtd_xform) == GED_ERROR) {
 	    bu_vls_printf(gedp->ged_result_str, "\nunable to get natural origin"
 			  " of \"%s\"", d->d_namep);
 	    return GED_ERROR;
@@ -908,7 +906,7 @@ edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
 		     const struct edit_arg *src_objs, const int flags)
 {
     struct edit_arg *prototype;
-    struct edit_arg **dest; 
+    struct edit_arg **dest;
     const struct edit_arg *src;
     const int noisy = (flags & GED_ERROR); /* side with verbosity */
     int firstrun = 1;
@@ -951,7 +949,7 @@ edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
 }
 
 
-/* 
+/*
  * Command helper functions
  */
 
@@ -1041,7 +1039,7 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
     if (edit_arg_to_apparent_coord(gedp, *arg_head, &src_v) == GED_ERROR)
 	return GED_ERROR;
 
-    while ((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != 
+    while ((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) !=
 	   &subcmd->common.objects) {
 	if (!(*arg_head))
 	    continue;
@@ -1077,11 +1075,11 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 	    kp_v = (vect_t *)NULL;
 	} else {
 	    BU_ASSERT((*arg_head)->type &= ~EDIT_ABS_POS);
-	    if (!((*arg_head)->coords_used & EDIT_COORD_X))
+	    if (!((*arg_head)->coords_used & EDIT_COORD_X) && kp_v)
 		(*to_v)[0] = (*kp_v)[0];
-	    if (!((*arg_head)->coords_used & EDIT_COORD_Y))
+	    if (!((*arg_head)->coords_used & EDIT_COORD_Y) && kp_v)
 		(*to_v)[1] = (*kp_v)[1];
-	    if (!((*arg_head)->coords_used & EDIT_COORD_Z))
+	    if (!((*arg_head)->coords_used & EDIT_COORD_Z) && kp_v)
 		(*to_v)[2] = (*kp_v)[2];
 	}
 	(*arg_head)->coords_used |= EDIT_COORDS_ALL;
@@ -1102,7 +1100,7 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
  * Returns GED_ERROR on failure, and GED_OK on success.
  */
 HIDDEN int
-edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd, 
+edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
 		      int skip_common_objects)
 {
     struct edit_arg **arg_head;
@@ -1114,7 +1112,7 @@ edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
     if (skip_common_objects)
 	i = 1;
 
-    while (((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) != 
+    while (((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) !=
 	    &subcmd->common.objects) || !skip_common_objects) {
 	skip_common_objects = 1;
 	prev_arg = *arg_head;
@@ -1303,7 +1301,7 @@ edit_scale_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
     const vect_t *ref_to_vp = (const vect_t *)cmd->scale.ref_factor.to->vector;
 
     return edit_scale(gedp, from_vp, to_vp, center_vp, ref_from_vp, ref_to_vp,
-		      (const struct db_full_path *const)cmd->scale.objects->object);
+		      (const struct db_full_path *)cmd->scale.objects->object);
 }
 
 
@@ -1381,7 +1379,7 @@ edit_translate(struct ged *gedp, const vect_t *const from,
 	leaf_to_modify = db_find_named_leaf(comb->tree, d_obj->d_namep);
 
 	/* path is already validated */
-	BU_ASSERT_PTR(leaf_to_modify, !=, TREE_NULL); 
+	BU_ASSERT_PTR(leaf_to_modify, !=, TREE_NULL);
 	if (!leaf_to_modify->tr_l.tl_mat) {
 	    leaf_to_modify->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t),
 							    "mat_t block for edit_translate()");
@@ -1439,9 +1437,9 @@ HIDDEN int
 edit_translate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     return edit_translate(gedp,
-			  (const vect_t *const)cmd->translate.ref_vector.from->vector,
-			  (const vect_t *const)cmd->translate.ref_vector.to->vector,
-			  (const struct db_full_path *const)cmd->translate.objects->object);
+			  (const vect_t *)cmd->translate.ref_vector.from->vector,
+			  (const vect_t *)cmd->translate.ref_vector.to->vector,
+			  (const struct db_full_path *)cmd->translate.objects->object);
 }
 
 
@@ -1466,12 +1464,16 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	/* if there isn't an EDIT_TO, this func shouldn't be called */
 	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL);
 
+#if 0
+	/* This assertion, as it is currently, is always true. */
+
 	/* A 'from' position is set; only flags that were possible
 	 * when this function was last updated should be handled.
 	 */
 	BU_ASSERT(cur_arg->type ^ ~(EDIT_FROM |
 				    EDIT_NATURAL_ORIGIN |
 				    EDIT_USE_TARGETS));
+#endif
 
 	/* disallow non-standard opts */
 	if (cur_arg->cl_options[0] != '\0')
@@ -1488,6 +1490,9 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	 */
 	BU_ASSERT_PTR(cur_arg->next, !=, (struct edit_arg *)NULL);
 
+#if 0
+	/* This assertion, as it is currently, is always true. */
+
 	/* A 'TO' position is set; only flags that were possible when
 	 * this function was last updated should be handled.
 	 */
@@ -1496,6 +1501,7 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 				    EDIT_REL_DIST |
 				    EDIT_ABS_POS |
 				    EDIT_USE_TARGETS));
+#endif
 
 	/* disallow non-standard opts */
 	if (cur_arg->cl_options[0] != '\0')
@@ -1536,13 +1542,16 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 			      "Usage: %s [help] | %s",
 			      cmd->cmd->name, cmd->cmd->usage);
 	    return GED_ERROR;
-	} else {
+	}
+#if 0
+	else {
 	    /* a target obj is set; only flags that were possible when
 	     * this function was last updated should be handled
 	     */
 	    BU_ASSERT(cur_arg->type ^ ~(EDIT_TARGET_OBJ |
 					EDIT_NATURAL_ORIGIN));
 	}
+#endif
 
 	/* disallow non-standard opts */
 	if (cur_arg->cl_options[0] != '\0')
@@ -1832,9 +1841,6 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 		return GED_ERROR;
 	    }
 
-	    /* detect >1 inner slashes */
-	    first_slash = (char *)memchr((void *)path_start, '/',
-					 (size_t)(path_end - path_start + 1));
 	    goto convert_obj;
 	}
 
@@ -1897,7 +1903,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 
 convert_obj:
     /* convert string to path/object */
-    BU_GETSTRUCT(arg->object, db_full_path);
+    BU_GET(arg->object, struct db_full_path);
     if (db_string_to_path(arg->object, gedp->ged_wdbp->dbip,
 			  str)) {
 	db_free_full_path(arg->object);
@@ -2029,7 +2035,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; edit_cmds[i].name; ++i) {
 	/* search for command name in the table */
 	if (BU_STR_EQUAL(edit_cmds[i].name, cmd_name)) {
-	    subcmd_name = cmd_name; /* saves a strcmp later */
+	    subcmd_name = cmd_name;
+	    /* save the name for a string comparison later */
 	    subcmd.cmd = &edit_cmds[i];
 	    /* match of cmd name takes precedence over match of subcmd
 	     * name
@@ -2059,7 +2066,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	if (argc > 1) {
 	    /* no arguments accepted without a subcommand */
 	    bu_vls_printf(gedp->ged_result_str, "unknown subcommand \"%s\"\n",
-	    		  argv[1]);
+			  argv[1]);
 	    ret = GED_ERROR;
 	}
 
@@ -2071,7 +2078,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	return ret;
     }
 
-    if (!subcmd.cmd->enabled) {
+    if (subcmd.cmd == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "subcommand \"%s\""
 		      " is disabled", subcmd_name);
 	return GED_ERROR;
@@ -2103,7 +2110,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 
 		if (!edit_cmds[i].name) {
 		    bu_vls_printf(gedp->ged_result_str,
-		   		  "unknown subcommand \"%s\"\n",
+				  "unknown subcommand \"%s\"\n",
 				  argv[0]);
 		    bu_vls_printf(gedp->ged_result_str,
 				  "Available subcommands: ");
@@ -2152,7 +2159,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
      */
     edit_cmd_init(&subcmd);
 
-    BU_GETSTRUCT(subcmd.cmd_line.args, edit_arg);
+    BU_GET(subcmd.cmd_line.args, struct edit_arg);
     edit_arg_init(subcmd.cmd_line.args);
     cur_arg = subcmd.cmd_line.args;
 
@@ -2278,14 +2285,14 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	conv_flags = GED_ERROR;
 	switch (c) {
 	    case 'n': /* use natural coordinates of object */
-	    	conv_flags = GED_QUIET;
+		conv_flags = GED_QUIET;
 		allow_subopts = 0;
 		break;
 	    case 'x': /* singular coord specif. sub-opts */
 	    case 'y':
 	    case 'z':
 		idx_cur_opt = 0;
-	    	if (!bu_optarg)
+		if (!bu_optarg)
 		    goto err_missing_arg;
 		if ((strlen(bu_optarg) > 1) && (bu_optarg[0] == '-') &&
 		    (!isdigit(bu_optarg[1])))
@@ -2302,7 +2309,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 	    case 'r':
 		idx_cur_opt = 0;
 		allow_subopts = 1;
-	    	if (!bu_optarg)
+		if (!bu_optarg)
 		    goto err_missing_arg;
 		if ((strlen(bu_optarg) > 1) && (bu_optarg[0] == '-')) {
 		    switch (bu_optarg[1]) {
@@ -2320,8 +2327,8 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case '?': /* nonstandard or unknown option */
 		allow_subopts = 1;
-	        c = bu_optopt;
-	    	if (!bu_optarg)
+		c = bu_optopt;
+		if (!bu_optarg)
 		    if (!isprint(c)) {
 			bu_vls_printf(gedp->ged_result_str,
 				      "Unknown option character '\\x%x'", c);
@@ -2330,14 +2337,14 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		    }
 
 		/* next element may be an arg */
-	    	conv_flags = GED_QUIET;
+		conv_flags = GED_QUIET;
 
 		/* record opt for validation/processing by subcmd */
 		cur_arg->cl_options[idx_cur_opt] = c;
 		++idx_cur_opt;
 		break;
 	    case ':':
-	        goto err_missing_arg;
+		goto err_missing_arg;
 	}
 
 	/* set flags for standard options */
@@ -2352,19 +2359,19 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		cur_arg->coords_used &= EDIT_COORD_Z;
 		break;
 	    case 'k':
-	        cur_arg->type |= EDIT_FROM;
-	        keypoint = cur_arg;
+		cur_arg->type |= EDIT_FROM;
+		keypoint = cur_arg;
 		break;
 	    case 'a':
-	        cur_arg->type |= EDIT_TO | EDIT_ABS_POS;
+		cur_arg->type |= EDIT_TO | EDIT_ABS_POS;
 		keypoint = NULL;
 		break;
 	    case 'r':
-	        cur_arg->type |= EDIT_TO | EDIT_REL_DIST;
+		cur_arg->type |= EDIT_TO | EDIT_REL_DIST;
 		keypoint = NULL;
 		break;
 	    case 'n':
-	        cur_arg->type |= EDIT_NATURAL_ORIGIN;
+		cur_arg->type |= EDIT_NATURAL_ORIGIN;
 		break;
 	    default:
 		break;

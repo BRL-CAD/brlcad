@@ -1,7 +1,7 @@
 /*                   A N I M _ L O O K A T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -82,7 +82,7 @@ int
 main(int argc, char *argv[])
 {
     fastf_t t /* time */, vsize=0.0;
-    vect_t eye, look, dir, angles, norm, temp;
+    vect_t eye, look, dir, angles, norm, temp = VINIT_ZERO;
     quat_t quat;
     mat_t mat;
     int val = 0;
@@ -123,7 +123,7 @@ main(int argc, char *argv[])
 		printf("end;\n");
 		break;
 	    case LOOKAT_YPR:
-		anim_mat2ypr(angles, mat);
+		anim_mat2ypr(mat, angles);
 		angles[0] *= RAD2DEG;
 		angles[1] *= RAD2DEG;
 		angles[2] *= RAD2DEG;

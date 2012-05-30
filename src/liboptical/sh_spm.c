@@ -1,7 +1,7 @@
 /*                        S H _ S P M . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -121,7 +121,7 @@ spm_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *
     register struct spm_specific *spp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(spp, spm_specific);
+    BU_GET(spp, struct spm_specific);
     *dpp = spp;
 
     spp->sp_file[0] = '\0';

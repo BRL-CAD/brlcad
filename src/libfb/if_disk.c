@@ -1,7 +1,7 @@
 /*                       I F _ D I S K . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 
 
 HIDDEN int
-dsk_open(FBIO *ifp, char *file, int width, int height)
+dsk_open(FBIO *ifp, const char *file, int width, int height)
 {
     static char zero = 0;
 
@@ -109,7 +109,11 @@ HIDDEN int
 dsk_free(FBIO *ifp)
 {
     close(ifp->if_fd);
-    return unlink(ifp->if_name);
+    if (bu_file_delete(ifp->if_name)) {
+	return 0;
+    } else {
+	return 1;
+    }
 }
 
 

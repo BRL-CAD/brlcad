@@ -1,7 +1,7 @@
 /*                        C U R S O R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -146,6 +146,7 @@ InitTermCap(FILE *fp)
     else
     {
 	(void) strncpy( termName, term, MAX_TERM_LEN ); /* intentionally not bu_strlcpy to not add libbu dep */
+	termName[sizeof(termName) - 1] = '\0';
     }
 
     /* Get terminal entry.						*/

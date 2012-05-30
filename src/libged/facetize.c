@@ -1,7 +1,7 @@
 /*                         F A C E T I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ facetize_region_end(struct db_tree_state *tsp,
 
     if (*facetize_tree) {
 	union tree *tr;
-	BU_GETUNION(tr, tree);
+	BU_GET(tr, union tree);
 	RT_TREE_INIT(tr);
 	tr->tr_op = OP_UNION;
 	tr->tr_b.tb_regionp = REGION_NULL;

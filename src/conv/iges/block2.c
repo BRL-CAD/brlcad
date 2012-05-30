@@ -1,7 +1,7 @@
 /*                        B L O C K 2 . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,9 +25,9 @@ int
 block(int entityno)
 {
 
-    fastf_t xscale=0.0;
-    fastf_t yscale=0.0;
-    fastf_t zscale=0.0;
+    fastf_t xscale = 0.0;
+    fastf_t yscale = 0.0;
+    fastf_t zscale = 0.0;
     fastf_t x_1, y_1, z_1;		/* First vertex components */
     fastf_t x_2, y_2, z_2;		/* xdir vector components */
     fastf_t x_3, y_3, z_3;		/* zdir vector components */

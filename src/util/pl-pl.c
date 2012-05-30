@@ -1,7 +1,7 @@
 /*                         P L - P L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2011 United States Government as represented by
+ * Copyright (c) 1988-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -359,16 +359,13 @@ getstring(void)
 short
 getshort(void)
 {
-    long v, w;
+    long v;
 
     v = getchar();
     v |= (getchar()<<8);	/* order is important! */
 
     /* worry about sign extension - sigh */
-    if (v <= 0x7FFF) return v;
-    w = -1;
-    w &= ~0x7FFF;
-    return w | v;
+    return (v <= 0x7FFF) ?  (short)v : (short)(((-1)&(~0x7FFF)) | v);
 }
 
 

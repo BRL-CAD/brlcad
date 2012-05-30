@@ -1,7 +1,7 @@
 /*                       R E M A P I D . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2011 United States Government as represented by
+ * Copyright (c) 1997-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -585,6 +585,11 @@ read_block(REMAPID_FILE *sfp, int *ch, int *n1, int *n2)
 	    return 1;
 	case '-':
 	    *ch = remapid_fgetc(sfp);
+	    if (*ch == EOF) {
+		remapid_file_err(sfp, "remapid:read_block()", "Unexpected EOF",
+				 (int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1));
+		return -1;
+	    }
 	    if (read_int(sfp, ch, n2) != 1)
 		return -1;
 	    else
@@ -788,9 +793,11 @@ tankill_reassign(char *db_name)
 	/* just copy the rest of the component */
 	while (coord_no < 3*vertex_count || !in_space) {
 	    ch = fgetc(fd_in);
-	    if (ch == EOF && coord_no < 3*vertex_count) {
+	    if (ch == EOF) {
 		bu_log("Unexpected EOF while processing ident %d\n", id);
 		bu_exit(EXIT_FAILURE, "Unexpected EOF\n");
+	    } else if (ch < 0 || ch > 128 || !isprint(ch)) {
+		ch = 0;
 	    }
 
 	    if (isspace(ch))
@@ -802,6 +809,7 @@ tankill_reassign(char *db_name)
 	    putchar(ch);
 	}
     }
+    fclose(fd_in);
 }
 
 

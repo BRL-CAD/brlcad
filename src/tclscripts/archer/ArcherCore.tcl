@@ -1,7 +1,7 @@
 #                      A R C H E R C O R E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2011 United States Government as represented by
+# Copyright (c) 2002-2012 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -80,6 +80,14 @@ namespace eval ArcherCore {
 	common COMP_PICK_BOT_SYNC_MODE 4
 	common COMP_PICK_BOT_FLIP_MODE 5
 
+	common COMP_SELECT_LIST_MODE 0
+	common COMP_SELECT_LIST_PARTIAL_MODE 1
+	common COMP_SELECT_GROUP_ADD_MODE 2
+	common COMP_SELECT_GROUP_ADD_PARTIAL_MODE 3
+	common COMP_SELECT_GROUP_REMOVE_MODE 4
+	common COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE 5
+	common COMP_SELECT_MODE_NAMES {"List" "List (Partial)" "Add to Group" "Add to Group (Partial)" "Remove from Group" "Remove from Group (Partial)"}
+
 	common LIGHT_MODE_FRONT 1
 	common LIGHT_MODE_FRONT_AND_BACK 2
 	common LIGHT_MODE_FRONT_AND_BACK_DARK 3
@@ -114,6 +122,7 @@ namespace eval ArcherCore {
 	method rebuildTree {}
 	method rsyncTree {_pnode}
 	method syncTree {}
+	method updateTreeDrawLists        {{_cflag 0}}
 	method shootRay {_start _op _target _prep _no_bool _onehit _bot_dflag}
 	method addMouseRayCallback {_callback}
 	method deleteMouseRayCallback {_callback}
@@ -202,6 +211,7 @@ namespace eval ArcherCore {
 	method killall             {args}
 	method killrefs            {args}
 	method killtree            {args}
+	method l                   {args}
 	method ls                  {args}
 	method make		   {args}
 	method make_bb             {args}
@@ -296,8 +306,6 @@ namespace eval ArcherCore {
 	variable mTargetCopy ""
 	variable mTargetOldCopy ""
 	variable mDisplayType
-	variable mLightingMode 1
-	variable mLightingModePref ""
 	variable mLighting 1
 	variable mRenderMode -1
 	variable mActivePane
@@ -320,6 +328,7 @@ namespace eval ArcherCore {
 	variable mSelectedObjType ""
 	variable mPasteActive 0
 	variable mMultiPane 0
+	variable mTransparency 0
 
 	variable mHPaneFraction1 80
 	variable mHPaneFraction2 20
@@ -355,11 +364,24 @@ namespace eval ArcherCore {
 	variable mTreeAttrColumns ""
 	variable mTreeAttrColumnsPref ""
 
+	variable mDoRtEdge 0
+	variable mDoRtEdgePref ""
+	variable mDoRtEdgeOverlay 0
+	variable mDoRtEdgeOverlayPref ""
+
 	variable mSeparateCommandWindow 0
 	variable mSeparateCommandWindowPref ""
 	variable mSepCmdPrefix "sepcmd_"
 
 	variable mCompPickMode $COMP_PICK_TREE_SELECT_MODE
+	variable mCompSelectMode $COMP_SELECT_LIST_MODE
+	variable mCompSelectModePref ""
+	variable mCompSelectGroup "tmp_group"
+	variable mCompSelectGroupPref ""
+	variable mCompSelectGroupList ""
+
+	variable mPerspective 0
+	variable mPerspectivePref 0
 
 	variable mZClipBack 100.0
 	variable mZClipBackPref 100.0
@@ -377,6 +399,8 @@ namespace eval ArcherCore {
 	variable mBackgroundColorPref ""
 	variable mFBBackgroundColor Black
 	variable mFBBackgroundColorPref ""
+	variable mFBOverlayColor White
+	variable mFBOverlayColorPref ""
 	variable mPrimitiveLabelColor Yellow
 	variable mPrimitiveLabelColorPref
 	variable mViewingParamsColor Yellow
@@ -394,6 +418,11 @@ namespace eval ArcherCore {
 	variable mDisplayFontSize 0
 	variable mDisplayFontSizePref ""
 	variable mDisplayFontSizes {}
+
+	variable mLightingMode 1
+	variable mLightingModePref ""
+	variable mDisplayListMode 0
+	variable mDisplayListModePref ""
 
 	variable mGridAnchor "0 0 0"
 	variable mGridAnchorXPref ""
@@ -473,7 +502,7 @@ namespace eval ArcherCore {
 	    delete draw E edcodes edcolor edcomb edit edmater erase ev \
 	    exit facetize fracture g group hide human i \
 	    importFg4Section in inside item kill killall killrefs \
-	    killtree ls make make_bb make_pnts man mater mirror move \
+	    killtree l ls make make_bb make_pnts man mater mirror move \
 	    move_arb_edge move_arb_face mv mvall nmg_collapse \
 	    nmg_simplify ocenter opendb orotate oscale otranslate p q \
 	    quit packTree prefix protate pscale ptranslate push put \
@@ -539,10 +568,12 @@ namespace eval ArcherCore {
 	method launchRtApp {_app _size}
 
 	method updateDisplaySettings {}
+	method updatePerspective {_unused}
 	method updateZClipPlanes {_unused}
 	method calculateZClipMax {}
 	method calculateZClipBackMax {}
 	method calculateZClipFrontMax {}
+	method pushPerspectiveSettings {}
 	method pushZClipSettings {}
 
 	method shootRay_doit {_start _op _target _prep _no_bool _onehit _bot_dflag _objects}
@@ -729,7 +760,6 @@ namespace eval ArcherCore {
 	method bot_split2 {_bot}
 
 	# tree commands
-	method updateTreeDrawLists        {{_cflag 0}}
 	method fillTree          {_pnode _ctext _flat {_allow_multiple 0}}
 	method fillTreeColumns   {_cnode _ctext}
 	method isRegion          {_cgdata}
@@ -765,6 +795,8 @@ namespace eval ArcherCore {
 	method render             {_node _state _trans _updateTree {_wflag 1}}
 	method selectDisplayColor  {_node}
 	method setDisplayColor	   {_node _rgb}
+	method selectTransparency  {_node}
+	method selectTransparencyCmd  {_node _alpha}
 	method setTransparency	   {_node _alpha}
 	method raytracePanel    {}
 	method doPng             {}
@@ -778,6 +810,9 @@ namespace eval ArcherCore {
 	method doAutoview {}
 	method doViewCenter {}
 	method doAe {_az _el}
+	method doFlipView {}
+
+	method doSelectGroup {}
 
 	method showViewAxes     {}
 	method showModelAxes    {}
@@ -806,6 +841,9 @@ namespace eval ArcherCore {
 	method initCompPick {}
 	method initCompSelect {}
 	method compSelectCallback {_mstring}
+	method compSelectGroupAdd {_plist}
+	method compSelectGroupCommon {_plist}
+	method compSelectGroupRemove {_plist}
 
 	method mrayCallback_cvo {_pane _start _target _partitions}
 	method mrayCallback_pick {_pane _start _target _partitions}
@@ -830,8 +868,10 @@ namespace eval ArcherCore {
 	method addHistory {_cmd}
 
 	# Dialogs Section
+	method buildSelectGroupDialog {}
 	method buildInfoDialog {_name _title _info _size _wrapOption _modality}
 	method buildSaveDialog {}
+	method buildSelectTransparencyDialog {}
 	method buildViewCenterDialog {}
 	method centerDialogOverPane {_dialog}
 
@@ -1095,6 +1135,9 @@ namespace eval ArcherCore {
     trace add variable [::itcl::scope mViewAxesLabelColor] write watchVar
 
     trace add variable [::itcl::scope mFBBackgroundColor] write watchVar
+    trace add variable [::itcl::scope mFBOverlayColor] write watchVar
+    trace add variable [::itcl::scope mDoRtEdge] write watchVar
+    trace add variable [::itcl::scope mDoRtEdgeOverlay] write watchVar
     trace add variable [::itcl::scope mDisplayFontSize] write watchVar
 
     eval itk_initialize $args
@@ -1276,10 +1319,10 @@ namespace eval ArcherCore {
 	    -command [::itcl::code $this doAe -90 0] \
 	    -state disabled
 	$itk_component(canvas_menu) menuconfigure .view.top \
-	    -command [::itcl::code $this doAe 0 90] \
+	    -command [::itcl::code $this doAe 270 90] \
 	    -state disabled
 	$itk_component(canvas_menu) menuconfigure .view.bottom \
-	    -command [::itcl::code $this doAe 0 -90] \
+	    -command [::itcl::code $this doAe 270 -90] \
 	    -state disabled
 	$itk_component(canvas_menu) menuconfigure .view.35,25 \
 	    -command [::itcl::code $this doAe 35 25] \
@@ -1949,6 +1992,8 @@ namespace eval ArcherCore {
 
     ::update
     Load $target
+
+    cd $mLastSelectedDir
 }
 
 ::itcl::body ArcherCore::saveDb {} {
@@ -2066,6 +2111,10 @@ namespace eval ArcherCore {
 	$itk_component(vpane) fraction $fraction [expr {100 - $fraction}]
     }
 }
+
+# ------------------------------------------------------------
+#                     PUBLIC TREE COMMANDS
+# ------------------------------------------------------------
 
 ::itcl::body ArcherCore::rebuildTree {} {
     if {$mNoTree} {
@@ -2310,6 +2359,49 @@ namespace eval ArcherCore {
     }
 
     updateTreeDrawLists
+}
+
+::itcl::body ArcherCore::updateTreeDrawLists {{_cflag 0}} {
+    if {$mNoTree} {
+	return
+    }
+
+    foreach node $mNodePDrawList {
+	removeTreeNodeTag $node $TREE_PARTIALLY_DISPLAYED_TAG
+    }
+    foreach node $mNodeDrawList {
+	removeTreeNodeTag $node $TREE_FULLY_DISPLAYED_TAG
+    }
+
+    set mNodePDrawList ""
+    set mNodeDrawList ""
+
+    foreach ditem [gedCmd who] {
+	if {$mEnableListView} {
+	    set ditem [regsub {^/} $ditem {}]
+	    set dlist [split $ditem /]
+	    set dlen [llength $dlist]
+	    if {$dlen == 1} {
+		eval lappend mNodeDrawList [lindex [lindex $mText2Node($ditem) 0] 0]
+	    } else {
+		eval lappend mNodePDrawList [lindex [lindex $mText2Node([lindex $dlist 0]) 0] 0]
+	    }
+	} else {
+	    set nodesList [getTreeNodes $ditem $_cflag]
+	    eval lappend mNodePDrawList [lindex $nodesList 0]
+	    eval lappend mNodeDrawList [lindex $nodesList 1]
+	}
+    }
+
+    set mNodePDrawList [lsort -unique $mNodePDrawList]
+    set mNodeDrawList [lsort -unique $mNodeDrawList]
+
+    foreach node $mNodePDrawList {
+	addTreeNodeTag $node $TREE_PARTIALLY_DISPLAYED_TAG
+    }
+    foreach node $mNodeDrawList {
+	addTreeNodeTag $node $TREE_FULLY_DISPLAYED_TAG
+    }
 }
 
 ::itcl::body ArcherCore::shootRay {_start _op _target _prep _no_bool _onehit _bot_dflag} {
@@ -2625,17 +2717,127 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::initCompSelect {} {
+    if {$mCompSelectMode != $COMP_SELECT_LIST_MODE &&
+	$mCompSelectMode != $COMP_SELECT_LIST_PARTIAL_MODE} {
+	doSelectGroup
+    }
+
     $itk_component(ged) clear_view_rect_callback_list
     $itk_component(ged) add_view_rect_callback [::itcl::code $this compSelectCallback]
-    $itk_component(ged) init_view_rect 1
+    if {$mCompSelectMode == $COMP_SELECT_LIST_PARTIAL_MODE ||
+	$mCompSelectMode == $COMP_SELECT_GROUP_ADD_PARTIAL_MODE ||
+	$mCompSelectMode == $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE} {
+	$itk_component(ged) init_view_rect 1 1
+    } else {
+	$itk_component(ged) init_view_rect 1 0
+    }
     $itk_component(ged) init_button_no_op 2
 
     # The rect lwidth should be a preference
     $itk_component(ged) rect lwidth 1
+
+    # Update the toolbar buttons
+    set mDefaultBindingMode $COMP_SELECT_MODE
 }
 
 ::itcl::body ArcherCore::compSelectCallback {_mstring} {
-    putString $_mstring
+    switch -- $mCompSelectMode \
+	$COMP_SELECT_LIST_MODE - \
+	$COMP_SELECT_LIST_PARTIAL_MODE {
+	    putString $_mstring
+	} \
+	$COMP_SELECT_GROUP_ADD_MODE - \
+	$COMP_SELECT_GROUP_ADD_PARTIAL_MODE {
+	    compSelectGroupAdd $_mstring
+	} \
+	$COMP_SELECT_GROUP_REMOVE_MODE - \
+	$COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE {
+	    compSelectGroupRemove $_mstring
+	}
+}
+
+::itcl::body ArcherCore::compSelectGroupAdd {_plist} {
+    set new_plist [compSelectGroupCommon $_plist]
+    if {$new_plist == ""} {
+	# Nothing to do
+	return
+    }
+
+    set add_list {}
+    foreach item $new_plist {
+	set i [lsearch $mCompSelectGroupList $item]
+	if {$i == -1} {
+	    lappend add_list $item
+	}
+    }
+
+    if {[llength $add_list] > 0} {
+	eval group $mCompSelectGroup $add_list
+
+	set tree [$itk_component(ged) get $mCompSelectGroup tree]
+	if {[llength $tree] > 0} {
+	    set tlist [getTreeMembers $tree]
+	    putString "$mCompSelectGroup now contains:"
+	    putString "\t$tlist"
+	}
+    }
+}
+
+##
+# Returns empty string if mCompSelectGroup exists and is not a group (i.e. it's a region).
+# Also sets mCompSelectGroupList to the list of components currently in mCompSelectGroup.
+#
+::itcl::body ArcherCore::compSelectGroupCommon {_plist} {
+    set mCompSelectGroupList ""
+
+    if {[$itk_component(ged) exists $mCompSelectGroup]} {
+	if {([$itk_component(ged) get_type $mCompSelectGroup] != "comb" ||
+	     [$itk_component(ged) get $mCompSelectGroup] == "yes")} {
+	    putString "$mCompSelectGroup is not a group"
+	    return ""
+	}
+
+	set tree [$itk_component(ged) get $mCompSelectGroup tree]
+	if {[llength $tree] > 0} {
+	    set mCompSelectGroupList [getTreeMembers $tree]
+	}
+    }
+
+    set new_plist {}
+    foreach item $_plist {
+	lappend new_plist [file tail $item]
+    }
+    
+    return [lsort -unique -dictionary $new_plist]
+}
+
+::itcl::body ArcherCore::compSelectGroupRemove {_plist} {
+    set new_plist [compSelectGroupCommon $_plist]
+    if {$new_plist == "" || $mCompSelectGroupList == ""} {
+	# Nothing to do
+	return
+    }
+
+    set rem_list {}
+    foreach item $new_plist {
+	set i [lsearch $mCompSelectGroupList $item]
+	if {$i != -1} {
+	    lappend rem_list $item
+	}
+    }
+
+    if {[llength $rem_list] > 0} {
+	eval rm $mCompSelectGroup $rem_list
+
+	set tree [$itk_component(ged) get $mCompSelectGroup tree]
+	if {[llength $tree] > 0} {
+	    set tlist [getTreeMembers $tree]
+	    putString "$mCompSelectGroup now contains:"
+	    putString "\t$tlist"
+	} else {
+	    putString "$mCompSelectGroup is empty"
+	}
+    }
 }
 
 ::itcl::body ArcherCore::mrayCallback_cvo {_pane _start _target _partitions} {
@@ -2692,19 +2894,26 @@ namespace eval ArcherCore {
 		redrawObj $path
 	    } \
 	    $COMP_PICK_BOT_SPLIT_MODE { \
+		SetWaitCursor $this
 		set how [gedCmd how $path]
-		if {![catch {bot_split2 $last} bgroup]} {
+		if {![catch {bot_split2 $last} bnames] && $bnames != ""} {
 		    set dirname [file dirname $path]
 		    if {$dirname != "."} {
 			set drawitem $dirname
 		    } else {
-			set drawitem $bgroup
+			set drawitem [lindex $bnames 0]
 		    }
+
+		    $itk_component(ged) refresh_off
 		    gedCmd draw -m$how $drawitem
+		    gedCmd erase [lindex $bnames 1]
+		    $itk_component(ged) refresh_on
+		    $itk_component(ged) refresh_all
 
 		    syncTree
 		    setSave
 		}
+		SetNormalCursor $this
 	    } \
 	    $COMP_PICK_BOT_SYNC_MODE { \
 		catch {bot_sync $path}
@@ -3018,7 +3227,6 @@ namespace eval ArcherCore {
 	return $_mlist
     }
 
-    puts "ArcherCore::getTreeMembers: faulty tree - $_tlist"
     return $_mlist
 }
 
@@ -3210,6 +3418,27 @@ namespace eval ArcherCore {
     updateSaveMode
 }
 
+
+::itcl::body ArcherCore::selectTransparency {_node} {
+    set rdata [gedCmd how -b $_node]
+    if {$rdata == -1} {
+	return
+    }
+
+    set mTransparency [expr {1.0 - [lindex $rdata 1]}]
+
+    set pane [centerDialogOverPane $itk_component(selTranspDialog)]
+    $itk_component(selTranspDialogSc) configure \
+	-command [::itcl::code $this selectTransparencyCmd $_node]
+    $itk_component(selTranspDialog) activate
+}
+
+
+::itcl::body ArcherCore::selectTransparencyCmd {_node _alpha} {
+    setTransparency $_node [expr {1.0 - $_alpha}]
+}
+
+
 ::itcl::body ArcherCore::setTransparency {node alpha} {
     gedCmd set_transparency $node $alpha
 }
@@ -3327,6 +3556,7 @@ namespace eval ArcherCore {
     }
 }
 
+
 ::itcl::body ArcherCore::doAe {_az _el} {
     if {$mCurrentPaneName == ""} {
 	set pane $mActivePaneName
@@ -3337,7 +3567,30 @@ namespace eval ArcherCore {
 
     $itk_component(ged) pane_ae $pane $_az $_el
 
-    addHistory "ae $_az $_el"
+    addHistory "aet $_az $_el"
+}
+
+
+::itcl::body ArcherCore::doFlipView {} {
+    if {$mCurrentPaneName == ""} {
+	set pane $mActivePaneName
+    } else {
+	set pane $mCurrentPaneName
+    }
+    set mCurrentPaneName ""
+
+    $itk_component(ged) pane_rot $pane -v 0 180 0
+
+    addHistory "rot -v 0 180 0"
+}
+
+::itcl::body ArcherCore::doSelectGroup {} {
+    $itk_component(selGroupDialog) center [namespace tail $this]
+    ::update idletasks
+    set save_name $mCompSelectGroup
+    if {![$itk_component(selGroupDialog) activate]} {
+	set mCompSelectGroup $save_name
+    }
 }
 
 ::itcl::body ArcherCore::showViewAxes {} {
@@ -3366,51 +3619,8 @@ namespace eval ArcherCore {
 
 
 # ------------------------------------------------------------
-#                     TREE COMMANDS
+#                     PROTECTED TREE COMMANDS
 # ------------------------------------------------------------
-
-::itcl::body ArcherCore::updateTreeDrawLists {{_cflag 0}} {
-    if {$mNoTree} {
-	return
-    }
-
-    foreach node $mNodePDrawList {
-	removeTreeNodeTag $node $TREE_PARTIALLY_DISPLAYED_TAG
-    }
-    foreach node $mNodeDrawList {
-	removeTreeNodeTag $node $TREE_FULLY_DISPLAYED_TAG
-    }
-
-    set mNodePDrawList ""
-    set mNodeDrawList ""
-
-    foreach ditem [gedCmd who] {
-	if {$mEnableListView} {
-	    set ditem [regsub {^/} $ditem {}]
-	    set dlist [split $ditem /]
-	    set dlen [llength $dlist]
-	    if {$dlen == 1} {
-		eval lappend mNodeDrawList [lindex [lindex $mText2Node($ditem) 0] 0]
-	    } else {
-		eval lappend mNodePDrawList [lindex [lindex $mText2Node([lindex $dlist 0]) 0] 0]
-	    }
-	} else {
-	    set nodesList [getTreeNodes $ditem $_cflag]
-	    eval lappend mNodePDrawList [lindex $nodesList 0]
-	    eval lappend mNodeDrawList [lindex $nodesList 1]
-	}
-    }
-
-    set mNodePDrawList [lsort -unique $mNodePDrawList]
-    set mNodeDrawList [lsort -unique $mNodeDrawList]
-
-    foreach node $mNodePDrawList {
-	addTreeNodeTag $node $TREE_PARTIALLY_DISPLAYED_TAG
-    }
-    foreach node $mNodeDrawList {
-	addTreeNodeTag $node $TREE_FULLY_DISPLAYED_TAG
-    }
-}
 
 ::itcl::body ArcherCore::fillTree {_pnode _ctext _flat {_allow_multiple 0}} {
     global no_tree_decorate
@@ -3618,6 +3828,8 @@ namespace eval ArcherCore {
 	-command [::itcl::code $this setDisplayColor $_node {0 255 0}]
     $color add command -label "Blue" \
 	-command [::itcl::code $this setDisplayColor $_node {0 0 255}]
+    $color add command -label "Cyan" \
+	-command [::itcl::code $this setDisplayColor $_node {0 255 255}]
     $color add command -label "Indigo" \
 	-command [::itcl::code $this setDisplayColor $_node {0 0 128}]
     $color add command -label "Violet" \
@@ -3657,20 +3869,23 @@ namespace eval ArcherCore {
 #	    -command [::itcl::code $this setTransparency $_node 0.5]
 #	$trans add command -label "60%" \
 #	    -command [::itcl::code $this setTransparency $_node 0.4]
-#	$trans add command -label "70%" \
-#	    -command [::itcl::code $this setTransparency $_node 0.3]
+	$trans add command -label "70%" \
+	    -command [::itcl::code $this setTransparency $_node 0.3]
 	$trans add command -label "80%" \
 	    -command [::itcl::code $this setTransparency $_node 0.2]
-	$trans add command -label "85%" \
+#	$trans add command -label "85%" \
 	    -command [::itcl::code $this setTransparency $_node 0.15]
 	$trans add command -label "90%" \
 	    -command [::itcl::code $this setTransparency $_node 0.1]
-	$trans add command -label "95%" \
+#	$trans add command -label "95%" \
 	    -command [::itcl::code $this setTransparency $_node 0.05]
-	$trans add command -label "97%" \
+#	$trans add command -label "97%" \
 	    -command [::itcl::code $this setTransparency $_node 0.03]
-	$trans add command -label "99%" \
+#	$trans add command -label "99%" \
 	    -command [::itcl::code $this setTransparency $_node 0.01]
+	$trans add separator
+	$trans add command -label "Select..." \
+	    -command [::itcl::code $this selectTransparency $_node]
 
 	# set up bindings for transparency status
 	bind $trans <<MenuSelect>> \
@@ -4890,7 +5105,19 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::updateDisplaySettings {} {
+    $itk_component(ged) refresh_off
+
     updateZClipPlanes 0
+    updatePerspective 0
+    doLighting
+    gedCmd dlist_on $mDisplayListMode
+
+    $itk_component(ged) refresh_on
+    $itk_component(ged) refresh_all
+}
+
+::itcl::body ArcherCore::updatePerspective {_unused} {
+    $itk_component(ged) perspective_all $mPerspectivePref
 }
 
 ::itcl::body ArcherCore::updateZClipPlanes {_unused} {
@@ -4922,12 +5149,17 @@ namespace eval ArcherCore {
     updateZClipPlanes 0
 }
 
+::itcl::body ArcherCore::pushPerspectiveSettings {} {
+    set mPerspectivePref $mPerspective
+    updatePerspective 0
+}
+
 ::itcl::body ArcherCore::pushZClipSettings {} {
-    set mZClipMaxBackPref $mZClipBackMax
-    set mZClipMaxFrontPref $mZClipFrontMax
+    set mZClipBackMaxPref $mZClipBackMax
+    set mZClipFrontMaxPref $mZClipFrontMax
     set mZClipBackPref $mZClipBack
     set mZClipFrontPref $mZClipFront
-    updateDisplaySettings
+    updateZClipPlanes 0
 }
 
 ::itcl::body ArcherCore::shootRay_doit {_start _op _target _prep _no_bool _onehit _bot_dflag _objects} {
@@ -4955,6 +5187,12 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::attr {args} {
+    set arg0 [lindex $args 0]
+    set ac [llength $args]
+    if {$arg0 == "get" || $arg0 == "show"} {
+	return [eval gedCmd attr $args]
+    }
+
     eval gedWrapper attr 0 0 1 2 $args
 }
 
@@ -5289,7 +5527,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::group {args} {
-    eval gedWrapper g 0 1 1 2 $args
+    eval gedWrapper g 1 1 1 2 $args
 }
 
 ::itcl::body ArcherCore::hide {args} {
@@ -5337,6 +5575,9 @@ namespace eval ArcherCore {
     eval gedWrapper killtree 1 0 1 2 $args
 }
 
+::itcl::body ArcherCore::l {args} {
+    eval gedWrapper l 1 0 0 0 $args
+}
 ::itcl::body ArcherCore::ls {args} {
     eval gedWrapper ls 1 0 0 0 $args
 }
@@ -5495,7 +5736,7 @@ namespace eval ArcherCore {
     if {$len == 2} {
 	set tree "l [lindex $line 1]"
     } elseif {$len == 18} {
-	set tree "l [lindex $line 1] [lrange $line 2 end]"
+	set tree "l [lindex $line 1] [list [lrange $line 2 end]]"
     } else {
 	#	error "packTree: malformed line - $line"
     }
@@ -5726,6 +5967,51 @@ namespace eval ArcherCore {
 
 ################################### Dialogs Section ###################################
 
+::itcl::body ArcherCore::buildSelectGroupDialog {} {
+    itk_component add selGroupDialog {
+	::iwidgets::dialog $itk_interior.selGroupDialog \
+	    -modality application \
+	    -title "Selection Group"
+    } {}
+    $itk_component(selGroupDialog) hide 1
+    $itk_component(selGroupDialog) hide 2
+    $itk_component(selGroupDialog) hide 3
+    $itk_component(selGroupDialog) configure \
+	-thickness 2 \
+	-buttonboxpady 0
+    $itk_component(selGroupDialog) buttonconfigure 0 \
+	-defaultring yes \
+	-defaultringpad 3 \
+	-borderwidth 1 \
+	-pady 0
+
+    # ITCL can be nasty
+    set win [$itk_component(selGroupDialog) component bbox component OK component hull]
+    after idle "$win configure -relief flat"
+
+    set parent [$itk_component(selGroupDialog) childsite]
+    itk_component add selGroupDialogL {
+	::ttk::label $parent.groupL \
+	    -text "Group Name:"
+    } {}
+
+    itk_component add selGroupDialogE {
+	::ttk::entry $parent.groupE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mCompSelectGroup]
+    } {}
+
+    set col 0
+    set row 0
+    grid $itk_component(selGroupDialogL) -row $row -column $col
+    incr col
+    grid $itk_component(selGroupDialogE) -row $row -column $col -sticky ew
+    grid columnconfigure $parent $col -weight 1
+
+    wm geometry $itk_component(selGroupDialog) "275x70"
+    $itk_component(selGroupDialog) center
+}
+
 ::itcl::body ArcherCore::buildInfoDialog {name title info size wrapOption modality} {
     itk_component add $name {
 	::iwidgets::dialog $itk_interior.$name \
@@ -5791,6 +6077,45 @@ namespace eval ArcherCore {
 	-vscrollmode none \
 	-hscrollmode none
 }
+
+
+::itcl::body ArcherCore::buildSelectTransparencyDialog {} {
+    itk_component add selTranspDialog {
+	::iwidgets::dialog $itk_interior.selTranspDialog \
+	    -modality application \
+	    -title "Select Transparency"
+    } {}
+    $itk_component(selTranspDialog) hide 1
+    $itk_component(selTranspDialog) hide 2
+    $itk_component(selTranspDialog) hide 3
+    $itk_component(selTranspDialog) configure \
+	-thickness 2 \
+	-buttonboxpady 0
+    $itk_component(selTranspDialog) buttonconfigure 0 \
+	-defaultring yes \
+	-defaultringpad 3 \
+	-borderwidth 1 \
+	-pady 0
+
+    # ITCL can be nasty
+    set win [$itk_component(selTranspDialog) component bbox component OK component hull]
+    after idle "$win configure -relief flat"
+
+    set parent [$itk_component(selTranspDialog) childsite]
+    itk_component add selTranspDialogSc {
+	::scale $parent.scale \
+	    -length 200 \
+	    -orient horizontal \
+	    -from 0.0 \
+	    -to 0.99 \
+	    -resolution 0.01 \
+	    -showvalue 1 \
+	    -variable [::itcl::scope mTransparency]
+    } {}
+
+    pack $itk_component(selTranspDialogSc) -expand yes -fill both
+}
+
 
 ::itcl::body ArcherCore::buildViewCenterDialog {} {
     itk_component add centerDialog {
@@ -5941,6 +6266,15 @@ namespace eval ArcherCore {
     switch -- $_name1 {
 	mFBBackgroundColor {
 	    $itk_component(rtcntrl) configure -color [cadwidgets::Ged::get_rgb_color $mFBBackgroundColor]
+	}
+	mFBOverlayColor {
+	    $itk_component(rtcntrl) configure -overlay_fg_color [cadwidgets::Ged::get_rgb_color $mFBOverlayColor]
+	}
+	mDoRtEdge {
+	    $itk_component(rtcntrl) configure -do_rtedge $mDoRtEdge
+	}
+	mDoRtEdgeOverlay {
+	    $itk_component(rtcntrl) configure -do_rtedge_overlay $mDoRtEdgeOverlay
 	}
 	mDisplayFontSize {
 	    $itk_component(ged) fontsize $mDisplayFontSize

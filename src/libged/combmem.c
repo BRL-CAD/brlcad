@@ -1,7 +1,7 @@
 /*                         C O M B M E M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -392,7 +392,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 
     COMBMEM_GETCOMBTREE(gedp, argv[0], argv[1], dp, intern, ntp, rt_tree_array, node_count);
 
-    for (i=0; i<node_count; i++) {
+    for (i = 0; i < node_count; i++) {
 	union tree *itp = rt_tree_array[i].tl_tree;
 	char op = '\0';
 
@@ -601,7 +601,7 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	    }
 	}
 
-	BU_GETUNION(tp, tree);
+	BU_GET(tp, union tree);
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
@@ -684,7 +684,7 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    bn_mat_xform_about_pt(mat, mat_rot, key_pt);
 	}
 
-	BU_GETUNION(tp, tree);
+	BU_GET(tp, union tree);
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
@@ -762,7 +762,7 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
 	    bn_mat_arb_rot(mat, pt, dir, ang);
 	}
 
-	BU_GETUNION(tp, tree);
+	BU_GET(tp, union tree);
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
@@ -832,7 +832,7 @@ combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    MAT_DELTAS_VEC(mat, tvec);
 	}
 
-	BU_GETUNION(tp, tree);
+	BU_GET(tp, union tree);
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
@@ -909,7 +909,7 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    combmem_assemble_mat(mat, aetvec, tvec, svec, key_pt, 1);
 	}
 
-	BU_GETUNION(tp, tree);
+	BU_GET(tp, union tree);
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
@@ -979,7 +979,7 @@ combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
 int
 ged_combmem(struct ged *gedp, int argc, const char *argv[])
 {
-    char c;
+    int c;
     enum etypes iflag = ETYPES_ABS;
     enum etypes rflag = ETYPES_NULL;
     const char *cmd_name = argv[0];
@@ -1059,10 +1059,12 @@ ged_combmem(struct ged *gedp, int argc, const char *argv[])
 	    if (argc > 6 && !((argc-2)%5)) {
 		return combmem_set_tra(gedp, argc, argv, rflag);
 	    }
+	    break;
 	case ETYPES_SCA:
 	    if (argc > 10 && !((argc-2)%9)) {
 		return combmem_set_sca(gedp, argc, argv, rflag);
 	    }
+	    break;
 	case ETYPES_NULL:
 	default:
 	    if (argc > 16 && !((argc-2)%15)) {

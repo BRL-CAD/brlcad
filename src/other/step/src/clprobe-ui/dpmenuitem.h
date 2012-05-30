@@ -15,8 +15,8 @@
 
 /*
  * DPMenuItem - a MyMenuItem that when chosen calls the function
- * 			 pointed to by func which you must define and
- *			 pass to the constructor.
+ *           pointed to by func which you must define and
+ *           pass to the constructor.
  */
 
 #include <IV-2_6/InterViews/message.h>
@@ -24,32 +24,32 @@
 
 #include <IV-2_6/_enter.h>
 
-typedef void (Probe::*DPMenuFunc)();
+typedef void ( Probe::*DPMenuFunc )();
 
 struct DPMenuInfo {
-    const char* lbl;
+    const char * lbl;
     DPMenuFunc func;
 };
 
 class DPMenuItem : public MyMenuItem {
-public:
-    DPMenuItem(const char* lbl, DPMenuFunc funcPtr, Probe *dp);
+    public:
+        DPMenuItem( const char * lbl, DPMenuFunc funcPtr, Probe * dp );
 
-    virtual void Do();
-private:
-    Probe *owner;
-    DPMenuFunc func;
+        virtual void Do();
+    private:
+        Probe * owner;
+        DPMenuFunc func;
 };
 
-inline DPMenuItem::DPMenuItem (const char* lbl, DPMenuFunc funcPtr, 
-				Probe *dp) 
-   : MyMenuItem(new Message(lbl, Left, 2, hfil, 0))
-//				Probe *dp) : MyMenuItem((Interactor*) nil)
+inline DPMenuItem::DPMenuItem( const char * lbl, DPMenuFunc funcPtr,
+                               Probe * dp )
+    : MyMenuItem( new Message( lbl, Left, 2, hfil, 0 ) )
+//              Probe *dp) : MyMenuItem((Interactor*) nil)
 {
 //   Insert(new Message(lbl, Center, 2, 3));
 //   Insert(new Message(lbl, Center, 2, hfil, 0));
-   func = funcPtr;
-   owner = dp;
+    func = funcPtr;
+    owner = dp;
 }
 
 #include <IV-2_6/_leave.h>

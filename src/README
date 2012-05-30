@@ -22,6 +22,7 @@ brlman - a 'man' tool that knows where to look for BRL-CAD manual pages
 burst - tool for simulation of burst effects
 bwish - BRL-CAD's version of 'tclsh' and 'wish' Tcl/Tk interpreters
 canon - tool to spool/queue image data to Canon printers via MDQS
+conv - codes for converting to/from BRL-CAD .g format and other TGM formats
 external - codes that require non-bundled external functionality
 fb - tools for displaying images to and reading from a framebuffer
 fbed - a framebuffer editor
@@ -62,4 +63,3 @@ tab - table processing tools, used primarily in conjunction with animation tools
 tclscripts - a library of Tcl routines used by mged, rtwizard, and archer
 util - various image processing and conversion utilities
 vas4 - tool for driving a Lyon Lamb Video Animation System (VAS4) to record videotape
-vdeck - tool for generating COM-GEOM decks from a BRL-CAD geometry file

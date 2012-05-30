@@ -1,7 +1,7 @@
 /*                       D O C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-unsigned char colortab[9][4]={
+unsigned char colortab[9][4] = {
     { 0, 217, 217, 217 },
     { 1, 0, 0, 0 },
     { 2, 255, 0, 0 },
@@ -45,7 +45,7 @@ Docolor()
     int i, j;
     fastf_t a;
 
-    for (i=0; i<totentities; i++) {
+    for (i = 0; i < totentities; i++) {
 	/* only set colors for regions, groups, or solid instances */
 	if (dir[i]->type == 180 || dir[i]->type == 184 || dir[i]->type == 430) {
 	    if (dir[i]->colorp > 0) {

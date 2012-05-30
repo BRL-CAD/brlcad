@@ -1,7 +1,7 @@
 /*                     W A L K _ E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -264,7 +264,7 @@ int main(int ac, char *av[])
 
     if ((ac - arg_count) < 1) {
 	tmp_basename = bu_basename(av[0]);
-	usage(tmp_basename, "bad arugment count");
+	usage(tmp_basename, "bad argument count");
 	bu_free(tmp_basename, "tmp_basename free");
     }
 
@@ -274,7 +274,7 @@ int main(int ac, char *av[])
      *  the database.  It also gives you back the
      *  title string in the header (ID) record.
      */
-    rtip=rt_dirbuild(av[arg_count], idbuf, sizeof(idbuf));
+    rtip = rt_dirbuild(av[arg_count], idbuf, sizeof(idbuf));
     if (rtip == RTI_NULL) {
 	bu_exit(2, "%s: rt_dirbuild failure\n", av[0]);
     }

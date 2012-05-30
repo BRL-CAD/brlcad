@@ -1,7 +1,7 @@
 /*                         X P U S H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -77,11 +77,11 @@ Free_uses(struct db_i *dbip)
 {
     int i;
 
-    for (i=0; i<RT_DBNHASH; i++) {
+    for (i = 0; i <RT_DBNHASH; i++) {
 	struct directory *dp;
 	struct object_use *use;
 
-	for (dp=dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
@@ -90,9 +90,12 @@ Free_uses(struct db_i *dbip)
 		if (!use->used) {
 		    if (use->dp->d_un.file_offset >= 0) {
 			/* was written to disk */
-			db_delete(dbip, use->dp);
+			if(db_delete(dbip, use->dp) != 0)
+			    bu_log("Free_uses: db_delete failure!\n");
 		    }
-		    db_dirdelete(dbip, use->dp);
+		    if (db_dirdelete(dbip, use->dp) < 0) {
+			bu_log("Free_uses: db_dirdelete failure!\n");
+		    }
 		}
 		BU_LIST_DEQUEUE(&use->l);
 		bu_free((genptr_t)use, "Free_uses: use");
@@ -120,7 +123,7 @@ Make_new_name(struct db_i *dbip,
     int name_length;
     int j;
     char format_v4[50], format_v5[50];
-    struct bu_vls name_v5;
+    struct bu_vls name_v5 = BU_VLS_INIT_ZERO;
     char name_v4[NAMESIZE+1];
     char *name;
     struct ged *gedp;
@@ -144,8 +147,6 @@ Make_new_name(struct db_i *dbip,
 	suffix_start = NAMESIZE - digits - 2;
     else
 	suffix_start = name_length;
-
-    bu_vls_init(&name_v5);
 
     j = 0;
     for (use_no=0; use_no<dp->d_uses; use_no++) {
@@ -213,7 +214,7 @@ static struct directory *Copy_object(struct ged *gedp, struct directory *dp, mat
  *
  */
 static void
-Do_copy_membs(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t UNUSED(user_ptr3))
+Do_copy_membs(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4))
 {
     struct directory *dp;
     struct directory *dp_new;
@@ -224,7 +225,7 @@ Do_copy_membs(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tr
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
 
-    if ((dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL)
+    if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL)
 	return;
 
     xform = (matp_t)user_ptr1;
@@ -365,7 +366,7 @@ Copy_comb(struct ged *gedp,
     /* copy members */
     if (comb->tree)
 	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_copy_membs,
-			 (genptr_t)xform, (genptr_t)gedp, (genptr_t)0);
+			 (genptr_t)xform, (genptr_t)gedp, (genptr_t)0, (genptr_t)NULL);
 
     /* Get a use of this object */
     found = RT_DIR_NULL;
@@ -422,7 +423,7 @@ Copy_object(struct ged *gedp,
  *
  */
 static void
-Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t UNUSED(user_ptr1), genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3))
+Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t UNUSED(user_ptr1), genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4))
 {
     struct directory *dp;
 
@@ -438,7 +439,7 @@ Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree
 
 static struct directory *Copy_object(struct ged *gedp, struct directory *dp, fastf_t *xform);
 
-static void Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3);
+static void Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3, genptr_t UNUSED(user_ptr4));
 
 
 int
@@ -480,10 +481,10 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Initialize use and reference counts of all directory entries */
-    for (i=0; i<RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=gedp->ged_wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
@@ -496,10 +497,10 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     db_functree(gedp->ged_wdbp->dbip, old_dp, increment_uses, increment_uses, &rt_uniresource, NULL);
 
     /* Do a simple reference count to find top level objects */
-    for (i=0; i<RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=gedp->ged_wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_flags & RT_DIR_SOLID)
 		continue;
 
@@ -513,17 +514,17 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    if (comb->tree)
 		db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_ref_incr,
-				 (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
+				 (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
 	    rt_db_free_internal(&intern);
 	}
     }
 
     /* anything with zero references is a tree top */
     bu_ptbl_init(&tops, 0, "tops for xpush");
-    for (i=0; i<RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=gedp->ged_wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_flags & RT_DIR_SOLID)
 		continue;
 
@@ -536,10 +537,10 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* now re-zero the reference counts */
-    for (i=0; i<RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp=gedp->ged_wdbp->dbip->dbi_Head[i]; dp!=RT_DIR_NULL; dp=dp->d_forw) {
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
@@ -548,7 +549,7 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* accurately count references in entire model */
-    for (i=0; i<BU_PTBL_END(&tops); i++) {
+    for (i = 0; i < BU_PTBL_END(&tops); i++) {
 	struct directory *dp;
 
 	dp = (struct directory *)BU_PTBL_GET(&tops, i);
@@ -578,7 +579,7 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     }
 
     db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_copy_membs,
-		     (genptr_t)xform, (genptr_t)gedp, (genptr_t)0);
+		     (genptr_t)xform, (genptr_t)gedp, (genptr_t)0, (genptr_t)NULL);
 
     if (rt_db_put_internal(old_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal failed for %s\n", old_dp->d_namep);

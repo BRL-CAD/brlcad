@@ -1,7 +1,7 @@
 /*                        G - A C A D . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2011 United States Government as represented by
+ * Copyright (c) 1996-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -318,7 +318,7 @@ process_region(const struct db_full_path *pathp, union tree *curtree, struct db_
 	*tsp->ts_m = nmg_mm();
 
 	return TREE_NULL;
-    } BU_UNSETJUMP;		/* Relinquish the protection */
+    }
 }
 
 
@@ -465,7 +465,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	       regions_tried, regions_converted, regions_written, npercent, tpercent);
     }
 
-    BU_GETUNION(curtree, tree);
+    BU_GET(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
 
@@ -483,6 +483,7 @@ main(int argc, char **argv)
     double percent;
     int i;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
     tree_state = rt_initial_tree_state;	/* struct copy */

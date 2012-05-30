@@ -1,7 +1,7 @@
 /*                       R E C S I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,11 +50,11 @@ int
 Recsize()
 {
 
-    int i, j, k=(-1), recl=0, length[NRECS], ch;
+    int i, j, k = (-1), recl = 0, length[NRECS] = {0}, ch;
 
-    for (j=0; j<NRECS; j++) {
+    for (j = 0; j < NRECS; j++) {
 	i = 1;
-	while ((ch=getc(fd)) != '\n' && i < NCHAR && ch != EOF)
+	while ((ch = getc(fd)) != '\n' && i < NCHAR && ch != EOF)
 	    i++;
 	if (i == NCHAR) {
 	    recl = 80;
@@ -80,7 +80,7 @@ Recsize()
 	recl = length[1];	/* don't use length[0] */
 
 	/* check for consistent record lengths */
-	for (j=2; j<k; j++) {
+	for (j = 2; j < k; j++) {
 	    if (recl != length[j])
 		return 0;
 	}

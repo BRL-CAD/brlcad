@@ -1,7 +1,7 @@
 /*                       D B _ S C A N . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -95,7 +95,11 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 	return -1;
     }
     rewind(dbip->dbi_fp);
-    next = ftell(dbip->dbi_fp);
+    next = (off_t)ftell(dbip->dbi_fp);
+    if (next < 0) {
+	perror("ftell");
+	next = 0;
+    }
 
     here = addr = (off_t)-1;
     totrec = 0;
@@ -111,6 +115,10 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 	    || feof(dbip->dbi_fp))
 	    break;
 	next = (off_t)ftell(dbip->dbi_fp);
+	if (next < 0) {
+	    perror("db_scan:  ftell:  ");
+	    return -1;
+	}
 	DEBUG_PR(addr, record);
 
 	nrec++;

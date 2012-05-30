@@ -1,7 +1,7 @@
 /*                        C A M E R A . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2011 United States Government as represented by
+ * Copyright (c) 2007-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -563,11 +563,11 @@ render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *
     /* Allocate storage for results */
     if (tile->format == RENDER_CAMERA_BIT_DEPTH_24)
     {
-	ind += 3 * tile->size_x * tile->size_y + sizeof(camera_tile_t);
+	ind += 3 * (unsigned int)tile->size_x * (unsigned int)tile->size_y + sizeof(camera_tile_t);
     }
     else if (tile->format == RENDER_CAMERA_BIT_DEPTH_128)
     {
-	ind += 4 * sizeof(tfloat) * tile->size_x * tile->size_y + sizeof(camera_tile_t);
+	ind += 4 * sizeof(tfloat) * (unsigned int)tile->size_x * (unsigned int)tile->size_y + sizeof(camera_tile_t);
     }
 
     TIENET_BUFFER_SIZE((*result), ind);
@@ -616,10 +616,10 @@ render_shader_load_plugin(const char *filename) {
 
     if(lh == NULL) { bu_log("Faulty plugin %s: %s\n", filename, bu_dlerror()); return NULL; }
     name = bu_dlsym(lh, "name");
-    if(name == NULL) { bu_log("Faulty plugin %s: No name\n", filename); return NULL; }
+    if(name == NULL) { bu_log("Faulty plugin %s: No name\n", filename); bu_dlclose(lh); return NULL; }
     /* assumes function pointers can be stored as a number, which ISO C does not guarantee */
     init = (int (*) (render_t *, const char *))(intptr_t)bu_dlsym(lh, "init");
-    if(init == NULL) { bu_log("Faulty plugin %s: No init\n", filename); return NULL; }
+    if(init == NULL) { bu_log("Faulty plugin %s: No init\n", filename); bu_dlclose(lh); return NULL; }
     s = render_shader_register(name, init);
     s->dlh = lh;
     return s->name;
@@ -634,9 +634,9 @@ render_shader_unload_plugin(render_t *r, const char *name)
 {
 #ifdef HAVE_DLFCN_H
     struct render_shader_s *t, *s = shaders, *meh;
-    if(!strncmp(s->name, name, 8)) {
+    if(!bu_strncmp(s->name, name, 8)) {
 	t = s->next;
-	if(r && r->shader && !strncmp(r->shader, name, 8)) {
+	if(r && r->shader && !bu_strncmp(r->shader, name, 8)) {
 	    meh = s->next;
 	    while( meh ) {
 		if(render_shader_init(r, meh->name, NULL) != -1)
@@ -655,7 +655,7 @@ LOADED:
     }
 
     while(s->next) {
-	if(!strncmp(s->next->name, name, 8)) {
+	if(!bu_strncmp(s->next->name, name, 8)) {
 	    if(r)
 		render_shader_init(r, s->name, NULL);
 	    if(s->next->dlh)
@@ -679,7 +679,7 @@ render_shader_init(render_t *r, const char *name, const char *buf)
 {
     struct render_shader_s *s = shaders;
     while(s) {
-	if(!strncmp(s->name, name, 8)) {
+	if(!bu_strncmp(s->name, name, 8)) {
 	    s->init(r, buf);
 	    r->shader = s->name;
 	    return 0;

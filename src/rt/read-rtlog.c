@@ -1,7 +1,7 @@
 /*                    R E A D - R T L O G . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2011 United States Government as represented by
+ * Copyright (c) 1991-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -118,16 +118,17 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	     */
 	    fprintf(stderr, "read_rt_file: read failure on file %s\n",
 		    name);
+            fclose(fp);
 	    return -1;
 	}
 
 	/* Check the first for a colon in the buffer.  If there is
-	 * one, replace it with a NULL, and set a pointer to the
-	 * next space.  Then feed the buffer to
-	 * strcmp see whether it is the view, the orientation,
-	 * the eye_position, or the size.  If it is, then sscanf()
-	 * the needed information into the appropriate variables.
-	 * If the keyword is not found, go back for another line.
+	 * one, replace it with a NULL, and set a pointer to the next
+	 * space.  Then feed the buffer to BU_STR_EQUAL to see whether
+	 * it is the view, the orientation, the eye_position, or the
+	 * size.  If it is, then sscanf() the needed information into
+	 * the appropriate variables.  If the keyword is not found, go
+	 * back for another line.
 	 *
 	 * Set arg_ptr to NULL so it can be used as a flag to verify
 	 * finding a colon in the input buffer.
@@ -187,6 +188,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	    num = sscanf(arg_ptr, "%lf %9s %lf", &azimuth, forget_it, &elevation);
 	    if (num != 3) {
 		fprintf(stderr, "View= %.6f %s %.6f elevation\n", azimuth, forget_it, elevation);
+                fclose(fp);
 		return -1;
 	    }
 	    seen_view = 1;
@@ -198,6 +200,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	    if (num != 4) {
 		fprintf(stderr, "Orientation= %.6f, %.6f, %.6f, %.6f\n",
 			V4ARGS(orientation));
+                fclose(fp);
 		return -1;
 	    }
 	    seen_orientation = 1;
@@ -207,6 +210,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	    if (num != 3) {
 		fprintf(stderr, "Eye_pos= %.6f, %.6f, %.6f\n",
 			V3ARGS(eye_pos));
+                fclose(fp);
 		return -1;
 	    }
 	    seen_eye_pos = 1;
@@ -214,6 +218,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	    num = sscanf(arg_ptr, "%lf", &m_size);
 	    if (num != 1) {
 		fprintf(stderr, "Size=%.6f\n", m_size);
+                fclose(fp);
 		return -1;
 	    }
 	    seen_size = 1;
@@ -224,21 +229,25 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 
     if (seen_view != 1) {
 	fprintf(stderr, "View not read for %s!\n", name);
+        fclose(fp);
 	return -1;
     }
 
     if (seen_orientation != 1) {
 	fprintf(stderr, "Orientation not read for %s!\n", name);
+        fclose(fp);
 	return -1;
     }
 
     if (seen_eye_pos != 1) {
 	fprintf(stderr, "Eye_pos not read for %s!\n", name);
+        fclose(fp);
 	return -1;
     }
 
     if (seen_size != 1) {
 	fprintf(stderr, "Size not read for %s!\n", name);
+        fclose(fp);
 	return -1;
     }
 

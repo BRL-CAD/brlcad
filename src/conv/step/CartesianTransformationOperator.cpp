@@ -1,7 +1,7 @@
 /*                 CartesianTransformationOperator.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,121 +37,121 @@
 string CartesianTransformationOperator::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)CartesianTransformationOperator::Create);
 
 CartesianTransformationOperator::CartesianTransformationOperator() {
-	step = NULL;
-	id = 0;
-	axis1 = NULL;
-	axis2 = NULL;
-	local_origin = NULL;
-	scale = 1.0;
+    step = NULL;
+    id = 0;
+    axis1 = NULL;
+    axis2 = NULL;
+    local_origin = NULL;
+    scale = 1.0;
 }
 
 CartesianTransformationOperator::CartesianTransformationOperator(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
-	axis1 = NULL;
-	axis2 = NULL;
-	local_origin = NULL;
-	scale = 1.0;
+    step = sw;
+    id = step_id;
+    axis1 = NULL;
+    axis2 = NULL;
+    local_origin = NULL;
+    scale = 1.0;
 }
 
 CartesianTransformationOperator::~CartesianTransformationOperator() {
 }
 
 bool
-CartesianTransformationOperator::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+CartesianTransformationOperator::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+    step=sw;
+    id = sse->STEPfile_id;
 
-	if ( !GeometricRepresentationItem::Load(sw,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
-		return false;
+    if ( !GeometricRepresentationItem::Load(sw,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
+	return false;
+    }
+
+    // need to do this for local attributes to makes sure we have
+    // the actual entity and not a complex/supertype parent
+    sse = step->getEntity(sse,ENTITYNAME);
+
+    if (axis1 == NULL) {
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"axis1");
+	if (entity) { //this attribute is optional
+	    axis1 = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
 	}
+    }
 
-	// need to do this for local attributes to makes sure we have
-	// the actual entity and not a complex/supertype parent
-	sse = step->getEntity(sse,ENTITYNAME);
-
-	if (axis1 == NULL) {
-		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"axis1");
-		if (entity) { //this attribute is optional
-			axis1 = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
-		}
+    if (axis2 == NULL) {
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"axis2");
+	if (entity) { // this attribute is optional
+	    axis2 = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
 	}
+    }
 
-	if (axis2 == NULL) {
-		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"axis2");
-		if (entity) { // this attribute is optional
-			axis2 = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
-		}
-	}
-
-	if (local_origin == NULL) {
-		SCLP23(Application_instance) *entity = step->getEntityAttribute(sse,"local_origin");
-		if (entity) {
-			local_origin = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,entity));
-		} else {
-			std::cerr << CLASSNAME << ": error loading 'local_origin' attribute." << std::endl;
-			return false;
-		}
-	}
-
-	STEPattribute *attr = step->getAttribute(sse,"scale");
-	if (attr) { //this attribute is optional
-		scale = step->getRealAttribute(sse,"scale");
+    if (local_origin == NULL) {
+	SDAI_Application_instance *entity = step->getEntityAttribute(sse,"local_origin");
+	if (entity) {
+	    local_origin = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,entity));
 	} else {
-		scale = 1.0;
+	    std::cerr << CLASSNAME << ": error loading 'local_origin' attribute." << std::endl;
+	    return false;
 	}
+    }
 
-	return true;
+    STEPattribute *attr = step->getAttribute(sse,"scale");
+    if (attr) { //this attribute is optional
+	scale = step->getRealAttribute(sse,"scale");
+    } else {
+	scale = 1.0;
+    }
+
+    return true;
 }
 
 void
 CartesianTransformationOperator::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << GeometricRepresentationItem::name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << GeometricRepresentationItem::name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Attributes:" << std::endl;
-	if (axis1) {
-		TAB(level+1); std::cout << "axis1:" << std::endl;
-		axis1->Print(level+1);
-	}
-	if (axis2) {
-		TAB(level+1); std::cout << "axis2:" << std::endl;
-		axis2->Print(level+1);
-	}
-	TAB(level+1); std::cout << "local_origin:" << std::endl;
-	local_origin->Print(level+1);
+    TAB(level); std::cout << "Attributes:" << std::endl;
+    if (axis1) {
+	TAB(level+1); std::cout << "axis1:" << std::endl;
+	axis1->Print(level+1);
+    }
+    if (axis2) {
+	TAB(level+1); std::cout << "axis2:" << std::endl;
+	axis2->Print(level+1);
+    }
+    TAB(level+1); std::cout << "local_origin:" << std::endl;
+    local_origin->Print(level+1);
 
-	TAB(level+1); std::cout << "scale: " << scale << std::endl;
+    TAB(level+1); std::cout << "scale: " << scale << std::endl;
 
-	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
-	GeometricRepresentationItem::Print(level+1);
+    TAB(level); std::cout << "Inherited Attributes:" << std::endl;
+    GeometricRepresentationItem::Print(level+1);
 }
 
 STEPEntity *
-CartesianTransformationOperator::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		CartesianTransformationOperator *object = new CartesianTransformationOperator(sw,sse->STEPfile_id);
+CartesianTransformationOperator::Create(STEPWrapper *sw, SDAI_Application_instance *sse) {
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	CartesianTransformationOperator *object = new CartesianTransformationOperator(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw, sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 bool
 CartesianTransformationOperator::LoadONBrep(ON_Brep *brep)
 {
-	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
-	return false;
+    std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not implemented for " << entityname << std::endl;
+    return false;
 }
 
 // Local Variables:

@@ -1,7 +1,7 @@
 /*                        I F _ O G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1091,7 +1091,7 @@ is_linear_cmap(register FBIO *ifp)
 
 
 HIDDEN int
-fb_ogl_open(FBIO *ifp, char *file, int width, int height)
+fb_ogl_open(FBIO *ifp, const char *file, int width, int height)
 {
     static char title[128];
     int mode, i, direct;
@@ -1108,13 +1108,13 @@ fb_ogl_open(FBIO *ifp, char *file, int width, int height)
     mode = MODE_2LINGERING;
 
     if (file != NULL) {
-	register char *cp;
+	const char *cp;
 	char modebuf[80];
 	char *mp;
 	int alpha;
 	struct modeflags *mfp;
 
-	if (strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
+	if (bu_strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
 	    /* How did this happen? */
 	    mode = 0;
 	} else {
@@ -1460,7 +1460,7 @@ _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
 
 
 int
-ogl_open_existing(FBIO *ifp, int argc, char **argv)
+ogl_open_existing(FBIO *ifp, int argc, const char **argv)
 {
     Display *dpy;
     Window win;

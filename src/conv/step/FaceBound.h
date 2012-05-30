@@ -1,7 +1,7 @@
 /*                 FaceBound.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,11 +42,8 @@ protected:
 	Loop *bound;
 	int ON_face_index;
 	bool inner;
-#ifdef YAYA
 	Boolean orientation;
-#else
-	int orientation;
-#endif
+
 
 public:
 	FaceBound();
@@ -57,14 +54,14 @@ public:
 	bool IsInner() {return inner;}
 	bool IsOuter() {return !inner;}
 	ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual void Print(int level);
 	bool Oriented();
 	void SetFaceIndex(int index) { ON_face_index = index; };
 
 	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
 };
 
 #endif /* FACEBOUND_H_ */

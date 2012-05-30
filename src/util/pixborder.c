@@ -1,7 +1,7 @@
 /*                     P I X B O R D E R . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2011 United States Government as represented by
+ * Copyright (c) 1996-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -284,7 +284,7 @@ static int is_interior (unsigned char *pix_rgb)
 		(! same_rgb(pix_rgb, exterior_rgb))	:
 		same_rgb(pix_rgb, interior_rgb));
     else {
-	vect_t pix_hsv = {0.0, 0.0, 0.0};
+	vect_t pix_hsv = VINIT_ZERO;
 
 	rgb_to_hsv(pix_rgb, pix_hsv);
 	return ((colors_specified == COLORS_EXTERIOR)	?
@@ -304,7 +304,7 @@ static int is_exterior (unsigned char *pix_rgb)
 		(! same_rgb(pix_rgb, interior_rgb))	:
 		same_rgb(pix_rgb, exterior_rgb));
     else {
-	vect_t pix_hsv = {0.0, 0.0, 0.0};
+	vect_t pix_hsv = VINIT_ZERO;
 
 	rgb_to_hsv(pix_rgb, pix_hsv);
 	return ((colors_specified == COLORS_INTERIOR)	?

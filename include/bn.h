@@ -1,7 +1,7 @@
 /*                            B N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,14 +41,13 @@ __BEGIN_DECLS
 #include "bu.h"		/* required for BU_CKMAG */
 #include "vmath.h"	/* required for mat_t, vect_t */
 
-
 #ifndef BN_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef BN_EXPORT_DLL
-#      define BN_EXPORT __declspec(dllexport)
-#    else
-#      define BN_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(BN_DLL_EXPORTS) && defined(BN_DLL_IMPORTS)
+#    error "Only BN_DLL_EXPORTS or BN_DLL_IMPORTS can be defined, not both."
+#  elif defined(BN_DLL_EXPORTS)
+#    define BN_EXPORT __declspec(dllexport)
+#  elif defined(BN_DLL_IMPORTS)
+#    define BN_EXPORT __declspec(dllimport)
 #  else
 #    define BN_EXPORT
 #  endif
@@ -136,6 +135,11 @@ struct bn_tol {
  * returns truthfully whether a bn_tol struct has been initialized.
  */
 #define BN_TOL_IS_INITIALIZED(_p) (((struct bn_tol *)(_p) != (struct bn_tol *)0) && LIKELY((_p)->magic == BN_TOL_MAGIC))
+
+/**
+ * replaces the hard coded tolerance value
+ */
+#define BN_TOL_DIST 0.0005
 
 /**
  * returns truthfully whether a given dot-product of two unspecified
@@ -485,8 +489,27 @@ typedef struct bn_complex {
 	(ap)->re = (cp)->re * (bp)->re - (cp)->im * (bp)->im; \
 	(ap)->im = (cp)->re * (bp)->im + (cp)->im * (bp)->re; }
 
+/**
+ * B N _ C X _ D I V
+ *@brief
+ * Divide one complex by another
+ *
+ * bn_cx_div(&a, &b).  divides a by b.  Zero divisor fails.  a and b
+ * may coincide.  Result stored in a.
+ */
 BN_EXPORT extern void bn_cx_div(bn_complex_t *ap,
 				const bn_complex_t *bp);
+
+/**
+ * B N _ C X _ S Q R T
+ *@brief
+ * Compute square root of complex number
+ *
+ * bn_cx_sqrt(&out, &c) replaces out by sqrt(c)
+ *
+ * Note: This is a double-valued function; the result of bn_cx_sqrt()
+ * always has nonnegative imaginary part.
+ */
 BN_EXPORT extern void bn_cx_sqrt(bn_complex_t *op,
 				 const bn_complex_t *ip);
 
@@ -789,6 +812,27 @@ BN_EXPORT extern int bn_distsq_line3_line3(fastf_t dist[3],
 					   vect_t e,
 					   point_t pt1,
 					   point_t pt2);
+
+BN_EXPORT extern int bn_dist_pt3_line3(fastf_t *dist,
+				       point_t pca,
+				       const point_t a,
+				       const point_t p,
+				       const vect_t dir,
+				       const struct bn_tol *tol);
+
+BN_EXPORT extern int bn_dist_line3_lseg3(fastf_t *dist,
+					 const fastf_t *p,
+					 const fastf_t *d,
+					 const fastf_t *a,
+					 const fastf_t *b,
+					 const struct bn_tol *tol);
+
+BN_EXPORT extern int bn_dist_line3_line3(fastf_t dist[2],
+					 const point_t p1,
+					 const point_t p2,
+					 const vect_t d1,
+					 const vect_t d2,
+					 const struct bn_tol *tol);
 
 BN_EXPORT extern int bn_dist_pt3_lseg3(fastf_t *dist,
 				       point_t pca,
@@ -1160,7 +1204,9 @@ BN_EXPORT extern void bn_mathtab_constant();
 /** @{ */
 /**
  * Mersenne Twister random number generation as defined by MT19937.
- * Moved from src/adrt/libutil/rand.c
+ *
+ * Generates one pseudorandom real number (double) which is uniformly
+ * distributed on [0, 1]-interval, for each call.
  *
  * @par Usage:
  @code
@@ -1665,7 +1711,6 @@ struct bn_vlist  {
 };
 #define BN_VLIST_NULL	((struct bn_vlist *)0)
 #define BN_CK_VLIST(_p) BU_CKMAG((_p), BN_VLIST_MAGIC, "bn_vlist")
-#define BN_CK_VLIST_TCL(_interp, _p) BU_CKMAG_TCL(_interp, (_p), BN_VLIST_MAGIC, "bn_vlist")
 
 /* should these be enum? -Erik */
 /* Values for cmd[] */
@@ -1676,7 +1721,13 @@ struct bn_vlist  {
 #define BN_VLIST_POLY_DRAW	4	/**< @brief subsequent poly vertex */
 #define BN_VLIST_POLY_END	5	/**< @brief last vert (repeats 1st), draw poly */
 #define BN_VLIST_POLY_VERTNORM	6	/**< @brief per-vertex normal, for interpoloation */
-#define BN_VLIST_POINT_DRAW	7	/**< @brief  Draw a single point */
+#define BN_VLIST_TRI_START	7	/**< @brief pt[] has surface normal */
+#define BN_VLIST_TRI_MOVE	8	/**< @brief move to first triangle vertex */
+#define BN_VLIST_TRI_DRAW	9	/**< @brief subsequent triangle vertex */
+#define BN_VLIST_TRI_END	10	/**< @brief last vert (repeats 1st), draw poly */
+#define BN_VLIST_TRI_VERTNORM	11	/**< @brief per-vertex normal, for interpoloation */
+#define BN_VLIST_POINT_DRAW	12	/**< @brief  Draw a single point */
+#define BN_VLIST_CMD_MAX	12	/**< @brief  Max command number */
 
 /**
  * Applications that are going to use BN_ADD_VLIST and BN_GET_VLIST

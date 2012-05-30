@@ -1,7 +1,7 @@
 /*                       D M - W G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2011 United States Government as represented by
+ * Copyright (c) 1988-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -204,8 +204,8 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     static int count = 0;
     GLfloat backgnd[4];
     int make_square = -1;
-    struct bu_vls str;
-    struct bu_vls init_proc_vls;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     struct dm *dmp = (struct dm *)NULL;
     Tk_Window tkwin;
     HWND hwnd;
@@ -217,7 +217,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 	return DM_NULL;
     }
 
-    BU_GETSTRUCT(dmp, dm);
+    BU_GET(dmp, struct dm);
     if (dmp == DM_NULL) {
 	return DM_NULL;
     }
@@ -243,7 +243,6 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     bu_vls_init(&dmp->dm_pathName);
     bu_vls_init(&dmp->dm_tkName);
     bu_vls_init(&dmp->dm_dName);
-    bu_vls_init(&init_proc_vls);
 
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
@@ -336,11 +335,10 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = tkwin;
 	} else {
-	    struct bu_vls top_vls;
+	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_init(&top_vls);
-	    bu_vls_printf(&top_vls, "%*s", cp - bu_vls_addr(&dmp->dm_pathName),
-			  bu_vls_addr(&dmp->dm_pathName));
+	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
+
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top =
 		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
 	    bu_vls_free(&top_vls);
@@ -362,7 +360,6 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     bu_vls_printf(&dmp->dm_tkName, "%s",
 		  (char *)Tk_Name(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
 
-    bu_vls_init(&str);
     bu_vls_printf(&str, "_init_dm %V %V\n",
 		  &init_proc_vls,
 		  &dmp->dm_pathName);
@@ -800,9 +797,8 @@ wgl_drawEnd(struct dm *dmp)
 
     if (dmp->dm_debugLevel) {
 	int error;
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "ANY ERRORS?\n");
 
 	while ((error = glGetError())!=0) {
@@ -855,11 +851,10 @@ wgl_loadMatrix(struct dm *dmp, mat_t mat, int which_eye)
     GLfloat gtmat[16];
 
     if (dmp->dm_debugLevel) {
-	struct bu_vls tmp_vls;
+	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	bu_log("wgl_loadMatrix()\n");
 
-	bu_vls_init(&tmp_vls);
 	bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
 	bu_vls_printf(&tmp_vls, "transformation matrix = \n");
 	bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8], mat[12]);
@@ -928,8 +923,7 @@ HIDDEN int
 wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 {
     register struct bn_vlist	*tvp;
-    int				first;
-    static float black[4] = {0.0, 0.0, 0.0, 0.0};
+    register int		first;
 
     if (dmp->dm_debugLevel)
 	bu_log("wgl_drawVList()\n");
@@ -981,6 +975,8 @@ wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 		    break;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_POLY_DRAW:
+		case BN_VLIST_TRI_MOVE:
+		case BN_VLIST_TRI_DRAW:
 		    VMOVE(glpt, *pt);
 		    glVertex3dv(glpt);
 		    break;
@@ -992,9 +988,23 @@ wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 		    first = 1;
 		    break;
 		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
 		    VMOVE(glpt, *pt);
 		    glNormal3dv(glpt);
+		    break;
+		case BN_VLIST_TRI_START:
+		    if (first)
+			glBegin(GL_TRIANGLES);
+
+		    first = 0;
+
+		    /* Set surface normal (vl_pnt points outward) */
+		    VMOVE(glpt, *pt);
+		    glNormal3dv(glpt);
+
+		    break;
+		case BN_VLIST_TRI_END:
 		    break;
 	    }
 	}
@@ -1031,6 +1041,7 @@ wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_START:
+		case BN_VLIST_TRI_START:
 		    /* Start poly marker & normal */
 		    if (first == 0)
 			glEnd();
@@ -1041,10 +1052,13 @@ wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 		case BN_VLIST_LINE_DRAW:
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_POLY_DRAW:
+		case BN_VLIST_TRI_MOVE:
+		case BN_VLIST_TRI_DRAW:
 		    VMOVE(glpt, *pt);
 		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_END:
+		case BN_VLIST_TRI_END:
 		    /* Draw, End Polygon */
 		    VMOVE(glpt, *pt);
 		    glVertex3dv(glpt);
@@ -1052,6 +1066,7 @@ wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 		    first = 1;
 		    break;
 		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
 		    VMOVE(glpt, glpt);
 		    glNormal3dv(*pt);
@@ -1087,8 +1102,8 @@ HIDDEN int
 wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
     struct bn_vlist	*tvp;
-    int				first;
-    int mflag = 1;
+    register int	first;
+    register int mflag = 1;
     float black[4] = {0.0, 0.0, 0.0, 0.0};
 
     if (dmp->dm_debugLevel)
@@ -1128,10 +1143,8 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    glVertex3dv(glpt);
 		    break;
 		case BN_VLIST_POLY_START:
+		case BN_VLIST_TRI_START:
 		    /* Start poly marker & normal */
-		    if (first == 0)
-			glEnd();
-		    first = 0;
 
 		    if (dmp->dm_light && mflag) {
 			mflag = 0;
@@ -1158,14 +1171,26 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			    glEnable(GL_BLEND);
 		    }
 
-		    glBegin(GL_POLYGON);
+		    if (*cmd == BN_VLIST_POLY_START) {
+			if (first == 0)
+			    glEnd();
+
+			glBegin(GL_POLYGON);
+		    } else if (first)
+			glBegin(GL_TRIANGLES);
+
 		    /* Set surface normal (vl_pnt points outward) */
 		    VMOVE(glpt, *pt);
 		    glNormal3dv(glpt);
+
+		    first = 0;
+
 		    break;
 		case BN_VLIST_LINE_DRAW:
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_POLY_DRAW:
+		case BN_VLIST_TRI_MOVE:
+		case BN_VLIST_TRI_DRAW:
 		    VMOVE(glpt, *pt);
 		    glVertex3dv(glpt);
 		    break;
@@ -1176,7 +1201,10 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    glEnd();
 		    first = 1;
 		    break;
+		case BN_VLIST_TRI_END:
+		    break;
 		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
 		    VMOVE(glpt, *pt);
 		    glNormal3dv(glpt);
@@ -1187,6 +1215,9 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
     if (first == 0)
 	glEnd();
+
+    if (dmp->dm_light && dmp->dm_transparency)
+	glDisable(GL_BLEND);
 
     return TCL_OK;
 }
@@ -1361,7 +1392,7 @@ wgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
  *
  */
 HIDDEN int
-wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag)
 {
     register int i;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
@@ -1386,8 +1417,7 @@ wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
 	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
     }
 
-    /* Must be an even number of points */
-    if (npoints%2)
+    if (npoints < 2 || (!sflag && npoints%2))
 	return TCL_OK;
 
     if (dmp->dm_light) {
@@ -1400,9 +1430,14 @@ wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
 	    glDisable(GL_BLEND);
     }
 
-    glBegin(GL_LINES);
+    if (sflag)
+	glBegin(GL_LINE_STRIP);
+    else
+	glBegin(GL_LINES);
+
     for (i = 0; i < npoints; ++i)
 	glVertex3dv(points[i]);
+
     glEnd();
 
     return TCL_OK;
@@ -2095,7 +2130,7 @@ wgl_beginDList(struct dm *dmp, unsigned int list)
 	return TCL_ERROR;
     }
 
-    glNewList(dmp->dm_displaylist + list, GL_COMPILE);
+    glNewList((GLuint)list, GL_COMPILE);
     return TCL_OK;
 }
 
@@ -2111,14 +2146,10 @@ wgl_endDList(struct dm *dmp)
 }
 
 
-int
-wgl_drawDList(struct dm *dmp, unsigned int list)
+void
+wgl_drawDList(unsigned int list)
 {
-    if (dmp->dm_debugLevel)
-	bu_log("wgl_drawDList()\n");
-
-    glCallList(dmp->dm_displaylist + list);
-    return TCL_OK;
+    glCallList((GLuint)list);
 }
 
 
@@ -2134,8 +2165,24 @@ wgl_freeDLists(struct dm *dmp, unsigned int list, int range)
 	return TCL_ERROR;
     }
 
-    glDeleteLists(dmp->dm_displaylist + list, (GLsizei)range);
+    glDeleteLists((GLuint)list, (GLsizei)range);
     return TCL_OK;
+}
+
+
+int
+wgl_genDLists(struct dm *dmp, size_t range)
+{
+    if (dmp->dm_debugLevel)
+	bu_log("wgl_freeDLists()\n");
+
+    if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
+			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+	bu_log("wgl_freeDLists: Couldn't make context current\n");
+	return TCL_ERROR;
+    }
+
+    return glGenLists((GLsizei)range);
 }
 
 
@@ -2169,6 +2216,7 @@ struct dm dm_wgl = {
     wgl_endDList,
     wgl_drawDList,
     wgl_freeDLists,
+    wgl_genDLists,
     Nu_int0, /* display to image function */
     wgl_reshape,
     0,
@@ -2189,9 +2237,9 @@ struct dm dm_wgl = {
     1.0, /* aspect ratio */
     0,
     {0, 0},
-    {0, 0, 0, 0, 0},		/* bu_vls path name*/
-    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
-    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
+    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     {0, 0, 0},			/* bg color */
     {0, 0, 0},			/* fg color */
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */

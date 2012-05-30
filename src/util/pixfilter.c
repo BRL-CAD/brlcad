@@ -1,7 +1,7 @@
 /*                     P I X F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -248,7 +248,7 @@ select_filter(char *str)
 
     i = 0;
     while (kernel[i].name != NULL) {
-	if (strncmp(str, kernel[i].uname, strlen(kernel[i].uname)) == 0)
+	if (bu_strncmp(str, kernel[i].uname, strlen(kernel[i].uname)) == 0)
 	    break;
 	i++;
     }

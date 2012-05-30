@@ -1,7 +1,7 @@
 /*                        H A N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,9 +45,11 @@ main(int argc, char **argv)
 {
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26];		/* Mged file create. */
-    double hgt, len;		/* Height & length of handle. */
-    double r1, r2;		/* Radius of tori & radius of cylinders. */
+    char filemged[26] = {0};	/* Mged file create. */
+    double hgt = 0.0;		/* Height of handle. */
+    double len = 0.0;		/* Length of handle. */
+    double r1 = 0.0;		/* Radius of tori & radius of cylinders. */
+    double r2 = 0.0;
     point_t pts[8];		/* Eight points of arb8. */
     point_t bs;			/* Base of rcc. */
     vect_t ht;			/* Height of rcc. */
@@ -61,7 +63,7 @@ main(int argc, char **argv)
     char solnam[8];		/* Solid name. */
     char regnam[8];		/* Region name. */
     char grpnam[5];		/* Group name. */
-    int numhan;			/* Number of handles to be created (<=26). */
+    int numhan = 0;		/* Number of handles to be created (<=26). */
 
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
@@ -108,35 +110,58 @@ main(int argc, char **argv)
 	(void)printf("(25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	}
+	if (BU_STR_EQUAL(filemged, ""))
+	    bu_strlcpy(filemged, "handle.g", sizeof(filemged));
 
 	/* Find number of handles to create (<=26). */
 	(void)printf("Enter number of handles to create (26 max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%d", &numhan);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
-	if (numhan > 26) numhan = 26;
+	    numhan = 1;
+	}
+	if (numhan < 1)
+	    numhan = 1;
+	if (numhan > 26)
+	    numhan = 26;
 
 	/* Find dimensions of handle. */
 	(void)printf("Enter the length and height of handle in mm.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf %lf", &len, &hgt);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    len = 100.0;
+	    hgt = 10.0;
+	}
+	if (len < SMALL_FASTF)
+	    len = SMALL_FASTF;
+	if (hgt < SMALL_FASTF)
+	    hgt = SMALL_FASTF;
 
 	(void)printf("Enter the radius of the tori in mm.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &r1);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    r1 = 5.0;
+	}
+	if (r1 < SMALL_FASTF)
+	    r1 = SMALL_FASTF;
 
 	(void)printf("Enter the radius of the cylinders in mm.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf", &r2);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    r2 = 5.0;
+	}
+	if (r2 < SMALL_FASTF)
+	    r2 = SMALL_FASTF;
     }							/* END # 3 */
 
     /* if there are arguments get the answers from the arguments. */

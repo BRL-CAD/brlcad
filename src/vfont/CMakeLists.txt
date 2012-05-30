@@ -1,21 +1,26 @@
 # Include directories needed by libvfont users
-SET(VFONT_INCLUDE_DIRS
-	${BRLCAD_BINARY_DIR}/include
-	${BRLCAD_SOURCE_DIR}/include
-	${BU_INCLUDE_DIRS}
-	)
-LIST(REMOVE_DUPLICATES VFONT_INCLUDE_DIRS)
-BRLCAD_INCLUDE_DIRS(VFONT_INCLUDE_DIRS)
+set(VFONT_INCLUDE_DIRS
+  ${BRLCAD_BINARY_DIR}/include
+  ${BRLCAD_SOURCE_DIR}/include
+  ${BU_INCLUDE_DIRS}
+  )
 
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-)
+# local
+set(VFONT_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
+BRLCAD_LIB_INCLUDE_DIRS(vfont VFONT_INCLUDE_DIRS VFONT_LOCAL_INCLUDE_DIRS)
 
 BRLCAD_ADDLIB(libvfont getfont.c libbu)
 SET_TARGET_PROPERTIES(libvfont PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
-BRLCAD_ADDFILE(fix.6r vfont)
-BRLCAD_ADDFILE(nonie.r.12 vfont)
+BRLCAD_ADDDATA(fix.6r vfont)
+BRLCAD_ADDDATA(nonie.r.12 vfont)
 
 CMAKEFILES(vfont.h)
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

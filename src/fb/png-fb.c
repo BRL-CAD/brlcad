@@ -1,7 +1,7 @@
 /*                        P N G - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2011 United States Government as represented by
+ * Copyright (c) 1998-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,18 +27,15 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-
+#include <zlib.h>
+#include <png.h>
 #include "bio.h"
-#include "png.h"
+#include "bin.h"
+
 #include "bu.h"
 #include "fb.h"
-
 #include "pkg.h"
 
-#ifdef HAVE_WINSOCK_H
-#  include <winsock.h>
-#endif
 
 static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
 static unsigned char **scanline;	/* 1 scanline pixel buffer */

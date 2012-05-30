@@ -1,7 +1,7 @@
 /*                          S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2011 United States Government as represented by
+ * Copyright (c) 1998-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,9 +46,8 @@ dm_draw_scale(struct dm *dmp,
     int soffset;
     fastf_t xpos1, xpos2;
     fastf_t ypos1, ypos2;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "%g", viewSize*0.5);
     soffset = (int)(strlen(bu_vls_addr(&vls)) * 0.5);
 

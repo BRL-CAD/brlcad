@@ -1,7 +1,7 @@
 /*                           M G E D . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -512,7 +512,7 @@ void add_solid_path_to_result(Tcl_Interp *interpreter, struct solid *sp);
 /* dozoom.c */
 void createDList(struct solid *sp);
 void createDLists(struct bu_list *hdlp);
-void createDListALL(struct solid *sp);
+void createDListAll(struct solid *sp);
 void freeDListsAll(unsigned int dlist, int range);
 
 /* edarb.c */

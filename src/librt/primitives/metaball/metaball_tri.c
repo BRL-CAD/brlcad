@@ -1,7 +1,7 @@
 /*			M B _ T R I . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,19 +71,21 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     fastf_t mtol, radius;
     point_t center, min, max;
     fastf_t i, j, k, finalstep = +INFINITY;
-    struct bu_vls times;
+    struct bu_vls times = BU_VLS_INIT_ZERO;
     struct wdb_metaballpt *mbpt;
     struct shell *s;
     int numtri = 0;
 
-    if (r) *r = NULL;
-    if (m) NMG_CK_MODEL(m);
+    if (r == NULL || m == NULL)
+	return -1;
+    *r = NULL;
+
+    NMG_CK_MODEL(m);
 
     RT_CK_DB_INTERNAL(ip);
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
 
-    bu_vls_init(&times);
     rt_prep_timer();
 
     /* since this geometry isn't necessarily prepped, we have to figure out the

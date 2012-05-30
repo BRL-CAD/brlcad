@@ -1,3 +1,38 @@
+#             F I N D P K G M A C R O S . C M A K E
+# BRL-CAD
+#
+# Copyright (c) 2011-2012 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
 #-------------------------------------------------------------------
 # This file is part of the CMake build system for OGRE
 #     (Object-oriented Graphics Rendering Engine)
@@ -27,11 +62,11 @@ endmacro(pkg_message)
 
 # Get environment variable, define it as ENV_$var and make sure backslashes are converted to forward slashes
 macro(getenv_path VAR)
-   set(ENV_${VAR} $ENV{${VAR}})
-   # replace won't work if var is blank
-   if (ENV_${VAR})
-     string( REGEX REPLACE "\\\\" "/" ENV_${VAR} ${ENV_${VAR}} )
-   endif ()
+  set(ENV_${VAR} $ENV{${VAR}})
+  # replace won't work if var is blank
+  if (ENV_${VAR})
+    string( REGEX REPLACE "\\\\" "/" ENV_${VAR} ${ENV_${VAR}} )
+  endif ()
 endmacro(getenv_path)
 
 # Construct search paths for includes and libraries from a PREFIX_PATH
@@ -103,12 +138,12 @@ macro(findpkg_finish PREFIX)
   # skip if already processed during this run
   if (NOT ${PREFIX}_FOUND)
     if (${PREFIX}_INCLUDE_DIR AND ${PREFIX}_LIBRARY)
-		 set(${PREFIX}_FOUND TRUE CACHE BOOL "Found ${PREFIX}")
-		 set(${PREFIX}_INCLUDE_DIRS ${${PREFIX}_INCLUDE_DIR} CACHE STRING "${PREFIX} include dirs")
-		 set(${PREFIX}_LIBRARIES ${${PREFIX}_LIBRARY} CACHE STRING "${PREFIX} libraries")
+      set(${PREFIX}_FOUND TRUE CACHE BOOL "Found ${PREFIX}")
+      set(${PREFIX}_INCLUDE_DIRS ${${PREFIX}_INCLUDE_DIR} CACHE STRING "${PREFIX} include dirs")
+      set(${PREFIX}_LIBRARIES ${${PREFIX}_LIBRARY} CACHE STRING "${PREFIX} libraries")
       if (NOT ${PREFIX}_FIND_QUIETLY)
         message(STATUS "Found ${PREFIX}: ${${PREFIX}_LIBRARIES}")
-		  SET(${PREFIX}_FIND_QUIETLY 1 CACHE BOOL "find quietly")
+	set(${PREFIX}_FIND_QUIETLY 1 CACHE BOOL "find quietly")
       endif ()
     else ()
       if (NOT ${PREFIX}_FIND_QUIETLY)
@@ -125,9 +160,9 @@ endmacro(findpkg_finish)
 
 
 # Slightly customised framework finder
-MACRO(findpkg_framework fwk)
-  IF(APPLE)
-    SET(${fwk}_FRAMEWORK_PATH
+macro(findpkg_framework fwk)
+  if(APPLE)
+    set(${fwk}_FRAMEWORK_PATH
       ${${fwk}_FRAMEWORK_SEARCH_PATH}
       ${CMAKE_FRAMEWORK_PATH}
       ~/Library/Frameworks
@@ -141,17 +176,24 @@ MACRO(findpkg_framework fwk)
       ${OGRE_PREFIX_PATH}/lib/Debug
       ${OGRE_PREFIX_BUILD}/lib/Release
       ${OGRE_PREFIX_BUILD}/lib/Debug
-    )
-    FOREACH(dir ${${fwk}_FRAMEWORK_PATH})
-      SET(fwkpath ${dir}/${fwk}.framework)
-      IF(EXISTS ${fwkpath})
-        SET(${fwk}_FRAMEWORK_INCLUDES ${${fwk}_FRAMEWORK_INCLUDES}
+      )
+    foreach(dir ${${fwk}_FRAMEWORK_PATH})
+      set(fwkpath ${dir}/${fwk}.framework)
+      if(EXISTS ${fwkpath})
+        set(${fwk}_FRAMEWORK_INCLUDES ${${fwk}_FRAMEWORK_INCLUDES}
           ${fwkpath}/Headers ${fwkpath}/PrivateHeaders)
-        SET(${fwk}_FRAMEWORK_PATH ${dir})
+        set(${fwk}_FRAMEWORK_PATH ${dir})
         if (NOT ${fwk}_LIBRARY_FWK)
-          SET(${fwk}_LIBRARY_FWK "-framework ${fwk}")
+          set(${fwk}_LIBRARY_FWK "-framework ${fwk}")
         endif ()
-      ENDIF(EXISTS ${fwkpath})
-    ENDFOREACH(dir)
-  ENDIF(APPLE)
-ENDMACRO(findpkg_framework)
+      endif(EXISTS ${fwkpath})
+    endforeach(dir)
+  endif(APPLE)
+endmacro(findpkg_framework)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

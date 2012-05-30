@@ -1,7 +1,7 @@
 /*                          L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ bu_list_new(void)
 {
     struct bu_list *new_list;
 
-    BU_GETSTRUCT(new_list, bu_list);
+    BU_GET(new_list, struct bu_list);
     BU_LIST_INIT(new_list);
 
     return new_list;

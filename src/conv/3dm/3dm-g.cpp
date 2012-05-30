@@ -1,7 +1,7 @@
 /*                           3 D M - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -176,7 +176,7 @@ void ProcessLayers(ONX_Model &model, ON_TextLog* dump) {
     for ( i=0; i < count; i++) {
 	const ON_Layer& layer = model.m_layer_table[i];
 	ON_wString lname = layer.LayerName();
-	strncpy(name, ON_String( lname ),255);
+	bu_strlcpy(name, ON_String( lname ), sizeof(name));
 	layer_name = name;
 	uuid = ON_UuidToString( layer.m_layer_id, uuidstr );
 	parent_uuid = ON_UuidToString( layer.m_parent_layer_id, uuidstr );
@@ -301,7 +301,7 @@ int main(int argc, char** argv) {
 		if (myAttributes.m_layer_index > 0) {
 		    const ON_Layer& layer = model.m_layer_table[myAttributes.m_layer_index];
 		    ON_wString layer_name = layer.LayerName();
-		    strncpy(name, ON_String( layer_name ),255);
+		    bu_strlcpy(name, ON_String( layer_name ), sizeof(name));
 		    genName = name;
 		    if (genName.length() <= 0) {
 			genName = "rhino";

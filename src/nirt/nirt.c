@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -125,26 +125,24 @@ void printusage(void)
 /**
  * List formats installed in global nirt data directory
  */
-void listformats(void)
+void
+listformats(void)
 {
-    int files, i;
-    char **filearray;
-    struct bu_vls nirtfilespath, nirtpathtofile, vlsfileline;
-    char suffix[5]=".nrt";
-    FILE *cfPtr;
+    size_t files, i;
+    char **filearray = NULL;
+    char suffix[6]="*.nrt";
+    FILE *cfPtr = NULL;
     int fnddesc;
 
-    bu_vls_init(&vlsfileline);
-    bu_vls_init(&nirtfilespath);
-    bu_vls_init(&nirtpathtofile);
+    struct bu_vls nirtfilespath = BU_VLS_INIT_ZERO;
+    struct bu_vls nirtpathtofile = BU_VLS_INIT_ZERO;
+    struct bu_vls vlsfileline = BU_VLS_INIT_ZERO;
+
+    /* get a nirt directory listing */
     bu_vls_printf(&nirtfilespath, "%s", bu_brlcad_data("nirt", 0));
+    files = bu_dir_list(bu_vls_addr(&nirtfilespath), suffix, &filearray);
 
-    files = bu_count_path(bu_vls_addr(&nirtfilespath), suffix);
-
-    filearray = (char **)bu_malloc(files*sizeof(char *), "filelist");
-
-    bu_list_path(bu_vls_addr(&nirtfilespath), suffix, filearray);
-
+    /* open every nirt file we find and extract the description */
     for (i = 0; i < files; i++) {
 	bu_vls_trunc(&nirtpathtofile, 0);
 	bu_vls_trunc(&vlsfileline, 0);
@@ -152,7 +150,7 @@ void listformats(void)
 	cfPtr = fopen(bu_vls_addr(&nirtpathtofile), "rb");
 	fnddesc = 0;
 	while (bu_vls_gets(&vlsfileline, cfPtr) && fnddesc == 0) {
-	    if (strncmp(bu_vls_addr(&vlsfileline), "# Description: ", 15) == 0) {
+	    if (bu_strncmp(bu_vls_addr(&vlsfileline), "# Description: ", 15) == 0) {
 		fnddesc = 1;
 		bu_log("%s\n", bu_vls_addr(&vlsfileline)+15);
 	    }
@@ -161,7 +159,8 @@ void listformats(void)
 	fclose(cfPtr);
     }
 
-    bu_free(filearray, "filelist");
+    /* release resources */
+    bu_free_argv(files, filearray);
     bu_vls_free(&vlsfileline);
     bu_vls_free(&nirtfilespath);
     bu_vls_free(&nirtpathtofile);
@@ -232,8 +231,7 @@ enqueue_script(struct bu_list *qp, int type, char *string)
 {
     struct script_rec *srp;
     FILE *cfPtr;
-    struct bu_vls str;
-    bu_vls_init(&str);
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     BU_CK_LIST_HEAD(qp);
 
@@ -582,9 +580,9 @@ main(int argc, char *argv[])
     local2base = rtip->rti_dbip->dbi_local2base;
     tmp_str = bu_units_string(local2base);
     if (tmp_str) {
-	bu_strlcpy(local_u_name, bu_units_string(local2base), sizeof(local_u_name));
+	bu_strlcpy(local_u_name, tmp_str, sizeof(local_u_name));
     } else {
-	strcpy(local_u_name, "Unknown units");
+	bu_strlcpy(local_u_name, "Unknown units", sizeof(local_u_name));
     }
 
     if (silent_flag != SILENT_YES) {

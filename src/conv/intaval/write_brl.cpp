@@ -1,7 +1,7 @@
 /*                  W R I T E _ B R L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,28 +62,23 @@ void addTriangle
 	    if (faces[i * 3 + 1] == b) {
 		if (faces[i * 3 + 2] == c)
 		    return;
-	    }
-	    else if (faces[i * 3 + 1] == c) {
+	    } else if (faces[i * 3 + 1] == c) {
 		if (faces[i * 3 + 2] == b)
 		    return;
 	    }
-	}
-	else if (faces[i * 3] == b) {
+	} else if (faces[i * 3] == b) {
 	    if (faces[i * 3 + 1] == a) {
 		if (faces[i * 3 + 2] == c)
 		    return;
-	    }
-	    else if (faces[i * 3 + 1] == c) {
+	    } else if (faces[i * 3 + 1] == c) {
 		if (faces[i * 3 + 2] == a)
 		    return;
 	    }
-	}
-	else if (faces[i * 3] == c) {
+	} else if (faces[i * 3] == c) {
 	    if (faces[i * 3 + 1] == b) {
 		if (faces[i * 3 + 2] == a)
 		    return;
-	    }
-	    else if (faces[i * 3 + 1] == a) {
+	    } else if (faces[i * 3 + 1] == a) {
 		if (faces[i * 3 + 2] == b)
 		    return;
 	    }
@@ -113,7 +108,10 @@ void smoothBot
 	    rt_bot_internal* bot = static_cast<rt_bot_internal*>(intern.idb_ptr);
 
 	    rt_bot_smooth(bot, name, wdbp->dbip, M_PI / 4.);
-		rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource);
+	
+	    if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
+		bu_bomb("Database write failure in smoothBot\n");
+	    }
 	}
 
 	rt_db_free_internal(&intern);
@@ -145,12 +143,13 @@ void writePipe
     for (size_t i = 1; i < form.npts; ++i) {
 	point_t pipePoint;
 
-	if (translate)
-	    VADD2(pipePoint, form.pt[i-1], form.tr_vec)
-	else
-	    VMOVE(pipePoint, form.pt[i-1])
+	if (translate) {
+          VADD2(pipePoint, form.pt[i-1], form.tr_vec);
+	} else {
+          VMOVE(pipePoint, form.pt[i-1]);
+        }
 
-	VSCALE(pipePoint, pipePoint, IntavalUnitInMm)
+	VSCALE(pipePoint, pipePoint, IntavalUnitInMm);
 
 	mk_add_pipe_pt(&pipePointList, pipePoint, radius, 2 * radius / 3., radius / 2.);
     }
@@ -177,16 +176,15 @@ void writeRectangularBox
     point_t min, max;
 
     if (translate) {
-	VADD2(min, form.pt[0], form.tr_vec)
-	VADD2(max, form.pt[1], form.tr_vec)
-    }
-    else {
-	VMOVE(min, form.pt[0])
-	VMOVE(max, form.pt[1])
+      VADD2(min, form.pt[0], form.tr_vec);
+      VADD2(max, form.pt[1], form.tr_vec);
+    } else {
+      VMOVE(min, form.pt[0]);
+      VMOVE(max, form.pt[1]);
     }
 
-    VSCALE(min, min, IntavalUnitInMm)
-    VSCALE(max, max, IntavalUnitInMm)
+    VSCALE(min, min, IntavalUnitInMm);
+    VSCALE(max, max, IntavalUnitInMm);
 
     sprintf(name, "s%lu.rpp", (long unsigned int)++rpp_counter);
     mk_rpp(wdbp, name, min, max);
@@ -212,8 +210,7 @@ void writeSolidBot
 	    vertices[i * 3 + 1] = (form.bot.vertices[i * 3 + 1] + form.tr_vec[1]) * IntavalUnitInMm;
 	    vertices[i * 3 + 2] = (form.bot.vertices[i * 3 + 2] + form.tr_vec[2]) * IntavalUnitInMm;
 	}
-    }
-    else {
+    } else {
 	for(size_t i = 0; i < form.bot.num_vertices; ++i) {
 	    vertices[i * 3]     = form.bot.vertices[i * 3] * IntavalUnitInMm;
 	    vertices[i * 3 + 1] = form.bot.vertices[i * 3 + 1] * IntavalUnitInMm;
@@ -256,55 +253,65 @@ void writeRingModeBox
 
     if (translate) {
 	for(size_t i = 0; i < form.npts; ++i)
-	    VADD2(outer[i], form.pt[i], form.tr_vec)
-    }
-    else {
-	for(size_t i = 0; i < form.npts; ++i)
-	    VMOVE(outer[i], form.pt[i])
+          VADD2(outer[i], form.pt[i], form.tr_vec);
+    } else {
+      for(size_t i = 0; i < form.npts; ++i) {
+          VMOVE(outer[i], form.pt[i]);
+      }
     }
 
-    for (size_t i1 = 0; i1 < form.npts; ++i1)
-	VSCALE(outer[i1], outer[i1], IntavalUnitInMm)
+    for (size_t i1 = 0; i1 < form.npts; ++i1) {
+      VSCALE(outer[i1], outer[i1], IntavalUnitInMm);
+    }
 
     // compute inner points
     vect_t inner[MAX_NPTS];
 
     for(size_t i2 = 0; i2 < form.npts; ++i2) {
 	vect_t a, b, c;
-	VMOVE(c, outer[(i2 - 1) % form.npts])
-	VMOVE(a, outer[i2])
-	VMOVE(b, outer[(i2 + 1) % form.npts])
+
+        VMOVE(a, outer[i2]);
+        if (i2 == 0) {
+          VMOVE(b, outer[i2 + 1]);
+          VMOVE(c, outer[form.npts-1]);
+        } else if (i2 == form.npts-1) {
+          VMOVE(b, outer[0]);
+          VMOVE(c, outer[i2 - 1]);
+        } else {
+          VMOVE(b, outer[i2 + 1]);
+          VMOVE(c, outer[i2 - 1]);
+        }
 
 	vect_t b_v, c_v;
-	VSUB2(b_v, b, a)
-	VSUB2(c_v, c, a)
+	VSUB2(b_v, b, a);
+	VSUB2(c_v, c, a);
 
 	vect_t n_v;
-	VCROSS(n_v, b_v, c_v)
+	VCROSS(n_v, b_v, c_v);
 
 	// with on b_v
 	vect_t width_b_v;
-	VCROSS(width_b_v, b_v, n_v)
+	VCROSS(width_b_v, b_v, n_v);
 
 	if (VDOT(width_b_v, c_v) < 0)
-	    VREVERSE(width_b_v, width_b_v)
+          VREVERSE(width_b_v, width_b_v);
 
-	VUNITIZE(width_b_v)
-	VSCALE(width_b_v, width_b_v, form.width * IntavalUnitInMm)
+	VUNITIZE(width_b_v);
+	VSCALE(width_b_v, width_b_v, form.width * IntavalUnitInMm);
 
 	// with on c_v
 	vect_t width_c_v;
-	VCROSS(width_c_v, c_v, n_v)
+	VCROSS(width_c_v, c_v, n_v);
 
 	if (VDOT(width_c_v, b_v) < 0)
-	    VREVERSE(width_c_v, width_c_v)
+          VREVERSE(width_c_v, width_c_v);
 
-	VUNITIZE(width_c_v)
-	VSCALE(width_c_v, width_c_v, form.width * IntavalUnitInMm)
+	VUNITIZE(width_c_v);
+	VSCALE(width_c_v, width_c_v, form.width * IntavalUnitInMm);
 
 	// intersection
-	VUNITIZE(b_v)
-	VUNITIZE(c_v)
+	VUNITIZE(b_v);
+	VUNITIZE(c_v);
 
 	vect_t cb_v;
 	VSUB2(cb_v, b_v, c_v);
@@ -312,19 +319,19 @@ void writeRingModeBox
 
 	if (!NEAR_ZERO(l_cb_v, VUNITIZE_TOL)) {
 	    vect_t width_cb_v;
-	    VSUB2(width_cb_v, width_b_v, width_c_v)
+	    VSUB2(width_cb_v, width_b_v, width_c_v);
 
 	    vect_t s_b_v;
-	    VSCALE(s_b_v, b_v, MAGNITUDE(width_cb_v) / l_cb_v)
+	    VSCALE(s_b_v, b_v, MAGNITUDE(width_cb_v) / l_cb_v);
 
 	    vect_t res;
-	    VADD2(res, a, width_c_v)
-	    VADD2(res, res, s_b_v)
+	    VADD2(res, a, width_c_v);
+	    VADD2(res, res, s_b_v);
 
-	    VMOVE(inner[i2], res)
-	}
-	else
-	    VMOVE(inner[i2], outer[i2])
+	    VMOVE(inner[i2], res);
+	} else {
+          VMOVE(inner[i2], outer[i2]);
+        }
     }
 
     // bot parameters
@@ -437,8 +444,7 @@ void writePlateBot
 	    vertices[i * 3 + 1] = (form.bot.vertices[i * 3 + 1] + form.tr_vec[1]) * IntavalUnitInMm;
 	    vertices[i * 3 + 2] = (form.bot.vertices[i * 3 + 2] + form.tr_vec[2]) * IntavalUnitInMm;
 	}
-    }
-    else {
+    } else {
 	for(size_t i = 0; i<form.bot.num_vertices; ++i) {
 	    vertices[i * 3]     = form.bot.vertices[i * 3] * IntavalUnitInMm;
 	    vertices[i * 3 + 1] = form.bot.vertices[i * 3 + 1] * IntavalUnitInMm;
@@ -485,15 +491,16 @@ void writeCone
     char   name[NAMELEN + 1];
     vect_t base, height;
 
-    if (translate)
-	VADD2(base, form.pt[0], form.tr_vec)
-    else
-	VMOVE(base, form.pt[0])
+    if (translate) {
+      VADD2(base, form.pt[0], form.tr_vec);
+    } else {
+      VMOVE(base, form.pt[0]);
+    }
 
     VSUB2(height, form.pt[1], form.pt[0]);
 
-    VSCALE(base, base, IntavalUnitInMm)
-    VSCALE(height, height, IntavalUnitInMm)
+    VSCALE(base, base, IntavalUnitInMm);
+    VSCALE(height, height, IntavalUnitInMm);
 
     fastf_t radius1 = form.radius1 * IntavalUnitInMm;
     fastf_t radius2 = form.radius2 * IntavalUnitInMm;
@@ -516,15 +523,16 @@ void writeCylinder
     char   name[NAMELEN + 1];
     vect_t base, height;
 
-    if (translate)
-	VADD2(base, form.pt[0], form.tr_vec)
-    else
-	VMOVE(base, form.pt[0])
+    if (translate) {
+      VADD2(base, form.pt[0], form.tr_vec);
+    } else {
+      VMOVE(base, form.pt[0]);
+    }
 
     VSUB2(height, form.pt[1], form.pt[0]);
 
-    VSCALE(base, base, IntavalUnitInMm)
-    VSCALE(height, height, IntavalUnitInMm)
+    VSCALE(base, base, IntavalUnitInMm);
+    VSCALE(height, height, IntavalUnitInMm);
 
     fastf_t radius = form.radius1 * IntavalUnitInMm;
 
@@ -547,28 +555,28 @@ void writeArb8
     point_t shuffle[8];
 
     if (translate) {
-	VADD2(shuffle[0], form.pt[0], form.tr_vec)
-	VADD2(shuffle[1], form.pt[7], form.tr_vec)
-	VADD2(shuffle[2], form.pt[3], form.tr_vec)
-	VADD2(shuffle[3], form.pt[1], form.tr_vec)
-	VADD2(shuffle[4], form.pt[6], form.tr_vec)
-	VADD2(shuffle[5], form.pt[5], form.tr_vec)
-	VADD2(shuffle[6], form.pt[4], form.tr_vec)
-	VADD2(shuffle[7], form.pt[2], form.tr_vec)
-    }
-    else {
-	VMOVE(shuffle[0], form.pt[0])
-	VMOVE(shuffle[1], form.pt[7])
-	VMOVE(shuffle[2], form.pt[3])
-	VMOVE(shuffle[3], form.pt[1])
-	VMOVE(shuffle[4], form.pt[6])
-	VMOVE(shuffle[5], form.pt[5])
-	VMOVE(shuffle[6], form.pt[4])
-	VMOVE(shuffle[7], form.pt[2])
+      VADD2(shuffle[0], form.pt[0], form.tr_vec);
+      VADD2(shuffle[1], form.pt[7], form.tr_vec);
+      VADD2(shuffle[2], form.pt[3], form.tr_vec);
+      VADD2(shuffle[3], form.pt[1], form.tr_vec);
+      VADD2(shuffle[4], form.pt[6], form.tr_vec);
+      VADD2(shuffle[5], form.pt[5], form.tr_vec);
+      VADD2(shuffle[6], form.pt[4], form.tr_vec);
+      VADD2(shuffle[7], form.pt[2], form.tr_vec);
+    } else {
+      VMOVE(shuffle[0], form.pt[0]);
+      VMOVE(shuffle[1], form.pt[7]);
+      VMOVE(shuffle[2], form.pt[3]);
+      VMOVE(shuffle[3], form.pt[1]);
+      VMOVE(shuffle[4], form.pt[6]);
+      VMOVE(shuffle[5], form.pt[5]);
+      VMOVE(shuffle[6], form.pt[4]);
+      VMOVE(shuffle[7], form.pt[2]);
     }
 
-    for (size_t i = 0; i < 8; ++i)
-	VSCALE(shuffle[i], shuffle[i], IntavalUnitInMm)
+    for (size_t i = 0; i < 8; ++i) {
+      VSCALE(shuffle[i], shuffle[i], IntavalUnitInMm);
+    }
 
     sprintf(name, "s%lu.arb8", (long unsigned)++arb8_counter);
     mk_arb8(wdbp, name, reinterpret_cast<fastf_t*>(shuffle));

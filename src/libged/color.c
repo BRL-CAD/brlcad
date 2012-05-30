@@ -1,7 +1,7 @@
 /*                         C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -172,6 +172,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     if (bu_fgets(line, sizeof (line), fp) == NULL ||
 	line[0] != hdr[0]) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Header line damaged, aborting\n", argv[0]);
+	(void)fclose(fp);
 	return GED_ERROR;
     }
 
@@ -195,7 +196,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "%s: Discarding %s\n", argv[0], line);
 		continue;
 	    }
-	    BU_GETSTRUCT(mp, mater);
+	    BU_GET(mp, struct mater);
 	    mp->mt_low = low;
 	    mp->mt_high = hi;
 	    mp->mt_r = r;
@@ -206,12 +207,10 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 	    color_putrec(gedp, mp);
 	}
     } else {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
 	/* free colors in rt_material_head */
 	rt_color_free();
-
-	bu_vls_init(&vls);
 
 	while (bu_fgets(line, sizeof (line), fp) != NULL) {
 	    int cnt;
@@ -235,7 +234,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     }
 
     (void)fclose(fp);
-    (void)unlink(tmpfil);
+    bu_file_delete(tmpfil);
 
     /* if there are drawables, update their colors */
     if (gedp->ged_gdp)
@@ -310,7 +309,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* construct the new color record */
-	BU_GETSTRUCT(newp, mater);
+	BU_GET(newp, struct mater);
 	newp->mt_low = atoi(argv[1]);
 	newp->mt_high = atoi(argv[2]);
 	newp->mt_r = atoi(argv[3]);
@@ -329,10 +328,10 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 	    mp = next_mater;
 	}
     } else {
-	struct bu_vls colors;
+	struct bu_vls colors = BU_VLS_INIT_ZERO;
 
 	/* construct the new color record */
-	BU_GETSTRUCT(newp, mater);
+	BU_GET(newp, struct mater);
 	newp->mt_low = atoi(argv[1]);
 	newp->mt_high = atoi(argv[2]);
 	newp->mt_r = atoi(argv[3]);
@@ -347,7 +346,6 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 	 * Gather color records from the in-memory list to build
 	 * the _GLOBAL objects regionid_colortable attribute.
 	 */
-	bu_vls_init(&colors);
 	rt_vls_color_map(&colors);
 
 	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colors), gedp->ged_wdbp->dbip);

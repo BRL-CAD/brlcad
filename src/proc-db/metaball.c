@@ -1,7 +1,7 @@
 /*                      M E T A B A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -120,7 +120,7 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
      * manually fill in with points from the other metaballs being
      * joined together.
      */
-    BU_GETSTRUCT(newmp, rt_metaball_internal);
+    BU_GET(newmp, struct rt_metaball_internal);
     newmp->magic = RT_METABALL_INTERNAL_MAGIC;
     newmp->threshold = 1.0;
     newmp->method = 1;
@@ -138,6 +138,7 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
 	dp = db_lookup(dbip, av[i], 1);
 	if (!dp) {
 	    bu_log("Unable to find %s\n", av[i]);
+	    continue;
 	}
 
 	/* load the existing database object */
@@ -253,7 +254,7 @@ main(int argc, char *argv[])
 	bu_exit(EXIT_FAILURE, "ERROR: count must be greater than zero");
     }
 
-    if (bu_file_exists(outfile)) {
+    if (bu_file_exists(outfile, NULL)) {
 	bu_exit(EXIT_FAILURE, "ERROR: %s already exists.  Remove file and try again.", outfile);
     }
 

@@ -1,7 +1,7 @@
 /*                          T U B E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -388,7 +388,7 @@ read_frame(FILE *fp)
 	    fprintf(stderr, "EOF?\n");
 	    return -1;
 	}
-	if (strncmp(buf, "TIME", strlen("TIME")) != 0)  continue;
+	if (bu_strncmp(buf, "TIME", strlen("TIME")) != 0)  continue;
 	if (sscanf(buf, "TIME %f", &last_read_time) < 1) {
 	    fprintf(stderr, "bad TIME\n");
 	    return -1;
@@ -429,6 +429,10 @@ read_frame(FILE *fp)
 	    EXAGERATION / (0.02 * inches2mm);
     }
 /* Extrapolate data for the right side -- end of muzzle */
+    if( nsamples < 2 ) {
+	bu_log("Insufficient number of samples for extrapolation. Aborting\n");
+	return -1;
+    }
     sample[nsamples][X] = dxtab[nsamples] + dx;	/* reuse last displacement */
     sample[nsamples][Y] = sample[nsamples-1][Y] * 2 - sample[nsamples-2][Y];
     sample[nsamples][Z] = sample[nsamples-1][Z] * 2 - sample[nsamples-2][Z];

@@ -1,7 +1,7 @@
 /*               G E T _ I G E S _ V E R T E X . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2011 United States Government as represented by
+ * Copyright (c) 1995-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ Get_iges_vertex(struct vertex *v)
     while (vert_list) {
 	int vert_no;
 
-	for (vert_no=0; vert_no < vert_list->no_of_verts; vert_no++) {
+	for (vert_no = 0; vert_no < vert_list->no_of_verts; vert_no++) {
 	    if (vert_list->i_verts[vert_no].v == v)
 		return &(vert_list->i_verts[vert_no]);
 	}

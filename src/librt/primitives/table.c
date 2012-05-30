@@ -1,7 +1,7 @@
 /*                         T A B L E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2011 United States Government as represented by
+ * Copyright (c) 1989-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1745,6 +1745,43 @@ const struct rt_functab rt_functab[] = {
     },
 
     {
+	/* 42 */
+	RT_FUNCTAB_MAGIC, "ID_ANNOTATION", "anno",
+	0,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	sizeof(struct rt_annotation_internal),
+	RT_ANNOTATION_INTERNAL_MAGIC,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+    },
+
+    {
 	/* this entry for sanity only */
 	0L, ">ID_MAXIMUM", ">id_max",
 	0,
@@ -1922,7 +1959,7 @@ rt_get_functab_by_label(const char *label)
     register const struct rt_functab *ftp;
 
     for (ftp = rt_functab; ftp->magic != 0; ftp++) {
-	if (strncmp(label, ftp->ft_label, 8) == 0)
+	if (bu_strncmp(label, ftp->ft_label, 8) == 0)
 	    return ftp;
     }
     return NULL;

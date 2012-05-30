@@ -1,7 +1,7 @@
 /*                         G E T _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,6 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
     size_t i;
     size_t node_count;
     size_t actual_count;
-    struct bu_vls vls;
     static const char *usage = "comb";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -64,7 +63,6 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    bu_vls_init(&vls);
 
     dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
 
@@ -179,7 +177,7 @@ _ged_vls_print_matrix(struct bu_vls *vls, matp_t matrix)
     if (bn_mat_is_identity(matrix))
 	return;
 
-    for (k=0; k<16; k++) {
+    for (k = 0; k < 16; k++) {
 	sprintf(buf, "%g", matrix[k]);
 	tmp = atof(buf);
 	if (ZERO(tmp - matrix[k]))

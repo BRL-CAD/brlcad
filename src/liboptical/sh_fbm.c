@@ -1,7 +1,7 @@
 /*                        S H _ F B M . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2011 United States Government as represented by
+ * Copyright (c) 1997-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -98,7 +98,7 @@ fbm_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
     register struct fbm_specific *fbm;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(fbm, fbm_specific);
+    BU_GET(fbm, struct fbm_specific);
     *dpp = fbm;
 
     memcpy(fbm, &fbm_defaults, sizeof(struct fbm_specific));

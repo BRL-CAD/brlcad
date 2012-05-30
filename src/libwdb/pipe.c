@@ -1,7 +1,7 @@
 /*                          P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ mk_particle(struct rt_wdb *fp, const char *name, fastf_t *vertex, fastf_t *heigh
 {
     struct rt_part_internal *part;
 
-    BU_GETSTRUCT(part, rt_part_internal);
+    BU_GET(part, struct rt_part_internal);
     part->part_magic = RT_PART_INTERNAL_MAGIC;
     VMOVE(part->part_V, vertex);
     VMOVE(part->part_H, height);
@@ -89,7 +89,7 @@ mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
 	return 1;
     }
 
-    BU_GETSTRUCT(pipep, rt_pipe_internal);
+    BU_GET(pipep, struct rt_pipe_internal);
     pipep->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
     BU_LIST_INIT(&pipep->pipe_segs_head);
     /* linked list from caller */
@@ -131,17 +131,17 @@ mk_add_pipe_pt(
     double id,
     double bendradius)
 {
-    struct wdb_pipept *new;
+    struct wdb_pipept *newpp;
 
     BU_CKMAG(headp, WDB_PIPESEG_MAGIC, "pipe point");
 
-    BU_GETSTRUCT(new, wdb_pipept);
-    new->l.magic = WDB_PIPESEG_MAGIC;
-    new->pp_od = od;
-    new->pp_id = id;
-    new->pp_bendradius = bendradius;
-    VMOVE(new->pp_coord, coord);
-    BU_LIST_INSERT(headp, &new->l);
+    BU_GET(newpp, struct wdb_pipept);
+    newpp->l.magic = WDB_PIPESEG_MAGIC;
+    newpp->pp_od = od;
+    newpp->pp_id = id;
+    newpp->pp_bendradius = bendradius;
+    VMOVE(newpp->pp_coord, coord);
+    BU_LIST_INSERT(headp, &newpp->l);
 }
 
 

@@ -48,7 +48,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-l</option></term>
+      <term><option>-L</option></term>
       <listitem>
 	<para>
 	  Instructs the coil tool to create a "left handed" coil (default
@@ -116,6 +116,17 @@
       </listitem>
     </varlistentry>
     <varlistentry>
+      <term><option>-l length</option></term>
+      <listitem>
+	<para>
+		Clamp the length of a coil to the specified value.  This option is currently limited - it will
+		work only for uncapped coils and the helix angle must be zero.  To fit length, pitch will be
+		adjusted first.  If pitch adjustments aren't enough, turns will be removed.  If both of those
+		variables can't be adjusted to satisfy the length, wire diameter will be adjusted.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
       <term><option>-S number_of_turns,outer_diameter,wire_diameter,helix_angle,pitch,winding_direction</option></term>
       <listitem>
 	<para>
@@ -175,7 +186,7 @@
 <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
   
   <para>
-    This software is Copyright (c) 2009-2011 United States Government as
+    This software is Copyright (c) 2009-2012 United States Government as
     represented by the U.S. Army Research Laboratory. All rights reserved.
   </para>
 </refsection>

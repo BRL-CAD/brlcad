@@ -1,7 +1,7 @@
 /*                           G E D . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,12 +43,12 @@
 __BEGIN_DECLS
 
 #ifndef GED_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef GED_EXPORT_DLL
-#      define GED_EXPORT __declspec(dllexport)
-#    else
-#      define GED_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(GED_DLL_EXPORTS) && defined(GED_DLL_IMPORTS)
+#    error "Only GED_DLL_EXPORTS or GED_DLL_IMPORTS can be defined, not both."
+#  elif defined(GED_DLL_EXPORTS)
+#    define GED_EXPORT __declspec(dllexport)
+#  elif defined(GED_DLL_IMPORTS)
+#    define GED_EXPORT __declspec(dllimport)
 #  else
 #    define GED_EXPORT
 #  endif
@@ -77,13 +77,13 @@ __BEGIN_DECLS
 #define GED_DRAWABLE_NULL ((struct ged_drawable *)0)
 #define GED_VIEW_NULL ((struct ged_view *)0)
 #define GED_DM_VIEW_NULL ((struct ged_dm_view *)0)
-#define GED_OBJ_NULL ((struct ged_obj *)0)
 
-#define GED_VIEW_OBJ_NULL ((struct view_obj *)0)
 #define GED_RESULT_NULL ((void *)0)
 
 #define GED_FUNC_PTR_NULL ((ged_func_ptr)0)
 #define GED_REFRESH_CALLBACK_PTR_NULL ((ged_refresh_callback_ptr)0)
+#define GED_CREATE_VLIST_CALLBACK_PTR_NULL ((ged_create_vlist_callback_ptr)0)
+#define GED_FREE_VLIST_CALLBACK_PTR_NULL ((ged_free_vlist_callback_ptr)0)
 
 /**
  * S E M A P H O R E S
@@ -334,6 +334,46 @@ struct ged_data_line_state {
     point_t   *gdls_points;		/* in model coordinates */
 };
 
+typedef enum { gctUnion, gctDifference, gctIntersection, gctXor } GedClipType;
+
+typedef struct {
+    size_t    gpc_num_points;
+    point_t   *gpc_point;		/* in model coordinates */
+} ged_poly_contour;
+
+typedef struct {
+    size_t		gp_num_contours;
+    int			gp_color[3];
+    int			gp_line_width;    	/* in pixels */
+    int			gp_line_style;
+    int			*gp_hole;
+    ged_poly_contour	*gp_contour;
+} ged_polygon;
+
+typedef struct {
+    size_t	gp_num_polygons;
+    ged_polygon	*gp_polygon;
+} ged_polygons;
+
+typedef struct {
+    int			gdps_draw;
+    int			gdps_color[3];
+    int			gdps_line_width;    	/* in pixels */
+    int			gdps_line_style;
+    int			gdps_cflag;             /* contour flag */
+    size_t		gdps_target_polygon_i;
+    size_t		gdps_curr_polygon_i;
+    size_t		gdps_curr_point_i;
+    point_t		gdps_prev_point;
+    GedClipType		gdps_clip_type;
+    fastf_t		gdps_scale;
+    point_t		gdps_origin;
+    mat_t		gdps_rotation;
+    mat_t		gdps_view2model;
+    mat_t		gdps_model2view;
+    ged_polygons	gdps_polygons;
+} ged_data_polygon_state;
+
 struct ged_grid_state {
     int		ggs_draw;		/* draw grid */
     int		ggs_snap;		/* snap to grid */
@@ -473,10 +513,12 @@ struct ged_view {
     struct ged_data_axes_state 	gv_data_axes;
     struct ged_data_label_state gv_data_labels;
     struct ged_data_line_state  gv_data_lines;
+    ged_data_polygon_state 	gv_data_polygons;
     struct ged_data_arrow_state	gv_sdata_arrows;
     struct ged_data_axes_state 	gv_sdata_axes;
     struct ged_data_label_state gv_sdata_labels;
     struct ged_data_line_state 	gv_sdata_lines;
+    ged_data_polygon_state 	gv_sdata_polygons;
     struct ged_grid_state 	gv_grid;
     struct ged_other_state 	gv_center_dot;
     struct ged_other_state 	gv_prim_labels;
@@ -500,13 +542,15 @@ struct ged {
 
     struct ged_drawable		*ged_gdp;
     struct ged_view		*ged_gvp;
-    struct fbserv_obj		*ged_fbsp;
+    struct fbserv_obj		*ged_fbsp; /* FIXME: this shouldn't be here */
 
     void			*ged_dmp;
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
     void			(*ged_refresh_handler)();	/**< @brief  function for handling refresh requests */
     void			(*ged_output_handler)();	/**< @brief  function for handling output */
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
+    void			(*ged_create_vlist_callback)();	/**< @brief  function to call after creating a vlist */
+    void			(*ged_free_vlist_callback)();	/**< @brief  function to call after freeing a vlist */
 
     /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
     int 			ged_internal_call;
@@ -520,6 +564,8 @@ struct ged {
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
 typedef void (*ged_refresh_callback_ptr)(void *);
+typedef void (*ged_create_vlist_callback_ptr)(struct solid *);
+typedef void (*ged_free_vlist_callback_ptr)(unsigned int, int);
 
 
 /**
@@ -537,59 +583,6 @@ struct ged_cmd {
     int (*exec)(struct ged *, int, const char *[]);
 };
 
-
-/**
- * V I E W _ O B J
- *
- * A view object maintains state for controlling a view.
- */
-struct view_obj {
-    struct bu_list 	l;
-    struct bu_vls	vo_name;		/**< @brief  view object name/cmd */
-    fastf_t		vo_scale;
-    fastf_t		vo_size;		/**< @brief  2.0 * scale */
-    fastf_t		vo_invSize;		/**< @brief  1.0 / size */
-    fastf_t		vo_perspective;		/**< @brief  perspective angle */
-    fastf_t		vo_local2base;		/**< @brief  scale local units to base units (i.e. mm) */
-    fastf_t		vo_base2local;		/**< @brief  scale base units (i.e. mm) to local units */
-    vect_t		vo_aet;
-    vect_t		vo_eye_pos;		/**< @brief  eye position */
-    vect_t		vo_keypoint;
-    char		vo_coord;		/**< @brief  coordinate system */
-    char		vo_rotate_about;	/**< @brief  indicates what point rotations are about */
-    mat_t		vo_rotation;
-    mat_t		vo_center;
-    mat_t		vo_model2view;
-    mat_t		vo_pmodel2view;
-    mat_t		vo_view2model;
-    mat_t		vo_pmat;		/**< @brief  perspective matrix */
-    struct bu_observer	vo_observers;
-    void 		(*vo_callback)();	/**< @brief  called in vo_update with vo_clientData and vop */
-    genptr_t		vo_clientData;		/**< @brief  passed to vo_callback */
-    int			vo_zclip;
-};
-
-struct ged_dm_view {
-    struct bu_list		l;
-    struct bu_vls		gdv_callback;
-    struct bu_vls		gdv_name;
-    struct ged_view		*gdv_view;
-    struct dm			*gdv_dmp;
-    struct fbserv_obj		gdv_fbs;
-    struct ged_obj		*gdv_gop; /* Pointer back to its ged object */
-};
-
-struct ged_obj {
-    struct ged		*go_gedp;
-    struct ged_dm_view	go_head_views;
-    struct bu_vls	go_name;
-    struct bu_observer	go_observers;
-    struct bu_vls	go_more_args_callback;
-    struct bu_vls	go_rt_end_callback;
-    struct bu_vls	*go_prim_label_list;
-    int			go_prim_label_list_size;
-    int			go_refresh_on;
-};
 
 /* defined in adc.c */
 GED_EXPORT extern void ged_calc_adc_pos(struct ged_view *gvp);
@@ -633,12 +626,6 @@ GED_EXPORT extern struct ged *ged_open(const char *dbtype,
 				       int existing_only);
 GED_EXPORT extern void ged_view_init(struct ged_view *gvp);
 
-/* defined in go_refresh.c */
-GED_EXPORT extern void go_refresh(struct ged_obj *gop,
-				  struct ged_dm_view *gdvp);
-GED_EXPORT extern void go_refresh_draw(struct ged_obj *gop,
-				       struct ged_dm_view *gdvp);
-
 /* defined in grid.c */
 GED_EXPORT extern void ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy);
 
@@ -655,463 +642,6 @@ GED_EXPORT extern int ged_build_tops(struct ged	*gedp,
 				     char		**start,
 				     char		**end);
 GED_EXPORT extern size_t ged_count_tops(struct ged *gedp);
-
-
-/* FIXME: wdb routines do not belong in libged.  need to be
- * refactored, renamed, or removed.
- */
-/* defined in wdb_comb_std.c */
-GED_EXPORT extern int wdb_comb_std_cmd(struct rt_wdb	*gedp,
-				       Tcl_Interp	*interp,
-				       int		argc,
-				       char 		**argv);
-
-/* FIXME: wdb routines do not belong in libged.  need to be
- * refactored, renamed, or removed.
- */
-/* defined in wdb_obj.c */
-GED_EXPORT extern int Wdb_Init(Tcl_Interp *interp);
-
-GED_EXPORT extern int wdb_create_cmd(Tcl_Interp	*interp,
-				     struct rt_wdb *wdbp,
-				     const char	*oname);
-GED_EXPORT extern void wdb_deleteProc(ClientData clientData);
-GED_EXPORT extern int	wdb_get_tcl(ClientData clientData,
-				    Tcl_Interp *interp,
-				    int argc, char *argv[]);
-GED_EXPORT extern int	wdb_init_obj(Tcl_Interp *interp,
-				     struct rt_wdb *wdbp,
-				     const char *oname);
-GED_EXPORT extern struct db_i	*wdb_prep_dbip(Tcl_Interp *interp,
-					       const char *filename);
-GED_EXPORT extern int	wdb_bot_face_sort_cmd(struct rt_wdb *wdbp,
-					      Tcl_Interp *interp,
-					      int argc, char *argv[]);
-GED_EXPORT extern int	wdb_bot_decimate_cmd(struct rt_wdb *wdbp,
-					     Tcl_Interp *interp,
-					     int argc,
-					     char *argv[]);
-GED_EXPORT extern int	wdb_close_cmd(struct rt_wdb *wdbp,
-				      Tcl_Interp *interp,
-				      int argc,
-				      char *argv[]);
-GED_EXPORT extern int	wdb_reopen_cmd(struct rt_wdb *wdbp,
-				       Tcl_Interp *interp,
-				       int argc,
-				       char *argv[]);
-GED_EXPORT extern int	wdb_match_cmd(struct rt_wdb *wdbp,
-				      Tcl_Interp *interp,
-				      int argc,
-				      char *argv[]);
-GED_EXPORT extern int	wdb_get_cmd(struct rt_wdb *wdbp,
-				    Tcl_Interp *interp,
-				    int argc,
-				    char *argv[]);
-GED_EXPORT extern int	wdb_put_cmd(struct rt_wdb *wdbp,
-				    Tcl_Interp *interp,
-				    int argc,
-				    const char *argv[]);
-GED_EXPORT extern int	wdb_adjust_cmd(struct rt_wdb *wdbp,
-				       Tcl_Interp *interp,
-				       int argc,
-				       const char *argv[]);
-GED_EXPORT extern int	wdb_form_cmd(struct rt_wdb *wdbp,
-				     Tcl_Interp *interp,
-				     int argc,
-				     char *argv[]);
-GED_EXPORT extern int	wdb_tops_cmd(struct rt_wdb *wdbp,
-				     Tcl_Interp *interp,
-				     int argc,
-				     char *argv[]);
-GED_EXPORT extern int	wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
-					    Tcl_Interp *interp,
-					    int argc,
-					    const char *argv[]);
-GED_EXPORT extern int	wdb_dump_cmd(struct rt_wdb *wdbp,
-				     Tcl_Interp *interp,
-				     int argc,
-				     char *argv[]);
-GED_EXPORT extern int	wdb_dbip_cmd(struct rt_wdb *wdbp,
-				     Tcl_Interp *interp,
-				     int argc,
-				     char *argv[]);
-GED_EXPORT extern int	wdb_ls_cmd(struct rt_wdb *wdbp,
-				   Tcl_Interp *interp,
-				   int argc,
-				   char *argv[]);
-GED_EXPORT extern int	wdb_list_cmd(struct rt_wdb *wdbp,
-				     Tcl_Interp *interp,
-				     int argc,
-				     char *argv[]);
-GED_EXPORT extern int	wdb_lt_cmd(struct rt_wdb *wdbp,
-				   Tcl_Interp *interp,
-				   int argc,
-				   char *argv[]);
-GED_EXPORT extern int	wdb_pathlist_cmd(struct rt_wdb *wdbp,
-					 Tcl_Interp *interp,
-					 int argc,
-					 char *argv[]);
-GED_EXPORT extern int	wdb_pathsum_cmd(struct rt_wdb *wdbp,
-					Tcl_Interp *interp,
-					int argc,
-					char *argv[]);
-GED_EXPORT extern int	wdb_expand_cmd(struct rt_wdb *wdbp,
-				       Tcl_Interp *interp,
-				       int argc,
-				       char *argv[]);
-GED_EXPORT extern int	wdb_kill_cmd(struct rt_wdb *wdbp,
-				     Tcl_Interp *interp,
-				     int argc,
-				     char *argv[]);
-GED_EXPORT extern int	wdb_killall_cmd(struct rt_wdb *wdbp,
-					Tcl_Interp *interp,
-					int argc,
-					char *argv[]);
-GED_EXPORT extern int	wdb_killtree_cmd(struct rt_wdb *wdbp,
-					 Tcl_Interp *interp,
-					 int argc,
-					 char *argv[]);
-GED_EXPORT extern int	wdb_copy_cmd(struct rt_wdb *wdbp,
-				     Tcl_Interp *interp,
-				     int argc,
-				     char *argv[]);
-GED_EXPORT extern int	wdb_move_cmd(struct rt_wdb *wdbp,
-				     Tcl_Interp *interp,
-				     int argc,
-				     char *argv[]);
-GED_EXPORT extern int	wdb_move_all_cmd(struct rt_wdb *wdbp,
-					 Tcl_Interp *interp,
-					 int argc,
-					 char *argv[]);
-GED_EXPORT extern int	wdb_concat_cmd(struct rt_wdb *wdbp,
-				       Tcl_Interp *interp,
-				       int argc,
-				       char *argv[]);
-GED_EXPORT extern int	wdb_dup_cmd(struct rt_wdb *wdbp,
-				    Tcl_Interp *interp,
-				    int argc,
-				    char *argv[]);
-GED_EXPORT extern int	wdb_group_cmd(struct rt_wdb *wdbp,
-				      Tcl_Interp *interp,
-				      int argc,
-				      char *argv[]);
-GED_EXPORT extern int	wdb_remove_cmd(struct rt_wdb *wdbp,
-				       Tcl_Interp *interp,
-				       int argc,
-				       char *argv[]);
-GED_EXPORT extern int	wdb_stub_cmd(struct rt_wdb *wdbp,
-				     Tcl_Interp *interp,
-				     int argc,
-				     const char *argv[]);
-GED_EXPORT extern int	wdb_region_cmd(struct rt_wdb *wdbp,
-				       Tcl_Interp *interp,
-				       int argc,
-				       char *argv[]);
-GED_EXPORT extern int	wdb_comb_cmd(struct rt_wdb *wdbp,
-				     Tcl_Interp *interp,
-				     int argc,
-				     char *argv[]);
-GED_EXPORT extern int	wdb_find_cmd(struct rt_wdb *wdbp,
-				     Tcl_Interp *interp,
-				     int argc,
-				     char *argv[]);
-GED_EXPORT extern int	wdb_which_cmd(struct rt_wdb *wdbp,
-				      Tcl_Interp *interp,
-				      int argc,
-				      char *argv[]);
-GED_EXPORT extern int	wdb_title_cmd(struct rt_wdb *wdbp,
-				      Tcl_Interp *interp,
-				      int argc,
-				      char *argv[]);
-GED_EXPORT extern int	wdb_color_cmd(struct rt_wdb *wdbp,
-				      Tcl_Interp *interp,
-				      int argc,
-				      char *argv[]);
-GED_EXPORT extern int	wdb_prcolor_cmd(struct rt_wdb *wdbp,
-					Tcl_Interp *interp,
-					int argc,
-					char *argv[]);
-GED_EXPORT extern int	wdb_tol_cmd(struct rt_wdb *wdbp,
-				    Tcl_Interp *interp,
-				    int argc,
-				    char *argv[]);
-GED_EXPORT extern int	wdb_push_cmd(struct rt_wdb *wdbp,
-				     Tcl_Interp *interp,
-				     int argc,
-				     char *argv[]);
-GED_EXPORT extern int	wdb_whatid_cmd(struct rt_wdb *wdbp,
-				       Tcl_Interp *interp,
-				       int argc,
-				       char *argv[]);
-GED_EXPORT extern int	wdb_keep_cmd(struct rt_wdb *wdbp,
-				     Tcl_Interp *interp,
-				     int argc,
-				     char *argv[]);
-GED_EXPORT extern int	wdb_cat_cmd(struct rt_wdb *wdbp,
-				    Tcl_Interp *interp,
-				    int argc,
-				    char *argv[]);
-GED_EXPORT extern int	wdb_instance_cmd(struct rt_wdb *wdbp,
-					 Tcl_Interp *interp,
-					 int argc,
-					 char *argv[]);
-GED_EXPORT extern int	wdb_observer_cmd(struct rt_wdb *wdbp,
-					 Tcl_Interp *interp,
-					 int argc,
-					 char *argv[]);
-GED_EXPORT extern int	wdb_make_bb_cmd(struct rt_wdb *wdbp,
-					Tcl_Interp *interp,
-					int argc,
-					char *argv[]);
-GED_EXPORT extern int	wdb_units_cmd(struct rt_wdb *wdbp,
-				      Tcl_Interp *interp,
-				      int argc,
-				      char *argv[]);
-GED_EXPORT extern int	wdb_hide_cmd(struct rt_wdb *wdbp,
-				     Tcl_Interp *interp,
-				     int argc,
-				     char *argv[]);
-GED_EXPORT extern int	wdb_unhide_cmd(struct rt_wdb *wdbp,
-				       Tcl_Interp *interp,
-				       int argc,
-				       char *argv[]);
-GED_EXPORT extern int	wdb_attr_cmd(struct rt_wdb *wdbp,
-				     Tcl_Interp *interp,
-				     int argc,
-				     char *argv[]);
-GED_EXPORT extern int	wdb_summary_cmd(struct rt_wdb *wdbp,
-					Tcl_Interp *interp,
-					int argc,
-					char *argv[]);
-GED_EXPORT extern int	wdb_comb_std_cmd(struct rt_wdb *wdbp,
-					 Tcl_Interp *interp,
-					 int argc,
-					 char *argv[]);
-GED_EXPORT extern int	wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
-					     Tcl_Interp *interp,
-					     int argc,
-					     char *argv[]);
-GED_EXPORT extern int	wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
-					     Tcl_Interp *interp,
-					     int argc,
-					     char *argv[]);
-GED_EXPORT extern int	wdb_shells_cmd(struct rt_wdb *wdbp,
-				       Tcl_Interp *interp,
-				       int argc,
-				       char *argv[]);
-GED_EXPORT extern int	wdb_xpush_cmd(struct rt_wdb *wdbp,
-				      Tcl_Interp *interp,
-				      int argc,
-				      char *argv[]);
-GED_EXPORT extern int	wdb_showmats_cmd(struct rt_wdb *wdbp,
-					 Tcl_Interp *interp,
-					 int argc,
-					 char *argv[]);
-GED_EXPORT extern int	wdb_copyeval_cmd(struct rt_wdb *wdbp,
-					 Tcl_Interp *interp,
-					 int argc,
-					 char *argv[]);
-GED_EXPORT extern int	wdb_version_cmd(struct rt_wdb *wdbp,
-					Tcl_Interp *interp,
-					int argc,
-					char *argv[]);
-GED_EXPORT extern int	wdb_bo_cmd(struct rt_wdb *wdbp,
-				   Tcl_Interp *interp,
-				   int argc,
-				   char *argv[]);
-GED_EXPORT extern int	wdb_track_cmd(struct rt_wdb *wdbp,
-				      Tcl_Interp *interp,
-				      int argc,
-				      char *argv[]);
-GED_EXPORT extern int wdb_bot_smooth_cmd(struct rt_wdb *wdbp,
-					 Tcl_Interp *interp,
-					 int argc,
-					 char *argv[]);
-GED_EXPORT extern int	wdb_importFg4Section_cmd(struct rt_wdb *wdbp,
-						 Tcl_Interp *interp,
-						 int argc,
-						 char *argv[]);
-
-
-
-/* FIXME: vo routines do not belong in libged.  need to be refactored,
- * renamed, or removed.
- */
-/* defined in view_obj.c */
-GED_EXPORT extern struct view_obj HeadViewObj;		/**< @brief  head of view object list */
-GED_EXPORT extern int Vo_Init(Tcl_Interp *interp);
-GED_EXPORT extern struct view_obj *vo_open_cmd(const char *oname);
-GED_EXPORT extern void vo_center(struct view_obj *vop,
-				 Tcl_Interp *interp,
-				 point_t center);
-GED_EXPORT extern int	vo_center_cmd(struct view_obj *vop,
-				      Tcl_Interp *interp,
-				      int argc,
-				      char *argv[]);
-GED_EXPORT extern void vo_size(struct view_obj *vop,
-			       Tcl_Interp *interp,
-			       fastf_t size);
-GED_EXPORT extern int	vo_size_cmd(struct view_obj *vop,
-				    Tcl_Interp *interp,
-				    int argc,
-				    char *argv[]);
-GED_EXPORT extern int	vo_invSize_cmd(struct view_obj *vop,
-				       Tcl_Interp *interp,
-				       int argc,
-				       char *argv[]);
-GED_EXPORT extern void vo_mat_aet(struct view_obj *vop);
-GED_EXPORT extern int	vo_zoom(struct view_obj *vop,
-				Tcl_Interp *interp,
-				fastf_t sf);
-GED_EXPORT extern int	vo_zoom_cmd(struct view_obj *vop,
-				    Tcl_Interp *interp,
-				    int argc, char *argv[]);
-GED_EXPORT extern int	vo_orientation_cmd(struct view_obj *vop,
-					   Tcl_Interp *interp,
-					   int argc,
-					   char *argv[]);
-GED_EXPORT extern int	vo_lookat_cmd(struct view_obj *vop,
-				      Tcl_Interp *interp,
-				      int argc,
-				      char *argv[]);
-GED_EXPORT extern void vo_setview(struct view_obj *vop,
-				  Tcl_Interp *interp,
-				  vect_t rvec);
-GED_EXPORT extern int	vo_setview_cmd(struct view_obj *vop,
-				       Tcl_Interp *interp,
-				       int argc,
-				       char *argv[]);
-GED_EXPORT extern int	vo_eye_cmd(struct view_obj *vop,
-				   Tcl_Interp *interp,
-				   int argc,
-				   char *argv[]);
-GED_EXPORT extern int	vo_eye_pos_cmd(struct view_obj *vop,
-				       Tcl_Interp *interp,
-				       int argc,
-				       char *argv[]);
-GED_EXPORT extern int	vo_pmat_cmd(struct view_obj *vop,
-				    Tcl_Interp *interp,
-				    int argc,
-				    char *argv[]);
-GED_EXPORT extern int	vo_perspective_cmd(struct view_obj *vop,
-					   Tcl_Interp *interp,
-					   int argc,
-					   char *argv[]);
-GED_EXPORT extern void vo_update(struct view_obj *vop,
-				 Tcl_Interp *interp,
-				 int oflag);
-GED_EXPORT extern int	vo_aet_cmd(struct view_obj *vop,
-				   Tcl_Interp *interp,
-				   int argc,
-				   char *argv[]);
-GED_EXPORT extern int	vo_rmat_cmd(struct view_obj *vop,
-				    Tcl_Interp *interp,
-				    int argc,
-				    char *argv[]);
-GED_EXPORT extern int	vo_model2view_cmd(struct view_obj *vop,
-					  Tcl_Interp *interp,
-					  int argc,
-					  char *argv[]);
-GED_EXPORT extern int	vo_pmodel2view_cmd(struct view_obj *vop,
-					   Tcl_Interp *interp,
-					   int argc,
-					   char *argv[]);
-GED_EXPORT extern int	vo_view2model_cmd(struct view_obj *vop,
-					  Tcl_Interp *interp,
-					  int argc,
-					  char *argv[]);
-GED_EXPORT extern int	vo_pov_cmd(struct view_obj *vop,
-				   Tcl_Interp *interp,
-				   int argc,
-				   char *argv[]);
-GED_EXPORT extern int	vo_units_cmd(struct view_obj *vop,
-				     Tcl_Interp *interp,
-				     int argc,
-				     char *argv[]);
-GED_EXPORT extern int	vo_base2local_cmd(struct view_obj *vop,
-					  Tcl_Interp *interp,
-					  int argc,
-					  char *argv[]);
-GED_EXPORT extern int	vo_local2base_cmd(struct view_obj *vop,
-					  Tcl_Interp *interp,
-					  int argc,
-					  char *argv[]);
-GED_EXPORT extern int	vo_rot(struct view_obj *vop,
-			       Tcl_Interp *interp,
-			       char coord,
-			       char origin,
-			       mat_t rmat,
-			       int (*func)());
-GED_EXPORT extern int	vo_rot_cmd(struct view_obj *vop,
-				   Tcl_Interp *interp,
-				   int argc, char *argv[],
-				   int (*func)());
-GED_EXPORT extern int	vo_arot_cmd(struct view_obj *vop,
-				    Tcl_Interp *interp,
-				    int argc,
-				    char *argv[],
-				    int (*func)());
-GED_EXPORT extern int	vo_mrot_cmd(struct view_obj *vop,
-				    Tcl_Interp *interp,
-				    int argc,
-				    char *argv[],
-				    int (*func)());
-GED_EXPORT extern int	vo_tra(struct view_obj *vop,
-			       Tcl_Interp *interp,
-			       char coord,
-			       vect_t tvec,
-			       int (*func)());
-GED_EXPORT extern int	vo_tra_cmd(struct view_obj *vop,
-				   Tcl_Interp *interp,
-				   int argc, char *argv[],
-				   int (*func)());
-GED_EXPORT extern int	vo_slew(struct view_obj *vop,
-				Tcl_Interp *interp,
-				vect_t svec);
-GED_EXPORT extern int	vo_slew_cmd(struct view_obj *vop,
-				    Tcl_Interp *interp,
-				    int argc, char *argv[]);
-GED_EXPORT extern int	vo_observer_cmd(struct view_obj *vop,
-					Tcl_Interp *interp,
-					int argc,
-					char *argv[]);
-GED_EXPORT extern int	vo_coord_cmd(struct view_obj *vop,
-				     Tcl_Interp *interp,
-				     int argc,
-				     char *argv[]);
-GED_EXPORT extern int	vo_rotate_about_cmd(struct view_obj *vop,
-					    Tcl_Interp *interp,
-					    int argc,
-					    char *argv[]);
-GED_EXPORT extern int	vo_keypoint_cmd(struct view_obj *vop,
-					Tcl_Interp *interp,
-					int argc,
-					char *argv[]);
-GED_EXPORT extern int	vo_vrot_cmd(struct view_obj *vop,
-				    Tcl_Interp *interp,
-				    int argc,
-				    char *argv[]);
-GED_EXPORT extern int	vo_sca(struct view_obj *vop,
-			       Tcl_Interp *interp,
-			       fastf_t sf,
-			       int (*func)());
-GED_EXPORT extern int	vo_sca_cmd(struct view_obj *vop,
-				   Tcl_Interp *interp,
-				   int argc,
-				   char *argv[],
-				   int (*func)());
-GED_EXPORT extern int	vo_viewDir_cmd(struct view_obj *vop,
-				       Tcl_Interp *interp,
-				       int argc,
-				       char *argv[]);
-GED_EXPORT extern int	vo_ae2dir_cmd(struct view_obj *vop,
-				      Tcl_Interp *interp,
-				      int argc,
-				      char *argv[]);
-GED_EXPORT extern int	vo_dir2ae_cmd(struct view_obj *vop,
-				      Tcl_Interp *interp,
-				      int argc,
-				      char *argv[]);
 
 
 /* Defined in vutil.c */
@@ -1214,7 +744,7 @@ GED_EXPORT extern int ged_bb(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Tesselates each operand object, then performs the
- * boolean evaluation, storing result in new_obj
+ * boolean evaluation, storing result in 'new_obj'
  */
 GED_EXPORT extern int ged_bev(struct ged *gedp, int argc, const char *argv[]);
 
@@ -2286,7 +1816,7 @@ GED_EXPORT extern int ged_version(struct ged *gedp, int argc, const char *argv[]
 /**
  * Get/set view attributes
  */
-GED_EXPORT extern int ged_view(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_view_func(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Convert view coordinates to grid coordinates.
@@ -2370,6 +1900,12 @@ GED_EXPORT extern int ged_zap(struct ged *gedp, int argc, const char *argv[]);
  * Zoom the view in or out.
  */
 GED_EXPORT extern int ged_zoom(struct ged *gedp, int argc, const char *argv[]);
+
+
+GED_EXPORT extern ged_polygon *ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model);
+GED_EXPORT extern ged_polygon *ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model);
+GED_EXPORT extern int ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polygon_i, const char *sname);
+GED_EXPORT extern ged_polygon *ged_import_polygon(struct ged *gedp, const char *sname);
 
 
 

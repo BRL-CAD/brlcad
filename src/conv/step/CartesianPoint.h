@@ -1,7 +1,7 @@
 /*                 CartesianPoint.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ public:
 	CartesianPoint();
 	virtual ~CartesianPoint();
 	CartesianPoint(STEPWrapper *sw,int step_id);
-	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	bool Load(STEPWrapper *sw,SDAI_Application_instance *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual void AddVertex(ON_Brep *brep);
 	virtual const double *Point3d() { return coordinates; };
@@ -51,7 +51,7 @@ public:
 	const double *Coordinates() { return coordinates; };
 
 	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
 };
 
 #endif /* CARTESIANPOINT_H_ */

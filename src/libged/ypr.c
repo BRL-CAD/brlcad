@@ -1,7 +1,7 @@
 /*                         Y P R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,12 +48,12 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
 
     /* return Viewrot as yaw, pitch and roll */
     if (argc == 1) {
-	point_t pt;
+	point_t pt = VINIT_ZERO;
 
 	bn_mat_trn(mat, gedp->ged_gvp->gv_rotation);
 	anim_v_unpermute(mat);
 
-	if (anim_mat2ypr(pt, mat) == 2) {
+	if (anim_mat2ypr(mat, pt) == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "view %s - matrix is not a rotation matrix", argv[0]);
 	    return GED_ERROR;
 	}

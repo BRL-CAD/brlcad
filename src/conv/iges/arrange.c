@@ -1,7 +1,7 @@
 /*                       A R R A N G E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@ Arrange(root)
     struct node *root;
 {
     struct node *Copytree(), *Pop(), *ptr, *ptra, *ptrb, *ptrc, *ptrd, *ptr1, *ptr2;
-    int retval=1;
+    int retval = 1;
 
     ptr = root;
     while (1) {

@@ -35,31 +35,31 @@
 typedef long Align;
 
 union freelist {
-	union freelist *next;	/* next block on freelist */
-	char memory;		/* user data */
-	Align aligner;		/* force alignment of blocks */
+    union freelist * next;  /* next block on freelist */
+    char memory;        /* user data */
+    Align aligner;      /* force alignment of blocks */
 };
 
 typedef union freelist Freelist;
 
 struct freelist_head {
-	int size_elt;		/* size of a single elt */
+    int size_elt;       /* size of a single elt */
 #ifndef NOSTAT
-	int alloc;		/* # of allocations */
-	int dealloc;
-	int create;		/* number of calls to create a new freelist */
-	Generic max;		/* end of freelist */
+    int alloc;      /* # of allocations */
+    int dealloc;
+    int create;     /* number of calls to create a new freelist */
+    Generic max;        /* end of freelist */
 #endif
-	int size;		/* size of a single elt incl. next ptr */
-	int bytes;		/* if we run out, allocate memory by this
-				   many bytes */
-	Freelist *freelist;
+    int size;       /* size of a single elt incl. next ptr */
+    int bytes;      /* if we run out, allocate memory by this
+                   many bytes */
+    Freelist * freelist;
 #if SPACE_PROFILE
-	int count;
+    int count;
 #endif
 };
 
-char *nnew();
+char * nnew();
 
 #include "error.h"
 
@@ -71,15 +71,15 @@ extern int yylineno;
 
 /* CALLOC grabs and initializes to all 0s space for the indicated */
 /* number of instances of the indicated type */
-#define	CALLOC(ptr, num, type)					\
-    if (((ptr) = (type*)calloc((num), (unsigned)sizeof(type)))==NULL) {	\
+#define CALLOC(ptr, num, type)                  \
+    if (((ptr) = (type*)calloc((num), (unsigned)sizeof(type)))==NULL) { \
         fprintf(stderr,"fedex: out of space");\
     } else {}
 
-void	_MEMinitialize PROTO((void));
-void	MEMinitialize PROTO((struct freelist_head *,int,int,int));
-void	MEM_destroy PROTO((  struct freelist_head *,Freelist *));
-Generic	MEM_new PROTO((      struct freelist_head *));
+void    _MEMinitialize PROTO( ( void ) );
+void    MEMinitialize PROTO( ( struct freelist_head *, int, int, int ) );
+void    MEM_destroy PROTO( ( struct freelist_head *, Freelist * ) );
+Generic MEM_new PROTO( ( struct freelist_head * ) );
 
 #endif /* MEMORY_H */
 

@@ -11,7 +11,7 @@
 * and is not subject to copyright.
 */
 
-/* $Id: seedefines.h,v 3.0.1.1 1997/11/05 23:01:08 sauderd DP3.1 $ */ 
+/* $Id: seedefines.h,v 3.0.1.1 1997/11/05 23:01:08 sauderd DP3.1 $ */
 
 #define SEE_SAVE_COMPLETE 1001
 #define SEE_SAVE_INCOMPLETE 1002
@@ -48,7 +48,7 @@
 #define CONTROL_U ('\025')
 #define CONTROL_X ('\030')
 
-	// single terminating characters for see editors
-static const char *seeTermChars = "\r\016\020\021";
+// single terminating characters for see editors
+static const char * seeTermChars = "\r\016\020\021";
 
 #endif

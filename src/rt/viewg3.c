@@ -1,7 +1,7 @@
 /*                        V I E W G 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2011 United States Government as represented by
+ * Copyright (c) 1989-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -292,7 +292,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
     static fastf_t dcorrection = 0;	/* RT to GIFT dist corr */
     int card_count;			/* # comp. on this card */
     const char *fmt;			/* printf() format string */
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
     char buf[128];			/* temp. sprintf() buffer */
     point_t hv;				/* GIFT h, v coords, in inches */
     point_t hvcen;
@@ -332,10 +332,9 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
     /* Set up variable length string, to buffer this shotline in.
      * Note that there is one component per card, and that each card
      * (line) is 80 characters long.  Hence the parameters given to
-     * rt-vls-extend().
+     * rt_vls_extend().
      */
 
-    bu_vls_init(&str);
     bu_vls_extend(&str, 80 * (comp_count+1));
 
     /*

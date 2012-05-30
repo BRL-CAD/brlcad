@@ -1,7 +1,7 @@
 /*                V I E W _ B O T _ F A C E S . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2011 United States Government as represented by
+ * Copyright (c) 2003-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -204,7 +204,7 @@ view_2init(struct application *ap, char *framename)
 
 	/* File exists, with partial results */
 	while (bu_fgets(line, RT_MAXLINE, outfp)) {
-	    if (!strncmp(line, "BOT:", 4)) {
+	    if (!bu_strncmp(line, "BOT:", 4)) {
 		struct directory *dp;
 
 		/* found a BOT entry, addit to the hash table */

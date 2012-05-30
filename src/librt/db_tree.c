@@ -1,7 +1,7 @@
 /*                       D B _ T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2011 United States Government as represented by
+ * Copyright (c) 1988-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 /** @file librt/db_tree.c
  *
  * Includes parallel tree walker routine.  Also includes routines to
- * return a matrix givne a name or path.
+ * return a matrix given a name or path.
  *
  */
 
@@ -48,7 +48,7 @@
 void
 db_dup_db_tree_state(struct db_tree_state *otsp, const struct db_tree_state *itsp)
 {
-    size_t shader_len=0;
+    size_t shader_len = 0;
     size_t i;
 
     RT_CK_DBTS(itsp);
@@ -66,7 +66,7 @@ db_dup_db_tree_state(struct db_tree_state *otsp, const struct db_tree_state *its
 
     if (itsp->ts_attrs.count > 0) {
 	bu_avs_init(&otsp->ts_attrs, itsp->ts_attrs.count, "otsp->ts_attrs");
-	for (i=0; i<(size_t)itsp->ts_attrs.count; i++)
+	for (i = 0; i<(size_t)itsp->ts_attrs.count; i++)
 	    bu_avs_add(&otsp->ts_attrs, itsp->ts_attrs.avp[i].name,
 		       itsp->ts_attrs.avp[i].value);
     } else {
@@ -131,7 +131,7 @@ db_new_combined_tree_state(const struct db_tree_state *tsp, const struct db_full
     RT_CK_FULL_PATH(pathp);
     RT_CK_DBI(tsp->ts_dbip);
 
-    BU_GETSTRUCT(new_ctsp, combined_tree_state);
+    BU_GET(new_ctsp, struct combined_tree_state);
     new_ctsp->magic = RT_CTS_MAGIC;
     db_dup_db_tree_state(&(new_ctsp->cts_s), tsp);
     db_full_path_init(&(new_ctsp->cts_p));
@@ -149,7 +149,7 @@ db_dup_combined_tree_state(const struct combined_tree_state *old_ctsp)
     struct combined_tree_state *new_ctsp;
 
     RT_CK_CTS(old_ctsp);
-    BU_GETSTRUCT(new_ctsp, combined_tree_state);
+    BU_GET(new_ctsp, struct combined_tree_state);
     new_ctsp->magic = RT_CTS_MAGIC;
     db_dup_db_tree_state(&(new_ctsp->cts_s), &(old_ctsp->cts_s));
     db_full_path_init(&(new_ctsp->cts_p));
@@ -198,7 +198,7 @@ db_pr_tree_state(const struct db_tree_state *tsp)
     }
     bu_log(" ts_mater.ma_temperature=%g K\n", tsp->ts_mater.ma_temperature);
     bu_log(" ts_mater.ma_shader=%s\n", tsp->ts_mater.ma_shader ? tsp->ts_mater.ma_shader : "");
-    for (i=0; i<(size_t)tsp->ts_attrs.count; i++) {
+    for (i = 0; i < (size_t)tsp->ts_attrs.count; i++) {
 	bu_log("\t%s = %s\n", tsp->ts_attrs.avp[i].name, tsp->ts_attrs.avp[i].value);
     }
     bn_mat_print("ts_mat", tsp->ts_mat);
@@ -291,13 +291,12 @@ db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *p
 	    }
 	    /* Just quietly ignore it -- it's being subtracted off */
 	} else if (tsp->ts_mater.ma_minherit == 0) {
-	    struct bu_vls tmp_vls;
+	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	    /* DB_INH_LOWER -- lower nodes in tree override */
 	    if (tsp->ts_mater.ma_shader)
 		bu_free((genptr_t)tsp->ts_mater.ma_shader, "ma_shader");
 
-	    bu_vls_init(&tmp_vls);
 	    if (bu_shader_to_key_eq(bu_vls_addr(&comb->shader), &tmp_vls)) {
 		char *sofar = db_path_to_string(pathp);
 
@@ -750,7 +749,8 @@ db_tree_funcleaf(
     void (*leaf_func)(),
     genptr_t user_ptr1,
     genptr_t user_ptr2,
-    genptr_t user_ptr3)
+    genptr_t user_ptr3,
+    genptr_t user_ptr4)
 {
     RT_CK_DBI(dbip);
 
@@ -761,14 +761,14 @@ db_tree_funcleaf(
 
     switch (comb_tree->tr_op) {
 	case OP_DB_LEAF:
-	    (*leaf_func)(dbip, comb, comb_tree, user_ptr1, user_ptr2, user_ptr3);
+	    (*leaf_func)(dbip, comb, comb_tree, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
 	    break;
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    db_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_left, leaf_func, user_ptr1, user_ptr2, user_ptr3);
-	    db_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_right, leaf_func, user_ptr1, user_ptr2, user_ptr3);
+	    db_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_left, leaf_func, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
+	    db_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_right, leaf_func, user_ptr1, user_ptr2, user_ptr3, user_ptr4);
 	    break;
 	default:
 	    bu_log("db_tree_funcleaf: bad op %d\n", comb_tree->tr_op);
@@ -1141,7 +1141,9 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	       sofar, tsp,
 	       *region_start_statepp, tsp->ts_sofar);
 	bu_free(sofar, "path string");
-	bn_mat_ck("db_recurse() tsp->ts_mat at start", tsp->ts_mat);
+	if (bn_mat_ck("db_recurse() tsp->ts_mat at start", tsp->ts_mat) < 0) {
+           bu_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n",  dp->d_namep);
+        }
     }
 
     /*
@@ -1166,7 +1168,7 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
-        db5_sync_attr_to_comb(comb, &intern.idb_avs, dp->d_namep);
+        db5_sync_attr_to_comb(comb, &intern.idb_avs, dp);
 	if ((is_region = db_apply_state_from_comb(&nts, pathp, comb)) < 0) {
 	    db_free_db_tree_state(&nts);
 	    curtree = TREE_NULL;		/* FAIL */
@@ -1551,14 +1553,18 @@ db_free_tree(union tree *tp, struct resource *resp)
 	    bu_bomb("db_free_tree\n");
     }
     tp->tr_op = 0;		/* sanity */
+
+    /* reset magic after recursion */
+    tp->magic = RT_TREE_MAGIC;
+
     RT_FREE_TREE(tp, resp);
 }
 
 
 /**
- * Re-balance this node to make it left heavy.  Unions operators will
+ * Re-balance this node to make it left heavy.  Union operators will
  * be moved to left side.  when finished "tp" MUST still point to top
- * node od this subtree.
+ * node of this subtree.
  */
 void
 db_left_hvy_node(union tree *tp)
@@ -2141,13 +2147,14 @@ _db_walk_dispatcher(int cpu, genptr_t arg)
 
     DB_CK_WPS(wps);
 
-    if (wps->rtip == NULL && cpu == 0) {
+    if (wps->rtip == NULL || cpu == 0) {
 	resp = &rt_uniresource;
     } else {
 	RT_CK_RTI(wps->rtip);
 
 	resp = (struct resource *)BU_PTBL_GET(&wps->rtip->rti_resources, cpu);
-	if (resp == NULL && cpu == 0) resp = &rt_uniresource;
+	if (resp == NULL)
+	    resp = &rt_uniresource;
     }
     RT_CK_RESOURCE(resp);
 
@@ -2278,19 +2285,19 @@ db_walk_tree(struct db_i *dbip,
     RT_CK_DBTS(init_state);
     RT_CHECK_DBI(dbip);
 
-    if (init_state->ts_rtip == NULL && ncpu == 1) {
+    if (init_state->ts_rtip == NULL || ncpu == 1) {
 	resp = &rt_uniresource;
     } else {
 	RT_CK_RTI(init_state->ts_rtip);
 	resp = (struct resource *)BU_PTBL_GET(&init_state->ts_rtip->rti_resources, 0);
-	if (resp == NULL && ncpu == 1) {
+	if (resp == NULL) {
 	    resp = &rt_uniresource;
 	}
     }
     RT_CK_RESOURCE(resp);
 
     /* Walk each of the given path strings */
-    for (i=0; i < argc; i++) {
+    for (i = 0; i < argc; i++) {
 	union tree *curtree;
 	struct db_tree_state ts;
 	struct db_full_path path;
@@ -2389,7 +2396,7 @@ db_walk_tree(struct db_i *dbip,
     /* As a debugging aid, print out the waiting region names */
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	bu_log("%d waiting regions:\n", new_reg_count);
-	for (i=0; i < new_reg_count; i++) {
+	for (i = 0; i < new_reg_count; i++) {
 	    union tree *treep;
 	    struct combined_tree_state *ctsp;
 	    char *str;
@@ -2439,7 +2446,7 @@ db_walk_tree(struct db_i *dbip,
     }
 
     /* Clean up any remaining sub-trees still in reg_trees[] */
-    for (i=0; i < new_reg_count; i++) {
+    for (i = 0; i < new_reg_count; i++) {
 	db_free_tree(reg_trees[i], resp);
     }
     bu_free((char *)reg_trees, "*reg_trees[]");
@@ -2537,7 +2544,7 @@ db_apply_anims(struct db_full_path *pathp, struct directory *dp, mat_t stack, ma
 		   i, j);
 	}
 
-	for (; i>=0 && j>=0; i--, j--) {
+	for (; i >= 0 && j >= 0; i--, j--) {
 	    if (anp->an_path.fp_names[i] != pathp->fp_names[j]) {
 		if (RT_G_DEBUG & DEBUG_ANIM) {
 		    bu_log("%s != %s\n",
@@ -2581,7 +2588,7 @@ db_region_mat(
 	bu_log("db_region_mat: db_string_to_path(%s) error\n", name);
 	return -1;
     }
-    if (! db_path_to_mat(dbip, &full_path, region_to_model, 0, resp)) {
+    if (!db_path_to_mat(dbip, &full_path, region_to_model, 0, resp)) {
 	/* bad thing */
 	bu_log("db_region_mat: db_path_to_mat(%s) error", name);
 	return -2;
@@ -2920,7 +2927,7 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 
     if (argc <= 0 || argc > 3) {
 	bu_vls_printf(vls,
-		      "db_tree_parse: tree node does not have 1, 2 or 2 elements: %s\n",
+		      "db_tree_parse: tree node does not have 1, 2 or 3 elements: %s\n",
 		      str);
 	goto out;
     }

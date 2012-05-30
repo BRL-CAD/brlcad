@@ -1,0 +1,15 @@
+SCHEMA gcc_incomplete_type;
+
+
+(* build/AP235/SdaiENGINEERING_PROPERTIES_SCHEMA.h:1882:30: error: field '_sdaiatom_based_value_agg' has incomplete type *)
+   TYPE atom_based_value = SELECT
+      (maths_number,
+       atom_based_tuple);
+   END_TYPE;
+   TYPE atom_based_tuple = LIST OF atom_based_value;
+   END_TYPE;
+
+   TYPE maths_number = NUMBER;
+   END_TYPE;
+
+END_SCHEMA;

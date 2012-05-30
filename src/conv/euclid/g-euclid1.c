@@ -1,7 +1,7 @@
 /*                     G - E U C L I D 1 . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -576,7 +576,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     if ( fp_out )
 	fclose( fp_out );
 
-    BU_GETUNION(curtree, tree);
+    BU_GET(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;
@@ -592,6 +592,7 @@ main(int argc, char **argv)
     int	c;
     double		percent;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf( stderr );
 
     ttol.magic = RT_TESS_TOL_MAGIC;

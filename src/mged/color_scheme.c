@@ -1,7 +1,7 @@
 /*                  C O L O R _ S C H E M E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -255,10 +255,8 @@ void
 cs_update(void)
 {
     struct bu_structparse *sp;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     int offset;
-
-    bu_vls_init(&vls);
 
     if (color_scheme->cs_mode)
 	offset = 1;
@@ -281,9 +279,8 @@ cs_set_bg(void)
 {
     struct dm_list *dmlp;
     struct dm_list *save_curr_dmlp = curr_dm_list;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "dm bg %d %d %d",
 		  color_scheme->cs_bg[0],
 		  color_scheme->cs_bg[1],

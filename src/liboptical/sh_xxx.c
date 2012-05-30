@@ -1,7 +1,7 @@
 /*                        S H _ X X X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -124,7 +124,7 @@ struct bu_structparse xxx_print_tab[] = {
 
 };
 struct bu_structparse xxx_parse_tab[] = {
-    {"%p",	bu_byteoffset(xxx_print_tab[0]), "xxx_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%p", 1, "xxx_print_tab", bu_byteoffset(xxx_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",  1, "v",		SHDR_O(xxx_val),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",  1, "dist",	SHDR_O(xxx_dist),		bu_mm_cvt, NULL, NULL },
     {"%f",  3, "d",		SHDR_AO(xxx_delta),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -182,7 +182,7 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 	bu_log("xxx_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(xxx_sp, xxx_specific);
+    BU_GET(xxx_sp, struct xxx_specific);
     *dpp = xxx_sp;
 
     /* initialize the default values for the shader */

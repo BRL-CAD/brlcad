@@ -1,7 +1,7 @@
 /*               G E T _ C N U R B _ C U R V E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2011 United States Government as represented by
+ * Copyright (c) 1995-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,12 +53,12 @@ Get_cnurb_curve(int curve_de, int *linear)
 
 	    }
 	    /* Read first point */
-	    for (i=0; i<3; i++)
+	    for (i = 0; i < 3; i++)
 		Readcnv(&pt1[i], "");
 	    MAT4X3PNT(start_pt, *dir[curve]->rot, pt1);
 
 	    /* Read second point */
-	    for (i=0; i<3; i++)
+	    for (i = 0; i < 3; i++)
 		Readcnv(&pt1[i], "");
 	    MAT4X3PNT(end_pt, *dir[curve]->rot, pt1);
 

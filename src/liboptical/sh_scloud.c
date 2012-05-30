@@ -1,7 +1,7 @@
 /*                     S H _ S C L O U D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2011 United States Government as represented by
+ * Copyright (c) 1998-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -132,7 +132,7 @@ scloud_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
     mat_t tmp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(scloud, scloud_specific);
+    BU_GET(scloud, struct scloud_specific);
     *dpp = scloud;
 
     if (rp->reg_aircode == 0) {
@@ -262,7 +262,7 @@ scloud_render(struct application *ap, const struct partition *pp, struct shadewo
     int i;
     double val;
     double trans;
-    point_t incident_light;
+    point_t incident_light = {0,0,0};
     double delta_dpmm;
     double density;
     struct shadework sub_sw;

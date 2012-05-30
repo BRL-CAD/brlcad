@@ -1,7 +1,7 @@
 /*                          D B C P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -87,6 +87,7 @@ main(int argc, char **argv)
 		break;
 	    case 'D':
 		deprecated=0;
+		break;
 	    default:
 		bu_exit(1, "%s", usage);
 	}
@@ -99,12 +100,15 @@ main(int argc, char **argv)
 	bu_exit(2, "%s", usage);
     }
     size = 512 * atoi(argv[bu_optind]);
+    if (size > INT_MAX)
+	size = INT_MAX;
 
     setbuf (stderr, errbuf);
-    if ((buffer = (char *)malloc(size)) == NULL)
-	bu_exit(88, "dbcp: Insufficient buffer memory\n");
+    buffer = (char *)bu_malloc(size, "alloc buffer");
+
     if (pipe (par2chld) < 0 || pipe (chld2par) < 0) {
 	perror("pipe");
+	bu_free(buffer, "free buffer");
 	bu_exit(89, "dbcp: Can't pipe\n");
     }
 
@@ -117,6 +121,7 @@ main(int argc, char **argv)
     switch (pid = fork()) {
 	case -1:
 	    perror("fork");
+	    bu_free(buffer, "free buffer");
 	    bu_exit(99, "dbcp: Can't fork\n");
 
 	case 0:
@@ -237,6 +242,8 @@ main(int argc, char **argv)
 	while (wait(&waitcode) > 0)
 	    ;
     }
+
+    bu_free(buffer, "free buffer");
 
     return exitval;
 }

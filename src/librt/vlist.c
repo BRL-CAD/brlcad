@@ -1,7 +1,7 @@
 /*                         V L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2011 United States Government as represented by
+ * Copyright (c) 1992-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include <string.h>
 #include "bin.h"
@@ -60,7 +61,7 @@ bn_vlblock_init(struct bu_list *free_vlist_hd, /**< where to get/put free vlists
     if (!BU_LIST_IS_INITIALIZED(free_vlist_hd))
 	BU_LIST_INIT(free_vlist_hd);
 
-    BU_GETSTRUCT(vbp, bn_vlblock);
+    BU_GET(vbp, struct bn_vlblock);
     vbp->magic = BN_VLBLOCK_MAGIC;
     vbp->free_vlist_hd = free_vlist_hd;
     vbp->max = max_ent;
@@ -121,22 +122,22 @@ rt_vlblock_free(struct bn_vlblock *vbp)
 struct bu_list *
 rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
 {
-    long new;
+    long newrgb;
     size_t n;
     size_t omax;		/* old max */
 
     BN_CK_VLBLOCK(vbp);
 
-    new = ((r&0xFF)<<16)|((g&0xFF)<<8)|(b&0xFF);
+    newrgb = ((r&0xFF)<<16)|((g&0xFF)<<8)|(b&0xFF);
 
     for (n=0; n < vbp->nused; n++) {
-	if (vbp->rgb[n] == new)
+	if (vbp->rgb[n] == newrgb)
 	    return &(vbp->head[n]);
     }
     if (vbp->nused < vbp->max) {
 	/* Allocate empty slot */
 	n = vbp->nused++;
-	vbp->rgb[n] = new;
+	vbp->rgb[n] = newrgb;
 	return &(vbp->head[n]);
     }
 
@@ -231,7 +232,7 @@ rt_ck_vlist(const struct bu_list *vhead)
 		    bu_bomb("rt_ck_vlist() bad coordinate value\n");
 		}
 		/* XXX Need a define for largest command number */
-		if (*cmd < 0 || *cmd > BN_VLIST_POLY_VERTNORM) {
+		if (*cmd < 0 || *cmd > BN_VLIST_CMD_MAX) {
 		    bu_log("cmd = x%x (%d.)\n", *cmd, *cmd);
 		    bu_bomb("rt_ck_vlist() bad vlist command\n");
 		}
@@ -503,14 +504,18 @@ rt_vlist_to_uplot(FILE *fp, const struct bu_list *vhead)
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
+		case BN_VLIST_TRI_START:
 		    break;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_TRI_MOVE:
 		    pdv_3move(fp, *pt);
 		    break;
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_POLY_END:
 		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_TRI_DRAW:
+		case BN_VLIST_TRI_END:
 		    pdv_3cont(fp, *pt);
 		    break;
 		default:
@@ -646,7 +651,11 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
 		carg[j] = '\0';
 		break;
 	    case TCHAR:
-		carg[i] = getc(fp);
+		cc = getc(fp);
+		if (cc == EOF)
+		    return;
+
+		carg[i] = cc;
 		arg[i] = 0;
 		break;
 	    case TNONE:
@@ -709,12 +718,20 @@ rt_process_uplot_value(register struct bu_list **vhead,
 {
     mat_t mat;
     const struct uplot *up;
-    char carg[256];
-    fastf_t arg[6];
+#define CARG_LEN 256
+#define ARG_LEN 6
+    char carg[CARG_LEN];
+    fastf_t arg[ARG_LEN];
     vect_t a, b;
     point_t last_pos;
     static point_t lpnt;		/* last point of a move/draw series */
     static int moved = 0;	/* moved since color change */
+
+    memset(carg, 0, sizeof(char)*CARG_LEN);
+    memset(arg, 0, sizeof(fastf_t)*ARG_LEN);
+#undef ARG_LEN
+#undef CARG_LEN
+
 
     /* look it up */
     if (c < 'A' || c > 'z') {

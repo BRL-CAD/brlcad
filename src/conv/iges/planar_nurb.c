@@ -1,7 +1,7 @@
 /*                   P L A N A R _ N U R B . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,9 +29,9 @@
 int
 planar_nurb(int entityno)
 {
-    int sol_num=0;		/* IGES solid type number */
-    int k1=0, k2=0;		/* Upper index of sums */
-    int m1=0, m2=0;		/* degree */
+    int sol_num = 0;		/* IGES solid type number */
+    int k1 = 0, k2 = 0;		/* Upper index of sums */
+    int m1 = 0, m2 = 0;		/* degree */
 
     if (dir[entityno]->param <= pstart) {
 	bu_log("Illegal parameter pointer for entity D%07d (%s)\n" ,

@@ -1,7 +1,7 @@
 /*                         K I L L R E F S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -87,7 +87,7 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
 
-	for (k=1; k<argc; k++) {
+	for (k = 1; k < argc; k++) {
 	    int code;
 
 	    code = db_tree_del_dbleaf(&(comb->tree), argv[k], &rt_uniresource, nflag);

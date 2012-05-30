@@ -1,7 +1,7 @@
 /*                        S U R F E L . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2011 United States Government as represented by
+ * Copyright (c) 2007-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,13 +54,12 @@ render_surfel_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, v
 {
     render_surfel_t *d;
     struct tie_id_s id;
-    adrt_mesh_t *mesh;
     uint32_t i;
     fastf_t dist_sq;
 
     d = (render_surfel_t *)render->data;
 
-    if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, render_hit, NULL))) {
+    if (tie_work(tie, ray, &id, render_hit, NULL) != NULL) {
 	for (i = 0; i < d->num; i++) {
 	    dist_sq = (d->list[i].pos[0]-id.pos[0]) * (d->list[i].pos[0]-id.pos[0]) +
 		(d->list[i].pos[1]-id.pos[1]) * (d->list[i].pos[1]-id.pos[1]) +

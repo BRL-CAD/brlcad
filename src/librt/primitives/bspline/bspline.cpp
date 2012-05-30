@@ -1,7 +1,7 @@
 /*                        B S P L I N E . C P P
  * BRL-CAD
  *
- * Copyright (c) 1991-2011 United States Government as represented by
+ * Copyright (c) 1991-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -131,7 +131,7 @@ rt_nurb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 	struct face_g_snurb * s;
 	struct nurb_specific * n;
 
-	BU_GETSTRUCT(n, nurb_specific);
+	BU_GET(n, struct nurb_specific);
 
 	/* Store off the original face_g_snurb */
 	s = rt_nurb_scopy(sip->srfs[i], (struct resource *)NULL);
@@ -232,7 +232,7 @@ rt_nurb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	struct face_g_snurb * s;
 	struct nurb_specific * n;
 
-	BU_GETSTRUCT(n, nurb_specific);
+	BU_GET(n, struct nurb_specific);
 
 	/* Store off the original face_g_snurb */
 	s = rt_nurb_scopy(sip->srfs[i], (struct resource *)NULL);
@@ -1014,6 +1014,9 @@ rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	rec_ptr += grans;
 	total_grans -= grans;
     }
+
+    bu_log("DEPRECATED:  The 'bspline' primitive is no longer supported.  Use 'brep' NURBS instead.\n");
+
     return 0;
 }
 
@@ -1098,6 +1101,8 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	      coords * srf->s_size[0] * srf->s_size[1]);
 	cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
     }
+
+    bu_log("DEPRECATED:  The 'bspline' primitive is no longer supported.  Use 'brep' NURBS instead.\n");
 
     return 0;
 }

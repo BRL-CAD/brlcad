@@ -1,7 +1,7 @@
 /*                        F C H M O D . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2011 United States Government as represented by
+ * Copyright (c) 2007-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,11 +38,6 @@
 
 #include "bu.h"
 
-
-/* c99 doesn't declare these */
-#ifndef  fileno
-extern int fileno(FILE*);
-#endif
 
 #ifdef HAVE_FCHMOD
 extern int fchmod(int, mode_t);
@@ -131,15 +126,11 @@ GetFileNameFromHandle(HANDLE hFile, char filepath[])
 
 
 int
-bu_fchmod(FILE *fp,
+bu_fchmod(int fd,
 	  unsigned long pmode)
 {
-    if (UNLIKELY(!fp)) {
-	return 0;
-    }
-
 #ifdef HAVE_FCHMOD
-    return fchmod(fileno(fp), (mode_t)pmode);
+    return fchmod(fd, (mode_t)pmode);
 #else
     /* Presumably Windows, so get dirty.  We can call chmod() instead
      * of fchmod(), but that means we need to know the file name.
@@ -152,7 +143,6 @@ bu_fchmod(FILE *fp,
      */
     {
 	char filepath[MAXPATHLEN+1];
-	int fd = fileno(fp);
 	HANDLE h = (HANDLE)_get_osfhandle(fd);
 	GetFileNameFromHandle(h, filepath);
 	return chmod(filepath, pmode);

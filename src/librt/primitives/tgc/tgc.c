@@ -1,7 +1,7 @@
 /*                           T G C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -265,7 +265,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     /* solid is OK, compute constant terms, etc. */
-    BU_GETSTRUCT(tgc, tgc_specific);
+    BU_GET(tgc, struct tgc_specific);
     stp->st_specific = (genptr_t)tgc;
 
     VMOVE(tgc->tgc_V, tip->v);

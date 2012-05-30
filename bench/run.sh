@@ -2,7 +2,7 @@
 #                          R U N . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2011 United States Government as represented by
+# Copyright (c) 2004-2012 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -52,8 +52,8 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # save the precious args
 ARGS="$*"
-NAME_OF_THIS=`basename $0`
-PATH_TO_THIS=`dirname $0`
+NAME_OF_THIS="`basename \"$0\"`"
+PATH_TO_THIS="`dirname \"$0\"`"
 THIS="$PATH_TO_THIS/$NAME_OF_THIS"
 
 # sanity check
@@ -355,14 +355,14 @@ if test "x$CLEAN" = "x1" ; then
     done
     if test "x$CLOBBER" = "x1" ; then
 	# NEVER automatically delete the summary file, but go ahead with the rest
-	for i in benchmark-[0-9]*-run.log ; do
+	for i in run-[0-9]*-benchmark.log ; do
 	    $ECHO rm -f $i
 	    rm -f $i
 	done
     fi
 
     printed=no
-    for i in summary benchmark-[0-9]*-run.log ; do
+    for i in summary run-[0-9]*-benchmark.log ; do
 	if test -f "$i" ; then
 	    if test "x$printed" = "xno" ; then
 		$ECHO

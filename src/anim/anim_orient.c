@@ -1,7 +1,7 @@
 /*                   A N I M _ O R I E N T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -250,13 +250,13 @@ main(int argc, char *argv[])
 	/* convert from matrix form and print result*/
 	switch (output_mode) {
 	    case YPR:
-		anim_mat2ypr(angle, matrix);
+		anim_mat2ypr(matrix, angle);
 		if (output_units==DEGREES)
 		    VSCALE(angle, angle, RAD2DEG);
 		printf("%.12g\t%.12g\t%.12g\n", angle[0], angle[1], angle[2]);
 		break;
 	    case AET:
-		anim_mat2ypr(angle, matrix);
+		anim_mat2ypr(matrix, angle);
 		if (angle[0] > 0.0) {
 		    angle[0] -= M_PI;
 		} else {
@@ -269,7 +269,7 @@ main(int argc, char *argv[])
 		printf("%.12g\t%.12g\t%.12g\n", angle[0], angle[1], angle[2]);
 		break;
 	    case XYZ:
-		anim_mat2zyx(angle, matrix);
+		anim_mat2zyx(matrix, angle);
 		if (output_units==DEGREES)
 		    VSCALE(angle, angle, RAD2DEG);
 		printf("%.12g\t%.12g\t%.12g\n", angle[0], angle[1], angle[2]);

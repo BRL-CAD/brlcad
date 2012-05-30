@@ -1,7 +1,7 @@
 /*                         G - X 3 D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -133,15 +133,15 @@ static int	regions_converted = 0;
  */
 static void
 char_replace(char *str,
-	     char old,
-	     char new)
+	     char oldc,
+	     char newc)
 {
     if (str == (char *)0)
 	return;
 
     while (*str != '\0') {
-	if (*str == old)
-	    *str = new;
+	if (*str == oldc)
+	    *str = newc;
 
 	++str;
     }
@@ -355,10 +355,11 @@ writeX3dEnd(FILE *fp_out) {
 int
 main(int argc, char **argv)
 {
-    int		i;
+    int	i;
     int	c;
     struct plate_mode pm;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf( stderr );
 
     the_model = nmg_mm();
@@ -610,7 +611,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     struct nmgregion *reg;
     struct bu_ptbl verts;
     struct vrml_mat mat;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     char *tok;
     int i;
     int first=1;
@@ -686,11 +687,11 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     mat.tx_file[0] = '\0';
     mat.tx_w = -1;
     mat.tx_n = -1;
-    bu_vls_init( &vls );
+
     bu_vls_strcpy( &vls, &mater->ma_shader[strlen(mat.shader)] );
     (void)bu_struct_parse( &vls, vrml_mat_parse, (char *)&mat );
 
-    if ( strncmp( "light", mat.shader, 5 ) == 0 )
+    if ( bu_strncmp( "light", mat.shader, 5 ) == 0 )
     {
 	/* this is a light source */
 	is_light = 1;
@@ -700,7 +701,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 	fprintf( fp, "\t<Shape DEF=\"%s\">\n", full_path);
 	fprintf( fp, "\t\t<Appearance>\n");
 
-	if ( strncmp( "plastic", mat.shader, 7 ) == 0 )
+	if ( bu_strncmp( "plastic", mat.shader, 7 ) == 0 )
 	{
 	    if ( mat.shininess < 0 )
 		mat.shininess = 10;
@@ -709,7 +710,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 
 	    fprintf( fp, "\t\t\t<Material diffuseColor=\"%g %g %g\" shininess=\"%g\" transparency=\"%g\" specularColor=\"%g %g %g\"/>\n", r, g, b, 1.0-exp(-(double)mat.shininess/20.0), mat.transparency, 1.0, 1.0, 1.0);
 	}
-	else if ( strncmp( "glass", mat.shader, 5 ) == 0 )
+	else if ( bu_strncmp( "glass", mat.shader, 5 ) == 0 )
 	{
 	    if ( mat.shininess < 0 )
 		mat.shininess = 4;
@@ -1102,7 +1103,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
-    BU_GETUNION(curtree, tree);
+    BU_GET(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     BARRIER_CHECK;

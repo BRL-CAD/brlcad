@@ -1,7 +1,7 @@
 /*                         L I G H T . H
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,17 +37,16 @@
 
 /* FIXME: replicated from optical.h */
 #ifndef OPTICAL_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef OPTICAL_EXPORT_DLL
-#      define OPTICAL_EXPORT __declspec(dllexport)
-#    else
-#      define OPTICAL_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(OPTICAL_DLL_EXPORTS) && defined(OPTICAL_DLL_IMPORTS)
+#    error "Only OPTICAL_DLL_EXPORTS or OPTICAL_DLL_IMPORTS can be defined, not both."
+#  elif defined(OPTICAL_DLL_EXPORTS)
+#    define OPTICAL_EXPORT __declspec(dllexport)
+#  elif defined(OPTICAL_DLL_IMPORTS)
+#    define OPTICAL_EXPORT __declspec(dllimport)
 #  else
 #    define OPTICAL_EXPORT
 #  endif
 #endif
-
 
 __BEGIN_DECLS
 

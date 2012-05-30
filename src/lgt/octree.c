@@ -1,7 +1,7 @@
 /*                        O C T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -362,6 +362,11 @@ write_Octree(Octree *parentp, FILE *fp)
     PtList	*ptp;
     F_Hdr_Ptlist	hdr_ptlist;
     long		addr = ftell( fp );
+
+    if (addr < 0) {
+	bu_log("Error: couldn't get input file's current file position.\n");
+	return 0;
+    }
     /* Write temperature and bogus number of points for this leaf.	*/
     hdr_ptlist.f_temp = parentp->o_temp;
     hdr_ptlist.f_length = 0;

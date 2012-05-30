@@ -1,7 +1,7 @@
 /*                        P I X C M P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -95,7 +95,7 @@ handle_i_opt(const char *arg, long *skip1, long *skip2)
 	if (skip2) {
 	    *skip2 = strtol(arg, NULL, 10);
 	}
-	if (skip1) {
+	if (skip1 && skip2) {
 	    *skip1 = *skip2;
 	}
     } else if (endptr[0] == ':') {

@@ -1,7 +1,7 @@
 /*                      S U P E R E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -316,7 +316,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     /* Solid is OK, compute constant terms now */
 
-    BU_GETSTRUCT(superell, superell_specific);
+    BU_GET(superell, struct superell_specific);
     stp->st_specific = (genptr_t)superell;
 
     superell->superell_n = eip->n;

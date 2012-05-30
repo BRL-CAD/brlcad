@@ -1,7 +1,7 @@
 /*                        B U F F E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,16 +42,16 @@
 #define SIZE (1024*1024)
 
 
-char template[512] = {0};
-char buf[SIZE] = {0};
-
-
 int
 main(int argc, char *argv[])
 {
-    FILE *fp;
-    long count;
-    int tfd;
+    char template[512] = {0};
+    char buf[SIZE] = {0};
+
+    FILE *fp = NULL;
+    long count = 0;
+    int tfd = 0;
+    int ret = 0;
 
     if (argc > 1)
 	bu_log("%s: unrecognized argument(s)\n", argv[0]);
@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 
     /* Create temporary file to hold data, get r/w file descriptor */
     fp = bu_temp_file(template, 512);
-    if ((tfd = fileno(fp)) < 0) {
+    if (fp == NULL || (tfd = fileno(fp)) < 0) {
 	perror(template);
 	goto err;
     }
@@ -109,16 +109,20 @@ main(int argc, char *argv[])
 	perror("buffer: tmp read");
 	goto err;
     }
-    (void)unlink(template);
-    return 0;
 
- err:
+    ret = 0;
+    goto clean;
+err:
+    ret = 1;
+clean:
+    /* clean up */
     if (fp) {
 	fclose(fp);
 	fp = NULL;
     }
-    unlink(template);
-    return 1;
+    bu_file_delete(template);
+
+    return ret;
 }
 
 

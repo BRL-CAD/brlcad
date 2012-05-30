@@ -1,7 +1,7 @@
 /*                         G L O B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -89,10 +89,14 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
     char *start, *end;          /* Start and ends of words */
     int regexp;                 /* Set to TRUE when word is a regexp */
     int backslashed;
-    struct bu_vls word;         /* Current word being processed */
-    struct bu_vls temp;
-    struct bu_vls src;
+    struct bu_vls word = BU_VLS_INIT_ZERO;         /* Current word being processed */
+    struct bu_vls temp = BU_VLS_INIT_ZERO;
+    struct bu_vls src = BU_VLS_INIT_ZERO;
     static const char *usage = "expression";
+
+    /* Silently return */
+    if (gedp == GED_NULL)
+	return GED_ERROR;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -107,10 +111,6 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
-
-    bu_vls_init(&word);
-    bu_vls_init(&temp);
-    bu_vls_init(&src);
 
     bu_vls_strcat(&src, argv[1]);
 
@@ -158,7 +158,10 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 	   it to the database. */
 
 	if (regexp) {
-	    GED_CHECK_DATABASE_OPEN(gedp, GED_INITIALIZED(gedp) ? GED_ERROR : GED_OK);
+	    /* No database to match against, so return. */
+	    if (gedp->ged_wdbp == RT_WDB_NULL || gedp->ged_wdbp->dbip == DBI_NULL)
+		return GED_OK;
+
 	    bu_vls_trunc(&temp, 0);
 	    if (db_regexp_match_all(&temp, gedp->ged_wdbp->dbip,
 				    bu_vls_addr(&word)) == 0) {

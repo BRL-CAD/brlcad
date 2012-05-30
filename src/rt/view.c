@@ -1,7 +1,7 @@
 /*                          V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,6 +50,7 @@
 
 #include "vmath.h"
 #include "mater.h"
+#include "icv.h"
 #include "raytrace.h"
 #include "fb.h"
 #include "plot3.h"
@@ -96,11 +97,14 @@ extern int do_kut_plane;           /* from opt.c */
 extern plane_t kut_plane;              /* from opt.c */
 vect_t kut_norm;
 struct soltab *kut_soltab = NULL;
-extern struct bu_image_file *bif;
+extern struct icv_image_file *bif;
 
 extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
 
-
+int ambSlow = 0;
+int ambSamples = 0;
+double ambRadius = 0.0;
+double ambOffset = 0.0;
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
 
 int ibackground[3] = {0};		/* integer 0..255 version */
@@ -168,6 +172,10 @@ struct bu_structparse view_parse[] = {
     {"%f", ELEMENTS_PER_VECT, "background", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "overlay", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ov", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "ambSamples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "ambRadius", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "ambOffset", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "ambSlow", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
@@ -308,7 +316,7 @@ view_pixel(struct application *ap)
 
 		if (bif != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
-		    bu_image_save_writepixel(bif, ap->a_y, ap->a_x, p);
+		    icv_image_save_writepixel(bif, ap->a_x, ap->a_y, p);
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		} else if (outfp != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -455,48 +463,48 @@ view_pixel(struct application *ap)
 	    }
 	    break;
 
-    case BUFMODE_ACC:
-    {
-	unsigned int i;
-	fastf_t *psum_p;
-	fastf_t *tmp_pixel;
-	int tmp_color;
+	case BUFMODE_ACC:
+	    {
+		unsigned int i;
+		fastf_t *psum_p;
+		fastf_t *tmp_pixel;
+		int tmp_color;
 
-	/* Scanline buffered mode */
-	bu_semaphore_acquire(RT_SEM_RESULTS);
+		/* Scanline buffered mode */
+		bu_semaphore_acquire(RT_SEM_RESULTS);
 	
-	tmp_pixel = bu_calloc(pwidth, sizeof(fastf_t), "tmp_pixel");
-	VMOVE(tmp_pixel, ap->a_color);
-	if (rpt_dist) {
-	    for(i = 0; i < 8; i++)
-		tmp_pixel[i + 3] = dist[i];
-	}
+		tmp_pixel = bu_calloc(pwidth, sizeof(fastf_t), "tmp_pixel");
+		VMOVE(tmp_pixel, ap->a_color);
+		if (rpt_dist) {
+		    for (i = 0; i < 8; i++)
+			tmp_pixel[i + 3] = dist[i];
+		}
 
-	psum_p = &psum_buffer[ap->a_y*width*pwidth + ap->a_x*pwidth];
-	slp = &scanline[ap->a_y];
-	if (slp->sl_buf == (unsigned char *)0) {
-	    slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
-	}
-	pixelp = slp->sl_buf+(ap->a_x*pwidth);
-	/* Update the partial sums and the scanline */
-	for(i = 0; i < pwidth; i++){
-	    psum_p[i] += tmp_pixel[i];
-	    /* change the float interval to [0,255] and round to
-	       the nearest integer */
-	    tmp_color = psum_p[i]*255.0/full_incr_sample + 0.5;
-	    /* clamp */
-	    pixelp[i] = tmp_color < 0 ? 0 : tmp_color > 255 ? 255 : tmp_color; 
-	}
-	bu_free(tmp_pixel, "tmp_pixel");
+		psum_p = &psum_buffer[ap->a_y*width*pwidth + ap->a_x*pwidth];
+		slp = &scanline[ap->a_y];
+		if (slp->sl_buf == (unsigned char *)0) {
+		    slp->sl_buf = bu_calloc(width, pwidth, "sl_buf scanline buffer");
+		}
+		pixelp = slp->sl_buf+(ap->a_x*pwidth);
+		/* Update the partial sums and the scanline */
+		for (i = 0; i < pwidth; i++) {
+		    psum_p[i] += tmp_pixel[i];
+		    /* change the float interval to [0, 255] and round to
+		       the nearest integer */
+		    tmp_color = psum_p[i]*255.0/full_incr_sample + 0.5;
+		    /* clamp */
+		    pixelp[i] = tmp_color < 0 ? 0 : tmp_color > 255 ? 255 : tmp_color; 
+		}
+		bu_free(tmp_pixel, "tmp_pixel");
 
-	bu_semaphore_release(RT_SEM_RESULTS);
-	if (--(slp->sl_left) <= 0)
-	    do_eol = 1;
-    }		    
-    break;
+		bu_semaphore_release(RT_SEM_RESULTS);
+		if (--(slp->sl_left) <= 0)
+		    do_eol = 1;
+	    }		    
+	    break;
     
-    default:
-	bu_exit(EXIT_FAILURE, "bad buf_mode: %d", buf_mode);
+	default:
+	    bu_exit(EXIT_FAILURE, "bad buf_mode: %d", buf_mode);
     }
 
 
@@ -560,7 +568,7 @@ view_pixel(struct application *ap)
 	    }
 	    if (bif != NULL) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		bu_image_save_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf);
+		icv_image_save_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf);
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	    } else if (outfp != NULL) {
 		size_t count;
@@ -634,7 +642,7 @@ view_end(struct application *ap)
     	scanline = NULL;
     }
 
-    if(psum_buffer){
+    if (psum_buffer) {
 	bu_free(psum_buffer, "psum_buffer");
 	psum_buffer = 0;
     }
@@ -837,6 +845,162 @@ static int hit_nothing(struct application *ap)
     ap->a_user = 0;		/* Signal view_pixel:  MISS */
     VMOVE(ap->a_color, background);	/* In case someone looks */
     return 0;
+}
+
+
+/* A O _ R A Y H I T
+ *
+ * hit routine for ambient occlusion
+ */
+int
+ao_rayhit(register struct application *ap,
+	  struct partition *PartHeadp,
+	  struct seg *UNUSED(segp))
+{
+    struct partition *pp;
+
+    /* if we don't have a radius, then any hit is ambient occlusion */
+    if (NEAR_ZERO(ambRadius, ap->a_rt_i->rti_tol.dist)) {
+	ap->a_user = 1;
+	ap->a_flag = 1;
+	return 1;
+    }
+
+    /* find the first hit that is in front */
+    for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
+
+	if (pp->pt_inhit->hit_dist > 0.0) {
+	    if (pp->pt_inhit->hit_dist < ambRadius) {
+		/* first hit is inside radius, so this is occlusion */
+		ap->a_user = 1;
+		ap->a_flag = 1;
+		return 1;
+	    } else {
+		/* first hit outside radius is same as no occlusion */
+		ap->a_user = 0;
+		ap->a_flag = 0;
+		return 0;
+	    }
+	}
+    }
+
+    /* no hits in front of the ray, so we miss */
+    ap->a_user = 0;
+    ap->a_flag = 0;
+    return 0;
+}
+
+
+/* A O _ R A Y H I T
+ *
+ * miss routine for ambient occlusion
+ */
+int
+ao_raymiss(register struct application *ap)
+{
+    ap->a_user = 0;
+    ap->a_flag = 0;
+    return 0;
+}
+
+
+/* a m b i e n t O c c l u s i o n
+ *
+ * Compute the ambient term using occlusion rays.
+ * Scale the color based upon the occlusion
+ */
+void
+ambientOcclusion(struct application *ap, struct partition *pp)
+{
+    struct application amb_ap = *ap;
+    struct soltab *stp;
+    struct hit *hitp;
+    vect_t inormal;
+    vect_t vAxis;
+    vect_t uAxis;
+    int ao_samp;
+    vect_t origin = VINIT_ZERO;
+    float occlusionFactor;
+    int hitCount = 0;
+
+    stp = pp->pt_inseg->seg_stp;
+
+    hitp = pp->pt_inhit;
+    VJOIN1(amb_ap.a_ray.r_pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
+    amb_ap.a_hit = ao_rayhit;
+    amb_ap.a_miss = ao_raymiss;
+    amb_ap.a_onehit = 4;  /* make sure we get at least two complete partitions.  The first may be "behind" the ray start */
+
+    RT_HIT_NORMAL(inormal, hitp, stp, &(ap->a_ray), pp->pt_inflip);
+
+    /* construct the ray origin.  Move it normalward off the surface
+     * to reduce the chances that the AO rays will hit the surface the ray
+     * is departing from.
+     */
+    if (ZERO(ambOffset)) {
+	VJOIN1(amb_ap.a_ray.r_pt, amb_ap.a_ray.r_pt, ap->a_rt_i->rti_tol.dist, inormal);
+    } else {
+	VJOIN1(amb_ap.a_ray.r_pt, amb_ap.a_ray.r_pt, ambOffset, inormal);
+    }
+
+    /* form a coordinate system at the hit point */
+    VCROSS(vAxis, inormal, ap->a_ray.r_dir);
+    if (MAGSQ(vAxis) < ap->a_rt_i->rti_tol.dist_sq) {
+	/* It appears the ray and the normal are perfectly aligned.
+	 * Time to construct a random vector to use for the cross-product
+	 * to construct the coordinate system
+	 */
+	vect_t arbitraryDir;
+
+	VSET(arbitraryDir, inormal[Y], inormal[Z], inormal[X]);
+	VCROSS(vAxis, inormal, arbitraryDir);
+    }
+
+    VUNITIZE(vAxis);
+    VCROSS(uAxis, vAxis, inormal);
+
+    for (ao_samp=0; ao_samp < ambSamples ; ao_samp++) {
+	vect_t randScale;
+
+	/* pick a random direction in the unit sphere */
+	if (ambSlow) {
+	    /* use bn_randmt() which is slow but not noisy */
+	    do {
+		/* less noisy but much slower */
+		randScale[X] = (bn_randmt() - 0.5) * 2.0;
+		randScale[Y] = (bn_randmt() - 0.5) * 2.0;
+		randScale[Z] = bn_randmt();
+	    } while (MAGSQ(randScale) > 1.0);
+	} else {
+	    do {
+		/* faster by a factor of 2 but noisy */
+		randScale[X] = bn_rand_half(ap->a_resource->re_randptr) * 2.0;
+		randScale[Y] = bn_rand_half(ap->a_resource->re_randptr) * 2.0;
+		randScale[Z] = bn_rand_half(ap->a_resource->re_randptr) + 0.5;
+	    } while (MAGSQ(randScale) > 1.0);
+	}
+
+	VJOIN3(amb_ap.a_ray.r_dir, origin, 
+	       randScale[X], uAxis, 
+	       randScale[Y], vAxis, 
+	       randScale[Z], inormal);
+
+	VUNITIZE(amb_ap.a_ray.r_dir);
+
+	amb_ap.a_user = 0;
+	amb_ap.a_flag = 0;
+
+	/* shoot in the direction and see what we hit */
+	rt_shootray(&amb_ap);
+	hitCount += amb_ap.a_flag;
+    }
+
+    occlusionFactor = 1.0 - (hitCount / (float)ambSamples);
+
+    /* try not go go completely black */
+    CLAMP(occlusionFactor, 0.0125, 1.0);
+
+    VSCALE(ap->a_color, ap->a_color, occlusionFactor);
 }
 
 
@@ -1078,6 +1242,11 @@ out:
 	VSCALE(ap->a_color, ap->a_color, f);
 	VJOIN1(ap->a_color, ap->a_color, g, haze);
     }
+
+
+    if (ambSamples > 0) 
+	ambientOcclusion(ap, pp);
+
     RT_CK_REGION(ap->a_uptr);
     if (R_DEBUG&RDEBUG_HITS) {
 	bu_log("colorview: lvl=%d ret a_user=%d %s\n",
@@ -1113,6 +1282,8 @@ int viewit(struct application *ap,
 	bu_log("viewit:  no hit out front?\n");
 	return 0;
     }
+
+    bu_log("----------------------------------------------------------------------viewit\n");
 
     if (do_kut_plane) {
 	fastf_t slant_factor;
@@ -1494,7 +1665,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
     }
     /* On fully incremental mode, allocate the scanline as the total
        size of the image */
-    if(full_incr_mode && !psum_buffer)
+    if (full_incr_mode && !psum_buffer)
 	psum_buffer = bu_calloc(height*width*pwidth, sizeof(fastf_t), "partial sums buffer");
 
 #ifdef RTSRV
@@ -1504,7 +1675,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	buf_mode = BUFMODE_FULLFLOAT;
     } else if (incr_mode) {
 	buf_mode = BUFMODE_INCR;
-    } else if (full_incr_mode){
+    } else if (full_incr_mode) {
 	buf_mode = BUFMODE_ACC;
     }
     else if (width <= 96 || random_mode) {
@@ -1774,18 +1945,23 @@ view_2init(struct application *ap, char *UNUSED(framename))
  * Called once, very early on in RT setup, even before command line is
  * processed.
  */
-void application_init (void)
+void
+application_init(void)
 {
     /* rpt_overlap = 1; */
 
     /* Set the byte offsets at run time */
-    view_parse[0].sp_offset = bu_byteoffset(gamma_corr);
-    view_parse[1].sp_offset = bu_byteoffset(max_bounces);
-    view_parse[2].sp_offset = bu_byteoffset(max_ireflect);
-    view_parse[3].sp_offset = bu_byteoffset(a_onehit);
-    view_parse[4].sp_offset = bu_byteoffset(background[0]);
-    view_parse[5].sp_offset = bu_byteoffset(overlay);
-    view_parse[6].sp_offset = bu_byteoffset(overlay);
+    view_parse[ 0].sp_offset = bu_byteoffset(gamma_corr);
+    view_parse[ 1].sp_offset = bu_byteoffset(max_bounces);
+    view_parse[ 2].sp_offset = bu_byteoffset(max_ireflect);
+    view_parse[ 3].sp_offset = bu_byteoffset(a_onehit);
+    view_parse[ 4].sp_offset = bu_byteoffset(background[0]);
+    view_parse[ 5].sp_offset = bu_byteoffset(overlay);
+    view_parse[ 6].sp_offset = bu_byteoffset(overlay);
+    view_parse[ 7].sp_offset = bu_byteoffset(ambSamples);
+    view_parse[ 8].sp_offset = bu_byteoffset(ambRadius);
+    view_parse[ 9].sp_offset = bu_byteoffset(ambOffset);
+    view_parse[10].sp_offset = bu_byteoffset(ambSlow);
 }
 
 

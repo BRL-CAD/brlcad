@@ -1,7 +1,7 @@
 /*                         T E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -91,9 +91,8 @@ f_tedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
     CHECK_READ_ONLY;
 
     if (argc < 1 || 1 < argc) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help ted");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -109,7 +108,8 @@ f_tedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	return TCL_ERROR;
 
     if (writesolid()) {
-	(void)unlink(tmpfil);
+	bu_file_delete(tmpfil);
+        fclose(fp);
 	return TCL_ERROR;
     }
 
@@ -117,7 +117,7 @@ f_tedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
     if (editit(argv[0], tmpfil) == TCL_OK) {
 	if (readsolid()) {
-	    (void)unlink(tmpfil);
+	    bu_file_delete(tmpfil);
 	    return TCL_ERROR;
 	}
 
@@ -127,7 +127,7 @@ f_tedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	Tcl_AppendResult(interp, "done\n", (char *)NULL);
     }
 
-    unlink(tmpfil);
+    bu_file_delete(tmpfil);
 
     return TCL_OK;
 }
@@ -901,7 +901,7 @@ get_editor_string(struct bu_vls *editstring)
 
     /* still unset? try mac os x */
     if (!editor || editor[0] == '\0') {
-	if (bu_file_exists(MAC_EDITOR)) {
+	if (bu_file_exists(MAC_EDITOR, NULL)) {
 	    editor = MAC_EDITOR;
 	}
     }
@@ -1082,9 +1082,9 @@ get_editor_string(struct bu_vls *editstring)
     	    }
     	}
     	/* if it's not something we know about, assume no terminal - user can arrange for one if needed */
-    }	
+    }
 
-    bu_vls_sprintf(editstring, "%s %s %s %s", terminal?terminal:"(null)", terminal_opt?terminal_opt:"(null)", editor?editor:"(null)", editor_opt?editor_opt:"(null)"); 
+    bu_vls_sprintf(editstring, "%s %s %s %s", terminal?terminal:"(null)", terminal_opt?terminal_opt:"(null)", editor, editor_opt?editor_opt:"(null)");
 
     return 1;
 }

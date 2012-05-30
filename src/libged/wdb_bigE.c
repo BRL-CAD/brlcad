@@ -1,7 +1,7 @@
 /*                          B I G E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2011 United States Government as represented by
+ * Copyright (c) 1997-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -130,7 +130,7 @@ wdb_add_solid(const struct directory *dp,
     int id;
     int solid_is_plate_mode_bot=0;
 
-    BU_GETUNION(eptr, E_tree);
+    BU_GET(eptr, union E_tree);
     eptr->magic = E_TREE_MAGIC;
 
     id = rt_db_get_internal(&intern, dp, dgcdp->dgop->dgo_wdbp->dbip, mat, &rt_uniresource);
@@ -172,7 +172,7 @@ wdb_add_solid(const struct directory *dp,
     }
 
     /* get the soltab stuff */
-    BU_GETSTRUCT(eptr->l.stp, soltab);
+    BU_GET(eptr->l.stp, struct soltab);
     eptr->l.stp->l.magic = RT_SOLTAB_MAGIC;
     eptr->l.stp->l2.magic = RT_SOLTAB2_MAGIC;
     eptr->l.stp->st_dp = dp;
@@ -251,7 +251,7 @@ wdb_build_etree(union tree *tp,
 	case OP_UNION:
 	case OP_SUBTRACT:
 	case OP_INTERSECT:
-	    BU_GETUNION(eptr, E_tree);
+	    BU_GET(eptr, union E_tree);
 	    eptr->magic = E_TREE_MAGIC;
 	    eptr->n.op = tp->tr_op;
 	    eptr->n.left = wdb_build_etree(tp->tr_b.tb_left, dgcdp);
@@ -265,7 +265,6 @@ wdb_build_etree(union tree *tp,
 	    break;
 	case OP_DB_LEAF:
 	    if ((dp=db_lookup(dgcdp->dgop->dgo_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL) {
-		eptr->l.m = (struct model *)NULL;
 		break;
 	    }
 	    eptr = wdb_add_solid(dp, tp->tr_l.tl_mat, dgcdp);
@@ -274,7 +273,7 @@ wdb_build_etree(union tree *tp,
 	    break;
 	case OP_NOP:
 	    /* add a NULL solid */
-	    BU_GETUNION(eptr, E_tree);
+	    BU_GET(eptr, union E_tree);
 	    eptr->magic = E_TREE_MAGIC;
 	    eptr->l.m = (struct model *)NULL;
 	    break;
@@ -1045,7 +1044,7 @@ wdb_classify_seg(struct seg *seg, struct soltab *shoot, struct xray *rp, struct 
 
     memset(&rd, 0, sizeof(struct ray_data));
 
-    BU_GETSTRUCT(rd.seghead, seg);
+    BU_GET(rd.seghead, struct seg);
     BU_LIST_INIT(&rd.seghead->l);
 
     mid_dist = (seg->seg_in.hit_dist + seg->seg_out.hit_dist) / 2.0;
@@ -1148,7 +1147,7 @@ wdb_shoot_and_plot(point_t start_pt,
 
     memset(&rd, 0, sizeof(struct ray_data));
 
-    BU_GETSTRUCT(rd.seghead, seg);
+    BU_GET(rd.seghead, struct seg);
     BU_LIST_INIT(&rd.seghead->l);
 
     VMOVE(rp.r_pt, start_pt)
@@ -1482,9 +1481,7 @@ wdb_Eplot(union E_tree *eptr,
 
 		    f2 = fu2->f_p;
 
-		    if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt,
-					   f1->min_pt, f1->max_pt,
-					   tol))
+		    if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt, f1->min_pt, f1->max_pt, tol->dist))
 			continue;
 
 		    NMG_GET_FU_PLANE(pl2, fu2);
@@ -1571,7 +1568,7 @@ wdb_Eplot(union E_tree *eptr,
 		    VUNITIZE(dir);
 		    max_dist = dists1[1];
 		    max_hit = 1;
-		    for (i=2; i<hit_count1; i++) {
+		    for (i = 2; i < hit_count1; i++) {
 			VSUB2(diff, hits1[i], start_pt);
 			dists1[i] = MAGNITUDE(diff);
 			if (VDOT(dir, diff) < 0.0)
@@ -1593,7 +1590,7 @@ wdb_Eplot(union E_tree *eptr,
 		    done = 0;
 		    while (!done) {
 			done = 1;
-			for (i=1; i<hit_count1; i++) {
+			for (i = 1; i < hit_count1; i++) {
 			    if (dists1[i-1] > dists1[i]) {
 				fastf_t tmp;
 				point_t tmp_pt;
@@ -1614,7 +1611,7 @@ wdb_Eplot(union E_tree *eptr,
 		    min_hit = -1;
 		    max_dist = -min_dist;
 		    max_hit = -1;
-		    for (i=0; i<hit_count2; i++) {
+		    for (i = 0; i < hit_count2; i++) {
 			VSUB2(diff, hits2[i], start_pt);
 			dists2[i] = MAGNITUDE(diff);
 			if (VDOT(dir, diff) < 0.0)
@@ -1632,7 +1629,7 @@ wdb_Eplot(union E_tree *eptr,
 		    done = 0;
 		    while (!done) {
 			done = 1;
-			for (i=1; i<hit_count2; i++) {
+			for (i = 1; i < hit_count2; i++) {
 			    if (dists2[i-1] > dists2[i]) {
 				fastf_t tmp;
 				point_t tmp_pt;
@@ -1654,7 +1651,7 @@ wdb_Eplot(union E_tree *eptr,
 		    BU_LIST_INIT(A);
 		    BU_LIST_INIT(B);
 
-		    for (i=1; i<hit_count1; i += 2) {
+		    for (i = 1; i < hit_count1; i += 2) {
 			if (NEAR_EQUAL(dists1[i], dists1[i-1], tol->dist)) {
 			    continue;
 			}
@@ -1669,7 +1666,7 @@ wdb_Eplot(union E_tree *eptr,
 			BU_LIST_APPEND(A, &aseg->l);
 		    }
 
-		    for (i=1; i<hit_count2; i += 2) {
+		    for (i = 1; i < hit_count2; i += 2) {
 			if (NEAR_EQUAL(dists2[i], dists2[i-1], tol->dist)) {
 			    continue;
 			}
@@ -1759,7 +1756,7 @@ wdb_fix_halfs(struct dg_client_data *dgcdp)
     VSETALL(max, -MAX_FASTF);
     VSETALL(min, MAX_FASTF);
 
-    for (i=0; i<BU_PTBL_END(&dgcdp->leaf_list); i++) {
+    for (i = 0; i < BU_PTBL_END(&dgcdp->leaf_list); i++) {
 	union E_tree *tp;
 
 	tp = (union E_tree *)BU_PTBL_GET(&dgcdp->leaf_list, i);
@@ -1777,7 +1774,7 @@ wdb_fix_halfs(struct dg_client_data *dgcdp)
 	return;
     }
 
-    for (i=0; i<BU_PTBL_END(&dgcdp->leaf_list); i++) {
+    for (i = 0; i < BU_PTBL_END(&dgcdp->leaf_list); i++) {
 	union E_tree *tp;
 	struct vertex *v[8];
 	struct vertex **vp[4];
@@ -1807,7 +1804,7 @@ wdb_fix_halfs(struct dg_client_data *dgcdp)
 	r = nmg_mrsv(tp->l.m);
 	s = BU_LIST_FIRST(shell, &r->s_hd);
 
-	for (j=0; j<8; j++)
+	for (j = 0; j < 8; j++)
 	    v[j] = (struct vertex *)NULL;
 
 	vp[0] = &v[0];
@@ -1992,7 +1989,7 @@ wdb_fix_halfs(struct dg_client_data *dgcdp)
 	nmg_close_shell(s, tol);
 	nmg_rebound(tp->l.m, tol);
 
-	BU_GETSTRUCT(pg, rt_pg_internal);
+	BU_GET(pg, struct rt_pg_internal);
 
 	if (!nmg_to_poly(tp->l.m, pg, tol)) {
 	    bu_free((char *)pg, "rt_pg_internal");
@@ -2025,20 +2022,18 @@ wdb_fix_halfs(struct dg_client_data *dgcdp)
 
 int
 dgo_E_cmd(struct dg_obj *dgop,
-	  Tcl_Interp *interp,
 	  int argc,
-	  char **argv)
+	  const char **argv)
 {
     int c;
     char perf_message[128];
     struct dg_client_data *dgcdp;
 
     if (argc < 2) {
-	struct bu_vls vls;
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "help E");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
+	Tcl_Eval(dgop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -2046,15 +2041,15 @@ dgo_E_cmd(struct dg_obj *dgop,
     if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	bu_log("Error at start of 'E'\n");
 
-    BU_GETSTRUCT(dgcdp, dg_client_data);
+    BU_GET(dgcdp, struct dg_client_data);
     dgcdp->dgop = dgop;
-    dgcdp->interp = interp;
+    dgcdp->interp = dgop->interp;
     dgcdp->do_polysolids = 0;
     dgcdp->wireframe_color_override = 0;
 
     /* Parse options. */
     bu_optind = 1;          /* re-init bu_getopt() */
-    while ((c=bu_getopt(argc, argv, "sC:")) != -1) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "sC:")) != -1) {
 	switch (c) {
 	    case 'C': {
 		int r, g, b;
@@ -2082,11 +2077,10 @@ dgo_E_cmd(struct dg_obj *dgop,
 		dgcdp->do_polysolids = 1;
 		break;
 	    default: {
-		struct bu_vls vls;
+		struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "help %s", argv[0]);
-		Tcl_Eval(interp, bu_vls_addr(&vls));
+		Tcl_Eval(dgop->interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 
 		return TCL_ERROR;
@@ -2096,7 +2090,7 @@ dgo_E_cmd(struct dg_obj *dgop,
     argc -= bu_optind;
     argv += bu_optind;
 
-    dgo_eraseobjpath(dgop, interp, argc, argv, LOOKUP_QUIET, 0);
+    dgo_eraseobjpath(dgop, argc, argv, LOOKUP_QUIET, 0);
 
     dgcdp->ap = (struct application *)bu_malloc(sizeof(struct application), "Big E app");
     RT_APPLICATION_INIT(dgcdp->ap);
@@ -2124,7 +2118,7 @@ dgo_E_cmd(struct dg_obj *dgop,
 	bu_free((char *)dgcdp->rtip, "rt_i structure for 'E'");
 	bu_free(dgcdp, "dgcdp");
 
-	Tcl_AppendResult(interp, "Failed to get objects\n", (char *)NULL);
+	bu_log("Failed to get objects\n");
 	return TCL_ERROR;
     }
     {
@@ -2164,7 +2158,7 @@ dgo_E_cmd(struct dg_obj *dgop,
     bu_ptbl_free(&dgcdp->leaf_list);
 
     sprintf(perf_message, "E: %ld vectors in %ld sec\n", dgcdp->nvectors, (long)(dgcdp->etime - dgcdp->start_time));
-    Tcl_AppendResult(interp, perf_message, (char *)NULL);
+    Tcl_AppendResult(dgop->interp, perf_message, (char *)NULL);
 
     return TCL_OK;
 }

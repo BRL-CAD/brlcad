@@ -1,7 +1,7 @@
 /*                       G L O B A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -75,34 +75,6 @@ const char bu_strdup_message[] = "bu_strdup string";
  * NOT published in a public header.
  */
 int bu_pid_of_initiating_thread = 0;
-
-/**
- * list of callbacks to call during bu_bomb.
- */
-struct bu_hook_list bu_bomb_hook_list = {
-    {
-	BU_LIST_HEAD_MAGIC,
-	&bu_bomb_hook_list.l,
-	&bu_bomb_hook_list.l
-    },
-    NULL,
-    GENPTR_NULL
-};
-
-/**
- * list of callbacks to call during bu_log.
- *
- * NOT published in a public header.
- */
-struct bu_hook_list bu_log_hook_list = {
-    {
-	BU_LIST_HEAD_MAGIC,
-	&bu_log_hook_list.l,
-	&bu_log_hook_list.l
-    },
-    NULL,
-    GENPTR_NULL
-};
 
 /**
  * bu_setjmp_valid is global because BU_SETJUMP() *must* be a macro.

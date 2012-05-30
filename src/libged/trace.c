@@ -1,7 +1,7 @@
 /*                         T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,8 +34,10 @@ trace_do(struct db_i *dbip,
 	     union tree *comb_leaf,
 	     genptr_t user_ptr1,
 	     genptr_t user_ptr2,
-	     genptr_t user_ptr3)
+	     genptr_t user_ptr3,
+	     genptr_t user_ptr4)
 {
+    int *verbose;
     int *pathpos;
     matp_t old_xlate;
     mat_t new_xlate;
@@ -51,6 +53,7 @@ trace_do(struct db_i *dbip,
     pathpos = (int *)user_ptr1;
     old_xlate = (matp_t)user_ptr2;
     gtdp = (struct _ged_trace_data *)user_ptr3;
+    verbose = (int *)user_ptr4;
 
     /*
      * In _GED_EVAL_ONLY mode we're collecting the matrices along
@@ -71,7 +74,7 @@ trace_do(struct db_i *dbip,
 	MAT_COPY(new_xlate, old_xlate);
     }
 
-    _ged_trace(nextdp, (*pathpos)+1, new_xlate, gtdp);
+    _ged_trace(nextdp, (*pathpos)+1, new_xlate, gtdp, *verbose);
 }
 
 
@@ -83,20 +86,18 @@ void
 _ged_trace(struct directory *dp,
 	   int pathpos,
 	   const mat_t old_xlate,
-	   struct _ged_trace_data *gtdp)
+	   struct _ged_trace_data *gtdp,
+	   int verbose)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     int i;
     int id;
-    struct bu_vls str;
-
-    bu_vls_init(&str);
 
     if (pathpos >= _GED_MAX_LEVELS) {
 	bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "nesting exceeds %d levels\n", _GED_MAX_LEVELS);
 
-	for (i=0; i<_GED_MAX_LEVELS; i++)
+	for (i = 0; i < _GED_MAX_LEVELS; i++)
 	    bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "/%s", gtdp->gtd_path[i]->d_namep);
 
 	bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "\n");
@@ -113,7 +114,7 @@ _ged_trace(struct directory *dp,
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	if (comb->tree)
 	    db_tree_funcleaf(gtdp->gtd_gedp->ged_wdbp->dbip, comb, comb->tree, trace_do,
-			     (genptr_t)&pathpos, (genptr_t)old_xlate, (genptr_t)gtdp);
+			     (genptr_t)&pathpos, (genptr_t)old_xlate, (genptr_t)gtdp, (genptr_t)&verbose);
 
 	rt_db_free_internal(&intern);
 
@@ -127,15 +128,20 @@ _ged_trace(struct directory *dp,
 
     /* check for desired path */
     if (gtdp->gtd_flag == _GED_CPEVAL) {
-	for (i=0; i<=pathpos; i++) {
+	for (i = 0; i <= pathpos; i++) {
 	    if (gtdp->gtd_path[i]->d_addr != gtdp->gtd_obj[i]->d_addr) {
 		/* not the desired path */
 		return;
 	    }
 	}
     } else {
-	for (i=0; i<gtdp->gtd_objpos; i++) {
-	    if (gtdp->gtd_path[i]->d_addr != gtdp->gtd_obj[i]->d_addr) {
+	for (i = 0; i < gtdp->gtd_objpos; i++) {
+	    if (gtdp->gtd_path[i]) {
+		if (gtdp->gtd_path[i]->d_addr != gtdp->gtd_obj[i]->d_addr) {
+		    /* not the desired path */
+		    return;
+	    	}
+	    } else {
 		/* not the desired path */
 		return;
 	    }
@@ -151,7 +157,7 @@ _ged_trace(struct directory *dp,
 	return;
 
     /* print the path */
-    for (i=0; i<pathpos; i++)
+    for (i = 0; i < pathpos; i++)
 	bu_vls_printf(gtdp->gtd_gedp->ged_result_str, "/%s", gtdp->gtd_path[i]->d_namep);
 
     if (gtdp->gtd_flag == _GED_LISTPATH) {
@@ -169,7 +175,7 @@ _ged_trace(struct directory *dp,
     if (!rt_functab[id].ft_describe ||
 	rt_functab[id].ft_describe(gtdp->gtd_gedp->ged_result_str,
 				   &intern,
-				   1,
+				   verbose,
 				   gtdp->gtd_gedp->ged_wdbp->dbip->dbi_base2local,
 				   &rt_uniresource,
 				   gtdp->gtd_gedp->ged_wdbp->dbip) < 0)

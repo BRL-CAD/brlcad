@@ -1,7 +1,7 @@
 /*                      I F _ S T A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,16 +44,16 @@ struct stkinfo {
 #define SIL(ptr) ((ptr)->u1.p)		/* left hand side version */
 
 HIDDEN int
-stk_open(FBIO *ifp, char *file, int width, int height)
+stk_open(FBIO *ifp, const char *file, int width, int height)
 {
     int i;
-    char *cp;
+    const char *cp;
     char devbuf[80];
 
     FB_CK_FBIO(ifp);
 
     /* Check for /dev/stack */
-    if (strncmp(file, ifp->if_name, strlen("/dev/stack")) != 0) {
+    if (bu_strncmp(file, ifp->if_name, strlen("/dev/stack")) != 0) {
 	fb_log("stack_dopen: Bad device %s\n", file);
 	return -1;
     }

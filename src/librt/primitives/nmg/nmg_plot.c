@@ -1,7 +1,7 @@
 /*                      N M G _ P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -273,11 +273,13 @@ nmg_lu_to_vlist(struct bu_list *vhead, const struct loopuse *lu, int poly_marker
 	VSCALE(centroid, centroid, f);
 	VSUB2(tocent, first_vg->coord, centroid);
 	f = MAGNITUDE(tocent) * 0.5;
-	if (*fp->g.magic_p != NMG_FACE_G_SNURB_MAGIC) {
+	if (fp) {
+	  if (*fp->g.magic_p != NMG_FACE_G_SNURB_MAGIC) {
 	    /* snurb normals are plotted in nmg_snurb_fu_to_vlist() */
 	    RT_ADD_VLIST(vhead, centroid, BN_VLIST_LINE_MOVE);
 	    VJOIN1(tip, centroid, f, normal);
 	    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
+	  } 
 	}
 
 	/* For any vertexuse attributes with normals, draw them too */

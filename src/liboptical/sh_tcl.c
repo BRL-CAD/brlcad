@@ -1,7 +1,7 @@
 /*                        S H _ T C L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ struct tcl_specific tcl_defaults = {
     MAT_INIT_ZERO,		/* tcl_m_to_r */
     {0},			/* tcl_interps */
     NULL,			/* tcl_objPtr */
-    {0, NULL, 0, 0, 0},		/* tcl_file */
+    BU_VLS_INIT_ZERO,		/* tcl_file */
     NULL			/* tcl_mp */
 };
 
@@ -83,8 +83,8 @@ struct bu_structparse tcl_print_tab[] = {
 
 };
 struct bu_structparse tcl_parse_tab[] = {
-    {"%p",	bu_byteoffset(tcl_print_tab[0]), "tcl_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%V",  1, "f", SHDR_O(tcl_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%p", 1, "tcl_print_tab", bu_byteoffset(tcl_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%V", 1, "f", SHDR_O(tcl_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -138,7 +138,7 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 	bu_log("tcl_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(tcl_sp, tcl_specific);
+    BU_GET(tcl_sp, struct tcl_specific);
     *dpp = tcl_sp;
 
     /* initialize the default values for the shader */
@@ -150,7 +150,8 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 
     for (cpu=0; cpu < MAX_PSW; cpu++) {
 	tcl_sp->tcl_interp[cpu] = Tcl_CreateInterp();
-	Tcl_Init(tcl_sp->tcl_interp[cpu]);
+	if (Tcl_Init(tcl_sp->tcl_interp[cpu]) == TCL_ERROR)
+	    return -1;
     }
 
     /* the shader needs to operate in a coordinate system which stays

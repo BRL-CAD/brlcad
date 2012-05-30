@@ -1,7 +1,7 @@
 /*                      P I X C L U M P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2011 United States Government as represented by
+ * Copyright (c) 1997-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -105,12 +105,11 @@ static void fill_table (char *f_name)
     FILE *fp;
     int line_nm;
     unsigned char rgb[3];
-    struct bu_vls v;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
 
     if ((fp = fopen(f_name, "r")) == NULL)
 	bu_exit(1, "Cannot open color file '%s'\n", bu_optarg);
 
-    bu_vls_init(&v);
     for (line_nm = 1; bu_vls_gets(&v, fp) != -1;
 	 ++line_nm, bu_vls_trunc(&v, 0))
     {
@@ -118,10 +117,13 @@ static void fill_table (char *f_name)
 	    ;
 	if ((*bp == '#') || (*bp == '\0'))
 	    continue;
-	if (! bu_str_to_rgb(bp, rgb))
+	if (! bu_str_to_rgb(bp, rgb)) {
+            fclose(fp);
 	    bu_exit(1, "Illegal color: '%s' on line %d of file '%s'\n", bp, line_nm, f_name);
+        }
 	add_to_table(rgb);
     }
+    fclose(fp);
 }
 
 

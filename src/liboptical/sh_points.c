@@ -1,7 +1,7 @@
 /*                     S H _ P O I N T S . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2011 United States Government as represented by
+ * Copyright (c) 1989-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -98,7 +98,7 @@ points_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
     FILE *fp;
 
     BU_CK_VLS(matparm);
-    BU_GETSTRUCT(ptp, points_specific);
+    BU_GET(ptp, struct points_specific);
     *dpp = ptp;
 
     /* get or default shader parameters */

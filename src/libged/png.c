@@ -1,7 +1,7 @@
 /*                         P N G . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,10 +28,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <zlib.h>
+#include <png.h>
 #include "bio.h"
 
-#include "zlib.h"
-#include "png.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
@@ -183,9 +183,12 @@ draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_POLY_VERTNORM:
+		case BN_VLIST_TRI_START:
+		case BN_VLIST_TRI_VERTNORM:
 		    continue;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_TRI_MOVE:
 		    /* Move, not draw */
 		    if (gedp->ged_gvp->gv_perspective > 0) {
 			/* cannot apply perspective transformation to
@@ -207,6 +210,8 @@ draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_POLY_END:
 		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_TRI_DRAW:
+		case BN_VLIST_TRI_END:
 		    /* draw */
 		    if (gedp->ged_gvp->gv_perspective > 0) {
 			/* cannot apply perspective transformation to
@@ -220,6 +225,7 @@ draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t
 				pt_prev = pt;
 				continue;
 			    } else {
+				if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -229,9 +235,11 @@ draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t
 				alpha = (dist_prev - delta) / (dist_prev - dist);
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(fin, psmat, tmp_pt);
+				}
 			    }
 			} else {
 			    if (dist_prev <= 0.0) {
+				if (pt_prev) {
 				fastf_t alpha;
 				vect_t diff;
 				point_t tmp_pt;
@@ -242,6 +250,7 @@ draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, matp_t
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(last, psmat, tmp_pt);
 				MAT4X3PNT(fin, psmat, *pt);
+				}
 			    } else {
 				MAT4X3PNT(fin, psmat, *pt);
 			    }
@@ -271,7 +280,7 @@ draw_png_body(struct ged *gedp, unsigned char **image)
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
-    mat_t new;
+    mat_t newmat;
     matp_t mat;
     mat_t perspective_mat;
     struct solid *sp;
@@ -295,8 +304,8 @@ draw_png_body(struct ged *gedp, unsigned char **image)
 	    ged_deering_persp_mat(perspective_mat, l, h, gedp->ged_gvp->gv_eye_pos);
 	}
 
-	bn_mat_mul(new, perspective_mat, mat);
-	mat = new;
+	bn_mat_mul(newmat, perspective_mat, mat);
+	mat = newmat;
     }
 
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);

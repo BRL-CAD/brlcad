@@ -1,7 +1,7 @@
 /*                     G - V A R . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2011 United States Government as represented by
+ * Copyright (c) 2002-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,8 @@
 #include "wdb.h"
 #include "raytrace.h"
 
-#define MESH_FORMAT_VERSION 2
+/* version is a char where it is used below */
+#define MESH_FORMAT_VERSION '2'
 
 
 struct mesh {
@@ -51,7 +52,7 @@ struct mesh {
 };
 
 
-static const char usage[] = "Usage: %s [-v] [-y] [-s scale] [-f] [-o out_file] brlcad_db.h object\n";
+static const char usage[] = "Usage: %s [-v] [-y] [-s scale] [-f] [-o out_file] tgm.g object\n";
 
 static int verbose = 0;
 static int yup = 0;
@@ -137,25 +138,25 @@ void write_header(struct db_i *dbip)
 
     /* endian */
     if (bu_byteorder() == BU_BIG_ENDIAN) {
-	endian = 1;
+	endian = '1';
     } else {
-	endian = 0;
+	endian = '0';
     }
     ret = fwrite(&endian, 1, 1, fp_out);
     if (ret != 1)
 	perror("fwrite");
 
     /* format version */
-    ret = fwrite(&format_version, 1, 1, fp_out);
+    ret = fwrite(&format_version, sizeof(char), 1, fp_out);
     if (ret != 1)
 	perror("fwrite");
     len = strlen(dbip->dbi_title);
     /* model name string length */
-    ret = fwrite(&len, sizeof(uint16_t), 1, fp_out);
+    ret = fwrite(&len, sizeof(size_t), 1, fp_out);
     if (ret != 1)
 	perror("fwrite");
     /* model name string */
-    ret = fwrite(dbip->dbi_title, 1, len, fp_out);
+    ret = fwrite(dbip->dbi_title, sizeof(char), len, fp_out);
     if (ret != 1)
 	perror("fwrite");
     /* mesh count */
@@ -237,7 +238,7 @@ void compute_normal(struct rt_bot_internal *bot, int p1, int p2,
 void get_normals(struct rt_bot_internal *bot, float *dest)
 {
     size_t i;
-    for (i=0; i < bot->num_faces; i++) {
+    for (i = 0; i < bot->num_faces; i++) {
 	compute_normal(curr->bot, bot->faces[3*i], bot->faces[3*i+1],
 		       bot->faces[3*i+2], dest);
     }
@@ -299,7 +300,7 @@ void write_mesh_data()
 	    perror("fwrite");
 
 	/* vertex triples */
-	for (i=0; i < curr->bot->num_vertices; i++) {
+	for (i = 0; i < curr->bot->num_vertices; i++) {
 	    get_vertex(curr->bot, i, vec);
 	    ret = fwrite(vec, sizeof(float), 3, fp_out);
 	    if (ret != 1)
@@ -339,8 +340,9 @@ void write_mesh_data()
 	if (ret != 1)
 	    perror("fwrite");
 	switch (format) {
+	    default:
 	    case 0:
-		for (i=0; i< nface; i++) {
+		for (i = 0; i < nface; i++) {
 		    ind8[0] = curr->bot->faces[3*i];
 		    if (flip_normals) {
 			ind8[1] = curr->bot->faces[3*i+2];
@@ -355,7 +357,7 @@ void write_mesh_data()
 		}
 		break;
 	    case 1:
-		for (i=0; i< nface; i++) {
+		for (i = 0; i < nface; i++) {
 		    ind16[0] = curr->bot->faces[3*i];
 		    if (flip_normals) {
 			ind16[1] = curr->bot->faces[3*i+2];
@@ -370,7 +372,7 @@ void write_mesh_data()
 		}
 		break;
 	    case 2:
-		for (i=0; i< nface; i++) {
+		for (i = 0; i < nface; i++) {
 		    ind32[0] = curr->bot->faces[3*i];
 		    if (flip_normals) {
 			ind32[1] = curr->bot->faces[3*i+2];
@@ -383,8 +385,6 @@ void write_mesh_data()
 		    if (ret != 1)
 			perror("fwrite");
 		}
-		break;
-	    default:
 		break;
 	}
 
@@ -400,6 +400,7 @@ int main(int argc, char *argv[])
     struct db_i *dbip;
 
     /* setup BRL-CAD environment */
+    bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
     rt_init_resource(&rt_uniresource, 0, NULL);
 

@@ -1,7 +1,7 @@
 /*                         R T C H E C K . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -328,7 +328,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
     *vp++ = rtcheck;
     *vp++ = "-M";
-    for (i=1; i < argc; i++)
+    for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
 
 #ifndef _WIN32
@@ -395,7 +395,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 	(void)close(e_pipe[0]);
 	(void)close(e_pipe[1]);
 
-	for (i=3; i < 20; i++)
+	for (i = 3; i < 20; i++)
 	    (void)close(i);
 
 	(void)execvp(gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd);
@@ -415,7 +415,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     (void)close(i_pipe[1]);
     (void)close(e_pipe[1]);
 
-    BU_GETSTRUCT(rtcp, ged_rtcheck);
+    BU_GET(rtcp, struct ged_rtcheck);
 
     /* initialize the rtcheck struct */
     rtcp->fd = i_pipe[0];
@@ -431,7 +431,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     Tcl_CreateFileHandler(i_pipe[0], TCL_READABLE,
 			  rtcheck_vector_handler, (ClientData)rtcp);
 
-    BU_GETSTRUCT(rtcop, rtcheck_output);
+    BU_GET(rtcop, struct rtcheck_output);
     rtcop->fd = e_pipe[0];
     rtcop->gedp = gedp;
     rtcop->interp = brlcad_interp;
@@ -494,7 +494,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     si.wShowWindow = SW_HIDE;
 
     snprintf(line, sizeof(line), "%s ", gedp->ged_gdp->gd_rt_cmd[0]);
-    for (i=1; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
+    for (i = 1; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
 	snprintf(name, sizeof(name), "%s ", gedp->ged_gdp->gd_rt_cmd[i]);
 	bu_strlcat(line, name, sizeof(line));
     }
@@ -518,7 +518,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     _ged_rt_write(gedp, fp, eye_model);
     (void)fclose(fp);
 
-    BU_GETSTRUCT(rtcp, ged_rtcheck);
+    BU_GET(rtcp, struct ged_rtcheck);
 
     /* initialize the rtcheck struct */
     rtcp->fd = pipe_iDup;
@@ -537,7 +537,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 			     rtcheck_vector_handler,
 			     (ClientData)rtcp);
 
-    BU_GETSTRUCT(rtcop, rtcheck_output);
+    BU_GET(rtcop, struct rtcheck_output);
     rtcop->fd = pipe_eDup;
     rtcop->chan = Tcl_MakeFileChannel(pipe_eDup, TCL_READABLE);
     rtcop->gedp = gedp;

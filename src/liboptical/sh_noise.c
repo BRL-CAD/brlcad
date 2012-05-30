@@ -1,7 +1,7 @@
 /*                      S H _ N O I S E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2011 United States Government as represented by
+ * Copyright (c) 1998-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -147,7 +147,7 @@ struct bu_structparse noise_print_tab[] = {
 
 
 struct bu_structparse noise_parse_tab[] = {
-    {"%p",	bu_byteoffset(noise_print_tab[0]), "noise_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%p", 1, "noise_print_tab", bu_byteoffset(noise_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "l",			SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -199,7 +199,7 @@ noise_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 	       rp->reg_mater.ma_shader);
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(noise_sp, noise_specific);
+    BU_GET(noise_sp, struct noise_specific);
     *dpp = noise_sp;
 
     /* initialize the default values for the shader */

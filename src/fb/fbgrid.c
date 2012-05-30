@@ -1,7 +1,7 @@
 /*                        F B G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -175,7 +175,8 @@ oldflavor(void)
     int	fb_sz;
     static RGBpixel	black, white, red;
 
-    if ((fbiop = fb_open(NULL, fbwidth, fbheight)) == NULL) {
+    fbiop = fb_open(NULL, fbwidth, fbheight);
+    if (fbiop == NULL) {
 	bu_exit(1, NULL);
     }
 

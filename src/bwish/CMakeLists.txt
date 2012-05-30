@@ -1,11 +1,11 @@
-SET(BWISH_INCLUDE_DIRS
-	${BU_INCLUDE_DIRS}
-	${TERMIO_INCLUDE_DIRS}
-	${GED_INCLUDE_DIRS}
-	${DM_INCLUDE_DIRS}
-	${TCLCAD_INCLUDE_DIRS}
-	)
-LIST(REMOVE_DUPLICATES BWISH_INCLUDE_DIRS)
+set(BWISH_INCLUDE_DIRS
+  ${BU_INCLUDE_DIRS}
+  ${TERMIO_INCLUDE_DIRS}
+  ${GED_INCLUDE_DIRS}
+  ${DM_INCLUDE_DIRS}
+  ${TCLCAD_INCLUDE_DIRS}
+  )
+list(REMOVE_DUPLICATES BWISH_INCLUDE_DIRS)
 include_directories(${BWISH_INCLUDE_DIRS})
 
 # Until we figure out how to package require instead
@@ -16,37 +16,54 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/other/tcl/unix
   ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
   ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
-)
+  )
 
-IF(WIN32)
-	BRLCAD_ADDEXEC(btclsh "cadAppInit.c consoleMain.c" "libtclcad libged ${ITCL_LIBRARY}")
-	CMAKEFILES(cmd.c input.c main.c tcl.c)
-ELSE(WIN32)
-	BRLCAD_ADDEXEC(btclsh "cmd.c input.c main.c tcl.c" "libbu libtclcad libtermio ${ITCL_LIBRARY}")
-	CMAKEFILES(cadAppInit.c consoleMain.c)
-ENDIF(WIN32)
+# Which source files constitute btclsh, and which libraries
+# it needs, depends on the current OS.
+if(WIN32)
+  set(btclsh_srcs cadAppInit.c consoleMain.c)
+  set(btclsh_libs libtclcad libged ${ITCL_LIBRARY})
+else(WIN32)
+  set(btclsh_srcs cmd.c input.c main.c tcl.c)
+  set(btclsh_libs libtclcad libbu libtermio ${ITCL_LIBRARY})
+endif(WIN32)
+# Regardless of OS , make sure all the tclsh files are marked for CMake
+CMAKEFILES(cmd.c input.c main.c tcl.c cadAppInit.c consoleMain.c)
 
-IF(BRLCAD-ENABLE_TK)
-	IF(WIN32)
-		add_executable(bwish WIN32 cadAppInit.c winMain.c)
-		target_link_libraries(bwish libtclcad libdm imm32.lib comctl32.lib ${ITCL_LIBRARY} ${ITK_LIBRARY})
-		CMAKEFILES(cmd.c input.c main.c tcl.c)
-	ELSE(WIN32)
-		BRLCAD_ADDEXEC(bwish "cmd.c input.c main.c tcl.c" "libtclcad libdm libtermio ${X11_LIBRARIES} ${X11_Xi_LIB} libdm ${ITCL_LIBRARY} ${ITK_LIBRARY}")
-		CMAKEFILES(winMain.c)
-	ENDIF(WIN32)
-	SET_TARGET_PROPERTIES(bwish PROPERTIES COMPILE_DEFINITIONS "BWISH=1")
-	install(TARGETS bwish RUNTIME DESTINATION ${BIN_DIR})
-ENDIF(BRLCAD-ENABLE_TK)
+# Now, define the btclsh target
+BRLCAD_ADDEXEC(btclsh "${btclsh_srcs}" "${btclsh_libs}")
 
-CMAKEFILES(unixMain.c)
+# If we have Tk enabled, we want bwish too
+if(BRLCAD_ENABLE_TK)
+  if(WIN32)
+    # Need to add support for specifying WIN32 executable types to
+    # BRLCAD_ADDEXEC - in the meantime, do this manually.
+    add_executable(bwish WIN32 cadAppInit.c winMain.c)
+    target_link_libraries(bwish libtclcad libdm imm32.lib comctl32.lib ${ITCL_LIBRARY} ${ITK_LIBRARY})
+    install(TARGETS bwish RUNTIME DESTINATION ${BIN_DIR})
+  else(WIN32)
+    # If we're not on Windows, bwish is just btclsh with more libraries and
+    # an extra compilation definition
+    BRLCAD_ADDEXEC(bwish "${btclsh_srcs}" "libtclcad;libdm;libtermio;${X11_LIBRARIES};${X11_Xi_LIB};libdm;${ITCL_LIBRARY};${ITK_LIBRARY}")
+  endif(WIN32)
+  # Both platform cases get the compilation flag
+  set_target_properties(bwish PROPERTIES COMPILE_DEFINITIONS "BWISH=1")
+endif(BRLCAD_ENABLE_TK)
+CMAKEFILES(unixMain.c winMain.c cmd.c input.c main.c tcl.c)
 
-IF(ITCL_LIBRARY MATCHES "^itcl$")
-   ADD_DEPENDENCIES(btclsh itcl)
-ENDIF(ITCL_LIBRARY MATCHES "^itcl$")
+if(ITCL_LIBRARY MATCHES "^itcl$")
+  add_dependencies(btclsh itcl)
+endif(ITCL_LIBRARY MATCHES "^itcl$")
 
-IF(ITK_LIBRARY MATCHES "^itk$" AND BRLCAD-ENABLE_TK)
-   ADD_DEPENDENCIES(bwish itcl itk)
-ENDIF(ITK_LIBRARY MATCHES "^itk$" AND BRLCAD-ENABLE_TK)
+if(ITK_LIBRARY MATCHES "^itk$" AND BRLCAD_ENABLE_TK)
+  add_dependencies(bwish itcl itk)
+endif(ITK_LIBRARY MATCHES "^itk$" AND BRLCAD_ENABLE_TK)
 
 CMAKEFILES(Makefile.am)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

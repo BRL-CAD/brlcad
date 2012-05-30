@@ -1,7 +1,7 @@
 /*                          C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -179,12 +179,19 @@ rt_comb_v5_serialize(
 	    memcpy(ssp->leafp, tp->tr_l.tl_name, n);
 	    ssp->leafp += n;
 
-	    if (tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat))
+	    if (tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat)) {
 		mi = ssp->mat_num++;
-	    else
+	    } else {
 		mi = (ssize_t)-1;
+	    }
+
 	    BU_ASSERT_SSIZE_T(mi, <, (ssize_t)ssp->nmat);
-	    ssp->leafp = db5_encode_length(ssp->leafp, mi, ssp->wid);
+
+	    /* there should be a better way than casting
+	     * 'mi' from ssize_t to size_t
+	     */
+	    n = (size_t)mi;
+	    ssp->leafp = db5_encode_length(ssp->leafp, n, ssp->wid);
 
 	    /* Encoding of the matrix */
 	    if (mi != (ssize_t)-1) {
@@ -263,7 +270,7 @@ rt_comb_export5(
     unsigned char *cp;
     unsigned char *leafp_end;
     struct bu_attribute_value_set *avsp;
-    struct bu_vls value;
+    struct bu_vls value = BU_VLS_INIT_ZERO;
 
     /* check inputs */
     RT_CK_DB_INTERNAL(ip);
@@ -358,7 +365,6 @@ rt_comb_export5(
 	BU_ASSERT_PTR(ss.exprp, <=, ((unsigned char *)ep->ext_buf) + ep->ext_nbytes);
 
     /* Encode all the other stuff as attributes. */
-    bu_vls_init(&value);
     /* WARNING:  We remove const from the ip pointer!!! */
     avsp = (struct bu_attribute_value_set *)&ip->idb_avs;
     if (avsp->magic != BU_AVS_MAGIC)
@@ -461,7 +467,8 @@ rt_comb_export5(
  * -1 FAIL
  */
 int
-rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)
+rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
+                const mat_t mat, const struct db_i *dbip, struct resource *resp)
 {
     struct rt_comb_internal *comb;
     unsigned char *cp;
@@ -486,7 +493,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_COMBINATION;
     ip->idb_meth = &rt_functab[ID_COMBINATION];
-    BU_GETSTRUCT(comb, rt_comb_internal);
+    BU_GET(comb, struct rt_comb_internal);
     RT_COMB_INTERNAL_INIT(comb);
 
     ip->idb_ptr = (genptr_t)comb;
@@ -558,7 +565,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 
 	/* use a second bu_ptbl to help build a balanced tree
 	 * 1 - pick off pairs of pointers from tbl1
-	 * 2 - make a small tree thats unions the pair
+	 * 2 - make a small tree that unions the pair
 	 * 3 - insert that tree into tbl2
 	 * 4 - insert any leftover pointer from tbl1 into tbl2
 	 * 5 - swap tbl1 and tbl2
@@ -569,7 +576,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 	while (1) {
 	    struct bu_ptbl *tmp;
 
-	    for (ius=0; ius<BU_PTBL_LEN(tbl1); ius += 2) {
+	    for (ius = 0; ius < BU_PTBL_LEN(tbl1); ius += 2) {
 		union tree *tp1, *tp2, *unionp;
 		size_t j;
 
@@ -629,7 +636,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
     }
     sp = &stack[0];
 
-    for (ius=0; ius < rpn_len; ius++, exprp++) {
+    for (ius = 0; ius < rpn_len; ius++, exprp++) {
 	union tree *tp;
 	size_t mi;
 
@@ -802,7 +809,7 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
     comb = (struct rt_comb_internal *)intern->idb_ptr;
     RT_CK_COMB(comb);
 
-    if (item==0) {
+    if (item == 0) {
 	/* Print out the whole combination. */
 
 	bu_vls_printf(logstr, "comb region ");
@@ -849,11 +856,11 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	register int i;
 	char itemlwr[128];
 
-	for (i = 0; i < 128 && item[i]; i++) {
+	for (i = 0; i < 127 && item[i]; i++) {
 	    itemlwr[i] = (isupper(item[i]) ? tolower(item[i]) :
 			  item[i]);
 	}
-	itemlwr[i] = 0;
+	itemlwr[i] = '\0';
 
 	if (BU_STR_EQUAL(itemlwr, "region")) {
 	    snprintf(buf, 128, "%s", comb->region_flag ? "yes" : "no");
@@ -912,7 +919,7 @@ int
 rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_comb_internal *comb;
-    char buf[128];
+    char buf[1024] = {'\0'};
     int i;
     double d;
 
@@ -922,9 +929,10 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 
     while (argc >= 2) {
 	/* Force to lower case */
-	for (i=0; i<128 && argv[0][i]!='\0'; i++)
-	    buf[i] = isupper(argv[0][i])?tolower(argv[0][i]):argv[0][i];
-	buf[i] = 0;
+	for (i = 0; i < 1023 && argv[0][i] != '\0'; i++) {
+	    buf[i] = tolower(argv[0][i]);
+	}
+	buf[i] = '\0';
 
 	if (BU_STR_EQUAL(buf, "region")) {
 	    if (BU_STR_EQUAL(argv[1], "none")) {
@@ -1035,19 +1043,19 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		comb->inherit = (char)i;
 	    }
 	} else if (BU_STR_EQUAL(buf, "tree")) {
-	    union tree *new;
+	    union tree *newtree;
 
 	    if (*argv[1] == '\0' || BU_STR_EQUAL(argv[1], "none")) {
 		db_free_tree(comb->tree, &rt_uniresource);
 		comb->tree = TREE_NULL;
 	    } else {
-		new = db_tree_parse(logstr, argv[1], &rt_uniresource);
-		if (new == TREE_NULL) {
+		newtree = db_tree_parse(logstr, argv[1], &rt_uniresource);
+		if (newtree == TREE_NULL) {
 		    bu_vls_printf(logstr, "db adjust tree: bad tree '%s'\n", argv[1]);
 		    return BRLCAD_ERROR;
 		}
 		db_free_tree(comb->tree, &rt_uniresource);
-		comb->tree = new;
+		comb->tree = newtree;
 	    }
 	} else {
 	    bu_vls_printf(logstr, "db adjust %s : no such attribute", buf);

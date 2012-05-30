@@ -1,7 +1,7 @@
 /*                 Axis2Placement.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,14 +31,16 @@
 
 class Placement;
 
-enum axis2_placement_type {
-	AXIS2_PLACEMENT_2D,
-	AXIS2_PLACEMENT_3D
-};
-
-class Axis2Placement : public STEPEntity {
+class Axis2Placement : virtual public STEPEntity {
 private:
 	static string entityname;
+
+public:
+	enum axis2_placement_type {
+		AXIS2_PLACEMENT_2D,
+		AXIS2_PLACEMENT_3D,
+		UNKNOWN
+	};
 
 protected:
 	Placement *value;
@@ -52,11 +54,11 @@ public:
 	const double *GetNormal();
 	const double *GetXAxis();
 	const double *GetYAxis();
-	bool Load(STEPWrapper *sw,SCLP23(Select) *sse);
+	bool Load(STEPWrapper *sw,SDAI_Select *sse);
 	virtual void Print(int level);
 
 	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+	static STEPEntity *Create(STEPWrapper *sw,SDAI_Application_instance *sse);
 };
 
 #endif /* AXIS2PLACEMENT_H_ */

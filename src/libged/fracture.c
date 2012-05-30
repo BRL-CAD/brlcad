@@ -1,7 +1,7 @@
 /*                        F R A C T U R E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -120,7 +120,7 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_vls_printf(gedp->ged_result_str, "fracture:");
-    for (i=0; i < argc; i++)
+    for (i = 0; i < argc; i++)
 	bu_vls_printf(gedp->ged_result_str, " %s", argv[i]);
     bu_vls_printf(gedp->ged_result_str, "\n");
 
@@ -148,7 +148,7 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_printf(gedp->ged_result_str, "%zu = %d digits\n", tf+tw+tp, maxdigits);
 
-    /* for (maxdigits=1, i=tf+tw+tp; i > 0; i /= 10)
+    /* for (maxdigits=1, i = tf + tw + tp; i > 0; i /= 10)
      * maxdigits++;
      */
 
@@ -170,7 +170,7 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 		v = s->vu_p->v_p;
 
 		new_model = nmg_mm();
-		new_r = nmg_mrsv(new_model);
+		nmg_mrsv(new_model);
 		new_s = BU_LIST_FIRST(shell, &r->s_hd);
 		v_new = new_s->vu_p->v_p;
 		if (v->vg_p) {

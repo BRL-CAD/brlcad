@@ -1,7 +1,7 @@
 /*                       R E F R A C T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -395,6 +395,7 @@ rr_render(register struct application *ap,
 
 #ifdef RT_MULTISPECTRAL
     sub_ap.a_spectrum = BN_TABDATA_NULL;
+    ms_reflect_color = bn_tabdata_get_constval(0.0, spectrum);
 #endif
 
     /*
@@ -739,14 +740,14 @@ vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 
 	/* a_user has hit/miss flag! */
 	if (sub_ap.a_user == 0) {
 #ifdef RT_MULTISPECTRAL
-	    bn_tabdata_copy(ms_transmit_color, background);
+	    ms_transmit_color = bn_tabdata_dup(background);
 #else
 	    VMOVE(transmit_color, background);
 #endif
 	    sub_ap.a_cumlen = 0;
 	} else {
 #ifdef RT_MULTISPECTRAL
-	    bn_tabdata_copy(ms_transmit_color, sub_ap.a_spectrum);
+	    ms_transmit_color = bn_tabdata_dup(sub_ap.a_spectrum);
 #else
 	    VMOVE(transmit_color, sub_ap.a_color);
 #endif
@@ -764,7 +765,7 @@ vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 
 	}
     } else {
 #ifdef RT_MULTISPECTRAL
-	bn_tabdata_constval(ms_transmit_color, 0.0);
+	ms_transmit_color = bn_tabdata_get_constval(0.0, spectrum);
 #else
 	VSETALL(transmit_color, 0);
 #endif
@@ -869,8 +870,8 @@ vdraw open rrnorm;vdraw params c 00ffff;vdraw write n 0 %g %g %g;vdraw write n 1
 	       pp->pt_regionp->reg_name);
 #ifdef RT_MULTISPECTRAL
 	{
-	    struct bu_vls str;
-	    bu_vls_init(&str);
+	    struct bu_vls str = BU_VLS_INIT_ZERO;
+
 	    bu_vls_strcat(&str, "ms_shader_color: ");
 	    bn_tabdata_to_tcl(&str, ms_shader_color);
 	    bu_vls_strcat(&str, "\nms_reflect_color: ");
@@ -890,8 +891,8 @@ out:
     if (R_DEBUG&RDEBUG_REFRACT) {
 #ifdef RT_MULTISPECTRAL
 	{
-	    struct bu_vls str;
-	    bu_vls_init(&str);
+	    struct bu_vls str = BU_VLS_INIT_ZERO;
+
 	    bu_vls_strcat(&str, "final swp->msw_color: ");
 	    bn_tabdata_to_tcl(&str, swp->msw_color);
 	    bu_log("rr_render: %s\n", bu_vls_addr(&str));

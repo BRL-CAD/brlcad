@@ -1,7 +1,7 @@
 /*                        G - I G E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -81,9 +81,9 @@ extern int comb_to_iges(struct rt_comb_internal *comb, int length, int dependent
 static void
 usage(const char *argv0)
 {
-    bu_log("Usage: %s [-f|t|m] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-d dist_tol] [-o output_file] brlcad_db.g object(s)\n", argv0);
+    bu_log("Usage: %s [-f|t|m] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-d dist_tol] [-P num_cpus] [-o output_file] brlcad_db.g object(s)\n", argv0);
     bu_log("	options:\n");
-    bu_log("		f - convert each region to facetted BREP before output\n");
+    bu_log("		f - convert each region to faceted BREP before output\n");
     bu_log("		t - produce a file of trimmed surfaces (experimental)\n");
     bu_log("		m - produces a seperate IGES file for each region, \n");
     bu_log("			implies -t, -o gives directory for output IGES file\n");
@@ -96,20 +96,21 @@ usage(const char *argv0)
     bu_log("		x - librt debug flag\n");
     bu_log("		X - nmg debug flag\n");
     bu_log("		o - file to receive IGES output (or directory when '-m' option is used)\n");
+    bu_log("		P - number of processors to use\n");
     bu_log("	The f and t options are mutually exclusive. If neither is specified, \n");
     bu_log("	the default output is a CSG file to the maximum extent possible\n");
     bu_exit(1, NULL);
 }
 
 
-int verbose=0;
+int verbose = 0;
 static char *db_name;	/* name of the BRL-CAD database */
 static char *prog_name;	/* name of this program as it was invoked */
-static int multi_file=0;	/* Flag to indicate output of seperate IGES file for each region */
+static int multi_file = 0;	/* Flag to indicate output of seperate IGES file for each region */
 static int NMG_debug;	/* saved arg of -X, for longjmp handling */
-static int scale_error=0;	/* Count indicating how many scaled objects were encountered */
-static int solid_error=0;	/* Count indicating how many solids were not converted */
-static int comb_error=0;	/* Count indicating how many combinations were not converted */
+static int scale_error = 0;	/* Count indicating how many scaled objects were encountered */
+static int solid_error = 0;	/* Count indicating how many solids were not converted */
+static int comb_error = 0;	/* Count indicating how many combinations were not converted */
 static int ncpu = 1;	/* Number of processors */
 static char *output_file = NULL;	/* output filename */
 static FILE *fp_dir = NULL;	/* IGES start, global, and directory sections */
@@ -139,7 +140,7 @@ struct iges_functab
 };
 
 
-struct iges_functab iges_write[ID_MAXIMUM+1]={
+struct iges_functab iges_write[ID_MAXIMUM+1] = {
     {null_to_iges},	/* ID_NULL */
     {tor_to_iges}, 	/* ID_TOR */
     {tgc_to_iges},	/* ID_TGC */
@@ -176,12 +177,12 @@ struct iges_functab iges_write[ID_MAXIMUM+1]={
 
 static int regions_tried = 0;
 static int regions_done = 0;
-int mode=CSG_MODE;	/* indicates which type of IGES file is desired */
+int mode = CSG_MODE;	/* indicates which type of IGES file is desired */
 int solid_is_brep;
 int comb_form;
 char **independent;
-size_t no_of_indeps=0;
-int do_nurbs=0;
+size_t no_of_indeps = 0;
+int do_nurbs = 0;
 
 /*
  * M A I N
@@ -196,6 +197,7 @@ main(int argc, char *argv[])
     char copy_buffer[CP_BUF_SIZE] = {0};
     struct directory *dp;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
     bu_log("%s", brlcad_ident("BRL-CAD to IGES Translator"));
@@ -237,35 +239,28 @@ main(int argc, char *argv[])
 		mode = TRIMMED_SURF_MODE;
 		multi_file = 0;
 		break;
-	    case 's':		/* Select NURB output */
-		do_nurbs = 1;
-		break;
-	    case 'a':		/* Absolute tolerance. */
-		ttol.abs = atof(bu_optarg);
-		break;
-	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg);
-		break;
-	    case 'o':		/* Output file name. */
-		output_file = bu_optarg;
-		break;
-	    case 'r':		/* Relative tolerance. */
-		ttol.rel = atof(bu_optarg);
-		break;
-	    case 'd':		/* distance tolerance */
-		tol.dist = atof(bu_optarg);
-		tol.dist_sq = tol.dist * tol.dist;
-		break;
 	    case 'm':		/* multi-file mode */
 		multi_file = 1;
 		mode = TRIMMED_SURF_MODE;
 		break;
+	    case 's':		/* Select NURB output */
+		do_nurbs = 1;
+		break;
 	    case 'v':
 		verbose++;
 		break;
-	    case 'P':
-		ncpu = atoi(bu_optarg);
-		rt_g.debug = 1;
+	    case 'a':		/* Absolute tolerance. */
+		ttol.abs = atof(bu_optarg);
+		break;
+	    case 'r':		/* Relative tolerance. */
+		ttol.rel = atof(bu_optarg);
+		break;
+	    case 'n':		/* Surface normal tolerance. */
+		ttol.norm = atof(bu_optarg);
+		break;
+	    case 'd':		/* distance tolerance */
+		tol.dist = atof(bu_optarg);
+		tol.dist_sq = tol.dist * tol.dist;
 		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
@@ -273,6 +268,13 @@ main(int argc, char *argv[])
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
 		NMG_debug = rt_g.NMG_debug;
+		break;
+            case 'o':		/* Output file name. */
+		output_file = bu_optarg;
+		break;
+	    case 'P':
+		ncpu = atoi(bu_optarg);
+		rt_g.debug = 1;
 		break;
 	    default:
 		usage(argv[0]);
@@ -306,14 +308,14 @@ main(int argc, char *argv[])
 	if (output_file == NULL)
 	    fp_dir = stdout;
 	else {
-	    if ((fp_dir=fopen(output_file, "wb")) == NULL) {
+	    if ((fp_dir = fopen(output_file, "wb")) == NULL) {
 		perror(output_file);
 		bu_exit(1, "Cannot open output file: %s\n", output_file);
 	    }
 	}
 
 	/* Open the temporary file for the parameter section */
-	if ((fp_param=bu_temp_file(NULL, 0)) == NULL) {
+	if ((fp_param = bu_temp_file(NULL, 0)) == NULL) {
 	    perror("g-iges");
 	    bu_exit(1, "Cannot open temporary file\n");
 	}
@@ -334,7 +336,7 @@ main(int argc, char *argv[])
     }
 
     /* Count object references */
-/* for (i=1; i<argc; i++) {
+/* for (i = 1; i < argc; i++) {
    dp = db_lookup(DBIP, argv[i], 1);
    db_functree(DBIP, dp, count_refs, 0, NULL);
    }	*/
@@ -360,7 +362,7 @@ main(int argc, char *argv[])
 
 	if (!multi_file) {
 	    /* Now walk the same trees again, but only output groups */
-	    for (i=1; i<(size_t)argc; i++) {
+	    for (i = 1; i < (size_t)argc; i++) {
 		char *ptr;
 
 		ptr = strrchr(argv[i], '/');
@@ -382,7 +384,7 @@ main(int argc, char *argv[])
 	 * as a CSG object, unless there is no IGES equivalent (then the
 	 * solid will be tessellated and output as a BREP object) */
 
-	for (i=1; i<(size_t)argc; i++) {
+	for (i = 1; i < (size_t)argc; i++) {
 	    dp = db_lookup(DBIP, argv[i], 1);
 	    if (!dp) {
 		bu_log("WARNING: Unable to locate %s in %s\n, skipping\n", argv[i], db_name);
@@ -414,7 +416,7 @@ main(int argc, char *argv[])
 	    bu_exit(1, "Cannot seek to start of temporary file\n");
 	}
 
-	while ((i=fread(copy_buffer, 1, CP_BUF_SIZE, fp_param)))
+	while ((i = fread(copy_buffer, 1, CP_BUF_SIZE, fp_param)))
 	    if (fwrite(copy_buffer, 1, i, fp_dir) != i) {
 		perror("g-iges");
 		bu_exit(1, "Error in copying parameter data to %s\n", output_file);
@@ -555,8 +557,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	    else {
 		char *multi_name;
 		size_t len;
-		int unique=0;
-		struct stat stat_ptr;
+		int unique = 0;
 		char suffix[SUFFIX_LEN+1];
 
 		/* construct a unique file name */
@@ -566,7 +567,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		bu_strlcpy(suffix, "a", sizeof(suffix));
 		suffix[0]--;
 		while (!unique) {
-		    if (stat(multi_name, &stat_ptr)) {
+		    if (bu_file_readable(multi_name)) {
 			unique = 1;
 			break;
 		    }
@@ -582,7 +583,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		    }
 
 		    if (suffix[0] > 'z' && len < SUFFIX_LEN) {
-			for (i=0; i<=len; i++)
+			for (i = 0; i <= len; i++)
 			    suffix[i] = 'a';
 		    } else if (suffix[0] > 'z' && len >= SUFFIX_LEN) {
 			bu_log("too many files with the same name (%s)\n", dp->d_namep);
@@ -590,14 +591,14 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		    }
 		    snprintf(multi_name, len, "%s/%s%s.igs", output_file, dp->d_namep, suffix);
 		}
-		if ((fp_dir=fopen(multi_name, "wb")) == NULL) {
+		if ((fp_dir = fopen(multi_name, "wb")) == NULL) {
 		    perror("g-iges");
 		    bu_exit(1, "Cannot open output file: %s\n", multi_name);
 		}
 	    }
 
 	    /* Open the temporary file for the parameter section */
-	    if ((fp_param=bu_temp_file(NULL, 0)) == NULL) {
+	    if ((fp_param = bu_temp_file(NULL, 0)) == NULL) {
 		perror("g-iges");
 		bu_exit(1, "Cannot open temporary file\n");
 	    }
@@ -611,8 +612,8 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
 	if (mode == FACET_MODE) {
 	    dependent = 1;
-	    for (i=0; i<no_of_indeps; i++) {
-		if (!strncmp(dp->d_namep, independent[i], NAMESIZE+1)) {
+	    for (i = 0; i < no_of_indeps; i++) {
+		if (!bu_strncmp(dp->d_namep, independent[i], NAMESIZE+1)) {
 		    dependent = 0;
 		    break;
 		}
@@ -634,7 +635,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		bu_exit(1, "Cannot seek to start of temporary file\n");
 	    }
 
-	    while ((i=fread(copy_buffer, 1, CP_BUF_SIZE, fp_param)))
+	    while ((i = fread(copy_buffer, 1, CP_BUF_SIZE, fp_param)))
 		if (fwrite(copy_buffer, 1, i, fp_dir) != i) {
 		    perror("g-iges");
 		    bu_exit(1, "Error in copying parameter data to %s\n", output_file);
@@ -655,7 +656,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
      */
     db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
-    BU_GETUNION(curtree, tree);
+    BU_GET(curtree, union tree);
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;
@@ -728,7 +729,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     struct iges_properties props;
     int comb_len;
     size_t i;
-    int dependent=1;
+    int dependent = 1;
     int *de_pointers;
     int id;
 
@@ -740,8 +741,8 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     if (dp->d_uses < 0)
 	return;
 
-    for (i=0; i<no_of_indeps; i++) {
-	if (!strncmp(dp->d_namep, independent[i], NAMESIZE+1)) {
+    for (i = 0; i < no_of_indeps; i++) {
+	if (!bu_strncmp(dp->d_namep, independent[i], NAMESIZE+1)) {
 	    dependent = 0;
 	    break;
 	}
@@ -838,7 +839,7 @@ csg_leaf_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
 
 
 void
-incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, genptr_t UNUSED(user_ptr1), genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3))
+incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, genptr_t UNUSED(user_ptr1), genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4))
 {
     struct directory *dp;
 
@@ -846,7 +847,7 @@ incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, genp
     RT_CK_DBI(dbip);
     RT_CK_TREE(tp);
 
-    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+    if ((dp = db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return;
 
     dp->d_nref++;
@@ -881,7 +882,7 @@ count_refs(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     comb_form = 0;
 
     db_tree_funcleaf(dbip, comb, comb->tree, incr_refs,
-		     (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
+		     (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
 
 }
 

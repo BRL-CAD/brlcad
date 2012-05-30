@@ -1,7 +1,7 @@
 /*                       A S C 2 P I X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,10 +65,11 @@ main(void)
 
     for (;;)  {
 	do {
-	    if ( (a = getchar()) == EOF || a > 255 )  goto out;
+	    a = getchar();
+	    if ( a == EOF || a < 0 || a > 255 )  goto out;
 	} while ( (i = lmap[a]) < 0 );
-
-	if ( (b = getchar()) == EOF || b > 255 )  {
+	b = getchar();
+	if ( b == EOF || b < 0 || b > 255 )  {
 	    fprintf(stderr, "asc2pix: unexpected EOF in middle of hex number\n");
 	    return 1;
 	}

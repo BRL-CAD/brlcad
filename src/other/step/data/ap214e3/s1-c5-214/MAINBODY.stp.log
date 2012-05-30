@@ -1,0 +1,73 @@
+
+STEPcheck v 2.0 (February 21, 2000) for stepcheck_stage_1_2 schema
+
+Copyright ERIM (July 1997)
+
+Checking STEP file: MAINBODY.stp
+
+
+Reading Data from MAINBODY.stp...
+
+HEADER read:
+ERROR: instance #37 'APPLIED_DOCUMENT_REFERENCE': Unknown ENTITY type.
+	Data lost: (#33,,(#30)) 
+
+ERROR: instance #77 'APPLIED_DOCUMENT_REFERENCE': Unknown ENTITY type.
+	Data lost: (#73,,(#70)) 
+
+ERROR: instance #35 'APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT': Unknown ENTITY type.
+	Data lost: (MAINBODY_FRONT.stp,#36,#32,(#33)) 
+
+ERROR: instance #75 'APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT': Unknown ENTITY type.
+	Data lost: (MAINBODY_BACK.stp,#76,#72,(#73)) 
+
+
+FIRST PASS complete:  101 instances created.
+  4  ERRORS	  0  WARNINGS
+
+
+ERROR: in 2nd pass, instance #37 not found.
+	Data lost: =APPLIED_DOCUMENT_REFERENCE(#33,,(#30)) 
+
+ERROR: in 2nd pass, instance #77 not found.
+	Data lost: =APPLIED_DOCUMENT_REFERENCE(#73,,(#70)) 
+
+ERROR: in 2nd pass, instance #35 not found.
+	Data lost: =APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT(MAINBODY_FRONT.stp,#36,#32,(#33)) 
+
+ERROR: in 2nd pass, instance #75 not found.
+	Data lost: =APPLIED_EXTERNAL_IDENTIFICATION_ASSIGNMENT(MAINBODY_BACK.stp,#76,#72,(#73)) 
+Second pass complete - instance summary: 
+	Total instances: 101 
+	Invalid instances: 4 
+	Incomplete instances (includes invalid instances): 0 
+	Warnings: 0.
+
+
+SECOND PASS complete:  101 instances valid.
+  6  ERRORS	  0  WARNINGS
+
+Finished reading file.
+
+Where Rule Document_File_WR1 violated by :
+	1) #33=DOCUMENT_FILE('MAINBODY_FRONT.stp','','',#34,'',$);
+
+
+	2) #73=DOCUMENT_FILE('MAINBODY_BACK.stp','','',#74,'',$);
+
+
+
+
+
+Global Rule Dependent_instantiable_identification_role violated by :
+	1) #76=IDENTIFICATION_ROLE('external document id and location', ...
+
+	2) #36=IDENTIFICATION_ROLE('external document id and location', ...
+
+
+
+
+total violations = 4
+total parse errors = 6
+total parse warnings = 0
+elapsed time : 0.217 seconds

@@ -1,7 +1,7 @@
 /*                        D S P L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -129,13 +129,15 @@ rt_dspline_matrix(fastf_t *m, const char *type, const double tension, const doub
 /* Cardinal tension of .5 is Catmull spline */
 /* only for B spline */
 {
-    if (!strncmp(type, "Cardinal", 8)) GetCardinal(m, tension);
-    else if (!strncmp(type, "Catmull", 7)) GetCardinal(m, 0.5);
-    else if (!strncmp(type, "Beta", 4)) GetBeta(m, bias, tension);
-    else {
-	bu_log("Error: %s:%d spline type \"%s\" Unknown\n",
-	       __FILE__, __LINE__, type);
-	abort();
+    if (!bu_strncasecmp(type, "Cardinal", 8)) {
+	GetCardinal(m, tension);
+    } else if (!bu_strncasecmp(type, "Catmull", 7)) {
+	GetCardinal(m, 0.5);
+    } else if (!bu_strncasecmp(type, "Beta", 4)) {
+	GetBeta(m, bias, tension);
+    } else {
+	bu_log("WARNING: %s:%d spline type \"%s\" unknown\n", __FILE__, __LINE__, type);
+	GetBeta(m, bias, tension);
     }
 }
 

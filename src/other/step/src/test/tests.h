@@ -1,4 +1,4 @@
-/* 
+/*
  * tests.h
  *
  * Ian Soboroff, NIST
@@ -12,9 +12,6 @@
  * (circa version 2.0.x) to test the STEP Class Libraries.
  */
 
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
 
 /* C++ Stuff */
 #include <iostream>
@@ -35,7 +32,7 @@
 
 #include <needFunc.h>
 
-extern void SchemaInit (Registry &);
+extern void SchemaInit( Registry & );
 
 /* STEPentity* Iterator class definition */
 #include <SEarritr.h>

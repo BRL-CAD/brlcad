@@ -1,7 +1,7 @@
 /*                       R B _ F R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2011 United States Government as represented by
+ * Copyright (c) 1998-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,8 +83,8 @@ rb_free_node(struct bu_rb_node *node)
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
 
     tree = node->rbn_tree;
-    if (rb_current(tree) == node)
-	rb_current(tree) = rb_null(tree);
+    if (RB_CURRENT(tree) == node)
+	RB_CURRENT(tree) = RB_NULL(tree);
     BU_CKMAG(node, BU_RB_NODE_MAGIC, "red-black node");
 
     /*

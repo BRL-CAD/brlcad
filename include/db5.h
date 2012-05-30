@@ -1,7 +1,7 @@
 /*                           D B 5 . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,15 +31,15 @@
 
 __BEGIN_DECLS
 
-#ifndef DB5_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef DB5_EXPORT_DLL
-#      define DB5_EXPORT __declspec(dllexport)
-#    else
-#      define DB5_EXPORT __declspec(dllimport)
-#    endif
+#ifndef RT_EXPORT
+#  if defined(RT_DLL_EXPORTS) && defined(RT_DLL_IMPORTS)
+#    error "Only RT_DLL_EXPORTS or RT_DLL_IMPORTS can be defined, not both."
+#  elif defined(RT_DLL_EXPORTS)
+#    define RT_EXPORT __declspec(dllexport)
+#  elif defined(RT_DLL_IMPORTS)
+#    define RT_EXPORT __declspec(dllimport)
 #  else
-#    define DB5_EXPORT
+#    define RT_EXPORT
 #  endif
 #endif
 
@@ -160,6 +160,7 @@ struct db5_ondisk_header {
 #define DB5_MINORTYPE_BRLCAD_CONSTRAINT		39
 
 #define DB5_MINORTYPE_BRLCAD_REVOLVE		40
+#define DB5_MINORTYPE_BRLCAD_ANNOTATION		41
 
 /* Uniform-array binary */
 #define DB5_MINORTYPE_BINU_WID_MASK		0x30
@@ -177,7 +178,7 @@ struct db5_ondisk_header {
 #define DB5_MINORTYPE_BINU_64BITINT		0x0f
 
 /* this array depends on the values of the above definitions and is defined in db5_bin.c */
-DB5_EXPORT extern const char *binu_types[];
+RT_EXPORT extern const char *binu_types[];
 
 /**
  *  The "raw internal" form of one database object.
@@ -208,12 +209,12 @@ struct db5_raw_internal {
 };
 #define RT_CK_RIP(_ptr)		BU_CKMAG( _ptr, DB5_RAW_INTERNAL_MAGIC, "db5_raw_internal" )
 
-DB5_EXPORT extern const int db5_enc_len[4];	/* convert wid to nbytes */
+RT_EXPORT extern const int db5_enc_len[4];	/* convert wid to nbytes */
 
-DB5_EXPORT extern unsigned char *db5_encode_length(unsigned char	*cp,
+RT_EXPORT extern unsigned char *db5_encode_length(unsigned char	*cp,
 						   size_t		val,
 						   int		format);
-DB5_EXPORT extern const unsigned char *db5_get_raw_internal_ptr(struct db5_raw_internal *rip,
+RT_EXPORT extern const unsigned char *db5_get_raw_internal_ptr(struct db5_raw_internal *rip,
 								const unsigned char *ip);
 
 

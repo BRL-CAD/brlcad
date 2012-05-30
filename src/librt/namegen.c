@@ -1,7 +1,7 @@
 /*                           N A M E G E N . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -135,16 +135,16 @@ test_regex(char *name, int style)
     regex_t compiled_regex;
     regmatch_t *result_locations;
     int i, ret, components = 0;
-    struct bu_vls testresult;
+    struct bu_vls testresult = BU_VLS_INIT_ZERO;
 
     int *iterators;
 
-    BU_GETSTRUCT(standard1, formatting_style);
+    BU_GET(standard1, struct formatting_style);
     bu_vls_init(&(standard1->regex_spec));
     bu_vls_strcat(&(standard1->regex_spec), "([rcs][.])?([^0-9^.]*)?([0-9]*)?([.][oicb])?([0-9]*)?([+u-])?([0-9]*)?");
     standard1->pos_of_type_id_char = 1;
 
-    BU_GETSTRUCT(standard2, formatting_style);
+    BU_GET(standard2, struct formatting_style);
     bu_vls_init(&(standard2->regex_spec));
     bu_vls_strcat(&(standard2->regex_spec), "([^0-9^.]*)?([0-9]*)?([^.]*)?([.][rcs])?([0-9]*)?([+u-])?([0-9]*)?");
     standard2->pos_of_type_id_char = 5;
@@ -173,7 +173,6 @@ test_regex(char *name, int style)
 
     ret = regexec(&compiled_regex, name, components+1, result_locations, 0);
     if (ret == 0) {
-	bu_vls_init(&testresult);
 	for (i=1; i<=components; i++) {
 	    bu_vls_trunc(&testresult, 0);
 	    bu_vls_strncpy(&testresult, name+result_locations[i].rm_so, result_locations[i].rm_eo - result_locations[i].rm_so);
@@ -228,8 +227,8 @@ main()
       char **av;
       struct db_i *dbip;
     */
-    struct bu_vls temp;
-    bu_vls_init(&temp);
+    struct bu_vls temp = BU_VLS_INIT_ZERO;
+
     bu_vls_trunc(&temp, 0);
     bu_vls_printf(&temp, "%s", "s.bcore12.b3");
 

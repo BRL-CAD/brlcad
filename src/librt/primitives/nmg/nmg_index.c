@@ -1,7 +1,7 @@
 /*                     N M G _ I N D E X . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -519,11 +519,10 @@ nmg_vls_struct_counts(struct bu_vls *str, const struct nmg_struct_counts *ctr)
 void
 nmg_pr_struct_counts(const struct nmg_struct_counts *ctr, const char *str)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     bu_log("nmg_pr_count(%s)\n", str);
 
-    bu_vls_init(&vls);
     nmg_vls_struct_counts(&vls, ctr);
     bu_log("%s", bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -787,6 +786,20 @@ nmg_merge_models(struct model *m1, struct model *m2)
 	r->m_p = m1;
     }
     BU_LIST_APPEND_LIST(&(m1->r_hd), &(m2->r_hd));
+
+    /* If there are any manifold tables, when the models are
+     * merged they become invalid and need to be regenerated.
+     * To avoid confusion, free them here so it is known they
+     * need to be regenerated.
+     */
+    if (m1->manifolds) {
+        bu_free((char *)m1->manifolds, "free manifolds table");
+        m1->manifolds = (char *)NULL;
+    }
+    if (m2->manifolds) {
+        bu_free((char *)m2->manifolds, "free manifolds table");
+        m2->manifolds = (char *)NULL;
+    }
 
     FREE_MODEL(m2);
 }

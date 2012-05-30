@@ -1,7 +1,7 @@
 /*                          T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2011 United States Government as represented by
+ * Copyright (c) 1995-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -116,19 +116,19 @@ _rt_tree_region_assign(union tree *tp, const struct region *regionp)
 HIDDEN int
 _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t UNUSED(client_data))
 {
-    if (tsp) {
-	RT_CK_RTI(tsp->ts_rtip);
-	RT_CK_RESOURCE(tsp->ts_resp);
-    }
+  if (tsp) {
+    RT_CK_RTI(tsp->ts_rtip);
+    RT_CK_RESOURCE(tsp->ts_resp);
     if (pathp) RT_CK_FULL_PATH(pathp);
     if (combp) RT_CHECK_COMB(combp);
 
     /* Ignore "air" regions unless wanted */
     if (tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0) {
-	tsp->ts_rtip->rti_air_discards++;
-	return -1;	/* drop this region */
+      tsp->ts_rtip->rti_air_discards++;
+      return -1;	/* drop this region */
     }
-    return 0;
+  }
+  return 0;
 }
 
 
@@ -168,7 +168,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	return curtree;
     }
 
-    BU_GETSTRUCT(rp, region);
+    BU_GET(rp, struct region);
     rp->l.magic = RT_REGION_MAGIC;
     rp->reg_regionid = tsp->ts_regionid;
     rp->reg_is_fastgen = tsp->ts_is_fastgen;
@@ -392,7 +392,7 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
      * now, while still inside the critical section, because they are
      * searched on, above.
      */
-    BU_GETSTRUCT(stp, soltab);
+    BU_GET(stp, struct soltab);
     stp->l.magic = RT_SOLTAB_MAGIC;
     stp->l2.magic = RT_SOLTAB2_MAGIC;
     stp->st_rtip = rtip;
@@ -575,9 +575,8 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
     }
 
     if (RT_G_DEBUG&DEBUG_SOLIDS) {
-	struct bu_vls str;
+	struct bu_vls str = BU_VLS_INIT_ZERO;
 	bu_log("\n---Primitive %d: %s\n", stp->st_bit, dp->d_namep);
-	bu_vls_init(&str);
 
 	/* verbose=1, mm2local=1.0 */
 	ret = -1;

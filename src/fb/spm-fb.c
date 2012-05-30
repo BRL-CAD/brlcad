@@ -1,7 +1,7 @@
 /*                        S P M - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -145,6 +145,7 @@ spm_square(bn_spm_map_t *mapp)
 	}
 	if (fb_write(fbp, 0, y, scanline, scr_width) != scr_width) break;
     }
+    free(scanline);
 }
 
 

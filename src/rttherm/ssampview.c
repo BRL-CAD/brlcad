@@ -1,7 +1,7 @@
 /*                     S S A M P V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ int width = 64;				/* Linked with TCL */
 int height = 64;				/* Linked with TCL */
 int nwave = 2;				/* Linked with TCL */
 
-char *datafile_basename = "mtherm";
+char *datafile_basename = NULL;
 char spectrum_name[100];
 
 FBIO *fbp;
@@ -109,11 +109,9 @@ char *first_command = "no_command?";
 void
 assign_tabdata_to_tcl_var(Tcl_Interp *interp, const char *name, const struct bn_tabdata *tabp)
 {
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     BN_CK_TABDATA(tabp);
-
-    bu_vls_init(&str);
 
     bn_tabdata_to_tcl(&str, tabp);
     Tcl_SetVar(interp, (char *)name, bu_vls_addr(&str), 0);
@@ -181,12 +179,11 @@ getntsccurves(ClientData UNUSED(cd), Tcl_Interp *interp, int UNUSED(argc), char 
 int
 getspectrum(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     size_t wl;
 
     BN_CK_TABLE(spectrum);
 
-    bu_vls_init(&vls);
     Tcl_ResetResult(interp);
 
     if (argc <= 1) {
@@ -224,7 +221,7 @@ getspectval(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
     size_t wl;
     char *cp;
     fastf_t val;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     Tcl_ResetResult(interp);
 
@@ -266,7 +263,6 @@ getspectval(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
     if (use_atmosphere)
 	val *= atmosphere->y[wl];
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "%g", val);
     Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
     bu_vls_free(&vls);
@@ -286,7 +282,7 @@ getspectxy(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
     struct bn_tabdata *sp;
     int x, y;
     char *cp;
-    struct bu_vls str;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     Tcl_ResetResult(interp);
 
@@ -313,7 +309,6 @@ getspectxy(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
     sp = (struct bn_tabdata *)cp;
     BN_CK_TABDATA(sp);
 
-    bu_vls_init(&str);
     bn_tabdata_to_tcl(&str, sp);
     Tcl_SetResult(interp, bu_vls_addr(&str), TCL_VOLATILE);
     bu_vls_free(&str);
@@ -338,7 +333,7 @@ tcl_fb_cursor(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 	Tcl_AppendResult(interp, "Usage: fb_cursor fbp mode x y", (char *)NULL);
 	return TCL_ERROR;
     }
-    ifp = (FBIO *)atol(argv[1]);
+
     mode = atol(argv[2]);
     x = atol(argv[3]);
     y = atol(argv[4]);
@@ -363,7 +358,7 @@ tcl_fb_readpixel(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **arg
     FBIO *ifp;
     long x, y;
     unsigned char pixel[4];
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     Tcl_ResetResult(interp);
 
@@ -371,7 +366,7 @@ tcl_fb_readpixel(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **arg
 	Tcl_AppendResult(interp, "Usage: fb_readpixel fbp x y", (char *)NULL);
 	return TCL_ERROR;
     }
-    ifp = (FBIO *)atol(argv[1]);
+
     x = atol(argv[2]);
     y = atol(argv[3]);
 
@@ -383,7 +378,6 @@ tcl_fb_readpixel(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **arg
 	return TCL_ERROR;
     }
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "%d %d %d", pixel[RED], pixel[GRN], pixel[BLU]);
     Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
     bu_vls_free(&vls);
@@ -404,8 +398,18 @@ tcl_appinit(Tcl_Interp *interp)
     if (Tk_Init(interp) == TCL_ERROR) return TCL_ERROR;
 
     /* Add commands offered by the libraries */
-    bu_tcl_setup(interp);
-    rt_tcl_setup(interp);
+
+    /* Initialize libbu */
+    if (Bu_Init(interp) == TCL_ERROR) {
+	bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+    /* Initialize librt */
+    if (Rt_Init(interp) == TCL_ERROR) {
+	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
 
     /* Add commands offered by this program */
     Tcl_CreateCommand(interp, "fb_cursor", (Tcl_CmdProc *)tcl_fb_cursor, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
@@ -501,8 +505,7 @@ conduct_tests(void)
     bu_log("G:\n");bn_print_table_and_tabdata("/dev/tty", ntsc_g);
     bu_log("B:\n");bn_print_table_and_tabdata("/dev/tty", ntsc_b);
     {
-	struct bu_vls str;
-	bu_vls_init(&str);
+	struct bu_vls str = BU_VLS_INIT_ZERO;
 	bn_tabdata_to_tcl(&str, ntsc_r);
 	bu_log("ntsc_r tcl:  %s\n", bu_vls_addr(&str));
 	bu_vls_free(&str);
@@ -515,20 +518,6 @@ conduct_tests(void)
     VPRINT("flat xyz?", xyz);
 
     return;
-
-    /* Check identity of XYZ->RGB->spectrum->XYZ->RGB */
-    check(0.313,     0.329,      0.358);	/* D6500 white */
-    check(0.670,     0.330,      0.000);	/* NTSC red primary */
-    check(0.210,     0.710,      0.080);	/* NTSC green primary */
-    check(0.140,     0.080,      0.780);	/* NTSC blue primary */
-    check(.5, .5, .5);
-    check(1, 0, 0);
-    check(0, 1, 0);
-    check(0, 0, 1);
-    check(1, 1, 1);
-    check(1, 1, 0);
-    check(1, 0, 1);
-    check(0, 1, 1);
 }
 
 
@@ -591,22 +580,28 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    if (argc > 1 && BU_STR_EQUAL(argv[1], "-t")) {
-    }
-
-    datafile_basename = argv[bu_optind];
+    datafile_basename = bu_realpath(argv[bu_optind], NULL);;
+    if (BU_STR_EQUAL(datafile_basename, ""))
+	datafile_basename = bu_strdup("ssampview");
 
     first_command = "doit1 42";
 
     if ((fbp = fb_open(NULL, width, height)) == FBIO_NULL) {
+	bu_free(datafile_basename, "datafile_basename realpath");
 	bu_exit(EXIT_FAILURE, "Unable to open fb\n");
     }
     fb_view(fbp, width/2, height/2, fb_getwidth(fbp)/width, fb_getheight(fbp)/height);
 
     /* Read spectrum definition */
     snprintf(spectrum_name, 100, "%s.spect", datafile_basename);
+    if (!bu_file_exists(spectrum_name, NULL)) {
+	bu_free(datafile_basename, "datafile_basename realpath");
+	bu_exit(EXIT_FAILURE, "Spectrum file [%s] does not exist\n", spectrum_name);
+    }
+
     spectrum = (struct bn_table *)bn_table_read(spectrum_name);
     if (spectrum == NULL) {
+	bu_free(datafile_basename, "datafile_basename realpath");
 	bu_exit(EXIT_FAILURE, "Unable to read spectrum\n");
     }
     BN_CK_TABLE(spectrum);
@@ -620,7 +615,10 @@ main(int argc, char **argv)
 
     /* Allocate and read 2-D spectrum array */
     data = bn_tabdata_binary_read(datafile_basename, width*height, spectrum);
-    if (!data) bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
+    bu_free(datafile_basename, "datafile_basename realpath");
+    if (!data) {
+	bu_exit(EXIT_FAILURE, "bn_tabdata_binary_read() of datafile_basename failed\n");
+    }
 
     /* Allocate framebuffer image buffer */
     pixels = (unsigned char *)bu_malloc(width * height * 3, "pixels[]");
@@ -785,7 +783,7 @@ show_color(int off)
     int todo;
     int nbytes;
     fastf_t scale;
-    struct bn_tabdata *new;
+    struct bn_tabdata *newtab;
 
     cp = (char *)data;
     nbytes = BN_SIZEOF_TABDATA(spectrum);
@@ -798,7 +796,7 @@ show_color(int off)
     if (cie_x->magic == 0)
 	rt_spect_make_CIE_XYZ(&cie_x, &cie_y, &cie_z, spectrum);
 
-    BN_GET_TABDATA(new, spectrum);
+    BN_GET_TABDATA(newtab, spectrum);
 
     for (todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3) {
 	struct bn_tabdata *sp;
@@ -810,13 +808,13 @@ show_color(int off)
 	BN_CK_TABDATA(sp);
 
 	if (use_atmosphere) {
-	    bn_tabdata_mul(new, sp, atmosphere);
-	    bn_tabdata_freq_shift(new, new, spectrum->x[off] - 380.0);
+	    bn_tabdata_mul(newtab, sp, atmosphere);
+	    bn_tabdata_freq_shift(newtab, newtab, spectrum->x[off] - 380.0);
 	} else {
-	    bn_tabdata_freq_shift(new, sp, spectrum->x[off] - 380.0);
+	    bn_tabdata_freq_shift(newtab, sp, spectrum->x[off] - 380.0);
 	}
 
-	spect_curve_to_xyz(xyz, new, cie_x, cie_y, cie_z);
+	spect_curve_to_xyz(xyz, newtab, cie_x, cie_y, cie_z);
 
 	MAT3X3VEC(rgb, xyz2rgb, xyz);
 
@@ -836,7 +834,7 @@ show_color(int off)
 	pp[BLU] = val;
     }
 
-    bn_tabdata_free(new);
+    bn_tabdata_free(newtab);
 }
 
 

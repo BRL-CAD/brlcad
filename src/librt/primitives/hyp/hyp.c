@@ -1,7 +1,7 @@
 /*                           H Y P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@ struct hyp_specific {
 struct hyp_specific *
 hyp_internal_to_specific(struct rt_hyp_internal *hyp_in) {
     struct hyp_specific *hyp;
-    BU_GETSTRUCT(hyp, hyp_specific);
+    BU_GET(hyp, struct hyp_specific);
 
     hyp->hyp_r1 = hyp_in->hyp_bnr * MAGNITUDE(hyp_in->hyp_A);
     hyp->hyp_r2 = hyp_in->hyp_bnr * hyp_in->hyp_b;

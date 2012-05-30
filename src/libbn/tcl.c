@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2011 United States Government as represented by
+ * Copyright (c) 1995-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -227,12 +227,11 @@ int
 bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     void (*math_func)();
-    struct bu_vls result;
+    struct bu_vls result = BU_VLS_INIT_ZERO;
     struct math_func_link *mfl;
 
     mfl = (struct math_func_link *)clientData;
     math_func = mfl->func;
-    bu_vls_init(&result);
 
     if (math_func == bn_mat_mul) {
 	mat_t o, a, b;
@@ -575,7 +574,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	vect_t dir, c;
 	int i;
 	static const struct bn_tol tol = {
-	    BN_TOL_MAGIC, 0.0005, 0.0005*0.0005, 1e-6, 1-1e-6
+	    BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
 	};
 	if (argc != 5) {
 	    bu_vls_printf(&result,
@@ -615,7 +614,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	vect_t dir, c;
 	int i;
 	static const struct bn_tol tol = {
-	    BN_TOL_MAGIC, 0.0005, 0.0005*0.0005, 1e-6, 1-1e-6
+	    BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
 	};
 
 	if (argc != 5) {
@@ -773,7 +772,10 @@ bn_cmd_noise_slice(ClientData UNUSED(clientData),
 #define NOISE_FBM 0
 #define NOISE_TURB 1
 
+#define COV186_UNUSED_CODE 0
+#if COV186_UNUSED_CODE
     int noise_type = NOISE_FBM;
+#endif
     double val;
     point_t pt;
 
@@ -793,8 +795,13 @@ bn_cmd_noise_slice(ClientData UNUSED(clientData),
     lacunarity = atof(argv[4]);
     octaves = atof(argv[5]);
 
+#define COV186_UNUSED_CODE 0
+    /* Only NOISE_FBM is possible at this time, so comment out the switching for
+     * NOISE_TURB. This may need to be deleted. */
+#if COV186_UNUSED_CODE
     switch (noise_type) {
 	case NOISE_FBM:
+#endif
 	    for (yval = 0; yval < ydim; yval++) {
 
 		pt[Y] = yval * scale[Y] + delta[Y];
@@ -806,6 +813,7 @@ bn_cmd_noise_slice(ClientData UNUSED(clientData),
 
 		}
 	    }
+#if COV186_UNUSED_CODE
 	    break;
 	case NOISE_TURB:
 	    for (yval = 0; yval < ydim; yval++) {
@@ -821,6 +829,7 @@ bn_cmd_noise_slice(ClientData UNUSED(clientData),
 	    }
 	    break;
     }
+#endif
 
 
     pt[0] = atof(argv[1]);

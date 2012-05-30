@@ -1,7 +1,7 @@
 /*                        I F _ M E M . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2011 United States Government as represented by
+ * Copyright (c) 1989-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,13 +71,21 @@ static struct modeflags {
 
 
 HIDDEN int
-mem_open(FBIO *ifp, char *file, int width, int height)
+mem_open(FBIO *ifp, const char *file, int width, int height)
 {
     int mode;
-    char *cp;
+    const char *cp;
     FBIO *fbp;
+    char modebuf[80];
+    char *mp;
+    int alpha;
+    struct modeflags *mfp;
 
     FB_CK_FBIO(ifp);
+
+    /* This function doesn't look like it will work if file
+     * is NULL - stop before we start, if that's the case.*/
+    if (file == NULL) return -1;
 
     /*
      * First, attempt to determine operating mode for this open,
@@ -87,13 +95,7 @@ mem_open(FBIO *ifp, char *file, int width, int height)
      */
     mode = 0;
 
-    if (file != NULL) {
-	char modebuf[80];
-	char *mp;
-	int alpha;
-	struct modeflags *mfp;
-
-	if (strncmp(file, "/dev/mem", 8)) {
+	if (bu_strncmp(file, "/dev/mem", 8)) {
 	    /* How did this happen?? */
 	    mode = 0;
 	} else {
@@ -123,7 +125,6 @@ mem_open(FBIO *ifp, char *file, int width, int height)
 	    if (!alpha)
 		mode = atoi(modebuf);
 	}
-    }
 
     /* build a local static info struct */
     if ((MIL(ifp) = (char *)calloc(1, sizeof(struct meminfo))) == NULL) {

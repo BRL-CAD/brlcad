@@ -1,7 +1,7 @@
 /*                         M A G I C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,8 +55,6 @@
 #include "common.h"
 
 #include "tcl.h"
-
-#include "bu.h"
 
 
 /* libbu */
@@ -129,6 +127,7 @@
 #define RT_TOR_INTERNAL_MAGIC		0x9bffed87 /**< ???? */
 #define RT_VOL_INTERNAL_MAGIC		0x987ba1d0 /**< ?{?? */
 #define RT_PNTS_INTERNAL_MAGIC          0x706e7473 /**< pnts */
+#define RT_ANNOTATION_INTERNAL_MAGIC    0x616e6e6f /**< anno */
 
 /* n-manifold geometry */
 
@@ -214,76 +213,7 @@
 #define WDB_METABALLPT_MAGIC		0x6d627074 /**< mbpt */
 #define WDB_PIPESEG_MAGIC		0x9723ffef /**< ?#?? */
 #define WMEMBER_MAGIC			0x43128912 /**< C??? */
-
-
-/**
- * B U _ C K M A G
- * B U _ C K M A G _ T C L
- *
- * Macros to check and validate a structure pointer, given that the
- * first entry in the structure is a magic number. ((void)(1?0:((_ptr), void(), 0)))
- */
-#ifdef NO_BOMBING_MACROS
-#  define BU_CKMAG(_ptr, _magic, _str) IGNORE((_ptr))
-#  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str) IGNORE((_interp)); IGNORE((_ptr))
-#else
-#  define BU_CKMAG(_ptr, _magic, _str) { \
-	uintptr_t _ptrval = (uintptr_t)(_ptr); \
-	if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
-	    bu_badmagic((uint32_t *)(_ptr), (uint32_t)_magic, _str, __FILE__, __LINE__); \
-	} \
-    }
-#  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str) { \
-	uintptr_t _ptrval = (uintptr_t)(_ptr); \
-	if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((uint32_t *)(_ptr)) != (_magic))) { \
-	    bu_badmagic_tcl((_interp), (uint32_t *)(_ptr), (uint32_t)_magic, _str, __FILE__, __LINE__); \
-	    return TCL_ERROR; \
-	} \
-    }
-#endif
-
-
-/**
- * b u _ b a d m a g i c
- *
- *  Support routine for BU_CKMAG macro.
- */
-BU_EXPORT extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line);
-
-/**
- * b u _ b a d m a g i c _ t c l
- *
- * Bad magic checking for Tcl routines.  The presence of Tcl_Interp as
- * an arg prevents giving arg list.
- *
- * Support routine for BU_CKMAG_TCL macro. As used by BU_CKMAG_TCL,
- * this routine is not called unless there is trouble with the
- * pointer. When called, an appropriate message is added to interp
- * indicating the problem.
- *
- * @param interp	- tcl interpreter where result is stored
- * @param ptr	- pointer to a data structure
- * @param magic	- the correct/desired magic number
- * @param str	- usually indicates the data structure name
- * @param file	- file where this routine was called
- * @param line	- line number in the above file
- *
- * @return
- * void
- */
-BU_EXPORT extern void bu_badmagic_tcl(Tcl_Interp *interp, const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line);
-
-
-/**
- * b u _ i d e n t i f y _ m a g i c
- *
- * Given a number which has been found in the magic number field of a
- * structure (which is typically the first entry), determine what kind
- * of structure this magic number pertains to.  This is called by the
- * macro BU_CK_MAGIC() to provide a "hint" as to what sort of pointer
- * error might have been made.
- */
-BU_EXPORT extern const char *bu_identify_magic(uint32_t magic);
+#define ICV_IMAGE_FILE_MAGIC		0x6269666d /**< bifm */
 
 
 #endif /* __MAGIC_H__ */

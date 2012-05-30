@@ -1,7 +1,7 @@
 /*                           A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -186,7 +186,7 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
      * Read all the curves into internal form.
      */
     ari->curves = (fastf_t **)bu_malloc(
-	(ari->ncurves+1) * sizeof(fastf_t **), "ars curve ptrs");
+	(ari->ncurves+1) * sizeof(fastf_t *), "ars curve ptrs");
 
     currec = 1;
     for (i=0; i < ari->ncurves; i++) {
@@ -655,10 +655,8 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* Compute "geometry" for region and shell */
     nmg_region_a(*r, tol);
 
-#ifdef TRI_PROTOTYPE
     nmg_shell_coplanar_face_merge(s, tol, 0);
     nmg_simplify_shell(s);
-#endif
 
     return 0;
 }

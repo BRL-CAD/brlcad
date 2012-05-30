@@ -1,7 +1,7 @@
 /*                       I F _ N U L L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2011 United States Government as represented by
+ * Copyright (c) 1989-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,9 +36,10 @@
 
 
 HIDDEN int
-null_open(FBIO *ifp, char *UNUSED(file), int width, int height)
+null_open(FBIO *ifp, const char *UNUSED(file), int width, int height)
 {
     FB_CK_FBIO(ifp);
+
     if (width > 0)
 	ifp->if_width = width;
     if (height > 0)

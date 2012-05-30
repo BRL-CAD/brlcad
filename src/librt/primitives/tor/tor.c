@@ -1,7 +1,7 @@
 /*                         T O R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -268,7 +268,7 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     /* Solid is OK, compute constant terms now */
-    BU_GETSTRUCT(tor, tor_specific);
+    BU_GET(tor, struct tor_specific);
     stp->st_specific = (genptr_t)tor;
 
     tor->tor_r1 = tip->r_a;
@@ -1649,6 +1649,48 @@ rt_tor_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
+}
+
+
+/**
+ * R T _ T O R _ S U R F A C E _ A R E A
+ *
+ */
+void
+rt_tor_surface_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
+    /* r_h: radius of torus tube
+     * r_a: radius from axis of rotation to center of tube
+     */
+    *area = 4.0 * M_PI * M_PI * tip->r_h * tip->r_a;
+}
+
+
+/**
+ * R T _ T O R _ V O L U M E
+ *
+ */
+void
+rt_tor_volume(fastf_t *vol, const struct rt_db_internal *ip)
+{
+    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
+    *vol = 2.0 * M_PI * M_PI * (tip->r_h * tip->r_h) * tip->r_a;
+}
+
+
+/**
+ * R T _ T O R _ C E N T R O I D
+ *
+ */
+void
+rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tip);
+    VMOVE(*cent,tip->v);
 }
 
 

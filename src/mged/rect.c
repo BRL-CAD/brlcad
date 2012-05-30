@@ -1,7 +1,7 @@
 /*                          R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2011 United States Government as represented by
+ * Copyright (c) 1998-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -211,7 +211,7 @@ rt_rect_area(void)
     int xmin, xmax;
     int ymin, ymax;
     int width, height;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (!fbp)
 	return;
@@ -244,7 +244,6 @@ rt_rect_area(void)
 	ymin += height;
     }
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "rt -w %d -n %d -V %lf -F %d -j %d,%d,%d,%d -C%d/%d/%d",
 		  dmp->dm_width, dmp->dm_height, dmp->dm_aspect,
 		  mged_variables->mv_port, xmin, ymin, xmax, ymax,

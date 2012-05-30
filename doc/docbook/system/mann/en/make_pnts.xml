@@ -1,0 +1,184 @@
+<!-- Converted by db4-upgrade version 1.0 -->
+
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="make_pnts">
+
+<refmeta>
+  <refentrytitle>MAKE_PNTS</refentrytitle>
+  <manvolnum>nged</manvolnum>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+</refmeta>
+
+<refnamediv xml:id="name">
+  <refname>make_pnts</refname>
+  <refpurpose>
+   Creates a "pnts" (ie point cloud) primitive by importing coordinate data (in ascii format) from a file.
+  </refpurpose>
+</refnamediv>
+
+<!-- body begins here -->
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
+    <command>make_pnts</command>    
+      <arg choice="req" rep="norepeat"><replaceable>ObjectName</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable>FileName</replaceable></arg>
+      <arg choice="req" rep="norepeat"><replaceable>FileDataFormat</replaceable></arg>
+      <group choice="req" rep="norepeat">
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>Units</replaceable></arg>
+          <arg choice="plain" rep="norepeat"><replaceable>ConversionFactor</replaceable></arg>
+        </group>
+      </group>
+      <arg choice="req" rep="norepeat"><replaceable>DefaultPointSize</replaceable></arg>
+    </cmdsynopsis>
+</refsynopsisdiv>
+
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <para>Creates a "pnts" primitive by importing, from a file, coordinate data
+  and optionally color, normal or point-size data. Data must be in text
+  (ie ascii) format but the data file does not need to contain only text. Any
+  byte value in the data file not representing one of the ascii characters
+  "0123456789.+-eE" will be considered a delimiter. This includes
+  carriage-returns, line-feeds, commas, spaces and non-printable characters.
+  Consecutive delimiters are treated as one delimiter. Text files can be used
+  from Windows or Unix systems without conversion. Numerical values can be
+  listed in any order but ordering must be consistent. Numerical values can
+  optionally be ignored.</para>
+</refsection>
+
+  <refsection xml:id="options"><info><title>OPTIONS</title></info>
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><option>ObjectName</option></term>
+      <listitem>
+        <para>
+          Name of the 'pnts' primitive to be created.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>FileName</option></term>
+      <listitem>
+        <para>
+          The path and filename of the data file.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>FileDataFormat {xyz}[rgb][s][ijk][?]</option></term>
+      <listitem>
+        <para>
+          The file data format represents the order of numerical data within the
+          data file. The "xyz" represent the x, y, z coordinates of a point. The
+          "rgb" represents the color of a point in (red, green, blue) format.
+          Color values must be in the range (0-255). The "ijk" represents the
+          x, y, z values of a point-normal. The "s" represents the size of the
+          point. The "?" indicates the numerical value is ignored. The file data
+          format can contain any ordering of characters "xyzrgbsijk?". The
+          format must always contain "xyz". Although any ordering is allowed,
+          sets of characters must be used. The optional sets are "rgb" and
+          "ijk". If any character from a set is used, then all characters from
+          the set must be used.
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>Units</option></term>
+      <term><option>ConversionFactor</option></term>
+      <listitem>
+        <para>
+          If a numerical value is specified for this parameter, it is assumed
+          to be a conversion factor from the units of the point data to
+          millimeters. Any non-numerical value will be assumed to be a standard
+          BRL-CAD unit string, such as one of the following "um, mm, cm, m, km,
+          in, ft, yd, mi".
+        </para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>DefaultPointSize</option></term>
+      <listitem>
+        <para>
+          The default point size. This is used if the point size is not included
+          in the data file.
+        </para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+</refsection>
+
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <example><info><title>Create basic point cloud</title></info>
+    <para>
+      <prompt>mged&gt; </prompt> <userinput>make_pnts cloud1.s /home/user/cloud1_data.txt xyz mm 1.0</userinput>
+    </para>
+    <para>
+      Creates a "pnts" primitive named "cloud1.s" using the data file
+      "/home/user/cloud1_data.txt" where the data file only contains the point
+      coordinates listed in the order "xyz". The units of the file data is "mm"
+      and the default point size is set to "1.0".
+    </para>
+  </example>
+  <example><info><title>Create basic point cloud from data file with reversed coordinate ordering</title></info>
+    <para>
+      <prompt>mged&gt; </prompt> <userinput>make_pnts cloud1.s /home/user/cloud1_data.txt zyx in 1.0</userinput>
+    </para>
+    <para>
+      Creates a "pnts" primitive named "cloud1.s" using the data file
+      "/home/user/cloud1_data.txt" where the data file only contains the point
+      coordinates listed in the order "zyx". The units of the file data is "in"
+      and the default point size is set to "1.0".
+    </para>
+  </example>
+  <example><info><title>Create point cloud with color</title></info>
+    <para>
+      <prompt>mged&gt; </prompt> <userinput>make_pnts cloud1.s /home/user/cloud1_data.txt xyzrgb 2 1.0</userinput>
+    </para>
+    <para>
+      Creates a "pnts" primitive named "cloud1.s" using the data file
+      "/home/user/cloud1_data.txt" which contains point and point-color data.
+      The data for each point in the file is ordered as "xyz" followed by "rgb".
+      An arbitrary conversion factor of "2" is used and the default point size
+      is set to "1.0".
+    </para>
+  </example>
+  <example><info><title>Create point cloud with color and normals</title></info>
+    <para>
+      <prompt>mged&gt; </prompt> <userinput>make_pnts cloud1.s /home/user/cloud1_data.txt xyzrgbijk m 1.0</userinput>
+    </para>
+    <para>
+      Creates a "pnts" primitive named "cloud1.s" using the data file
+      "/home/user/cloud1_data.txt" which contains point, point-color and
+      point-normal data. The data for each point in the file is ordered as "xyz"
+      followed by "rgb" then "ijk". The units of the file data is "m" and the
+      default point size is set to "1.0".
+    </para>
+  </example>
+  <example><info><title>Create point cloud with only normals from data file containing normals and colors</title></info>
+    <para>
+      <prompt>mged&gt; </prompt> <userinput>make_pnts cloud1.s /home/user/cloud1_data.txt xyz???ijk cm 1.0</userinput>
+    </para>
+    <para>
+      Creates a "pnts" primitive named "cloud1.s" using the data file
+      "/home/user/cloud1_data.txt" which contains point, point-color and
+      point-normal data. In this case we want to ignore the point-color data.
+      The data for each point in the file is ordered as "xyz" followed by "rgb"
+      then "ijk". In the file data format we use "xyz???ijk" to indicate we want
+      to ignore the three numerical values following the point coordinates and
+      then use the point-normal data. The units of the file data is "cm" and the
+      default point size is set to "1.0".
+    </para>
+  </example>
+</refsection> 
+
+<info><corpauthor>BRL-CAD Team</corpauthor></info>
+
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  
+  <para>
+    Reports of bugs or problems should be submitted via electronic
+    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+  </para>
+</refsection>
+</refentry>
+

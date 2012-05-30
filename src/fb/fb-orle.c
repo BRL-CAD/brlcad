@@ -1,7 +1,7 @@
 /*                       F B - O R L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2011 United States Government as represented by
+ * Copyright (c) 1986-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -219,7 +219,7 @@ parsArgv(int argc, char **argv)
 	}
     }
     if (argv[bu_optind] != NULL) {
-	if (bu_file_exists(argv[bu_optind])) {
+	if (bu_file_exists(argv[bu_optind], NULL)) {
 	    (void) fprintf(stderr,
 			   "\"%s\" already exists.\n",
 			   argv[bu_optind]

@@ -1,7 +1,7 @@
 /*                      I N T E R A C T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -202,7 +202,7 @@ get_comtab_ent(char *pattern, int pat_len)
 
     for (ctp = ComTab; ctp->com_name; ++ctp) {
 	len = FMAX(pat_len, (int)strlen(ctp->com_name));
-	if ((strncmp (pattern, ctp->com_name, len)) == 0)
+	if ((bu_strncmp (pattern, ctp->com_name, len)) == 0)
 	    break;
     }
     return (ctp->com_name) ? ctp : CT_NULL;

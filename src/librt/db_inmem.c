@@ -1,7 +1,7 @@
 /*                     D B _ I N M E M . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2011 United States Government as represented by
+ * Copyright (c) 2006-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,7 +56,7 @@ db_open_inmem(void)
     register struct db_i *dbip = DBI_NULL;
     register int i;
 
-    BU_GETSTRUCT(dbip, db_i);
+    BU_GET(dbip, struct db_i);
     dbip->dbi_eof = (off_t)-1L;
     dbip->dbi_fp = NULL;
     dbip->dbi_mf = NULL;
@@ -105,7 +105,7 @@ db_create_inmem(void) {
     struct db_i *dbip;
     struct bu_external obj;
     struct bu_attribute_value_set avs;
-    struct bu_vls units;
+    struct bu_vls units = BU_VLS_INIT_ZERO;
     struct bu_external attr;
     int flags;
 
@@ -115,7 +115,6 @@ db_create_inmem(void) {
     RT_CK_WDB(dbip->dbi_wdbp);
 
     /* Second, create the attribute-only _GLOBAL object */
-    bu_vls_init(&units);
     bu_vls_printf(&units, "%.25e", dbip->dbi_local2base);
 
     bu_avs_init(&avs, 4, "db_create_inmem");

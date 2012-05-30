@@ -1,7 +1,7 @@
 /*                O B J _ T O K E N _ T Y P E . H
  * BRL-CAD
  *
- * Copyright (c) 2011 United States Government as represented by
+ * Copyright (c) 2011-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ typedef union YYSTYPE
     float real;
     int integer;
     int reference[3];
-    bool toggle;
+    unsigned char toggle;
     size_t index;
     char string[TOKEN_STRING_LEN];
 } YYSTYPE;

@@ -1,7 +1,7 @@
 /*                       I F _ W G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -560,7 +560,7 @@ MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 HIDDEN int
-wgl_open(FBIO *ifp, char *file, int width, int height)
+wgl_open(FBIO *ifp, const char *file, int width, int height)
 {
     static char title[128];
     int mode,  ret;
@@ -583,13 +583,13 @@ wgl_open(FBIO *ifp, char *file, int width, int height)
     mode = MODE_2LINGERING;
 
     if (file != NULL) {
-	char *cp;
+	const char *cp;
 	char modebuf[80];
 	char *mp;
 	int alpha;
 	struct modeflags *mfp;
 
-	if (strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
+	if (bu_strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
 	    /* How did this happen? */
 	    mode = 0;
 	} else {
@@ -834,7 +834,7 @@ _wgl_open_existing(FBIO *ifp,
 
 
 int
-wgl_open_existing(FBIO *ifp, int argc, char **argv)
+wgl_open_existing(FBIO *ifp, int argc, const char **argv)
 {
     Display *dpy;
     Window win;

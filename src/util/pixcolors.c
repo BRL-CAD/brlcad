@@ -1,7 +1,7 @@
 /*                     P I X C O L O R S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -61,36 +61,50 @@ void doit(FILE *fd)
     int bytes;
     int mask, i;
     unsigned long k;
+    int r, g, b;
 
 
     count = 0;
-    while ((bytes=fread(pixbuf, 3, PIXELS, fd)) > 0) {
-	for (i=(bytes-1)*3; i >= 0; i -= 3) {
-	    pixel = pixbuf[i] +
-		(pixbuf[i+1] << 8) +
-		(pixbuf[i+2] << 16);
+    while ((bytes = fread(pixbuf, 3, PIXELS, fd)) > 0) {
+	for (i = (bytes-1)*3; i >= 0; i -= 3) {
+	    r = pixbuf[i];
+	    g = pixbuf[i+1];
+	    b = pixbuf[i+2];
+	    if (r < 0)
+		r = 0;
+	    if (g < 0)
+		g = 0;
+	    if (b < 0)
+		b = 0;
+	    if (r > UCHAR_MAX)
+		r = UCHAR_MAX;
+	    if (g > UCHAR_MAX)
+		g = UCHAR_MAX;
+	    if (b > UCHAR_MAX)
+		b = UCHAR_MAX;
+	    pixel = r +	(g << 8) + (b << 16);
 
-	    if (! (vals[k=(pixel >> 3)] &
-		   (mask=(1 << (pixel & 0x07))))) {
+	    if (!(vals[k=(pixel >> 3)] &
+		   (mask = (1 << (pixel & 0x07))))) {
 		vals[k] |= (unsigned char)mask;
 		++count;
 	    }
 	}
     }
-    (void) printf("%lu\n", (long unsigned)count);
+    (void)printf("%lu\n", (long unsigned)count);
     if (verbose)
-	for (i=0; i < 1<<24; ++i)
+	for (i = 0; i < 1<<24; ++i)
 	    if ((vals[i>>3] & (1<<(i & 0x07))))
-		(void) printf("%3d %3d %3d\n",
-			      i & 0x0ff,
-			      (i >> 8) & 0x0ff,
-			      (i >> 16) & 0x0ff);
+		(void)printf("%3d %3d %3d\n",
+                             i & 0x0ff,
+                             (i >> 8) & 0x0ff,
+                             (i >> 16) & 0x0ff);
 }
 
 
 void usage(void)
 {
-    (void) fprintf(stderr, "Usage: %s [ -v ] < PIXfile\n", progname);
+    (void)fprintf(stderr, "Usage: %s [ -v ] < PIXfile\n", progname);
     bu_exit (1, NULL);
 }
 

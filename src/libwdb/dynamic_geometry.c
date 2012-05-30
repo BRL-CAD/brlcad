@@ -1,7 +1,7 @@
 /*              D Y N A M I C _ G E O M E T R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2011 United States Government as represented by
+ * Copyright (c) 2003-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -111,9 +111,8 @@ make_hole(struct rt_wdb *wdbp,		/* datbase to be modified */
 					 * get this hole applied
 					 */
 {
-    struct bu_vls tmp_name;
+    struct bu_vls tmp_name = BU_VLS_INIT_ZERO;
     int i, base_len, count=0;
-    struct directory *dp_tmp;
 
     RT_CHECK_WDB(wdbp);
 
@@ -132,11 +131,10 @@ make_hole(struct rt_wdb *wdbp,		/* datbase to be modified */
     /* make a unique name for the RCC we will use (of the form
      * "make_hole_%d")
      */
-    bu_vls_init(&tmp_name);
     bu_vls_strcat(&tmp_name, "make_hole_");
     base_len = bu_vls_strlen(&tmp_name);
     bu_vls_strcat(&tmp_name, "0");
-    while ((dp_tmp=db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) != RT_DIR_NULL) {
+    while ((db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) != RT_DIR_NULL) {
 	count++;
 	bu_vls_trunc(&tmp_name, base_len);
 	bu_vls_printf(&tmp_name, "%d", count);
@@ -164,14 +162,14 @@ make_hole(struct rt_wdb *wdbp,		/* datbase to be modified */
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 	/* Build a new "subtract" node (will be the root of the new tree) */
-	BU_GETUNION(tree, tree);
+	BU_GET(tree, union tree);
 	RT_TREE_INIT(tree);
 	tree->tr_b.tb_op = OP_SUBTRACT;
 	tree->tr_b.tb_left = comb->tree;	/* subtract from the original tree */
 	comb->tree = tree;
 
 	/* Build a node for the RCC to be subtracted */
-	BU_GETUNION(tree, tree);
+	BU_GET(tree, union tree);
 	RT_TREE_INIT(tree);
 	tree->tr_l.tl_op = OP_DB_LEAF;
 	tree->tr_l.tl_mat = NULL;
@@ -225,7 +223,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 							 * is to be applied
 							 */
 {
-    struct bu_vls tmp_name;
+    struct bu_vls tmp_name = BU_VLS_INIT_ZERO;
     size_t i, base_len, count=0;
     struct directory *dp;
     struct rt_db_internal intern;
@@ -234,11 +232,10 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     RT_CHECK_WDB(wdbp);
 
     /* make a unique name for the RCC we will use (of the form "make_hole_%d") */
-    bu_vls_init(&tmp_name);
     bu_vls_strcat(&tmp_name, "make_hole_");
     base_len = bu_vls_strlen(&tmp_name);
     bu_vls_strcat(&tmp_name, "0");
-    while ((dp=db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) != RT_DIR_NULL) {
+    while ((db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) != RT_DIR_NULL) {
 	count++;
 	bu_vls_trunc(&tmp_name, base_len);
 	bu_vls_printf(&tmp_name, "%zu", count);
@@ -252,8 +249,9 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     }
 
     /* lookup the newly created RCC */
-    if ((dp=db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET)) == RT_DIR_NULL) {
-	bu_log("Failed to lookup RCC (%s) just made by make_hole_in_prepped_regions()!!!\n",
+    dp=db_lookup(wdbp->dbip, bu_vls_addr(&tmp_name), LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
+      bu_log("Failed to lookup RCC (%s) just made by make_hole_in_prepped_regions()!!!\n",
 	       bu_vls_addr(&tmp_name));
 	bu_bomb("Failed to lookup RCC just made by make_hole_in_prepped_regions()!!!\n");
     }
@@ -266,7 +264,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
     }
 
     /* Build a soltab structure for the new RCC */
-    BU_GETSTRUCT(stp, soltab);
+    BU_GET(stp, struct soltab);
     stp->l.magic = RT_SOLTAB_MAGIC;
     stp->l2.magic = RT_SOLTAB2_MAGIC;
     stp->st_uses = 1;
@@ -300,7 +298,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 	RT_CK_REGION(rp);
 
 	/* create a tree node for the subtraction operation, this will be the new tree root */
-	BU_GETUNION(treep, tree);
+	BU_GET(treep, union tree);
 	RT_TREE_INIT(treep);
 	treep->tr_b.tb_op = OP_SUBTRACT;
 	treep->tr_b.tb_left = rp->reg_treetop;	/* subtract from the old treetop */
@@ -310,7 +308,7 @@ make_hole_in_prepped_regions(struct rt_wdb *wdbp,	/* database to be modified */
 	rp->reg_treetop = treep;
 
 	/* create a tree node for the new RCC */
-	BU_GETUNION(treep, tree);
+	BU_GET(treep, union tree);
 	RT_TREE_INIT(treep);
 	treep->tr_a.tu_op = OP_SOLID;
 	treep->tr_a.tu_stp = stp;

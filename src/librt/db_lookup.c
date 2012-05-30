@@ -1,7 +1,7 @@
 /*                     D B _ L O O K U P . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2011 United States Government as represented by
+ * Copyright (c) 1988-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -107,18 +107,16 @@ int
 db_dirhash(const char *str)
 {
     const unsigned char *s = (unsigned char *)str;
-    long sum;
-    int i;
+    long sum = 0;
+    int i = 1;
 
     /* sanity */
-    if (!str) {
+    if (!str)
 	return 0;
-    }
 
-    sum = 0;
     /* BSD name hashing starts i=0, discarding first char.  why? */
-    for (i=1; *s;)
-	sum += *s++ * i++;
+    while(*s)
+	sum += (long)*s++ * i++;
 
     return RT_DBHASH(sum);
 }
@@ -274,7 +272,7 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
     struct directory **headp;
     struct directory *dp;
     char *tmp_ptr;
-    struct bu_vls local;
+    struct bu_vls local = BU_VLS_INIT_ZERO;
 
     RT_CK_DBI(dbip);
 
@@ -293,7 +291,6 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
 	}
     }
 
-    bu_vls_init(&local);
     if (db_version(dbip) < 5) {
 	bu_vls_strncpy(&local, name, NAMESIZE);
     } else {

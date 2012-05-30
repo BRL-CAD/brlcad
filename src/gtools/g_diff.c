@@ -1,7 +1,7 @@
 /*                        G _ D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2011 United States Government as represented by
+ * Copyright (c) 1998-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,6 +50,10 @@
 #include "wdb.h"
 #include "mater.h"
 #include "tclcad.h"
+
+/* FIXME: should decouple from wdb object interface */
+#include "obj.h"
+
 
 static struct mater *mater_hd1 = MATER_NULL;
 static struct mater *mater_hd2 = MATER_NULL;
@@ -172,7 +176,7 @@ kill_obj(char *name)
 int
 compare_external(struct directory *dp1, struct directory *dp2)
 {
-    int kill = 0;
+    int killit = 0;
     struct bu_external ext1, ext2;
 
     if (db_get_external(&ext1, dp1, dbip1)) {
@@ -186,15 +190,15 @@ compare_external(struct directory *dp1, struct directory *dp2)
 
     if (ext1.ext_nbytes != ext2.ext_nbytes) {
 	printf("Byte counts are different on %s (%ld != %ld)\n", dp1->d_namep, (long int)ext1.ext_nbytes, (long int)ext2.ext_nbytes);
-	kill = 1;
+	killit = 1;
     }
 
     if (memcmp((void *)ext1.ext_buf, (void *)ext2.ext_buf, ext1.ext_nbytes)) {
 	printf("Byte value(s) are different on %s (has no Tcl list representation)\n", dp1->d_namep);
-	kill = 1;
+	killit = 1;
     }
 
-    if (kill) {
+    if (killit) {
 	if (mode == HUMAN) {
 	    printf("kill %s and import it from %s\n", dp1->d_namep, dbip1->dbi_filename);
 	} else {
@@ -505,10 +509,8 @@ int
 compare_tcl_solids(char *str1, Tcl_Obj *obj1, struct directory *dp1, char *str2, Tcl_Obj *obj2)
 {
     char *c1, *c2;
-    struct bu_vls adjust;
+    struct bu_vls adjust = BU_VLS_INIT_ZERO;
     int different = 0;
-
-    bu_vls_init(&adjust);
 
     /* check if same solid type */
     c1 = str1;
@@ -548,10 +550,8 @@ int
 compare_tcl_combs(Tcl_Obj *obj1, struct directory *dp1, Tcl_Obj *obj2)
 {
     int junk;
-    struct bu_vls adjust;
+    struct bu_vls adjust = BU_VLS_INIT_ZERO;
     int different = 0;
-
-    bu_vls_init(&adjust);
 
     /* first check if there is any difference */
     if (BU_STR_EQUAL(Tcl_GetStringFromObj(obj1, &junk), Tcl_GetStringFromObj(obj2, &junk)))
@@ -624,7 +624,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 			dp->d_namep, dbip->dbi_filename, los, comb->los);
 	    }
 	} else if (BU_STR_EQUAL(key, "material")) {
-	    if (!strncmp(value, "gift", 4)) {
+	    if (!bu_strncmp(value, "gift", 4)) {
 		long GIFTmater;
 
 		GIFTmater = strtol(&value[4], NULL, 0);
@@ -683,7 +683,7 @@ remove_region_attrs(Tcl_Obj *obj)
 	}
 	if (!found_material && BU_STR_EQUAL(key, "material")) {
 	    found_material = 1;
-	    if (!strncmp(Tcl_GetStringFromObj(objs[i], NULL), "gift", 4)) {
+	    if (!bu_strncmp(Tcl_GetStringFromObj(objs[i], NULL), "gift", 4)) {
 		Tcl_ListObjReplace(interp, obj, i-1, 2, 0, NULL);
 	    }
 	}
@@ -694,11 +694,9 @@ remove_region_attrs(Tcl_Obj *obj)
 int
 compare_attrs(struct directory *dp1, struct directory *dp2)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     Tcl_Obj *obj1, *obj2;
     int different = 0;
-
-    bu_vls_init(&vls);
 
     if (db_version(dbip1) > 4) {
 	bu_vls_printf(&vls, "_db1 attr get %s", dp1->d_namep);
@@ -755,16 +753,13 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 {
     struct directory *dp1, *dp2;
     char *argv[4] = {NULL, NULL, NULL, NULL};
-    struct bu_vls s1_tcl, s2_tcl;
-    struct bu_vls vls;
+    struct bu_vls s1_tcl = BU_VLS_INIT_ZERO;
+    struct bu_vls s2_tcl = BU_VLS_INIT_ZERO;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     int has_diff = 0;
 
     RT_CK_WDB(wdb1);
     RT_CK_WDB(wdb2);
-
-    bu_vls_init(&s1_tcl);
-    bu_vls_init(&s2_tcl);
-    bu_vls_init(&vls);
 
     /* look at all objects in this database */
     FOR_ALL_DIRECTORY_START(dp1, dbip1) {
@@ -865,12 +860,12 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	    continue;
 
 	/* check if this object exists in the other database */
-	if ((dp1 = db_lookup(dbip1, dp2->d_namep, 0)) == RT_DIR_NULL) {
+	if (db_lookup(dbip1, dp2->d_namep, 0) == RT_DIR_NULL) {
 	    /* need to add this object */
 	    has_diff += 1;
 	    argv[2] = dp2->d_namep;
-	    if (wdb_get_tcl((ClientData)(wdb2), interp, 3, argv) == TCL_ERROR ||
-		!strncmp(Tcl_GetStringResult(interp), "invalid", 7)) {
+	    if (wdb_get_tcl((void *)wdb2, 3, (const char **)argv) == TCL_ERROR ||
+		!bu_strncmp(Tcl_GetStringResult(interp), "invalid", 7)) {
 		/* could not get TCL version */
 		if (mode == HUMAN)
 		    printf("Import %s from %s\n",
@@ -933,12 +928,12 @@ main(int argc, char **argv)
     file1 = *argv++;
     file2 = *argv;
 
-    if (!bu_file_exists(file1)) {
+    if (!bu_file_exists(file1, NULL)) {
 	perror(file1);
 	bu_exit(1, "Cannot stat file %s\n", file1);
     }
 
-    if (!bu_file_exists(file2)) {
+    if (!bu_file_exists(file2, NULL)) {
 	perror(file2);
 	bu_exit(1, "Cannot stat file %s\n", file2);
     }
@@ -978,7 +973,7 @@ main(int argc, char **argv)
 	bu_exit(1, "wdb_init_obj failed on %s\n", file1);
     }
 
-    if (wdb_create_cmd(interp, wdb1, "_db1") != TCL_OK) {
+    if (wdb_create_cmd(wdb1, "_db1") != TCL_OK) {
 	wdb_close(wdb1);
 	bu_exit(1, "wdb_create_cmd failed on %s\n", file1);
     }
@@ -1016,7 +1011,7 @@ main(int argc, char **argv)
 	bu_exit(1, "wdb_init_obj failed on %s\n", file2);
     }
 
-    if (wdb_create_cmd(interp, wdb2, "_db2") != TCL_OK) {
+    if (wdb_create_cmd(wdb2, "_db2") != TCL_OK) {
 	wdb_close(wdb1);
 	bu_exit(1, "wdb_create_cmd failed on %s\n", file2);
     }

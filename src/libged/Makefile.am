@@ -3,6 +3,7 @@ lib_LTLIBRARIES = libged.la
 noinst_LTLIBRARIES = libged_nil.la
 
 libged_nil_la_SOURCES = \
+	${top_srcdir}/src/other/clipper/clipper.cpp \
 	3ptarb.c \
 	adc.c \
 	adjust.c \
@@ -153,6 +154,7 @@ libged_nil_la_SOURCES = \
 	pmat.c \
 	pmodel2view.c \
 	png.c \
+	polyclip.cpp \
 	pov.c \
 	prcolor.c \
 	prefix.c \
@@ -276,7 +278,8 @@ AM_CFLAGS = ${STRICT_FLAGS}
 AM_CPPFLAGS = \
 	${PNG_CPPFLAGS} \
 	${REGEX_CPPFLAGS} \
-	${TCL_CPPFLAGS}
+	${TCL_CPPFLAGS} \
+	-I${top_srcdir}/src/other/clipper
 
 noinst_HEADERS = \
 	ged_private.h \

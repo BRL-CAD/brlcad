@@ -1,7 +1,7 @@
 /*                          B O L T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ int
 main(int argc, char **argv)
 {
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26];		/* Mged file create. */
+    char filemged[26] = {0};	/* Mged file create. */
     double hd, hh;		/* Diameter & height of bolt head. */
     double wd, wh;		/* Diameter & height of washer. */
     double sd, sh;		/* Diameter & height of bolt stem. */
@@ -112,23 +112,37 @@ main(int argc, char **argv)
 	(void)printf("\t4 - bolt head & stem\n");
 	(void)fflush(stdout);
 	ret = scanf("%d", &iopt);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    iopt = 3;
+	}
+	if (iopt < 0)
+	    iopt = 0;
+	if (iopt > 4)
+	    iopt = 4;
 
 	/* Get file name of mged file to be created. */
 	(void)printf("Enter name of mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	}
+	if (BU_STR_EQUAL(filemged, ""))
+	    bu_strlcpy(filemged, "bolt.g", sizeof(filemged));
 
 	/* Find the number of bolts to be created (<=26). */
 	(void)printf("Enter the number of bolts to be created (26 max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%d", &numblt);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
-	if (numblt > 26) numblt = 26;
+	    numblt = 1;
+	}
+	if (numblt < 1)
+	    numblt = 1;
+	if (numblt > 26)
+	    numblt = 26;
 
 	/* Find dimensions of the bolt. */
 	/* Find dimensions of head first. */
@@ -136,24 +150,45 @@ main(int argc, char **argv)
 	(void)printf("bolt head.\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%lf %lf", &hd, &hh);
-	if (ret == 0)
+	if (ret == 0) {
 	    perror("scanf");
+	    hd = 20.0;
+	    hh = 20.0;
+	}
+	if (hd < SMALL_FASTF)
+	    hd = SMALL_FASTF;
+	if (hh < SMALL_FASTF)
+	    hh = SMALL_FASTF;
 
 	/* Find dimensions of washer if necessary. */
 	if ((iopt == 2) || (iopt == 3)) {
 	    (void)printf("Enter diameter & height of washer.\n\t");
 	    (void)fflush(stdout);
 	    ret = scanf("%lf %lf", &wd, &wh);
-	    if (ret == 0)
+	    if (ret == 0) {
 		perror("scanf");
+		wd = 30.0;
+		wh = 2.0;
+	    }
+	    if (wd < SMALL_FASTF)
+		wd = SMALL_FASTF;
+	    if (wh < SMALL_FASTF)
+		wh = SMALL_FASTF;
 	}
 	/* Find dimensions of bolt stem if necessary. */
 	if ((iopt == 3) || (iopt == 4)) {
 	    (void)printf("Enter diameter & height of bolt stem.\n\t");
 	    (void)fflush(stdout);
 	    ret = scanf("%lf %lf", &sd, &sh);
-	    if (ret == 0)
+	    if (ret == 0) {
 		perror("scanf");
+		sd = 10.0;
+		sh = 100.0;
+	    }
+	    if (sd < SMALL_FASTF)
+		sd = SMALL_FASTF;
+	    if (sh < SMALL_FASTF)
+		sh = SMALL_FASTF;
 	}
 
     }							/* END # 1 */

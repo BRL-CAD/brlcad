@@ -1,7 +1,7 @@
 #               M A N _ B R O W S E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2011 United States Government as represented by
+# Copyright (c) 1998-2012 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ package provide ManBrowser 1.0
 #
 ::itcl::configbody ManBrowser::path {
     if {![info exists path] || ![file isdirectory $path]} {
-	set path [file join [bu_brlcad_data "html"] mann en]
+	set path [file join [bu_brlcad_data "doc/html"] mann en]
     }
 }
 

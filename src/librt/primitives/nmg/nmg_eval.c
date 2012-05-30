@@ -1,7 +1,7 @@
 /*                      N M G _ E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -260,11 +260,6 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
 
     /* Remove loops/edges/vertices that appear more than once in result */
     nmg_rm_redundancies(sA, tol);
-
-    if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
-	bu_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d) END\n",
-	       sA, sB, op);
-    }
 }
 
 

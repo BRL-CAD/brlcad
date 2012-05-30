@@ -665,6 +665,13 @@ typedef uint_least32_t uint_fast32_t;
 # define STDINT_H_UINTPTR_T_DEFINED
 #elif defined (_MSC_VER) && defined (_UINTPTR_T_DEFINED)
 # define STDINT_H_UINTPTR_T_DEFINED
+# ifndef UINTPTR_MAX
+#  ifdef  _WIN64
+#   define UINTPTR_MAX _UI64_MAX
+#  else
+#   define UINTPTR_MAX UINT_MAX
+#  endif
+# endif
 #endif
 
 #ifndef STDINT_H_UINTPTR_T_DEFINED

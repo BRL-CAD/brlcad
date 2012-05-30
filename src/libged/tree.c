@@ -1,7 +1,7 @@
 /*                         T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -79,7 +79,10 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
 		flags |= _GED_TREE_CFLAG;
 		break;
 	    case 'o':
-		if ((fdout = fopen(bu_optarg, "w+b")) == NULL) {
+		if (fdout)
+		    fclose(fdout);
+		fdout = fopen(bu_optarg, "w+b");
+		if (fdout == NULL) {
 		    bu_vls_printf(gedp->ged_result_str, "Failed to open output file, %d", errno);
 		    return GED_ERROR;
 		}
@@ -88,12 +91,16 @@ ged_tree(struct ged *gedp, int argc, const char *argv[])
 		displayDepth = atoi(bu_optarg);
 		if (displayDepth < 0) {
 		    bu_vls_printf(gedp->ged_result_str, "Negative number supplied as depth - unsupported.");
+		    if (fdout != NULL)
+		      fclose(fdout);
 		    return GED_ERROR;
 		}
 		break;
 	    case '?':
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		if (fdout != NULL)
+		  fclose(fdout);
 		return GED_ERROR;
 	}
     }

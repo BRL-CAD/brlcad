@@ -1,7 +1,7 @@
 /*                           F F T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,12 +36,12 @@
 #endif
 
 #ifndef FFT_EXPORT
-#  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
-#    ifdef FFT_EXPORT_DLL
-#      define FFT_EXPORT __declspec(dllexport)
-#    else
-#      define FFT_EXPORT __declspec(dllimport)
-#    endif
+#  if defined(FFT_DLL_EXPORTS) && defined(FFT_DLL_IMPORTS)
+#    error "Only FFT_DLL_EXPORTS or FFT_DLL_IMPORTS can be defined, not both."
+#  elif defined(FFT_DLL_EXPORTS)
+#    define FFT_EXPORT __declspec(dllexport)
+#  elif defined(FFT_DLL_IMPORTS)
+#    define FFT_EXPORT __declspec(dllimport)
 #  else
 #    define FFT_EXPORT
 #  endif

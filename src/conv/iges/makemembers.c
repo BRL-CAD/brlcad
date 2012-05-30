@@ -1,7 +1,7 @@
 /*                   M A K E M E M B E R S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ Makemembers(struct node *root, struct wmember *head)
     struct node *ptr;
     struct wmember *wmem;
     fastf_t *flt;
-    int op=Union, entno, i;
+    int op = Union, entno, i;
 
     Freestack();
     ptr = root;
@@ -55,7 +55,7 @@ Makemembers(struct node *root, struct wmember *head)
 	    /* make the member record */
 	    wmem = mk_addmember(dir[entno]->name, &(head->l), NULL, operator[op]);
 	    flt = (fastf_t *)dir[entno]->rot;
-	    for (i=0; i<16; i++) {
+	    for (i = 0; i < 16; i++) {
 		wmem->wm_mat[i] = (*flt);
 		flt++;
 	    }

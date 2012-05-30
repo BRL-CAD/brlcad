@@ -1,7 +1,7 @@
 /*                           B I N . H
  * BRL-CAD
  *
- * Copyright (c) 2011 United States Government as represented by
+ * Copyright (c) 2011-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,9 @@
 #define __BIN_H__
 
 /* Do not rely on common.h's HAVE_* defines.  Do not include the
- * common.h header.
+ * common.h header.  This is a stand-alone portability header intended
+ * to be independent of BRL-CAD and the BRL-CAD build system, reusable
+ * by external projects.
  */
 
 #if defined(_WIN32) && !defined(__CYGWIN__)

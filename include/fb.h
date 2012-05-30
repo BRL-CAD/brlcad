@@ -1,7 +1,7 @@
 /*                            F B . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,8 +46,8 @@
 #  include <sys/time.h>
 #endif
 
-#include "fbio.h"
 #include "bu.h"
+#include "fbio.h"
 
 
 /* Library entry points which are macros.
@@ -78,7 +78,7 @@
 
 /* Library entry points which are true functions. */
 FB_EXPORT extern void fb_configureWindow(FBIO *, int, int);
-FB_EXPORT extern FBIO *fb_open(char *file, int _width, int _height);
+FB_EXPORT extern FBIO *fb_open(const char *file, int _width, int _height);
 FB_EXPORT extern int fb_close(FBIO *ifp);
 FB_EXPORT extern int fb_close_existing(FBIO *ifp);
 FB_EXPORT extern int fb_genhelp(void);
@@ -89,7 +89,7 @@ FB_EXPORT extern int fb_rpixel(FBIO *ifp, unsigned char *pp);
 FB_EXPORT extern int fb_wpixel(FBIO *ifp, unsigned char *pp);
 FB_EXPORT extern int fb_flush(FBIO *ifp);
 #if !defined(_WIN32) || defined(__CYGWIN__)
-FB_EXPORT extern void fb_log(const char *fmt, ...) __BU_ATTR_FORMAT12;
+FB_EXPORT extern void fb_log(const char *fmt, ...) _BU_ATTR_PRINTF12;
 #endif
 FB_EXPORT extern int fb_null(FBIO *ifp);
 FB_EXPORT extern int fb_null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig);
@@ -192,18 +192,6 @@ FB_EXPORT extern int _wgl_open_existing(FBIO *ifp, Display *dpy, Window win, Col
 #define FB_DEBUG_CMAP 2	/* Contents of colormaps */
 #define FB_DEBUG_RW 4	/* Contents of reads and writes */
 #define FB_DEBUG_BRW 8	/* Buffered IO rpixel and wpixel */
-
-#define FB_CKMAG(_ptr, _magic, _str)	\
-	if (!(_ptr)) { \
-		fb_log("ERROR: null %s ptr, file %s, line %d\n", \
-			_str, __FILE__, __LINE__); \
-		abort(); \
-	} else if ((uint32_t)(*((uintptr_t *)(_ptr))) != (uint32_t)(_magic)) { \
-		fb_log("ERROR: bad %s ptr 0x%x, s/b 0x%x, was %p, file %s, line %d\n", \
-		       _str, (uint32_t)(*((uintptr_t *)(_ptr))), (uint32_t)(_magic), \
-		       (uint32_t)(*((uintptr_t *)(_ptr))), __FILE__, __LINE__); \
-		abort(); \
-	}
 
 /* tcl.c */
 /* The presence of Tcl_Interp as an arg prevents giving arg list */

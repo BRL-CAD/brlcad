@@ -1,7 +1,7 @@
 /*                        A S C - P L . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -167,6 +167,7 @@ main (int argc, char **argv)
 		if (check_syntax(*bp, 6, nm_args, line_nm))
 		    pl_3space(fp[FP_OUT], iarg[0], iarg[1], iarg[2], iarg[3],
 			      iarg[4], iarg[5]);
+		break;
 	    case 'i':
 		if (check_syntax(*bp, 3, nm_args, line_nm))
 		    pd_circle(fp[FP_OUT], darg[0], darg[1], darg[2]);
@@ -213,6 +214,7 @@ main (int argc, char **argv)
 		if (check_syntax(*bp, 6, nm_args, line_nm))
 		    pd_3space(fp[FP_OUT], darg[0], darg[1], darg[2], darg[3],
 			      darg[4], darg[5]);
+		break;
 	    case 'X':
 		if (check_syntax(*bp, 3, nm_args, line_nm))
 		    pd_3point(fp[FP_OUT], darg[0], darg[1], darg[2]);

@@ -1,7 +1,7 @@
 /*                         S T A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2011 United States Government as represented by
+ * Copyright (c) 1990-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ Pop()
     union tree *ptr;
 
     if (jtop == (-1))
-	ptr=NULL;
+	ptr = NULL;
     else {
 	ptr = stk[jtop];
 	jtop--;

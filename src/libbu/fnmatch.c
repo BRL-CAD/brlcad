@@ -1,7 +1,7 @@
 /*                       F N M A T C H . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2011 United States Government as represented by
+ * Copyright (c) 1993-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -195,6 +195,7 @@ findclass(char *charclass)
 {
     CHARCLASS tmp;
     tmp.idstring = charclass;
+    tmp.checkfun = NULL;
     return (CHARCLASS *)bsearch(&tmp, charclasses, sizeof(charclasses)/sizeof(CHARCLASS), sizeof(CHARCLASS), classcompare);
 }
 
@@ -205,9 +206,9 @@ charclassmatch(const char *pattern, char test, int *s)
     char c;
     int counter = 0;
     int resultholder = 0;
-    struct bu_vls classname;
+    struct bu_vls classname = BU_VLS_INIT_ZERO;
     CHARCLASS *ctclass;
-    bu_vls_init(&classname);
+
     c = *pattern++;
     while (c && (c != ':') && (resultholder != -1)) {
 	if (c == FNMATCH_EOS) resultholder = -1;

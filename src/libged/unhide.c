@@ -1,7 +1,7 @@
 /*                         U N H I D E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ ged_unhide(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    for (i=1; i<argc; i++) {
+    for (i = 1; i < argc; i++) {
 	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    continue;
 	}

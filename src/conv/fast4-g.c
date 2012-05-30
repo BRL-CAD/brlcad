@@ -1,7 +1,7 @@
 /*                       F A S T 4 - G . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -248,9 +248,8 @@ static int
 get_line(void)
 {
     int len;
-    struct bu_vls buffer;
+    struct bu_vls buffer = BU_VLS_INIT_ZERO;
 
-    bu_vls_init(&buffer);
     len = bu_vls_gets(&buffer, fpin);
 
     /* eof? */
@@ -581,7 +580,7 @@ find_region_name(int g_id, int c_id)
 static char *
 make_unique_name(char *name)
 {
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
     int found;
 
     /* make a unique name from what we got off the $NAME card */
@@ -589,8 +588,6 @@ make_unique_name(char *name)
     (void)Search_names(name_root, name, &found);
     if (!found)
 	return bu_strdup(name);
-
-    bu_vls_init(&vls);
 
     while (found) {
 	bu_vls_trunc(&vls, 0);
@@ -633,11 +630,10 @@ static char *
 get_solid_name(char type, int element_id, int c_id, int g_id, int inner)
 {
     int reg_id;
-    struct bu_vls vls;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     reg_id = g_id * 1000 + c_id;
 
-    bu_vls_init(&vls);
     bu_vls_printf(&vls, "%d.%d.%c%d", reg_id, element_id, type, inner);
 
     return bu_vls_strgrab(&vls);
@@ -1558,7 +1554,7 @@ f4_do_ccone3(void)
 	bu_exit(1, "ERROR: unexpected end-of-file encountered\n");
     }
 
-    if (strncmp(field, line, 8)) {
+    if (bu_strncmp(field, line, 8)) {
 	bu_log("WARNING: CCONE3 continuation flags disagree, %8.8s vs %8.8s\n", field, line);
 	bu_log("\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 	       group_id, comp_id, element_id);
@@ -2166,12 +2162,20 @@ skip_section(void)
 
     /* skip to start of next section */
     section_start = ftell(fpin);
+    if (section_start < 0L) {
+	bu_exit(1, "Error: couldn't get input file's current file position.\n");
+    }
+
     if (get_line()) {
-	while (line[0] && strncmp(line, "SECTION", 7) &&
-	       strncmp(line, "HOLE", 4) &&
-	       strncmp(line, "WALL", 4) &&
-	       strncmp(line, "VEHICLE", 7)) {
+	while (line[0] && bu_strncmp(line, "SECTION", 7) &&
+	       bu_strncmp(line, "HOLE", 4) &&
+	       bu_strncmp(line, "WALL", 4) &&
+	       bu_strncmp(line, "VEHICLE", 7))
+	{
 	    section_start = ftell(fpin);
+	    if (section_start < 0L) {
+		bu_exit(1, "Error: couldn't get input file's current file position.\n");
+	    }
 	    if (!get_line())
 		break;
 	}
@@ -2417,13 +2421,13 @@ Process_hole_wall(void)
 
     rewind(fpin);
     while (1) {
-	if (!strncmp(line, "HOLE", 4)) {
+	if (!bu_strncmp(line, "HOLE", 4)) {
 	    f4_do_hole_wall(HOLE);
-	} else if (!strncmp(line, "WALL", 4)) {
+	} else if (!bu_strncmp(line, "WALL", 4)) {
 	    f4_do_hole_wall(WALL);
-	} else if (!strncmp(line, "COMPSPLT", 8)) {
+	} else if (!bu_strncmp(line, "COMPSPLT", 8)) {
 	    f4_do_compsplt();
-	} else if (!strncmp(line, "SECTION", 7)) {
+	} else if (!bu_strncmp(line, "SECTION", 7)) {
 	    bu_strlcpy(field, &line[24], sizeof(field));
 	    mode = atoi(field);
 	    if (mode != 1 && mode != 2) {
@@ -2431,7 +2435,7 @@ Process_hole_wall(void)
 		       mode, group_id, comp_id);
 		mode = 2;
 	    }
-	} else if (!strncmp(line, "ENDDATA", 7)) {
+	} else if (!bu_strncmp(line, "ENDDATA", 7)) {
 	    break;
 	}
 
@@ -2515,45 +2519,45 @@ Process_input(int pass_number)
     if (!get_line() || !line[0])
 	bu_strlcpy(line, "ENDDATA", sizeof(line));
     while (1) {
-	if (!strncmp(line, "VEHICLE", 7))
+	if (!bu_strncmp(line, "VEHICLE", 7))
 	    f4_do_vehicle();
-	else if (!strncmp(line, "HOLE", 4))
+	else if (!bu_strncmp(line, "HOLE", 4))
 	    ;
-	else if (!strncmp(line, "WALL", 4))
+	else if (!bu_strncmp(line, "WALL", 4))
 	    ;
-	else if (!strncmp(line, "COMPSPLT", 8))
+	else if (!bu_strncmp(line, "COMPSPLT", 8))
 	    ;
-	else if (!strncmp(line, "CBACKING", 8))
+	else if (!bu_strncmp(line, "CBACKING", 8))
 	    f4_do_cbacking();
-	else if (!strncmp(line, "CHGCOMP", 7))
+	else if (!bu_strncmp(line, "CHGCOMP", 7))
 	    f4_do_chgcomp();
-	else if (!strncmp(line, "SECTION", 7))
+	else if (!bu_strncmp(line, "SECTION", 7))
 	    f4_do_section(0);
-	else if (!strncmp(line, "$NAME", 5))
+	else if (!bu_strncmp(line, "$NAME", 5))
 	    f4_do_name();
-	else if (!strncmp(line, "$COMMENT", 8))
+	else if (!bu_strncmp(line, "$COMMENT", 8))
 	    ;
-	else if (!strncmp(line, "GRID", 4))
+	else if (!bu_strncmp(line, "GRID", 4))
 	    f4_do_grid();
-	else if (!strncmp(line, "CLINE", 5))
+	else if (!bu_strncmp(line, "CLINE", 5))
 	    f4_do_cline();
-	else if (!strncmp(line, "CHEX1", 5))
+	else if (!bu_strncmp(line, "CHEX1", 5))
 	    f4_do_hex1();
-	else if (!strncmp(line, "CHEX2", 5))
+	else if (!bu_strncmp(line, "CHEX2", 5))
 	    f4_do_hex2();
-	else if (!strncmp(line, "CTRI", 4))
+	else if (!bu_strncmp(line, "CTRI", 4))
 	    f4_do_tri();
-	else if (!strncmp(line, "CQUAD", 5))
+	else if (!bu_strncmp(line, "CQUAD", 5))
 	    f4_do_quad();
-	else if (!strncmp(line, "CCONE1", 6))
+	else if (!bu_strncmp(line, "CCONE1", 6))
 	    f4_do_ccone1();
-	else if (!strncmp(line, "CCONE2", 6))
+	else if (!bu_strncmp(line, "CCONE2", 6))
 	    f4_do_ccone2();
-	else if (!strncmp(line, "CCONE3", 6))
+	else if (!bu_strncmp(line, "CCONE3", 6))
 	    f4_do_ccone3();
-	else if (!strncmp(line, "CSPHERE", 7))
+	else if (!bu_strncmp(line, "CSPHERE", 7))
 	    f4_do_sphere();
-	else if (!strncmp(line, "ENDDATA", 7)) {
+	else if (!bu_strncmp(line, "ENDDATA", 7)) {
 	    f4_do_section(1);
 	    break;
 	} else {
@@ -2689,10 +2693,11 @@ make_regions(void)
 	hptr = hole_root;
 	while (hptr && hptr->group * 1000 + hptr->component != ptr1->region_id)
 	    hptr = hptr->next;
-	if (hptr)
+
+	lptr = NULL;
+	if (hptr != NULL) {
 	    lptr = hptr->holes;
-	else
-	    lptr = (struct hole_list *)NULL;
+	}
 
 	splt = compsplt_root;
 	while (splt && splt->ident_to_split != ptr1->region_id)
@@ -2729,6 +2734,11 @@ make_regions(void)
 
 	    /* create new region by subtracting halfspace */
 	    BU_LIST_INIT(&region.l);
+	    lptr = NULL;
+	    if (hptr != NULL) {
+		lptr = hptr->holes;
+	    }
+
 	    if (mk_addmember(solids_name, &region.l, NULL, WMOP_UNION) == (struct wmember *)NULL)
 		bu_log("make_regions: mk_addmember failed to add %s to %s\n", solids_name, ptr1->name);
 
@@ -2803,7 +2813,7 @@ read_fast4_colors(char *color_file)
 	if (high < low)
 	    continue;
 
-	BU_GETSTRUCT(color, fast4_color);
+	BU_GET(color, struct fast4_color);
 	color->low = low;
 	color->high = high;
 	color->rgb[0] = r;
@@ -2811,6 +2821,7 @@ read_fast4_colors(char *color_file)
 	color->rgb[2] = b;
 	BU_LIST_APPEND(&HeadColor.l, &color->l);
     }
+    fclose(fp);
 }
 
 
@@ -2819,8 +2830,10 @@ main(int argc, char **argv)
 {
     int i;
     int c;
-    char *plot_file=NULL;
-    char *color_file=NULL;
+    char *plot_file = NULL;
+    char *color_file = NULL;
+
+    bu_setprogname(argv[0]);
 
     while ((c=bu_getopt(argc, argv, "qm:o:c:dwx:b:X:C:")) != -1) {
 	switch (c) {

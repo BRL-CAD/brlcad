@@ -1,7 +1,7 @@
 /*                            P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -167,7 +167,7 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
     vect_t work;
     fastf_t m1, m2, m3, m4;
 
-    BU_GETSTRUCT(trip, tri_specific);
+    BU_GET(trip, struct tri_specific);
     VMOVE(trip->tri_A, ap);
     VSUB2(trip->tri_BA, bp, ap);
     VSUB2(trip->tri_CA, cp, ap);
@@ -806,6 +806,10 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 	    VMOVE(rec[rno].q.q_norms[i], &pp->norms[i*3]);
 	}
     }
+
+    bu_log("DEPRECATED:  The 'poly' primitive is no longer supported.  Use the 'bot' or 'nmg' polygonal mesh instead.\n");
+    bu_log("\tTo convert polysolids to BOT primitives, use 'dbupgrade'.\n");
+
     return 0;
 }
 
@@ -833,7 +837,7 @@ rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double UN
     if (ip) RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);
 
-    bu_log("As of release 6.0 the polysolid is superceded by the BOT primitive.\n");
+    bu_log("DEPRECATED:  The 'poly' primitive is no longer supported.  Use the 'bot' or 'nmg' polygonal mesh instead.\n");
     bu_log("\tTo convert polysolids to BOT primitives, use 'dbupgrade'.\n");
     /* The rt_pg_to_bot() routine can also be used. */
     return -1;
@@ -976,7 +980,7 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 
     RT_PG_CK_MAGIC(ip_pg);
 
-    BU_GETSTRUCT(ip_bot, rt_bot_internal);
+    BU_GET(ip_bot, struct rt_bot_internal);
     ip_bot->magic = RT_BOT_INTERNAL_MAGIC;
     ip_bot->mode = RT_BOT_SOLID;
     ip_bot->orientation = RT_BOT_CCW;

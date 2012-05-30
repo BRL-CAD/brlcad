@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -229,9 +229,12 @@ setup(int argc, char **argv)
 	    bu_exit(1, "Automatic sizing can not be used with pipes.\n");
 	}
     } else {
-	if (freopen(argv[bu_optind], "r", stdin) == NULL ) {
+	char *ifname = bu_realpath(argv[bu_optind], NULL);
+	if (freopen(ifname, "r", stdin) == NULL ) {
+	    bu_free(ifname,"ifname alloc from bu_realpath");
 	    bu_exit(1, "halftone: cannot open \"%s\" for reading.\n", argv[bu_optind]);
 	}
+	bu_free(ifname,"ifname alloc from bu_realpath");
 	if (autosize) {
 	    if ( !fb_common_file_size((size_t *)&width, (size_t *)&height, argv[bu_optind], 1)) {
 		(void) fprintf(stderr, "halftone: unable to autosize.\n");

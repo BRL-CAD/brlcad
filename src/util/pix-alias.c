@@ -1,7 +1,7 @@
 /*                     P I X - A L I A S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -81,6 +81,7 @@ void doit(void)
     for (n=y-1; n >= 0; --n)
 	if (fread(&image[n*x*3], x*3, 1, stdin) != 1) {
 	    (void) fprintf(stderr, "Error reading image at scanline %u\n", n);
+            free(image);
 	    bu_exit (-2, NULL);
 	}
 
@@ -121,6 +122,7 @@ void doit(void)
 	(void) putchar(image[cpix+1]);
 	(void) putchar(image[cpix]);
     }
+    free(image);
 }
 
 

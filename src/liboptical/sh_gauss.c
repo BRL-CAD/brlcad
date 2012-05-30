@@ -1,7 +1,7 @@
 /*                      S H _ G A U S S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2011 United States Government as represented by
+ * Copyright (c) 1998-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -122,7 +122,7 @@ struct bu_structparse gauss_print_tab[] = {
 
 };
 struct bu_structparse gauss_parse_tab[] = {
-    {"%p", bu_byteoffset(gauss_print_tab[0]), "gauss_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%p", 1, "gauss_print_tab", bu_byteoffset(gauss_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f", 1, "s",			SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
@@ -162,11 +162,12 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 	case OP_SOLID: {
 	    struct reg_db_internals *dbint;
 	    matp_t mp;
-	    long sol_id;
+	    long sol_id = 0;
 	    struct rt_ell_internal *ell_p;
 	    vect_t v;
+	    int ret;
 
-	    BU_GETSTRUCT(dbint, reg_db_internals);
+	    BU_GET(dbint, struct reg_db_internals);
 	    BU_LIST_INIT_MAGIC(&(dbint->l), DBINT_MAGIC);
 
 	    if (tp->tr_a.tu_stp->st_matp)
@@ -175,8 +176,11 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 		mp = (matp_t)bn_mat_identity;
 
 	    /* Get the internal form of this solid & add it to the list */
-	    rt_db_get_internal(&dbint->ip, tp->tr_a.tu_stp->st_dp,
-			       tb->dbip, mp, resp);
+	    ret = rt_db_get_internal(&dbint->ip, tp->tr_a.tu_stp->st_dp, tb->dbip, mp, resp);
+	    if (ret < 0) {
+		bu_log("Failure reading %s object from database.\n", rt_functab[sol_id].ft_name);
+		return;
+	    }
 
 	    RT_CK_DB_INTERNAL(&dbint->ip);
 	    dbint->st_p = tp->tr_a.tu_stp;
@@ -315,7 +319,7 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 
 
     /* Get memory for the shader parameters and shader-specific data */
-    BU_GETSTRUCT(gauss_sp, gauss_specific);
+    BU_GET(gauss_sp, struct gauss_specific);
     *dpp = gauss_sp;
 
     /* initialize the default values for the shader */

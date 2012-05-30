@@ -1,7 +1,7 @@
 /*                        G I F 2 F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2011 United States Government as represented by
+ * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,6 +40,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -130,7 +131,7 @@ main(int argc, char **argv)
 		break;
 	    default:	/* '?' */
 		usage(argv);
-		bu_exit(1, NULL);
+		return 1;
 	}
     }
 
@@ -138,7 +139,7 @@ main(int argc, char **argv)
 	if ( isatty(fileno(stdin)) ) {
 	    (void) fprintf(stderr, "%s: No input file.\n", argv[0]);
 	    usage(argv);
-	    bu_exit(1, NULL);
+	    return 1;
 	}
 	file_name = "-";
 	fp = stdin;
@@ -149,7 +150,7 @@ main(int argc, char **argv)
 			   "%s: cannot open \"%s\" for reading\n", argv[0],
 			   file_name );
 	    usage(argv);
-	    bu_exit(1, NULL);
+	    return 1;
 	}
     }
 /*
@@ -159,7 +160,7 @@ main(int argc, char **argv)
 
     if (n != 13) {
 	fprintf(stderr, "%s: only %d bytes in header.\n", argv[0], n);
-	bu_exit(1, NULL);
+	return 1;
     }
 
     ScreenWidth = WORD(Header.GH_ScreenWidth);
@@ -169,21 +170,25 @@ main(int argc, char **argv)
     GlobalPixels= (Header.GH_Flags&0x07) + 1;
     if (headers) {
 	fprintf(stderr, "-w%d -n%d\n", ScreenWidth, ScreenHeight);
-	bu_exit(0, NULL);
+	return 0;
     }
 /*
  * In verbose mode, output a message before checking to allow the
  * "smarter" user look over the header even if the header is barfO.
  */
     if (verbose) {
+	char magic[sizeof(Header.GH_Magic)+1];
+	memcpy(magic, Header.GH_Magic, sizeof(Header.GH_Magic));
+	magic[sizeof(magic)-1] = '\0';
+
 	fprintf(stderr, "Magic=%.6s, -w%d -n%d, M=%d, cr=%d, pixel=%d, bg=%d\n",
-		Header.GH_Magic, ScreenWidth, ScreenHeight, GlobalMap,
+		magic, ScreenWidth, ScreenHeight, GlobalMap,
 		CR, GlobalPixels, Header.GH_Background);
     }
 
     if (Header.GH_EOB) {
 	fprintf(stderr, "%s: missing EOB in header.\n", argv[0]);
-	bu_exit(1, NULL);
+	return 1;
     }
     maxcolors = 1 << GlobalPixels;
 
@@ -195,18 +200,18 @@ main(int argc, char **argv)
 	if (n != 3) {
 	    fprintf(stdout, "%s: only read %d global colors.\n",
 		    argv[0], i);
-	    bu_exit(1, NULL);
+	    return 1;
 	}
     }
 /*
  * Read in the image header.
  */
-    n= fread(&Im, 1, sizeof(Im), fp);
+    n = fread(&Im, 1, sizeof(Im), fp);
 
     if (n != sizeof(Im)) {
 	fprintf(stderr, "%s: only %d bytes in image header.\n",
 		argv[0], n);
-	bu_exit(1, NULL);
+	return 1;
     }
     if (verbose) {
 	fprintf(stderr, "Magic=%c, left=%d, top=%d, Width=%d, Height=%d\n",
@@ -215,6 +220,9 @@ main(int argc, char **argv)
 	fprintf(stderr, "Map=%d, Interlaced=%d, pixel=%d\n",
 		Im.IH_Flags>>7, (Im.IH_Flags>>6)&0x01, Im.IH_Flags&0x03);
     }
+
+    if(WORD(Im.IH_Height) < 0 || WORD(Im.IH_Height) > 65535)
+	bu_exit(1, "Bad height info in GIF header\n");
 
     interlaced = (Im.IH_Flags>>6)&0x01;
 
@@ -229,7 +237,7 @@ main(int argc, char **argv)
 		fprintf(stdout,
 			"%s: only read %d global colors.\n",
 			argv[0], i);
-		bu_exit(1, NULL);
+		return 1;
 	    }
 	}
     }
@@ -237,7 +245,7 @@ main(int argc, char **argv)
     if (WORD(Im.IH_Width) > 2048) {
 	fprintf(stderr, "%s: Input line greater than internal buffer!\n",
 		argv[0]);
-	bu_exit(1, NULL);
+	return 1;
     }
 
     MinBits = getc(fp) + 1;
@@ -252,40 +260,50 @@ main(int argc, char **argv)
 	lineNumber = offs[lineIdx];
 	lineInc= lace[lineIdx];
     } else {
-	lineIdx = 4;
+	lineIdx = (sizeof(lace)/sizeof(lace[0]))-1;
 	lineNumber = 0;
 	lineInc = 1;
     }
 /*
  * Open the frame buffer.
  */
-    fbp = fb_open(framebuffer, WORD(Im.IH_Width),
-		  WORD(Im.IH_Height));
+    if ((fbp = fb_open(framebuffer, WORD(Im.IH_Width), WORD(Im.IH_Height))) != NULL) {
+      int ih_height = WORD(Im.IH_Height);
+      int ih_width = WORD(Im.IH_Width);
 
-/*
- * The speed of this loop can be greatly increased by moving all of
- * the WORD macro calls out of the loop.
- */
-    for (i=0; i<WORD(Im.IH_Height);i++) {
+      if(ih_height < 0 || ih_height > 0xffff || ih_width < 0 || ih_height > 0xffff)
+        bu_exit(1, "Invalid height in GIF Header\n");
+
+      /*
+       * The speed of this loop can be greatly increased by moving all of
+       * the WORD macro calls out of the loop.
+       */
+      for (i=0; i<ih_height;i++) {
 	int k;
 	lp = line;
-	for (k=0;k<WORD(Im.IH_Width);k++) {
-	    idx = getByte(fp);
-	    *lp++ = GlobalColors[idx].red;
-	    *lp++ = GlobalColors[idx].green;
-	    *lp++ = GlobalColors[idx].blue;
+	for (k=0;k<ih_width;k++) {
+	  idx = getByte(fp);
+	  if (idx < 0) {
+	    fb_close(fbp);
+	    bu_exit(1, "Error: Unexpectedly reached end of input. Output may be incomplete.\n");
+	  }
+	  *lp++ = GlobalColors[idx].red;
+	  *lp++ = GlobalColors[idx].green;
+	  *lp++ = GlobalColors[idx].blue;
 	}
-	fb_write(fbp, 0, WORD(Im.IH_Height)-lineNumber, line,
-		 WORD(Im.IH_Width));
+	fb_write(fbp, 0, ih_height-lineNumber, line, ih_width);
 	fb_flush(fbp);
 	lineNumber += lineInc;
-	if (lineNumber >= WORD(Im.IH_Height)) {
-	    ++lineIdx;
-	    lineInc = lace[lineIdx];
-	    lineNumber = offs[lineIdx];
+	if (lineNumber >= ih_height) {
+	  ++lineIdx;
+	  if (lineIdx > (int)(sizeof(lace)/sizeof(lace[0]))-1)
+	      lineIdx = (sizeof(lace)/sizeof(lace[0]))-1;
+	  lineInc = lace[lineIdx];
+	  lineNumber = offs[lineIdx];
 	}
+      }
+      fb_close(fbp);
     }
-    fb_close(fbp);
     return 0;
 }
 /* getcode - Get a LWZ "code"

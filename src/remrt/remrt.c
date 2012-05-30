@@ -1,7 +1,7 @@
 /*                         R E M R T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2011 United States Government as represented by
+ * Copyright (c) 1989-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,6 +49,7 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
+#include "bselect.h"
 #include "bio.h"
 
 #ifndef FD_MOVE
@@ -277,7 +278,7 @@ struct bu_list 		FreeList;
 #define LIST_MAGIC	0x4c494c49
 
 #define GET_LIST(p)	if ( BU_LIST_IS_EMPTY( &FreeList ) )  { \
-				BU_GETSTRUCT((p), list); \
+				BU_GET((p), struct list); \
 				(p)->l.magic = LIST_MAGIC; \
 			} else { \
 				(p) = BU_LIST_FIRST(list, &FreeList); \
@@ -293,17 +294,7 @@ struct frame *FreeFrame;
 #define FRAME_NULL	((struct frame *)0)
 #define FRAME_MAGIC	0xbafe12ce
 
-#define CHECK_FRAME(_p)	CHECK_IT(_p, fr_magic, FRAME_MAGIC, "frame pointer")
-
-#define CHECK_IT(_q, _el, _magic, _str)	\
-	if ( !(_q) )  { \
-		bu_log("NULL %s in %s line %d\n", _str, __FILE__, __LINE__ ); \
-		abort(); \
-	} else if ( (_q)->_el != _magic )  { \
-		bu_log("ERROR %s=%p magic was=%lx s/b=%lx in %s line %d\n", \
-		       _str, (void *)(_q), (unsigned long)((_q)->_el), (unsigned long)(_magic), __FILE__, __LINE__ ); \
-		abort(); \
-	}
+#define CHECK_FRAME(_p)	BU_CKMAG(&(_p->fr_magic), FRAME_MAGIC, "frame pointer")
 
 
 /*
@@ -312,7 +303,7 @@ struct frame *FreeFrame;
 
 #define GET_FRAME(p)	{ \
 		if ( ((p)=FreeFrame) == FRAME_NULL ) {\
-			BU_GETSTRUCT(p, frame); \
+			BU_GET(p, struct frame); \
 		} else { \
 			FreeFrame = (p)->fr_forw; (p)->fr_forw = FRAME_NULL; \
 		} \
@@ -1079,21 +1070,17 @@ eat_script(FILE *fp)
     char		*nsbuf;
     int		argc;
     char		*argv[64+1];
-    struct bu_vls	prelude;
-    struct bu_vls	body;
-    struct bu_vls	finish;
+    struct bu_vls prelude = BU_VLS_INIT_ZERO;
+    struct bu_vls body = BU_VLS_INIT_ZERO;
+    struct bu_vls finish = BU_VLS_INIT_ZERO;
     int		frame = 0;
     struct frame	*fr;
 
     bu_log("%s Starting to scan animation script\n", stamp() );
 
-    bu_vls_init( &prelude );
-    bu_vls_init( &body );
-    bu_vls_init( &finish );
-
     /* Once only, collect up any prelude */
     while ( (buf = rt_read_cmd( fp )) != (char *)0 )  {
-	if ( strncmp( buf, "start", 5 ) == 0 )  break;
+	if ( bu_strncmp( buf, "start", 5 ) == 0 )  break;
 
 	bu_vls_strcat( &prelude, buf );
 	bu_vls_strcat( &prelude, ";" );
@@ -1111,14 +1098,14 @@ eat_script(FILE *fp)
 	needtree = 0;
 	/* Gobble until "end" keyword seen */
 	while ( (ebuf = rt_read_cmd( fp )) != (char *)0 )  {
-	    if ( strncmp( ebuf, "end", 3 ) == 0 )  {
+	    if ( bu_strncmp( ebuf, "end", 3 ) == 0 )  {
 		bu_free( ebuf, "end line" );
 		break;
 	    }
-	    if ( strncmp( ebuf, "clean", 5 ) == 0 ) {
+	    if ( bu_strncmp( ebuf, "clean", 5 ) == 0 ) {
 		needtree=1;
 	    }
-	    if ( strncmp( ebuf, "tree", 4 ) == 0 ) {
+	    if ( bu_strncmp( ebuf, "tree", 4 ) == 0 ) {
 		needtree=1;
 	    }
 	    bu_vls_strcat( &body, ebuf );
@@ -1132,7 +1119,7 @@ eat_script(FILE *fp)
 
 	/* Gobble trailer until next "start" keyword seen */
 	while ( (nsbuf = rt_read_cmd( fp )) != (char *)0 )  {
-	    if ( strncmp( nsbuf, "start", 5 ) == 0 )  {
+	    if ( bu_strncmp( nsbuf, "start", 5 ) == 0 )  {
 		break;
 	    }
 	    bu_vls_strcat( &finish, nsbuf );
@@ -1432,6 +1419,7 @@ scan_frame_for_finished_pixels(struct frame *fr)
     }
     bu_log("%s Scanning %s complete, %d non-black spans, %d non-black pixels\n",
 	   stamp(), fr->fr_filename, nspans, npix );
+    fclose(fp); 
     return 0;
 }
 
@@ -1472,7 +1460,7 @@ create_outputfilename( struct frame *fr )
      *	file exists, is writable -- eliminate all non-black pixels
      *		from work-to-do queue
      */
-    if (!bu_file_exists(fr->fr_filename))  {
+    if (!bu_file_exists(fr->fr_filename, NULL))  {
 	/* File does not yet exist */
 	if ( (fd = creat( fr->fr_filename, 0644 )) < 0 )  {
 	    /* Unable to create new file */
@@ -1547,19 +1535,20 @@ frame_is_done(struct frame *fr)
 
     /* Final processing of output file */
     if ( fr->fr_tempfile )  {
-	/* Unlink temp file -- it is in framebuffer */
-	if ( unlink( fr->fr_filename ) < 0 )
+	/* Delete temp file -- it is in framebuffer */
+	if ( !bu_file_delete( fr->fr_filename ) )
 	    perror( fr->fr_filename );
     } else {
 	FILE *fp;
 	if ( (fp = fopen( fr->fr_filename, "r" )) == NULL )  {
+	  perror( fr->fr_filename );
+	} else {
+	  /* Write-protect file, to prevent re-computation */
+	  if ( fchmod( fileno(fp), 0444 ) < 0 ) {
 	    perror( fr->fr_filename );
+	  }
+	  (void)fclose(fp);
 	}
-	/* Write-protect file, to prevent re-computation */
-	if ( fchmod( fileno(fp), 0444 ) < 0 ) {
-	    perror( fr->fr_filename );
-	}
-	(void)fclose(fp);
     }
 
     /* Forget all about this frame */
@@ -2353,35 +2342,36 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     /* Write pixels into file */
     /* Later, can implement FD cache here */
     if ( (fd = open( fr->fr_filename, 2 )) < 0 )  {
+	/* open failed */
 	perror( fr->fr_filename );
-	/* The bad fd will trigger a write error, below */
     } else if ( lseek( fd, info.li_startpix*3L, 0 ) < 0 )  {
+	/* seek failed */
 	perror( fr->fr_filename );
-	(void)close(fd);	/* prevent write */
-	fd = -1;
-	/* The bad fd will trigger a write error, below */
-    }
-    cnt = write( fd, buf+ext.ext_nbytes, i );
-    if (cnt != (ssize_t)i) {
-	perror( fr->fr_filename );
-	bu_log("write s/b %zu, got %zu\n", i, cnt );
-	/*
-	 *  Generally, a write error is caused by lack of disk space.
-	 *  In any case, it is indicative of bad problems.
-	 *  Stop assigning new work.
-	 */
-	/* XXX should re-queue this assignment */
-	bu_log("%s disk write error, preparing graceful STOP\n", stamp() );
-	cd_stop( 0, (char **)0 );
-
-	/* Dropping the (innocent) server will requeue the work */
-	drop_server( sp, "disk write error" );
-
-	/* Return, as if nothing had happened. */
 	(void)close(fd);
-	goto out;
+    } else {
+	cnt = write( fd, buf+ext.ext_nbytes, i );
+	(void)close(fd);
+
+	if (cnt != (ssize_t)i) {
+	    /* write failed */
+	    perror( fr->fr_filename );
+	    bu_log("write s/b %zu, got %zu\n", i, cnt );
+	    /*
+	     *  Generally, a write error is caused by lack of disk space.
+	     *  In any case, it is indicative of bad problems.
+	     *  Stop assigning new work.
+	     */
+	    /* XXX should re-queue this assignment */
+	    bu_log("%s disk write error, preparing graceful STOP\n", stamp() );
+	    cd_stop( 0, (char **)0 );
+
+	    /* Dropping the (innocent) server will requeue the work */
+	    drop_server( sp, "disk write error" );
+
+	    /* Return, as if nothing had happened. */
+	    goto out;
+	}
     }
-    (void)close(fd);
 
     /* If display attached, also draw it */
     if ( fbp != FBIO_NULL )  {
@@ -2599,6 +2589,7 @@ repaint_fb(struct frame *fr)
 	if ( cnt != 1 )  break;
     }
     bu_free( (char *)line, "scanline" );
+    fclose(fp);
 }
 
 /*
@@ -3080,12 +3071,11 @@ cd_rdebug(int argc, char **argv)
 {
     struct servers *sp;
     int		len;
-    struct bu_vls	cmd;
+    struct bu_vls cmd = BU_VLS_INIT_ZERO;
 
     if (argc < 2)
 	return 1;
 
-    bu_vls_init( &cmd );
     bu_vls_strcpy( &cmd, "opt " );
     bu_vls_strcat( &cmd, argv[1] );
     len = bu_vls_strlen( &cmd )+1;

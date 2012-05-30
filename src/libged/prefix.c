@@ -1,7 +1,7 @@
 /*                         P R E F I X . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2011 United States Government as represented by
+ * Copyright (c) 2008-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 
 
 static void
-prefix_do(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t prefix_ptr, genptr_t obj_ptr, genptr_t UNUSED(user_ptr3))
+prefix_do(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t prefix_ptr, genptr_t obj_ptr, genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4))
 {
     char *prefix, *obj;
     char tempstring_v4[NAMESIZE+1];
@@ -72,7 +72,7 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     char tempstring_v4[NAMESIZE+1];
-    struct bu_vls tempstring_v5;
+    struct bu_vls tempstring_v5 = BU_VLS_INIT_ZERO;
     char *tempstring;
     int len = NAMESIZE+1;
     static const char *usage = "new_prefix object(s)";
@@ -95,8 +95,7 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    bu_log("XXXged_prefix: step 1\n");
-    bu_vls_init(&tempstring_v5);
+    bu_log("!!! ged_prefix: step 1\n");
 
     /* First, check validity, and change node names */
     for (i = 2; i < argc; i++) {
@@ -163,9 +162,9 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-	for (k=2; k<argc; k++)
+	for (k = 2; k < argc; k++)
 	    db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, prefix_do,
-			     (genptr_t)argv[1], (genptr_t)argv[k], (genptr_t)NULL);
+			     (genptr_t)argv[1], (genptr_t)argv[k], (genptr_t)NULL, (genptr_t)NULL);
 	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource)) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	    return GED_ERROR;

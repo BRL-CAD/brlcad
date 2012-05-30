@@ -1,7 +1,7 @@
 /*                 RationalUniformCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2011 United States Government as represented by
+ * Copyright (c) 1994-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,57 +35,57 @@
 string RationalUniformCurve::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)RationalUniformCurve::Create);
 
 RationalUniformCurve::RationalUniformCurve() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
 RationalUniformCurve::RationalUniformCurve(STEPWrapper *sw,int step_id) {
-	step = sw;
-	id = step_id;
+    step = sw;
+    id = step_id;
 }
 
 RationalUniformCurve::~RationalUniformCurve() {
 }
 
 bool
-RationalUniformCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+RationalUniformCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
+    step=sw;
+    id = sse->STEPfile_id;
 
-	// load base class attributes
-	if ( !RationalBSplineCurve::Load(sw,sse) ) {
-		std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << std::endl;
-		return false;
-	}
+    // load base class attributes
+    if ( !RationalBSplineCurve::Load(sw,sse) ) {
+	std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << std::endl;
+	return false;
+    }
 
-	return true;
+    return true;
 }
 
 void
 RationalUniformCurve::Print(int level) {
-	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
-	std::cout << "ID:" << STEPid() << ")" << std::endl;
+    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); std::cout << "Inherited:" << std::endl;
-	RationalBSplineCurve::Print(level+1);
+    TAB(level); std::cout << "Inherited:" << std::endl;
+    RationalBSplineCurve::Print(level+1);
 }
 STEPEntity *
-RationalUniformCurve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		RationalUniformCurve *object = new RationalUniformCurve(sw,sse->STEPfile_id);
+RationalUniformCurve::Create(STEPWrapper *sw,SDAI_Application_instance *sse){
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	RationalUniformCurve *object = new RationalUniformCurve(sw,sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw,sse)) {
-			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw,sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
 
 // Local Variables:

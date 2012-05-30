@@ -1,7 +1,7 @@
 /*                        D O Z O O M . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2011 United States Government as represented by
+ * Copyright (c) 1985-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -265,8 +265,8 @@ dozoom(int which_eye)
     struct solid *sp;
     fastf_t ratio;
     fastf_t inv_viewsize;
-    mat_t new;
-    matp_t mat = new;
+    mat_t newmat;
+    matp_t mat = newmat;
     int linestyle = -1;  /* not dashed */
     short r = -1;
     short g = -1;
@@ -350,8 +350,8 @@ dozoom(int which_eye)
 		deering_persp_mat(perspective_mat, l, h, eye);
 		break;
 	}
-	bn_mat_mul(new, perspective_mat, mat);
-	mat = new;
+	bn_mat_mul(newmat, perspective_mat, mat);
+	mat = newmat;
     }
 
     DM_LOADMATRIX(dmp, mat, which_eye);
@@ -359,12 +359,12 @@ dozoom(int which_eye)
 #ifdef DM_RTGL
     /* dm rtgl has its own way of drawing */
     if (IS_DM_TYPE_RTGL(dmp->dm_type)) {
-    
+
         /* dm-rtgl needs database info for ray tracing */
         RTGL_GEDP = gedp;
 
 	/* will ray trace visible objects and draw the intersection points */
-        DM_DRAW_VLIST(dmp, (struct bn_vlist *)NULL); 
+        DM_DRAW_VLIST(dmp, (struct bn_vlist *)NULL);
 	/* force update if needed */
 	dirty = RTGL_DIRTY;
 
@@ -520,7 +520,7 @@ dozoom(int which_eye)
 		       color_scheme->cs_predictor[0],
 		       color_scheme->cs_predictor[1],
 		       color_scheme->cs_predictor[2], 1, 1.0);
-	DM_DRAW_VLIST(dmp, (struct bn_vlist *)&curr_dm_list->dml_p_vlist);	
+	DM_DRAW_VLIST(dmp, (struct bn_vlist *)&curr_dm_list->dml_p_vlist);
     }
 
     /*
@@ -533,8 +533,8 @@ dozoom(int which_eye)
     if (view_state->vs_gvp->gv_perspective <= 0) {
 	mat = view_state->vs_model2objview;
     } else {
-	bn_mat_mul(new, perspective_mat, view_state->vs_model2objview);
-	mat = new;
+	bn_mat_mul(newmat, perspective_mat, view_state->vs_model2objview);
+	mat = newmat;
     }
     DM_LOADMATRIX(dmp, mat, which_eye);
     inv_viewsize /= modelchanges[15];
@@ -604,7 +604,17 @@ dozoom(int which_eye)
 void
 createDList(struct solid *sp)
 {
+    if (sp->s_dlist == 0)
+	sp->s_dlist = DM_GEN_DLISTS(dmp, 1);
+
     DM_BEGINDLIST(dmp, sp->s_dlist);
+    if (sp->s_iflag == UP)
+	DM_SET_FGCOLOR(dmp, 255, 255, 255, 0, sp->s_transparency);
+    else
+	DM_SET_FGCOLOR(dmp,
+		       (unsigned char)sp->s_color[0],
+		       (unsigned char)sp->s_color[1],
+		       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
     DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
     DM_ENDDLIST(dmp);
 }
@@ -642,27 +652,20 @@ createDLists(struct bu_list *hdlp)
  * display manager that has already created the display list)
  */
 void
-createDListALL(struct solid *sp)
+createDListAll(struct solid *sp)
 {
     struct dm_list *dlp;
     struct dm_list *save_dlp;
 
     save_dlp = curr_dm_list;
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	dlp->dml_dlist_state->dl_flag = 1;
-
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
 	if (dlp->dml_dmp->dm_displaylist &&
 	    dlp->dml_mged_variables->mv_dlist) {
-	    if (dlp->dml_dlist_state->dl_flag) {
-		curr_dm_list = dlp;
-		createDList(sp);
-	    }
+	    createDList(sp);
 	}
 
 	dlp->dml_dirty = 1;
-	dlp->dml_dlist_state->dl_flag = 0;
     }
 
     curr_dm_list = save_dlp;
@@ -678,18 +681,13 @@ freeDListsAll(unsigned int dlist, int range)
 {
     struct dm_list *dlp;
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	dlp->dml_dlist_state->dl_flag = 1;
-
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
 	if (dlp->dml_dmp->dm_displaylist &&
 	    dlp->dml_mged_variables->mv_dlist) {
-	    if (dlp->dml_dlist_state->dl_flag)
-		DM_FREEDLISTS(dlp->dml_dmp, dlist, range);
+	    DM_FREEDLISTS(dlp->dml_dmp, dlist, range);
 	}
 
 	dlp->dml_dirty = 1;
-	dlp->dml_dlist_state->dl_flag = 0;
     }
 }
 

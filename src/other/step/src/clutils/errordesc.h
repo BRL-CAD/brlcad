@@ -13,12 +13,6 @@
 * and is not subject to copyright.
 */
 
-/* $Id: errordesc.h,v 3.0.1.2 1997/11/05 22:33:46 sauderd DP3.1 $  */ 
-
-#ifdef __O3DB__
-#include <OpenOODB.h>
-#endif
-
 #include <string>
 #include <iostream>
 using namespace std;
@@ -26,115 +20,119 @@ using namespace std;
 #define _POC_  " report problem to brlcad-devel"
 
 typedef enum Severity {
-    SEVERITY_MAX	= -5,
-    SEVERITY_DUMP	= -4,
-    SEVERITY_EXIT	= -3,	// fatal
-    SEVERITY_BUG	= -2,	// non-recoverable error -- probably bug
-    SEVERITY_INPUT_ERROR = -1,	// non-recoverable error
-    SEVERITY_WARNING	= 0,	// recoverable error
-    SEVERITY_INCOMPLETE	= 1,	// incomplete data
-    SEVERITY_USERMSG	= 2,	// possibly an error
-    SEVERITY_NULL	= 3	// no error or message
-  } Severity;
+    SEVERITY_MAX    = -5,
+    SEVERITY_DUMP   = -4,
+    SEVERITY_EXIT   = -3,   // fatal
+    SEVERITY_BUG    = -2,   // non-recoverable error -- probably bug
+    SEVERITY_INPUT_ERROR = -1,  // non-recoverable error
+    SEVERITY_WARNING    = 0,    // recoverable error
+    SEVERITY_INCOMPLETE = 1,    // incomplete data
+    SEVERITY_USERMSG    = 2,    // possibly an error
+    SEVERITY_NULL   = 3 // no error or message
+} Severity;
 
-/* DAS not used
-enum Enforcement {
-    ENFORCE_OFF,
-    ENFORCE_OPTIONALITY,
-    ENFORCE_ALL
-    
-    } ;
-*/    
 
 enum  DebugLevel  {
-    DEBUG_OFF	=0,
-    DEBUG_USR	=1,
-    DEBUG_ALL	=2
-    
+    DEBUG_OFF   = 0,
+    DEBUG_USR   = 1,
+    DEBUG_ALL   = 2
+
 };
 
 /******************************************************************
  ** Class:  ErrorDescriptor
- ** Data Members:  
- **	severity level of error
- **	user message
- **	detailed message
- ** Description:  
- **	the error is a detailed error message + a severity level
- **	also keeps a user message separately
- **	detailed message gets sent to ostream
- **	uses std::string class to keep the user messages
- **	keeps severity of error
- **	created with or without error
- ** Status:  
+ ** Data Members:
+ **    severity level of error
+ **    user message
+ **    detailed message
+ ** Description:
+ **    the error is a detailed error message + a severity level
+ **    also keeps a user message separately
+ **    detailed message gets sent to ostream
+ **    uses std::string class to keep the user messages
+ **    keeps severity of error
+ **    created with or without error
+ ** Status:
  ******************************************************************/
 
 class ErrorDescriptor {
-//  friend     istream &operator<< ( istream&, ErrorDescriptor& );
-  protected:
-  
-    Severity	_severity;
+    private:
+        std::string _userMsg, _detailMsg;
+    protected:
+        Severity    _severity;
 
-    static DebugLevel	_debug_level;
-    static ostream* _out; // note this will not be persistent
-    
-    std::string *_userMsg;
-    std::string *_detailMsg;
-  public:
+        static DebugLevel   _debug_level;
+        static ostream * _out; // note this will not be persistent
+    public:
+        ErrorDescriptor( Severity s    = SEVERITY_NULL,
+                         DebugLevel d  = DEBUG_OFF );
 
-    ErrorDescriptor (Severity s    = SEVERITY_NULL, 
-			  DebugLevel d  = DEBUG_OFF);
-    ~ErrorDescriptor () { delete _userMsg; delete _detailMsg; }
+        void PrintContents( ostream & out = cout ) const;
 
-    void PrintContents(ostream &out = cout) const;
+        void ClearErrorMsg() {
+            _severity = SEVERITY_NULL;
+            _userMsg.clear();
+            _detailMsg.clear();
+        }
 
-    void ClearErrorMsg() {
-	_severity = SEVERITY_NULL;
-	delete _userMsg;   _userMsg = 0;
-	delete _detailMsg; _detailMsg = 0;
-    }
+        // return the enum value of _severity
+        Severity severity() const {
+            return _severity;
+        }
+        Severity severity( Severity s ) {
+            return ( _severity = s );
+        }
+	std::string severityString() const;
+        Severity GetCorrSeverity( const char * s );
+        Severity GreaterSeverity( Severity s ) {
+            return ( ( s < _severity ) ?  _severity = s : _severity );
+        }
 
-	// return the enum value of _severity
-    Severity severity() const        { return _severity; }
-	// return _severity as a const char * in the std::string provided
-    const char * severity(std::string &s) const; 
-    Severity severity(Severity s) {  return (_severity = s); }
-    Severity GetCorrSeverity(const char *s);
-    Severity GreaterSeverity(Severity s)
-	{ return ((s < _severity) ?  _severity = s : _severity); }
+        std::string UserMsg() const {
+            return _userMsg;
+        }
+        void UserMsg( const char * );
+        void UserMsg( const std::string msg ) {
+            _userMsg.assign( msg );
+        }
 
-    const char * UserMsg () const;  //  UserMsg is from String
-    void UserMsg ( const char *);
-    void AppendToUserMsg ( const char *);
-    void PrependToUserMsg ( const char *);
-    void AppendToUserMsg ( const char c);
+        void AppendToUserMsg( const char * );
+        void AppendToUserMsg( const char c );
+        void AppendToUserMsg( const std::string & msg ) {
+            _userMsg.append( msg );
+        }
+        void PrependToUserMsg( const char * );
 
-    const char * DetailMsg () const;
-    void DetailMsg ( const char *);
-    void AppendToDetailMsg ( const char *);
-    void PrependToDetailMsg ( const char *);
-    void AppendToDetailMsg ( const char c);
+        std::string DetailMsg() const {
+            return _detailMsg;
+        }
+        void DetailMsg( const std::string msg ) {
+            _detailMsg.assign( msg );
+        }
+        void DetailMsg( const char * );
+        void AppendToDetailMsg( const char * );
+        void AppendToDetailMsg( const std::string & msg ) {
+            _detailMsg.append( msg );
+        }
+        void PrependToDetailMsg( const char * );
+        void AppendToDetailMsg( const char c );
 
-    Severity AppendFromErrorArg(ErrorDescriptor *err)
-    {
-	GreaterSeverity( err->severity() );
-	AppendToDetailMsg( err->DetailMsg() );
-	AppendToUserMsg( err->UserMsg() );
-	return severity();
-    }
+        Severity AppendFromErrorArg( ErrorDescriptor * err ) {
+            GreaterSeverity( err->severity() );
+            AppendToDetailMsg( err->DetailMsg() );
+            AppendToUserMsg( err->UserMsg() );
+            return severity();
+        }
 
-    DebugLevel debug_level() const        { return _debug_level; }
-    void debug_level(DebugLevel d)   { _debug_level = d; }
-    void SetOutput(ostream *o)      { _out = o; }
-
-/*
-//    Enforcement	_enforcement_level;	
-    ErrorDescriptor (Severity s    = SEVERITY_NULL, 
-			  Enforcement e = ENFORCE_OFF,
-			  DebugLevel d  = DEBUG_OFF);
-    Enforcement enforcement() const       { return _enforcement_level; }
-    void enforcement(Enforcement e) { _enforcement_level = e; }
-*/
+        DebugLevel debug_level() const        {
+            return _debug_level;
+        }
+        void debug_level( DebugLevel d )   {
+            _debug_level = d;
+        }
+        void SetOutput( ostream * o )      {
+            _out = o;
+        }
 } ;
 
 #endif
