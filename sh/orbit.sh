@@ -48,7 +48,7 @@ if test "$2" = "" ; then
     exit 1
 fi
 
-set -- `getopt es:S:w:n:W:N: $ARGS`
+set -- `getopt e:s:S:w:n:W:N: $*`
 while : ; do
     case $1 in
 	-e)
@@ -64,18 +64,13 @@ while : ; do
     esac
     shift
 done
-
-FILENAME=$1; shift;
-
-echo "Using $FILENAME, We want a ${WIDTH}x${HEIGHT} orbit at ${ELEVATION} degrees of: $*"
-
-exit 0
+shift
 
 mkdir -p orbit.$$
 for frame in `jot 360 0`
 do
     echo -n "$frame: "
-    time rt -o orbit.$$/orbit.$frame.pix -w$WIDTH -n$HEIGHT -e$ELEVATION $FILENAME $* 2>/dev/null && pix-png -w$WIDTH -n$HEIGHT orbit.$$/orbit.$frame.pix > orbit.$$/orbit.$frame.png
+    time rt -o orbit.$$/orbit.$frame.pix -w$WIDTH -n$HEIGHT -e$ELEVATION $* 2>/dev/null && pix-png -w$WIDTH -n$HEIGHT orbit.$$/orbit.$frame.pix > orbit.$$/orbit.$frame.png
 done && ffmpeg -o orbit.$$.mp4 orbit.$$/*png && rm -rf orbit.$$
 
 exit 0
