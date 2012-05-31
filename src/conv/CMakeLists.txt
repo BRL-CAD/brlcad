@@ -117,6 +117,8 @@ BRLCAD_ADDEXEC(g-acad g-acad.c "librt;libbu")
 
 BRLCAD_ADDEXEC(g-obj g-obj.c "librt;libbu")
 
+BRLCAD_ADDEXEC(g-voxel g-voxel.c "librt;libbu;libwdb")
+
 # TODO - Until wfobj functionality is available as a libgcv API,
 # obj-g build logic is living in src/libgcv/wfobj. Once an API 
 # for libgcv is devised that exposes the wfobj functionality move 
