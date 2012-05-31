@@ -807,9 +807,19 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    handle_obsolete_format_char(c, VP_PRINT);
 		} else {
 		    fprintf(stderr, "Unknown format character '%c'.\n", c);
+		    fprintf(stderr, "  Status flags: %x.\n", format_part_status(c));
 		    bu_bomb("ERROR: Shouldn't get here.\n");
 		}
-		break;
+                /* try to get some kind of output, assume it's an int */
+                {
+		    int d = va_arg(ap, int);
+		    if (f.flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbufp, f.fieldlen, d);
+		    else
+			snprintf(buf, BUFSIZ, fbufp, d);
+                }
+		bu_vls_strcat(vls, buf);
+                break;
 	}
 	sp = ep + 1;
     }
