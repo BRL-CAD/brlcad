@@ -14,9 +14,6 @@
 */
 
 #include <string>
-
-
-/*#include <math.h>*/
 #include <instmgr.h>
 #include <Registry.h>
 #include <fstream>
@@ -100,9 +97,9 @@ class STEPfile {
             return _headerRegistry;
         }
 // to create header instances
-        SDAI_Application_instance  * HeaderDefaultFileName();
-        SDAI_Application_instance  * HeaderDefaultFileDescription();
-        SDAI_Application_instance  * HeaderDefaultFileSchema();
+        SDAI_Application_instance * HeaderDefaultFileName();
+        SDAI_Application_instance * HeaderDefaultFileDescription();
+        SDAI_Application_instance * HeaderDefaultFileSchema();
 
 //file information
         std::string FileName() const {

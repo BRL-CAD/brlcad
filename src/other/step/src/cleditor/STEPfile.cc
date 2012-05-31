@@ -1229,7 +1229,7 @@ SDAI_Application_instance * STEPfile::ReadInstance( istream & in, ostream & out,
         if( !in.good() ) {
             out << "ERROR: instance #" << fileid
                 << " Unexpected file problem in "
-                << "STEPfile::CreateInstance.\n";
+                << "STEPfile::ReadInstance." << endl;
         }
         ReadTokenSeparator( in, &cmtStr );
 
@@ -1237,8 +1237,8 @@ SDAI_Application_instance * STEPfile::ReadInstance( istream & in, ostream & out,
         if( userDefined ) {
             SkipInstance( in, tmpbuf );
             out << "WARNING: #" << fileid <<
-                ". Ignoring User defined entity.\n\tdata lost: !"
-                << objnm << tmpbuf << "\n";
+                ". Ignoring User defined entity." << endl << "    data lost: !"
+                << objnm << tmpbuf << endl;
             ++_warningCount;
             return ENTITY_NULL;
         }
