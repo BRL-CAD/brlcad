@@ -741,14 +741,14 @@ w_start_global(
     bu_vls_free(&str);
 
     /* Write Global Section */
-    bu_vls_printf(&str, ",, %zH%s", strlen(db_name), db_name);
+    bu_vls_printf(&str, ",, %zdH%s", strlen(db_name), db_name);
 
     if (output_file == NULL)
 	bu_vls_printf(&str, ", 7Hstd_out");
     else
-	bu_vls_printf(&str, ", %zH%s", strlen(output_file), output_file);
+	bu_vls_printf(&str, ", %zdH%s", strlen(output_file), output_file);
 
-    bu_vls_printf(&str, ", %zH%s, %zH%s, 32, 38, 6, 308, 15, %zH%s, 1.0, 2, 2HMM,, 1.0" ,
+    bu_vls_printf(&str, ", %zdH%s, %zdH%s, 32, 38, 6, 308, 15, %zdH%s, 1.0, 2, 2HMM,, 1.0" ,
 		  strlen(version), version ,
 		  strlen(id), id,
 		  strlen(db_name), db_name);
@@ -1976,7 +1976,7 @@ write_name_entity(char *name,
     if (name_len >= NAMESIZE)
 	bu_vls_printf(&str, "406, 1, 16H%16.16s;", name);
     else
-	bu_vls_printf(&str, "406, 1, %zH%s;", strlen(name), name);
+	bu_vls_printf(&str, "406, 1, %zdH%s;", strlen(name), name);
 
     /* remember where parameter data is going */
     dir_entry[2] = param_seq + 1;
