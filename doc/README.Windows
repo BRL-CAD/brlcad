@@ -38,7 +38,7 @@ file for Visual Studio.  Double-click that file, and Visual Studio
 should launch.  It will load the targets (a default configuration of
 BRL-CAD on Windows will generate over 800 of them) and a large
 list of targets will appear.  To build everything (what you normally
-want to do) look for a targed named ALL_BUILD.  Start compiling that
+want to do) look for a target named ALL_BUILD.  Start compiling that
 target.
 
 Once compilation is successfully complete, you may want to produce 
