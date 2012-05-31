@@ -61,9 +61,9 @@ if(SH_EXEC)
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/red.sh ${CMAKE_SOURCE_DIR}
     DEPENDS mged
     )
-  add_custom_target(regress-vls_vprintf
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/vls_vprintf.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS test_vls_vprintf
+  add_custom_target(regress-vls
+    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/vls.sh ${CMAKE_SOURCE_DIR}
+    DEPENDS test_vls
     )
   add_custom_target(regress-nirt
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/nirt.sh ${CMAKE_SOURCE_DIR}
@@ -100,7 +100,7 @@ if(SH_EXEC)
     regress-solids regress-shaders regress-spdi regress-iges
     regress-weight regress-gqa regress-fastgen regress-bots
     regress-repository regress-red regress-nirt
-    regress-vls_vprintf regress-comgeom regress-gnff regress-gdot
+    regress-vls regress-comgeom regress-gnff regress-gdot
     )
 
 endif(SH_EXEC)
@@ -151,7 +151,7 @@ CMAKEFILES(
   tgms/comgeom-tgt-1-v4.cg
   tgms/m35.asc.gz
   tgms/m35.cg.gz
-  vls_vprintf.sh
+  vls.sh
   weight.sh
   )
 

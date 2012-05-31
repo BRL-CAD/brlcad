@@ -87,7 +87,6 @@ set(LIBBU_SOURCES
   vfont.c
   vlb.c
   vls.c
-  vls_vprintf.c
   whereis.c
   which.c
   xdr.c
@@ -101,16 +100,14 @@ if("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
 endif("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
 
 BRLCAD_ADDEXEC(test_basename test_basename.c libbu NO_INSTALL)
-BRLCAD_ADDEXEC(test_bitv test_bitv.c libbu NO_INSTALL)
 BRLCAD_ADDEXEC(test_booleanize test_booleanize.c libbu NO_INSTALL)
-BRLCAD_ADDEXEC(test_ctype test_ctype.c libbu NO_INSTALL)
 BRLCAD_ADDEXEC(test_dirname test_dirname.c libbu NO_INSTALL)
 BRLCAD_ADDEXEC(test_escape test_escape.c libbu NO_INSTALL)
 BRLCAD_ADDEXEC(test_progname test_progname.c libbu NO_INSTALL)
 BRLCAD_ADDEXEC(test_quote test_quote.c libbu NO_INSTALL)
 BRLCAD_ADDEXEC(test_sscanf test_sscanf.c libbu NO_INSTALL)
 BRLCAD_ADDEXEC(test_timer test_timer.c libbu NO_INSTALL)
-BRLCAD_ADDEXEC(test_vls_vprintf test_vls_vprintf.c libbu NO_INSTALL)
+BRLCAD_ADDEXEC(test_vls test_vls.c libbu NO_INSTALL)
 
 set(bu_MAN3
   htond.3
@@ -121,7 +118,6 @@ ADD_MAN_PAGES(3 bu_MAN3)
 set(bu_ignore_files
   rb_internals.h
   uce-dirent.h
-  vls_internals.h
   )
 CMAKEFILES(${bu_ignore_files})
 CMAKEFILES(Makefile.am)

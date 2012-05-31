@@ -1,4 +1,4 @@
-/*                    T E S T _ V L S _ V P R I N T F. C
+/*                      T E S T _ V L S . C
  * BRL-CAD
  *
  * Copyright (c) 2011-2012 United States Government as represented by
@@ -25,19 +25,16 @@
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "bu.h"
-
-#include "./vls_internals.h"
 
 /* Test against sprintf */
 int
 test_vls(const char *fmt, ...)
 {
-    int status        = 0; /* okay */
+    int status = 0;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-    char output[80]   = {0};
+    char output[80] = {0};
     char buffer[1024] = {0};
     va_list ap;
 
@@ -49,15 +46,17 @@ test_vls(const char *fmt, ...)
     va_start(ap, fmt);
     /* use BRL-CAD bu_vls version for comparison */
     bu_vls_vprintf(&vls, fmt, ap);
+
     va_end(ap);
 
     snprintf(output, sizeof(output), "%-24s -> '%s'", fmt, bu_vls_addr(&vls));
     if (BU_STR_EQUAL(buffer, bu_vls_addr(&vls))
-	&& strlen(buffer) == bu_vls_strlen(&vls)) {
+	&& strlen(buffer) == bu_vls_strlen(&vls))
+    {
 	printf("%-*s[PASS]\n", 60, output);
     } else {
 	printf("%-*s[FAIL]  (should be: '%s')\n", 60, output, buffer);
-	status = 1;
+        status = 1;
     }
 
     bu_vls_free(&vls);
@@ -66,54 +65,15 @@ test_vls(const char *fmt, ...)
 }
 
 int
-check_format_chars()
-{
-  int status = 0; /* assume okay */
-  int i, flags;
-  vflags_t f;
-
-  for (i = 0; i < 255; ++i) {
-    unsigned char c = (unsigned char)i;
-    if (!isprint(c))
-      continue;
-    flags = format_part_status(c);
-    if (flags & VP_VALID) {
-      /* we need a valid part handler */
-      int vp_part = flags & VP_PARTS;
-
-      /* for the moment we only have one such handler */
-      if (vp_part ^ VP_LENGTH_MOD) /* same as !(vp_part & VP_LENGTH_MOD) */
-        continue;
-
-      if (!handle_format_part(vp_part, &f, c, VP_NOPRINT)) {
-        /* tell user */
-        printf("Unhandled valid char '%c'                                    [FAIL]\n", c);
-        status = 1;
-      }
-    } else if (flags & VP_OBSOLETE) {
-      /* we need an obsolete part handler */
-      if (!handle_obsolete_format_char(c, VP_NOPRINT)) {
-        /* tell user */
-        printf("Unhandled obsolete char '%c'                                 [FAIL]\n", c);
-        status = 1;
-      }
-    }
-  }
-
-  return status;
-}
-
-int
 main(int ac, char *av[])
 {
     int fails    = 0; /* track unexpected failures */
     int expfails = 0; /* track expected failures */
-
     int f = 0;
     int p = 0;
     const char *word = "Lawyer";
 
-    printf("Testing bu_vls_vprintf...\n");
+    printf("Testing vls...\n");
 
     /* ======================================================== */
     /* TESTS EXPECTED TO PASS
@@ -121,15 +81,6 @@ main(int ac, char *av[])
      *   (see expected failures section below)
      */
     /* ======================================================== */
-
-    /* first check that we handle all known format chars */
-    printf("\n");
-    printf("Testing format char handlers...\n\n");
-    fails += check_format_chars();
-
-    printf("\n");
-    printf("Testing format conversions ...\n\n");
-
     /* various types */
     printf("An empty string (\"\"):\n");
     fails += test_vls("");
@@ -236,40 +187,13 @@ main(int ac, char *av[])
     fails += test_vls("%f %F", 1.23, -3.21);
 
     /* from "two-character length modifiers" */
-    fails += test_vls("%ld %lld", 123, -123LL);
-
-    /* unsigned variant */
-    fails += test_vls("%lu %llu", 123, 123ULL);
-
-    /* from "two-character length modifiers" */
     fails += test_vls("%ld %lld", 123, -123);
 
     /* unsigned variant */
     fails += test_vls("%lu %llu", 123, 123);
 
-    fails += test_vls("%hd %hhd", 123, -123);
-
-    /* misc */
-    fails += test_vls("% d % d", 123, -123);
-
-    fails += test_vls("% 05d % d", 123, -123);
-
-    fails += test_vls("%'d", 123000);
-
-    fails += test_vls("%c", 'r');
-
-    /* obsolete but usable */
-/*
-    fails += test_vls("%S", (wchar_t *)"hello");
-*/
-/*
-    fails += test_vls("%qd %qd", 123, -123);
-*/
-
-    /* other */
-
     /* ======================================================== */
-    /* EXPECTED FAILURES ONLY BELOW HERE                        */
+    /* EXPECTED FAILURES ONLY BELOW HERE                           */
     /* ======================================================== */
     /* EXPECTED FAILURES:
      *
@@ -285,30 +209,18 @@ main(int ac, char *av[])
      *
      */
 
-/* uncomment if using expected failures */
-/* #define EXP_FAILS */
-
     printf("\nExpected failures (don't use in production code):\n");
 
-#if defined (EXP_FAILS)
-    /* obsolete - expected failures */
-    expfails += test_vls("%C", 'N');
-    expfails += test_vls("%D %D", 123, -123);
-    expfails += test_vls("%O %O", 123, -123);
-    expfails += test_vls("%U %U", 123, -123);
-#else
     printf("  NONE AT THIS TIME\n");
-#endif
 
     /* report results */
     fprintf(stderr, "%d", expfails);
-
 
     printf("\n%s: testing complete\n", av[0]);
 
     if (fails != 0) {
       /* as long as fails is < 127 the STATUS will be the number of unexpected failures */
-	return fails;
+      return fails;
     }
 
     return 0;

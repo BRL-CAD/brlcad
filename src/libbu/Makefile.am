@@ -5,15 +5,13 @@ noinst_LTLIBRARIES = libbu_nil.la
 noinst_PROGRAMS = \
 	test_basename \
 	test_booleanize \
-	test_ctype \
 	test_dirname \
 	test_escape \
 	test_progname \
 	test_quote \
 	test_timer \
-	test_vls_vprintf \
-	test_sscanf \
-	test_bitv
+	test_vls \
+	test_sscanf
 
 libbu_nil_la_SOURCES = \
 	argv.c \
@@ -92,7 +90,6 @@ libbu_nil_la_SOURCES = \
 	vfont.c \
 	vlb.c \
 	vls.c \
-	vls_vprintf.c \
 	whereis.c \
 	which.c \
 	xdr.c
@@ -105,19 +102,8 @@ libbu_la_LIBADD = \
 
 test_booleanize_SOURCES = test_booleanize.c
 test_booleanize_LDADD = \
-	libbu.la \
+	libbu.la
 	${BU_LIBS}
-
-test_bitv_SOURCES = test_bitv.c
-test_bitv_LDADD = \
-	libbu.la \
-	${BU_LIBS}
-
-test_ctype_SOURCES = test_ctype.c
-test_ctype_LDADD = \
-	libbu.la \
-	${BU_LIBS}
-
 test_timer_SOURCES = test_timer.c
 test_timer_LDADD = \
 	libbu.la \
@@ -148,8 +134,8 @@ test_quote_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
-test_vls_vprintf_SOURCES = test_vls_vprintf.c
-test_vls_vprintf_LDADD = \
+test_vls_SOURCES = test_vls.c
+test_vls_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
@@ -159,8 +145,7 @@ test_sscanf_LDADD = \
 	${BU_LIBS}
 
 noinst_HEADERS = \
-	rb_internals.h \
-	vls_internals.h
+	rb_internals.h
 
 man_MANS = \
 	htond.3 \
