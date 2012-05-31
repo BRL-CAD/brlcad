@@ -62,6 +62,7 @@ create_db ( ) {
     $MGED -c >> red.log 2>&1 <<EOF
 opendb red.g y
 make sph sph
+make sph sph2
 comb sph.c u sph
 r sph.r u sph.c
 cp sph.r hps.r
@@ -243,6 +244,18 @@ cat $SAMPLE | sed 's/region[^_].*=.*/region = 0/g' > $REDFILE
 assert_different
 edit_and_dump sph.r $REDFILE.new
 should_be_different $SAMPLE $REDFILE.new
+
+# check for rev 50521 fix
+init "Editing region combination (-r50521)" red.region.edit-comb.out
+cat $SAMPLE  > $REDFILE
+edit_and_dump sph.r $REDFILE.new
+should_be_same $SAMPLE $REDFILE.new
+cat $REDFILE.new > $REDFILE.test
+echo " u sph2" >> $REDFILE.test
+should_be_different $SAMPLE $REDFILE.test
+cat $REDFILE.test | sed 's/u sph2/ /g' > $REDFILE.test2
+dump sph.r $REDFILE.test2
+should_be_same $SAMPLE $REDFILE.test2
 
 #############
 # region_id #
