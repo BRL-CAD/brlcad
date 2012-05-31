@@ -27,11 +27,11 @@
 static const size_t _VLS_ALLOC_STEP = 128;
 
 /* constant bit flags  for var 'vp_part' */
-#define VP_UNKNOWN          0x0000
-#define VP_FLAG             0x0001
-#define VP_LENGTH_MOD       0x0002
-#define VP_CONVERSION_SPEC  0x0004
-#define VP_MISC             0x0008
+#define VP_UNKNOWN          0x0001
+#define VP_FLAG             0x0002
+#define VP_LENGTH_MOD       0x0004
+#define VP_CONVERSION_SPEC  0x0008
+#define VP_MISC             0x0010
 #define VP_VALID            0x0100
 #define VP_OBSOLETE         0x1000
 #define VP_PARTS            (VP_FLAG | VP_LENGTH_MOD | VP_CONVERSION_SPEC | VP_MISC)
