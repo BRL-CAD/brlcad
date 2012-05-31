@@ -60,7 +60,7 @@ class STEPfile {
 
 //file information
         DirObj * _currentDir;
-        char * _fileName;
+        std::string _fileName;
 
 //error information
         ErrorDescriptor _error;
@@ -105,11 +105,11 @@ class STEPfile {
         SDAI_Application_instance  * HeaderDefaultFileSchema();
 
 //file information
-        const char * FileName() const {
+        std::string FileName() const {
             return _fileName;
         }
-        const char * SetFileName( const char * name = "" );
-        const char * TruncFileName( const char * name ) const;
+        std::string SetFileName( const std::string name = "" );
+        std::string TruncFileName( const std::string name ) const;
 
 //error information
         ErrorDescriptor & Error() { /* const */
@@ -133,17 +133,17 @@ class STEPfile {
         int SetFileType( FileTypeCode ft = VERSION_CURRENT );
 
 //Reading and Writing
-        Severity ReadExchangeFile( const char * filename = 0, int useTechCor = 1 );
-        Severity AppendExchangeFile( const char * filename = 0, int useTechCor = 1 );
+        Severity ReadExchangeFile( const std::string filename = "", int useTechCor = 1 );
+        Severity AppendExchangeFile( const std::string filename = "", int useTechCor = 1 );
 
-        Severity ReadWorkingFile( const char * filename = 0, int useTechCor = 1 );
-        Severity AppendWorkingFile( const char * filename = 0, int useTechCor = 1 );
+        Severity ReadWorkingFile( const std::string filename = "", int useTechCor = 1 );
+        Severity AppendWorkingFile( const std::string filename = "", int useTechCor = 1 );
 
         Severity AppendFile( istream * in, int useTechCor = 1 ) ;
 
         Severity WriteExchangeFile( ostream & out, int validate = 1,
                                     int clearError = 1, int writeComments = 1 );
-        Severity WriteExchangeFile( const char * filename = 0, int validate = 1,
+        Severity WriteExchangeFile( const std::string filename = "", int validate = 1,
                                     int clearError = 1, int writeComments = 1 );
         Severity WriteValuePairsFile( ostream & out, int validate = 1,
                                       int clearError = 1,
@@ -151,7 +151,7 @@ class STEPfile {
 
         Severity WriteWorkingFile( ostream & out, int clearError = 1,
                                    int writeComments = 1 );
-        Severity WriteWorkingFile( const char * filename = 0, int clearError = 1,
+        Severity WriteWorkingFile( const std::string filename = "", int clearError = 1,
                                    int writeComments = 1 );
 
         stateEnum EntityWfState( char c );
@@ -159,14 +159,14 @@ class STEPfile {
         void Renumber();
 
 //constructors
-        STEPfile( Registry & r, InstMgr & i, const char * filename = ( const char * )0 );
+        STEPfile( Registry & r, InstMgr & i, const std::string filename = "" );
         virtual ~STEPfile();
 
     protected:
 //member functions
         std::string schemaName();       /**< Returns and copies out schema name from header instances.
                                              Called by ReadExchangeFile */
-        istream * OpenInputFile( const char * filename = "" );
+        istream * OpenInputFile( const std::string filename = "" );
         void CloseInputFile( istream * in );
 
         Severity ReadHeader( istream & in );
@@ -210,7 +210,7 @@ class STEPfile {
         void WriteWorkingData( ostream & out, int writeComments = 1 );
 
 //called by WriteExchangeFile
-        ofstream * OpenOutputFile( const char * filename = 0 );
+        ofstream * OpenOutputFile( const std::string filename = "" );
         void CloseOutputFile( ostream * out );
 
         void WriteHeader( ostream & out );

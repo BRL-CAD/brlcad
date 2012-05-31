@@ -70,7 +70,6 @@
 
 #include "express/basic.h"
 #include <ctype.h>
-#include <pwd.h>
 #include <stdlib.h>
 #include <setjmp.h>
 #include <errno.h>
@@ -284,44 +283,6 @@ typedef struct Dir {
     char * leaf;
 } Dir;
 
-/* expand ~ in-place, blindly assuming argument has extra space */
-/* if translation is valid, return original address, else return 0 */
-/* note: returns result in static buffer! */
-/* assume arg begins at first char past tilde */
-static char * tilde_translate( char * name ) {
-    static char output[1024];
-    struct passwd * pwd;
-    char * new;
-    char * slash;
-
-    /* we'll need to put back string beginning at slash+1 */
-    slash = strchr( name, '/' );
-    if( slash ) {
-        *slash = '\0';
-    }
-
-    /*         "~"                  "~/"       */
-    if( ( name[0] == '\0' ) || ( name == slash ) ) {
-        /* get our own home dir */
-        new = getenv( "HOME" );
-    } else {
-        /* "~name" */
-        pwd = getpwnam( name );
-        new = ( pwd ? pwd->pw_dir : 0 );
-    }
-    if( !new ) {
-        ERRORreport( ERROR_tilde_expansion_failed, name - 1 );
-        return( 0 );
-    }
-    if( slash ) {
-        sprintf( output, "%s/%s", new, slash + 1 );
-    } else {
-        strcpy( output, new );
-    }
-    return output;
-}
-
-
 static void EXPRESS_PATHinit() {
     char * p;
     Dir * dir;
@@ -375,16 +336,7 @@ static void EXPRESS_PATHinit() {
                 continue;
             }
 
-            /* if does not begin with a tilde */
-            if( start[0] != '~' ) {
-                length = ( p - 1 ) - start;
-            } else {
-                start = tilde_translate( start + 1 );
-                if( !start ) {
-                    break;
-                }
-                length = strlen( start );
-            }
+            length = ( p - 1 ) - start;
 
             /* if slash present at end, don't add another */
             slash = strrchr( start, '/' );

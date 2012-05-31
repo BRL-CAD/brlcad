@@ -34,38 +34,23 @@
 #include <STEPundefined.h>
 #include <vector>
 
-/***************************
-function:     SetFileName
-returns:      (const char*) The new file name for the class.
-parameters:   (const char*) The file name to be set.
-description:
-   This function sets the (char*)_fileName member variable to an
-   absolute path name to a directory on the file system. If newName
-   cannot be resolved to a file, then an empty char* is returned.
-side effects: STEPfile::_fileName value may change.
-***************************/
-const char * STEPfile::SetFileName( const char * newName ) {
-    char tmp[MAXPATHLEN + 1];
-    const char * path = tmp;
-
+/**
+ * \returns The new file name for the class.
+ * \param newName The file name to be set.
+ *
+ * This function sets the _fileName member variable to an
+ * absolute path name to a directory on the file system. If newName
+ * cannot be resolved to a file, then an empty string is returned.
+ *
+ * side effects: STEPfile::_fileName value may change.
+ */
+std::string STEPfile::SetFileName( const std::string newName ) {
     //  if a newName is not given or is the same as the old, use the old name
-    if( ( !newName ) || ( !strcmp( newName, "" ) ) || ( newName == _fileName ) ) {
+    if( ( newName.empty() ) || ( newName == _fileName ) ) {
         return FileName();
     }
 
-    path = _currentDir->Normalize( newName );
-    if( !_currentDir->LoadDirectory( path ) ) {
-        _error.AppendToUserMsg( "Cannot Load Directory.\n" );
-        return ( char * )0;
-    }
-
-    delete [] _fileName;
-    _fileName = new char[strlen( newName ) + 1];
-    if( !_fileName )  {
-        _error.AppendToUserMsg( "free store exhausted.\n" );
-        return ( char * )0;
-    }
-    strcpy( _fileName, newName );
+    _fileName = DirObj::Normalize( newName );
     return _fileName;
 }
 
@@ -1333,7 +1318,7 @@ SDAI_Application_instance * STEPfile::ReadInstance( istream & in, ostream & out,
 
 
 
-/******************************************************
+/**
 This function uses the C library function system to issue
 a shell command which checks for the existence of the
 file name and creates a backup file if the file exists.
@@ -1344,25 +1329,24 @@ sh command. The command is:
 BUG: doesn't check to see if the backup command works.
      the results of the system call are not used by the
      by this function
-******************************************************/
+*/
 void STEPfile::MakeBackupFile() {
-    char backup_call [2 * BUFSIZ];
-    char backup_file [BUFSIZ];
+    std::string bckup = FileName();
+    bckup.append( ".bak" );
 
-    sprintf( backup_file, "%s.bak", FileName() );
+    std::fstream f( FileName().c_str(), std::fstream::in | std::fstream::binary );
+    f << std::noskipws;
+    std::istream_iterator<unsigned char> begin( f );
+    std::istream_iterator<unsigned char> end;
 
-    sprintf( backup_call,
-             "if (test -f %s )"
-             " then mv %s %s ;",
-             FileName(),
-             FileName(), backup_file );
+    std::fstream f2( bckup.c_str(), std::fstream::out | std::fstream::trunc | std::fstream::binary );
+    std::ostream_iterator<char> begin2( f2 );
 
-    strcat( backup_call, "fi" );
+    copy( begin, end, begin2 );
 
     _error.AppendToDetailMsg( "Making backup file: " );
-    _error.AppendToDetailMsg( backup_file );
+    _error.AppendToDetailMsg( bckup.c_str() );
     _error.AppendToDetailMsg( "\n" );
-    system( backup_call );
 }
 
 Severity STEPfile::WriteExchangeFile( ostream & out, int validate, int clearError,
@@ -1390,7 +1374,7 @@ Severity STEPfile::WriteExchangeFile( ostream & out, int validate, int clearErro
     return rval;
 }
 
-Severity STEPfile::WriteExchangeFile( const char * filename, int validate, int clearError,
+Severity STEPfile::WriteExchangeFile( const std::string filename, int validate, int clearError,
                              int writeComments ) {
     Severity rval = SEVERITY_NULL;
 
@@ -1614,13 +1598,13 @@ Severity STEPfile::AppendFile( istream * in, int useTechCor ) {
         sprintf( errbuf,
                  "Faulty input at beginning of file. \"ISO-10303-21;\" or"
                  " \"STEP_WORKING_SESSION;\" expected. File not read: %s\n",
-                 ( ( strcmp( FileName(), "-" ) == 0 ) ? "standard input" : FileName() ) );
+                 ( ( FileName().compare( "-" ) == 0 ) ? "standard input" : FileName().c_str() ) );
         _error.AppendToUserMsg( errbuf );
         _error.GreaterSeverity( SEVERITY_INPUT_ERROR );
         return SEVERITY_INPUT_ERROR;
     }
 
-    cout << "Reading Data from " << ( ( strcmp( FileName(), "-" ) == 0 ) ? "standard input" : FileName() ) << "...\n";
+    cout << "Reading Data from " << ( ( FileName().compare( "-" ) == 0 ) ? "standard input" : FileName().c_str() ) << "...\n";
 
     //  Read header
     rval = ReadHeader( *in );
@@ -1696,7 +1680,7 @@ Severity STEPfile::AppendFile( istream * in, int useTechCor ) {
     ReadTokenSeparator( *in2 );
     if( total_insts != valid_insts ) {
         sprintf( errbuf, "%d invalid instances in file: %s\n",
-                 total_insts - valid_insts, ( ( strcmp( FileName(), "-" ) == 0 ) ? "standard input" : FileName() ) );
+                 total_insts - valid_insts, ( ( FileName().compare( "-" ) == 0 ) ? "standard input" : FileName().c_str() ) );
         _error.AppendToUserMsg( errbuf );
         CloseInputFile( in2 );
         return _error.GreaterSeverity( SEVERITY_WARNING );
@@ -1761,7 +1745,7 @@ Severity STEPfile::WriteWorkingFile( ostream & out, int clearError, int writeCom
     return _error.severity();
 }
 
-Severity STEPfile::WriteWorkingFile( const char * filename, int clearError,
+Severity STEPfile::WriteWorkingFile( const std::string filename, int clearError,
                             int writeComments ) {
     if( clearError ) {
         _error.ClearErrorMsg();

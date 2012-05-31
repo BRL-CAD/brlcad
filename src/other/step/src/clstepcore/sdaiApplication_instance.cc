@@ -40,29 +40,10 @@ SDAI_Application_instance::SDAI_Application_instance( int fileid, int complex )
 
 SDAI_Application_instance::~SDAI_Application_instance() {
     ResetAttributes();
-    STEPattribute * next = NextAttribute();
-    while( next ) {
-        delete next;
-        next = NextAttribute();
-    }
 
     if( MultipleInheritance() ) {
         delete nextMiEntity;
     }
-
-    /*
-    // this is not necessary since each will call delete on its
-    // own nextMiEntity - DAS
-      SDAI_Application_instance * nextMI = nextMiEntity;
-      SDAI_Application_instance * nextMItrail = 0;
-      while(nextMI)
-      {
-          nextMItrail = nextMI;
-          nextMI = nextMI->nextMiEntity;
-        // this is ok since STEPattribute doesn't explicitly delete its attr
-          delete nextMItrail;
-      }
-    */
 }
 
 SDAI_Application_instance * SDAI_Application_instance::Replicate() {
