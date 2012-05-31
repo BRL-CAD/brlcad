@@ -466,8 +466,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		}
 		/* all length modifiers below here */
 	    } else if (format_part_status(c) == (VP_VALID | VP_LENGTH_MOD)) {
-	      handle_format_part(VP_LENGTH_MOD, &f, c, VP_PRINT);
-		fprintf(stderr, "\n");
+ 	        handle_format_part(VP_LENGTH_MOD, &f, c, VP_PRINT);
 	    } else {
 		/* Anything else must be the end of the fmt specifier
 		   (i.e., the conversion specifier)*/
