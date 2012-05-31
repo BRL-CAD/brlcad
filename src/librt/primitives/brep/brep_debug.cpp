@@ -52,6 +52,7 @@ extern "C" {
 #endif
     RT_EXPORT extern int brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
     RT_EXPORT extern int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep);
+    RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
 #ifdef __cplusplus
 }
 #endif
@@ -1761,10 +1762,130 @@ brep_conversion(struct rt_db_internal* intern, ON_Brep** brep)
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = SMALL_FASTF;
     tol.para = 1.0 - tol.perp;
-    if(intern->idb_meth->ft_brep == NULL) {
+    if (intern->idb_meth->ft_brep == NULL) {
 	return -1;
     }
     intern->idb_meth->ft_brep(brep, intern, &tol);
+    return 0;
+}
+
+int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtree, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm) {
+    newtree->tr_op = oldtree->tr_op;
+    switch (oldtree->tr_op) {
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    /* convert right */
+	    int ret;
+	    rt_comb_internal *comb;
+	    BU_GET(comb, struct rt_comb_internal);
+	    BU_GET(newtree->tr_b.tb_right, union tree);
+	    RT_TREE_INIT(newtree->tr_b.tb_right);
+	    ret = brep_conversion_tree(db, oldtree->tr_b.tb_right, newtree->tr_b.tb_right, suffix, wdbp, local2mm);
+	    if (ret)
+		return ret;
+	    /* fall through */
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    /* convert left */
+	    BU_GET(newtree->tr_b.tb_left, union tree);
+	    RT_TREE_INIT(newtree->tr_b.tb_left);
+	    ret = brep_conversion_tree(db, oldtree->tr_b.tb_left, newtree->tr_b.tb_left, suffix, wdbp, local2mm);
+	    if (ret)
+		return ret;
+	    comb->tree = newtree;
+	    break;
+	case OP_DB_LEAF:
+	    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(oldtree->tr_l.tl_name)+6, "char");
+	    char *tmpname;
+	    char *oldname;
+	    oldname = oldtree->tr_l.tl_name;
+	    tmpname = (char*)bu_malloc(strlen(oldname)+strlen(suffix)+1, "char");
+	    bu_strlcpy(tmpname, oldname, strlen(oldname)+1);
+	    bu_strlcat(tmpname, suffix, strlen(oldname)+strlen(suffix)+1);
+	    if (db_lookup(db, tmpname, LOOKUP_QUIET) == RT_DIR_NULL) {
+		directory *dir;
+		dir = db_lookup(db, oldname, LOOKUP_QUIET);
+		if (dir != RT_DIR_NULL) {
+		    rt_db_internal *intern;
+		    BU_GET(intern, struct rt_db_internal);
+		    rt_db_get_internal(intern, dir, db, bn_mat_identity, &rt_uniresource);
+		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_COMBINATION")) {
+			int ret;
+			ret = brep_conversion_comb(intern, tmpname, suffix, wdbp, local2mm);
+			if (ret)
+			    return ret;
+			bu_strlcpy(newtree->tr_l.tl_name, tmpname, strlen(tmpname)+1);
+			break;
+		    }
+		    ON_Brep** brep = (ON_Brep**)bu_malloc(sizeof(ON_Brep*), "ON_Brep*");
+		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_BREP")) {
+			**brep = *(((struct rt_brep_internal *)intern->idb_ptr)->brep);
+		    } else {
+			int ret;
+			ret = brep_conversion(intern, brep);
+			if (ret) {
+			    bu_log("The brep conversion of %s is unsuccessful.\n", oldname);
+			    return -1;
+			}
+		    }
+		    if (brep != NULL) {
+			rt_brep_internal *bi;
+			BU_GET(bi, struct rt_brep_internal);
+			bi->magic = RT_BREP_INTERNAL_MAGIC;
+			bi->brep = *brep;
+			wdb_export(wdbp, tmpname, (genptr_t)bi, ID_BREP, local2mm);
+			bu_log("%s is made.\n", tmpname);
+			bu_strlcpy(newtree->tr_l.tl_name, tmpname, strlen(tmpname)+1);
+		    } else {
+			bu_log("The brep conversion of %s is unsuccessful.\n", oldname);
+			return -1;
+		    }
+		} else {
+		    bu_log("Cannot find %s.\n", oldname);
+		}
+	    } else {
+		bu_log("%s already exists.\n", tmpname);
+		//return -1;
+	    }
+	    break;
+	default:
+	    bu_log("OPCODE NOT IMPLEMENTED: %d\n", oldtree->tr_op);
+	    return -1;
+    }
+    return 0;
+}
+
+int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm)
+{
+    RT_CK_COMB(old_internal->idb_ptr);
+    rt_comb_internal *comb_internal;
+    comb_internal = (rt_comb_internal *)old_internal->idb_ptr;
+    if (comb_internal->tree == NULL) {
+	// Empty tree
+	return -1;
+    }
+    RT_CK_TREE(comb_internal->tree);
+    union tree *oldtree = comb_internal->tree;
+
+    rt_comb_internal *new_internal;
+    BU_GET(new_internal, struct rt_comb_internal);
+    RT_COMB_INTERNAL_INIT(new_internal);
+    BU_GET(new_internal->tree, union tree);
+    RT_TREE_INIT(new_internal->tree);
+    union tree *newtree = new_internal->tree;
+
+    int ret;
+    ret = brep_conversion_tree(wdbp->dbip, oldtree, newtree, suffix, wdbp, local2mm);
+    if (ret)
+	return ret;
+
+    ret = wdb_export(wdbp, name, (genptr_t)new_internal, ID_COMBINATION, local2mm);
+    if (ret)
+	return ret;
+    bu_log("%s is made.\n", name);
     return 0;
 }
 

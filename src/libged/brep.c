@@ -38,7 +38,8 @@
 
 #if 1
 RT_EXPORT extern int brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
-RT_EXPORT extern int brep_conversion(struct rt_db_internal* intern, ON_Brep **brep);
+RT_EXPORT extern int brep_conversion(struct rt_db_internal *intern, ON_Brep **brep);
+RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
 #else
 extern int brep_surface_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int index);
 #endif
@@ -48,7 +49,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 {
     struct bn_vlblock*vbp;
     char *solid_name;
-    static const char *usage = "brep obj [command|brepname] ";
+    static const char *usage = "brep obj [command|brepname|suffix] ";
     struct directory *ndp;
     struct rt_db_internal intern;
     struct rt_brep_internal* bi;
@@ -75,7 +76,8 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\tplot - plot entire BREP\n");
 	bu_vls_printf(gedp->ged_result_str, "\tplot S [index] - plot specific BREP 'surface'\n");
 	bu_vls_printf(gedp->ged_result_str, "\tplot F [index] - plot specific BREP 'face'\n");
-	bu_vls_printf(gedp->ged_result_str, "\t[brepname] - convert the non-BREP object to BREP form");
+	bu_vls_printf(gedp->ged_result_str, "\t[brepname] - convert the non-BREP object to BREP form\n");
+	bu_vls_printf(gedp->ged_result_str, "\t[suffix] - convert non-BREP comb to unevaluated BREP form\n");
 	return GED_HELP;
     }
 
@@ -107,32 +109,45 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     if (!RT_BREP_TEST_MAGIC(bi)) {
 	/* The solid is not in brep form. Covert it to brep. */
 
-	char* bname;
+	char *bname;
+	char *suffix;
 	ON_Brep** brep = (ON_Brep**)bu_malloc(sizeof(ON_Brep*), "ON_Brep*");
 	int ret;
 	if (argc > 2) {
 	    bname = (char*)bu_malloc(strlen(argv[2])+1, "char");
 	    bu_strlcpy(bname, argv[2], strlen(argv[2])+1);
+	    suffix = (char*)bu_malloc(strlen(argv[2])+2, "char");
+	    bu_strlcpy(suffix, ".", 2);
+	    bu_strlcat(suffix, argv[2], strlen(argv[2])+2);
 	} else {
 	    bname = (char*)bu_malloc(strlen(solid_name)+6, "char");
 	    bu_strlcpy(bname, solid_name, strlen(solid_name)+1);
 	    bu_strlcat(bname, "_brep", strlen(bname)+6);
+	    suffix = "_brep";
 	}
 	if (db_lookup(gedp->ged_wdbp->dbip, bname, LOOKUP_QUIET) != RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "%s already exist.", bname);
+	    bu_vls_printf(gedp->ged_result_str, "%s already exists.", bname);
 	    bu_free(brep, "ON_Brep*");
 	    bu_free(bname, "char");
 	    return GED_OK;
 	}
-	ret = brep_conversion(&intern, brep);
-	if (ret == -1) {
-	    bu_vls_printf(gedp->ged_result_str, "%s doesn't have a brep-conversion function yet.", solid_name);
-	} else if (*brep == NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "%s cannot be converted to brep correctly.", solid_name);
+	if (BU_STR_EQUAL(intern.idb_meth->ft_name,"ID_COMBINATION")) {
+	    char *bname_suffix;
+	    bname_suffix = (char*)bu_malloc(strlen(solid_name)+strlen(suffix)+1, "char");
+	    bu_strlcpy(bname_suffix, solid_name, strlen(solid_name)+1);
+	    bu_strlcat(bname_suffix, suffix, strlen(solid_name)+strlen(suffix)+1);
+	    brep_conversion_comb(&intern, bname_suffix, suffix, gedp->ged_wdbp, mk_conv2mm);
 	} else {
-	    ret = mk_brep(gedp->ged_wdbp, bname, *brep);
-	    if (ret == 0) {
-		bu_vls_printf(gedp->ged_result_str, "%s is made.", bname);
+	    ret = brep_conversion(&intern, brep);
+	    if (ret == -1) {
+		bu_vls_printf(gedp->ged_result_str, "%s doesn't have a brep-conversion function yet. Type: %s", solid_name, intern.idb_meth->ft_label);
+	    } else if (*brep == NULL) {
+		bu_vls_printf(gedp->ged_result_str, "%s cannot be converted to brep correctly.", solid_name);
+	    } else {
+		ret = mk_brep(gedp->ged_wdbp, bname, *brep);
+		if (ret == 0) {
+		    bu_vls_printf(gedp->ged_result_str, "%s is made.", bname);
+		}
 	    }
 	}
 	bu_free(brep, "ON_Brep*");
