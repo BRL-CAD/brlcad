@@ -144,6 +144,7 @@ main(int ac, char *av[])
     fails += test_vls("%e %E", 1.23, -3.21);
     fails += test_vls("%g %G", 1.23, -3.21);
     fails += test_vls("%x %X", 1.23, -3.21);
+    fails += test_vls("%x %X", 123, -321);
     fails += test_vls("%o", 1.23);
     fails += test_vls("%c%c%c", '1', '2', '3');
     fails += test_vls("%p", (void *)av);
@@ -257,6 +258,8 @@ main(int ac, char *av[])
     fails += test_vls("%'d", 123000);
 
     fails += test_vls("%c", 'r');
+
+    fails += test_vls("%H", 123);
 
     /* obsolete but usable */
 /*
