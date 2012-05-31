@@ -1837,7 +1837,7 @@ void ENTITYlib_print( Entity entity, Linked_List neededAttr, FILE * file, Schema
 }
 
 /** return 1 if types are predefined by us */
-int TYPEis_builtin( const Type t ) {
+bool TYPEis_builtin( const Type t ) {
     switch( TYPEget_body( t )->type ) { /* dunno if correct*/
         case integer_:
         case real_:
@@ -1846,11 +1846,11 @@ int TYPEis_builtin( const Type t ) {
         case boolean_:
         case number_:
         case logical_:
-            return 1;
+            return true;
         default:
             break;
     }
-    return 0;
+    return false;
 }
 
 /** go down through a type'sbase type chain,
