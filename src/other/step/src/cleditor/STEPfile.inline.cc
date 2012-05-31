@@ -100,7 +100,7 @@ std::string STEPfile::TruncFileName( const std::string filename ) const {
 
 
 /******************************************************/
-Severity STEPfile::ReadExchangeFile( const std::string filename, int useTechCor ) {
+Severity STEPfile::ReadExchangeFile( const std::string filename, bool useTechCor ) {
     _error.ClearErrorMsg();
     _errorCount = 0;
     istream * in = OpenInputFile( filename );
@@ -119,7 +119,7 @@ Severity STEPfile::ReadExchangeFile( const std::string filename, int useTechCor 
     return rval;
 }
 
-Severity STEPfile::AppendExchangeFile( const std::string filename, int useTechCor ) {
+Severity STEPfile::AppendExchangeFile( const std::string filename, bool useTechCor ) {
     _error.ClearErrorMsg();
     _errorCount = 0;
     istream * in = OpenInputFile( filename );
@@ -132,7 +132,7 @@ Severity STEPfile::AppendExchangeFile( const std::string filename, int useTechCo
     return rval;
 }
 
-Severity STEPfile::ReadWorkingFile( const std::string filename, int useTechCor ) {
+Severity STEPfile::ReadWorkingFile( const std::string filename, bool useTechCor ) {
     _error.ClearErrorMsg();
     _errorCount = 0;
     istream * in = OpenInputFile( filename );
@@ -152,7 +152,7 @@ Severity STEPfile::ReadWorkingFile( const std::string filename, int useTechCor )
 }
 
 
-Severity STEPfile::AppendWorkingFile( const std::string filename, int useTechCor ) {
+Severity STEPfile::AppendWorkingFile( const std::string filename, bool useTechCor ) {
     _error.ClearErrorMsg();
     _errorCount = 0;
     istream * in = OpenInputFile( filename );

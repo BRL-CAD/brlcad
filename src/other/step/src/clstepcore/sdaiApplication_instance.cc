@@ -505,7 +505,7 @@ void SDAI_Application_instance::STEPread_error( char c, int i, istream & in ) {
 
 Severity SDAI_Application_instance::STEPread( int id,  int idIncr,
         InstMgr * instance_set, istream & in,
-        const char * currSch, int useTechCor ) {
+        const char * currSch, bool useTechCor ) {
     STEPfile_id = id;
     char c = '\0';
     char errStr[BUFSIZ];

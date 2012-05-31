@@ -133,13 +133,13 @@ class STEPfile {
         int SetFileType( FileTypeCode ft = VERSION_CURRENT );
 
 //Reading and Writing
-        Severity ReadExchangeFile( const std::string filename = "", int useTechCor = 1 );
-        Severity AppendExchangeFile( const std::string filename = "", int useTechCor = 1 );
+        Severity ReadExchangeFile( const std::string filename = "", bool useTechCor = 1 );
+        Severity AppendExchangeFile( const std::string filename = "", bool useTechCor = 1 );
 
-        Severity ReadWorkingFile( const std::string filename = "", int useTechCor = 1 );
-        Severity AppendWorkingFile( const std::string filename = "", int useTechCor = 1 );
+        Severity ReadWorkingFile( const std::string filename = "", bool useTechCor = 1 );
+        Severity AppendWorkingFile( const std::string filename = "", bool useTechCor = 1 );
 
-        Severity AppendFile( istream * in, int useTechCor = 1 ) ;
+        Severity AppendFile( istream * in, bool useTechCor = 1 ) ;
 
         Severity WriteExchangeFile( ostream & out, int validate = 1,
                                     int clearError = 1, int writeComments = 1 );
@@ -179,11 +179,11 @@ class STEPfile {
 
         int ReadData1( istream & in ); // first pass to create instances
         // second pass to read instances
-        int ReadData2( istream & in, int useTechCor = 1 );
+        int ReadData2( istream & in, bool useTechCor = true );
 
 // obsolete
         int ReadWorkingData1( istream & in );
-        int ReadWorkingData2( istream & in, int useTechCor = 1 );
+        int ReadWorkingData2( istream & in, bool useTechCor = true );
 
         void ReadRestOfFile( istream & in );
 
@@ -195,7 +195,7 @@ class STEPfile {
 
         // read the instance - used by ReadData2()
         SDAI_Application_instance  * ReadInstance( istream & in, ostream & out,
-                std::string & cmtStr, int useTechCor = 1 );
+                std::string & cmtStr, bool useTechCor = true );
 
         //  reading scopes are still incomplete
         //  these functions are stubs

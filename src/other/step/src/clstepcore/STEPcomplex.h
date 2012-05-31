@@ -34,7 +34,7 @@ class STEPcomplex : public SDAI_Application_instance  {
         virtual Severity STEPread( int id, int addFileId,
                                    class InstMgr * instance_set,
                                    istream & in = cin, const char * currSch = NULL,
-                                   int useTechCor = 1 );
+                                   bool useTechCor = true );
 
         virtual void STEPread_error( char c, int index, istream & in );
 

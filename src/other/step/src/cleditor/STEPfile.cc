@@ -527,7 +527,7 @@ int STEPfile::ReadWorkingData1( istream & in ) {
  ** Description:  reads in the data portion of the instances
  **               in an exchange file
  ******************************************************************/
-int STEPfile::ReadData2( istream & in, int useTechCor ) {
+int STEPfile::ReadData2( istream & in, bool useTechCor ) {
     _entsInvalid = 0;
     _entsIncomplete = 0;
     _entsWarning = 0;
@@ -641,7 +641,7 @@ int STEPfile::ReadData2( istream & in, int useTechCor ) {
 }
 
 
-int STEPfile::ReadWorkingData2( istream & in, int useTechCor ) {
+int STEPfile::ReadWorkingData2( istream & in, bool useTechCor ) {
     return ReadData2( in, useTechCor );
 }
 
@@ -1117,7 +1117,7 @@ Severity STEPfile::ReadScopeInstances( istream & in ) {
  the STEPfile ErrorDescriptor.
 *****************************************************/
 SDAI_Application_instance * STEPfile::ReadInstance( istream & in, ostream & out, std::string & cmtStr,
-                        int useTechCor ) {
+                        bool useTechCor ) {
     Severity sev = SEVERITY_NULL;
 
     std::string tmpbuf;
@@ -1570,7 +1570,7 @@ void STEPfile::WriteValuePairsData( ostream & out, int writeComments, int mixedC
     }
 }
 
-Severity STEPfile::AppendFile( istream * in, int useTechCor ) {
+Severity STEPfile::AppendFile( istream * in, bool useTechCor ) {
     Severity rval = SEVERITY_NULL;
     char errbuf[BUFSIZ];
 

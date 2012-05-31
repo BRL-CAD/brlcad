@@ -56,8 +56,8 @@ void DICTprint( Dictionary dict ) {
     }
 }
 
-/** Initialize the Dictionary module */ void
-DICTinitialize( void ) {
+/** Initialize the Dictionary module */
+void DICTinitialize( void ) {
     ERROR_duplicate_decl = ERRORcreate(
                                "Redeclaration of %s.  Previous declaration was on line %d.", SEVERITY_ERROR );
     ERROR_duplicate_decl_diff_file = ERRORcreate(
