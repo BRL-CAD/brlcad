@@ -525,7 +525,13 @@ STEPcomplex::BuildAttrs( const char * s ) {
 
 void
 STEPcomplex::STEPread_error( char c, int index, istream & in ) {
-    cout << "STEPcomplex::STEPread_error() \n";
+    cout << "STEPcomplex::STEPread_error(), index=" << index << ", entity #" << STEPfile_id << "." << endl;
+    streampos p = in.tellg();
+    std::string q, r;
+    getline( in, q );
+    getline( in, r );
+    cout << "Remainder of this line:" << endl << c << q << endl << "Next line:" << endl << r << endl;
+    in.seekg( p );
 }
 
 // WRITE

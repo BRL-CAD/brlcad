@@ -196,8 +196,6 @@ Severity STEPattribute::StrToVal( const char * s, InstMgr * instances, int addFi
 ******************************************************************/
 Severity STEPattribute::STEPread( istream & in, InstMgr * instances, int addFileId,
                          const char * currSch ) {
-    char errStr[BUFSIZ];
-    errStr[0] = '\0';
     char c = '\0';
 
     // The attribute has been redefined by the attribute pointed
@@ -221,10 +219,11 @@ Severity STEPattribute::STEPread( istream & in, InstMgr * instances, int addFile
             _error.severity( SEVERITY_NULL );
         } else {
             _error.severity( SEVERITY_WARNING );
-            sprintf( errStr, "  WARNING: attribute %s of type %s, %s",
-                     aDesc->Name(), aDesc->TypeName(),
-                     "Missing asterisk for derived attribute.\n" );
-            _error.AppendToDetailMsg( errStr );
+            _error.AppendToDetailMsg( "  WARNING: attribute " );
+            _error.AppendToDetailMsg( aDesc->Name() );
+            _error.AppendToDetailMsg( " of type " );
+            _error.AppendToDetailMsg( aDesc->TypeName() );
+            _error.AppendToDetailMsg( "Missing asterisk for derived attribute.\n" );
         }
         CheckRemainingInput( in, &_error, aDesc->TypeName(), ",)" );
         return _error.severity();
@@ -243,8 +242,7 @@ Severity STEPattribute::STEPread( istream & in, InstMgr * instances, int addFile
                 _error.severity( SEVERITY_NULL );
             } else {
                 _error.severity( SEVERITY_INCOMPLETE );
-                sprintf( errStr, " missing and required\n" );
-                _error.AppendToDetailMsg( errStr );
+                _error.AppendToDetailMsg( " missing and required\n" );
             }
             return _error.severity();
     }
