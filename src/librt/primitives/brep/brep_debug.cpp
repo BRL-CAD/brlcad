@@ -1822,7 +1822,7 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 		    }
 		    ON_Brep** brep = (ON_Brep**)bu_malloc(sizeof(ON_Brep*), "ON_Brep*");
 		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_BREP")) {
-			**brep = *(((struct rt_brep_internal *)intern->idb_ptr)->brep);
+			*brep = ((struct rt_brep_internal *)intern->idb_ptr)->brep->Duplicate();
 		    } else {
 			int ret;
 			ret = brep_conversion(intern, brep);
