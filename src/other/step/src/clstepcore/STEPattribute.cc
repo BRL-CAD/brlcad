@@ -195,7 +195,7 @@ Severity STEPattribute::StrToVal( const char * s, InstMgr * instances, int addFi
 **         value <= SEVERITY_INPUT_ERROR  is fatal read error
 ******************************************************************/
 Severity STEPattribute::STEPread( istream & in, InstMgr * instances, int addFileId,
-                         const char * currSch ) {
+                                  const char * currSch, bool strict ) {
 
     // The attribute has been redefined by the attribute pointed
     // to by _redefAttr so write the redefined value.
@@ -239,6 +239,47 @@ Severity STEPattribute::STEPread( istream & in, InstMgr * instances, int addFile
             }
             if( Nullable() )  {
                 _error.severity( SEVERITY_NULL );
+            } else if ( !strict ) {
+                std::string fillerValue;
+                // we aren't in strict mode, so find out the type of the missing attribute and insert a suitable value.
+                ErrorDescriptor err; //this will be discarded
+                switch( attrBaseType ) {
+                    case INTEGER_TYPE: {
+                        fillerValue = "'0',";
+                        ReadInteger( *( ptr.i ), fillerValue.c_str(), &err, ",)" );
+                        break;
+                    }
+                    case REAL_TYPE: {
+                        fillerValue = "'0.0',";
+                        ReadReal( *( ptr.r ), fillerValue.c_str(), &err, ",)" );
+                        break;
+                    }
+                    case NUMBER_TYPE: {
+                        fillerValue = "'0',";
+                        ReadNumber( *( ptr.r ), fillerValue.c_str(), &err, ",)" );
+                        break;
+                    }
+                    case STRING_TYPE: {
+                        fillerValue = "'',";
+                        *(ptr.S) = "''";
+                        break;
+                    }
+                    default: { //do not know what a good value would be for other types
+                        _error.severity( SEVERITY_INCOMPLETE );
+                        _error.AppendToDetailMsg( " missing and required\n" );
+                        return _error.severity();
+                    }
+                }
+                if( err.severity() <= SEVERITY_INCOMPLETE ) {
+                    _error.severity( SEVERITY_BUG );
+                    _error.AppendToDetailMsg( " Error in STEPattribute::STEPread()\n" );
+                    return _error.severity();
+                }
+                //create a warning. SEVERITY_WARNING makes more sense to me, but is considered more severe than SEVERITY_INCOMPLETE
+                _error.severity( SEVERITY_USERMSG );
+                _error.AppendToDetailMsg( " missing and required. For compatibility, replacing with " );
+                _error.AppendToDetailMsg( fillerValue.substr( 0, fillerValue.length()-1 ) );
+                _error.AppendToDetailMsg( ".\n" );
             } else {
                 _error.severity( SEVERITY_INCOMPLETE );
                 _error.AppendToDetailMsg( " missing and required\n" );

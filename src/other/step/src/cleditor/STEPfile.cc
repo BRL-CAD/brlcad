@@ -169,7 +169,7 @@ Severity STEPfile::ReadHeader( istream & in ) {
                 fileid = HeaderId( const_cast<char *>( keywd.c_str() ) );
 
                 //read the values from the istream
-                objsev = obj->STEPread( fileid, 0, ( InstMgr * )0, in );
+                objsev = obj->STEPread( fileid, 0, ( InstMgr * )0, in, NULL, true, _strict );
                 if( !cmtStr.empty() ) {
                     obj->AddP21Comment( cmtStr );
                 }
@@ -1200,7 +1200,7 @@ SDAI_Application_instance * STEPfile::ReadInstance( istream & in, ostream & out,
     if( c == '(' ) {
         // TODO
         sev = obj->STEPread( fileid, idIncrNum, &instances(), in, currSch.c_str(),
-                             useTechCor );
+                             useTechCor, _strict );
 
         ReadTokenSeparator( in, &cmtStr );
 
@@ -1247,7 +1247,7 @@ SDAI_Application_instance * STEPfile::ReadInstance( istream & in, ostream & out,
         // (WORKING_SESSION included)
 
         sev = obj->STEPread( fileid, idIncrNum, &instances(), in, currSch.c_str(),
-                             useTechCor );
+                             useTechCor, _strict );
 
         ReadTokenSeparator( in, &cmtStr );
 

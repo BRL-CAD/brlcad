@@ -278,9 +278,8 @@ STEPcomplex::AppendEntity( STEPcomplex * stepc ) {
 }
 
 // READ
-Severity
-STEPcomplex::STEPread( int id, int addFileId, class InstMgr * instance_set,
-                       istream & in, const char * currSch, bool useTechCor ) {
+Severity STEPcomplex::STEPread( int id, int addFileId, class InstMgr * instance_set,
+                                istream & in, const char * currSch, bool /*useTechCor*/, bool /*strict*/ ) {
     char c;
     std::string typeNm;
     STEPcomplex * stepc = 0;

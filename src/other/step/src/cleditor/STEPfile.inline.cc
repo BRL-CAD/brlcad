@@ -23,13 +23,11 @@ extern void HeaderSchemaInit( Registry & reg );
 
 //constructor & destructor
 
-STEPfile::STEPfile( Registry & r, InstMgr & i, const std::string filename ) :
-    _reg( r ), _instances( i ),
-    _headerId( 0 ), _maxErrorCount( 5000 ),
-    _fileName( "" ), _entsNotCreated( 0 ), _entsInvalid( 0 ),
-    _entsIncomplete( 0 ), _entsWarning( 0 ),
-    _errorCount( 0 ), _warningCount( 0 ),
-    _fileIdIncr( 0 )
+STEPfile::STEPfile( Registry & r, InstMgr & i, const std::string filename, bool strict ) :
+    _instances( i ), _reg( r ), _fileIdIncr( 0 ), _headerId( 0 ),
+    _entsNotCreated( 0 ), _entsInvalid( 0 ), _entsIncomplete( 0 ),
+    _entsWarning( 0 ), _errorCount( 0 ), _warningCount( 0 ),
+    _maxErrorCount( 5000 ), _strict( strict )
 {
     SetFileType( VERSION_CURRENT );
     SetFileIdIncrement();

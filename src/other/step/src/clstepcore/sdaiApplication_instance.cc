@@ -505,7 +505,7 @@ void SDAI_Application_instance::STEPread_error( char c, int i, istream & in ) {
 
 Severity SDAI_Application_instance::STEPread( int id,  int idIncr,
         InstMgr * instance_set, istream & in,
-        const char * currSch, bool useTechCor ) {
+        const char * currSch, bool useTechCor, bool strict ) {
     STEPfile_id = id;
     char c = '\0';
     char errStr[BUFSIZ];
@@ -569,7 +569,7 @@ Severity SDAI_Application_instance::STEPread( int id,  int idIncr,
             // aren't written or read => there won't be a delimiter either
 //      i++;
         } else {
-            attributes[i].STEPread( in, instance_set, idIncr, currSch );
+            attributes[i].STEPread( in, instance_set, idIncr, currSch, strict );
             in >> c; // read the , or ) following the attr read
 
             severe = attributes[i].Error().severity();
