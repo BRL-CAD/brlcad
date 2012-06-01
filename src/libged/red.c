@@ -214,7 +214,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     struct bu_vls next_op_vls = BU_VLS_INIT_ZERO;
     struct bu_mapped_file *redtmpfile;
     int attrstart, attrend, attrcumulative, name_end;
-    int ret, gedret, combtagstart, combtagend;
+    int ret, reti, gedret, combtagstart, combtagend;
     struct bu_attribute_value_set avs;
     matp_t matrix = {0};
 
@@ -242,12 +242,17 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     }
 
     /* Set up the regular expressions */
-    regcomp(&nonwhitespace_regex, "([^[:space:]])", REG_EXTENDED);
-    regcomp(&attr_regex, "(.+[[:space:]]+=.*)", REG_EXTENDED|REG_NEWLINE);
+    reti = 0;
+    reti |= regcomp(&nonwhitespace_regex, "([^[:space:]])", REG_EXTENDED);
+    reti |= regcomp(&attr_regex, "(.+[[:space:]]+=.*)", REG_EXTENDED|REG_NEWLINE);
     bu_vls_sprintf(&current_substring, "(%s)", combtree_header);
-    regcomp(&combtree_regex, bu_vls_addr(&current_substring), REG_EXTENDED);
-    regcomp(&combtree_op_regex, "([[:blank:]]+[[.-.][.+.]u][[:blank:]]+)", REG_EXTENDED);
+    reti |= regcomp(&combtree_regex, bu_vls_addr(&current_substring), REG_EXTENDED);
+    reti |= regcomp(&combtree_op_regex, "([[:blank:]]+[[.-.][.+.]u][[:blank:]]+)", REG_EXTENDED);
 
+    if (reti) {
+	bu_vls_printf(gedp->ged_result_str, "Unable to compile regular expression.\n");
+     return -1;
+    }
 
     /* Need somewhere to hold the results - initially, size according to attribute regex */
     result_locations = (regmatch_t *)bu_calloc(attr_regex.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
@@ -363,7 +368,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub , result_locations, 0);
 	node_count++;
     }
-    currptr = (const char *)(redtmpfile->buf) + combtagend;
+    currptr = (const char *)(redtmpfile->buf) + combtagend + 1;
     name_end = 0;
 
     ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub , result_locations, 0);
@@ -627,7 +632,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 	    }
 	    fprintf(fp, "%s%s = \n", attr, bu_vls_addr(&spacer));
 	}
-	fprintf(fp, "%s", combseparator);
+	fprintf(fp, "%s\n", combseparator);
 	fclose(fp);
 	bu_vls_free(&spacer);
 	return GED_OK;
@@ -691,7 +696,7 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
     }
     bu_vls_free(&spacer);
 
-    fprintf(fp, "%s", combseparator);
+    fprintf(fp, "%s\n", combseparator);
 
     for (i = 0; i<actual_count; i++) {
 	char op;
