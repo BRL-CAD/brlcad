@@ -1,4 +1,4 @@
-/*                O S L - R E N D E R E R . C P P
+/*                    L I B O S L R E N D . C P P
  * BRL-CAD
  *
  * Copyright (c) 2011-2012 United States Government as represented by
@@ -29,7 +29,7 @@
 OSLRenderer::OSLRenderer(){
 
     shadingsys = ShadingSystem::create(&rend, NULL, &errhandler);
-    
+
     ssi = (ShadingSystemImpl *)shadingsys;
 }
 

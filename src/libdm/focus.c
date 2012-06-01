@@ -1,4 +1,3 @@
-
 /*                         F O C U S . C
  * BRL-CAD
  *

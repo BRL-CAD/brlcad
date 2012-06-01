@@ -1,4 +1,4 @@
-/*                   O B J _ G R A M M A R . H
+/*             O B J _ G R A M M A R _ D E C L S . H
  * BRL-CAD
  *
  * Copyright (c) 2011-2012 United States Government as represented by

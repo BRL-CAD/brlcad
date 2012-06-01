@@ -1,4 +1,4 @@
-/*                         G R O U P . C
+/*                      S P H G R O U P . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2012 United States Government as represented by

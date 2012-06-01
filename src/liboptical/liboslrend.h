@@ -1,4 +1,4 @@
-/*                  O S L - R E N D E R E R . H
+/*                    L I B O S L R E N D . H
  * BRL-CAD
  *
  * Copyright (c) 2011-2012 United States Government as represented by
