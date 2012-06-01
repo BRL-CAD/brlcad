@@ -1813,7 +1813,6 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 		    BU_GET(intern, struct rt_db_internal);
 		    rt_db_get_internal(intern, dir, db, bn_mat_identity, &rt_uniresource);
 		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_COMBINATION")) {
-			int ret;
 			ret = brep_conversion_comb(intern, tmpname, suffix, wdbp, local2mm);
 			if (ret)
 			    return ret;
@@ -1824,7 +1823,6 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_BREP")) {
 			*brep = ((struct rt_brep_internal *)intern->idb_ptr)->brep->Duplicate();
 		    } else {
-			int ret;
 			ret = brep_conversion(intern, brep);
 			if (ret) {
 			    bu_log("The brep conversion of %s is unsuccessful.\n", oldname);
