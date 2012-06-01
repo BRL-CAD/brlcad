@@ -574,7 +574,8 @@ EOF
 
 	count=`expr $count + 1`
 
-	$ECHO "%-4s\tnmg: %s %ss\tbot: %s %ss\tbrep: %s %ss %6.0fs %*s%.0f %s:%s" \
+	SECONDS=`echo $real_nmg $real_bot $real_brep | awk '{print ($1+$2+$3)}'`
+	$ECHO "%-4s\tnmg: %s %ss\tbot: %s %ss\tbrep: %s %ss %6.2fs %*s%.0f %s:%s" \
                \"$status\" \"$nmg\" \"$real_nmg\" \"$bot\" \"$real_bot\" \"$brep\" \"$real_brep\" \"$SECONDS\" \
                \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
 
