@@ -17,6 +17,7 @@ EXTRA_DIST = \
 	shp/README \
 	shp/shapelib/LICENSE.LGPL \
 	shp/shapelib/license.html \
+        step \
 	walk_example.c
 
 if ONLY_BENCHMARK
@@ -42,9 +43,6 @@ DIST_SUBDIRS = \
 	intaval \
 	raw \
 	vdeck
-
-EXTRA_DIST = \
-	step
 
 bin_PROGRAMS = \
 	3dm-g \
@@ -500,8 +498,7 @@ FAST_OBJECTS = \
 	$(stl_g_OBJECTS) \
 	$(tankill_g_OBJECTS) \
 	$(viewpoint_g_OBJECTS) \
-	$(bin_PROGRAMS) \
-
+	$(bin_PROGRAMS)
 
 endif
 # end ONLY_BENCHMARK
