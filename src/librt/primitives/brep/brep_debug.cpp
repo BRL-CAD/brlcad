@@ -1826,6 +1826,7 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 			ret = brep_conversion(intern, brep);
 			if (ret) {
 			    bu_log("The brep conversion of %s is unsuccessful.\n", oldname);
+			    newtree = NULL;
 			    return -1;
 			}
 		    }
@@ -1839,13 +1840,17 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 			bu_strlcpy(newtree->tr_l.tl_name, tmpname, strlen(tmpname)+1);
 		    } else {
 			bu_log("The brep conversion of %s is unsuccessful.\n", oldname);
+			newtree = NULL;
 			return -1;
 		    }
 		} else {
 		    bu_log("Cannot find %s.\n", oldname);
+		    newtree = NULL;
+		    return -1;
 		}
 	    } else {
 		bu_log("%s already exists.\n", tmpname);
+		bu_strlcpy(newtree->tr_l.tl_name, tmpname, strlen(tmpname)+1);
 		//return -1;
 	    }
 	    break;
@@ -1870,7 +1875,7 @@ int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *
 
     rt_comb_internal *new_internal;
     BU_GET(new_internal, struct rt_comb_internal);
-    RT_COMB_INTERNAL_INIT(new_internal);
+    *new_internal = *comb_internal;
     BU_GET(new_internal->tree, union tree);
     RT_TREE_INIT(new_internal->tree);
     union tree *newtree = new_internal->tree;
