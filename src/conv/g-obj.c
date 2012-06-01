@@ -1,4 +1,3 @@
-
 /*                         G - O B J . C
  * BRL-CAD
  *

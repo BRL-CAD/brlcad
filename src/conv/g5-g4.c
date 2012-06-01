@@ -1,4 +1,5 @@
-/* BRL-CAD	G 5 - G 4 . C
+/*                          G 5 - G 4 . C
+ * BRL-CAD
  *
  * Copyright (c) 2004-2012 United States Government as represented by
  * the U.S. Army Research Laboratory.

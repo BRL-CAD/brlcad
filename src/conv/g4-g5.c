@@ -1,4 +1,5 @@
-/* BRL-CAD	G 4 - G 5 . C
+/*                         G 4 - G 5 . C
+ * BRL-CAD
  *
  *
  * Copyright (c) 2004-2012 United States Government as represented by
