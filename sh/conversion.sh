@@ -554,6 +554,12 @@ EOF
 	if test "x$found" = "x${object}.brep" ; then
 	    brep=pass
 	    brep_count=`expr $brep_count + 1`
+	else
+	    found2=`$SGED -c "$work" search . -name \"${obj}.${obj}.brep\" 2>&1 | grep -v Using`
+	    if test "x$found2" = "x${object}.${object}.brep" ; then
+		brep=pass
+		brep_count=`expr $brep_count + 1`
+	    fi
 	fi
 	if [ -e "./${obj}.brep.extl" ] ; then
             `rm "./${obj}.brep.extl"`
