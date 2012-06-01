@@ -196,7 +196,6 @@ Severity STEPattribute::StrToVal( const char * s, InstMgr * instances, int addFi
 ******************************************************************/
 Severity STEPattribute::STEPread( istream & in, InstMgr * instances, int addFileId,
                          const char * currSch ) {
-    char c = '\0';
 
     // The attribute has been redefined by the attribute pointed
     // to by _redefAttr so write the redefined value.
@@ -210,8 +209,7 @@ Severity STEPattribute::STEPread( istream & in, InstMgr * instances, int addFile
     set_null();
 
     in >> ws; // skip whitespace
-    in >> c;
-    in.putback( c );   //  leave input stream alone
+    char c = in.peek();
 
     if( IsDerived() ) {
         if( c == '*' ) {
@@ -228,6 +226,7 @@ Severity STEPattribute::STEPread( istream & in, InstMgr * instances, int addFile
         CheckRemainingInput( in, &_error, aDesc->TypeName(), ",)" );
         return _error.severity();
     }
+    PrimitiveType attrBaseType = NonRefType();
 
     //  check for NULL or derived attribute value, return if either
     switch( c ) {
@@ -235,7 +234,7 @@ Severity STEPattribute::STEPread( istream & in, InstMgr * instances, int addFile
         case ',':
         case ')':
             if( c == '$' ) {
-                in.get( c );
+                in.ignore();
                 CheckRemainingInput( in, &_error, aDesc->TypeName(), ",)" );
             }
             if( Nullable() )  {
@@ -247,7 +246,6 @@ Severity STEPattribute::STEPread( istream & in, InstMgr * instances, int addFile
             return _error.severity();
     }
 
-    PrimitiveType attrBaseType = NonRefType();
     switch( attrBaseType ) {
         case INTEGER_TYPE: {
             ReadInteger( *( ptr.i ), in, &_error, ",)" );
