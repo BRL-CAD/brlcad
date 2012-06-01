@@ -284,6 +284,10 @@ set(regress_outfiles
   red.name.unsafe.out
   red.name.unsafe.out.new
   red.name.unsafe.out.test
+  red.region.edit-comb.out.test2
+  red.region.edit-comb.out.new
+  red.region.edit-comb.out
+  red.region.edit-comb.out.test
   red.region.empty.out
   red.region.empty.out.new
   red.region.no.out
