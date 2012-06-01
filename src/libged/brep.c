@@ -125,19 +125,29 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	    bu_strlcat(bname, "_brep", strlen(bname)+6);
 	    suffix = "_brep";
 	}
-	if (db_lookup(gedp->ged_wdbp->dbip, bname, LOOKUP_QUIET) != RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "%s already exists.", bname);
-	    bu_free(brep, "ON_Brep*");
-	    bu_free(bname, "char");
-	    return GED_OK;
-	}
 	if (BU_STR_EQUAL(intern.idb_meth->ft_name,"ID_COMBINATION")) {
 	    char *bname_suffix;
 	    bname_suffix = (char*)bu_malloc(strlen(solid_name)+strlen(suffix)+1, "char");
 	    bu_strlcpy(bname_suffix, solid_name, strlen(solid_name)+1);
 	    bu_strlcat(bname_suffix, suffix, strlen(solid_name)+strlen(suffix)+1);
+	    if (db_lookup(gedp->ged_wdbp->dbip, bname_suffix, LOOKUP_QUIET) != RT_DIR_NULL) {
+		bu_vls_printf(gedp->ged_result_str, "%s already exists.", bname_suffix);
+		bu_free(brep, "ON_Brep*");
+		bu_free(bname, "char");
+		bu_free(bname_suffix, "char");
+		if (argc > 2) bu_free(suffix, "char");
+		return GED_OK;
+	    }
 	    brep_conversion_comb(&intern, bname_suffix, suffix, gedp->ged_wdbp, mk_conv2mm);
+	    bu_free(bname_suffix, "char");
 	} else {
+	    if (db_lookup(gedp->ged_wdbp->dbip, bname, LOOKUP_QUIET) != RT_DIR_NULL) {
+		bu_vls_printf(gedp->ged_result_str, "%s already exists.", bname);
+		bu_free(brep, "ON_Brep*");
+		bu_free(bname, "char");
+		if (argc > 2) bu_free(suffix, "char");
+		return GED_OK;
+	    }
 	    ret = brep_conversion(&intern, brep);
 	    if (ret == -1) {
 		bu_vls_printf(gedp->ged_result_str, "%s doesn't have a brep-conversion function yet. Type: %s", solid_name, intern.idb_meth->ft_label);
@@ -152,6 +162,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	}
 	bu_free(brep, "ON_Brep*");
 	bu_free(bname, "char");
+	if (argc > 2) bu_free(suffix, "char");
 	return GED_OK;
     }
 
