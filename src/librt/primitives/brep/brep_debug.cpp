@@ -1798,11 +1798,11 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 	    comb->tree = newtree;
 	    break;
 	case OP_DB_LEAF:
-	    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(oldtree->tr_l.tl_name)+6, "char");
 	    char *tmpname;
 	    char *oldname;
 	    oldname = oldtree->tr_l.tl_name;
 	    tmpname = (char*)bu_malloc(strlen(oldname)+strlen(suffix)+1, "char");
+	    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(oldname)+strlen(suffix)+1, "char");
 	    bu_strlcpy(tmpname, oldname, strlen(oldname)+1);
 	    bu_strlcat(tmpname, suffix, strlen(oldname)+strlen(suffix)+1);
 	    if (db_lookup(db, tmpname, LOOKUP_QUIET) == RT_DIR_NULL) {
@@ -1814,9 +1814,12 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 		    rt_db_get_internal(intern, dir, db, bn_mat_identity, &rt_uniresource);
 		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_COMBINATION")) {
 			ret = brep_conversion_comb(intern, tmpname, suffix, wdbp, local2mm);
-			if (ret)
+			if (ret) {
+			    bu_free(tmpname, "char");
 			    return ret;
+			}
 			bu_strlcpy(newtree->tr_l.tl_name, tmpname, strlen(tmpname)+1);
+			bu_free(tmpname, "char");
 			break;
 		    }
 		    ON_Brep** brep = (ON_Brep**)bu_malloc(sizeof(ON_Brep*), "ON_Brep*");
@@ -1827,6 +1830,7 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 			if (ret) {
 			    bu_log("The brep conversion of %s is unsuccessful.\n", oldname);
 			    newtree = NULL;
+			    bu_free(tmpname, "char");
 			    return -1;
 			}
 		    }
@@ -1841,11 +1845,13 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 		    } else {
 			bu_log("The brep conversion of %s is unsuccessful.\n", oldname);
 			newtree = NULL;
+			bu_free(tmpname, "char");
 			return -1;
 		    }
 		} else {
 		    bu_log("Cannot find %s.\n", oldname);
 		    newtree = NULL;
+		    bu_free(tmpname, "char");
 		    return -1;
 		}
 	    } else {
@@ -1856,6 +1862,7 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 	    break;
 	default:
 	    bu_log("OPCODE NOT IMPLEMENTED: %d\n", oldtree->tr_op);
+	    bu_free(tmpname, "char");
 	    return -1;
     }
     return 0;
