@@ -815,7 +815,7 @@ opendb solids-simple.g y
 
 
 units mm
-in sph.s sph 0 0 0 1000
+in sph.s sph 0 0 0 50
 r sph.r u sph.s
 mater sph.r "plastic {di .9 sp .5}" 200 180 0 0
 g all *.r
