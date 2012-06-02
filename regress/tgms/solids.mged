@@ -1,0 +1,135 @@
+opendb solids.g y
+
+units cm
+#
+# Halfspace
+#
+in half.s half 0 0 1 -1
+r half.r u half.s
+mater half.r plastic 76 158 113 0
+
+#
+# Make one of each arb
+#
+in arb4.s arb4 0 -64 33 -31 -64 33 -31 -64 48 -31 -95 33
+r arb4.r u arb4.s
+mater arb4.r "plastic" 120 120 200 0
+
+in arb5.s arb5 -31 -128 33 0 -128 33 0 -97 33 -31 -97 33 -16.5 -113.5 43
+r arb5.r u arb5.s
+mater arb5.r "plastic" 120 120 120 0
+
+in arb6.s arb6 -64 -95 33 -33 -95 33 -33 -64 33 -64 -64 33 -49.5 -95 43 -49.5 -64 43
+r arb6.r u arb6.s
+mater arb6.r "plastic" 120 200 120 0
+
+in arb7.s arb7 -64 -97 33 -64 -128 33 -64 -128 64 -64 -97 48.5 -33 -97 33 -33 -128 33 -33 -128 48.5
+r arb7.r u arb7.s
+mater arb7.r "plastic" 200 120 120 0
+
+in arb8.s arb8 0 -128 0 0 -64 0 0 -64 32 0 -128 32 -64 -128 0 -64 -64 0 -64 -64 32 -64 -128 32
+r arb8.r u arb8.s
+mater arb8.r "plastic {di .9 sp .5}" 200 180 0 0
+
+
+#
+#  Make some ellipsoids
+#
+in sph.s sph -32 0 32 32
+r sph.r u sph.s
+mater sph.r "plastic re=0.2" 255 255 255 0
+
+in ell.s ell -32 0 96  8 0 0  0 16 0  0 0 32
+r ell.r u ell.s
+mater ell.r "plastic {sp .4 di .6}" 255 120 120 0
+
+#
+#  Tori
+#
+in tor.s tor 64 0 9 0 0 1 32 8
+r tor.r u tor.s
+mater tor.r plastic 200 200 255 0
+
+in eto.s eto 64 0 32 0 0 1 12 0 12 24 4
+r eto.r u eto.s
+mater eto.r "plastic {sp .4 di .9}" 155 155 255 0
+
+#
+# Cylinders
+#
+in rcc.s rcc 64 -96 0 0 0 32 32
+r rcc.r u rcc.s
+mater rcc.r plastic 200 200 50 0
+
+in tgc.s tgc 64 -112 32 0 0 24 16 0 0 0 8 0 4 12
+r tgc.r u tgc.s
+mater tgc.r plastic 200 50 200 0
+
+in trc.s trc 80 -90 32 0 0 24 8 4
+r trc.r u trc.s
+mater trc.r plastic 50 200 200 0
+
+in rec.s rec 54 -80 32 0 0 16 0 12 0 8 0 0
+r rec.r u rec.s
+mater rec.r "plastic {sp .4 di .9 re .1}" 250 250 210 0
+
+
+#
+# Hyperboloids
+#
+in ehy.s ehy 64 -192 0    0  0 64   32 0 0   16   128
+r ehy.r u ehy.s
+mater ehy.r plastic 255 192 192 0
+
+in rhc.s rhc 64 -212 0    0 -32 0   0 0 64   32   128
+r rhc.r u rhc.s
+mater rhc.r plastic 255 128 128 0
+
+#
+# Paraboloids
+#
+in epa.s epa  -32 -192 0   0 0 64     32 0 0  16
+r epa.r u epa.s
+mater epa.r plastic 192 192 255 0
+
+in rpc.s rpc  -32 -212 0   0 -32 0    0 0 64  32
+r rpc.r u rpc.s
+mater rpc.r plastic 128 128 255 0
+
+#
+# Extruded bit-map
+#
+db put ebm.s ebm F ebm.bw W 32 N 32 H 32 M {1 0 0 -82  0 1 0 -64   0 0 1 0  0 0 0 0.05}
+r ebm.r u ebm.s
+
+#
+# Displacement map
+#
+db put dsp.s dsp src f name dsp.pix w 33 n 33 sm 0 cut a stom {20 0 0 -1687 0 20 0 -2432 0 0 0.3906250 0 0 0 0 1}
+r dsp.r u dsp.s
+
+#
+# Particle Solid
+#
+
+db put particle.s part V {1280 -960 100} H {0 0 320} r_v 80 r_h 160
+r particle.r u particle.s
+mater particle.r plastic 255 100 100 0
+
+
+in light1.s sph 141.642 12.8892 176.202 10
+r light1.r u light1.s
+mater light1.r "light shadows=1" 255 255 255 0
+
+# Group it all together
+g all.g *.r
+
+# Show it off
+Z
+e all.g
+center 0 -96 0
+set perspective 30
+size 1600
+ae 25 45
+saveview solids.rt
+q
