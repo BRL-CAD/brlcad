@@ -68,8 +68,12 @@ if test ! -f "$PIXDIFF" ; then
     exit 1
 fi
 
-
-rm -f dsp.dat ebm.bw solids.rt solids.g solids.log solids.rt.pix solids.pix.diff solids.mged
+# for test 1:
+rm -f solids-simple.rt solids-simple.g solids-simple.rt.pix solids-simple.pix.diff solids-simple.mged
+rm -f solids-simple.log solids-simple-diff.log solids-simple.rt.log
+# for test 2:
+rm -f dsp.dat ebm.bw solids.rt solids.g solids.rt.pix solids.pix.diff solids.mged
+rm -f solids.log solids-diff.log solids.rt.log
 
 $A2P > dsp.dat << EOF
 01BF01
@@ -804,6 +808,69 @@ EOF
 # Trim 1025 byte sequence down to exactly 1024.
 $GENCOLOR -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1 > solids.log 2>&1
 
+# TEST 1 ==========================================================
+# first check a simple solid
+cat > solids-simple.mged <<EOF
+opendb solids-simple.g y
+
+
+units mm
+in sph.s sph 0 0 0 1000
+r sph.r u sph.s
+mater sph.r "plastic {di .9 sp .5}" 200 180 0 0
+g all *.r
+
+# Show it off
+Z
+e all
+center 0 0 0
+set perspective 30
+size 1000
+ae 25 45
+saveview solids-simple.rt
+q
+EOF
+
+$MGED -c >> solids-simple.log 2>&1 << EOF
+`cat solids-simple.mged`
+EOF
+
+if [ ! -f solids-simple.rt ] ; then
+    echo "mged failed to create solids-simple.rt script"
+    echo "-> solids.sh FAILED (test 1 of 2)"
+    exit 1
+fi
+mv solids-simple.rt solids-simple.orig.rt
+export RT
+sed "s,^rt,$RT -B -P 1 ," < solids-simple.orig.rt > solids-simple.rt
+rm -f solids-simple.orig.rt
+chmod 775 solids-simple.rt
+
+echo 'rendering solids...'
+./solids-simple.rt
+if [ ! -f solids-simple.rt.pix ] ; then
+	echo raytrace failed
+	exit 1
+fi
+if [ ! -f "$PATH_TO_THIS/solids-simplepix.asc" ] ; then
+	echo No reference file for solids-simple.rt.pix
+	exit 1
+fi
+$A2P < "$1/regress/solids-simplepix.asc" > solids-simple_ref.pix
+$PIXDIFF solids-simple.rt.pix solids-simple_ref.pix > solids-simple.pix.diff \
+    2> solids-simple-diff.log
+
+tr , '\012' < solids-simple-diff.log | awk '/many/ {print $0}'
+NUMBER_WRONG=`tr , '\012' < solids-simple-diff.log | awk '/many/ {print $1}'`
+echo "solids-simple.rt.pix $NUMBER_WRONG off by many"
+
+if [ X$NUMBER_WRONG = X0 ] ; then
+    echo "-> solids.sh succeeded (test 1 of 2)"
+else
+    echo "-> solids.sh FAILED (test 1 of 2)"
+fi
+
+# TEST 2 ==========================================================
 cat > solids.mged <<EOF
 opendb solids.g y
 
@@ -949,7 +1016,7 @@ EOF
 
 if [ ! -f solids.rt ] ; then
     echo "mged failed to create solids.rt script"
-    echo "-> solids.sh FAILED"
+    echo "-> solids.sh FAILED (test 2 of 2)"
     exit 1
 fi
 mv solids.rt solids.orig.rt
@@ -977,9 +1044,9 @@ NUMBER_WRONG=`tr , '\012' < solids-diff.log | awk '/many/ {print $1}'`
 echo "solids.rt.pix $NUMBER_WRONG off by many"
 
 if [ X$NUMBER_WRONG = X0 ] ; then
-    echo "-> solids.sh succeeded"
+    echo "-> solids.sh succeeded (test 2 of 2)"
 else
-    echo "-> solids.sh FAILED"
+    echo "-> solids.sh FAILED (test 2 of 2)"
 fi
 
 exit $NUMBER_WRONG
