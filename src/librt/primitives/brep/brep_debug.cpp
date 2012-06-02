@@ -1866,9 +1866,14 @@ int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *
     RT_CK_COMB(old_internal->idb_ptr);
     rt_comb_internal *comb_internal;
     comb_internal = (rt_comb_internal *)old_internal->idb_ptr;
+    int ret;
     if (comb_internal->tree == NULL) {
-	// Empty tree
-	return -1;
+	// Empty tree. Also output an empty comb.
+	ret = wdb_export(wdbp, name, comb_internal, ID_COMBINATION, local2mm);
+	if (ret)
+	    return ret;
+	bu_log("%s is made.\n", name);
+	return 0;
     }
     RT_CK_TREE(comb_internal->tree);
     union tree *oldtree = comb_internal->tree;
@@ -1880,7 +1885,6 @@ int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *
     RT_TREE_INIT(new_internal->tree);
     union tree *newtree = new_internal->tree;
 
-    int ret;
     ret = brep_conversion_tree(wdbp->dbip, oldtree, newtree, suffix, wdbp, local2mm);
     if (ret)
 	return ret;
