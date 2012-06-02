@@ -224,7 +224,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 
     /* Standard sanity checks */
     if (gedp->ged_wdbp->dbip == DBI_NULL)
-	return -1;
+	return GED_ERROR;
 
     GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
     comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -238,7 +238,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     redtmpfile = bu_open_mapped_file(_ged_tmpfil, (char *)NULL);
     if (!redtmpfile) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot open temporary file %s\n", _ged_tmpfil);
-	return -1;
+	return GED_ERROR;
     }
 
     /* Set up the regular expressions */
@@ -251,7 +251,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 
     if (reti) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to compile regular expression.\n");
-     return -1;
+     return GED_ERROR;
     }
 
     /* Need somewhere to hold the results - initially, size according to attribute regex */
@@ -281,7 +281,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	    bu_free(result_locations, "free regex results array\n");
 	    bu_close_mapped_file(redtmpfile);
 
-	    return -1;
+	    return GED_ERROR;
 	}
     } else {
 	bu_vls_printf(gedp->ged_result_str, "cannot locate comb tree, aborting\n");
@@ -293,7 +293,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	bu_free(result_locations, "free regex results array\n");
 	bu_close_mapped_file(redtmpfile);
 
-	return -1;
+	return GED_ERROR;
     }
 
     /* Parsing the file is handled in two stages - attributes and combination tree.  Start with attributes */
@@ -315,7 +315,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	    bu_free(result_locations, "free regex results array\n");
 	    bu_close_mapped_file(redtmpfile);
 
-	    return -1;
+	    return GED_ERROR;
 	} else {
 	    /* matched */
 
@@ -567,14 +567,14 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "build_comb %s: Cannot apply tree\n", dp->d_namep);
 	bu_avs_free(&avs);
-	return -1;
+	return GED_ERROR;
     }
 
     if(db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip))
 	bu_vls_printf(gedp->ged_result_str, "build_comb %s: Failed to update attributes\n", dp->d_namep);
 
     bu_avs_free(&avs);
-    return node_count;
+    return GED_OK;
 }
 
 
@@ -897,7 +897,7 @@ ged_red(struct ged *gedp, int argc, const char **argv)
 	}
 
 	/* reconstitute the new combination */
-	if (build_comb(gedp, tmp_dp, &final_name) < 0) {
+	if ((ret = build_comb(gedp, tmp_dp, &final_name)) != GED_OK) {
 
 	    /* Something went wrong - kill the temporary comb */
 
