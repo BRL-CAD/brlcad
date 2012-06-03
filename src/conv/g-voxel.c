@@ -43,7 +43,7 @@
  */
 
 
-int 
+int
 hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs))
 {
     int xMin, low=-1, voxelNumIn, voxelNumOut, presentVoxel=-1, i, numVoxelX;
@@ -55,41 +55,41 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
     xMin = ap->a_rt_i->mdl_max[0];
     low = 0;
     /**
-     * length of voxels in the X-direction is sizeVoxelX, rtip is structure 
+     * length of voxels in the X-direction is sizeVoxelX, rtip is structure
      * for raytracing
-     */      
+     */
     sizeVoxelX = * (float*) ap->a_uptr;
     rtip = ap->a_rt_i;
-    pp = PartHeadp->pt_forw;	
-    
-    /** 
+    pp = PartHeadp->pt_forw;
+
+    /**
      * The following loop prints the voxels is present in path of ray (1-present)
      */
     while(pp != PartHeadp) {
 
-	/** 
-  	 * hitInp, hitOutp are hit structures to save distances where ray entered 
+	/**
+	 * hitInp, hitOutp are hit structures to save distances where ray entered
 	 * and exited the present partition.
 	 * hitDistIn, hitDistOut are the respective distances from the origin of ray.
- 	 * voxelNumIn, voxelNumOut are the voxel numbers where ray enterd and exited
+	 * voxelNumIn, voxelNumOut are the voxel numbers where ray enterd and exited
 	 * the present partition.
 	 * presentVoxel is the voxel index from which the ray came out of in the last
-	 * partition 	
+	 * partition
 	 */
 	hitInp = pp->pt_inhit;
 	hitOutp = pp->pt_outhit;
-	
-        hitDistIn = hitInp->hit_dist;
+
+	hitDistIn = hitInp->hit_dist;
 	hitDistOut = hitOutp->hit_dist;
 
 	voxelNumIn = (int) (hitDistIn - 1.0) / sizeVoxelX;
 	voxelNumOut = (int) (hitDistOut - 1.0) / sizeVoxelX;
-	
+
 	/**
- 	* If ray does not enter next partition (ie the voxel index from which ray exited)
- 	* in the same voxel index, this means that last voxel of previous partition can be
- 	* evaluated. Also, the intermediate voxels are NOT filled. 
- 	*/
+	* If ray does not enter next partition (ie the voxel index from which ray exited)
+	* in the same voxel index, this means that last voxel of previous partition can be
+	* evaluated. Also, the intermediate voxels are NOT filled.
+	*/
 	if(presentVoxel != voxelNumIn) {
 
 	    if(inDistance / sizeVoxelX >= threshold) {
@@ -97,25 +97,25 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 	    } else {
 		if(presentVoxel!=-1) {
 		    printf("0");
-		}    
+		}
 	    }
 
 	    for(i = 0; i < voxelNumIn - presentVoxel - 1 ; i++) {
 		printf("0");
 	    }
-			
+
 	    presentVoxel = voxelNumIn ;
 	    inDistance = 0.0;
 
 	}
 
 	/**
- 	* If voxel entered and voxel exited are same then nothing can be evaluated till
- 	* we see the next partition too. If not, evaluate entry voxel. Also, all the 
- 	* intermediate voxels are in. 
- 	* inDistance is given the distance covered before 
- 	* exiting the last voxel of the present partition. 
- 	*/
+	* If voxel entered and voxel exited are same then nothing can be evaluated till
+	* we see the next partition too. If not, evaluate entry voxel. Also, all the
+	* intermediate voxels are in.
+	* inDistance is given the distance covered before
+	* exiting the last voxel of the present partition.
+	*/
 
 	if(voxelNumIn == voxelNumOut) {
 	    inDistance += hitDistOut - hitDistIn ;
@@ -127,7 +127,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 	    } else {
 		printf("0");
 	    }
-		
+
 	    for(i = 0; i < voxelNumOut - voxelNumIn -1; i++) {
 		printf("1");
 	    }
@@ -135,7 +135,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 	    presentVoxel = voxelNumOut;
 	    inDistance = hitDistOut - voxelNumOut * sizeVoxelX ;
 	}
-  		
+
 
 	pp = pp->pt_forw;
     }
@@ -145,7 +145,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
     } else {
 	printf("0");
     }
-    
+
    /**
     * voxels after the last partition are not in
     */
@@ -155,10 +155,9 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
     }
 
     printf("\n");
-    return 0;		 	
+    return 0;
 
 }
-
 
 
 /**
@@ -227,14 +226,14 @@ main(int argc, char **argv)
     rt_prep_parallel(rtip, 1);
 
 
-   /* get bounding corners of bounding box of region through which ray is shot*/ 
+   /* get bounding corners of bounding box of region through which ray is shot*/
 
     printf("\nbounding box is this\n");
-     	    
+
     VPRINT("\nmin of bounding rectangular parallelopiped --Pnt\n",rtip->mdl_min);
     VPRINT("\nmax of bounding rectangular parallelopiped --Pnt\n",rtip->mdl_max);
 
-   
+
 /*    printf("\nx value of maximum on the highest corner of parallelopiped is: %f",(rtip->mdl_max)[0]);
     printf("\ny value of maximum on the highest corner of parallelopiped is: %f",(rtip->mdl_max)[1]);
     printf("\nz value of maximum on the highest corner of parallelopiped is: %f",(rtip->mdl_max)[2]);
@@ -243,38 +242,37 @@ main(int argc, char **argv)
     printf("\nz value of minimum on the lowest corner of parallelopiped is: %f",(rtip->mdl_min)[2]);
 */
 
-    
-    
+
     sizeVoxelX = 1.0;
     sizeVoxelY = 1.0;
     sizeVoxelZ = 1.0;
-    
+
 
     /*assume voxels are sizeVoxelX, sizeVoxelY, sizeVoxelZ size in each dimension*/
     numVoxelX = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxelX) + 1  ;
     numVoxelY = (int)(((rtip->mdl_max)[1] - (rtip->mdl_min)[1])/sizeVoxelY) + 1  ;
     numVoxelZ = (int)(((rtip->mdl_max)[2] - (rtip->mdl_min)[2])/sizeVoxelZ) + 1  ;
-    
+
     xMin = (int)((rtip->mdl_min)[0]) ;
     yMin = (int)((rtip->mdl_min)[1]) ;
     zMin = (int)((rtip->mdl_min)[2]) ;
 
     for(i = 0; i < numVoxelZ; i++) {
-	for( j = 0; j < numVoxelY; j++) { 
-    	    printf("Ray number is %d\n", numVoxelY * i + j);
+	for( j = 0; j < numVoxelY; j++) {
+	    printf("Ray number is %d\n", numVoxelY * i + j);
 	    RT_APPLICATION_INIT(&ap);
 	    ap.a_rt_i = rtip;
 	    ap.a_onehit = 0;
-            
+
 	    /*ray is hit through midpoint of the unit sized voxels*/
 	    VSET(ap.a_ray.r_pt, (rtip->mdl_min)[0] - 1.0, yMin + (j + 0.5) * sizeVoxelY, zMin + (i + 0.5) * sizeVoxelZ);
 	    VSET(ap.a_ray.r_dir, 1.0, 0.0, 0.0);
-	    
+
 	    ap.a_hit = hit;
 	    ap.a_miss = miss;
-	    ap.a_uptr = &sizeVoxelX;                
-    
-	    rt_shootray(&ap);    
+	    ap.a_uptr = &sizeVoxelX;
+
+	    rt_shootray(&ap);
 	}
     }
 
