@@ -183,6 +183,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -219,7 +222,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_tor_params,
-	rt_tor_bbox
+	rt_tor_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -256,7 +262,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_tgc_params,
-	rt_tgc_bbox
+	rt_tgc_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -293,7 +302,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_ell_params,
-	rt_ell_bbox
+	rt_ell_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -330,7 +342,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_arb_params,
-	rt_arb_bbox
+	rt_arb_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -367,7 +382,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_ars_params,
-	rt_ars_bbox
+	rt_ars_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -404,7 +422,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_hlf_params,
-	NULL
+	NULL,
+    NULL,
+    NULL,
+    NULL
     },
 
     {
@@ -441,7 +462,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_rec_params,
-	rt_rec_bbox
+	rt_rec_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -478,7 +502,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_pg_params,
-	rt_pg_bbox
+	rt_pg_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -515,7 +542,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_nurb_params,
-	rt_nurb_bbox	
+	rt_nurb_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -552,7 +582,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_sph_params,
-	rt_ell_bbox
+	rt_ell_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -589,7 +622,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	rt_nmg_make,
 	rt_nmg_params,
-	rt_nmg_bbox
+	rt_nmg_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -626,7 +662,10 @@ const struct rt_functab rt_functab[] = {
 	rt_ebm_form,
 	rt_ebm_make,
 	rt_ebm_params,
-	rt_ebm_bbox
+	rt_ebm_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -663,7 +702,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_vol_params,
-	rt_vol_bbox
+	rt_vol_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -700,7 +742,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_arbn_params,
-	rt_arbn_bbox
+	rt_arbn_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -737,7 +782,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_pipe_params,
-	rt_pipe_bbox
+	rt_pipe_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -774,7 +822,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_part_params,
-	rt_part_bbox
+	rt_part_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -811,7 +862,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_rpc_params,
-	rt_rpc_bbox
+	rt_rpc_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -848,7 +902,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_rhc_params,
-	rt_rhc_bbox
+	rt_rhc_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -885,7 +942,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_epa_params,
-	rt_epa_bbox
+	rt_epa_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -922,7 +982,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_ehy_params,
-	rt_ehy_bbox
+	rt_ehy_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -959,7 +1022,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_eto_params,
-	rt_eto_bbox
+	rt_eto_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -996,7 +1062,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_grp_params,
-	NULL
+	NULL,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -1033,7 +1102,10 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-	NULL
+	NULL,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -1070,7 +1142,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_hf_params,
-	rt_hf_bbox
+	rt_hf_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -1107,7 +1182,10 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_dsp_make,
 	rt_dsp_params,
-	rt_dsp_bbox
+	rt_dsp_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -1144,7 +1222,10 @@ const struct rt_functab rt_functab[] = {
 	rt_sketch_form,
 	NULL,
 	rt_sketch_params,
-	NULL
+	NULL,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -1181,7 +1262,10 @@ const struct rt_functab rt_functab[] = {
 	rt_extrude_form,
 	NULL,
 	rt_extrude_params,
-	rt_extrude_bbox
+	rt_extrude_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -1218,7 +1302,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_submodel_params,
-	NULL
+	NULL,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -1255,7 +1342,10 @@ const struct rt_functab rt_functab[] = {
 	rt_cline_form,
 	NULL,
 	rt_cline_params,
-	rt_cline_bbox
+	rt_cline_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -1292,7 +1382,10 @@ const struct rt_functab rt_functab[] = {
 	rt_bot_form,
 	NULL,
 	rt_bot_params,
-	rt_bot_bbox
+	rt_bot_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -1329,7 +1422,10 @@ const struct rt_functab rt_functab[] = {
 	rt_comb_form,
 	rt_comb_make,
 	NULL,
-	NULL
+	NULL,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -1367,8 +1463,11 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
+    NULL,
+    NULL,
+    NULL,
 	NULL,
-	NULL
+	NULL,
     },
 
     {
@@ -1405,7 +1504,10 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_binunif_make,
 	NULL,
-	NULL
+	NULL,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -1443,8 +1545,11 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
+    NULL,
+    NULL,
+    NULL,
 	NULL,
-	NULL
+	NULL,
     },
 
     {
@@ -1481,7 +1586,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_superell_params,
-	rt_superell_bbox
+	rt_superell_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -1518,7 +1626,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_metaball_params,
-	rt_metaball_bbox
+	rt_metaball_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
 #if OBJ_BREP
@@ -1556,7 +1667,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_brep_params,
-	rt_brep_bbox
+	rt_brep_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 #else
     {
@@ -1592,7 +1706,10 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-	NULL
+	NULL,
+    NULL,
+    NULL,
+    NULL;
     },
 #endif
 
@@ -1630,7 +1747,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	rt_hyp_params,
-	rt_hyp_bbox
+	rt_hyp_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -1667,7 +1787,10 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-	NULL
+	NULL,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -1704,7 +1827,10 @@ const struct rt_functab rt_functab[] = {
 	rt_generic_form,
 	NULL,
 	NULL,
-	rt_revolve_bbox
+	rt_revolve_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -1741,7 +1867,10 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-	rt_pnts_bbox
+	rt_pnts_bbox,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -1778,7 +1907,10 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-	NULL
+	NULL,
+    NULL,
+    NULL,
+    NULL,
     },
 
     {
@@ -1815,7 +1947,10 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-	NULL
+	NULL,
+    NULL,
+    NULL,
+    NULL,
     }
 };
 
