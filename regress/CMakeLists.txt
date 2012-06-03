@@ -142,6 +142,7 @@ CMAKEFILES(
   shaderspix.asc
   slave_build.sh
   solids.sh
+  solids-simplepix.asc
   solidspix.asc
   spdi.sh
   spdipix.asc
@@ -149,8 +150,11 @@ CMAKEFILES(
   tgms/cgtest.cg
   tgms/comgeom-tgt-1-v4-documented.cg
   tgms/comgeom-tgt-1-v4.cg
+  tgms/dsp.dat
   tgms/m35.asc.gz
   tgms/m35.cg.gz
+  tgms/solids-simple.mged
+  tgms/solids.mged
   vls_vprintf.sh
   weight.sh
   )
