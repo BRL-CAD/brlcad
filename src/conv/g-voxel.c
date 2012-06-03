@@ -44,14 +44,11 @@
 static int
 hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs))
 {
-    int xMin, low=-1, voxelNumIn, voxelNumOut, presentVoxel=-1, i, numVoxelX;
+    int voxelNumIn, voxelNumOut, presentVoxel=-1, i, numVoxelX;
     struct partition *pp;
     struct hit *hitOutp, *hitInp;
     struct rt_i *rtip;
     float hitDistIn, hitDistOut, sizeVoxelX, inDistance = 0.0, threshold = 0.5;
-
-    xMin = ap->a_rt_i->mdl_max[0];
-    low = 0;
 
     /**
      * length of voxels in the X-direction is sizeVoxelX, rtip is
@@ -183,7 +180,7 @@ main(int argc, char **argv)
     static struct rt_i *rtip;
 
     char title[1024] = {0};
-    int i, j, numVoxelX,  numVoxelY, numVoxelZ, xMin,  yMin, zMin;
+    int i, j, numVoxelX,  numVoxelY, numVoxelZ, yMin, zMin;
     float sizeVoxelX,  sizeVoxelY, sizeVoxelZ;
 
     /* Check for command-line arguments.  Make sure we have at least a
@@ -257,7 +254,7 @@ main(int argc, char **argv)
     numVoxelY = (int)(((rtip->mdl_max)[1] - (rtip->mdl_min)[1])/sizeVoxelY) + 1;
     numVoxelZ = (int)(((rtip->mdl_max)[2] - (rtip->mdl_min)[2])/sizeVoxelZ) + 1;
 
-    xMin = (int)((rtip->mdl_min)[0]);
+    /* X is unused? */
     yMin = (int)((rtip->mdl_min)[1]);
     zMin = (int)((rtip->mdl_min)[2]);
 
