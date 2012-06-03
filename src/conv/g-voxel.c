@@ -100,11 +100,11 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 		}
 	    }
 
-	    for(i = 0; i < voxelNumIn - presentVoxel - 1 ; i++) {
+	    for(i = 0; i < voxelNumIn - presentVoxel - 1; i++) {
 		printf("0");
 	    }
 
-	    presentVoxel = voxelNumIn ;
+	    presentVoxel = voxelNumIn;
 	    inDistance = 0.0;
 
 	}
@@ -118,9 +118,9 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 	*/
 
 	if(voxelNumIn == voxelNumOut) {
-	    inDistance += hitDistOut - hitDistIn ;
+	    inDistance += hitDistOut - hitDistIn;
 	} else {
-	    inDistance += (voxelNumIn + 1) * sizeVoxelX - hitDistOut ;
+	    inDistance += (voxelNumIn + 1) * sizeVoxelX - hitDistOut;
 
 	    if(inDistance / sizeVoxelX >= threshold) {
 		printf("1");
@@ -133,7 +133,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 	    }
 
 	    presentVoxel = voxelNumOut;
-	    inDistance = hitDistOut - voxelNumOut * sizeVoxelX ;
+	    inDistance = hitDistOut - voxelNumOut * sizeVoxelX;
 	}
 
 
@@ -149,7 +149,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
    /**
     * voxels after the last partition are not in
     */
-    numVoxelX = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxelX) + 1  ;
+    numVoxelX = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxelX) + 1;
     for( i = 0; i < numVoxelX - presentVoxel; i++) {
 	printf("0");
     }
@@ -249,13 +249,13 @@ main(int argc, char **argv)
 
 
     /*assume voxels are sizeVoxelX, sizeVoxelY, sizeVoxelZ size in each dimension*/
-    numVoxelX = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxelX) + 1  ;
-    numVoxelY = (int)(((rtip->mdl_max)[1] - (rtip->mdl_min)[1])/sizeVoxelY) + 1  ;
-    numVoxelZ = (int)(((rtip->mdl_max)[2] - (rtip->mdl_min)[2])/sizeVoxelZ) + 1  ;
+    numVoxelX = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxelX) + 1;
+    numVoxelY = (int)(((rtip->mdl_max)[1] - (rtip->mdl_min)[1])/sizeVoxelY) + 1;
+    numVoxelZ = (int)(((rtip->mdl_max)[2] - (rtip->mdl_min)[2])/sizeVoxelZ) + 1;
 
-    xMin = (int)((rtip->mdl_min)[0]) ;
-    yMin = (int)((rtip->mdl_min)[1]) ;
-    zMin = (int)((rtip->mdl_min)[2]) ;
+    xMin = (int)((rtip->mdl_min)[0]);
+    yMin = (int)((rtip->mdl_min)[1]);
+    zMin = (int)((rtip->mdl_min)[2]);
 
     for(i = 0; i < numVoxelZ; i++) {
 	for( j = 0; j < numVoxelY; j++) {
