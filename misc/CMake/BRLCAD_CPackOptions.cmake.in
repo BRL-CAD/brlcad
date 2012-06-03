@@ -43,6 +43,7 @@
 if(CPACK_GENERATOR MATCHES "ZIP" OR CPACK_GENERATOR MATCHES "TGZ" OR CPACK_GENERATOR MATCHES "TBZ2" )
   CMAKE_POLICY(SET CMP0007 OLD)
   if(NOT EXISTS @CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done)
+    file(REMOVE_RECURSE "@CMAKE_BINARY_DIR@/source_archive_contents")
     file(STRINGS @CMAKE_BINARY_DIR@/cmakefiles.cmake source_tree_files)
     file(STRINGS @CMAKE_BINARY_DIR@/cmakedirs.cmake ignored_dirctories)
     string(REPLACE "@BRLCAD_SOURCE_DIR@" "------BRLCAD_SOURCE_DIR----" ignored_directories "${ignored_directories}")
