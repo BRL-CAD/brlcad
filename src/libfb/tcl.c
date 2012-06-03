@@ -287,6 +287,11 @@ fb_configureWindow(FBIO *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
 fb_configureWindow(FBIO *ifp, int width, int height)
 #endif
 {
+    /* unknown/unset framebuffer */
+    if (!ifp || !ifp->if_name) {
+	return;
+    }
+
 #ifdef IF_X
     if (!bu_strncmp(ifp->if_name, X_device_name, strlen(X_device_name))) {
 	X24_configureWindow(ifp, width, height);
