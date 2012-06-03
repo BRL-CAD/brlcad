@@ -64,7 +64,7 @@ if(CPACK_GENERATOR MATCHES "ZIP" OR CPACK_GENERATOR MATCHES "TGZ" OR CPACK_GENER
 	string(REPLACE "@CMAKE_SOURCE_DIR@/" "" relative_name "${source_file}")
 	if(NOT "${relative_name}" MATCHES ".svn/")
 	  string(REPLACE "@CMAKE_SOURCE_DIR@/" "@CMAKE_BINARY_DIR@/source_archive_contents/" outfile "${source_file}")
-	  execute_process(COMMAND "@CMAKE_COMMAND@" -E copy_if_different ${source_file} ${outfile})
+	  execute_process(COMMAND "@CMAKE_COMMAND@" -E copy ${source_file} ${outfile})
 	endif(NOT "${relative_name}" MATCHES ".svn/")
       endif(NOT IS_DIRECTORY ${source_file})
     endforeach(source_file ${source_tree_files})
