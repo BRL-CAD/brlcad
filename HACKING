@@ -345,8 +345,8 @@ and on-going development.
 
 Included below is a sample (not comprehensive) of how some of the
 sources are organized in the source distribution.  For the directories
-under src/, see the src/README file for more details on subdirectories
-not covered here.
+under src/ and doc/docbook, see the provided README file for more
+details on subdirectories and authorship not covered here.
 
   bench/
 	The BRL-CAD Benchmark Suite
