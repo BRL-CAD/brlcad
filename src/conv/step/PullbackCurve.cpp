@@ -1025,11 +1025,6 @@ pullback_samples_from_closed_surface(PBCData* data,
 			has_dir = true;
 			if(has_prev_dir && (j>1)) {
 			    double dot = prev_dir * dir;
-#if 0
-			    double dist = pt.DistanceTo(prev_pt);
-			    double newdelta = delta/2.0;
-#endif
-			    //std::cout << "dot - " << dot << std::endl;
 			    double lastgood=0.0,lastbad=0.0;
 			    ON_2dPoint lastgoodpoint;
 			    ON_2dPoint lastbadpoint;
