@@ -180,7 +180,7 @@ main(int argc, char **argv)
     static struct rt_i *rtip;
 
     char title[1024] = {0};
-    int i, j, numVoxelX,  numVoxelY, numVoxelZ, yMin, zMin;
+    int i, j, numVoxelY, numVoxelZ, yMin, zMin;
     float sizeVoxelX,  sizeVoxelY, sizeVoxelZ;
 
     /* Check for command-line arguments.  Make sure we have at least a
@@ -250,7 +250,7 @@ main(int argc, char **argv)
 
 
     /* assume voxels are sizeVoxelX, sizeVoxelY, sizeVoxelZ size in each dimension */
-    numVoxelX = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxelX) + 1;
+    /* numVoxelX is unused? */
     numVoxelY = (int)(((rtip->mdl_max)[1] - (rtip->mdl_min)[1])/sizeVoxelY) + 1;
     numVoxelZ = (int)(((rtip->mdl_max)[2] - (rtip->mdl_min)[2])/sizeVoxelZ) + 1;
 
