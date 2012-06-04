@@ -458,7 +458,7 @@ set(stepg_HDRS
   )
 CMAKEFILES(${stepg_HDRS})
 
-BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "libwdb;librt;libbu;steputils;stepcore;stepdai;stepeditor;${OPENNURBS_LIBRARY}" NOSTRICTCXX)
+BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "libwdb;librt;libbu;steputils;stepcore;stepdai;stepeditor;${OPENNURBS_LIBRARY}" NOSTRICT)
 
 DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)
 CMAKEFILES(Makefile.am)
