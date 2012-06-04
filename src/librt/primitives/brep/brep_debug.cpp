@@ -1862,7 +1862,6 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 	    break;
 	default:
 	    bu_log("OPCODE NOT IMPLEMENTED: %d\n", oldtree->tr_op);
-	    bu_free(tmpname, "char");
 	    return -1;
     }
     return 0;
