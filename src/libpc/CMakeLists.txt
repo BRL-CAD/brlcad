@@ -1,8 +1,8 @@
 
 # TODO: check existing boost using FindBoost.cmake
-#       and remove blind Include.  Longer term, get
-#       flex/byacc/bsd m4 working and rewrite boost
-#       parsing
+#       and remove blind Include.  Longer term, use
+#	re2c/lemon to rewrite parsing code currently
+#       using boost
 
 # No point in warnings here, we can't do anything about
 # it until the boost issue is handled
