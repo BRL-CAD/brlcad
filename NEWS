@@ -66,7 +66,7 @@ changes made.  See document footer for additional details.
 * improved tab-completion behavior for mged and archer - Sean Morrison
 * fixed pervasive string handling memory leak - Tom Browder
 * improved table output formatting for 'analyze' command - Tom Browder
-* fixed rtweight to handle incorrect lines - Tom Browder
+* improved rtweight portability and density file parsing - Tom Browder
 * fixed crash in anim_cascade animation tool - Nick Reed
 * fixed bug in gif2fb processing non-interlaced images - Sean Morrison
 * fixed crash in coil when using -S and -l options - Cliff Yapp
