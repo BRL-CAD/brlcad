@@ -1941,7 +1941,6 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 	    plot_usage(vls);
 	} else if (argc >= 4) {
 	    const char *part = argv[3];
-	    int index = -1;
 	    int startindex = -1;
 	    int endindex = -1;
 	    int plotres = 100;
@@ -1952,7 +1951,7 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 	    if (argc >= 5) {
 		const char *str = argv[4];
 		if (BU_STR_EQUAL(str, "all")) {
-		    index = startindex = endindex = -1;
+		    startindex = endindex = -1;
 		} else {
 		    const char *dash = strchr(str, '-');
 		    if (dash) {
@@ -1967,7 +1966,6 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 			startindex = atoi(str);
 			endindex = startindex;
 		    }
-		    index = startindex;
 		}
 	    }
 	    if (BU_STR_EQUAL(part, "S")) {

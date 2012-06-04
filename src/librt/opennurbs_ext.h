@@ -549,7 +549,6 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
     ON_3dVector Tan_end = m_trim->TangentAt(Tb);
 
 
-    fastf_t du = fabs(Tan_end.x - Tan_start.x);
     fastf_t dT = Tb - Ta;
     fastf_t guess;
     ON_3dPoint p;
@@ -576,7 +575,6 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
     	    Tan_start = m_trim->TangentAt(Ta);
     	}
     	dT = Tb - Ta;
-    	du = fabs(Tan_end.x - Tan_start.x);
     	dU = B[X] - A[X];
     }
 
@@ -644,7 +642,6 @@ BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
     ON_3dVector Tan_end = m_trim->TangentAt(Tb);
 
 
-    fastf_t dv = fabs(Tan_end.y - Tan_start.y);
     fastf_t dT = Tb - Ta;
     fastf_t guess;
     ON_3dPoint p;
@@ -663,7 +660,6 @@ BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
     	    Tan_end = m_trim->TangentAt(Tb);
     	}
     	dT = Tb - Ta;
-    	dv = fabs(Tan_end.y - Tan_start.y);
     	dV = B[Y] - A[Y];
     }
 
