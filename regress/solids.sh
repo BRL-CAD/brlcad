@@ -82,9 +82,7 @@ $GENCOLOR -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1 > solids.log 2>&1
 # first check a simple TGM
 # generate TGM from script
 TGM="$1/regress/tgms/solids-simple.mged"
-$MGED -c >> solids-simple.log 2>&1 << EOF
-`cat $TGM`
-EOF
+$MGED -c >> solids-simple.log 2>&1 < "$TGM"
 
 if [ ! -f solids-simple.rt ] ; then
     echo "mged failed to create solids-simple.rt script"
@@ -137,9 +135,7 @@ if [ ! -f ebm.bw ] ; then
     echo "-> solids.sh FAILED (test 2 of 2)"
     exit 1
 fi
-$MGED -c >> solids.log 2>&1 << EOF
-`cat $TGM`
-EOF
+$MGED -c >> solids.log 2>&1 < "$TGM"
 
 if [ ! -f solids.rt ] ; then
     echo "mged failed to create solids.rt script"
