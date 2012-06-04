@@ -204,6 +204,7 @@ CLEANFILES = \
 	shaders.txt \
 	shaders_ref.pix \
 	solids-diff.log \
+	solids-simple.log \
 	solids \
 	solids.g \
 	solids.mged \
