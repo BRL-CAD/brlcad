@@ -778,6 +778,7 @@ get_densities_from_file(char *name)
     densities = bu_calloc(128, sizeof(struct density_entry), "density entries");
     num_densities = 128;
 
+    /* a mapped file would make more sense here */
     buf = bu_malloc(sb.st_size+1, "density buffer");
     sret = fread(buf, sb.st_size, 1, fp);
     if (sret != 1)

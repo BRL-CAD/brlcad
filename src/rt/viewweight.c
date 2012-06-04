@@ -78,6 +78,12 @@ int	noverlaps = 0;
 FILE	*densityfp;
 char	*densityfile;
 #define	DENSITY_FILE	".density"
+
+/* FIXME: use a bu_avs instead of a hard-coded limit so that materials
+ * are looked up by the key in the density file, not assuming it's an
+ * integer index into a fixed-size array.  gqa does it better by using
+ * dynamic memory.
+ */
 #define MAXMATLS	32768
 fastf_t	density[MAXMATLS];
 char	*dens_name[MAXMATLS];
