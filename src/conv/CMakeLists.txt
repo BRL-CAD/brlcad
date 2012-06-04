@@ -36,7 +36,7 @@ add_definitions(
 
 BRLCAD_ADDEXEC(3dm-g 3dm/3dm-g.cpp "libwdb;${OPENNURBS_LIBRARY}")
 
-BRLCAD_ADDEXEC(asc2g asc/asc2g.c "libged;libwdb;librt;libbu;libtclcad;${WINSOCK_LIB};${M_LIBRARY}")
+BRLCAD_ADDEXEC(asc2g asc/asc2g.c "libtclcad;libged;libwdb;librt;libbu;${WINSOCK_LIB};${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(asc2pix asc/asc2pix.c libbu)
 
