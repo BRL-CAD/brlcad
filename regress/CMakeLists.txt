@@ -185,6 +185,7 @@ set(regress_outfiles
   core
   density_table.txt
   dsp.dat
+  dsp.pix
   eagleCAD-512x438.pix
   ebm.bw
   exp_air.pl
@@ -349,6 +350,14 @@ set(regress_outfiles
   shaders_ref.pix
   solids
   solids-diff.log
+  solids-simple-diff.log
+  solids-simple.g
+  solids-simple.log
+  solids-simple.pix.diff
+  solids-simple.rt
+  solids-simple.rt.log
+  solids-simple.rt.pix
+  solids-simple_ref.pix
   solids.g
   solids.log
   solids.mged
