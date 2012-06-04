@@ -49,31 +49,6 @@ macro(BOX_PRINT input_string border_string)
 endmacro()
 
 #-----------------------------------------------------------------------------
-include(CheckCCompilerFlag)
-CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
-
-macro(CPP_WARNINGS srcslist)
-  # We need to specify specific flags for c++ files - their warnings are
-  # not usually used to hault the build, althogh BRLCAD_ENABLE_CXX_STRICT
-  # can be set to on to achieve that
-  if(BRLCAD_ENABLE_STRICT AND NOT BRLCAD_ENABLE_CXX_STRICT)
-    foreach(srcfile ${${srcslist}})
-      if(${srcfile} MATCHES "cpp$" OR ${srcfile} MATCHES "cc$")
-	if(BRLCAD_ENABLE_COMPILER_WARNINGS)
-	  if(NOERROR_FLAG)
-	    get_property(previous_flags SOURCE ${srcfile} PROPERTY COMPILE_FLAGS)
-	    set_source_files_properties(${srcfile} COMPILE_FLAGS "-Wno-error ${previous_flags}")
-	  endif(NOERROR_FLAG)
-	else(BRLCAD_ENABLE_COMPILER_WARNINGS)
-	  get_property(previous_flags SOURCE ${srcfile} PROPERTY COMPILE_FLAGS)
-	  set_source_files_properties(${srcfile} COMPILE_FLAGS "-w ${previous_flags}")
-	endif(BRLCAD_ENABLE_COMPILER_WARNINGS)
-      endif(${srcfile} MATCHES "cpp$" OR ${srcfile} MATCHES "cc$")
-    endforeach(srcfile ${${srcslist}})
-  endif(BRLCAD_ENABLE_STRICT AND NOT BRLCAD_ENABLE_CXX_STRICT)
-endmacro(CPP_WARNINGS)
-
-#-----------------------------------------------------------------------------
 # For situations like file copying, where we sometimes need to autogenerate
 # target names, it is important to make sure we can avoid generating absurdly
 # long names.  To do this, we run candidate names through a length filter

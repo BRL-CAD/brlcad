@@ -34,6 +34,12 @@
 #
 ###
 
+# When defining targets, we need to know if we have a no-error flag
+include(CheckCCompilerFlag)
+CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
+
+# Take a target definition and find out what definitions its libraries
+# are using
 macro(GET_TARGET_DEFINES targetname target_libs)
 # Take care of compile flags and definitions
   foreach(libitem ${target_libs})
@@ -48,6 +54,8 @@ macro(GET_TARGET_DEFINES targetname target_libs)
   endforeach(libitem ${target_libs})
 endmacro(GET_TARGET_DEFINES)
 
+# Take a target definition and find out what compilation flags its libraries
+# are using
 macro(GET_TARGET_FLAGS targetname target_libs)
   set(FLAG_LANGUAGES C CXX)
   foreach(lang ${FLAG_LANGUAGES})
@@ -143,7 +151,23 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
     endif(${extraarg} MATCHES "NOSTRICT" AND BRLCAD_ENABLE_STRICT)
   endforeach(extraarg ${ARGN})
 
-  CPP_WARNINGS(srcslist)
+  # C++ can be handled separately if we have mixed sources via the NOSTRICTCXX flag
+  if(${exec_type} STREQUAL "MIXED")
+    if(NOERROR_FLAG)
+      foreach(extraarg ${ARGN})
+	if(${extraarg} MATCHES "NOSTRICTCXX" AND BRLCAD_ENABLE_STRICT)
+	  foreach(srcfile ${srcslist})
+	    get_filename_component(srcfile_ext ${srcfile} EXT)
+	    if(${srcfile_ext} MATCHES ".cxx$" OR ${srcfile_ext} MATCHES ".cpp$" OR ${srcfile_ext} MATCHES ".cc$")
+	      get_property(previous_flags SOURCE ${srcfile} PROPERTY COMPILE_FLAGS)
+	      set_source_files_properties(${srcfile} COMPILE_FLAGS "-Wno-error ${previous_flags}")
+	    endif()
+	  endforeach(srcfile ${srcslist})
+	endif(${extraarg} MATCHES "NOSTRICTCXX" AND BRLCAD_ENABLE_STRICT)
+      endforeach(extraarg ${ARGN})
+    endif(NOERROR_FLAG)
+  endif(${exec_type} STREQUAL "MIXED")
+
 endmacro(BRLCAD_ADDEXEC execname srcslist libslist)
 
 
@@ -283,7 +307,24 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   set_property(GLOBAL PROPERTY ${libname}_DEFINES "${${libname}_DEFINES}")
 
   mark_as_advanced(BRLCAD_LIBS)
-  CPP_WARNINGS(srcslist)
+
+  # C++ can be handled separately if we have mixed sources via the NOSTRICTCXX flag
+  if(${lib_type} STREQUAL "MIXED")
+    if(NOERROR_FLAG)
+      foreach(extraarg ${ARGN})
+	if(${extraarg} MATCHES "NOSTRICTCXX" AND BRLCAD_ENABLE_STRICT)
+	  foreach(srcfile ${srcslist})
+	    get_filename_component(srcfile_ext ${srcfile} EXT)
+	    if(${srcfile_ext} MATCHES ".cxx$" OR ${srcfile_ext} MATCHES ".cpp$" OR ${srcfile_ext} MATCHES ".cc$")
+	      get_property(previous_flags SOURCE ${srcfile} PROPERTY COMPILE_FLAGS)
+	      set_source_files_properties(${srcfile} COMPILE_FLAGS "-Wno-error ${previous_flags}")
+	    endif()
+	  endforeach(srcfile ${srcslist})
+	endif(${extraarg} MATCHES "NOSTRICTCXX" AND BRLCAD_ENABLE_STRICT)
+      endforeach(extraarg ${ARGN})
+    endif(NOERROR_FLAG)
+  endif(${lib_type} STREQUAL "MIXED")
+
 endmacro(BRLCAD_ADDLIB libname srcslist libslist)
 
 #-----------------------------------------------------------------------------
