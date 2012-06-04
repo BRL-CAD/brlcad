@@ -73,7 +73,7 @@ changes made.  See document footer for additional details.
 * fixed mged 'make_pnts' command resource contention bug - Nick Reed
 * fixed nirt memory leak and scriptfile off-by-one bug - Sean Morrison
 * d2-c now handles the imaginary part correctly - Erik Greenwald
-* fixed rt* crash when output file cannot be created - Erik Greenwald
+* fixed raytracer crash if output file creation fails - Erik Greenwald
 * restored mged BoT editing interface functionality - Tom Browder
 * fixed mged 'solids' and 'regions' command crashes - Tom Browder
 * fixed orientation bug in mged 'ypr' rotation command - Nick Reed
