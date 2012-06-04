@@ -58,7 +58,7 @@ void RegionList::create(rt_wdb* wdbp)
 	BU_LIST_INIT(&regionContent.l);
 	mk_addmember(it->second.name().c_str(), &regionContent.l, 0, WMOP_UNION);
 
-	int id = toValue(it->first.c_str());
+	int id = (int)toValue(it->first.c_str());
 
 	mk_lrcomb(wdbp,
 		  it->first.c_str(),
