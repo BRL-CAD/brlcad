@@ -18,6 +18,13 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* something wrong with brep/nurbs subdivision spatial partitioning
+  causing inline failure in BANode<ON_BoundingBox>::addChild().
+  disable NOSTRICTCXX strict flag on librt with Release mode
+  compilation to diagnose.  need to make sure class composition and
+  data members are correct and, iff correct, expand inline-unit-growth
+  to accommodate.
+
 * make sure mged's sketch editor works (particularly for circles)
 
 * bump library versions to 20.  been 19 for way too long, not
