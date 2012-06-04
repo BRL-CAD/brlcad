@@ -47,7 +47,12 @@ static int preview_tree_walk_needed;
 static int draw_eye_path;
 static char *image_name = NULL;
 
-#define MAXARGS 9000 /* restore locally until preview command is sorted out */
+
+/* FIXME: this shouldn't exist as a static array and doesn't even seem
+ * to be necessary.  gd_rt_cmd points into it as an argv, but the
+ * elements can probably be dup'd strings and released by the caller.
+ */
+#define MAXARGS 9000
 static char rt_cmd_storage[MAXARGS*9];
 
 
