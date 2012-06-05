@@ -17,7 +17,7 @@ set(rawg_SRCS
   raw-g.cpp
   RegionList.cpp
   )
-BRLCAD_ADDEXEC(raw-g "${rawg_SRCS}" "libwdb;librt;libbu")
+BRLCAD_ADDEXEC(raw-g "${rawg_SRCS}" "libwdb;librt;libbu" NOSTRICT)
 
 set(RAW_IGNORE_FILES
   Bot.h
