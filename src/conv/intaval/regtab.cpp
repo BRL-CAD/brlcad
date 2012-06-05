@@ -38,7 +38,7 @@
 
 static std::map<std::string, Region*> regionTable;
 
-Region::Region(int nr, char* description)
+Region::Region(int nr, std::string description)
   : compnr(nr), material(0), desc(description), addCreated(false), excludeCreated(false)
 {
     WMEMBER_INIT(&head);

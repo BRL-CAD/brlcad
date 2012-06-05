@@ -67,7 +67,7 @@ void createRegions
 class Region {
 public:
 
-    Region(int nr = 0, char* description = NULL);
+    Region(int nr = 0, std::string description = std::string(""));
 
     ~Region() {
 	mk_freemembers(&head.l);
