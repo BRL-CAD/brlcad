@@ -56,21 +56,20 @@ N350 ( August 31, 1993 ) of ISO 10303 TC184/SC4/WG7.
 #define TYPEtd_name(t)  TypeDescriptorName (t)
 
 typedef  struct file_holder  {
-    FILE * inc;     /*  include file  */
-    FILE * lib;     /*  library file  */
-    FILE * incall;  /*  include file for collecting all include files  */
-    FILE * initall; /*  for registering all entities from all schemas  */
-    FILE * code;
-    FILE * init;    /*  contains function to initialize program
-                to use schema's entities */
-    FILE * create;      /*  DAR - added - to create all schema & ent descrip-
-                tors.  In multiple interrelated schemas, must be
-                done before attribute descriptors and sub-super
-                links created. */
-    FILE * classes;     /*  DAR - added - a new .h file to contain declara-
-                tions of all the classes, so that all the .h files
-                can refer any of the entity classes.  Nec. if ent1
-                of schemaA has attribute ent2 from schemaB. */
+    FILE * inc;                ///<  include file
+    FILE * lib;                ///<  library file
+    FILE * incall;             ///<  include file for collecting all include files
+    FILE * initall;            ///<  for registering all entities from all schemas
+    FILE * init;               ///<  contains function to initialize program to use schema's entities
+    FILE * create;             /**<  DAR - added - to create all schema & ent descriptors.  In multiple
+                                *    interrelated schemas, must be done before attribute descriptors and
+                                *    sub-super links created.
+                                */
+    FILE * classes;            /**<  DAR - added - a new .h file to contain declarations of all the
+                                *    classes, so that all the .h files can refer any of the entity classes.
+                                *    Nec. if ent1 of schemaA has attribute ent2 from schemaB.
+                                */
+    FILE * names;               ///< MAP Nov 2011 - header with namespace for entity and attr descriptors
 }  File_holder, FILES;
 
 typedef struct EntityTag_ * EntityTag;

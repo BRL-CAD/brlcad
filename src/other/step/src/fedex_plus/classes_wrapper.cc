@@ -110,14 +110,15 @@ void print_file_header( Express express, FILES * files ) {
  ******************************************************************/
 
 /*ARGSUSED*/
-void
-print_file_trailer( Express express, FILES * files ) {
+void print_file_trailer( Express express, FILES * files ) {
     FILEclose( files->incall );
     FILEclose( files->initall );
     fprintf( files->create, "}\n\n" );
     FILEclose( files->create );
     fprintf( files->classes, "\n" );
     FILEclose( files->classes );
+    fprintf( files->names, "\n}\n" );
+    FILEclose( files->names );
 }
 
 /******************************************************************
@@ -136,8 +137,7 @@ print_file_trailer( Express express, FILES * files ) {
  ** organization of the schemas in the input Express
  ******************************************************************/
 
-void
-SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
+void SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
             ComplexCollect * col, int cnt ) {
     Linked_List list = SCOPEget_entities_superclass_order( scope );
     DictionaryEntry de;
@@ -152,8 +152,7 @@ SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
         ** during multiple passes.  This includes Sdaiclasses.h, SdaiAll.cc,
         ** and the Sdaixxx.init.cc files. */
 
-        fprintf( files -> lib, "\nSchema *%s%s =0;\n",
-                 SCHEMA_PREFIX, SCHEMAget_name( schema ) );
+        fprintf( files -> lib, "\nSchema * %s::schema = 0;\n", SCHEMAget_name( schema ) );
 
         /* Do \'new\'s for types descriptors (in SdaiAll.cc (files->create)),
            and the externs typedefs, and incomplete descriptors (in Sdai-
@@ -163,6 +162,10 @@ SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
         SCOPEdo_types( scope, t, de )
         TYPEprint_new( t, files->create, schema );
         TYPEprint_typedefs( t, files->classes );
+
+        //print in namespace. Some logic copied from TypeDescriptorName()
+        fprintf( files->names, "    extern %s * %s%s;\n", GetTypeDescriptorName( t ), TYPEprefix( t ), TYPEget_name( t ) );
+
         SCOPEod;
 
         /* do \'new\'s for entity descriptors  */
@@ -303,7 +306,7 @@ SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
     fprintf( files -> lib, "\n/*\t**************  SCOPE  \t*/\n" );
 
     LISTdo( list, s, Schema )
-    sprintf( nm, "%s%s", SCHEMA_PREFIX, SCHEMAget_name( s ) );
+    sprintf( nm, "%s::schema", SCHEMAget_name( s ) );
     fprintf( files->inc, "//	\t include definitions for %s \n", nm );
     fprintf( files->inc, "#include <%s.h> \n", nm );
     LISTod;
@@ -324,9 +327,8 @@ SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
  ** Status:
  ******************************************************************/
 
-void
-SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
-             int suffix ) {
+void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
+                  int suffix ) {
     char schnm[MAX_LEN], sufnm[MAX_LEN], fnm[MAX_LEN], *np;
     /* sufnm = schema name + suffix */
     FILE * libfile,
@@ -345,7 +347,7 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
     /*  return if failure           */
     /*  1.  header file             */
     sprintf( schnm, "%s%s", SCHEMA_FILE_PREFIX,
-             StrToUpper( SCHEMAget_name( schema ) ) );
+             StrToUpper( SCHEMAget_name( schema ) ) ); //TODO change file names to CamelCase?
     if( suffix == 0 ) {
         sprintf( sufnm, "%s", schnm );
     } else {
@@ -357,10 +359,7 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
         return;
     }
 
-    fprintf( incfile,
-             "#ifndef  SCHEMA_H\n"
-             "#include <schema.h>\n"
-             "#endif\n" );
+    fprintf( incfile, "#include \"schema.h\"\n" );
 
     np = fnm + strlen( fnm ) - 1; /*  point to end of constant part of string  */
 
@@ -369,16 +368,13 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
     if( !( libfile = ( files -> lib ) = FILEcreate( fnm ) ) ) {
         return;
     }
+//TODO: Looks like this switches between 'schema.h' and a non-generic name. What is that name,
+//and how do we fully enable this feature (i.e. how to write the file with different name)?
 #ifdef SCHEMA_HANDLING
     sprintf( np, "h" );
-    fprintf( libfile, "#ifndef  %s\n", StrToConstant( sufnm ) );
     fprintf( libfile, "#include <%s.h> \n", sufnm );
-    fprintf( libfile, "#endif" );
 #else
-    fprintf( libfile,
-             "#ifndef  SCHEMA_H \n"
-             "#include <schema.h> \n"
-             "#endif \n" );
+    fprintf( libfile, "#include \"schema.h\"\n" );
 #endif
     fprintf( libfile,
              "\n#ifdef  SCL_LOGGING \n"
@@ -387,7 +383,20 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
              "#define SCLLOGFILE \"scl.log\"\n"
              "#endif \n" );
 
-    /*  3.  source code to initialize entity registry   */
+    fprintf( libfile, "\n#include \"%s.h\"\n", schnm );
+
+    // 3. header for namespace to contain all formerly-global variables
+    sprintf( fnm, "%sNames.h", schnm );
+    if( !( files->names = FILEcreate( fnm ) ) ) {
+        return;
+    }
+    fprintf( libfile, "#include \"%sNames.h\"\n", schnm );
+    fprintf( files->names, "\n// In the fedex_plus source code, this file is referred to as files->names.\n// This line printed at %s:%d (one of two possible locations).\n\n", __FILE__, __LINE__ );
+    fprintf( files->names, "//this file contains a namespace for all formerly-global variables\n\n" );
+    fprintf( files->names, "namespace %s {\n\n", SCHEMAget_name( schema ) );
+    fprintf( files->names, "    extern Schema * schema;\n\n" );
+
+    /*  4.  source code to initialize entity registry   */
     /*  prints header of file for input function    */
 
     if( suffix <= 1 ) {
@@ -413,21 +422,17 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
         fprintf( initfile, "#include <Registry.h>\n" );
 
         fprintf( initfile, "void \n%sInit (Registry& reg)\n{\n", schnm );
+
         fprintf( createall, "\t// Schema:  %s\n", schnm );
-        fprintf( createall,
-                 "\t%s%s = new Schema(\"%s\");\n",
-                 SCHEMA_PREFIX, SCHEMAget_name( schema ),
-                 PrettyTmpName( SCHEMAget_name( schema ) ) );
+        fprintf( createall, "    %s::schema = new Schema(\"%s\");\n",
+                 SCHEMAget_name( schema ), PrettyTmpName( SCHEMAget_name( schema ) ) );
 
         /* Add the SdaiModel_contents_<schema_name> class constructor to the
            schema descriptor create function for it */
-        fprintf( createall,
-                 "\t%s%s->AssignModelContentsCreator(\n\t\t\t"
-                 "(ModelContentsCreator) create_SdaiModel_contents_%s);\n",
-                 SCHEMA_PREFIX, SCHEMAget_name( schema ), SCHEMAget_name( schema ) );
+        fprintf( createall, "    %s::schema->AssignModelContentsCreator( (ModelContentsCreator) create_SdaiModel_contents_%s);\n",
+                 SCHEMAget_name( schema ), SCHEMAget_name( schema ) );
 
-        fprintf( createall, "\treg.AddSchema (*%s%s);\n",
-                 SCHEMA_PREFIX, SCHEMAget_name( schema ) );
+        fprintf( createall, "    reg.AddSchema (*%s::schema);\n", SCHEMAget_name( schema ) );
         /**************/
         /* add global RULEs to Schema dictionary entry */
         DICTdo_type_init( schema->symbol_table, &de, OBJ_RULE );
@@ -442,13 +447,11 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
             }
 
             fprintf( createall,
-                     "\tgr = new Global_rule(\"%s\",%s%s,\"%s\");\n",
+                     "    gr = new Global_rule(\"%s\",%s::schema,\"%s\");\n",
                      r->symbol.name,
-                     SCHEMA_PREFIX, SCHEMAget_name( schema ),
+                     SCHEMAget_name( schema ),
                      format_for_stringout( RULEto_string( r ), tmpstr ) );
-            fprintf( createall,
-                     "\t%s%s->AddGlobal_rule(gr);\n",
-                     SCHEMA_PREFIX, SCHEMAget_name( schema ) );
+            fprintf( createall, "    %s::schema->AddGlobal_rule(gr);\n", SCHEMAget_name( schema ) );
             fprintf( createall, "/*\n%s\n*/\n", RULEto_string( r ) );
         }
         /**************/
@@ -464,9 +467,8 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
             }
 
             fprintf( createall,
-                     "#ifndef MSWIN\n\t%s%s->AddFunction(\"%s\");\n#endif\n",
-                     SCHEMA_PREFIX, SCHEMAget_name( schema ),
-                     format_for_stringout( FUNCto_string( f ), tmpstr ) );
+                     "#ifndef MSWIN\n    %s::schema->AddFunction(\"%s\");\n#endif\n",
+                     SCHEMAget_name( schema ), format_for_stringout( FUNCto_string( f ), tmpstr ) );
             fprintf( createall, "/*\n%s\n*/\n", FUNCto_string( f ) );
         }
 
@@ -481,9 +483,8 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
                 tmpstr = ( char * )malloc( sizeof( char ) * tmpstr_size );
             }
             fprintf( createall,
-                     "#ifndef MSWIN\n\t%s%s->AddProcedure(\"%s\");\n#endif\n",
-                     SCHEMA_PREFIX, SCHEMAget_name( schema ),
-                     format_for_stringout( PROCto_string( p ), tmpstr ) );
+                     "#ifndef MSWIN\n    %s::schema->AddProcedure(\"%s\");\n#endif\n",
+                     SCHEMAget_name( schema ), format_for_stringout( PROCto_string( p ), tmpstr ) );
             fprintf( createall, "/*\n%s\n*/\n", PROCto_string( p ) );
         }
         if( tmpstr_size > 0 ) {
@@ -491,9 +492,7 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
         }
 
         fprintf( files->classes, "\n// Schema:  %s", schnm );
-        fprintf( files->classes,
-                 "\nextern Schema *  %s%s;\n",
-                 SCHEMA_PREFIX, SCHEMAget_name( schema ) );
+        fprintf( files->classes, "\n#include \"%sNames.h\"\n", schnm );
     } else {
         /* Just reopen the .init.cc (in append mode): */
         sprintf( fnm, "%s.init.cc", schnm );
@@ -503,6 +502,7 @@ SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol,
     /**********  record in files relating to entire input   ***********/
 
     /*  add to schema's include and initialization file */
+    fprintf( schemafile, "#include \"%sNames.h\"\n", schnm );
     fprintf( schemafile, "#include <%s.h> \n", sufnm );
     if( schema->search_id == PROCESSED ) {
         fprintf( schemafile, "extern void %sInit (Registry & r);\n", schnm );
@@ -619,7 +619,17 @@ EXPRESSPrint( Express express, ComplexCollect & col, FILES * files ) {
     }
     fprintf( libfile, "#include <%s.h> n", schnm );
 
-    /*  3.  source code to initialize entity registry   */
+    // 3. header for namespace to contain all formerly-global variables
+    sprintf( fnm, "%sNames.h", schnm );
+    if( !( files->names = FILEcreate( fnm ) ) ) {
+        return;
+    }
+    fprintf( libfile, "#include \"%sNames.h\"\n", schnm );
+    fprintf( files->names, "\n// In the fedex_plus source code, this file is referred to as files->names.\n// This line printed at %s:%d (one of two possible locations).\n\n", __FILE__, __LINE__ );
+    fprintf( files->names, "//this file contains a namespace for all formerly-global variables\n\n" );
+    //the next line in this file depends on the schema name, so printing continues in the while loop ~25 lines below
+
+    /*  4.  source code to initialize entity registry   */
     /*  prints header of file for input function    */
 
     sprintf( np, "init.cc" );
@@ -632,6 +642,7 @@ EXPRESSPrint( Express express, ComplexCollect & col, FILES * files ) {
     /**********  record in files relating to entire input   ***********/
 
     /*  add to schema's include and initialization file */
+    fprintf( schemafile, "#include \"%sNames.h\"\n", schnm );
     fprintf( schemafile, "#include <%s.h>\n\n", schnm );
     fprintf( schemafile, "extern void %sInit (Registry & r);\n", schnm );
     fprintf( schemainit, "\t extern void %sInit (Registry & r);\n", schnm );
@@ -639,7 +650,15 @@ EXPRESSPrint( Express express, ComplexCollect & col, FILES * files ) {
 
     /**********  do all schemas ***********/
     DICTdo_init( express->symbol_table, &de );
+    bool first = true;
     while( 0 != ( schema = ( Scope )DICTdo( &de ) ) ) {
+        if( !first ) {
+            fprintf( files->names, "} //namespace %s\n", SCHEMAget_name( schema ) );
+        }
+        first = false;
+        fprintf( files->names, "namespace %s {\n\n", SCHEMAget_name( schema ) );
+        fprintf( files->names, "    extern Schema * schema;\n\n" );
+
         SCOPEPrint( schema, files, schema, express, &col, 0 );
     }
 

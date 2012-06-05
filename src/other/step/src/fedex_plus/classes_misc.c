@@ -573,12 +573,11 @@ FundamentalType( const Type t, int report_reftypes ) {
     }
 }
 
-/* this actually gets you the name of the variable that will be generated to
+/** this actually gets you the name of the variable that will be generated to
    be a TypeDescriptor or subtype of TypeDescriptor to represent Type t in
    the dictionary. */
 
-const char *
-TypeDescriptorName( Type t ) {
+const char * TypeDescriptorName( Type t ) {
     static char b [BUFSIZ];
     Schema parent = t->superscope;
     /* NOTE - I corrected a prev bug here in which the *current* schema was
@@ -593,7 +592,7 @@ TypeDescriptorName( Type t ) {
         ** by following through the entity they reference, as above. */
     }
 
-    sprintf( b, "%s%s%s", SCHEMAget_name( parent ), TYPEprefix( t ),
+    sprintf( b, "%s::%s%s", SCHEMAget_name( parent ), TYPEprefix( t ),
              TYPEget_name( t ) );
     return b;
 }
