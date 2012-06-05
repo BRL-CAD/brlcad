@@ -65,6 +65,11 @@ static std::vector<std::string> readLine(std::istream& is)
     return ret;
 }
 
+void getPoint(point_t &point, const char *x, const char *y, const char *z) {
+    point[X] = toValue(x);
+    point[Y] = toValue(y);
+    point[Z] = toValue(z);
+}
 
 int main(int   argc,
 	 char* argv[])
@@ -123,19 +128,13 @@ int main(int   argc,
 		while (is && (triangleLine.size() == 9)) {
 		    point_t point;
 
-		    point[X] = toValue(triangleLine[0].c_str());
-		    point[Y] = toValue(triangleLine[1].c_str());
-		    point[Z] = toValue(triangleLine[2].c_str());
+		    getPoint(point, triangleLine[0].c_str(), triangleLine[1].c_str(), triangleLine[2].c_str());
 		    int a = bot.addPoint(point);
 
-		    point[X] = toValue(triangleLine[3].c_str());
-		    point[Y] = toValue(triangleLine[4].c_str());
-		    point[Z] = toValue(triangleLine[5].c_str());
+		    getPoint(point, triangleLine[3].c_str(), triangleLine[4].c_str(), triangleLine[5].c_str());
 		    int b = bot.addPoint(point);
 
-		    point[X] = toValue(triangleLine[6].c_str());
-		    point[Y] = toValue(triangleLine[7].c_str());
-		    point[Z] = toValue(triangleLine[8].c_str());
+		    getPoint(point, triangleLine[6].c_str(), triangleLine[7].c_str(), triangleLine[8].c_str());
 		    int c = bot.addPoint(point);
 
 		    bot.addTriangle(a, b, c);
