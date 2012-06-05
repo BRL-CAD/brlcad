@@ -279,7 +279,7 @@ nmg_lu_to_vlist(struct bu_list *vhead, const struct loopuse *lu, int poly_marker
 	    RT_ADD_VLIST(vhead, centroid, BN_VLIST_LINE_MOVE);
 	    VJOIN1(tip, centroid, f, normal);
 	    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
-	  } 
+	  }
 	}
 
 	/* For any vertexuse attributes with normals, draw them too */

@@ -68,9 +68,9 @@ rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 
     if (magsq_a < tol->dist_sq || magsq_b < tol->dist_sq || magsq_c < tol->dist_sq) {
     bu_log("rt_ell_brep():  ell zero length A(%g), B(%g), or C(%g) vector\n",
-           magsq_a, magsq_b, magsq_c);
+	   magsq_a, magsq_b, magsq_c);
     }
-    
+
     f = 1.0/sqrt(magsq_a);
     VSCALE(Au, eip->a, f);
     f = 1.0/sqrt(magsq_b);

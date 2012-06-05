@@ -172,7 +172,7 @@ rt_eto_bbox(struct rt_db_internal *ip, point_t *min, point_t *max){
     VMOVE(Nu, tip->eto_N);
     VUNITIZE(Nu);		/* z axis of coord sys */
     eto_rc = MAGNITUDE(tip->eto_C);
- 
+
     /* X */
     VSET(P, 1.0, 0, 0);	/* bounding plane normal */
     VCROSS(w1, Nu, P);	/* for sin(angle N P) */

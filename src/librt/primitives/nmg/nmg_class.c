@@ -455,10 +455,10 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
 	    nmg_class_pt_e(closest, pt, eu, tol);
 	    /* If point lies ON edge, we are done */
 	    if (closest->class == NMG_CLASS_AonBanti) {
-                break;
-            } else if (closest->class == NMG_CLASS_AonBshared) {
+		break;
+	    } else if (closest->class == NMG_CLASS_AonBshared) {
 		bu_bomb("nmg_class_pt_l(): nmg_class_pt_e returned AonBshared but can only return AonBanti\n");
-            }
+	    }
 	}
     } else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 	register struct vertexuse *vu;
@@ -972,9 +972,9 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struc
      * of the edge are outside the shell.
      */
     if (!V3RPP_OVERLAP_TOL(e_min_pt, e_max_pt, s->sa_p->min_pt, s->sa_p->max_pt, tol->dist)) {
-        NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
-        NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->vu_p->v_p);
-        NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->eumate_p->vu_p->v_p);
+	NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
+	NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->vu_p->v_p);
+	NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->eumate_p->vu_p->v_p);
 	status = OUTSIDE;
 	goto out;
     }
@@ -1095,15 +1095,15 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struc
 		    reason = "point near EU end classification (both verts ON)";
 		    break;
 	    }
-            /* 3rd parameter of '0' allows a return of AonBanti
-             * instead of only AinB or AoutB.
-             */
+	    /* 3rd parameter of '0' allows a return of AonBanti
+	     * instead of only AinB or AoutB.
+	     */
 	    class = nmg_class_pt_s(pt, s, 0, tol);
 	    try++;
 	}
 
 	if (class == NMG_CLASS_AonBshared) {
-	    bu_bomb("class_eu_vs_s(): function nmg_class_pt_s returned AonBshared when it can only return AonBanti\n"); 
+	    bu_bomb("class_eu_vs_s(): function nmg_class_pt_s returned AonBshared when it can only return AonBanti\n");
 	}
 	if (class == NMG_CLASS_AoutB) {
 	    NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
@@ -1762,14 +1762,14 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, char **classlist, const struc
 	/* now check if eu's match in both LU's */
 	eu1 = BU_LIST_FIRST(edgeuse, &lu->down_hd);
 	if (eu1->vu_p->v_p == eu->vu_p->v_p) {
-            /* true when eu1-lu and eu-lu are opposite i.e. cw -vs- ccw */
+	    /* true when eu1-lu and eu-lu are opposite i.e. cw -vs- ccw */
 	    eu2 = eu;
 	} else if (eu1->vu_p->v_p == eu->eumate_p->vu_p->v_p) {
-            /* true when eu1-lu and eu-lu are same i.e. cw or ccw */
+	    /* true when eu1-lu and eu-lu are same i.e. cw or ccw */
 	    eu2 = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
 	} else {
 	    eu2 = BU_LIST_PPREV_CIRC(edgeuse, &eu->l);
-        }
+	}
 
 	found_match = 1;
 	do {
@@ -1954,31 +1954,31 @@ class_fu_vs_s(struct faceuse *fu, struct shell *s, char **classlist, const struc
     NMG_CK_SHELL(s);
 
     if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-        NMG_GET_FU_PLANE(n, fu);
+	NMG_GET_FU_PLANE(n, fu);
 	PLPRINT("\nclass_fu_vs_s plane equation:", n);
     }
 
     in = out = on = 0;
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-        NMG_CK_LOOPUSE(lu);
-        class = class_lu_vs_s(lu, s, classlist, tol);
-        switch (class) {
-            case INSIDE	        : ++in;
-                break;
-            case OUTSIDE        : ++out;
-                break;
-            case ON_SURF        : ++on;
-                break;
-            default             : bu_bomb("class_fu_vs_s: bad class for faceuse\n");
-        }
+	NMG_CK_LOOPUSE(lu);
+	class = class_lu_vs_s(lu, s, classlist, tol);
+	switch (class) {
+	    case INSIDE	        : ++in;
+		break;
+	    case OUTSIDE        : ++out;
+		break;
+	    case ON_SURF        : ++on;
+		break;
+	    default             : bu_bomb("class_fu_vs_s: bad class for faceuse\n");
+	}
     }
 
     if (in == 0 && out == 0 && on > 0) {
-        NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], fu->f_p);
+	NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared], fu->f_p);
     } else if (in == 0 && out > 0 && on == 0) {
-        NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], fu->f_p);
+	NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], fu->f_p);
     } else {
-        NMG_INDEX_SET(classlist[NMG_CLASS_AinB], fu->f_p);
+	NMG_INDEX_SET(classlist[NMG_CLASS_AinB], fu->f_p);
     }
 
     if (rt_g.NMG_debug & DEBUG_CLASSIFY)
@@ -2647,4 +2647,3 @@ nmg_classify_s_vs_s(struct shell *s2, struct shell *s, const struct bn_tol *tol)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

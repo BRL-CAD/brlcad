@@ -2254,11 +2254,11 @@ bool SurfaceTree::isFlatU(ON_Plane *frames)
     // check surface normals in U direction
 	double Ndot = 1.0;
     if ((Ndot=frames[0].zaxis * frames[1].zaxis) < BREP_SURFACE_FLATNESS) {
-    	return false;
+	return false;
     } else if ((Ndot=Ndot * frames[2].zaxis * frames[3].zaxis) < BREP_SURFACE_FLATNESS) {
-    	return false;
+	return false;
     } else if ((Ndot=Ndot * frames[5].zaxis * frames[7].zaxis) < BREP_SURFACE_FLATNESS) {
-    	return false;
+	return false;
     } else if ((Ndot=Ndot * frames[6].zaxis * frames[8].zaxis) < BREP_SURFACE_FLATNESS) {
 	return false;
     }
@@ -2266,11 +2266,11 @@ bool SurfaceTree::isFlatU(ON_Plane *frames)
     // check for U twist within plane
     double Xdot = 1.0;
     if ((Xdot=frames[0].xaxis * frames[1].xaxis) < BREP_SURFACE_FLATNESS) {
-    	return false;
+	return false;
     } else if ((Xdot=Xdot * frames[2].xaxis * frames[3].xaxis) < BREP_SURFACE_FLATNESS) {
-    	return false;
+	return false;
     } else if ((Xdot=Xdot * frames[5].xaxis * frames[7].xaxis) < BREP_SURFACE_FLATNESS) {
-    	return false;
+	return false;
     } else if ((Xdot=Xdot * frames[6].xaxis * frames[8].xaxis) < BREP_SURFACE_FLATNESS) {
 	return false;
     }
@@ -2284,11 +2284,11 @@ bool SurfaceTree::isFlatV(ON_Plane *frames)
     // check surface normals in V direction
 	double Ndot = 1.0;
     if ((Ndot=frames[0].zaxis * frames[3].zaxis) < BREP_SURFACE_FLATNESS) {
-    	return false;
+	return false;
     } else if ((Ndot=Ndot * frames[1].zaxis * frames[2].zaxis) < BREP_SURFACE_FLATNESS) {
-    	return false;
+	return false;
     } else if ((Ndot=Ndot * frames[5].zaxis * frames[6].zaxis) < BREP_SURFACE_FLATNESS) {
-    	return false;
+	return false;
     } else if ((Ndot=Ndot * frames[7].zaxis * frames[8].zaxis) < BREP_SURFACE_FLATNESS) {
 	return false;
     }
@@ -2296,11 +2296,11 @@ bool SurfaceTree::isFlatV(ON_Plane *frames)
     // check for V twist within plane
     double Xdot = 1.0;
     if ((Xdot=frames[0].xaxis * frames[3].xaxis) < BREP_SURFACE_FLATNESS) {
-    	return false;
+	return false;
     } else if ((Xdot=Xdot * frames[1].xaxis * frames[2].xaxis) < BREP_SURFACE_FLATNESS) {
-    	return false;
+	return false;
     } else if ((Xdot=Xdot * frames[5].xaxis * frames[6].xaxis) < BREP_SURFACE_FLATNESS) {
-    	return false;
+	return false;
     } else if ((Xdot=Xdot * frames[7].xaxis * frames[8].xaxis) < BREP_SURFACE_FLATNESS) {
 	return false;
     }

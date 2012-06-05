@@ -749,7 +749,7 @@ rt_db_cvt_to_external5(
 	/* needed for call into functab */
 	resp = &rt_uniresource;
     }
-    
+
     /* prepare output */
     BU_EXTERNAL_INIT(ext);
     BU_EXTERNAL_INIT(&body);

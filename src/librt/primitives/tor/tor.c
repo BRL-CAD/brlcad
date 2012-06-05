@@ -296,7 +296,7 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) {
 	return 1;
     }
-    
+
     return 0;			/* OK */
 }
 

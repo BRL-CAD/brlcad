@@ -4885,9 +4885,9 @@ nmg_ck_vert_on_fus(const struct vertex *v, const struct bn_tol *tol)
     NMG_CK_VERTEX_G(v->vg_p);
 
     for (BU_LIST_FOR (vu, vertexuse, &v->vu_hd)) {
-        /* nmg_ck_vertexuse called within nmg_find_fu_of_vu,
-         * so do not need to call here
-         */
+	/* nmg_ck_vertexuse called within nmg_find_fu_of_vu,
+	 * so do not need to call here
+	 */
 	fu = nmg_find_fu_of_vu(vu);
 	if (!fu) {
 	    continue;
@@ -4903,13 +4903,13 @@ nmg_ck_vert_on_fus(const struct vertex *v, const struct bn_tol *tol)
 	    if (dist > max_dist) {
 		max_dist = dist;
 	    }
-	    bu_log("nmg_ck_vert_on_fus: v=x%x vu=x%x (%f %f %f) is %g from\n\tfaceuse x%x f x%x\n", 
+	    bu_log("nmg_ck_vert_on_fus: v=x%x vu=x%x (%f %f %f) is %g from\n\tfaceuse x%x f x%x\n",
 		    v, vu, V3ARGS(v->vg_p->coord), dist, fu, fu->f_p);
 	}
     }
 
     if (ret_val)
-	bu_log("nmg_ck_vert_on_fus: v=x%x (%f %f %f) max distance of %g from faceuses\n", 
+	bu_log("nmg_ck_vert_on_fus: v=x%x (%f %f %f) max distance of %g from faceuses\n",
 		v, V3ARGS(v->vg_p->coord), max_dist);
 
     return ret_val;
@@ -6353,18 +6353,18 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
  * Detect situations where edges have been split, but new vertices are
  * in wrong order. This typically happens as shown:
  @code
-                   new face planes
-                   |
-                   |
+		   new face planes
+		   |
+		   |
     \       \   /  |    /
      \       \ /<--|   /
       \       X       /
        \     / \     /
-        \   /___\   /
-         \         /
-          \       /<- original face planes
-           \     /
-            \___/
+	\   /___\   /
+	 \         /
+	  \       /<- original face planes
+	   \     /
+	    \___/
  @endcode
  * This can be detected by checking if the edges leaving from the new
  * vertices cross. If so, the middle face is deleted and the two
@@ -9686,7 +9686,7 @@ nmg_to_tgc(
     /* This looks like a good candidate,
      * Calculate center of base and top faces
      */
-    
+
     if (fu_base) {
     vert_count = 0;
     VSETALL(sum, 0.0);

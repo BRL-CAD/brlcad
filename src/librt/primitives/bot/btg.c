@@ -90,7 +90,7 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
 	return -1;
     }
 
-    for(i=0;i<bot_ip->num_faces*3;i++) {   
+    for(i=0;i<bot_ip->num_faces*3;i++) {
 	tribufp[i] = &tribuf[i];
 	VMOVE(tribuf[i].v, (bot_ip->vertices+3*bot_ip->faces[i]));
     }

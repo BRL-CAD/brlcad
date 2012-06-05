@@ -105,7 +105,7 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
     struct face_g_plane *fg1, *fg2;
 
     flags = (char *)bu_calloc(sizeof(char), (s->r_p->m_p->maxindex) * 2,
-                              "nmg_shell_coplanar_face_merge flags[]");
+			      "nmg_shell_coplanar_face_merge flags[]");
 
     /* Visit each face in the shell */
     for (BU_LIST_FOR(fu1, faceuse, &s->fu_hd)) {
@@ -139,34 +139,34 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 
 	    /* See if face geometry is shared & same direction */
 	    if (fg1 != fg2 || f1->flip != f2->flip) {
-                register fastf_t dist;
+		register fastf_t dist;
 		/* If plane equations are different, done */
 
-                /* test if the bounding boxes of the faceuse overlap */
-                if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol->dist)) {
+		/* test if the bounding boxes of the faceuse overlap */
+		if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol->dist)) {
 		    continue;
-                }
+		}
 
-	        NMG_GET_FU_PLANE(n1, fu1);
+		NMG_GET_FU_PLANE(n1, fu1);
 		NMG_GET_FU_PLANE(n2, fu2);
 
 		/* compare the distance between the faceuse planes at their center */
-                dist = n1[W] - n2[W];
+		dist = n1[W] - n2[W];
 		if (!NEAR_ZERO(dist, tol->dist)) {
-                    continue;
-                }
+		    continue;
+		}
 
-                /* skip faceuse pairs if normals are not in the same general direction. */
-                if (VDOT(n1, n2) < SMALL_FASTF) {
-                    continue;
-                }
+		/* skip faceuse pairs if normals are not in the same general direction. */
+		if (VDOT(n1, n2) < SMALL_FASTF) {
+		    continue;
+		}
 
-                /* test if the vertices from each faceuse is within tolerance of the
-                 * plane from the other faceuse
-                 */
+		/* test if the vertices from each faceuse is within tolerance of the
+		 * plane from the other faceuse
+		 */
 		if (nmg_ck_fu_verts(fu2, f1, tol) || nmg_ck_fu_verts(fu1, f2, tol)) {
 		    continue;
-                }
+		}
 	    }
 
 	    /*
@@ -175,9 +175,9 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 	     * now empty faceuse, fumate, and face
 	     */
 
-            prev_fu = BU_LIST_PREV(faceuse, &fu2->l);
-            nmg_jf(fu1, fu2);
-            fu2 = prev_fu;
+	    prev_fu = BU_LIST_PREV(faceuse, &fu2->l);
+	    nmg_jf(fu1, fu2);
+	    fu2 = prev_fu;
 
 	    /* There is now the option of simplifying the face, by
 	     * removing unnecessary edges.
@@ -2374,13 +2374,13 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 
     if (vu1->v_p == vu2->v_p) {
 	/* The loops touch, use a different routine */
-        /* The 2nd parameter passed into 'nmg_split_lu_at_vu' is added
-         * to the new loopuse created by 'nmg_split_lu_at_vu'. Because
-         * of this, the 2nd parameter should be vu2 because when
-         * 'nmg_cut_loop' is called and returns, it is expected that
-         * vu1 remain within the same loopuse as when 'nmg_cut_loop'
-         * was called.
-         */
+	/* The 2nd parameter passed into 'nmg_split_lu_at_vu' is added
+	 * to the new loopuse created by 'nmg_split_lu_at_vu'. Because
+	 * of this, the 2nd parameter should be vu2 because when
+	 * 'nmg_cut_loop' is called and returns, it is expected that
+	 * vu1 remain within the same loopuse as when 'nmg_cut_loop'
+	 * was called.
+	 */
 	lu = nmg_split_lu_at_vu(oldlu, vu2);
 	goto out;
     }
@@ -3063,43 +3063,43 @@ nmg_kill_accordions(struct loopuse *lu)
     eu_curr = eu_prev = eu_next = (struct edgeuse *)NULL;
 
     if (BU_LIST_IS_EMPTY(&lu->down_hd)) {
-        return;
+	return;
     }
 
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
-        return;
+	return;
     }
 
     for (BU_LIST_FOR(eu_curr, edgeuse, &lu->down_hd)) {
-        vert_cnt++;
+	vert_cnt++;
     }
 
     eu_curr = BU_LIST_FIRST(edgeuse, &lu->down_hd);
     while (BU_LIST_NOT_HEAD(&eu_curr->l, &lu->down_hd) && vert_cnt > 2) {
 
-        eu_prev = BU_LIST_PPREV_CIRC(edgeuse, &eu_curr->l);
-        eu_next = BU_LIST_PNEXT_CIRC(edgeuse, &eu_curr->l);
+	eu_prev = BU_LIST_PPREV_CIRC(edgeuse, &eu_curr->l);
+	eu_next = BU_LIST_PNEXT_CIRC(edgeuse, &eu_curr->l);
 
-        if ((eu_prev->vu_p->v_p == eu_next->vu_p->v_p) && (eu_curr != eu_prev)) {
-            if (eu_prev != eu_next) {
-                if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP)) {
-                    bu_log("nmg_kill_accordions(): killing jaunt in accordion eu's x%x and x%x\n",
-                           eu_curr, eu_prev);
-                }
-                (void)nmg_keu(eu_curr);
-                (void)nmg_keu(eu_prev);
-                vert_cnt -= 2;
-            } else {
-                if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP)) {
-                    bu_log("nmg_kill_accordions(): killing jaunt in accordion eu x%x\n", eu_curr);
-                }
-                (void)nmg_keu(eu_curr);
-                vert_cnt--;
-            }
-            eu_curr = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-        } else {
-            eu_curr = BU_LIST_PNEXT(edgeuse, eu_curr);
-        }
+	if ((eu_prev->vu_p->v_p == eu_next->vu_p->v_p) && (eu_curr != eu_prev)) {
+	    if (eu_prev != eu_next) {
+		if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP)) {
+		    bu_log("nmg_kill_accordions(): killing jaunt in accordion eu's x%x and x%x\n",
+			   eu_curr, eu_prev);
+		}
+		(void)nmg_keu(eu_curr);
+		(void)nmg_keu(eu_prev);
+		vert_cnt -= 2;
+	    } else {
+		if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP)) {
+		    bu_log("nmg_kill_accordions(): killing jaunt in accordion eu x%x\n", eu_curr);
+		}
+		(void)nmg_keu(eu_curr);
+		vert_cnt--;
+	    }
+	    eu_curr = BU_LIST_FIRST(edgeuse, &lu->down_hd);
+	} else {
+	    eu_curr = BU_LIST_PNEXT(edgeuse, eu_curr);
+	}
     }
 }
 
@@ -5001,4 +5001,3 @@ nmg_mv_vu_between_shells(struct shell *dest, register struct shell *src, registe
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

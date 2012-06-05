@@ -2265,7 +2265,7 @@ isect_ray_faceuse(struct ray_data *rd, struct faceuse *fu_p)
 		bu_log("missed bounding box\n");
 	    return;
 	}
-        dist *= MAGNITUDE(rd->rp->r_dir);
+	dist *= MAGNITUDE(rd->rp->r_dir);
 	VJOIN1(hit_pt, rd->rp->r_pt, dist, r_dir_unit);
 	if (V3PT_OUT_RPP_TOL(hit_pt, fp->min_pt, fp->max_pt, rd->tol->dist)) {
 	    NMG_GET_HITMISS(myhit, rd->ap);
@@ -2470,7 +2470,7 @@ guess_class_from_hitlist_max(struct ray_data *rd, int *hari_kari, int in_or_out_
 
 	if (!in_or_out_only) {
 	    /* if we've got a zero distance hit, that clinches it */
-            if (NEAR_ZERO(a_hit->hit.hit_dist, rd->tol->dist)) {
+	    if (NEAR_ZERO(a_hit->hit.hit_dist, rd->tol->dist)) {
 		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
 		    bu_log("guess_class_from_hitlist_min() returns NMG_CLASS_AonBshared for 0 dist hit\n");
 		return NMG_CLASS_AonBanti;
@@ -2561,7 +2561,7 @@ guess_class_from_hitlist_min(struct ray_data *rd, int *hari_kari, int in_or_out_
 
 	if (!in_or_out_only) {
 	    /* if we've got a zero distance hit, that clinches it */
-            if (NEAR_ZERO(a_hit->hit.hit_dist, rd->tol->dist)) {
+	    if (NEAR_ZERO(a_hit->hit.hit_dist, rd->tol->dist)) {
 		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
 		    bu_log("guess_class_from_hitlist_min() returns NMG_CLASS_AonBshared for 0 dist hit\n");
 		return NMG_CLASS_AonBanti;
@@ -2687,9 +2687,9 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
      * in this function and then freed in this function.
      */
     if (rd.rd_m->manifolds) {
-        rd.manifolds = rd.rd_m->manifolds;
+	rd.manifolds = rd.rd_m->manifolds;
     } else {
-        rd.manifolds = nmg_manifolds(rd.rd_m);
+	rd.manifolds = nmg_manifolds(rd.rd_m);
     }
 
     if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
@@ -2799,15 +2799,15 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
     bu_free((char *)rd.hitmiss, "free nmg geom hit list");
 
     if (!rd.rd_m->manifolds) {
-        /* If there is no manfolds list attached to the model
-         * structure then the list was created here (within
-         * nmg_class_ray_vs_shell) and should be freed here.
-         * If there is a manifold list attached to the model
-         * structure then it was created in the nmg_bool
-         * function and should be freed in the nmg_bool
-         * function.
-         */
-        bu_free((char *)rd.manifolds, "free local manifolds table");
+	/* If there is no manfolds list attached to the model
+	 * structure then the list was created here (within
+	 * nmg_class_ray_vs_shell) and should be freed here.
+	 * If there is a manifold list attached to the model
+	 * structure then it was created in the nmg_bool
+	 * function and should be freed in the nmg_bool
+	 * function.
+	 */
+	bu_free((char *)rd.manifolds, "free local manifolds table");
 	rd.manifolds = NULL; /* sanity */
     }
 

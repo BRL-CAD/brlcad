@@ -117,9 +117,9 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
 	       eip->sketch_name);
 	return -1;
     }
-    
+
     BU_GET(extr, struct extrude_specific);
-   
+
     VMOVE(extr->unit_h, eip->h);
     VUNITIZE(extr->unit_h);
 

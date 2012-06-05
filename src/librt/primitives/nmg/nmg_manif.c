@@ -381,10 +381,10 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
 	paint_color = NMG_INDEX_VALUE((long *)paint_table, fu_p->index);
 
 	/* this should never trigger. */
-        /* it is easier to compare against the max model index */
+	/* it is easier to compare against the max model index */
 	if (paint_color > sp->r_p->m_p->maxindex - 1) {
 	    bu_log("nmg_shell_manifolds(): ERROR, color index out of range (%ld > %ld)\n",
-                   paint_color, sp->r_p->m_p->maxindex - 1);
+		   paint_color, sp->r_p->m_p->maxindex - 1);
 	    bu_bomb("nmg_shell_manifolds(): ERROR, color index out of range\n");
 	    break;
 	}

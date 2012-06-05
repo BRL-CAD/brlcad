@@ -129,7 +129,7 @@ ars_rd_curve(union record *rp, int npts, int flip)
 	    /* cvt from dbfloat_t */
 	    flip_fastf_float(vec, (&(rr->b.b_values[i*3])), 1, flip);
 	    VMOVE(fp, vec);
-	    
+
 	    fp += ELEMENTS_PER_VECT;
 	}
     }
@@ -682,7 +682,7 @@ rt_ars_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
     VSETALL((*max), -MAX_FASTF);
 
     /*
-     * Iterate over the curves. 
+     * Iterate over the curves.
      */
     for (i = 0; i < arip->ncurves; i++) {
 	register fastf_t *v1;
@@ -723,7 +723,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /*point_t min, max;*/
     /*if (rt_ars_bbox(ip, &min, &max)) return -1;*/
-    
+
     m = nmg_mm();
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);
 
@@ -759,7 +759,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* Use the ars bbox results, rather than the BoT results */
     /*VMOVE(stp->st_min, min);
     VMOVE(stp->st_max, max);*/
-    
+
     return ret;
 }
 

@@ -562,71 +562,71 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     NMG_CK_MODEL(m);
 
     if (sA->r_p->m_p != sB->r_p->m_p) {
-        bu_bomb("nmg_bool(): internal error, both shells are not in the same nmg model\n");
+	bu_bomb("nmg_bool(): internal error, both shells are not in the same nmg model\n");
     }
 
     /* for the simple case where shells sA and sB do not overlap, we
      * can skip most of the steps to perform the boolean operation
      */
-    if (!V3RPP_OVERLAP_TOL(sA->sa_p->min_pt, sA->sa_p->max_pt, 
-                           sB->sa_p->min_pt, sB->sa_p->max_pt, tol->dist)) {
-        switch (oper) {
-            case NMG_BOOL_ADD: {
-                struct faceuse *fu;
-                vect_t s_min_pt;
-                vect_t s_max_pt;
+    if (!V3RPP_OVERLAP_TOL(sA->sa_p->min_pt, sA->sa_p->max_pt,
+			   sB->sa_p->min_pt, sB->sa_p->max_pt, tol->dist)) {
+	switch (oper) {
+	    case NMG_BOOL_ADD: {
+		struct faceuse *fu;
+		vect_t s_min_pt;
+		vect_t s_max_pt;
 
-                /* find new sA shell bounding box which combines the
-                 * bounding boxes of shells sA and sB.
-                 */
-                VSETALL(s_min_pt, MAX_FASTF);
-                VSETALL(s_max_pt, -MAX_FASTF);
-                VMIN(s_min_pt, sA->sa_p->min_pt);
-                VMIN(s_min_pt, sB->sa_p->min_pt);
-                VMIN(s_min_pt, sB->sa_p->max_pt);
-                VMAX(s_max_pt, sA->sa_p->max_pt);
-                VMAX(s_max_pt, sB->sa_p->min_pt);
-                VMAX(s_max_pt, sB->sa_p->max_pt);
+		/* find new sA shell bounding box which combines the
+		 * bounding boxes of shells sA and sB.
+		 */
+		VSETALL(s_min_pt, MAX_FASTF);
+		VSETALL(s_max_pt, -MAX_FASTF);
+		VMIN(s_min_pt, sA->sa_p->min_pt);
+		VMIN(s_min_pt, sB->sa_p->min_pt);
+		VMIN(s_min_pt, sB->sa_p->max_pt);
+		VMAX(s_max_pt, sA->sa_p->max_pt);
+		VMAX(s_max_pt, sB->sa_p->min_pt);
+		VMAX(s_max_pt, sB->sa_p->max_pt);
 
-                /* move all the faceuse from shell sB to shell sA */
-                for (BU_LIST_FOR(fu, faceuse, &sB->fu_hd)) {
-                    fu->s_p = sA;
-                }
-                BU_LIST_APPEND_LIST(&(sA->fu_hd), &(sB->fu_hd));
+		/* move all the faceuse from shell sB to shell sA */
+		for (BU_LIST_FOR(fu, faceuse, &sB->fu_hd)) {
+		    fu->s_p = sA;
+		}
+		BU_LIST_APPEND_LIST(&(sA->fu_hd), &(sB->fu_hd));
 
-                /* assign new bounding box to sA */
-                VMOVE(sA->sa_p->min_pt, s_min_pt);
-                VMOVE(sA->sa_p->max_pt, s_max_pt);
+		/* assign new bounding box to sA */
+		VMOVE(sA->sa_p->min_pt, s_min_pt);
+		VMOVE(sA->sa_p->max_pt, s_max_pt);
 
-                /* kill shell sB */
-                nmg_ks(sB);
-                break;
-            }
-            case NMG_BOOL_SUB:
-                /* kill shell sB */
-                nmg_ks(sB);
-                break;
-            case NMG_BOOL_ISECT:
-                /* kill the contents of shell sA */
-                while (BU_LIST_NON_EMPTY(&sA->fu_hd)) {
-                    (void)nmg_kfu(BU_LIST_FIRST(faceuse, &sA->fu_hd));
-                }
-                while (BU_LIST_NON_EMPTY(&sA->lu_hd)) {
-                    (void)nmg_klu(BU_LIST_FIRST(loopuse, &sA->lu_hd));
-                }
-                while (BU_LIST_NON_EMPTY(&sA->eu_hd)) {
-                    (void)nmg_keu(BU_LIST_FIRST(edgeuse, &sA->eu_hd));
-                }
-                if (sA->vu_p) {
-                    nmg_kvu(sA->vu_p);
-                }
-                /* kill shell sB */
-                nmg_ks(sB);
-                break;
-            default:
-                bu_bomb("nmg_bool(): unknown operation\n");
-        }
-        return sA;
+		/* kill shell sB */
+		nmg_ks(sB);
+		break;
+	    }
+	    case NMG_BOOL_SUB:
+		/* kill shell sB */
+		nmg_ks(sB);
+		break;
+	    case NMG_BOOL_ISECT:
+		/* kill the contents of shell sA */
+		while (BU_LIST_NON_EMPTY(&sA->fu_hd)) {
+		    (void)nmg_kfu(BU_LIST_FIRST(faceuse, &sA->fu_hd));
+		}
+		while (BU_LIST_NON_EMPTY(&sA->lu_hd)) {
+		    (void)nmg_klu(BU_LIST_FIRST(loopuse, &sA->lu_hd));
+		}
+		while (BU_LIST_NON_EMPTY(&sA->eu_hd)) {
+		    (void)nmg_keu(BU_LIST_FIRST(edgeuse, &sA->eu_hd));
+		}
+		if (sA->vu_p) {
+		    nmg_kvu(sA->vu_p);
+		}
+		/* kill shell sB */
+		nmg_ks(sB);
+		break;
+	    default:
+		bu_bomb("nmg_bool(): unknown operation\n");
+	}
+	return sA;
     }
 
     debug_file_count++;
@@ -730,7 +730,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
     nelem = m->maxindex;
     for (i = 0; i < 8; i++) {
-        classlist[i] = (char *)bu_calloc(nelem, sizeof(char), "nmg_bool classlist");
+	classlist[i] = (char *)bu_calloc(nelem, sizeof(char), "nmg_bool classlist");
     }
 
     nmg_classify_shared_edges_verts(sA, sB, classlist);
@@ -772,23 +772,23 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     if (rt_g.NMG_debug & DEBUG_BOOL) {
-        int dangle_error = 0;
-        if (nmg_has_dangling_faces((uint32_t *)rA, (char *)NULL)) {
-            dangle_error = 1;
-            bu_log("nmg_bool(): Dangling faces detected in rA before classification\n");
-        }
-        if (nmg_has_dangling_faces((uint32_t *)rB, (char *)NULL)) {
-            dangle_error = 1;
-            bu_log("nmg_bool(): Dangling faces detected in rB before classification\n");
-        }
-        if (nmg_has_dangling_faces((uint32_t *)m, (char *)NULL)) {
-            dangle_error = 1;
-            bu_log("nmg_bool(): Dangling faces detected in model before classification\n");
-        }
-        if (dangle_error) {
-            nmg_stash_model_to_file("dangle.g", m, "After Boolean");
-            bu_bomb("nmg_bool(): Dangling faces detected before classification\n");
-        }
+	int dangle_error = 0;
+	if (nmg_has_dangling_faces((uint32_t *)rA, (char *)NULL)) {
+	    dangle_error = 1;
+	    bu_log("nmg_bool(): Dangling faces detected in rA before classification\n");
+	}
+	if (nmg_has_dangling_faces((uint32_t *)rB, (char *)NULL)) {
+	    dangle_error = 1;
+	    bu_log("nmg_bool(): Dangling faces detected in rB before classification\n");
+	}
+	if (nmg_has_dangling_faces((uint32_t *)m, (char *)NULL)) {
+	    dangle_error = 1;
+	    bu_log("nmg_bool(): Dangling faces detected in model before classification\n");
+	}
+	if (dangle_error) {
+	    nmg_stash_model_to_file("dangle.g", m, "After Boolean");
+	    bu_bomb("nmg_bool(): Dangling faces detected before classification\n");
+	}
     }
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
@@ -869,8 +869,8 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     if (m->manifolds) {
-        bu_free((char *)m->manifolds, "free manifolds table");
-        m->manifolds = (char *)NULL;
+	bu_free((char *)m->manifolds, "free manifolds table");
+	m->manifolds = (char *)NULL;
     }
     m->manifolds = nmg_manifolds(m);
 
@@ -893,8 +893,8 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     nmg_class_shells(sB, sA, &classlist[4], tol);
 
     if (m->manifolds) {
-        bu_free((char *)m->manifolds, "free manifolds table");
-        m->manifolds = (char *)NULL;
+	bu_free((char *)m->manifolds, "free manifolds table");
+	m->manifolds = (char *)NULL;
     }
 
     if (rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
@@ -946,29 +946,29 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
 	nmg_s_radial_check(sA, tol);
 
-        if (rt_g.NMG_debug & DEBUG_BOOL) {
-            int dangle_error = 0;
-            if (nmg_has_dangling_faces((uint32_t *)rA, (char *)NULL)) {
-                dangle_error = 1;
-                bu_log("nmg_bool(): Dangling faces detected in rA after boolean\n");
-            }
-            if (nmg_has_dangling_faces((uint32_t *)rB, (char *)NULL)) {
-                dangle_error = 1;
-                bu_log("nmg_bool(): Dangling faces detected in rB after boolean\n");
-            }
-            if (nmg_has_dangling_faces((uint32_t *)m, (char *)NULL)) {
-                dangle_error = 1;
-                bu_log("nmg_bool(): Dangling faces detected in m after boolean\n");
-            }
-            if (dangle_error) {
-                nmg_stash_model_to_file("dangle.g", m, "After Boolean");
-                bu_bomb("nmg_bool(): Dangling faces detected after boolean\n");
-            }
-        } else {
-            if (nmg_has_dangling_faces((uint32_t *)rA, (char *)NULL)) {
-	        bu_bomb("nmg_bool(): Dangling faces detected in rA after boolean\n");
-            }
-        }
+	if (rt_g.NMG_debug & DEBUG_BOOL) {
+	    int dangle_error = 0;
+	    if (nmg_has_dangling_faces((uint32_t *)rA, (char *)NULL)) {
+		dangle_error = 1;
+		bu_log("nmg_bool(): Dangling faces detected in rA after boolean\n");
+	    }
+	    if (nmg_has_dangling_faces((uint32_t *)rB, (char *)NULL)) {
+		dangle_error = 1;
+		bu_log("nmg_bool(): Dangling faces detected in rB after boolean\n");
+	    }
+	    if (nmg_has_dangling_faces((uint32_t *)m, (char *)NULL)) {
+		dangle_error = 1;
+		bu_log("nmg_bool(): Dangling faces detected in m after boolean\n");
+	    }
+	    if (dangle_error) {
+		nmg_stash_model_to_file("dangle.g", m, "After Boolean");
+		bu_bomb("nmg_bool(): Dangling faces detected after boolean\n");
+	    }
+	} else {
+	    if (nmg_has_dangling_faces((uint32_t *)rA, (char *)NULL)) {
+		bu_bomb("nmg_bool(): Dangling faces detected in rA after boolean\n");
+	    }
+	}
 
 	/* Do this before table size changes */
 	if (rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
@@ -1011,7 +1011,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     for (i = 0; i < 8; i++) {
-        bu_free((char *)classlist[i], "nmg_bool classlist");
+	bu_free((char *)classlist[i], "nmg_bool classlist");
     }
 
     if (rt_g.NMG_debug & DEBUG_BOOL) {
@@ -1266,95 +1266,95 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
     tr = nmg_booltree_evaluate(tp->tr_b.tb_right, tol, resp);
 
     if (tl) {
-        RT_CK_TREE(tl);
-        if (tl != tp->tr_b.tb_left) {
-            bu_bomb("nmg_booltree_evaluate(): tl != tp->tr_b.tb_left\n");
-        }
+	RT_CK_TREE(tl);
+	if (tl != tp->tr_b.tb_left) {
+	    bu_bomb("nmg_booltree_evaluate(): tl != tp->tr_b.tb_left\n");
+	}
     }
     if (tr) {
-        RT_CK_TREE(tr);
-        if (tr != tp->tr_b.tb_right) {
-            bu_bomb("nmg_booltree_evaluate(): tr != tp->tr_b.tb_right\n");
-        }
+	RT_CK_TREE(tr);
+	if (tr != tp->tr_b.tb_right) {
+	    bu_bomb("nmg_booltree_evaluate(): tr != tp->tr_b.tb_right\n");
+	}
     }
 
     if (!tl && !tr) {
-        /* left-r == null && right-r == null */
-        RT_CK_TREE(tp);
-        db_free_tree(tp->tr_b.tb_left, resp);
-        db_free_tree(tp->tr_b.tb_right, resp);
-        tp->tr_op = OP_NOP;
-        return TREE_NULL;
+	/* left-r == null && right-r == null */
+	RT_CK_TREE(tp);
+	db_free_tree(tp->tr_b.tb_left, resp);
+	db_free_tree(tp->tr_b.tb_right, resp);
+	tp->tr_op = OP_NOP;
+	return TREE_NULL;
     }
 
     if (tl && !tr) {
-        /* left-r != null && right-r == null */
-        RT_CK_TREE(tp);
-        db_free_tree(tp->tr_b.tb_right, resp);
-        if (op == NMG_BOOL_ISECT) {
-            /* OP_INTERSECT '+' */
-            RT_CK_TREE(tp);
-            db_free_tree(tl, resp);
-            tp->tr_op = OP_NOP;
-            return TREE_NULL;
-        } else {
-            /* copy everything from tl to tp no matter which union type
-             * could probably have done a mem-copy
-             */
-            tp->tr_op = tl->tr_op;
-            tp->tr_b.tb_regionp = tl->tr_b.tb_regionp;
-            tp->tr_b.tb_left = tl->tr_b.tb_left;
-            tp->tr_b.tb_right = tl->tr_b.tb_right;
+	/* left-r != null && right-r == null */
+	RT_CK_TREE(tp);
+	db_free_tree(tp->tr_b.tb_right, resp);
+	if (op == NMG_BOOL_ISECT) {
+	    /* OP_INTERSECT '+' */
+	    RT_CK_TREE(tp);
+	    db_free_tree(tl, resp);
+	    tp->tr_op = OP_NOP;
+	    return TREE_NULL;
+	} else {
+	    /* copy everything from tl to tp no matter which union type
+	     * could probably have done a mem-copy
+	     */
+	    tp->tr_op = tl->tr_op;
+	    tp->tr_b.tb_regionp = tl->tr_b.tb_regionp;
+	    tp->tr_b.tb_left = tl->tr_b.tb_left;
+	    tp->tr_b.tb_right = tl->tr_b.tb_right;
 
-            /* null data from tl so only to free this node */
-            tl->tr_b.tb_regionp = (struct region *)NULL;
-            tl->tr_b.tb_left = TREE_NULL;
-            tl->tr_b.tb_right = TREE_NULL;
+	    /* null data from tl so only to free this node */
+	    tl->tr_b.tb_regionp = (struct region *)NULL;
+	    tl->tr_b.tb_left = TREE_NULL;
+	    tl->tr_b.tb_right = TREE_NULL;
 
-            db_free_tree(tl, resp);
-            return tp;
-        }
+	    db_free_tree(tl, resp);
+	    return tp;
+	}
     }
 
     if (!tl && tr) {
-        /* left-r == null && right-r != null */
-        RT_CK_TREE(tp);
-        db_free_tree(tp->tr_b.tb_left, resp);
-        if (op == NMG_BOOL_ADD) {
-            /* OP_UNION 'u' */
-            /* copy everything from tr to tp no matter which union type
-             * could probably have done a mem-copy
-             */
-            tp->tr_op = tr->tr_op;
-            tp->tr_b.tb_regionp = tr->tr_b.tb_regionp;
-            tp->tr_b.tb_left = tr->tr_b.tb_left;
-            tp->tr_b.tb_right = tr->tr_b.tb_right;
+	/* left-r == null && right-r != null */
+	RT_CK_TREE(tp);
+	db_free_tree(tp->tr_b.tb_left, resp);
+	if (op == NMG_BOOL_ADD) {
+	    /* OP_UNION 'u' */
+	    /* copy everything from tr to tp no matter which union type
+	     * could probably have done a mem-copy
+	     */
+	    tp->tr_op = tr->tr_op;
+	    tp->tr_b.tb_regionp = tr->tr_b.tb_regionp;
+	    tp->tr_b.tb_left = tr->tr_b.tb_left;
+	    tp->tr_b.tb_right = tr->tr_b.tb_right;
 
-            /* null data from tr so only to free this node */
-            tr->tr_b.tb_regionp = (struct region *)NULL;
-            tr->tr_b.tb_left = TREE_NULL;
-            tr->tr_b.tb_right = TREE_NULL;
+	    /* null data from tr so only to free this node */
+	    tr->tr_b.tb_regionp = (struct region *)NULL;
+	    tr->tr_b.tb_left = TREE_NULL;
+	    tr->tr_b.tb_right = TREE_NULL;
 
-            db_free_tree(tr, resp);
-            return tp;
+	    db_free_tree(tr, resp);
+	    return tp;
 
-        } else if ((op == NMG_BOOL_SUB) || (op == NMG_BOOL_ISECT)) {
-            /* for sub and intersect, if left-hand-side is null, result is null */
-            RT_CK_TREE(tp);
-            db_free_tree(tr, resp);
-            tp->tr_op = OP_NOP;
-            return TREE_NULL;
+	} else if ((op == NMG_BOOL_SUB) || (op == NMG_BOOL_ISECT)) {
+	    /* for sub and intersect, if left-hand-side is null, result is null */
+	    RT_CK_TREE(tp);
+	    db_free_tree(tr, resp);
+	    tp->tr_op = OP_NOP;
+	    return TREE_NULL;
 
-        } else {
-            bu_bomb("nmg_booltree_evaluate(): error, unknown operation\n");
-        }
+	} else {
+	    bu_bomb("nmg_booltree_evaluate(): error, unknown operation\n");
+	}
     }
 
     if (tl->tr_op != OP_NMG_TESS) {
-        bu_bomb("nmg_booltree_evaluate(): bad left tree\n");
+	bu_bomb("nmg_booltree_evaluate(): bad left tree\n");
     }
     if (tr->tr_op != OP_NMG_TESS) {
-        bu_bomb("nmg_booltree_evaluate(): bad right tree\n");
+	bu_bomb("nmg_booltree_evaluate(): bad right tree\n");
     }
 
     if (!nmg_bool_eval_silent) {
@@ -1402,22 +1402,22 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
 
 
     if (reg) {
-        /* convert argument binary node into a result node */
+	/* convert argument binary node into a result node */
 	NMG_CK_REGION(reg);
 	nmg_r_radial_check(reg, tol);
-        tp->tr_op = OP_NMG_TESS;
-        tp->tr_d.td_r = reg;
-        tp->tr_d.td_name = name;
+	tp->tr_op = OP_NMG_TESS;
+	tp->tr_d.td_r = reg;
+	tp->tr_d.td_name = name;
 
 	if (rt_g.NMG_debug & DEBUG_VERIFY) {
 	    nmg_vshell(&reg->s_hd, reg);
 	}
-        return tp;
+	return tp;
 
     } else {
-        /* resulting region was null */
-        tp->tr_op = OP_NOP;
-        return TREE_NULL;
+	/* resulting region was null */
+	tp->tr_op = OP_NOP;
+	return TREE_NULL;
     }
 
 }
@@ -1473,18 +1473,18 @@ nmg_boolean(union tree *tp, struct model *m, const struct bn_tol *tol, struct re
     result = nmg_booltree_evaluate(tp, tol, resp);
 
     if (result == TREE_NULL) {
-        bu_log("nmg_boolean(): result of nmg_booltree_evaluate() is NULL\n");
+	bu_log("nmg_boolean(): result of nmg_booltree_evaluate() is NULL\n");
 	rt_pr_tree(tp, 0);
 	ret = 1;
 	goto out;
     }
 
     if (result != tp) {
-        bu_bomb("nmg_boolean(): result of nmg_booltree_evaluate() isn't tp\n");
+	bu_bomb("nmg_boolean(): result of nmg_booltree_evaluate() isn't tp\n");
     }
 
     RT_CK_TREE(result);
- 
+
     if (tp->tr_op != OP_NMG_TESS) {
 	bu_log("nmg_boolean(): result of nmg_booltree_evaluate() op != OP_NMG_TESS\n");
 	rt_pr_tree(tp, 0);
@@ -1521,7 +1521,3 @@ nmg_boolean(union tree *tp, struct model *m, const struct bn_tol *tol, struct re
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-
-
-
-

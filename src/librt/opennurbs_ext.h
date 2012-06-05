@@ -542,7 +542,7 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
 
     fastf_t dU = B[X] - A[X];
     if (NEAR_ZERO(dU, tol)) {  //vertical
-    	return A[Y];
+	return A[Y];
     }
 
     ON_3dVector Tan_start = m_trim->TangentAt(Ta);
@@ -555,32 +555,32 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const
 
     /* Use quick binary subdivision until derivatives at end points in 'u' are within 5 percent */
     while (!NEAR_ZERO(dU, tol) && !NEAR_ZERO(dT, tol)) {
-    	guess = Ta + dT/2;
-    	p = m_trim->PointAt(guess);
+	guess = Ta + dT/2;
+	p = m_trim->PointAt(guess);
 
 	if (UNLIKELY(NEAR_EQUAL(p[X], u, SMALL_FASTF))) {
 	    /* hit 'u' exactly, done deal */
 	    return p[Y];
 	}
 
-    	if (p[X] > u) {
+	if (p[X] > u) {
 	    /* v is behind us, back up the end */
-    	    Tb = guess;
-    	    VMOVE(B, p);
-    	    Tan_end = m_trim->TangentAt(Tb);
-    	} else {
+	    Tb = guess;
+	    VMOVE(B, p);
+	    Tan_end = m_trim->TangentAt(Tb);
+	} else {
 	    /* v is in front, move start forward */
-    	    Ta = guess;
-    	    VMOVE(A, p);
-    	    Tan_start = m_trim->TangentAt(Ta);
-    	}
-    	dT = Tb - Ta;
-    	dU = B[X] - A[X];
+	    Ta = guess;
+	    VMOVE(A, p);
+	    Tan_start = m_trim->TangentAt(Ta);
+	}
+	dT = Tb - Ta;
+	dU = B[X] - A[X];
     }
 
     dU = B[X] - A[X];
     if (NEAR_ZERO(dU, tol)) {  //vertical
-    	return A[Y];
+	return A[Y];
     }
 
     guess = Ta + (u - A[X]) * dT/dU;
@@ -648,24 +648,24 @@ BANode<BA>::getCurveEstimateOfU(fastf_t v, fastf_t tol) const
 
     /* Use quick binary subdivision until derivatives at end points in 'u' are within 5 percent */
     while (!NEAR_ZERO(dV, tol) && !NEAR_ZERO(dT, tol)) {
-    	guess = Ta + dT/2;
-    	p = m_trim->PointAt(guess);
-    	if (p[Y] < v) {
-    	    Ta = guess;
-    	    VMOVE(A, p);
-    	    Tan_start = m_trim->TangentAt(Ta);
-    	} else {
-    	    Tb = guess;
-    	    VMOVE(B, p);
-    	    Tan_end = m_trim->TangentAt(Tb);
-    	}
-    	dT = Tb - Ta;
-    	dV = B[Y] - A[Y];
+	guess = Ta + dT/2;
+	p = m_trim->PointAt(guess);
+	if (p[Y] < v) {
+	    Ta = guess;
+	    VMOVE(A, p);
+	    Tan_start = m_trim->TangentAt(Ta);
+	} else {
+	    Tb = guess;
+	    VMOVE(B, p);
+	    Tan_end = m_trim->TangentAt(Tb);
+	}
+	dT = Tb - Ta;
+	dV = B[Y] - A[Y];
     }
 
     dV = B[Y] - A[Y];
     if (NEAR_ZERO(dV, tol)) {  //horizontal
-    	return A[X];
+	return A[X];
     }
 
     guess = Ta + (v - A[Y]) * dT/dV;
@@ -916,7 +916,7 @@ inline
 _BU_ATTR_ALWAYS_INLINE
 BVNode<BV>::BVNode(CurveTree* ct, const BV& node, const ON_BrepFace* face,
 		   const ON_Interval& u, const ON_Interval& v, bool checkTrim, bool trimmed)
-    : m_ctree(ct), m_node(node), m_face(face), m_u(u), m_v(v), m_checkTrim(checkTrim), 
+    : m_ctree(ct), m_node(node), m_face(face), m_u(u), m_v(v), m_checkTrim(checkTrim),
       m_trimmed(trimmed)
 {
     for (int i = 0; i < 3; i++) {
@@ -1018,8 +1018,8 @@ BVNode<BV>::intersectedBy(ON_Ray& ray, double* tnear_opt, double* tfar_opt)
 	    */
 	}
     }
-    if (tnear_opt != NULL && tfar_opt != NULL) { 
-	*tnear_opt = tnear; *tfar_opt = tfar; 
+    if (tnear_opt != NULL && tfar_opt != NULL) {
+	*tnear_opt = tnear; *tfar_opt = tfar;
     }
     if (isLeaf()) {
 	return !m_trimmed && untrimmedresult;
@@ -1042,7 +1042,7 @@ BVNode<BV>::intersectsHierarchy(ON_Ray& ray, std::list<BBNode*>& results_opt)
 	    m_children[i]->intersectsHierarchy(ray, results_opt);
 	}
     }
-    return intersects; 
+    return intersects;
 }
 
 
@@ -1110,7 +1110,7 @@ ON_2dPoint
 BVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v)
 {
     if (isLeaf()) {
-	double uvs[5][2] = {{m_u.Min(), m_v.Min()}, {m_u.Max(), m_v.Min()}, 
+	double uvs[5][2] = {{m_u.Min(), m_v.Min()}, {m_u.Max(), m_v.Min()},
 			    {m_u.Max(), m_v.Max()}, {m_u.Min(), m_v.Max()},
 			    {m_u.Mid(), m_v.Mid()}}; // include the estimate
 	ON_3dPoint corners[5];
@@ -1360,7 +1360,7 @@ BVNode<BV>::prepTrims()
     m_trims_above.clear();
 
     if (ct != NULL)
-    	ct->getLeavesAbove(m_trims_above, m_u, m_v);
+	ct->getLeavesAbove(m_trims_above, m_u, m_v);
 
     m_trims_above.sort(sortY);
 

@@ -2425,8 +2425,8 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
     struct bu_ptbl vert_list1, vert_list2;
     fastf_t *mag1, *mag2;
     int i, j;
-    const fastf_t opsff = (1.0 + SMALL_FASTF); 
-    const fastf_t omsff = (1.0 - SMALL_FASTF); 
+    const fastf_t opsff = (1.0 + SMALL_FASTF);
+    const fastf_t omsff = (1.0 - SMALL_FASTF);
 
     NMG_CK_FACEUSE(fu1);
     NMG_CK_FACEUSE(fu2);
@@ -2505,7 +2505,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		 * dist[0] otherwise use both dist[0] and dist[1].
 		 * In the description below the line p0->p1 is eu1 where
 		 * p0 is the start of eu1 and p1 is the end of eu1.
-		 * The same is done for eu2 with line q0->q1. 
+		 * The same is done for eu2 with line q0->q1.
 		 * When eu1 and eu2 are colinear, the value of dist[0]
 		 * returned from function 'bn_isect_lseg3_lseg3' is the
 		 * scaled distance from p0->q0 and dist[1] is the scaled
@@ -2513,7 +2513,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		 */
 		if ((dist[0] < -SMALL_FASTF && ((dist[1] > SMALL_FASTF) &&
 		   (dist[1] < omsff))) ||
-		   ((dist[1] > SMALL_FASTF) && (dist[1] < omsff) 
+		   ((dist[1] > SMALL_FASTF) && (dist[1] < omsff)
 		   && (dist[0] > opsff))) {
 		    /* true when q1 is within p0->p1 */
 		    hit_count = 1;
@@ -2530,7 +2530,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    hit_count = 1;
 		    dist[1] = MAX_FASTF; /* sanity */
 		    /* dist[0] is already the correct value */
-		} else if (((dist[0] < -SMALL_FASTF) && (dist[1] > opsff)) || 
+		} else if (((dist[0] < -SMALL_FASTF) && (dist[1] > opsff)) ||
 			   ((dist[0] > opsff) && (dist[1] < -SMALL_FASTF))) {
 		    /* true when both p0 and p1 is within q0->q1 */
 		    /* eu1 is not cut */
@@ -2556,19 +2556,19 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    hit_count = 0; /* sanity */
 		    dist[0] = dist[1] = MAX_FASTF; /* sanity */
 		    continue;
-		} else if ((ZERO(dist[0]) && (dist[1] > SMALL_FASTF) && 
-			    (dist[1] < omsff)) || 
-			   ((dist[1] > SMALL_FASTF) && 
-			    (dist[1] < omsff) && 
+		} else if ((ZERO(dist[0]) && (dist[1] > SMALL_FASTF) &&
+			    (dist[1] < omsff)) ||
+			   ((dist[1] > SMALL_FASTF) &&
+			    (dist[1] < omsff) &&
 			    ZERO(dist[0] - 1.0))) {
 		    /* true when q1 is within p0->p1 and q0 = p0 or q0 = p1 */
 		    hit_count = 1;
 		    dist[0] = dist[1];
 		    dist[1] = MAX_FASTF; /* sanity */
-		} else if ((ZERO(dist[1]) && (dist[0] > SMALL_FASTF) && 
-			   (dist[0] < omsff)) || 
-			  ((dist[0] > SMALL_FASTF) && 
-			   (dist[0] < omsff) && 
+		} else if ((ZERO(dist[1]) && (dist[0] > SMALL_FASTF) &&
+			   (dist[0] < omsff)) ||
+			  ((dist[0] > SMALL_FASTF) &&
+			   (dist[0] < omsff) &&
 			   ZERO(dist[1] - 1.0))) {
 		    /* true when q0 is within p0->p1 and q1 = p0 or q1 = p1 */
 		    hit_count = 1;
@@ -2579,7 +2579,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 			   (ZERO(dist[0] - 1.0) && (dist[1] < -SMALL_FASTF)) ||
 			  ((dist[0] < -SMALL_FASTF) && ZERO(dist[1] - 1.0))) {
 		    /* true when eu2 shares one of the vertices of eu1 and
-		     * the other vertex in eu2 is on the far side of eu1 
+		     * the other vertex in eu2 is on the far side of eu1
 		     * outside eu1 (i.e. p0->p1).
 		     */
 		    /* eu1 is not cut */
@@ -2588,7 +2588,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    continue;
 		} else {
 		    /* should never get here */
-		    bu_log("nmg_isect_two_face2p_jra(): dist[0] = %f dist[1] = %f\n", 
+		    bu_log("nmg_isect_two_face2p_jra(): dist[0] = %f dist[1] = %f\n",
 			    dist[0], dist[1]);
 		    bu_bomb("nmg_isect_two_face2p_jra(): unexpected condition\n");
 		}
@@ -2596,7 +2596,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		if (ZERO(dist[0]) || ZERO(dist[0] - 1.0)) {
 		    /* eu1 was hit on a vertex, nothing to cut */
 		    continue;
-	        } else if ((dist[0] < -SMALL_FASTF) || (dist[0] > opsff)) {
+		} else if ((dist[0] < -SMALL_FASTF) || (dist[0] > opsff)) {
 		    bu_bomb("nmg_isect_two_face2p_jra(): dist[0] not within 0-1\n");
 		} else {
 		    hit_count = 1;
@@ -3699,7 +3699,7 @@ nmg_isect_eu_eu(struct edgeuse *eu1, struct vertex_g *vg1a, struct vertex_g *vg1
     VMIN(e1_min_pt, vg1b->coord);
     VMOVE(e1_max_pt, vg1a->coord);
     VMAX(e1_max_pt, vg1b->coord);
- 
+
     /* compute bounding box for eu2 */
     VMOVE(e2_min_pt, vg2a->coord);
     VMIN(e2_min_pt, vg2b->coord);
@@ -3707,7 +3707,7 @@ nmg_isect_eu_eu(struct edgeuse *eu1, struct vertex_g *vg1a, struct vertex_g *vg1
     VMAX(e2_max_pt, vg2b->coord);
 
     if (!V3RPP_OVERLAP_TOL(e1_min_pt, e1_max_pt, e2_min_pt, e2_max_pt, tol->dist)) {
-        return;
+	return;
     }
 
     VSUB2(dir2, vg2b->coord, vg2a->coord);
@@ -4530,7 +4530,7 @@ re_tabulate:
 		    (*eg1)->e_dir,
 		    &(is->tol)));
 	    goto force_isect;
-        }
+	}
 
 	/* Geometry says 2 lines intersect at a point */
 	VJOIN1(hit3d, is->pt, dist[0], is->dir);
@@ -6896,27 +6896,27 @@ nmg_no_isect_fu_pl(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol
     NMG_GET_FU_PLANE(pl, fu1);
 
     for (BU_LIST_FOR (lu, loopuse, &fu2->lu_hd)) {
-        NMG_CK_LOOPUSE(lu);
+	NMG_CK_LOOPUSE(lu);
 
-        if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-            continue;
+	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+	    continue;
 
-        for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
+	for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
 
-            dist = DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, pl);
+	    dist = DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, pl);
 
-            if (dist < -(tol->dist)) {
-                neg++;
-            } else if (dist > tol->dist) {
-                pos++;
-            } else {
-                hit++;
-            }
-            if ((pos && neg) || hit) {
-                ret = 0;
-                goto out;
-            }
-        }
+	    if (dist < -(tol->dist)) {
+		neg++;
+	    } else if (dist > tol->dist) {
+		pos++;
+	    } else {
+		hit++;
+	    }
+	    if ((pos && neg) || hit) {
+		ret = 0;
+		goto out;
+	    }
+	}
     }
 out:
 
@@ -6980,16 +6980,16 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 	status = (-1);
     }
 
-    if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt, 
+    if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt,
 			   f1->min_pt, f1->max_pt, bs.tol.dist)) {
 	return;
     }
 
     if (nmg_no_isect_fu_pl(fu1, fu2, tol) ||
-        nmg_no_isect_fu_pl(fu2, fu1, tol)) {
+	nmg_no_isect_fu_pl(fu2, fu1, tol)) {
 	return;
     }
- 
+
     /*
      * The extents of face1 overlap the extents of face2.
      * Construct a ray which contains the line of intersection.
@@ -7457,7 +7457,7 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
     NMG_CK_SHELL_A(sa2);
 
     if (s1->r_p->m_p != s2->r_p->m_p) {
-        bu_bomb("nmg_crackshells(): shells are not in the same model\n");
+	bu_bomb("nmg_crackshells(): shells are not in the same model\n");
     }
 
     NMG_CK_REGION(s1->r_p);
@@ -7510,13 +7510,13 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
      */
     for (BU_LIST_FOR(fu1, faceuse, &s1->fu_hd)) {
 	if ((size_t)(m->maxindex) >= flag_len) {
-            old_flag_len = flag_len;
-            flag_len *= 2;
-            tmp = (char *)bu_realloc(flags, flag_len * sizeof(char), "realloc nmg_crackshells flags[]"); 
-            flags = tmp;
-            /* initialize new space */
-            memset((char *)(flags + (old_flag_len * sizeof(char))), 0, (flag_len - old_flag_len) * sizeof(char));
-        }
+	    old_flag_len = flag_len;
+	    flag_len *= 2;
+	    tmp = (char *)bu_realloc(flags, flag_len * sizeof(char), "realloc nmg_crackshells flags[]");
+	    flags = tmp;
+	    /* initialize new space */
+	    memset((char *)(flags + (old_flag_len * sizeof(char))), 0, (flag_len - old_flag_len) * sizeof(char));
+	}
 	NMG_CK_FACEUSE(fu1);
 	f1 = fu1->f_p;
 	NMG_CK_FACE(f1);
@@ -7525,13 +7525,13 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	if (NMG_INDEX_IS_SET(flags, f1)) continue;
 	NMG_CK_FACE_G_PLANE(f1->g.plane_p);
 
-        /* test if the face f1 bounding box and isect bounding box 
-         * by at least distance tolerance
-         */
-        if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
-            NMG_INDEX_SET(flags, f1);
-            continue;
-        }
+	/* test if the face f1 bounding box and isect bounding box
+	 * by at least distance tolerance
+	 */
+	if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
+	    NMG_INDEX_SET(flags, f1);
+	    continue;
+	}
 
 	is.fu1 = fu1;
 
@@ -7541,13 +7541,13 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	 */
 	for (BU_LIST_FOR(fu2, faceuse, &s2->fu_hd)) {
 	    if ((size_t)(m->maxindex) >= flag_len) {
-                old_flag_len = flag_len;
-                flag_len *= 2;
-                tmp = (char *)bu_realloc(flags, flag_len * sizeof(char), "realloc nmg_crackshells flags[]"); 
-                flags = tmp;
-                /* initialize new space */
-                memset((char *)(flags + (old_flag_len * sizeof(char))), 0, (flag_len - old_flag_len) * sizeof(char));
-            }
+		old_flag_len = flag_len;
+		flag_len *= 2;
+		tmp = (char *)bu_realloc(flags, flag_len * sizeof(char), "realloc nmg_crackshells flags[]");
+		flags = tmp;
+		/* initialize new space */
+		memset((char *)(flags + (old_flag_len * sizeof(char))), 0, (flag_len - old_flag_len) * sizeof(char));
+	    }
 	    NMG_CK_FACEUSE(fu2);
 	    NMG_CK_FACE(fu2->f_p);
 
@@ -7557,13 +7557,13 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	    if (fu2->orientation != OT_SAME) continue;
 	    if (NMG_INDEX_IS_SET(flags, f2)) continue;
 
-            /* test if the face f2 bounding box and isect bounding box 
-             * overlap by at least distance tolerance
-             */
-            if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
-	        NMG_INDEX_SET(flags, f2);
-	        continue;
-            }
+	    /* test if the face f2 bounding box and isect bounding box
+	     * overlap by at least distance tolerance
+	     */
+	    if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
+		NMG_INDEX_SET(flags, f2);
+		continue;
+	    }
 
 	    nmg_isect_two_generic_faces(fu1, fu2, tol);
 	}
@@ -7658,12 +7658,12 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	/* Unnecessary: already done by vertex fuser */
     }
     if ((size_t)(m->maxindex) >= flag_len) {
-        old_flag_len = flag_len;
-        flag_len *= 2;
-        tmp = (char *)bu_realloc(flags, flag_len * sizeof(char), "realloc nmg_crackshells flags[]"); 
-        flags = tmp;
-        /* initialize new space */
-        memset((char *)(flags + (old_flag_len * sizeof(char))), 0, (flag_len - old_flag_len) * sizeof(char));
+	old_flag_len = flag_len;
+	flag_len *= 2;
+	tmp = (char *)bu_realloc(flags, flag_len * sizeof(char), "realloc nmg_crackshells flags[]");
+	flags = tmp;
+	/* initialize new space */
+	memset((char *)(flags + (old_flag_len * sizeof(char))), 0, (flag_len - old_flag_len) * sizeof(char));
     }
 
     /* Release storage from bogus isect line */
@@ -7763,10 +7763,10 @@ nmg_isect_2faceuse(point_t pt,
     VSETALL(dir, 0.0); /* sanity */
 
     if (fu1->orientation != OT_SAME && fu1->orientation != OT_OPPOSITE) {
-        bu_bomb("nmg_isect_2faceuse(): invalid fu1 orientation\n");
+	bu_bomb("nmg_isect_2faceuse(): invalid fu1 orientation\n");
     }
     if (fu2->orientation != OT_SAME && fu2->orientation != OT_OPPOSITE) {
-        bu_bomb("nmg_isect_2faceuse(): invalid fu2 orientation\n");
+	bu_bomb("nmg_isect_2faceuse(): invalid fu2 orientation\n");
     }
 
     NMG_CK_FACEUSE(fu1);
@@ -7816,8 +7816,8 @@ nmg_isect_2faceuse(point_t pt,
 	    dist = DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, f2_pl);
 	    tot_dist += dist;
 	    /* the current distance is included in the average
-             * that the current distance is compared against
-             */
+	     * that the current distance is compared against
+	     */
 	    avg_dist = tot_dist / cnt;
 	    if (NEAR_ZERO(dist - avg_dist, tol->dist)) {
 	    } else {
@@ -7846,9 +7846,9 @@ nmg_isect_2faceuse(point_t pt,
 		cnt++;
 		dist = DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, f1_pl);
 		tot_dist += dist;
-	        /* the current distance is included in the average
-                 * that the current distance is compared against
-                 */
+		/* the current distance is included in the average
+		 * that the current distance is compared against
+		 */
 		avg_dist = tot_dist / cnt;
 		if (!NEAR_ZERO(dist - avg_dist, tol->dist)) {
 		    /* not parallel */
@@ -7862,13 +7862,13 @@ nmg_isect_2faceuse(point_t pt,
     coplanar = 0;
     if (!nmg_ck_fu_verts(fu2, f1, tol) && !nmg_ck_fu_verts(fu1, f2, tol) &&
 	NEAR_ZERO(fabs(f1_pl[W] - f2_pl[W]), tol->dist)) {
-	/* true when fu1 and fu2 are coplanar, i.e. all vertices 
-	 * of faceuse (fu1) are within distance tolarance of 
-	 * face (f2) and vice-versa. 
+	/* true when fu1 and fu2 are coplanar, i.e. all vertices
+	 * of faceuse (fu1) are within distance tolarance of
+	 * face (f2) and vice-versa.
 	 */
 	coplanar = 1;
-    } 
- 
+    }
+
     if (coplanar && !parallel) {
 	bu_bomb("nmg_isect_2faceuse(): logic error, coplanar but not parallel\n");
     }
@@ -7891,24 +7891,24 @@ nmg_isect_2faceuse(point_t pt,
     VSETALL(rpp_min, MAX_FASTF);
 
     for (BU_LIST_FOR(lu, loopuse, &fu1->lu_hd)) {
-        NMG_CK_LOOPUSE(lu);
-        if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
-            continue;
-        }
-        for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-            NMG_CK_EDGEUSE(eu);
-            VMIN(rpp_min, eu->vu_p->v_p->vg_p->coord);
-        }
+	NMG_CK_LOOPUSE(lu);
+	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+	    continue;
+	}
+	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	    NMG_CK_EDGEUSE(eu);
+	    VMIN(rpp_min, eu->vu_p->v_p->vg_p->coord);
+	}
     }
     for (BU_LIST_FOR(lu, loopuse, &fu2->lu_hd)) {
-        NMG_CK_LOOPUSE(lu);
-        if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
-            continue;
-        }
-        for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-            NMG_CK_EDGEUSE(eu);
-            VMIN(rpp_min, eu->vu_p->v_p->vg_p->coord);
-        }
+	NMG_CK_LOOPUSE(lu);
+	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+	    continue;
+	}
+	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	    NMG_CK_EDGEUSE(eu);
+	    VMIN(rpp_min, eu->vu_p->v_p->vg_p->coord);
+	}
     }
 
     /* Direction vector for ray is perpendicular to both plane
@@ -7927,13 +7927,13 @@ nmg_isect_2faceuse(point_t pt,
     abs_dir[Z] = fabs(dir[Z]);
 
     if (ZERO(abs_dir[X])) {
-        abs_dir[X] = 0.0;
+	abs_dir[X] = 0.0;
     }
     if (ZERO(abs_dir[Y])) {
-        abs_dir[Y] = 0.0;
+	abs_dir[Y] = 0.0;
     }
     if (ZERO(abs_dir[Z])) {
-        abs_dir[Z] = 0.0;
+	abs_dir[Z] = 0.0;
     }
 
     if (abs_dir[X] >= abs_dir[Y]) {
@@ -7983,4 +7983,3 @@ nmg_isect_2faceuse(point_t pt,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

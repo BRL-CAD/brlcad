@@ -218,33 +218,33 @@ rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt) {
      * Locate the min-max of the HF.
      */
     if (hip->shorts) {
-        int max, min;
-        int len;
-        unsigned short *sp;
-        int i;
+	int max, min;
+	int len;
+	unsigned short *sp;
+	int i;
 
-        sp = (unsigned short *)hip->mp->apbuf;
-        min = max = *sp++;
-        len = hip->w * hip->n;
-        for (i=1; i< len; i++, sp++) {
-            if ((int)*sp > max) max=*sp;
-            if ((int)*sp < min) min=*sp;
-        }
-        hf_max = max * hip->file2mm;
+	sp = (unsigned short *)hip->mp->apbuf;
+	min = max = *sp++;
+	len = hip->w * hip->n;
+	for (i=1; i< len; i++, sp++) {
+	    if ((int)*sp > max) max=*sp;
+	    if ((int)*sp < min) min=*sp;
+	}
+	hf_max = max * hip->file2mm;
     } else {
-        fastf_t max, min;
-        int len;
-        int i;
-        fastf_t *fp;
+	fastf_t max, min;
+	int len;
+	int i;
+	fastf_t *fp;
 
-        fp = (fastf_t *) hip->mp->apbuf;
-        min = max = *fp++;
-        len = hip->w * hip->n;
-        for (i=1; i < len; i++, fp++) {
-            if (*fp > max) max = *fp;
-            if (*fp < min) min = *fp;
-        }
-        hf_max = max * hip->file2mm;
+	fp = (fastf_t *) hip->mp->apbuf;
+	min = max = *fp++;
+	len = hip->w * hip->n;
+	for (i=1; i < len; i++, fp++) {
+	    if (*fp > max) max = *fp;
+	    if (*fp < min) min = *fp;
+	}
+	hf_max = max * hip->file2mm;
     }
 
     VSCALE(height, hf_N, hf_max);

@@ -135,10 +135,10 @@ rt_db_get_internal(
 
     /* ... but this isn't the whole story: */
     if (id == ID_COMBINATION) {
-        const struct rt_comb_internal *comb = (const struct rt_comb_internal *)ip->idb_ptr;
-        RT_CK_COMB(comb);
+	const struct rt_comb_internal *comb = (const struct rt_comb_internal *)ip->idb_ptr;
+	RT_CK_COMB(comb);
 
-        db5_sync_comb_to_attr(&ip->idb_avs, comb);
+	db5_sync_comb_to_attr(&ip->idb_avs, comb);
     }
 
     return id;			/* OK */

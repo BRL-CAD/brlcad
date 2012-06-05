@@ -529,7 +529,7 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
 	comb->region_flag = 1;
     } else {
 	/* unset region bit */
-	dp->d_flags &= ~RT_DIR_REGION;  
+	dp->d_flags &= ~RT_DIR_REGION;
 	comb->region_flag = 0;
     }
 
