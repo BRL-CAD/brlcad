@@ -35,13 +35,11 @@ add_definitions(
   )
 
 find_library(AVOID_LIBRARY NAMES libavoid PATHS /usr/lib/ /usr/local/lib/)
-IF(NOT AVOID_LIBRARY)
-  message(STATUS "Could NOT find Avoid")
+if(NOT AVOID_LIBRARY)
   set(AVOID_SRCS "")
-ELSE(NOT AVOID_LIBRARY)
-  message(STATUS "Found Avoid: " ${AVOID_LIBRARY})
+else(NOT AVOID_LIBRARY)
   set(AVOID_SRCS "")
-ENDIF(NOT AVOID_LIBRARY)
+endif(NOT AVOID_LIBRARY)
 
 BRLCAD_ADDEXEC(3dm-g 3dm/3dm-g.cpp "libwdb;${OPENNURBS_LIBRARY}" NOSTRICT)
 
