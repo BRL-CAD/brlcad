@@ -394,6 +394,8 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	return -1;
     }
     used += dlen;
+
+    /* verify the length won't overflow before we <<=3 it */
     if ( rip->object_length > UINTPTR_MAX>>3 ) {
 	bu_log("db5_get_raw_internal_fp():  bad length read\n");
 	return -1;
