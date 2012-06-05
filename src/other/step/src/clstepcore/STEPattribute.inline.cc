@@ -10,6 +10,7 @@
 * and is not subject to copyright.
 */
 
+#include <assert.h>
 #include <STEPattribute.h>
 #include <sdai.h>
 #include <ExpDict.h>
@@ -22,24 +23,28 @@ STEPattribute::STEPattribute( const STEPattribute & a )
 STEPattribute::STEPattribute( const class AttrDescriptor & d, SDAI_Integer  *p )
     : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
     ptr.i = p;
+    assert( &d ); //ensure that the AttrDescriptor is not a null pointer
 }
 
 ///  BINARY
 STEPattribute::STEPattribute( const class AttrDescriptor & d, SDAI_Binary  *p )
     : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
     ptr.b = p;
+    assert( &d ); //ensure that the AttrDescriptor is not a null pointer
 }
 
 ///  STRING
 STEPattribute::STEPattribute( const class AttrDescriptor & d, SDAI_String  *p )
     : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
     ptr.S = p;
+    assert( &d ); //ensure that the AttrDescriptor is not a null pointer
 }
 
 ///  REAL & NUMBER
 STEPattribute::STEPattribute( const class AttrDescriptor & d, SDAI_Real  *p )
     : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
     ptr.r = p;
+    assert( &d ); //ensure that the AttrDescriptor is not a null pointer
 }
 
 ///  ENTITY
@@ -47,18 +52,21 @@ STEPattribute::STEPattribute( const class AttrDescriptor & d,
                               SDAI_Application_instance * *p )
     : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
     ptr.c = p;
+    assert( &d ); //ensure that the AttrDescriptor is not a null pointer
 }
 
 ///  AGGREGATE
 STEPattribute::STEPattribute( const class AttrDescriptor & d, STEPaggregate * p )
     : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
     ptr.a =  p;
+    assert( &d ); //ensure that the AttrDescriptor is not a null pointer
 }
 
 ///  ENUMERATION  and Logical
 STEPattribute::STEPattribute( const class AttrDescriptor & d, SDAI_Enum  *p )
     : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
     ptr.e = p;
+    assert( &d ); //ensure that the AttrDescriptor is not a null pointer
 }
 
 ///  SELECT
@@ -66,12 +74,14 @@ STEPattribute::STEPattribute( const class AttrDescriptor & d,
                               class SDAI_Select  *p )
     : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
     ptr.sh = p;
+    assert( &d ); //ensure that the AttrDescriptor is not a null pointer
 }
 
 ///  UNDEFINED
 STEPattribute::STEPattribute( const class AttrDescriptor & d, SCLundefined * p )
     : aDesc( &d ), _derive( 0 ), _redefAttr( 0 ) {
     ptr.u = p;
+    assert( &d ); //ensure that the AttrDescriptor is not a null pointer
 }
 
 
