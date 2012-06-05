@@ -1926,9 +1926,7 @@ vo_keypoint_cmd(struct view_obj *vop,
 		const char *argv[])
 {
     struct bu_vls vls;
-    vect_t tvec;
-
-    VSETALL(tvec, 0);
+    vect_t tvec = VINIT_ZERO;
 
     /* Get the keypoint */
     if (argc == 1) {
