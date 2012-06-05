@@ -112,13 +112,13 @@ void USEREFout( Schema schema, Dictionary refdict, Linked_List reflist, char * t
     strncpy( sch_name, PrettyTmpName( SCHEMAget_name( schema ) ), BUFSIZ );
 
     LISTdo( reflist, s, Schema ) {
-        fprintf( file, "\t// %s FROM %s; (all objects)\n", type, s->symbol.name );
-        fprintf( file, "\tis = new Interface_spec(\"%s\",\"%s\");\n", sch_name, PrettyTmpName( s->symbol.name ) );
-        fprintf( file, "\tis->all_objects_(1);\n" );
+        fprintf( file, "        // %s FROM %s; (all objects)\n", type, s->symbol.name );
+        fprintf( file, "        is = new Interface_spec(\"%s\",\"%s\");\n", sch_name, PrettyTmpName( s->symbol.name ) );
+        fprintf( file, "        is->all_objects_(1);\n" );
         if( !strcmp( type, "USE" ) ) {
-            fprintf( file, "\t%s%s->use_interface_list_()->Append(is);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ) );
+            fprintf( file, "        %s%s->use_interface_list_()->Append(is);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ) );
         } else {
-            fprintf( file, "\t%s%s->ref_interface_list_()->Append(is);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ) );
+            fprintf( file, "        %s%s->ref_interface_list_()->Append(is);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ) );
         }
     }
     LISTod
@@ -152,12 +152,12 @@ void USEREFout( Schema schema, Dictionary refdict, Linked_List reflist, char * t
 
         /* note: SCHEMAget_name(r->schema) equals r->schema->symbol.name) */
         if( first_time ) {
-            fprintf( file, "\t// %s FROM %s (selected objects)\n", type, r->schema->symbol.name );
-            fprintf( file, "\tis = new Interface_spec(\"%s\",\"%s\");\n", sch_name, PrettyTmpName( r->schema->symbol.name ) );
+            fprintf( file, "        // %s FROM %s (selected objects)\n", type, r->schema->symbol.name );
+            fprintf( file, "        is = new Interface_spec(\"%s\",\"%s\");\n", sch_name, PrettyTmpName( r->schema->symbol.name ) );
             if( !strcmp( type, "USE" ) ) {
-                fprintf( file, "\t%s%s->use_interface_list_()->Append(is);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ) );
+                fprintf( file, "        %s%s->use_interface_list_()->Append(is);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ) );
             } else {
-                fprintf( file, "\t%s%s->ref_interface_list_()->Append(is);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ) );
+                fprintf( file, "        %s%s->ref_interface_list_()->Append(is);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ) );
             }
         }
 
@@ -180,27 +180,27 @@ void USEREFout( Schema schema, Dictionary refdict, Linked_List reflist, char * t
             sprintf( td_name, "/* %c from OBJ_? in expbasic.h not implemented */ 0", r->type );
         }
         if( r->old != r->nnew ) {
-            fprintf( file, "\t// object %s AS %s\n", r->old->name,
+            fprintf( file, "        // object %s AS %s\n", r->old->name,
                      r->nnew->name );
             if( !strcmp( type, "USE" ) ) {
-                fprintf( file, "\tui = new Used_item(\"%s\", %s, \"%s\", \"%s\");\n", r->schema->symbol.name, td_name, r->old->name, r->nnew->name );
-                fprintf( file, "\tis->explicit_items_()->Append(ui);\n" );
-                fprintf( file, "\t%s%s->interface_().explicit_items_()->Append(ui);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ) );
+                fprintf( file, "        ui = new Used_item(\"%s\", %s, \"%s\", \"%s\");\n", r->schema->symbol.name, td_name, r->old->name, r->nnew->name );
+                fprintf( file, "        is->explicit_items_()->Append(ui);\n" );
+                fprintf( file, "        %s%s->interface_().explicit_items_()->Append(ui);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ) );
             } else {
-                fprintf( file, "\tri = new Referenced_item(\"%s\", %s, \"%s\", \"%s\");\n", r->schema->symbol.name, td_name, r->old->name, r->nnew->name );
-                fprintf( file, "\tis->explicit_items_()->Append(ri);\n" );
-                fprintf( file, "\t%s%s->interface_().explicit_items_()->Append(ri);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ) );
+                fprintf( file, "        ri = new Referenced_item(\"%s\", %s, \"%s\", \"%s\");\n", r->schema->symbol.name, td_name, r->old->name, r->nnew->name );
+                fprintf( file, "        is->explicit_items_()->Append(ri);\n" );
+                fprintf( file, "        %s%s->interface_().explicit_items_()->Append(ri);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ) );
             }
         } else {
-            fprintf( file, "\t// object %s\n", r->old->name );
+            fprintf( file, "        // object %s\n", r->old->name );
             if( !strcmp( type, "USE" ) ) {
-                fprintf( file, "\tui = new Used_item(\"%s\", %s, \"\", \"%s\");\n", r->schema->symbol.name, td_name, r->nnew->name );
-                fprintf( file, "\tis->explicit_items_()->Append(ui);\n" );
-                fprintf( file, "\t%s%s->interface_().explicit_items_()->Append(ui);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ) );
+                fprintf( file, "        ui = new Used_item(\"%s\", %s, \"\", \"%s\");\n", r->schema->symbol.name, td_name, r->nnew->name );
+                fprintf( file, "        is->explicit_items_()->Append(ui);\n" );
+                fprintf( file, "        %s%s->interface_().explicit_items_()->Append(ui);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ) );
             } else {
-                fprintf( file, "\tri = new Referenced_item(\"%s\", %s, \"\", \"%s\");\n", r->schema->symbol.name, td_name, r->nnew->name );
-                fprintf( file, "\tis->explicit_items_()->Append(ri);\n" );
-                fprintf( file, "\t%s%s->interface_().explicit_items_()->Append(ri);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ) );
+                fprintf( file, "        ri = new Referenced_item(\"%s\", %s, \"\", \"%s\");\n", r->schema->symbol.name, td_name, r->nnew->name );
+                fprintf( file, "        is->explicit_items_()->Append(ri);\n" );
+                fprintf( file, "        %s%s->interface_().explicit_items_()->Append(ri);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ) );
             }
         }
         LISTod
@@ -622,11 +622,11 @@ void ATTRsign_access_methods( Variable a, FILE * file ) {
     strncpy( ctype, AccessType( t ), BUFSIZ );
 
     if( isReferenceType( class ) ) {
-	fprintf( file, "\tconst_%s %s() const;\n", ctype, attrnm );
+	fprintf( file, "        const_%s %s() const;\n", ctype, attrnm );
     } else {
-	fprintf( file, "\t%s %s() const;\n", ctype, attrnm );
+	fprintf( file, "        %s %s() const;\n", ctype, attrnm );
     }
-    fprintf( file, "\tvoid %s (const %s x);\n\n", attrnm, ctype );
+    fprintf( file, "        void %s (const %s x);\n\n", attrnm, ctype );
 
     return;
 }
@@ -703,7 +703,7 @@ void AGGRprint_access_methods( CONST char * entnm, Variable a, FILE * file, Type
     fprintf( file, "{\n" );
     fprintf( file, "    return (%s) &_%s; \n}\n", ctype, attrnm );
     ATTRprint_access_methods_put_head( entnm, a, file );
-    fprintf( file, "\t{ _%s.ShallowCopy (*x); }\n", attrnm );
+    fprintf( file, "        { _%s.ShallowCopy (*x); }\n", attrnm );
     return;
 }
 
@@ -756,19 +756,19 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         if( print_logging ) {
             fprintf( file, "#ifdef SCL_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
-            fprintf( file, "\tlogStream->open(SCLLOGFILE,ios::app);\n" );
-            fprintf( file, "\tif(! (_%s == S_ENTITY_NULL) )\n\t{\n", attrnm );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+            fprintf( file, "        logStream->open(SCLLOGFILE,ios::app);\n" );
+            fprintf( file, "        if(! (_%s == S_ENTITY_NULL) )\n        {\n", attrnm );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << \"reference to Sdai%s entity #\" << _%s->STEPfile_id << std::endl;\n",
+                     "            *logStream << \"reference to Sdai%s entity #\" << _%s->STEPfile_id << std::endl;\n",
                      nm, attrnm );
-            fprintf( file, "\t}\n\telse\n\t{\n" );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+            fprintf( file, "        }\n        else\n        {\n" );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << \"null entity\" << std::endl;\n\t}\n" );
-            fprintf( file, "\tlogStream->close();\n" );
+                     "            *logStream << \"null entity\" << std::endl;\n        }\n" );
+            fprintf( file, "        logStream->close();\n" );
             fprintf( file, "    }\n" );
             fprintf( file, "#endif\n" );
         }
@@ -780,23 +780,23 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
             fprintf( file, "\n" );
             fprintf( file, "#ifdef SCL_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
-            fprintf( file, "\tlogStream->open(SCLLOGFILE,ios::app);\n" );
+            fprintf( file, "        logStream->open(SCLLOGFILE,ios::app);\n" );
 
-	    fprintf( file, "\tif(! (x == S_ENTITY_NULL) )\n\t{\n" );
+	    fprintf( file, "        if(! (x == S_ENTITY_NULL) )\n        {\n" );
 
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n",
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n",
                      entnm, funcnm );
 
 	    fprintf( file,
-		     "\t    *logStream << \"reference to Sdai%s entity #\" << x->STEPfile_id << std::endl;\n",
+		     "            *logStream << \"reference to Sdai%s entity #\" << x->STEPfile_id << std::endl;\n",
 		     nm );
 
-            fprintf( file, "\t}\n\telse\n\t{\n" );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n",
+            fprintf( file, "        }\n        else\n        {\n" );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << \"null entity\" << std::endl;\n\t}\n" );
-            fprintf( file, "\tlogStream->close();\n" );
+                     "            *logStream << \"null entity\" << std::endl;\n        }\n" );
+            fprintf( file, "        logStream->close();\n" );
             fprintf( file, "    }\n" );
             fprintf( file, "#endif\n" );
         }
@@ -811,19 +811,19 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         if( print_logging ) {
             fprintf( file, "#ifdef SCL_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
-            fprintf( file, "\tlogStream->open(SCLLOGFILE,ios::app);\n" );
-            fprintf( file, "\tif(!_%s.is_null())\n\t{\n", attrnm );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+            fprintf( file, "        logStream->open(SCLLOGFILE,ios::app);\n" );
+            fprintf( file, "        if(!_%s.is_null())\n        {\n", attrnm );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << _%s.element_at(_%s.asInt()) << std::endl;\n",
+                     "            *logStream << _%s.element_at(_%s.asInt()) << std::endl;\n",
                      attrnm, attrnm );
-            fprintf( file, "\t}\n\telse\n\t{\n" );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+            fprintf( file, "        }\n        else\n        {\n" );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << \"unset\" << std::endl;\n\t}\n" );
-            fprintf( file, "\t    logStream->close();\n" );
+                     "            *logStream << \"unset\" << std::endl;\n        }\n" );
+            fprintf( file, "            logStream->close();\n" );
             fprintf( file, "    }\n" );
             fprintf( file, "#endif\n" );
         }
@@ -834,10 +834,10 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         if( print_logging ) {
             fprintf( file, "#ifdef SCL_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
-            fprintf( file, "\t*logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n",
+            fprintf( file, "        *logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t*logStream << _%s.element_at(x) << std::endl;\n", attrnm );
+                     "        *logStream << _%s.element_at(x) << std::endl;\n", attrnm );
             fprintf( file, "    }\n" );
             fprintf( file, "#endif\n" );
         }
@@ -850,17 +850,17 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         if( print_logging ) {
             fprintf( file, "#ifdef SCL_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
-            fprintf( file, "\tif(!_%s.is_null())\n\t{\n", attrnm );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+            fprintf( file, "        if(!_%s.is_null())\n        {\n", attrnm );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << _%s.element_at(_%s.asInt()) << std::endl;\n",
+                     "            *logStream << _%s.element_at(_%s.asInt()) << std::endl;\n",
                      attrnm, attrnm );
-            fprintf( file, "\t}\n\telse\n\t{\n" );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+            fprintf( file, "        }\n        else\n        {\n" );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << \"unset\" << std::endl;\n\t}\n    }\n" );
+                     "            *logStream << \"unset\" << std::endl;\n        }\n    }\n" );
             fprintf( file, "#endif\n" );
         }
         fprintf( file, "    return (%s) _%s; \n}\n",
@@ -871,10 +871,10 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         if( print_logging ) {
             fprintf( file, "#ifdef SCL_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
-            fprintf( file, "\t*logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n",
+            fprintf( file, "        *logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t*logStream << _%s.element_at(x) << std::endl;\n", attrnm );
+                     "        *logStream << _%s.element_at(x) << std::endl;\n", attrnm );
             fprintf( file, "    }\n" );
             fprintf( file, "#endif\n" );
         }
@@ -883,9 +883,9 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
     }
     /*    case TYPE_SELECT: */
     if( class == Class_Select_Type )  {
-        fprintf( file, "\t{ return (const %s) &_%s; }\n",  ctype, attrnm );
+        fprintf( file, "        { return (const %s) &_%s; }\n",  ctype, attrnm );
         ATTRprint_access_methods_put_head( entnm, a, file );
-        fprintf( file, "\t{ _%s = x; }\n", attrnm );
+        fprintf( file, "        { _%s = x; }\n", attrnm );
         return;
     }
     /*    case TYPE_AGGRETATES: */
@@ -899,16 +899,16 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         if( print_logging ) {
             fprintf( file, "#ifdef SCL_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
-            fprintf( file, "\tif(!_%s.is_null())\n\t{\n", attrnm );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+            fprintf( file, "        if(!_%s.is_null())\n        {\n", attrnm );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << _%s << std::endl;\n", attrnm );
-            fprintf( file, "\t}\n\telse\n\t{\n" );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+                     "            *logStream << _%s << std::endl;\n", attrnm );
+            fprintf( file, "        }\n        else\n        {\n" );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << \"unset\" << std::endl;\n\t}\n    }\n" );
+                     "            *logStream << \"unset\" << std::endl;\n        }\n    }\n" );
             fprintf( file, "#endif\n" );
 
         }
@@ -918,16 +918,16 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         if( print_logging ) {
             fprintf( file, "#ifdef SCL_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
-            fprintf( file, "\tif(!x)\n\t{\n" );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+            fprintf( file, "        if(!x)\n        {\n" );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << x << std::endl;\n" );
-            fprintf( file, "\t}\n\telse\n\t{\n" );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+                     "            *logStream << x << std::endl;\n" );
+            fprintf( file, "        }\n        else\n        {\n" );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << \"unset\" << std::endl;\n\t}\n    }\n" );
+                     "            *logStream << \"unset\" << std::endl;\n        }\n    }\n" );
             fprintf( file, "#endif\n" );
         }
         fprintf( file, "    _%s = x; \n}\n", attrnm );
@@ -939,16 +939,16 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         if( print_logging ) {
             fprintf( file, "#ifdef SCL_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
-            fprintf( file, "\tif(!(_%s == S_INT_NULL) )\n\t{\n", attrnm );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+            fprintf( file, "        if(!(_%s == S_INT_NULL) )\n        {\n", attrnm );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << _%s << std::endl;\n", attrnm );
-            fprintf( file, "\t}\n\telse\n\t{\n" );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+                     "            *logStream << _%s << std::endl;\n", attrnm );
+            fprintf( file, "        }\n        else\n        {\n" );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << \"unset\" << std::endl;\n\t}\n    }\n" );
+                     "            *logStream << \"unset\" << std::endl;\n        }\n    }\n" );
             fprintf( file, "#endif\n" );
         }
         /*  default:  INTEGER   */
@@ -959,16 +959,16 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         if( print_logging ) {
             fprintf( file, "#ifdef SCL_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
-            fprintf( file, "\tif(!(x == S_INT_NULL) )\n\t{\n" );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+            fprintf( file, "        if(!(x == S_INT_NULL) )\n        {\n" );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << x << std::endl;\n" );
-            fprintf( file, "\t}\n\telse\n\t{\n" );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+                     "            *logStream << x << std::endl;\n" );
+            fprintf( file, "        }\n        else\n        {\n" );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << \"unset\" << std::endl;\n\t}\n    }\n" );
+                     "            *logStream << \"unset\" << std::endl;\n        }\n    }\n" );
             fprintf( file, "#endif\n" );
             /*  default:  INTEGER   */
             /*  is the same type as the data member  */
@@ -983,16 +983,16 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         if( print_logging ) {
             fprintf( file, "#ifdef SCL_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
-            fprintf( file, "\tif(!(_%s == S_REAL_NULL) )\n\t{\n", attrnm );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+            fprintf( file, "        if(!(_%s == S_REAL_NULL) )\n        {\n", attrnm );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << _%s << std::endl;\n", attrnm );
-            fprintf( file, "\t}\n\telse\n\t{\n" );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+                     "            *logStream << _%s << std::endl;\n", attrnm );
+            fprintf( file, "        }\n        else\n        {\n" );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << \"unset\" << std::endl;\n\t}\n    }\n" );
+                     "            *logStream << \"unset\" << std::endl;\n        }\n    }\n" );
             fprintf( file, "#endif\n" );
         }
         fprintf( file, "    return (const %s) _%s; \n}\n", ctype, attrnm );
@@ -1001,16 +1001,16 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         if( print_logging ) {
             fprintf( file, "#ifdef SCL_LOGGING\n" );
             fprintf( file, "    if(*logStream)\n    {\n" );
-            fprintf( file, "\tif(!(_%s == S_REAL_NULL) )\n\t{\n", attrnm );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+            fprintf( file, "        if(!(_%s == S_REAL_NULL) )\n        {\n", attrnm );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << _%s << std::endl;\n", attrnm );
-            fprintf( file, "\t}\n\telse\n\t{\n" );
-            fprintf( file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
+                     "            *logStream << _%s << std::endl;\n", attrnm );
+            fprintf( file, "        }\n        else\n        {\n" );
+            fprintf( file, "            *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n",
                      entnm, funcnm );
             fprintf( file,
-                     "\t    *logStream << \"unset\" << std::endl;\n\t}\n    }\n" );
+                     "            *logStream << \"unset\" << std::endl;\n        }\n    }\n" );
             fprintf( file, "#endif\n" );
         }
         fprintf( file, "    _%s = x; \n}\n", attrnm );
@@ -1361,7 +1361,7 @@ void LIBcopy_constructor( Entity ent, FILE * file ) {
     const char * StrToLower( const char * word );
 
     /*mjm7/10/91 copy constructor definition  */
-    fprintf( file, "\t%s::%s(%s& e ) \n", entnm, entnm, entnm );
+    fprintf( file, "        %s::%s(%s& e ) \n", entnm, entnm, entnm );
     fprintf( file, "  {" );
 
     /*  attributes  */
@@ -1376,37 +1376,37 @@ void LIBcopy_constructor( Entity ent, FILE * file ) {
         /*  1. initialize everything to NULL (even if not optional)  */
 
         /*    default:  to intialize attribute to NULL  */
-        sprintf( b, "\t_%s = e.%s();\n", attrnm, attrnm );
+        sprintf( b, "        _%s = e.%s();\n", attrnm, attrnm );
 
         /*mjm7/11/91  case TYPE_STRING */
         if( ( class == Class_String_Type ) || ( class == Class_Binary_Type ) ) {
-            sprintf( b, "\t_%s = strdup(e.%s());\n", attrnm, attrnm );
+            sprintf( b, "        _%s = strdup(e.%s());\n", attrnm, attrnm );
         }
 
 
         /*      case TYPE_ENTITY:   */
         if( class == Class_Entity_Type ) {
-            sprintf( b, "\t_%s = e.%s();\n", attrnm, attrnm );
+            sprintf( b, "        _%s = e.%s();\n", attrnm, attrnm );
         }
         /* previous line modified to conform with SDAI C++ Binding for PDES, Inc. Prototyping 5/22/91 CD */
 
         /*    case TYPE_ENUM:   */
         if( class == Class_Enumeration_Type ) {
-            sprintf( b, "\t_%s.put(e.%s().asInt());\n", attrnm, attrnm );
+            sprintf( b, "        _%s.put(e.%s().asInt());\n", attrnm, attrnm );
         }
         /*    case TYPE_SELECT: */
         if( class == Class_Select_Type ) {
-            sprintf( b, "DDDDDDD\t_%s.put(e.%s().asInt());\n", attrnm, attrnm );
+            sprintf( b, "DDDDDDD        _%s.put(e.%s().asInt());\n", attrnm, attrnm );
         }
         /*   case TYPE_BOOLEAN    */
         if( class == Class_Boolean_Type ) {
-            sprintf( b, "\t_%s.put(e.%s().asInt());\n", attrnm, attrnm );
+            sprintf( b, "        _%s.put(e.%s().asInt());\n", attrnm, attrnm );
         }
         /* previous line modified to conform with SDAI C++ Binding for PDES, Inc. Prototyping 5/22/91 CD */
 
         /*   case TYPE_LOGICAL    */
         if( class == Class_Logical_Type ) {
-            sprintf( b, "\t_%s.put(e.%s().asInt());\n", attrnm, attrnm );
+            sprintf( b, "        _%s.put(e.%s().asInt());\n", attrnm, attrnm );
         }
         /* previous line modified to conform with SDAI C++ Binding for PDES, Inc. Prototyping 5/22/91 CD */
 
@@ -1420,13 +1420,13 @@ void LIBcopy_constructor( Entity ent, FILE * file ) {
 
         fprintf( file, "%s", b )       ;
 
-        fprintf( file, "\t attributes.push " );
+        fprintf( file, "         attributes.push " );
 
         /*  2.  put attribute on attributes list    */
 
         /*  default:    */
 
-        fprintf( file, "\n\t(new STEPattribute(*%s%d%s, %s &_%s));\n",
+        fprintf( file, "\n        (new STEPattribute(*%s%d%s, %s &_%s));\n",
                  ATTR_PREFIX, count,
                  attrnm,
                  ( TYPEis_entity( t ) ? "(SDAI_Application_instance_ptr *)" : "" ),
@@ -1513,26 +1513,26 @@ void LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
             /*  if there\'s no super class yet,
                 or the super class doesn\'t have any attributes
             */
-            fprintf( file, "\t/*  parent: %s  */\n", ENTITYget_classname( e ) );
+            fprintf( file, "        /*  parent: %s  */\n", ENTITYget_classname( e ) );
 
             super_cnt++;
             if( super_cnt == 1 ) {
                 /* ignore the 1st parent */
                 fprintf( file,
-                         "\t/* Ignore the first parent since it is */\n %s\n",
-                         "\t/* part of the main inheritance hierarchy */" );
+                         "        /* Ignore the first parent since it is */\n %s\n",
+                         "        /* part of the main inheritance hierarchy */" );
                 principalSuper = e; /* principal SUPERTYPE */
             } else {
                 fprintf( file, "    HeadEntity(this); \n" );
                 fprintf( file, "#if 1 \n" );
                 fprintf( file,
-                         "\t/* Optionally use the following to replace the line following \n" );
+                         "        /* Optionally use the following to replace the line following \n" );
                 fprintf( file,
-                         "\t   the endif. Use this to turn off adding attributes in \n" );
+                         "           the endif. Use this to turn off adding attributes in \n" );
                 fprintf( file,
-                         "\t   diamond shaped hierarchies for each additional parent at this\n" );
+                         "           diamond shaped hierarchies for each additional parent at this\n" );
                 fprintf( file,
-                         "\t   level. You currently must hand edit this for it to work. */\n" );
+                         "           level. You currently must hand edit this for it to work. */\n" );
                 fprintf( file, "    int attrFlags[3]; // e.g. \n" );
                 fprintf( file, "    attrFlags[0] = 1; // add parents attrs\n" );
                 fprintf( file,
@@ -1555,15 +1555,15 @@ void LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
                 if( super_cnt == 2 ) {
                     printf( "\nMULTIPLE INHERITANCE for entity: %s\n",
                             ENTITYget_name( entity ) );
-                    printf( "\tSUPERTYPE 1: %s (principal supertype)\n",
+                    printf( "        SUPERTYPE 1: %s (principal supertype)\n",
                             ENTITYget_name( principalSuper ) );
                 }
-                printf( "\tSUPERTYPE %d: %s\n", super_cnt, ENTITYget_name( e ) );
+                printf( "        SUPERTYPE %d: %s\n", super_cnt, ENTITYget_name( e ) );
             }
             LISTod;
 
         } else {    /*  if entity has no supertypes, it's at top of hierarchy  */
-            fprintf( file, "\t/*  no SuperTypes */\n" );
+            fprintf( file, "        /*  no SuperTypes */\n" );
         }
     }
 
@@ -1629,12 +1629,12 @@ void LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
 
     /* include explicit initialization of base class */
     if( principalSuper ) {
-        fprintf( file, "\t: %s()\n", ENTITYget_classname( principalSuper ) );
+        fprintf( file, "        : %s()\n", ENTITYget_classname( principalSuper ) );
     } else {
-        fprintf( file, "\t: SDAI_Application_instance()\n" );
+        fprintf( file, "        : SDAI_Application_instance()\n" );
     }
 
-    fprintf( file, "\t{  CopyAs((SDAI_Application_instance_ptr) &e);\t}\n" );
+    fprintf( file, "        {  CopyAs((SDAI_Application_instance_ptr) &e);        }\n" );
 
     /*  print destructor  */
     /*  currently empty, but should check to see if any attributes need
@@ -1694,7 +1694,7 @@ void LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
 
         fprintf( file, "{\n" );
 
-        fprintf( file, "\t/* Set this to point to the head entity. */\n" );
+        fprintf( file, "        /* Set this to point to the head entity. */\n" );
         fprintf( file, "    HeadEntity(se); \n" );
 
         fprintf( file, "\n" );
@@ -1704,24 +1704,24 @@ void LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
             /*  if there\'s no super class yet,
                 or the super class doesn\'t have any attributes
                 */
-            fprintf( file, "\t/*  parent: %s  */\n", ENTITYget_classname( e ) );
+            fprintf( file, "        /*  parent: %s  */\n", ENTITYget_classname( e ) );
 
             super_cnt++;
             if( super_cnt == 1 ) {
                 /* ignore the 1st parent */
                 fprintf( file,
-                         "\t/* Ignore the first parent since it is */\n %s\n",
-                         "\t/* part of the main inheritance hierarchy */" );
+                         "        /* Ignore the first parent since it is */\n %s\n",
+                         "        /* part of the main inheritance hierarchy */" );
             }  else {
                 fprintf( file, "#if 0 \n" );
                 fprintf( file,
-                         "\t/* Optionally use the following to replace the line following \n" );
+                         "        /* Optionally use the following to replace the line following \n" );
                 fprintf( file,
-                         "\t   the endif. Use this to turn off adding attributes in \n" );
+                         "           the endif. Use this to turn off adding attributes in \n" );
                 fprintf( file,
-                         "\t   diamond shaped hierarchies for each additional parent at this\n" );
+                         "           diamond shaped hierarchies for each additional parent at this\n" );
                 fprintf( file,
-                         "\t   level. You currently must hand edit this for it to work. */\n" );
+                         "           level. You currently must hand edit this for it to work. */\n" );
                 fprintf( file, "    int attrFlags[3]; // e.g. \n" );
                 fprintf( file, "    attrFlags[0] = 1; // add parents attrs\n" );
                 fprintf( file,
@@ -1742,7 +1742,7 @@ void LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
             LISTod;
 
         }  else {   /*  if entity has no supertypes, it's at top of hierarchy  */
-            fprintf( file, "\t/*  no SuperTypes */\n" );
+            fprintf( file, "        /*  no SuperTypes */\n" );
         }
 
         /* what if entity comes from other schema? */
@@ -1778,14 +1778,14 @@ void LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
                 fprintf( file, "    a -> set_null ();\n" );
 
                 fprintf( file,
-                         "\t/* Put attribute on this class' %s\n",
-                         "attributes list so the */\n\t/*access functions still work. */" );
+                         "        /* Put attribute on this class' %s\n",
+                         "attributes list so the */\n        /*access functions still work. */" );
                 /*  3.  put attribute on this class' attributes list so the
                 access functions still work */
                 fprintf( file, "    attributes.push (a);\n" );
                 fprintf( file,
-                         "\t/* Put attribute on the attributes list %s\n",
-                         "for the */\n\t/* main inheritance heirarchy. */" );
+                         "        /* Put attribute on the attributes list %s\n",
+                         "for the */\n        /* main inheritance heirarchy. */" );
                 /*  4.  put attribute on attributes list for the main
                 inheritance heirarchy */
                 fprintf( file, "    if(!addAttrs || addAttrs[0])\n" );
@@ -1897,25 +1897,25 @@ void print_typechain( FILE * f, const Type t, char * buf, Schema schema ) {
         case set_:
         case list_:
             /* create a new TypeDescriptor variable, e.g. t1, and new space for it */
-            fprintf( f, "\t%s * %s%d = new %s;\n",
+            fprintf( f, "        %s * %s%d = new %s;\n",
                      GetTypeDescriptorName( t ), TD_PREFIX, count,
                      GetTypeDescriptorName( t ) );
 
             fprintf( f,
-                     "\t%s%d->AssignAggrCreator((AggregateCreator) create_%s);%s",
-                     TD_PREFIX, count, ctype, "\t// Creator function \n" );
+                     "        %s%d->AssignAggrCreator((AggregateCreator) create_%s);%s",
+                     TD_PREFIX, count, ctype, "        // Creator function \n" );
             if( !TYPEget_head( t ) ) {
                 if( TYPEget_body( t )->lower )
-                    fprintf( f, "\t%s%d->Bound1(%d);\n", TD_PREFIX, count,
+                    fprintf( f, "        %s%d->Bound1(%d);\n", TD_PREFIX, count,
                              TYPEget_body( t )->lower->u.integer );
                 if( TYPEget_body( t )->upper )
-                    fprintf( f, "\t%s%d->Bound2(%d);\n", TD_PREFIX, count,
+                    fprintf( f, "        %s%d->Bound2(%d);\n", TD_PREFIX, count,
                              TYPEget_body( t )->upper->u.integer );
                 if( TYPEget_body( t )->flags.unique )
-                    fprintf( f, "\t%s%d->UniqueElements(LTrue);\n",
+                    fprintf( f, "        %s%d->UniqueElements(LTrue);\n",
                              TD_PREFIX, count );
                 if( TYPEget_body( t )->flags.optional )
-                    fprintf( f, "\t%s%d->OptionalElements(LTrue);\n",
+                    fprintf( f, "        %s%d->OptionalElements(LTrue);\n",
                              TD_PREFIX, count );
             }
             break;
@@ -1923,23 +1923,23 @@ void print_typechain( FILE * f, const Type t, char * buf, Schema schema ) {
         default: /* this should not happen since only aggregates are allowed to
           not have a name. This funct should only be called for aggrs
           without names. */
-            fprintf( f, "\tTypeDescriptor * %s%d = new TypeDescriptor;\n",
+            fprintf( f, "        TypeDescriptor * %s%d = new TypeDescriptor;\n",
                      TD_PREFIX, count );
     }
 
     /* there is no name so name doesn't need to be initialized */
 
-    fprintf( f, "\t%s%d->FundamentalType(%s);\n", TD_PREFIX, count,
+    fprintf( f, "        %s%d->FundamentalType(%s);\n", TD_PREFIX, count,
              FundamentalType( t, 1 ) );
-    fprintf( f, "\t%s%d->Description(\"%s\");\n", TD_PREFIX, count,
+    fprintf( f, "        %s%d->Description(\"%s\");\n", TD_PREFIX, count,
              TypeDescription( t ) );
 
     /* DAS ORIG SCHEMA FIX */
-    fprintf( f, "\t%s%d->OriginatingSchema(%s%s);\n", TD_PREFIX, count,
+    fprintf( f, "        %s%d->OriginatingSchema(%s%s);\n", TD_PREFIX, count,
              SCHEMA_PREFIX, SCHEMAget_name( schema ) );
 
     if( TYPEget_RefTypeVarNm( t, typename_buf, schema ) ) {
-        fprintf( f, "\t%s%d->ReferentType(%s);\n", TD_PREFIX, count, typename_buf );
+        fprintf( f, "        %s%d->ReferentType(%s);\n", TD_PREFIX, count, typename_buf );
     } else {
         /* no name, recurse */
         char callee_buffer[MAX_LEN];
@@ -1947,7 +1947,7 @@ void print_typechain( FILE * f, const Type t, char * buf, Schema schema ) {
             base = TYPEget_body( t )->base;
         }
         print_typechain( f, base, callee_buffer, schema );
-        fprintf( f, "\t%s%d->ReferentType(%s);\n", TD_PREFIX, count, callee_buffer );
+        fprintf( f, "        %s%d->ReferentType(%s);\n", TD_PREFIX, count, callee_buffer );
     }
     sprintf( buf, "%s%d", TD_PREFIX, count );
 }
@@ -1975,12 +1975,12 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
     /* DAS New SDAI Dictionary 5/95 */
     /* insert the entity into the schema descriptor */
     fprintf( file,
-             "\t((SDAIAGGRH(Set,EntityH))%s%s->Entities())->Add(%s%s%s);\n",
+             "        ((SDAIAGGRH(Set,EntityH))%s%s->Entities())->Add(%s%s%s);\n",
              SCHEMA_PREFIX, schema_name, schema_name, ENT_PREFIX, entity_name );
 #endif
 
     if( ENTITYget_abstract( entity ) ) {
-        fprintf( file, "\t%s%s%s->AddSupertype_Stmt(\"",
+        fprintf( file, "        %s%s%s->AddSupertype_Stmt(\"",
                  schema_name, ENT_PREFIX, entity_name );
         if( entity->u.entity->subtype_expression ) {
             fprintf( file, "ABSTRACT SUPERTYPE OF (" );
@@ -1994,7 +1994,7 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
         }
     } else {
         if( entity->u.entity->subtype_expression ) {
-            fprintf( file, "\t%s%s%s->AddSupertype_Stmt(\"",
+            fprintf( file, "        %s%s%s->AddSupertype_Stmt(\"",
                      schema_name, ENT_PREFIX, entity_name );
             fprintf( file, "SUPERTYPE OF (" );
             tmp = SUBTYPEto_string( entity->u.entity->subtype_expression );
@@ -2026,8 +2026,8 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
     if( TYPEget_name( v->type ) ) {
         if( ( !TYPEget_head( v->type ) ) &&
                 ( TYPEget_body( v->type )->type == entity_ ) ) {
-            fprintf( file, "\t%s%d%s%s =\n\t  new %s"
-                     "(\"%s\",%s%s%s,\n\t  %s,%s%s,\n\t  *%s%s%s);\n",
+            fprintf( file, "        %s%d%s%s =\n          new %s"
+                     "(\"%s\",%s%s%s,\n          %s,%s%s,\n          *%s%s%s);\n",
                      ATTR_PREFIX, attr_count,
                      ( VARis_derived( v ) ? "D" :
                        ( VARis_type_shifter( v ) ? "R" :
@@ -2060,8 +2060,8 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
                    );
         } else {
             /* type reference */
-            fprintf( file, "  %s%d%s%s =\n\t  new %s"
-                     "(\"%s\",%s%s%s,\n\t  %s,%s%s,\n\t  *%s%s%s);\n",
+            fprintf( file, "  %s%d%s%s =\n          new %s"
+                     "(\"%s\",%s%s%s,\n          %s,%s%s,\n          *%s%s%s);\n",
                      ATTR_PREFIX, attr_count,
                      ( VARis_derived( v ) ? "D" :
                        ( VARis_type_shifter( v ) ? "R" :
@@ -2089,8 +2089,8 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
         }
     } else if( TYPEis_builtin( v->type ) ) {
         /*  the type wasn\'t named -- it must be built in or aggregate  */
-        fprintf( file, "  %s%d%s%s =\n\t  new %s"
-                 "(\"%s\",%s%s,\n\t  %s,%s%s,\n\t  *%s%s%s);\n",
+        fprintf( file, "  %s%d%s%s =\n          new %s"
+                 "(\"%s\",%s%s,\n          %s,%s%s,\n          *%s%s%s);\n",
                  ATTR_PREFIX, attr_count,
                  ( VARis_derived( v ) ? "D" :
                    ( VARis_type_shifter( v ) ? "R" :
@@ -2115,8 +2115,8 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
         /* manufacture new one(s) on the spot */
         char typename_buf[MAX_LEN];
         print_typechain( file, v->type, typename_buf, schema );
-        fprintf( file, "  %s%d%s%s =\n\t  new %s"
-                 "(\"%s\",%s,%s,%s%s,\n\t  *%s%s%s);\n",
+        fprintf( file, "  %s%d%s%s =\n          new %s"
+                 "(\"%s\",%s,%s,%s%s,\n          *%s%s%s);\n",
                  ATTR_PREFIX, attr_count,
                  ( VARis_derived( v ) ? "D" :
                    ( VARis_type_shifter( v ) ? "R" :
@@ -2151,7 +2151,7 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
     if( VARis_derived( v ) && v->initializer ) {
         tmp = EXPRto_string( v->initializer );
         tmp2 = ( char * )malloc( sizeof( char ) * ( strlen( tmp ) + BUFSIZ ) );
-        fprintf( file, "\t%s%d%s%s->initializer_(\"%s\");\n",
+        fprintf( file, "        %s%d%s%s->initializer_(\"%s\");\n",
                  ATTR_PREFIX, attr_count,
                  ( VARis_derived( v ) ? "D" :
                    ( VARis_type_shifter( v ) ? "R" :
@@ -2161,7 +2161,7 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
         free( tmp2 );
     }
     if( VARget_inverse( v ) ) {
-        fprintf( file, "\t%s%d%s%s->inverted_attr_id_(\"%s\");\n",
+        fprintf( file, "        %s%d%s%s->inverted_attr_id_(\"%s\");\n",
                  ATTR_PREFIX, attr_count,
                  ( VARis_derived( v ) ? "D" :
                    ( VARis_type_shifter( v ) ? "R" :
@@ -2169,7 +2169,7 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
                  attrnm, v->inverse_attribute->name->symbol.name );
         if( v->type->symbol.name ) {
             fprintf( file,
-                     "\t%s%d%s%s->inverted_entity_id_(\"%s\");\n",
+                     "        %s%d%s%s->inverted_entity_id_(\"%s\");\n",
                      ATTR_PREFIX, attr_count,
                      ( VARis_derived( v ) ? "D" :
                        ( VARis_type_shifter( v ) ? "R" :
@@ -2180,7 +2180,7 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
             switch( TYPEget_body( v->type )->type ) {
                 case entity_:
                     fprintf( file,
-                             "\t%s%d%s%s->inverted_entity_id_(\"%s\");\n",
+                             "        %s%d%s%s->inverted_entity_id_(\"%s\");\n",
                              ATTR_PREFIX, attr_count,
                              ( VARis_derived( v ) ? "D" :
                                ( VARis_type_shifter( v ) ? "R" :
@@ -2194,7 +2194,7 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
                 case set_:
                 case list_:
                     fprintf( file,
-                             "\t%s%d%s%s->inverted_entity_id_(\"%s\");\n",
+                             "        %s%d%s%s->inverted_entity_id_(\"%s\");\n",
                              ATTR_PREFIX, attr_count,
                              ( VARis_derived( v ) ? "D" :
                                ( VARis_type_shifter( v ) ? "R" :
@@ -2209,7 +2209,7 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
 
     LISTod
 
-    fprintf( file, "\treg.AddEntity (*%s%s%s);\n",
+    fprintf( file, "        reg.AddEntity (*%s%s%s);\n",
              schema_name, ENT_PREFIX, entity_name );
 
 #undef schema_name
@@ -2266,17 +2266,17 @@ void ENTITYPrint( Entity entity, FILES * files, Schema schema ) {
         LIST_destroy( required );
     }
 
-    fprintf( files->inc, "\n/////////\t ENTITY %s\n\n", n );
+    fprintf( files->inc, "\n/////////         ENTITY %s\n\n", n );
     ENTITYinc_print( entity, remaining, files -> inc, schema );
-    fprintf( files->inc, "\n/////////\t END_ENTITY %s\n\n", n );
+    fprintf( files->inc, "\n/////////         END_ENTITY %s\n\n", n );
 
-    fprintf( files->lib, "\n/////////\t ENTITY %s\n\n", n );
+    fprintf( files->lib, "\n/////////         ENTITY %s\n\n", n );
     ENTITYlib_print( entity, remaining, files -> lib, schema );
-    fprintf( files->lib, "\n/////////\t END_ENTITY %s\n\n", n );
+    fprintf( files->lib, "\n/////////         END_ENTITY %s\n\n", n );
 
-    fprintf( files->init, "\n/////////\t ENTITY %s\n\n", n );
+    fprintf( files->init, "\n/////////         ENTITY %s\n\n", n );
     ENTITYincode_print( entity, files -> init, schema );
-    fprintf( files->init, "/////////\t END_ENTITY %s\n", n );
+    fprintf( files->init, "/////////         END_ENTITY %s\n", n );
 
     DEBUG( "DONE ENTITYPrint\n" )    ;
     LIST_destroy( remaining );
@@ -2326,26 +2326,26 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
     Linked_List uniqs;
     int i;
 
-    fprintf( files->create, "\t%s%s%s = new EntityDescriptor(\n\t\t",
+    fprintf( files->create, "        %s%s%s = new EntityDescriptor(\n                ",
              SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
     fprintf( files->create, "  \"%s\", %s%s, %s, ",
              PrettyTmpName( ENTITYget_name( entity ) ),
              SCHEMA_PREFIX, SCHEMAget_name( schema ),
              ( ENTITYget_abstract( entity ) ? "LTrue" :
                "LFalse" ) );
-    fprintf( files->create, "%s,\n\t\t", externMap ? "LTrue" :
+    fprintf( files->create, "%s,\n                ", externMap ? "LTrue" :
              "LFalse" );
 
     fprintf( files->create, "  (Creator) create_%s );\n",
              ENTITYget_classname( entity ) );
     /* add the entity to the Schema dictionary entry */
-    fprintf( files->create, "\t%s%s->AddEntity(%s%s%s);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ), SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
+    fprintf( files->create, "        %s%s->AddEntity(%s%s%s);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ), SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
 
     wheres = TYPEget_where( entity );
 
     if( wheres ) {
         fprintf( files->create,
-                 "\t%s%s%s->_where_rules = new Where_rule__list;\n",
+                 "        %s%s%s->_where_rules = new Where_rule__list;\n",
                  SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
 
         LISTdo( wheres, w, Where )
@@ -2428,8 +2428,8 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
             *ptr = '\0';
             strcat( ptr, ");\\n" );
         }
-        fprintf( files->create, "\twr = new Where_rule(\"%s\");\n", whereRule_formatted );
-        fprintf( files->create, "\t%s%s%s->_where_rules->Append(wr);\n",
+        fprintf( files->create, "        wr = new Where_rule(\"%s\");\n", whereRule_formatted );
+        fprintf( files->create, "        %s%s%s->_where_rules->Append(wr);\n",
                  SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
 
         free( whereRule );
@@ -2441,7 +2441,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
 
     if( uniqs ) {
         fprintf( files->create,
-                 "\t%s%s%s->_uniqueness_rules = new Uniqueness_rule__set;\n",
+                 "        %s%s%s->_uniqueness_rules = new Uniqueness_rule__set;\n",
                  SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
 
         if( whereRule_formatted_size == 0 ) {
@@ -2459,7 +2459,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
         */
         LISTdo( uniqs, list, Linked_List )
         i = 0;
-        fprintf( files->create, "\tur = new Uniqueness_rule(\"" );
+        fprintf( files->create, "        ur = new Uniqueness_rule(\"" );
         LISTdo( list, v, Variable )
         i++;
         if( i == 1 ) {
@@ -2476,7 +2476,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
         }
         LISTod
         fprintf( files->create, ";\\n\");\n" );
-        fprintf( files->create, "\t%s%s%s->_uniqueness_rules->Append(ur);\n",
+        fprintf( files->create, "        %s%s%s->_uniqueness_rules->Append(ur);\n",
                  SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
         LISTod
     }
@@ -2487,20 +2487,20 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
 
     n = ENTITYget_classname( entity );
     fprintf( files->classes, "\nclass %s;\n", n );
-    fprintf( files->classes, "typedef %s *  \t%sH;\n", n, n );
-    fprintf( files->classes, "typedef %s *  \t%s_ptr;\n", n, n );
-    fprintf( files->classes, "typedef %s_ptr\t%s_var;\n", n, n );
+    fprintf( files->classes, "typedef %s *          %sH;\n", n, n );
+    fprintf( files->classes, "typedef %s *          %s_ptr;\n", n, n );
+    fprintf( files->classes, "typedef %s_ptr        %s_var;\n", n, n );
 
-    fprintf( files->classes, "typedef const %s *  \tconst_%sH;\n", n, n );
-    fprintf( files->classes, "typedef const %s *  \tconst_%s_ptr;\n", n, n );
-
-    fprintf( files->classes,
-             "#define %s__set \tSDAI_DAObject__set\n", n );
+    fprintf( files->classes, "typedef const %s *          const_%sH;\n", n, n );
+    fprintf( files->classes, "typedef const %s *          const_%s_ptr;\n", n, n );
 
     fprintf( files->classes,
-             "#define %s__set_var \tSDAI_DAObject__set_var\n", n );
+             "#define %s__set         SDAI_DAObject__set\n", n );
 
-    fprintf( files ->classes, "extern EntityDescriptor \t*%s%s%s;\n",
+    fprintf( files->classes,
+             "#define %s__set_var         SDAI_DAObject__set_var\n", n );
+
+    fprintf( files ->classes, "extern EntityDescriptor         *%s%s%s;\n",
              SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
 
 }
@@ -2585,44 +2585,44 @@ void TYPEenum_inc_print( const Type type, FILE * inc ) {
         fprintf( inc, ",\n" );
     }
     ++cnt;
-    fprintf( inc, "\t%s", EnumCElementName( type, expr ) );
+    fprintf( inc, "        %s", EnumCElementName( type, expr ) );
 
     LISTod
 
-    fprintf( inc, ",\n\t%s_unset\n};\n", EnumName( TYPEget_name( type ) ) );
+    fprintf( inc, ",\n        %s_unset\n};\n", EnumName( TYPEget_name( type ) ) );
 
     /*  print class for enumeration */
     n = TYPEget_ctype( type );
     fprintf( inc, "\nclass %s  :  public SDAI_Enum  {\n", n );
 
-    fprintf( inc, "  protected:\n\tEnumTypeDescriptor *type;\n\n" );
+    fprintf( inc, "  protected:\n        EnumTypeDescriptor *type;\n\n" );
 
     /*  constructors    */
     strncpy( tdnm, TYPEtd_name( type ), BUFSIZ );
-    fprintf( inc, "  public:\n\t%s (const char * n =0, Enum"
+    fprintf( inc, "  public:\n        %s (const char * n =0, Enum"
              "TypeDescriptor *et =%s);\n", n, tdnm );
-    fprintf( inc, "\t%s (%s e, EnumTypeDescriptor *et =%s)\n"
-             "\t\t: type(et) {  set_value (e);  }\n",
+    fprintf( inc, "        %s (%s e, EnumTypeDescriptor *et =%s)\n"
+             "                : type(et) {  set_value (e);  }\n",
              n, EnumName( TYPEget_name( type ) ), tdnm );
 
     /*  destructor  */
-    fprintf( inc, "\t~%s () { }\n", n );
+    fprintf( inc, "        ~%s () { }\n", n );
 
     /*      operator =      */
-    fprintf( inc, "\t%s& operator= (const %s& e)\n",
+    fprintf( inc, "        %s& operator= (const %s& e)\n",
              n, TYPEget_ctype( type ) );
-    fprintf( inc, "\t\t{  set_value (e);  return *this;  }\n" );
+    fprintf( inc, "                {  set_value (e);  return *this;  }\n" );
 
     /*      operator to cast to an enumerated type  */
-    fprintf( inc, "\toperator %s () const;\n",
+    fprintf( inc, "        operator %s () const;\n",
              EnumName( TYPEget_name( type ) ) );
 
     /*      others          */
-    fprintf( inc, "\n\tinline virtual const char * Name () const\n" );
-    fprintf( inc, "\t\t{  return type->Name();  }\n" );
-    fprintf( inc, "\tinline virtual int no_elements () const"
+    fprintf( inc, "\n        inline virtual const char * Name () const\n" );
+    fprintf( inc, "                {  return type->Name();  }\n" );
+    fprintf( inc, "        inline virtual int no_elements () const"
              "  {  return %d;  }\n", cnt );
-    fprintf( inc, "\tvirtual const char * element_at (int n) const;\n" );
+    fprintf( inc, "        virtual const char * element_at (int n) const;\n" );
 
     /*  end class definition  */
     fprintf( inc, "};\n" );
@@ -2680,12 +2680,12 @@ void TYPEenum_lib_print( const Type type, FILE * f ) {
     DICTdo_type_init( ENUM_TYPEget_items( type ), &de, OBJ_ENUM );
     while( 0 != ( expr = ( Expression )DICTdo( &de ) ) ) {
         strncpy( c_enum_ele, EnumCElementName( type, expr ), BUFSIZ );
-        fprintf( f, "  case %s\t:  return \"%s\";\n",
+        fprintf( f, "  case %s        :  return \"%s\";\n",
                  c_enum_ele,
                  StrToUpper( EXPget_name( expr ) ) );
     }
-    fprintf( f, "  case %s_unset\t:\n", EnumName( TYPEget_name( type ) ) );
-    fprintf( f, "  default\t\t:  return \"UNSET\";\n  }\n}\n" );
+    fprintf( f, "  case %s_unset        :\n", EnumName( TYPEget_name( type ) ) );
+    fprintf( f, "  default                :  return \"UNSET\";\n  }\n}\n" );
 
     /*    constructors    */
     /*    construct with character string  */
@@ -2700,12 +2700,12 @@ void TYPEenum_lib_print( const Type type, FILE * f ) {
     DICTdo_type_init( ENUM_TYPEget_items( type ), &de, OBJ_ENUM );
     while( 0 != ( expr = ( Expression )DICTdo( &de ) ) ) {
         strncpy( c_enum_ele, EnumCElementName( type, expr ), BUFSIZ );
-        fprintf( f, "\tcase %s\t:  ", c_enum_ele );
+        fprintf( f, "        case %s        :  ", c_enum_ele );
         fprintf( f, "return %s;\n", c_enum_ele );
     }
     /*  print the last case with the default so sun c++ doesn\'t complain */
-    fprintf( f, "\tcase %s_unset\t:\n", EnumName( TYPEget_name( type ) ) );
-    fprintf( f, "\tdefault\t\t:  return %s_unset;\n  }\n}\n", EnumName( TYPEget_name( type ) ) );
+    fprintf( f, "        case %s_unset        :\n", EnumName( TYPEget_name( type ) ) );
+    fprintf( f, "        default                :  return %s_unset;\n  }\n}\n", EnumName( TYPEget_name( type ) ) );
 
     printEnumCreateBody( f, type );
 
@@ -2965,20 +2965,20 @@ void TYPEprint_typedefs( Type t, FILE * classes ) {
             // fundamental types and their aggregates, and for 2D aggregates(aggre-
             // gates of aggregates) of enum's and selects. */
             strncpy( nm, ClassName( TYPEget_name( t ) ), BUFSIZ );
-            fprintf( classes, "typedef %s \t%s;\n", TYPEget_ctype( t ), nm );
+            fprintf( classes, "typedef %s         %s;\n", TYPEget_ctype( t ), nm );
             if( TYPEis_aggregate( t ) ) {
                 fprintf( classes, "typedef       %s *       %sH;\n", nm, nm );
                 fprintf( classes, "typedef const %s * const_%sH;\n", nm, nm );
                 fprintf( classes, "typedef       %s *       %s_ptr;\n", nm, nm );
                 fprintf( classes, "typedef const %s * const_%s_ptr;\n", nm, nm );
-                fprintf( classes, "typedef %s_ptr \t%s_var;\n", nm, nm );
+                fprintf( classes, "typedef %s_ptr         %s_var;\n", nm, nm );
             }
         }
     }
 
     /* Print the extern statement: */
     strncpy( nm, TYPEtd_name( t ), BUFSIZ );
-    fprintf( classes, "extern %s \t*%s;\n", GetTypeDescriptorName( t ), nm );
+    fprintf( classes, "extern %s         *%s;\n", GetTypeDescriptorName( t ), nm );
 }
 
 /** return 1 if it is a multidimensional aggregate at the level passed in
@@ -3123,7 +3123,7 @@ void TYPEprint_descriptions( const Type type, FILES * files, Schema schema ) {
     /* define type descriptor pointer */
     /*  in source - declare the real definition of the pointer */
     /*  i.e. in the .cc file                                   */
-    fprintf( files -> lib, "%s \t*%s;\n", GetTypeDescriptorName( type ), tdnm );
+    fprintf( files -> lib, "%s         *%s;\n", GetTypeDescriptorName( type ), tdnm );
 
     if( isAggregateType( type ) ) {
         const char * ctype = TYPEget_ctype( type );
@@ -3229,16 +3229,16 @@ void TYPEprint_init( const Type type, FILE * ifile, Schema schema ) {
     if( isAggregateType( type ) ) {
         if( !TYPEget_head( type ) ) {
             if( TYPEget_body( type )->lower )
-                fprintf( ifile, "\t%s->Bound1(%d);\n", tdnm,
+                fprintf( ifile, "        %s->Bound1(%d);\n", tdnm,
                          TYPEget_body( type )->lower->u.integer );
             if( TYPEget_body( type )->upper )
-                fprintf( ifile, "\t%s->Bound2(%d);\n", tdnm,
+                fprintf( ifile, "        %s->Bound2(%d);\n", tdnm,
                          TYPEget_body( type )->upper->u.integer );
             if( TYPEget_body( type )->flags.unique ) {
-                fprintf( ifile, "\t%s->UniqueElements(\"LTrue\");\n", tdnm );
+                fprintf( ifile, "        %s->UniqueElements(\"LTrue\");\n", tdnm );
             }
             if( TYPEget_body( type )->flags.optional ) {
-                fprintf( ifile, "\t%s->OptionalElements(\"LTrue\");\n", tdnm );
+                fprintf( ifile, "        %s->OptionalElements(\"LTrue\");\n", tdnm );
             }
         }
     }
@@ -3247,7 +3247,7 @@ void TYPEprint_init( const Type type, FILE * ifile, Schema schema ) {
     declared with basic values) */
 
     if( TYPEget_RefTypeVarNm( type, typename_buf, schema ) ) {
-        fprintf( ifile, "\t%s->ReferentType(%s);\n", tdnm, typename_buf );
+        fprintf( ifile, "        %s->ReferentType(%s);\n", tdnm, typename_buf );
     } else {
         switch( TYPEget_body( type )->type ) {
             case aggregate_: /* aggregate_ should not happen? DAS */
@@ -3279,11 +3279,11 @@ void TYPEprint_init( const Type type, FILE * ifile, Schema schema ) {
     /* DAS New SDAI Dictionary 5/95 */
     /* insert the type into the schema descriptor */
     fprintf( ifile,
-             "\t((SDAIAGGRH(Set,DefinedTypeH))%s%s->Types())->Add((DefinedTypeH)%s);\n",
+             "        ((SDAIAGGRH(Set,DefinedTypeH))%s%s->Types())->Add((DefinedTypeH)%s);\n",
              SCHEMA_PREFIX, SCHEMAget_name( schema ), tdnm );
 #endif
     /* insert into type dictionary */
-    fprintf( ifile, "\treg.AddType (*%s);\n", tdnm );
+    fprintf( ifile, "        reg.AddType (*%s);\n", tdnm );
 }
 
 /** print name, fundamental type, and description initialization function
@@ -3291,13 +3291,13 @@ void TYPEprint_init( const Type type, FILE * ifile, Schema schema ) {
 
 void TYPEprint_nm_ft_desc( Schema schema, const Type type, FILE * f, char * endChars ) {
 
-    fprintf( f, "\t\t  \"%s\",\t// Name\n",
+    fprintf( f, "                  \"%s\",        // Name\n",
              PrettyTmpName( TYPEget_name( type ) ) );
-    fprintf( f, "\t\t  %s,\t// FundamentalType\n",
+    fprintf( f, "                  %s,        // FundamentalType\n",
              FundamentalType( type, 1 ) );
-    fprintf( f, "\t\t  %s%s,\t// Originating Schema\n",
+    fprintf( f, "                  %s%s,        // Originating Schema\n",
              SCHEMA_PREFIX, SCHEMAget_name( schema ) );
-    fprintf( f, "\t\t  \"%s\"%s\t// Description\n",
+    fprintf( f, "                  \"%s\"%s        // Description\n",
              TypeDescription( type ), endChars );
 }
 
@@ -3318,7 +3318,7 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
 
     if( TYPEis_select( type ) ) {
         fprintf( create,
-                 "\t%s = new SelectTypeDescriptor (\n\t\t  ~%s,\t//unique elements,\n",
+                 "        %s = new SelectTypeDescriptor (\n                  ~%s,        //unique elements,\n",
                  TYPEtd_name( type ),
                  /*      ! any_duplicates_in_select (SEL_TYPEget_items(type)) );*/
                  /*      unique_types (SEL_TYPEget_items (type) ) );*/
@@ -3326,35 +3326,35 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
         TYPEprint_nm_ft_desc( schema, type, create, "," );
 
         fprintf( create,
-                 "\t\t  (SelectCreator) create_%s);\t// Creator function\n",
+                 "                  (SelectCreator) create_%s);        // Creator function\n",
                  SelectName( TYPEget_name( type ) ) );
     } else
         switch( TYPEget_body( type )->type ) {
             case boolean_:
 
-                fprintf( create, "\t%s = new EnumTypeDescriptor (\n",
+                fprintf( create, "        %s = new EnumTypeDescriptor (\n",
                          TYPEtd_name( type ) );
 
                 /* fill in it's values  */
                 TYPEprint_nm_ft_desc( schema, type, create, "," );
                 fprintf( create,
-                         "\t\t  (EnumCreator) create_BOOLEAN);\t// Creator function\n" );
+                         "                  (EnumCreator) create_BOOLEAN);        // Creator function\n" );
                 break;
 
             case logical_:
 
-                fprintf( create, "\t%s = new EnumTypeDescriptor (\n",
+                fprintf( create, "        %s = new EnumTypeDescriptor (\n",
                          TYPEtd_name( type ) );
 
                 /* fill in it's values  */
                 TYPEprint_nm_ft_desc( schema, type, create, "," );
                 fprintf( create,
-                         "\t\t  (EnumCreator) create_LOGICAL);\t// Creator function\n" );
+                         "                  (EnumCreator) create_LOGICAL);        // Creator function\n" );
                 break;
 
             case enumeration_:
 
-                fprintf( create, "\t%s = new EnumTypeDescriptor (\n",
+                fprintf( create, "        %s = new EnumTypeDescriptor (\n",
                          TYPEtd_name( type ) );
 
                 /* fill in it's values  */
@@ -3374,11 +3374,11 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
                     }
 
                     fprintf( create,
-                             "\t\t  (EnumCreator) create_%s);\t// Creator function\n",
+                             "                  (EnumCreator) create_%s);        // Creator function\n",
                              TYPEget_ctype( bodyType ) );
                 } else
                     fprintf( create,
-                             "\t\t  (EnumCreator) create_%s);\t// Creator function\n",
+                             "                  (EnumCreator) create_%s);        // Creator function\n",
                              TYPEget_ctype( type ) );
                 break;
 
@@ -3388,19 +3388,19 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
             case set_:
             case list_:
 
-                fprintf( create, "\n\t%s = new %s (\n",
+                fprintf( create, "\n        %s = new %s (\n",
                          TYPEtd_name( type ), GetTypeDescriptorName( type ) );
 
                 /* fill in it's values  */
                 TYPEprint_nm_ft_desc( schema, type, create, "," );
 
                 fprintf( create,
-                         "\t\t  (AggregateCreator) create_%s);\t// Creator function\n\n",
+                         "                  (AggregateCreator) create_%s);        // Creator function\n\n",
                          ClassName( TYPEget_name( type ) ) );
                 break;
 
             default:
-                fprintf( create, "\t%s = new TypeDescriptor (\n",
+                fprintf( create, "        %s = new TypeDescriptor (\n",
                          TYPEtd_name( type ) );
 
                 /* fill in it's values  */
@@ -3409,13 +3409,13 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
                 break;
         }
     /* add the type to the Schema dictionary entry */
-    fprintf( create, "\t%s%s->AddType(%s);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ), TYPEtd_name( type ) );
+    fprintf( create, "        %s%s->AddType(%s);\n", SCHEMA_PREFIX, SCHEMAget_name( schema ), TYPEtd_name( type ) );
 
 
     wheres = type->where;
 
     if( wheres ) {
-        fprintf( create, "\t%s->_where_rules = new Where_rule__list;\n",
+        fprintf( create, "        %s->_where_rules = new Where_rule__list;\n",
                  TYPEtd_name( type ) );
 
         LISTdo( wheres, w, Where )
@@ -3482,8 +3482,8 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
             *ptr = '\0';
             strcat( ptr, ");\\n" );
         }
-        fprintf( create, "\twr = new Where_rule(\"%s\");\n", whereRule_formatted );
-        fprintf( create, "\t%s->_where_rules->Append(wr);\n",
+        fprintf( create, "        wr = new Where_rule(\"%s\");\n", whereRule_formatted );
+        fprintf( create, "        %s->_where_rules->Append(wr);\n",
                  TYPEtd_name( type ) );
 
         free( whereRule );
