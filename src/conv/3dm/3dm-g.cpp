@@ -376,8 +376,13 @@ int main(int argc, char** argv) {
 	    if ((brep = const_cast<ON_Brep * >(ON_Brep::Cast(pGeometry)))) {
 		mk_id(outfp, id_name);
 		mk_brep(outfp, geom_name.c_str(), brep);
-		unsigned char rgb[] = {r,g,b};
+
+		unsigned char rgb[3];
+		rgb[RED] = (unsigned char)r;
+		rgb[GRN] = (unsigned char)g;
+		rgb[BLU] = (unsigned char)b;
 		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
+
 		(void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
 		if (verbose_mode > 0) brep->Dump(*dump);
 		dump->PopIndent();
