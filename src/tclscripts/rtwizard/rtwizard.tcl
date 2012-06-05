@@ -394,7 +394,11 @@ if {[info exists ::use_gui]} {
         incr ::RtWizard::wizard_state(framebuffer_port)
       }
    } else {
-      if {$fbtype_specified} {puts "Warning - using existing fbserv at port $::RtWizard::wizard_state(framebuffer_port), can not specify framebuffer type."}
+      if {$::RtWizard::wizard_state(verbose)} {
+         if {$fbtype_specified} {
+            puts "Warning - using existing fbserv at port $::RtWizard::wizard_state(framebuffer_port), can not specify framebuffer type."
+         }
+      }
    }
 
    # If we didn't have a pre-specified port number and the default didn't work, start counting up 
