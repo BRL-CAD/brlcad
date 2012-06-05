@@ -109,10 +109,12 @@ int main(int   argc,
 		    if (thicknessIndex != std::string::npos) {
 			std::string thickf = nameLine[1].substr(thicknessIndex + 7);
 
-			if (thickf.size() > 0)
-			    bot.setThickness(toValue(thickf.c_str()));
-			else
+			if (thickf.size() > 0) {
+			    fastf_t val = toValue(thickf.c_str());
+			    bot.setThickness(val);
+			} else {
 			    std::cout << "Missing thickness in " << nameLine[0].c_str() << '\n';
+			}
 		    }
 		}
 
