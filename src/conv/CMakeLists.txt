@@ -43,7 +43,7 @@ ELSE(NOT AVOID_LIBRARY)
   set(AVOID_SRCS "")
 ENDIF(NOT AVOID_LIBRARY)
 
-BRLCAD_ADDEXEC(3dm-g 3dm/3dm-g.cpp "libwdb;${OPENNURBS_LIBRARY}")
+BRLCAD_ADDEXEC(3dm-g 3dm/3dm-g.cpp "libwdb;${OPENNURBS_LIBRARY}" NOSTRICT)
 
 BRLCAD_ADDEXEC(asc2g asc/asc2g.c "libtclcad;libged;libwdb;librt;libbu;${WINSOCK_LIB};${M_LIBRARY}")
 
