@@ -65,10 +65,12 @@ static std::vector<std::string> readLine(std::istream& is)
     return ret;
 }
 
-void getPoint(point_t &point, const char *x, const char *y, const char *z) {
-    point[X] = toValue(x);
-    point[Y] = toValue(y);
-    point[Z] = toValue(z);
+
+static inline void
+getPoint(const std::string &x, const std::string &y, const std::string &z, point_t& point) {
+    point[X] = toValue(x.c_str());
+    point[Y] = toValue(y.c_str());
+    point[Z] = toValue(z.c_str());
 }
 
 int main(int   argc,
@@ -126,16 +128,16 @@ int main(int   argc,
 		std::vector<std::string> triangleLine = readLine(is);
 
 		while (is && (triangleLine.size() == 9)) {
-		    point_t point;
+		    point_t p;
 
-		    getPoint(point, triangleLine[0].c_str(), triangleLine[1].c_str(), triangleLine[2].c_str());
-		    int a = bot.addPoint(point);
+		    getPoint(triangleLine[0], triangleLine[1], triangleLine[2], p);
+		    int a = bot.addPoint(p);
 
-		    getPoint(point, triangleLine[3].c_str(), triangleLine[4].c_str(), triangleLine[5].c_str());
-		    int b = bot.addPoint(point);
+		    getPoint(triangleLine[3], triangleLine[4], triangleLine[5], p);
+		    int b = bot.addPoint(p);
 
-		    getPoint(point, triangleLine[6].c_str(), triangleLine[7].c_str(), triangleLine[8].c_str());
-		    int c = bot.addPoint(point);
+		    getPoint(triangleLine[6], triangleLine[7], triangleLine[8], p);
+		    int c = bot.addPoint(p);
 
 		    bot.addTriangle(a, b, c);
 
