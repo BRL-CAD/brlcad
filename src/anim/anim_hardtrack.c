@@ -237,8 +237,7 @@ track_prep(void)
     int i;
     fastf_t phi, costheta, arc_angle;
     fastf_t link_angle = 0.0;
-    vect_t difference, link_cent;
-    VSETALL(link_cent, 0.0);
+    vect_t difference, link_cent = VINIT_ZERO;
 
     /* first loop - get inter axle slopes and start/end angles */
     for (i=0;i<NW;i++) {
@@ -305,29 +304,37 @@ track_prep(void)
 int
 main(int argc, char *argv[])
 {
-    int val, frame, go, i, count;
-    fastf_t y_rot, distance, yaw, pitch, roll;
-    vect_t p1, p2, p3, dir, dir2, wheel_now, wheel_prev;
-    vect_t zero, position, vdelta, temp, to_track, to_front;
-    mat_t mat_v, wmat, mat_x;
-    FILE *stream;
-    int last_frame;
+    FILE *stream = NULL;
+    fastf_t distance = 0.0;
+    fastf_t pitch = 0.0;
+    fastf_t roll = 0.0;
+    fastf_t y_rot = 0.0;
+    fastf_t yaw = 0.0;
+    int count = 0;
+    int frame = 0;
+    int go = 0;
+    int i = 0;
+    int last_frame = 0;
+    int val = 0;
+    mat_t mat_v = MAT_INIT_IDN;
+    mat_t mat_x = MAT_INIT_DIN;
+    mat_t wmat = MAT_INIT_IDN;
+    vect_t dir = VINIT_ZERO;
+    vect_t dir2 = VINIT_ZERO;
+    vect_t p1 = VINIT_ZERO;
+    vect_t p2 = VINIT_ZERO;
+    vect_t p3 = VINIT_ZERO;
+    vect_t position = VINIT_ZERO;
+    vect_t temp = VINIT_ZERO;
+    vect_t to_front = VINIT_ZERO;
+    vect_t to_track = VINIT_ZERO;
+    vect_t vdelta = VINIT_ZERO;
+    vect_t wheel_now = VINIT_ZERO;
+    vect_t wheel_prev = VINIT_ZERO;
+    vect_t zero = VINIT_ZERO;
 
-    VSETALL(p1, 0.0);
-    VSETALL(p2, 0.0);
-    VSETALL(p3, 0.0);
-    VSETALL(zero, 0.0);
-    VSETALL(to_track, 0.0);
-    VSETALL(centroid, 0.0);
-    VSETALL(rcentroid, 0.0);
-    VSETALL(wheel_now, 0.0);
-    VSETALL(wheel_prev, 0.0);
-    init_dist = y_rot = radius= 0.0;
-    first_frame = num_wheels = steer = axes = cent = links_placed=0;
-    num_wheels = num_links = last_frame = 0;
-    MAT_IDN(mat_v);
-    MAT_IDN(mat_x);
-    MAT_IDN(wmat);
+    init_dist = radius= 0.0;
+    first_frame = num_wheels = steer = axes = cent = links_placed = num_links = 0;
     MAT_IDN(m_axes);
     MAT_IDN(m_rev_axes);
 
