@@ -34,6 +34,15 @@ add_definitions(
   -DBRLCAD_DLL
   )
 
+find_library(AVOID_LIBRARY NAMES libavoid PATHS /usr/lib/ /usr/local/lib/)
+IF(NOT AVOID_LIBRARY)
+  message(STATUS "Could NOT find Avoid")
+  set(AVOID_SRCS "")
+ELSE(NOT AVOID_LIBRARY)
+  message(STATUS "Found Avoid: " ${AVOID_LIBRARY})
+  set(AVOID_SRCS "")
+ENDIF(NOT AVOID_LIBRARY)
+
 BRLCAD_ADDEXEC(3dm-g 3dm/3dm-g.cpp "libwdb;${OPENNURBS_LIBRARY}")
 
 BRLCAD_ADDEXEC(asc2g asc/asc2g.c "libtclcad;libged;libwdb;librt;libbu;${WINSOCK_LIB};${M_LIBRARY}")
@@ -223,6 +232,7 @@ set(conv_ignore_files
   shp/shapelib/license.html
   shp/shapelib/shapefil.h
   shp/README
+  ${AVOID_SRCS}
   walk_example.c
   )
 CMAKEFILES(${conv_ignore_files})
