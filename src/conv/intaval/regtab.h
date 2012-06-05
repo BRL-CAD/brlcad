@@ -67,7 +67,7 @@ void createRegions
 class Region {
 public:
 
-    Region(int nr = 0, char* description = "");
+    Region(int nr = 0, char* description = NULL);
 
     ~Region() {
 	mk_freemembers(&head.l);
