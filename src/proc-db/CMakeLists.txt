@@ -9,7 +9,9 @@ include_directories(${PROC_DB_INCLUDE_DIRS})
 BRLCAD_ADDEXEC(bottest bottest.c libwdb)
 BRLCAD_ADDEXEC(brep_cube brep_cube.cpp "libwdb;${OPENNURBS_LIBRARY}")
 BRLCAD_ADDEXEC(brep_simple brep_simple.cpp "libwdb;${OPENNURBS_LIBRARY}")
-BRLCAD_ADDEXEC(brepintersect brepintersect.cpp "libwdb;${OPENNURBS_LIBRARY}")
+
+# NOSTRICT used due to openNURBS header overflow warning
+BRLCAD_ADDEXEC(brepintersect brepintersect.cpp "libwdb;${OPENNURBS_LIBRARY}" NOSTRICT)
 BRLCAD_ADDEXEC(breplicator breplicator.cpp "libwdb;${OPENNURBS_LIBRARY}")
 BRLCAD_ADDEXEC(brickwall brickwall.c libwdb)
 BRLCAD_ADDEXEC(clutter "clutter.c;common.c" "libwdb;${M_LIBRARY}")
@@ -34,7 +36,9 @@ BRLCAD_ADDEXEC(room "room.c;common.c" "libwdb;${M_LIBRARY}")
 BRLCAD_ADDEXEC(sketch sketch.c libwdb)
 BRLCAD_ADDEXEC(sphflake sphflake.c "libwdb;${M_LIBRARY}")
 BRLCAD_ADDEXEC(spltest spltest.c libwdb)
-BRLCAD_ADDEXEC(surfaceintersect surfaceintersect.cpp "libwdb;${OPENNURBS_LIBRARY}")
+
+# NOSTRICT used due to openNURBS header inlining warning
+BRLCAD_ADDEXEC(surfaceintersect surfaceintersect.cpp "libwdb;${OPENNURBS_LIBRARY}" NOSTRICT)
 BRLCAD_ADDEXEC(tea tea.c libwdb)
 BRLCAD_ADDEXEC(tea_nmg tea_nmg.c libwdb)
 BRLCAD_ADDEXEC(wavy wavy.c libwdb)
