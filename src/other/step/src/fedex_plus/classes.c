@@ -1379,7 +1379,7 @@ void LIBcopy_constructor( Entity ent, FILE * file ) {
          *b = buffer;
     int count = attr_count;
 
-    char * entnm = ENTITYget_classname( ent );
+    const char * entnm = ENTITYget_classname( ent );
     const char * StrToLower( const char * word );
 
     /*mjm7/10/91 copy constructor definition  */
@@ -1992,8 +1992,6 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
     const char * super_schema;
     char * tmp, *tmp2;
 
-    fprintf( file, "/* how about here? */" );
-
 #ifdef NEWDICT
     /* DAS New SDAI Dictionary 5/95 */
     /* insert the entity into the schema descriptor */
@@ -2051,23 +2049,38 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
     if( TYPEget_name( v->type ) ) {
         if( ( !TYPEget_head( v->type ) ) &&
                 ( TYPEget_body( v->type )->type == entity_ ) ) {
+            fprintf( file, "        %s::%s%d%s%s =\n          new %s"
+                     "(\"%s\",%s::%s%s,\n          %s,%s%s,\n          *%s::%s%s);\n",
+                     SCHEMAget_name( schema ), ATTR_PREFIX, attr_count,
+                     ( VARis_derived( v ) ? "D" :
+                       ( VARis_type_shifter( v ) ? "R" :
+                         ( VARget_inverse( v ) ? "I" : "" ) ) ),
+                     attrnm,
 
-            const char *interfix = VARis_derived( v ) ? "D" : ( VARis_type_shifter( v ) ? "R" : ( VARget_inverse( v ) ? "I" : "" ) );
-            const char *newName = VARget_inverse( v ) ? "Inverse_attribute" : ( VARis_derived( v ) ? "Derived_attribute" : "AttrDescriptor" );
-            char *attrNameParam = generate_dict_attr_name( v, dict_attrnm );
-            char *typeName = TYPEget_name( TYPEget_body( v->type )->entity->superscope );
-            const char *vOptional = VARget_optional( v ) ? "LTrue" : "LFalse";
-            const char *vUnique = VARget_unique( v ) ? "LTrue" : "LFalse";
-            const char *redefining = VARget_inverse( v ) ? "" : ( VARis_derived( v ) ? ", AttrType_Deriving" : ( VARis_type_shifter( v ) ? ", AttrType_Redefining" : ", AttrType_Explicit" ) );
+                     ( VARget_inverse( v ) ? "Inverse_attribute" : ( VARis_derived( v ) ? "Derived_attribute" : "AttrDescriptor" ) ),
 
-//            fprintf( file, "/* just print something dammit! */" );
-//            fprintf( file, "        %21s::", "foobar" );
-//            fprintf( file, "%s", ATTR_PREFIX );
-//            fprintf( file, "%d%s%s =\n", attr_count, interfix, attrnm );
-            fprintf( file, "        %s::%s%d%s%s =\n", SCHEMAget_name( schema ), ATTR_PREFIX, attr_count, interfix, attrnm );
-            fprintf( file, "            new %s(\"%s\",%s::%s%s,\n", newName, attrNameParam, typeName, ENT_PREFIX, TYPEget_name( v->type ) );
-            fprintf( file, "                   %s,%s%s,\n", vOptional, vUnique, redefining );
-            fprintf( file, "                   *%s::%s%s);\n", schema_name, ENT_PREFIX, TYPEget_name( entity ));
+                     /* attribute name param */
+                     generate_dict_attr_name( v, dict_attrnm ),
+
+                     /* following assumes we are not in a nested */
+                     /* entity otherwise we should search upward */
+                     /* for schema */
+                     /* attribute's type  */
+                     TYPEget_name(
+                         TYPEget_body( v->type )->entity->superscope ),
+                     ENT_PREFIX, TYPEget_name( v->type ),
+
+                     ( VARget_optional( v ) ? "LTrue" : "LFalse" ),
+
+                     ( VARget_unique( v ) ? "LTrue" : "LFalse" ),
+
+                     /* Support REDEFINED */
+                     ( VARget_inverse( v ) ? "" :
+                       ( VARis_derived( v ) ? ", AttrType_Deriving" :
+                         ( VARis_type_shifter( v ) ? ", AttrType_Redefining" : ", AttrType_Explicit" ) ) ),
+
+                     schema_name, ENT_PREFIX, TYPEget_name( entity )
+                   );
         } else {
             /* type reference */
             fprintf( file, "        %s::%s%d%s%s =\n          new %s"
@@ -2344,7 +2357,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
     fprintf( files->create, "  \"%s\", %s::schema, %s, ",
              PrettyTmpName( ENTITYget_name( entity ) ),
              SCHEMAget_name( schema ), ( ENTITYget_abstract( entity ) ? "LTrue" : "LFalse" ) );
-    fprintf( files->create, "%s,\n                ", externMap ? "LTrue" :
+    fprintf( files->create, "%s,\n          ", externMap ? "LTrue" :
              "LFalse" );
 
     fprintf( files->create, "  (Creator) create_%s );\n",
