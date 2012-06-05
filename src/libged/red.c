@@ -104,7 +104,7 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
     const char *floatptr;
     const char *float_string = "[+-]?[0-9]*[.]?[0-9]+([eE][+-]?[0-9]+)?";
 
-    bu_vls_sprintf(&current_substring, "(%s[[:space:]]+)", float_string);
+    bu_vls_sprintf(&current_substring, "(%s)", float_string);
     regcomp(&matrix_entry, bu_vls_addr(&current_substring), REG_EXTENDED);
     bu_vls_sprintf(&current_substring,
 		   /* broken into two strings so auto-formatting
@@ -113,7 +113,7 @@ _ged_find_matrix(struct ged *gedp, const char *currptr, int strlength, matp_t *m
 		   "[[:space:]]+(%s[[:space:]]+)"
 		   "{15}(%s)", float_string, float_string);
     regcomp(&full_matrix, bu_vls_addr(&current_substring), REG_EXTENDED);
-    regcomp(&nonwhitespace_regex, "([^[:blank:]])", REG_EXTENDED);
+    regcomp(&nonwhitespace_regex, "([^[:space:]])", REG_EXTENDED);
 
     float_locations = (regmatch_t *)bu_calloc(full_matrix.re_nsub, sizeof(regmatch_t), "array to hold answers from regex");
 
