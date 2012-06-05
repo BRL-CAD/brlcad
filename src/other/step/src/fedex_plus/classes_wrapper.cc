@@ -29,8 +29,7 @@ N350 ( August 31, 1993 ) of ISO 10303 TC184/SC4/WG7.
 
 void use_ref( Schema, Express, FILES * );
 
-void
-create_builtin_type_decl( FILES * files, char * name ) {
+void create_builtin_type_decl( FILES * files, char * name ) {
     fprintf( files->incall, "extern TypeDescriptor *%s%s_TYPE;\n",
              TD_PREFIX, name );
 }
@@ -99,7 +98,7 @@ void print_file_header( Express express, FILES * files ) {
     fprintf( files->classes, "#include <schema.h>\n" );
 }
 
-/******************************************************************
+/** ****************************************************************
  ** Procedure:  print_file_trailer
  ** Parameters: const Schema schema - top-level schema printed
  **     FILE*        file   - file on which to print trailer
@@ -107,8 +106,6 @@ void print_file_header( Express express, FILES * files ) {
  ** Description:  handles cleaning up things at end of processing
  ** Status:  ok 1/15/91
  ******************************************************************/
-
-/*ARGSUSED*/
 void print_file_trailer( Express express, FILES * files ) {
     FILEclose( files->incall );
     FILEclose( files->initall );
@@ -123,7 +120,7 @@ void print_file_trailer( Express express, FILES * files ) {
 /******************************************************************
  **  SCHEMA SECTION                      **/
 
-/******************************************************************
+/** ****************************************************************
  ** Procedure:  SCOPEPrint
  ** Parameters: const Scope scope   - scope to print
  **     FILE*       file    - file on which to print
@@ -311,7 +308,7 @@ void SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
 #endif
 }
 
-/******************************************************************
+/** ****************************************************************
  ** Procedure:  SCHEMAprint
  ** Parameters: const Schema schema - schema to print
  **     FILES *file     - file on which to print
@@ -529,7 +526,7 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
     }
 }
 
-/******************************************************************
+/** ****************************************************************
  ** Procedure:  getMCPrint
  ** Parameters:
        Express express   - in memory representation of an express model
