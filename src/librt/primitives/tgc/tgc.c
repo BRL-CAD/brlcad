@@ -3077,6 +3077,61 @@ rt_tgc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
+/**
+ * R T _ T G C _ V O L U M E
+ */
+void
+rt_tgc_volume(fastf_t *vol, const struct rt_db_internal *ip)
+{
+    int tgc_type;
+    fastf_t mag_a, mag_b, mag_c, mag_d, mag_h;
+    struct rt_tgc_internal *tip = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tip);
+
+    mag_a = MAGNITUDE(tip->a);
+    mag_b = MAGNITUDE(tip->b);
+    mag_c = MAGNITUDE(tip->c);
+    mag_d = MAGNITUDE(tip->d);
+    mag_h = MAGNITUDE(tip->h);
+
+    if (EQUAL(mag_a, mag_b) && EQUAL(mag_c, mag_d)) {
+        /* circular base and top */
+        if (EQUAL(mag_a, mag_c)) {
+            /* right circular cylinder */
+            tgc_type = RCC;
+        } else {
+            /* truncated right cone */
+            tgc_type = TRC;
+        }
+    } else {
+        /* elliptical base or top */
+        if (EQUAL(mag_a, mag_c) && EQUAL(mag_b, mag_d)) {
+            /* right elliptical cylinder */
+            tgc_type = REC;
+        } else {
+            /* truncated elliptical cone */
+            tgc_type = TEC;
+        }
+    }
+
+    switch (tgc_type) {
+        case RCC:
+        case REC:
+            *vol = M_PI * mag_h * mag_a * mag_b;
+            break;
+        case TRC:
+            /* TRC could fall through, but this formula avoids a sqrt and
+             * so will probably be more accurate */
+            *vol = M_PI * mag_h * (mag_a * mag_a + mag_c * mag_c + mag_a * mag_c) / 3.0;
+            break;
+        case TEC:
+            *vol = M_PI * mag_h * (mag_a * mag_b + mag_c * mag_d + sqrt(mag_a * mag_b * mag_c * mag_d)) / 3.0;
+        default:
+            bu_log("rt_tgc_volume(): cannot find volume");
+    }
+}
+
+
 /*
  * Local Variables:
  * mode: C
