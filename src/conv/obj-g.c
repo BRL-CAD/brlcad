@@ -2851,8 +2851,6 @@ output_to_nmg(struct ga_t *ga,
     bu_ptbl_init(&faces, 64, " &faces ");
 
     verts = (struct vertex **)bu_calloc(gfi->tot_vertices, sizeof(struct vertex *), "verts");
-    if(verts == NULL)
-	bu_bomb("Unable to allocation vertex struct\n");
     memset((void *)verts, 0, sizeof(struct vertex *) * gfi->tot_vertices);
 
     /* begin bomb protection */
@@ -2865,10 +2863,8 @@ output_to_nmg(struct ga_t *ga,
 	rt_g.NMG_debug = NMG_debug; /* restore mode */
 
 	bu_ptbl_reset(&faces);
-	if (verts != (struct vertex **)NULL) {
-	    /* sanity check */
-	    bu_free(verts, "verts");
-	}
+	bu_free(verts, "verts");
+
 	if (m != (struct model *)NULL) {
 	    /* sanity check */
 	    nmg_km(m);
@@ -3102,10 +3098,8 @@ output_to_nmg(struct ga_t *ga,
     BU_UNSETJUMP; /* relinquish bomb catch protection */
 
     bu_ptbl_reset(&faces);
-    if (verts != (struct vertex **)NULL) {
-	/* sanity check */
-	bu_free(verts, "verts");
-    }
+    bu_free(verts, "verts");
+
     if (ret) {
 	/* if failure kill model */
 	nmg_km(m);
