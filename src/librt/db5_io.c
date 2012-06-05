@@ -1121,10 +1121,9 @@ rt_db_get_internal5(
     const mat_t mat,
     struct resource *resp)
 {
-    struct bu_external ext;
+    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
     int ret;
 
-    BU_EXTERNAL_INIT(&ext);
     RT_DB_INTERNAL_INIT(ip);
     if (resp) {
 	RT_CK_RESOURCE(resp);
@@ -1210,7 +1209,7 @@ db5_put_color_table(struct db_i *dbip)
 int
 db5_get_attributes(const struct db_i *dbip, struct bu_attribute_value_set *avs, const struct directory *dp)
 {
-    struct bu_external ext;
+    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
     struct db5_raw_internal raw;
 
     RT_CK_DBI(dbip);
@@ -1220,7 +1219,6 @@ db5_get_attributes(const struct db_i *dbip, struct bu_attribute_value_set *avs, 
 
     RT_CK_DIR(dp);
 
-    BU_EXTERNAL_INIT(&ext);
     BU_AVS_INIT(avs);
 
     if (db_get_external(&ext, dp, dbip) < 0)
