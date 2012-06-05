@@ -439,8 +439,8 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
 	    return 0;
 
 	perror("fread");
-	bu_log("ERROR: bu_struct_get bad fread (%ld), file %s, line %d\n",
-	       (long int)i, __FILE__, __LINE__);
+	bu_log("ERROR: bu_struct_get bad fread (%zu), file %s, line %d\n",
+	       i, __FILE__, __LINE__);
 	return 0;
     }
 
@@ -466,8 +466,8 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
     if (UNLIKELY(i != len-6)) {
-	bu_log("ERROR: bu_struct_get bad fread (%ld), file %s, line %d\n",
-	       (long int)i, __FILE__, __LINE__);
+	bu_log("ERROR: bu_struct_get bad fread (%zu), file %s, line %d\n",
+	       i, __FILE__, __LINE__);
 	ext->ext_nbytes = 0;
 	bu_free(ext->ext_buf, "bu_struct_get full buffer");
 	ext->ext_buf = NULL;
@@ -2197,7 +2197,7 @@ bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse
 	    BU_STR_EQUAL(sp->sp_fmt, "%V")) {
 	    if (sp->sp_count > 1) {
 		/* Make them all look like %###s */
-		bu_vls_printf(logstr, "%%%lds", (long int)sp->sp_count);
+		bu_vls_printf(logstr, "%%%zus", sp->sp_count);
 	    } else {
 		/* Singletons are specified by their actual character */
 		bu_vls_printf(logstr, "%%c");
@@ -2267,9 +2267,9 @@ bu_structparse_argv(struct bu_vls *logstr,
 		     */
 		    if (argc < 1) {
 			bu_vls_printf(logstr,
-				      "not enough values for \"%s\" argument: should be %ld",
+				      "not enough values for \"%s\" argument: should be %zu",
 				      sdp->sp_name,
-				      (long int)sdp->sp_count);
+				      sdp->sp_count);
 			return BRLCAD_ERROR;
 		    }
 		    for (ii = j = 0;
@@ -2299,9 +2299,9 @@ bu_structparse_argv(struct bu_vls *logstr,
 
 			if (argc < 1) {
 			    bu_vls_printf(logstr,
-					  "not enough values for \"%V\" argument: should be %ld",
+					  "not enough values for \"%V\" argument: should be %zu",
 					  sdp->sp_name,
-					  (long int)sdp->sp_count);
+					  sdp->sp_count);
 			    return BRLCAD_ERROR;
 			}
 
@@ -2318,9 +2318,9 @@ bu_structparse_argv(struct bu_vls *logstr,
 
 		    if (argc < 1) {
 			bu_vls_printf(logstr,
-				      "not enough values for \"%s\" argument: should have %ld",
+				      "not enough values for \"%s\" argument: should have %zu",
 				      sdp->sp_name,
-				      (long int)sdp->sp_count);
+				      sdp->sp_count);
 			return BRLCAD_ERROR;
 		    }
 
@@ -2337,9 +2337,9 @@ bu_structparse_argv(struct bu_vls *logstr,
 		    for (ii = 0; ii < sdp->sp_count; ++ii) {
 			if (*cp == '\0') {
 			    bu_vls_printf(logstr,
-					  "not enough values for \"%s\" argument: should have %ld",
+					  "not enough values for \"%s\" argument: should have %zu",
 					  sdp->sp_name,
-					  (long int)sdp->sp_count);
+					  sdp->sp_count);
 			    return BRLCAD_ERROR;
 			}
 
@@ -2381,9 +2381,9 @@ bu_structparse_argv(struct bu_vls *logstr,
 		    if (argc < 1) {
 			/* XXX - when was ii defined */
 			bu_vls_printf(logstr,
-				      "not enough values for \"%s\" argument: should have %ld",
+				      "not enough values for \"%s\" argument: should have %zu",
 				      sdp->sp_name,
-				      (long int)sdp->sp_count);
+				      sdp->sp_count);
 			return BRLCAD_ERROR;
 		    }
 
@@ -2400,9 +2400,9 @@ bu_structparse_argv(struct bu_vls *logstr,
 		    for (ii = 0; ii < sdp->sp_count; ++ii) {
 			if (*cp == '\0') {
 			    bu_vls_printf(logstr,
-					  "not enough values for \"%s\" argument: should have %ld",
+					  "not enough values for \"%s\" argument: should have %zu",
 					  sdp->sp_name,
-					  (long int)sdp->sp_count);
+					  sdp->sp_count);
 			    return BRLCAD_ERROR;
 			}
 
@@ -2446,9 +2446,9 @@ bu_structparse_argv(struct bu_vls *logstr,
 
 		    if (argc < 1) {
 			bu_vls_printf(&str,
-				      "not enough values for \"%s\" argument: should have %ld, only %d given",
+				      "not enough values for \"%s\" argument: should have %zu, only %d given",
 				      sdp->sp_name,
-				      (long int)sdp->sp_count, argc);
+				      sdp->sp_count, argc);
 			return BRLCAD_ERROR;
 		    }
 
@@ -2458,9 +2458,9 @@ bu_structparse_argv(struct bu_vls *logstr,
 		    for (ii = 0; ii < sdp->sp_count; ii++) {
 			if (*cp == '\0') {
 			    bu_vls_printf(logstr,
-					  "not enough values for \"%s\" argument: should have %ld, only %zu given",
+					  "not enough values for \"%s\" argument: should have %zu, only %zu given",
 					  sdp->sp_name,
-					  (long int)sdp->sp_count,
+					  sdp->sp_count,
 					  ii);
 			    return BRLCAD_ERROR;
 			}
