@@ -66,18 +66,8 @@ void createRegions
 
 class Region {
 public:
-    Region() : compnr(0), material(0), desc(""), addCreated(false), excludeCreated(false) {
-	WMEMBER_INIT(&head);
-	WMEMBER_INIT(&addHead);
-	WMEMBER_INIT(&excludeHead);
-    };
 
-    Region(int   nr,
-	   char* description) : compnr(nr), material(0), desc(description), addCreated(false), excludeCreated(false) {
-	WMEMBER_INIT(&head);
-	WMEMBER_INIT(&addHead);
-	WMEMBER_INIT(&excludeHead);
-    }
+    Region(int nr = 0, char* description = "");
 
     ~Region() {
 	mk_freemembers(&head.l);
