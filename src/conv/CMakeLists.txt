@@ -230,7 +230,7 @@ set(conv_ignore_files
   shp/shapelib/license.html
   shp/shapelib/shapefil.h
   shp/README
-  #${AVOID_SRCS}
+  ${AVOID_SRCS}
   walk_example.c
   )
 CMAKEFILES(${conv_ignore_files})
