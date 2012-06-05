@@ -75,6 +75,7 @@ getopt::init {
         {input	 		i  	{::have_gfile ::RtWizard::wizard_state(dbFile)}}
         {output   		o  	{::output ::RtWizard::wizard_state(output_filename)}}
         {framebuffer_type 	F  	{::framebuffer_type ::RtWizard::wizard_state(framebuffer_type)}}
+        {framebuffer_port 	p  	{::framebuffer_port ::RtWizard::wizard_state(framebuffer_port)}}
         {width 			w	{::have_width ::RtWizard::wizard_state(width)}}
         {height 		n 	{::have_scanlines ::RtWizard::wizard_state(scanlines)}}
 	# Objects to raytrace
@@ -96,6 +97,7 @@ getopt::init {
 	{perspective		P	{::have_perspective ::RtWizard::wizard_state(perspective)}}
         {zoom 			z 	{::have_zoom ::RtWizard::wizard_state(zoom)}}
 	{center			""	{::have_center ::RtWizard::wizard_state(x_center) ::RtWizard::wizard_state(y_center) ::RtWizard::wizard_state(z_center)}}
+	
         # Debugging info
 	{verbose		v 	{::RtWizard::wizard_state(verbose)}}
 }
@@ -349,7 +351,7 @@ if {[info exists ::use_gui]} {
    if {[info exists argv]} {exit}
 } else {
 
-   if {![info exists ::RtWizard::wizard_state(output_filename)] && ![info exists ::RtWizard::wizard_state(framebuffer_type)]} {
+   if {![info exists ::RtWizard::wizard_state(output_filename)] && ![info exists ::RtWizard::wizard_state(framebuffer_port)] && ![info exists ::RtWizard::wizard_state(framebuffer_type)]} {
      set ::RtWizard::wizard_state(output_filename) rtwizard.pix
      if {![file exists $::RtWizard::wizard_state(output_filename)]} {
         puts "Warning - no output file or framebuffer specified - using file rtwizard.pix for output."
@@ -368,17 +370,45 @@ if {[info exists ::use_gui]} {
    # Get an in-memory framebuffer to hold the intermediate image stages
    if {![info exists ::RtWizard::wizard_state(framebuffer_type)]} {
       set ::RtWizard::wizard_state(framebuffer_type) /dev/mem
+      set fbtype_specified 0
+   } else {
+      set fbtype_specified 1
    }
 
    # We need a port number for the fbserv.
-   set fbserv_port 0
-   while { ! [catch {exec [file join [bu_brlcad_root bin] fbclear] -F $fbserv_port } error ] } {
-        if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $fbserv_port is already in use."}
-	incr fbserv_port
+   if {![info exists ::RtWizard::wizard_state(framebuffer_port)]} {
+      set ::RtWizard::wizard_state(framebuffer_port) 0
+      set port_number_specified 0
+   } else {
+      set port_number_specified 1
    }
 
-   catch {exec [file join [bu_brlcad_root bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $fbserv_port $::RtWizard::wizard_state(framebuffer_type) &} pid
-   set fbserv_pid $pid
+   # Check whether the framebuffer already exists.  If it does, and if
+   # it was specified on the command line, go with it.
+   if { [catch {exec [file join [bu_brlcad_root bin] fblabel] -F $::RtWizard::wizard_state(framebuffer_port)  -C 0/0/0 10 10 " "} error ] } {
+      catch {exec [file join [bu_brlcad_root bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(framebuffer_port) $::RtWizard::wizard_state(framebuffer_type) &} pid 
+      if {[info exists pid]} {
+        set fbserv_pid $pid
+      } else {
+        if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(framebuffer_port) failed!"}
+        incr ::RtWizard::wizard_state(framebuffer_port)
+      }
+   } else {
+      if {$fbtype_specified} {puts "Warning - using existing fbserv at port $::RtWizard::wizard_state(framebuffer_port), can not specify framebuffer type."}
+   }
+
+   # If we didn't have a pre-specified port number and the default didn't work, start counting up 
+   if { ! $port_number_specified && ! [info exists fbserv_pid] } {
+       incr ::RtWizard::wizard_state(framebuffer_port)
+       while { ! [catch {exec [file join [bu_brlcad_root bin] fbclear] -F $::RtWizard::wizard_state(framebuffer_port) } error ] } {
+             if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(framebuffer_port) is already in use."}
+	     incr ::RtWizard::wizard_state(framebuffer_port)
+       }
+      catch {exec [file join [bu_brlcad_root bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(framebuffer_port) $::RtWizard::wizard_state(framebuffer_type) &} pid
+      set fbserv_pid $pid
+   }
+
+
    if {[llength $::RtWizard::wizard_state(color_objlist)]} {
       foreach item $::RtWizard::wizard_state(color_objlist) {
 	db draw $item 
@@ -406,7 +436,7 @@ if {[info exists ::use_gui]} {
    set viewsize [lindex [lindex $vdata 0] 1]
    set orientation [lrange [lindex $vdata 1] 1 end]
    set eye_pt [lrange [lindex $vdata 2] 1 end]
-   ::cadwidgets::rtimage $::RtWizard::wizard_state(dbFile) $fbserv_port \
+   ::cadwidgets::rtimage $::RtWizard::wizard_state(dbFile) $::RtWizard::wizard_state(framebuffer_port) \
 			$::RtWizard::wizard_state(width) $::RtWizard::wizard_state(scanlines) \
 			$viewsize $orientation $eye_pt $::RtWizard::wizard_state(perspective) \
 			$::RtWizard::wizard_state(bg_color) $::RtWizard::wizard_state(e_color) $::RtWizard::wizard_state(ne_color)\
@@ -418,11 +448,11 @@ if {[info exists ::use_gui]} {
    if {[info exists ::RtWizard::wizard_state(output_filename)]} {
       set output_generated 0
       if {[file extension $::RtWizard::wizard_state(output_filename)] == ".png"} {
-         exec [file join [bu_brlcad_root bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $fbserv_port $::RtWizard::wizard_state(output_filename)
+         exec [file join [bu_brlcad_root bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $::RtWizard::wizard_state(framebuffer_port) $::RtWizard::wizard_state(output_filename)
          set output_generated 1
       }
       if {!$output_generated} {
-         exec [file join [bu_brlcad_root bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $fbserv_port $::RtWizard::wizard_state(output_filename)
+         exec [file join [bu_brlcad_root bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $::RtWizard::wizard_state(framebuffer_port) $::RtWizard::wizard_state(output_filename)
          set output_generated 1
       }
 
@@ -435,7 +465,7 @@ if {[info exists ::use_gui]} {
 	   set kill_cmd [auto_execok kill]
        }
 
-       if {$kill_cmd != ""} {
+       if {$kill_cmd != "" && [info exists fbserv_pid]} {
 	   exec $kill_cmd $fbserv_pid
        }
    }
