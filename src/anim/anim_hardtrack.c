@@ -317,7 +317,7 @@ main(int argc, char *argv[])
     int last_frame = 0;
     int val = 0;
     mat_t mat_v = MAT_INIT_IDN;
-    mat_t mat_x = MAT_INIT_DIN;
+    mat_t mat_x = MAT_INIT_IDN;
     mat_t wmat = MAT_INIT_IDN;
     vect_t dir = VINIT_ZERO;
     vect_t dir2 = VINIT_ZERO;
