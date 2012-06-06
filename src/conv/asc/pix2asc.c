@@ -43,9 +43,8 @@ main(int UNUSED(ac), char **UNUSED(argv))
 
     while (!feof(stdin)
            && fread((void *)pix, sizeof(unsigned char) * 3, 1, stdin) == 1) {
-        int i;
-        ok = 1;
         /* Input validation */
+        int i;
 	for (i = 0; i < 3; ++i) {
             int d = (int)pix[i];
 	    if (d < 0 || d > UCHAR_MAX) {
