@@ -172,9 +172,10 @@ x_comp(const void *p1, const void *p2)
     i = (*((struct vertex **)p1))->vg_p->coord[X];
     j = (*((struct vertex **)p2))->vg_p->coord[X];
 
-    if (i >= j) {
-		return 1;
-    }
+    if (i == j)
+	return 0;
+    else if (i > j)
+	return 1;
     return -1;
 }
 
