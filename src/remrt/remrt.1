@@ -56,7 +56,7 @@ While
 can operate on more than one processor of a shared memory MIMD style
 multi-processor, it can not spread the work out across the network.
 .I remrt
-and it's companion program
+and its companion program
 .IR rtsrv (1)
 implement a
 .IR libpkg (3)-based
@@ -67,10 +67,10 @@ with differing instruction sets and data representations,
 operating at widely different speeds.
 .P
 .I remrt
-provides two levels of fault-tolerance in it's distributed computation.
+provides two levels of fault-tolerance in its distributed computation.
 First, any
 .I rtsrv
-processor which fails (or whose network link fails) will have it's work
+processor which fails (or whose network link fails) will have its work
 reassigned automaticly by
 .I remrt
 to other processors, so that the failure of that processor does not
@@ -301,7 +301,7 @@ many other control and status commands can be used.
 .P
 Normally
 .I remrt
-runs in a batch mode, taking all it's information from the
+runs in a batch mode, taking all its information from the
 command line, the script file on stdin, and the ``.remrtrc'' file.
 If you wish to issue an interactive-style command to
 .I remrt
