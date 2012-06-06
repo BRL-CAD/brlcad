@@ -74,7 +74,7 @@ main(void)
     /* copy defined chars in rmap to lmap's corresponding int but
        shifted 4 bits left */
     for (i = 0; i < 256; i++) {
-	if ( rmap[i] >= 0 )
+	if (rmap[i] >= 0)
 	    lmap[i] = rmap[i] << 4;
 	else
 	    lmap[i] = -1;
