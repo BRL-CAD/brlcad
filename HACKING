@@ -643,10 +643,6 @@ footer script in sh/footer.sh to automatically set/update files.
 
 2) Stylistic whitespace
 
-Space around operators and between multiple statements.
-  a = (b + c) * d;                  /* ok */
-  b = 2; c = 3;                     /* ok */
-
 No space immediately inside parentheses.
   while (1) { ...                   /* ok */
   for (i = 0; i < max; i++) { ...   /* ok */
