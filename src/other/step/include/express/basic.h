@@ -108,8 +108,15 @@ typedef int ( *intFuncptr )();
 /* deal with inline functions */
 /******************************/
 
-/* inline is c99, so use __inline__ extension instead */
-#define static_inline static __inline__
+#if !defined(static_inline)
+#if (!defined(__GNUC__) && !defined(__MSVC__)) || defined(__STRICT_ANSI)
+#define static_inline
+#undef supports_inline_functions
+#else
+#define static_inline static __inline
+#define supports_inline_functions   1L
+#endif    /*    */
+#endif /* !defined(static_inline) */
 
 /* allow same declarations to suffice for both Standard and Classic C */
 /* ... at least in header files ... */

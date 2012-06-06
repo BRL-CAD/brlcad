@@ -138,6 +138,20 @@ int DirObj::Index( const char * name ) {
 bool DirObj::Reset( const std::string & path ) {
     bool successful = IsADirectory( path.c_str() );
     if( successful ) {
+#ifdef __WIN32__
+        WIN32_FIND_DATA FindFileData;
+        HANDLE hFind;
+
+        ClearFileList();
+        hFind = FindFirstFile( path.c_str(), &FindFileData );
+        if( hFind != INVALID_HANDLE_VALUE ) {
+            int i = 0;
+            do {
+                InsertFile( FindFileData.cFileName, i++ );
+            } while( FindNextFile( hFind, &FindFileData ) );
+            FindClose( hFind );
+        }
+#else
         DIR * dir = opendir( path.c_str() );
         ClearFileList();
 
@@ -145,6 +159,7 @@ bool DirObj::Reset( const std::string & path ) {
             InsertFile( d->d_name, Position( d->d_name ) );
         }
         closedir( dir );
+#endif
     } else {
         std::cout << "not a directory: " << path << "!" << std::endl;
     }
@@ -228,7 +243,11 @@ std::string DirObj::Normalize( const std::string & path ) {
 ///////////////////////////////////////////////////////////////////////////////
 
 const char * DirObj::ValidDirectories( const char * path ) {
+#ifdef __WIN32__
+    static char buf[MAX_PATH + 1];
+#else
     static char buf[MAXPATHLEN + 1];
+#endif
     strcpy( buf, path );
     int i = strlen( path );
 
@@ -276,7 +295,11 @@ void DirObj::InsertFile( const char * f, int index ) {
         CheckIndex( index );
         spot = &fileList[index];
     }
+#ifdef __MSVC__
+    char * string = _strdup( f );
+#else
     char * string = strdup( f );
+#endif
     *spot = string;
     ++fileCount;
 }
