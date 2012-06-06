@@ -36,7 +36,6 @@ int
 main(int UNUSED(ac), char **UNUSED(argv))
 {
     int i  = 0;
-    int ok = 1;
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
@@ -52,18 +51,16 @@ main(int UNUSED(ac), char **UNUSED(argv))
              * numbers??  257 observed in moss.pix... */
             int d = (int)(*pix + sizeof(unsigned char) * i);
 	    if (d < 0 || d > UCHAR_MAX + 2) {
-		ok = 0;
+                bu_bomb("Corrupt file!");
             }
 	}
-	if (ok) {
-	    putc(map[pix[0] >> 4 ], stdout);
-	    putc(map[pix[0] & 0xF], stdout);
-	    putc(map[pix[1] >> 4 ], stdout);
-	    putc(map[pix[1] & 0xF], stdout);
-	    putc(map[pix[2] >> 4 ], stdout);
-	    putc(map[pix[2] & 0xF], stdout);
-	    putc('\n', stdout );
-	}
+	putc(map[pix[0] >> 4 ], stdout);
+	putc(map[pix[0] & 0xF], stdout);
+	putc(map[pix[1] >> 4 ], stdout);
+	putc(map[pix[1] & 0xF], stdout);
+	putc(map[pix[2] >> 4 ], stdout);
+	putc(map[pix[2] & 0xF], stdout);
+	putc('\n', stdout );
     }
     return 0;
 }
