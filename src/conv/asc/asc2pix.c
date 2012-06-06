@@ -18,6 +18,7 @@
  * information.
  *
  */
+
 /** @file asc2pix.c
  *
  *  Convert ASCII (hex) pixel files to the binary form.
@@ -49,23 +50,44 @@ main(void)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 #endif
-    /* Init map */
-    for (i=0;i<256;i++) rmap[i] = -1;		/* Unused entries */
-    for (i=0; i<10; i++)  rmap['0'+i] = i;
-    for (i=10; i<16; i++)  rmap['A'-10+i] = i;
-    for (i=10; i<16; i++)  rmap['a'-10+i] = i;
-    for (i=0;i<256;i++) {
+
+    /* Init rmap */
+
+    /* set all to "unused" */
+    for (i=0;i<256;i++)
+        rmap[i] = -1;
+
+    /* note that all input chars of interest use only low 4 bits */
+    /* set chars '0' - '9' */
+    for (i = 0; i < 10; i++)
+        rmap['0'+i] = i;
+
+    /* set chars 'A' - 'F' */
+    for (i = 10; i < 16; i++)
+        rmap['A'-10+i] = i;
+
+    /* set chars 'a' - 'f' */
+    for (i = 10; i < 16; i++)
+        rmap['a'-10+i] = i;
+
+    /* Init lmap */
+    /* copy defined chars in rmap to lmap's corresponding int but
+       shifted 4 bits left */
+    for (i = 0; i < 256; i++) {
 	if ( rmap[i] >= 0 )
-	    lmap[i] = rmap[i]<<4;
+	    lmap[i] = rmap[i] << 4;
 	else
 	    lmap[i] = -1;
     }
 
     for (;;)  {
+        /* get a valid hex char in i */
 	do {
 	    a = getchar();
 	    if ( a == EOF || a < 0 || a > 255 )  goto out;
 	} while ( (i = lmap[a]) < 0 );
+
+        /* get the next hex char */
 	b = getchar();
 	if ( b == EOF || b < 0 || b > 255 )  {
 	    fprintf(stderr, "asc2pix: unexpected EOF in middle of hex number\n");
@@ -77,9 +99,12 @@ main(void)
 	    return 1;
 	}
 
-	putc( (i | b), stdout );
+        /* now output the two 4-bit chars combined as a single byte  */
+	putc((i | b), stdout);
     }
+
  out:
+
     fflush(stdout);
     exit(0);
 }
