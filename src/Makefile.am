@@ -65,7 +65,6 @@ kitchensink_dirs = \
 	adrt \
 	anim \
 	archer \
-	brlman \
 	burst \
 	bwish \
 	canon \
@@ -140,6 +139,7 @@ DIST_SUBDIRS= \
 	$(kitchensink_dirs)
 
 EXTRA_DIST = \
+	brlman \
 	README \
 	CMakeLists.txt
 
