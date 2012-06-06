@@ -80,7 +80,7 @@ main(void)
 	    lmap[i] = -1;
     }
 
-    for (;;)  {
+    for (;;) {
         /* get a valid hex char in i */
 	do {
 	    a = getchar();
