@@ -47,7 +47,8 @@ main(int UNUSED(ac), char **UNUSED(argv))
 	for (i = 0; i < 3; ++i) {
 	    /* really the max here should probably be that of the unsigned char, but pix files seem to have higher
              * numbers??  257 observed in moss.pix... */
-	    if ((int)(*pix + sizeof(unsigned char) * i) < 0 || (int)(*pix + sizeof(unsigned char) * i) > UCHAR_MAX + 2) {
+            int d = (int)(*pix + sizeof(unsigned char) * i);
+	    if (d < 0 || d > UCHAR_MAX + 2) {
 		ok = 0;
             }
 	}
