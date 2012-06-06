@@ -151,6 +151,7 @@ static struct str_ht ht;
 	    bu_bomb("ht.hashTable changed rel ht.hashTableMagic2");	\
     }
 
+
 /**
  * Map integer point into repeatable random number [0..TABLE_SIZE-1]
  * (i.e., [0-4095]).  We actually only use the first 8 bits of the
@@ -306,6 +307,7 @@ bn_noise_perlin(fastf_t *point)
 
 }
 
+
 /**
  * Vector-valued "Noise"
  */
@@ -411,21 +413,17 @@ bn_noise_vec(fastf_t *point, fastf_t *result)
     result[1] += INCRSUM(m+4, s, px, py, pz);
     result[2] += INCRSUM(m+8, s, px, py, pz);
 }
-/*************************************************************
- *@brief
+
+
+/**
  * Spectral Noise functions
- *
- *************************************************************
  *
  * The Spectral Noise functions cache the values of the term:
  *
- *@code
-		    (-h_val)
-		freq
-		*@endcode
-		* Which on some systems is rather expensive to compute.
-		*
-		*************************************************************/
+ * (-h_val)
+ * freq
+ * Which on some systems is rather expensive to compute.
+ */
 struct fbm_spec {
     uint32_t magic;
     double octaves;
@@ -464,10 +462,11 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
 	    etbl = (struct fbm_spec *)bu_realloc((char *)etbl,
 						 etbl_size*sizeof(struct fbm_spec),
 						 "spectral weights table");
-	} else
+	} else {
 	    etbl = (struct fbm_spec *)bu_calloc(etbl_size = 10,
 						sizeof(struct fbm_spec),
 						"spectral weights table");
+	}
     }
 
     /* set up the next available table */
@@ -486,6 +485,7 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
     etbl_next++; /* saved for last in case we're running multi-threaded */
     return ep;
 }
+
 
 /**
  * The first order of business is to see if we have pre-computed the
@@ -537,6 +537,8 @@ find_spec_wgt(double h, double l, double o)
 
     return ep;
 }
+
+
 /**
  * @brief
  * Procedural fBm evaluated at "point"; returns value stored in
@@ -702,6 +704,7 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 
 } /* bn_noise_turb() */
 
+
 /**
  *@brief
  * A ridged noise pattern
@@ -761,6 +764,7 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
     }
     return result;
 }
+
 
 /**
  *
