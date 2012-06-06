@@ -82,6 +82,7 @@ changes made.  See document footer for additional details.
 * fixed orientation bug in mged 'ypr' rotation command - Nick Reed
 * fixed mged bug setting color via Combination Editor - Nicholas Reed
 * fixed numerous xyz/ypr orientation bugs in anim tools - Nick Reed
+* improved tessellation of pipe bends for conversion - Richard Weiss
 * fixed keypoint vertex bug when editing extrude objects - Nick Reed
 * fixed eto error converting hyp objects with asc2g tool - Nick Reed
 # fixed mged bug processing edcodes command arguments - Bob Parker
