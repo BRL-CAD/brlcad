@@ -14,7 +14,7 @@ AM_CPPFLAGS = \
 	${TCL_CPPFLAGS}
 
 g_diff_SOURCES = g_diff.c
-g_diff_LDADD = ${RT} ${GED} ${TCLCAD}
+g_diff_LDADD = ${TCLCAD} ${RT}
 
 g_transfer_SOURCES = g_transfer.c
 g_transfer_LDADD = ${RT} ${PKG}
@@ -23,7 +23,7 @@ g_lint_SOURCES = g_lint.c
 g_lint_LDADD = ${RT}
 
 g_qa_SOURCES = g_qa.c
-g_qa_LDADD = ${RT} ${GED}
+g_qa_LDADD = ${GED} ${RT}
 
 remapid_SOURCES = remapid.c
 remapid_LDADD = ${RT} ${BU}
