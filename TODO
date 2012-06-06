@@ -1656,6 +1656,14 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
   one attribute object entity that can do everything a binunif can do,
   then allow attributes on objects to provide that same flexibility.
 
+* change format of related programs (especially filters) so the
+  input/output files are handled identically. two examples of
+  different handling:
+
+    png-pix   file.png > file.pix
+    pix-bw  < file.pix > file.bw
+ 
+  (desired style to be determined)
 
 FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 -------------------------------------------
