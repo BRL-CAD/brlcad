@@ -70,6 +70,10 @@ set manext(8) {8}
 set manext(9) {9}
 set manext(n) {n nged}
 
+# Determine the executable extension, if any.
+if {$tcl_platform(platform) == "windows"} {set os_ext ".exe"}
+if {![info exists os_ext]} {set os_ext ""}
+
 # Set up the options we support with rtwizard.  We will use
 # an associative array named wizard_state in the RtWizard
 # namespace to hold the key information - have getopt place the
@@ -128,10 +132,39 @@ if {[llength $argv2] == 2} {
    if {$numcount == 2} {set section_number [lindex $argv2 1]}
 }
 
+# See if we have man available.
+set have_man [expr ![catch {exec man man} output]]
+
+# See if we have Tk avaialble.
+set have_tk [file exists [file join [bu_brlcad_root bin] bwish$os_ext]]
+
+# If we don't have any viable means of viewing man pages, report that and quit.
+if {$have_man != 1 && $have_tk != 1} {
+   puts stderr "Neither man page viewer nor Tk graphics available - man page viewing is not supported."
+   if {[info exists argv]} {exit}
+}
+
+# If we don't have Tk but graphics was specified, quit.
+if {[info exists ::enable_gui] && $have_tk != 1} {
+   puts stderr "Error - Graphical man page viewer requested, but Tk graphics not available."
+   if {[info exists argv]} {exit}
+}
+
+# If we don't have man but non-graphical viewing was specified, quit.
+if {[info exists ::disable_gui] && $have_man != 1} {
+   puts stderr "Error - Command Line man page viewer requested, but man is not available."
+   if {[info exists argv]} {exit}
+}
+
 # If we have both gui and no-gui specified, use gui
-if {[info exists ::use_gui] && [info exists ::disable_gui]} {
+if {[info exists ::enable_gui] && [info exists ::disable_gui]} {
    puts stderr "Warning - both -gui and -no-gui supplied - enabling gui"
    unset ::disable_gui
+}
+
+# If nothing was specified, prefer command line but go with whats available.
+if {![info exists ::enable_gui] && ![info exists ::disable_gui]} {
+   if {$have_man != 1 && $have_tk == 1} {set ::enable_gui 1}
 }
 
 # Locate the file specified.
