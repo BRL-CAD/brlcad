@@ -35,13 +35,16 @@ unsigned char map[18] = "0123456789ABCDEFx";
 int
 main(int UNUSED(ac), char **UNUSED(argv))
 {
-    int i = 0;
+    int i  = 0;
     int ok = 1;
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 #endif
-    while ( !feof(stdin) && fread( (void *)pix, sizeof(unsigned char) * 3, 1, stdin) == 1 )  {
+
+    while (!feof(stdin)
+           && fread((void *)pix, sizeof(unsigned char) * 3, 1, stdin) == 1) {
         ok = 1;
         /* Input validation */
 	for (i = 0; i < 3; ++i) {
@@ -53,13 +56,13 @@ main(int UNUSED(ac), char **UNUSED(argv))
             }
 	}
 	if (ok) {
-	    putc( map[pix[0]>>4], stdout );
-	    putc( map[pix[0]&0xF], stdout );
-	    putc( map[pix[1]>>4], stdout );
-	    putc( map[pix[1]&0xF], stdout );
-	    putc( map[pix[2]>>4], stdout );
-	    putc( map[pix[2]&0xF], stdout );
-	    putc( '\n', stdout );
+	    putc(map[pix[0] >> 4 ], stdout);
+	    putc(map[pix[0] & 0xF], stdout);
+	    putc(map[pix[1] >> 4 ], stdout);
+	    putc(map[pix[1] & 0xF], stdout);
+	    putc(map[pix[2] >> 4 ], stdout);
+	    putc(map[pix[2] & 0xF], stdout);
+	    putc('\n', stdout );
 	}
     }
     return 0;
