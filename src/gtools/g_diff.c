@@ -861,6 +861,10 @@ diff_objs(Tcl_Interp *interp, const char *db1, const char *db2)
 	    /* need to add this object */
 	    has_diff += 1;
 	    argv[2] = dp2->d_namep;
+
+	    /* FIXME: use libtclcad's get interface or libged or librt
+	     * directly, just not wdb_obj
+	     */
 	    if (wdb_get_tcl((void *)dbip2->dbi_wdbp, 3, (const char **)argv) == TCL_ERROR ||
 		!bu_strncmp(Tcl_GetStringResult(interp), "invalid", 7)) {
 		/* could not get TCL version */
