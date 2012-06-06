@@ -30,8 +30,6 @@
 
 unsigned char pix[3];		/* RGB of one pixel */
 
-unsigned char map[18] = "0123456789ABCDEFx";
-
 int
 main(int UNUSED(ac), char **UNUSED(argv))
 {
