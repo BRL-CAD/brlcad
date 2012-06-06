@@ -28,11 +28,11 @@
 #include "bio.h"
 #include "bu.h"
 
-unsigned char pix[3];		/* RGB of one pixel */
 
 int
 main(int UNUSED(ac), char **UNUSED(argv))
 {
+    unsigned char pix[3]; /* RGB of one pixel */
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
