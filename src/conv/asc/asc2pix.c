@@ -37,7 +37,7 @@
 
 #include "bio.h"
 
-int lmap[256];		/* Map HEX ASCII to binary in left nybble */
+int lmap[256];		/* Map HEX ASCII to binary in left nybble  */
 int rmap[256];		/* Map HEX ASCII to binary in right nybble */
 
 int
@@ -54,21 +54,21 @@ main(void)
     /* Init rmap */
 
     /* set all to "unused" */
-    for (i=0;i<256;i++)
+    for (i = 0; i < 256; i++)
         rmap[i] = -1;
 
     /* note that all input chars of interest use only low 4 bits */
     /* set chars '0' - '9' */
     for (i = 0; i < 10; i++)
-        rmap['0'+i] = i;
+        rmap['0' + i] = i;
 
     /* set chars 'A' - 'F' */
     for (i = 10; i < 16; i++)
-        rmap['A'-10+i] = i;
+        rmap['A' - 10 + i] = i;
 
     /* set chars 'a' - 'f' */
     for (i = 10; i < 16; i++)
-        rmap['a'-10+i] = i;
+        rmap['a' - 10 + i] = i;
 
     /* Init lmap */
     /* copy defined chars in rmap to lmap's corresponding int but
