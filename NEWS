@@ -53,6 +53,7 @@ changes made.  See document footer for additional details.
 * "About BRL-CAD" article translation to Italian
 	- Unknown Contributor, Tom Browder
 * improved handling of rgb/color attributes by adjust cmd - Cliff Yapp
+* added initial support for step-g import of assemblies - Keith Bowman
 * added a basic SWIG spec file - Erik Greenwald
 * fixed referenced object highlighting in archer treeview - Bob Parker
 * fixed error handling input reading failure in burst - Sean Morrison
