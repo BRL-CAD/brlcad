@@ -51,13 +51,8 @@ main(int UNUSED(ac), char **UNUSED(argv))
 	    if (d < 0 || d > UCHAR_MAX) {
                 bu_bomb("Corrupt file!");
             }
+            printf("%02X", pix[i]);
 	}
-	putc(map[pix[0] >> 4 ], stdout);
-	putc(map[pix[0] & 0xF], stdout);
-	putc(map[pix[1] >> 4 ], stdout);
-	putc(map[pix[1] & 0xF], stdout);
-	putc(map[pix[2] >> 4 ], stdout);
-	putc(map[pix[2] & 0xF], stdout);
 	putc('\n', stdout );
     }
     return 0;
