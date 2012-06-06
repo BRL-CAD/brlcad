@@ -1,9 +1,7 @@
 #ifndef EXPRESSION_H
 #define EXPRESSION_H
 
-/* $Id: expr.h,v 1.4 1997/01/21 19:17:11 dar Exp $ */
-
-/************************************************************************
+/** **********************************************************************
 ** Module:  Expression
 ** Description: This module implements the Expression abstraction.
 **  Several types of expressions are supported: identifiers,
@@ -62,6 +60,7 @@
 /* packages used */
 /*****************/
 
+#include <scl_export.h>
 #include <math.h>
 #include "expbasic.h"   /* get basic definitions */
 
@@ -192,23 +191,23 @@ struct EXPop_entry {
 /* global variables */
 /********************/
 
-extern struct EXPop_entry EXPop_table[OP_LAST];
+extern SCL_EXPRESS_EXPORT struct EXPop_entry EXPop_table[OP_LAST];
 
-extern Expression  LITERAL_E;
-extern Expression  LITERAL_INFINITY;
-extern Expression  LITERAL_PI;
-extern Expression  LITERAL_ZERO;
-extern Expression  LITERAL_ONE;
+extern SCL_EXPRESS_EXPORT Expression  LITERAL_E;
+extern SCL_EXPRESS_EXPORT Expression  LITERAL_INFINITY;
+extern SCL_EXPRESS_EXPORT Expression  LITERAL_PI;
+extern SCL_EXPRESS_EXPORT Expression  LITERAL_ZERO;
+extern SCL_EXPRESS_EXPORT Expression  LITERAL_ONE;
 
-extern Error ERROR_bad_qualification;
-extern Error ERROR_integer_expression_expected;
-extern Error ERROR_implicit_downcast;
-extern Error ERROR_ambig_implicit_downcast;
+extern SCL_EXPRESS_EXPORT Error ERROR_bad_qualification;
+extern SCL_EXPRESS_EXPORT Error ERROR_integer_expression_expected;
+extern SCL_EXPRESS_EXPORT Error ERROR_implicit_downcast;
+extern SCL_EXPRESS_EXPORT Error ERROR_ambig_implicit_downcast;
 
-extern struct freelist_head EXP_fl;
-extern struct freelist_head OP_fl;
-extern struct freelist_head QUERY_fl;
-extern struct freelist_head QUAL_ATTR_fl;
+extern SCL_EXPRESS_EXPORT struct freelist_head EXP_fl;
+extern SCL_EXPRESS_EXPORT struct freelist_head OP_fl;
+extern SCL_EXPRESS_EXPORT struct freelist_head QUERY_fl;
+extern SCL_EXPRESS_EXPORT struct freelist_head QUAL_ATTR_fl;
 
 /******************************/
 /* macro function definitions */
@@ -261,15 +260,15 @@ extern struct freelist_head QUAL_ATTR_fl;
 /* function prototypes */
 /***********************/
 
-extern Expression   EXPcreate PROTO( ( Type ) );
-extern Expression   EXPcreate_simple PROTO( ( Type ) );
-extern Expression   EXPcreate_from_symbol PROTO( ( Type, Symbol * ) );
-extern Expression   UN_EXPcreate PROTO( ( Op_Code, Expression ) );
-extern Expression   BIN_EXPcreate PROTO( ( Op_Code, Expression, Expression ) );
-extern Expression   TERN_EXPcreate PROTO( ( Op_Code, Expression, Expression, Expression ) );
-extern Expression   QUERYcreate PROTO( ( Symbol *, Expression ) );
-extern void     EXPinitialize PROTO( ( void ) );
-extern Type     EXPtype PROTO( ( Expression, struct Scope_ * ) );
-extern int      EXPget_integer_value PROTO( ( Expression ) );
+extern SCL_EXPRESS_EXPORT Expression   EXPcreate PROTO( ( Type ) );
+extern SCL_EXPRESS_EXPORT Expression   EXPcreate_simple PROTO( ( Type ) );
+extern SCL_EXPRESS_EXPORT Expression   EXPcreate_from_symbol PROTO( ( Type, Symbol * ) );
+extern SCL_EXPRESS_EXPORT Expression   UN_EXPcreate PROTO( ( Op_Code, Expression ) );
+extern SCL_EXPRESS_EXPORT Expression   BIN_EXPcreate PROTO( ( Op_Code, Expression, Expression ) );
+extern SCL_EXPRESS_EXPORT Expression   TERN_EXPcreate PROTO( ( Op_Code, Expression, Expression, Expression ) );
+extern SCL_EXPRESS_EXPORT Expression   QUERYcreate PROTO( ( Symbol *, Expression ) );
+extern SCL_EXPRESS_EXPORT void     EXPinitialize PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT Type     EXPtype PROTO( ( Expression, struct Scope_ * ) );
+extern SCL_EXPRESS_EXPORT int      EXPget_integer_value PROTO( ( Expression ) );
 
 #endif /*EXPRESSION_H*/

@@ -72,7 +72,7 @@ struct Case_Item_ {
 /* global variables */
 /********************/
 
-extern struct freelist_head CASE_IT_fl;
+extern SCL_EXPRESS_EXPORT struct freelist_head CASE_IT_fl;
 
 /******************************/
 /* macro function definitions */
@@ -88,7 +88,7 @@ extern struct freelist_head CASE_IT_fl;
 #define CASE_IT_new()       (struct Case_Item_ *)MEM_new(&CASE_IT_fl)
 #define CASE_IT_destroy(x)  MEM_destroy(&CASE_IT_fl,(Freelist *)(Generic)x)
 
-extern Case_Item    CASE_ITcreate PROTO( ( Linked_List, struct Statement_ * ) );
-extern void     CASE_ITinitialize PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT Case_Item    CASE_ITcreate PROTO( ( Linked_List, struct Statement_ * ) );
+extern SCL_EXPRESS_EXPORT void     CASE_ITinitialize PROTO( ( void ) );
 
 #endif /*CASE_ITEM_H*/

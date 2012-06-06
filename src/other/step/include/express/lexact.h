@@ -1,8 +1,6 @@
 #ifndef LEX_ACTIONS_H
 #define LEX_ACTIONS_H
 
-/* $Id: lexact.h,v 1.5 1995/04/05 13:55:40 clark dec96 $ */
-
 /*
  * This software was developed by U.S. Government employees as part of
  * their official duties and is not subject to copyright.
@@ -40,6 +38,7 @@
 /* packages used */
 /*****************/
 
+#include <scl_export.h>
 #include <ctype.h>
 #include "basic.h"
 #include "error.h"
@@ -69,19 +68,19 @@ typedef struct Scan_Buffer {
 /* global variables */
 /********************/
 
-extern Scan_Buffer  SCAN_buffers[SCAN_NESTING_DEPTH];
-extern int      SCAN_current_buffer;
-extern char    *    SCANcurrent;
+extern SCL_EXPRESS_EXPORT Scan_Buffer  SCAN_buffers[SCAN_NESTING_DEPTH];
+extern SCL_EXPRESS_EXPORT int      SCAN_current_buffer;
+extern SCL_EXPRESS_EXPORT char    *    SCANcurrent;
 
-extern Error        ERROR_include_file;
-extern Error        ERROR_unmatched_close_comment;
-extern Error        ERROR_unmatched_open_comment;
-extern Error        ERROR_unterminated_string;
-extern Error        ERROR_encoded_string_bad_digit;
-extern Error        ERROR_encoded_string_bad_count;
-extern Error        ERROR_bad_identifier;
-extern Error        ERROR_unexpected_character;
-extern Error        ERROR_nonascii_char;
+extern SCL_EXPRESS_EXPORT Error        ERROR_include_file;
+extern SCL_EXPRESS_EXPORT Error        ERROR_unmatched_close_comment;
+extern SCL_EXPRESS_EXPORT Error        ERROR_unmatched_open_comment;
+extern SCL_EXPRESS_EXPORT Error        ERROR_unterminated_string;
+extern SCL_EXPRESS_EXPORT Error        ERROR_encoded_string_bad_digit;
+extern SCL_EXPRESS_EXPORT Error        ERROR_encoded_string_bad_count;
+extern SCL_EXPRESS_EXPORT Error        ERROR_bad_identifier;
+extern SCL_EXPRESS_EXPORT Error        ERROR_unexpected_character;
+extern SCL_EXPRESS_EXPORT Error        ERROR_nonascii_char;
 
 /******************************/
 /* macro function definitions */
@@ -100,24 +99,24 @@ extern Error        ERROR_nonascii_char;
 /* function prototypes */
 /***********************/
 
-extern void SCANinitialize PROTO( ( void ) );
-extern int  SCANprocess_real_literal PROTO( ( const char * ) );
-extern int  SCANprocess_integer_literal PROTO( ( const char * ) );
-extern int  SCANprocess_binary_literal PROTO( ( const char * ) );
-extern int  SCANprocess_logical_literal PROTO( ( char * ) );
-extern int  SCANprocess_identifier_or_keyword PROTO( ( const char * ) );
-extern int  SCANprocess_string PROTO( ( const char * ) );
-extern int  SCANprocess_encoded_string PROTO( ( const char * ) );
-extern int  SCANprocess_semicolon PROTO( ( const char *, int ) );
-extern void SCANsave_comment PROTO( ( const char * ) );
-extern bool  SCANread PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT void SCANinitialize PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT int  SCANprocess_real_literal PROTO( ( const char * ) );
+extern SCL_EXPRESS_EXPORT int  SCANprocess_integer_literal PROTO( ( const char * ) );
+extern SCL_EXPRESS_EXPORT int  SCANprocess_binary_literal PROTO( ( const char * ) );
+extern SCL_EXPRESS_EXPORT int  SCANprocess_logical_literal PROTO( ( char * ) );
+extern SCL_EXPRESS_EXPORT int  SCANprocess_identifier_or_keyword PROTO( ( const char * ) );
+extern SCL_EXPRESS_EXPORT int  SCANprocess_string PROTO( ( const char * ) );
+extern SCL_EXPRESS_EXPORT int  SCANprocess_encoded_string PROTO( ( const char * ) );
+extern SCL_EXPRESS_EXPORT int  SCANprocess_semicolon PROTO( ( const char *, int ) );
+extern SCL_EXPRESS_EXPORT void SCANsave_comment PROTO( ( const char * ) );
+extern SCL_EXPRESS_EXPORT bool  SCANread PROTO( ( void ) );
 #if macros_bit_the_dust
-extern void SCANdefine_macro PROTO( ( char *, char * ) );
+extern SCL_EXPRESS_EXPORT void SCANdefine_macro PROTO( ( char *, char * ) );
 #endif
-extern void SCANinclude_file PROTO( ( char * ) );
-void        SCANlowerize PROTO( ( char * ) );
-void        SCANupperize PROTO( ( char * ) );
-extern char  *  SCANstrdup PROTO( ( char * ) );
-extern long SCANtell PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT void SCANinclude_file PROTO( ( char * ) );
+SCL_EXPRESS_EXPORT void        SCANlowerize PROTO( ( char * ) );
+SCL_EXPRESS_EXPORT void        SCANupperize PROTO( ( char * ) );
+extern SCL_EXPRESS_EXPORT char  *  SCANstrdup PROTO( ( char * ) );
+extern SCL_EXPRESS_EXPORT long SCANtell PROTO( ( void ) );
 
 #endif /* LEX_ACTIONS_H */

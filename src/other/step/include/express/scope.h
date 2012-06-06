@@ -1,9 +1,7 @@
 #ifndef SCOPE_H
 #define SCOPE_H
 
-/* $Id: scope.h,v 1.10 1997/01/21 19:17:11 dar Exp $ */
-
-/************************************************************************
+/** **********************************************************************
 ** Module:  Scope
 ** Description: This module implements a hierarchical (i.e., scoped)
 **  symbol table.  The symbol table can store definitions of entities,
@@ -47,16 +45,11 @@
 
 #define SCOPE_NULL  (Scope)0
 
-/************/
-/* typedefs */
-/************/
-
-/*typedef struct Scope *Scope;*/
-
 /****************/
 /* modules used */
 /****************/
 
+#include <scl_export.h>
 #include "type.h"
 #include "variable.h"
 #include "entity.h"
@@ -138,18 +131,10 @@ struct Scope_ {
 /* function prototypes */
 /***********************/
 
-extern struct Symbol_ * SCOPE_get_symbol PROTO( ( Generic ) );
-/*extern struct Scope * SCOPEget_nearest_enclosing_entity PROTO((Scope));*/
-extern void     SCOPE_get_entities PROTO( ( Scope, Linked_List ) );
-extern Linked_List  SCOPEget_entities PROTO( ( Scope ) );
-extern Linked_List  SCOPEget_entities_superclass_order PROTO( ( Scope ) );
-extern Generic      SCOPEfind PROTO( ( Scope, char *, int ) );
-
-#if 0
-extern Linked_List  SCOPEget_types PROTO( ( Scope ) );
-extern Linked_List  SCOPEget_variables PROTO( ( Scope ) );
-extern Linked_List  SCOPEget_algorithms PROTO( ( Scope ) );
-extern Linked_List  SCOPEget_constants PROTO( ( Scope ) );
-#endif
+extern SCL_EXPRESS_EXPORT struct Symbol_ * SCOPE_get_symbol PROTO( ( Generic ) );
+extern SCL_EXPRESS_EXPORT void     SCOPE_get_entities PROTO( ( Scope, Linked_List ) );
+extern SCL_EXPRESS_EXPORT Linked_List  SCOPEget_entities PROTO( ( Scope ) );
+extern SCL_EXPRESS_EXPORT Linked_List  SCOPEget_entities_superclass_order PROTO( ( Scope ) );
+extern SCL_EXPRESS_EXPORT Generic      SCOPEfind PROTO( ( Scope, char *, int ) );
 
 #endif /* SCOPE_H */

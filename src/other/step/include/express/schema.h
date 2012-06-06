@@ -1,9 +1,7 @@
 #ifndef SCHEMA_H
 #define SCHEMA_H
 
-/* $Id: schema.h,v 1.11 1997/02/25 19:49:01 dar Exp $ */
-
-/************************************************************************
+/** **********************************************************************
 ** Module:  Schema
 ** Description: This module implements the Schema abstraction, which
 **  basically amounts to a named symbol table.
@@ -56,6 +54,7 @@
 /* packages used */
 /*****************/
 
+#include <scl_export.h>
 #include "expbasic.h"   /* get basic definitions */
 #include "symbol.h"
 #include "scope.h"
@@ -116,11 +115,11 @@ struct Schema_ {
 /* global variables */
 /********************/
 
-extern struct freelist_head REN_fl;
-extern struct freelist_head SCOPE_fl;
-extern struct freelist_head SCHEMA_fl;
+extern SCL_EXPRESS_EXPORT struct freelist_head REN_fl;
+extern SCL_EXPRESS_EXPORT struct freelist_head SCOPE_fl;
+extern SCL_EXPRESS_EXPORT struct freelist_head SCHEMA_fl;
 
-extern int __SCOPE_search_id;
+extern SCL_EXPRESS_EXPORT int __SCOPE_search_id;
 
 /******************************/
 /* macro function definitions */
@@ -145,19 +144,19 @@ extern int __SCOPE_search_id;
 /* function prototypes */
 /***********************/
 
-extern Variable VARfind PROTO( ( Scope, char *, int ) );
-extern Schema   SCHEMAcreate PROTO( ( void ) );
-extern void SCHEMAinitialize PROTO( ( void ) );
-extern void SCHEMAadd_use PROTO( ( Schema, Symbol *, Symbol *, Symbol * ) );
-extern void SCHEMAadd_reference PROTO( ( Schema, Symbol *, Symbol *, Symbol * ) );
-extern void SCHEMAdefine_use PROTO( ( Schema, Rename * ) );
-extern void SCHEMAdefine_reference PROTO( ( Schema, Rename * ) );
-extern Generic  SCHEMAfind PROTO( ( Schema, char * name, int search_refs ) );
-extern Scope    SCOPEcreate PROTO( ( char ) );
-extern Scope    SCOPEcreate_tiny PROTO( ( char ) );
-extern Scope    SCOPEcreate_nostab PROTO( ( char ) );
-extern Linked_List SCHEMAget_entities_use PROTO( ( Scope ) );
-extern Linked_List SCHEMAget_entities_ref PROTO( ( Scope ) );
+extern SCL_EXPRESS_EXPORT Variable VARfind PROTO( ( Scope, char *, int ) );
+extern SCL_EXPRESS_EXPORT Schema   SCHEMAcreate PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT void     SCHEMAinitialize PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT void     SCHEMAadd_use PROTO( ( Schema, Symbol *, Symbol *, Symbol * ) );
+extern SCL_EXPRESS_EXPORT void     SCHEMAadd_reference PROTO( ( Schema, Symbol *, Symbol *, Symbol * ) );
+extern SCL_EXPRESS_EXPORT void     SCHEMAdefine_use PROTO( ( Schema, Rename * ) );
+extern SCL_EXPRESS_EXPORT void     SCHEMAdefine_reference PROTO( ( Schema, Rename * ) );
+extern SCL_EXPRESS_EXPORT Generic  SCHEMAfind PROTO( ( Schema, char * name, int search_refs ) );
+extern SCL_EXPRESS_EXPORT Scope    SCOPEcreate PROTO( ( char ) );
+extern SCL_EXPRESS_EXPORT Scope    SCOPEcreate_tiny PROTO( ( char ) );
+extern SCL_EXPRESS_EXPORT Scope    SCOPEcreate_nostab PROTO( ( char ) );
+extern SCL_EXPRESS_EXPORT Linked_List SCHEMAget_entities_use PROTO( ( Scope ) );
+extern SCL_EXPRESS_EXPORT Linked_List SCHEMAget_entities_ref PROTO( ( Scope ) );
 
 #endif /*  SCHEMA_H */
 
