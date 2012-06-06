@@ -91,6 +91,28 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
+	<term><option>-F</option> <replaceable>framebuffer type</replaceable></term>
+	<term><option>--framebuffer_type</option> <replaceable>framebuffer type</replaceable></term>
+	<listitem>
+	  <para>
+	    The type of framebuffer to use when creating the image.  By default, "/dev/mem" is used for a non-graphical
+            framebuffer - other options (/dev/X, /dev/ogl, etc.) may be used just as they would be used with <command>rt</command>.
+            A /dev/mem framebuffer created by <command>rtwizard</command> will be closed after the image generation is complete.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-p</option> <replaceable>port_number</replaceable></term>
+	<term><option>--framebuffer_port</option> <replaceable>port_number</replaceable></term>
+	<listitem>
+	  <para>
+	    The number of the framebuffer port to use when running <command>fbserv</command> to establish a framebuffer.  An
+            existing framebuffer may also be specified and used.  In the case of a pre-existing non-grapical framebuffer,
+            <command>rtwizard</command> will not close the framebuffer automatically after the raytracing process is complete.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><option>--gui</option></term>
 	<listitem>
 	  <para>
@@ -110,7 +132,14 @@
       </varlistentry>
     </variablelist>
 
-    <variablelist remap="TP"><title>Model View Options</title>
+    <variablelist remap="TP"><title>Model View Options - User Level</title>
+    <para>
+       When it comes to preparing the view for an RtWizard image, there are two options.  One
+       is to use the "user level" controls, which reflect the view manipulations used by users
+       on the command line.  The other is to use the "low level" specifiers, which are more
+       typically used when <command>rtwizard</command> is run by automated scripts.  The two
+       methods are mutually exclusive.
+    </para>
       <varlistentry>
 	<term><option>-a</option> <replaceable>angle (degrees)</replaceable></term>
 	<term><option>--azimuth</option> <replaceable>angle (degrees)</replaceable></term>
@@ -136,6 +165,15 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
+        <term><option>-P</option> <replaceable>angle (degrees)</replaceable></term>
+        <term><option>--perspective</option> <replaceable>angle (degrees)</replaceable></term>
+        <listitem>
+          <para>                                                                                                      
+            Set the perspective angle.                                                                                          
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><option>-z</option> <replaceable>value</replaceable></term>
 	<term><option>--zoom</option> <replaceable>value</replaceable></term>
 	<listitem>
@@ -144,8 +182,46 @@
 	  </para>
 	</listitem>
       </varlistentry>
+     <varlistentry>
+	<term><option>--center</option> <replaceable>X Y Z</replaceable> </term>
+	<listitem>
+	  <para>
+	    Set the xyz coordinates of the center of the view.
+	  </para>
+	</listitem>
+      </varlistentry>
     </variablelist>
  
+    <variablelist remap="TP"><title>Model View Options - Low Level</title>
+      <para>
+         When specifying a low level view model is "all or nothing" - all options
+         are required to correctly define the view.
+      </para>
+      <varlistentry>
+         <term><option>--viewsize</option> <replaceable>view_size(mm)</replaceable></term>
+        <listitem>
+          <para>Set the view size.</para>
+	</listitem>
+	  </varlistentry>
+      <varlistentry>
+        <term><option>--orientation</option> <replaceable>element_1 element_2 element_3 element_4</replaceable> </term>
+        <listitem>
+          <para>                                                                                                      
+            Set view quaternion.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--eye_pt</option> <replaceable>X Y Z</replaceable></term>
+        <listitem>
+          <para>                                                                                                      
+            Set twist angle.                                                                                          
+	  </para>
+	</listitem>
+      </varlistentry>
+
+    </variablelist>
+
     <variablelist remap="TP"><title>Image Generation Options</title>
       <varlistentry>
 	<term><option>-c</option> <replaceable>obj1</replaceable> <replaceable>...</replaceable> </term>
