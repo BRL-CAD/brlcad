@@ -30,10 +30,11 @@
 
 unsigned char pix[3];		/* RGB of one pixel */
 
+unsigned char map[18] = "0123456789ABCDEFx";
+
 int
 main(int UNUSED(ac), char **UNUSED(argv))
 {
-    int i  = 0;
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
@@ -42,6 +43,7 @@ main(int UNUSED(ac), char **UNUSED(argv))
 
     while (!feof(stdin)
            && fread((void *)pix, sizeof(unsigned char) * 3, 1, stdin) == 1) {
+        int i;
         ok = 1;
         /* Input validation */
 	for (i = 0; i < 3; ++i) {
