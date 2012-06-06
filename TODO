@@ -87,6 +87,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* update mged to not call wdb_init_obj and wdb_create_cmd, trace down
+  other vestiges of wdb_obj for removal
+
 * migrate the mged 'joint' command to libged
 
 * add support to rt tools and gtools for specifying az/el in radians
