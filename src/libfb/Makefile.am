@@ -54,7 +54,7 @@ libfb_la_SOURCES = \
 	tcl.c \
 	vers.c
 
-libfb_la_LDFLAGS = -version-info 19:1 -no-undefined
+libfb_la_LDFLAGS = -version-info 20:1 -no-undefined
 
 # STD_C99_FLAG is needed due to gl.h on Mac OS X 10.6 having // comments
 libfb_la_CFLAGS = \

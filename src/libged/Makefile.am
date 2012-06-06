@@ -288,7 +288,7 @@ noinst_HEADERS = \
 	wdb_qray.h
 
 libged_la_SOURCES =
-libged_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
+libged_la_LDFLAGS = -version-info 20:1 -no-undefined -Wc,${FEXCEPTIONS}
 
 
 # !!! FIXME: LIBGED should not be directly utilizing LIBDM or LIBFB as

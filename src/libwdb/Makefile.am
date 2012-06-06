@@ -33,7 +33,7 @@ libwdb_nil_la_SOURCES = \
 	wdb.c
 
 libwdb_la_SOURCES =
-libwdb_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
+libwdb_la_LDFLAGS = -version-info 20:1 -no-undefined -Wc,${FEXCEPTIONS}
 libwdb_la_LIBADD = \
 	libwdb_nil.la \
 	${WDB_LIBS}

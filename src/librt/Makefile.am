@@ -256,7 +256,7 @@ librt_nil_la_SOURCES = \
 librt_nil_la_LIBADD = ${BREP_LIBADD}
 
 librt_la_SOURCES =
-librt_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
+librt_la_LDFLAGS = -version-info 20:1 -no-undefined -Wc,${FEXCEPTIONS}
 librt_la_LIBADD = \
 	librt_nil.la \
 	${RT_LIBS}
