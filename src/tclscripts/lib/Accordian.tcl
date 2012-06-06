@@ -36,9 +36,15 @@
     destructor {}
 
     public {
+	method addTogglePanelCallback {_callback}
+	method clearTogglePanelCallbackList {}
+	method deleteTogglePanelCallback {_callback}
+
+	method clear {}
 	method delete {_first {_last ""}}
 	method insert {_index args}
 	method itemChildsite {_index}
+	method rename {_item1 _item2}
 	method togglePanel {_index}
     }
 
@@ -47,7 +53,9 @@
 
 	variable mItemList {}
 	variable mCurrIndex -1
+	variable mTogglePanelCallbacks ""
 
+	method createPanel
 	method getIndex {_index}
 	method resetSingleSelect {}
 	method toggleDisplay {_item}
@@ -85,6 +93,35 @@
 
 
 ################################# Public Methods ################################
+
+
+::itcl::body cadwidgets::Accordian::addTogglePanelCallback {_callback} {
+    set i [lsearch $mTogglePanelCallbacks $_callback]
+
+    # Add if not already in list
+    if {$i == -1} {
+	lappend mTogglePanelCallbacks $_callback
+    }
+}
+
+
+::itcl::body cadwidgets::Accordian::clearTogglePanelCallbackList {} {
+    set mTogglePanelCallbacks {}
+}
+
+
+::itcl::body cadwidgets::Accordian::deleteTogglePanelCallback {_callback} {
+    set i [lsearch $mTogglePanelCallbacks $_callback]
+    if {$i != -1} {
+	set mTogglePanelCallbacks [lreplace $mTogglePanelCallbacks $i $i]
+    }
+}
+
+
+::itcl::body cadwidgets::Accordian::clear {} {
+    delete [lindex $mItemList 0] [lindex $mItemList end]
+}
+
 
 ::itcl::body cadwidgets::Accordian::delete {_first {_last ""}} {
     set i [getIndex $_first]
@@ -125,7 +162,7 @@
     foreach item $dlist {
 	set name "$ACC_PREFIX[regsub -all { } $item "_"]"
 	grid forget $itk_component($name\F)
-	rename $itk_component($name\F) ""
+	::rename $itk_component($name\F) ""
 
 	incr curr_i
     }
@@ -240,6 +277,35 @@
 }
 
 
+::itcl::body cadwidgets::Accordian::rename {_item1 _item2} {
+    if {$_item1 == $_item2} {
+	return
+    }
+
+    set i [getIndex $_item1]
+
+    if {$i == -1} {
+	error "Bad item - $_item1"
+    }
+
+    set j [getIndex $_item2]
+    if {$j != -1} {
+	error "$_item2 already in use"
+    }
+
+    set saveCI $mCurrIndex
+
+    delete $_item1
+    insert $i $_item2
+
+    .archer0 putString "Accordian::rename: i - $i, mCurrIndex - $saveCI"
+
+    if {$i == $saveCI} {
+	toggleDisplay $_item2
+    }
+}
+
+
 ::itcl::body cadwidgets::Accordian::togglePanel {_index} {
     set i [getIndex $_index]
 
@@ -259,6 +325,7 @@
 
 
 ################################# Protected Methods ################################
+
 
 ::itcl::body cadwidgets::Accordian::getIndex {_index} {
     set len [llength $mItemList]
@@ -341,6 +408,10 @@
 	    grid rowconfigure $itk_interior $mCurrIndex -weight 1
 	}
 
+	foreach callback $mTogglePanelCallbacks {
+	    catch {$callback $_item}
+	}
+
 	return
     }
 
@@ -356,6 +427,10 @@
 	grid rowconfigure $itk_interior $i -weight 0
 
 	set mCurrIndex -1
+    }
+
+    foreach callback $mTogglePanelCallbacks {
+	catch {$callback $_item}
     }
 }
 

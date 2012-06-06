@@ -1926,9 +1926,7 @@ vo_keypoint_cmd(struct view_obj *vop,
 		const char *argv[])
 {
     struct bu_vls vls;
-    vect_t tvec;
-
-    VSETALL(tvec, 0);
+    vect_t tvec = VINIT_ZERO;
 
     /* Get the keypoint */
     if (argc == 1) {
@@ -2346,8 +2344,8 @@ vo_m2vPoint_cmd(struct view_obj *vop,
 
     /* Parse the incoming point */
     if (argc == 2 || argc == 4) {
-	point_t viewPt = {0,0,0};
-	point_t modelPt = {0,0,0};
+	point_t viewPt = VINIT_ZERO;
+	point_t modelPt = VINIT_ZERO;
 
 	if (argc == 2) {
 	    if (bn_decode_vect(viewPt, argv[1]) != 3)

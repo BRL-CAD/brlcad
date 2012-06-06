@@ -1,4 +1,3 @@
-
 /*                        I F _ X 2 4 . C
  * BRL-CAD
  *

@@ -1,4 +1,4 @@
-/*                          E X T R . C
+/*                       E X T R U D E . C
  * BRL-CAD
  *
  * Copyright (c) 2000-2012 United States Government as represented by

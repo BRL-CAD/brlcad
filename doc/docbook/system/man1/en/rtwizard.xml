@@ -37,9 +37,16 @@
     </para>
 
     <para>
+      Images produced by <emphasis remap="I">rtwizard</emphasis> use three primary elements - 
+      standard full color raytracings produced by <command>rt</command>, "line drawing" style
+      images produced by <command>rtedge</command>, and a faded greyscale version of color
+      raytracings produced with a variety of image manipulation tools included with BRL-CAD.
+    </para>
+
+    <para>
       The following options are recognized.
     </para>
-    <variablelist remap="TP">
+    <variablelist remap="TP"><title>Input/Output Options</title>
      <varlistentry>
 	<term><replaceable>geometry_file.g</replaceable></term>
 	<listitem>
@@ -101,7 +108,45 @@
 	  </para>
 	</listitem>
       </varlistentry>
+    </variablelist>
 
+    <variablelist remap="TP"><title>Model View Options</title>
+      <varlistentry>
+	<term><option>-a</option> <replaceable>angle (degrees)</replaceable></term>
+	<term><option>--azimuth</option> <replaceable>angle (degrees)</replaceable></term>
+	<listitem>
+	  <para>Set azimuth angle.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-e</option> <replaceable>angle (degrees)</replaceable></term>
+	<term><option>--elevation</option> <replaceable>angle (degrees)</replaceable></term>
+	<listitem>
+	  <para>
+	    Set elevation angle.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>--twist</option> <replaceable>angle (degrees)</replaceable></term>
+	<listitem>
+	  <para>
+	    Set twist angle.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-z</option> <replaceable>value</replaceable></term>
+	<term><option>--zoom</option> <replaceable>value</replaceable></term>
+	<listitem>
+	  <para>
+	    Set the zoom factor (smaller factor results in a smaller object in the view, and vice versa).
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+ 
+    <variablelist remap="TP"><title>Image Generation Options</title>
       <varlistentry>
 	<term><option>-c</option> <replaceable>obj1</replaceable> <replaceable>...</replaceable> </term>
 	<term><option>--color-objects</option> <replaceable>obj1</replaceable> <replaceable>...</replaceable></term>
@@ -181,109 +226,62 @@
 	<term><option>--type</option> <replaceable>image_type</replaceable></term>
 	<listitem>
 	  <para>
-	    Specify the type of image to be rendered.  This is optional, but if a type is specified and insufficient information is supplied to generate that particular image type, rtwizard knows to error out.
-	  </para>
-	</listitem>
-      </varlistentry>
+            Specify the type of image to be rendered. The images produces by <command>rtwizard</command> 
+            are categorized by <emphasis remap="I">picture type</emphasis> - there are six picture types 
+            built on full color raytracing, ghosting, and <command>rtedge</command> line renderings.  
+	    If a type is specified and insufficient information is supplied to generate that particular 
+            image type, rtwizard will exit with an error.
 
-      <varlistentry>
-	<term><option>-a</option> <replaceable>angle (degrees)</replaceable></term>
-	<term><option>--azimuth</option> <replaceable>angle (degrees)</replaceable></term>
-	<listitem>
-	  <para>Set azimuth angle.</para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><option>-e</option> <replaceable>angle (degrees)</replaceable></term>
-	<term><option>--elevation</option> <replaceable>angle (degrees)</replaceable></term>
-	<listitem>
-	  <para>
-	    Set elevation angle.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><option>--twist</option> <replaceable>angle (degrees)</replaceable></term>
-	<listitem>
-	  <para>
-	    Set twist angle.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><option>-z</option> <replaceable>value</replaceable></term>
-	<term><option>--zoom</option> <replaceable>value</replaceable></term>
-	<listitem>
-	  <para>
-	    Set the zoom factor (smaller factor results in a smaller object in the view, and vice versa).
+          <table><info><title>RtWizard Image Types</title></info>
+
+            <tgroup cols="2">
+              <thead>
+                <row>
+                  <entry>Type</entry>
+                  <entry>Name</entry>
+                  <entry>Description</entry>
+                </row>
+              </thead>
+              <tbody>
+                <row>
+                  <entry>A</entry>
+                  <entry>Simple Full-Color Image</entry>
+                  <entry>Standard <command>rt</command> image.</entry>
+                </row>
+                <row>
+                  <entry>B</entry>
+                  <entry>Simple Line Drawing</entry>
+                  <entry>Standard <command>rtedge</command> image.</entry>
+                </row>
+                <row>
+                  <entry>C</entry>
+                  <entry>Highlighted Image</entry>
+                  <entry>Full Color <command>rt</command> image enhanced with <command>rtedge</command> lines.</entry>
+                </row>
+                <row>
+                  <entry>D</entry>
+                  <entry>Mixed Full Color and Edges</entry>
+                  <entry>Like Type C, except objects may be selectively enhanced with <command>rtedge</command> lines.</entry>
+                </row>
+                <row>
+                  <entry>E</entry>
+                  <entry>Ghose Image with Inserts</entry>
+                  <entry>A combination of Full Color elements and faded greyscale raytracings for context.</entry>
+                </row>
+                <row>
+                  <entry>F</entry>
+                  <entry>Ghost Image with Inserts and Edges</entry>
+                  <entry>A Type E image further enhanced with <command>rtedge</command> lines.</entry>
+                </row>
+
+              </tbody>
+            </tgroup>
+          </table>
 	  </para>
 	</listitem>
       </varlistentry>
     </variablelist>
-    
-  </refsection>
-  
-  <refsection xml:id="rtwizard_image_types"><info><title>IMAGE TYPES</title></info>
-    
-    <para>
-      The images produces by <command>rtwizard</command> are categorized by <emphasis remap="I">picture type</emphasis> - there
-      are six picture types built on full color raytracing, ghosting (greyscale raytraced images partially faded into the background) and
-      line renderings based on <command>rtedge</command> outputs.  Those types are:
-
-    <variablelist remap="TP">
-      <varlistentry>
-	<term>Simple Full-Color Image</term>
-	<listitem>
-	  <para>
-	    Simple <command>rt</command> raytrace.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term>Simple Line Drawing</term>
-	<listitem>
-	  <para>
-	    Simple <command>rtedge</command> raytrace.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term>Highlighted Image</term>
-	<listitem>
-	  <para>
-	    Color <command>rt</command> raytrace enhanced with <command>rtedge</command> output.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term>Mixed Full-Color and Edges</term>
-	<listitem>
-	  <para>
-	    Mix of <command>rtedge</command> and <command>rt</command> rendered components.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term>Ghost Image with Insert</term>
-	<listitem>
-	  <para>
-	    Combination of full color <command>rt</command> raytracings and faded greyscale raytracings, produced by...
-	  </para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
-	<term>Ghost Image with Inserts and Lines</term>
-	<listitem>
-	  <para>
-	    Combines all available rendering techniques in one image - most complex.
-	  </para>
-	</listitem>
-      </varlistentry>
-
-   </variablelist>
-
-    </para>
+   
   </refsection>
 
   <refsection xml:id="examples"><info><title>EXAMPLES</title></info>

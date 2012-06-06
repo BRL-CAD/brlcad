@@ -1,4 +1,4 @@
-/*			G _ M E T A B A L L . H
+/*                        M E T A B A L L . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2012 United States Government as represented by

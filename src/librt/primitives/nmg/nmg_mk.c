@@ -1690,8 +1690,8 @@ nmg_km(struct model *m)
 	(void)nmg_kr(BU_LIST_FIRST(nmgregion, &m->r_hd));
 
     if (m->manifolds) {
-        bu_free((char *)m->manifolds, "free manifolds table");
-        m->manifolds = (char *)NULL;
+	bu_free((char *)m->manifolds, "free manifolds table");
+	m->manifolds = (char *)NULL;
     }
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
@@ -2267,20 +2267,20 @@ nmg_loop_g(struct loop *l, const struct bn_tol *tol)
 
     /* Pad the dimension of the loop bounding box which is less than
      * distance tolerance so that the resulting dimension will be
-     * at least distance tolerance. 
+     * at least distance tolerance.
      */
     thickening = 0.5 * tol->dist;
     if (NEAR_ZERO(lg->max_pt[X] - lg->min_pt[X], tol->dist)) {
-        lg->min_pt[X] -= thickening;
-        lg->max_pt[X] += thickening;
+	lg->min_pt[X] -= thickening;
+	lg->max_pt[X] += thickening;
     }
     if (NEAR_ZERO(lg->max_pt[Y] - lg->min_pt[Y], tol->dist)) {
-        lg->min_pt[Y] -= thickening;
-        lg->max_pt[Y] += thickening;
+	lg->min_pt[Y] -= thickening;
+	lg->max_pt[Y] += thickening;
     }
     if (NEAR_ZERO(lg->max_pt[Z] - lg->min_pt[Z], tol->dist)) {
-        lg->min_pt[Z] -= thickening;
-        lg->max_pt[Z] += thickening;
+	lg->min_pt[Z] -= thickening;
+	lg->max_pt[Z] += thickening;
     }
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
@@ -2906,12 +2906,12 @@ nmg_je(struct edgeuse *eudst, struct edgeuse *eusrc)
 	 */
 
 	/* this is the only use of the eusrc edge. kill/free edge but not
-         * here. the edge should be freed by the calling function which can
-         * determine this edge should be freed by its edgeuse pointer
-         * pointing to itself and the magic number set to zero.
-         */
-        e->eu_p = (struct edgeuse *)e;
-        e->magic = 0;
+	 * here. the edge should be freed by the calling function which can
+	 * determine this edge should be freed by its edgeuse pointer
+	 * pointing to itself and the magic number set to zero.
+	 */
+	e->eu_p = (struct edgeuse *)e;
+	e->magic = 0;
     }
 
     eusrc->radial_p = eudst;
@@ -3173,7 +3173,7 @@ nmg_jeg(struct edge_g_lseg *dest_eg, struct edge_g_lseg *src_eg)
  *
  */
 int
-nmg_keu_zl(struct shell *s, const struct bn_tol *tol) 
+nmg_keu_zl(struct shell *s, const struct bn_tol *tol)
 {
     int empty_loop = 0;
     int empty_face = 0;
@@ -3194,50 +3194,50 @@ nmg_keu_zl(struct shell *s, const struct bn_tol *tol)
 	    fu = BU_LIST_PNEXT(faceuse, fu);
 	    continue;
 	}
-        empty_face = 0;
+	empty_face = 0;
 	lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-        while(BU_LIST_NOT_HEAD(lu, &fu->lu_hd)) {
-            NMG_CK_LOOPUSE(lu);
+	while(BU_LIST_NOT_HEAD(lu, &fu->lu_hd)) {
+	    NMG_CK_LOOPUSE(lu);
 	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
-	        bu_bomb("loopuse does not contains edgeuse\n");
+		bu_bomb("loopuse does not contains edgeuse\n");
 	    }
 	    empty_loop = 0;
 	    eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
 	    while(BU_LIST_NOT_HEAD(eu, &lu->down_hd)) {
 		NMG_CK_EDGEUSE(eu);
-	        if ((eu->vu_p->v_p->vg_p == eu->eumate_p->vu_p->v_p->vg_p) ||
-		     bn_pt3_pt3_equal(eu->vu_p->v_p->vg_p->coord, 
-                                     eu->eumate_p->vu_p->v_p->vg_p->coord, tol)) {
+		if ((eu->vu_p->v_p->vg_p == eu->eumate_p->vu_p->v_p->vg_p) ||
+		     bn_pt3_pt3_equal(eu->vu_p->v_p->vg_p->coord,
+				     eu->eumate_p->vu_p->v_p->vg_p->coord, tol)) {
 		    /* fuse the two vertices */
 		    nmg_jv(eu->vu_p->v_p, eu->eumate_p->vu_p->v_p);
 
 		    eu_killed++;
 		    if (nmg_keu(eu)) {
-		        empty_loop = 1;
+			empty_loop = 1;
 		    }
 		    eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-	        } else {
+		} else {
 		    eu = BU_LIST_PNEXT(edgeuse, eu);
-	        } 
+		}
 	    }
 	    if (empty_loop) {
-	        if (nmg_klu(lu)) {
+		if (nmg_klu(lu)) {
 		    empty_face = 1;
-	        }
-	        lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+		}
+		lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
 	    } else {
-	        lu = BU_LIST_PNEXT(loopuse, lu);
+		lu = BU_LIST_PNEXT(loopuse, lu);
 	    }
-        }
+	}
 
-        if (empty_face) {
+	if (empty_face) {
 	    if (nmg_kfu(fu)) {
-	        empty_shell = 1;
+		empty_shell = 1;
 	    }
 	    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
-        } else {
+	} else {
 	    fu = BU_LIST_PNEXT(faceuse, fu);
-        }
+	}
     }
 
     if (empty_shell) {
@@ -3256,4 +3256,3 @@ nmg_keu_zl(struct shell *s, const struct bn_tol *tol)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

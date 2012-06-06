@@ -1,8 +1,8 @@
 
 # TODO: check existing boost using FindBoost.cmake
-#       and remove blind Include.  Longer term, get
-#       flex/byacc/bsd m4 working and rewrite boost
-#       parsing
+#       and remove blind Include.  Longer term, use
+#	re2c/lemon to rewrite parsing code currently
+#       using boost
 
 # No point in warnings here, we can't do anything about
 # it until the boost issue is handled
@@ -59,7 +59,7 @@ add_definitions(
   -DOBJ_BREP=1
   )
 
-BRLCAD_ADDLIB(libpc "${LIBPC_SOURCES}" "libbu;${OPENNURBS_LIBRARY};${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(libpc "${LIBPC_SOURCES}" "libbu;${OPENNURBS_LIBRARY};${STDCXX_LIBRARIES}" NOSTRICTCXX)
 SET_TARGET_PROPERTIES(libpc PROPERTIES VERSION 19.0.1 SOVERSION 19)
 
 #BRLCAD_ADDEXEC(solver_test solver_test.cpp libpc NO_INSTALL)

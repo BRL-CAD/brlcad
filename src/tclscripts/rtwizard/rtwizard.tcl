@@ -75,6 +75,7 @@ getopt::init {
         {input	 		i  	{::have_gfile ::RtWizard::wizard_state(dbFile)}}
         {output   		o  	{::output ::RtWizard::wizard_state(output_filename)}}
         {framebuffer_type 	F  	{::framebuffer_type ::RtWizard::wizard_state(framebuffer_type)}}
+        {framebuffer_port 	p  	{::framebuffer_port ::RtWizard::wizard_state(framebuffer_port)}}
         {width 			w	{::have_width ::RtWizard::wizard_state(width)}}
         {height 		n 	{::have_scanlines ::RtWizard::wizard_state(scanlines)}}
 	# Objects to raytrace
@@ -96,6 +97,9 @@ getopt::init {
 	{perspective		P	{::have_perspective ::RtWizard::wizard_state(perspective)}}
         {zoom 			z 	{::have_zoom ::RtWizard::wizard_state(zoom)}}
 	{center			""	{::have_center ::RtWizard::wizard_state(x_center) ::RtWizard::wizard_state(y_center) ::RtWizard::wizard_state(z_center)}}
+	{viewsize		""	{::have_viewsize ::RtWizard::wizard_state(viewsize)}}
+	{orientation		""	{::have_orientation ::RtWizard::wizard_state(orientation)}}
+	{eye_pt			""	{::have_eye_pt ::RtWizard::wizard_state(eye_pt)}}
         # Debugging info
 	{verbose		v 	{::RtWizard::wizard_state(verbose)}}
 }
@@ -103,6 +107,7 @@ getopt::init {
 # Perform the actual option parsing
 if {[info exists argv]} {
   # Handle specifications of framebuffer devices like -F/dev/ogl for rt compatibility
+  set argv [regsub -all {^-F/} $argv {-F /}]
   set argv [regsub -all { -F/} $argv { -F /}]
   set argv2 [getopt::getopt $argv]
   set argv ""
@@ -296,7 +301,10 @@ if {![info exists ::RtWizard::wizard_state(dbFile)]} {
 
 # OK, we've collected all the info we can from the inputs.  Make sure all the key
 # variables are initialized to sane defaults.  The viewsize, eye_pt and center defaults are determined from
-# the drawing of the objects into the display manager.
+# the drawing of the objects into the display manager if not already specified.  If
+# viewsize, orientation and eye_pt have already been specified, they are used instead of these
+# defaults when these defaults would conflict with them.
+
 # Geometry Database
 if {![info exists ::RtWizard::wizard_state(dbFile)]} { set ::RtWizard::wizard_state(dbFile) "" }
 # Initial orientation
@@ -349,7 +357,7 @@ if {[info exists ::use_gui]} {
    if {[info exists argv]} {exit}
 } else {
 
-   if {![info exists ::RtWizard::wizard_state(output_filename)] && ![info exists ::RtWizard::wizard_state(framebuffer_type)]} {
+   if {![info exists ::RtWizard::wizard_state(output_filename)] && ![info exists ::RtWizard::wizard_state(framebuffer_port)] && ![info exists ::RtWizard::wizard_state(framebuffer_type)]} {
      set ::RtWizard::wizard_state(output_filename) rtwizard.pix
      if {![file exists $::RtWizard::wizard_state(output_filename)]} {
         puts "Warning - no output file or framebuffer specified - using file rtwizard.pix for output."
@@ -362,51 +370,106 @@ if {[info exists ::use_gui]} {
      }
    }
 
-   set db [go_open db db $::RtWizard::wizard_state(dbFile)]
-   db new_view v1 nu
-
    # Get an in-memory framebuffer to hold the intermediate image stages
    if {![info exists ::RtWizard::wizard_state(framebuffer_type)]} {
       set ::RtWizard::wizard_state(framebuffer_type) /dev/mem
+      set fbtype_specified 0
+   } else {
+      set fbtype_specified 1
    }
 
    # We need a port number for the fbserv.
-   set fbserv_port 0
-   while { ! [catch {exec [file join [bu_brlcad_root bin] fbclear] -F $fbserv_port } error ] } {
-        if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $fbserv_port is already in use."}
-	incr fbserv_port
+   if {![info exists ::RtWizard::wizard_state(framebuffer_port)]} {
+      set ::RtWizard::wizard_state(framebuffer_port) 0
+      set port_number_specified 0
+   } else {
+      set port_number_specified 1
+   }
+   # Check whether the framebuffer already exists.  If it does, and if
+   # it was specified on the command line, go with it.
+   if { [catch {exec [file join [bu_brlcad_root bin] fblabel] -F $::RtWizard::wizard_state(framebuffer_port) 1 1 " "} error ] } {
+      catch {exec [file join [bu_brlcad_root bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(framebuffer_port) $::RtWizard::wizard_state(framebuffer_type) &} pid 
+      if {[info exists pid]} {
+        set fbserv_pid $pid
+        # Wait a few milliseconds to make sure fbserv has completed its work and is available
+        while { [catch {exec [file join [bu_brlcad_root bin] fblabel] -F $::RtWizard::wizard_state(framebuffer_port) 1 1 " "} error] } {after 300}
+      } else {
+        if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(framebuffer_port) failed!"}
+        incr ::RtWizard::wizard_state(framebuffer_port)
+      }
+   } else {
+      if {$::RtWizard::wizard_state(verbose)} {
+         if {$fbtype_specified} {
+            puts "Warning - using existing fbserv at port $::RtWizard::wizard_state(framebuffer_port), can not specify framebuffer type."
+         }
+      }
    }
 
-   catch {exec [file join [bu_brlcad_root bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $fbserv_port $::RtWizard::wizard_state(framebuffer_type) &} pid
-   set fbserv_pid $pid
-   if {[llength $::RtWizard::wizard_state(color_objlist)]} {
-      foreach item $::RtWizard::wizard_state(color_objlist) {
-	db draw $item 
-      }
-   } 
-   if {[llength $::RtWizard::wizard_state(line_objlist)]} {
-      foreach item $::RtWizard::wizard_state(line_objlist) {
-	db draw $item 
-      }
-   } 
-   if {[llength $::RtWizard::wizard_state(ghost_objlist)]} {
-      foreach item $::RtWizard::wizard_state(ghost_objlist) {
-	db draw $item 
-      }
-   } 
-   db autoview v1
-   db aet v1 $::RtWizard::wizard_state(init_azimuth) $::RtWizard::wizard_state(init_elevation) $::RtWizard::wizard_state(init_twist)
-   db zoom v1 $::RtWizard::wizard_state(zoom)
-   db perspective v1 $::RtWizard::wizard_state(perspective)
-   if {[info exists ::RtWizard::wizard_state(x_center)] && [info exists ::RtWizard::wizard_state(y_center)] && [info exists ::RtWizard::wizard_state(z_center)]} {
-      db center v1 $::RtWizard::wizard_state(x_center) $::RtWizard::wizard_state(y_center) $::RtWizard::wizard_state(z_center)
+   # If we didn't have a pre-specified port number and the default didn't work, start counting up 
+   if { ! $port_number_specified && ! [info exists fbserv_pid] } {
+       incr ::RtWizard::wizard_state(framebuffer_port)
+       while { ! [catch {exec [file join [bu_brlcad_root bin] fbclear] -F $::RtWizard::wizard_state(framebuffer_port) } error ] } {
+             if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(framebuffer_port) is already in use."}
+	     incr ::RtWizard::wizard_state(framebuffer_port)
+       }
+      catch {exec [file join [bu_brlcad_root bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(framebuffer_port) $::RtWizard::wizard_state(framebuffer_type) &} pid
+      set fbserv_pid $pid
+      # Wait a few milliseconds to make sure fbserv has completed its work and is available
+      while { [catch {exec [file join [bu_brlcad_root bin] fblabel] -F $::RtWizard::wizard_state(framebuffer_port) 1 1 " "} error] } {after 300}
    }
-   set view_info [regsub -all ";" [db get_eyemodel v1] ""]
-   set vdata [split $view_info "\n"]
-   set viewsize [lindex [lindex $vdata 0] 1]
-   set orientation [lrange [lindex $vdata 1] 1 end]
-   set eye_pt [lrange [lindex $vdata 2] 1 end]
-   ::cadwidgets::rtimage $::RtWizard::wizard_state(dbFile) $fbserv_port \
+
+   # Either we're using a specified view model, or we're deducing one based on user options
+   if {[info exists ::RtWizard::wizard_state(viewsize)] && [info exists ::RtWizard::wizard_state(orientation)] && [info exists ::RtWizard::wizard_state(eye_pt)]} {
+     set viewsize $::RtWizard::wizard_state(viewsize)
+     set orientation [split $::RtWizard::wizard_state(orientation) " "]
+     set eye_pt [split $::RtWizard::wizard_state(eye_pt) " "]
+     if {[info exists ::have_azimuth]} {puts "Warning - view model explicitly set - ignoring azimuth option"}
+     if {[info exists ::have_elevation]} {puts "Warning - view model explicitly set - ignoring elevation option"}
+     if {[info exists ::have_twist]} {puts "Warning - view model explicitly set - ignoring twist option"}
+     if {[info exists ::have_zoom]} {puts "Warning - view model explicitly set - ignoring zoom option"}
+     if {[info exists ::have_center]} {puts "Warning - view model explicitly set - ignoring center option"}
+
+   } else {
+     if {[info exists ::RtWizard::wizard_state(viewsize)] || [info exists ::RtWizard::wizard_state(orientation)] || [info exists ::RtWizard::wizard_state(eye_pt)]} {
+        if {! [info exists ::have_viewsize]} {puts "Error - when specifying view model directly, need viewsize"}
+        if {! [info exists ::have_orientation]} {puts "Error - when specifying view model directly, need orientation"}
+        if {! [info exists ::have_eye_pt]} {puts "Error - when specifying view model directly, need eye_pt"}
+        if {[info exists argv]} {exit}
+     }
+     set db [go_open db db $::RtWizard::wizard_state(dbFile)]
+     db new_view v1 nu
+
+     if {[llength $::RtWizard::wizard_state(color_objlist)]} {
+        foreach item $::RtWizard::wizard_state(color_objlist) {
+	  db draw $item 
+        }
+     } 
+     if {[llength $::RtWizard::wizard_state(line_objlist)]} {
+        foreach item $::RtWizard::wizard_state(line_objlist) {
+	  db draw $item 
+        }
+     } 
+     if {[llength $::RtWizard::wizard_state(ghost_objlist)]} {
+        foreach item $::RtWizard::wizard_state(ghost_objlist) {
+	  db draw $item 
+        }
+     }
+
+     db autoview v1
+     db aet v1 $::RtWizard::wizard_state(init_azimuth) $::RtWizard::wizard_state(init_elevation) $::RtWizard::wizard_state(init_twist)
+     db zoom v1 $::RtWizard::wizard_state(zoom)
+     db perspective v1 $::RtWizard::wizard_state(perspective)
+     if {[info exists ::RtWizard::wizard_state(x_center)] && [info exists ::RtWizard::wizard_state(y_center)] && [info exists ::RtWizard::wizard_state(z_center)]} {
+        db center v1 $::RtWizard::wizard_state(x_center) $::RtWizard::wizard_state(y_center) $::RtWizard::wizard_state(z_center)
+     }
+     set view_info [regsub -all ";" [db get_eyemodel v1] ""]
+     set vdata [split $view_info "\n"]
+     set viewsize [lindex [lindex $vdata 0] 1]
+     set orientation [lrange [lindex $vdata 1] 1 end]
+     set eye_pt [lrange [lindex $vdata 2] 1 end]
+   }
+
+   ::cadwidgets::rtimage $::RtWizard::wizard_state(dbFile) $::RtWizard::wizard_state(framebuffer_port) \
 			$::RtWizard::wizard_state(width) $::RtWizard::wizard_state(scanlines) \
 			$viewsize $orientation $eye_pt $::RtWizard::wizard_state(perspective) \
 			$::RtWizard::wizard_state(bg_color) $::RtWizard::wizard_state(e_color) $::RtWizard::wizard_state(ne_color)\
@@ -418,11 +481,11 @@ if {[info exists ::use_gui]} {
    if {[info exists ::RtWizard::wizard_state(output_filename)]} {
       set output_generated 0
       if {[file extension $::RtWizard::wizard_state(output_filename)] == ".png"} {
-         exec [file join [bu_brlcad_root bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $fbserv_port $::RtWizard::wizard_state(output_filename)
+         exec [file join [bu_brlcad_root bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $::RtWizard::wizard_state(framebuffer_port) $::RtWizard::wizard_state(output_filename)
          set output_generated 1
       }
       if {!$output_generated} {
-         exec [file join [bu_brlcad_root bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $fbserv_port $::RtWizard::wizard_state(output_filename)
+         exec [file join [bu_brlcad_root bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $::RtWizard::wizard_state(framebuffer_port) $::RtWizard::wizard_state(output_filename)
          set output_generated 1
       }
 
@@ -435,7 +498,7 @@ if {[info exists ::use_gui]} {
 	   set kill_cmd [auto_execok kill]
        }
 
-       if {$kill_cmd != ""} {
+       if {$kill_cmd != "" && [info exists fbserv_pid]} {
 	   exec $kill_cmd $fbserv_pid
        }
    }

@@ -50,9 +50,10 @@ private:
 };
 
 
-inline fastf_t toValue(const char* string)
+static inline fastf_t
+toValue(const char* string)
 {
-    fastf_t            ret;
+    fastf_t ret;
     std::istringstream buffer(string);
 
     buffer >> ret;

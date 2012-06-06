@@ -173,9 +173,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"gqa", cmd_ged_gqa, ged_gqa},
     {"grid2model_lu", cmd_ged_plain_wrapper, ged_grid2model_lu},
     {"grid2view_lu", cmd_ged_plain_wrapper, ged_grid2view_lu},
-#ifdef HIDELINE
-    {"H", f_hideline, GED_FUNC_PTR_NULL},
-#endif
     {"has_embedded_fb", cmd_has_embedded_fb, GED_FUNC_PTR_NULL},
     {"hide", cmd_ged_plain_wrapper, ged_hide},
     {"hist", cmd_hist, GED_FUNC_PTR_NULL},

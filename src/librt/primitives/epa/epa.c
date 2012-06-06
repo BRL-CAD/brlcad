@@ -221,9 +221,9 @@ rt_epa_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 
     /* Find the RPP of the rotated axis-aligned epa bbox - that is,
      * the bounding box the given epa would have if its height
-     * vector were in the positive Z direction. This does not give 
-     * us an optimal bbox except in the case where the epa is 
-     * actually axis aligned to start with, but it's usually 
+     * vector were in the positive Z direction. This does not give
+     * us an optimal bbox except in the case where the epa is
+     * actually axis aligned to start with, but it's usually
      * at least a bit better than the bounding sphere RPP. */
     VMINMAX((*min), (*max), pt1);
     VMINMAX((*min), (*max), pt2);

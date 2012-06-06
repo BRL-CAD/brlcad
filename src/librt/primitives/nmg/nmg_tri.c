@@ -1649,7 +1649,7 @@ pick_pt2d_for_cutjoin(struct bu_list *tbl2d, struct pt2d **p1, struct pt2d **p2,
      * cut, i.e. when the two vertexuse are in the same loopuse.
      */
     if ((*p1)->vu_p->up.eu_p->up.lu_p == (*p2)->vu_p->up.eu_p->up.lu_p) {
-        return;
+	return;
     }
 
     /* form direction vector for the cut we want to make */
@@ -1924,16 +1924,16 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
     if (rt_g.NMG_debug & DEBUG_TRI)
 	bu_log("join_mapped_loops()\n");
 
-    if (((p1->vu_p->up.eu_p->up.lu_p->orientation != OT_OPPOSITE) && 
-         (p1->vu_p->up.eu_p->up.lu_p->orientation != OT_SAME)) ||
-        ((p2->vu_p->up.eu_p->up.lu_p->orientation != OT_OPPOSITE) && 
-         (p2->vu_p->up.eu_p->up.lu_p->orientation != OT_SAME))) {
-        bu_bomb("join_mapped_loops(): loopuse orientation is not OT_SAME or OT_OPPOSITE\n");
+    if (((p1->vu_p->up.eu_p->up.lu_p->orientation != OT_OPPOSITE) &&
+	 (p1->vu_p->up.eu_p->up.lu_p->orientation != OT_SAME)) ||
+	((p2->vu_p->up.eu_p->up.lu_p->orientation != OT_OPPOSITE) &&
+	 (p2->vu_p->up.eu_p->up.lu_p->orientation != OT_SAME))) {
+	bu_bomb("join_mapped_loops(): loopuse orientation is not OT_SAME or OT_OPPOSITE\n");
     }
 
-    if ((p1->vu_p->up.eu_p->up.lu_p->orientation == OT_OPPOSITE) && 
-        (p2->vu_p->up.eu_p->up.lu_p->orientation == OT_OPPOSITE)) {
-        bu_bomb("join_mapped_loops(): both loopuse can not have orientation OT_OPPOSITE (1)\n");
+    if ((p1->vu_p->up.eu_p->up.lu_p->orientation == OT_OPPOSITE) &&
+	(p2->vu_p->up.eu_p->up.lu_p->orientation == OT_OPPOSITE)) {
+	bu_bomb("join_mapped_loops(): both loopuse can not have orientation OT_OPPOSITE (1)\n");
     }
 
     if (p1 == p2) {
@@ -1952,16 +1952,16 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
 		   V3ARGS(p1->vu_p->v_p->vg_p->coord));
 	}
 	vu = nmg_join_2loops(p1->vu_p,  p2->vu_p);
-        goto out;
+	goto out;
     }
 
     pick_pt2d_for_cutjoin(tbl2d, &p1, &p2, tol);
 
     if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
-        bu_bomb("join_mapped_loops(): attempting to join a loopuse to itself\n");
+	bu_bomb("join_mapped_loops(): attempting to join a loopuse to itself\n");
     }
     if (p1->vu_p == p2->vu_p) {
-        bu_bomb("join_mapped_loops(): attempting to join a vertexuse to itself\n");
+	bu_bomb("join_mapped_loops(): attempting to join a vertexuse to itself\n");
     }
 
     vu1 = p1->vu_p;
@@ -1982,13 +1982,13 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
 	return;
     }
 
-    if ((vu1->up.eu_p->up.lu_p->orientation == OT_OPPOSITE) && 
-        (vu2->up.eu_p->up.lu_p->orientation == OT_OPPOSITE)) {
-        bu_bomb("join_mapped_loops(): both loopuse can not have orientation OT_OPPOSITE (2)\n");
+    if ((vu1->up.eu_p->up.lu_p->orientation == OT_OPPOSITE) &&
+	(vu2->up.eu_p->up.lu_p->orientation == OT_OPPOSITE)) {
+	bu_bomb("join_mapped_loops(): both loopuse can not have orientation OT_OPPOSITE (2)\n");
     }
 
     if (*vu2->up.magic_p != NMG_EDGEUSE_MAGIC) {
-        bu_bomb("join_mapped_loops(): vertexuse vu2 must belong to an edgeuse\n");
+	bu_bomb("join_mapped_loops(): vertexuse vu2 must belong to an edgeuse\n");
     }
 
     NMG_CK_EDGEUSE(vu2->up.eu_p);
@@ -2023,7 +2023,7 @@ join_mapped_loops(struct bu_list *tbl2d, struct pt2d *p1, struct pt2d *p2, const
     NMG_CK_VERTEXUSE(vu);
 
     if (vu == vu2) {
-        bu_bomb("join_mapped_loops(): vu == vu2\n");
+	bu_bomb("join_mapped_loops(): vu == vu2\n");
     }
     /* since we've just made some new vertexuses
      * we need to map them to the 2D plane.
@@ -2542,70 +2542,70 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 
-        non_consec_edgeuse_vert_count = 0;
-        edgeuse_vert_count = 0;
-        prev_v_p = (struct vertex *)NULL;
-        curr_v_p = (struct vertex *)NULL;
-        first_v_p = (struct vertex *)NULL;
-        curr_eu = (struct edgeuse *)NULL;
-        prev_eu = (struct edgeuse *)NULL;
-        first_eu = (struct edgeuse *)NULL;
+	non_consec_edgeuse_vert_count = 0;
+	edgeuse_vert_count = 0;
+	prev_v_p = (struct vertex *)NULL;
+	curr_v_p = (struct vertex *)NULL;
+	first_v_p = (struct vertex *)NULL;
+	curr_eu = (struct edgeuse *)NULL;
+	prev_eu = (struct edgeuse *)NULL;
+	first_eu = (struct edgeuse *)NULL;
 
-        faceuse_loopuse_count++;
+	faceuse_loopuse_count++;
 
-        bu_vls_sprintf(&plot_file_name, "%s_faceuse_%x_loopuse_%x.pl", prefix, fu, lu);
-        plotfp = fopen(bu_vls_addr(&plot_file_name), "wb");
+	bu_vls_sprintf(&plot_file_name, "%s_faceuse_%x_loopuse_%x.pl", prefix, fu, lu);
+	plotfp = fopen(bu_vls_addr(&plot_file_name), "wb");
 
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-            curr_v_p = eu->vu_p->v_p; 
-            curr_eu = eu;
-            if (edgeuse_vert_count == 0) {
-                first_v_p = curr_v_p;
-                first_eu = eu;
-            }
-            if (edgeuse_vert_count <= 1) {
-                if (first_eu->e_p->is_real) {
-                    /* if 1st edgeuse is real set start edge plot color to hot pink */
-                    pl_color(plotfp, 255,105,180);
-                } else {
-                    /* set first segment red */
-                    pl_color(plotfp, 255,0,0);
-                }
-            } else {
-                if (prev_eu->e_p->is_real) {
-                    /* set middle segments shades of yellow */
-                    pl_color(plotfp, ((edgeuse_vert_count * 30) % 155) + 100,
-                                     ((edgeuse_vert_count * 30) % 155) + 100, 0);
-                } else {
-                    /* set middle segments shades of green */
-                    pl_color(plotfp, 0, ((edgeuse_vert_count * 30) % 155) + 100, 0);
-                }
-            }
-            edgeuse_vert_count++;
-            if (curr_v_p != prev_v_p) {
-                non_consec_edgeuse_vert_count++;
-            }
-            if (edgeuse_vert_count > 1) {
-                bn_dist_pt3_pt3(prev_v_p->vg_p->coord,curr_v_p->vg_p->coord);
-                pdv_3line(plotfp, prev_v_p->vg_p->coord, curr_v_p->vg_p->coord);
-            }
-            prev_v_p = curr_v_p;
-            prev_eu = curr_eu;
-        }
+	    curr_v_p = eu->vu_p->v_p;
+	    curr_eu = eu;
+	    if (edgeuse_vert_count == 0) {
+		first_v_p = curr_v_p;
+		first_eu = eu;
+	    }
+	    if (edgeuse_vert_count <= 1) {
+		if (first_eu->e_p->is_real) {
+		    /* if 1st edgeuse is real set start edge plot color to hot pink */
+		    pl_color(plotfp, 255,105,180);
+		} else {
+		    /* set first segment red */
+		    pl_color(plotfp, 255,0,0);
+		}
+	    } else {
+		if (prev_eu->e_p->is_real) {
+		    /* set middle segments shades of yellow */
+		    pl_color(plotfp, ((edgeuse_vert_count * 30) % 155) + 100,
+				     ((edgeuse_vert_count * 30) % 155) + 100, 0);
+		} else {
+		    /* set middle segments shades of green */
+		    pl_color(plotfp, 0, ((edgeuse_vert_count * 30) % 155) + 100, 0);
+		}
+	    }
+	    edgeuse_vert_count++;
+	    if (curr_v_p != prev_v_p) {
+		non_consec_edgeuse_vert_count++;
+	    }
+	    if (edgeuse_vert_count > 1) {
+		bn_dist_pt3_pt3(prev_v_p->vg_p->coord,curr_v_p->vg_p->coord);
+		pdv_3line(plotfp, prev_v_p->vg_p->coord, curr_v_p->vg_p->coord);
+	    }
+	    prev_v_p = curr_v_p;
+	    prev_eu = curr_eu;
+	}
 
-        if (curr_v_p && first_v_p) {
-            bn_dist_pt3_pt3(first_v_p->vg_p->coord,curr_v_p->vg_p->coord);
-            if (curr_eu->e_p->is_real) {
-                /* set last segment if is_real to cyan */
-                pl_color(plotfp, 0, 255, 255);
-            } else {
-                /* set last segment blue */
-                pl_color(plotfp, 0,0,255);
-            }
-            pdv_3line(plotfp, curr_v_p->vg_p->coord, first_v_p->vg_p->coord);
-        }
-        (void)fclose(plotfp);
-        bu_vls_free(&plot_file_name);
+	if (curr_v_p && first_v_p) {
+	    bn_dist_pt3_pt3(first_v_p->vg_p->coord,curr_v_p->vg_p->coord);
+	    if (curr_eu->e_p->is_real) {
+		/* set last segment if is_real to cyan */
+		pl_color(plotfp, 0, 255, 255);
+	    } else {
+		/* set last segment blue */
+		pl_color(plotfp, 0,0,255);
+	    }
+	    pdv_3line(plotfp, curr_v_p->vg_p->coord, first_v_p->vg_p->coord);
+	}
+	(void)fclose(plotfp);
+	bu_vls_free(&plot_file_name);
     }
 }
 
@@ -2637,103 +2637,103 @@ nmg_isect_lseg3_eu(struct vertexuse *vu1, struct vertexuse *vu2, struct faceuse 
     /* Loop thru all loopuse, looking for intersections */
     hit = 0;
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-        NMG_CK_LOOPUSE(lu);
+	NMG_CK_LOOPUSE(lu);
 
-        for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {  
-            NMG_CK_EDGEUSE(eu);
+	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	    NMG_CK_EDGEUSE(eu);
 
-            NMG_CK_VERTEXUSE(vu2);
-            NMG_CK_VERTEXUSE(vu1);
-            NMG_CK_VERTEXUSE(eu->vu_p);
-            NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
+	    NMG_CK_VERTEXUSE(vu2);
+	    NMG_CK_VERTEXUSE(vu1);
+	    NMG_CK_VERTEXUSE(eu->vu_p);
+	    NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
 
-            NMG_CK_VERTEX(vu2->v_p);
-            NMG_CK_VERTEX(vu1->v_p);
-            NMG_CK_VERTEX(eu->vu_p->v_p);
-            NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
+	    NMG_CK_VERTEX(vu2->v_p);
+	    NMG_CK_VERTEX(vu1->v_p);
+	    NMG_CK_VERTEX(eu->vu_p->v_p);
+	    NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
 
-            NMG_CK_VERTEX_G(vu2->v_p->vg_p);
-            NMG_CK_VERTEX_G(vu1->v_p->vg_p);
-            NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-            NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
+	    NMG_CK_VERTEX_G(vu2->v_p->vg_p);
+	    NMG_CK_VERTEX_G(vu1->v_p->vg_p);
+	    NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
+	    NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
 
-            /* Test if edge is zero length, if so bomb since this
-             * should not happen.
-             */
-            if (eu->vu_p->v_p->vg_p->coord == eu->eumate_p->vu_p->v_p->vg_p->coord) {
-                bu_bomb("nmg_isect_lseg3_eu(): found zero length edge\n");
-            }
+	    /* Test if edge is zero length, if so bomb since this
+	     * should not happen.
+	     */
+	    if (eu->vu_p->v_p->vg_p->coord == eu->eumate_p->vu_p->v_p->vg_p->coord) {
+		bu_bomb("nmg_isect_lseg3_eu(): found zero length edge\n");
+	    }
 
-            VMOVE(p1, vu2->v_p->vg_p->coord);
-            VMOVE(p2, vu1->v_p->vg_p->coord);
-            VSUB2(pdir, p2, p1);
-            VMOVE(q1, eu->vu_p->v_p->vg_p->coord);
-            VMOVE(q2, eu->eumate_p->vu_p->v_p->vg_p->coord);
-            VSUB2(qdir, q2, q1); 
+	    VMOVE(p1, vu2->v_p->vg_p->coord);
+	    VMOVE(p2, vu1->v_p->vg_p->coord);
+	    VSUB2(pdir, p2, p1);
+	    VMOVE(q1, eu->vu_p->v_p->vg_p->coord);
+	    VMOVE(q2, eu->eumate_p->vu_p->v_p->vg_p->coord);
+	    VSUB2(qdir, q2, q1);
 
-            status = bn_isect_lseg3_lseg3(dist, p1, pdir, q1, qdir, tol);
+	    status = bn_isect_lseg3_lseg3(dist, p1, pdir, q1, qdir, tol);
 
-            if (status == 0) {  /* colinear and overlapping */
-                /* Hit because, can only skip if hit on end point only
-                 * and overlapping indicates more than an end point
-                 * was hit.
-                 */
-                hit = 1;
-            } else if (status == 1) {  /* normal intersection */
+	    if (status == 0) {  /* colinear and overlapping */
+		/* Hit because, can only skip if hit on end point only
+		 * and overlapping indicates more than an end point
+		 * was hit.
+		 */
+		hit = 1;
+	    } else if (status == 1) {  /* normal intersection */
 
-                /* When either (p1 = q1) or (p2 = q1) meaning either
-                 * the start or end vertex of pot-cut (potential cut
-                 * between hole-loopuse and non-hole-loopuse) is the
-                 * same as the 1st vertex of the current edgeuse being
-                 * tested then the corresponding vertex pointers
-                 * should also be equal, verify this is true, if not,
-                 * bomb so problem can be investigated.
-                 */
+		/* When either (p1 = q1) or (p2 = q1) meaning either
+		 * the start or end vertex of pot-cut (potential cut
+		 * between hole-loopuse and non-hole-loopuse) is the
+		 * same as the 1st vertex of the current edgeuse being
+		 * tested then the corresponding vertex pointers
+		 * should also be equal, verify this is true, if not,
+		 * bomb so problem can be investigated.
+		 */
 
-                if (((NEAR_ZERO(dist[0], SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF))
-                    != (vu2->v_p == eu->vu_p->v_p)) ||
-                    ((NEAR_EQUAL(dist[0], 1.0, SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF))
-                    != (vu1->v_p == eu->vu_p->v_p))) {
-                    bu_bomb("nmg_isect_lseg3_eu(): logic error possibly in 'bn_isect_lseg3_lseg3'\n");
-                }
+		if (((NEAR_ZERO(dist[0], SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF))
+		    != (vu2->v_p == eu->vu_p->v_p)) ||
+		    ((NEAR_EQUAL(dist[0], 1.0, SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF))
+		    != (vu1->v_p == eu->vu_p->v_p))) {
+		    bu_bomb("nmg_isect_lseg3_eu(): logic error possibly in 'bn_isect_lseg3_lseg3'\n");
+		}
 
-                /* True when either (p1 = q1) or (p2 = q1) or
-                 * (p1 = q2) or (p2 = q2) meaning either the start or
-                 * end vertex of pot-cut (potential cut between
-                 * hole-loopuse and non-hole-loopuse) is the same as
-                 * the 1st vertex of the current edgeuse being tested.
-                 * When this is true this is ok because we already
-                 * know of these intersections, we are testing
-                 * everywhere else for intersections.
-                 */
-                if ((NEAR_ZERO(dist[0], SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF)) || 
-                    (NEAR_EQUAL(dist[0], 1.0, SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF)) ||
-                    (NEAR_ZERO(dist[0], SMALL_FASTF) && NEAR_EQUAL(dist[1], 1.0, SMALL_FASTF)) ||
-                    (NEAR_EQUAL(dist[0], 1.0, SMALL_FASTF) && NEAR_EQUAL(dist[1], 1.0, SMALL_FASTF))) {
-                } else {
-                    /* Set hit true so elsewhere logic can skip this
-                     * pot-cut and try the next one.
-                     */
-                    hit = 1;
-                }
-            }
+		/* True when either (p1 = q1) or (p2 = q1) or
+		 * (p1 = q2) or (p2 = q2) meaning either the start or
+		 * end vertex of pot-cut (potential cut between
+		 * hole-loopuse and non-hole-loopuse) is the same as
+		 * the 1st vertex of the current edgeuse being tested.
+		 * When this is true this is ok because we already
+		 * know of these intersections, we are testing
+		 * everywhere else for intersections.
+		 */
+		if ((NEAR_ZERO(dist[0], SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF)) ||
+		    (NEAR_EQUAL(dist[0], 1.0, SMALL_FASTF) && NEAR_ZERO(dist[1], SMALL_FASTF)) ||
+		    (NEAR_ZERO(dist[0], SMALL_FASTF) && NEAR_EQUAL(dist[1], 1.0, SMALL_FASTF)) ||
+		    (NEAR_EQUAL(dist[0], 1.0, SMALL_FASTF) && NEAR_EQUAL(dist[1], 1.0, SMALL_FASTF))) {
+		} else {
+		    /* Set hit true so elsewhere logic can skip this
+		     * pot-cut and try the next one.
+		     */
+		    hit = 1;
+		}
+	    }
 
-            if (hit) {
-                /* Break from eu for-loop since a hit was found and
-                 * we need to stop testing the current pot-cut and
-                 * start testing the next.
-                 */
-                break;  /* Break from eu for-loop */
-            }
-        } /* End of eu for-loop */
+	    if (hit) {
+		/* Break from eu for-loop since a hit was found and
+		 * we need to stop testing the current pot-cut and
+		 * start testing the next.
+		 */
+		break;  /* Break from eu for-loop */
+	    }
+	} /* End of eu for-loop */
 
-        if (hit) {
-            /* Break from lu for-loop since a hit was found and we
-             * need to stop testing the current pot-cut and start
-             * testing the next.
-             */
-            break;  /* Break from lu for-loop */
-        }
+	if (hit) {
+	    /* Break from lu for-loop since a hit was found and we
+	     * need to stop testing the current pot-cut and start
+	     * testing the next.
+	     */
+	    break;  /* Break from lu for-loop */
+	}
 
     } /* End of lu for-loop */
 
@@ -2764,166 +2764,166 @@ nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, const struct
     holes = 0;
 
     for (BU_LIST_FOR(lu_tmp, loopuse, &fu->lu_hd)) {
-        if (lu_tmp->orientation == OT_OPPOSITE) {
-            holes = 1;
-            lu1 = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-            break;
-        }
+	if (lu_tmp->orientation == OT_OPPOSITE) {
+	    holes = 1;
+	    lu1 = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+	    break;
+	}
     }
 
     while (holes) {
-        NMG_CK_LOOPUSE(lu1);
-        fast_exit = 0;
-        if (lu1->orientation == OT_OPPOSITE) {
+	NMG_CK_LOOPUSE(lu1);
+	fast_exit = 0;
+	if (lu1->orientation == OT_OPPOSITE) {
 
-            /* Test lu1 to determine if any of the vertex is shared
-             * with a outer loopuse.
-             */
+	    /* Test lu1 to determine if any of the vertex is shared
+	     * with a outer loopuse.
+	     */
 
-            /* Loop thru each eu of lu1 hole loopuse. */
-            for (BU_LIST_FOR(eu1, edgeuse, &lu1->down_hd)) {
-                for (BU_LIST_FOR(vu1, vertexuse, &eu1->vu_p->v_p->vu_hd)) { 
-                    /* Ensure same faceuse */
-                    if (lu1->up.fu_p == vu1->up.eu_p->up.lu_p->up.fu_p) {
-                        if (vu1->up.eu_p->up.lu_p->orientation == OT_SAME) {
-                            /* Non-hole edgeuse */
-                            pt2d_cut_from = find_pt2d(tbl2d, vu1);
-                            /* Hole edgeuse */
-                            pt2d_cut_to = find_pt2d(tbl2d, eu1->vu_p);
+	    /* Loop thru each eu of lu1 hole loopuse. */
+	    for (BU_LIST_FOR(eu1, edgeuse, &lu1->down_hd)) {
+		for (BU_LIST_FOR(vu1, vertexuse, &eu1->vu_p->v_p->vu_hd)) {
+		    /* Ensure same faceuse */
+		    if (lu1->up.fu_p == vu1->up.eu_p->up.lu_p->up.fu_p) {
+			if (vu1->up.eu_p->up.lu_p->orientation == OT_SAME) {
+			    /* Non-hole edgeuse */
+			    pt2d_cut_from = find_pt2d(tbl2d, vu1);
+			    /* Hole edgeuse */
+			    pt2d_cut_to = find_pt2d(tbl2d, eu1->vu_p);
 
-                            if ( !pt2d_cut_from || !pt2d_cut_to ) {
-                                bu_bomb("nmg_triangulate_rm_holes(): failed to find vu in tbl2d table\n");
-                            }
+			    if ( !pt2d_cut_from || !pt2d_cut_to ) {
+				bu_bomb("nmg_triangulate_rm_holes(): failed to find vu in tbl2d table\n");
+			    }
 
-                            NMG_CK_PT2D(pt2d_cut_from);
-                            NMG_CK_PT2D(pt2d_cut_to);
-                            join_mapped_loops(tbl2d, pt2d_cut_from, pt2d_cut_to, cut_color, tol);
-                            fast_exit = 1;
-                            break;
-                        }
-                    }
-                }
-                if (fast_exit) {
-                    break;
-                }
-            }
+			    NMG_CK_PT2D(pt2d_cut_from);
+			    NMG_CK_PT2D(pt2d_cut_to);
+			    join_mapped_loops(tbl2d, pt2d_cut_from, pt2d_cut_to, cut_color, tol);
+			    fast_exit = 1;
+			    break;
+			}
+		    }
+		}
+		if (fast_exit) {
+		    break;
+		}
+	    }
 
-            if (!fast_exit) {
-                /* Loop thru each eu of hole loopuse */
-                for (BU_LIST_FOR(eu1, edgeuse, &lu1->down_hd)) {
+	    if (!fast_exit) {
+		/* Loop thru each eu of hole loopuse */
+		for (BU_LIST_FOR(eu1, edgeuse, &lu1->down_hd)) {
 
-                    /* Loop thru each non-hole loopuse to create pot-cut. */
-                    for (BU_LIST_FOR(lu2, loopuse, &fu->lu_hd)) {
-                        NMG_CK_LOOPUSE(lu2);
-                        if (lu2->orientation != OT_OPPOSITE) {
+		    /* Loop thru each non-hole loopuse to create pot-cut. */
+		    for (BU_LIST_FOR(lu2, loopuse, &fu->lu_hd)) {
+			NMG_CK_LOOPUSE(lu2);
+			if (lu2->orientation != OT_OPPOSITE) {
 
-                            NMG_CK_EDGEUSE(eu1);
-                            /* Loop thru each eu of non-hole loopuse,
-                             * vu1 of pot-cut.
-                             */
-                            for (BU_LIST_FOR(eu2, edgeuse, &lu2->down_hd)) {
-                                NMG_CK_EDGEUSE(eu2);
-                                /* The pot-cut should be from non-hole
-                                 * loopuse to a hole-loopuse it is
-                                 * assumed that vertices are fused.
-                                 */
+			    NMG_CK_EDGEUSE(eu1);
+			    /* Loop thru each eu of non-hole loopuse,
+			     * vu1 of pot-cut.
+			     */
+			    for (BU_LIST_FOR(eu2, edgeuse, &lu2->down_hd)) {
+				NMG_CK_EDGEUSE(eu2);
+				/* The pot-cut should be from non-hole
+				 * loopuse to a hole-loopuse it is
+				 * assumed that vertices are fused.
+				 */
 
-                                /* Test if edge is zero length, if so
-                                 * skip this edge.
-                                 */
-                                if (eu2->vu_p->v_p->vg_p->coord == eu1->vu_p->v_p->vg_p->coord) {
-                                    continue;
-                                }
+				/* Test if edge is zero length, if so
+				 * skip this edge.
+				 */
+				if (eu2->vu_p->v_p->vg_p->coord == eu1->vu_p->v_p->vg_p->coord) {
+				    continue;
+				}
 
-                                hit = nmg_isect_lseg3_eu(eu1->vu_p, eu2->vu_p, fu, tol);
+				hit = nmg_isect_lseg3_eu(eu1->vu_p, eu2->vu_p, fu, tol);
 
-                                if (!hit) {
-                                    /* perform cut */
-                                    fast_exit = 1;
+				if (!hit) {
+				    /* perform cut */
+				    fast_exit = 1;
 
-                                    /* p1, non-hole edgeuse */
-                                    pt2d_cut_from = find_pt2d(tbl2d, eu2->vu_p);
-                                    /* p2, hole edgeuse */
-                                    pt2d_cut_to = find_pt2d(tbl2d, eu1->vu_p);
+				    /* p1, non-hole edgeuse */
+				    pt2d_cut_from = find_pt2d(tbl2d, eu2->vu_p);
+				    /* p2, hole edgeuse */
+				    pt2d_cut_to = find_pt2d(tbl2d, eu1->vu_p);
 
-                                    if ( !pt2d_cut_from || !pt2d_cut_to ) {
-                                        bu_bomb("nmg_triangulate_rm_holes(): failed to find vu in tbl2d table\n");
-                                    }
+				    if ( !pt2d_cut_from || !pt2d_cut_to ) {
+					bu_bomb("nmg_triangulate_rm_holes(): failed to find vu in tbl2d table\n");
+				    }
 
-                                    NMG_CK_PT2D(pt2d_cut_from);
-                                    NMG_CK_PT2D(pt2d_cut_to);
-                                    join_mapped_loops(tbl2d, pt2d_cut_from, pt2d_cut_to, cut_color, tol);
+				    NMG_CK_PT2D(pt2d_cut_from);
+				    NMG_CK_PT2D(pt2d_cut_to);
+				    join_mapped_loops(tbl2d, pt2d_cut_from, pt2d_cut_to, cut_color, tol);
 
-                                    if (fast_exit) {
-                                        break; /* Break from eu2 */
-                                    }
-                                }
+				    if (fast_exit) {
+					break; /* Break from eu2 */
+				    }
+				}
 
-                            } /* End of for-loop eu2 traversing all
-                               * possible pot-cut v1 of current
-                               * non-hole-loopuse.
-                               */
+			    } /* End of for-loop eu2 traversing all
+			       * possible pot-cut v1 of current
+			       * non-hole-loopuse.
+			       */
 
-                        } /* End of if-statement making sure lu2 is
-                           * NOT a hole-loopuse, makes sure the start vertex
-                           * of pot-cut is on a non-hole-loopuse.
-                           */
+			} /* End of if-statement making sure lu2 is
+			   * NOT a hole-loopuse, makes sure the start vertex
+			   * of pot-cut is on a non-hole-loopuse.
+			   */
 
-                        if (fast_exit) break;
+			if (fast_exit) break;
 
-                    } /* End of lu2 for-loop. */
+		    } /* End of lu2 for-loop. */
 
-                    if (fast_exit) {
-                        break;
-                    }
+		    if (fast_exit) {
+			break;
+		    }
 
-                } /* End of eu1 for-loop. */
-            }
-        }
+		} /* End of eu1 for-loop. */
+	    }
+	}
 
-        if (fast_exit) {
-            lu1 = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-        } else {
-            lu1 = BU_LIST_PNEXT_CIRC(loopuse, lu1);
-        }
+	if (fast_exit) {
+	    lu1 = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+	} else {
+	    lu1 = BU_LIST_PNEXT_CIRC(loopuse, lu1);
+	}
 
-        holes = 0;
-        for (BU_LIST_FOR(lu_tmp, loopuse, &fu->lu_hd)) {
-            if (lu_tmp->orientation == OT_OPPOSITE) {
-                holes = 1;
-                break;
-            }
-        }
+	holes = 0;
+	for (BU_LIST_FOR(lu_tmp, loopuse, &fu->lu_hd)) {
+	    if (lu_tmp->orientation == OT_OPPOSITE) {
+		holes = 1;
+		break;
+	    }
+	}
     }
 
-    /* When we get to this point, all hole-loopuse should be removed 
+    /* When we get to this point, all hole-loopuse should be removed
      * by joining them with a non-hole-loopuse, which converts them to
      * a non-hole-loopuse.
      */
-    
-    /* This is at the end of processing of the current hole-loopuse, 
+
+    /* This is at the end of processing of the current hole-loopuse,
      * if a cut was not made for this hole-loopuse then bomb. Maybe
      * enhance process to create a vertex to cut into since could not
      * find an existing vertex.
      */
      if (0) {
-        bu_log("nmg_triangulate_rm_holes(): hole-loopuse lu1 0x%lx no cut found\n", (unsigned long)lu1);
-        for (BU_LIST_FOR(lu_tmp, loopuse, &fu->lu_hd)) {
-            for (BU_LIST_FOR(eu_tmp, edgeuse, &lu_tmp->down_hd)) {  
-                bu_log("nmg_triangulate_rm_holes(): lu_p = 0x%lx lu_orient = %d fu_p = 0x%lx vu_p = 0x%lx eu_p = 0x%lx v_p = 0x%lx vg_p = 0x%lx 3D coord = %g %g %g\n",
-                    (unsigned long)lu_tmp, lu_tmp->orientation, (unsigned long)lu_tmp->up.fu_p,
-                    (unsigned long)eu_tmp->vu_p, (unsigned long)eu_tmp, (unsigned long)eu_tmp->vu_p->v_p,
-                    (unsigned long)eu_tmp->vu_p->v_p->vg_p, V3ARGS(eu_tmp->vu_p->v_p->vg_p->coord));
+	bu_log("nmg_triangulate_rm_holes(): hole-loopuse lu1 0x%lx no cut found\n", (unsigned long)lu1);
+	for (BU_LIST_FOR(lu_tmp, loopuse, &fu->lu_hd)) {
+	    for (BU_LIST_FOR(eu_tmp, edgeuse, &lu_tmp->down_hd)) {
+		bu_log("nmg_triangulate_rm_holes(): lu_p = 0x%lx lu_orient = %d fu_p = 0x%lx vu_p = 0x%lx eu_p = 0x%lx v_p = 0x%lx vg_p = 0x%lx 3D coord = %g %g %g\n",
+		    (unsigned long)lu_tmp, lu_tmp->orientation, (unsigned long)lu_tmp->up.fu_p,
+		    (unsigned long)eu_tmp->vu_p, (unsigned long)eu_tmp, (unsigned long)eu_tmp->vu_p->v_p,
+		    (unsigned long)eu_tmp->vu_p->v_p->vg_p, V3ARGS(eu_tmp->vu_p->v_p->vg_p->coord));
 
-            }
-        } 
-        bu_bomb("nmg_triangulate_rm_holes(): could not find cut for current hole-loopuse\n");
+	    }
+	}
+	bu_bomb("nmg_triangulate_rm_holes(): could not find cut for current hole-loopuse\n");
     }
 
 #ifdef DEBUG_TRI_P
     {
        struct model *my_m2;
-       struct edgeuse *myeu2; 
+       struct edgeuse *myeu2;
        lu_tmp = BU_LIST_FIRST(loopuse, &fu->lu_hd);
        myeu2 = BU_LIST_FIRST(edgeuse, &(lu_tmp->down_hd));
        nmg_plot_lu_around_eu("holes_removed", myeu2, tol);
@@ -2960,147 +2960,147 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
     NMG_CK_FACEUSE(fu);
 
     book_keeping_array = (size_t *)bu_calloc(book_keeping_array_alloc_cnt, sizeof(size_t),
-                          "book_keeping_array"); 
+			  "book_keeping_array");
 
     /* remove loopuse with < 3 vertices */
     lu_done = 0;
     lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
     while (!lu_done) {
 
-        if (BU_LIST_IS_HEAD(lu, &fu->lu_hd)) {
-            lu_done = 1;
-        } else {
-            NMG_CK_LOOPUSE(lu);
-            lu_tmp = lu;
-            killed_lu = 0;
-            if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-                edgeuse_vert_count = 0;
-                for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-                    NMG_CK_EDGEUSE(eu);
-                    edgeuse_vert_count++;
-                }
-                if (edgeuse_vert_count < 3) {
-                    nmg_klu(lu);
-                    killed_lu = 1;
-                    if (rt_g.NMG_debug & DEBUG_TRI) {
-                        bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- killed loopuse 0x%lx with %d vertices\n", 
-                                (unsigned long)fu, (unsigned long)lu_tmp, edgeuse_vert_count);
-                    }
-                }
-            } else if ((BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) && 
-                       (BU_LIST_FIRST_MAGIC(&lu->lumate_p->down_hd) == NMG_VERTEXUSE_MAGIC)) {
-                nmg_kvu(BU_LIST_FIRST(vertexuse, &lu->down_hd));
-                nmg_kvu(BU_LIST_FIRST(vertexuse, &lu->lumate_p->down_hd));
-                nmg_klu(lu);
-                killed_lu = 1;
-                if (rt_g.NMG_debug & DEBUG_TRI) {
-                    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- killed single vertex loopuse 0x%lx\n",
-                            (unsigned long)fu, (unsigned long)lu_tmp);
-                }
-            } else {
-                bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- unknown loopuse content\n",
-                        (unsigned long)fu);
-                bu_bomb("nmg_triangulate_rm_degen_loopuse(): unknown loopuse content\n");
-            }
+	if (BU_LIST_IS_HEAD(lu, &fu->lu_hd)) {
+	    lu_done = 1;
+	} else {
+	    NMG_CK_LOOPUSE(lu);
+	    lu_tmp = lu;
+	    killed_lu = 0;
+	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+		edgeuse_vert_count = 0;
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		    NMG_CK_EDGEUSE(eu);
+		    edgeuse_vert_count++;
+		}
+		if (edgeuse_vert_count < 3) {
+		    nmg_klu(lu);
+		    killed_lu = 1;
+		    if (rt_g.NMG_debug & DEBUG_TRI) {
+			bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- killed loopuse 0x%lx with %d vertices\n",
+				(unsigned long)fu, (unsigned long)lu_tmp, edgeuse_vert_count);
+		    }
+		}
+	    } else if ((BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) &&
+		       (BU_LIST_FIRST_MAGIC(&lu->lumate_p->down_hd) == NMG_VERTEXUSE_MAGIC)) {
+		nmg_kvu(BU_LIST_FIRST(vertexuse, &lu->down_hd));
+		nmg_kvu(BU_LIST_FIRST(vertexuse, &lu->lumate_p->down_hd));
+		nmg_klu(lu);
+		killed_lu = 1;
+		if (rt_g.NMG_debug & DEBUG_TRI) {
+		    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- killed single vertex loopuse 0x%lx\n",
+			    (unsigned long)fu, (unsigned long)lu_tmp);
+		}
+	    } else {
+		bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- unknown loopuse content\n",
+			(unsigned long)fu);
+		bu_bomb("nmg_triangulate_rm_degen_loopuse(): unknown loopuse content\n");
+	    }
 
-            if (killed_lu) {
-                loopuse_count_tmp = 0;
-                for (BU_LIST_FOR(lu1, loopuse, &fu->lu_hd)) {
-                    loopuse_count_tmp++;
-                }
+	    if (killed_lu) {
+		loopuse_count_tmp = 0;
+		for (BU_LIST_FOR(lu1, loopuse, &fu->lu_hd)) {
+		    loopuse_count_tmp++;
+		}
 
-                if (rt_g.NMG_debug & DEBUG_TRI) {
-                    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- %d loopuse remain in faceuse after killing loopuse 0x%lx\n", 
-                            (unsigned long)fu, loopuse_count_tmp, (unsigned long)lu_tmp);
-                }
-                if (loopuse_count_tmp < 1) {
-                    lu_done = 1;
-                    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- contains no loopuse\n",
-                            (unsigned long)fu);
-                    bu_bomb("nmg_triangulate_rm_degen_loopuse(): faceuse contains no loopuse\n");
-                }
+		if (rt_g.NMG_debug & DEBUG_TRI) {
+		    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- %d loopuse remain in faceuse after killing loopuse 0x%lx\n",
+			    (unsigned long)fu, loopuse_count_tmp, (unsigned long)lu_tmp);
+		}
+		if (loopuse_count_tmp < 1) {
+		    lu_done = 1;
+		    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- contains no loopuse\n",
+			    (unsigned long)fu);
+		    bu_bomb("nmg_triangulate_rm_degen_loopuse(): faceuse contains no loopuse\n");
+		}
 
-                lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-            } else {
-                /* test for at least 3 unique vertices */
-                unique_vertex_cnt = 0;
-                done = 0;
-                eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-                while (!done) {
-                    if (BU_LIST_IS_HEAD(eu, &lu->down_hd)) {
-                        done = 1;
-                        if (unique_vertex_cnt == 0) {
-                            bu_bomb("nmg_triangulate_rm_degen_loopuse(): empty loopuse\n");
-                        }
-                    } else {
-                        NMG_CK_EDGEUSE(eu);
-                        if (unique_vertex_cnt == 0) {
-                            /* insert first record */
-                            book_keeping_array[unique_vertex_cnt] = (size_t)eu->vu_p->v_p->vg_p;
-                            unique_vertex_cnt++;
-                        } else {
-                            match = 0;
-                            for (idx = 0 ; idx < unique_vertex_cnt ; idx++) {
-                                if (book_keeping_array[idx] == (size_t)eu->vu_p->v_p->vg_p) {
-                                    match = 1;
-                                    {
-                                        struct edgeuse *eu1;
-                                        int cnt = 0;
-                                        for (BU_LIST_FOR(eu1, edgeuse, &lu->down_hd)) {
-                                            cnt++;
-                                            bu_log("%d -- vu_p = %x vg_p = %x dup_vu_p = %x dup_vg_p = %x\n", 
-                                                   cnt, eu1->vu_p, eu1->vu_p->v_p->vg_p, 
-                                                   eu->vu_p, eu->vu_p->v_p->vg_p);
-                                        }
-                                    }
-                                    bu_bomb("nmg_triangulate_rm_degen_loopuse(): found duplicate vertex\n");
-                                    break;
-                                }
-                            }
-                            if (!match) {
-                                book_keeping_array[unique_vertex_cnt] = (size_t)eu->vu_p->v_p->vg_p;
-                                unique_vertex_cnt++;
-                                if (unique_vertex_cnt >= book_keeping_array_alloc_cnt) {
-                                    book_keeping_array_alloc_cnt = unique_vertex_cnt;
-                                    book_keeping_array_alloc_cnt += 10;
-                                    book_keeping_array_tmp = (size_t *)bu_realloc((genptr_t)book_keeping_array,
-                                                             book_keeping_array_alloc_cnt * sizeof(size_t),
-                                                             "book_keeping_array realloc"); 
-                                    book_keeping_array = book_keeping_array_tmp;
-                                }
-                            }
-                        }
-                    }
-                    eu = BU_LIST_PNEXT(edgeuse, eu);
-                } /* end of while-not-done loop */
+		lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+	    } else {
+		/* test for at least 3 unique vertices */
+		unique_vertex_cnt = 0;
+		done = 0;
+		eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
+		while (!done) {
+		    if (BU_LIST_IS_HEAD(eu, &lu->down_hd)) {
+			done = 1;
+			if (unique_vertex_cnt == 0) {
+			    bu_bomb("nmg_triangulate_rm_degen_loopuse(): empty loopuse\n");
+			}
+		    } else {
+			NMG_CK_EDGEUSE(eu);
+			if (unique_vertex_cnt == 0) {
+			    /* insert first record */
+			    book_keeping_array[unique_vertex_cnt] = (size_t)eu->vu_p->v_p->vg_p;
+			    unique_vertex_cnt++;
+			} else {
+			    match = 0;
+			    for (idx = 0 ; idx < unique_vertex_cnt ; idx++) {
+				if (book_keeping_array[idx] == (size_t)eu->vu_p->v_p->vg_p) {
+				    match = 1;
+				    {
+					struct edgeuse *eu1;
+					int cnt = 0;
+					for (BU_LIST_FOR(eu1, edgeuse, &lu->down_hd)) {
+					    cnt++;
+					    bu_log("%d -- vu_p = %x vg_p = %x dup_vu_p = %x dup_vg_p = %x\n",
+						   cnt, eu1->vu_p, eu1->vu_p->v_p->vg_p,
+						   eu->vu_p, eu->vu_p->v_p->vg_p);
+					}
+				    }
+				    bu_bomb("nmg_triangulate_rm_degen_loopuse(): found duplicate vertex\n");
+				    break;
+				}
+			    }
+			    if (!match) {
+				book_keeping_array[unique_vertex_cnt] = (size_t)eu->vu_p->v_p->vg_p;
+				unique_vertex_cnt++;
+				if (unique_vertex_cnt >= book_keeping_array_alloc_cnt) {
+				    book_keeping_array_alloc_cnt = unique_vertex_cnt;
+				    book_keeping_array_alloc_cnt += 10;
+				    book_keeping_array_tmp = (size_t *)bu_realloc((genptr_t)book_keeping_array,
+							     book_keeping_array_alloc_cnt * sizeof(size_t),
+							     "book_keeping_array realloc");
+				    book_keeping_array = book_keeping_array_tmp;
+				}
+			    }
+			}
+		    }
+		    eu = BU_LIST_PNEXT(edgeuse, eu);
+		} /* end of while-not-done loop */
 
-                if (unique_vertex_cnt < 3) {
-                    nmg_klu(lu);
-                    if (rt_g.NMG_debug & DEBUG_TRI) {
-                        bu_log("killed loopuse 0x%lx with %d vertices (i.e. < 3 unique vertices)\n", 
-                                (unsigned long)lu_tmp, edgeuse_vert_count);
+		if (unique_vertex_cnt < 3) {
+		    nmg_klu(lu);
+		    if (rt_g.NMG_debug & DEBUG_TRI) {
+			bu_log("killed loopuse 0x%lx with %d vertices (i.e. < 3 unique vertices)\n",
+				(unsigned long)lu_tmp, edgeuse_vert_count);
 
-                    }
-                    loopuse_count_tmp = 0;
-                    for (BU_LIST_FOR(lu1, loopuse, &fu->lu_hd)) {
-                        loopuse_count_tmp++;
-                    }
+		    }
+		    loopuse_count_tmp = 0;
+		    for (BU_LIST_FOR(lu1, loopuse, &fu->lu_hd)) {
+			loopuse_count_tmp++;
+		    }
 
-                    if (rt_g.NMG_debug & DEBUG_TRI) {
-                        bu_log("nmg_triangulate_rm_degen_loopuse(): %d remaining loopuse in faceuse after killing loopuse 0x%lx\n", loopuse_count_tmp, (unsigned long)lu_tmp);
-                    }
-                    if (loopuse_count_tmp < 1) {
-                        lu_done = 1;
-                        bu_bomb("nmg_triangulate_rm_degen_loopuse(): faceuse contains no loopuse\n");
-                    }
+		    if (rt_g.NMG_debug & DEBUG_TRI) {
+			bu_log("nmg_triangulate_rm_degen_loopuse(): %d remaining loopuse in faceuse after killing loopuse 0x%lx\n", loopuse_count_tmp, (unsigned long)lu_tmp);
+		    }
+		    if (loopuse_count_tmp < 1) {
+			lu_done = 1;
+			bu_bomb("nmg_triangulate_rm_degen_loopuse(): faceuse contains no loopuse\n");
+		    }
 
-                    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+		    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
 
-                } else {
-                    lu = BU_LIST_PNEXT(loopuse, lu);
-                }
-            }
-        }
+		} else {
+		    lu = BU_LIST_PNEXT(loopuse, lu);
+		}
+	    }
+	}
     }
 
     bu_free(book_keeping_array, "book_keeping_array");
@@ -3125,44 +3125,44 @@ nmg_dump_model(struct model *m)
     size_t eu_cnt = 0;
 
     if ((fp = fopen("nmg_vertex_dump.txt", "a")) == NULL) {
-        bu_bomb("nmg_vertex_dump, open failed\n");
+	bu_bomb("nmg_vertex_dump, open failed\n");
     }
 
     r_cnt = 0;
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
-        r_cnt++;
-        NMG_CK_REGION(r);
-        s_cnt = 0;
-        for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-            s_cnt++;
-            NMG_CK_SHELL(s);
-            fu_cnt = 0;
-            for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
-                fu_cnt++;
-                NMG_CK_FACEUSE(fu);
-                lu_cnt = 0;
-                for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
-                    lu_cnt++;
-                    NMG_CK_LOOPUSE(lu);
-                    eu_cnt = 0;
-                    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
-                        eu_cnt++;
-                        NMG_CK_EDGEUSE(eu);
-                        NMG_CK_VERTEXUSE(eu->vu_p);
-                        NMG_CK_VERTEX(eu->vu_p->v_p);
-                        NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p); 
-                        vg = eu->vu_p->v_p->vg_p;
-                        (void)fprintf(fp, "%ld %ld %ld %ld %ld %g %g %g\n", 
-                              (unsigned long)r_cnt, 
-                              (unsigned long)s_cnt, 
-                              (unsigned long)fu_cnt, 
-                              (unsigned long)lu_cnt,
-                              (unsigned long)eu_cnt,
-                              V3ARGS(vg->coord));
-                    }
-                }
-            }
-        }
+	r_cnt++;
+	NMG_CK_REGION(r);
+	s_cnt = 0;
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+	    s_cnt++;
+	    NMG_CK_SHELL(s);
+	    fu_cnt = 0;
+	    for (BU_LIST_FOR (fu, faceuse, &s->fu_hd)) {
+		fu_cnt++;
+		NMG_CK_FACEUSE(fu);
+		lu_cnt = 0;
+		for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd)) {
+		    lu_cnt++;
+		    NMG_CK_LOOPUSE(lu);
+		    eu_cnt = 0;
+		    for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
+			eu_cnt++;
+			NMG_CK_EDGEUSE(eu);
+			NMG_CK_VERTEXUSE(eu->vu_p);
+			NMG_CK_VERTEX(eu->vu_p->v_p);
+			NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
+			vg = eu->vu_p->v_p->vg_p;
+			(void)fprintf(fp, "%ld %ld %ld %ld %ld %g %g %g\n",
+			      (unsigned long)r_cnt,
+			      (unsigned long)s_cnt,
+			      (unsigned long)fu_cnt,
+			      (unsigned long)lu_cnt,
+			      (unsigned long)eu_cnt,
+			      V3ARGS(vg->coord));
+		    }
+		}
+	    }
+	}
     }
 
     fclose(fp);
@@ -3182,66 +3182,66 @@ nmg_tri_kill_accordions(struct loopuse *lu, struct bu_list *tbl2d)
     eu_curr = eu_prev = eu_next = (struct edgeuse *)NULL;
 
     if (tbl2d) {
-        NMG_CK_TBL2D(tbl2d);
+	NMG_CK_TBL2D(tbl2d);
     }
 
     if (BU_LIST_IS_EMPTY(&lu->down_hd)) {
-        return;
+	return;
     }
 
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
-        return;
+	return;
     }
 
     for (BU_LIST_FOR(eu_curr, edgeuse, &lu->down_hd)) {
-        vert_cnt++;
+	vert_cnt++;
     }
 
     eu_curr = BU_LIST_FIRST(edgeuse, &lu->down_hd);
     while (BU_LIST_NOT_HEAD(&eu_curr->l, &lu->down_hd) && vert_cnt > 2) {
 
-        eu_prev = BU_LIST_PPREV_CIRC(edgeuse, &eu_curr->l);
-        eu_next = BU_LIST_PNEXT_CIRC(edgeuse, &eu_curr->l);
+	eu_prev = BU_LIST_PPREV_CIRC(edgeuse, &eu_curr->l);
+	eu_next = BU_LIST_PNEXT_CIRC(edgeuse, &eu_curr->l);
 
-        if ((eu_prev->vu_p->v_p == eu_next->vu_p->v_p) && (eu_curr != eu_prev)) {
-            if (eu_prev != eu_next) {
-                if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP)) {
-                    bu_log("nmg_tri_kill_accordions(): killing jaunt in accordion eu's x%x and x%x\n",
-                           eu_curr, eu_prev);
-                }
-                if (tbl2d) {
-                    if ((tmp = find_pt2d(tbl2d, eu_curr->vu_p))) {
-                        tmp->vu_p = (struct vertexuse *)NULL;
-                    } else {
-                        bu_bomb("nmg_tri_kill_accordions(): could not find eu_curr->vu_p in tbl2d table (1)\n");
-                    }
-                    if ((tmp = find_pt2d(tbl2d, eu_prev->vu_p))) {
-                        tmp->vu_p = (struct vertexuse *)NULL;
-                    } else {
-                        bu_bomb("nmg_tri_kill_accordions(): could not find eu_prev->vu_p in tbl2d table\n");
-                    }
-                }
-                (void)nmg_keu(eu_curr);
-                (void)nmg_keu(eu_prev);
-                vert_cnt -= 2;
-            } else {
-                if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP)) {
-                    bu_log("nmg_tri_kill_accordions(): killing jaunt in accordion eu x%x\n", eu_curr);
-                }
-                if (tbl2d) {
-                    if ((tmp = find_pt2d(tbl2d, eu_curr->vu_p))) {
-                        tmp->vu_p = (struct vertexuse *)NULL;
-                    } else {
-                        bu_bomb("nmg_tri_kill_accordions(): could not find eu_curr->vu_p in tbl2d table (2)\n");
-                    }
-                }
-                (void)nmg_keu(eu_curr);
-                vert_cnt--;
-            }
-            eu_curr = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-        } else {
-            eu_curr = BU_LIST_PNEXT(edgeuse, eu_curr);
-        }
+	if ((eu_prev->vu_p->v_p == eu_next->vu_p->v_p) && (eu_curr != eu_prev)) {
+	    if (eu_prev != eu_next) {
+		if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP)) {
+		    bu_log("nmg_tri_kill_accordions(): killing jaunt in accordion eu's x%x and x%x\n",
+			   eu_curr, eu_prev);
+		}
+		if (tbl2d) {
+		    if ((tmp = find_pt2d(tbl2d, eu_curr->vu_p))) {
+			tmp->vu_p = (struct vertexuse *)NULL;
+		    } else {
+			bu_bomb("nmg_tri_kill_accordions(): could not find eu_curr->vu_p in tbl2d table (1)\n");
+		    }
+		    if ((tmp = find_pt2d(tbl2d, eu_prev->vu_p))) {
+			tmp->vu_p = (struct vertexuse *)NULL;
+		    } else {
+			bu_bomb("nmg_tri_kill_accordions(): could not find eu_prev->vu_p in tbl2d table\n");
+		    }
+		}
+		(void)nmg_keu(eu_curr);
+		(void)nmg_keu(eu_prev);
+		vert_cnt -= 2;
+	    } else {
+		if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP)) {
+		    bu_log("nmg_tri_kill_accordions(): killing jaunt in accordion eu x%x\n", eu_curr);
+		}
+		if (tbl2d) {
+		    if ((tmp = find_pt2d(tbl2d, eu_curr->vu_p))) {
+			tmp->vu_p = (struct vertexuse *)NULL;
+		    } else {
+			bu_bomb("nmg_tri_kill_accordions(): could not find eu_curr->vu_p in tbl2d table (2)\n");
+		    }
+		}
+		(void)nmg_keu(eu_curr);
+		vert_cnt--;
+	    }
+	    eu_curr = BU_LIST_FIRST(edgeuse, &lu->down_hd);
+	} else {
+	    eu_curr = BU_LIST_PNEXT(edgeuse, eu_curr);
+	}
     }
 }
 
@@ -3255,33 +3255,33 @@ validate_tbl2d(const char *str, struct bu_list *tbl2d, struct faceuse *fu)
     int error_cnt = 0;
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-        NMG_CK_LOOPUSE(lu);
+	NMG_CK_LOOPUSE(lu);
 
-        if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
-            continue;
-        }
+	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+	    continue;
+	}
 
-        for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-            NMG_CK_EDGEUSE(eu);
-            if (!(pt = find_pt2d(tbl2d, eu->vu_p))) {
-                error_cnt++;
-                bu_log("validate_tbl2d(): %d: fu = %x fu_orient = %d lu = %x lu_orient = %d missing vu = %x coord = %f %f %f \n", 
-                        error_cnt, fu, fu->orientation, lu, 
-                        lu->orientation, eu->vu_p, 
-                        V3ARGS(eu->vu_p->v_p->vg_p->coord));
-            } else {
-                NMG_CK_VERTEXUSE(pt->vu_p);
-                NMG_CK_VERTEX(pt->vu_p->v_p);
-                NMG_CK_VERTEX_G(pt->vu_p->v_p->vg_p);
-                NMG_CK_EDGEUSE(pt->vu_p->up.eu_p);
-                NMG_CK_LOOPUSE(pt->vu_p->up.eu_p->up.lu_p);
-                NMG_CK_FACEUSE(pt->vu_p->up.eu_p->up.lu_p->up.fu_p);
-            }
-        }
+	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	    NMG_CK_EDGEUSE(eu);
+	    if (!(pt = find_pt2d(tbl2d, eu->vu_p))) {
+		error_cnt++;
+		bu_log("validate_tbl2d(): %d: fu = %x fu_orient = %d lu = %x lu_orient = %d missing vu = %x coord = %f %f %f \n",
+			error_cnt, fu, fu->orientation, lu,
+			lu->orientation, eu->vu_p,
+			V3ARGS(eu->vu_p->v_p->vg_p->coord));
+	    } else {
+		NMG_CK_VERTEXUSE(pt->vu_p);
+		NMG_CK_VERTEX(pt->vu_p->v_p);
+		NMG_CK_VERTEX_G(pt->vu_p->v_p->vg_p);
+		NMG_CK_EDGEUSE(pt->vu_p->up.eu_p);
+		NMG_CK_LOOPUSE(pt->vu_p->up.eu_p->up.lu_p);
+		NMG_CK_FACEUSE(pt->vu_p->up.eu_p->up.lu_p->up.fu_p);
+	    }
+	}
     }
     if (error_cnt != 0) {
-        bu_log("validate_tbl2d(): %s\n", str);
-        bu_bomb("validate_tbl2d(): missing entries in tbl2d table\n");
+	bu_log("validate_tbl2d(): %s\n", str);
+	bu_bomb("validate_tbl2d(): missing entries in tbl2d table\n");
     }
 }
 
@@ -3318,7 +3318,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
     struct faceuse *fu;
     struct loopuse *lu2, *orig_lu_p;
     struct edgeuse *eu;
-    struct vertex_g *prev_vg_p = NULL; 
+    struct vertex_g *prev_vg_p = NULL;
 
     static const int cut_color[3] = { 90, 255, 90};
 
@@ -3342,7 +3342,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
     /* find min/max points & count vertex points */
     verts = 0;
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-        NMG_CK_EDGEUSE(eu);
+	NMG_CK_EDGEUSE(eu);
 	newpt = find_pt2d(tbl2d, eu->vu_p);
 	if (!newpt) {
 	    bu_log("cut_unimonotone(): can not find a 2D point for %g %g %g\n",
@@ -3352,14 +3352,14 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 
 	if (rt_g.NMG_debug & DEBUG_TRI) {
 	    bu_log("%g %g\n", newpt->coord[X], newpt->coord[Y]);
-        }
+	}
 
 	if (!min || P_LT_V(newpt, min)) {
 	    min = newpt;
-        }
+	}
 	if (!max || P_GT_V(newpt, max)) {
 	    max = newpt;
-        }
+	}
 	verts++;
     }
 
@@ -3391,128 +3391,128 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 	prev = PT2D_PREV(tbl2d, current);
 	next = PT2D_NEXT(tbl2d, current);
 
-        VSETALL(v0, 0.0);
-        VSETALL(v1, 0.0);
-        VSETALL(v2, 0.0);
-        dot00 = dot01 = dot02 = dot11 = dot12 = 0.0;
-        invDenom = u = v = 0.0;
-        prev_vg_p = (struct vertex_g *)NULL; 
+	VSETALL(v0, 0.0);
+	VSETALL(v1, 0.0);
+	VSETALL(v2, 0.0);
+	dot00 = dot01 = dot02 = dot11 = dot12 = 0.0;
+	invDenom = u = v = 0.0;
+	prev_vg_p = (struct vertex_g *)NULL;
 
-        /* test if any of the loopuse vertices are within the triangle
-         * to be created. it is assumed none of the loopuse within the
-         * faceuse intersects any of the other loopuse with the exception
-         * of having a common edge or vertex
-         */
-        inside_triangle = 0;
-        for (BU_LIST_FOR(pt, pt2d, tbl2d)) {
+	/* test if any of the loopuse vertices are within the triangle
+	 * to be created. it is assumed none of the loopuse within the
+	 * faceuse intersects any of the other loopuse with the exception
+	 * of having a common edge or vertex
+	 */
+	inside_triangle = 0;
+	for (BU_LIST_FOR(pt, pt2d, tbl2d)) {
 
-            if (inside_triangle) {
-                break;
-            }
+	    if (inside_triangle) {
+		break;
+	    }
 
-            if (pt->vu_p == (struct vertexuse *)NULL) {
-                /* skip tbl2d entries with a null vertexuse */
-                continue;
-            }
+	    if (pt->vu_p == (struct vertexuse *)NULL) {
+		/* skip tbl2d entries with a null vertexuse */
+		continue;
+	    }
 
-            if (pt->vu_p->up.eu_p == (struct edgeuse *)NULL) {
-                /* skip tbl2d entries with a null edgeuse */
-                continue;
-            }
+	    if (pt->vu_p->up.eu_p == (struct edgeuse *)NULL) {
+		/* skip tbl2d entries with a null edgeuse */
+		continue;
+	    }
 
-            NMG_CK_EDGEUSE(pt->vu_p->up.eu_p);
-            NMG_CK_LOOPUSE(pt->vu_p->up.eu_p->up.lu_p);
+	    NMG_CK_EDGEUSE(pt->vu_p->up.eu_p);
+	    NMG_CK_LOOPUSE(pt->vu_p->up.eu_p->up.lu_p);
 
-            if (pt->vu_p->up.eu_p->up.lu_p == current->vu_p->up.eu_p->up.lu_p) { 
-                /* true when the vertexuse to be tested is in the
-                 * same loopuse as the potential cut
-                 */
+	    if (pt->vu_p->up.eu_p->up.lu_p == current->vu_p->up.eu_p->up.lu_p) {
+		/* true when the vertexuse to be tested is in the
+		 * same loopuse as the potential cut
+		 */
 
-                /* skips processing the same vertex */
-                if (prev_vg_p != pt->vu_p->v_p->vg_p) {
-                    VSUB2(v0, next->coord, prev->coord);
-                    VSUB2(v1, current->coord, prev->coord);
-                    VSUB2(v2, pt->coord, prev->coord);
-                    dot00 = VDOT(v0, v0);
-                    dot01 = VDOT(v0, v1);
-                    dot02 = VDOT(v0, v2);
-                    dot11 = VDOT(v1, v1);
-                    dot12 = VDOT(v1, v2);
-                    invDenom = 1.0 / (dot00 * dot11 - dot01 * dot01);
-                    u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-                    v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+		/* skips processing the same vertex */
+		if (prev_vg_p != pt->vu_p->v_p->vg_p) {
+		    VSUB2(v0, next->coord, prev->coord);
+		    VSUB2(v1, current->coord, prev->coord);
+		    VSUB2(v2, pt->coord, prev->coord);
+		    dot00 = VDOT(v0, v0);
+		    dot01 = VDOT(v0, v1);
+		    dot02 = VDOT(v0, v2);
+		    dot11 = VDOT(v1, v1);
+		    dot12 = VDOT(v1, v2);
+		    invDenom = 1.0 / (dot00 * dot11 - dot01 * dot01);
+		    u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+		    v = (dot00 * dot12 - dot01 * dot02) * invDenom;
 
-                    if ((u > SMALL_FASTF) && (v > SMALL_FASTF) && ((u + v) < (1.0 - SMALL_FASTF))) {
-                        /* true if point inside triangle */
-		        if (rt_g.NMG_debug & DEBUG_TRI) {
-			    bu_log("cut_unimonotone(): point inside triangle, lu_p = %x, point = %g %g %g\n", 
-                                    lu, V3ARGS(pt->vu_p->v_p->vg_p->coord));
-		        }
-                        inside_triangle = 1;
-                    } else {
-		        if (rt_g.NMG_debug & DEBUG_TRI) {
+		    if ((u > SMALL_FASTF) && (v > SMALL_FASTF) && ((u + v) < (1.0 - SMALL_FASTF))) {
+			/* true if point inside triangle */
+			if (rt_g.NMG_debug & DEBUG_TRI) {
+			    bu_log("cut_unimonotone(): point inside triangle, lu_p = %x, point = %g %g %g\n",
+				    lu, V3ARGS(pt->vu_p->v_p->vg_p->coord));
+			}
+			inside_triangle = 1;
+		    } else {
+			if (rt_g.NMG_debug & DEBUG_TRI) {
 			    bu_log("cut_unimonotone(): outside triangle, lu_p = %x, 3Dprev = %g %g %g 3Dcurr = %g %g %g 3Dnext = %g %g %g 3Dpoint = %g %g %g is_convex = %d\n",
 				    lu, V3ARGS(prev->vu_p->v_p->vg_p->coord),
 				    V3ARGS(current->vu_p->v_p->vg_p->coord),
 				    V3ARGS(next->vu_p->v_p->vg_p->coord),
 				    V3ARGS(pt->vu_p->v_p->vg_p->coord),
 				    is_convex(prev, current, next, tol));
-		        }
-                    }
-                }
-                prev_vg_p = pt->vu_p->v_p->vg_p;
-            } /* end of if-statement to skip testing vertices not in the current loopuse */
-        }
+			}
+		    }
+		}
+		prev_vg_p = pt->vu_p->v_p->vg_p;
+	    } /* end of if-statement to skip testing vertices not in the current loopuse */
+	}
 
-        /* test if the potential cut would intersect a vertex which
-         * would not belong to the resulting triangle to be created
-         * by the cut
-         */
-        isect_vertex = 0;
-	for (BU_LIST_FOR(eu, edgeuse, &next->vu_p->up.eu_p->up.lu_p->down_hd)) { 
+	/* test if the potential cut would intersect a vertex which
+	 * would not belong to the resulting triangle to be created
+	 * by the cut
+	 */
+	isect_vertex = 0;
+	for (BU_LIST_FOR(eu, edgeuse, &next->vu_p->up.eu_p->up.lu_p->down_hd)) {
 
-            if (isect_vertex) {
-                break;
-            }
+	    if (isect_vertex) {
+		break;
+	    }
 
-	    if ((prev->vu_p->v_p != eu->vu_p->v_p) && 
-                (current->vu_p->v_p != eu->vu_p->v_p) && 
+	    if ((prev->vu_p->v_p != eu->vu_p->v_p) &&
+		(current->vu_p->v_p != eu->vu_p->v_p) &&
 		(next->vu_p->v_p != eu->vu_p->v_p)) {
-                /* true when the vertex tested would not belong to
-                 * the resulting triangle
-                 */
-		status = bn_isect_pt_lseg(&dist, prev->vu_p->v_p->vg_p->coord, 
-                                          next->vu_p->v_p->vg_p->coord,
+		/* true when the vertex tested would not belong to
+		 * the resulting triangle
+		 */
+		status = bn_isect_pt_lseg(&dist, prev->vu_p->v_p->vg_p->coord,
+					  next->vu_p->v_p->vg_p->coord,
 					  eu->vu_p->v_p->vg_p->coord, tol);
-		if (status == 3) { 
-                    /* true when the potential cut intersects a vertex */
-                    isect_vertex = 1;
+		if (status == 3) {
+		    /* true when the potential cut intersects a vertex */
+		    isect_vertex = 1;
 		    if (rt_g.NMG_debug & DEBUG_TRI) {
 			bu_log("cut_unimonotone(): cut prev %g %g %g -> next %g %g %g point = %g %g %g\n",
-				V3ARGS(prev->vu_p->v_p->vg_p->coord), 
-				V3ARGS(next->vu_p->v_p->vg_p->coord), 
-				V3ARGS(eu->vu_p->v_p->vg_p->coord)); 
+				V3ARGS(prev->vu_p->v_p->vg_p->coord),
+				V3ARGS(next->vu_p->v_p->vg_p->coord),
+				V3ARGS(eu->vu_p->v_p->vg_p->coord));
 			bu_log("cut_unimonotone(): cut and vertex intersect\n");
 		    }
 		}
 	    }
-        }
+	}
 
 	if (is_convex(prev, current, next, tol) && !inside_triangle && !isect_vertex) {
-            /* true if the angle is convex and there are no vertices
-             * from this loopuse within the triangle to be created
-             * and the potential cut does not intersect any vertices,
-             * from this loopuse, which are not part of the triangle
-             * to be created. convex here is between 0 and 180 degrees
-             * including 0 and 180.
-             */
+	    /* true if the angle is convex and there are no vertices
+	     * from this loopuse within the triangle to be created
+	     * and the potential cut does not intersect any vertices,
+	     * from this loopuse, which are not part of the triangle
+	     * to be created. convex here is between 0 and 180 degrees
+	     * including 0 and 180.
+	     */
 	    if (rt_g.NMG_debug & DEBUG_TRI) {
 		bu_log("cut_unimonotone(): before cut loop:\n");
 		nmg_pr_fu_briefly(lu->up.fu_p, "");
 	    }
 
 	    if (rt_g.NMG_debug & DEBUG_TRI) {
-		bu_log("cut_unimonotone(): before cut orig_lu_p = %x prev lu_p = %x 3D %g %g %g curr lu_p = %x 3D %g %g %g next lu_p = %x 3D %g %g %g\n", 
+		bu_log("cut_unimonotone(): before cut orig_lu_p = %x prev lu_p = %x 3D %g %g %g curr lu_p = %x 3D %g %g %g next lu_p = %x 3D %g %g %g\n",
 			orig_lu_p, prev->vu_p->up.eu_p->up.lu_p,
 			V3ARGS(prev->vu_p->v_p->vg_p->coord),
 			current->vu_p->up.eu_p->up.lu_p,
@@ -3522,227 +3522,227 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 	    }
 
 
-            if (next->vu_p == prev->vu_p) {
-                bu_bomb("cut_unimonotone(): trying to cut to/from same vertexuse\n");
-            }
+	    if (next->vu_p == prev->vu_p) {
+		bu_bomb("cut_unimonotone(): trying to cut to/from same vertexuse\n");
+	    }
 
 	    if (rt_g.NMG_debug & DEBUG_TRI) {
-                validate_tbl2d("before cut_unimonotone -- cut_mapped_loop", 
-                                tbl2d, current->vu_p->up.eu_p->up.lu_p->up.fu_p);
-            }
+		validate_tbl2d("before cut_unimonotone -- cut_mapped_loop",
+				tbl2d, current->vu_p->up.eu_p->up.lu_p->up.fu_p);
+	    }
 
-            prev_orig = prev;
-            next_orig = next;
+	    prev_orig = prev;
+	    next_orig = next;
 
 	    /* cut a triangular piece off of the loop to create a new loop */
 	    current = cut_mapped_loop(tbl2d, next, prev, cut_color, tol, 0);
 
-            prev = prev_orig;
-            next = next_orig;
+	    prev = prev_orig;
+	    next = next_orig;
 
-            if (!current) {
-                bu_bomb("cut_unimonotone(): function cut_mapped_loop returned null\n");
-            }
-            if (current == next) {
-                bu_bomb("cut_unimonotone(): current == next\n");
-            }
+	    if (!current) {
+		bu_bomb("cut_unimonotone(): function cut_mapped_loop returned null\n");
+	    }
+	    if (current == next) {
+		bu_bomb("cut_unimonotone(): current == next\n");
+	    }
 
 	    if (rt_g.NMG_debug & DEBUG_TRI) {
-                validate_tbl2d("after cut_unimonotone -- cut_mapped_loop", 
-                                tbl2d, current->vu_p->up.eu_p->up.lu_p->up.fu_p);
-            }
+		validate_tbl2d("after cut_unimonotone -- cut_mapped_loop",
+				tbl2d, current->vu_p->up.eu_p->up.lu_p->up.fu_p);
+	    }
 
-            if (BU_LIST_FIRST_MAGIC(&next->vu_p->up.eu_p->up.lu_p->down_hd) != NMG_EDGEUSE_MAGIC) {
-                bu_bomb("cut_unimonotone(): next loopuse contains no edgeuse\n");
-            }
+	    if (BU_LIST_FIRST_MAGIC(&next->vu_p->up.eu_p->up.lu_p->down_hd) != NMG_EDGEUSE_MAGIC) {
+		bu_bomb("cut_unimonotone(): next loopuse contains no edgeuse\n");
+	    }
 
-            /* check direction (cw/ccw) of loopuse after cut */
-            NMG_GET_FU_NORMAL(fu_normal, next->vu_p->up.eu_p->up.lu_p->up.fu_p);
-            ccw_result = nmg_loop_is_ccw(next->vu_p->up.eu_p->up.lu_p, fu_normal, tol);
+	    /* check direction (cw/ccw) of loopuse after cut */
+	    NMG_GET_FU_NORMAL(fu_normal, next->vu_p->up.eu_p->up.lu_p->up.fu_p);
+	    ccw_result = nmg_loop_is_ccw(next->vu_p->up.eu_p->up.lu_p, fu_normal, tol);
 
-            if (ccw_result == 0) {
-                /* true if could not determine direction */
+	    if (ccw_result == 0) {
+		/* true if could not determine direction */
 
-                /* need to save the lu pointer since the vu pointer
-                 * may become invalid after nmg_tri_kill_accordions 
-                 * removes the accordions
-                 */
-                lu2 = next->vu_p->up.eu_p->up.lu_p;
+		/* need to save the lu pointer since the vu pointer
+		 * may become invalid after nmg_tri_kill_accordions
+		 * removes the accordions
+		 */
+		lu2 = next->vu_p->up.eu_p->up.lu_p;
 
-	        if (rt_g.NMG_debug & DEBUG_TRI) {
-                    validate_tbl2d("cut_unimonotone() before nmg_tri_kill_accordions", 
-                                    tbl2d, lu2->up.fu_p);
-                }
+		if (rt_g.NMG_debug & DEBUG_TRI) {
+		    validate_tbl2d("cut_unimonotone() before nmg_tri_kill_accordions",
+				    tbl2d, lu2->up.fu_p);
+		}
 
-                nmg_tri_kill_accordions(lu2, tbl2d);
+		nmg_tri_kill_accordions(lu2, tbl2d);
 
-                if (BU_LIST_FIRST_MAGIC(&lu2->down_hd) != NMG_EDGEUSE_MAGIC) {
-                    bu_bomb("cut_unimonotone(): after nmg_tri_kill_accordions, loopuse has no edgeuse\n");
-                }
+		if (BU_LIST_FIRST_MAGIC(&lu2->down_hd) != NMG_EDGEUSE_MAGIC) {
+		    bu_bomb("cut_unimonotone(): after nmg_tri_kill_accordions, loopuse has no edgeuse\n");
+		}
 
-	        if (rt_g.NMG_debug & DEBUG_TRI) {
-                    validate_tbl2d("cut_unimonotone() after nmg_tri_kill_accordions", 
-                                    tbl2d, lu2->up.fu_p);
-                }
+		if (rt_g.NMG_debug & DEBUG_TRI) {
+		    validate_tbl2d("cut_unimonotone() after nmg_tri_kill_accordions",
+				    tbl2d, lu2->up.fu_p);
+		}
 
-                NMG_CK_LOOPUSE(lu2);
-                /* find the pt2d table entry for the first vu within
-                 * the resulting lu
-                 */
-                eu = BU_LIST_FIRST(edgeuse, &lu2->down_hd);
-                if (!(next = find_pt2d(tbl2d, eu->vu_p))) {
-                    bu_bomb("cut_unimonotone(): unable to find next vertexuse\n");
-                }
+		NMG_CK_LOOPUSE(lu2);
+		/* find the pt2d table entry for the first vu within
+		 * the resulting lu
+		 */
+		eu = BU_LIST_FIRST(edgeuse, &lu2->down_hd);
+		if (!(next = find_pt2d(tbl2d, eu->vu_p))) {
+		    bu_bomb("cut_unimonotone(): unable to find next vertexuse\n");
+		}
 
-                /* count the number of vertexuse in the 'next' loopuse */
-                for (BU_LIST_FOR(eu, edgeuse, &next->vu_p->up.eu_p->up.lu_p->down_hd)) {
-                    tmp_vert_cnt++;
-                }
+		/* count the number of vertexuse in the 'next' loopuse */
+		for (BU_LIST_FOR(eu, edgeuse, &next->vu_p->up.eu_p->up.lu_p->down_hd)) {
+		    tmp_vert_cnt++;
+		}
 
-                /* set the vertexuse counter (i.e. verts) to the current
-                 * number of vertexuse in the loopuse. this is needed 
-                 * since nmg_tri_kill_accordions, if it kills any 
-                 * accordions in the loopuse, will reduce the number of
-                 * vertexuse in the loopuse
-                 */
-                verts = tmp_vert_cnt;
+		/* set the vertexuse counter (i.e. verts) to the current
+		 * number of vertexuse in the loopuse. this is needed
+		 * since nmg_tri_kill_accordions, if it kills any
+		 * accordions in the loopuse, will reduce the number of
+		 * vertexuse in the loopuse
+		 */
+		verts = tmp_vert_cnt;
 
-                if (verts > 3) {
-                    bu_bomb("cut_unimonotone(): can not determine loopuse cw/ccw and loopuse contains > 3 vertices\n");
-                }
+		if (verts > 3) {
+		    bu_bomb("cut_unimonotone(): can not determine loopuse cw/ccw and loopuse contains > 3 vertices\n");
+		}
 
-            } else if (ccw_result == -1) {
-                /* true if the loopuse has a cw rotation */
-                bu_log("cut_unimonotone(): after cut_mapped_loop, next loopuse was cw.\n");
+	    } else if (ccw_result == -1) {
+		/* true if the loopuse has a cw rotation */
+		bu_log("cut_unimonotone(): after cut_mapped_loop, next loopuse was cw.\n");
 
-	        if (rt_g.NMG_debug & DEBUG_TRI) {
-                    validate_tbl2d("cut_unimonotone() before flip direction", 
-                                    tbl2d, next->vu_p->up.eu_p->up.lu_p->up.fu_p);
-                }
-                fu = next->vu_p->up.eu_p->up.lu_p->up.fu_p;
-                lu2 = next->vu_p->up.eu_p->up.lu_p;
+		if (rt_g.NMG_debug & DEBUG_TRI) {
+		    validate_tbl2d("cut_unimonotone() before flip direction",
+				    tbl2d, next->vu_p->up.eu_p->up.lu_p->up.fu_p);
+		}
+		fu = next->vu_p->up.eu_p->up.lu_p->up.fu_p;
+		lu2 = next->vu_p->up.eu_p->up.lu_p;
 
-                NMG_CK_LOOPUSE(lu2);
-                NMG_CK_FACEUSE(fu);
-                if (*lu2->up.magic_p == NMG_FACEUSE_MAGIC) {
-                    /* loop is in wrong direction, exchange lu and lu_mate */
-                    BU_LIST_DEQUEUE(&lu2->l);
-                    BU_LIST_DEQUEUE(&lu2->lumate_p->l);
-                    BU_LIST_APPEND(&fu->lu_hd, &lu2->lumate_p->l);
-                    lu2->lumate_p->up.fu_p = fu;
-                    BU_LIST_APPEND(&fu->fumate_p->lu_hd, &lu2->l);
-                    lu2->up.fu_p = fu->fumate_p;
-                } else if (*lu2->up.magic_p == NMG_SHELL_MAGIC) {
-                    bu_bomb("cut_unimonotone(): loopuse parent is shell\n");
-                } else {
-                    bu_bomb("cut_unimonotone(): loopuse parent is unknown\n");
-                }
+		NMG_CK_LOOPUSE(lu2);
+		NMG_CK_FACEUSE(fu);
+		if (*lu2->up.magic_p == NMG_FACEUSE_MAGIC) {
+		    /* loop is in wrong direction, exchange lu and lu_mate */
+		    BU_LIST_DEQUEUE(&lu2->l);
+		    BU_LIST_DEQUEUE(&lu2->lumate_p->l);
+		    BU_LIST_APPEND(&fu->lu_hd, &lu2->lumate_p->l);
+		    lu2->lumate_p->up.fu_p = fu;
+		    BU_LIST_APPEND(&fu->fumate_p->lu_hd, &lu2->l);
+		    lu2->up.fu_p = fu->fumate_p;
+		} else if (*lu2->up.magic_p == NMG_SHELL_MAGIC) {
+		    bu_bomb("cut_unimonotone(): loopuse parent is shell\n");
+		} else {
+		    bu_bomb("cut_unimonotone(): loopuse parent is unknown\n");
+		}
 
-                /* add the new vertexuse to the pt2d table. these new
-                 * vertexuse are from loopuse-mate before the switch.
-                 */
+		/* add the new vertexuse to the pt2d table. these new
+		 * vertexuse are from loopuse-mate before the switch.
+		 */
 #if 1
-                lu2 = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+		lu2 = BU_LIST_FIRST(loopuse, &fu->lu_hd);
 #else
-                lu2 = next->vu_p->up.eu_p->up.lu_p;
+		lu2 = next->vu_p->up.eu_p->up.lu_p;
 #endif
-                for (BU_LIST_FOR(eu, edgeuse, &lu2->down_hd)) {
-                    NMG_CK_EDGEUSE(eu);
-                    map_new_vertexuse(tbl2d, eu->vu_p); 
-	            if (rt_g.NMG_debug & DEBUG_TRI) {
-	        	tmp = find_pt2d(tbl2d, eu->vu_p);
-                        if (!(tmp)) {
-                            bu_bomb("cut_unimonotone(): vertexuse not added to tbl2d table\n");
-                        }
-                    }
-                }
+		for (BU_LIST_FOR(eu, edgeuse, &lu2->down_hd)) {
+		    NMG_CK_EDGEUSE(eu);
+		    map_new_vertexuse(tbl2d, eu->vu_p);
+		    if (rt_g.NMG_debug & DEBUG_TRI) {
+			tmp = find_pt2d(tbl2d, eu->vu_p);
+			if (!(tmp)) {
+			    bu_bomb("cut_unimonotone(): vertexuse not added to tbl2d table\n");
+			}
+		    }
+		}
 
-                eu = BU_LIST_FIRST(edgeuse, &lu2->down_hd);
-                if (!(next = find_pt2d(tbl2d, eu->vu_p))) {
-                    bu_bomb("cut_unimonotone(): unable to find next vertexuse in tbl2d table\n");
-                }
+		eu = BU_LIST_FIRST(edgeuse, &lu2->down_hd);
+		if (!(next = find_pt2d(tbl2d, eu->vu_p))) {
+		    bu_bomb("cut_unimonotone(): unable to find next vertexuse in tbl2d table\n");
+		}
 
-                /* make sure loopuse orientation is marked OT_SAME */
-                nmg_set_lu_orientation(lu2, 0);
+		/* make sure loopuse orientation is marked OT_SAME */
+		nmg_set_lu_orientation(lu2, 0);
 
-	        current = PT2D_PREV(tbl2d, next);
-	        prev = PT2D_PREV(tbl2d, current);
+		current = PT2D_PREV(tbl2d, next);
+		prev = PT2D_PREV(tbl2d, current);
 
-                orig_lu_p = next->vu_p->up.eu_p->up.lu_p;
+		orig_lu_p = next->vu_p->up.eu_p->up.lu_p;
 
-	        if (rt_g.NMG_debug & DEBUG_TRI) {
-                    validate_tbl2d("cut_unimonotone() after flip direction", 
-                                    tbl2d, next->vu_p->up.eu_p->up.lu_p->up.fu_p);
-                }
-            } else if (ccw_result == 1) {
-                /* make sure loopuse orientation is marked OT_SAME */
-                nmg_set_lu_orientation(next->vu_p->up.eu_p->up.lu_p, 0);
-            } else {
-                bu_bomb("cut_unimonotone(): function 'nmg_loop_is_ccw' returned an invalid result\n"); 
-            }
+		if (rt_g.NMG_debug & DEBUG_TRI) {
+		    validate_tbl2d("cut_unimonotone() after flip direction",
+				    tbl2d, next->vu_p->up.eu_p->up.lu_p->up.fu_p);
+		}
+	    } else if (ccw_result == 1) {
+		/* make sure loopuse orientation is marked OT_SAME */
+		nmg_set_lu_orientation(next->vu_p->up.eu_p->up.lu_p, 0);
+	    } else {
+		bu_bomb("cut_unimonotone(): function 'nmg_loop_is_ccw' returned an invalid result\n");
+	    }
 
-            if (rt_g.NMG_debug & DEBUG_TRI) {
-                bu_log("cut_unimonotone(): after cut orig_lu_p = %x lu_p = %x 3D %g %g %g --> lu_p = %x 3D %g %g %g\n", 
-                    orig_lu_p, prev->vu_p->up.eu_p->up.lu_p,
-                    V3ARGS(prev->vu_p->v_p->vg_p->coord),
-                    next->vu_p->up.eu_p->up.lu_p,
-                    V3ARGS(next->vu_p->v_p->vg_p->coord));
-            }
+	    if (rt_g.NMG_debug & DEBUG_TRI) {
+		bu_log("cut_unimonotone(): after cut orig_lu_p = %x lu_p = %x 3D %g %g %g --> lu_p = %x 3D %g %g %g\n",
+		    orig_lu_p, prev->vu_p->up.eu_p->up.lu_p,
+		    V3ARGS(prev->vu_p->v_p->vg_p->coord),
+		    next->vu_p->up.eu_p->up.lu_p,
+		    V3ARGS(next->vu_p->v_p->vg_p->coord));
+	    }
 
-            if (orig_lu_p != next->vu_p->up.eu_p->up.lu_p) {
-                bu_bomb("cut_unimonotone(): next loopuse to cut is not the original loopuse\n");
-            }
+	    if (orig_lu_p != next->vu_p->up.eu_p->up.lu_p) {
+		bu_bomb("cut_unimonotone(): next loopuse to cut is not the original loopuse\n");
+	    }
 
 	    if (rt_g.NMG_debug & DEBUG_TRI) {
 		bu_log("cut_unimonotone(): after cut loop:\n");
 		nmg_pr_fu_briefly(lu->up.fu_p, "");
 	    }
-            if (next->vu_p->v_p == prev->vu_p->v_p) {
-                /* the vert count must be decremented 2 when
-                 * the cut was between the same vertex
-                 */
-                verts -= 2;
-            } else {
-	        verts--;
-            }
+	    if (next->vu_p->v_p == prev->vu_p->v_p) {
+		/* the vert count must be decremented 2 when
+		 * the cut was between the same vertex
+		 */
+		verts -= 2;
+	    } else {
+		verts--;
+	    }
 
 	    NMG_CK_LOOPUSE(lu);
 
 	    if (rt_g.NMG_debug & DEBUG_TRI) {
 		nmg_tri_plfu(lu->up.fu_p, tbl2d);
-            }
+	    }
 
 	    if (current->vu_p == first->vu_p) {
 		t = PT2D_NEXT(tbl2d, first);
 		if (rt_g.NMG_debug & DEBUG_TRI) {
-		    bu_log("cut_unimonotone(): first(0x%08x -> %g %g\n", 
-                            first, t->coord[X], t->coord[Y]);
-                }
+		    bu_log("cut_unimonotone(): first(0x%08x -> %g %g\n",
+			    first, t->coord[X], t->coord[Y]);
+		}
 
 		t = PT2D_NEXT(tbl2d, current);
 		if (rt_g.NMG_debug & DEBUG_TRI) {
-		    bu_log("cut_unimonotone(): current(0x%08x) -> %g %g\n", 
-                            current, t->coord[X], t->coord[Y]);
-                }
+		    bu_log("cut_unimonotone(): current(0x%08x) -> %g %g\n",
+			    current, t->coord[X], t->coord[Y]);
+		}
 
 		current = PT2D_NEXT(tbl2d, current);
 		if (rt_g.NMG_debug & DEBUG_TRI) {
-		    bu_log("cut_unimonotone(): current(0x%08x) -> %g %g\n", 
-                            current, t->coord[X], t->coord[Y]);
-                }
+		    bu_log("cut_unimonotone(): current(0x%08x) -> %g %g\n",
+			    current, t->coord[X], t->coord[Y]);
+		}
 	    }
 	} else {
 	    if (rt_g.NMG_debug & DEBUG_TRI) {
-                bu_log("cut_unimonotone(): not-cut orig_lu_p = %x lu_p = %x 3D %g %g %g --> lu_p = %x 3D %g %g %g\n", 
-                     orig_lu_p, prev->vu_p->up.eu_p->up.lu_p,
-                     V3ARGS(prev->vu_p->v_p->vg_p->coord),
-                     next->vu_p->up.eu_p->up.lu_p,
-                     V3ARGS(next->vu_p->v_p->vg_p->coord));
-            }
+		bu_log("cut_unimonotone(): not-cut orig_lu_p = %x lu_p = %x 3D %g %g %g --> lu_p = %x 3D %g %g %g\n",
+		     orig_lu_p, prev->vu_p->up.eu_p->up.lu_p,
+		     V3ARGS(prev->vu_p->v_p->vg_p->coord),
+		     next->vu_p->up.eu_p->up.lu_p,
+		     V3ARGS(next->vu_p->v_p->vg_p->coord));
+	    }
 
 	    if (rt_g.NMG_debug & DEBUG_TRI) {
 		bu_log("cut_unimonotone(): cut not performed, moving to next potential cut\n");
-            }
+	    }
 	    current = next;
 	}
     }
@@ -3750,17 +3750,17 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 
 
 void
-print_loopuse_tree(struct bu_list *head, struct loopuse_tree_node *parent, const struct bn_tol *tol) 
+print_loopuse_tree(struct bu_list *head, struct loopuse_tree_node *parent, const struct bn_tol *tol)
 {
     struct loopuse_tree_node *node, *node_first;
     struct bu_vls plot_file_desc = BU_VLS_INIT_ZERO;
 
     if (head->magic != BU_LIST_HEAD_MAGIC) {
-        bu_bomb("print_loopuse_tree(): head not bu_list head\n");
+	bu_bomb("print_loopuse_tree(): head not bu_list head\n");
     }
 
     if (BU_LIST_IS_EMPTY(head)) {
-        bu_bomb("print_loopuse_tree(): empty bu_list\n");
+	bu_bomb("print_loopuse_tree(): empty bu_list\n");
     }
 
     node_first = BU_LIST_FIRST(loopuse_tree_node, head);
@@ -3771,11 +3771,11 @@ print_loopuse_tree(struct bu_list *head, struct loopuse_tree_node *parent, const
     bu_vls_free(&plot_file_desc);
 
     for (BU_LIST_FOR(node, loopuse_tree_node, head)) {
-        bu_log("print_loopuse_tree() parent ptr %x head ptr = %x siblings node %x lu %x %d child_hd ptr %x\n",
-                parent, head, node, node->lu, node->lu->orientation, &(node->children_hd)); 
-        if (BU_LIST_NON_EMPTY(&(node->children_hd))) {
-            print_loopuse_tree(&(node->children_hd), node, tol);
-        }
+	bu_log("print_loopuse_tree() parent ptr %x head ptr = %x siblings node %x lu %x %d child_hd ptr %x\n",
+		parent, head, node, node->lu, node->lu->orientation, &(node->children_hd));
+	if (BU_LIST_NON_EMPTY(&(node->children_hd))) {
+	    print_loopuse_tree(&(node->children_hd), node, tol);
+	}
     }
 }
 
@@ -3811,209 +3811,209 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
     NMG_CK_LOOPUSE(lu);
 
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
-        bu_bomb("nmg_classify_pt_loop_new(): loopuse contains no edgeuse\n");
+	bu_bomb("nmg_classify_pt_loop_new(): loopuse contains no edgeuse\n");
     }
 
 
     for (BU_LIST_FOR(eu1, edgeuse, &lu->down_hd)) {
-        NMG_CK_EDGEUSE(eu1);
-        if (eu1->vu_p->v_p->vg_p->coord[X] > max_pt[X]) {
-            max_pt[X] = eu1->vu_p->v_p->vg_p->coord[X];
-        }
-        if (eu1->vu_p->v_p->vg_p->coord[Y] > max_pt[Y]) {
-            max_pt[Y] = eu1->vu_p->v_p->vg_p->coord[Y];
-        }
-        if (eu1->vu_p->v_p->vg_p->coord[Z] > max_pt[Z]) {
-            max_pt[Z] = eu1->vu_p->v_p->vg_p->coord[Z];
-        }
-        if (eu1->vu_p->v_p->vg_p->coord[X] < min_pt[X]) {
-            min_pt[X] = eu1->vu_p->v_p->vg_p->coord[X];
-        }
-        if (eu1->vu_p->v_p->vg_p->coord[Y] < min_pt[Y]) {
-            min_pt[Y] = eu1->vu_p->v_p->vg_p->coord[Y];
-        }
-        if (eu1->vu_p->v_p->vg_p->coord[Z] < min_pt[Z]) {
-            min_pt[Z] = eu1->vu_p->v_p->vg_p->coord[Z];
-        }
+	NMG_CK_EDGEUSE(eu1);
+	if (eu1->vu_p->v_p->vg_p->coord[X] > max_pt[X]) {
+	    max_pt[X] = eu1->vu_p->v_p->vg_p->coord[X];
+	}
+	if (eu1->vu_p->v_p->vg_p->coord[Y] > max_pt[Y]) {
+	    max_pt[Y] = eu1->vu_p->v_p->vg_p->coord[Y];
+	}
+	if (eu1->vu_p->v_p->vg_p->coord[Z] > max_pt[Z]) {
+	    max_pt[Z] = eu1->vu_p->v_p->vg_p->coord[Z];
+	}
+	if (eu1->vu_p->v_p->vg_p->coord[X] < min_pt[X]) {
+	    min_pt[X] = eu1->vu_p->v_p->vg_p->coord[X];
+	}
+	if (eu1->vu_p->v_p->vg_p->coord[Y] < min_pt[Y]) {
+	    min_pt[Y] = eu1->vu_p->v_p->vg_p->coord[Y];
+	}
+	if (eu1->vu_p->v_p->vg_p->coord[Z] < min_pt[Z]) {
+	    min_pt[Z] = eu1->vu_p->v_p->vg_p->coord[Z];
+	}
     }
 
     if (V3PT_OUT_RPP_TOL(line1_pt1, min_pt, max_pt, tol->dist)) {
-        /* True when the point is outside the loopuse bounding box.
-         * Considering distance tolerance, the point is also not on
-         * the bounding box and therefore the point can not be on the
-         * loopuse.
-         */
-        bu_log("pt = %g %g %g min_pt = %g %g %g max_pt = %g %g %g\n", 
-               V3ARGS(line1_pt1), V3ARGS(min_pt), V3ARGS(max_pt));
-        bu_log("nmg_classify_pt_loop_new(): pt outside loopuse bb\n");
-        bu_log("\nnmg_classify_pt_loop_new(): END ==========================================\n\n");
-        return NMG_CLASS_AoutB;
+	/* True when the point is outside the loopuse bounding box.
+	 * Considering distance tolerance, the point is also not on
+	 * the bounding box and therefore the point can not be on the
+	 * loopuse.
+	 */
+	bu_log("pt = %g %g %g min_pt = %g %g %g max_pt = %g %g %g\n",
+	       V3ARGS(line1_pt1), V3ARGS(min_pt), V3ARGS(max_pt));
+	bu_log("nmg_classify_pt_loop_new(): pt outside loopuse bb\n");
+	bu_log("\nnmg_classify_pt_loop_new(): END ==========================================\n\n");
+	return NMG_CLASS_AoutB;
     }
 
     for (BU_LIST_FOR(eu1, edgeuse, &lu->down_hd)) {
-        NMG_CK_EDGEUSE(eu1);
-        if (eu1->vu_p->v_p == line1_pt1_v_ptr) {
-            bu_log("nmg_classify_pt_loop_new(): pt %g %g %g is same as a loopuse vertex\n",
-                    V3ARGS(eu1->vu_p->v_p->vg_p->coord));
-            bu_log("\nnmg_classify_pt_loop_new(): END ==========================================\n\n");
-            return NMG_CLASS_AonBshared;
-        } else {
-            if (bn_pt3_pt3_equal(eu1->vu_p->v_p->vg_p->coord, line1_pt1_v_ptr->vg_p->coord, tol)) {
-                bu_bomb("nmg_classify_pt_loop_new(): found unfused vertex\n");
-            }
-        }
+	NMG_CK_EDGEUSE(eu1);
+	if (eu1->vu_p->v_p == line1_pt1_v_ptr) {
+	    bu_log("nmg_classify_pt_loop_new(): pt %g %g %g is same as a loopuse vertex\n",
+		    V3ARGS(eu1->vu_p->v_p->vg_p->coord));
+	    bu_log("\nnmg_classify_pt_loop_new(): END ==========================================\n\n");
+	    return NMG_CLASS_AonBshared;
+	} else {
+	    if (bn_pt3_pt3_equal(eu1->vu_p->v_p->vg_p->coord, line1_pt1_v_ptr->vg_p->coord, tol)) {
+		bu_bomb("nmg_classify_pt_loop_new(): found unfused vertex\n");
+	    }
+	}
     }
 
     NMG_GET_FU_NORMAL(N, lu->up.fu_p);
 
     for (BU_LIST_FOR(eu1, edgeuse, &lu->down_hd)) {
-        NMG_CK_EDGEUSE(eu1);
-        if (eu1->eumate_p->vu_p->v_p->vg_p == eu1->vu_p->v_p->vg_p) {
-            bu_bomb("nmg_classify_pt_loop_new(): zero length edge\n");
-        } else if (bn_pt3_pt3_equal(eu1->eumate_p->vu_p->v_p->vg_p->coord, eu1->vu_p->v_p->vg_p->coord, tol)) {
-            bu_bomb("nmg_classify_pt_loop_new(): found unfused vertex, zero length edge\n");
-        }
+	NMG_CK_EDGEUSE(eu1);
+	if (eu1->eumate_p->vu_p->v_p->vg_p == eu1->vu_p->v_p->vg_p) {
+	    bu_bomb("nmg_classify_pt_loop_new(): zero length edge\n");
+	} else if (bn_pt3_pt3_equal(eu1->eumate_p->vu_p->v_p->vg_p->coord, eu1->vu_p->v_p->vg_p->coord, tol)) {
+	    bu_bomb("nmg_classify_pt_loop_new(): found unfused vertex, zero length edge\n");
+	}
 
-        line1_pt2 = eu1->vu_p->v_p->vg_p->coord;
-        VSUB2(line1_dir, line1_pt2, line1_pt1);
+	line1_pt2 = eu1->vu_p->v_p->vg_p->coord;
+	VSUB2(line1_dir, line1_pt2, line1_pt1);
 
-        hit_cnt = 0;
-        done = 0;
-        eu2 = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-        while(!done) {
-            if (BU_LIST_IS_HEAD(eu2, &lu->down_hd)) {
-                done = 1;
-            } else {
-                line2_pt1 = eu2->vu_p->v_p->vg_p->coord;
-                line2_pt2 = eu2->eumate_p->vu_p->v_p->vg_p->coord;
-                VSUB2(line2_dir, line2_pt2, line2_pt1);
+	hit_cnt = 0;
+	done = 0;
+	eu2 = BU_LIST_FIRST(edgeuse, &lu->down_hd);
+	while(!done) {
+	    if (BU_LIST_IS_HEAD(eu2, &lu->down_hd)) {
+		done = 1;
+	    } else {
+		line2_pt1 = eu2->vu_p->v_p->vg_p->coord;
+		line2_pt2 = eu2->eumate_p->vu_p->v_p->vg_p->coord;
+		VSUB2(line2_dir, line2_pt2, line2_pt1);
 
-                status = bn_isect_line3_line3(&line1_dist, &line2_dist, 
-                         line1_pt1, line1_dir, line2_pt1, line2_dir, tol);
+		status = bn_isect_line3_line3(&line1_dist, &line2_dist,
+			 line1_pt1, line1_dir, line2_pt1, line2_dir, tol);
 
-                if ( status == 1 ) {
-                    int on_vertex = 0;
-                    VSUB2(vec2, line2_pt2, line2_pt1);
-                    vec2_mag = MAGNITUDE(vec2);
-                    if ((line1_dist > -(tol->dist)) && (line2_dist > -(tol->dist)) &&
-                        (line2_dist < (vec2_mag + tol->dist))) {
-                        /* true when intercept is on the ray and on the edgeuse */
+		if ( status == 1 ) {
+		    int on_vertex = 0;
+		    VSUB2(vec2, line2_pt2, line2_pt1);
+		    vec2_mag = MAGNITUDE(vec2);
+		    if ((line1_dist > -(tol->dist)) && (line2_dist > -(tol->dist)) &&
+			(line2_dist < (vec2_mag + tol->dist))) {
+			/* true when intercept is on the ray and on the edgeuse */
 
-                        if (NEAR_ZERO(line1_dist, tol->dist)) {
-                            /* true when start point of ray is within distance tolerance of edgeuse */
-                            bu_log("normal intercept, pt on loopuse but not vertexuse, lu_ptr = %x pt = %g %g %g line1_dist = %g line2_dist = %g edgeuse pt1 %g %g %g pt2 %g %g %g\n",
-                                   lu, V3ARGS(line1_pt1), line1_dist, line2_dist, V3ARGS(line2_pt1), V3ARGS(line2_pt2));
-                            bu_bomb("normal intercept, pt on loopuse but not vertexuse\n");
-                            return NMG_CLASS_AonBshared;
-                        }
+			if (NEAR_ZERO(line1_dist, tol->dist)) {
+			    /* true when start point of ray is within distance tolerance of edgeuse */
+			    bu_log("normal intercept, pt on loopuse but not vertexuse, lu_ptr = %x pt = %g %g %g line1_dist = %g line2_dist = %g edgeuse pt1 %g %g %g pt2 %g %g %g\n",
+				   lu, V3ARGS(line1_pt1), line1_dist, line2_dist, V3ARGS(line2_pt1), V3ARGS(line2_pt2));
+			    bu_bomb("normal intercept, pt on loopuse but not vertexuse\n");
+			    return NMG_CLASS_AonBshared;
+			}
 
-                        if (NEAR_ZERO(line2_dist, tol->dist)) { 
-                            /* true when hit is on 1st vertex of edgeuse */
-                            VSUB2(x_dir, line2_pt1, line1_pt1);
-                            VCROSS(y_dir, N, x_dir);
-                            VSUB2(vec1, line2_pt2, line1_pt1);
-                            angle1 = bn_angle_measure(vec1, x_dir, y_dir);
-                            on_vertex = 1;
-                        }
+			if (NEAR_ZERO(line2_dist, tol->dist)) {
+			    /* true when hit is on 1st vertex of edgeuse */
+			    VSUB2(x_dir, line2_pt1, line1_pt1);
+			    VCROSS(y_dir, N, x_dir);
+			    VSUB2(vec1, line2_pt2, line1_pt1);
+			    angle1 = bn_angle_measure(vec1, x_dir, y_dir);
+			    on_vertex = 1;
+			}
 
-                        if (NEAR_ZERO(line2_dist - vec2_mag, tol->dist)) {
-                            /* true when hit is on 2st vertex of edgeuse */
-                            VSUB2(x_dir, line2_pt2, line1_pt1);
-                            VCROSS(y_dir, N, x_dir);
-                            VSUB2(vec1, line2_pt1, line1_pt1);
-                            angle1 = bn_angle_measure(vec1, x_dir, y_dir);
-                            on_vertex = 1;
-                        }
+			if (NEAR_ZERO(line2_dist - vec2_mag, tol->dist)) {
+			    /* true when hit is on 2st vertex of edgeuse */
+			    VSUB2(x_dir, line2_pt2, line1_pt1);
+			    VCROSS(y_dir, N, x_dir);
+			    VSUB2(vec1, line2_pt1, line1_pt1);
+			    angle1 = bn_angle_measure(vec1, x_dir, y_dir);
+			    on_vertex = 1;
+			}
 
-                        if (on_vertex) {
-                            if (angle1 > M_PI) {
-                                /* count hit only when non-hit vertex of edgeuse lies below ray */
-                                bu_log("hit-on-edgeuse-vertex ... ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g edge lu_ptr = %x ang1 = %g vec1 = %g %g %g N = %g %g %g %g, x_dir = %g %g %g y_dir = %g %g %g\n",
-                                      V3ARGS(line1_pt1), V3ARGS(line1_pt2), V3ARGS(line2_pt1), 
-                                      V3ARGS(line2_pt2), lu, angle1, V3ARGS(vec1), V4ARGS(N), 
-                                      V3ARGS(x_dir), V3ARGS(y_dir));
-                                hit_cnt++;
-                            }
-                        } else {
-                            bu_log("hit-on-edgeuse-non-vertex ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g edge lu_ptr = %x N = %g %g %g %g\n",
-                                  V3ARGS(line1_pt1), V3ARGS(line1_pt2), V3ARGS(line2_pt1), 
-                                  V3ARGS(line2_pt2), lu, V4ARGS(N));
-                            hit_cnt++;
-                        }
-                    }
-                    eu2 = BU_LIST_PNEXT(edgeuse, eu2);
-                }
+			if (on_vertex) {
+			    if (angle1 > M_PI) {
+				/* count hit only when non-hit vertex of edgeuse lies below ray */
+				bu_log("hit-on-edgeuse-vertex ... ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g edge lu_ptr = %x ang1 = %g vec1 = %g %g %g N = %g %g %g %g, x_dir = %g %g %g y_dir = %g %g %g\n",
+				      V3ARGS(line1_pt1), V3ARGS(line1_pt2), V3ARGS(line2_pt1),
+				      V3ARGS(line2_pt2), lu, angle1, V3ARGS(vec1), V4ARGS(N),
+				      V3ARGS(x_dir), V3ARGS(y_dir));
+				hit_cnt++;
+			    }
+			} else {
+			    bu_log("hit-on-edgeuse-non-vertex ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g edge lu_ptr = %x N = %g %g %g %g\n",
+				  V3ARGS(line1_pt1), V3ARGS(line1_pt2), V3ARGS(line2_pt1),
+				  V3ARGS(line2_pt2), lu, V4ARGS(N));
+			    hit_cnt++;
+			}
+		    }
+		    eu2 = BU_LIST_PNEXT(edgeuse, eu2);
+		}
 
-                if (status == 0) {
-                    bu_log("nmg_classify_pt_loop_new(): co-linear, ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g lu_ptr = %x line1_dist = %g line2_dist = %g\n",
-                           V3ARGS(line1_pt1), V3ARGS(line1_pt2), V3ARGS(line2_pt1), 
-                           V3ARGS(line2_pt2), lu, line1_dist, line2_dist);
-                    VSUB2(line1_dir, line1_pt2, line1_pt1);
-                    VSUB2(line2_dir, line2_pt2, line2_pt1);
+		if (status == 0) {
+		    bu_log("nmg_classify_pt_loop_new(): co-linear, ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g lu_ptr = %x line1_dist = %g line2_dist = %g\n",
+			   V3ARGS(line1_pt1), V3ARGS(line1_pt2), V3ARGS(line2_pt1),
+			   V3ARGS(line2_pt2), lu, line1_dist, line2_dist);
+		    VSUB2(line1_dir, line1_pt2, line1_pt1);
+		    VSUB2(line2_dir, line2_pt2, line2_pt1);
 
-                    /* test if ray start point is on edgeuse */
-                    if (((line1_dist > SMALL_FASTF) && (line2_dist < -SMALL_FASTF)) ||
-                        ((line1_dist < -SMALL_FASTF) && (line2_dist > SMALL_FASTF))) {
-                        /* true when the sign of the two distances are opposite */
-                        /* if the point was on one of the loopuse vertices, it would
-                         * have been determined in the earlier logic. no need to
-                         * consider any of the in/out results because they are
-                         * inconclusive if the point is on the edgeuse.
-                         */
+		    /* test if ray start point is on edgeuse */
+		    if (((line1_dist > SMALL_FASTF) && (line2_dist < -SMALL_FASTF)) ||
+			((line1_dist < -SMALL_FASTF) && (line2_dist > SMALL_FASTF))) {
+			/* true when the sign of the two distances are opposite */
+			/* if the point was on one of the loopuse vertices, it would
+			 * have been determined in the earlier logic. no need to
+			 * consider any of the in/out results because they are
+			 * inconclusive if the point is on the edgeuse.
+			 */
 
-                        bu_log("co-linear, pt on loopuse but not vertexuse, lu_ptr = %x pt = %g %g %g line1_dist = %g line2_dist = %g edgeuse pt1 %g %g %g pt2 %g %g %g\n",
-                               lu, V3ARGS(line1_pt1), line1_dist, line2_dist, 
-                               V3ARGS(line2_pt1), V3ARGS(line2_pt2));
-                        bu_bomb("co-linear, pt on loopuse but not vertexuse\n");
-                        return NMG_CLASS_AonBshared;
+			bu_log("co-linear, pt on loopuse but not vertexuse, lu_ptr = %x pt = %g %g %g line1_dist = %g line2_dist = %g edgeuse pt1 %g %g %g pt2 %g %g %g\n",
+			       lu, V3ARGS(line1_pt1), line1_dist, line2_dist,
+			       V3ARGS(line2_pt1), V3ARGS(line2_pt2));
+			bu_bomb("co-linear, pt on loopuse but not vertexuse\n");
+			return NMG_CLASS_AonBshared;
 
-                    } else if ((line1_dist > SMALL_FASTF) && (line2_dist > SMALL_FASTF)) {
-                        /* true when both intercepts are on the ray 
-                         * this is not a hit but we need to keep track of these
-                         * future hits on these vertices are inconclusive
-                         */
-                        bu_log("nmg_classify_pt_loop_new(): co-linear ON RAY, ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g lu_ptr = %x line1_dist = %g line2_dist = %g\n",
-                               V3ARGS(line1_pt1), V3ARGS(line1_pt2), V3ARGS(line2_pt1), 
-                               V3ARGS(line2_pt2), lu, line1_dist, line2_dist);
-                        eu2 = BU_LIST_PNEXT(edgeuse, eu2);
-                    } else {
-                        eu2 = BU_LIST_PNEXT(edgeuse, eu2);
-                    }
-                } /* end of status = 0 if statement */
+		    } else if ((line1_dist > SMALL_FASTF) && (line2_dist > SMALL_FASTF)) {
+			/* true when both intercepts are on the ray
+			 * this is not a hit but we need to keep track of these
+			 * future hits on these vertices are inconclusive
+			 */
+			bu_log("nmg_classify_pt_loop_new(): co-linear ON RAY, ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g lu_ptr = %x line1_dist = %g line2_dist = %g\n",
+			       V3ARGS(line1_pt1), V3ARGS(line1_pt2), V3ARGS(line2_pt1),
+			       V3ARGS(line2_pt2), lu, line1_dist, line2_dist);
+			eu2 = BU_LIST_PNEXT(edgeuse, eu2);
+		    } else {
+			eu2 = BU_LIST_PNEXT(edgeuse, eu2);
+		    }
+		} /* end of status = 0 if statement */
 
-                if (status != 1 && status != 0) {
-                    eu2 = BU_LIST_PNEXT(edgeuse, eu2);
-                }
-            }
-        } /* end of while-loop */
+		if (status != 1 && status != 0) {
+		    eu2 = BU_LIST_PNEXT(edgeuse, eu2);
+		}
+	    }
+	} /* end of while-loop */
 
-        if (hit_cnt != 0) {
-            if (NEAR_ZERO((hit_cnt/2.0) - floor(hit_cnt/2.0), SMALL_FASTF)) {
-                /* true when hit_cnt is even */
-                bu_log("nmg_classify_pt_loop_new(): hit_cnt = %d %f %f EVEN\n", 
-                        hit_cnt, (hit_cnt/2.0), floor(hit_cnt/2.0));
-                out_cnt++;
-            } else {
-                bu_log("nmg_classify_pt_loop_new(): hit_cnt = %d %f %f ODD\n", 
-                        hit_cnt, (hit_cnt/2.0), floor(hit_cnt/2.0));
-                in_cnt++;
-            }
-        }
+	if (hit_cnt != 0) {
+	    if (NEAR_ZERO((hit_cnt/2.0) - floor(hit_cnt/2.0), SMALL_FASTF)) {
+		/* true when hit_cnt is even */
+		bu_log("nmg_classify_pt_loop_new(): hit_cnt = %d %f %f EVEN\n",
+			hit_cnt, (hit_cnt/2.0), floor(hit_cnt/2.0));
+		out_cnt++;
+	    } else {
+		bu_log("nmg_classify_pt_loop_new(): hit_cnt = %d %f %f ODD\n",
+			hit_cnt, (hit_cnt/2.0), floor(hit_cnt/2.0));
+		in_cnt++;
+	    }
+	}
     }
 
     if (((out_cnt > 0) && (in_cnt != 0)) || ((in_cnt > 0) && (out_cnt != 0))) {
-        bu_log("lu ptr = %x pt = %g %g %g in_cnt = %d out_cnt = %d on_cnt = %d\n", 
-               lu, V3ARGS(line1_pt1), in_cnt, out_cnt, on_cnt);
-        bu_log("nmg_classify_pt_loop_new(): inconsistent result, point both inside and outside loopuse\n");
+	bu_log("lu ptr = %x pt = %g %g %g in_cnt = %d out_cnt = %d on_cnt = %d\n",
+	       lu, V3ARGS(line1_pt1), in_cnt, out_cnt, on_cnt);
+	bu_log("nmg_classify_pt_loop_new(): inconsistent result, point both inside and outside loopuse\n");
     }
 
     if (out_cnt > 0) {
-        bu_log("\nnmg_classify_pt_loop_new(): END ==========================================\n\n");
-        return NMG_CLASS_AoutB;
+	bu_log("\nnmg_classify_pt_loop_new(): END ==========================================\n\n");
+	return NMG_CLASS_AoutB;
     }
     if (in_cnt > 0) {
-        bu_log("\nnmg_classify_pt_loop_new(): END ==========================================\n\n");
-        return NMG_CLASS_AinB;
+	bu_log("\nnmg_classify_pt_loop_new(): END ==========================================\n\n");
+	return NMG_CLASS_AinB;
     }
 
     bu_log("in_cnt = %d out_cnt = %d on_cnt = %d\n", in_cnt, out_cnt, on_cnt);
@@ -4036,38 +4036,38 @@ nmg_classify_lu_lu_new(const struct loopuse *lu1, const struct loopuse *lu2, con
     NMG_CK_LOOPUSE(lu2);
 
     if (BU_LIST_FIRST_MAGIC(&lu1->down_hd) != NMG_EDGEUSE_MAGIC) {
-        bu_bomb("nmg_classify_lu_lu_new(): loopuse lu1 contains no edgeuse\n");
+	bu_bomb("nmg_classify_lu_lu_new(): loopuse lu1 contains no edgeuse\n");
     }
 
     for (BU_LIST_FOR(eu, edgeuse, &lu1->down_hd)) {
 
-        status = nmg_classify_pt_loop_new(eu->vu_p->v_p, lu2, tol);
+	status = nmg_classify_pt_loop_new(eu->vu_p->v_p, lu2, tol);
 
-        if (status == NMG_CLASS_AoutB) {
-            out_cnt++;
-        }
-        if (status == NMG_CLASS_AinB) {
-            in_cnt++;
-        }
-        if (status == NMG_CLASS_AonBshared) {
-            on_cnt++;
-        }
+	if (status == NMG_CLASS_AoutB) {
+	    out_cnt++;
+	}
+	if (status == NMG_CLASS_AinB) {
+	    in_cnt++;
+	}
+	if (status == NMG_CLASS_AonBshared) {
+	    on_cnt++;
+	}
     }
 
     if (((out_cnt > 0) && (in_cnt != 0)) || ((in_cnt > 0) && (out_cnt != 0))) {
-        bu_log("in_cnt = %d out_cnt = %d on_cnt = %d\n", in_cnt, out_cnt, on_cnt);
-        bu_log("nmg_classify_lu_lu_new(): inconsistent result, point both inside and outside loopuse\n");
+	bu_log("in_cnt = %d out_cnt = %d on_cnt = %d\n", in_cnt, out_cnt, on_cnt);
+	bu_log("nmg_classify_lu_lu_new(): inconsistent result, point both inside and outside loopuse\n");
     }
 
     if (out_cnt > 0) {
-        return NMG_CLASS_AoutB;
+	return NMG_CLASS_AoutB;
     }
     if (in_cnt > 0) {
-        return NMG_CLASS_AinB;
+	return NMG_CLASS_AinB;
     }
 
-    bu_log("lu1_ptr = %x lu2_ptr = %x in_cnt = %d out_cnt = %d on_cnt = %d\n", 
-            lu1, lu2, in_cnt, out_cnt, on_cnt);
+    bu_log("lu1_ptr = %x lu2_ptr = %x in_cnt = %d out_cnt = %d on_cnt = %d\n",
+	    lu1, lu2, in_cnt, out_cnt, on_cnt);
     bu_bomb("nmg_classify_lu_lu_new(): should not be here\n");
 
     return NMG_CLASS_Unknown; /* error */
@@ -4082,7 +4082,7 @@ insert_above(struct loopuse *lu, struct loopuse_tree_node *node, const struct bn
     int result;
 
     if (node->l.magic == BU_LIST_HEAD_MAGIC) {
-        bu_bomb("insert_above(): was passed bu_list head, should have received bu_list node\n");
+	bu_bomb("insert_above(): was passed bu_list head, should have received bu_list node\n");
     }
 
     NMG_CK_LOOPUSE(lu);
@@ -4102,27 +4102,27 @@ insert_above(struct loopuse *lu, struct loopuse_tree_node *node, const struct bn
     bu_log("insert_above(): lu_p = %x node ptr = %x new_node ptr = %x\n", lu, node, new_node);
 
     if (node_idx->l.magic == BU_LIST_HEAD_MAGIC) {
-        return;
+	return;
     }
 
     while (!done) {
-        if (node_idx->l.magic == BU_LIST_HEAD_MAGIC) {
-            done = 1;
-        } else {
-            NMG_CK_LOOPUSE(node_idx->lu);
-            result = nmg_classify_lu_lu(node_idx->lu, lu, tol);
+	if (node_idx->l.magic == BU_LIST_HEAD_MAGIC) {
+	    done = 1;
+	} else {
+	    NMG_CK_LOOPUSE(node_idx->lu);
+	    result = nmg_classify_lu_lu(node_idx->lu, lu, tol);
 
-            if (result == NMG_CLASS_AinB) {
-                node_tmp = BU_LIST_PNEXT(loopuse_tree_node, node_idx);
-                BU_LIST_DEQUEUE(&(node_idx->l));
-                node_idx->parent = new_node;
-                BU_LIST_APPEND(&(new_node->children_hd), &(node_idx->l));
-                bu_log("insert_above(): adjust lu_p = %x node ptr = %x new_node ptr = %x\n", lu, node_idx, new_node);
-                node_idx = node_tmp;
-            } else {
-                node_idx = BU_LIST_PNEXT(loopuse_tree_node, node_idx);
-            }
-        }
+	    if (result == NMG_CLASS_AinB) {
+		node_tmp = BU_LIST_PNEXT(loopuse_tree_node, node_idx);
+		BU_LIST_DEQUEUE(&(node_idx->l));
+		node_idx->parent = new_node;
+		BU_LIST_APPEND(&(new_node->children_hd), &(node_idx->l));
+		bu_log("insert_above(): adjust lu_p = %x node ptr = %x new_node ptr = %x\n", lu, node_idx, new_node);
+		node_idx = node_tmp;
+	    } else {
+		node_idx = BU_LIST_PNEXT(loopuse_tree_node, node_idx);
+	    }
+	}
     }
     BU_LIST_APPEND(&(new_node->parent->children_hd), &(new_node->l));
 
@@ -4131,7 +4131,7 @@ insert_above(struct loopuse *lu, struct loopuse_tree_node *node, const struct bn
 
 void
 insert_node(struct loopuse *lu, struct bu_list *head,
-            struct loopuse_tree_node *parent, const struct bn_tol *tol)
+	    struct loopuse_tree_node *parent, const struct bn_tol *tol)
 {
     /* when 'insert_node' is first called, the level must be '0' */
     int found = 0;
@@ -4145,77 +4145,77 @@ insert_node(struct loopuse *lu, struct bu_list *head,
     NMG_CK_LOOPUSE(lu);
 
     if (BU_LIST_NON_EMPTY(head)) {
-        for (BU_LIST_FOR(node, loopuse_tree_node, head)) {
-            NMG_CK_LOOPUSE(node->lu);
+	for (BU_LIST_FOR(node, loopuse_tree_node, head)) {
+	    NMG_CK_LOOPUSE(node->lu);
 
-            orientation_tmp_a = lu->orientation;
-            orientation_tmp_b = node->lu->orientation;
-            lu->orientation = 1;
-            node->lu->orientation = 1;
-            result1 = nmg_classify_lu_lu(lu, node->lu, tol);
-            lu->orientation = orientation_tmp_a;
-            node->lu->orientation = orientation_tmp_b;
-            bu_log("---- lu %x %d vs lu %x %d result1 = %d\n", 
-                   lu, lu->orientation, node->lu, node->lu->orientation, result1);
+	    orientation_tmp_a = lu->orientation;
+	    orientation_tmp_b = node->lu->orientation;
+	    lu->orientation = 1;
+	    node->lu->orientation = 1;
+	    result1 = nmg_classify_lu_lu(lu, node->lu, tol);
+	    lu->orientation = orientation_tmp_a;
+	    node->lu->orientation = orientation_tmp_b;
+	    bu_log("---- lu %x %d vs lu %x %d result1 = %d\n",
+		   lu, lu->orientation, node->lu, node->lu->orientation, result1);
 
-            orientation_tmp_a = node->lu->orientation;
-            orientation_tmp_b = lu->orientation;
-            node->lu->orientation = 1;
-            lu->orientation = 1;
-            result_tmp = nmg_classify_lu_lu_new(node->lu, lu, tol);
-            bu_log("NEW FUNCTION ---- lu %x lu-orient = %d vs lu %x lu-orient = %d result_tmp = %d\n", 
-                   node->lu, node->lu->orientation, lu, lu->orientation, result_tmp);
-            result2 = nmg_classify_lu_lu(node->lu, lu, tol);
+	    orientation_tmp_a = node->lu->orientation;
+	    orientation_tmp_b = lu->orientation;
+	    node->lu->orientation = 1;
+	    lu->orientation = 1;
+	    result_tmp = nmg_classify_lu_lu_new(node->lu, lu, tol);
+	    bu_log("NEW FUNCTION ---- lu %x lu-orient = %d vs lu %x lu-orient = %d result_tmp = %d\n",
+		   node->lu, node->lu->orientation, lu, lu->orientation, result_tmp);
+	    result2 = nmg_classify_lu_lu(node->lu, lu, tol);
 
-            node->lu->orientation = orientation_tmp_a;
-            lu->orientation = orientation_tmp_b;
-            bu_log("OLD FUNCTION ---- lu %x lu-orient = %d vs lu %x lu-orient = %d ...result2 = %d\n", 
-                   node->lu, node->lu->orientation, lu, lu->orientation, result2);
+	    node->lu->orientation = orientation_tmp_a;
+	    lu->orientation = orientation_tmp_b;
+	    bu_log("OLD FUNCTION ---- lu %x lu-orient = %d vs lu %x lu-orient = %d ...result2 = %d\n",
+		   node->lu, node->lu->orientation, lu, lu->orientation, result2);
 
-            if (result_tmp != result2) {
-                bu_log("nmg_classify_lu_lu_new != nmg_classify_lu_lu\n");
-            }
+	    if (result_tmp != result2) {
+		bu_log("nmg_classify_lu_lu_new != nmg_classify_lu_lu\n");
+	    }
 
-            if (result1 == NMG_CLASS_AinB) {
-                /* insert new node below current node */
-                found = 1;
-                bu_log("lu %x in lu %x\n", lu, node->lu);
-                insert_node(lu, &(node->children_hd), parent, tol);
-                break;
-            }
-            if (result2 == NMG_CLASS_AinB) {
-                /* insert new node above current node */
-                found = 1;
-                bu_log("lu %x in lu %x\n", node->lu, lu);
-                break;
-            }
-        }
+	    if (result1 == NMG_CLASS_AinB) {
+		/* insert new node below current node */
+		found = 1;
+		bu_log("lu %x in lu %x\n", lu, node->lu);
+		insert_node(lu, &(node->children_hd), parent, tol);
+		break;
+	    }
+	    if (result2 == NMG_CLASS_AinB) {
+		/* insert new node above current node */
+		found = 1;
+		bu_log("lu %x in lu %x\n", node->lu, lu);
+		break;
+	    }
+	}
     }
 
     if (!found) {
-        bu_log("lu %x in lu %x\n", lu, parent->lu);
+	bu_log("lu %x in lu %x\n", lu, parent->lu);
     }
 
     if (!found || (result2 == NMG_CLASS_AinB)) {
-        BU_GET(new_node, struct loopuse_tree_node);
-        BU_LIST_INIT(&(new_node->l));
-        /* unset magic from BU_LIST_HEAD_MAGIC to zero since this node
-         * is not going to be a head
-         */ 
-        new_node->l.magic = 1;
-        new_node->lu = lu;
-        new_node->parent = parent;
-        BU_LIST_INIT(&(new_node->children_hd));  /* also sets magic to BU_LIST_HEAD_MAGIC */
-        BU_LIST_APPEND(head, &(new_node->l));
-        bu_log("insert-node, insert-node ptr = %x, lu_p = %x parent ptr = %x\n", 
-                &(new_node->l), new_node->lu, new_node->parent);
+	BU_GET(new_node, struct loopuse_tree_node);
+	BU_LIST_INIT(&(new_node->l));
+	/* unset magic from BU_LIST_HEAD_MAGIC to zero since this node
+	 * is not going to be a head
+	 */
+	new_node->l.magic = 1;
+	new_node->lu = lu;
+	new_node->parent = parent;
+	BU_LIST_INIT(&(new_node->children_hd));  /* also sets magic to BU_LIST_HEAD_MAGIC */
+	BU_LIST_APPEND(head, &(new_node->l));
+	bu_log("insert-node, insert-node ptr = %x, lu_p = %x parent ptr = %x\n",
+		&(new_node->l), new_node->lu, new_node->parent);
     }
 
     if (found) {
-        if (result2 == NMG_CLASS_AinB) {
-            BU_LIST_DEQUEUE(&(node->l));
-            BU_LIST_APPEND(&(new_node->children_hd), &(node->l));
-        }
+	if (result2 == NMG_CLASS_AinB) {
+	    BU_LIST_DEQUEUE(&(node->l));
+	    BU_LIST_APPEND(&(new_node->children_hd), &(node->l));
+	}
     }
 
     return;
@@ -4240,18 +4240,18 @@ nmg_build_loopuse_tree(struct faceuse *fu, struct loopuse_tree_node **root, cons
 
     loopuse_cnt = 0;
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-        NMG_CK_LOOPUSE(lu);
-        loopuse_cnt++;
-        bu_log("nmg_build_loopuse_tree(): %d fu_p = %x lu_p = %x\n", loopuse_cnt, fu, lu);
+	NMG_CK_LOOPUSE(lu);
+	loopuse_cnt++;
+	bu_log("nmg_build_loopuse_tree(): %d fu_p = %x lu_p = %x\n", loopuse_cnt, fu, lu);
     }
 
     loopuse_cnt = 0;
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-        NMG_CK_LOOPUSE(lu);
-        loopuse_cnt++;
-        bu_log("nmg_build_loopuse_tree(): %d fu_p = %x lu_p = %x\n", loopuse_cnt, fu, lu);
-        bu_log("nmg_build_loopuse_tree(): root child ptr = %x root ptr = %x\n", &((*root)->children_hd), *root);
-        insert_node(lu, &((*root)->children_hd), *root, tol);
+	NMG_CK_LOOPUSE(lu);
+	loopuse_cnt++;
+	bu_log("nmg_build_loopuse_tree(): %d fu_p = %x lu_p = %x\n", loopuse_cnt, fu, lu);
+	bu_log("nmg_build_loopuse_tree(): root child ptr = %x root ptr = %x\n", &((*root)->children_hd), *root);
+	insert_node(lu, &((*root)->children_hd), *root, tol);
     }
 }
 
@@ -4285,46 +4285,46 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
     }
 
     if (rt_g.NMG_debug & DEBUG_TRI) {
-        nmg_plot_fu("nmg_triangulate_fu_unprocessed_faceuse", fu, tol);
+	nmg_plot_fu("nmg_triangulate_fu_unprocessed_faceuse", fu, tol);
     }
 
     /* test if this faceuse needs triangulation. this for-loop is
-     * to prevent extra processing on simple faceuse. after 
+     * to prevent extra processing on simple faceuse. after
      * initial processing of more complex faceuse we will need to
      * test the faceuse again if it needs to be triangulated
      */
     need_triangulation = 0;
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-        NMG_CK_LOOPUSE(lu);
-        if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
-            continue;
-        }
-        if (!((lu->orientation == OT_SAME) || (lu->orientation == OT_OPPOSITE))) {
-            bu_bomb("nmg_triangulate_fu(): loopuse orientation must be OT_SAME or OT_OPPOSITE\n");
-        }
-        if (lu->orientation == OT_OPPOSITE) {
-            /* the faceuse must contain only exterior loopuse
-             * to possibly skip triangulation
-             */
-            need_triangulation++;
-        } else {
-            vert_count = 0;
-            for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-                NMG_CK_EDGEUSE(eu);
-                vert_count++;
-            }
-            if (vert_count != 3) {
-                /* we want to process the loopuse if any have more
-                 * or less than 3 vertices. if less than 3, we want
-                 * to remove these loopuse, if greater than 3 we
-                 * want to triangulate them
-                 */
-                need_triangulation++;
-            }
-        }
+	NMG_CK_LOOPUSE(lu);
+	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+	    continue;
+	}
+	if (!((lu->orientation == OT_SAME) || (lu->orientation == OT_OPPOSITE))) {
+	    bu_bomb("nmg_triangulate_fu(): loopuse orientation must be OT_SAME or OT_OPPOSITE\n");
+	}
+	if (lu->orientation == OT_OPPOSITE) {
+	    /* the faceuse must contain only exterior loopuse
+	     * to possibly skip triangulation
+	     */
+	    need_triangulation++;
+	} else {
+	    vert_count = 0;
+	    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		NMG_CK_EDGEUSE(eu);
+		vert_count++;
+	    }
+	    if (vert_count != 3) {
+		/* we want to process the loopuse if any have more
+		 * or less than 3 vertices. if less than 3, we want
+		 * to remove these loopuse, if greater than 3 we
+		 * want to triangulate them
+		 */
+		need_triangulation++;
+	    }
+	}
     }
     if (!need_triangulation) {
-        return;
+	return;
     }
 
     /* do some cleanup before anything else */
@@ -4345,12 +4345,12 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
     nmg_triangulate_rm_degen_loopuse(fu, tol);
 
     if (BU_LIST_IS_EMPTY(&fu->lu_hd)) {
-        /* faceuse contains no loopuse */
-        return;
+	/* faceuse contains no loopuse */
+	return;
     }
 
     if (rt_g.NMG_debug & DEBUG_TRI) {
-        nmg_plot_fu("nmg_triangulate_fu_after_cleanup_after_degen_loopuse_killed", fu, tol);
+	nmg_plot_fu("nmg_triangulate_fu_after_cleanup_after_degen_loopuse_killed", fu, tol);
     }
 
     if (rt_g.NMG_debug & DEBUG_TRI) {
@@ -4361,7 +4361,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
     tbl2d = nmg_flatten_face(fu, TformMat);
 
     if (rt_g.NMG_debug & DEBUG_TRI) {
-        validate_tbl2d("before nmg_triangulate_rm_holes", tbl2d, fu);
+	validate_tbl2d("before nmg_triangulate_rm_holes", tbl2d, fu);
     }
 
     /* remove holes from faceuse. this is done by converting inner
@@ -4373,7 +4373,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
     nmg_triangulate_rm_holes(fu, tbl2d, tol);
 
     if (rt_g.NMG_debug & DEBUG_TRI) {
-        validate_tbl2d("after nmg_triangulate_rm_holes", tbl2d, fu);
+	validate_tbl2d("after nmg_triangulate_rm_holes", tbl2d, fu);
     }
 
     /* this 'while loop' goes through each loopuse within the faceuse
@@ -4387,82 +4387,82 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
     lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
     vert_count = 0;
     while(BU_LIST_NOT_HEAD(lu, &fu->lu_hd)) {
-        NMG_CK_LOOPUSE(lu);
-        cut = 0;
-        if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-            /* true when loopuse contains edgeuse */
-            vert_count = 0;
-            for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-                NMG_CK_EDGEUSE(eu);
-                vert_count++;
-            }
-            /* only ear-clip loopuse with > 3 vertices */
-            if (vert_count > 3) {
-                /* test loopuse rotation */                       
-                ccw_result = nmg_loop_is_ccw(lu, fu_normal, tol);
-                if (ccw_result == 1) {
-                    /* true when loopuse rotation is ccw */
-                    if (lu->orientation != OT_SAME) {
-                        /* set loopuse orientation to OT_SAME */
-                        nmg_set_lu_orientation(lu, 0);
-                    }
-                    /* ear clip loopuse */
-                    cut_unimonotone(tbl2d, lu, tol);
-                    cut = 1;
-                } else if (ccw_result == -1 || ccw_result == 0) {
-                    /* true when loopuse rotation is cw or unknown */
-                    bu_log("nmg_triangulate_fu(): lu = 0x%lx ccw_result = %d\n", 
-                           (unsigned long)lu, ccw_result);
-                    vert_count = 0;
-                    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-                        vert_count++;
-                        bu_log("nmg_triangulate_fu(): %d ccw_result = %d lu = %x coord = %g %g %g\n", 
-                               vert_count, ccw_result, lu, V3ARGS(eu->vu_p->v_p->vg_p->coord));
-                    }
-                    bu_bomb("nmg_triangulate_fu(): attempted to cut problem loopuse\n");
-                } else {
-                    bu_bomb("nmg_triangulate_fu(): function nmg_loop_is_ccw returned invalid result\n");
-                }
-            }
-        }
-        if (cut) {
-            /* since a cut was made, continue with the first
-             * loopuse in the faceuse
-             */
-            lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-        } else {
-            /* since no cut was made, continue with the next
-             * loopuse in the faceuse
-             */
-            lu = BU_LIST_PNEXT(loopuse, lu);
-        }
+	NMG_CK_LOOPUSE(lu);
+	cut = 0;
+	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+	    /* true when loopuse contains edgeuse */
+	    vert_count = 0;
+	    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		NMG_CK_EDGEUSE(eu);
+		vert_count++;
+	    }
+	    /* only ear-clip loopuse with > 3 vertices */
+	    if (vert_count > 3) {
+		/* test loopuse rotation */
+		ccw_result = nmg_loop_is_ccw(lu, fu_normal, tol);
+		if (ccw_result == 1) {
+		    /* true when loopuse rotation is ccw */
+		    if (lu->orientation != OT_SAME) {
+			/* set loopuse orientation to OT_SAME */
+			nmg_set_lu_orientation(lu, 0);
+		    }
+		    /* ear clip loopuse */
+		    cut_unimonotone(tbl2d, lu, tol);
+		    cut = 1;
+		} else if (ccw_result == -1 || ccw_result == 0) {
+		    /* true when loopuse rotation is cw or unknown */
+		    bu_log("nmg_triangulate_fu(): lu = 0x%lx ccw_result = %d\n",
+			   (unsigned long)lu, ccw_result);
+		    vert_count = 0;
+		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+			vert_count++;
+			bu_log("nmg_triangulate_fu(): %d ccw_result = %d lu = %x coord = %g %g %g\n",
+			       vert_count, ccw_result, lu, V3ARGS(eu->vu_p->v_p->vg_p->coord));
+		    }
+		    bu_bomb("nmg_triangulate_fu(): attempted to cut problem loopuse\n");
+		} else {
+		    bu_bomb("nmg_triangulate_fu(): function nmg_loop_is_ccw returned invalid result\n");
+		}
+	    }
+	}
+	if (cut) {
+	    /* since a cut was made, continue with the first
+	     * loopuse in the faceuse
+	     */
+	    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+	} else {
+	    /* since no cut was made, continue with the next
+	     * loopuse in the faceuse
+	     */
+	    lu = BU_LIST_PNEXT(loopuse, lu);
+	}
     } /* close of 'loopuse while loop' */
-        
+
     if (1 || rt_g.NMG_debug & DEBUG_TRI) {
-        /* sanity check */
-        /* after triangulation, verify all loopuse contains <= 3 vertices
-         * and those loopuse with 3 vertices do not have a cw rotation 
-         */
-        for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-            if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
-                vert_count = 0;
-                for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-                    vert_count++;
-                    if (vert_count > 3) {
-                        bu_bomb("nmg_triangulate_fu(): after ear-clipping found loopuse with > 3 vertices\n");
-                    } else if (vert_count == 3) {
-                        ccw_result = nmg_loop_is_ccw(lu, fu_normal, tol);
-                        if (ccw_result == -1) {
-                            bu_bomb("nmg_triangulate_fu(): after ear-clipping found loopuse with cw rotation\n");
-                        }
-                    }
-                }
-            }
-        }
+	/* sanity check */
+	/* after triangulation, verify all loopuse contains <= 3 vertices
+	 * and those loopuse with 3 vertices do not have a cw rotation
+	 */
+	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+		vert_count = 0;
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		    vert_count++;
+		    if (vert_count > 3) {
+			bu_bomb("nmg_triangulate_fu(): after ear-clipping found loopuse with > 3 vertices\n");
+		    } else if (vert_count == 3) {
+			ccw_result = nmg_loop_is_ccw(lu, fu_normal, tol);
+			if (ccw_result == -1) {
+			    bu_bomb("nmg_triangulate_fu(): after ear-clipping found loopuse with cw rotation\n");
+			}
+		    }
+		}
+	    }
+	}
     }
 
     if (rt_g.NMG_debug & DEBUG_TRI) {
-        validate_tbl2d("nmg_triangulate_fu() after triangulation, before lu_reorient", tbl2d, fu);
+	validate_tbl2d("nmg_triangulate_fu() after triangulation, before lu_reorient", tbl2d, fu);
     }
 
     /* removes loopuse with < 3 vertices i.e. degenerate loopuse */
@@ -4470,12 +4470,12 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
     nmg_triangulate_rm_degen_loopuse(fu, tol);
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-        /* set the loopuse orientation to OT_SAME */
-        nmg_set_lu_orientation(lu, 0);
+	/* set the loopuse orientation to OT_SAME */
+	nmg_set_lu_orientation(lu, 0);
     }
 
     if (rt_g.NMG_debug & DEBUG_TRI) {
-        validate_tbl2d("nmg_triangulate_fu() after triangulation, after lu_reorient", tbl2d, fu);
+	validate_tbl2d("nmg_triangulate_fu() after triangulation, after lu_reorient", tbl2d, fu);
     }
 
     while (BU_LIST_WHILE(pt, pt2d, tbl2d)) {
@@ -4732,7 +4732,7 @@ nmg_triangulate_model(struct model *m, const struct bn_tol *tol)
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	NMG_CK_REGION(r);
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
-            nmg_triangulate_shell(s, tol);
+	    nmg_triangulate_shell(s, tol);
 	}
     }
 
@@ -4751,4 +4751,3 @@ nmg_triangulate_model(struct model *m, const struct bn_tol *tol)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

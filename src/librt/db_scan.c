@@ -74,13 +74,13 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 
 /* argument for handler */
 {
-    union record record;		/* Initial record, holds name */
+    union record record;	/* Initial record, holds name */
     union record rec2;		/* additional record(s) */
-    register off_t addr;		/* start of current rec */
-    register off_t here;		/* intermediate positions */
-    register off_t next;		/* start of next rec */
+    register off_t addr;	/* start of current rec */
+    register long here;		/* intermediate positions */
+    register long next;		/* start of next rec */
     register int nrec;		/* # records for this solid */
-    register int totrec;		/* # records for database */
+    register int totrec;	/* # records for database */
     register long j;
 
     RT_CK_DBI(dbip);
@@ -95,26 +95,28 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 	return -1;
     }
     rewind(dbip->dbi_fp);
-    next = (off_t)ftell(dbip->dbi_fp);
+    next = ftell(dbip->dbi_fp);
     if (next < 0) {
 	perror("ftell");
 	next = 0;
     }
 
-    here = addr = (off_t)-1;
+    here = -1;
+    addr = (off_t)0L;
+
     totrec = 0;
     while (1) {
 	nrec = 0;
-	if (fseek(dbip->dbi_fp, next, 0) != 0) {
-	    bu_log("db_scan:  fseek(offset=%d) failure\n", next);
+	if (fseek(dbip->dbi_fp, (off_t)next, 0) != 0) {
+	    bu_log("db_scan:  fseek(offset=%ld) failure\n", next);
 	    return -1;
 	}
-	addr = next;
+	addr = (off_t)next;
 
 	if (fread((char *)&record, sizeof record, 1, dbip->dbi_fp) != 1
 	    || feof(dbip->dbi_fp))
 	    break;
-	next = (off_t)ftell(dbip->dbi_fp);
+	next = ftell(dbip->dbi_fp);
 	if (next < 0) {
 	    perror("db_scan:  ftell:  ");
 	    return -1;
@@ -136,12 +138,11 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		break;
 	    case ID_FREE:
 		/* Inform db manager of avail. space */
-		rt_memfree(&(dbip->dbi_freep), (unsigned)1,
-			   addr/sizeof(union record));
+		rt_memfree(&(dbip->dbi_freep), 1, addr/sizeof(union record));
 		break;
 	    case ID_ARS_A:
 		while (1) {
-		    here = (off_t)ftell(dbip->dbi_fp);
+		    here = ftell(dbip->dbi_fp);
 		    if (fread((char *)&rec2, sizeof(rec2),
 			      1, dbip->dbi_fp) != 1)
 			break;
@@ -152,7 +153,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		    }
 		    nrec++;
 		}
-		next = (off_t)ftell(dbip->dbi_fp);
+		next = ftell(dbip->dbi_fp);
 		handler(dbip, record.a.a_name, addr, nrec, RT_DIR_SOLID, client_data);
 		break;
 	    case ID_ARS_B:
@@ -166,7 +167,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
 			break;
 		}
-		next = (off_t)ftell(dbip->dbi_fp);
+		next = ftell(dbip->dbi_fp);
 		handler(dbip, record.ss.ss_name, addr, nrec, RT_DIR_SOLID, client_data);
 		break;
 	    case ID_MATERIAL:
@@ -187,7 +188,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		break;
 	    case ID_P_HEAD:
 		while (1) {
-		    here = (off_t)ftell(dbip->dbi_fp);
+		    here = ftell(dbip->dbi_fp);
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
 			break;
 		    DEBUG_PR(here, rec2);
@@ -197,7 +198,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		    }
 		    nrec++;
 		}
-		next = (off_t)ftell(dbip->dbi_fp);
+		next = ftell(dbip->dbi_fp);
 		handler(dbip, record.p.p_name, addr, nrec, RT_DIR_SOLID, client_data);
 		break;
 	    case ID_P_DATA:
@@ -206,7 +207,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 	    case ID_BSOLID:
 		while (1) {
 		    /* Find and skip subsequent BSURFs */
-		    here = (off_t)ftell(dbip->dbi_fp);
+		    here = ftell(dbip->dbi_fp);
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
 			break;
 		    DEBUG_PR(here, rec2);
@@ -222,7 +223,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 			if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
 			    break;
 		    }
-		    next = (off_t)ftell(dbip->dbi_fp);
+		    next = ftell(dbip->dbi_fp);
 		}
 		handler(dbip, record.B.B_name, addr, nrec, RT_DIR_SOLID, client_data);
 		break;
@@ -244,7 +245,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
 			break;
 		}
-		next = (off_t)ftell(dbip->dbi_fp);
+		next = ftell(dbip->dbi_fp);
 		handler(dbip, record.n.n_name, addr, nrec, RT_DIR_SOLID, client_data);
 		break;
 	    case DBID_PARTICLE:
@@ -257,7 +258,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
 			break;
 		}
-		next = (off_t)ftell(dbip->dbi_fp);
+		next = ftell(dbip->dbi_fp);
 		handler(dbip, record.pwr.pwr_name, addr, nrec, RT_DIR_SOLID, client_data);
 		break;
 	    case DBID_NMG:
@@ -267,7 +268,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
 			break;
 		}
-		next = (off_t)ftell(dbip->dbi_fp);
+		next = ftell(dbip->dbi_fp);
 		handler(dbip, record.nmg.N_name, addr, nrec, RT_DIR_SOLID, client_data);
 		break;
 	    case DBID_SKETCH:
@@ -277,7 +278,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
 			break;
 		}
-		next = (off_t)ftell(dbip->dbi_fp);
+		next = ftell(dbip->dbi_fp);
 		handler(dbip, record.skt.skt_name, addr, nrec, RT_DIR_SOLID, client_data);
 		break;
 	    case DBID_EXTR:
@@ -287,7 +288,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
 			break;
 		}
-		next = (off_t)ftell(dbip->dbi_fp);
+		next = ftell(dbip->dbi_fp);
 		handler(dbip, record.extr.ex_name, addr, nrec, RT_DIR_SOLID, client_data);
 		break;
 	    case DBID_CLINE:
@@ -300,7 +301,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
 			break;
 		}
-		next = (off_t)ftell(dbip->dbi_fp);
+		next = ftell(dbip->dbi_fp);
 		handler(dbip, record.s.s_name, addr, nrec, RT_DIR_SOLID, client_data);
 		break;
 	    case ID_MEMB:
@@ -308,7 +309,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		break;
 	    case ID_COMB:
 		while (1) {
-		    here = (off_t)ftell(dbip->dbi_fp);
+		    here = ftell(dbip->dbi_fp);
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
 			break;
 		    DEBUG_PR(here, rec2);
@@ -318,7 +319,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		    }
 		    nrec++;
 		}
-		next = (off_t)ftell(dbip->dbi_fp);
+		next = ftell(dbip->dbi_fp);
 		switch (record.c.c_flags) {
 		    default:
 		    case DBV4_NON_REGION:
@@ -341,7 +342,11 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 	totrec += nrec;
     }
     dbip->dbi_nrec = totrec;
-    dbip->dbi_eof = (off_t)ftell(dbip->dbi_fp);
+    next = ftell(dbip->dbi_fp);
+    if (next < 0)
+	dbip->dbi_eof = -1;
+    else
+	dbip->dbi_eof = (off_t)next;
     rewind(dbip->dbi_fp);
 
     return 0;			/* OK */

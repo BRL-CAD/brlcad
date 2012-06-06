@@ -1163,30 +1163,30 @@ int rt_load_attrs(struct rt_i *rtip, char **attrs)
     RT_CK_DBI(rtip->rti_dbip);
 
     if (db_version(rtip->rti_dbip) < 5)
-        return 0;
+	return 0;
 
     while (attrs[attr_count])
-        attr_count++;
+	attr_count++;
 
     for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
-        RT_CK_REGION(regp);
+	RT_CK_REGION(regp);
 
 	did_set = 0;
-        if ((reg_name=strrchr(regp->reg_name, '/')) == NULL)
-            reg_name = regp->reg_name;
-        else
-            reg_name++;
+	if ((reg_name=strrchr(regp->reg_name, '/')) == NULL)
+	    reg_name = regp->reg_name;
+	else
+	    reg_name++;
 
-        if ((dp=db_lookup(rtip->rti_dbip, reg_name, LOOKUP_NOISY)) == RT_DIR_NULL)
-            continue;
+	if ((dp=db_lookup(rtip->rti_dbip, reg_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+	    continue;
 
-        bu_avs_init_empty(&avs);
-        if (db5_get_attributes(rtip->rti_dbip, &avs, dp)) {
-            bu_log("rt_load_attrs: Failed to get attributes for region %s\n", reg_name);
-            continue;
-        }
+	bu_avs_init_empty(&avs);
+	if (db5_get_attributes(rtip->rti_dbip, &avs, dp)) {
+	    bu_log("rt_load_attrs: Failed to get attributes for region %s\n", reg_name);
+	    continue;
+	}
 
-        bu_avs_init_empty(&(regp->attr_values));
+	bu_avs_init_empty(&(regp->attr_values));
 	for (i=0; i<attr_count; i++) {
 	    if ((attr = bu_avs_get(&avs, attrs[i])) == NULL)
 		continue;

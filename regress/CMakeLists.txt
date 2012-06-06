@@ -61,9 +61,9 @@ if(SH_EXEC)
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/red.sh ${CMAKE_SOURCE_DIR}
     DEPENDS mged
     )
-  add_custom_target(regress-vls
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/vls.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS test_vls
+  add_custom_target(regress-vls_vprintf
+    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/vls_vprintf.sh ${CMAKE_SOURCE_DIR}
+    DEPENDS test_vls_vprintf
     )
   add_custom_target(regress-nirt
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/nirt.sh ${CMAKE_SOURCE_DIR}
@@ -100,7 +100,7 @@ if(SH_EXEC)
     regress-solids regress-shaders regress-spdi regress-iges
     regress-weight regress-gqa regress-fastgen regress-bots
     regress-repository regress-red regress-nirt
-    regress-vls regress-comgeom regress-gnff regress-gdot
+    regress-vls_vprintf regress-comgeom regress-gnff regress-gdot
     )
 
 endif(SH_EXEC)
@@ -142,6 +142,7 @@ CMAKEFILES(
   shaderspix.asc
   slave_build.sh
   solids.sh
+  solids-simplepix.asc
   solidspix.asc
   spdi.sh
   spdipix.asc
@@ -149,9 +150,12 @@ CMAKEFILES(
   tgms/cgtest.cg
   tgms/comgeom-tgt-1-v4-documented.cg
   tgms/comgeom-tgt-1-v4.cg
+  tgms/dsp.dat
   tgms/m35.asc.gz
   tgms/m35.cg.gz
-  vls.sh
+  tgms/solids-simple.mged
+  tgms/solids.mged
+  vls_vprintf.sh
   weight.sh
   )
 
@@ -181,6 +185,7 @@ set(regress_outfiles
   core
   density_table.txt
   dsp.dat
+  dsp.pix
   eagleCAD-512x438.pix
   ebm.bw
   exp_air.pl
@@ -284,6 +289,10 @@ set(regress_outfiles
   red.name.unsafe.out
   red.name.unsafe.out.new
   red.name.unsafe.out.test
+  red.region.edit-comb.out.test2
+  red.region.edit-comb.out.new
+  red.region.edit-comb.out
+  red.region.edit-comb.out.test
   red.region.empty.out
   red.region.empty.out.new
   red.region.no.out
@@ -341,6 +350,14 @@ set(regress_outfiles
   shaders_ref.pix
   solids
   solids-diff.log
+  solids-simple-diff.log
+  solids-simple.g
+  solids-simple.log
+  solids-simple.pix.diff
+  solids-simple.rt
+  solids-simple.rt.log
+  solids-simple.rt.pix
+  solids-simple_ref.pix
   solids.g
   solids.log
   solids.mged

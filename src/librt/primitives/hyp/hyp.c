@@ -151,9 +151,9 @@ rt_hyp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 
     /* Find the RPP of the rotated axis-aligned hyp bbox - that is,
      * the bounding box the given hyp would have if its height
-     * vector were in the positive Z direction. This does not give 
-     * us an optimal bbox except in the case where the hyp is 
-     * actually axis aligned to start with, but it's usually 
+     * vector were in the positive Z direction. This does not give
+     * us an optimal bbox except in the case where the hyp is
+     * actually axis aligned to start with, but it's usually
      * at least a bit better than the bounding sphere RPP. */
     VMINMAX((*min), (*max), pt1);
     VMINMAX((*min), (*max), pt2);
@@ -207,7 +207,7 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(r
     stp->st_aradius = sqrt((hyp->hyp_c*hyp->hyp_c + 1)*MAGSQ(hyp->hyp_H)
 			   + (hyp->hyp_r1*hyp->hyp_r1));
     stp->st_bradius = stp->st_aradius;
-  
+
     /* calculate bounding RPP */
     if (rt_hyp_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
     return 0;			/* OK */

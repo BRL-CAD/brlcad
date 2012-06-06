@@ -583,7 +583,7 @@ nmg_vsshell(const struct shell *s, const struct nmgregion *r)
     if (s->sa_p) {
 	NMG_CK_SHELL_A(s->sa_p);
 	/* we make sure that all values of min_pt are less than or
-         * equal to the values of max_pt
+	 * equal to the values of max_pt
 	 */
 	lpt = s->sa_p->min_pt;
 	hpt = s->sa_p->max_pt;
@@ -1730,4 +1730,3 @@ nmg_ck_vs_in_region(const struct nmgregion *r, const struct bn_tol *tol)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

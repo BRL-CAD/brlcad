@@ -847,7 +847,7 @@ const char * ReadComment( istream & in, std::string & s ) {
                 if( c == '*' ) { // looks like start of end comment
                     in.get( c );
                     if( c == '/' ) { // it is end of comment
-                        return const_cast<char *>( s.c_str() );    // return comment as a string
+                        return s.c_str();    // return comment as a string
                     } else { // it is not end of comment
                         // so store the * and put back the other char
                         s.append( "*" );
@@ -864,7 +864,7 @@ const char * ReadComment( istream & in, std::string & s ) {
                  << "Will try to recover...\n";
             std::string tmp;
             SkipInstance( in, tmp );
-            return const_cast<char *>( s.c_str() );
+            return s.c_str();
         }
         // leave slash read from stream... assume caller already knew there was
         //  a slash, leave it off stream so they don't think this funct needs

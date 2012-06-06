@@ -34,9 +34,16 @@ add_definitions(
   -DBRLCAD_DLL
   )
 
-BRLCAD_ADDEXEC(3dm-g 3dm/3dm-g.cpp "libwdb;${OPENNURBS_LIBRARY}")
+find_package(ADAPTAGRAMS)
+if(ADAPTAGRAMS_FOUND)
+  set(AVOID_SRCS "")
+else(ADAPTAGRAMS_FOUND)
+  set(AVOID_SRCS "")
+endif(ADAPTAGRAMS_FOUND)
 
-BRLCAD_ADDEXEC(asc2g asc/asc2g.c "libged;libwdb;librt;libbu;libtclcad;${WINSOCK_LIB};${M_LIBRARY}")
+BRLCAD_ADDEXEC(3dm-g 3dm/3dm-g.cpp "libwdb;${OPENNURBS_LIBRARY}" NOSTRICT)
+
+BRLCAD_ADDEXEC(asc2g asc/asc2g.c "libtclcad;libged;libwdb;librt;libbu;${WINSOCK_LIB};${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(asc2pix asc/asc2pix.c libbu)
 
@@ -116,6 +123,8 @@ BRLCAD_ADDEXEC(g5-g4 g5-g4.c "libwdb;librt;libbu" NO_INSTALL)
 BRLCAD_ADDEXEC(g-acad g-acad.c "librt;libbu")
 
 BRLCAD_ADDEXEC(g-obj g-obj.c "librt;libbu")
+
+BRLCAD_ADDEXEC(g-voxel g-voxel.c "librt;libbu;libwdb")
 
 # TODO - Until wfobj functionality is available as a libgcv API,
 # obj-g build logic is living in src/libgcv/wfobj. Once an API 
@@ -221,6 +230,7 @@ set(conv_ignore_files
   shp/shapelib/license.html
   shp/shapelib/shapefil.h
   shp/README
+  ${AVOID_SRCS}
   walk_example.c
   )
 CMAKEFILES(${conv_ignore_files})

@@ -119,6 +119,7 @@ endif(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
 
 if(BRLCAD_ENABLE_STRICT)
   BRLCAD_CHECK_C_FLAG(Werror)
+  BRLCAD_CHECK_CXX_FLAG(Werror)
 endif(BRLCAD_ENABLE_STRICT)
 
 # End detection of flags intended for BRL-CAD use.  Make sure all variables have

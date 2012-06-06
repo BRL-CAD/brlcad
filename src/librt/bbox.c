@@ -350,7 +350,7 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 	    /* BINARY type -- just use left tree */
 	    if (rt_traverse_tree(rtip, tp->tr_b.tb_left, tree_min, tree_max) < 0 ||
 		rt_traverse_tree(rtip, tp->tr_b.tb_right, r_min, r_max) < 0)
-	    	return -1;
+		return -1;
 	    /* Discard right rpp */
 	    break;
 
@@ -448,7 +448,7 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 /**
  * R T _ B O U N D _ I N T E R N A L
  *
- * Calculate the bounding RPP of the internal format passed in 'ip'. 
+ * Calculate the bounding RPP of the internal format passed in 'ip'.
  * The bounding RPP is returned in rpp_min and rpp_max in mm
  * FIXME: This function needs to be modified to eliminate the rt_gettree() call and the related
  * parameters. In that case calling code needs to call another function before calling this function
@@ -534,7 +534,7 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
 	(NEAR_ZERO(rpp_max[1], SMALL_FASTF) || rpp_max[1] <= -INFINITY || rpp_max[1] >= INFINITY) &&
 	(NEAR_ZERO(rpp_max[2], SMALL_FASTF) || rpp_max[2] <= -INFINITY || rpp_max[2] >= INFINITY)
 	) {
-	bu_log("rt_bound_internal: Warning : The returned bounds of the model may not be correct\n");         
+	bu_log("rt_bound_internal: Warning : The returned bounds of the model may not be correct\n");
     }
 
     rt_db_free_internal(&intern);

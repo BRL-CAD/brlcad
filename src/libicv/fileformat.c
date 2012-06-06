@@ -1,4 +1,4 @@
-/*                           I M A G E . C
+/*                      F I L E F O R M A T . C
  * BRL-CAD
  *
  * Copyright (c) 2007-2012 United States Government as represented by

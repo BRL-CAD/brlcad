@@ -1,4 +1,4 @@
-/*                  G - S H E L L . R E C T . C
+/*                  G - S H E L L - R E C T . C
  * BRL-CAD
  *
  * Copyright (c) 2004-2012 United States Government as represented by

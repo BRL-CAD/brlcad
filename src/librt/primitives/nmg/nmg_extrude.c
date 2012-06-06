@@ -749,10 +749,10 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 		    VSUB2(v2, eu2->eumate_p->vu_p->v_p->vg_p->coord ,
 			  eu2->vu_p->v_p->vg_p->coord);
 
-		    /* The logic below needs to be changed, the meaning of 
-                     * dist[1] is different depending on if the result is '0'
-                     * or '1'. Presently this function is not called.
-                     */
+		    /* The logic below needs to be changed, the meaning of
+		     * dist[1] is different depending on if the result is '0'
+		     * or '1'. Presently this function is not called.
+		     */
 		    if (bn_isect_lseg3_lseg3(dist, eu1->vu_p->v_p->vg_p->coord, v1 ,
 					     eu2->vu_p->v_p->vg_p->coord, v2, tol) >= 0) {
 			point_t pt = VINIT_ZERO;
@@ -948,7 +948,7 @@ nmg_extrude_cleanup(struct shell *in_shell, const int is_void, const struct bn_t
 		if (nmg_ks(s_tmp)) {
 
 		    /* All shells have been removed (all were bad).
-		     * Kill the now-empty temporary region. 
+		     * Kill the now-empty temporary region.
 		     */
 		    nmg_kr(new_r);
 		    new_r = (struct nmgregion *)NULL;

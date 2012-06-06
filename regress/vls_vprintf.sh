@@ -1,5 +1,5 @@
 #!/bin/sh
-#                          V L S . S H
+#                    V L S _ V P R I N T F . S H
 # BRL-CAD
 #
 # Copyright (c) 2010-2012 United States Government as represented by
@@ -43,9 +43,9 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
-TEST=vls
+TEST=vls_vprintf
 TESTSCRIPT=$TEST.sh
-TESTEXE=test_vls
+TESTEXE=test_vls_vprintf
 TESTLOG=${TEST}_test.log
 TESTCMD="`ensearch $TESTEXE`"
 if test ! -f "$TESTCMD" ; then
@@ -100,7 +100,8 @@ if [ $STATUS -eq 0 ] ; then
         echo "-> $TESTSCRIPT succeeded with no failures of any kind."
         # but one more check
         if [ $KNOWNEXP -ne 0 ] ; then
-            echo "     But SURPRISE!  We expected $KNOWNEXP failed tests so something has changed!"
+            echo "     But SURPRISE!  We expected $KNOWNEXP failed tests so"
+            echo "        something has changed!"
             echo "     See file './regress/$TESTLOG' for results and compare"
             echo "       with file './src/libbu/test_vls.c'."
         else
@@ -110,7 +111,8 @@ if [ $STATUS -eq 0 ] ; then
     fi
 else
     echo "-> $TESTSCRIPT unexpectedly FAILED $STATUS test(s)."
-    echo "   See file './regress/$TESTLOG' for results."
+    echo "   See files './regress/$TESTLOG' and."
+    echo "             './regress/$ERRLOG' for results."
 fi
 
 exit $STATUS

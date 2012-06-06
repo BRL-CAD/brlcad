@@ -203,7 +203,7 @@ rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
     for (vert_index = 0; vert_index < bot_ip->num_vertices; vert_index++) {
 	VMINMAX((*min), (*max), &bot_ip->vertices[vert_index]);
     }
-    
+
     /* Prevent the RPP from being 0 thickness */
     if (NEAR_EQUAL((*min)[X], (*max)[X], SMALL_FASTF)) {
 	(*min)[X] -= SMALL_FASTF;
@@ -609,52 +609,52 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 #if 1
     if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
 #define RT_BOT_TESS_MAX_FACES 1024
-        size_t faces[RT_BOT_TESS_MAX_FACES];
-        plane_t planes[RT_BOT_TESS_MAX_FACES];
-        fastf_t scale = 1.0;
+	size_t faces[RT_BOT_TESS_MAX_FACES];
+	plane_t planes[RT_BOT_TESS_MAX_FACES];
+	fastf_t scale = 1.0;
 
-        rt_bot_condense(bot_ip);
-        VSETALL(center, 0.0);
-        for (i = 0; i < bot_ip->num_vertices; i++) {
-            VADD2(center, center, &bot_ip->vertices[i*3]);
-        }
-        scale = 1.0 / (fastf_t)bot_ip->num_vertices;
-        VSCALE(center, center, scale);
-        fprintf(stderr, "center pt = (%g %g %g)\n", V3ARGS(center));
+	rt_bot_condense(bot_ip);
+	VSETALL(center, 0.0);
+	for (i = 0; i < bot_ip->num_vertices; i++) {
+	    VADD2(center, center, &bot_ip->vertices[i*3]);
+	}
+	scale = 1.0 / (fastf_t)bot_ip->num_vertices;
+	VSCALE(center, center, scale);
+	fprintf(stderr, "center pt = (%g %g %g)\n", V3ARGS(center));
 
-        /* get the faces that use each vertex */
-        for (i = 0; i < bot_ip->num_vertices; i++) {
-            size_t faceCount = 0;
-            size_t j;
-            for (j = 0; j < bot_ip->num_faces; j++) {
-                size_t k;
-                for (k = 0; k < 3; k++) {
-                    if ((size_t)bot_ip->faces[j*3+k] == i) {
-                        /* this face uses vertex i */
-                        faces[faceCount] = j;
-                        faceCount++;
-                        break;
-                    }
-                }
-            }
-            fprintf(stderr, "Vertex #%lu appears in %lu faces\n", (long unsigned)i, (long unsigned)faceCount);
-            if (faceCount == 0) {
-                continue;
-            }
-            if (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS)
+	/* get the faces that use each vertex */
+	for (i = 0; i < bot_ip->num_vertices; i++) {
+	    size_t faceCount = 0;
+	    size_t j;
+	    for (j = 0; j < bot_ip->num_faces; j++) {
+		size_t k;
+		for (k = 0; k < 3; k++) {
+		    if ((size_t)bot_ip->faces[j*3+k] == i) {
+			/* this face uses vertex i */
+			faces[faceCount] = j;
+			faceCount++;
+			break;
+		    }
+		}
+	    }
+	    fprintf(stderr, "Vertex #%lu appears in %lu faces\n", (long unsigned)i, (long unsigned)faceCount);
+	    if (faceCount == 0) {
+		continue;
+	    }
+	    if (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS)
 		for (i = 0; i < faceCount; i++) {
 		    size_t k;
 		    fastf_t *plane;
 		    for (k = 0; k < 3; k++) {
-                        size_t idx = faces[i] * 3 + k;
-                        VMOVE(planes[i], &bot_ip->normals[bot_ip->face_normals[idx]*3]);
-                        planes[i][3] = VDOT(planes[i], &bot_ip->vertices[bot_ip->faces[faces[i]*3]*3]);
+			size_t idx = faces[i] * 3 + k;
+			VMOVE(planes[i], &bot_ip->normals[bot_ip->face_normals[idx]*3]);
+			planes[i][3] = VDOT(planes[i], &bot_ip->vertices[bot_ip->faces[faces[i]*3]*3]);
 		    }
 		    plane = planes[i];
 		    fprintf(stderr, "\tplane #%lu = (%g %g %g %g)\n", (long unsigned)i, V4ARGS(plane));
 		}
-        }
-        return -1;
+	}
+	return -1;
     }
 #endif
     *r = nmg_mrsv(m);     /* Make region, empty shell, vertex */
@@ -1247,7 +1247,7 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
     if (!verbose)
 	return 0;
-	
+
     for (i = 0; i < bot_ip->num_faces; i++) {
 	size_t j, k;
 	point_t pt[3];
@@ -2601,7 +2601,7 @@ struct bot_edge {
  */
 int
 buildEdgeTable(struct rt_bot_internal *bot, struct bot_edge ***edges)
-{ 
+{
     size_t tmp, flen, currFace;
     int currVert, nextVert, from, to;
     size_t numVertices, numEdges = 0;
@@ -2652,7 +2652,7 @@ buildEdgeTable(struct rt_bot_internal *bot, struct bot_edge ***edges)
 			"edges[from]");
 		(*edges)[from] = edge;
 	    }
-	    
+
 	    /* list already exists */
 	    else {
 
@@ -2829,7 +2829,7 @@ maxEdge(struct rt_bot_internal *bot)
 
 /**
  * RT_BOT_PROPGET
- * 
+ *
  * Command used to query BoT property values. Returns parseable
  * values rather than formatted strings.
  *
@@ -3032,7 +3032,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
 
 	/* iterate over all vertices in this bin */
 	for (i = 0; i < bin_todonext[slot]; i++) {
-	    
+
 	    /* compare to the other vertices in this bin */
 	    for (j = i + 1; j < bin_todonext[slot]; j++) {
 
@@ -3865,7 +3865,7 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, size_t num_edges, int *fa
 			prev->next = next;
 		    } else {
 			edges[i] = next;
-		    } 
+		    }
 
 		    /* free it */
 		    edg->v = -1;

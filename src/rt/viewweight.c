@@ -78,6 +78,12 @@ int	noverlaps = 0;
 FILE	*densityfp;
 char	*densityfile;
 #define	DENSITY_FILE	".density"
+
+/* FIXME: use a bu_avs instead of a hard-coded limit so that materials
+ * are looked up by the key in the density file, not assuming it's an
+ * integer index into a fixed-size array.  gqa does it better by using
+ * dynamic memory.
+ */
 #define MAXMATLS	32768
 fastf_t	density[MAXMATLS];
 char	*dens_name[MAXMATLS];
@@ -320,7 +326,7 @@ view_end(struct application *ap)
     fastf_t volume = 0;
     char units[128] = {0};
     char unit2[128] = {0};
-    int MAX_ITEM = 0;
+    int max_item = 0;
     time_t clockval;
     struct tm *locltime;
     char *timeptr;
@@ -401,8 +407,8 @@ view_end(struct application *ap)
             ++nregions; /* this is needed to create the region array */
 
             /* keep track of the highest region ID */
-            if (MAX_ITEM < rp->reg_regionid)
-                MAX_ITEM = rp->reg_regionid;
+            if (max_item < rp->reg_regionid)
+                max_item = rp->reg_regionid;
 
             for (dp = (struct datapoint *)rp->reg_udata;
                  dp != (struct datapoint *)NULL; dp = dp->next) {
@@ -425,10 +431,10 @@ view_end(struct application *ap)
 
         /* make room for a zero ID number and an "end ID " so we can
            use ID indexing and our usual loop idiom */
-        MAX_ITEM += 2;
+        max_item += 2;
 
-        item_wt = (fastf_t *)bu_malloc(sizeof(fastf_t) * (MAX_ITEM + 1), "item_wt");
-        for (id = 1; id < MAX_ITEM; id++)
+        item_wt = (fastf_t *)bu_malloc(sizeof(fastf_t) * (max_item + 1), "item_wt");
+        for (id = 1; id < max_item; id++)
             item_wt[id] = -1.0;
 
         /* create and fill an array for handling region names and region IDs */
@@ -458,7 +464,7 @@ view_end(struct application *ap)
 	fprintf(outfp, "-------- ------ --- --------------- ------- -------------\n");
 
         start_ridx = 0; /* region array is indexed from 0 */
-        for (id = 1; id < MAX_ITEM; ++id) {
+        for (id = 1; id < max_item; ++id) {
             const int flen = 37; /* desired size of name field */
 
             if (item_wt[id] < 0)
@@ -495,7 +501,7 @@ view_end(struct application *ap)
         fprintf(outfp, "----- -------- --------------------\n");
 
         start_ridx = 0; /* region array is indexed from 0 */
-        for (id = 1; id < MAX_ITEM; ++id) {
+        for (id = 1; id < max_item; ++id) {
             const int flen = 65; /* desired size of name field */
             int CR = 0;
             const int ns = 15;

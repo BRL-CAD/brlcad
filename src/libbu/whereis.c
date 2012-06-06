@@ -1,4 +1,4 @@
-/*                       W H E R I S . C
+/*                       W H E R E I S . C
  * BRL-CAD
  *
  * Copyright (c) 2005-2012 United States Government as represented by

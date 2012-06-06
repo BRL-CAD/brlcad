@@ -2442,78 +2442,6 @@ refresh(void)
 }
 
 
-/*
- * L O G _ E V E N T
- *
- * Logging routine
- */
-static void
-log_event(const char *UNUSED(event), const char *UNUSED(arg))
-{
-#if 0
-    struct bu_vls line = BU_VLS_INIT_ZERO;
-    time_t now;
-    char *timep;
-    int logfd;
-    char uname[256] = {0};
-
-    /* let the user know that we're logging */
-    static int notified = 0;
-#endif
-    /* disable for now until it can be tied to OPTIMIZED too */
-    return;
-#if 0
-    /* get the current time */
-    (void)time(&now);
-    timep = ctime(&now);	/* returns 26 char string */
-    timep[24] = '\0';	/* Chop off \n */
-
-    /* get the user name */
-#ifdef _WIN32
-    {
-	DWORD dwNumBytes = 256;
-	GetUserName(uname, &dwNumBytes);
-    }
-#else
-    getlogin_r(uname, 256);
-#endif
-
-    bu_vls_printf(&line, "%s (%ld) %s [%s] %s: %s\n",
-		  timep,
-		  (long)now,
-		  event,
-		  dmp->dm_name,
-		  uname,
-		  arg
-	);
-
-#ifdef _WIN32
-    logfd = open(LOGFILE, _O_WRONLY|_O_APPEND|O_CREAT, _S_IREAD|_S_IWRITE);
-#else
-    logfd = open(LOGFILE, O_WRONLY|O_APPEND|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP);
-#endif
-
-    if (!notified) {
-	bu_log("Logging mged events to %s\n", LOGFILE);
-	notified = 1;
-    }
-
-    if (logfd >= 0) {
-	ssize_t ret = write(logfd, bu_vls_addr(&line), (unsigned)bu_vls_strlen(&line));
-	if (ret < 0)
-	    perror("write");
-	(void)close(logfd);
-    } else {
-	if (notified) {
-	    perror("Unable to open event log file");
-	}
-    }
-
-    bu_vls_free(&line);
-#endif
-}
-
-
 /**
  * F I N I S H
  *
@@ -2529,7 +2457,6 @@ mged_finish(int exitcode)
     struct cmd_list *c;
 
     (void)sprintf(place, "exit_status=%d", exitcode);
-    log_event("CEASE", place);
 
     /* Release all displays */
     while (BU_LIST_WHILE(p, dm_list, &(head_dm_list.l))) {
@@ -2828,9 +2755,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	bu_vls_printf(&msg, "%s: READ ONLY\n", dbip->dbi_filename);
     }
 
-    /* Quick -- before he gets away -- write a logfile entry! */
-    log_event("START", argv[1]);
-
     /* associate the gedp with a wdbp as well, but separate from the
      * one we fed tcl.  must occur before the call to [get_dbip] since
      * that hooks into a libged callback.
@@ -3003,8 +2927,6 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 
     /* wipe out the material list */
     rt_new_material_head(MATER_NULL);
-
-    log_event("CEASE", "(close)");
 
     return TCL_OK;
 }

@@ -303,7 +303,7 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 	copy[len - 1] = '\0';
 	--len;
     }
-	
+
     cp = copy;
     while (*cp) {
 	if ((slashp = strchr(cp, '/')) == NULL) break;

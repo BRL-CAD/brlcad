@@ -13,6 +13,8 @@ changes made.  See document footer for additional details.
 --- 2012-04-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed bug creating binary uniform (binunif) objects - Sean Morrison
+* fixed memory corruption bug reading v4 geometry - Sean Morrison
 * fixed bug where small raytraces were being rotated - Erik Greenwald
 * ios-icon.sh script added for generating IOS icons - Erik Greenwald
 * support for implicit to boundary representation geometry conversion
@@ -64,14 +66,14 @@ changes made.  See document footer for additional details.
 * improved tab-completion behavior for mged and archer - Sean Morrison
 * fixed pervasive string handling memory leak - Tom Browder
 * improved table output formatting for 'analyze' command - Tom Browder
-* fixed rtweight to handle incorrect lines - Tom Browder
+* improved rtweight portability and density file parsing - Tom Browder
 * fixed crash in anim_cascade animation tool - Nick Reed
 * fixed bug in gif2fb processing non-interlaced images - Sean Morrison
 * fixed crash in coil when using -S and -l options - Cliff Yapp
 * fixed mged 'make_pnts' command resource contention bug - Nick Reed
 * fixed nirt memory leak and scriptfile off-by-one bug - Sean Morrison
 * d2-c now handles the imaginary part correctly - Erik Greenwald
-* fixed rt* crash when output file cannot be created - Erik Greenwald
+* fixed raytracer crash if output file creation fails - Erik Greenwald
 * restored mged BoT editing interface functionality - Tom Browder
 * fixed mged 'solids' and 'regions' command crashes - Tom Browder
 * fixed orientation bug in mged 'ypr' rotation command - Nick Reed
@@ -79,6 +81,7 @@ changes made.  See document footer for additional details.
 * fixed numerous xyz/ypr orientation bugs in anim tools - Nick Reed
 * fixed keypoint vertex bug when editing extrude objects - Nick Reed
 * fixed eto error converting hyp objects with asc2g tool - Nick Reed
+# fixed mged bug processing edcodes command arguments - Bob Parker
 * various improvements to NMG polygonal mesh processing robustness
 	- Nick Reed, Sean Morrison, Richard Weiss
 * improved bad face handling within the obj-g importer - Nick Reed

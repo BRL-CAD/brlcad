@@ -17,6 +17,7 @@ EXTRA_DIST = \
 	shp/README \
 	shp/shapelib/LICENSE.LGPL \
 	shp/shapelib/license.html \
+        step \
 	walk_example.c
 
 if ONLY_BENCHMARK
@@ -42,9 +43,6 @@ DIST_SUBDIRS = \
 	intaval \
 	raw \
 	vdeck
-
-EXTRA_DIST = \
-	step
 
 bin_PROGRAMS = \
 	3dm-g \
@@ -98,7 +96,8 @@ bin_PROGRAMS = \
 	shp-g \
 	stl-g \
 	tankill-g \
-	viewpoint-g
+	viewpoint-g \
+	g-voxel
 
 noinst_PROGRAMS = \
 	g4-g5 \
@@ -248,6 +247,13 @@ g_nff_LDADD = ${WDB}
 g_nmg_SOURCES = nmg/g-nmg.c
 g_nmg_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
 g_nmg_LDADD = ${WDB}
+
+g_voxel_SOURCES = g-voxel.c
+g_voxel_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
+g_voxel_LDADD = \
+	${RT} \
+	${BU} \
+	${WDB} 
 
 g_obj_SOURCES = g-obj.c
 g_obj_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
@@ -485,6 +491,7 @@ FAST_OBJECTS = \
 	$(patch_g_OBJECTS) \
 	$(pix2asc_OBJECTS) \
 	$(ply_g_OBJECTS) \
+	$(g_voxel_OBJECTS) \
 	$(poly_bot_OBJECTS) \
 	$(proe_g_OBJECTS) \
 	$(rpatch_OBJECTS) \

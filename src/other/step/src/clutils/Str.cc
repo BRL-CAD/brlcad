@@ -209,28 +209,45 @@ char * PrettyNewName( const char * oldname ) {
     return name;
 }
 
-// This function is used to check an input stream following a read.  It writes
-// error messages in the 'ErrorDescriptor &err' argument as appropriate.
-// 'const char *delimiterList' argument contains a string made up of delimiters
-// that are used to move the file pointer in the input stream to the end of
-// the value you are reading (i.e. the ending marked by the presence of the
-// delimiter).  The file pointer is moved just prior to the delimiter.  If the
-// delimiterList argument is a null pointer then this function expects to find
-// EOF.
-//
-// If input is being read from a stream then a delimiterList should be provided
-// so this function can push the file pointer up to but not past the delimiter
-// (i.e. not removing the delimiter from the input stream).  If you have a
-// string containing a single value and you expect the whole string to contain
-// a valid value, you can change the string to an istrstream, read the value
-// then send the istrstream to this function with delimiterList set to null
-// and this function will set an error for you if any input remains following
-// the value.
-Severity
-CheckRemainingInput( istream & in,
-                     ErrorDescriptor * err,
-                     const char * typeName,     // used in error message
-                     const char * delimiterList ) { // e.g. ",)"
+/**
+*** This function is used to check an input stream following a read.  It writes
+*** error messages in the 'ErrorDescriptor &err' argument as appropriate.
+*** 'const char *tokenList' argument contains a string made up of delimiters
+*** that are used to move the file pointer in the input stream to the end of
+*** the value you are reading (i.e. the ending marked by the presence of the
+*** delimiter).  The file pointer is moved just prior to the delimiter.  If the
+*** tokenList argument is a null pointer then this function expects to find EOF.
+***
+*** If input is being read from a stream then a tokenList should be provided so
+*** this function can push the file pointer up to but not past the delimiter
+*** (i.e. not removing the delimiter from the input stream).  If you have a
+*** string containing a single value and you expect the whole string to contain
+*** a valid value, you can change the string to an istrstream, read the value
+*** then send the istrstream to this function with tokenList set to null
+*** and this function will set an error for you if any input remains following
+*** the value.
+
+*** If the input stream can be readable again then
+***  - any error states set for the the stream are cleared.
+***  - white space skipped in the input stream
+***  - if EOF is encountered it returns
+***    otherwise it peeks at the next character
+***  - if the tokenList argument exists (i.e. is not null)
+***    then if looks to see if the char peeked at is in the tokenList string
+***    if it is then no error is set in the ErrorDescriptor
+***    if the char peeked at is not in the tokenList string that implies
+***       that there is garbage following the value that was successfully
+***       or unsuccessfully read.  The garbage is read until EOF or a
+***       delimiter in the tokenList is found.
+***       - EOF is found you did not recover -> SEVERITY_INPUT_ERROR
+***       - delimiter found you recovered successfully => SEVERITY_WARNING
+***  - if tokenList does not exist then it expects to find EOF, if it does
+***    not then it is an error but the bad chars are not read since you have
+***    no way to know when to stop.
+**/
+Severity CheckRemainingInput( istream & in, ErrorDescriptor * err,
+                              const char * typeName, // used in error message
+                              const char * delimiterList ) { // e.g. ",)"
     string skipBuf;
     ostringstream errMsg;
 

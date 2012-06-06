@@ -379,7 +379,7 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* Compute bounding sphere and RPP */
     {
 	fastf_t dx, dy, dz;	/* For bounding sphere */
-	
+
 	if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
 
 	VSET(stp->st_center,

@@ -72,7 +72,7 @@ rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
     vect_t rad, work;
     point_t top;
     fastf_t max_tr;
-    
+
     RT_CK_DB_INTERNAL(ip);
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cline_ip);

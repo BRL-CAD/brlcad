@@ -180,7 +180,7 @@ rt_superell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
 
     struct rt_superell_internal *eip;
     fastf_t magsq_a, magsq_b, magsq_c;
-    vect_t Au, Bu, Cu;	
+    vect_t Au, Bu, Cu;
     mat_t R;
     vect_t w1, w2, P;	/* used for bounding RPP */
     fastf_t f;
@@ -235,7 +235,7 @@ rt_superell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
     f = sqrt(f);
     (*min)[Z] = eip->v[Z] - f;	/* V.P +/- f */
     (*max)[Z] = eip->v[Z] + f;
-    
+
     return 0;
 }
 

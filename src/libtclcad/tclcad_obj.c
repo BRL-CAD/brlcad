@@ -5114,6 +5114,23 @@ to_init_default_bindings(struct ged_dm_view *gdvp)
 		  &gdvp->gdv_dmp->dm_pathName,
 		  &current_top->to_gop->go_name,
 		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Key-Left> {%V rot %V -v 0 1 0; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Key-Right> {%V rot %V -v 0 -1 0; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Key-Up> {%V rot %V -v 1 0 0; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name);
+    bu_vls_printf(&bindings, "bind %V <Key-Down> {%V rot %V -v -1 0 0; break}; ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name);
+
 
     Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     bu_vls_free(&bindings);

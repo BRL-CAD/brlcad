@@ -127,7 +127,6 @@ struct dsp_bb_layer {
 # define YSIZ(_p) (_p->dsp_i.dsp_ycnt - 1)
 
 
-
 /* FIXME: rename? */
 extern int rt_retrieve_binunif(struct rt_db_internal *intern,
 			       const struct db_i *dbip,

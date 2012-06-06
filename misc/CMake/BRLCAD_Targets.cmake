@@ -34,6 +34,12 @@
 #
 ###
 
+# When defining targets, we need to know if we have a no-error flag
+include(CheckCCompilerFlag)
+CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
+
+# Take a target definition and find out what definitions its libraries
+# are using
 macro(GET_TARGET_DEFINES targetname target_libs)
 # Take care of compile flags and definitions
   foreach(libitem ${target_libs})
@@ -48,6 +54,8 @@ macro(GET_TARGET_DEFINES targetname target_libs)
   endforeach(libitem ${target_libs})
 endmacro(GET_TARGET_DEFINES)
 
+# Take a target definition and find out what compilation flags its libraries
+# are using
 macro(GET_TARGET_FLAGS targetname target_libs)
   set(FLAG_LANGUAGES C CXX)
   foreach(lang ${FLAG_LANGUAGES})
@@ -74,9 +82,9 @@ macro(FLAGS_TO_FILES srcslist targetname)
     get_property(file_language SOURCE ${srcfile} PROPERTY LANGUAGE)
     if(NOT file_language)
       get_filename_component(srcfile_ext ${srcfile} EXT)
-      if(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp")
+      if(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc")
 	set(file_language CXX)
-      endif(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp")
+      endif(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc")
       if(${srcfile_ext} STREQUAL ".c")
 	set(file_language C)
       endif(${srcfile_ext} STREQUAL ".c")
@@ -88,6 +96,24 @@ macro(FLAGS_TO_FILES srcslist targetname)
     endif(file_language)
   endforeach(srcfile ${srcslist})
 endmacro(FLAGS_TO_FILES)
+
+# Handle C++ NOSTRICT settings
+macro(CXX_NOSTRICT cxx_srcslist args)
+  if(NOERROR_FLAG)
+    foreach(extraarg ${args})
+      if(${extraarg} MATCHES "NOSTRICTCXX" AND BRLCAD_ENABLE_STRICT)
+	foreach(srcfile ${cxx_srcslist})
+	  get_filename_component(srcfile_ext ${srcfile} EXT)
+	  if(${srcfile_ext} STREQUAL ".cxx" OR ${srcfile_ext} STREQUAL ".cpp" OR ${srcfile_ext} STREQUAL ".cc")
+	    get_property(previous_flags SOURCE ${srcfile} PROPERTY COMPILE_FLAGS)
+	    set_source_files_properties(${srcfile} COMPILE_FLAGS "-Wno-error ${previous_flags}")
+	  endif()
+	endforeach(srcfile ${cxx_srcslist})
+      endif(${extraarg} MATCHES "NOSTRICTCXX" AND BRLCAD_ENABLE_STRICT)
+    endforeach(extraarg ${args})
+  endif(NOERROR_FLAG)
+endmacro(CXX_NOSTRICT cxx_srcslist)
+
 
 #-----------------------------------------------------------------------------
 # Core routines for adding executables and libraries to the build and
@@ -136,14 +162,18 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
   
   # If this target is marked as incompatible with the strict flags, disable them
   foreach(extraarg ${ARGN})
-    if(${extraarg} MATCHES "NOSTRICT" AND BRLCAD_ENABLE_STRICT)
+    if(${extraarg} MATCHES "NOSTRICT$" AND BRLCAD_ENABLE_STRICT)
       if(NOERROR_FLAG)
 	set_property(TARGET ${execname} APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
       endif(NOERROR_FLAG)
-    endif(${extraarg} MATCHES "NOSTRICT" AND BRLCAD_ENABLE_STRICT)
+    endif(${extraarg} MATCHES "NOSTRICT$" AND BRLCAD_ENABLE_STRICT)
   endforeach(extraarg ${ARGN})
 
-  CPP_WARNINGS(srcslist)
+  # C++ is handled separately (on a per-file basis) if we have mixed sources via the NOSTRICTCXX flag
+  if(${exec_type} STREQUAL "MIXED")
+    CXX_NOSTRICT("${srcslist}" "${ARGN}")
+  endif(${exec_type} STREQUAL "MIXED")
+
 endmacro(BRLCAD_ADDEXEC execname srcslist libslist)
 
 
@@ -222,11 +252,11 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
     endif(NOT ${lib_type} STREQUAL "MIXED")
 
     foreach(extraarg ${ARGN})
-      if(${extraarg} MATCHES "NOSTRICT" AND BRLCAD_ENABLE_STRICT)
+      if(${extraarg} MATCHES "NOSTRICT$" AND BRLCAD_ENABLE_STRICT)
 	if(NOERROR_FLAG)
 	  set_property(TARGET ${libname} APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
 	endif(NOERROR_FLAG)
-      endif(${extraarg} MATCHES "NOSTRICT" AND BRLCAD_ENABLE_STRICT)
+      endif(${extraarg} MATCHES "NOSTRICT$" AND BRLCAD_ENABLE_STRICT)
     endforeach(extraarg ${ARGN})
   endif(BUILD_SHARED_LIBS)
 
@@ -267,13 +297,19 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
 
     # If we can't build this library strict, add the -Wno-error flag
     foreach(extraarg ${ARGN})
-      if(${extraarg} MATCHES "NOSTRICT" AND BRLCAD_ENABLE_STRICT)
+      if(${extraarg} MATCHES "NOSTRICT$" AND BRLCAD_ENABLE_STRICT)
 	if(NOERROR_FLAG)
 	  set_property(TARGET ${libname}-static APPEND PROPERTY COMPILE_FLAGS "-Wno-error")
 	endif(NOERROR_FLAG)
-      endif(${extraarg} MATCHES "NOSTRICT" AND BRLCAD_ENABLE_STRICT)
+      endif(${extraarg} MATCHES "NOSTRICT$" AND BRLCAD_ENABLE_STRICT)
     endforeach(extraarg ${ARGN})
   endif(BUILD_STATIC_LIBS)
+
+  # C++ STRICTNESS is handled separately (on a per-file basis) if we have mixed 
+  # sources via the NOSTRICTCXX flag
+  if(${lib_type} STREQUAL "MIXED")
+    CXX_NOSTRICT("${srcslist}" "${ARGN}")
+  endif(${lib_type} STREQUAL "MIXED")
 
   # For any CPP_DLL_DEFINES library, users of that library will need the DLL_IMPORTS
   # definition specific to that library.  Add it to ${libname}_DEFINES
@@ -283,7 +319,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   set_property(GLOBAL PROPERTY ${libname}_DEFINES "${${libname}_DEFINES}")
 
   mark_as_advanced(BRLCAD_LIBS)
-  CPP_WARNINGS(srcslist)
+
 endmacro(BRLCAD_ADDLIB libname srcslist libslist)
 
 #-----------------------------------------------------------------------------

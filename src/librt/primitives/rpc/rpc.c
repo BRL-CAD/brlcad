@@ -206,7 +206,7 @@ rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(xip);
-    
+
     VSETALL((*min), MAX_FASTF);
     VSETALL((*max), -MAX_FASTF);
 

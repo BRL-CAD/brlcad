@@ -222,7 +222,7 @@ public:
   PolyFillType clipFillType = pftEvenOdd);
   void Clear();
   bool ReverseSolution() {return m_ReverseOutput;};
-  void ReverseSolution(bool value) {m_ReverseOutput = value;};
+  void ReverseSolution(bool value) {m_ReverseOutput = value;}
 protected:
   void Reset();
   virtual bool ExecuteInternal(bool fixHoleLinkages);

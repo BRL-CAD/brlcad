@@ -180,7 +180,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     if (!dp)
 	return TREE_NULL;
 
-    bu_avs_init_empty(&avs); 
+    bu_avs_init_empty(&avs);
     if (!db5_get_attributes(tsp->ts_dbip, &avs, dp)) {
 	bu_avs_init_empty(&(rp->attr_values));
 	for(BU_AVS_FOR(avpp, &(tsp->ts_attrs))) {
@@ -787,32 +787,32 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 	tree_state.ts_resp = NULL;	/* sanity.  Needs to be updated */
 
 
-        if (attrs) {
-            if (db_version(rtip->rti_dbip) < 5) {
-                bu_log("WARNING: requesting attributes from an old database version (ignored)\n");
-                bu_avs_init_empty(&tree_state.ts_attrs);
-            } else {
-                while (attrs[num_attrs]) {
-                    num_attrs++;
-                }
-                if (num_attrs) {
-                    bu_avs_init(&tree_state.ts_attrs,
-                                num_attrs,
-                                "avs in tree_state");
-                    num_attrs = 0;
-                    while (attrs[num_attrs]) {
-                        bu_avs_add(&tree_state.ts_attrs,
-                                   attrs[num_attrs],
-                                   NULL);
-                        num_attrs++;
-                    }
-                } else {
-                    bu_avs_init_empty(&tree_state.ts_attrs);
-                }
-            }
-        } else {
-            bu_avs_init_empty(&tree_state.ts_attrs);
-        }
+	if (attrs) {
+	    if (db_version(rtip->rti_dbip) < 5) {
+		bu_log("WARNING: requesting attributes from an old database version (ignored)\n");
+		bu_avs_init_empty(&tree_state.ts_attrs);
+	    } else {
+		while (attrs[num_attrs]) {
+		    num_attrs++;
+		}
+		if (num_attrs) {
+		    bu_avs_init(&tree_state.ts_attrs,
+				num_attrs,
+				"avs in tree_state");
+		    num_attrs = 0;
+		    while (attrs[num_attrs]) {
+			bu_avs_add(&tree_state.ts_attrs,
+				   attrs[num_attrs],
+				   NULL);
+			num_attrs++;
+		    }
+		} else {
+		    bu_avs_init_empty(&tree_state.ts_attrs);
+		}
+	    }
+	} else {
+	    bu_avs_init_empty(&tree_state.ts_attrs);
+	}
 
 	i = db_walk_tree(rtip->rti_dbip, argc, argv, ncpus,
 			 &tree_state,

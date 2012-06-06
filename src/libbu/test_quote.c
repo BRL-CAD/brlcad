@@ -48,30 +48,30 @@ test_quote(const char *str)
 
     len_d = bu_vls_strlen(&decoded);
     if (f_wid < len_s)
-        f_wid = len_s + 1;
+	f_wid = len_s + 1;
     if (f_wid < len_d)
-        f_wid = len_d + 1;
+	f_wid = len_d + 1;
 
     if (BU_STR_EQUAL(str, bu_vls_addr(&decoded))
-        /* && !BU_STR_EQUAL(str, bu_vls_addr(&encoded)) */
-        ) {
-        /* a hack for str showing '(null)' in printf if zero length */
-        if (len_s == 0)
-            len_s = 6;
+	/* && !BU_STR_EQUAL(str, bu_vls_addr(&encoded)) */
+	) {
+	/* a hack for str showing '(null)' in printf if zero length */
+	if (len_s == 0)
+	    len_s = 6;
 	printf("{%*s}%*s -> {%*s}%*s [PASS]\n",
-               len_s, str, f_wid - len_s, " ",
-               len_d, bu_vls_addr(&decoded), f_wid - len_d, " "
-               );
+	       len_s, str, f_wid - len_s, " ",
+	       len_d, bu_vls_addr(&decoded), f_wid - len_d, " "
+	       );
     } else {
-        /* a hack for str showing '(null)' in printf if zero length */
-        if (len_s == 0)
-            len_s = 6;
+	/* a hack for str showing '(null)' in printf if zero length */
+	if (len_s == 0)
+	    len_s = 6;
 	printf("{%*s}%*s -> {%*s}%*s [FAIL]  (should be: {%s})\n",
-               len_s, str, f_wid - len_s, " ",
-               len_d, bu_vls_addr(&decoded), f_wid - len_d, " ",
-               str
-               );
-        status = 1;
+	       len_s, str, f_wid - len_s, " ",
+	       len_d, bu_vls_addr(&decoded), f_wid - len_d, " ",
+	       str
+	       );
+	status = 1;
     }
 
     bu_vls_free(&encoded);

@@ -1,8 +1,8 @@
-.PHONY : regression regress test mged red moss lights solids shaders spdi iges weight gqa fastgen bots repository comgeom gdot gnff
+.PHONY : regression regress test mged red moss lights solids shaders spdi iges weight gqa fastgen bots repository comgeom gdot gnff vls_vprintf
 
 SUBDIRS = mged
 
-regression: clean mged moss lights solids shaders spdi iges weight gqa fastgen bots repository comgeom gdot gnff
+regression: clean mged moss lights solids shaders spdi iges weight gqa fastgen bots repository comgeom gdot gnff vls_vprintf
 	@${ECHO} ---
 	@${ECHO} Regression testing completed.
 
@@ -78,6 +78,10 @@ gnff: $(top_srcdir)/regress/g-nff.sh
 	-${SH} $(top_srcdir)/regress/g-nff.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
+vls_vprintf: $(top_srcdir)/regress/vls_vprintf.sh
+	-${SH} $(top_srcdir)/regress/vls_vprintf.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
+
 # these are here because they go in the distribution but are not installed
 EXTRA_DIST = \
 	bots.sh \
@@ -111,7 +115,7 @@ EXTRA_DIST = \
 	spdi.sh \
 	spdipix.asc \
 	testlib.c \
-	vls.sh \
+	vls_vprintf.sh \
 	weight.sh \
 	CMakeLists.txt
 
@@ -200,6 +204,7 @@ CLEANFILES = \
 	shaders.txt \
 	shaders_ref.pix \
 	solids-diff.log \
+	solids-simple.log \
 	solids \
 	solids.g \
 	solids.mged \

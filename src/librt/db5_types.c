@@ -393,9 +393,10 @@ db5_standardize_attribute(const char *attr)
 }
 
 
+HIDDEN
 int
-db5_is_boolean_attribute(int attr) {
-    if (attr == ATTR_REGION) 
+boolean_attribute(int attr) {
+    if (attr == ATTR_REGION)
 	return 1;
     if (attr == ATTR_INHERIT)
 	return 1;
@@ -403,10 +404,11 @@ db5_is_boolean_attribute(int attr) {
 }
 
 
+HIDDEN
 void
-db_attr_add(struct bu_attribute_value_set *newavs, int attr_type, const char *stdattr, const char *value)
-{   
-    if (db5_is_boolean_attribute(attr_type)) {
+attr_add(struct bu_attribute_value_set *newavs, int attr_type, const char *stdattr, const char *value)
+{
+    if (boolean_attribute(attr_type)) {
 	if (bu_str_true(value)) {
 	    /* Use R for region, otherwise go with 1 */
 	    if (attr_type == ATTR_REGION) {
@@ -455,7 +457,7 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 
 	/* name is already in standard form, add it */
 	if (attr_type != ATTR_NULL && BU_STR_EQUAL(stdattr, avpp->name))
-	    (void)db_attr_add(&newavs, attr_type, stdattr, avpp->value);
+	    (void)attr_add(&newavs, attr_type, stdattr, avpp->value);
     }
 
     /* SECOND PASS: check for duplicates and non-standard
@@ -475,7 +477,7 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 
 	    /* case 1: name is "standardizable" and not added */
 
-	    (void)db_attr_add(&newavs, attr_type, stdattr, avpp->value);
+	    (void)attr_add(&newavs, attr_type, stdattr, avpp->value);
 	} else if (attr_type != ATTR_NULL && BU_STR_EQUAL(added, avpp->value)) {
 
 	    /* case 2: name is "standardizable", but we already added the same value */
@@ -486,13 +488,13 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
 	    /* case 3: name is "standardizable", but we already added something else */
 
 	    /* preserve the conflict, keep the old value too */
-	    (void)db_attr_add(&newavs, attr_type, avpp->name, avpp->value);
+	    (void)attr_add(&newavs, attr_type, avpp->name, avpp->value);
 	    conflict++;
 	} else {
 
 	    /* everything else: add it */
 
-	    (void)db_attr_add(&newavs, attr_type, avpp->name, avpp->value);
+	    (void)attr_add(&newavs, attr_type, avpp->name, avpp->value);
 	}
     }
     bu_avs_free(avs);
@@ -523,11 +525,11 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
     bu_vls_trimspace(&newval);
     if (bu_str_true(bu_vls_addr(&newval))) {
 	/* set region bit */
-	dp->d_flags |= RT_DIR_REGION;  
+	dp->d_flags |= RT_DIR_REGION;
 	comb->region_flag = 1;
     } else {
 	/* unset region bit */
-	dp->d_flags &= ~RT_DIR_REGION;  
+	dp->d_flags &= ~RT_DIR_REGION;
 	comb->region_flag = 0;
     }
 
@@ -581,7 +583,7 @@ db5_sync_attr_to_comb(struct rt_comb_internal *comb, const struct bu_attribute_v
     bu_vls_trimspace(&newval);
     if (bu_vls_strlen(&newval) != 0 && !BU_STR_EQUAL(bu_vls_addr(&newval), "(null)") && !BU_STR_EQUAL(bu_vls_addr(&newval), "del")) {
 	/* Currently, struct rt_comb_internal lists los as a long.  Probably should allow
-	 * floating point, but as it's DEPRECATED anyway I suppose we can wait for that? */ 
+	 * floating point, but as it's DEPRECATED anyway I suppose we can wait for that? */
 	/* attr_float_val = strtod(bu_vls_addr(&newval), &endptr); */
 	attr_num_val = strtol(bu_vls_addr(&newval), &endptr, 0);
 	if (endptr == bu_vls_addr(&newval) + strlen(bu_vls_addr(&newval))) {

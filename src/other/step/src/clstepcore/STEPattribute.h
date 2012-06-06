@@ -128,7 +128,7 @@ class STEPattribute {
         Severity StrToVal( const char * s, InstMgr * instances = 0,
                            int addFileId = 0 );
         Severity STEPread( istream & in = cin, InstMgr * instances = 0,
-                           int addFileId = 0, const char * = NULL );
+                           int addFileId = 0, const char * = NULL, bool strict = true );
 
         const char * asStr( std::string &, const char * = 0 ) const;
         // return the attr value as a string

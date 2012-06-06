@@ -1142,8 +1142,8 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	       *region_start_statepp, tsp->ts_sofar);
 	bu_free(sofar, "path string");
 	if (bn_mat_ck("db_recurse() tsp->ts_mat at start", tsp->ts_mat) < 0) {
-           bu_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n",  dp->d_namep);
-        }
+	   bu_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n",  dp->d_namep);
+	}
     }
 
     /*
@@ -1168,7 +1168,7 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
-        db5_sync_attr_to_comb(comb, &intern.idb_avs, dp);
+	db5_sync_attr_to_comb(comb, &intern.idb_avs, dp);
 	if ((is_region = db_apply_state_from_comb(&nts, pathp, comb)) < 0) {
 	    db_free_db_tree_state(&nts);
 	    curtree = TREE_NULL;		/* FAIL */

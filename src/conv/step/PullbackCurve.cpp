@@ -1004,7 +1004,7 @@ pullback_samples_from_closed_surface(PBCData* data,
 	if (i <= numKnots/2) {
 	    if (i>0) {
 		double delta = (knots[i] - knots[i-1])/(double)samplesperknotinterval;
-		for (int j=1; j<samplesperknotinterval; ) {
+		for (size_t j=1; j<samplesperknotinterval; ) {
 		    if (toUV(*data, pt, knots[i-1]+j*delta, PBC_FROM_OFFSET)) {
 			if (surf->IsClosed(0) && (NEAR_EQUAL(pt.x, dom[0].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.x, dom[0].m_t[1], PBC_TOL))) {
 			    if (fabs(prev_pt.x-dom[0].m_t[0]) < fabs(prev_pt.x-dom[0].m_t[1])) {
@@ -1025,9 +1025,6 @@ pullback_samples_from_closed_surface(PBCData* data,
 			has_dir = true;
 			if(has_prev_dir && (j>1)) {
 			    double dot = prev_dir * dir;
-			    double dist = pt.DistanceTo(prev_pt);
-			    double newdelta = delta/2.0;
-			    //std::cout << "dot - " << dot << std::endl;
 			    double lastgood=0.0,lastbad=0.0;
 			    ON_2dPoint lastgoodpoint;
 			    ON_2dPoint lastbadpoint;
@@ -1136,7 +1133,7 @@ pullback_samples_from_closed_surface(PBCData* data,
 	} else {
 	    if ((i>0) && (i < (numKnots+1))) {
 		double delta = (knots[i] - knots[i-1])/(double)samplesperknotinterval;
-		for (int j=1; j<samplesperknotinterval; ) {
+		for (size_t j=1; j<samplesperknotinterval; ) {
 		    if (toUV(*data, pt, knots[i-1]+j*delta, -PBC_FROM_OFFSET)) {
 			if (surf->IsClosed(0) && (NEAR_EQUAL(pt.x, dom[0].m_t[0], PBC_TOL) || NEAR_EQUAL(pt.x, dom[0].m_t[1], PBC_TOL))) {
 			    if (fabs(prev_pt.x-dom[0].m_t[0]) < fabs(prev_pt.x-dom[0].m_t[1])) {

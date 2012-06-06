@@ -66,6 +66,13 @@ static std::vector<std::string> readLine(std::istream& is)
 }
 
 
+static inline void
+getPoint(const std::string &x, const std::string &y, const std::string &z, point_t& point) {
+    point[X] = toValue(x.c_str());
+    point[Y] = toValue(y.c_str());
+    point[Z] = toValue(z.c_str());
+}
+
 int main(int   argc,
 	 char* argv[])
 {
@@ -109,32 +116,28 @@ int main(int   argc,
 		    if (thicknessIndex != std::string::npos) {
 			std::string thickf = nameLine[1].substr(thicknessIndex + 7);
 
-			if (thickf.size() > 0)
-			    bot.setThickness(toValue(thickf.c_str()));
-			else
+			if (thickf.size() > 0) {
+			    fastf_t val = toValue(thickf.c_str());
+			    bot.setThickness(val);
+			} else {
 			    std::cout << "Missing thickness in " << nameLine[0].c_str() << '\n';
+			}
 		    }
 		}
 
 		std::vector<std::string> triangleLine = readLine(is);
 
 		while (is && (triangleLine.size() == 9)) {
-		    point_t point;
+		    point_t p;
 
-		    point[X] = toValue(triangleLine[0].c_str());
-		    point[Y] = toValue(triangleLine[1].c_str());
-		    point[Z] = toValue(triangleLine[2].c_str());
-		    int a = bot.addPoint(point);
+		    getPoint(triangleLine[0], triangleLine[1], triangleLine[2], p);
+		    int a = bot.addPoint(p);
 
-		    point[X] = toValue(triangleLine[3].c_str());
-		    point[Y] = toValue(triangleLine[4].c_str());
-		    point[Z] = toValue(triangleLine[5].c_str());
-		    int b = bot.addPoint(point);
+		    getPoint(triangleLine[3], triangleLine[4], triangleLine[5], p);
+		    int b = bot.addPoint(p);
 
-		    point[X] = toValue(triangleLine[6].c_str());
-		    point[Y] = toValue(triangleLine[7].c_str());
-		    point[Z] = toValue(triangleLine[8].c_str());
-		    int c = bot.addPoint(point);
+		    getPoint(triangleLine[6], triangleLine[7], triangleLine[8], p);
+		    int c = bot.addPoint(p);
 
 		    bot.addTriangle(a, b, c);
 

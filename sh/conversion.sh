@@ -554,6 +554,12 @@ EOF
 	if test "x$found" = "x${object}.brep" ; then
 	    brep=pass
 	    brep_count=`expr $brep_count + 1`
+	else
+	    found2=`$SGED -c "$work" search . -name \"${obj}.${obj}.brep\" 2>&1 | grep -v Using`
+	    if test "x$found2" = "x${object}.${object}.brep" ; then
+		brep=pass
+		brep_count=`expr $brep_count + 1`
+	    fi
 	fi
 	if [ -e "./${obj}.brep.extl" ] ; then
             `rm "./${obj}.brep.extl"`
@@ -568,7 +574,8 @@ EOF
 
 	count=`expr $count + 1`
 
-	$ECHO "%-4s\tnmg: %s %ss\tbot: %s %ss\tbrep: %s %ss %6.0fs %*s%.0f %s:%s" \
+	SECONDS=`echo $real_nmg $real_bot $real_brep | awk '{print ($1+$2+$3)}'`
+	$ECHO "%-4s\tnmg: %s %ss\tbot: %s %ss\tbrep: %s %ss %6.2fs %*s%.0f %s:%s" \
                \"$status\" \"$nmg\" \"$real_nmg\" \"$bot\" \"$real_bot\" \"$brep\" \"$real_brep\" \"$SECONDS\" \
                \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
 

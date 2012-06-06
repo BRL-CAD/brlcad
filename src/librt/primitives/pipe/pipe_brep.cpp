@@ -85,13 +85,13 @@ make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
 	ON_BrepEdge& startinneredge = (*b)->NewEdge((*b)->m_V[vert3ind], (*b)->m_V[vert3ind], c3ind);
 	startinneredge.m_tolerance = 0.0;
 	ON_BrepEdge& endinneredge = (*b)->NewEdge((*b)->m_V[vert4ind], (*b)->m_V[vert4ind], c4ind);
-	endinneredge.m_tolerance = 0.0;
-	startinnercurves->Empty();
-	for (int i = 0; i < endinnercurves->Count(); i++) {
-	    ON_Curve *curve = (*endinnercurves)[i];
-	    startinnercurves->Append(curve);
-	}
+	endinneredge.m_tolerance = 0.0;	
 	(*b)->NewRuledFace(startinneredge, false, endinneredge, false);
+    }
+    startinnercurves->Empty();
+    for (int i = 0; i < endinnercurves->Count(); i++) {
+	ON_Curve *curve = (*endinnercurves)[i];
+	startinnercurves->Append(curve);
     }
 }
 
@@ -169,7 +169,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     nextp = BU_LIST_NEXT(wdb_pipept, &curp->l);
     if (BU_LIST_IS_HEAD(&curp->l, &pip->pipe_segs_head)) return;
 
-    VMOVE(current_point, prevp->pp_coord);
+    VMOVE(current_point, curp->pp_coord);
 
     VSUB2(pipe_dir, prevp->pp_coord, curp->pp_coord);
     bn_vec_ortho(x_dir, pipe_dir);
@@ -249,11 +249,11 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 
 	    if (isnan(dist_to_bend) || VNEAR_ZERO(norm, SQRT_SMALL_FASTF) || NEAR_ZERO(dist_to_bend, SQRT_SMALL_FASTF)) {
 		// points are colinear, treat as linear segment
-		VSUB2(pipe_dir, prevp->pp_coord, current_point);
+		VSUB2(pipe_dir, current_point, curp->pp_coord);
 		bn_vec_ortho(x_dir, pipe_dir);
 		VCROSS(y_dir, pipe_dir, x_dir);
 		VUNITIZE(y_dir);
-		plane_origin = ON_3dPoint(current_point);
+		plane_origin = ON_3dPoint(curp->pp_coord);
 		plane_x_dir = ON_3dVector(x_dir);
 		plane_y_dir = ON_3dVector(y_dir);
 		endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);

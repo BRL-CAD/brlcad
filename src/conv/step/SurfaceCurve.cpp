@@ -113,7 +113,7 @@ SurfaceCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 	    while (sn != NULL) {
 		p_or_s = (SDAI_Select *) sn->node;
 
-		if (p_or_s->CurrentUnderlyingType() == config_control_designt_pcurve_or_surface) {
+		if (p_or_s->CurrentUnderlyingType() == config_control_design::t_pcurve_or_surface) {
 		    PCurveOrSurface *aPCOS = new PCurveOrSurface();
 
 		    associated_geometry.push_back(aPCOS);

@@ -47,7 +47,7 @@ rt_extrude_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
     eip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(eip);
 
-    // Create a sketch whose shape is according to eip->skt, 
+    // Create a sketch whose shape is according to eip->skt,
     // and position is according to eip->V, eip->u_vec and eip->v_vec.
     // Then convert the sketch to BREP.
     struct rt_sketch_internal sketch;

@@ -1,4 +1,4 @@
-/*                          R A N D . C
+/*                      R A N D M T . C
  * BRL-CAD
  *
  * A C-program for MT19937: Real number version

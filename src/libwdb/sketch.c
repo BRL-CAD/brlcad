@@ -1,4 +1,4 @@
-/*                           S K T . C
+/*                        S K E T C H . C
  * BRL-CAD
  *
  * Copyright (c) 2000-2012 United States Government as represented by

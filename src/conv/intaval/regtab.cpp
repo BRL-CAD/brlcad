@@ -38,6 +38,14 @@
 
 static std::map<std::string, Region*> regionTable;
 
+Region::Region(int nr, std::string description)
+  : compnr(nr), material(0), desc(description), addCreated(false), excludeCreated(false)
+{
+    WMEMBER_INIT(&head);
+    WMEMBER_INIT(&addHead);
+    WMEMBER_INIT(&excludeHead);
+}
+
 
 int readMaterials(FILE *fp)
 {

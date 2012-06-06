@@ -33,6 +33,7 @@ lex_getone(int *used, struct bu_vls *rtstr)
 {
     register char *cp;
     register char *sp;
+    register char tc;
     register char *unit;
     int number;
 
@@ -41,46 +42,36 @@ lex_getone(int *used, struct bu_vls *rtstr)
 
     BU_CK_VLS(rtstr);
     cp = bu_vls_addr(rtstr);
-top:
-    if (bu_lex_reading_comment) {
-	for (;;) {
-	    register char tc;
-	    tc = *cp; cp++;
-	    if (!tc) {
-		return 0;
-	    }
-	    if (tc != '*') continue;
-	    if (*cp != '/') continue;
-	    cp++;	/* Skip the '/' */
-	    break;
-	}
-	bu_lex_reading_comment = 0;
-    }
+    while (1) {
+        if (bu_lex_reading_comment) {
+            do {
+                /* looking at two consecutive chars */
+                tc = *cp; cp++;
+                if (!tc) {
+                    return 0;
+                }
+            } while (!(tc == '*' && *cp == '/'));
+            cp++;   /* skip the '/' */
+            bu_lex_reading_comment = 0;
+        }
+        /* skip leading blanks */
+        while (*cp && isspace(*cp)) cp++;
+        /* is this a comment? '#' to end of line is */
+        if (!*cp || *cp == '#') {
+            return 0;
 
-    /*
-     * skip leading blanks
-     */
-    for (; *cp && isspace(*cp); cp++);
-    /*
-     * Is this a comment?  '#' to end of line is.
-     */
-    if (!*cp || *cp == '#') {
-	return 0;
+        }
+        /* is this a 'C' multi-line comment? */
+        if (*cp == '/' && *(cp+1) == '*') {
+            cp += 2;
+            bu_lex_reading_comment = 1;
+        } else /* we are done reading comments */ {
+            break;
+        }
     }
-    /*
-     * Is this a 'C' multi-line comment?
-     */
-    if (*cp == '/' && *(cp+1)=='*') {
-	cp += 2;
-	bu_lex_reading_comment = 1;
-	goto top;
-    }
-    /*
-     * cp points to the first non-blank character.
-     */
+    /* cp points to the first non-blank character */
     sp = cp;		/* start pointer */
     while (*cp) {
-	register char tc;
 
 	tc = *cp; cp++;
 	/*
@@ -100,7 +91,7 @@ top:
 		if (number == 1) number = 2;
 		continue;
 	    }
-	    if (number==2 && tc == '.') {
+	    if (number == 2 && tc == '.') {
 		/*
 		 * [0-9][0-9]*.
 		 */
@@ -126,7 +117,7 @@ top:
 	}
 	if (!isalnum(tc) && tc != '.' && tc != '_') break;
     }
-    if (number ==  6) --cp;	/* subtract off the + or - */
+    if (number == 6) --cp;	/* subtract off the + or - */
     if (number == 3) --cp;  /* subtract off the . */
     /*
      * All spaces have been skipped. (sp)

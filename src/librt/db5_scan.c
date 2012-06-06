@@ -93,10 +93,10 @@ db5_scan(
 	    nrec++;
 	    if (raw.buf) {
 #if 1
-                bu_pool_put((void *)raw.buf, (size_t)raw.object_length);
+		bu_pool_put((void *)raw.buf, (size_t)raw.object_length);
 #else
 		bu_free(raw.buf, "raw v5 object");
-#endif 
+#endif
 		raw.buf = NULL;
 	    }
 	}
