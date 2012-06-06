@@ -61,16 +61,19 @@ make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
     ON_BrepVertex& vert2 = (*b)->NewVertex((*b)->m_C3[c2ind]->PointAt(0), SMALL_FASTF);
     vert2.m_tolerance = 0.0;
     int vert2ind = (*b)->m_V.Count() - 1;
-    ON_BrepEdge& startedge = (*b)->NewEdge((*b)->m_V[vert1ind], (*b)->m_V[vert1ind], c1ind);
-    startedge.m_tolerance = 0.0;
-    ON_BrepEdge& endedge = (*b)->NewEdge((*b)->m_V[vert2ind], (*b)->m_V[vert2ind], c2ind);
-    endedge.m_tolerance = 0.0;
+    ON_BrepEdge* startedge = &(*b)->NewEdge((*b)->m_V[vert1ind], (*b)->m_V[vert1ind], c1ind);
+    startedge->m_tolerance = 0.0;
+    ON_BrepEdge* endedge = &(*b)->NewEdge((*b)->m_V[vert2ind], (*b)->m_V[vert2ind], c2ind);
+    endedge->m_tolerance = 0.0;
+    // startedge might points to the wrong place if adding endegde expands the capacity
+    // of the edge array, so we need to fix it.
+    startedge = (*b)->Edge(startedge->m_edge_index);
     startoutercurves->Empty();
     for (int i = 0; i < endoutercurves->Count(); i++) {
 	ON_Curve *curve = (*endoutercurves)[i];
 	startoutercurves->Append(curve);
     }
-    ON_BrepFace *newouterface = (*b)->NewRuledFace(startedge, false, endedge, false);
+    ON_BrepFace *newouterface = (*b)->NewRuledFace(*startedge, false, *endedge, false);
     if (newouterface != NULL) (*b)->FlipFace(*newouterface);
 
     if (startinnercurves->Count() > 0) {
@@ -82,11 +85,12 @@ make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
 	ON_BrepVertex& vert4 = (*b)->NewVertex((*b)->m_C3[c4ind]->PointAt(0), SMALL_FASTF);
 	vert4.m_tolerance = 0.0;
 	int vert4ind = (*b)->m_V.Count() - 1;
-	ON_BrepEdge& startinneredge = (*b)->NewEdge((*b)->m_V[vert3ind], (*b)->m_V[vert3ind], c3ind);
-	startinneredge.m_tolerance = 0.0;
-	ON_BrepEdge& endinneredge = (*b)->NewEdge((*b)->m_V[vert4ind], (*b)->m_V[vert4ind], c4ind);
-	endinneredge.m_tolerance = 0.0;	
-	(*b)->NewRuledFace(startinneredge, false, endinneredge, false);
+	ON_BrepEdge* startinneredge = &(*b)->NewEdge((*b)->m_V[vert3ind], (*b)->m_V[vert3ind], c3ind);
+	startinneredge->m_tolerance = 0.0;
+	ON_BrepEdge* endinneredge = &(*b)->NewEdge((*b)->m_V[vert4ind], (*b)->m_V[vert4ind], c4ind);
+	endinneredge->m_tolerance = 0.0;
+	startedge = (*b)->Edge(startedge->m_edge_index);
+	(*b)->NewRuledFace(*startinneredge, false, *endinneredge, false);
     }
     startinnercurves->Empty();
     for (int i = 0; i < endinnercurves->Count(); i++) {
