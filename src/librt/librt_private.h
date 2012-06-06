@@ -31,6 +31,9 @@
 
 #include "common.h"
 
+#include "db.h"
+#include "raytrace.h"
+
 
 __BEGIN_DECLS
 
@@ -70,6 +73,18 @@ extern void flip_dbmat_mat(dbfloat_t *dbp, const fastf_t *ff);
  * where a is the semi-major axis.
  */
 extern fastf_t ell_angle(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol);
+
+/**
+ * used by rt_shootray_bundle()
+ * FIXME: non-public API shouldn't be using rt_ prefix
+ */
+extern const union cutter *rt_advance_to_next_cell(struct rt_shootray_status *ssp);
+
+/**
+ * used by rt_shootray_bundle()
+ * FIXME: non-public API shouldn't be using rt_ prefix
+ */
+extern void rt_plot_cell(const union cutter *cutp, struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);
 
 
 __END_DECLS
