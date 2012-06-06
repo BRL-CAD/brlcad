@@ -182,6 +182,24 @@ if {[info exists ::enable_gui]} {
 
 
 if {[info exists ::enable_gui]} {
+  package require Iwidgets
+  package require ManBrowser 1.0
+  wm state . withdrawn
+  set w [ ManBrowser .browser ]
+  $w buttonconfigure 0 -text Close -command ::exit 
+  wm title .browser "BRL-CAD Man Page - $argv2"
+  wm protocol .browser WM_DELETE_WINDOW ::exit
+  bind $w <Escape> ::exit
+  bind $w <q> ::exit
+
+  $w loadPage $man_file
+
+  $w center
+  $w activate
+  $w center
+  vwait forever
+  
+  update
   puts "Graphical mode done."
 } else {
   puts $man_file

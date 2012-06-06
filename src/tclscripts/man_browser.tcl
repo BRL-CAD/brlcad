@@ -154,8 +154,13 @@ package provide ManBrowser 1.0
 #
 ::itcl::body ManBrowser::loadPage {pageName} {
     # Get page
-    if {[file exists [file join $path $pageName.html]]} {
-       set pathname [file join $path $pageName.html]
+    if {[file exists $pageName]} {set pathname $pageName}
+    if {![info exists pathname]} {
+       if {[file exists [file join $path $pageName.html]]} {
+          set pathname [file join $path $pageName.html]
+       }
+    }
+    if {[info exists pathname]} {
        set htmlFile [open $pathname]
        set pageData [read $htmlFile]
        close $htmlFile
