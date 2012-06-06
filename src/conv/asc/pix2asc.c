@@ -47,9 +47,7 @@ main(int UNUSED(ac), char **UNUSED(argv))
         ok = 1;
         /* Input validation */
 	for (i = 0; i < 3; ++i) {
-	    /* really the max here should probably be that of the unsigned char, but pix files seem to have higher
-             * numbers??  257 observed in moss.pix... */
-            int d = (int)(*pix + sizeof(unsigned char) * i);
+            int d = (int)pix[i];
 	    if (d < 0 || d > UCHAR_MAX + 2) {
                 bu_bomb("Corrupt file!");
             }
