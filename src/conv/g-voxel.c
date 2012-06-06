@@ -29,6 +29,13 @@
 #include "raytrace.h"		/* librt interface definitions */
 
 
+struct rayInfo {
+    float sizeVoxelX;
+    float threshold;
+    int *rayData;
+};
+
+
 /**
  * rt_shootray() was told to call this on a hit.
  *
@@ -44,22 +51,29 @@
 static int
 hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs))
 {
-    int voxelNumIn, voxelNumOut, presentVoxel=-1, i, numVoxelX;
+    int voxelNumIn, voxelNumOut, presentVoxel=0, i, j = 0, numVoxelX, *rayData;
     struct partition *pp;
+    struct rayInfo *voxelHits;
     struct hit *hitOutp, *hitInp;
     struct rt_i *rtip;
-    float hitDistIn, hitDistOut, sizeVoxelX, inDistance = 0.0, threshold = 0.5;
+    float hitDistIn, hitDistOut, sizeVoxelX, inDistance = 0.0, threshold;
+
+
+    voxelHits = (struct rayInfo*) ap->a_uptr;
 
     /**
      * length of voxels in the X-direction is sizeVoxelX, rtip is
      * structure for raytracing
      */
-    sizeVoxelX = * (float*) ap->a_uptr;
+    sizeVoxelX = voxelHits->sizeVoxelX;
+    rayData = voxelHits->rayData;
+    threshold = voxelHits->threshold;
+
     rtip = ap->a_rt_i;
     pp = PartHeadp->pt_forw;
 
     /**
-     * The following loop prints the voxels is present in path of ray
+     * The following loop prints the voxels is present in path of rayi
      * (1-present)
      */
     while (pp != PartHeadp) {
@@ -82,6 +96,11 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 	voxelNumIn = (int) (hitDistIn - 1.0) / sizeVoxelX;
 	voxelNumOut = (int) (hitDistOut - 1.0) / sizeVoxelX;
 
+	if((hitDistOut - 1.0) / sizeVoxelX - floor((hitDistOut - 1.0) / sizeVoxelX) <= 0.0) {
+	    voxelNumOut -= 1;
+	}
+
+
 	/**
 	 * If ray does not enter next partition (ie the voxel index
 	 * from which ray exited) in the same voxel index, this means
@@ -91,15 +110,14 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 	if (presentVoxel != voxelNumIn) {
 
 	    if (inDistance / sizeVoxelX >= threshold) {
-		printf("1");
+		rayData[j++] += 1;
+
 	    } else {
-		if (presentVoxel!=-1) {
-		    printf("0");
-		}
+		rayData[j++] += 0;
 	    }
 
 	    for (i = 0; i < voxelNumIn - presentVoxel - 1; i++) {
-		printf("0");
+		rayData[j++] += 0;
 	    }
 
 	    presentVoxel = voxelNumIn;
@@ -120,41 +138,40 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 	if (voxelNumIn == voxelNumOut) {
 	    inDistance += hitDistOut - hitDistIn;
 	} else {
-	    inDistance += (voxelNumIn + 1) * sizeVoxelX - hitDistOut;
+	    inDistance += (voxelNumIn + 1)*sizeVoxelX - hitDistIn + 1.0;
 
 	    if (inDistance / sizeVoxelX >= threshold) {
-		printf("1");
+		rayData[j++] += 1;
 	    } else {
-		printf("0");
+		rayData[j++] += 0;
 	    }
 
-	    for (i = 0; i < voxelNumOut - voxelNumIn -1; i++) {
-		printf("1");
+	    for (i = 0; i < voxelNumOut - voxelNumIn - 1; i++) {
+		rayData[j++] += 1;
 	    }
 
 	    presentVoxel = voxelNumOut;
-	    inDistance = hitDistOut - voxelNumOut * sizeVoxelX;
+	    inDistance = hitDistOut - 1.0 - voxelNumOut * sizeVoxelX;
 	}
 
 
 	pp = pp->pt_forw;
     }
 
-    if (inDistance >= threshold) {
-	printf("1");
+    if (inDistance / sizeVoxelX >= threshold) {
+	rayData[j++] += 1;
     } else {
-	printf("0");
+	rayData[j++] += 0;
     }
 
     /**
      * voxels after the last partition are not in
      */
-    numVoxelX = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxelX) + 1;
-    for (i = 0; i < numVoxelX - presentVoxel; i++) {
-	printf("0");
+    numVoxelX = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxelX) ;
+    for (i = 0; i < numVoxelX - presentVoxel - 1; i++) {
+	rayData[j++] += 0;
     }
 
-    printf("\n");
     return 0;
 
 }
@@ -168,7 +185,6 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 static int
 miss(struct application *UNUSED(ap))
 {
-    bu_log("missed\n");
     return 0;
 }
 
@@ -178,10 +194,11 @@ main(int argc, char **argv)
 {
     struct application ap;
     static struct rt_i *rtip;
+    struct rayInfo voxelHits;
 
     char title[1024] = {0};
-    int i, j, numVoxelY, numVoxelZ, yMin, zMin;
-    float sizeVoxelX,  sizeVoxelY, sizeVoxelZ;
+    int i, j, k, numVoxelX, numVoxelY, numVoxelZ, yMin, zMin, *rayData, raysPerVoxel = 2, rayNum;
+    float sizeVoxelX,  sizeVoxelY, sizeVoxelZ, threshold = 0.5, rayNumThreshold = 0.5;
 
     /* Check for command-line arguments.  Make sure we have at least a
      * geometry file and one geometry object on the command line.
@@ -233,26 +250,21 @@ main(int argc, char **argv)
     VPRINT("\nmin of bounding rectangular parallelopiped --Pnt\n", rtip->mdl_min);
     VPRINT("\nmax of bounding rectangular parallelopiped --Pnt\n", rtip->mdl_max);
 
-
-    /*
-      printf("\nx value of maximum on the highest corner of parallelopiped is: %f", (rtip->mdl_max)[0]);
-      printf("\ny value of maximum on the highest corner of parallelopiped is: %f", (rtip->mdl_max)[1]);
-      printf("\nz value of maximum on the highest corner of parallelopiped is: %f", (rtip->mdl_max)[2]);
-      printf("\nx value of minimum on the lowest corner of parallelopiped is: %f", (rtip->mdl_min)[0]);
-      printf("\ny value of minimum on the lowest corner of parallelopiped is: %f", (rtip->mdl_min)[1]);
-      printf("\nz value of minimum on the lowest corner of parallelopiped is: %f", (rtip->mdl_min)[2]);
-    */
-
-
     sizeVoxelX = 1.0;
     sizeVoxelY = 1.0;
     sizeVoxelZ = 1.0;
 
 
     /* assume voxels are sizeVoxelX, sizeVoxelY, sizeVoxelZ size in each dimension */
-    /* numVoxelX is unused? */
-    numVoxelY = (int)(((rtip->mdl_max)[1] - (rtip->mdl_min)[1])/sizeVoxelY) + 1;
-    numVoxelZ = (int)(((rtip->mdl_max)[2] - (rtip->mdl_min)[2])/sizeVoxelZ) + 1;
+    numVoxelX = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxelX);
+    numVoxelY = (int)(((rtip->mdl_max)[1] - (rtip->mdl_min)[1])/sizeVoxelY);
+    numVoxelZ = (int)(((rtip->mdl_max)[2] - (rtip->mdl_min)[2])/sizeVoxelZ);
+
+    /*rayData is pointer to an array of 1's and 0's telling whether that particular ray takes the voxel as in or out*/
+    rayData = bu_calloc(numVoxelX, sizeof(int), "rayData");
+    voxelHits.sizeVoxelX = sizeVoxelX;
+    voxelHits.rayData = rayData;
+    voxelHits.threshold = threshold;
 
     /* X is unused? */
     yMin = (int)((rtip->mdl_min)[1]);
@@ -260,23 +272,42 @@ main(int argc, char **argv)
 
     for (i = 0; i < numVoxelZ; i++) {
 	for (j = 0; j < numVoxelY; j++) {
-	    printf("Ray number is %d\n", numVoxelY * i + j);
+	    printf("\nRay number is %d\n", numVoxelY * i + j);
 	    RT_APPLICATION_INIT(&ap);
 	    ap.a_rt_i = rtip;
 	    ap.a_onehit = 0;
 
-	    /* ray is hit through midpoint of the unit sized voxels */
-	    VSET(ap.a_ray.r_pt, (rtip->mdl_min)[0] - 1.0, yMin + (j + 0.5) * sizeVoxelY, zMin + (i + 0.5) * sizeVoxelZ);
-	    VSET(ap.a_ray.r_dir, 1.0, 0.0, 0.0);
+	    for(k = 0; k < numVoxelX; k++) {
+		rayData[k] = 0;
+	    }
 
-	    ap.a_hit = hit;
-	    ap.a_miss = miss;
-	    ap.a_uptr = &sizeVoxelX;
+	    /* right now, rays are hit at the same point(no use, but have to see how to proceed) */
+	    for(rayNum = 0; rayNum < raysPerVoxel; rayNum++) {
 
-	    rt_shootray(&ap);
+		/* ray is hit through midpoint of the unit sized voxels */
+		VSET(ap.a_ray.r_pt, (rtip->mdl_min)[0] - 1.0, yMin + (j + 0.5) * sizeVoxelY, zMin + (i + 0.5) * sizeVoxelZ);
+		VSET(ap.a_ray.r_dir, 1.0, 0.0, 0.0);
+
+		ap.a_hit = hit;
+		ap.a_miss = miss;
+		ap.a_uptr = &voxelHits;
+
+		rt_shootray(&ap);
+	   }
+	    printf("\nraydata in main is:\n");
+
+	    for(k=0;k<numVoxelX;k++) {
+		if(rayData[k] / raysPerVoxel >= rayNumThreshold) {
+		    printf("1");
+		}
+		else {
+		   printf("0");
+		}
+	    }
+	    printf("\n");
 	}
+	printf("\n");
     }
-
     return 0;
 }
 
