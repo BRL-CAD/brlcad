@@ -84,17 +84,18 @@ main(void)
         /* get a valid hex char in i */
 	do {
 	    a = getchar();
-	    if ( a == EOF || a < 0 || a > 255 )  goto OUT;
-	} while ( (i = lmap[a]) < 0 );
+	    if (a == EOF || a < 0 || a > 255)
+                goto OUT;
+	} while ((i = lmap[a]) < 0);
 
         /* get the next hex char */
 	b = getchar();
-	if ( b == EOF || b < 0 || b > 255 )  {
+	if (b == EOF || b < 0 || b > 255) {
 	    fprintf(stderr, "asc2pix: unexpected EOF in middle of hex number\n");
 	    return 1;
 	}
 
-	if ( (b = rmap[b]) < 0 )  {
+	if ((b = rmap[b]) < 0) {
 	    fprintf(stderr, "asc2pix: illegal hex code in file, aborting\n");
 	    return 1;
 	}
