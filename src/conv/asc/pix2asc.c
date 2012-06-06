@@ -48,7 +48,7 @@ main(int UNUSED(ac), char **UNUSED(argv))
         /* Input validation */
 	for (i = 0; i < 3; ++i) {
             int d = (int)pix[i];
-	    if (d < 0 || d > UCHAR_MAX + 2) {
+	    if (d < 0 || d > UCHAR_MAX) {
                 bu_bomb("Corrupt file!");
             }
 	}
