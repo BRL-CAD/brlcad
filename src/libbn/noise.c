@@ -499,7 +499,8 @@ find_spec_wgt(double h, double l, double o)
     struct fbm_spec *ep = NULL;
     int i;
 
-    for (ep = etbl, i=0; i < etbl_next; i++, ep++) {
+    for (i=0; i < etbl_next; i++) {
+	ep = &etbl[i];
 	if (ep->magic != MAGIC_fbm_spec_wgt)
 	    bu_bomb("find_spec_wgt");
 	if (ZERO(ep->lacunarity - l)
@@ -519,7 +520,8 @@ find_spec_wgt(double h, double l, double o)
     /* We search the list one more time in case the last process to
      * hold the semaphore just created the table we were about to add
      */
-    for (ep = etbl, i=0; i < etbl_next; i++, ep++) {
+    for (i=0; i < etbl_next; i++) {
+	ep = &etbl[i];
 	if (ep->magic != MAGIC_fbm_spec_wgt)
 	    bu_bomb("find_spec_wgt");
 	if (ZERO(ep->lacunarity - l)
