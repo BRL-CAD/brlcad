@@ -447,8 +447,7 @@ static int etbl_size = 0;
 static struct fbm_spec *
 build_spec_tbl(double h_val, double lacunarity, double octaves)
 {
-    struct fbm_spec *ep;
-    double *spec_wgts;
+    struct fbm_spec *ep = NULL;
     double frequency;
     int i;
 
@@ -475,14 +474,12 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
     ep = &etbl[etbl_next];
     ep->magic = MAGIC_fbm_spec_wgt;	ep->octaves = octaves;
     ep->h_val = h_val;		ep->lacunarity = lacunarity;
-    spec_wgts = ep->spec_wgts =
-	(double *)bu_malloc(((int)(octaves+1)) * sizeof(double),
-			    "spectral weights");
+    ep->spec_wgts = (double *)bu_malloc(((int)(octaves+1)) * sizeof(double), "spectral weights");
 
     /* precompute and store spectral weights table */
     for (frequency = 1.0, i=0; i < octaves; i++) {
 	/* compute weight for each frequency */
-	spec_wgts[i] = pow(frequency, -h_val);
+	ep->spec_wgts[i] = pow(frequency, -h_val);
 	frequency *= lacunarity;
     }
 
@@ -499,9 +496,8 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
 struct fbm_spec *
 find_spec_wgt(double h, double l, double o)
 {
-    struct fbm_spec *ep;
+    struct fbm_spec *ep = NULL;
     int i;
-
 
     for (ep = etbl, i=0; i < etbl_next; i++, ep++) {
 	if (ep->magic != MAGIC_fbm_spec_wgt)
@@ -532,7 +528,8 @@ find_spec_wgt(double h, double l, double o)
 	    break;
     }
 
-    if (i >= etbl_next) ep = build_spec_tbl(h, l, o);
+    if (i >= etbl_next)
+	ep = build_spec_tbl(h, l, o);
 
     bu_semaphore_release(BU_SEM_BN_NOISE);
 
