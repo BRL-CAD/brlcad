@@ -3126,6 +3126,7 @@ rt_tgc_volume(fastf_t *vol, const struct rt_db_internal *ip)
             break;
         case TEC:
             *vol = M_PI * mag_h * (mag_a * mag_b + mag_c * mag_d + sqrt(mag_a * mag_b * mag_c * mag_d)) / 3.0;
+            break;
         default:
             bu_log("rt_tgc_volume(): cannot find volume");
     }
