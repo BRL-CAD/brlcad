@@ -174,6 +174,7 @@ BRLCAD_ADDDATA(g-xxx.c sample_applications)
 BRLCAD_ADDDATA(g-xxx_facets.c sample_applications)
 
 set(conv_MANS
+  asc/asc2pix.1
   asc/g2asc.1
   asc/pix2asc.1
   bot_dump.1
