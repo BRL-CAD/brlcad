@@ -70,7 +70,10 @@
     extern int rt_##name##_params(struct pc_pc_set *ps, const struct rt_db_internal *ip); \
     extern int rt_##name##_bbox(struct rt_db_internal *ip, point_t *min, point_t *max); \
     extern int rt_##name##_mirror(struct rt_db_internal *ip, const plane_t *plane); \
-    extern const struct bu_structparse rt_##name##_parse[]
+    extern const struct bu_structparse rt_##name##_parse[]; \
+    extern void rt_##name##_volume(fastf_t *vol, const struct rt_db_internal *ip); \
+    extern void rt_##name##_surf_area(fastf_t *area, const struct rt_db_internal *ip); \
+    extern void rt_##name##_centroid(point_t *cent, const struct rt_db_internal *ip)
 
 
 RT_DECLARE_INTERFACE(tor);
