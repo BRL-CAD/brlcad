@@ -506,8 +506,8 @@ find_spec_wgt(double h, double l, double o)
 	ep = &etbl[i];
 	if (ep->magic != MAGIC_fbm_spec_wgt)
 	    bu_bomb("find_spec_wgt");
-	if (ZERO(ep->lacunarity - l)
-	    && ZERO(ep->h_val - h)
+	if (EQUAL(ep->lacunarity, l)
+	    && EQUAL(ep->h_val, h)
 	    && ep->octaves > (o - SMALL_FASTF))
 	{
 	    return ep;
@@ -527,8 +527,8 @@ find_spec_wgt(double h, double l, double o)
 	ep = &etbl[i];
 	if (ep->magic != MAGIC_fbm_spec_wgt)
 	    bu_bomb("find_spec_wgt");
-	if (ZERO(ep->lacunarity - l)
-	    && ZERO(ep->h_val - h)
+	if (EQUAL(ep->lacunarity, l)
+	    && EQUAL(ep->h_val, h)
 	    && ep->octaves > (o - SMALL_FASTF))
 	    break;
     }
