@@ -15,6 +15,18 @@ on-going issues.
 Recent Bugs
 -----------
 
+* corruption/crash issue rendering terra.g without terra.dsp,
+  possibly/probably parallel-related in libbn/noise.c's
+  bn_noise_turb() function.  gdb eventually catches a segfault in
+  find_spec_wgt() loop with indications of corrupted memory.  valgrind
+  confirms corrupted memory (8 bytes) after a build_spec_table()
+  realloc within find_spec_wgt() but it's not clear why.  etbl
+  book-keeping seems okay..  corrupted read consistently detected on
+  spec_wgts = ep->spec_wgts line in bn_noise_turb().  observed on
+  64-bit linux system:
+
+  rm -f terra.pix && valgrind bin/rt -o terra.pix -P1 -H3 -s1024 share/brlcad/7.21.0/db/terra.g all.g
+
 * mged 'joint' hold command isn't working. looks like the fp_names
   book-keeping is fuxored or the db_lookup is returning NULL (or isn't
   yet performed).
