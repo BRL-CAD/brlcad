@@ -1,7 +1,9 @@
 #ifndef SDAIDAOBJECT_H
 #define SDAIDAOBJECT_H 1
 
-typedef char * SDAI_DAObjectID ;
+#include <scl_export.h>
+
+typedef char * SDAI_DAObjectID;
 
 // interface PID (ISO/DIS 10303-23:1996(E) 5.3.10.1)
 // Also, CORBA POS specification, Section 5.4
@@ -24,7 +26,7 @@ typedef char * SDAI_DAObjectID ;
    SDAI_DAObjectID as follows:
  */
 
-class SDAI_PID  : public SDAI_sdaiObject  {
+class SCL_DAI_EXPORT SDAI_PID : public SDAI_sdaiObject {
     public:
 
 // These are in the IDL generated code for Part 26. I will have to think about
@@ -33,18 +35,18 @@ class SDAI_PID  : public SDAI_sdaiObject  {
 //    static PID_ptr _narrow(SDAI_sdaiObject_ptr);
 //    static PID_ptr _nil();
 
-        SDAI_String  _datastore_type ;
-        SDAI_String  _pidstring ;
+        SDAI_String _datastore_type;
+        SDAI_String _pidstring;
 
         // constructor/destructor
-        SDAI_PID ();
-        virtual ~SDAI_PID ();
+        SDAI_PID();
+        virtual ~SDAI_PID();
 
         /*
            The Datestore_type attribute shall identify the type of the underlying
            datastore.
          */
-        char * Datastore_type() const  {
+        char * Datastore_type() const {
             return const_cast<char *>( _datastore_type.c_str() );
         }
         void Datastore_type( char * x ) {
@@ -57,8 +59,8 @@ class SDAI_PID  : public SDAI_sdaiObject  {
         char * get_PIDString();
 };
 
-typedef SDAI_PID  * SDAI_PID_ptr ;
-typedef SDAI_PID_ptr  SDAI_PID_var ;
+typedef SDAI_PID * SDAI_PID_ptr;
+typedef SDAI_PID_ptr SDAI_PID_var;
 
 
 // interface PID_DA (ISO/DIS 10303-23:1996(E) 5.3.10.3)
@@ -83,10 +85,10 @@ typedef SDAI_PID_ptr  SDAI_PID_var ;
 // interface.
 //
 
-class SDAI_PID_DA : public SDAI_PID  {
+class SCL_DAI_EXPORT SDAI_PID_DA : public SDAI_PID {
     public:
 
-        SDAI_String  _oid ;
+        SDAI_String _oid;
         // oid (ISO/DIS 10303-23:1996(E) 5.3.10.3)
         //
         //   This attribute shall set and return the string representation of the
@@ -100,32 +102,32 @@ class SDAI_PID_DA : public SDAI_PID  {
         //
 
         // constructor/destructor
-        SDAI_PID_DA ();
-        virtual ~SDAI_PID_DA ();
+        SDAI_PID_DA();
+        virtual ~SDAI_PID_DA();
 
-        virtual void oid( const SDAI_DAObjectID  x ) {
+        virtual void oid( const SDAI_DAObjectID x ) {
             _oid = x;
         }
-        virtual SDAI_DAObjectID  oid() const {
+        virtual SDAI_DAObjectID oid() const {
             return const_cast<char *>( _oid.c_str() );
         }
 };
 
-typedef SDAI_PID_DA  * SDAI_PID_DA_ptr ;
-typedef SDAI_PID_DA_ptr  SDAI_PID_DA_var ;
+typedef SDAI_PID_DA * SDAI_PID_DA_ptr;
+typedef SDAI_PID_DA_ptr SDAI_PID_DA_var;
 
 // interface PID_SDAI (ISO/DIS 10303-23:1996(E) 5.3.10.2)
 //
 //    The PID_SDAI class maintains the persistent object identifier for
 // a Model_contents object.
 //
-class SDAI_PID_SDAI  : public SDAI_PID  {
+class SCL_DAI_EXPORT SDAI_PID_SDAI : public SDAI_PID {
     public:
-        SDAI_String  _modelid ;
+        SDAI_String _modelid;
 
         // constructor/destructor
-        SDAI_PID_SDAI ();
-        virtual ~SDAI_PID_SDAI ();
+        SDAI_PID_SDAI();
+        virtual ~SDAI_PID_SDAI();
 
         // Modelid (ISO/DIS 10303-23:1996(E) 5.3.10.3)
         //
@@ -136,13 +138,13 @@ class SDAI_PID_SDAI  : public SDAI_PID  {
         virtual void Modelid( const char * x ) {
             _modelid = x;
         }
-        virtual char * Modelid() const   {
+        virtual char * Modelid() const {
             return const_cast<char *>( _modelid.c_str() );
         }
 };
 
-typedef SDAI_PID_SDAI  * SDAI_PID_SDAI_ptr ;
-typedef SDAI_PID_SDAI_ptr  SDAI_PID_SDAI_var ;
+typedef SDAI_PID_SDAI * SDAI_PID_SDAI_ptr;
+typedef SDAI_PID_SDAI_ptr SDAI_PID_SDAI_var;
 
 // interface DAObject (ISO/DIS 10303-23:1996(E) 5.3.10.5)
 // Also, CORBA POS Section 5.10.2, Direct Access Protocol.
@@ -156,16 +158,14 @@ typedef SDAI_PID_SDAI_ptr  SDAI_PID_SDAI_var ;
 //
 
 // predefine these _ptr since they are used inside this class
-class SDAI_DAObject ;
-typedef SDAI_DAObject  * SDAI_DAObject_ptr ;
-typedef SDAI_DAObject_ptr  SDAI_DAObject_var ;
+class SDAI_DAObject;
+typedef SDAI_DAObject * SDAI_DAObject_ptr;
+typedef SDAI_DAObject_ptr SDAI_DAObject_var;
 
-class SDAI_DAObject  : public SDAI_sdaiObject 
-//class DAObject : public SDAI_sdaiObject
-{
+class SCL_DAI_EXPORT SDAI_DAObject : public SDAI_sdaiObject {
     public:
 
-        SDAI_String  _dado_oid;
+        SDAI_String _dado_oid;
 
         // dado_same (ISO/DIS 10303-23:1996(E) 5.3.10.5)
         //
@@ -178,10 +178,10 @@ class SDAI_DAObject  : public SDAI_sdaiObject
         //
 
         // constructor/destructor
-        SDAI_DAObject ();
-        virtual ~SDAI_DAObject ();
+        SDAI_DAObject();
+        virtual ~SDAI_DAObject();
 
-        Logical dado_same( SDAI_DAObject_ptr  obj ) {
+        Logical dado_same( SDAI_DAObject_ptr obj ) {
 	    (void)obj;
             return LUnknown;
         }
@@ -215,7 +215,7 @@ class SDAI_DAObject  : public SDAI_sdaiObject
                  note that the return value as described in the text above
                  should be a string type.
          */
-        SDAI_DAObjectID  dado_oid() {
+        SDAI_DAObjectID dado_oid() {
             return const_cast<char *>( _dado_oid.c_str() );
         }
 
@@ -228,7 +228,7 @@ class SDAI_DAObject  : public SDAI_sdaiObject
                  part of interface DAObject in the specification of the
                  Persistent Object Service.
          */
-        SDAI_PID_DA_ptr  dado_pid( ) {
+        SDAI_PID_DA_ptr dado_pid() {
             return 0;
         }
 
@@ -262,13 +262,12 @@ class SDAI_DAObject  : public SDAI_sdaiObject
    5.3.10.1  DAObject_SDAI
 */
 
-class SDAI_DAObject_SDAI  : public SDAI_DAObject  {
+class SCL_DAI_EXPORT SDAI_DAObject_SDAI : public SDAI_DAObject {
 
     public:
-        SDAI_DAObject_SDAI ();
-//    SDAI_DAObject_SDAI)(const SCLP23_NAME(DAObject_SDAI&);
+        SDAI_DAObject_SDAI();
 
-        virtual ~SDAI_DAObject_SDAI ();
+        virtual ~SDAI_DAObject_SDAI();
 
         /*
            5.3.10.1.1  Find entity instance SDAI-model
@@ -483,24 +482,24 @@ class SDAI_DAObject_SDAI  : public SDAI_DAObject  {
 
 };
 
-typedef SDAI_DAObject_SDAI  * SDAI_DAObject_SDAI_ptr ;
-typedef SDAI_DAObject_SDAI_ptr  SDAI_DAObject_SDAI_var ;
+typedef SDAI_DAObject_SDAI * SDAI_DAObject_SDAI_ptr;
+typedef SDAI_DAObject_SDAI_ptr SDAI_DAObject_SDAI_var;
 
-class SDAI_DAObject__set  {
+class SCL_DAI_EXPORT SDAI_DAObject__set {
     public:
-        SDAI_DAObject__set ( int = 16 );
-        ~SDAI_DAObject__set ();
+        SDAI_DAObject__set( int = 16 );
+        ~SDAI_DAObject__set();
 
-        SDAI_DAObject_ptr  retrieve( int index );
+        SDAI_DAObject_ptr retrieve( int index );
         int is_empty();
 
-        SDAI_DAObject_ptr  & operator[]( int index );
+        SDAI_DAObject_ptr & operator[]( int index );
 
-        void Insert( SDAI_DAObject_ptr , int index );
-        void Append( SDAI_DAObject_ptr  );
+        void Insert( SDAI_DAObject_ptr, int index );
+        void Append( SDAI_DAObject_ptr );
         void Remove( int index );
 
-        int Index( SDAI_DAObject_ptr  );
+        int Index( SDAI_DAObject_ptr );
 
         void Clear();
         int Count();
@@ -508,7 +507,7 @@ class SDAI_DAObject__set  {
     private:
         void Check( int index );
     private:
-        SDAI_DAObject_ptr  * _buf;
+        SDAI_DAObject_ptr * _buf;
         int _bufsize;
         int _count;
 
@@ -516,7 +515,7 @@ class SDAI_DAObject__set  {
 
 };
 
-typedef SDAI_DAObject__set  * SDAI_DAObject__set_ptr ;
-typedef SDAI_DAObject__set_ptr  SDAI_DAObject__set_var ;
+typedef SDAI_DAObject__set * SDAI_DAObject__set_ptr;
+typedef SDAI_DAObject__set_ptr SDAI_DAObject__set_var;
 
 #endif

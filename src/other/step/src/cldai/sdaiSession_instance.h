@@ -2,15 +2,16 @@
 #ifndef SESSION_INSTANCE_H
 #define SESSION_INSTANCE_H 1
 
+#include <scl_export.h>
 //#include <sdai.h>
 
-class SDAI_Session_instance  : public SDAI_sdaiObject  {
+class SCL_DAI_EXPORT SDAI_Session_instance : public SDAI_sdaiObject {
 
     public:
         int x;
 
-        SDAI_Session_instance ();
-        virtual ~SDAI_Session_instance ();
+        SDAI_Session_instance();
+        virtual ~SDAI_Session_instance();
 //    SDAI_Session_instance)(const SCLP23_NAME(Session_instance& si) {}
 
 //    static SDAI_Session_instance_ptr
@@ -21,8 +22,8 @@ class SDAI_Session_instance  : public SDAI_sdaiObject  {
 
 };
 
-typedef SDAI_Session_instance  * SDAI_Session_instance_ptr ;
-typedef SDAI_Session_instance_ptr  SDAI_Session_instance_var ;
+typedef SDAI_Session_instance * SDAI_Session_instance_ptr;
+typedef SDAI_Session_instance_ptr SDAI_Session_instance_var;
 
 // the old names
 //typedef SDAI_Session_instance) SCLP23_NAME(SessionInstance;

@@ -1,6 +1,7 @@
 #ifndef SDAIMODEL_CONTENTS_H
 #define SDAIMODEL_CONTENTS_H 1
 
+#include <scl_export.h>
 //SDAI_Model_contents
 
 /*
@@ -25,35 +26,35 @@
 // The class SDAI_Model_contents_instances shall implement convenience functions by
 // SDAI_Model_contents in this part of ISO 10303
 
-class SDAI_Model_contents_instances  : public SDAI_DAObject  {
+class SCL_DAI_EXPORT SDAI_Model_contents_instances : public SDAI_DAObject {
     public:
 
-        SDAI_DAObject__set  _instances;
+        SDAI_DAObject__set _instances;
 
-        SDAI_Model_contents_instances ();
-        virtual ~SDAI_Model_contents_instances ();
+        SDAI_Model_contents_instances();
+        virtual ~SDAI_Model_contents_instances();
 
         // This function shall return the set of DAObjects contained in
         // the receiver.
-        SDAI_DAObject__set_var  contents_() {
+        SDAI_DAObject__set_var contents_() {
             return &_instances;
         }
-        SDAI_DAObject__set_var  contents_() const {
-            return ( const SDAI_DAObject__set_var  ) &_instances;
+        SDAI_DAObject__set_var contents_() const {
+            return ( const SDAI_DAObject__set_var ) &_instances;
         };
 
 };
 
-typedef SDAI_Model_contents_instances  *
-SDAI_Model_contents_instances_ptr ;
+typedef SDAI_Model_contents_instances *
+SDAI_Model_contents_instances_ptr;
 typedef SDAI_Model_contents_instances_ptr 
-SDAI_Model_contents_instances_var ;
+SDAI_Model_contents_instances_var;
 
 // Model_contents_ptr def pushed ahead of #include for Entity_extent
 //class SDAI_Model_contents;
 //typedef SDAI_Model_contents) SCLP23_NAME(Model_contents_ptr;
 
-class SDAI_Model_contents  : public SDAI_Session_instance  {
+class SCL_DAI_EXPORT SDAI_Model_contents : public SDAI_Session_instance {
 
 //friend class SDAI_Model;
 
@@ -66,11 +67,11 @@ class SDAI_Model_contents  : public SDAI_Session_instance  {
     public:
 //  protected: // for now
 // contains Application_instances (i.e. STEPentities)
-        SDAI_Model_contents_instances  _instances;
+        SDAI_Model_contents_instances _instances;
 
-        SDAI_Entity_extent__set  _folders;   // of entity_extent
+        SDAI_Entity_extent__set _folders;   // of entity_extent
 
-        SDAI_Entity_extent__set  _populated_folders; // of entity_extent
+        SDAI_Entity_extent__set _populated_folders; // of entity_extent
 
 //  EntityAggregate _instances;   // of Entity_instance
 //  EntityAggregate _folders;     // of entity_extent
@@ -88,16 +89,16 @@ class SDAI_Model_contents  : public SDAI_Session_instance  {
            Access function declarations
            */
     public:
-        SDAI_Model_contents_instances_ptr  instances_();
-        SDAI_Model_contents_instances_ptr  instances_() const;
+        SDAI_Model_contents_instances_ptr instances_();
+        SDAI_Model_contents_instances_ptr instances_() const;
 
-        SDAI_Entity_extent__set_var  folders_();
-        SDAI_Entity_extent__set_var  folders_() const;
+        SDAI_Entity_extent__set_var folders_();
+        SDAI_Entity_extent__set_var folders_() const;
 
         //Boolean TestFolders() const;
 
-        SDAI_Entity_extent__set_var  populated_folders_() const;
-        SDAI_Entity_extent__set_var  populated_folders_();
+        SDAI_Entity_extent__set_var populated_folders_() const;
+        SDAI_Entity_extent__set_var populated_folders_();
         //Boolean TestPopulated_folders() const;
 
 //    static SDAI_Model_contents_ptr
@@ -106,9 +107,9 @@ class SDAI_Model_contents  : public SDAI_Session_instance  {
 //    static SDAI_Model_contents_ptr) _nil(;
 
         SDAI_PID_DA_ptr 
-        get_object_pid( const SDAI_DAObject_ptr & d  ) const;
+        get_object_pid( const SDAI_DAObject_ptr & d ) const;
 
-        SDAI_DAObject_ptr  lookup( const SDAI_PID_DA_ptr & p  ) const;
+        SDAI_DAObject_ptr lookup( const SDAI_PID_DA_ptr & p ) const;
 
         /*
            SDAI operation declarations

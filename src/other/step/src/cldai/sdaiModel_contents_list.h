@@ -1,20 +1,22 @@
 #ifndef SDAIMODEL_CONTENTS_LIST_H
 #define SDAIMODEL_CONTENTS_LIST_H 1
 
-class SDAI_Model_contents__list  {
-    public:
-        SDAI_Model_contents__list ( int = 16 );
-        ~SDAI_Model_contents__list ();
+#include <scl_export.h>
 
-        SDAI_Model_contents_ptr  retrieve( int index );
+class SCL_DAI_EXPORT SDAI_Model_contents__list {
+    public:
+        SDAI_Model_contents__list( int = 16 );
+        ~SDAI_Model_contents__list();
+
+        SDAI_Model_contents_ptr retrieve( int index );
         int is_empty();
 
-        SDAI_Model_contents_ptr  & operator[]( int index );
+        SDAI_Model_contents_ptr & operator[]( int index );
 
         void Insert( SDAI_Model_contents_ptr , int index );
-        void Append( SDAI_Model_contents_ptr  );
+        void Append( SDAI_Model_contents_ptr );
         void Remove( int index );
-        int Index( SDAI_Model_contents_ptr  );
+        int Index( SDAI_Model_contents_ptr );
 
         void Clear();
         int Count();
@@ -22,14 +24,14 @@ class SDAI_Model_contents__list  {
     private:
         void Check( int index );
     private:
-        SDAI_Model_contents_ptr  * _buf;
+        SDAI_Model_contents_ptr * _buf;
         int _bufsize;
         int _count;
 };
 
-typedef SDAI_Model_contents__list  *
-SDAI_Model_contents__list_ptr ;
+typedef SDAI_Model_contents__list *
+SDAI_Model_contents__list_ptr;
 typedef SDAI_Model_contents__list_ptr 
-SDAI_Model_contents__list_var ;
+SDAI_Model_contents__list_var;
 
 #endif

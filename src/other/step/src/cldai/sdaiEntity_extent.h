@@ -1,6 +1,8 @@
 #ifndef ENTITYEXTENT_H
 #define ENTITYEXTENT_H 1
 
+#include <scl_export.h>
+
 /*
 //#include <sdaiDefs.h>
 //#include <ApplInstanceSet.h>
@@ -12,13 +14,13 @@
    7.3.3  Entity extent
 */
 
-class SDAI_Entity_extent ;
-typedef SDAI_Entity_extent  * SDAI_Entity_extent_ptr ;
-typedef SDAI_Entity_extent_ptr  SDAI_Entity_extent_var ;
+class SDAI_Entity_extent;
+typedef SDAI_Entity_extent * SDAI_Entity_extent_ptr;
+typedef SDAI_Entity_extent_ptr SDAI_Entity_extent_var;
 
-class SDAI_Entity_extent  : public SDAI_Session_instance  {
+class SCL_DAI_EXPORT SDAI_Entity_extent : public SDAI_Session_instance {
 
-        friend class SDAI_Model_contents ;
+        friend class SDAI_Model_contents;
         /*
            NOTE - The ModelContent class is a friend so that ModelContent may add
            instances to Entity_extent instances.
@@ -26,22 +28,22 @@ class SDAI_Entity_extent  : public SDAI_Session_instance  {
 
     public: //for now
 //  protected:
-        Entity_ptr _definition ;
-        SDAI_Entity_name  _definition_name ;
-        SDAI_DAObject__set  _instances ; //  of  Application_instance
-//    Entity_instance__set _instances ;   //  of  entity_instance
-//    EntityAggregate _instances ;    //  of  entity_instance
+        Entity_ptr _definition;
+        SDAI_Entity_name _definition_name;
+        SDAI_DAObject__set _instances; //  of  Application_instance
+//    Entity_instance__set _instances;   //  of entity_instance
+//    EntityAggregate _instances;    //  of entity_instance
 // Express in part 22 - INVERSE owned_by : sdai_model_contents FOR folders;
-        SDAI_Model_contents__list  _owned_by ; //  ADDED in Part 22
+        SDAI_Model_contents__list _owned_by; //  ADDED in Part 22
 
 //  private:
-        SDAI_Entity_extent ();
+        SDAI_Entity_extent();
 //    SDAI_Entity_extent)(const SCLP23_NAME(Entity_extent& ee);
-        ~SDAI_Entity_extent (); // not in part 23
+        ~SDAI_Entity_extent(); // not in part 23
 
     public:
 
-        SDAI_Entity_name  definition_name_() const {
+        SDAI_Entity_name definition_name_() const {
             return _definition_name;
         }
 
@@ -50,15 +52,15 @@ class SDAI_Entity_extent  : public SDAI_Session_instance  {
 //    const Entity_ptr definition_() const;
 #endif
 
-        SDAI_DAObject__set_var  instances_() {
+        SDAI_DAObject__set_var instances_() {
             return &_instances;
         }
-        SDAI_DAObject__set_var  instances_() const {
+        SDAI_DAObject__set_var instances_() const {
             return ( const SDAI_DAObject__set_var  )&_instances;
         }
 
 // need to implement Model_contents__list
-        SDAI_Model_contents__list_var  owned_by_() const;
+        SDAI_Model_contents__list_var owned_by_() const;
 
 //    static SDAI_Entity_extent_ptr
 //          _duplicate(SDAI_Entity_extent_ptr) eep;
