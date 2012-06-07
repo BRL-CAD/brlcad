@@ -53,8 +53,8 @@ generate_curves(fastf_t id, fastf_t od, ON_Plane *plane, ON_SimpleArray<ON_Curve
 void
 make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, ON_SimpleArray<ON_Curve*> *endoutercurves, ON_SimpleArray<ON_Curve*> *startinnercurves, ON_SimpleArray<ON_Curve*> *endinnercurves)
 {
-    int c1ind = (*b)->AddEdgeCurve(*(startoutercurves[0]));
-    int c2ind = (*b)->AddEdgeCurve(*(endoutercurves[0]));
+    int c1ind = (*b)->AddEdgeCurve((*startoutercurves)[0]);
+    int c2ind = (*b)->AddEdgeCurve((*endoutercurves)[0]);
     ON_BrepVertex& vert1 = (*b)->NewVertex((*b)->m_C3[c1ind]->PointAt(0), SMALL_FASTF);
     vert1.m_tolerance = 0.0;
     int vert1ind = (*b)->m_V.Count() - 1;
@@ -70,7 +70,7 @@ make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
     startedge = (*b)->Edge(startedge->m_edge_index);
     startoutercurves->Empty();
     for (int i = 0; i < endoutercurves->Count(); i++) {
-	ON_Curve *curve = (*endoutercurves)[i];
+	ON_Curve *curve = (*endoutercurves)[i]->Duplicate();
 	startoutercurves->Append(curve);
     }
     ON_BrepFace *newouterface = (*b)->NewRuledFace(*startedge, false, *endedge, false);
@@ -94,7 +94,7 @@ make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
     }
     startinnercurves->Empty();
     for (int i = 0; i < endinnercurves->Count(); i++) {
-	ON_Curve *curve = (*endinnercurves)[i];
+	ON_Curve *curve = (*endinnercurves)[i]->Duplicate();
 	startinnercurves->Append(curve);
     }
 }
