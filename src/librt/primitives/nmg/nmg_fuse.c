@@ -1032,9 +1032,10 @@ v_ptr_comp(const void *p1, const void *p2)
     i = ((size_t *)p1)[1];
     j = ((size_t *)p2)[1];
 
-	if (i >= j) {
+    if (i == j)
+	return 0;
+    else if (i > j)
 	return 1;
-    }
     return -1;
 }
 
