@@ -135,7 +135,7 @@ typedef int ( *intFuncptr )();
 #  define PROTO(x)  x
 # else
 
-# ifdef __CLCC__
+# if defined(__CLCC__) || defined(__MSVC__) || defined(__BORLAND__)
 # define PROTO(x)   x
 #else
 # define PROTO(x)   ()

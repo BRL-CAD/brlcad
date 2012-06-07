@@ -75,10 +75,16 @@ char * FEDEXversion( void ) {
     return( "V2.11.4-beta CADDETC preval June 8, 1995" );
 }
 
-#include <getopt.h>
+#include <scl_cf.h>
+#include <scl_export.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+#ifndef HAVE_GETOPT
+# include "xgetopt.h"
+#endif
 #include "express/error.h"
 #include "express/express.h"
 #include "express/resolve.h"

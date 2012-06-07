@@ -1,9 +1,7 @@
 #ifndef DICTIONARY_H
 #define DICTIONARY_H
 
-/* $Id: dict.h,v 1.4 1997/01/21 19:17:11 dar Exp $ */
-
-/************************************************************************
+/** **********************************************************************
 ** Module:  Dictionary
 ** Description: This module implements the dictionary abstraction.  A
 **  dictionary is a repository for a number of objects, all of which
@@ -52,7 +50,6 @@
 
 #include "hash.h"
 #include "error.h"
-#include "dict.h"
 
 /************/
 /* typedefs */
