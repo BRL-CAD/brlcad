@@ -30,8 +30,8 @@ N350 ( August 31, 1993 ) of ISO 10303 TC184/SC4/WG7.
 void use_ref( Schema, Express, FILES * );
 
 void create_builtin_type_decl( FILES * files, char * name ) {
-    fprintf( files->incall, "extern TypeDescriptor *%s%s_TYPE;\n",
-             TD_PREFIX, name );
+    fprintf( files->incall, "extern SCL_%s_EXPORT TypeDescriptor *%s%s_TYPE;\n",
+             "SCHEMA", TD_PREFIX, name );
 }
 
 void create_builtin_type_defn( FILES * files, char * name ) {
@@ -52,10 +52,24 @@ void create_builtin_type_defn( FILES * files, char * name ) {
  ** Status:  ok 1/15/91
  ******************************************************************/
 void print_file_header( Express express, FILES * files ) {
+
     /*  open file which unifies all schema specific header files
     of input Express source */
     files -> incall = FILEcreate( "schema.h" );
     fprintf( files->incall, "\n// in the fedex_plus source code, this file is generally referred to as files->incall or schemafile\n" );
+
+    fprintf( files->incall, "\n#ifndef SCL_%s_EXPORT\n", "SCHEMA" );
+    fprintf( files->incall, "# if defined(SCL_%s_DLL_EXPORTS) && defined(SCL_%s_DLL_IMPORTS)\n", "SCHEMA", "SCHEMA" );
+    fprintf( files->incall, "#  error \"SCL_%s_DLL_EXPORTS or SCL_%s_DLL_IMPORTS can be defined, not both.\"\n", "SCHEMA", "SCHEMA" );
+    fprintf( files->incall, "# elif defined(SCL_%s_DLL_EXPORTS)\n", "SCHEMA" );
+    fprintf( files->incall, "#  define SCL_%s_EXPORT __declspec(dllexport)\n", "SCHEMA" );
+    fprintf( files->incall, "# elif defined(SCL_%s_DLL_IMPORTS)\n", "SCHEMA" );
+    fprintf( files->incall, "#  define SCL_%s_EXPORT __declspec(dllimport)\n", "SCHEMA" );
+    fprintf( files->incall, "# else\n" );
+    fprintf( files->incall, "#  define SCL_%s_EXPORT\n", "SCHEMA" );
+    fprintf( files->incall, "# endif\n" );
+    fprintf( files->incall, "#endif\n\n" );
+
     fprintf( files->incall, "#ifdef SCL_LOGGING\n" );
     fprintf( files->incall, "#include <sys/time.h>\n" );
     fprintf( files->incall, "#endif\n" );
@@ -69,8 +83,8 @@ void print_file_header( Express express, FILES * files ) {
 
     fprintf( files->incall, "\n#include <Sdaiclasses.h>\n" );
 
-    fprintf( files->incall, "extern void SchemaInit (Registry &);\n" );
-    fprintf( files->incall, "extern void InitSchemasAndEnts (Registry &);\n" );
+    fprintf( files->incall, "extern SCL_%s_EXPORT void SchemaInit (Registry &);\n", "SCHEMA" );
+    fprintf( files->incall, "extern SCL_%s_EXPORT void InitSchemasAndEnts (Registry &);\n", "SCHEMA" );
 
     files -> initall = FILEcreate( "schema.cc" );
     fprintf( files->initall, "\n// in the fedex_plus source code, this file is generally referred to as files->initall or schemainit\n" );
