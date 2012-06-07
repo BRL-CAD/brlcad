@@ -21,9 +21,8 @@
 
 #include "common.h"
 
-#include <stdio.h>
-#include <limits.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "bio.h"
 #include "bu.h"
