@@ -1118,7 +1118,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 	    switch (face_type) {
 		case FACE_V:
 		    (*gfi)->index_arr_faces =
-			(void *)bu_calloc((*gfi)->max_faces, sizeof(size_t const *),
+			(void *)bu_calloc((*gfi)->max_faces, sizeof(size_t *),
 					  "index_arr_faces");
 
 		    index_arr_faces_1D = (arr_1D_t)((*gfi)->index_arr_faces);
@@ -1126,14 +1126,14 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 		case FACE_TV:
 		case FACE_NV:
 		    (*gfi)->index_arr_faces =
-			(void *)bu_calloc((*gfi)->max_faces, sizeof(size_t const (*)[2]),
+			(void *)bu_calloc((*gfi)->max_faces, sizeof(size_t (*)[2]),
 					  "index_arr_faces");
 
 		    index_arr_faces_2D = (arr_2D_t)((*gfi)->index_arr_faces);
 		    break;
 		case FACE_TNV:
 		    (*gfi)->index_arr_faces =
-			(void *)bu_calloc((*gfi)->max_faces, sizeof(size_t const (*)[3]),
+			(void *)bu_calloc((*gfi)->max_faces, sizeof(size_t (*)[3]),
 					  "index_arr_faces");
 
 		    index_arr_faces_3D = (arr_3D_t)((*gfi)->index_arr_faces);
@@ -1169,7 +1169,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 		    case FACE_V:
 			(*gfi)->index_arr_faces =
 			    (void *)bu_realloc(index_arr_faces_1D,
-					       sizeof(size_t const *) * (*gfi)->max_faces,
+					       sizeof(size_t *) * (*gfi)->max_faces,
 					       "index_arr_faces");
 
 			index_arr_faces_1D =
@@ -1180,7 +1180,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 		    case FACE_NV:
 			(*gfi)->index_arr_faces =
 			    (void *)bu_realloc(index_arr_faces_2D,
-					       sizeof(size_t const (*)[2]) * (*gfi)->max_faces,
+					       sizeof(size_t (*)[2]) * (*gfi)->max_faces,
 					       "index_arr_faces");
 
 			index_arr_faces_2D =
@@ -1190,7 +1190,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 		    case FACE_TNV:
 			(*gfi)->index_arr_faces =
 			    (void *)bu_realloc(index_arr_faces_3D,
-					       sizeof(size_t const (*)[3]) * (*gfi)->max_faces,
+					       sizeof(size_t (*)[3]) * (*gfi)->max_faces,
 					       "index_arr_faces");
 			index_arr_faces_3D =
 			    (arr_3D_t)((*gfi)->index_arr_faces);
