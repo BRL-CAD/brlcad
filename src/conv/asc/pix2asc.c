@@ -27,7 +27,6 @@
 #include "bio.h"
 #include "bu.h"
 
-
 int
 main(int UNUSED(ac), char **UNUSED(argv))
 {
@@ -40,9 +39,12 @@ main(int UNUSED(ac), char **UNUSED(argv))
 
     while (!feof(stdin)
            && fread((void *)pix, sizeof(unsigned char) * 3, 1, stdin) == 1) {
-        /* Input validation */
+        /* Input validation of the individual R, G, and B bytes
+           (required by Coverity) */
         int i;
 	for (i = 0; i < 3; ++i) {
+            /* the cast to int is necessary to avoid a gcc warning of
+               an always true test */
             int d = (int)pix[i];
 	    if (d < 0 || d > UCHAR_MAX) {
                 bu_bomb("Corrupt file!");
