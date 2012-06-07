@@ -226,9 +226,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_tor_params,
 	rt_tor_bbox,
-    NULL,
-    NULL,
-    NULL,
+    rt_tor_volume,
+    rt_tor_surf_area,
+    rt_tor_centroid,
     },
 
     {
@@ -266,9 +266,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_tgc_params,
 	rt_tgc_bbox,
+    rt_tgc_volume,
     NULL,
-    NULL,
-    NULL,
+    rt_tgc_centroid,
     },
 
     {
@@ -306,9 +306,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_ell_params,
 	rt_ell_bbox,
-    NULL,
-    NULL,
-    NULL,
+    rt_ell_volume,
+    rt_ell_surf_area,
+    rt_ell_centroid,
     },
 
     {
@@ -586,9 +586,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_sph_params,
 	rt_ell_bbox,
-    NULL,
-    NULL,
-    NULL,
+    rt_ell_volume,
+    rt_ell_surf_area,
+    rt_ell_centroid,
     },
 
     {
