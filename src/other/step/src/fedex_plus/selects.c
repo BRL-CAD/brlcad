@@ -190,7 +190,7 @@ SELgetnew_dmlist( const Type type ) {
 
     /*     if t\'s underlying type is not already in newlist, */
     if( ! utype_member( newlist, t, 0 ) ) {
-        LISTadd_last( newlist, t );
+        LISTadd_last( newlist, ( Generic ) t );
     }
 
     LISTod;
@@ -362,9 +362,9 @@ find_duplicate_list( const Type type, Linked_List * duplicate_list ) {
         if( !utype_member( *duplicate_list, u, 1 ) ) {
             /**  if not already a duplicate  **/
             if( utype_member( temp, u, 1 ) ) {
-                LISTadd_first( *duplicate_list, u );
+                LISTadd_first( *duplicate_list, ( Generic ) u );
             } else {
-                LISTadd_first( temp, u );
+                LISTadd_first( temp, ( Generic ) u );
             }
         }
         LISTod;
@@ -562,7 +562,7 @@ SEL_TYPEgetnew_attribute_list( const Type type ) {
         attrs = ENTITYget_all_attributes( cur );
         LISTdo( attrs, a, Variable )
         if( ! ATTR_LISTmember( newlist, a ) ) {
-            LISTadd_first( newlist, a );
+            LISTadd_first( newlist, ( Generic ) a );
         }
         LISTod;
     }
@@ -954,8 +954,8 @@ ENTITYget_expanded_entities( Entity e, Linked_List l ) {
     int super_cnt = 0;
     Entity super;
 
-    if( ! LISTmember( l, e ) ) {
-        LISTadd_first( l, e );
+    if( ! LISTmember( l, ( Generic ) e ) ) {
+        LISTadd_first( l, ( Generic ) e );
     }
 
     if( multiple_inheritance ) {
@@ -1006,7 +1006,7 @@ memberOfEntPrimary( Entity ent, Variable uattr )
     int result;
 
     ENTITYget_first_attribs( ent, attrlist );
-    result = ( LISTmember( attrlist, uattr ) != 0 );
+    result = ( LISTmember( attrlist, ( Generic ) uattr ) != 0 );
     LIST_destroy( attrlist );
     return result;
 }

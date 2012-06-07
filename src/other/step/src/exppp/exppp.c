@@ -414,10 +414,10 @@ REFout( Dictionary refdict, Linked_List reflist, char * type, int level ) {
         list = ( Linked_List )DICTlookup( dict, r->schema->symbol.name );
         if( !list ) {
             list = LISTcreate();
-            DICTdefine( dict, r->schema->symbol.name, list,
+            DICTdefine( dict, r->schema->symbol.name, ( Generic ) list,
                         ( Symbol * )0, OBJ_UNKNOWN );
         }
-        LISTadd( list, r );
+        LISTadd( list, ( Generic ) r );
     }
 
     /* step 2: for each list, print out the renames */
