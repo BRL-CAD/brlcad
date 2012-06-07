@@ -1,13 +1,14 @@
 #ifndef STEPCOMPLEX_H
 #define STEPCOMPLEX_H
 
+#include <scl_export.h>
 #include <errordesc.h>
 #include <sdai.h>
 #include <baseType.h>
 #include <ExpDict.h>
 #include <Registry.h>
 
-class STEPcomplex : public SDAI_Application_instance  {
+class SCL_CORE_EXPORT STEPcomplex : public SDAI_Application_instance  {
     public:
         STEPcomplex * sc;
         STEPcomplex * head;

@@ -12,6 +12,7 @@
 * and is not subject to copyright.
 */
 
+#include <scl_export.h>
 #include <sdai.h>
 #include <errordesc.h>
 #include <scl_hash.h>
@@ -24,7 +25,7 @@ class Registry;
 extern char * EntityClassName( char * );
 typedef void ( * CF_init )( Registry & ); //  pointer to creation initialization
 
-class Registry {
+class SCL_CORE_EXPORT Registry {
     protected:
         HashTable primordialSwamp;    //  dictionary of EntityDescriptors
         HashTable active_schemas;     //  dictionary of Schemas

@@ -13,21 +13,14 @@
 * and is not subject to copyright.
 */
 
-/* $Id: STEPattributeList.h,v 3.0.1.3 1997/11/05 21:59:25 sauderd DP3.1 $ */
-
-
-//#ifndef _STEPattribute_typedefs
-//#define _STEPattribute_typedefs 1
-
-//#include <STEPattribute.h>
 class STEPattribute;
+
+#include <scl_export.h>
 #include <SingleLinkList.h>
 
-//class STEPattribute;
 class STEPattributeList;
-//class AttrListNode;
 
-class AttrListNode :  public SingleLinkNode {
+class SCL_CORE_EXPORT AttrListNode :  public SingleLinkNode {
         friend class STEPattributeList;
 
     protected:
@@ -39,7 +32,7 @@ class AttrListNode :  public SingleLinkNode {
 
 };
 
-class STEPattributeList : public SingleLinkList {
+class SCL_CORE_EXPORT STEPattributeList : public SingleLinkList {
     public:
         STEPattributeList();
         virtual ~STEPattributeList();
