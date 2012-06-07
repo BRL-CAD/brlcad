@@ -893,7 +893,6 @@ mark_as_advanced(PREVIOUS_CONFIGURE_TYPE)
 # BRL-CAD has over a thousand such files in a default build, the only
 # viable approach is to close Visual Studio, re-run CMake manually,
 # and re-open the project in Visual Studio.
-  message("CMAKE_GENERATOR: ${CMAKE_GENERATOR}")
 if("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
   set(CMAKE_SUPPRESS_REGENERATION ON)
 endif("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
