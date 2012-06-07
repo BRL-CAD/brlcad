@@ -37,26 +37,43 @@ set(G_SAMPLE_MODELS
   xmp.asc
 )
 
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/db)
+# Get our root path
+if(CMAKE_CONFIGURATION_TYPES)
+  set(bin_root "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}")
+else(CMAKE_CONFIGURATION_TYPES)
+  set(bin_root "${CMAKE_BINARY_DIR}")
+endif(CMAKE_CONFIGURATION_TYPES)
+
+# Make sure the db directories are there
+if(CMAKE_CONFIGURATION_TYPES)
+  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+     file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${CFG_TYPE}/${DATA_DIR}/db)
+  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+else(CMAKE_CONFIGURATION_TYPES)
+  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/db)
+endif(CMAKE_CONFIGURATION_TYPES)
+
 foreach(g_model ${G_SAMPLE_MODELS})
   string(REGEX REPLACE "([0-9a-z]*).asc" "\\1" g_model_root "${g_model}")
+  set(output_file ${bin_root}/${DATA_DIR}/db/${g_model_root}.g)
   add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${g_model_root}.g
-    COMMAND asc2g ${CMAKE_CURRENT_SOURCE_DIR}/${g_model} ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${g_model_root}.g
-	 DEPENDS asc2g ${CMAKE_CURRENT_SOURCE_DIR}/${g_model}
+    OUTPUT ${output_file}
+    COMMAND asc2g ${CMAKE_CURRENT_SOURCE_DIR}/${g_model} ${output_file}
+    DEPENDS asc2g ${CMAKE_CURRENT_SOURCE_DIR}/${g_model}
   )
-  add_custom_target(${g_model_root}.g ALL DEPENDS ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${g_model_root}.g)
+  add_custom_target(${g_model_root}.g ALL DEPENDS ${output_file})
   if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
-	  install(FILES ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${g_model_root}.g DESTINATION ${DATA_DIR}/db)
+    string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" output_file "${output_file}")
+    install(FILES ${output_file} DESTINATION ${DATA_DIR}/db)
   endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
-  set(BUILT_MODELS "${BUILT_MODELS};${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${g_model_root}.g")
+  set(BUILT_MODELS "${BUILT_MODELS};${output_file}")
 endforeach(g_model ${G_SAMPLE_MODELS})
 CMAKEFILES(${G_SAMPLE_MODELS})
 
 SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${BUILT_MODELS}")
 
 if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
-	BRLCAD_ADDDATA(terra.dsp db)
+   BRLCAD_ADDDATA(terra.dsp db)
 endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
 CMAKEFILES(Makefile.am cornell.rt db.php include)
 

@@ -55,7 +55,6 @@ set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-fo-st
 include(${BRLCAD_SOURCE_DIR}/misc/CMake/DocBook.cmake)
 
 # For the html files, we need brlcad.css
-file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/${DOC_DIR}/html/css)
 if(NOT CMAKE_CONFIGURATION_TYPES)
   configure_file(css/brlcad.css ${CMAKE_BINARY_DIR}/${DATA_DIR}/${DOC_DIR}/html/css/brlcad.css)
 else(NOT CMAKE_CONFIGURATION_TYPES)
