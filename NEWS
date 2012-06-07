@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-04-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* added support for section numbers to brlman script - Cliff Yapp
 * added new manual page for existing asc2pix converter - Tom Browder
 * fixed bug creating binary uniform (binunif) objects - Sean Morrison
 * fixed memory corruption bug reading v4 geometry - Sean Morrison
