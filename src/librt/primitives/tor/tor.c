@@ -1657,7 +1657,7 @@ rt_tor_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
  *
  */
 void
-rt_tor_surface_area(fastf_t *area, const struct rt_db_internal *ip)
+rt_tor_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
