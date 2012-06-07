@@ -91,6 +91,8 @@
  *
  */
 
+#include <scl_export.h>
+
 typedef enum { HASH_FIND, HASH_INSERT, HASH_DELETE } Action;
 
 struct Element {
@@ -130,14 +132,15 @@ typedef struct {
 extern "C" {
 #endif
 
-    struct Hash_Table  * HASHcreate( unsigned );
-    void    *    HASHfind( struct Hash_Table *,  char * );
-    void        HASHinsert( struct Hash_Table *, char *, void * );
-    void        HASHdestroy( struct Hash_Table * );
-    struct Element * HASHsearch( struct Hash_Table *, const struct Element *, Action );
-    void        HASHlistinit( struct Hash_Table *, HashEntry * );
-    void        HASHlistinit_by_type( struct Hash_Table *, HashEntry *, char );
-    struct Element * HASHlist( HashEntry * );
+    SCL_UTILS_EXPORT struct Hash_Table * HASHcreate( unsigned );
+    SCL_UTILS_EXPORT void               HASHinitialize( void );
+    SCL_UTILS_EXPORT void       *       HASHfind( struct Hash_Table *,  char * );
+    SCL_UTILS_EXPORT void               HASHinsert( struct Hash_Table *, char *, void * );
+    SCL_UTILS_EXPORT void               HASHdestroy( struct Hash_Table * );
+    SCL_UTILS_EXPORT struct Element  *  HASHsearch( struct Hash_Table *, const struct Element *, Action );
+    SCL_UTILS_EXPORT void               HASHlistinit( struct Hash_Table *, HashEntry * );
+    SCL_UTILS_EXPORT void               HASHlistinit_by_type( struct Hash_Table *, HashEntry *, char );
+    SCL_UTILS_EXPORT struct Element  *  HASHlist( HashEntry * );
 
 #ifdef __cplusplus
 }
