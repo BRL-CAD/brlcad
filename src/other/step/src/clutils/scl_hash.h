@@ -132,15 +132,15 @@ typedef struct {
 extern "C" {
 #endif
 
-    SCL_UTILS_EXPORT struct Hash_Table * HASHcreate( unsigned );
-    SCL_UTILS_EXPORT void               HASHinitialize( void );
-    SCL_UTILS_EXPORT void       *       HASHfind( struct Hash_Table *,  char * );
-    SCL_UTILS_EXPORT void               HASHinsert( struct Hash_Table *, char *, void * );
-    SCL_UTILS_EXPORT void               HASHdestroy( struct Hash_Table * );
-    SCL_UTILS_EXPORT struct Element  *  HASHsearch( struct Hash_Table *, const struct Element *, Action );
-    SCL_UTILS_EXPORT void               HASHlistinit( struct Hash_Table *, HashEntry * );
-    SCL_UTILS_EXPORT void               HASHlistinit_by_type( struct Hash_Table *, HashEntry *, char );
-    SCL_UTILS_EXPORT struct Element  *  HASHlist( HashEntry * );
+    SCL_UTILS_EXPORT struct Hash_Table * SCL_HASHcreate( unsigned );
+    SCL_UTILS_EXPORT void               SCL_HASHinitialize( void );
+    SCL_UTILS_EXPORT void       *       SCL_HASHfind( struct Hash_Table *,  char * );
+    SCL_UTILS_EXPORT void               SCL_HASHinsert( struct Hash_Table *, char *, void * );
+    SCL_UTILS_EXPORT void               SCL_HASHdestroy( struct Hash_Table * );
+    SCL_UTILS_EXPORT struct Element  *  SCL_HASHsearch( struct Hash_Table *, const struct Element *, Action );
+    SCL_UTILS_EXPORT void               SCL_HASHlistinit( struct Hash_Table *, HashEntry * );
+    SCL_UTILS_EXPORT void               SCL_HASHlistinit_by_type( struct Hash_Table *, HashEntry *, char );
+    SCL_UTILS_EXPORT struct Element  *  SCL_HASHlist( HashEntry * );
 
 #ifdef __cplusplus
 }
