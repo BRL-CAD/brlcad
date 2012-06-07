@@ -939,6 +939,9 @@ void ReadTokenSeparator( istream & in, std::string * comments ) {
             case '\\': // try to read a print control directive
                 ReadPcd( in );
                 break;
+            case '\n':
+                in.ignore();
+                break;
             default:
                 return;
         }

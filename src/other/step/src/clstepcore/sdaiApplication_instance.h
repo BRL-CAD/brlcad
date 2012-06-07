@@ -61,6 +61,7 @@ class SCL_CORE_EXPORT SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
 
         void AddP21Comment( const std::string & s, bool replace = true );
         void AddP21Comment( const char * s, bool replace = true );
+        void PrependP21Comment( const std::string & s );
         void DeleteP21Comment() {
             p21Comment = "";
         }

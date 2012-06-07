@@ -171,7 +171,7 @@ Severity STEPfile::ReadHeader( istream & in ) {
                 //read the values from the istream
                 objsev = obj->STEPread( fileid, 0, ( InstMgr * )0, in, NULL, true, _strict );
                 if( !cmtStr.empty() ) {
-                    obj->AddP21Comment( cmtStr );
+                    obj->PrependP21Comment( cmtStr );
                 }
 
                 in >> ws;
