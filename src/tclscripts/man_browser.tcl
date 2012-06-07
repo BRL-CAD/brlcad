@@ -237,32 +237,32 @@ package provide ManBrowser 1.0
 
     # Table of Contents
     if {$itk_option(-useToC)} {
-    itk_component add toc {
-        ::tk::frame $parent.toc
-    } {}
-
-    set toc $itk_component(toc)
-
-    itk_component add toc_scrollbar {
-        ::ttk::scrollbar $toc.toc_scrollbar
-    } {}
-
-    itk_component add toc_listbox {
-        ::tk::listbox $toc.toc_listbox -bd 2 \
- 				       -width 16 \
-                                       -exportselection false \
-	                               -yscroll "$toc.toc_scrollbar set" \
-				       -listvariable [scope pages($this)]
-    } {}
-
-    $toc.toc_scrollbar configure -command "$toc.toc_listbox yview"
-
-    grid $toc.toc_listbox $toc.toc_scrollbar -sticky nsew -in $toc
-
-    grid columnconfigure $toc 0 -weight 1
-    grid rowconfigure $toc 0 -weight 1
-
-    pack $toc -side left -expand no -fill y
+       itk_component add toc {                                                 
+           ::tk::frame $parent.toc
+       } {}
+                                                                              
+       set toc $itk_component(toc)
+                                                                              
+       itk_component add toc_scrollbar {
+           ::ttk::scrollbar $toc.toc_scrollbar
+       } {}
+                                                                              
+       itk_component add toc_listbox {
+           ::tk::listbox $toc.toc_listbox -bd 2 \
+           			       -width 16 \
+                                          -exportselection false \
+                                          -yscroll "$toc.toc_scrollbar set" \
+           			       -listvariable [scope pages($this)]
+       } {}
+                                                                              
+       $toc.toc_scrollbar configure -command "$toc.toc_listbox yview"
+                                                                              
+       grid $toc.toc_listbox $toc.toc_scrollbar -sticky nsew -in $toc
+                                                                              
+       grid columnconfigure $toc 0 -weight 1
+       grid rowconfigure $toc 0 -weight 1
+                                                                              
+       pack $toc -side left -expand no -fill y
     }
 
     # Main HTML window
@@ -291,10 +291,10 @@ package provide ManBrowser 1.0
     }
 
     if {$itk_option(-useToC)} {
-    bind $toc.toc_listbox <<ListboxSelect>> {
-	set mb [itcl_info objects -class ManBrowser]
-	$mb loadPage [%W get [%W curselection]]
-    }
+       bind $toc.toc_listbox <<ListboxSelect>> {
+	   set mb [itcl_info objects -class ManBrowser]
+	   $mb loadPage [%W get [%W curselection]]
+       }
     }
 
     configure -height 600 -width 800
