@@ -459,11 +459,12 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
     if (etbl_next >= etbl_size) {
 	if (etbl_size) {
 	    etbl_size *= 2;
-	    etbl = (struct fbm_spec *)bu_realloc((char *)etbl,
+	    etbl = (struct fbm_spec *)bu_realloc((void *)etbl,
 						 etbl_size*sizeof(struct fbm_spec),
 						 "spectral weights table");
 	} else {
-	    etbl = (struct fbm_spec *)bu_calloc(etbl_size = 10,
+	    etbl_size = 128;
+	    etbl = (struct fbm_spec *)bu_calloc(etbl_size,
 						sizeof(struct fbm_spec),
 						"spectral weights table");
 	}
@@ -471,9 +472,11 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
 
     /* set up the next available table */
     ep = &etbl[etbl_next];
-    ep->magic = MAGIC_fbm_spec_wgt;	ep->octaves = octaves;
-    ep->h_val = h_val;		ep->lacunarity = lacunarity;
-    ep->spec_wgts = (double *)bu_malloc(((int)(octaves+1)) * sizeof(double), "spectral weights");
+    ep->h_val = h_val;
+    ep->lacunarity = lacunarity;
+    ep->octaves = octaves;
+    ep->spec_wgts = (double *)bu_calloc(((int)(octaves+1)), sizeof(double), "spectral weights");
+    ep->magic = MAGIC_fbm_spec_wgt;
 
     /* precompute and store spectral weights table */
     for (frequency = 1.0, i=0; i < octaves; i++) {
