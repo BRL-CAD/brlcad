@@ -560,7 +560,7 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 
 			if (ZERO(dist[1]))
 			    v = eu2->vu_p->v_p;
-			else if (ZERO(dist[1] - 1.0)) /* i.e., == 1.0 */
+			else if (EQUAL(dist[1], 1.0)) /* i.e., == 1.0 */
 			    v = eu2->eumate_p->vu_p->v_p;
 			else {
 			    VJOIN1(pt, eu1->vu_p->v_p->vg_p->coord, dist[0], v1);
@@ -578,7 +578,7 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 
 			if (ZERO(dist[0]))
 			    v = eu1->vu_p->v_p;
-			else if (ZERO(dist[0] - 1.0)) /* i.e., == 1.0 */
+			else if (EQUAL(dist[0], 1.0)) /* i.e., == 1.0 */
 			    v = eu2->eumate_p->vu_p->v_p;
 			else {
 			    VJOIN1(pt, eu2->vu_p->v_p->vg_p->coord, dist[1], v2);
@@ -764,7 +764,7 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 			    if (ZERO(dist[1])) {
 				v = eu2->vu_p->v_p;
 				VMOVE(pt, v->vg_p->coord);
-			    } else if (ZERO(dist[1] - 1.0)) { /* i.e., == 1.0 */
+			    } else if (EQUAL(dist[1], 1.0)) { /* i.e., == 1.0 */
 				v = eu2->eumate_p->vu_p->v_p;
 				VMOVE(pt, v->vg_p->coord);
 			    } else {
@@ -787,7 +787,7 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 			    if (ZERO(dist[0])) {
 				v = eu1->vu_p->v_p;
 				VMOVE(pt, v->vg_p->coord);
-			    } else if (ZERO(dist[0] - 1.0)) { /* i.e., == 1.0 */
+			    } else if (EQUAL(dist[0], 1.0)) { /* i.e., == 1.0 */
 				v = eu1->eumate_p->vu_p->v_p;
 				VMOVE(pt, v->vg_p->coord);
 			    } else {
