@@ -3132,6 +3132,70 @@ rt_tgc_volume(fastf_t *vol, const struct rt_db_internal *ip)
     }
 }
 
+/**
+ * R T _ T G C _ C E N T R O I D
+ */
+void
+rt_tgc_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    int tgc_type;
+    fastf_t mag_a, mag_b, mag_c, mag_d, mag_h;
+    fastf_t magsq_a, magsq_c, magsq_h;
+    fastf_t scalar;
+    vect_t u_h;
+    struct rt_tgc_internal *tip = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tip);
+
+    mag_a = MAGNITUDE(tip->a);
+    mag_b = MAGNITUDE(tip->b);
+    mag_c = MAGNITUDE(tip->c);
+    mag_d = MAGNITUDE(tip->d);
+    mag_h = MAGNITUDE(tip->h);
+
+    magsq_a = MAGSQ(tip->a);
+    magsq_c = MAGSQ(tip->c);
+    magsq_h = MAGSQ(tip->h);
+
+    VMOVE(u_h, tip->h);
+    VUNITIZE(u_h);
+
+    if (EQUAL(mag_a, mag_b) && EQUAL(mag_c, mag_d)) {
+        /* circular base and top */
+        if (EQUAL(mag_a, mag_c)) {
+            /* right circular cylinder */
+            tgc_type = RCC;
+        } else {
+            /* truncated right cone */
+            tgc_type = TRC;
+        }
+    } else {
+        /* elliptical base or top */
+        if (EQUAL(mag_a, mag_c) && EQUAL(mag_b, mag_d)) {
+            /* right elliptical cylinder */
+            tgc_type = REC;
+        } else {
+            /* truncated elliptical cone */
+            tgc_type = TEC;
+        }
+    }
+
+    switch (tgc_type) {
+        case RCC:
+        case REC:
+            scalar = mag_h * 0.5;
+            VSCALE(*cent, u_h, scalar);
+            break;
+        case TRC:
+            scalar = mag_h * 0.25 * (magsq_h + 2.0 * mag_a * mag_c + 3.0 * magsq_c) / (magsq_a + mag_a * mag_c + magsq_c);
+            VSCALE(*cent, u_h, scalar);
+            break;
+        case TEC:
+            /* need to confirm formula */
+        default:
+            bu_log("rt_tgc_centroid(): cannot find centroid");
+    }
+}
+
 
 /*
  * Local Variables:
