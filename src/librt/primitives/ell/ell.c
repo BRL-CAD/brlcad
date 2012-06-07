@@ -1778,7 +1778,7 @@ rt_ell_volume(fastf_t *volume, const struct rt_db_internal *ip)
     mag_a = MAGNITUDE(eip->a);
     mag_b = MAGNITUDE(eip->b);
     mag_c = MAGNITUDE(eip->c);
-    *volume = (4.0/3.0) * M_PI * mag_a*mag_b*mag_c;
+    *volume = (4.0/3.0) * M_PI * mag_a * mag_b * mag_c;
 }
 
 
@@ -1797,7 +1797,8 @@ rt_ell_centroid(point_t *cent, const struct rt_db_internal *ip)
 
 
 /**
- * E L L _ O B L Used to calculate surface area for Oblate spheroids
+ * E L L _ O B L
+ * Used to calculate surface area for Oblate spheroids
  */
 HIDDEN void
 ell_obl(fastf_t a, fastf_t c, fastf_t *ell_sfa)
@@ -1812,7 +1813,8 @@ ell_obl(fastf_t a, fastf_t c, fastf_t *ell_sfa)
 
 
 /**
- * E L L _ P R O Used to calculate surface area for Prolate spheroids
+ * E L L _ P R O
+ * Used to calculate surface area for Prolate spheroids
  */
 HIDDEN void
 ell_pro(fastf_t a, fastf_t c, fastf_t *ell_sfa)
@@ -1831,8 +1833,8 @@ ell_pro(fastf_t a, fastf_t c, fastf_t *ell_sfa)
 *
 * Used to calculate and return surface area of an ellipsoid
 */
-int
-rt_ell_sfa(struct rt_db_internal *ip, fastf_t *ell_sfa)
+void
+rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t mag_a, mag_b, mag_c;
 
@@ -1845,30 +1847,27 @@ rt_ell_sfa(struct rt_db_internal *ip, fastf_t *ell_sfa)
 
     if (EQUAL(mag_a, mag_c)) {
 	if (EQUAL(mag_a, mag_b)) {
-	    *ell_sfa = 4.0 * M_PI * mag_a * mag_a; /* Sphere */
+	    *area = 4.0 * M_PI * mag_a * mag_a; /* Sphere */
 	} else if (mag_b < mag_a) {
-	    ell_obl(mag_a, mag_b, ell_sfa); /* Oblate with A=C, and A<B */
+	    ell_obl(mag_a, mag_b, area); /* Oblate with A=C, and A<B */
 	} else if (mag_b > mag_a) {
-	    ell_pro(mag_a, mag_b, ell_sfa); /* Prolate with A=C, and A>B */
+	    ell_pro(mag_a, mag_b, area); /* Prolate with A=C, and A>B */
 	}
     } else if (EQUAL(mag_a, mag_b)) {
 	if (mag_c < mag_a) {
-	    ell_obl(mag_a, mag_c, ell_sfa); /* Oblate with A=B, and A>C */
+	    ell_obl(mag_a, mag_c, area); /* Oblate with A=B, and A>C */
 	} else if (mag_c > mag_a) {
-	    ell_pro(mag_a, mag_c, ell_sfa); /* Prolate with A=B, and A<C */
+	    ell_pro(mag_a, mag_c, area); /* Prolate with A=B, and A<C */
 	}
     } else if (EQUAL(mag_b, mag_c)) {
 	if (mag_a < mag_b) {
-	    ell_obl(mag_b, mag_a, ell_sfa); /* Oblate with B=C, and B>A */
+	    ell_obl(mag_b, mag_a, area); /* Oblate with B=C, and B>A */
 	} else if (mag_a > mag_b) {
-	    ell_pro(mag_b, mag_a, ell_sfa); /* Prolate with B=C, and B<A */
+	    ell_pro(mag_b, mag_a, area); /* Prolate with B=C, and B<A */
 	}
     } else {
-	return 1; /* a != b != c Triaxial Ellipsoid, function can't solve */
+        bu_log("rt_ell_surf_area(): triaxial ellipsoid, cannot solve"); /* a != b != c */
     }
-
-    return 0; /* OK */
-
 }
 
 
