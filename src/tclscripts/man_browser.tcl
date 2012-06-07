@@ -39,6 +39,8 @@ package provide ManBrowser 1.0
 ::itcl::class ::ManBrowser {
     inherit iwidgets::Dialog
 
+    itk_option define -useToC useToC UseToC 1
+
     public {	
 	variable path
 	variable parentName
@@ -234,6 +236,7 @@ package provide ManBrowser 1.0
     set parent [$this childsite]
 
     # Table of Contents
+    if {$itk_option(-useToC)} {
     itk_component add toc {
         ::tk::frame $parent.toc
     } {}
@@ -260,6 +263,7 @@ package provide ManBrowser 1.0
     grid rowconfigure $toc 0 -weight 1
 
     pack $toc -side left -expand no -fill y
+    }
 
     # Main HTML window
     itk_component add browser {
@@ -286,9 +290,11 @@ package provide ManBrowser 1.0
         loadPage [lindex $pages($this) 0]
     }
 
+    if {$itk_option(-useToC)} {
     bind $toc.toc_listbox <<ListboxSelect>> {
 	set mb [itcl_info objects -class ManBrowser]
 	$mb loadPage [%W get [%W curselection]]
+    }
     }
 
     configure -height 600 -width 800

@@ -180,6 +180,7 @@ if {[info exists ::enable_gui]} {
       foreach i {1 3 5 n} {
          if {![info exists man_file] && [file exists [file join [bu_brlcad_data doc/html/man$i] $::man_language $argv2.html]]} {
             set man_file [file join [bu_brlcad_data doc/html/man$i] $::man_language $argv2.html]
+            set section_number $i
          }
       }
       if {! [info exists man_file]} {
@@ -203,6 +204,7 @@ if {[info exists ::enable_gui]} {
          foreach extension $manext($i) {
             if {![info exists man_file] && [file exists [file join [bu_brlcad_data man/man$i] $argv2.$extension]]} {
                set man_file [file join [bu_brlcad_data man/man$i] $argv2.$extension]
+               set section_number $i
             }
          }
       }
@@ -218,9 +220,9 @@ if {[info exists ::enable_gui]} {
   package require Iwidgets
   package require ManBrowser 1.0
   wm state . withdrawn
-  set w [ ManBrowser .browser ]
+  set w [ ManBrowser .browser -useToC 0 ]
   $w buttonconfigure 0 -text Close -command ::exit 
-  wm title .browser "BRL-CAD Man Page - $argv2"
+  wm title .browser "BRL-CAD Man Page ($section_number) - $argv2"
   wm protocol .browser WM_DELETE_WINDOW ::exit
   bind $w <Escape> ::exit
   bind $w <q> ::exit
