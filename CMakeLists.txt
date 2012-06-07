@@ -876,6 +876,18 @@ endif(PREVIOUS_CONFIGURE_TYPE)
 set(PREVIOUS_CONFIGURE_TYPE ${CMAKE_WORD_SIZE} CACHE STRING "Previous configuration word size" FORCE)
 mark_as_advanced(PREVIOUS_CONFIGURE_TYPE)
 
+# Auto-reconfiguration - by default, a CMake generated build system
+# will re-run CMake if it detects that build system logic has changed.
+# This is normally a good thing, but becomes problematic when using
+# Visual Studio - recent versions of MSVC will individually prompt for
+# a re-loading of generated solution files one at a time.  Since 
+# BRL-CAD has over a thousand such files in a default build, the only
+# viable approach is to close Visual Studio, re-run CMake manually,
+# and re-open the project in Visual Studio.
+  message("CMAKE_GENERATOR: ${CMAKE_GENERATOR}")
+if("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
+  set(CMAKE_SUPPRESS_REGENERATION ON)
+endif("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
 
 # *******************************************************************
 # ***        Top Level Configure Options - Stage 1 of 9           ***
