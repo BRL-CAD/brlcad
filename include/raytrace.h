@@ -5359,6 +5359,12 @@ RT_EXPORT extern int rt_mk_binunif(struct rt_wdb *wdbp,
 				   unsigned int minor_type,
 				   size_t max_count);
 
+/* defined in bundle.c */
+RT_EXPORT extern int rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays);
+
+/* defined in mkbundle.c */
+RT_EXPORT extern int rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring);
+
 /* defined in db5_bin.c */
 RT_EXPORT extern void rt_binunif_free(struct rt_binunif_internal *bip);
 RT_EXPORT extern void rt_binunif_dump(struct rt_binunif_internal *bip);
