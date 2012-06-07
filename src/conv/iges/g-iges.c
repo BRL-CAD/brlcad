@@ -323,14 +323,7 @@ main(int argc, char *argv[])
 	/* Write start and global sections of the IGES file */
 	w_start_global(fp_dir, fp_param, argv[0], prog_name, output_file, __DATE__, brlcad_version());
     } else {
-	struct stat stat_ptr;
-
-	if (stat(output_file, &stat_ptr)) {
-	    perror(prog_name);
-	    bu_exit(1, "Cannot determine status of %s\n", output_file);
-	}
-
-	if (!(S_ISDIR(stat_ptr.st_mode))) {
+	if (!bu_file_directory(output_file)) {
 	    bu_exit(1, "-o option must provide a directory, %s is not a directory\n", output_file);
 	}
     }
