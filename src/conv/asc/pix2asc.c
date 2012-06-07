@@ -51,7 +51,7 @@ main(int UNUSED(ac), char **UNUSED(argv))
             }
             printf("%02X", pix[i]);
 	}
-	putc('\n', stdout );
+	printf("\n");
     }
     return 0;
 }
