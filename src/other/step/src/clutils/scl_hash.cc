@@ -203,7 +203,7 @@ SCL_HASHlist( HashEntry * he ) {
 
 void
 SCL_HASHdestroy( Hash_TableP table ) {
-    int     i, j;
+    unsigned int i, j;
     struct Element ** s;
     struct Element * p, *q;
 

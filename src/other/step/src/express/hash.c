@@ -279,7 +279,7 @@ HASH_in_use( Hash_Table table, char * action ) {
 
 void
 HASHdestroy( Hash_Table table ) {
-    int     i, j;
+    unsigned int i, j;
     Segment s;
     Element p, q;
 

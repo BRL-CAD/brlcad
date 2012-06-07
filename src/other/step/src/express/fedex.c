@@ -95,8 +95,7 @@ extern int exp_yydebug;
 
 char EXPRESSgetopt_options[256] = "Bbd:e:i:w:p:rvz";
 
-static void
-usage() {
+static void usage( void ) {
     fprintf( stderr, "usage: %s [-v] [-d #] [-p <object_type>] {-w|-i <warning>} express_file\n", EXPRESSprogram_name );
     fprintf( stderr, "where\t-v produces a version description\n" );
     fprintf( stderr, "\t-d turns on debugging (\"-d 0\" describes this further\n" );
