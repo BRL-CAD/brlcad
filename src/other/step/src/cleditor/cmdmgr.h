@@ -12,6 +12,7 @@
 * and is not subject to copyright.
 */
 
+#include <scl_export.h>
 #include <gennode.h>
 #include <gennodelist.h>
 #include <gennodearray.h>
@@ -76,7 +77,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-class ReplicateLinkNode : public SingleLinkNode {
+class SCL_EDITOR_EXPORT ReplicateLinkNode : public SingleLinkNode {
     private:
     protected:
         MgrNode * _repNode;
@@ -98,7 +99,7 @@ class ReplicateLinkNode : public SingleLinkNode {
         }
 };
 
-class ReplicateList : public SingleLinkList {
+class SCL_EDITOR_EXPORT ReplicateList : public SingleLinkList {
     private:
     protected:
     public:
@@ -129,7 +130,7 @@ class ReplicateList : public SingleLinkList {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-class CmdMgr {
+class SCL_EDITOR_EXPORT CmdMgr {
     protected:
         MgrNodeList * completeList;
         MgrNodeList * incompleteList;

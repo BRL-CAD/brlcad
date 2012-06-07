@@ -8,6 +8,7 @@
 #include <sys/time.h>
 #endif
 
+#include <scl_export.h>
 #include <sdai.h>
 #include <Registry.h>
 #include <STEPaggregate.h>
@@ -19,8 +20,8 @@
 #include <SdaiHeaderSchemaClasses.h>
 #include <SdaiHeaderSchema.h>
 
-void HeaderSchemaInit( Registry & );
-void HeaderInitSchemasAndEnts( Registry & );
-void SdaiHEADER_SECTION_SCHEMAInit( Registry & r );
+SCL_EDITOR_EXPORT void HeaderSchemaInit( Registry & );
+SCL_EDITOR_EXPORT void HeaderInitSchemasAndEnts( Registry & );
+SCL_EDITOR_EXPORT void SdaiHEADER_SECTION_SCHEMAInit( Registry & r );
 
 #endif

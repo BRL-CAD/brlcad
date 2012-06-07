@@ -28,6 +28,7 @@
  * prettied up interface to print_objects_when_running
  */
 
+#include <scl_export.h>
 #include "basic.h"  /* get basic definitions */
 #include <setjmp.h>
 

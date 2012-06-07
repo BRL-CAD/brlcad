@@ -22,7 +22,6 @@
 typedef struct Hash_Table * HashTable;
 
 class Registry;
-extern char * EntityClassName( char * );
 typedef void ( * CF_init )( Registry & ); //  pointer to creation initialization
 
 class SCL_CORE_EXPORT Registry {
