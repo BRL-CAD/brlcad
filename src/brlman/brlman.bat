@@ -26,9 +26,7 @@ SET PATH=%~dp0;%PATH%
 SET BTCLSH=%~dp0btclsh
 SET BRLMAN=%~dp0brlman.tcl
 
-START /B "" "%BTCLSH%" "%BRLMAN%" %1
-
-EXIT
+START /B "" "%BTCLSH%" "%BRLMAN%" %*
 
 REM Local Variables:
 REM mode: sh
