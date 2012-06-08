@@ -163,6 +163,8 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
   # Use the list of libraries to be linked into this target to 
   # accumulate the necessary definitions and compilation flags.
   GET_TARGET_DEFINES(${execname} "${libslist}")
+  # For DLL libraries, we may need additional flags 
+  GET_TARGET_DLL_DEFINES(${execname} "${libslist}")
   GET_TARGET_FLAGS(${execname} "${libslist}")
 
   # Find out if we have C, C++, or both
@@ -172,6 +174,9 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
   foreach(lib_define ${${execname}_DEFINES})
     set_property(TARGET ${execname} APPEND PROPERTY COMPILE_DEFINITIONS "${lib_define}")
   endforeach(lib_define ${${execname}_DEFINES})
+  foreach(lib_define ${${execname}_DLL_DEFINES})
+    set_property(TARGET ${execname} APPEND PROPERTY COMPILE_DEFINITIONS "${lib_define}")
+  endforeach(lib_define ${${execname}_DLL_DEFINES})
 
   # If we have a mixed language exec, pass on the flags to
   # the source files - otherwise, use the target.
