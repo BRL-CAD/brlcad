@@ -54,30 +54,6 @@ macro(GET_TARGET_DEFINES targetname target_libs)
   endforeach(libitem ${target_libs})
 endmacro(GET_TARGET_DEFINES)
 
-# Take a target definition and find out what its libraries
-# are supplying in the way of DLL definitions.
-macro(GET_TARGET_DLL_DEFINES targetname target_libs)
-  if(CPP_DLL_DEFINES)
-    # In case of re-running cmake, make sure the DLL_IMPORTS define
-    # for this specific library is removed, since for the actual target 
-    # we need to export, not import.
-    get_property(${targetname}_DLL_DEFINES GLOBAL PROPERTY ${targetname}_DLL_DEFINES)
-    if(${targetname}_DLL_DEFINES)
-      list(REMOVE_ITEM ${targetname}_DLL_DEFINES ${targetname}_DLL_IMPORTS)
-    endif(${targetname}_DLL_DEFINES)
-    foreach(libitem ${target_libs})
-      list(FIND BRLCAD_LIBS ${libitem} FOUNDIT)
-      if(NOT ${FOUNDIT} STREQUAL "-1")
-	get_property(${libitem}_DLL_DEFINES GLOBAL PROPERTY ${libitem}_DLL_DEFINES)
-	list(APPEND ${targetname}_DLL_DEFINES ${${libitem}_DLL_DEFINES})
-	if(${targetname}_DLL_DEFINES)
-	  list(REMOVE_DUPLICATES ${targetname}_DLL_DEFINES)
-	endif(${targetname}_DLL_DEFINES)
-      endif(NOT ${FOUNDIT} STREQUAL "-1")
-    endforeach(libitem ${target_libs})
-  endif(CPP_DLL_DEFINES)
-endmacro(GET_TARGET_DLL_DEFINES)
-
 # Take a target definition and find out what compilation flags its libraries
 # are using
 macro(GET_TARGET_FLAGS targetname target_libs)
@@ -212,9 +188,14 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   set(BRLCAD_LIBS "${BRLCAD_LIBS}" CACHE STRING "BRL-CAD libraries" FORCE)
 
   # Collect the definitions and flags needed by this library
+  # In case of re-running cmake, make sure the DLL_IMPORTS define
+  # for this specific library is removed, since for the actual target 
+  # we need to export, not import.
+  get_property(${libname}_DEFINES GLOBAL PROPERTY ${libname}_DEFINES)
+  if(${libname}_DEFINES)
+    list(REMOVE_ITEM ${libname}_DEFINES ${libname}_DLL_IMPORTS)
+  endif(${libname}_DEFINES)
   GET_TARGET_DEFINES(${libname} "${libslist}")
-  # For DLL libraries, we may need additional flags 
-  GET_TARGET_DLL_DEFINES(${libname} "${libslist}")
   GET_TARGET_FLAGS(${libname} "${libslist}")
 
   # Find out if we have C, C++, or both
@@ -229,7 +210,6 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
 
   # Handle "shared" libraries (with MSVC, these would be dynamic libraries)
   if(BUILD_SHARED_LIBS)
-   
     add_library(${libname} SHARED ${srcslist})
 
     # Make sure we don't end up with outputs named liblib...
@@ -261,10 +241,6 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
     foreach(lib_define ${${libname}_DEFINES})
       set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${lib_define}")
     endforeach(lib_define ${${libname}_DEFINES})
-    # If we're building a DLL, also apply the DLL definitions
-    foreach(lib_define ${${libname}_DLL_DEFINES})
-      set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${lib_define}")
-    endforeach(lib_define ${${libname}_DLL_DEFINES})
 
     # If we haven't already taken care of the flags on a per-file basis,
     # apply them to the target now that we have one.
@@ -335,12 +311,12 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
     CXX_NOSTRICT("${srcslist}" "${ARGN}")
   endif(${lib_type} STREQUAL "MIXED")
 
-  # For any CPP_DLL_DEFINES DLL library, users of that library will need the DLL_IMPORTS
-  # definition specific to that library.  Add it to ${libname}_DLL_DEFINES
+  # For any CPP_DLL_DEFINES library, users of that library will need the DLL_IMPORTS
+  # definition specific to that library.  Add it to ${libname}_DEFINES
   if(CPP_DLL_DEFINES)
-    list(APPEND ${libname}_DLL_DEFINES ${UPPER_CORE}_DLL_IMPORTS)
+    list(APPEND ${libname}_DEFINES ${UPPER_CORE}_DLL_IMPORTS)
   endif(CPP_DLL_DEFINES)
-  set_property(GLOBAL PROPERTY ${libname}_DLL_DEFINES "${${libname}_DLL_DEFINES}")
+  set_property(GLOBAL PROPERTY ${libname}_DEFINES "${${libname}_DEFINES}")
 
   mark_as_advanced(BRLCAD_LIBS)
 
