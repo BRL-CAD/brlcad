@@ -3077,13 +3077,35 @@ rt_tgc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
+/* determines the class of tgc given vector magnitudes a, b, c, d */
+HIDDEN inline void
+get_tgc_type(int *type, fastf_t a, fastf_t b, fastf_t c, fastf_t d)
+{
+    if (EQUAL(a, b) && EQUAL(c, d)) {
+        /* circular base and top */
+        if (EQUAL(a, c)) {
+            *type = RCC;
+        } else {
+            *type = TRC;
+        }
+    } else {
+        /* elliptical base or top */
+        if (EQUAL(a, c) && EQUAL(b, d)) {
+            *type = REC;
+        } else {
+            *type = TEC;
+        }
+    }
+}
+
+
 /**
  * R T _ T G C _ V O L U M E
  */
 void
 rt_tgc_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
-    int tgc_type;
+    int tgc_type = 0;
     fastf_t mag_a, mag_b, mag_c, mag_d, mag_h;
     struct rt_tgc_internal *tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
@@ -3094,25 +3116,7 @@ rt_tgc_volume(fastf_t *vol, const struct rt_db_internal *ip)
     mag_d = MAGNITUDE(tip->d);
     mag_h = MAGNITUDE(tip->h);
 
-    if (EQUAL(mag_a, mag_b) && EQUAL(mag_c, mag_d)) {
-        /* circular base and top */
-        if (EQUAL(mag_a, mag_c)) {
-            /* right circular cylinder */
-            tgc_type = RCC;
-        } else {
-            /* truncated right cone */
-            tgc_type = TRC;
-        }
-    } else {
-        /* elliptical base or top */
-        if (EQUAL(mag_a, mag_c) && EQUAL(mag_b, mag_d)) {
-            /* right elliptical cylinder */
-            tgc_type = REC;
-        } else {
-            /* truncated elliptical cone */
-            tgc_type = TEC;
-        }
-    }
+    get_tgc_type(&tgc_type, mag_a, mag_b, mag_c, mag_d);
 
     switch (tgc_type) {
         case RCC:
@@ -3132,13 +3136,52 @@ rt_tgc_volume(fastf_t *vol, const struct rt_db_internal *ip)
     }
 }
 
+
+/**
+ * R T _ T G C _ S U R F _ A R E A
+ */
+void
+rt_tgc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    int tgc_type = 0;
+    fastf_t mag_a, mag_b, mag_c, mag_d, mag_h;
+    fastf_t magsq_a, magsq_c, magsq_h;
+    struct rt_tgc_internal *tip = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tip);
+
+    mag_a = MAGNITUDE(tip->a);
+    mag_b = MAGNITUDE(tip->b);
+    mag_c = MAGNITUDE(tip->c);
+    mag_d = MAGNITUDE(tip->d);
+    mag_h = MAGNITUDE(tip->h);
+
+    magsq_a = MAGSQ(tip->a);
+    magsq_c = MAGSQ(tip->c);
+    magsq_h = MAGSQ(tip->h);
+
+    get_tgc_type(&tgc_type, mag_a, mag_b, mag_c, mag_d);
+
+    switch (tgc_type) {
+        case RCC:
+            *area = 2.0 * M_PI * mag_a * (mag_a + mag_h);
+            break;
+        case TRC:
+            *area = M_PI * ((mag_a + mag_c) * sqrt((mag_a - mag_c) * (mag_a - mag_c) + magsq_h) + magsq_a + magsq_c);
+            break;
+        case REC:
+        case TEC:
+        default:
+            bu_log("rt_tgc_surf_area(): cannot find surface area");
+    }
+}
+
 /**
  * R T _ T G C _ C E N T R O I D
  */
 void
 rt_tgc_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
-    int tgc_type;
+    int tgc_type = 0;
     fastf_t mag_a, mag_b, mag_c, mag_d, mag_h;
     fastf_t magsq_a, magsq_c, magsq_h;
     fastf_t scalar;
@@ -3159,25 +3202,7 @@ rt_tgc_centroid(point_t *cent, const struct rt_db_internal *ip)
     VMOVE(u_h, tip->h);
     VUNITIZE(u_h);
 
-    if (EQUAL(mag_a, mag_b) && EQUAL(mag_c, mag_d)) {
-        /* circular base and top */
-        if (EQUAL(mag_a, mag_c)) {
-            /* right circular cylinder */
-            tgc_type = RCC;
-        } else {
-            /* truncated right cone */
-            tgc_type = TRC;
-        }
-    } else {
-        /* elliptical base or top */
-        if (EQUAL(mag_a, mag_c) && EQUAL(mag_b, mag_d)) {
-            /* right elliptical cylinder */
-            tgc_type = REC;
-        } else {
-            /* truncated elliptical cone */
-            tgc_type = TEC;
-        }
-    }
+    get_tgc_type(&tgc_type, mag_a, mag_b, mag_c, mag_d);
 
     switch (tgc_type) {
         case RCC:
@@ -3186,7 +3211,8 @@ rt_tgc_centroid(point_t *cent, const struct rt_db_internal *ip)
             VSCALE(*cent, u_h, scalar);
             break;
         case TRC:
-            scalar = mag_h * 0.25 * (magsq_h + 2.0 * mag_a * mag_c + 3.0 * magsq_c) / (magsq_a + mag_a * mag_c + magsq_c);
+            scalar = mag_h * 0.25 * (magsq_h + 2.0 * mag_a * mag_c + 3.0 * magsq_c) /
+                (magsq_a + mag_a * mag_c + magsq_c);
             VSCALE(*cent, u_h, scalar);
             break;
         case TEC:
