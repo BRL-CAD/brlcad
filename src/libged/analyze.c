@@ -950,16 +950,10 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
 static void
 analyze_tor(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
-    fastf_t r1, r2, vol, sur_area;
+    fastf_t vol, area;
 
-    RT_TOR_CK_MAGIC(tor);
-
-    r1 = tor->r_a;
-    r2 = tor->r_h;
-
-    vol = 2.0 * M_PI * M_PI * r1 * r2 * r2;
-    sur_area = 4.0 * M_PI * M_PI * r1 * r2;
+    rt_functab[ID_TOR].ft_volume(&vol, ip);
+    rt_functab[ID_TOR].ft_surf_area(&area, ip);
 
     bu_vls_printf(gedp->ged_result_str, "\n");
 
@@ -968,7 +962,7 @@ analyze_tor(struct ged *gedp, const struct rt_db_internal *ip)
 		       * gedp->ged_wdbp->dbip->dbi_base2local
 		       * gedp->ged_wdbp->dbip->dbi_base2local
 		       * gedp->ged_wdbp->dbip->dbi_base2local,
-		       sur_area
+		       area
 		       * gedp->ged_wdbp->dbip->dbi_base2local
 		       * gedp->ged_wdbp->dbip->dbi_base2local,
 		       vol/GALLONS_TO_MM3
