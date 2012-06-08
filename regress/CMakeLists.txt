@@ -279,6 +279,9 @@ set(regress_outfiles
   red.material_id.unsafe.out
   red.material_id.unsafe.out.new
   red.material_id.unsafe.out.test
+  red.matrix.noop.out
+  red.matrix.noop.out.new
+  red.sph_rot.c.out
   red.name.empty.out
   red.name.empty.out.new
   red.name.emptyedit.out

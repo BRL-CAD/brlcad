@@ -67,6 +67,11 @@ comb sph.c u sph
 r sph.r u sph.c
 cp sph.r hps.r
 mater hps.r light 255 0 0 0
+cp sph.c sph_rot.c
+e sph_rot.c
+oed sph_rot.c sph
+rot 20.2 30.1 10.4
+accept
 quit
 EOF
 
@@ -200,6 +205,9 @@ dump sph.r $SAMPLE
 ELPMAS=red.hps.r.out
 dump hps.r $ELPMAS
 should_be_different $SAMPLE $ELPMAS
+MATRIX=red.sph_rot.c.out
+dump sph_rot.c $MATRIX
+should_be_different $SAMPLE $MATRIX
 
 ########
 # nada #
@@ -506,6 +514,14 @@ should_be_same $SAMPLE $REDFILE.new
 should_be_same $ELPMAS $REDFILE.test
 should_be_different $REDFILE.new $REDFILE.test
 
+##########
+# matrix #
+##########
+init "Verify that red no-op leaves matrix intact" red.matrix.noop.out
+cat $MATRIX | sed 's/  / /g' > $REDFILE
+assert_different
+edit_and_dump sph_rot.c $REDFILE.new
+should_be_same $MATRIX $REDFILE.new
 
 if test $FAILURES -eq 0 ; then
     echo "-> mged 'red' check succeeded"
