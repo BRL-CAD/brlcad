@@ -1295,8 +1295,11 @@ comp.r4 ID 5678 material code 5 LOS 75
   they have any code we could snarf to make life easier, but regardless
   we need a libbu API on top of any other code - at such a core level,
   we can't introduce an external API.
-  
- 
+
+* add per-face analysis of primitives like tgc, arb to their respective
+  analyze commands in libged
+
+
 CONVERTERS
 ----------
 
