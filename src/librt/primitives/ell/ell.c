@@ -1869,7 +1869,7 @@ rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     switch (ell_type) {
         case PROLATE:
-              *area = (2.0 * M_PI * major2) + (2.0 * M_PI * major * minor / ecc) * asin(ecc);
+              *area = (2.0 * M_PI * minor2) + (2.0 * M_PI * major * minor / ecc) * asin(ecc);
               break;
         case OBLATE:
               *area = (2.0 * M_PI * major2) + (M_PI * minor2 / ecc) * log((1.0 + ecc) / (1.0 - ecc));

@@ -987,107 +987,31 @@ analyze_tor(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
-#define PROLATE 1
-#define OBLATE 2
-
 /* analyze an ell */
 static void
 analyze_ell(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    struct rt_ell_internal *ell = (struct rt_ell_internal *)ip->idb_ptr;
-    fastf_t ma, mb, mc;
-#ifdef major		/* Some systems have these defined as macros!!! */
-#undef major
-#endif
-#ifdef minor
-#undef minor
-#endif
-    fastf_t ecc, major, minor;
-    fastf_t vol, sur_area;
-    int type;
-
-    RT_ELL_CK_MAGIC(ell);
-
-    ma = MAGNITUDE(ell->a);
-    mb = MAGNITUDE(ell->b);
-    mc = MAGNITUDE(ell->c);
-
-    type = 0;
+    fastf_t vol, area = -1;
 
     bu_vls_printf(gedp->ged_result_str, "\n");
 
-    vol = 4.0 * M_PI * ma * mb * mc / 3.0;
+    rt_functab[ID_ELL].ft_volume(&vol, ip);
     bu_vls_printf(gedp->ged_result_str, "\nELL Volume = %.8f (%.8f gal)",
-		  vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  vol/GALLONS_TO_MM3);
+          vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
+          vol/GALLONS_TO_MM3);
 
-    if (fabs(ma-mb) < .00001 && fabs(mb-mc) < .00001) {
-	/* have a sphere */
-	sur_area = 4.0 * M_PI * ma * ma;
-	bu_vls_printf(gedp->ged_result_str, "   Surface Area = %.8f\n",
-		      sur_area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
-	return;
+    rt_functab[ID_ELL].ft_surf_area(&area, ip);
+    if (area < 0) {
+        bu_vls_printf(gedp->ged_result_str, "   Cannot find surface area\n");
+    } else {
+        bu_vls_printf(gedp->ged_result_str, "   Surface Area = %.8f\n",
+                area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
     }
-
-    if (fabs(ma-mb) < .00001) {
-	/* A == B */
-	if (mc > ma) {
-	    /* oblate spheroid */
-	    type = OBLATE;
-	    major = mc;
-	    minor = ma;
-	} else {
-	    /* prolate spheroid */
-	    type = PROLATE;
-	    major = ma;
-	    minor = mc;
-	}
-    } else
-	if (fabs(ma-mc) < .00001) {
-	    /* A == C */
-	    if (mb > ma) {
-		/* oblate spheroid */
-		type = OBLATE;
-		major = mb;
-		minor = ma;
-	    } else {
-		/* prolate spheroid */
-		type = PROLATE;
-		major = ma;
-		minor = mb;
-	    }
-	} else
-	    if (fabs(mb-mc) < .00001) {
-		/* B == C */
-		if (ma > mb) {
-		    /* oblate spheroid */
-		    type = OBLATE;
-		    major = ma;
-		    minor = mb;
-		} else {
-		    /* prolate spheroid */
-		    type = PROLATE;
-		    major = mb;
-		    minor = ma;
-		}
-	    } else {
-		bu_vls_printf(gedp->ged_result_str, "   Cannot find surface area\n");
-		return;
-	    }
-
-    ecc = sqrt(major*major - minor*minor) / major;
-    if (type == PROLATE) {
-	sur_area = 2.0 * M_PI * minor * minor +
-	    (2.0 * M_PI * (major*minor/ecc) * asin(ecc));
-    } else { /* type == OBLATE */
-	sur_area = 2.0 * M_PI * major * major +
-	    (M_PI * (minor*minor/ecc) * log((1.0+ecc)/(1.0-ecc)));
-    }
-
-    bu_vls_printf(gedp->ged_result_str, "   Surface Area = %.8f\n",
-		  sur_area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
 }
 
+
+#define PROLATE 1
+#define OBLATE 2
 
 /* analyze an superell */
 static void
