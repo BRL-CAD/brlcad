@@ -88,7 +88,7 @@ endmacro(DISTCLEAN)
 # Stash the initial CMakeCache.txt file, if it exists, for subsequent
 # comparison
 if(EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
-  configure_file(${CMAKE_BINARY_DIR}/CMakeCache.txt ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev COPY_ONLY)
+  configure_file(${CMAKE_BINARY_DIR}/CMakeCache.txt ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev COPYONLY)
   DISTCLEAN(${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
 DISTCLEAN(${CMAKE_BINARY_DIR}/CMakeCache.txt)
