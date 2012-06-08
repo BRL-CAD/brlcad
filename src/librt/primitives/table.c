@@ -267,7 +267,7 @@ const struct rt_functab rt_functab[] = {
 	rt_tgc_params,
 	rt_tgc_bbox,
     rt_tgc_volume,
-    NULL,
+    rt_tgc_surf_area,
     rt_tgc_centroid,
     },
 
@@ -466,9 +466,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_rec_params,
 	rt_rec_bbox,
-    NULL,
-    NULL,
-    NULL,
+    rt_tgc_volume,
+    rt_tgc_surf_area,
+    rt_tgc_centroid,
     },
 
     {
