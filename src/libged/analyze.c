@@ -1102,95 +1102,33 @@ analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
-#define GED_ANAL_RCC 1
-#define GED_ANAL_TRC 2
-#define GED_ANAL_REC 3
-
 /* analyze tgc */
 static void
 analyze_tgc(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)ip->idb_ptr;
-    fastf_t maxb, ma, mb, mc, md, mh;
-    fastf_t area_base, area_top, area_side, vol;
-    vect_t axb;
-    int cgtype = 0;
+    fastf_t vol, area = -1;
 
-    RT_TGC_CK_MAGIC(tgc);
-
-    VCROSS(axb, tgc->a, tgc->b);
-    maxb = MAGNITUDE(axb);
-    ma = MAGNITUDE(tgc->a);
-    mb = MAGNITUDE(tgc->b);
-    mc = MAGNITUDE(tgc->c);
-    md = MAGNITUDE(tgc->d);
-    mh = MAGNITUDE(tgc->h);
-
-    /* check for right cylinder */
-    if (fabs(fabs(VDOT(tgc->h, axb)) - (mh*maxb)) < .00001) {
-	/* have a right cylinder */
-	if (fabs(ma-mb) < .00001) {
-	    /* have a circular base */
-	    if (fabs(mc-md) < .00001) {
-		/* have a circular top */
-		if (fabs(ma-mc) < .00001)
-		    cgtype = GED_ANAL_RCC;
-		else
-		    cgtype = GED_ANAL_TRC;
-	    }
-	} else {
-	    /* have an elliptical base */
-	    if (fabs(ma-mc) < .00001 && fabs(mb-md) < .00001)
-		cgtype = GED_ANAL_REC;
-	}
-    }
-
-    switch (cgtype) {
-
-	case GED_ANAL_RCC:
-	    area_base = M_PI * ma * ma;
-	    area_top = area_base;
-	    area_side = 2.0 * M_PI * ma * mh;
-	    vol = M_PI * ma * ma * mh;
-	    bu_vls_printf(gedp->ged_result_str, "\nRCC\n");
-	    break;
-
-	case GED_ANAL_TRC:
-	    area_base = M_PI * ma * ma;
-	    area_top = M_PI * mc * mc;
-	    area_side = M_PI * (ma+mc) * sqrt((ma-mc)*(ma-mc)+(mh*mh));
-	    vol = M_PI * mh * (ma*ma + mc*mc + ma*mc) / 3.0;
-
-	    bu_vls_printf(gedp->ged_result_str, "\nTRC\n");
-	    break;
-
-	case GED_ANAL_REC:
-	    area_base = M_PI * ma * mb;
-	    area_top = M_PI * mc * md;
-	    /* approximate */
-	    area_side = 2.0 * M_PI * mh * sqrt(0.5 * (ma*ma + mb*mb));
-	    vol = M_PI * ma * mb * mh;
-	    bu_vls_printf(gedp->ged_result_str, "\nREC\n");
-	    break;
-
-	default:
-	    bu_vls_printf(gedp->ged_result_str, "\nTGC Cannot find areas and volume\n");
-	    return;
-    }
+    rt_functab[ID_TGC].ft_volume(&vol, ip);
+    rt_functab[ID_TGC].ft_surf_area(&area, ip);
 
     bu_vls_printf(gedp->ged_result_str, "\n");
 
-    /* print the results */
-    bu_vls_printf(gedp->ged_result_str, "Surface Areas:  base(AxB)=%.8f  top(CxD)=%.8f  side=%.8f\n",
-		  area_base*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  area_top*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  area_side*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(gedp->ged_result_str, "Total Surface Area=%.8f    Volume=%.8f (%.8f gal)\n",
-		  (area_base+area_top+area_side)*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local, vol/GALLONS_TO_MM3);
-    /* Print units? */
-    return;
+    /* reminder to add per-face analysis */
+    /*bu_vls_printf(gedp->ged_result_str, "Surface Areas:  base(AxB)=%.8f  top(CxD)=%.8f  side=%.8f\n",*/
+		  /*area_base*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,*/
+		  /*area_top*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,*/
+		  /*area_side*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);*/
 
+    bu_vls_printf(gedp->ged_result_str, "Volume=%.8f (%.8f gal)",
+            vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
+            vol/GALLONS_TO_MM3);
+
+    if (area < 0) {
+        bu_vls_printf(gedp->ged_result_str, "\nTGC Cannot find surface area\n");
+    } else {
+        bu_vls_printf(gedp->ged_result_str, "    Surface Area=%.8f\n",
+                area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
+    }
 }
 
 
