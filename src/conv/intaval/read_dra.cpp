@@ -27,12 +27,13 @@
  *	IABG mbH (Germany)
  */
 
+#include "read_dra.h"
+
 #include <iostream>
 
 #include "glob.h"
 #include "regtab.h"
 #include "write_brl.h"
-#include "read_dra.h"
 
 
 size_t addBotPoint

@@ -30,9 +30,9 @@
 #ifndef REGTAB_INCLUDED
 #define REGTAB_INCLUDED
 
-#include <string>
-
 #include "common.h"
+
+#include <string>
 
 #include "vmath.h"
 #include "wdb.h"

@@ -30,8 +30,11 @@
 #ifndef READ_DRA_INCLUDED
 #define READ_DRA_INCLUDED
 
+#include "common.h"
+
 #include <istream>
 
+#include "wdb.h"
 
 void conv
 (

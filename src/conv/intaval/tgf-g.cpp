@@ -27,6 +27,8 @@
  *	IABG mbH (Germany)
  */
 
+#include "common.h"
+
 #include <iostream>
 #include <fstream>
 

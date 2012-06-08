@@ -34,7 +34,6 @@
 
 #include "vmath.h"
 
-
 const size_t LINELEN       = 128;
 const size_t MAX_TRIANGLES = 1000;
 const size_t MAX_NPTS      = 3 * MAX_TRIANGLES;
