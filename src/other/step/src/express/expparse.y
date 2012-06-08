@@ -2021,7 +2021,7 @@ schema_decl(A) ::= include_directive(B).
 
 schema_header ::= TOK_SCHEMA TOK_IDENTIFIER(A) semicolon.
 {
-    Schema schema = DICTlookup(CURRENT_SCOPE->symbol_table, A.symbol->name);
+    Schema schema = ( Schema ) DICTlookup(CURRENT_SCOPE->symbol_table, A.symbol->name);
 
     if (print_objects_while_running & OBJ_SCHEMA_BITS) {
 	fprintf(stdout, "parse: %s (schema)\n", A.symbol->name);

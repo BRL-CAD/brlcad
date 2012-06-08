@@ -371,7 +371,7 @@ void EXP_resolve( Expression expr, Scope scope, Type typecheck ) {
             /* add function or entity as first element of list */
             LISTadd_first( expr->u.list, x );
 #endif
-            expr->u.funcall.function = x;
+            expr->u.funcall.function = ( struct Scope_ * ) x;
 
             resolved_all( expr );
             break;

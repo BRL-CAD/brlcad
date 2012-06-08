@@ -684,7 +684,7 @@ ENTITYput_superclass( Entity entity ) {
 
         tag = ( EntityTag ) malloc( sizeof( struct EntityTag_ ) );
         tag -> superclass = super;
-        TYPEput_clientData( ENTITYget_type( entity ), tag );
+        TYPEput_clientData( ENTITYget_type( entity ), ( ClientData ) tag );
         return super;
     }
     return 0;
@@ -693,7 +693,7 @@ ENTITYput_superclass( Entity entity ) {
 Entity
 ENTITYget_superclass( Entity entity ) {
     EntityTag tag;
-    tag = TYPEget_clientData( ENTITYget_type( entity ) );
+    tag = ( EntityTag ) TYPEget_clientData( ENTITYget_type( entity ) );
     return ( tag ? tag -> superclass : 0 );
 }
 

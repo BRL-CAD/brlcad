@@ -1982,7 +1982,7 @@ TYPEselect_print( Type t, FILES * files, Schema schema ) {
     FILE * inc = files->inc;
 
     /*  if type is already marked, return  */
-    if( ( SelectTag )( tmp = TYPEget_clientData( t ) ) )  {
+    if( tmp = ( SelectTag ) TYPEget_clientData( t ) ) {
         if( ( tmp ->started ) && ( ! tmp ->complete ) )
             fprintf( stderr, "WARNING:  SELECT type %s causes circular references\n",
                      TYPEget_name( t ) );
@@ -1993,7 +1993,7 @@ TYPEselect_print( Type t, FILES * files, Schema schema ) {
     tag = ( SelectTag ) malloc( sizeof( struct SelectTag_ ) );
     tag -> started = 1;
     tag -> complete = 0;
-    TYPEput_clientData( t, tag );
+    TYPEput_clientData( t, ( ClientData ) tag );
 
 
     /* Check if we're a renamed type, e.g., TYPE B (sel) = A.  If so, if A has

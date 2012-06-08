@@ -735,7 +735,7 @@ void
 SCOPEconsts_out( Scope s, int level ) {
     Variable v;
     DictionaryEntry de;
-    int max_indent = 0;
+    size_t max_indent = 0;
     Dictionary d = s->symbol_table;
 
     DICTdo_type_init( d, &de, OBJ_VARIABLE );
@@ -789,7 +789,7 @@ void
 SCOPElocals_out( Scope s, int level ) {
     Variable v;
     DictionaryEntry de;
-    int max_indent = 0;
+    size_t max_indent = 0;
     Dictionary d = s->symbol_table;
 
     DICTdo_type_init( d, &de, OBJ_VARIABLE );
@@ -1284,7 +1284,7 @@ ENTITYattrs_out( Linked_List attrs, int derived, int level ) {
 
 void
 WHERE_out( Linked_List wheres, int level ) {
-    int max_indent;
+    size_t max_indent;
     if( !wheres ) {
         return;
     }
