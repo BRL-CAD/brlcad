@@ -120,7 +120,7 @@ static pthread_mutex_t apps_mutex = PTHREAD_MUTEX_INITIALIZER;
 static char *title=NULL;
 
 /* use air flag (0 -> ignore air regions) */
-static int use_air=0;
+static int use_air=1;
 
 /* verbosity flag */
 static int verbose=0;
