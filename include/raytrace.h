@@ -2444,6 +2444,19 @@ RT_EXPORT extern int rt_gen_circular_grid(struct xrays *ray_bundle,
 RT_EXPORT extern int rt_shootray(struct application *ap);
 /* Shoot a bundle of rays */
 RT_EXPORT extern int rt_shootrays(struct application_bundle *bundle);
+
+/**
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT extern int rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays);
+
+/**
+ * PRIVATE: this is new API and should be considered private for the
+ * time being.
+ */
+RT_EXPORT extern int rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring);
+
 /* Shoot a ray, returning the partition list */
 RT_EXPORT extern struct partition *rt_shootray_simple(struct application *ap,
 						      point_t origin,
@@ -5359,11 +5372,6 @@ RT_EXPORT extern int rt_mk_binunif(struct rt_wdb *wdbp,
 				   unsigned int minor_type,
 				   size_t max_count);
 
-/* defined in bundle.c */
-RT_EXPORT extern int rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays);
-
-/* defined in mkbundle.c */
-RT_EXPORT extern int rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring);
 
 /* defined in db5_bin.c */
 RT_EXPORT extern void rt_binunif_free(struct rt_binunif_internal *bip);
