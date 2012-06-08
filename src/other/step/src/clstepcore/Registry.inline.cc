@@ -273,10 +273,10 @@ SDAI_Application_instance * Registry::ObjCreate( const char * nm, const char * s
             ( ( EntityDescriptor * )entd ) -> NewSTEPentity();
 
         // See comment in previous function.
-        if( entd->AbstractEntity().asInt() == true ) {
+        if( entd->AbstractEntity().asInt() == 1 ) {
             se->Error().severity( SEVERITY_WARNING );
             se->Error().UserMsg( "ENTITY is abstract supertype" );
-        } else if( entd->ExtMapping().asInt() == true ) {
+        } else if( entd->ExtMapping().asInt() == 1 ) {
             se->Error().severity( SEVERITY_WARNING );
             se->Error().UserMsg( "ENTITY requires external mapping" );
         }
