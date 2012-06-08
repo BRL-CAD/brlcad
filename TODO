@@ -666,6 +666,10 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * complete conversion of existing manual pages into docbook format
 
+  note that Eric Raymond's "manlifter" (a driver for his "doclifter")
+  can be used to aid the project (see 
+  http://www.catb.org/~esr/doclifter/)
+
 * add an option to bot_dump for outputting surface normals.  Make sure
   all supported dump formats (obj, dxf, etc) optionally write out
   normals.  Consider adding an option to smoothly interpolate normals
