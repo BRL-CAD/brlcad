@@ -1770,6 +1770,7 @@ brep_conversion(struct rt_db_internal* intern, ON_Brep** brep)
 }
 
 int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtree, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm) {
+    int ret;
     newtree->tr_op = oldtree->tr_op;
     switch (oldtree->tr_op) {
 	case OP_UNION:
@@ -1777,7 +1778,6 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    /* convert right */
-	    int ret;
 	    rt_comb_internal *comb;
 	    BU_GET(comb, struct rt_comb_internal);
 	    BU_GET(newtree->tr_b.tb_right, union tree);
@@ -1822,6 +1822,18 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 			bu_free(tmpname, "char");
 			break;
 		    }
+		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_HALF")) {
+			ret = wdb_export(wdbp, tmpname, intern->idb_ptr, ID_HALF, local2mm);
+			if (ret) {
+			    bu_log("ERROR: failure writing [%s] to disk\n", tmpname);
+			    bu_free(tmpname, "char");
+			    return ret;
+			}
+			bu_log("%s is made.\n", tmpname);
+			bu_strlcpy(newtree->tr_l.tl_name, tmpname, strlen(tmpname)+1);
+			bu_free(tmpname, "char");
+			return ret;
+		    }
 		    ON_Brep** brep = (ON_Brep**)bu_malloc(sizeof(ON_Brep*), "ON_Brep*");
 		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_BREP")) {
 			*brep = ((struct rt_brep_internal *)intern->idb_ptr)->brep->Duplicate();
@@ -1839,7 +1851,12 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 			BU_GET(bi, struct rt_brep_internal);
 			bi->magic = RT_BREP_INTERNAL_MAGIC;
 			bi->brep = *brep;
-			wdb_export(wdbp, tmpname, (genptr_t)bi, ID_BREP, local2mm);
+			ret = wdb_export(wdbp, tmpname, (genptr_t)bi, ID_BREP, local2mm);
+			if (ret) {
+			    bu_log("ERROR: failure writing [%s] to disk\n", tmpname);
+			    bu_free(tmpname, "char");
+			    return ret;
+			}
 			bu_log("%s is made.\n", tmpname);
 			bu_strlcpy(newtree->tr_l.tl_name, tmpname, strlen(tmpname)+1);
 		    } else {
