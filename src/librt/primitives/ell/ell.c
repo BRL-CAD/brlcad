@@ -1808,9 +1808,12 @@ void
 rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t mag_a, mag_b, mag_c;
-    fastf_t ecc, major, minor;
-    fastf_t major2, minor2;
-    int ell_type;
+    fastf_t ecc = 0;
+    fastf_t major = 0;
+    fastf_t minor = 0;
+    fastf_t major2 = 0;
+    fastf_t minor2 = 0;
+    int ell_type = 0;
 
     struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
