@@ -55,9 +55,9 @@ A track consists of a number of identical pads which
 are wrapped in a chain around two or more ordered wheels. Normally, the
 track is linear between the wheels. The exeption is that between the
 first and last wheels, any extra track length is taken up in a hanging
-caternary arc.
+catenary arc.
 .PP
-Anim_track requires two input files. The first, referred to above as
+anim_track requires two input files. The first, referred to above as
 .BR wheelfile ,
 is a table which
 defines the initial track geometry by describing the wheels around which
@@ -84,7 +84,7 @@ which all of the other wheels are projected.
 The track pads are spread evenly along the entire length of the track.
 The track segments between wheels are always linear, except for the
 segment between the first and last wheels. If there is any extra track
-length, it is taken up in a caternary arc which hangs down between the
+length, it is taken up in a catenary arc which hangs down between the
 first and last wheels. Thus if the the first wheel in
 .B wheelfile
 should be the top front wheel of the vehicle, and the last wheel in
@@ -92,7 +92,7 @@ should be the top front wheel of the vehicle, and the last wheel in
 should be the top back wheel of the vehicle. Depending on the track
 length mode specified with the
 .B -l
-option, the caternary segment may or may not appear.
+option, the catenary segment may or may not appear.
 .PP
 The second input file required by
 .IR anim_track ,
@@ -300,7 +300,7 @@ never gets shorter than its original length.
 .TP
 .B -i #
 Specify the initial offset of the track. By default, the first track pad
-is initially placed at the point where the caternary arc meets the first
+is initially placed at the point where the catenary arc meets the first
 wheel. If an offset is specified, it represents the distance clockwise
 around the track to from this point to the desired initiall point of
 the first pad. This option is typically used to align the track pads
@@ -347,14 +347,18 @@ you obtain the position of the center of
 the tank and its orientation at each time. You also nead to obtain the
 position of the each wheel relative to the vehicle center at each time.
 All of this information is placed in
-.BR in.table .
-The model of the tank is stored in
+.BR in.table
+\. The model of the tank is stored in
 model.g as a combination named "tank". Its centroid is at the
 point (0,0,1005) and it faces the y-axis. An animation script for the
 tank itself is created as follows:
+
 .PP
-anim_script -d 0 0 1005 -b 90 0 0 /tank < tank.table > tank.script
+.nf
+    anim_script -d 0 0 1005 -b 90 0 0 /tank < tank.table > tank.script
+.fi
 .PP
+
 Here
 .B tank.table
 specifies the position and orientation of the tank in each frame; the
@@ -374,38 +378,37 @@ Now, a file called
 .B rwheelfile
 is created, describing the positions and radii of the four wheels in the
 right track:
+
 .nf
-
-   1300  2000  1005     60
-   1300  1500    55     50
-   1300 -1500    55     50
-   1300 -2000  1005     60
-
+    1300  2000  1005     60
+    1300  1500    55     50
+    1300 -1500    55     50
+    1300 -2000  1005     60
 .fi
+
 Two roadwheels both have radius 50mm, while the idler and drivewheels
 have a 60mm radius, and the wheels are named wh.0, wh.1, wh.2, and wh.3.
 .PP
 The following call checks the circumference of the track:
+
 .nf
-
-%> anim_track -c  rwheelfile
-9502.448956
-
+    %> anim_track -c rwheelfile
+    9502.448956
 .fi
+
 The 96 100mm-long pads should be sufficient to wrap around the wheels,
-leaving a shallow caternary arc between the idler and driver wheels.
+leaving a shallow catenary arc between the idler and driver wheels.
 .PP
 The following call creates a file which can be used by
 .I mged
 to wrap the pads around the wheels in the model.
+
 .nf
-
-%> anim_track -g 0 -b 90 0 0 -d 0 0 100 -lf 9600 -p 96 rtrack/rpad.
-rwheelfile <<EOF > rtrack.src
-? 0 0
-? EOF
-
+    %> anim_track -g 0 -b 90 0 0 -d 0 0 100 -lf 9600 -p 96 rtrack/rpad.rwheelfile <<EOF > rtrack.src
+    ? 0 0
+    ? EOF
 .fi
+
 In this case,
 .I in.table
 consisted of only one row and two columns. The two columns represented
@@ -417,18 +420,19 @@ input table.
 The changes are applied to the geometry in
 .I mged
 with the following command:
+
 .nf
-
-mged> source rtrack.src
-
+    mged> source rtrack.src
 .fi
+
 The pads are now permanently modeled in their new positions.
 .PP
 In order to animate the pads and wheels, the following command would be
 appropriate:
 .PP
-anim_track -p 96 rtrack/rpad. -w rwheel/wh. -d 0 0 1005 -b 90 0 0 -y -v -lf
-9600 rwheelfile < in.table > rtrack.script
+.nf
+    anim_track -p 96 rtrack/rpad. -w rwheel/wh. -d 0 0 1005 -b 90 0 0 -y -v -lf 9600 rwheelfile < in.table > rtrack.script
+.fi
 .PP
 The in.table contains 15 columns specifying the time, the 3D position and
 yaw, pitch, and roll of the vehicle, and the front-back and up-down
@@ -436,9 +440,13 @@ coordinates of each of the four wheels relative to the vehicle center.
 For example, one row of
 .B in.table
 could be:
+
 .PP
-0.5 234.0 1415.6 1005 45 0 0   2000 0   1500 -950   -1500 -950   -2000 -10
+.nf
+    0.5 234.0 1415.6 1005 45 0 0   2000 0   1500 -950   -1500 -950   -2000 -10
+.fi
 .PP
+
 This would specify the new position of the vehicle half of a second into
 the animation, and indicate that
 the first three wheels remained in their original positions
