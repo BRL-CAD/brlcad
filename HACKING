@@ -679,8 +679,8 @@ Comments should have an interior space and be without tabs.
 BRL-CAD uses the "The One True Brace Style" from BSD KNF and K&R.
 Opening braces should be on the same line as their statement, closing
 braces should line up with that same statement.  Functions, however,
-are treated special and place the opening brace on a separate line.
-See http://en.wikipedia.org/wiki/Indent_style for details.
+are treated specially and we place their opening braces on separate
+lines.  See http://en.wikipedia.org/wiki/Indent_style for details.
 
   int some_function(char *j)
   {
