@@ -381,6 +381,7 @@ noinst_HEADERS = \
 	shp/shapelib/shapefil.h
 
 dist_man_MANS = \
+	asc/asc2g.1 \
 	asc/asc2pix.1 \
 	asc/g2asc.1 \
 	asc/pix2asc.1 \
