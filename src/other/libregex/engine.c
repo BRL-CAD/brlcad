@@ -1038,7 +1038,7 @@ sopno stopst;
 
 	printf("%s %s-", title, pchar(*start));
 	printf("%s ", pchar(*stop));
-	printf("%ld-%ld\n", (long)startst, (long)stopst);
+	printf("%ld-%ld\n", (ssize_t)startst, (ssize_t)stopst);
 }
 
 #ifndef PCHARDONE
