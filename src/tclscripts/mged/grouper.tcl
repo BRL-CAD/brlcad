@@ -33,31 +33,20 @@
 # displayed in yellow.
 #
 
-
-proc gr_childcount { args } {
-    if { [llength $args] != 1 } {
-	return "Usage: gr_childcount collection"
-    }
-    set collection [lindex $args 0]
-    if { [lindex [get $collection] 0 ] != "comb" } {
-	return "This is not a collection!"
-    }
-    set collData [lt $collection]
-    return "[llength $collData]"	
-}
-
+set GroupNameGlobal ""
 
 proc gr_remdup { args } {
     if { [llength $args] != 1 } {
-	return "Usage: gr_remdup collection"
+	puts stdout "Usage: gr_remdup collection"
+	return
     }
     set collection [lindex $args 0]
 
     if { [lindex [get $collection] 0 ] != "comb" } {
-	return "This is not a collection!"
+	puts stdout "This is not a collection!"
+	return
     }
     set collData [lt $collection]
-    set beforeCnt [gr_childcount $collection]
 
     foreach row $collData {
 	set rowBool [lindex $row 0]
@@ -67,9 +56,6 @@ proc gr_remdup { args } {
 	    g $collection $rowName
 	}
     }
-    set collData [lt $collection]
-    set afterCnt [gr_childcount $collection]
-    return "$beforeCnt \-\> $afterCnt "
 }
 
 
@@ -118,12 +104,12 @@ proc gr_getObjInRectangle {} {
 }
 
 
-proc gr { GroupName Boolean } {
-    grouper $GroupName $Boolean
+proc gr { GroupName Boolean { ListLimit 0 } } {
+    grouper $GroupName $Boolean $ListLimit
 }
 
 
-proc grouper { GroupName Boolean } {
+proc grouper { GroupName Boolean { ListLimit 0 } } {
     global mged_gui mged_default mged_players
 
     for {set i 0} {1} {incr i} {
@@ -141,7 +127,7 @@ proc grouper { GroupName Boolean } {
     rset vars fb 0     
     rset r draw 1     
 
-    bind $mged_gui($id,active_dm) <ButtonRelease-2> " winset $mged_gui($id,active_dm); dm idle; do_grouper $GroupName $Boolean" 
+    bind $mged_gui($id,active_dm) <ButtonRelease-2> " winset $mged_gui($id,active_dm); dm idle; do_grouper $GroupName $Boolean $ListLimit" 
     bind $mged_gui($id,active_dm) <Control-ButtonRelease-2> " winset $mged_gui($id,active_dm); dm idle; done_grouper" 
 
     # highlight in yellow current group
@@ -151,11 +137,13 @@ proc grouper { GroupName Boolean } {
 }
 
 
-proc do_grouper { GroupName Boolean } {
+proc do_grouper { GroupName Boolean ListLimit } {
+
+    uplevel #0 set GroupNameGlobal $GroupName
     set objs [gr_getObjInRectangle]
 
     if { $objs == "no_result" } {
-	puts stdout "Nothing selected"
+	puts stdout "Nothing selected."
 	return
     }
 
@@ -194,18 +182,25 @@ proc do_grouper { GroupName Boolean } {
 
     if { $grp_obj_list_len_after > $grp_obj_list_len_before } {
 	set objcnt_chng [expr $grp_obj_list_len_after - $grp_obj_list_len_before]
-	puts stdout "$objcnt_chng of $tot_obj_in_rect objects added to '$GroupName'"
+	puts stdout "$objcnt_chng of $tot_obj_in_rect selected objects added to group '$GroupName'."
     } elseif { $grp_obj_list_len_after < $grp_obj_list_len_before } {
 	set objcnt_chng [expr $grp_obj_list_len_before - $grp_obj_list_len_after]
-	puts stdout "$objcnt_chng of $tot_obj_in_rect objects removed from '$GroupName'"
+	puts stdout "$objcnt_chng of $tot_obj_in_rect selected objects removed from group '$GroupName'."
     } else {
-	puts stdout "No change to '$GroupName'"
+	puts stdout "No change to group '$GroupName'."
     }
 
-    if { $tot_obj_in_rect > 0 } {
-	puts stdout "Selected objects\:\n$objs"
-    } else {
-	puts stdout "Nothing selected"
+    set objcnt 0
+    if { $ListLimit > 0 } {
+	puts stdout "Selected objects\:"
+	foreach obj $objs {
+	    incr objcnt
+	    if { $objcnt > $ListLimit } {
+        	puts stdout "Listed $ListLimit of $tot_obj_in_rect selected objects."
+		break;
+	    }
+	    puts stdout "$objcnt\t$obj"
+	}
     }
 
     # highlight in yellow current group
@@ -222,6 +217,7 @@ proc dg {} {
 
 proc done_grouper {} {
     global mged_gui mged_default mged_players
+    global GroupNameGlobal
 
     for {set i 0} {1} {incr i} {
 	set id [subst $mged_default(id)]_$i
@@ -234,6 +230,11 @@ proc done_grouper {} {
     rset r draw 0
 
     bind $mged_gui($id,active_dm) <ButtonRelease-2> " winset $mged_gui($id,active_dm); dm idle"
+
+    # remove yellow highlights from the display
+    erase $GroupNameGlobal
+
+    puts stdout "Grouper done."
 }
 
 
