@@ -1,4 +1,5 @@
-/*******************************************************************
+/** *****************************************************************
+** \file selects.c
 ** FedEx parser output module for generating C++  class definitions
 ** December  5, 1989
 ** release 2 17-Feb-1992
@@ -42,7 +43,7 @@ void ATTRprint_access_methods_put_head( const char * entnm, Variable a, FILE * f
                   ((t)->u.type->body->type == number_) )
 #define PRINT_BUG_REPORT  \
      fprintf( f, "   std::cerr << __FILE__ << \":\" << __LINE__ <<  \":  ERROR" \
-              " in schema library:  \\n\" \n\t<< _POC_ << \"\\n\\n\";\n");
+              " in schema library:  \\n\" \n    << _POC_ << \"\\n\\n\";\n");
 
 #define PRINT_SELECTBUG_WARNING(f) \
      fprintf( (f), "\n   severity( SEVERITY_WARNING );\n" ); \
@@ -574,8 +575,7 @@ SEL_TYPEgetnew_attribute_list( const Type type ) {
 TYPEselect_inc_print_vars prints the class 'definition', that is, the objects
     and the constructor(s)/destructor for a select class.
 ********************/
-void
-TYPEselect_inc_print_vars( const Type type, FILE * f, Linked_List dups ) {
+void TYPEselect_inc_print_vars( const Type type, FILE * f, Linked_List dups ) {
     int size, j;
     Linked_List data_members = SELgetnew_dmlist( type );
     char dmname [BUFSIZ],
@@ -586,65 +586,54 @@ TYPEselect_inc_print_vars( const Type type, FILE * f, Linked_List dups ) {
     strncpy( tdnm, TYPEtd_name( type ), BUFSIZ );
     size = strlen( classnm ) + 2; /* for formatting output */
 
-    fprintf( f, "\n//////////  SELECT TYPE %s\n",
-             SelectName( TYPEget_name( type ) ) );
-    /*  fprintf( f, "class %s;\n"*/
-    /*     "typedef %s * %sH;\n\n",*/
-    /*     classnm, classnm, classnm);*/
+    fprintf( f, "\n//////////  SELECT TYPE %s\n", SelectName( TYPEget_name( type ) ) );
     fprintf( f, "class %s  :  public "  BASE_SELECT " {\n", classnm );
     fprintf( f, "  protected:\n" );
-    /*   fprintf( f, "  \tunion {  \n" );  */
-    fprintf( f, "/*  \tunion {  */\n" );
-    fprintf( f, "\t//  types in SELECT \n" );
-    LISTdo( SEL_TYPEget_items( type ), t, Type )
-    fprintf( f, "\t//   %s\t--  %s\n",
-             SEL_ITEMget_enumtype( t ), FundamentalType( t, 0 ) );
-    LISTod;
+    fprintf( f, "    //  types in SELECT \n" );
+    LISTdo( SEL_TYPEget_items( type ), t, Type ) {
+        fprintf( f, "    //   %s    --  %s\n", SEL_ITEMget_enumtype( t ), FundamentalType( t, 0 ) );
+    } LISTod;
 
     LISTdo( data_members, t, Type ) {
         strncpy( dmname, SEL_ITEMget_dmname( t ), BUFSIZ );
-        fprintf( f, "\t   %s _%s;\n", TYPEget_utype( t ), dmname );
-    }
-    LISTod;
+        fprintf( f, "       %s _%s;\n", TYPEget_utype( t ), dmname );
+    } LISTod;
 
-    /*   fprintf( f, "  \t}  ;" );*/
-    fprintf( f, "/*  \t} ;  */" );
-    fprintf( f, "  /* unnamed union of select items */\n" );
 
     fprintf( f, "\n  public:\n" );
     fprintf( f,
-             "\tvirtual const TypeDescriptor * AssignEntity (SDAI_Application_instance * se);\n"
-             "\tvirtual SDAI_Select * NewSelect ();\n"
+             "    virtual const TypeDescriptor * AssignEntity (SDAI_Application_instance * se);\n"
+             "    virtual SDAI_Select * NewSelect ();\n"
            );
 
-    fprintf( f, "\n\tvirtual BASE_TYPE ValueType() const;\n" );
+    fprintf( f, "\n    virtual BASE_TYPE ValueType() const;\n" );
 
     fprintf( f, "\n\n// STEP Part 21\n" );
-    fprintf( f, "\tvirtual void STEPwrite_content (ostream& out =std::cout,\n"
-             "\t\t\t\t\tconst char *currSch =0) const;\n" );
-    fprintf( f, "\tvirtual void STEPwrite_verbose (ostream& out =std::cout,\n"
-             "\t\t\t\t\tconst char *currSch =0) const;\n" );
-    fprintf( f, "\tvirtual Severity STEPread_content (istream& in =cin,\n"
-             "\t\tInstMgr * instances =0, const char *utype =0,\n"
-             "\t\tint addFileId =0, const char *currSch =0);\n" );
+    fprintf( f, "    virtual void STEPwrite_content (ostream& out =std::cout,\n"
+             "                    const char *currSch =0) const;\n" );
+    fprintf( f, "    virtual void STEPwrite_verbose (ostream& out =std::cout,\n"
+             "                    const char *currSch =0) const;\n" );
+    fprintf( f, "    virtual Severity STEPread_content (istream& in =cin,\n"
+             "        InstMgr * instances =0, const char *utype =0,\n"
+             "        int addFileId =0, const char *currSch =0);\n" );
 
     /*  read StrToVal_content   */
-    fprintf( f, "\tvirtual Severity StrToVal_content "
-             "(const char *,\n\t\tInstMgr * instances =0);\n" );
+    fprintf( f, "    virtual Severity StrToVal_content "
+             "(const char *,\n        InstMgr * instances =0);\n" );
 
     /*  constructor(s)  */
     fprintf( f, "\n// STEP Part 22:  SDAI\n" );
     fprintf( f, "\n// constructors\n" );
-    fprintf( f, "\t%s( const SelectTypeDescriptor * =%s );\n",
+    fprintf( f, "    %s( const SelectTypeDescriptor * =%s );\n",
              classnm, tdnm );
 
-    fprintf( f, "\t//  part 1\n" );
+    fprintf( f, "    //  part 1\n" );
 
     LISTdo( SEL_TYPEget_items( type ), t, Type )
     if( ( TYPEis_entity( t ) )
             || ( !utype_member( dups, t, 1 ) ) ) {
         /**  if an entity or not in the dup list  **/
-        fprintf( f, "\t%s( const %s&,\n\t",
+        fprintf( f, "    %s( const %s&,\n    ",
                  SelectName( TYPEget_name( type ) ), AccessType( t ) );
         for( j = 0; j < size; j++ ) {
             fprintf( f, " " );
@@ -654,7 +643,7 @@ TYPEselect_inc_print_vars( const Type type, FILE * f, Linked_List dups ) {
     LISTod;
     LISTdo( dups, t, Type )
     if( ! TYPEis_entity( t ) )  { /*  entities were done already */
-        fprintf( f, "\t%s( const %s&,\n\t",
+        fprintf( f, "    %s( const %s&,\n    ",
                  SelectName( TYPEget_name( type ) ),
                  isAggregateType( t ) ?  AccessType( t ) : TYPEget_utype( t ) );
         for( j = 0; j < size; j++ ) {
@@ -665,7 +654,7 @@ TYPEselect_inc_print_vars( const Type type, FILE * f, Linked_List dups ) {
     LISTod;
 
     /* destructor  */
-    fprintf( f, "\tvirtual ~%s();\n", classnm );
+    fprintf( f, "    virtual ~%s();\n", classnm );
     LISTfree( data_members );
 }
 
@@ -686,24 +675,24 @@ TYPEselect_inc_print( const Type type, FILE * f ) {
     strncpy( tdnm, TYPEtd_name( type ), BUFSIZ );
     TYPEselect_inc_print_vars( type, f, dups );
 
-    fprintf( f, "\n\t//  part 2\n" );
+    fprintf( f, "\n    //  part 2\n" );
 
     LISTdo( SEL_TYPEget_items( type ), t, Type )
     if( ( TYPEis_entity( t ) )
             || ( !utype_member( dups, t, 1 ) ) ) {
         /**  if an entity or not in the dup list  **/
-        fprintf( f, "\toperator %s();\n", AccessType( t ) );
+        fprintf( f, "    operator %s();\n", AccessType( t ) );
     }
     LISTod;
     LISTdo( dups, t, Type )
     /* do the dups once only */
     if( ! TYPEis_entity( t ) ) /*  entities were done already */
-        fprintf( f, "\toperator %s ();\n",
+        fprintf( f, "    operator %s ();\n",
                  ( TYPEis_aggregate( t ) || TYPEis_select( t ) ) ?
                  AccessType( t ) : TYPEget_utype( t ) );
     LISTod;
 
-    fprintf( f, "\n\t//  part 3\n" );
+    fprintf( f, "\n    //  part 3\n" );
     attrs = SEL_TYPEgetnew_attribute_list( type );
     /* get the list of unique attributes from the entity items */
     LISTdo( attrs, a, Variable )
@@ -713,56 +702,56 @@ TYPEselect_inc_print( const Type type, FILE * f ) {
     LISTod;
     LISTfree( attrs );
 
-    fprintf( f, "\n\t//  part 4\n" );
+    fprintf( f, "\n    //  part 4\n" );
     LISTdo( SEL_TYPEget_items( type ), t, Type )
     if( ( TYPEis_entity( t ) )
             || ( !utype_member( dups, t, 1 ) ) ) {
         /**  if an entity or not in the dup list  **/
-        fprintf( f, "\t%s& operator =( const %s& );\n",
+        fprintf( f, "    %s& operator =( const %s& );\n",
                  SelectName( TYPEget_name( type ) ), AccessType( t ) );
     }
     LISTod;
     LISTdo( dups, t, Type )
     if( ! TYPEis_entity( t ) )   { /*  entities were done already */
-        fprintf( f, "\t%s& operator =( const %s& );\n",
+        fprintf( f, "    %s& operator =( const %s& );\n",
                  SelectName( TYPEget_name( type ) ),
                  isAggregateType( t ) ? AccessType( t ) : TYPEget_utype( t ) );
     }
     LISTod;
 
-    fprintf( f, "\t// not in SDAI\n"
-             "\t%s& ShallowCopy ( const %s& );\n",
+    fprintf( f, "    // not in SDAI\n"
+             "    %s& ShallowCopy ( const %s& );\n",
              n, n );
 
     fprintf( f, "\n#ifdef COMPILER_DEFINES_OPERATOR_EQ\n#else\n" );
-    fprintf( f, "\t%s& operator =( %s * const & );\n", n, n );
-    fprintf( f, "\tSDAI_Select& operator =( const SDAI_Select& );\n" );
-    /*  fprintf( f, "\t%s& operator =( const %s& );\n", n, n );*/
+    fprintf( f, "    %s& operator =( %s * const & );\n", n, n );
+    fprintf( f, "    SDAI_Select& operator =( const SDAI_Select& );\n" );
+    /*  fprintf( f, "    %s& operator =( const %s& );\n", n, n );*/
     fprintf( f, "#endif\n" );
 
-    fprintf( f, "\n\t//  part 5\n" );
+    fprintf( f, "\n    //  part 5\n" );
     LISTdo( SEL_TYPEget_items( type ), t, Type )
-    fprintf( f, "\tLogical Is%s() const;\n",
+    fprintf( f, "    Logical Is%s() const;\n",
              FirstToUpper( TYPEget_name( t ) ) );
     LISTod;
 
-    fprintf( f, "\n\t//  part 6 ... UnderlyingTypeName () implemented in"
+    fprintf( f, "\n    //  part 6 ... UnderlyingTypeName () implemented in"
              " SDAI_Select class ...\n" );
-    /*   fprintf( f, "\tSDAI_String UnderlyingTypeName() const;\n" );*/
-    /*   fprintf( f, "\tconst EntityDescriptor * CurrentUnderlyingType();\n" );*/
+    /*   fprintf( f, "    SDAI_String UnderlyingTypeName() const;\n" );*/
+    /*   fprintf( f, "    const EntityDescriptor * CurrentUnderlyingType();\n" );*/
 
     if( dup_result ) {
         /**  if there are duplicate underlying types  **/
-        fprintf( f, "\n\t//  part 7\n" );
-        fprintf( f, "\tconst TypeDescriptor *"
+        fprintf( f, "\n    //  part 7\n" );
+        fprintf( f, "    const TypeDescriptor *"
                  "SetUnderlyingType ( const TypeDescriptor * td );\n");
     } else {
-        fprintf( f, "\n\t//  part 7 ... NONE\tonly for complex selects...\n" );
+        fprintf( f, "\n    //  part 7 ... NONE    only for complex selects...\n" );
     }
 
 #ifdef PART8
-    fprintf( f, "\n\t//  part 8\n" );
-    fprintf( f, "\t%s* operator->();\n", n );
+    fprintf( f, "\n    //  part 8\n" );
+    fprintf( f, "    %s* operator->();\n", n );
 #endif
 
     fprintf( f, "};\n" );
@@ -782,7 +771,7 @@ TYPEselect_inc_print( const Type type, FILE * f ) {
     fprintf( f, "    %s_agg( SelectTypeDescriptor * =%s );\n", n, tdnm );
     fprintf( f, "    ~%s_agg();\n", n );
     fprintf( f, "    virtual SingleLinkNode * NewNode()\n" );
-    fprintf( f, "\t { return new SelectNode (new %s( sel_type )); }\n", n );
+    fprintf( f, "     { return new SelectNode (new %s( sel_type )); }\n", n );
     fprintf( f, "};\n" );
 
     /* DAS creation function for select aggregate class */
@@ -815,25 +804,25 @@ TYPEselect_lib_print_part_one( const Type type, FILE * f, Schema schema,
     /*  constructor(s)  */
     /*  null constructor  */
     fprintf( f, "\n// STEP Part 22:  SDAI\n" );
-    fprintf( f, "\n\t//  part 0\n" );
+    fprintf( f, "\n    //  part 0\n" );
     fprintf( f, "%s::%s( const SelectTypeDescriptor *typedescript )\n", n, n );
     fprintf( f, "  : " BASE_SELECT " (typedescript)" );
     /* Initialize the select members with their correct typedescriptors: */
     initSelItems( type, f );
     fprintf( f, "\n{\n" );
     fprintf( f, "#ifdef SCL_LOGGING\n    if( *logStream )\n    {\n" );
-    fprintf( f, "\t*logStream << \"DAVE ERR entering %s constructor.\" << std::endl;\n", n );
+    fprintf( f, "    *logStream << \"DAVE ERR entering %s constructor.\" << std::endl;\n", n );
     fprintf( f, "    }\n#endif\n" );
     /*  fprintf( f, "#ifdef  WE_WANT_TO_HAVE_THIS_CONSTRUCTOR\n" );*/
     fprintf( f, "   nullify();\n" );
     /*  fprintf( f, "#endif\n" );*/
     fprintf( f, "#ifdef SCL_LOGGING\n    if( *logStream )\n    {\n" );
-    fprintf( f, "//\t*logStream << \"DAVE ERR exiting %s constructor.\" << std::endl;\n", n );
+    fprintf( f, "//    *logStream << \"DAVE ERR exiting %s constructor.\" << std::endl;\n", n );
     fprintf( f, "    }\n#endif\n" );
     fprintf( f, "}\n" );
 
     /*  constructors with underlying types  */
-    fprintf( f, "\n\t//  part 1\n" );
+    fprintf( f, "\n    //  part 1\n" );
     LISTdo( SEL_TYPEget_items( type ), t, Type )
     if( ( TYPEis_entity( t ) )
             || ( !utype_member( dups, t, 1 ) ) ) {
@@ -857,7 +846,7 @@ TYPEselect_lib_print_part_one( const Type type, FILE * f, Schema schema,
         fprintf( f, "\n{\n" );
         fprintf( f, "#ifdef SCL_LOGGING\n    if( *logStream )\n    {\n" );
         fprintf( f,
-                 "\t*logStream << \"DAVE ERR entering %s constructor.\""
+                 "    *logStream << \"DAVE ERR entering %s constructor.\""
                  " << std::endl;\n", n );
         fprintf( f, "    }\n#endif\n" );
 
@@ -868,7 +857,7 @@ TYPEselect_lib_print_part_one( const Type type, FILE * f, Schema schema,
         }
         fprintf( f, "#ifdef SCL_LOGGING\n    if( *logStream )\n    {\n" );
         fprintf( f,
-                 "//\t*logStream << \"DAVE ERR exiting %s constructor.\""
+                 "//    *logStream << \"DAVE ERR exiting %s constructor.\""
                  " << std::endl;\n", n );
         fprintf( f, "    }\n#endif\n" );
 
@@ -892,7 +881,7 @@ TYPEselect_lib_print_part_one( const Type type, FILE * f, Schema schema,
             fprintf( f, "\n{\n" );
             fprintf( f, "#ifdef SCL_LOGGING\n    if( *logStream )\n    {\n" );
             fprintf( f,
-                     "\t*logStream << \"DAVE ERR entering %s constructor.\""
+                     "    *logStream << \"DAVE ERR entering %s constructor.\""
                      " << std::endl;\n", n );
             fprintf( f, "    }\n#endif\n" );
             fprintf( f, "   _%s.ShallowCopy (*o);\n", SEL_ITEMget_dmname( t ) );
@@ -913,7 +902,7 @@ TYPEselect_lib_print_part_one( const Type type, FILE * f, Schema schema,
                  TYPEtd_name( t ) );
         fprintf( f, "#ifdef SCL_LOGGING\n    if( *logStream )\n    {\n" );
         fprintf( f,
-                 "//\t*logStream << \"DAVE ERR exiting %s constructor.\""
+                 "//    *logStream << \"DAVE ERR exiting %s constructor.\""
                  " << std::endl;\n", n );
         fprintf( f, "    }\n#endif\n" );
         fprintf( f, "}\n\n" );
@@ -1032,7 +1021,7 @@ TYPEselect_lib_print_part_three( const Type type, FILE * f, Schema schema,
     Entity ent;
     Variable uattr;     /*  attribute in underlying type  */
 
-    fprintf( f, "\n\t//  part 3\n" );
+    fprintf( f, "\n    //  part 3\n" );
 
     LISTdo( attrs, a, Variable )
     /*  go through all the unique attributes  */
@@ -1090,18 +1079,18 @@ TYPEselect_lib_print_part_three( const Type type, FILE * f, Schema schema,
                         generate_attribute_func_name( a, funcnm );
                     }
                     fprintf( f,
-                             "  if( CurrentUnderlyingType () == %s ) \n\t//  %s\n",
+                             "  if( CurrentUnderlyingType () == %s ) \n    //  %s\n",
                              TYPEtd_name( t ), StrToUpper( TYPEget_name( t ) ) );
-                    fprintf( f, "\treturn ((%s) _%s) ->%s();\n",
+                    fprintf( f, "    return ((%s) _%s) ->%s();\n",
                              uent, SEL_ITEMget_dmname( t ),  funcnm );
 
                 } else {
                     /*  types are not the same issue a warning  */
                     fprintf( stderr,
-                             "WARNING: in SELECT TYPE %s: \n\tambiguous "
+                             "WARNING: in SELECT TYPE %s: \n    ambiguous "
                              "attribute \"%s\" from underlying type \"%s\".\n\n",
                              TYPEget_name( type ), attrnm, TYPEget_name( t ) );
-                    fprintf( f, "  //  %s\n\t//  attribute access function"
+                    fprintf( f, "  //  %s\n    //  attribute access function"
                              " has a different return type\n",
                              StrToUpper( TYPEget_name( t ) ) );
                 }
@@ -1187,9 +1176,9 @@ TYPEselect_lib_print_part_three( const Type type, FILE * f, Schema schema,
 
                     strncpy( uent, TYPEget_ctype( t ), BUFSIZ );
                     fprintf( f,
-                             "  if( CurrentUnderlyingType () == %s ) \n\t//  %s\n",
+                             "  if( CurrentUnderlyingType () == %s ) \n    //  %s\n",
                              TYPEtd_name( t ), StrToUpper( TYPEget_name( t ) ) );
-                    fprintf( f, "\t{  ((%s) _%s) ->%s( x );\n\t  return;\n\t}\n",
+                    fprintf( f, "    {  ((%s) _%s) ->%s( x );\n      return;\n    }\n",
                              uent, SEL_ITEMget_dmname( t ),  funcnm );
                 } else {
                     /*  warning printed above  */
@@ -1221,7 +1210,7 @@ TYPEselect_lib_print_part_four( const Type type, FILE * f, Schema schema,
     char x[BUFSIZ];
     int firsttime = 1;
 
-    fprintf( f, "\n\t//  part 4\n" );
+    fprintf( f, "\n    //  part 4\n" );
 
     LISTdo( SEL_TYPEget_items( type ), t, Type )
     if( ( TYPEis_entity( t ) )
@@ -1278,7 +1267,7 @@ TYPEselect_lib_print_part_four( const Type type, FILE * f, Schema schema,
                      SEL_ITEMget_dmname( t ),
                      StrToLower( TYPEget_utype( t ) ) );
         else
-            fprintf( f, "\t_%s =  &(o -> _%s);\n",
+            fprintf( f, "    _%s =  &(o -> _%s);\n",
                      SEL_ITEMget_dmname( t ),
                      SEL_ITEMget_dmname( t ) );
     } else {
@@ -1290,7 +1279,7 @@ TYPEselect_lib_print_part_four( const Type type, FILE * f, Schema schema,
         /* I changed this although I'm not sure how the if and else differ */
         /*          StrToLower(TYPEget_utype(t)) ); */
         else
-            fprintf( f, "\t_%s =  o -> _%s;\n",
+            fprintf( f, "    _%s =  o -> _%s;\n",
                      SEL_ITEMget_dmname( t ),
                      SEL_ITEMget_dmname( t ) );
     }
@@ -1316,14 +1305,14 @@ TYPEselect_lib_print_part_four( const Type type, FILE * f, Schema schema,
         if( utype_member( dups, t, 1 ) )
             /**  if in the dup list  **/
             /*     fprintf( f, "      _%s = o._%s;\n", */
-            fprintf( f, "\t_%s = ((%s&) o)._%s;\n",
+            fprintf( f, "    _%s = ((%s&) o)._%s;\n",
                      SEL_ITEMget_dmname( t ),
                      n,
                      SEL_ITEMget_dmname( t ) );
         /*          StrToLower(TYPEget_utype(t)) ); */
         else
-            /*     fprintf( f, "\t_%s =  o._%s;\n", */
-            fprintf( f, "\t_%s = &(((%s&) o)._%s);\n",
+            /*     fprintf( f, "    _%s =  o._%s;\n", */
+            fprintf( f, "    _%s = &(((%s&) o)._%s);\n",
                      SEL_ITEMget_dmname( t ),
                      n,
                      SEL_ITEMget_dmname( t ) );
@@ -1331,14 +1320,14 @@ TYPEselect_lib_print_part_four( const Type type, FILE * f, Schema schema,
         if( utype_member( dups, t, 1 ) )
             /**  if in the dup list  **/
             /*         fprintf( f, "      _%s = o._%s;\n", */
-            fprintf( f, "\t_%s = ((%s&) o)._%s;\n",
+            fprintf( f, "    _%s = ((%s&) o)._%s;\n",
                      SEL_ITEMget_dmname( t ),
                      n,
                      SEL_ITEMget_dmname( t ) );
         /*         StrToLower(TYPEget_utype(t)) ); */
         else
-            /*         fprintf( f, "\t_%s =  o._%s;\n", */
-            fprintf( f, "\t_%s = ((%s&) o)._%s;\n",
+            /*         fprintf( f, "    _%s =  o._%s;\n", */
+            fprintf( f, "    _%s = ((%s&) o)._%s;\n",
                      SEL_ITEMget_dmname( t ),
                      n,
                      SEL_ITEMget_dmname( t ) );
@@ -1362,7 +1351,7 @@ TYPEselect_lib_print_part_four( const Type type, FILE * f, Schema schema,
                  SEL_ITEMget_dmname( t ),
                  StrToLower( TYPEget_utype( t ) ) );
     else
-        fprintf( f, "\t_%s =  o._%s;\n",
+        fprintf( f, "    _%s =  o._%s;\n",
                  SEL_ITEMget_dmname( t ),
                  SEL_ITEMget_dmname( t ) );
     LISTod;
@@ -1381,7 +1370,7 @@ TYPEselect_init_print( const Type type, FILE * f, Schema schema ) {
 #define schema_name SCHEMAget_name(schema)
     LISTdo( SEL_TYPEget_items( type ), t, Type )
 
-    fprintf( f, "\t%s -> Elements ().AddNode",
+    fprintf( f, "    %s -> Elements ().AddNode",
              TYPEtd_name( type ) );
     fprintf( f, " (%s);\n",
              TYPEtd_name( t ) );
@@ -1413,16 +1402,16 @@ TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
 
             /*  if it\'s a number, just print it  */
         case integer_:
-            fprintf( f, "\tout <<  _%s;\n  else ", dm );
+            fprintf( f, "    out <<  _%s;\n  else ", dm );
             break;
 
         case number_:
         case real_:
-            fprintf( f, "\tWriteReal(_%s,out);\n  else ", dm );
+            fprintf( f, "    WriteReal(_%s,out);\n  else ", dm );
             break;
 
         case entity_:
-            fprintf( f, "\t_%s -> STEPwrite_reference (out);\n  else ", dm );
+            fprintf( f, "    _%s -> STEPwrite_reference (out);\n  else ", dm );
             break;
 
         case string_:
@@ -1438,11 +1427,11 @@ TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
             /*  for string\'s, enum\'s, select\'s, binary\'s, and aggregate\'s
             it\'ll be embedded;
             */
-            fprintf( f, "\t_%s.STEPwrite (out);\n  else ", dm );
+            fprintf( f, "    _%s.STEPwrite (out);\n  else ", dm );
             break;
 
         case select_:
-            fprintf( f, "\t_%s.STEPwrite (out, currSch);\n  else ", dm );
+            fprintf( f, "    _%s.STEPwrite (out, currSch);\n  else ", dm );
             /* Select type needs currSch passed too.  A Select writes the name of its
             // current choice when it writes itself out (e.g. "DATA(33.5)").  Since
             // the current choice name may depend on our current schema (it may be a
@@ -1451,7 +1440,7 @@ TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
 
         default:
             /*  otherwise it\'s a pointer  */
-            fprintf( f, "\t_%s -> STEPwrite (out);\n  else ", dm );
+            fprintf( f, "    _%s -> STEPwrite (out);\n  else ", dm );
             break;
     }
     LISTod;
@@ -1562,7 +1551,7 @@ TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
 
     /*  Read part 21   */
     fprintf( f, "\nSeverity\n%s::STEPread_content (istream& in, InstMgr * instances,\n"
-             "\t\t\tconst char *utype, int addFileId, const char *currSch)\n{\n"
+             "            const char *utype, int addFileId, const char *currSch)\n{\n"
              "  (void)instances;\n  (void)utype;\n  (void)addFileId;\n  (void)currSch;\n  ", n );
 
     /*  go through the items  */
@@ -1579,32 +1568,32 @@ TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
         case number_:
             /*  since REAL and NUMBER are handled the same they both need
             to be included in the case stmt  */
-            fprintf( f, "  {\n\tReadReal (_%s, in, &_error, \"),\");\n"
-                     "\treturn severity ();\n  }\n",
+            fprintf( f, "  {\n    ReadReal (_%s, in, &_error, \"),\");\n"
+                     "    return severity ();\n  }\n",
                      dm );
             break;
 
         case integer_:
-            fprintf( f, "  {\n\tReadInteger (_%s, in, &_error, \"),\");\n"
-                     "\treturn severity ();\n  }\n",
+            fprintf( f, "  {\n    ReadInteger (_%s, in, &_error, \"),\");\n"
+                     "    return severity ();\n  }\n",
                      dm );
             break;
 
         case entity_:
             /*  if it\'s an entity, use Assign - done in Select class  */
             fprintf( f,
-                     "  {\n\t// set Underlying Type in Select class\n"
-                     "\t_%s = ReadEntityRef "
+                     "  {\n    // set Underlying Type in Select class\n"
+                     "    _%s = ReadEntityRef "
                      "(in, &_error, \",)\", instances, addFileId);\n", dm );
-            fprintf( f, "\tif (_%s && (_%s != S_ENTITY_NULL)\n "
-                     "\t  && (CurrentUnderlyingType () -> CanBe (_%s -> eDesc )) )\n"
-                     "\t  return severity ();\n",
+            fprintf( f, "    if (_%s && (_%s != S_ENTITY_NULL)\n "
+                     "      && (CurrentUnderlyingType () -> CanBe (_%s -> eDesc )) )\n"
+                     "      return severity ();\n",
                      dm, dm, dm );
-            fprintf( f, "\telse {\n "
-                     "\t  Error (\"Reference to instance that is not indicated type\\n\");\n"
-                     "\t  _%s = 0;\n"
-                     "\t  nullify ();\n"
-                     "\t  return severity (SEVERITY_USERMSG);\n\t}\n  }\n",
+            fprintf( f, "    else {\n "
+                     "      Error (\"Reference to instance that is not indicated type\\n\");\n"
+                     "      _%s = 0;\n"
+                     "      nullify ();\n"
+                     "      return severity (SEVERITY_USERMSG);\n    }\n  }\n",
                      dm
                    );
             break;
@@ -1615,14 +1604,14 @@ TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
         case boolean_:
         case binary_:
             fprintf( f,
-                     "  {\n\t_%s.STEPread (in, &_error);\n"
-                     "\treturn severity ();\n  }\n",
+                     "  {\n    _%s.STEPread (in, &_error);\n"
+                     "    return severity ();\n  }\n",
                      dm );
             break;
         case select_:
             fprintf( f,
-                     "  {\n\t_%s.STEPread (in, &_error, instances, utype, "
-                     "addFileId, currSch);\n\treturn severity ();\n  }\n",
+                     "  {\n    _%s.STEPread (in, &_error, instances, utype, "
+                     "addFileId, currSch);\n    return severity ();\n  }\n",
                      dm );
             break;
         case aggregate_:
@@ -1631,17 +1620,17 @@ TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
         case set_:
         case list_:
             fprintf( f,
-                     "  {\n\t_%s.STEPread (in, &_error,\n"
-                     "\t\t\t     %s -> AggrElemTypeDescriptor (),\n"
-                     "\t\t\t     instances, addFileId, currSch);\n"
-                     "\treturn severity ();\n  }\n",
+                     "  {\n    _%s.STEPread (in, &_error,\n"
+                     "                 %s -> AggrElemTypeDescriptor (),\n"
+                     "                 instances, addFileId, currSch);\n"
+                     "    return severity ();\n  }\n",
                      dm, TYPEtd_name( t ) );
             break;
 
         default:
             fprintf( f,
-                     "  {\n\t_%s -> STEPread (in, &_error, instances, addFileId);\n"
-                     "\treturn severity ();\n  }\n",
+                     "  {\n    _%s -> STEPread (in, &_error, instances, addFileId);\n"
+                     "    return severity ();\n  }\n",
                      dm );
             break;
     }
@@ -1704,7 +1693,7 @@ TYPEselect_lib_StrToVal( const Type type, FILE * f, Schema schema ) {
                 /*  if there\'s more than one enumeration they are done in Select class  */
                 fprintf( f, "  case %s :  \n",  FundamentalType( t, 0 ) );
                 fprintf( f,
-                         "\treturn _%s.StrToVal (str, &_error);\n",
+                         "    return _%s.StrToVal (str, &_error);\n",
                          SEL_ITEMget_dmname( t ) );
             } else {
                 fprintf( f, "  //  case %s :  done in Select class\n", FundamentalType( t, 0 ) );
@@ -1715,7 +1704,7 @@ TYPEselect_lib_StrToVal( const Type type, FILE * f, Schema schema ) {
         case string_:
             fprintf( f, "  case %s :  \n",    FundamentalType( t, 0 ) );
             fprintf( f,
-                     "\treturn _%s.StrToVal (str);\n",
+                     "    return _%s.StrToVal (str);\n",
                      SEL_ITEMget_dmname( t ) );
             break;
 
@@ -1726,7 +1715,7 @@ TYPEselect_lib_StrToVal( const Type type, FILE * f, Schema schema ) {
         case list_:
             fprintf( f, "  case %s :  \n",    FundamentalType( t, 0 ) );
             fprintf( f,
-                     "\treturn _%s.StrToVal (str, &_error, "
+                     "    return _%s.StrToVal (str, &_error, "
                      "%s -> AggrElemTypeDescriptor ());\n",
                      /*         "instances, addFileId);  "*/
                      SEL_ITEMget_dmname( t ),
@@ -1737,7 +1726,7 @@ TYPEselect_lib_StrToVal( const Type type, FILE * f, Schema schema ) {
             /*  otherwise use StrToVal on the contents to check the format  */
             fprintf( f, "  case %s :  \n",    FundamentalType( t, 0 ) );
             fprintf( f,
-                     "\treturn _%s -> StrToVal (str, instances);\n",
+                     "    return _%s -> StrToVal (str, instances);\n",
                      SEL_ITEMget_dmname( t ) );
     }
     LISTod;
@@ -1747,7 +1736,7 @@ TYPEselect_lib_StrToVal( const Type type, FILE * f, Schema schema ) {
     fprintf( f, "#ifdef __SUNCPLUSPLUS__\n"
              "std::cerr << str << \"  \" << instances << std::endl;\n"
              "#endif\n" );
-    fprintf( f, "\treturn SEVERITY_WARNING;\n  }\n" );
+    fprintf( f, "    return SEVERITY_WARNING;\n  }\n" );
 
     LISTfree( data_members );
     fprintf( f,
@@ -1781,9 +1770,9 @@ SELlib_print_protected( const Type type,  FILE * f, const Schema schema ) {
                  "  //  %s\n"  /*  item name  */
                  "  if (se -> IsA (%s))\n" /*  td */
                  "  {  \n"
-                 "\t_%s = (%s_ptr) se;\n"  /* underlying data member */
+                 "    _%s = (%s_ptr) se;\n"  /* underlying data member */
                  /*  underlying data member type */
-                 "\treturn SetUnderlyingType (%s);\n"  /* td */
+                 "    return SetUnderlyingType (%s);\n"  /* td */
                  "  }\n",
                  StrToUpper( TYPEget_name( t ) ),
                  TYPEtd_name( t ),
@@ -1797,8 +1786,8 @@ SELlib_print_protected( const Type type,  FILE * f, const Schema schema ) {
                  "  //  %s\n"  /*  item name  */
                  "  if (%s -> CanBe (se -> eDesc))\n"
                  "  {  \n"
-                 "\t_%s.AssignEntity (se);\n"  /* underlying data member */
-                 "\treturn SetUnderlyingType (%s);\n"  /* td */
+                 "    _%s.AssignEntity (se);\n"  /* underlying data member */
+                 "    return SetUnderlyingType (%s);\n"  /* td */
                  "  }\n",
                  StrToUpper( TYPEget_name( t ) ),
                  TYPEtd_name( t ),
@@ -1844,7 +1833,7 @@ TYPEselect_lib_print( const Type type, FILE * f, Schema schema ) {
     TYPEselect_lib_virtual( type, f, schema );
     TYPEselect_lib_print_part_one( type, f, schema, dups, n );
 
-    fprintf( f, "\n\t//  part 2\n" );
+    fprintf( f, "\n    //  part 2\n" );
 
     LISTdo( SEL_TYPEget_items( type ), t, Type )
     if( TYPEis_entity( t ) ) {
@@ -1914,7 +1903,7 @@ TYPEselect_lib_print( const Type type, FILE * f, Schema schema ) {
     TYPEselect_lib_print_part_three( type, f, schema, n );
     TYPEselect_lib_print_part_four( type, f, schema, dups, n );
 
-    fprintf( f, "\n\t//  part 5\n" );
+    fprintf( f, "\n    //  part 5\n" );
     LISTdo( SEL_TYPEget_items( type ), t, Type )
     z = FirstToUpper( TYPEget_name( t ) );
     fprintf( f, "Logical %s::Is%s() const\n{\n", n, z );
@@ -1926,7 +1915,7 @@ TYPEselect_lib_print( const Type type, FILE * f, Schema schema ) {
     LISTod;
 
 #ifdef UNDERLYINGTYPE
-    fprintf( f, "\n\t//  part 6\n" );
+    fprintf( f, "\n    //  part 6\n" );
     fprintf( f, "SDAI_String %s::UnderlyingTypeName() const\n{\n", n );
     fprintf( f, "   if( exists() )\n" );
     fprintf( f, "   {\n" );
@@ -1955,7 +1944,7 @@ TYPEselect_lib_print( const Type type, FILE * f, Schema schema ) {
 
 #endif
     if( dup_result )  {
-        fprintf( f, "\n\t//  part 7\n" );
+        fprintf( f, "\n    //  part 7\n" );
         fprintf( f,
                  "const TypeDescriptor * \n"
                  "%s::SetUnderlyingType (const TypeDescriptor * td)\n{\n"
@@ -1964,7 +1953,7 @@ TYPEselect_lib_print( const Type type, FILE * f, Schema schema ) {
     }
 
 #ifdef PART8
-    fprintf( f, "\n\t//  part 8\n" );
+    fprintf( f, "\n    //  part 8\n" );
     fprintf( f, "%s* %s::operator->()\n", n, n );
     fprintf( f, "{\n   return this;\n}\n" );
 #endif
@@ -2008,7 +1997,7 @@ TYPEselect_print( Type t, FILES * files, Schema schema ) {
         strncpy( tdnm, TYPEtd_name( t ), BUFSIZ );
         fprintf( inc, "typedef       %s *       %sH;\n", nm, nm );
         fprintf( inc, "typedef const %s * const_%sH;\n", nm, nm );
-        fprintf( inc, "typedef %s_ptr *\t%s_var;\n", nm, nm );
+        fprintf( inc, "typedef %s_ptr *    %s_var;\n", nm, nm );
         /* Below are specialized create functions for the renamed sel type (both
         // single and aggregate).  The functions call the original sel's con-
         // structor, passing the new sel's typedescriptor to create a hybrid

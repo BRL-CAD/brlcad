@@ -633,7 +633,6 @@ void EXPresolve_op_default( Expression e, Scope s ) {
     }
 }
 
-/*ARGSUSED*/
 Type EXPresolve_op_unknown( Expression e, Scope s ) {
     ERRORreport( ERROR_internal_unrecognized_op_in_EXPresolve );
     return Type_Bad;
