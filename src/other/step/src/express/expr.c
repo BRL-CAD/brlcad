@@ -657,6 +657,8 @@ Type EXPresolve_op_array_like( Expression e, Scope s ) {
         return( op1type );
     } else if( op1type == Type_Runtime ) {
         return( Type_Runtime );
+    } else if( op1type->u.type->body->type == generic_ ) {
+        return( Type_Generic );
     } else {
         ERRORreport_with_symbol( ERROR_indexing_illegal, &e->symbol );
         return( Type_Unknown );

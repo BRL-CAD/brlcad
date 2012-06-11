@@ -218,9 +218,9 @@ struct TypeBody_ {
 extern SCL_EXPRESS_EXPORT Type Type_Bad;
 extern SCL_EXPRESS_EXPORT Type Type_Unknown;
 extern SCL_EXPRESS_EXPORT Type Type_Dont_Care;
-extern SCL_EXPRESS_EXPORT Type Type_Runtime; /* indicates that this object can't be */
-/* calculated now but must be deferred */
-/* til (the mythical) runtime */
+extern SCL_EXPRESS_EXPORT Type Type_Runtime;   /**< indicates that this object can't be
+                                                    calculated now but must be deferred
+                                                    until (the mythical) runtime */
 extern SCL_EXPRESS_EXPORT Type Type_Binary;
 extern SCL_EXPRESS_EXPORT Type Type_Boolean;
 extern SCL_EXPRESS_EXPORT Type Type_Enumeration;
