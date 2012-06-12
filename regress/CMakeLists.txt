@@ -115,7 +115,6 @@ CMAKEFILES(
   bots.sh
   comgeom.sh
   dsp.sh
-  dsp/dsp-common.sh
   dsp/dsp-1-1.asc
   dsp/dsp-1-2.asc
   dsp/dsp-2-1.asc
