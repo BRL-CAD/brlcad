@@ -350,8 +350,13 @@ if {[info exists ::use_gui]} {
    # Have to do these loads until we get "package require tclcad" and "package require dm" 
    # working - bwish loads them for us by default, but since rtwizard may be either
    # graphical or command line we need to start with btclsh
-   load [file join [bu_brlcad_root "lib"] libtclcad[info sharedlibextension]]
-   load [file join [bu_brlcad_root "lib"] libdm[info sharedlibextension]]
+   if {$tcl_platform(platform) == "windows"} {
+     load [file join [bu_brlcad_root "bin"] libtclcad[info sharedlibextension]]
+     load [file join [bu_brlcad_root "bin"] libdm[info sharedlibextension]]
+   } else {
+     load [file join [bu_brlcad_root "lib"] libtclcad[info sharedlibextension]]
+     load [file join [bu_brlcad_root "lib"] libdm[info sharedlibextension]]
+   }
    # Now, load the actual Raytrace Wizard GUI
    package require RaytraceWizard
    if {[info exists argv]} {exit}
