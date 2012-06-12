@@ -302,6 +302,7 @@ package provide Archer 1.0
 	method buildHypEditView {}
 	method buildObjAttrView {}
 	method buildObjEditView {}
+	method buildObjRtImageView {}
 	method buildObjToolView {}
 	method buildObjViewToolbar {}
 	method buildPartEditView {}
@@ -332,9 +333,10 @@ package provide Archer 1.0
 	method initHalfEditView {_odata}
 	method initHypEditView {_odata}
 	method initNoWizard {_parent _msg}
-	method initObjAttrView {}
-	method initObjEditView {}
-	method initObjToolView {}
+	method initObjAttrView {{_tflag 0}}
+	method initObjEditView {{_tflag 0}}
+	method initObjRtImageView {{_tflag 0}}
+	method initObjToolView {{_tflag 0}}
 	method initObjWizard {_obj _wizardLoaded}
 	method initPartEditView {_odata}
 	method initPipeEditView {_odata}
@@ -449,6 +451,7 @@ package provide Archer 1.0
 	buildObjViewToolbar
 	buildObjAttrView
 	buildObjEditView
+	buildObjRtImageView
 	buildObjToolView
 	buildSelectTransparencyDialog
 	buildSelectGroupDialog
@@ -938,7 +941,37 @@ package provide Archer 1.0
     $itk_component(primaryToolbar) itemconfigure raytrace \
 	-image $mImage_rtAbort \
 	-command "$itk_component(rtcntrl) abort"
-    $itk_component(rtcntrl) raytracePlus
+
+    if {$mTreeMode == $TREE_MODE_TREE} {
+	$itk_component(rtcntrl) raytracePlus
+    } else {
+	$itk_component(rtcntrl) configure -fb_enabled 1
+
+	if {![info exists itk_component(ged)]} {
+	    return
+	}
+
+	set wlist [$itk_component(ged) win_size]
+	set w [lindex $wlist 0]
+	set n [lindex $wlist 1]
+	set port [$itk_component(ged) listen 0]
+
+	set bcolor [cadwidgets::Ged::get_rgb_color $mFBBackgroundColor]
+	set ecolor [cadwidgets::Ged::get_rgb_color $mRtWizardEdgeColor]
+
+	if {$mRtWizardNonEdgeColor != ""} {
+	    set necolor [cadwidgets::Ged::get_rgb_color $mRtWizardNonEdgeColor]
+
+	    eval $itk_component(ged) rtwizard -C [list $bcolor] --line-color [list $ecolor] \
+		--non-line-color [list $necolor] \
+		-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
+		-G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
+	} else {
+	    eval $itk_component(ged) rtwizard -C [list $bcolor] --line-color [list $ecolor] \
+		-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
+		-G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
+	}
+    }
 }
 
 
@@ -1533,6 +1566,10 @@ package provide Archer 1.0
 	set mDefaultBindingMode $VIEW_ROTATE_MODE
 	beginViewRotate
     }
+
+    set mSavedCenter ""
+    set mSavedSize ""
+
     $itk_component(ged) refresh_on
     $itk_component(ged) refresh_all
     SetNormalCursor $this
@@ -1717,6 +1754,9 @@ package provide Archer 1.0
 	$itk_component(objViewToolbar) itemconfigure objToolView \
 	    -image [image create photo \
 			-file [file join $mImgDir tools.png]]
+	$itk_component(objViewToolbar) itemconfigure objRtImageView \
+	    -image [image create photo \
+			-file [file join $mImgDir rtimage.png]]
     }
 
     initFbImages
@@ -2492,7 +2532,7 @@ proc title_node_handler {node} {
     buildComboBox $itk_component(generalF) \
 	fboverlayColor \
 	fbocolor \
-	mFBOverlayColorPref \
+	mRtWizardEdgeColorPref \
 	"FB Overlay Color:" \
 	$mColorListNoTriple
 
@@ -2595,18 +2635,6 @@ proc title_node_handler {node} {
 	    -command [::itcl::code $this listViewAllAffectedCallback]
     } {}
 
-    itk_component add doRtEdgeCB {
-	::ttk::checkbutton $itk_component(generalF).doRtEdgeCB \
-	    -text "Do Rtedge" \
-	    -variable [::itcl::scope mDoRtEdgePref]
-    } {}
-
-    itk_component add doRtEdgeOverlayCB {
-	::ttk::checkbutton $itk_component(generalF).doRtEdgeOverlayCB \
-	    -text "Do Rtedge Overlay" \
-	    -variable [::itcl::scope mDoRtEdgeOverlayPref]
-    } {}
-
     if {$ArcherCore::inheritFromToplevel} {
 	itk_component add sepCmdWinCB {
 	    ::ttk::checkbutton $itk_component(generalF).sepCmdWinCB \
@@ -2683,18 +2711,6 @@ proc title_node_handler {node} {
 	-sticky sw
     incr i
     grid $itk_component(listViewAllAffectedCB) \
-	-columnspan 2 \
-	-column 0 \
-	-row $i \
-	-sticky sw
-    incr i
-    grid $itk_component(doRtEdgeCB) \
-	-columnspan 2 \
-	-column 0 \
-	-row $i \
-	-sticky sw
-    incr i
-    grid $itk_component(doRtEdgeOverlayCB) \
 	-columnspan 2 \
 	-column 0 \
 	-row $i \
@@ -6176,6 +6192,69 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
 }
 
 
+::itcl::body Archer::buildObjRtImageView {} {
+    set parent [$itk_component(vpane) childsite attrView]
+    itk_component add objRtImageView {
+	::ttk::frame $parent.objrtimageview \
+	    -borderwidth 1 \
+	    -relief sunken
+    } {}
+
+    set parent $itk_component(objRtImageView)
+    buildComboBox $parent \
+	edgeColor \
+	edgecolor \
+	mRtWizardEdgeColor \
+	"Edge Color:" \
+	$mColorListNoTriple
+
+    buildComboBox $parent \
+	nonedgeColor \
+	nonedgecolor \
+	mRtWizardNonEdgeColor \
+	"Non Edge Color:" \
+	$mColorListNoTriple
+
+    buildComboBox $parent \
+	occlusion \
+	occlusion \
+	mRtWizardOccMode \
+	"Occlusion Mode:" \
+	{0 1 2 3}
+
+    
+    itk_component add ghostIntensityL {
+	::ttk::label $parent.ghostIntensityL \
+	    -anchor se \
+	    -text "Ghost Intensity:"
+    } {}
+    itk_component add ghostIntensityS {
+	::scale $parent.ghostIntensityS \
+	    -showvalue 1 \
+	    -orient horizontal \
+	    -from 1 \
+	    -to 20 \
+	    -resolution 1 \
+	    -variable [::itcl::scope mRtWizardGhostIntensity]
+    }
+
+    set i 0
+    grid $itk_component(ghostIntensityL) -column 0 -row $i -sticky e
+    grid $itk_component(ghostIntensityS) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(edgeColorL) -column 0 -row $i -sticky e
+    grid $itk_component(edgeColorF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(nonedgeColorL) -column 0 -row $i -sticky e
+    grid $itk_component(nonedgeColorF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(occlusionL) -column 0 -row $i -sticky e
+    grid $itk_component(occlusionF) -column 1 -row $i -sticky ew
+
+    grid columnconfigure $itk_component(objRtImageView) 1 -weight 1
+}
+
+
 ::itcl::body Archer::buildObjToolView {} {
     set parent [$itk_component(vpane) childsite attrView]
     itk_component add objToolView {
@@ -6317,21 +6396,28 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
 	-balloonstr "Object edit mode" \
 	-variable [::itcl::scope mObjViewMode] \
 	-value $OBJ_EDIT_VIEW_MODE \
-	-command [::itcl::code $this initObjEditView]
+	-command [::itcl::code $this initObjEditView 1]
 
     $itk_component(objViewToolbar) add radiobutton objAttrView \
 	-helpstr "Object text mode" \
 	-balloonstr "Object text mode" \
 	-variable [::itcl::scope mObjViewMode] \
 	-value $OBJ_ATTR_VIEW_MODE \
-	-command [::itcl::code $this initObjAttrView]
+	-command [::itcl::code $this initObjAttrView 1]
 
     $itk_component(objViewToolbar) add radiobutton objToolView \
 	-helpstr "Tool view mode" \
 	-balloonstr "Tool view mode" \
 	-variable [::itcl::scope mObjViewMode] \
 	-value $OBJ_TOOL_VIEW_MODE \
-	-command [::itcl::code $this initObjToolView]
+	-command [::itcl::code $this initObjToolView 1]
+
+    $itk_component(objViewToolbar) add radiobutton objRtImageView \
+	-helpstr "Rt image view mode" \
+	-balloonstr "Rt image view mode" \
+	-variable [::itcl::scope mObjViewMode] \
+	-value $OBJ_RT_IMAGE_VIEW_MODE \
+	-command [::itcl::code $this initObjRtImageView 1]
 }
 
 
@@ -6555,6 +6641,8 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
     catch {pack forget $itk_component(objEditView)}
+    catch {pack forget $itk_component(objRtImageView)}
+    catch {pack forget $itk_component(objToolView)}
     catch {pack forget $itk_component(noWizard)}
     set mNoWizardActive 0
 
@@ -6742,7 +6830,7 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
 }
 
 
-::itcl::body Archer::initObjAttrView {} {
+::itcl::body Archer::initObjAttrView {{_tflag 0}} {
     if {$mSelectedObj == ""} {
 	return
     }
@@ -6753,6 +6841,7 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
     catch {pack forget $itk_component(objEditView)}
+    catch {pack forget $itk_component(objRtImageView)}
     catch {pack forget $itk_component(objToolView)}
     catch {pack forget $itk_component(noWizard)}
     set mNoWizardActive 0
@@ -6782,10 +6871,15 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
 
     pack $itk_component(objViewToolbar) -expand no -fill both -anchor n
     pack $itk_component(objAttrView) -expand yes -fill both -anchor n
+
+    if {$_tflag} {
+	set mTreeMode $mPrevTreeMode
+	toggleTreeView
+    }
 }
 
 
-::itcl::body Archer::initObjEditView {} {
+::itcl::body Archer::initObjEditView {{_tflag 0}} {
     if {$mSelectedObj == ""} {
 	return
     }
@@ -6804,6 +6898,7 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
     catch {pack forget $itk_component(objEditView)}
+    catch {pack forget $itk_component(objRtImageView)}
     catch {pack forget $itk_component(objToolView)}
     catch {pack forget $itk_component(noWizard)}
     set mNoWizardActive 0
@@ -6843,10 +6938,15 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
 	    initObjWizard $mSelectedObj 1
 	}
     }
+
+    if {$_tflag} {
+	set mTreeMode $mPrevTreeMode
+	toggleTreeView
+    }
 }
 
 
-::itcl::body Archer::initObjToolView {} {
+::itcl::body Archer::initObjRtImageView {{_tflag 0}} {
     if {$mSelectedObj == ""} {
 	return
     }
@@ -6857,6 +6957,42 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
     catch {pack forget $itk_component(objViewToolbar)}
     catch {pack forget $itk_component(objAttrView)}
     catch {pack forget $itk_component(objEditView)}
+    catch {pack forget $itk_component(objRtImageView)}
+    catch {pack forget $itk_component(objToolView)}
+    catch {pack forget $itk_component(noWizard)}
+    set mNoWizardActive 0
+
+    # delete the previous wizard instance
+    if {$mWizardClass != ""} {
+	::destroy $itk_component($mWizardClass)
+	::destroy $itk_component(wizardUpdate)
+	set mWizardClass ""
+	set mWizardTop ""
+	set mWizardState ""
+    }
+
+    pack $itk_component(objViewToolbar) -expand no -fill both -anchor n
+    pack $itk_component(objRtImageView) -expand yes -fill both -anchor n
+
+    if {$_tflag} {
+	set mTreeMode $mPrevTreeMode2
+	toggleTreeView
+    }
+}
+
+
+::itcl::body Archer::initObjToolView {{_tflag 0}} {
+    if {$mSelectedObj == ""} {
+	return
+    }
+
+    set mPrevObjViewMode $mObjViewMode
+
+    catch {pack forget $itk_component(dbAttrView)}
+    catch {pack forget $itk_component(objViewToolbar)}
+    catch {pack forget $itk_component(objAttrView)}
+    catch {pack forget $itk_component(objEditView)}
+    catch {pack forget $itk_component(objRtImageView)}
     catch {pack forget $itk_component(objToolView)}
     catch {pack forget $itk_component(noWizard)}
     set mNoWizardActive 0
@@ -6872,6 +7008,11 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
 
     pack $itk_component(objViewToolbar) -expand no -fill both -anchor n
     pack $itk_component(objToolView) -expand yes -fill both -anchor n
+
+    if {$_tflag} {
+	set mTreeMode $mPrevTreeMode
+	toggleTreeView
+    }
 }
 
 
@@ -7588,9 +7729,7 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
 
     backgroundColor $mBackgroundColor
     $itk_component(rtcntrl) configure -color [cadwidgets::Ged::get_rgb_color $mFBBackgroundColor]
-    $itk_component(rtcntrl) configure -overlay_fg_color [cadwidgets::Ged::get_rgb_color $mFBOverlayColor]
-    $itk_component(rtcntrl) configure -do_rtedge $mDoRtEdge
-    $itk_component(rtcntrl) configure -do_rtedge_overlay $mDoRtEdgeOverlay
+    $itk_component(rtcntrl) configure -overlay_fg_color [cadwidgets::Ged::get_rgb_color $mRtWizardEdgeColor]
     gedCmd configure -measuringStickColor $mMeasuringStickColor
     gedCmd configure -measuringStickMode $mMeasuringStickMode
     gedCmd configure -primitiveLabelColor $mPrimitiveLabelColor
@@ -7628,16 +7767,8 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
 	set mFBBackgroundColor $mFBBackgroundColorPref
     }
 
-    if {$mFBOverlayColor != $mFBOverlayColorPref} {
-	set mFBOverlayColor $mFBOverlayColorPref
-    }
-
-    if {$mDoRtEdge != $mDoRtEdgePref} {
-	set mDoRtEdge $mDoRtEdgePref
-    }
-
-    if {$mDoRtEdgeOverlay != $mDoRtEdgeOverlayPref} {
-	set mDoRtEdgeOverlay $mDoRtEdgeOverlayPref
+    if {$mRtWizardEdgeColor != $mRtWizardEdgeColorPref} {
+	set mRtWizardEdgeColor $mRtWizardEdgeColorPref
     }
 
     if {$mDisplayFontSize != $mDisplayFontSizePref} {
@@ -8180,7 +8311,7 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
     set mBindingModePref $mBindingMode
     set mEnableBigEPref $mEnableBigE
     set mFBBackgroundColorPref $mFBBackgroundColor
-    set mFBOverlayColorPref $mFBOverlayColor
+    set mRtWizardEdgeColorPref $mRtWizardEdgeColor
     set mDisplayFontSizePref $mDisplayFontSize
     set mMeasuringStickColorPref $mMeasuringStickColor
     set mMeasuringStickModePref $mMeasuringStickMode
@@ -8193,8 +8324,6 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
     set mEnableAffectedNodeHighlightPref $mEnableAffectedNodeHighlight
     set mSeparateCommandWindowPref $mSeparateCommandWindow
     set mDbUnits [gedCmd units -s]
-    set mDoRtEdgePref $mDoRtEdge
-    set mDoRtEdgeOverlayPref $mDoRtEdgeOverlay
     set mCompSelectGroupPref $mCompSelectGroup
 
     # Convert mCompSelectMode to a string for the preferences panel
@@ -8342,7 +8471,7 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
     puts $_pfile "set mBindingMode $mBindingMode"
     puts $_pfile "set mEnableBigE $mEnableBigE"
     puts $_pfile "set mFBBackgroundColor \"$mFBBackgroundColor\""
-    puts $_pfile "set mFBOverlayColor \"$mFBOverlayColor\""
+    puts $_pfile "set mRtWizardEdgeColor \"$mRtWizardEdgeColor\""
     puts $_pfile "set mDisplayFontSize \"$mDisplayFontSize\""
     puts $_pfile "set mMeasuringStickColor \"$mMeasuringStickColor\""
     puts $_pfile "set mMeasuringStickMode $mMeasuringStickMode"
@@ -8353,8 +8482,6 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
     puts $_pfile "set mEnableListView $mEnableListView"
     puts $_pfile "set mEnableListViewAllAffected $mEnableListViewAllAffected"
     puts $_pfile "set mEnableAffectedNodeHighlight $mEnableAffectedNodeHighlight"
-    puts $_pfile "set mDoRtEdge $mDoRtEdge"
-    puts $_pfile "set mDoRtEdgeOverlay $mDoRtEdgeOverlay"
     puts $_pfile "set mSeparateCommandWindow $mSeparateCommandWindow"
     puts $_pfile "set mCompSelectGroup $mCompSelectGroup"
     puts $_pfile "set mCompSelectMode $mCompSelectMode"
@@ -8606,7 +8733,11 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
 	}
     }
 
-    fillTree {} $name $mEnableListView
+    if {$mTreeMode == $TREE_MODE_LIST} {
+	fillTree {} $name 1
+    } else {
+	fillTree {} $name 0
+    }
     $itk_component(ged) draw $name
     selectTreePath $name
     #    updateTreeDrawLists

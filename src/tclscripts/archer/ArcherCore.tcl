@@ -56,6 +56,12 @@ namespace eval ArcherCore {
 	common TREE_OPENED_TAG "opened"
 	common TREE_PLACEHOLDER_TAG "placeholder"
 
+	common TREE_MODE_TREE 0
+	common TREE_MODE_COLOR_OBJECTS 1
+	common TREE_MODE_GHOST_OBJECTS 2
+	common TREE_MODE_EDGE_OBJECTS 3
+	common TREE_MODE_NAMES {Tree "Color Objects" "Ghost Objects" "Edge Objects"}
+
 	common VIEW_ROTATE_MODE 0
 	common VIEW_TRANSLATE_MODE 1
 	common VIEW_SCALE_MODE 2
@@ -72,6 +78,7 @@ namespace eval ArcherCore {
 	common OBJ_EDIT_VIEW_MODE 0
 	common OBJ_ATTR_VIEW_MODE 1
 	common OBJ_TOOL_VIEW_MODE 2
+	common OBJ_RT_IMAGE_VIEW_MODE 3
 
 	common COMP_PICK_TREE_SELECT_MODE 0
 	common COMP_PICK_NAME_MODE 1
@@ -139,7 +146,7 @@ namespace eval ArcherCore {
 	method Close               {}
 	method askToSave           {}
 	method getTkColor          {_r _g _b}
-	method getRgbColor         {_tkColor}
+	method getRgbColor         {_color}
 	method setSave {}
 	method getLastSelectedDir  {}
 	method refreshDisplay      {}
@@ -364,10 +371,21 @@ namespace eval ArcherCore {
 	variable mTreeAttrColumns ""
 	variable mTreeAttrColumnsPref ""
 
-	variable mDoRtEdge 0
-	variable mDoRtEdgePref ""
-	variable mDoRtEdgeOverlay 0
-	variable mDoRtEdgeOverlayPref ""
+	variable mEnableColorListView 0
+	variable mEnableGhostListView 0
+	variable mEnableEdgeListView 0
+	variable mColorObjects {}
+	variable mGhostObjects {}
+	variable mEdgeObjects {}
+
+	variable mAccordianCallbackActive 0
+	variable mTreeMode $TREE_MODE_TREE
+	variable mPrevTreeMode $TREE_MODE_TREE
+	variable mPrevTreeMode2 $TREE_MODE_COLOR_OBJECTS
+	variable mToolViewChange 0
+
+	variable mSavedCenter ""
+	variable mSavedSize ""
 
 	variable mSeparateCommandWindow 0
 	variable mSeparateCommandWindowPref ""
@@ -397,10 +415,6 @@ namespace eval ArcherCore {
 	variable mBackground "0 0 0"
 	variable mBackgroundColor Navy
 	variable mBackgroundColorPref ""
-	variable mFBBackgroundColor Black
-	variable mFBBackgroundColorPref ""
-	variable mFBOverlayColor White
-	variable mFBOverlayColorPref ""
 	variable mPrimitiveLabelColor Yellow
 	variable mPrimitiveLabelColorPref
 	variable mViewingParamsColor Yellow
@@ -414,6 +428,17 @@ namespace eval ArcherCore {
 	variable mMeasuringStickColorVDraw ffff00
 	variable mEnableBigE 0
 	variable mEnableBigEPref ""
+
+	variable mFBBackgroundColor Black
+	variable mFBBackgroundColorPref ""
+	variable mRtWizardEdgeColor White
+	variable mRtWizardEdgeColorPref ""
+	variable mRtWizardNonEdgeColor Yellow
+	variable mRtWizardNonEdgeColorPref ""
+	variable mRtWizardOccMode 1
+	variable mRtWizardOccModePref ""
+	variable mRtWizardGhostIntensity 12
+	variable mRtWizardGhostIntensityPref ""
 
 	variable mDisplayFontSize 0
 	variable mDisplayFontSizePref ""
@@ -879,6 +904,7 @@ namespace eval ArcherCore {
 	method buildComboBox {_parent _name1 _name2 _varName _text _listOfChoices}
 
 	method watchVar {_name1 _name2 _op}
+	method accordianCallback {_item _state}
     }
 }
 
@@ -1102,7 +1128,7 @@ namespace eval ArcherCore {
 	pack $itk_component(statusF) -before $itk_component(south) -side bottom -fill x
     }
     if {!$mNoTree} {
-	pack $itk_component(newtreeF) -fill both -expand yes
+	pack $itk_component(treeAccordian) -fill both -expand yes
     }
     pack $itk_component(hpane) -fill both -expand yes
     pack $itk_component(vpane) -fill both -expand yes
@@ -1135,9 +1161,7 @@ namespace eval ArcherCore {
     trace add variable [::itcl::scope mViewAxesLabelColor] write watchVar
 
     trace add variable [::itcl::scope mFBBackgroundColor] write watchVar
-    trace add variable [::itcl::scope mFBOverlayColor] write watchVar
-    trace add variable [::itcl::scope mDoRtEdge] write watchVar
-    trace add variable [::itcl::scope mDoRtEdgeOverlay] write watchVar
+#    trace add variable [::itcl::scope mRtWizardEdgeColor] write watchVar
     trace add variable [::itcl::scope mDisplayFontSize] write watchVar
 
     eval itk_initialize $args
@@ -1543,13 +1567,25 @@ namespace eval ArcherCore {
     set mCNode2PList() ""
     set mPNode2CList() ""
 
-    itk_component add newtreeF {
-	::frame $parent.newtreeF
+    itk_component add treeAccordian {
+	::cadwidgets::Accordian $parent.treeAccordian
     } {}
 
+    $itk_component(treeAccordian) addTogglePanelCallback [::itcl::code $this accordianCallback]
+
+    if {$mTreeMode < $TREE_MODE_COLOR_OBJECTS} {
+	$itk_component(treeAccordian) insert 0 [lindex $TREE_MODE_NAMES $TREE_MODE_TREE]
+    } else {
+	$itk_component(treeAccordian) insert 0 "[lindex $TREE_MODE_NAMES $TREE_MODE_EDGE_OBJECTS] (Tree)"
+	$itk_component(treeAccordian) insert 0 "[lindex $TREE_MODE_NAMES $TREE_MODE_GHOST_OBJECTS] (Tree)"
+	$itk_component(treeAccordian) insert 0 "[lindex $TREE_MODE_NAMES $TREE_MODE_COLOR_OBJECTS] (Tree)"
+    }
+
+    set childsite [$itk_component(treeAccordian) itemChildsite 0]
     itk_component add newtree {
-	::ttk::treeview $itk_component(newtreeF).tree \
-	    -selectmode browse
+	::ttk::treeview $itk_component(treeAccordian).tree \
+	    -selectmode browse \
+	    -show tree
     } {}
 
     bind $itk_component(newtree) <<TreeviewSelect>> [::itcl::code $this handleTreeSelect]
@@ -1571,12 +1607,12 @@ namespace eval ArcherCore {
     } {}
 
     itk_component add newtreehscroll {
-	::ttk::scrollbar $itk_component(newtreeF).newtreehscroll \
+	::ttk::scrollbar $itk_component(treeAccordian).newtreehscroll \
 	    -orient horizontal
     } {}
 
     itk_component add newtreevscroll {
-	::ttk::scrollbar $itk_component(newtreeF).newtreevscroll \
+	::ttk::scrollbar $itk_component(treeAccordian).newtreevscroll \
 	    -orient vertical
     } {}
 
@@ -1586,16 +1622,12 @@ namespace eval ArcherCore {
     $itk_component(newtreehscroll) configure -command "$itk_component(newtree) xview"
     $itk_component(newtreevscroll) configure -command "$itk_component(newtree) yview"
 
-    grid $itk_component(newtree) $itk_component(newtreevscroll) -sticky nsew
-    grid $itk_component(newtreehscroll) - -sticky nsew
-    grid columnconfigure $itk_component(newtreeF) 0 -weight 1
-    grid rowconfigure $itk_component(newtreeF) 0 -weight 1
-
-    # Arrange to have the tree column's heading be a toggle between tree and flat list views
-    $itk_component(newtree) heading \#0 \
-	-command [::itcl::code $this toggleTreeView] \
-	-anchor w
-    setTreeView
+    # newtree and its scrollbars get added via a callback to accordianCallback
+    if {$mTreeMode < $TREE_MODE_COLOR_OBJECTS} {
+	$itk_component(treeAccordian) togglePanel [lindex $TREE_MODE_NAMES $mTreeMode]
+    } else {
+	$itk_component(treeAccordian) togglePanel "[lindex $TREE_MODE_NAMES $mTreeMode] (Tree)"
+    }
 }
 
 ::itcl::body ArcherCore::initTreeImages {} {
@@ -2145,6 +2177,30 @@ namespace eval ArcherCore {
     set mNodeDrawList ""
     set mAffectedNodeList ""
 
+    switch -- $mTreeMode \
+	$TREE_MODE_TREE - \
+	$TREE_MODE_COLOR_OBJECTS {
+	    if {$mEnableColorListView} {
+		set mEnableListView 1
+	    } else {
+		set mEnableListView 0
+	    }
+	} \
+	$TREE_MODE_GHOST_OBJECTS {
+	    if {$mEnableGhostListView} {
+		set mEnableListView 1
+	    } else {
+		set mEnableListView 0
+	    }
+	} \
+	$TREE_MODE_EDGE_OBJECTS {
+	    if {$mEnableEdgeListView} {
+		set mEnableListView 1
+	    } else {
+		set mEnableListView 0
+	    }
+	}
+
     if {$mEnableListView} {
 	set items [lsort -dictionary [$itk_component(ged) ls]]
     } else {
@@ -2153,7 +2209,11 @@ namespace eval ArcherCore {
 
     foreach item $items {
 	set item [regsub {/.*} $item {}]
-	fillTree {} $item $mEnableListView
+	if {$mEnableListView} {
+	    fillTree {} $item 1
+	} else {
+	    fillTree {} $item 0
+	}
     }
 
     updateTreeDrawLists
@@ -2280,8 +2340,14 @@ namespace eval ArcherCore {
 	}
 
 	# Anything leftover in mlist needs to be added
-	foreach member $mlist {
-	    fillTree $_pnode $member $mEnableListView 1
+	if {$mEnableListView} {
+	    foreach member $mlist {
+		fillTree $_pnode $member 1 1
+	    }
+	} else {
+	    foreach member $mlist {
+		fillTree $_pnode $member 0 1
+	    }
 	}
     } else {
 	set pgdata [$itk_component(ged) get $ptext]
@@ -2332,6 +2398,7 @@ namespace eval ArcherCore {
 		set cnode [lindex $clist 1]
 		purgeNodeData $cnode
 		$itk_component(newtree) delete $cnode
+
 	    } elseif {!$mEnableListView} {
 		# Make sure ctext is a valid toplevel
 		set i [lsearch $scrubbed_items $ctext]
@@ -2350,7 +2417,11 @@ namespace eval ArcherCore {
 	set cnodes [getCNodesFromCText {} $item]
 
 	if {$cnodes == {}} {
-	    fillTree {} $item $mEnableListView
+	    if {$mEnableListView} {
+		fillTree {} $item 1
+	    } else {
+		fillTree {} $item 0
+	    }
 	} elseif {!$mEnableListView} {
 	    foreach item $cnodes {
 		rsyncTree $item
@@ -2376,7 +2447,21 @@ namespace eval ArcherCore {
     set mNodePDrawList ""
     set mNodeDrawList ""
 
-    foreach ditem [gedCmd who] {
+    set whoList [gedCmd who]
+
+    switch -- $mTreeMode \
+	$TREE_MODE_TREE - \
+	$TREE_MODE_COLOR_OBJECTS {
+	    set mColorObjects $whoList
+	} \
+	$TREE_MODE_GHOST_OBJECTS {
+	    set mGhostObjects $whoList
+	} \
+	$TREE_MODE_EDGE_OBJECTS {
+	    set mEdgeObjects $whoList
+	}
+
+    foreach ditem $whoList {
 	if {$mEnableListView} {
 	    set ditem [regsub {^/} $ditem {}]
 	    set dlist [split $ditem /]
@@ -3352,6 +3437,11 @@ namespace eval ArcherCore {
     }
     }
 
+    if {$mSavedCenter != "" && $mTreeMode > $TREE_MODE_TREE} {
+	$itk_component(ged) center $mSavedCenter
+	$itk_component(ged) size $mSavedSize
+    }
+
     $itk_component(ged) refresh_on
     $itk_component(ged) refresh_all
  
@@ -4161,7 +4251,11 @@ namespace eval ArcherCore {
 		}
 
 		# Add gchild members
-		fillTree $cnode $gctext $mEnableListView 1
+		if {$mEnableListView} {
+		    fillTree $cnode $gctext 1 1
+		} else {
+		    fillTree $cnode $gctext 0 0
+		}
 	    }
 	}
     }
@@ -4347,15 +4441,11 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::setTreeView {{_rflag 0}} {
-    SetWaitCursor $this
-
-    if {$mEnableListView} {
-	set text "Show Tree"
-    } else {
-	set text "Show List"
+    if {![info exists itk_component(ged)]} {
+	return
     }
 
-    $itk_component(newtree) heading \#0 -text $text
+    SetWaitCursor $this
 
     if {$_rflag} {
 	rebuildTree
@@ -4373,14 +4463,79 @@ namespace eval ArcherCore {
     SetNormalCursor $this
 }
 
+##
+# Expects mTreeMode to be set before calling.
+#
 ::itcl::body ArcherCore::toggleTreeView {} {
-    if {$mEnableListView} {
-	set mEnableListView 0
+
+    set mToolViewChange 1
+    $itk_component(treeAccordian) clear
+
+    if {$mTreeMode < $TREE_MODE_COLOR_OBJECTS} {
+	if {$mEnableColorListView} {
+	    $itk_component(treeAccordian) insert 0 List
+	} else {
+	    $itk_component(treeAccordian) insert 0 [lindex $TREE_MODE_NAMES $mTreeMode]
+	}
     } else {
-	set mEnableListView 1
+	if {$mEnableEdgeListView} {
+	    $itk_component(treeAccordian) insert 0 "[lindex $TREE_MODE_NAMES $TREE_MODE_EDGE_OBJECTS] (List)"
+	} else {
+	    $itk_component(treeAccordian) insert 0 "[lindex $TREE_MODE_NAMES $TREE_MODE_EDGE_OBJECTS] (Tree)"
+	}
+
+	if {$mEnableGhostListView} {
+	    $itk_component(treeAccordian) insert 0 "[lindex $TREE_MODE_NAMES $TREE_MODE_GHOST_OBJECTS] (List)"
+	} else {
+	    $itk_component(treeAccordian) insert 0 "[lindex $TREE_MODE_NAMES $TREE_MODE_GHOST_OBJECTS] (Tree)"
+	}
+
+	if {$mEnableColorListView} {
+	    $itk_component(treeAccordian) insert 0 "[lindex $TREE_MODE_NAMES $TREE_MODE_COLOR_OBJECTS] (List)"
+	} else {
+	    $itk_component(treeAccordian) insert 0 "[lindex $TREE_MODE_NAMES $TREE_MODE_COLOR_OBJECTS] (Tree)"
+	}
     }
 
-    setTreeView 1
+    switch -- $mTreeMode \
+	$TREE_MODE_TREE - \
+	$TREE_MODE_COLOR_OBJECTS {
+	    if {$mEnableColorListView} {
+		set mEnableListView 1
+	    } else {
+		set mEnableListView 0
+	    }
+	} \
+	$TREE_MODE_GHOST_OBJECTS {
+	    if {$mEnableGhostListView} {
+		set mEnableListView 1
+	    } else {
+		set mEnableListView 0
+	    }
+	} \
+	$TREE_MODE_EDGE_OBJECTS {
+	    if {$mEnableEdgeListView} {
+		set mEnableListView 1
+	    } else {
+		set mEnableListView 0
+	    }
+	}
+
+    if {$mTreeMode < $TREE_MODE_COLOR_OBJECTS} {
+	if {$mEnableListView} {
+	    $itk_component(treeAccordian) togglePanel List
+	} else {
+	    $itk_component(treeAccordian) togglePanel [lindex $TREE_MODE_NAMES $mTreeMode]
+	}
+    } else {
+	if {$mEnableListView} {
+	    $itk_component(treeAccordian) togglePanel "[lindex $TREE_MODE_NAMES $mTreeMode] (List)"
+	} else {
+	    $itk_component(treeAccordian) togglePanel "[lindex $TREE_MODE_NAMES $mTreeMode] (Tree)"
+	}
+    }
+
+    set mToolViewChange 0
 }
 
 ::itcl::body ArcherCore::treeNodeHasBeenOpened {_node} {
@@ -4476,7 +4631,11 @@ namespace eval ArcherCore {
     if {$i != -1} {
 	# Add _name if not already there.
 	if {[catch {lsearch -index 0 $mPNode2CList() $_name} j] || $j == -1} {
-	    fillTree {} $_name $mEnableListView
+	    if {$mEnableListView} {
+		fillTree {} $_name 1
+	    } else {
+		fillTree {} $_name 0
+	    }
 	}
     } else {
 	# Not found in call to tops, so possibly need to update _name as a member
@@ -4608,6 +4767,10 @@ namespace eval ArcherCore {
     if {$mBindingMode == 0} {
 	initDefaultBindings $itk_component(ged)
     }
+
+    set mSavedCenter ""
+    set mSavedSize ""
+
     SetNormalCursor $this
 }
 
@@ -4646,12 +4809,28 @@ namespace eval ArcherCore {
     return [format \#%.2x%.2x%.2x $r $g $b]
 }
 
-::itcl::body ArcherCore::getRgbColor {tkColor} {
-    set rgb [winfo rgb $itk_interior $tkColor]
-    return [list \
-		[expr {[lindex $rgb 0] / 256}] \
-		[expr {[lindex $rgb 1] / 256}] \
-		[expr {[lindex $rgb 2] / 256}]]
+::itcl::body ArcherCore::getRgbColor {_color} {
+    set len [llength $_color]
+    if {$len == 1} {
+	set rgb [winfo rgb $itk_interior $_color]
+	return [list \
+		    [expr {[lindex $rgb 0] / 256}] \
+		    [expr {[lindex $rgb 1] / 256}] \
+		    [expr {[lindex $rgb 2] / 256}]]
+    }
+
+    # This widget uses values from 0 to 255
+    set r [lindex $_color 0]
+    set g [lindex $_color 1]
+    set b [lindex $_color 2]
+
+    if {[string is digit -strict $r] && $r >= 0 && $r <= 255 &&
+	[string is digit -strict $g] && $g >= 0 && $g <= 255 &&
+	[string is digit -strict $b] && $b >= 0 && $b <= 255} {
+	return $_color
+    }
+
+    return "255 255 255"
 }
 
 ::itcl::body ArcherCore::setSave {} {
@@ -6267,14 +6446,8 @@ namespace eval ArcherCore {
 	mFBBackgroundColor {
 	    $itk_component(rtcntrl) configure -color [cadwidgets::Ged::get_rgb_color $mFBBackgroundColor]
 	}
-	mFBOverlayColor {
-	    $itk_component(rtcntrl) configure -overlay_fg_color [cadwidgets::Ged::get_rgb_color $mFBOverlayColor]
-	}
-	mDoRtEdge {
-	    $itk_component(rtcntrl) configure -do_rtedge $mDoRtEdge
-	}
-	mDoRtEdgeOverlay {
-	    $itk_component(rtcntrl) configure -do_rtedge_overlay $mDoRtEdgeOverlay
+	mRtWizardEdgeColor {
+	    $itk_component(rtcntrl) configure -overlay_fg_color [cadwidgets::Ged::get_rgb_color $mRtWizardEdgeColor]
 	}
 	mDisplayFontSize {
 	    $itk_component(ged) fontsize $mDisplayFontSize
@@ -6324,6 +6497,144 @@ namespace eval ArcherCore {
 	}
     }
 }
+
+
+::itcl::body ArcherCore::accordianCallback {_item _state} {
+    if {$mAccordianCallbackActive} {
+	return
+    }
+
+    set mAccordianCallbackActive 1
+
+    grid forget $itk_component(newtree) $itk_component(newtreevscroll) $itk_component(newtreehscroll)
+
+    set saveTreeMode $mTreeMode
+    if {$_item == "Tree" || $_item == "List"} {
+	set mTreeMode $TREE_MODE_TREE
+    } else {
+	set base [regsub { (\(Tree\))| (\(List\))} $_item ""]
+	set mTreeMode [lsearch $TREE_MODE_NAMES $base]
+    }
+
+    set drawem 0
+    set draw_objects ""
+
+    if {!$_state && !$mToolViewChange} {    # The same accordian button was pressed and there's NO tool view change
+	if {[regexp Tree $_item all]} {
+	    set mEnableListView 1
+	    set item [regsub Tree $_item List]
+	} else {
+	    set mEnableListView 0
+	    set item [regsub List $_item Tree]
+	}
+
+	if {$mEnableListView} {
+	    switch -- $mTreeMode \
+		$TREE_MODE_TREE - \
+		$TREE_MODE_COLOR_OBJECTS {
+		    set mEnableColorListView 1
+		} \
+		$TREE_MODE_GHOST_OBJECTS {
+		    set mEnableGhostListView 1
+		} \
+		$TREE_MODE_EDGE_OBJECTS {
+		    set mEnableEdgeListView 1
+		}
+	} else {
+	    switch -- $mTreeMode \
+		$TREE_MODE_TREE - \
+		$TREE_MODE_COLOR_OBJECTS {
+		    set mEnableColorListView 0
+		} \
+		$TREE_MODE_GHOST_OBJECTS {
+		    set mEnableGhostListView 0
+		} \
+		$TREE_MODE_EDGE_OBJECTS {
+		    set mEnableEdgeListView 0
+		}
+	}
+
+	$itk_component(treeAccordian) rename $_item $item
+
+    } else {    # A different accordian button was pressed OR there's a tool view change
+	if {[catch {gedCmd who} whoList]} {
+	    set whoList ""
+	}
+
+	if {[regexp Tree $_item all]} {
+	    set mEnableListView 0
+	} else {
+	    set mEnableListView 1
+	}
+
+	switch -- $saveTreeMode \
+	    $TREE_MODE_TREE - \
+	    $TREE_MODE_COLOR_OBJECTS {
+		if {$mTreeMode != $TREE_MODE_TREE && $mTreeMode != $TREE_MODE_COLOR_OBJECTS} {
+		    set drawem 1
+		}
+	    } \
+	    $TREE_MODE_GHOST_OBJECTS {
+		if {$mTreeMode != $TREE_MODE_GHOST_OBJECTS} {
+		    set drawem 1
+		}
+	    } \
+	    $TREE_MODE_EDGE_OBJECTS {
+		if {$mTreeMode != $TREE_MODE_EDGE_OBJECTS} {
+		    set drawem 1
+		}
+	    }
+
+	if {$drawem || $mToolViewChange} {
+	    switch -- $mTreeMode \
+		$TREE_MODE_TREE - \
+		$TREE_MODE_COLOR_OBJECTS {
+		    set draw_objects $mColorObjects
+		} \
+		$TREE_MODE_GHOST_OBJECTS {
+		    set draw_objects $mGhostObjects
+		} \
+		$TREE_MODE_EDGE_OBJECTS {
+		    set draw_objects $mEdgeObjects
+		}
+	}
+
+	set item $_item
+    }
+
+    set childsite [$itk_component(treeAccordian) itemChildsite $item]
+    grid $itk_component(newtree) $itk_component(newtreevscroll) -sticky nsew -in $childsite
+    grid $itk_component(newtreehscroll) - -sticky nsew -in $childsite
+    grid columnconfigure $childsite 0 -weight 1
+    grid rowconfigure $childsite 0 -weight 1
+
+    raise $itk_component(newtree)
+    raise $itk_component(newtreevscroll)
+    raise $itk_component(newtreehscroll)
+
+    setTreeView 1
+    if {($drawem || $mToolViewChange) && [info exists itk_component(ged)]} {
+	$itk_component(ged) refresh_off
+	set mSavedCenter [$itk_component(ged) center]
+	set mSavedSize  [$itk_component(ged) size]
+	zap
+	eval draw $draw_objects
+	$itk_component(ged) center $mSavedCenter
+	$itk_component(ged) size $mSavedSize
+	$itk_component(ged) refresh_on
+	$itk_component(ged) refresh_all
+    }
+
+    if {$mTreeMode < $TREE_MODE_COLOR_OBJECTS} {
+	set mPrevTreeMode $mTreeMode
+    } else {
+	set mPrevTreeMode2 $mTreeMode
+    }
+
+    set mAccordianCallbackActive 0
+}
+
+
 
 # Local Variables:
 # mode: Tcl
