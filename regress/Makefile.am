@@ -1,8 +1,8 @@
-.PHONY : regression regress test mged red moss lights solids shaders spdi iges weight gqa fastgen bots repository comgeom gdot gnff vls_vprintf
+.PHONY : regression regress test mged red moss lights solids shaders spdi iges weight gqa fastgen bots repository comgeom gdot gnff vls_vprintf dsp
 
 SUBDIRS = mged
 
-regression: clean mged moss lights solids shaders spdi iges weight gqa fastgen bots repository comgeom gdot gnff vls_vprintf
+regression: clean mged moss lights solids shaders spdi iges weight gqa fastgen bots repository comgeom gdot gnff vls_vprintf dsp
 	@${ECHO} ---
 	@${ECHO} Regression testing completed.
 
@@ -82,6 +82,10 @@ vls_vprintf: $(top_srcdir)/regress/vls_vprintf.sh
 	-${SH} $(top_srcdir)/regress/vls_vprintf.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
+dsp: $(top_srcdir)/regress/dsp.sh
+	-${SH} $(top_srcdir)/regress/dsp.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
+
 # these are here because they go in the distribution but are not installed
 EXTRA_DIST = \
 	bots.sh \
@@ -143,7 +147,84 @@ CLEANFILES = \
 	comgeom.t-v4.g \
 	comgeom.t-v5.g \
 	density_table.txt \
-	dsp.dat \
+        dsp-2-1.bw \
+        dsp-2-1.dsp \
+        dsp-2-1.g \
+        dsp-2-1.log \
+        dsp-2-1.pix \
+        dsp-2-1.rt.pix \
+        dsp-2-2.bw \
+        dsp-2-2.dsp \
+        dsp-2-2.g \
+        dsp-2-2.log \
+        dsp-2-2.pix \
+        dsp-2-2.rt.pix \
+        dsp-2-3.bw \
+        dsp-2-3.dsp \
+        dsp-2-3.g \
+        dsp-2-3.log \
+        dsp-2-3.pix \
+        dsp-2-3.rt.pix \
+        dsp-2-4.bw \
+        dsp-2-4.dsp \
+        dsp-2-4.g \
+        dsp-2-4.log \
+        dsp-2-4.pix \
+        dsp-2-4.rt.pix \
+        dsp-2-5.bw \
+        dsp-2-5.dsp \
+        dsp-2-5.g \
+        dsp-2-5.log \
+        dsp-2-5.pix \
+        dsp-2-5.rt.pix \
+        dsp-3-1.bw \
+        dsp-3-1.dsp \
+        dsp-3-1.g \
+        dsp-3-1.log \
+        dsp-3-1.pix \
+        dsp-3-1.rt.pix \
+        dsp-3-2.bw \
+        dsp-3-2.dsp \
+        dsp-3-2.g \
+        dsp-3-2.log \
+        dsp-3-2.pix \
+        dsp-3-2.rt.pix \
+        dsp-3-3.bw \
+        dsp-3-3.dsp \
+        dsp-3-3.g \
+        dsp-3-3.log \
+        dsp-3-3.pix \
+        dsp-3-3.rt.pix \
+        dsp-3-4.bw \
+        dsp-3-4.dsp \
+        dsp-3-4.g \
+        dsp-3-4.log \
+        dsp-3-4.pix \
+        dsp-3-4.rt.pix \
+        dsp-3-5.bw \
+        dsp-3-5.dsp \
+        dsp-3-5.g \
+        dsp-3-5.log \
+        dsp-3-5.pix \
+        dsp-3-5.rt.pix \
+        dsp-3-6.bw \
+        dsp-3-6.dsp \
+        dsp-3-6.g \
+        dsp-3-6.log \
+        dsp-3-6.pix \
+        dsp-3-6.rt.pix \
+        dsp-3-7.bw \
+        dsp-3-7.dsp \
+        dsp-3-7.g \
+        dsp-3-7.log \
+        dsp-3-7.pix \
+        dsp-3-7.rt.pix \
+        dsp-3-8.bw \
+        dsp-3-8.dsp \
+        dsp-3-8.g \
+        dsp-3-8.log \
+        dsp-3-8.pix \
+        dsp-3-8.rt.pix \
 	eagleCAD-512x438.pix \
 	ebm.bw \
 	exp_air.pl \

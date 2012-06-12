@@ -54,132 +54,40 @@ if test ! -f "$CV" ; then
     exit 1
 fi
 
-rm -f dsp.log dsp.mged.log
+A2P="`ensearch asc2pix`"
+if test ! -f "$A2P" ; then
+    echo "Unable to find asc2pix, aborting"
+    exit 1
+fi
 
-# create 0x0 dataset (null case)
+rm -f dsp.log
 
-# create 1x1 datasets
-# ---
-# | |
-# ---
-# and
-# ---
-# |X|
-# ---
+FAILED=0
 
-# create 2x2 datasets
-# -----
-# |X|X|
-# -----
-# |X|X|
-# -----
-#  and
-# -----
-# |X|X|
-# -----
-# |X| |
-# -----
-#  and
-# -----
-# |X| |
-# -----
-# | |X|
-# -----
-#  and
-# -----
-# | | |
-# -----
-# |X|X|
-# -----
-#  and
-# -----
-# | | |
-# -----
-# | |X|
-# -----
+# note that cases 0 and 1 are not functional yet
+#CASES='0 1 2 3'
+CASES='2 3'
 
-# create 3x3 datasets
-# -------
-# |X|X|X|
-# -------
-# |X|X|X|
-# -------
-# |X|X|X|
-# -------
-#   and
-# -------
-# |X|X|X|
-# -------
-# | |X| |
-# -------
-# |X|X|X|
-# -------
-#   and
-# -------
-# | |X| |
-# -------
-# |X|X|X|
-# -------
-# | |X| |
-# -------
-#   and
-# -------
-# |X|X|X|
-# -------
-# |X| |X|
-# -------
-# |X|X|X|
-# -------
-#   and
-# -------
-# |X|X|X|
-# -------
-# | | | |
-# -------
-# |X|X|X|
-# -------
-#   and
-# -------
-# |X| |X|
-# -------
-# | |X| |
-# -------
-# |X| |X|
-# -------
-#   and
-# -------
-# |X| |X|
-# -------
-# | | | |
-# -------
-# |X| |X|
-# -------
-#   and
-# -------
-# | | | |
-# -------
-# | |X| |
-# -------
-# | | | |
-# -------
+for i in $CASES ; do
+
+  $1/regress/dsp/run-dsp-case-set-$i.sh $1
+  STATUS=$?
+  if [ $STATUS -gt 0 ] ; then
+    FAILED="`expr $FAILED + 1`"
+  fi
+
+done
 
 # create random 10x10 datasets
 
-
-#$MGED -c dsp.g <<EOF > dsp.mged.log 2>&1
-#
-#EOF
-
-
-STATUS=0
-
-if [ $STATUS = 0 ] ; then
+if [ $FAILED = 0 ] ; then
     echo "-> dsp.sh succeeded"
 else
     echo "-> dsp.sh FAILED"
+    echo "   with $FAILED failed tests"
 fi
 
-exit $STATUS
+exit $FAILED
 
 # Local Variables:
 # mode: sh
