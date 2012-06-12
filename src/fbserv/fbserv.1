@@ -82,16 +82,22 @@ an inetd remote framebuffer server by specifying
 as a server program in
 .B inetd.conf.
 .SH EXAMPLES
+
 .nf
-.ce
+.RS
 fbserv 0 &
+.RE
 .fi
+
 This command will start a standalone fbserv daemon. Any access of a framebuffer
 specifying port 0 will result in opening a new framebuffer.
+
 .nf
-.ce
+.RS
 fbserv -h 0 /dev/sgil &
+.RE
 .fi
+
 The above command will open a 1024 X 1024 '/dev/sgil' framebuffer and associate port number 0
 with it. Any access of a framebuffer specifying port 0 will use the already opened '/dev/sgil' framebuffer.
 .SH "SEE ALSO"
