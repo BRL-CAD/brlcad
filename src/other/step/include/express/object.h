@@ -94,12 +94,6 @@ extern SCL_EXPRESS_EXPORT struct Object * OBJ;
 #define OBJtype_is_oneof(_type_,class)  (OBJ[_type_].bits & (class))
 #define OBJget_name(obj,type)       (OBJget_symbol(obj,type)->name)
 
-/* for backwards compatibility */
-#define OBJequal(x,y)           ((x) == (y))
-#define OBJfree(x)
-#define OBJreference(x)         (x)
-#define OBJget_data(obj,type,err)   (obj)
-
 /***********************/
 /* function prototypes */
 /***********************/

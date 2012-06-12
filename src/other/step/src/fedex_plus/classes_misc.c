@@ -218,25 +218,25 @@ TYPEget_ctype( const Type t ) {
         class = TYPEget_type( bt );
 
         /*      case TYPE_INTEGER:  */
-        if( class == Class_Integer_Type ) {
+        if( class == integer_ ) {
             return ( "IntAggregate" );
         }
 
         /*      case TYPE_REAL:
             case TYPE_NUMBER:   */
-        if( ( class == Class_Number_Type ) || ( class == Class_Real_Type ) ) {
+        if( ( class == number_ ) || ( class == real_ ) ) {
             return ( "RealAggregate" );
         }
 
         /*      case TYPE_ENTITY:   */
-        if( class == Class_Entity_Type ) {
+        if( class == entity_ ) {
             return( "EntityAggregate" );
         }
 
         /*      case TYPE_ENUM:     */
         /*  case TYPE_SELECT:   */
-        if( ( class == Class_Enumeration_Type )
-                || ( class == Class_Select_Type ) )  {
+        if( ( class == enumeration_ )
+                || ( class == select_ ) )  {
             /*
                     strcpy (retval, ClassName (TYPEget_name (bt)));
             */
@@ -246,22 +246,22 @@ TYPEget_ctype( const Type t ) {
         }
 
         /*  case TYPE_LOGICAL:  */
-        if( class == Class_Logical_Type ) {
+        if( class == logical_ ) {
             return ( "LOGICALS" );
         }
 
         /*  case TYPE_BOOLEAN:  */
-        if( class == Class_Boolean_Type ) {
+        if( class == boolean_ ) {
             return ( "BOOLEANS" );
         }
 
         /*  case TYPE_STRING:   */
-        if( class == Class_String_Type ) {
+        if( class == string_ ) {
             return( "StringAggregate" );
         }
 
         /*  case TYPE_BINARY:   */
-        if( class == Class_Binary_Type ) {
+        if( class == binary_ ) {
             return( "BinaryAggregate" );
         }
     }
@@ -271,38 +271,38 @@ TYPEget_ctype( const Type t ) {
     class = TYPEget_type( t );
 
     /*    case TYPE_LOGICAL:    */
-    if( class == Class_Logical_Type ) {
+    if( class == logical_ ) {
         return ( "SDAI_LOGICAL" );
     }
 
     /*    case TYPE_BOOLEAN:    */
-    if( class == Class_Boolean_Type ) {
+    if( class == boolean_ ) {
         return ( "SDAI_BOOLEAN" );
     }
 
     /*      case TYPE_INTEGER:  */
-    if( class == Class_Integer_Type ) {
+    if( class == integer_ ) {
         return ( "SDAI_Integer" );
     }
 
     /*      case TYPE_REAL:
         case TYPE_NUMBER:   */
-    if( ( class == Class_Number_Type ) || ( class == Class_Real_Type ) ) {
+    if( ( class == number_ ) || ( class == real_ ) ) {
         return ( "SDAI_Real" );
     }
 
     /*      case TYPE_STRING:   */
-    if( class == Class_String_Type ) {
+    if( class == string_ ) {
         return ( "SDAI_String" );
     }
 
     /*      case TYPE_BINARY:   */
-    if( class == Class_Binary_Type ) {
+    if( class == binary_ ) {
         return ( "SDAI_Binary" );
     }
 
     /*      case TYPE_ENTITY:   */
-    if( class == Class_Entity_Type ) {
+    if( class == entity_ ) {
         strncpy( retval, TypeName( t ), BUFSIZ - 2 );
         strcat( retval, "_ptr" );
         return retval;
@@ -310,12 +310,12 @@ TYPEget_ctype( const Type t ) {
     }
     /*    case TYPE_ENUM:   */
     /*    case TYPE_SELECT: */
-    if( class == Class_Enumeration_Type ) {
+    if( class == enumeration_ ) {
         strncpy( retval, TypeName( t ), BUFSIZ - 2 );
         strcat( retval, "_var" );
         return retval;
     }
-    if( class == Class_Select_Type )  {
+    if( class == select_ )  {
         return ( TypeName( t ) );
     }
 
@@ -370,17 +370,17 @@ AccessType( Type t ) {
         return nm;
     }
     class = TYPEget_type( t );
-    if( class == Class_Enumeration_Type ) {
+    if( class == enumeration_ ) {
         strncpy( nm, TypeName( t ), BUFSIZ - 2 );
         strcat( nm, "_var" );
         return nm;
     }
-    if( class == Class_Logical_Type ) {
+    if( class == logical_ ) {
         strncpy( nm, "Logical", BUFSIZ - 2 );
     }
 
     /*    case TYPE_BOOLEAN:    */
-    if( class == Class_Boolean_Type ) {
+    if( class == boolean_ ) {
         strncpy( nm, "Boolean", BUFSIZ - 2 );
     }
     return nm;

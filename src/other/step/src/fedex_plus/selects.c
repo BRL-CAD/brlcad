@@ -220,28 +220,28 @@ const char *
 SEL_ITEMget_dmname( Type t ) {
     Class_Of_Type class = TYPEget_type( t );
 
-    if( class == Class_Integer_Type ) {
+    if( class == integer_ ) {
         return "integer";
     }
-    if( class == Class_Real_Type ) {
+    if( class == real_ ) {
         return "real";
     }
-    if( class == Class_Number_Type ) {
+    if( class == number_ ) {
         return "real";
     }
-    if( class == Class_String_Type ) {
+    if( class == string_ ) {
         return "string";
     }
-    if( class == Class_Binary_Type ) {
+    if( class == binary_ ) {
         return "binary";
     }
-    if( class == Class_Logical_Type ) {
+    if( class == logical_ ) {
         return "logical";
     }
-    if( class == Class_Boolean_Type ) {
+    if( class == boolean_ ) {
         return "boolean";
     }
-    if( class == Class_Entity_Type ) {
+    if( class == entity_ ) {
         return "app_inst";
     }
     return ( StrToLower( TYPEget_utype( t ) ) );

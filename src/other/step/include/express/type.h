@@ -123,38 +123,11 @@ typedef struct TypeHead_ * TypeHead;
 typedef struct TypeBody_ * TypeBody;
 typedef enum type_enum  TypeType;
 
-/* following are all for backwards compatibility - not otherwise necessary */
-typedef Type        Aggregate_Type, Composed_Type, Sized_Type, Type_Reference;
-typedef Aggregate_Type  Array_Type, List_Type, Bag_Type;
-typedef Bag_Type    Set_Type;
-typedef Composed_Type   Entity_Type, Enumeration_Type, Select_Type;
-typedef Sized_Type  Integer_Type, Real_Type, String_Type, Binary_Type;
-
 /* provide a replacement for Class */
 typedef enum type_enum  Class_Of_Type;
 typedef enum type_enum  Class;
 #define OBJget_class(typ)   ((typ)->u.type->body->type)
 #define CLASSinherits_from  TYPEinherits_from
-
-/* backwards compatibility */
-#define Class_Integer_Type  integer_
-#define Class_Number_Type   number_
-#define Class_Real_Type     real_
-#define Class_Entity_Type   entity_
-#define Class_Entity_List_Type  entity_list_
-#define Class_Enumeration_Type  enumeration_
-#define Class_Boolean_Type  boolean_
-#define Class_Logical_Type  logical_
-#define Class_Binary_Type   binary_
-#define Class_String_Type   string_
-#define Class_Array_Type    array_
-#define Class_List_Type     list_
-#define Class_Set_Type      set_
-#define Class_Bag_Type      bag_
-#define Class_Generic_Type  generic_
-#define Class_Select_Type   select_
-#define Class_Reference_Type    reference_
-#define Class_Aggregate_Type    aggregate_
 
 /****************/
 /* modules used */
