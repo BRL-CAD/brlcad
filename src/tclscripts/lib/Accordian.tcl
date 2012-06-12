@@ -30,6 +30,7 @@
 ::itcl::class cadwidgets::Accordian {
     inherit ::itk::Widget
 
+    itk_option define -padding padding Padding 0
     itk_option define -singleselect singleselect Singleselect 1
 
     constructor {args} {}
@@ -76,6 +77,13 @@
 
 
 ############################### Configuration Options ###############################
+
+::itcl::configbody cadwidgets::Accordian::padding {
+    foreach item $mItemList {
+	set name "$ACC_PREFIX[regsub -all { } $item "_"]"
+	catch {$itk_component($name\B) configure -padding $itk_option(-padding)}
+    }
+}
 
 ::itcl::configbody cadwidgets::Accordian::singleselect {
     if {$itk_option(-singleselect) != "true" &&
@@ -242,6 +250,7 @@
 	itk_component add $name\B {
 	    ::ttk::button $itk_component($name\F).button \
 		-text $item \
+		-padding $itk_option(-padding) \
 		-command [::itcl::code $this toggleDisplay $item]
 	} {}
 	itk_component add $name\CS {
