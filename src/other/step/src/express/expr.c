@@ -651,7 +651,6 @@ Type EXPresolve_op_logical( Expression e, Scope s ) {
     EXPresolve_op_default( e, s );
     return( Type_Logical );
 }
-
 Type EXPresolve_op_array_like( Expression e, Scope s ) {
 
     Type op1type;
@@ -664,6 +663,9 @@ Type EXPresolve_op_array_like( Expression e, Scope s ) {
         return( op1type );
     } else if( op1type == Type_Runtime ) {
         return( Type_Runtime );
+    } else if( op1type->u.type->body->type == binary_ ) {
+        ERRORreport_with_symbol( ERROR_warn_unsupported_lang_feat, &e->symbol, "indexing on a BINARY",__FILE__, __LINE__ );
+        return( Type_Binary );
     } else if( op1type->u.type->body->type == generic_ ) {
         return( Type_Generic );
     } else if( TYPEis_select( op1type ) ) {

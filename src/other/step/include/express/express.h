@@ -108,6 +108,7 @@ extern SCL_EXPRESS_EXPORT Error ERROR_syntax;
 extern SCL_EXPRESS_EXPORT Error ERROR_unlabelled_param_type;
 extern SCL_EXPRESS_EXPORT Error ERROR_file_unreadable;
 extern SCL_EXPRESS_EXPORT Error ERROR_file_unwriteable;
+extern SCL_EXPRESS_EXPORT Error ERROR_warn_unsupported_lang_feat;
 
 extern SCL_EXPRESS_EXPORT struct Scope_ * FUNC_NVL;
 extern SCL_EXPRESS_EXPORT struct Scope_ * FUNC_USEDIN;
