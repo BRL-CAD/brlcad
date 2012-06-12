@@ -154,7 +154,7 @@ main(int argc, char **argv)
 
     char title[1024] = {0};
     int i, j, k, numVoxel[3], yMin, zMin, raysPerVoxel = 4, rayNum;
-    float sizeVoxel[3], threshold = 0.5, *fillDistances, *voxelArray;
+    float sizeVoxel[3], threshold = 0.5, *voxelArray, rayTraceDistance;
 
     FILE *fp;
 
@@ -204,11 +204,13 @@ main(int argc, char **argv)
     numVoxel[1] = (int)(((rtip->mdl_max)[1] - (rtip->mdl_min)[1])/sizeVoxel[1]);
     numVoxel[2] = (int)(((rtip->mdl_max)[2] - (rtip->mdl_min)[2])/sizeVoxel[2]);
 
-    /* voxelArray stores the distance in path of ray inside a voxel which is filled*/
-    voxelArray = bu_calloc(numVoxel[0] * numVoxel[1] * numVoxel[2], sizeof(float), "voxelArray");
+
     voxelHits.sizeVoxel[0] = sizeVoxel[0];
     voxelHits.sizeVoxel[1] = sizeVoxel[1];
     voxelHits.sizeVoxel[2] = sizeVoxel[2];
+
+    /* voxelArray stores the distance in path of ray inside a voxel which is filled*/
+    voxelArray = bu_calloc(numVoxel[0] * numVoxel[1] * numVoxel[2], sizeof(float), "voxelArray");
 
     for(k = 0; k < numVoxel[0] * numVoxel[1] * numVoxel[2]; k++) {
 	voxelArray[k] = 0.0;
@@ -218,27 +220,31 @@ main(int argc, char **argv)
     yMin = (int)((rtip->mdl_min)[1]);
     zMin = (int)((rtip->mdl_min)[2]);
 
+    /* 1.0 / (raysPerVoxel + 1) has to be used multiple times in the following loops */
+    rayTraceDistance = 1.0 / (raysPerVoxel + 1);
+
+    /* start shooting */
     for (i = 0; i < numVoxel[2]; i++) {
 	for (j = 0; j < numVoxel[1]; j++) {
 	    RT_APPLICATION_INIT(&ap);
 	    ap.a_rt_i = rtip;
 	    ap.a_onehit = 0;
+	    VSET(ap.a_ray.r_dir, 1.0, 0.0, 0.0);
 
-	    fillDistances = voxelArray + i * numVoxel[1] + j ;
-	    voxelHits.fillDistances = fillDistances ;
+	    ap.a_hit = hit;
+	    ap.a_miss = miss;
+	    ap.a_uptr = &voxelHits;
+
+	    voxelHits.fillDistances = voxelArray + i * numVoxel[1] + j ;
 
 	    /* right now, rays are hit at the same point(no use, but have to see how to proceed) */
-	    for(rayNum = 0; rayNum < raysPerVoxel; rayNum++) {
+	    for(rayNum = 1; rayNum < raysPerVoxel + 1; rayNum++) {
+		for(k = 1; k < raysPerVoxel + 1; k++) {
 
-		/* ray is hit through midpoint of the unit sized voxels */
-		VSET(ap.a_ray.r_pt, (rtip->mdl_min)[0] - 1.0, yMin + (j + 0.5) * sizeVoxel[1], zMin + (i + 0.5) * sizeVoxel[2]);
-		VSET(ap.a_ray.r_dir, 1.0, 0.0, 0.0);
-
-		ap.a_hit = hit;
-		ap.a_miss = miss;
-		ap.a_uptr = &voxelHits;
-
-		rt_shootray(&ap);
+		    /* ray is hit through midpoint of the unit sized voxels */
+		    VSET(ap.a_ray.r_pt, (rtip->mdl_min)[0] - 1.0, yMin + (j + k * rayTraceDistance) * sizeVoxel[1], zMin + (i + rayNum * rayTraceDistance) * sizeVoxel[2]);
+		    rt_shootray(&ap);
+		}
 	   }
 	}
     }
@@ -255,7 +261,7 @@ main(int argc, char **argv)
 	if(i % (numVoxel[1] * numVoxel[2]) == 0) {
 	    fprintf(fp, "frame number %d is \n", i / (numVoxel[1] * numVoxel[2]));
 	}
-	if(voxelArray[i]/(raysPerVoxel * sizeVoxel[0]) >= threshold){
+	if(voxelArray[i]/(raysPerVoxel * raysPerVoxel * sizeVoxel[0]) >= threshold){
 	    fprintf(fp, "1");
 	} else {
 	    fprintf(fp, "0");
