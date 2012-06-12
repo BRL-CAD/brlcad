@@ -653,8 +653,8 @@ Type EXPresolve_op_logical( Expression e, Scope s ) {
 }
 
 Type EXPresolve_op_array_like( Expression e, Scope s ) {
-    Type op1type;
 
+    Type op1type;
     EXPresolve_op_default( e, s );
     op1type = e->e.op1->return_type;
 

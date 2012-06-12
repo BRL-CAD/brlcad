@@ -660,9 +660,9 @@ void ATTRprint_access_methods_get_head( const char * classnm, Variable a,
     strncpy( ctype, AccessType( t ), BUFSIZ );
 
     if( isReferenceType( class ) ) {
-	fprintf( file, "\nconst_%s \n%s::%s() const\n", ctype, classnm, funcnm );
+	fprintf( file, "\nconst_%s %s::%s() const ", ctype, classnm, funcnm );
     } else {
-	fprintf( file, "\n%s \n%s::%s() const\n", ctype, classnm, funcnm );
+	fprintf( file, "\n%s %s::%s() const ", ctype, classnm, funcnm );
     }
 
     return;
