@@ -12,10 +12,42 @@
 #include <sdai.h>
 #include <sstream>
 
+SDAI_String::SDAI_String( const char * str, int max ) {
+    content = std::string( str, max );
+}
+
+SDAI_String::SDAI_String( const std::string & s ) {
+    content = std::string( s );
+}
+
+SDAI_String::SDAI_String( const SDAI_String & s ) {
+    content = std::string( s.c_str() );
+}
+
+SDAI_String::~SDAI_String( void ) {
+}
+
 SDAI_String & SDAI_String::operator= ( const char * s ) {
-    std::string::operator= ( s );
+    content = std::string( s );
     return *this;
 }
+
+bool SDAI_String::operator== ( const char * s ) const {
+    return ( content == s );
+}
+
+void SDAI_String::clear( void ) {
+    content.clear();
+}
+
+bool SDAI_String::empty( void ) const {
+    return content.empty();
+}
+
+const char * SDAI_String::c_str( void ) const {
+    return content.c_str();
+}
+
 
 void SDAI_String::STEPwrite( ostream & out ) const {
     out << c_str();
@@ -46,7 +78,7 @@ Severity SDAI_String::STEPread( istream & in, ErrorDescriptor * err ) {
 
     // extract the string from the inputstream
     std::string s = GetLiteralStr( in, err );
-    append( s );
+    content += s;
 
     // retrieve current severity
     Severity sev = err -> severity();

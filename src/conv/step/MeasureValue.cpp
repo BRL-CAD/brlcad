@@ -140,7 +140,7 @@ MeasureValue::Load(STEPWrapper *sw,SDAI_Select *sse) {
     } else if (v->IsDescriptive_measure()) {
 	SdaiDescriptive_measure dm = *v;
 	type = DESCRIPTIVE_MEASURE;
-	svalue = dm;
+	svalue = dm.c_str();
     } else if (v->IsPositive_length_measure()) {
 	type = POSITIVE_LENGTH_MEASURE;
 	rvalue = (double)*v;

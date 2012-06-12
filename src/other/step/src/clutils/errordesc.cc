@@ -118,6 +118,9 @@ ErrorDescriptor::ErrorDescriptor( Severity s,  DebugLevel d ) : _severity( s ) {
     }
 }
 
+ErrorDescriptor::~ErrorDescriptor( void ) {
+}
+
 void ErrorDescriptor::UserMsg( const char * msg ) {
     _userMsg.assign( msg );
 }

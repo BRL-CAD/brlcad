@@ -13,21 +13,22 @@
 * and is not subject to copyright.
 */
 
-class SDAI_Binary : public std::string {
+class SCL_DAI_EXPORT SDAI_Binary {
+    private:
+        std::string content;
     public:
 
         //constructor(s) & destructor
-        SDAI_Binary ( const char * str = 0, int max = 0 )
-            : std::string( str, max ) { }
-
-        SDAI_Binary ( const std::string & s )   : std::string( s ) { }
-
-
-        ~SDAI_Binary ()  {  }
+        SDAI_Binary( const char * str = 0, int max = 0 );
+        SDAI_Binary( const std::string & s );
+        ~SDAI_Binary( void );
 
         //  operators
         SDAI_Binary  & operator= ( const char * s );
 
+        void clear( void );
+        bool empty( void ) const;
+        const char * c_str( void ) const;
         // format for STEP
         const char * asStr() const  {
             return c_str();

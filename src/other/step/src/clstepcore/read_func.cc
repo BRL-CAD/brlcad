@@ -562,7 +562,7 @@ Severity FindStartOfInstance( istream & in, std::string & inst ) {
             case '\'':  // get past the string
                 in.putback( c );
                 tmp.STEPread( in, &errs );
-                inst.append( tmp );
+                inst.append( tmp.c_str() );
                 break;
 
             case '\0':  // problem in input ?
@@ -593,7 +593,7 @@ Severity SkipInstance( istream & in, std::string & inst ) {
             case '\'':  // get past the string
                 in.putback( c );
                 tmp.STEPread( in, &errs );
-                inst.append( tmp );
+                inst.append( tmp.c_str() );
                 break;
 
             case '\0':  // problem in input ?

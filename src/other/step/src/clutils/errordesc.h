@@ -67,6 +67,7 @@ class SCL_UTILS_EXPORT ErrorDescriptor {
     public:
         ErrorDescriptor( Severity s    = SEVERITY_NULL,
                          DebugLevel d  = DEBUG_OFF );
+        ~ErrorDescriptor( void );
 
         void PrintContents( ostream & out = cout ) const;
 
