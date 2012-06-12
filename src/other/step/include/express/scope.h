@@ -82,7 +82,7 @@ struct Scope_ {
     char        type;       /* see above */
     ClientData  clientData; /* user may use this for any purpose */
     int     search_id;  /* key to avoid searching this scope twice */
-    Dictionary  symbol_table;
+    Dictionary      symbol_table,enum_table;
     struct Scope_ * superscope;
     union {
         /*      struct Constant *constant;*/

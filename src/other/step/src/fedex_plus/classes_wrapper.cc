@@ -201,23 +201,30 @@ void SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
     /* and print the enumerations */
     fprintf( files -> inc, "\n/*    **************  TYPES      */\n" );
     fprintf( files -> lib, "\n/*    **************  TYPES      */\n" );
-    SCOPEdo_types( scope, t, de )
-    // First check for one exception:  Say enumeration type B is defined
-    // to be a rename of enum A.  If A is in this schema but has not been
-    // processed yet, we must wait till it's processed first.  The reason
-    // is because B will basically be defined with a couple of typedefs to
-    // the classes which represent A.  (To simplify, we wait even if A is
-    // in another schema, so long as it's been processed.)
-    if( ( t->search_id == CANPROCESS )
-            && ( TYPEis_enumeration( t ) )
-            && ( ( i = TYPEget_ancestor( t ) ) != NULL )
-            && ( i->search_id >= CANPROCESS ) ) {
-        redefs = 1;
+    /* The following was `SCOPEdo_types( scope, t, de ) ... SCOPEod;`
+     * Modified Jan 2012 by MAP - moving enums to own dictionary */
+    if( scope->enum_table ) {
+        HASHlistinit_by_type(scope->enum_table,&de,OBJ_TYPE);
+        Type t;
+        while( 0 != ( t = (Type) DICTdo( &de ) ) ) {
+            // First check for one exception:  Say enumeration type B is defined
+            // to be a rename of enum A.  If A is in this schema but has not been
+            // processed yet, we must wait till it's processed first.  The reason
+            // is because B will basically be defined with a couple of typedefs to
+            // the classes which represent A.  (To simplify, we wait even if A is
+            // in another schema, so long as it's been processed.)
+            if( ( t->search_id == CANPROCESS )
+                    && ( TYPEis_enumeration( t ) )
+                    && ( ( i = TYPEget_ancestor( t ) ) != NULL )
+                    && ( i->search_id >= CANPROCESS ) ) {
+                redefs = 1;
+            }
+        }
     }
-    SCOPEod
 
     SCOPEdo_types( scope, t, de )
-    // Do the non-redefined enumerations:
+     /* NOTE the following comment seems to contradict the logic below it (... && !( TYPEis_enumeration( t ) && ...)
+     // Do the non-redefined enumerations:*/
     if( ( t->search_id == CANPROCESS )
             && !( TYPEis_enumeration( t ) && TYPEget_head( t ) ) ) {
         TYPEprint_descriptions( t, files, schema );
@@ -231,12 +238,18 @@ void SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
     if( redefs ) {
         // Here we process redefined enumerations.  See note, 2 loops ago.
         fprintf( files->inc, "//    ***** Redefined Enumerations:\n" );
-        SCOPEdo_types( scope, t, de )
-        if( t->search_id == CANPROCESS && TYPEis_enumeration( t ) ) {
-            TYPEprint_descriptions( t, files, schema );
-            t->search_id = PROCESSED;
+        /* The following was `SCOPEdo_types( scope, t, de ) ... SCOPEod;`
+        * Modified Jan 2012 by MAP - moving enums to own dictionary */
+        HASHlistinit_by_type(scope->enum_table,&de,OBJ_TYPE);
+        {
+            Type t;
+            while ( 0 != ( t = (Type) DICTdo( &de ) ) ) {
+                if( t->search_id == CANPROCESS && TYPEis_enumeration( t ) ) {
+                    TYPEprint_descriptions( t, files, schema );
+                    t->search_id = PROCESSED;
+                }
+            }
         }
-        SCOPEod;
     }
 
     /*  do the select definitions next, since they depend on the others  */

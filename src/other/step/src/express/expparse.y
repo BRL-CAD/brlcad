@@ -856,22 +856,23 @@ enumeration_type ::= TOK_ENUMERATION TOK_OF nested_id_list(A).
     if (!CURRENT_SCOPE->symbol_table) {
         CURRENT_SCOPE->symbol_table = DICTcreate(25);
     }
+    if (!PREVIOUS_SCOPE->enum_table) {
+        PREVIOUS_SCOPE->enum_table = DICTcreate(25);
+    }
+    LISTdo_links(A, id) {
+        tmp = (Symbol *)id->data;
+        id->data = (Generic)(x = EXPcreate(CURRENT_SCOPE));
+        x->symbol = *(tmp);
+        x->u.integer = ++value;
 
-    LISTdo_links(A, id) 
-
-    tmp = (Symbol *)id->data;
-    id->data = (Generic)(x = EXPcreate(CURRENT_SCOPE));
-    x->symbol = *(tmp);
-    x->u.integer = ++value;
-
-    /* define both in enum scope and scope of */
-    /* 1st visibility */
-    DICT_define(CURRENT_SCOPE->symbol_table, x->symbol.name,
-	(Generic)x, &x->symbol, OBJ_EXPRESSION);
-    DICTdefine(PREVIOUS_SCOPE->symbol_table, x->symbol.name,
-	(Generic)x, &x->symbol, OBJ_EXPRESSION);
-    SYMBOL_destroy(tmp);
-    LISTod;
+        /* define both in enum scope and scope of */
+        /* 1st visibility */
+        DICT_define(CURRENT_SCOPE->symbol_table, x->symbol.name,
+            (Generic)x, &x->symbol, OBJ_EXPRESSION);
+        DICTdefine(PREVIOUS_SCOPE->symbol_table, x->symbol.name,
+            (Generic)x, &x->symbol, OBJ_EXPRESSION);
+        SYMBOL_destroy(tmp);
+    } LISTod;
 }
 
 escape_statement(A) ::= TOK_ESCAPE semicolon.
