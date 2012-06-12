@@ -73,6 +73,8 @@
 #include "express/expr.h"
 #include "express/resolve.h"
 
+#include <assert.h>
+
 struct EXPop_entry EXPop_table[OP_LAST];
 
 Expression  LITERAL_E = EXPRESSION_NULL;
@@ -97,6 +99,7 @@ static Error ERROR_internal_unrecognized_op_in_EXPresolve;
 static Error ERROR_attribute_reference_on_aggregate;
 static Error ERROR_attribute_ref_from_nonentity;
 static Error ERROR_indexing_illegal;
+static Error ERROR_warn_indexing_mixed;
 static Error ERROR_enum_no_such_item;
 static Error ERROR_group_ref_no_such_entity;
 static Error ERROR_group_ref_unexpected_type;
@@ -203,6 +206,9 @@ void EXPinitialize( void ) {
     ERROR_indexing_illegal = ERRORcreate(
                                  "Indexing is only permitted on aggregates", SEVERITY_ERROR );
 
+    ERROR_warn_indexing_mixed = ERRORcreate( "Indexing upon a select (%s), with mixed base types (aggregates and "
+                                "non-aggregates) and/or different aggregation types.", SEVERITY_WARNING );
+
     ERROR_enum_no_such_item = ERRORcreate(
                                   "Enumeration type %s does not contain item %s", SEVERITY_ERROR );
 
@@ -220,6 +226,7 @@ void EXPinitialize( void ) {
 
     ERRORcreate_warning( "downcast", ERROR_implicit_downcast );
     ERRORcreate_warning( "downcast", ERROR_ambig_implicit_downcast );
+    ERRORcreate_warning( "indexing", ERROR_warn_indexing_mixed );
 
     EXPop_init();
 }
@@ -659,10 +666,54 @@ Type EXPresolve_op_array_like( Expression e, Scope s ) {
         return( Type_Runtime );
     } else if( op1type->u.type->body->type == generic_ ) {
         return( Type_Generic );
-    } else {
-        ERRORreport_with_symbol( ERROR_indexing_illegal, &e->symbol );
-        return( Type_Unknown );
+    } else if( TYPEis_select( op1type ) ) {
+        int numAggr = 0, numNonAggr = 0;
+        bool sameAggrType = true;
+        Type lasttype = 0;
+
+        /* FIXME Is it possible that the base type hasn't yet been resolved?
+         * If it is possible, we should signal that we need to come back later... but how? */
+        assert( op1type->symbol.resolved == 1 );
+
+        /* FIXME We should check for a not...or excluding non-aggregate types in the select, such as
+         * WR1: NOT('INDEX_ATTRIBUTE.COMMON_DATUM_LIST' IN TYPEOF(base)) OR (SELF\shape_aspect.of_shape = base[1]\shape_aspect.of_shape);
+         * (how?)
+         */
+
+        //count aggregates and non-aggregates, check aggregate types
+        LISTdo( op1type->u.type->body->list, item, Type ) {
+            if( TYPEis_aggregate( item ) ) {
+                numAggr++;
+                if( lasttype == TYPE_NULL ) {
+                    lasttype = item;
+                } else {
+                    if( lasttype->u.type->body->type != item->u.type->body->type ) {
+                        sameAggrType = false;
+                    }
+                }
+            } else {
+                numNonAggr++;
+            }
+        }
+        LISTod;
+
+        /* NOTE the following code returns the same data for every case that isn't an error.
+         * It needs to be simplified or extended, depending on whether it works or not. */
+        if( sameAggrType && ( numAggr != 0 ) && ( numNonAggr == 0 ) ) {
+            // All are the same aggregation type
+            return( lasttype->u.type->body->base );
+        } else if( numNonAggr == 0 ) {
+            // All aggregates, but different types
+            ERRORreport_with_symbol( ERROR_warn_indexing_mixed, &e->symbol, op1type->symbol.name );
+            return( lasttype->u.type->body->base ); // WARNING I'm assuming that any of the types is acceptable!!!
+        } else if( numAggr != 0 ) {
+            // One or more aggregates, one or more nonaggregates
+            ERRORreport_with_symbol( ERROR_warn_indexing_mixed, &e->symbol, op1type->symbol.name );
+            return( lasttype->u.type->body->base ); // WARNING I'm assuming that any of the types is acceptable!!!
+        }   // Else, all are nonaggregates. This is an error.
     }
+    ERRORreport_with_symbol( ERROR_indexing_illegal, &e->symbol );
+    return( Type_Unknown );
 }
 
 Type EXPresolve_op_entity_constructor( Expression e, Scope s ) {
