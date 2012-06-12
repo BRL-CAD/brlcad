@@ -298,8 +298,6 @@
     delete $_item1
     insert $i $_item2
 
-    .archer0 putString "Accordian::rename: i - $i, mCurrIndex - $saveCI"
-
     if {$i == $saveCI} {
 	toggleDisplay $_item2
     }
@@ -406,10 +404,14 @@
 	    set mCurrIndex $i
 
 	    grid rowconfigure $itk_interior $mCurrIndex -weight 1
+
+	    set state 1
+	} else {
+	    set state 0
 	}
 
 	foreach callback $mTogglePanelCallbacks {
-	    catch {$callback $_item}
+	    catch {$callback $_item $state}
 	}
 
 	return
@@ -422,15 +424,17 @@
 	grid rowconfigure $itk_interior $i -weight 1
 
 	set mCurrIndex $i
+	set state 1
     } else {
 	grid forget $itk_component($name\CS)
 	grid rowconfigure $itk_interior $i -weight 0
 
 	set mCurrIndex -1
+	set state 0
     }
 
     foreach callback $mTogglePanelCallbacks {
-	catch {$callback $_item}
+	catch {$callback $_item $state}
     }
 }
 
