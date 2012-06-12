@@ -1160,8 +1160,6 @@ namespace eval ArcherCore {
     trace add variable [::itcl::scope mViewAxesColor] write watchVar
     trace add variable [::itcl::scope mViewAxesLabelColor] write watchVar
 
-    trace add variable [::itcl::scope mFBBackgroundColor] write watchVar
-#    trace add variable [::itcl::scope mRtWizardEdgeColor] write watchVar
     trace add variable [::itcl::scope mDisplayFontSize] write watchVar
 
     eval itk_initialize $args
@@ -3437,9 +3435,13 @@ namespace eval ArcherCore {
     }
     }
 
-    if {$mSavedCenter != "" && $mTreeMode > $TREE_MODE_TREE} {
+    if {$mSavedCenter != "" && $mTreeMode > $TREE_MODE_TREE &&
+	($mColorObjects != "" || $mGhostObjects != "" || $mEdgeObjects != "")} {
 	$itk_component(ged) center $mSavedCenter
 	$itk_component(ged) size $mSavedSize
+    } else {
+	set mSavedCenter ""
+	set mSavedSize ""
     }
 
     $itk_component(ged) refresh_on
@@ -6443,12 +6445,6 @@ namespace eval ArcherCore {
     }
 
     switch -- $_name1 {
-	mFBBackgroundColor {
-	    $itk_component(rtcntrl) configure -color [cadwidgets::Ged::get_rgb_color $mFBBackgroundColor]
-	}
-	mRtWizardEdgeColor {
-	    $itk_component(rtcntrl) configure -overlay_fg_color [cadwidgets::Ged::get_rgb_color $mRtWizardEdgeColor]
-	}
 	mDisplayFontSize {
 	    $itk_component(ged) fontsize $mDisplayFontSize
 	}

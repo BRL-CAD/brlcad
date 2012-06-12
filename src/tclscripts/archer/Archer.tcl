@@ -938,25 +938,27 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::raytracePlus {} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
     $itk_component(primaryToolbar) itemconfigure raytrace \
 	-image $mImage_rtAbort \
 	-command "$itk_component(rtcntrl) abort"
 
+    $itk_component(rtcntrl) configure -fb_enabled 1
+
+    set wlist [$itk_component(ged) win_size]
+    set w [lindex $wlist 0]
+    set n [lindex $wlist 1]
+    set port [$itk_component(ged) listen 0]
+
+    set bcolor [cadwidgets::Ged::get_rgb_color $mFBBackgroundColor]
+
     if {$mTreeMode == $TREE_MODE_TREE} {
-	$itk_component(rtcntrl) raytracePlus
+	eval $itk_component(ged) rtwizard -C [list $bcolor] \
+	    -w $w -n $n -p $port -c $mColorObjects
     } else {
-	$itk_component(rtcntrl) configure -fb_enabled 1
-
-	if {![info exists itk_component(ged)]} {
-	    return
-	}
-
-	set wlist [$itk_component(ged) win_size]
-	set w [lindex $wlist 0]
-	set n [lindex $wlist 1]
-	set port [$itk_component(ged) listen 0]
-
-	set bcolor [cadwidgets::Ged::get_rgb_color $mFBBackgroundColor]
 	set ecolor [cadwidgets::Ged::get_rgb_color $mRtWizardEdgeColor]
 
 	if {$mRtWizardNonEdgeColor != ""} {
@@ -2529,7 +2531,7 @@ proc title_node_handler {node} {
 	"FB Background Color:" \
 	$mColorListNoTriple
 
-    buildComboBox $itk_component(generalF) \
+#    buildComboBox $itk_component(generalF) \
 	fboverlayColor \
 	fbocolor \
 	mRtWizardEdgeColorPref \
@@ -2668,9 +2670,9 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(fbbackgroundColorL) -column 0 -row $i -sticky ne
     grid $itk_component(fbbackgroundColorF) -column 1 -row $i -sticky ew
-    incr i
-    grid $itk_component(fboverlayColorL) -column 0 -row $i -sticky ne
-    grid $itk_component(fboverlayColorF) -column 1 -row $i -sticky ew
+#    incr i
+#    grid $itk_component(fboverlayColorL) -column 0 -row $i -sticky ne
+#    grid $itk_component(fboverlayColorF) -column 1 -row $i -sticky ew
     incr i
     grid $itk_component(fontsizeL) -column 0 -row $i -sticky e
     grid $itk_component(fontsizeF) -column 1 -row $i -sticky ew
@@ -3461,10 +3463,6 @@ proc title_node_handler {node} {
 	-state disabled
     $itk_component(${_prefix}filemenu) add separator
     $itk_component(${_prefix}filemenu) add command \
-	-label "Raytrace Control Panel..." \
-	-command [::itcl::code $this raytracePanel] \
-	-state disabled
-    $itk_component(${_prefix}filemenu) add command \
 	-label "Preferences..." \
 	-command [::itcl::code $this doPreferences]
     $itk_component(${_prefix}filemenu) add separator
@@ -3920,9 +3918,6 @@ proc title_node_handler {node} {
 	    }
 	    "Revert" {
 		set mStatusStr "Discard all edits waiting to be saved"
-	    }
-	    "Raytrace Control Panel..." {
-		set mStatusStr "Launch the raytrace control panel"
 	    }
 	    "Close" {
 		set mStatusStr "Close the current target description"
@@ -4801,8 +4796,6 @@ proc title_node_handler {node} {
 		-label "Save" \
 		-helpstr "Save target description"
 	    separator sep0
-	    command rt -label "Raytrace Control Panel..." \
-		-helpstr "Launch Ray Trace Panel"
 	    command pref \
 		-label "Preferences..." \
 		-helpstr "Set application preferences"
@@ -5461,8 +5454,6 @@ proc title_node_handler {node} {
 	    }
 
 	    foreach prefix $plist {
-		$itk_component(${prefix}filemenu) entryconfigure "Raytrace Control Panel..." -state normal
-
 		$itk_component(${prefix}displaymenu) entryconfigure "Standard Views" -state normal
 		$itk_component(${prefix}displaymenu) entryconfigure "Reset" -state normal
 		$itk_component(${prefix}displaymenu) entryconfigure "Autoview" -state normal
@@ -6202,6 +6193,13 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
 
     set parent $itk_component(objRtImageView)
     buildComboBox $parent \
+	fbbColor \
+	fbbcolor \
+	mFBBackgroundColor \
+	"FB Background Color:" \
+	$mColorListNoTriple
+
+    buildComboBox $parent \
 	edgeColor \
 	edgecolor \
 	mRtWizardEdgeColor \
@@ -6241,6 +6239,9 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
     set i 0
     grid $itk_component(ghostIntensityL) -column 0 -row $i -sticky e
     grid $itk_component(ghostIntensityS) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(fbbColorL) -column 0 -row $i -sticky e
+    grid $itk_component(fbbColorF) -column 1 -row $i -sticky ew
     incr i
     grid $itk_component(edgeColorL) -column 0 -row $i -sticky e
     grid $itk_component(edgeColorF) -column 1 -row $i -sticky ew
