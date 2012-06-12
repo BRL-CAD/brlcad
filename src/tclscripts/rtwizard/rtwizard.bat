@@ -29,8 +29,6 @@ SET RTWIZARD=%~dp0rtwizard
 
 START /B "" "%BWISH%" "%RTWIZARD%" %1
 
-EXIT
-
 REM Local Variables:
 REM mode: sh
 REM tab-width: 8
