@@ -377,6 +377,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_rtcheck {_pane args}
 	method pane_rtedge {_pane args}
 	method pane_rtweight {_pane args}
+	method pane_rtwizard {_pane args}
 	method pane_savekey {_pane args}
 	method pane_saveview {_pane args}
 	method pane_sca {_pane args}
@@ -465,6 +466,7 @@ package provide cadwidgets::Ged 1.0
 	method rtcheck {args}
 	method rtedge {args}
 	method rtweight {args}
+	method rtwizard {args}
 	method savekey {args}
 	method saveview {args}
 	method sca {args}
@@ -2243,6 +2245,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed rtweight $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_rtwizard {_pane args} {
+    eval $mGed rtwizard $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_savekey {_pane args} {
     eval $mGed savekey $itk_component($_pane) $args
 }
@@ -2626,6 +2632,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::rtweight {args} {
     eval $mGed rtweight $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::rtwizard {args} {
+    eval $mGed rtwizard $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::savekey {args} {
