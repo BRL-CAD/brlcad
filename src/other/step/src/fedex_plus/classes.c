@@ -2992,8 +2992,10 @@ void TYPEprint_typedefs( Type t, FILE * classes ) {
     }
 
     /* Print the extern statement: */
+#if !defined(__BORLAND__)
     strncpy( nm, TYPEtd_name( t ), BUFSIZ );
     fprintf( classes, "extern %s         *%s;\n", GetTypeDescriptorName( t ), nm );
+#endif
 }
 
 /** return 1 if it is a multidimensional aggregate at the level passed in
