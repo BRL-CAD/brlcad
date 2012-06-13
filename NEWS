@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-04-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* fixed a problem with rt writing pix files on Windows - Bob Parker
 * added Windows man page support (using html) to brlman - Cliff Yapp
 * added support for section numbers to brlman script - Cliff Yapp
 * added new manual page for existing asc2pix converter - Tom Browder
