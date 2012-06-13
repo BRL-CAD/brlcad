@@ -362,8 +362,6 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
     Function f;
     Procedure p;
     DictionaryEntry de;
-    char * tmpstr = 0;
-    size_t tmpstr_size = 0;
     /**********  create files based on name of schema   ***********/
     /*  return if failure           */
     /*  1.  header file             */
@@ -462,16 +460,8 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
         /* add global RULEs to Schema dictionary entry */
         DICTdo_type_init( schema->symbol_table, &de, OBJ_RULE );
         while( 0 != ( r = ( Rule )DICTdo( &de ) ) ) {
-            if( tmpstr_size < ( strlen( RULEto_string( r ) ) * 2 ) ) {
-                if( tmpstr != 0 ) {
-                    free( tmpstr );
-                }
-                tmpstr_size = strlen( RULEto_string( r ) ) * 2;
-                tmpstr = ( char * )malloc( sizeof( char ) * tmpstr_size );
-                tmpstr[0] = '\0';
-            }
-
-            fprintf( createall, "    str.clear();\n%s", format_for_std_stringout( RULEto_string( r ), tmpstr ) );
+            fprintf( createall, "    str.clear();\n" );
+            format_for_std_stringout( createall, RULEto_string( r ) );
             fprintf( createall, "    gr = new Global_rule(\"%s\",%s::schema, str );\n",
                      r->symbol.name, SCHEMAget_name( schema ) );
             fprintf( createall, "    %s::schema->AddGlobal_rule(gr);\n", SCHEMAget_name( schema ) );
@@ -481,37 +471,18 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
         /* add FUNCTIONs to Schema dictionary entry */
         DICTdo_type_init( schema->symbol_table, &de, OBJ_FUNCTION );
         while( 0 != ( f = ( Function )DICTdo( &de ) ) ) {
-            if( tmpstr_size < ( strlen( FUNCto_string( f ) ) * 2 ) ) {
-                if( tmpstr != 0 ) {
-                    free( tmpstr );
-                }
-                tmpstr_size = strlen( FUNCto_string( f ) ) * 2;
-                tmpstr = ( char * )malloc( sizeof( char ) * tmpstr_size );
-            }
-            fprintf( createall, "    str.clear();\n%s",
-                     format_for_std_stringout( FUNCto_string( f ), tmpstr ));
-            fprintf( createall,
-                     "%s::schema->AddFunction( str );\n",
-                     SCHEMAget_name( schema ) );
-            fprintf( createall, "/*\n%s\n*/\n", FUNCto_string( f ) );
+            fprintf( createall, "    str.clear();\n" );
+            format_for_std_stringout( createall, FUNCto_string( f ) );
+            fprintf( createall, "%s::schema->AddFunction( str );\n", SCHEMAget_name( schema ) );
         }
 
         /* add PROCEDUREs to Schema dictionary entry */
         DICTdo_type_init( schema->symbol_table, &de, OBJ_PROCEDURE );
         while( 0 != ( p = ( Procedure )DICTdo( &de ) ) ) {
-            if( tmpstr_size < ( strlen( PROCto_string( p ) ) * 2 ) ) {
-                if( tmpstr != 0 ) {
-                    free( tmpstr );
-                }
-                tmpstr_size = strlen( PROCto_string( p ) ) * 2;
-                tmpstr = ( char * )malloc( sizeof( char ) * tmpstr_size );
-            }
-            fprintf( createall, "    str.clear();\n%s", format_for_std_stringout( PROCto_string( p ), tmpstr ) );
+            fprintf( createall, "    str.clear();\n" );
+            format_for_std_stringout( createall, PROCto_string( p ) );
             fprintf( createall, "    %s::schema->AddProcedure( str );\n", SCHEMAget_name( schema ) );
             fprintf( createall, "/*\n%s\n*/\n", PROCto_string( p ) );
-        }
-        if( tmpstr_size > 0 ) {
-            free( tmpstr );
         }
 
         fprintf( files->classes, "\n// Schema:  %s", schnm );
