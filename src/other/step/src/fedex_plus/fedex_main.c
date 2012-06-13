@@ -72,6 +72,7 @@
  * Added * to typedefs.  Replaced warning kludges with ERRORoption.
  */
 
+#include <scl_memmgr.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "../express/express.h"

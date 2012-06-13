@@ -14,6 +14,7 @@
  *****************************************************************************/
 
 #include "complexSupport.h"
+#include <scl_memmgr.h>
 
 MatchType AndOrList::matchORs( EntNode * ents )
 /*

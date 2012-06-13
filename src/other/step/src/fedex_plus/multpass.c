@@ -31,6 +31,7 @@
  * Date:        04/09/97                                                     *
  *****************************************************************************/
 
+#include <scl_memmgr.h>
 #include <stdlib.h>
 #include "classes.h"
 
@@ -181,7 +182,7 @@ static void initializeMarks( Express express )
     DICTdo_type_init( express->symbol_table, &de_sch, OBJ_SCHEMA );
     while( ( schema = ( Scope )DICTdo( &de_sch ) ) != 0 ) {
         schema->search_id = UNPROCESSED;
-        schema->clientData = ( int * )malloc( sizeof( int ) );
+        schema->clientData = ( int * )scl_malloc( sizeof( int ) );
         *( int * )schema->clientData = 0;
         SCOPEdo_entities( schema, ent, de_ent )
         ent->search_id = NOTKNOWN;

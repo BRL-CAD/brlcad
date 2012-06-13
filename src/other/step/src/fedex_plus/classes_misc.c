@@ -1,4 +1,5 @@
 #define CLASSES_MISC_C
+#include <scl_memmgr.h>
 #include <stdlib.h>
 #include "classes.h"
 /*******************************************************************
@@ -683,7 +684,7 @@ ENTITYput_superclass( Entity entity ) {
             LISTod;
         }
 
-        tag = ( EntityTag ) malloc( sizeof( struct EntityTag_ ) );
+        tag = ( EntityTag ) scl_malloc( sizeof( struct EntityTag_ ) );
         tag -> superclass = super;
         TYPEput_clientData( ENTITYget_type( entity ), ( ClientData ) tag );
         return super;
@@ -751,10 +752,10 @@ VARis_type_shifter( Variable a ) {
     temp = EXPRto_string( VARget_name( a ) );
     if( ! strncmp( StrToLower( temp ), "self\\", 5 ) ) {
         /*    a is a type shifter */
-        free( temp );
+        scl_free( temp );
         return a;
     }
-    free( temp );
+    scl_free( temp );
     return 0;
 }
 

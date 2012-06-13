@@ -11,6 +11,7 @@
  *****************************************************************************/
 
 #include "complexSupport.h"
+#include <scl_memmgr.h>
 
 ComplexList::~ComplexList()
 /*

@@ -22,6 +22,7 @@ extern int multiple_inheritance;
 ********    The functions in this file generate C++ code for representing
 ********    EXPRESS SELECT types.
 **************************************************************************/
+#include <scl_memmgr.h>
 #include <stdlib.h>
 #include "classes.h"
 
@@ -464,7 +465,7 @@ non_unique_types_string( const Type type ) {
     non_unique_types_vector( type, tvec );
 
     /* build type string from vector */
-    typestr = ( char * )malloc( BUFSIZ );
+    typestr = ( char * )scl_malloc( BUFSIZ );
     typestr[0] = '\0';
     strcat( typestr, ( char * )"(" );
     for( i = 0; i <= tnumber; i++ ) {
@@ -1981,7 +1982,7 @@ TYPEselect_print( Type t, FILES * files, Schema schema ) {
     }
 
     /*  mark the type as being processed  */
-    tag = ( SelectTag ) malloc( sizeof( struct SelectTag_ ) );
+    tag = ( SelectTag ) scl_malloc( sizeof( struct SelectTag_ ) );
     tag -> started = 1;
     tag -> complete = 0;
     TYPEput_clientData( t, ( ClientData ) tag );

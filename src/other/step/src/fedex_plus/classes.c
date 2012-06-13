@@ -25,8 +25,9 @@ N350 ( August 31, 1993 ) of ISO 10303 TC184/SC4/WG7.
 /* this is used to add new dictionary calls */
 /* #define NEWDICT */
 
-#include <assert.h>
+#include <scl_memmgr.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "classes.h"
 
 int isAggregateType( const Type t );
@@ -445,7 +446,7 @@ char * generate_attribute_name( Variable a, char * out ) {
         }
     }
     *q = '\0';
-    free( temp );
+    scl_free( temp );
     return out;
 }
 
@@ -503,7 +504,7 @@ char * generate_dict_attr_name( Variable a, char * out ) {
     }
     *q = '\0';
 
-    free( temp );
+    scl_free( temp );
     return out;
 }
 
@@ -596,7 +597,7 @@ char * TYPEget_express_type( const Type t ) {
 
         /*  this will declare extra memory when aggregate is > 1D  */
 
-        permval = ( char * )malloc( strlen( retval ) * sizeof( char ) + 1 );
+        permval = ( char * )scl_malloc( strlen( retval ) * sizeof( char ) + 1 );
         strcpy( permval, retval );
         return permval;
 
@@ -2048,7 +2049,7 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
             format_for_std_stringout( file, tmp );
             fprintf( file, "\n      str.append( \")\" );\n" );
             fprintf( file, "        %s::%s%s->AddSupertype_Stmt( str );", schema_name, ENT_PREFIX, entity_name );
-            free( tmp );
+            scl_free( tmp );
         } else {
             fprintf( file, "        %s::%s%s->AddSupertype_Stmt( \"ABSTRACT SUPERTYPE\" );\n",
                                                                 schema_name, ENT_PREFIX, entity_name );
@@ -2059,7 +2060,7 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
             tmp = SUBTYPEto_string( entity->u.entity->subtype_expression );
             format_for_std_stringout( file, tmp );
             fprintf( file, "\n      str.append( \")\" );\n" );
-            free( tmp );
+            scl_free( tmp );
             fprintf( file, "        %s::%s%s->AddSupertype_Stmt( str );", schema_name, ENT_PREFIX, entity_name );
         }
     }
@@ -2211,15 +2212,15 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
 
     if( VARis_derived( v ) && v->initializer ) {
         tmp = EXPRto_string( v->initializer );
-        tmp2 = ( char * )malloc( sizeof( char ) * ( strlen( tmp ) + BUFSIZ ) );
+        tmp2 = ( char * )scl_malloc( sizeof( char ) * ( strlen( tmp ) + BUFSIZ ) );
         fprintf( file, "        %s::%s%d%s%s->initializer_(\"%s\");\n",
                  schema_name, ATTR_PREFIX, attr_count,
                  ( VARis_derived( v ) ? "D" :
                    ( VARis_type_shifter( v ) ? "R" :
                      ( VARget_inverse( v ) ? "I" : "" ) ) ),
                  attrnm, format_for_stringout( tmp, tmp2 ) );
-        free( tmp );
-        free( tmp2 );
+        scl_free( tmp );
+        scl_free( tmp2 );
     }
     if( VARget_inverse( v ) ) {
         fprintf( file, "        %s::%s%d%s%s->inverted_attr_id_(\"%s\");\n",
@@ -2416,11 +2417,11 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
 
         if( whereRule_formatted_size == 0 ) {
             whereRule_formatted_size = 3 * BUFSIZ;
-            whereRule_formatted = ( char * )malloc( sizeof( char ) * whereRule_formatted_size );
+            whereRule_formatted = ( char * )scl_malloc( sizeof( char ) * whereRule_formatted_size );
         } else if( ( strlen( whereRule ) + 300 ) > whereRule_formatted_size ) {
-            free( whereRule_formatted );
+            scl_free( whereRule_formatted );
             whereRule_formatted_size = strlen( whereRule ) + BUFSIZ;
-            whereRule_formatted = ( char * )malloc( sizeof( char ) * whereRule_formatted_size );
+            whereRule_formatted = ( char * )scl_malloc( sizeof( char ) * whereRule_formatted_size );
         }
         whereRule_formatted[0] = '\0';
         if( w->label ) {
@@ -2494,7 +2495,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
         fprintf( files->create, "        %s::%s%s->_where_rules->Append(wr);\n",
                  SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
 
-        free( whereRule );
+        scl_free( whereRule );
         ptr2 = whereRule = 0;
         LISTod
     }
@@ -2507,7 +2508,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
                  SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
 
         if( whereRule_formatted_size == 0 ) {
-            uniqRule_formatted = ( char * )malloc( sizeof( char ) * 2 * BUFSIZ );
+            uniqRule_formatted = ( char * )scl_malloc( sizeof( char ) * 2 * BUFSIZ );
             whereRule_formatted = uniqRule_formatted;
         } else {
             uniqRule_formatted = whereRule_formatted;
@@ -2544,7 +2545,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
     }
 
     if( whereRule_formatted_size > 0 ) {
-        free( whereRule_formatted );
+        scl_free( whereRule_formatted );
     }
 
     n = ENTITYget_classname( entity );
@@ -2781,7 +2782,7 @@ void Type_Description( const Type, char * );
  * return it in static buffer
  */
 char * TypeDescription( const Type t ) {
-    static char buf[4000];
+    static char buf[5000];
 
     buf[0] = '\0';
 
@@ -3482,11 +3483,11 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
 
         if( whereRule_formatted_size == 0 ) {
             whereRule_formatted_size = 3 * BUFSIZ;
-            whereRule_formatted = ( char * )malloc( sizeof( char ) * whereRule_formatted_size );
+            whereRule_formatted = ( char * )scl_malloc( sizeof( char ) * whereRule_formatted_size );
         } else if( ( strlen( whereRule ) + 300 ) > whereRule_formatted_size ) {
-            free( whereRule_formatted );
+            scl_free( whereRule_formatted );
             whereRule_formatted_size = strlen( whereRule ) + BUFSIZ;
-            whereRule_formatted = ( char * )malloc( sizeof( char ) * whereRule_formatted_size );
+            whereRule_formatted = ( char * )scl_malloc( sizeof( char ) * whereRule_formatted_size );
         }
         whereRule_formatted[0] = '\0';
         if( w->label ) {
@@ -3544,10 +3545,10 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
         fprintf( create, "        %s->_where_rules->Append(wr);\n",
                  TYPEtd_name( type ) );
 
-        free( whereRule );
+        scl_free( whereRule );
         ptr2 = whereRule = 0;
         LISTod
-        free( whereRule_formatted );
+        scl_free( whereRule_formatted );
     }
 }
 

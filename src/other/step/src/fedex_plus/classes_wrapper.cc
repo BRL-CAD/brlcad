@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "complexSupport.h"
+#include <scl_memmgr.h>
 
 /*******************************************************************
 ** FedEx parser output module for generating C++  class definitions
