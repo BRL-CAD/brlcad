@@ -134,14 +134,12 @@ if {[info exists argv2]} {
    set possible_incorrect_g_name 0
    set residualArgs {}
    foreach item $argv2 {
-     if {[file extension $item] == ".g"} {
-	 if {![info exists ::RtWizard::wizard_state(dbFile)]} {
-	    if {[file exists $item]} {
-	      set ::RtWizard::wizard_state(dbFile) $item
-	    } else {
-	      set possible_incorrect_g_name $item
-	    }
-	 }
+     if {[file extension $item] == ".g" && ![info exists ::RtWizard::wizard_state(dbFile)]} {
+	if {[file exists $item]} {
+	  set ::RtWizard::wizard_state(dbFile) $item
+	} else {
+	  set possible_incorrect_g_name $item
+	}
      } else {
        lappend residualArgs $item
      }
