@@ -55,7 +55,7 @@ lex_getone(int *used, struct bu_vls *rtstr)
             bu_lex_reading_comment = 0;
         }
         /* skip leading blanks */
-        while (*cp && isspace(*cp)) cp++;
+        while (*cp && isspace((int)(*cp))) cp++;
         /* is this a comment? '#' to end of line is */
         if (!*cp || *cp == '#') {
             return 0;
@@ -85,7 +85,7 @@ lex_getone(int *used, struct bu_vls *rtstr)
 	     * We have not seen anything to make this NOT
 	     * a number.
 	     */
-	    if (isdigit(tc)) {
+	    if (isdigit((int)tc)) {
 		if (number == 5 || number == 6) number = 7;
 		if (number == 3) number = 4;
 		if (number == 1) number = 2;
@@ -115,7 +115,7 @@ lex_getone(int *used, struct bu_vls *rtstr)
 	    if (number == 3) break;
 	    number = 0;
 	}
-	if (!isalnum(tc) && tc != '.' && tc != '_') break;
+	if (!isalnum((int)tc) && tc != '.' && tc != '_') break;
     }
     if (number == 6) --cp;	/* subtract off the + or - */
     if (number == 3) --cp;  /* subtract off the . */
@@ -166,7 +166,7 @@ bu_lex(
     /*
      * Decide if this unit is a symbol, number or identifier.
      */
-    if (isdigit(*unit)) {
+    if (isdigit((int)(*unit))) {
 	/*
 	 * Humm, this could be a number.
 	 * octal -- 0[0-7]*
@@ -194,7 +194,7 @@ bu_lex(
 	     */
 	    cp=unit+1;
 	    if (*cp == 'x' || *cp == 'X') {
-		for (;*cp && isxdigit(*cp);cp++);
+		for (;*cp && isxdigit((int)(*cp));cp++);
 		if (!*cp) {
 		    token->type = BU_LEX_INT;
 		    sscanf(unit, "%x", (unsigned int *)&token->t_int.value);
@@ -207,7 +207,7 @@ bu_lex(
 	 * This could be a decimal number, a double or an identifier.
 	 * dec   -- [0-9][0-9]*
 	 */
-	for (cp=unit; *cp && isdigit(*cp); cp++);
+	for (cp=unit; *cp && isdigit((int)(*cp)); cp++);
 	if (!*cp) {
 	    token->type = BU_LEX_INT;
 	    sscanf(unit, "%d", &token->t_int.value);
@@ -222,10 +222,10 @@ bu_lex(
 	 * *cp should be a '.'
 	 */
 	if (*cp == '.') {
-	    for (cp++;*cp &&isdigit(*cp);cp++);
+	    for (cp++;*cp &&isdigit((int)(*cp));cp++);
 	    if (*cp == 'e' || *cp == 'E') cp++;
 	    if (*cp == '+' || *cp == '-') cp++;
-	    for (;*cp &&isdigit(*cp);cp++);
+	    for (;*cp &&isdigit((int)(*cp));cp++);
 	    if (!*cp) {
 		token->type = BU_LEX_DOUBLE;
 		sscanf(unit, "%lg", &token->t_dbl.value);

@@ -39,7 +39,7 @@ bu_basename(const char *str)
     /* skip the filesystem disk/drive name if we're on a DOS-capable
      * platform that uses '\' for paths, e.g., C:\ -> \
      */
-    if (BU_DIR_SEPARATOR == '\\' && isalpha(str[0]) && str[1] == ':') {
+    if (BU_DIR_SEPARATOR == '\\' && isalpha((int)(str[0])) && str[1] == ':') {
 	str += 2;
     }
 

@@ -48,7 +48,7 @@ bu_argv_from_string(char *argv[], size_t lim, char *lp)
     }
 
     /* skip leading whitespace */
-    while (*lp != '\0' && isspace(*lp))
+    while (*lp != '\0' && isspace((int)(*lp)))
 	lp++;
 
     if (*lp == '\0') {
@@ -109,7 +109,7 @@ bu_argv_from_string(char *argv[], size_t lim, char *lp)
 		*lp++ = '\0';
 
 	    /* skip leading whitespace */
-	    while (*lp != '\0' && isspace(*lp)) {
+	    while (*lp != '\0' && isspace((int)(*lp))) {
 		/* null out spaces */
 		*lp = '\0';
 		lp++;
@@ -122,7 +122,7 @@ bu_argv_from_string(char *argv[], size_t lim, char *lp)
 	escaped = 0;
 
 	/* skip over current word */
-	if (quoted || !isspace(*lp))
+	if (quoted || !isspace((int)(*lp)))
 	    continue;
 
 	skip = 0;
@@ -130,7 +130,7 @@ bu_argv_from_string(char *argv[], size_t lim, char *lp)
 	/* terminate current word, skip space until we find the start
 	 * of the next word nulling out the spaces as we go along.
 	 */
-	while (*(lp+skip) != '\0' && isspace(*(lp+skip))) {
+	while (*(lp+skip) != '\0' && isspace((int)(*(lp+skip)))) {
 	    lp[skip] = '\0';
 	    skip++;
 	}

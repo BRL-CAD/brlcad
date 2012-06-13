@@ -31,7 +31,7 @@ bu_str_isprint(const char *cp)
     if (cp == NULL || *cp == '\0')
 	return 0;
 
-    while (*cp != '\0' && isprint(*cp))
+    while (*cp != '\0' && isprint((int)(*cp)))
 	++cp;
 
     if (*cp == '\0')
