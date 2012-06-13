@@ -378,7 +378,19 @@ if {[info exists ::use_gui]} {
       set ::RtWizard::wizard_state(framebuffer_type) /dev/mem
       set fbtype_specified 0
    } else {
-      set fbtype_specified 1
+      # If we got an integer number for framebuffer_type, that is actually a port number - 
+      # handle accordingly
+      if {[string is integer -strict $::RtWizard::wizard_state(framebuffer_type)]} {
+         if {![info exists ::RtWizard::wizard_state(framebuffer_port)]} {
+            set ::RtWizard::wizard_state(framebuffer_port) $::RtWizard::wizard_state(framebuffer_type)
+	    set ::RtWizard::wizard_state(framebuffer_type) /dev/mem
+         } else {
+            puts "Warning - numerical port $::RtWizard::wizard_state(framebuffer_type) suppled as argument to framebuffer type, but port already specified."
+	    set ::RtWizard::wizard_state(framebuffer_type) /dev/mem
+         }
+      } else {
+         set fbtype_specified 1
+      }
    }
 
    # We need a port number for the fbserv.
