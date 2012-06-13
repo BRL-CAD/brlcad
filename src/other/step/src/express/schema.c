@@ -45,6 +45,7 @@
  * prettied up interface to print_objects_when_running
  */
 
+#include <scl_memmgr.h>
 #include "express/expbasic.h"
 #include "express/schema.h"
 #include "express/object.h"

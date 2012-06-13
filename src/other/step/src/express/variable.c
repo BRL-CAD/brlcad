@@ -83,6 +83,7 @@
  *
  */
 
+#include <scl_memmgr.h>
 #include <stdlib.h>
 #include "express/variable.h"
 #include "express/object.h"

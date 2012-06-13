@@ -1,6 +1,7 @@
 include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${SCL_SOURCE_DIR}/src/base
 )
 
 find_package(LEMON)
@@ -42,5 +43,5 @@ SET(EXPRESS_PRIVATE_HDRS
     stack.h
 )
 
-SCL_ADDLIB(express "${EXPRESS_SOURCES}" "")
+SCL_ADDLIB(express "${EXPRESS_SOURCES}" "base")
 SCL_ADDEXEC(fedex "${FEDEX_SOURCES}" express)

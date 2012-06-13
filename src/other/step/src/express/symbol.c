@@ -32,6 +32,7 @@
  * Initial revision
  */
 
+#include <scl_memmgr.h>
 #include "express/symbol.h"
 
 struct freelist_head SYMBOL_fl;

@@ -76,6 +76,7 @@ char * FEDEXversion( void ) {
 }
 
 #include <scl_cf.h>
+#include <scl_memmgr.h>
 #include <scl_export.h>
 #include <stdlib.h>
 #include <stdio.h>
