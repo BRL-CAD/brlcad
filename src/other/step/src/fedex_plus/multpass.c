@@ -71,7 +71,8 @@ void print_schemas_separate( Express express, void * complexCol, FILES * files )
     /* First set all marks we'll be using to UNPROCESSED/NOTKNOWN: */
     initializeMarks( express );
 
-    fprintf( files->create, "    Uniqueness_rule_ptr ur;\n    Where_rule_ptr wr;\n    Global_rule_ptr gr;\n" );
+    fprintf( files->create, "    Uniqueness_rule_ptr ur;\n    Where_rule_ptr wr;\n    Global_rule_ptr gr;\n" 
+                            "    std::string str; //for large strings such as functions or global rules\n");
     while( !complete ) {
         complete = TRUE;
         DICTdo_type_init( express->symbol_table, &de, OBJ_SCHEMA );

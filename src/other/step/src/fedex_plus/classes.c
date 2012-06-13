@@ -102,6 +102,37 @@ char * format_for_stringout( char * orig_buf, char * return_buf ) {
     return return_buf;
 }
 
+/**
+ * Like format_for_stringout, but splits the static string up
+ * into numerous small ones that are appended to a std::string named
+ * 'str'. It is assumed that this string already exists and is empty.
+ */
+char * format_for_std_stringout( char * orig_buf, char * return_buf ) {
+    char * optr  = orig_buf;
+    char * rptr  = return_buf;
+    char * s_end = "\\n\" );\n";
+    char * s_begin = "    str.append( \"";
+    strcpy( rptr, s_begin );
+    rptr += strlen( rptr );
+    while( *optr ) {
+        if( *optr == '\n' ) {
+            strcpy( rptr, s_end );
+            strcat( rptr, s_begin );
+            rptr += strlen( rptr ) - 1;
+        } else if( *optr == '\\' ) {
+            *rptr = '\\';
+            rptr++;
+            *rptr = '\\';
+        } else {
+            *rptr = *optr;
+        }
+        rptr++;
+        optr++;
+    }
+    strcpy( rptr, s_end );
+    return return_buf;
+}
+
 void USEREFout( Schema schema, Dictionary refdict, Linked_List reflist, char * type, FILE * file ) {
     Dictionary dict;
     DictionaryEntry de;
@@ -2014,28 +2045,30 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
 #endif
 
     if( ENTITYget_abstract( entity ) ) {
-        fprintf( file, "        %s::%s%s->AddSupertype_Stmt(\"",
-                 schema_name, ENT_PREFIX, entity_name );
         if( entity->u.entity->subtype_expression ) {
-            fprintf( file, "ABSTRACT SUPERTYPE OF (" );
+
+            fprintf( file, "        str.clear();\n        str.append( \"ABSTRACT SUPERTYPE OF ( \" );\n" );
+
             tmp = SUBTYPEto_string( entity->u.entity->subtype_expression );
             tmp2 = ( char * )malloc( sizeof( char ) * ( strlen( tmp ) + BUFSIZ ) );
-            fprintf( file, "%s)\");\n", format_for_stringout( tmp, tmp2 ) );
+            fprintf( file, "%s\n      str.append( \")\" );\n", format_for_std_stringout( tmp, tmp2 ) );
+            fprintf( file, "        %s::%s%s->AddSupertype_Stmt( str.c_str() );", schema_name, ENT_PREFIX, entity_name );
             free( tmp );
             free( tmp2 );
         } else {
-            fprintf( file, "ABSTRACT SUPERTYPE\");\n" );
+            fprintf( file, "        %s::%s%s->AddSupertype_Stmt( \"ABSTRACT SUPERTYPE\" );\n",
+                                                                schema_name, ENT_PREFIX, entity_name );
         }
     } else {
         if( entity->u.entity->subtype_expression ) {
-            fprintf( file, "        %s::%s%s->AddSupertype_Stmt(\"",
-                     schema_name, ENT_PREFIX, entity_name );
-            fprintf( file, "SUPERTYPE OF (" );
+            fprintf( file, "        str.clear();\n        str.append( \"SUPERTYPE OF ( \" );\n" );
             tmp = SUBTYPEto_string( entity->u.entity->subtype_expression );
             tmp2 = ( char * )malloc( sizeof( char ) * ( strlen( tmp ) + BUFSIZ ) );
-            fprintf( file, "%s)\");\n", format_for_stringout( tmp, tmp2 ) );
+            fprintf( file, "%s\n      str.append( \")\" );\n", format_for_std_stringout( tmp, tmp2 ) );
             free( tmp );
             free( tmp2 );
+            fprintf( file, "        %s::%s%s->AddSupertype_Stmt( str.c_str() );", schema_name, ENT_PREFIX, entity_name );
+
         }
     }
     LISTdo( ENTITYget_supertypes( entity ), sup, Entity )

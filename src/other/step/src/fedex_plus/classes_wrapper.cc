@@ -444,9 +444,9 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
                  "#include \"schema.h\"\n"
                  "#endif\n" );
 #endif
-        fprintf( initfile, "#include <Registry.h>\n" );
+        fprintf( initfile, "#include <Registry.h>\n#include <string>\n" );
 
-        fprintf( initfile, "\nvoid %sInit (Registry& reg) {\n", schnm );
+        fprintf( initfile, "\nvoid %sInit (Registry& reg) {\n    std::string str;\n", schnm );
 
         fprintf( createall, "// Schema:  %s\n", schnm );
         fprintf( createall, "    %s::schema = new Schema(\"%s\");\n",
@@ -471,11 +471,10 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
                 tmpstr[0] = '\0';
             }
 
+            fprintf( createall, "    str.clear();\n%s", format_for_std_stringout( RULEto_string( r ), tmpstr ) );
             fprintf( createall,
-                     "    gr = new Global_rule(\"%s\",%s::schema,\"%s\");\n",
-                     r->symbol.name,
-                     SCHEMAget_name( schema ),
-                     format_for_stringout( RULEto_string( r ), tmpstr ) );
+                         "    gr = new Global_rule(\"%s\",%s::schema, str.c_str() );\n",
+                         r->symbol.name, SCHEMAget_name( schema ) );
             fprintf( createall, "    %s::schema->AddGlobal_rule(gr);\n", SCHEMAget_name( schema ) );
             fprintf( createall, "/*\n%s\n*/\n", RULEto_string( r ) );
         }
@@ -490,10 +489,11 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
                 tmpstr_size = strlen( FUNCto_string( f ) ) * 2;
                 tmpstr = ( char * )malloc( sizeof( char ) * tmpstr_size );
             }
-
+            fprintf( createall, "    str.clear();\n%s",
+                     format_for_std_stringout( FUNCto_string( f ), tmpstr ));
             fprintf( createall,
-                     "#ifndef MSWIN\n    %s::schema->AddFunction(\"%s\");\n#endif\n",
-                     SCHEMAget_name( schema ), format_for_stringout( FUNCto_string( f ), tmpstr ) );
+                     "%s::schema->AddFunction( str.c_str() );\n",
+                     SCHEMAget_name( schema ) );
             fprintf( createall, "/*\n%s\n*/\n", FUNCto_string( f ) );
         }
 
@@ -507,9 +507,8 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
                 tmpstr_size = strlen( PROCto_string( p ) ) * 2;
                 tmpstr = ( char * )malloc( sizeof( char ) * tmpstr_size );
             }
-            fprintf( createall,
-                     "#ifndef MSWIN\n    %s::schema->AddProcedure(\"%s\");\n#endif\n",
-                     SCHEMAget_name( schema ), format_for_stringout( PROCto_string( p ), tmpstr ) );
+            fprintf( createall, "    str.clear();\n%s", format_for_std_stringout( PROCto_string( p ), tmpstr ) );
+            fprintf( createall, "    %s::schema->AddProcedure( str.c_str() );\n", SCHEMAget_name( schema ) );
             fprintf( createall, "/*\n%s\n*/\n", PROCto_string( p ) );
         }
         if( tmpstr_size > 0 ) {
