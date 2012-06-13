@@ -51,8 +51,8 @@ file, or a
 geometric properties file.  The following information about each region
 of the mged description may be obtained from firpass when creating a
 PRISM ready file.
-.nf
 
+.nf
 	number (arbitrarily assigned by rt_shootray plus one)
 	name (25 right most characters of region name)
 	type (set to 1)
@@ -67,15 +67,15 @@ PRISM ready file.
 	shape factor (set to 0)
 	hub radius (set to 0)
 	bearing friction constant (set to 0)
-
 .fi
+
 The variables set to 0 or 1 need to be changed by the user for special
 cases.
 .sp
 The following information about each region is obtained when creating
 a generic thermal data file.
-.nf
 
+.nf
 	number (arbitrarily assigned by rt_shootray plus one)
 	name (25 right most characters of region name)
 	volume (m**3)
@@ -89,12 +89,12 @@ a generic thermal data file.
 	external surface area
 	surface normal unit vector (averaged over free surface of region)
 	absorptivity
-
 .fi
+
 The following information about each region is obtained when creating
 a geometric properties file.
-.nf
 
+.nf
 	number (arbitrarily assigned by rt_shootray plus one)
 	name (25 right most characters of region name)
 	centroid
@@ -112,11 +112,12 @@ a geometric properties file.
 	thermal conductivity (W/mK)
 	material
 	all adjacent regions (up to 20)
-
 .fi
+
 .SH EXAMPLE
 The following is an example from an interactive session.
 .sp
+
 .nf
 $ firpass test.veh.g vehicle air
 Write output to standard out (0) or a file (1) or not at all (2)?  2
@@ -182,6 +183,7 @@ SUMMARY OF FILES USED & CREATED
 
 Freeing memory.
 .fi
+
 .SH CHANGES SINCE BRL-CAD RELEASE 4.0
 1.  Region number and name file is created for use with shapefact and
 showtherm.

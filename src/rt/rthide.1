@@ -143,7 +143,9 @@ which is most useful when used with
 This section shows the ordinary usage of \fIrthide\fR.  For example,
 
 .nf
-	\fIrthide -a# -e# -s32 model.g all.g > file.pl\fR
+.RS
+rthide -a# -e# -s32 model.g all.g > file.pl
+.RE
 .fi
 
 results in a 32 by 32 UNIXplot file of the named model at the specified
@@ -152,7 +154,9 @@ of the plot based on surface curvature.  In order to minimize
 this cross-hatching, an angle can be specified:
 
 .nf
-	 \fIrthide -a# -e# -s32 -A89.0  model.g all.g > file.pl\fR
+.RS
+rthide -a# -e# -s32 -A89.0  model.g all.g > file.pl
+.RE
 .fi
 
 elliminates cross-hatching due to curvature.  However,
@@ -163,14 +167,25 @@ The plotfile resulting from an \fIrthide\fR run can be viewed directly
 via \fIpl-sgi\fR and may be rotated with \fBplrot\fR at the user's option:
 
 .nf
-	\fIpl-sgi hide.pl\fR  or \fIplrot -a# -e# -g hide.pl | pl-sgi\fR
+.RS
+pl-sgi hide.pl
+.RE
+.fi
+
+or
+
+.nf
+.RS
+plrot -a# -e# -g hide.pl | pl-sgi
+.RE
 .fi
 
 or it can be overlayed onto a solid model in \fImged\fR:
 
 .nf
-	\fImged>\fR
-	\fIoverlay hide.pl\fR
+.RS
+mged> overlay hide.pl
+.RE
 .fi
 
 This technique can be used to position and plot \fIrthide\fR output.
@@ -178,6 +193,7 @@ This technique can be used to position and plot \fIrthide\fR output.
 The output of \fBrthide\fR can be overlaid on top of a \fBrt\fR
 shaded image, for ``edge enhancement''.  Here is a complete example,
 which assumes that FB_FILE points to a valid framebuffer:
+
 .nf
 	AZ=35
 	EL=25
@@ -186,6 +202,7 @@ which assumes that FB_FILE points to a valid framebuffer:
 	rthide -A89.9 -s256 -a$AZ -e$EL -o rthide.pl moss.g all.g 2> rthide.log
 	eval `rtregis rthide.log rt.log` < rthide.pl | pl-fb -o -s512
 .fi
+
 .SH "SEE ALSO"
 cell-fb(1),
 mged(1), pl-sgi(1), plrot(1), rt(1), rtray(1), rtregis(1), rtscale(1),

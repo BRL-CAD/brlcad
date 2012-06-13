@@ -78,7 +78,9 @@ may be given to identify the view or the model.
 This section shows the ordinary usage of \fIrtscale\fR.  For example:
 
 .nf
-	\fIrtscale 30 mm 10 rt.log > scale.pl\fR
+.RS
+rtscale 30 mm 10 rt.log > scale.pl
+.RE
 .fi
 
 This will result in a 30 mm scale with ten tickmarks being plotted in the
@@ -86,7 +88,9 @@ lower left corner of the scale.pl image.  Alternately, a descriptive
 string may be given to identify the view or the model:
 
 .nf
-	\fIrtscale 30 mm 10 rt.log "UH-60 a90 e0" > scale.pl\fR
+.RS
+rtscale 30 mm 10 rt.log "UH-60 a90 e0" > scale.pl
+.RE
 .fi
 
 Note that a descriptive string longer than 28 characters will be cut
@@ -98,7 +102,9 @@ which they are concatenated is important: the scale is always concatenated
 over top of the model plot:
 
 .nf
-	\fIcat scale.pl model.pl >> model.w.scale.pl\fR
+.RS
+cat scale.pl model.pl >> model.w.scale.pl
+.RE
 .fi
 
 The resulting UNIX-Plot of the geometry with a scale added to it can be
@@ -107,12 +113,19 @@ rotated to the desired azimuth and elevation with \fBplrot\fR and be
 stored in a file or view with \fBpl-sgi\fR or \fBpl-fb\fR:
 
 .nf
-	\fIplrot -a# -e# -g model.w.scale.pl | pl-sgi\fR
-
-				or
-
-	\fIplrot -a# -e# -g model.w.scale.pl | pl-fb \fR
+.RS
+plrot -a# -e# -g model.w.scale.pl | pl-sgi
+.RE
 .fi
+
+or
+
+.nf
+.RS
+plrot -a# -e# -g model.w.scale.pl | pl-fb
+.RE
+.fi
+
 .SH "SEE ALSO"
 mged(1),
 plrot(1), pl-sgi(1), rt(1), rthide(1),

@@ -66,35 +66,41 @@ Both floating point and integer arguments can be used.  On
 integer arguments, if leading zeros are specified, they will
 be preserver on output.  This is useful for generating sequences
 of file names which are numbered with leading zeros.
-.SH EXAMPLE
-\fI
+.SH EXAMPLES
+
 .nf
+.RS
 for i in `loop 10 30 5`
 do
   echo $i
 done
+.RE
 .fi
-\fP
+
 Will display the values 10, 15, 20, 25, and 30.
 .P
-\fI
+
 .nf
+.RS
 for i in `loop 008 005`
 do
   echo $i
 done
+.RE
 .fi
-\fP
+
 Will display the values 008, 007, 006, 005.
 .P
-\fI
+
 .nf
+.RS
 for i in `loop 0.1 2.9 0.5`
 do
   echo $i
 done
+.RE
 .fi
-\fP
+
 Will display the values 0.1, 0.6, 1.1, 1.6, 2.1, 2.6.
 .SH BUGS
 This program just scratches the surface.

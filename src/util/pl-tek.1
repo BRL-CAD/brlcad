@@ -67,8 +67,11 @@ but is very verbose.
 To send a Unix-plot to an Imagen printer, this command can be used:
 
 .nf
-	\fIpl-tek < file.pl | ipr -Ltektronix -q im101\fR
+.RS
+pl-tek < file.pl | ipr -Ltektronix -q im101
+.RE
 .fi
+
 .P
 All UnixPlot line types are supported.
 .P

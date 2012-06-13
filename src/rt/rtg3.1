@@ -184,7 +184,8 @@ option.
 The resulting plot file can be displayed with \fIpl-fb\fR or \fIpl-sgi\fR.
 .SH "FORMAT"
 The general layout of the output format is:
-.LP
+.sp 1
+.RS
 Overall header line (one per run)
 .LP
 View header line (one per view)
@@ -192,7 +193,8 @@ View header line (one per view)
 Ray (shotline) header line (one per ray)
 .LP
 Component line (one for each three components in this ray)
-.LP
+.RE
+
 The
 .B GIFT-3
 shotline format has a different convention for the location of
@@ -228,16 +230,18 @@ This section will acquaint the user with the ordinary usage of \fIrtg3\fR.
 A GIFT-3 output file is produced by giving the command:
 
 .nf
-.ce
-\fIrtg3 -s32 model.g all.g > file\fR
+.RS
+rtg3 -s32 model.g all.g > file
+.RE
 .fi
 
 This will a 32 by 32 ray file of the named model.  If a bounding-box
 plot file is to be made as part of producing visual output, use
 
 .nf
-.ce
- \fIrtg3 -s32 -x80000000 model.g\fR
+.RS
+rtg3 -s32 -x80000000 model.g
+.RE
 .fi
 
 The bounding boxes for the objects in the database specified will
@@ -245,8 +249,9 @@ automatically be put into a file called \fIrtrpp.plot\fR.  Now,
 to compute the color rays use
 
 .nf
-.ce
- \fIrtg3 -s32 -X80000000 model.g\fR
+.RS
+Irtg3 -s32 -X80000000 model.g
+.RE
 .fi
 
 The results will be automatically stored in \fIrtg3.pl\fR.  The rays
@@ -257,8 +262,9 @@ The two plot files can now be combined into a single picture and
 displayed:
 
 .nf
-.ce
- \fIcat rtrpp.plot rtg3.pl | pl-sgi\fR
+.RS
+cat rtrpp.plot rtg3.pl | pl-sgi
+.RE
 .fi
 
 .SH "OVERLAP REPORTING"
@@ -273,12 +279,11 @@ alerts the user that more overlaps exist, but that they are too numerous to
 list individually.  The general overlap message takes the following form:
 
 .nf
-.ce
- \fI"OVERLAP1: reg=region_name isol=solid_name"\fR
-.ce
- \fI"OVERLAP2: reg=region_name isol=solid_name"\fR
-.ce
- \fI"OVERLAP depth #mm at (x, y, z) sx# sy# lvl#"\fR
+.RS
+OVERLAP1: reg=region_name isol=solid_name
+OVERLAP2: reg=region_name isol=solid_name
+OVERLAP depth #mm at (x, y, z) sx# sy# lvl#
+.RE
 .fi
 
 This means that OVERLAP1 and OVERLAP2 share a common space (depth) of

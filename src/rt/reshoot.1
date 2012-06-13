@@ -61,24 +61,26 @@ program to produce input to
 Consider the file p.awk with the following contents:
 .P
 .in +5
+
 .nf
 /Pnt/ { START=index($0,"(") + 1
        STR=substr($0, START, index($0,")") - START)
        gsub(  ", "  , "," , STR)
-       printf "Pnt=%s\n",STR
+       printf "Pnt=%s\\n",STR
        }
 /Dir/ { START=index($0,"(") + 1
        STR=substr($0, START, index($0,")") - START)
        gsub(  ", "  , "," , STR)
-       printf "Dir=%s\n",STR
+       printf "Dir=%s\\n",STR
        }
 /PT/  { PIN=$3; POUT=$5 }
 /InHIT/ { INHIT=$2 }
 /OutHIT/ { OUTHIT=$2 }
-/Region/ { printf "\tregion=%s in=%s in%s out=%s out%s\n",
+/Region/ { printf "\tregion=%s in=%s in%s out=%s out%s\\n",
 	$2,PIN,INHIT,POUT,OUTHIT
 	}
 .fi
+
 .P
 Given this
 .I awk
@@ -93,6 +95,7 @@ An example of the input file format for
 is:
 .P
 .in +5
+
 .nf
 Pnt=0,0,1
 Dir=0,0,-1
@@ -105,6 +108,7 @@ Dir=0,0,-1
 	region=r2.r in=p3.s indist=10018.8 out=p4.s outdist=10019.8
 	\fI... (arbitrary many region lines)\fR
 .fi
+
 .P
 There can be an arbitrary number of rays specified in the file.
 There must not be whitespace between the values of Pnt and Dir.

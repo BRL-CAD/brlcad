@@ -120,23 +120,35 @@ and file storage formats are used.
 .PP
 .SH EXAMPLES
 The command
-.br
-.I pixcut\ \-S256\ file1.pix\ \>file2.pix
-.br
+
+.nf
+.RS
+pixcut -S256 file1.pix > file2.pix
+.RE
+.fi
+
 will extract the lower left quadrent of "file1.pix" and place it in
 file2.pix.
 .PP
 The command
-.br
-.I pixcut\ \-S256\ \-x128\ \-y128\ file1.pix\ \>file2.pix
-.br
+
+.nf
+.RS
+pixcut -S256 -x128 -y128 file1.pix >file2.pix
+.RE
+.fi
+
 will extract the center of the 512x512 input file (file1.pix) and place
 it in file2.pix.
 .PP
 The command
-.br
-.I pixcut\ \-x\ \-\1\ file1.pix\ \>file2.pix
-.br
+
+.nf
+.RS
+pixcut -x -1 file1.pix >file2.pix
+.RE
+.fi
+
 will shift file1.pix one pixel to the right.  If a raytrace was done with
 default parameters, the background (rays which do not intersect the model)
 are set to 0/0/1.  Since
@@ -144,13 +156,15 @@ are set to 0/0/1.  Since
 will fill with 0/0/1 the net result is that the model image is shifted.
 .PP
 The command
-.br
-.I pixcut\ \-h\ \-x128\ \-y256\ background.pix\ |
-.br
-.I pixmatte\ \-w512\ \-e\ image.pix\ \=0/0/1\ \-\ image.pix\ |
-.br
-.I pixpaste\ \-h\ \-x128\ \-y256\ background.pix\ \-\ \>new.pix
-.br
+
+.nf
+.RS
+pixcut -h -x128 -y256 background.pix |
+pixmatte -w512 -e image.pix =0/0/1 - image.pix |
+pixpaste -h -x128 -y256 background.pix - >new.pix
+.RE
+.fi
+
 will extract the center 512x512 section of the 1024x1024 background image
 composite that section with a foreground image and the place the new
 composite image into the center of the background image.
