@@ -24,10 +24,10 @@ REM REM REM
 SETLOCAL
 
 SET PATH=%~dp0;%PATH%
-SET BWISH=%~dp0bwish
+SET BTCLSH=%~dp0btclsh
 SET RTWIZARD=%~dp0rtwizard
 
-START /B "" "%BWISH%" "%RTWIZARD%" %1
+START /B "" "%BTCLSH%" "%RTWIZARD%" %*
 
 REM Local Variables:
 REM mode: sh
