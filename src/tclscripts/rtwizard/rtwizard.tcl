@@ -506,16 +506,20 @@ if {[info exists ::use_gui]} {
 
    }
 
-   if {$::RtWizard::wizard_state(framebuffer_type) == "/dev/mem"} {
-       if {$tcl_platform(platform) == "windows"} {
-	   set kill_cmd [auto_execok taskkill]
-       } else {
-	   set kill_cmd [auto_execok kill]
-       }
 
-       if {$kill_cmd != "" && [info exists fbserv_pid]} {
-	   exec $kill_cmd $fbserv_pid
-       }
+   if {$::RtWizard::wizard_state(framebuffer_type) == "/dev/mem"} {
+       if {[info exists fbserv_pid]} {
+          if {$tcl_platform(platform) == "windows"} {
+	      set kill_cmd [auto_execok taskkill]
+              set kill_args [list $kill_cmd "/F" "/PID" $fbserv_pid]
+          } else {
+	      set kill_cmd [auto_execok kill]
+              set kill_args [list $kill_cmd $fbserv_pid]
+          }
+          if {$kill_cmd != ""} {
+	      exec {*}$kill_args
+          }
+      }
    }
 }
 
