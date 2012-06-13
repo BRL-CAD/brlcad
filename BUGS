@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* metaball tessellation enters either an infinite loop or an absurdly
+  long tessellation process - observed on Linux 64 bit sytem - quick 
+  test:
+
+  rm -f metaball.g && mged -c metaball.g "make m.s metaball; facetize m.bot m.s" 
+
 * corruption/crash issue rendering terra.g without terra.dsp,
   possibly/probably parallel-related in libbn/noise.c's
   bn_noise_turb() function.  gdb eventually catches a segfault in
