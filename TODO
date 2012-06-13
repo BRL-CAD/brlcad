@@ -86,6 +86,24 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* investigate why Eric Raymond's doclifter
+  (http://www.catb.org/~esr/doclifter/)is failing on these man page
+  source files:
+
+    ./src/anim/anim_sort.1
+    ./src/canon/canonize.1
+    ./src/util/pixrot.1
+    ./src/tab/tabinterp.1
+    ./src/tab/tabsub.1
+    ./src/anim/anim_time.1
+    ./src/libbn/libplot3.3
+    ./src/libbu/htond.3
+    ./src/libbu/redblack.3
+    ./src/libcursor/libcursor.3
+    ./src/liborle/liborle.3
+    ./src/librt/librt.3
+    ./src/libwdb/libwdb.3
+
 * update mged to not call wdb_init_obj and wdb_create_cmd, trace down
   other vestiges of wdb_obj for removal
 
