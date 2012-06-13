@@ -288,8 +288,8 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     *vp++ = bu_vls_addr(&eye_vls);
 
     if (gedp->ged_gvp->gv_perspective > 0) {
-	*vp++ = "-perspective";
-	(void)sprintf(pstring, "-p%g", gedp->ged_gvp->gv_perspective);
+	*vp++ = "--perspective";
+	(void)sprintf(pstring, "%g", gedp->ged_gvp->gv_perspective);
 	*vp++ = pstring;
     }
 
