@@ -259,7 +259,7 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
 #ifdef _WIN32
-	snprintf(rt, 256, "\"%s/rtwizard\"", bin);
+	snprintf(rt, 256, "\"%s/rtwizard.bat\"", bin);
 #else
 	snprintf(rt, 256, "%s/rtwizard", bin);
 #endif
