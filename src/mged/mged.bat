@@ -25,10 +25,6 @@ SETLOCAL
 SET PATH=%~dp0;%PATH%
 SET MGED=%~dp0mged
 
-IF "%1"=="-g" (
-    START /B "" "%MGED%" %2
-) ELSE (
-    START /B "" "%MGED%" %1
-)
+START /B "" "%MGED%" %*
 
 EXIT
