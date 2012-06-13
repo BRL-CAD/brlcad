@@ -15,6 +15,9 @@
 #include <scl_export.h>
 #include <sdai.h>
 
+#include <vector>
+#include <string>
+
 typedef  SDAI_Application_instance * ( * Creator )();
 
 enum AttrType_Enum {
@@ -29,7 +32,6 @@ enum AttrType_Enum {
 #include <baseType.h>
 #include <dictdefs.h>
 #include <Str.h>
-#include <scl_char_str_list.h>
 
 
 // defined and created in Registry.inline.cc
@@ -521,7 +523,7 @@ class SCL_CORE_EXPORT Global_rule : public Dictionary_instance {
         std::string _rule_text; // non-SDAI
 
         Global_rule();
-        Global_rule( const char * n, Schema_ptr parent_sch, const char * rt );
+        Global_rule( const char * n, Schema_ptr parent_sch, const std::string & rt );
         Global_rule( Global_rule & ); // not fully implemented
         virtual ~Global_rule();
 
@@ -664,8 +666,8 @@ class SCL_CORE_EXPORT Schema : public Dictionary_instance {
         // non-SDAI lists
         Interface_spec__set_var _use_interface_list; // list of USE interfaces
         Interface_spec__set_var _ref_interface_list; // list of REFERENCE interfaces
-        scl_char_str__list_var _function_list; // of EXPRESS functions
-        scl_char_str__list_var _procedure_list; // of EXPRESS procedures
+        std::vector< std::string > _function_list; // of EXPRESS functions
+        std::vector< std::string > _procedure_list; // of EXPRESS procedures
 
         Global_rule__set_var _global_rules;
 
@@ -699,11 +701,11 @@ class SCL_CORE_EXPORT Schema : public Dictionary_instance {
             return _ref_interface_list;
         }
 
-        scl_char_str__list_var function_list_() {
+        std::vector< std::string > function_list_() {
             return _function_list;
         }
 
-        void AddFunction( const char * f );
+        void AddFunction( const std::string & f );
 
         Global_rule__set_var global_rules_() { // const
             return _global_rules;
@@ -713,11 +715,11 @@ class SCL_CORE_EXPORT Schema : public Dictionary_instance {
 
         void global_rules_( Global_rule__set_var & grs ); // not implemented
 
-        scl_char_str__list_var procedure_list_() {
+        std::vector< std::string > procedure_list_() {
             return _procedure_list;
         }
 
-        void AddProcedure( const char * p );
+        void AddProcedure( const std::string & p );
 
         EntityDescLinkNode * AddEntity( EntityDescriptor * ed ) {
             return _entList.AddNode( ed );
@@ -1554,7 +1556,7 @@ class SCL_CORE_EXPORT EntityDescriptor  :    public TypeDescriptor  {
         void AddSubtype( EntityDescriptor * ed ) {
             _subtypes.AddNode( ed );
         }
-        void AddSupertype_Stmt( const char * s ) {
+        void AddSupertype_Stmt( const std::string & s ) {
             _supertype_stmt = s;
         }
         const char * Supertype_Stmt() {

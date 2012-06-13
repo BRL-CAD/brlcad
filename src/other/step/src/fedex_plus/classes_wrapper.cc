@@ -472,9 +472,8 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
             }
 
             fprintf( createall, "    str.clear();\n%s", format_for_std_stringout( RULEto_string( r ), tmpstr ) );
-            fprintf( createall,
-                         "    gr = new Global_rule(\"%s\",%s::schema, str.c_str() );\n",
-                         r->symbol.name, SCHEMAget_name( schema ) );
+            fprintf( createall, "    gr = new Global_rule(\"%s\",%s::schema, str );\n",
+                     r->symbol.name, SCHEMAget_name( schema ) );
             fprintf( createall, "    %s::schema->AddGlobal_rule(gr);\n", SCHEMAget_name( schema ) );
             fprintf( createall, "/*\n%s\n*/\n", RULEto_string( r ) );
         }
@@ -492,7 +491,7 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
             fprintf( createall, "    str.clear();\n%s",
                      format_for_std_stringout( FUNCto_string( f ), tmpstr ));
             fprintf( createall,
-                     "%s::schema->AddFunction( str.c_str() );\n",
+                     "%s::schema->AddFunction( str );\n",
                      SCHEMAget_name( schema ) );
             fprintf( createall, "/*\n%s\n*/\n", FUNCto_string( f ) );
         }
@@ -508,7 +507,7 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
                 tmpstr = ( char * )malloc( sizeof( char ) * tmpstr_size );
             }
             fprintf( createall, "    str.clear();\n%s", format_for_std_stringout( PROCto_string( p ), tmpstr ) );
-            fprintf( createall, "    %s::schema->AddProcedure( str.c_str() );\n", SCHEMAget_name( schema ) );
+            fprintf( createall, "    %s::schema->AddProcedure( str );\n", SCHEMAget_name( schema ) );
             fprintf( createall, "/*\n%s\n*/\n", PROCto_string( p ) );
         }
         if( tmpstr_size > 0 ) {

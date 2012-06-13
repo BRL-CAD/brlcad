@@ -320,11 +320,8 @@ Interface_spec::~Interface_spec() {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void Schema::AddFunction( const char * f ) {
-    if( _function_list == 0 ) {
-        _function_list = new scl_char_str__list;
-    }
-    _function_list->Append( ( char * )f );
+void Schema::AddFunction( const std::string & f ) {
+    _function_list.push_back( f );
 }
 
 void Schema::AddGlobal_rule( Global_rule_ptr gr ) {
@@ -338,11 +335,8 @@ void Schema::AddGlobal_rule( Global_rule_ptr gr ) {
 void Schema::global_rules_( Global_rule__set_var & grs ) {
 }
 
-void Schema::AddProcedure( const char * p ) {
-    if( _procedure_list == 0 ) {
-        _procedure_list = new scl_char_str__list;
-    }
-    _procedure_list->Append( ( char * )p );
+void Schema::AddProcedure( const std::string & p ) {
+    _procedure_list.push_back( p );
 }
 
 /// the whole schema
@@ -367,18 +361,18 @@ void Schema::GenerateExpress( ostream & out ) const {
             out << endl << ( *_global_rules )[i]->rule_text_() << endl;
         }
     }
-    if( _function_list != 0 ) {
+    if( !_function_list.empty() ) {
         out << "(* *************FUNCTIONS************* *)" << endl;
-        count = _function_list->Count();
+        count = _function_list.size();
         for( i = 0; i <  count; i++ ) {
-            out << endl << ( *_function_list )[i] << endl;
+            out << endl << _function_list[i] << endl;
         }
     }
-    if( _procedure_list != 0 ) {
+    if( !_procedure_list.empty() ) {
         out << "(* *************PROCEDURES************* *)" << endl;
-        count = _procedure_list->Count();
+        count = _procedure_list.size();
         for( i = 0; i <  count; i++ ) {
-            out << endl << ( *_procedure_list )[i] << endl;
+            out << endl << _procedure_list[i] << endl;
         }
     }
     out << endl << "END_SCHEMA;" << endl;
@@ -1220,7 +1214,7 @@ Global_rule::Global_rule()
     : _entities( 0 ), _where_rules( 0 ), _parent_schema( 0 ) {
 }
 
-Global_rule::Global_rule( const char * n, Schema_ptr parent_sch, const char * rt )
+Global_rule::Global_rule( const char * n, Schema_ptr parent_sch, const std::string & rt )
     : _name( n ), _entities( 0 ), _where_rules( 0 ), _parent_schema( parent_sch ),
       _rule_text( rt ) {
 }

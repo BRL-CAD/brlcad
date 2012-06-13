@@ -2052,7 +2052,7 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
             tmp = SUBTYPEto_string( entity->u.entity->subtype_expression );
             tmp2 = ( char * )malloc( sizeof( char ) * ( strlen( tmp ) + BUFSIZ ) );
             fprintf( file, "%s\n      str.append( \")\" );\n", format_for_std_stringout( tmp, tmp2 ) );
-            fprintf( file, "        %s::%s%s->AddSupertype_Stmt( str.c_str() );", schema_name, ENT_PREFIX, entity_name );
+            fprintf( file, "        %s::%s%s->AddSupertype_Stmt( str );", schema_name, ENT_PREFIX, entity_name );
             free( tmp );
             free( tmp2 );
         } else {
@@ -2067,7 +2067,7 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
             fprintf( file, "%s\n      str.append( \")\" );\n", format_for_std_stringout( tmp, tmp2 ) );
             free( tmp );
             free( tmp2 );
-            fprintf( file, "        %s::%s%s->AddSupertype_Stmt( str.c_str() );", schema_name, ENT_PREFIX, entity_name );
+            fprintf( file, "        %s::%s%s->AddSupertype_Stmt( str );", schema_name, ENT_PREFIX, entity_name );
 
         }
     }
