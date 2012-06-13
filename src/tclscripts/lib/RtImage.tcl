@@ -240,14 +240,14 @@ proc rtimage {_dbfile
 	}
 
 	if {[llength $occlude_objects]} {
-	    set coMode "-c {set om=$_occmode} -c {set oo=\\\"$occlude_objects\\\"}"
+	    set coMode "-c {set om=$_occmode} -c {set oo=$occlude_objects}"
 	    set bgMode [list set bg=[lindex $_necolor 0],[lindex $_necolor 1],[lindex $_necolor 2]]
 	} else {
 	    set coMode "-c {set ov=1}"
 	    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
 	}
 
-	set cmd [concat [file join $binpath rtedge] -w $_w -n $_n \
+	set cmd [concat [list [file join $binpath rtedge]] -w $_w -n $_n \
 		     -F $_port \
 		     -V $ar \
 		     -R \
@@ -259,7 +259,7 @@ proc rtimage {_dbfile
 		     -c [list [list viewsize $_viewsize]] \
 		     -c [list [eval list orientation $_orientation]] \
 		     -c [list [eval list eye_pt $_eye_pt]] \
-				   $_dbfile]
+		     [list $_dbfile]]
 
 	foreach obj $_edge_objects {
 	    lappend cmd $obj
