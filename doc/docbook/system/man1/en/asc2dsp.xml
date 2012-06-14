@@ -1,0 +1,66 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="rt1">
+  <refmeta>
+    <refentrytitle>ASC2DSP</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
+  
+  <refnamediv xml:id="name">
+    <refname>asc2dsp</refname>
+    <refpurpose>
+      convert an ASCII dsp file to the dsp binary format
+    </refpurpose>
+  </refnamediv>
+  
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>rt</command>    
+      <arg choice="plain" rep="norepeat"><replaceable>file.asc</replaceable></arg>
+      <arg choice="plain" rep="norepeat"><replaceable>file.dsp</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  
+  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+    
+    <para>
+      <emphasis remap="I">Asc2dsp</emphasis> converts ASCII (decimal
+      integer) cell (point) files to the binary form of a file in
+      BRL-CAD's dsp format.  Pixels are defined by
+      whitespace-delimited, unsigned decimal integers in the range 0
+      to 2^16-1 (65535).  The output file is in dsp binary format (one
+      unsigned short int per cell (point).
+    </para>
+
+    <para>
+      The user must ensure that the input file is valid as far as width
+      x length = number of cells (points).
+    </para>
+
+  </refsection>
+  
+  <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+    <para>
+      <citerefentry><refentrytitle>dsp</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
+    </para>
+  </refsection>
+  
+  <refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
+  <para>Error conditions include invalid input characters or an input
+  value greater than 65535.
+  Descriptive messages are printed on stderr.</para>
+  </refsection>
+  
+  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  
+  <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+  <para>This software is Copyright (c) 2012-2012 United States Government as
+  represented by the U.S. Army Research Laboratory. All rights reserved.</para>
+  </refsection>
+
+  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <para>Reports of bugs or problems should be submitted via electronic
+  mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.</para>
+  </refsection>
+</refentry>

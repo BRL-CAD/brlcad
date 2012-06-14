@@ -25,6 +25,7 @@ if ONLY_BENCHMARK
 SUBDIRS = .
 
 bin_PROGRAMS = \
+        asc2dsp \
 	asc2g \
 	asc2pix \
 	g2asc \
@@ -47,6 +48,7 @@ DIST_SUBDIRS = \
 bin_PROGRAMS = \
 	3dm-g \
 	asc-nmg \
+        asc2dsp \
 	asc2g \
 	asc2pix \
 	bot-bldxf \
@@ -120,6 +122,9 @@ endif
 	${WDB} \
 	${WDB_LIBS} \
 	${OPENNURBS}
+
+asc2dsp_SOURCES = asc/asc2dsp.c
+asc2dsp_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
 
 asc2g_SOURCES = asc/asc2g.c
 asc2g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
@@ -444,6 +449,7 @@ else !ONLY_BENCHMARK
 
 FAST_OBJECTS = \
 	$(3dm_g_OBJECTS) \
+	$(asc2dsp_OBJECTS) \
 	$(asc2g_OBJECTS) \
 	$(asc2pix_OBJECTS) \
 	$(asc_nmg_OBJECTS) \
