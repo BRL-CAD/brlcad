@@ -125,6 +125,7 @@ endif
 
 asc2dsp_SOURCES = asc/asc2dsp.c
 asc2dsp_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
+asc2dsp_LDADD = ${BU}
 
 asc2g_SOURCES = asc/asc2g.c
 asc2g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
