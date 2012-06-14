@@ -129,6 +129,7 @@ CMAKEFILES(
   dsp/dsp-3-6.asc
   dsp/dsp-3-7.asc
   dsp/dsp-3-8.asc
+  dsp/dsp-common.sh
   dsp/run-dsp-case-set-0.sh
   dsp/run-dsp-case-set-1.sh
   dsp/run-dsp-case-set-2.sh
