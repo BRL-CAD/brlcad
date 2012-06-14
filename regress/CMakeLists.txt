@@ -207,6 +207,7 @@ set(regress_outfiles
   comgeom.t-v5.g
   core
   density_table.txt
+  dsp.pix
   dsp-2-1.bw
   dsp-2-1.dsp
   dsp-2-1.g
