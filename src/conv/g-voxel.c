@@ -33,8 +33,8 @@
  */
 
 struct rayInfo {
-    float sizeVoxel[3];
-    float *fillDistances;
+    fastf_t sizeVoxel[3];
+    fastf_t *fillDistances;
 };
 
 
@@ -54,7 +54,7 @@ static int
 hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs))
 {
     int voxelNumIn, voxelNumOut, j = 0, numVoxel[3];
-    float hitDistIn, hitDistOut, sizeVoxel[3], *fillDistances;
+    fastf_t hitDistIn, hitDistOut, sizeVoxel[3], *fillDistances;
 
     struct partition *pp;
     struct rayInfo *voxelHits;
@@ -93,13 +93,13 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 	hitInp = pp->pt_inhit;
 	hitOutp = pp->pt_outhit;
 
-	hitDistIn = hitInp->hit_dist;
-	hitDistOut = hitOutp->hit_dist;
+	hitDistIn = hitInp->hit_dist - 1.0;
+	hitDistOut = hitOutp->hit_dist - 1.0;
 
-	voxelNumIn = (int) (hitDistIn - 1.0) / sizeVoxel[0];
-	voxelNumOut = (int) (hitDistOut - 1.0) / sizeVoxel[0];
+	voxelNumIn = ((int) hitDistIn / sizeVoxel[0]);
+	voxelNumOut = ((int) hitDistOut / sizeVoxel[0]);
 
-	if((hitDistOut - 1.0) / sizeVoxel[0] - floor((hitDistOut - 1.0) / sizeVoxel[0]) <= 0.0) {
+	if((hitDistOut / sizeVoxel[0]) - floor(hitDistOut / sizeVoxel[0]) <= FLT_EPSILON) {
 	    voxelNumOut -= 1;
 	}
 
@@ -112,17 +112,17 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 	 */
 	if (voxelNumIn == voxelNumOut) {
 
-	    fillDistances[voxelNumIn * numVoxel[1] * numVoxel[2]] +=  hitDistOut - hitDistIn;
+	    fillDistances[voxelNumIn] +=  hitDistOut - hitDistIn;
 
 	} else {
 
-	    fillDistances[voxelNumIn * numVoxel[1] * numVoxel[2]] += (voxelNumIn + 1) * sizeVoxel[0] - hitDistIn + 1.0 ;
+	    fillDistances[voxelNumIn] += (voxelNumIn + 1) * sizeVoxel[0] - hitDistIn;
 
 	    for(j = voxelNumIn + 1; j<voxelNumOut; j++) {
-		fillDistances[j * numVoxel[1] * numVoxel[2]] += sizeVoxel[0];
+		fillDistances[j] += sizeVoxel[0];
 	    }
 
-	    fillDistances[voxelNumOut * numVoxel[1] * numVoxel[2]] += hitDistOut - 1.0 - (voxelNumOut * sizeVoxel[0]);
+	    fillDistances[voxelNumOut] += hitDistOut - (voxelNumOut * sizeVoxel[0]);
 	}
 
 	pp = pp->pt_forw;
@@ -154,7 +154,7 @@ main(int argc, char **argv)
 
     char title[1024] = {0};
     int i, j, k, numVoxel[3], yMin, zMin, raysPerVoxel = 4, rayNum;
-    float sizeVoxel[3], threshold = 0.5, *voxelArray, rayTraceDistance;
+    fastf_t sizeVoxel[3], threshold = 0.5, *voxelArray, rayTraceDistance;
 
     FILE *fp;
 
@@ -204,15 +204,14 @@ main(int argc, char **argv)
     numVoxel[1] = (int)(((rtip->mdl_max)[1] - (rtip->mdl_min)[1])/sizeVoxel[1]);
     numVoxel[2] = (int)(((rtip->mdl_max)[2] - (rtip->mdl_min)[2])/sizeVoxel[2]);
 
-
     voxelHits.sizeVoxel[0] = sizeVoxel[0];
     voxelHits.sizeVoxel[1] = sizeVoxel[1];
     voxelHits.sizeVoxel[2] = sizeVoxel[2];
 
     /* voxelArray stores the distance in path of ray inside a voxel which is filled*/
-    voxelArray = bu_calloc(numVoxel[0] * numVoxel[1] * numVoxel[2], sizeof(float), "voxelArray");
+    voxelArray = bu_calloc(numVoxel[0], sizeof(fastf_t), "voxelArray");
 
-    for(k = 0; k < numVoxel[0] * numVoxel[1] * numVoxel[2]; k++) {
+    for(k = 0; k < numVoxel[0]; k++) {
 	voxelArray[k] = 0.0;
     }
 
@@ -222,6 +221,11 @@ main(int argc, char **argv)
 
     /* 1.0 / (raysPerVoxel + 1) has to be used multiple times in the following loops */
     rayTraceDistance = 1.0 / (raysPerVoxel + 1);
+
+    fp = fopen("voxels.txt","w");
+
+    fprintf(fp, "voxel specs :\n\tDimensions of a voxel are : (%f,%f,%f)\n\tNumber of voxels in x,y,z direction is %d,%d,%d respectively\n\n", sizeVoxel[0], sizeVoxel[1], sizeVoxel[2], numVoxel[0], numVoxel[1], numVoxel[2]);
+
 
     /* start shooting */
     for (i = 0; i < numVoxel[2]; i++) {
@@ -235,41 +239,31 @@ main(int argc, char **argv)
 	    ap.a_miss = miss;
 	    ap.a_uptr = &voxelHits;
 
-	    voxelHits.fillDistances = voxelArray + i * numVoxel[1] + j ;
+	    voxelHits.fillDistances = voxelArray;
 
-	    /* right now, rays are hit at the same point(no use, but have to see how to proceed) */
-	    for(rayNum = 1; rayNum < raysPerVoxel + 1; rayNum++) {
-		for(k = 1; k < raysPerVoxel + 1; k++) {
+	    for(rayNum = 1; rayNum <= raysPerVoxel; rayNum++) {
+		for(k = 1; k <= raysPerVoxel; k++) {
 
-		    /* ray is hit through midpoint of the unit sized voxels */
+		    /* ray is hit through evenly spaced points of the unit sized voxels */
 		    VSET(ap.a_ray.r_pt, (rtip->mdl_min)[0] - 1.0, yMin + (j + k * rayTraceDistance) * sizeVoxel[1], zMin + (i + rayNum * rayTraceDistance) * sizeVoxel[2]);
 		    rt_shootray(&ap);
 		}
 	   }
-	}
-    }
 
-    /* represent the voxels as 0's and 1's in a file "voxels.txt", over frames of width sizeVoxel[0] */
-    fp = fopen("voxels.txt","w");
-
-    fprintf(fp, "voxel specs :\n\tDimensions of a voxel are : (%f,%f,%f)\n\tNumber of voxels in x,y,z direction is %d,%d,%d respectively\n\n", sizeVoxel[0], sizeVoxel[1], sizeVoxel[2], numVoxel[0], numVoxel[1], numVoxel[2]);
-
-    for(i=0;i < numVoxel[0] * numVoxel[1] * numVoxel[2]; i++){
-	if(i % numVoxel[1] == 0){
+	    for(k = 0; k < numVoxel[0]; k++) {
+		if(voxelArray[k] >= threshold){
+		    fprintf(fp, "1 ");
+		} else {
+		    fprintf(fp, "0 ");
+		}
+		voxelArray[k] = 0.0;
+	    }
 	    fprintf(fp, "\n");
 	}
-	if(i % (numVoxel[1] * numVoxel[2]) == 0) {
-	    fprintf(fp, "frame number %d is \n", i / (numVoxel[1] * numVoxel[2]));
-	}
-	if(voxelArray[i]/(raysPerVoxel * raysPerVoxel * sizeVoxel[0]) >= threshold){
-	    fprintf(fp, "1");
-	} else {
-	    fprintf(fp, "0");
-	}
+	fprintf(fp, "\n");
     }
 
     fclose(fp);
-
     return 0;
 }
 
