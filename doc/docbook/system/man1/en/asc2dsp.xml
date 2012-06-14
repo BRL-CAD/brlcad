@@ -30,8 +30,21 @@
       BRL-CAD's dsp format.  Pixels are defined by
       whitespace-delimited, unsigned decimal integers in the range 0
       to 2^16-1 (65535).  The output file is in dsp binary format (one
-      unsigned short int per cell (point).
+      network unsigned short int per cell (point).
     </para>
+
+    <para>The grid is oriented in the X-Y plane where width is in the
+    X direction and length is in the Y direction.  When used to create
+    a dsp object im mged, the bottom left cell will have its bottom-left
+    corner at X = 0, Y = 0, its bottom at Z = 0, and its top at Z
+    equal to the value input in the ASCII file.  Note that entries in the
+    ASCII file are read in the same manner as a pix file, i.e., filling the
+    grid from bottom to top, left to right, so the first cell defined in the ASCII
+    file is the bottom-left cell when the dsp file is imported
+    with mged. Note also that white space is ignored so the user
+    can lay out the grid row by row to aid visualizing the end product
+    (always remembering that the order of the rows will be reversed
+    during input by mged).</para>
 
     <para>
       The user must ensure that the input file is valid as far as width
@@ -42,6 +55,7 @@
   
   <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
     <para>
+      <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
       <citerefentry><refentrytitle>dsp</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
     </para>
   </refsection>

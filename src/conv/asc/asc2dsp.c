@@ -29,6 +29,8 @@
  *  The user must ensure that the input file is valid as far as width
  *  x length = number of cells (points).
  *
+ *  See dsp(5) for details of the dsp format.
+ *
  *  Usage: asc2dsp file.asc file.dsp
  *
  */

@@ -21,10 +21,10 @@
   defined in the X-Y plane with each cell's value defining the cell's
   height above Z = 0. Each cell value ranges from 0 to 65535.  The first cell in a
   <emphasis remap='I'>dsp</emphasis> file is the lower left corner of
-  the grid of cells.  The cells proceed from left-to-right across each
+  the grid of cells.  The cells proceed from left to right across each
   row, with rows being written from the bottom to the top of the grid.
-  Grid dimensions are length (number of cells in the X direction) and
-  width (number of cells in the Y direction).
+  Grid dimensions are width (number of cells in the X direction) and
+  length (number of cells in the Y direction).
 </para>
 
 <para><emphasis remap='I'>Dsp</emphasis>
