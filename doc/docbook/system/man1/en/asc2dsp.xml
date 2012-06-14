@@ -55,7 +55,7 @@
   
   <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
     <para>
-      <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+      <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>dsp</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
     </para>
   </refsection>
