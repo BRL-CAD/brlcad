@@ -339,6 +339,7 @@ patch_g_LDADD = \
 
 pix2asc_SOURCES = asc/pix2asc.c
 pix2asc_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
+pix2asc_LDADD = ${BU}
 
 ply_g_SOURCES = ply-g.c
 ply_g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
