@@ -1,4 +1,4 @@
-.PHONY : regression regress test mged red moss lights solids shaders spdi iges weight gqa fastgen bots repository comgeom gdot gnff vls_vprintf dsp
+.PHONY : regression regress test mged red moss lights solids shaders spdi iges weight gqa fastgen bots repository comgeom gdot gnff vls_vprintf dsp asc2dsp
 
 SUBDIRS = mged
 
@@ -86,8 +86,13 @@ dsp: $(top_srcdir)/regress/dsp.sh
 	-${SH} $(top_srcdir)/regress/dsp.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
+asc2dsp: $(top_srcdir)/regress/asc2dsp.sh
+	-${SH} $(top_srcdir)/regress/asc2dsp.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
+
 # these are here because they go in the distribution but are not installed
 EXTRA_DIST = \
+	asc2dsp.sh \
 	bots.sh \
 	comgeom.sh \
 	dsp.sh \
@@ -127,6 +132,11 @@ CLEANFILES = \
 	$(MOSTLYCLEANFILES) \
 	.density \
 	adj_air.pl \
+        asc2dsp-new.dsp \
+        asc2dsp-old.bw \
+        asc2dsp-old.dsp \
+        asc2dsp-old.pix \
+        asc2dsp.log \
 	bots.g \
 	bots.lh.pix \
 	bots.log \

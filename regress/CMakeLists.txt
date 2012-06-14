@@ -97,6 +97,10 @@ if(SH_EXEC)
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/dsp.sh ${CMAKE_SOURCE_DIR}
     DEPENDS mged cv asc2pix rt pix-bw
     )
+  add_custom_target(regress-asc2dsp
+    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/asc2dsp.sh ${CMAKE_SOURCE_DIR}
+    DEPENDS cv asc2pix pix-bw asc2dsp
+    )
 
   add_custom_target(regress
     DEPENDS regress-mged regress-moss regress-lights
@@ -104,6 +108,7 @@ if(SH_EXEC)
     regress-weight regress-gqa regress-fastgen regress-bots
     regress-repository regress-red regress-nirt
     regress-vls_vprintf regress-comgeom regress-gnff regress-gdot
+    regress-dsp regress-asc2dsp
     )
 
 endif(SH_EXEC)
@@ -111,9 +116,12 @@ endif(SH_EXEC)
 CMAKEFILES(
   Makefile.am
   analyze.asc
+  asc2dsp.sh
   bots.sh
   comgeom.sh
   dsp.sh
+  dsp/asc2dsp-new.asc
+  dsp/asc2dsp-old.asc
   dsp/dsp-1-1.asc
   dsp/dsp-1-2.asc
   dsp/dsp-2-1.asc
@@ -186,6 +194,11 @@ CMAKEFILES(
 set(regress_outfiles
   .density
   adj_air.pl
+  asc2dsp-new.dsp
+  asc2dsp-old.bw
+  asc2dsp-old.dsp
+  asc2dsp-old.pix
+  asc2dsp.log
   bots.diff.log
   bots.diff.pix
   bots.g
