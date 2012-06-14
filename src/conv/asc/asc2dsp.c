@@ -42,7 +42,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <arpa/inet.h>
+
+#include "bin.h"
+
 
 static char usage[] = "\
 Usage: asc2dsp file.asc file.dsp\n\n\
