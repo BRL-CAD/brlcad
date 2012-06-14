@@ -193,6 +193,7 @@ libged_nil_la_SOURCES = \
 	rt.c \
 	rtabort.c \
 	rtcheck.c \
+	rtwizard.c \
 	savekey.c \
 	saveview.c \
 	scale.c \
