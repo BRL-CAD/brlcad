@@ -9507,6 +9507,7 @@ static struct bu_cmdtab wdb_newcmds[] = {
     {"orotate",		(int (*)(void *, int, const char **))ged_orotate},
     {"oscale",		(int (*)(void *, int, const char **))ged_oscale},
     {"otranslate",	(int (*)(void *, int, const char **))ged_otranslate},
+    {"put",		(int (*)(void *, int, const char **))ged_put},
     {"rmater",		(int (*)(void *, int, const char **))ged_rmater},
     {"shader",		(int (*)(void *, int, const char **))ged_shader},
     {"wmater",		(int (*)(void *, int, const char **))ged_wmater},
