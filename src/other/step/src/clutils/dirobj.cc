@@ -53,6 +53,8 @@
 #include <string>
 #include <iostream>
 
+#include <scl_memmgr.h>
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Create a new DirObj object.
@@ -76,6 +78,7 @@ DirObj::DirObj( const char * dirName ) {
 
 DirObj::~DirObj() {
     ClearFileList();
+    delete [] fileList;
 }
 
 //////////////////////////////// RealPath() ///////////////////////////////////

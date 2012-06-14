@@ -20,6 +20,7 @@ SET(LIBSTEPUTILS_PRIVATE_HDRS
 )
 
 include_directories(
+    ${SCL_SOURCE_DIR}/src/base
     ${SCL_BINARY_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
@@ -29,4 +30,4 @@ add_definitions( -DSCL_BASE_DLL_IMPORTS )
 add_definitions( -DSCL_UTILS_DLL_EXPORTS )
 endif()
 
-SCL_ADDLIB(steputils "${LIBSTEPUTILS_SRCS}" "")
+SCL_ADDLIB(steputils "${LIBSTEPUTILS_SRCS}" "base")

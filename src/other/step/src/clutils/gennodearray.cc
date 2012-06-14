@@ -17,6 +17,7 @@
 #include <gennode.h>
 #include <gennodelist.h>
 #include <gennodearray.h>
+#include <scl_memmgr.h>
 
 #ifndef HAVE_MEMMOVE
 extern "C" {
