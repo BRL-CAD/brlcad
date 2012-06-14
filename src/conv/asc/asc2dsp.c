@@ -53,7 +53,6 @@ Convert an ASCII DSP file to DSP binary form\n\
 
 #define BUFSZ 6
 
-static const unsigned int MAXSHORT = 0xffffffff;
 
 static void
 output_netshort(char *buf, unsigned *nchars, FILE *fpo)
@@ -77,8 +76,8 @@ output_netshort(char *buf, unsigned *nchars, FILE *fpo)
     /* get the value as a host unsigned short int */
     /* note strtoul should ignore leading zeroes: verified by testing with '011' input */
     val = strtoul(buf, 0, 10);
-    if (val > MAXSHORT) {
-        bu_log("asc2dsp: hostshort (%lu) > MAXSHORT (%lu)\n", val, MAXSHORT);
+    if (val > UINT16_MAX) {
+        bu_log("asc2dsp: hostshort (%lu) > UINT16_MAX (%lu)\n", val, UINT16_MAX);
         bu_exit(1, "asc2dsp: FATAL");
     }
 
