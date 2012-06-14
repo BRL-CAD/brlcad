@@ -11,6 +11,7 @@
 */
 
 #include <ExpDict.h>
+#include "scl_memmgr.h"
 
 Dictionary_instance::~Dictionary_instance() {
 }

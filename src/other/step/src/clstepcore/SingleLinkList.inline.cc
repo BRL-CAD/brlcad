@@ -12,6 +12,7 @@
 
 #include <SingleLinkList.h>
 #include <iostream>
+#include "scl_memmgr.h"
 
 SingleLinkNode *
 SingleLinkNode::NextNode()  const {

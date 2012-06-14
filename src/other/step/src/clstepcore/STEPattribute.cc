@@ -20,7 +20,7 @@
 #include <STEPaggregate.h>
 #include <ExpDict.h>
 #include <sdai.h>
-
+#include "scl_memmgr.h"
 
 // REAL_NUM_PRECISION is defined in STEPattribute.h, and is also used
 // in aggregate real handling (STEPaggregate.cc)  -- IMS 6 Jun 95

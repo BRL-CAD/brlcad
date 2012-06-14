@@ -11,6 +11,7 @@
 
 #include <ExpDict.h>
 #include <Registry.h>
+#include "scl_memmgr.h"
 
 const TypeDescriptor  * t_sdaiINTEGER;
 const TypeDescriptor  * t_sdaiREAL;

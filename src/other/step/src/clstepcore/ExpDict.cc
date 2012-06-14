@@ -18,6 +18,7 @@
 
 #include <ExpDict.h>
 #include <STEPaggregate.h>
+#include "scl_memmgr.h"
 
 
 Explicit_item_id__set::Explicit_item_id__set( int defaultSize ) {

@@ -11,6 +11,7 @@
  *****************************************************************************/
 
 #include "complexSupport.h"
+#include "scl_memmgr.h"
 
 /**
  * Checks if we match the nodes of ents.  If only one unmarked is left

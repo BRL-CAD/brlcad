@@ -12,6 +12,7 @@
  *****************************************************************************/
 
 #include "complexSupport.h"
+#include "scl_memmgr.h"
 
 /**
  * Given a list of entity names, creates a sorted linked list of EntNodes

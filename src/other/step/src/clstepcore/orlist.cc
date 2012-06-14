@@ -11,6 +11,7 @@
  *****************************************************************************/
 
 #include "complexSupport.h"
+#include "scl_memmgr.h"
 
 /**
  * Check if we matched nm.  We have two possibilities here:  If we have a

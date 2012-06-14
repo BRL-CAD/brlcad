@@ -11,6 +11,7 @@
 */
 
 #include <SingleLinkList.h>
+#include "scl_memmgr.h"
 
 void SingleLinkList::DeleteFollowingNodes( SingleLinkNode * item ) {
     if( head ) {

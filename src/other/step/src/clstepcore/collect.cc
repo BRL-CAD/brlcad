@@ -12,6 +12,7 @@
  *****************************************************************************/
 
 #include "complexSupport.h"
+#include "scl_memmgr.h"
 
 /**
  * Inserts a new ComplexList to our list.  The ComplexLists are ordered by
