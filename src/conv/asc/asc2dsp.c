@@ -137,6 +137,7 @@ main(int argc, char **argv)
           /* may be end of a chunk of digits indicating need to process buffer */
           /* there should be nchars > 0 if anything is there */
           if (nchars) {
+              /* note that the following call resets the buffer and nchars */
               output_netshort(buf, &nchars, fpo);
           }
           continue;
