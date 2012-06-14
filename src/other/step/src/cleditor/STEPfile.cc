@@ -22,6 +22,7 @@
 #include <iostream>
 #include <iterator>
 #include <algorithm>
+#include <vector>
 
 #include <STEPfile.h>
 #include <sdai.h>
@@ -32,7 +33,8 @@
 // STEPundefined contains
 // void PushPastString (istream& in, std::string &s, ErrorDescriptor *err)
 #include <STEPundefined.h>
-#include <vector>
+
+#include "scl_memmgr.h"
 
 /**
  * \returns The new file name for the class.

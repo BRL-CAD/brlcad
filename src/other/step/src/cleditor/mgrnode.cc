@@ -22,6 +22,7 @@
 #include <sdai.h>
 
 #include <iostream>
+#include "scl_memmgr.h"
 
 void * MgrNode::SEE() {
     return ( di ? di->SEE() : 0 );

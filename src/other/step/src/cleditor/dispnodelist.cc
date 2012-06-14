@@ -19,7 +19,7 @@
 #include <mgrnodelist.h>
 #include <dispnode.h>
 #include <dispnodelist.h>
-
+#include "scl_memmgr.h"
 
 void DisplayNodeList::Remove( GenericNode * node ) {
     GenNodeList::Remove( node );
