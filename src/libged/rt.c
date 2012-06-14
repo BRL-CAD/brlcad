@@ -146,6 +146,10 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	vect_t direction;
 	vect_t extremum[2];
 	vect_t minus, plus;    /* vers of this solid's bounding box */
+	double t_in;
+	vect_t diag1;
+	vect_t diag2;
+	point_t ecenter;
 
 	VSET(eye_model, -gedp->ged_gvp->gv_center[MDX],
 	     -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
@@ -177,19 +181,13 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	for (i = 0; i < 3; ++i)
 	    if (NEAR_ZERO(direction[i], 1e-10))
 		direction[i] = 0.0;
-	if ((eye_model[X] >= extremum[0][X]) &&
-	    (eye_model[X] <= extremum[1][X]) &&
-	    (eye_model[Y] >= extremum[0][Y]) &&
-	    (eye_model[Y] <= extremum[1][Y]) &&
-	    (eye_model[Z] >= extremum[0][Z]) &&
-	    (eye_model[Z] <= extremum[1][Z])) {
-	    double t_in;
-	    vect_t diag;
 
-	    VSUB2(diag, extremum[1], extremum[0]);
-	    t_in = MAGNITUDE(diag);
-	    VJOIN1(eye_model, eye_model, t_in, direction);
-	}
+	VSUB2(diag1, extremum[1], extremum[0]);
+	VADD2(ecenter, extremum[1], extremum[0]);
+	VSCALE(ecenter, ecenter, 0.5);
+	VSUB2(diag2, ecenter, eye_model);
+	t_in = MAGNITUDE(diag1) + MAGNITUDE(diag2);
+	VJOIN1(eye_model, eye_model, t_in, direction);
     }
 }
 
