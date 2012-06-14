@@ -22,7 +22,7 @@
  * BRL-CAD private system compatibility wrapper header that provides
  * declarations for native and standard system INPUT/OUTPUT routines.
  *
- * This header is commonly used in leu of including the following:
+ * This header is commonly used in lieu of including the following:
  * stdio.h, io.h, fcntl, unistd.h, and windows.h
  *
  * This header does not belong to any BRL-CAD library but may used by
