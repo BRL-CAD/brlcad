@@ -104,7 +104,6 @@ if(SH_EXEC)
     regress-weight regress-gqa regress-fastgen regress-bots
     regress-repository regress-red regress-nirt
     regress-vls_vprintf regress-comgeom regress-gnff regress-gdot
-    regress-dsp
     )
 
 endif(SH_EXEC)
