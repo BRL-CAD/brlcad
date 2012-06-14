@@ -67,9 +67,9 @@ dsk_open(FBIO *ifp, const char *file, int width, int height)
 	return 0;
     }
 
-    if ((ifp->if_fd = open(file, O_RDWR, 0)) == -1
-	&& (ifp->if_fd = open(file, O_RDONLY, 0)) == -1) {
-	if ((ifp->if_fd = open(file, O_RDWR|O_CREAT, 0664)) > 0) {
+    if ((ifp->if_fd = open(file, O_RDWR | O_BINARY, 0)) == -1
+	&& (ifp->if_fd = open(file, O_RDONLY | O_BINARY, 0)) == -1) {
+	if ((ifp->if_fd = open(file, O_RDWR | O_CREAT | O_BINARY, 0664)) > 0) {
 	    /* New file, write byte at end */
 	    if (lseek(ifp->if_fd, (off_t)(height*width*sizeof(RGBpixel)-1), 0) == -1) {
 		fb_log("disk_device_open : can not seek to end of new file.\n");

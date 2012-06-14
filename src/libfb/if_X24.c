@@ -2070,7 +2070,7 @@ X24_getmem(FBIO *ifp)
 #ifdef HAVE_SYS_MMAN_H
 		int fd;
 
-		fd = open(BS_NAME, O_RDWR | O_CREAT, 0666);
+		fd = open(BS_NAME, O_RDWR | O_CREAT | O_BINARY, 0666);
 		if (fd < 0)
 		    fb_log("X24_getmem: can't create fb file, using private memory instead, errno %d\n", errno);
 		else if (lseek(fd, size, SEEK_SET) < 0)
