@@ -54,6 +54,7 @@ static const unsigned int MAXSHORT = 0xffffffff;
 static void
 output_netshort(char *buf, unsigned *nchars, FILE *fpo)
 {
+    int ret = 0;
     unsigned long val;
     uint16_t hostshort;
     uint16_t netshort;
@@ -88,7 +89,11 @@ output_netshort(char *buf, unsigned *nchars, FILE *fpo)
 #endif
 
     /* now output it */
-    fwrite(&netshort, sizeof(uint16_t), 1, fpo);
+    ret = fwrite(&netshort, sizeof(uint16_t), 1, fpo);
+    if (UNLIKELY(ret != 1)) {
+       perror("fwrite failed");
+       bu_bomb("output_netshort: write error");
+    }
 
     /* prep buffer for next value */
     buf[0] = '\0';
