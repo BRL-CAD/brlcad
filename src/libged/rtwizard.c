@@ -319,6 +319,7 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
     bu_vls_printf(gedp->ged_result_str, "\n");
 
+    gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
     (void)_ged_run_rtwizard(gedp);
     bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
     gedp->ged_gdp->gd_rt_cmd = NULL;
