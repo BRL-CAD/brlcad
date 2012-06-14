@@ -95,7 +95,7 @@ if(SH_EXEC)
     )
   add_custom_target(regress-dsp
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/dsp.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS mged cv asc2pix rt
+    DEPENDS mged cv asc2pix rt pix-fb
     )
 
   add_custom_target(regress
