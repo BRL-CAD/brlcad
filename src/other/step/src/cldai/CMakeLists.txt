@@ -35,8 +35,9 @@ ENDIF()
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${SCL_SOURCE_DIR}/src/base
     ${SCL_SOURCE_DIR}/src/clstepcore
     ${SCL_SOURCE_DIR}/src/clutils
 )
 
-SCL_ADDLIB(stepdai "${LIBSTEPDAI_SRCS}" "steputils")
+SCL_ADDLIB(stepdai "${LIBSTEPDAI_SRCS}" "steputils;base")

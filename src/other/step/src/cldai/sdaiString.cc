@@ -11,6 +11,7 @@
 
 #include <sdai.h>
 #include <sstream>
+#include "scl_memmgr.h"
 
 SDAI_String::SDAI_String( const char * str, int max ) {
     content = std::string( str, max );

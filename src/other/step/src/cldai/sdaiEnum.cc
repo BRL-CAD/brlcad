@@ -1,5 +1,6 @@
 
 #include <sdai.h>
+#include "scl_memmgr.h"
 
 /*
 * NIST STEP Core Class Library
