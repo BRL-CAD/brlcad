@@ -22,9 +22,9 @@
 /** @file asc2dsp.c
  *
  *  Convert ASCII (decimal integer) cell (point) files to the binary
- *  form of a file in BRL-CAD's dsp format.  Pixels are defined by
- *  whitespace-delimited, unsigned decimal integers in the range 0 to
- *  2^16-1 (65535).
+ *  form of a file in BRL-CAD's DSP (Displacement map) format.  Pixels
+ *  are defined by whitespace-delimited, unsigned decimal integers in
+ *  the range 0 to 2^16-1 (65535).
  *
  *  The user must ensure that the input file is valid as far as width
  *  x length = number of cells (points).

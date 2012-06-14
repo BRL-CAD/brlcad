@@ -16,7 +16,7 @@
 <refsect1 xml:id='format'>
   <title>FORMAT</title>
 
-  <para>A <emphasis remap='I'>dsp</emphasis> file contains sequences
+  <para>A <emphasis remap='I'>dsp</emphasis> (displacement map) file contains sequences
   of cells (points) comprising a rectangular grid of network unsigned short ints
   defined in the X-Y plane with each cell's value defining the cell's
   height above Z = 0. Each cell value ranges from 0 to 65535.  The first cell in a

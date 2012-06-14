@@ -9,7 +9,7 @@
   <refnamediv xml:id="name">
     <refname>asc2dsp</refname>
     <refpurpose>
-      convert an ASCII dsp file to the dsp binary format
+      convert an ASCII dsp file to the BRL-CAD DSP (Displacement map) binary format
     </refpurpose>
   </refnamediv>
   
