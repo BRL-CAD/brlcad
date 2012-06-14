@@ -229,7 +229,8 @@ proc done_grouper {} {
     set_mouse_behavior $id
     rset r draw 0
 
-    bind $mged_gui($id,active_dm) <ButtonRelease-2> " winset $mged_gui($id,active_dm); dm idle"
+    bind $mged_gui($id,active_dm) <Control-ButtonRelease-2> ""
+    bind $mged_gui($id,active_dm) <ButtonRelease-2> ""
 
     # remove yellow highlights from the display
     erase $GroupNameGlobal
