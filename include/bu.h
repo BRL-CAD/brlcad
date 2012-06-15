@@ -6153,20 +6153,6 @@ BU_EXPORT extern const char *bu_dlerror();
 
 /** @} file */
 
-typedef struct {
-    int fieldlen;
-    int flags;
-    int have_digit;
-    int have_dot;
-    int left_justify;
-    int precision;
-} vflags_t;
-
-/* defined in file 'vls_vprintf.c' */
-BU_EXPORT extern int format_part_status(const char c);
-BU_EXPORT extern int handle_format_part(const int vp_part, vflags_t *f, const char c, const int print);
-BU_EXPORT extern int handle_obsolete_format_char(const char c, const int print);
-
 /**
  * Definitions for memory pool "get" and "free" functions.
  */
