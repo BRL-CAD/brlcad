@@ -53,7 +53,7 @@ struct rayInfo {
 static int
 hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs))
 {
-    int voxelNumIn, voxelNumOut, j = 0, numVoxel[3];
+    int voxelNumIn, voxelNumOut, j = 0;
     fastf_t hitDistIn, hitDistOut, sizeVoxel[3], *fillDistances;
 
     struct partition *pp;
@@ -73,10 +73,6 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
     sizeVoxel[2] = voxelHits->sizeVoxel[2];
 
     rtip = ap->a_rt_i;
-
-    numVoxel[0] = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxel[0]);
-    numVoxel[1] = (int)(((rtip->mdl_max)[1] - (rtip->mdl_min)[1])/sizeVoxel[1]);
-    numVoxel[2] = (int)(((rtip->mdl_max)[2] - (rtip->mdl_min)[2])/sizeVoxel[2]);
 
     pp = PartHeadp->pt_forw;
     fillDistances = voxelHits->fillDistances;
