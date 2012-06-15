@@ -91,19 +91,20 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-F</option> <replaceable>framebuffer type</replaceable></term>
-	<term><option>--framebuffer_type</option> <replaceable>framebuffer type</replaceable></term>
+	<term><option>-d</option> <replaceable>framebuffer_device</replaceable></term>
+	<term><option>--fbserv-device</option> <replaceable>framebuffer_device</replaceable></term>
 	<listitem>
 	  <para>
-	    The type of framebuffer to use when creating the image.  By default, "/dev/mem" is used for a non-graphical
-            framebuffer - other options (/dev/X, /dev/ogl, etc.) may be used just as they would be used with <command>rt</command>.
-            A /dev/mem framebuffer created by <command>rtwizard</command> will be closed after the image generation is complete.
+	    The type of framebuffer to use when running fbserv to establish a framebuffer.  By default, 
+            "/dev/mem" is used for a non-graphical framebuffer - other options include /dev/X, /dev/ogl, 
+            and (Windows only) /dev/wgl. A /dev/mem framebuffer created by <command>rtwizard</command> 
+            will be closed after the image generation is complete.
 	  </para>
 	</listitem>
       </varlistentry>
       <varlistentry>
 	<term><option>-p</option> <replaceable>port_number</replaceable></term>
-	<term><option>--framebuffer_port</option> <replaceable>port_number</replaceable></term>
+	<term><option>--fbserv-port</option> <replaceable>port_number</replaceable></term>
 	<listitem>
 	  <para>
 	    The number of the framebuffer port to use when running <command>fbserv</command> to establish a framebuffer.  An
