@@ -418,13 +418,6 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
 
 	if (!bn_3pts_distinct(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol) ||
 		bn_3pts_collinear(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol)) {
-	    bu_log("Heh, throwing away a triangle %d/%d/%d (%g %g %g | %g %g %g | %g %g %g)\n",
-		V3ARGS(vi), V3ARGS(edges[vi[0]]), V3ARGS(edges[vi[1]]), V3ARGS(edges[vi[2]]));
-	    if(NEAR_EQUAL(edges[vi[0]][X], VOODOO, tol->dist) ||
-		NEAR_EQUAL(edges[vi[1]][X], VOODOO, tol->dist) ||
-		NEAR_EQUAL(edges[vi[2]][X], VOODOO, tol->dist)) {
-		bu_log("Heh, VOODOO!\n");
-	    }
 	    vi+=3;
 	    continue;
 	}
