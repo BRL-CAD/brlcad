@@ -346,7 +346,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_arb_params,
 	rt_arb_bbox,
-    NULL,
+    rt_arb_volume,
     NULL,
     NULL,
     },
