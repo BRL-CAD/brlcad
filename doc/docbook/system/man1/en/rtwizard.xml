@@ -367,18 +367,47 @@
       Introduction
     </para>
 
-    <example><info><title>example1</title></info>
+    <example><info><title>Basic Color Image</title></info>
       
       <para>
-      <userinput>rwizard</userinput>
+      <userinput>rtwizard m35.g component</userinput>
       </para>
       <para>
-	results in 
+	Results in a default color image of the m35 truck, output to rtwizard.pix
       </para>
     </example>
+
+    <example><info><title>Line Drawing Image</title></info>
       
+      <para>
+      <userinput>rtwizard -d /dev/ogl m35.g -l component</userinput>
+      </para>
+      <para>
+	Results in a line drawing of the m35 truck being display in an OpenGL framebuffer
+      </para>
+    </example>
+   
+    <example><info><title>Complex Image</title></info>
+      
+      <para>
+      <userinput>rtwizard -d /dev/ogl -i m35.g -c component/power.train -g component -l component</userinput>
+      </para>
+      <para>
+	Results in a view of the m35 truck highlighting the engine (in color) with the truck being shown as a ghosted, edged background.
+      </para>
+    </example>
+ 
+    <example><info><title>Complex Image with Non-Default View</title></info>
+      
+      <para>
+      <userinput>rtwizard -d /dev/ogl -i m35.g -c component/power.train -g component -l component -a -35 -e 15 -z 1.6</userinput>
+      </para>
+      <para>
+	Same as the previous image, except viewing the truck from a different direction and zoomed in closer.
+      </para>
+    </example>
   </refsection>
-  
+
   <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
     
     <para><citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtedge</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
