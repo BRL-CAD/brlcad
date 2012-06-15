@@ -129,6 +129,17 @@ static const struct arb_info rt_arb_info[6] = {
 };
 
 
+/* division of an arb8 into 6 arb4s */
+static const int farb4[6][4] = {
+    {0, 1, 2, 4},
+    {4, 5, 6, 1},
+    {1, 2, 6, 4},
+    {0, 2, 3, 4},
+    {4, 6, 7, 2},
+    {2, 3, 7, 4},
+};
+
+
 const struct bu_structparse rt_arb_parse[] = {
     { "%f", 3, "V1", bu_offsetof(struct rt_arb_internal, pt[0][X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "V2", bu_offsetof(struct rt_arb_internal, pt[1][X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -339,8 +350,8 @@ rt_arb_centroid(point_t center_pt, const struct rt_arb_internal *arb, int npoint
 
     VSETALL(sum, 0);
 
-    for (j=0; j < npoints; j++) {
-	VADD2(sum, sum, arb->pt[j]);
+    for (j = 0; j < npoints; j++) {
+        VADD2(sum, sum, arb->pt[j]);
     }
     divisor = 1.0 / npoints;
     VSCALE(center_pt, sum, divisor);
@@ -2164,6 +2175,58 @@ rt_arb_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
+}
+
+
+/**
+ * R T _ A R B _ V O L U M E
+ *
+ * compute volume of an arb8 by dividing it into
+ * 6 arb4 and summing the volumes.
+ */
+void
+rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
+{
+    int i, a, b, c, d;
+    fastf_t len[3], arb4_base, arb4_height, tmp;
+    plane_t plane;
+    struct bn_tol tmp_tol;
+    struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(aip);
+
+    /* tol struct needed for bn_mk_plane_3pts,
+     * can't be passed to the function since it
+     * must fit into the rt_functab interface */
+    tmp_tol.magic = BN_TOL_MAGIC;
+    tmp_tol.dist = RT_LEN_TOL;
+    tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+
+    for (i = 0; i < 6; i++) {
+        /* a, b, c = base of the arb4 */
+        a = farb4[i][0];
+        b = farb4[i][1];
+        c = farb4[i][2];
+        /* d = "top" point of the arb4 */
+        d = farb4[i][3];
+
+        /* create a plane from a,b,c */
+        if (bn_mk_plane_3pts(plane, aip->pt[a], aip->pt[b],
+                    aip->pt[c], &tmp_tol) < 0) {
+            continue;
+        }
+
+        /* height of arb4 is distance from the plane created using the
+         * points of the base, and the top point 'd' */
+        arb4_height = fabs(DIST_PT_PLANE(plane, aip->pt[d]));
+        /* find side lengths of the base */
+        len[0] = DIST_PT_PT(aip->pt[a], aip->pt[b]);
+        len[1] = DIST_PT_PT(aip->pt[a], aip->pt[c]);
+        len[2] = DIST_PT_PT(aip->pt[b], aip->pt[c]);
+
+        tmp = 0.5 * (len[0] + len[1] + len[2]);
+        arb4_base = sqrt(tmp * (tmp - len[0]) * (tmp - len[1]) * (tmp - len[2]));
+        *vol += arb4_base * arb4_height / 3.0;
+    }
 }
 
 
