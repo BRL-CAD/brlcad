@@ -90,7 +90,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 	voxelNumIn = ((int) hitDistIn / sizeVoxel[0]);
 	voxelNumOut = ((int) hitDistOut / sizeVoxel[0]);
 
-	if(ZERO((hitDistOut / sizeVoxel[0]) - floor(hitDistOut / sizeVoxel[0]))) {
+	if (ZERO((hitDistOut / sizeVoxel[0]) - floor(hitDistOut / sizeVoxel[0]))) {
 	    voxelNumOut -= 1;
 	}
 
@@ -108,7 +108,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 
 	    fillDistances[voxelNumIn] += (voxelNumIn + 1) * sizeVoxel[0] - hitDistIn;
 
-	    for(j = voxelNumIn + 1; j<voxelNumOut; j++) {
+	    for (j = voxelNumIn + 1; j<voxelNumOut; j++) {
 		fillDistances[j] += sizeVoxel[0];
 	    }
 
@@ -212,9 +212,9 @@ main(int argc, char **argv)
     /* 1.0 / (raysPerVoxel + 1) has to be used multiple times in the following loops */
     rayTraceDistance = 1.0 / (raysPerVoxel + 1);
 
-    fp = fopen("voxels.txt","w");
+    fp = fopen("voxels.txt", "w");
 
-    fprintf(fp, "voxel specs :\n\tDimensions of a voxel are : (%f,%f,%f)\n\tNumber of voxels in x,y,z direction is %d,%d,%d respectively\n\n", sizeVoxel[0], sizeVoxel[1], sizeVoxel[2], numVoxel[0], numVoxel[1], numVoxel[2]);
+    fprintf(fp, "voxel specs :\n\tDimensions of a voxel are : (%f, %f, %f)\n\tNumber of voxels in x, y, z direction is %d, %d, %d respectively\n\n", sizeVoxel[0], sizeVoxel[1], sizeVoxel[2], numVoxel[0], numVoxel[1], numVoxel[2]);
 
 
     /* start shooting */
@@ -231,17 +231,17 @@ main(int argc, char **argv)
 
 	    voxelHits.fillDistances = voxelArray;
 
-	    for(rayNum = 1; rayNum <= raysPerVoxel; rayNum++) {
-		for(k = 1; k <= raysPerVoxel; k++) {
+	    for (rayNum = 1; rayNum <= raysPerVoxel; rayNum++) {
+		for (k = 1; k <= raysPerVoxel; k++) {
 
 		    /* ray is hit through evenly spaced points of the unit sized voxels */
 		    VSET(ap.a_ray.r_pt, (rtip->mdl_min)[0] - 1.0, yMin + (j + k * rayTraceDistance) * sizeVoxel[1], zMin + (i + rayNum * rayTraceDistance) * sizeVoxel[2]);
 		    rt_shootray(&ap);
 		}
-	   }
+	    }
 
-	    for(k = 0; k < numVoxel[0]; k++) {
-		if(voxelArray[k] >= threshold){
+	    for (k = 0; k < numVoxel[0]; k++) {
+		if (voxelArray[k] >= threshold) {
 		    fprintf(fp, "1 ");
 		} else {
 		    fprintf(fp, "0 ");
