@@ -241,7 +241,7 @@ proc rtimage {_dbfile
 	}
 
 	if {[llength $occlude_objects]} {
-	    set coMode "-c {set om=$_occmode} -c {set oo=$occlude_objects}"
+	    set coMode "-c {set om=$_occmode} -c {set oo=\\\"$occlude_objects\\\"}"
 	    set bgMode [list set bg=[lindex $_necolor 0],[lindex $_necolor 1],[lindex $_necolor 2]]
 	} else {
 	    set coMode "-c {set ov=1}"
