@@ -90,7 +90,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 	voxelNumIn = ((int) hitDistIn / sizeVoxel[0]);
 	voxelNumOut = ((int) hitDistOut / sizeVoxel[0]);
 
-	if (ZERO((hitDistOut / sizeVoxel[0]) - floor(hitDistOut / sizeVoxel[0]))) {
+	if (EQUAL((hitDistOut / sizeVoxel[0]), floor(hitDistOut / sizeVoxel[0]))) {
 	    voxelNumOut -= 1;
 	}
 
