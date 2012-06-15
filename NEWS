@@ -17,6 +17,7 @@ changes made.  See document footer for additional details.
 * integration of rtwizard traits into archer - Bob Parker, Cliff Yapp
 * new asc2dsp prep tool for displacement map data files - Tom Browder
 * fixed a problem with rt writing pix files on Windows - Bob Parker
+* added new raw-g raw triangle mesh to BoT importer - Daniel Roßberg
 * added Windows man page support (using html) to brlman - Cliff Yapp
 * added support for section numbers to brlman script - Cliff Yapp
 * new manual pages for asc2dsp, dsp, asc2pix, and asc2g - Tom Browder
