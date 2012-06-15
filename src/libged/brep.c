@@ -125,7 +125,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	    bu_strlcat(bname, "_brep", strlen(bname)+6);
 	    suffix = "_brep";
 	}
-	if (BU_STR_EQUAL(intern.idb_meth->ft_name,"ID_COMBINATION")) {
+	if (BU_STR_EQUAL(intern.idb_meth->ft_name, "ID_COMBINATION")) {
 	    char *bname_suffix;
 	    bname_suffix = (char*)bu_malloc(strlen(solid_name)+strlen(suffix)+1, "char");
 	    bu_strlcpy(bname_suffix, solid_name, strlen(solid_name)+1);
