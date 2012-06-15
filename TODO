@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* quick-test build_region
+
 * something wrong with brep/nurbs subdivision spatial partitioning
   causing inline failure in BANode<ON_BoundingBox>::addChild().
   disable NOSTRICTCXX strict flag on librt with Release mode
