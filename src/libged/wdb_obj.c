@@ -9627,7 +9627,7 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"paths",		wdb_pathsum_tcl},
     {"prcolor",		wdb_prcolor_tcl},
     {"push",		wdb_push_tcl},
-    {"put",		wdb_put_tcl},
+    {"put",		wdb_newcmds_tcl},
     {"r",		wdb_region_tcl},
     {"rm",		wdb_remove_tcl},
     {"rmap",		wdb_rmap_tcl},
