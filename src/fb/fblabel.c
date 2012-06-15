@@ -371,6 +371,8 @@ main(int argc, char **argv)
 {
     struct vfont *vfp;
 
+    bu_setprogname(argv[0]);
+
     if (!get_args(argc, argv)) {
 	fputs(usage, stderr);
 	bu_exit(1, NULL);
