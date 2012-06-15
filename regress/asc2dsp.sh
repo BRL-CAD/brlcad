@@ -70,7 +70,7 @@ if test ! -f "$P2B" ; then
 fi
 
 if [ $FAILED -ne 0 ] ; then
-    echo "Unable to find pix-bw, aborting"
+    echo "Unable to find asc2dsp requirements, aborting"
     echo "-> asc2dsp.sh ABORTED"
     exit 1
 fi
@@ -88,7 +88,7 @@ rm -f $TRASH
 # we generate one dsp file the old way and one the new way--they should be identical
 # old first
 # convert dsp data file in asc hex format to pix format
-ASC1=$1/regress/dsp/$BASE1.asc
+ASC1="$1/regress/dsp/$BASE1.asc"
 $A2P < $ASC1 > $BASE1.pix 2>>$LOG
 # convert pix to bw format
 # take the blue pixel only
@@ -98,7 +98,7 @@ $CV huc nu16 $BASE1.bw $BASE1.dsp 1>>$LOG 2>>$LOG
 
 # new
 # convert dsp data file in asc decimal format to dsp format
-ASC2=$1/regress/dsp/$BASE2.asc
+ASC2="$1/regress/dsp/$BASE2.asc"
 $A2D $BASE2.asc $BASE2.dsp 1>>$LOG 2>>$LOG
 
 # the two dsp files should be identical
