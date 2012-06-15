@@ -385,6 +385,7 @@ namespace eval ArcherCore {
 	variable mToolViewChange 0
 
 	variable mSavedCenter ""
+	variable mSavedViewEyePt ""
 	variable mSavedSize ""
 
 	variable mSeparateCommandWindow 0
@@ -3444,6 +3445,25 @@ namespace eval ArcherCore {
 	set mSavedSize ""
     }
 
+    # Get the eye pt in model coordinates
+    set eyemodel [split [regsub {;} [$itk_component(ged) get_eyemodel] {}] "\n"]
+    set eye_pt [lrange [lindex $eyemodel 2] 1 end]
+
+    # Convert the eye pt to view coordinates
+    set viewEyePt [eval $itk_component(ged) m2v_point $eye_pt]
+
+    # Use the eye pt that is furthest from the view center
+    if {$mSavedViewEyePt == ""} {
+	set mSavedViewEyePt $viewEyePt
+    } else {
+	set vz [lindex $viewEyePt 2]
+	set saved_vz [lindex $mSavedViewEyePt 2]
+
+	if {$vz > $saved_vz} {
+	    set mSavedViewEyePt $viewEyePt
+	}
+    }
+
     $itk_component(ged) refresh_on
     $itk_component(ged) refresh_all
  
@@ -4771,6 +4791,7 @@ namespace eval ArcherCore {
     }
 
     set mSavedCenter ""
+    set mSavedViewEyePt ""
     set mSavedSize ""
 
     SetNormalCursor $this
@@ -6612,7 +6633,7 @@ namespace eval ArcherCore {
     if {($drawem || $mToolViewChange) && [info exists itk_component(ged)]} {
 	$itk_component(ged) refresh_off
 	set mSavedCenter [$itk_component(ged) center]
-	set mSavedSize  [$itk_component(ged) size]
+	set mSavedSize [$itk_component(ged) size]
 	zap
 	eval draw $draw_objects
 	$itk_component(ged) center $mSavedCenter

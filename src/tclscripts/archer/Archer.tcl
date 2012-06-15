@@ -964,14 +964,35 @@ package provide Archer 1.0
 	if {$mRtWizardNonEdgeColor != ""} {
 	    set necolor [cadwidgets::Ged::get_rgb_color $mRtWizardNonEdgeColor]
 
-	    eval $itk_component(ged) rtwizard -C [list $bcolor] --line-color [list $ecolor] \
-		--non-line-color [list $necolor] \
-		-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
-		-G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
+	    if {$mSavedViewEyePt != ""} {
+		set eye_pt [eval $itk_component(ged) v2m_point $mSavedViewEyePt]
+		eval $itk_component(ged) rtwizard \
+		    --eye_pt [list $eye_pt] \
+		    -C [list $bcolor] --line-color [list $ecolor] \
+		    --non-line-color [list $necolor] \
+		    -w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
+		    -G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
+	    } else {
+		eval $itk_component(ged) rtwizard \
+		    -C [list $bcolor] --line-color [list $ecolor] \
+		    --non-line-color [list $necolor] \
+		    -w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
+		    -G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
+	    }
 	} else {
-	    eval $itk_component(ged) rtwizard -C [list $bcolor] --line-color [list $ecolor] \
-		-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
-		-G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
+	    if {$mSavedViewEyePt != ""} {
+		set eye_pt [eval $itk_component(ged) v2m_point $mSavedViewEyePt]
+		eval $itk_component(ged) rtwizard \
+		    --eye_pt [list $eye_pt] \
+		    -C [list $bcolor] --line-color [list $ecolor] \
+		    -w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
+		    -G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
+	    }  {
+		eval $itk_component(ged) rtwizard \
+		    -C [list $bcolor] --line-color [list $ecolor] \
+		    -w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
+		    -G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
+	    }
 	}
     }
 }
@@ -1570,6 +1591,7 @@ package provide Archer 1.0
     }
 
     set mSavedCenter ""
+    set mSavedViewEyePt ""
     set mSavedSize ""
 
     $itk_component(ged) refresh_on
