@@ -15,12 +15,10 @@ changes made.  See document footer for additional details.
 
 * integration of rtwizard traits into archer - Bob Parker, Cliff Yapp
 * new asc2dsp prep tool for displacement map data files - Tom Browder
-* added new manual pages for asc2dsp and dsp - Tom Browder
 * fixed a problem with rt writing pix files on Windows - Bob Parker
 * added Windows man page support (using html) to brlman - Cliff Yapp
 * added support for section numbers to brlman script - Cliff Yapp
-* added new manual page for existing asc2pix converter - Tom Browder
-* added new manual page for existing asc2g converter - Tom Browder
+* new manual pages for asc2dsp, dsp, asc2pix, and asc2g - Tom Browder
 * fixed bug creating binary uniform (binunif) objects - Sean Morrison
 * fixed memory corruption bug reading v4 geometry - Sean Morrison
 * fixed bug where small raytraces were being rotated - Erik Greenwald
