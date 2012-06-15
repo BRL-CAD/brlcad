@@ -53,9 +53,9 @@ vprintf_flags
 } vflags_t;
 
 /* private shared function decls */
-int format_part_status(const char c);
-int handle_format_part(const int vp_part, vflags_t *f, const char c, const int print);
-int handle_obsolete_format_char(const char c, const int print);
+extern int format_part_status(const char c);
+extern int handle_format_part(const int vp_part, vflags_t *f, const char c, const int print);
+extern int handle_obsolete_format_char(const char c, const int print);
 
 #endif /* BU_VLS_INTERNALS_H */
 
