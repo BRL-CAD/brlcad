@@ -1,4 +1,4 @@
-/*                          T E S T _ C T Y P E . C
+/*                     T E S T _ C T Y P E . C
  * BRL-CAD
  *
  * Copyright (c) 2007-2012 United States Government as represented by
@@ -32,9 +32,9 @@ test_str_isprint(char *inp , int exp)
 {
     int res;
     res = bu_str_isprint(inp);
-    if(res == exp){
-	if(res) {
-	    printf("Testing with string : %10s is printable->PASSED!\n",inp);
+    if (res == exp) {
+	if (res) {
+	    printf("Testing with string : %10s is printable->PASSED!\n", inp);
 	    return 1;
 	} else {
 	    printf("Given string not printable->PASSED!\n");
@@ -48,13 +48,9 @@ test_str_isprint(char *inp , int exp)
 
 
 int
-main(int ac , char **av)
+main(int UNUSED(ac) , char **UNUSED(av))
 {
     int pass = 1;
-
-    /* unused variables generate warnings, and sometimes warnings are treated as errors*/
-    if (ac) {};
-    if (av) {};
 
     printf("\nStarting Tests For ctype.c....\n");
 
