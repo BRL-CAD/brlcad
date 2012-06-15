@@ -154,16 +154,16 @@ proc build_region { args } {
     # if we are in append mode, union the current tree with an existing region
     if { $append } {
 	set regname ${tag}.r$regnum
-	if { [catch {db get $regname tree} oldtree] == 0 } {
+	if { [catch {get $regname tree} oldtree] == 0 } {
 	    set tree [list u $oldtree $tree]
-	    if { [catch {db adjust $regname tree $tree} ret ] } {
+	    if { [catch {adjust $regname tree $tree} ret ] } {
 		error "failed to update existing region ($regname)"
 	    } else {
 		puts "Appended to region $regname"
 	    }
 	} else {
 	    # specified region does not exist, so create it
-	    if { [catch {db put $regname comb region yes air $air id $id los $los GIFTmater $mater tree $tree} ret] } {
+	    if { [catch {put $regname comb region yes air $air id $id los $los GIFTmater $mater tree $tree} ret] } {
 		error "failed to create region!!!\n$ret"
 	    } else {
 		puts "Created region $regname"
@@ -187,7 +187,7 @@ proc build_region { args } {
 	}
 
 	# create the new region
-	if { [catch {db put $regname comb region yes air $air id $id los $los GIFTmater $mater tree $tree} ret] } {
+	if { [catch {put $regname comb region yes air $air id $id los $los GIFTmater $mater tree $tree} ret] } {
 	    error "failed to create region!!!\n$ret"
 	} else {
 	    puts "Created region $regname"
