@@ -70,7 +70,7 @@ CASES='2 3'
 
 for i in $CASES ; do
 
-  $1/regress/dsp/run-dsp-case-set-$i.sh $1
+  "$1/regress/dsp/run-dsp-case-set-$i.sh" "$1"
   STATUS=$?
   if [ $STATUS -gt 0 ] ; then
     FAILED="`expr $FAILED + 1`"
