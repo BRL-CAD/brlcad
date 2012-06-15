@@ -9659,10 +9659,15 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
     struct ged ged;
+    struct bu_hook_list save_hook_list;
     int ret;
 
     /* look for the new libged commands before trying one of the old ones */
     GED_INIT(&ged, wdbp);
+
+    bu_hook_list_init(&save_hook_list);
+    bu_log_hook_save_all(&save_hook_list);
+    bu_log_hook_delete_all();
 
     /* suppress bu_log output because we don't care if the command
      * exists in wdb_newcmds since it might be in wdb_cmds.  this
@@ -9677,7 +9682,7 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* unsuppress bu_log output */
-    bu_log_delete_hook(do_nothing, NULL);
+    bu_log_hook_restore_all(&save_hook_list);
 
     /* release any allocated memory */
     ged_free(&ged);

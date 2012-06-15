@@ -74,6 +74,50 @@ bu_hook_call(struct bu_hook_list *hlp, genptr_t buf)
     }
 }
 
+
+void
+bu_hook_save_all(struct bu_hook_list *hlp, struct bu_hook_list *save_hlp)
+{
+    struct bu_hook_list *cur = hlp;
+
+    while(BU_LIST_WHILE(cur, bu_hook_list, &hlp->l)) {
+	BU_LIST_DEQUEUE(&(cur->l));
+
+	/* append what was on hlp to save_hlp */
+	BU_LIST_APPEND(&save_hlp->l, &cur->l);
+    }
+}
+
+
+void
+bu_hook_delete_all(struct bu_hook_list *hlp)
+{
+    struct bu_hook_list *cur = hlp;
+
+    while(BU_LIST_WHILE(cur, bu_hook_list, &hlp->l)) {
+	BU_LIST_DEQUEUE(&(cur->l));
+	bu_free((genptr_t)cur, "bu_hook_delete_all");
+    }
+}
+
+
+void
+bu_hook_restore_all(struct bu_hook_list *hlp, struct bu_hook_list *restore_hlp)
+{
+    struct bu_hook_list *cur = restore_hlp;
+
+    /* first delete what's there */
+    bu_hook_delete_all(hlp);
+
+    /* restore using restore_hlp */
+    while(BU_LIST_WHILE(cur, bu_hook_list, &restore_hlp->l)) {
+	BU_LIST_DEQUEUE(&(cur->l));
+
+	/* append what was on the restore list to hlp */
+	BU_LIST_APPEND(&hlp->l, &cur->l);
+    }
+}
+
 /*
  * Local Variables:
  * mode: C

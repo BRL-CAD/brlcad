@@ -3537,6 +3537,11 @@ BU_EXPORT extern void bu_hook_delete(struct bu_hook_list *hlp,
 				     genptr_t clientdata);
 BU_EXPORT extern void bu_hook_call(struct bu_hook_list *hlp,
 				   genptr_t buf);
+BU_EXPORT extern void bu_hook_save_all(struct bu_hook_list *hlp,
+				       struct bu_hook_list *save_hlp);
+BU_EXPORT extern void bu_hook_delete_all(struct bu_hook_list *hlp);
+BU_EXPORT extern void bu_hook_restore_all(struct bu_hook_list *hlp,
+					  struct bu_hook_list *restore_hlp);
 
 /** @} */
 /** @addtogroup log */
@@ -3612,6 +3617,10 @@ BU_EXPORT extern void bu_log_add_hook(bu_hook_t func, genptr_t clientdata);
  * the hook list.  Note that it is not necessarily the active (top) hook.
  */
 BU_EXPORT extern void bu_log_delete_hook(bu_hook_t func, genptr_t clientdata);
+
+BU_EXPORT extern void bu_log_hook_save_all(struct bu_hook_list *save_hlp);
+BU_EXPORT extern void bu_log_hook_delete_all();
+BU_EXPORT extern void bu_log_hook_restore_all(struct bu_hook_list *restore_hlp);
 
 /**
  * Log a single character with no flushing.
