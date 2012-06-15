@@ -67,9 +67,6 @@ _ged_run_rtwizard(struct ged *gedp)
     SECURITY_ATTRIBUTES sa = {0};
     struct bu_vls line = BU_VLS_INIT_ZERO;
 #endif
-#if 0
-    vect_t eye_model;
-#endif
     struct ged_run_rt *run_rtp;
     struct _ged_rt_client_data *drcdp;
 #ifndef _WIN32
@@ -117,10 +114,6 @@ _ged_run_rtwizard(struct ged *gedp)
 
     (void)close(pipe_err[1]);
 
-#if 0
-    _ged_rt_set_eye_model(gedp, eye_model);
-    _ged_rt_write(gedp, fp_in, eye_model);
-#endif
     (void)fclose(fp_in);
 
     BU_GET(run_rtp, struct ged_run_rt);
@@ -178,7 +171,7 @@ _ged_run_rtwizard(struct ged *gedp)
     si.hStdError   = pipe_err[1];
 
     for (i = 0; i < gedp->ged_gdp->gd_rt_cmd_len; i++) {
-	bu_vls_printf(&line, "%s ", gedp->ged_gdp->gd_rt_cmd[i]);
+	bu_vls_printf(&line, "\"%s\" ", gedp->ged_gdp->gd_rt_cmd[i]);
     }
 
     CreateProcess(NULL, bu_vls_addr(&line), NULL, NULL, TRUE,
@@ -192,10 +185,6 @@ _ged_run_rtwizard(struct ged *gedp)
     /* As parent, send view information down pipe */
     fp_in = _fdopen(_open_osfhandle((intptr_t)pipe_inDup, _O_TEXT), "wb");
 
-#if 0
-    _ged_rt_set_eye_model(gedp, eye_model);
-    _ged_rt_write(gedp, fp_in, eye_model);
-#endif
     (void)fclose(fp_in);
 
     BU_GET(run_rtp, struct ged_run_rt);
@@ -259,7 +248,7 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
 #ifdef _WIN32
-	snprintf(rt, 256, "\"%s/rtwizard.bat\"", bin);
+	snprintf(rt, 256, "%s/rtwizard.bat", bin);
 #else
 	snprintf(rt, 256, "%s/rtwizard", bin);
 #endif
