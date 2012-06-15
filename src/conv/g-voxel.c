@@ -59,20 +59,15 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
     struct partition *pp;
     struct rayInfo *voxelHits;
     struct hit *hitOutp, *hitInp;
-    struct rt_i *rtip;
-
 
     voxelHits = (struct rayInfo*) ap->a_uptr;
 
     /**
      * length of voxels in the 3 directions is stored in sizeVoxel[],
-     * rtip is structure for raytracing
      */
     sizeVoxel[0] = voxelHits->sizeVoxel[0];
     sizeVoxel[1] = voxelHits->sizeVoxel[1];
     sizeVoxel[2] = voxelHits->sizeVoxel[2];
-
-    rtip = ap->a_rt_i;
 
     pp = PartHeadp->pt_forw;
     fillDistances = voxelHits->fillDistances;
