@@ -2131,25 +2131,6 @@ wdb_put_cmd(struct rt_wdb *wdbp,
 }
 
 
-/**
- * W D B _ P U T _ T C L
- *@brief
- * Creates an object and stuffs it into the databse.
- * All arguments must be specified.  Object cannot already exist.
- *
- */
-
-static int
-wdb_put_tcl(void *clientData,
-	    int argc,
-	    const char *argv[])
-{
-    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-
-    return wdb_put_cmd(wdbp, argc-1, argv+1);
-}
-
-
 int
 wdb_adjust_cmd(struct rt_wdb *wdbp,
 	       int argc,
