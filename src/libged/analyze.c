@@ -53,17 +53,6 @@ static const int prface[5][6] = {
 };
 
 
-/* division of an arb8 into 6 arb4s */
-static const int farb4[6][4] = {
-    {0, 1, 2, 4},
-    {4, 5, 6, 1},
-    {1, 2, 6, 4},
-    {0, 2, 3, 4},
-    {4, 6, 7, 2},
-    {2, 3, 7, 4},
-};
-
-
 /* edge definition array */
 static const int nedge[5][24] = {
     {0, 1, 1, 2, 2, 0, 0, 3, 3, 2, 1, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* ARB4 */
@@ -811,41 +800,6 @@ analyze_edge(struct ged *gedp, const int edge, const struct rt_arb_internal *arb
 }
 
 
-/* Finds volume of an arb4 defined by farb4[loc][] 	*/
-static double
-analyze_find_vol(int loc, struct rt_arb_internal *arb, struct bn_tol *tol)
-{
-    int a, b, c, d;
-    fastf_t vol, height, len[3], temp, areabase;
-    vect_t v_temp;
-    plane_t plane;
-
-    /* a, b, c = base of the arb4 */
-    a = farb4[loc][0];
-    b = farb4[loc][1];
-    c = farb4[loc][2];
-
-    /* d = "top" point of arb4 */
-    d = farb4[loc][3];
-
-    if (bn_mk_plane_3pts(plane, arb->pt[a], arb->pt[b],
-			 arb->pt[c], tol) < 0)
-	return 0.0;
-
-    /* have a good arb4 - find its volume */
-    height = fabs(plane[W] - VDOT(&plane[0], arb->pt[d]));
-    VSUB2(v_temp, arb->pt[b], arb->pt[a]);
-    len[0] = MAGNITUDE(v_temp);
-    VSUB2(v_temp, arb->pt[c], arb->pt[a]);
-    len[1] = MAGNITUDE(v_temp);
-    VSUB2(v_temp, arb->pt[c], arb->pt[b]);
-    len[2] = MAGNITUDE(v_temp);
-    temp = 0.5 * (len[0] + len[1] + len[2]);
-    areabase = sqrt(temp * (temp-len[0]) * (temp-len[1]) * (temp-len[2]));
-    vol = areabase * height / 3.0;
-    return vol;
-}
-
 /*
  * A R B _ A N A L
  */
@@ -855,8 +809,7 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     int i;
     point_t center_pt;
-    double tot_vol;
-    double tot_area;
+    fastf_t tot_vol, tot_area;
     int cgtype;		/* COMGEOM arb type: # of vertices */
     int type;
 
@@ -927,8 +880,7 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
     /* blank line following previous table */
     bu_vls_printf(gedp->ged_result_str, "\n");
 
-    for (i = 0; i < 6; i++)
-	tot_vol += analyze_find_vol(i, arb, &gedp->ged_wdbp->wdb_tol);
+    rt_functab[ID_ARB8].ft_volume(&tot_vol, ip);
 
     print_volume_table(gedp,
 		       tot_vol
