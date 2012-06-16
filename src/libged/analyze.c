@@ -991,15 +991,22 @@ analyze_ell(struct ged *gedp, const struct rt_db_internal *ip)
 
     rt_functab[ID_ELL].ft_volume(&vol, ip);
     bu_vls_printf(gedp->ged_result_str, "\nELL Volume = %.8f (%.8f gal)",
-          vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-          vol/GALLONS_TO_MM3);
+          vol
+          * gedp->ged_wdbp->dbip->dbi_base2local
+          * gedp->ged_wdbp->dbip->dbi_base2local
+          * gedp->ged_wdbp->dbip->dbi_base2local,
+          vol/GALLONS_TO_MM3
+          );
 
     rt_functab[ID_ELL].ft_surf_area(&area, ip);
     if (area < 0) {
         bu_vls_printf(gedp->ged_result_str, "   Cannot find surface area\n");
     } else {
         bu_vls_printf(gedp->ged_result_str, "   Surface Area = %.8f\n",
-                area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
+                area
+                * gedp->ged_wdbp->dbip->dbi_base2local
+                * gedp->ged_wdbp->dbip->dbi_base2local
+                );
     }
 }
 
