@@ -100,9 +100,8 @@ getopt::init {
 	{viewsize		""	{::have_viewsize ::RtWizard::wizard_state(viewsize)}}
 	{orientation		""	{::have_orientation ::RtWizard::wizard_state(orientation)}}
 	{eye_pt			""	{::have_eye_pt ::RtWizard::wizard_state(eye_pt)}}
-        # Debugging/extra info
+        # Debugging info
 	{verbose		v 	{::RtWizard::wizard_state(verbose)}}
-	{pid-file		"" 	{::have_pidfile ::pid_filename}}
 }
 
 # Perform the actual option parsing
@@ -120,10 +119,6 @@ if {[info exists argc]} {
 if {[info exists ::use_gui] && [info exists ::disable_gui]} {
    puts "Warning - both -gui and -no-gui supplied - enabling gui"
    unset ::disable_gui
-}
-
-if {![info exists ::pid_filename]} {
-  set ::pid_filename ""
 }
 
 # There are three common possibilities for inputs specified without an option flag - the
@@ -475,8 +470,7 @@ if {[info exists ::use_gui]} {
 			$::RtWizard::wizard_state(occmode) $::RtWizard::wizard_state(ghosting_intensity) \
 			$::RtWizard::wizard_state(color_objlist) \
 			$::RtWizard::wizard_state(ghost_objlist) \
-			$::RtWizard::wizard_state(line_objlist) \
-			"$::pid_filename"
+			$::RtWizard::wizard_state(line_objlist)
 		
    if {[info exists ::RtWizard::wizard_state(output_filename)]} {
       set output_generated 0
