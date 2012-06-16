@@ -1345,7 +1345,7 @@ generate_manifolds(struct simulation_params *sim_params,
 	add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&overlap_name));
 
     /* Clear ray visualization primitives */
-    kill(sim_params->gedp, "ray_*");
+    sim_kill(sim_params->gedp, "ray_*");
 
 	/* Initialize the rayshot results structure, has to be done for each manifold  */
 	init_rayshot_results();

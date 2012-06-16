@@ -175,7 +175,7 @@ check_tree_funcleaf(
 
 
 int
-kill(struct ged *gedp, char *name)
+sim_kill(struct ged *gedp, char *name)
 {
     char *cmd_args[5];
     int argc = 2;
@@ -188,11 +188,11 @@ kill(struct ged *gedp, char *name)
 		cmd_args[2] = (char *)0;
 
 		if (ged_kill(gedp, argc, (const char **)cmd_args) != GED_OK) {
-			bu_log("kill: ERROR Could not delete existing \"%s\"\n", name);
+			bu_log("sim_kill: ERROR Could not delete existing \"%s\"\n", name);
 			return GED_ERROR;
 		}
 
-		bu_free_array(argc, cmd_args, "kill: free cmd_args");
+		bu_free_array(argc, cmd_args, "sim_kill: free cmd_args");
     }
 
     return GED_OK;
@@ -200,13 +200,13 @@ kill(struct ged *gedp, char *name)
 
 
 int
-kill_copy(struct ged *gedp, struct directory *dp, char* new_name)
+sim_kill_copy(struct ged *gedp, struct directory *dp, char* new_name)
 {
     char *cmd_args[5];
     int rv, argc = 3;
 
-    if (kill(gedp, new_name) != GED_OK) {
-	bu_log("kill_copy: ERROR Could not delete existing \"%s\"\n", new_name);
+    if (sim_kill(gedp, new_name) != GED_OK) {
+	bu_log("sim_kill_copy: ERROR Could not delete existing \"%s\"\n", new_name);
 	return GED_ERROR;
     }
 
@@ -217,12 +217,12 @@ kill_copy(struct ged *gedp, struct directory *dp, char* new_name)
     cmd_args[3] = (char *)0;
     rv = ged_copy(gedp, 3, (const char **)cmd_args);
     if (rv != GED_OK) {
-	bu_log("kill_copy: ERROR Could not copy \"%s\" to \"%s\"\n", dp->d_namep,
+	bu_log("sim_kill_copy: ERROR Could not copy \"%s\" to \"%s\"\n", dp->d_namep,
 	       new_name);
 	return GED_ERROR;
     }
 
-    bu_free_array(argc, cmd_args, "kill_copy: free cmd_args");
+    bu_free_array(argc, cmd_args, "sim_kill_copy: free cmd_args");
 
     return GED_OK;
 }
@@ -267,12 +267,12 @@ line(struct ged *gedp, char* name, point_t from, point_t to,
     /* Arrow line primitive name */
     bu_vls_sprintf(&reg_vls, "%s%s", name, suffix_reg);
 
-    if (kill(gedp, name) != GED_OK) {
+    if (sim_kill(gedp, name) != GED_OK) {
 	bu_log("line: ERROR Could not delete existing \"%s\"\n", name);
 	return GED_ERROR;
     }
 
-    if (kill(gedp, bu_vls_addr(&reg_vls)) != GED_OK) {
+    if (sim_kill(gedp, bu_vls_addr(&reg_vls)) != GED_OK) {
 	bu_log("line: ERROR Could not delete existing \"%s\"\n", bu_vls_addr(&reg_vls));
 	return GED_ERROR;
     }
@@ -342,12 +342,12 @@ arrow(struct ged *gedp, char* name, point_t from, point_t to)
     bu_vls_sprintf(&arrow_head_vls, "%s%s", prefix_arrow_head, name);
     prefixed_arrow_head = bu_vls_addr(&arrow_head_vls);
 
-    if (kill(gedp, prefixed_arrow_line) != GED_OK) {
+    if (sim_kill(gedp, prefixed_arrow_line) != GED_OK) {
 	bu_log("line: ERROR Could not delete existing \"%s\"\n", prefixed_arrow_line);
 	return GED_ERROR;
     }
 
-    if (kill(gedp, prefixed_arrow_head) != GED_OK) {
+    if (sim_kill(gedp, prefixed_arrow_head) != GED_OK) {
 	bu_log("line: ERROR Could not delete existing \"%s\"\n", prefixed_arrow_head);
 	return GED_ERROR;
     }
@@ -529,7 +529,7 @@ make_rpp(struct ged *gedp, vect_t min, vect_t max, char* name)
     char buffer_str[MAX_FLOATING_POINT_STRLEN];
     char* cmd_args[28];
 
-    if (kill(gedp, name) != GED_OK) {
+    if (sim_kill(gedp, name) != GED_OK) {
 	bu_log("line: ERROR Could not delete existing \"%s\"\n", name);
 	return GED_ERROR;
     }
@@ -585,14 +585,14 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
     prefixed_reg_name = bu_vls_addr(&buffer2);
 
     /* Delete existing bb prim and region */
-    rv = kill(gedp, prefixed_name);
+    rv = sim_kill(gedp, prefixed_name);
     if (rv != GED_OK) {
 	bu_log("insertAABB: ERROR Could not delete existing bounding box arb8 : %s \
 		so NOT attempting to add new bounding box\n", prefixed_name);
 	return GED_ERROR;
     }
 
-    rv = kill(gedp, prefixed_reg_name);
+    rv = sim_kill(gedp, prefixed_reg_name);
     if (rv != GED_OK) {
 	bu_log("insertAABB: ERROR Could not delete existing bounding box region : %s \
 		so NOT attempting to add new region\n", prefixed_reg_name);
@@ -732,14 +732,14 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 	    bu_vls_sprintf(&prefixed_normal_name, "%s%s", prefix_normal, bu_vls_addr(&name));
 
 	    /* Delete existing manifold prim and region */
-	    rv = kill(gedp, bu_vls_addr(&prefixed_name));
+	    rv = sim_kill(gedp, bu_vls_addr(&prefixed_name));
 	    if (rv != GED_OK) {
 		bu_log("insert_manifolds: ERROR Could not delete existing bounding box arb8 : %s \
 					so NOT attempting to add new bounding box\n", bu_vls_addr(&prefixed_name));
 		return GED_ERROR;
 	    }
 
-	    rv = kill(gedp, bu_vls_addr(&prefixed_reg_name));
+	    rv = sim_kill(gedp, bu_vls_addr(&prefixed_reg_name));
 	    if (rv != GED_OK) {
 		bu_log("insert_manifolds: ERROR Could not delete existing bounding box region : %s \
 					so NOT attempting to add new region\n", bu_vls_addr(&prefixed_reg_name));

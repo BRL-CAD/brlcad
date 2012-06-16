@@ -84,7 +84,7 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
     struct bu_vls dp_name_vls = BU_VLS_INIT_ZERO;
 
     /* Kill the existing sim comb */
-    kill(gedp, sim_params->sim_comb_name);
+    sim_kill(gedp, sim_params->sim_comb_name);
     sim_params->num_bodies = 0;
 
     /* Walk the directory list duplicating all regions only, skip some regions */
@@ -110,7 +110,7 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 	    /* Duplicate the region */
 	    bu_vls_sprintf(&dp_name_vls, "%s%s", prefix, dp->d_namep);
 
-	    kill_copy(gedp, dp, bu_vls_addr(&dp_name_vls));
+	    sim_kill_copy(gedp, dp, bu_vls_addr(&dp_name_vls));
 	    bu_vls_printf(gedp->ged_result_str, "add_regions: Copied \"%s\" to \"%s\"\n", dp->d_namep,
 			  bu_vls_addr(&dp_name_vls));
 
@@ -326,8 +326,8 @@ int recreate_sim_comb(struct ged *gedp, struct simulation_params *sim_params)
 {
     struct rigid_body *current_node;
 
-    if (kill(gedp, sim_params->sim_comb_name) != GED_OK) {
-	bu_log("kill_copy: ERROR Could not delete existing \"%s\"\n", sim_params->sim_comb_name);
+    if (sim_kill(gedp, sim_params->sim_comb_name) != GED_OK) {
+	bu_log("sim_kill_copy: ERROR Could not delete existing \"%s\"\n", sim_params->sim_comb_name);
 	return GED_ERROR;
     }
 
