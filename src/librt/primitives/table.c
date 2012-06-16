@@ -1704,7 +1704,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	0,
 	0,
-	NULL,
+	0,
 	NULL,
 	NULL,
 	NULL,
@@ -1712,7 +1712,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
     NULL,
     NULL,
-    NULL;
+    NULL,
     },
 #endif
 
