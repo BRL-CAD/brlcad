@@ -46,8 +46,14 @@
     (always remembering that the order of the rows will be reversed
     during input by mged).</para>
 
+    <para>An easy way to create the input file for asc2dsp is to first create it
+    row by row in natural form with the top row being the desired top row and so on
+    in desired viewing order.  Then take the finished file and filter it through
+    the Unix utility tac which will reverse the order of the rows (lines).
+    </para>
+
     <para>
-      The user must ensure that the input file is valid as far as width
+      Note the user must ensure that the input file is valid as far as width
       x length = number of cells (points).
     </para>
 
@@ -55,6 +61,7 @@
   
   <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
     <para>
+      <citerefentry><refentrytitle>tac</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>dsp</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
     </para>
