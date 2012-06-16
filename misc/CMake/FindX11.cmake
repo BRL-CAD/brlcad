@@ -178,12 +178,12 @@ if(UNIX)
   # Candidate directories for headers
   set(X11_INC_SEARCH_PATH
     /usr/X11/include
-    /usr/include
-    /usr/include/X11
     /usr/X11R7/include
     /usr/X11R6/include
+    /usr/include/X11
     /usr/local/include/X11
     /usr/local/include
+    /usr/include
     /usr/openwin/share/include
     /usr/openwin/include
     /usr/pkg/xorg/include

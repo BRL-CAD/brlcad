@@ -144,17 +144,17 @@ else (WIN32)
 
   set(OPENGL_INC_SEARCH_PATH
     /usr/share/doc/NVIDIA_GLX-1.0/include
-    /usr/pkg/xorg/include
     /usr/X11/include
-    /usr/X11R6/include
     /usr/X11R7/include
+    /usr/X11R6/include
     /usr/include/X11
-    /usr/local/include
     /usr/local/include/X11
-    /usr/openwin/include
-    /usr/openwin/share/include
-    /opt/graphics/OpenGL/include
+    /usr/local/include
     /usr/include
+    /usr/openwin/share/include
+    /usr/openwin/include
+    /usr/pkg/xorg/include
+    /opt/graphics/OpenGL/include
     )
   # Handle HP-UX cases where we only want to find OpenGL in either hpux64
   # or hpux32 depending on if we're doing a 64 bit build.
