@@ -25,7 +25,25 @@
 
 package provide cadwidgets::RtImage 1.0
 
+
+proc ::pid_wait { pid } {
+    if {$::tcl_platform(platform) == "windows"} {
+       set task_cmd [auto_execok tasklist]
+       set task_args [list $task_cmd "/FI" "PID eq $pid" "/FI" "STATUS eq running" "/FO" "LIST"]
+       set task_list "$pid"
+       while {[string matches "*$pid*"]} {
+	 catch {exec {*}$task_args} task_list
+         after 50
+       }
+    } else {
+       while {![catch {exec kill -0 $pid} pid_results]} {
+         after 50
+       }
+    }
+}
+
 namespace eval cadwidgets {
+
 proc rtimage {_dbfile
 	      _port
 	      _w _n
@@ -40,7 +58,8 @@ proc rtimage {_dbfile
 	      _gamma
 	      _color_objects
 	      _ghost_objects
-	      _edge_objects} {
+	      _edge_objects
+	      _pid_filename} {
     global tcl_platform
     global env
 
@@ -67,6 +86,10 @@ proc rtimage {_dbfile
     set tbw [file join $dir $pid\_bw.bw]
     set tmod [file join $dir $pid\_bwmod.bw]
     set tbwpix [file join $dir $pid\_bwpix.pix]
+    set log_file [file join $dir rtwizard.log]
+    if {[string length $_pid_filename]} {
+       set pidfile [file join $dir $_pid_filename]
+    }
 
     set binpath [bu_brlcad_root "bin"]
 
@@ -91,7 +114,13 @@ proc rtimage {_dbfile
 	#
 	# Run rt to generate the color insert
 	#
-	catch {eval exec $cmd}
+	catch {eval exec $cmd >& $log_file &} curr_pid
+	if { [info exists pidfile] } {
+	   set chan [open $pidfile w]
+	   puts $chan $curr_pid
+	   close $chan
+	}
+	::pid_wait $curr_pid
 
 	# Look for color objects that also get edges
 	if {[llength $_edge_objects] && [llength $_ecolor] == 3} {
@@ -143,8 +172,13 @@ proc rtimage {_dbfile
 		#
 		# Run rtedge to generate the full-color with edges
 		#
-		catch {eval exec $cmd}
-
+		catch {eval exec $cmd >& $log_file &} curr_pid
+		if { [info exists pidfile] } {
+	   	   set chan [open $pidfile w]
+	   	   puts $chan $curr_pid
+	   	   close $chan
+	        }
+	        ::pid_wait $curr_pid
 	    }
 	}
 
@@ -182,7 +216,14 @@ proc rtimage {_dbfile
 	#
 	# Run rt to generate the full-color version of the ghost image
 	#
-	catch {eval exec $cmd}
+	catch {eval exec $cmd >& $log_file &} curr_pid
+	if { [info exists pidfile] } {
+	   set chan [open $pidfile w]
+	   puts $chan $curr_pid
+	   close $chan
+	}
+
+	::pid_wait $curr_pid
 
 	set cmd [list [file join $binpath rt] -w $_w -n $_n \
 		     -o $tgfci \
@@ -203,7 +244,13 @@ proc rtimage {_dbfile
 	#
 	# Run rt to generate the full-color version of the occlude_objects (i.e. color and ghost)
 	#
-	catch {eval exec $cmd}
+	catch {eval exec $cmd >& $log_file &} curr_pid
+	if { [info exists pidfile] } {
+	   set chan [open $pidfile w]
+	   puts $chan $curr_pid
+	   close $chan
+	}
+	::pid_wait $curr_pid
 
 	#
 	# Convert to ghost image
@@ -269,7 +316,14 @@ proc rtimage {_dbfile
 	#
 	# Run rtedge to generate the full-color version of the ghost image
 	#
-	catch {eval exec $cmd}
+	catch {eval exec $cmd >& $log_file &} curr_pid
+	if { [info exists pidfile] } {
+	   set chan [open $pidfile w]
+	   puts $chan $curr_pid
+	   close $chan
+	}
+
+	::pid_wait $curr_pid
     }
 
     catch {file delete -force $tgi}
