@@ -53,8 +53,8 @@
     </para>
 
     <para>
-      Note the user must ensure that the input file is valid as far as width
-      x length = number of cells (points).
+      Note the user must ensure that the input file is valid for mged so that width
+      times length equals the actual number of cells (points).
     </para>
 
   </refsection>
