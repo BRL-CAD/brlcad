@@ -311,7 +311,7 @@
 
           <table><info><title>RtWizard Image Types</title></info>
 
-            <tgroup cols="2">
+            <tgroup cols="3">
               <thead>
                 <row>
                   <entry>Type</entry>
