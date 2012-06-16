@@ -2217,7 +2217,7 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
 
         /* height of arb4 is distance from the plane created using the
          * points of the base, and the top point 'd' */
-        arb4_height = fabs(DIST_PT_PLANE(plane, aip->pt[d]));
+        arb4_height = fabs(DIST_PT_PLANE(aip->pt[d], plane));
         /* find side lengths of the base */
         len[0] = DIST_PT_PT(aip->pt[a], aip->pt[b]);
         len[1] = DIST_PT_PT(aip->pt[a], aip->pt[c]);
