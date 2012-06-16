@@ -157,23 +157,33 @@ if(UNIX)
   set(CMAKE_FIND_FRAMEWORK NEVER)
 
 
-  # See whether we're looking for 32 or 64 bit libraries
+  # See whether we're looking for 32 or 64 bit libraries,
+  # and organize our search directories accordingly.  The
+  # common convention is to use lib64 for 64 bit versions of
+  # libraries, but some distributions (notably archlinux) 
+  # use lib32 for 32 bit and lib for 64 bit.
   get_property(SEARCH_64BIT GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
   if(SEARCH_64BIT)
     set(64BIT_DIRS "/usr/lib64/X11;/usr/lib64;/usr/lib/x86_64-linux-gnu")
+    if(EXISTS "/usr/lib32" OR NOT EXISTS "/usr/lib64")
+      set(64BIT_DIRS ${64BIT_DIRS} /usr/lib/X11 /usr/lib)
+    endif(EXISTS "/usr/lib32" OR NOT EXISTS "/usr/lib64")
   else(SEARCH_64BIT)
-    set(32BIT_DIRS "/usr/lib/X11;/usr/lib;/usr/lib/i386-linux-gnu")
+    set(32BIT_DIRS "/usr/lib32/X11;/usr/lib32;/usr/lib/i386-linux-gnu")
+    if(EXISTS "/usr/lib64" OR NOT EXISTS "/usr/lib32")
+      set(32BIT_DIRS ${32BIT_DIRS} /usr/lib/X11 /usr/lib)
+    endif(EXISTS "/usr/lib64" OR NOT EXISTS "/usr/lib32")
   endif(SEARCH_64BIT)
 
   # Candidate directories for headers
   set(X11_INC_SEARCH_PATH
     /usr/X11/include
-    /usr/include
-    /usr/include/X11
     /usr/X11R7/include
     /usr/X11R6/include
+    /usr/include/X11
     /usr/local/include/X11
     /usr/local/include
+    /usr/include
     /usr/openwin/share/include
     /usr/openwin/include
     /usr/pkg/xorg/include
@@ -411,9 +421,9 @@ if(UNIX)
   endif(X11_ICE_LIB AND X11_ICE_INCLUDE_PATH)
 
   # Deprecated variable for backwards compatibility with CMake 1.4
-  if(X11_X11_INCLUDE_PATH AND X11_LIBRARIES)
+  if(X11_Xlib_INCLUDE_PATH AND X11_LIBRARIES)
     set(X11_FOUND 1)
-  endif(X11_X11_INCLUDE_PATH AND X11_LIBRARIES)
+  endif(X11_Xlib_INCLUDE_PATH AND X11_LIBRARIES)
 
   if(X11_FOUND)
     include(CheckFunctionExists)
