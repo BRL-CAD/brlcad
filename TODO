@@ -20,13 +20,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * quick-test build_region
 
-* something wrong with brep/nurbs subdivision spatial partitioning
-  causing inline failure in BANode<ON_BoundingBox>::addChild().
-  disable NOSTRICTCXX strict flag on librt with Release mode
-  compilation to diagnose.  need to make sure class composition and
-  data members are correct and, iff correct, expand inline-unit-growth
-  to accommodate.
-
 * make sure mged's sketch editor works (particularly for circles)
 
 * add regression test for 'red' command unsetting the region flag
@@ -83,6 +76,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* something wrong with brep/nurbs subdivision spatial partitioning
+  causing inline failure in BANode<ON_BoundingBox>::addChild().
+  disable NOSTRICTCXX strict flag on librt with Release mode
+  compilation to diagnose.  need to make sure class composition and
+  data members are correct and, iff correct, expand inline-unit-growth
+  to accommodate.
 
 * investigate why Eric Raymond's doclifter
   (http://www.catb.org/~esr/doclifter/)is failing on these man page
