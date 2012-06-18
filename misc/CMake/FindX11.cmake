@@ -178,12 +178,12 @@ if(UNIX)
   # Candidate directories for headers
   set(X11_INC_SEARCH_PATH
     /usr/X11/include
-    /usr/include
-    /usr/include/X11
     /usr/X11R7/include
     /usr/X11R6/include
+    /usr/include/X11
     /usr/local/include/X11
     /usr/local/include
+    /usr/include
     /usr/openwin/share/include
     /usr/openwin/include
     /usr/pkg/xorg/include
@@ -421,9 +421,9 @@ if(UNIX)
   endif(X11_ICE_LIB AND X11_ICE_INCLUDE_PATH)
 
   # Deprecated variable for backwards compatibility with CMake 1.4
-  if(X11_X11_INCLUDE_PATH AND X11_LIBRARIES)
+  if(X11_Xlib_INCLUDE_PATH AND X11_LIBRARIES)
     set(X11_FOUND 1)
-  endif(X11_X11_INCLUDE_PATH AND X11_LIBRARIES)
+  endif(X11_Xlib_INCLUDE_PATH AND X11_LIBRARIES)
 
   if(X11_FOUND)
     include(CheckFunctionExists)

@@ -11,6 +11,7 @@
 */
 
 #include <ExpDict.h>
+#include "scl_memmgr.h"
 
 Dictionary_instance::~Dictionary_instance() {
 }
@@ -29,12 +30,6 @@ Schema::~Schema() {
     }
     if( _ref_interface_list != 0 ) {
         delete _ref_interface_list;
-    }
-    if( _function_list != 0 ) {
-        delete _function_list;
-    }
-    if( _procedure_list != 0 ) {
-        delete _procedure_list;
     }
     if( _global_rules != 0 ) {
         delete _global_rules;

@@ -1,80 +1,81 @@
 #ifndef READ_FUNC_H
 #define READ_FUNC_H
 
+#include <scl_export.h>
 #include <sdai.h>
 
 #define MAX_COMMENT_LENGTH 512
 
 // print Error information for debugging purposes
-extern void PrintErrorState( ErrorDescriptor & err );
+extern SCL_CORE_EXPORT void PrintErrorState( ErrorDescriptor & err );
 
 // print istream error information for debugging purposes
-extern void IStreamState( istream & in );
+extern SCL_CORE_EXPORT void IStreamState( istream & in );
 
-extern int ReadInteger( SDAI_Integer  &val, istream & in, ErrorDescriptor * err,
+extern SCL_CORE_EXPORT int ReadInteger( SDAI_Integer  &val, istream & in, ErrorDescriptor * err,
              const char * tokenList );
 
-extern int ReadInteger( SDAI_Integer  &val, const char * s, ErrorDescriptor * err,
+extern SCL_CORE_EXPORT int ReadInteger( SDAI_Integer  &val, const char * s, ErrorDescriptor * err,
              const char * tokenList );
 
-extern Severity IntValidLevel( const char * attrValue, ErrorDescriptor * err,
+extern SCL_CORE_EXPORT Severity IntValidLevel( const char * attrValue, ErrorDescriptor * err,
                int clearError, int optional, const char * tokenList );
 
-extern char * WriteReal( SDAI_Real  val, std::string & s );
+extern SCL_CORE_EXPORT char * WriteReal( SDAI_Real  val, std::string & s );
 
-extern void WriteReal( SDAI_Real  val, ostream & out );
+extern SCL_CORE_EXPORT void WriteReal( SDAI_Real  val, ostream & out );
 
-extern int ReadReal( SDAI_Real  &val, istream & in, ErrorDescriptor * err,
+extern SCL_CORE_EXPORT int ReadReal( SDAI_Real  &val, istream & in, ErrorDescriptor * err,
           const char * tokenList );
 
-extern int ReadReal( SDAI_Real  &val, const char * s, ErrorDescriptor * err,
+extern SCL_CORE_EXPORT int ReadReal( SDAI_Real  &val, const char * s, ErrorDescriptor * err,
           const char * tokenList );
 
-extern Severity RealValidLevel( const char * attrValue, ErrorDescriptor * err,
+extern SCL_CORE_EXPORT Severity RealValidLevel( const char * attrValue, ErrorDescriptor * err,
                 int clearError, int optional, const char * tokenList );
 
-extern int ReadNumber( SDAI_Real  &val, istream & in, ErrorDescriptor * err,
+extern SCL_CORE_EXPORT int ReadNumber( SDAI_Real  &val, istream & in, ErrorDescriptor * err,
             const char * tokenList );
 
-extern int ReadNumber( SDAI_Real  &val, const char * s, ErrorDescriptor * err,
+extern SCL_CORE_EXPORT int ReadNumber( SDAI_Real  &val, const char * s, ErrorDescriptor * err,
             const char * tokenList );
 
-extern Severity NumberValidLevel( const char * attrValue, ErrorDescriptor * err,
+extern SCL_CORE_EXPORT Severity NumberValidLevel( const char * attrValue, ErrorDescriptor * err,
                   int clearError, int optional, const char * tokenList );
 
 
 ////////////////////
 
-extern int   QuoteInString( istream & in );
+extern SCL_CORE_EXPORT int   QuoteInString( istream & in );
 
-extern void PushPastString( istream & in, std::string & s, ErrorDescriptor * err );
+extern SCL_CORE_EXPORT void PushPastString( istream & in, std::string & s, ErrorDescriptor * err );
 
-extern void PushPastImbedAggr( istream & in, std::string & s, ErrorDescriptor * err );
+extern SCL_CORE_EXPORT void PushPastImbedAggr( istream & in, std::string & s, ErrorDescriptor * err );
 
-extern void PushPastAggr1Dim( istream & in, std::string & s, ErrorDescriptor * err );
+extern SCL_CORE_EXPORT void PushPastAggr1Dim( istream & in, std::string & s, ErrorDescriptor * err );
 
 ////////////////////
 
-extern Severity FindStartOfInstance( istream & in, std::string & inst );
+extern SCL_CORE_EXPORT Severity FindStartOfInstance( istream & in, std::string & inst );
 
 //  used for instances that aren\'t valid - reads to next \';\'
-extern Severity SkipInstance( istream & in, std::string & inst );
+extern SCL_CORE_EXPORT Severity SkipInstance( istream & in, std::string & inst );
 
-extern const char * SkipSimpleRecord( istream & in, std::string & buf, ErrorDescriptor * err );
+extern SCL_CORE_EXPORT const char * SkipSimpleRecord( istream & in, std::string & buf, ErrorDescriptor * err );
 
 // this includes entity names
-extern const char * ReadStdKeyword( istream & in, std::string & buf, int skipInitWS = 1 );
+extern SCL_CORE_EXPORT const char * ReadStdKeyword( istream & in, std::string & buf, int skipInitWS = 1 );
 
-extern const char * GetKeyword( istream & in, const char * delims, ErrorDescriptor & err );
+extern SCL_CORE_EXPORT const char * GetKeyword( istream & in, const char * delims, ErrorDescriptor & err );
 
-extern int FoundEndSecKywd( istream & in, ErrorDescriptor & err );
+extern SCL_CORE_EXPORT int FoundEndSecKywd( istream & in, ErrorDescriptor & err );
 
-extern const char * ReadComment( std::string & ss, const char * s );
+extern SCL_CORE_EXPORT const char * ReadComment( std::string & ss, const char * s );
 
-extern const char * ReadComment( istream & in, std::string & s );
+extern SCL_CORE_EXPORT const char * ReadComment( istream & in, std::string & s );
 
-extern Severity    ReadPcd( istream & in ); //print control directive
+extern SCL_CORE_EXPORT Severity    ReadPcd( istream & in ); //print control directive
 
-extern void        ReadTokenSeparator( istream & in, std::string * comments = 0 );
+extern SCL_CORE_EXPORT void        ReadTokenSeparator( istream & in, std::string * comments = 0 );
 
 #endif

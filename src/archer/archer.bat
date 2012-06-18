@@ -26,7 +26,7 @@ SET PATH=%~dp0;%PATH%
 SET BWISH=%~dp0bwish
 SET ARCHER=%~dp0archer
 
-START /B "" "%BWISH%" "%ARCHER%" %1
+START /B "" "%BWISH%" "%ARCHER%" %*
 
 EXIT
 

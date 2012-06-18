@@ -30,9 +30,9 @@
 #ifndef REGTAB_INCLUDED
 #define REGTAB_INCLUDED
 
-#include <string>
-
 #include "common.h"
+
+#include <string>
 
 #include "vmath.h"
 #include "wdb.h"
@@ -67,7 +67,7 @@ void createRegions
 class Region {
 public:
 
-    Region(int nr = 0, std::string description = std::string(""));
+    Region(int nr = 0, const char* description = "");
 
     ~Region() {
 	mk_freemembers(&head.l);

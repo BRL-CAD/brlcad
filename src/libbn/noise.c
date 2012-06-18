@@ -151,6 +151,7 @@ static struct str_ht ht;
 	    bu_bomb("ht.hashTable changed rel ht.hashTableMagic2");	\
     }
 
+
 /**
  * Map integer point into repeatable random number [0..TABLE_SIZE-1]
  * (i.e., [0-4095]).  We actually only use the first 8 bits of the
@@ -306,6 +307,7 @@ bn_noise_perlin(fastf_t *point)
 
 }
 
+
 /**
  * Vector-valued "Noise"
  */
@@ -411,21 +413,17 @@ bn_noise_vec(fastf_t *point, fastf_t *result)
     result[1] += INCRSUM(m+4, s, px, py, pz);
     result[2] += INCRSUM(m+8, s, px, py, pz);
 }
-/*************************************************************
- *@brief
+
+
+/**
  * Spectral Noise functions
- *
- *************************************************************
  *
  * The Spectral Noise functions cache the values of the term:
  *
- *@code
-		    (-h_val)
-		freq
-		*@endcode
-		* Which on some systems is rather expensive to compute.
-		*
-		*************************************************************/
+ * (-h_val)
+ * freq
+ * Which on some systems is rather expensive to compute.
+ */
 struct fbm_spec {
     uint32_t magic;
     double octaves;
@@ -447,8 +445,7 @@ static int etbl_size = 0;
 static struct fbm_spec *
 build_spec_tbl(double h_val, double lacunarity, double octaves)
 {
-    struct fbm_spec *ep;
-    double *spec_wgts;
+    struct fbm_spec *ep = NULL;
     double frequency;
     int i;
 
@@ -462,33 +459,36 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
     if (etbl_next >= etbl_size) {
 	if (etbl_size) {
 	    etbl_size *= 2;
-	    etbl = (struct fbm_spec *)bu_realloc((char *)etbl,
+	    etbl = (struct fbm_spec *)bu_realloc((void *)etbl,
 						 etbl_size*sizeof(struct fbm_spec),
 						 "spectral weights table");
-	} else
-	    etbl = (struct fbm_spec *)bu_calloc(etbl_size = 10,
+	} else {
+	    etbl_size = 128;
+	    etbl = (struct fbm_spec *)bu_calloc(etbl_size,
 						sizeof(struct fbm_spec),
 						"spectral weights table");
+	}
     }
 
     /* set up the next available table */
     ep = &etbl[etbl_next];
-    ep->magic = MAGIC_fbm_spec_wgt;	ep->octaves = octaves;
-    ep->h_val = h_val;		ep->lacunarity = lacunarity;
-    spec_wgts = ep->spec_wgts =
-	(double *)bu_malloc(((int)(octaves+1)) * sizeof(double),
-			    "spectral weights");
+    ep->h_val = h_val;
+    ep->lacunarity = lacunarity;
+    ep->octaves = octaves;
+    ep->spec_wgts = (double *)bu_calloc(((int)(octaves+1)), sizeof(double), "spectral weights");
+    ep->magic = MAGIC_fbm_spec_wgt;
 
     /* precompute and store spectral weights table */
     for (frequency = 1.0, i=0; i < octaves; i++) {
 	/* compute weight for each frequency */
-	spec_wgts[i] = pow(frequency, -h_val);
+	ep->spec_wgts[i] = pow(frequency, -h_val);
 	frequency *= lacunarity;
     }
 
     etbl_next++; /* saved for last in case we're running multi-threaded */
     return ep;
 }
+
 
 /**
  * The first order of business is to see if we have pre-computed the
@@ -499,15 +499,15 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
 struct fbm_spec *
 find_spec_wgt(double h, double l, double o)
 {
-    struct fbm_spec *ep;
+    struct fbm_spec *ep = NULL;
     int i;
 
-
-    for (ep = etbl, i=0; i < etbl_next; i++, ep++) {
+    for (i=0; i < etbl_next; i++) {
+	ep = &etbl[i];
 	if (ep->magic != MAGIC_fbm_spec_wgt)
 	    bu_bomb("find_spec_wgt");
-	if (ZERO(ep->lacunarity - l)
-	    && ZERO(ep->h_val - h)
+	if (EQUAL(ep->lacunarity, l)
+	    && EQUAL(ep->h_val, h)
 	    && ep->octaves > (o - SMALL_FASTF))
 	{
 	    return ep;
@@ -523,21 +523,25 @@ find_spec_wgt(double h, double l, double o)
     /* We search the list one more time in case the last process to
      * hold the semaphore just created the table we were about to add
      */
-    for (ep = etbl, i=0; i < etbl_next; i++, ep++) {
+    for (i=0; i < etbl_next; i++) {
+	ep = &etbl[i];
 	if (ep->magic != MAGIC_fbm_spec_wgt)
 	    bu_bomb("find_spec_wgt");
-	if (ZERO(ep->lacunarity - l)
-	    && ZERO(ep->h_val - h)
+	if (EQUAL(ep->lacunarity, l)
+	    && EQUAL(ep->h_val, h)
 	    && ep->octaves > (o - SMALL_FASTF))
 	    break;
     }
 
-    if (i >= etbl_next) ep = build_spec_tbl(h, l, o);
+    if (i >= etbl_next)
+	ep = build_spec_tbl(h, l, o);
 
     bu_semaphore_release(BU_SEM_BN_NOISE);
 
     return ep;
 }
+
+
 /**
  * @brief
  * Procedural fBm evaluated at "point"; returns value stored in
@@ -703,6 +707,7 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 
 } /* bn_noise_turb() */
 
+
 /**
  *@brief
  * A ridged noise pattern
@@ -762,6 +767,7 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
     }
     return result;
 }
+
 
 /**
  *

@@ -35,9 +35,18 @@ SET(LIBSTEPEDITOR_PRIVATE_HDRS
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${SCL_SOURCE_DIR}/src/base
     ${SCL_SOURCE_DIR}/src/cldai
     ${SCL_SOURCE_DIR}/src/clstepcore
     ${SCL_SOURCE_DIR}/src/clutils
 )
 
-SCL_ADDLIB(stepeditor "${LIBSTEPEDITOR_SRCS}" stepcore)
+if(MSVC OR BORLAND)
+add_definitions( -DSCL_EDITOR_DLL_EXPORTS )
+add_definitions( -DSCL_BASE_DLL_IMPORTS )
+add_definitions( -DSCL_CORE_DLL_IMPORTS )
+add_definitions( -DSCL_DAI_DLL_IMPORTS )
+add_definitions( -DSCL_UTILS_DLL_IMPORTS )
+endif()
+
+SCL_ADDLIB(stepeditor "${LIBSTEPEDITOR_SRCS}" "stepcore;base")

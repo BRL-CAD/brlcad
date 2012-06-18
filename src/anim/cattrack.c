@@ -20,7 +20,7 @@
  */
 /** @file cattrack.c
  *
- * Caternary curve routines used by anim_track.c
+ * Catenary curve routines used by anim_track.c
  *
  */
 

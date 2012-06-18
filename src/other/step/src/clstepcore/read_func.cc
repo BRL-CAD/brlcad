@@ -1,10 +1,11 @@
 
+#include <errordesc.h>
 #include <stdio.h>
-#include "errordesc.h"
-#include "sdai.h"
-#include "read_func.h"
-#include "STEPattribute.h"
+#include <sdai.h>
+#include <read_func.h>
+#include <STEPattribute.h>
 #include "Str.h"
+#include "scl_memmgr.h"
 
 const int RealNumPrecision = REAL_NUM_PRECISION;
 
@@ -562,7 +563,7 @@ Severity FindStartOfInstance( istream & in, std::string & inst ) {
             case '\'':  // get past the string
                 in.putback( c );
                 tmp.STEPread( in, &errs );
-                inst.append( tmp );
+                inst.append( tmp.c_str() );
                 break;
 
             case '\0':  // problem in input ?
@@ -593,7 +594,7 @@ Severity SkipInstance( istream & in, std::string & inst ) {
             case '\'':  // get past the string
                 in.putback( c );
                 tmp.STEPread( in, &errs );
-                inst.append( tmp );
+                inst.append( tmp.c_str() );
                 break;
 
             case '\0':  // problem in input ?
@@ -938,6 +939,9 @@ void ReadTokenSeparator( istream & in, std::string * comments ) {
 
             case '\\': // try to read a print control directive
                 ReadPcd( in );
+                break;
+            case '\n':
+                in.ignore();
                 break;
             default:
                 return;

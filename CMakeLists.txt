@@ -88,7 +88,7 @@ endmacro(DISTCLEAN)
 # Stash the initial CMakeCache.txt file, if it exists, for subsequent
 # comparison
 if(EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
-  configure_file(${CMAKE_BINARY_DIR}/CMakeCache.txt ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev COPY_ONLY)
+  configure_file(${CMAKE_BINARY_DIR}/CMakeCache.txt ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev COPYONLY)
   DISTCLEAN(${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
 DISTCLEAN(${CMAKE_BINARY_DIR}/CMakeCache.txt)
@@ -586,6 +586,15 @@ else(NOT CMAKE_CONFIGURATION_TYPES)
   mark_as_advanced(CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_CONFIGURATION_TYPES)
 
+# Normalize the build type capitalization and handle NONE case
+string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE_UPPER)
+if ("${BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type" FORCE)
+endif ("${BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
+if ("${BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build Type" FORCE)
+endif ("${BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
+
 if(CMAKE_BUILD_TYPE MATCHES "NONE")
   set(CMAKE_BUILD_TYPE "")
 endif(CMAKE_BUILD_TYPE MATCHES "NONE")
@@ -876,6 +885,17 @@ endif(PREVIOUS_CONFIGURE_TYPE)
 set(PREVIOUS_CONFIGURE_TYPE ${CMAKE_WORD_SIZE} CACHE STRING "Previous configuration word size" FORCE)
 mark_as_advanced(PREVIOUS_CONFIGURE_TYPE)
 
+# Auto-reconfiguration - by default, a CMake generated build system
+# will re-run CMake if it detects that build system logic has changed.
+# This is normally a good thing, but becomes problematic when using
+# Visual Studio - recent versions of MSVC will individually prompt for
+# a re-loading of generated solution files one at a time.  Since 
+# BRL-CAD has over a thousand such files in a default build, the only
+# viable approach is to close Visual Studio, re-run CMake manually,
+# and re-open the project in Visual Studio.
+if("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
+  set(CMAKE_SUPPRESS_REGENERATION ON)
+endif("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
 
 # *******************************************************************
 # ***        Top Level Configure Options - Stage 1 of 9           ***
@@ -1565,6 +1585,7 @@ BRLCAD_INCLUDE_FILE(sys/mman.h HAVE_SYS_MMAN_H)
 BRLCAD_INCLUDE_FILE(sys/mount.h HAVE_SYS_MOUNT_H)
 BRLCAD_INCLUDE_FILE(sys/param.h HAVE_SYS_PARAM_H)
 BRLCAD_INCLUDE_FILE(sys/prctl.h HAVE_SYS_PRCTL_H)
+BRLCAD_INCLUDE_FILE(sys/resource.h HAVE_SYS_RESOURCE_H)
 BRLCAD_INCLUDE_FILE(sys/sched.h HAVE_SYS_SCHED_H)
 BRLCAD_INCLUDE_FILE(sys/select.h HAVE_SYS_SELECT_H)
 BRLCAD_INCLUDE_FILE(sys/socket.h HAVE_SYS_SOCKET_H)

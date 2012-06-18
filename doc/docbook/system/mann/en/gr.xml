@@ -27,21 +27,73 @@
          <arg choice="plain" rep="norepeat"><replaceable>+</replaceable></arg>
          <arg choice="plain" rep="norepeat"><replaceable>-</replaceable></arg>
        </group>
+       <arg choice="opt" rep="norepeat"><replaceable>ListLimit</replaceable></arg>
      </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
  <para>Allows primitives to be added or removed from a group by selecting
- them on the MGED display using a selection box. Drawing the selection box
- (left to right), only primitives completely in the box are selected.
- Drawing the selection box (right to left), primitives completely and partly
- in the box are selected. Primitives are identified by the location of their
- vertices on the display. For example, a portion of a primitive may be
- within the selection box but if none of its vertices are then it is not
- considered within the section box. To start grouper use the command
- 'grouper' or 'gr' and to finish use 'done_grouper' or 'dg'. The center
- mouse button is used to create the selection box. Primitives in the group
- will be displayed in yellow.</para>
+ them on the MGED display using a selection box. Primitives are identified
+ by the location of their vertices on the display. For example, a portion of
+ a primitive may be within the selection box but if none of its vertices are
+ then it is not considered within the section box. Because of this,
+ primitives can only be selected if they are displayed in wireframe. Drawing
+ a selection box (left to right), primitives completely in the box are
+ selected. Drawing the selection box (right to left), primitives completely
+ and partly in the box are selected. To start grouper use the command 'gr'
+ or 'grouper'. Press and hold the center mouse button then drag the mouse to
+ create the selection box. If there are a large number of vertices within
+ the selection box, there will be a delay before the selected primitives are
+ highlighted and control of MGED is returned to the user. To exit grouper
+ mode, hold down the 'ctrl' key and single-click the center mouse button.
+ You can also exit grouper mode with the 'dg' or 'done_grouper' commands.
+ Primitives in the group, while in grouper mode, will be displayed (i.e.
+ highlighted) in yellow wireframe. When entering grouper mode, if the chosen
+ group already contains primitives, these existing primitives will be
+ immediately displayed in yellow wireframe. As primitives are added to the
+ group, they will also be highlighted in yellow. When you exit grouper mode,
+ the yellow highlights will be removed.</para>
+ <para>Caveats: When primitives are added to the group, they will lose any
+ translation matrices used to place them into the position where they were
+ selected. A workaround for this would be to use the 'xpush' command to push
+ the translation matrices down to the primitives before using grouper.</para>
+</refsection>
+
+ <refsection xml:id="options"><info><title>OPTIONS</title></info>
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><option>GroupName</option></term>
+      <listitem>
+        <para>
+          The name of the group to add or remove primitives.
+        </para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>+</option></term>
+      <term><option>-</option></term>
+      <listitem>
+        <para>
+          Indicates if to add or remove primitives.
+        </para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>ListLimit</option></term>
+      <listitem>
+        <para>
+          As primitives are selected using a selection box, the names of the
+          primitives can be listed. This option controls the number of
+          entries which will be listed. By default this value is zero. All
+          selected primitives will be listed, assuming the 'ListLimit' is
+          high enough, even if they are not added to the group. This will
+          happen if some of the selected primitives are already in the group.
+        </para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>

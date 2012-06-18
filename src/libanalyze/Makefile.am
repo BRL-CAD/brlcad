@@ -11,7 +11,7 @@ AM_CPPFLAGS = \
 	${TCL_CPPFLAGS}
 
 libanalyze_la_SOURCES =
-libanalyze_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
+libanalyze_la_LDFLAGS = -version-info 20:1 -no-undefined -Wc,${FEXCEPTIONS}
 libanalyze_la_LIBADD = \
 	libanalyze_nil.la \
 	${ANALYZE_LIBS}

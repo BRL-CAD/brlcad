@@ -204,6 +204,8 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
     int ab[3], split, stack_ind;
     void *result;
 
+    memset(stack, 0, sizeof(stack));
+
     if (!tie->kdtree)
 	return NULL;
 

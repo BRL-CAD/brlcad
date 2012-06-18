@@ -72,7 +72,9 @@ the blades of a windmill, and
 controlls the movement of a
 knight. These scripts should first be concatenated together:
 .sp
-cat view.script mill.script quixote.script > mixed.script
+.nf
+    cat view.script mill.script quixote.script > mixed.script
+.fi
 .sp
 Calling
 .I anim_sort
@@ -91,13 +93,13 @@ animation script, containing a series of frames of the
 following form:
 .sp
 .nf
-start framenumber;
-any number of semi-colon terminated commands for rt;
-end;
-any number of post-raytracing commands
+    start framenumber;
+    any number of semi-colon terminated commands for rt;
+    end;
+    any number of post-raytracing commands
 .fi
 .sp
-.I Anim_sort
+.I anim_sort
 reads the framenumber of the first start command, and uses
 this to as the first frame number of the output file. The commands of
 all frames in
@@ -175,7 +177,7 @@ rt(1), tabsub(1), anim_script(1)
 .SH AUTHOR
 Carl J. Nuzman
 .SH COPYRIGHT
-	This software is Copyright (c) 1993-2012 by the United States
+This software is Copyright (c) 1993-2012 by the United States
 Government as represented by U.S. Army Research Laboratory.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic

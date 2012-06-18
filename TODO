@@ -18,39 +18,10 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* something wrong with brep/nurbs subdivision spatial partitioning
-  causing inline failure in BANode<ON_BoundingBox>::addChild().
-  disable NOSTRICTCXX strict flag on librt with Release mode
-  compilation to diagnose.  need to make sure class composition and
-  data members are correct and, iff correct, expand inline-unit-growth
-  to accommodate.
-
-* make sure mged's sketch editor works (particularly for circles)
-
-* bump library versions to 20.  been 19 for way too long, not
-  following proper library versioning compatibility numbering.
- 
-* add regression test for 'red' command unsetting the region flag
-
-* quickly verify cross-platform that mged -c + attach X + draw doesn't
-  crash.
-
-* g-nff is crashing, fix it; more specifically, it is
-  getting a bu_bomb abort with a failed region conversion
-  with supposedly a stack trace to a bu_bomb log but
-  no stack trace is printed to the log (getting same error 
-  with g-euclid, g-euclid1, g-iges, g-jack, g-nmg, g-obj, 
-  g-off, g-tankill, g-x3d, g-xxx_facets)
-
-* test illuminate (e.g. oed) + Z, report of crash (on Windows)
-
-* review and test extensively (post-coverity review)
-
-* investigate and fix the idents command first column bug
-
-
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* test illuminate (e.g. oed) + Z, report of crash (on Windows)
 
 * bu_bomb not printing stack trace as it is supposed to
 
@@ -86,6 +57,34 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* something wrong with brep/nurbs subdivision spatial partitioning
+  causing inline failure in BANode<ON_BoundingBox>::addChild().
+  disable NOSTRICTCXX strict flag on librt with Release mode
+  compilation to diagnose.  need to make sure class composition and
+  data members are correct and, iff correct, expand inline-unit-growth
+  to accommodate.
+
+* investigate why Eric Raymond's doclifter
+  (http://www.catb.org/~esr/doclifter/)is failing on these man page
+  source files:
+
+    ./src/anim/anim_sort.1
+    ./src/canon/canonize.1
+    ./src/util/pixrot.1
+    ./src/tab/tabinterp.1
+    ./src/tab/tabsub.1
+    ./src/anim/anim_time.1
+    ./src/libbn/libplot3.3
+    ./src/libbu/htond.3
+    ./src/libbu/redblack.3
+    ./src/libcursor/libcursor.3
+    ./src/liborle/liborle.3
+    ./src/librt/librt.3
+    ./src/libwdb/libwdb.3
+
+* update mged to not call wdb_init_obj and wdb_create_cmd, trace down
+  other vestiges of wdb_obj for removal
 
 * migrate the mged 'joint' command to libged
 
@@ -663,6 +662,10 @@ comp.r4 ID 5678 material code 5 LOS 75
   near-zero tests.
 
 * complete conversion of existing manual pages into docbook format
+
+  note that Eric Raymond's "manlifter" (a driver for his "doclifter")
+  can be used to aid the project (see 
+  http://www.catb.org/~esr/doclifter/)
 
 * add an option to bot_dump for outputting surface normals.  Make sure
   all supported dump formats (obj, dxf, etc) optionally write out
@@ -1293,8 +1296,11 @@ comp.r4 ID 5678 material code 5 LOS 75
   they have any code we could snarf to make life easier, but regardless
   we need a libbu API on top of any other code - at such a core level,
   we can't introduce an external API.
-  
- 
+
+* add per-face analysis of primitives like tgc, arb to their respective
+  analyze commands in libged
+
+
 CONVERTERS
 ----------
 
@@ -1654,6 +1660,14 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
   one attribute object entity that can do everything a binunif can do,
   then allow attributes on objects to provide that same flexibility.
 
+* change format of related programs (especially filters) so the
+  input/output files are handled identically. two examples of
+  different handling:
+
+    png-pix   file.png > file.pix
+    pix-bw  < file.pix > file.bw
+ 
+  (desired style to be determined)
 
 FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 -------------------------------------------

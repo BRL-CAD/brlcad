@@ -52,21 +52,36 @@ converts the specified
 geometry database file containing NMG objects. The
 .I ascii_file
 is expected to contain lines of the following forms:
-.nf
+
 To start a new outer loop for a face:
+
+.nf
 	l
+.fi
+
 To start a new "hole" loop in the current face:
+
+.nf
 	l hole
+.fi
+
 To indicate a vertex in the current loop:
+
+.nf
 	v# x y z
 .fi
+
 where # is the vertex number and x, y, and z are the coordinates
 of that vertex.
-.nf
+
 To extrude a face:
+
+.nf
 	e x y z
 .fi
+
 where x, y, and z compose the extrusion vector for the face.
+
 If an extrusion vector is specified, then the first face in the
 NMG objects list of faces
 will be extruded. This is intended for cases where only one face
@@ -80,6 +95,7 @@ will produce a single NMG object.
 If the file
 .I ascii_file
 contains the following:
+
 .nf
 l
 	e	-1 0 0
@@ -89,11 +105,14 @@ l
 	v3	1 0 0
 	v4	1 0 1
 	v5	1 -1 1
-Then, the command:
 .fi
+
+Then, the command:
+
 .RS
 $ \|\fIasc-nmg ascii_file \|sample.g\fP
 .RE
+
 will produce an 'L'-shaped NMG solid to the sample.g database file.
 .SH DIAGNOSTICS
 Error messages are intended to be self-explanatory.

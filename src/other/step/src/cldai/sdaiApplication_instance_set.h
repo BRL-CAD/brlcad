@@ -30,6 +30,7 @@
 #ifndef SDAI_APPLICATION_INSTANCE_SET_h
 #define SDAI_APPLICATION_INSTANCE_SET_h
 
+#include <scl_export.h>
 //#include <STEPentity.h>
 
 class SDAI_Application_instance__set ;
@@ -38,7 +39,7 @@ SDAI_Application_instance__set_ptr ;
 typedef SDAI_Application_instance__set_ptr 
 SDAI_Application_instance__set_var ;
 
-class SDAI_Application_instance__set  {
+class SCL_DAI_EXPORT SDAI_Application_instance__set  {
     public:
         SDAI_Application_instance__set ( int = 16 );
         ~SDAI_Application_instance__set ();

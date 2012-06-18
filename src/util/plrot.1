@@ -148,9 +148,13 @@ command has exactly the same effect as giving
 in the same place.
 .SH EXAMPLES
 The command
-.br
-.I plrot\ \-z\30\ \-x20\ \<\ file.plot\ \>\ file2.plot
-.br
+
+.nf
+.RS
+plrot -z30 -x20 < file.plot > file2.plot
+.RE
+.fi
+
 performs a 30 degree positive rotation about the Z axis (counter
 clockwise as viewed from the top), and then translates by 20
 units
@@ -160,11 +164,15 @@ be the same.
 .PP
 To view a plot of a model the way one would see it from a
 ray trace command, you could use:
-.br
-.I rthide\ \-a35\ \-e25\ \-o\ file.plot
-.br
-.I plrot\ \-a\35\ \-e25\ \-g\ \<\ file.plot\ \|\ pl-fb
-.br
+
+.nf
+.RS
+rthide -a35 -e25 -o file.plot
+
+plrot -a35 -e25 -g < file.plot | pl-fb
+.RE
+.fi
+
 The final
 .B \-g
 converts the \fBgift\fR style azimuth and elevations into the

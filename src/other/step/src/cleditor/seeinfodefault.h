@@ -15,6 +15,7 @@
 // this is a default seeinfo that does nothing... thus it is not
 //  dependent on a user interface toolkit
 
+#include <scl_export.h>
 
 class MgrNode;
 class DisplayNode;
@@ -24,7 +25,7 @@ class DisplayNodelist;
 
 #include <editordefines.h>
 
-class seeInfo : public DisplayNode {
+class SCL_EDITOR_EXPORT seeInfo : public DisplayNode {
     public:
         seeInfo( MgrNode * node,
                  SDAI_Application_instance  *se,

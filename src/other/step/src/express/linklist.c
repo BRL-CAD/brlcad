@@ -21,6 +21,7 @@
  * prettied up interface to print_objects_when_running
  */
 
+#include <scl_memmgr.h>
 #include "express/linklist.h"
 
 Error ERROR_empty_list = ERROR_none;

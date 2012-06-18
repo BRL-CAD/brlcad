@@ -31,6 +31,7 @@
  * Date:        04/09/97                                                     *
  *****************************************************************************/
 
+#include <scl_memmgr.h>
 #include <stdlib.h>
 #include "classes.h"
 
@@ -71,7 +72,8 @@ void print_schemas_separate( Express express, void * complexCol, FILES * files )
     /* First set all marks we'll be using to UNPROCESSED/NOTKNOWN: */
     initializeMarks( express );
 
-    fprintf( files->create, "    Uniqueness_rule_ptr ur;\n    Where_rule_ptr wr;\n    Global_rule_ptr gr;\n" );
+    fprintf( files->create, "    Uniqueness_rule_ptr ur;\n    Where_rule_ptr wr;\n    Global_rule_ptr gr;\n" 
+                            "    std::string str; //for large strings such as functions or global rules\n");
     while( !complete ) {
         complete = TRUE;
         DICTdo_type_init( express->symbol_table, &de, OBJ_SCHEMA );
@@ -123,11 +125,11 @@ void print_schemas_separate( Express express, void * complexCol, FILES * files )
     DICTdo_type_init( express->symbol_table, &de, OBJ_SCHEMA );
     while( ( schema = ( Scope )DICTdo( &de ) ) != 0 ) {
         fprintf( files->create,
-                 "\t//////////////// USE statements\n" );
+                 "//////////////// USE statements\n" );
         USEREFout( schema, schema->u.schema->usedict, schema->u.schema->use_schemas, "USE", files->create );
 
         fprintf( files->create,
-                 "\t//////////////// REFERENCE statements\n" );
+                 "//////////////// REFERENCE statements\n" );
         USEREFout( schema, schema->u.schema->refdict, schema->u.schema->ref_schemas, "REFERENCE", files->create );
     }
     /*****************
@@ -152,7 +154,7 @@ void print_schemas_separate( Express express, void * complexCol, FILES * files )
     /* On our way out, print the necessary statements to add support for
     // complex entities.  (The 1st line below is a part of SchemaInit(),
     // which hasn't been closed yet.  (That's done on 2nd line below.)) */
-    fprintf( files->initall, "\t reg.SetCompCollect( gencomplex() );\n" );
+    fprintf( files->initall, "     reg.SetCompCollect( gencomplex() );\n" );
     fprintf( files->initall, "}\n\n" );
     fprintf( files->incall,  "\n#include <complexSupport.h>\n" );
     fprintf( files->incall,  "ComplexCollect *gencomplex();\n" );
@@ -180,7 +182,7 @@ static void initializeMarks( Express express )
     DICTdo_type_init( express->symbol_table, &de_sch, OBJ_SCHEMA );
     while( ( schema = ( Scope )DICTdo( &de_sch ) ) != 0 ) {
         schema->search_id = UNPROCESSED;
-        schema->clientData = ( int * )malloc( sizeof( int ) );
+        schema->clientData = ( int * )scl_malloc( sizeof( int ) );
         *( int * )schema->clientData = 0;
         SCOPEdo_entities( schema, ent, de_ent )
         ent->search_id = NOTKNOWN;
@@ -606,7 +608,7 @@ static void addRenameTypedefs( Schema schema, FILE * classes )
         if( TYPEis_enumeration( t ) ) {
             strncpy( nm, TYPEget_ctype( t ), BUFSIZ - 1 );
             strncpy( basenm, TYPEget_ctype( i ), BUFSIZ - 1 );
-            fprintf( classes, "typedef %s_agg\t%s_agg;\n", basenm, nm );
+            fprintf( classes, "typedef %s_agg        %s_agg;\n", basenm, nm );
         } else {
             strncpy( nm, SelectName( TYPEget_name( t ) ), BUFSIZ - 1 );
             strncpy( basenm, SelectName( TYPEget_name( i ) ), BUFSIZ - 1 );
@@ -649,7 +651,7 @@ static void addAggrTypedefs( Schema schema, FILE * classes )
                 firsttime = FALSE;
             }
             strncpy( nm, ClassName( TYPEget_name( t ) ), BUFSIZ );
-            fprintf( classes, "typedef %s\t%s;\n",
+            fprintf( classes, "typedef %s        %s;\n",
                      TYPEget_ctype( t ), nm );
             fprintf( classes, "typedef       %s *       %sH;\n", nm, nm );
             fprintf( classes, "typedef const %s * const_%sH;\n", nm, nm );
@@ -688,15 +690,15 @@ static void addUseRefNames( Schema schema, FILE * create )
                 // from X.  nnew would = old, but name would not be same
                 // as rnm->object's name. */
                 if( firsttime ) {
-                    fprintf( create, "\t// Alternate names for types and " );
+                    fprintf( create, "        // Alternate names for types and " );
                     fprintf( create, "entities when used in other schemas:\n" );
                     firsttime = FALSE;
                 }
                 if( rnm->type == OBJ_TYPE ) {
-                    fprintf( create, "\t%s", TYPEtd_name( ( Type )rnm->object ) );
+                    fprintf( create, "        %s", TYPEtd_name( ( Type )rnm->object ) );
                 } else {
                     /* must be an entity */
-                    fprintf( create, "\t%s%s%s",
+                    fprintf( create, "        %s%s%s",
                              SCOPEget_name( ( ( Entity )rnm->object )->superscope ),
                              ENT_PREFIX, ENTITYget_name( ( Entity )rnm->object ) );
                 }
@@ -712,14 +714,14 @@ static void addUseRefNames( Schema schema, FILE * create )
             oldnm = ( ( Scope )rnm->object )->symbol.name;
             if( ( strcmp( oldnm, rnm->nnew->name ) ) ) {
                 if( firsttime ) {
-                    fprintf( create, "\t// Alternate names for types and " );
+                    fprintf( create, "        // Alternate names for types and " );
                     fprintf( create, "entities when used in other schemas:\n" );
                     firsttime = FALSE;
                 }
                 if( rnm->type == OBJ_TYPE ) {
-                    fprintf( create, "\t%s", TYPEtd_name( ( Type )rnm->object ) );
+                    fprintf( create, "        %s", TYPEtd_name( ( Type )rnm->object ) );
                 } else {
-                    fprintf( create, "\t%s%s%s",
+                    fprintf( create, "        %s%s%s",
                              SCOPEget_name( ( ( Entity )rnm->object )->superscope ),
                              ENT_PREFIX, ENTITYget_name( ( Entity )rnm->object ) );
                 }

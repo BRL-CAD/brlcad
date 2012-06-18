@@ -1,4 +1,5 @@
 #define CLASSES_MISC_C
+#include <scl_memmgr.h>
 #include <stdlib.h>
 #include "classes.h"
 /*******************************************************************
@@ -126,8 +127,7 @@ StrToConstant( const char * word ) {
  ** Status:  complete
  ******************************************************************/
 
-FILE *
-FILEcreate( const char * filename ) {
+FILE * FILEcreate( const char * filename ) {
     FILE * file;
     const char * fn;
 
@@ -219,25 +219,25 @@ TYPEget_ctype( const Type t ) {
         class = TYPEget_type( bt );
 
         /*      case TYPE_INTEGER:  */
-        if( class == Class_Integer_Type ) {
+        if( class == integer_ ) {
             return ( "IntAggregate" );
         }
 
         /*      case TYPE_REAL:
             case TYPE_NUMBER:   */
-        if( ( class == Class_Number_Type ) || ( class == Class_Real_Type ) ) {
+        if( ( class == number_ ) || ( class == real_ ) ) {
             return ( "RealAggregate" );
         }
 
         /*      case TYPE_ENTITY:   */
-        if( class == Class_Entity_Type ) {
+        if( class == entity_ ) {
             return( "EntityAggregate" );
         }
 
         /*      case TYPE_ENUM:     */
         /*  case TYPE_SELECT:   */
-        if( ( class == Class_Enumeration_Type )
-                || ( class == Class_Select_Type ) )  {
+        if( ( class == enumeration_ )
+                || ( class == select_ ) )  {
             /*
                     strcpy (retval, ClassName (TYPEget_name (bt)));
             */
@@ -247,22 +247,22 @@ TYPEget_ctype( const Type t ) {
         }
 
         /*  case TYPE_LOGICAL:  */
-        if( class == Class_Logical_Type ) {
+        if( class == logical_ ) {
             return ( "LOGICALS" );
         }
 
         /*  case TYPE_BOOLEAN:  */
-        if( class == Class_Boolean_Type ) {
+        if( class == boolean_ ) {
             return ( "BOOLEANS" );
         }
 
         /*  case TYPE_STRING:   */
-        if( class == Class_String_Type ) {
+        if( class == string_ ) {
             return( "StringAggregate" );
         }
 
         /*  case TYPE_BINARY:   */
-        if( class == Class_Binary_Type ) {
+        if( class == binary_ ) {
             return( "BinaryAggregate" );
         }
     }
@@ -272,38 +272,38 @@ TYPEget_ctype( const Type t ) {
     class = TYPEget_type( t );
 
     /*    case TYPE_LOGICAL:    */
-    if( class == Class_Logical_Type ) {
+    if( class == logical_ ) {
         return ( "SDAI_LOGICAL" );
     }
 
     /*    case TYPE_BOOLEAN:    */
-    if( class == Class_Boolean_Type ) {
+    if( class == boolean_ ) {
         return ( "SDAI_BOOLEAN" );
     }
 
     /*      case TYPE_INTEGER:  */
-    if( class == Class_Integer_Type ) {
+    if( class == integer_ ) {
         return ( "SDAI_Integer" );
     }
 
     /*      case TYPE_REAL:
         case TYPE_NUMBER:   */
-    if( ( class == Class_Number_Type ) || ( class == Class_Real_Type ) ) {
+    if( ( class == number_ ) || ( class == real_ ) ) {
         return ( "SDAI_Real" );
     }
 
     /*      case TYPE_STRING:   */
-    if( class == Class_String_Type ) {
+    if( class == string_ ) {
         return ( "SDAI_String" );
     }
 
     /*      case TYPE_BINARY:   */
-    if( class == Class_Binary_Type ) {
+    if( class == binary_ ) {
         return ( "SDAI_Binary" );
     }
 
     /*      case TYPE_ENTITY:   */
-    if( class == Class_Entity_Type ) {
+    if( class == entity_ ) {
         strncpy( retval, TypeName( t ), BUFSIZ - 2 );
         strcat( retval, "_ptr" );
         return retval;
@@ -311,12 +311,12 @@ TYPEget_ctype( const Type t ) {
     }
     /*    case TYPE_ENUM:   */
     /*    case TYPE_SELECT: */
-    if( class == Class_Enumeration_Type ) {
+    if( class == enumeration_ ) {
         strncpy( retval, TypeName( t ), BUFSIZ - 2 );
         strcat( retval, "_var" );
         return retval;
     }
-    if( class == Class_Select_Type )  {
+    if( class == select_ )  {
         return ( TypeName( t ) );
     }
 
@@ -371,17 +371,17 @@ AccessType( Type t ) {
         return nm;
     }
     class = TYPEget_type( t );
-    if( class == Class_Enumeration_Type ) {
+    if( class == enumeration_ ) {
         strncpy( nm, TypeName( t ), BUFSIZ - 2 );
         strcat( nm, "_var" );
         return nm;
     }
-    if( class == Class_Logical_Type ) {
+    if( class == logical_ ) {
         strncpy( nm, "Logical", BUFSIZ - 2 );
     }
 
     /*    case TYPE_BOOLEAN:    */
-    if( class == Class_Boolean_Type ) {
+    if( class == boolean_ ) {
         strncpy( nm, "Boolean", BUFSIZ - 2 );
     }
     return nm;
@@ -419,25 +419,8 @@ ClassName( const char * oldname ) {
     }
     newname [j] = '\0';
     return ( newname );
-
-    /******  This procedure gets rid of '_' and is no longer being used
-        if (oldname [i] != '_') newname [j] = ToLower (oldname [i]);
-        else {  *//*  character is '_'  *//*
-        newname [j] = ToUpper (oldname [++i]);
-        if (oldname [i] == '\0') --i;
-    }
-    ++i;
-    ++j;
-*******/
 }
 
-const char *
-ENTITYget_CORBAname( Entity ent ) {
-    static char newname [BUFSIZ];
-    strcpy( newname, ENTITYget_name( ent ) );
-    newname[0] = ToUpper( newname [0] );
-    return newname;
-}
 
 /******************************************************************
  ** Procedure:  ENTITYget_classname
@@ -491,12 +474,11 @@ EnumName( const char * oldname ) {
         return ( "" );
     }
 
-    strcpy( newname, ENUM_PREFIX )    ;
-    j = strlen( ENUM_PREFIX )    ;
+    strcpy( newname, ENUM_PREFIX );
+    j = strlen( ENUM_PREFIX );
     newname [j] = ToUpper( oldname [0] );
-    strncpy( newname + j + 1, StrToLower( oldname + 1 ), MAX_LEN - j );
-    j = strlen( newname );
-    newname [j] = '\0';
+    strncpy( newname + j + 1, StrToLower( oldname + 1 ), MAX_LEN - j - 1 );
+    newname [MAX_LEN - 1] = '\0';
     return ( newname );
 }
 
@@ -512,9 +494,8 @@ SelectName( const char * oldname ) {
     newname [0] = ToUpper( newname [0] );
     j = strlen( TYPE_PREFIX );
     newname [j] = ToUpper( oldname [0] );
-    strncpy( newname + j + 1, StrToLower( oldname + 1 ), MAX_LEN - j );
-    j = strlen( newname );
-    newname [j] = '\0';
+    strncpy( newname + j + 1, StrToLower( oldname + 1 ), MAX_LEN - j - 1 );
+    newname [MAX_LEN - 1] = '\0';
     return ( newname );
 }
 
@@ -637,10 +618,11 @@ GetTypeDescriptorName( Type t ) {
         case generic_:
             return "TypeDescriptor";
         default:
-            fprintf(stderr, "GetTypeDescriptor: can't handle unknown type %d\n",
-                    TYPEget_body(t)->type);
+            printf( "Error in %s, line %d: type %d not handled by switch statement.", __FILE__, __LINE__, TYPEget_body( t )->type );
             abort();
     }
+    /* NOTREACHED */
+    return "";
 }
 
 int
@@ -702,9 +684,9 @@ ENTITYput_superclass( Entity entity ) {
             LISTod;
         }
 
-        tag = ( EntityTag ) malloc( sizeof( struct EntityTag_ ) );
+        tag = ( EntityTag ) scl_malloc( sizeof( struct EntityTag_ ) );
         tag -> superclass = super;
-        TYPEput_clientData( ENTITYget_type( entity ), tag );
+        TYPEput_clientData( ENTITYget_type( entity ), ( ClientData ) tag );
         return super;
     }
     return 0;
@@ -713,7 +695,7 @@ ENTITYput_superclass( Entity entity ) {
 Entity
 ENTITYget_superclass( Entity entity ) {
     EntityTag tag;
-    tag = TYPEget_clientData( ENTITYget_type( entity ) );
+    tag = ( EntityTag ) TYPEget_clientData( ENTITYget_type( entity ) );
     return ( tag ? tag -> superclass : 0 );
 }
 
@@ -770,10 +752,10 @@ VARis_type_shifter( Variable a ) {
     temp = EXPRto_string( VARget_name( a ) );
     if( ! strncmp( StrToLower( temp ), "self\\", 5 ) ) {
         /*    a is a type shifter */
-        free( temp );
+        scl_free( temp );
         return a;
     }
-    free( temp );
+    scl_free( temp );
     return 0;
 }
 

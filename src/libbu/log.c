@@ -87,6 +87,27 @@ log_call_hooks(genptr_t buf)
 }
 
 
+void
+bu_log_hook_save_all(struct bu_hook_list *save_hlp)
+{
+    bu_hook_save_all(&log_hook_list, save_hlp);
+}
+
+
+void
+bu_log_hook_delete_all()
+{
+    bu_hook_delete_all(&log_hook_list);
+}
+
+
+void
+bu_log_hook_restore_all(struct bu_hook_list *restore_hlp)
+{
+    bu_hook_restore_all(&log_hook_list, restore_hlp);
+}
+
+
 /**
  * This subroutine is used to append log_indent_level spaces
  * into a printf() format specifier string, after each newline

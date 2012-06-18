@@ -12,10 +12,12 @@
 * and is not subject to copyright.
 */
 
+#include <scl_export.h>
+
 /**
  ** \file sdaiSelect.h class definition for the select superclass SDAI_Select.
  **/
-class SDAI_Select  {
+class SCL_CORE_EXPORT SDAI_Select {
     protected:
         const SelectTypeDescriptor * _type;
         const TypeDescriptor    *   underlying_type;
@@ -88,14 +90,14 @@ class SDAI_Select  {
                                            int addFileId = 0,
                                            const char * currSch = 0 ) = 0;
 
-        virtual SDAI_Select  & operator =( const SDAI_Select  & ) = 0;
+        virtual SDAI_Select & operator =( const SDAI_Select & ) = 0;
 
         int set_null();
         int is_null();
 
 };        /** end class  **/
 
-typedef SDAI_Select * SDAI_Select_ptr ;
-typedef SDAI_Select_ptr SDAI_Select_var ;
+typedef SDAI_Select * SDAI_Select_ptr;
+typedef SDAI_Select_ptr SDAI_Select_var;
 
 #endif

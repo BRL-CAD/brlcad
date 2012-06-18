@@ -85,7 +85,7 @@ set(LIBDM_SRCS
   )
 
 BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${X11_LIBRARIES};${X11_Xi_LIB};${DM_TKLIB};${Carbon_LIBRARIES}")
-set_target_properties(libdm PROPERTIES VERSION 19.0.1 SOVERSION 19)
+set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
   add_dependencies(libdm tk)

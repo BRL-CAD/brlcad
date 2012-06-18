@@ -247,12 +247,12 @@ bu_hex_to_bitv(const char *str)
     abyte[2] = '\0';
 
     /* skip over any initial white space */
-    while (isspace(*str))
+    while (isspace((int)(*str)))
 	str++;
 
     str_start = str;
     /* count hex digits */
-    while (isxdigit(*str))
+    while (isxdigit((int)(*str)))
 	str++;
 
     len = str - str_start;

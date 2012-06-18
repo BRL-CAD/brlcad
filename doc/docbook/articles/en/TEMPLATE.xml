@@ -55,7 +55,7 @@ Available commands:
 
     <para>
       Another paragraph with embedded list is shown here.  Each
-      paragraph gets it's own para and should be wrapped for
+      paragraph gets its own para and should be wrapped for
       readability and localized context diff comparisons.
 
       <info><title>A list of items:</title></info>

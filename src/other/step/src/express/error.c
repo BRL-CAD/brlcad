@@ -51,6 +51,7 @@
  * prettied up interface to print_objects_when_running
  */
 
+#include <scl_memmgr.h>
 #include <stdlib.h>
 #include <setjmp.h>
 
@@ -99,7 +100,7 @@ void ( *ERRORusage_function )( void );
                                   * dump the buffer */
 
 static struct heap_element {
-    int line;
+    unsigned int line;
     char * msg;
 } heap[ERROR_MAX_ERRORS + 1]; /**< NOTE!  element 0 is purposely ignored, and
                                 * an additional element is at the end.  This
@@ -123,7 +124,7 @@ void ERRORinitialize( void ) {
     ERROR_syntax_expecting =
         ERRORcreate( "%s, expecting %s in %s %s", SEVERITY_EXIT );
 
-    ERROR_string_base = ( char * )calloc( 1, ERROR_MAX_SPACE );
+    ERROR_string_base = ( char * )scl_malloc( ERROR_MAX_SPACE );
     ERROR_start_message_buffer();
 
 
@@ -428,7 +429,7 @@ void ERRORnospace() {
 Error ERRORcreate( char * message, Severity severity ) {
     Error n;
 
-    n = ( struct Error_ * )malloc( sizeof( struct Error_ ) );
+    n = ( struct Error_ * )scl_malloc( sizeof( struct Error_ ) );
     n->message = message;
     n->severity = severity;
     n->enabled = true;

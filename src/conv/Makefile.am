@@ -25,6 +25,7 @@ if ONLY_BENCHMARK
 SUBDIRS = .
 
 bin_PROGRAMS = \
+        asc2dsp \
 	asc2g \
 	asc2pix \
 	g2asc \
@@ -47,6 +48,7 @@ DIST_SUBDIRS = \
 bin_PROGRAMS = \
 	3dm-g \
 	asc-nmg \
+        asc2dsp \
 	asc2g \
 	asc2pix \
 	bot-bldxf \
@@ -120,6 +122,10 @@ endif
 	${WDB} \
 	${WDB_LIBS} \
 	${OPENNURBS}
+
+asc2dsp_SOURCES = asc/asc2dsp.c
+asc2dsp_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
+asc2dsp_LDADD = ${BU}
 
 asc2g_SOURCES = asc/asc2g.c
 asc2g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
@@ -333,6 +339,7 @@ patch_g_LDADD = \
 
 pix2asc_SOURCES = asc/pix2asc.c
 pix2asc_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
+pix2asc_LDADD = ${BU}
 
 ply_g_SOURCES = ply-g.c
 ply_g_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
@@ -381,6 +388,8 @@ noinst_HEADERS = \
 	shp/shapelib/shapefil.h
 
 dist_man_MANS = \
+	asc/asc2g.1 \
+	asc/asc2pix.1 \
 	asc/g2asc.1 \
 	asc/pix2asc.1 \
 	bot_dump.1 \
@@ -442,6 +451,7 @@ else !ONLY_BENCHMARK
 
 FAST_OBJECTS = \
 	$(3dm_g_OBJECTS) \
+	$(asc2dsp_OBJECTS) \
 	$(asc2g_OBJECTS) \
 	$(asc2pix_OBJECTS) \
 	$(asc_nmg_OBJECTS) \

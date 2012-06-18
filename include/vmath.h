@@ -402,13 +402,13 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define VEQUAL(_a, _b) VNEAR_EQUAL((_a), (_b), SMALL_FASTF)
 
 /**
- * @brief Compare two vectors for EXACT equality.  Use carefully. 
+ * @brief Compare two vectors for EXACT equality.  Use carefully.
  * Version for degree 2 vectors.  FIXME: no such thing as exact.
  */
 #define V2EQUAL(a, b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y])
 
 /**
- * @brief Compare two vectors for EXACT equality.  Use carefully. 
+ * @brief Compare two vectors for EXACT equality.  Use carefully.
  * Version for degree 4 vectors.   FIXME: no such thing as exact.
  */
 #define HEQUAL(a, b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y] && (a)[Z]==(b)[Z] && (a)[W]==(b)[W])
@@ -1659,7 +1659,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(_l1)[Z] > (_h2)[Z] + (_t)) || \
        ((_l2)[X] > (_h1)[X] + (_t) && \
 	(_l2)[Y] > (_h1)[Y] + (_t) && \
-	(_l2)[Z] > (_h1)[Z] + (_t))) 
+	(_l2)[Z] > (_h1)[Z] + (_t)))
 
 /** Compare two bounding boxes and return true If they overlap. */
 #define V3RPP_OVERLAP(_l1, _h1, _l2, _h2) \
@@ -1703,9 +1703,9 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * This will not return true if the point is on the RPP.
  */
 #define V3PT_OUT_RPP_TOL(_pt, _lo, _hi, _t)      (\
-        (_pt)[X] < (_lo)[X]-(_t) || (_pt)[X] > (_hi)[X]+(_t) || \
-        (_pt)[Y] < (_lo)[Y]-(_t) || (_pt)[Y] > (_hi)[Y]+(_t) || \
-        (_pt)[Z] < (_lo)[Z]-(_t) || (_pt)[Z] > (_hi)[Z]+(_t))
+	(_pt)[X] < (_lo)[X]-(_t) || (_pt)[X] > (_hi)[X]+(_t) || \
+	(_pt)[Y] < (_lo)[Y]-(_t) || (_pt)[Y] > (_hi)[Y]+(_t) || \
+	(_pt)[Z] < (_lo)[Z]-(_t) || (_pt)[Z] > (_hi)[Z]+(_t))
 
 /**
  * @brief Determine if one bounding box is within another.  Also

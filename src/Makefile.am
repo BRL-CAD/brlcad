@@ -3,7 +3,7 @@ lib_LTLIBRARIES = libbrlcad.la
 noinst_LTLIBRARIES = libbrlcad_nil.la
 
 libbrlcad_la_SOURCES =
-libbrlcad_la_LDFLAGS = -version-info 19:1
+libbrlcad_la_LDFLAGS = -version-info 20:1
 libbrlcad_la_LIBADD = libbrlcad_nil.la
 
 if BUILD_OPENNURBS
@@ -65,7 +65,6 @@ kitchensink_dirs = \
 	adrt \
 	anim \
 	archer \
-	brlman \
 	burst \
 	bwish \
 	canon \
@@ -140,6 +139,7 @@ DIST_SUBDIRS= \
 	$(kitchensink_dirs)
 
 EXTRA_DIST = \
+	brlman \
 	README \
 	CMakeLists.txt
 

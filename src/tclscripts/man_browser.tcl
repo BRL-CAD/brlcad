@@ -39,6 +39,8 @@ package provide ManBrowser 1.0
 ::itcl::class ::ManBrowser {
     inherit iwidgets::Dialog
 
+    itk_option define -useToC useToC UseToC 1
+
     public {	
 	variable path
 	variable parentName
@@ -154,8 +156,13 @@ package provide ManBrowser 1.0
 #
 ::itcl::body ManBrowser::loadPage {pageName} {
     # Get page
-    if {[file exists [file join $path $pageName.html]]} {
-       set pathname [file join $path $pageName.html]
+    if {[file exists $pageName]} {set pathname $pageName}
+    if {![info exists pathname]} {
+       if {[file exists [file join $path $pageName.html]]} {
+          set pathname [file join $path $pageName.html]
+       }
+    }
+    if {[info exists pathname]} {
        set htmlFile [open $pathname]
        set pageData [read $htmlFile]
        close $htmlFile
@@ -229,32 +236,34 @@ package provide ManBrowser 1.0
     set parent [$this childsite]
 
     # Table of Contents
-    itk_component add toc {
-        ::tk::frame $parent.toc
-    } {}
-
-    set toc $itk_component(toc)
-
-    itk_component add toc_scrollbar {
-        ::ttk::scrollbar $toc.toc_scrollbar
-    } {}
-
-    itk_component add toc_listbox {
-        ::tk::listbox $toc.toc_listbox -bd 2 \
- 				       -width 16 \
-                                       -exportselection false \
-	                               -yscroll "$toc.toc_scrollbar set" \
-				       -listvariable [scope pages($this)]
-    } {}
-
-    $toc.toc_scrollbar configure -command "$toc.toc_listbox yview"
-
-    grid $toc.toc_listbox $toc.toc_scrollbar -sticky nsew -in $toc
-
-    grid columnconfigure $toc 0 -weight 1
-    grid rowconfigure $toc 0 -weight 1
-
-    pack $toc -side left -expand no -fill y
+    if {$itk_option(-useToC)} {
+       itk_component add toc {                                                 
+           ::tk::frame $parent.toc
+       } {}
+                                                                              
+       set toc $itk_component(toc)
+                                                                              
+       itk_component add toc_scrollbar {
+           ::ttk::scrollbar $toc.toc_scrollbar
+       } {}
+                                                                              
+       itk_component add toc_listbox {
+           ::tk::listbox $toc.toc_listbox -bd 2 \
+           			       -width 16 \
+                                          -exportselection false \
+                                          -yscroll "$toc.toc_scrollbar set" \
+           			       -listvariable [scope pages($this)]
+       } {}
+                                                                              
+       $toc.toc_scrollbar configure -command "$toc.toc_listbox yview"
+                                                                              
+       grid $toc.toc_listbox $toc.toc_scrollbar -sticky nsew -in $toc
+                                                                              
+       grid columnconfigure $toc 0 -weight 1
+       grid rowconfigure $toc 0 -weight 1
+                                                                              
+       pack $toc -side left -expand no -fill y
+    }
 
     # Main HTML window
     itk_component add browser {
@@ -281,9 +290,11 @@ package provide ManBrowser 1.0
         loadPage [lindex $pages($this) 0]
     }
 
-    bind $toc.toc_listbox <<ListboxSelect>> {
-	set mb [itcl_info objects -class ManBrowser]
-	$mb loadPage [%W get [%W curselection]]
+    if {$itk_option(-useToC)} {
+       bind $toc.toc_listbox <<ListboxSelect>> {
+	   set mb [itcl_info objects -class ManBrowser]
+	   $mb loadPage [%W get [%W curselection]]
+       }
     }
 
     configure -height 600 -width 800

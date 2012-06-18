@@ -25,8 +25,9 @@ N350 ( August 31, 1993 ) of ISO 10303 TC184/SC4/WG7.
 /* this is used to add new dictionary calls */
 /* #define NEWDICT */
 
-#include <assert.h>
+#include <scl_memmgr.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "classes.h"
 
 int isAggregateType( const Type t );
@@ -102,6 +103,32 @@ char * format_for_stringout( char * orig_buf, char * return_buf ) {
     return return_buf;
 }
 
+/**
+ * Like format_for_stringout above, but splits the static string up
+ * into numerous small ones that are appended to a std::string named
+ * 'str'. It is assumed that this string already exists and is empty.
+ *
+ * This version takes a file pointer and eliminates use of the temp buffer.
+ */
+void format_for_std_stringout( FILE * f, const char * orig_buf ) {
+    const char * optr  = orig_buf;
+    char * s_end = "\\n\" );\n";
+    char * s_begin = "    str.append( \"";
+    fprintf(f, "%s", s_begin );
+    while( *optr ) {
+        if( *optr == '\n' ) {
+            fprintf( f, "%s", s_end );
+            fprintf( f, "%s", s_begin );
+        } else if( *optr == '\\' ) {
+            fprintf( f, "\\\\" );
+        } else {
+            fprintf( f, "%c", *optr );
+        }
+        optr++;
+    }
+    fprintf( f,  s_end );
+}
+
 void USEREFout( Schema schema, Dictionary refdict, Linked_List reflist, char * type, FILE * file ) {
     Dictionary dict;
     DictionaryEntry de;
@@ -139,10 +166,10 @@ void USEREFout( Schema schema, Dictionary refdict, Linked_List reflist, char * t
         list = ( Linked_List )DICTlookup( dict, r->schema->symbol.name );
         if( !list ) {
             list = LISTcreate();
-            DICTdefine( dict, r->schema->symbol.name, list,
+            DICTdefine( dict, r->schema->symbol.name, ( Generic ) list,
                         ( Symbol * )0, OBJ_UNKNOWN );
         }
-        LISTadd( list, r );
+        LISTadd( list, ( Generic ) r );
     }
 
     /* step 2: for each list, print out the renames */
@@ -235,45 +262,45 @@ const char * GetAggrElemType( const Type type ) {
         class = TYPEget_type( bt );
 
         /*      case TYPE_INTEGER:  */
-        if( class == Class_Integer_Type ) {
+        if( class == integer_ ) {
             strcpy( retval, "long" );
         }
 
         /*      case TYPE_REAL:
             case TYPE_NUMBER:   */
-        if( ( class == Class_Number_Type ) || ( class == Class_Real_Type ) ) {
+        if( ( class == number_ ) || ( class == real_ ) ) {
             strcpy( retval, "double" );
         }
 
         /*      case TYPE_ENTITY:   */
-        if( class == Class_Entity_Type ) {
+        if( class == entity_ ) {
             strcpy( retval, IdlEntityTypeName( bt ) );
         }
 
         /*      case TYPE_ENUM:     */
         /*  case TYPE_SELECT:   */
-        if( ( class == Class_Enumeration_Type )
-                || ( class == Class_Select_Type ) ) {
+        if( ( class == enumeration_ )
+                || ( class == select_ ) )  {
             strcpy( retval, TYPEget_ctype( bt ) );
         }
 
         /*  case TYPE_LOGICAL:  */
-        if( class == Class_Logical_Type ) {
+        if( class == logical_ ) {
             strcpy( retval, "Logical" );
         }
 
         /*  case TYPE_BOOLEAN:  */
-        if( class == Class_Boolean_Type ) {
+        if( class == boolean_ ) {
             strcpy( retval, "Bool" );
         }
 
         /*  case TYPE_STRING:   */
-        if( class == Class_String_Type ) {
+        if( class == string_ ) {
             strcpy( retval, "string" );
         }
 
         /*  case TYPE_BINARY:   */
-        if( class == Class_Binary_Type ) {
+        if( class == binary_ ) {
             strcpy( retval, "binary" );
         }
     }
@@ -295,19 +322,19 @@ const char * TYPEget_idl_type( const Type t ) {
         strcpy( retval, GetAggrElemType( t ) );
 
         /*  case TYPE_ARRAY:    */
-        if( TYPEget_type( t ) == Class_Array_Type ) {
+        if( TYPEget_type( t ) == array_ ) {
             strcat( retval, "__array" );
         }
         /*  case TYPE_LIST: */
-        if( TYPEget_type( t ) == Class_List_Type ) {
+        if( TYPEget_type( t ) == list_ ) {
             strcat( retval, "__list" );
         }
         /*  case TYPE_SET:  */
-        if( TYPEget_type( t ) == Class_Set_Type ) {
+        if( TYPEget_type( t ) == set_ ) {
             strcat( retval, "__set" );
         }
         /*  case TYPE_BAG:  */
-        if( TYPEget_type( t ) == Class_Bag_Type ) {
+        if( TYPEget_type( t ) == bag_ ) {
             strcat( retval, "__bag" );
         }
         return retval;
@@ -318,38 +345,38 @@ const char * TYPEget_idl_type( const Type t ) {
     class = TYPEget_type( t );
 
     /*    case TYPE_LOGICAL:    */
-    if( class == Class_Logical_Type ) {
+    if( class == logical_ ) {
         return ( "Logical" );
     }
 
     /*    case TYPE_BOOLEAN:    */
-    if( class == Class_Boolean_Type ) {
+    if( class == boolean_ ) {
         return ( "Boolean" );
     }
 
     /*      case TYPE_INTEGER:  */
-    if( class == Class_Integer_Type ) {
+    if( class == integer_ ) {
         return ( "SDAI_Integer" );
     }
 
     /*      case TYPE_REAL:
         case TYPE_NUMBER:   */
-    if( ( class == Class_Number_Type ) || ( class == Class_Real_Type ) ) {
+    if( ( class == number_ ) || ( class == real_ ) ) {
         return ( "SDAI_Real" );
     }
 
     /*      case TYPE_STRING:   */
-    if( class == Class_String_Type ) {
+    if( class == string_ ) {
         return ( "char *" );
     }
 
     /*      case TYPE_BINARY:   */
-    if( class == Class_Binary_Type ) {
+    if( class == binary_ ) {
         return ( AccessType( t ) );
     }
 
     /*      case TYPE_ENTITY:   */
-    if( class == Class_Entity_Type ) {
+    if( class == entity_ ) {
         /* better do this because the return type might go away */
         strcpy( retval, IdlEntityTypeName( t ) );
         strcat( retval, "_ptr" );
@@ -357,7 +384,7 @@ const char * TYPEget_idl_type( const Type t ) {
     }
     /*    case TYPE_ENUM:   */
     /*    case TYPE_SELECT: */
-    if( class == Class_Enumeration_Type ) {
+    if( class == enumeration_ ) {
         strncpy( retval, EnumName( TYPEget_name( t ) ), BUFSIZ - 2 );
 
         strcat( retval, " /*" );
@@ -365,7 +392,7 @@ const char * TYPEget_idl_type( const Type t ) {
         strcat( retval, "*/ " );
         return retval;
     }
-    if( class == Class_Select_Type )  {
+    if( class == select_ )  {
         return ( IdlEntityTypeName( t ) );
     }
 
@@ -419,7 +446,7 @@ char * generate_attribute_name( Variable a, char * out ) {
         }
     }
     *q = '\0';
-    free( temp );
+    scl_free( temp );
     return out;
 }
 
@@ -477,7 +504,7 @@ char * generate_dict_attr_name( Variable a, char * out ) {
     }
     *q = '\0';
 
-    free( temp );
+    scl_free( temp );
     return out;
 }
 
@@ -513,28 +540,28 @@ char * TYPEget_express_type( const Type t ) {
     class = TYPEget_type( t );
 
     /*    case TYPE_LOGICAL:    */
-    if( ( class == Class_Boolean_Type ) || ( class == Class_Logical_Type ) ) {
+    if( ( class == boolean_ ) || ( class == logical_ ) ) {
         return ( "Logical" );
     }
 
     /*      case TYPE_INTEGER:  */
-    if( class == Class_Integer_Type ) {
+    if( class == integer_ ) {
         return ( "Integer " );
     }
 
     /*      case TYPE_REAL:
         case TYPE_NUMBER:   */
-    if( ( class == Class_Number_Type ) || ( class == Class_Real_Type ) ) {
+    if( ( class == number_ ) || ( class == real_ ) ) {
         return ( "Real " );
     }
 
     /*      case TYPE_STRING:   */
-    if( class == Class_String_Type ) {
+    if( class == string_ ) {
         return ( "String " )      ;
     }
 
     /*      case TYPE_BINARY:   */
-    if( class == Class_Binary_Type ) {
+    if( class == binary_ ) {
         return ( "Binary " )      ;
     }
 
@@ -549,19 +576,19 @@ char * TYPEget_express_type( const Type t ) {
         class = TYPEget_type( bt );
 
         /*  case TYPE_ARRAY:    */
-        if( TYPEget_type( t ) == Class_Array_Type ) {
+        if( TYPEget_type( t ) == array_ ) {
             aggr_type = "Array";
         }
         /*  case TYPE_LIST: */
-        if( TYPEget_type( t ) == Class_List_Type ) {
+        if( TYPEget_type( t ) == list_ ) {
             aggr_type = "List";
         }
         /*  case TYPE_SET:  */
-        if( TYPEget_type( t ) == Class_Set_Type ) {
+        if( TYPEget_type( t ) == set_ ) {
             aggr_type = "Set";
         }
         /*  case TYPE_BAG:  */
-        if( TYPEget_type( t ) == Class_Bag_Type ) {
+        if( TYPEget_type( t ) == bag_ ) {
             aggr_type = "Bag";
         }
 
@@ -570,7 +597,7 @@ char * TYPEget_express_type( const Type t ) {
 
         /*  this will declare extra memory when aggregate is > 1D  */
 
-        permval = ( char * )malloc( strlen( retval ) * sizeof( char ) + 1 );
+        permval = ( char * )scl_malloc( strlen( retval ) * sizeof( char ) + 1 );
         strcpy( permval, retval );
         return permval;
 
@@ -584,12 +611,12 @@ char * TYPEget_express_type( const Type t ) {
 }
 
 int isReferenceType( Class_Of_Type class ) {
-    if( ( class == Class_String_Type )  ||
-            ( class == Class_Logical_Type ) ||
-            ( class == Class_Boolean_Type ) ||
-            ( class == Class_Real_Type )    ||
-            ( class == Class_Integer_Type ) ||
-            ( class == Class_Enumeration_Type ) ) {
+    if( ( class == string_ )  ||
+            ( class == logical_ ) ||
+            ( class == boolean_ ) ||
+            ( class == real_ )    ||
+            ( class == integer_ ) ||
+            ( class == enumeration_ ) ) {
         return 0;
     }
 
@@ -660,9 +687,9 @@ void ATTRprint_access_methods_get_head( const char * classnm, Variable a,
     strncpy( ctype, AccessType( t ), BUFSIZ );
 
     if( isReferenceType( class ) ) {
-	fprintf( file, "\nconst_%s \n%s::%s() const\n", ctype, classnm, funcnm );
+	fprintf( file, "\nconst_%s %s::%s() const ", ctype, classnm, funcnm );
     } else {
-	fprintf( file, "\n%s \n%s::%s() const\n", ctype, classnm, funcnm );
+	fprintf( file, "\n%s %s::%s() const ", ctype, classnm, funcnm );
     }
 
     return;
@@ -702,9 +729,9 @@ void AGGRprint_access_methods( CONST char * entnm, Variable a, FILE * file, Type
                           char * ctype, char * attrnm ) {
     ATTRprint_access_methods_get_head( entnm, a, file );
     fprintf( file, "{\n" );
-    fprintf( file, "    return (%s) &_%s; \n}\n", ctype, attrnm );
+    fprintf( file, "    return (%s) %s_%s;\n}\n", ctype,( ( a->type->u.type->body->base ) ? "" : "&"), attrnm );
     ATTRprint_access_methods_put_head( entnm, a, file );
-    fprintf( file, "        { _%s.ShallowCopy (*x); }\n", attrnm );
+    fprintf( file, "{\n    _%s%sShallowCopy (*x);\n}\n", attrnm, ( ( a->type->u.type->body->base ) ? "->" : ".") );
     return;
 }
 
@@ -751,7 +778,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
     ATTRprint_access_methods_get_head( entnm, a, file );
 
     /*      case TYPE_ENTITY:   */
-    if( class == Class_Entity_Type )  {
+    if( class == entity_ )  {
 
         fprintf( file, "{\n" );
         if( print_logging ) {
@@ -806,7 +833,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         return;
     }
     /*    case TYPE_LOGICAL:    */
-    if( ( class == Class_Boolean_Type ) || ( class == Class_Logical_Type ) )  {
+    if( ( class == boolean_ ) || ( class == logical_ ) )  {
 
         fprintf( file, "{\n" );
         if( print_logging ) {
@@ -846,7 +873,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         return;
     }
     /*    case TYPE_ENUM:   */
-    if( class == Class_Enumeration_Type )  {
+    if( class == enumeration_ )  {
         fprintf( file, "{\n" );
         if( print_logging ) {
             fprintf( file, "#ifdef SCL_LOGGING\n" );
@@ -883,7 +910,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         return;
     }
     /*    case TYPE_SELECT: */
-    if( class == Class_Select_Type )  {
+    if( class == select_ )  {
         fprintf( file, "        { return (const %s) &_%s; }\n",  ctype, attrnm );
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "        { _%s = x; }\n", attrnm );
@@ -895,7 +922,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
 
     /*  case STRING:*/
     /*      case TYPE_BINARY:   */
-    if( ( class == Class_String_Type ) || ( class == Class_Binary_Type ) )  {
+    if( ( class == string_ ) || ( class == binary_ ) )  {
         fprintf( file, "{\n" );
         if( print_logging ) {
             fprintf( file, "#ifdef SCL_LOGGING\n" );
@@ -935,7 +962,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         return;
     }
     /*      case TYPE_INTEGER:  */
-    if( class == Class_Integer_Type ) {
+    if( class == integer_ ) {
         fprintf( file, "{\n" );
         if( print_logging ) {
             fprintf( file, "#ifdef SCL_LOGGING\n" );
@@ -979,7 +1006,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
 
     /*      case TYPE_REAL:
         case TYPE_NUMBER:   */
-    if( ( class == Class_Number_Type ) || ( class == Class_Real_Type ) ) {
+    if( ( class == number_ ) || ( class == real_ ) ) {
         fprintf( file, "{\n" );
         if( print_logging ) {
             fprintf( file, "#ifdef SCL_LOGGING\n" );
@@ -1113,6 +1140,8 @@ void DataMemberPrintAttr( Entity entity, Variable a, FILE * file ) {
         }
         if( TYPEis_entity( VARget_type( a ) ) ) {
             fprintf( file, "        SDAI_Application_instance_ptr _%s ;", attrnm );
+        } else if( TYPEis_aggregate( VARget_type( a ) ) ) {
+            fprintf( file, "        %s_ptr _%s ;", ctype, attrnm );
         } else {
             fprintf( file, "        %s _%s ;", ctype, attrnm );
         }
@@ -1379,7 +1408,7 @@ void LIBcopy_constructor( Entity ent, FILE * file ) {
          *b = buffer;
     int count = attr_count;
 
-    char * entnm = ENTITYget_classname( ent );
+    const char * entnm = ENTITYget_classname( ent );
     const char * StrToLower( const char * word );
 
     /*mjm7/10/91 copy constructor definition  */
@@ -1401,33 +1430,33 @@ void LIBcopy_constructor( Entity ent, FILE * file ) {
         sprintf( b, "        _%s = e.%s();\n", attrnm, attrnm );
 
         /*mjm7/11/91  case TYPE_STRING */
-        if( ( class == Class_String_Type ) || ( class == Class_Binary_Type ) ) {
+        if( ( class == string_ ) || ( class == binary_ ) ) {
             sprintf( b, "        _%s = strdup(e.%s());\n", attrnm, attrnm );
         }
 
 
         /*      case TYPE_ENTITY:   */
-        if( class == Class_Entity_Type ) {
+        if( class == entity_ ) {
             sprintf( b, "        _%s = e.%s();\n", attrnm, attrnm );
         }
         /* previous line modified to conform with SDAI C++ Binding for PDES, Inc. Prototyping 5/22/91 CD */
 
         /*    case TYPE_ENUM:   */
-        if( class == Class_Enumeration_Type ) {
+        if( class == enumeration_ ) {
             sprintf( b, "        _%s.put(e.%s().asInt());\n", attrnm, attrnm );
         }
         /*    case TYPE_SELECT: */
-        if( class == Class_Select_Type ) {
+        if( class == select_ ) {
             sprintf( b, "DDDDDDD        _%s.put(e.%s().asInt());\n", attrnm, attrnm );
         }
         /*   case TYPE_BOOLEAN    */
-        if( class == Class_Boolean_Type ) {
+        if( class == boolean_ ) {
             sprintf( b, "        _%s.put(e.%s().asInt());\n", attrnm, attrnm );
         }
         /* previous line modified to conform with SDAI C++ Binding for PDES, Inc. Prototyping 5/22/91 CD */
 
         /*   case TYPE_LOGICAL    */
-        if( class == Class_Logical_Type ) {
+        if( class == logical_ ) {
             sprintf( b, "        _%s.put(e.%s().asInt());\n", attrnm, attrnm );
         }
         /* previous line modified to conform with SDAI C++ Binding for PDES, Inc. Prototyping 5/22/91 CD */
@@ -1605,13 +1634,19 @@ void LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
 
         if( ( ! VARget_inverse( a ) ) && ( ! VARis_derived( a ) ) )  {
             /*  1. create a new STEPattribute */
-            fprintf( file, "    %sa = new STEPattribute(*%s::%s%d%s%s, %s &_%s);\n",
+
+            // if type is aggregate, the variable is a pointer and needs initialized
+            if( TYPEis_aggregate( t ) ) {
+                fprintf( file, "    _%s = new %s;\n",attrnm,TYPEget_ctype( t ) );
+            }
+            fprintf( file, "    %sa = new STEPattribute(*%s::%s%d%s%s, %s %s_%s);\n",
                      ( first ? "STEPattribute *" : "" ), //  first time through, declare 'a'
                      SCHEMAget_name( schema ),
                      ATTR_PREFIX, count,
                      ( VARis_type_shifter( a ) ? "R" : "" ),
                      attrnm,
                      ( TYPEis_entity( t ) ? "(SDAI_Application_instance_ptr *)" : "" ),
+                     ( TYPEis_aggregate( t ) ? "" : "&" ),
                      attrnm );
             if( first ) {
                 first = 0 ;
@@ -1783,13 +1818,18 @@ void LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
             if( ( ! VARget_inverse( a ) ) && ( ! VARis_derived( a ) ) )  {
                 /*  1. create a new STEPattribute */
 
-                fprintf( file, "    %sa = new STEPattribute(*%s::%s%d%s%s, %s &_%s);\n",
+                // if type is aggregate, the variable is a pointer and needs initialized
+                if( TYPEis_aggregate( t ) ) {
+                    fprintf( file, "    _%s = new %s;\n",attrnm,TYPEget_ctype( t ) );
+                }
+                fprintf( file, "    %sa = new STEPattribute(*%s::%s%d%s%s, %s %s_%s);\n",
                          ( first ? "STEPattribute *" : "" ), //  first time through, declare a
                          SCHEMAget_name( schema ),
                          ATTR_PREFIX, count,
                          ( VARis_type_shifter( a ) ? "R" : "" ),
                          attrnm,
                          ( TYPEis_entity( t ) ? "(SDAI_Application_instance_ptr *)" : "" ),
+                         ( TYPEis_aggregate( t ) ? "" : "&" ),
                          attrnm );
 
                 if( first ) {
@@ -1992,8 +2032,6 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
     const char * super_schema;
     char * tmp, *tmp2;
 
-    fprintf( file, "/* how about here? */" );
-
 #ifdef NEWDICT
     /* DAS New SDAI Dictionary 5/95 */
     /* insert the entity into the schema descriptor */
@@ -2003,28 +2041,27 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
 #endif
 
     if( ENTITYget_abstract( entity ) ) {
-        fprintf( file, "        %s::%s%s->AddSupertype_Stmt(\"",
-                 schema_name, ENT_PREFIX, entity_name );
         if( entity->u.entity->subtype_expression ) {
-            fprintf( file, "ABSTRACT SUPERTYPE OF (" );
+
+            fprintf( file, "        str.clear();\n        str.append( \"ABSTRACT SUPERTYPE OF ( \" );\n" );
+
             tmp = SUBTYPEto_string( entity->u.entity->subtype_expression );
-            tmp2 = ( char * )malloc( sizeof( char ) * ( strlen( tmp ) + BUFSIZ ) );
-            fprintf( file, "%s)\");\n", format_for_stringout( tmp, tmp2 ) );
-            free( tmp );
-            free( tmp2 );
+            format_for_std_stringout( file, tmp );
+            fprintf( file, "\n      str.append( \")\" );\n" );
+            fprintf( file, "        %s::%s%s->AddSupertype_Stmt( str );", schema_name, ENT_PREFIX, entity_name );
+            scl_free( tmp );
         } else {
-            fprintf( file, "ABSTRACT SUPERTYPE\");\n" );
+            fprintf( file, "        %s::%s%s->AddSupertype_Stmt( \"ABSTRACT SUPERTYPE\" );\n",
+                                                                schema_name, ENT_PREFIX, entity_name );
         }
     } else {
         if( entity->u.entity->subtype_expression ) {
-            fprintf( file, "        %s::%s%s->AddSupertype_Stmt(\"",
-                     schema_name, ENT_PREFIX, entity_name );
-            fprintf( file, "SUPERTYPE OF (" );
+            fprintf( file, "        str.clear();\n        str.append( \"SUPERTYPE OF ( \" );\n" );
             tmp = SUBTYPEto_string( entity->u.entity->subtype_expression );
-            tmp2 = ( char * )malloc( sizeof( char ) * ( strlen( tmp ) + BUFSIZ ) );
-            fprintf( file, "%s)\");\n", format_for_stringout( tmp, tmp2 ) );
-            free( tmp );
-            free( tmp2 );
+            format_for_std_stringout( file, tmp );
+            fprintf( file, "\n      str.append( \")\" );\n" );
+            scl_free( tmp );
+            fprintf( file, "        %s::%s%s->AddSupertype_Stmt( str );", schema_name, ENT_PREFIX, entity_name );
         }
     }
     LISTdo( ENTITYget_supertypes( entity ), sup, Entity )
@@ -2051,23 +2088,38 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
     if( TYPEget_name( v->type ) ) {
         if( ( !TYPEget_head( v->type ) ) &&
                 ( TYPEget_body( v->type )->type == entity_ ) ) {
+            fprintf( file, "        %s::%s%d%s%s =\n          new %s"
+                     "(\"%s\",%s::%s%s,\n          %s,%s%s,\n          *%s::%s%s);\n",
+                     SCHEMAget_name( schema ), ATTR_PREFIX, attr_count,
+                     ( VARis_derived( v ) ? "D" :
+                       ( VARis_type_shifter( v ) ? "R" :
+                         ( VARget_inverse( v ) ? "I" : "" ) ) ),
+                     attrnm,
 
-            const char *interfix = VARis_derived( v ) ? "D" : ( VARis_type_shifter( v ) ? "R" : ( VARget_inverse( v ) ? "I" : "" ) );
-            const char *newName = VARget_inverse( v ) ? "Inverse_attribute" : ( VARis_derived( v ) ? "Derived_attribute" : "AttrDescriptor" );
-            char *attrNameParam = generate_dict_attr_name( v, dict_attrnm );
-            char *typeName = TYPEget_name( TYPEget_body( v->type )->entity->superscope );
-            const char *vOptional = VARget_optional( v ) ? "LTrue" : "LFalse";
-            const char *vUnique = VARget_unique( v ) ? "LTrue" : "LFalse";
-            const char *redefining = VARget_inverse( v ) ? "" : ( VARis_derived( v ) ? ", AttrType_Deriving" : ( VARis_type_shifter( v ) ? ", AttrType_Redefining" : ", AttrType_Explicit" ) );
+                     ( VARget_inverse( v ) ? "Inverse_attribute" : ( VARis_derived( v ) ? "Derived_attribute" : "AttrDescriptor" ) ),
 
-//            fprintf( file, "/* just print something dammit! */" );
-//            fprintf( file, "        %21s::", "foobar" );
-//            fprintf( file, "%s", ATTR_PREFIX );
-//            fprintf( file, "%d%s%s =\n", attr_count, interfix, attrnm );
-            fprintf( file, "        %s::%s%d%s%s =\n", SCHEMAget_name( schema ), ATTR_PREFIX, attr_count, interfix, attrnm );
-            fprintf( file, "            new %s(\"%s\",%s::%s%s,\n", newName, attrNameParam, typeName, ENT_PREFIX, TYPEget_name( v->type ) );
-            fprintf( file, "                   %s,%s%s,\n", vOptional, vUnique, redefining );
-            fprintf( file, "                   *%s::%s%s);\n", schema_name, ENT_PREFIX, TYPEget_name( entity ));
+                     /* attribute name param */
+                     generate_dict_attr_name( v, dict_attrnm ),
+
+                     /* following assumes we are not in a nested */
+                     /* entity otherwise we should search upward */
+                     /* for schema */
+                     /* attribute's type  */
+                     TYPEget_name(
+                         TYPEget_body( v->type )->entity->superscope ),
+                     ENT_PREFIX, TYPEget_name( v->type ),
+
+                     ( VARget_optional( v ) ? "LTrue" : "LFalse" ),
+
+                     ( VARget_unique( v ) ? "LTrue" : "LFalse" ),
+
+                     /* Support REDEFINED */
+                     ( VARget_inverse( v ) ? "" :
+                       ( VARis_derived( v ) ? ", AttrType_Deriving" :
+                         ( VARis_type_shifter( v ) ? ", AttrType_Redefining" : ", AttrType_Explicit" ) ) ),
+
+                     schema_name, ENT_PREFIX, TYPEget_name( entity )
+                   );
         } else {
             /* type reference */
             fprintf( file, "        %s::%s%d%s%s =\n          new %s"
@@ -2160,15 +2212,15 @@ void ENTITYincode_print( Entity entity, FILE * file, Schema schema ) {
 
     if( VARis_derived( v ) && v->initializer ) {
         tmp = EXPRto_string( v->initializer );
-        tmp2 = ( char * )malloc( sizeof( char ) * ( strlen( tmp ) + BUFSIZ ) );
+        tmp2 = ( char * )scl_malloc( sizeof( char ) * ( strlen( tmp ) + BUFSIZ ) );
         fprintf( file, "        %s::%s%d%s%s->initializer_(\"%s\");\n",
                  schema_name, ATTR_PREFIX, attr_count,
                  ( VARis_derived( v ) ? "D" :
                    ( VARis_type_shifter( v ) ? "R" :
                      ( VARget_inverse( v ) ? "I" : "" ) ) ),
                  attrnm, format_for_stringout( tmp, tmp2 ) );
-        free( tmp );
-        free( tmp2 );
+        scl_free( tmp );
+        scl_free( tmp2 );
     }
     if( VARget_inverse( v ) ) {
         fprintf( file, "        %s::%s%d%s%s->inverted_attr_id_(\"%s\");\n",
@@ -2344,7 +2396,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
     fprintf( files->create, "  \"%s\", %s::schema, %s, ",
              PrettyTmpName( ENTITYget_name( entity ) ),
              SCHEMAget_name( schema ), ( ENTITYget_abstract( entity ) ? "LTrue" : "LFalse" ) );
-    fprintf( files->create, "%s,\n                ", externMap ? "LTrue" :
+    fprintf( files->create, "%s,\n          ", externMap ? "LTrue" :
              "LFalse" );
 
     fprintf( files->create, "  (Creator) create_%s );\n",
@@ -2365,11 +2417,11 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
 
         if( whereRule_formatted_size == 0 ) {
             whereRule_formatted_size = 3 * BUFSIZ;
-            whereRule_formatted = ( char * )malloc( sizeof( char ) * whereRule_formatted_size );
+            whereRule_formatted = ( char * )scl_malloc( sizeof( char ) * whereRule_formatted_size );
         } else if( ( strlen( whereRule ) + 300 ) > whereRule_formatted_size ) {
-            free( whereRule_formatted );
+            scl_free( whereRule_formatted );
             whereRule_formatted_size = strlen( whereRule ) + BUFSIZ;
-            whereRule_formatted = ( char * )malloc( sizeof( char ) * whereRule_formatted_size );
+            whereRule_formatted = ( char * )scl_malloc( sizeof( char ) * whereRule_formatted_size );
         }
         whereRule_formatted[0] = '\0';
         if( w->label ) {
@@ -2443,7 +2495,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
         fprintf( files->create, "        %s::%s%s->_where_rules->Append(wr);\n",
                  SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
 
-        free( whereRule );
+        scl_free( whereRule );
         ptr2 = whereRule = 0;
         LISTod
     }
@@ -2456,7 +2508,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
                  SCHEMAget_name( schema ), ENT_PREFIX, ENTITYget_name( entity ) );
 
         if( whereRule_formatted_size == 0 ) {
-            uniqRule_formatted = ( char * )malloc( sizeof( char ) * 2 * BUFSIZ );
+            uniqRule_formatted = ( char * )scl_malloc( sizeof( char ) * 2 * BUFSIZ );
             whereRule_formatted = uniqRule_formatted;
         } else {
             uniqRule_formatted = whereRule_formatted;
@@ -2493,7 +2545,7 @@ void ENTITYprint_new( Entity entity, FILES * files, Schema schema, int externMap
     }
 
     if( whereRule_formatted_size > 0 ) {
-        free( whereRule_formatted );
+        scl_free( whereRule_formatted );
     }
 
     n = ENTITYget_classname( entity );
@@ -2730,7 +2782,7 @@ void Type_Description( const Type, char * );
  * return it in static buffer
  */
 char * TypeDescription( const Type t ) {
-    static char buf[4000];
+    static char buf[5000];
 
     buf[0] = '\0';
 
@@ -2979,8 +3031,10 @@ void TYPEprint_typedefs( Type t, FILE * classes ) {
     }
 
     /* Print the extern statement: */
+#if !defined(__BORLAND__)
     strncpy( nm, TYPEtd_name( t ), BUFSIZ );
     fprintf( classes, "extern %s         *%s;\n", GetTypeDescriptorName( t ), nm );
+#endif
 }
 
 /** return 1 if it is a multidimensional aggregate at the level passed in
@@ -3429,11 +3483,11 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
 
         if( whereRule_formatted_size == 0 ) {
             whereRule_formatted_size = 3 * BUFSIZ;
-            whereRule_formatted = ( char * )malloc( sizeof( char ) * whereRule_formatted_size );
+            whereRule_formatted = ( char * )scl_malloc( sizeof( char ) * whereRule_formatted_size );
         } else if( ( strlen( whereRule ) + 300 ) > whereRule_formatted_size ) {
-            free( whereRule_formatted );
+            scl_free( whereRule_formatted );
             whereRule_formatted_size = strlen( whereRule ) + BUFSIZ;
-            whereRule_formatted = ( char * )malloc( sizeof( char ) * whereRule_formatted_size );
+            whereRule_formatted = ( char * )scl_malloc( sizeof( char ) * whereRule_formatted_size );
         }
         whereRule_formatted[0] = '\0';
         if( w->label ) {
@@ -3491,10 +3545,10 @@ void TYPEprint_new( const Type type, FILE * create, Schema schema ) {
         fprintf( create, "        %s->_where_rules->Append(wr);\n",
                  TYPEtd_name( type ) );
 
-        free( whereRule );
+        scl_free( whereRule );
         ptr2 = whereRule = 0;
         LISTod
-        free( whereRule_formatted );
+        scl_free( whereRule_formatted );
     }
 }
 

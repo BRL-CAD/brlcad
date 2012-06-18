@@ -4,7 +4,9 @@ set(SCL_BASE_SOURCES
 )
 
 include_directories(
-	${SCL_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${SCL_SOURCE_DIR}/include
 )
 
 option(SCL_MEMMGR_ENABLE_CHECKS "Enable scl_memmgr's memory leak detection" OFF)

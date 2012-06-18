@@ -34,6 +34,7 @@ Now you can say things like:
     foo_destroy(foo1);
 
 */
+#include <scl_memmgr.h>
 #include <stdlib.h>
 #include <string.h>
 #include "express/memory.h"

@@ -228,6 +228,7 @@ set(archer_images
   rpc_labeled.png
   rpc_subtract.png
   rpc_union.png
+  rtimage.png
   run.png
   save.png
   sketch.png

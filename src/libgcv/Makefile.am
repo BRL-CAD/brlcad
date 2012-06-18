@@ -18,7 +18,7 @@ EXTRA_DIST = \
 	wfobj
 
 libgcv_la_SOURCES =
-libgcv_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS}
+libgcv_la_LDFLAGS = -version-info 20:1 -no-undefined -Wc,${FEXCEPTIONS}
 libgcv_la_LIBADD = \
 	libgcv_nil.la \
 	${GCV_LIBS}

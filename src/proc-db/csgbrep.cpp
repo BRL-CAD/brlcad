@@ -379,22 +379,22 @@ main(int argc, char** argv)
     bu_log("PIPE\n");
     struct wdb_pipept pipe1[] = {
 	{
-	    {(long)WDB_PIPESEG_MAGIC, 0, 0},
+	    {WDB_PIPESEG_MAGIC, 0, 0},
 	    {0, 1000, 0},
 	    50, 100, 100
 	},
 	{
-	    {(long)WDB_PIPESEG_MAGIC, 0, 0},
+	    {WDB_PIPESEG_MAGIC, 0, 0},
 	    {4000, 5000, 0},
 	    50,100,2000
 	},
 	{
-	    {(long)WDB_PIPESEG_MAGIC, 0, 0},
+	    {WDB_PIPESEG_MAGIC, 0, 0},
 	    {4000, 9000, 0},
 	    50,100,1500
 	},
 	{
-	    {(long)WDB_PIPESEG_MAGIC, 0, 0},
+	    {WDB_PIPESEG_MAGIC, 0, 0},
 	    {9000, 9000, 0},
 	    50,100,100
 	}

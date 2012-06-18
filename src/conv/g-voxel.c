@@ -28,6 +28,15 @@
 #include "vmath.h"		/* vector math macros */
 #include "raytrace.h"		/* librt interface definitions */
 
+/**
+ * This structure stores the information about voxels provided by a single raytrace.
+ */
+
+struct rayInfo {
+    fastf_t sizeVoxel[3];
+    fastf_t *fillDistances;
+};
+
 
 /**
  * rt_shootray() was told to call this on a hit.
@@ -44,24 +53,25 @@
 static int
 hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs))
 {
-    int voxelNumIn, voxelNumOut, presentVoxel=-1, i, numVoxelX;
+    int voxelNumIn, voxelNumOut, j = 0;
+    fastf_t hitDistIn, hitDistOut, sizeVoxel[3], *fillDistances;
+
     struct partition *pp;
+    struct rayInfo *voxelHits;
     struct hit *hitOutp, *hitInp;
-    struct rt_i *rtip;
-    float hitDistIn, hitDistOut, sizeVoxelX, inDistance = 0.0, threshold = 0.5;
+
+    voxelHits = (struct rayInfo*) ap->a_uptr;
 
     /**
-     * length of voxels in the X-direction is sizeVoxelX, rtip is
-     * structure for raytracing
+     * length of voxels in the 3 directions is stored in sizeVoxel[],
      */
-    sizeVoxelX = * (float*) ap->a_uptr;
-    rtip = ap->a_rt_i;
+    sizeVoxel[0] = voxelHits->sizeVoxel[0];
+    sizeVoxel[1] = voxelHits->sizeVoxel[1];
+    sizeVoxel[2] = voxelHits->sizeVoxel[2];
+
     pp = PartHeadp->pt_forw;
+    fillDistances = voxelHits->fillDistances;
 
-    /**
-     * The following loop prints the voxels is present in path of ray
-     * (1-present)
-     */
     while (pp != PartHeadp) {
 
 	/**
@@ -69,42 +79,19 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 	 * ray entered and exited the present partition.  hitDistIn,
 	 * hitDistOut are the respective distances from the origin of
 	 * ray.  voxelNumIn, voxelNumOut are the voxel numbers where
-	 * ray enterd and exited the present partition.  presentVoxel
-	 * is the voxel index from which the ray came out of in the
-	 * last partition
+	 * ray entered and exited the present partition.
 	 */
 	hitInp = pp->pt_inhit;
 	hitOutp = pp->pt_outhit;
 
-	hitDistIn = hitInp->hit_dist;
-	hitDistOut = hitOutp->hit_dist;
+	hitDistIn = hitInp->hit_dist - 1.0;
+	hitDistOut = hitOutp->hit_dist - 1.0;
 
-	voxelNumIn = (int) (hitDistIn - 1.0) / sizeVoxelX;
-	voxelNumOut = (int) (hitDistOut - 1.0) / sizeVoxelX;
+	voxelNumIn = ((int) hitDistIn / sizeVoxel[0]);
+	voxelNumOut = ((int) hitDistOut / sizeVoxel[0]);
 
-	/**
-	 * If ray does not enter next partition (ie the voxel index
-	 * from which ray exited) in the same voxel index, this means
-	 * that last voxel of previous partition can be
-	 * evaluated. Also, the intermediate voxels are NOT filled.
-	 */
-	if (presentVoxel != voxelNumIn) {
-
-	    if (inDistance / sizeVoxelX >= threshold) {
-		printf("1");
-	    } else {
-		if (presentVoxel!=-1) {
-		    printf("0");
-		}
-	    }
-
-	    for (i = 0; i < voxelNumIn - presentVoxel - 1; i++) {
-		printf("0");
-	    }
-
-	    presentVoxel = voxelNumIn;
-	    inDistance = 0.0;
-
+	if (EQUAL((hitDistOut / sizeVoxel[0]), floor(hitDistOut / sizeVoxel[0]))) {
+	    voxelNumOut -= 1;
 	}
 
 	/**
@@ -112,49 +99,25 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 	 * be evaluated till we see the next partition too. If not,
 	 * evaluate entry voxel. Also, all the intermediate voxels are
 	 * in.
-	 *
-	 * inDistance is given the distance covered before
-	 * exiting the last voxel of the present partition.
 	 */
-
 	if (voxelNumIn == voxelNumOut) {
-	    inDistance += hitDistOut - hitDistIn;
+
+	    fillDistances[voxelNumIn] +=  hitDistOut - hitDistIn;
+
 	} else {
-	    inDistance += (voxelNumIn + 1) * sizeVoxelX - hitDistOut;
 
-	    if (inDistance / sizeVoxelX >= threshold) {
-		printf("1");
-	    } else {
-		printf("0");
+	    fillDistances[voxelNumIn] += (voxelNumIn + 1) * sizeVoxel[0] - hitDistIn;
+
+	    for (j = voxelNumIn + 1; j<voxelNumOut; j++) {
+		fillDistances[j] += sizeVoxel[0];
 	    }
 
-	    for (i = 0; i < voxelNumOut - voxelNumIn -1; i++) {
-		printf("1");
-	    }
-
-	    presentVoxel = voxelNumOut;
-	    inDistance = hitDistOut - voxelNumOut * sizeVoxelX;
+	    fillDistances[voxelNumOut] += hitDistOut - (voxelNumOut * sizeVoxel[0]);
 	}
-
 
 	pp = pp->pt_forw;
     }
 
-    if (inDistance >= threshold) {
-	printf("1");
-    } else {
-	printf("0");
-    }
-
-    /**
-     * voxels after the last partition are not in
-     */
-    numVoxelX = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxelX) + 1;
-    for (i = 0; i < numVoxelX - presentVoxel; i++) {
-	printf("0");
-    }
-
-    printf("\n");
     return 0;
 
 }
@@ -168,7 +131,6 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 static int
 miss(struct application *UNUSED(ap))
 {
-    bu_log("missed\n");
     return 0;
 }
 
@@ -178,10 +140,13 @@ main(int argc, char **argv)
 {
     struct application ap;
     static struct rt_i *rtip;
+    struct rayInfo voxelHits;
 
     char title[1024] = {0};
-    int i, j, numVoxelY, numVoxelZ, yMin, zMin;
-    float sizeVoxelX,  sizeVoxelY, sizeVoxelZ;
+    int i, j, k, numVoxel[3], yMin, zMin, raysPerVoxel = 4, rayNum;
+    fastf_t sizeVoxel[3], threshold = 0.5, *voxelArray, rayTraceDistance;
+
+    FILE *fp;
 
     /* Check for command-line arguments.  Make sure we have at least a
      * geometry file and one geometry object on the command line.
@@ -189,6 +154,7 @@ main(int argc, char **argv)
     if (argc < 3) {
 	bu_exit(1, "Usage: %s model.g objects...\n", argv[0]);
     }
+
 
     /* Load the specified geometry database (i.e., a ".g" file).
      * rt_dirbuild() returns an "instance" pointer which describes the
@@ -201,12 +167,6 @@ main(int argc, char **argv)
 	bu_exit(2, "Building the database directory for [%s] FAILED\n", argv[1]);
     }
 
-    /* Display the geometry database title obtained during rt_dirbuild
-     * if a title is set.
-     */
-    if (title[0]) {
-	bu_log("Title:\n%s\n", title);
-    }
 
     /* Walk the geometry trees.  Here you identify any objects in the
      * database that you want included in the ray trace by iterating
@@ -221,62 +181,79 @@ main(int argc, char **argv)
 
     /* This next call gets the database ready for ray tracing.  This
      * causes some values to be precomputed, sets up space
-     * partitioning, computes boudning volumes, etc.
+     * partitioning, computes bounding volumes, etc.
      */
     rt_prep_parallel(rtip, 1);
 
+    /* assume voxels are sizeVoxel[0], sizeVoxel[1], sizeVoxel[2] size in each dimension */
+    sizeVoxel[0] = 1.0;
+    sizeVoxel[1] = 1.0;
+    sizeVoxel[2] = 1.0;
 
-    /* get bounding corners of bounding box of region through which ray is shot */
+    numVoxel[0] = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxel[0]);
+    numVoxel[1] = (int)(((rtip->mdl_max)[1] - (rtip->mdl_min)[1])/sizeVoxel[1]);
+    numVoxel[2] = (int)(((rtip->mdl_max)[2] - (rtip->mdl_min)[2])/sizeVoxel[2]);
 
-    printf("\nbounding box is this\n");
+    voxelHits.sizeVoxel[0] = sizeVoxel[0];
+    voxelHits.sizeVoxel[1] = sizeVoxel[1];
+    voxelHits.sizeVoxel[2] = sizeVoxel[2];
 
-    VPRINT("\nmin of bounding rectangular parallelopiped --Pnt\n", rtip->mdl_min);
-    VPRINT("\nmax of bounding rectangular parallelopiped --Pnt\n", rtip->mdl_max);
+    /* voxelArray stores the distance in path of ray inside a voxel which is filled*/
+    voxelArray = bu_calloc(numVoxel[0], sizeof(fastf_t), "voxelArray");
 
+    for(k = 0; k < numVoxel[0]; k++) {
+	voxelArray[k] = 0.0;
+    }
 
-    /*
-      printf("\nx value of maximum on the highest corner of parallelopiped is: %f", (rtip->mdl_max)[0]);
-      printf("\ny value of maximum on the highest corner of parallelopiped is: %f", (rtip->mdl_max)[1]);
-      printf("\nz value of maximum on the highest corner of parallelopiped is: %f", (rtip->mdl_max)[2]);
-      printf("\nx value of minimum on the lowest corner of parallelopiped is: %f", (rtip->mdl_min)[0]);
-      printf("\ny value of minimum on the lowest corner of parallelopiped is: %f", (rtip->mdl_min)[1]);
-      printf("\nz value of minimum on the lowest corner of parallelopiped is: %f", (rtip->mdl_min)[2]);
-    */
-
-
-    sizeVoxelX = 1.0;
-    sizeVoxelY = 1.0;
-    sizeVoxelZ = 1.0;
-
-
-    /* assume voxels are sizeVoxelX, sizeVoxelY, sizeVoxelZ size in each dimension */
-    /* numVoxelX is unused? */
-    numVoxelY = (int)(((rtip->mdl_max)[1] - (rtip->mdl_min)[1])/sizeVoxelY) + 1;
-    numVoxelZ = (int)(((rtip->mdl_max)[2] - (rtip->mdl_min)[2])/sizeVoxelZ) + 1;
-
-    /* X is unused? */
+    /* minimum value of bounding box in Y and Z directions */
     yMin = (int)((rtip->mdl_min)[1]);
     zMin = (int)((rtip->mdl_min)[2]);
 
-    for (i = 0; i < numVoxelZ; i++) {
-	for (j = 0; j < numVoxelY; j++) {
-	    printf("Ray number is %d\n", numVoxelY * i + j);
+    /* 1.0 / (raysPerVoxel + 1) has to be used multiple times in the following loops */
+    rayTraceDistance = 1.0 / (raysPerVoxel + 1);
+
+    fp = fopen("voxels.txt", "w");
+
+    fprintf(fp, "voxel specs :\n\tDimensions of a voxel are : (%f, %f, %f)\n\tNumber of voxels in x, y, z direction is %d, %d, %d respectively\n\n", sizeVoxel[0], sizeVoxel[1], sizeVoxel[2], numVoxel[0], numVoxel[1], numVoxel[2]);
+
+
+    /* start shooting */
+    for (i = 0; i < numVoxel[2]; i++) {
+	for (j = 0; j < numVoxel[1]; j++) {
 	    RT_APPLICATION_INIT(&ap);
 	    ap.a_rt_i = rtip;
 	    ap.a_onehit = 0;
-
-	    /* ray is hit through midpoint of the unit sized voxels */
-	    VSET(ap.a_ray.r_pt, (rtip->mdl_min)[0] - 1.0, yMin + (j + 0.5) * sizeVoxelY, zMin + (i + 0.5) * sizeVoxelZ);
 	    VSET(ap.a_ray.r_dir, 1.0, 0.0, 0.0);
 
 	    ap.a_hit = hit;
 	    ap.a_miss = miss;
-	    ap.a_uptr = &sizeVoxelX;
+	    ap.a_uptr = &voxelHits;
 
-	    rt_shootray(&ap);
+	    voxelHits.fillDistances = voxelArray;
+
+	    for (rayNum = 1; rayNum <= raysPerVoxel; rayNum++) {
+		for (k = 1; k <= raysPerVoxel; k++) {
+
+		    /* ray is hit through evenly spaced points of the unit sized voxels */
+		    VSET(ap.a_ray.r_pt, (rtip->mdl_min)[0] - 1.0, yMin + (j + k * rayTraceDistance) * sizeVoxel[1], zMin + (i + rayNum * rayTraceDistance) * sizeVoxel[2]);
+		    rt_shootray(&ap);
+		}
+	    }
+
+	    for (k = 0; k < numVoxel[0]; k++) {
+		if (voxelArray[k] >= threshold) {
+		    fprintf(fp, "1 ");
+		} else {
+		    fprintf(fp, "0 ");
+		}
+		voxelArray[k] = 0.0;
+	    }
+	    fprintf(fp, "\n");
 	}
+	fprintf(fp, "\n");
     }
 
+    fclose(fp);
     return 0;
 }
 

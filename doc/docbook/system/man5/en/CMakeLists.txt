@@ -1,4 +1,5 @@
 set(docbook_man5_EN
+  dsp.xml
   gattributes.xml
   )
 

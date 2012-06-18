@@ -55,6 +55,7 @@
  *
  */
 
+#include <scl_memmgr.h>
 #include <stdlib.h>
 #include "express/resolve.h"
 #include "stack.h"
@@ -371,7 +372,7 @@ void EXP_resolve( Expression expr, Scope scope, Type typecheck ) {
             /* add function or entity as first element of list */
             LISTadd_first( expr->u.list, x );
 #endif
-            expr->u.funcall.function = x;
+            expr->u.funcall.function = ( struct Scope_ * ) x;
 
             resolved_all( expr );
             break;
@@ -390,21 +391,35 @@ void EXP_resolve( Expression expr, Scope scope, Type typecheck ) {
             break;
         case identifier_:
 
-            /* if this must match an enumeration, try first looking */
-            /* in the enumeration tag scope */
             x = 0;
-#ifdef permissive_checks
-            if( typecheck->u.type->body->type == enumeration_ ) {
-                x = DICTlookup( TYPEget_enum_tags( typecheck ), expr->symbol.name );
-            }
-#endif
-            /* if not an enumeration tag, assume it's a variable/attribute */
+
+            /* assume it's a variable/attribute */
             if( !x ) {
                 x = ( Generic )VARfind( scope, expr->symbol.name, 0 );
             }
             /* if not found as a variable, try as function, etc ... */
-            if( !x ) x = SCOPEfind( scope, expr->symbol.name,
-                                        SCOPE_FIND_ANYTHING );
+            if( !x ) {
+                x = SCOPEfind( scope, expr->symbol.name,
+                                           SCOPE_FIND_ANYTHING );
+            }
+            /* Not all enums have `typecheck->u.type->body->type` == `enumeration_` - ?! */
+            if( !x ) {
+                Scope enumscope = scope;
+                while( 1 ) {
+                    // look up locally, then go through the superscopes
+                    x = DICTlookup( enumscope->enum_table, expr->symbol.name );
+                    if( x ) {
+                        break;
+                    }
+                    if( enumscope->type == OBJ_SCHEMA ) {
+                        //if we get here, this means that we've looked through all scopes
+                        x = 0;
+                        break;
+                    }
+                    enumscope = enumscope->superscope;
+                }
+            }
+
             if( !x ) {
                 if( typecheck == Type_Unknown ) {
                     return;

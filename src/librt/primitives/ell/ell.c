@@ -1778,7 +1778,7 @@ rt_ell_volume(fastf_t *volume, const struct rt_db_internal *ip)
     mag_a = MAGNITUDE(eip->a);
     mag_b = MAGNITUDE(eip->b);
     mag_c = MAGNITUDE(eip->c);
-    *volume = (4.0/3.0) * M_PI * mag_a*mag_b*mag_c;
+    *volume = (4.0/3.0) * M_PI * mag_a * mag_b * mag_c;
 }
 
 
@@ -1797,44 +1797,23 @@ rt_ell_centroid(point_t *cent, const struct rt_db_internal *ip)
 
 
 /**
- * E L L _ O B L Used to calculate surface area for Oblate spheroids
+ * R T _ E L L _ S U R F A C E _ A R E A
+ *
+ * Computes the surface area of an ellipsoid.
+ * logs error if triaxial ellipsoid (cannot find surface area).
  */
-HIDDEN void
-ell_obl(fastf_t a, fastf_t c, fastf_t *ell_sfa)
-{
-    fastf_t e, e2, a2, c2;
-    a2 = a * a;
-    c2 = c * c;
-    e2 = 1.0 - (c2 / a2);
-    e = sqrt(e2);
-    *ell_sfa = (2.0 * M_PI * a2) + (M_PI * (c2 / e) * log((1.0 + e) / (1.0 - e)));
-}
-
-
-/**
- * E L L _ P R O Used to calculate surface area for Prolate spheroids
- */
-HIDDEN void
-ell_pro(fastf_t a, fastf_t c, fastf_t *ell_sfa)
-{
-    fastf_t e, e2, a2, c2;
-    a2 = a * a;
-    c2 = c * c;
-    e2 = 1.0 - (a2 / c2);
-    e = sqrt(e2);
-    *ell_sfa = (2.0 * M_PI * a2) + (2.0 * M_PI * ((a * c) / e) * asin(e));
-}
-
-
-/*
-* R T _ E L L _ S F A
-*
-* Used to calculate and return surface area of an ellipsoid
-*/
-int
-rt_ell_sfa(struct rt_db_internal *ip, fastf_t *ell_sfa)
+#define PROLATE 1
+#define OBLATE 2
+void
+rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t mag_a, mag_b, mag_c;
+    fastf_t ecc = 0;
+    fastf_t major = 0;
+    fastf_t minor = 0;
+    fastf_t major2 = 0;
+    fastf_t minor2 = 0;
+    int ell_type = 0;
 
     struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
@@ -1843,32 +1822,64 @@ rt_ell_sfa(struct rt_db_internal *ip, fastf_t *ell_sfa)
     mag_b = MAGNITUDE(eip->b);
     mag_c = MAGNITUDE(eip->c);
 
-    if (EQUAL(mag_a, mag_c)) {
-	if (EQUAL(mag_a, mag_b)) {
-	    *ell_sfa = 4.0 * M_PI * mag_a * mag_a; /* Sphere */
-	} else if (mag_b < mag_a) {
-	    ell_obl(mag_a, mag_b, ell_sfa); /* Oblate with A=C, and A<B */
-	} else if (mag_b > mag_a) {
-	    ell_pro(mag_a, mag_b, ell_sfa); /* Prolate with A=C, and A>B */
-	}
-    } else if (EQUAL(mag_a, mag_b)) {
-	if (mag_c < mag_a) {
-	    ell_obl(mag_a, mag_c, ell_sfa); /* Oblate with A=B, and A>C */
-	} else if (mag_c > mag_a) {
-	    ell_pro(mag_a, mag_c, ell_sfa); /* Prolate with A=B, and A<C */
-	}
-    } else if (EQUAL(mag_b, mag_c)) {
-	if (mag_a < mag_b) {
-	    ell_obl(mag_b, mag_a, ell_sfa); /* Oblate with B=C, and B>A */
-	} else if (mag_a > mag_b) {
-	    ell_pro(mag_b, mag_a, ell_sfa); /* Prolate with B=C, and B<A */
-	}
-    } else {
-	return 1; /* a != b != c Triaxial Ellipsoid, function can't solve */
+    if (EQUAL(mag_a, mag_b) && EQUAL(mag_b, mag_c)) {
+        /* case: sphere */
+        *area = 4.0 * M_PI * mag_a * mag_a;
+        return;
     }
 
-    return 0; /* OK */
+    if (EQUAL(mag_a, mag_b)) {
+        if (mag_a > mag_c) {
+            /* case: prolate spheroid */
+            ell_type = PROLATE;
+            major = mag_a;
+            minor = mag_c;
+        } else {
+            /* case: oblate spheroid */
+            ell_type = OBLATE;
+            major = mag_c;
+            minor = mag_a;
+        }
+    } else if (EQUAL(mag_a, mag_c)) {
+        if (mag_a > mag_b) {
+            /* case: prolate spheroid */
+            ell_type = PROLATE;
+            major = mag_a;
+            minor = mag_b;
+        } else {
+            /* case: oblate spheroid */
+            ell_type = OBLATE;
+            major = mag_b;
+            minor = mag_a;
+        }
+    } else if (EQUAL(mag_b, mag_c)) {
+        if (mag_b > mag_c) {
+            /* case: prolate spheroid */
+            ell_type = PROLATE;
+            major = mag_b;
+            minor = mag_c;
+        } else {
+            /* case: oblate spheroid */
+            ell_type = OBLATE;
+            major = mag_c;
+            minor = mag_b;
+        }
+    }
 
+    major2 = major * major;
+    minor2 = minor * minor;
+    ecc = sqrt(1.0 - (minor2 / major2));
+
+    switch (ell_type) {
+        case PROLATE:
+              *area = (2.0 * M_PI * minor2) + (2.0 * M_PI * major * minor / ecc) * asin(ecc);
+              break;
+        case OBLATE:
+              *area = (2.0 * M_PI * major2) + (M_PI * minor2 / ecc) * log((1.0 + ecc) / (1.0 - ecc));
+              break;
+        default:
+              bu_log("rt_ell_surf_area(): triaxial ellipsoid, cannot find surface area");
+    }
 }
 
 

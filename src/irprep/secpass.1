@@ -49,8 +49,8 @@ Secpass is an interactive program used to create a conductivity
 table for the PRISM-ready input file (when used in conjunction
 with firpass) or a generic thermal data file.  The conduction approximation
 is based on the following formula from the PRISM manual.
-.nf
 
+.nf
 	RK(i,j) =             1
 		    ---------------------------
 		      L(i)/K(i)A + L(j)/K(j)A
@@ -61,33 +61,33 @@ is based on the following formula from the PRISM manual.
 	K(i)    - conductivity of material of region i
 	K(j)    - conductivity of material of region j
 	A       - shared surface area
-
 .fi
+
 The conduction path length is a distance between the centroid of
 the region and the shared surface.  The user may select the average,
 root mean squared (rms), minimum, or maximum distance for the length.
 .sp
 The following information about each region is obtained from
 secpass when creating a PRISM ready file.
-.nf
 
+.nf
 	number (same scheme as in firpass)
 	number of region there is conduction between
 	conduction
-
 .fi
+
 The following information about each region is obtained when creating
 a generic thermal data file
-.nf
 
+.nf
 	number
 	number of adjacent regions
 	shared area of each adjacent region (m**2)
 	conduction distance (m)
 .SH EXAMPLE
 The following is an example from an interactive session.
-.nf
 
+.nf
 $ secpass test.veh.g vehicle air
 Write output to standard out (0) or a file(1) not at all (2)?  2
 Enter name of file that has second pass information
@@ -160,6 +160,7 @@ SUMMARY OF FILES USED & CREATED
 
 Freeing memory.
 .fi
+
 .SH CHANGES SINCE BRL-CAD RELEASE 4.0
 1.  Made the numbering scheme for regions the same throughout all
 irprep programs, i.e. region numbers start at one not zero.  This

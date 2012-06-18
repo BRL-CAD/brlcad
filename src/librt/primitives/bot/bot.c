@@ -1554,9 +1554,7 @@ rt_bot_find_e_nearest_pt2(
     /* now look for the closest edge */
     for (i = 0; i < edge_count; i++) {
 	point_t p1, p2, pca;
-#if 0
 	vect_t p1_to_pca, p1_to_p2;
-#endif
 	int ret;
 
 	MAT4X3PNT(p1, mat, &bot->vertices[ edge_list[i*2+0]*3]);
@@ -1591,11 +1589,11 @@ rt_bot_find_e_nearest_pt2(
 		    *vert1 = edge_list[i*2+0];
 		    *vert2 = edge_list[i*2+1];
 		    break;
-#if 0
 		case 4:
 		    dist = tmp_dist;
 		    *vert1 = edge_list[i*2+1];
 		    *vert2 = edge_list[i*2+0];
+		    break;
 		case 5:
 		    dist = tmp_dist;
 		    V2SUB2(p1_to_pca, pca, p1);
@@ -1608,7 +1606,6 @@ rt_bot_find_e_nearest_pt2(
 			*vert2 = edge_list[i*2+0];
 		    }
 		    break;
-#endif
 	    }
 	}
     }

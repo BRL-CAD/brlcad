@@ -146,7 +146,7 @@ main (int argc, char *argv[])
     } else if ((*cf_name == '-') && (*(cf_name + 1) == '\0')) {
 	cf_name = "stdout";
 	cfd = 1;
-    } else if ((cfd = open(cf_name, O_WRONLY | O_CREAT | O_TRUNC, 0644)) == -1) {
+    } else if ((cfd = open(cf_name,  O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644)) == -1) {
 	bu_log("Cannot open file '%s'\n", cf_name);
 	return 1;
     }
@@ -158,7 +158,7 @@ main (int argc, char *argv[])
     } else if ((*df_name == '-') && (*(df_name + 1) == '\0')) {
 	df_name = "stdout";
 	dfd = 1;
-    } else if ((dfd = open(df_name, O_WRONLY | O_CREAT | O_TRUNC, 0644)) == -1) {
+    } else if ((dfd = open(df_name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644)) == -1) {
 	bu_log("Cannot open file '%s'\n", df_name);
 	return 1;
     }

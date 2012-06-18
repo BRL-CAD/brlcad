@@ -42,10 +42,6 @@
 #include "./rtuif.h"
 
 
-extern int rt_shootray_bundle (struct application *ap, struct xray *rays, int nrays);
-extern int rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring);
-
-
 void
 usage(const char *argv0)
 {

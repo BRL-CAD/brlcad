@@ -1633,6 +1633,11 @@ GED_EXPORT extern int ged_rtabort(struct ged *gedp, int argc, const char *argv[]
 GED_EXPORT extern int ged_rtcheck(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Run the rtwizard application.
+ */
+GED_EXPORT extern int ged_rtwizard(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Save keyframe in file (experimental)
  */
 GED_EXPORT extern int ged_savekey(struct ged *gedp, int argc, const char *argv[]);

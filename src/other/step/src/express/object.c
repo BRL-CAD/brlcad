@@ -21,6 +21,7 @@
  * prettied up interface to print_objects_when_running
  */
 
+#include <scl_memmgr.h>
 #include <stdlib.h>
 #include "express/object.h"
 
@@ -36,7 +37,7 @@ Symbol * UNK_get_symbol( Generic x ) {
 void OBJinitialize() {
     int i;
 
-    OBJ = ( struct Object * )malloc( MAX_OBJECT_TYPES * sizeof( struct Object ) );
+    OBJ = ( struct Object * )scl_malloc( MAX_OBJECT_TYPES * sizeof( struct Object ) );
     for( i = 0; i < MAX_OBJECT_TYPES; i++ ) {
         OBJ[i].get_symbol = UNK_get_symbol;
         OBJ[i].type = "of unknown_type";

@@ -125,7 +125,7 @@ check_tree_funcleaf(
  * TODO: lower to librt
  */
 int
-kill(struct ged *gedp, char *name);
+sim_kill(struct ged *gedp, char *name);
 
 
 /**
@@ -134,7 +134,7 @@ kill(struct ged *gedp, char *name);
  * TODO : lower to librt
  */
 int
-kill_copy(struct ged *gedp, struct directory *dp, char* new_name);
+sim_kill_copy(struct ged *gedp, struct directory *dp, char* new_name);
 
 
 /**

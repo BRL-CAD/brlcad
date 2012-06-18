@@ -12,7 +12,7 @@ libpkg_la_SOURCES = \
 	tcl.c \
 	vers.c
 
-libpkg_la_LDFLAGS = -version-info 19:1 -no-undefined
+libpkg_la_LDFLAGS = -version-info 20:1 -no-undefined
 libpkg_la_LIBADD = ${PKG_LIBS}
 
 tpkg_SOURCES = tpkg.c

@@ -39,6 +39,16 @@ else(BULLET_FOUND)
   set(ged_ignore_files simulate/simphysics.cpp simulate/simulate.c simulate/simcollisionalgo.cpp simulate/simcollisionalgo.h simulate/simutils.c simulate/simrt.c simulate/simrt.h simulate/simutils.h)
 endif(BULLET_FOUND)
 
+find_package(ADAPTAGRAMS)
+if(ADAPTAGRAMS_FOUND)
+  set(AVOID_SRCS
+    dag.cpp
+    )
+else(ADAPTAGRMS_FOUND)
+  set(AVOID_SRCS "")
+  set(ged_ignore_files ${ged_ignore_files} dag.cpp)
+endif(ADAPTAGRAMS_FOUND)
+
 set(LIBGED_SOURCES
   3ptarb.c
   adc.c
@@ -229,6 +239,7 @@ set(LIBGED_SOURCES
   rt.c
   rtabort.c
   rtcheck.c
+  rtwizard.c
   savekey.c
   saveview.c
   scale.c
@@ -306,6 +317,7 @@ set(LIBGED_SOURCES
   zap.c
   zoom/zoom.c
   ${SIM_SRCS}
+  ${AVOID_SRCS}
   )
 
 # Core logic for adding commands to the libged source/lib/include lists.
@@ -365,7 +377,7 @@ if(BULLET_FOUND)
 else(BULLET_FOUND)
   BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}")
 endif(BULLET_FOUND)
-SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 19.0.1 SOVERSION 19)
+SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(ged_ignore_files
   ${ged_ignore_files}

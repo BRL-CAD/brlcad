@@ -211,7 +211,7 @@
 	<para>
 	  Use the natural origin of the object specified as an
 	  argument to <option>-k</option>, <option>-a</option>, or
-	  <option>-r</option> rather than it's bounding box center.
+	  <option>-r</option> rather than its bounding box center.
 	</para>
       </listitem>
     </varlistentry>

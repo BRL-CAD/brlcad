@@ -18,6 +18,7 @@
 
 #include <dispnode.h>
 #include <dispnodelist.h>
+#include "scl_memmgr.h"
 
 // define this to be the name of the display object
 class StepEntityEditor;

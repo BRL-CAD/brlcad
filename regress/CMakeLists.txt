@@ -93,7 +93,14 @@ if(SH_EXEC)
     rtwizard_pkgIndex.tcl rtwizard_TCLSCRIPTS_cp lib_tclIndex
     lib_pkgIndex.tcl
     )
-
+  add_custom_target(regress-dsp
+    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/dsp.sh ${CMAKE_SOURCE_DIR}
+    DEPENDS mged cv asc2pix rt pix-bw
+    )
+  add_custom_target(regress-asc2dsp
+    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/asc2dsp.sh ${CMAKE_SOURCE_DIR}
+    DEPENDS cv asc2pix pix-bw asc2dsp
+    )
 
   add_custom_target(regress
     DEPENDS regress-mged regress-moss regress-lights
@@ -101,6 +108,7 @@ if(SH_EXEC)
     regress-weight regress-gqa regress-fastgen regress-bots
     regress-repository regress-red regress-nirt
     regress-vls_vprintf regress-comgeom regress-gnff regress-gdot
+    regress-dsp regress-asc2dsp
     )
 
 endif(SH_EXEC)
@@ -108,9 +116,32 @@ endif(SH_EXEC)
 CMAKEFILES(
   Makefile.am
   analyze.asc
+  asc2dsp.sh
   bots.sh
   comgeom.sh
   dsp.sh
+  dsp/asc2dsp-new.asc
+  dsp/asc2dsp-old.asc
+  dsp/dsp-1-1.asc
+  dsp/dsp-1-2.asc
+  dsp/dsp-2-1.asc
+  dsp/dsp-2-2.asc
+  dsp/dsp-2-3.asc
+  dsp/dsp-2-4.asc
+  dsp/dsp-2-5.asc
+  dsp/dsp-3-1.asc
+  dsp/dsp-3-2.asc
+  dsp/dsp-3-3.asc
+  dsp/dsp-3-4.asc
+  dsp/dsp-3-5.asc
+  dsp/dsp-3-6.asc
+  dsp/dsp-3-7.asc
+  dsp/dsp-3-8.asc
+  dsp/dsp-common.sh
+  dsp/run-dsp-case-set-0.sh
+  dsp/run-dsp-case-set-1.sh
+  dsp/run-dsp-case-set-2.sh
+  dsp/run-dsp-case-set-3.sh
   fastgen.sh
   fastgen_dos.fast4
   flawfinder.sh
@@ -163,6 +194,11 @@ CMAKEFILES(
 set(regress_outfiles
   .density
   adj_air.pl
+  asc2dsp-new.dsp
+  asc2dsp-old.bw
+  asc2dsp-old.dsp
+  asc2dsp-old.pix
+  asc2dsp.log
   bots.diff.log
   bots.diff.pix
   bots.g
@@ -184,8 +220,85 @@ set(regress_outfiles
   comgeom.t-v5.g
   core
   density_table.txt
-  dsp.dat
   dsp.pix
+  dsp-2-1.bw
+  dsp-2-1.dsp
+  dsp-2-1.g
+  dsp-2-1.log
+  dsp-2-1.pix
+  dsp-2-1.rt.pix
+  dsp-2-2.bw
+  dsp-2-2.dsp
+  dsp-2-2.g
+  dsp-2-2.log
+  dsp-2-2.pix
+  dsp-2-2.rt.pix
+  dsp-2-3.bw
+  dsp-2-3.dsp
+  dsp-2-3.g
+  dsp-2-3.log
+  dsp-2-3.pix
+  dsp-2-3.rt.pix
+  dsp-2-4.bw
+  dsp-2-4.dsp
+  dsp-2-4.g
+  dsp-2-4.log
+  dsp-2-4.pix
+  dsp-2-4.rt.pix
+  dsp-2-5.bw
+  dsp-2-5.dsp
+  dsp-2-5.g
+  dsp-2-5.log
+  dsp-2-5.pix
+  dsp-2-5.rt.pix
+  dsp-3-1.bw
+  dsp-3-1.dsp
+  dsp-3-1.g
+  dsp-3-1.log
+  dsp-3-1.pix
+  dsp-3-1.rt.pix
+  dsp-3-2.bw
+  dsp-3-2.dsp
+  dsp-3-2.g
+  dsp-3-2.log
+  dsp-3-2.pix
+  dsp-3-2.rt.pix
+  dsp-3-3.bw
+  dsp-3-3.dsp
+  dsp-3-3.g
+  dsp-3-3.log
+  dsp-3-3.pix
+  dsp-3-3.rt.pix
+  dsp-3-4.bw
+  dsp-3-4.dsp
+  dsp-3-4.g
+  dsp-3-4.log
+  dsp-3-4.pix
+  dsp-3-4.rt.pix
+  dsp-3-5.bw
+  dsp-3-5.dsp
+  dsp-3-5.g
+  dsp-3-5.log
+  dsp-3-5.pix
+  dsp-3-5.rt.pix
+  dsp-3-6.bw
+  dsp-3-6.dsp
+  dsp-3-6.g
+  dsp-3-6.log
+  dsp-3-6.pix
+  dsp-3-6.rt.pix
+  dsp-3-7.bw
+  dsp-3-7.dsp
+  dsp-3-7.g
+  dsp-3-7.log
+  dsp-3-7.pix
+  dsp-3-7.rt.pix
+  dsp-3-8.bw
+  dsp-3-8.dsp
+  dsp-3-8.g
+  dsp-3-8.log
+  dsp-3-8.pix
+  dsp-3-8.rt.pix
   eagleCAD-512x438.pix
   ebm.bw
   exp_air.pl
@@ -279,6 +392,9 @@ set(regress_outfiles
   red.material_id.unsafe.out
   red.material_id.unsafe.out.new
   red.material_id.unsafe.out.test
+  red.matrix.noop.out
+  red.matrix.noop.out.new
+  red.sph_rot.c.out
   red.name.empty.out
   red.name.empty.out.new
   red.name.emptyedit.out

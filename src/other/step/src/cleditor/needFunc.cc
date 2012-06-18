@@ -1,4 +1,5 @@
 #include <needFunc.h>
+#include "scl_memmgr.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function defined as a stub (necessary to use the scl)

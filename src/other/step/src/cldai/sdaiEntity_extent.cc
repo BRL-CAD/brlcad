@@ -3,6 +3,7 @@
 //#include <EntityExtent.h>
 
 #include <sdai.h>
+#include "scl_memmgr.h"
 
 SDAI_Entity_extent ::SDAI_Entity_extent ( )
     : _definition( 0 ), _definition_name( 0 ), _owned_by( 0 ) {

@@ -751,6 +751,7 @@ mark_as_advanced(SCL_CPP_GENERATOR)
 mark_as_advanced(SCL_ENABLE_COVERAGE)
 mark_as_advanced(SCL_ENABLE_TESTING)
 mark_as_advanced(SCL_PYTHON_GENERATOR)
+mark_as_advanced(SCL_MEMMGR_ENABLE_CHECKS)
 
 # Clipper polygon clipping library - for now, we're going to use our copy
 if(BRLCAD_LEVEL2)

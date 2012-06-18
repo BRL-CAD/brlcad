@@ -258,7 +258,7 @@ get_args(int argc, char **argv)
 /* TRACK_PREP - Calculate the geometry of the track. Wheel positions and
  * radii should already exist in the x[i] structs. Track_prep fills in the
  * rest of the x[i] structs and also calculates values for curve_a, curve_b,
- * curve_c, and s_start, which describe the caternary segment
+ * curve_c, and s_start, which describe the catenary segment
  * return values: 0 = GOOD
  * -1 = BAD. Track too short to fit around wheels
  */
@@ -369,7 +369,7 @@ track_prep(void)
 
 
 /* GET_LINK - Find the position and angle of a link which is a given
- * distance around the track, measured from the point where the caternary
+ * distance around the track, measured from the point where the catenary
  * section meets wheel.0.
  */
 int
@@ -403,7 +403,7 @@ get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	}
     }
 
-    /* caternary section */
+    /* catenary section */
     if (curve_a > VDIVIDE_TOL) {
 	pos[X] = hyper_get_x(curve_a, 0.0, s_start+dist);
 	pos[Y] = x[0].w.pos[Y];

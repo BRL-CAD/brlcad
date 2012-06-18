@@ -12,6 +12,7 @@
 
 #include <errordesc.h>
 #include <Str.h>
+#include <scl_memmgr.h>
 
 DebugLevel ErrorDescriptor::_debug_level = DEBUG_OFF;
 ostream  * ErrorDescriptor::_out = 0;
@@ -116,6 +117,9 @@ ErrorDescriptor::ErrorDescriptor( Severity s,  DebugLevel d ) : _severity( s ) {
     if( d  != DEBUG_OFF ) {
         _debug_level = d;
     }
+}
+
+ErrorDescriptor::~ErrorDescriptor( void ) {
 }
 
 void ErrorDescriptor::UserMsg( const char * msg ) {

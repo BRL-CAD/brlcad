@@ -30,6 +30,7 @@
 ::itcl::class cadwidgets::Accordian {
     inherit ::itk::Widget
 
+    itk_option define -padding padding Padding 0
     itk_option define -singleselect singleselect Singleselect 1
 
     constructor {args} {}
@@ -76,6 +77,13 @@
 
 
 ############################### Configuration Options ###############################
+
+::itcl::configbody cadwidgets::Accordian::padding {
+    foreach item $mItemList {
+	set name "$ACC_PREFIX[regsub -all { } $item "_"]"
+	catch {$itk_component($name\B) configure -padding $itk_option(-padding)}
+    }
+}
 
 ::itcl::configbody cadwidgets::Accordian::singleselect {
     if {$itk_option(-singleselect) != "true" &&
@@ -242,6 +250,7 @@
 	itk_component add $name\B {
 	    ::ttk::button $itk_component($name\F).button \
 		-text $item \
+		-padding $itk_option(-padding) \
 		-command [::itcl::code $this toggleDisplay $item]
 	} {}
 	itk_component add $name\CS {
@@ -297,8 +306,6 @@
 
     delete $_item1
     insert $i $_item2
-
-    .archer0 putString "Accordian::rename: i - $i, mCurrIndex - $saveCI"
 
     if {$i == $saveCI} {
 	toggleDisplay $_item2
@@ -406,10 +413,14 @@
 	    set mCurrIndex $i
 
 	    grid rowconfigure $itk_interior $mCurrIndex -weight 1
+
+	    set state 1
+	} else {
+	    set state 0
 	}
 
 	foreach callback $mTogglePanelCallbacks {
-	    catch {$callback $_item}
+	    catch {$callback $_item $state}
 	}
 
 	return
@@ -422,15 +433,17 @@
 	grid rowconfigure $itk_interior $i -weight 1
 
 	set mCurrIndex $i
+	set state 1
     } else {
 	grid forget $itk_component($name\CS)
 	grid rowconfigure $itk_interior $i -weight 0
 
 	set mCurrIndex -1
+	set state 0
     }
 
     foreach callback $mTogglePanelCallbacks {
-	catch {$callback $_item}
+	catch {$callback $_item $state}
     }
 }
 

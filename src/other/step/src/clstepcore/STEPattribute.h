@@ -13,6 +13,7 @@
 */
 
 
+#include <scl_export.h>
 #include <stdio.h>
 #include <errordesc.h>
 #include <baseType.h>
@@ -38,19 +39,19 @@ class EntityDescriptor;
 
 #include <sstream>
 
-extern int SetErrOnNull( const char * attrValue, ErrorDescriptor * error );
+extern SCL_CORE_EXPORT int SetErrOnNull( const char * attrValue, ErrorDescriptor * error );
 
-extern SDAI_Application_instance * ReadEntityRef( istream & in, ErrorDescriptor * err, const char * tokenList,
+extern SCL_CORE_EXPORT SDAI_Application_instance * ReadEntityRef( istream & in, ErrorDescriptor * err, const char * tokenList,
         InstMgr * instances, int addFileId );
 
-extern SDAI_Application_instance * ReadEntityRef( const char * s, ErrorDescriptor * err, const char * tokenList,
+extern SCL_CORE_EXPORT SDAI_Application_instance * ReadEntityRef( const char * s, ErrorDescriptor * err, const char * tokenList,
         InstMgr * instances, int addFileId );
 
-extern Severity EntityValidLevel( SDAI_Application_instance * se,
+extern SCL_CORE_EXPORT Severity EntityValidLevel( SDAI_Application_instance * se,
         const TypeDescriptor * ed, ///< entity type that entity se needs to match. (this must be an EntityDescriptor)
         ErrorDescriptor * err );
 
-extern Severity EntityValidLevel( const char * attrValue, ///< string containing entity ref
+extern SCL_CORE_EXPORT Severity EntityValidLevel( const char * attrValue, ///< string containing entity ref
         const TypeDescriptor * ed, /**< entity type that entity in attrValue (if it exists) needs
                                              *  to match. (this must be an EntityDescriptor)
                                              */
@@ -59,30 +60,23 @@ extern Severity EntityValidLevel( const char * attrValue, ///< string containing
 ////////////////////
 ////////////////////
 
-extern SDAI_Application_instance * STEPread_reference( const char * s, ErrorDescriptor * err,
+extern SCL_CORE_EXPORT SDAI_Application_instance * STEPread_reference( const char * s, ErrorDescriptor * err,
         InstMgr * instances, int addFileId );
 ////////////////////
 
-extern int   QuoteInString( istream & in );
+extern SCL_CORE_EXPORT int QuoteInString( istream & in );
 
-extern void  AppendChar( char c, int & index, char *& s, int & sSize );
+extern SCL_CORE_EXPORT void AppendChar( char c, int & index, char *& s, int & sSize );
 
-extern void PushPastString( istream & in, std::string & s, ErrorDescriptor * err );
+extern SCL_CORE_EXPORT void PushPastString( istream & in, std::string & s, ErrorDescriptor * err );
 
-extern void PushPastImbedAggr( istream & in, std::string & s, ErrorDescriptor * err );
+extern SCL_CORE_EXPORT void PushPastImbedAggr( istream & in, std::string & s, ErrorDescriptor * err );
 
-extern void PushPastAggr1Dim( istream & in, std::string & s, ErrorDescriptor * err );
+extern SCL_CORE_EXPORT void PushPastAggr1Dim( istream & in, std::string & s, ErrorDescriptor * err );
 
-class STEPattribute {
-
+class SCL_CORE_EXPORT STEPattribute {
         friend ostream & operator<< ( ostream &, STEPattribute & );
-
-// The CenterLine compiler couldn't handle this friend declaration.
-// Here is the error
-// "../../../src/clstepcore/STEPattribute.h", line 118: internal << AT&T C++ Translator 3.0.2 - ObjectCenter Version 2.1>> error: cannot find friend P23::Application_instance
-// We may want to change the next two lines back at some point? DAS FIXME
-//    friend class SDAI_Application_instance;
-//  protected:
+        friend class SDAI_Application_instance;
     public:
         ErrorDescriptor _error;
         unsigned int _derive : 1;

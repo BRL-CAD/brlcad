@@ -52,14 +52,14 @@ For a .g file, the specified changes are made to that file;
 For a TANKILL file, a modified model is written to stdout.
 The remapping assignment is read from a specification file
 containing commands, the grammar for which looks something like:
+
 .nf
-
-command  --> id_list ':' id
-id_list  --> id_block | id_block ',' id_list
-id_block --> id | id '-' id
-id       --> [0-9]+
-
+    command  --> id_list ':' id
+    id_list  --> id_block | id_block ',' id_list
+    id_block --> id | id '-' id
+    id       --> [0-9]+
 .fi
+
 The semantics of a command is:  For every region in the database
 whose region ID appears in the id_list before the ':', change its
 region ID to the value appearing after the ':'.

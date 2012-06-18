@@ -15,6 +15,7 @@
 #include <instmgr.h>
 #include <STEPcomplex.h>
 #include <STEPattribute.h>
+#include <read_func.h> //for ReadTokenSeparator, used when comments are inside entities
 
 SDAI_Application_instance NilSTEPentity;
 
@@ -80,6 +81,10 @@ void SDAI_Application_instance::AddP21Comment( const std::string & s, bool repla
         p21Comment.clear();
     }
     p21Comment += s;
+}
+
+void SDAI_Application_instance::PrependP21Comment( const std::string & s ) {
+    p21Comment.insert( 0, s );
 }
 
 void SDAI_Application_instance::STEPwrite_reference( ostream & out ) {
@@ -523,7 +528,7 @@ Severity SDAI_Application_instance::STEPread( int id,  int idIncr,
             "  Missing initial open paren... Trying to recover.\n" );
         in.putback( c ); // assume you can recover by reading 1st attr value
     }
-    in >> ws;
+    ReadTokenSeparator( in, &p21Comment );
 
     int n = attributes.list_length();
     if( n == 0 ) { // no attributes
@@ -534,6 +539,7 @@ Severity SDAI_Application_instance::STEPread( int id,  int idIncr,
     }
 
     for( i = 0 ; i < n; i++ ) {
+        ReadTokenSeparator( in, &p21Comment );
         if( attributes[i].aDesc->AttrType() == AttrType_Redefining ) {
             in >> ws;
             c = in.peek();

@@ -71,24 +71,26 @@ The background (ambient) temperature may be set from the command
 line with the
 .B \-c\ set\ bg_temp=degK
 command, or in the animation script with the command
-.sp .5
-.ti +5
-.ft I
- set bg_temp=293.0
-.ft R
-.sp .5
+
+.nf
+.RS
+set bg_temp=293.0
+.RE
+.fi
+
 which is the default.  (20 degrees C is 293 degrees Kelvin).
 .LP
 The spectral sampling density may be set from the command line
 with the
 .B \-c\ set\ spectrum=nsamp/lo_nm/hi_nm
 option, or in the animation script with the command
-.sp .5
-.ti +5
-.ft I
- set spectrum=nsamp/lo_nm/hi_nm
-.ft R
-.sp .5
+
+.nf
+.RS
+set spectrum=nsamp/lo_nm/hi_nm
+.RE
+.fi
+
 The default setting is 100/380/12000,
 which takes 100 samples equally spaced from 380nm (low end of the optical
 band) to 12microns (upper end of the "Far-IR" band).
@@ -111,12 +113,13 @@ when the
 .B \-M
 flag is specified.
 The syntax of the anim command is:
-.sp .5
-.ti +5
-.ft I
+
+.nf
+.RS
  anim path temp ## ;
-.ft R
-.sp .5
+.RE
+.fi
+
 where
 "anim" is a keyword,
 "path" is the path specification for the affected combination(s),
@@ -125,13 +128,14 @@ where
 .LP
 The Tcl interface to the database supports adjusting region temperatures.
 The syntax of the anim command is:
-.sp .5
-.ti +5
-.ft I
+
+.nf
+.RS
  db put|adjust combname temp ##
-.ft R
-.sp .5
-were
+.RE
+.fi
+
+where
 "db" is the name of the Tcl database object for the desired
 database (typically "db" or ".inmem"),
 "put" and "adjust" are keywords,
@@ -147,7 +151,6 @@ so this command won't have any effect on v4 databases.
 is a GUI tool for viewing
 the multi-spectral output files created by
 .IR rttherm (1).
-.LR
 In the works is a post-processing tool which will
 extract a spectral window into a conventional
 8-bit/pixel

@@ -155,12 +155,13 @@ proc rtimage {_dbfile
 	catch {exec [file join $binpath fbclear] -F $_port [lindex $_bgcolor 0] [lindex $_bgcolor 1] [lindex $_bgcolor 2]}
     }
 
-    # Pull the image from the framebuffer
-    catch {exec [file join $binpath fb-pix] -w $_w -n $_n -F $_port $tfci}
-
     set occlude_objects [lsort -unique [concat $_color_objects $_ghost_objects]]
 
     if {[llength $_ghost_objects]} {
+
+        # Pull the image from the framebuffer
+        catch {exec [file join $binpath fb-pix] -w $_w -n $_n -F $_port $tfci}
+
 	set have_ghost_objects 1
 	set cmd [list [file join $binpath rt] -w $_w -n $_n \
 		     -o $tgi \
@@ -247,7 +248,7 @@ proc rtimage {_dbfile
 	    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
 	}
 
-	set cmd [concat [file join $binpath rtedge] -w $_w -n $_n \
+	set cmd [concat [list [file join $binpath rtedge]] -w $_w -n $_n \
 		     -F $_port \
 		     -V $ar \
 		     -R \
@@ -259,7 +260,7 @@ proc rtimage {_dbfile
 		     -c [list [list viewsize $_viewsize]] \
 		     -c [list [eval list orientation $_orientation]] \
 		     -c [list [eval list eye_pt $_eye_pt]] \
-				   $_dbfile]
+		     [list $_dbfile]]
 
 	foreach obj $_edge_objects {
 	    lappend cmd $obj

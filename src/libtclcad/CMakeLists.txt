@@ -31,7 +31,7 @@ set(LIBTCLCAD_SRCS
   cmdhist_obj.c
   )
 BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "libged;libdm;${TCLCAD_XLIBS};${X11_Xi_LIB}")
-SET_TARGET_PROPERTIES(libtclcad PROPERTIES VERSION 19.0.1 SOVERSION 19)
+SET_TARGET_PROPERTIES(libtclcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
 set(tclcad_ignore_files tclcad_private.h)
 CMAKEFILES(${tclcad_ignore_files})
 CMAKEFILES(Makefile.am)

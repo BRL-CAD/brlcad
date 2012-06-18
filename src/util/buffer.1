@@ -64,12 +64,15 @@ because of too many processes competing at the same time.
 This can also be useful when processing data from and to the
 same framebuffer with a pipeline, without interfering.
 .SH EXAMPLES
-\fI
+
 .nf
+.RS
 munch | crunch | buffer | grind | package
+
 fb-pix | pixfilter -flo | buffer | pix-fb
+.RE
 .fi
-\fP
+
 .SH FILES
 .TP
 .FN /usr/tmp/bufferXXXXXX

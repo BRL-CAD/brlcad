@@ -13,6 +13,7 @@
 * and is not subject to copyright.
 */
 
+#include <scl_export.h>
 #include <ctype.h>
 
 //#include <std.h> // not found in CenterLine C++
@@ -28,21 +29,21 @@
 #define STRING_DELIM '\''
 #endif
 
-char         ToLower( const char c );
-char         ToUpper( const char c );
-char    *    StrToLower( const char *, char * );
-const char * StrToLower( const char * word, std::string & s );
-const char * StrToUpper( const char * word, std::string & s );
-const char * StrToConstant( const char * word, std::string & s );
-int StrCmpIns( const char * str1, const char * str2 );
-bool StrEndsWith( const std::string &s, const char * suffix );
-std::string  GetLiteralStr( istream & in, ErrorDescriptor * err );
-const char * PrettyTmpName( const char * oldname );
-char    *    PrettyNewName( const char * oldname );
-int          StrCmpIns( const char *, const char * );
-char    *    EntityClassName( char * oldname );
+SCL_UTILS_EXPORT char         ToLower( const char c );
+SCL_UTILS_EXPORT char         ToUpper( const char c );
+SCL_UTILS_EXPORT char    *    StrToLower( const char *, char * );
+SCL_UTILS_EXPORT const char * StrToLower( const char * word, std::string & s );
+SCL_UTILS_EXPORT const char * StrToUpper( const char * word, std::string & s );
+SCL_UTILS_EXPORT const char * StrToConstant( const char * word, std::string & s );
+SCL_UTILS_EXPORT int          StrCmpIns( const char *str1, const char *str2 );
+SCL_UTILS_EXPORT const char * PrettyTmpName( const char * oldname );
+SCL_UTILS_EXPORT char    *    PrettyNewName( const char * oldname );
+SCL_UTILS_EXPORT char    *    EntityClassName( char * oldname );
 
-extern Severity CheckRemainingInput
+SCL_UTILS_EXPORT bool StrEndsWith( const std::string &s, const char * suffix );
+SCL_UTILS_EXPORT std::string  GetLiteralStr( istream & in, ErrorDescriptor * err );
+
+extern SCL_UTILS_EXPORT Severity CheckRemainingInput
 ( istream & in, ErrorDescriptor * err,
   const char * typeName, // used in error message
   const char * tokenList ); // e.g. ",)"

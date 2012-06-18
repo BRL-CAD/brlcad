@@ -643,10 +643,6 @@ footer script in sh/footer.sh to automatically set/update files.
 
 2) Stylistic whitespace
 
-Space around operators and between multiple statements.
-  a = (b + c) * d;                  /* ok */
-  b = 2; c = 3;                     /* ok */
-
 No space immediately inside parentheses.
   while (1) { ...                   /* ok */
   for (i = 0; i < max; i++) { ...   /* ok */
@@ -683,8 +679,8 @@ Comments should have an interior space and be without tabs.
 BRL-CAD uses the "The One True Brace Style" from BSD KNF and K&R.
 Opening braces should be on the same line as their statement, closing
 braces should line up with that same statement.  Functions, however,
-are treated special and place the opening brace on a separate line.
-See http://en.wikipedia.org/wiki/Indent_style for details.
+are treated specially and we place their opening braces on separate
+lines.  See http://en.wikipedia.org/wiki/Indent_style for details.
 
   int some_function(char *j)
   {
@@ -1144,7 +1140,7 @@ documented, synchronized, and tagged release are as follows:
 0) All code is committed to SVN.  All commits have been reviewed.
 Notify developer mailing list of intention to release.
 
-    echo "Release preparations have begun.  Please hold off disruptive commits until the release is tagged, tomorrow at the latest.  Ensure your API changes are in doc/deprecation.txt and user-visibile changes are in NEWS." | mail -s "Release preparations commencing" brlcad-devel@lists.sourceforge.net
+    echo "Release preparations have begun.  Please refrain from disruptive commits until the release is tagged or 24-hours have passed, whichever first.  Ensure API changes are in doc/deprecation.txt, user-visibile changes are in NEWS, and help with release testing." | mail -s "Release preparations commencing" brlcad-devel@lists.sourceforge.net
 
 1) Update TODO and BUGS.  Verify all user-visible changes are in NEWS.
 Verify doc/deprecation.txt reflects all API and application changes.

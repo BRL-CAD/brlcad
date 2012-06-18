@@ -13,6 +13,7 @@
 * and is not subject to copyright.
 */
 
+#include <scl_export.h>
 #include <string>
 #include <iostream>
 using namespace std;
@@ -55,7 +56,7 @@ enum  DebugLevel  {
  ** Status:
  ******************************************************************/
 
-class ErrorDescriptor {
+class SCL_UTILS_EXPORT ErrorDescriptor {
     private:
         std::string _userMsg, _detailMsg;
     protected:
@@ -66,6 +67,7 @@ class ErrorDescriptor {
     public:
         ErrorDescriptor( Severity s    = SEVERITY_NULL,
                          DebugLevel d  = DEBUG_OFF );
+        ~ErrorDescriptor( void );
 
         void PrintContents( ostream & out = cout ) const;
 

@@ -12,11 +12,12 @@
 * and is not subject to copyright.
 */
 
+#include <scl_export.h>
 
 ///////////////////////////////////////////////////////////////////////////////
 // SDAI_Application_instance used to be STEPentity
 
-class SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
+class SCL_CORE_EXPORT SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
     private:
         int _cur;        // provides a built-in way of accessing attributes in order.
 
@@ -60,6 +61,7 @@ class SDAI_Application_instance  : public SDAI_DAObject_SDAI  {
 
         void AddP21Comment( const std::string & s, bool replace = true );
         void AddP21Comment( const char * s, bool replace = true );
+        void PrependP21Comment( const std::string & s );
         void DeleteP21Comment() {
             p21Comment = "";
         }

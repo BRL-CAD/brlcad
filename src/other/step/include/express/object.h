@@ -55,6 +55,7 @@
 /* packages used */
 /*****************/
 
+#include <scl_export.h>
 #include "basic.h"  /* get basic definitions */
 #include "symbol.h"
 
@@ -81,7 +82,7 @@ struct Object {
 /* global variables */
 /********************/
 
-extern struct Object * OBJ;
+extern SCL_EXPRESS_EXPORT struct Object * OBJ;
 
 /******************************/
 /* macro function definitions */
@@ -93,18 +94,12 @@ extern struct Object * OBJ;
 #define OBJtype_is_oneof(_type_,class)  (OBJ[_type_].bits & (class))
 #define OBJget_name(obj,type)       (OBJget_symbol(obj,type)->name)
 
-/* for backwards compatibility */
-#define OBJequal(x,y)           ((x) == (y))
-#define OBJfree(x)
-#define OBJreference(x)         (x)
-#define OBJget_data(obj,type,err)   (obj)
-
 /***********************/
 /* function prototypes */
 /***********************/
 
-extern void OBJinitialize PROTO( ( void ) );
-extern void OBJcreate PROTO( ( char, struct Symbol_ * ( * )( Generic ), char *, int ) );
-extern Symbol * UNK_get_symbol PROTO( ( Generic x ) );
+extern SCL_EXPRESS_EXPORT void OBJinitialize PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT void OBJcreate PROTO( ( char, struct Symbol_ * ( * )( Generic ), char *, int ) );
+extern SCL_EXPRESS_EXPORT Symbol * UNK_get_symbol PROTO( ( Generic x ) );
 
 #endif /*OBJECT_H*/

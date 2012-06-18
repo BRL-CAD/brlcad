@@ -21,45 +21,37 @@
 
 #include "common.h"
 
-#include <stdio.h>
-#include <limits.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include "bio.h"
 #include "bu.h"
 
-unsigned char pix[3];		/* RGB of one pixel */
-
-unsigned char map[18] = "0123456789ABCDEFx";
-
 int
 main(int UNUSED(ac), char **UNUSED(argv))
 {
-    int i = 0;
-    int ok = 1;
+    unsigned char pix[3]; /* RGB of one pixel */
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
 #endif
-    while ( !feof(stdin) && fread( (void *)pix, sizeof(unsigned char) * 3, 1, stdin) == 1 )  {
-        ok = 1;
-        /* Input validation */
+
+    while (!feof(stdin)
+           && fread((void *)pix, sizeof(unsigned char) * 3, 1, stdin) == 1) {
+        /* Input validation of the individual R, G, and B bytes
+           (required by Coverity) */
+        int i;
 	for (i = 0; i < 3; ++i) {
-	    /* really the max here should probably be that of the unsigned char, but pix files seem to have higher
-             * numbers??  257 observed in moss.pix... */
-	    if ((int)(*pix + sizeof(unsigned char) * i) < 0 || (int)(*pix + sizeof(unsigned char) * i) > UCHAR_MAX + 2) {
-		ok = 0;
+            /* the cast to int is necessary to avoid a gcc warning of
+               an always true test */
+            int d = (int)pix[i];
+	    if (d < 0 || d > UCHAR_MAX) {
+                bu_bomb("Corrupt file!");
             }
+            printf("%02X", pix[i]);
 	}
-	if (ok) {
-	    putc( map[pix[0]>>4], stdout );
-	    putc( map[pix[0]&0xF], stdout );
-	    putc( map[pix[1]>>4], stdout );
-	    putc( map[pix[1]&0xF], stdout );
-	    putc( map[pix[2]>>4], stdout );
-	    putc( map[pix[2]&0xF], stdout );
-	    putc( '\n', stdout );
-	}
+	printf("\n");
     }
     return 0;
 }

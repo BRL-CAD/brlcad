@@ -2131,25 +2131,6 @@ wdb_put_cmd(struct rt_wdb *wdbp,
 }
 
 
-/**
- * W D B _ P U T _ T C L
- *@brief
- * Creates an object and stuffs it into the databse.
- * All arguments must be specified.  Object cannot already exist.
- *
- */
-
-static int
-wdb_put_tcl(void *clientData,
-	    int argc,
-	    const char *argv[])
-{
-    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-
-    return wdb_put_cmd(wdbp, argc-1, argv+1);
-}
-
-
 int
 wdb_adjust_cmd(struct rt_wdb *wdbp,
 	       int argc,
@@ -9507,6 +9488,7 @@ static struct bu_cmdtab wdb_newcmds[] = {
     {"orotate",		(int (*)(void *, int, const char **))ged_orotate},
     {"oscale",		(int (*)(void *, int, const char **))ged_oscale},
     {"otranslate",	(int (*)(void *, int, const char **))ged_otranslate},
+    {"put",		(int (*)(void *, int, const char **))ged_put},
     {"rmater",		(int (*)(void *, int, const char **))ged_rmater},
     {"shader",		(int (*)(void *, int, const char **))ged_shader},
     {"wmater",		(int (*)(void *, int, const char **))ged_wmater},
@@ -9626,7 +9608,7 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"paths",		wdb_pathsum_tcl},
     {"prcolor",		wdb_prcolor_tcl},
     {"push",		wdb_push_tcl},
-    {"put",		wdb_put_tcl},
+    {"put",		wdb_newcmds_tcl},
     {"r",		wdb_region_tcl},
     {"rm",		wdb_remove_tcl},
     {"rmap",		wdb_rmap_tcl},
@@ -9677,10 +9659,15 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
     struct ged ged;
+    struct bu_hook_list save_hook_list;
     int ret;
 
     /* look for the new libged commands before trying one of the old ones */
     GED_INIT(&ged, wdbp);
+
+    bu_hook_list_init(&save_hook_list);
+    bu_log_hook_save_all(&save_hook_list);
+    bu_log_hook_delete_all();
 
     /* suppress bu_log output because we don't care if the command
      * exists in wdb_newcmds since it might be in wdb_cmds.  this
@@ -9695,7 +9682,7 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* unsuppress bu_log output */
-    bu_log_delete_hook(do_nothing, NULL);
+    bu_log_hook_restore_all(&save_hook_list);
 
     /* release any allocated memory */
     ged_free(&ged);

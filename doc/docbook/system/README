@@ -21,3 +21,6 @@ required to use this precise template for all MGED commands - see
 search.xml for a more elaborate example - but it should provide
 a convenient "container" for what has been the common documentation
 format in previous work.
+
+The file './man1/en/rt.xml' is a good example of the format for a
+command-line BRL-CAD user command.

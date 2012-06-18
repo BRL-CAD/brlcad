@@ -29,10 +29,13 @@
 
 #include "bu.h"
 
+#ifdef HAVE_SYS_RESOURCE_H
+#  include <sys/resource.h>
+#endif
+
 #ifdef linux
 #  include <sys/time.h>
 #  include <sys/types.h>
-#  include <sys/resource.h>
 #  ifdef HAVE_SYS_WAIT_H
 #    include <sys/wait.h>
 #  endif
@@ -44,7 +47,6 @@
 #  include <sys/types.h>
 #  include <sys/param.h>
 #  include <sys/time.h>
-#  include <sys/resource.h>
 #  include <sys/sysctl.h>
 #  ifdef HAVE_SYS_WAIT_H
 #    include <sys/wait.h>
@@ -55,7 +57,6 @@
 #ifdef __APPLE__
 #  include <sys/types.h>
 #  include <sys/time.h>
-#  include <sys/resource.h>
 #  ifdef HAVE_SYS_WAIT_H
 #    include <sys/wait.h>
 #  endif
@@ -72,7 +73,6 @@
 
 #ifdef CRAY
 #  include <sys/category.h>
-#  include <sys/resource.h>
 #  include <sys/types.h>
 #  ifdef CRAY1
 #    include <sys/machd.h>	/* For HZ */

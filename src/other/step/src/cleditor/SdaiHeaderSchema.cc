@@ -13,6 +13,7 @@ extern ofstream * logStream;
 #include <ExpDict.h>
 #include <STEPattribute.h>
 #include <SdaiHeaderSchema.h>
+#include "scl_memmgr.h"
 
 Schema * s_header_section_schema = 0;
 

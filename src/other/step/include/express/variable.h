@@ -1,9 +1,7 @@
 #ifndef VARIABLE_H
 #define VARIABLE_H
 
-/* $Id: variable.h,v 1.10 1997/01/21 19:17:11 dar Exp $ */
-
-/************************************************************************
+/** **********************************************************************
 ** Module:  Variable
 ** Description: This module implements the Variable abstraction.  A
 **  Variable consists of a name, a type, a reference class, and
@@ -104,7 +102,7 @@ struct Variable_ {
 /* global variables */
 /********************/
 
-extern struct freelist_head VAR_fl;
+extern SCL_EXPRESS_EXPORT struct freelist_head VAR_fl;
 
 /******************************/
 /* macro function definitions */
@@ -132,8 +130,8 @@ extern struct freelist_head VAR_fl;
 /* function prototypes */
 /***********************/
 
-extern Variable VARcreate PROTO( ( Expression, Type ) );
-extern void VARinitialize PROTO( ( void ) );
-extern char * VARget_simple_name PROTO( ( Variable ) );
+extern SCL_EXPRESS_EXPORT Variable VARcreate PROTO( ( Expression, Type ) );
+extern SCL_EXPRESS_EXPORT void VARinitialize PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT char * VARget_simple_name PROTO( ( Variable ) );
 
 #endif    /*  VARIABLE_H  */

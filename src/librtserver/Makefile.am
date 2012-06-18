@@ -13,7 +13,7 @@ AM_CFLAGS = \
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
-librtserver_la_LDFLAGS = -version-info 19:1 ${JAVA_LDFLAGS} -module -no-undefined -Wc,${FEXCEPTIONS}
+librtserver_la_LDFLAGS = -version-info 20:1 ${JAVA_LDFLAGS} -module -no-undefined -Wc,${FEXCEPTIONS}
 
 if BUILD_OPENNURBS
 ON_NIL = $(top_builddir)/src/other/openNURBS/libopenNURBS_nil.la

@@ -98,7 +98,7 @@ libbu_nil_la_SOURCES = \
 	xdr.c
 
 libbu_la_SOURCES =
-libbu_la_LDFLAGS = -version-info 19:1 -no-undefined
+libbu_la_LDFLAGS = -version-info 20:1 -no-undefined
 libbu_la_LIBADD = \
 	libbu_nil.la \
 	${BU_LIBS}

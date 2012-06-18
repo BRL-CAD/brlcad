@@ -13,6 +13,14 @@ changes made.  See document footer for additional details.
 --- 2012-04-XX  Release 7.21.X                                     ---
 ----------------------------------------------------------------------
 
+* numerous manual page corrections and improvements - Tom Browder
+* integration of rtwizard traits into archer - Bob Parker, Cliff Yapp
+* new asc2dsp prep tool for displacement map data files - Tom Browder
+* fixed a problem with rt writing pix files on Windows - Bob Parker
+* added new raw-g raw triangle mesh to BoT importer - Daniel Roßberg
+* added Windows man page support (using html) to brlman - Cliff Yapp
+* added support for section numbers to brlman script - Cliff Yapp
+* new manual pages for asc2dsp, dsp, asc2pix, and asc2g - Tom Browder
 * fixed bug creating binary uniform (binunif) objects - Sean Morrison
 * fixed memory corruption bug reading v4 geometry - Sean Morrison
 * fixed bug where small raytraces were being rotated - Erik Greenwald
@@ -34,7 +42,7 @@ changes made.  See document footer for additional details.
 * upgraded libpng to 1.5.10 - Cliff Yapp
 * fixed various memory leaks in the comgeom-g geometry importer
 	- Tom Browder, Nick Reed
-* fixed comgeom-g bug importing ARS primitive objects - Tom Brower
+* fixed comgeom-g bug importing ars primitive objects - Tom Browder
 * added new command-line invocation support to rtwizard -  Cliff Yapp
 * fixed BoT mesh hit offset and vanish TIE render bugs  - Keith Bowman
 * improved nurbs raytracing when shooting from inside - Keith Bowman
@@ -46,6 +54,8 @@ changes made.  See document footer for additional details.
 * fixed bug in fast4-g importer handling HOLE/WALL cards - Nick Reed
 * fixed field truncation bug in comgeom-g importer - Tom Browder
 * fixed log file clobber bug in the benchmark suite - Cliff Yapp
+* enabled new 'select' command for use within mged - Richard Weiss
+* added preliminary object 'select' command to archer - Bob Parker
 * improved support for the Intel C/C++ compiler (icc) - Sean Morrison
 * now sorting top level object alphabetically in rtwizard - Cliff Yapp
 * "About BRL-CAD" article translation to Russian - Ilya
@@ -53,6 +63,7 @@ changes made.  See document footer for additional details.
 * "About BRL-CAD" article translation to Italian
 	- Unknown Contributor, Tom Browder
 * improved handling of rgb/color attributes by adjust cmd - Cliff Yapp
+* added initial support for step-g import of assemblies - Keith Bowman
 * added a basic SWIG spec file - Erik Greenwald
 * fixed referenced object highlighting in archer treeview - Bob Parker
 * fixed error handling input reading failure in burst - Sean Morrison
@@ -79,6 +90,7 @@ changes made.  See document footer for additional details.
 * fixed orientation bug in mged 'ypr' rotation command - Nick Reed
 * fixed mged bug setting color via Combination Editor - Nicholas Reed
 * fixed numerous xyz/ypr orientation bugs in anim tools - Nick Reed
+* improved tessellation of pipe bends for conversion - Richard Weiss
 * fixed keypoint vertex bug when editing extrude objects - Nick Reed
 * fixed eto error converting hyp objects with asc2g tool - Nick Reed
 # fixed mged bug processing edcodes command arguments - Bob Parker

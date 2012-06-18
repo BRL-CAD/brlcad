@@ -1,8 +1,6 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-/* $Id: memory.h,v 1.5 1997/01/21 19:17:11 dar Exp $ */
-
 /*
  * This work was supported by the United States Government, and is
  * not subject to copyright.
@@ -30,7 +28,9 @@
 /* packages used */
 /*****************/
 
-/* mem.h - defs for fixed size block memory allocator */
+#include <scl_export.h>
+
+/** \file memory.h - defs for fixed size block memory allocator */
 
 typedef long Align;
 
@@ -67,7 +67,7 @@ char * nnew();
 /* space allocation macros with error package: */
 /***********************************************/
 
-extern int yylineno;
+extern SCL_EXPRESS_EXPORT int yylineno;
 
 /* CALLOC grabs and initializes to all 0s space for the indicated */
 /* number of instances of the indicated type */
@@ -76,10 +76,10 @@ extern int yylineno;
         fprintf(stderr,"fedex: out of space");\
     } else {}
 
-void    _MEMinitialize PROTO( ( void ) );
-void    MEMinitialize PROTO( ( struct freelist_head *, int, int, int ) );
-void    MEM_destroy PROTO( ( struct freelist_head *, Freelist * ) );
-Generic MEM_new PROTO( ( struct freelist_head * ) );
+SCL_EXPRESS_EXPORT void    _MEMinitialize PROTO( ( void ) );
+SCL_EXPRESS_EXPORT void    MEMinitialize PROTO( ( struct freelist_head *, int, int, int ) );
+SCL_EXPRESS_EXPORT void    MEM_destroy PROTO( ( struct freelist_head *, Freelist * ) );
+SCL_EXPRESS_EXPORT Generic MEM_new PROTO( ( struct freelist_head * ) );
 
 #endif /* MEMORY_H */
 

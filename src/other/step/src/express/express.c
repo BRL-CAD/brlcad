@@ -68,6 +68,7 @@
  *
  */
 
+#include "scl_memmgr.h"
 #include "express/basic.h"
 #include <ctype.h>
 #include <stdlib.h>
@@ -107,6 +108,7 @@ Error ERROR_syntax      = ERROR_none;
 Error ERROR_unlabelled_param_type = ERROR_none;
 Error ERROR_file_unreadable;
 Error ERROR_file_unwriteable;
+Error ERROR_warn_unsupported_lang_feat;
 
 struct Scope_ * FUNC_NVL;
 struct Scope_ * FUNC_USEDIN;
@@ -273,7 +275,7 @@ Symbol * EXPRESS_get_symbol( Generic e ) {
 
 Express EXPRESScreate() {
     Express model = SCOPEcreate( OBJ_EXPRESS );
-    model->u.express = ( struct Express_ * )calloc( 1, sizeof( struct Express_ ) );
+    model->u.express = ( struct Express_ * )scl_calloc( 1, sizeof( struct Express_ ) );
     return model;
 }
 
@@ -292,7 +294,7 @@ static void EXPRESS_PATHinit() {
     p = getenv( "EXPRESS_PATH" );
     if( !p ) {
         /* if no EXPRESS_PATH, search current directory anyway */
-        dir = ( Dir * )malloc( sizeof( Dir ) );
+        dir = ( Dir * )scl_malloc( sizeof( Dir ) );
         dir->leaf = dir->full;
         LISTadd( EXPRESS_path, ( Generic )dir );
     } else {
@@ -324,7 +326,7 @@ static void EXPRESS_PATHinit() {
             }
             p++;    /* leave p after terminating null */
 
-            dir = ( Dir * )malloc( sizeof( Dir ) );
+            dir = ( Dir * )scl_malloc( sizeof( Dir ) );
 
             /* if it's just ".", make it as if it was */
             /* just "" to make error messages cleaner */
@@ -469,13 +471,14 @@ void EXPRESSinitialize( void ) {
             "Schema %s was not found in its own schema file (%s)", SEVERITY_ERROR );
     ERROR_unlabelled_param_type = ERRORcreate(
                                       "Return type or local variable requires type label in `%s'", SEVERITY_ERROR );
-    ERROR_file_unreadable = ERRORcreate(
-                                "Could not read file %s: %s", SEVERITY_ERROR );
-    ERROR_file_unwriteable = ERRORcreate(
-                                 "Could not write file %s: %s", SEVERITY_ERROR );
+    ERROR_file_unreadable = ERRORcreate( "Could not read file %s: %s", SEVERITY_ERROR );
+    ERROR_file_unwriteable = ERRORcreate( "Could not write file %s: %s", SEVERITY_ERROR );
+    ERROR_warn_unsupported_lang_feat = ERRORcreate("Unsupported language feature (%s) at %s:%d",SEVERITY_WARNING);
+
     OBJcreate( OBJ_EXPRESS, EXPRESS_get_symbol, "express file", OBJ_UNUSED_BITS );
 
     ERRORcreate_warning( "unknown_subtype", ERROR_unknown_subtype );
+    ERRORcreate_warning( "unsupported", ERROR_warn_unsupported_lang_feat );
 
     EXPRESS_PATHinit(); /* note, must follow defn of errors it needs! */
 }
@@ -521,7 +524,7 @@ void EXPRESSparse( Express model, FILE * fp, char * filename ) {
             length -= 4;
         }
 
-        model->u.express->basename = ( char * )malloc( length + 1 );
+        model->u.express->basename = ( char * )scl_malloc( length + 1 );
         memcpy( model->u.express->basename, filename, length );
         model->u.express->basename[length] = '\0';
 

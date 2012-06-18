@@ -53,17 +53,6 @@ static const int prface[5][6] = {
 };
 
 
-/* division of an arb8 into 6 arb4s */
-static const int farb4[6][4] = {
-    {0, 1, 2, 4},
-    {4, 5, 6, 1},
-    {1, 2, 6, 4},
-    {0, 2, 3, 4},
-    {4, 6, 7, 2},
-    {2, 3, 7, 4},
-};
-
-
 /* edge definition array */
 static const int nedge[5][24] = {
     {0, 1, 1, 2, 2, 0, 0, 3, 3, 2, 1, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},	/* ARB4 */
@@ -811,41 +800,6 @@ analyze_edge(struct ged *gedp, const int edge, const struct rt_arb_internal *arb
 }
 
 
-/* Finds volume of an arb4 defined by farb4[loc][] 	*/
-static double
-analyze_find_vol(int loc, struct rt_arb_internal *arb, struct bn_tol *tol)
-{
-    int a, b, c, d;
-    fastf_t vol, height, len[3], temp, areabase;
-    vect_t v_temp;
-    plane_t plane;
-
-    /* a, b, c = base of the arb4 */
-    a = farb4[loc][0];
-    b = farb4[loc][1];
-    c = farb4[loc][2];
-
-    /* d = "top" point of arb4 */
-    d = farb4[loc][3];
-
-    if (bn_mk_plane_3pts(plane, arb->pt[a], arb->pt[b],
-			 arb->pt[c], tol) < 0)
-	return 0.0;
-
-    /* have a good arb4 - find its volume */
-    height = fabs(plane[W] - VDOT(&plane[0], arb->pt[d]));
-    VSUB2(v_temp, arb->pt[b], arb->pt[a]);
-    len[0] = MAGNITUDE(v_temp);
-    VSUB2(v_temp, arb->pt[c], arb->pt[a]);
-    len[1] = MAGNITUDE(v_temp);
-    VSUB2(v_temp, arb->pt[c], arb->pt[b]);
-    len[2] = MAGNITUDE(v_temp);
-    temp = 0.5 * (len[0] + len[1] + len[2]);
-    areabase = sqrt(temp * (temp-len[0]) * (temp-len[1]) * (temp-len[2]));
-    vol = areabase * height / 3.0;
-    return vol;
-}
-
 /*
  * A R B _ A N A L
  */
@@ -855,8 +809,7 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     int i;
     point_t center_pt;
-    double tot_vol;
-    double tot_area;
+    fastf_t tot_vol, tot_area;
     int cgtype;		/* COMGEOM arb type: # of vertices */
     int type;
 
@@ -927,8 +880,7 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
     /* blank line following previous table */
     bu_vls_printf(gedp->ged_result_str, "\n");
 
-    for (i = 0; i < 6; i++)
-	tot_vol += analyze_find_vol(i, arb, &gedp->ged_wdbp->wdb_tol);
+    rt_functab[ID_ARB8].ft_volume(&tot_vol, ip);
 
     print_volume_table(gedp,
 		       tot_vol
@@ -950,16 +902,10 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
 static void
 analyze_tor(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    struct rt_tor_internal *tor = (struct rt_tor_internal *)ip->idb_ptr;
-    fastf_t r1, r2, vol, sur_area;
+    fastf_t vol, area;
 
-    RT_TOR_CK_MAGIC(tor);
-
-    r1 = tor->r_a;
-    r2 = tor->r_h;
-
-    vol = 2.0 * M_PI * M_PI * r1 * r2 * r2;
-    sur_area = 4.0 * M_PI * M_PI * r1 * r2;
+    rt_functab[ID_TOR].ft_volume(&vol, ip);
+    rt_functab[ID_TOR].ft_surf_area(&area, ip);
 
     bu_vls_printf(gedp->ged_result_str, "\n");
 
@@ -968,7 +914,7 @@ analyze_tor(struct ged *gedp, const struct rt_db_internal *ip)
 		       * gedp->ged_wdbp->dbip->dbi_base2local
 		       * gedp->ged_wdbp->dbip->dbi_base2local
 		       * gedp->ged_wdbp->dbip->dbi_base2local,
-		       sur_area
+		       area
 		       * gedp->ged_wdbp->dbip->dbi_base2local
 		       * gedp->ged_wdbp->dbip->dbi_base2local,
 		       vol/GALLONS_TO_MM3
@@ -987,107 +933,38 @@ analyze_tor(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
-#define PROLATE 1
-#define OBLATE 2
-
 /* analyze an ell */
 static void
 analyze_ell(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    struct rt_ell_internal *ell = (struct rt_ell_internal *)ip->idb_ptr;
-    fastf_t ma, mb, mc;
-#ifdef major		/* Some systems have these defined as macros!!! */
-#undef major
-#endif
-#ifdef minor
-#undef minor
-#endif
-    fastf_t ecc, major, minor;
-    fastf_t vol, sur_area;
-    int type;
-
-    RT_ELL_CK_MAGIC(ell);
-
-    ma = MAGNITUDE(ell->a);
-    mb = MAGNITUDE(ell->b);
-    mc = MAGNITUDE(ell->c);
-
-    type = 0;
+    fastf_t vol, area = -1;
 
     bu_vls_printf(gedp->ged_result_str, "\n");
 
-    vol = 4.0 * M_PI * ma * mb * mc / 3.0;
+    rt_functab[ID_ELL].ft_volume(&vol, ip);
     bu_vls_printf(gedp->ged_result_str, "\nELL Volume = %.8f (%.8f gal)",
-		  vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  vol/GALLONS_TO_MM3);
+          vol
+          * gedp->ged_wdbp->dbip->dbi_base2local
+          * gedp->ged_wdbp->dbip->dbi_base2local
+          * gedp->ged_wdbp->dbip->dbi_base2local,
+          vol/GALLONS_TO_MM3
+          );
 
-    if (fabs(ma-mb) < .00001 && fabs(mb-mc) < .00001) {
-	/* have a sphere */
-	sur_area = 4.0 * M_PI * ma * ma;
-	bu_vls_printf(gedp->ged_result_str, "   Surface Area = %.8f\n",
-		      sur_area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
-	return;
+    rt_functab[ID_ELL].ft_surf_area(&area, ip);
+    if (area < 0) {
+        bu_vls_printf(gedp->ged_result_str, "   Cannot find surface area\n");
+    } else {
+        bu_vls_printf(gedp->ged_result_str, "   Surface Area = %.8f\n",
+                area
+                * gedp->ged_wdbp->dbip->dbi_base2local
+                * gedp->ged_wdbp->dbip->dbi_base2local
+                );
     }
-
-    if (fabs(ma-mb) < .00001) {
-	/* A == B */
-	if (mc > ma) {
-	    /* oblate spheroid */
-	    type = OBLATE;
-	    major = mc;
-	    minor = ma;
-	} else {
-	    /* prolate spheroid */
-	    type = PROLATE;
-	    major = ma;
-	    minor = mc;
-	}
-    } else
-	if (fabs(ma-mc) < .00001) {
-	    /* A == C */
-	    if (mb > ma) {
-		/* oblate spheroid */
-		type = OBLATE;
-		major = mb;
-		minor = ma;
-	    } else {
-		/* prolate spheroid */
-		type = PROLATE;
-		major = ma;
-		minor = mb;
-	    }
-	} else
-	    if (fabs(mb-mc) < .00001) {
-		/* B == C */
-		if (ma > mb) {
-		    /* oblate spheroid */
-		    type = OBLATE;
-		    major = ma;
-		    minor = mb;
-		} else {
-		    /* prolate spheroid */
-		    type = PROLATE;
-		    major = mb;
-		    minor = ma;
-		}
-	    } else {
-		bu_vls_printf(gedp->ged_result_str, "   Cannot find surface area\n");
-		return;
-	    }
-
-    ecc = sqrt(major*major - minor*minor) / major;
-    if (type == PROLATE) {
-	sur_area = 2.0 * M_PI * minor * minor +
-	    (2.0 * M_PI * (major*minor/ecc) * asin(ecc));
-    } else { /* type == OBLATE */
-	sur_area = 2.0 * M_PI * major * major +
-	    (M_PI * (minor*minor/ecc) * log((1.0+ecc)/(1.0-ecc)));
-    }
-
-    bu_vls_printf(gedp->ged_result_str, "   Surface Area = %.8f\n",
-		  sur_area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
 }
 
+
+#define PROLATE 1
+#define OBLATE 2
 
 /* analyze an superell */
 static void
@@ -1184,95 +1061,40 @@ analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
-#define GED_ANAL_RCC 1
-#define GED_ANAL_TRC 2
-#define GED_ANAL_REC 3
-
 /* analyze tgc */
 static void
 analyze_tgc(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    struct rt_tgc_internal *tgc = (struct rt_tgc_internal *)ip->idb_ptr;
-    fastf_t maxb, ma, mb, mc, md, mh;
-    fastf_t area_base, area_top, area_side, vol;
-    vect_t axb;
-    int cgtype = 0;
+    fastf_t vol, area = -1;
 
-    RT_TGC_CK_MAGIC(tgc);
-
-    VCROSS(axb, tgc->a, tgc->b);
-    maxb = MAGNITUDE(axb);
-    ma = MAGNITUDE(tgc->a);
-    mb = MAGNITUDE(tgc->b);
-    mc = MAGNITUDE(tgc->c);
-    md = MAGNITUDE(tgc->d);
-    mh = MAGNITUDE(tgc->h);
-
-    /* check for right cylinder */
-    if (fabs(fabs(VDOT(tgc->h, axb)) - (mh*maxb)) < .00001) {
-	/* have a right cylinder */
-	if (fabs(ma-mb) < .00001) {
-	    /* have a circular base */
-	    if (fabs(mc-md) < .00001) {
-		/* have a circular top */
-		if (fabs(ma-mc) < .00001)
-		    cgtype = GED_ANAL_RCC;
-		else
-		    cgtype = GED_ANAL_TRC;
-	    }
-	} else {
-	    /* have an elliptical base */
-	    if (fabs(ma-mc) < .00001 && fabs(mb-md) < .00001)
-		cgtype = GED_ANAL_REC;
-	}
-    }
-
-    switch (cgtype) {
-
-	case GED_ANAL_RCC:
-	    area_base = M_PI * ma * ma;
-	    area_top = area_base;
-	    area_side = 2.0 * M_PI * ma * mh;
-	    vol = M_PI * ma * ma * mh;
-	    bu_vls_printf(gedp->ged_result_str, "\nRCC\n");
-	    break;
-
-	case GED_ANAL_TRC:
-	    area_base = M_PI * ma * ma;
-	    area_top = M_PI * mc * mc;
-	    area_side = M_PI * (ma+mc) * sqrt((ma-mc)*(ma-mc)+(mh*mh));
-	    vol = M_PI * mh * (ma*ma + mc*mc + ma*mc) / 3.0;
-
-	    bu_vls_printf(gedp->ged_result_str, "\nTRC\n");
-	    break;
-
-	case GED_ANAL_REC:
-	    area_base = M_PI * ma * mb;
-	    area_top = M_PI * mc * md;
-	    /* approximate */
-	    area_side = 2.0 * M_PI * mh * sqrt(0.5 * (ma*ma + mb*mb));
-	    vol = M_PI * ma * mb * mh;
-	    bu_vls_printf(gedp->ged_result_str, "\nREC\n");
-	    break;
-
-	default:
-	    bu_vls_printf(gedp->ged_result_str, "\nTGC Cannot find areas and volume\n");
-	    return;
-    }
+    rt_functab[ID_TGC].ft_volume(&vol, ip);
+    rt_functab[ID_TGC].ft_surf_area(&area, ip);
 
     bu_vls_printf(gedp->ged_result_str, "\n");
 
-    /* print the results */
-    bu_vls_printf(gedp->ged_result_str, "Surface Areas:  base(AxB)=%.8f  top(CxD)=%.8f  side=%.8f\n",
-		  area_base*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  area_top*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  area_side*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(gedp->ged_result_str, "Total Surface Area=%.8f    Volume=%.8f (%.8f gal)\n",
-		  (area_base+area_top+area_side)*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local, vol/GALLONS_TO_MM3);
-    /* Print units? */
-    return;
+    /* reminder to add per-face analysis */
+    /*bu_vls_printf(gedp->ged_result_str, "Surface Areas:  base(AxB)=%.8f  top(CxD)=%.8f  side=%.8f\n",*/
+		  /*area_base*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,*/
+		  /*area_top*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,*/
+		  /*area_side*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);*/
 
+    bu_vls_printf(gedp->ged_result_str, "Volume=%.8f (%.8f gal)",
+            vol
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            vol/GALLONS_TO_MM3
+            );
+
+    if (area < 0) {
+        bu_vls_printf(gedp->ged_result_str, "\nTGC Cannot find surface area\n");
+    } else {
+        bu_vls_printf(gedp->ged_result_str, "    Surface Area=%.8f\n",
+                area
+                * gedp->ged_wdbp->dbip->dbi_base2local
+                * gedp->ged_wdbp->dbip->dbi_base2local
+                );
+    }
 }
 
 

@@ -289,7 +289,7 @@ icv_image_save_open(const char *filename, int format, int width, int height, int
 
     /* if we want the ability to "continue" a stopped output, this would be
      * where to check for an existing "partial" file. */
-    bif->fd = open(bif->filename, O_WRONLY|O_CREAT|O_TRUNC, WRMODE);
+    bif->fd = open(bif->filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE);
     if (UNLIKELY(bif->fd < 0)) {
 	perror("open");
 	bu_log("ERROR: opening output file \"%s\" for writing\n", bif->filename);

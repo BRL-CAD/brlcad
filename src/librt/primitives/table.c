@@ -70,7 +70,10 @@
     extern int rt_##name##_params(struct pc_pc_set *ps, const struct rt_db_internal *ip); \
     extern int rt_##name##_bbox(struct rt_db_internal *ip, point_t *min, point_t *max); \
     extern int rt_##name##_mirror(struct rt_db_internal *ip, const plane_t *plane); \
-    extern const struct bu_structparse rt_##name##_parse[]
+    extern const struct bu_structparse rt_##name##_parse[]; \
+    extern void rt_##name##_volume(fastf_t *vol, const struct rt_db_internal *ip); \
+    extern void rt_##name##_surf_area(fastf_t *area, const struct rt_db_internal *ip); \
+    extern void rt_##name##_centroid(point_t *cent, const struct rt_db_internal *ip)
 
 
 RT_DECLARE_INTERFACE(tor);
@@ -223,9 +226,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_tor_params,
 	rt_tor_bbox,
-    NULL,
-    NULL,
-    NULL,
+    rt_tor_volume,
+    rt_tor_surf_area,
+    rt_tor_centroid,
     },
 
     {
@@ -263,9 +266,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_tgc_params,
 	rt_tgc_bbox,
-    NULL,
-    NULL,
-    NULL,
+    rt_tgc_volume,
+    rt_tgc_surf_area,
+    rt_tgc_centroid,
     },
 
     {
@@ -303,9 +306,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_ell_params,
 	rt_ell_bbox,
-    NULL,
-    NULL,
-    NULL,
+    rt_ell_volume,
+    rt_ell_surf_area,
+    rt_ell_centroid,
     },
 
     {
@@ -343,7 +346,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_arb_params,
 	rt_arb_bbox,
-    NULL,
+    rt_arb_volume,
     NULL,
     NULL,
     },
@@ -463,9 +466,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_rec_params,
 	rt_rec_bbox,
-    NULL,
-    NULL,
-    NULL,
+    rt_tgc_volume,
+    rt_tgc_surf_area,
+    rt_tgc_centroid,
     },
 
     {
@@ -583,9 +586,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_sph_params,
 	rt_ell_bbox,
-    NULL,
-    NULL,
-    NULL,
+    rt_ell_volume,
+    rt_ell_surf_area,
+    rt_ell_centroid,
     },
 
     {
@@ -1701,7 +1704,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	0,
 	0,
-	NULL,
+	0,
 	NULL,
 	NULL,
 	NULL,
@@ -1709,7 +1712,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
     NULL,
     NULL,
-    NULL;
+    NULL,
     },
 #endif
 

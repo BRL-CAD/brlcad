@@ -12,14 +12,12 @@
 * and is not subject to copyright.
 */
 
-/* $Id: STEPundefined.h,v 3.0.1.2 1997/11/05 21:59:28 sauderd DP3.1 $ */
-
-
+#include <scl_export.h>
 #include <errordesc.h>
 #include <string>
 #include <read_func.h>
 
-class SCLundefined  {
+class SCL_CORE_EXPORT SCLundefined  {
     protected:
         std::string val;
 

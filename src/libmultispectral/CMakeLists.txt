@@ -26,7 +26,7 @@ add_definitions(
   )
 
 BRLCAD_ADDLIB(libmultispectral "${LIBMULTISPECTRAL_SRCS}" "librt;libbn;libbu")
-SET_TARGET_PROPERTIES(libmultispectral PROPERTIES VERSION 19.0.1 SOVERSION 19)
+SET_TARGET_PROPERTIES(libmultispectral PROPERTIES VERSION 20.0.1 SOVERSION 20)
 CMAKEFILES(Makefile.am)
 
 # Local Variables:

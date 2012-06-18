@@ -105,6 +105,7 @@
  *
  */
 
+#include <scl_memmgr.h>
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
@@ -144,7 +145,7 @@ HASHinitialize() {
 
 Hash_Table
 HASHcreate( unsigned count ) {
-    int     i;
+    unsigned    i;
     Hash_Table  table;
 
     /*
@@ -279,7 +280,7 @@ HASH_in_use( Hash_Table table, char * action ) {
 
 void
 HASHdestroy( Hash_Table table ) {
-    int     i, j;
+    unsigned int i, j;
     Segment s;
     Element p, q;
 
@@ -300,7 +301,7 @@ HASHdestroy( Hash_Table table ) {
                         p = q;
                     }
                 }
-                free( table->Directory[i] );
+                scl_free( table->Directory[i] );
             }
         }
         HASH_Table_destroy( table );

@@ -1,4 +1,5 @@
 set(docbook_man1_EN
+  asc2dsp.xml
   bwscale.xml
   coil.xml
   db.xml

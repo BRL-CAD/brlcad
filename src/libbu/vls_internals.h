@@ -21,6 +21,9 @@
 #ifndef BU_VLS_INTERNALS_H
 #define BU_VLS_INTERNALS_H seen
 
+#include "bu.h"
+
+
 /* private constants */
 
 /* minimum vls allocation increment size */
@@ -39,6 +42,23 @@ static const size_t _VLS_ALLOC_STEP = 128;
 /* other flags */
 static const int VP_NOPRINT = 0;
 static const int VP_PRINT   = 1;
+
+/* private structs */
+typedef struct
+vprintf_flags
+{
+    int fieldlen;
+    int flags;
+    int have_digit;
+    int have_dot;
+    int left_justify;
+    int precision;
+} vflags_t;
+
+/* private shared function decls */
+BU_EXPORT extern int format_part_status(const char c);
+BU_EXPORT extern int handle_format_part(const int vp_part, vflags_t *f, const char c, const int print);
+BU_EXPORT extern int handle_obsolete_format_char(const char c, const int print);
 
 #endif /* BU_VLS_INTERNALS_H */
 

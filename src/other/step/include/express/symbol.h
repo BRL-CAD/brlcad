@@ -43,6 +43,7 @@
 /* packages used */
 /*****************/
 
+#include <scl_export.h>
 #include "basic.h"  /* get basic definitions */
 #include "memory.h"
 
@@ -71,7 +72,7 @@ struct Symbol_ {
 /* global variables */
 /********************/
 
-extern struct freelist_head SYMBOL_fl;
+extern SCL_EXPRESS_EXPORT struct freelist_head SYMBOL_fl;
 
 /******************************/
 /* macro function definitions */
@@ -87,7 +88,7 @@ extern struct freelist_head SYMBOL_fl;
 /* function prototypes */
 /***********************/
 
-extern void SYMBOLinitialize PROTO( ( void ) );
-Symbol * SYMBOLcreate PROTO( ( char *, int, char * ) );
+extern SCL_EXPRESS_EXPORT void SYMBOLinitialize PROTO( ( void ) );
+SCL_EXPRESS_EXPORT Symbol * SYMBOLcreate( char * name, int line, char * filename );
 
 #endif    /*  SYMBOL_H  */

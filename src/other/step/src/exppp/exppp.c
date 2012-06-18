@@ -1,3 +1,4 @@
+#include <scl_memmgr.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>
@@ -414,10 +415,10 @@ REFout( Dictionary refdict, Linked_List reflist, char * type, int level ) {
         list = ( Linked_List )DICTlookup( dict, r->schema->symbol.name );
         if( !list ) {
             list = LISTcreate();
-            DICTdefine( dict, r->schema->symbol.name, list,
+            DICTdefine( dict, r->schema->symbol.name, ( Generic ) list,
                         ( Symbol * )0, OBJ_UNKNOWN );
         }
-        LISTadd( list, r );
+        LISTadd( list, ( Generic ) r );
     }
 
     /* step 2: for each list, print out the renames */
@@ -571,7 +572,7 @@ SCOPEalgs_out( Scope s, int level ) {
 }
 
 static int
-min( int a, int b, int c ) {
+minimum( int a, int b, int c ) {
     if( a < b ) {
         return ( ( a < c ) ? a : c );
     } else {
@@ -606,7 +607,7 @@ static void copy_file_chunk( char * filename, int start, int end, int level ) {
     /* copy the rest */
     for( i = end - start; i--; ) {
         fgets( buff, 255, infile );
-        fix = min( undent, strlen( buff ), strspn( buff, " " ) );
+        fix = minimum( undent, strlen( buff ), strspn( buff, " " ) );
         raw( "%*s%s", indent + fix, "", buff + fix );
     }
 
@@ -735,7 +736,7 @@ void
 SCOPEconsts_out( Scope s, int level ) {
     Variable v;
     DictionaryEntry de;
-    int max_indent = 0;
+    size_t max_indent = 0;
     Dictionary d = s->symbol_table;
 
     DICTdo_type_init( d, &de, OBJ_VARIABLE );
@@ -789,7 +790,7 @@ void
 SCOPElocals_out( Scope s, int level ) {
     Variable v;
     DictionaryEntry de;
-    int max_indent = 0;
+    size_t max_indent = 0;
     Dictionary d = s->symbol_table;
 
     DICTdo_type_init( d, &de, OBJ_VARIABLE );
@@ -1284,7 +1285,7 @@ ENTITYattrs_out( Linked_List attrs, int derived, int level ) {
 
 void
 WHERE_out( Linked_List wheres, int level ) {
-    int max_indent;
+    size_t max_indent;
     if( !wheres ) {
         return;
     }
@@ -1481,7 +1482,7 @@ TYPE_body_out( Type t, int level ) {
             while( 0 != ( expr = ( Expression )DICTdo( &de ) ) ) {
                 count++;
             }
-            names = ( char ** )malloc( count * sizeof( char * ) );
+            names = ( char ** )scl_malloc( count * sizeof( char * ) );
             DICTdo_type_init( t->symbol_table, &de, OBJ_EXPRESSION );
             while( 0 != ( expr = ( Expression )DICTdo( &de ) ) ) {
                 names[expr->u.integer - 1] = expr->symbol.name;
@@ -1505,7 +1506,7 @@ TYPE_body_out( Type t, int level ) {
                 raw( names[i] );
             }
             raw( ")" );
-            free( ( char * )names );
+            scl_free( ( char * )names );
         }
 #else
             wrap( " ENUMERATION OF\n" );
@@ -2005,7 +2006,7 @@ prep_string() {
     }
     string_func_in_use = true;
 
-    exppp_buf = exppp_bufp = ( char * )malloc( BIGBUFSIZ );
+    exppp_buf = exppp_bufp = ( char * )scl_malloc( BIGBUFSIZ );
     if( !exppp_buf ) {
         fprintf( stderr, "failed to allocate exppp buffer\n" );
         return 1;
@@ -2024,7 +2025,7 @@ prep_string() {
 
 static char *
 finish_string() {
-    char * b = ( char * )realloc( exppp_buf, 1 + exppp_maxbuflen - exppp_buflen );
+    char * b = ( char * )scl_realloc( exppp_buf, 1 + exppp_maxbuflen - exppp_buflen );
 
     if( b == 0 ) {
         fprintf( stderr, "failed to reallocate exppp buffer\n" );

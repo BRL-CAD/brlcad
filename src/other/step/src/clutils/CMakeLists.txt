@@ -7,7 +7,6 @@ set(LIBSTEPUTILS_SRCS
     gennodearray.cc
     scl_hash.cc
     errordesc.cc
-    scl_char_str_list.cc
 )
 
 SET(LIBSTEPUTILS_PRIVATE_HDRS
@@ -16,14 +15,19 @@ SET(LIBSTEPUTILS_PRIVATE_HDRS
     gennodearray.h
     gennode.h
     gennodelist.h
-    scl_char_str_list.h
     scl_hash.h
     Str.h
 )
 
 include_directories(
+    ${SCL_SOURCE_DIR}/src/base
     ${SCL_BINARY_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-SCL_ADDLIB(steputils "${LIBSTEPUTILS_SRCS}" "")
+if (MSVC OR BORLAND)
+add_definitions( -DSCL_BASE_DLL_IMPORTS )
+add_definitions( -DSCL_UTILS_DLL_EXPORTS )
+endif()
+
+SCL_ADDLIB(steputils "${LIBSTEPUTILS_SRCS}" "base")

@@ -20,7 +20,7 @@
 #include <STEPaggregate.h>
 #include <ExpDict.h>
 #include <sdai.h>
-
+#include "scl_memmgr.h"
 
 // REAL_NUM_PRECISION is defined in STEPattribute.h, and is also used
 // in aggregate real handling (STEPaggregate.cc)  -- IMS 6 Jun 95
@@ -396,6 +396,8 @@ Severity STEPattribute::STEPread( istream & in, InstMgr * instances, int addFile
  ** Status:  complete 3/91
  *********************************************************************/
 const char * STEPattribute::asStr( std::string & str, const char * currSch ) const {
+    ostringstream ss;
+
     str.clear();
 
     // The attribute has been derived by a subtype's attribute
@@ -415,18 +417,17 @@ const char * STEPattribute::asStr( std::string & str, const char * currSch ) con
         return const_cast<char *>( str.c_str() );
     }
 
-    std::ostringstream oss;
-
     switch( NonRefType() ) {
         case INTEGER_TYPE:
-            oss << *( ptr.i );
-            str.append( oss.str() );
+            ss << *( ptr.i );
+            str += ss.str();
             break;
 
         case NUMBER_TYPE:
         case REAL_TYPE:
-            oss << std::setprecision( Real_Num_Precision ) << *( ptr.r );
-            str.append( oss.str() );
+            ss.precision( ( int ) Real_Num_Precision );
+            ss << *( ptr.r );
+            str += ss.str();
             break;
 
         case ENTITY_TYPE:

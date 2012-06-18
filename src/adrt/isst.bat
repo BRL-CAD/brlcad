@@ -26,7 +26,7 @@ SET PATH=%~dp0;%PATH%
 SET BWISH=%~dp0bwish
 SET ISST=%~dp0isst
 
-START /B "" "%BWISH%" "%ISST%" %1
+START /B "" "%BWISH%" "%ISST%" %*
 
 EXIT
 

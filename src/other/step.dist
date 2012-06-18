@@ -77,7 +77,6 @@ src/clutils/errordesc.h
 src/clutils/gennode.h
 src/clutils/gennodearray.h
 src/clutils/gennodelist.h
-src/clutils/scl_char_str_list.h
 src/clutils/scl_hash.h
 src/clSchemas
 src/clprobe-ui

@@ -20,7 +20,7 @@
 //  start a new undo list and delete the old undo list.
 /////////////////////
 
-
+#include <scl_export.h>
 
 extern char * EntityClassName( char * );
 
@@ -39,7 +39,7 @@ extern char * EntityClassName( char * );
 
 #include <mgrnodearray.h>
 
-class InstMgr {
+class SCL_EDITOR_EXPORT InstMgr {
     protected:
         int maxFileId;
         int _ownsInstances; // if true will delete instances inside destructor

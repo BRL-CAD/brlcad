@@ -91,6 +91,29 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
+	<term><option>-d</option> <replaceable>framebuffer_device</replaceable></term>
+	<term><option>--fbserv-device</option> <replaceable>framebuffer_device</replaceable></term>
+	<listitem>
+	  <para>
+	    The type of framebuffer to use when running fbserv to establish a framebuffer.  By default, 
+            "/dev/mem" is used for a non-graphical framebuffer - other options include /dev/X, /dev/ogl, 
+            and (Windows only) /dev/wgl. A /dev/mem framebuffer created by <command>rtwizard</command> 
+            will be closed after the image generation is complete.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-p</option> <replaceable>port_number</replaceable></term>
+	<term><option>--fbserv-port</option> <replaceable>port_number</replaceable></term>
+	<listitem>
+	  <para>
+	    The number of the framebuffer port to use when running <command>fbserv</command> to establish a framebuffer.  An
+            existing framebuffer may also be specified and used.  In the case of a pre-existing non-grapical framebuffer,
+            <command>rtwizard</command> will not close the framebuffer automatically after the raytracing process is complete.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><option>--gui</option></term>
 	<listitem>
 	  <para>
@@ -110,7 +133,14 @@
       </varlistentry>
     </variablelist>
 
-    <variablelist remap="TP"><title>Model View Options</title>
+    <variablelist remap="TP"><title>Model View Options - User Level</title>
+    <para>
+       When it comes to preparing the view for an RtWizard image, there are two options.  One
+       is to use the "user level" controls, which reflect the view manipulations used by users
+       on the command line.  The other is to use the "low level" specifiers, which are more
+       typically used when <command>rtwizard</command> is run by automated scripts.  The two
+       methods are mutually exclusive.
+    </para>
       <varlistentry>
 	<term><option>-a</option> <replaceable>angle (degrees)</replaceable></term>
 	<term><option>--azimuth</option> <replaceable>angle (degrees)</replaceable></term>
@@ -136,6 +166,15 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
+        <term><option>-P</option> <replaceable>angle (degrees)</replaceable></term>
+        <term><option>--perspective</option> <replaceable>angle (degrees)</replaceable></term>
+        <listitem>
+          <para>                                                                                                      
+            Set the perspective angle.                                                                                          
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
 	<term><option>-z</option> <replaceable>value</replaceable></term>
 	<term><option>--zoom</option> <replaceable>value</replaceable></term>
 	<listitem>
@@ -144,8 +183,46 @@
 	  </para>
 	</listitem>
       </varlistentry>
+     <varlistentry>
+	<term><option>--center</option> <replaceable>X Y Z</replaceable> </term>
+	<listitem>
+	  <para>
+	    Set the xyz coordinates of the center of the view.
+	  </para>
+	</listitem>
+      </varlistentry>
     </variablelist>
  
+    <variablelist remap="TP"><title>Model View Options - Low Level</title>
+      <para>
+         When specifying a low level view model is "all or nothing" - all options
+         are required to correctly define the view.
+      </para>
+      <varlistentry>
+         <term><option>--viewsize</option> <replaceable>view_size(mm)</replaceable></term>
+        <listitem>
+          <para>Set the view size.</para>
+	</listitem>
+	  </varlistentry>
+      <varlistentry>
+        <term><option>--orientation</option> <replaceable>element_1 element_2 element_3 element_4</replaceable> </term>
+        <listitem>
+          <para>                                                                                                      
+            Set view quaternion.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--eye_pt</option> <replaceable>X Y Z</replaceable></term>
+        <listitem>
+          <para>                                                                                                      
+            Set twist angle.                                                                                          
+	  </para>
+	</listitem>
+      </varlistentry>
+
+    </variablelist>
+
     <variablelist remap="TP"><title>Image Generation Options</title>
       <varlistentry>
 	<term><option>-c</option> <replaceable>obj1</replaceable> <replaceable>...</replaceable> </term>
@@ -234,7 +311,7 @@
 
           <table><info><title>RtWizard Image Types</title></info>
 
-            <tgroup cols="2">
+            <tgroup cols="3">
               <thead>
                 <row>
                   <entry>Type</entry>
@@ -290,18 +367,47 @@
       Introduction
     </para>
 
-    <example><info><title>example1</title></info>
+    <example><info><title>Basic Color Image</title></info>
       
       <para>
-      <userinput>rwizard</userinput>
+      <userinput>rtwizard m35.g component</userinput>
       </para>
       <para>
-	results in 
+	Results in a default color image of the m35 truck, output to rtwizard.pix
       </para>
     </example>
+
+    <example><info><title>Line Drawing Image</title></info>
       
+      <para>
+      <userinput>rtwizard -d /dev/ogl m35.g -l component</userinput>
+      </para>
+      <para>
+	Results in a line drawing of the m35 truck being display in an OpenGL framebuffer
+      </para>
+    </example>
+   
+    <example><info><title>Complex Image</title></info>
+      
+      <para>
+      <userinput>rtwizard -d /dev/ogl -i m35.g -c component/power.train -g component -l component</userinput>
+      </para>
+      <para>
+	Results in a view of the m35 truck highlighting the engine (in color) with the truck being shown as a ghosted, edged background.
+      </para>
+    </example>
+ 
+    <example><info><title>Complex Image with Non-Default View</title></info>
+      
+      <para>
+      <userinput>rtwizard -d /dev/ogl -i m35.g -c component/power.train -g component -l component -a -35 -e 15 -z 1.6</userinput>
+      </para>
+      <para>
+	Same as the previous image, except viewing the truck from a different direction and zoomed in closer.
+      </para>
+    </example>
   </refsection>
-  
+
   <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
     
     <para><citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtedge</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
