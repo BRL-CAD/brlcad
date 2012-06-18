@@ -20,9 +20,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * add regression test for 'red' command unsetting the region flag
 
-* quickly verify cross-platform that mged -c + attach X + draw doesn't
-  crash.
-
 * g-nff is crashing, fix it; more specifically, it is
   getting a bu_bomb abort with a failed region conversion
   with supposedly a stack trace to a bu_bomb log but
