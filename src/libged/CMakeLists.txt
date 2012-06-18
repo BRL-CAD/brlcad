@@ -39,6 +39,15 @@ else(BULLET_FOUND)
   set(ged_ignore_files simulate/simphysics.cpp simulate/simulate.c simulate/simcollisionalgo.cpp simulate/simcollisionalgo.h simulate/simutils.c simulate/simrt.c simulate/simrt.h simulate/simutils.h)
 endif(BULLET_FOUND)
 
+find_package(ADAPTAGRAMS)
+if(ADAPTAGRAMS_FOUND)
+  set(AVOID_SRCS
+    dag.cpp
+    )
+else(ADAPTAGRMS_FOUND)
+  set(AVOID_SRCS "")
+endif(ADAPTAGRAMS_FOUND)
+
 set(LIBGED_SOURCES
   3ptarb.c
   adc.c
