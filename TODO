@@ -20,14 +20,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * add regression test for 'red' command unsetting the region flag
 
-* g-nff is crashing, fix it; more specifically, it is
-  getting a bu_bomb abort with a failed region conversion
-  with supposedly a stack trace to a bu_bomb log but
-  no stack trace is printed to the log (getting same error 
-  with g-euclid, g-euclid1, g-iges, g-jack, g-nmg, g-obj, 
-  g-off, g-tankill, g-x3d, g-xxx_facets)
-
-
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
