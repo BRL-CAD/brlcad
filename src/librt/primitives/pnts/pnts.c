@@ -648,6 +648,10 @@ rt_pnts_ifree(struct rt_db_internal *internal)
     pnts = ((struct rt_pnts_internal *)(internal->idb_ptr));
     RT_PNTS_CK_MAGIC(pnts);
 
+    if (pnts->count == 0) {
+	return;
+    }
+
     /* since each point type has a bu_list as the first struct
      * element, we can treat them all as 'pnt' structs in order to
      * iterate over the bu_list and free them.
@@ -836,6 +840,10 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 
     snprintf(buf, BUF_SZ, "Total number of points: %lu\nDefault scale: %f\n", numPoints, defaultSize);
     bu_vls_strcat(str, buf);
+
+    if (pnts->count == 0) {
+	return 0;
+    }
 
     loop_counter = 1;
     switch (pnts->type) {
