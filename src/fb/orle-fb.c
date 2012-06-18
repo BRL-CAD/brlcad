@@ -367,6 +367,30 @@ prnt_Usage(void)
     return;
 }
 
+void seg_Print(unsigned short *cp)
+{
+    (void) fprintf( stderr,
+		"%3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d\n",
+		/* 1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16 */
+			cp[0],
+			cp[1],
+			cp[2],
+			cp[3],
+			cp[4],
+			cp[5],
+			cp[6],
+			cp[7],
+			cp[8],
+			cp[9],
+			cp[10],
+			cp[11],
+			cp[12],
+			cp[13],
+			cp[14],
+			cp[15]
+		    );
+    return;
+}
 static void
 prnt_Cmap(ColorMap *cmap)
 {
@@ -375,76 +399,13 @@ prnt_Cmap(ColorMap *cmap)
     (void) fprintf( stderr, "\t\t\t_________ Color map __________\n" );
     (void) fprintf( stderr, "Red segment :\n" );
     for ( i = 0, cp = cmap->cm_red; i < 16; ++i, cp += 16 )
-    {
-	(void) fprintf( stderr,
-			"%3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d\n",
-			/* 1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16 */
-			cp[0],
-			cp[1],
-			cp[2],
-			cp[3],
-			cp[4],
-			cp[5],
-			cp[6],
-			cp[7],
-			cp[8],
-			cp[9],
-			cp[10],
-			cp[11],
-			cp[12],
-			cp[13],
-			cp[14],
-			cp[15]
-	    );
-    }
+	(void) seg_Print(cp);
     (void) fprintf( stderr, "Green segment :\n" );
     for ( i = 0, cp = cmap->cm_green; i < 16; ++i, cp += 16 )
-    {
-	(void) fprintf( stderr,
-			"%3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d\n",
-			/* 1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16 */
-			cp[0],
-			cp[1],
-			cp[2],
-			cp[3],
-			cp[4],
-			cp[5],
-			cp[6],
-			cp[7],
-			cp[8],
-			cp[9],
-			cp[10],
-			cp[11],
-			cp[12],
-			cp[13],
-			cp[14],
-			cp[15]
-	    );
-    }
+	(void) seg_Print(cp);
     (void) fprintf( stderr, "Blue segment :\n" );
     for ( i = 0, cp = cmap->cm_blue; i < 16; ++i, cp += 16 )
-    {
-	(void) fprintf( stderr,
-			"%3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d %3d\n",
-			/* 1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16 */
-			cp[0],
-			cp[1],
-			cp[2],
-			cp[3],
-			cp[4],
-			cp[5],
-			cp[6],
-			cp[7],
-			cp[8],
-			cp[9],
-			cp[10],
-			cp[11],
-			cp[12],
-			cp[13],
-			cp[14],
-			cp[15]
-	    );
-    }
+	(void) seg_Print(cp);
     return;
 }
 
