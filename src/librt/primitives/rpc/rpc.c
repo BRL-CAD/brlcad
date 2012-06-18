@@ -1484,6 +1484,25 @@ rt_rpc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
+/**
+ * R T _ R P C _ V O L U M E
+ */
+void
+rt_rpc_volume(fastf_t *vol, const struct rt_db_internal *ip)
+{
+    fastf_t mag_h, mag_b, mag_r;
+    struct rt_rpc_internal *xip = (struct rt_rpc_internal *)ip->idb_ptr;
+
+    RT_RPC_CK_MAGIC(xip);
+
+    mag_h = MAGNITUDE(xip->rpc_H);
+    mag_b = MAGNITUDE(xip->rpc_B);
+    mag_r = xip->rpc_r;
+
+    *vol = 4.0/3.0 * mag_b * mag_r * mag_h;
+}
+
+
 /*
  * Local Variables:
  * mode: C
