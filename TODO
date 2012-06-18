@@ -34,13 +34,11 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   with g-euclid, g-euclid1, g-iges, g-jack, g-nmg, g-obj, 
   g-off, g-tankill, g-x3d, g-xxx_facets)
 
-* test illuminate (e.g. oed) + Z, report of crash (on Windows)
-
-* test facetize/ev on windows
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* test illuminate (e.g. oed) + Z, report of crash (on Windows)
 
 * bu_bomb not printing stack trace as it is supposed to
 
