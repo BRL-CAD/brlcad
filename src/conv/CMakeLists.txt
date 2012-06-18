@@ -34,13 +34,6 @@ add_definitions(
   -DBRLCAD_DLL
   )
 
-find_package(ADAPTAGRAMS)
-if(ADAPTAGRAMS_FOUND)
-  set(AVOID_SRCS "")
-else(ADAPTAGRAMS_FOUND)
-  set(AVOID_SRCS "")
-endif(ADAPTAGRAMS_FOUND)
-
 BRLCAD_ADDEXEC(3dm-g 3dm/3dm-g.cpp "libwdb;${OPENNURBS_LIBRARY}" NOSTRICT)
 
 BRLCAD_ADDEXEC(asc2dsp asc/asc2dsp.c libbu)
@@ -234,7 +227,6 @@ set(conv_ignore_files
   shp/shapelib/license.html
   shp/shapelib/shapefil.h
   shp/README
-  ${AVOID_SRCS}
   walk_example.c
   )
 CMAKEFILES(${conv_ignore_files})
