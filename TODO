@@ -18,8 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* quick-test build_region
-
 * make sure mged's sketch editor works (particularly for circles)
 
 * add regression test for 'red' command unsetting the region flag
