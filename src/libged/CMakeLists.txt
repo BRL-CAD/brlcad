@@ -46,6 +46,7 @@ if(ADAPTAGRAMS_FOUND)
     )
 else(ADAPTAGRMS_FOUND)
   set(AVOID_SRCS "")
+  set(ged_ignore_files ${ged_ignore_files} dag.cpp)
 endif(ADAPTAGRAMS_FOUND)
 
 set(LIBGED_SOURCES
@@ -316,6 +317,7 @@ set(LIBGED_SOURCES
   zap.c
   zoom/zoom.c
   ${SIM_SRCS}
+  ${AVOID_SRCS}
   )
 
 # Core logic for adding commands to the libged source/lib/include lists.
