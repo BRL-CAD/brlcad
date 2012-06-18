@@ -1822,14 +1822,16 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 			bu_free(tmpname, "char");
 			break;
 		    }
-		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_HALF")) {
+		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_HALF") || 
+			BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_PNTS")) {
 			ret = wdb_export(wdbp, tmpname, intern->idb_ptr, ID_HALF, local2mm);
 			if (ret) {
 			    bu_log("ERROR: failure writing [%s] to disk\n", tmpname);
 			    bu_free(tmpname, "char");
 			    return ret;
 			}
-			bu_log("%s is made.\n", tmpname);
+			bu_log("The conversion of [%s] (type: %s) is ignored. Implicit form remains.\n", 
+			    tmpname, intern->idb_meth->ft_label);
 			bu_strlcpy(newtree->tr_l.tl_name, tmpname, strlen(tmpname)+1);
 			bu_free(tmpname, "char");
 			return ret;
