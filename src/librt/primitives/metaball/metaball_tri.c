@@ -103,7 +103,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
     /* TODO: get better sampling tolerance, unless this is "good enough" */
     mtol = ttol->abs;
-    V_MAX(mtol, ttol->rel * radius);
+    V_MAX(mtol, ttol->rel * radius * 10);
     V_MAX(mtol, tol->dist);
 
     *r = nmg_mrsv(m);	/* new empty nmg */
