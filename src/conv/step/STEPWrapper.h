@@ -45,9 +45,9 @@
 #include <STEPattribute.h>
 #include <STEPcomplex.h>
 #include <STEPfile.h>
-#include <SdaiCONFIG_CONTROL_DESIGN.h>
 
 #include <BRLCADWrapper.h>
+#include <SdaiCONFIG_CONTROL_DESIGN.h>
 
 /*
 class SDAI_Application_instance;

@@ -30,16 +30,17 @@
 #include "bu.h"
 
 //
+// step-g related headers
+//
+#include <BRLCADWrapper.h>
+#include <STEPWrapper.h>
+
+//
 // include NIST step related headers
 //
 #include <sdai.h>
 #include <STEPfile.h>
 #include <SdaiCONFIG_CONTROL_DESIGN.h>
-//
-// step-g related headers
-//
-#include <STEPWrapper.h>
-#include <BRLCADWrapper.h>
 
 #include "Factory.h"
 

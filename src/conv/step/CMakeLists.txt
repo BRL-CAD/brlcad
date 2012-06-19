@@ -11,6 +11,7 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${BRLCAD_SOURCE_DIR}/src/other/step/include
+  ${BRLCAD_SOURCE_DIR}/src/other/step/src/base
   ${BRLCAD_SOURCE_DIR}/src/other/step/src/clstepcore
   ${BRLCAD_SOURCE_DIR}/src/other/step/src/cleditor
   ${BRLCAD_SOURCE_DIR}/src/other/step/src/clutils

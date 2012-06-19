@@ -23,6 +23,9 @@
  *
  */
 
+#include <cctype>
+#include <algorithm>
+
 /* inteface header */
 #include "./STEPWrapper.h"
 
@@ -36,10 +39,6 @@
 #include "ProductDefinitionContextAssociation.h"
 #include "ProductRelatedProductCategory.h"
 #include "ContextDependentShapeRepresentation.h"
-
-#include <cctype>
-#include <algorithm>
-
 
 STEPWrapper::STEPWrapper()
 {

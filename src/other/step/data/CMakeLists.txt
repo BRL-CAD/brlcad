@@ -51,7 +51,7 @@ FUNCTION(BUILD_A_SCHEMA SCHEMA_FILE)
     # multiple schemas, each one will use the include dirs from all previous schemas. Since
     # one header (schema.h) is always named the same, this will not work. only workaround
     # seems to be set_target_properties( <target> PROPERTIES COMPILE_FLAGS <flags> )
-    set( ${PROJECT_NAME}_COMPILE_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR} -I${SCL_SOURCE_DIR}/src/cldai -I${SCL_SOURCE_DIR}/src/cleditor -I${SCL_SOURCE_DIR}/src/clutils -I${SCHEMA_OUTPUT_DIR} -I${SCL_SOURCE_DIR}/src/clstepcore" )
+    set( ${PROJECT_NAME}_COMPILE_FLAGS "-I${CMAKE_CURRENT_SOURCE_DIR} -I${SCL_SOURCE_DIR}/src/cldai -I${SCL_SOURCE_DIR}/src/cleditor -I${SCL_SOURCE_DIR}/src/clutils -I${SCHEMA_OUTPUT_DIR} -I${SCL_SOURCE_DIR}/src/clstepcore -I${SCL_SOURCE_DIR}/src/base" )
 
     add_custom_target( generate_cpp_${SCHEMA_SHORT_NAME} SOURCES ${FEDEX_OUT} )
     add_custom_command( OUTPUT ${SCHEMA_OUTPUT_DIR}
@@ -65,6 +65,7 @@ FUNCTION(BUILD_A_SCHEMA SCHEMA_FILE)
                         VERBATIM )
     if(MSVC OR BORLAND)
         add_definitions( -DSCL_SCHEMA_DLL_EXPORTS )
+        add_definitions( -DSCL_BASE_DLL_IMPORTS )
         add_definitions( -DSCL_EXPRESS_DLL_IMPORTS )
         add_definitions( -DSCL_UTILS_DLL_IMPORTS )
         add_definitions( -DSCL_DAI_DLL_IMPORTS )
@@ -72,7 +73,7 @@ FUNCTION(BUILD_A_SCHEMA SCHEMA_FILE)
         add_definitions( -DSCL_EDITOR_DLL_IMPORTS )
     endif()
     add_library( ${PROJECT_NAME} SHARED ${FEDEX_OUT} )
-    target_link_libraries(${PROJECT_NAME} stepdai stepcore express stepeditor steputils )
+    target_link_libraries(${PROJECT_NAME} stepdai stepcore express stepeditor steputils base )
     add_dependencies( ${PROJECT_NAME} generate_cpp_${SCHEMA_SHORT_NAME} )
     set_target_properties( ${PROJECT_NAME} PROPERTIES COMPILE_FLAGS
                            ${${PROJECT_NAME}_COMPILE_FLAGS} )
