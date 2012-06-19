@@ -174,6 +174,7 @@ set(docbook_mann_EN
   regdebug.xml
   regdef.xml
   regions.xml
+  reid.xml
   release.xml
   rfarb.xml
   rm.xml
