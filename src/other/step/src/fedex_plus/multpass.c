@@ -42,6 +42,7 @@ int isAggregateType (const Type t);
 
 /* Local function prototypes: */
 static void initializeMarks( Express );
+static void cleanupMarks( Express );
 static void unsetObjs( Schema );
 static int checkTypes( Schema );
 static int checkEnts( Schema );
@@ -163,6 +164,9 @@ void print_schemas_separate( Express express, void * complexCol, FILES * files )
     // files.  This is done in a separate loop through the schemas, in function
     // below. */
     getMCPrint( express, files->incall, files->initall );
+
+    /* Finally clean up memory allocated by initializeMarks. */
+    cleanupMarks( express );
 }
 
 static void initializeMarks( Express express )
@@ -190,6 +194,19 @@ static void initializeMarks( Express express )
         SCOPEdo_types( schema, t, de_type )
         t->search_id = NOTKNOWN;
         SCOPEod
+    }
+}
+
+static void cleanupMarks( Express express ) {
+    DictionaryEntry de_sch, de_ent, de_type;
+    Schema schema;
+
+    DICTdo_type_init( express->symbol_table, &de_sch, OBJ_SCHEMA );
+    while( ( schema = ( Scope )DICTdo( &de_sch ) ) != 0 ) {
+        if ( schema->clientData ) {
+            scl_free( schema->clientData );
+            schema->clientData = NULL;
+        }
     }
 }
 
