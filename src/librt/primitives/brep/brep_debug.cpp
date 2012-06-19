@@ -1822,7 +1822,7 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 			bu_free(tmpname, "char");
 			break;
 		    }
-		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_HALF") || 
+		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_HALF") ||
 			BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_PNTS")) {
 			if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_HALF"))  {
 			    ret = wdb_export(wdbp, tmpname, intern->idb_ptr, ID_HALF, local2mm);
@@ -1834,8 +1834,8 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 			    bu_free(tmpname, "char");
 			    return ret;
 			}
-			bu_log("The conversion of [%s] (type: %s) is ignored. Implicit form remains as %s.\n", 
-			    oldname, intern->idb_meth->ft_label, tmpname);
+			bu_log("The conversion of [%s] (type: %s) is ignored. Implicit form remains.\n",
+			    tmpname, intern->idb_meth->ft_label);
 			bu_strlcpy(newtree->tr_l.tl_name, tmpname, strlen(tmpname)+1);
 			bu_free(tmpname, "char");
 			return ret;
