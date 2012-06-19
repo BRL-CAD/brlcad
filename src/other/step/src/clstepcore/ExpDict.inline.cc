@@ -25,6 +25,8 @@ Schema::Schema( const char * schemaName )
 }
 
 Schema::~Schema() {
+    TypeDescLinkNode *node;
+
     if( _use_interface_list != 0 ) {
         delete _use_interface_list;
     }
@@ -33,6 +35,11 @@ Schema::~Schema() {
     }
     if( _global_rules != 0 ) {
         delete _global_rules;
+    }
+    node = (TypeDescLinkNode*) _unnamed_typeList.GetHead();
+    while ( node ) {
+        delete node->TypeDesc();
+        node = (TypeDescLinkNode*) node->NextNode();
     }
 }
 

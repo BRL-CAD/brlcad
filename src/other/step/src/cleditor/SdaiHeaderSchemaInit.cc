@@ -59,6 +59,7 @@ void SdaiHEADER_SECTION_SCHEMAInit( Registry & reg ) {
     t_0->Description( "SET [1:?] OF section_name" );
     t_0->OriginatingSchema( s_header_section_schema );
     t_0->ReferentType( header_section_schemat_section_name );
+    s_header_section_schema->AddUnnamedType(t_0);
     a_4governed_sections =
         new AttrDescriptor( "governed_sections", t_0, LTrue, LFalse, AttrType_Explicit,
                             *header_section_schemae_file_population );
@@ -86,6 +87,7 @@ void SdaiHEADER_SECTION_SCHEMAInit( Registry & reg ) {
     t_1->Description( "LIST [1:?] OF STRING (256)" );
     t_1->OriginatingSchema( s_header_section_schema );
     t_1->ReferentType( t_sdaiSTRING );
+    s_header_section_schema->AddUnnamedType(t_1);
     a_7author =
         new AttrDescriptor( "author", t_1, LFalse, LFalse, AttrType_Explicit,
                             *header_section_schemae_file_name );
@@ -98,6 +100,7 @@ void SdaiHEADER_SECTION_SCHEMAInit( Registry & reg ) {
     t_2->Description( "LIST [1:?] OF STRING (256)" );
     t_2->OriginatingSchema( s_header_section_schema );
     t_2->ReferentType( t_sdaiSTRING );
+    s_header_section_schema->AddUnnamedType(t_2);
     a_8organization =
         new AttrDescriptor( "organization", t_2, LFalse, LFalse, AttrType_Explicit,
                             *header_section_schemae_file_name );
@@ -135,6 +138,7 @@ void SdaiHEADER_SECTION_SCHEMAInit( Registry & reg ) {
     t_3->Description( "LIST [1:?] OF context_name" );
     t_3->OriginatingSchema( s_header_section_schema );
     t_3->ReferentType( header_section_schemat_context_name );
+    s_header_section_schema->AddUnnamedType(t_3);
     a_13context_identifiers =
         new AttrDescriptor( "context_identifiers", t_3, LFalse, LFalse, AttrType_Explicit,
                             *header_section_schemae_section_context );
@@ -152,6 +156,7 @@ void SdaiHEADER_SECTION_SCHEMAInit( Registry & reg ) {
     t_4->Description( "LIST [1:?] OF STRING (256)" );
     t_4->OriginatingSchema( s_header_section_schema );
     t_4->ReferentType( t_sdaiSTRING );
+    s_header_section_schema->AddUnnamedType(t_4);
     a_14description =
         new AttrDescriptor( "description", t_4, LFalse, LFalse, AttrType_Explicit,
                             *header_section_schemae_file_description );
@@ -175,6 +180,7 @@ void SdaiHEADER_SECTION_SCHEMAInit( Registry & reg ) {
     t_5->Description( "LIST [1:?] OF UNIQUE schema_name" );
     t_5->OriginatingSchema( s_header_section_schema );
     t_5->ReferentType( header_section_schemat_schema_name );
+    s_header_section_schema->AddUnnamedType(t_5);
     a_16schema_identifiers =
         new AttrDescriptor( "schema_identifiers", t_5, LFalse, LFalse, AttrType_Explicit,
                             *header_section_schemae_file_schema );

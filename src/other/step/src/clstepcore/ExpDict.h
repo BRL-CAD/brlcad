@@ -669,6 +669,7 @@ class SCL_CORE_EXPORT Schema : public Dictionary_instance {
         const char  * _name;
         EntityDescriptorList _entList; // list of entities in the schema
         TypeDescriptorList _typeList; // list of types in the schema
+        TypeDescriptorList _unnamed_typeList; // list of unnamed types in the schema (for cleanup)
         Interface_spec _interface; // list of USE and REF interfaces  (SDAI)
 
         // non-SDAI lists
@@ -735,6 +736,10 @@ class SCL_CORE_EXPORT Schema : public Dictionary_instance {
 
         TypeDescLinkNode * AddType( TypeDescriptor * td ) {
             return _typeList.AddNode( td );
+        }
+
+        TypeDescLinkNode * AddUnnamedType( TypeDescriptor * td ) {
+            return _unnamed_typeList.AddNode( td );
         }
 
         // the whole schema
