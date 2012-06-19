@@ -43,8 +43,6 @@ STEPfile::STEPfile( Registry & r, InstMgr & i, const std::string filename, bool 
 STEPfile::~STEPfile() {
     delete _currentDir;
 
-    // remove everything from the Registry before deleting it
-    _headerRegistry->DeleteContents();
     delete _headerRegistry;
 
     _headerInstances->DeleteInstances();
