@@ -369,7 +369,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_ars_tess,
 	NULL,
-	NULL,
+	rt_ars_brep,
 	rt_ars_import5,
 	rt_ars_export5,
 	rt_ars_import4,

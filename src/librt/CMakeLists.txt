@@ -71,6 +71,7 @@ set(LIBRT_SOURCES
   primitives/arbn/arbn_brep.cpp
   primitives/arbn/arbn_mirror.c
   primitives/ars/ars.c
+  primitives/ars/ars_brep.c
   primitives/ars/ars_mirror.c
   primitives/bot/bot.c
   primitives/bot/bot_brep.cpp
