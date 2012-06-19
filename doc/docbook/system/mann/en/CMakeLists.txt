@@ -35,6 +35,7 @@ set(docbook_mann_EN
   bot_decimate.xml
   bot_face_fuse.xml
   bot_face_sort.xml
+  bot_flip.xml
   bot_sync.xml
   bot_vertex_fuse.xml
   build_region.xml
