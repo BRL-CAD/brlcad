@@ -49,6 +49,14 @@
 #    include "brlcad_config.h"
 #  endif  /* _WIN32 */
 
+/* Implements asinh() functionality using log() and sqrt() which are
+ * assumed to exist everywhere.
+ */
+#  ifndef HAVE_ASINH
+#    define asinh(x) (log(x + sqrt(x * x + 1)))
+#    define HAVE_ASINH 1
+#  endif
+
 /* Simulates drand48() functionality using rand() which is assumed to
  * exist everywhere. The range is [0, 1).
  */
@@ -116,8 +124,8 @@ typedef ptrdiff_t ssize_t;
  * optional uintptr_t type.
  */
 #if !defined(INT8_MAX) || !defined(INT16_MAX) || !defined(INT32_MAX) || !defined(INT64_MAX)
-#  if (defined _MSC_VER && (_MSC_VER <= 1500))	
-     /* Older Versions of Visual C++ seem to need pstdint.h 
+#  if (defined _MSC_VER && (_MSC_VER <= 1500))
+     /* Older Versions of Visual C++ seem to need pstdint.h
       * but still pass the tests below, so force it based on
       * version (ugh.) */
 #    include "pstdint.h"

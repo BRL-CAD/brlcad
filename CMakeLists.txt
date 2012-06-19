@@ -107,7 +107,7 @@ endif(COMMAND CMAKE_POLICY)
 project(BRLCAD)
 
 #---------------------------------------------------------------------
-# Write out entries to populate a tm struct (will be used for time 
+# Write out entries to populate a tm struct (will be used for time
 # delta calculations later)
 if(NOT BRLCAD_IS_SUBBUILD)
   set(DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/DELTA_START")
@@ -265,7 +265,7 @@ endif(NOT DOC_DIR)
 # they are something already found on the system due to non-BRL-CAD
 # installation (source compile, package managers, etc.).  Unfortunately,
 # CMake's standard behavior is to add CMAKE_INSTALL_PREFIX to the search
-# path once defined, resulting in (for us) the unexpected behavior of 
+# path once defined, resulting in (for us) the unexpected behavior of
 # returning old installed libraries when CMake is re-run in a directory.
 #
 # To work around this, there are two possible approaches.  One,
@@ -316,7 +316,7 @@ if(BRLCAD_PREFIX)
     set(CMAKE_SYSTEM_IGNORE_PATH ${PATH_NORMALIZED})
   endif(NOT ${BRLCAD_PREFIX} STREQUAL "/usr" AND NOT ${BRLCAD_PREFIX} STREQUAL "/usr/local")
 endif(BRLCAD_PREFIX)
-mark_as_advanced(CMAKE_SYSTEM_IGNORE_PATH) 
+mark_as_advanced(CMAKE_SYSTEM_IGNORE_PATH)
 
 #---------------------------------------------------------------------
 # For cleaning files as part of the distclean command, CMake needs
@@ -401,7 +401,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # check that the file is part of the source tree and not itself a
   # generated file, but not reject full-path entries since there are quite a
   # few of them. This means that, unlike CMAKEFILES's reliance on full vs.
-  # relative path comparisions, generated files supplied to configure_file 
+  # relative path comparisions, generated files supplied to configure_file
   # need to have the GENERATED property set in order to reliably tell which
   # files should be added to the build system's lists.  Not
   # so critical with not-in-src-dir builds, but makes a big difference
@@ -627,7 +627,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
   set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT 0)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
 set(BRLCAD_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "BRL-CAD install prefix")
-mark_as_advanced(BRLCAD_PREFIX) 
+mark_as_advanced(BRLCAD_PREFIX)
 
 # If we've got a Release build with a Debug path or vice versa, change it - that
 # is probably the most "expected" behavior.
@@ -692,13 +692,13 @@ else(NOT CMAKE_CONFIGURATION_TYPES)
   # relative positions.  Because files may be placed by CMake
   # without a build target to put them in their proper relative build
   # directory position using these paths, we must fully qualify them
-  # without using CMAKE_CFG_INTDIR. 
+  # without using CMAKE_CFG_INTDIR.
   #
   # We define directories that may not be quite "standard"
-  # for a particular build tool - for example, native VS2010 projects use 
+  # for a particular build tool - for example, native VS2010 projects use
   # another directory to denote CPU type being compiled for - but CMake only
   # supports multi-configuration setups having multiple configurations,
-  # not multiple compilers.  
+  # not multiple compilers.
   #
   # One additional wrinkle we must watch for here is the case where
   # a multi-configuration setup uses "." for its internal directory -
@@ -865,7 +865,7 @@ endif(MSVC)
 # NOTE: Ideally we would set a matching property for 32 bit paths
 # on systems that default to 64 bit - as of 2.8.8 CMake doesn't yet
 # support FIND_LIBRARY_USE_LIB32_PATHS.  There is a bug report on the
-# topic here: http://www.cmake.org/Bug/view.php?id=11260 
+# topic here: http://www.cmake.org/Bug/view.php?id=11260
 #
 if(${CMAKE_WORD_SIZE} MATCHES "32BIT")
   set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS OFF)
@@ -889,7 +889,7 @@ mark_as_advanced(PREVIOUS_CONFIGURE_TYPE)
 # will re-run CMake if it detects that build system logic has changed.
 # This is normally a good thing, but becomes problematic when using
 # Visual Studio - recent versions of MSVC will individually prompt for
-# a re-loading of generated solution files one at a time.  Since 
+# a re-loading of generated solution files one at a time.  Since
 # BRL-CAD has over a thousand such files in a default build, the only
 # viable approach is to close Visual Studio, re-run CMake manually,
 # and re-open the project in Visual Studio.
@@ -910,7 +910,7 @@ set(CONFIG_OPT_STRING "CONFIGURATION OPTIONS\n---------------------\n")
 file(WRITE ${CMAKE_BINARY_DIR}/OPTIONS "${CONFIG_OPT_STRING}")
 
 # The BRL-CAD CMake build will also generate a configure script
-# that emulates the command option style of GNU Autotool's 
+# that emulates the command option style of GNU Autotool's
 # configure.  Write the pre-defined header into the build-dir template
 # to initialize the file.
 file(REMOVE ${CMAKE_BINARY_DIR}/configure.new)
@@ -943,7 +943,7 @@ else(NOT CMAKE_CONFIGURATION_TYPES)
   set(BUILD_STATIC_LIBS "${BRLCAD_BUILD_STATIC_LIBS}")
 endif(NOT CMAKE_CONFIGURATION_TYPES)
 
-# On Mac OS X, it is common to have third party package managers 
+# On Mac OS X, it is common to have third party package managers
 # present for easy software installation (currently we're aware of
 # Fink and MacPorts).  This can seriously complicate find_* results,
 # so provide an option to specify whether or which of the third
@@ -975,10 +975,10 @@ mark_as_advanced(BRLCAD_ENABLE_BRLCAD_LIBRARY)
 set(BRLCAD_BUNDLED_LIBS_ALIASES "ENABLE_ALL")
 set(BRLCAD_BUNDLED_LIBS_DESCRIPTION "
 Enables compilation of all 3rd party sources that are provided within a BRL-CAD
-source distribution.  If used this option sets all other 3rd party library 
-build flags to ON by default.  However, that setting can be overridden by 
-manually setting individual variables. Default is \"AUTO\" - 3rd party sources 
-are compiled only if they are not detected as being available and functioning 
+source distribution.  If used this option sets all other 3rd party library
+build flags to ON by default.  However, that setting can be overridden by
+manually setting individual variables. Default is \"AUTO\" - 3rd party sources
+are compiled only if they are not detected as being available and functioning
 as expected.
 ")
 if(MSVC)
@@ -1053,7 +1053,7 @@ endif(NOT WIN32)
 # not on Windows, we're non-graphical and that means OpenGL is
 # a no-go.  The Windows version would have to be some sort of
 # option for the WIN32 graphics layer?  Should probably think
-# about that... for now, on Win32 don't try OpenGL if Tk is 
+# about that... for now, on Win32 don't try OpenGL if Tk is
 # off.  That'll hold until we get a non-Tk based GUI - then
 # setting non-graphical on Windows will take more thought.
 if(NOT WIN32)
@@ -1085,7 +1085,7 @@ set(BRLCAD_ENABLE_OPENGL_ALIASES
   )
 set(BRLCAD_ENABLE_OPENGL_DESCRIPTION "
 Enable support for OpenGL based Display Managers in BRL-CAD.
-Default depends on whether OpenGL is successfully detected - 
+Default depends on whether OpenGL is successfully detected -
 if it is, default is to enable.
 ")
 BRLCAD_OPTION(${OPENGL_FOUND} BRLCAD_ENABLE_OPENGL	BRLCAD_ENABLE_OPENGL_ALIASES BRLCAD_ENABLE_OPENGL_DESCRIPTION)
@@ -1114,11 +1114,11 @@ mark_as_advanced(BRLCAD_ENABLE_JOVE)
 #----------------------------------------------------------------------
 # There are extra documentation files available requiring DocBook
 # They are quite useful in graphical interfaces, but also add considerably
-# to the overall build time.  If necesssary BRL-CAD  provides its own 
+# to the overall build time.  If necesssary BRL-CAD  provides its own
 # xsltproc (see src/other/xmltools), so the html and man page
 # outputs are always potentially available.  PDF output, on the other hand,
-# needs Apache FOP.  FOP is not a candidate for bundling with BRL-CAD for 
-# a number of reasons, so we simply check to see if it is present and set 
+# needs Apache FOP.  FOP is not a candidate for bundling with BRL-CAD for
+# a number of reasons, so we simply check to see if it is present and set
 # the options accordingly.
 
 # Do we have the environment variable set locally?
@@ -1177,8 +1177,8 @@ mark_as_advanced(BRLCAD_EXTRADOCS_HTML)
 
 # Normally, we'll turn on man page output by default, but there is
 # no point in doing man page output for a Visual Studio build - the
-# files aren't useful and it *seriously* increases the target build 
-# count/build time.  Conditionalize on the CMake MSVC variable NOT 
+# files aren't useful and it *seriously* increases the target build
+# count/build time.  Conditionalize on the CMake MSVC variable NOT
 # being set.
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_MAN "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS;NOT MSVC" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_MAN)
@@ -1216,17 +1216,17 @@ mark_as_advanced(BRLCAD_EXTRADOCS_VALIDATE)
 # Enable/disable runtime debugging - these are protections for
 # minimizing the possibility of corrupted data files.  Generally
 # speaking these should be left on.
-set(BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES 
+set(BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES
   ENABLE_RUNTIME_DEBUG
   ENABLE_RUN_TIME_DEBUG
   ENABLE_RUNTIME_DEBUGGING
   ENABLE_RUN_TIME_DEBUGGING)
 set(BRLCAD_ENABLE_RUNTIME_DEBUG_DESCRIPTION "
-Enables support for application and library debugging facilities.  
-Disabling the run-time debugging facilities can provide a significant 
-(10%-30%) performance boost at the expense of extensive error 
-checking (that in turn help prevent corruption of your data).  
-Default is "ON", and should only be disabled for read-only render 
+Enables support for application and library debugging facilities.
+Disabling the run-time debugging facilities can provide a significant
+(10%-30%) performance boost at the expense of extensive error
+checking (that in turn help prevent corruption of your data).
+Default is "ON", and should only be disabled for read-only render
 work where performance is critical.
 ")
 BRLCAD_OPTION(ON BRLCAD_ENABLE_RUNTIME_DEBUG BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES BRLCAD_ENABLE_RUNTIME_DEBUG_DESCRIPTION)
@@ -1288,7 +1288,7 @@ mark_as_advanced(BRLCAD_ENABLE_COMPILER_WARNINGS)
 # code unless the NOSTRICT option is specified when defining a target
 # with BRLCAD_ADDEXEC or BRLCAD_ADDLIB.  If only C++ files in a target
 # are not compatible with strict, the NOSTRICTCXX option can be used.
-set(BRLCAD_ENABLE_STRICT_ALIASES 
+set(BRLCAD_ENABLE_STRICT_ALIASES
   ENABLE_STRICT
   ENABLE_STRICT_COMPILE
   ENABLE_STRICT_COMPILE_FLAGS)
@@ -1305,7 +1305,7 @@ if(BRLCAD_ENABLE_STRICT)
 endif(BRLCAD_ENABLE_STRICT)
 
 # Build with compiler optimization flags.  This should normally be on for
-# release builds.  
+# release builds.
 AUTO_OPTION(BRLCAD_FLAGS_OPTIMIZATION BRLCAD_OPTIMIZED_BUILD "OFF" "ON")
 
 # By default, we don't want any error reports at all from src/other
@@ -1666,6 +1666,7 @@ BRLCAD_ALLOCA()
 
 BRLCAD_FUNCTION_EXISTS(XQueryExtension HAVE_XQUERYEXTENSION)
 BRLCAD_FUNCTION_EXISTS(alarm HAVE_ALARM)
+BRLCAD_FUNCTION_EXISTS(asinh HAVE_ASINH)
 BRLCAD_FUNCTION_EXISTS(dlopen HAVE_DLOPEN)
 BRLCAD_FUNCTION_EXISTS(drand48 HAVE_DRAND48)
 BRLCAD_FUNCTION_EXISTS(fchmod HAVE_FCHMOD)
@@ -1786,7 +1787,7 @@ endif(WIN32)
 # ***              Summarize Results - Stage 9 of 9               ***
 # *******************************************************************
 
-# Now that everything is configured, print a summary of the build 
+# Now that everything is configured, print a summary of the build
 # settings.
 if(NOT BRLCAD_DISABLE_SUMMARY)
   include(${BRLCAD_CMAKE_DIR}/BRLCAD_Summary.cmake)
@@ -2145,7 +2146,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   include(${BRLCAD_CMAKE_DIR}/Distcheck.cmake)
 
   # Define some custom distcheck targets for distcheck-full (not run by default)
-  # 
+  #
   # CREATE_DISTCHECK(TARGET_SUFFIX CMAKE_OPTS source_dir build_dir install_dir [custom_template])
 
   CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TK=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
@@ -2183,7 +2184,7 @@ file(APPEND ${BRLCAD_BINARY_DIR}/INSTALL.new "\n\n*** Note - Do not add or edit 
    lists in this file - those entries are auto-generated from information in
    the toplevel CMakeLists.txt file and src/other/CMakeLists.txt - any changes
    should be made in those files.  The CMake configuration process will
-   automatically re-generate INSTALL with the new descriptions and alias 
+   automatically re-generate INSTALL with the new descriptions and alias
    information.")
 execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
   ${BRLCAD_SOURCE_DIR}/INSTALL ${BRLCAD_BINARY_DIR}/INSTALL.new
@@ -2208,7 +2209,7 @@ endif(IS_CONFIG_SH_DIFFERENT)
 
 
 # Because the build-time-delta needs a configure-file but comes at the
-# end of the CMake configure, the preparation of the final distclean 
+# end of the CMake configure, the preparation of the final distclean
 # list must account for it.  Also, the distclean script itself must
 # be added to the list, as it is generated by CMake
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/distclean.sh "#!/bin/sh\n")
