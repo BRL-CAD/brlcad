@@ -9667,7 +9667,6 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     bu_hook_list_init(&save_hook_list);
     bu_log_hook_save_all(&save_hook_list);
-    bu_log_hook_delete_all();
 
     /* suppress bu_log output because we don't care if the command
      * exists in wdb_newcmds since it might be in wdb_cmds.  this
