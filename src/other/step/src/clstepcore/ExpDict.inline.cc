@@ -123,6 +123,9 @@ AttrDescLinkNode::AttrDescLinkNode() {
 }
 
 AttrDescLinkNode::~AttrDescLinkNode() {
+    if ( _attrDesc ) {
+        delete _attrDesc;
+    }
 }
 
 AttrDescItr::AttrDescItr( const AttrDescriptorList & adList ) : adl( adList ) {
@@ -143,6 +146,13 @@ Inverse_attributeList::Inverse_attributeList() {
 }
 
 Inverse_attributeList::~Inverse_attributeList() {
+    Inverse_attributeLinkNode *node;
+
+    node = ( Inverse_attributeLinkNode* ) head;
+    while ( node ) {
+        delete node->Inverse_attr();
+        node = ( Inverse_attributeLinkNode* ) node->NextNode();
+    }
 }
 
 Inverse_attributeLinkNode * Inverse_attributeList::AddNode( Inverse_attribute * ad ) {
@@ -209,6 +219,12 @@ TypeDescriptor::TypeDescriptor
     :  _name( nm ), altNames( 0 ), _fundamentalType( ft ),
        _originatingSchema( origSchema ), _referentType( 0 ), _description( d ),
        _where_rules( 0 ) {
+}
+
+TypeDescriptor::~TypeDescriptor() {
+    if ( _where_rules ) {
+        delete _where_rules;
+    }
 }
 
 /**

@@ -1307,9 +1307,7 @@ class SCL_CORE_EXPORT TypeDescriptor {
         TypeDescriptor( const char * nm, PrimitiveType ft,
                         Schema * origSchema, const char * d );
         TypeDescriptor( );
-        virtual ~TypeDescriptor() {
-            /* if ( altNames ) delete altNames; */
-        }
+        virtual ~TypeDescriptor();
 
         virtual const char * GenerateExpress( std::string & buf ) const;
 

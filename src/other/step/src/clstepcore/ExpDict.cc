@@ -1024,6 +1024,8 @@ Where_rule__list::Where_rule__list( int defaultSize ) {
 }
 
 Where_rule__list::~Where_rule__list() {
+    Clear();
+
     delete _buf;
 }
 
@@ -1101,6 +1103,9 @@ int Where_rule__list::Count() {
 }
 
 void Where_rule__list::Clear() {
+    for ( int i = 0; i < _count ; i ++ ) {
+        delete _buf[i];
+    }
     _count = 0;
 }
 
@@ -1129,6 +1134,8 @@ Uniqueness_rule__set::Uniqueness_rule__set( int defaultSize ) {
 }
 
 Uniqueness_rule__set::~Uniqueness_rule__set() {
+    Clear();
+
     delete _buf;
 }
 
@@ -1206,6 +1213,9 @@ int Uniqueness_rule__set::Count() {
 }
 
 void Uniqueness_rule__set::Clear() {
+    for ( int i = 0; i < _count; i ++ ) {
+        delete _buf[i];
+    }
     _count = 0;
 }
 
@@ -1246,6 +1256,7 @@ Global_rule__set::Global_rule__set( int defaultSize ) {
 }
 
 Global_rule__set::~Global_rule__set() {
+    Clear();
     delete _buf;
 }
 
@@ -1323,6 +1334,9 @@ int Global_rule__set::Count() {
 }
 
 void Global_rule__set::Clear() {
+    for ( int i = 0; i < _count; i ++ ) {
+        delete _buf[i];
+    }
     _count = 0;
 }
 
