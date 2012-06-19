@@ -43,7 +43,7 @@ void ATTRprint_access_methods_put_head( const char * entnm, Variable a, FILE * f
                   ((t)->u.type->body->type == integer_) || \
                   ((t)->u.type->body->type == number_) )
 #define PRINT_BUG_REPORT  \
-     fprintf( f, "   std::cerr << __FILE__ << \":\" << __LINE__ <<  \":  ERROR" \
+     fprintf( f, "    std::cerr << __FILE__ << \":\" << __LINE__ <<  \":  ERROR" \
               " in schema library:  \\n\" \n    << _POC_ << \"\\n\\n\";\n");
 
 #define PRINT_SELECTBUG_WARNING(f) \
@@ -1274,86 +1274,75 @@ TYPEselect_lib_print_part_four( const Type type, FILE * f, Schema schema,
 
     LISTdo( SEL_TYPEget_items( type ), t, Type )
     strncpy( x, TYPEget_name( t ), BUFSIZ );
-    if( firsttime ) {
-        fprintf( f, "   " );
-        firsttime = 0;
-    } else {
-        fprintf( f, "   else " );
-    }
-    fprintf( f, "if ( o -> CurrentUnderlyingType () == %s )\n",
+    fprintf( f, "    if ( o -> CurrentUnderlyingType () == %s ) {\n",
              TYPEtd_name( t ) );
     if( TYPEis_select( t ) ) {
         if( utype_member( dups, t, 1 ) )
             /**  if in the dup list  **/
-            fprintf( f, "      _%s = &(o -> _%s);\n",
+            fprintf( f, "        _%s = &(o -> _%s);\n",
                      SEL_ITEMget_dmname( t ),
                      StrToLower( TYPEget_utype( t ) ) );
         else
-            fprintf( f, "    _%s =  &(o -> _%s);\n",
+            fprintf( f, "        _%s =  &(o -> _%s);\n",
                      SEL_ITEMget_dmname( t ),
                      SEL_ITEMget_dmname( t ) );
     } else {
         if( utype_member( dups, t, 1 ) )
             /**  if in the dup list  **/
-            fprintf( f, "      _%s = o -> _%s;\n",
+            fprintf( f, "        _%s = o -> _%s;\n",
                      SEL_ITEMget_dmname( t ),
                      SEL_ITEMget_dmname( t ) );
         /* I changed this although I'm not sure how the if and else differ */
         /*          StrToLower(TYPEget_utype(t)) ); */
         else
-            fprintf( f, "    _%s =  o -> _%s;\n",
+            fprintf( f, "        _%s =  o -> _%s;\n",
                      SEL_ITEMget_dmname( t ),
                      SEL_ITEMget_dmname( t ) );
     }
-    LISTod;
-    fprintf( f, "   underlying_type = o -> CurrentUnderlyingType ();\n" );
-    fprintf( f, "   return *this;\n}\n\n" );
 
-    /*   fprintf( f, "%s& %s::operator =( const %s& o )\n{\n", n,n,n );*/
-    fprintf( f, "SDAI_Select& %s::operator =( const SDAI_Select& o )\n{\n", n );
+    fprintf( f, "        underlying_type = o -> CurrentUnderlyingType ();\n" );
+    fprintf( f, "        return *this;\n" );
+    fprintf( f, "    }\n" );
+
+    LISTod;
+    fprintf( f, "    underlying_type = o -> CurrentUnderlyingType ();\n" );
+    fprintf( f, "    return *this;\n}\n\n" );
+
+    fprintf( f, "SDAI_Select& %s::operator =( const SDAI_Select& o ) {\n", n );
 
     firsttime = 1;
     LISTdo( SEL_TYPEget_items( type ), t, Type )
     strncpy( x, TYPEget_name( t ), BUFSIZ );
-    if( firsttime ) {
-        fprintf( f, "   " );
-        firsttime = 0;
-    } else {
-        fprintf( f, "   else " );
-    }
-    fprintf( f, "if ( o.CurrentUnderlyingType () == %s )\n",
+    fprintf( f, "    if ( o.CurrentUnderlyingType () == %s ) {\n",
              TYPEtd_name( t ) );
     if( TYPEis_select( t ) ) {
         if( utype_member( dups, t, 1 ) )
             /**  if in the dup list  **/
-            /*     fprintf( f, "      _%s = o._%s;\n", */
-            fprintf( f, "    _%s = ((%s&) o)._%s;\n",
+            fprintf( f, "        _%s = ((%s&) o)._%s;\n",
                      SEL_ITEMget_dmname( t ),
                      n,
                      SEL_ITEMget_dmname( t ) );
-        /*          StrToLower(TYPEget_utype(t)) ); */
         else
-            /*     fprintf( f, "    _%s =  o._%s;\n", */
-            fprintf( f, "    _%s = &(((%s&) o)._%s);\n",
+            fprintf( f, "        _%s = &(((%s&) o)._%s);\n",
                      SEL_ITEMget_dmname( t ),
                      n,
                      SEL_ITEMget_dmname( t ) );
     } else {
         if( utype_member( dups, t, 1 ) )
             /**  if in the dup list  **/
-            /*         fprintf( f, "      _%s = o._%s;\n", */
-            fprintf( f, "    _%s = ((%s&) o)._%s;\n",
+            fprintf( f, "        _%s = ((%s&) o)._%s;\n",
                      SEL_ITEMget_dmname( t ),
                      n,
                      SEL_ITEMget_dmname( t ) );
-        /*         StrToLower(TYPEget_utype(t)) ); */
         else
-            /*         fprintf( f, "    _%s =  o._%s;\n", */
-            fprintf( f, "    _%s = ((%s&) o)._%s;\n",
+            fprintf( f, "        _%s = ((%s&) o)._%s;\n",
                      SEL_ITEMget_dmname( t ),
                      n,
                      SEL_ITEMget_dmname( t ) );
     }
+    fprintf( f, "        underlying_type = o.CurrentUnderlyingType ();\n" );
+    fprintf( f, "        return *this;\n" );
+    fprintf( f, "    }\n" );
     LISTod;
     fprintf( f, "   underlying_type = o.CurrentUnderlyingType ();\n" );
     fprintf( f, "   return *this;\n}\n\n" );
@@ -1411,29 +1400,29 @@ TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
     fprintf( f, "\n\n// STEP Part 21\n" );
     /*  write part 21   */
     fprintf( f, "\nvoid\n%s::STEPwrite_content (ostream& out, const char *"
-             " currSch) const\n{\n  (void)currSch;\n  ", n );
+             " currSch) const {\n  (void)currSch;\n  ", n );
 
     /*  go through the items  */
     LISTdo( SEL_TYPEget_items( type ), t, Type )
     dm = SEL_ITEMget_dmname( t );
 
-    fprintf( f, "if (CurrentUnderlyingType () == %s)\n",
+    fprintf( f, "    if (CurrentUnderlyingType () == %s) {\n",
              TYPEtd_name( t ) );
 
     switch( TYPEget_body( t )->type ) {
 
             /*  if it\'s a number, just print it  */
         case integer_:
-            fprintf( f, "    out <<  _%s;\n  else ", dm );
+            fprintf( f, "        out <<  _%s;\n", dm );
             break;
 
         case number_:
         case real_:
-            fprintf( f, "    WriteReal(_%s,out);\n  else ", dm );
+            fprintf( f, "        WriteReal(_%s,out);\n", dm );
             break;
 
         case entity_:
-            fprintf( f, "    _%s -> STEPwrite_reference (out);\n  else ", dm );
+            fprintf( f, "        _%s -> STEPwrite_reference (out);\n", dm );
             break;
 
         case string_:
@@ -1442,11 +1431,11 @@ TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
         case boolean_:
         case binary_:
             /*  for string's, enum's, select's, and binary's it'll be embedded */
-            fprintf( f, "    _%s.STEPwrite (out);\n  else ", dm );
+            fprintf( f, "        _%s.STEPwrite (out);\n", dm );
             break;
 
         case select_:
-            fprintf( f, "    _%s.STEPwrite (out, currSch);\n  else ", dm );
+            fprintf( f, "        _%s.STEPwrite (out, currSch);\n", dm );
             /* Select type needs currSch passed too.  A Select writes the name of its
             // current choice when it writes itself out (e.g. "DATA(33.5)").  Since
             // the current choice name may depend on our current schema (it may be a
@@ -1461,38 +1450,39 @@ TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
         case list_:
         default:
             /*  otherwise it\'s a pointer  */
-            fprintf( f, "    _%s -> STEPwrite (out);\n  else ", dm );
+            fprintf( f, "        _%s -> STEPwrite (out);\n", dm );
             break;
     }
+
+    fprintf( f, "        return;\n" );
+    fprintf( f, "    }\n");
+
     LISTod;
 
-    fprintf( f, "  {\n" );
     PRINT_BUG_REPORT
-    fprintf( f, "  }\n" );
-    fprintf( f, "  return;\n}\n" );
+
+    fprintf( f, "}\n" );
 
     /* ValueType() -- get type of value stored in select */
 
-    fprintf( f, "\nBASE_TYPE\n%s::ValueType() const\n{\n  ", n );
+    fprintf( f, "\nBASE_TYPE\n%s::ValueType() const {\n", n );
 
     LISTdo( SEL_TYPEget_items( type ), t, Type )
     dm = SEL_ITEMget_dmname( t );
-    fprintf( f, "if (CurrentUnderlyingType() == %s)\n",
+    fprintf( f, "    if (CurrentUnderlyingType() == %s)\n",
              TYPEtd_name( t ) );
 
     switch( TYPEget_body( t )->type ) {
         case select_:
-            fprintf( f, "    return _%s.ValueType();\n  else ", dm );
+            fprintf( f, "        return _%s.ValueType();\n", dm );
             break;
         default:
-            fprintf( f, "    return %s;\n  else ", FundamentalType( t, 0 ) );
+            fprintf( f, "        return %s;\n", FundamentalType( t, 0 ) );
     }
     LISTod;
 
-    fprintf( f, "  {\n" );
     PRINT_BUG_REPORT
-    fprintf( f, "  }\n" );
-    fprintf( f, "  return (BASE_TYPE)0;\n}\n" );
+    fprintf( f, "    return (BASE_TYPE)0;\n}\n" );
 
     /* STEPwrite_verbose() -- print value with specified type */
 
@@ -1500,48 +1490,48 @@ TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
              " const char *currSch) const\n{\n", n );
 
     /* Get name of typedescriptor, according to value of currSch: */
-    fprintf( f, "  const TypeDescriptor *td = CurrentUnderlyingType();\n" );
-    fprintf( f, "  std::string tmp;\n\n" );
-    fprintf( f, "  if ( td ) {\n" );
-    fprintf( f, "    // If we have a legal underlying type, get its name acc\n" );
-    fprintf( f, "    // to the current schema.\n" );
-    fprintf( f, "    StrToUpper( td->Name(currSch), tmp );\n" );
-    fprintf( f, "  }\n  " );
+    fprintf( f, "    const TypeDescriptor *td = CurrentUnderlyingType();\n" );
+    fprintf( f, "    std::string tmp;\n\n" );
+    fprintf( f, "    if ( td ) {\n" );
+    fprintf( f, "        // If we have a legal underlying type, get its name acc\n" );
+    fprintf( f, "        // to the current schema.\n" );
+    fprintf( f, "        StrToUpper( td->Name(currSch), tmp );\n" );
+    fprintf( f, "    }\n" );
 
     /* Next loop through the possible items: */
     LISTdo( SEL_TYPEget_items( type ), t, Type )
     dm = SEL_ITEMget_dmname( t );
-    fprintf( f, "if (td == %s)\n",
+    fprintf( f, "    if (td == %s) {\n",
              TYPEtd_name( t ) );
 
     switch( TYPEget_body( t )->type ) {
         case integer_:
             /*      fprintf(f, "    out << \"%s(\" << _%s << \")\";\n  else ",
                           StrToUpper(TYPEget_name(t)), dm);*/
-            fprintf( f, "    out << tmp << \"(\" << _%s << \")\";\n  else ",
+            fprintf( f, "        out << tmp << \"(\" << _%s << \")\";\n",
                      dm );
             break;
 
         case real_:
         case number_:
-            fprintf( f, "  {\n    out << tmp << \"(\";\n" );
-            fprintf( f, "    WriteReal(_%s,out);\n", dm );
-            fprintf( f, "    out << \")\";\n  }\n  else " );
+            fprintf( f, "        out << tmp << \"(\";\n" );
+            fprintf( f, "        WriteReal(_%s,out);\n", dm );
+            fprintf( f, "        out << \")\";\n" );
             break;
 
         case entity_:
-            fprintf( f, "  {\n    out <<  tmp << \"(\";\n" );
-            fprintf( f, "    _%s -> STEPwrite_reference (out);\n", dm );
-            fprintf( f, "    out << \")\";\n  }\n  else " );
+            fprintf( f, "        out <<  tmp << \"(\";\n" );
+            fprintf( f, "        _%s -> STEPwrite_reference (out);\n", dm );
+            fprintf( f, "        out << \")\";\n" );
             break;
         case string_:
         case enumeration_:
         case logical_:
         case boolean_:
         case binary_:
-            fprintf( f, "  {\n    out << tmp << \"(\";\n" );
-            fprintf( f, "    _%s.STEPwrite (out);\n", dm );
-            fprintf( f, "    out << \")\";\n  }\n  else " );
+            fprintf( f, "        out << tmp << \"(\";\n" );
+            fprintf( f, "        _%s.STEPwrite (out);\n", dm );
+            fprintf( f, "        out << \")\";\n" );
             break;
         case aggregate_:
         case array_:
@@ -1549,27 +1539,29 @@ TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
         case set_:
         case list_:
             /* Aggregates need currSch passed since they may be aggrs of sels. */
-            fprintf( f, "  {\n   out << tmp << \"(\";\n" );
+            fprintf( f, "        out << tmp << \"(\";\n" );
             fprintf( f, "        _%s%sSTEPwrite (out, currSch);\n", dm,
                      ( ( t->u.type->body->base ) ? "->" : "." ) );
-            fprintf( f, "        out << \")\";\n  }\n" );
+            fprintf( f, "        out << \")\";\n" );
             break;
         case select_:
-            fprintf( f, "  {\n    out << tmp << \"(\";\n" );
-            fprintf( f, "    _%s.STEPwrite_verbose (out, currSch);\n", dm );
-            fprintf( f, "    out << \")\";\n  }\n  else " );
+            fprintf( f, "        out << tmp << \"(\";\n" );
+            fprintf( f, "        _%s.STEPwrite_verbose (out, currSch);\n", dm );
+            fprintf( f, "        out << \")\";\n" );
             break;
         default:
-            fprintf( f, "  _%s -> STEPwrite (out); \n  else " );
+            fprintf( f, "        _%s -> STEPwrite (out); \n", dm );
             break;
     }
+
+    fprintf( f, "        return;\n");
+    fprintf( f, "    }\n");
+
     LISTod;
 
-    fprintf( f, "  {\n" );
     PRINT_BUG_REPORT
-    fprintf( f, "  }\n" );
-    fprintf( f, "  return;\n}\n" );
 
+    fprintf( f, "    return;\n}\n" );
 
     /*  Read part 21   */
     fprintf( f, "\nSeverity\n%s::STEPread_content (istream& in, InstMgr * instances,\n"
@@ -1579,43 +1571,48 @@ TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
     /*  go through the items  */
     LISTdo( SEL_TYPEget_items( type ), t, Type )
 
-    fprintf( f, "  if (CurrentUnderlyingType () == %s) ",
+    fprintf( f, "    if (CurrentUnderlyingType () == %s) {\n",
              TYPEtd_name( t ) );
 
     dm = SEL_ITEMget_dmname( t );
 
     switch( TYPEget_body( t )->type ) {
-            /*  if it\'s a number, just read it  */
+            /*  if it's a number, just read it  */
         case real_:
         case number_:
             /*  since REAL and NUMBER are handled the same they both need
             to be included in the case stmt  */
-            fprintf( f, "  {\n    ReadReal (_%s, in, &_error, \"),\");\n"
-                     "    return severity ();\n  }\n",
+            fprintf( f, 
+                     "        ReadReal (_%s, in, &_error, \"),\");\n"
+                     "        return severity ();\n",
                      dm );
             break;
 
         case integer_:
-            fprintf( f, "  {\n    ReadInteger (_%s, in, &_error, \"),\");\n"
-                     "    return severity ();\n  }\n",
+            fprintf( f, 
+                     "        ReadInteger (_%s, in, &_error, \"),\");\n"
+                     "        return severity ();\n",
                      dm );
             break;
 
         case entity_:
-            /*  if it\'s an entity, use Assign - done in Select class  */
+            /*  if it's an entity, use Assign - done in Select class  */
             fprintf( f,
-                     "  {\n    // set Underlying Type in Select class\n"
-                     "    _%s = ReadEntityRef "
-                     "(in, &_error, \",)\", instances, addFileId);\n", dm );
-            fprintf( f, "    if (_%s && (_%s != S_ENTITY_NULL)\n "
-                     "      && (CurrentUnderlyingType () -> CanBe (_%s -> eDesc )) )\n"
-                     "      return severity ();\n",
+                     "        // set Underlying Type in Select class\n"
+                     "        _%s = ReadEntityRef(in, &_error, \",)\", instances, addFileId);\n", 
+                     dm );
+            fprintf( f, 
+                     "        if (_%s && (_%s != S_ENTITY_NULL)\n "
+                     "          && (CurrentUnderlyingType () -> CanBe (_%s -> eDesc )) )\n"
+                     "            return severity ();\n",
                      dm, dm, dm );
-            fprintf( f, "    else {\n "
-                     "      Error (\"Reference to instance that is not indicated type\\n\");\n"
-                     "      _%s = 0;\n"
-                     "      nullify ();\n"
-                     "      return severity (SEVERITY_USERMSG);\n    }\n  }\n",
+            fprintf( f, 
+                     "        else {\n "
+                     "            Error (\"Reference to instance that is not indicated type\\n\");\n"
+                     "            _%s = 0;\n"
+                     "            nullify ();\n"
+                     "            return severity (SEVERITY_USERMSG);\n"
+                     "        }\n",
                      dm
                    );
             break;
@@ -1626,14 +1623,14 @@ TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
         case boolean_:
         case binary_:
             fprintf( f,
-                     "  {\n    _%s.STEPread (in, &_error);\n"
-                     "    return severity ();\n  }\n",
+                     "        _%s.STEPread (in, &_error);\n"
+                     "        return severity ();\n",
                      dm );
             break;
         case select_:
             fprintf( f,
-                     "  {\n    _%s.STEPread (in, &_error, instances, utype, "
-                     "addFileId, currSch);\n    return severity ();\n  }\n",
+                     "        _%s.STEPread (in, &_error, instances, utype, addFileId, currSch);\n"
+                     "        return severity ();\n",
                      dm );
             break;
         case aggregate_:
@@ -1642,21 +1639,23 @@ TYPEselect_lib_part21( const Type type, FILE * f, Schema schema ) {
         case set_:
         case list_:
             fprintf( f, 
-                     "  {\n   _%s%sSTEPread (in, &_error, %s -> AggrElemTypeDescriptor (),\n"
+                     "        _%s%sSTEPread (in, &_error, %s -> AggrElemTypeDescriptor (),\n"
                      "          instances, addFileId, currSch);\n", 
                      dm, ( ( t->u.type->body->base ) ? "->" : "." ),
                      TYPEtd_name( t ) );
             fprintf( f, 
-                     "        return severity ();\n  }\n" );
+                     "        return severity ();\n" );
             break;
 
         default:
             fprintf( f,
-                     "  {\n    _%s -> STEPread (in, &_error, instances, addFileId);\n"
-                     "    return severity ();\n  }\n",
+                     "        _%s -> STEPread (in, &_error, instances, addFileId);\n"
+                     "        return severity ();\n",
                      dm );
             break;
     }
+
+    fprintf( f, "    }\n" );
 
     LISTod;
 

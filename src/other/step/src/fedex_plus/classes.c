@@ -2782,7 +2782,7 @@ void Type_Description( const Type, char * );
  * return it in static buffer
  */
 char * TypeDescription( const Type t ) {
-    static char buf[5000];
+    static char buf[6000];
 
     buf[0] = '\0';
 
