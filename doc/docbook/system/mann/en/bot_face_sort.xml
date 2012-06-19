@@ -23,7 +23,7 @@
       <command>bot_face_sort</command>    
       <arg choice="req" rep="norepeat"> <replaceable>triangles_per_piece</replaceable></arg>
       <arg choice="req" rep="norepeat"> <replaceable>bot_primitive1&gt;</replaceable></arg>
-      <arg rep="repeat" choice="opt"> choice='opt'<replaceable>bot_primitive2 bot_primitive3</replaceable></arg>
+      <arg rep="repeat" choice="opt"> <replaceable>bot_primitive2 bot_primitive3</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   
