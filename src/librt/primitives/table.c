@@ -866,9 +866,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_rpc_params,
 	rt_rpc_bbox,
-    NULL,
-    NULL,
-    NULL,
+    rt_rpc_volume,
+    rt_rpc_surf_area,
+    rt_rpc_centroid,
     },
 
     {
