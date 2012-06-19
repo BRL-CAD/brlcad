@@ -49,14 +49,6 @@
 #    include "brlcad_config.h"
 #  endif  /* _WIN32 */
 
-/* Implements asinh() functionality using log() and sqrt() which are
- * assumed to exist everywhere.
- */
-#  ifndef HAVE_ASINH
-#    define asinh(x) (log(x + sqrt(x * x + 1)))
-#    define HAVE_ASINH 1
-#  endif
-
 /* Simulates drand48() functionality using rand() which is assumed to
  * exist everywhere. The range is [0, 1).
  */

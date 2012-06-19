@@ -151,6 +151,14 @@
 
 #define SHARED_PTR_BOOST	1
 
+/* Implements asinh() functionality using log() and sqrt() which are
+ * assumed to exist everywhere.
+ */
+#  ifndef HAVE_ASINH
+#    define asinh(x) (log(x + sqrt(x * x + 1)))
+#    define HAVE_ASINH 1
+#  endif
+
 /*
  * Signal handling
  */
