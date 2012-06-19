@@ -1128,41 +1128,32 @@ analyze_part(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
-#define arcsinh(x) (log((x) + sqrt((x)*(x) + 1.)))
-
 /* analyze rpc */
 static void
 analyze_rpc(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    fastf_t area_parab, area_body, b, h, r, vol_parab;
-    struct rt_rpc_internal *rpc = (struct rt_rpc_internal *)ip->idb_ptr;
-
-    RT_RPC_CK_MAGIC(rpc);
-
-    b = MAGNITUDE(rpc->rpc_B);
-    h = MAGNITUDE(rpc->rpc_H);
-    r = rpc->rpc_r;
-
-    /* area of one parabolic side */
-    area_parab = 4./3 * b*r;
+    fastf_t vol, area;
 
     /* volume of rpc */
-    vol_parab = area_parab*h;
+    rt_functab[ID_RPC].ft_volume(&vol, ip);
+    /* surface area of rpc */
+    rt_functab[ID_RPC].ft_surf_area(&area, ip);
 
-    /* surface area of parabolic body */
-    area_body = .5*sqrt(r*r + 4.*b*b) + .25*r*r/b*arcsinh(2.*b/r);
-    area_body *= 2.;
+    /* reminder to implement per-face analysis */
+    /*bu_vls_printf(gedp->ged_result_str, "Surface Areas:  front(BxR)=%.8f  top(RxH)=%.8f  body=%.8f\n",*/
+            /*area_parab*/
+            /** gedp->ged_wdbp->dbip->dbi_base2local*/
+            /** gedp->ged_wdbp->dbip->dbi_base2local,*/
+            /*area_rect*/
+            /** gedp->ged_wdbp->dbip->dbi_base2local*/
+            /** gedp->ged_wdbp->dbip->dbi_base2local,*/
+            /*area_body*/
+            /** gedp->ged_wdbp->dbip->dbi_base2local*/
+            /** gedp->ged_wdbp->dbip->dbi_base2local*/
+            /*);*/
 
     bu_vls_printf(gedp->ged_result_str, "\n");
-
-    bu_vls_printf(gedp->ged_result_str, "Surface Areas:  front(BxR)=%.8f  top(RxH)=%.8f  body=%.8f\n",
-		  area_parab*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  2*r*h*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  area_body*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(gedp->ged_result_str, "Total Surface Area=%.8f    Volume=%.8f (%.8f gal)\n",
-		  (2*area_parab+2*r*h+area_body)*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  vol_parab*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  vol_parab/GALLONS_TO_MM3);
+    print_volume_table(gedp, vol, area, vol/GALLONS_TO_MM3);
 }
 
 
