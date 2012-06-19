@@ -215,27 +215,6 @@ void RESOLVEinitialize( void ) {
     ERRORcreate_warning( "circular_subtype", ERROR_subsuper_loop );
     ERRORcreate_warning( "circular_select", ERROR_select_loop );
     ERRORcreate_warning( "entity_as_type", ERROR_type_is_entity );
-
-#if 0
-
-    ERROR_undefined_object = ERRORcreate(
-                                 "Reference to undefined object %s.", SEVERITY_ERROR );
-    ERROR_undefined_entity = ERRORcreate(
-                                 "Reference to undefined entity %s.", SEVERITY_ERROR );
-    ERROR_inappropriate_use = ERRORcreate(
-                                  "Inappropriate use of symbol %s.", SEVERITY_ERROR );
-    ERROR_overshadowed_reference = ERRORcreate(
-                                       "Referenced item %s already exists on line %d.", SEVERITY_WARNING );
-    ERROR_overloaded_reference  = ERRORcreate(
-                                      "Referenced item %s already referenced on line %d.", SEVERITY_WARNING );
-    ERROR_missing_subtype = ERRORcreate(
-                                "Entity %s missing from subtype list for supertype %s.", SEVERITY_WARNING );
-    ERROR_shadow_decl = ERRORcreate(
-                            "Declaration of %s shadows previous declaration on line %d.", SEVERITY_WARNING );
-    ERROR_group_reference_syntax = ERRORcreate(
-                                       "Bad syntax in group reference syntax.  Should be entity\\supertype", SEVERITY_EXIT );
-
-#endif
 }
 
 /** Clean up the Fed-X second pass */
@@ -272,17 +251,6 @@ void RESOLVEcleanup( void ) {
     ERRORdestroy( ERROR_redecl_no_such_attribute );
     ERRORdestroy( ERROR_redecl_no_such_supertype );
     ERRORdestroy( ERROR_missing_self );
-
-    #if 0
-    ERRORdestroy( ERROR_undefined_object );
-    ERRORdestroy( ERROR_undefined_entity );
-    ERRORdestroy( ERROR_inappropriate_use );
-    ERRORdestroy( ERROR_overshadowed_reference );
-    ERRORdestroy( ERROR_overloaded_reference );
-    ERRORdestroy( ERROR_missing_subtype );
-    ERRORdestroy( ERROR_shadow_decl );
-    ERRORdestroy( ERROR_group_reference_syntax );
-    #endif
 }
 
 /**
