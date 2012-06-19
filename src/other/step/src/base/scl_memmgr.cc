@@ -176,7 +176,7 @@ scl_memmgr::~scl_memmgr( void ) {
     // Check if total allocated equals total deallocated
     if( _allocated_total != _deallocated_total ) {
         // todo: generate warning for possible memory leaks, enable full memory leak checking
-        printf( "scl_memmgr warning: Possible memory leaks detected\n" );
+        printf("scl_memmgr warning: Possible memory leaks detected (%d of %d bytes)\n", _allocated_total - _deallocated_total, _allocated_total);
     }
 
     // Compact leaks into an error list to prevent same leak being reported multiple times.
