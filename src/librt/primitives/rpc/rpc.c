@@ -1519,7 +1519,7 @@ rt_rpc_centroid(point_t *cent, const struct rt_db_internal *ip)
     /* centroid of a parabolic section is
      * 2.0 / 5.0 * h where h is the height from
      * the base to the vertex of the parabola */
-    VSCALE(vect_b, vect_b, 2.0 / 5.0);
+    VSCALE(vect_b, vect_b, 0.4);
     VADD2(*cent, vect_v, vect_b);
 
     /* cent now stores the centroid of the
@@ -1527,6 +1527,38 @@ rt_rpc_centroid(point_t *cent, const struct rt_db_internal *ip)
      * of the rpc */
     VSCALE(vect_h, vect_h, 0.5);
     VADD2(*cent, *cent, vect_h);
+}
+
+
+/**
+ * R T _ R P C _ S U R F _ A R E A
+ */
+void
+rt_rpc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    fastf_t area_base, area_shell, area_rect;
+    fastf_t mag_b, mag_r, mag_h;
+    fastf_t magsq_b, magsq_r;
+    struct rt_rpc_internal *xip = (struct rt_rpc_internal *)ip->idb_ptr;
+    RT_RPC_CK_MAGIC(xip);
+
+    mag_h = MAGNITUDE(xip->rpc_H);
+
+    mag_b = MAGNITUDE(xip->rpc_B);
+    mag_r = xip->rpc_r;
+
+    magsq_b = mag_b * mag_b;
+    magsq_r = mag_r * mag_r;
+
+    area_base = 4.0/3.0 * mag_b * mag_r;
+
+    area_shell = 0.5 * sqrt(magsq_r + 4.0 * magsq_b) + 0.25 * magsq_r /
+        mag_b * asinh(2.0 * mag_b / mag_r);
+    area_shell *= 2.0;
+
+    area_rect = 2.0 * mag_r * mag_h;
+    
+    *area = 2.0 * area_base + area_rect + area_shell;
 }
 
 
