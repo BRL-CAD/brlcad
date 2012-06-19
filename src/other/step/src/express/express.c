@@ -279,6 +279,15 @@ Express EXPRESScreate() {
     return model;
 }
 
+void EXPRESSdestroy( Express model ) {
+    if ( model->u.express->basename )
+        scl_free( model->u.express->basename );
+    if ( model->u.express->filename )
+        scl_free( model->u.express->filename );
+    scl_free( model->u.express );
+    SCOPEdestroy( model );
+}
+
 #define MAX_SCHEMA_FILENAME_SIZE    256
 typedef struct Dir {
     char full[MAX_SCHEMA_FILENAME_SIZE];
@@ -354,6 +363,13 @@ static void EXPRESS_PATHinit() {
             *( p - 1 ) = save; /* put char back where temp null was */
         }
     }
+}
+
+static void EXPRESS_PATHfree( void ) {
+    LISTdo( EXPRESS_path, dir, Dir * )
+        scl_free( dir );
+    LISTod
+    LISTfree( EXPRESS_path );
 }
 
 /** inform object system about bit representation for handling pass diagnostics */
@@ -481,6 +497,30 @@ void EXPRESSinitialize( void ) {
     ERRORcreate_warning( "unsupported", ERROR_warn_unsupported_lang_feat );
 
     EXPRESS_PATHinit(); /* note, must follow defn of errors it needs! */
+}
+
+/** Clean up the EXPRESS package. */
+void EXPRESScleanup( void ) {
+    EXPRESS_PATHfree();
+
+    ERRORdestroy( ERROR_bail_out );
+    ERRORdestroy( ERROR_syntax );
+    ERRORdestroy( ERROR_ref_nonexistent );
+    ERRORdestroy( ERROR_tilde_expansion_failed );
+    ERRORdestroy( ERROR_schema_not_in_own_schema_file );
+    ERRORdestroy( ERROR_unlabelled_param_type );
+    ERRORdestroy( ERROR_file_unreadable );
+    ERRORdestroy( ERROR_file_unwriteable );
+    ERRORdestroy( ERROR_warn_unsupported_lang_feat );
+
+    DICTcleanup();
+    OBJcleanup();
+    ERRORcleanup();
+    RESOLVEcleanup();
+    TYPEcleanup();
+    EXPcleanup();
+    SCANcleanup();
+    LISTcleanup();
 }
 
 /**

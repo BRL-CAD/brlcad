@@ -72,6 +72,7 @@ extern SCL_EXPRESS_EXPORT Error ERROR_ambiguous_group;
 /***********************/
 
 extern SCL_EXPRESS_EXPORT void RESOLVEinitialize PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT void RESOLVEcleanup PROTO( ( void ) );
 extern SCL_EXPRESS_EXPORT void SCOPEresolve_expressions_statements PROTO( ( Scope ) );
 extern SCL_EXPRESS_EXPORT void SCOPEresolve_subsupers PROTO( ( Scope ) );
 extern SCL_EXPRESS_EXPORT void SCOPEresolve_types PROTO( ( Scope ) );

@@ -283,6 +283,19 @@ SCANinitialize( void ) {
     }
 }
 
+/** Clean up the Scan module */
+void SCANcleanup( void ) {
+    ERRORdestroy( ERROR_include_file );
+    ERRORdestroy( ERROR_unmatched_close_comment );
+    ERRORdestroy( ERROR_unmatched_open_comment );
+    ERRORdestroy( ERROR_unterminated_string );
+    ERRORdestroy( ERROR_encoded_string_bad_digit );
+    ERRORdestroy( ERROR_encoded_string_bad_count );
+    ERRORdestroy( ERROR_bad_identifier );
+    ERRORdestroy( ERROR_unexpected_character );
+    ERRORdestroy( ERROR_nonascii_char );
+}
+
 int
 SCANprocess_real_literal( const char * yytext ) {
     sscanf( yytext, "%lf", &( yylval.rVal ) );

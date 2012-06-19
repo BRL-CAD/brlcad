@@ -83,6 +83,10 @@ Scope SCOPEcreate_tiny( char type ) {
     return d;
 }
 
+void SCOPEdestroy( Scope scope ) {
+    SCOPE_destroy( scope );
+}
+
 /**
  * create a scope without a symbol table
  * used for simple types

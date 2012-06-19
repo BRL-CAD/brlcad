@@ -238,6 +238,53 @@ void RESOLVEinitialize( void ) {
 #endif
 }
 
+/** Clean up the Fed-X second pass */
+void RESOLVEcleanup( void ) {
+    ERRORdestroy( ERROR_undefined );
+    ERRORdestroy( ERROR_undefined_attribute );
+    ERRORdestroy( ERROR_undefined_type );
+    ERRORdestroy( ERROR_undefined_schema );
+    ERRORdestroy( ERROR_unknown_attr_in_entity );
+    ERRORdestroy( ERROR_unknown_subtype );
+    ERRORdestroy( ERROR_unknown_supertype );
+    ERRORdestroy( ERROR_circular_reference );
+    ERRORdestroy( ERROR_subsuper_loop );
+    ERRORdestroy( ERROR_subsuper_continuation );
+    ERRORdestroy( ERROR_select_loop );
+    ERRORdestroy( ERROR_select_continuation );
+    ERRORdestroy( ERROR_supertype_resolve );
+    ERRORdestroy( ERROR_subtype_resolve );
+    ERRORdestroy( ERROR_not_a_type );
+    ERRORdestroy( ERROR_funcall_not_a_function );
+    ERRORdestroy( ERROR_undefined_func );
+    ERRORdestroy( ERROR_expected_proc );
+    ERRORdestroy( ERROR_no_such_procedure );
+    ERRORdestroy( ERROR_wrong_arg_count );
+    ERRORdestroy( ERROR_query_requires_aggregate );
+    ERRORdestroy( ERROR_self_is_unknown );
+    ERRORdestroy( ERROR_inverse_bad_entity );
+    ERRORdestroy( ERROR_inverse_bad_attribute );
+    ERRORdestroy( ERROR_missing_supertype );
+    ERRORdestroy( ERROR_type_is_entity );
+    ERRORdestroy( ERROR_ambiguous_attribute );
+    ERRORdestroy( ERROR_ambiguous_group );
+    ERRORdestroy( ERROR_overloaded_attribute );
+    ERRORdestroy( ERROR_redecl_no_such_attribute );
+    ERRORdestroy( ERROR_redecl_no_such_supertype );
+    ERRORdestroy( ERROR_missing_self );
+
+    #if 0
+    ERRORdestroy( ERROR_undefined_object );
+    ERRORdestroy( ERROR_undefined_entity );
+    ERRORdestroy( ERROR_inappropriate_use );
+    ERRORdestroy( ERROR_overshadowed_reference );
+    ERRORdestroy( ERROR_overloaded_reference );
+    ERRORdestroy( ERROR_missing_subtype );
+    ERRORdestroy( ERROR_shadow_decl );
+    ERRORdestroy( ERROR_group_reference_syntax );
+    #endif
+}
+
 /**
 ** Retrieve the aggregate type from the underlying types of the select type t_select
 ** \param t_select the select type to retrieve the aggregate type from

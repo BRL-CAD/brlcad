@@ -309,6 +309,7 @@ extern SCL_EXPRESS_EXPORT Type TYPEcreate_name PROTO( ( struct Symbol_ * ) );
 extern SCL_EXPRESS_EXPORT Type TYPEcreate_nostab PROTO( ( struct Symbol_ *, Scope, char ) );
 extern SCL_EXPRESS_EXPORT TypeBody TYPEBODYcreate PROTO( ( enum type_enum ) );
 extern SCL_EXPRESS_EXPORT void TYPEinitialize PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT void TYPEcleanup PROTO( ( void ) );
 
 extern SCL_EXPRESS_EXPORT bool TYPEinherits_from PROTO( ( Type, enum type_enum ) );
 extern SCL_EXPRESS_EXPORT Type TYPEget_nonaggregate_base_type PROTO( ( Type ) );

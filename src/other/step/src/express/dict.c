@@ -65,6 +65,12 @@ void DICTinitialize( void ) {
                                          "Redeclaration of %s.  Previous declaration was on line %d in file %s.", SEVERITY_ERROR );
 }
 
+/** Clean up the Dictionary module */
+void DICTcleanup( void ) {
+    ERRORdestroy( ERROR_duplicate_decl );
+    ERRORdestroy( ERROR_duplicate_decl_diff_file );
+}
+
 /**
  * Define anything in a dictionary.  Generates an
  * error directly if there is a duplicate value.

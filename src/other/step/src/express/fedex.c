@@ -124,13 +124,13 @@ static void usage( void ) {
     exit( 2 );
 }
 
-int
-main( int argc, char ** argv ) {
+int main( int argc, char ** argv ) {
     int c;
     int rc;
     char * cp;
     int no_warnings = 1;
     int resolve = 1;
+    int result;
     int no_need_to_work = 0;/* TRUE if we can exit gracefully without */
     /* doing any work */
 
@@ -239,6 +239,7 @@ main( int argc, char ** argv ) {
     if( !filename ) {
         filename = argv[optind];
         if( !filename ) {
+            EXPRESScleanup();
             if( no_need_to_work ) {
                 return( 0 );
             } else {
@@ -259,7 +260,10 @@ main( int argc, char ** argv ) {
     model = EXPRESScreate();
     EXPRESSparse( model, ( FILE * )0, filename );
     if( ERRORoccurred ) {
-        return( EXPRESS_fail( model ) );
+        result = EXPRESS_fail( model );
+        EXPRESScleanup();
+        EXPRESSdestroy( model );
+        return result;
     }
 
 #ifdef debugging
@@ -272,7 +276,10 @@ main( int argc, char ** argv ) {
     if( resolve ) {
         EXPRESSresolve( model );
         if( ERRORoccurred ) {
-            return( EXPRESS_fail( model ) );
+            result = EXPRESS_fail( model ); 
+            EXPRESScleanup();
+            EXPRESSdestroy( model );
+            return result;
         }
     }
 
@@ -281,8 +288,14 @@ main( int argc, char ** argv ) {
     }
 
     if( ERRORoccurred ) {
-        return( EXPRESS_fail( model ) );
+        result = EXPRESS_fail( model );
+        EXPRESScleanup();
+        EXPRESSdestroy( model );
+        return result;
     }
 
-    return( EXPRESS_succeed( model ) );
+    result = EXPRESS_succeed( model ); 
+    EXPRESScleanup();
+    EXPRESSdestroy( model );
+    return result;
 }

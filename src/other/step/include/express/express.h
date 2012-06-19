@@ -248,8 +248,10 @@ extern SCL_EXPRESS_EXPORT char * KW_XOR;
 /***********************/
 
 extern SCL_EXPRESS_EXPORT Express  EXPRESScreate PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT void     EXPRESSdestroy PROTO( ( Express ) );
 extern SCL_EXPRESS_EXPORT void     EXPRESSparse PROTO( ( Express, FILE *, char * ) );
 extern SCL_EXPRESS_EXPORT void     EXPRESSinitialize PROTO( ( void ) );
+extern SCL_EXPRESS_EXPORT void     EXPRESScleanup PROTO( ( void ) );
 extern SCL_EXPRESS_EXPORT void     EXPRESSresolve PROTO( ( Express ) );
 extern SCL_EXPRESS_EXPORT char  *  EXPRESSversion PROTO( ( void ) );
 extern SCL_EXPRESS_EXPORT int      EXPRESS_fail PROTO( ( Express ) );

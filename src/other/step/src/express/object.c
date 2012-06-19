@@ -45,6 +45,11 @@ void OBJinitialize() {
     }
 }
 
+/** Clean up the Object module */
+void OBJcleanup() {
+    scl_free( OBJ );
+}
+
 void OBJcreate( char type, struct Symbol_ * ( *get_symbol )( Generic ), char * printable_type, int bits ) {
     OBJ[type].get_symbol = get_symbol;
     OBJ[type].type = printable_type;

@@ -39,6 +39,10 @@ LISTinitialize( void ) {
 
 }
 
+void LISTcleanup( void ) {
+    ERRORdestroy( ERROR_empty_list );
+}
+
 Linked_List
 LISTcreate() {
     Linked_List list = LIST_new();

@@ -142,6 +142,14 @@ void ERRORinitialize( void ) {
 #endif
 }
 
+/** Clean up the Error module */
+void ERRORcleanup( void ) {
+    ERRORdestroy( ERROR_subordinate_failed );
+    ERRORdestroy( ERROR_syntax_expecting );
+
+    scl_free( ERROR_string_base );
+}
+
 /** Need the LIST routines to complete ERROR initialization */
 void ERRORinitialize_after_LIST( void ) {
     ERRORwarnings = LISTcreate();
@@ -434,6 +442,10 @@ Error ERRORcreate( char * message, Severity severity ) {
     n->severity = severity;
     n->enabled = true;
     return n;
+}
+
+void ERRORdestroy( Error error ) {
+    scl_free( error );
 }
 
 /** \fn ERRORbuffer_messages
