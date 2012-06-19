@@ -40,7 +40,18 @@ SDAI_Application_instance::SDAI_Application_instance( int fileid, int complex )
 }
 
 SDAI_Application_instance::~SDAI_Application_instance() {
+    STEPattribute *attr;
+
     ResetAttributes();
+    do {
+        attr = NextAttribute();
+        if (attr) {
+            attr->refCount --;
+            if (attr->refCount <= 0)
+                delete attr;
+        }   
+    } while (attr);
+
 
     if( MultipleInheritance() ) {
         delete nextMiEntity;
