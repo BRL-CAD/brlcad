@@ -1824,11 +1824,7 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 		    }
 		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_HALF") ||
 			BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_PNTS")) {
-			if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_HALF"))  {
-			    ret = wdb_export(wdbp, tmpname, intern->idb_ptr, ID_HALF, local2mm);
-			} else {
-			    ret = wdb_export(wdbp, tmpname, intern->idb_ptr, ID_PNTS, local2mm);
-			}
+			ret = wdb_export(wdbp, tmpname, intern->idb_ptr, intern->idb_type, local2mm);
 			if (ret) {
 			    bu_log("ERROR: failure writing [%s] to disk\n", tmpname);
 			    bu_free(tmpname, "char");
