@@ -1704,19 +1704,25 @@ BRLCAD_FUNCTION_EXISTS(vfork HAVE_VFORK)
 BRLCAD_FUNCTION_EXISTS(vsscanf HAVE_VSSCANF)
 BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
 
-# On Windows, we need to check for hypot.  This test pertains
+# On Windows, we need to check for hypot etc..  This test pertains
 # to the windows specific config file, not CONFIG_H_FILE - hence,
 # just run the test and it will be handled by configure_file later.
 include(CheckSymbolExists)
 if(WIN32)
   # consider all warnings as errors (MSVC)
   set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS} /WX)
+
   CHECK_SYMBOL_EXISTS(hypot "math.h" HAVE_HYPOT)
   #If we don't have it, need to define it as _hypot in config_win
   if(NOT HAVE_HYPOT)
     set(hypot 1)
   endif(NOT HAVE_HYPOT)
+
   CHECK_SYMBOL_EXISTS(asinh "math.h" HAVE_ASINH)
+  #If we don't have it, need to define it in config_win
+  if(NOT HAVE_ASINH)
+    set(asinh 1)
+  endif(NOT HAVE_ASINH)
 endif(WIN32)
 
 # Check whether we need to add import/export lines to libraries
