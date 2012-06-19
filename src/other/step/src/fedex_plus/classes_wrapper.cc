@@ -701,37 +701,21 @@ EXPRESSPrint( Express express, ComplexCollect & col, FILES * files ) {
 
 }
 
-/******************************************************************
- ** Procedure:  print_schemas_combined
- ** Parameters:
-       Express express -- in memory representation of an express model
-       FILES* files  -- set of output files to print to
- ** Returns:
- ** Description:  drives functions to generate code for all the schemas
- ** in an Express model into one set of files  -- works with EXPRESSPrint
- ** Side Effects:  generates code
- ** Status:  24-Feb-1992 new -kcm
- ******************************************************************/
-
-void
-print_schemas_combined( Express express, ComplexCollect & col, FILES * files ) {
-
+/**
+ * drives functions to generate code for all the schemas
+ * in an Express model into one set of files  -- works with EXPRESSPrint
+ * Side Effects:  generates code
+ * Status:  24-Feb-1992 new -kcm
+ */
+void print_schemas_combined( Express express, ComplexCollect & col, FILES * files ) {
     EXPRESSPrint( express, col, files );
 }
 
-/*
-** Procedure:   print_file
-** Parameters:  const Schema schema - top-level schema to print
-**      FILE*        file   - file on which to print
-** Returns: void
-** Description:  this function calls one of two different functions
-**  depending on whether the output should be combined into a single
-**  set of files or a separate set for each schema
-**
-*/
-
-void
-print_file( Express express ) {
+/** this function calls one of two different functions
+ *  depending on whether the output should be combined into a single
+ *  set of files or a separate set for each schema
+ */
+void print_file( Express express ) {
     extern void RESOLUTIONsucceed( void );
     int separate_schemas = 1;
     ComplexCollect col( express );
