@@ -71,7 +71,7 @@ usage(const char *msg, const char *argv0)
     if (msg) {
 	bu_log("%s\n", msg);
     }
-    bu_log("Client Usage: %s [-t] [-p#] host file\n\t-p#\tport number to send to (default 2000)\n\thost\thostname or IP address of receiving server\n\tfile\tsome file to transfer\n", argv0 ? argv0 : MAGIC_ID);
+    bu_log("Client Usage: %s [-t] [-p#] [-b#] host file\n\t-p#\tport number to send to (default 2000)\n\t-b#\tsize of the packages sent (default 2048)\n\thost\thostname or IP address of receiving server\n\tfile\tsome file to transfer\n", argv0 ? argv0 : MAGIC_ID);
     bu_log("Server Usage: %s -r [-p#]\n\t-p#\tport number to listen on (default 2000)\n", argv0 ? argv0 : MAGIC_ID);
 
     bu_log("\n%s", pkg_version());
@@ -234,16 +234,15 @@ run_server(int port) {
  * serialized file data.
  */
 void
-run_client(const char *server, int port, const char *file)
+run_client(const char *server, int port, const char *file, unsigned int tpkg_bufsize)
 {
     my_data stash;
     char s_port[MAX_DIGITS + 1] = {0};
     long bytes = 0;
     FILE *fp = (FILE *)NULL;
-    static const unsigned int TPKG_BUFSIZE = 2048;
     char *buffer;
 
-    buffer = (char *)bu_calloc(TPKG_BUFSIZE, 1, "buffer allocation");
+    buffer = (char *)bu_calloc(tpkg_bufsize, 1, "buffer allocation");
 
     /* make sure the file can be opened */
     fp = fopen(file, "rb");
@@ -276,7 +275,7 @@ run_client(const char *server, int port, const char *file)
 
     /* send the file data to the server */
     while (!feof(fp) && !ferror(fp)) {
-	bytes = fread(buffer, 1, TPKG_BUFSIZE, fp);
+	bytes = fread(buffer, 1, tpkg_bufsize, fp);
 	bu_log("Read %ld bytes from %s\n", bytes, file);
 
 	if (bytes > 0) {
@@ -314,7 +313,7 @@ main(int argc, char *argv[]) {
     int c;
     int server = 0; /* not a server by default */
     int port = 2000;
-
+    unsigned int pkg_size = 2048;
     /* client stuff */
     const char *server_name = NULL;
     const char *file = NULL;
@@ -324,7 +323,7 @@ main(int argc, char *argv[]) {
     }
 
     /* process the command-line arguments after the application name */
-    while ((c = bu_getopt(argc, argv, "tTrRp:P:hH")) != -1) {
+    while ((c = bu_getopt(argc, argv, "tTrRp:P:hH:b:B:")) != -1) {
 	switch (c) {
 	    case 't':
 	    case 'T':
@@ -340,6 +339,11 @@ main(int argc, char *argv[]) {
 	    case 'P':
 		port = atoi(bu_optarg);
 		break;
+	    case 'b':
+	    case 'B':
+		/* Package size*/
+		pkg_size=(unsigned int)atoi(bu_optarg);
+		break;
 	    case 'h':
 	    case 'H':
 		/* help */
@@ -349,7 +353,6 @@ main(int argc, char *argv[]) {
 		usage("ERROR: Unknown argument\n", argv0);
 	}
     }
-
     argc -= bu_optind;
     argv += bu_optind;
 
@@ -390,7 +393,7 @@ main(int argc, char *argv[]) {
 
     /* fire up the client */
     bu_log("Connecting to %s, port %d\n", server_name, port);
-    run_client(server_name, port, file);
+    run_client(server_name, port, file, pkg_size);
 
     return 0;
 }
