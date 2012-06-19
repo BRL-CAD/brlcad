@@ -1700,7 +1700,24 @@ void LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
     to be deleted -- attributes will need reference count  */
 
     entnm = ENTITYget_classname( entity );
-    fprintf( file, "%s::~%s () {  }\n", entnm, entnm );
+    fprintf( file, "%s::~%s () {\n", entnm, entnm );
+
+    attr_list = ENTITYget_attributes( entity );
+
+    LISTdo( attr_list, a, Variable )
+    if( VARget_initializer( a ) == EXPRESSION_NULL ) {
+        generate_attribute_name( a, attrnm );
+        t = VARget_type( a );
+
+        if( ( ! VARget_inverse( a ) ) && ( ! VARis_derived( a ) ) )  {
+            if( TYPEis_aggregate( t ) ) {
+                fprintf( file, "    delete _%s;\n", attrnm );
+            }
+        }
+    }
+    LISTod;
+
+    fprintf( file, "}\n" );
 }
 
 /********************/
