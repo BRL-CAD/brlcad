@@ -1492,7 +1492,6 @@ rt_rpc_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
     fastf_t mag_h, mag_b, mag_r;
     struct rt_rpc_internal *xip = (struct rt_rpc_internal *)ip->idb_ptr;
-
     RT_RPC_CK_MAGIC(xip);
 
     mag_h = MAGNITUDE(xip->rpc_H);
@@ -1500,6 +1499,34 @@ rt_rpc_volume(fastf_t *vol, const struct rt_db_internal *ip)
     mag_r = xip->rpc_r;
 
     *vol = 4.0/3.0 * mag_b * mag_r * mag_h;
+}
+
+
+/**
+ * R T _ R P C _ C E N T R O I D
+ */
+void
+rt_rpc_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    vect_t vect_b, vect_h, vect_v;
+    struct rt_rpc_internal *xip = (struct rt_rpc_internal *)ip->idb_ptr;
+    RT_RPC_CK_MAGIC(xip);
+
+    VMOVE(vect_b, xip->rpc_B);
+    VMOVE(vect_h, xip->rpc_H);
+    VMOVE(vect_v, xip->rpc_V);
+
+    /* centroid of a parabolic section is
+     * 2.0 / 5.0 * h where h is the height from
+     * the base to the vertex of the parabola */
+    VSCALE(vect_b, vect_b, 2.0 / 5.0);
+    VADD2(*cent, vect_v, vect_b);
+
+    /* cent now stores the centroid of the
+     * parabolic section representing the base
+     * of the rpc */
+    VSCALE(vect_h, vect_h, 0.5);
+    VADD2(*cent, *cent, vect_h);
 }
 
 
