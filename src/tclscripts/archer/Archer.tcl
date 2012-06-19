@@ -2553,13 +2553,6 @@ proc title_node_handler {node} {
 	"FB Background Color:" \
 	$mColorListNoTriple
 
-#    buildComboBox $itk_component(generalF) \
-	fboverlayColor \
-	fbocolor \
-	mRtWizardEdgeColorPref \
-	"FB Overlay Color:" \
-	$mColorListNoTriple
-
     buildComboBox $itk_component(generalF) \
 	fontsize \
 	fontsize \
@@ -6275,6 +6268,8 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
     grid $itk_component(occlusionF) -column 1 -row $i -sticky ew
 
     grid columnconfigure $itk_component(objRtImageView) 1 -weight 1
+
+    return $i
 }
 
 
@@ -7790,10 +7785,6 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
 	set mFBBackgroundColor $mFBBackgroundColorPref
     }
 
-    if {$mRtWizardEdgeColor != $mRtWizardEdgeColorPref} {
-	set mRtWizardEdgeColor $mRtWizardEdgeColorPref
-    }
-
     if {$mDisplayFontSize != $mDisplayFontSizePref} {
 	set mDisplayFontSize $mDisplayFontSizePref
     }
@@ -8334,7 +8325,6 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
     set mBindingModePref $mBindingMode
     set mEnableBigEPref $mEnableBigE
     set mFBBackgroundColorPref $mFBBackgroundColor
-    set mRtWizardEdgeColorPref $mRtWizardEdgeColor
     set mDisplayFontSizePref $mDisplayFontSize
     set mMeasuringStickColorPref $mMeasuringStickColor
     set mMeasuringStickModePref $mMeasuringStickMode

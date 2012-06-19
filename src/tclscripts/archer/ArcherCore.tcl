@@ -433,13 +433,9 @@ namespace eval ArcherCore {
 	variable mFBBackgroundColor Black
 	variable mFBBackgroundColorPref ""
 	variable mRtWizardEdgeColor White
-	variable mRtWizardEdgeColorPref ""
-	variable mRtWizardNonEdgeColor Yellow
-	variable mRtWizardNonEdgeColorPref ""
+	variable mRtWizardNonEdgeColor Grey
 	variable mRtWizardOccMode 1
-	variable mRtWizardOccModePref ""
 	variable mRtWizardGhostIntensity 12
-	variable mRtWizardGhostIntensityPref ""
 
 	variable mDisplayFontSize 0
 	variable mDisplayFontSizePref ""
