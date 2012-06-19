@@ -194,9 +194,9 @@ void SCOPEPrint( Scope scope, FILES * files, Schema schema, Express model,
 
         // Write the SdaixxxInit() fn (in .init.cc file):
         //    Do the types:
-        SCOPEdo_types( scope, t, de )
-        TYPEprint_init( t, files->init, schema );
-        SCOPEod;
+        SCOPEdo_types( scope, t, de ) {
+            TYPEprint_init( t, files, schema );
+        } SCOPEod;
         //    (The entities are done as a part of ENTITYPrint() below.)
     }
 
@@ -356,11 +356,11 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
     char schnm[MAX_LEN], sufnm[MAX_LEN], fnm[MAX_LEN], *np;
     /* sufnm = schema name + suffix */
     FILE * libfile,
-         *incfile,
-         *schemafile = files->incall,
-          *schemainit = files->initall,
-            *initfile,
-            *createall = files->create;
+         * incfile,
+         * schemafile = files->incall,
+         * schemainit = files->initall,
+         * initfile,
+         * createall = files->create;
     Rule r;
     Function f;
     Procedure p;
@@ -450,6 +450,7 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
 #endif
         fprintf( initfile, "#include <Registry.h>\n#include <string>\n" );
         fprintf( initfile, "#include <scl_memmgr.h>\n" );
+        fprintf( files->init, "\n#include \"%sHelpers.h\"\n", schnm );
 
         fprintf( initfile, "\nvoid %sInit (Registry& reg) {\n    std::string str;\n", schnm );
 
@@ -503,6 +504,15 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
         initfile = files->init = fopen( fnm, "a" );
     }
 
+    // 5. header containing inline helper functions (for runtime aggregate bounds, possibly other uses)
+    sprintf( fnm, "%sHelpers.h", schnm );
+    if( !( files->helpers = FILEcreate( fnm ) ) ) {
+        return;
+    }
+    fprintf( files->helpers, "\n// In the fedex_plus source code, this file is referred to as files->helpers.\n// This line printed at %s:%d (one of two possible locations).\n\n", __FILE__, __LINE__ );
+    fprintf( files->helpers, "//this file contains inline helper functions (for runtime aggregate bounds, possibly other uses)\n\n" );
+
+
     /**********  record in files relating to entire input   ***********/
 
     /*  add to schema's include and initialization file */
@@ -530,6 +540,7 @@ void SCHEMAprint( Schema schema, FILES * files, Express model, void * complexCol
     } else {
         fclose( initfile );
     }
+    FILEclose( files->helpers );
 }
 
 /** ****************************************************************
@@ -646,7 +657,17 @@ EXPRESSPrint( Express express, ComplexCollect & col, FILES * files ) {
     fprintf( files->init, "\n// in the fedex_plus source code, this file is generally referred to as files->init or initfile\n" );
 
     fprintf( initfile, "#include \"%s.h\"\n\n", schnm );
+    fprintf( files->init, "\n#include \"%sHelpers.h\"\n", schnm );
     fprintf( initfile, "void \n%sInit (Registry& reg)\n{\n", schnm );
+
+    // 5. header containing inline helper functions (for runtime aggregate bounds, possibly other uses)
+    sprintf( fnm, "%sHelpers.h", schnm );
+    if( !( files->helpers = FILEcreate( fnm ) ) ) {
+        return;
+    }
+    fprintf( files->helpers, "\n// In the fedex_plus source code, this file is referred to as files->helpers.\n// This line printed at %s:%d (one of two possible locations).\n\n", __FILE__, __LINE__ );
+    fprintf( files->helpers, "//this file contains inline helper functions (for runtime aggregate bounds, possibly other uses)\n\n" );
+
 
     /**********  record in files relating to entire input   ***********/
 

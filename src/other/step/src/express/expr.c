@@ -577,12 +577,16 @@ Type EXPresolve_op_group( Expression expr, Scope scope ) {
                     /*                  &op2->symbol, op2->symbol.name);*/
                     return( Type_Runtime );
             }
+        case array_:
+            if( op1->type->u.type->body->type == self_ ) {
+                return( Type_Runtime ); //not sure if there are other cases where Type_Runtime should be returned, or not
+            } // else fallthrough
         case unknown_:  /* unable to resolve operand */
             /* presumably error has already been reported */
             resolve_failed( expr );
             return( Type_Bad );
         case aggregate_:
-        case array_:
+
         case bag_:
         case list_:
         case set_:
