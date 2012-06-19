@@ -2060,6 +2060,8 @@ TYPEselect_print( Type t, FILES * files, Schema schema ) {
     /* TYPEselect_init_print (t, files -> init, schema);
        DAR - moved to TYPEprint_init() - to keep init info together. */
     tag -> complete = 1;
+
+    scl_free( tag );
 }
 #undef BASE_SELECT
 
