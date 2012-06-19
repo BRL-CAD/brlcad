@@ -21,8 +21,8 @@
     straightforward:
     <footnote>
       <para>Note: <emphasis>lhs</emphasis> is an abbreviation for left 
-      hand side and rhs similary stands for right hand side, given the 
-      assumption that a path is displayed as an ascii stream with left 
+      hand side and rhs similarly stands for right hand side, given the 
+      assumption that a path is displayed as an ASCII stream with left 
       to right text orientation (e.g. /toplevel/level-1/level-2/etc.)
       </para>
     </footnote>
@@ -61,7 +61,7 @@
     </para>
 
     <para> If we examine the tree structure of this object, we see it
-    resembles a filesystem - combinations and regions act a bit like
+    resembles a file system - combinations and regions act a bit like
     "folders" which can hold other folders and files. 
     <footnote>
       <para> When tree structures are displayed, a "/" suffix denotes
@@ -87,7 +87,7 @@ lollipop/
                 - stick.s
     </literallayout>
     
-    In the "filesystem" of a BRL-CAD object combinations can 
+    In the "file system" of a BRL-CAD object combinations can 
     hold combinations, regions and primitives.  Regions
     can hold combinations and primitives.
     <footnote>
@@ -99,7 +99,7 @@ lollipop/
     Primitives are always leaves on the tree - they do not "contain" 
     anything.  Combinations, regions, and primitives can have 
     associated with them transformation data (sort of like metadata in 
-    a filesystem) that tells BRL-CAD how to manipulate the combination, 
+    a file system) that tells BRL-CAD how to manipulate the combination, 
     region, or primitive in question.  It is this data that will be 
     acted upon when the <command>oed</command> command is used.  So in 
     the above example the full "path" of the outer-candy-sphere.c 
@@ -813,7 +813,7 @@ object1.c:  --
 	  <para>
 	    Object edit mode does not alter primitives directly but 
 	    instead works on a transformation matrix that BRL-CAD uses
-	    when interperting the primitive.
+	    when interpreting the primitive.
 	  </para>
 	</listitem>
 	<listitem>
