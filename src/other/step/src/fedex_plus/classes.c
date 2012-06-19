@@ -1925,15 +1925,12 @@ bool TYPEis_builtin( const Type t ) {
  * \param t the Type
  * \param var_name the name of the C++ variable, such as t_1 or schema::t_name
  */
-void AGGRprint_init( FILES* files, const Type t, const char* var_name ) {
-    ///called from print_typechain and TYPEprint_init. print_typechain called from Tp_i and ENTITYincode_print
-    ///Need FILES* not FILE*, so modify those functions
+void AGGRprint_init( FILES* files, const Type t, const char* var_name, const char* aggr_name ) {
     if( !TYPEget_head( t ) ) {
         //the code for lower and upper is almost identical
         if( TYPEget_body( t )->lower ) {
             if (TYPEget_body( t )->lower->symbol.resolved ) {
                 if( TYPEget_body( t )->lower->type == Type_Funcall ) {
-                    //assert( TYPEget_body( t )->lower->return_type == Type_Integer );
                     fprintf( files->init, "        %s->SetBound1FromExpressFuncall(\"%s\");\n", var_name,
                              EXPRto_string( TYPEget_body( t )->lower) );
                 } else {
@@ -1943,9 +1940,9 @@ void AGGRprint_init( FILES* files, const Type t, const char* var_name ) {
                 assert( ( t->superscope ) && ( t->superscope->symbol.name ) && ( TYPEget_body( t )->lower->e.op2 ) &&
                         ( TYPEget_body( t )->lower->e.op2->symbol.name ) );
                 fprintf( files->init, "        %s->SetBound1FromMemberAccessor( &getBound1_%s__%s );\n", var_name,
-                        ClassName( t->superscope->symbol.name ), TYPEget_body( t )->lower->e.op2->symbol.name );
+                        ClassName( t->superscope->symbol.name ), aggr_name );
                 fprintf( files->helpers, "inline SDAI_Integer getBound1_%s__%s( SDAI_Application_instance* this_ptr ) {\n",
-                         ClassName( t->superscope->symbol.name ), TYPEget_body( t )->lower->e.op2->symbol.name );
+                         ClassName( t->superscope->symbol.name ), aggr_name );
                 fprintf( files->helpers, "    return ( (%s *) this_ptr)->%s_();\n};\n",
                          ClassName( t->superscope->symbol.name ), TYPEget_body( t )->lower->e.op2->symbol.name );
             }
@@ -1953,7 +1950,6 @@ void AGGRprint_init( FILES* files, const Type t, const char* var_name ) {
         if( TYPEget_body( t )->upper ) {
             if (TYPEget_body( t )->upper->symbol.resolved ) {
                 if( TYPEget_body( t )->upper->type == Type_Funcall ) {
-                    //assert( TYPEget_body( t )->upper->return_type == Type_Integer );
                     fprintf( files->init, "        %s->SetBound2FromExpressFuncall(\"%s\");\n", var_name,
                              EXPRto_string( TYPEget_body( t )->upper ) );
                 } else {
@@ -1963,9 +1959,9 @@ void AGGRprint_init( FILES* files, const Type t, const char* var_name ) {
                 assert( ( t->superscope ) && ( t->superscope->symbol.name ) && ( TYPEget_body( t )->upper->e.op2 ) &&
                         ( TYPEget_body( t )->upper->e.op2->symbol.name ) );
                 fprintf( files->init, "        %s->SetBound2FromMemberAccessor( &getBound2_%s__%s );\n", var_name,
-                         ClassName( t->superscope->symbol.name ), TYPEget_body( t )->upper->e.op2->symbol.name );
+                         ClassName( t->superscope->symbol.name ), aggr_name );
                 fprintf( files->helpers, "inline SDAI_Integer getBound2_%s__%s( SDAI_Application_instance* this_ptr ) {\n",
-                         ClassName( t->superscope->symbol.name ), TYPEget_body( t )->upper->e.op2->symbol.name );
+                         ClassName( t->superscope->symbol.name ), aggr_name );
                 fprintf( files->helpers, "    return ( (%s *) this_ptr)->%s_();\n};\n",
                          ClassName( t->superscope->symbol.name ), TYPEget_body( t )->upper->e.op2->symbol.name );
             }
@@ -2006,7 +2002,7 @@ void AGGRprint_init( FILES* files, const Type t, const char* var_name ) {
         that can be referenced to refer to the type that was created for
     Type t.
 */
-void print_typechain( FILES * files, const Type t, char * buf, Schema schema ) {
+void print_typechain( FILES * files, const Type t, char * buf, Schema schema, const char* type_name ) {
     /* if we've been called, current type has no name */
     /* nor is it a built-in type */
     /* the type_count variable is there for debugging purposes  */
@@ -2034,7 +2030,7 @@ void print_typechain( FILES * files, const Type t, char * buf, Schema schema ) {
 
             s = snprintf( name_buf, MAX_LEN, "%s%d", TD_PREFIX, count );
             assert( ( s > 0 ) && ( s < MAX_LEN ) );
-            AGGRprint_init( files, t, name_buf );
+            AGGRprint_init( files, t, name_buf, type_name );
 
             break;
 
@@ -2063,7 +2059,7 @@ void print_typechain( FILES * files, const Type t, char * buf, Schema schema ) {
         if( TYPEget_body( t ) ) {
             base = TYPEget_body( t )->base;
         }
-        print_typechain( files, base, callee_buffer, schema );
+        print_typechain( files, base, callee_buffer, schema, type_name );
         fprintf( files->init, "        %s%d->ReferentType(%s);\n", TD_PREFIX, count, callee_buffer );
     }
     sprintf( buf, "%s%d", TD_PREFIX, count );
@@ -2229,7 +2225,7 @@ void ENTITYincode_print( Entity entity, FILES * files, Schema schema ) {
     } else {
         /* manufacture new one(s) on the spot */
         char typename_buf[MAX_LEN];
-        print_typechain( files, v->type, typename_buf, schema );
+        print_typechain( files, v->type, typename_buf, schema, v->name->symbol.name );
         fprintf( files->init, "        %s::%s%d%s%s =\n          new %s"
                  "(\"%s\",%s,%s,%s%s,\n          *%s::%s%s);\n",
                  SCHEMAget_name( schema ), ATTR_PREFIX, attr_count,
@@ -3341,7 +3337,7 @@ void TYPEprint_init( const Type type, FILES * files, Schema schema ) {
     strncpy( tdnm, TYPEtd_name( type ), BUFSIZ );
 
     if( isAggregateType( type ) ) {
-        AGGRprint_init( files, type, tdnm );
+        AGGRprint_init( files, type, tdnm, type->symbol.name );
     }
 
     /* fill in the TD's values in the SchemaInit function (it is already
@@ -3360,7 +3356,7 @@ void TYPEprint_init( const Type type, FILES * files, Schema schema ) {
 
                 if( isMultiDimAggregateType( type ) ) {
                     print_typechain( files, TYPEget_body( type )->base,
-                                     typename_buf, schema );
+                                     typename_buf, schema, type->symbol.name );
                     fprintf( files->init, "        %s->ReferentType(%s);\n", tdnm,
                              typename_buf );
                 }
