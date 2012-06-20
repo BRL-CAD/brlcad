@@ -1960,7 +1960,7 @@ void AGGRprint_init( FILES* files, const Type t, const char* var_name, const cha
                         ClassName( t->superscope->symbol.name ), aggr_name );
                 fprintf( files->helpers, "inline SDAI_Integer getBound1_%s__%s( SDAI_Application_instance* this_ptr ) {\n",
                          ClassName( t->superscope->symbol.name ), aggr_name );
-                fprintf( files->helpers, "    return ( (%s *) this_ptr)->%s_();\n};\n",
+                fprintf( files->helpers, "    return ( (%s *) this_ptr)->%s_();\n}\n",
                          ClassName( t->superscope->symbol.name ), TYPEget_body( t )->lower->e.op2->symbol.name );
             }
         }
@@ -1979,7 +1979,7 @@ void AGGRprint_init( FILES* files, const Type t, const char* var_name, const cha
                          ClassName( t->superscope->symbol.name ), aggr_name );
                 fprintf( files->helpers, "inline SDAI_Integer getBound2_%s__%s( SDAI_Application_instance* this_ptr ) {\n",
                          ClassName( t->superscope->symbol.name ), aggr_name );
-                fprintf( files->helpers, "    return ( (%s *) this_ptr)->%s_();\n};\n",
+                fprintf( files->helpers, "    return ( (%s *) this_ptr)->%s_();\n}\n",
                          ClassName( t->superscope->symbol.name ), TYPEget_body( t )->upper->e.op2->symbol.name );
             }
         }
