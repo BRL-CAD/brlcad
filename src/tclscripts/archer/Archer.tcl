@@ -962,7 +962,9 @@ package provide Archer 1.0
 	set orientation [lindex $_batch_list 3]
 	set eye_pt [lindex $_batch_list 4]
 
+	set dbname [file normalize $mTarget]
 	set execpath [file dirname [file normalize $argv0]]
+
 	if {$tcl_platform(platform) == "windows"} {
 	    set rtwizname [file join $execpath rtwizard.bat]
 	} else {
@@ -981,7 +983,7 @@ package provide Archer 1.0
 	if {$len == 0} {
 	    eval $itk_component(ged) rtwizard -C [list $bcolor] -w $w -n $n -p $port -c $mColorObjects
 	} else {
-	    puts $fh "catch {exec $rtwizname -C [list $bcolor] -w $w -n $n -p $port -c $mColorObjects --viewsize $viewsize --orientation $orientation --eye_pt $eye_pt}"
+	    puts $fh "catch {exec $rtwizname --no-gui --input $dbname -C [list $bcolor] -w $w -n $n -p $port -c $mColorObjects --viewsize $viewsize --orientation $orientation --eye_pt $eye_pt}"
 	}
     } else {
 	set ecolor [cadwidgets::Ged::get_rgb_color $mRtWizardEdgeColor]
@@ -1024,9 +1026,9 @@ package provide Archer 1.0
 	    if {$mRtWizardNonEdgeColor != ""} {
 		set necolor [cadwidgets::Ged::get_rgb_color $mRtWizardNonEdgeColor]
 
-		puts $fh "catch {exec $rtwizname -C [list $bcolor] --line-color [list $ecolor] --non-line-color [list $necolor] -w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects -G $mRtWizardGhostIntensity -O $mRtWizardOccMode --viewsize $viewsize --orientation $orientation --eye_pt $eye_pt}"
+		puts $fh "catch {exec $rtwizname --no-gui --input $dbname -C [list $bcolor] --line-color [list $ecolor] --non-line-color [list $necolor] -w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects -G $mRtWizardGhostIntensity -O $mRtWizardOccMode --viewsize $viewsize --orientation $orientation --eye_pt $eye_pt}"
 	    } else {
-		puts $fh "catch {exec $rtwizname -C [list $bcolor] --line-color [list $ecolor] -w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects -G $mRtWizardGhostIntensity -O $mRtWizardOccMode --viewsize $viewsize --orientation $orientation --eye_pt $eye_pt}"
+		puts $fh "catch {exec $rtwizname --no-gui --input $dbname -C [list $bcolor] --line-color [list $ecolor] -w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects -G $mRtWizardGhostIntensity -O $mRtWizardOccMode --viewsize $viewsize --orientation $orientation --eye_pt $eye_pt}"
 	    }
 	}
     }
