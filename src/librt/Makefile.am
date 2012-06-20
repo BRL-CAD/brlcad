@@ -148,6 +148,7 @@ librt_nil_la_SOURCES = \
 	primitives/grip/grip.c \
 	primitives/grip/grip_mirror.c \
 	primitives/half/half.c \
+	primitives/half/half_brep.cpp \
 	primitives/half/half_mirror.c \
 	primitives/hf/hf.c \
 	primitives/hyp/hyp.c \
@@ -210,6 +211,7 @@ librt_nil_la_SOURCES = \
 	primitives/pipe/pipe_brep.cpp \
 	primitives/pipe/pipe_mirror.c \
 	primitives/pnts/pnts.c \
+	primitives/pnts/pnts_brep.cpp \
 	primitives/poly/poly.c \
 	primitives/poly/poly_brep.cpp \
 	primitives/poly/poly_mirror.c \
