@@ -60,6 +60,12 @@ class SCL_EDITOR_EXPORT STEPfile {
         DirObj * _currentDir;
         std::string _fileName;
 
+        //the following are used to compute read/write progress
+        std::ifstream::pos_type _iFileSize; ///< input file size
+        std::ifstream::pos_type _iFileCurrentPosition; ///< input file position (from ifstream::tellg())
+        bool _iFileStage1Done; ///< set immediately before ReadData1() returns
+        int _oFileInstsWritten; ///< number of instances that have been written
+
 //error information
         ErrorDescriptor _error;
 
@@ -110,6 +116,8 @@ class SCL_EDITOR_EXPORT STEPfile {
         }
         std::string SetFileName( const std::string name = "" );
         std::string TruncFileName( const std::string name ) const;
+        float GetReadProgress() const;
+        float GetWriteProgress() const;
 
 //error information
         ErrorDescriptor & Error() { /* const */

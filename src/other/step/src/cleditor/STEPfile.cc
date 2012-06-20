@@ -56,6 +56,43 @@ std::string STEPfile::SetFileName( const std::string newName ) {
     return _fileName;
 }
 
+/** Returns read progress,scaled 0-100. Will return a value < 0 if
+ * called *immediately* after read operation starts, if no file has
+ * been specified, or if file has been closed. If result < 50,
+ * ReadData1() hasn't completed yet.
+ *
+ * This function is useless unless it is called from another thread.
+ */
+float STEPfile::GetReadProgress() const {
+    if( _iFileSize < 1 ) {
+        return -1;
+    }
+    //the file is read once by ReadData1(), and again by ReadData2. Each gets 50%.
+    float percent = ( static_cast<float>( _iFileCurrentPosition ) / _iFileSize ) * 50.0;
+    if( _iFileStage1Done ) {
+        percent += 50;
+    }
+    return percent;
+}
+
+/** Returns write progress,scaled 0-100. Will return a value < 0 if
+ * called *immediately* after write operation starts, if no file has
+ * been specified, or if file has been closed.
+ * \sa GetReadProgress()
+ *
+ * Caveat: Only works for files written via WriteExchangeFile() / WriteData().
+ *
+ * This function is useless unless it is called from another thread.
+ */
+float STEPfile::GetWriteProgress() const {
+    int total = _instances.InstanceCount();
+    if( total > 0 ) {
+        return ( static_cast<float>( _oFileInstsWritten ) / total ) * 100.0;
+    } else {
+        return -1;
+    }
+}
+
 /**
  * \param in The input stream from which the file is read.
  *
@@ -463,6 +500,7 @@ int STEPfile::ReadData1( istream & in ) {
                 SkipInstance( in, tmpbuf );
             } else {
                 obj =  CreateInstance( in, cout );
+                _iFileCurrentPosition = in.tellg();
             }
 
             if( obj != ENTITY_NULL ) {
@@ -511,6 +549,7 @@ int STEPfile::ReadData1( istream & in ) {
         _error.AppendToUserMsg( "Error in input file.\n" );
     }
 
+    _iFileStage1Done = true;
     return instance_count;
 }
 
@@ -578,6 +617,7 @@ int STEPfile::ReadData2( istream & in, bool useTechCor ) {
                 SkipInstance( in, tmpbuf );
             } else {
                 obj =  ReadInstance( in, cout, cmtStr, useTechCor );
+                _iFileCurrentPosition = in.tellg();
             }
 
             cmtStr.clear();
@@ -1551,12 +1591,14 @@ void STEPfile::WriteHeaderInstanceFileSchema( ostream & out ) {
 }
 
 void STEPfile::WriteData( ostream & out, int writeComments ) {
+    _oFileInstsWritten = 0;
     std::string currSch = schemaName();
     out << "DATA;\n";
 
     int n = instances().InstanceCount();
     for( int i = 0; i < n; ++i ) {
         instances().GetMgrNode( i )->GetApplication_instance()->STEPwrite( out, currSch.c_str(), writeComments );
+        _oFileInstsWritten++;
     }
 
     out << "ENDSEC;\n";
