@@ -189,6 +189,7 @@ set(docbook_mann_EN
   rpp-cap.xml
   rrt.xml
   rt.xml
+  rtarea.xml
   rtcheck.xml
   savekey.xml
   saveview.xml
