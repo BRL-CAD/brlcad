@@ -2604,14 +2604,14 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 /** R T _ T G C _ T N U R B
  *
  * "Tessellate an TGC into a trimmed-NURB-NMG data structure.
- * Computing NRUB surfaces and trimming curves to interpolate
+ * Computing NURB surfaces and trimming curves to interpolate
  * the parameters of the TGC
  *
  * The process is to create the nmg topology of the TGC fill it
  * in with a unit cylinder geometry (i.e. unitcircle at the top (0, 0, 1)
  * unit cylinder of radius 1, and unitcirlce at the bottom), and then
  * scale it with a perspective matrix derived from the parameters of the
- * tgc. The result is three trimmed nub surfaces which interpolate the
+ * tgc. The result is three trimmed nurb surfaces which interpolate the
  * parameters of the original TGC.
  *
  * Returns -
