@@ -188,7 +188,7 @@
 	<listitem>
 	  <para>
 	    Selects auto-sizing, and gives the view azimuth in degrees. Used with
-            -e and conflicts with -M. The default is the current display azimuth.
+            -e option. The default is the current display azimuth.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -197,7 +197,7 @@
 	<listitem>
 	  <para>
 	    Selects auto-sizing, and gives the view elevation in degrees. Used with
-            -a and conflicts with -M. The default is the current display elevation.
+            -a option. The default is the current display elevation.
 	  </para>
 	</listitem>
       </varlistentry>
