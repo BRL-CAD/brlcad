@@ -2640,6 +2640,8 @@ proc title_node_handler {node} {
 	{}
     $itk_component(unitsCB) configure -state disabled
 
+    # Disable tree attributes indefinitely
+    if {0} {
     itk_component add treeAttrsL {
 	::ttk::label $itk_component(generalF).treeAttrsL \
 	    -anchor e \
@@ -2650,6 +2652,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mTreeAttrColumnsPref]
     } {}
+    }
 
     itk_component add selGroupL {
 	::ttk::label $itk_component(generalF).selGroupL \
@@ -2740,9 +2743,12 @@ proc title_node_handler {node} {
     incr i
     grid $itk_component(viewingParamsColorL) -column 0 -row $i -sticky e
     grid $itk_component(viewingParamsColorF) -column 1 -row $i -sticky ew
-    incr i
-    grid $itk_component(treeAttrsL) -column 0 -row $i -sticky e
-    grid $itk_component(treeAttrsE) -column 1 -row $i -sticky ew
+
+    # Disable tree attributes indefinitely
+#    incr i
+#    grid $itk_component(treeAttrsL) -column 0 -row $i -sticky e
+#    grid $itk_component(treeAttrsE) -column 1 -row $i -sticky ew
+
     incr i
     grid $itk_component(selGroupL) -column 0 -row $i -sticky e
     grid $itk_component(selGroupE) -column 1 -row $i -sticky ew
