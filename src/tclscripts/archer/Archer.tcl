@@ -168,7 +168,7 @@ package provide Archer 1.0
 	method bot_sync_all {}
 	method bot_sync_all_wrapper {}
 	method fbclear {}
-	method raytracePlus {}
+	method raytracePlus {{_batch_list {}}}
 
 	# ArcherCore Override Section
 	method cmd                 {args}
@@ -937,61 +937,96 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::raytracePlus {} {
+::itcl::body Archer::raytracePlus {{_batch_list {}}} {
+    global tcl_platform
+    global argv0
+
     if {![info exists itk_component(ged)]} {
 	return
     }
 
-    $itk_component(primaryToolbar) itemconfigure raytrace \
-	-image $mImage_rtAbort \
-	-command "$itk_component(rtcntrl) abort"
+    set len [llength $_batch_list]
 
-    $itk_component(rtcntrl) configure -fb_enabled 1
+    if {$len == 0} {
+	$itk_component(primaryToolbar) itemconfigure raytrace \
+	    -image $mImage_rtAbort \
+	    -command "$itk_component(rtcntrl) abort"
+
+	$itk_component(rtcntrl) configure -fb_enabled 1
+
+	set port [$itk_component(ged) listen 0]
+    } elseif {$len == 5} {
+	set fh [lindex $_batch_list 0]
+	set port [lindex $_batch_list 1]
+	set viewsize [lindex $_batch_list 2]
+	set orientation [lindex $_batch_list 3]
+	set eye_pt [lindex $_batch_list 4]
+
+	set execpath [file dirname [file normalize $argv0]]
+	if {$tcl_platform(platform) == "windows"} {
+	    set rtwizname [file join $execpath rtwizard.bat]
+	} else {
+	    set rtwizname [file join $execpath rtwizard]
+	}
+    } else {
+	error "_batch_list must have 5 items: _batch_list ---> $_batch_list"
+    }
 
     set wlist [$itk_component(ged) win_size]
     set w [lindex $wlist 0]
     set n [lindex $wlist 1]
-    set port [$itk_component(ged) listen 0]
-
     set bcolor [cadwidgets::Ged::get_rgb_color $mFBBackgroundColor]
 
     if {$mTreeMode == $TREE_MODE_TREE} {
-	eval $itk_component(ged) rtwizard -C [list $bcolor] \
-	    -w $w -n $n -p $port -c $mColorObjects
+	if {$len == 0} {
+	    eval $itk_component(ged) rtwizard -C [list $bcolor] -w $w -n $n -p $port -c $mColorObjects
+	} else {
+	    puts $fh "catch {exec $rtwizname -C [list $bcolor] -w $w -n $n -p $port -c $mColorObjects --viewsize $viewsize --orientation $orientation --eye_pt $eye_pt}"
+	}
     } else {
 	set ecolor [cadwidgets::Ged::get_rgb_color $mRtWizardEdgeColor]
 
-	if {$mRtWizardNonEdgeColor != ""} {
-	    set necolor [cadwidgets::Ged::get_rgb_color $mRtWizardNonEdgeColor]
+	if {$len == 0} {
+	    if {$mRtWizardNonEdgeColor != ""} {
+		set necolor [cadwidgets::Ged::get_rgb_color $mRtWizardNonEdgeColor]
 
-	    if {$mSavedViewEyePt != ""} {
-		set eye_pt [eval $itk_component(ged) v2m_point $mSavedViewEyePt]
-		eval $itk_component(ged) rtwizard \
-		    --eye_pt [list $eye_pt] \
-		    -C [list $bcolor] --line-color [list $ecolor] \
-		    --non-line-color [list $necolor] \
-		    -w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
-		    -G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
+		if {$mSavedViewEyePt != ""} {
+		    set eye_pt [eval $itk_component(ged) v2m_point $mSavedViewEyePt]
+		    eval $itk_component(ged) rtwizard \
+			--eye_pt [list $eye_pt] \
+			-C [list $bcolor] --line-color [list $ecolor] \
+			--non-line-color [list $necolor] \
+			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
+			-G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
+		} else {
+		    eval $itk_component(ged) rtwizard \
+			-C [list $bcolor] --line-color [list $ecolor] \
+			--non-line-color [list $necolor] \
+			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
+			-G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
+		}
 	    } else {
-		eval $itk_component(ged) rtwizard \
-		    -C [list $bcolor] --line-color [list $ecolor] \
-		    --non-line-color [list $necolor] \
-		    -w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
-		    -G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
+		if {$mSavedViewEyePt != ""} {
+		    set eye_pt [eval $itk_component(ged) v2m_point $mSavedViewEyePt]
+		    eval $itk_component(ged) rtwizard \
+			--eye_pt [list $eye_pt] \
+			-C [list $bcolor] --line-color [list $ecolor] \
+			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
+			-G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
+		}  {
+		    eval $itk_component(ged) rtwizard \
+			-C [list $bcolor] --line-color [list $ecolor] \
+			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
+			-G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
+		}
 	    }
 	} else {
-	    if {$mSavedViewEyePt != ""} {
-		set eye_pt [eval $itk_component(ged) v2m_point $mSavedViewEyePt]
-		eval $itk_component(ged) rtwizard \
-		    --eye_pt [list $eye_pt] \
-		    -C [list $bcolor] --line-color [list $ecolor] \
-		    -w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
-		    -G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
-	    }  {
-		eval $itk_component(ged) rtwizard \
-		    -C [list $bcolor] --line-color [list $ecolor] \
-		    -w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
-		    -G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
+	    if {$mRtWizardNonEdgeColor != ""} {
+		set necolor [cadwidgets::Ged::get_rgb_color $mRtWizardNonEdgeColor]
+
+		puts $fh "catch {exec $rtwizname -C [list $bcolor] --line-color [list $ecolor] --non-line-color [list $necolor] -w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects -G $mRtWizardGhostIntensity -O $mRtWizardOccMode --viewsize $viewsize --orientation $orientation --eye_pt $eye_pt}"
+	    } else {
+		puts $fh "catch {exec $rtwizname -C [list $bcolor] --line-color [list $ecolor] -w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects -G $mRtWizardGhostIntensity -O $mRtWizardOccMode --viewsize $viewsize --orientation $orientation --eye_pt $eye_pt}"
 	    }
 	}
     }
