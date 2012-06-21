@@ -245,6 +245,9 @@ set(librt_ignored_files
   librt_private.h
   namegen.c
   opennurbs_ext.h
+  opennurbs_fit.cpp
+  opennurbs_fit.h
+  test_nurbsfit.cpp
   prcomb.c
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
@@ -304,6 +307,8 @@ endif(CPP_DLL_DEFINES)
 
 install(FILES librt.3 DESTINATION ${MAN_DIR}/man3)
 CMAKEFILES(Makefile.am)
+
+#BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libbu" NOSTRICT NO_INSTALL)
 
 # Local Variables:
 # tab-width: 8
