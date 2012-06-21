@@ -13,6 +13,7 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${REGEX_INCLUDE_DIR}
   ${TNT_INCLUDE_DIR}
+  #${BRLCAD_SOURCE_DIR}/src/other/Eigen
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
@@ -60,6 +61,7 @@ set(LIBRT_SOURCES
   memalloc.c
   mkbundle.c
   opennurbs_ext.cpp
+  #opennurbs_fit.cpp
   oslo_calc.c
   oslo_map.c
   pr.c
@@ -245,8 +247,8 @@ set(librt_ignored_files
   librt_private.h
   namegen.c
   opennurbs_ext.h
-  opennurbs_fit.cpp
   opennurbs_fit.h
+  opennurbs_fit.cpp
   test_nurbsfit.cpp
   prcomb.c
   primitives/bot/btg.h
@@ -285,6 +287,8 @@ set(librt_DEFINES "")
 # Set librt compile definitions
 get_property(librt_DEFINES GLOBAL PROPERTY librt_DEFINES)
 list(APPEND librt_DEFINES "OBJ_BREP=1")
+#list(APPEND librt_DEFINES "EIGEN_NO_DEBUG")
+#list(APPEND librt_DEFINES "EIGEN_USE_NEW_STDVECTOR")
 if(CPP_DLL_DEFINES)
   list(APPEND librt_DEFINES "ON_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
@@ -308,7 +312,7 @@ endif(CPP_DLL_DEFINES)
 install(FILES librt.3 DESTINATION ${MAN_DIR}/man3)
 CMAKEFILES(Makefile.am)
 
-#BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libbu" NOSTRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbu" NOSTRICT NO_INSTALL)
 
 # Local Variables:
 # tab-width: 8
