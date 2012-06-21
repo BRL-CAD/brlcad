@@ -34,6 +34,7 @@
 #
 
 set GroupNameGlobal ""
+set GrouperRunning 0
 
 proc gr_remdup { args } {
     if { [llength $args] != 1 } {
@@ -111,6 +112,13 @@ proc gr { GroupName Boolean { ListLimit 0 } } {
 
 proc grouper { GroupName Boolean { ListLimit 0 } } {
     global mged_gui mged_default mged_players
+    global GrouperRunning
+
+    if {$GrouperRunning == 1} {
+	return "Grouper already running, use the 'dg' command to exit grouper before restarting."
+    }
+
+    set GrouperRunning 1
 
     for {set i 0} {1} {incr i} {
 	set id [subst $mged_default(id)]_$i
@@ -120,6 +128,7 @@ proc grouper { GroupName Boolean { ListLimit 0 } } {
     }
 
     if {$Boolean != "+" && $Boolean != "-" } {
+	set GrouperRunning 0
 	return "Please provide a Boolean of either + or -"
     }
     set mged_gui($id,mouse_behavior) p     
@@ -218,6 +227,7 @@ proc dg {} {
 proc done_grouper {} {
     global mged_gui mged_default mged_players
     global GroupNameGlobal
+    global GrouperRunning
 
     for {set i 0} {1} {incr i} {
 	set id [subst $mged_default(id)]_$i
@@ -234,6 +244,7 @@ proc done_grouper {} {
 
     # remove yellow highlights from the display
     erase $GroupNameGlobal
+    set GrouperRunning 0
 
     puts stdout "Grouper done."
 }
