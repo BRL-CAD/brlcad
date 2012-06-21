@@ -38,7 +38,15 @@ proc mouse_get_spath { x y } {
     }
 
     set mged_gui($id,mgs_path) ""
-    set ray [mouse_shoot_ray $x $y]
+
+    if {[catch {mouse_shoot_ray $x $y} ray]} {
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
+	    "Nothing was hit!"\
+	    "Nothing was hit!"\
+	    "" 0 OK
+	return ""
+    }
+
     set paths [ray_get_info $ray in path]
 
     if {![llength $paths]} {
@@ -183,7 +191,15 @@ proc mouse_get_comb { x y } {
     }
 
     set mged_gui($id,mgc_comb) ""
-    set ray [mouse_shoot_ray $x $y]
+
+    if {[catch {mouse_shoot_ray $x $y} ray]} {
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
+	    "Nothing was hit!"\
+	    "Nothing was hit!"\
+	    "" 0 OK
+	return ""
+    }
+
     set paths [ray_get_info $ray in path]
     if {![llength $paths]} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen)\
