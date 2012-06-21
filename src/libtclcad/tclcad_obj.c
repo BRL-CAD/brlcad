@@ -93,7 +93,6 @@
 /* Private headers */
 #include "tclcad_private.h"
 
-#define TO_MAX_RT_ARGS 64
 #define TO_UNLIMITED -1
 
 /*
@@ -989,7 +988,7 @@ static struct to_cmdtab to_cmds[] = {
     {"mv",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_move},
     {"mvall",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_move_all},
     {"new_view",	"vname type [args]", TO_UNLIMITED, to_new_view, GED_FUNC_PTR_NULL},
-    {"nirt",	"[args]", TO_MAX_RT_ARGS, to_view_func, ged_nirt},
+    {"nirt",	"[args]", TO_UNLIMITED, to_view_func, ged_nirt},
     {"nmg_collapse",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_nmg_collapse},
     {"nmg_simplify",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_nmg_simplify},
     {"ocenter",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_ocenter},
@@ -1063,17 +1062,17 @@ static struct to_cmdtab to_cmds[] = {
     {"rotate_arb_face",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_rotate_arb_face},
     {"rotate_arb_face_mode",	"obj face v x y", TO_UNLIMITED, to_rotate_arb_face_mode, GED_FUNC_PTR_NULL},
     {"rotate_mode",	"x y", TO_UNLIMITED, to_rotate_mode, GED_FUNC_PTR_NULL},
-    {"rrt",	"[args]", TO_MAX_RT_ARGS, to_view_func, ged_rrt},
+    {"rrt",	"[args]", TO_UNLIMITED, to_view_func, ged_rrt},
     {"rselect",		(char *)0, TO_UNLIMITED, to_view_func, ged_rselect},
-    {"rt",	"[args]", TO_MAX_RT_ARGS, to_view_func, ged_rt},
-    {"rt_end_callback",	"[args]", TO_MAX_RT_ARGS, to_rt_end_callback, GED_FUNC_PTR_NULL},
+    {"rt",	"[args]", TO_UNLIMITED, to_view_func, ged_rt},
+    {"rt_end_callback",	"[args]", TO_UNLIMITED, to_rt_end_callback, GED_FUNC_PTR_NULL},
     {"rt_gettrees",	"[-i] [-u] pname object", TO_UNLIMITED, to_rt_gettrees, GED_FUNC_PTR_NULL},
-    {"rtabort",	(char *)0, TO_MAX_RT_ARGS, to_pass_through_func, ged_rtabort},
-    {"rtarea",	"[args]", TO_MAX_RT_ARGS, to_view_func, ged_rt},
-    {"rtcheck",	"[args]", TO_MAX_RT_ARGS, to_view_func, ged_rtcheck},
-    {"rtedge",	"[args]", TO_MAX_RT_ARGS, to_view_func, ged_rt},
-    {"rtweight", "[args]", TO_MAX_RT_ARGS, to_view_func, ged_rt},
-    {"rtwizard", "[args]", TO_MAX_RT_ARGS, to_view_func, ged_rtwizard},
+    {"rtabort",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_rtabort},
+    {"rtarea",	"[args]", TO_UNLIMITED, to_view_func, ged_rt},
+    {"rtcheck",	"[args]", TO_UNLIMITED, to_view_func, ged_rtcheck},
+    {"rtedge",	"[args]", TO_UNLIMITED, to_view_func, ged_rt},
+    {"rtweight", "[args]", TO_UNLIMITED, to_view_func, ged_rt},
+    {"rtwizard", "[args]", TO_UNLIMITED, to_view_func, ged_rtwizard},
     {"savekey",	"filename", 3, to_view_func, ged_savekey},
     {"saveview",	"filename", 3, to_view_func, ged_saveview},
     {"sca",	"sf", 3, to_view_func_plus, ged_scale},
@@ -1127,7 +1126,7 @@ static struct to_cmdtab to_cmds[] = {
     {"view2screen",	"vname", 2, to_view2screen, GED_FUNC_PTR_NULL},
     {"viewdir",	"[-i]", 3, to_view_func, ged_viewdir},
     {"vmake",	"pname ptype", TO_UNLIMITED, to_vmake, GED_FUNC_PTR_NULL},
-    {"vnirt",	"[args]", TO_MAX_RT_ARGS, to_view_func, ged_vnirt},
+    {"vnirt",	"[args]", TO_UNLIMITED, to_view_func, ged_vnirt},
     {"vslew",	"x y", TO_UNLIMITED, to_vslew, GED_FUNC_PTR_NULL},
     {"wcodes",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_wcodes},
     {"whatid",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_whatid},
