@@ -35,6 +35,13 @@
 
 set GroupNameGlobal ""
 set GrouperRunning 0
+set draw_orig ""
+set pos_orig ""
+set dim_orig ""
+set fb_orig ""
+set fb_all_orig ""
+set listen_orig ""
+set objs {}
 
 proc gr_remdup { args } {
     if { [llength $args] != 1 } {
@@ -71,7 +78,7 @@ proc gr_getObjInRectangle {} {
     set dimY [lindex $dim 1].0    
 
     if { $dimX == 0.0 || $dimY == 0.0 } {
-	return "no_result"
+	return "invalid_selection"
     }
 
     set pos [rset r pos]     
@@ -131,12 +138,20 @@ proc grouper { GroupName Boolean { ListLimit 0 } } {
 	set GrouperRunning 0
 	return "Please provide a Boolean of either + or -"
     }
+    uplevel #0 {set draw_orig [rset r draw]}
+    uplevel #0 {set pos_orig [rset r pos]}
+    uplevel #0 {set dim_orig [rset r dim]}
+    uplevel #0 {set fb_orig [rset var fb]}
+    uplevel #0 {set fb_all_orig [rset var fb_all]}
+    uplevel #0 {set listen_orig [rset var listen]}
+
     set mged_gui($id,mouse_behavior) p     
     set_mouse_behavior $id     
+
     rset vars fb 0     
     rset r draw 1     
 
-    bind $mged_gui($id,active_dm) <ButtonRelease-2> " winset $mged_gui($id,active_dm); dm idle; do_grouper $GroupName $Boolean $ListLimit" 
+    bind $mged_gui($id,active_dm) <ButtonRelease-2> " winset $mged_gui($id,active_dm); dm idle; do_grouper $GroupName $Boolean $ListLimit"
     bind $mged_gui($id,active_dm) <Control-ButtonRelease-2> " winset $mged_gui($id,active_dm); dm idle; done_grouper" 
 
     # highlight in yellow current group
@@ -149,7 +164,17 @@ proc grouper { GroupName Boolean { ListLimit 0 } } {
 proc do_grouper { GroupName Boolean ListLimit } {
 
     uplevel #0 set GroupNameGlobal $GroupName
-    set objs [gr_getObjInRectangle]
+    global objs
+
+    after 1 {set objs [gr_getObjInRectangle]}
+
+    puts stdout "Selection running ..."
+    vwait objs
+
+    if { $objs == "invalid_selection" } {
+	puts stdout "Invalid selection (zero area selection box)."
+	return
+    }
 
     if { $objs == "no_result" } {
 	puts stdout "Nothing selected."
@@ -166,7 +191,7 @@ proc do_grouper { GroupName Boolean ListLimit } {
 	set grp_obj_list_before [search $GroupName]
 	set grp_obj_list_len_before [expr [llength $grp_obj_list_before] - 1]
     }
-	
+
     if { $Boolean == "+" } {
 	foreach obj $objs {
 	    g $GroupName $obj
@@ -201,21 +226,24 @@ proc do_grouper { GroupName Boolean ListLimit } {
 
     set objcnt 0
     if { $ListLimit > 0 } {
-	puts stdout "Selected objects\:"
+	puts stdout "Selected object list\:"
 	foreach obj $objs {
 	    incr objcnt
 	    if { $objcnt > $ListLimit } {
-        	puts stdout "Listed $ListLimit of $tot_obj_in_rect selected objects."
+        	puts -nonewline stdout "\nListed $ListLimit of $tot_obj_in_rect selected objects."
 		break;
 	    }
-	    puts stdout "$objcnt\t$obj"
+	    puts -nonewline stdout "$obj "
 	}
+	puts -nonewline stdout "\n"
     }
 
     # highlight in yellow current group
     if { [search -name $GroupName] != "" } {
 	e -C255/255/0 $GroupName
     }
+
+    puts stdout "Selection complete."
 }
 
 
@@ -228,6 +256,12 @@ proc done_grouper {} {
     global mged_gui mged_default mged_players
     global GroupNameGlobal
     global GrouperRunning
+    global draw_orig
+    global pos_orig
+    global dim_orig
+    global fb_orig
+    global fb_all_orig
+    global listen_orig
 
     for {set i 0} {1} {incr i} {
 	set id [subst $mged_default(id)]_$i
@@ -235,9 +269,9 @@ proc done_grouper {} {
 	    break;
 	}
     }
+
     set mged_gui($id,mouse_behavior) d
     set_mouse_behavior $id
-    rset r draw 0
 
     bind $mged_gui($id,active_dm) <Control-ButtonRelease-2> ""
     bind $mged_gui($id,active_dm) <ButtonRelease-2> ""
@@ -245,6 +279,14 @@ proc done_grouper {} {
     # remove yellow highlights from the display
     erase $GroupNameGlobal
     set GrouperRunning 0
+
+    # return display to state before grouper changed it
+    rset r draw $draw_orig
+    rset r pos $pos_orig
+    rset r dim $dim_orig
+    rset var fb $fb_orig
+    rset var fb_all $fb_all_orig
+    rset var listen $listen_orig
 
     puts stdout "Grouper done."
 }
