@@ -809,7 +809,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_part_tess,
 	NULL,
-	NULL,
+	rt_part_brep,
 	rt_part_import5,
 	rt_part_export5,
 	rt_part_import4,

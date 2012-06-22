@@ -190,6 +190,7 @@ set(LIBRT_SOURCES
   primitives/obj_vshot.c
   primitives/obj_xform.c
   primitives/part/part.c
+  primitives/part/part_brep.cpp
   primitives/part/part_mirror.c
   primitives/pipe/pipe.c
   primitives/pipe/pipe_brep.cpp
