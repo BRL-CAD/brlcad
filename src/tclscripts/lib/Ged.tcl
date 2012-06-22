@@ -4586,6 +4586,7 @@ package provide cadwidgets::Ged 1.0
 
 
 ::itcl::body cadwidgets::Ged::rgb_to_tk {_r _g _b} {
+    return [format \#%.2x%.2x%.2x $_r $_g $_b]
 }
 
 
