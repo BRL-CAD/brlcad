@@ -561,6 +561,7 @@ namespace eval ArcherCore {
 	variable mLastTags ""
 
 	method handleMoreArgs {args}
+	method isdouble {_str}
 
 	method gedWrapper {_cmd _eflag _hflag _sflag _tflag args}
 
@@ -1211,6 +1212,14 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::handleMoreArgs {args} {
     eval $itk_component(cmd) print_more_args_prompt $args
     return [$itk_component(cmd) get_more_args]
+}
+
+::itcl::body ArcherCore::isdouble {_str} {
+    if {[string is double $_str] || $_str == "."} {
+	return 1
+    }
+
+    return 0
 }
 
 ::itcl::body ArcherCore::gedWrapper {cmd eflag hflag sflag tflag args} {
