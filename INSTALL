@@ -240,9 +240,9 @@ enable functionality using OpenGL, set
   -DBRLCAD_ENABLE_OPENGL=OFF
 
 To obtain an optimized build (for example, for BRL-CAD Benchmark
-performance evaluation), enable BRLCAD_ENABLE_OPTIMIZED_BUILD:
+performance evaluation), enable BRLCAD_FLAGS_OPTIMIZATION:
 
-  -DBRLCAD_ENABLE_OPTIMIZED_BUILD=ON
+  -DBRLCAD_FLAGS_OPTIMIZATION=ON
 
 See the CONFIGURATION OPTIONS below for more details on all of the
 possible settings.
