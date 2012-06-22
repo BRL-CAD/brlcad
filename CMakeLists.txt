@@ -2191,7 +2191,7 @@ file(APPEND ${BRLCAD_BINARY_DIR}/INSTALL.new "\n\n*** Note - Do not add or edit 
    the toplevel CMakeLists.txt file and src/other/CMakeLists.txt - any changes
    should be made in those files.  The CMake configuration process will
    automatically re-generate INSTALL with the new descriptions and alias
-   information.")
+   information.\n")
 execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
   ${BRLCAD_SOURCE_DIR}/INSTALL ${BRLCAD_BINARY_DIR}/INSTALL.new
   RESULT_VARIABLE IS_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
