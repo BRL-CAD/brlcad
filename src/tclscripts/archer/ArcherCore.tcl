@@ -1576,7 +1576,6 @@ namespace eval ArcherCore {
 	$itk_component(treeAccordian) insert 0 "[lindex $TREE_MODE_NAMES $TREE_MODE_COLOR_OBJECTS] (Tree)"
     }
 
-    set childsite [$itk_component(treeAccordian) itemChildsite 0]
     itk_component add newtree {
 	::ttk::treeview $itk_component(treeAccordian).tree \
 	    -selectmode browse \
