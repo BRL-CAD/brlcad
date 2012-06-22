@@ -677,6 +677,7 @@ package provide cadwidgets::Ged 1.0
 	proc get_ged_color {_color}
 	proc get_rgb_color {_color}
 	proc get_vdraw_color {_color}
+	proc isdouble {_str}
 	proc rgb_to_tk {_r _g _b}
 	proc tk_to_rgb {_tkcolor}
     }
@@ -4574,16 +4575,26 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
+
+::itcl::body cadwidgets::Ged::isdouble {_str} {
+    if {[string is double $_str] || $_str == "."} {
+	return 1
+    }
+
+    return 0
+}
+
+
+::itcl::body cadwidgets::Ged::rgb_to_tk {_r _g _b} {
+}
+
+
 ::itcl::body cadwidgets::Ged::tk_to_rgb {_tkcolor} {
     if {![regexp {^\#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$} $_tkcolor all r g b]} {
 	return {128 128 128}
     }
 
     return [list [expr int(0x$r)] [expr int(0x$g)] [expr int(0x$b)]]
-}
-
-::itcl::body cadwidgets::Ged::rgb_to_tk {_r _g _b} {
-    return [format \#%.2x%.2x%.2x $_r $_g $_b]
 }
 
 
