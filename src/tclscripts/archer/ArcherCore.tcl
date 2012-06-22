@@ -3055,11 +3055,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::validateDouble {d} {
-    if {$d == "-" || [string is double $d]} {
-	return 1
-    }
-
-    return 0
+    ::cadwidgets::Ged::isdouble $d
 }
 
 ::itcl::body ArcherCore::validateTickInterval {ti} {
@@ -3067,8 +3063,8 @@ namespace eval ArcherCore {
 	return 1
     }
 
-    if {[string is double $ti]} {
-	if {0 <= $ti} {
+    if {[::cadwidgets::Ged::isdouble $ti]} {
+	if {$ti == "." || 0 <= $ti} {
 	    return 1
 	}
 
