@@ -15,25 +15,20 @@ main (int argc, char *argv[])
    struct directory *dp;
    struct rt_db_internal intern;
    struct rt_bot_internal *bot_ip = NULL;
-
-   static FILE* plot = NULL;
-
-   vect_t from_xplus = {-1, 0, 0};
-   vect_t from_xminus = {1, 0, 0};
-   vect_t from_yplus = {0, -1, 0};
-   vect_t from_yminus = {0, 1, 0};
-   vect_t from_zplus = {0, 0, -1};
-   vect_t from_zminus = {0, 0, 1};
+   struct rt_bot_list *headRblp = NULL;
+   struct rt_db_internal bot_intern;
+   struct rt_bot_list *rblp;
+   struct bu_vls name;
 
    int i = 0;
-   int j = 0;
-   point_t min, max;
+
+   bu_vls_init(&name);
 
    if (argc != 3) {
       bu_exit(1, "Usage: %s file.g object", argv[0]);
    }
 
-   dbip = db_open(argv[1], "r");
+   dbip = db_open(argv[1], "r+w");
    if (dbip == DBI_NULL) { 
       bu_exit(1, "ERROR: Unable to read from %s\n", argv[1]);
    }
@@ -60,79 +55,34 @@ main (int argc, char *argv[])
    }
    RT_BOT_CK_MAGIC(bot_ip);
 
-  plot = fopen("out.pl", "w");
-  VSET(min, -2048, -2048, -2048);
-  VSET(max, 2048, 2048, 2048);
-  pdv_3space(plot, min, max);
+   headRblp = rt_bot_patches(bot_ip);
 
-  /*printf("num_vertices: %d\n", bot_ip->num_vertices);
-  printf("num_normals: %d\n", bot_ip->num_normals);
-  printf("num_faces: %d\n", bot_ip->num_faces);
-  printf("num_face_normals: %d\n", bot_ip->num_face_normals);*/
+   i = 0;
+   for (BU_LIST_FOR(rblp, rt_bot_list, &headRblp->l)) {
+	   bu_vls_sprintf(&name, "%d.bot", i);
+	   RT_DB_INTERNAL_INIT(&bot_intern);
+	   bot_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	   bot_intern.idb_type = ID_BOT;
+	   bot_intern.idb_meth = &rt_functab[ID_BOT];
+	   bot_intern.idb_ptr = (genptr_t)rblp->bot;
+	   dp = db_diradd(dbip, bu_vls_addr(&name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&bot_intern.idb_type);
+	   if (dp == RT_DIR_NULL) {
+                   printf("auuugh - dp says diradd failed!\n");
+		   rt_bot_list_free(headRblp, 0);
+		   rt_db_free_internal(&intern);
+	   } else {
+		   if (rt_db_put_internal(dp, dbip, &bot_intern, &rt_uniresource) < 0) {
+			   printf("auuugh - put_internal failed!\n");
+			   rt_bot_list_free(headRblp, 0);
+			   rt_db_free_internal(&intern);
+		   }
+	   }
+	   i++;
+   }
 
-  for (i = 0; i < (int)bot_ip->num_faces; i++) {
-      vect_t a, b, norm_dir;
-      fastf_t results[6];
-      int result_max = 0;
-      fastf_t tmp = 0.0;
-      VSETALLN(results, 0, 6);
-      VSUB2(a, &bot_ip->vertices[bot_ip->faces[i*3+1]*3], &bot_ip->vertices[bot_ip->faces[i*3]*3]);
-      VSUB2(b, &bot_ip->vertices[bot_ip->faces[i*3+2]*3], &bot_ip->vertices[bot_ip->faces[i*3]*3]);
-      VCROSS(norm_dir, a, b);
-      VUNITIZE(norm_dir);
-      results[0] = VDOT(from_xplus, norm_dir);
-      results[1] = VDOT(from_xminus, norm_dir);
-      results[2] = VDOT(from_yplus, norm_dir);
-      results[3] = VDOT(from_yminus, norm_dir);
-      results[4] = VDOT(from_zplus, norm_dir);
-      results[5] = VDOT(from_zminus, norm_dir);
-      VSCALE(norm_dir, norm_dir, 100);
-      VADD2(norm_dir, &bot_ip->vertices[bot_ip->faces[i*3+1]*3], norm_dir);
-      /*printf("vert %d (%f,%f,%f,%f,%f,%f): ", i, results[0], results[1], results[2], results[3], results[4], results[5]);*/
-      for(j = 0; j < 6; j++) {
-         if (results[j] > tmp) {
-            result_max = j;
-            tmp = results[j];
-         }
-      }
+   rt_bot_list_free(headRblp, 0);
+   rt_db_free_internal(&intern);
+   bu_vls_free(&name); 
 
-      if (result_max == 0) {
-        COLOR_PLOT(255, 0, 0);
-	pdv_3move(plot, &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
-        LINE_PLOT(&bot_ip->vertices[bot_ip->faces[i*3+1]*3], norm_dir);
-        /*printf(" xplus ");*/
-      }
-      if (result_max == 1) {
-        COLOR_PLOT(50, 0, 0);
-	pdv_3move(plot, &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
-        LINE_PLOT(&bot_ip->vertices[bot_ip->faces[i*3+1]*3], norm_dir);
-        /*printf(" xminus ");*/
-      }
-      if (result_max == 2) {
-        COLOR_PLOT(0, 255, 0);
-	pdv_3move(plot, &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
-        LINE_PLOT(&bot_ip->vertices[bot_ip->faces[i*3+1]*3], norm_dir);
-        /* printf(" yplus "); */
-      }
-      if (result_max == 3) {
-        COLOR_PLOT(0, 50, 0);
-	pdv_3move(plot, &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
-        LINE_PLOT(&bot_ip->vertices[bot_ip->faces[i*3+1]*3], norm_dir);
-        /* printf(" yminus "); */
-      }
-      if (result_max == 4) {
-        COLOR_PLOT(0, 0, 255);
-	pdv_3move(plot, &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
-        LINE_PLOT(&bot_ip->vertices[bot_ip->faces[i*3+1]*3], norm_dir);
-        /* printf(" zplus "); */
-      }
-      if (result_max == 5) {
-        COLOR_PLOT(0, 0, 50);
-	pdv_3move(plot, &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
-        LINE_PLOT(&bot_ip->vertices[bot_ip->faces[i*3+1]*3], norm_dir);
-        /* printf(" zminus "); */
-      }
-      /*printf("\n");*/
-  }
-  return 0;
+   return 0;
 }

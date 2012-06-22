@@ -4858,6 +4858,168 @@ rt_bot_split(struct rt_bot_internal *bot)
     return headRblp;
 }
 
+struct rt_bot_list *
+rt_bot_patches(struct rt_bot_internal *bot)
+{
+    size_t i, j;
+    struct tri_pts headTp;
+    struct tri_pts xplus;
+    struct tri_pts xminus;
+    struct tri_pts yplus;
+    struct tri_pts yminus;
+    struct tri_pts zplus;
+    struct tri_pts zminus;
+    struct tri_pts *tpp;
+    struct tri_pts *alltpp;
+    struct rt_bot_list *headRblp = (struct rt_bot_list *)0;
+    struct rt_bot_list *rblp;
+
+    vect_t from_xplus = {-1, 0, 0};
+    vect_t from_xminus = {1, 0, 0};
+    vect_t from_yplus = {0, -1, 0};
+    vect_t from_yminus = {0, 1, 0};
+    vect_t from_zplus = {0, 0, -1};
+    vect_t from_zminus = {0, 0, 1};
+
+    RT_BOT_CK_MAGIC(bot);
+
+    BU_GET(headRblp, struct rt_bot_list);
+    BU_LIST_INIT(&headRblp->l);
+
+    /* Nothing to do */
+    if (bot->num_faces < 2)
+	return NULL;
+
+    BU_LIST_INIT(&headTp.l);
+    BU_LIST_INIT(&xplus.l);
+    BU_LIST_INIT(&xminus.l);
+    BU_LIST_INIT(&yplus.l);
+    BU_LIST_INIT(&yminus.l);
+    BU_LIST_INIT(&zplus.l);
+    BU_LIST_INIT(&zminus.l);
+
+    alltpp = (struct tri_pts *)bu_calloc(bot->num_faces, sizeof(struct tri_pts), "patches alltpp");
+
+    for (i=0; i < bot->num_faces; ++i) {
+	vect_t a, b, norm_dir;
+	fastf_t results[6];
+	int result_max = 0;
+	fastf_t tmp = 0.0;
+	VSETALLN(results, 0, 6);
+
+        tpp = &alltpp[i];
+	tpp->tri = i;
+        tpp->a = bot->faces[i*3+0];
+        tpp->b = bot->faces[i*3+1];
+        tpp->c = bot->faces[i*3+2];
+
+	VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
+	VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);
+	VCROSS(norm_dir, a, b);
+	VUNITIZE(norm_dir);
+	results[0] = VDOT(from_xplus, norm_dir);
+	results[1] = VDOT(from_xminus, norm_dir);
+	results[2] = VDOT(from_yplus, norm_dir);
+	results[3] = VDOT(from_yminus, norm_dir);
+	results[4] = VDOT(from_zplus, norm_dir);
+	results[5] = VDOT(from_zminus, norm_dir);
+
+	for(j = 0; j < 6; j++) {
+	    if (results[j] > tmp) {
+		result_max = j;
+		tmp = results[j];
+	    }
+	}
+
+
+	if (result_max == 0) {
+	   BU_LIST_APPEND(&xplus.l, &tpp->l);
+	}
+	if (result_max == 1) {
+	   BU_LIST_APPEND(&xminus.l, &tpp->l);
+	}
+	if (result_max == 2) {
+	   BU_LIST_APPEND(&yplus.l, &tpp->l);
+	}
+	if (result_max == 3) {
+	   BU_LIST_APPEND(&yminus.l, &tpp->l);
+	}
+	if (result_max == 4) {
+	   BU_LIST_APPEND(&zplus.l, &tpp->l);
+	}
+	if (result_max == 5) {
+	   BU_LIST_APPEND(&zminus.l, &tpp->l);
+	}
+
+    }
+    if (BU_LIST_NON_EMPTY(&xplus.l)) {
+	/* Create a new bot */
+	BU_GET(rblp, struct rt_bot_list);
+	rblp->bot = rt_bot_create(bot, &xplus);
+	BU_LIST_APPEND(&headRblp->l, &rblp->l);
+    }
+    if (BU_LIST_NON_EMPTY(&xminus.l)) {
+	/* Create a new bot */
+	BU_GET(rblp, struct rt_bot_list);
+	rblp->bot = rt_bot_create(bot, &xminus);
+	BU_LIST_APPEND(&headRblp->l, &rblp->l);
+    }
+    if (BU_LIST_NON_EMPTY(&yplus.l)) {
+	/* Create a new bot */
+	BU_GET(rblp, struct rt_bot_list);
+	rblp->bot = rt_bot_create(bot, &yplus);
+	BU_LIST_APPEND(&headRblp->l, &rblp->l);
+    }
+    if (BU_LIST_NON_EMPTY(&yminus.l)) {
+	/* Create a new bot */
+	BU_GET(rblp, struct rt_bot_list);
+	rblp->bot = rt_bot_create(bot, &yminus);
+	BU_LIST_APPEND(&headRblp->l, &rblp->l);
+    }
+    if (BU_LIST_NON_EMPTY(&zplus.l)) {
+	/* Create a new bot */
+	BU_GET(rblp, struct rt_bot_list);
+	rblp->bot = rt_bot_create(bot, &zplus);
+	BU_LIST_APPEND(&headRblp->l, &rblp->l);
+    }
+    if (BU_LIST_NON_EMPTY(&zminus.l)) {
+	/* Create a new bot */
+	BU_GET(rblp, struct rt_bot_list);
+	rblp->bot = rt_bot_create(bot, &zminus);
+	BU_LIST_APPEND(&headRblp->l, &rblp->l);
+    }
+
+    while (BU_LIST_WHILE(tpp, tri_pts, &xplus.l)) {
+	BU_LIST_DEQUEUE(&tpp->l);
+    }
+
+    while (BU_LIST_WHILE(tpp, tri_pts, &xminus.l)) {
+	BU_LIST_DEQUEUE(&tpp->l);
+    }
+
+    while (BU_LIST_WHILE(tpp, tri_pts, &yplus.l)) {
+	BU_LIST_DEQUEUE(&tpp->l);
+    }
+
+    while (BU_LIST_WHILE(tpp, tri_pts, &yminus.l)) {
+	BU_LIST_DEQUEUE(&tpp->l);
+    }
+
+
+    while (BU_LIST_WHILE(tpp, tri_pts, &zplus.l)) {
+	BU_LIST_DEQUEUE(&tpp->l);
+    }
+
+
+    while (BU_LIST_WHILE(tpp, tri_pts, &zminus.l)) {
+	BU_LIST_DEQUEUE(&tpp->l);
+    }
+
+    bu_free((genptr_t)alltpp, "rt_bot_patches: alltpp");
+
+    return headRblp;
+}
+
 void
 rt_bot_list_free(struct rt_bot_list *headRblp, int fbflag)
 {

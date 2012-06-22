@@ -4381,6 +4381,7 @@ RT_EXPORT extern int rt_bot_smooth(struct rt_bot_internal *bot,
 RT_EXPORT extern int rt_bot_flip(struct rt_bot_internal *bot);
 RT_EXPORT extern int rt_bot_sync(struct rt_bot_internal *bot);
 RT_EXPORT extern struct rt_bot_list * rt_bot_split(struct rt_bot_internal *bot);
+RT_EXPORT extern struct rt_bot_list * rt_bot_patches(struct rt_bot_internal *bot);
 RT_EXPORT extern void rt_bot_list_free(struct rt_bot_list *headRblp,
 				       int fbflag);
 
