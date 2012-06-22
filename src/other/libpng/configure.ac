@@ -44,6 +44,7 @@ AC_CHECK_TOOL(AWK, awk, :)
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
+AC_PROG_LIBTOOL
 LT_INIT([win32-dll])
 
 # On Solaris 10 and 12 CPP gets set to cc -E, however this still
