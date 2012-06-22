@@ -2442,7 +2442,7 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
     /* Delete previous proc (if any) to release all that memory, first */
     (void)Tcl_DeleteCommand(wdbp->wdb_interp, newprocname);
 
-    while (argv[2][0] == '-') {
+    while (argc > 2 && argv[2][0] == '-') {
 	if (BU_STR_EQUAL(argv[2], "-i")) {
 	    rtip->rti_dont_instance = 1;
 	    argc--;
@@ -2456,6 +2456,12 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
 	    continue;
 	}
 	break;
+    }
+
+    if (argc-2 < 1) {
+	Tcl_AppendResult(wdbp->wdb_interp,
+			 "rt_gettrees(): no geometry has been specified ", (char *)NULL);
+	return TCL_ERROR;
     }
 
     if (rt_gettrees(rtip, argc-2, (const char **)&argv[2], 1) < 0) {
@@ -9667,7 +9673,6 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     bu_hook_list_init(&save_hook_list);
     bu_log_hook_save_all(&save_hook_list);
-    bu_log_hook_delete_all();
 
     /* suppress bu_log output because we don't care if the command
      * exists in wdb_newcmds since it might be in wdb_cmds.  this
@@ -9688,7 +9693,8 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     ged_free(&ged);
 
     /* not a new command -- look for the command in the old command table */
-    return bu_cmd(wdb_cmds, argc, (const char **)argv, 1, clientData, NULL);
+    bu_cmd(wdb_cmds, argc, (const char **)argv, 1, clientData, &ret);
+    return ret;
 }
 
 
