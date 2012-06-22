@@ -64,7 +64,7 @@
 	method handleCopy {_win}
 	method handleCut {_win}
 	method handleEnter {_win}
-	method handleKey {_win _key}
+	method handleKey {_win _key _ucc _keynum}
 	method handleLeftRight {_win _sflag}
 	method handleTablePopup {_win _x _y _X _Y}
 	method handleUpDown {_win _up}
@@ -168,7 +168,7 @@
     bind $itk_component(table) <B3-Motion>
 
     # Key Bindings
-    bind $itk_component(table) <Key> "[::itcl::code $this handleKey %W %K]; if {\[[::itcl::code $this doBreak]\]} {break}"
+    bind $itk_component(table) <Key> "[::itcl::code $this handleKey %W %K %A %N]; if {\[[::itcl::code $this doBreak]\]} {break}"
     bind $itk_component(table) <Key-Tab> "[::itcl::code $this handleLeftRight %W 0]; break"
 #    bind $itk_component(table) <Shift-Key-Tab> "[::itcl::code $this handleLeftRight %W 1]; break"
     bind $itk_component(table) <<PrevWindow>> "[::itcl::code $this handleLeftRight %W 1]; break"
@@ -396,7 +396,7 @@
     }
 }
 
-::itcl::body cadwidgets::TkTable::handleKey {_win _key} {
+::itcl::body cadwidgets::TkTable::handleKey {_win _key _ucc _keynum} {
     set index [$_win index active]
     set ilist [split $index ,]
     set row [lindex $ilist 0]
@@ -413,11 +413,11 @@
 	set mDoBreak 1
 
 	# Overwrite what's in the cell
-	if {[keyVisible $_key]} {
+	if {[keyVisible $_keynum]} {
 	    setInsertMode 1
 
 	    if {$itk_option(-validatecommand) != ""} {
-		if {[catch {$itk_option(-validatecommand) $row $col $_key $itk_option(-vclientdata)} isvalid]} {
+		if {[catch {$itk_option(-validatecommand) $row $col $_ucc $itk_option(-vclientdata)} isvalid]} {
 		    set isvalid 0
 		}
 	    } else {
@@ -425,7 +425,7 @@
 	    }
 
 	    if {$isvalid} {
-		setTableVal $index $_key
+		setTableVal $index $_ucc
 	    }
 	} else {
 	    setInsertMode 0
@@ -542,8 +542,8 @@
     }
 }
 
-::itcl::body cadwidgets::TkTable::keyVisible {_key} {
-    if {[string length $_key] == 1} {
+::itcl::body cadwidgets::TkTable::keyVisible {_keynum} {
+    if {32 <= $_keynum && $_keynum <= 126} {
 	return 1
     }
 
