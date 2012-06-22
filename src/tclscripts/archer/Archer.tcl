@@ -8464,6 +8464,9 @@ putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFra
 	}
     }
 
+    # This feature has been disabled.
+    set mTreeAttrColumns ""
+
     backgroundColor $mBackgroundColor
 
     if {!$mDelayCommandViewBuild} {
