@@ -4577,7 +4577,7 @@ package provide cadwidgets::Ged 1.0
 
 
 ::itcl::body cadwidgets::Ged::isdouble {_str} {
-    if {[string is double $_str] || $_str == "."} {
+    if {[string is double $_str] || $_str == "." || $_str == "-"} {
 	return 1
     }
 
