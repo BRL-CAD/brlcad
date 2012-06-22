@@ -294,9 +294,19 @@ main(int argc, char **argv)
     sizeVoxel[1] = 1.0;
     sizeVoxel[2] = 1.0;
 
-    numVoxel[0] = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxel[0]);
-    numVoxel[1] = (int)(((rtip->mdl_max)[1] - (rtip->mdl_min)[1])/sizeVoxel[1]);
-    numVoxel[2] = (int)(((rtip->mdl_max)[2] - (rtip->mdl_min)[2])/sizeVoxel[2]);
+    numVoxel[0] = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxel[0]) + 1;
+    numVoxel[1] = (int)(((rtip->mdl_max)[1] - (rtip->mdl_min)[1])/sizeVoxel[1]) + 1;
+    numVoxel[2] = (int)(((rtip->mdl_max)[2] - (rtip->mdl_min)[2])/sizeVoxel[2]) + 1;
+
+    if(EQUAL(numVoxel[0] - 1, (((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxel[0]))) {
+	numVoxel[0] -=1;
+    }
+    if(EQUAL(numVoxel[1] - 1, (((rtip->mdl_max)[1] - (rtip->mdl_min)[1])/sizeVoxel[1]))) {
+	numVoxel[1] -=1;
+    }
+    if(EQUAL(numVoxel[2] - 1, (((rtip->mdl_max)[2] - (rtip->mdl_min)[2])/sizeVoxel[2]))) {
+	numVoxel[2] -=1;
+    }
 
     voxelHits.sizeVoxel[0] = sizeVoxel[0];
     voxelHits.sizeVoxel[1] = sizeVoxel[1];
