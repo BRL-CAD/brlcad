@@ -155,9 +155,6 @@ const struct bu_structparse rt_arb_parse[] = {
 
 /* rt_arb_get_cgtype(), rt_arb_std_type(), and rt_arb_centroid()
  * stolen from mged/arbs.c */
-#define NO 0
-#define YES 1
-
 
 /**
  * R T _ A R B _ G E T _ C G T Y P E
@@ -181,84 +178,70 @@ rt_arb_get_cgtype(
     int *cgtype,
     struct rt_arb_internal *arb,
     const struct bn_tol *tol,
-    register int *uvec,	/* array of unique points */
-    register int *svec)	/* array of like points */
+    register int *uvec, /* array of indexes to unique points in arb->pt[] */
+    register int *svec) /* array of indexes to like points in arb->pt[] */
 {
     register int i, j;
-    int numuvec, unique, done;
-    int si;
+    int numuvec, unique;
+    int si = 2;         /* working index into svec */
+    int dup_list = 0;   /* index for the first two entries in svec */
+    int idx = 1;
 
     RT_ARB_CK_MAGIC(arb);
     BN_CK_TOL(tol);
 
-    done = NO;		/* done checking for like vectors */
-
     svec[0] = svec[1] = 0;
-    si = 2;
-
-    for (i=0; i<7; i++) {
-	unique = YES;
-	if (done == NO) {
-	    svec[si] = i;
-	}
-	for (j=i+1; j<8; j++) {
-	    int tmp;
-	    vect_t vtmp;
-
-	    VSUB2(vtmp, arb->pt[i], arb->pt[j]);
-
-	    if (fabs(vtmp[0]) > tol->dist) tmp = 0;
-	    else if (fabs(vtmp[1]) > tol->dist) tmp = 0;
-	    else if (fabs(vtmp[2]) > tol->dist) tmp = 0;
-	    else tmp = 1;
-
-	    if (tmp) {
-		if (done == NO)
-		    svec[++si] = j;
-		unique = NO;
-	    }
-	}
-	if (unique == NO) {
-	    /* point i not unique */
-	    if (si > 2 && si < 6) {
-		svec[0] = si - 1;
-		if (si == 5 && svec[5] >= 6)
-		    done = YES;
-		si = 6;
-	    }
-	    if (si > 6) {
-		svec[1] = si - 5;
-		done = YES;
-	    }
-	}
+    /* compare each point against every other point
+     * to find duplicates */
+    for (i = 0; i < 7; i++) {
+        unique = 1;
+        /* store possible duplicate point,
+         * will be overwritten if no duplicate is found */
+        svec[si] = i;
+        for (j = i + 1; j < 8; j++) {
+            /* check if points are "equal" */
+            if (VNEAR_EQUAL(arb->pt[i], arb->pt[j], tol->dist)) {
+                svec[++si] = j;
+                unique = 0;
+            }
+        }
+        if (!unique) {
+            /* record length */
+            svec[dup_list] = si - idx;
+            if (!dup_list) {
+                /* arb5 has only one set of duplicate points so end early */
+                if (si == 5 && svec[5] >= 6) {
+                    break;
+                }
+                /* remember the current index so we can compare
+                 * the new value of si to it later */
+                idx = si++;
+                dup_list = 1;
+            } else {
+                /* second set of duplicates, we're finished looking */
+                break;
+            }
+        }
     }
 
-    if (si > 2 && si < 6) {
-	svec[0] = si - 1;
-    }
-    if (si > 6) {
-	svec[1] = si - 5;
-    }
-    for (i=1; i<=svec[1]; i++) {
-	svec[svec[0]+1+i] = svec[5+i];
-    }
-    for (i=svec[0]+svec[1]+2; i<11; i++) {
-	svec[i] = -1;
+    /* mark invalid entries */
+    for (i = svec[0] + svec[1] + 2; i < 11; i++) {
+        svec[i] = -1;
     }
 
     /* find the unique points */
     numuvec = 0;
-    for (j=0; j<8; j++) {
-	unique = YES;
-	for (i=2; i<svec[0]+svec[1]+2; i++) {
-	    if (j == svec[i]) {
-		unique = NO;
-		break;
-	    }
-	}
-	if (unique == YES) {
-	    uvec[numuvec++] = j;
-	}
+    for (i = 0; i < 8; i++) {
+        unique = 1;
+        for (j = 2; j < svec[0] + svec[1] + 2; j++) {
+            if (i == svec[j]) {
+                unique = 0;
+                break;
+            }
+        }
+        if (unique) {
+            uvec[numuvec++] = i;
+        }
     }
 
     /* Figure out what kind of ARB this is */
