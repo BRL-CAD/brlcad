@@ -10,8 +10,67 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2012-04-XX  Release 7.21.X                                     ---
+--- 2012-06-22  Release 7.22.0                                     ---
 ----------------------------------------------------------------------
+
+After many months of development, this release includes hundreds of
+fixes for source code defects, logic and memory management bugs,
+potential security vulnerabilities, and numerous other issues reported
+by Coverity Static Analysis.  While having participated in the
+Coverity Scan Initiative since inception in 2006, this release marks a
+completion milestone with the review and resolution of all reported
+issues, more than 2100 overall.  Each and every defect was inspected,
+code modifications were peer-reviewed, critical changes were tested,
+and user-visible changes were documented.  Along with other on-going
+improvement efforts such as treating all compiler-generated warnings
+as errors, time and attention continues to be put forth towards
+improving BRL-CAD's maintainability and source code quality.
+
+Development of BREP/NURB representation support within BRL-CAD
+continues to mature with this release including ray tracing
+improvements, tighter bounding boxes for improved and more accurate
+rendering performance, wireframe improvements, progress converting
+from traditional implicit+CSG representations to NURBS+CSG, and a
+thorough verification and validation (V&V) review for analysis
+suitability.  The V&V review compared most of BRL-CAD's primitives in
+implicit, polygonal mesh, and NURBS form evaluating more than a dozen
+separate tests looking for differences in rendering, curvature,
+presented areas, volume, and more.  The review identified a couple
+minor issues that were inspected and fixed but overwhelmingly
+demonstrated successful viability of using our BREP/NURBS
+implementation for geometry representation and analysis purposes.
+
+This release includes numerous major enhancements including the
+initial development of a new physics simulation capability, a new
+ambient occlusion rendering capability, and integration of rtwizard
+into Archer.  The simulation system was developed by Abhijit Nandy
+under the European Space Agency's 2011 Summer of Code in Space (SOCIS)
+program and it allows BRL-CAD geometry objects to dynamically interact
+with each other (e.g., friction, collision detection) or with the
+environment (e.g., gravity).  Ambient occlusion is a shading method
+that helps add considerable realism and feature definition to
+renderings, enabled within rt with -c "set ambSamples=128" option.
+The rtwizard rendering interface was extended to work as a
+command-line tool (useful for scripting) and was integrated within
+Archer as the underlying rendering interface.
+
+Conversion support continues to be a development priority with
+significant importer enhancements for the STEP, OBJ, COMGEOM, FASTGEN,
+and RAW file formats.  The STEP importer in particular receives
+several updates, support for importing assembly hierarchies, and has
+been ported to Windows.  This release also fixes more than 40
+user-visible bugs including a significant database corruption issue.
+A database corruption issue was discovered and fixed affecting 64-bit
+big endian platforms (e.g., IBM Power Series) when writing out ebm,
+dsp, vol, and hf primitives.
+
+BRL-CAD's documentation continues to be extended, improved, and
+translated due to the sustained efforts of several contributors.
+Manual page documentation is now available on Windows through the
+'brlman' command and within MGED.  Several utilities and commands that
+previously had no documentation now have manual pages; many others
+received corrections and improvements.  The "About BRL-CAD" article is
+now available in Russian, Italian, and Armenian.
 
 * numerous manual page corrections and improvements - Tom Browder
 * integration of rtwizard traits into archer - Bob Parker, Cliff Yapp
