@@ -71,12 +71,14 @@ rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     ON_NurbsSurface *part_nurbs_surf = ON_NurbsSurface::New();
     part_surf->GetNurbForm(*part_nurbs_surf, 0.0);
 
-    (*b)->m_S.Append(part_nurbs_surf);
-    int surfindex = (*b)->m_S.Count();
-    ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
-    // (*b)->FlipFace(face);
-    int faceindex = (*b)->m_F.Count();
-    (*b)->NewOuterLoop(faceindex-1);
+    if (!EQUAL(fabs(temp), ON_PI/2.0)) {
+	(*b)->m_S.Append(part_nurbs_surf);
+	int surfindex = (*b)->m_S.Count();
+	ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
+	// (*b)->FlipFace(face);
+	int faceindex = (*b)->m_F.Count();
+	(*b)->NewOuterLoop(faceindex-1);
+    }
 
     vect_t minusH;
     VREVERSE(minusH, pip->part_H);
@@ -94,12 +96,14 @@ rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     ON_NurbsSurface *v_nurbs_surf = ON_NurbsSurface::New();
     v_sph_surf->GetNurbForm(*v_nurbs_surf, 0.0);
 
-    (*b)->m_S.Append(v_nurbs_surf);
-    surfindex = (*b)->m_S.Count();
-    face = (*b)->NewFace(surfindex - 1);
-    (*b)->FlipFace(face);
-    faceindex = (*b)->m_F.Count();
-    (*b)->NewOuterLoop(faceindex-1);
+    if (!EQUAL(temp, -ON_PI/2.0)) {
+	(*b)->m_S.Append(v_nurbs_surf);
+	int surfindex = (*b)->m_S.Count();
+	ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
+	(*b)->FlipFace(face);
+	int faceindex = (*b)->m_F.Count();
+	(*b)->NewOuterLoop(faceindex-1);
+    }
 
     ON_Plane hplane = ON_Plane(ON_3dPoint(origin), ON_3dPoint(pip->part_H), ON_3dPoint(r));
     ON_Circle hcircle = ON_Circle(hplane, pip->part_hrad);
@@ -116,12 +120,14 @@ rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     ON_NurbsSurface *h_nurbs_surf = ON_NurbsSurface::New();
     h_sph_surf->GetNurbForm(*h_nurbs_surf, 0.0);
 
-    (*b)->m_S.Append(h_nurbs_surf);
-    surfindex = (*b)->m_S.Count();
-    ON_BrepFace& face2 = (*b)->NewFace(surfindex - 1);
-    (*b)->FlipFace(face2);
-    faceindex = (*b)->m_F.Count();
-    (*b)->NewOuterLoop(faceindex-1);
+    if (!EQUAL(temp, ON_PI/2.0)) {
+	(*b)->m_S.Append(h_nurbs_surf);
+	int surfindex = (*b)->m_S.Count();
+	ON_BrepFace& face2 = (*b)->NewFace(surfindex - 1);
+	(*b)->FlipFace(face2);
+	int faceindex = (*b)->m_F.Count();
+	(*b)->NewOuterLoop(faceindex-1);
+    }
 }
 
 
