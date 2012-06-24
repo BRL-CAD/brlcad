@@ -75,7 +75,7 @@ rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	(*b)->m_S.Append(part_nurbs_surf);
 	int surfindex = (*b)->m_S.Count();
 	ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
-	// (*b)->FlipFace(face);
+	(*b)->FlipFace(face);
 	int faceindex = (*b)->m_F.Count();
 	(*b)->NewOuterLoop(faceindex-1);
     }
@@ -109,7 +109,7 @@ rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     ON_Circle hcircle = ON_Circle(hplane, pip->part_hrad);
     ON_NurbsCurve *tnurbscurve2 = ON_NurbsCurve::New();
     ON_NurbsCurve *h_curve = ON_NurbsCurve::New();
-    const ON_Interval subinterval2 = ON_Interval(0, ON_PI/2.0 - temp);
+    const ON_Interval subinterval2 = ON_Interval(ON_PI/2.0 - temp, 0);
     ON_Arc h_arc(hcircle, subinterval2);
     h_arc.Translate(ON_3dVector(VaddH));
     h_arc.GetNurbForm(*h_curve);
