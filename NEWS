@@ -56,12 +56,12 @@ Archer as the underlying rendering interface.
 Conversion support continues to be a development priority with
 significant importer enhancements for the STEP, OBJ, COMGEOM, FASTGEN,
 and RAW file formats.  The STEP importer in particular receives
-several updates, support for importing assembly hierarchies, and has
-been ported to Windows.  This release also fixes more than 40
-user-visible bugs including a significant database corruption issue.
-A database corruption issue was discovered and fixed affecting 64-bit
-big endian platforms (e.g., IBM Power Series supercomputers) when
-writing out ebm, dsp, vol, and hf primitives.
+several updates, support for importing assembly hierarchies, and is in
+the process of being fully ported to Windows.  This release also fixes
+more than 40 user-visible bugs including a significant database
+corruption issue.  A database corruption issue was discovered and
+fixed affecting 64-bit big endian platforms (e.g., IBM Power Series
+supercomputers) when writing out ebm, dsp, vol, and hf primitives.
 
 BRL-CAD's documentation continues to be extended, improved, and
 translated due to the sustained efforts of several contributors.
