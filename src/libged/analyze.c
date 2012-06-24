@@ -620,24 +620,24 @@ void print_faces_table(struct ged *gedp, table_t *table)
 static void
 findang(fastf_t *angles, fastf_t *unitv)
 {
+    int i;
     fastf_t f;
 
     /* convert direction cosines into axis angles */
-    if (unitv[X] <= -1.0) angles[X] = -90.0;
-    else if (unitv[X] >= 1.0) angles[X] = 90.0;
-    else angles[X] = acos(unitv[X]) * bn_radtodeg;
-
-    if (unitv[Y] <= -1.0) angles[Y] = -90.0;
-    else if (unitv[Y] >= 1.0) angles[Y] = 90.0;
-    else angles[Y] = acos(unitv[Y]) * bn_radtodeg;
-
-    if (unitv[Z] <= -1.0) angles[Z] = -90.0;
-    else if (unitv[Z] >= 1.0) angles[Z] = 90.0;
-    else angles[Z] = acos(unitv[Z]) * bn_radtodeg;
+    for (i = X; i <= Z; i++) {
+        if (unitv[i] <= -1.0)
+            angles[i] = -90.0;
+        else if (unitv[i] >= 1.0)
+            angles[i] = 90.0;
+        else
+            angles[i] = acos(unitv[i]) * bn_radtodeg;
+    }
 
     /* fallback angle */
-    if (unitv[Z] <= -1.0) unitv[Z] = -1.0;
-    else if (unitv[Z] >= 1.0) unitv[Z] = 1.0;
+    if (unitv[Z] <= -1.0)
+        unitv[Z] = -1.0;
+    else if (unitv[Z] >= 1.0)
+        unitv[Z] = 1.0;
     angles[4] = asin(unitv[Z]);
 
     /* rotation angle */
@@ -646,18 +646,18 @@ findang(fastf_t *angles, fastf_t *unitv)
      * substituted for the original +/- 1.0e-20.
      */
     if ((f = cos(angles[4])) > 1.0e-16 || f < -1.0e-16) {
-	f = unitv[X]/f;
-	if (f <= -1.0)
-	    angles[3] = 180;
-	else if (f >= 1.0)
-	    angles[3] = 0;
-	else
-	    angles[3] = bn_radtodeg * acos(f);
-    }  else
-	   angles[3] = 0.0;
+        f = unitv[X]/f;
+        if (f <= -1.0)
+            angles[3] = 180;
+        else if (f >= 1.0)
+            angles[3] = 0;
+        else
+            angles[3] = bn_radtodeg * acos(f);
+    } else
+        angles[3] = 0;
 
     if (unitv[Y] < 0)
-	angles[3] = 360.0 - angles[3];
+        angles[3] = 360.0 - angles[3];
 
     angles[4] *= bn_radtodeg;
 }
@@ -665,7 +665,7 @@ findang(fastf_t *angles, fastf_t *unitv)
 
 /* Analyzes an arb face
  */
-static double
+static fastf_t
 analyze_face(struct ged *gedp, int face, fastf_t *center_pt,
         const struct rt_arb_internal *arb, int type,
         const struct bn_tol *tol, row_t *row)
