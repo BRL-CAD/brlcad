@@ -743,36 +743,33 @@ analyze_face(struct ged *gedp, int face, fastf_t *center_pt,
 /* Analyzes arb edges - finds lengths */
 static void
 analyze_edge(struct ged *gedp, const int edge, const struct rt_arb_internal *arb,
-	     const int type, row_t *row)
+        const int type, row_t *row)
 {
-    static vect_t v_temp;
     int a = nedge[type][edge*2];
     int b = nedge[type][edge*2+1];
 
     if (b == -1) {
-	/* fill out the line */
-	if ((a = edge % 4) == 0) {
-	    row->nfields = 0;
-	    return;
-	}
-	if (a == 1) {
-	    row->nfields = 0;
-	    return;
-	}
-	if (a == 2) {
-	    row->nfields = 0;
-	    return;
-	}
-	row->nfields = 0;
-	return;
+        /* fill out the line */
+        if ((a = edge % 4) == 0) {
+            row->nfields = 0;
+            return;
+        }
+        if (a == 1) {
+            row->nfields = 0;
+            return;
+        }
+        if (a == 2) {
+            row->nfields = 0;
+            return;
+        }
+        row->nfields = 0;
+        return;
     }
-
-    VSUB2(v_temp, arb->pt[b], arb->pt[a]);
 
     row->nfields = 2;
     row->fields[0].nchars = sprintf(row->fields[0].buf, "%d%d", a + 1, b + 1);
     row->fields[1].nchars = sprintf(row->fields[1].buf, "%10.8f",
-				    MAGNITUDE(v_temp)*gedp->ged_wdbp->dbip->dbi_base2local);
+            DIST_PT_PT(arb->pt[a], arb->pt[b])*gedp->ged_wdbp->dbip->dbi_base2local);
 }
 
 
@@ -786,16 +783,16 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
     int i;
     point_t center_pt;
     fastf_t tot_vol, tot_area;
-    int cgtype;		/* COMGEOM arb type: # of vertices */
+    int cgtype;     /* COMGEOM arb type: # of vertices */
     int type;
 
     /* variables for pretty printing */
-    table_t table;      /* holds table data from child functions */
+    table_t table;  /* holds table data from child functions */
 
     /* find the specific arb type, in GIFT order. */
     if ((cgtype = rt_arb_std_type(ip, &gedp->ged_wdbp->wdb_tol)) == 0) {
-	bu_vls_printf(gedp->ged_result_str, "analyze_arb: bad ARB\n");
-	return;
+        bu_vls_printf(gedp->ged_result_str, "analyze_arb: bad ARB\n");
+        return;
     }
 
     tot_area = tot_vol = 0.0;
@@ -803,8 +800,8 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
     type = cgtype - 4;
 
     /* to get formatting correct, we need to collect the actual string
-       lengths for each field BEFORE we start printing a table (fields
-       are allowed to overflow the stated printf field width) */
+     * lengths for each field BEFORE we start printing a table (fields
+     * are allowed to overflow the stated printf field width) */
 
     /* TABLE 1 =========================================== */
     /* analyze each face, use center point of arb for reference */
@@ -813,9 +810,9 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
     /* collect table data */
     table.nrows = 0;
     for (i = 0; i < 6; i++) {
-      tot_area += analyze_face(gedp, i, center_pt, arb, type, &gedp->ged_wdbp->wdb_tol,
-			       &(table.rows[i]));
-      table.nrows += 1;
+        tot_area += analyze_face(gedp, i, center_pt, arb, type, &gedp->ged_wdbp->wdb_tol,
+                &(table.rows[i]));
+        table.nrows += 1;
     }
 
     /* and print it */
@@ -831,21 +828,20 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
     /* also collect table data */
     table.nrows = 0;
 
-    {
-	struct rt_arb_internal earb = *arb;	/* struct copy */
+    struct rt_arb_internal earb = *arb; /* struct copy */
 
-	if (cgtype == 4) {
-	    VMOVE(earb.pt[3], earb.pt[4]);
-	} else if (cgtype == 6) {
-	    VMOVE(earb.pt[5], earb.pt[6]);
-	}
+    if (cgtype == 4) {
+        VMOVE(earb.pt[3], earb.pt[4]);
+    } else if (cgtype == 6) {
+        VMOVE(earb.pt[5], earb.pt[6]);
+    }
 
-	for (i = 0; i < 12; i++) {
-	    analyze_edge(gedp, i, &earb, type, &(table.rows[i]));
-	    if (nedge[type][i*2] == -1)
-		break;
-	    table.nrows += 1;
-	}
+    for (i = 0; i < 12; i++) {
+        analyze_edge(gedp, i, &earb, type, &(table.rows[i]));
+        if (nedge[type][i*2] == -1) {
+            break;
+        }
+        table.nrows += 1;
     }
 
     print_edges_table(gedp, &table);
@@ -859,18 +855,17 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
     rt_functab[ID_ARB8].ft_volume(&tot_vol, ip);
 
     print_volume_table(gedp,
-		       tot_vol
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
+            tot_vol
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
 
-		       tot_area
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
+            tot_area
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
 
-		       tot_vol/GALLONS_TO_MM3
-		       );
-
+            tot_vol/GALLONS_TO_MM3
+            );
 }
 
 
