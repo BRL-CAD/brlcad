@@ -145,7 +145,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 
 		while(tmp->nextRegion != NULL) {
 
-		    if(!strcmp(pp->pt_regionp->reg_name, tmp->regionName)){
+		    if(!bu_strcmp(pp->pt_regionp->reg_name, tmp->regionName)){
 
 			regionSaved = 1;
 			tmp->regionDistance += hitDistOut - hitDistIn;
@@ -154,7 +154,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 		    tmp = tmp->nextRegion;
 		}
 
-		if(!strcmp(tmp->regionName,pp->pt_regionp->reg_name)){
+		if(!bu_strcmp(tmp->regionName,pp->pt_regionp->reg_name)){
 		    regionSaved = 1;
 		    tmp->regionDistance += hitDistOut - hitDistIn;
 		}
@@ -183,13 +183,13 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 		tmp = voxelHits->regionList + voxelNumIn;
 		while(tmp->nextRegion != NULL) {
 
-		    if(!strcmp(pp->pt_regionp->reg_name,tmp->regionName)) {
+		    if(!bu_strcmp(pp->pt_regionp->reg_name,tmp->regionName)) {
 			regionSaved = 1;
 			tmp->regionDistance += (voxelNumIn + 1) * sizeVoxel[0] - hitDistIn;
 		    }
 		    tmp = tmp->nextRegion;
 		}
-		if(!strcmp(tmp->regionName, pp->pt_regionp->reg_name)) {
+		if(!bu_strcmp(tmp->regionName, pp->pt_regionp->reg_name)) {
 		    regionSaved = 1;
 		    tmp->regionDistance += (voxelNumIn + 1) * sizeVoxel[0] - hitDistIn;
 		}
