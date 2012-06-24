@@ -46,6 +46,9 @@ rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     point_t origin;
     VSET(origin, 0.0, 0.0, 0.0);
 
+    // First, create the body of the particle. It should be a revolution of a line.
+    // The body should be either a cylinder or a truncated cone which is tangent to
+    // the two hemispheres.
     point_t VaddH;
     vect_t r;
     VADD2(VaddH, pip->part_V, pip->part_H);
@@ -80,6 +83,7 @@ rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	(*b)->NewOuterLoop(faceindex-1);
     }
 
+    // Then, create the v-hemisphere.
     vect_t minusH;
     VREVERSE(minusH, pip->part_H);
     ON_Plane vplane = ON_Plane(ON_3dPoint(origin), ON_3dPoint(minusH), ON_3dPoint(r));
@@ -105,6 +109,7 @@ rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	(*b)->NewOuterLoop(faceindex-1);
     }
 
+    // Last, the h-hemisphere.
     ON_Plane hplane = ON_Plane(ON_3dPoint(origin), ON_3dPoint(pip->part_H), ON_3dPoint(r));
     ON_Circle hcircle = ON_Circle(hplane, pip->part_hrad);
     ON_NurbsCurve *tnurbscurve2 = ON_NurbsCurve::New();
