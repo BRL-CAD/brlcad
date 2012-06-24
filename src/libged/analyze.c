@@ -667,22 +667,17 @@ findang(fastf_t *angles, fastf_t *unitv)
  */
 static double
 analyze_face(struct ged *gedp, int face, fastf_t *center_pt,
-	     const struct rt_arb_internal *arb, int type,
-	     const struct bn_tol *tol, row_t *row)
-
+        const struct rt_arb_internal *arb, int type,
+        const struct bn_tol *tol, row_t *row)
 
 /* reference center point */
 
-
 {
-    int i, j, k;
-    int a, b, c, d;	/* 4 points of face to look at */
-    fastf_t angles[5];	/* direction cosines, rot, fb */
-    fastf_t temp;
-    fastf_t area[2], len[6];
-    vect_t v_temp;
+    int a, b, c, d;     /* 4 points of face to look at */
+    fastf_t angles[5];  /* direction cosines, rot, fb */
+    fastf_t face_area;
     plane_t plane;
-    double face_area = 0;
+    vect_t v_tmp[3];    /* array of vects to store intermediate calculations */
 
     a = rt_arb_faces[type][face*4+0];
     b = rt_arb_faces[type][face*4+1];
@@ -690,20 +685,18 @@ analyze_face(struct ged *gedp, int face, fastf_t *center_pt,
     d = rt_arb_faces[type][face*4+3];
 
     if (a == -1) {
-	row->nfields = 0;
-	return 0;
+        row->nfields = 0;
+        return 0;
     }
 
     /* find plane eqn for this face */
     if (bn_mk_plane_3pts(plane, arb->pt[a], arb->pt[b],
-			 arb->pt[c], tol) < 0) {
-#if 1
-	bu_vls_printf(gedp->ged_result_str, "| %d%d%d%d |         ***NOT A PLANE***                                          |\n",
-		      a+1, b+1, c+1, d+1);
-#endif
-	/* this row has 1 special fields */
-	row->nfields = NOT_A_PLANE;
-	return 0;
+                arb->pt[c], tol) < 0) {
+        bu_vls_printf(gedp->ged_result_str, "| %d%d%d%d |         ***NOT A PLANE***                                          |\n",
+                a+1, b+1, c+1, d+1);
+        /* this row has 1 special fields */
+        row->nfields = NOT_A_PLANE;
+        return 0;
     }
 
     /* The plane equations returned by planeqn above do not
@@ -711,40 +704,23 @@ analyze_face(struct ged *gedp, int face, fastf_t *center_pt,
      * point for the arb and reverse direction for
      * any errant planes. This corrects the output rotation,
      * fallback angles so that they always give the outward
-     * pointing normal vector.
-     */
-    if ((plane[W] - VDOT(center_pt, &plane[0])) < 0.0) {
-	for (i = 0; i < 4; i++)
-	    plane[i] *= -1.0;
+     * pointing normal vector. */
+    if (DIST_PT_PLANE(center_pt, plane) > 0.0) {
+        HSCALE(plane, plane, -1.0);
     }
 
     /* plane[] contains normalized eqn of plane of this face
-     * find the dir cos, rot, fb angles
-     */
+     * find the dir cos, rot, fb angles */
     findang(angles, &plane[0]);
 
-    /* find the surface area of this face */
-    for (i = 0; i < 3; i++) {
-	j = rt_arb_faces[type][face*4+i];
-	k = rt_arb_faces[type][face*4+i+1];
-	VSUB2(v_temp, arb->pt[k], arb->pt[j]);
-	len[i] = MAGNITUDE(v_temp);
-    }
-    len[4] = len[2];
-    j = rt_arb_faces[type][face*4+0];
-    for (i = 2; i < 4; i++) {
-	k = rt_arb_faces[type][face*4+i];
-	VSUB2(v_temp, arb->pt[k], arb->pt[j]);
-	len[((i*2)-1)] = MAGNITUDE(v_temp);
-    }
-    len[2] = len[3];
+    /* find the surface area of this face.
+     * for planar quadrilateral Q:V0,V1,V2,V3 with unit normal N,
+     * area = N/2 * [(V2 - V0) x (V3 - V1)] */
+    VSUB2(v_tmp[0], arb->pt[c], arb->pt[a]);
+    VSUB2(v_tmp[1], arb->pt[d], arb->pt[b]);
+    VCROSS(v_tmp[2], v_tmp[0], v_tmp[1]);
 
-    for (i = 0; i < 2; i++) {
-	j = i * 3;
-	temp = .5 * (len[j] + len[j+1] + len[j+2]);
-	area[i] = sqrt(temp * (temp - len[j]) * (temp - len[j+1]) * (temp - len[j+2]));
-	face_area += area[i];
-    }
+    face_area = fabs(VDOT(plane, v_tmp[2])) / 2.0;
 
     /* don't printf, just sprintf! */
     /* these rows have 8 fields */
@@ -756,9 +732,9 @@ analyze_face(struct ged *gedp, int face, fastf_t *center_pt,
     row->fields[4].nchars = sprintf(row->fields[4].buf, "%10.8f", plane[Y]);
     row->fields[5].nchars = sprintf(row->fields[5].buf, "%10.8f", plane[Z]);
     row->fields[6].nchars = sprintf(row->fields[6].buf, "%10.8f",
-				    plane[W]*gedp->ged_wdbp->dbip->dbi_base2local);
+            plane[W]*gedp->ged_wdbp->dbip->dbi_base2local);
     row->fields[7].nchars = sprintf(row->fields[7].buf, "%10.8f",
-				    (area[0]+area[1])*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local );
+            face_area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
 
     return face_area;
 }
