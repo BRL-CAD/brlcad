@@ -49,11 +49,10 @@ canonize \- queue a pix file to a printer using MDQS
 .RB [ \-w\ filewidth]
 .RB [ \-n\ fileheight]
 .br
-.br
-.RB [ \-g\ {cg|rgb|scan}]
+.RB [ \-g\ {cg | rgb | scan}]
 .br
 .RB [ \-t\ {u|l|m}]
-.RB [ \-C\ {1-99}]
+.RB [ \-C\ numcopies]
 .RB [ \-q\ queue]
 .br
 .RB [ \-R\ dpi ]
@@ -119,7 +118,7 @@ selects the tray from which paper should be taken to
 produce the print.  The options are "u" for the upper tray, "l" for
 the lower tray, and "m" for manual feed.
 .TP
-\-C #copies
+\-C numcopies
 Specifies the number of prints of the image desired.
 This number must be in the range 1-99.
 .TP

@@ -88,17 +88,17 @@ command is given to load the necessary columns of raw values into
 the output channels.
 If a channel number in the list is given as a minus ('-'),
 that input column is skipped.
-.sp .5
+.sp 1
    file filename chan_num(s);
-.sp .5
+.sp 1
 Using the output channel assignments given above
 as an example, if an input table existed in a file named "table1"
 which consisted of
 five columns of values representing (time, brightness, objX, objY, objZ),
 then these values would be loaded with this command:
-.sp .5
+.sp 1
    file table1 6 0 1 2;
-.sp .5
+.sp 1
 This command indicates that from the file "table1", the current time and
 four columns of parameters should be read into the raw output table,
 with the first input column representing the time, the second input
@@ -115,9 +115,9 @@ time all the values just read into the
 the raw output table will be sent on to the interpolators, and
 how many rows of interpolated output should be produced for each second
 (time unit) in the input file.
-.sp .5
+.sp 1
    times start stop fps;
-.sp .5
+.sp 1
 The
 .I fps
 parameter can be thought of as the
@@ -127,9 +127,9 @@ NTSC video.  Any positive integer value is acceptable.
 (In fact, any time unit can be used, as the time channel is dimensionless.
 Nothing depends on the units being seconds.)
 For example, the command:
-.sp .5
+.sp 1
    times 1 7.3 24;
-.sp .5
+.sp 1
 would cause
 .I tabinterp
 to process data values from time 1 second to 7.3 seconds, producing
@@ -144,13 +144,13 @@ The available interpolator procedures are:
 The available value generator commands are:
 \fBrate, accel,\fR and \fBnext\fR.
 The interpolator procedures are selected by giving commands of this form:
-.sp .5
+.sp 1
    interp type chan_num(s);
-.sp .5
+.sp 1
 For example, the command:
-.sp .5
+.sp 1
    interp linear 3 4 5;
-.sp .5
+.sp 1
 would indicate that output channels 3, 4, and 5 (representing the camera
 aim point) would be processed using linear interpolation.
 If only a starting and ending values
@@ -188,9 +188,9 @@ obtain a pointing direction, and a "twist" angle around that vector.
 To do this, quaternions are processed in blocks of four channels, which
 must be numbered sequentially (\fIe.g.\fR channels 7, 8, 9, 10).
 Giving the command
-.sp .5
+.sp 1
    interp quat 7 15;
-.sp .5
+.sp 1
 assigns the quaternion interpolator to two blocks of four channels,
 the block starting with channel 7 (\fIe.g.\fR channels 7, 8, 9, 10),
 and the block starting with channel 15.
@@ -213,13 +213,13 @@ for each output channel.
 The
 .B rate
 command takes these arguments:
-.sp .5
+.sp 1
    rate chan_num init_value incr_per_sec;
-.sp .5
+.sp 1
 For example,
-.sp .5
+.sp 1
    rate 6 1.5 0.5;
-.sp .5
+.sp 1
 says to make channel 6 a rate based channel, with the initial value
 (at time=0) of 1.5, linearly increasing with an increment of 0.5 for
 the passing of every additional second (time unit).
@@ -232,13 +232,13 @@ in this way.
 The
 .B accel
 command takes these arguments:
-.sp .5
+.sp 1
    accel chan_num init_value mult_per_sec;
-.sp .5
+.sp 1
 For example,
-.sp .5
+.sp 1
    accel 5 10 2;
-.sp .5
+.sp 1
 says to make channel 5 an acceleration based channel,
 with the initial value at time=0 of 10.0, which is multipled by
 2 for every additional second (time unit).
@@ -257,18 +257,18 @@ in order to determine where to aim the nose of the rocket (by rotating it).
 This kind of lookahead is easily implemented using the
 .B next
 command.
-.sp .5
+.sp 1
    next dest_chan src_chan nsamp;
-.sp .5
+.sp 1
 (See also the
 .B fromto
 directive in
 .IR tabsub (1)
 which is used in conjunction with this).
 The command
-.sp .5
+.sp 1
    next 4 5 +3;
-.sp .5
+.sp 1
 says to fill channel 4 with the values that will be present in channel 5
 at 3 output rows later on.
 Negative values are also permitted.
@@ -309,11 +309,11 @@ it will be accepted as a valid floating-point zero.
 .PP
 As an aid to debugging, it is possible to dump the raw values of
 columns of the output table before the interpolation is run:
-.sp .5
+.sp 1
    idump;
 .br
    idump chan_num(s);
-.sp .5
+.sp 1
 If no output channel numbers are given, all channels are dumped,
 otherwise only the indicated channels are dumped.
 .PP
@@ -330,6 +330,7 @@ that are normally printed on standard error.
 What follows here is a Bourne shell script which will generate
 two input tables using ``here documents'', and will then
 produce an interpolated output table of 8 channels.
+
 .nf
 #!/bin/sh
 cat << EOF > table.aim
@@ -366,6 +367,7 @@ interp spline 3 4 5;
 interp spline 7;
 EOF
 .fi
+
 .PP
 Try clipping this example out of the manual page
 (usually found in /usr/brlcad/man/man1/tabinterp.1)
@@ -381,15 +383,15 @@ in creating an animation.
 To visualize the exact position taken by the aim point
 in the example (output channels 3, 4, 5), a UNIX-plot file
 of that trajectory can be created with:
-.sp .5
+.sp 1
    cut -f5,6,7 table.final | xyz-pl > aim.pl
 .br
    cut -f1,5,6,7 table.final | txyz-pl > aim.pl
-.sp .5
+.sp 1
 Similarly, the position of the main object can be viewed with
-.sp .5
+.sp 1
    cut -f2,3,4 table.final | xyz-pl > obj.pl
-.sp .5
+.sp 1
 .I tabinterp
 uses 0-based column numbering, while
 .I cut
@@ -405,9 +407,9 @@ or
 or it can be viewed in
 .IR mged (1)
 by giving the command
-.sp .5
+.sp 1
    overlay aim.pl
-.sp .5
+.sp 1
 to
 .I mged.
 If the model geometry is brought into view using the

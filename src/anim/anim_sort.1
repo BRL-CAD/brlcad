@@ -69,13 +69,15 @@ movement of the virtual camera and the lighting,
 rotates
 the blades of a windmill, and
 .B quixote.script
-controlls the movement of a
+controls the movement of a
 knight. These scripts should first be concatenated together:
-.sp
+
 .nf
-    cat view.script mill.script quixote.script > mixed.script
+.RS
+cat view.script mill.script quixote.script > mixed.script
+.RE
 .fi
-.sp
+
 Calling
 .I anim_sort
 with
@@ -91,14 +93,16 @@ viable
 .I rt
 animation script, containing a series of frames of the
 following form:
-.sp
+
 .nf
-    start framenumber;
-    any number of semi-colon terminated commands for rt;
-    end;
-    any number of post-raytracing commands
+.RS
+start framenumber;
+any number of semi-colon terminated commands for rt;
+end;
+any number of post-raytracing commands
+.RE
 .fi
-.sp
+
 .I anim_sort
 reads the framenumber of the first start command, and uses
 this to as the first frame number of the output file. The commands of
