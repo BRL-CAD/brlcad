@@ -16,11 +16,14 @@ main (int argc, char *argv[])
    struct rt_db_internal intern;
    struct rt_bot_internal *bot_ip = NULL;
    struct rt_bot_list *headRblp = NULL;
+   struct rt_bot_list *split_bots = NULL;
    struct rt_db_internal bot_intern;
    struct rt_bot_list *rblp;
+   struct rt_bot_list *splitlp;
    struct bu_vls name;
 
    int i = 0;
+   int j = 0;
 
    bu_vls_init(&name);
 
@@ -58,24 +61,25 @@ main (int argc, char *argv[])
    headRblp = rt_bot_patches(bot_ip);
 
    i = 0;
+   j = 0;
    for (BU_LIST_FOR(rblp, rt_bot_list, &headRblp->l)) {
-	   bu_vls_sprintf(&name, "%d.bot", i);
-	   RT_DB_INTERNAL_INIT(&bot_intern);
-	   bot_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	   bot_intern.idb_type = ID_BOT;
-	   bot_intern.idb_meth = &rt_functab[ID_BOT];
-	   bot_intern.idb_ptr = (genptr_t)rblp->bot;
-	   dp = db_diradd(dbip, bu_vls_addr(&name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&bot_intern.idb_type);
-	   if (dp == RT_DIR_NULL) {
-                   printf("auuugh - dp says diradd failed!\n");
-		   rt_bot_list_free(headRblp, 0);
-		   rt_db_free_internal(&intern);
-	   } else {
-		   if (rt_db_put_internal(dp, dbip, &bot_intern, &rt_uniresource) < 0) {
-			   printf("auuugh - put_internal failed!\n");
-			   rt_bot_list_free(headRblp, 0);
-			   rt_db_free_internal(&intern);
+	   split_bots = rt_bot_split(rblp->bot);
+	   for (BU_LIST_FOR(splitlp, rt_bot_list, &split_bots->l)) {
+		   bu_vls_sprintf(&name, "auto-%d_%d.bot", i, j);
+		   RT_DB_INTERNAL_INIT(&bot_intern);
+		   bot_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+		   bot_intern.idb_type = ID_BOT;
+		   bot_intern.idb_meth = &rt_functab[ID_BOT];
+		   bot_intern.idb_ptr = (genptr_t)splitlp->bot;
+		   dp = db_diradd(dbip, bu_vls_addr(&name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&bot_intern.idb_type);
+		   if (dp == RT_DIR_NULL) {
+			   printf("auuugh - dp says diradd failed!\n");
+		   } else {
+			   if (rt_db_put_internal(dp, dbip, &bot_intern, &rt_uniresource) < 0) {
+				   printf("auuugh - put_internal failed!\n");
+			   }
 		   }
+                   j++;
 	   }
 	   i++;
    }
