@@ -23,16 +23,22 @@
  *
  */
 
+#include "common.h"
+
+#ifdef HAVE_ADAPTAGRAMS
+
+/* System Header */
 #include <stdint.h>
 
+#define BRLCAD_PARALLEL PARALLEL
+#undef PARALLEL
+
+/* Adaptagrams Header */
 #include "libavoid/libavoid.h"
 using namespace Avoid;
 
-#include "common.h"
-#include "bu.h"
-#include "ged_private.h"
+/* Public Header */
 #include "ged.h"
-#include "raytrace.h"
 
 
 struct _ged_dag_data {
@@ -52,8 +58,7 @@ conn_callback(void *ptr)
 
     const Avoid::PolyLine& route = connRef->route();
     printf("New path: ");
-    for (size_t i = 0; i < route.ps.size(); ++i)
-    {
+    for (size_t i = 0; i < route.ps.size(); ++i) {
         printf("%s(%f, %f)", (i > 0) ? "-" : "",
                 route.ps[i].x, route.ps[i].y);
     }
@@ -89,28 +94,29 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
     int i;
 
     /* Traverse the database 'gedp' */
-    for(i = 0; i < RT_DBNHASH; i++)
-    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-        bu_vls_sprintf(&dp_name_vls, "%s%s", "", dp->d_namep);
-        ndp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&dp_name_vls), 1);
-        if (ndp) {
-            if(dp->d_flags & RT_DIR_SOLID) {
-                bu_log("Adding SOLID object [%s]\n", bu_vls_addr(&dp_name_vls));
-                add_object(dag);
-                bu_log("[SOLID]added %d objects.\n", dag->object_nr);
-            } else if (dp->d_flags & RT_DIR_COMB) {
-                bu_log("Adding COMB object [%s]\n", bu_vls_addr(&dp_name_vls));
-                add_object(dag);
-                bu_log("[COMB]added %d objects.\n", dag->object_nr);
-            } else if (dp->d_flags & RT_DIR_REGION) {
-                bu_log("Adding REGION object [%s]\n", bu_vls_addr(&dp_name_vls));
-                add_object(dag);
-                bu_log("[REGION]added %d objects.\n", dag->object_nr);
+    for (i = 0; i < RT_DBNHASH; i++) {
+        for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+            bu_vls_sprintf(&dp_name_vls, "%s%s", "", dp->d_namep);
+            ndp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&dp_name_vls), 1);
+            if (ndp) {
+                if(dp->d_flags & RT_DIR_SOLID) {
+                    bu_log("Adding SOLID object [%s]\n", bu_vls_addr(&dp_name_vls));
+                    add_object(dag);
+                    bu_log("[SOLID]added %d objects.\n", dag->object_nr);
+                } else if (dp->d_flags & RT_DIR_COMB) {
+                    bu_log("Adding COMB object [%s]\n", bu_vls_addr(&dp_name_vls));
+                    add_object(dag);
+                    bu_log("[COMB]added %d objects.\n", dag->object_nr);
+                } else if (dp->d_flags & RT_DIR_REGION) {
+                    bu_log("Adding REGION object [%s]\n", bu_vls_addr(&dp_name_vls));
+                    add_object(dag);
+                    bu_log("[REGION]added %d objects.\n", dag->object_nr);
+                } else {
+                    bu_log("Something else: [%s]\n", bu_vls_addr(&dp_name_vls));
+                }
             } else {
-                bu_log("Something else: [%s]\n", bu_vls_addr(&dp_name_vls));
+                bu_log("ERROR: Unable to locate [%s] within input database, skipping.\n",  bu_vls_addr(&dp_name_vls));
             }
-        } else {
-            bu_log("ERROR: Unable to locate [%s] within input database, skipping.\n",  bu_vls_addr(&dp_name_vls));
         }
     }
 
@@ -119,6 +125,11 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
 
     return GED_OK;
 }
+
+#define PARALLEL BRLCAD_PARALLEL
+#undef BRLCAD_PARALLEL
+
+#endif
 
 
 /*
