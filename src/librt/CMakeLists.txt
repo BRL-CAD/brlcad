@@ -251,7 +251,7 @@ set(librt_ignored_files
   opennurbs_fit.h
   opennurbs_fit.cpp
   test_nurbsfit.cpp
-  test_botpatches.c
+  test_botpatches.cpp
   prcomb.c
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
