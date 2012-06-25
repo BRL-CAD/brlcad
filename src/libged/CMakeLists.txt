@@ -39,15 +39,7 @@ else(BULLET_FOUND)
   set(ged_ignore_files simulate/simphysics.cpp simulate/simulate.c simulate/simcollisionalgo.cpp simulate/simcollisionalgo.h simulate/simutils.c simulate/simrt.c simulate/simrt.h simulate/simutils.h)
 endif(BULLET_FOUND)
 
-find_package(ADAPTAGRAMS)
-if(ADAPTAGRAMS_FOUND)
-  set(AVOID_SRCS
-    dag.cpp
-    )
-else(ADAPTAGRMS_FOUND)
-  set(AVOID_SRCS "")
-  set(ged_ignore_files ${ged_ignore_files} dag.cpp)
-endif(ADAPTAGRAMS_FOUND)
+set(AVOID_SRCS dag.cpp)
 
 set(LIBGED_SOURCES
   3ptarb.c
@@ -373,9 +365,17 @@ if(CPP_DLL_DEFINES)
 endif(CPP_DLL_DEFINES)
 
 if(BULLET_FOUND)
-  BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}" NOSTRICTCXX)
+  if(ADAPTAGRAMS_FOUND)
+    BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${AVOID_LIBRARY};${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}" NOSTRICTCXX)
+  else(ADAPTAGRAMS_FOUND)
+    BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}" NOSTRICTCXX)
+  endif(ADAPTAGRAMS_FOUND)
 else(BULLET_FOUND)
-  BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}")
+  if(ADAPTAGRAMS_FOUND)
+    BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${AVOID_LIBRARY};${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}")
+  else(ADAPTAGRAMS_FOUND)
+    BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}")
+  endif(ADAPTAGRAMS_FOUND)
 endif(BULLET_FOUND)
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
