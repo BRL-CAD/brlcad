@@ -677,9 +677,12 @@ package provide cadwidgets::Ged 1.0
 	proc get_ged_color {_color}
 	proc get_rgb_color {_color}
 	proc get_vdraw_color {_color}
-	proc isdouble {_str}
+	proc isDouble {_str}
 	proc rgb_to_tk {_r _g _b}
 	proc tk_to_rgb {_tkcolor}
+	proc validateDigit {_d}
+	proc validateDigitMax {_d _max}
+	proc validateDouble {_d}
     }
 
     protected {
@@ -4576,8 +4579,8 @@ package provide cadwidgets::Ged 1.0
 }
 
 
-::itcl::body cadwidgets::Ged::isdouble {_str} {
-    if {[string is double $_str] || $_str == "." || $_str == "-"} {
+::itcl::body cadwidgets::Ged::isDouble {_d} {
+    if {[string is double $_d] && $_d != ""} {
 	return 1
     }
 
@@ -4598,6 +4601,35 @@ package provide cadwidgets::Ged 1.0
     return [list [expr int(0x$r)] [expr int(0x$g)] [expr int(0x$b)]]
 }
 
+
+::itcl::body cadwidgets::Ged::validateDigit {_d} {
+    if {[string is digit $_d]} {
+	return 1
+    }
+
+    return 0
+}
+
+::itcl::body cadwidgets::Ged::validateDigitMax {_d _max} {
+    if {![string is digit $_d]} {
+	return 0
+    }
+
+    if {$_d == "" || $_d <= $_max} {
+	return 1
+    }
+
+    return 0
+}
+
+
+::itcl::body cadwidgets::Ged::validateDouble {_d} {
+    if {[string is double $_d] || $_d == "." || $_d == "-"} {
+	return 1
+    }
+
+    return 0
+}
 
 
 ############################### Commands that still need to be resolved ###############################
