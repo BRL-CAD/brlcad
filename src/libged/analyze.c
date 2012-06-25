@@ -780,6 +780,7 @@ static void
 analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
 {
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
+    struct rt_arb_internal earb;
     int i;
     point_t center_pt;
     fastf_t tot_vol, tot_area;
@@ -828,7 +829,7 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
     /* also collect table data */
     table.nrows = 0;
 
-    struct rt_arb_internal earb = *arb; /* struct copy */
+    earb = *arb; /* struct copy */
 
     if (cgtype == 4) {
         VMOVE(earb.pt[3], earb.pt[4]);
