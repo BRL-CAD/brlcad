@@ -96,21 +96,21 @@
 	    -textvariable [::itcl::scope mNx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add halfNyE {
 	::ttk::entry $parent.halfNyE \
 	    -textvariable [::itcl::scope mNy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add halfNzE {
 	::ttk::entry $parent.halfNzE \
 	    -textvariable [::itcl::scope mNz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add halfNUnitsL {
 	::ttk::label $parent.halfNUnitsL \
@@ -125,7 +125,7 @@
 	::ttk::entry $parent.halfDE \
 	    -textvariable [::itcl::scope mD] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add halfDUnitsL {
 	::ttk::label $parent.halfDUnitsL \

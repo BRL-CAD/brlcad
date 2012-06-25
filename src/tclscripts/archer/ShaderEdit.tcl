@@ -36,8 +36,6 @@
     destructor {}
 
     public {
-	proc validateDouble {d}
-
 	method initShader {_shaderSpec}
 	method getShaderSpec {}
     }
@@ -554,7 +552,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope lightFraction($id)] \
 	    -validate key \
-	    -validatecommand {ShaderEdit::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
 
     itk_component add lightAngle$id\L {
@@ -567,7 +565,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope lightAngle($id)] \
 	    -validate key \
-	    -validatecommand {ShaderEdit::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
 
     itk_component add lightTarget$id\L {
@@ -580,7 +578,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope lightTarget($id)] \
 	    -validate key \
-	    -validatecommand {ShaderEdit::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
 
     itk_component add lightLumens$id\L {
@@ -593,7 +591,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope lightLumens($id)] \
 	    -validate key \
-	    -validatecommand {ShaderEdit::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
 }
 
@@ -896,7 +894,7 @@
 }
 
 ::itcl::body ShaderEdit::validateDouble_plastic {id d} {
-    if {![validateDouble $d]} {
+    if {![::cadwidgets::validateDouble $d]} {
 	return 0
     }
 
@@ -982,7 +980,7 @@
 }
 
 ::itcl::body ShaderEdit::validateDouble_mirror {id d} {
-    if {![validateDouble $d]} {
+    if {![::cadwidgets::validateDouble $d]} {
 	return 0
     }
 
@@ -1068,7 +1066,7 @@
 }
 
 ::itcl::body ShaderEdit::validateDouble_glass {id d} {
-    if {![validateDouble $d]} {
+    if {![::cadwidgets::validateDouble $d]} {
 	return 0
     }
 
@@ -1162,9 +1160,6 @@
     }
 }
 
-::itcl::body ShaderEdit::validateDouble {d} {
-    ::cadwidgets::Ged::isdouble $d
-}
 
 # Local Variables:
 # mode: Tcl

@@ -3047,15 +3047,11 @@ namespace eval ArcherCore {
 
 
 ::itcl::body ArcherCore::validateDigit {d} {
-    if {[string is digit $d]} {
-	return 1
-    }
-
-    return 0
+    ::cadwidgets::Ged::validateDigit $d
 }
 
 ::itcl::body ArcherCore::validateDouble {d} {
-    ::cadwidgets::Ged::isdouble $d
+    ::cadwidgets::Ged::validateDouble $d
 }
 
 ::itcl::body ArcherCore::validateTickInterval {ti} {
@@ -3063,7 +3059,7 @@ namespace eval ArcherCore {
 	return 1
     }
 
-    if {[::cadwidgets::Ged::isdouble $ti]} {
+    if {[::cadwidgets::Ged::validateDouble $ti]} {
 	if {$ti == "." || 0 <= $ti} {
 	    return 1
 	}
@@ -6343,7 +6339,7 @@ namespace eval ArcherCore {
 	    -width 12 \
 	    -textvariable [::itcl::scope mCenterX] \
 	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble %P]
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add centerDialogXUL {
 	::ttk::label $parent.xul \
@@ -6358,7 +6354,7 @@ namespace eval ArcherCore {
 	    -width 12 \
 	    -textvariable [::itcl::scope mCenterY] \
 	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble %P]
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add centerDialogYUL {
 	::ttk::label $parent.yul \
@@ -6373,7 +6369,7 @@ namespace eval ArcherCore {
 	    -width 12 \
 	    -textvariable [::itcl::scope mCenterZ] \
 	    -validate key \
-	    -validatecommand [::itcl::code $this validateDouble %P]
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add centerDialogZUL {
 	::ttk::label $parent.zul \

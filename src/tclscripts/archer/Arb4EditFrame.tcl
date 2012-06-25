@@ -116,21 +116,21 @@
 	    -textvariable [::itcl::scope mV1x] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add arb4V1yE {
 	::ttk::entry $parent.arb4V1yE \
 	    -textvariable [::itcl::scope mV1y] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add arb4V1zE {
 	::ttk::entry $parent.arb4V1zE \
 	    -textvariable [::itcl::scope mV1z] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add arb4V1UnitsL {
 	::ttk::label $parent.arb4V1UnitsL \
@@ -147,21 +147,21 @@
 	    -textvariable [::itcl::scope mV2x] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add arb4V2yE {
 	::ttk::entry $parent.arb4V2yE \
 	    -textvariable [::itcl::scope mV2y] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add arb4V2zE {
 	::ttk::entry $parent.arb4V2zE \
 	    -textvariable [::itcl::scope mV2z] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add arb4V2UnitsL {
 	::ttk::label $parent.arb4V2UnitsL \
@@ -178,21 +178,21 @@
 	    -textvariable [::itcl::scope mV3x] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add arb4V3yE {
 	::ttk::entry $parent.arb4V3yE \
 	    -textvariable [::itcl::scope mV3y] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add arb4V3zE {
 	::ttk::entry $parent.arb4V3zE \
 	    -textvariable [::itcl::scope mV3z] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add arb4V3UnitsL {
 	::ttk::label $parent.arb4V3UnitsL \
@@ -209,21 +209,21 @@
 	    -textvariable [::itcl::scope mV5x] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add arb4V4yE {
 	::ttk::entry $parent.arb4V4yE \
 	    -textvariable [::itcl::scope mV5y] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add arb4V4zE {
 	::ttk::entry $parent.arb4V4zE \
 	    -textvariable [::itcl::scope mV5z] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add arb4V4UnitsL {
 	::ttk::label $parent.arb4V4UnitsL \

@@ -154,7 +154,7 @@
 	    -textvariable [::itcl::scope mN] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add superellNUnitsL {
 	::ttk::label $parent.superellNUnitsL \
@@ -172,7 +172,7 @@
 	    -textvariable [::itcl::scope mE] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add superellEUnitsL {
 	::ttk::label $parent.superellEUnitsL \

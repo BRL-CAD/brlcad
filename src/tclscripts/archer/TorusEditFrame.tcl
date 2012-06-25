@@ -113,19 +113,19 @@
 	::ttk::entry $parent.torVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add torVyE {
 	::ttk::entry $parent.torVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add torVzE {
 	::ttk::entry $parent.torVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add torVUnitsL {
 	::ttk::label $parent.torVUnitsL \
@@ -142,21 +142,21 @@
 	    -textvariable [::itcl::scope mHx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add torHyE {
 	::ttk::entry $parent.torHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add torHzE {
 	::ttk::entry $parent.torHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add torHUnitsL {
 	::ttk::label $parent.torHUnitsL \
@@ -171,7 +171,7 @@
 	::ttk::entry $parent.torR_aE \
 	    -textvariable [::itcl::scope mR_a] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add torR_aUnitsL {
 	::ttk::label $parent.torR_aUnitsL \
@@ -187,7 +187,7 @@
 	::ttk::entry $parent.torR_hE \
 	    -textvariable [::itcl::scope mR_h] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add torR_hUnitsL {
 	::ttk::label $parent.torR_hUnitsL \

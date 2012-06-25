@@ -542,11 +542,7 @@
 	return 0
     }
 
-    if {[string is double $_newval]} {
-	return 1
-    }
-
-    return 0
+    return [::cadwidgets::validateDouble $_newval]
 }
 
 

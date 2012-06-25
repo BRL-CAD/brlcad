@@ -287,19 +287,19 @@
 	::ttk::entry $parent.tgcVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcVyE {
 	::ttk::entry $parent.tgcVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcVzE {
 	::ttk::entry $parent.tgcVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcVUnitsL {
 	::ttk::label $parent.tgcVUnitsL \
@@ -315,19 +315,19 @@
 	::ttk::entry $parent.tgcHxE \
 	    -textvariable [::itcl::scope mHx] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcHyE {
 	::ttk::entry $parent.tgcHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcHzE {
 	::ttk::entry $parent.tgcHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcHUnitsL {
 	::ttk::label $parent.tgcHUnitsL \
@@ -344,21 +344,21 @@
 	    -textvariable [::itcl::scope mAx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcAyE {
 	::ttk::entry $parent.tgcAyE \
 	    -textvariable [::itcl::scope mAy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcAzE {
 	::ttk::entry $parent.tgcAzE \
 	    -textvariable [::itcl::scope mAz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcAUnitsL {
 	::ttk::label $parent.tgcAUnitsL \
@@ -375,21 +375,21 @@
 	    -textvariable [::itcl::scope mBx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcByE {
 	::ttk::entry $parent.tgcByE \
 	    -textvariable [::itcl::scope mBy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcBzE {
 	::ttk::entry $parent.tgcBzE \
 	    -textvariable [::itcl::scope mBz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcBUnitsL {
 	::ttk::label $parent.tgcBUnitsL \
@@ -406,21 +406,21 @@
 	    -textvariable [::itcl::scope mCx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcCyE {
 	::ttk::entry $parent.tgcCyE \
 	    -textvariable [::itcl::scope mCy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcCzE {
 	::ttk::entry $parent.tgcCzE \
 	    -textvariable [::itcl::scope mCz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcCUnitsL {
 	::ttk::label $parent.tgcCUnitsL \
@@ -437,21 +437,21 @@
 	    -textvariable [::itcl::scope mDx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcDyE {
 	::ttk::entry $parent.tgcDyE \
 	    -textvariable [::itcl::scope mDy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcDzE {
 	::ttk::entry $parent.tgcDzE \
 	    -textvariable [::itcl::scope mDz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {GeometryEditFrame::validateDouble %P}
+	    -validatecommand {::cadwidgets::validateDouble %P}
     } {}
     itk_component add tgcDUnitsL {
 	::ttk::label $parent.tgcDUnitsL \

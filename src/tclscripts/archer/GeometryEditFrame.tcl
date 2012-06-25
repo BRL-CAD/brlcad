@@ -58,9 +58,6 @@
 	common mEditLastTransMode $::ArcherCore::OBJECT_CENTER_MODE
 	common mEditPCommand ""
 
-	proc validateDigit {d}
-	proc validateDigitMax100 {d}
-	proc validateDouble {d}
 	proc validateColorComp {c}
 	proc validateColor {color}
 
@@ -195,30 +192,6 @@
 # ------------------------------------------------------------
 #                      PUBLIC CLASS METHODS
 # ------------------------------------------------------------
-
-::itcl::body GeometryEditFrame::validateDigit {d} {
-    if {[string is digit $d]} {
-	return 1
-    }
-
-    return 0
-}
-
-::itcl::body GeometryEditFrame::validateDigitMax100 {d} {
-    if {![GeometryEditFrame::validateDigit $d]} {
-	return 0
-    }
-
-    if {$d <= 100} {
-	return 1
-    }
-
-    return 0
-}
-
-::itcl::body GeometryEditFrame::validateDouble {d} {
-    ::cadwidgets::Ged::isdouble $d
-}
 
 ::itcl::body GeometryEditFrame::validateColorComp {c} {
     if {$c == ""} {
