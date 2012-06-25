@@ -117,8 +117,8 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 	hitDistIn = hitInp->hit_dist - 1.0;
 	hitDistOut = hitOutp->hit_dist - 1.0;
 
-	voxelNumIn = ((int) hitDistIn / sizeVoxel[0]);
-	voxelNumOut = ((int) hitDistOut / sizeVoxel[0]);
+	voxelNumIn =  (int)(hitDistIn / sizeVoxel[0]);
+	voxelNumOut = (int)(hitDistOut / sizeVoxel[0]);
 
 	if (EQUAL((hitDistOut / sizeVoxel[0]), floor(hitDistOut / sizeVoxel[0]))) {
 	    voxelNumOut -= 1;
@@ -248,7 +248,7 @@ main(int argc, char **argv)
 
     char title[1024] = {0};
     int i, j, k, numVoxel[3], yMin, zMin, levelOfDetail = 4, rayNum;
-    fastf_t sizeVoxel[3], threshold = 0.5, *voxelArray, rayTraceDistance;
+    fastf_t sizeVoxel[3], threshold = 0.5, *voxelArray, rayTraceDistance, effectiveDistance;
 
     FILE *fp;
 
@@ -326,8 +326,9 @@ main(int argc, char **argv)
     yMin = (int)((rtip->mdl_min)[1]);
     zMin = (int)((rtip->mdl_min)[2]);
 
-    /* 1.0 / (levelOfDetail + 1) has to be used multiple times in the following loops */
+    /* 1.0 / (levelOfDetail + 1) and effectiveDistance have to be used multiple times in the following loops */
     rayTraceDistance = 1.0 / (levelOfDetail + 1);
+    effectiveDistance = levelOfDetail * levelOfDetail * sizeVoxel[0];
 
     fp = fopen("voxels.txt", "w");
 
@@ -361,15 +362,15 @@ main(int argc, char **argv)
 	    /*print results into "voxels.txt"*/
 	    for (k = 0; k < numVoxel[0]; k++) {
 		fprintf(fp,"\n");
-		if (voxelArray[k]/ (levelOfDetail * levelOfDetail) >= threshold) {
+		if (voxelArray[k] / effectiveDistance >= threshold) {
 
 		    tmp = voxelHits.regionList + k;
-		    fprintf(fp, "1\t(%d,%d,%d)\t%s\t%f\n", k, j, i, tmp->regionName, tmp->regionDistance / (levelOfDetail * levelOfDetail));
+		    fprintf(fp, "1\t(%d,%d,%d)\t%s\t%f\n", k, j, i, tmp->regionName, tmp->regionDistance / effectiveDistance);
 		    old = tmp->nextRegion;
 
 		    while(old != NULL) {
 			tmp = old;
-			fprintf(fp, " \t(%d,%d,%d)\t%s\t%f\n", k, j, i, tmp->regionName, tmp->regionDistance / (levelOfDetail * levelOfDetail));
+			fprintf(fp, " \t(%d,%d,%d)\t%s\t%f\n", k, j, i, tmp->regionName, tmp->regionDistance / effectiveDistance);
 			old = tmp->nextRegion;
 			/* free space allocated for new regions */
 			bu_free(tmp, "");
@@ -383,12 +384,12 @@ main(int argc, char **argv)
 		    } else {
 
 			tmp = voxelHits.regionList + k;
-			fprintf(fp, "0\t(%d,%d,%d)\t%s\t%f\n", k, j, i, tmp->regionName, tmp->regionDistance / (levelOfDetail * levelOfDetail));
+			fprintf(fp, "0\t(%d,%d,%d)\t%s\t%f\n", k, j, i, tmp->regionName, tmp->regionDistance / effectiveDistance);
 			old = tmp->nextRegion;
 
 			while(old != NULL) {
 			    tmp = old;
-			    fprintf(fp, " \t(%d,%d,%d)\t%s\t%f\n", k, j, i, tmp->regionName, tmp->regionDistance / (levelOfDetail * levelOfDetail));
+			    fprintf(fp, " \t(%d,%d,%d)\t%s\t%f\n", k, j, i, tmp->regionName, tmp->regionDistance / effectiveDistance);
 			    old = tmp->nextRegion;
 			    /* free space allocated for new regions */
 			    bu_free(tmp, "");
