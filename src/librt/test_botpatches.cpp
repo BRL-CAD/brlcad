@@ -1,12 +1,50 @@
 #include "common.h"
+
+#include <map>
+#include <list>
+#include <iostream>
+
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "plot3.h"
 
+void find_edges(struct rt_bot_internal *bot, FILE *plot) 
+{
+   size_t i;
+   size_t pt_A, pt_B, pt_C;
+   std::map<std::pair<size_t, size_t>, size_t> edge_face_cnt;
 
-#define LINE_PLOT(p1, p2) pdv_3line(plot, p1, p2) 
-#define COLOR_PLOT(r, g, b) pl_color(plot, (r), (g), (b))
+   for (i = 0; i < bot->num_faces; ++i) {
+       pt_A = bot->faces[i*3+0]*3;
+       pt_B = bot->faces[i*3+1]*3; 
+       pt_C = bot->faces[i*3+2]*3;
+       if (pt_A <= pt_B) {
+          edge_face_cnt[std::make_pair(pt_A, pt_B)] += 1;
+       } else {
+          edge_face_cnt[std::make_pair(pt_B, pt_A)] += 1;
+       }
+       if (pt_B <= pt_C) {
+          edge_face_cnt[std::make_pair(pt_B, pt_C)] += 1;
+       } else {
+          edge_face_cnt[std::make_pair(pt_C, pt_B)] += 1;
+       }
+       if (pt_C <= pt_A) {
+          edge_face_cnt[std::make_pair(pt_C, pt_A)] += 1;
+       } else {
+          edge_face_cnt[std::make_pair(pt_A, pt_C)] += 1;
+       }
+   } 
+   for( std::map<std::pair<size_t, size_t>, size_t>::iterator curredge=edge_face_cnt.begin(); curredge!=edge_face_cnt.end(); curredge++) {
+       if ((*curredge).second == 1) {
+	  //std::cout << "(" << (*curredge).first.first << "," << (*curredge).first.second << ")" << ": ";
+	  pdv_3move(plot, &bot->vertices[(*curredge).first.first]); 
+	  pdv_3cont(plot, &bot->vertices[(*curredge).first.second]); 
+       }
+   }
+}
+
+
 
 int
 main (int argc, char *argv[])
@@ -21,6 +59,8 @@ main (int argc, char *argv[])
    struct rt_bot_list *rblp;
    struct rt_bot_list *splitlp;
    struct bu_vls name;
+   static FILE* plot = NULL;
+   point_t min, max;
 
    int i = 0;
    int j = 0;
@@ -58,13 +98,20 @@ main (int argc, char *argv[])
    }
    RT_BOT_CK_MAGIC(bot_ip);
 
+   plot = fopen("out.pl", "w");
+   VSET(min, -2048, -2048, -2048);
+   VSET(max, 2048, 2048, 2048);
+   pdv_3space(plot, min, max);
+
    headRblp = rt_bot_patches(bot_ip);
 
    i = 0;
-   j = 0;
    for (BU_LIST_FOR(rblp, rt_bot_list, &headRblp->l)) {
+	   j = 0;
 	   split_bots = rt_bot_split(rblp->bot);
 	   for (BU_LIST_FOR(splitlp, rt_bot_list, &split_bots->l)) {
+                   std::cout << "BoT " << i << "," << j << "\n";
+		   find_edges(splitlp->bot, plot);
 		   bu_vls_sprintf(&name, "auto-%d_%d.bot", i, j);
 		   RT_DB_INTERNAL_INIT(&bot_intern);
 		   bot_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
