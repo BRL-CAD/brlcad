@@ -332,7 +332,7 @@
 	::ttk::entry $parent.combidE \
 	    -textvariable [::itcl::scope mId] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDigit %P}
+	    -validatecommand {::cadwidgets::Ged::validateDigit %P}
     } {
 	rename -font -entryFont entryFont Font
     }
@@ -347,7 +347,7 @@
 	::ttk::entry $parent.combairE \
 	    -textvariable [::itcl::scope mAir] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDigit %P}
+	    -validatecommand {::cadwidgets::Ged::validateDigit %P}
     } {
 	rename -font -entryFont entryFont Font
     }
@@ -362,7 +362,7 @@
 	::ttk::entry $parent.comblosE \
 	    -textvariable [::itcl::scope mLos] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDigitMax %P 100}
+	    -validatecommand {::cadwidgets::Ged::validateDigitMax %P 100}
     } {
 	rename -font -entryFont entryFont Font
     }
@@ -377,7 +377,7 @@
 	::ttk::entry $parent.combgiftE \
 	    -textvariable [::itcl::scope mGift] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDigit %P}
+	    -validatecommand {::cadwidgets::Ged::validateDigit %P}
     } {
 	rename -font -entryFont entryFont Font
     }

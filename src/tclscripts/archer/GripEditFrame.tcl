@@ -98,19 +98,19 @@
 	::ttk::entry $parent.gripVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gripVyE {
 	::ttk::entry $parent.gripVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gripVzE {
 	::ttk::entry $parent.gripVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gripVUnitsL {
 	::ttk::label $parent.gripVUnitsL \
@@ -127,21 +127,21 @@
 	    -textvariable [::itcl::scope mNx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gripNyE {
 	::ttk::entry $parent.gripNyE \
 	    -textvariable [::itcl::scope mNy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gripNzE {
 	::ttk::entry $parent.gripNzE \
 	    -textvariable [::itcl::scope mNz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gripNUnitsL {
 	::ttk::label $parent.gripNUnitsL \
@@ -156,7 +156,7 @@
 	::ttk::entry $parent.gripLE \
 	    -textvariable [::itcl::scope mL] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gripLUnitsL {
 	::ttk::label $parent.gripLUnitsL \

@@ -197,19 +197,19 @@
 	::ttk::entry $parent.rpcVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcVyE {
 	::ttk::entry $parent.rpcVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcVzE {
 	::ttk::entry $parent.rpcVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcVUnitsL {
 	::ttk::label $parent.rpcVUnitsL \
@@ -226,21 +226,21 @@
 	    -textvariable [::itcl::scope mHx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcHyE {
 	::ttk::entry $parent.rpcHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcHzE {
 	::ttk::entry $parent.rpcHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcHUnitsL {
 	::ttk::label $parent.rpcHUnitsL \
@@ -257,21 +257,21 @@
 	    -textvariable [::itcl::scope mBx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcByE {
 	::ttk::entry $parent.rpcByE \
 	    -textvariable [::itcl::scope mBy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcBzE {
 	::ttk::entry $parent.rpcBzE \
 	    -textvariable [::itcl::scope mBz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcBUnitsL {
 	::ttk::label $parent.rpcBUnitsL \
@@ -287,7 +287,7 @@
 	::ttk::entry $parent.rpcRE \
 	    -textvariable [::itcl::scope mR] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add rpcRUnitsL {
 	::ttk::label $parent.rpcRUnitsL \

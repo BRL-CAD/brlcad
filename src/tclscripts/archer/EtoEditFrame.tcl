@@ -217,19 +217,19 @@
 	::ttk::entry $parent.etoVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoVyE {
 	::ttk::entry $parent.etoVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoVzE {
 	::ttk::entry $parent.etoVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoVUnitsL {
 	::ttk::label $parent.etoVUnitsL \
@@ -246,21 +246,21 @@
 	    -textvariable [::itcl::scope mNx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoNyE {
 	::ttk::entry $parent.etoNyE \
 	    -textvariable [::itcl::scope mNy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoNzE {
 	::ttk::entry $parent.etoNzE \
 	    -textvariable [::itcl::scope mNz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoNUnitsL {
 	::ttk::label $parent.etoNUnitsL \
@@ -276,21 +276,21 @@
 	    -textvariable [::itcl::scope mCx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoCyE {
 	::ttk::entry $parent.etoCyE \
 	    -textvariable [::itcl::scope mCy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoCzE {
 	::ttk::entry $parent.etoCzE \
 	    -textvariable [::itcl::scope mCz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoCUnitsL {
 	::ttk::label $parent.etoCUnitsL \
@@ -306,7 +306,7 @@
 	::ttk::entry $parent.etoRE \
 	    -textvariable [::itcl::scope mR] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoRUnitsL {
 	::ttk::label $parent.etoRVUnitsL \
@@ -322,7 +322,7 @@
 	::ttk::entry $parent.etoR_dE \
 	    -textvariable [::itcl::scope mR_d] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add etoR_dUnitsL {
 	::ttk::label $parent.etoR_dUnitsL \

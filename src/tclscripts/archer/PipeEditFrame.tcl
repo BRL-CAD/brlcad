@@ -542,7 +542,7 @@
 	return 0
     }
 
-    return [::cadwidgets::validateDouble $_newval]
+    return [::cadwidgets::Ged::validateDouble $_newval]
 }
 
 

@@ -225,19 +225,19 @@
 	::ttk::entry $parent.hypVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypVyE {
 	::ttk::entry $parent.hypVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypVzE {
 	::ttk::entry $parent.hypVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypVUnitsL {
 	::ttk::label $parent.hypVUnitsL \
@@ -254,21 +254,21 @@
 	    -textvariable [::itcl::scope mHx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypHyE {
 	::ttk::entry $parent.hypHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypHzE {
 	::ttk::entry $parent.hypHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypHUnitsL {
 	::ttk::label $parent.hypHUnitsL \
@@ -284,21 +284,21 @@
 	    -textvariable [::itcl::scope mAx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypAyE {
 	::ttk::entry $parent.hypAyE \
 	    -textvariable [::itcl::scope mAy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypAzE {
 	::ttk::entry $parent.hypAzE \
 	    -textvariable [::itcl::scope mAz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypAUnitsL {
 	::ttk::label $parent.hypAUnitsL \
@@ -314,7 +314,7 @@
 	::ttk::entry $parent.hypBE \
 	    -textvariable [::itcl::scope mB] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypBUnitsL {
 	::ttk::label $parent.hypBVUnitsL \
@@ -330,7 +330,7 @@
 	::ttk::entry $parent.hypCE \
 	    -textvariable [::itcl::scope mC] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add hypCUnitsL {
 	::ttk::label $parent.hypCUnitsL \

@@ -123,21 +123,21 @@
 	    -textvariable [::itcl::scope mV1x] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb5V1yE {
 	::ttk::entry $parent.arb5V1yE \
 	    -textvariable [::itcl::scope mV1y] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb5V1zE {
 	::ttk::entry $parent.arb5V1zE \
 	    -textvariable [::itcl::scope mV1z] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb5V1UnitsL {
 	::ttk::label $parent.arb5V1UnitsL \
@@ -154,21 +154,21 @@
 	    -textvariable [::itcl::scope mV2x] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb5V2yE {
 	::ttk::entry $parent.arb5V2yE \
 	    -textvariable [::itcl::scope mV2y] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb5V2zE {
 	::ttk::entry $parent.arb5V2zE \
 	    -textvariable [::itcl::scope mV2z] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb5V2UnitsL {
 	::ttk::label $parent.arb5V2UnitsL \
@@ -185,21 +185,21 @@
 	    -textvariable [::itcl::scope mV3x] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb5V3yE {
 	::ttk::entry $parent.arb5V3yE \
 	    -textvariable [::itcl::scope mV3y] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb5V3zE {
 	::ttk::entry $parent.arb5V3zE \
 	    -textvariable [::itcl::scope mV3z] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb5V3UnitsL {
 	::ttk::label $parent.arb5V3UnitsL \
@@ -216,21 +216,21 @@
 	    -textvariable [::itcl::scope mV4x] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb5V4yE {
 	::ttk::entry $parent.arb5V4yE \
 	    -textvariable [::itcl::scope mV4y] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb5V4zE {
 	::ttk::entry $parent.arb5V4zE \
 	    -textvariable [::itcl::scope mV4z] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb5V4UnitsL {
 	::ttk::label $parent.arb5V4UnitsL \
@@ -247,21 +247,21 @@
 	    -textvariable [::itcl::scope mV5x] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb5V5yE {
 	::ttk::entry $parent.arb5V5yE \
 	    -textvariable [::itcl::scope mV5y] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb5V5zE {
 	::ttk::entry $parent.arb5V5zE \
 	    -textvariable [::itcl::scope mV5z] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add arb5V5UnitsL {
 	::ttk::label $parent.arb5V5UnitsL \

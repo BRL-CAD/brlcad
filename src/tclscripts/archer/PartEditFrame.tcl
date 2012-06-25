@@ -195,19 +195,19 @@
 	::ttk::entry $parent.partVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add partVyE {
 	::ttk::entry $parent.partVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add partVzE {
 	::ttk::entry $parent.partVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add partVUnitsL {
 	::ttk::label $parent.partVUnitsL \
@@ -223,19 +223,19 @@
 	::ttk::entry $parent.partHxE \
 	    -textvariable [::itcl::scope mHx] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add partHyE {
 	::ttk::entry $parent.partHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add partHzE {
 	::ttk::entry $parent.partHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add partHUnitsL {
 	::ttk::label $parent.partHUnitsL \
@@ -251,7 +251,7 @@
 	::ttk::entry $parent.partR_vE \
 	    -textvariable [::itcl::scope mR_v] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add partR_vUnitsL {
 	::ttk::label $parent.partR_vUnitsL \
@@ -267,7 +267,7 @@
 	::ttk::entry $parent.partR_hE \
 	    -textvariable [::itcl::scope mR_h] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add partR_hUnitsL {
 	::ttk::label $parent.partR_hUnitsL \

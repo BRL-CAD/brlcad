@@ -552,7 +552,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope lightFraction($id)] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
 
     itk_component add lightAngle$id\L {
@@ -565,7 +565,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope lightAngle($id)] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
 
     itk_component add lightTarget$id\L {
@@ -578,7 +578,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope lightTarget($id)] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
 
     itk_component add lightLumens$id\L {
@@ -591,7 +591,7 @@
 	    -width 5 \
 	    -textvariable [::itcl::scope lightLumens($id)] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
 }
 
@@ -894,7 +894,7 @@
 }
 
 ::itcl::body ShaderEdit::validateDouble_plastic {id d} {
-    if {![::cadwidgets::validateDouble $d]} {
+    if {![::cadwidgets::Ged::validateDouble $d]} {
 	return 0
     }
 
@@ -980,7 +980,7 @@
 }
 
 ::itcl::body ShaderEdit::validateDouble_mirror {id d} {
-    if {![::cadwidgets::validateDouble $d]} {
+    if {![::cadwidgets::Ged::validateDouble $d]} {
 	return 0
     }
 
@@ -1066,7 +1066,7 @@
 }
 
 ::itcl::body ShaderEdit::validateDouble_glass {id d} {
-    if {![::cadwidgets::validateDouble $d]} {
+    if {![::cadwidgets::Ged::validateDouble $d]} {
 	return 0
     }
 

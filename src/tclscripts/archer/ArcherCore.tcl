@@ -6339,7 +6339,7 @@ namespace eval ArcherCore {
 	    -width 12 \
 	    -textvariable [::itcl::scope mCenterX] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add centerDialogXUL {
 	::ttk::label $parent.xul \
@@ -6354,7 +6354,7 @@ namespace eval ArcherCore {
 	    -width 12 \
 	    -textvariable [::itcl::scope mCenterY] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add centerDialogYUL {
 	::ttk::label $parent.yul \
@@ -6369,7 +6369,7 @@ namespace eval ArcherCore {
 	    -width 12 \
 	    -textvariable [::itcl::scope mCenterZ] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add centerDialogZUL {
 	::ttk::label $parent.zul \

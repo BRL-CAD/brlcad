@@ -227,19 +227,19 @@
 	::ttk::entry $parent.extrudeVxE \
 	    -textvariable [::itcl::scope mVx] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeVyE {
 	::ttk::entry $parent.extrudeVyE \
 	    -textvariable [::itcl::scope mVy] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeVzE {
 	::ttk::entry $parent.extrudeVzE \
 	    -textvariable [::itcl::scope mVz] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeVUnitsL {
 	::ttk::label $parent.extrudeVUnitsL \
@@ -255,19 +255,19 @@
 	::ttk::entry $parent.extrudeHxE \
 	    -textvariable [::itcl::scope mHx] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeHyE {
 	::ttk::entry $parent.extrudeHyE \
 	    -textvariable [::itcl::scope mHy] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeHzE {
 	::ttk::entry $parent.extrudeHzE \
 	    -textvariable [::itcl::scope mHz] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeHUnitsL {
 	::ttk::label $parent.extrudeHUnitsL \
@@ -284,21 +284,21 @@
 	    -textvariable [::itcl::scope mAx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeAyE {
 	::ttk::entry $parent.extrudeAyE \
 	    -textvariable [::itcl::scope mAy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeAzE {
 	::ttk::entry $parent.extrudeAzE \
 	    -textvariable [::itcl::scope mAz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeAUnitsL {
 	::ttk::label $parent.extrudeAUnitsL \
@@ -314,21 +314,21 @@
 	    -textvariable [::itcl::scope mBx] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeByE {
 	::ttk::entry $parent.extrudeByE \
 	    -textvariable [::itcl::scope mBy] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeBzE {
 	::ttk::entry $parent.extrudeBzE \
 	    -textvariable [::itcl::scope mBz] \
 	    -state disabled \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeBUnitsL {
 	::ttk::label $parent.extrudeBUnitsL \
@@ -343,7 +343,7 @@
 	::ttk::entry $parent.extrudeSE \
 	    -textvariable [::itcl::scope mS] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add extrudeSUnitsL {
 	::ttk::label $parent.extrudeSUnitsL \

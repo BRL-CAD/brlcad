@@ -2451,7 +2451,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mZClipBackMaxPref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add zclipBackMaxB {
 	::ttk::button $itk_component(zclipBackMaxF).zclipBackMaxB \
@@ -2476,7 +2476,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mZClipFrontMaxPref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add zclipFrontMaxB {
 	::ttk::button $itk_component(zclipFrontMaxF).zclipFrontMaxB \
@@ -2816,7 +2816,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mGridAnchorXPref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gridAnchorXUnitsL {
 	::ttk::label $itk_component(gridF).anchorXUnitsL \
@@ -2834,7 +2834,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mGridAnchorYPref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gridAnchorYUnitsL {
 	::ttk::label $itk_component(gridF).anchorYUnitsL \
@@ -2852,7 +2852,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mGridAnchorZPref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gridAnchorZUnitsL {
 	::ttk::label $itk_component(gridF).anchorZUnitsL \
@@ -2877,7 +2877,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mGridMrhPref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
 
     itk_component add gridMrvL {
@@ -2890,7 +2890,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mGridMrvPref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
 
     itk_component add gridRhL {
@@ -2903,7 +2903,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mGridRhPref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gridRhUnitsL {
 	::ttk::label $itk_component(gridF).rhUnitsL \
@@ -2921,7 +2921,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mGridRvPref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add gridRvUnitsL {
 	::ttk::label $itk_component(gridF).rvUnitsL \
@@ -2984,7 +2984,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mGroundPlaneSizePref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add groundPlaneSizeUnitsL {
 	::ttk::label $itk_component(groundPlaneF).sizeUnitsL \
@@ -3002,7 +3002,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mGroundPlaneIntervalPref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add groundPlaneIntervalUnitsL {
 	::ttk::label $itk_component(groundPlaneF).intervalUnitsL \
@@ -3093,7 +3093,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mModelAxesPositionXPref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add modelAxesPositionYL {
 	::ttk::label $parent.yl \
@@ -3105,7 +3105,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mModelAxesPositionYPref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
     itk_component add modelAxesPositionZL {
 	::ttk::label $parent.zl \
@@ -3117,7 +3117,7 @@ proc title_node_handler {node} {
 	    -width 12 \
 	    -textvariable [::itcl::scope mModelAxesPositionZPref] \
 	    -validate key \
-	    -validatecommand {::cadwidgets::validateDouble %P}
+	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
     } {}
 
     #    set row 0
