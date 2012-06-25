@@ -156,14 +156,14 @@ db5_decode_signed(size_t *lenp, const unsigned char *cp, int format)
 {
     switch (format) {
 	case DB5HDR_WIDTHCODE_8BIT:
-	    if ((*lenp = (*cp)) & 0x80) *lenp |= (-1L ^ 0xFF);
+	    if ((*lenp = (*cp)) & 0x80) *lenp |= ((size_t)-1 ^ 0xFF);
 	    return 1;
 	case DB5HDR_WIDTHCODE_16BIT:
-	    if ((*lenp = BU_GSHORT(cp)) & 0x8000)  *lenp |= (-1L ^ 0xFFFF);
+	    if ((*lenp = BU_GSHORT(cp)) & 0x8000)  *lenp |= ((size_t)-1 ^ 0xFFFF);
 	    return 2;
 	case DB5HDR_WIDTHCODE_32BIT:
 	    if ((*lenp = BU_GLONG(cp)) & 0x80000000)
-		*lenp |= (-1L ^ 0xFFFFFFFF);
+		*lenp |= ((size_t)-1 ^ 0xFFFFFFFF);
 	    return 4;
 	case DB5HDR_WIDTHCODE_64BIT:
 	    if (sizeof(size_t) >= 8) {
