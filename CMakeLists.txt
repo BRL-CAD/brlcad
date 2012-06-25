@@ -1514,6 +1514,11 @@ if(BULLET_FOUND)
 endif(BULLET_FOUND)
 mark_as_advanced(BULLET_INCLUDE_DIR)
 
+# Adaptagrams library
+FIND_PACKAGE(ADAPTAGRAMS)
+if(ADAPTAGRAMS_FOUND)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_ADAPTAGRAMS 1\n")
+endif(ADAPTAGRAMS_FOUND)
 
 # *******************************************************************
 # ***             Check for Headers - Stage 5 of 9                ***
