@@ -786,10 +786,9 @@ int STEPattribute::is_null()  const {
             return ( *( ptr.c ) == S_ENTITY_NULL );
 
         case STRING_TYPE:
-            return ptr.S->empty();
+            return ( *( ptr.S ) == S_STRING_NULL );
 
         case BINARY_TYPE:
-            //ptr.b->clear();
             return ptr.b->empty();
 
         case AGGREGATE_TYPE:

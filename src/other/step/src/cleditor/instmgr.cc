@@ -24,7 +24,7 @@
 //  debug_level >= 2 => tells when a command is chosen
 //  debug_level >= 3 => prints values within functions:
 ///////////////////////////////////////////////////////////////////////////////
-static int debug_level = 2;
+static int debug_level = 3;
 // if debug_level is greater than this number then
 // function names get printed out when executed
 //static int PrintFunctionTrace = 2;
