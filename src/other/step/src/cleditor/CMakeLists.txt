@@ -49,4 +49,4 @@ add_definitions( -DSCL_DAI_DLL_IMPORTS )
 add_definitions( -DSCL_UTILS_DLL_IMPORTS )
 endif()
 
-SCL_ADDLIB(stepeditor "${LIBSTEPEDITOR_SRCS}" "stepcore;base")
+SCL_ADDLIB(stepeditor "${LIBSTEPEDITOR_SRCS}" "stepcore;stepdai;steputils;base")
