@@ -19,7 +19,7 @@
  */
 /** @file ehy_brep.cpp
  *
- * Convert a Right Parabolic Cylinder to b-rep form
+ * Convert an Elliptical Hyperboloid to b-rep form
  *
  */
 

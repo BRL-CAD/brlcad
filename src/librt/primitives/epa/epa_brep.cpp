@@ -19,7 +19,7 @@
  */
 /** @file epa_brep.cpp
  *
- * Convert a Right Parabolic Cylinder to b-rep form
+ * Convert an Elliptical Paraboloid to b-rep form
  *
  */
 
