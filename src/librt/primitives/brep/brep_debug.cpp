@@ -1774,7 +1774,7 @@ brep_conversion(struct rt_db_internal* intern, ON_Brep** brep)
 
 int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtree, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm) {
     int ret;
-    newtree->tr_op = oldtree->tr_op;
+    *newtree = *oldtree;
     switch (oldtree->tr_op) {
 	case OP_UNION:
 	case OP_INTERSECT:
@@ -1808,7 +1808,6 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 	    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(oldname)+strlen(suffix)+1, "char");
 	    bu_strlcpy(tmpname, oldname, strlen(oldname)+1);
 	    bu_strlcat(tmpname, suffix, strlen(oldname)+strlen(suffix)+1);
-	    newtree->tr_l.tl_mat = oldtree->tr_l.tl_mat;
 	    if (db_lookup(db, tmpname, LOOKUP_QUIET) == RT_DIR_NULL) {
 		directory *dir;
 		dir = db_lookup(db, oldname, LOOKUP_QUIET);
