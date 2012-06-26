@@ -144,6 +144,41 @@ void find_edges(struct rt_bot_internal *bot, FILE *plot, EdgeList *edges)
 }
 
 
+void find_edges2(struct rt_bot_internal *bot, const std::set<size_t> *faces, FILE *plot, EdgeList *edges)
+{
+   size_t pt_A, pt_B, pt_C;
+   std::set<size_t>::iterator it;
+   std::map<std::pair<size_t, size_t>, size_t> edge_face_cnt;
+   for (it = faces->begin(); it != faces->end(); it++) {
+       pt_A = bot->faces[(*it)*3+0]*3;
+       pt_B = bot->faces[(*it)*3+1]*3; 
+       pt_C = bot->faces[(*it)*3+2]*3;
+       if (pt_A <= pt_B) {
+          edge_face_cnt[std::make_pair(pt_A, pt_B)] += 1;
+       } else {
+          edge_face_cnt[std::make_pair(pt_B, pt_A)] += 1;
+       }
+       if (pt_B <= pt_C) {
+          edge_face_cnt[std::make_pair(pt_B, pt_C)] += 1;
+       } else {
+          edge_face_cnt[std::make_pair(pt_C, pt_B)] += 1;
+       }
+       if (pt_C <= pt_A) {
+          edge_face_cnt[std::make_pair(pt_C, pt_A)] += 1;
+       } else {
+          edge_face_cnt[std::make_pair(pt_A, pt_C)] += 1;
+       }
+   } 
+   for( std::map<std::pair<size_t, size_t>, size_t>::iterator curredge=edge_face_cnt.begin(); curredge!=edge_face_cnt.end(); curredge++) {
+       if ((*curredge).second == 1) {
+	  //std::cout << "(" << (*curredge).first.first << "," << (*curredge).first.second << ")" << ": ";
+	  pdv_3move(plot, &bot->vertices[(*curredge).first.first]); 
+	  pdv_3cont(plot, &bot->vertices[(*curredge).first.second]);
+          edges->push_back((*curredge).first);
+       }
+   }
+}
+
 
 int
 main (int argc, char *argv[])
@@ -152,11 +187,11 @@ main (int argc, char *argv[])
    struct directory *dp;
    struct rt_db_internal intern;
    struct rt_bot_internal *bot_ip = NULL;
-   struct rt_bot_list *headRblp = NULL;
-   struct rt_bot_list *split_bots = NULL;
-   struct rt_db_internal bot_intern;
-   struct rt_bot_list *rblp;
-   struct rt_bot_list *splitlp;
+//   struct rt_bot_list *headRblp = NULL;
+ //  struct rt_bot_list *split_bots = NULL;
+  // struct rt_db_internal bot_intern;
+//   struct rt_bot_list *rblp;
+ //  struct rt_bot_list *splitlp;
    struct vector_list *vects;
    struct vector_list *vect;
    struct bu_vls name;
@@ -166,7 +201,7 @@ main (int argc, char *argv[])
    PatchSet patches;
 
    int i = 0;
-   int j = 0;
+  // int j = 0;
 
    BU_GET(vects, struct vector_list);
    BU_LIST_INIT(&(vects->l));
@@ -226,27 +261,45 @@ main (int argc, char *argv[])
    find_patches(bot_ip, vects, &faces);
    split_patches(bot_ip, &faces, &patches);
  
-   int patch_cnt = 1;
+   plot = fopen("bots.pl", "w");
+   VSET(min, -2048, -2048, -2048);
+   VSET(max, 2048, 2048, 2048);
+   pdv_3space(plot, min, max);
+
    std::set<std::set<size_t> >::iterator patch_it;         
    for( patch_it = patches.begin(); patch_it != patches.end(); patch_it++ ) {
 	std::set<size_t>::iterator face_it;
-        std::cout << "\nPatch(" << patch_cnt << "): ";
-        patch_cnt++;
 	for( face_it = (*patch_it).begin(); face_it != (*patch_it).end(); face_it++ ) {
-           std::cout << *face_it << " ";
+	  pdv_3move(plot, &bot_ip->vertices[bot_ip->faces[(*face_it)*3+0]*3]); 
+	  pdv_3cont(plot, &bot_ip->vertices[bot_ip->faces[(*face_it)*3+1]*3]); 
+	  pdv_3move(plot, &bot_ip->vertices[bot_ip->faces[(*face_it)*3+1]*3]); 
+	  pdv_3cont(plot, &bot_ip->vertices[bot_ip->faces[(*face_it)*3+2]*3]); 
+	  pdv_3move(plot, &bot_ip->vertices[bot_ip->faces[(*face_it)*3+2]*3]); 
+	  pdv_3cont(plot, &bot_ip->vertices[bot_ip->faces[(*face_it)*3+0]*3]); 
         }
    }
-   std::cout << "\n";
 
    plot = fopen("out.pl", "w");
    VSET(min, -2048, -2048, -2048);
    VSET(max, 2048, 2048, 2048);
    pdv_3space(plot, min, max);
 
-   headRblp = rt_bot_patches(bot_ip);
+//   headRblp = rt_bot_patches(bot_ip);
 
-   int bot_cnt = 0;
+//   int bot_cnt = 0;
    i = 0;
+
+   //std::set<std::set<size_t> >::iterator patch_it;         
+   for( patch_it = patches.begin(); patch_it != patches.end(); patch_it++ ) {
+        EdgeList edges;
+        find_edges2(bot_ip, &(*patch_it), plot, &edges);
+	for( std::list<std::pair<size_t, size_t> >::iterator curredge=edges.begin(); curredge!=edges.end(); curredge++) {
+		std::cout << "(" << (*curredge).first << "," << (*curredge).second << ")" << "\n";
+	}
+
+   }
+
+#if 0
    for (BU_LIST_FOR(rblp, rt_bot_list, &headRblp->l)) {
 	   j = 0;
 	   split_bots = rt_bot_split(rblp->bot);
@@ -280,6 +333,6 @@ std::cout << "BoT Count: " << bot_cnt << "\n";
    rt_bot_list_free(headRblp, 0);
    rt_db_free_internal(&intern);
    bu_vls_free(&name); 
-
+#endif
    return 0;
 }
