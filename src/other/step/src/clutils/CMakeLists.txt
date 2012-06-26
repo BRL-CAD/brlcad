@@ -31,3 +31,7 @@ add_definitions( -DSCL_UTILS_DLL_EXPORTS )
 endif()
 
 SCL_ADDLIB(steputils "${LIBSTEPUTILS_SRCS}" "base")
+
+IF(MINGW OR MSVC OR BORLAND)
+    TARGET_LINK_LIBRARIES(steputils shlwapi.lib)
+ENDIF()

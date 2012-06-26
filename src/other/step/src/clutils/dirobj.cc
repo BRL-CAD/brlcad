@@ -53,6 +53,10 @@
 #include <string>
 #include <iostream>
 
+#if defined(__WIN32__)
+#include <shlwapi.h>
+#endif
+
 #include <scl_memmgr.h>
 
 ///////////////////////////////////////////////////////////////////////////////
