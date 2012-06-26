@@ -1808,6 +1808,7 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 	    newtree->tr_l.tl_name = (char*)bu_malloc(strlen(oldname)+strlen(suffix)+1, "char");
 	    bu_strlcpy(tmpname, oldname, strlen(oldname)+1);
 	    bu_strlcat(tmpname, suffix, strlen(oldname)+strlen(suffix)+1);
+	    newtree->tr_l.tl_mat = oldtree->tr_l.tl_mat;
 	    if (db_lookup(db, tmpname, LOOKUP_QUIET) == RT_DIR_NULL) {
 		directory *dir;
 		dir = db_lookup(db, oldname, LOOKUP_QUIET);
