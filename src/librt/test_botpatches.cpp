@@ -9,12 +9,47 @@
 #include "wdb.h"
 #include "plot3.h"
 
-void find_edges(struct rt_bot_internal *bot, FILE *plot) 
+typedef std::multimap< size_t, size_t > FaceList;
+typedef FaceList::iterator FaceListIter;
+typedef std::list< std::pair<size_t, size_t> > EdgeList;
+
+struct vector_list {
+   struct bu_list l;
+   vect_t v;
+};
+
+void find_patches(struct rt_bot_internal *bot, struct vector_list *vects, FaceList *faces) 
+{
+	struct vector_list *vect;
+	for (size_t i=0; i < bot->num_faces; ++i) {
+		size_t count = 0;
+		size_t result_max = 0;
+		fastf_t tmp = 0.0;
+		fastf_t result = 0.0;
+		vect_t a, b, vtmp, norm_dir;
+		VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
+		VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);
+		VCROSS(norm_dir, a, b);
+		VUNITIZE(norm_dir);
+		for (BU_LIST_FOR(vect, vector_list, &vects->l)) {
+			VSET(vtmp, vect->v[0], vect->v[1], vect->v[2]);
+			VUNITIZE(vtmp);
+			tmp = VDOT(vtmp, norm_dir);
+			if (tmp > result) {
+				result_max = count;
+				result = tmp;
+			}
+			count++;
+		}
+		faces->insert(std::make_pair(result_max, i));
+	}
+}
+
+void find_edges(struct rt_bot_internal *bot, FILE *plot, EdgeList *edges)
 {
    size_t i;
    size_t pt_A, pt_B, pt_C;
    std::map<std::pair<size_t, size_t>, size_t> edge_face_cnt;
-
    for (i = 0; i < bot->num_faces; ++i) {
        pt_A = bot->faces[i*3+0]*3;
        pt_B = bot->faces[i*3+1]*3; 
@@ -39,7 +74,8 @@ void find_edges(struct rt_bot_internal *bot, FILE *plot)
        if ((*curredge).second == 1) {
 	  //std::cout << "(" << (*curredge).first.first << "," << (*curredge).first.second << ")" << ": ";
 	  pdv_3move(plot, &bot->vertices[(*curredge).first.first]); 
-	  pdv_3cont(plot, &bot->vertices[(*curredge).first.second]); 
+	  pdv_3cont(plot, &bot->vertices[(*curredge).first.second]);
+          edges->push_back((*curredge).first);
        }
    }
 }
@@ -58,12 +94,37 @@ main (int argc, char *argv[])
    struct rt_db_internal bot_intern;
    struct rt_bot_list *rblp;
    struct rt_bot_list *splitlp;
+   struct vector_list *vects;
+   struct vector_list *vect;
    struct bu_vls name;
    static FILE* plot = NULL;
    point_t min, max;
+   FaceList faces;
 
    int i = 0;
    int j = 0;
+
+   BU_GET(vects, struct vector_list);
+   BU_LIST_INIT(&(vects->l));
+   VSET(vects->v, 0, 0, 1);
+   BU_GET(vect, struct vector_list);
+   VSET(vect->v, -1,0,0);
+   BU_LIST_PUSH(&(vects->l), &(vect->l));
+   BU_GET(vect, struct vector_list);
+   VSET(vect->v, 0,-1,0);
+   BU_LIST_PUSH(&(vects->l), &(vect->l));
+   BU_GET(vect, struct vector_list);
+   VSET(vect->v, 0,0,-1);
+   BU_LIST_PUSH(&(vects->l), &(vect->l));
+   BU_GET(vect, struct vector_list);
+   VSET(vect->v, 1,0,0);
+   BU_LIST_PUSH(&(vects->l), &(vect->l));
+   BU_GET(vect, struct vector_list);
+   VSET(vect->v, 0,1,0);
+   BU_LIST_PUSH(&(vects->l), &(vect->l));
+   BU_GET(vect, struct vector_list);
+   VSET(vect->v, 0,0,1);
+   BU_LIST_PUSH(&(vects->l), &(vect->l)); 
 
    bu_vls_init(&name);
 
@@ -98,6 +159,17 @@ main (int argc, char *argv[])
    }
    RT_BOT_CK_MAGIC(bot_ip);
 
+   find_patches(bot_ip, vects, &faces);
+  
+   FaceListIter m_it, s_it; 
+   for( m_it = faces.begin(); m_it != faces.end(); m_it = s_it ) {
+         std::pair<FaceListIter, FaceListIter> keyRange = faces.equal_range((*m_it).first);
+         for (s_it = keyRange.first; s_it != keyRange.second; ++s_it) {
+         std::cout << "Category " << (*m_it).first << " ";
+            std::cout << "Face: " << (*s_it).second << "\n";
+         }
+   }
+
    plot = fopen("out.pl", "w");
    VSET(min, -2048, -2048, -2048);
    VSET(max, 2048, 2048, 2048);
@@ -110,8 +182,12 @@ main (int argc, char *argv[])
 	   j = 0;
 	   split_bots = rt_bot_split(rblp->bot);
 	   for (BU_LIST_FOR(splitlp, rt_bot_list, &split_bots->l)) {
-                   std::cout << "BoT " << i << "," << j << "\n";
-		   find_edges(splitlp->bot, plot);
+		   EdgeList edges;
+		   std::cout << "BoT " << i << "," << j << "\n";
+		   find_edges(splitlp->bot, plot, &edges);
+		   for( std::list<std::pair<size_t, size_t> >::iterator curredge=edges.begin(); curredge!=edges.end(); curredge++) {
+			   std::cout << "(" << (*curredge).first << "," << (*curredge).second << ")" << "\n";
+                   }
 		   bu_vls_sprintf(&name, "auto-%d_%d.bot", i, j);
 		   RT_DB_INTERNAL_INIT(&bot_intern);
 		   bot_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
