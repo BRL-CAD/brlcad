@@ -42,6 +42,7 @@ set fb_orig ""
 set fb_all_orig ""
 set listen_orig ""
 set objs {}
+set erase_status ""
 
 proc gr_remdup { args } {
     if { [llength $args] != 1 } {
@@ -165,6 +166,13 @@ proc do_grouper { GroupName Boolean ListLimit } {
 
     uplevel #0 set GroupNameGlobal $GroupName
     global objs
+    global erase_status
+
+    # Temporarily erase group from display while getting objects in rectangle"
+    after 1 {if { [search -name $GroupNameGlobal] != "" } { set erase_status [erase $GroupNameGlobal] } else { set erase_status 1 }}
+
+    # Wait for the group to be erased from the display before we continue
+    vwait erase_status
 
     after 1 {set objs [gr_getObjInRectangle]}
 
