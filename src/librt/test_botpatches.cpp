@@ -1,6 +1,8 @@
 #include "common.h"
 
 #include <map>
+#include <set>
+#include <queue>
 #include <list>
 #include <iostream>
 
@@ -12,6 +14,7 @@
 typedef std::multimap< size_t, size_t > FaceList;
 typedef FaceList::iterator FaceListIter;
 typedef std::list< std::pair<size_t, size_t> > EdgeList;
+typedef std::set<std::set<size_t> > PatchSet;
 
 struct vector_list {
    struct bu_list l;
@@ -43,6 +46,66 @@ void find_patches(struct rt_bot_internal *bot, struct vector_list *vects, FaceLi
 		}
 		faces->insert(std::make_pair(result_max, i));
 	}
+}
+
+void split_patches(struct rt_bot_internal *bot, FaceList *faces, PatchSet *patches) 
+{
+   FaceListIter m_it, s_it; 
+   for( m_it = faces->begin(); m_it != faces->end(); m_it = s_it ) {
+         std::set<size_t> all_faces;
+         std::pair<FaceListIter, FaceListIter> currkey = faces->equal_range((*m_it).first);
+         for (s_it = currkey.first; s_it != currkey.second; s_it++) {
+            size_t curr_face = (*s_it).second;
+            all_faces.insert(curr_face);
+         }
+	 while (!all_faces.empty()) {
+		 size_t a, b, c;
+		 std::queue<size_t> face_queue;
+		 std::set<size_t> patch_faces;
+		 std::set<size_t>::iterator f_it;
+
+		 face_queue.push(*all_faces.begin());
+		 patch_faces.insert(*all_faces.begin());
+		 all_faces.erase(all_faces.begin());
+		 while (!face_queue.empty()) {
+			 size_t face_num = face_queue.front();
+			 face_queue.pop();
+			 a = bot->faces[face_num*3+0];
+			 b = bot->faces[face_num*3+1];
+			 c = bot->faces[face_num*3+2];
+			 for (f_it = all_faces.begin(); f_it != all_faces.end(); f_it++) {
+				 size_t curr_a, curr_b, curr_c;
+				 curr_a = bot->faces[*f_it*3+0];
+				 curr_b = bot->faces[*f_it*3+1];
+				 curr_c = bot->faces[*f_it*3+2];
+				 if ((a == curr_a && b == curr_b) ||
+						 (a == curr_b && b == curr_a) ||
+						 (a == curr_b && b == curr_c) ||
+						 (a == curr_c && b == curr_b) ||
+						 (a == curr_a && b == curr_c) ||
+						 (a == curr_c && b == curr_a) ||
+						 (a == curr_a && c == curr_b) ||
+						 (a == curr_b && c == curr_a) ||
+						 (a == curr_b && c == curr_c) ||
+						 (a == curr_c && c == curr_b) ||
+						 (a == curr_a && c == curr_c) ||
+						 (a == curr_c && c == curr_a) ||
+						 (b == curr_a && c == curr_b) ||
+						 (b == curr_b && c == curr_a) ||
+						 (b == curr_b && c == curr_c) ||
+						 (b == curr_c && c == curr_b) ||
+						 (b == curr_a && c == curr_c) ||
+						 (b == curr_c && c == curr_a)) {
+					 /* Found a shared edge of a neighboring triangle */
+					 patch_faces.insert(*f_it);
+                                         face_queue.push(*f_it);
+					 all_faces.erase(f_it);
+				 }
+			 }
+		 }
+		 patches->insert(patch_faces);
+	 }
+   }
 }
 
 void find_edges(struct rt_bot_internal *bot, FILE *plot, EdgeList *edges)
@@ -100,6 +163,7 @@ main (int argc, char *argv[])
    static FILE* plot = NULL;
    point_t min, max;
    FaceList faces;
+   PatchSet patches;
 
    int i = 0;
    int j = 0;
@@ -160,15 +224,19 @@ main (int argc, char *argv[])
    RT_BOT_CK_MAGIC(bot_ip);
 
    find_patches(bot_ip, vects, &faces);
-  
-   FaceListIter m_it, s_it; 
-   for( m_it = faces.begin(); m_it != faces.end(); m_it = s_it ) {
-         std::pair<FaceListIter, FaceListIter> keyRange = faces.equal_range((*m_it).first);
-         for (s_it = keyRange.first; s_it != keyRange.second; ++s_it) {
-         std::cout << "Category " << (*m_it).first << " ";
-            std::cout << "Face: " << (*s_it).second << "\n";
-         }
+   split_patches(bot_ip, &faces, &patches);
+ 
+   int patch_cnt = 1;
+   std::set<std::set<size_t> >::iterator patch_it;         
+   for( patch_it = patches.begin(); patch_it != patches.end(); patch_it++ ) {
+	std::set<size_t>::iterator face_it;
+        std::cout << "\nPatch(" << patch_cnt << "): ";
+        patch_cnt++;
+	for( face_it = (*patch_it).begin(); face_it != (*patch_it).end(); face_it++ ) {
+           std::cout << *face_it << " ";
+        }
    }
+   std::cout << "\n";
 
    plot = fopen("out.pl", "w");
    VSET(min, -2048, -2048, -2048);
@@ -177,17 +245,19 @@ main (int argc, char *argv[])
 
    headRblp = rt_bot_patches(bot_ip);
 
+   int bot_cnt = 0;
    i = 0;
    for (BU_LIST_FOR(rblp, rt_bot_list, &headRblp->l)) {
 	   j = 0;
 	   split_bots = rt_bot_split(rblp->bot);
 	   for (BU_LIST_FOR(splitlp, rt_bot_list, &split_bots->l)) {
 		   EdgeList edges;
-		   std::cout << "BoT " << i << "," << j << "\n";
+		   //std::cout << "BoT " << i << "," << j << "\n";
 		   find_edges(splitlp->bot, plot, &edges);
 		   for( std::list<std::pair<size_t, size_t> >::iterator curredge=edges.begin(); curredge!=edges.end(); curredge++) {
-			   std::cout << "(" << (*curredge).first << "," << (*curredge).second << ")" << "\n";
+			   //std::cout << "(" << (*curredge).first << "," << (*curredge).second << ")" << "\n";
                    }
+                   bot_cnt++;
 		   bu_vls_sprintf(&name, "auto-%d_%d.bot", i, j);
 		   RT_DB_INTERNAL_INIT(&bot_intern);
 		   bot_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -206,7 +276,7 @@ main (int argc, char *argv[])
 	   }
 	   i++;
    }
-
+std::cout << "BoT Count: " << bot_cnt << "\n";
    rt_bot_list_free(headRblp, 0);
    rt_db_free_internal(&intern);
    bu_vls_free(&name); 
