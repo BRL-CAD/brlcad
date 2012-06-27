@@ -11,145 +11,127 @@
 #include "wdb.h"
 #include "plot3.h"
 
-typedef std::multimap< size_t, size_t > FaceList;
-typedef FaceList::iterator FaceListIter;
-typedef std::list< std::pair<size_t, size_t> > EdgeList;
-typedef std::set<std::set<size_t> > PatchSet;
+typedef std::multimap< size_t, size_t > FaceCategorization;
+typedef std::multimap< size_t, size_t > VertToFace;
+typedef std::pair<size_t, size_t> Edge;
+typedef std::set<Edge> EdgeList;
+typedef std::set<EdgeList> LoopList;
+typedef std::set<size_t> VertList;
+typedef std::set<size_t> FaceList;
 
-struct vector_list {
-   struct bu_list l;
-   vect_t v;
+class Patch {
+      public:
+        int id;
+	EdgeList edges;
+	LoopList loops;
+        FaceList faces;
+	bool operator< (const Patch &other) const {return id < other.id;}
 };
 
-void find_patches(struct rt_bot_internal *bot, struct vector_list *vects, FaceList *faces) 
+class ThreeDPoint {
+      public:
+          fastf_t x, y, z;
+          ThreeDPoint (fastf_t, fastf_t, fastf_t);
+          bool operator< (const ThreeDPoint &other) const {return (100*x + 10*y + z) < (100*other.x + 10*other.y + other.z);}
+};
+
+ThreeDPoint::ThreeDPoint(fastf_t a, fastf_t b, fastf_t c) {
+     x = a;
+     y = b;
+     z = c;
+}
+
+typedef std::set<ThreeDPoint> VectList; 
+
+void strip_noedge_matches(struct rt_bot_internal *bot, Patch *patch, FaceList *face_pool, VertToFace *vert_to_face)
 {
-	struct vector_list *vect;
-	for (size_t i=0; i < bot->num_faces; ++i) {
-		size_t count = 0;
-		size_t result_max = 0;
-		fastf_t tmp = 0.0;
-		fastf_t result = 0.0;
-		vect_t a, b, vtmp, norm_dir;
-		VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
-		VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);
-		VCROSS(norm_dir, a, b);
-		VUNITIZE(norm_dir);
-		for (BU_LIST_FOR(vect, vector_list, &vects->l)) {
-			VSET(vtmp, vect->v[0], vect->v[1], vect->v[2]);
-			VUNITIZE(vtmp);
-			tmp = VDOT(vtmp, norm_dir);
-			if (tmp > result) {
-				result_max = count;
-				result = tmp;
+	size_t vert_A, vert_B, vert_C;
+	std::set<size_t>::iterator it;
+	std::map<std::pair<size_t, size_t>, size_t> edge_face_cnt;
+	std::pair<VertToFace::iterator, VertToFace::iterator> vertkey;
+	VertToFace::iterator vert_it;
+	FaceList to_erase;
+	size_t curr_patch_cnt = patch->faces.size();
+        if (patch->faces.size() > 1) {
+	for (it = patch->faces.begin(); it != patch->faces.end(); it++) {
+	    if (curr_patch_cnt > 1) {
+		VertList a_verts;
+		VertList b_verts;
+		VertList c_verts;
+		int is_ok = 0;
+		vert_A = bot->faces[(*it)*3+0]*3;
+		vert_B = bot->faces[(*it)*3+1]*3;
+		vert_C = bot->faces[(*it)*3+2]*3;
+		vertkey = vert_to_face->equal_range(vert_A);
+		for( vert_it = vertkey.first; vert_it != vertkey.second; ++vert_it ) {
+			size_t face_from_vert = (*vert_it).second;
+			if (face_from_vert != (*it)) {
+				FaceList::iterator this_it = patch->faces.find(face_from_vert);
+				if (this_it != patch->faces.end()) {
+					a_verts.insert(bot->faces[face_from_vert*3+0]*3);
+					a_verts.insert(bot->faces[face_from_vert*3+1]*3);
+					a_verts.insert(bot->faces[face_from_vert*3+2]*3);
+				}
 			}
-			count++;
 		}
-		faces->insert(std::make_pair(result_max, i));
+		if (a_verts.find(vert_B) != a_verts.end() || a_verts.find(vert_C) != a_verts.end()) {
+			is_ok = 1;
+		} 
+		if (!is_ok) {
+			vertkey = vert_to_face->equal_range(vert_B);
+			for( vert_it = vertkey.first; vert_it != vertkey.second; ++vert_it ) {
+				size_t face_from_vert = (*vert_it).second;
+				if (face_from_vert != (*it)) {
+					FaceList::iterator this_it = patch->faces.find(face_from_vert);
+					if (this_it != patch->faces.end()) {
+						b_verts.insert(bot->faces[face_from_vert*3+0]*3);
+						b_verts.insert(bot->faces[face_from_vert*3+1]*3);
+						b_verts.insert(bot->faces[face_from_vert*3+2]*3);
+					}
+				}
+			}
+			if (b_verts.find(vert_A) != b_verts.end() || b_verts.find(vert_C) != b_verts.end()) {
+				is_ok = 1;
+			}
+		} 
+
+		if (!is_ok) {
+			vertkey = vert_to_face->equal_range(vert_C);
+			for( vert_it = vertkey.first; vert_it != vertkey.second; ++vert_it ) {
+				size_t face_from_vert = (*vert_it).second;
+				if (face_from_vert != (*it)) {
+					FaceList::iterator this_it = patch->faces.find(face_from_vert);
+					if (this_it != patch->faces.end()) {
+						c_verts.insert(bot->faces[face_from_vert*3+0]*3);
+						c_verts.insert(bot->faces[face_from_vert*3+1]*3);
+						c_verts.insert(bot->faces[face_from_vert*3+2]*3);
+					}
+				}
+			}
+			if (c_verts.find(vert_A) != c_verts.end() || c_verts.find(vert_A) != c_verts.end()) {
+				is_ok = 1;
+			}
+		} 
+		if (!is_ok) {
+			to_erase.insert((*it));
+                        curr_patch_cnt--;
+		}
+             }
 	}
-}
-
-void split_patches(struct rt_bot_internal *bot, FaceList *faces, PatchSet *patches) 
-{
-   FaceListIter m_it, s_it; 
-   for( m_it = faces->begin(); m_it != faces->end(); m_it = s_it ) {
-         std::set<size_t> all_faces;
-         std::pair<FaceListIter, FaceListIter> currkey = faces->equal_range((*m_it).first);
-         for (s_it = currkey.first; s_it != currkey.second; s_it++) {
-            size_t curr_face = (*s_it).second;
-            all_faces.insert(curr_face);
-         }
-	 while (!all_faces.empty()) {
-		 size_t a, b, c;
-		 std::queue<size_t> face_queue;
-		 std::set<size_t> patch_faces;
-		 std::set<size_t>::iterator f_it;
-
-		 face_queue.push(*all_faces.begin());
-		 patch_faces.insert(*all_faces.begin());
-		 all_faces.erase(all_faces.begin());
-		 while (!face_queue.empty()) {
-			 size_t face_num = face_queue.front();
-			 face_queue.pop();
-			 a = bot->faces[face_num*3+0];
-			 b = bot->faces[face_num*3+1];
-			 c = bot->faces[face_num*3+2];
-			 for (f_it = all_faces.begin(); f_it != all_faces.end(); f_it++) {
-				 size_t curr_a, curr_b, curr_c;
-				 curr_a = bot->faces[*f_it*3+0];
-				 curr_b = bot->faces[*f_it*3+1];
-				 curr_c = bot->faces[*f_it*3+2];
-				 if ((a == curr_a && b == curr_b) ||
-						 (a == curr_b && b == curr_a) ||
-						 (a == curr_b && b == curr_c) ||
-						 (a == curr_c && b == curr_b) ||
-						 (a == curr_a && b == curr_c) ||
-						 (a == curr_c && b == curr_a) ||
-						 (a == curr_a && c == curr_b) ||
-						 (a == curr_b && c == curr_a) ||
-						 (a == curr_b && c == curr_c) ||
-						 (a == curr_c && c == curr_b) ||
-						 (a == curr_a && c == curr_c) ||
-						 (a == curr_c && c == curr_a) ||
-						 (b == curr_a && c == curr_b) ||
-						 (b == curr_b && c == curr_a) ||
-						 (b == curr_b && c == curr_c) ||
-						 (b == curr_c && c == curr_b) ||
-						 (b == curr_a && c == curr_c) ||
-						 (b == curr_c && c == curr_a)) {
-					 /* Found a shared edge of a neighboring triangle */
-					 patch_faces.insert(*f_it);
-                                         face_queue.push(*f_it);
-					 all_faces.erase(f_it);
-				 }
-			 }
-		 }
-		 patches->insert(patch_faces);
-	 }
-   }
-}
-
-void find_edges(struct rt_bot_internal *bot, FILE *plot, EdgeList *edges)
-{
-   size_t i;
-   size_t pt_A, pt_B, pt_C;
-   std::map<std::pair<size_t, size_t>, size_t> edge_face_cnt;
-   for (i = 0; i < bot->num_faces; ++i) {
-       pt_A = bot->faces[i*3+0]*3;
-       pt_B = bot->faces[i*3+1]*3; 
-       pt_C = bot->faces[i*3+2]*3;
-       if (pt_A <= pt_B) {
-          edge_face_cnt[std::make_pair(pt_A, pt_B)] += 1;
-       } else {
-          edge_face_cnt[std::make_pair(pt_B, pt_A)] += 1;
-       }
-       if (pt_B <= pt_C) {
-          edge_face_cnt[std::make_pair(pt_B, pt_C)] += 1;
-       } else {
-          edge_face_cnt[std::make_pair(pt_C, pt_B)] += 1;
-       }
-       if (pt_C <= pt_A) {
-          edge_face_cnt[std::make_pair(pt_C, pt_A)] += 1;
-       } else {
-          edge_face_cnt[std::make_pair(pt_A, pt_C)] += 1;
-       }
-   } 
-   for( std::map<std::pair<size_t, size_t>, size_t>::iterator curredge=edge_face_cnt.begin(); curredge!=edge_face_cnt.end(); curredge++) {
-       if ((*curredge).second == 1) {
-	  //std::cout << "(" << (*curredge).first.first << "," << (*curredge).first.second << ")" << ": ";
-	  pdv_3move(plot, &bot->vertices[(*curredge).first.first]); 
-	  pdv_3cont(plot, &bot->vertices[(*curredge).first.second]);
-          edges->push_back((*curredge).first);
-       }
-   }
+	for (it = to_erase.begin(); it != to_erase.end(); it++) {
+	    patch->faces.erase(*it);
+	    face_pool->insert(*it);
+	}
+        }
 }
 
 
-void find_edges2(struct rt_bot_internal *bot, const std::set<size_t> *faces, FILE *plot, EdgeList *edges)
+void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot)
 {
    size_t pt_A, pt_B, pt_C;
    std::set<size_t>::iterator it;
    std::map<std::pair<size_t, size_t>, size_t> edge_face_cnt;
-   for (it = faces->begin(); it != faces->end(); it++) {
+   for (it = patch->faces.begin(); it != patch->faces.end(); it++) {
        pt_A = bot->faces[(*it)*3+0]*3;
        pt_B = bot->faces[(*it)*3+1]*3; 
        pt_C = bot->faces[(*it)*3+2]*3;
@@ -169,14 +151,103 @@ void find_edges2(struct rt_bot_internal *bot, const std::set<size_t> *faces, FIL
           edge_face_cnt[std::make_pair(pt_A, pt_C)] += 1;
        }
    } 
+
    for( std::map<std::pair<size_t, size_t>, size_t>::iterator curredge=edge_face_cnt.begin(); curredge!=edge_face_cnt.end(); curredge++) {
        if ((*curredge).second == 1) {
-	  //std::cout << "(" << (*curredge).first.first << "," << (*curredge).first.second << ")" << ": ";
+	  //std::cout << "(" << (*curredge).first.first << "," << (*curredge).first.second << ") (";
+	  //printf("%f,%f,%f), (%f,%f,%f)", V3ARGS(&bot->vertices[(*curredge).first.first]), V3ARGS(&bot->vertices[(*curredge).first.second]));
 	  pdv_3move(plot, &bot->vertices[(*curredge).first.first]); 
 	  pdv_3cont(plot, &bot->vertices[(*curredge).first.second]);
-          edges->push_back((*curredge).first);
+          patch->edges.insert((*curredge).first);
        }
    }
+   //std::cout << "\n";
+}
+
+void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch> *patches, FILE* plot) {
+        FaceCategorization face_groups;
+        FaceCategorization::iterator fg_1, fg_2;
+        VertToFace vert_to_face;
+        int patch_cnt = 1;
+	
+        VectList::iterator vect_it;
+        // Break apart the bot based on angles between faces and bounding rpp planes
+        for (size_t i=0; i < bot->num_faces; ++i) {
+		size_t count = 0;
+                size_t result_max = 0;
+		fastf_t vdot = 0.0;
+                size_t result = 0.0;
+		vect_t a, b, dir, norm_dir;
+                // Add vertex -> face mappings to global map.
+		vert_to_face.insert(std::make_pair(bot->faces[i*3+0]*3, i));
+		vert_to_face.insert(std::make_pair(bot->faces[i*3+1]*3, i));
+		vert_to_face.insert(std::make_pair(bot->faces[i*3+2]*3, i));
+                // Categorize face
+		VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
+		VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);
+		VCROSS(norm_dir, a, b);
+		VUNITIZE(norm_dir);
+		for (vect_it = vects->begin(); vect_it != vects->end(); vect_it++) {
+			count++;
+		//	std::cout << "vector: (" << (*vect_it).x << "," << (*vect_it).y << "," << (*vect_it).z << ")\n";
+			VSET(dir, (*vect_it).x, (*vect_it).y, (*vect_it).z);
+			VUNITIZE(dir);
+			vdot = VDOT(dir, norm_dir);
+                        if (vdot > result) {
+                           result_max = count;
+                           result = vdot;
+                        }
+                
+		}
+		face_groups.insert(std::make_pair(result_max, i));
+        }
+        // For each "sub-bot", identify contiguous patches.
+	for( fg_1 = face_groups.begin(); fg_1 != face_groups.end(); fg_1 = fg_2 ) {
+		// Make a list of all faces associated with the current category
+		FaceList group_faces, second_tier;
+		std::pair<FaceCategorization::iterator, FaceCategorization::iterator> currkey = face_groups.equal_range((*fg_1).first);
+		for (fg_2 = currkey.first; fg_2 != currkey.second; fg_2++) {
+			size_t curr_face = (*fg_2).second;
+			group_faces.insert(curr_face);
+		}
+		// All faces must belong to some patch - continue until all faces are processed
+		while (!group_faces.empty()) {
+			std::pair<VertToFace::iterator, VertToFace::iterator> vertkey;
+			VertToFace::iterator vert_it;
+			//size_t a, b, c;
+                        int i;
+			Patch curr_patch; 
+                        curr_patch.id = patch_cnt;
+                        patch_cnt++;
+			std::queue<size_t> face_queue;
+			FaceList::iterator f_it;
+			face_queue.push(*(group_faces.begin()));
+			while (!face_queue.empty()) {
+				size_t face_num = face_queue.front();
+				face_queue.pop();
+				curr_patch.faces.insert(face_num);
+				group_faces.erase(face_num);
+				for (i = 0; i < 3; i++) {
+					vertkey = vert_to_face.equal_range(bot->faces[face_num*3+i]*3);
+					for( vert_it = vertkey.first; vert_it != vertkey.second; ++vert_it ) {
+						size_t face_from_vert = (*vert_it).second;
+						FaceList::iterator this_it = group_faces.find(face_from_vert);
+						if (this_it != group_faces.end()) {
+							face_queue.push(face_from_vert);
+							group_faces.erase(face_from_vert);
+						}
+					}
+				}
+			}
+                        strip_noedge_matches(bot, &curr_patch, &second_tier, &vert_to_face);
+			//std::cout << "Patch: " << curr_patch.id << "\n";
+                        find_edges(bot, &curr_patch, plot);
+			patches->insert(curr_patch);
+                        if (group_faces.empty() && !second_tier.empty()) {
+			   group_faces.swap(second_tier);
+			}
+		}
+	}
 }
 
 
@@ -187,45 +258,26 @@ main (int argc, char *argv[])
    struct directory *dp;
    struct rt_db_internal intern;
    struct rt_bot_internal *bot_ip = NULL;
-//   struct rt_bot_list *headRblp = NULL;
- //  struct rt_bot_list *split_bots = NULL;
-  // struct rt_db_internal bot_intern;
-//   struct rt_bot_list *rblp;
- //  struct rt_bot_list *splitlp;
-   struct vector_list *vects;
-   struct vector_list *vect;
    struct bu_vls name;
-   static FILE* plot = NULL;
-   point_t min, max;
-   FaceList faces;
-   PatchSet patches;
+   VectList vectors;
+   std::set<Patch> patches;
+   std::set<Patch>::iterator p_it;
 
-   int i = 0;
-  // int j = 0;
-
-   BU_GET(vects, struct vector_list);
-   BU_LIST_INIT(&(vects->l));
-   VSET(vects->v, 0, 0, 1);
-   BU_GET(vect, struct vector_list);
-   VSET(vect->v, -1,0,0);
-   BU_LIST_PUSH(&(vects->l), &(vect->l));
-   BU_GET(vect, struct vector_list);
-   VSET(vect->v, 0,-1,0);
-   BU_LIST_PUSH(&(vects->l), &(vect->l));
-   BU_GET(vect, struct vector_list);
-   VSET(vect->v, 0,0,-1);
-   BU_LIST_PUSH(&(vects->l), &(vect->l));
-   BU_GET(vect, struct vector_list);
-   VSET(vect->v, 1,0,0);
-   BU_LIST_PUSH(&(vects->l), &(vect->l));
-   BU_GET(vect, struct vector_list);
-   VSET(vect->v, 0,1,0);
-   BU_LIST_PUSH(&(vects->l), &(vect->l));
-   BU_GET(vect, struct vector_list);
-   VSET(vect->v, 0,0,1);
-   BU_LIST_PUSH(&(vects->l), &(vect->l)); 
+   vectors.insert(*(new ThreeDPoint(-1,0,0)));
+   vectors.insert(*(new ThreeDPoint(0,-1,0)));
+   vectors.insert(*(new ThreeDPoint(0,0,-1)));
+   vectors.insert(*(new ThreeDPoint(1,0,0)));
+   vectors.insert(*(new ThreeDPoint(0,1,0)));
+   vectors.insert(*(new ThreeDPoint(0,0,1)));
 
    bu_vls_init(&name);
+
+   static FILE* plot = NULL;
+   point_t min, max;
+   plot = fopen("edges.pl", "w");
+   VSET(min, -2048, -2048, -2048);
+   VSET(max, 2048, 2048, 2048);
+   pdv_3space(plot, min, max);
 
    if (argc != 3) {
       bu_exit(1, "Usage: %s file.g object", argv[0]);
@@ -258,81 +310,11 @@ main (int argc, char *argv[])
    }
    RT_BOT_CK_MAGIC(bot_ip);
 
-   find_patches(bot_ip, vects, &faces);
-   split_patches(bot_ip, &faces, &patches);
- 
-   plot = fopen("bots.pl", "w");
-   VSET(min, -2048, -2048, -2048);
-   VSET(max, 2048, 2048, 2048);
-   pdv_3space(plot, min, max);
+   make_structure(bot_ip, &vectors, &patches, plot); 
 
-   std::set<std::set<size_t> >::iterator patch_it;         
-   for( patch_it = patches.begin(); patch_it != patches.end(); patch_it++ ) {
-	std::set<size_t>::iterator face_it;
-	for( face_it = (*patch_it).begin(); face_it != (*patch_it).end(); face_it++ ) {
-	  pdv_3move(plot, &bot_ip->vertices[bot_ip->faces[(*face_it)*3+0]*3]); 
-	  pdv_3cont(plot, &bot_ip->vertices[bot_ip->faces[(*face_it)*3+1]*3]); 
-	  pdv_3move(plot, &bot_ip->vertices[bot_ip->faces[(*face_it)*3+1]*3]); 
-	  pdv_3cont(plot, &bot_ip->vertices[bot_ip->faces[(*face_it)*3+2]*3]); 
-	  pdv_3move(plot, &bot_ip->vertices[bot_ip->faces[(*face_it)*3+2]*3]); 
-	  pdv_3cont(plot, &bot_ip->vertices[bot_ip->faces[(*face_it)*3+0]*3]); 
-        }
+   for (p_it = patches.begin(); p_it != patches.end(); p_it++) {
+       //std::cout << "Found patch " << (*p_it).id << "\n";
    }
 
-   plot = fopen("out.pl", "w");
-   VSET(min, -2048, -2048, -2048);
-   VSET(max, 2048, 2048, 2048);
-   pdv_3space(plot, min, max);
-
-//   headRblp = rt_bot_patches(bot_ip);
-
-//   int bot_cnt = 0;
-   i = 0;
-
-   //std::set<std::set<size_t> >::iterator patch_it;         
-   for( patch_it = patches.begin(); patch_it != patches.end(); patch_it++ ) {
-        EdgeList edges;
-        find_edges2(bot_ip, &(*patch_it), plot, &edges);
-	for( std::list<std::pair<size_t, size_t> >::iterator curredge=edges.begin(); curredge!=edges.end(); curredge++) {
-		std::cout << "(" << (*curredge).first << "," << (*curredge).second << ")" << "\n";
-	}
-
-   }
-
-#if 0
-   for (BU_LIST_FOR(rblp, rt_bot_list, &headRblp->l)) {
-	   j = 0;
-	   split_bots = rt_bot_split(rblp->bot);
-	   for (BU_LIST_FOR(splitlp, rt_bot_list, &split_bots->l)) {
-		   EdgeList edges;
-		   //std::cout << "BoT " << i << "," << j << "\n";
-		   find_edges(splitlp->bot, plot, &edges);
-		   for( std::list<std::pair<size_t, size_t> >::iterator curredge=edges.begin(); curredge!=edges.end(); curredge++) {
-			   //std::cout << "(" << (*curredge).first << "," << (*curredge).second << ")" << "\n";
-                   }
-                   bot_cnt++;
-		   bu_vls_sprintf(&name, "auto-%d_%d.bot", i, j);
-		   RT_DB_INTERNAL_INIT(&bot_intern);
-		   bot_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-		   bot_intern.idb_type = ID_BOT;
-		   bot_intern.idb_meth = &rt_functab[ID_BOT];
-		   bot_intern.idb_ptr = (genptr_t)splitlp->bot;
-		   dp = db_diradd(dbip, bu_vls_addr(&name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&bot_intern.idb_type);
-		   if (dp == RT_DIR_NULL) {
-			   printf("auuugh - dp says diradd failed!\n");
-		   } else {
-			   if (rt_db_put_internal(dp, dbip, &bot_intern, &rt_uniresource) < 0) {
-				   printf("auuugh - put_internal failed!\n");
-			   }
-		   }
-                   j++;
-	   }
-	   i++;
-   }
-std::cout << "BoT Count: " << bot_cnt << "\n";
-   rt_bot_list_free(headRblp, 0);
-   rt_db_free_internal(&intern);
-   bu_vls_free(&name); 
-#endif
    return 0;
 }
