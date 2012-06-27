@@ -892,7 +892,7 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	/* FIXME: this needs to be handled more gracefully */
 	if (!split || !south || !north) {
 	    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)south, (void *)north);
-	    onfree(parent);
+	    delete parent;
 	    return NULL;
 	}
 
@@ -901,7 +901,7 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	/* FIXME: this needs to be handled more gracefully */
 	if (!split || !south || !north) {
 	    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)south, (void *)north);
-	    onfree(parent);
+	    delete parent;
 	    return NULL;
 	}
 
@@ -914,7 +914,7 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	/* FIXME: this needs to be handled more gracefully */
 	if (!split || !q0surf || !q1surf) {
 	    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)q0surf, (void *)q1surf);
-	    onfree(parent);
+	    delete parent;
 	    return NULL;
 	}
 
@@ -926,7 +926,7 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	/* FIXME: this needs to be handled more gracefully */
 	if (!split || !q3surf || !q2surf) {
 	    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)q3surf, (void *)q2surf);
-	    onfree(parent);
+	    delete parent;
 	    return NULL;
 	}
 
@@ -1135,7 +1135,7 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	/* FIXME: this needs to be handled more gracefully */
 	if (!split || !east || !west) {
 	    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)east, (void *)west);
-	    onfree(parent);
+	    delete parent;
 	    return NULL;
 	}
 
@@ -1332,7 +1332,7 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	/* FIXME: this needs to be handled more gracefully */
 	if (!split || !south || !north) {
 	    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)south, (void *)north);
-	    onfree(parent);
+	    delete parent;
 	    return NULL;
 	}
 
@@ -1497,7 +1497,7 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	//return surfaceBBox(localsurf, true, corners, normals, u, v);
 	//parent->addChild(subdivideSurface(localsurf, u, v, frames, corners, normals, 0));
 	((ON_Surface *)localsurf)->ClearBoundingBox();
-	onfree(parent);
+	delete parent;
 	return subdivideSurface(localsurf, u, v, frames, corners, normals, 0, depthLimit);
     }
     delete [] spanu;
@@ -1571,7 +1571,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    /* FIXME: this needs to be handled more gracefully */
 	    if (!split || !south || !north) {
 		bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)south, (void *)north);
-		onfree(parent);
+		delete parent;
 		return NULL;
 	    }
 
@@ -1584,7 +1584,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    /* FIXME: this needs to be handled more gracefully */
 	    if (!split || !q0surf || !q1surf) {
 		bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)q0surf, (void *)q1surf);
-		onfree(parent);
+		delete parent;
 		return NULL;
 	    }
 
@@ -1596,7 +1596,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    /* FIXME: this needs to be handled more gracefully */
 	    if (!split || !q3surf || !q2surf) {
 		bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)q3surf, (void *)q2surf);
-		onfree(parent);
+		delete parent;
 		return NULL;
 	    }
 
@@ -1798,7 +1798,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    /* FIXME: this needs to be handled more gracefully */
 	    if (!split || !east || !west) {
 		bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)east, (void *)west);
-		onfree(parent);
+		delete parent;
 		return NULL;
 	    }
 
@@ -1989,7 +1989,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    /* FIXME: this needs to be handled more gracefully */
 	    if (!split || !south || !north) {
 		bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)south, (void *)north);
-		onfree(parent);
+		delete parent;
 		return NULL;
 	    }
 
