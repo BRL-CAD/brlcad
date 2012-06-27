@@ -78,8 +78,8 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 
     ON_Plane *bottom_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
     ON_PlaneSurface *bottom_surf = new ON_PlaneSurface(*bottom_plane);
-    bottom_surf->SetDomain(0, 0.0, 255000.0);
-    bottom_surf->SetDomain(1, 0.0, 255000.0);
+    bottom_surf->SetDomain(0, 0.0, (dsp_ip->dsp_xcnt-1)*1000.0);
+    bottom_surf->SetDomain(1, 0.0, (dsp_ip->dsp_ycnt-1)*1000.0);
     bottom_surf->SetExtents(0, bottom_surf->Domain(0));
     bottom_surf->SetExtents(1, bottom_surf->Domain(1));
     ON_BrepFace *bottomface = (*b)->NewFace(*bottom_surf);
@@ -138,7 +138,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     ON_3dPointArray *bezpoints2 = new ON_3dPointArray(256);
 
     boundary.Empty();
-    VSET(s1p1, 0, 0, 0);
+    VSET(s2p1, 0, 0, 0);
     VSET(s2p2, 0, (dsp_ip->dsp_ycnt - 1)*1000, 0);
     VSET(s2p3, 0, (dsp_ip->dsp_ycnt - 1)*1000, DSP(dsp_ip, 0, dsp_ip->dsp_ycnt-1));
     VSET(s2p4, 0, 0, DSP(dsp_ip, 0 , 0));
