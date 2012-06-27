@@ -176,7 +176,7 @@ void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch
 		size_t count = 0;
                 size_t result_max = 0;
 		fastf_t vdot = 0.0;
-                size_t result = 0.0;
+                fastf_t result = 0.0;
 		vect_t a, b, dir, norm_dir;
                 // Add vertex -> face mappings to global map.
 		vert_to_face.insert(std::make_pair(bot->faces[i*3+0]*3, i));
