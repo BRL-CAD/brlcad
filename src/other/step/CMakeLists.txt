@@ -314,7 +314,7 @@ if(NOT SCL_IS_SUBBUILD)
   # $make package                                                               #
   ###############################################################################
 
-  SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "STEP Class Library")
+  SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "STEPcode")
   SET(CPACK_SET_DESTDIR "ON")
 
   SET(CPACK_PACKAGE_VERSION_MAJOR ${SCL_VERSION_MAJOR})

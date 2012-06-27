@@ -71,13 +71,10 @@
  *
  */
 
-char * FEDEXversion( void ) {
-    return( "V2.11.4-beta CADDETC preval June 8, 1995" );
-}
-
 #include <scl_cf.h>
 #include <scl_memmgr.h>
 #include <scl_export.h>
+#include "scl_version_string.h"
 #include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
@@ -99,10 +96,17 @@ extern int exp_yydebug;
 #endif /*YYDEBUG*/
 
 char EXPRESSgetopt_options[256] = "Bbd:e:i:w:p:rvz";
+static int no_need_to_work = 0; /* TRUE if we can exit gracefully without doing any work */
+
+void print_fedex_version( void ) {
+    fprintf( stderr, "Build info for %s: %s\nhttp://github.com/stepcode/stepcode\n", EXPRESSprogram_name, scl_version() );
+    no_need_to_work = 1;
+}
 
 static void usage( void ) {
     fprintf( stderr, "usage: %s [-v] [-d #] [-p <object_type>] {-w|-i <warning>} express_file\n", EXPRESSprogram_name );
-    fprintf( stderr, "where\t-v produces a version description\n" );
+    fprintf( stderr, "where\t-v produces the following version description:\n" );
+    print_fedex_version();
     fprintf( stderr, "\t-d turns on debugging (\"-d 0\" describes this further\n" );
     fprintf( stderr, "\t-p turns on printing when processing certain objects (see below)\n" );
     fprintf( stderr, "\t-w warning enable\n" );
@@ -131,8 +135,6 @@ int main( int argc, char ** argv ) {
     int no_warnings = 1;
     int resolve = 1;
     int result;
-    int no_need_to_work = 0;/* TRUE if we can exit gracefully without */
-    /* doing any work */
 
     bool buffer_messages = false;
     char * filename = 0;
@@ -218,7 +220,7 @@ int main( int argc, char ** argv ) {
                 }
                 break;
             case 'v':
-                printf( "%s %s\n%s\n", EXPRESSprogram_name, FEDEXversion(), EXPRESSversion() );
+                print_fedex_version();
                 no_need_to_work = 1;
                 break;
             case 'z':

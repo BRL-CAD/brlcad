@@ -68,7 +68,7 @@
   <qtHelp collectionFile="./doc/helpcollection.qhc"
           projectFile="./doc/helpcollection.qhcp"
           storage="./doc/qch" copyAction="copy">
-    <title>StepClassLibrary</title>
+    <title>STEPcode</title>
     <startPage>qthelp://com.github.mpictor/doc/index.html</startPage>
     <!-- See http://doc.trolltech.com/assistant-custom-help-viewer.html for more
          settings in the <assistant> section. -->
@@ -100,7 +100,7 @@
     -->
     <project>
       <!-- The name of the project -->
-      <name>StepClassLibrary</name>
+      <name>STEPcode</name>
       <!-- The version number of the documentation -->
       <version>0.2</version>
       <!-- Whether to build version specific documentation for the projects or not.
