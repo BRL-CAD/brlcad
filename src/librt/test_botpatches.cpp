@@ -13,15 +13,18 @@
 
 typedef std::multimap< size_t, size_t > FaceCategorization;
 typedef std::pair<size_t, size_t> Edge;
+typedef std::multimap< size_t, Edge> VertToEdge;
 typedef std::multimap< Edge, size_t > EdgeToFace;
+typedef std::multimap< Edge, size_t > EdgeToPatch;
 typedef std::set<Edge> EdgeList;
-typedef std::set<EdgeList> LoopList;
+typedef std::set<EdgeList> CurveList;
+typedef std::set<CurveList> LoopList;
 typedef std::set<size_t> VertList;
 typedef std::set<size_t> FaceList;
 
 class Patch {
       public:
-        int id;
+        size_t id;
 	EdgeList edges;
 	LoopList loops;
         FaceList faces;
@@ -43,9 +46,11 @@ ThreeDPoint::ThreeDPoint(fastf_t a, fastf_t b, fastf_t c) {
 
 typedef std::set<ThreeDPoint> VectList; 
 
-void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot)
+void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot, EdgeToPatch *edge_to_patch)
 {
    size_t pt_A, pt_B, pt_C;
+   VertToEdge vert_to_edge;
+   EdgeList patch_edges;
    std::set<size_t>::iterator it;
    std::map<std::pair<size_t, size_t>, size_t> edge_face_cnt;
    for (it = patch->faces.begin(); it != patch->faces.end(); it++) {
@@ -53,19 +58,19 @@ void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot)
        pt_B = bot->faces[(*it)*3+1]*3; 
        pt_C = bot->faces[(*it)*3+2]*3;
        if (pt_A <= pt_B) {
-          edge_face_cnt[std::make_pair(pt_A, pt_B)] += 1;
+	       edge_face_cnt[std::make_pair(pt_A, pt_B)] += 1;
        } else {
-          edge_face_cnt[std::make_pair(pt_B, pt_A)] += 1;
+	       edge_face_cnt[std::make_pair(pt_B, pt_A)] += 1;
        }
        if (pt_B <= pt_C) {
-          edge_face_cnt[std::make_pair(pt_B, pt_C)] += 1;
+	       edge_face_cnt[std::make_pair(pt_B, pt_C)] += 1;
        } else {
-          edge_face_cnt[std::make_pair(pt_C, pt_B)] += 1;
+	       edge_face_cnt[std::make_pair(pt_C, pt_B)] += 1;
        }
        if (pt_C <= pt_A) {
-          edge_face_cnt[std::make_pair(pt_C, pt_A)] += 1;
+	       edge_face_cnt[std::make_pair(pt_C, pt_A)] += 1;
        } else {
-          edge_face_cnt[std::make_pair(pt_A, pt_C)] += 1;
+	       edge_face_cnt[std::make_pair(pt_A, pt_C)] += 1;
        }
    } 
 
@@ -73,18 +78,137 @@ void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot)
        if ((*curredge).second == 1) {
 	  //std::cout << "(" << (*curredge).first.first << "," << (*curredge).first.second << ") (";
 	  //printf("%f,%f,%f), (%f,%f,%f)", V3ARGS(&bot->vertices[(*curredge).first.first]), V3ARGS(&bot->vertices[(*curredge).first.second]));
-	  pdv_3move(plot, &bot->vertices[(*curredge).first.first]); 
-	  pdv_3cont(plot, &bot->vertices[(*curredge).first.second]);
-          patch->edges.insert((*curredge).first);
+	  vert_to_edge.insert(std::make_pair((*curredge).first.first, (*curredge).first)); 
+	  vert_to_edge.insert(std::make_pair((*curredge).first.second, (*curredge).first)); 
+          patch_edges.insert((*curredge).first);
        }
    }
-   //std::cout << "\n";
+
+   // We have the edges of the patch - break them down into loops;
+   std::set<EdgeList> loops;
+   while (!patch_edges.empty()) {
+	   std::queue<Edge> edge_queue;
+	   EdgeList curr_loop;
+	   EdgeList::iterator e_it;
+	   edge_queue.push(*patch_edges.begin());
+	   while (!edge_queue.empty()) {
+		   VertToEdge::iterator v_it;
+		   std::pair<VertToEdge::iterator, VertToEdge::iterator> v_range;
+		   Edge curr_edge = edge_queue.front();
+		   edge_queue.pop();
+		   curr_loop.insert(curr_edge);
+		   
+		   // use verttoedge - pull other two edges from multimap
+		   v_range = vert_to_edge.equal_range(curr_edge.first);
+		   for (v_it = v_range.first; v_it != v_range.second; v_it++) {
+			   if ((*v_it).second != curr_edge) {
+				   if (patch_edges.find((*v_it).second) != patch_edges.end()) {
+					   edge_queue.push((*v_it).second);
+					   patch_edges.erase((*v_it).second);
+				   }
+			   }
+		   }
+		   v_range = vert_to_edge.equal_range(curr_edge.second);
+		   for (v_it = v_range.first; v_it != v_range.second; v_it++) {
+			   if ((*v_it).second != curr_edge) {
+				   if (patch_edges.find((*v_it).second) != patch_edges.end()) {
+					   edge_queue.push((*v_it).second);
+					   patch_edges.erase((*v_it).second);
+				   }
+			   }
+		   }
+	   }
+	   loops.insert(curr_loop);
+   }
+
+   std::cout << "loop count: " << loops.size() << "\n";
+
+   // We have loops - break them into curves.  A curve is shared between two
+   // and only two patches.
+   while (!loops.empty()) {
+         EdgeList curr_loop = *loops.begin();
+         loops.erase(loops.begin());
+	 CurveList loop_curves;
+	 while (!curr_loop.empty()) {
+		 size_t other_id; 
+		 EdgeList curve_edges;
+		 std::queue<Edge> edge_queue;
+		 EdgeList::iterator e_it;
+		 EdgeToPatch::iterator ep_it;
+		 std::pair<EdgeToPatch::iterator, EdgeToPatch::iterator> ep_range;
+		 edge_queue.push(*curr_loop.begin());
+		 // pull non-this patch ide from loop_edges.begin() - this will be 
+		 // the id tested for when pulling other connected edges
+		 ep_range = edge_to_patch->equal_range(*curr_loop.begin());
+		 for (ep_it = ep_range.first; ep_it != ep_range.second; ep_it++) {
+			 if ((*ep_it).second != patch->id) other_id = (*ep_it).second;
+		 }
+		 curr_loop.erase(curr_loop.begin());
+		 pl_color(plot, int(256*drand48() + 1.0), int(256*drand48() + 1.0), int(256*drand48() + 1.0));
+		 while (!edge_queue.empty()) {
+			 size_t pt1, pt2;
+			 Edge e1, e2;
+			 VertToEdge::iterator v_it;
+			 std::pair<VertToEdge::iterator, VertToEdge::iterator> v_range;
+			 Edge curr_edge = edge_queue.front();
+			 edge_queue.pop();
+			 curve_edges.insert(curr_edge);
+			 pt1 = curr_edge.first;
+			 pt2 = curr_edge.second;
+
+			 // use verttoedge - pull other two edges from multimap
+			 v_range = vert_to_edge.equal_range(pt1);
+			 for (v_it = v_range.first; v_it != v_range.second; v_it++) {
+				 if ((*v_it).second != curr_edge) {
+					 if (curr_loop.find((*v_it).second) != curr_loop.end()) {
+						 e1 = (*v_it).second;
+					 }
+				 }
+			 }
+			 v_range = vert_to_edge.equal_range(pt2);
+			 for (v_it = v_range.first; v_it != v_range.second; v_it++) {
+				 if ((*v_it).second != curr_edge) {
+					 if (curr_loop.find((*v_it).second) != curr_loop.end()) {
+						 e2 = (*v_it).second;
+					 }
+				 }
+			 }
+
+			 // use edgetopatch - pull non-this patch id from multimap for other two connected edges
+			 ep_range = edge_to_patch->equal_range(e1);
+			 for (ep_it = ep_range.first; ep_it != ep_range.second; ep_it++) {
+				 if ((*ep_it).second != patch->id) {
+					 if (other_id == (*ep_it).second) {
+						 pdv_3move(plot, &bot->vertices[e1.first]); 
+						 pdv_3cont(plot, &bot->vertices[e1.second]);
+						 edge_queue.push(e1);
+						 curr_loop.erase(e1);
+					 }
+				 }
+			 }
+			 ep_range = edge_to_patch->equal_range(e2);
+			 for (ep_it = ep_range.first; ep_it != ep_range.second; ep_it++) {
+				 if ((*ep_it).second != patch->id) {
+					 if (other_id == (*ep_it).second) {
+						 pdv_3move(plot, &bot->vertices[e2.first]); 
+						 pdv_3cont(plot, &bot->vertices[e2.second]);
+						 edge_queue.push(e2);
+						 curr_loop.erase(e2);
+					 }
+				 }
+			 }
+		 }
+		 loop_curves.insert(curve_edges);
+	 }
+	 patch->loops.insert(loop_curves);
+   }
 }
 
 void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch> *patches, FILE* plot) {
         FaceCategorization face_groups;
         FaceCategorization::iterator fg_1, fg_2;
         EdgeToFace edge_to_face;
+        EdgeToPatch edge_to_patch;
         int patch_cnt = 1;
 	
         VectList::iterator vect_it;
@@ -96,7 +220,7 @@ void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch
 		fastf_t vdot = 0.0;
                 fastf_t result = 0.0;
 		vect_t a, b, dir, norm_dir;
-                // Add edge -> face mappings to global map.
+                // Add vert -> edge and edge -> face mappings to global map.
 		pt_A = bot->faces[i*3+0]*3;
 		pt_B = bot->faces[i*3+1]*3; 
 		pt_C = bot->faces[i*3+2]*3;
@@ -181,6 +305,7 @@ void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch
 					e1.second= pt_A;
 				}
 				face_edges.insert(e1);
+				edge_to_patch.insert(std::make_pair(e1, curr_patch.id)); 
 				if (pt_B <= pt_C) {
 					e2.first = pt_B;
 					e2.second= pt_C;
@@ -189,6 +314,7 @@ void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch
 					e2.second= pt_B;
 				}
 				face_edges.insert(e2);
+				edge_to_patch.insert(std::make_pair(e2, curr_patch.id)); 
 				if (pt_C <= pt_A) {
 					e3.first = pt_C;
 					e3.second= pt_A;
@@ -197,6 +323,7 @@ void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch
 					e3.second= pt_C;
 				}
 				face_edges.insert(e3);
+				edge_to_patch.insert(std::make_pair(e3, curr_patch.id)); 
 
 
 				int edge_cnt = 0;
@@ -219,7 +346,7 @@ void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch
 
 			}
 			//std::cout << "Patch: " << curr_patch.id << "\n";
-                        find_edges(bot, &curr_patch, plot);
+                        find_edges(bot, &curr_patch, plot, &edge_to_patch);
 			patches->insert(curr_patch);
                         if (group_faces.empty() && !second_tier.empty()) {
 			   group_faces.swap(second_tier);
@@ -291,7 +418,7 @@ main (int argc, char *argv[])
    make_structure(bot_ip, &vectors, &patches, plot); 
 
    for (p_it = patches.begin(); p_it != patches.end(); p_it++) {
-       //std::cout << "Found patch " << (*p_it).id << "\n";
+       std::cout << "Found patch " << (*p_it).id << "\n";
    }
 
    return 0;
