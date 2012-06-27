@@ -32,6 +32,7 @@
 /* private header */
 #include "./dsp.h"
 
+#define MOVEPT(_p) MAT4X3PNT(_p, dsp_ip->dsp_stom, p_temp)
 
 /**
  * R T _ D S P _ B R E P
@@ -65,21 +66,25 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     // Step 1 - create the bottom face.
 
     point_t p_origin, p2, p3;
+    point_t p_temp;
     ON_3dPoint plane_origin, plane_x_dir, plane_y_dir, pt2, pt3, pt4;
 
-    VSETALL(p_origin, 0.0);
+    VSETALL(p_temp, 0.0);
+    MOVEPT(p_origin);
     plane_origin = ON_3dPoint(p_origin);
 
-    VSET(p2, (dsp_ip->dsp_xcnt-1)*1000 , 0, 0);
+    VSET(p_temp, dsp_ip->dsp_xcnt-1, 0, 0);
+    MOVEPT(p2);
     plane_x_dir = ON_3dPoint(p2);
 
-    VSET(p3, 0, (dsp_ip->dsp_ycnt-1)*1000 - 1, 0);
+    VSET(p_temp, 0, dsp_ip->dsp_ycnt-1, 0);
+    MOVEPT(p3);
     plane_y_dir = ON_3dPoint(p3);
 
     ON_Plane *bottom_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
     ON_PlaneSurface *bottom_surf = new ON_PlaneSurface(*bottom_plane);
-    bottom_surf->SetDomain(0, 0.0, (dsp_ip->dsp_xcnt-1)*1000.0);
-    bottom_surf->SetDomain(1, 0.0, (dsp_ip->dsp_ycnt-1)*1000.0);
+    bottom_surf->SetDomain(0, 0.0, DIST_PT_PT(p_origin, p2));
+    bottom_surf->SetDomain(1, 0.0, DIST_PT_PT(p_origin, p3));
     bottom_surf->SetExtents(0, bottom_surf->Domain(0));
     bottom_surf->SetExtents(1, bottom_surf->Domain(1));
     ON_BrepFace *bottomface = (*b)->NewFace(*bottom_surf);
@@ -95,10 +100,14 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     ON_3dPoint s1pt1, s1pt2, s1pt3, s1pt4;
     ON_3dPointArray *bezpoints1 = new ON_3dPointArray(256);
 
-    VSET(s1p1, 0, 0, 0);
-    VSET(s1p2, (dsp_ip->dsp_xcnt - 1)*1000, 0, 0);
-    VSET(s1p3, (dsp_ip->dsp_xcnt - 1)*1000, 0, DSP(dsp_ip, dsp_ip->dsp_xcnt-1, 0));
-    VSET(s1p4, 0, 0, DSP(dsp_ip, 0 , 0));
+    VSET(p_temp, 0, 0, 0);
+    MOVEPT(s1p1);
+    VSET(p_temp, dsp_ip->dsp_xcnt - 1, 0, 0);
+    MOVEPT(s1p2);
+    VSET(p_temp, dsp_ip->dsp_xcnt - 1, 0, DSP(dsp_ip, dsp_ip->dsp_xcnt-1, 0));
+    MOVEPT(s1p3);
+    VSET(p_temp, 0, 0, DSP(dsp_ip, 0 , 0));
+    MOVEPT(s1p4);
     s1pt1 = ON_3dPoint(s1p1);
     s1pt2 = ON_3dPoint(s1p2);
     s1pt3 = ON_3dPoint(s1p3);
@@ -111,7 +120,10 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     ON_Curve *s1c2 = new ON_LineCurve(s1pt2, s1pt3);
     boundary.Append(s1c2);
     for (int x=(dsp_ip->dsp_xcnt - 1); x > 0; x--) {
-	ON_3dPoint *ctrlpt = new ON_3dPoint(x*1000, 0, DSP(dsp_ip, x, 0));
+	point_t p_ctrl;
+	VSET(p_temp, x, 0, DSP(dsp_ip, x, 0));
+	MOVEPT(p_ctrl);
+	ON_3dPoint *ctrlpt = new ON_3dPoint(p_ctrl);
 	bezpoints1->Append(*ctrlpt);
     }
     ON_BezierCurve *s1_bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints1);
@@ -138,10 +150,14 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     ON_3dPointArray *bezpoints2 = new ON_3dPointArray(256);
 
     boundary.Empty();
-    VSET(s2p1, 0, 0, 0);
-    VSET(s2p2, 0, (dsp_ip->dsp_ycnt - 1)*1000, 0);
-    VSET(s2p3, 0, (dsp_ip->dsp_ycnt - 1)*1000, DSP(dsp_ip, 0, dsp_ip->dsp_ycnt-1));
-    VSET(s2p4, 0, 0, DSP(dsp_ip, 0 , 0));
+    VSET(p_temp, 0, 0, 0);
+    MOVEPT(s2p1);
+    VSET(p_temp, 0, dsp_ip->dsp_ycnt - 1, 0);
+    MOVEPT(s2p2);
+    VSET(p_temp, 0, dsp_ip->dsp_ycnt - 1, DSP(dsp_ip, 0, dsp_ip->dsp_ycnt-1));
+    MOVEPT(s2p3);
+    VSET(p_temp, 0, 0, DSP(dsp_ip, 0 , 0));
+    MOVEPT(s2p4);
     s2pt1 = ON_3dPoint(s2p1);
     s2pt2 = ON_3dPoint(s2p2);
     s2pt3 = ON_3dPoint(s2p3);
@@ -154,7 +170,10 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     ON_Curve *s2c2 = new ON_LineCurve(s2pt2, s2pt3);
     boundary.Append(s2c2);
     for (int y=(dsp_ip->dsp_ycnt - 1); y > 0; y--) {
-	ON_3dPoint *ctrlpt = new ON_3dPoint(0, y*1000, DSP(dsp_ip, 0, y));
+	point_t p_ctrl;
+	VSET(p_temp, 0, y, DSP(dsp_ip, 0, y));
+	MOVEPT(p_ctrl);
+	ON_3dPoint *ctrlpt = new ON_3dPoint(p_ctrl);
 	bezpoints2->Append(*ctrlpt);
     }
     ON_BezierCurve *s2_bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints2);
@@ -182,10 +201,14 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     ON_3dPointArray *bezpoints3 = new ON_3dPointArray(256);
 
     boundary.Empty();
-    VSET(s3p1, (dsp_ip->dsp_xcnt - 1)*1000, (dsp_ip->dsp_ycnt - 1)*1000, 0);
-    VSET(s3p2, 0, (dsp_ip->dsp_ycnt - 1)*1000, 0);
-    VSET(s3p3, 0, (dsp_ip->dsp_ycnt - 1)*1000, DSP(dsp_ip, 0, dsp_ip->dsp_ycnt-1));
-    VSET(s3p4, (dsp_ip->dsp_xcnt - 1)*1000, (dsp_ip->dsp_ycnt - 1)*1000, DSP(dsp_ip, dsp_ip->dsp_xcnt-1, dsp_ip->dsp_ycnt-1));
+    VSET(p_temp, dsp_ip->dsp_xcnt - 1, dsp_ip->dsp_ycnt - 1, 0);
+    MOVEPT(s3p1);
+    VSET(p_temp, 0, dsp_ip->dsp_ycnt - 1, 0);
+    MOVEPT(s3p2);
+    VSET(p_temp, 0, dsp_ip->dsp_ycnt - 1, DSP(dsp_ip, 0, dsp_ip->dsp_ycnt-1));
+    MOVEPT(s3p3);
+    VSET(p_temp, dsp_ip->dsp_xcnt - 1, dsp_ip->dsp_ycnt - 1, DSP(dsp_ip, dsp_ip->dsp_xcnt-1, dsp_ip->dsp_ycnt-1));
+    MOVEPT(s3p4);
     s3pt1 = ON_3dPoint(s3p1);
     s3pt2 = ON_3dPoint(s3p2);
     s3pt3 = ON_3dPoint(s3p3);
@@ -198,7 +221,10 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     ON_Curve *s3c2 = new ON_LineCurve(s3pt2, s3pt3);
     boundary.Append(s3c2);
     for (unsigned int x = 0; x < (dsp_ip->dsp_xcnt); x++) {
-	ON_3dPoint *ctrlpt = new ON_3dPoint(x*1000, (dsp_ip->dsp_ycnt - 1)*1000, DSP(dsp_ip, x, dsp_ip->dsp_ycnt - 1));
+	point_t p_ctrl;
+	VSET(p_temp, x, dsp_ip->dsp_ycnt - 1, DSP(dsp_ip, x, dsp_ip->dsp_ycnt - 1));
+	MOVEPT(p_ctrl);
+	ON_3dPoint *ctrlpt = new ON_3dPoint(p_ctrl);
 	bezpoints3->Append(*ctrlpt);
     }
     ON_BezierCurve *s3_bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints3);
@@ -225,10 +251,14 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     ON_3dPointArray *bezpoints4 = new ON_3dPointArray(256);
 
     boundary.Empty();
-    VSET(s4p1, (dsp_ip->dsp_xcnt - 1)*1000, (dsp_ip->dsp_ycnt - 1)*1000, 0);
-    VSET(s4p2, (dsp_ip->dsp_xcnt - 1)*1000, 0, 0);
-    VSET(s4p3, (dsp_ip->dsp_xcnt - 1)*1000, 0, DSP(dsp_ip, dsp_ip->dsp_xcnt-1, 0));
-    VSET(s4p4, (dsp_ip->dsp_xcnt - 1)*1000, (dsp_ip->dsp_ycnt - 1)*1000, DSP(dsp_ip, dsp_ip->dsp_xcnt-1, dsp_ip->dsp_ycnt-1));
+    VSET(p_temp, dsp_ip->dsp_xcnt - 1, dsp_ip->dsp_ycnt - 1, 0);
+    MOVEPT(s4p1);
+    VSET(p_temp, dsp_ip->dsp_xcnt - 1, 0, 0);
+    MOVEPT(s4p2);
+    VSET(p_temp, dsp_ip->dsp_xcnt - 1, 0, DSP(dsp_ip, dsp_ip->dsp_xcnt-1, 0));
+    MOVEPT(s4p3);
+    VSET(p_temp, dsp_ip->dsp_xcnt - 1, dsp_ip->dsp_ycnt - 1, DSP(dsp_ip, dsp_ip->dsp_xcnt-1, dsp_ip->dsp_ycnt-1));
+    MOVEPT(s4p4);
     s4pt1 = ON_3dPoint(s4p1);
     s4pt2 = ON_3dPoint(s4p2);
     s4pt3 = ON_3dPoint(s4p3);
@@ -241,7 +271,10 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     ON_Curve *s4c2 = new ON_LineCurve(s4pt2, s4pt3);
     boundary.Append(s4c2);
     for (unsigned int y=0; y < (dsp_ip->dsp_ycnt); y++) {
-	ON_3dPoint *ctrlpt = new ON_3dPoint((dsp_ip->dsp_xcnt - 1)*1000, y*1000, DSP(dsp_ip, dsp_ip->dsp_xcnt - 1, y));
+	point_t p_ctrl;
+	VSET(p_temp, dsp_ip->dsp_xcnt - 1, y, DSP(dsp_ip, dsp_ip->dsp_xcnt - 1, y));
+	MOVEPT(p_ctrl);
+	ON_3dPoint *ctrlpt = new ON_3dPoint(p_ctrl);
 	bezpoints4->Append(*ctrlpt);
     }
     ON_BezierCurve *s4_bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints4);
@@ -268,7 +301,10 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 
     for (unsigned int y=0; y < (dsp_ip->dsp_ycnt); y++) {
 	for (unsigned int x=0; x < (dsp_ip->dsp_xcnt); x++) {
-	    ON_3dPoint *ctrlpt = new ON_3dPoint(x*1000, y*1000, DSP(dsp_ip, x, y));
+	    point_t p_ctrl;
+	    VSET(p_temp, x, y, DSP(dsp_ip, x, y));
+	    MOVEPT(p_ctrl);
+	    ON_3dPoint *ctrlpt = new ON_3dPoint(p_ctrl);
 	    bezsurf->SetCV(x, y, *ctrlpt);
 	}
     }
