@@ -155,6 +155,8 @@ void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot, EdgeToPat
 			 curve_edges.insert(curr_edge);
 			 pt1 = curr_edge.first;
 			 pt2 = curr_edge.second;
+			 pdv_3move(plot, &bot->vertices[pt1]); 
+			 pdv_3cont(plot, &bot->vertices[pt2]);
 
 			 // use verttoedge - pull other two edges from multimap
 			 v_range = vert_to_edge.equal_range(pt1);
@@ -179,8 +181,6 @@ void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot, EdgeToPat
 			 for (ep_it = ep_range.first; ep_it != ep_range.second; ep_it++) {
 				 if ((*ep_it).second != patch->id) {
 					 if (other_id == (*ep_it).second) {
-						 pdv_3move(plot, &bot->vertices[e1.first]); 
-						 pdv_3cont(plot, &bot->vertices[e1.second]);
 						 edge_queue.push(e1);
 						 curr_loop.erase(e1);
 					 }
@@ -190,8 +190,6 @@ void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot, EdgeToPat
 			 for (ep_it = ep_range.first; ep_it != ep_range.second; ep_it++) {
 				 if ((*ep_it).second != patch->id) {
 					 if (other_id == (*ep_it).second) {
-						 pdv_3move(plot, &bot->vertices[e2.first]); 
-						 pdv_3cont(plot, &bot->vertices[e2.second]);
 						 edge_queue.push(e2);
 						 curr_loop.erase(e2);
 					 }
