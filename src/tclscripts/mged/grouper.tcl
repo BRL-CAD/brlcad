@@ -44,27 +44,27 @@ set listen_orig ""
 set objs {}
 set erase_status ""
 
-proc gr_remdup { args } {
-    if { [llength $args] != 1 } {
-	puts stdout "Usage: gr_remdup collection"
-	return
-    }
-    set collection [lindex $args 0]
+proc gr_remdup { GroupName } {
 
-    if { [lindex [get $collection] 0 ] != "comb" } {
-	puts stdout "This is not a collection!"
-	return
-    }
-    set collData [lt $collection]
+    set ItemList [search $GroupName]
+    set ItemList [lrange $ItemList 1 end] 
 
-    foreach row $collData {
-	set rowBool [lindex $row 0]
-	set rowName [lindex $row 1]
-	if { $rowBool == "u" } {
-	    rm $collection $rowName
-	    g $collection $rowName
+    set ItemList [lsort -unique $ItemList]
+
+    set found_tmp 0
+
+    while { !$found_tmp } {
+	set tmp_grp [expr rand()]
+	if { [search -name $tmp_grp] == "" } {
+	    set found_tmp 1
 	}
     }
+
+    eval g $tmp_grp $ItemList
+
+    kill $GroupName 
+
+    mv $tmp_grp $GroupName
 }
 
 
@@ -107,6 +107,7 @@ proc gr_getObjInRectangle {} {
     foreach obj $objs {
 	set obj2 [file tail $obj]
 	lappend objs2 $obj2
+        unset obj2
     }
 
     return $objs2
@@ -181,11 +182,19 @@ proc do_grouper { GroupName Boolean ListLimit } {
 
     if { $objs == "invalid_selection" } {
 	puts stdout "Invalid selection (zero area selection box)."
+	# highlight in yellow current group
+	if { [search -name $GroupName] != "" } {
+	    e -C255/255/0 $GroupName
+	}
 	return
     }
 
     if { $objs == "no_result" } {
 	puts stdout "Nothing selected."
+	# highlight in yellow current group
+	if { [search -name $GroupName] != "" } {
+	    e -C255/255/0 $GroupName
+	}
 	return
     }
 
@@ -233,7 +242,11 @@ proc do_grouper { GroupName Boolean ListLimit } {
     }
 
     set objcnt 0
-    if { $ListLimit > 0 } {
+
+    # hack to prevent script lockup on windows
+    set max_objs_per_line 200
+
+    if { ($ListLimit > 0 && $ListLimit <= $max_objs_per_line) || ($ListLimit > 0 && $tot_obj_in_rect <= $max_objs_per_line) } {
 	puts stdout "Selected object list\:"
 	foreach obj $objs {
 	    incr objcnt
@@ -244,6 +257,16 @@ proc do_grouper { GroupName Boolean ListLimit } {
 	    puts -nonewline stdout "$obj "
 	}
 	puts -nonewline stdout "\n"
+    } elseif { $ListLimit > 0 } {
+	puts stdout "Selected object list\:"
+	foreach obj $objs {
+	    incr objcnt
+	    if { $objcnt > $ListLimit } {
+        	puts -nonewline stdout "\nListed $ListLimit of $tot_obj_in_rect selected objects."
+		break;
+	    }
+	    puts stdout "$objcnt\t$obj"
+	}
     }
 
     # highlight in yellow current group
@@ -270,6 +293,11 @@ proc done_grouper {} {
     global fb_orig
     global fb_all_orig
     global listen_orig
+
+    if {$GrouperRunning != 1} {
+	return "Grouper not running."
+    }
+
 
     for {set i 0} {1} {incr i} {
 	set id [subst $mged_default(id)]_$i
