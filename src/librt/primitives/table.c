@@ -1573,7 +1573,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_superell_tess,
 	NULL,
-	NULL,
+	rt_superell_brep,
 	rt_superell_import5,
 	rt_superell_export5,
 	rt_superell_import4,
