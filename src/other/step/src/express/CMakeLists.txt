@@ -45,3 +45,5 @@ SET(EXPRESS_PRIVATE_HDRS
 
 SCL_ADDLIB(express "${EXPRESS_SOURCES}" "base")
 SCL_ADDEXEC(fedex "${FEDEX_SOURCES}" express)
+
+add_dependencies(fedex version_string)
