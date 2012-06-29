@@ -10,6 +10,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "plot3.h"
+#include "opennurbs_fit.h"
 
 typedef std::multimap< size_t, size_t > FaceCategorization;
 typedef std::pair<size_t, size_t> Edge;
@@ -45,6 +46,26 @@ ThreeDPoint::ThreeDPoint(fastf_t a, fastf_t b, fastf_t c) {
 }
 
 typedef std::set<ThreeDPoint> VectList; 
+
+void PatchToVector3d(struct rt_bot_internal *bot, const Patch *patch, on_fit::vector_vec3d &data) {
+	FaceList::iterator f_it;
+	std::set<size_t> verts;
+	std::set<size_t>::iterator v_it;
+  int i = 0;
+  for (i = 0; i < bot->num_vertices; i++) {
+      printf("v(%d): %f %f %f\n", i, V3ARGS(&bot->vertices[3*i]));
+  }
+	for (f_it = patch->faces.begin(); f_it != patch->faces.end(); f_it++) {
+		verts.insert(bot->faces[(*f_it)*3+0]);
+		verts.insert(bot->faces[(*f_it)*3+1]);
+		verts.insert(bot->faces[(*f_it)*3+2]);
+	}
+	for (v_it = verts.begin(); v_it != verts.end(); v_it++) {	
+		printf("vert %d\n", (int)(*v_it));
+		printf("vert(%d): %f %f %f\n", (int)(*v_it), V3ARGS(&bot->vertices[(*v_it)*3]));
+	        data.push_back (Eigen::Vector3d (V3ARGS(&bot->vertices[(*v_it)*3])));
+	}
+}
 
 void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot, EdgeToPatch *edge_to_patch)
 {
@@ -361,10 +382,15 @@ main (int argc, char *argv[])
    struct directory *dp;
    struct rt_db_internal intern;
    struct rt_bot_internal *bot_ip = NULL;
+   struct rt_wdb *wdbp;
    struct bu_vls name;
+   char *bname;
+    
    VectList vectors;
    std::set<Patch> patches;
    std::set<Patch>::iterator p_it;
+   ON_Brep *brep = ON_Brep::New();
+   FaceList::iterator f_it;
 
    vectors.insert(*(new ThreeDPoint(-1,0,0)));
    vectors.insert(*(new ThreeDPoint(0,-1,0)));
@@ -417,7 +443,42 @@ main (int argc, char *argv[])
 
    for (p_it = patches.begin(); p_it != patches.end(); p_it++) {
        std::cout << "Found patch " << (*p_it).id << "\n";
+       unsigned order (3);
+       on_fit::NurbsDataSurface data;
+       PatchToVector3d(bot_ip, &(*p_it), data.interior);
+       ON_NurbsSurface nurbs = on_fit::FittingSurface::initNurbsPCABoundingBox (order, &data);
+       on_fit::FittingSurface fit (&data, nurbs);
+       on_fit::FittingSurface::Parameter params;
+       params.interior_smoothness = 0.15;
+       params.interior_weight = 1.0;
+       params.boundary_smoothness = 0.15;
+       params.boundary_weight = 0.0;
+       // NURBS refinement
+       for (unsigned i = 0; i < 5; i++)
+       {
+	       fit.refine (0);
+	       fit.refine (1);
+       }
+
+       // fitting iterations
+       for (unsigned i = 0; i < 2; i++)
+       {
+	       fit.assemble (params);
+	       bu_log("Solving %d - iteration %d\n", (*p_it).id, i);
+	       fit.solve ();
+       }
+       brep->NewFace(fit.m_nurbs);
    }
+
+   wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+   bname = (char*)bu_malloc(strlen(argv[2])+6, "char");
+   bu_strlcpy(bname, argv[2], strlen(argv[2])+1);
+   bu_strlcat(bname, "_brep", strlen(bname)+6);
+   if (mk_brep(wdbp, bname, brep) == 0) {
+      bu_log("Generated brep object %s\n", bname);
+   }
+   bu_free(bname, "char");
+
 
    return 0;
 }
