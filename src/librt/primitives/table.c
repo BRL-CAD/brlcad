@@ -1026,9 +1026,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_eto_params,
 	rt_eto_bbox,
-    NULL,
-    NULL,
-    NULL,
+    rt_eto_volume,
+    rt_eto_surf_area,
+    rt_eto_centroid,
     },
 
     {
