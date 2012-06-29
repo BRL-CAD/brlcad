@@ -35,12 +35,15 @@
 #include "raytrace.h"
 
 
+#define NMG_COPY_GETSTRUCT(p, str) (p = (struct str *)bu_pool_get(sizeof(struct str)))
+
+
 static struct nmgregion_a *
 nmg_construct_region_a(const struct nmgregion_a *original, genptr_t *structArray)
 {
     struct nmgregion_a *ret;
 
-    NMG_GETSTRUCT(ret, nmgregion_a);
+    NMG_COPY_GETSTRUCT(ret, nmgregion_a);
 
     ret->magic = NMG_REGION_A_MAGIC;
 
@@ -59,7 +62,7 @@ nmg_construct_region(struct model *parent, const struct nmgregion *original, gen
 {
     struct nmgregion *ret;
 
-    NMG_GETSTRUCT(ret, nmgregion);
+    NMG_COPY_GETSTRUCT(ret, nmgregion);
 
     ret->l.magic = NMG_REGION_MAGIC;
     ret->m_p     = parent;
@@ -89,7 +92,7 @@ nmg_construct_face_g_plane(const struct face_g_plane *original, genptr_t *struct
 {
     struct face_g_plane *ret;
 
-    NMG_GETSTRUCT(ret, face_g_plane);
+    NMG_COPY_GETSTRUCT(ret, face_g_plane);
 
     ret->magic = NMG_FACE_G_PLANE_MAGIC;
 
@@ -108,7 +111,7 @@ nmg_construct_face_g_snurb(const struct face_g_snurb *original, genptr_t *struct
 {
     struct face_g_snurb *ret;
 
-    NMG_GETSTRUCT(ret, face_g_snurb);
+    NMG_COPY_GETSTRUCT(ret, face_g_snurb);
 
     ret->l.magic = NMG_FACE_G_SNURB_MAGIC;
 
@@ -148,7 +151,7 @@ nmg_construct_face(struct faceuse *parent, const struct face *original, genptr_t
 {
     struct face *ret;
 
-    NMG_GETSTRUCT(ret, face);
+    NMG_COPY_GETSTRUCT(ret, face);
 
     ret->l.magic   = NMG_FACE_MAGIC;
     ret->fu_p      = parent;
@@ -189,7 +192,7 @@ nmg_construct_vertex_g(const struct vertex_g *original, genptr_t *structArray)
 {
     struct vertex_g *ret;
 
-    NMG_GETSTRUCT(ret, vertex_g);
+    NMG_COPY_GETSTRUCT(ret, vertex_g);
 
     ret->magic = NMG_VERTEX_G_MAGIC;
 
@@ -207,7 +210,7 @@ nmg_construct_vertex(const struct vertex *original, genptr_t *structArray)
 {
     struct vertex *ret;
 
-    NMG_GETSTRUCT(ret, vertex);
+    NMG_COPY_GETSTRUCT(ret, vertex);
 
     ret->magic = NMG_VERTEX_MAGIC;
 
@@ -233,7 +236,7 @@ nmg_construct_vertexuse_a_plane(const struct vertexuse_a_plane *original, genptr
 {
     struct vertexuse_a_plane *ret;
 
-    NMG_GETSTRUCT(ret, vertexuse_a_plane);
+    NMG_COPY_GETSTRUCT(ret, vertexuse_a_plane);
 
     ret->magic            = NMG_VERTEXUSE_A_PLANE_MAGIC;
 
@@ -251,7 +254,7 @@ nmg_construct_vertexuse_a_cnurb(const struct vertexuse_a_cnurb *original, genptr
 {
     struct vertexuse_a_cnurb *ret;
 
-    NMG_GETSTRUCT(ret, vertexuse_a_cnurb);
+    NMG_COPY_GETSTRUCT(ret, vertexuse_a_cnurb);
 
     ret->magic            = NMG_VERTEXUSE_A_CNURB_MAGIC;
 
@@ -269,7 +272,7 @@ nmg_construct_vertexuse(void *parent, const struct vertexuse *original, genptr_t
 {
     struct vertexuse *ret;
 
-    NMG_GETSTRUCT(ret, vertexuse);
+    NMG_COPY_GETSTRUCT(ret, vertexuse);
 
     ret->l.magic            = NMG_VERTEXUSE_MAGIC;
     ret->up.magic_p         = parent;
@@ -314,7 +317,7 @@ nmg_construct_edge(struct edgeuse *parent, const struct edge *original, genptr_t
 {
     struct edge *ret;
 
-    NMG_GETSTRUCT(ret, edge);
+    NMG_COPY_GETSTRUCT(ret, edge);
 
     ret->magic              = NMG_EDGE_MAGIC;
     ret->eu_p               = parent;
@@ -331,7 +334,7 @@ nmg_construct_edge_g_lseg(const struct edge_g_lseg *original, genptr_t *structAr
 {
     struct edge_g_lseg *ret;
 
-    NMG_GETSTRUCT(ret, edge_g_lseg);
+    NMG_COPY_GETSTRUCT(ret, edge_g_lseg);
 
     ret->l.magic = NMG_EDGE_G_LSEG_MAGIC;
 
@@ -352,7 +355,7 @@ nmg_construct_edge_g_cnurb(const struct edge_g_cnurb *original, genptr_t *struct
 {
     struct edge_g_cnurb *ret;
 
-    NMG_GETSTRUCT(ret, edge_g_cnurb);
+    NMG_COPY_GETSTRUCT(ret, edge_g_cnurb);
 
     ret->l.magic = NMG_EDGE_G_CNURB_MAGIC;
 
@@ -382,7 +385,7 @@ nmg_construct_edgeuse(void *parent, const struct edgeuse *original, genptr_t *st
 {
     struct edgeuse *ret;
 
-    NMG_GETSTRUCT(ret, edgeuse);
+    NMG_COPY_GETSTRUCT(ret, edgeuse);
 
     ret->l.magic = NMG_EDGEUSE_MAGIC;
 
@@ -463,7 +466,7 @@ nmg_construct_loop_g(const struct loop_g *original, genptr_t *structArray)
 {
     struct loop_g *ret;
 
-    NMG_GETSTRUCT(ret, loop_g);
+    NMG_COPY_GETSTRUCT(ret, loop_g);
 
     ret->magic = NMG_LOOP_G_MAGIC;
 
@@ -482,7 +485,7 @@ nmg_construct_loop(struct loopuse *parent, const struct loop *original, genptr_t
 {
     struct loop *ret;
 
-    NMG_GETSTRUCT(ret, loop);
+    NMG_COPY_GETSTRUCT(ret, loop);
 
     ret->magic              = NMG_LOOP_MAGIC;
     ret->lu_p               = parent;
@@ -506,7 +509,7 @@ nmg_construct_loopuse(void *parent, const struct loopuse *original, genptr_t *st
 {
     struct loopuse *ret;
 
-    NMG_GETSTRUCT(ret, loopuse);
+    NMG_COPY_GETSTRUCT(ret, loopuse);
 
     ret->l.magic     = NMG_LOOPUSE_MAGIC;
     ret->up.magic_p  = parent;
@@ -573,7 +576,7 @@ nmg_construct_faceuse(struct shell *parent, const struct faceuse *original, genp
     struct faceuse       *ret;
     const struct loopuse *originalLoopUse;
 
-    NMG_GETSTRUCT(ret, faceuse);
+    NMG_COPY_GETSTRUCT(ret, faceuse);
 
     ret->l.magic     = NMG_FACEUSE_MAGIC;
     ret->s_p         = parent;
@@ -619,7 +622,7 @@ nmg_construct_shell_a(const struct shell_a *original, genptr_t *structArray)
 {
     struct shell_a *ret;
 
-    NMG_GETSTRUCT(ret, shell_a);
+    NMG_COPY_GETSTRUCT(ret, shell_a);
 
     ret->magic = NMG_SHELL_A_MAGIC;
 
@@ -641,7 +644,7 @@ nmg_construct_shell(struct nmgregion *parent, const struct shell *original, genp
     const struct loopuse *originalLoopUse;
     const struct edgeuse *originalEdgeUse;
 
-    NMG_GETSTRUCT(ret, shell);
+    NMG_COPY_GETSTRUCT(ret, shell);
 
     ret->l.magic = NMG_SHELL_MAGIC;
     ret->r_p     = parent;
