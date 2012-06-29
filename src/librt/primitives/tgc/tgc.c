@@ -3129,10 +3129,10 @@ rt_tgc_volume(fastf_t *vol, const struct rt_db_internal *ip)
         *vol = M_PI * mag_h * (mag_a * mag_b + mag_c * mag_d + sqrt(mag_a * mag_b * mag_c * mag_d)) / 3.0;
         break;
     default:
+        /* never reached */
         bu_log("rt_tgc_volume(): cannot find volume\n");
     }
 }
-
 
 /**
  * R T _ T G C _ S U R F _ A R E A
@@ -3143,6 +3143,8 @@ rt_tgc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     int tgc_type = 0;
     fastf_t mag_a, mag_b, mag_c, mag_d, mag_h;
     fastf_t magsq_a, magsq_c, magsq_h;
+    fastf_t c;
+    fastf_t area_base;
     struct rt_tgc_internal *tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
@@ -3166,8 +3168,13 @@ rt_tgc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
         *area = M_PI * ((mag_a + mag_c) * sqrt((mag_a - mag_c) * (mag_a - mag_c) + magsq_h) + magsq_a + magsq_c);
         break;
     case REC:
+        area_base = M_PI * mag_a * mag_b;
+        /* approximation */
+        c = ELL_CIRCUMFERENCE(mag_a, mag_b);
+        *area = c * mag_h + 2.0 * area_base;
     case TEC:
     default:
+        /* never reached */
         bu_log("rt_tgc_surf_area(): cannot find surface area\n");
     }
 }
@@ -3210,6 +3217,7 @@ rt_tgc_centroid(point_t *cent, const struct rt_db_internal *ip)
     case TEC:
         /* need to confirm formula */
     default:
+        /* never reached */
         bu_log("rt_tgc_centroid(): cannot find centroid\n");
     }
 }
