@@ -667,8 +667,8 @@ findang(fastf_t *angles, fastf_t *unitv)
  */
 static fastf_t
 analyze_face(struct ged *gedp, int face, fastf_t *center_pt,
-        const struct rt_arb_internal *arb, int type,
-        const struct bn_tol *tol, row_t *row)
+             const struct rt_arb_internal *arb, int type,
+             const struct bn_tol *tol, row_t *row)
 
 /* reference center point */
 
@@ -690,8 +690,7 @@ analyze_face(struct ged *gedp, int face, fastf_t *center_pt,
     }
 
     /* find plane eqn for this face */
-    if (bn_mk_plane_3pts(plane, arb->pt[a], arb->pt[b],
-                arb->pt[c], tol) < 0) {
+    if (bn_mk_plane_3pts(plane, arb->pt[a], arb->pt[b], arb->pt[c], tol) < 0) {
         bu_vls_printf(gedp->ged_result_str, "| %d%d%d%d |         ***NOT A PLANE***                                          |\n",
                 a+1, b+1, c+1, d+1);
         /* this row has 1 special fields */
@@ -715,7 +714,7 @@ analyze_face(struct ged *gedp, int face, fastf_t *center_pt,
 
     /* find the surface area of this face.
      * for planar quadrilateral Q:V0,V1,V2,V3 with unit normal N,
-     * area = N/2 * [(V2 - V0) x (V3 - V1)] */
+     * area = N/2 ⋅ [(V2 - V0) x (V3 - V1)] */
     VSUB2(v_tmp[0], arb->pt[c], arb->pt[a]);
     VSUB2(v_tmp[1], arb->pt[d], arb->pt[b]);
     VCROSS(v_tmp[2], v_tmp[0], v_tmp[1]);
@@ -860,11 +859,9 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
             * gedp->ged_wdbp->dbip->dbi_base2local
             * gedp->ged_wdbp->dbip->dbi_base2local
             * gedp->ged_wdbp->dbip->dbi_base2local,
-
             tot_area
             * gedp->ged_wdbp->dbip->dbi_base2local
             * gedp->ged_wdbp->dbip->dbi_base2local,
-
             tot_vol/GALLONS_TO_MM3
             );
 }
@@ -880,7 +877,6 @@ analyze_tor(struct ged *gedp, const struct rt_db_internal *ip)
     rt_functab[ID_TOR].ft_surf_area(&area, ip);
 
     bu_vls_printf(gedp->ged_result_str, "\n");
-
     print_volume_table(gedp,
             vol
             * gedp->ged_wdbp->dbip->dbi_base2local
@@ -900,8 +896,6 @@ analyze_ell(struct ged *gedp, const struct rt_db_internal *ip)
 {
     fastf_t vol, area = -1;
 
-    bu_vls_printf(gedp->ged_result_str, "\n");
-
     rt_functab[ID_ELL].ft_volume(&vol, ip);
     bu_vls_printf(gedp->ged_result_str, "\nELL Volume = %.8f (%.8f gal)",
           vol
@@ -913,7 +907,7 @@ analyze_ell(struct ged *gedp, const struct rt_db_internal *ip)
 
     rt_functab[ID_ELL].ft_surf_area(&area, ip);
     if (area < 0) {
-        bu_vls_printf(gedp->ged_result_str, "   Cannot find surface area\n");
+        bu_vls_printf(gedp->ged_result_str, "\nCannot find surface area\n");
     } else {
         bu_vls_printf(gedp->ged_result_str, "   Surface Area = %.8f\n",
                 area
@@ -1048,7 +1042,7 @@ analyze_tgc(struct ged *gedp, const struct rt_db_internal *ip)
             );
 
     if (area < 0) {
-        bu_vls_printf(gedp->ged_result_str, "\nTGC Cannot find surface area\n");
+        bu_vls_printf(gedp->ged_result_str, "\nCannot find surface area\n");
     } else {
         bu_vls_printf(gedp->ged_result_str, "    Surface Area=%.8f\n",
                 area
@@ -1095,9 +1089,7 @@ analyze_rpc(struct ged *gedp, const struct rt_db_internal *ip)
 {
     fastf_t vol, area;
 
-    /* volume of rpc */
     rt_functab[ID_RPC].ft_volume(&vol, ip);
-    /* surface area of rpc */
     rt_functab[ID_RPC].ft_surf_area(&area, ip);
 
     /* reminder to implement per-face analysis */
@@ -1114,7 +1106,16 @@ analyze_rpc(struct ged *gedp, const struct rt_db_internal *ip)
             /*);*/
 
     bu_vls_printf(gedp->ged_result_str, "\n");
-    print_volume_table(gedp, vol, area, vol/GALLONS_TO_MM3);
+    print_volume_table(gedp,
+            vol
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            area
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            vol/GALLONS_TO_MM3
+            );
 }
 
 
@@ -1159,6 +1160,28 @@ analyze_rhc(struct ged *gedp, const struct rt_db_internal *ip)
 		  (2*area_hyperb+2*r*h+2*area_body)*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
 		  vol_hyperb*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
 		  vol_hyperb/GALLONS_TO_MM3);
+}
+
+
+/* analyze eto */
+static void
+analyze_eto(struct ged *gedp, const struct rt_db_internal *ip)
+{
+    fastf_t area, vol;
+    rt_functab[ID_ETO].ft_volume(&vol, ip);
+    rt_functab[ID_ETO].ft_surf_area(&area, ip);
+
+    bu_vls_printf(gedp->ged_result_str, "\n");
+    print_volume_table(gedp,
+            vol
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            area
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            vol/GALLONS_TO_MM3
+            );
 }
 
 
@@ -1211,6 +1234,10 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 	case ID_SUPERELL:
 	    analyze_superell(gedp, ip);
 	    break;
+
+    case ID_ETO:
+        analyze_eto(gedp, ip);
+        break;
 
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "\nanalyze: unable to process %s solid\n",
