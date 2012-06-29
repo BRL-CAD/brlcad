@@ -867,6 +867,153 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
+/* currently, each arbn_pt needs to know the plane equation of
+ * the face for which it is a vertice, since ccw needs the plane
+ * equation to compare two points and it's impossible to
+ * determine a plane given only two points. */
+struct arbn_pt
+{
+    point_t pt;
+    plane_t plane_eqn;
+};
+
+
+struct arbn_face
+{
+    int npts;
+    struct arbn_pt *pts;
+    point_t center_pt;
+    plane_t plane_eqn;
+    fastf_t area;
+};
+
+
+/* qsort helper function, used to sort points into
+ * counter-clockwise order */
+static int
+ccw(const void *x, const void *y)
+{
+    vect_t tmp;
+    const struct arbn_pt *ix = (struct arbn_pt *)x;
+    const struct arbn_pt *iy = (struct arbn_pt *)y;
+    VCROSS(tmp, ix->pt, iy->pt);
+    return VDOT(ix->plane_eqn, tmp);
+}
+
+
+/* implicit returns:
+ * sorts face->pts into counter-clockwise order
+ * unsigned area of face in face->area
+ * centroid of face in face->center_pt */
+static void
+analyze_arbn_face(struct arbn_face *face)
+{
+    int i;
+    vect_t tmp[2];
+    /* tmp[1] needs to be reset */
+    VSETALL(tmp[1], 0.0);
+
+    /* sort points into counter-clockwise order */
+    qsort(face->pts, face->npts, sizeof(face->pts[0]), ccw);
+
+    for (i = 0; i < face->npts; i++) {
+        /* sum vertices for centroid */
+        VADD2(face->center_pt, face->center_pt, face->pts[i].pt);
+        /* walk edges of face, summing cross products of vertices as we go to calculate area */
+        VCROSS(tmp[0], face->pts[i].pt, face->pts[i + 1 == face->npts ? 0 : i + 1].pt);
+        VADD2(tmp[1], tmp[1], tmp[0]);
+    }
+
+    VSCALE(face->center_pt, face->center_pt, 1.0 / face->npts);
+    face->area = fabs(VDOT(face->plane_eqn, tmp[1])) / 2.0;
+}
+
+
+#define ADD_POINT(face) { \
+    VMOVE(faces[(face)].pts[faces[(face)].npts].pt, pt) \
+    HMOVE(faces[(face)].pts[faces[(face)].npts].plane_eqn, faces[(face)].plane_eqn); \
+    faces[(face)].npts++; \
+}
+
+/* analyze an arbn */
+static void
+analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
+{
+    size_t i, j, k, l;
+    int keep_point;
+    fastf_t tot_vol, tot_area;
+    point_t pt;
+    struct arbn_face *faces;
+    struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
+
+    /* allocate array of face structs */
+    faces = (struct arbn_face *)bu_calloc(aip->neqn, sizeof(struct arbn_face), "analyze_arbn: faces");
+    for (i = 0; i < aip->neqn; i++) {
+        HMOVE(faces[i].plane_eqn, aip->eqn[i]);
+        VUNITIZE(faces[i].plane_eqn);
+        /* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
+        faces[i].pts = (struct arbn_pt *)bu_calloc(aip->neqn - 1, sizeof(struct arbn_pt), "analyze_arbn: pts");
+    }
+
+    /* find all vertices */
+    for (i = 0; i < aip->neqn - 2; i++) {
+        for (j = i + 1; j < aip->neqn - 1; j++) {
+            for (k = j + 1; k < aip->neqn; k++) {
+                keep_point = 1;
+                if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0){
+                    continue;
+                }
+                /* discard pt if it is outside the arbn */
+                for (l = 0; l < aip->neqn; l++) {
+                    if (l == i || l == j || l == k) {
+                        continue;
+                    }
+                    if (DIST_PT_PLANE(pt, aip->eqn[l]) > gedp->ged_wdbp->wdb_tol.dist) {
+                        keep_point = 0;
+                        break;
+                    }
+                }
+                /* found a good point */
+                if (keep_point) {
+                    ADD_POINT(i);
+                    ADD_POINT(j);
+                    ADD_POINT(k);
+                }
+            }
+        }
+    }
+
+    /* calculate surface area */
+    for (i = 0; i < aip->neqn; i++) {
+        analyze_arbn_face(&faces[i]);
+        tot_area += faces[i].area;
+    }
+
+    /* calculate volume */
+    for (i = 0; i < aip->neqn; i++) {
+        vect_t tmp;
+        VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
+        tot_vol += VDOT(faces[i].center_pt, tmp) / 3.0;
+    }
+
+    for (i = 0; i < aip->neqn; i++) {
+        bu_free((char *)faces[i].pts, "analyze_arbn: pts");
+    }
+    bu_free((char *)faces, "analyze_arbn: faces");
+
+    bu_vls_printf(gedp->ged_result_str, "\n");
+    print_volume_table(gedp,
+            tot_vol
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            tot_area
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            tot_vol/GALLONS_TO_MM3
+            );
+}
+
 /* analyze a torus */
 static void
 analyze_tor(struct ged *gedp, const struct rt_db_internal *ip)
@@ -898,12 +1045,12 @@ analyze_ell(struct ged *gedp, const struct rt_db_internal *ip)
 
     rt_functab[ID_ELL].ft_volume(&vol, ip);
     bu_vls_printf(gedp->ged_result_str, "\nELL Volume = %.8f (%.8f gal)",
-          vol
-          * gedp->ged_wdbp->dbip->dbi_base2local
-          * gedp->ged_wdbp->dbip->dbi_base2local
-          * gedp->ged_wdbp->dbip->dbi_base2local,
-          vol/GALLONS_TO_MM3
-          );
+            vol
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            vol/GALLONS_TO_MM3
+            );
 
     rt_functab[ID_ELL].ft_surf_area(&area, ip);
     if (area < 0) {
@@ -1237,6 +1384,10 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 
     case ID_ETO:
         analyze_eto(gedp, ip);
+        break;
+
+    case ID_ARBN:
+        analyze_arbn(gedp, ip);
         break;
 
 	default:
