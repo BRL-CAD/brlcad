@@ -1500,6 +1500,50 @@ rt_eto_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 }
 
 
+/**
+ * R T _ E T O _ V O L U M E
+ */
+void
+rt_eto_volume(fastf_t *vol, const struct rt_db_internal *ip)
+{
+    fastf_t mag_c;
+    struct rt_eto_internal *tip = (struct rt_eto_internal *)ip->idb_ptr;
+    RT_ETO_CK_MAGIC(tip);
+
+    mag_c = MAGNITUDE(tip->eto_C);
+    *vol = 2.0 * M_PI * M_PI * tip->eto_r * tip->eto_rd * mag_c;
+}
+
+
+/**
+ * R T _ E T O _ C E N T R O I D
+ */
+void
+rt_eto_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct rt_eto_internal *tip = (struct rt_eto_internal *)ip->idb_ptr;
+    RT_ETO_CK_MAGIC(tip);
+    VMOVE(*cent, tip->eto_V);
+}
+
+
+/**
+ * R T _ E T O _ S U R F _ A R E A
+ */
+void
+rt_eto_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    fastf_t circum, mag_c;
+    struct rt_eto_internal *tip = (struct rt_eto_internal *)ip->idb_ptr;
+    RT_ETO_CK_MAGIC(tip);
+
+    mag_c = MAGNITUDE(tip->eto_C);
+    /* approximation */
+    circum = ELL_CIRCUMFERENCE(mag_c, tip->eto_rd);
+    *area = 2.0 * M_PI * tip->eto_r * circum;
+}
+
+
 /** @} */
 /*
  * Local Variables:
