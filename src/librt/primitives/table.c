@@ -946,9 +946,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_epa_params,
 	rt_epa_bbox,
-    NULL,
-    NULL,
-    NULL,
+    rt_epa_volume,
+    rt_epa_surf_area,
+    rt_epa_centroid,
     },
 
     {
