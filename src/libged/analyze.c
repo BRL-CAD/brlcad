@@ -1041,6 +1041,8 @@ analyze_ell(struct ged *gedp, const struct rt_db_internal *ip)
     fastf_t vol, area = -1;
 
     rt_functab[ID_ELL].ft_volume(&vol, ip);
+    rt_functab[ID_ELL].ft_surf_area(&area, ip);
+
     bu_vls_printf(gedp->ged_result_str, "\nELL Volume = %.8f (%.8f gal)",
             vol
             * gedp->ged_wdbp->dbip->dbi_base2local
@@ -1049,7 +1051,6 @@ analyze_ell(struct ged *gedp, const struct rt_db_internal *ip)
             vol/GALLONS_TO_MM3
             );
 
-    rt_functab[ID_ELL].ft_surf_area(&area, ip);
     if (area < 0) {
         bu_vls_printf(gedp->ged_result_str, "\nCannot find surface area\n");
     } else {
@@ -1169,15 +1170,13 @@ analyze_tgc(struct ged *gedp, const struct rt_db_internal *ip)
     rt_functab[ID_TGC].ft_volume(&vol, ip);
     rt_functab[ID_TGC].ft_surf_area(&area, ip);
 
-    bu_vls_printf(gedp->ged_result_str, "\n");
-
     /* reminder to add per-face analysis */
     /*bu_vls_printf(gedp->ged_result_str, "Surface Areas:  base(AxB)=%.8f  top(CxD)=%.8f  side=%.8f\n",*/
 		  /*area_base*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,*/
 		  /*area_top*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,*/
 		  /*area_side*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);*/
 
-    bu_vls_printf(gedp->ged_result_str, "Volume=%.8f (%.8f gal)",
+    bu_vls_printf(gedp->ged_result_str, "\nVolume=%.8f (%.8f gal)",
             vol
             * gedp->ged_wdbp->dbip->dbi_base2local
             * gedp->ged_wdbp->dbip->dbi_base2local
@@ -1327,6 +1326,27 @@ analyze_eto(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
+/* analyze epa */
+static void
+analyze_epa(struct ged *gedp, const struct rt_db_internal *ip)
+{
+    fastf_t area, vol;
+    rt_functab[ID_EPA].ft_volume(&vol, ip);
+    rt_functab[ID_EPA].ft_surf_area(&area, ip);
+
+    print_volume_table(gedp,
+            vol
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            area
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            vol/GALLONS_TO_MM3
+            );
+}
+
+
 /*
  * Analyze command - prints loads of info about a solid
  * Format:	analyze [name]
@@ -1341,41 +1361,41 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 
     switch (ip->idb_type) {
 
-	case ID_ARS:
-	    analyze_ars(gedp, ip);
-	    break;
+    case ID_ARS:
+        analyze_ars(gedp, ip);
+        break;
 
-	case ID_ARB8:
-	    analyze_arb(gedp, ip);
-	    break;
+    case ID_ARB8:
+        analyze_arb(gedp, ip);
+        break;
 
-	case ID_TGC:
-	    analyze_tgc(gedp, ip);
-	    break;
+    case ID_TGC:
+        analyze_tgc(gedp, ip);
+        break;
 
-	case ID_ELL:
-	    analyze_ell(gedp, ip);
-	    break;
+    case ID_ELL:
+        analyze_ell(gedp, ip);
+        break;
 
-	case ID_TOR:
-	    analyze_tor(gedp, ip);
-	    break;
+    case ID_TOR:
+        analyze_tor(gedp, ip);
+        break;
 
-	case ID_RPC:
-	    analyze_rpc(gedp, ip);
-	    break;
+    case ID_RPC:
+        analyze_rpc(gedp, ip);
+        break;
 
-	case ID_RHC:
-	    analyze_rhc(gedp, ip);
-	    break;
+    case ID_RHC:
+        analyze_rhc(gedp, ip);
+        break;
 
-	case ID_PARTICLE:
-	    analyze_part(gedp, ip);
-	    break;
+    case ID_PARTICLE:
+        analyze_part(gedp, ip);
+        break;
 
-	case ID_SUPERELL:
-	    analyze_superell(gedp, ip);
-	    break;
+    case ID_SUPERELL:
+        analyze_superell(gedp, ip);
+        break;
 
     case ID_ETO:
         analyze_eto(gedp, ip);
@@ -1385,10 +1405,14 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
         analyze_arbn(gedp, ip);
         break;
 
-    	default:
-	    bu_vls_printf(gedp->ged_result_str, "\nanalyze: unable to process %s solid\n",
-			  rt_functab[ip->idb_type].ft_name);
-	    break;
+    case ID_EPA:
+        analyze_epa(gedp, ip);
+        break;
+
+    default:
+        bu_vls_printf(gedp->ged_result_str, "\nanalyze: unable to process %s solid\n",
+                rt_functab[ip->idb_type].ft_name);
+        break;
     }
 }
 
