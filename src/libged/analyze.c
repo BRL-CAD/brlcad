@@ -928,11 +928,10 @@ analyze_arbn_face(struct arbn_face *face)
     face->area = fabs(VDOT(face->plane_eqn, tmp[1])) / 2.0;
 }
 
-
 #define ADD_POINT(face) { \
-    VMOVE(faces[(face)].pts[faces[(face)].npts].pt, pt) \
-    HMOVE(faces[(face)].pts[faces[(face)].npts].plane_eqn, faces[(face)].plane_eqn); \
-    faces[(face)].npts++; \
+    VMOVE((face).pts[(face).npts].pt, pt); \
+    HMOVE((face).pts[(face).npts].plane_eqn, (face).plane_eqn); \
+    (face).npts++; \
 }
 
 /* analyze an arbn */
@@ -940,9 +939,7 @@ static void
 analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 {
     size_t i, j, k, l;
-    int keep_point;
     fastf_t tot_vol, tot_area;
-    point_t pt;
     struct arbn_face *faces;
     struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
 
@@ -957,30 +954,31 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 
     /* find all vertices */
     for (i = 0; i < aip->neqn - 2; i++) {
-        for (j = i + 1; j < aip->neqn - 1; j++) {
-            for (k = j + 1; k < aip->neqn; k++) {
-                keep_point = 1;
-                if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0){
-                    continue;
-                }
-                /* discard pt if it is outside the arbn */
-                for (l = 0; l < aip->neqn; l++) {
-                    if (l == i || l == j || l == k) {
-                        continue;
-                    }
-                    if (DIST_PT_PLANE(pt, aip->eqn[l]) > gedp->ged_wdbp->wdb_tol.dist) {
-                        keep_point = 0;
-                        break;
-                    }
-                }
-                /* found a good point */
-                if (keep_point) {
-                    ADD_POINT(i);
-                    ADD_POINT(j);
-                    ADD_POINT(k);
-                }
+    for (j = i + 1; j < aip->neqn - 1; j++) {
+    for (k = j + 1; k < aip->neqn; k++) {
+        point_t pt;
+        int keep_point = 1;
+        if (bn_mkpoint_3planes(pt, aip->eqn[i], aip->eqn[j], aip->eqn[k]) < 0) {
+            continue;
+        }
+        /* discard pt if it is outside the arbn */
+        for (l = 0; l < aip->neqn; l++) {
+            if (l == i || l == j || l == k) {
+                continue;
+            }
+            if (DIST_PT_PLANE(pt, aip->eqn[l]) > gedp->ged_wdbp->wdb_tol.dist) {
+                keep_point = 0;
+                break;
             }
         }
+        /* found a good point, add it to each of the intersecting faces */
+        if (keep_point) {
+            ADD_POINT(faces[i]);
+            ADD_POINT(faces[j]);
+            ADD_POINT(faces[k]);
+        }
+    }
+    }
     }
 
     /* calculate surface area */
@@ -993,8 +991,9 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     for (i = 0; i < aip->neqn; i++) {
         vect_t tmp;
         VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
-        tot_vol += VDOT(faces[i].center_pt, tmp) / 3.0;
+        tot_vol += VDOT(faces[i].center_pt, tmp);
     }
+    tot_vol /= 3.0;
 
     for (i = 0; i < aip->neqn; i++) {
         bu_free((char *)faces[i].pts, "analyze_arbn: pts");
@@ -1386,7 +1385,7 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
         analyze_arbn(gedp, ip);
         break;
 
-	default:
+    	default:
 	    bu_vls_printf(gedp->ged_result_str, "\nanalyze: unable to process %s solid\n",
 			  rt_functab[ip->idb_type].ft_name);
 	    break;
@@ -1410,20 +1409,20 @@ ged_analyze(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_HELP;
+        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+        return GED_HELP;
     }
 
     /* use the names that were input */
     for (i = 1; i < argc; i++) {
-	if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
-	    continue;
+        if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
+            continue;
 
-	GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+        GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
-	_ged_do_list(gedp, ndp, 1);
-	analyze_do(gedp, &intern);
-	rt_db_free_internal(&intern);
+        _ged_do_list(gedp, ndp, 1);
+        analyze_do(gedp, &intern);
+        rt_db_free_internal(&intern);
     }
 
     return GED_OK;
