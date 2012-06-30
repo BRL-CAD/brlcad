@@ -1750,6 +1750,49 @@ rt_epa_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 }
 
 
+/**
+ * R T _ E P A _ V O L U M E
+ */
+void
+rt_epa_volume(fastf_t *vol, const struct rt_db_internal *ip)
+{
+    fastf_t mag_h;
+    struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(xip);
+
+    mag_h = MAGNITUDE(xip->epa_H);
+    *vol = 0.5 * M_PI * xip->epa_r1 * xip->epa_r2 * mag_h;
+}
+
+
+/**
+ * R T _ E P A _ C E N T R O I D
+ */
+void
+rt_epa_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(xip);
+    VJOIN1(*cent, xip->epa_V, 1.0/3.0, xip->epa_H);
+}
+
+
+/**
+ * R T _ E P A _ S U R F _ A R E A
+ */
+void
+rt_epa_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    fastf_t magsq_h, m;
+    struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(xip);
+
+    magsq_h = MAGSQ(xip->epa_H);
+    m = sqrt(1.0 + (4.0 * magsq_h) / (xip->epa_r1 * xip->epa_r2));
+    *area = 2.0/3.0 * M_PI * xip->epa_r1 * xip->epa_r2 * (m + (1.0 / (m + 1.0)));
+}
+
+
 /** @} */
 /*
  * Local Variables:
