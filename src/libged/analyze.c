@@ -156,6 +156,9 @@ void print_volume_table(struct ged *gedp
     table_width_chars += 2 + 2; /* 2 chars at each end of a row */
     table_width_chars += 3; /* ' = ' between the two fields of a row */
 
+    /* newline following previous table */
+    bu_vls_printf(gedp->ged_result_str, "\n");
+
     /* header row 1 */
     nd = table_width_chars - 4;
     get_dashes(&dashes, nd);
@@ -849,9 +852,6 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
     /* TABLE 3 =========================================== */
     /* find the volume - break arb8 into 6 arb4s */
 
-    /* blank line following previous table */
-    bu_vls_printf(gedp->ged_result_str, "\n");
-
     rt_functab[ID_ARB8].ft_volume(&tot_vol, ip);
 
     print_volume_table(gedp,
@@ -1001,7 +1001,6 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     }
     bu_free((char *)faces, "analyze_arbn: faces");
 
-    bu_vls_printf(gedp->ged_result_str, "\n");
     print_volume_table(gedp,
             tot_vol
             * gedp->ged_wdbp->dbip->dbi_base2local
@@ -1023,7 +1022,6 @@ analyze_tor(struct ged *gedp, const struct rt_db_internal *ip)
     rt_functab[ID_TOR].ft_volume(&vol, ip);
     rt_functab[ID_TOR].ft_surf_area(&area, ip);
 
-    bu_vls_printf(gedp->ged_result_str, "\n");
     print_volume_table(gedp,
             vol
             * gedp->ged_wdbp->dbip->dbi_base2local
@@ -1252,7 +1250,6 @@ analyze_rpc(struct ged *gedp, const struct rt_db_internal *ip)
             /** gedp->ged_wdbp->dbip->dbi_base2local*/
             /*);*/
 
-    bu_vls_printf(gedp->ged_result_str, "\n");
     print_volume_table(gedp,
             vol
             * gedp->ged_wdbp->dbip->dbi_base2local
@@ -1318,7 +1315,6 @@ analyze_eto(struct ged *gedp, const struct rt_db_internal *ip)
     rt_functab[ID_ETO].ft_volume(&vol, ip);
     rt_functab[ID_ETO].ft_surf_area(&area, ip);
 
-    bu_vls_printf(gedp->ged_result_str, "\n");
     print_volume_table(gedp,
             vol
             * gedp->ged_wdbp->dbip->dbi_base2local
