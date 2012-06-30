@@ -1778,7 +1778,7 @@ rt_ell_volume(fastf_t *volume, const struct rt_db_internal *ip)
     mag_a = MAGNITUDE(eip->a);
     mag_b = MAGNITUDE(eip->b);
     mag_c = MAGNITUDE(eip->c);
-    *volume = (4.0/3.0) * M_PI * mag_a * mag_b * mag_c;
+    *volume = 4.0/3.0 * M_PI * mag_a * mag_b * mag_c;
 }
 
 
@@ -1808,11 +1808,15 @@ void
 rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     fastf_t mag_a, mag_b, mag_c;
-    fastf_t ecc = 0;
-    fastf_t major = 0;
-    fastf_t minor = 0;
-    fastf_t major2 = 0;
-    fastf_t minor2 = 0;
+#ifdef major        /* Some systems have these defined as macros!!! */
+#undef major
+#endif
+#ifdef minor
+#undef minor
+#endif
+    fastf_t major = 0, minor = 0;
+    fastf_t major2, minor2;
+    fastf_t ecc;
     int ell_type = 0;
 
     struct rt_ell_internal *eip = (struct rt_ell_internal *)ip->idb_ptr;
@@ -1823,47 +1827,47 @@ rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     mag_c = MAGNITUDE(eip->c);
 
     if (EQUAL(mag_a, mag_b) && EQUAL(mag_b, mag_c)) {
-	/* case: sphere */
-	*area = 4.0 * M_PI * mag_a * mag_a;
-	return;
+        /* case: sphere */
+        *area = 4.0 * M_PI * mag_a * mag_a;
+        return;
     }
 
     if (EQUAL(mag_a, mag_b)) {
-	if (mag_a > mag_c) {
-	    /* case: prolate spheroid */
-	    ell_type = PROLATE;
-	    major = mag_a;
-	    minor = mag_c;
-	} else {
-	    /* case: oblate spheroid */
-	    ell_type = OBLATE;
-	    major = mag_c;
-	    minor = mag_a;
-	}
+        if (mag_a > mag_c) {
+            /* case: prolate spheroid */
+            ell_type = PROLATE;
+            major = mag_a;
+            minor = mag_c;
+        } else {
+            /* case: oblate spheroid */
+            ell_type = OBLATE;
+            major = mag_c;
+            minor = mag_a;
+        }
     } else if (EQUAL(mag_a, mag_c)) {
-	if (mag_a > mag_b) {
-	    /* case: prolate spheroid */
-	    ell_type = PROLATE;
-	    major = mag_a;
-	    minor = mag_b;
-	} else {
-	    /* case: oblate spheroid */
-	    ell_type = OBLATE;
-	    major = mag_b;
-	    minor = mag_a;
-	}
+        if (mag_a > mag_b) {
+            /* case: prolate spheroid */
+            ell_type = PROLATE;
+            major = mag_a;
+            minor = mag_b;
+        } else {
+            /* case: oblate spheroid */
+            ell_type = OBLATE;
+            major = mag_b;
+            minor = mag_a;
+        }
     } else if (EQUAL(mag_b, mag_c)) {
-	if (mag_b > mag_c) {
-	    /* case: prolate spheroid */
-	    ell_type = PROLATE;
-	    major = mag_b;
-	    minor = mag_c;
-	} else {
-	    /* case: oblate spheroid */
-	    ell_type = OBLATE;
-	    major = mag_c;
-	    minor = mag_b;
-	}
+        if (mag_b > mag_c) {
+            /* case: prolate spheroid */
+            ell_type = PROLATE;
+            major = mag_b;
+            minor = mag_c;
+        } else {
+            /* case: oblate spheroid */
+            ell_type = OBLATE;
+            major = mag_c;
+            minor = mag_b;
+        }
     }
 
     major2 = major * major;
@@ -1871,14 +1875,14 @@ rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     ecc = sqrt(1.0 - (minor2 / major2));
 
     switch (ell_type) {
-	case PROLATE:
-	      *area = (2.0 * M_PI * minor2) + (2.0 * M_PI * major * minor / ecc) * asin(ecc);
-	      break;
-	case OBLATE:
-	      *area = (2.0 * M_PI * major2) + (M_PI * minor2 / ecc) * log((1.0 + ecc) / (1.0 - ecc));
-	      break;
-	default:
-	      bu_log("rt_ell_surf_area(): triaxial ellipsoid, cannot find surface area");
+    case PROLATE:
+        *area = (2.0 * M_PI * minor2) + (2.0 * M_PI * major * minor / ecc) * asin(ecc);
+        break;
+    case OBLATE:
+        *area = (2.0 * M_PI * major2) + (M_PI * minor2 / ecc) * log((1.0 + ecc) / (1.0 - ecc));
+        break;
+    default:
+        bu_log("rt_ell_surf_area(): triaxial ellipsoid, cannot find surface area");
     }
 }
 
