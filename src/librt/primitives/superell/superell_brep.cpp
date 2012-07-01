@@ -1,4 +1,4 @@
-/*                    E L L _ B R E P . C P P
+/*                S U P E R E L L _ B R E P . C P P
  * BRL-CAD
  *
  * Copyright (c) 2012 United States Government as represented by
