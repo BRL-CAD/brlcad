@@ -981,14 +981,12 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     }
     }
 
-    /* calculate surface area */
     for (i = 0; i < aip->neqn; i++) {
+        /* calculate surface area */
         analyze_arbn_face(&faces[i]);
         tot_area += faces[i].area;
-    }
 
-    /* calculate volume */
-    for (i = 0; i < aip->neqn; i++) {
+        /* calculate volume */
         vect_t tmp;
         VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
         tot_vol += VDOT(faces[i].center_pt, tmp);
@@ -1373,7 +1371,7 @@ analyze_bot_face(struct ged *gedp, struct bot_face *face, const struct rt_bot_in
         if (bn_mk_plane_3pts(face->normal, face_verts[2], face_verts[1], face_verts[0],
                     &gedp->ged_wdbp->wdb_tol) < 0) {
             bu_vls_printf(gedp->ged_result_str,
-                    "analyze_bot: bad bot, points (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f) do not form a plane\n",
+                    "analyze_bot: bad BOT, points (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f) do not form a plane\n",
                     V3ARGS(face_verts[2]), V3ARGS(face_verts[1]), V3ARGS(face_verts[0]));
             return;
         }
@@ -1405,15 +1403,13 @@ analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
     RT_BOT_CK_MAGIC(bot);
     struct bot_face faces[bot->num_faces];
 
-    /* surface area */
     for (i = 0; i < bot->num_faces; i++) {
+        /* surface area */
         faces[i].idx = i;
         analyze_bot_face(gedp, &faces[i], bot);
         tot_area += faces[i].area;
-    }
 
-    /* volume */
-    for (i = 0; i < bot->num_faces; i++) {
+        /* volume */
         vect_t tmp;
         VSCALE(tmp, faces[i].normal, faces[i].area);
         tot_vol += fabs(VDOT(faces[i].centroid, tmp));
