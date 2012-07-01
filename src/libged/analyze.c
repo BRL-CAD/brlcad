@@ -1347,6 +1347,74 @@ analyze_epa(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
+/* analyze bot */
+static void
+analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
+{
+    size_t i, j;
+    fastf_t tot_area, tot_vol;
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+    point_t centroids[bot->num_faces];
+    plane_t normals[bot->num_faces];
+    fastf_t areas[bot->num_faces];
+
+    /* surface area */
+    for (i = 0; i < bot->num_faces; i++) {
+        vect_t face_verts[3];
+        vect_t tmp[3];
+
+        for (j = 0; j < 3; j++) {
+            VMOVE(face_verts[j], &bot->vertices[(int)bot->faces[i*3+j] * 3]);
+        }
+
+        /* area */
+        VSUB2(tmp[0], face_verts[1], face_verts[0]);
+        VSUB2(tmp[1], face_verts[2], face_verts[0]);
+        VCROSS(tmp[2], tmp[1], tmp[0]);
+        areas[i] = MAGNITUDE(tmp[2]) / 2.0;
+        tot_area += areas[i];
+
+        /* centroid */
+        VADD3(tmp[2], face_verts[2], face_verts[1], face_verts[0]);
+        VSCALE(centroids[i], tmp[2], 1.0 / 3.0);
+
+        /* normal */
+        if (bot->bot_flags != RT_BOT_HAS_SURFACE_NORMALS) {
+            if (bn_mk_plane_3pts(normals[i], face_verts[2], face_verts[1], face_verts[0],
+                    &gedp->ged_wdbp->wdb_tol) < 0) {
+                bu_vls_printf(gedp->ged_result_str,
+                    "analyze_bot: bad bot, points (%3.3f), (%3.3f), (%3.3f) do not form a plane",
+                    V3ARGS(face_verts[2]), V3ARGS(face_verts[1]), V3ARGS(face_verts[0]));
+            }
+        } else if (bot->normals) {
+            for (i = 0; i < bot->num_faces; i++) {
+                VMOVE(normals[i], &bot->normals[i*3]);
+            }
+        }
+    }
+
+    /* volume */
+    for (i = 0; i < bot->num_faces; i++) {
+        vect_t tmp;
+        VSCALE(tmp, normals[i], areas[i]);
+        tot_vol += fabs(VDOT(centroids[i], tmp));
+    }
+    tot_vol /= 3.0;
+
+    print_volume_table(gedp,
+            tot_vol
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            tot_area
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            tot_vol/GALLONS_TO_MM3
+            );
+}
+
+
 /*
  * Analyze command - prints loads of info about a solid
  * Format:	analyze [name]
@@ -1367,6 +1435,10 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 
     case ID_ARB8:
         analyze_arb(gedp, ip);
+        break;
+
+    case ID_BOT:
+        analyze_bot(gedp, ip);
         break;
 
     case ID_TGC:
