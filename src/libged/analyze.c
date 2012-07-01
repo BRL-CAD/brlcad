@@ -939,7 +939,7 @@ static void
 analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 {
     size_t i, j, k, l;
-    fastf_t tot_vol, tot_area;
+    fastf_t tot_vol = 0.0, tot_area = 0.0;
     struct arbn_face *faces;
     struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
 
@@ -1400,7 +1400,7 @@ static void
 analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
 {
     size_t i;
-    fastf_t tot_area, tot_vol;
+    fastf_t tot_area = 0.0, tot_vol = 0.0;
     struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
     struct bot_face faces[bot->num_faces];
