@@ -44,7 +44,7 @@ class Patch {
 	EdgeList edges;
 	LoopList loops;
         FaceList faces;
-	CurveList *outer_loop;
+	CurveList outer_loop;
 	bool operator< (const Patch &other) const {return id < other.id;}
 };
 
@@ -223,55 +223,73 @@ void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot, EdgeToPat
 	 patch->loops.insert(loop_curves);
    }
 
-#if 0
-   // Plot loops
-   pl_color(plot, int(256*drand48() + 1.0), int(256*drand48() + 1.0), int(256*drand48() + 1.0));
-   LoopList patch_loops = patch->loops;
-   LoopList::iterator l_it;
-   for (l_it = patch_loops.begin(); l_it != patch_loops.end(); l_it++) {
-       CurveList::iterator c_it;
-       for (c_it = (*l_it).begin(); c_it != (*l_it).end(); c_it++) {
-	   EdgeList::iterator e_it;
-	   for (e_it = (*c_it).begin(); e_it != (*c_it).end(); e_it++) {
-		   pdv_3move(plot, &bot->vertices[(*e_it).first]); 
-		   pdv_3cont(plot, &bot->vertices[(*e_it).second]);
-	   }
-       }
-   }
-#endif
 
    // If we have more than one loop, we need to identify the outer loop.  OpenNURBS handles outer
    // and inner loops separately, so we need to know which loop is our outer surface boundary.
-   pl_color(plot, int(256*drand48() + 1.0), int(256*drand48() + 1.0), int(256*drand48() + 1.0));
    LoopList patch_loops = patch->loops;
-   LoopList::iterator l_it;
-   for (l_it = patch_loops.begin(); l_it != patch_loops.end(); l_it++) {
+   if (patch_loops.size() > 1) {
+	   LoopList::iterator l_it;
+	   fastf_t diag_max = 0.0;
+	   CurveList outer_loop;
+	   for (l_it = patch_loops.begin(); l_it != patch_loops.end(); l_it++) {
+		   vect_t min, max, diag;
+		   VSETALL(min, MAX_FASTF);
+		   VSETALL(max, -MAX_FASTF);
+		   CurveList::iterator c_it;
+		   for (c_it = (*l_it).begin(); c_it != (*l_it).end(); c_it++) {
+			   EdgeList::iterator e_it;
+			   for (e_it = (*c_it).begin(); e_it != (*c_it).end(); e_it++) {
+				   vect_t ep1, ep2, eproj, eproj2, norm_scale, normal;
+				   fastf_t dotP;
+				   VMOVE(ep1, &bot->vertices[(*e_it).first]);
+				   VMOVE(ep2, &bot->vertices[(*e_it).second]);
+				   VSET(normal, patch->category_plane->x, patch->category_plane->y, patch->category_plane->z);
+				   dotP = VDOT(ep1, normal);
+				   VSCALE(norm_scale, normal, dotP);
+				   VSUB2(eproj, ep1, norm_scale);
+				   VSCALE(eproj2, eproj, 1.1);
+				   VMINMAX(min, max, eproj);
+
+				   dotP = VDOT(ep2, normal);
+				   VSCALE(norm_scale, normal, dotP);
+				   VSUB2(eproj, ep2, norm_scale);
+				   VSCALE(eproj2, eproj, 1.1);
+				   VMINMAX(min, max, eproj);
+			   }
+		   }
+		   VSUB2(diag, max, min);
+
+		   if (MAGNITUDE(diag) > diag_max) {
+			   diag_max = MAGNITUDE(diag);
+			   patch->outer_loop = (*l_it);
+		   }
+	   }
+	   patch->loops.erase(patch->loops.find(patch->outer_loop));
+
+	   // Plot loops
+	   pl_color(plot, int(256*drand48() + 1.0), int(256*drand48() + 1.0), int(256*drand48() + 1.0));
+	   LoopList plot_patch_loops = patch->loops;
+	   LoopList::iterator p_l_it;
+	   for (p_l_it = plot_patch_loops.begin(); p_l_it != plot_patch_loops.end(); p_l_it++) {
+		   CurveList::iterator c_it;
+		   for (c_it = (*p_l_it).begin(); c_it != (*p_l_it).end(); c_it++) {
+			   EdgeList::iterator e_it;
+			   for (e_it = (*c_it).begin(); e_it != (*c_it).end(); e_it++) {
+				   pdv_3move(plot, &bot->vertices[(*e_it).first]); 
+				   pdv_3cont(plot, &bot->vertices[(*e_it).second]);
+			   }
+		   }
+	   }
+	   pl_color(plot, 255, 255, 255);
 	   CurveList::iterator c_it;
-	   for (c_it = (*l_it).begin(); c_it != (*l_it).end(); c_it++) {
+	   for (c_it = patch->outer_loop.begin(); c_it != patch->outer_loop.end(); c_it++) {
 		   EdgeList::iterator e_it;
 		   for (e_it = (*c_it).begin(); e_it != (*c_it).end(); e_it++) {
-			   vect_t ep1, ep2, eproj, eproj2, norm_scale, normal;
-                           fastf_t dotP;
-			   VMOVE(ep1, &bot->vertices[(*e_it).first]);
-			   VMOVE(ep2, &bot->vertices[(*e_it).second]);
-			   VSET(normal, patch->category_plane->x, patch->category_plane->y, patch->category_plane->z);
-			   dotP = VDOT(ep1, normal);
-			   VSCALE(norm_scale, normal, dotP);
-			   VSUB2(eproj, ep1, norm_scale);
-			   VSCALE(eproj2, eproj, 1.1);
-			   pdv_3move(plot, eproj); 
-			   pdv_3cont(plot, eproj2);
-
-			   dotP = VDOT(ep2, normal);
-			   VSCALE(norm_scale, normal, dotP);
-			   VSUB2(eproj, ep2, norm_scale);
-			   VSCALE(eproj2, eproj, 1.1);
-			   pdv_3move(plot, eproj); 
-			   pdv_3cont(plot, eproj2);
+			   pdv_3move(plot, &bot->vertices[(*e_it).first]); 
+			   pdv_3cont(plot, &bot->vertices[(*e_it).second]);
 		   }
 	   }
    }
-
 
 }
 
