@@ -10,9 +10,8 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "plot3.h"
-#include "opennurbs_fit.h"
+//#include "opennurbs_fit.h"
 
-typedef std::multimap< size_t, size_t > FaceCategorization;
 typedef std::pair<size_t, size_t> Edge;
 typedef std::multimap< size_t, Edge> VertToEdge;
 typedef std::multimap< Edge, size_t > EdgeToFace;
@@ -22,15 +21,6 @@ typedef std::set<EdgeList> CurveList;
 typedef std::set<CurveList> LoopList;
 typedef std::set<size_t> VertList;
 typedef std::set<size_t> FaceList;
-
-class Patch {
-      public:
-        size_t id;
-	EdgeList edges;
-	LoopList loops;
-        FaceList faces;
-	bool operator< (const Patch &other) const {return id < other.id;}
-};
 
 class ThreeDPoint {
       public:
@@ -45,8 +35,22 @@ ThreeDPoint::ThreeDPoint(fastf_t a, fastf_t b, fastf_t c) {
      z = c;
 }
 
-typedef std::set<ThreeDPoint> VectList; 
+typedef std::multimap< ThreeDPoint, size_t > FaceCategorization;
 
+class Patch {
+      public:
+        size_t id;
+	ThreeDPoint *category_plane;
+	EdgeList edges;
+	LoopList loops;
+        FaceList faces;
+	CurveList *outer_loop;
+	bool operator< (const Patch &other) const {return id < other.id;}
+};
+
+
+typedef std::set<ThreeDPoint> VectList; 
+#if 0
 void PatchToVector3d(struct rt_bot_internal *bot, const Patch *patch, on_fit::vector_vec3d &data) {
 	FaceList::iterator f_it;
 	std::set<size_t> verts;
@@ -66,7 +70,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, const Patch *patch, on_fit::ve
 	        data.push_back (Eigen::Vector3d (V3ARGS(&bot->vertices[(*v_it)*3])));
 	}
 }
-
+#endif
 void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot, EdgeToPatch *edge_to_patch)
 {
    size_t pt_A, pt_B, pt_C;
@@ -165,7 +169,6 @@ void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot, EdgeToPat
 			 if ((*ep_it).second != patch->id) other_id = (*ep_it).second;
 		 }
 		 curr_loop.erase(curr_loop.begin());
-		 pl_color(plot, int(256*drand48() + 1.0), int(256*drand48() + 1.0), int(256*drand48() + 1.0));
 		 while (!edge_queue.empty()) {
 			 size_t pt1, pt2;
 			 Edge e1, e2;
@@ -176,8 +179,6 @@ void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot, EdgeToPat
 			 curve_edges.insert(curr_edge);
 			 pt1 = curr_edge.first;
 			 pt2 = curr_edge.second;
-			 pdv_3move(plot, &bot->vertices[pt1]); 
-			 pdv_3cont(plot, &bot->vertices[pt2]);
 
 			 // use verttoedge - pull other two edges from multimap
 			 v_range = vert_to_edge.equal_range(pt1);
@@ -221,6 +222,57 @@ void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot, EdgeToPat
 	 }
 	 patch->loops.insert(loop_curves);
    }
+
+#if 0
+   // Plot loops
+   pl_color(plot, int(256*drand48() + 1.0), int(256*drand48() + 1.0), int(256*drand48() + 1.0));
+   LoopList patch_loops = patch->loops;
+   LoopList::iterator l_it;
+   for (l_it = patch_loops.begin(); l_it != patch_loops.end(); l_it++) {
+       CurveList::iterator c_it;
+       for (c_it = (*l_it).begin(); c_it != (*l_it).end(); c_it++) {
+	   EdgeList::iterator e_it;
+	   for (e_it = (*c_it).begin(); e_it != (*c_it).end(); e_it++) {
+		   pdv_3move(plot, &bot->vertices[(*e_it).first]); 
+		   pdv_3cont(plot, &bot->vertices[(*e_it).second]);
+	   }
+       }
+   }
+#endif
+
+   // If we have more than one loop, we need to identify the outer loop.  OpenNURBS handles outer
+   // and inner loops separately, so we need to know which loop is our outer surface boundary.
+   pl_color(plot, int(256*drand48() + 1.0), int(256*drand48() + 1.0), int(256*drand48() + 1.0));
+   LoopList patch_loops = patch->loops;
+   LoopList::iterator l_it;
+   for (l_it = patch_loops.begin(); l_it != patch_loops.end(); l_it++) {
+	   CurveList::iterator c_it;
+	   for (c_it = (*l_it).begin(); c_it != (*l_it).end(); c_it++) {
+		   EdgeList::iterator e_it;
+		   for (e_it = (*c_it).begin(); e_it != (*c_it).end(); e_it++) {
+			   vect_t ep1, ep2, eproj, eproj2, norm_scale, normal;
+                           fastf_t dotP;
+			   VMOVE(ep1, &bot->vertices[(*e_it).first]);
+			   VMOVE(ep2, &bot->vertices[(*e_it).second]);
+			   VSET(normal, patch->category_plane->x, patch->category_plane->y, patch->category_plane->z);
+			   dotP = VDOT(ep1, normal);
+			   VSCALE(norm_scale, normal, dotP);
+			   VSUB2(eproj, ep1, norm_scale);
+			   VSCALE(eproj2, eproj, 1.1);
+			   pdv_3move(plot, eproj); 
+			   pdv_3cont(plot, eproj2);
+
+			   dotP = VDOT(ep2, normal);
+			   VSCALE(norm_scale, normal, dotP);
+			   VSUB2(eproj, ep2, norm_scale);
+			   VSCALE(eproj2, eproj, 1.1);
+			   pdv_3move(plot, eproj); 
+			   pdv_3cont(plot, eproj2);
+		   }
+	   }
+   }
+
+
 }
 
 void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch> *patches, FILE* plot) {
@@ -235,7 +287,7 @@ void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch
         for (size_t i=0; i < bot->num_faces; ++i) {
 		size_t pt_A, pt_B, pt_C;
 		size_t count = 0;
-                size_t result_max = 0;
+                const ThreeDPoint *result_max;
 		fastf_t vdot = 0.0;
                 fastf_t result = 0.0;
 		vect_t a, b, dir, norm_dir;
@@ -271,12 +323,12 @@ void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch
 			//std::cout << "vector(" << count << "): (" << dir[0] << "," << dir[1] << "," << dir[2] << ") . ";
 			//std::cout << "(" << norm_dir[0] << "," << norm_dir[1] << "," << norm_dir[2] << ") =  " << vdot << ">?" << result << "\n";
                         if (vdot > result) {
-                           result_max = count;
+                           result_max = &(*vect_it);
                            result = vdot;
                         }
                 
 		}
-		face_groups.insert(std::make_pair(result_max, i));
+		face_groups.insert(std::make_pair(*result_max, i));
 		//std::cout << "Face " << i << ": " << result_max << "," << result << "\n";
         }
         // For each "sub-bot", identify contiguous patches.
@@ -302,6 +354,7 @@ void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch
 			Edge e1, e2, e3;
 			Patch curr_patch; 
                         curr_patch.id = patch_cnt;
+			curr_patch.category_plane = new ThreeDPoint((*fg_1).first.x, (*fg_1).first.y, (*fg_1).first.z);
                         patch_cnt++;
 			std::queue<size_t> face_queue;
 			FaceList::iterator f_it;
@@ -382,14 +435,14 @@ main (int argc, char *argv[])
    struct directory *dp;
    struct rt_db_internal intern;
    struct rt_bot_internal *bot_ip = NULL;
-   struct rt_wdb *wdbp;
+   //struct rt_wdb *wdbp;
    struct bu_vls name;
-   char *bname;
+   //char *bname;
     
    VectList vectors;
    std::set<Patch> patches;
    std::set<Patch>::iterator p_it;
-   ON_Brep *brep = ON_Brep::New();
+   //ON_Brep *brep = ON_Brep::New();
    FaceList::iterator f_it;
 
    vectors.insert(*(new ThreeDPoint(-1,0,0)));
@@ -440,7 +493,7 @@ main (int argc, char *argv[])
    RT_BOT_CK_MAGIC(bot_ip);
 
    make_structure(bot_ip, &vectors, &patches, plot); 
-
+#if 0
    for (p_it = patches.begin(); p_it != patches.end(); p_it++) {
        std::cout << "Found patch " << (*p_it).id << "\n";
        unsigned order (3);
@@ -478,7 +531,7 @@ main (int argc, char *argv[])
       bu_log("Generated brep object %s\n", bname);
    }
    bu_free(bname, "char");
-
+#endif
 
    return 0;
 }
