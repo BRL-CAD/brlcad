@@ -1347,58 +1347,76 @@ analyze_epa(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
+struct bot_face
+{
+    size_t idx; /* face index, ranges from 0 -> bot.num_faces */
+    point_t centroid;
+    plane_t normal;
+    fastf_t area;
+};
+
+
+static void
+analyze_bot_face(struct ged *gedp, struct bot_face *face, const struct rt_bot_internal *bot)
+{
+    size_t j;
+    vect_t face_verts[3];
+    vect_t tmp[3];
+
+    /* find the 3 vertices that make up this face */
+    for (j = 0; j < 3; j++) {
+        VMOVE(face_verts[j], &bot->vertices[bot->faces[face->idx*3+j] * 3]);
+    }
+
+    /* find normal, needed to calculate volume */
+    if (bot->bot_flags != RT_BOT_HAS_SURFACE_NORMALS) {
+        if (bn_mk_plane_3pts(face->normal, face_verts[2], face_verts[1], face_verts[0],
+                    &gedp->ged_wdbp->wdb_tol) < 0) {
+            bu_vls_printf(gedp->ged_result_str,
+                    "analyze_bot: bad bot, points (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f) do not form a plane\n",
+                    V3ARGS(face_verts[2]), V3ARGS(face_verts[1]), V3ARGS(face_verts[0]));
+            return;
+        }
+    } else if (bot->normals) {
+        /* if bot->normals array already exists, use those instead */
+        VMOVE(face->normal, &bot->normals[face->idx*3]);
+    }
+
+    /* calculate area, take cross product of two legs
+     * of the bot face and divide by 2 */
+    VSUB2(tmp[0], face_verts[1], face_verts[0]);
+    VSUB2(tmp[1], face_verts[2], face_verts[0]);
+    VCROSS(tmp[2], tmp[1], tmp[0]);
+    face->area = MAGNITUDE(tmp[2]) * 0.5;
+
+    /* calculate centroid */
+    VADD3(tmp[2], face_verts[2], face_verts[1], face_verts[0]);
+    VSCALE(face->centroid, tmp[2], 1.0/3.0);
+}
+
+
 /* analyze bot */
 static void
 analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    size_t i, j;
+    size_t i;
     fastf_t tot_area, tot_vol;
     struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
-    point_t centroids[bot->num_faces];
-    plane_t normals[bot->num_faces];
-    fastf_t areas[bot->num_faces];
+    struct bot_face faces[bot->num_faces];
 
     /* surface area */
     for (i = 0; i < bot->num_faces; i++) {
-        vect_t face_verts[3];
-        vect_t tmp[3];
-
-        for (j = 0; j < 3; j++) {
-            VMOVE(face_verts[j], &bot->vertices[(int)bot->faces[i*3+j] * 3]);
-        }
-
-        /* area */
-        VSUB2(tmp[0], face_verts[1], face_verts[0]);
-        VSUB2(tmp[1], face_verts[2], face_verts[0]);
-        VCROSS(tmp[2], tmp[1], tmp[0]);
-        areas[i] = MAGNITUDE(tmp[2]) / 2.0;
-        tot_area += areas[i];
-
-        /* centroid */
-        VADD3(tmp[2], face_verts[2], face_verts[1], face_verts[0]);
-        VSCALE(centroids[i], tmp[2], 1.0 / 3.0);
-
-        /* normal */
-        if (bot->bot_flags != RT_BOT_HAS_SURFACE_NORMALS) {
-            if (bn_mk_plane_3pts(normals[i], face_verts[2], face_verts[1], face_verts[0],
-                    &gedp->ged_wdbp->wdb_tol) < 0) {
-                bu_vls_printf(gedp->ged_result_str,
-                    "analyze_bot: bad bot, points (%3.3f), (%3.3f), (%3.3f) do not form a plane",
-                    V3ARGS(face_verts[2]), V3ARGS(face_verts[1]), V3ARGS(face_verts[0]));
-            }
-        } else if (bot->normals) {
-            for (i = 0; i < bot->num_faces; i++) {
-                VMOVE(normals[i], &bot->normals[i*3]);
-            }
-        }
+        faces[i].idx = i;
+        analyze_bot_face(gedp, &faces[i], bot);
+        tot_area += faces[i].area;
     }
 
     /* volume */
     for (i = 0; i < bot->num_faces; i++) {
         vect_t tmp;
-        VSCALE(tmp, normals[i], areas[i]);
-        tot_vol += fabs(VDOT(centroids[i], tmp));
+        VSCALE(tmp, faces[i].normal, faces[i].area);
+        tot_vol += fabs(VDOT(faces[i].centroid, tmp));
     }
     tot_vol /= 3.0;
 
