@@ -4,7 +4,8 @@ noinst_LTLIBRARIES = libanalyze_nil.la
 
 libanalyze_nil_la_SOURCES = \
 	density.c \
-	overlaps.c
+	overlaps.c \
+	voxels.c
 
 AM_CPPFLAGS = \
 	${STRICT_FLAGS} \
