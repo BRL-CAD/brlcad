@@ -1329,7 +1329,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_cline_tess,
 	NULL,
-	NULL,
+	rt_cline_brep,
 	rt_cline_import5,
 	rt_cline_export5,
 	rt_cline_import4,

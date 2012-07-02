@@ -39,6 +39,7 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+#include "wdb.h"
 
 
 /* ray tracing form of solid, including precomputed terms */
@@ -1133,6 +1134,49 @@ rt_cline_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
+/**
+ * R T _ C L I N E _ T O _ P I P E
+ *
+ */
+int
+rt_cline_to_pipe(struct rt_pipe_internal *pipe, const struct rt_db_internal *ip)
+{
+    struct rt_cline_internal *cip;
+    struct wdb_pipept *point, *point2;
+
+    if (!ip)
+	return -1;
+    
+    RT_CK_DB_INTERNAL(ip);
+    cip = (struct rt_cline_internal *)ip->idb_ptr;
+    RT_CLINE_CK_MAGIC(cip);
+
+    if (!pipe)
+	return -1;
+
+    pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
+    pipe->pipe_count = 1;
+
+    BU_LIST_INIT(&pipe->pipe_segs_head);
+    BU_GET(point, struct wdb_pipept);
+    point->pp_bendradius = 0.0;
+    VMOVE(point->pp_coord, cip->v);
+    point->l.magic = WDB_PIPESEG_MAGIC;
+    point->pp_od = cip->radius * 2;
+    point->pp_id = (cip->radius - cip->thickness) * 2;
+    BU_LIST_APPEND(&pipe->pipe_segs_head, &point->l);
+
+    BU_GET(point2, struct wdb_pipept);
+    point2->pp_bendradius = 0.0;
+    VADD2(point2->pp_coord, cip->v, cip->h);
+    point2->l.magic = WDB_PIPESEG_MAGIC;
+    point2->pp_od = cip->radius * 2;
+    point2->pp_id = (cip->radius - cip->thickness) * 2;
+    BU_LIST_APPEND(&pipe->pipe_segs_head, &point2->l);
+
+    return 0;
+}
+    
 
 /** @} */
 /*
