@@ -9,6 +9,7 @@ BRLCAD_LIB_INCLUDE_DIRS(analyze ANALYZE_INCLUDE_DIRS "")
 set(LIBANALYZE_SOURCES
   density.c
   overlaps.c
+  voxels.c
   )
 
 #BRLCAD_ADDEXEC(test_density test_density.c "libanalyze;libbu" NO_INSTALL)
