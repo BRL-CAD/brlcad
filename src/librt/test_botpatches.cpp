@@ -71,7 +71,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, const Patch *patch, on_fit::ve
 	}
 }
 #endif
-void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot, EdgeToPatch *edge_to_patch)
+void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot, ON_SimpleArray<ON_NurbsCurve> *bedges, EdgeToPatch *edge_to_patch)
 {
    size_t pt_A, pt_B, pt_C;
    VertToEdge vert_to_edge;
@@ -265,7 +265,7 @@ void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot, EdgeToPat
 		   }
 	   }
 	   patch->loops.erase(patch->loops.find(patch->outer_loop));
-
+#if 0
 	   // Plot loops
 	   pl_color(plot, int(256*drand48() + 1.0), int(256*drand48() + 1.0), int(256*drand48() + 1.0));
 	   LoopList plot_patch_loops = patch->loops;
@@ -289,11 +289,93 @@ void find_edges(struct rt_bot_internal *bot, Patch *patch, FILE* plot, EdgeToPat
 			   pdv_3cont(plot, &bot->vertices[(*e_it).second]);
 		   }
 	   }
+#endif
+   } else {
+	   patch->outer_loop = (*patch_loops.begin());
+	   patch_loops.erase(patch_loops.begin());
    }
+
+   // Make some edge curves
+   if (patch->outer_loop.size() > 1) {
+	   CurveList::iterator c_it;
+	   for (c_it = patch->outer_loop.begin(); c_it != patch->outer_loop.end(); c_it++) {
+		   if ((*c_it).size() > 2) {
+		   pl_color(plot, int(256*drand48() + 1.0), int(256*drand48() + 1.0), int(256*drand48() + 1.0));
+		   EdgeList::iterator e_it;
+		   std::map<size_t, size_t> pnt_cnt;
+		   std::multimap<size_t, size_t> vert_map;
+		   std::set<size_t>::iterator pnt_it;
+		   ON_3dPointArray curve_pnts;
+		   for (e_it = (*c_it).begin(); e_it != (*c_it).end(); e_it++) {
+			   pnt_cnt[(*e_it).first]++;
+			   pnt_cnt[(*e_it).second]++;
+			   vert_map.insert(std::make_pair((*e_it).first, (*e_it).second));
+			   vert_map.insert(std::make_pair((*e_it).second, (*e_it).first));
+		   }
+		   int endpt_cnt = 0;
+		   std::pair<size_t, size_t> start_and_end;
+		   std::map<size_t, size_t>::iterator m_it;
+		   for (m_it = pnt_cnt.begin(); m_it != pnt_cnt.end(); m_it++) {
+			   if ((*m_it).second == 1 && endpt_cnt == 0) {
+				   start_and_end.first = (*m_it).first;
+				   endpt_cnt = 1;
+			   } else if ((*m_it).second == 1 && endpt_cnt == 1) {
+				   start_and_end.second = (*m_it).first;
+				   endpt_cnt = 2;
+			   }
+		   }
+                   if (endpt_cnt > 1) {
+
+		   size_t current_pt = start_and_end.first;
+		   std::set<size_t> visited;
+
+		   while (current_pt != start_and_end.second) {
+			   printf("current_pt: %d\n", (int)current_pt);
+			   std::multimap<size_t, size_t>::iterator v_it;
+			   std::pair<std::multimap<size_t, size_t>::iterator, std::multimap<size_t, size_t>::iterator> v_range;
+			   curve_pnts.Append(ON_3dPoint(&bot->vertices[current_pt]));
+			   visited.insert(current_pt);
+			   v_range = vert_map.equal_range(current_pt);
+			   for (v_it = v_range.first; v_it != v_range.second; v_it++) {
+			   //printf("(*v_it).second: %d\n", (int)(*v_it).second);
+				if ((*v_it).second != current_pt && visited.find((*v_it).second) == visited.end()) {
+				   printf("using %d\n", (int)(*v_it).second);
+				   current_pt = (*v_it).second;
+				}
+			   }
+		   }
+		   curve_pnts.Append(ON_3dPoint(&bot->vertices[start_and_end.second]));
+
+		   ON_BezierCurve curve_bez((const ON_3dPointArray)curve_pnts);
+		   ON_NurbsCurve *curve_nurb = ON_NurbsCurve::New();
+		   curve_bez.GetNurbForm(*curve_nurb);
+		   curve_nurb->SetDomain(0.0, 1.0);
+		   //bedges->Append(*curve_nurb);
+
+		   double pt1[3], pt2[3];
+		   int plotres = 1000;
+		   ON_Interval dom = curve_nurb->Domain();
+		   for (int i = 1; i <= plotres; i++) {
+			   ON_3dPoint p = curve_nurb->PointAt(dom.ParameterAt((double) (i - 1)
+						   / (double)plotres));
+			   VMOVE(pt1, p);
+			   p = curve_nurb->PointAt(dom.ParameterAt((double) i / (double)plotres));
+			   VMOVE(pt2, p);
+			   pdv_3move(plot, pt1); 
+			   pdv_3cont(plot, pt2);
+		   }
+}
+}
+
+	   }
+   } else {
+	// use PCL fitting routine for a full loop fit.
+   }
+
 
 }
 
-void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch> *patches, FILE* plot) {
+void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch> *patches, ON_SimpleArray<ON_NurbsCurve> *bedges, FILE* plot) {
         FaceCategorization face_groups;
         FaceCategorization::iterator fg_1, fg_2;
         EdgeToFace edge_to_face;
@@ -436,7 +518,7 @@ void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch
 
 			}
 			//std::cout << "Patch: " << curr_patch.id << "\n";
-                        find_edges(bot, &curr_patch, plot, &edge_to_patch);
+                        find_edges(bot, &curr_patch, plot, bedges, &edge_to_patch);
 			patches->insert(curr_patch);
                         if (group_faces.empty() && !second_tier.empty()) {
 			   group_faces.swap(second_tier);
@@ -462,6 +544,8 @@ main (int argc, char *argv[])
    std::set<Patch>::iterator p_it;
    //ON_Brep *brep = ON_Brep::New();
    FaceList::iterator f_it;
+
+   ON_SimpleArray<ON_NurbsCurve> edges;
 
    vectors.insert(*(new ThreeDPoint(-1,0,0)));
    vectors.insert(*(new ThreeDPoint(0,-1,0)));
@@ -510,7 +594,7 @@ main (int argc, char *argv[])
    }
    RT_BOT_CK_MAGIC(bot_ip);
 
-   make_structure(bot_ip, &vectors, &patches, plot); 
+   make_structure(bot_ip, &vectors, &patches, &edges, plot); 
 #if 0
    for (p_it = patches.begin(); p_it != patches.end(); p_it++) {
        std::cout << "Found patch " << (*p_it).id << "\n";
