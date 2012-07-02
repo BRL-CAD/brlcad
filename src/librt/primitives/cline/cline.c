@@ -1139,7 +1139,7 @@ rt_cline_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
  *
  */
 int
-rt_cline_to_pipe(struct rt_pipe_internal *pipe, const struct rt_db_internal *ip)
+rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip)
 {
     struct rt_cline_internal *cip;
     struct wdb_pipept *point, *point2;
@@ -1151,20 +1151,20 @@ rt_cline_to_pipe(struct rt_pipe_internal *pipe, const struct rt_db_internal *ip)
     cip = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cip);
 
-    if (!pipe)
+    if (!pipep)
 	return -1;
 
-    pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
-    pipe->pipe_count = 1;
+    pipep->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
+    pipep->pipe_count = 1;
 
-    BU_LIST_INIT(&pipe->pipe_segs_head);
+    BU_LIST_INIT(&pipep->pipe_segs_head);
     BU_GET(point, struct wdb_pipept);
     point->pp_bendradius = 0.0;
     VMOVE(point->pp_coord, cip->v);
     point->l.magic = WDB_PIPESEG_MAGIC;
     point->pp_od = cip->radius * 2;
     point->pp_id = (cip->radius - cip->thickness) * 2;
-    BU_LIST_APPEND(&pipe->pipe_segs_head, &point->l);
+    BU_LIST_APPEND(&pipep->pipe_segs_head, &point->l);
 
     BU_GET(point2, struct wdb_pipept);
     point2->pp_bendradius = 0.0;
@@ -1172,7 +1172,7 @@ rt_cline_to_pipe(struct rt_pipe_internal *pipe, const struct rt_db_internal *ip)
     point2->l.magic = WDB_PIPESEG_MAGIC;
     point2->pp_od = cip->radius * 2;
     point2->pp_id = (cip->radius - cip->thickness) * 2;
-    BU_LIST_APPEND(&pipe->pipe_segs_head, &point2->l);
+    BU_LIST_APPEND(&pipep->pipe_segs_head, &point2->l);
 
     return 0;
 }
