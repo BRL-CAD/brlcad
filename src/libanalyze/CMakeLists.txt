@@ -14,7 +14,7 @@ set(LIBANALYZE_SOURCES
 
 #BRLCAD_ADDEXEC(test_density test_density.c "libanalyze;libbu" NO_INSTALL)
 
-BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" libbu)
+BRLCAD_ADDLIB(libanalyze "${LIBANALYZE_SOURCES}" "libbu;librt")
 SET_TARGET_PROPERTIES(libanalyze PROPERTIES VERSION 20.0.1 SOVERSION 20)
 CMAKEFILES(Makefile.am test_density.c)
 
