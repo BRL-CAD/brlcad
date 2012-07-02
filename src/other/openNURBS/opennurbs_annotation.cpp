@@ -97,7 +97,7 @@ bool ON_Annotation::IsLeader() const { return Type() == ON::dtLeader; }
 bool ON_Annotation::IsDimension() const { if( IsText() || IsLeader()) return false; return true; }
 
 //virtual 
-double ON_Annotation::NumericValue() const { return 0.0; }
+double ON_Annotation::NumericValue() { return 0.0; }
 //virtual 
 void ON_Annotation::SetTextToDefault() { SetDefaultText( L""); }
 

@@ -246,7 +246,7 @@ public:
   bool IsLeader() const;
   bool IsDimension() const;
 
-  virtual double NumericValue() const;
+  virtual double NumericValue();
   virtual void SetTextToDefault();
 
   void SetType( ON::eAnnotationType type );

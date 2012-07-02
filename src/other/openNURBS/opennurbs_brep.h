@@ -232,6 +232,7 @@ public:
   Returns:
     The trim brep.m_T[edge.m_ti[eti]];
   */
+  using ON_CurveProxy::Trim;
   ON_BrepTrim* Trim( int eti ) const;
 
   /*
