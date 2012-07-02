@@ -75,6 +75,40 @@ struct region_pair {
     vect_t coord;
 };
 
+/*
+ *      Voxel specific structures
+ */
+
+/**
+ * This structure is for lists that store region names for each voxel
+ */
+
+struct voxelRegion {
+    const char *regionName;
+    fastf_t regionDistance;
+    struct voxelRegion *nextRegion;
+};
+
+/**
+ * This structure stores the information about voxels provided by a single raytrace.
+ */
+
+struct rayInfo {
+    fastf_t sizeVoxel[3];
+    fastf_t *fillDistances;
+    struct voxelRegion *regionList;
+};
+
+/**
+ * This structure stores the user defined parameters for the voxelization
+ */
+
+struct paramVoxelize {
+    fastf_t sizeVoxel[3];
+    int levelOfDetail;
+    fastf_t threshold;
+};
+
 /**
  *     Routine to parse a .density file
  */
@@ -91,6 +125,45 @@ ANALYZE_EXPORT extern struct region_pair *add_unique_pair(struct region_pair *li
 							  struct region *r1,
 							  struct region *r2,
 							  double dist, point_t pt);
+
+/**
+ * rt_shootray() was told to call this on a hit.
+ *
+ * This callback routine utilizes the application structure which
+ * describes the current state of the raytrace.
+ *
+ * This callback routine is provided a circular linked list of
+ * partitions, each one describing one in and out segment of one
+ * region for each region encountered.
+ *
+ * The 'segs' segment list is unused in this example.
+ */
+int
+hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs));
+
+/**
+ * Function to print values to Screen
+ */
+void
+printToScreen(char inout, int x, int y, int z, const char *a, fastf_t fill);
+
+/**
+ * Function to print values to File
+ */
+void
+printToFile(char inout, int x, int y, int z, const char *a, fastf_t fill);
+
+/**
+ * Function to assign a new region to a voxel.
+ */
+void
+setRegionName(struct bu_vls **vp, const char **nameSource, const char **nameDestination);
+
+/**
+ * voxelize function takes raytrace instance and user parameters as inputs
+ */
+void
+voxelize(struct rt_i *rtip, struct paramVoxelize *userParameters, void (*printFunction)(char ch, int x, int y, int z, const char *regionName, fastf_t percentageFill));
 
 
 __END_DECLS
