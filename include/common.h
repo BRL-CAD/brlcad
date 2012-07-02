@@ -335,6 +335,12 @@ typedef ptrdiff_t ssize_t;
    typedef _TCHAR TCHAR;
 #endif
 
+/* Avoid -Wundef warnings for system headers that use __STDC_VERSION__ without
+ * checking if it's defined.
+ */
+#if !defined(__STDC_VERSION__)
+#  define __STDC_VERSION__ 0
+#endif
 
 #endif  /* __COMMON_H__ */
 /** @} */
