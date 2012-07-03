@@ -145,8 +145,11 @@ void print_volume_table(struct ged *gedp
 
 	/* field 1 */
 	field = 1;
-	table.rows[i].fields[1].nchars = sprintf(table.rows[i].fields[field].buf, "%10.8f",
-						 val);
+    if (val < 0) {
+ 	table.rows[i].fields[1].nchars = sprintf(table.rows[i].fields[field].buf, "COULD NOT DETERMINE");
+    } else {
+	table.rows[i].fields[1].nchars = sprintf(table.rows[i].fields[field].buf, "%10.8f", val);
+    }
 	if (maxwidth[field] < table.rows[i].fields[field].nchars)
 	    maxwidth[field] = table.rows[i].fields[field].nchars;
     }
@@ -1041,23 +1044,16 @@ analyze_ell(struct ged *gedp, const struct rt_db_internal *ip)
     rt_functab[ID_ELL].ft_volume(&vol, ip);
     rt_functab[ID_ELL].ft_surf_area(&area, ip);
 
-    bu_vls_printf(gedp->ged_result_str, "\nELL Volume = %.8f (%.8f gal)",
+    print_volume_table(gedp,
             vol
             * gedp->ged_wdbp->dbip->dbi_base2local
             * gedp->ged_wdbp->dbip->dbi_base2local
             * gedp->ged_wdbp->dbip->dbi_base2local,
+            area
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
             vol/GALLONS_TO_MM3
             );
-
-    if (area < 0) {
-        bu_vls_printf(gedp->ged_result_str, "\nCannot find surface area\n");
-    } else {
-        bu_vls_printf(gedp->ged_result_str, "   Surface Area = %.8f\n",
-                area
-                * gedp->ged_wdbp->dbip->dbi_base2local
-                * gedp->ged_wdbp->dbip->dbi_base2local
-                );
-    }
 }
 
 
@@ -1089,16 +1085,11 @@ analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
     type = 0;
 
     vol = 4.0 * M_PI * ma * mb * mc / 3.0;
-    bu_vls_printf(gedp->ged_result_str, "SUPERELL Volume = %.8f (%.8f gal)",
-		  vol*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
-		  vol/GALLONS_TO_MM3);
 
     if (fabs(ma-mb) < .00001 && fabs(mb-mc) < .00001) {
 	/* have a sphere */
 	sur_area = 4.0 * M_PI * ma * ma;
-	bu_vls_printf(gedp->ged_result_str, "   Surface Area = %.8f\n",
-		      sur_area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
-	return;
+	goto print_results;
     }
     if (fabs(ma-mb) < .00001) {
 	/* A == B */
@@ -1154,8 +1145,17 @@ analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 	    (M_PI * (minor*minor/ecc) * log((1.0+ecc)/(1.0-ecc)));
     }
 
-    bu_vls_printf(gedp->ged_result_str, "   Surface Area = %.8f\n",
-		  sur_area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
+print_results:
+    print_volume_table(gedp,
+            vol
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            sur_area
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            vol/GALLONS_TO_MM3
+            );
 }
 
 
@@ -1174,23 +1174,16 @@ analyze_tgc(struct ged *gedp, const struct rt_db_internal *ip)
 		  /*area_top*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,*/
 		  /*area_side*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);*/
 
-    bu_vls_printf(gedp->ged_result_str, "\nVolume=%.8f (%.8f gal)",
+    print_volume_table(gedp,
             vol
             * gedp->ged_wdbp->dbip->dbi_base2local
             * gedp->ged_wdbp->dbip->dbi_base2local
             * gedp->ged_wdbp->dbip->dbi_base2local,
+            area
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
             vol/GALLONS_TO_MM3
             );
-
-    if (area < 0) {
-        bu_vls_printf(gedp->ged_result_str, "\nCannot find surface area\n");
-    } else {
-        bu_vls_printf(gedp->ged_result_str, "    Surface Area=%.8f\n",
-                area
-                * gedp->ged_wdbp->dbip->dbi_base2local
-                * gedp->ged_wdbp->dbip->dbi_base2local
-                );
-    }
 }
 
 
