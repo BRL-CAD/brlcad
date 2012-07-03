@@ -185,8 +185,8 @@ rt_arb_get_cgtype(
     int numuvec, unique;
     int si = 2;         /* working index into svec */
     int dup_list = 0;   /* index for the first two entries in svec */
-    int idx = 1;
-
+    int idx = 1;        /* index to the beginning of a list of duplicate vertices in svec,
+                         * compared against si to determine length of list */
     RT_ARB_CK_MAGIC(arb);
     BN_CK_TOL(tol);
 
@@ -208,19 +208,16 @@ rt_arb_get_cgtype(
         if (!unique) {
             /* record length */
             svec[dup_list] = si - idx;
-            if (!dup_list) {
-                /* arb5 has only one set of duplicate points so end early */
-                if (si == 5 && svec[5] >= 6) {
-                    break;
-                }
-                /* remember the current index so we can compare
-                 * the new value of si to it later */
-                idx = si++;
-                dup_list = 1;
-            } else {
-                /* second set of duplicates, we're finished looking */
-                break;
-            }
+
+            /* arb5 only has one set of duplicates, end early */
+            if (si == 5 && svec[5] >= 6) break;
+            /* second list of duplicates, done looking */
+            if (dup_list) break;
+
+            /* remember the current index so we can compare
+             * the new value of si to it later */
+            idx = si++;
+            dup_list = 1;
         }
     }
 
@@ -246,31 +243,29 @@ rt_arb_get_cgtype(
 
     /* Figure out what kind of ARB this is */
     switch (numuvec) {
+    case 8:
+        *cgtype = ARB8;     /* ARB8 */
+        break;
 
-	case 8:
-	    *cgtype = ARB8;		/* ARB8 */
-	    break;
+    case 6:
+        *cgtype = ARB7;     /* ARB7 */
+        break;
 
-	case 6:
-	    *cgtype = ARB7;		/* ARB7 */
-	    break;
+    case 4:
+        if (svec[0] == 2)
+            *cgtype = ARB6; /* ARB6 */
+        else
+            *cgtype = ARB5; /* ARB5 */
+        break;
 
-	case 4:
-	    if (svec[0] == 2)
-		*cgtype = ARB6;	/* ARB6 */
-	    else
-		*cgtype = ARB5;	/* ARB5 */
-	    break;
+    case 2:
+        *cgtype = ARB4;     /* ARB4 */
+        break;
 
-	case 2:
-	    *cgtype = ARB4;		/* ARB4 */
-	    break;
-
-	default:
-	    bu_log("rt_arb_get_cgtype: bad number of unique vectors (%d)\n",
-		   numuvec);
-
-	    return 0;
+    default:
+        bu_log("rt_arb_get_cgtype: bad number of unique vectors (%d)\n",
+                numuvec);
+        return 0;
     }
     return numuvec;
 }
@@ -309,8 +304,9 @@ rt_arb_std_type(const struct rt_db_internal *ip, const struct bn_tol *tol)
     arb = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    if (rt_arb_get_cgtype(&cgtype, arb, tol, uvec, svec) == 0)
-	return 0;
+    /* return rt_arb_get_cgtype(...); causes segfault in bk_mk_plane_3pts() when
+     * using analyze command */
+    if (rt_arb_get_cgtype(&cgtype, arb, tol, uvec, svec) == 0) return 0;
 
     return cgtype;
 }
