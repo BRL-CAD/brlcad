@@ -669,8 +669,7 @@ findang(fastf_t *angles, fastf_t *unitv)
 }
 
 
-/* Analyzes an arb face
- */
+/* Analyzes an arb face */
 static fastf_t
 analyze_face(struct ged *gedp, int face, fastf_t *center_pt,
              const struct rt_arb_internal *arb, int type,
@@ -679,11 +678,11 @@ analyze_face(struct ged *gedp, int face, fastf_t *center_pt,
 /* reference center point */
 
 {
-    int a, b, c, d;     /* 4 points of face to look at */
-    fastf_t angles[5];  /* direction cosines, rot, fb */
+    int a, b, c, d;         /* 4 points of face to look at */
+    fastf_t angles[5];      /* direction cosines, rot, fb */
     fastf_t face_area;
     plane_t plane;
-    vect_t v_tmp[3];    /* array of vects to store intermediate calculations */
+    vect_t c_a, d_b, tmp;   /* tmp vectors to store intermediate calculations */
 
     a = rt_arb_faces[type][face*4+0];
     b = rt_arb_faces[type][face*4+1];
@@ -721,11 +720,11 @@ analyze_face(struct ged *gedp, int face, fastf_t *center_pt,
     /* find the surface area of this face.
      * for planar quadrilateral Q:V0,V1,V2,V3 with unit normal N,
      * area = N/2 ⋅ [(V2 - V0) x (V3 - V1)] */
-    VSUB2(v_tmp[0], arb->pt[c], arb->pt[a]);
-    VSUB2(v_tmp[1], arb->pt[d], arb->pt[b]);
-    VCROSS(v_tmp[2], v_tmp[0], v_tmp[1]);
+    VSUB2(c_a, arb->pt[c], arb->pt[a]);
+    VSUB2(d_b, arb->pt[d], arb->pt[b]);
+    VCROSS(tmp, c_a, d_b);
 
-    face_area = fabs(VDOT(plane, v_tmp[2])) / 2.0;
+    face_area = fabs(VDOT(plane, tmp)) / 2.0;
 
     /* don't printf, just sprintf! */
     /* these rows have 8 fields */
@@ -909,15 +908,18 @@ ccw(const void *x, const void *y)
  * unsigned area of face in face->area
  * centroid of face in face->center_pt */
 static void
-analyze_arbn_face(struct arbn_face *face)
+analyze_arbn_face(struct ged *gedp, struct arbn_face *face, int face_idx, row_t *row)
 {
     int i;
     vect_t tmp, sum;
+    fastf_t angles[5];
     /* sum needs to be reset */
     VSETALL(sum, 0.0);
 
     /* sort points into counter-clockwise order */
-    qsort(face->pts, face->npts, sizeof(face->pts[0]), ccw);
+    qsort(face->pts, face->npts, sizeof(struct arbn_pt), ccw);
+
+    findang(angles, face->plane_eqn);
 
     for (i = 0; i < face->npts; i++) {
         /* sum vertices for centroid */
@@ -929,6 +931,19 @@ analyze_arbn_face(struct arbn_face *face)
 
     VSCALE(face->center_pt, face->center_pt, 1.0 / face->npts);
     face->area = fabs(VDOT(face->plane_eqn, sum)) / 2.0;
+
+    /* store face information for pretty printing */
+    row->nfields = 8;
+    row->fields[0].nchars = sprintf(row->fields[0].buf, "%4d", face_idx);
+    row->fields[1].nchars = sprintf(row->fields[1].buf, "%10.8f", angles[3]);
+    row->fields[2].nchars = sprintf(row->fields[2].buf, "%10.8f", angles[4]);
+    row->fields[3].nchars = sprintf(row->fields[3].buf, "%10.8f", face->plane_eqn[X]);
+    row->fields[4].nchars = sprintf(row->fields[4].buf, "%10.8f", face->plane_eqn[Y]);
+    row->fields[5].nchars = sprintf(row->fields[5].buf, "%10.8f", face->plane_eqn[Z]);
+    row->fields[6].nchars = sprintf(row->fields[6].buf, "%10.8f",
+            face->plane_eqn[W]*gedp->ged_wdbp->dbip->dbi_base2local);
+    row->fields[7].nchars = sprintf(row->fields[7].buf, "%10.8f",
+            face->area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
 }
 
 #define ADD_POINT(face) { \
@@ -943,6 +958,7 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 {
     size_t i, j, k, l;
     fastf_t tot_vol = 0.0, tot_area = 0.0;
+    table_t table;
     struct arbn_face *faces;
     struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
 
@@ -986,7 +1002,7 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 
     for (i = 0; i < aip->neqn; i++) {
         /* calculate surface area */
-        analyze_arbn_face(&faces[i]);
+        analyze_arbn_face(gedp, &faces[i], i, &table.rows[i]);
         tot_area += faces[i].area;
 
         /* calculate volume */
@@ -1000,6 +1016,9 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
         bu_free((char *)faces[i].pts, "analyze_arbn: pts");
     }
     bu_free((char *)faces, "analyze_arbn: faces");
+
+    table.nrows = aip->neqn;
+    print_faces_table(gedp, &table);
 
     print_volume_table(gedp,
             tot_vol
@@ -1348,15 +1367,21 @@ struct bot_face
 
 
 static void
-analyze_bot_face(struct ged *gedp, struct bot_face *face, const struct rt_bot_internal *bot)
+analyze_bot_face(struct ged *gedp, struct bot_face *face, const struct rt_bot_internal *bot, row_t *row)
 {
+    int a, b, c;        /* indexes into bot->vertices */
     point_t p1, p2, p3;
     vect_t p2_p1, p3_p1, tmp;
+    fastf_t angles[5];
 
     /* find the 3 vertices that make up this face */
-    VMOVE(p1, &bot->vertices[bot->faces[face->idx * ELEMENTS_PER_POINT + 0] * ELEMENTS_PER_POINT]);
-    VMOVE(p2, &bot->vertices[bot->faces[face->idx * ELEMENTS_PER_POINT + 1] * ELEMENTS_PER_POINT]);
-    VMOVE(p3, &bot->vertices[bot->faces[face->idx * ELEMENTS_PER_POINT + 2] * ELEMENTS_PER_POINT]);
+    a = bot->faces[face->idx * ELEMENTS_PER_POINT + 0];
+    b = bot->faces[face->idx * ELEMENTS_PER_POINT + 1];
+    c = bot->faces[face->idx * ELEMENTS_PER_POINT + 2];
+
+    VMOVE(p1, &bot->vertices[a * ELEMENTS_PER_POINT]);
+    VMOVE(p2, &bot->vertices[b * ELEMENTS_PER_POINT]);
+    VMOVE(p3, &bot->vertices[c * ELEMENTS_PER_POINT]);
 
     /* find normal, needed to calculate volume */
     if (bot->bot_flags != RT_BOT_HAS_SURFACE_NORMALS) {
@@ -1371,6 +1396,8 @@ analyze_bot_face(struct ged *gedp, struct bot_face *face, const struct rt_bot_in
         VMOVE(face->normal, &bot->normals[face->idx * ELEMENTS_PER_VECT]);
     }
 
+    findang(angles, face->normal);
+
     /* calculate area, take cross product of two legs
      * of the bot face and divide by 2 */
     VSUB2(p2_p1, p2, p1);
@@ -1381,6 +1408,19 @@ analyze_bot_face(struct ged *gedp, struct bot_face *face, const struct rt_bot_in
     /* calculate centroid */
     VADD3(tmp, p1, p2, p3);
     VSCALE(face->centroid, tmp, 1.0/3.0);
+
+    /* store face information for pretty printing */
+    row->nfields = 8;
+    row->fields[0].nchars = sprintf(row->fields[0].buf, "%d%d%d ", a, b, c);
+    row->fields[1].nchars = sprintf(row->fields[1].buf, "%10.8f", angles[3]);
+    row->fields[2].nchars = sprintf(row->fields[2].buf, "%10.8f", angles[4]);
+    row->fields[3].nchars = sprintf(row->fields[3].buf, "%10.8f", face->normal[X]);
+    row->fields[4].nchars = sprintf(row->fields[4].buf, "%10.8f", face->normal[Y]);
+    row->fields[5].nchars = sprintf(row->fields[5].buf, "%10.8f", face->normal[Z]);
+    row->fields[6].nchars = sprintf(row->fields[6].buf, "%10.8f",
+            face->normal[W]*gedp->ged_wdbp->dbip->dbi_base2local);
+    row->fields[7].nchars = sprintf(row->fields[7].buf, "%10.8f",
+            face->area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
 }
 
 
@@ -1390,6 +1430,7 @@ analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
 {
     size_t i;
     fastf_t tot_area = 0.0, tot_vol = 0.0;
+    table_t table;
     struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
     struct bot_face faces[bot->num_faces];
@@ -1397,7 +1438,7 @@ analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
     for (i = 0; i < bot->num_faces; i++) {
         /* surface area */
         faces[i].idx = i;
-        analyze_bot_face(gedp, &faces[i], bot);
+        analyze_bot_face(gedp, &faces[i], bot, &table.rows[i]);
         tot_area += faces[i].area;
 
         /* volume */
@@ -1406,6 +1447,9 @@ analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
         tot_vol += fabs(VDOT(faces[i].centroid, tmp));
     }
     tot_vol /= 3.0;
+
+    table.nrows = bot->num_faces;
+    print_faces_table(gedp, &table);
 
     print_volume_table(gedp,
             tot_vol
