@@ -909,9 +909,9 @@ static void
 analyze_arbn_face(struct arbn_face *face)
 {
     int i;
-    vect_t tmp[2];
-    /* tmp[1] needs to be reset */
-    VSETALL(tmp[1], 0.0);
+    vect_t tmp, sum;
+    /* sum needs to be reset */
+    VSETALL(sum, 0.0);
 
     /* sort points into counter-clockwise order */
     qsort(face->pts, face->npts, sizeof(face->pts[0]), ccw);
@@ -920,12 +920,12 @@ analyze_arbn_face(struct arbn_face *face)
         /* sum vertices for centroid */
         VADD2(face->center_pt, face->center_pt, face->pts[i].pt);
         /* walk edges of face, summing cross products of vertices as we go to calculate area */
-        VCROSS(tmp[0], face->pts[i].pt, face->pts[i + 1 == face->npts ? 0 : i + 1].pt);
-        VADD2(tmp[1], tmp[1], tmp[0]);
+        VCROSS(tmp, face->pts[i].pt, face->pts[i + 1 == face->npts ? 0 : i + 1].pt);
+        VADD2(sum, sum, tmp);
     }
 
     VSCALE(face->center_pt, face->center_pt, 1.0 / face->npts);
-    face->area = fabs(VDOT(face->plane_eqn, tmp[1])) / 2.0;
+    face->area = fabs(VDOT(face->plane_eqn, sum)) / 2.0;
 }
 
 #define ADD_POINT(face) { \
