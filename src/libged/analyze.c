@@ -703,19 +703,18 @@ analyze_face(struct ged *gedp, int face, fastf_t *center_pt,
         return 0;
     }
 
-    /* The plane equations returned by planeqn above do not
-     * necessarily point outward. Use the reference center
-     * point for the arb and reverse direction for
-     * any errant planes. This corrects the output rotation,
-     * fallback angles so that they always give the outward
-     * pointing normal vector. */
+    /* The plane equations returned by bn_mk_plane_3pts above do
+     * not necessarily point outward. Use the reference center
+     * point for the arb and reverse direction for any errant planes.
+     * This corrects the output rotation, fallback angles so that
+     * they always give the outward pointing normal vector. */
     if (DIST_PT_PLANE(center_pt, plane) > 0.0) {
         HSCALE(plane, plane, -1.0);
     }
 
     /* plane[] contains normalized eqn of plane of this face
      * find the dir cos, rot, fb angles */
-    findang(angles, &plane[0]);
+    findang(angles, plane);
 
     /* find the surface area of this face.
      * for planar quadrilateral Q:V0,V1,V2,V3 with unit normal N,
@@ -1037,7 +1036,6 @@ static void
 analyze_tor(struct ged *gedp, const struct rt_db_internal *ip)
 {
     fastf_t vol, area;
-
     rt_functab[ID_TOR].ft_volume(&vol, ip);
     rt_functab[ID_TOR].ft_surf_area(&area, ip);
 
@@ -1059,7 +1057,6 @@ static void
 analyze_ell(struct ged *gedp, const struct rt_db_internal *ip)
 {
     fastf_t vol, area = -1;
-
     rt_functab[ID_ELL].ft_volume(&vol, ip);
     rt_functab[ID_ELL].ft_surf_area(&area, ip);
 
@@ -1183,7 +1180,6 @@ static void
 analyze_tgc(struct ged *gedp, const struct rt_db_internal *ip)
 {
     fastf_t vol, area = -1;
-
     rt_functab[ID_TGC].ft_volume(&vol, ip);
     rt_functab[ID_TGC].ft_surf_area(&area, ip);
 
@@ -1241,7 +1237,6 @@ static void
 analyze_rpc(struct ged *gedp, const struct rt_db_internal *ip)
 {
     fastf_t vol, area;
-
     rt_functab[ID_RPC].ft_volume(&vol, ip);
     rt_functab[ID_RPC].ft_surf_area(&area, ip);
 
