@@ -1347,7 +1347,7 @@ analyze_epa(struct ged *gedp, const struct rt_db_internal *ip)
 
 struct bot_face
 {
-    size_t idx; /* face index, ranges from 0 -> bot.num_faces */
+    size_t idx; /* face index, 0 <= idx < num_faces */
     point_t centroid;
     plane_t normal;
     fastf_t area;
@@ -1357,39 +1357,37 @@ struct bot_face
 static void
 analyze_bot_face(struct ged *gedp, struct bot_face *face, const struct rt_bot_internal *bot)
 {
-    size_t j;
-    vect_t face_verts[3];
-    vect_t tmp[3];
+    point_t p1, p2, p3;
+    vect_t p2_p1, p3_p1, tmp;
 
     /* find the 3 vertices that make up this face */
-    for (j = 0; j < 3; j++) {
-        VMOVE(face_verts[j], &bot->vertices[bot->faces[face->idx*3+j] * 3]);
-    }
+    VMOVE(p1, &bot->vertices[bot->faces[face->idx * ELEMENTS_PER_POINT + 0] * ELEMENTS_PER_POINT]);
+    VMOVE(p2, &bot->vertices[bot->faces[face->idx * ELEMENTS_PER_POINT + 1] * ELEMENTS_PER_POINT]);
+    VMOVE(p3, &bot->vertices[bot->faces[face->idx * ELEMENTS_PER_POINT + 2] * ELEMENTS_PER_POINT]);
 
     /* find normal, needed to calculate volume */
     if (bot->bot_flags != RT_BOT_HAS_SURFACE_NORMALS) {
-        if (bn_mk_plane_3pts(face->normal, face_verts[2], face_verts[1], face_verts[0],
-                    &gedp->ged_wdbp->wdb_tol) < 0) {
+        if (UNLIKELY(bn_mk_plane_3pts(face->normal, p1, p2, p3, &gedp->ged_wdbp->wdb_tol) < 0)) {
             bu_vls_printf(gedp->ged_result_str,
                     "analyze_bot: bad BOT, points (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f) do not form a plane\n",
-                    V3ARGS(face_verts[2]), V3ARGS(face_verts[1]), V3ARGS(face_verts[0]));
+                    V3ARGS(p1), V3ARGS(p2), V3ARGS(p3));
             return;
         }
     } else if (bot->normals) {
         /* if bot->normals array already exists, use those instead */
-        VMOVE(face->normal, &bot->normals[face->idx*3]);
+        VMOVE(face->normal, &bot->normals[face->idx * ELEMENTS_PER_VECT]);
     }
 
     /* calculate area, take cross product of two legs
      * of the bot face and divide by 2 */
-    VSUB2(tmp[0], face_verts[1], face_verts[0]);
-    VSUB2(tmp[1], face_verts[2], face_verts[0]);
-    VCROSS(tmp[2], tmp[1], tmp[0]);
-    face->area = MAGNITUDE(tmp[2]) * 0.5;
+    VSUB2(p2_p1, p2, p1);
+    VSUB2(p3_p1, p3, p1);
+    VCROSS(tmp, p3_p1, p2_p1);
+    face->area = MAGNITUDE(tmp) * 0.5;
 
     /* calculate centroid */
-    VADD3(tmp[2], face_verts[2], face_verts[1], face_verts[0]);
-    VSCALE(face->centroid, tmp[2], 1.0/3.0);
+    VADD3(tmp, p1, p2, p3);
+    VSCALE(face->centroid, tmp, 1.0/3.0);
 }
 
 
