@@ -34,7 +34,7 @@
  * R T _ P A R T _ B R E P
  */
 extern "C" void
-rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     struct rt_part_internal *pip;
 
@@ -112,7 +112,6 @@ rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     // Last, the h-hemisphere.
     ON_Plane hplane = ON_Plane(ON_3dPoint(origin), ON_3dPoint(pip->part_H), ON_3dPoint(r));
     ON_Circle hcircle = ON_Circle(hplane, pip->part_hrad);
-    ON_NurbsCurve *tnurbscurve2 = ON_NurbsCurve::New();
     ON_NurbsCurve *h_curve = ON_NurbsCurve::New();
     const ON_Interval subinterval2 = ON_Interval(ON_PI/2.0 - temp, 0);
     ON_Arc h_arc(hcircle, subinterval2);
