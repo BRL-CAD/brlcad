@@ -145,8 +145,6 @@ rt_superell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_t
 	surface[0]->SetKnot(1, 2, 1);
 	surface[0]->SetKnot(1, 3, 1);
 
-	ON_3dPoint cv3d;
-
 	// Surface 1
 	surface[0]->SetCV(0, 0, ON_4dPoint(0, 0, -1, 1));
 	surface[0]->SetCV(0, 2, ON_4dPoint(1, 0, 0, 1));
