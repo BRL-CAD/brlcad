@@ -73,6 +73,13 @@ rt_superell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_t
     const fastf_t cos45 = cos(ON_PI/4.0);
     fastf_t weight_e = (pow(cos45, sip->e) - 0.5) / (1 - pow(cos45, sip->e));
     fastf_t weight_n = (pow(cos45, sip->n) - 0.5) / (1 - pow(cos45, sip->n));
+    // When the center (origin) is used as a control point
+    if (weight_e < 0) {
+	weight_e = (pow(cos45, sip->e) - 0.5) / pow(cos45, sip->e);
+    }
+    if (weight_n < 0) {
+	weight_n = (pow(cos45, sip->n) - 0.5) / pow(cos45, sip->n);
+    }
 
     // Change the weight of the control points. rt_ell_brep() creates a NURBS surface with 9*5
     // control points.
