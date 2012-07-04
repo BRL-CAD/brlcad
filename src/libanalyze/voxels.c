@@ -35,19 +35,22 @@
  * Function to print values to Screen
  */
 void
-printToScreen(char inout, int x, int y, int z, const char *a, fastf_t fill) {
-    printf("%2c\t(%4d,%4d,%4d)\t%s\t%f\n", inout, x, y, z, a, fill);
+printToScreen(genptr_t callBackData, int x, int y, int z, const char* a, fastf_t fill) {
+    fastf_t *threshold = (fastf_t *)callBackData;
+
+    printf("%f\t(%4d,%4d,%4d)\t%s\t%f\n", *threshold, x, y, z, a, fill);
 }
 
 /**
  * Function to print values to File
  */
 void
-printToFile(char inout, int x, int y, int z, const char *a, fastf_t fill) {
+printToFile(genptr_t callBackData, int x, int y, int z, const char *a, fastf_t fill) {
+    fastf_t *threshold = (fastf_t *)callBackData;
     FILE *fp;
 
     fp = fopen("voxels1.txt","a");
-    fprintf(fp, "%2c\t(%4d,%4d,%4d)\t%s\t%f\n", inout, x, y, z, a, fill);
+    fprintf(fp, "%f\t(%4d,%4d,%4d)\t%s\t%f\n", *threshold, x, y, z, a, fill);
     fclose(fp);
 }
 
@@ -235,22 +238,14 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
  * voxelize function takes raytrace instance and user parameters as inputs
  */
 void
-voxelize(struct rt_i *rtip, struct paramVoxelize *userParameters, void (*printFunction)(char ch, int x, int y, int z, const char *regionName, fastf_t percentageFill)){
+voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*printFunction)(genptr_t callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), genptr_t callBackData){
 
     struct application ap;
     struct rayInfo voxelHits;
     struct voxelRegion *tmp, *old;
 
-    int i, j, k, numVoxel[3], yMin, zMin, levelOfDetail, rayNum;
-    fastf_t sizeVoxel[3], threshold, *voxelArray, rayTraceDistance, effectiveDistance;
-
-    /* assume voxels are sizeVoxel[0], sizeVoxel[1], sizeVoxel[2] size in each dimension */
-    sizeVoxel[0] = userParameters->sizeVoxel[0];
-    sizeVoxel[1] = userParameters->sizeVoxel[1];
-    sizeVoxel[2] = userParameters->sizeVoxel[2];
-
-    threshold = userParameters->threshold;
-    levelOfDetail = userParameters->levelOfDetail;
+    int i, j, k, numVoxel[3], yMin, zMin, rayNum;
+    fastf_t *voxelArray, rayTraceDistance, effectiveDistance;
 
     /* calculate number oof voxels in each dimension */
     numVoxel[0] = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxel[0]) + 1;
@@ -318,35 +313,20 @@ voxelize(struct rt_i *rtip, struct paramVoxelize *userParameters, void (*printFu
 
 	    /*print results into file name supplied by user*/
 	    for (k = 0; k < numVoxel[0]; k++) {
-		if (voxelArray[k] / effectiveDistance >= threshold) {
-
-		    tmp = voxelHits.regionList + k;
-		    printFunction('1', k, j, i, tmp->regionName, tmp->regionDistance / effectiveDistance);
-		    old = tmp->nextRegion;
-
-		    while(old != NULL) {
-			tmp = old;
-			printFunction(' ', k, j, i, tmp->regionName, tmp->regionDistance / effectiveDistance);
-			old = tmp->nextRegion;
-			/* free the space allocated for new regions */
-			bu_free(tmp, "");
-		     }
-
-		} else {
 
 		    if(voxelHits.regionList[k].regionName==NULL){
 
-			printFunction('0', k, j, i, "air", 1.0);
+			printFunction(callBackData, k, j, i, "air", 1.0);
 
 		    } else {
 
 			tmp = voxelHits.regionList + k;
-			printFunction('0', k, j, i, tmp->regionName, tmp->regionDistance / effectiveDistance);
+			printFunction(callBackData, k, j, i, tmp->regionName, tmp->regionDistance / effectiveDistance);
 			old = tmp->nextRegion;
 
 			while(old != NULL) {
 			    tmp = old;
-			    printFunction(' ', k, j, i, tmp->regionName, tmp->regionDistance / effectiveDistance);
+			    printFunction(callBackData, k, j, i, tmp->regionName, tmp->regionDistance / effectiveDistance);
 			    old = tmp->nextRegion;
 			    /* free the space allocated for new regions */
 			    bu_free(tmp, "");
@@ -354,15 +334,13 @@ voxelize(struct rt_i *rtip, struct paramVoxelize *userParameters, void (*printFu
 
 		    }
 
-		}
-
 		voxelArray[k] = 0.0;
 		voxelHits.regionList[k].regionName = NULL;
 		voxelHits.regionList[k].nextRegion = NULL;
 		voxelHits.regionList[k].regionDistance = 0.0;
+		}
 	    }
 	}
-    }
 
     bu_free(voxelArray, "");
     bu_free(voxelHits.regionList, "");
