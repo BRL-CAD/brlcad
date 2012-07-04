@@ -65,16 +65,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   data members are correct and, iff correct, expand inline-unit-growth
   to accommodate.
 
-* investigate why Eric Raymond's doclifter
-  (http://www.catb.org/~esr/doclifter/)is failing on these man page
-  source files:
+* get dev consensus on format of these man page source files which
+  describe library APIs:
 
-    ./src/anim/anim_sort.1
-    ./src/canon/canonize.1
-    ./src/util/pixrot.1
-    ./src/tab/tabinterp.1
-    ./src/tab/tabsub.1
-    ./src/anim/anim_time.1
     ./src/libbn/libplot3.3
     ./src/libbu/htond.3
     ./src/libbu/redblack.3
