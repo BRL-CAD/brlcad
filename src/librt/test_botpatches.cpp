@@ -406,9 +406,9 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
     // Make some edge curves
     LoopList::iterator l_it;
     for (l_it = patch_loops.begin(); l_it != patch_loops.end(); l_it++) {
-	pl_color(plot, int(256*drand48() + 1.0), int(256*drand48() + 1.0), int(256*drand48() + 1.0));
 	CurveList::iterator c_it;
 	for (c_it = (*l_it).begin(); c_it != (*l_it).end(); c_it++) {
+	    pl_color(plot, int(256*drand48() + 1.0), int(256*drand48() + 1.0), int(256*drand48() + 1.0));
 	    if ((*c_it).edges.size() > 1) {
 		EdgeList::iterator e_it;
 		std::multimap<size_t, size_t> vert_map;
