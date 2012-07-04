@@ -26,7 +26,9 @@ int
 main(int argc, char **argv) {
 
 static struct rt_i *rtip;
-struct paramVoxelize *userParameters;
+fastf_t sizeVoxel[3], threshold;
+int levelOfDetail;
+genptr_t callBackData;
 
 char title[1024] = {0};
 
@@ -67,19 +69,18 @@ char title[1024] = {0};
      */
     rt_prep_parallel(rtip, 1);
 
-    /* allocate space for structure userParameters */
-    userParameters =  bu_calloc(1,sizeof(struct paramVoxelize), "input");
-
     /* user parameters are being given values directly here*/
-    userParameters->sizeVoxel[0] = 1.0;
-    userParameters->sizeVoxel[1] = 1.0;
-    userParameters->sizeVoxel[2] = 1.0;
+    sizeVoxel[0] = 1.0;
+    sizeVoxel[1] = 1.0;
+    sizeVoxel[2] = 1.0;
 
-    userParameters->threshold = 0.5;
-    userParameters->levelOfDetail = 4;
+    threshold = 0.5;
+    levelOfDetail = 4;
+
+    callBackData = (void *)(& threshold);
 
     /* voxelize function is called here with rtip(ray trace instance), userParameters and printToFile/printToScreen options */
-    voxelize(rtip, userParameters, printToFile);
+    voxelize(rtip, sizeVoxel, levelOfDetail, printToScreen, callBackData);
 
     return 0;
 }
