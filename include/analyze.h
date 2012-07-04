@@ -66,8 +66,8 @@ struct density_entry {
 struct region_pair {
     struct bu_list l;
     union {
-        char *name;
-        struct region *r1;
+	char *name;
+	struct region *r1;
     } r;
     struct region *r2;
     unsigned long count;
@@ -100,16 +100,6 @@ struct rayInfo {
 };
 
 /**
- * This structure stores the user defined parameters for the voxelization
- */
-
-struct paramVoxelize {
-    fastf_t sizeVoxel[3];
-    int levelOfDetail;
-    fastf_t threshold;
-};
-
-/**
  *     Routine to parse a .density file
  */
 ANALYZE_EXPORT extern int parse_densities_buffer(char *buf,
@@ -119,7 +109,7 @@ ANALYZE_EXPORT extern int parse_densities_buffer(char *buf,
 						 int *num_densities);
 
 /**
- *     region_pair for gqa 
+ *     region_pair for gqa
  */
 ANALYZE_EXPORT extern struct region_pair *add_unique_pair(struct region_pair *list,
 							  struct region *r1,
@@ -145,13 +135,13 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
  * Function to print values to Screen
  */
 void
-printToScreen(char inout, int x, int y, int z, const char *a, fastf_t fill);
+printToScreen(genptr_t callBackData, int x, int y, int z, const char *a, fastf_t fill);
 
 /**
  * Function to print values to File
  */
 void
-printToFile(char inout, int x, int y, int z, const char *a, fastf_t fill);
+printToFile(genptr_t callBackData, int x, int y, int z, const char *a, fastf_t fill);
 
 /**
  * Function to assign a new region to a voxel.
@@ -163,7 +153,7 @@ setRegionName(struct bu_vls **vp, const char **nameSource, const char **nameDest
  * voxelize function takes raytrace instance and user parameters as inputs
  */
 void
-voxelize(struct rt_i *rtip, struct paramVoxelize *userParameters, void (*printFunction)(char ch, int x, int y, int z, const char *regionName, fastf_t percentageFill));
+voxelize(struct rt_i *rtip, fastf_t voxelSize[3], int levelOfDetail, void (*printFunction)(genptr_t callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), genptr_t callBackData);
 
 
 __END_DECLS
