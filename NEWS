@@ -165,7 +165,7 @@ received corrections and improvements.  The introductory article
 * fixed crash during rt -c "ae 35 25" view change - Bob Parker
 * added -r BoT orientation option on the obj-g importer - Nick Reed
 * added ambient occlusion shading method to rt - Lee Butler
-* fixed attribute handling bug affecting v4 geometry - Daniel Rossberg
+* fixed attribute handling bug affecting v4 geometry - Daniel Roßberg
 * reid command now reports the highest region ID set - Carl Moore
 * batch script shortcuts now set PATH on Windows - Sean Morrison
 * fixed g-obj error when exporting facets - Christopher Pitts
