@@ -108,7 +108,7 @@ received corrections and improvements.  The introductory article
 * fixed various memory leaks in the comgeom-g geometry importer
 	- Tom Browder, Nick Reed
 * fixed comgeom-g bug importing ars primitive objects - Tom Browder
-* added new command-line invocation support to rtwizard -  Cliff Yapp
+* added new command-line invocation support to rtwizard - Cliff Yapp
 * fixed BoT mesh hit offset and vanish TIE render bugs  - Keith Bowman
 * improved nurbs raytracing when shooting from inside - Keith Bowman
 * added 'draw'/'e' -m1 option for shading BoTs in mged - Richard Weiss
