@@ -3172,9 +3172,9 @@ rt_tgc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
         /* approximation */
         c = ELL_CIRCUMFERENCE(mag_a, mag_b);
         *area = c * mag_h + 2.0 * area_base;
+        break;
     case TEC:
     default:
-        /* never reached */
         bu_log("rt_tgc_surf_area(): cannot find surface area\n");
     }
 }

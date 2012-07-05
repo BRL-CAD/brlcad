@@ -587,6 +587,25 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 
 
 /**
+ * R T _ B O T _ C E N T R O I D
+ */
+void
+rt_bot_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    size_t i;
+    struct rt_bot_internal *bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
+    RT_BOT_CK_MAGIC(bot_ip);
+
+    rt_bot_condense(bot_ip);
+    VSETALL(*cent, 0.0);
+    for (i = 0; i < bot_ip->num_vertices; i++) {
+        VADD2(*cent, *cent, &bot_ip->vertices[i*3]);
+    }
+    VSCALE(*cent, *cent, 1.0 / (fastf_t)bot_ip->num_vertices);
+}
+
+
+/**
  * R T _ B O T _ T E S S
  *
  * Returns -
@@ -611,15 +630,8 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 #define RT_BOT_TESS_MAX_FACES 1024
 	size_t faces[RT_BOT_TESS_MAX_FACES];
 	plane_t planes[RT_BOT_TESS_MAX_FACES];
-	fastf_t scale = 1.0;
 
-	rt_bot_condense(bot_ip);
-	VSETALL(center, 0.0);
-	for (i = 0; i < bot_ip->num_vertices; i++) {
-	    VADD2(center, center, &bot_ip->vertices[i*3]);
-	}
-	scale = 1.0 / (fastf_t)bot_ip->num_vertices;
-	VSCALE(center, center, scale);
+    rt_bot_centroid(&center, ip);
 	fprintf(stderr, "center pt = (%g %g %g)\n", V3ARGS(center));
 
 	/* get the faces that use each vertex */

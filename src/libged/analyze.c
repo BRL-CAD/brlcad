@@ -39,6 +39,17 @@
 
 #include "./ged_private.h"
 
+/**
+ * TODO: primitives that still need implementing
+ * ars
+ * ehy
+ * metaball
+ * nmg
+ * part
+ * pipe
+ * rhc
+ */
+
 /* Conversion factor for Gallons to cubic millimeters */
 #define GALLONS_TO_MM3 3785411.784
 
@@ -1183,11 +1194,8 @@ analyze_tgc(struct ged *gedp, const struct rt_db_internal *ip)
     rt_functab[ID_TGC].ft_volume(&vol, ip);
     rt_functab[ID_TGC].ft_surf_area(&area, ip);
 
-    /* reminder to add per-face analysis */
+    /* TODO: implement per-face analysis */
     /*bu_vls_printf(gedp->ged_result_str, "Surface Areas:  base(AxB)=%.8f  top(CxD)=%.8f  side=%.8f\n",*/
-		  /*area_base*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,*/
-		  /*area_top*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,*/
-		  /*area_side*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);*/
 
     print_volume_table(gedp,
             vol
@@ -1202,36 +1210,6 @@ analyze_tgc(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
-/* analyze ars */
-static void
-analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
-{
-    if (ip) RT_CK_DB_INTERNAL(ip);
-
-    bu_vls_printf(gedp->ged_result_str, "ARS analyze not implemented\n");
-}
-
-
-/* XXX analyze spline needed
- * static void
- * analyze_spline(gedp->ged_result_str, ip)
- * struct bu_vls *vp;
- * const struct rt_db_internal *ip;
- * {
- * bu_vls_printf(gedp->ged_result_str, "SPLINE analyze not implemented\n");
- * }
- */
-
-/* analyze particle */
-static void
-analyze_part(struct ged *gedp, const struct rt_db_internal *ip)
-{
-    if (ip) RT_CK_DB_INTERNAL(ip);
-
-    bu_vls_printf(gedp->ged_result_str, "PARTICLE analyze not implemented\n");
-}
-
-
 /* analyze rpc */
 static void
 analyze_rpc(struct ged *gedp, const struct rt_db_internal *ip)
@@ -1240,18 +1218,8 @@ analyze_rpc(struct ged *gedp, const struct rt_db_internal *ip)
     rt_functab[ID_RPC].ft_volume(&vol, ip);
     rt_functab[ID_RPC].ft_surf_area(&area, ip);
 
-    /* reminder to implement per-face analysis */
+    /* TODO: implement per-face analysis */
     /*bu_vls_printf(gedp->ged_result_str, "Surface Areas:  front(BxR)=%.8f  top(RxH)=%.8f  body=%.8f\n",*/
-            /*area_parab*/
-            /** gedp->ged_wdbp->dbip->dbi_base2local*/
-            /** gedp->ged_wdbp->dbip->dbi_base2local,*/
-            /*area_rect*/
-            /** gedp->ged_wdbp->dbip->dbi_base2local*/
-            /** gedp->ged_wdbp->dbip->dbi_base2local,*/
-            /*area_body*/
-            /** gedp->ged_wdbp->dbip->dbi_base2local*/
-            /** gedp->ged_wdbp->dbip->dbi_base2local*/
-            /*);*/
 
     print_volume_table(gedp,
             vol
@@ -1473,10 +1441,6 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 
     switch (ip->idb_type) {
 
-    case ID_ARS:
-        analyze_ars(gedp, ip);
-        break;
-
     case ID_ARB8:
         analyze_arb(gedp, ip);
         break;
@@ -1503,10 +1467,6 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 
     case ID_RHC:
         analyze_rhc(gedp, ip);
-        break;
-
-    case ID_PARTICLE:
-        analyze_part(gedp, ip);
         break;
 
     case ID_SUPERELL:
