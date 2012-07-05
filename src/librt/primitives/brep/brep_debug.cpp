@@ -1844,8 +1844,8 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 				bu_free(tmpname, "char");
 				return ret;
 			    }
-			    bu_log("The conversion of [%s] (type: %s) is skipped. Implicit form remains.\n",
-				tmpname, intern->idb_meth->ft_label);
+			    bu_log("The conversion of [%s] (type: %s) is skipped. Implicit form remains as %s.\n",
+				oldname, intern->idb_meth->ft_label, tmpname);
 			    bu_strlcpy(newtree->tr_l.tl_name, tmpname, strlen(tmpname)+1);
 			    bu_free(tmpname, "char");
 			    return ret;
