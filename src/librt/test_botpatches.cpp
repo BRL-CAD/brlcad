@@ -257,8 +257,8 @@ void find_single_curve_loops(std::set<Curve> *loop_curves, LoopList *loops) {
     }
 }
 
-void find_multicurve_loops(std::set<Curve> *loop_curves, LoopList *loops) {
-
+void find_multicurve_loops(std::set<Curve> *loop_curves, LoopList *loops) 
+{
     // build a map of endpoints to curves
     std::map<size_t, std::set<Curve> > endpts_to_curves;
     CurveList::iterator cl_it;
@@ -267,6 +267,7 @@ void find_multicurve_loops(std::set<Curve> *loop_curves, LoopList *loops) {
 	endpts_to_curves[(*cl_it).start_and_end.second].insert((*cl_it));
     }
 
+    std::set<Curve> unpaired_edges;
     while (!loop_curves->empty()) {
 	std::queue<Curve> curve_queue;
 	CurveList curr_loop;
@@ -274,6 +275,7 @@ void find_multicurve_loops(std::set<Curve> *loop_curves, LoopList *loops) {
 	curve_queue.push(*loop_curves->begin());
 	loop_curves->erase(*loop_curves->begin());
 	while (!curve_queue.empty()) {
+	    int is_matched = 0;
 	    // Add the first edge in the queue
 	    Curve curr_curve = curve_queue.front();
 	    curve_queue.pop();
@@ -293,6 +295,7 @@ void find_multicurve_loops(std::set<Curve> *loop_curves, LoopList *loops) {
 		    curr_loop.find((*curves_it)) == curr_loop.end()) {
 		    curve_queue.push((*curves_it));
 		    loop_curves->erase((*curves_it));
+		    is_matched = 1;
 		}
 	    }
 	    for (curves_it = curves2.begin(); curves_it != curves2.end(); curves_it++) {
@@ -301,29 +304,116 @@ void find_multicurve_loops(std::set<Curve> *loop_curves, LoopList *loops) {
 		    curr_loop.find((*curves_it)) == curr_loop.end()) {
 		    curve_queue.push((*curves_it));
 		    loop_curves->erase((*curves_it));
+		    is_matched = 1;
+		}
+	    }
+
+	    // If none of the curves shared an outer patch with the current curve, we store
+	    // this edge for later.  The first priority is to build curves that do have
+	    // multiple edge segments sharing both patches - only once those curves are built
+	    // and removed from loop_curves can we deal with this edge.
+	    if (!is_matched) {
+		unpaired_edges.insert(curr_curve);
+		curr_loop.erase(curr_curve);
+	    }
+	}
+	if (curr_loop.size() > 0) {
+	    std::cout << "Inserting multicurve loop:" << curr_loop.size() << "\n";
+	    loops->insert(curr_loop);
+	}
+    }
+    // Now, handle the unpaired curve set.
+    while (!unpaired_edges.empty()) {
+	std::queue<Curve> curve_queue;
+	CurveList curr_loop;
+	CurveList::iterator c_it;
+	curve_queue.push(*unpaired_edges.begin());
+	unpaired_edges.erase(*unpaired_edges.begin());
+	while (!curve_queue.empty()) {
+	    // Add the first edge in the queue
+	    Curve curr_curve = curve_queue.front();
+	    curve_queue.pop();
+	    curr_loop.insert(curr_curve);
+	    std::set<Curve> curves1, curves2;
+	    std::set<Curve>::iterator curves_it;
+
+	    // Pull curve id list.
+	    curves1 = endpts_to_curves[curr_curve.start_and_end.first];
+	    curves2 = endpts_to_curves[curr_curve.start_and_end.second];
+	    curves1.erase(curr_curve);
+	    curves2.erase(curr_curve);
+	    // use the curve info - if the curve shares the current patches, add it to the queue
+	    for (curves_it = curves1.begin(); curves_it != curves1.end(); curves_it++) {
+		if ((*curves_it).inner_patch == curr_curve.inner_patch &&
+		    curr_loop.find((*curves_it)) == curr_loop.end()) {
+		    curve_queue.push((*curves_it));
+		    unpaired_edges.erase((*curves_it));
+		}
+	    }
+	    for (curves_it = curves2.begin(); curves_it != curves2.end(); curves_it++) {
+		if ((*curves_it).inner_patch == curr_curve.inner_patch &&
+		    curr_loop.find((*curves_it)) == curr_loop.end()) {
+		    curve_queue.push((*curves_it));
+		    unpaired_edges.erase((*curves_it));
 		}
 	    }
 
 	}
-	CurveList::iterator cu_it;
-	EdgeList::iterator e_it;
-	std::set<size_t> single_verts;
-	std::map<size_t, size_t> vertex_use;
-	std::map<size_t, size_t>::iterator vu_it;
-
-	for (cu_it = curr_loop.begin(); cu_it != curr_loop.end(); cu_it++) {
-	    for (e_it = (*cu_it).edges.begin(); e_it != (*cu_it).edges.end(); e_it++) {
-		vertex_use[(*e_it).first]++;
-		vertex_use[(*e_it).second]++;
-	    }
-	}
-	for (vu_it = vertex_use.begin(); vu_it != vertex_use.end(); vu_it++) {
-	    if ((*vu_it).second == 1) single_verts.insert((*vu_it).first);
-	}
-	if (single_verts.size() != 2 && single_verts.size() != 0) {
-	    printf("Error - loop returned unclosed!\n");
-	}
+	std::cout << "Inserting unpaired edge loop:" << curr_loop.size() << "\n";
 	loops->insert(curr_loop);
+    }
+
+
+}
+
+void find_outer_loop(struct rt_bot_internal *bot, const Patch *patch, LoopList *loops, CurveList *outer_loop)
+{
+    // If we have more than one loop, we need to identify the outer loop.  OpenNURBS handles outer
+    // and inner loops separately, so we need to know which loop is our outer surface boundary.
+    if (loops->size() > 0) {
+	if (loops->size() > 1) {
+	    std::cout << "Loop count: " << loops->size() << "\n";
+	    LoopList::iterator l_it;
+	    fastf_t diag_max = 0.0;
+	    CurveList oloop;
+	    for (l_it = loops->begin(); l_it != loops->end(); l_it++) {
+		vect_t min, max, diag;
+		VSETALL(min, MAX_FASTF);
+		VSETALL(max, -MAX_FASTF);
+		CurveList::iterator c_it;
+		for (c_it = (*l_it).begin(); c_it != (*l_it).end(); c_it++) {
+		    EdgeList::iterator e_it;
+		    for (e_it = (*c_it).edges.begin(); e_it != (*c_it).edges.end(); e_it++) {
+			vect_t ep1, ep2, eproj, eproj2, norm_scale, normal;
+			fastf_t dotP;
+			VMOVE(ep1, &bot->vertices[(*e_it).first]);
+			VMOVE(ep2, &bot->vertices[(*e_it).second]);
+			VSET(normal, patch->category_plane->x, patch->category_plane->y, patch->category_plane->z);
+			dotP = VDOT(ep1, normal);
+			VSCALE(norm_scale, normal, dotP);
+			VSUB2(eproj, ep1, norm_scale);
+			VSCALE(eproj2, eproj, 1.1);
+			VMINMAX(min, max, eproj);
+
+			dotP = VDOT(ep2, normal);
+			VSCALE(norm_scale, normal, dotP);
+			VSUB2(eproj, ep2, norm_scale);
+			VSCALE(eproj2, eproj, 1.1);
+			VMINMAX(min, max, eproj);
+		    }
+		}
+		VSUB2(diag, max, min);
+
+		if (MAGNITUDE(diag) > diag_max) {
+		    diag_max = MAGNITUDE(diag);
+		    oloop = (*l_it);
+		}
+	    }
+	    *outer_loop = oloop;
+	    std::cout << "Outer loop diagonal: " << diag_max << "\n";
+	} else {
+	    *outer_loop = (*(loops->begin()));
+	}
     }
 }
 
@@ -333,6 +423,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
     EdgeList patch_edges;
     LoopList patch_loops;
     LoopList patch_loops_1curve;
+    LoopList patch_loops_all;
 
     // Find the edges of the patch   
     find_edge_segments(bot, (const Patch *)patch, &patch_edges, &vert_to_edge); 
@@ -351,6 +442,17 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
     // assemble multicurve loops - use end points to find candidate curves,
     // then check patch ids to confirm
     find_multicurve_loops(&loop_curves, &patch_loops);
+
+    // Find the outer loop - this will be the outer trimming loop for the NURBS patch
+    CurveList outer_loop;
+    LoopList::iterator all_it;
+    for (all_it = patch_loops_1curve.begin(); all_it != patch_loops_1curve.end(); all_it++) {
+	patch_loops_all.insert((*all_it));
+    }
+    for (all_it = patch_loops.begin(); all_it != patch_loops.end(); all_it++) {
+	patch_loops_all.insert((*all_it));
+    }
+    find_outer_loop(bot, (const Patch *)patch, &patch_loops_all, &outer_loop);
 
 #if 0
     // If we have more than one loop, we need to identify the outer loop.  OpenNURBS handles outer
