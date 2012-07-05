@@ -244,51 +244,35 @@ void find_curves(const Patch *patch, std::set<Curve> *loop_curves, EdgeList *pat
     }
 }
 
-void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_SimpleArray<ON_NurbsCurve> *UNUSED(bedges), EdgeToPatch *edge_to_patch, VertToPatch *vert_to_patch)
-{
-    VertToEdge vert_to_edge;
-    EdgeList patch_edges;
-    LoopList patch_loops;
-    LoopList patch_loops_1curve;
-
-    // Find the edges of the patch   
-    find_edge_segments(bot, (const Patch *)patch, &patch_edges, &vert_to_edge); 
-
-    std::cout << "Patch " << patch->id << " edge total: " << patch_edges.size() << "\n";
-
-    // Assemble the edge segments into curves
-    std::set<Curve> loop_curves;
-    find_curves(patch, &loop_curves, &patch_edges, &vert_to_edge, vert_to_patch, edge_to_patch);
-
-    // We have the curves of the patch - build the loops
-    //
-    // First, pull any curves that are already loops
+void find_single_curve_loops(std::set<Curve> *loop_curves, LoopList *loops) {
     CurveList::iterator cl_it;
-    for (cl_it = loop_curves.begin(); cl_it != loop_curves.end(); cl_it++) {
+    for (cl_it = loop_curves->begin(); cl_it != loop_curves->end(); cl_it++) {
 	if ((*cl_it).start_and_end.first == (*cl_it).start_and_end.second) {
-	    std::cout << "Curve " << (*cl_it).id << " is a loop\n";
+	    //std::cout << "Curve " << (*cl_it).id << " is a loop\n";
 	    CurveList curve_loop;
 	    curve_loop.insert((*cl_it));
-	    patch_loops_1curve.insert(curve_loop);
-	    loop_curves.erase(cl_it);
+	    loops->insert(curve_loop);
+	    loop_curves->erase(cl_it);
 	}
     }
+}
+
+void find_multicurve_loops(std::set<Curve> *loop_curves, LoopList *loops) {
 
     // build a map of endpoints to curves
     std::map<size_t, std::set<Curve> > endpts_to_curves;
-    for (cl_it = loop_curves.begin(); cl_it != loop_curves.end(); cl_it++) {
+    CurveList::iterator cl_it;
+    for (cl_it = loop_curves->begin(); cl_it != loop_curves->end(); cl_it++) {
 	endpts_to_curves[(*cl_it).start_and_end.first].insert((*cl_it));
 	endpts_to_curves[(*cl_it).start_and_end.second].insert((*cl_it));
     }
 
-    // assemble loops - use end points to find candidate curves,
-    // then check patch ids to confirm
-    while (!loop_curves.empty()) {
+    while (!loop_curves->empty()) {
 	std::queue<Curve> curve_queue;
 	CurveList curr_loop;
 	CurveList::iterator c_it;
-	curve_queue.push(*loop_curves.begin());
-	loop_curves.erase(*loop_curves.begin());
+	curve_queue.push(*loop_curves->begin());
+	loop_curves->erase(*loop_curves->begin());
 	while (!curve_queue.empty()) {
 	    // Add the first edge in the queue
 	    Curve curr_curve = curve_queue.front();
@@ -308,7 +292,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 		    (*curves_it).outer_patch == curr_curve.outer_patch &&
 		    curr_loop.find((*curves_it)) == curr_loop.end()) {
 		    curve_queue.push((*curves_it));
-		    loop_curves.erase((*curves_it));
+		    loop_curves->erase((*curves_it));
 		}
 	    }
 	    for (curves_it = curves2.begin(); curves_it != curves2.end(); curves_it++) {
@@ -316,7 +300,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 		    (*curves_it).outer_patch == curr_curve.outer_patch &&
 		    curr_loop.find((*curves_it)) == curr_loop.end()) {
 		    curve_queue.push((*curves_it));
-		    loop_curves.erase((*curves_it));
+		    loop_curves->erase((*curves_it));
 		}
 	    }
 
@@ -339,8 +323,34 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 	if (single_verts.size() != 2 && single_verts.size() != 0) {
 	    printf("Error - loop returned unclosed!\n");
 	}
-	patch_loops.insert(curr_loop);
+	loops->insert(curr_loop);
     }
+}
+
+void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_SimpleArray<ON_NurbsCurve> *UNUSED(bedges), EdgeToPatch *edge_to_patch, VertToPatch *vert_to_patch)
+{
+    VertToEdge vert_to_edge;
+    EdgeList patch_edges;
+    LoopList patch_loops;
+    LoopList patch_loops_1curve;
+
+    // Find the edges of the patch   
+    find_edge_segments(bot, (const Patch *)patch, &patch_edges, &vert_to_edge); 
+
+    std::cout << "Patch " << patch->id << " edge total: " << patch_edges.size() << "\n";
+
+    // Assemble the edge segments into curves
+    std::set<Curve> loop_curves;
+    find_curves(patch, &loop_curves, &patch_edges, &vert_to_edge, vert_to_patch, edge_to_patch);
+
+    // We have the curves of the patch - build the loops
+    //
+    // First, pull any curves that are already loops
+    find_single_curve_loops(&loop_curves, &patch_loops_1curve);
+
+    // assemble multicurve loops - use end points to find candidate curves,
+    // then check patch ids to confirm
+    find_multicurve_loops(&loop_curves, &patch_loops);
 
 #if 0
     // If we have more than one loop, we need to identify the outer loop.  OpenNURBS handles outer
