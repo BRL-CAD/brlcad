@@ -625,7 +625,6 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     RT_CK_DB_INTERNAL(ip);
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
-#if 1
     if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
 #define RT_BOT_TESS_MAX_FACES 1024
 	size_t faces[RT_BOT_TESS_MAX_FACES];
@@ -668,7 +667,6 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
 	return -1;
     }
-#endif
     *r = nmg_mrsv(m);     /* Make region, empty shell, vertex */
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 

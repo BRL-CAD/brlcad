@@ -3217,7 +3217,6 @@ rt_tgc_centroid(point_t *cent, const struct rt_db_internal *ip)
     case TEC:
         /* need to confirm formula */
     default:
-        /* never reached */
         bu_log("rt_tgc_centroid(): cannot find centroid\n");
     }
 }
