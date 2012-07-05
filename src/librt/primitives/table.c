@@ -1049,7 +1049,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_grp_tess,
 	NULL,
-	NULL,
+	rt_grp_brep,
 	rt_grp_import5,
 	rt_grp_export5,
 	rt_grp_import4,

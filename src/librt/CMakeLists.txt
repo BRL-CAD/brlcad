@@ -131,6 +131,7 @@ set(LIBRT_SOURCES
   primitives/extrude/extrude_brep.cpp
   primitives/generic.c
   primitives/grip/grip.c
+  primitives/grip/grip_brep.cpp
   primitives/grip/grip_mirror.c
   primitives/half/half.c
   primitives/half/half_brep.cpp
