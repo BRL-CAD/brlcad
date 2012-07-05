@@ -1388,7 +1388,7 @@ const struct rt_functab rt_functab[] = {
 	rt_bot_bbox,
     NULL,
     NULL,
-    NULL,
+    rt_bot_centroid,
     },
 
     {
