@@ -109,7 +109,7 @@ received corrections and improvements.  The introductory article
 	- Tom Browder, Nick Reed
 * fixed comgeom-g bug importing ars primitive objects - Tom Browder
 * added new command-line invocation support to rtwizard - Cliff Yapp
-* fixed BoT mesh hit offset and vanish TIE render bugs  - Keith Bowman
+* fixed BoT mesh hit offset and vanish TIE render bugs - Keith Bowman
 * improved nurbs raytracing when shooting from inside - Keith Bowman
 * added 'draw'/'e' -m1 option for shading BoTs in mged - Richard Weiss
 * expanded docs on mged listeval and 'l' list commands - Richard Weiss
