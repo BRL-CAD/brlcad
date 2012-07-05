@@ -94,7 +94,12 @@ void PatchToVector3d(struct rt_bot_internal *bot, const Patch *patch, on_fit::ve
 }
 #endif
 
-void plot_curve(struct rt_bot_internal *bot, size_t patch_id, Curve *curve, int r, int g, int b, FILE *c_plot) {
+
+// To plot specific groups of curves in MGED, do the following:
+// set glob_compat_mode 0
+// set pl_list [glob 27_curve*.pl]
+// foreach plfile $pl_list {overlay $plfile}
+void plot_curve(struct rt_bot_internal *bot, size_t patch_id, const Curve *curve, int r, int g, int b, FILE *c_plot) {
 	if(c_plot == NULL) {
 		struct bu_vls name;
 		static FILE* plot = NULL;
@@ -262,6 +267,27 @@ void find_curves(struct rt_bot_internal *bot, const Patch *patch, std::set<Curve
     }
 }
 
+int loop_is_closed(std::set<Curve> *curves) {
+    std::set<Curve>::iterator cv_it;
+    EdgeList::iterator ev_it;
+    std::map<size_t, size_t> vert_use_cnt;
+    std::map<size_t, size_t>::iterator vv_it;
+    int closed = 1;
+    for (cv_it = curves->begin(); cv_it != curves->end(); cv_it++) {
+	    for (ev_it = (*cv_it).edges.begin(); ev_it != (*cv_it).edges.end(); ev_it++) {
+		    vert_use_cnt[(*ev_it).first]++;
+		    vert_use_cnt[(*ev_it).second]++;
+	    }
+    }
+
+    for (vv_it = vert_use_cnt.begin(); vv_it!=vert_use_cnt.end(); vv_it++) {
+	if ((*vv_it).second == 1) {
+	   closed = 0;
+	}
+    }
+    return closed;
+}
+
 void find_single_curve_loops(std::set<Curve> *loop_curves, LoopList *loops) {
     CurveList::iterator cl_it;
     for (cl_it = loop_curves->begin(); cl_it != loop_curves->end(); cl_it++) {
@@ -285,7 +311,6 @@ void find_multicurve_loops(std::set<Curve> *loop_curves, LoopList *loops)
 	endpts_to_curves[(*cl_it).start_and_end.second].insert((*cl_it));
     }
 
-    std::set<Curve> unpaired_edges;
     while (!loop_curves->empty()) {
 	std::queue<Curve> curve_queue;
 	CurveList curr_loop;
@@ -309,7 +334,6 @@ void find_multicurve_loops(std::set<Curve> *loop_curves, LoopList *loops)
 	    // use the curve info - if the curve shares the current patches, add it to the queue
 	    for (curves_it = curves1.begin(); curves_it != curves1.end(); curves_it++) {
 		if ((*curves_it).inner_patch == curr_curve.inner_patch &&
-		    (*curves_it).outer_patch == curr_curve.outer_patch &&
 		    curr_loop.find((*curves_it)) == curr_loop.end()) {
 		    curve_queue.push((*curves_it));
 		    loop_curves->erase((*curves_it));
@@ -318,70 +342,19 @@ void find_multicurve_loops(std::set<Curve> *loop_curves, LoopList *loops)
 	    }
 	    for (curves_it = curves2.begin(); curves_it != curves2.end(); curves_it++) {
 		if ((*curves_it).inner_patch == curr_curve.inner_patch &&
-		    (*curves_it).outer_patch == curr_curve.outer_patch &&
 		    curr_loop.find((*curves_it)) == curr_loop.end()) {
 		    curve_queue.push((*curves_it));
 		    loop_curves->erase((*curves_it));
 		    is_matched = 1;
 		}
-	    }
-
-	    // If none of the curves shared an outer patch with the current curve, we store
-	    // this edge for later.  The first priority is to build curves that do have
-	    // multiple edge segments sharing both patches - only once those curves are built
-	    // and removed from loop_curves can we deal with this edge.
-	    if (!is_matched) {
-		unpaired_edges.insert(curr_curve);
-		curr_loop.erase(curr_curve);
 	    }
 	}
 	if (curr_loop.size() > 0) {
-	    std::cout << "Inserting multicurve loop:" << curr_loop.size() << "\n";
+	    std::cout << "Inserting loop:" << curr_loop.size() << "\n";
 	    loops->insert(curr_loop);
 	}
+	if (!loop_is_closed(&curr_loop)) std::cout << "Waaaittt!  Loop is not closed!!!\n";
     }
-    // Now, handle the unpaired curve set.
-    while (!unpaired_edges.empty()) {
-	std::queue<Curve> curve_queue;
-	CurveList curr_loop;
-	CurveList::iterator c_it;
-	curve_queue.push(*unpaired_edges.begin());
-	unpaired_edges.erase(*unpaired_edges.begin());
-	while (!curve_queue.empty()) {
-	    // Add the first edge in the queue
-	    Curve curr_curve = curve_queue.front();
-	    curve_queue.pop();
-	    curr_loop.insert(curr_curve);
-	    std::set<Curve> curves1, curves2;
-	    std::set<Curve>::iterator curves_it;
-
-	    // Pull curve id list.
-	    curves1 = endpts_to_curves[curr_curve.start_and_end.first];
-	    curves2 = endpts_to_curves[curr_curve.start_and_end.second];
-	    curves1.erase(curr_curve);
-	    curves2.erase(curr_curve);
-	    // use the curve info - if the curve shares the current patches, add it to the queue
-	    for (curves_it = curves1.begin(); curves_it != curves1.end(); curves_it++) {
-		if ((*curves_it).inner_patch == curr_curve.inner_patch &&
-		    curr_loop.find((*curves_it)) == curr_loop.end()) {
-		    curve_queue.push((*curves_it));
-		    unpaired_edges.erase((*curves_it));
-		}
-	    }
-	    for (curves_it = curves2.begin(); curves_it != curves2.end(); curves_it++) {
-		if ((*curves_it).inner_patch == curr_curve.inner_patch &&
-		    curr_loop.find((*curves_it)) == curr_loop.end()) {
-		    curve_queue.push((*curves_it));
-		    unpaired_edges.erase((*curves_it));
-		}
-	    }
-
-	}
-	std::cout << "Inserting unpaired edge loop:" << curr_loop.size() << "\n";
-	loops->insert(curr_loop);
-    }
-
-
 }
 
 void find_outer_loop(struct rt_bot_internal *bot, const Patch *patch, LoopList *loops, CurveList *outer_loop)
@@ -460,6 +433,25 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
     // assemble multicurve loops - use end points to find candidate curves,
     // then check patch ids to confirm
     find_multicurve_loops(&loop_curves, &patch_loops);
+    LoopList::iterator l_it;
+    int lp_cnt = 1;
+    for (l_it = patch_loops.begin(); l_it != patch_loops.end(); l_it++) {
+	    CurveList::iterator c_it;
+	    struct bu_vls name;
+	    static FILE* lplot = NULL;
+	    bu_vls_init(&name);
+	    bu_vls_printf(&name, "%d_loop_%d.pl", (int) patch->id, lp_cnt);
+            lp_cnt++;
+	    lplot = fopen(bu_vls_addr(&name), "w");
+	    int r = int(256*drand48() + 1.0);
+	    int g = int(256*drand48() + 1.0);
+	    int b = int(256*drand48() + 1.0);
+	    for (c_it = (*l_it).begin(); c_it != (*l_it).end(); c_it++) {
+		    plot_curve(bot, patch->id, &(*c_it), r, g, b, lplot);
+	    }
+            fclose(lplot);
+    }
+
 
     // Find the outer loop - this will be the outer trimming loop for the NURBS patch
     CurveList outer_loop;
@@ -473,76 +465,6 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
     find_outer_loop(bot, (const Patch *)patch, &patch_loops_all, &outer_loop);
 
 #if 0
-    // If we have more than one loop, we need to identify the outer loop.  OpenNURBS handles outer
-    // and inner loops separately, so we need to know which loop is our outer surface boundary.
-    LoopList patch_loops = patch->loops;
-    if (patch_loops.size() > 1) {
-	LoopList::iterator l_it;
-	fastf_t diag_max = 0.0;
-	CurveList outer_loop;
-	for (l_it = patch_loops.begin(); l_it != patch_loops.end(); l_it++) {
-	    vect_t min, max, diag;
-	    VSETALL(min, MAX_FASTF);
-	    VSETALL(max, -MAX_FASTF);
-	    CurveList::iterator c_it;
-	    for (c_it = (*l_it).begin(); c_it != (*l_it).end(); c_it++) {
-		EdgeList::iterator e_it;
-		for (e_it = (*c_it).begin(); e_it != (*c_it).end(); e_it++) {
-		    vect_t ep1, ep2, eproj, eproj2, norm_scale, normal;
-		    fastf_t dotP;
-		    VMOVE(ep1, &bot->vertices[(*e_it).first]);
-		    VMOVE(ep2, &bot->vertices[(*e_it).second]);
-		    VSET(normal, patch->category_plane->x, patch->category_plane->y, patch->category_plane->z);
-		    dotP = VDOT(ep1, normal);
-		    VSCALE(norm_scale, normal, dotP);
-		    VSUB2(eproj, ep1, norm_scale);
-		    VSCALE(eproj2, eproj, 1.1);
-		    VMINMAX(min, max, eproj);
-
-		    dotP = VDOT(ep2, normal);
-		    VSCALE(norm_scale, normal, dotP);
-		    VSUB2(eproj, ep2, norm_scale);
-		    VSCALE(eproj2, eproj, 1.1);
-		    VMINMAX(min, max, eproj);
-		}
-	    }
-	    VSUB2(diag, max, min);
-
-	    if (MAGNITUDE(diag) > diag_max) {
-		diag_max = MAGNITUDE(diag);
-		patch->outer_loop = (*l_it);
-	    }
-	}
-	patch->loops.erase(patch->loops.find(patch->outer_loop));
-	// Plot loops
-	pl_color(plot, int(256*drand48() + 1.0), int(256*drand48() + 1.0), int(256*drand48() + 1.0));
-	LoopList plot_patch_loops = patch->loops;
-	LoopList::iterator p_l_it;
-	for (p_l_it = plot_patch_loops.begin(); p_l_it != plot_patch_loops.end(); p_l_it++) {
-	    CurveList::iterator c_it;
-	    for (c_it = (*p_l_it).begin(); c_it != (*p_l_it).end(); c_it++) {
-		EdgeList::iterator e_it;
-		for (e_it = (*c_it).begin(); e_it != (*c_it).end(); e_it++) {
-		    pdv_3move(plot, &bot->vertices[(*e_it).first]);
-		    pdv_3cont(plot, &bot->vertices[(*e_it).second]);
-		}
-	    }
-	}
-	pl_color(plot, 255, 255, 255);
-	CurveList::iterator c_it;
-	for (c_it = patch->outer_loop.begin(); c_it != patch->outer_loop.end(); c_it++) {
-	    EdgeList::iterator e_it;
-	    for (e_it = (*c_it).begin(); e_it != (*c_it).end(); e_it++) {
-		pdv_3move(plot, &bot->vertices[(*e_it).first]);
-		pdv_3cont(plot, &bot->vertices[(*e_it).second]);
-	    }
-	}
-    } else {
-	patch->outer_loop = (*patch_loops.begin());
-	patch_loops.erase(patch_loops.begin());
-    }
-
-#endif
     // Make some edge curves
     LoopList::iterator l_it;
     for (l_it = patch_loops.begin(); l_it != patch_loops.end(); l_it++) {
@@ -598,6 +520,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 	    }
 	}
     }
+#endif
 
 }
 
