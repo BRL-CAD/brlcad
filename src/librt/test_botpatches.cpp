@@ -94,14 +94,8 @@ void PatchToVector3d(struct rt_bot_internal *bot, const Patch *patch, on_fit::ve
 }
 #endif
 
-
-void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_SimpleArray<ON_NurbsCurve> *UNUSED(bedges), EdgeToPatch *edge_to_patch, VertToPatch *vert_to_patch)
-{
+void find_edge_segments(struct rt_bot_internal *bot, const Patch *patch, EdgeList *patch_edges, VertToEdge *vert_to_edge) {
     size_t pt_A, pt_B, pt_C;
-    VertToEdge vert_to_edge;
-    EdgeList patch_edges;
-    LoopList patch_loops;
-    LoopList patch_loops_1curve;
     std::set<size_t>::iterator it;
     std::map<std::pair<size_t, size_t>, size_t> edge_face_cnt;
     std::map<std::pair<size_t, size_t>, size_t>::iterator efc_it;
@@ -128,20 +122,20 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 
     for (efc_it = edge_face_cnt.begin(); efc_it!=edge_face_cnt.end(); efc_it++) {
 	if ((*efc_it).second == 1) {
-	    vert_to_edge[(*efc_it).first.first].insert((*efc_it).first);
-	    vert_to_edge[(*efc_it).first.second].insert((*efc_it).first);
-	    patch_edges.insert((*efc_it).first);
+	    (*vert_to_edge)[(*efc_it).first.first].insert((*efc_it).first);
+	    (*vert_to_edge)[(*efc_it).first.second].insert((*efc_it).first);
+	    patch_edges->insert((*efc_it).first);
 	}
     }
-    std::cout << "Patch " << patch->id << " edge total: " << patch_edges.size() << "\n";
+}
 
-    // Assemble edges into curves.  A curve is shared between two
-    // and only two patches, and all vertex points except the endpoints
-    // are used by only two edges (edges in this case referring to face
-    // edges that are also part of some edge curve).
-    std::set<Curve> loop_curves;
+// Assemble edges into curves.  A curve is shared between two
+// and only two patches, and all vertex points except the endpoints
+// are used by only two edges (edges in this case referring to face
+// edges that are also part of some edge curve).
+void find_curves(const Patch *patch, std::set<Curve> *loop_curves, EdgeList *patch_edges, VertToEdge *vert_to_edge, VertToPatch *vert_to_patch, EdgeToPatch *edge_to_patch) {
     size_t curve_cnt = 1;
-    while (!patch_edges.empty()) {
+    while (!patch_edges->empty()) {
 	Curve curve;
 	curve.start_and_end.first = INT_MAX;
 	curve.start_and_end.second = INT_MAX;
@@ -149,14 +143,14 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 	curve.id = curve_cnt;
 	curve_cnt++;
 	// Need to get the other patch for this curve
-	std::set<size_t> edge_patches = (*edge_to_patch)[(*patch_edges.begin())];
+	std::set<size_t> edge_patches = (*edge_to_patch)[(*patch_edges->begin())];
 	edge_patches.erase(patch->id);
 	curve.outer_patch = (*edge_patches.begin());
 
 	// Initialize queue
 	std::queue<Edge> edge_queue;
-	edge_queue.push(*patch_edges.begin());
-	patch_edges.erase(*patch_edges.begin());
+	edge_queue.push(*patch_edges->begin());
+	patch_edges->erase(*patch_edges->begin());
 
 	while (!edge_queue.empty()) {
 	    VertToEdge::iterator v_it;
@@ -179,7 +173,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 		    curve.start_and_end.second= curr_edge.first;
 		}
 	    } else {
-		eset1 = vert_to_edge[curr_edge.first];
+		eset1 = (*vert_to_edge)[curr_edge.first];
 		eset1.erase(curr_edge);
 	    }
 	    // use edgetopatch - if the edge shares the current outer patch, add it to the queue
@@ -188,7 +182,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 		if ((*edge_to_patch)[es1].find(curve.outer_patch) != (*edge_to_patch)[es1].end() &&
 		    curve.edges.find(es1) == curve.edges.end()) {
 		    edge_queue.push(es1);
-		    patch_edges.erase(es1);
+		    patch_edges->erase(es1);
 		}
 	    }
 
@@ -201,7 +195,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 		    curve.start_and_end.second= curr_edge.second;
 		}
 	    } else {
-		eset2 = vert_to_edge[curr_edge.second];
+		eset2 = (*vert_to_edge)[curr_edge.second];
 		eset2.erase(curr_edge);
 	    }
 
@@ -210,7 +204,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 		if ((*edge_to_patch)[es2].find(curve.outer_patch) != (*edge_to_patch)[es2].end() &&
 		    curve.edges.find(es2) == curve.edges.end()) {
 		    edge_queue.push(es2);
-		    patch_edges.erase(es2);
+		    patch_edges->erase(es2);
 		}
 	    }
 	}
@@ -246,9 +240,25 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 	    pdv_3cont(plot, &bot->vertices[(*e_it).second]);
 	}
 #endif
-	loop_curves.insert(curve);
+	loop_curves->insert(curve);
     }
+}
 
+void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_SimpleArray<ON_NurbsCurve> *UNUSED(bedges), EdgeToPatch *edge_to_patch, VertToPatch *vert_to_patch)
+{
+    VertToEdge vert_to_edge;
+    EdgeList patch_edges;
+    LoopList patch_loops;
+    LoopList patch_loops_1curve;
+
+    // Find the edges of the patch   
+    find_edge_segments(bot, (const Patch *)patch, &patch_edges, &vert_to_edge); 
+
+    std::cout << "Patch " << patch->id << " edge total: " << patch_edges.size() << "\n";
+
+    // Assemble the edge segments into curves
+    std::set<Curve> loop_curves;
+    find_curves(patch, &loop_curves, &patch_edges, &vert_to_edge, vert_to_patch, edge_to_patch);
 
     // We have the curves of the patch - build the loops
     //
