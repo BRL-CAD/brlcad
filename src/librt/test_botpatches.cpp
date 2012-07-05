@@ -94,6 +94,31 @@ void PatchToVector3d(struct rt_bot_internal *bot, const Patch *patch, on_fit::ve
 }
 #endif
 
+void plot_curve(struct rt_bot_internal *bot, size_t patch_id, Curve *curve, int r, int g, int b, FILE *c_plot) {
+	if(c_plot == NULL) {
+		struct bu_vls name;
+		static FILE* plot = NULL;
+		bu_vls_init(&name);
+		bu_vls_printf(&name, "%d_curve_%d.pl", (int) patch_id, (int) curve->id);
+		plot = fopen(bu_vls_addr(&name), "w");
+		pl_color(plot, int(256*drand48() + 1.0), int(256*drand48() + 1.0), int(256*drand48() + 1.0));
+		EdgeList::iterator e_it;
+		for (e_it = curve->edges.begin(); e_it != curve->edges.end(); e_it++) {
+			pdv_3move(plot, &bot->vertices[(*e_it).first]);
+			pdv_3cont(plot, &bot->vertices[(*e_it).second]);
+		} 
+		fclose(plot);
+		bu_vls_free(&name);
+	} else {
+		pl_color(c_plot, r, g, b);
+		EdgeList::iterator e_it;
+		for (e_it = curve->edges.begin(); e_it != curve->edges.end(); e_it++) {
+			pdv_3move(c_plot, &bot->vertices[(*e_it).first]);
+			pdv_3cont(c_plot, &bot->vertices[(*e_it).second]);
+		} 
+	}
+}
+
 void find_edge_segments(struct rt_bot_internal *bot, const Patch *patch, EdgeList *patch_edges, VertToEdge *vert_to_edge) {
     size_t pt_A, pt_B, pt_C;
     std::set<size_t>::iterator it;
@@ -133,7 +158,7 @@ void find_edge_segments(struct rt_bot_internal *bot, const Patch *patch, EdgeLis
 // and only two patches, and all vertex points except the endpoints
 // are used by only two edges (edges in this case referring to face
 // edges that are also part of some edge curve).
-void find_curves(const Patch *patch, std::set<Curve> *loop_curves, EdgeList *patch_edges, VertToEdge *vert_to_edge, VertToPatch *vert_to_patch, EdgeToPatch *edge_to_patch) {
+void find_curves(struct rt_bot_internal *bot, const Patch *patch, std::set<Curve> *loop_curves, EdgeList *patch_edges, VertToEdge *vert_to_edge, VertToPatch *vert_to_patch, EdgeToPatch *edge_to_patch, FILE *plot) {
     size_t curve_cnt = 1;
     while (!patch_edges->empty()) {
 	Curve curve;
@@ -232,14 +257,7 @@ void find_curves(const Patch *patch, std::set<Curve> *loop_curves, EdgeList *pat
 	    }
 	}
 	std::cout << "      " << patch->id << " curve " << curve.id << " edge count: " << curve.edges.size() << "\n";
-#if 0
-	// Plot curve
-	pl_color(plot, int(256*drand48() + 1.0), int(256*drand48() + 1.0), int(256*drand48() + 1.0));
-	for (e_it = curve.edges.begin(); e_it != curve.edges.end(); e_it++) {
-	    pdv_3move(plot, &bot->vertices[(*e_it).first]);
-	    pdv_3cont(plot, &bot->vertices[(*e_it).second]);
-	}
-#endif
+	plot_curve(bot, patch->id, &curve, 0, 0, 0, NULL);
 	loop_curves->insert(curve);
     }
 }
@@ -432,7 +450,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 
     // Assemble the edge segments into curves
     std::set<Curve> loop_curves;
-    find_curves(patch, &loop_curves, &patch_edges, &vert_to_edge, vert_to_patch, edge_to_patch);
+    find_curves(bot, patch, &loop_curves, &patch_edges, &vert_to_edge, vert_to_patch, edge_to_patch, plot);
 
     // We have the curves of the patch - build the loops
     //
