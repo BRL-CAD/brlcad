@@ -501,8 +501,7 @@ void EXP_resolve( Expression expr, Scope scope, Type typecheck ) {
                     expr->symbol.resolved = expr->type->symbol.resolved;
                     break;
                 default:
-                    printf( "unexpected type in EXPresolve.  Press ^C now to trap to debugger\n" );
-                    pause();
+                    fprintf( stderr, "ERROR: unexpected type in EXPresolve.\n" );
                     break;
             }
             break;
@@ -570,8 +569,7 @@ void EXP_resolve( Expression expr, Scope scope, Type typecheck ) {
             resolved_all( expr );
             break;
         default:
-            printf( "unexpected type in EXPresolve.  Press ^C now to trap to debugger\n" );
-            pause();
+            fprintf( stderr, "ERROR: unexpected type in EXPresolve.\n" );
     }
 }
 

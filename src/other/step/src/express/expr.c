@@ -399,8 +399,7 @@ Type EXPresolve_op_dot( Expression expr, Scope scope ) {
                 return( Type_Bad );
             }
             if( DICT_type != OBJ_VARIABLE ) {
-                printf( "EXPresolved_op_dot: attribute not an attribute? - press ^C now to trap to debugger\n" );
-                pause();
+                fprintf( stderr, "ERROR: EXPresolved_op_dot: attribute not an attribute?\n" );
             }
 
             op2->u.variable = v;

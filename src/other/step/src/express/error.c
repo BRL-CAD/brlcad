@@ -512,9 +512,6 @@ void ERRORabort( int sig ) {
 #endif
         abort();
     }
-
-    fprintf( stderr, "pausing...press ^C now to enter debugger: " );
-    pause();
 }
 
 void ERRORsafe( jmp_buf env ) {
