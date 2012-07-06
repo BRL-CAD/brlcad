@@ -126,21 +126,24 @@ void plot_curve(struct rt_bot_internal *bot, size_t patch_id, const Curve *curve
 }
 
 // plot loop
-void plot_loop(struct rt_bot_internal *bot, size_t patch_id, int loop_num, const CurveList *curves)
+void plot_loop(struct rt_bot_internal *bot, size_t patch_id, int loop_num, int r, int g, int b, const CurveList *curves, FILE *l_plot)
 {
     CurveList::iterator c_it;
-    struct bu_vls name;
-    static FILE* lplot = NULL;
-    bu_vls_init(&name);
-    bu_vls_printf(&name, "%d_loop_%d.pl", (int) patch_id, loop_num);
-    lplot = fopen(bu_vls_addr(&name), "w");
-    int r = int(256*drand48() + 1.0);
-    int g = int(256*drand48() + 1.0);
-    int b = int(256*drand48() + 1.0);
-    for (c_it = curves->begin(); c_it != curves->end(); c_it++) {
-	plot_curve(bot, patch_id, &(*c_it), r, g, b, lplot);
+    if (l_plot == NULL) {
+	struct bu_vls name;
+	static FILE* lplot = NULL;
+	bu_vls_init(&name);
+	bu_vls_printf(&name, "%d_loop_%d.pl", (int) patch_id, loop_num);
+	lplot = fopen(bu_vls_addr(&name), "w");
+	for (c_it = curves->begin(); c_it != curves->end(); c_it++) {
+	    plot_curve(bot, patch_id, &(*c_it), r, g, b, lplot);
+	}
+	fclose(lplot);
+    } else {
+	for (c_it = curves->begin(); c_it != curves->end(); c_it++) {
+	    plot_curve(bot, patch_id, &(*c_it), r, g, b, l_plot);
+	}
     }
-    fclose(lplot);
 }
 
 void find_edge_segments(struct rt_bot_internal *bot, const Patch *patch, EdgeList *patch_edges, VertToEdge *vert_to_edge)
@@ -458,10 +461,19 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
     find_multicurve_loops(&loop_curves, &patch_loops);
     LoopList::iterator l_it;
     int lp_cnt = 1;
+    struct bu_vls name;
+    static FILE* laplot = NULL;
+    bu_vls_init(&name);
+    bu_vls_printf(&name, "%d_loop.pl", (int) patch->id);
+    laplot = fopen(bu_vls_addr(&name), "w");
     for (l_it = patch_loops.begin(); l_it != patch_loops.end(); l_it++) {
-	plot_loop(bot, patch->id, lp_cnt, &(*l_it));
+	int r = int(256*drand48() + 1.0);
+	int g = int(256*drand48() + 1.0);
+	int b = int(256*drand48() + 1.0);
+	plot_loop(bot, patch->id, lp_cnt, r, g, b, &(*l_it), laplot);
 	lp_cnt++;
     }
+    fclose(laplot);
 
 
     // Find the outer loop - this will be the outer trimming loop for the NURBS patch
@@ -474,7 +486,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 	patch_loops_all.insert((*all_it));
     }
     find_outer_loop(bot, (const Patch *)patch, &patch_loops_all, &outer_loop);
-    plot_loop(bot, patch->id, 0, &(outer_loop));
+    plot_loop(bot, patch->id, 0, 255, 0, 0, &(outer_loop), NULL);
 
     // Make some edge curves
     for (l_it = patch_loops.begin(); l_it != patch_loops.end(); l_it++) {
