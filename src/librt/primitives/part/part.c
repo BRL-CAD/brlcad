@@ -1813,6 +1813,56 @@ rt_part_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
+/**
+ * R T _ P A R T _ V O L U M E
+ */
+void
+rt_part_volume(fastf_t *vol, const struct rt_db_internal *ip)
+{
+    fastf_t vrad, hrad, mag_h;
+    struct rt_part_internal *pip = (struct rt_part_internal *)ip->idb_ptr;
+    RT_PART_CK_MAGIC(pip);
+
+    vrad = pip->part_vrad;
+    hrad = pip->part_hrad;
+    mag_h = MAGNITUDE(pip->part_H);
+
+    if (EQUAL(vrad, hrad)) {
+        *vol = M_PI * vrad * vrad * (4.0/3.0 * vrad + mag_h);
+    } else {
+        fastf_t vrad3, hrad3, mid_section;
+        vrad3 = vrad * vrad * vrad;
+        hrad3 = hrad * hrad * hrad;
+        mid_section = M_PI * mag_h * (hrad * hrad + vrad * vrad + hrad * vrad) / 3.0;
+        *vol = 2.0/3.0 * M_PI * (vrad3 + hrad3) + mid_section;
+    }
+}
+
+
+/**
+ * R T _ P A R T _ S U R F _ A R E A
+ */
+void
+rt_part_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    fastf_t vrad, hrad, mag_h;
+    struct rt_part_internal *pip = (struct rt_part_internal *)ip->idb_ptr;
+    RT_PART_CK_MAGIC(pip);
+
+    vrad = pip->part_vrad;
+    hrad = pip->part_hrad;
+    mag_h = MAGNITUDE(pip->part_H);
+
+    if (EQUAL(vrad, hrad)) {
+        *area = 2.0 * M_PI * vrad * (2.0 * vrad + mag_h);
+    } else {
+        fastf_t mid_section;
+        mid_section = M_PI * ((vrad + hrad) * sqrt((vrad - hrad) * (vrad - hrad) + mag_h * mag_h));
+        *area = 2.0 * M_PI * (vrad * vrad + hrad * hrad) + mid_section;
+    }
+}
+
+
 /*
  * Local Variables:
  * mode: C
