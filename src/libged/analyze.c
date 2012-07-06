@@ -1427,6 +1427,27 @@ analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
+/* analyze part */
+void
+analyze_part(struct ged *gedp, const struct rt_db_internal *ip)
+{
+    fastf_t vol, area;
+    rt_functab[ID_PARTICLE].ft_volume(&vol, ip);
+    rt_functab[ID_PARTICLE].ft_surf_area(&area, ip);
+
+     print_volume_table(gedp,
+            vol
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            area
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            vol/GALLONS_TO_MM3
+            );
+}
+
+
 /*
  * Analyze command - prints loads of info about a solid
  * Format:	analyze [name]
@@ -1483,6 +1504,10 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 
     case ID_EPA:
         analyze_epa(gedp, ip);
+        break;
+
+    case ID_PARTICLE:
+        analyze_part(gedp, ip);
         break;
 
     default:
