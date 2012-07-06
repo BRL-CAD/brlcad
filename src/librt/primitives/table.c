@@ -826,8 +826,8 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_part_params,
 	rt_part_bbox,
-    NULL,
-    NULL,
+    rt_part_volume,
+    rt_part_surf_area,
     NULL,
     },
 
