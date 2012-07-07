@@ -58,6 +58,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* rendering of the 'part' primitive is wrong for cases where H is less
+  than r1 (i.e., smaller cap is partially or fully within the larger
+  cap's radius).  It ends up rendering the larger sphere.
+
 * something wrong with brep/nurbs subdivision spatial partitioning
   causing inline failure in BANode<ON_BoundingBox>::addChild().
   disable NOSTRICTCXX strict flag on librt with Release mode
