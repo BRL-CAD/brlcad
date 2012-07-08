@@ -137,6 +137,7 @@ set(LIBRT_SOURCES
   primitives/half/half_brep.cpp
   primitives/half/half_mirror.c
   primitives/hf/hf.c
+  primitives/hf/hf_brep.cpp
   primitives/hyp/hyp.c
   primitives/hyp/hyp_brep.cpp
   primitives/hyp/hyp_mirror.c

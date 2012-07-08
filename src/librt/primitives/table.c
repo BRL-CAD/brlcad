@@ -1129,7 +1129,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_hf_tess,
 	NULL,
-	NULL,
+	rt_hf_brep,
 	rt_hf_import5,
 	rt_hf_export5,
 	rt_hf_import4,
