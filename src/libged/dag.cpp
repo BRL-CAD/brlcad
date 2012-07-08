@@ -29,6 +29,7 @@
 
 /* System Header */
 #include <stdint.h>
+#include <stdlib.h>
 
 #define BRLCAD_PARALLEL PARALLEL
 #undef PARALLEL
@@ -40,15 +41,14 @@ using namespace Avoid;
 
 /* Public Header */
 #include "ged.h"
-#include "raytrace.h"
 
-
+/**
+ * This structure has fields that correspond to three hash tables for solid, group and region type objects of a database.
+ */
 struct output {
-    FILE *outfp;
-    struct bu_ptbl groups;
-    struct bu_ptbl regions;
-    struct bu_ptbl combinations;
-    struct bu_ptbl primitives;
+    struct bu_hash_tbl groups;
+    struct bu_hash_tbl regions;
+    struct bu_hash_tbl solids;
 };
 
 
@@ -59,6 +59,7 @@ struct _ged_dag_data {
     Avoid::Router *router;
     Avoid::ConnRef *connRef;
     uint16_t object_nr;
+    uint16_t last_connref_id;
 };
 
 
@@ -84,21 +85,23 @@ conn_callback(void *ptr)
  * Add one object to the router of the 'dag' structure.
  */
 static Avoid::ShapeRef*
-add_object(struct _ged_dag_data *dag)
+add_object(struct _ged_dag_data *dag, unsigned int id)
 {
-    dag->object_nr++;
-
     Avoid::Point srcPt(dag->object_nr * POSITION_COORDINATE + 1.0, dag->object_nr * POSITION_COORDINATE + 1.0);
     Avoid::Point dstPt(POSITION_COORDINATE + dag->object_nr * POSITION_COORDINATE, POSITION_COORDINATE +
         dag->object_nr * POSITION_COORDINATE);
     Avoid::Rectangle shapeRect(srcPt, dstPt);
-    Avoid::ShapeRef *shapeRef = new Avoid::ShapeRef(dag->router, shapeRect);
+    Avoid::ShapeRef *shapeRef = new Avoid::ShapeRef(dag->router, shapeRect, id);
 
     return shapeRef;
 }
 
+
 /**
- * Function to process a combination node.
+ * Function which processes a combination node. I.e., it adds a new entry into the hash tables, if necessary.
+ * In this case, it also adds a Avoid::ShapeRef object to the graph. It also traverses its subtree, adds
+ * entries into the hash table for solid objects, if neccessary. In this case as well, it also adds a
+ * Avoid::ShapeRef object to the graph.
  */
 static void
 dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_data *dag)
@@ -108,6 +111,12 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
     struct rt_comb_internal *comb;
 
     struct output *o = (struct output *)out;
+    struct bu_hash_entry *prev = NULL;
+    unsigned long idx;
+    int new_entry;
+    int was_solid;
+    unsigned int value = 0;
+    char id[100];
 
     Avoid::ShapeRef *shapeRef1 = NULL;
     Avoid::ShapeRef *shapeRef2 = NULL;
@@ -118,17 +127,63 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-    if (comb->region_flag) {
-        if (bu_ptbl_ins_unique(&(o->regions), (long *)bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep))) == -1) {
+    struct bu_hash_entry *hsh_entry_solid = (struct bu_hash_entry *)calloc(1, sizeof(struct bu_hash_entry));
+    if ((hsh_entry_solid = bu_find_hash_entry(&(o->solids), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &prev, &idx))) {
+        value = atoi((const char*)hsh_entry_solid->value);
+        was_solid = 1;
+    } else {
+        was_solid = 0;
+    }
+
+    if (comb->region_flag) {   
+        if (bu_find_hash_entry(&(o->regions), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &prev, &idx) == NULL) {
+            struct bu_hash_entry *hsh_entry = (struct bu_hash_entry *)calloc(1, sizeof(struct bu_hash_entry));
+            hsh_entry = bu_hash_add_entry(&(o->regions), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &new_entry);
+            if (was_solid == 1) {
+                sprintf(id, "%d", value);
+            } else {
+                dag->object_nr ++;
+                sprintf(id, "%d", dag->object_nr);
+                value = dag->object_nr;
+            }
+            /* Set the id value for this shape */
+            hsh_entry->value = (unsigned char *)malloc((size_t)strlen(id));
+            memcpy(hsh_entry->value, id, (size_t)strlen(id) + 1);
+
             bu_log("\t\"%s\" [ color=blue shape=box3d ];\n", dp->d_namep);
         }
     } else {
-        if (bu_ptbl_ins_unique(&(o->groups), (long *)bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep))) == -1) {
+        if (bu_find_hash_entry(&(o->groups), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &prev, &idx) == NULL) {
+            struct bu_hash_entry *hsh_entry = (struct bu_hash_entry *)calloc(1, sizeof(struct bu_hash_entry));
+            hsh_entry = bu_hash_add_entry(&(o->groups), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &new_entry);
+            if (was_solid == 1) {
+                sprintf(id, "%d", value);
+            } else {
+                dag->object_nr ++;
+                sprintf(id, "%d", dag->object_nr);
+                value = dag->object_nr;
+            }
+            /* Set the id value for this shape */
+            hsh_entry->value = (unsigned char *)malloc((size_t)strlen(id));
+            memcpy(hsh_entry->value, id, (size_t)strlen(id) + 1);
+
             bu_log("\t\"%s\" [ color=green ];\n", dp->d_namep);
         }
     }
 
-    shapeRef1 = add_object(dag);
+    if(was_solid == 1) {
+        /* Don't create another shape because it already exists a corresponding one. */
+        ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
+        for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
+            if ((*it)->id() == value) {
+                shapeRef1 = dynamic_cast<ShapeRef *>(*it);
+                break;
+            }
+        }
+    } else {
+        /* Create a shape for the current object. */
+        shapeRef1 = add_object(dag, value);
+    }
 
     /* FIXME: this is yet-another copy of the commonly-used code that
      * gets a list of comb members.  needs to return tabular data.
@@ -158,7 +213,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
         rt_tree_array = NULL;
     }
 
-    bu_log("actual count: %d", actual_count);
+    bu_log("actual count: %d\n", actual_count);
 
     for (i = 0; i < actual_count; i++) {
         char op;
@@ -178,19 +233,56 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
                 break;
         }
 
-        bu_log("\t\"%s\" -> \"%s\" [ label=\"%c\" ];\n", dp->d_namep, rt_tree_array[i].tl_tree->tr_l.tl_name, op);
+        struct bu_hash_entry *hsh_entry1, *hsh_entry2, *hsh_entry3;
 
-        /* Link this node with its subnode */
-        shapeRef2 = add_object(dag);
+        hsh_entry1 = bu_find_hash_entry(&(o->regions), (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name), &prev, &idx);
+        hsh_entry2 = bu_find_hash_entry(&(o->groups), (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name), &prev, &idx);
+        hsh_entry3 = bu_find_hash_entry(&(o->solids), (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name), &prev, &idx);
 
-        /* Create connection pins on shapes */
+        if ((!hsh_entry1) && (!hsh_entry2) && (!hsh_entry3)) {
+            /* This object hasn't been registered yet. Add it into the solids hash table and create a shape for it. */
+            struct bu_hash_entry *hsh_entry = (struct bu_hash_entry *)calloc(1, sizeof(struct bu_hash_entry));
+            hsh_entry = bu_hash_add_entry(&(o->solids), (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name), &new_entry);
+            dag->object_nr ++;
+            sprintf(id, "%d", dag->object_nr);
+
+            /* Set the id value for this shape */
+            hsh_entry->value = (unsigned char *)malloc((size_t)strlen(id));
+            memcpy(hsh_entry->value, id, (size_t)strlen(id) + 1);
+
+            value = dag->object_nr;
+            bu_log("\t\"%s\" -> \"%s\" [ label=\"%c\" ];\n", dp->d_namep, rt_tree_array[i].tl_tree->tr_l.tl_name, op);
+
+            /* Create a shape for the current node of the subtree */
+            shapeRef2 = add_object(dag, value);
+        } else {
+            /* The shape already exists */
+            bu_log("\t\"%s\" -> \"%s\" [ label=\"%c\" ];\n", dp->d_namep, rt_tree_array[i].tl_tree->tr_l.tl_name, op);
+            struct bu_hash_entry *hsh_entry = (struct bu_hash_entry *)calloc(1, sizeof(struct bu_hash_entry));
+            hsh_entry =  (hsh_entry1) ? hsh_entry1 : ((hsh_entry2) ? hsh_entry2 : hsh_entry3);
+            value = atoi((const char *)hsh_entry->value);
+
+            /* Don't create another shape because it already exists a corresponding one. */
+            ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
+            for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
+                if ((*it)->id() == value) {
+                    /* Get a reference to the shape that corresponds to the current node of the subtree. */
+                    shapeRef2 = dynamic_cast<ShapeRef *>(*it);
+                    break;
+                }
+            }
+        }
+
+        /* Create connection pins on shapes for linking the parent node with the subnode. */
         new Avoid::ShapeConnectionPin(shapeRef1, CENTRE, Avoid::ATTACH_POS_CENTRE, Avoid::ATTACH_POS_CENTRE);
         new Avoid::ShapeConnectionPin(shapeRef2, CENTRE, Avoid::ATTACH_POS_CENTRE, Avoid::ATTACH_POS_CENTRE);
 
-        /* Create connector from each shape shapeRef2 to the input pin on shapeRef1 */
+        /* Create connector from each shape shapeRef2 to the input pin on shapeRef1. */
         Avoid::ConnEnd dstEnd(shapeRef1, CENTRE);
         Avoid::ConnEnd srcEnd(shapeRef2, CENTRE);
-        Avoid::ConnRef *connRef = new Avoid::ConnRef(dag->router, srcEnd, dstEnd);
+        dag->last_connref_id++;
+        Avoid::ConnRef *connRef = new Avoid::ConnRef(dag->router, srcEnd, dstEnd, dag->last_connref_id);
+
         connRef->setCallback(conn_callback, connRef);
         dag->router->processTransaction();
 
@@ -207,7 +299,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
 
 
 /**
- * Add the list of objects(either solids, comb or region) to the router.
+ * Add the list of objects(either solids, comb or region) in the hash tables and to the router.
  */
 int
 add_objects(struct ged *gedp, struct _ged_dag_data *dag)
@@ -215,12 +307,32 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
     struct directory *dp = NULL, *ndp = NULL;
     struct bu_vls dp_name_vls = BU_VLS_INIT_ZERO;
     int i;
-    struct output o = {NULL, BU_PTBL_INIT_ZERO, BU_PTBL_INIT_ZERO, BU_PTBL_INIT_ZERO, BU_PTBL_INIT_ZERO};
-    o.outfp = NULL;
+    struct output o = {BU_HASH_TBL_INIT_ZERO, BU_HASH_TBL_INIT_ZERO, BU_HASH_TBL_INIT_ZERO};
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     Avoid::ShapeRef *shapeRef = NULL;
 
-    /* Traverse the database 'gedp' */
+    /* Create the hash tables. Each one will have at most 64 entries. */
+    o.regions = *bu_create_hash_tbl(1);
+    o.groups = *bu_create_hash_tbl(1);
+    o.solids = *bu_create_hash_tbl(1);
+
+    dag->router = new Avoid::Router(Avoid::PolyLineRouting);
+
+    /* Sets a spacing distance for overlapping orthogonal connectors to be nudged apart. */
+    dag->router->setOrthogonalNudgeDistance(25);
+
+    /* Number of Avoid::ShapeRef objects in the graph. These corresponds to the ones in the database. */
+    dag->object_nr = 0;
+
+    /*
+     * This value is used for establishing the starting id for the Avoid::ConnRef objects.
+     * It starts with the value <nr_of_objects_in_the_database>.
+     * It is incremented every time a new Avoid::ConnRef is added to the graph.
+     * It is needed in order to avoid the overlapping with the Avoid::ShapeRef ids when adding a Avoid::ConnRef to the graph.
+     */
+    dag->last_connref_id = gedp->ged_wdbp->dbip->dbi_nrec;
+
+    /* Traverse the database 'gedp'. */
     for (i = 0; i < RT_DBNHASH; i++) {
         for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
             bu_vls_sprintf(&dp_name_vls, "%s%s", "", dp->d_namep);
@@ -228,19 +340,39 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
             if (ndp) {
                 if(dp->d_flags & RT_DIR_SOLID) {
                     bu_log("Adding SOLID object [%s]\n", bu_vls_addr(&dp_name_vls));
-                    dag->object_nr++;
 
-                    /* Create and add a shape (obstacle) to the router */
-                    Avoid::Rectangle rectangle(Avoid::Point(dag->object_nr * POSITION_COORDINATE + 1.0,
-                        dag->object_nr * POSITION_COORDINATE + 1.0), Avoid::Point(POSITION_COORDINATE +
-                        dag->object_nr * POSITION_COORDINATE, POSITION_COORDINATE + dag->object_nr *
-                        POSITION_COORDINATE));
-                    shapeRef = new Avoid::ShapeRef(dag->router, rectangle);
-                    dag->router->processTransaction();
-                    bu_log("[SOLID]added %d objects.\n", dag->object_nr);
+                    /* Check if this solid is already in one of the hash tables. If not, add it to the solids hash table. */
+                    struct bu_hash_entry *hsh_entry1, *hsh_entry2, *hsh_entry3;
+                    struct bu_hash_entry *prev = NULL;
+                    unsigned long idx;
+                    int new_entry;
+                    char id[100];
+
+                    hsh_entry1 = bu_find_hash_entry(&(o.regions), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &prev, &idx);
+                    hsh_entry2 = bu_find_hash_entry(&(o.groups), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &prev, &idx);
+                    hsh_entry3 = bu_find_hash_entry(&(o.solids), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &prev, &idx);
+
+                    if ((!hsh_entry1) && (!hsh_entry2) && (!hsh_entry3)) {
+                        /* This object hasn't been registered yet. Add it into the solids hash table and create a shape for it. */
+                        dag->object_nr++;
+
+                        struct bu_hash_entry *hsh_entry = bu_hash_add_entry(&(o.solids), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &new_entry);
+                        sprintf(id, "%d", dag->object_nr);
+
+                        /* Set the id value for this object */
+                        hsh_entry->value = (unsigned char *)malloc((size_t)strlen(id));
+                        memcpy(hsh_entry->value, id, (size_t)strlen(id) + 1);
+
+                        /* Create and add a shape (obstacle) to the router */
+                        shapeRef = add_object(dag, dag->object_nr);
+                        dag->router->processTransaction();
+                        bu_log("[SOLID]added %d objects.\n", dag->object_nr);
+                    }
+
                 } else if (dp->d_flags & RT_DIR_COMB) {
                     bu_log("Adding COMB object [%s]\n", bu_vls_addr(&dp_name_vls));
                     dag_comb(dbip, ndp, &o, dag);
+                    bu_log("[COMB]added %d objects.\n", dag->object_nr);
                 } else {
                     bu_log("Something else: [%s]\n", bu_vls_addr(&dp_name_vls));
                 }
