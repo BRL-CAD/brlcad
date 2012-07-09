@@ -35,10 +35,9 @@
 #define MOVEPT(_p) MAT4X3PNT(_p, dsp_ip->dsp_stom, p_temp)
 #define MAX_CNT 256
 
-const int threshold = 20; // Thershold of the degree of a Bezier curve
 fastf_t C[2*MAX_CNT+1][2*MAX_CNT+1]; // Combination. Assume xcnt & ycnt are not greater than 256
 
-void DegreeReduction(int n, ON_3dPointArray &bezcurv)
+int DegreeReduction(int n, ON_3dPointArray &bezcurv, fastf_t tol, fastf_t &maxerr)
 {
     /* This function reduces the degree of a Bezier curve by one.
      * For details about the algorithm, see:
@@ -51,11 +50,16 @@ void DegreeReduction(int n, ON_3dPointArray &bezcurv)
      * with a better algorithm.
      */
 
+    if (tol < 0.0)
+	return -1;
     if (bezcurv.Count() != n + 1) {
 	bu_log("DegreeReduction(): The Bezier curve should has %d control points!\n", n + 1);
-	return;
+	return -2;
     }
-    ON_3dPointArray left(n), right(n);
+    if (n < 1)
+	return -2;
+
+    ON_3dPointArray left(n), right(n), tmpcurve(n);
     left[0] = bezcurv[0];
     for (int i = 1; i < n; i++) {
 	left[i] = bezcurv[i] + (double)i / (n - i) * (bezcurv[i] - left[i - 1]);
@@ -64,7 +68,7 @@ void DegreeReduction(int n, ON_3dPointArray &bezcurv)
     for (int i = n - 1; i > 0; i--) {
 	right[i - 1] = bezcurv[i] + (double)(n - i) / i * (bezcurv[i] - right[i]);
     }
-    bezcurv.Empty();
+
     fastf_t sum = 0.0;
     for (int i = 0; i < n; i++) {
 	ON_3dPoint newpt;
@@ -77,8 +81,26 @@ void DegreeReduction(int n, ON_3dPointArray &bezcurv)
 	if (NEAR_EQUAL(lumbda, 1.0, 1e-6))
 	    lumbda = 1.0;
 	newpt = (1 - lumbda) * left[i] + lumbda * right[i];
-	bezcurv.Append(newpt);
+	tmpcurve.Append(newpt);
     }
+    // Calculate the deviation
+    int r = (n - 1) / 2;
+    if (n % 2 == 0) {
+	ON_3dVector delta;
+	delta = bezcurv[r + 1] - (tmpcurve[r] + tmpcurve[r + 1]) / 2;
+	maxerr += delta.Length();
+    } else {
+	ON_3dVector delta;
+	delta = left[r] - right[r];
+	maxerr += delta.Length();
+    }
+
+    if (maxerr > tol)
+	return -1;
+
+    bezcurv.Empty();
+    bezcurv.Append(tmpcurve.Count(), tmpcurve.Array());
+    return 0;
 }
 
 /**
@@ -356,6 +378,21 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	}
     }
 
+    // Reduce the top surface
+    fastf_t min = DSP(dsp_ip, 0, 0), max = DSP(dsp_ip, 0, 0);
+    for (unsigned int x = 0; x < dsp_ip->dsp_xcnt; x++) {
+	for (unsigned int y = 0; y < dsp_ip->dsp_ycnt; y++) {
+	    fastf_t data = DSP(dsp_ip, x, y);
+	    if (data > max)
+		max = data;
+	    if (data < min)
+		min = data;
+	}
+    }
+    fastf_t max_delta = max - min;
+    bu_log("%lf\n", max_delta);
+    fastf_t tol = max_delta * 5.0 * dsp_ip->dsp_ycnt;
+    fastf_t maxerr = 0.0;
     // Calculate the combinations
     C[0][0] = 1;
     for (int i = 1; i <= MAX_CNT*2; i++) {
@@ -365,35 +402,71 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	}
     }
 
-    ON_BezierSurface *tempsurf = new ON_BezierSurface(3, false, threshold, dsp_ip->dsp_ycnt);
+    ON_BezierSurface *reducedsurf = new ON_BezierSurface(3, false, dsp_ip->dsp_xcnt, dsp_ip->dsp_ycnt);
+    *reducedsurf = *bezsurf;
+    unsigned int currentdegree = dsp_ip->dsp_xcnt;
+    bool exceedtol = false;
+    ON_SimpleArray<ON_3dPointArray *> bezcurvarray(dsp_ip->dsp_ycnt);
     for (unsigned int y = 0; y < dsp_ip->dsp_ycnt; y++) {
-	ON_3dPointArray bezcurv(dsp_ip->dsp_xcnt);
+	bezcurvarray[y] = new ON_3dPointArray(dsp_ip->dsp_xcnt);
 	for (unsigned int x = 0; x < dsp_ip->dsp_xcnt; x++) {
-	    ON_3dPoint tmppt = ON_3dPoint(bezsurf->CV(x, y));
-	    bezcurv.Append(tmppt);
-	}
-	for (unsigned int degree = dsp_ip->dsp_xcnt; degree > threshold; degree--) {
-	    DegreeReduction(degree - 1, bezcurv);
-	}
-	ON_3dPoint show[256];
-	for (unsigned int x = 0; x < threshold; x++) {
-	    tempsurf->SetCV(x, y, bezcurv[x]);
+	    bezcurvarray[y]->Append(bezsurf->CV(x, y));
 	}
     }
-
-    ON_BezierSurface *reducedsurf = new ON_BezierSurface(3, false, threshold, threshold);
-    for (unsigned int x = 0; x < threshold; x++) {
-	ON_3dPointArray bezcurv(dsp_ip->dsp_ycnt);
+    while (currentdegree && !exceedtol) {
 	for (unsigned int y = 0; y < dsp_ip->dsp_ycnt; y++) {
-	    ON_3dPoint tmppt = ON_3dPoint(tempsurf->CV(x, y));
-	    bezcurv.Append(tmppt);
+	    if (DegreeReduction(currentdegree - 1, *bezcurvarray[y], tol, maxerr) == -1) {
+		exceedtol = true;
+		bu_log("%lf\n", maxerr);
+		break;
+	    }
 	}
-	for (unsigned int degree = dsp_ip->dsp_ycnt; degree > threshold; degree--) {
-	    DegreeReduction(degree - 1, bezcurv);
+	if (!exceedtol) {
+	    currentdegree--;
+	    for (unsigned int y = 0; y < dsp_ip->dsp_ycnt; y++) {
+		for (unsigned int x = 0; x <= currentdegree; x++) {
+		    reducedsurf->SetCV(x, y, (*bezcurvarray[y])[x]);
+		}
+	    }
 	}
-	for (unsigned int y = 0; y < threshold; y++) {
-	    reducedsurf->SetCV(x, y, bezcurv[y]);
+    }
+    reducedsurf->m_order[0] = currentdegree;
+
+    exceedtol = false;
+    tol = max_delta * 5.0 * currentdegree;
+    maxerr = 0.0;
+    currentdegree = dsp_ip->dsp_ycnt;
+    for (int i = 0; i < bezcurvarray.Count(); i++) {
+	delete bezcurvarray[i];
+    }
+    bezcurvarray.Empty();
+    bezcurvarray.SetCount(reducedsurf->m_order[0]);
+    for (int x = 0; x < reducedsurf->m_order[0]; x++) {
+	bezcurvarray[x] = new ON_3dPointArray(dsp_ip->dsp_ycnt);
+	for (unsigned int y = 0; y < dsp_ip->dsp_ycnt; y++) {
+	    bezcurvarray[x]->Append(reducedsurf->CV(x, y));
 	}
+    }
+    while (currentdegree && !exceedtol) {
+	for (int x = 0; x < reducedsurf->m_order[0]; x++) {
+	    if (DegreeReduction(currentdegree - 1, *bezcurvarray[x], tol, maxerr) == -1) {
+		exceedtol = true;
+		bu_log("%lf\n", maxerr);
+		break;
+	    }
+	}
+	if (!exceedtol) {
+	    currentdegree--;
+	    for (int x = 0; x < reducedsurf->m_order[0]; x++) {
+		for (unsigned int y = 0; y <= currentdegree; y++) {
+		    reducedsurf->SetCV(x, y, (*bezcurvarray[x])[y]);
+		}
+	    }
+	}
+    }
+    reducedsurf->m_order[1] = currentdegree;
+    for (int i = 0; i < bezcurvarray.Count(); i++) {
+	delete bezcurvarray[i];
     }
 
     ON_NurbsSurface *tnurbssurf = ON_NurbsSurface::New();
@@ -401,7 +474,6 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     (*b)->NewFace(*tnurbssurf);
 
     delete bezsurf;
-    delete tempsurf;
     delete reducedsurf;
 }
 
