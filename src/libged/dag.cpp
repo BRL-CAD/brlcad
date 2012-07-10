@@ -127,7 +127,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
     }
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-    struct bu_hash_entry *hsh_entry_solid = (struct bu_hash_entry *)calloc(1, sizeof(struct bu_hash_entry));
+    struct bu_hash_entry *hsh_entry_solid = NULL;
     if ((hsh_entry_solid = bu_find_hash_entry(&(o->solids), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &prev, &idx))) {
         value = atoi((const char*)hsh_entry_solid->value);
         was_solid = 1;
@@ -137,8 +137,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
 
     if (comb->region_flag) {   
         if (bu_find_hash_entry(&(o->regions), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &prev, &idx) == NULL) {
-            struct bu_hash_entry *hsh_entry = (struct bu_hash_entry *)calloc(1, sizeof(struct bu_hash_entry));
-            hsh_entry = bu_hash_add_entry(&(o->regions), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &new_entry);
+            struct bu_hash_entry *hsh_entry = bu_hash_add_entry(&(o->regions), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &new_entry);
             if (was_solid == 1) {
                 sprintf(id, "%d", value);
             } else {
@@ -154,8 +153,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
         }
     } else {
         if (bu_find_hash_entry(&(o->groups), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &prev, &idx) == NULL) {
-            struct bu_hash_entry *hsh_entry = (struct bu_hash_entry *)calloc(1, sizeof(struct bu_hash_entry));
-            hsh_entry = bu_hash_add_entry(&(o->groups), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &new_entry);
+            struct bu_hash_entry *hsh_entry = bu_hash_add_entry(&(o->groups), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &new_entry);
             if (was_solid == 1) {
                 sprintf(id, "%d", value);
             } else {
@@ -241,8 +239,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
 
         if ((!hsh_entry1) && (!hsh_entry2) && (!hsh_entry3)) {
             /* This object hasn't been registered yet. Add it into the solids hash table and create a shape for it. */
-            struct bu_hash_entry *hsh_entry = (struct bu_hash_entry *)calloc(1, sizeof(struct bu_hash_entry));
-            hsh_entry = bu_hash_add_entry(&(o->solids), (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name), &new_entry);
+            struct bu_hash_entry *hsh_entry = bu_hash_add_entry(&(o->solids), (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name), &new_entry);
             dag->object_nr ++;
             sprintf(id, "%d", dag->object_nr);
 
@@ -258,8 +255,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
         } else {
             /* The shape already exists */
             bu_log("\t\"%s\" -> \"%s\" [ label=\"%c\" ];\n", dp->d_namep, rt_tree_array[i].tl_tree->tr_l.tl_name, op);
-            struct bu_hash_entry *hsh_entry = (struct bu_hash_entry *)calloc(1, sizeof(struct bu_hash_entry));
-            hsh_entry =  (hsh_entry1) ? hsh_entry1 : ((hsh_entry2) ? hsh_entry2 : hsh_entry3);
+            struct bu_hash_entry *hsh_entry = (hsh_entry1) ? hsh_entry1 : ((hsh_entry2) ? hsh_entry2 : hsh_entry3);
             value = atoi((const char *)hsh_entry->value);
 
             /* Don't create another shape because it already exists a corresponding one. */
