@@ -377,7 +377,7 @@ bu_realloc(register genptr_t ptr, size_t siz, const char *str)
     /* If bu_realloc receives a non-NULL pointer and zero size then
      * free the memory.  Instead of returning NULL, though, the
      * standard says we can return a small allocation suitable for
-     * passing to bu_free().  Do that so we can maintain are LIBBU
+     * passing to bu_free().  Do that so we can maintain our LIBBU
      * guarantee of worry-free memory management.
      */
     if (UNLIKELY(ptr != NULL && siz == 0)) {
