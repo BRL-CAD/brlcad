@@ -822,7 +822,7 @@ utah_pushBack(const BBNode* sbv, ON_2dPoint &uv)
 
 
 int
-utah_newton_solver_test(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, ON_2dPoint* suv, int count, int iu, int iv)
+utah_newton_solver_test(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, ON_2dPoint* suv, const int count, const int iu, const int iv)
 {
     int i;
     int intersects = 0;
@@ -985,6 +985,7 @@ utah_newton_4corner_solver(const BBNode* sbv, const ON_Surface* surf, const ON_R
 void
 utah_newton_solver(const ON_Surface* surf, const ON_Ray& r, ON_2dPoint &uv, double& t, ON_3dVector &N, bool& converged)
 {
+    // This function is currently not called when ray tracing. We use utah_newton_solver_test().
     int i;
     double j11, j12, j21, j22;
     double f, g;
@@ -1047,6 +1048,7 @@ utah_newton_solver(const ON_Surface* surf, const ON_Ray& r, ON_2dPoint &uv, doub
 bool
 lines_intersect(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4)
 {
+    // This function is currently not called when ray tracing.
     double tol = 1e-8;
     double A1 = y2-y1;
     double B1 = x1-x2;
@@ -1296,6 +1298,7 @@ utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Su
 int
 utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, ON_Ray& ray, HitList& hits)
 {
+    // This function is currently not called when ray tracing. We use utah_brep_intersect_test().
     ON_3dVector N;
     bool hit = false;
     double t = 0.0;
@@ -1363,6 +1366,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 int
 brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t uv, ON_Ray& ray, HitList& hits)
 {
+    // This function is currently not called when ray tracing. We use utah_brep_intersect_test().
     int found = BREP_INTERSECT_ROOT_ITERATION_LIMIT;
     fastf_t Dlast = MAX_FASTF;
     int diverge_iter = 0;
