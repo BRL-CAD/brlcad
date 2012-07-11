@@ -46,9 +46,9 @@ using namespace Avoid;
  * This structure has fields that correspond to three hash tables for solid, group and region type objects of a database.
  */
 struct output {
-    struct bu_hash_tbl groups;
-    struct bu_hash_tbl regions;
-    struct bu_hash_tbl solids;
+    struct bu_hash_tbl *groups;
+    struct bu_hash_tbl *regions;
+    struct bu_hash_tbl *solids;
 };
 
 
@@ -128,32 +128,49 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     struct bu_hash_entry *hsh_entry_solid = NULL;
-    if ((hsh_entry_solid = bu_find_hash_entry(&(o->solids), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &prev, &idx))) {
+    if ((hsh_entry_solid = bu_find_hash_entry(o->solids, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx))) {
         value = atoi((const char*)hsh_entry_solid->value);
         was_solid = 1;
+
+        if (hsh_entry_solid == o->solids->lists[idx]) {
+            o->solids->lists[idx] = hsh_entry_solid->next;
+        } else {
+            prev->next = hsh_entry_solid->next;
+        }
+        free(hsh_entry_solid->value);
+        hsh_entry_solid->value = NULL;
+        free(hsh_entry_solid->key);
+        hsh_entry_solid->key = NULL;
+        free(hsh_entry_solid);
+        hsh_entry_solid = NULL;
+
+        o->solids->num_entries--;
     } else {
         was_solid = 0;
     }
 
     if (comb->region_flag) {   
-        if (bu_find_hash_entry(&(o->regions), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &prev, &idx) == NULL) {
-            struct bu_hash_entry *hsh_entry = bu_hash_add_entry(&(o->regions), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &new_entry);
+        if (bu_find_hash_entry(o->regions, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx) == NULL) {
+            struct bu_hash_entry *hsh_entry = bu_hash_add_entry(o->regions, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &new_entry);
+            bu_log("index: %d\n", idx);
             if (was_solid == 1) {
+                bu_log("it already is a SOLID\n");
                 sprintf(id, "%d", value);
             } else {
+                bu_log("it isn't a solid\n");
                 dag->object_nr ++;
                 sprintf(id, "%d", dag->object_nr);
                 value = dag->object_nr;
             }
             /* Set the id value for this shape */
-            hsh_entry->value = (unsigned char *)malloc((size_t)strlen(id));
+            hsh_entry->value = (unsigned char *)malloc((size_t)strlen(id) + 1);
             memcpy(hsh_entry->value, id, (size_t)strlen(id) + 1);
 
             bu_log("\t\"%s\" [ color=blue shape=box3d ];\n", dp->d_namep);
         }
     } else {
-        if (bu_find_hash_entry(&(o->groups), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &prev, &idx) == NULL) {
-            struct bu_hash_entry *hsh_entry = bu_hash_add_entry(&(o->groups), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &new_entry);
+        if (bu_find_hash_entry(o->groups, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx) == NULL) {
+            struct bu_hash_entry *hsh_entry = bu_hash_add_entry(o->groups, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &new_entry);
             if (was_solid == 1) {
                 sprintf(id, "%d", value);
             } else {
@@ -162,7 +179,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
                 value = dag->object_nr;
             }
             /* Set the id value for this shape */
-            hsh_entry->value = (unsigned char *)malloc((size_t)strlen(id));
+            hsh_entry->value = (unsigned char *)malloc((size_t)strlen(id) + 1);
             memcpy(hsh_entry->value, id, (size_t)strlen(id) + 1);
 
             bu_log("\t\"%s\" [ color=green ];\n", dp->d_namep);
@@ -233,22 +250,24 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
 
         struct bu_hash_entry *hsh_entry1, *hsh_entry2, *hsh_entry3;
 
-        hsh_entry1 = bu_find_hash_entry(&(o->regions), (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name), &prev, &idx);
-        hsh_entry2 = bu_find_hash_entry(&(o->groups), (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name), &prev, &idx);
-        hsh_entry3 = bu_find_hash_entry(&(o->solids), (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name), &prev, &idx);
+        hsh_entry1 = bu_find_hash_entry(o->regions, (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name) + 1, &prev, &idx);
+        hsh_entry2 = bu_find_hash_entry(o->groups, (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name) + 1, &prev, &idx);
+        hsh_entry3 = bu_find_hash_entry(o->solids, (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name) + 1, &prev, &idx);
 
         if ((!hsh_entry1) && (!hsh_entry2) && (!hsh_entry3)) {
             /* This object hasn't been registered yet. Add it into the solids hash table and create a shape for it. */
-            struct bu_hash_entry *hsh_entry = bu_hash_add_entry(&(o->solids), (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name), &new_entry);
+            struct bu_hash_entry *hsh_entry = bu_hash_add_entry(o->solids, (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name) + 1, &new_entry);
+            bu_log("index: %d\n", idx);
             dag->object_nr ++;
             sprintf(id, "%d", dag->object_nr);
 
             /* Set the id value for this shape */
-            hsh_entry->value = (unsigned char *)malloc((size_t)strlen(id));
+            hsh_entry->value = (unsigned char *)malloc((size_t)strlen(id) + 1);
             memcpy(hsh_entry->value, id, (size_t)strlen(id) + 1);
 
             value = dag->object_nr;
             bu_log("\t\"%s\" -> \"%s\" [ label=\"%c\" ];\n", dp->d_namep, rt_tree_array[i].tl_tree->tr_l.tl_name, op);
+            bu_log("[SOLID]added %d objects.\n", dag->object_nr);
 
             /* Create a shape for the current node of the subtree */
             shapeRef2 = add_object(dag, value);
@@ -268,10 +287,6 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
                 }
             }
         }
-
-        /* Create connection pins on shapes for linking the parent node with the subnode. */
-        new Avoid::ShapeConnectionPin(shapeRef1, CENTRE, Avoid::ATTACH_POS_CENTRE, Avoid::ATTACH_POS_CENTRE);
-        new Avoid::ShapeConnectionPin(shapeRef2, CENTRE, Avoid::ATTACH_POS_CENTRE, Avoid::ATTACH_POS_CENTRE);
 
         /* Create connector from each shape shapeRef2 to the input pin on shapeRef1. */
         Avoid::ConnEnd dstEnd(shapeRef1, CENTRE);
@@ -303,16 +318,14 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
     struct directory *dp = NULL, *ndp = NULL;
     struct bu_vls dp_name_vls = BU_VLS_INIT_ZERO;
     int i;
-    struct output o = {BU_HASH_TBL_INIT_ZERO, BU_HASH_TBL_INIT_ZERO, BU_HASH_TBL_INIT_ZERO};
+    struct output o;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
     Avoid::ShapeRef *shapeRef = NULL;
 
     /* Create the hash tables. Each one will have at most 64 entries. */
-    o.regions = *bu_create_hash_tbl(1);
-    o.groups = *bu_create_hash_tbl(1);
-    o.solids = *bu_create_hash_tbl(1);
-
-    dag->router = new Avoid::Router(Avoid::PolyLineRouting);
+    o.regions = bu_create_hash_tbl(1);
+    o.groups = bu_create_hash_tbl(1);
+    o.solids = bu_create_hash_tbl(1);
 
     /* Sets a spacing distance for overlapping orthogonal connectors to be nudged apart. */
     dag->router->setOrthogonalNudgeDistance(25);
@@ -344,19 +357,19 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
                     int new_entry;
                     char id[100];
 
-                    hsh_entry1 = bu_find_hash_entry(&(o.regions), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &prev, &idx);
-                    hsh_entry2 = bu_find_hash_entry(&(o.groups), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &prev, &idx);
-                    hsh_entry3 = bu_find_hash_entry(&(o.solids), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &prev, &idx);
+                    hsh_entry1 = bu_find_hash_entry(o.regions, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
+                    hsh_entry2 = bu_find_hash_entry(o.groups, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
+                    hsh_entry3 = bu_find_hash_entry(o.solids, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
 
                     if ((!hsh_entry1) && (!hsh_entry2) && (!hsh_entry3)) {
                         /* This object hasn't been registered yet. Add it into the solids hash table and create a shape for it. */
                         dag->object_nr++;
 
-                        struct bu_hash_entry *hsh_entry = bu_hash_add_entry(&(o.solids), (unsigned char *)dp->d_namep, strlen(dp->d_namep), &new_entry);
+                        struct bu_hash_entry *hsh_entry = bu_hash_add_entry(o.solids, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &new_entry);
                         sprintf(id, "%d", dag->object_nr);
 
                         /* Set the id value for this object */
-                        hsh_entry->value = (unsigned char *)malloc((size_t)strlen(id));
+                        hsh_entry->value = (unsigned char *)malloc((size_t)strlen(id) + 1);
                         memcpy(hsh_entry->value, id, (size_t)strlen(id) + 1);
 
                         /* Create and add a shape (obstacle) to the router */
@@ -381,6 +394,9 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
     ged_close(gedp);
     bu_vls_free(&dp_name_vls);
     dag->router->deleteShape(shapeRef);
+    bu_hash_tbl_free(o.regions);
+    bu_hash_tbl_free(o.groups);
+    bu_hash_tbl_free(o.solids);
 
     return GED_OK;
 }
