@@ -132,6 +132,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
         value = atoi((const char*)hsh_entry_solid->value);
         was_solid = 1;
 
+        /* The comb object has been registered as a solid prior to this. Delete its corresponding entry from the solids hash table. */
         if (hsh_entry_solid == o->solids->lists[idx]) {
             o->solids->lists[idx] = hsh_entry_solid->next;
         } else {
@@ -287,6 +288,10 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
                 }
             }
         }
+
+        /* Create connection pins on shapes for linking the parent node with the subnode. */
+        new Avoid::ShapeConnectionPin(shapeRef1, CENTRE, Avoid::ATTACH_POS_CENTRE, Avoid::ATTACH_POS_CENTRE);
+        new Avoid::ShapeConnectionPin(shapeRef2, CENTRE, Avoid::ATTACH_POS_CENTRE, Avoid::ATTACH_POS_CENTRE);
 
         /* Create connector from each shape shapeRef2 to the input pin on shapeRef1. */
         Avoid::ConnEnd dstEnd(shapeRef1, CENTRE);
