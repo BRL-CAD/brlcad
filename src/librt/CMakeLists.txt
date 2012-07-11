@@ -214,6 +214,7 @@ set(LIBRT_SOURCES
   primitives/rpc/rpc_mirror.c
   primitives/sketch/sketch.c
   primitives/sketch/sketch_brep.cpp
+  primitives/sketch/sketch_tess.cpp
   primitives/sph/sph.c
   primitives/sph/sph_brep.cpp
   primitives/submodel/submodel.c
