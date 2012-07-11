@@ -34,16 +34,6 @@ int isAggregateType( const Type t );
 int isAggregate( Variable a );
 Variable VARis_type_shifter( Variable a );
 
-static_inline bool LISTempty( Linked_List list ) {
-    if( !list ) {
-        return true;
-    }
-    if( list->mark->next == list->mark ) {
-        return true;
-    }
-    return false;
-}
-
 int multiple_inheritance = 1;
 int print_logging = 0;
 int old_accessors = 0;

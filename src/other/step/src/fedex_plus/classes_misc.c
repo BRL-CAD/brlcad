@@ -24,18 +24,6 @@ extern char * scl_version();
 extern int multiple_inheritance;
 /*extern int corba_binding; */
 
-static_inline
-bool
-LISTempty( Linked_List list ) {
-    if( !list ) {
-        return true;
-    }
-    if( list->mark->next == list->mark ) {
-        return true;
-    }
-    return false;
-}
-
 /******************************************************************
 **      The following functions will be used        ***
 ***     through out the the program fedex_plus      ***/
