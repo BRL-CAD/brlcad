@@ -83,28 +83,16 @@ incenter(ON_2dPoint a, ON_2dPoint b, ON_2dPoint c)
 }
 
 int
-biarc(struct bezier_seg bezier, const struct rt_sketch_internal *sketch_ip, ON_Arc *biarc)
+biarc(ON_BezierCurve bezier, ON_Arc *biarc)
 {
     ON_2dPoint p1, p2, p3, isect;
-    ON_2dPointArray *bezier_points;
     ON_2dVector t1, t2;
-    ON_BezierCurve ON_bezier;
 
-    p1 = ON_2dPoint(sketch_ip->verts[bezier.ctl_points[0]]);
-    p2 = ON_2dPoint(sketch_ip->verts[bezier.ctl_points[bezier.degree]]);
+    p1 = bezier.PointAt(0.0);
+    p2 = bezier.PointAt(1.0);
 
-    bezier_points = new ON_2dPointArray[bezier.degree + 1];
-
-    for (int i = 0; i < bezier.degree + 1; i++) {
-        bezier_points->Append(sketch_ip->verts[bezier.ctl_points[i]]);
-    }
-
-    ON_bezier = ON_BezierCurve((const ON_2dPointArray)*bezier_points);
-
-    delete bezier_points;
-
-    t1 = ON_bezier.TangentAt(0.0);
-    t2 = ON_bezier.TangentAt(1.0);
+    t1 = bezier.TangentAt(0.0);
+    t2 = bezier.TangentAt(1.0);
 
     if (intersect_2dRay(p1, p2, t1, t2, &isect) < 0) {
         return -1;
