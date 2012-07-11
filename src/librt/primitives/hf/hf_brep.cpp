@@ -42,12 +42,12 @@ extern "C" {
 extern "C" void
 rt_hf_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-    struct rt_db_internal *tmp_internal = (struct rt_db_internal *) bu_malloc(sizeof(struct rt_db_internal), "allocate structure");
+    struct rt_db_internal tmp_internal;
     RT_CK_DB_INTERNAL(ip);
-    *tmp_internal = *ip;
-    rt_hf_to_dsp(tmp_internal);
+    tmp_internal = *ip;
+    rt_hf_to_dsp(&tmp_internal);
 
-    rt_dsp_brep(b, tmp_internal, tol);
+    rt_dsp_brep(b, &tmp_internal, tol);
 }
 
 
