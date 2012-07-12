@@ -35,18 +35,27 @@ Docstrings are courtesy of ISO 10303-11:1994(E)
 
 class NUMBER:
     """
+    EXPRESS definition:
+    ===================
     The number data type has as its domain all numeric values in the language. The number data
-    type shall be used when a more specific numeric representation is not important.
+    type shall be used when a more specic numeric representation is not important.
+    Syntax:
+    248 number_type = NUMBER .
+    EXAMPLE 15 - Since we may not know the context of size we do not know how to correctly
+    represent it, e.g. the size of the crowd at a football game would be an integer, whereas the area
+    of the pitch would be a real.
+    size : NUMBER ;
     
-    Python mapping: cannot be mapped to a builtin python type. The constructor only checks that
-    the parameter passed at initialization is a number.
+    Python definition:
+    ==================
+    class NUMBER is an abstract class, aimed at being specialized.
     """
-    def __init__(self,value):
-        # should test the type of value (float, or integer)
-        pass
+    pass
            
-class REAL(float):
+class REAL(float,NUMBER):
     """
+    EXPRESS definition:
+    ===================
     The real data type has as its domain all rational, irrational and scientfic real numbers. It is
     a specialization of the number data type.
     Syntax:
@@ -65,16 +74,37 @@ class REAL(float):
     b) When no resolution specification is given the precision of the real number is uncon-
     strained.
     
-    Python mapping: REAL is mapped to 'float' type
+    Note 9.2.6:
+    integer and real are both specializations of number;
+    
+    Python definition:
+    ==================
+    REAL both inherits from float and NUMBER
     """
     pass
 
-class INTEGER(int):
+class INTEGER(int,NUMBER):
     """
+    EXPRESS definition:
+    ===================
     The integer data type has as its domain all integer numbers. It is a specialization of the real
     data type.
+    Syntax:
+    227 integer_type = INTEGER .
+    EXAMPLE 16 - This example uses an integer data type to represent an attribute named nodes.
+    The domain of this attribute is all integers, with no further constraint.
+    ENTITY foo;
+    nodes : INTEGER;
+    END_ENTITY;
     
-    Python mapping: INTEGER is mapped to 'int' type"""
+    Note 9.2.6: integer and real are both specializations of number;
+    
+    Python definition:
+    ==================
+    INTEGER both inherits from int and NUMBER
+    
+    @TODO: note 9.2.6 tells that integer is a specialization of real
+    """
     pass
       
 class STRING(str):

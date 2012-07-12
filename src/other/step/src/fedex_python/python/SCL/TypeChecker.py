@@ -30,8 +30,10 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from ConstructedDataTypes import ENUMERATION, SELECT
+import BaseType
 
 RAISE_EXCEPTION_IF_TYPE_DOES_NOT_MATCH = True
+DEBUG = False
 
 def cast_python_object_to_aggregate(obj, aggregate):
     """ This function casts a python object to an aggregate type. For instance:
@@ -48,11 +50,20 @@ def check_type(instance, expected_type):
     returns False or True
     """
     type_match = False #by default, will be set to True if any match
+    if DEBUG:
+        print "==="
+        print "Instance passed: ",instance
+        print "Expected type: ", expected_type
     # in the case of an enumeration, we have to check if the instance is in the list
-    if (isinstance(expected_type,SELECT) or isinstance(expected_type,ENUMERATION)):        
+    if (isinstance(expected_type,ENUMERATION)):
+        allowed_ids = expected_type.get_enum_ids()
+        if instance in allowed_ids:
+            type_match = True
+        else:
+            raise TypeError('Enumeration ids must be %s ( passed %s)'%(allowed_ids,type(instance)))
+    elif (isinstance(expected_type,SELECT)):        
         # we check if the instance is of the type of any of the types that are in the SELECT
         allowed_types = expected_type.get_allowed_basic_types()
-        #if instance in allowed_types:
         for allowed_type in allowed_types:
             if isinstance(instance,allowed_type):
                 type_match = True
@@ -62,7 +73,24 @@ def check_type(instance, expected_type):
             else:
                 print "WARNING: expected '%s' but passed a '%s', casting from python value to EXPRESS type"%(allowed_types, type(instance))
                 return False
-    else:
+    elif (isinstance(expected_type, BaseType.Aggregate)):
+        # first check that they are instance of the same class
+        if not (type(instance) == type(expected_type)):
+            raise TypeError('Expected %s but passed %s'%(type(expected_type),type(instance)))
+        # then check that the base type is the same
+        elif not (instance.get_type() == expected_type.get_type()):
+            #print instance.get_type()
+            #print expected_type.get_type()
+            raise TypeError('Expected %s:%s base type but passed %s:%s base type'%(type(expected_type),expected_type.get_type(),type(instance), instance.get_type()))
+        # check optional and unique attributes
+        #elif not (instance._unique == expected_type._unique):
+        #    raise TypeError('Aggregate expects UNIQUE:%s property but passed UNIQUE:%s'%(expected_type._unique, instance._unique))
+        #elif not (instance._optional == expected_type._optional):
+        #    raise TypeError('Aggregate expects OPTIONAL:%s property but passed OPTIONAL:%s'%(expected_type._optional, instance._optional))
+        # @TODO: check aggregate bounds
+        else:
+            type_match = True
+    else: # simple data types
         type_match = isinstance(instance,expected_type)
         if not type_match:
             if RAISE_EXCEPTION_IF_TYPE_DOES_NOT_MATCH:
