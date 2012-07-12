@@ -38,7 +38,7 @@ set(archer_TCLSCRIPTS
   itk_redefines.tcl
   tabwindow.itk
   )
-BRLCAD_ADDDATA(archer_TCLSCRIPTS tclscripts/archer)
+BRLCAD_ADDDATA(archer_TCLSCRIPTS ${DATA_DIR}/tclscripts/archer)
 pkgIndex_BUILD(archer tclscripts/archer)
 tclIndex_BUILD(archer tclscripts/archer)
 

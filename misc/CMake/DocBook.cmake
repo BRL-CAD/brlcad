@@ -97,9 +97,9 @@ string(REGEX REPLACE "/$" "" bin_root "${bin_root}")
 # (xsltproc needs the directory to already exist when multiple docs are building in
 # parallel.)  If CMAKE_CFG_INTDIR is just the current working directory, then everything
 # is flat even if we are multi-config and we proceed as normal.
-macro(DB_SCRIPT targetname targetdir executable)
+macro(DB_SCRIPT targetname outdir executable)
   if(NOT CMAKE_CONFIGURATION_TYPES OR "${CMAKE_CFG_INTDIR}" STREQUAL ".")
-    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/${DOC_DIR}/${targetdir})
+    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${outdir})
     set(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake)
     configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${executable}.cmake.in ${scriptfile} @ONLY)
   else(NOT CMAKE_CONFIGURATION_TYPES OR "${CMAKE_CFG_INTDIR}" STREQUAL ".")
@@ -110,7 +110,7 @@ macro(DB_SCRIPT targetname targetdir executable)
     # for the generation of flexible build targets.
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE})
-      file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${CFG_TYPE}/${DATA_DIR}/${DOC_DIR}/${targetdir})
+      file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${CFG_TYPE}/${outdir})
       # Temporarily store flexible values
       string(TOUPPER "${executable}" exec_upper)
       set(outfile_tmp "${outfile}")
@@ -131,7 +131,7 @@ endmacro(DB_SCRIPT)
 
 # Macro to define individual validation build targets and generate the script files 
 # used to run the validation step during build
-macro(DB_VALIDATE_TARGET targetname filename_root)
+macro(DB_VALIDATE_TARGET targetname targetdir filename_root)
   # Man page root names are not unique (and other documents' root names are not guaranteed to be
   # unique) - incorporate the two parent dirs into things like target names for uniqueness
   get_filename_component(root1 ${CMAKE_CURRENT_SOURCE_DIR} NAME)
@@ -146,7 +146,7 @@ macro(DB_VALIDATE_TARGET targetname filename_root)
   # file has handled - skip it.
   get_target_property(tarprop ${validate_target} TARGET_NAME)
   if("${tarprop}" MATCHES "NOTFOUND")
-    DB_SCRIPT("${validate_target}" "${VALIDATE_EXECUTABLE}")
+    DB_SCRIPT("${validate_target}" "${DATA_DIR}/${DOC_DIR}/${targetdir}" "${VALIDATE_EXECUTABLE}")
     add_custom_command(
       OUTPUT ${db_outfile}
       COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
@@ -175,10 +175,10 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
       endforeach(extra_out ${EXTRA_OUTPUTS})
      
       # Generate the script that will be used to run the XSLT executable 
-      DB_SCRIPT("${targetname}" "${targetdir}" "${XSLT_EXECUTABLE}")
+      DB_SCRIPT("${targetname}" "${DATA_DIR}/${DOC_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
 
       if(BRLCAD_EXTRADOCS_VALIDATE)
-	DB_VALIDATE_TARGET(${targetname} ${filename_root})
+	DB_VALIDATE_TARGET(${targetname} ${targetdir} ${filename_root})
 	add_custom_command(
 	  OUTPUT ${outfile} ${EXTRAS}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
@@ -217,7 +217,7 @@ macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir deps_li
   if(BRLCAD_EXTRADOCS_MAN)
     foreach(filename ${${xml_files}})
       string(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
-      set(outfile ${bin_root}/${DATA_DIR}/${targetdir}/${filename_root}.${manext})
+      set(outfile ${bin_root}/${MAN_DIR}/${targetdir}/${filename_root}.${manext})
       set(targetname ${filename_root}_${targetname_suffix}_man)
       set(CURRENT_XSL_STYLESHEET ${XSL_MAN_STYLESHEET})
 
@@ -225,11 +225,11 @@ macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir deps_li
       set(EXTRAS)
       get_property(EXTRA_OUTPUTS SOURCE ${filename} PROPERTY EXTRA_MAN_OUTPUTS)
       foreach(extra_out ${EXTRA_OUTPUTS})
-	set(EXTRAS ${EXTRAS} ${bin_root}/${DATA_DIR}/${targetdir}/${extra_out})
+	set(EXTRAS ${EXTRAS} ${bin_root}/${MAN_DIR}/${targetdir}/${extra_out})
       endforeach(extra_out ${EXTRA_OUTPUTS})
  
       # Generate the script that will be used to run the XSLT executable
-      DB_SCRIPT("${targetname}" "${targetdir}" "${XSLT_EXECUTABLE}")
+      DB_SCRIPT("${targetname}" "${MAN_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
 
       if(BRLCAD_EXTRADOCS_VALIDATE)
 	DB_VALIDATE_TARGET(${targetname} ${filename_root})
@@ -283,7 +283,7 @@ macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir deps_list)
       endif(CMAKE_CONFIGURATION_TYPES)
       set(fo_outfile ${outfile})
       set(CURRENT_XSL_STYLESHEET ${XSL_FO_STYLESHEET})
-      DB_SCRIPT("${targetname}" "${targetdir}" "${XSLT_EXECUTABLE}")
+      DB_SCRIPT("${targetname}" "${DATA_DIR}/${DOC_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
       if(BRLCAD_EXTRADOCS_VALIDATE)
 	DB_VALIDATE_TARGET(${targetname} ${filename_root})
 	add_custom_command(
@@ -300,7 +300,7 @@ macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir deps_list)
       endif(BRLCAD_EXTRADOCS_VALIDATE)
       set(targetname ${filename_root}_${targetname_suffix}_pdf)
       set(outfile ${bin_root}/${DATA_DIR}/${DOC_DIR}/${targetdir}/${filename_root}.pdf)
-      DB_SCRIPT("${targetname}_pdf" "${targetdir}" "${PDF_CONV_EXECUTABLE}")
+      DB_SCRIPT("${targetname}_pdf" "${DATA_DIR}/${DOC_DIR}/${targetdir}" "${PDF_CONV_EXECUTABLE}")
       add_custom_command(
 	OUTPUT ${outfile}
 	COMMAND ${CMAKE_COMMAND} -P ${scriptfile}

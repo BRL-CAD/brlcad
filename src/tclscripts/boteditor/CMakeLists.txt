@@ -3,7 +3,7 @@ set(boteditor_TCLSCRIPTS
   botPropertyBox.tcl
   botTools.tcl
   )
-BRLCAD_ADDDATA(boteditor_TCLSCRIPTS tclscripts/boteditor)
+BRLCAD_ADDDATA(boteditor_TCLSCRIPTS ${DATA_DIR}/tclscripts/boteditor)
 CMAKEFILES(Makefile.am)
 
 # Local Variables:

@@ -12,7 +12,7 @@ set(LIBPKG_SOURCES
   vers.c
   )
 
-BRLCAD_ADDDATA(tpkg.c sample_applications)
+BRLCAD_ADDDATA(tpkg.c ${DATA_DIR}/sample_applications)
 BRLCAD_ADDEXEC(tpkg tpkg.c "libbu;libpkg" NO_INSTALL)
 
 BRLCAD_ADDLIB(libpkg "${LIBPKG_SOURCES}" libbu)

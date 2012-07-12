@@ -6,7 +6,7 @@ set(swidgets_image_DATA
   plus.xbm
   tip.gif
   )
-BRLCAD_ADDDATA(swidgets_image_DATA tclscripts/swidgets/images)
+BRLCAD_ADDDATA(swidgets_image_DATA ${DATA_DIR}/tclscripts/swidgets/images)
 
 CMAKEFILES(Makefile.am)
 

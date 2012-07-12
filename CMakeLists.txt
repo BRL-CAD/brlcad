@@ -248,7 +248,7 @@ endif(NOT DATA_DIR)
 
 # The location in which to install BRL-CAD Manual pages
 if(NOT MAN_DIR)
-  set(MAN_DIR ${DATA_DIR}/man)
+  set(MAN_DIR man)
 endif(NOT MAN_DIR)
 
 # The location in which to install BRL-CAD documentation files
@@ -1787,7 +1787,7 @@ set(toplevel_DOCFILES
   NEWS
   README
   )
-BRLCAD_ADDDATA(toplevel_DOCFILES ".")
+BRLCAD_ADDDATA(toplevel_DOCFILES "${DATA_DIR}/.")
 
 # Generate the windows specific file, if needed
 if(WIN32)

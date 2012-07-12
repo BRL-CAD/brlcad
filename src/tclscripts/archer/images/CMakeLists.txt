@@ -262,7 +262,7 @@ set(archer_images
   wizard.png
   )
 
-BRLCAD_ADDDATA(archer_images tclscripts/archer/images)
+BRLCAD_ADDDATA(archer_images ${DATA_DIR}/tclscripts/archer/images)
 CMAKEFILES(Makefile.am)
 
 # Local Variables:

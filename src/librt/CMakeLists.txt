@@ -279,8 +279,8 @@ set(librt_ignored_files
   )
 CMAKEFILES(${librt_ignored_files})
 
-BRLCAD_ADDDATA(nurb_example.c sample_applications)
-BRLCAD_ADDDATA(raydebug.tcl sample_applications)
+BRLCAD_ADDDATA(nurb_example.c ${DATA_DIR}/sample_applications)
+BRLCAD_ADDDATA(raydebug.tcl ${DATA_DIR}/sample_applications)
 
 if(MSVC)
   set(LIBRT_SOURCES ${LIBRT_SOURCES} timer-nt.c)

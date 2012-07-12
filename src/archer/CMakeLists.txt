@@ -62,30 +62,30 @@ if(BRLCAD_ENABLE_TK)
   endif(BRLCAD_BUILD_TKTABLE)
 endif(BRLCAD_ENABLE_TK)
 
-BRLCAD_ADDDATA(plugins/Core/README plugins/archer/Core)
-BRLCAD_ADDDATA(plugins/Commands/README plugins/archer/Command)
+BRLCAD_ADDDATA(plugins/Core/README ${DATA_DIR}/plugins/archer/Core)
+BRLCAD_ADDDATA(plugins/Commands/README ${DATA_DIR}/plugins/archer/Command)
 
 set(archer_utility_FILES
   plugins/Utility/botUtilityP.tcl
   plugins/Utility/attrGroupsDisplayUtilityP.tcl
   plugins/Utility/README
   )
-BRLCAD_ADDDATA(archer_utility_FILES plugins/archer/Utility)
+BRLCAD_ADDDATA(archer_utility_FILES ${DATA_DIR}/plugins/archer/Utility)
 
-BRLCAD_ADDDATA(plugins/Utility/botUtilityP/BotUtilityP.tcl plugins/archer/Utility/botUtilityP)
-BRLCAD_ADDDATA(plugins/Utility/attrGroupsDisplayUtilityP/AttrGroupsDisplayUtilityP.tcl	plugins/archer/Utility/attrGroupsDisplayUtilityP)
+BRLCAD_ADDDATA(plugins/Utility/botUtilityP/BotUtilityP.tcl ${DATA_DIR}/plugins/archer/Utility/botUtilityP)
+BRLCAD_ADDDATA(plugins/Utility/attrGroupsDisplayUtilityP/AttrGroupsDisplayUtilityP.tcl	${DATA_DIR}/plugins/archer/Utility/attrGroupsDisplayUtilityP)
 
 set(archer_wizard_FILES
   plugins/Wizards/humanwizard.tcl
   plugins/Wizards/tankwizard.tcl
   plugins/Wizards/tirewizard.tcl
   )
-BRLCAD_ADDDATA(archer_wizard_FILES plugins/archer/Wizards)
+BRLCAD_ADDDATA(archer_wizard_FILES ${DATA_DIR}/plugins/archer/Wizards)
 
-BRLCAD_ADDDATA(plugins/Wizards/humanwizard/HumanWizard.tcl plugins/archer/Wizards/humanwizard)
-BRLCAD_ADDDATA(plugins/Wizards/tankwizard/TankWizard.tcl plugins/archer/Wizards/tankwizard)
-BRLCAD_ADDDATA(plugins/Wizards/tankwizard/images/tank.png plugins/archer/Wizards/tankwizardIA/images)
-BRLCAD_ADDDATA(plugins/Wizards/tirewizard/TireWizard.tcl plugins/archer/Wizards/tirewizard)
+BRLCAD_ADDDATA(plugins/Wizards/humanwizard/HumanWizard.tcl ${DATA_DIR}/plugins/archer/Wizards/humanwizard)
+BRLCAD_ADDDATA(plugins/Wizards/tankwizard/TankWizard.tcl ${DATA_DIR}/plugins/archer/Wizards/tankwizard)
+BRLCAD_ADDDATA(plugins/Wizards/tankwizard/images/tank.png ${DATA_DIR}/plugins/archer/Wizards/tankwizardIA/images)
+BRLCAD_ADDDATA(plugins/Wizards/tirewizard/TireWizard.tcl ${DATA_DIR}/plugins/archer/Wizards/tirewizard)
 
 set(archer_ignore_files
   TODO

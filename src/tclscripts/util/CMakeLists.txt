@@ -3,7 +3,7 @@ set(util_TCLSCRIPTS
   getopt.tcl
   luniq.tcl
   )
-BRLCAD_ADDDATA(util_TCLSCRIPTS tclscripts/util)
+BRLCAD_ADDDATA(util_TCLSCRIPTS ${DATA_DIR}/tclscripts/util)
 pkgIndex_BUILD(util tclscripts/util)
 tclIndex_BUILD(util tclscripts/util)
 

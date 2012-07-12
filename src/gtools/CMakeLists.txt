@@ -24,7 +24,7 @@ BRLCAD_ADDEXEC(g_qa g_qa.c "libged;librt")
 BRLCAD_ADDEXEC(remapid remapid.c "librt;libbu")
 
 BRLCAD_ADDEXEC(g_transfer g_transfer.c "librt;libpkg" NO_INSTALL)
-BRLCAD_ADDDATA(g_transfer.c sample_applications)
+BRLCAD_ADDDATA(g_transfer.c ${DATA_DIR}/sample_applications)
 
 set(gtools_MANS
   g_diff.1

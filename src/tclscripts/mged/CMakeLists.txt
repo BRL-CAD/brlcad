@@ -83,7 +83,7 @@ set(mged_TCLSCRIPTS
   tree.tcl
   xclone.tcl
   )
-BRLCAD_ADDDATA(mged_TCLSCRIPTS tclscripts/mged)
+BRLCAD_ADDDATA(mged_TCLSCRIPTS ${DATA_DIR}/tclscripts/mged)
 # no packages in here (so far)
 # pkgIndex_BUILD(mged tclscripts/mged)
 tclIndex_BUILD(mged tclscripts/mged)
@@ -133,7 +133,7 @@ set(mged_tcl_DATA
   mike-tux.ppm
   mike-tux.png
   )
-BRLCAD_ADDDATA(mged_tcl_DATA tclscripts/mged)
+BRLCAD_ADDDATA(mged_tcl_DATA ${DATA_DIR}/tclscripts/mged)
 
 CMAKEFILES(rrmb.tcl pkgIndex.tcl tclIndex)
 CMAKEFILES(Makefile.am)

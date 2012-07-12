@@ -20,7 +20,7 @@ set(rtwizard_lib_TCLSCRIPTS
 	PictureTypeF.itcl
 	Wizard.itk
 	)
-BRLCAD_ADDDATA(rtwizard_lib_TCLSCRIPTS tclscripts/rtwizard/lib)
+BRLCAD_ADDDATA(rtwizard_lib_TCLSCRIPTS ${DATA_DIR}/tclscripts/rtwizard/lib)
 pkgIndex_BUILD(rtwizard_lib tclscripts/rtwizard/lib)
 tclIndex_BUILD(rtwizard_lib tclscripts/rtwizard/lib)
 

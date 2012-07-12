@@ -44,7 +44,7 @@ set(rtwizard_TCLSCRIPTS
   rtwizard.tcl
   rtwizard.bat
   )
-BRLCAD_ADDDATA(rtwizard_TCLSCRIPTS tclscripts/rtwizard)
+BRLCAD_ADDDATA(rtwizard_TCLSCRIPTS ${DATA_DIR}/tclscripts/rtwizard)
 pkgIndex_BUILD(rtwizard tclscripts/rtwizard)
 tclIndex_BUILD(rtwizard tclscripts/rtwizard)
 
@@ -57,7 +57,7 @@ set(PictureTypeA_DATA
   examples/PictureTypeA/title.txt
   examples/PictureTypeA/preview.small.gif
   )
-BRLCAD_ADDDATA(PictureTypeA_DATA tclscripts/rtwizard/examples/PictureTypeA)
+BRLCAD_ADDDATA(PictureTypeA_DATA ${DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeA)
 
 set(PictureTypeB_DATA
   examples/PictureTypeB/desc.txt
@@ -66,7 +66,7 @@ set(PictureTypeB_DATA
   examples/PictureTypeB/title.txt
   examples/PictureTypeB/preview.small.gif
   )
-BRLCAD_ADDDATA(PictureTypeB_DATA tclscripts/rtwizard/examples/PictureTypeB)
+BRLCAD_ADDDATA(PictureTypeB_DATA ${DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeB)
 
 set(PictureTypeC_DATA
   examples/PictureTypeC/desc.txt
@@ -75,7 +75,7 @@ set(PictureTypeC_DATA
   examples/PictureTypeC/title.txt
   examples/PictureTypeC/preview.small.gif
   )
-BRLCAD_ADDDATA(PictureTypeC_DATA tclscripts/rtwizard/examples/PictureTypeC)
+BRLCAD_ADDDATA(PictureTypeC_DATA ${DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeC)
 
 set(PictureTypeD_DATA
   examples/PictureTypeD/desc.txt
@@ -84,7 +84,7 @@ set(PictureTypeD_DATA
   examples/PictureTypeD/title.txt
   examples/PictureTypeD/preview.small.gif
   )
-BRLCAD_ADDDATA(PictureTypeD_DATA tclscripts/rtwizard/examples/PictureTypeD)
+BRLCAD_ADDDATA(PictureTypeD_DATA ${DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeD)
 
 set(PictureTypeE_DATA
   examples/PictureTypeE/desc.txt
@@ -93,7 +93,7 @@ set(PictureTypeE_DATA
   examples/PictureTypeE/title.txt
   examples/PictureTypeE/preview.small.gif
   )
-BRLCAD_ADDDATA(PictureTypeE_DATA tclscripts/rtwizard/examples/PictureTypeE)
+BRLCAD_ADDDATA(PictureTypeE_DATA ${DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeE)
 
 set(PictureTypeF_DATA
   examples/PictureTypeF/desc.txt
@@ -102,7 +102,7 @@ set(PictureTypeF_DATA
   examples/PictureTypeF/title.txt
   examples/PictureTypeF/preview.small.gif
   )
-BRLCAD_ADDDATA(PictureTypeF_DATA tclscripts/rtwizard/examples/PictureTypeF)
+BRLCAD_ADDDATA(PictureTypeF_DATA ${DATA_DIR}/tclscripts/rtwizard/examples/PictureTypeF)
 
 CMAKEFILES(examples pkgIndex.tcl tclIndex)
 CMAKEFILES(Makefile.am)
