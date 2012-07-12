@@ -2249,7 +2249,8 @@ SurfaceTree::isStraight(ON_Plane *frames)
 }
 
 
-bool SurfaceTree::isFlatU(ON_Plane *frames)
+bool
+SurfaceTree::isFlatU(ON_Plane *frames)
 {
     // check surface normals in U direction
 	double Ndot = 1.0;
@@ -2279,7 +2280,8 @@ bool SurfaceTree::isFlatU(ON_Plane *frames)
 }
 
 
-bool SurfaceTree::isFlatV(ON_Plane *frames)
+bool
+SurfaceTree::isFlatV(ON_Plane *frames)
 {
     // check surface normals in V direction
 	double Ndot = 1.0;
@@ -2788,7 +2790,8 @@ sortX(BRNode* first, BRNode* second)
 }
 
 
-bool sortY(BRNode* first, BRNode* second)
+bool
+sortY(BRNode* first, BRNode* second)
 {
     point_t first_min, second_min;
     point_t first_max, second_max;
@@ -2802,11 +2805,13 @@ bool sortY(BRNode* first, BRNode* second)
 	return false;
 }
 
+
 #define INTERSECT_MAX_DEPTH 8
-extern int surface_surface_intersection(const ON_Surface* surfA,
-					const ON_Surface* surfB,
-					ON_NurbsCurve* intersect,
-					double tolerance)
+int
+surface_surface_intersection(const ON_Surface* surfA,
+			     const ON_Surface* surfB,
+			     ON_NurbsCurve* intersect,
+			     double tolerance)
 {
     if (surfA == NULL || surfB == NULL) {
 	intersect = NULL;
