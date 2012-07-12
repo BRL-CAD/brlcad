@@ -94,9 +94,9 @@ static const char usage[] =
 "  -c, --conditions\tenable support for start conditions\n"
 "  -i, --header PATH\tspecify path of header file\n"
 "  -o, --output\t\tspecify path of output file\n"
-"  -s, --safe-mode\t\tprevent rule fall-through by skipping matched text by default\n"
+"  -s, --safe-mode\tprevent rule fall-through by skipping matched text by default\n"
 "  -t, --template PATH\tspecify path to scanner template file\n"
-"  -v, --version\tprint perplex version number and exit\n"
+"  -v, --version\t\tprint perplex version number and exit\n"
 ;
 
 int main(int argc, char *argv[])
