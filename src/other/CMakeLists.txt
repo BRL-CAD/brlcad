@@ -168,6 +168,11 @@ endif(NOT COMMAND RE2C_TARGET)
 # Perplex is set up as a src/other sub-build, but at this time it is
 # entirely a BRL-CAD effort and not distributed or maintained as its
 # own project.
+
+# For all BRL-CAD projects, we will use the perplex template in
+# src/other/perplex 
+SET(PERPLEX_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/perplex/perplex_template.c" CACHE STRING "Perplex template file" FORCE)
+
 set(perplex_ALIASES ENABLE_PERPLEX)
 set(perplex_DESCRIPTION "
 Option for enabling and disabling compilation of the perplex scanner generator

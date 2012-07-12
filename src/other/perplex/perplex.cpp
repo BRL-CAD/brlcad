@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
     void *parser;
     perplex_t scanner;
     appData_t *appData;
-    char defaultTemplate[] = "scanner_template.c";
+    char defaultTemplate[] = "perplex_template.c";
     FILE *inFile;
     FILE *outFile = stdout;
     FILE *templateFile = NULL;

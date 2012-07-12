@@ -4,6 +4,6 @@ SET(perplex_ignore_files
     perplex.h
     README.txt
     scanner.re
-    scanner_template.c
+    perplex_template.c
     token_type.h
 )
