@@ -237,6 +237,8 @@ extern SCL_EXPRESS_EXPORT Error ERROR_corrupted_type;
 #define TYPEis_identifier(t)    ((t)->u.type->body->type == identifier_)
 #define TYPEis_logical(t)   ((t)->u.type->body->type == logical_)
 #define TYPEis_boolean(t)   ((t)->u.type->body->type == boolean_)
+#define TYPEis_real(t)   ((t)->u.type->body->type == real_)
+#define TYPEis_integer(t)   ((t)->u.type->body->type == integer_)
 #define TYPEis_string(t)    ((t)->u.type->body->type == string_)
 #define TYPEis_expression(t)    ((t)->u.type->body->type == op_)
 #define TYPEis_oneof(t)     ((t)->u.type->body->type == oneof_)

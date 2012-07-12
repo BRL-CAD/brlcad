@@ -65,6 +65,49 @@ void SCOPE_get_entities( Scope scope, Linked_List result ) {
     }
 }
 
+/**  SCOPE_get_functions
+ * \sa SCOPEget_functions
+ */
+void SCOPE_get_functions( Scope scope, Linked_List result ) {
+    DictionaryEntry de;
+    Generic x;
+
+    DICTdo_type_init( scope->symbol_table, &de, OBJ_FUNCTION );
+    while( 0 != ( x = DICTdo( &de ) ) ) {
+        LISTadd_last( result, x );
+    }
+}
+/**  SCOPE_get_functions
+ * \sa SCOPEget_functions
+ */
+Linked_List SCOPEget_functions( Scope scope ) {
+    Linked_List result = LISTcreate();
+    SCOPE_get_functions( scope, result );
+    return( result );
+}
+
+/**  SCOPE_get_rules
+ * \sa SCOPEget_rules
+ */
+void SCOPE_get_rules( Scope scope, Linked_List result ) {
+    DictionaryEntry de;
+    Generic x;
+
+    DICTdo_type_init( scope->symbol_table, &de, OBJ_RULE );
+    while( 0 != ( x = DICTdo( &de ) ) ) {
+        LISTadd_last( result, x );
+    }
+}
+/**  SCOPE_get_functions
+ * \sa SCOPEget_functions
+ */
+Linked_List SCOPEget_rules( Scope scope ) {
+    Linked_List result = LISTcreate();
+    SCOPE_get_rules( scope, result );
+    return( result );
+}
+
+
 /**
  ** \param scope scope to examine
  ** \return entities defined locally

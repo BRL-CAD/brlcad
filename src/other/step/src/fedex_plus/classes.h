@@ -102,6 +102,8 @@ FILE         *  FILEcreate( const char * );
 void            FILEclose( FILE * );
 const char   *  ClassName( const char * );
 const char   *  ENTITYget_classname( Entity );
+void            FUNCPrint( Function, FILES *, Schema );
+void            RULEPrint( Rule, FILES *, Schema );
 void            ENTITYPrint( Entity, FILES *, Schema );
 const char   *  StrToConstant( const char * );
 void            TYPEselect_print( Type, FILES *, Schema );

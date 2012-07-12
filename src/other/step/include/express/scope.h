@@ -125,6 +125,13 @@ struct Scope_ {
 #define SCOPEdo_entities(s,t,de) DICTdo_type_init(s->symbol_table,&de,OBJ_ENTITY); { \
                 Entity t; \
                   while (0 != (t = (Entity)DICTdo(&de))) {
+#define SCOPEdo_functions(s,t,de) DICTdo_type_init(s->symbol_table,&de,OBJ_FUNCTION); { \
+                Entity t; \
+                  while (0 != (t = (Entity)DICTdo(&de))) {
+#define SCOPEdo_rules(s,t,de) DICTdo_type_init(s->symbol_table,&de,OBJ_RULE); { \
+                Entity t; \
+                  while (0 != (t = (Entity)DICTdo(&de))) {
+
 #define SCOPEod         }}
 
 /***********************/
@@ -136,5 +143,9 @@ extern SCL_EXPRESS_EXPORT void     SCOPE_get_entities PROTO( ( Scope, Linked_Lis
 extern SCL_EXPRESS_EXPORT Linked_List  SCOPEget_entities PROTO( ( Scope ) );
 extern SCL_EXPRESS_EXPORT Linked_List  SCOPEget_entities_superclass_order PROTO( ( Scope ) );
 extern SCL_EXPRESS_EXPORT Generic      SCOPEfind PROTO( ( Scope, char *, int ) );
+extern SCL_EXPRESS_EXPORT void     SCOPE_get_functions PROTO( ( Scope, Linked_List ) );
+extern SCL_EXPRESS_EXPORT Linked_List  SCOPEget_functions PROTO( ( Scope ) );
+extern SCL_EXPRESS_EXPORT void     SCOPE_get_rules PROTO( ( Scope, Linked_List ) );
+extern SCL_EXPRESS_EXPORT Linked_List  SCOPEget_rules PROTO( ( Scope ) );
 
 #endif /* SCOPE_H */
