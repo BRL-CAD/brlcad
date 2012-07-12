@@ -8,10 +8,12 @@ if(CMAKE_CONFIGURATION_TYPES)
       FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
       GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
     file(REMOVE ${CMAKE_BINARY_DIR}/src/brlman/brlman)
-    file(COPY brlman.tcl 
+    configure_file(brlman.tcl.in ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl @ONLY)
+    file(COPY ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl  
       DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}
       FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
       GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+    file(REMOVE ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl)
     file(COPY brlman.bat
       DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}
       FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
@@ -28,10 +30,12 @@ else(CMAKE_CONFIGURATION_TYPES)
     FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
     GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
   file(REMOVE ${CMAKE_BINARY_DIR}/src/brlman/brlman)
-  file(COPY brlman.tcl 
+  configure_file(brlman.tcl.in ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl @ONLY)
+  file(COPY ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl
     DESTINATION ${CMAKE_BINARY_DIR}/${BIN_DIR}
     FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
     GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+  file(REMOVE ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl)
   file(COPY brlman.bat 
     DESTINATION ${CMAKE_BINARY_DIR}/${BIN_DIR}
     FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
@@ -44,9 +48,10 @@ endif(CMAKE_CONFIGURATION_TYPES)
 set(BTCLSH_BIN_DIR "${CMAKE_INSTALL_PREFIX}/${BIN_DIR}")
 configure_file(brlman.sh.in ${CMAKE_BINARY_DIR}/src/brlman/brlman @ONLY)
 install(PROGRAMS ${CMAKE_BINARY_DIR}/src/brlman/brlman DESTINATION ${BIN_DIR})
-install(PROGRAMS brlman.tcl DESTINATION ${BIN_DIR})
+configure_file(brlman.tcl.in ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl @ONLY)
+install(PROGRAMS ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl DESTINATION ${BIN_DIR})
 
-CMAKEFILES(brlman.tcl brlman.sh.in brlman.bat)
+CMAKEFILES(brlman.tcl.in brlman.sh.in brlman.bat)
 
 # Local Variables:
 # tab-width: 8
