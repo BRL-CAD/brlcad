@@ -64,7 +64,7 @@ macro(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
     get_filename_component(LemonInputFull ${LemonInput}  ABSOLUTE)
     get_filename_component(LemonSourceFull ${LemonSource} ABSOLUTE)
     get_filename_component(LemonHeaderFull ${LemonHeader} ABSOLUTE)
-    
+
     if(NOT ${LemonInput} STREQUAL ${LemonInputFull})
       set(LEMON_${Name}_INPUT "${CMAKE_CURRENT_BINARY_DIR}/${LemonInput}")
     else(NOT ${LemonInput} STREQUAL ${LemonInputFull})
@@ -88,9 +88,6 @@ macro(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
     # get input name minus path
     get_filename_component(INPUT_NAME "${LemonInput}" NAME)
     set(LEMON_BIN_INPUT ${CMAKE_CURRENT_BINARY_DIR}/${INPUT_NAME})
-    if(NOT "${CMAKE_CURRENT_SOURCE_DIR}/${LemonInput}" STREQUAL "${LEMON_BIN_INPUT}")
-      set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${LEMON_BIN_INPUT}") 
-    endif(NOT "${CMAKE_CURRENT_SOURCE_DIR}/${LemonInput}" STREQUAL "${LEMON_BIN_INPUT}")
 
     # names of lemon output files will be based on the name of the input file
     string(REGEX REPLACE "^(.*)(\\.[^.]*)$" "\\1.c"   LEMON_GEN_SOURCE "${INPUT_NAME}")
@@ -127,7 +124,11 @@ macro(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
     set(LEMON_${Name}_OUTPUTS ${LEMON_GEN_OUT} ${LemonSource} ${LemonHeader})
 
     # make sure we clean up generated output and copied input
-    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${LEMON_${Name}_OUTPUTS}") 
+    if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+      set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${LEMON_${Name}_OUTPUTS}") 
+    else("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+      set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${LEMON_${Name}_OUTPUTS};${LEMON_BIN_INPUT}") 
+    endif("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 
     # macro ran successfully
     set(LEMON_${Name}_DEFINED TRUE)

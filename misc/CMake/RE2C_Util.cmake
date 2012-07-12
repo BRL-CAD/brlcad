@@ -72,32 +72,32 @@
 #============================================================
 #
 macro(RE2C_TARGET Name Input Output)
-	set(RE2C_TARGET_usage "RE2C_TARGET(<Name> <Input> <Output> [COMPILE_FLAGS <string>]")
-	if(${ARGC} GREATER 3)
-		if(${ARGC} EQUAL 5)
-			if("${ARGV3}" STREQUAL "COMPILE_FLAGS")
-				set(RE2C_EXECUTABLE_opts  "${ARGV4}")
-				SEPARATE_ARGUMENTS(RE2C_EXECUTABLE_opts)
-			else()
-				message(SEND_ERROR ${RE2C_TARGET_usage})
-			endif()
-		else()
-			message(SEND_ERROR ${RE2C_TARGET_usage})
-		endif()
-	endif()
+  set(RE2C_TARGET_usage "RE2C_TARGET(<Name> <Input> <Output> [COMPILE_FLAGS <string>]")
+  if(${ARGC} GREATER 3)
+    if(${ARGC} EQUAL 5)
+      if("${ARGV3}" STREQUAL "COMPILE_FLAGS")
+	set(RE2C_EXECUTABLE_opts  "${ARGV4}")
+	SEPARATE_ARGUMENTS(RE2C_EXECUTABLE_opts)
+      else()
+	message(SEND_ERROR ${RE2C_TARGET_usage})
+      endif()
+    else()
+      message(SEND_ERROR ${RE2C_TARGET_usage})
+    endif()
+  endif()
 
-	add_custom_command(OUTPUT ${Output}
-		COMMAND ${RE2C_EXECUTABLE}
-		ARGS ${RE2C_EXECUTABLE_opts} -o${Output} ${Input}
-		DEPENDS ${Input} ${RE2C_EXECUTABLE_TARGET}
-		COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  add_custom_command(OUTPUT ${Output}
+    COMMAND ${RE2C_EXECUTABLE}
+    ARGS ${RE2C_EXECUTABLE_opts} -o${Output} ${Input}
+    DEPENDS ${Input} ${RE2C_EXECUTABLE_TARGET}
+    COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-	set(RE2C_${Name}_DEFINED TRUE)
-	set(RE2C_${Name}_OUTPUTS ${Output})
-	set(RE2C_${Name}_INPUT ${Input})
-	set(RE2C_${Name}_COMPILE_FLAGS ${RE2C_EXECUTABLE_opts})
-	set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${Output}")
+  set(RE2C_${Name}_DEFINED TRUE)
+  set(RE2C_${Name}_OUTPUTS ${Output})
+  set(RE2C_${Name}_INPUT ${Input})
+  set(RE2C_${Name}_COMPILE_FLAGS ${RE2C_EXECUTABLE_opts})
+  set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${Output}")
 endmacro(RE2C_TARGET)
 #============================================================
 
@@ -107,16 +107,16 @@ endmacro(RE2C_TARGET)
 #
 macro(ADD_RE2C_LEMON_DEPENDENCY RE2CTarget LemonTarget)
 
-	if(NOT RE2C_${RE2CTarget}_OUTPUTS)
-		message(SEND_ERROR "RE2C target `${RE2CTarget}' does not exists.")
-	endif()
+  if(NOT RE2C_${RE2CTarget}_OUTPUTS)
+    message(SEND_ERROR "RE2C target `${RE2CTarget}' does not exists.")
+  endif()
 
-	if(NOT LEMON_${LemonTarget}_OUTPUT_HEADER)
-		message(SEND_ERROR "Lemon target `${LemonTarget}' does not exists.")
-	endif()
+  if(NOT LEMON_${LemonTarget}_OUTPUT_HEADER)
+    message(SEND_ERROR "Lemon target `${LemonTarget}' does not exists.")
+  endif()
 
-	set_source_files_properties(${RE2C_${RE2CTarget}_OUTPUTS}
-		PROPERTIES OBJECT_DEPENDS ${LEMON_${LemonTarget}_OUTPUT_HEADER})
+  set_source_files_properties(${RE2C_${RE2CTarget}_OUTPUTS}
+    PROPERTIES OBJECT_DEPENDS ${LEMON_${LemonTarget}_OUTPUT_HEADER})
 endmacro(ADD_RE2C_LEMON_DEPENDENCY)
 #============================================================
 
