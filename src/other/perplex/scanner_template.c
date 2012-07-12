@@ -219,14 +219,17 @@ buf_prints(struct Buf *buf, const char *fmt, const char *s)
 
 int numDigits(int n)
 {
-    int digits, abs = n >= 0 ? n : -n;
+    int digits;
 
-    if (abs == 0) {
+    /* take absolute value of n */
+    n = n >= 0 ? n : -n;
+
+    if (n == 0) {
 	return 1;
     }
 
     for (digits = 0; abs > 0; digits++) {
-	abs /= 10;
+	n /= 10;
     }
 
     return digits;
