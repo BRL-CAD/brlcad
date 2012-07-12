@@ -168,6 +168,7 @@ set(mged_ignore_files
   comb_bool.h
   comb_bool_parse.y
   comb_bool_scan.l
+  dm-ogl.c
   dm-rtgl.c
   dm-tk.c
   dm-wgl.c

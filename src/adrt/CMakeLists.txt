@@ -93,6 +93,7 @@ if(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
   endif(NOT CMAKE_CONFIGURATION_TYPES)
   install(PROGRAMS ${isst_script} DESTINATION bin)
 endif(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
+CMAKEFILES(isst_tcltk.c)
 
 set(adrt_ignore_files
   isst.h
