@@ -288,6 +288,7 @@ set(LIBGED_SOURCES
   view2model_vec.c
   view_obj.c
   viewdir.c
+  voxelize.c
   vrot.c
   vutil.c
   wcodes.c
