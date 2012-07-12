@@ -26,13 +26,12 @@ extern int multiple_inheritance;
 
 int isAggregateType( const Type t );
 char * generate_attribute_name( Variable a, char * out );
-char * FundamentalType( const Type t, int report_reftypes );
 void ATTRsign_access_methods( Variable a, FILE * file );
 char * generate_attribute_func_name( Variable a, char * out );
 void ATTRprint_access_methods_get_head( const char * classnm, Variable a, FILE * file );
 void ATTRprint_access_methods_put_head( const char * entnm, Variable a, FILE * file );
 
-#define BASE_SELECT "SDAI_Select"
+#define BASE_SELECT "SCLP23(Select)"
 
 #define TYPEis_primitive(t) ( !( TYPEis_entity(t)  || \
                                  TYPEis_select (t) || \
@@ -272,8 +271,8 @@ duplicate_utype_member( const Linked_List list, const Type check ) {
         {
             return TRUE;
         }
-        if( ! strcmp( b, "SDAI_Integer)"  &&
-                ( ! strcmp( TYPEget_utype( check ), "SDAI_Real)"  ) )
+        if( ! strcmp( b, "SCLP23(Integer)" ) &&
+                ( ! strcmp( TYPEget_utype( check ), "SCLP23(Real)" ) ) )
             /*  integer\'s and real\'s are not unique  */
         {
             return TRUE;
@@ -533,7 +532,7 @@ TYPEselect_inc_print_vars prints the class 'definition', that is, the objects
 ********************/
 void
 TYPEselect_inc_print_vars( const Type type, FILE * f, Linked_List dups ) {
-
+ 
 }
 
 /*******************
@@ -542,7 +541,7 @@ class.
 *******************/
 void
 TYPEselect_inc_print( const Type type, FILE * f ) {
-}
+   }
 
 
 /*******************
@@ -645,7 +644,7 @@ class.
 void
 TYPEselect_lib_print_part_four( const Type type, FILE * f, Schema schema,
                                 Linked_List dups, char * n ) {
-}
+ }
 
 
 /*******************
@@ -693,44 +692,33 @@ TYPEselect_lib_print( const Type type, FILE * f, Schema schema ) {
     int nbr_select = 0;
     int num = 0;
 
-    fprintf( f, "# SELECT TYPE %s_\n", TYPEget_name( type ) );
-    // writes the variable with strings
-    LISTdo( SEL_TYPEget_items( type ), t, Type )
-    if( is_python_keyword( TYPEget_name( t ) ) ) {
-        fprintf( f, "if (not '%s_' in globals().keys()):\n", TYPEget_name( t ) );
-        fprintf( f, "%s_ = '%s_'\n", TYPEget_name( t ), TYPEget_name( t ) );
-    } else {
-        fprintf( f, "if (not '%s' in globals().keys()):\n", TYPEget_name( t ) );
-        fprintf( f, "\t%s = '%s'\n", TYPEget_name( t ), TYPEget_name( t ) );
-    }
-    LISTod;
-
+    fprintf( f, "# SELECT TYPE %s\n", TYPEget_name(type) );
     // create the SELECT
-    if( is_python_keyword( TYPEget_name( type ) ) ) {
-        fprintf( f, "%s_ = SELECT(", TYPEget_name( type ) );
-    } else {
-        fprintf( f, "%s = SELECT(", TYPEget_name( type ) );
+    if (is_python_keyword(TYPEget_name(type))) {    
+        fprintf( f, "%s_ = SELECT(",TYPEget_name(type));
     }
-
+    else {
+        fprintf( f, "%s = SELECT(",TYPEget_name(type));
+    }
+    
     // first compute the number of types (necessary to insert commas)
     nbr_select = 0;
     LISTdo( SEL_TYPEget_items( type ), t, Type )
-    nbr_select++;
+        nbr_select++;
     LISTod;
     // then write types
     num = 0;
     LISTdo( SEL_TYPEget_items( type ), t, Type )
-    if( is_python_keyword( TYPEget_name( t ) ) ) {
-        fprintf( f, "\n\t'%s_'", TYPEget_name( t ) );
-    } else {
-        fprintf( f, "\n\t'%s'", TYPEget_name( t ) );
-    }
-    if( num < nbr_select - 1 ) {
-        fprintf( f, "," );
-    }
-    num++;
+        if (is_python_keyword(TYPEget_name(t))) {
+            fprintf( f, "\n\t'%s_'",TYPEget_name(t));
+        }
+        else {
+            fprintf( f, "\n\t'%s'",TYPEget_name(t));
+        }
+        if (num < nbr_select -1 ) fprintf(f,",");
+        num++;
     LISTod;
-    fprintf( f, ")\n" );
+    fprintf(f,",\n\tscope = schema_scope)\n");
 }
 
 void
