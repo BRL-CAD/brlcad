@@ -57,7 +57,6 @@ struct output {
  */
 struct _ged_dag_data {
     Avoid::Router *router;
-    Avoid::ConnRef *connRef;
     uint16_t object_nr;
     uint16_t last_connref_id;
 };
@@ -98,6 +97,24 @@ add_object(struct _ged_dag_data *dag, unsigned int id)
 
 
 /**
+ * Method that frees the memory allocated for each value field of a bu_hash_entry structure.
+ */
+void
+free_hash_values(struct bu_hash_tbl *htbl)
+{
+    struct bu_hash_entry *entry;
+    struct bu_hash_record rec;
+
+    entry = bu_hash_tbl_first(htbl, &rec);
+
+    while (entry) {
+    bu_free(bu_get_hash_value(entry), "hash entry");
+    entry = bu_hash_tbl_next(&rec);
+    }
+}
+
+
+/**
  * Function which processes a combination node. I.e., it adds a new entry into the hash tables, if necessary.
  * In this case, it also adds a Avoid::ShapeRef object to the graph. It also traverses its subtree, adds
  * entries into the hash table for solid objects, if neccessary. In this case as well, it also adds a
@@ -116,7 +133,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
     int new_entry;
     int was_solid;
     unsigned int value = 0;
-    char id[100];
+    char *id = (char *)bu_malloc((size_t)6, "hash entry value");
 
     Avoid::ShapeRef *shapeRef1 = NULL;
     Avoid::ShapeRef *shapeRef2 = NULL;
@@ -164,8 +181,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
                 value = dag->object_nr;
             }
             /* Set the id value for this shape */
-            hsh_entry->value = (unsigned char *)malloc((size_t)strlen(id) + 1);
-            memcpy(hsh_entry->value, id, (size_t)strlen(id) + 1);
+            bu_set_hash_value(hsh_entry, (unsigned char *)id);
 
             bu_log("\t\"%s\" [ color=blue shape=box3d ];\n", dp->d_namep);
         }
@@ -180,8 +196,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
                 value = dag->object_nr;
             }
             /* Set the id value for this shape */
-            hsh_entry->value = (unsigned char *)malloc((size_t)strlen(id) + 1);
-            memcpy(hsh_entry->value, id, (size_t)strlen(id) + 1);
+            bu_set_hash_value(hsh_entry, (unsigned char *)id);
 
             bu_log("\t\"%s\" [ color=green ];\n", dp->d_namep);
         }
@@ -260,11 +275,12 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
             struct bu_hash_entry *hsh_entry = bu_hash_add_entry(o->solids, (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name) + 1, &new_entry);
             bu_log("index: %d\n", idx);
             dag->object_nr ++;
+
+            id = (char *)bu_malloc((size_t)6, "hash entry value");
             sprintf(id, "%d", dag->object_nr);
 
             /* Set the id value for this shape */
-            hsh_entry->value = (unsigned char *)malloc((size_t)strlen(id) + 1);
-            memcpy(hsh_entry->value, id, (size_t)strlen(id) + 1);
+            bu_set_hash_value(hsh_entry, (unsigned char *)id);
 
             value = dag->object_nr;
             bu_log("\t\"%s\" -> \"%s\" [ label=\"%c\" ];\n", dp->d_namep, rt_tree_array[i].tl_tree->tr_l.tl_name, op);
@@ -360,7 +376,6 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
                     struct bu_hash_entry *prev = NULL;
                     unsigned long idx;
                     int new_entry;
-                    char id[100];
 
                     hsh_entry1 = bu_find_hash_entry(o.regions, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
                     hsh_entry2 = bu_find_hash_entry(o.groups, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
@@ -371,11 +386,11 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
                         dag->object_nr++;
 
                         struct bu_hash_entry *hsh_entry = bu_hash_add_entry(o.solids, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &new_entry);
+                        char *id = (char *)bu_malloc((size_t)6, "hash entry value");
                         sprintf(id, "%d", dag->object_nr);
 
                         /* Set the id value for this object */
-                        hsh_entry->value = (unsigned char *)malloc((size_t)strlen(id) + 1);
-                        memcpy(hsh_entry->value, id, (size_t)strlen(id) + 1);
+                        bu_set_hash_value(hsh_entry, (unsigned char *)id);
 
                         /* Create and add a shape (obstacle) to the router */
                         shapeRef = add_object(dag, dag->object_nr);
@@ -397,10 +412,15 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
     }
 
     ged_close(gedp);
+
+    /* Free memory. */
     bu_vls_free(&dp_name_vls);
     dag->router->deleteShape(shapeRef);
+    free_hash_values(o.regions);
     bu_hash_tbl_free(o.regions);
+    free_hash_values(o.groups);
     bu_hash_tbl_free(o.groups);
+    free_hash_values(o.solids);
     bu_hash_tbl_free(o.solids);
 
     return GED_OK;
