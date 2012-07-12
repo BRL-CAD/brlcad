@@ -186,6 +186,12 @@ void parserInitState()
 
 %extra_argument { parse_data_t parseData }
 
+%destructor statement_list {
+    if (parseData.scanner == NULL) {
+	$$.string = (char*)NULL;
+    }
+}
+
 %type case_action			{ Case_Item }
 %type case_otherwise			{ Case_Item }
 %type entity_body			{ struct entity_body }
@@ -2457,10 +2463,12 @@ while_control(A) ::= TOK_WHILE expression(B).
 %syntax_error {
     yyerrstatus++;
     fprintf(stderr, "Express parser experienced syntax error at line %d.\n", yylineno);
+    fprintf(stderr, "Last token (type %d) had value %x\n", yymajor, yyminor.yy0.val);
 }
 
 %stack_overflow {
     fprintf(stderr, "Express parser experienced stack overflow.\n");
+    fprintf(stderr, "Last token had value %x\n", yypMinor->yy0.val);
 }
 
 %include {
