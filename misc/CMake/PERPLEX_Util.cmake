@@ -70,7 +70,7 @@ macro(PERPLEX_TARGET Name Input OutputSrc OutputHeader)
     if(PERPLEX_TEMPLATE)
       set(Template ${PERPLEX_TEMPLATE})
     else(PERPLEX_TEMPLATE)
-      message(FATAL_ERROR "No Perplex template file specifed!")
+      message(FATAL_ERROR "\nNo Perplex template file specifed - please specify the file using the PERPLEX_TEMPLATE variable:\ncmake .. -DPERPLEX_TEMPLATE=/path/to/template_file.c\n")
     endif(PERPLEX_TEMPLATE)
   endif(${ARGC} GREATER 4)
 
