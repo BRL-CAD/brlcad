@@ -1,5 +1,5 @@
-/*****************************************************************************
- * entlist.cc                                                                *
+/*************************************************************************//**
+ * entlist.cc     \class EntList                                             *
  *                                                                           *
  * Description: EntList is a class type which supports the concept of com-   *
  *              plex inheritance.  EntLists capture information on the       *
@@ -16,12 +16,11 @@
 #include "complexSupport.h"
 #include "scl_memmgr.h"
 
-int EntList::siblings()
-/*
+/**
  * Returns the number of EntLists in this's list (EntList->next, next->next
  * etc.) including this.
  */
-{
+int EntList::siblings() {
     int count;
     EntList * el;
 

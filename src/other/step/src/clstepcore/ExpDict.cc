@@ -694,8 +694,7 @@ const char * Derived_attribute::AttrExprDefStr( std::string & s ) const {
 // Inverse_attribute functions
 ///////////////////////////////////////////////////////////////////////////////
 
-const char *
-Inverse_attribute::AttrExprDefStr( std::string & s ) const {
+const char * Inverse_attribute::AttrExprDefStr( std::string & s ) const {
     std::string buf;
 
     s = Name();
@@ -1115,6 +1114,7 @@ Uniqueness_rule::Uniqueness_rule()
     : _parent_entity( 0 ) {
 }
 
+///////////////////////////////////////////////////////////////////////////////
 
 Uniqueness_rule::Uniqueness_rule( const Uniqueness_rule & ur ) {
     _label = ur._label;
@@ -1538,16 +1538,14 @@ const char * TypeDescriptor::TypeString( std::string & s ) const {
 
 }
 
-const TypeDescriptor *
-TypeDescriptor::IsA( const TypeDescriptor * other )  const {
+const TypeDescriptor * TypeDescriptor::IsA( const TypeDescriptor * other )  const {
     if( this == other ) {
         return other;
     }
     return 0;
 }
 
-const TypeDescriptor *
-TypeDescriptor::IsA( const char * other ) const  {
+const TypeDescriptor * TypeDescriptor::IsA( const char * other ) const  {
     if( !Name() ) {
         return 0;
     }
@@ -1611,8 +1609,7 @@ PrimitiveType TypeDescriptor::AggrElemType() const {
     return UNKNOWN_TYPE;
 }
 
-const TypeDescriptor *
-TypeDescriptor::AggrElemTypeDescriptor() const {
+const TypeDescriptor * TypeDescriptor::AggrElemTypeDescriptor() const {
     const TypeDescriptor * aggrTD = NonRefTypeDescriptor();
     const TypeDescriptor * aggrElemTD = aggrTD->ReferentType();
     if( aggrElemTD ) {

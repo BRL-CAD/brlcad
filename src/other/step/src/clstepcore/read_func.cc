@@ -884,8 +884,7 @@ const char * ReadComment( istream & in, std::string & s ) {
  ** "\F\" == formfeed
  ** "\N\" == newline
  ***************************/
-Severity
-ReadPcd( istream & in ) {
+Severity ReadPcd( istream & in ) {
     char c;
     in.get( c );
     if( c == '\\' ) {

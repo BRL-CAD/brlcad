@@ -1,5 +1,5 @@
-/*****************************************************************************
- * entnode.cc                                                                *
+/*************************************************************************//**
+ * entnode.cc     \class EntNode                                             *
  *                                                                           *
  * Description: The EntNode class is used to store a collection of entity    *
  *              names.  It stores them in alphabetical order.  It is the key *

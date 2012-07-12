@@ -1,5 +1,5 @@
-/*****************************************************************************
- * collect.cc                                                                *
+/*************************************************************************//**
+ * collect.cc     \class ComplexCollect                                      *
  *                                                                           *
  * Description: ComplexCollect is the container structure for all ofthe com- *
  *              plex entity information in a schema.  It contains a list of  *

@@ -41,7 +41,6 @@ enum AggrBoundTypeEnum {
 #include <dictdefs.h>
 #include <Str.h>
 
-
 // defined and created in Registry.inline.cc
 extern SCL_CORE_EXPORT const TypeDescriptor  * t_sdaiINTEGER;
 extern SCL_CORE_EXPORT const TypeDescriptor  * t_sdaiREAL;
@@ -655,14 +654,11 @@ class SCL_CORE_EXPORT Uniqueness_rule__set {
 typedef Uniqueness_rule__set * Uniqueness_rule__set_ptr;
 typedef Uniqueness_rule__set_ptr Uniqueness_rule__set_var;
 
-///////////////////////////////////////////////////////////////////////////////
-// Schema (was SchemaDescriptor) - a class of this type is generated and
-// contains schema info.
-///////////////////////////////////////////////////////////////////////////////
-
-
 typedef  SDAI_Model_contents_ptr( * ModelContentsCreator )();
 
+/**
+ * \class Schema (was SchemaDescriptor) - a class of this type is generated and contains schema info.
+ */
 class SCL_CORE_EXPORT Schema : public Dictionary_instance {
 
     protected:
@@ -852,22 +848,20 @@ class SCL_CORE_EXPORT InverseAItr {
         const Inverse_attribute * NextInverse_attribute();
 };
 
-///////////////////////////////////////////////////////////////////////////////
-// AttrDescriptor
-// An instance of this class will be generated for each attribute for
-// an Entity.  They will be pointed to by the EntityTypeDescriptors.
-///////////////////////////////////////////////////////////////////////////////
-
+/**
+ * \class AttrDescriptor
+ * An instance of this class will be generated for each attribute for
+ * an Entity.  They will be pointed to by the EntityTypeDescriptors.
+ */
 class SCL_CORE_EXPORT AttrDescriptor {
 
     protected:
         const char  * _name;   // the attributes name
         // this defines the domain of the attribute
         const TypeDescriptor * _domainType;
-        SDAI_LOGICAL  _optional;
-        SDAI_LOGICAL  _unique;
+        SDAI_LOGICAL _optional;
+        SDAI_LOGICAL _unique;
         AttrType_Enum _attrType; // former attribute _derived
-
         const EntityDescriptor & _owner;  // the owning entityDescriptor
     public:
 
@@ -952,10 +946,10 @@ class SCL_CORE_EXPORT AttrDescriptor {
             _domainType = td;
         }
 
-        const SDAI_LOGICAL  & Optional() const {
+        const SDAI_LOGICAL & Optional() const {
             return _optional;
         }
-        void Optional( SDAI_LOGICAL  &opt )    {
+        void Optional( SDAI_LOGICAL & opt ) {
             _optional.put( opt.asInt() );
         }
 
@@ -966,13 +960,13 @@ class SCL_CORE_EXPORT AttrDescriptor {
             _optional.put( opt );
         }
 
-        const SDAI_LOGICAL  & Unique() const {
+        const SDAI_LOGICAL & Unique() const {
             return _unique;
         }
-        void Unique( SDAI_LOGICAL  uniq )  {
+        void Unique( SDAI_LOGICAL uniq ) {
             _unique.put( uniq.asInt() );
         }
-        void Unique( Logical uniq )  {
+        void Unique( Logical uniq ) {
             _unique.put( uniq );
         }
         void Unique( const char * uniq )  {
@@ -996,32 +990,32 @@ class SCL_CORE_EXPORT AttrDescriptor {
             return Deriving();
         }
         void Derived( Logical x );    // outdated DAS
-        void Derived( SDAI_LOGICAL  x ); // outdated DAS
+        void Derived( SDAI_LOGICAL x ); // outdated DAS
         void Derived( const char * x ); // outdated DAS
 
-        const SDAI_LOGICAL  & Optionality() const {
+        const SDAI_LOGICAL & Optionality() const {
             return _optional;
         }
-        void Optionality( SDAI_LOGICAL  &opt ) {
+        void Optionality( SDAI_LOGICAL & opt ) {
             _optional.put( opt.asInt() );
         }
-        void Optionality( Logical opt )     {
+        void Optionality( Logical opt ) {
             _optional.put( opt );
         }
         void Optionality( const char * opt ) {
             _optional.put( opt );
         }
 
-        const SDAI_LOGICAL  & Uniqueness() const  {
+        const SDAI_LOGICAL & Uniqueness() const {
             return _unique;
         }
-        void Uniqueness( SDAI_LOGICAL  uniq )  {
+        void Uniqueness( SDAI_LOGICAL uniq ) {
             _unique.put( uniq.asInt() );
         }
-        void Uniqueness( Logical uniq )      {
+        void Uniqueness( Logical uniq ) {
             _unique.put( uniq );
         }
-        void Uniqueness( const char * uniq )  {
+        void Uniqueness( const char * uniq ) {
             _unique.put( uniq );
         }
 
@@ -1032,7 +1026,7 @@ class SCL_CORE_EXPORT AttrDescriptor {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Inverse_attribute
+// Derived_attribute
 ///////////////////////////////////////////////////////////////////////////////
 
 class SCL_CORE_EXPORT Derived_attribute  :    public AttrDescriptor  {
@@ -1040,10 +1034,10 @@ class SCL_CORE_EXPORT Derived_attribute  :    public AttrDescriptor  {
         const char * _initializer;
 
         Derived_attribute(
-            const char * name,       // i.e. char *
+            const char * name,                // i.e. char *
             const TypeDescriptor * domainType,
-            Logical optional,    // i.e. F U or T
-            Logical unique,  // i.e. F U or T
+            Logical optional,        // i.e. F U or T
+            Logical unique,        // i.e. F U or T
             AttrType_Enum at,// AttrType_Explicit, AttrType_Inverse,
             // AttrType_Deriving,AttrType_Redefining
             const EntityDescriptor & owner
@@ -1073,11 +1067,10 @@ class SCL_CORE_EXPORT Inverse_attribute  :    public AttrDescriptor  {
     public:
 
         Inverse_attribute(
-            const char * name,       // i.e. char *
+            const char * name,                // i.e. char *
             TypeDescriptor * domainType,
-            Logical optional,    // i.e. F U or T*/
-            Logical unique,  // i.e. F U or T
-//             AttrType_Enum at, // will always be AttrType_Inverse
+            Logical optional,        // i.e. F U or T*/
+            Logical unique,        // i.e. F U or T
             const EntityDescriptor & owner,
             const char * inverted_attr_id = 0
         ) : AttrDescriptor( name, domainType, optional, unique,
@@ -1105,7 +1098,7 @@ class SCL_CORE_EXPORT Inverse_attribute  :    public AttrDescriptor  {
             _inverted_entity_id = iei;
         }
 
-        // not implemented
+        /// FIXME not implemented
         class AttrDescriptor * inverted_attr_() {
                 return _inverted_attr;
         }
@@ -1123,18 +1116,17 @@ class SCL_CORE_EXPORT Inverse_attribute  :    public AttrDescriptor  {
         }
 };
 
-///////////////////////////////////////////////////////////////////////////////
-// SchRename is a structure which partially support the concept of USE and RE-
-// FERENCE in EXPRESS.  Say schema A USEs object X from schema B and renames it
-// to Y (i.e., "USE (X as Y);").  SchRename stores the name of the schema (B)
-// plus the new object name for that schema (Y).  Each TypeDescriptor has a
-// SchRename object (actually a linked list of SchRenames) corresponding to all
-// the possible different names of itself depending on the current schema (the
-// schema which is currently reading or writing this object).  (The current
-// schema is determined by the file schema section of the header section of a
-// part21 file (the _headerInstances of STEPfile).
-///////////////////////////////////////////////////////////////////////////////
-
+/** \class SchRename
+ * SchRename is a structure which partially support the concept of USE and RE-
+ * FERENCE in EXPRESS.  Say schema A USEs object X from schema B and renames it
+ * to Y (i.e., "USE (X as Y);").  SchRename stores the name of the schema (B)
+ * plus the new object name for that schema (Y).  Each TypeDescriptor has a
+ * SchRename object (actually a linked list of SchRenames) corresponding to all
+ * the possible different names of itself depending on the current schema (the
+ * schema which is currently reading or writing this object).  (The current
+ * schema is determined by the file schema section of the header section of a
+ * part21 file (the _headerInstances of STEPfile).
+ */
 class SCL_CORE_EXPORT SchRename {
     public:
         SchRename( const char * sch = "\0", const char * newnm = "\0" ) : next( 0 ) {
@@ -1161,87 +1153,92 @@ class SCL_CORE_EXPORT SchRename {
         char newName[BUFSIZ];
 };
 
-///////////////////////////////////////////////////////////////////////////////
-// TypeDescriptor
-// This class and the classes inherited from this class are used to describe
-// all types (base types and created types).  There will be an instance of this
-// class generated for each type found in the schema.
-// A TypeDescriptor will be generated in three contexts:
-// 1) to describe a base type - e.g. INTEGER, REAL, STRING.  There is only one
-//  TypeDescriptor created for each Express base type. Each of these will
-//  be pointed to by several other AttrDescriptors and TypeDescriptors)
-// 2) to describe a type created by an Express TYPE statement.
-//  e.g. TYPE label = STRING END_TYPE;
-//  These TypeDescriptors will be pointed to by other AttrDescriptors (and
-//  TypeDescriptors) representing attributes (and Express TYPEs) that are
-//  of the type created by this Express TYPE.
-// 3) to describe a type created in an attribute definition
-//  e.g. part_label_grouping : ARRAY [1.10] label;
-//  or part_codes : ARRAY [1.10] INTEGER;
-//  In this #3 context there will not be a name associated with the type.
-//  The TypeDescriptor created in this case will only be pointed to by the
-//  single AttrDescriptor associated with the attribute it was created for.
-///////////////////////////////////////////////////////////////////////////////
-
-///// _name is the name of the type.
-// In the case of the TypeDescriptors representing the Express base
-// types this will be the name of the base type.
-// In the case where this TypeDescriptor is representing an Express
-// TYPE it is the LEFT side of an Express TYPE statement (i.e. label
-// as in TYPE label = STRING END_TYPE;) This name would in turn be
-// found on the RIGHT side of an Express attribute definition (e.g.
-// attr defined as part_label : label; )
-// In the case where this TypeDescriptor was generated to describe a
-// type created in an attr definition, it will be a null pointer (e.g
-// attr defined as part_label_grouping : ARRAY [1..10] label)
-///// _fundamentalType is the 'type' of the type being represented by
-//  the TypeDescriptor . i.e. the following 2 stmts
-//  would cause 2 TypeDescriptors to be generated - the 1st having
-//  _fundamentalType set to STRING_TYPE and for the 2nd to
-//  REFERENCE_TYPE.
-// TYPE label = STRING END_TYPE;
-// TYPE part_label = label END_TYPE;
-// part_label and label would be the value of the respective
-// _name member variables for the 2 TypeDescriptors.
-///// _referentType will point at another TypeDescriptor furthur specifying
-//  the type in all cases except when the type is directly
-//  an enum or select.  i.e. in the following... _referentType for
-//  the 1st type does not point at anything and for the 2nd it does:
-// TYPE color = ENUMERATION OF (red, blue); END_TYPE;
-// TYPE color_ref = color; END_TYPE;
-////// _fundamentalType being REFERENCE_TYPE (as would be the case for
-// part_label and color_ref above) means that the _referentType
-// member variable points at a TypeDescriptor representing a type
-// that has been defined in an Express TYPE stmt.
-//  Otherwise _fundamental type reflects
-//  the type directly as in the type label above.  type label above
-//  has a _referentType that points at a TypeDescriptor for STRING
-//  described in the next sentence (also see #1 above).
-// A TypeDescriptor would be generated for each of the EXPRESS base
-// types (int, string, real, etc) having _fundamentalType member
-// variables set to match the EXPRESS base type being represented.
-//////_referentType
-// For the TypeDescriptors describing the EXPRESS base types this will
-// be a null pointer.  For all other TypeDescriptors this will point
-// to another TypeDescriptor which furthur describes the type. e.g.
-// TYPE part_label = label END_TYPE; TYPE label = STRING END_TYPE;
-// part_label's _referentType will point to the TypeDescriptor for
-// label.  label's _referentType will point to the TypeDescriptor
-// for STRING. The _fundamentalType for part_label will be
-// REFERENCE_TYPE and for label will be STRING_TYPE.
-// The _fundamentalType for the EXPRESS base type STRING's
-// TypeDescriptor will be STRING_TYPE.
-// The _referentType member variable will in most cases point to
-// a subtype of TypeDescriptor.
-//////_description
-// This is the string description of the type as found in the
-// EXPRESS file. e.g. aggr of [aggr of ...] [list of ...] someType
-// It is the RIGHT side of an Express TYPE statement
-// (i.e. LIST OF STRING as in
-// TYPE label_group = LIST OF STRING END_TYPE;)
-// It is the same as _name for EXPRESS base types TypeDescriptors (with
-// the possible exception of upper or lower case differences).
-
+/**
+ * TypeDescriptor
+ * This class and the classes inherited from this class are used to describe
+ * all types (base types and created types).  There will be an instance of this
+ * class generated for each type found in the schema.
+ * A TypeDescriptor will be generated in three contexts:
+ * 1) to describe a base type - e.g. INTEGER, REAL, STRING.  There is only one
+ *        TypeDescriptor created for each Express base type. Each of these will
+ *        be pointed to by several other AttrDescriptors and TypeDescriptors)
+ * 2) to describe a type created by an Express TYPE statement.
+ *        e.g. TYPE label = STRING END_TYPE;
+ *        These TypeDescriptors will be pointed to by other AttrDescriptors (and
+ *        TypeDescriptors) representing attributes (and Express TYPEs) that are
+ *        of the type created by this Express TYPE.
+ * 3) to describe a type created in an attribute definition
+ *        e.g. part_label_grouping : ARRAY [1.10] label;
+ *        or part_codes : ARRAY [1.10] INTEGER;
+ *        In this #3 context there will not be a name associated with the type.
+ *        The TypeDescriptor created in this case will only be pointed to by the
+ *        single AttrDescriptor associated with the attribute it was created for.
+ *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ * \var _name
+    * \brief the name of the type.
+    * In the case of the TypeDescriptors representing the Express base
+    * types this will be the name of the base type.
+    * In the case where this TypeDescriptor is representing an Express
+    * TYPE it is the LEFT side of an Express TYPE statement (i.e. label
+    * as in TYPE label = STRING END_TYPE;) This name would in turn be
+    * found on the RIGHT side of an Express attribute definition (e.g.
+    * attr defined as part_label : label; )
+    * In the case where this TypeDescriptor was generated to describe a
+    * type created in an attr definition, it will be a null pointer (e.g
+    * attr defined as part_label_grouping : ARRAY [1..10] label)
+ * \var _fundamentalType
+    *  the 'type' of the type being represented by
+    *  the TypeDescriptor . i.e. the following 2 stmts
+    *  would cause 2 TypeDescriptors to be generated - the 1st having
+    *  _fundamentalType set to STRING_TYPE and for the 2nd to
+    *  REFERENCE_TYPE.
+    * TYPE label = STRING END_TYPE;
+    * TYPE part_label = label END_TYPE;
+    * part_label and label would be the value of the respective
+    * _name member variables for the 2 TypeDescriptors.
+ * \var _referentType
+    * will point at another TypeDescriptor furthur specifying
+    *  the type in all cases except when the type is directly
+    *  an enum or select.  i.e. in the following... _referentType for
+    *  the 1st type does not point at anything and for the 2nd it does:
+    * TYPE color = ENUMERATION OF (red, blue); END_TYPE;
+    * TYPE color_ref = color; END_TYPE;
+ ** var _fundamentalType
+    * being REFERENCE_TYPE (as would be the case for
+    * part_label and color_ref above) means that the _referentType
+    * member variable points at a TypeDescriptor representing a type
+    * that has been defined in an Express TYPE stmt.
+    *  Otherwise _fundamental type reflects
+    *  the type directly as in the type label above.  type label above
+    *  has a _referentType that points at a TypeDescriptor for STRING
+    *  described in the next sentence (also see #1 above).
+    * A TypeDescriptor would be generated for each of the EXPRESS base
+    * types (int, string, real, etc) having _fundamentalType member
+    * variables set to match the EXPRESS base type being represented.
+ ** var _referentType
+    * For the TypeDescriptors describing the EXPRESS base types this will
+    * be a null pointer.  For all other TypeDescriptors this will point
+    * to another TypeDescriptor which furthur describes the type. e.g.
+    * TYPE part_label = label END_TYPE; TYPE label = STRING END_TYPE;
+    * part_label's _referentType will point to the TypeDescriptor for
+    * label.  label's _referentType will point to the TypeDescriptor
+    * for STRING. The _fundamentalType for part_label will be
+    * REFERENCE_TYPE and for label will be STRING_TYPE.
+    * The _fundamentalType for the EXPRESS base type STRING's
+    * TypeDescriptor will be STRING_TYPE.
+    * The _referentType member variable will in most cases point to
+    * a subtype of TypeDescriptor.
+ * \var _description
+    * This is the string description of the type as found in the
+    * EXPRESS file. e.g. aggr of [aggr of ...] [list of ...] someType
+    * It is the RIGHT side of an Express TYPE statement
+    * (i.e. LIST OF STRING as in
+    * TYPE label_group = LIST OF STRING END_TYPE;)
+    * It is the same as _name for EXPRESS base types TypeDescriptors (with
+    * the possible exception of upper or lower case differences).
+*/
 class SCL_CORE_EXPORT TypeDescriptor {
 
     protected:
@@ -1268,7 +1265,6 @@ class SCL_CORE_EXPORT TypeDescriptor {
 
         // the type of the type (see above).
         // it is an enum see file clstepcore/baseType.h
-//  BASE_TYPE _fundamentalType ;
         PrimitiveType _fundamentalType;
 
         const Schema * _originatingSchema;
@@ -1339,10 +1335,10 @@ class SCL_CORE_EXPORT TypeDescriptor {
         const char * TypeString( std::string & s ) const;
 
         // This TypeDescriptor's type
-        PrimitiveType Type() const  {
+        PrimitiveType Type() const {
             return _fundamentalType;
         }
-        void Type( const PrimitiveType type )    {
+        void Type( const PrimitiveType type ) {
             _fundamentalType = type;
         }
 
@@ -1435,7 +1431,7 @@ class SCL_CORE_EXPORT TypeDescriptor {
         // is USE/REFERENCE'ing us (added to altNames).
 };
 
-typedef  SDAI_Enum  * ( * EnumCreator )();
+typedef SDAI_Enum * ( * EnumCreator )();
 
 class SCL_CORE_EXPORT EnumTypeDescriptor  :    public TypeDescriptor  {
     public:
@@ -1447,7 +1443,7 @@ class SCL_CORE_EXPORT EnumTypeDescriptor  :    public TypeDescriptor  {
             CreateNewEnum = f;
         }
 
-        SDAI_Enum  * CreateEnum();
+        SDAI_Enum * CreateEnum();
 
         EnumTypeDescriptor( ) { }
         EnumTypeDescriptor( const char * nm, PrimitiveType ft,
@@ -1458,32 +1454,28 @@ class SCL_CORE_EXPORT EnumTypeDescriptor  :    public TypeDescriptor  {
 };
 
 
-///////////////////////////////////////////////////////////////////////////////
-// EntityDescriptor
-// An instance of this class will be generated for each entity type
-// found in the schema.  This should probably be derived from the
-// CreatorEntry class (see sdaiApplicaton_instance.h).  Then the binary tree
-// that the current software  builds up containing the entities in the schema
-// will be building the same thing but using the new schema info.
-// nodes (i.e. EntityDesc nodes) for each entity.
-///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * EntityDescriptor
+ * An instance of this class will be generated for each entity type
+ * found in the schema.  This should probably be derived from the
+ * CreatorEntry class (see sdaiApplicaton_instance.h).  Then the binary tree
+ * that the current software  builds up containing the entities in the schema
+ * will be building the same thing but using the new schema info.
+ * nodes (i.e. EntityDesc nodes) for each entity.
+ */
 class SCL_CORE_EXPORT EntityDescriptor  :    public TypeDescriptor  {
 
     protected:
-//  const Schema * _originatingSchema;
-        SDAI_LOGICAL  _abstractEntity;
-        SDAI_LOGICAL  _extMapping;
+        SDAI_LOGICAL _abstractEntity;
+        SDAI_LOGICAL _extMapping;
         // does external mapping have to be used to create an instance of
         // us (see STEP Part 21, sect 11.2.5.1)
 
         EntityDescriptorList _subtypes;   // OPTIONAL
         EntityDescriptorList _supertypes; // OPTIONAL
-
-        AttrDescriptorList    _explicitAttr; // OPTIONAL
-//  StringAggregate      * _derivedAttr;  // OPTIONAL
+        AttrDescriptorList _explicitAttr; // OPTIONAL
         Inverse_attributeList _inverseAttr;  // OPTIONAL
-
         std::string _supertype_stmt;
     public:
         Uniqueness_rule__set_var _uniqueness_rules; // initially a null pointer
@@ -1505,16 +1497,16 @@ class SCL_CORE_EXPORT EntityDescriptor  :    public TypeDescriptor  {
 
         const char * QualifiedName( std::string & s ) const;
 
-        const SDAI_LOGICAL  & AbstractEntity() const {
+        const SDAI_LOGICAL & AbstractEntity() const {
             return _abstractEntity;
         }
-        const SDAI_LOGICAL  & ExtMapping() const   {
+        const SDAI_LOGICAL & ExtMapping() const   {
             return _extMapping;
         }
-        void AbstractEntity( SDAI_LOGICAL  &ae ) {
+        void AbstractEntity( SDAI_LOGICAL & ae ) {
             _abstractEntity.put( ae.asInt() );
         }
-        void ExtMapping( SDAI_LOGICAL  &em ) {
+        void ExtMapping( SDAI_LOGICAL & em ) {
             _extMapping.put( em.asInt() );
         }
         void AbstractEntity( Logical ae ) {
@@ -1542,8 +1534,6 @@ class SCL_CORE_EXPORT EntityDescriptor  :    public TypeDescriptor  {
         const AttrDescriptorList & ExplicitAttr() const {
             return _explicitAttr;
         }
-
-//  StringAggregate  & DerivedAttr()    { return *_derivedAttr; }
 
         const Inverse_attributeList & InverseAttr() const {
             return _inverseAttr;
@@ -1597,10 +1587,9 @@ class SCL_CORE_EXPORT EntityDescriptor  :    public TypeDescriptor  {
 
 };
 
-
-///////////////////////////////////////////////////////////////////////////////
-// EnumerationTypeDescriptor
-///////////////////////////////////////////////////////////////////////////////
+/** \class EnumerationTypeDescriptor
+ * FIXME not implemented
+*/
 #ifdef NOT_YET
 class SCL_CORE_EXPORT EnumerationTypeDescriptor  :    public TypeDescriptor  {
 
@@ -1615,7 +1604,7 @@ class SCL_CORE_EXPORT EnumerationTypeDescriptor  :    public TypeDescriptor  {
         StringAggregate & Elements() {
             return *_elements;
         }
-//  void Elements (StringAggregate  e);
+//        void Elements (StringAggregate  e);
 };
 #endif
 
@@ -1629,15 +1618,15 @@ class BinaryAggregate;
 class RealAggregate;
 class IntAggregate;
 
-typedef  STEPaggregate * ( * AggregateCreator )();
-typedef  EnumAggregate * ( * EnumAggregateCreator )();
-typedef  GenericAggregate * ( * GenericAggregateCreator )();
-typedef  EntityAggregate * ( * EntityAggregateCreator )();
-typedef  SelectAggregate * ( * SelectAggregateCreator )();
-typedef  StringAggregate * ( * StringAggregateCreator )();
-typedef  BinaryAggregate * ( * BinaryAggregateCreator )();
-typedef  RealAggregate * ( * RealAggregateCreator )();
-typedef  IntAggregate * ( * IntAggregateCreator )();
+typedef STEPaggregate * ( * AggregateCreator )();
+typedef EnumAggregate * ( * EnumAggregateCreator )();
+typedef GenericAggregate * ( * GenericAggregateCreator )();
+typedef EntityAggregate * ( * EntityAggregateCreator )();
+typedef SelectAggregate * ( * SelectAggregateCreator )();
+typedef StringAggregate * ( * StringAggregateCreator )();
+typedef BinaryAggregate * ( * BinaryAggregateCreator )();
+typedef RealAggregate * ( * RealAggregateCreator )();
+typedef IntAggregate * ( * IntAggregateCreator )();
 
 SCL_CORE_EXPORT EnumAggregate * create_EnumAggregate();
 
@@ -1673,7 +1662,7 @@ class SCL_CORE_EXPORT AggrTypeDescriptor  :    public TypeDescriptor  {
     protected:
 
         SDAI_Integer  _bound1, _bound2;
-        SDAI_LOGICAL  _uniqueElements;
+        SDAI_LOGICAL _uniqueElements;
         TypeDescriptor * _aggrDomainType;
         AggregateCreator CreateNewAggr;
 
@@ -1764,10 +1753,10 @@ class SCL_CORE_EXPORT AggrTypeDescriptor  :    public TypeDescriptor  {
             _bound2_type = bound_funcall;
         }
 
-        SDAI_LOGICAL  & UniqueElements()   {
+        SDAI_LOGICAL & UniqueElements() {
             return _uniqueElements;
         }
-        void UniqueElements( SDAI_LOGICAL  &ue ) {
+        void UniqueElements( SDAI_LOGICAL & ue ) {
             _uniqueElements.put( ue.asInt() );
         }
         void UniqueElements( Logical ue )     {
@@ -1788,7 +1777,6 @@ class SCL_CORE_EXPORT AggrTypeDescriptor  :    public TypeDescriptor  {
 ///////////////////////////////////////////////////////////////////////////////
 // ArrayTypeDescriptor
 ///////////////////////////////////////////////////////////////////////////////
-
 class SCL_CORE_EXPORT ArrayTypeDescriptor  :    public AggrTypeDescriptor  {
 
     protected:
@@ -1808,10 +1796,10 @@ class SCL_CORE_EXPORT ArrayTypeDescriptor  :    public AggrTypeDescriptor  {
         virtual ~ArrayTypeDescriptor() {}
 
 
-        SDAI_LOGICAL  & OptionalElements()       {
+        SDAI_LOGICAL & OptionalElements() {
             return _optionalElements;
         }
-        void OptionalElements( SDAI_LOGICAL  &oe ) {
+        void OptionalElements( SDAI_LOGICAL & oe ) {
             _optionalElements.put( oe.asInt() );
         }
         void OptionalElements( Logical oe )     {
@@ -1826,20 +1814,6 @@ class SCL_CORE_EXPORT ListTypeDescriptor  :    public AggrTypeDescriptor  {
 
     protected:
     public:
-
-        /*    void AssignAggrCreator(ListAggregateCreator f = 0)
-            {
-            CreateNewAggr = f;
-            }
-
-            STEPaggregate *CreateListAggregate()
-            {
-            if(CreateNewAggr)
-                return CreateNewAggr();
-            else
-                return 0;
-            }
-            */
         ListTypeDescriptor( ) { }
         ListTypeDescriptor( const char * nm, PrimitiveType ft,
                             Schema * origSchema, const char * d,
@@ -1877,7 +1851,7 @@ class SCL_CORE_EXPORT BagTypeDescriptor  :    public AggrTypeDescriptor  {
 
 };
 
-typedef  SDAI_Select  * ( * SelectCreator )();
+typedef SDAI_Select * ( * SelectCreator )();
 
 class SCL_CORE_EXPORT SelectTypeDescriptor  :    public TypeDescriptor  {
 
@@ -1893,7 +1867,7 @@ class SCL_CORE_EXPORT SelectTypeDescriptor  :    public TypeDescriptor  {
             CreateNewSelect = f;
         }
 
-        SDAI_Select  * CreateSelect();
+        SDAI_Select * CreateSelect();
 
         SelectTypeDescriptor( int b, const char * nm, PrimitiveType ft,
                               Schema * origSchema,
@@ -1909,7 +1883,6 @@ class SCL_CORE_EXPORT SelectTypeDescriptor  :    public TypeDescriptor  {
         const TypeDescriptorList & GetElements() const {
             return _elements;
         }
-//  void Elements (TypeDescriptorList x);
         int UniqueElements() const {
             return _unique_elements;
         }
@@ -1936,17 +1909,17 @@ class SCL_CORE_EXPORT StringTypeDescriptor  :    public TypeDescriptor  {
         virtual ~StringTypeDescriptor() { }
 
 
-        SDAI_Integer Width()     {
+        SDAI_Integer Width() {
             return _width;
         }
-        void Width( SDAI_Integer   w ) {
+        void Width( SDAI_Integer w ) {
             _width = w;
         }
 
-        SDAI_LOGICAL  & FixedSize()        {
+        SDAI_LOGICAL & FixedSize() {
             return _fixedSize;
         }
-        void FixedSize( SDAI_LOGICAL  fs ) {
+        void FixedSize( SDAI_LOGICAL fs ) {
             _fixedSize.put( fs.asInt() );
         }
         void FixedSize( Logical fs ) {
@@ -1957,7 +1930,7 @@ class SCL_CORE_EXPORT StringTypeDescriptor  :    public TypeDescriptor  {
 class SCL_CORE_EXPORT RealTypeDescriptor  :    public TypeDescriptor  {
 
     protected:
-        SDAI_Integer   _precisionSpec;  //  OPTIONAL
+        SDAI_Integer _precisionSpec;  //  OPTIONAL
     public:
 
         RealTypeDescriptor( ) {
@@ -1965,10 +1938,10 @@ class SCL_CORE_EXPORT RealTypeDescriptor  :    public TypeDescriptor  {
         }
         virtual ~RealTypeDescriptor() { }
 
-        SDAI_Integer PrecisionSpec()      {
+        SDAI_Integer PrecisionSpec() {
             return _precisionSpec;
         }
-        void PrecisionSpec( SDAI_Integer   ps ) {
+        void PrecisionSpec( SDAI_Integer ps ) {
             _precisionSpec = ps;
         }
 };
