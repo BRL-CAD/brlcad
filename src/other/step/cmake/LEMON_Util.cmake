@@ -64,7 +64,7 @@ macro(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
     get_filename_component(LemonInputFull ${LemonInput}  ABSOLUTE)
     get_filename_component(LemonSourceFull ${LemonSource} ABSOLUTE)
     get_filename_component(LemonHeaderFull ${LemonHeader} ABSOLUTE)
-    
+
     if(NOT ${LemonInput} STREQUAL ${LemonInputFull})
       set(LEMON_${Name}_INPUT "${CMAKE_CURRENT_BINARY_DIR}/${LemonInput}")
     else(NOT ${LemonInput} STREQUAL ${LemonInputFull})
