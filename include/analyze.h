@@ -134,7 +134,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs)
 /**
  * Function to print values to Screen
  */
-void
+ANALYZE_EXPORT extern void
 printToScreen(genptr_t callBackData, int x, int y, int z, const char *a, fastf_t fill);
 
 /**
@@ -152,7 +152,7 @@ setRegionName(struct bu_vls **vp, const char **nameSource, const char **nameDest
 /**
  * voxelize function takes raytrace instance and user parameters as inputs
  */
-void
+ANALYZE_EXPORT extern void
 voxelize(struct rt_i *rtip, fastf_t voxelSize[3], int levelOfDetail, void (*printFunction)(genptr_t callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), genptr_t callBackData);
 
 
