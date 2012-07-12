@@ -1538,9 +1538,13 @@ extern ON_Curve* pullback_curve(ON_BrepFace* face,
 				double flatness = 1.0e-3);
 
 
+
+extern int surface_surface_intersection(const ON_Surface* surfA,
+					const ON_Surface* surfB,
+					ON_NurbsCurve* intersect,
+					double tolerance = 1.0e-3);
+
 }
-
-
 #endif
 
 /*

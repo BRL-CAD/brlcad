@@ -2802,6 +2802,66 @@ bool sortY(BRNode* first, BRNode* second)
 	return false;
 }
 
+#define INTERSECT_MAX_DEPTH 8
+extern int surface_surface_intersection(const ON_Surface* surfA,
+					const ON_Surface* surfB,
+					ON_NurbsCurve* intersect,
+					double tolerance)
+{
+    if (surfA == NULL || surfB == NULL) {
+	intersect = NULL;
+	return -1;
+    }
+    ON_BrepFace *faceA, *faceB;
+    ON_Brep *brep = ON_Brep::New();
+    faceA = brep->NewFace(*surfA);
+    SurfaceTree streeA(faceA, true, INTERSECT_MAX_DEPTH);
+    faceB = brep->NewFace(*surfB);
+    SurfaceTree streeB(faceB, true, INTERSECT_MAX_DEPTH);
+    ON_3dPoint maxA, minA, maxB, minB;
+    typedef std::vector<std::pair<BBNode*, BBNode*> > NodePairs;
+    NodePairs nodepairs;
+    BBNode *rootA = streeA.getRootNode();
+    BBNode *rootB = streeB.getRootNode();
+    nodepairs.push_back(std::make_pair(rootA, rootB));
+    ON_3dPointArray curvept;
+
+    for (int h = 0; h <= INTERSECT_MAX_DEPTH; h++) {
+	if (nodepairs.empty())
+	    break;
+	NodePairs::iterator i;
+	std::vector<BBNode *>::iterator j, k;
+	NodePairs tmp_pairs;
+	if (h) {
+	    for (i = nodepairs.begin(); i != nodepairs.end(); i++) {
+		for (j = (*i).first->m_children.begin(); j != (*i).first->m_children.end(); j++) {
+		    for (k = (*i).second->m_children.begin(); k != (*i).second->m_children.end(); k++) {
+			tmp_pairs.push_back(std::make_pair(*j, *k));
+		    }
+		}
+	    }
+	} else {
+	    tmp_pairs = nodepairs;
+	}
+	nodepairs.clear();
+	for (i = tmp_pairs.begin(); i != tmp_pairs.end(); i++) {
+	    ON_BoundingBox box_a, box_b, intersect;
+	    (*i).first->GetBBox(box_a.m_min, box_a.m_max);
+	    (*i).second->GetBBox(box_b.m_min, box_b.m_max);
+	    if (intersect.Intersection(box_a, box_b)) {
+		nodepairs.push_back(*i);
+		if (h == INTERSECT_MAX_DEPTH)
+		    curvept.Append(intersect.Center()); // Use center temporarily just for testing
+	    }
+	}
+	/* for (int i = 0; i < curvept.Count(); i++) {
+	    bu_log("(%lf %lf %lf)\n", curvept[i].x, curvept[i].y, curvept[i].z);
+	}
+	bu_log("%d %d\n", h, tmp_pairs.size());*/
+    }
+    // WIP
+    return 0;
+}
 
 } /* end namespace */
 
