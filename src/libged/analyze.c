@@ -1011,12 +1011,12 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     }
 
     for (i = 0; i < aip->neqn; i++) {
+		vect_t tmp;
         /* calculate surface area */
         analyze_arbn_face(gedp, &faces[i], i, &table.rows[i]);
         tot_area += faces[i].area;
 
         /* calculate volume */
-        vect_t tmp;
         VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
         tot_vol += VDOT(faces[i].center_pt, tmp);
     }
@@ -1395,17 +1395,19 @@ analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
     fastf_t tot_area = 0.0, tot_vol = 0.0;
     table_t table;
     struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+	struct bot_face *faces;
+
     RT_BOT_CK_MAGIC(bot);
-    struct bot_face faces[bot->num_faces];
+	faces = (struct bot_face *)bu_calloc(bot->num_faces, sizeof(struct bot_face), "analyze_bot: faces"); 
 
     for (i = 0; i < bot->num_faces; i++) {
+		vect_t tmp;
         /* surface area */
         faces[i].idx = i;
         analyze_bot_face(gedp, &faces[i], bot, &table.rows[i]);
         tot_area += faces[i].area;
 
         /* volume */
-        vect_t tmp;
         VSCALE(tmp, faces[i].normal, faces[i].area);
         tot_vol += fabs(VDOT(faces[i].centroid, tmp));
     }
@@ -1424,6 +1426,8 @@ analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
             * gedp->ged_wdbp->dbip->dbi_base2local,
             tot_vol/GALLONS_TO_MM3
             );
+
+	bu_free((char *)faces, "analyze_bot: faces");
 }
 
 
