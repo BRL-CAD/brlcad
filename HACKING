@@ -1140,7 +1140,7 @@ documented, synchronized, and tagged release are as follows:
 0) All code is committed to SVN.  All commits have been reviewed.
 Notify developer mailing list of intention to release.
 
-    echo "Release preparations have begun.  Please refrain from disruptive commits until the release is tagged or 24-hours have passed, whichever first.  Ensure API changes are in doc/deprecation.txt, user-visibile changes are in NEWS, and help with release testing." | mail -s "Release preparations commencing" brlcad-devel@lists.sourceforge.net
+    echo "Release preparations have begun.  Please refrain from disruptive commits until the release is tagged or 24-hours have passed, whichever first.  Ensure API changes are in doc/deprecation.txt, user-visibile changes are in NEWS, and help with release testing." | mail -s "Release preparations commencing" brlcad-devel@lists.sourceforge.net -r "your@subscribed.address"
 
 1) Update TODO and BUGS.  Verify all user-visible changes are in NEWS.
 Verify doc/deprecation.txt reflects all API and application changes.
