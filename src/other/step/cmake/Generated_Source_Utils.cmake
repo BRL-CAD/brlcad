@@ -25,11 +25,10 @@ macro(VERIFY_FILES filelist warn resultvar)
     get_filename_component(ITEM_ABS_PATH "${fileitem}" ABSOLUTE)
     if("${fileitem}" STREQUAL "${ITEM_ABS_PATH}")
       set(filefullname "${fileitem}")
-      get_filename_component(filename "${fileitem}" NAME)
     else("${fileitem}" STREQUAL "${ITEM_ABS_PATH}")
       set(filefullname "${CURRENT_SOURCE_DIR}/${fileitem}")
-      set(filename "${fileitem}")
     endif("${fileitem}" STREQUAL "${ITEM_ABS_PATH}")
+    get_filename_component(filename "${fileitem}" NAME)
     # Got filename components sorted - proceed
     if(NOT EXISTS ${filefullname})
       message(FATAL_ERROR "Attempted to verify non-existant file ${filefullname}")
@@ -49,7 +48,7 @@ macro(VERIFY_FILES filelist warn resultvar)
 endmacro(VERIFY_FILES filelist resultvar)
 
 
-macro(TOOL_VERSIONS)
+macro(GET_GENERATOR_EXEC_VERSIONS)
   # Read lemon version
   execute_process(COMMAND ${LEMON_EXECUTABLE} -x OUTPUT_VARIABLE lemon_version)
   string(REPLACE "Lemon version " "" lemon_version "${lemon_version}")
@@ -60,7 +59,7 @@ macro(TOOL_VERSIONS)
   # Read perplex version
   execute_process(COMMAND ${PERPLEX_EXECUTABLE} -v OUTPUT_VARIABLE perplex_version)
   string(STRIP "${perplex_version}" perplex_version)
-endmacro(TOOL_VERSIONS)
+endmacro(GET_GENERATOR_EXEC_VERSIONS)
 
   # Calculate the MD5 sums of the template files used for lemon and perplex
   #MD5_FILES("${LEMON_TEMPLATE}" "${PERPLEX_TEMPLATE}")

@@ -8,9 +8,6 @@ if(NOT DEBUGGING_GENERATED_SOURCES)
 
   include(@BASELINE_INFORMATION_FILE@)
 
-  # Assume we're OK until proven otherwise
-  set(srcs_pass 1)
-
   # Define a variety of convenience routines
   include(@PROJECT_CMAKE_DIR@/Generated_Source_Utils.cmake)
 
@@ -20,6 +17,15 @@ if(NOT DEBUGGING_GENERATED_SOURCES)
   if(NOT srcs_pass)
     message(FATAL_ERROR "Generated sources have been modified.  These files should never be modified directly except when debugging faulty output from the generators - changes to lexer and parser logic should be made to the generator input files.  If this is a debugging situation, set the variable DEBUGGING_GENERATED_SOURCES to ON during the CMake configure.")
   endif(NOT srcs_pass)
+
+  # If we got by that test, see if it looks like these 
+  # sources came from the current input files.  It's not
+  # a failure condition if they didn't, but warn about it.
+  set(filelist "@INPUT_FILELIST@")
+  VERIFY_FILES("${filelist}" 0 inputs_same)
+  if(NOT inputs_same)
+    message("Note: cached generated sources are not in sync with input files.")
+  endif(NOT inputs_same)
 
 endif(NOT DEBUGGING_GENERATED_SOURCES)
 

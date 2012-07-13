@@ -1,5 +1,8 @@
 # Inherit the parent CMake setting
 set(CURRENT_SOURCE_DIR @CMAKE_CURRENT_SOURCE_DIR@)
+set(LEMON_EXECUTABLE @LEMON_EXECUTABLE@)
+set(RE2C_EXECUTABLE @RE2C_EXECUTABLE@)
+set(PERPLEX_EXECUTABLE @PERPLEX_EXECUTABLE@)
 
 # Include the file the provides the baseline against which
 # current files will be compared
@@ -41,6 +44,48 @@ VERIFY_FILES("${input_files}" 1 cached_unchanged)
 if(NOT cached_unchanged)
     message(FATAL_ERROR "Cached generated sources do not match the MD5 hashes present in @BASELINE_INFORMATION_FILE@ - if updating cached sources, remember that the build enforces the requirement that associated MD5 hashes in @BASELINE_INFORMATION_FILE@ are current as well.  Cached generated sources should not be directly edited.")
 endif(NOT cached_unchanged)
+
+GET_GENERATOR_EXEC_VERSIONS()
+
+if("${lemon_version}" VERSION_EQUAL "${baseline_lemon_version}" AND "${perplex_version}" VERSION_EQUAL "${baseline_perplex_version}" AND "${re2c_version}" VERSION_EQUAL "${baseline_re2c_version}")
+  set(tool_versions_equal 1)
+else()
+  set(tool_versions_equal 0)
+endif()
+
+if(NOT input_unchanged)
+  if(templates_unchanged AND tool_versions_equal)
+    message("Input files changed - syncing cached outputs")
+    #TODO
+  else(templates_unchanged AND tool_versions_equal)
+    if(NOT templates_unchanged AND NOT tool_versions_equal)
+      message("Input files have been updated, but templates and current tool versions do not match those previously used to generate cached sources.  Automatic syncing will not proceed.")
+      message("To force syncing, use the build target @SYNC_TARGET_NAME@")
+    else(NOT templates_unchanged AND NOT tool_versions_equal)
+      if(NOT templates_unchanged)
+	message("Input files have been updated, but templates do not match those previously used to generate cached sources.  Automatic syncing will not proceed.")
+	message("To force syncing, use the build target @SYNC_TARGET_NAME@")
+      endif(NOT templates_unchanged)
+      if(NOT tool_versions_equal)
+	message("Input files have been updated, but tool versions do not match those previously used to generate cached sources.  Automatic syncing will not proceed.")
+	message("To force syncing, use the build target @SYNC_TARGET_NAME@")
+      endif(NOT tool_versions_equal)
+    endif(NOT templates_unchanged AND NOT tool_versions_equal)
+  endif(templates_unchanged AND tool_versions_equal)
+else(NOT input_unchanged)
+  if(templates_unchanged AND cached_unchanged AND tool_versions_equal)
+    # Under these conditions, the uncached generated output should be equal to the cached files.
+    # Check if it is - a difference here may indicate a platform-specific behavior in one of the
+    # generators.
+    set(build_files "@BUILD_OUTPUT_FILELIST@")
+    VERIFY_FILES("${build_files}" 1 platform_unchanged)
+    if(NOT platform_unchanged)
+      message("Note: give these build inputs and tools, source files should be identical to generated files.  Differences were still observed - possible indiciation of platform-specific generator behavior.")
+    endif(NOT platform_unchanged)
+  endif(templates_unchanged AND cached_unchanged AND tool_versions_equal)
+endif(NOT input_unchanged)
+
+#TODO - create target that will go in SYNC_TARGET_NAME
 
 # Local Variables:
 # tab-width: 8

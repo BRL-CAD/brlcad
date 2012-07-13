@@ -86,7 +86,7 @@ macro(PERPLEX_TARGET Name Input OutputSrc OutputHeader)
     )
   add_custom_command(
     OUTPUT ${OutputSrc}
-    COMMAND ${RE2C_EXECUTABLE} -c -o ${OutputSrc} ${re2c_src}
+    COMMAND ${RE2C_EXECUTABLE} --no-generation-date -c -o ${OutputSrc} ${re2c_src}
     DEPENDS ${Input} ${re2c_src} ${OutputHeader} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
