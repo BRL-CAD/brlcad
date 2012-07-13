@@ -31,6 +31,7 @@
 
 #include "./vls_internals.h"
 
+
 /* Test against sprintf */
 int
 test_vls(const char *fmt, ...)
@@ -64,6 +65,7 @@ test_vls(const char *fmt, ...)
 
     return status;
 }
+
 
 int
 check_format_chars()
@@ -102,6 +104,7 @@ check_format_chars()
 
   return status;
 }
+
 
 int
 main(int ac, char *av[])
