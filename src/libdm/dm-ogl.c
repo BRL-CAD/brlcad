@@ -1663,6 +1663,14 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    /* Set per-vertex normal.  Given before vert. */
 		    glNormal3dv(*pt);
 		    break;
+		case BN_VLIST_POINT_DRAW:
+		    if (first == 0)
+			glEnd();
+		    first = 0;
+		    glPointSize(5.0);
+		    glBegin(GL_POINTS);
+		    glVertex3dv(*pt);
+		    break;
 	    }
 	}
     }
