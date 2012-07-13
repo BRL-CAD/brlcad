@@ -1,5 +1,6 @@
 # Inherit the parent CMake setting
 set(DEBUGGING_GENERATED_SOURCES @DEBUGGING_GENERATED_SOURCES@)
+set(CURRENT_SOURCE_DIR @CMAKE_CURRENT_SOURCE_DIR@)
 
 # Include the file the provides the baseline against which
 # current files will be compared
@@ -14,21 +15,8 @@ if(NOT DEBUGGING_GENERATED_SOURCES)
   include(@PROJECT_CMAKE_DIR@/Generated_Source_Utils.cmake)
 
   # Individually verify all of the files in question.
-  set(filelist "@VERIFY_FILELIST@")
-  foreach(filename ${filelist})
-    if(NOT EXISTS @CMAKE_CURRENT_SOURCE_DIR@/${filename})
-      message(FATAL_ERROR "Attempted to verify non-existant file ${filename}")
-    endif(NOT EXISTS @CMAKE_CURRENT_SOURCE_DIR@/${filename})
-    FILEVAR(${filename} filevar)
-    if(NOT baseline_${filevar}_md5)
-      message(FATAL_ERROR "No baseline MD5 available for ${filename} - ${filevar} is not defined.")
-    endif(NOT baseline_${filevar}_md5)
-    MD5(@CMAKE_CURRENT_SOURCE_DIR@/${filename} ${filevar}_md5)
-    if(NOT "${${filevar}_md5}" STREQUAL "${baseline_${filevar}_md5}")
-      message("\n${filename} has been modified: baseline md5 hash is ${baseline_${filevar}_md5} and current hash is ${${filevar}_md5}.\n")
-      set(srcs_pass 0)
-    endif(NOT "${${filevar}_md5}" STREQUAL "${baseline_${filevar}_md5}")
-  endforeach(filename ${filelist})
+  set(filelist "@CACHED_FILELIST@")
+  VERIFY_FILES("${filelist}" 1 srcs_pass)
   if(NOT srcs_pass)
     message(FATAL_ERROR "Generated sources have been modified.  These files should never be modified directly except when debugging faulty output from the generators - changes to lexer and parser logic should be made to the generator input files.  If this is a debugging situation, set the variable DEBUGGING_GENERATED_SOURCES to ON during the CMake configure.")
   endif(NOT srcs_pass)

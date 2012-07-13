@@ -252,6 +252,17 @@ if(NOT "${SCL_GENERATE_LEXER_PARSER}" STREQUAL "OFF")
 	find_package(RE2C)
 	find_package(PERPLEX)
 	if(LEMON_EXECUTABLE AND LEMON_TEMPLATE AND PERPLEX_EXECUTABLE AND PERPLEX_TEMPLATE AND RE2C_EXECUTABLE)
+		# Templates may be anywhere - make sure we have a stable path if a relative
+		# path was specified at CMake time
+		get_filename_component(lemon_template_fpath "${LEMON_TEMPLATE}" ABSOLUTE)
+		if(NOT "${lemon_template_fpath}" STREQUAL "${LEMON_TEMPLATE}")
+			get_filename_component(LEMON_TEMPLATE "${CMAKE_BINARY_DIR}/${LEMON_TEMPLATE}" ABSOLUTE)
+		endif(NOT "${lemon_template_fpath}" STREQUAL "${LEMON_TEMPLATE}")
+		get_filename_component(perplex_template_fpath "${PERPLEX_TEMPLATE}" ABSOLUTE)
+		if(NOT "${perplex_template_fpath}" STREQUAL "${PERPLEX_TEMPLATE}")
+			get_filename_component(PERPLEX_TEMPLATE "${CMAKE_BINARY_DIR}/${PERPLEX_TEMPLATE}" ABSOLUTE)
+		endif(NOT "${perplex_template_fpath}" STREQUAL "${PERPLEX_TEMPLATE}")
+
 		if(NOT COMMAND LEMON_TARGET)
 			include(${SCL_CMAKE_DIR}/LEMON_Util.cmake)
 		endif(NOT COMMAND LEMON_TARGET)
