@@ -8,12 +8,13 @@ set(BASELINE_INFORMATION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/generated/verificatio
 set(PROJECT_CMAKE_DIR "${SCL_SOURCE_DIR}/cmake")
 set(INPUT_FILELIST expscan.l expparse.y)
 set(TEMPLATE_FILELIST ${LEMON_TEMPLATE} ${PERPLEX_TEMPLATE})
-set(CACHED_FILELIST 
-	generated/expscan.c 
-	generated/expscan.h 
-	generated/expparse.c 
-	generated/expparse.h
+set(BUILD_OUTPUT_FILELIST
+	${CMAKE_CURRENT_BINARY_DIR}/expscan.c
+	${CMAKE_CURRENT_BINARY_DIR}/expscan.h
+	${CMAKE_CURRENT_BINARY_DIR}/expparse.c
+	${CMAKE_CURRENT_BINARY_DIR}/expparse.h
 	)
+string(REPLACE "${CMAKE_CURRENT_BINARY_DIR}" "generated" CACHED_FILELIST "${BUILD_OUTPUT_FILELIST}")
 
 if(SCL_GENERATE_LP_SOURCES)
    LEMON_TARGET(ExpParser expparse.y expparse.c expparse.h)
@@ -22,12 +23,6 @@ if(SCL_GENERATE_LP_SOURCES)
    set(EXPRESS_GENERATED_SRCS
 	   ${LEMON_ExpParser_OUTPUT_SOURCE}
 	   ${PERPLEX_ExpScanner_OUTPUTS}
-	   )
-   set(BUILD_OUTPUT_FILELIST
-	   ${CMAKE_CURRENT_BINARY_DIR}/expscan.c
-	   ${CMAKE_CURRENT_BINARY_DIR}/expscan.h
-	   ${CMAKE_CURRENT_BINARY_DIR}/expparse.c
-	   ${CMAKE_CURRENT_BINARY_DIR}/expparse.h
 	   )
    configure_file(${SCL_SOURCE_DIR}/cmake/manage_generated.cmake.in
 	   ${CMAKE_CURRENT_BINARY_DIR}/express_manage_generated.cmake @ONLY)
