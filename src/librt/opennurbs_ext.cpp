@@ -2806,6 +2806,110 @@ sortY(BRNode* first, BRNode* second)
 }
 
 
+struct Triangle {
+    ON_3dPoint A, B, C;
+    void CreateFromPoints(ON_3dPoint &_A, ON_3dPoint &_B, ON_3dPoint &_C) {
+	A = _A, B = _B, C = _C;
+    }
+};
+
+
+bool
+triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, ON_3dPoint &center)
+{
+    ON_Plane plane_a(TriA.A, TriA.B, TriA.C);
+    ON_Plane plane_b(TriB.A, TriB.B, TriB.C);
+    ON_Line intersect;
+    if (!ON_Intersect(plane_a, plane_b, intersect))
+	return false;
+    ON_3dVector line_normal = ON_CrossProduct(plane_a.Normal(), intersect.Direction());
+    // dpi - >0: one side of the line, <0: another side, ==0: on the line
+    double dp1 = ON_DotProduct(TriA.A - intersect.from, line_normal);
+    double dp2 = ON_DotProduct(TriA.B - intersect.from, line_normal);
+    double dp3 = ON_DotProduct(TriA.C - intersect.from, line_normal);
+
+    int points_on_one_side = (dp1 >= 0) + (dp2 >= 0) + (dp3 >= 0);
+    if (points_on_one_side == 0 || points_on_one_side == 3)
+	return false;
+
+    double dp4 = ON_DotProduct(TriB.A - intersect.from, line_normal);
+    double dp5 = ON_DotProduct(TriB.B - intersect.from, line_normal);
+    double dp6 = ON_DotProduct(TriB.C - intersect.from, line_normal);
+    points_on_one_side = (dp4 >= 0) + (dp5 >= 0) + (dp6 >= 0);
+    if (points_on_one_side == 0 || points_on_one_side == 3)
+	return false;
+
+    double t[4];
+    int count = 0;
+    double t1, t2;
+    // dpi*dpj < 0 - the corresponding points are on different sides
+    // - the line segment between them are intersected by the plane-plane
+    // intersection line
+    if (dp1*dp2 < 0) {
+	intersect.ClosestPointTo(TriA.A, &t1);
+	intersect.ClosestPointTo(TriA.B, &t2);
+	double d1 = TriA.A.DistanceTo(intersect.PointAt(t1));
+	double d2 = TriA.B.DistanceTo(intersect.PointAt(t2));
+	if (!ZERO(d1 + d2))
+	    t[count++] = t1 + d1/(d1+d2)*(t2-t1);
+    }
+    if (dp1*dp3 < 0) {
+	intersect.ClosestPointTo(TriA.A, &t1);
+	intersect.ClosestPointTo(TriA.C, &t2);
+	double d1 = TriA.A.DistanceTo(intersect.PointAt(t1));
+	double d2 = TriA.C.DistanceTo(intersect.PointAt(t2));
+	if (!ZERO(d1 + d2))
+	    t[count++] = t1 + d1/(d1+d2)*(t2-t1);
+    }
+    if (dp2*dp3 < 0 && count != 2) {
+	intersect.ClosestPointTo(TriA.B, &t1);
+	intersect.ClosestPointTo(TriA.C, &t2);
+	double d1 = TriA.B.DistanceTo(intersect.PointAt(t1));
+	double d2 = TriA.C.DistanceTo(intersect.PointAt(t2));
+	if (!ZERO(d1 + d2))
+	    t[count++] = t1 + d1/(d1+d2)*(t2-t1);
+    }
+    if (count != 2)
+	return false;
+    if (dp4*dp5 < 0) {
+	intersect.ClosestPointTo(TriB.A, &t1);
+	intersect.ClosestPointTo(TriB.B, &t2);
+	double d1 = TriB.A.DistanceTo(intersect.PointAt(t1));
+	double d2 = TriB.B.DistanceTo(intersect.PointAt(t2));
+	if (!ZERO(d1 + d2))
+	    t[count++] = t1 + d1/(d1+d2)*(t2-t1);
+    }
+    if (dp4*dp6 < 0) {
+	intersect.ClosestPointTo(TriB.A, &t1);
+	intersect.ClosestPointTo(TriB.C, &t2);
+	double d1 = TriB.A.DistanceTo(intersect.PointAt(t1));
+	double d2 = TriB.C.DistanceTo(intersect.PointAt(t2));
+	if (!ZERO(d1 + d2))
+	    t[count++] = t1 + d1/(d1+d2)*(t2-t1);
+    }
+    if (dp5*dp6 < 0 && count != 4) {
+	intersect.ClosestPointTo(TriB.B, &t1);
+	intersect.ClosestPointTo(TriB.C, &t2);
+	double d1 = TriB.B.DistanceTo(intersect.PointAt(t1));
+	double d2 = TriB.C.DistanceTo(intersect.PointAt(t2));
+	if (!ZERO(d1 + d2))
+	    t[count++] = t1 + d1/(d1+d2)*(t2-t1);
+    }
+    if (count != 4)
+	return false;
+    if (t[0] > t[1])
+	std::swap(t[1], t[0]);
+    if (t[2] > t[3])
+	std::swap(t[3], t[2]);
+    int left = std::max(t[0], t[2]);
+    int right = std::min(t[1], t[3]);
+    if (left > right)
+	return false;
+    center = intersect.PointAt((left+right)/2);
+    return true;
+}
+
+
 #define INTERSECT_MAX_DEPTH 8
 int
 surface_surface_intersection(const ON_Surface* surfA,
@@ -2817,6 +2921,8 @@ surface_surface_intersection(const ON_Surface* surfA,
 	intersect = NULL;
 	return -1;
     }
+
+    // First step: build the bounding box tree of the two surfaces
     ON_BrepFace *faceA, *faceB;
     ON_Brep *brep = ON_Brep::New();
     faceA = brep->NewFace(*surfA);
@@ -2831,6 +2937,8 @@ surface_surface_intersection(const ON_Surface* surfA,
     nodepairs.push_back(std::make_pair(rootA, rootB));
     ON_3dPointArray curvept;
 
+    // Second step: calculate the intersection of the bounding boxes.
+    // Only the children of intersecting b-box pairs need to be considered.
     for (int h = 0; h <= INTERSECT_MAX_DEPTH; h++) {
 	if (nodepairs.empty())
 	    break;
@@ -2855,14 +2963,56 @@ surface_surface_intersection(const ON_Surface* surfA,
 	    (*i).second->GetBBox(box_b.m_min, box_b.m_max);
 	    if (intersect.Intersection(box_a, box_b)) {
 		nodepairs.push_back(*i);
-		if (h == INTERSECT_MAX_DEPTH)
-		    curvept.Append(intersect.Center()); // Use center temporarily just for testing
+		if (h == INTERSECT_MAX_DEPTH) {
+		    // We have arrived at the bottom of the trees.
+		    // Get an estimate of the intersection point lying on the intersection curve
+		    ON_3dPoint cornerA[4], cornerB[4];
+		    /**
+		     * TODO: It seems that m_u and m_v are not working.
+		     * Maybe it should be calculated with reversed evaluation or updated when
+		     * building the surface tree.
+		     */
+		    cornerA[0] = surfA->PointAt((*i).first->m_u.Min(), (*i).first->m_v.Min());
+		    cornerA[1] = surfA->PointAt((*i).first->m_u.Min(), (*i).first->m_v.Max());
+		    cornerA[2] = surfA->PointAt((*i).first->m_u.Max(), (*i).first->m_v.Min());
+		    cornerA[3] = surfA->PointAt((*i).first->m_u.Max(), (*i).first->m_v.Max());
+		    cornerB[0] = surfA->PointAt((*i).second->m_u.Min(), (*i).second->m_v.Min());
+		    cornerB[0] = surfA->PointAt((*i).second->m_u.Min(), (*i).second->m_v.Min());
+		    cornerB[0] = surfA->PointAt((*i).second->m_u.Min(), (*i).second->m_v.Min());
+		    cornerB[0] = surfA->PointAt((*i).second->m_u.Min(), (*i).second->m_v.Min());
+
+		    // We approximate each surface sub-patch inside the bounding-box with two 
+		    // triangles that share an edge.
+		    struct Triangle triangle[4];
+		    triangle[0].CreateFromPoints(cornerA[0], cornerA[1], cornerA[2]);
+		    triangle[1].CreateFromPoints(cornerA[1], cornerA[2], cornerA[3]);
+		    triangle[2].CreateFromPoints(cornerB[0], cornerB[1], cornerB[2]);
+		    triangle[3].CreateFromPoints(cornerB[1], cornerB[2], cornerB[3]);
+		    bool is_intersect[4];
+		    ON_3dPoint intersect_center[4];
+		    is_intersect[0] = triangle_intersection(triangle[0], triangle[2], intersect_center[0]);
+		    is_intersect[1] = triangle_intersection(triangle[0], triangle[3], intersect_center[1]);
+		    is_intersect[2] = triangle_intersection(triangle[1], triangle[2], intersect_center[2]);
+		    is_intersect[3] = triangle_intersection(triangle[1], triangle[3], intersect_center[3]);
+		    int num_intersects = 0;
+		    ON_3dPoint average(0.0, 0.0, 0.0);
+		    for (int i = 0; i < 4; i++) {
+			if (is_intersect[i]) {
+			    average += intersect_center[i];
+			    num_intersects++;
+			}
+		    }
+		    if (num_intersects)
+			average /= num_intersects;
+		    if (intersect.IsPointIn(average))
+			curvept.Append(average);
+		}
 	    }
 	}
-	/* for (int i = 0; i < curvept.Count(); i++) {
+	for (int i = 0; i < curvept.Count(); i++) {
 	    bu_log("(%lf %lf %lf)\n", curvept[i].x, curvept[i].y, curvept[i].z);
 	}
-	bu_log("%d %d\n", h, tmp_pairs.size());*/
+	bu_log("%d %d\n", h, tmp_pairs.size());
     }
     // WIP
     return 0;
