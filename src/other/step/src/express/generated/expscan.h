@@ -1,6 +1,6 @@
 #ifndef PERPLEX_H
 #define PERPLEX_H
-/*              S C A N N E R _ T E M P L A T E . C
+/*              P E R P L E X _ T E M P L A T E . C
  * BRL-CAD
  *
  * Copyright (c) 1990-2011 United States Government as represented by
@@ -45,7 +45,7 @@
  *  to contract no. DE-AC03-76SF00098 between the United States
  *  Department of Energy and the University of California.
  */
-/** @file scanner_template.c
+/** @file perplex_template.c
  *
  * template for generated scanners
  *
