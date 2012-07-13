@@ -211,22 +211,12 @@ color_fix(register const struct bu_structparse *sdp, register const char *UNUSED
 	*p /= 255.0;
     }
 }
-
-
-/* C A M O _ S E T U P
- *
- * This routine is called (at prep time)
- * once for each region which uses this shader.
- * Any shader-specific initialization should be done here.
- */
-HIDDEN int
-camo_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
-
-
+int
+setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, struct rt_i *rtip, char *parameters, struct camo_specific defaults)
+{
 /* pointer to reg_udata in *rp */
 
 /* New since 4.4 release */
-{
     register struct camo_specific *camo_sp;
     mat_t model_to_region;
     mat_t tmp;
@@ -238,9 +228,9 @@ camo_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
     *dpp = camo_sp;
 
     if (rdebug&RDEBUG_SHADE) {
-	bu_log("camouflage parameters = '%s'\n", bu_vls_addr(matparm));
+	bu_log("%s'%s'\n", parameters, bu_vls_addr(matparm));
     }
-    memcpy(camo_sp, &camo_defaults, sizeof(struct camo_specific));
+    memcpy(camo_sp, &defaults, sizeof(struct camo_specific));
 
     if (bu_struct_parse(matparm, camo_parse, (char *)camo_sp) < 0)
 	return -1;
@@ -279,6 +269,18 @@ camo_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
     }
 
     return 1;
+}
+
+/* C A M O _ S E T U P
+ *
+ * This routine is called (at prep time)
+ * once for each region which uses this shader.
+ * Any shader-specific initialization should be done here.
+ */
+HIDDEN int
+camo_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+{   
+    return setup(rp, matparm, dpp, rtip, "camouflage parameters = ", camo_defaults);
 }
 
 
@@ -368,64 +370,8 @@ camo_render(struct application *ap, const struct partition *pp, struct shadework
  */
 HIDDEN int
 marble_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
-
-
-/* pointer to reg_udata in *rp */
-
-/* New since 4.4 release */
 {
-    register struct camo_specific *camo_sp;
-    mat_t model_to_region;
-    mat_t tmp;
-
-    RT_CHECK_RTI(rtip);
-    BU_CK_VLS(matparm);
-    RT_CK_REGION(rp);
-    BU_GET(camo_sp, struct camo_specific);
-    *dpp = camo_sp;
-
-    if (rdebug&RDEBUG_SHADE) {
-	bu_log("marble parameters = '%s'\n", bu_vls_addr(matparm));
-    }
-    memcpy(camo_sp, &marble_defaults, sizeof(struct camo_specific));
-
-    if (bu_struct_parse(matparm, camo_parse, (char *)camo_sp) < 0)
-	return -1;
-
-    /* Optional:  get the matrix which maps model space into
-     * "region" or "shader" space
-     */
-    db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
-
-    /* add the noise-space scaling */
-    MAT_IDN(tmp);
-    if (!EQUAL(camo_sp->noise_size, 1.0)) {
-	/* the user sets "noise_size" to the size of the biggest
-	 * noise-space blob in model coordinates
-	 */
-	tmp[0] = tmp[5] = tmp[10] = 1.0/camo_sp->noise_size;
-    } else {
-	tmp[0] = 1.0/camo_sp->noise_vscale[0];
-	tmp[5] = 1.0/camo_sp->noise_vscale[1];
-	tmp[10] = 1.0/camo_sp->noise_vscale[2];
-    }
-
-    bn_mat_mul(camo_sp->xform, tmp, model_to_region);
-
-    /* Add any translation within shader/region space */
-    MAT_IDN(tmp);
-    tmp[MDX] = camo_sp->noise_delta[0];
-    tmp[MDY] = camo_sp->noise_delta[1];
-    tmp[MDZ] = camo_sp->noise_delta[2];
-    bn_mat_mul2(tmp, camo_sp->xform);
-
-    if (rdebug&RDEBUG_SHADE) {
-	bu_struct_print(rp->reg_name, camo_print_tab,
-			(char *)camo_sp);
-	bn_mat_print("xform", camo_sp->xform);
-    }
-
-    return 1;
+    return setup(rp, matparm, dpp, rtip, "marble parameters = ", marble_defaults);
 }
 
 
