@@ -4,13 +4,7 @@ include_directories(
     ${SCL_SOURCE_DIR}/src/base
 )
 
-find_package(LEMON)
-find_package(PERPLEX)
-find_package(RE2C)
-if(LEMON_EXECUTABLE AND LEMON_TEMPLATE AND PERPLEX_EXECUTABLE AND RE2C_EXECUTABLE)
-   include(${SCL_SOURCE_DIR}/cmake/LEMON_Util.cmake)
-   include(${SCL_SOURCE_DIR}/cmake/RE2C_Util.cmake)
-   include(${SCL_SOURCE_DIR}/cmake/PERPLEX_Util.cmake)
+if(SCL_GENERATE_LP_SOURCES)
    LEMON_TARGET(ExpParser expparse.y expparse.c expparse.h)
    PERPLEX_TARGET(ExpScanner expscan.l ${CMAKE_CURRENT_BINARY_DIR}/expscan.c ${CMAKE_CURRENT_BINARY_DIR}/expscan.h)
    ADD_PERPLEX_LEMON_DEPENDENCY(ExpScanner ExpParser)
@@ -18,13 +12,13 @@ if(LEMON_EXECUTABLE AND LEMON_TEMPLATE AND PERPLEX_EXECUTABLE AND RE2C_EXECUTABL
       ${LEMON_ExpParser_OUTPUT_SOURCE}
       ${PERPLEX_ExpScanner_OUTPUTS}
       )
-else(LEMON_EXECUTABLE AND LEMON_TEMPLATE AND PERPLEX_EXECUTABLE AND RE2C_EXECUTABLE)
+else(SCL_GENERATE_LP_SOURCES)
    set(EXPRESS_GENERATED_SRCS
        generated/expparse.c
        generated/expscan.c
        )
    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/generated)
-endif(LEMON_EXECUTABLE AND LEMON_TEMPLATE AND PERPLEX_EXECUTABLE AND RE2C_EXECUTABLE)
+endif(SCL_GENERATE_LP_SOURCES)
 
 set(EXPRESS_SOURCES
     ${EXPRESS_GENERATED_SRCS}
