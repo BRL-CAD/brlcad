@@ -30,32 +30,27 @@
 
 #include "common.h"
 
+#include <vector>
+
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "brep.h"
 
 
-fastf_t
-CrossProduct2d(ON_2dVector u, ON_2dVector v)
-{
-    return u.x * v.y - u.y * v.x;
-}
+#define CROSSPRODUCT2D(u, v) (u).x * (v).y - (u).y * (v).x
 
-
-/* intersect two 2d rays, given by a point of origin and a vector. return the
+/* intersect two 2d rays, defined by a point of origin and a vector. return the
  * point of intersection in isect.
  * -1: FAIL
  *  0: OKAY
  */
 int
-intersect_2dRay(ON_2dPoint p, ON_2dPoint q, ON_2dVector u, ON_2dVector v, ON_2dPoint *isect)
+intersect_2dRay(const ON_2dPoint p, const ON_2dPoint q, const ON_2dVector u, const ON_2dVector v, ON_2dPoint *isect)
 {
     fastf_t uxv, q_pxv;
-
     /* check for parallel and collinear cases */
-    if (ZERO((uxv = CrossProduct2d(u, v)))) {
-        return -1;
-    } else if (ZERO((q_pxv = CrossProduct2d(q - p, v)))) {
+    if (ZERO((uxv = CROSSPRODUCT2D(u, v)))
+        || (ZERO((q_pxv = CROSSPRODUCT2D(q - p, v))))) {
         return -1;
     }
 
@@ -64,10 +59,10 @@ intersect_2dRay(ON_2dPoint p, ON_2dPoint q, ON_2dVector u, ON_2dVector v, ON_2dP
 }
 
 
-/* returns the incenter of the inscribed circle inside the triangle formed by
+/* returns the incenter of the inscribed circle inside the triangle defined by
  * points a, b, c */
 ON_2dPoint
-incenter(ON_2dPoint a, ON_2dPoint b, ON_2dPoint c)
+incenter(const ON_2dPoint a, const ON_2dPoint b, const ON_2dPoint c)
 {
     fastf_t a_b, a_c, b_c, sum;
     ON_2dPoint incenter;
@@ -82,26 +77,147 @@ incenter(ON_2dPoint a, ON_2dPoint b, ON_2dPoint c)
     return incenter;
 }
 
-int
-biarc(ON_BezierCurve bezier, ON_Arc *biarc)
+/* create a biarc for a bezier curve.
+ *
+ * extends the tangent lines to the bezier curve at its first and last control
+ * points and finds the incenter of the circle defined by the first, last
+ * control points and the intersection of the two tangents.
+ * the biarc is defined by the first and last control points, and the incenter */
+ON_Arc
+make_biarc(const ON_BezierCurve bezier)
 {
-    ON_2dPoint p1, p2, p3, isect;
+    ON_2dPoint start, end, arc_pt, isect;
     ON_2dVector t1, t2;
 
-    p1 = bezier.PointAt(0.0);
-    p2 = bezier.PointAt(1.0);
+    start = bezier.PointAt(0.0);
+    end = bezier.PointAt(1.0);
 
     t1 = bezier.TangentAt(0.0);
     t2 = bezier.TangentAt(1.0);
 
-    if (intersect_2dRay(p1, p2, t1, t2, &isect) < 0) {
-        return -1;
+    intersect_2dRay(start, end, t1, t2, &isect);
+    arc_pt = incenter(start, end, isect);
+
+    return ON_Arc(start, arc_pt, end);
+}
+
+
+/* computes the first point of inflection on a bezier if it exists by finding
+ * where the magnitude of the curvature vector (2nd derivative) is at a maximum
+ * -1: FAIL
+ *  0: OKAY
+ */
+int
+bezier_inflection(const ON_BezierCurve bezier, fastf_t *inflection)
+{
+    fastf_t t, step = 0.1;
+    for (t = 0; t <= 1.0; t += step) {
+        ON_2dVector crv_1, crv_2;
+        crv_1 = bezier.CurvatureAt(t);
+        crv_2 = bezier.CurvatureAt(t + (step * 0.5));
+        // compare magnitude of curvature vectors
+        if (crv_1.LengthSquared() > crv_2.LengthSquared()) {
+            *inflection = t;
+            return 0;
+        }
+    }
+    return -1;
+}
+
+
+/* approximates a bezier curve with a set of circular arcs by dividing where
+ * the bezier deviates from the approximation biarc by more than a given
+ * tolerance, and recursively calling on the sub-sections until it is
+ * approximated to tolerance by the biarc */
+void
+approx_bezier(const ON_BezierCurve bezier, const ON_Arc biarc, const struct bn_tol *tol, std::vector<ON_Arc>& approx)
+{
+    fastf_t t, step = 0.1;
+    ON_3dPoint test;
+    ON_BezierCurve head, tail;
+    // walk the bezier curve at interval given by step
+    for (t = 0; t <= 1.0; t += step) {
+        test = bezier.PointAt(t);
+        // compare distance from arc to the bezier evaluated at 't' to the
+        // given tolerance
+        if ((test - biarc.ClosestPointTo(test)).LengthSquared() > tol->dist_sq) {
+            bezier.Split(step, head, tail);
+            approx_bezier(head, make_biarc(head), tol, approx);
+            approx_bezier(tail, make_biarc(tail), tol, approx);
+        }
+    }
+    // bezier doesn't deviate from biarc by the given tolerance, add the biarc
+    // approximation
+    approx.push_back(biarc);
+}
+
+
+/* approximates a bezier curve with a set of circular arcs */
+void
+bezier_to_carcs(const ON_BezierCurve bezier, const struct bn_tol *tol, std::vector<ON_Arc>& carcs)
+{
+    bool curvature_changed = false;
+    fastf_t inflection_pt, biarc_angle;
+    ON_Arc biarc;
+    ON_BezierCurve current, tmp;
+    std::vector<ON_BezierCurve> rest;
+
+    // get inflection point, if it exists
+    if (bezier_inflection(bezier, &inflection_pt)) {
+        current = bezier;
+    } else {
+        curvature_changed = true;
+        bezier.Split(inflection_pt, current, tmp);
+        rest.push_back(tmp);
     }
 
-    p3 = incenter(p1, p2, isect);
+    do {
+    biarc = make_biarc(current);
+    if ((biarc_angle = biarc.AngleRadians()) <= M_PI_2) {
+        // approximate the current bezier segment and add its biarc
+        // approximation to carcs
+        approx_bezier(current, biarc, tol, carcs);
+    } else if (biarc_angle <= M_PI) {
+        // divide the current bezier segment in half
+        current.Split(0.5, current, tmp);
+        rest.push_back(tmp);
 
-    *biarc = ON_Arc(p1, p2, p3);
-    return 0;
+        approx_bezier(current, biarc, tol, carcs);
+        // get next bezier section and pop it
+        current = rest.back();
+        rest.pop_back();
+
+        approx_bezier(current, biarc, tol, carcs);
+    } else {
+        fastf_t t = 1.0;
+        ON_Arc test_biarc;
+        ON_BezierCurve test_bezier;
+        // divide the current bezier such that the first curve segment would
+        // have an approximating biarc segment <=90 degrees
+        do {
+            t *= 0.5;
+            current.Split(t, test_bezier, tmp);
+            test_biarc = make_biarc(test_bezier);
+        } while(test_biarc.AngleRadians() > M_PI_2);
+
+        rest.push_back(tmp);
+
+        approx_bezier(test_bezier, test_biarc, tol, carcs);
+
+        current = rest.back();
+        rest.pop_back();
+        continue;
+    }
+
+    if (curvature_changed) {
+        curvature_changed = false;
+        current = rest.back();
+        rest.pop_back();
+        // dont check while() condition, we want to continue even if we just
+        // popped the last element
+        continue;
+    }
+    } while (!rest.empty());
 }
 
 
