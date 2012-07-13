@@ -1388,14 +1388,14 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 
 /*
- *  			O G L _ D R A W V L I S T H I D D E N L I N E
+ * O G L _ D R A W V L I S T H I D D E N L I N E
  *
  */
 HIDDEN int
 ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 {
-    register struct bn_vlist	*tvp;
-    register int		first;
+    register struct bn_vlist *tvp;
+    register int first;
 
     if (dmp->dm_debugLevel)
 	bu_log("ogl_drawVList()\n");
@@ -1423,9 +1423,9 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	register int	i;
-	register int	nused = tvp->nused;
-	register int	*cmd = tvp->cmd;
+	register int i;
+	register int nused = tvp->nused;
+	register int *cmd = tvp->cmd;
 	register point_t *pt = tvp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    if (dmp->dm_debugLevel > 2)
@@ -1487,9 +1487,9 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	register int	i;
-	register int	nused = tvp->nused;
-	register int	*cmd = tvp->cmd;
+	register int i;
+	register int nused = tvp->nused;
+	register int *cmd = tvp->cmd;
 	register point_t *pt = tvp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    if (dmp->dm_debugLevel > 2)
@@ -1613,17 +1613,17 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseColor);
 
 			switch (dmp->dm_light) {
-			case 1:
-			    break;
-			case 2:
-			    glMaterialfv(GL_BACK, GL_DIFFUSE, diffuseColor);
-			    break;
-			case 3:
-			    glMaterialfv(GL_BACK, GL_DIFFUSE, backDiffuseColorDark);
-			    break;
-			default:
-			    glMaterialfv(GL_BACK, GL_DIFFUSE, backDiffuseColorLight);
-			    break;
+			    case 1:
+				break;
+			    case 2:
+				glMaterialfv(GL_BACK, GL_DIFFUSE, diffuseColor);
+				break;
+			    case 3:
+				glMaterialfv(GL_BACK, GL_DIFFUSE, backDiffuseColorDark);
+				break;
+			    default:
+				glMaterialfv(GL_BACK, GL_DIFFUSE, backDiffuseColorLight);
+				break;
 			}
 
 			if (dmp->dm_transparency)
@@ -1718,7 +1718,6 @@ ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t
 HIDDEN int
 ogl_normal(struct dm *dmp)
 {
-
     if (dmp->dm_debugLevel)
 	bu_log("ogl_normal\n");
 
@@ -1771,7 +1770,6 @@ ogl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int UNUSED(siz
 HIDDEN int
 ogl_drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2)
 {
-
     if (dmp->dm_debugLevel)
 	bu_log("ogl_drawLine2D()\n");
 
