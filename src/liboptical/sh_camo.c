@@ -211,7 +211,9 @@ color_fix(register const struct bu_structparse *sdp, register const char *UNUSED
 	*p /= 255.0;
     }
 }
-int
+
+
+HIDDEN int
 setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, struct rt_i *rtip, char *parameters, struct camo_specific defaults)
 {
 /* pointer to reg_udata in *rp */
@@ -271,6 +273,7 @@ setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, struct 
     return 1;
 }
 
+
 /* C A M O _ S E T U P
  *
  * This routine is called (at prep time)
@@ -279,7 +282,7 @@ setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, struct 
  */
 HIDDEN int
 camo_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
-{   
+{
     return setup(rp, matparm, dpp, rtip, "camouflage parameters = ", camo_defaults);
 }
 
