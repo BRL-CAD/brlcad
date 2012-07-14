@@ -4,6 +4,8 @@ include_directories(
     ${SCL_SOURCE_DIR}/src/base
 )
 
+# Set up the information we need to feed the generated source management
+# scripts
 set(BASELINE_INFORMATION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/generated/verification_info.cmake")
 set(PROJECT_CMAKE_DIR "${SCL_SOURCE_DIR}/cmake")
 set(INPUT_FILELIST expscan.l expparse.y)
@@ -14,8 +16,13 @@ set(BUILD_OUTPUT_FILELIST
 	${CMAKE_CURRENT_BINARY_DIR}/expparse.c
 	${CMAKE_CURRENT_BINARY_DIR}/expparse.h
 	)
-string(REPLACE "${CMAKE_CURRENT_BINARY_DIR}" "generated" CACHED_FILELIST "${BUILD_OUTPUT_FILELIST}")
+set(CACHED_FILES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/generated")
+string(REPLACE "${CMAKE_CURRENT_BINARY_DIR}" "${CACHED_FILES_DIR}" CACHED_FILELIST "${BUILD_OUTPUT_FILELIST}")
+set(SYNC_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.cmake")
+set(SYNC_TARGET_NAME "express_sync_generated_files")
 
+# Depending on whether we're using pre-generated sources or building them on
+# the fly, set up targets and source lists.
 if(SCL_GENERATE_LP_SOURCES)
    LEMON_TARGET(ExpParser expparse.y expparse.c expparse.h)
    PERPLEX_TARGET(ExpScanner expscan.l ${CMAKE_CURRENT_BINARY_DIR}/expscan.c ${CMAKE_CURRENT_BINARY_DIR}/expscan.h)
@@ -33,6 +40,17 @@ if(SCL_GENERATE_LP_SOURCES)
 	   DEPENDS ${INPUT_FILELIST} ${TEMPLATE_FILELIST} ${CACHED_FILELIST} generated/verification_info.cmake ${PROJECT_CMAKE_DIR}/Generated_Source_Utils.cmake
 	   )
    add_custom_target(express_verify DEPENDS ${PERPLEX_ExpScanner_OUTPUTS} ${LEMON_ExpParser_OUTPUT_SOURCE} ${CMAKE_CURRENT_BINARY_DIR}/express_manage_generated.sentinel)
+
+	configure_file(${SCL_SOURCE_DIR}/cmake/sync_generated.cmake.in
+	   ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.cmake @ONLY)
+   add_custom_command(
+	   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.sentinel
+	   COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.cmake
+	   COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.sentinel
+	   DEPENDS ${INPUT_FILELIST} ${TEMPLATE_FILELIST} ${PROJECT_CMAKE_DIR}/Generated_Source_Utils.cmake
+	   )
+	add_custom_target(express_sync_generated_files DEPENDS ${PERPLEX_ExpScanner_OUTPUTS} ${LEMON_ExpParser_OUTPUT_SOURCE} ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.sentinel)
+
 
 else(SCL_GENERATE_LP_SOURCES)
 
@@ -87,6 +105,7 @@ SET(EXPRESS_PRIVATE_HDRS
 )
 
 SCL_ADDLIB(express "${EXPRESS_SOURCES}" "base")
+add_dependencies(express express_verify)
 SCL_ADDEXEC(fedex "${FEDEX_SOURCES}" express)
 
 add_dependencies(fedex version_string)

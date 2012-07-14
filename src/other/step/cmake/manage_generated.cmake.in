@@ -3,6 +3,8 @@ set(CURRENT_SOURCE_DIR @CMAKE_CURRENT_SOURCE_DIR@)
 set(LEMON_EXECUTABLE @LEMON_EXECUTABLE@)
 set(RE2C_EXECUTABLE @RE2C_EXECUTABLE@)
 set(PERPLEX_EXECUTABLE @PERPLEX_EXECUTABLE@)
+set(SYNC_SCRIPT @SYNC_SCRIPT@)
+set(SYNC_TARGET_NAME @SYNC_TARGET_NAME@)
 
 # Include the file the provides the baseline against which
 # current files will be compared
@@ -56,19 +58,19 @@ endif()
 if(NOT input_unchanged)
   if(templates_unchanged AND tool_versions_equal)
     message("Input files changed - syncing cached outputs")
-    #TODO
+    execute_process(COMMAND ${CMAKE_COMMAND} -P ${SYNC_SCRIPT} OUTPUT_VARIABLE output) 
   else(templates_unchanged AND tool_versions_equal)
     if(NOT templates_unchanged AND NOT tool_versions_equal)
       message("Input files have been updated, but templates and current tool versions do not match those previously used to generate cached sources.  Automatic syncing will not proceed.")
-      message("To force syncing, use the build target @SYNC_TARGET_NAME@")
+      message("To force syncing, use the build target ${SYNC_TARGET_NAME}")
     else(NOT templates_unchanged AND NOT tool_versions_equal)
       if(NOT templates_unchanged)
 	message("Input files have been updated, but templates do not match those previously used to generate cached sources.  Automatic syncing will not proceed.")
-	message("To force syncing, use the build target @SYNC_TARGET_NAME@")
+	message("To force syncing, use the build target ${SYNC_TARGET_NAME}")
       endif(NOT templates_unchanged)
       if(NOT tool_versions_equal)
 	message("Input files have been updated, but tool versions do not match those previously used to generate cached sources.  Automatic syncing will not proceed.")
-	message("To force syncing, use the build target @SYNC_TARGET_NAME@")
+	message("To force syncing, use the build target ${SYNC_TARGET_NAME}")
       endif(NOT tool_versions_equal)
     endif(NOT templates_unchanged AND NOT tool_versions_equal)
   endif(templates_unchanged AND tool_versions_equal)
@@ -84,8 +86,6 @@ else(NOT input_unchanged)
     endif(NOT platform_unchanged)
   endif(templates_unchanged AND cached_unchanged AND tool_versions_equal)
 endif(NOT input_unchanged)
-
-#TODO - create target that will go in SYNC_TARGET_NAME
 
 # Local Variables:
 # tab-width: 8

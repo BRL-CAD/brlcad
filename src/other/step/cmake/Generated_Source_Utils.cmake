@@ -1,12 +1,4 @@
-# lots of TODO items for this stuff...
-# 1.  gather in-use version nums for re2c, perplex and lemon
-# 2.  gather md5sum results for PERPLEX_TEMPLATE and LEMON_TEMPLATE files
-# 2a.  gather md5sum results for input files
-# 3.  read numbers from gen_info.cmake to identify baseline for all inputs.
-
-# There are a variety of situations that may result - need to outline them and deal with them appropriately
-
-# define a special build target that will copy generated outputs back into their proper places and generated and updated gen_info.cmake, to automate the syncing process.
+# Utility routines for managing generated files with CMake
 
 macro(MD5 filename md5sum)
   execute_process(COMMAND ${CMAKE_COMMAND} -E md5sum ${filename} OUTPUT_VARIABLE md5string)
@@ -50,6 +42,26 @@ macro(VERIFY_FILES filelist warn resultvar)
     endif(NOT "${${filevar}_md5}" STREQUAL "${baseline_${filevar}_md5}")
   endforeach(fileitem ${filelist})
 endmacro(VERIFY_FILES filelist resultvar)
+
+macro(WRITE_MD5_SUMS filelist outfile)
+  foreach(fileitem ${filelist})
+    # Deal with absolute and relative paths a bit differently
+    get_filename_component(ITEM_ABS_PATH "${fileitem}" ABSOLUTE)
+    if("${fileitem}" STREQUAL "${ITEM_ABS_PATH}")
+      set(filefullname "${fileitem}")
+    else("${fileitem}" STREQUAL "${ITEM_ABS_PATH}")
+      set(filefullname "${CURRENT_SOURCE_DIR}/${fileitem}")
+    endif("${fileitem}" STREQUAL "${ITEM_ABS_PATH}")
+    get_filename_component(filename "${fileitem}" NAME)
+    # Got filename components sorted - proceed
+    if(NOT EXISTS ${filefullname})
+      message(FATAL_ERROR "Attempted to get MD5 sum of non-existant file ${filefullname}")
+    endif(NOT EXISTS ${filefullname})
+    FILEVAR(${filename} filevar)
+    MD5(${filefullname} ${filevar}_md5)
+    file(APPEND ${outfile} "set(baseline_${filevar}_md5 ${${filevar}_md5})\n")
+  endforeach(fileitem ${filelist})
+endmacro(WRITE_MD5_SUMS)
 
 
 macro(GET_GENERATOR_EXEC_VERSIONS)
