@@ -84,13 +84,23 @@ macro(PERPLEX_TARGET Name Input OutputSrc OutputHeader)
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "[PERPLEX][${Name}] Generating re2c input with ${PERPLEX_EXECUTABLE}"
     )
-  add_custom_command(
-    OUTPUT ${OutputSrc}
-    COMMAND ${RE2C_EXECUTABLE} --no-generation-date -c -o ${OutputSrc} ${re2c_src}
-    DEPENDS ${Input} ${re2c_src} ${OutputHeader} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
-    )
+  if(NOT DEBUGGING_GENERATED_SOURCES)
+    add_custom_command(
+      OUTPUT ${OutputSrc}
+      COMMAND ${RE2C_EXECUTABLE} --no-debug-info --no-generation-date -c -o ${OutputSrc} ${re2c_src}
+      DEPENDS ${Input} ${re2c_src} ${OutputHeader} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
+      )
+  else(NOT DEBUGGING_GENERATED_SOURCES)
+    add_custom_command(
+      OUTPUT ${OutputSrc}
+      COMMAND ${RE2C_EXECUTABLE} --no-generation-date -c -o ${OutputSrc} ${re2c_src}
+      DEPENDS ${Input} ${re2c_src} ${OutputHeader} ${PERPLEX_EXECUTABLE_TARGET} ${RE2C_EXECUTABLE_TARGET}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
+      )
+  endif(NOT DEBUGGING_GENERATED_SOURCES)
   set(PERPLEX_${Name}_DEFINED TRUE)
   set(PERPLEX_${Name}_OUTPUTS ${OutputSrc})
   set(PERPLEX_${Name}_INPUT ${Input})
