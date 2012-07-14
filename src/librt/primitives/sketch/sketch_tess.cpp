@@ -35,26 +35,26 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "brep.h"
-
+#include "../../opennurbs_ext.h"
 
 #define CROSSPRODUCT2D(u, v) (u).x * (v).y - (u).y * (v).x
 
-/* intersect two 2d rays, defined by a point of origin and a vector. return the
- * point of intersection in isect.
+/* intersect two 2d rays. return the point of intersection in isect.
  * -1: FAIL
  *  0: OKAY
  */
 int
-intersect_2dRay(const ON_2dPoint p, const ON_2dPoint q, const ON_2dVector u, const ON_2dVector v, ON_2dPoint *isect)
+intersect_2dRay(const ON_Ray u, const ON_Ray v, ON_2dPoint& isect)
+//intersect_2dRay(const ON_2dPoint p, const ON_2dPoint q, const ON_2dVector u, const ON_2dVector v, ON_2dPoint *isect)
 {
     fastf_t uxv, q_pxv;
     /* check for parallel and collinear cases */
-    if (ZERO((uxv = CROSSPRODUCT2D(u, v)))
-        || (ZERO((q_pxv = CROSSPRODUCT2D(q - p, v))))) {
+    if (ZERO((uxv = CROSSPRODUCT2D(u.m_dir, v.m_dir)))
+        || (ZERO((q_pxv = CROSSPRODUCT2D(v.m_origin - u.m_origin, v.m_dir))))) {
         return -1;
     }
 
-    *isect = p + (u * q_pxv / uxv);
+    isect = u.PointAt(q_pxv / uxv);
     return 0;
 }
 
@@ -86,16 +86,13 @@ incenter(const ON_2dPoint a, const ON_2dPoint b, const ON_2dPoint c)
 ON_Arc
 make_biarc(const ON_BezierCurve bezier)
 {
-    ON_2dPoint start, end, arc_pt, isect;
-    ON_2dVector t1, t2;
+    ON_2dPoint isect, arc_pt;
+    ON_2dPoint start(bezier.PointAt(0)), end(bezier.PointAt(1.0));
+    ON_2dVector t_start(bezier.TangentAt(0)), t_end(bezier.TangentAt(1.0));
+    ON_Ray r_start((ON_3dPoint&)start, (ON_3dVector&)t_start),
+           r_end((ON_3dPoint&)end, (ON_3dVector&)t_end);
 
-    start = bezier.PointAt(0.0);
-    end = bezier.PointAt(1.0);
-
-    t1 = bezier.TangentAt(0.0);
-    t2 = bezier.TangentAt(1.0);
-
-    intersect_2dRay(start, end, t1, t2, &isect);
+    intersect_2dRay(r_start, r_end, isect);
     arc_pt = incenter(start, end, isect);
 
     return ON_Arc(start, arc_pt, end);
@@ -108,7 +105,7 @@ make_biarc(const ON_BezierCurve bezier)
  *  0: OKAY
  */
 int
-bezier_inflection(const ON_BezierCurve bezier, fastf_t *inflection)
+bezier_inflection(const ON_BezierCurve bezier, fastf_t& inflection)
 {
     fastf_t t, step = 0.1;
     for (t = 0; t <= 1.0; t += step) {
@@ -117,7 +114,7 @@ bezier_inflection(const ON_BezierCurve bezier, fastf_t *inflection)
         crv_2 = bezier.CurvatureAt(t + (step * 0.5));
         // compare magnitude of curvature vectors
         if (crv_1.LengthSquared() > crv_2.LengthSquared()) {
-            *inflection = t;
+            inflection = t;
             return 0;
         }
     }
@@ -152,7 +149,8 @@ approx_bezier(const ON_BezierCurve bezier, const ON_Arc biarc, const struct bn_t
 }
 
 
-/* approximates a bezier curve with a set of circular arcs */
+/* approximates a bezier curve with a set of circular arcs.
+ * returns approximation in carcs */
 void
 bezier_to_carcs(const ON_BezierCurve bezier, const struct bn_tol *tol, std::vector<ON_Arc>& carcs)
 {
@@ -163,7 +161,7 @@ bezier_to_carcs(const ON_BezierCurve bezier, const struct bn_tol *tol, std::vect
     std::vector<ON_BezierCurve> rest;
 
     // get inflection point, if it exists
-    if (bezier_inflection(bezier, &inflection_pt)) {
+    if (bezier_inflection(bezier, inflection_pt)) {
         current = bezier;
     } else {
         curvature_changed = true;
@@ -181,12 +179,12 @@ bezier_to_carcs(const ON_BezierCurve bezier, const struct bn_tol *tol, std::vect
         // divide the current bezier segment in half
         current.Split(0.5, current, tmp);
         rest.push_back(tmp);
-
+        // approximate first bezier segment
         approx_bezier(current, biarc, tol, carcs);
         // get next bezier section and pop it
         current = rest.back();
         rest.pop_back();
-
+        // approximate second bezier segment
         approx_bezier(current, biarc, tol, carcs);
     } else {
         fastf_t t = 1.0;
@@ -199,7 +197,6 @@ bezier_to_carcs(const ON_BezierCurve bezier, const struct bn_tol *tol, std::vect
             current.Split(t, test_bezier, tmp);
             test_biarc = make_biarc(test_bezier);
         } while(test_biarc.AngleRadians() > M_PI_2);
-
         rest.push_back(tmp);
 
         approx_bezier(test_bezier, test_biarc, tol, carcs);
@@ -220,6 +217,81 @@ bezier_to_carcs(const ON_BezierCurve bezier, const struct bn_tol *tol, std::vect
     } while (!rest.empty());
 }
 
+
+extern "C" fastf_t
+carc_area(const struct carc_seg *csg, const struct rt_sketch_internal *sk)
+{
+    fastf_t theta, side_ratio;
+    side_ratio = DIST_PT_PT(sk->verts[csg->start], sk->verts[csg->end]) / (2.0 * csg->radius);
+    theta = asin(side_ratio);
+    return 0.5 * csg->radius * csg->radius * (theta - side_ratio);
+}
+
+
+void
+rt_sketch_surf_area(fastf_t *area, const struct rt_sketch_internal *sketch_ip, const struct bn_tol *tol)
+{
+    size_t i;
+    struct rt_curve crv = sketch_ip->curve;
+    ON_3dVector sketch_normal, sum;
+    std::vector<ON_2dPoint> verts;
+
+    if (crv.count == 0) {
+        return;
+    }
+
+    for (i = 0; i < crv.count; i++) {
+        const struct line_seg *lsg;
+        const struct carc_seg *csg;
+        const struct bezier_seg *bsg;
+        //const struct nurb_seg *nsg;
+        const uint32_t *lng;
+
+        lng = (uint32_t *)crv.segment[i];
+
+        switch (*lng) {
+        case CURVE_LSEG_MAGIC:
+            lsg = (struct line_seg *)lng;
+            verts.push_back(sketch_ip->verts[lsg->start]);
+            verts.push_back(sketch_ip->verts[lsg->end]);
+            break;
+        case CURVE_CARC_MAGIC:
+            csg = (struct carc_seg *)lng;
+            verts.push_back(sketch_ip->verts[csg->start]);
+            verts.push_back(sketch_ip->verts[csg->end]);
+            *area += carc_area(csg, sketch_ip);
+            break;
+        case CURVE_BEZIER_MAGIC:
+            bsg = (struct bezier_seg *)lng;
+            ON_2dPointArray bez_pts(bsg->degree + 1);
+            ON_BezierCurve bezier_curve;
+            std::vector<ON_Arc> carcs;
+            for (i = 0; (int)i < bsg->degree + 1; i++) {
+                bez_pts[i] = sketch_ip->verts[bsg->ctl_points[i]];
+            }
+            bezier_curve = ON_BezierCurve(bez_pts);
+            bezier_to_carcs(bezier_curve, tol, carcs);
+            for (std::vector<ON_Arc>::iterator it = carcs.begin(); it != carcs.end(); ++it) {
+                verts.push_back(it->StartPoint());
+                verts.push_back(it->MidPoint());
+                verts.push_back(it->EndPoint());
+            }
+            break;
+        //case CURVE_NURB_MAGIC:
+        //default:
+            //break;
+        }
+    }
+
+    for (std::vector<ON_2dPoint>::iterator it = verts.begin(); it != verts.end(); ++it) {
+        sum += ON_CrossProduct((ON_2dVector&)*it, (ON_2dVector&)*(it + 1 == verts.end() ? verts.begin() : it + 1));
+    }
+
+    //for (i = 0; i < verts.size(); i++) {
+        //sum += ON_CrossProduct((ON_2dVector&)verts[i], (ON_2dVector&)verts[i + 1 == verts.size() ? 0 : i + 1]);
+    //}
+    *area += fabs(ON_DotProduct(sketch_normal, sum)) / 2.0;
+}
 
 /*
  * Local Variables:
