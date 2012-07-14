@@ -16,7 +16,7 @@ input files and/or tools.  As long as the toolchain in place
 is the same as that used previously when generating these
 files, the contents of this directory will be kept in sync 
 automatically.  In the case of updates to the tools, use the 
-express-sync-generated-files build target to force an
+express_sync_generated_files build target to force an
 update.
 
 The verification_info.cmake file in this directory is 
