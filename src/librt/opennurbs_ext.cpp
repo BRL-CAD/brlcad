@@ -2915,7 +2915,7 @@ int
 surface_surface_intersection(const ON_Surface* surfA,
 			     const ON_Surface* surfB,
 			     ON_NurbsCurve* intersect,
-			     double tolerance)
+			     double)
 {
     if (surfA == NULL || surfB == NULL) {
 	intersect = NULL;
@@ -2942,11 +2942,10 @@ surface_surface_intersection(const ON_Surface* surfA,
     for (int h = 0; h <= INTERSECT_MAX_DEPTH; h++) {
 	if (nodepairs.empty())
 	    break;
-	NodePairs::iterator i;
-	std::vector<BBNode *>::iterator j, k;
 	NodePairs tmp_pairs;
 	if (h) {
-	    for (i = nodepairs.begin(); i != nodepairs.end(); i++) {
+	    for (NodePairs::iterator i = nodepairs.begin(); i != nodepairs.end(); i++) {
+		std::vector<BBNode *>::iterator j, k;
 		for (j = (*i).first->m_children.begin(); j != (*i).first->m_children.end(); j++) {
 		    for (k = (*i).second->m_children.begin(); k != (*i).second->m_children.end(); k++) {
 			tmp_pairs.push_back(std::make_pair(*j, *k));
@@ -2957,11 +2956,11 @@ surface_surface_intersection(const ON_Surface* surfA,
 	    tmp_pairs = nodepairs;
 	}
 	nodepairs.clear();
-	for (i = tmp_pairs.begin(); i != tmp_pairs.end(); i++) {
-	    ON_BoundingBox box_a, box_b, intersect;
+	for (NodePairs::iterator i = tmp_pairs.begin(); i != tmp_pairs.end(); i++) {
+	    ON_BoundingBox box_a, box_b, box_intersect;
 	    (*i).first->GetBBox(box_a.m_min, box_a.m_max);
 	    (*i).second->GetBBox(box_b.m_min, box_b.m_max);
-	    if (intersect.Intersection(box_a, box_b)) {
+	    if (box_intersect.Intersection(box_a, box_b)) {
 		nodepairs.push_back(*i);
 		if (h == INTERSECT_MAX_DEPTH) {
 		    // We have arrived at the bottom of the trees.
@@ -2996,15 +2995,15 @@ surface_surface_intersection(const ON_Surface* surfA,
 		    is_intersect[3] = triangle_intersection(triangle[1], triangle[3], intersect_center[3]);
 		    int num_intersects = 0;
 		    ON_3dPoint average(0.0, 0.0, 0.0);
-		    for (int i = 0; i < 4; i++) {
-			if (is_intersect[i]) {
-			    average += intersect_center[i];
+		    for (int j = 0; j < 4; j++) {
+			if (is_intersect[j]) {
+			    average += intersect_center[j];
 			    num_intersects++;
 			}
 		    }
 		    if (num_intersects)
 			average /= num_intersects;
-		    if (intersect.IsPointIn(average))
+		    if (box_intersect.IsPointIn(average))
 			curvept.Append(average);
 		}
 	    }
