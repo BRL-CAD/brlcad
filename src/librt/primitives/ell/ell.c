@@ -1857,16 +1857,16 @@ rt_ell_surf_area(fastf_t *area, const struct rt_db_internal *ip)
             minor = mag_a;
         }
     } else if (EQUAL(mag_b, mag_c)) {
-        if (mag_b > mag_c) {
+        if (mag_a > mag_c) {
             /* case: prolate spheroid */
             ell_type = PROLATE;
-            major = mag_b;
+            major = mag_a;
             minor = mag_c;
         } else {
             /* case: oblate spheroid */
             ell_type = OBLATE;
             major = mag_c;
-            minor = mag_b;
+            minor = mag_a;
         }
     }
 
