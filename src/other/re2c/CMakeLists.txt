@@ -123,5 +123,13 @@ add_executable(re2c ${re2c_SRCS})
 # Need to link against stl library with some compilers.
 target_link_libraries(re2c "${STDCXX_LIBRARIES}")
 
+# Install
+if(NOT BIN_DIR)
+   set(BIN_DIR bin)
+endif(NOT BIN_DIR)
+if(NOT RE2C_SKIP_INSTALL)
+  install(TARGETS re2c DESTINATION ${BIN_DIR})
+endif(NOT RE2C_SKIP_INSTALL)
+
 configure_file(README.in ${CMAKE_CURRENT_BINARY_DIR}/README)
 configure_file(run_tests.sh.in ${CMAKE_CURRENT_BINARY_DIR}/run_tests.sh @ONLY)

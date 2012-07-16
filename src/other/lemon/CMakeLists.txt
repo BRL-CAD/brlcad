@@ -8,8 +8,15 @@ ENDIF(COMMAND CMAKE_POLICY)
 PROJECT(LEMON)
 
 add_executable(lemon lemon.c)
+# Install
+if(NOT BIN_DIR)
+  set(BIN_DIR bin)
+endif(NOT BIN_DIR)
+if(NOT LEMON_SKIP_INSTALL)
+  install(TARGETS lemon DESTINATION ${BIN_DIR})
+endif(NOT LEMON_SKIP_INSTALL)
 
-
+# Handle lempar.c template file
 if(NOT CMAKE_CONFIGURATION_TYPES)
   set(LEMPAR_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 else(NOT CMAKE_CONFIGURATION_TYPES)
@@ -22,3 +29,7 @@ add_custom_command(
   )
 add_custom_target(lempar_cp ALL DEPENDS ${LEMPAR_DIR}/lempar.c)
 add_dependencies(lemon lempar_cp)
+
+if(NOT LEMON_SKIP_INSTALL)
+   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/lempar.c DESTINATION ${BIN_DIR})
+endif(NOT LEMON_SKIP_INSTALL)

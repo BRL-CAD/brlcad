@@ -51,7 +51,9 @@ target_link_libraries(perplex "${STDCXX_LIBRARIES}")
 if(NOT BIN_DIR)
   set(BIN_DIR bin)
 endif(NOT BIN_DIR)
-install(TARGETS perplex DESTINATION ${BIN_DIR})
+if(NOT PERPLEX_SKIP_INSTALL)
+   install(TARGETS perplex DESTINATION ${BIN_DIR})
+endif(NOT PERPLEX_SKIP_INSTALL)
 
 # Handle Perplex template
 if(NOT DATA_DIR)
@@ -71,7 +73,9 @@ add_custom_command(
 add_custom_target(perplex_template_cp ALL DEPENDS ${PERPLEX_TEMPLATE_DIR}/perplex_template.c)
 add_dependencies(perplex perplex_template_cp)
 
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/perplex_template.c DESTINATION ${DATA_DIR})
+if(NOT PERPLEX_SKIP_INSTALL)
+   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/perplex_template.c DESTINATION ${DATA_DIR})
+endif(NOT PERPLEX_SKIP_INSTALL)
 
 # Local Variables:
 # tab-width: 8
