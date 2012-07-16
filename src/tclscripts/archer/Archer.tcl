@@ -5869,8 +5869,6 @@ proc title_node_handler {node} {
     $itk_component(ged) init_button_no_op 2
     set ::GeometryEditFrame::mEditLastTransMode $OBJECT_TRANSLATE_MODE
 
-putString "beginObjTranslate: GeometryEditFrame::mEditCommand - $GeometryEditFrame::mEditCommand"
-
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
 
