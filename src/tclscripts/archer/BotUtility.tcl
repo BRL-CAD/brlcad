@@ -28,9 +28,9 @@ package require Itcl
 package require Itk
 
 if {$tcl_platform(platform) == "windows"} {
-    load [file join [bu_brlcad_root "bin"] libbu[info sharedlibextension]]
+    load [file join [bu_brlcad_root [bu_brlcad_dir bin]] libbu[info sharedlibextension]]
 } else {
-    load [file join [bu_brlcad_root "lib"] libbu[info sharedlibextension]]
+    load [file join [bu_brlcad_root [bu_brlcad_dir lib]] libbu[info sharedlibextension]]
 }
 
 if {[catch {

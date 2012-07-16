@@ -71,7 +71,7 @@ exec "$WISH" "$0" "$@"
 # installed file will be loaded instead of the edited version.  
 # Warn if it looks like this situation is occurring by checking 
 # the root path against the argv0 path.
-set check_root_dir [file normalize [bu_brlcad_root bin]]
+set check_root_dir [file normalize [bu_brlcad_root [bu_brlcad_dir bin]]]
 set check_bin_dir [file dirname [file normalize $argv0]]
 set dir_same [string compare $check_root_dir $check_bin_dir]
 if {!$dir_same == 0} {

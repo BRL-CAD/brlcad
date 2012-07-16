@@ -214,7 +214,19 @@ set(BRLCAD_VERSION "${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PAT
 #---------------------------------------------------------------------
 # Define relative install locations.  Don't set these if they have already
 # been set by some other means (like a higher level CMakeLists.txt file
-# including this one.)
+# including this one.)  
+#
+# Setting the variable LFS_COMPATIBLE_FILETREE will automatically append
+# the necessary data to create the following layout:
+#
+# ${CMAKE_INSTALL_PREFIX}/bin
+# ${CMAKE_INSTALL_PREFIX}/lib/brlcad/VERSION
+# ${CMAKE_INSTALL_PREFIX}/include/brlcad/VERSION
+# ${CMAKE_INSTALL_PREFIX}/etc/brlcad/VERSION
+# ${CMAKE_INSTALL_PREFIX}/package/brlcad/VERSION
+# ${CMAKE_INSTALL_PREFIX}/share/brlcad/VERSION
+# ${CMAKE_INSTALL_PREFIX}/share/brlcad/VERSION/man
+# ${CMAKE_INSTALL_PREFIX}/share/brlcad/VERSION/doc
 
 # The location in which to install BRLCAD executables.
 if(NOT BIN_DIR)
@@ -224,32 +236,51 @@ endif(NOT BIN_DIR)
 # The location in which to install BRLCAD header files.
 if(NOT INCLUDE_DIR)
   set(INCLUDE_DIR include)
+  if(LFS_COMPATIBLE_FILETREE)
+    set(INCLUDE_DIR ${INCLUDE_DIR}/brlcad/${BRLCAD_VERSION})
+  endif(LFS_COMPATIBLE_FILETREE)
 endif(NOT INCLUDE_DIR)
 
 # The location in which to install BRL-CAD libraries.
 if(NOT LIB_DIR)
   set(LIB_DIR lib)
+  if(LFS_COMPATIBLE_FILETREE)
+    set(LIB_DIR ${LIB_DIR}/brlcad/${BRLCAD_VERSION})
+  endif(LFS_COMPATIBLE_FILETREE)
 endif(NOT LIB_DIR)
 
 # The location in which to install BRL-CAD configuration files.
 if(NOT CONF_DIR)
   set(CONF_DIR etc)
+  if(LFS_COMPATIBLE_FILETREE)
+    set(CONF_DIR ${CONF_DIR}/brlcad/${BRLCAD_VERSION})
+  endif(LFS_COMPATIBLE_FILETREE)
 endif(NOT CONF_DIR)
 
 # The location in which to install CMake scripts for packaging BRLCAD.
 if(NOT PACKAGE_DIR)
   set(PACKAGE_DIR lib)
+  if(LFS_COMPATIBLE_FILETREE)
+    set(PACKAGE_DIR ${PACKAGE_DIR}/brlcad/${BRLCAD_VERSION})
+  endif(LFS_COMPATIBLE_FILETREE)
 endif(NOT PACKAGE_DIR)
 
 # The location in which to install BRL-CAD data files
 if(NOT DATA_DIR)
-  set(DATA_DIR share/brlcad/${BRLCAD_VERSION})
+  #set(DATA_DIR share/brlcad/${BRLCAD_VERSION})
+  set(DATA_DIR share)
+  if(LFS_COMPATIBLE_FILETREE)
+    set(DATA_DIR ${DATA_DIR}/brlcad/${BRLCAD_VERSION})
+  endif(LFS_COMPATIBLE_FILETREE)
 endif(NOT DATA_DIR)
 
 # The location in which to install BRL-CAD Manual pages
 if(NOT MAN_DIR)
   set(MAN_DIR ${DATA_DIR}/man)
 endif(NOT MAN_DIR)
+if(LFS_COMPATIBLE_FILETREE AND NOT "${MAN_DIR}" MATCHES "${BRLCAD_VERSION}")
+  set(MAN_DIR ${MAN_DIR}/brlcad/${BRLCAD_VERSION})
+endif(LFS_COMPATIBLE_FILETREE AND NOT "${MAN_DIR}" MATCHES "${BRLCAD_VERSION}")
 
 # The location in which to install BRL-CAD documentation files
 if(NOT DOC_DIR)
@@ -780,6 +811,12 @@ CONFIG_H_APPEND(BRLCAD "#define PACKAGE_TARNAME \"brlcad\"\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DATA \"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DATA_SUBPATH \"${DATA_DIR}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_BIN_DIR \"${BIN_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_LIB_DIR \"${LIB_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_INCLUDE_DIR \"${INCLUDE_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DATA_DIR \"${DATA_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DOC_DIR \"${DOC_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_MAN_DIR \"${MAN_DIR}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_VERSION \"${BRLCAD_VERSION}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define VERSION \"${BRLCAD_VERSION}\"\n")
 

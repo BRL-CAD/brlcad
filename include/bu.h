@@ -3106,6 +3106,27 @@ BU_EXPORT extern void bu_setprogname(const char *path);
 BU_EXPORT extern char *bu_getcwd(char *buf, size_t size);
 
 /**
+ * Report the relative paths being used to hold BRL-CAD applications,
+ * libraries, and data.
+ *
+ * Recognized keys include:
+ *
+ *   bin     - Directory containing binary applications
+ *   lib     - Directory containing libraries
+ *   include - Directory containing headers 
+ *   data    - Directory containing shared data
+ *   share   - Directory containing shared data
+ *   doc     - Directory containing documentation
+ *   man     - Directory containing Unix man pages
+ *
+ * @return
+ * A STATIC buffer is returned.  It is the caller's responsibility to
+ * call bu_strdup() or make other provisions to save the returned
+ * string, before calling again.
+ */
+BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly);
+
+/**
  * Locate where the BRL-CAD applications and libraries are installed.
  *
  * The BRL-CAD root is searched for in the following order of

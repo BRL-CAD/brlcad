@@ -219,6 +219,67 @@ find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_v
 }
 
 const char *
+bu_brlcad_dir(const char *dirkey, int fail_quietly)
+{
+    static char result[MAXPATHLEN] = {0};
+    if (BU_STR_EQUAL(dirkey, "bin")) {
+#if defined(BRLCAD_BIN_DIR)
+	snprintf(result, MAXPATHLEN, "%s", BRLCAD_BIN_DIR);
+#else
+	snprintf(result, MAXPATHLEN, "%s", "bin");
+#endif
+        return result;
+    }
+    if (BU_STR_EQUAL(dirkey, "lib")) {
+#if defined(BRLCAD_LIB_DIR)
+	snprintf(result, MAXPATHLEN, "%s", BRLCAD_LIB_DIR);
+#else
+	snprintf(result, MAXPATHLEN, "%s", "lib");
+#endif
+        return result;
+    }
+    if (BU_STR_EQUAL(dirkey, "include")) {
+#if defined(BRLCAD_INCLUDE_DIR)
+	snprintf(result, MAXPATHLEN, "%s", BRLCAD_INCLUDE_DIR);
+#else
+	snprintf(result, MAXPATHLEN, "%s", "include");
+#endif
+        return result;
+    }
+    if (BU_STR_EQUAL(dirkey, "data") || BU_STR_EQUAL(dirkey, "share")) {
+#if defined(BRLCAD_DATA_DIR)
+	snprintf(result, MAXPATHLEN, "%s", BRLCAD_DATA_DIR);
+#else
+	snprintf(result, MAXPATHLEN, "%s", "share");
+#endif
+        return result;
+    }
+    if (BU_STR_EQUAL(dirkey, "doc")) {
+#if defined(BRLCAD_DOC_DIR)
+	snprintf(result, MAXPATHLEN, "%s", BRLCAD_DOC_DIR);
+#else
+	snprintf(result, MAXPATHLEN, "%s", "doc");
+#endif
+        return result;
+    }
+    if (BU_STR_EQUAL(dirkey, "man")) {
+#if defined(BRLCAD_MAN_DIR)
+	snprintf(result, MAXPATHLEN, "%s", BRLCAD_MAN_DIR);
+#else
+	snprintf(result, MAXPATHLEN, "%s", "share/man");
+#endif
+        return result;
+    }
+
+
+    if (!fail_quietly) {
+	snprintf(result, MAXPATHLEN, "Unknown directory key %s", dirkey);
+        return result;
+    }
+    return NULL;
+}
+
+const char *
 bu_brlcad_root(const char *rhs, int fail_quietly)
 {
     static char result[MAXPATHLEN] = {0};
