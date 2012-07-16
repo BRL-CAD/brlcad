@@ -3837,6 +3837,28 @@ to_data_polygons(struct ged *gedp,
 	return GED_OK;
     }
 
+    /* Usage: area i
+     *
+     * Find area of polygon i
+     */
+    if (BU_STR_EQUAL(argv[2], "area")) {
+	size_t i;
+	double area;
+
+	if (argc != 4)
+	    goto bad;
+
+	if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	    i >= gdpsp->gdps_polygons.gp_num_polygons)
+	    goto bad;
+
+	area = ged_find_polygon_area(&gdpsp->gdps_polygons.gp_polygon[i], CLIPPER_MAX,
+				     gdpsp->gdps_model2view, gdpsp->gdps_scale);
+	bu_vls_printf(gedp->ged_result_str, "%lf", area);
+
+	return GED_OK;
+    }
+
     /* Usage: [v]polygons [poly_list]
      *
      * Set/get the polygon list. If vpolygons is specified then

@@ -1248,6 +1248,7 @@ package provide cadwidgets::Ged 1.0
     if {$scmd == "poly_color" ||
 	$scmd == "poly_line_width" ||
 	$scmd == "poly_line_style" ||
+	$scmd == "area" ||
 	$scmd == "export" ||
 	$scmd == "import"} {
 	return [eval $mGed data_polygons $itk_component($itk_option(-pane)) $args]
