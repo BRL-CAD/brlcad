@@ -12,27 +12,26 @@ INCLUDE_DIRECTORIES(
 
 set(PERPLEX_CMAKE_DIR "${PERPLEX_SOURCE_DIR}/CMake")
 if(PERPLEX_IS_SUBBUILD)
-	set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PERPLEX_CMAKE_DIR}")
+  set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PERPLEX_CMAKE_DIR}")
 else(PERPLEX_IS_SUBBUILD)
-	set(CMAKE_MODULE_PATH "${PERPLEX_CMAKE_DIR};${CMAKE_MODULE_PATH}")
+  set(CMAKE_MODULE_PATH "${PERPLEX_CMAKE_DIR};${CMAKE_MODULE_PATH}")
 endif(PERPLEX_IS_SUBBUILD)
 
 FIND_PACKAGE(LEMON)
 FIND_PACKAGE(RE2C)
 
 if(NOT LEMON_EXECUTABLE OR NOT RE2C_EXECUTABLE)
-	message(FATAL_ERROR "Perplex requires the LEMON Parser Generator and the re2c scanner generator.")
+  message(FATAL_ERROR "Perplex requires the LEMON Parser Generator and the re2c scanner generator.")
 endif(NOT LEMON_EXECUTABLE OR NOT RE2C_EXECUTABLE)
 
 if(NOT COMMAND LEMON_TARGET)
-	include(${PERPLEX_CMAKE_DIR}/LEMON_Util.cmake)
+  include(${PERPLEX_CMAKE_DIR}/LEMON_Util.cmake)
 endif(NOT COMMAND LEMON_TARGET)
 if(NOT COMMAND RE2C_TARGET)
-	include(${PERPLEX_CMAKE_DIR}/RE2C_Util.cmake)
-endif(NOT COMMAND	RE2C_TARGET)
+  include(${PERPLEX_CMAKE_DIR}/RE2C_Util.cmake)
+endif(NOT COMMAND RE2C_TARGET)
 
-RE2C_TARGET(PERPLEX scanner.re ${CMAKE_CURRENT_BINARY_DIR}/scanner.c
-  COMPILE_FLAGS "-c")
+RE2C_TARGET(PERPLEX scanner.re ${CMAKE_CURRENT_BINARY_DIR}/scanner.c COMPILE_FLAGS "-c")
 LEMON_TARGET(PERPLEX parser.y parser.c parser.h)
 ADD_RE2C_LEMON_DEPENDENCY(PERPLEX PERPLEX)
 
@@ -58,3 +57,10 @@ if(NOT DATA_DIR)
   set(DATA_DIR share/perplex)
 endif(NOT DATA_DIR)
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/perplex_template.c DESTINATION ${DATA_DIR})
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
