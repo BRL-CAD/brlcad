@@ -807,6 +807,8 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf, bool isLeaf, ON_3dPoint *m
     node->m_estimate = estimate;
     node->m_normal = normal;
     node->m_face = m_face;
+    node->m_u = u;
+    node->m_v = v;
     return node;
 }
 
@@ -824,6 +826,8 @@ initialBBox(CurveTree* ctree, const ON_Surface* surf, const ON_BrepFace* face, c
     node->m_estimate = estimate;
     node->m_normal = normal;
     node->m_face = face;
+    node->m_u = u;
+    node->m_v = v;
     return node;
 }
 
@@ -2808,7 +2812,7 @@ sortY(BRNode* first, BRNode* second)
 
 struct Triangle {
     ON_3dPoint A, B, C;
-    void CreateFromPoints(ON_3dPoint &_A, ON_3dPoint &_B, ON_3dPoint &_C) {
+    inline void CreateFromPoints(ON_3dPoint &_A, ON_3dPoint &_B, ON_3dPoint &_C) {
 	A = _A, B = _B, C = _C;
     }
 };
@@ -2917,7 +2921,7 @@ surface_surface_intersection(const ON_Surface* surfA,
 			     ON_NurbsCurve* intersect,
 			     double)
 {
-    if (surfA == NULL || surfB == NULL) {
+    if (surfA == NULL || surfB == NULL || intersect == NULL) {
 	intersect = NULL;
 	return -1;
     }
@@ -2937,7 +2941,8 @@ surface_surface_intersection(const ON_Surface* surfA,
     nodepairs.push_back(std::make_pair(rootA, rootB));
     ON_3dPointArray curvept;
 
-    // Second step: calculate the intersection of the bounding boxes.
+    // Second step: calculate the intersection of the bounding boxes, using
+    // trigonal approximation.
     // Only the children of intersecting b-box pairs need to be considered.
     for (int h = 0; h <= INTERSECT_MAX_DEPTH; h++) {
 	if (nodepairs.empty())
@@ -2965,23 +2970,23 @@ surface_surface_intersection(const ON_Surface* surfA,
 		if (h == INTERSECT_MAX_DEPTH) {
 		    // We have arrived at the bottom of the trees.
 		    // Get an estimate of the intersection point lying on the intersection curve
+
+		    // Get the corners of each surface sub-patch inside the bounding-box.
 		    ON_3dPoint cornerA[4], cornerB[4];
-		    /**
-		     * TODO: It seems that m_u and m_v are not working.
-		     * Maybe it should be calculated with reversed evaluation or updated when
-		     * building the surface tree.
-		     */
 		    cornerA[0] = surfA->PointAt((*i).first->m_u.Min(), (*i).first->m_v.Min());
 		    cornerA[1] = surfA->PointAt((*i).first->m_u.Min(), (*i).first->m_v.Max());
 		    cornerA[2] = surfA->PointAt((*i).first->m_u.Max(), (*i).first->m_v.Min());
 		    cornerA[3] = surfA->PointAt((*i).first->m_u.Max(), (*i).first->m_v.Max());
-		    cornerB[0] = surfA->PointAt((*i).second->m_u.Min(), (*i).second->m_v.Min());
-		    cornerB[0] = surfA->PointAt((*i).second->m_u.Min(), (*i).second->m_v.Min());
-		    cornerB[0] = surfA->PointAt((*i).second->m_u.Min(), (*i).second->m_v.Min());
-		    cornerB[0] = surfA->PointAt((*i).second->m_u.Min(), (*i).second->m_v.Min());
+		    cornerB[0] = surfB->PointAt((*i).second->m_u.Min(), (*i).second->m_v.Min());
+		    cornerB[1] = surfB->PointAt((*i).second->m_u.Min(), (*i).second->m_v.Max());
+		    cornerB[2] = surfB->PointAt((*i).second->m_u.Max(), (*i).second->m_v.Min());
+		    cornerB[3] = surfB->PointAt((*i).second->m_u.Max(), (*i).second->m_v.Max());
 
-		    // We approximate each surface sub-patch inside the bounding-box with two 
-		    // triangles that share an edge.
+		    /* We approximate each surface sub-patch inside the bounding-box with two 
+		     * triangles that share an edge.
+		     * The intersection of the surface sub-patches is approximated as the
+		     * intersection of triangles.
+		     */
 		    struct Triangle triangle[4];
 		    triangle[0].CreateFromPoints(cornerA[0], cornerA[1], cornerA[2]);
 		    triangle[1].CreateFromPoints(cornerA[1], cornerA[2], cornerA[3]);
@@ -3001,10 +3006,11 @@ surface_surface_intersection(const ON_Surface* surfA,
 			    num_intersects++;
 			}
 		    }
-		    if (num_intersects)
+		    if (num_intersects) {
 			average /= num_intersects;
-		    if (box_intersect.IsPointIn(average))
-			curvept.Append(average);
+			if (box_intersect.IsPointIn(average))
+			    curvept.Append(average);
+		    }
 		}
 	    }
 	}
@@ -3013,6 +3019,8 @@ surface_surface_intersection(const ON_Surface* surfA,
 	}
 	bu_log("%d %d\n", h, tmp_pairs.size());
     }
+
+    // Third step: Fit the points in curvept into a NURBS curve.
     // WIP
     return 0;
 }
