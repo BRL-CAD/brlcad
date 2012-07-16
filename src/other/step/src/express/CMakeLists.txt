@@ -37,9 +37,9 @@ if(SCL_GENERATE_LP_SOURCES)
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/express_manage_generated.sentinel
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/express_manage_generated.cmake
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/express_manage_generated.sentinel
-    DEPENDS ${INPUT_FILELIST} ${TEMPLATE_FILELIST} ${CACHED_FILELIST} generated/verification_info.cmake ${PROJECT_CMAKE_DIR}/Generated_Source_Utils.cmake
+    DEPENDS ${INPUT_FILELIST} ${TEMPLATE_FILELIST} ${CACHED_FILELIST} ${PERPLEX_ExpScanner_OUTPUTS} ${LEMON_ExpParser_OUTPUT_SOURCE} generated/verification_info.cmake ${PROJECT_CMAKE_DIR}/Generated_Source_Utils.cmake
     )
-  add_custom_target(express_verify DEPENDS ${PERPLEX_ExpScanner_OUTPUTS} ${LEMON_ExpParser_OUTPUT_SOURCE} ${CMAKE_CURRENT_BINARY_DIR}/express_manage_generated.sentinel)
+  add_custom_target(express_verify DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/express_manage_generated.sentinel)
 
   configure_file(${SCL_SOURCE_DIR}/cmake/sync_generated.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.cmake @ONLY)
@@ -47,9 +47,9 @@ if(SCL_GENERATE_LP_SOURCES)
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.sentinel
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.cmake
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.sentinel
-    DEPENDS ${INPUT_FILELIST} ${TEMPLATE_FILELIST} ${PROJECT_CMAKE_DIR}/Generated_Source_Utils.cmake
+    DEPENDS ${INPUT_FILELIST} ${TEMPLATE_FILELIST} ${PERPLEX_ExpScanner_OUTPUTS} ${LEMON_ExpParser_OUTPUT_SOURCE} ${PROJECT_CMAKE_DIR}/Generated_Source_Utils.cmake
     )
-  add_custom_target(express_sync_generated_files DEPENDS ${PERPLEX_ExpScanner_OUTPUTS} ${LEMON_ExpParser_OUTPUT_SOURCE} ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.sentinel)
+  add_custom_target(express_sync_generated_files DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/express_sync_generated.sentinel)
 
 else(SCL_GENERATE_LP_SOURCES)
 
