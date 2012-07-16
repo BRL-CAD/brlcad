@@ -31,6 +31,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <vector>
 
 #include "raytrace.h"
 #include "../../opennurbs_ext.h"
@@ -39,7 +40,7 @@
 /* returns the incenter of the inscribed circle inside the triangle defined by
  * points a, b, c
  */
-ON_2dPoint
+HIDDEN ON_2dPoint
 incenter(const ON_2dPoint a, const ON_2dPoint b, const ON_2dPoint c)
 {
     fastf_t a_b, a_c, b_c, sum;
@@ -62,7 +63,7 @@ incenter(const ON_2dPoint a, const ON_2dPoint b, const ON_2dPoint c)
  * the biarc passes through the first and last control points, and the incenter
  * of the circle defined by the first, last and intersection points.
  */
-ON_Arc
+HIDDEN ON_Arc
 make_biarc(const ON_BezierCurve bezier)
 {
     ON_2dPoint isect, arc_pt;
@@ -78,20 +79,20 @@ make_biarc(const ON_BezierCurve bezier)
 
 
 /* computes the first point of inflection on a bezier if it exists by finding
- * where the magnitude of the curvature vector (2nd derivative) is at a
+ * where the magnitude of the velocity vector (1st derivative) is at a
  * maximum.
  * Returns true if an inflection point was found
  */
-bool
+HIDDEN bool
 bezier_inflection(const ON_BezierCurve bezier, fastf_t& inflection)
 {
     fastf_t t, step = 0.1;
-    for (t = 0; t <= 1.0; t += step) {
-        ON_2dVector crv_1, crv_2;
-        crv_1 = bezier.CurvatureAt(t);
-        crv_2 = bezier.CurvatureAt(t + (step * 0.5));
-        // compare magnitude of curvature vectors
-        if (crv_1.LengthSquared() > crv_2.LengthSquared()) {
+    for (t = 0.0; t <= 1.0; t += step) {
+        ON_2dVector derv_1, derv_2;
+        derv_1 = bezier.DerivativeAt(t);
+        derv_2 = bezier.DerivativeAt(t + step * 0.5 > 1.0 ? 1.0 : t + step * 0.5);
+        // compare magnitude of velocity vectors
+        if (derv_1.LengthSquared() > derv_2.LengthSquared()) {
             inflection = t;
             return true;
         }
@@ -101,37 +102,47 @@ bezier_inflection(const ON_BezierCurve bezier, fastf_t& inflection)
 
 
 /* approximates a bezier curve with a set of circular arcs by dividing where
- * the bezier deviates from the approximation biarc by more than a given
- * tolerance, and recursively calling on the sub-sections until it is
- * approximated to tolerance by the biarc
+ * the bezier's deviation from its approximating biarc is at a maximum, then
+ * recursively calling on the subsections until it is approximated to
+ * tolerance by the biarc
  */
-void
+HIDDEN void
 approx_bezier(const ON_BezierCurve bezier, const ON_Arc biarc, const struct bn_tol *tol, std::vector<ON_Arc>& approx)
 {
     fastf_t t, step = 0.1;
+    fastf_t err, max_t, max_err = 0.0;
     ON_3dPoint test;
     ON_BezierCurve head, tail;
+
     // walk the bezier curve at interval given by step
     for (t = 0; t <= 1.0; t += step) {
         test = bezier.PointAt(t);
-        // compare distance from arc to the bezier evaluated at 't' to the
-        // given tolerance
-        if ((test - biarc.ClosestPointTo(test)).LengthSquared() > tol->dist_sq) {
-            bezier.Split(step, head, tail);
-            approx_bezier(head, make_biarc(head), tol, approx);
-            approx_bezier(tail, make_biarc(tail), tol, approx);
+        err = (test - biarc.ClosestPointTo(test)).LengthSquared();
+        // find the maximum point of deviation
+        if (err > max_err) {
+            max_t = t;
+            max_err = err;
         }
     }
-    // bezier doesn't deviate from biarc by the given tolerance, add the biarc
-    // approximation
-    approx.push_back(biarc);
+
+    if (max_err > tol->dist_sq) {
+        // split bezier at point of maximum deviation and recurse on the new
+        // subsections
+        bezier.Split(max_t, head, tail);
+        approx_bezier(head, make_biarc(head), tol, approx);
+        approx_bezier(tail, make_biarc(tail), tol, approx);
+    } else {
+        // bezier doesn't deviate from biarc by the given tolerance, add the biarc
+        // approximation
+        approx.push_back(biarc);
+    }
 }
 
 
 /* approximates a bezier curve with a set of circular arcs.
  * returns approximation in carcs
  */
-void
+HIDDEN void
 bezier_to_carcs(const ON_BezierCurve bezier, const struct bn_tol *tol, std::vector<ON_Arc>& carcs)
 {
     bool curvature_changed = false;
@@ -141,15 +152,18 @@ bezier_to_carcs(const ON_BezierCurve bezier, const struct bn_tol *tol, std::vect
     std::vector<ON_BezierCurve> rest;
 
     // get inflection point, if it exists
-    if (bezier_inflection(bezier, inflection_pt)) {
-        curvature_changed = true;
-        bezier.Split(inflection_pt, current, tmp);
-        rest.push_back(tmp);
-    } else {
-        current = bezier;
-    }
+    //if (bezier_inflection(bezier, inflection_pt)) {
+        //curvature_changed = true;
+        //bezier.Split(inflection_pt, current, tmp);
+        //rest.push_back(tmp);
+    //} else {
+        //current = bezier;
+    //}
+
+    current = bezier;
 
     do {
+loop:
     biarc = make_biarc(current);
     if ((biarc_angle = biarc.AngleRadians()) <= M_PI_2) {
         // approximate the current bezier segment and add its biarc
@@ -192,14 +206,15 @@ bezier_to_carcs(const ON_BezierCurve bezier, const struct bn_tol *tol, std::vect
         rest.pop_back();
         // dont check while() condition, we want to continue even if we just
         // popped the last element
-        continue;
+        // XXX - find a better solution for this!
+        goto loop;
     }
     } while (!rest.empty());
 }
 
 #define SKETCHPT(idx) sketch_ip->verts[(idx)]
 
-inline fastf_t
+HIDDEN inline fastf_t
 carc_area(const struct carc_seg *csg, const struct rt_sketch_internal *sketch_ip)
 {
     fastf_t theta, side_ratio;
@@ -216,14 +231,14 @@ carc_area(const struct carc_seg *csg, const struct rt_sketch_internal *sketch_ip
  * each curve segment in the sketch, calculating the area of the polygon
  * created by the start and end points of each curve segment, as well as the
  * additional areas for circular segments.
-
+ *
  * line_seg: calculate the area for the polygon edge Start->End
  * carc_seg: if the segment is a full circle, calculate its area.
  *      else, calculate the area for the polygon edge Start->End, and the area
  *      of the circular segment
  * bezier_seg: approximate the bezier using the bezier_to_carcs() function. for
- *      each carc_seg, calculate the area for the polygon edge Start->End, and
- *      the area of the circular segment
+ *      each carc_seg, calculate the area for the polygon edges Start->Mid and
+ *      Mid->End, and the area of the circular segment
  */
 extern "C" void
 rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip) //, const struct bn_tol *tol)
@@ -278,7 +293,7 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip) //, const st
             std::vector<ON_Arc> carcs;
             // convert struct bezier_seg into ON_BezierCurve
             for (i = 0; (int)i < bsg->degree + 1; i++) {
-                bez_pts[i] = SKETCHPT(bsg->ctl_points[i]);
+                bez_pts.Append(SKETCHPT(bsg->ctl_points[i]));
             }
             // approximate bezier curve by a set of circular arcs
             bezier_to_carcs(ON_BezierCurve(bez_pts), &tol, carcs);
@@ -289,8 +304,8 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip) //, const st
                 // calculate area for circular segment
                 *area += 0.5 * it->Radius() * it->Radius() * (it->AngleRadians() - sin(it->AngleRadians()));
             }
-            break;
             }
+            break;
         case CURVE_NURB_MAGIC:
         default:
             break;
