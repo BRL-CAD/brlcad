@@ -443,7 +443,7 @@ endmacro(BRLCAD_LIB_INCLUDE_DIRS)
 
 
 #-----------------------------------------------------------------------------
-# Data files needed by BRL-CAD need to be both installed and copied into the 
+# Files needed by BRL-CAD need to be both installed and copied into the 
 # correct locations in the build directories to allow executables to run
 # at build time.  Ideally, we would like any error messages returned when 
 # running from the build directory to direct back to the copies of files in
@@ -456,15 +456,15 @@ endmacro(BRLCAD_LIB_INCLUDE_DIRS)
 # to take further actions (for example, re-generating tclIndex and pkgIndex.tcl
 # files when the source .tcl files change).
 #
-# Because BRLCAD_ADDDATA defines custom commands and specifies the files it is
+# Because BRLCAD_MANAGE_FILES defines custom commands and specifies the files it is
 # to copy/symlink as dependencies, there is a potential for file names to 
 # conflict with build target names. (This has actually been observed with 
 # MSVC - our file INSTALL in the toplevel source directory conflicts with the
 # MSVC target named INSTALL.)  To avoid conflicts and make the dependencies 
 # of the custom commands robust we supply full file paths as dependencies to
-# the data copying custom commands.  
+# the file copying custom commands.  
 
-macro(BRLCAD_ADDDATA inputdata targetdir)
+macro(BRLCAD_MANAGE_FILES inputdata targetdir)
   # Handle both a list of one or more files and variable holding a list of files - 
   # find out what we've got.
   NORMALIZE_FILE_LIST("${inputdata}" datalist fullpath_datalist targetname)
@@ -557,12 +557,19 @@ macro(BRLCAD_ADDDATA inputdata targetdir)
   # need to explicitly concern itself with configurations.
   install(FILES ${datalist} DESTINATION ${targetdir})
 
-endmacro(BRLCAD_ADDDATA datalist targetdir)
+endmacro(BRLCAD_MANAGE_FILES)
 
 #-----------------------------------------------------------------------------
+# Specific uses of the BRLCAD_MANAGED_FILES functionality - these cover most
+# of the common cases in BRL-CAD.
+
+macro(BRLCAD_ADDDATA datalist targetdir)
+  BRLCAD_MANAGE_FILES(${datalist} ${DATA_DIR}/${targetdir})
+endmacro(BRLCAD_ADDDATA datalist targetdir)
+
 macro(ADD_MAN_PAGES num inmanlist)
   set(man_target_dir ${MAN_DIR}/man${num})
-  BRLCAD_ADDDATA(${inmanlist} ${man_target_dir})
+  BRLCAD_MANAGE_FILES(${inmanlist} ${man_target_dir})
 endmacro(ADD_MAN_PAGES num fullpath_manlist)
 
 # Local Variables:

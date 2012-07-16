@@ -31,7 +31,7 @@ set(nirt_sfiles
   sfiles/gap1.nrt
   sfiles/gap2.nrt
   )
-BRLCAD_ADDDATA(nirt_sfiles ${DATA_DIR}/nirt)
+BRLCAD_ADDDATA(nirt_sfiles nirt)
 
 set(nirt_ignore_files
   nirt.h

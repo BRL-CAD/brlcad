@@ -3,7 +3,7 @@ set(doc_legal
   bdl.txt
   lgpl.txt
   )
-BRLCAD_ADDDATA(doc_legal ${DATA_DIR}/${DOC_DIR}/legal)
+BRLCAD_ADDDATA(doc_legal ${DOC_DIR}/legal)
 
 CMAKEFILES(Makefile.am bsd.txt bdl.txt lgpl.txt)
 

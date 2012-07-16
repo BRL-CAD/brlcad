@@ -7,7 +7,7 @@ set(hv3_TCLSCRIPTS
   hv3_util.tcl
   snit.tcl
   )
-BRLCAD_ADDDATA(hv3_TCLSCRIPTS ${DATA_DIR}/tclscripts/hv3)
+BRLCAD_ADDDATA(hv3_TCLSCRIPTS tclscripts/hv3)
 pkgIndex_BUILD(hv3 tclscripts/hv3)
 tclIndex_BUILD(hv3 tclscripts/hv3)
 install(FILES hv3.man DESTINATION ${DATA_DIR}/doc)

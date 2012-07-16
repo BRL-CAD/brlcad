@@ -5,7 +5,7 @@ set(swidgets_scripts_TCLSCRIPTS
   tooltip.itk
   tree.itk
   )
-BRLCAD_ADDDATA(swidgets_scripts_TCLSCRIPTS ${DATA_DIR}/tclscripts/swidgets/scripts)
+BRLCAD_ADDDATA(swidgets_scripts_TCLSCRIPTS tclscripts/swidgets/scripts)
 tclIndex_BUILD(swidgets_scripts tclscripts/swidgets/scripts)
 
 CMAKEFILES(Makefile.am tclIndex)

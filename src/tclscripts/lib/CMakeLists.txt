@@ -25,7 +25,7 @@ set(lib_TCLSCRIPTS
 	ViewAxesControl.tcl
 	cursor.tcl
 )
-BRLCAD_ADDDATA(lib_TCLSCRIPTS ${DATA_DIR}/tclscripts/lib)
+BRLCAD_ADDDATA(lib_TCLSCRIPTS tclscripts/lib)
 pkgIndex_BUILD(lib tclscripts/lib)
 tclIndex_BUILD(lib tclscripts/lib)
 

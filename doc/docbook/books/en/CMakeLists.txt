@@ -51,7 +51,7 @@ set(docbook_books_EN_IMAGES
   images/v4-image010.jpg
   images/v4-image011.jpg
   )
-BRLCAD_ADDDATA(docbook_books_EN_IMAGES ${DATA_DIR}/${DOC_DIR}/html/books/en/images)
+BRLCAD_ADDDATA(docbook_books_EN_IMAGES ${DOC_DIR}/html/books/en/images)
 
 set(docbook_books_EN
   BRL-CAD_Tutorial_Series-VolumeI.xml
