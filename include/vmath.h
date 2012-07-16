@@ -1179,11 +1179,12 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 /** @brief Return scalar magnitude of vector at `a' */
 #define MAGNITUDE(a) sqrt(MAGSQ(a))
 
+
 /**
- * @brief Store cross product of vectors at `b' and `c' in vector at
- * `a'.  Note that the "right hand rule" applies: If closing your
- * right hand goes from `b' to `c', then your thumb points in the
- * direction of the cross product.
+ * Store cross product of 3D vectors at `b' and `c' in vector at `a'.
+ * Note that the "right hand rule" applies: If closing your right hand
+ * goes from `b' to `c', then your thumb points in the direction of
+ * the cross product.
  *
  * If the angle from `b' to `c' goes clockwise, then the result vector
  * points "into" the plane (inward normal).  Example: b=(0, 1, 0),
@@ -1198,6 +1199,19 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(a)[Y] = (b)[Z] * (c)[X] - (b)[X] * (c)[Z]; \
 	(a)[Z] = (b)[X] * (c)[Y] - (b)[Y] * (c)[X]; \
 }
+
+/**
+ * Return the analog of a cross product for 2D vectors `a' and `b'
+ * as a scalar value.  If a = (ax, ay) and b = (bx, by), then the analog
+ * of a x b is det(a*b) = ax*by - ay*bx
+ */
+#define V2CROSS(a, b) ((a)[X] * (b)[Y] - (a)[Y] * (b)[X])
+
+/**
+ * TODO: implement me
+ */
+#define HCROSS(a, b, c)
+
 
 /** @brief Compute dot product of vectors at `a' and `b'. */
 #define VDOT(a, b)	((a)[X]*(b)[X] + (a)[Y]*(b)[Y] + (a)[Z]*(b)[Z])
