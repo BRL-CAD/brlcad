@@ -31,5 +31,12 @@ add_custom_target(lempar_cp ALL DEPENDS ${LEMPAR_DIR}/lempar.c)
 add_dependencies(lemon lempar_cp)
 
 if(NOT LEMON_SKIP_INSTALL)
-   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/lempar.c DESTINATION ${BIN_DIR})
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/lempar.c DESTINATION ${BIN_DIR})
 endif(NOT LEMON_SKIP_INSTALL)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
