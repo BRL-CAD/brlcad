@@ -116,38 +116,6 @@ ANALYZE_EXPORT extern struct region_pair *add_unique_pair(struct region_pair *li
 							  struct region *r2,
 							  double dist, point_t pt);
 
-/**
- * rt_shootray() was told to call this on a hit.
- *
- * This callback routine utilizes the application structure which
- * describes the current state of the raytrace.
- *
- * This callback routine is provided a circular linked list of
- * partitions, each one describing one in and out segment of one
- * region for each region encountered.
- *
- * The 'segs' segment list is unused in this example.
- */
-int
-hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs));
-
-/**
- * Function to print values to Screen
- */
-ANALYZE_EXPORT extern void
-printToScreen(genptr_t callBackData, int x, int y, int z, const char *a, fastf_t fill);
-
-/**
- * Function to print values to File
- */
-void
-printToFile(genptr_t callBackData, int x, int y, int z, const char *a, fastf_t fill);
-
-/**
- * Function to assign a new region to a voxel.
- */
-void
-setRegionName(struct bu_vls **vp, const char **nameSource, const char **nameDestination);
 
 /**
  * voxelize function takes raytrace instance and user parameters as inputs
