@@ -52,7 +52,7 @@ if(NOT BIN_DIR)
   set(BIN_DIR bin)
 endif(NOT BIN_DIR)
 if(NOT PERPLEX_SKIP_INSTALL)
-   install(TARGETS perplex DESTINATION ${BIN_DIR})
+  install(TARGETS perplex DESTINATION ${BIN_DIR})
 endif(NOT PERPLEX_SKIP_INSTALL)
 
 # Handle Perplex template
@@ -74,7 +74,7 @@ add_custom_target(perplex_template_cp ALL DEPENDS ${PERPLEX_TEMPLATE_DIR}/perple
 add_dependencies(perplex perplex_template_cp)
 
 if(NOT PERPLEX_SKIP_INSTALL)
-   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/perplex_template.c DESTINATION ${DATA_DIR})
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/perplex_template.c DESTINATION ${DATA_DIR})
 endif(NOT PERPLEX_SKIP_INSTALL)
 
 # Local Variables:
