@@ -208,7 +208,6 @@ carc_area(const struct carc_seg *csg, const struct rt_sketch_internal *sketch_ip
     return 0.5 * csg->radius * csg->radius * (theta - side_ratio);
 }
 
-#define CROSSPRODUCT2D(u, v) (u)[X] * (v)[Y] - (u)[Y] * (v)[X]
 
 /**
  * R T _ S K E T C H _ S U R F _ A R E A
@@ -259,7 +258,7 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip) //, const st
         case CURVE_LSEG_MAGIC:
             lsg = (struct line_seg *)lng;
             // calculate area for polygon edge
-            *area += CROSSPRODUCT2D(SKETCHPT(lsg->start), SKETCHPT(lsg->end));
+            *area += V2CROSS(SKETCHPT(lsg->start), SKETCHPT(lsg->end));
             break;
         case CURVE_CARC_MAGIC:
             csg = (struct carc_seg *)lng;
@@ -268,7 +267,7 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip) //, const st
                 full_circle_area += M_PI * DIST_PT_PT_SQ(SKETCHPT(csg->start), SKETCHPT(csg->end));
             } else {
                 // calculate area for polygon edge
-                *area += CROSSPRODUCT2D(SKETCHPT(csg->start), SKETCHPT(csg->end));
+                *area += V2CROSS(SKETCHPT(csg->start), SKETCHPT(csg->end));
                 // calculate area for circular segment
                 *area += carc_area(csg, sketch_ip);
             }
@@ -285,8 +284,8 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip) //, const st
             bezier_to_carcs(ON_BezierCurve(bez_pts), &tol, carcs);
             for (std::vector<ON_Arc>::iterator it = carcs.begin(); it != carcs.end(); ++it) {
                 // calculate area for polygon edges Start->Mid, Mid->End
-                *area += CROSSPRODUCT2D(it->StartPoint(), it->MidPoint());
-                *area += CROSSPRODUCT2D(it->MidPoint(), it->EndPoint());
+                *area += V2CROSS(it->StartPoint(), it->MidPoint());
+                *area += V2CROSS(it->MidPoint(), it->EndPoint());
                 // calculate area for circular segment
                 *area += 0.5 * it->Radius() * it->Radius() * (it->AngleRadians() - sin(it->AngleRadians()));
             }
