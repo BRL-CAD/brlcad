@@ -32,7 +32,6 @@
 #include <iostream>
 #include "vmath.h"
 
-//#define CROSSPRODUCT2D(u, v) (u).x * (v).y - (u).y * (v).x
 
 /**
  * These definitions were added to opennurbs_curve.h - they are
@@ -79,37 +78,24 @@ public:
 
     /**
      * Description:
-     *  Intersect two Rays
+     *  Intersect two 2d Rays
      * Parameters:
      *  v - [in] other ray to intersect with
      *  isect - [out] point of intersection
      * Returns:
-     *  true if successful.
+     *  true if single point of intersection is found
      */
     bool IntersectRay(const ON_Ray& v, ON_2dPoint& isect) const
     {
-        bool rc;
-        double t, s;
-        ON_Line m = ON_Line(m_origin, m_origin + m_dir),
-                n = ON_Line(v.m_origin, v.m_origin + v.m_dir);
-
-        rc = ON_Intersect(m, n, &t, &s);
-        if (VEQUAL(m.PointAt(t), n.PointAt(s))) {
-            isect = m.PointAt(t);
+        double uxv, q_pxv;
+        // consider parallel and collinear cases
+        if (ZERO(uxv = V2CROSS(m_dir, v.m_dir))
+            || (ZERO(q_pxv = V2CROSS(v.m_origin - m_origin, v.m_dir)))) {
+            return false;
         }
-        return rc;
+        isect = PointAt(q_pxv / uxv);
+        return true;
     }
-
-    //bool IntersectRay(const ON_Ray& v, ON_2dPoint& isect) const
-    //{
-        //double uxv, q_pxv;
-        //if (ZERO(uxv = CROSSPRODUCT2D(m_dir, v.m_dir))
-            //|| (ZERO(q_pxv = CROSSPRODUCT2D(v.m_origin - m_origin, v.m_dir)))) {
-            //return false;
-        //}
-        //isect = PointAt(q_pxv / uxv);
-        //return true;
-    //}
 };
 
 
