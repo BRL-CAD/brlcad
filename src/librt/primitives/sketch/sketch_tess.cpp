@@ -197,12 +197,13 @@ bezier_to_carcs(const ON_BezierCurve bezier, const struct bn_tol *tol, std::vect
     } while (!rest.empty());
 }
 
+#define SKETCHPT(idx) sketch_ip->verts[(idx)]
 
 inline fastf_t
-carc_area(const struct carc_seg *csg, const struct rt_sketch_internal *sk)
+carc_area(const struct carc_seg *csg, const struct rt_sketch_internal *sketch_ip)
 {
     fastf_t theta, side_ratio;
-    side_ratio = DIST_PT_PT(sk->verts[csg->start], sk->verts[csg->end]) / (2.0 * csg->radius);
+    side_ratio = DIST_PT_PT(SKETCHPT(csg->start), SKETCHPT(csg->end)) / (2.0 * csg->radius);
     theta = asin(side_ratio);
     return 0.5 * csg->radius * csg->radius * (theta - side_ratio);
 }
@@ -255,20 +256,19 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip) //, const st
         lng = (uint32_t *)crv.segment[i];
 
         switch (*lng) {
-        case CURVE_LSEG_MAGIC: {
+        case CURVE_LSEG_MAGIC:
             lsg = (struct line_seg *)lng;
             // calculate area for polygon edge
-            *area += CROSSPRODUCT2D(sketch_ip->verts[lsg->start], sketch_ip->verts[lsg->end]);
+            *area += CROSSPRODUCT2D(SKETCHPT(lsg->start), SKETCHPT(lsg->end));
             break;
-            }
         case CURVE_CARC_MAGIC:
             csg = (struct carc_seg *)lng;
             if (csg->radius < 0) {
                 // calculate full circle area
-                full_circle_area += M_PI * DIST_PT_PT_SQ(sketch_ip->verts[csg->start], sketch_ip->verts[csg->end]);
+                full_circle_area += M_PI * DIST_PT_PT_SQ(SKETCHPT(csg->start), SKETCHPT(csg->end));
             } else {
                 // calculate area for polygon edge
-                *area += CROSSPRODUCT2D(sketch_ip->verts[csg->start], sketch_ip->verts[csg->end]);
+                *area += CROSSPRODUCT2D(SKETCHPT(csg->start), SKETCHPT(csg->end));
                 // calculate area for circular segment
                 *area += carc_area(csg, sketch_ip);
             }
@@ -279,7 +279,7 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip) //, const st
             std::vector<ON_Arc> carcs;
             // convert struct bezier_seg into ON_BezierCurve
             for (i = 0; (int)i < bsg->degree + 1; i++) {
-                bez_pts[i] = sketch_ip->verts[bsg->ctl_points[i]];
+                bez_pts[i] = SKETCHPT(bsg->ctl_points[i]);
             }
             // approximate bezier curve by a set of circular arcs
             bezier_to_carcs(ON_BezierCurve(bez_pts), &tol, carcs);
