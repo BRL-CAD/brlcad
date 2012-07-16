@@ -2966,7 +2966,6 @@ surface_surface_intersection(const ON_Surface* surfA,
 	    (*i).first->GetBBox(box_a.m_min, box_a.m_max);
 	    (*i).second->GetBBox(box_b.m_min, box_b.m_max);
 	    if (box_intersect.Intersection(box_a, box_b)) {
-		nodepairs.push_back(*i);
 		if (h == INTERSECT_MAX_DEPTH) {
 		    // We have arrived at the bottom of the trees.
 		    // Get an estimate of the intersection point lying on the intersection curve
@@ -3011,6 +3010,8 @@ surface_surface_intersection(const ON_Surface* surfA,
 			if (box_intersect.IsPointIn(average))
 			    curvept.Append(average);
 		    }
+		} else {
+		    nodepairs.push_back(*i);
 		}
 	    }
 	}
