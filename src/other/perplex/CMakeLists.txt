@@ -47,3 +47,14 @@ add_executable(perplex ${perplex_sources})
 
 # Need to link against stl library with some compilers.
 target_link_libraries(perplex "${STDCXX_LIBRARIES}")
+
+# Install
+if(NOT BIN_DIR)
+  set(BIN_DIR bin)
+endif(NOT BIN_DIR)
+install(TARGETS perplex DESTINATION ${BIN_DIR})
+
+if(NOT DATA_DIR)
+  set(DATA_DIR share/perplex)
+endif(NOT DATA_DIR)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/perplex_template.c DESTINATION ${DATA_DIR})
