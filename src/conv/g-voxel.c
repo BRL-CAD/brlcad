@@ -19,6 +19,30 @@
  */
 #include "analyze.h"
 
+/**
+ * Function to print values to Screen
+ */
+void
+printToScreen(genptr_t callBackData, int x, int y, int z, const char* a, fastf_t fill) {
+    fastf_t *threshold = (fastf_t *)callBackData;
+
+    printf("%f\t(%4d,%4d,%4d)\t%s\t%f\n", *threshold, x, y, z, a, fill);
+}
+
+/**
+ * Function to print values to File
+ */
+void
+printToFile(genptr_t callBackData, int x, int y, int z, const char *a, fastf_t fill) {
+    fastf_t *threshold = (fastf_t *)callBackData;
+    FILE *fp;
+
+    fp = fopen("voxels1.txt","a");
+    fprintf(fp, "%f\t(%4d,%4d,%4d)\t%s\t%f\n", *threshold, x, y, z, a, fill);
+    fclose(fp);
+}
+
+
 /*
  *			M A I N
  */
@@ -63,11 +87,6 @@ char title[1024] = {0};
 	argv++;
     }
 
-    /* This next call gets the database ready for ray tracing.  This
-     * causes some values to be precomputed, sets up space
-     * partitioning, computes bounding volumes, etc.
-     */
-    rt_prep_parallel(rtip, 1);
 
     /* user parameters are being given values directly here*/
     sizeVoxel[0] = 1.0;
@@ -80,7 +99,9 @@ char title[1024] = {0};
     callBackData = (void *)(& threshold);
 
     /* voxelize function is called here with rtip(ray trace instance), userParameters and printToFile/printToScreen options */
-    voxelize(rtip, sizeVoxel, levelOfDetail, printToScreen, callBackData);
+    voxelize(rtip, sizeVoxel, levelOfDetail, printToFile, callBackData);
+
+    rt_free_rti(rtip);
 
     return 0;
 }
