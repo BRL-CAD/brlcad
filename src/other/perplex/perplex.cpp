@@ -43,7 +43,7 @@
 #include "perplex.h"
 #include "mbo_getopt.h"
 
-#if 0
+/*
 Desired Features:
 - string and file inputs w/ autobuffering
 - autogenerate scanner function
@@ -69,7 +69,8 @@ Possible Options (borrowed from flex usage message):
 -t,  --template=FILE    specify path to scanner template file
 -v,  --version		report perplex version
      --yylineno		track line count in yylineno
-#endif
+*/
+
 using namespace re2c;
 
 static const mbo_opt_struct options[] =
