@@ -53,9 +53,24 @@ if(NOT BIN_DIR)
 endif(NOT BIN_DIR)
 install(TARGETS perplex DESTINATION ${BIN_DIR})
 
+# Handle Perplex template
 if(NOT DATA_DIR)
   set(DATA_DIR share/perplex)
 endif(NOT DATA_DIR)
+
+if(NOT CMAKE_CONFIGURATION_TYPES)
+  set(PERPLEX_TEMPLATE_DIR ${CMAKE_BINARY_DIR}/${DATA_DIR})
+else(NOT CMAKE_CONFIGURATION_TYPES)
+  set(PERPLEX_TEMPLATE_DIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${DATA_DIR})
+endif(NOT CMAKE_CONFIGURATION_TYPES)
+add_custom_command(
+  OUTPUT ${PERPLEX_TEMPLATE_DIR}/perplex_template.c
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/perplex_template.c ${PERPLEX_TEMPLATE_DIR}/perplex_template.c
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/perplex_template.c
+  )
+add_custom_target(perplex_template_cp ALL DEPENDS ${PERPLEX_TEMPLATE_DIR}/perplex_template.c)
+add_dependencies(perplex perplex_template_cp)
+
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/perplex_template.c DESTINATION ${DATA_DIR})
 
 # Local Variables:
