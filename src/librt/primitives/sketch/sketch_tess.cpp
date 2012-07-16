@@ -198,7 +198,7 @@ bezier_to_carcs(const ON_BezierCurve bezier, const struct bn_tol *tol, std::vect
 }
 
 
-fastf_t
+inline fastf_t
 carc_area(const struct carc_seg *csg, const struct rt_sketch_internal *sk)
 {
     fastf_t theta, side_ratio;
@@ -207,68 +207,71 @@ carc_area(const struct carc_seg *csg, const struct rt_sketch_internal *sk)
     return 0.5 * csg->radius * csg->radius * (theta - side_ratio);
 }
 
+#define CROSSPRODUCT2D(u, v) (u)[X] * (v)[Y] - (u)[Y] * (v)[X]
+
 /**
  * R T _ S K E T C H _ S U R F _ A R E A
  *
  * calculate approximate surface area for a sketch primitive by iterating through
- * each curve segment in the sketch, creating a polygon using the endpoints of
- * each segment as vertices.
+ * each curve segment in the sketch, calculating the area of the polygon
+ * created by the start and end points of each curve segment, as well as the
+ * additional areas for circular segments.
 
- * line_seg: add start and end points to the polygon vertices
- * carc_seg: add start and end points to the polygon vertices, and add the area
- *      of the circular segment to the total area
+ * line_seg: calculate the area for the polygon edge Start->End
+ * carc_seg: if the segment is a full circle, calculate its area.
+ *      else, calculate the area for the polygon edge Start->End, and the area
+ *      of the circular segment
  * bezier_seg: approximate the bezier using the bezier_to_carcs() function. for
- *      each carc_seg, add the start and end points to the polygon vertices, and add
- *      the area of the circular segment to the total area
- *
- * finally, calculate the area of the polygon and add it to the total area
+ *      each carc_seg, calculate the area for the polygon edge Start->End, and
+ *      the area of the circular segment
  */
 extern "C" void
 rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip) //, const struct bn_tol *tol)
 {
     size_t i;
-    ON_3dVector sum, sketch_normal;
-    std::vector<ON_2dPoint> verts;
+    fastf_t full_circle_area = 0.0;
 
     struct rt_sketch_internal *sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(sketch_ip);
-
     struct rt_curve crv = sketch_ip->curve;
 
-    struct bn_tol *tol;
-    tol->magic = BN_TOL_MAGIC;
-    tol->dist = RT_DOT_TOL;
-    tol->dist_sq = RT_DOT_TOL * RT_DOT_TOL;
+    struct bn_tol tol;
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = RT_DOT_TOL;
+    tol.dist_sq = RT_DOT_TOL * RT_DOT_TOL;
 
     // a sketch with no curves has no area
     if (crv.count == 0) {
         return;
     }
 
-    // find vertices for each curve segment in the sketch
+    // iterate through each curve segment in the sketch
     for (i = 0; i < crv.count; i++) {
         const struct line_seg *lsg;
         const struct carc_seg *csg;
         const struct bezier_seg *bsg;
-        //const struct nurb_seg *nsg;
         const uint32_t *lng;
 
         lng = (uint32_t *)crv.segment[i];
 
         switch (*lng) {
-        case CURVE_LSEG_MAGIC:
+        case CURVE_LSEG_MAGIC: {
             lsg = (struct line_seg *)lng;
-            // add start and end points for each line_seg to verts
-            verts.push_back(sketch_ip->verts[lsg->start]);
-            verts.push_back(sketch_ip->verts[lsg->end]);
+            // calculate area for polygon edge
+            *area += CROSSPRODUCT2D(sketch_ip->verts[lsg->start], sketch_ip->verts[lsg->end]);
             break;
+            }
         case CURVE_CARC_MAGIC:
             csg = (struct carc_seg *)lng;
-            // add start and end points for each carc_seg to verts
-            verts.push_back(sketch_ip->verts[csg->start]);
-            verts.push_back(sketch_ip->verts[csg->end]);
-            // calculate area for each circular segment
-            *area += carc_area(csg, sketch_ip);
+            if (csg->radius < 0) {
+                // calculate full circle area
+                full_circle_area += M_PI * DIST_PT_PT_SQ(sketch_ip->verts[csg->start], sketch_ip->verts[csg->end]);
+            } else {
+                // calculate area for polygon edge
+                *area += CROSSPRODUCT2D(sketch_ip->verts[csg->start], sketch_ip->verts[csg->end]);
+                // calculate area for circular segment
+                *area += carc_area(csg, sketch_ip);
+            }
             break;
         case CURVE_BEZIER_MAGIC: {
             bsg = (struct bezier_seg *)lng;
@@ -279,13 +282,12 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip) //, const st
                 bez_pts[i] = sketch_ip->verts[bsg->ctl_points[i]];
             }
             // approximate bezier curve by a set of circular arcs
-            bezier_to_carcs(ON_BezierCurve(bez_pts), tol, carcs);
+            bezier_to_carcs(ON_BezierCurve(bez_pts), &tol, carcs);
             for (std::vector<ON_Arc>::iterator it = carcs.begin(); it != carcs.end(); ++it) {
-                // add start, mid, and end points for each circular arc to verts
-                verts.push_back(it->StartPoint());
-                verts.push_back(it->MidPoint());
-                verts.push_back(it->EndPoint());
-                // calculate area for each circular arc seg
+                // calculate area for polygon edges Start->Mid, Mid->End
+                *area += CROSSPRODUCT2D(it->StartPoint(), it->MidPoint());
+                *area += CROSSPRODUCT2D(it->MidPoint(), it->EndPoint());
+                // calculate area for circular segment
                 *area += 0.5 * it->Radius() * it->Radius() * (it->AngleRadians() - sin(it->AngleRadians()));
             }
             break;
@@ -295,18 +297,7 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip) //, const st
             break;
         }
     }
-
-    // remove repeated vertices.
-    std::vector<ON_2dPoint>::iterator it = unique(verts.begin(), verts.end());
-    verts.resize(it - verts.begin());
-
-    sketch_normal = ON_CrossProduct(verts[2] - verts[0], verts[1] - verts[0]);
-    sketch_normal.Unitize();
-
-    for (it = verts.begin(); it != verts.end(); ++it) {
-        sum += ON_CrossProduct((ON_2dVector&)*it, (ON_2dVector&)*(it + 1));
-    }
-    *area += fabs(ON_DotProduct(sketch_normal, sum)) / 2.0;
+    *area = fabs(*area) * 0.5 + full_circle_area;
 }
 
 
