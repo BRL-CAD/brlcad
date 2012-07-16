@@ -32,6 +32,8 @@
 #include <iostream>
 #include "vmath.h"
 
+//#define CROSSPRODUCT2D(u, v) (u).x * (v).y - (u).y * (v).x
+
 /**
  * These definitions were added to opennurbs_curve.h - they are
  * extensions of openNURBS, so add them here instead.  At some point a
@@ -46,27 +48,68 @@ public:
     ON_3dVector m_dir;
 
     ON_Ray(ON_3dPoint& origin, ON_3dVector& dir) : m_origin(origin), m_dir(dir) {}
+
+    ON_Ray(ON_2dPoint& origin, ON_2dVector& dir) : m_origin(origin), m_dir(dir) {}
+
     ON_Ray(const ON_Ray& r) : m_origin(r.m_origin), m_dir(r.m_dir) {}
-    ON_Ray& operator=(const ON_Ray& r) {
-	m_origin = r.m_origin;
-	m_dir = r.m_dir;
-	return *this;
+
+    ON_Ray& operator=(const ON_Ray& r)
+    {
+        m_origin = r.m_origin;
+        m_dir = r.m_dir;
+        return *this;
     }
 
-    ON_3dPoint PointAt(double t) const {
-	return m_origin + m_dir * t;
+    ON_3dPoint PointAt(double t) const
+    {
+        return m_origin + m_dir * t;
     }
 
-    double DistanceTo(const ON_3dPoint& pt, double* out_t = NULL) const {
-	ON_3dVector w = pt - m_origin;
-	double c1 = w * m_dir;
-	if (c1 <= 0) return pt.DistanceTo(m_origin);
-	double c2 = m_dir * m_dir;
-	double b = c1 / c2;
-	ON_3dPoint p = m_dir * b + m_origin;
-	if (out_t != NULL) *out_t = b;
-	return p.DistanceTo(pt);
+    double DistanceTo(const ON_3dPoint& pt, double* out_t = NULL) const
+    {
+        ON_3dVector w = pt - m_origin;
+        double c1 = w * m_dir;
+        if (c1 <= 0) return pt.DistanceTo(m_origin);
+        double c2 = m_dir * m_dir;
+        double b = c1 / c2;
+        ON_3dPoint p = m_dir * b + m_origin;
+        if (out_t != NULL) *out_t = b;
+        return p.DistanceTo(pt);
     }
+
+    /**
+     * Description:
+     *  Intersect two Rays
+     * Parameters:
+     *  v - [in] other ray to intersect with
+     *  isect - [out] point of intersection
+     * Returns:
+     *  true if successful.
+     */
+    bool IntersectRay(const ON_Ray& v, ON_2dPoint& isect) const
+    {
+        bool rc;
+        double t, s;
+        ON_Line m = ON_Line(m_origin, m_origin + m_dir),
+                n = ON_Line(v.m_origin, v.m_origin + v.m_dir);
+
+        rc = ON_Intersect(m, n, &t, &s);
+        if (VEQUAL(m.PointAt(t), n.PointAt(s))) {
+            isect = m.PointAt(t);
+        }
+        return rc;
+    }
+
+    //bool IntersectRay(const ON_Ray& v, ON_2dPoint& isect) const
+    //{
+        //double uxv, q_pxv;
+        //if (ZERO(uxv = CROSSPRODUCT2D(m_dir, v.m_dir))
+            //|| (ZERO(q_pxv = CROSSPRODUCT2D(v.m_origin - m_origin, v.m_dir)))) {
+            //return false;
+        //}
+        //isect = PointAt(q_pxv / uxv);
+        //return true;
+    //}
 };
 
 
