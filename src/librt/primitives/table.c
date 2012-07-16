@@ -1227,7 +1227,7 @@ const struct rt_functab rt_functab[] = {
 	rt_sketch_params,
 	NULL,
     NULL,
-    NULL,
+    rt_sketch_surf_area,
     NULL,
     },
 
