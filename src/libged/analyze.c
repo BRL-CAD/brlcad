@@ -45,7 +45,6 @@
  * ehy
  * metaball
  * nmg
- * part
  * pipe
  * rhc
  */
@@ -1452,6 +1451,17 @@ analyze_part(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
+/* analyze sketch */
+static void
+analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
+{
+    /*WIP*/
+    fastf_t area;
+    rt_functab[ID_SKETCH].ft_surf_area(&area, ip);
+    bu_vls_printf(gedp->ged_result_str, "area:%8.f", area);
+}
+
+
 /*
  * Analyze command - prints loads of info about a solid
  * Format:	analyze [name]
@@ -1512,6 +1522,10 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 
     case ID_PARTICLE:
         analyze_part(gedp, ip);
+        break;
+
+    case ID_SKETCH:
+        analyze_sketch(gedp, ip);
         break;
 
     default:
