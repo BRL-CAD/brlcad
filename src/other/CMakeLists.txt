@@ -172,15 +172,6 @@ endif(NOT COMMAND RE2C_TARGET)
 # For all BRL-CAD projects, we will use the perplex template in
 # src/other/perplex 
 SET(PERPLEX_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/perplex/perplex_template.c" CACHE STRING "Perplex template file" FORCE)
-# Perplex is not per-say a part of BRL-CAD, so the installation location
-# of it's template should go in its own directory.  This could pose problems
-# if trying to install into a system directory, so only do it if the
-# installation location appears to be one of the standard BRL-CAD specific
-# targets.
-if("${CMAKE_INSTALL_PREFIX}" MATCHES "brlcad")
-  set(DATA_DIR_TMP "${DATA_DIR}")
-  set(DATA_DIR share/perplex)
-endif("${CMAKE_INSTALL_PREFIX}" MATCHES "brlcad")
 
 set(perplex_ALIASES ENABLE_PERPLEX)
 set(perplex_DESCRIPTION "
@@ -196,11 +187,6 @@ if(NOT COMMAND PERPLEX_TARGET)
   include(${BRLCAD_SOURCE_DIR}/misc/CMake/PERPLEX_Util.cmake)
 endif(NOT COMMAND PERPLEX_TARGET)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/Makefile)
-
-# Restore the DATA_DIR setting
-if("${CMAKE_INSTALL_PREFIX}" MATCHES "brlcad")
-  set(DATA_DIR "${DATA_DIR_TMP}")
-endif("${CMAKE_INSTALL_PREFIX}" MATCHES "brlcad")
 
 # libxml and libxslt tools for DocBook processing.  We build just
 # enough library support to get these two tools working.
