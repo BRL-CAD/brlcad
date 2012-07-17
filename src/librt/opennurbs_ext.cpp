@@ -2914,15 +2914,23 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
 }
 
 
+struct PointPair {
+    int indexA, indexB;
+    double distance;
+    const bool operator < (const PointPair &_pp) const {
+	return distance < _pp.distance;
+    }
+};
+
+
 #define INTERSECT_MAX_DEPTH 8
 int
 surface_surface_intersection(const ON_Surface* surfA,
 			     const ON_Surface* surfB,
-			     ON_NurbsCurve* intersect,
-			     double)
+			     ON_SimpleArray<ON_NurbsCurve> &intersect,
+			     double tolerance)
 {
-    if (surfA == NULL || surfB == NULL || intersect == NULL) {
-	intersect = NULL;
+    if (surfA == NULL || surfB == NULL) {
 	return -1;
     }
 
@@ -3015,13 +3023,130 @@ surface_surface_intersection(const ON_Surface* surfA,
 		}
 	    }
 	}
-	for (int i = 0; i < curvept.Count(); i++) {
+	/* for (int i = 0; i < curvept.Count(); i++) {
 	    bu_log("(%lf %lf %lf)\n", curvept[i].x, curvept[i].y, curvept[i].z);
 	}
-	bu_log("%d %d\n", h, tmp_pairs.size());
+	bu_log("%d %d\n", h, tmp_pairs.size());*/
     }
 
-    // Third step: Fit the points in curvept into a NURBS curve.
+    // Third step: Fit the points in curvept into NURBS curves.
+    // Here we use polyline approximation.
+    // TODO: Find a better fitting algorithm unless this is good enough.
+
+    const double max_dis = 10000.0;
+    // NOTE: this is a threshold value and should be calculated according to the
+    // biggest bounding box. Here we just use a big enough value for testing.
+
+    std::vector<PointPair> ptpairs;
+    for (int i = 0; i < curvept.Count(); i++) {
+	for (int j = i + 1; j < curvept.Count(); j++) {
+	    PointPair ppair;
+	    ppair.distance = curvept[i].DistanceTo(curvept[j]);
+	    if (ppair.distance < max_dis) {
+		ppair.indexA = i;
+		ppair.indexB = j;
+		ptpairs.push_back(ppair);
+	    }
+	}
+    }
+    std::sort(ptpairs.begin(), ptpairs.end());
+
+    std::vector<ON_Polyline*> polylines(curvept.Count());
+    int *index = (int*)bu_malloc(curvept.Count() * sizeof(int), "int");
+    // index[i] = j means curvept[i] is a startpoint/endpoint of polylines[j]
+    int *startpt = (int*)bu_malloc(curvept.Count() * sizeof(int), "int");
+    int *endpt = (int*)bu_malloc(curvept.Count() * sizeof(int), "int");
+    // index of startpoints and endpoints of polylines[i]
+
+    // Initialize each polyline with only one point.
+    for (int i = 0; i < curvept.Count(); i++) {
+	ON_3dPointArray single;
+	single.Append(curvept[i]);
+	polylines[i] = new ON_Polyline(single);
+	index[i] = i;
+	startpt[i] = i;
+	endpt[i] = i;
+    }
+
+    // Merge polylines with distance less than max_dis.
+    for (unsigned int i = 0; i < ptpairs.size(); i++) {
+	int index1 = index[ptpairs[i].indexA], index2 = index[ptpairs[i].indexB];
+	if (index1 == -1 || index2 == -1)
+	    continue;
+	index[startpt[index1]] = index[endpt[index1]] = index1;
+	index[startpt[index2]] = index[endpt[index2]] = index1;
+	ON_Polyline *line1 = polylines[index1];
+	ON_Polyline *line2 = polylines[index2];
+	if (line1 != NULL && line2 != NULL && line1 != line2) {
+	    ON_Polyline *unionline = new ON_Polyline();
+	    if ((*line1)[0] == curvept[ptpairs[i].indexA]) {
+		if ((*line2)[0] == curvept[ptpairs[i].indexB]) {
+		    // Case 1: endA -- startA -- startB -- endB
+		    line1->Reverse();
+		    unionline->Append(line1->Count(), line1->Array());
+		    unionline->Append(line2->Count(), line2->Array());
+		    startpt[index1] = endpt[index1];
+		    endpt[index1] = endpt[index2];
+		} else {
+		    // Case 2: startB -- endB -- startA -- endA
+		    unionline->Append(line2->Count(), line2->Array());
+		    unionline->Append(line1->Count(), line1->Array());
+		    startpt[index1] = startpt[index2];
+		    endpt[index1] = endpt[index1];
+		}
+	    } else {
+		if ((*line2)[0] == curvept[ptpairs[i].indexB]) {
+		    // Case 3: startA -- endA -- startB -- endB
+		    unionline->Append(line1->Count(), line1->Array());
+		    unionline->Append(line2->Count(), line2->Array());
+		    startpt[index1] = startpt[index1];
+		    endpt[index1] = endpt[index2];
+		} else {
+		    // Case 4: start -- endA -- endB -- startB
+		    unionline->Append(line1->Count(), line1->Array());
+		    line2->Reverse();
+		    unionline->Append(line2->Count(), line2->Array());
+		    startpt[index1] = startpt[index1];
+		    endpt[index1] = startpt[index2];
+		}
+	    }
+	    polylines[index1] = unionline;
+	    polylines[index2] = NULL;
+	    if (line1->PointCount() >= 2) {
+		index[ptpairs[i].indexA] = -1;
+	    }
+	    if (line2->PointCount() >= 2) {
+		index[ptpairs[i].indexB] = -1;
+	    }
+	    delete line1;
+	    delete line2;
+	}
+    }
+
+    // Generate NURBS curves from the polylines.
+    for (unsigned int i = 0; i < polylines.size(); i++) {
+	if (polylines[i] != NULL) {
+	    ON_3dPoint *startpoint = polylines[i]->At(0);
+	    ON_3dPoint *endpoint = polylines[i]->At(polylines[i]->Count() - 1);
+	    if (startpoint->DistanceTo(*endpoint) < max_dis) {
+		polylines[i]->Append(*startpoint);
+	    }
+	    ON_3dPointArray ptarray;
+	    ptarray.Append(polylines[i]->Count(), polylines[i]->Array());
+	    ON_PolylineCurve curve(ptarray);
+	    ON_NurbsCurve nurbscurve;
+	    if (curve.GetNurbForm(nurbscurve)) {
+		// It seems that there is a small problem here.
+		intersect.Append(nurbscurve);
+	    }
+	    delete polylines[i];
+	}
+    }
+
+    bu_log("Segments: %d\n", intersect.Count());
+    bu_free(index, "int");
+    bu_free(startpt, "int");
+    bu_free(endpt, "int");
     // WIP
     return 0;
 }
