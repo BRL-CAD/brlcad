@@ -267,7 +267,6 @@ endif(NOT PACKAGE_DIR)
 
 # The location in which to install BRL-CAD data files
 if(NOT DATA_DIR)
-  #set(DATA_DIR share/brlcad/${BRLCAD_VERSION})
   set(DATA_DIR share)
   if(LFS_COMPATIBLE_FILETREE)
     set(DATA_DIR ${DATA_DIR}/brlcad/${BRLCAD_VERSION})
@@ -284,7 +283,7 @@ endif(LFS_COMPATIBLE_FILETREE AND NOT "${MAN_DIR}" MATCHES "${BRLCAD_VERSION}")
 
 # The location in which to install BRL-CAD documentation files
 if(NOT DOC_DIR)
-  set(DOC_DIR doc)
+  set(DOC_DIR ${DATA_DIR}/doc)
 endif(NOT DOC_DIR)
 
 #---------------------------------------------------------------------

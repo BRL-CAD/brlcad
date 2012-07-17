@@ -565,12 +565,17 @@ endmacro(BRLCAD_MANAGE_FILES)
 
 macro(BRLCAD_ADDDATA datalist targetdir)
   BRLCAD_MANAGE_FILES(${datalist} ${DATA_DIR}/${targetdir})
-endmacro(BRLCAD_ADDDATA datalist targetdir)
+endmacro(BRLCAD_ADDDATA)
+
+macro(ADD_DOC doclist targetdir)
+  set(doc_target_dir ${DOC_DIR}/${targetdir})
+  BRLCAD_MANAGE_FILES(${doclist} ${doc_target_dir})
+endmacro(ADD_DOC)
 
 macro(ADD_MAN_PAGES num inmanlist)
   set(man_target_dir ${MAN_DIR}/man${num})
   BRLCAD_MANAGE_FILES(${inmanlist} ${man_target_dir})
-endmacro(ADD_MAN_PAGES num fullpath_manlist)
+endmacro(ADD_MAN_PAGES)
 
 # Local Variables:
 # tab-width: 8

@@ -36,7 +36,7 @@ set(documentation_DATA
   mater.txt
   matrix.txt
   )
-BRLCAD_ADDDATA(documentation_DATA ${DOC_DIR})
+ADD_DOC(documentation_DATA ".")
 
 set(documentation_mged_old_DATA
   mged/a.tex
@@ -214,7 +214,7 @@ set(documentation_mged_old_DATA
   tool_categories.txt
   ecosystem.dot
   )
-BRLCAD_ADDDATA(documentation_mged_old_DATA ${DOC_DIR}/mged_old)
+ADD_DOC(documentation_mged_old_DATA mged_old)
 
 set(doc_MANS
   bw.5
