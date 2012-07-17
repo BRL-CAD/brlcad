@@ -251,6 +251,16 @@ if(NOT DOC_DIR)
   set(DOC_DIR ${DATA_DIR}/doc)
 endif(NOT DOC_DIR)
 
+# Make sure no absolute paths have been supplied to these variables
+set(INSTALL_DIRS BIN INCLUDE LIB CONF DATA MAN DOC)
+foreach(instdir ${INSTALL_DIRS})
+  get_filename_component(instdir_full ${${instdir}_DIR} ABSOLUTE)
+  if("${${instdir}_DIR}" STREQUAL "${instdir_full}")
+    message(FATAL_ERROR "Error - absolute path supplied for ${instdir}_DIR.  This path must be relative - e.g. \"bin\" instead of \"/usr/bin\"") 
+    set(HAVE_INSTALL_DIR_FULL_PATH 1)
+  endif("${${instdir}_DIR}" STREQUAL "${instdir_full}")
+endforeach(instdir ${INSTALL_DIRS})
+
 #---------------------------------------------------------------------
 # Searching the system for packages presents something of a dilemma -
 # in most situations it is Very Bad for a BRL-CAD build to be using
