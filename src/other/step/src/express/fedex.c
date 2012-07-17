@@ -84,9 +84,7 @@
 /* process.h defines getpid() function on WIN32 systems */
 # include <process.h>
 #endif
-#ifndef HAVE_GETOPT
-# include "xgetopt.h"
-#endif
+#include "sc_getopt.h"
 #include "express/error.h"
 #include "express/express.h"
 #include "express/resolve.h"
@@ -152,7 +150,7 @@ int main( int argc, char ** argv ) {
     }
 
     optind = 1;
-    while( ( c = getopt( argc, argv, EXPRESSgetopt_options ) ) != -1 )
+    while( ( c = sc_getopt( argc, argv, EXPRESSgetopt_options ) ) != -1 )
         switch( c ) {
             case 'd':
                 ERRORdebugging = 1;

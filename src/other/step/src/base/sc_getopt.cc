@@ -1,10 +1,12 @@
+/****** RENAMED from xgetopt.cc to sc_getopt.cc ***********/
+
 // XGetopt.cpp  Version 1.2
 //
 // Author:  Hans Dietrich
 //          hdietrich2@hotmail.com
 //
 // Description:
-//     XGetopt.cpp implements getopt(), a function to parse command lines.
+//     XGetopt.cpp implements sc_getopt(), a function to parse command lines.
 //
 // History
 //     Version 1.2 - 2003 May 17
@@ -36,7 +38,7 @@
 #include <string.h>
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "XGetopt.h"
+#include "sc_getopt.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -44,21 +46,21 @@
 //
 //
 //  NAME
-//       getopt -- parse command line options
+//       sc_getopt -- parse command line options
 //
 //  SYNOPSIS
-//       int getopt(int argc, char *argv[], char *optstring)
+//       int sc_getopt(int argc, char *argv[], char *optstring)
 //
 //       extern char *optarg;
 //       extern int optind;
 //
 //  DESCRIPTION
-//       The getopt() function parses the command line arguments. Its
+//       The sc_getopt() function parses the command line arguments. Its
 //       arguments argc and argv are the argument count and array as
 //       passed into the application on program invocation.  In the case
 //       of Visual C++ programs, argc and argv are available via the
 //       variables __argc and __argv (double underscores), respectively.
-//       getopt returns the next option letter in argv that matches a
+//       sc_getopt returns the next option letter in argv that matches a
 //       letter in optstring.  (Note:  Unicode programs should use
 //       __targv instead of __argv.  Also, all character and string
 //       literals should be enclosed in _T( ) ).
@@ -67,17 +69,17 @@
 //       is followed by a colon, the option is expected to have an argument
 //       that may or may not be separated from it by white space.  optarg
 //       is set to point to the start of the option argument on return from
-//       getopt.
+//       sc_getopt.
 //
 //       Option letters may be combined, e.g., "-ab" is equivalent to
 //       "-a -b".  Option letters are case sensitive.
 //
-//       getopt places in the external variable optind the argv index
+//       sc_getopt places in the external variable optind the argv index
 //       of the next argument to be processed.  optind is initialized
-//       to 0 before the first call to getopt.
+//       to 0 before the first call to sc_getopt.
 //
 //       When all options have been processed (i.e., up to the first
-//       non-option argument), getopt returns EOF, optarg will point
+//       non-option argument), sc_getopt returns EOF, optarg will point
 //       to the argument, and optind will be set to the argv index of
 //       the argument.  If there are no non-option arguments, optarg
 //       will be set to NULL.
@@ -87,8 +89,8 @@
 //       will be skipped.
 //
 //  RETURN VALUE
-//       For option letters contained in the string optstring, getopt
-//       will return the option letter.  getopt returns a question mark (?)
+//       For option letters contained in the string optstring, sc_getopt
+//       will return the option letter.  sc_getopt returns a question mark (?)
 //       when it encounters an option letter not included in optstring.
 //       EOF is returned when processing is finished.
 //
@@ -98,7 +100,7 @@
 //       3)  The environment variable POSIXLY_CORRECT is not supported.
 //       4)  The + syntax is not supported.
 //       5)  The automatic permutation of arguments is not supported.
-//       6)  This implementation of getopt() returns EOF if an error is
+//       6)  This implementation of sc_getopt() returns EOF if an error is
 //           encountered, instead of -1 as the latest standard requires.
 //
 //  EXAMPLE
@@ -106,7 +108,7 @@
 //       {
 //           int c;
 //
-//           while ((c = getopt(argc, argv, _T("aBn:"))) != EOF)
+//           while ((c = sc_getopt(argc, argv, _T("aBn:"))) != EOF)
 //           {
 //               switch (c)
 //               {
@@ -153,7 +155,7 @@
 char  * optarg;        // global argument pointer
 int     optind = 0;     // global argv index
 
-int getopt( int argc, char * argv[], char * optstring ) {
+int sc_getopt( int argc, char * argv[], char * optstring ) {
     static char * next = NULL;
     if( optind == 0 ) {
         next = NULL;
