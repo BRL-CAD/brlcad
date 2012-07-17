@@ -105,9 +105,8 @@ SET(EXPRESS_PRIVATE_HDRS
 
 SCL_ADDLIB(express "${EXPRESS_SOURCES}" "base")
 add_dependencies(express express_verify)
+add_dependencies(express version_string)
 SCL_ADDEXEC(fedex "${FEDEX_SOURCES}" express)
-
-add_dependencies(fedex version_string)
 
 # Local Variables:
 # tab-width: 8
