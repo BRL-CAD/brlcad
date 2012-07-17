@@ -228,7 +228,7 @@ int numDigits(int n)
 	return 1;
     }
 
-    for (digits = 0; abs > 0; digits++) {
+    for (digits = 0; n > 0; digits++) {
 	n /= 10;
     }
 
