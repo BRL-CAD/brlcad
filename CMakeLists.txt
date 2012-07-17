@@ -236,11 +236,6 @@ if(NOT CONF_DIR)
   set(CONF_DIR etc)
 endif(NOT CONF_DIR)
 
-# The location in which to install CMake scripts for packaging BRLCAD.
-if(NOT PACKAGE_DIR)
-  set(PACKAGE_DIR lib)
-endif(NOT PACKAGE_DIR)
-
 # The location in which to install BRL-CAD data files
 if(NOT DATA_DIR)
   set(DATA_DIR share)
