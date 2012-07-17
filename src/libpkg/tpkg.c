@@ -99,9 +99,8 @@ validate_port(int port) {
  * handshake setup.
  */
 void
-server_helo(struct pkg_conn *connection, char *buf)
+server_helo(struct pkg_conn *UNUSED(connection), char *buf)
 {
-    connection=connection; /* quell */
     bu_log("Unexpected HELO encountered\n");
     free(buf);
 }
@@ -111,9 +110,8 @@ server_helo(struct pkg_conn *connection, char *buf)
  * callback when a DATA message packet is received
  */
 void
-server_data(struct pkg_conn *connection, char *buf)
+server_data(struct pkg_conn *UNUSED(connection), char *buf)
 {
-    connection=connection; /* quell */
     bu_log("Received file data\n");
     free(buf);
 }
@@ -123,9 +121,8 @@ server_data(struct pkg_conn *connection, char *buf)
  * callback when a CIAO message packet is received
  */
 void
-server_ciao(struct pkg_conn *connection, char *buf)
+server_ciao(struct pkg_conn *UNUSED(connection), char *buf)
 {
-    connection=connection; /* quell */
     bu_log("CIAO encountered\n");
     free(buf);
 }
