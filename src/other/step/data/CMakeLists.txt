@@ -63,23 +63,11 @@ FUNCTION(BUILD_A_SCHEMA SCHEMA_FILE)
                         WORKING_DIRECTORY ${SCHEMA_OUTPUT_DIR}
                         COMMENT "Running fedex_plus for ${SCHEMA_SHORT_NAME}..."
                         VERBATIM )
-    if(MSVC OR BORLAND)
-        add_definitions( -DSCL_SCHEMA_DLL_EXPORTS )
-        add_definitions( -DSCL_BASE_DLL_IMPORTS )
-        add_definitions( -DSCL_EXPRESS_DLL_IMPORTS )
-        add_definitions( -DSCL_UTILS_DLL_IMPORTS )
-        add_definitions( -DSCL_DAI_DLL_IMPORTS )
-        add_definitions( -DSCL_CORE_DLL_IMPORTS )
-        add_definitions( -DSCL_EDITOR_DLL_IMPORTS )
-    endif()
     add_library( ${PROJECT_NAME} SHARED ${FEDEX_OUT} )
     target_link_libraries(${PROJECT_NAME} stepdai stepcore express stepeditor steputils base )
     add_dependencies( ${PROJECT_NAME} generate_cpp_${SCHEMA_SHORT_NAME} )
     set_target_properties( ${PROJECT_NAME} PROPERTIES COMPILE_FLAGS
                            ${${PROJECT_NAME}_COMPILE_FLAGS} )
-    if(APPLE)
-        set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-flat_namespace -undefined suppress")
-    endif(APPLE)
     TESTABLE_TARGET( ${PROJECT_NAME} )
 
     add_test( NAME generate_cpp_${SCHEMA_SHORT_NAME}

@@ -26,13 +26,6 @@ set(LIBSTEPCORE_SRCS
     trynext.cc
     print.cc
 )
-if(MSVC OR BORLAND)
-	add_definitions( -DSCL_CORE_DLL_EXPORTS )
-	add_definitions( -DSCL_BASE_DLL_IMPORTS )
-	add_definitions( -DSCL_EXPRESS_DLL_IMPORTS )
-	add_definitions( -DSCL_UTILS_DLL_IMPORTS )
-	add_definitions( -DSCL_DAI_DLL_IMPORTS )
-endif()
 
 SET(LIBSTEPCORE_PRIVATE_HDRS
     baseType.h
@@ -61,6 +54,3 @@ include_directories(
 )
 
 SCL_ADDLIB(stepcore "${LIBSTEPCORE_SRCS}" "express;steputils;stepdai;base")
-if(APPLE)
-   set_target_properties(stepcore PROPERTIES LINK_FLAGS "-flat_namespace -undefined suppress")
-endif(APPLE)

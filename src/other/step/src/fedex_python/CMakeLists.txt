@@ -10,12 +10,6 @@ include_directories(
 
 add_definitions( -DHAVE_CONFIG_H )
 
-IF(MSVC)
-add_definitions( -DSCL_BASE_DLL_IMPORTS )
-add_definitions( -DSCL_EXPRESS_DLL_IMPORTS )
-add_definitions( -DSCL_EXPPP_DLL_IMPORTS )
-ENDIF(MSVC)
-
 set(fedex_python_SOURCES
     src/classes_misc_python.c
     ../express/fedex.c

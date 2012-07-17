@@ -30,12 +30,7 @@ include_directories(
     ${SCL_SOURCE_DIR}/include/express
     ${SCL_SOURCE_DIR}/src/base
 )
-IF(MSVC OR BORLAND)
-add_definitions( -DSCL_EXPRESS_DLL_IMPORTS )
-add_definitions( -DSCL_EXPPP_DLL_IMPORTS )
-add_definitions( -DSCL_BASE_DLL_IMPORTS )
-ENDIF()
 
-SCL_ADDEXEC(fedex_plus "${fedex_plus_SOURCES};${fedex_plus_EXTRA_SOURCES}" "libexppp;express;base")
+SCL_ADDEXEC(fedex_plus "${fedex_plus_SOURCES}" "libexppp;express;base")
 
 add_dependencies( fedex_plus version_string )

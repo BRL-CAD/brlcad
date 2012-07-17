@@ -27,12 +27,6 @@ SET(LIBSTEPDAI_PRIVATE_HDRS
     sdaiString.h
 )
 
-IF(MSVC OR BORLAND)
-add_definitions( -DSCL_DAI_DLL_EXPORTS )
-add_definitions( -DSCL_BASE_DLL_IMPORTS )
-add_definitions( -DSCL_UTILS_DLL_IMPORTS )
-ENDIF()
-
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${SCL_SOURCE_DIR}/src/base
