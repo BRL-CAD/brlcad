@@ -37,9 +37,6 @@
 #
 # BRL-CAD configuration script for determining compilation
 # characteristics of a given install.
-#
-# Author -
-#   Christopher Sean Morrison
 ###
 
 prefix=@prefix@
