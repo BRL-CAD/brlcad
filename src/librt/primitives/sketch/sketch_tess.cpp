@@ -163,7 +163,7 @@ bezier_to_carcs(const ON_BezierCurve bezier, const struct bn_tol *tol, std::vect
     current = bezier;
 
     do {
-loop:
+bez_to_carcs_loop:
     biarc = make_biarc(current);
     if ((biarc_angle = biarc.AngleRadians()) <= M_PI_2) {
         // approximate the current bezier segment and add its biarc
@@ -207,7 +207,7 @@ loop:
         // dont check while() condition, we want to continue even if we just
         // popped the last element
         // XXX - find a better solution for this!
-        goto loop;
+        goto bez_to_carcs_loop;
     }
     } while (!rest.empty());
 }
