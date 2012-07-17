@@ -201,7 +201,7 @@ bez_to_carcs_loop:
 
         current = rest.back();
         rest.pop_back();
-        goto loop;
+        goto bez_to_carcs_loop;
     }
 
     if (curvature_changed) {
