@@ -3147,6 +3147,7 @@ surface_surface_intersection(const ON_Surface* surfA,
     bu_free(startpt, "int");
     bu_free(endpt, "int");
     // WIP
+    delete brep;
     return 0;
 }
 
