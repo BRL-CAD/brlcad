@@ -2927,7 +2927,7 @@ struct PointPair {
 int
 surface_surface_intersection(const ON_Surface* surfA,
 			     const ON_Surface* surfB,
-			     ON_SimpleArray<ON_NurbsCurve> &intersect,
+			     ON_SimpleArray<ON_NurbsCurve*> &intersect,
 			     double tolerance)
 {
     if (surfA == NULL || surfB == NULL) {
@@ -3134,9 +3134,8 @@ surface_surface_intersection(const ON_Surface* surfA,
 	    ON_3dPointArray ptarray;
 	    ptarray.Append(polylines[i]->Count(), polylines[i]->Array());
 	    ON_PolylineCurve curve(ptarray);
-	    ON_NurbsCurve nurbscurve;
-	    if (curve.GetNurbForm(nurbscurve)) {
-		// It seems that there is a small problem here.
+	    ON_NurbsCurve *nurbscurve = ON_NurbsCurve::New();
+	    if (curve.GetNurbForm(*nurbscurve)) {
 		intersect.Append(nurbscurve);
 	    }
 	    delete polylines[i];
