@@ -31,6 +31,7 @@ set(LIBBN_SOURCES
   tabdata.c
   tcl.c
   tplot.c
+  tri_tri.c
   vectfont.c
   vector.c
   vers.c
