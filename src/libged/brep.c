@@ -40,6 +40,7 @@
 RT_EXPORT extern int brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
 RT_EXPORT extern int brep_conversion(struct rt_db_internal *intern, ON_Brep **brep);
 RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
+RT_EXPORT extern int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp);
 #else
 extern int brep_surface_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int index);
 #endif
@@ -76,6 +77,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\tplot - plot entire BREP\n");
 	bu_vls_printf(gedp->ged_result_str, "\tplot S [index] - plot specific BREP 'surface'\n");
 	bu_vls_printf(gedp->ged_result_str, "\tplot F [index] - plot specific BREP 'face'\n");
+	bu_vls_printf(gedp->ged_result_str, "\tintersect obj2 i j - intersect obj's ith surface and obj2' jth surface\n");
 	bu_vls_printf(gedp->ged_result_str, "\t[brepname] - convert the non-BREP object to BREP form\n");
 	bu_vls_printf(gedp->ged_result_str, "\t[suffix] - convert non-BREP comb to unevaluated BREP form\n");
 	return GED_HELP;
@@ -105,6 +107,40 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     RT_CK_DB_INTERNAL(&intern);
     bi = (struct rt_brep_internal*)intern.idb_ptr;
+
+    if (BU_STR_EQUAL(argv[2], "intersect")) {
+	struct rt_db_internal intern2;
+	int i, j;
+
+	if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  argv[3], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", argv[3]);
+	    return GED_ERROR;
+	} else {
+	    real_flag = (ndp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
+	}
+
+	if (!real_flag) {
+	    /* solid doesnt exists - don't kill */
+	    bu_vls_printf(gedp->ged_result_str, "Error: %s is not a real solid", argv[3]);
+	    return GED_OK;
+	}
+
+	GED_DB_GET_INTERNAL(gedp, &intern2, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+
+	i = atoi(argv[4]);
+	j = atoi(argv[5]);
+	vbp = rt_vlblock_init();
+
+	brep_intersect(&intern, &intern2, i, j, vbp);
+
+	_ged_cvt_vlblock_to_solids(gedp, vbp, namebuf, 0);
+	rt_vlblock_free(vbp);
+	vbp = (struct bn_vlblock *)NULL;
+	
+	rt_db_free_internal(&intern);
+	rt_db_free_internal(&intern2);
+	return GED_OK;
+    }
 
     if (!RT_BREP_TEST_MAGIC(bi)) {
 	/* The solid is not in brep form. Covert it to brep. */

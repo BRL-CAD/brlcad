@@ -53,6 +53,7 @@ extern "C" {
     RT_EXPORT extern int brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
     RT_EXPORT extern int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep);
     RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
+    RT_EXPORT extern int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock* vbp);
 #ifdef __cplusplus
 }
 #endif
@@ -550,13 +551,13 @@ plottrimdirection(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
 
 
 void
-plotsurface(ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridres)
+plotsurface(ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridres, const int red = 255, const int green = 218, const int blue = 185)
 {
     register struct bu_list *vhead;
     double pt1[3], pt2[3];
     ON_2dPoint from, to;
 
-    vhead = rt_vlblock_find(vbp, PEACH);
+    vhead = rt_vlblock_find(vbp, red, green, blue);
 
     ON_Interval udom = surf.Domain(0);
     ON_Interval vdom = surf.Domain(1);
@@ -651,13 +652,13 @@ plotsurfaceknots(ON_Surface &surf, struct bn_vlblock *vbp)
 
 
 void
-plotcurve(ON_Curve &curve, struct bn_vlblock *vbp, int plotres)
+plotcurve(ON_Curve &curve, struct bn_vlblock *vbp, int plotres, const int red = 255, const int green = 255, const int blue = 0)
 {
     register struct bu_list *vhead;
     double pt1[3], pt2[3];
     ON_2dPoint from, to;
 
-    vhead = rt_vlblock_find(vbp, YELLOW);
+    vhead = rt_vlblock_find(vbp, red, green, blue);
 
     if (curve.IsLinear()) {
 	/*
@@ -2550,6 +2551,48 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 	}
     }
     return ret;
+}
+
+
+int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp) {
+    RT_CK_DB_INTERNAL(intern1);
+    RT_CK_DB_INTERNAL(intern2);
+    struct rt_brep_internal *bi1, *bi2;
+    bi1 = (struct rt_brep_internal *)intern1->idb_ptr;
+    bi2 = (struct rt_brep_internal *)intern2->idb_ptr;
+    RT_BREP_CK_MAGIC(bi1);
+    RT_BREP_CK_MAGIC(bi2);
+
+    ON_Brep *brep1 = bi1->brep;
+    ON_Brep *brep2 = bi2->brep;
+
+    ON_NurbsSurface surf1;
+    ON_NurbsSurface surf2;
+    ON_SimpleArray<ON_NurbsCurve*> curve;
+
+    if (i < 0 || i >= brep1->m_S.Count() || j < 0 || j >= brep2->m_S.Count()) {
+	bu_log("Out of range: \n");
+	bu_log("\t0 <= i <= %d\n", brep1->m_S.Count() - 1);
+	bu_log("\t0 <= j <= %d\n", brep2->m_S.Count() - 1);
+	return -1;
+    }
+
+    brep1->m_S[i]->GetNurbForm(surf1);
+    brep2->m_S[j]->GetNurbForm(surf2);
+
+    if (brlcad::surface_surface_intersection(&surf1, &surf2, curve)) {
+	bu_log("Intersection failed\n");
+	return -1;
+    }
+
+    plotsurface(surf1, vbp, 100, 10, PURERED);
+    plotsurface(surf2, vbp, 100, 10, BLUE);
+    for (int i = 0; i < curve.Count(); i++) {
+        plotcurve(*(curve[i]), vbp, 100, GREEN);
+	delete curve[i];
+    }
+
+    return 0;
 }
 
 
