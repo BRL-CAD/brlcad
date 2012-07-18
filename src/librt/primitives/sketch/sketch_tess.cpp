@@ -82,7 +82,7 @@ make_biarc(const ON_BezierCurve& bezier)
 
 #define POW3(x) ((x)*(x)*(x))
 #define SIGN(x) ((x) >= 0 ? 1 : -1)
-#define SIGNEDCURVATURE(d1, d2) SIGN(V2CROSS((d1), (d2)) / POW3((d1).Length()))
+#define CURVATURE(d1, d2) (V2CROSS((d1), (d2)) / POW3((d1).Length()))
 
 /* find a point of inflection on a bezier curve, if it exists, by finding the
  * value of parameter 't' where the signed curvature of the bezier changes
@@ -91,19 +91,28 @@ make_biarc(const ON_BezierCurve& bezier)
 HIDDEN bool
 bezier_inflection(const ON_BezierCurve& bezier, fastf_t& inflection_pt)
 {
-    fastf_t t, step = 0.1;
-    ON_3dVector d1, d2;
-    ON_3dPoint tmp;
+    fastf_t t, step, crv;
+    ON_3dVector d1, d2; // first derivative, second derivative
+    ON_3dPoint tmp;     // not used, but needed by Ev2Der
 
+    // calculate curvature at t=0
     bezier.Ev2Der(0, tmp, d1, d2);
-    int sign = SIGNEDCURVATURE(d1, d2);
+    crv = CURVATURE(d1, d2);
+    // maximum step size is 0.1, but decreases as |crv| -> 0 with minimum step
+    // size RT_LEN_TOL
+    step = fabs(crv) > 0.1 ? 0.1 : (fabs(crv) < RT_LEN_TOL ? RT_LEN_TOL : fabs(crv));
+
+    int sign = SIGN(crv);
 
     for (t = step; t <= 1.0; t += step) {
         bezier.Ev2Der(t, tmp, d1, d2);
-        if (sign != SIGNEDCURVATURE(d1, d2)) {
+        crv = CURVATURE(d1, d2);
+        // if sign changes, t is an inflection point
+        if (sign != SIGN(crv)) {
             inflection_pt = t;
             return true;
         }
+        step = fabs(crv) > 0.1 ? 0.1 : (fabs(crv) < RT_LEN_TOL ? RT_LEN_TOL : fabs(crv));
     }
     return false;
 }
