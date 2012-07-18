@@ -77,13 +77,6 @@
 #include "scl_version_string.h"
 #include <stdlib.h>
 #include <stdio.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#ifdef HAVE_PROCESS_H
-/* process.h defines getpid() function on WIN32 systems */
-# include <process.h>
-#endif
 #include "sc_getopt.h"
 #include "express/error.h"
 #include "express/express.h"
@@ -220,10 +213,6 @@ int main( int argc, char ** argv ) {
             case 'v':
                 print_fedex_version();
                 no_need_to_work = 1;
-                break;
-            case 'z':
-                printf( "pid = %d\n", getpid() );
-                pause();/* to allow user to attach debugger and continue */
                 break;
             default:
                 rc = 1;
