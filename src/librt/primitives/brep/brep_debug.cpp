@@ -2349,7 +2349,6 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 	} else if (argc == 5) {
 	    const char *part = argv[3];
 	    const char *strindex = argv[4];
-	    int index = -1;
 	    int startindex = -1;
 	    int endindex = -1;
 	    if (BU_STR_EQUAL(strindex, "all")) {
@@ -2396,7 +2395,6 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 		    startindex = atoi(strindex);
 		    endindex = startindex;
 		}
-		index = startindex;
 		if (BU_STR_EQUAL(part, "S")) {
 		    int S_count = brep->m_S.Count() - 1 ? endindex : brep->m_S.Count() - 1 < endindex;
 		    for (int i = startindex; i <= S_count; ++i) {
@@ -2587,9 +2585,9 @@ int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern
 
     plotsurface(surf1, vbp, 100, 10, PURERED);
     plotsurface(surf2, vbp, 100, 10, BLUE);
-    for (int i = 0; i < curve.Count(); i++) {
-        plotcurve(*(curve[i]), vbp, 100, GREEN);
-	delete curve[i];
+    for (int k = 0; k < curve.Count(); k++) {
+	plotcurve(*(curve[k]), vbp, 100, GREEN);
+	delete curve[k];
     }
 
     return 0;

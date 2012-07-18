@@ -2928,7 +2928,7 @@ int
 surface_surface_intersection(const ON_Surface* surfA,
 			     const ON_Surface* surfB,
 			     ON_SimpleArray<ON_NurbsCurve*> &intersect,
-			     double tolerance)
+			     double)
 {
     if (surfA == NULL || surfB == NULL) {
 	return -1;
