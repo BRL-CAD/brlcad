@@ -94,7 +94,7 @@ set(EXPRESS_SOURCES
   express.c
   )
 
-SET(FEDEX_SOURCES
+SET(CHECK_EXPRESS_SOURCES
   fedex.c
   )
 
@@ -106,7 +106,7 @@ SET(EXPRESS_PRIVATE_HDRS
 SCL_ADDLIB(express "${EXPRESS_SOURCES}" "base")
 add_dependencies(express express_verify)
 add_dependencies(express version_string)
-SCL_ADDEXEC(fedex "${FEDEX_SOURCES}" express)
+SCL_ADDEXEC("check-express" "${CHECK_EXPRESS_SOURCES}" "express base" )
 
 # Local Variables:
 # tab-width: 8
