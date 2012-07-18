@@ -1,8 +1,12 @@
 # Utility routines for managing generated files with CMake
 
 macro(MD5 filename md5sum)
-  execute_process(COMMAND ${CMAKE_COMMAND} -E md5sum ${filename} OUTPUT_VARIABLE md5string)
-  string(REPLACE " ${filename}" "" md5string "${md5string}")
+  file(READ "${filename}" RAW_MD5_FILE)
+  string(REGEX REPLACE "\r?\n" "" STRIPPED_MD5_FILE "${RAW_MD5_FILE}")
+  file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/md5_file "${STRIPPED_MD5_FILE}")
+  execute_process(COMMAND ${CMAKE_COMMAND} -E md5sum ${CMAKE_BINARY_DIR}/CMakeTmp/md5_file OUTPUT_VARIABLE md5string)
+  file(REMOVE ${CMAKE_BINARY_DIR}/CMakeTmp/md5_file)
+  string(REPLACE " ${CMAKE_BINARY_DIR}/CMakeTmp/md5_file" "" md5string "${md5string}")
   string(STRIP "${md5string}" ${md5sum})
 endmacro(MD5)
 
