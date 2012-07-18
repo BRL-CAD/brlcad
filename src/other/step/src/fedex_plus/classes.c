@@ -2035,7 +2035,7 @@ void print_typechain( FILES * files, const Type t, char * buf, Schema schema, co
                      "        %s%d->AssignAggrCreator((AggregateCreator) create_%s);%s",
                      TD_PREFIX, count, ctype, "        // Creator function \n" );
 
-            s = snprintf( name_buf, MAX_LEN, "%s%d", TD_PREFIX, count );
+            s = sprintf( name_buf, "%s%d", TD_PREFIX, count );
             assert( ( s > 0 ) && ( s < MAX_LEN ) );
             AGGRprint_init( files, t, name_buf, type_name );
 
