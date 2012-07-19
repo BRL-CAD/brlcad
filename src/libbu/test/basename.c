@@ -58,52 +58,27 @@ automatic_test(const char *input)
     if (BU_STR_EQUAL(res, ans))
 	printf("%24s -> %24s [PASSED]\n", input, res);
     else
-	printf("%24s -> %24s (should be: %s) [FAIL]\n", input, res, ans);
+	bu_exit(EXIT_FAILURE, "%24s -> %24s (should be: %s) [FAIL]\n", input, res, ans);
 
     bu_free(res, NULL);
 }
 
 
 int
-main(int ac, char *av[])
+main(int argc, char *argv[])
 {
-    char input[1000] = {0};
-
-    /* pre-define tests */
-    printf("Performing pre-defined tests:\n");
-    automatic_test("/usr/dir/file");
-    automatic_test("/usr/dir/");
-    automatic_test("/usr\\/dir");
-    automatic_test("/usr/.");
-    automatic_test("/usr/");
-    automatic_test("/usr");
-    automatic_test("usr");
-    automatic_test("/usr/some long/file");
-    automatic_test("/usr/some file");
-    automatic_test("C:/usr/some\\ drivepath");
-    automatic_test("/a test file");
-    automatic_test("another file");
-    automatic_test("C:\\Temp");
-    automatic_test("C:/Temp");
-    automatic_test("/");
-    automatic_test("/////");
-    automatic_test(".");
-    automatic_test("..");
-    automatic_test("...");
-    automatic_test("   ");
-    automatic_test("");
-    automatic_test(NULL);
-
-    /* user tests */
-    if (ac > 1) {
-	printf("Enter a string:\n");
-	bu_fgets(input, 1000, stdin);
-	if (strlen(input) > 0)
-	    input[strlen(input)-1] = '\0';
-	automatic_test(input);
+    /* If we don't have any args at all, test NULL and "" */
+    if (argc == 1) {
+	automatic_test("");
+	automatic_test(NULL);
     }
 
-    printf("%s: testing complete\n", av[0]);
+    /* If we have something, print it and test it */
+    if (argc > 1) {
+       printf("Testing string %s\n", argv[1]);
+       automatic_test(argv[1]);
+    }
+
     return 0;
 }
 
