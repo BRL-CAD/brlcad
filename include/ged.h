@@ -409,7 +409,6 @@ struct ged_rect_state {
 };
 
 
-
 struct ged_run_rt {
     struct bu_list l;
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -1905,6 +1904,10 @@ GED_EXPORT extern int ged_zap(struct ged *gedp, int argc, const char *argv[]);
  * Zoom the view in or out.
  */
 GED_EXPORT extern int ged_zoom(struct ged *gedp, int argc, const char *argv[]);
+/**
+ * Voxelize the specified objects
+ */
+GED_EXPORT extern int ged_voxelize(struct ged *gedp, int argc, const char *argv[]);
 
 
 GED_EXPORT extern ged_polygon *ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model);
@@ -1912,7 +1915,6 @@ GED_EXPORT extern ged_polygon *ged_clip_polygons(GedClipType op, ged_polygons *s
 GED_EXPORT extern int ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polygon_i, const char *sname);
 GED_EXPORT extern ged_polygon *ged_import_polygon(struct ged *gedp, const char *sname);
 GED_EXPORT extern fastf_t ged_find_polygon_area(ged_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size);
-
 
 
 /***************************************
@@ -1957,4 +1959,3 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-
