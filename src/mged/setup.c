@@ -371,6 +371,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"viewdir", cmd_ged_plain_wrapper, ged_viewdir},
     {"viewsize", cmd_size, GED_FUNC_PTR_NULL}, /* alias "size" for saveview scripts */
     {"vnirt", f_vnirt, GED_FUNC_PTR_NULL},
+    {"voxelize", cmd_ged_plain_wrapper, ged_voxelize},
     {"vquery_ray", f_vnirt, GED_FUNC_PTR_NULL},
 #if 0
     {"vrmgr", f_vrmgr, GED_FUNC_PTR_NULL},
