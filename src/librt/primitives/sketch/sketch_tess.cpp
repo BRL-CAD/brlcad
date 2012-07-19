@@ -263,8 +263,9 @@ carc_area(const struct carc_seg *csg, const struct rt_sketch_internal *sketch_ip
  *      the area of the circular segment
  */
 extern "C" void
-rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip) //, const struct bn_tol *tol)
+rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
+    int j;
     size_t i;
     fastf_t full_circle_area = 0.0;
 
@@ -295,7 +296,7 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip) //, const st
         case CURVE_LSEG_MAGIC:
             lsg = (struct line_seg *)lng;
             // calculate area for polygon edge
-            *area += V2CROSS(SKETCHPT(lsg->start), SKETCHPT(lsg->end));
+            *area += 0.5 * V2CROSS(SKETCHPT(lsg->start), SKETCHPT(lsg->end));
             break;
         case CURVE_CARC_MAGIC:
             csg = (struct carc_seg *)lng;
@@ -304,7 +305,7 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip) //, const st
                 full_circle_area += M_PI * DIST_PT_PT_SQ(SKETCHPT(csg->start), SKETCHPT(csg->end));
             } else {
                 // calculate area for polygon edge
-                *area += V2CROSS(SKETCHPT(csg->start), SKETCHPT(csg->end));
+                *area += 0.5 * V2CROSS(SKETCHPT(csg->start), SKETCHPT(csg->end));
                 // calculate area for circular segment
                 *area += carc_area(csg, sketch_ip);
             }
@@ -314,15 +315,15 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip) //, const st
             ON_2dPointArray bez_pts(bsg->degree + 1);
             std::vector<ON_Arc> carcs;
             // convert struct bezier_seg into ON_BezierCurve
-            for (i = 0; (int)i < bsg->degree + 1; i++) {
-                bez_pts.Append(SKETCHPT(bsg->ctl_points[i]));
+            for (j = 0; j < bsg->degree + 1; j++) {
+                bez_pts.Append(SKETCHPT(bsg->ctl_points[j]));
             }
             // approximate bezier curve by a set of circular arcs
             bezier_to_carcs(ON_BezierCurve(bez_pts), &tol, carcs);
             for (std::vector<ON_Arc>::iterator it = carcs.begin(); it != carcs.end(); ++it) {
-                // calculate area for polygon edges Start->End
-                *area += V2CROSS(it->StartPoint(), it->EndPoint());
-                // calculate area for circular segment
+                // calculate area for each polygon edge
+                *area += 0.5 * V2CROSS(it->StartPoint(), it->EndPoint());
+                // calculate area for each circular segment
                 *area += 0.5 * it->Radius() * it->Radius() * (it->AngleRadians() - sin(it->AngleRadians()));
             }
             }
@@ -332,7 +333,7 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip) //, const st
             break;
         }
     }
-    *area = fabs(*area) * 0.5 + full_circle_area;
+    *area = fabs(*area) + full_circle_area;
 }
 
 
