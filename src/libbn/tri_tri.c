@@ -7,13 +7,6 @@
  * Updated June 1999: removed the divisions -- a little faster now!
  * Updated October 1999: added {} to CROSS and SUB macros 
  *
- * Calculate whether two coplanar triangles intersect:
- *
- * int bn_coplanar_tri_tri(point_t V0, point_t V1, point_t V2, 
- * 			   point_t U0, point_t U1, point_t U2)
- * parameters: vertices of triangle 1: V0,V1,V2
- *             vertices of triangle 2: U0,U1,U2
- *
  * Calculate whether two triangles intersect:
  *
  * int bn_tri_tri_isect(point_t V0, point_t V1, point_t V2, 
@@ -140,27 +133,11 @@
   }                                         \
 }
 
-int bn_coplanar_tri_tri(point_t V0,point_t V1,point_t V2,
+int bn_coplanar_tri_tri(point_t N, point_t V0,point_t V1,point_t V2,
                      point_t U0,point_t U1,point_t U2)
 {
    fastf_t A[3];
    short i0,i1;
-   point_t E1, E2, N, N2;
- 
-   /* Unlike the vanilla tri/tri intersection routine, BRL-CAD will
-    * re-verify coplanar status of the triangles here to make the coplanar
-    * test a "stand-alone" function, accepting the slight performance
-    * hit the re-calculation imposes. */
-   VSUB2(E1,V1,V0);
-   VSUB2(E2,V2,V0);
-   VCROSS(N,E1,E2);
-   VSUB2(E1,U1,U0);
-   VSUB2(E2,U2,U0);
-   VCROSS(N2,E1,E2);
-   VCROSS(E2, N, N2);
-   if (!VNEAR_ZERO(E2, EPSILON)) {
-      return -1;     
-   }
  
    /* first project onto an axis-aligned plane, that maximizes the area */
    /* of the triangles, compute indices: i0,i1. */
@@ -237,7 +214,7 @@ int bn_coplanar_tri_tri(point_t V0,point_t V1,point_t V2,
         else \
         { \
                 /* triangles are coplanar */ \
-                return bn_coplanar_tri_tri(V0,V1,V2,U0,U1,U2); \
+                return bn_coplanar_tri_tri(N1,V0,V1,V2,U0,U1,U2); \
         } \
 }
 
@@ -501,7 +478,7 @@ int bn_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2,
   /* compute interval for triangle 1 */
   *coplanar=compute_intervals_isectline(V0,V1,V2,vp0,vp1,vp2,dv0,dv1,dv2,
 				       dv0dv1,dv0dv2,&isect1[0],&isect1[1],isectpointA1,isectpointA2);
-  if(*coplanar) return bn_coplanar_tri_tri(V0,V1,V2,U0,U1,U2);     
+  if(*coplanar) return bn_coplanar_tri_tri(N1,V0,V1,V2,U0,U1,U2);     
 
 
   /* compute interval for triangle 2 */
