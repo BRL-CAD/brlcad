@@ -22,17 +22,17 @@
 /**
  * Function to print values to Screen
  */
-void
+/*void
 printToScreen(genptr_t callBackData, int x, int y, int z, const char* a, fastf_t fill) {
     fastf_t *threshold = (fastf_t *)callBackData;
 
     printf("%f\t(%4d,%4d,%4d)\t%s\t%f\n", *threshold, x, y, z, a, fill);
 }
-
+*/
 /**
  * Function to print values to File
  */
-void
+HIDDEN void
 printToFile(genptr_t callBackData, int x, int y, int z, const char *a, fastf_t fill) {
     fastf_t *threshold = (fastf_t *)callBackData;
     FILE *fp;
