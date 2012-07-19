@@ -38,6 +38,17 @@
 include(CheckCCompilerFlag)
 CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
 
+# Utility macro checking for a specific arg in un-named arguments to a
+# macro.
+macro(CHECK_OPT prop result args)
+  set(${result} 0)
+  foreach(extraarg ${args})
+    if(${extraarg} STREQUAL "${prop}")
+      set(${result} 1)
+    endif(${extraarg} STREQUAL "${prop}")
+  endforeach(extraarg ${args})
+endmacro(CHECK_OPT)
+
 # Take a target definition and find out what definitions its libraries
 # are using
 macro(GET_TARGET_DEFINES targetname target_libs)
@@ -150,15 +161,26 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
 
   # Make sure we don't have a non-installed exec target.  If it is to
   # be installed, call the install function
-  set(EXEC_INSTALL 1)
-  foreach(extraarg ${ARGN})
-    if(${extraarg} MATCHES "NO_INSTALL" AND BRLCAD_ENABLE_STRICT)
-      set(EXEC_INSTALL 0)
-    endif(${extraarg} MATCHES "NO_INSTALL" AND BRLCAD_ENABLE_STRICT)
-  endforeach(extraarg ${ARGN})
-  if(EXEC_INSTALL)
+  CHECK_OPT("NO_INSTALL" NO_EXEC_INSTALL "${ARGN}")
+  if(NOT NO_EXEC_INSTALL)
     install(TARGETS ${execname} DESTINATION ${BIN_DIR})
-  endif(EXEC_INSTALL)
+  endif(NOT NO_EXEC_INSTALL)
+
+  # In some situations (usually testing executables) we want to
+  # be able to force the executable to remain in the local directory
+  # regardless of the global CMAKE_RUNTIME_OUTPUT_DIRECTORY setting.
+  # The LOCAL flag is used to denote such executables.
+  CHECK_OPT("LOCAL" LOCAL_EXEC "${ARGN}")
+  if(LOCAL_EXEC)
+    if(NOT CMAKE_CONFIGURATION_TYPES)
+      set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    else(NOT CMAKE_CONFIGURATION_TYPES)
+      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+	set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER} ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE})
+      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    endif(NOT CMAKE_CONFIGURATION_TYPES)
+  endif(LOCAL_EXEC)
 
   # Use the list of libraries to be linked into this target to 
   # accumulate the necessary definitions and compilation flags.
