@@ -91,6 +91,7 @@ make_biarc(const ON_BezierCurve& bezier)
 HIDDEN bool
 bezier_inflection(const ON_BezierCurve& bezier, fastf_t& inflection_pt)
 {
+    int sign;
     fastf_t t, step, crv;
     ON_3dVector d1, d2; // first derivative, second derivative
     ON_3dPoint tmp;     // not used, but needed by Ev2Der
@@ -99,10 +100,10 @@ bezier_inflection(const ON_BezierCurve& bezier, fastf_t& inflection_pt)
     bezier.Ev2Der(0, tmp, d1, d2);
     crv = CURVATURE(d1, d2);
     // maximum step size is 0.1, but decreases as |crv| -> 0 with minimum step
-    // size RT_LEN_TOL
-    step = fabs(crv) > 0.1 ? 0.1 : (fabs(crv) < RT_LEN_TOL ? RT_LEN_TOL : fabs(crv));
+    // size 0.01
+    step = fabs(crv) > 0.1 ? 0.1 : (fabs(crv) < 0.01 ? 0.01 : fabs(crv));
 
-    int sign = SIGN(crv);
+    sign = SIGN(crv);
 
     for (t = step; t <= 1.0; t += step) {
         bezier.Ev2Der(t, tmp, d1, d2);
@@ -112,7 +113,7 @@ bezier_inflection(const ON_BezierCurve& bezier, fastf_t& inflection_pt)
             inflection_pt = t;
             return true;
         }
-        step = fabs(crv) > 0.1 ? 0.1 : (fabs(crv) < RT_LEN_TOL ? RT_LEN_TOL : fabs(crv));
+        step = fabs(crv) > 0.1 ? 0.1 : (fabs(crv) < 0.01 ? 0.01 : fabs(crv));
     }
     return false;
 }
@@ -127,17 +128,24 @@ HIDDEN void
 approx_bezier(const ON_BezierCurve& bezier, const ON_Arc& biarc, const struct bn_tol *tol, std::vector<ON_Arc>& approx)
 {
     fastf_t t, step = 0.1;
-    fastf_t err, max_t, max_err = 0.0;
+    fastf_t crv, err, max_t, max_err = 0.0;
     ON_BezierCurve head, tail;
+    ON_3dPoint test;
+    ON_3dVector d1, d2;
 
     // walk the bezier curve at interval given by step
     for (t = 0; t <= 1.0; t += step) {
-        err = fabs((bezier.PointAt(t) - biarc.Center()).Length() - biarc.Radius());
+        bezier.Ev2Der(t, test, d1, d2);
+        err = fabs((test - biarc.Center()).Length() - biarc.Radius());
         // find the maximum point of deviation
         if (err > max_err) {
             max_t = t;
             max_err = err;
         }
+        crv = CURVATURE(d1, d2);
+        // maximum step size is 0.1, but decreases as |crv| -> 1 with minimum step
+        // size 0.01
+        step = 1.0 - fabs(crv) > 0.1 ? 0.1 : (1.0 - fabs(crv) < 0.01 ? 0.01 : 1.0 - fabs(crv));
     }
 
     if (max_err + VDIVIDE_TOL < tol->dist) {
@@ -224,6 +232,7 @@ bez_to_carcs_loop:
     }
     } while (!rest.empty());
 }
+
 
 #define SKETCHPT(idx) sketch_ip->verts[(idx)]
 
