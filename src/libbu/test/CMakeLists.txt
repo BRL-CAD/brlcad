@@ -26,7 +26,7 @@ add_test(bu_basename_sl_usr_sl_some_sp_file                 tester_basename "/us
 add_test(bu_basename_C_c__sl_usr_sl_some_bsl__sp_drivepath  tester_basename "C:/usr/some\\\\ drivepath")
 add_test(bu_basename_sl_a_sp_test_sp_file                   tester_basename "/a test file")
 add_test(bu_basename_another_sp_file                        tester_basename "another file")
-add_test(bu_basename_C_c__bsl__bsl_Temp                     tester_basename "C:\\\\Temp")
+add_test(bu_basename_C_c__bsl__Temp                         tester_basename "C:\\\\Temp")
 add_test(bu_basename_C_c__sl_Temp                           tester_basename "C:/Temp")
 add_test(bu_basename_sl_                                    tester_basename "/")
 add_test(bu_basename_sl__sl__sl__sl__sl_                    tester_basename "/////")
