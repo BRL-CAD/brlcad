@@ -3029,6 +3029,10 @@ surface_surface_intersection(const ON_Surface* surfA,
 	bu_log("%d %d\n", h, tmp_pairs.size());*/
     }
 
+    if (!curvept.Count()) {
+	    delete brep;
+	    return 0;
+	}
     // Third step: Fit the points in curvept into NURBS curves.
     // Here we use polyline approximation.
     // TODO: Find a better fitting algorithm unless this is good enough.
