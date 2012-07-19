@@ -1853,23 +1853,23 @@ package provide Archer 1.0
     }
 
     switch -- $mDefaultBindingMode \
-	$OBJECT_ROTATE_MODE { \
-				  beginObjRotate
+	$OBJECT_ROTATE_MODE {
+	    beginObjRotate
 	} \
-	$OBJECT_TRANSLATE_MODE { \
-				     beginObjTranslate
+	$OBJECT_TRANSLATE_MODE {
+	    beginObjTranslate
 	} \
-	$OBJECT_SCALE_MODE { \
-				 beginObjScale
+	$OBJECT_SCALE_MODE {
+	    beginObjScale
 	} \
-	$OBJECT_CENTER_MODE { \
-				  if {$saved_mode == $OBJECT_TRANSLATE_MODE} { \
-										   set mDefaultBindingMode $saved_mode
-				      beginObjTranslate
-				  } else { \
-					       beginObjCenter
-				  } \
-			      }
+	$OBJECT_CENTER_MODE {
+	    if {$saved_mode == $OBJECT_TRANSLATE_MODE} {
+		set mDefaultBindingMode $saved_mode
+		beginObjTranslate
+	    } else {
+		beginObjCenter
+	    }
+	}
 }
 
 
