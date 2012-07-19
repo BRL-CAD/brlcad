@@ -90,12 +90,21 @@ set(EXPRESS_SOURCES
   hash.c
   memory.c
   object.c
-  inithook.c
   express.c
   )
 
+# TODO
+# Currently, fedex.c provides the main() for multiple programs. These programs
+# provide custom behavior by defining EXPRESSinit_init (called by fedex.c's
+# main) which sets other callbacks.
+#
+# What would be better is to remove the call to EXPRESSinit_init and turn
+# fedex.c's main() into an express library function. That way, programs only
+# need to link against express (not fedex.o too) and they can do initialization
+# in their own main (instead of in a local EXPRESSinit_init definition).
 SET(CHECK_EXPRESS_SOURCES
   fedex.c
+  inithook.c
   )
 
 SET(EXPRESS_PRIVATE_HDRS
