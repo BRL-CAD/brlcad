@@ -80,6 +80,14 @@ make_biarc(const ON_BezierCurve& bezier)
 }
 
 
+/* NOTE: MINSTEP and MAXSTEP were determined by experimentation. If MINSTEP is
+ * much lower (ie. 0.00001), approx_bezier() slows significantly on curves with
+ * high curvature over a large part of its domain. MAXSTEP represents a step
+ * size of 1/10th the domain of a Bezier curve, and MINSTEP represents 1/10000th.
+ */
+#define MINSTEP 0.0001
+#define MAXSTEP 0.1
+
 #define POW3(x) ((x)*(x)*(x))
 #define SIGN(x) ((x) >= 0 ? 1 : -1)
 #define CURVATURE(d1, d2) (V2CROSS((d1), (d2)) / POW3((d1).Length()))
@@ -99,9 +107,8 @@ bezier_inflection(const ON_BezierCurve& bezier, fastf_t& inflection_pt)
     // calculate curvature at t=0
     bezier.Ev2Der(0, tmp, d1, d2);
     crv = CURVATURE(d1, d2);
-    // maximum step size is 0.1, but decreases as |crv| -> 0 with minimum step
-    // size 0.01
-    step = fabs(crv) > 0.1 ? 0.1 : (fabs(crv) < 0.01 ? 0.01 : fabs(crv));
+    // step size decreases as |crv| -> 0
+    step = fabs(crv) > MAXSTEP ? MAXSTEP : (fabs(crv) < MINSTEP ? MINSTEP : fabs(crv));
 
     sign = SIGN(crv);
 
@@ -113,7 +120,7 @@ bezier_inflection(const ON_BezierCurve& bezier, fastf_t& inflection_pt)
             inflection_pt = t;
             return true;
         }
-        step = fabs(crv) > 0.1 ? 0.1 : (fabs(crv) < 0.01 ? 0.01 : fabs(crv));
+        step = fabs(crv) > MAXSTEP ? MAXSTEP : (fabs(crv) < MINSTEP ? MINSTEP : fabs(crv));
     }
     return false;
 }
@@ -143,9 +150,8 @@ approx_bezier(const ON_BezierCurve& bezier, const ON_Arc& biarc, const struct bn
             max_err = err;
         }
         crv = CURVATURE(d1, d2);
-        // maximum step size is 0.1, but decreases as |crv| -> 1 with minimum step
-        // size 0.01
-        step = 1.0 - fabs(crv) > 0.1 ? 0.1 : (1.0 - fabs(crv) < 0.01 ? 0.01 : 1.0 - fabs(crv));
+        // step size decreases as |crv| -> 1
+        step = 1.0 - fabs(crv) > MAXSTEP ? MAXSTEP : (1.0 - fabs(crv) < MINSTEP ? MINSTEP : 1.0 - fabs(crv));
     }
 
     if (max_err + VDIVIDE_TOL < tol->dist) {
@@ -267,7 +273,6 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     int j;
     size_t i;
-    fastf_t full_circle_area = 0.0;
 
     struct rt_sketch_internal *sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(sketch_ip);
@@ -279,7 +284,7 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     tol.dist_sq = RT_DOT_TOL * RT_DOT_TOL;
 
     // a sketch with no curves has no area
-    if (crv.count == 0) {
+    if (UNLIKELY(crv.count == 0)) {
         return;
     }
 
@@ -288,9 +293,8 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
         const struct line_seg *lsg;
         const struct carc_seg *csg;
         const struct bezier_seg *bsg;
-        const uint32_t *lng;
 
-        lng = (uint32_t *)crv.segment[i];
+        const uint32_t *lng = (uint32_t *)crv.segment[i];
 
         switch (*lng) {
         case CURVE_LSEG_MAGIC:
@@ -302,7 +306,7 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
             csg = (struct carc_seg *)lng;
             if (csg->radius < 0) {
                 // calculate full circle area
-                full_circle_area += M_PI * DIST_PT_PT_SQ(SKETCHPT(csg->start), SKETCHPT(csg->end));
+                *area += M_PI * DIST_PT_PT_SQ(SKETCHPT(csg->start), SKETCHPT(csg->end));
             } else {
                 // calculate area for polygon edge
                 *area += 0.5 * V2CROSS(SKETCHPT(csg->start), SKETCHPT(csg->end));
@@ -333,7 +337,7 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
             break;
         }
     }
-    *area = fabs(*area) + full_circle_area;
+    *area = fabs(*area);
 }
 
 
