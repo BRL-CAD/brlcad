@@ -1487,7 +1487,13 @@ namespace eval ArcherCore {
 
     set rmode [lindex $rdata 0]
     set rtrans [lindex $rdata 1]
-    gedCmd draw -m$rmode -x$rtrans $obj
+    set obj [file tail $obj]
+
+    foreach item [gedCmd report 0] {
+	if {[lsearch [split $item /] $obj] != -1} {
+	    gedCmd draw -m$rmode -x$rtrans $item
+	}
+    }
 }
 
 ::itcl::body ArcherCore::redrawWho {} {
