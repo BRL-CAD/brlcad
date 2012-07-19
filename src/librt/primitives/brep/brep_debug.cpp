@@ -2586,7 +2586,7 @@ int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern
     plotsurface(surf1, vbp, 100, 10, PURERED);
     plotsurface(surf2, vbp, 100, 10, BLUE);
     for (int k = 0; k < curve.Count(); k++) {
-	plotcurve(*(curve[k]), vbp, 100, GREEN);
+	plotcurve(*(curve[k]), vbp, 1000, GREEN);
 	delete curve[k];
     }
 
