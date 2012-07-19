@@ -53,4 +53,4 @@ include_directories(
     ${SCL_SOURCE_DIR}/src/clutils
 )
 
-SCL_ADDLIB(stepcore "${LIBSTEPCORE_SRCS}" "express;steputils;stepdai;base")
+SCL_ADDLIB(stepcore "${LIBSTEPCORE_SRCS}" "express steputils stepdai base")

@@ -31,6 +31,6 @@ include_directories(
     ${SCL_SOURCE_DIR}/src/base
 )
 
-SCL_ADDEXEC(fedex_plus "${fedex_plus_SOURCES}" "libexppp;express;base")
+SCL_ADDEXEC(fedex_plus "${fedex_plus_SOURCES}" "libexppp express base")
 
 add_dependencies( fedex_plus version_string )
