@@ -39,16 +39,15 @@ automatic_test(const char *input)
     char buf_input[1000];
     char *res = NULL;
 
+#ifdef HAVE_BASENAME
     if (input)
 	bu_strlcpy(buf_input, input, strlen(input)+1);
 
-#ifdef HAVE_BASENAME
     /* build UNIX 'basename' command */
     if (!input)
 	ans = basename(NULL);
     else
 	ans = basename(buf_input);
-#endif
 
     if (!input)
 	res = bu_basename(NULL);
@@ -59,8 +58,11 @@ automatic_test(const char *input)
 	printf("%24s -> %24s [PASSED]\n", input, res);
     else
 	bu_exit(EXIT_FAILURE, "%24s -> %24s (should be: %s) [FAIL]\n", input, res, ans);
-
+    
     bu_free(res, NULL);
+#else
+    printf("BASENAME not available on this platform\n");
+#endif
 }
 
 
