@@ -53,6 +53,7 @@ struct output {
     std::vector<std::string> non_geometries;
 };
 
+
 /**
  * This structure has fields related to the representation of a graph with the help of the Adaptagrams library.
  */
@@ -273,6 +274,71 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
 
 
 /**
+ * Method that figures out the type of an object, constructs its corresponding shape in a graph
+ * and adds it to the corresponding list of names.
+ */
+void
+put_me_in_a_bucket(struct directory *dp, struct directory *ndp, struct db_i *dbip, struct bu_hash_tbl *objects, struct output *o, struct _ged_dag_data *dag)
+{
+    struct bu_hash_entry *prev = NULL;
+    unsigned long idx;
+    unsigned int object_id;
+    struct bu_hash_entry *hsh_entry;
+    struct bu_vls dp_name_vls = BU_VLS_INIT_ZERO;
+
+    bu_vls_sprintf(&dp_name_vls, "%s%s", "", dp->d_namep);
+
+    if(dp->d_flags & RT_DIR_SOLID) {
+        bu_log("Adding PRIMITIVE object [%s]\n", bu_vls_addr(&dp_name_vls));
+
+        /* Check if this solid is in the objects list. */
+        prev = NULL;
+        hsh_entry = bu_find_hash_entry(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
+
+        if (hsh_entry) {
+            object_id = atoi((const char*)hsh_entry->value);
+
+            o->primitives.reserve(o->primitives.size() + 1);
+            std::string name((const char *)dp->d_namep);
+            o->primitives.push_back(name);
+
+            /* Check if a shape was already created for this subnode. */
+            bool shape_exists = false;
+            ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
+            for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
+                if ((*it)->id() == object_id) {
+                    /* Don't create another shape because it already exists a corresponding one. */
+                    shape_exists = true;
+                    break;
+                }
+            }
+            if (!shape_exists) {
+                /* Create a shape for the current node of the subtree */
+                dag->object_nr++;
+                add_object(dag, object_id);
+                dag->router->processTransaction();
+            }
+        }
+    } else if (dp->d_flags & RT_DIR_COMB) {
+        bu_log("Adding COMB object [%s]\n", bu_vls_addr(&dp_name_vls));
+        dag_comb(dbip, ndp, o, dag, objects);
+    } else {
+        bu_log("Something else: [%s]\n", bu_vls_addr(&dp_name_vls));
+        prev = NULL;
+        hsh_entry = bu_find_hash_entry(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
+
+        if (hsh_entry) {
+            o->non_geometries.reserve(o->non_geometries.size() + 1);
+            std::string name((const char *)dp->d_namep);
+            o->non_geometries.push_back(name);
+        }
+    }
+
+    bu_vls_free(&dp_name_vls);
+}
+
+
+/**
  * Add the list of objects in the master hash table "objects".
  */
 int
@@ -282,13 +348,11 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
     struct bu_vls dp_name_vls = BU_VLS_INIT_ZERO;
     int i, object_nr = 0;
     struct output o;
-    unsigned int primitive_id;
     struct bu_hash_tbl *objects;
     struct bu_hash_entry *hsh_entry1;
     struct bu_hash_entry *prev = NULL;
     unsigned long idx;
     struct db_i *dbip = gedp->ged_wdbp->dbip;
-    Avoid::ShapeRef *shapeRef = NULL;
 
     /* Create the master "objects" hash table. It will have at most 64 entries. */
     objects = bu_create_hash_tbl(1);
@@ -345,46 +409,7 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
             bu_vls_sprintf(&dp_name_vls, "%s%s", "", dp->d_namep);
             ndp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&dp_name_vls), 1);
             if (ndp) {
-                if(dp->d_flags & RT_DIR_SOLID) {
-                    bu_log("Adding PRIMITIVE object [%s]\n", bu_vls_addr(&dp_name_vls));
-
-                    /* Check if this solid is in the objects list. */
-                    prev = NULL;
-                    hsh_entry1 = bu_find_hash_entry(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
-
-                    if (hsh_entry1) {
-                        primitive_id = atoi((const char*)hsh_entry1->value);
-
-                        o.primitives.reserve(o.primitives.size() + 1);
-                        std::string name((const char *)dp->d_namep);
-                        o.primitives.push_back(name);
-
-                        /* Check if a shape was already created for this subnode. */
-                        bool shape_exists = false;
-                        ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
-                        for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
-                            if ((*it)->id() == primitive_id) {
-                                /* Don't create another shape because it already exists a corresponding one.
-                                 * Get a reference to the shape that corresponds to the current node of the subtree.
-                                 */
-                                shapeRef = dynamic_cast<ShapeRef *>(*it);
-                                shape_exists = true;
-                                break;
-                            }
-                        }
-                        if (!shape_exists) {
-                            /* Create a shape for the current node of the subtree */
-                            dag->object_nr++;
-                            shapeRef = add_object(dag, primitive_id);
-                            dag->router->processTransaction();
-                        }
-                    }
-                } else if (dp->d_flags & RT_DIR_COMB) {
-                    bu_log("Adding COMB object [%s]\n", bu_vls_addr(&dp_name_vls));
-                    dag_comb(dbip, ndp, &o, dag, objects);
-                } else {
-                    bu_log("Something else: [%s]\n", bu_vls_addr(&dp_name_vls));
-                }
+                put_me_in_a_bucket(dp, ndp, dbip, objects, &o, dag);
             } else {
                 bu_log("ERROR: Unable to locate [%s] within input database, skipping.\n",  bu_vls_addr(&dp_name_vls));
             }
@@ -397,7 +422,6 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
 
     /* Free memory. */
     bu_vls_free(&dp_name_vls);
-    dag->router->deleteShape(shapeRef);
     free_hash_values(objects);
     bu_hash_tbl_free(objects);
 
@@ -407,7 +431,6 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
 
 #define PARALLEL BRLCAD_PARALLEL
 #undef BRLCAD_PARALLEL
-
 
 #endif
 
