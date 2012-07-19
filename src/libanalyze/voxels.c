@@ -34,7 +34,7 @@
 /**
  * Function to assign a new region to a voxel.
  */
-void
+HIDDEN void
 setRegionName(struct bu_vls **vp, const char **nameSource, const char **nameDestination) {
     size_t newlen;
 
@@ -60,7 +60,7 @@ setRegionName(struct bu_vls **vp, const char **nameSource, const char **nameDest
  * The 'segs' segment list is unused in this example.
  */
 int
-hit(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs))
+hit_voxelize(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs))
 {
     struct partition *pp;
     struct rayInfo *voxelHits;
@@ -276,7 +276,7 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*prin
 	    ap.a_onehit = 0;
 	    VSET(ap.a_ray.r_dir, 1.0, 0.0, 0.0);
 
-	    ap.a_hit = hit;
+	    ap.a_hit = hit_voxelize;
 	    ap.a_miss = NULL;
 	    ap.a_uptr = &voxelHits;
 
