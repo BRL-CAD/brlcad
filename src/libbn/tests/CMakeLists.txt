@@ -10,16 +10,14 @@ BRLCAD_ADDEXEC(tester_bn_tri_tri_isect bn_tri_tri_isect.c "libbu;libbn" NO_INSTA
 # flag tells the function whether or not to require non-zero area for an
 # overlap in coplanar cases.
 
-add_test(bn_coplanar_tri_tri_isect_null   tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  0  0) 
-add_test(bn_coplanar_tri_tri_isect_vertex tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        0  1)
-add_test(bn_coplanar_tri_tri_isect_edge   tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        0  1)
-add_test(bn_coplanar_tri_tri_isect_full   tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    0  1) 
-add_test(bn_coplanar_tri_tri_isect_null   tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  1  0) 
-add_test(bn_coplanar_tri_tri_isect_vertex tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        1  0)
-add_test(bn_coplanar_tri_tri_isect_edge   tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        1  0)
-add_test(bn_coplanar_tri_tri_isect_full   tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    1  1) 
-
-
+add_test(bn_coplanar_tri_tri_isect_null_noarea   tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  0  0) 
+add_test(bn_coplanar_tri_tri_isect_vertex_noarea tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        0  1)
+add_test(bn_coplanar_tri_tri_isect_edge_noarea   tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        0  1)
+add_test(bn_coplanar_tri_tri_isect_full_noarea   tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    0  1) 
+add_test(bn_coplanar_tri_tri_isect_null_area   tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  1  0) 
+add_test(bn_coplanar_tri_tri_isect_vertex_area tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        1  0)
+add_test(bn_coplanar_tri_tri_isect_edge_area   tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        1  0)
+add_test(bn_coplanar_tri_tri_isect_full_area   tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    1  1) 
 
 # For tester_bn_tri_tri_isect, the input format is as follows:
 #
