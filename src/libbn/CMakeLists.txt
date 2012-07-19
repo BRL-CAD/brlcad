@@ -47,6 +47,8 @@ ADD_MAN_PAGES(3 libplot3.3)
 
 BRLCAD_ADDEXEC(bntester bntester.c "libbu;libbn" NO_INSTALL)
 
+add_subdirectory(tests)
+
 CMAKEFILES(
   Makefile.am
   README

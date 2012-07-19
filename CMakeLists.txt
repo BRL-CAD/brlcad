@@ -1279,8 +1279,6 @@ if(BRLCAD_FLAGS_DEBUG)
   CONFIG_H_APPEND(BRLCAD "#define DEBUG 1\n")
 endif(BRLCAD_FLAGS_DEBUG)
 
-
-
 # Build with compiler warning flags
 set(BRLCAD_ENABLE_COMPILER_WARNINGS_ALIASES
   ENABLE_WARNINGS
@@ -1767,6 +1765,11 @@ if(MSVC)
   set(CMAKE_SHARED_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
   set(CMAKE_MODULE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
 endif(MSVC)
+
+# Enable CTest Testing support - this is done after src/other is
+# added to avoid incorporating src/other CTests into BRL-CAD's own
+# testing.  TODO - probably should control this with an option.
+ENABLE_TESTING()
 
 # We've done the toplevel configure steps, now add the subdirectories
 add_subdirectory(src)
