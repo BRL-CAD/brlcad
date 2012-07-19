@@ -7,6 +7,16 @@
  * Updated June 1999: removed the divisions -- a little faster now!
  * Updated October 1999: added {} to CROSS and SUB macros 
  *
+ * Calculate whether two coplanar triangles intersect:
+ *
+ * int bn_coplanar_tri_tri_isect(point_t V0, point_t V1, point_t V2, 
+ *                               point_t U0, point_t U1, point_t U2, 
+ *                               int area_flag)
+ * parameters: vertices of triangle 1: V0,V1,V2
+ *             vertices of triangle 2: U0,U1,U2
+ *             flag to tell function to require non-zero area: area_flag
+ * result    : returns 1 if the triangles intersect, otherwise 0
+ *
  * Calculate whether two triangles intersect:
  *
  * int bn_tri_tri_isect(point_t V0, point_t V1, point_t V2, 
@@ -32,15 +42,14 @@
  * The changes made for BRL-CAD integration were to use the point_t
  * data type instead of fastf_t arrays and use vmath's vector macros 
  * instead of the locally defined versions.  The function names were 
- * changed to bn_coplanar_tri_tri, bn_tri_tri_isect, and 
- * bn_tri_tri_isect_with_line.
+ * changed to bn_tri_tri_isect and bn_tri_tri_isect_with_line.
  * A number of minor changes were made for C89 compatibility.  BRL-CAD's
  * NEAR_ZERO macro was used in place of exact floating point comparisons.
  *
  */
 
 #include <math.h>
-#include <vmath.h>
+#include <bn.h>
 #define FABS(x) fabs(x)        /* implement as is fastest on your machine */
 
 /* if USE_EPSILON_TEST is true then we do a check:
@@ -95,9 +104,30 @@
     }                                                 \
   }
 
+#define EDGE_EDGE_TEST_AREA(V0,U0,U1)                 \
+  Bx=U0[i0]-U1[i0];                                   \
+  By=U0[i1]-U1[i1];                                   \
+  Cx=V0[i0]-U0[i0];                                   \
+  Cy=V0[i1]-U0[i1];                                   \
+  f=Ay*Bx-Ax*By;                                      \
+  d=By*Cx-Bx*Cy;                                      \
+  if((f>0 && d>0 && d<f) || (f<0 && d<0 && d>f))      \
+  {                                                   \
+    e=Ax*Cy-Ay*Cx;                                    \
+    if(f>0)                                           \
+    {                                                 \
+      if(e>0 && e<f) return 1;                        \
+    }                                                 \
+    else                                              \
+    {                                                 \
+      if(e<0 && e>f) return 1;                        \
+    }                                                 \
+  }
+
+
 #define EDGE_AGAINST_TRI_EDGES(V0,V1,U0,U1,U2) \
 {                                              \
-  fastf_t Ax,Ay,Bx,By,Cx,Cy,e,d,f;               \
+  fastf_t Ax,Ay,Bx,By,Cx,Cy,e,d,f;             \
   Ax=V1[i0]-V0[i0];                            \
   Ay=V1[i1]-V0[i1];                            \
   /* test edge U0,U1 against V0,V1 */          \
@@ -106,6 +136,19 @@
   EDGE_EDGE_TEST(V0,U1,U2);                    \
   /* test edge U2,U1 against V0,V1 */          \
   EDGE_EDGE_TEST(V0,U2,U0);                    \
+}
+
+#define EDGE_AGAINST_TRI_EDGES_AREA(V0,V1,U0,U1,U2) \
+{                                                   \
+  fastf_t Ax,Ay,Bx,By,Cx,Cy,e,d,f;                  \
+  Ax=V1[i0]-V0[i0];                                 \
+  Ay=V1[i1]-V0[i1];                                 \
+  /* test edge U0,U1 against V0,V1 */               \
+  EDGE_EDGE_TEST_AREA(V0,U0,U1);                    \
+  /* test edge U1,U2 against V0,V1 */               \
+  EDGE_EDGE_TEST_AREA(V0,U1,U2);                    \
+  /* test edge U2,U1 against V0,V1 */               \
+  EDGE_EDGE_TEST_AREA(V0,U2,U0);                    \
 }
 
 #define POINT_IN_TRI(V0,U0,U1,U2)           \
@@ -133,7 +176,87 @@
   }                                         \
 }
 
-int bn_coplanar_tri_tri(point_t N, point_t V0,point_t V1,point_t V2,
+
+int bn_coplanar_tri_tri_isect(point_t V0,point_t V1,point_t V2,
+                              point_t U0,point_t U1,point_t U2, int area_flag)
+{
+   int ret;
+   fastf_t A[3];
+   short i0,i1;
+   point_t E1, E2, N;
+   plane_t P1, P2;
+   static const struct bn_tol tol = {
+      BN_TOL_MAGIC, EPSILON, EPSILON*EPSILON, 1e-6, 1-1e-6
+   };
+   
+   /* compute plane of triangle (V0,V1,V2) */
+   ret = bn_mk_plane_3pts(P1, V0, V1, V2, &tol);
+   if (ret) return -1;
+   /* compute plane of triangle (U0,U1,U2) */
+   ret = bn_mk_plane_3pts(P2, U0, U1, U2, &tol);
+   if (ret) return -1;
+   /* verify that triangles are coplanar */ 
+   if (bn_coplanar(P1,P2,&tol) <= 0) return -1; 
+
+   /* first project onto an axis-aligned plane, that maximizes the area */
+   /* of the triangles, compute indices: i0,i1. */
+   VSUB2(E1,V1,V0);
+   VSUB2(E2,V2,V0);
+   VCROSS(N,E1,E2);
+
+   A[0]=FABS(N[0]);
+   A[1]=FABS(N[1]);
+   A[2]=FABS(N[2]);
+   if(A[0]>A[1])
+   {
+      if(A[0]>A[2])
+      {
+          i0=1;      /* A[0] is greatest */
+          i1=2;
+      }
+      else
+      {
+          i0=0;      /* A[2] is greatest */
+          i1=1;
+      }
+   }
+   else   /* A[0]<=A[1] */
+   {
+      if(A[2]>A[1])
+      {
+          i0=0;      /* A[2] is greatest */
+          i1=1;
+      }
+      else
+      {
+          i0=0;      /* A[1] is greatest */
+          i1=2;
+      }
+    }
+
+    /* test all edges of triangle 1 against the edges of triangle 2 */
+    if(!area_flag) {
+      EDGE_AGAINST_TRI_EDGES(V0,V1,U0,U1,U2);
+      EDGE_AGAINST_TRI_EDGES(V1,V2,U0,U1,U2);
+      EDGE_AGAINST_TRI_EDGES(V2,V0,U0,U1,U2);
+    } else {
+      EDGE_AGAINST_TRI_EDGES_AREA(V0,V1,U0,U1,U2);
+      EDGE_AGAINST_TRI_EDGES_AREA(V1,V2,U0,U1,U2);
+      EDGE_AGAINST_TRI_EDGES_AREA(V2,V0,U0,U1,U2);
+    }
+
+    /* finally, test if tri1 is totally contained in tri2 or vice versa */
+    POINT_IN_TRI(V0,U0,U1,U2);
+    POINT_IN_TRI(U0,V0,V1,V2);
+
+    return 0;
+}
+
+
+/* Internal coplanar test used by more general routines.  Separate from
+ * the external function because this version of the test can assume
+ * coplanar and does not need to test for area-only intersections. */
+int coplanar_tri_tri(point_t N, point_t V0,point_t V1,point_t V2,
                      point_t U0,point_t U1,point_t U2)
 {
    fastf_t A[3];
@@ -184,7 +307,6 @@ int bn_coplanar_tri_tri(point_t N, point_t V0,point_t V1,point_t V2,
 }
 
 
-
 #define NEWCOMPUTE_INTERVALS(VV0,VV1,VV2,D0,D1,D2,D0D1,D0D2,A,B,C,X0,X1) \
 { \
         if(D0D1>0.0f) \
@@ -214,10 +336,9 @@ int bn_coplanar_tri_tri(point_t N, point_t V0,point_t V1,point_t V2,
         else \
         { \
                 /* triangles are coplanar */ \
-                return bn_coplanar_tri_tri(N1,V0,V1,V2,U0,U1,U2); \
+                return coplanar_tri_tri(N1,V0,V1,V2,U0,U1,U2); \
         } \
 }
-
 
 
 int bn_tri_tri_isect(point_t V0,point_t V1,point_t V2,
@@ -478,7 +599,7 @@ int bn_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2,
   /* compute interval for triangle 1 */
   *coplanar=compute_intervals_isectline(V0,V1,V2,vp0,vp1,vp2,dv0,dv1,dv2,
 				       dv0dv1,dv0dv2,&isect1[0],&isect1[1],isectpointA1,isectpointA2);
-  if(*coplanar) return bn_coplanar_tri_tri(N1,V0,V1,V2,U0,U1,U2);     
+  if(*coplanar) return coplanar_tri_tri(N1,V0,V1,V2,U0,U1,U2);     
 
 
   /* compute interval for triangle 2 */

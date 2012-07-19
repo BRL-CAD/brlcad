@@ -1682,6 +1682,14 @@ BN_EXPORT extern struct bn_tabdata *bn_tabdata_mk_linear_filter(const struct bn_
  * Journal of Graphics Tools, 2(2), 1997
  */
 
+BN_EXPORT extern int bn_coplanar_tri_tri_isect(point_t V0,
+                                               point_t V1,  
+                                               point_t V2,
+                                               point_t U0,
+                                               point_t U1,
+                                               point_t U2,
+                                               int area_flag);
+
 BN_EXPORT extern int bn_tri_tri_isect(point_t V0,
                                       point_t V1,
                                       point_t V2,
