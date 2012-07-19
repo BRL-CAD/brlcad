@@ -17,7 +17,7 @@ if(BORLAND)
     add_definitions( -D__STDC__ )
 endif()
 
-SCL_ADDLIB(libexppp "${LIBEXPPP_SOURCES}" "express;base")
+SCL_ADDLIB(libexppp "${LIBEXPPP_SOURCES}" "express base")
 set_target_properties(libexppp PROPERTIES PREFIX "")
 
-SCL_ADDEXEC(exppp "${EXPPP_SOURCES}" "libexppp;express")
+SCL_ADDEXEC(exppp "${EXPPP_SOURCES}" "libexppp express base")
