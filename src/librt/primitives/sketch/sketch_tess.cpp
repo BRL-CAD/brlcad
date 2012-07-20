@@ -21,9 +21,8 @@
 /** @{ */
 /** @file primitives/sketch/sketch_tess.c
  *
- * Provide support for tesselation of sketch primitive
- * including approximation of bezier/NURBS curves by
- * circular arcs
+ * An extension of sketch.c for functions using the openNURBS library. Includes
+ * support for approximation of Bezier curves using circular arcs.
  *
  */
 /** @} */
@@ -134,7 +133,7 @@ bezier_inflection(const ON_BezierCurve& bezier, fastf_t& inflection_pt)
 HIDDEN void
 approx_bezier(const ON_BezierCurve& bezier, const ON_Arc& biarc, const struct bn_tol *tol, std::vector<ON_Arc>& approx)
 {
-    fastf_t t, step = 0.1;
+    fastf_t t, step;
     fastf_t crv, err, max_t, max_err = 0.0;
     ON_BezierCurve head, tail;
     ON_3dPoint test;
@@ -242,16 +241,6 @@ bez_to_carcs_loop:
 
 #define SKETCHPT(idx) sketch_ip->verts[(idx)]
 
-HIDDEN inline fastf_t
-carc_area(const struct carc_seg *csg, const struct rt_sketch_internal *sketch_ip)
-{
-    fastf_t theta, side_ratio;
-    side_ratio = DIST_PT_PT(SKETCHPT(csg->start), SKETCHPT(csg->end)) / (2.0 * csg->radius);
-    theta = asin(side_ratio);
-    return 0.5 * csg->radius * csg->radius * (theta - side_ratio);
-}
-
-
 /**
  * R T _ S K E T C H _ S U R F _ A R E A
  *
@@ -273,20 +262,21 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
     int j;
     size_t i;
+    fastf_t poly_area = 0, carc_area = 0;
 
+    struct bn_tol tol;
     struct rt_sketch_internal *sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(sketch_ip);
     struct rt_curve crv = sketch_ip->curve;
-
-    struct bn_tol tol;
-    tol.magic = BN_TOL_MAGIC;
-    tol.dist = RT_DOT_TOL;
-    tol.dist_sq = RT_DOT_TOL * RT_DOT_TOL;
 
     // a sketch with no curves has no area
     if (UNLIKELY(crv.count == 0)) {
         return;
     }
+
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = RT_DOT_TOL;
+    tol.dist_sq = RT_DOT_TOL * RT_DOT_TOL;
 
     // iterate through each curve segment in the sketch
     for (i = 0; i < crv.count; i++) {
@@ -300,18 +290,21 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
         case CURVE_LSEG_MAGIC:
             lsg = (struct line_seg *)lng;
             // calculate area for polygon edge
-            *area += 0.5 * V2CROSS(SKETCHPT(lsg->start), SKETCHPT(lsg->end));
+            poly_area += V2CROSS(SKETCHPT(lsg->start), SKETCHPT(lsg->end));
             break;
         case CURVE_CARC_MAGIC:
             csg = (struct carc_seg *)lng;
             if (csg->radius < 0) {
                 // calculate full circle area
-                *area += M_PI * DIST_PT_PT_SQ(SKETCHPT(csg->start), SKETCHPT(csg->end));
+                carc_area += M_PI * DIST_PT_PT_SQ(SKETCHPT(csg->start), SKETCHPT(csg->end));
             } else {
+                fastf_t theta, side_ratio;
                 // calculate area for polygon edge
-                *area += 0.5 * V2CROSS(SKETCHPT(csg->start), SKETCHPT(csg->end));
+                poly_area += V2CROSS(SKETCHPT(csg->start), SKETCHPT(csg->end));
                 // calculate area for circular segment
-                *area += carc_area(csg, sketch_ip);
+                side_ratio = DIST_PT_PT(SKETCHPT(csg->start), SKETCHPT(csg->end)) / (2.0 * csg->radius);
+                theta = asin(side_ratio);
+                carc_area += 0.5 * csg->radius * csg->radius * (theta - side_ratio);
             }
             break;
         case CURVE_BEZIER_MAGIC: {
@@ -326,9 +319,9 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
             bezier_to_carcs(ON_BezierCurve(bez_pts), &tol, carcs);
             for (std::vector<ON_Arc>::iterator it = carcs.begin(); it != carcs.end(); ++it) {
                 // calculate area for each polygon edge
-                *area += 0.5 * V2CROSS(it->StartPoint(), it->EndPoint());
+                poly_area += V2CROSS(it->StartPoint(), it->EndPoint());
                 // calculate area for each circular segment
-                *area += 0.5 * it->Radius() * it->Radius() * (it->AngleRadians() - sin(it->AngleRadians()));
+                carc_area += 0.5 * it->Radius() * it->Radius() * (it->AngleRadians() - sin(it->AngleRadians()));
             }
             }
             break;
@@ -337,7 +330,7 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
             break;
         }
     }
-    *area = fabs(*area);
+    *area = 0.5 * fabs(poly_area) + carc_area;
 }
 
 
