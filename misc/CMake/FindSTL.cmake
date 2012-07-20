@@ -44,13 +44,6 @@
 #
 #=============================================================================
 
-if(NOT STDCXX_LIBRARIES)
-  set(STDCXX_LIBRARIES "-lstdc++")
-endif(NOT STDCXX_LIBRARIES)
-
-set(CMAKE_REQUIRED_LIBRARIES_BAK "${CMAKE_REQUIRED_LIBRARIES}")
-set(CMAKE_REQUIRED_LIBRARIES "${STDCXX_LIBRARIES}")
-
 set(stl_test_src "
 int
 main(int ac, char *av[])
@@ -61,15 +54,34 @@ main(int ac, char *av[])
     return ac-ac;
 }
 ")
+
+set(CMAKE_REQUIRED_LIBRARIES_BAK "${CMAKE_REQUIRED_LIBRARIES}")
+
+# first try with no library
+set(CMAKE_REQUIRED_LIBRARIES "")
 CHECK_C_SOURCE_RUNS("${stl_test_src}" STL_LIB_TEST)
+
+if("${STL_LIB_TEST}" EQUAL 1)
+  # succeeded - no STL needed
+  set(STDCXX_LIBRARIES "" CACHE STRING "STL not found" FORCE)
+else("${STL_LIB_TEST}" EQUAL 1)
+  # failed - try library
+  if(NOT STDCXX_LIBRARIES)
+    set(STDCXX_LIBRARIES "-lstdc++")
+  endif(NOT STDCXX_LIBRARIES)
+
+  set(CMAKE_REQUIRED_LIBRARIES "${STDCXX_LIBRARIES}")
+  CHECK_C_SOURCE_RUNS("${stl_test_src}" STL_LIB_TEST)
+
+  if("${STL_LIB_TEST}" EQUAL 1)
+    set(STDCXX_LIBRARIES "${STDCXX_LIBRARIES}" CACHE STRING "STL found" FORCE)
+  else()
+    set(STDCXX_LIBRARIES "" CACHE STRING "STL not found" FORCE)
+  endif()
+endif("${STL_LIB_TEST}" EQUAL 1)
 
 SET(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES_BAK}")
 
-if("${STL_LIB_TEST}" EQUAL 1)
-  set(STDCXX_LIBRARIES "${STDCXX_LIBRARIES}" CACHE STRING "STL found" FORCE)
-else("${STL_LIB_TEST}" EQUAL 1)
-  set(STDCXX_LIBRARIES "" CACHE STRING "STL not found" FORCE)
-endif("${STL_LIB_TEST}" EQUAL 1)
 mark_as_advanced(STDCXX_LIBRARIES)
 
 # handle the QUIETLY and REQUIRED arguments 
