@@ -1,4 +1,5 @@
 BRLCAD_ADDEXEC(tester_bu_basename bu_basename.c libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_bitv_and bu_bitv_and.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_hex_to_bitv bu_hex_to_bitv.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_bitv bu_bitv.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_booleanize bu_booleanize.c libbu NO_INSTALL LOCAL)
@@ -35,6 +36,12 @@ add_test(bu_basename_p_                                     tester_bu_basename "
 add_test(bu_basename_p__p_                                  tester_bu_basename "..")
 add_test(bu_basename_p__p__p_                               tester_bu_basename "...")
 add_test(bu_basename_sp__sp__sp_                            tester_bu_basename "   ")
+
+###############################
+#      bu_bitv_and testing    #
+###############################
+add_test(bu_bitv_and_test1                                  tester_bu_bitv_and "ffffffff" "00000000" "00000000")
+add_test(bu_bitv_and_test2                                  tester_bu_bitv_and "ab00" "1200" "0200")
 
 ##################################
 #      bu_hex_to_bitv testing    #
