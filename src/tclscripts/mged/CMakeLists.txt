@@ -8,6 +8,7 @@ set(mged_TCLSCRIPTS
   attr_edit.tcl
   bindings.tcl
   bot_face_select.tcl
+  bot_vertex_fuse_all.tcl
   bots.tcl
   botedit.tcl
   build_region.tcl
