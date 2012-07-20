@@ -100,7 +100,7 @@ if("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
   add_dependencies(libbu tcl)
 endif("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
 
-add_subdirectory(test)
+add_subdirectory(tests)
 
 set(bu_MAN3
   htond.3
