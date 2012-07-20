@@ -4371,7 +4371,8 @@ RT_EXPORT extern int rt_bot_find_v_nearest_pt2(const struct rt_bot_internal *bot
 RT_EXPORT extern int rt_bot_find_e_nearest_pt2(int *vert1, int *vert2, const struct rt_bot_internal *bot, const point_t pt2, const mat_t mat);
 RT_EXPORT extern fastf_t rt_bot_propget(struct rt_bot_internal *bot,
 					const char *property);
-RT_EXPORT extern int rt_bot_vertex_fuse(struct rt_bot_internal *bot);
+RT_EXPORT extern int rt_bot_vertex_fuse(struct rt_bot_internal *bot,
+					const struct bn_tol *tol);
 RT_EXPORT extern int rt_bot_face_fuse(struct rt_bot_internal *bot);
 RT_EXPORT extern int rt_bot_condense(struct rt_bot_internal *bot);
 RT_EXPORT extern int rt_bot_smooth(struct rt_bot_internal *bot,

@@ -2888,7 +2888,7 @@ rt_bot_propget(struct rt_bot_internal *bot, const char *property)
  * Returns the number of vertices fused.
  */
 int
-rt_bot_vertex_fuse(struct rt_bot_internal *bot)
+rt_bot_vertex_fuse(struct rt_bot_internal *bot, const struct bn_tol *tol)
 {
 #if 1
     /* THE OLD WAY .. possibly O(n^3) with the vertex shifting */
@@ -2901,8 +2901,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
     for (i = 0; i < bot->num_vertices; i++) {
 	j = i + 1;
 	while (j < bot->num_vertices) {
-	    /* specifically not using tolerances here (except underlying representation tolerance) */
-	    if (VEQUAL(&bot->vertices[i*3], &bot->vertices[j*3])) {
+	    if (bn_pt3_pt3_equal(&bot->vertices[i*3], &bot->vertices[j*3], tol)) {
 		count++;
 
 		/* update bot */

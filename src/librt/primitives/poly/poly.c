@@ -1057,7 +1057,7 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 	}
     }
 
-    rt_bot_vertex_fuse(ip_bot);
+    rt_bot_vertex_fuse(ip_bot, tol);
     rt_bot_face_fuse(ip_bot);
 
     rt_db_free_internal(ip);
