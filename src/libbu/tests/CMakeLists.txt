@@ -15,7 +15,8 @@ BRLCAD_ADDEXEC(tester_bu_vls_vprintf bu_vls_vprintf.c libbu NO_INSTALL LOCAL)
 ###############################
 #      bu_basename testing    #
 ###############################
-add_test(bu_basename_empty                                  tester_bu_basename) # tests NULL and ""
+add_test(bu_basename_null                                   tester_bu_basename) # tests NULL 
+add_test(bu_basename_empty                                  tester_bu_basename "")
 add_test(bu_basename_sl_usr_sl_dir_sl_file                  tester_bu_basename "/usr/dir/file")
 add_test(bu_basename_sl_usr_sl_dir_sl_                      tester_bu_basename "/usr/dir/")
 add_test(bu_basename_sl_usr_bsl__sl_dir                     tester_bu_basename "/usr\\\\/dir")

@@ -69,15 +69,14 @@ automatic_test(const char *input)
 int
 main(int argc, char *argv[])
 {
-    /* If we don't have any args at all, test NULL and "" */
+    /* If we don't have any args at all, test NULL */
     if (argc == 1) {
-	automatic_test("");
 	automatic_test(NULL);
     }
 
     /* If we have something, print it and test it */
     if (argc > 1) {
-       printf("Testing string %s\n", argv[1]);
+       printf("Testing string \"%s\"\n", argv[1]);
        automatic_test(argv[1]);
     }
 
