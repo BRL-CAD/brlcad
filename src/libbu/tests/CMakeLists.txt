@@ -1,4 +1,5 @@
 BRLCAD_ADDEXEC(tester_bu_basename bu_basename.c libbu NO_INSTALL LOCAL)
+BRLCAD_ADDEXEC(tester_bu_hex_to_bitv bu_hex_to_bitv.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_bitv bu_bitv.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_booleanize bu_booleanize.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_ctype bu_ctype.c libbu NO_INSTALL LOCAL)
@@ -10,9 +11,9 @@ BRLCAD_ADDEXEC(tester_bu_sscanf bu_sscanf.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_timer bu_timer.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_vls_vprintf bu_vls_vprintf.c libbu NO_INSTALL LOCAL)
 
-############################
-#     basename testing     #
-############################
+###############################
+#      bu_basename testing    #
+###############################
 add_test(bu_basename_empty                                  tester_bu_basename) # tests NULL and ""
 add_test(bu_basename_sl_usr_sl_dir_sl_file                  tester_bu_basename "/usr/dir/file")
 add_test(bu_basename_sl_usr_sl_dir_sl_                      tester_bu_basename "/usr/dir/")
@@ -35,6 +36,12 @@ add_test(bu_basename_p__p_                                  tester_bu_basename "
 add_test(bu_basename_p__p__p_                               tester_bu_basename "...")
 add_test(bu_basename_sp__sp__sp_                            tester_bu_basename "   ")
 
+##################################
+#      bu_hex_to_bitv testing    #
+##################################
+add_test(bu_hex_to_bitv_test1                               tester_bu_hex_to_bitv "33323130" "0123" 0)
+add_test(bu_hex_to_bitv_test2                               tester_bu_hex_to_bitv "30" "0" 0)
+add_test(bu_hex_to_bitv_error                               tester_bu_hex_to_bitv "303" "" 1)
 
 # Local Variables:
 # tab-width: 8
