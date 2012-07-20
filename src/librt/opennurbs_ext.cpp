@@ -3033,13 +3033,13 @@ surface_surface_intersection(const ON_Surface* surfA,
 	    delete brep;
 	    return 0;
 	}
+
     // Third step: Fit the points in curvept into NURBS curves.
     // Here we use polyline approximation.
     // TODO: Find a better fitting algorithm unless this is good enough.
 
-    const double max_dis = 10000.0;
-    // NOTE: this is a threshold value and should be calculated according to the
-    // biggest bounding box. Here we just use a big enough value for testing.
+    const double max_dis = pow(surfA->BoundingBox().Volume()*surfB->BoundingBox().Volume(), 1.0/6.0) * 0.1;
+    // NOTE: More tests are needed to find a better threshold.
 
     std::vector<PointPair> ptpairs;
     for (int i = 0; i < curvept.Count(); i++) {
