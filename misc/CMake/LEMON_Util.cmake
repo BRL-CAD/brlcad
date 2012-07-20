@@ -57,6 +57,10 @@
 # LEMON_TARGET (public macro)
 #============================================================
 #
+# TODO - rework this macro to make use of CMakeParseArguments, see
+# http://www.cmake.org/pipermail/cmake/2012-July/051309.html
+#
+
 macro(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
   if(NOT ${ARGC} EQUAL 4 AND NOT ${ARGC} EQUAL 5)
     message(SEND_ERROR "Usage")

@@ -71,6 +71,9 @@
 # RE2C_TARGET (public macro)
 #============================================================
 #
+# TODO - rework this macro to make use of CMakeParseArguments, see
+# http://www.cmake.org/pipermail/cmake/2012-July/051309.html
+#
 macro(RE2C_TARGET Name Input Output)
   set(RE2C_TARGET_usage "RE2C_TARGET(<Name> <Input> <Output> [COMPILE_FLAGS <string>]")
   if(${ARGC} GREATER 3)

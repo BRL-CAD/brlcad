@@ -91,6 +91,10 @@ endmacro(ADD_NEW_FLAG)
 # the default.  After all flags are assigned, CMAKE_C_FLAGS (which
 # collects the general C flags) is prepended to all other active
 # C flag strings.
+#
+# TODO - rework these macros to make use of CMakeParseArguments, see
+# http://www.cmake.org/pipermail/cmake/2012-July/051309.html
+#
 macro(BRLCAD_CHECK_C_FLAG flag)
   string(TOUPPER ${flag} UPPER_FLAG)
   string(REGEX REPLACE "[^a-zA-Z0-9]" "_" UPPER_FLAG ${UPPER_FLAG})

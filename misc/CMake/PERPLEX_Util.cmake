@@ -63,6 +63,10 @@
 #============================================================
 # PERPLEX_TARGET (public macro)
 #============================================================
+#
+# TODO - rework this macro to make use of CMakeParseArguments, see
+# http://www.cmake.org/pipermail/cmake/2012-July/051309.html
+#
 macro(PERPLEX_TARGET Name Input OutputSrc OutputHeader)
   if(${ARGC} GREATER 4)
     set(Template ${ARGV4})
