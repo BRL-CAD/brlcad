@@ -1571,6 +1571,7 @@ extern ON_Curve* pullback_curve(ON_BrepFace* face,
 extern int surface_surface_intersection(const ON_Surface* surfA,
 					const ON_Surface* surfB,
 					ON_SimpleArray<ON_NurbsCurve*> &intersect,
+					double max_dis = 0.0,
 					double tolerance = 1.0e-3);
 
 }

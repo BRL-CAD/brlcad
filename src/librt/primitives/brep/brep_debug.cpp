@@ -53,7 +53,7 @@ extern "C" {
     RT_EXPORT extern int brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
     RT_EXPORT extern int brep_conversion(struct rt_db_internal* intern, ON_Brep** brep);
     RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
-    RT_EXPORT extern int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock* vbp);
+    RT_EXPORT extern int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock* vbp, double max_dis);
 #ifdef __cplusplus
 }
 #endif
@@ -2552,7 +2552,7 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 }
 
 
-int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp) {
+int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp, double max_dis) {
     RT_CK_DB_INTERNAL(intern1);
     RT_CK_DB_INTERNAL(intern2);
     struct rt_brep_internal *bi1, *bi2;
@@ -2578,7 +2578,7 @@ int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern
     brep1->m_S[i]->GetNurbForm(surf1);
     brep2->m_S[j]->GetNurbForm(surf2);
 
-    if (brlcad::surface_surface_intersection(&surf1, &surf2, curve)) {
+    if (brlcad::surface_surface_intersection(&surf1, &surf2, curve, max_dis)) {
 	bu_log("Intersection failed\n");
 	return -1;
     }

@@ -2928,6 +2928,7 @@ int
 surface_surface_intersection(const ON_Surface* surfA,
 			     const ON_Surface* surfB,
 			     ON_SimpleArray<ON_NurbsCurve*> &intersect,
+			     double max_dis,
 			     double)
 {
     if (surfA == NULL || surfB == NULL) {
@@ -3038,7 +3039,9 @@ surface_surface_intersection(const ON_Surface* surfA,
     // Here we use polyline approximation.
     // TODO: Find a better fitting algorithm unless this is good enough.
 
-    const double max_dis = pow(surfA->BoundingBox().Volume()*surfB->BoundingBox().Volume(), 1.0/6.0) * 0.1;
+    if (max_dis == 0.0)
+	max_dis = pow(surfA->BoundingBox().Volume()*surfB->BoundingBox().Volume(), 1.0/6.0) * 0.1;
+    bu_log("max_dis: %lf\n", max_dis);
     // NOTE: More tests are needed to find a better threshold.
 
     std::vector<PointPair> ptpairs;
