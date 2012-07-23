@@ -338,6 +338,10 @@ add_test(bu_vls_vprintf_test_50 tester_bu_vls_vprintf 50)
 add_test(bu_vls_vprintf_test_51 tester_bu_vls_vprintf 51)
 add_test(bu_vls_vprintf_test_52 tester_bu_vls_vprintf 52)
 add_test(bu_vls_vprintf_test_53 tester_bu_vls_vprintf 53)
+add_test(bu_vls_vprintf_test_54 tester_bu_vls_vprintf 54)
+add_test(bu_vls_vprintf_test_55 tester_bu_vls_vprintf 55)
+add_test(bu_vls_vprintf_test_56 tester_bu_vls_vprintf 56)
+add_test(bu_vls_vprintf_test_57 tester_bu_vls_vprintf 57)
 
 # Local Variables:
 # tab-width: 8
