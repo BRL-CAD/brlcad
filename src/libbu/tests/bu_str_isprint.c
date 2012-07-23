@@ -69,9 +69,9 @@ main(int argc, char **argv)
 	case 4:
 	    return !test_str_isprint("123\txyz", 0);	/* \t is horizontal tab - not printable */
 	case 5:
-	    return !test_str_isprint("#$%\n 748", 0);	/* \n is end of line -not printable */
-	case 6:
 	    return !test_str_isprint("#$ ab12", 1);
+	case 6:
+	    return !test_str_isprint("#$%\n 748", 0);	/* \n is end of line -not printable */
 	case 7:
 	    return !test_str_isprint("#$^\ry", 0);	/* \r is carriage return - not printable */
     }
