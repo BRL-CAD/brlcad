@@ -1,5 +1,4 @@
 BRLCAD_ADDEXEC(tester_bu_sscanf bu_sscanf.c libbu NO_INSTALL LOCAL)
-BRLCAD_ADDEXEC(tester_bu_timer bu_timer.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_vls_vprintf bu_vls_vprintf.c libbu NO_INSTALL LOCAL)
 
 #
@@ -276,6 +275,12 @@ add_test(bu_quote_test_20 tester_bu_quote 20)  # "\'\'hello\'\'"
 add_test(bu_quote_test_21 tester_bu_quote 21)  # "\'\"hello\"\'"
 add_test(bu_quote_test_22 tester_bu_quote 22)  # "\"\"hello\"\""
 add_test(bu_quote_test_23 tester_bu_quote 23)  # "\"\"\"hello\"\"\""
+
+#
+#  ************ timer.c tests *************
+#
+BRLCAD_ADDEXEC(tester_bu_timer bu_timer.c libbu NO_INSTALL LOCAL)
+add_test(bu_gettime_test tester_bu_timer)                 
 
 # Local Variables:
 # tab-width: 8
