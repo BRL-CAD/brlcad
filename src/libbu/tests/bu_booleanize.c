@@ -23,7 +23,7 @@
 
 #include <string.h>
 
-void
+int
 automatic_test(const char *input)
 {
 
@@ -84,44 +84,29 @@ automatic_test(const char *input)
     } else {
 	printf("%24s -> %d (should be: %d) [FAIL]\n", buf_input, res, ans);
     }
+
+    return check;
 }
 
 
-int main(int ac, char *av[])
+int main(int argc, char *argv[])
 {
-    char input[1000] = {0};
+    int pass = 0;
 
-    /* pre-defined tests */
-    printf("Performing pre-defined tests:\n");
-    automatic_test(NULL);
-    automatic_test("");
-    automatic_test("n");
-    automatic_test("nabcd");
-    automatic_test("N");
-    automatic_test("Nabcd");
-    automatic_test("  abcd");
-    automatic_test("0");
-    automatic_test("0000");
-    automatic_test("(null)");
-    automatic_test("y");
-    automatic_test("yabcd");
-    automatic_test("Y");
-    automatic_test("Yabcd");
-    automatic_test("1");
-    automatic_test("0001");
-    automatic_test("abcd");
-
-    /*  user tests */
-    if (ac > 1) {
-	printf("Enter a string:\n");
-	bu_fgets(input, 1000, stdin);
-	if (strlen(input) > 0)
-	    input[strlen(input)-1] = '\0';
-	automatic_test(input);
+    if (argc > 2) {
+       printf("Usage: %s test_string\n", argv[0]);
     }
 
-    printf("%s: testing complete\n", av[0]);
-    return 0;
+    if (argc == 1) {
+       pass = automatic_test(NULL);
+       return !pass;  
+    }
+ 
+    if (argc > 1) {
+       pass = automatic_test(argv[1]);
+    }
+
+    return !pass;
 }
 
 

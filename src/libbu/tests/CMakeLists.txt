@@ -1,4 +1,3 @@
-BRLCAD_ADDEXEC(tester_bu_booleanize bu_booleanize.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_ctype bu_ctype.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_dirname bu_dirname.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_escape bu_escape.c libbu NO_INSTALL LOCAL)
@@ -84,6 +83,34 @@ BRLCAD_ADDEXEC(tester_bu_hex_to_bitv bu_hex_to_bitv.c libbu NO_INSTALL LOCAL)
 add_test(bu_hex_to_bitv_test1 tester_bu_hex_to_bitv "33323130" "0123" 0)
 add_test(bu_hex_to_bitv_test2 tester_bu_hex_to_bitv "30" "0" 0)
 add_test(bu_hex_to_bitv_error tester_bu_hex_to_bitv "303" "" 1)
+
+#
+#  ************ booleanize.c tests *************
+#
+
+#################################
+#      bu_booleanize testing    #
+#################################
+BRLCAD_ADDEXEC(tester_bu_booleanize bu_booleanize.c libbu NO_INSTALL LOCAL)
+add_test(bu_booleanize_null         tester_bu_booleanize) # tests NULL 
+add_test(bu_booleanize_empty        tester_bu_booleanize "")
+add_test(bu_booleanize_n            tester_bu_booleanize "n")
+add_test(bu_booleanize_nabcd        tester_bu_booleanize "nabcd")
+add_test(bu_booleanize_N            tester_bu_booleanize "N")
+add_test(bu_booleanize_Nabcd        tester_bu_booleanize "Nabcd")
+add_test(bu_booleanize__sp__sp_abcd tester_bu_booleanize "  abcd")
+add_test(bu_booleanize_0            tester_bu_booleanize "0")
+add_test(bu_booleanize_0000         tester_bu_booleanize "0000")
+add_test(bu_booleanize__lp_null_rp_ tester_bu_booleanize "(null)")
+add_test(bu_booleanize_y            tester_bu_booleanize "y")
+add_test(bu_booleanize_yabcd        tester_bu_booleanize "yabcd")
+add_test(bu_booleanize_Y            tester_bu_booleanize "Y")
+add_test(bu_booleanize_Yabcd        tester_bu_booleanize "Yabcd")
+add_test(bu_booleanize_1            tester_bu_booleanize "1")
+add_test(bu_booleanize_0001         tester_bu_booleanize "0001")
+add_test(bu_booleanize_abcd         tester_bu_booleanize "abcd")
+
+
 
 # Local Variables:
 # tab-width: 8
