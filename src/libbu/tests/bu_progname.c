@@ -30,6 +30,7 @@
 int
 main(int ac, char *av[])
 {
+    int pass = 0;
     const char *label;
     const char *ans;
     const char *res;
@@ -47,20 +48,24 @@ main(int ac, char *av[])
     res = bu_getprogname();
     ans = NULL;
 
-    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(av[0])))
+    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(av[0]))) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, "unset", res);
-    else
+    } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
+        pass++;
+    }
 
     /* CASE 1: try again unset */
     label = "CASE 1";
     res = bu_getprogname();
     ans = NULL;
 
-    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(av[0])))
+    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(av[0]))) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, "unset#2", res);
-    else
+    } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
+        pass++;
+    }
 
     /* CASE 2: set NULL, then get */
     label = "CASE 2";
@@ -68,10 +73,12 @@ main(int ac, char *av[])
     res = bu_getprogname();
     ans = NULL;
 
-    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(av[0])))
+    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(av[0]))) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, "NULL", res);
-    else
+    } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
+        pass++;
+    }
 
     /* CASE 3: set, then get */
     label = "CASE 3";
@@ -79,10 +86,12 @@ main(int ac, char *av[])
     res = bu_getprogname();
     ans = av[0];
 
-    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(av[0])))
+    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(av[0]))) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, "av[0]", res);
-    else
+    } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
+        pass++;
+    }
 
     /* CASE 4: set full, then get */
     label = "CASE 4";
@@ -90,37 +99,42 @@ main(int ac, char *av[])
     res = bu_getprogname();
     ans = bu_argv0_full_path();
 
-    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(ans)))
+    if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(ans))) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, ans, res);
-    else
+    } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
+        pass++;
+    }
 
     /* CASE 5: set 2x, then get */
     label = "CASE 5";
     bu_setprogname(av[0]);
-    bu_setprogname("monkey_see_monkey_poo");
+    bu_setprogname("monkey_see_monkey_do");
     res = bu_getprogname();
-    ans = "monkey_see_monkey_poo";
+    ans = "monkey_see_monkey_do";
 
-    if (BU_STR_EQUAL(res, ans ? ans : ""))
+    if (BU_STR_EQUAL(res, ans ? ans : "")) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, ans, res);
-    else
+    } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
+        pass++;
+    }
 
     /* CASE 5: set 2x full path, then get */
     label = "CASE 6";
     bu_setprogname(bu_argv0_full_path());
-    bu_setprogname("/monkey/see/monkey/poo");
+    bu_setprogname("/monkey/see/monkey/do");
     res = bu_getprogname();
-    ans = "poo";
+    ans = "do";
 
-    if (BU_STR_EQUAL(res, ans ? ans : ""))
-	printf("%s: %24s -> %24s [PASSED]\n", label, "/monkey/see/monkey/poo", res);
-    else
+    if (BU_STR_EQUAL(res, ans ? ans : "")) {
+	printf("%s: %24s -> %24s [PASSED]\n", label, "/monkey/see/monkey/do", res);
+    } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
+        pass++;
+    }
 
-    printf("%s: testing complete\n", av[0]);
-    return 0;
+    return pass;
 }
 
 

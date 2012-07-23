@@ -1,4 +1,3 @@
-BRLCAD_ADDEXEC(tester_bu_progname bu_progname.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_quote bu_quote.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_sscanf bu_sscanf.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_timer bu_timer.c libbu NO_INSTALL LOCAL)
@@ -233,7 +232,18 @@ add_test(bu_escape_roundtrip_1  tester_bu_escape 3 1) # "abc", "b"
 add_test(bu_escape_roundtrip_2  tester_bu_escape 3 2) # "abc\\cba", "b" 
 add_test(bu_escape_roundtrip_3  tester_bu_escape 3 3) # "abc\\\\cba", "b"
 add_test(bu_escape_roundtrip_4  tester_bu_escape 3 4) # "abc\\\\\\c\\ba\\"
+#
+#  ************ progname.c tests *************
+#
+# Note - some of the test conditions for bu_progname require previous
+# steps to be performed in the same executable context.  Hence, in this
+# case, multiple test cases are rolled into a single program execution.
 
+###############################
+#      bu_progname testing    #
+###############################
+BRLCAD_ADDEXEC(tester_bu_progname bu_progname.c libbu NO_INSTALL LOCAL)
+add_test(bu_progname_tests tester_bu_progname)
 
 # Local Variables:
 # tab-width: 8
