@@ -84,70 +84,62 @@ test_quote(const char *str)
 int
 main(int ac, char *av[])
 {
-    int fails    = 0; /* track unexpected failures */
-    int expfails = 0; /* track expected failures */
+    int test_num = 0;
+    if (ac != 2)
+	printf("Usage: %s test_number\n", av[0]);
 
-    printf("Testing quote\n");
+    sscanf(av[1], "%d", &test_num);
 
-    if (ac > 1)
-	printf("Usage: %s\n", av[0]);
-
-    fails += test_quote(NULL);
-    fails += test_quote("");
-    fails += test_quote(" ");
-    fails += test_quote("hello");
-    fails += test_quote("\"");
-    fails += test_quote("\'");
-    fails += test_quote("\\");
-    fails += test_quote("\\\"");
-    fails += test_quote("\\\\");
-    fails += test_quote("\"hello\"");
-    fails += test_quote("\'hello\'");
-    fails += test_quote("\\hello");
-    fails += test_quote("\\hello\"");
-    fails += test_quote("hello\\\\");
-    fails += test_quote("\"hello\'\"");
-    fails += test_quote("\"hello\'");
-    fails += test_quote("\'hello\'");
-    fails += test_quote("\'hello\"");
-    fails += test_quote("\"\"hello\"");
-    fails += test_quote("\'\'hello\'\'");
-    fails += test_quote("\'\"hello\"\'");
-    fails += test_quote("\"\"hello\"\"");
-    fails += test_quote("\"\"\"hello\"\"\"");
-
-    /* ======================================================== */
-    /* EXPECTED FAILURES ONLY BELOW HERE                           */
-    /* ======================================================== */
-    /* EXPECTED FAILURES:
-     *
-     * Notes:
-     *
-     *   1. For these tests have the return value increment 'expfails'.
-     *   2. Test with both 'make vsl-regress' and 'make regress' because
-     *        some other tests use this function in unpredictable ways.
-     *   3. After a test is fixed, change the return value to increment
-     *        'fails', move it to the EXPECTED PASS group above, and add
-     *        some info about it as necessary to help those who may be
-     *        forced to revisit this.
-     *
-     */
-
-    printf("\nExpected failures (don't use in production code):\n");
-
-    printf("  NONE AT THIS TIME\n");
-
-    /* report results */
-    fprintf(stderr, "%d", expfails);
-
-    printf("%s: testing complete\n", av[0]);
-
-    if (fails != 0) {
-      /* as long as fails is < 127 the STATUS will be the number of unexpected failures */
-      return fails;
+    switch (test_num) {
+	case 1:
+	    return test_quote(NULL);
+	case 2:
+	    return test_quote("");
+	case 3:
+	    return test_quote(" ");
+	case 4:
+	    return test_quote("hello");
+	case 5:
+	    return test_quote("\"");
+	case 6:
+	    return test_quote("\'");
+	case 7:
+	    return test_quote("\\");
+	case 8:
+	    return test_quote("\\\"");
+	case 9:
+	    return test_quote("\\\\");
+	case 10:
+	    return test_quote("\"hello\"");
+	case 11:
+	    return test_quote("\'hello\'");
+	case 12:
+	    return test_quote("\\hello");
+	case 13:
+	    return test_quote("\\hello\"");
+	case 14:
+	    return test_quote("hello\\\\");
+	case 15:
+	    return test_quote("\"hello\'\"");
+	case 16:
+	    return test_quote("\"hello\'");
+	case 17:
+	    return test_quote("\'hello\'");
+	case 18:
+	    return test_quote("\'hello\"");
+	case 19:
+	    return test_quote("\"\"hello\"");
+	case 20:
+	    return test_quote("\'\'hello\'\'");
+	case 21:
+	    return test_quote("\'\"hello\"\'");
+	case 22:
+	    return test_quote("\"\"hello\"\"");
+	case 23:
+	    return test_quote("\"\"\"hello\"\"\"");
     }
 
-    return 0;
+    return 1;
 }
 
 

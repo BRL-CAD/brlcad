@@ -1,4 +1,3 @@
-BRLCAD_ADDEXEC(tester_bu_quote bu_quote.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_sscanf bu_sscanf.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_timer bu_timer.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_vls_vprintf bu_vls_vprintf.c libbu NO_INSTALL LOCAL)
@@ -232,6 +231,7 @@ add_test(bu_escape_roundtrip_1  tester_bu_escape 3 1) # "abc", "b"
 add_test(bu_escape_roundtrip_2  tester_bu_escape 3 2) # "abc\\cba", "b" 
 add_test(bu_escape_roundtrip_3  tester_bu_escape 3 3) # "abc\\\\cba", "b"
 add_test(bu_escape_roundtrip_4  tester_bu_escape 3 4) # "abc\\\\\\c\\ba\\"
+
 #
 #  ************ progname.c tests *************
 #
@@ -244,6 +244,38 @@ add_test(bu_escape_roundtrip_4  tester_bu_escape 3 4) # "abc\\\\\\c\\ba\\"
 ###############################
 BRLCAD_ADDEXEC(tester_bu_progname bu_progname.c libbu NO_INSTALL LOCAL)
 add_test(bu_progname_tests tester_bu_progname)
+
+#
+#  ************ quote.c tests *************
+#
+# The testing of encoding and de-coding is tested at once in a "round trip"
+# approach - the tests below all test both bu_vls_encode and bu_vls_decode.
+# Like many string functions using escaped characters the input strings are
+# left in C to minimize pass-through errors.
+BRLCAD_ADDEXEC(tester_bu_quote bu_quote.c libbu NO_INSTALL LOCAL)
+add_test(bu_quote_test_1  tester_bu_quote 1)   # NULL                 
+add_test(bu_quote_test_2  tester_bu_quote 2)   # ""
+add_test(bu_quote_test_3  tester_bu_quote 3)   # " "
+add_test(bu_quote_test_4  tester_bu_quote 4)   # "hello"
+add_test(bu_quote_test_5  tester_bu_quote 5)   # "\""
+add_test(bu_quote_test_6  tester_bu_quote 6)   # "\'"
+add_test(bu_quote_test_7  tester_bu_quote 7)   # "\\"
+add_test(bu_quote_test_8  tester_bu_quote 8)   # "\\\""
+add_test(bu_quote_test_9  tester_bu_quote 9)   # "\\\\"
+add_test(bu_quote_test_10 tester_bu_quote 10)  # "\"hello\""
+add_test(bu_quote_test_11 tester_bu_quote 11)  # "\'hello\'"
+add_test(bu_quote_test_12 tester_bu_quote 12)  # "\\hello"
+add_test(bu_quote_test_13 tester_bu_quote 13)  # "\\hello\""
+add_test(bu_quote_test_14 tester_bu_quote 14)  # "hello\\\\"
+add_test(bu_quote_test_15 tester_bu_quote 15)  # "\"hello\'\""
+add_test(bu_quote_test_16 tester_bu_quote 16)  # "\"hello\'"
+add_test(bu_quote_test_17 tester_bu_quote 17)  # "\'hello\'"
+add_test(bu_quote_test_18 tester_bu_quote 18)  # "\'hello\""
+add_test(bu_quote_test_19 tester_bu_quote 19)  # "\"\"hello\""
+add_test(bu_quote_test_20 tester_bu_quote 20)  # "\'\'hello\'\'"
+add_test(bu_quote_test_21 tester_bu_quote 21)  # "\'\"hello\"\'"
+add_test(bu_quote_test_22 tester_bu_quote 22)  # "\"\"hello\"\""
+add_test(bu_quote_test_23 tester_bu_quote 23)  # "\"\"\"hello\"\"\""
 
 # Local Variables:
 # tab-width: 8
