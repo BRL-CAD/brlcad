@@ -167,72 +167,72 @@ BRLCAD_ADDEXEC(tester_bu_escape bu_escape.c libbu NO_INSTALL LOCAL)
 ###################################
 #      bu_str_unescape testing    #
 ###################################
-add_test(bu_str_unescape_1   tester_bu_escape 1 1) 
-add_test(bu_str_unescape_2   tester_bu_escape 1 2)
-add_test(bu_str_unescape_3   tester_bu_escape 1 3)
-add_test(bu_str_unescape_4   tester_bu_escape 1 4)
-add_test(bu_str_unescape_5   tester_bu_escape 1 5)
-add_test(bu_str_unescape_6   tester_bu_escape 1 6) 
-add_test(bu_str_unescape_7   tester_bu_escape 1 7)
-add_test(bu_str_unescape_8   tester_bu_escape 1 8)
-add_test(bu_str_unescape_9   tester_bu_escape 1 9)
-add_test(bu_str_unescape_10  tester_bu_escape 1 10) 
-add_test(bu_str_unescape_11  tester_bu_escape 1 11) 
-add_test(bu_str_unescape_12  tester_bu_escape 1 12) 
-add_test(bu_str_unescape_13  tester_bu_escape 1 13) 
-add_test(bu_str_unescape_14  tester_bu_escape 1 14) 
-add_test(bu_str_unescape_15  tester_bu_escape 1 15) 
-add_test(bu_str_unescape_16  tester_bu_escape 1 16) 
-add_test(bu_str_unescape_17  tester_bu_escape 1 17) 
-add_test(bu_str_unescape_18  tester_bu_escape 1 18) 
-add_test(bu_str_unescape_19  tester_bu_escape 1 19) 
-add_test(bu_str_unescape_20  tester_bu_escape 1 20) 
-add_test(bu_str_unescape_21  tester_bu_escape 1 21) 
-add_test(bu_str_unescape_22  tester_bu_escape 1 22) 
-add_test(bu_str_unescape_23  tester_bu_escape 1 23) 
+add_test(bu_str_unescape_1   tester_bu_escape 1 1)   # NULL
+add_test(bu_str_unescape_2   tester_bu_escape 1 2)   # ""
+add_test(bu_str_unescape_3   tester_bu_escape 1 3)   # " "
+add_test(bu_str_unescape_4   tester_bu_escape 1 4)   # "hello"
+add_test(bu_str_unescape_5   tester_bu_escape 1 5)   # "\""
+add_test(bu_str_unescape_6   tester_bu_escape 1 6)   # "\'"
+add_test(bu_str_unescape_7   tester_bu_escape 1 7)   # "\\"
+add_test(bu_str_unescape_8   tester_bu_escape 1 8)   # "\\\""
+add_test(bu_str_unescape_9   tester_bu_escape 1 9)   # "\\\\"
+add_test(bu_str_unescape_10  tester_bu_escape 1 10)  # "\"hello\""
+add_test(bu_str_unescape_11  tester_bu_escape 1 11)  # "\'hello\'"
+add_test(bu_str_unescape_12  tester_bu_escape 1 12)  # "\\hello"
+add_test(bu_str_unescape_13  tester_bu_escape 1 13)  # "\\hello\""
+add_test(bu_str_unescape_14  tester_bu_escape 1 14)  # "hello\\\\"
+add_test(bu_str_unescape_15  tester_bu_escape 1 15)  # "\"hello\'\""
+add_test(bu_str_unescape_16  tester_bu_escape 1 16)  # "\"hello\'"
+add_test(bu_str_unescape_17  tester_bu_escape 1 17)  # "\'hello\'"
+add_test(bu_str_unescape_18  tester_bu_escape 1 18)  # "\'hello\""
+add_test(bu_str_unescape_19  tester_bu_escape 1 19)  # "\"\"hello\""
+add_test(bu_str_unescape_20  tester_bu_escape 1 20)  # "\'\'hello\'\'"
+add_test(bu_str_unescape_21  tester_bu_escape 1 21)  # "\'\"hello\"\'"
+add_test(bu_str_unescape_22  tester_bu_escape 1 22)  # "\"\"hello\"\""
+add_test(bu_str_unescape_23  tester_bu_escape 1 23)  # "\\\"\\\"\\\"hello\\"
 
 #################################
 #      bu_str_escape testing    #
 #################################
-add_test(bu_str_escape_1   tester_bu_escape 2 1) 
-add_test(bu_str_escape_2   tester_bu_escape 2 2)
-add_test(bu_str_escape_3   tester_bu_escape 2 3)
-add_test(bu_str_escape_4   tester_bu_escape 2 4)
-add_test(bu_str_escape_5   tester_bu_escape 2 5)
-add_test(bu_str_escape_6   tester_bu_escape 2 6) 
-add_test(bu_str_escape_7   tester_bu_escape 2 7)
-add_test(bu_str_escape_8   tester_bu_escape 2 8)
-add_test(bu_str_escape_9   tester_bu_escape 2 9)
-add_test(bu_str_escape_10  tester_bu_escape 2 10) 
-add_test(bu_str_escape_11  tester_bu_escape 2 11) 
-add_test(bu_str_escape_12  tester_bu_escape 2 12) 
-add_test(bu_str_escape_13  tester_bu_escape 2 13) 
-add_test(bu_str_escape_14  tester_bu_escape 2 14) 
-add_test(bu_str_escape_15  tester_bu_escape 2 15) 
-add_test(bu_str_escape_16  tester_bu_escape 2 16) 
-add_test(bu_str_escape_17  tester_bu_escape 2 17) 
-add_test(bu_str_escape_18  tester_bu_escape 2 18) 
-add_test(bu_str_escape_19  tester_bu_escape 2 19) 
-add_test(bu_str_escape_20  tester_bu_escape 2 20) 
-add_test(bu_str_escape_21  tester_bu_escape 2 21) 
-add_test(bu_str_escape_22  tester_bu_escape 2 22) 
-add_test(bu_str_escape_23  tester_bu_escape 2 23) 
-add_test(bu_str_escape_24  tester_bu_escape 2 24) 
-add_test(bu_str_escape_25  tester_bu_escape 2 25) 
-add_test(bu_str_escape_26  tester_bu_escape 2 26) 
-add_test(bu_str_escape_27  tester_bu_escape 2 27) 
-add_test(bu_str_escape_28  tester_bu_escape 2 28) 
-add_test(bu_str_escape_29  tester_bu_escape 2 29) 
-add_test(bu_str_escape_30  tester_bu_escape 2 30) 
-add_test(bu_str_escape_31  tester_bu_escape 2 31) 
+add_test(bu_str_escape_1   tester_bu_escape 2 1)     # NULL, NULL
+add_test(bu_str_escape_2   tester_bu_escape 2 2)     # NULL, ""
+add_test(bu_str_escape_3   tester_bu_escape 2 3)     # "", NULL
+add_test(bu_str_escape_4   tester_bu_escape 2 4)     # "", ""
+add_test(bu_str_escape_5   tester_bu_escape 2 5)     # " ", ""
+add_test(bu_str_escape_6   tester_bu_escape 2 6)     # "[ ]", " "
+add_test(bu_str_escape_7   tester_bu_escape 2 7)     # "[  ]", " "
+add_test(bu_str_escape_8   tester_bu_escape 2 8)     # "h e l l o", " "
+add_test(bu_str_escape_9   tester_bu_escape 2 9)     # "h\\ ello", " "
+add_test(bu_str_escape_10  tester_bu_escape 2 10)    # "[]", "\\"
+add_test(bu_str_escape_11  tester_bu_escape 2 11)    # "\\", "\\"
+add_test(bu_str_escape_12  tester_bu_escape 2 12)    # "\\\\", "\\"
+add_test(bu_str_escape_13  tester_bu_escape 2 13)    # "\\a\\b", "\\"
+add_test(bu_str_escape_14  tester_bu_escape 2 14)    # "abc", "a"
+add_test(bu_str_escape_15  tester_bu_escape 2 15)    # "abc", "b"
+add_test(bu_str_escape_16  tester_bu_escape 2 16)    # "abc", "c"
+add_test(bu_str_escape_17  tester_bu_escape 2 17)    # "abc", "ab"
+add_test(bu_str_escape_18  tester_bu_escape 2 18)    # "abc", "bc"
+add_test(bu_str_escape_19  tester_bu_escape 2 19)    # "abc", "abc"
+add_test(bu_str_escape_20  tester_bu_escape 2 20)    # "aaa", "bc"
+add_test(bu_str_escape_21  tester_bu_escape 2 21)    # "aaa", "a"
+add_test(bu_str_escape_22  tester_bu_escape 2 22)    # "aaa", "aaa"
+add_test(bu_str_escape_23  tester_bu_escape 2 23)    # "abc", "^a"
+add_test(bu_str_escape_24  tester_bu_escape 2 24)    # "abc", "^b"
+add_test(bu_str_escape_25  tester_bu_escape 2 25)    # "abc", "^c"
+add_test(bu_str_escape_26  tester_bu_escape 2 26)    # "abc", "^ab"
+add_test(bu_str_escape_27  tester_bu_escape 2 27)    # "abc", "^bc"
+add_test(bu_str_escape_28  tester_bu_escape 2 28)    # "abc", "^abc"
+add_test(bu_str_escape_29  tester_bu_escape 2 29)    # "aaa", "^bc"
+add_test(bu_str_escape_30  tester_bu_escape 2 30)    # "aaa", "^a"
+add_test(bu_str_escape_31  tester_bu_escape 2 31)    # "aaa", "^aaa"
 
 ##############################################
 #      escape/unescape round trip testing    #
 ##############################################
-add_test(bu_escape_roundtrip_1  tester_bu_escape 3 1) 
-add_test(bu_escape_roundtrip_2  tester_bu_escape 3 2) 
-add_test(bu_escape_roundtrip_3  tester_bu_escape 3 3) 
-add_test(bu_escape_roundtrip_4  tester_bu_escape 3 4) 
+add_test(bu_escape_roundtrip_1  tester_bu_escape 3 1) # "abc", "b" 
+add_test(bu_escape_roundtrip_2  tester_bu_escape 3 2) # "abc\\cba", "b" 
+add_test(bu_escape_roundtrip_3  tester_bu_escape 3 3) # "abc\\\\cba", "b"
+add_test(bu_escape_roundtrip_4  tester_bu_escape 3 4) # "abc\\\\\\c\\ba\\"
 
 
 # Local Variables:
