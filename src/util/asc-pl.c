@@ -42,7 +42,7 @@
 
 static void printusage (void)
 {
-    bu_log("asc-pl [file.in [file.pl]]\n");
+    bu_log("Usage: asc-pl [file.in [file.pl]]\n");
 }
 
 
@@ -87,6 +87,7 @@ main (int argc, char **argv)
     }
     if (isatty(fileno(fp[FP_OUT]))) {
 	bu_log("asc-pl: Will not write to a TTY\n");
+	printusage();
 	return 1;
     }
 
