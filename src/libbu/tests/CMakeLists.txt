@@ -1,4 +1,3 @@
-BRLCAD_ADDEXEC(tester_bu_escape bu_escape.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_progname bu_progname.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_quote bu_quote.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_sscanf bu_sscanf.c libbu NO_INSTALL LOCAL)
@@ -156,6 +155,84 @@ add_test(bu_dirname__period__period__period_ tester_bu_dirname "...")
 add_test(bu_dirname__sp__sp__sp_ tester_bu_dirname "   ")
 add_test(bu_dirname_empty tester_bu_dirname "")
 add_test(bu_dirname_null tester_bu_dirname)
+
+#
+#  ************ escape.c tests *************
+#
+# Note - because of the quoting needed in these tests, it is simpler
+# to leave the input strings in the C code.  Individual tests are triggered
+# by number
+BRLCAD_ADDEXEC(tester_bu_escape bu_escape.c libbu NO_INSTALL LOCAL)
+
+###################################
+#      bu_str_unescape testing    #
+###################################
+add_test(bu_str_unescape_1   tester_bu_escape 1 1) 
+add_test(bu_str_unescape_2   tester_bu_escape 1 2)
+add_test(bu_str_unescape_3   tester_bu_escape 1 3)
+add_test(bu_str_unescape_4   tester_bu_escape 1 4)
+add_test(bu_str_unescape_5   tester_bu_escape 1 5)
+add_test(bu_str_unescape_6   tester_bu_escape 1 6) 
+add_test(bu_str_unescape_7   tester_bu_escape 1 7)
+add_test(bu_str_unescape_8   tester_bu_escape 1 8)
+add_test(bu_str_unescape_9   tester_bu_escape 1 9)
+add_test(bu_str_unescape_10  tester_bu_escape 1 10) 
+add_test(bu_str_unescape_11  tester_bu_escape 1 11) 
+add_test(bu_str_unescape_12  tester_bu_escape 1 12) 
+add_test(bu_str_unescape_13  tester_bu_escape 1 13) 
+add_test(bu_str_unescape_14  tester_bu_escape 1 14) 
+add_test(bu_str_unescape_15  tester_bu_escape 1 15) 
+add_test(bu_str_unescape_16  tester_bu_escape 1 16) 
+add_test(bu_str_unescape_17  tester_bu_escape 1 17) 
+add_test(bu_str_unescape_18  tester_bu_escape 1 18) 
+add_test(bu_str_unescape_19  tester_bu_escape 1 19) 
+add_test(bu_str_unescape_20  tester_bu_escape 1 20) 
+add_test(bu_str_unescape_21  tester_bu_escape 1 21) 
+add_test(bu_str_unescape_22  tester_bu_escape 1 22) 
+add_test(bu_str_unescape_23  tester_bu_escape 1 23) 
+
+#################################
+#      bu_str_escape testing    #
+#################################
+add_test(bu_str_escape_1   tester_bu_escape 2 1) 
+add_test(bu_str_escape_2   tester_bu_escape 2 2)
+add_test(bu_str_escape_3   tester_bu_escape 2 3)
+add_test(bu_str_escape_4   tester_bu_escape 2 4)
+add_test(bu_str_escape_5   tester_bu_escape 2 5)
+add_test(bu_str_escape_6   tester_bu_escape 2 6) 
+add_test(bu_str_escape_7   tester_bu_escape 2 7)
+add_test(bu_str_escape_8   tester_bu_escape 2 8)
+add_test(bu_str_escape_9   tester_bu_escape 2 9)
+add_test(bu_str_escape_10  tester_bu_escape 2 10) 
+add_test(bu_str_escape_11  tester_bu_escape 2 11) 
+add_test(bu_str_escape_12  tester_bu_escape 2 12) 
+add_test(bu_str_escape_13  tester_bu_escape 2 13) 
+add_test(bu_str_escape_14  tester_bu_escape 2 14) 
+add_test(bu_str_escape_15  tester_bu_escape 2 15) 
+add_test(bu_str_escape_16  tester_bu_escape 2 16) 
+add_test(bu_str_escape_17  tester_bu_escape 2 17) 
+add_test(bu_str_escape_18  tester_bu_escape 2 18) 
+add_test(bu_str_escape_19  tester_bu_escape 2 19) 
+add_test(bu_str_escape_20  tester_bu_escape 2 20) 
+add_test(bu_str_escape_21  tester_bu_escape 2 21) 
+add_test(bu_str_escape_22  tester_bu_escape 2 22) 
+add_test(bu_str_escape_23  tester_bu_escape 2 23) 
+add_test(bu_str_escape_24  tester_bu_escape 2 24) 
+add_test(bu_str_escape_25  tester_bu_escape 2 25) 
+add_test(bu_str_escape_26  tester_bu_escape 2 26) 
+add_test(bu_str_escape_27  tester_bu_escape 2 27) 
+add_test(bu_str_escape_28  tester_bu_escape 2 28) 
+add_test(bu_str_escape_29  tester_bu_escape 2 29) 
+add_test(bu_str_escape_30  tester_bu_escape 2 30) 
+add_test(bu_str_escape_31  tester_bu_escape 2 31) 
+
+##############################################
+#      escape/unescape round trip testing    #
+##############################################
+add_test(bu_escape_roundtrip_1  tester_bu_escape 3 1) 
+add_test(bu_escape_roundtrip_2  tester_bu_escape 3 2) 
+add_test(bu_escape_roundtrip_3  tester_bu_escape 3 3) 
+add_test(bu_escape_roundtrip_4  tester_bu_escape 3 4) 
 
 
 # Local Variables:
