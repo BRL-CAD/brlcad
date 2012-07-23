@@ -1,4 +1,3 @@
-BRLCAD_ADDEXEC(tester_bu_ctype bu_ctype.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_dirname bu_dirname.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_escape bu_escape.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_progname bu_progname.c libbu NO_INSTALL LOCAL)
@@ -109,6 +108,15 @@ add_test(bu_booleanize_Yabcd        tester_bu_booleanize "Yabcd")
 add_test(bu_booleanize_1            tester_bu_booleanize "1")
 add_test(bu_booleanize_0001         tester_bu_booleanize "0001")
 add_test(bu_booleanize_abcd         tester_bu_booleanize "abcd")
+
+#
+#  ************ ctype.c tests *************
+#
+
+##################################
+#      bu_str_isprint testing    #
+##################################
+BRLCAD_ADDEXEC(tester_bu_str_isprint bu_str_isprint.c libbu NO_INSTALL LOCAL)
 
 
 
