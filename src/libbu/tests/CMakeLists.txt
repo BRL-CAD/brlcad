@@ -116,7 +116,17 @@ add_test(bu_booleanize_abcd         tester_bu_booleanize "abcd")
 ##################################
 #      bu_str_isprint testing    #
 ##################################
+# Note - because of the special characters needed in these tests, the strings
+# don't work well when fed in from the command line.  
 BRLCAD_ADDEXEC(tester_bu_str_isprint bu_str_isprint.c libbu NO_INSTALL LOCAL)
+add_test(bu_str_isprint_basic                tester_bu_str_isprint 1) 
+add_test(bu_str_isprint_eol                  tester_bu_str_isprint 2)
+add_test(bu_str_isprint_double_slash         tester_bu_str_isprint 3)
+add_test(bu_str_isprint_horiz_tab            tester_bu_str_isprint 4)
+add_test(bu_str_isprint_non-alphanumeric     tester_bu_str_isprint 5)
+add_test(bu_str_isprint_eol_non-alphanumeric tester_bu_str_isprint 6) 
+add_test(bu_str_isprint_carriage_return      tester_bu_str_isprint 7)
+
 
 
 

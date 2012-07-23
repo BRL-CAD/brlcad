@@ -48,21 +48,35 @@ test_str_isprint(char *inp , int exp)
 
 
 int
-main(int UNUSED(ac) , char **UNUSED(av))
+main(int argc, char **argv)
 {
-    int pass = 1;
+    int test_num = 0;
 
-    printf("\nStarting Tests For ctype.c....\n");
+    if (argc < 2) {
+       printf("Usage: %s test_num\n", argv[0]);
+       return 1;
+    }
+    
+    sscanf(argv[1], "%d", &test_num);
 
-    pass *= test_str_isprint("abc", 1);
-    pass *= test_str_isprint("abc123\n", 0);	/* \n is end of line -not printable */
-    pass *= test_str_isprint("abc123\\n1!", 1);
-    pass *= test_str_isprint("123\txyz", 0);	/* \t is horizontal tab - not printable */
-    pass *= test_str_isprint("#$%\n 748", 0);	/* \n is end of line -not printable */
-    pass *= test_str_isprint("#$ ab12", 1);
-    pass *= test_str_isprint("#$^\ry", 0);	/* \r is carriage return - not printable */
+    switch (test_num) {
+	case 1:
+	    return !test_str_isprint("abc", 1);
+	case 2:
+	    return !test_str_isprint("abc123\n", 0);	/* \n is end of line -not printable */
+	case 3:
+	    return !test_str_isprint("abc123\\n1!", 1);
+	case 4:
+	    return !test_str_isprint("123\txyz", 0);	/* \t is horizontal tab - not printable */
+	case 5:
+	    return !test_str_isprint("#$%\n 748", 0);	/* \n is end of line -not printable */
+	case 6:
+	    return !test_str_isprint("#$ ab12", 1);
+	case 7:
+	    return !test_str_isprint("#$^\ry", 0);	/* \r is carriage return - not printable */
+    }
 
-    return (1-pass);
+    return 1;
 }
 
 
