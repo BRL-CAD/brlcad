@@ -2827,6 +2827,7 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
     if (!ON_Intersect(plane_a, plane_b, intersect))
 	return false;
     ON_3dVector line_normal = ON_CrossProduct(plane_a.Normal(), intersect.Direction());
+
     // dpi - >0: one side of the line, <0: another side, ==0: on the line
     double dp1 = ON_DotProduct(TriA.A - intersect.from, line_normal);
     double dp2 = ON_DotProduct(TriA.B - intersect.from, line_normal);
@@ -2846,6 +2847,7 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
     double t[4];
     int count = 0;
     double t1, t2;
+
     // dpi*dpj < 0 - the corresponding points are on different sides
     // - the line segment between them are intersected by the plane-plane
     // intersection line
@@ -2917,7 +2919,7 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
 struct PointPair {
     int indexA, indexB;
     double distance;
-    const bool operator < (const PointPair &_pp) const {
+    bool operator < (const PointPair &_pp) const {
 	return distance < _pp.distance;
     }
 };
@@ -2949,6 +2951,7 @@ surface_surface_intersection(const ON_Surface* surfA,
     BBNode *rootB = streeB.getRootNode();
     nodepairs.push_back(std::make_pair(rootA, rootB));
     ON_3dPointArray curvept;
+    int bbox_count = 0;
 
     // Second step: calculate the intersection of the bounding boxes, using
     // trigonal approximation.
@@ -2960,6 +2963,16 @@ surface_surface_intersection(const ON_Surface* surfA,
 	if (h) {
 	    for (NodePairs::iterator i = nodepairs.begin(); i != nodepairs.end(); i++) {
 		std::vector<BBNode *>::iterator j, k;
+		if ((*i).first->m_children.size() == 0) {
+		    BBNode *copy = new BBNode();
+		    *copy = *((*i).first);
+		    (*i).first->m_children.push_back(copy);
+		}
+		if ((*i).second->m_children.size() == 0) {
+		    BBNode *copy = new BBNode();
+		    *copy = *((*i).second);
+		    (*i).second->m_children.push_back(copy);
+		}
 		for (j = (*i).first->m_children.begin(); j != (*i).first->m_children.end(); j++) {
 		    for (k = (*i).second->m_children.begin(); k != (*i).second->m_children.end(); k++) {
 			tmp_pairs.push_back(std::make_pair(*j, *k));
@@ -3019,6 +3032,7 @@ surface_surface_intersection(const ON_Surface* surfA,
 			if (box_intersect.IsPointIn(average))
 			    curvept.Append(average);
 		    }
+		    bbox_count++;
 		} else {
 		    nodepairs.push_back(*i);
 		}
@@ -3029,6 +3043,8 @@ surface_surface_intersection(const ON_Surface* surfA,
 	}
 	bu_log("%d %d\n", h, tmp_pairs.size());*/
     }
+    bu_log("We get %d intersection bounding boxes.\n", bbox_count);
+    bu_log("%d points on the intersection curves.\n", curvept.Count());
 
     if (!curvept.Count()) {
 	    delete brep;
@@ -3039,8 +3055,16 @@ surface_surface_intersection(const ON_Surface* surfA,
     // Here we use polyline approximation.
     // TODO: Find a better fitting algorithm unless this is good enough.
 
-    if (max_dis == 0.0)
-	max_dis = pow(surfA->BoundingBox().Volume()*surfB->BoundingBox().Volume(), 1.0/6.0) * 0.1;
+    if (max_dis == 0.0) {
+	// max_dis = 0.0 means that we need to automatically generate a threshold.
+	if (ZERO(surfA->BoundingBox().Volume())) {
+	    max_dis = pow(surfB->BoundingBox().Volume(), 1.0/3.0) * 0.2;
+	} else if (ZERO(surfB->BoundingBox().Volume())) {
+	    max_dis = pow(surfA->BoundingBox().Volume(), 1.0/3.0) * 0.2;
+	} else {
+	    max_dis = pow(surfA->BoundingBox().Volume()*surfB->BoundingBox().Volume(), 1.0/6.0) * 0.2;
+	}
+    }
     bu_log("max_dis: %lf\n", max_dis);
     // NOTE: More tests are needed to find a better threshold.
 
