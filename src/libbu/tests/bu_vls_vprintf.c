@@ -107,220 +107,218 @@ check_format_chars()
 
 
 int
-main(int ac, char *av[])
+main(int argc, char *argv[])
 {
-    int fails    = 0; /* track unexpected failures */
-    int expfails = 0; /* track expected failures */
 
+    int test_num = 0;
     int f = 0;
     int p = 0;
     const char *word = "Lawyer";
 
-    printf("Testing bu_vls_vprintf...\n");
-
-    /* ======================================================== */
-    /* TESTS EXPECTED TO PASS
-     *
-     *   (see expected failures section below)
-     */
-    /* ======================================================== */
-
-    /* first check that we handle all known format chars */
-    printf("\n");
-    printf("Testing format char handlers...\n\n");
-    fails += check_format_chars();
-
-    printf("\n");
-    printf("Testing format conversions ...\n\n");
-
-    /* various types */
-    printf("An empty string (\"\"):\n");
-    fails += test_vls("");
-
-    printf("A newline (\"\\n\"):\n");
-    fails += test_vls("\n");
-
-    fails += test_vls("hello");
-    fails += test_vls("%s", "hello");
-    fails += test_vls("%d", 123);
-    fails += test_vls("%u", -123);
-    fails += test_vls("%e %E", 1.23, -3.21);
-    fails += test_vls("%g %G", 1.23, -3.21);
-    fails += test_vls("%x %X", 1.23, -3.21);
-    fails += test_vls("%x %X", 123, -321);
-    fails += test_vls("%o", 1.23);
-    fails += test_vls("%c%c%c", '1', '2', '3');
-    fails += test_vls("%p", (void *)av);
-    fails += test_vls("%%%d%%", ac);
-
-    /* various lengths */
-    fails += test_vls("%zu %zd", (size_t)123, (ssize_t)-123);
-    fails += test_vls("%jd %td", (intmax_t)123, (ptrdiff_t)-123);
-
-    /* various widths */
-    fails += test_vls("he%*so", 2, "ll");
-    fails += test_vls("he%*so", 2, "llll");
-    fails += test_vls("he%*so", 4, "ll");
-
-    /* various precisions */
-    fails += test_vls("he%.*so", 2, "ll");
-    fails += test_vls("he%.-1-o", 123);
-    fails += test_vls("%6.-3f", 123);
-
-    /* various flags */
-    fails += test_vls("%010d", 123);
-    fails += test_vls("%#-.10lx", 123);
-    fails += test_vls("%#lf", 123.0);
-
-    /* two-character length modifiers */
-    fails += test_vls("he%10dllo", 123);
-    fails += test_vls("he%-10ullo", 123);
-    fails += test_vls("he%#-12.10tullo", (ptrdiff_t)0x1234);
-    fails += test_vls("he%+-6.3ld%-+3.6dllo", 123, 321);
-    fails += test_vls("he%.10dllo", 123);
-    fails += test_vls("he%.-10ullo", 123);
-    fails += test_vls("%hd %hhd", 123, -123);
-
-    /* combinations, e.g., bug ID 3475562, fixed at rev 48958 */
-    /* left justify, right justify, in wider fields than the strings */
-    f = p = 2;
-    fails += test_vls("|%-*.*s|%*.*s|", f, p, "t", f, p, "t");
-    fails += test_vls("|%*s|%-*s|", f, "test", f, "test");
-    fails += test_vls("|%*s|%-*s|", f, word, f, word);
-
-    /* min field width; max string length ('precision'); string */
-    f = 2; p = 4;
-    printf("fw=%d, prec=%d, '%s': '%%%d.%ds'\n", f, p, word, f, p);
-    fails += test_vls("%*.*s", f, p, word);
-
-    f = 4; p = 2;
-    printf("fw=%d, prec=%d, '%s': '%%%d.%ds'\n", f, p, word, f, p);
-    fails += test_vls("%*.*s", f, p, word);
-
-    f = 4; p = 8;
-    printf("fw=%d, prec=%d, '%s': '%%%d.%ds'\n", f, p, word, f, p);
-    fails += test_vls("%*.*s", f, p, word);
-
-    f = 0; p = 8;
-    printf("fw=%d, prec=%d, '%s': '%%%d.%ds'\n", f, p, word, f, p);
-    fails += test_vls("%*.*s", f, p, word);
-
-    f = 8; p = 0;
-    printf("fw=%d, prec=%d, '%s': '%%%d.%ds'\n", f, p, word, f, p);
-    fails += test_vls("%*.*s", f, p, word);
-
-    /* mged bug at rev 48989 */
-    f = 8; p = 0;
-    printf("fw=%d, '%s': '%%%ds'\n", f, word, f);
-    fails += test_vls("%*s", f, word);
-
-    /* same but left justify */
-
-    f = 2; p = 4;
-    printf("fw=%d, prec=%d, '%s': '%%-%d.%ds'\n", f, p, word, f, p);
-    fails += test_vls("%-*.*s", f, p, word);
-
-    f = 4; p = 2;
-    printf("fw=%d, prec=%d, '%s': '%%-%d.%ds'\n", f, p, word, f, p);
-    fails += test_vls("%-*.*s", f, p, word);
-
-    f = 4; p = 8;
-    printf("fw=%d, prec=%d, '%s': '%%-%d.%ds'\n", f, p, word, f, p);
-    fails += test_vls("%-*.*s", f, p, word);
-
-    f = 0; p = 8;
-    printf("fw=%d, prec=%d, '%s': '%%-%d.%ds'\n", f, p, word, f, p);
-    fails += test_vls("%-*.*s", f, p, word);
-
-    f = 8; p = 0;
-    printf("fw=%d, prec=%d, '%s': '%%-%d.%ds'\n", f, p, word, f, p);
-    fails += test_vls("%-*.*s", f, p, word);
-
-    /* from "various types" */
-    fails += test_vls("%f %F", 1.23, -3.21);
-
-    /* from "two-character length modifiers" */
-    fails += test_vls("%ld %lld", 123, -123LL);
-
-    /* unsigned variant */
-    fails += test_vls("%lu %llu", 123, 123ULL);
-
-    /* from "two-character length modifiers" */
-    fails += test_vls("%ld %lld", 123, -123);
-
-    /* unsigned variant */
-    fails += test_vls("%lu %llu", 123, 123);
-
-    fails += test_vls("%hd %hhd", 123, -123);
-
-    /* misc */
-    fails += test_vls("% d % d", 123, -123);
-
-    fails += test_vls("% 05d % d", 123, -123);
-
-    fails += test_vls("%'d", 123000);
-
-    fails += test_vls("%c", 'r');
-
-/* this test needs a relook
-    fails += test_vls("%H", 123);
-*/
-
-    /* obsolete but usable */
-/*
-    fails += test_vls("%S", (wchar_t *)"hello");
-*/
-/*
-    fails += test_vls("%qd %qd", 123, -123);
-*/
-
-    /* other */
-
-    /* ======================================================== */
-    /* EXPECTED FAILURES ONLY BELOW HERE                        */
-    /* ======================================================== */
-    /* EXPECTED FAILURES:
-     *
-     * Notes:
-     *
-     *   1. For these tests have the return value increment 'expfails'.
-     *   2. Test with both 'make vsl-regress' and 'make regress' because
-     *        some other tests use this function in unpredictable ways.
-     *   3. After a test is fixed, change the return value to increment
-     *        'fails', move it to the EXPECTED PASS group above, and add
-     *        some info about it as necessary to help those who may be
-     *        forced to revisit this.
-     *
-     */
-
-/* uncomment if using expected failures */
-/* #define EXP_FAILS */
-
-    printf("\nExpected failures (don't use in production code):\n");
-
-#if defined (EXP_FAILS)
-    /* obsolete - expected failures */
-    expfails += test_vls("%C", 'N');
-    expfails += test_vls("%D %D", 123, -123);
-    expfails += test_vls("%O %O", 123, -123);
-    expfails += test_vls("%U %U", 123, -123);
-#else
-    printf("  NONE AT THIS TIME\n");
-#endif
-
-    /* report results */
-    fprintf(stderr, "%d", expfails);
-
-
-    printf("\n%s: testing complete\n", av[0]);
-
-    if (fails != 0) {
-      /* as long as fails is < 127 the STATUS will be the number of unexpected failures */
-	return fails;
+    if (argc < 2) {
+	printf("Usage: %s test_num\n", argv[0]);
+	return 1;
     }
 
-    return 0;
 
+    sscanf(argv[1], "%d", &test_num);    
+
+
+    switch (test_num) {
+	case 1:
+	    /* check that we handle all known format chars */
+	    return check_format_chars();
+	case 2:
+	    return test_vls("");
+	case 3:
+	    return test_vls("\n");
+	case 4:
+	    return test_vls("hello");
+	case 5:
+	    return test_vls("%s", "hello");
+	case 6:
+	    return test_vls("%d", 123);
+	case 7:
+	    return test_vls("%u", -123);
+	case 8:
+	    return test_vls("%e %E", 1.23, -3.21);
+	case 9:
+	    return test_vls("%g %G", 1.23, -3.21);
+	case 10:
+	    return test_vls("%x %X", 1.23, -3.21);
+	case 11:
+	    return test_vls("%x %X", 123, -321);
+	case 12:
+	    return test_vls("%o", 1.23);
+	case 13:
+	    return test_vls("%c%c%c", '1', '2', '3');
+	case 14:
+	    return test_vls("%p", (void *)argv);
+	case 15:
+	    return test_vls("%%%d%%", argc);
+	/* various lengths */
+	case 16:
+	    return test_vls("%zu %zd", (size_t)123, (ssize_t)-123);
+	case 17:
+	    return test_vls("%jd %td", (intmax_t)123, (ptrdiff_t)-123);
+        /* various widths */
+	case 18:
+	    return test_vls("he%*so", 2, "ll");
+	case 19:
+	    return test_vls("he%*so", 2, "llll");
+	case 20:
+	    return test_vls("he%*so", 4, "ll");
+        /* various precisions */
+	case 21:
+	    return test_vls("he%.*so", 2, "ll");
+	case 22:
+	    return test_vls("he%.-1-o", 123);
+	case 23:
+	    return test_vls("%6.-3f", 123);
+	/* various flags */
+	case 24:
+	    return test_vls("%010d", 123);
+	case 25:
+	    return test_vls("%#-.10lx", 123);
+	case 26:
+	    return test_vls("%#lf", 123.0);
+        /* two-character length modifiers */
+	case 27:
+	    return test_vls("he%10dllo", 123);
+	case 28:
+	    return test_vls("he%-10ullo", 123);
+	case 29:
+	    return test_vls("he%#-12.10tullo", (ptrdiff_t)0x1234);
+	case 30:
+	    return test_vls("he%+-6.3ld%-+3.6dllo", 123, 321);
+	case 31:
+	    return test_vls("he%.10dllo", 123);
+	case 32:
+	    return test_vls("he%.-10ullo", 123);
+	case 33:
+	    return test_vls("%hd %hhd", 123, -123);
+	/* combinations, e.g., bug ID 3475562, fixed at rev 48958 */
+	/* left justify, right justify, in wider fields than the strings */
+	case 34:
+	    f = p = 2;
+	    return test_vls("|%-*.*s|%*.*s|", f, p, "t", f, p, "t");
+	case 35:
+	    f = p = 2;
+	    return test_vls("|%*s|%-*s|", f, "test", f, "test");
+	case 36:
+	    f = p = 2;
+	    return test_vls("|%*s|%-*s|", f, word, f, word);
+        /* min field width; max string length ('precision'); string */
+	case 37:
+	    f = 2; p = 4;
+	    printf("fw=%d, prec=%d, '%s': '%%%d.%ds'\n", f, p, word, f, p);
+	    return test_vls("%*.*s", f, p, word);
+	case 38:
+	    f = 4; p = 2;
+	    printf("fw=%d, prec=%d, '%s': '%%%d.%ds'\n", f, p, word, f, p);
+	    return test_vls("%*.*s", f, p, word);
+	case 39:
+	    f = 4; p = 8;
+	    printf("fw=%d, prec=%d, '%s': '%%%d.%ds'\n", f, p, word, f, p);
+	    return test_vls("%*.*s", f, p, word);
+	case 40:
+	    f = 0; p = 8;
+	    printf("fw=%d, prec=%d, '%s': '%%%d.%ds'\n", f, p, word, f, p);
+	    return test_vls("%*.*s", f, p, word);
+	case 41:
+	    f = 8; p = 0;
+	    printf("fw=%d, prec=%d, '%s': '%%%d.%ds'\n", f, p, word, f, p);
+	    return test_vls("%*.*s", f, p, word);
+	case 42:
+	    /* mged bug at rev 48989 */
+	    f = 8; p = 0;
+	    printf("fw=%d, '%s': '%%%ds'\n", f, word, f);
+	    return test_vls("%*s", f, word);
+	/* same but left justify */
+	case 43:
+	    f = 2; p = 4;
+	    printf("fw=%d, prec=%d, '%s': '%%-%d.%ds'\n", f, p, word, f, p);
+	    return test_vls("%-*.*s", f, p, word);
+	case 44:
+	    f = 4; p = 2;
+	    printf("fw=%d, prec=%d, '%s': '%%-%d.%ds'\n", f, p, word, f, p);
+	    return test_vls("%-*.*s", f, p, word);
+	case 45:
+	    f = 4; p = 8;
+	    printf("fw=%d, prec=%d, '%s': '%%-%d.%ds'\n", f, p, word, f, p);
+	    return test_vls("%-*.*s", f, p, word);
+	case 46:
+	    f = 0; p = 8;
+	    printf("fw=%d, prec=%d, '%s': '%%-%d.%ds'\n", f, p, word, f, p);
+	    return test_vls("%-*.*s", f, p, word);
+	case 47:
+	    f = 8; p = 0;
+	    printf("fw=%d, prec=%d, '%s': '%%-%d.%ds'\n", f, p, word, f, p);
+	    return test_vls("%-*.*s", f, p, word);
+	/* from "various types" */
+	case 48:
+	    return test_vls("%f %F", 1.23, -3.21);
+	/* from "two-character length modifiers" */
+	case 49:
+	    return test_vls("%ld %lld", 123, -123LL);
+        /* unsigned variant */
+	case 50:
+	    return test_vls("%lu %llu", 123, 123ULL);
+        /* from "two-character length modifiers" */
+	case 51:
+	    return test_vls("%ld %lld", 123, -123);
+	/* unsigned variant */
+	case 52:
+	    return test_vls("%lu %llu", 123, 123);
+	case 53:
+	    return test_vls("%hd %hhd", 123, -123);
+        /* misc */
+	case 54:
+	    return test_vls("% d % d", 123, -123);
+	case 55:
+	    return test_vls("% 05d % d", 123, -123);
+	case 56:
+	    return test_vls("%'d", 123000);
+	case 57:
+	    return test_vls("%c", 'r');
+
+	/* this test needs a relook
+	    return test_vls("%H", 123);
+	 */
+
+        /* obsolete but usable */
+        /*
+           test_vls("%S", (wchar_t *)"hello");
+           test_vls("%qd %qd", 123, -123);
+         */
+
+        /* EXPECTED FAILURES (don't use in production code):                                             
+         *
+         * Notes:
+         *
+         *   1. For these tests have the return value increment 'expfails'.
+         *   2. Test with both 'make vsl-regress' and 'make regress' because
+         *        some other tests use this function in unpredictable ways.
+         *   3. After a test is fixed, change the return value to increment
+         *        'fails', move it to the EXPECTED PASS group above, and add
+         *        some info about it as necessary to help those who may be
+         *        forced to revisit this.
+         *
+         */
+
+         /* obsolete - expected failures 
+	case 10000:
+	    return !test_vls("%C", 'N');
+	case 10001:
+	    return !test_vls("%D %D", 123, -123);
+	case 10002:
+	    return !test_vls("%O %O", 123, -123);
+	case 10003:
+	    return !test_vls("%U %U", 123, -123);a
+        */
+    }
+
+    return 1;
 }
 
 
