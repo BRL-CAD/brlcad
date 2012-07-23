@@ -518,9 +518,12 @@ int bn_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2,
   fastf_t d1,d2;
   fastf_t du0,du1,du2,dv0,dv1,dv2;
   fastf_t D[3];
-  fastf_t isect1[2], isect2[2];
-  fastf_t isectpointA1[3],isectpointA2[3];
-  fastf_t isectpointB1[3],isectpointB2[3];
+  fastf_t isect1[2] = {0,0};
+  fastf_t isect2[2] = {0,0};
+  point_t isectpointA1 = VINIT_ZERO;
+  point_t isectpointA2 = VINIT_ZERO;
+  point_t isectpointB1 = VINIT_ZERO;
+  point_t isectpointB2 = VINIT_ZERO;
   fastf_t du0du1,du0du2,dv0dv1,dv0dv2;
   short index;
   fastf_t vp0,vp1,vp2;
