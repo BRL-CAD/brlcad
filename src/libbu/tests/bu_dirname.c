@@ -31,80 +31,57 @@
 
 
 /* Test against basename UNIX tool */
-void
+int
 automatic_test(const char *input)
 {
-
+#ifdef HAVE_DIRNAME
     char *ans = NULL;
     char buf_input[1000];
     char *res = NULL;
+    int pass = 0;
 
     if (input)
 	bu_strlcpy(buf_input, input, strlen(input)+1);
 
-#ifdef HAVE_DIRNAME
     /* build UNIX 'dirname' command */
     if (!input)
 	ans = dirname(NULL);
     else
 	ans = dirname(buf_input);
-#endif
 
     if (!input)
 	res = bu_dirname(NULL);
     else
 	res = bu_dirname(buf_input);
 
-    if (BU_STR_EQUAL(res, ans))
+    if (BU_STR_EQUAL(res, ans)) {
 	printf("%24s -> %24s [PASSED]\n", input, res);
-    else
+        pass = 1;
+    } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", input, res, ans);
+    }
 
     bu_free(res, NULL);
+    return pass;
+#else 
+    printf("%s untested - dirname not implemented on this platform\n", input);
+    return 1;
+#endif
 }
 
 
 int
-main(int ac, char *av[])
+main(int argc, char *argv[])
 {
-    char input[1000] = {0};
-
-    /* pre-define tests */
-    printf("Performing pre-defined tests:\n");
-    automatic_test("/usr/dir/file");
-    automatic_test("/usr/dir/");
-    automatic_test("/usr\\/dir");
-    automatic_test("/usr/.");
-    automatic_test("/usr/");
-    automatic_test("/usr");
-    automatic_test("usr");
-    automatic_test("/usr/some long/file");
-    automatic_test("/usr/some file");
-    automatic_test("C:/usr/some\\ drivepath");
-    automatic_test("/a test file");
-    automatic_test("another file");
-    automatic_test("C:\\Temp");
-    automatic_test("C:/Temp");
-    automatic_test("/");
-    automatic_test("/////");
-    automatic_test(".");
-    automatic_test("..");
-    automatic_test("...");
-    automatic_test("   ");
-    automatic_test("");
-    automatic_test(NULL);
-
-    /* user tests */
-    if (ac > 1) {
-	printf("Enter a string:\n");
-	bu_fgets(input, 1000, stdin);
-	if (strlen(input) > 0)
-	    input[strlen(input)-1] = '\0';
-	automatic_test(input);
+    if (argc == 1) {
+       return !automatic_test(NULL);
     }
 
-    printf("%s: testing complete\n", av[0]);
-    return 0;
+    if (argc > 2) {
+       printf("Usage %s test_string\n", argv[0]);
+    }
+
+    return !automatic_test(argv[1]);
 }
 
 

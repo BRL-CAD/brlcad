@@ -1,4 +1,3 @@
-BRLCAD_ADDEXEC(tester_bu_dirname bu_dirname.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_escape bu_escape.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_progname bu_progname.c libbu NO_INSTALL LOCAL)
 BRLCAD_ADDEXEC(tester_bu_quote bu_quote.c libbu NO_INSTALL LOCAL)
@@ -127,7 +126,36 @@ add_test(bu_str_isprint_non-alphanumeric     tester_bu_str_isprint 5)
 add_test(bu_str_isprint_eol_non-alphanumeric tester_bu_str_isprint 6) 
 add_test(bu_str_isprint_carriage_return      tester_bu_str_isprint 7)
 
+#
+#  ************ dirname.c tests *************
+#
 
+##############################
+#      bu_dirname testing    #
+##############################
+BRLCAD_ADDEXEC(tester_bu_dirname bu_dirname.c libbu NO_INSTALL LOCAL)
+add_test(bu_dirname__usr_dir_file tester_bu_dirname "/usr/dir/file")
+add_test(bu_dirname__usr_dir_ tester_bu_dirname "/usr/dir/")
+add_test(bu_dirname__usr__bsl__dir tester_bu_dirname "/usr\\\\/dir")
+add_test(bu_dirname__usr_period tester_bu_dirname "/usr/.")
+add_test(bu_dirname__usr_ tester_bu_dirname "/usr/")
+add_test(bu_dirname__usr tester_bu_dirname "/usr")
+add_test(bu_dirname_usr tester_bu_dirname "usr")
+add_test(bu_dirname__usr_some_sp_long_file tester_bu_dirname "/usr/some long/file")
+add_test(bu_dirname__usr_some_sp_file tester_bu_dirname "/usr/some file")
+add_test(bu_dirname__usr_some__bsl__sp_drivepath tester_bu_dirname "C:/usr/some\\\\ drivepath")
+add_test(bu_dirname__a_sp_test_file tester_bu_dirname "/a test file")
+add_test(bu_dirname_another_file tester_bu_dirname "another file")
+add_test(bu_dirname_C_colon__bsl_Temp tester_bu_dirname "C:\\\\Temp")
+add_test(bu_dirname_C_colon__Temp tester_bu_dirname "C:/Temp")
+add_test(bu_dirname__ tester_bu_dirname "/")
+add_test(bu_dirname______ tester_bu_dirname "/////")
+add_test(bu_dirname__period_ tester_bu_dirname ".")
+add_test(bu_dirname__period__period_ tester_bu_dirname "..")
+add_test(bu_dirname__period__period__period_ tester_bu_dirname "...")
+add_test(bu_dirname__sp__sp__sp_ tester_bu_dirname "   ")
+add_test(bu_dirname_empty tester_bu_dirname "")
+add_test(bu_dirname_null tester_bu_dirname)
 
 
 # Local Variables:
