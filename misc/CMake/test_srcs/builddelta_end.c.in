@@ -90,8 +90,8 @@ int main(void) {
   printtime(tdiff);
   printf("\n---\n");
 
-  printf("${INSTALL_LINE}.\n");
-  printf("${BENCHMARK_LINE}.\n");
+  printf("${INSTALL_LINE}\n");
+  printf("${BENCHMARK_LINE}\n");
   printf("\n");
 
   return 0;
