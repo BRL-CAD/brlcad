@@ -56,7 +56,7 @@ MassUnit::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     if ( !NamedUnit::Load(step,sse) ) {
 	std::string err = CLASSNAME;
 	err += ":Error loading base class ::Unit.";
-	ERROR(err);
+	REPORT_ERROR(err);
 	return false;
     }
 
