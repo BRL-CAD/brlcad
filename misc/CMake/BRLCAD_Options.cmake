@@ -59,11 +59,11 @@ macro(AUTO_OPTION username varname debug_state release_state)
 
   # If we we don't understand the build type and have an AUTO setting 
   # varname is not set.
-  if(NOT "${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+  if(CMAKE_BUILD_TYPE AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
     if(NOT ${${username}} MATCHES "AUTO")
       set(${varname} ${${username}})
     endif(NOT ${${username}} MATCHES "AUTO")
-  endif(NOT "${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
+  endif(CMAKE_BUILD_TYPE AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
 
   # If we DO understand the build type and have AUTO, be smart
   if("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND ${${username}} MATCHES "AUTO")
@@ -75,6 +75,12 @@ macro(AUTO_OPTION username varname debug_state release_state)
     set(${varname} ${debug_state})
     set(${username} "${debug_state} (AUTO)" CACHE STRING "auto option" FORCE)
   endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${${username}} MATCHES "AUTO")
+
+  if(NOT CMAKE_BUILD_TYPE AND ${${username}} MATCHES "AUTO")
+    set(${varname} ${debug_state})
+    set(${username} "${debug_state} (AUTO)" CACHE STRING "auto option" FORCE)
+  endif(NOT CMAKE_BUILD_TYPE AND ${${username}} MATCHES "AUTO")
+
 endmacro(AUTO_OPTION varname release_state debug_state)
 
 #-----------------------------------------------------------------------------
