@@ -2815,6 +2815,17 @@ struct Triangle {
     inline void CreateFromPoints(ON_3dPoint &_A, ON_3dPoint &_B, ON_3dPoint &_C) {
 	A = _A, B = _B, C = _C;
     }
+    ON_3dPoint BarycentricCoordinate(ON_3dPoint &pt) {
+	ON_Matrix M(3, 3);
+	M[0][0] = A[0], M[0][1] = B[0], M[0][2] = C[0];
+	M[1][0] = A[1], M[1][1] = B[1], M[1][2] = C[1];
+	M[2][0] = A[2], M[2][1] = B[2], M[2][2] = C[2];
+	M.Invert(0.0);
+	ON_Matrix B(3, 1);
+	B[0][0] = pt[0], B[1][0] = pt[1], B[2][0] = pt[2];
+	M.Multiply(M, B);
+	return ON_3dPoint(M[0][0], M[1][0], M[2][0]);
+    }
 };
 
 
@@ -2951,6 +2962,7 @@ surface_surface_intersection(const ON_Surface* surfA,
     BBNode *rootB = streeB.getRootNode();
     nodepairs.push_back(std::make_pair(rootA, rootB));
     ON_3dPointArray curvept;
+    ON_2dPointArray curveuv, curvest;
     int bbox_count = 0;
 
     // Second step: calculate the intersection of the bounding boxes, using
@@ -2994,14 +3006,18 @@ surface_surface_intersection(const ON_Surface* surfA,
 
 		    // Get the corners of each surface sub-patch inside the bounding-box.
 		    ON_3dPoint cornerA[4], cornerB[4];
-		    cornerA[0] = surfA->PointAt((*i).first->m_u.Min(), (*i).first->m_v.Min());
-		    cornerA[1] = surfA->PointAt((*i).first->m_u.Min(), (*i).first->m_v.Max());
-		    cornerA[2] = surfA->PointAt((*i).first->m_u.Max(), (*i).first->m_v.Min());
-		    cornerA[3] = surfA->PointAt((*i).first->m_u.Max(), (*i).first->m_v.Max());
-		    cornerB[0] = surfB->PointAt((*i).second->m_u.Min(), (*i).second->m_v.Min());
-		    cornerB[1] = surfB->PointAt((*i).second->m_u.Min(), (*i).second->m_v.Max());
-		    cornerB[2] = surfB->PointAt((*i).second->m_u.Max(), (*i).second->m_v.Min());
-		    cornerB[3] = surfB->PointAt((*i).second->m_u.Max(), (*i).second->m_v.Max());
+		    double u_min = (*i).first->m_u.Min(), u_max = (*i).first->m_u.Max();
+		    double v_min = (*i).first->m_v.Min(), v_max = (*i).first->m_v.Max();
+		    double s_min = (*i).second->m_u.Min(), s_max = (*i).second->m_u.Max();
+		    double t_min = (*i).second->m_v.Min(), t_max = (*i).second->m_v.Max();
+		    cornerA[0] = surfA->PointAt(u_min, v_min);
+		    cornerA[1] = surfA->PointAt(u_min, v_max);
+		    cornerA[2] = surfA->PointAt(u_max, v_min);
+		    cornerA[3] = surfA->PointAt(u_max, v_max);
+		    cornerB[0] = surfB->PointAt(s_min, t_min);
+		    cornerB[1] = surfB->PointAt(s_min, t_max);
+		    cornerB[2] = surfB->PointAt(s_max, t_min);
+		    cornerB[3] = surfB->PointAt(s_max, t_max);
 
 		    /* We approximate each surface sub-patch inside the bounding-box with two 
 		     * triangles that share an edge.
@@ -3019,18 +3035,63 @@ surface_surface_intersection(const ON_Surface* surfA,
 		    is_intersect[1] = triangle_intersection(triangle[0], triangle[3], intersect_center[1]);
 		    is_intersect[2] = triangle_intersection(triangle[1], triangle[2], intersect_center[2]);
 		    is_intersect[3] = triangle_intersection(triangle[1], triangle[3], intersect_center[3]);
+
+		    // Calculate the intersection centers' uv (st) coordinates.
+		    ON_3dPoint bcoor[8];
+		    ON_2dPoint uv[4]/*surfA*/, st[4]/*surfB*/;
+		    if (is_intersect[0]) {
+			bcoor[0] = triangle[0].BarycentricCoordinate(intersect_center[0]);
+			bcoor[1] = triangle[2].BarycentricCoordinate(intersect_center[0]);
+			uv[0].x = bcoor[0].x*u_min + bcoor[0].y*u_min + bcoor[0].z*u_max;
+			uv[0].y = bcoor[0].x*v_min + bcoor[0].y*v_max + bcoor[0].z*v_min;
+			st[0].x = bcoor[1].x*s_min + bcoor[1].y*s_min + bcoor[1].z*s_max;
+			st[0].y = bcoor[1].x*t_min + bcoor[1].y*t_max + bcoor[1].z*t_min;
+		    }
+		    if (is_intersect[1]) {
+			bcoor[2] = triangle[0].BarycentricCoordinate(intersect_center[1]);
+			bcoor[3] = triangle[3].BarycentricCoordinate(intersect_center[1]);
+			uv[1].x = bcoor[2].x*u_min + bcoor[2].y*u_min + bcoor[2].z*u_max;
+			uv[1].y = bcoor[2].x*v_min + bcoor[2].y*v_max + bcoor[2].z*v_min;
+			st[1].x = bcoor[3].x*s_min + bcoor[3].y*s_max + bcoor[3].z*s_max;
+			st[1].y = bcoor[3].x*t_max + bcoor[3].y*t_min + bcoor[3].z*t_max;
+		    }
+		    if (is_intersect[2]) {
+			bcoor[4] = triangle[1].BarycentricCoordinate(intersect_center[2]);
+			bcoor[5] = triangle[2].BarycentricCoordinate(intersect_center[2]);
+			uv[2].x = bcoor[4].x*u_min + bcoor[4].y*u_max + bcoor[4].z*u_max;
+			uv[2].y = bcoor[4].x*v_max + bcoor[4].y*v_min + bcoor[4].z*v_max;
+			st[2].x = bcoor[5].x*s_min + bcoor[5].y*s_min + bcoor[5].z*s_max;
+			st[2].y = bcoor[5].x*t_min + bcoor[5].y*t_max + bcoor[5].z*t_min;
+		    }
+		    if (is_intersect[3]) {
+			bcoor[6] = triangle[1].BarycentricCoordinate(intersect_center[3]);
+			bcoor[7] = triangle[3].BarycentricCoordinate(intersect_center[3]);
+			uv[3].x = bcoor[6].x*u_min + bcoor[6].y*u_max + bcoor[6].z*u_max;
+			uv[3].y = bcoor[6].x*v_max + bcoor[6].y*v_min + bcoor[6].z*v_max;
+			st[3].x = bcoor[7].x*s_min + bcoor[7].y*s_max + bcoor[7].z*s_max;
+			st[3].y = bcoor[7].x*t_max + bcoor[7].y*t_min + bcoor[7].z*t_max;
+		    }
+
 		    int num_intersects = 0;
 		    ON_3dPoint average(0.0, 0.0, 0.0);
+		    ON_2dPoint avguv(0.0, 0.0), avgst(0.0, 0.0);
 		    for (int j = 0; j < 4; j++) {
 			if (is_intersect[j]) {
 			    average += intersect_center[j];
+			    avguv += uv[j];
+			    avgst += st[j];
 			    num_intersects++;
 			}
 		    }
 		    if (num_intersects) {
 			average /= num_intersects;
-			if (box_intersect.IsPointIn(average))
+			avguv /= num_intersects;
+			avgst /= num_intersects;
+			if (box_intersect.IsPointIn(average)) {
 			    curvept.Append(average);
+			    curveuv.Append(avguv);
+			    curvest.Append(avgst);
+			}
 		    }
 		    bbox_count++;
 		} else {
@@ -3047,9 +3108,9 @@ surface_surface_intersection(const ON_Surface* surfA,
     bu_log("%d points on the intersection curves.\n", curvept.Count());
 
     if (!curvept.Count()) {
-	    delete brep;
-	    return 0;
-	}
+	delete brep;
+	return 0;
+    }
 
     // Third step: Fit the points in curvept into NURBS curves.
     // Here we use polyline approximation.
