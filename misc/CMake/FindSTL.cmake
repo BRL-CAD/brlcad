@@ -63,7 +63,7 @@ CHECK_C_SOURCE_RUNS("${stl_test_src}" STL_LIB_TEST)
 
 if("${STL_LIB_TEST}" EQUAL 1)
   # succeeded - no STL needed
-  set(STDCXX_LIBRARIES "" CACHE STRING "STL not found" FORCE)
+  set(STDCXX_LIBRARIES "" CACHE STRING "STL not required" FORCE)
 else("${STL_LIB_TEST}" EQUAL 1)
   # failed - try library
   if(NOT STDCXX_LIBRARIES)
@@ -78,16 +78,15 @@ else("${STL_LIB_TEST}" EQUAL 1)
   else()
     set(STDCXX_LIBRARIES "" CACHE STRING "STL not found" FORCE)
   endif()
+
+  set(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES_BAK}")
+
+  mark_as_advanced(STDCXX_LIBRARIES)
+
+  # handle the QUIETLY and REQUIRED arguments 
+  include(FindPackageHandleStandardArgs)
+  FIND_PACKAGE_HANDLE_STANDARD_ARGS(STL DEFAULT_MSG STDCXX_LIBRARIES)
 endif("${STL_LIB_TEST}" EQUAL 1)
-
-SET(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES_BAK}")
-
-mark_as_advanced(STDCXX_LIBRARIES)
-
-# handle the QUIETLY and REQUIRED arguments 
-include(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(STL DEFAULT_MSG STDCXX_LIBRARIES)
-
 
 # Local Variables:
 # tab-width: 8
