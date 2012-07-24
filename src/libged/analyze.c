@@ -684,9 +684,6 @@ static fastf_t
 analyze_face(struct ged *gedp, int face, fastf_t *center_pt,
              const struct rt_arb_internal *arb, int type,
              const struct bn_tol *tol, row_t *row)
-
-/* reference center point */
-
 {
     int a, b, c, d;         /* 4 points of face to look at */
     fastf_t angles[5];      /* direction cosines, rot, fb */
@@ -792,24 +789,20 @@ analyze_edge(struct ged *gedp, const int edge, const struct rt_arb_internal *arb
 static void
 analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
 {
+    int i, type;
+    int cgtype;     /* COMGEOM arb type: # of vertices */
+    fastf_t tot_vol = 0.0, tot_area = 0.0;
+    point_t center_pt;
+    table_t table;  /* holds table data from child functions */
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     struct rt_arb_internal earb;
-    int i;
-    point_t center_pt;
-    fastf_t tot_vol, tot_area;
-    int cgtype;     /* COMGEOM arb type: # of vertices */
-    int type;
-
-    /* variables for pretty printing */
-    table_t table;  /* holds table data from child functions */
+    RT_ARB_CK_MAGIC(arb);
 
     /* find the specific arb type, in GIFT order. */
     if ((cgtype = rt_arb_std_type(ip, &gedp->ged_wdbp->wdb_tol)) == 0) {
         bu_vls_printf(gedp->ged_result_str, "analyze_arb: bad ARB\n");
         return;
     }
-
-    tot_area = tot_vol = 0.0;
 
     type = cgtype - 4;
 
@@ -905,10 +898,8 @@ static int
 ccw(const void *x, const void *y)
 {
     vect_t tmp;
-    const struct arbn_pt *ix = (struct arbn_pt *)x;
-    const struct arbn_pt *iy = (struct arbn_pt *)y;
-    VCROSS(tmp, ix->pt, iy->pt);
-    return VDOT(ix->plane_eqn, tmp);
+    VCROSS(tmp, ((struct arbn_pt *)x)->pt, ((struct arbn_pt *)y)->pt);
+    return VDOT(((struct arbn_pt *)x)->plane_eqn, tmp);
 }
 
 
@@ -1455,10 +1446,13 @@ analyze_part(struct ged *gedp, const struct rt_db_internal *ip)
 static void
 analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
 {
-    /*WIP*/
     fastf_t area;
     rt_functab[ID_SKETCH].ft_surf_area(&area, ip);
-    bu_vls_printf(gedp->ged_result_str, "area:%8.f", area);
+    bu_vls_printf(gedp->ged_result_str, "\nTotal Area: %10.8f",
+            area
+            * gedp->ged_wdbp->dbip->dbi_local2base
+            * gedp->ged_wdbp->dbip->dbi_local2base
+            );
 }
 
 
