@@ -22,12 +22,12 @@ typedef std::set<size_t> FaceList;
 
 class ThreeDPoint
 {
-public:
-    fastf_t x, y, z;
-    ThreeDPoint(fastf_t, fastf_t, fastf_t);
-    bool operator< (const ThreeDPoint &other) const {
-	return (100*x + 10*y + z) < (100*other.x + 10*other.y + other.z);
-    }
+    public:
+	fastf_t x, y, z;
+	ThreeDPoint(fastf_t, fastf_t, fastf_t);
+	bool operator< (const ThreeDPoint &other) const {
+	    return (100*x + 10*y + z) < (100*other.x + 10*other.y + other.z);
+	}
 };
 
 ThreeDPoint::ThreeDPoint(fastf_t a, fastf_t b, fastf_t c)
@@ -41,15 +41,15 @@ typedef std::map< ThreeDPoint, std::set<size_t> > FaceCategorization;
 
 class Curve
 {
-public:
-    size_t id;
-    std::pair<size_t, size_t> start_and_end;
-    size_t inner_patch;
-    size_t outer_patch;
-    EdgeList edges;
-    bool operator< (const Curve &other) const {
-	return id < other.id;
-    }
+    public:
+	size_t id;
+	std::pair<size_t, size_t> start_and_end;
+	size_t inner_patch;
+	size_t outer_patch;
+	EdgeList edges;
+	bool operator< (const Curve &other) const {
+	    return id < other.id;
+	}
 };
 
 typedef std::set<Curve> CurveList;
@@ -57,16 +57,16 @@ typedef std::set<CurveList> LoopList;
 
 class Patch
 {
-public:
-    size_t id;
-    ThreeDPoint *category_plane;
-    EdgeList edges;
-    LoopList loops;
-    FaceList faces;
-    CurveList outer_loop;
-    bool operator< (const Patch &other) const {
-	return id < other.id;
-    }
+    public:
+	size_t id;
+	ThreeDPoint *category_plane;
+	EdgeList edges;
+	LoopList loops;
+	FaceList faces;
+	CurveList outer_loop;
+	bool operator< (const Patch &other) const {
+	    return id < other.id;
+	}
 };
 
 
@@ -182,6 +182,111 @@ void find_edge_segments(struct rt_bot_internal *bot, const Patch *patch, EdgeLis
     }
 }
 
+/* We start by checking faces along the edges - due to the nature of the
+ * segmentation already done, any triangle overlaps in the projection are
+ * going to have member triangles along the edges of the bot.*/
+void find_proj_overlaps(struct rt_bot_internal *bot, const Patch *patch, std::set<Patch> *UNUSED(patches), EdgeToFace *edge_to_face)
+{
+    size_t pt_A, pt_B, pt_C;
+    FaceList edge_faces;
+    FaceList::iterator ef_it;
+    FaceList::iterator ef_it2;
+    std::set<size_t>::iterator it;
+    std::map<std::pair<size_t, size_t>, size_t> edge_face_cnt;
+    std::map<std::pair<size_t, size_t>, size_t>::iterator efc_it;
+    for (it = patch->faces.begin(); it != patch->faces.end(); it++) {
+	pt_A = bot->faces[(*it)*3+0]*3;
+	pt_B = bot->faces[(*it)*3+1]*3;
+	pt_C = bot->faces[(*it)*3+2]*3;
+	if (pt_A <= pt_B) {
+	    edge_face_cnt[std::make_pair(pt_A, pt_B)] += 1;
+	} else {
+	    edge_face_cnt[std::make_pair(pt_B, pt_A)] += 1;
+	}
+	if (pt_B <= pt_C) {
+	    edge_face_cnt[std::make_pair(pt_B, pt_C)] += 1;
+	} else {
+	    edge_face_cnt[std::make_pair(pt_C, pt_B)] += 1;
+	}
+	if (pt_C <= pt_A) {
+	    edge_face_cnt[std::make_pair(pt_C, pt_A)] += 1;
+	} else {
+	    edge_face_cnt[std::make_pair(pt_A, pt_C)] += 1;
+	}
+    }
+
+    for (efc_it = edge_face_cnt.begin(); efc_it!=edge_face_cnt.end(); efc_it++) {
+	if ((*efc_it).second == 1) {
+	    std::set<size_t>::iterator ffe_it;
+	    std::set<size_t> faces_from_edge = (*edge_to_face)[(*efc_it).first];
+	    for (ffe_it = faces_from_edge.begin(); ffe_it != faces_from_edge.end() ; ffe_it++) {
+		FaceList::iterator this_it = patch->faces.find((*ffe_it));
+		if (this_it != patch->faces.end()) {
+		    edge_faces.insert((*ffe_it));
+		}
+	    }
+
+	}
+    }
+
+    // OK, now we have the edge triangles.  Pick the first one, check it against
+    // the rest for overlapping in the projected space.  
+    // If it does, pull it out and start a new patch.
+    // Check the faces shared by that triangle's edges - if they
+    // are in the original patch and overlap something in that patch, try to
+    // add them to the new patch.  if they overlap with *that* patch, start another
+    // patch and so on.  at then end, need a set of connected patches with non
+    // overlapping triangles.
+
+    // as a first test, just see if we can find any overlapping triangles.
+    if (edge_faces.size() > 1) {
+	for (ef_it = edge_faces.begin(); ef_it!=edge_faces.end(); ef_it++) {
+	    std::cout << "patch_id: " << patch->id << " face: " << (*ef_it) << "\n";
+	    point_t p1, p2, p3, normal, norm_scale;
+	    point_t v0, v1, v2;
+	    fastf_t dotP;
+	    VSET(normal, patch->category_plane->x, patch->category_plane->y, patch->category_plane->z);
+	    VMOVE(p1, &bot->vertices[bot->faces[(*ef_it)*3+0]*3]);
+	    dotP = VDOT(p1, normal);
+	    VSCALE(norm_scale, normal, dotP);
+	    VSUB2(v0, p1, norm_scale);
+	    VMOVE(p2, &bot->vertices[bot->faces[(*ef_it)*3+1]*3]);
+	    dotP = VDOT(p2, normal);
+	    VSCALE(norm_scale, normal, dotP);
+	    VSUB2(v1, p2, norm_scale);
+	    VMOVE(p3, &bot->vertices[bot->faces[(*ef_it)*3+2]*3]);
+	    dotP = VDOT(p3, normal);
+	    VSCALE(norm_scale, normal, dotP);
+	    VSUB2(v2, p3, norm_scale);
+	    for (ef_it2 = edge_faces.begin(); ef_it2!=edge_faces.end(); ef_it2++) {
+		if ((*ef_it) != (*ef_it2)) {
+		    point_t q1, q2, q3;
+		    point_t u0, u1, u2;
+		    VMOVE(q1, &bot->vertices[bot->faces[(*ef_it2)*3+0]*3]);
+		    dotP = VDOT(q1, normal);
+		    VSCALE(norm_scale, normal, dotP);
+		    VSUB2(u0, q1, norm_scale);
+		    VMOVE(q2, &bot->vertices[bot->faces[(*ef_it2)*3+1]*3]);
+		    dotP = VDOT(q2, normal);
+		    VSCALE(norm_scale, normal, dotP);
+		    VSUB2(u1, q2, norm_scale);
+		    VMOVE(q3, &bot->vertices[bot->faces[(*ef_it2)*3+2]*3]);
+		    dotP = VDOT(q3, normal);
+		    VSCALE(norm_scale, normal, dotP);
+		    VSUB2(u2, q3, norm_scale);
+
+		   int overlap = 0;
+                   overlap = bn_coplanar_tri_tri_isect(v0, v1, v2, u0, u1, u2, 1);
+                   if(overlap) {
+		       std::cout << "Overlap: " << (*ef_it) << " and " << (*ef_it2) << "\n";
+		   }
+		}
+	    }
+	}
+    }
+
+}
+
 // Assemble edges into curves.  A curve is shared between two
 // and only two patches, and all vertex points except the endpoints
 // are used by only two edges (edges in this case referring to face
@@ -234,7 +339,7 @@ void find_curves(struct rt_bot_internal *bot, const Patch *patch, std::set<Curve
 	    if (!eset1.empty()) {
 		Edge es1 = *eset1.begin();
 		if ((*edge_to_patch)[es1].find(curve.outer_patch) != (*edge_to_patch)[es1].end() &&
-		    curve.edges.find(es1) == curve.edges.end()) {
+			curve.edges.find(es1) == curve.edges.end()) {
 		    edge_queue.push(es1);
 		    patch_edges->erase(es1);
 		}
@@ -256,7 +361,7 @@ void find_curves(struct rt_bot_internal *bot, const Patch *patch, std::set<Curve
 	    if (!eset2.empty()) {
 		Edge es2 = *eset2.begin();
 		if ((*edge_to_patch)[es2].find(curve.outer_patch) != (*edge_to_patch)[es2].end() &&
-		    curve.edges.find(es2) == curve.edges.end()) {
+			curve.edges.find(es2) == curve.edges.end()) {
 		    edge_queue.push(es2);
 		    patch_edges->erase(es2);
 		}
@@ -360,7 +465,7 @@ void find_multicurve_loops(std::set<Curve> *loop_curves, LoopList *loops)
 	    // use the curve info - if the curve shares the current patches, add it to the queue
 	    for (curves_it = curves1.begin(); curves_it != curves1.end(); curves_it++) {
 		if ((*curves_it).inner_patch == curr_curve.inner_patch &&
-		    curr_loop.find((*curves_it)) == curr_loop.end()) {
+			curr_loop.find((*curves_it)) == curr_loop.end()) {
 		    curve_queue.push((*curves_it));
 		    loop_curves->erase((*curves_it));
 		    is_matched = 1;
@@ -368,7 +473,7 @@ void find_multicurve_loops(std::set<Curve> *loop_curves, LoopList *loops)
 	    }
 	    for (curves_it = curves2.begin(); curves_it != curves2.end(); curves_it++) {
 		if ((*curves_it).inner_patch == curr_curve.inner_patch &&
-		    curr_loop.find((*curves_it)) == curr_loop.end()) {
+			curr_loop.find((*curves_it)) == curr_loop.end()) {
 		    curve_queue.push((*curves_it));
 		    loop_curves->erase((*curves_it));
 		    is_matched = 1;
@@ -529,7 +634,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 		ON_Interval dom = curve_nurb->Domain();
 		for (int i = 1; i <= plotres; i++) {
 		    ON_3dPoint p = curve_nurb->PointAt(dom.ParameterAt((double)(i - 1)
-								       / (double)plotres));
+				/ (double)plotres));
 		    VMOVE(pt1, p);
 		    p = curve_nurb->PointAt(dom.ParameterAt((double) i / (double)plotres));
 		    VMOVE(pt2, p);
@@ -545,7 +650,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 
 }
 
-void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch> *patches, ON_SimpleArray<ON_NurbsCurve> *bedges, FILE *plot)
+void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch> *patches, ON_SimpleArray<ON_NurbsCurve> *UNUSED(bedges), FILE *UNUSED(plot))
 {
     FaceCategorization face_groups;
     FaceCategorization::iterator fg_it;
@@ -680,15 +785,22 @@ void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch
 
     std::cout << "Patch count: " << patches->size() << "\n";
 
-    // Build edges
-    std::set<Patch>::iterator patch_it;
-    for (patch_it = (*patches).begin(); patch_it != (*patches).end(); patch_it++) {
-	find_edges(bot, &(*patch_it), plot, bedges, &edge_to_patch, &vert_to_patch);
+    // Look for triangles that overlap in projection of patch - they have to be
+    // broken out into their own patch, or else they will interfere with the surface fit.
+    std::set<Patch>::iterator patch_it_overlap;
+    for (patch_it_overlap = (*patches).begin(); patch_it_overlap != (*patches).end(); patch_it_overlap++) {
+	find_proj_overlaps(bot, &(*patch_it_overlap), patches, &edge_to_face);
     }
+
+    // Build edges
+    //std::set<Patch>::iterator patch_it;
+    //for (patch_it = (*patches).begin(); patch_it != (*patches).end(); patch_it++) {
+    //	find_edges(bot, &(*patch_it), plot, bedges, &edge_to_patch, &vert_to_patch);
+    //    }
 }
 
 
-int
+    int
 main(int argc, char *argv[])
 {
     struct db_i *dbip;
@@ -743,9 +855,9 @@ main(int argc, char *argv[])
     }
 
     RT_DB_INTERNAL_INIT(&intern)
-    if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
-	bu_exit(1, "ERROR: Unable to get internal representation of %s\n", argv[2]);
-    }
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+	    bu_exit(1, "ERROR: Unable to get internal representation of %s\n", argv[2]);
+	}
 
     if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_exit(1, "ERROR: object %s does not appear to be of type BoT\n", argv[2]);
@@ -795,3 +907,12 @@ main(int argc, char *argv[])
 
     return 0;
 }
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
