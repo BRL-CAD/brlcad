@@ -1618,7 +1618,7 @@ Plane::LoadONBrep(ON_Brep *brep)
     // origin may not lie within face so include in extent
     double maxdist = origin.DistanceTo(trim_curve_3d_bbox->m_max);
     double mindist = origin.DistanceTo(trim_curve_3d_bbox->m_min);
-    bbdiag += MAX(maxdist, mindist);
+    bbdiag += FMAX(maxdist, mindist);
 
     //TODO: look into line curves that are just point and direction
     ON_Interval extents(-bbdiag, bbdiag);
@@ -2595,7 +2595,7 @@ SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
 
     ON_3dPoint dir = extrusion_axis->Orientation();
     double mag = extrusion_axis->Magnitude() * LocalUnits::length;
-    mag = MAX(mag, bbdiag);
+    mag = FMAX(mag, bbdiag);
 
     ON_3dPoint startpnt;
     if (swept_curve->PointAtStart() == NULL) {
