@@ -3,17 +3,6 @@
 
 #include <scl_export.h>
 
-/**
-    Platform specific defines
-*/
-#if defined(__MSVC__) || defined(__BORLAND__)
-#define THROW_STD_BAD_ALLOC
-#define THROW_EMPTY
-#else
-#define THROW_STD_BAD_ALLOC     throw (std::bad_alloc)
-#define THROW_EMPTY             throw ()
-#endif
-
 #ifdef  __cplusplus
 #include <stddef.h>
 extern "C" {
@@ -47,27 +36,27 @@ SCL_BASE_EXPORT void   scl_operator_delete( void * addr );
 
 #include <new>
 
-inline void * operator new( size_t size, const char * file, const int line ) THROW_STD_BAD_ALLOC {
+inline void * operator new( size_t size, const char * file, const int line ) {
     return scl_operator_new( size, file, line );
 }
 
-inline void * operator new[]( size_t size, const char * file, const int line ) THROW_STD_BAD_ALLOC {
+inline void * operator new[]( size_t size, const char * file, const int line ) {
     return scl_operator_new( size, file, line );
 }
 
-inline void operator delete( void * addr, const char * file, const int line ) THROW_STD_BAD_ALLOC {
+inline void operator delete( void * addr, const char * file, const int line ) {
     scl_operator_delete( addr, file, line );
 }
 
-inline void operator delete[]( void * addr, const char * file, const int line ) THROW_STD_BAD_ALLOC {
+inline void operator delete[]( void * addr, const char * file, const int line ) {
     scl_operator_delete( addr, file, line );
 }
 
-inline void operator delete( void * addr ) THROW_EMPTY {
+inline void operator delete( void * addr ) {
     scl_operator_delete( addr );
 }
 
-inline void operator delete[]( void * addr ) THROW_EMPTY {
+inline void operator delete[]( void * addr ) {
     scl_operator_delete( addr );
 }
 
