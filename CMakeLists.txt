@@ -634,15 +634,6 @@ endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
 set(BRLCAD_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "BRL-CAD install prefix")
 mark_as_advanced(BRLCAD_PREFIX)
 
-# If we've got a Release build with a Debug path or vice versa, change it - that
-# is probably the most "expected" behavior.
-if("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
-  set(CMAKE_INSTALL_PREFIX "/usr/brlcad/rel-${BRLCAD_VERSION}" CACHE STRING "BRL-CAD install prefix" FORCE)
-endif("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
-if("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
-  set(CMAKE_INSTALL_PREFIX "/usr/brlcad/dev-${BRLCAD_VERSION}" CACHE STRING "BRL-CAD install prefix" FORCE)
-endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${CMAKE_INSTALL_PREFIX}	STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
-
 
 #---------------------------------------------------------------------
 # The following logic is what allows binaries to run successfully in
