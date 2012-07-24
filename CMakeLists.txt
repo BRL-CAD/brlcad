@@ -216,12 +216,12 @@ set(BRLCAD_VERSION "${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PAT
 # been set by some other means (like a higher level CMakeLists.txt file
 # including this one.)  
 
-# The location in which to install BRLCAD executables.
+# The location in which to install BRL-CAD executables.
 if(NOT BIN_DIR)
   set(BIN_DIR bin)
 endif(NOT BIN_DIR)
 
-# The location in which to install BRLCAD header files.
+# The location in which to install BRL-CAD header files.
 if(NOT INCLUDE_DIR)
   set(INCLUDE_DIR include)
 endif(NOT INCLUDE_DIR)
@@ -605,7 +605,7 @@ if(CMAKE_BUILD_TYPE MATCHES "NONE")
 endif(CMAKE_BUILD_TYPE MATCHES "NONE")
 
 #---------------------------------------------------------------------
-# The location in which to install BRLCAD.  Only do this if
+# The location in which to install BRL-CAD.  Only do this if
 # CMAKE_INSTALL_PREFIX hasn't been set already, to try and allow
 # parent builds (if any) some control.
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
