@@ -146,6 +146,23 @@ void plot_loop(struct rt_bot_internal *bot, size_t patch_id, int loop_num, int r
     }
 }
 
+Edge mk_edge(size_t pt_A, size_t pt_B) {
+    if (pt_A <= pt_B) {
+       return std::make_pair(pt_A, pt_B);
+    } else {
+       return std::make_pair(pt_B, pt_A);
+    }
+}
+
+void pnt_project(point_t orig_pt, point_t *new_pt, point_t normal) {
+    point_t p1, norm_scale;
+    fastf_t dotP;
+    VMOVE(p1, orig_pt);
+    dotP = VDOT(p1, normal);
+    VSCALE(norm_scale, normal, dotP);
+    VSUB2(*new_pt, p1, norm_scale);
+}
+
 void find_edge_segments(struct rt_bot_internal *bot, const Patch *patch, EdgeList *patch_edges, VertToEdge *vert_to_edge)
 {
     size_t pt_A, pt_B, pt_C;
@@ -156,21 +173,9 @@ void find_edge_segments(struct rt_bot_internal *bot, const Patch *patch, EdgeLis
 	pt_A = bot->faces[(*it)*3+0]*3;
 	pt_B = bot->faces[(*it)*3+1]*3;
 	pt_C = bot->faces[(*it)*3+2]*3;
-	if (pt_A <= pt_B) {
-	    edge_face_cnt[std::make_pair(pt_A, pt_B)] += 1;
-	} else {
-	    edge_face_cnt[std::make_pair(pt_B, pt_A)] += 1;
-	}
-	if (pt_B <= pt_C) {
-	    edge_face_cnt[std::make_pair(pt_B, pt_C)] += 1;
-	} else {
-	    edge_face_cnt[std::make_pair(pt_C, pt_B)] += 1;
-	}
-	if (pt_C <= pt_A) {
-	    edge_face_cnt[std::make_pair(pt_C, pt_A)] += 1;
-	} else {
-	    edge_face_cnt[std::make_pair(pt_A, pt_C)] += 1;
-	}
+        edge_face_cnt[mk_edge(pt_A, pt_B)] += 1;
+        edge_face_cnt[mk_edge(pt_B, pt_C)] += 1;
+        edge_face_cnt[mk_edge(pt_C, pt_A)] += 1;
     }
 
     for (efc_it = edge_face_cnt.begin(); efc_it!=edge_face_cnt.end(); efc_it++) {
@@ -198,21 +203,9 @@ void find_proj_overlaps(struct rt_bot_internal *bot, const Patch *patch, std::se
 	pt_A = bot->faces[(*it)*3+0]*3;
 	pt_B = bot->faces[(*it)*3+1]*3;
 	pt_C = bot->faces[(*it)*3+2]*3;
-	if (pt_A <= pt_B) {
-	    edge_face_cnt[std::make_pair(pt_A, pt_B)] += 1;
-	} else {
-	    edge_face_cnt[std::make_pair(pt_B, pt_A)] += 1;
-	}
-	if (pt_B <= pt_C) {
-	    edge_face_cnt[std::make_pair(pt_B, pt_C)] += 1;
-	} else {
-	    edge_face_cnt[std::make_pair(pt_C, pt_B)] += 1;
-	}
-	if (pt_C <= pt_A) {
-	    edge_face_cnt[std::make_pair(pt_C, pt_A)] += 1;
-	} else {
-	    edge_face_cnt[std::make_pair(pt_A, pt_C)] += 1;
-	}
+        edge_face_cnt[mk_edge(pt_A, pt_B)] += 1;
+        edge_face_cnt[mk_edge(pt_B, pt_C)] += 1;
+        edge_face_cnt[mk_edge(pt_C, pt_A)] += 1;
     }
 
     for (efc_it = edge_face_cnt.begin(); efc_it!=edge_face_cnt.end(); efc_it++) {
@@ -243,45 +236,25 @@ void find_proj_overlaps(struct rt_bot_internal *bot, const Patch *patch, std::se
 	for (ef_it = edge_faces.begin(); ef_it!=edge_faces.end(); ef_it++) {
             int this_overlaps = 0;
 	    std::cout << "patch_id: " << patch->id << " face: " << (*ef_it) << "\n";
-	    point_t p1, p2, p3, normal, norm_scale;
+	    point_t normal;
 	    point_t v0, v1, v2;
-	    fastf_t dotP;
 	    VSET(normal, patch->category_plane->x, patch->category_plane->y, patch->category_plane->z);
-	    VMOVE(p1, &bot->vertices[bot->faces[(*ef_it)*3+0]*3]);
-	    dotP = VDOT(p1, normal);
-	    VSCALE(norm_scale, normal, dotP);
-	    VSUB2(v0, p1, norm_scale);
-	    VMOVE(p2, &bot->vertices[bot->faces[(*ef_it)*3+1]*3]);
-	    dotP = VDOT(p2, normal);
-	    VSCALE(norm_scale, normal, dotP);
-	    VSUB2(v1, p2, norm_scale);
-	    VMOVE(p3, &bot->vertices[bot->faces[(*ef_it)*3+2]*3]);
-	    dotP = VDOT(p3, normal);
-	    VSCALE(norm_scale, normal, dotP);
-	    VSUB2(v2, p3, norm_scale);
+            pnt_project(&bot->vertices[bot->faces[(*ef_it)*3+0]*3], &v0, normal);
+            pnt_project(&bot->vertices[bot->faces[(*ef_it)*3+1]*3], &v1, normal);
+            pnt_project(&bot->vertices[bot->faces[(*ef_it)*3+2]*3], &v2, normal);
 	    for (ef_it2 = edge_faces.begin(); ef_it2!=edge_faces.end(); ef_it2++) {
 		if ((*ef_it) != (*ef_it2)) {
-		    point_t q1, q2, q3;
 		    point_t u0, u1, u2;
-		    VMOVE(q1, &bot->vertices[bot->faces[(*ef_it2)*3+0]*3]);
-		    dotP = VDOT(q1, normal);
-		    VSCALE(norm_scale, normal, dotP);
-		    VSUB2(u0, q1, norm_scale);
-		    VMOVE(q2, &bot->vertices[bot->faces[(*ef_it2)*3+1]*3]);
-		    dotP = VDOT(q2, normal);
-		    VSCALE(norm_scale, normal, dotP);
-		    VSUB2(u1, q2, norm_scale);
-		    VMOVE(q3, &bot->vertices[bot->faces[(*ef_it2)*3+2]*3]);
-		    dotP = VDOT(q3, normal);
-		    VSCALE(norm_scale, normal, dotP);
-		    VSUB2(u2, q3, norm_scale);
+		    pnt_project(&bot->vertices[bot->faces[(*ef_it2)*3+0]*3], &u0, normal);
+		    pnt_project(&bot->vertices[bot->faces[(*ef_it2)*3+1]*3], &u1, normal);
+		    pnt_project(&bot->vertices[bot->faces[(*ef_it2)*3+2]*3], &u2, normal);
 
-		   int overlap = 0;
-                   overlap = bn_coplanar_tri_tri_isect(v0, v1, v2, u0, u1, u2, 1);
-                   if(overlap) {
-                       this_overlaps = 1;
-		       std::cout << "Overlap: " << (*ef_it) << " and " << (*ef_it2) << "\n";
-		   }
+		    int overlap = 0;
+		    overlap = bn_coplanar_tri_tri_isect(v0, v1, v2, u0, u1, u2, 1);
+		    if(overlap) {
+			this_overlaps = 1;
+			std::cout << "Overlap: " << (*ef_it) << " and " << (*ef_it2) << "\n";
+		    }
 		}
 	    }
             if (this_overlaps) {
@@ -512,21 +485,11 @@ void find_outer_loop(struct rt_bot_internal *bot, const Patch *patch, LoopList *
 		for (c_it = (*l_it).begin(); c_it != (*l_it).end(); c_it++) {
 		    EdgeList::iterator e_it;
 		    for (e_it = (*c_it).edges.begin(); e_it != (*c_it).edges.end(); e_it++) {
-			vect_t ep1, ep2, eproj, eproj2, norm_scale, normal;
-			fastf_t dotP;
-			VMOVE(ep1, &bot->vertices[(*e_it).first]);
-			VMOVE(ep2, &bot->vertices[(*e_it).second]);
+			vect_t eproj, normal;
 			VSET(normal, patch->category_plane->x, patch->category_plane->y, patch->category_plane->z);
-			dotP = VDOT(ep1, normal);
-			VSCALE(norm_scale, normal, dotP);
-			VSUB2(eproj, ep1, norm_scale);
-			VSCALE(eproj2, eproj, 1.1);
+                        pnt_project(&bot->vertices[(*e_it).first], &eproj, normal);
 			VMINMAX(min, max, eproj);
-
-			dotP = VDOT(ep2, normal);
-			VSCALE(norm_scale, normal, dotP);
-			VSUB2(eproj, ep2, norm_scale);
-			VSCALE(eproj2, eproj, 1.1);
+                        pnt_project(&bot->vertices[(*e_it).second], &eproj, normal);
 			VMINMAX(min, max, eproj);
 		    }
 		}
@@ -678,21 +641,9 @@ void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch
 	pt_A = bot->faces[i*3+0]*3;
 	pt_B = bot->faces[i*3+1]*3;
 	pt_C = bot->faces[i*3+2]*3;
-	if (pt_A <= pt_B) {
-	    edge_to_face[std::make_pair(pt_A, pt_B)].insert(i);
-	} else {
-	    edge_to_face[std::make_pair(pt_B, pt_A)].insert(i);
-	}
-	if (pt_B <= pt_C) {
-	    edge_to_face[std::make_pair(pt_B, pt_C)].insert(i);
-	} else {
-	    edge_to_face[std::make_pair(pt_C, pt_B)].insert(i);
-	}
-	if (pt_C <= pt_A) {
-	    edge_to_face[std::make_pair(pt_C, pt_A)].insert(i);
-	} else {
-	    edge_to_face[std::make_pair(pt_A, pt_C)].insert(i);
-	}
+        edge_to_face[mk_edge(pt_A, pt_B)].insert(i);
+        edge_to_face[mk_edge(pt_B, pt_C)].insert(i);
+        edge_to_face[mk_edge(pt_C, pt_A)].insert(i);
 	// Categorize face
 	VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
 	VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);
