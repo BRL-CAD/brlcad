@@ -231,7 +231,7 @@ void make_new_patch(struct rt_bot_internal *bot, std::set<Patch> *patches, Patch
     new_patch->category_plane = new ThreeDPoint(orig_patch->category_plane->x,orig_patch->category_plane->y,orig_patch->category_plane->z); 
     new_patch->faces.insert(overlap_face);
     orig_patch->faces.erase(overlap_face);
-#if 0
+
     // Add triangle(s) that will now become edge triangles to the edge_faces list
     for(o_it = overlap_edges.begin(); o_it != overlap_edges.end(); o_it++) {
 	std::set<size_t>::iterator ffe_it;
@@ -243,7 +243,7 @@ void make_new_patch(struct rt_bot_internal *bot, std::set<Patch> *patches, Patch
 	    }
 	}
     }
-#endif
+
     patches->insert(*new_patch);
 }
 

@@ -13,7 +13,7 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${REGEX_INCLUDE_DIR}
   ${TNT_INCLUDE_DIR}
-  #${BRLCAD_SOURCE_DIR}/src/other/Eigen
+  ${BRLCAD_SOURCE_DIR}/src/other/Eigen
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
@@ -61,7 +61,7 @@ set(LIBRT_SOURCES
   memalloc.c
   mkbundle.c
   opennurbs_ext.cpp
-  #opennurbs_fit.cpp
+  opennurbs_fit.cpp
   oslo_calc.c
   oslo_map.c
   pr.c
@@ -320,7 +320,7 @@ install(FILES librt.3 DESTINATION ${MAN_DIR}/man3)
 CMAKEFILES(Makefile.am)
 
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbu" NOSTRICT NO_INSTALL)
-#BRLCAD_ADDEXEC(test_botpatches test_botpatches.cpp "librt;libwdb;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(test_botpatches test_botpatches.cpp "librt;libwdb;libbu" NOSTRICT NO_INSTALL)
 
 # Local Variables:
 # tab-width: 8
