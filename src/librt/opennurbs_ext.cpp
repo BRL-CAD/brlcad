@@ -2815,7 +2815,8 @@ struct Triangle {
     inline void CreateFromPoints(ON_3dPoint &_A, ON_3dPoint &_B, ON_3dPoint &_C) {
 	A = _A, B = _B, C = _C;
     }
-    ON_3dPoint BarycentricCoordinate(ON_3dPoint &pt) {
+    ON_3dPoint BarycentricCoordinate(ON_3dPoint &pt)
+    {
 	ON_Matrix M(3, 3);
 	M[0][0] = A[0], M[0][1] = B[0], M[0][2] = C[0];
 	M[1][0] = A[1], M[1][1] = B[1], M[1][2] = C[1];
@@ -2936,6 +2937,91 @@ struct PointPair {
 };
 
 
+struct Subsurface {
+private:
+    ON_BoundingBox m_node;
+public:
+    ON_Surface *m_surf;
+    ON_Interval m_u, m_v;
+    Subsurface *m_children[4];
+
+    Subsurface() : m_surf(NULL)
+    {
+	m_children[0] = m_children[1] = m_children[2] = m_children[3] = NULL;
+    }
+    Subsurface(const Subsurface &_ssurf)
+    {
+	m_surf = _ssurf.m_surf->Duplicate();
+	m_u = _ssurf.m_u;
+	m_v = _ssurf.m_v;
+	m_children[0] = m_children[1] = m_children[2] = m_children[3] = NULL;
+	SetBBox(_ssurf.m_node);
+    }
+    ~Subsurface()
+    {
+	for (int i = 0; i < 4; i++) {
+	    if (m_children[i])
+		delete m_children[i];
+	}
+	delete m_surf;
+    }
+    int Split()
+    {
+	for (int i = 0; i < 4; i++)
+	    m_children[i] = new Subsurface();
+	ON_Surface *temp_surf1 = NULL, *temp_surf2 = NULL;
+	ON_BOOL32 ret = true;
+	ret = ((ON_NurbsSurface*)m_surf)->Split(0, m_u.Mid(), temp_surf1, temp_surf2);
+	if (!ret)
+	    return -1;
+
+	ret = temp_surf1->Split(1, m_v.Mid(), m_children[0]->m_surf, m_children[1]->m_surf);
+	delete temp_surf1;
+	if (!ret)
+	    return -1;
+	m_children[0]->m_u = ON_Interval(m_u.Min(), m_u.Mid());
+	m_children[0]->m_v = ON_Interval(m_v.Min(), m_v.Mid());
+	m_children[0]->SetBBox(m_children[0]->m_surf->BoundingBox());
+	m_children[1]->m_u = ON_Interval(m_u.Min(), m_u.Mid());
+	m_children[1]->m_v = ON_Interval(m_v.Mid(), m_v.Max());
+	m_children[1]->SetBBox(m_children[1]->m_surf->BoundingBox());
+
+	ret = temp_surf2->Split(1, m_v.Mid(), m_children[2]->m_surf, m_children[3]->m_surf);
+	delete temp_surf2;
+	if (!ret)
+	    return -1;
+	m_children[2]->m_u = ON_Interval(m_u.Mid(), m_u.Max());
+	m_children[2]->m_v = ON_Interval(m_v.Min(), m_v.Mid());
+	m_children[2]->SetBBox(m_children[2]->m_surf->BoundingBox());
+	m_children[3]->m_u = ON_Interval(m_u.Mid(), m_u.Max());
+	m_children[3]->m_v = ON_Interval(m_v.Mid(), m_v.Max());
+	m_children[3]->SetBBox(m_children[3]->m_surf->BoundingBox());
+
+	return 0;
+    }
+    void GetBBox(ON_3dPoint &min, ON_3dPoint &max)
+    {
+	min = m_node.m_min;
+	max = m_node.m_max;
+    }
+    void SetBBox(const ON_BoundingBox &bbox)
+    {
+	m_node = bbox;
+	/* Make sure that each dimension of the bounding box is greater than
+	 * ON_ZERO_TOLERANCE.
+	 * It does the same work as building the surface tree when ray tracing
+	 */
+	for (int i = 0; i < 3; i++) {
+	    double d = m_node.m_max[i] - m_node.m_min[i];
+	    if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
+		m_node.m_min[i] -= 0.001;
+		m_node.m_max[i] += 0.001;
+	    }
+	}
+    }
+};
+
+
 #define INTERSECT_MAX_DEPTH 8
 int
 surface_surface_intersection(const ON_Surface* surfA,
@@ -2948,46 +3034,59 @@ surface_surface_intersection(const ON_Surface* surfA,
 	return -1;
     }
 
-    // First step: build the bounding box tree of the two surfaces
-    ON_BrepFace *faceA, *faceB;
-    ON_Brep *brep = ON_Brep::New();
-    faceA = brep->NewFace(*surfA);
-    SurfaceTree streeA(faceA, true, INTERSECT_MAX_DEPTH);
-    faceB = brep->NewFace(*surfB);
-    SurfaceTree streeB(faceB, true, INTERSECT_MAX_DEPTH);
-    ON_3dPoint maxA, minA, maxB, minB;
-    typedef std::vector<std::pair<BBNode*, BBNode*> > NodePairs;
+    /* First step: Initialize the first two Subsurface.
+     * It's just like getting the root of the surface tree.
+     */
+    typedef std::vector<std::pair<Subsurface*, Subsurface*> > NodePairs;
     NodePairs nodepairs;
-    BBNode *rootA = streeA.getRootNode();
-    BBNode *rootB = streeB.getRootNode();
+    Subsurface *rootA = new Subsurface(), *rootB = new Subsurface();
+    rootA->SetBBox(surfA->BoundingBox());
+    rootA->m_u = surfA->Domain(0);
+    rootA->m_v = surfA->Domain(1);
+    rootA->m_surf = surfA->Duplicate();
+    rootB->SetBBox(surfB->BoundingBox());
+    rootB->m_u = surfB->Domain(0);
+    rootB->m_v = surfB->Domain(1);
+    rootB->m_surf = surfB->Duplicate();
     nodepairs.push_back(std::make_pair(rootA, rootB));
     ON_3dPointArray curvept;
     ON_2dPointArray curveuv, curvest;
     int bbox_count = 0;
 
-    // Second step: calculate the intersection of the bounding boxes, using
-    // trigonal approximation.
-    // Only the children of intersecting b-box pairs need to be considered.
+    /* Second step: calculate the intersection of the bounding boxes, using
+     * trigonal approximation.
+     * Only the children of intersecting b-box pairs need to be considered.
+     * The children will be generated only when they are needed, using the
+     * method of splitting a NURBS surface.
+     * So finally only a small subset of the surface tree is created.
+     * TODO: the tolerance value should be adapted instead of using
+     * INTERSECT_MAX_DEPTH. We stop going deeper when we get small enough
+     * bounding boxes and intersection points that are accurate enough.
+     */
     for (int h = 0; h <= INTERSECT_MAX_DEPTH; h++) {
 	if (nodepairs.empty())
 	    break;
 	NodePairs tmp_pairs;
 	if (h) {
 	    for (NodePairs::iterator i = nodepairs.begin(); i != nodepairs.end(); i++) {
-		std::vector<BBNode *>::iterator j, k;
-		if ((*i).first->m_children.size() == 0) {
-		    BBNode *copy = new BBNode();
-		    *copy = *((*i).first);
-		    (*i).first->m_children.push_back(copy);
+		int j_max = 4, k_max = 4;
+		if ((*i).first->m_children[0] == NULL) {
+		    if ((*i).first->Split()) { // Split failed, just copy itself
+			delete (*i).first->m_children[0];
+			(*i).first->m_children[0] = new Subsurface(*((*i).first));
+			j_max = 1;
+		    }
 		}
-		if ((*i).second->m_children.size() == 0) {
-		    BBNode *copy = new BBNode();
-		    *copy = *((*i).second);
-		    (*i).second->m_children.push_back(copy);
+		if ((*i).second->m_children[0] == NULL) {
+		    if ((*i).second->Split()) { // Split failed, just copy itself
+			delete (*i).second->m_children[0];
+			(*i).second->m_children[0] = new Subsurface(*((*i).second));
+			k_max = 1;
+		    }
 		}
-		for (j = (*i).first->m_children.begin(); j != (*i).first->m_children.end(); j++) {
-		    for (k = (*i).second->m_children.begin(); k != (*i).second->m_children.end(); k++) {
-			tmp_pairs.push_back(std::make_pair(*j, *k));
+		for (int j = 0; j < j_max; j++) {
+		    for (int k = 0; k < k_max; k++) {
+			tmp_pairs.push_back(std::make_pair((*i).first->m_children[j], (*i).second->m_children[k]));
 		    }
 		}
 	    }
@@ -3072,6 +3171,8 @@ surface_surface_intersection(const ON_Surface* surfA,
 			st[3].y = bcoor[7].x*t_max + bcoor[7].y*t_min + bcoor[7].z*t_max;
 		    }
 
+		    // The centroid of these intersection centers is the
+		    // intersection point we want.
 		    int num_intersects = 0;
 		    ON_3dPoint average(0.0, 0.0, 0.0);
 		    ON_2dPoint avguv(0.0, 0.0), avgst(0.0, 0.0);
@@ -3108,7 +3209,8 @@ surface_surface_intersection(const ON_Surface* surfA,
     bu_log("%d points on the intersection curves.\n", curvept.Count());
 
     if (!curvept.Count()) {
-	delete brep;
+	delete rootA;
+	delete rootB;
 	return 0;
     }
 
@@ -3238,8 +3340,10 @@ surface_surface_intersection(const ON_Surface* surfA,
     bu_free(index, "int");
     bu_free(startpt, "int");
     bu_free(endpt, "int");
+    delete rootA;
+    delete rootB;
+
     // WIP
-    delete brep;
     return 0;
 }
 
