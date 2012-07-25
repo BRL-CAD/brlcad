@@ -759,19 +759,6 @@ analyze_edge(struct ged *gedp, const int edge, const struct rt_arb_internal *arb
     int b = nedge[type][edge*2+1];
 
     if (b == -1) {
-        /* fill out the line */
-        if ((a = edge % 4) == 0) {
-            row->nfields = 0;
-            return;
-        }
-        if (a == 1) {
-            row->nfields = 0;
-            return;
-        }
-        if (a == 2) {
-            row->nfields = 0;
-            return;
-        }
         row->nfields = 0;
         return;
     }
@@ -886,7 +873,6 @@ struct arbn_face
 {
     int npts;
     struct arbn_pt *pts;
-    point_t center_pt;
     plane_t plane_eqn;
     fastf_t area;
 };
@@ -905,31 +891,24 @@ ccw(const void *x, const void *y)
 
 /* implicit returns:
  * sorts face->pts into counter-clockwise order
- * unsigned area of face in face->area
- * centroid of face in face->center_pt */
+ * unsigned area of face in face->area */
 static void
 analyze_arbn_face(struct ged *gedp, struct arbn_face *face, int face_idx, row_t *row)
 {
     int i;
-    vect_t tmp, sum;
+    vect_t tmp, sum = VINIT_ZERO;
     fastf_t angles[5];
-    /* sum needs to be reset */
-    VSETALL(sum, 0.0);
-
-    /* sort points into counter-clockwise order */
-    qsort(face->pts, face->npts, sizeof(struct arbn_pt), ccw);
 
     findang(angles, face->plane_eqn);
 
+    /* sort points into counter-clockwise order */
+    qsort(face->pts, face->npts, sizeof(struct arbn_pt), ccw);
     for (i = 0; i < face->npts; i++) {
-        /* sum vertices for centroid */
-        VADD2(face->center_pt, face->center_pt, face->pts[i].pt);
         /* walk edges of face, summing cross products of vertices as we go to calculate area */
         VCROSS(tmp, face->pts[i].pt, face->pts[i + 1 == face->npts ? 0 : i + 1].pt);
         VADD2(sum, sum, tmp);
     }
 
-    VSCALE(face->center_pt, face->center_pt, 1.0 / face->npts);
     face->area = fabs(VDOT(face->plane_eqn, sum)) / 2.0;
 
     /* store face information for pretty printing */
@@ -1008,7 +987,7 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 
         /* calculate volume */
         VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
-        tot_vol += VDOT(faces[i].center_pt, tmp);
+        tot_vol += VDOT(faces[i].pts[0].pt, tmp);
     }
     tot_vol /= 3.0;
 
@@ -1312,8 +1291,8 @@ analyze_epa(struct ged *gedp, const struct rt_db_internal *ip)
 
 struct bot_face
 {
-    size_t idx; /* face index, 0 <= idx < num_faces */
-    point_t centroid;
+    size_t idx;     /* face index, 0 <= idx < num_faces */
+    point_t pt;     /* a point on the face */
     plane_t normal;
     fastf_t area;
 };
@@ -1335,6 +1314,7 @@ analyze_bot_face(struct ged *gedp, struct bot_face *face, const struct rt_bot_in
     VMOVE(p1, &bot->vertices[a * ELEMENTS_PER_POINT]);
     VMOVE(p2, &bot->vertices[b * ELEMENTS_PER_POINT]);
     VMOVE(p3, &bot->vertices[c * ELEMENTS_PER_POINT]);
+    VMOVE(face->pt, p1);
 
     /* find normal, needed to calculate volume */
     if (bot->bot_flags != RT_BOT_HAS_SURFACE_NORMALS) {
@@ -1357,10 +1337,6 @@ analyze_bot_face(struct ged *gedp, struct bot_face *face, const struct rt_bot_in
     VSUB2(p3_p1, p3, p1);
     VCROSS(tmp, p3_p1, p2_p1);
     face->area = MAGNITUDE(tmp) * 0.5;
-
-    /* calculate centroid */
-    VADD3(tmp, p1, p2, p3);
-    VSCALE(face->centroid, tmp, 1.0/3.0);
 
     /* store face information for pretty printing */
     row->nfields = 8;
@@ -1388,7 +1364,7 @@ analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
 	struct bot_face *faces;
 
     RT_BOT_CK_MAGIC(bot);
-	faces = (struct bot_face *)bu_calloc(bot->num_faces, sizeof(struct bot_face), "analyze_bot: faces"); 
+	faces = (struct bot_face *)bu_calloc(bot->num_faces, sizeof(struct bot_face), "analyze_bot: faces");
 
     for (i = 0; i < bot->num_faces; i++) {
 		vect_t tmp;
@@ -1399,7 +1375,7 @@ analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
 
         /* volume */
         VSCALE(tmp, faces[i].normal, faces[i].area);
-        tot_vol += fabs(VDOT(faces[i].centroid, tmp));
+        tot_vol += fabs(VDOT(faces[i].pt, tmp));
     }
     tot_vol /= 3.0;
 
