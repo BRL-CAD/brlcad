@@ -796,9 +796,8 @@ int Get3Coords(coords *coop)
     return ret;
 }
 
-
-/* IEEE coordinates */
-int Get3DCoords(coords *coop)
+static inline int 
+dCoords(coords *coop, char *print_coord, char *print_pixel)
 {
     static unsigned char in[3*8];
     static double out[2];
@@ -828,10 +827,16 @@ int Get3DCoords(coords *coop)
 	coop->y = YMAX;
 
     if (debug) {
-	fprintf(stderr, "Coord3: (%g, %g) ", out[0], out[1]);
-	fprintf(stderr, "Pixel3: (%d, %d)\n", coop->x, coop->y);
+	fprintf(stderr, "%s: (%g, %g) ", print_coord, out[0], out[1]);
+	fprintf(stderr, "%s: (%d, %d)\n", print_pixel, coop->x, coop->y);
     }
     return true;
+}
+
+/* IEEE coordinates */
+static int Get3DCoords(coords *coop)
+{
+    return dCoords(coop, "Coord3", "Pixel3");
 }
 
 
@@ -839,38 +844,7 @@ int
 GetDCoords(coords *coop)
     /* -> input coordinates */
 {
-    static unsigned char in[2*8];
-    static double out[2];
-    double x, y;
-
-    /* read coordinates */
-    if (fread(in, sizeof(in), 1, pfin) != 1)
-	return false;
-    ntohd((unsigned char *)out, in, 2);
-    x = out[0];
-    y = out[1];
-
-    /* limit left, bottom */
-    if ((x -= space.left) < 0)
-	x = 0;
-    if ((y -= space.bottom) < 0)
-	y = 0;
-
-    /* convert to device pixels */
-    coop->x = (short)(x * Npixels / (double)delta + 0.5);
-    coop->y = (short)(y * Nscanlines / (double)delta + 0.5);
-
-    /* limit right, top */
-    if (coop->x > XMAX)
-	coop->x = XMAX;
-    if (coop->y > YMAX)
-	coop->y = YMAX;
-
-    if (debug) {
-	fprintf(stderr, "Coord2: (%g, %g) ", out[0], out[1]);
-	fprintf(stderr, "Pixel2: (%d, %d)\n", coop->x, coop->y);
-    }
-    return true;
+    return dCoords(coop, "Coord2", "Pixel2");
 }
 
 
