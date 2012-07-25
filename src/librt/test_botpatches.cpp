@@ -188,7 +188,7 @@ void find_edge_segments(struct rt_bot_internal *bot, const Patch *patch, EdgeLis
 void find_proj_overlaps(struct rt_bot_internal *bot, const Patch *patch, std::set<Patch> *UNUSED(patches), EdgeToFace *edge_to_face)
 {
     size_t pt_A, pt_B, pt_C;
-    FaceList edge_faces;
+    FaceList edge_faces, overlap_faces;
     FaceList::iterator ef_it;
     FaceList::iterator ef_it2;
     std::set<size_t>::iterator it;
@@ -241,6 +241,7 @@ void find_proj_overlaps(struct rt_bot_internal *bot, const Patch *patch, std::se
     // as a first test, just see if we can find any overlapping triangles.
     if (edge_faces.size() > 1) {
 	for (ef_it = edge_faces.begin(); ef_it!=edge_faces.end(); ef_it++) {
+            int this_overlaps = 0;
 	    std::cout << "patch_id: " << patch->id << " face: " << (*ef_it) << "\n";
 	    point_t p1, p2, p3, normal, norm_scale;
 	    point_t v0, v1, v2;
@@ -278,10 +279,15 @@ void find_proj_overlaps(struct rt_bot_internal *bot, const Patch *patch, std::se
 		   int overlap = 0;
                    overlap = bn_coplanar_tri_tri_isect(v0, v1, v2, u0, u1, u2, 1);
                    if(overlap) {
+                       this_overlaps = 1;
 		       std::cout << "Overlap: " << (*ef_it) << " and " << (*ef_it2) << "\n";
 		   }
 		}
 	    }
+            if (this_overlaps) {
+               overlap_faces.insert((*ef_it));
+            }
+	    edge_faces.erase((*ef_it));
 	}
     }
 
