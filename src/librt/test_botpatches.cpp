@@ -146,6 +146,17 @@ void plot_loop(struct rt_bot_internal *bot, size_t patch_id, int loop_num, int r
     }
 }
 
+void plot_face(point_t p1, point_t p2, point_t p3, int r, int g, int b, FILE *c_plot)
+{
+    pl_color(c_plot, r, g, b);
+    pdv_3move(c_plot, p1);
+    pdv_3cont(c_plot, p2);
+    pdv_3move(c_plot, p1);
+    pdv_3cont(c_plot, p3);
+    pdv_3move(c_plot, p2);
+    pdv_3cont(c_plot, p3);
+}
+
 Edge mk_edge(size_t pt_A, size_t pt_B) {
     if (pt_A <= pt_B) {
        return std::make_pair(pt_A, pt_B);
@@ -187,13 +198,62 @@ void find_edge_segments(struct rt_bot_internal *bot, const Patch *patch, EdgeLis
     }
 }
 
+/* Assemble a new patch starting from an overlapping triangle.
+ *
+ * Faces that share an edge with the overlapping triangle
+ * and are in the original patch are added to the edge_faces list.
+ * Test them to see if they also overlap.  If they do, and do NOT
+ * overlap with any triangle in the new patch, add them to the
+ * new patch.  If they overlap with BOTH, put them in a queue to
+ * be handled as a new patch.  When the faces that overlap and share
+ * an edge with triangles in the new patch have been categorized,
+ * work on the overlapping triangles that didn't fit into the first
+ * new patch.  Continue until all triangles are in patches without
+ * internal overlaps.
+ */
+void make_new_patch(struct rt_bot_internal *bot, std::set<Patch> *patches, Patch *orig_patch, int *patch_cnt, size_t overlap_face, FaceList *edge_faces, EdgeToFace *edge_to_face) {
+    std::cout << "patch_id: " << orig_patch->id << " face: " << overlap_face << "\n";
+    size_t pt_A, pt_B, pt_C;
+    EdgeList overlap_edges;
+    EdgeList::iterator o_it;
+    FaceList candidate_faces;
+    Patch *new_patch = new Patch;
+    pt_A = bot->faces[overlap_face*3+0]*3;
+    pt_B = bot->faces[overlap_face*3+1]*3;
+    pt_C = bot->faces[overlap_face*3+2]*3;
+    overlap_edges.insert(mk_edge(pt_A, pt_B));
+    overlap_edges.insert(mk_edge(pt_B, pt_C));
+    overlap_edges.insert(mk_edge(pt_C, pt_A));
+
+    // Set up the new patch and add the overlapping face
+    new_patch->id = *patch_cnt;
+    (*patch_cnt)++;
+    new_patch->category_plane = new ThreeDPoint(orig_patch->category_plane->x,orig_patch->category_plane->y,orig_patch->category_plane->z); 
+    new_patch->faces.insert(overlap_face);
+    orig_patch->faces.erase(overlap_face);
+#if 0
+    // Add triangle(s) that will now become edge triangles to the edge_faces list
+    for(o_it = overlap_edges.begin(); o_it != overlap_edges.end(); o_it++) {
+	std::set<size_t>::iterator ffe_it;
+	std::set<size_t> faces_from_edge = (*edge_to_face)[(*o_it)];
+	for (ffe_it = faces_from_edge.begin(); ffe_it != faces_from_edge.end() ; ffe_it++) {
+	    FaceList::iterator this_it = orig_patch->faces.find((*ffe_it));
+	    if (this_it != orig_patch->faces.end()) {
+		edge_faces->insert((*ffe_it));
+	    }
+	}
+    }
+#endif
+    patches->insert(*new_patch);
+}
+
 /* We start by checking faces along the edges - due to the nature of the
  * segmentation already done, any triangle overlaps in the projection are
  * going to have member triangles along the edges of the bot.*/
-void find_proj_overlaps(struct rt_bot_internal *bot, const Patch *patch, std::set<Patch> *UNUSED(patches), EdgeToFace *edge_to_face)
+void find_proj_overlaps(struct rt_bot_internal *bot, Patch *patch, std::set<Patch> *patches, int *patch_cnt, EdgeToFace *edge_to_face)
 {
     size_t pt_A, pt_B, pt_C;
-    FaceList edge_faces, overlap_faces;
+    FaceList edge_faces;
     FaceList::iterator ef_it;
     FaceList::iterator ef_it2;
     std::set<size_t>::iterator it;
@@ -231,11 +291,9 @@ void find_proj_overlaps(struct rt_bot_internal *bot, const Patch *patch, std::se
     // patch and so on.  at then end, need a set of connected patches with non
     // overlapping triangles.
 
-    // as a first test, just see if we can find any overlapping triangles.
     if (edge_faces.size() > 1) {
 	for (ef_it = edge_faces.begin(); ef_it!=edge_faces.end(); ef_it++) {
             int this_overlaps = 0;
-	    std::cout << "patch_id: " << patch->id << " face: " << (*ef_it) << "\n";
 	    point_t normal;
 	    point_t v0, v1, v2;
 	    VSET(normal, patch->category_plane->x, patch->category_plane->y, patch->category_plane->z);
@@ -243,6 +301,9 @@ void find_proj_overlaps(struct rt_bot_internal *bot, const Patch *patch, std::se
             pnt_project(&bot->vertices[bot->faces[(*ef_it)*3+1]*3], &v1, normal);
             pnt_project(&bot->vertices[bot->faces[(*ef_it)*3+2]*3], &v2, normal);
 	    for (ef_it2 = edge_faces.begin(); ef_it2!=edge_faces.end(); ef_it2++) {
+		struct bu_vls name;
+		static FILE* plot = NULL;
+		bu_vls_init(&name);
 		if ((*ef_it) != (*ef_it2)) {
 		    point_t u0, u1, u2;
 		    pnt_project(&bot->vertices[bot->faces[(*ef_it2)*3+0]*3], &u0, normal);
@@ -254,11 +315,20 @@ void find_proj_overlaps(struct rt_bot_internal *bot, const Patch *patch, std::se
 		    if(overlap) {
 			this_overlaps = 1;
 			std::cout << "Overlap: " << (*ef_it) << " and " << (*ef_it2) << "\n";
+			//bu_vls_printf(&name, "%d_overlaps_%d.pl", (int) (*ef_it), (int) (*ef_it2));
+			//plot = fopen(bu_vls_addr(&name), "w");
+			bu_vls_printf(&name, "overlaps.pl", (int) (*ef_it), (int) (*ef_it2));
+			plot = fopen(bu_vls_addr(&name), "a");
+                        plot_face(v0,v1,v2,255,0,0,plot);
+                        plot_face(u0,u1,u2,255,0,0,plot);
+                        plot_face(&bot->vertices[bot->faces[(*ef_it)*3+0]*3], &bot->vertices[bot->faces[(*ef_it)*3+1]*3], &bot->vertices[bot->faces[(*ef_it)*3+2]*3],0,0,255,plot);
+                        plot_face(&bot->vertices[bot->faces[(*ef_it2)*3+0]*3], &bot->vertices[bot->faces[(*ef_it2)*3+1]*3], &bot->vertices[bot->faces[(*ef_it2)*3+2]*3],0,0,255,plot);
+			fclose(plot);
 		    }
 		}
 	    }
             if (this_overlaps) {
-               overlap_faces.insert((*ef_it));
+               make_new_patch(bot, patches, patch, patch_cnt, *ef_it, &edge_faces, edge_to_face);
             }
 	    edge_faces.erase((*ef_it));
 	}
@@ -619,7 +689,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 
 }
 
-void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch> *patches, ON_SimpleArray<ON_NurbsCurve> *UNUSED(bedges), FILE *UNUSED(plot))
+void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch> *patches, ON_SimpleArray<ON_NurbsCurve> *bedges, FILE *plot)
 {
     FaceCategorization face_groups;
     FaceCategorization::iterator fg_it;
@@ -736,24 +806,18 @@ void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch
 
 	    }
 	    //std::cout << "Patch: " << curr_patch.id << "\n";
+	    find_proj_overlaps(bot, &curr_patch, patches, &patch_cnt, &edge_to_face);
 	    patches->insert(curr_patch);
 	}
     }
 
     std::cout << "Patch count: " << patches->size() << "\n";
 
-    // Look for triangles that overlap in projection of patch - they have to be
-    // broken out into their own patch, or else they will interfere with the surface fit.
-    std::set<Patch>::iterator patch_it_overlap;
-    for (patch_it_overlap = (*patches).begin(); patch_it_overlap != (*patches).end(); patch_it_overlap++) {
-	find_proj_overlaps(bot, &(*patch_it_overlap), patches, &edge_to_face);
-    }
-
     // Build edges
-    //std::set<Patch>::iterator patch_it;
-    //for (patch_it = (*patches).begin(); patch_it != (*patches).end(); patch_it++) {
-    //	find_edges(bot, &(*patch_it), plot, bedges, &edge_to_patch, &vert_to_patch);
-    //    }
+    std::set<Patch>::iterator patch_it;
+    for (patch_it = (*patches).begin(); patch_it != (*patches).end(); patch_it++) {
+	find_edges(bot, &(*patch_it), plot, bedges, &edge_to_patch, &vert_to_patch);
+    }
 }
 
 
