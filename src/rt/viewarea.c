@@ -651,6 +651,24 @@ void view_eol(struct application *UNUSED(ap))
  * the 'count' of regions printed.  this routine returns the number of
  * ray hits across all regions.
  */
+static double
+set_factor() {
+if (ZERO(units - 1.0))
+	return bu_units_conversion("m");
+    else if (ZERO(units - 10.0))
+	return bu_units_conversion("m");
+    else if (ZERO(units - 100.0))
+	return bu_units_conversion("m");
+    else if (ZERO(units - 1000.0))
+        return bu_units_conversion("km");
+    else if (ZERO(units - 25.4))
+        return bu_units_conversion("ft");
+    else if (ZERO(units - 304.8))
+        return bu_units_conversion("yd");
+    else
+        return bu_units_conversion("mm");
+}
+
 static size_t
 print_region_area_list(size_t *count, struct rt_i *rtip, area_type_t type)
 {
@@ -712,21 +730,7 @@ print_region_area_list(size_t *count, struct rt_i *rtip, area_type_t type)
 	double factor = 1.0; /* show mm in parens by default */
 
 	/* show some common larger units in parens otherwise default to mm^2*/
-	if (ZERO(units - 1.0)) {
-	    factor = bu_units_conversion("m");
-	} else if (ZERO(units - 10.0)) {
-	    factor = bu_units_conversion("m");
-	} else if (ZERO(units - 100.0)) {
-	    factor = bu_units_conversion("m");
-	} else if (ZERO(units - 1000.0)) {
-	    factor = bu_units_conversion("km");
-	} else if (ZERO(units - 25.4)) {
-	    factor = bu_units_conversion("ft");
-	} else if (ZERO(units - 304.8)) {
-	    factor = bu_units_conversion("yd");
-	} else {
-	    factor = bu_units_conversion("mm");
-	}
+	factor = set_factor();
 	cell = listp->cell;
 
 	if (type == PRESENTED_AREA) {
@@ -863,21 +867,7 @@ print_assembly_area_list(struct rt_i *rtip, size_t max_depth, area_type_t type)
 	double factor = 1.0; /* show mm in parens by default */
 
 	/* show some common larger units in parens otherwise default to mm^2*/
-	if (ZERO(units - 1.0)) {
-	    factor = bu_units_conversion("m");
-	} else if (ZERO(units - 10.0)) {
-	    factor = bu_units_conversion("m");
-	} else if (ZERO(units - 100.0)) {
-	    factor = bu_units_conversion("m");
-	} else if (ZERO(units - 1000.0)) {
-	    factor = bu_units_conversion("km");
-	} else if (ZERO(units - 25.4)) {
-	    factor = bu_units_conversion("ft");
-	} else if (ZERO(units - 304.8)) {
-	    factor = bu_units_conversion("yd");
-	} else {
-	    factor = bu_units_conversion("mm");
-	}
+	factor = set_factor();
 	cell = listp->cell;
 
 	while (indents-- > 0) {
@@ -970,21 +960,7 @@ view_end(struct application *ap)
     }
 
     /* show some common larger units in parens otherwise default to mm^2*/
-    if (ZERO(units - 1.0)) {
-	factor = bu_units_conversion("m");
-    } else if (ZERO(units - 10.0)) {
-	factor = bu_units_conversion("m");
-    } else if (ZERO(units - 100.0)) {
-	factor = bu_units_conversion("m");
-    } else if (ZERO(units - 1000.0)) {
-	factor = bu_units_conversion("km");
-    } else if (ZERO(units - 25.4)) {
-	factor = bu_units_conversion("ft");
-    } else if (ZERO(units - 304.8)) {
-	factor = bu_units_conversion("yd");
-    } else {
-	factor = bu_units_conversion("mm");
-    }
+    factor = set_factor();
     bu_log("\n"
 	   "********************************************************************\n"
 	   "WARNING: The terminology and output format of 'rtarea' is deprecated\n"

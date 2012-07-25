@@ -47,16 +47,27 @@ unsigned char out1[MAX_LINE*3] = {0};
 
 static int nlines;		/* Number of input lines */
 static int pix_line;		/* Number of pixels/line */
+int readval = 0;
 
 char usage[] = "Usage: lowp file1.pix file2.pix file3.pix [width] > out.pix\n";
 
 int infd1, infd2, infd3;		/* input fd's */
 
+static void
+check_readval(unsigned char *in, int infd)
+{
+    readval = read(infd, in, scanbytes);
+    if (readval != scanbytes) {
+	if (readval < 0) {
+	    perror("lowp READ ERROR");
+	}
+	bu_exit (0, NULL);
+    }
+}
 int
 main(int argc, char **argv)
 {
     int x, y;
-    int readval;
     ssize_t ret;
     char *ifname;
 
@@ -100,27 +111,9 @@ main(int argc, char **argv)
     in2 = (unsigned char *) bu_malloc(scanbytes, "lowp in2");
     in3 = (unsigned char *) bu_malloc(scanbytes, "lowp in3");
 
-    readval = read(infd1, in1, scanbytes);
-    if (readval != scanbytes) {
-	if (readval < 0) {
-	    perror("lowp READ ERROR");
-	}
-	bu_exit (0, NULL);
-    }
-    readval = read(infd3, in3, scanbytes);
-    if (readval != scanbytes) {
-	if (readval < 0) {
-	    perror("lowp READ ERROR");
-	}
-	bu_exit (0, NULL);
-    }
-    readval = read(infd3, in3, scanbytes);
-    if (readval != scanbytes) {
-	if (readval < 0) {
-	    perror("lowp READ ERROR");
-	}
-	bu_exit (0, NULL);
-    }
+    check_readval(in1, infd1);
+    check_readval(in2, infd2);
+    check_readval(in3, infd3);
 
     /* First and last are black */
     memset(out1, 0, pix_line*3);
