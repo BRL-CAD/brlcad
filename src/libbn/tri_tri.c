@@ -5,12 +5,12 @@
  * updated: 2001-06-20 (added line of intersection)
  *
  * Updated June 1999: removed the divisions -- a little faster now!
- * Updated October 1999: added {} to CROSS and SUB macros 
+ * Updated October 1999: added {} to CROSS and SUB macros
  *
  * Calculate whether two coplanar triangles intersect:
  *
- * int bn_coplanar_tri_tri_isect(point_t V0, point_t V1, point_t V2, 
- *                               point_t U0, point_t U1, point_t U2, 
+ * int bn_coplanar_tri_tri_isect(point_t V0, point_t V1, point_t V2,
+ *                               point_t U0, point_t U1, point_t U2,
  *                               int area_flag)
  * parameters: vertices of triangle 1: V0,V1,V2
  *             vertices of triangle 2: U0,U1,U2
@@ -19,29 +19,29 @@
  *
  * Calculate whether two triangles intersect:
  *
- * int bn_tri_tri_isect(point_t V0, point_t V1, point_t V2, 
+ * int bn_tri_tri_isect(point_t V0, point_t V1, point_t V2,
  *                      point_t U0, point_t U1, point_t U2)
  * parameters: vertices of triangle 1: V0,V1,V2
  *             vertices of triangle 2: U0,U1,U2
  * result    : returns 1 if the triangles intersect, otherwise 0
  *
- * This version computes the line of intersection as well (if they 
+ * This version computes the line of intersection as well (if they
  * are not coplanar):
  *
- * int bn_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2,  
- *			          point_t U0, point_t U1, point_t U2, 
- *			          int *coplanar, point_t *isectpt1, 
+ * int bn_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2,
+ *			          point_t U0, point_t U1, point_t U2,
+ *			          int *coplanar, point_t *isectpt1,
  *			          point_t *isectpt2);
  *
  * coplanar returns whether the tris are coplanar
  * isectpt1, isectpt2 are the endpoints of the line of intersection
  *
- * License:  public domain (from Moller's collection of public domain code at 
+ * License:  public domain (from Moller's collection of public domain code at
  * http://fileadmin.cs.lth.se/cs/Personal/Tomas_Akenine-Moller/code/)
  *
  * The changes made for BRL-CAD integration were to use the point_t
- * data type instead of fastf_t arrays and use vmath's vector macros 
- * instead of the locally defined versions.  The function names were 
+ * data type instead of fastf_t arrays and use vmath's vector macros
+ * instead of the locally defined versions.  The function names were
  * changed to bn_tri_tri_isect and bn_tri_tri_isect_with_line.
  * A number of minor changes were made for C89 compatibility.  BRL-CAD's
  * NEAR_ZERO macro was used in place of exact floating point comparisons.
@@ -53,7 +53,7 @@
 #define FABS(x) fabs(x)        /* implement as is fastest on your machine */
 
 /* if USE_EPSILON_TEST is true then we do a check:
-         if |dv|<EPSILON then dv=0.0;
+	 if |dv|<EPSILON then dv=0.0;
    else no check is done (which is less robust)
 */
 #define USE_EPSILON_TEST 1
@@ -61,24 +61,24 @@
 
 /* sort so that a<=b */
 #define SORT(a,b)       \
-             if(a>b)    \
-             {          \
-               fastf_t c_tmp; \
-               c_tmp=a;     \
-               a=b;     \
-               b=c_tmp;     \
-             }
+	     if(a>b)    \
+	     {          \
+	       fastf_t c_tmp; \
+	       c_tmp=a;     \
+	       a=b;     \
+	       b=c_tmp;     \
+	     }
 
 #define SORT2(a,b,smallest)       \
-             if(a>b)       \
-             {             \
-               fastf_t c_tmp;    \
-               c_tmp=a;        \
-               a=b;        \
-               b=c_tmp;        \
-               smallest=1; \
-             }             \
-             else smallest=0;
+	     if(a>b)       \
+	     {             \
+	       fastf_t c_tmp;    \
+	       c_tmp=a;        \
+	       a=b;        \
+	       b=c_tmp;        \
+	       smallest=1; \
+	     }             \
+	     else smallest=0;
 
 
 /* this edge to edge test is based on Franlin Antonio's gem:
@@ -160,12 +160,12 @@
   b=-(U1[i0]-U0[i0]);                       \
   c=-a*U0[i0]-b*U0[i1];                     \
   d0=a*V0[i0]+b*V0[i1]+c;                   \
-                                            \
+					    \
   a=U2[i1]-U1[i1];                          \
   b=-(U2[i0]-U1[i0]);                       \
   c=-a*U1[i0]-b*U1[i1];                     \
   d1=a*V0[i0]+b*V0[i1]+c;                   \
-                                            \
+					    \
   a=U0[i1]-U2[i1];                          \
   b=-(U0[i0]-U2[i0]);                       \
   c=-a*U2[i0]-b*U2[i1];                     \
@@ -178,7 +178,7 @@
 
 
 int bn_coplanar_tri_tri_isect(point_t V0,point_t V1,point_t V2,
-                              point_t U0,point_t U1,point_t U2, int area_flag)
+			      point_t U0,point_t U1,point_t U2, int area_flag)
 {
    int ret;
    fastf_t A[3];
@@ -188,15 +188,15 @@ int bn_coplanar_tri_tri_isect(point_t V0,point_t V1,point_t V2,
    static const struct bn_tol tol = {
       BN_TOL_MAGIC, EPSILON, EPSILON*EPSILON, 1e-6, 1-1e-6
    };
-   
+
    /* compute plane of triangle (V0,V1,V2) */
    ret = bn_mk_plane_3pts(P1, V0, V1, V2, &tol);
    if (ret) return -1;
    /* compute plane of triangle (U0,U1,U2) */
    ret = bn_mk_plane_3pts(P2, U0, U1, U2, &tol);
    if (ret) return -1;
-   /* verify that triangles are coplanar */ 
-   if (bn_coplanar(P1,P2,&tol) <= 0) return -1; 
+   /* verify that triangles are coplanar */
+   if (bn_coplanar(P1,P2,&tol) <= 0) return -1;
 
    /* first project onto an axis-aligned plane, that maximizes the area */
    /* of the triangles, compute indices: i0,i1. */
@@ -211,26 +211,26 @@ int bn_coplanar_tri_tri_isect(point_t V0,point_t V1,point_t V2,
    {
       if(A[0]>A[2])
       {
-          i0=1;      /* A[0] is greatest */
-          i1=2;
+	  i0=1;      /* A[0] is greatest */
+	  i1=2;
       }
       else
       {
-          i0=0;      /* A[2] is greatest */
-          i1=1;
+	  i0=0;      /* A[2] is greatest */
+	  i1=1;
       }
    }
    else   /* A[0]<=A[1] */
    {
       if(A[2]>A[1])
       {
-          i0=0;      /* A[2] is greatest */
-          i1=1;
+	  i0=0;      /* A[2] is greatest */
+	  i1=1;
       }
       else
       {
-          i0=0;      /* A[1] is greatest */
-          i1=2;
+	  i0=0;      /* A[1] is greatest */
+	  i1=2;
       }
     }
 
@@ -257,11 +257,11 @@ int bn_coplanar_tri_tri_isect(point_t V0,point_t V1,point_t V2,
  * the external function because this version of the test can assume
  * coplanar and does not need to test for area-only intersections. */
 int coplanar_tri_tri(point_t N, point_t V0,point_t V1,point_t V2,
-                     point_t U0,point_t U1,point_t U2)
+		     point_t U0,point_t U1,point_t U2)
 {
    fastf_t A[3];
    short i0,i1;
- 
+
    /* first project onto an axis-aligned plane, that maximizes the area */
    /* of the triangles, compute indices: i0,i1. */
    A[0]=FABS(N[0]);
@@ -271,26 +271,26 @@ int coplanar_tri_tri(point_t N, point_t V0,point_t V1,point_t V2,
    {
       if(A[0]>A[2])
       {
-          i0=1;      /* A[0] is greatest */
-          i1=2;
+	  i0=1;      /* A[0] is greatest */
+	  i1=2;
       }
       else
       {
-          i0=0;      /* A[2] is greatest */
-          i1=1;
+	  i0=0;      /* A[2] is greatest */
+	  i1=1;
       }
    }
    else   /* A[0]<=A[1] */
    {
       if(A[2]>A[1])
       {
-          i0=0;      /* A[2] is greatest */
-          i1=1;
+	  i0=0;      /* A[2] is greatest */
+	  i1=1;
       }
       else
       {
-          i0=0;      /* A[1] is greatest */
-          i1=2;
+	  i0=0;      /* A[1] is greatest */
+	  i1=2;
       }
     }
 
@@ -309,40 +309,40 @@ int coplanar_tri_tri(point_t N, point_t V0,point_t V1,point_t V2,
 
 #define NEWCOMPUTE_INTERVALS(VV0,VV1,VV2,D0,D1,D2,D0D1,D0D2,A,B,C,X0,X1) \
 { \
-        if(D0D1>0.0f) \
-        { \
-                /* here we know that D0D2<=0.0 */ \
-            /* that is D0, D1 are on the same side, D2 on the other or on the plane */ \
-                A=VV2; B=(VV0-VV2)*D2; C=(VV1-VV2)*D2; X0=D2-D0; X1=D2-D1; \
-        } \
-        else if(D0D2>0.0f)\
-        { \
-                /* here we know that d0d1<=0.0 */ \
-            A=VV1; B=(VV0-VV1)*D1; C=(VV2-VV1)*D1; X0=D1-D0; X1=D1-D2; \
-        } \
-        else if(D1*D2>0.0f || !NEAR_ZERO(D0, SMALL_FASTF)) \
-        { \
-                /* here we know that d0d1<=0.0 or that D0!=0.0 */ \
-                A=VV0; B=(VV1-VV0)*D0; C=(VV2-VV0)*D0; X0=D0-D1; X1=D0-D2; \
-        } \
-        else if(!NEAR_ZERO(D1, SMALL_FASTF)) \
-        { \
-                A=VV1; B=(VV0-VV1)*D1; C=(VV2-VV1)*D1; X0=D1-D0; X1=D1-D2; \
-        } \
-        else if(!NEAR_ZERO(D2, SMALL_FASTF)) \
-        { \
-                A=VV2; B=(VV0-VV2)*D2; C=(VV1-VV2)*D2; X0=D2-D0; X1=D2-D1; \
-        } \
-        else \
-        { \
-                /* triangles are coplanar */ \
-                return coplanar_tri_tri(N1,V0,V1,V2,U0,U1,U2); \
-        } \
+	if(D0D1>0.0f) \
+	{ \
+		/* here we know that D0D2<=0.0 */ \
+	    /* that is D0, D1 are on the same side, D2 on the other or on the plane */ \
+		A=VV2; B=(VV0-VV2)*D2; C=(VV1-VV2)*D2; X0=D2-D0; X1=D2-D1; \
+	} \
+	else if(D0D2>0.0f)\
+	{ \
+		/* here we know that d0d1<=0.0 */ \
+	    A=VV1; B=(VV0-VV1)*D1; C=(VV2-VV1)*D1; X0=D1-D0; X1=D1-D2; \
+	} \
+	else if(D1*D2>0.0f || !NEAR_ZERO(D0, SMALL_FASTF)) \
+	{ \
+		/* here we know that d0d1<=0.0 or that D0!=0.0 */ \
+		A=VV0; B=(VV1-VV0)*D0; C=(VV2-VV0)*D0; X0=D0-D1; X1=D0-D2; \
+	} \
+	else if(!NEAR_ZERO(D1, SMALL_FASTF)) \
+	{ \
+		A=VV1; B=(VV0-VV1)*D1; C=(VV2-VV1)*D1; X0=D1-D0; X1=D1-D2; \
+	} \
+	else if(!NEAR_ZERO(D2, SMALL_FASTF)) \
+	{ \
+		A=VV2; B=(VV0-VV2)*D2; C=(VV1-VV2)*D2; X0=D2-D0; X1=D2-D1; \
+	} \
+	else \
+	{ \
+		/* triangles are coplanar */ \
+		return coplanar_tri_tri(N1,V0,V1,V2,U0,U1,U2); \
+	} \
 }
 
 
 int bn_tri_tri_isect(point_t V0,point_t V1,point_t V2,
-                     point_t U0,point_t U1,point_t U2)
+		     point_t U0,point_t U1,point_t U2)
 {
   point_t E1,E2;
   point_t N1,N2;
@@ -359,7 +359,7 @@ int bn_tri_tri_isect(point_t V0,point_t V1,point_t V2,
   fastf_t a,b,c,tri_x0,tri_x1;
   /* parameters for triangle 2 interval computation */
   fastf_t d,e,f,tri_y0,tri_y1;
-  
+
   fastf_t xx,yy,xxyy,tmp;
 
   /* compute plane equation of triangle(V0,V1,V2) */
@@ -456,20 +456,20 @@ int bn_tri_tri_isect(point_t V0,point_t V1,point_t V2,
 }
 
 inline void calc_isect2(point_t VTX0, point_t VTX1, point_t VTX2, fastf_t VV0, fastf_t VV1,
-                        fastf_t VV2, fastf_t D0, fastf_t D1, fastf_t D2, fastf_t *isect0,
-                        fastf_t *isect1, point_t isectpoint0, point_t isectpoint1) 
+			fastf_t VV2, fastf_t D0, fastf_t D1, fastf_t D2, fastf_t *isect0,
+			fastf_t *isect1, point_t isectpoint0, point_t isectpoint1)
 {
-  fastf_t tmp=D0/(D0-D1);          
+  fastf_t tmp=D0/(D0-D1);
   point_t diff;
-  *isect0=VV0+(VV1-VV0)*tmp;         
-  VSUB2(diff,VTX1,VTX0);              
-  VSCALE(diff,diff,tmp);               
-  VADD2(isectpoint0,diff,VTX0);        
-  tmp=D0/(D0-D2);                    
-  *isect1=VV0+(VV2-VV0)*tmp;          
-  VSUB2(diff,VTX2,VTX0);                   
-  VSCALE(diff,diff,tmp);                 
-  VADD2(isectpoint1,VTX0,diff);          
+  *isect0=VV0+(VV1-VV0)*tmp;
+  VSUB2(diff,VTX1,VTX0);
+  VSCALE(diff,diff,tmp);
+  VADD2(isectpoint0,diff,VTX0);
+  tmp=D0/(D0-D2);
+  *isect1=VV0+(VV2-VV0)*tmp;
+  VSUB2(diff,VTX2,VTX0);
+  VSCALE(diff,diff,tmp);
+  VADD2(isectpoint1,VTX0,diff);
 }
 
 inline int compute_intervals_isectline(point_t VERT0,point_t VERT1,point_t VERT2,
@@ -477,41 +477,41 @@ inline int compute_intervals_isectline(point_t VERT0,point_t VERT1,point_t VERT2
 				       fastf_t D0D1,fastf_t D0D2,fastf_t *isect0,fastf_t *isect1,
 				       point_t isectpoint0,point_t isectpoint1)
 {
-  if(D0D1>0.0f)                                        
-  {                                                    
-    /* here we know that D0D2<=0.0 */                  
+  if(D0D1>0.0f)
+  {
+    /* here we know that D0D2<=0.0 */
     /* that is D0, D1 are on the same side, D2 on the other or on the plane */
     calc_isect2(VERT2,VERT0,VERT1,VV2,VV0,VV1,D2,D0,D1,isect0,isect1,isectpoint0,isectpoint1);
-  } 
-  else if(D0D2>0.0f)                                   
-    {                                                   
-    /* here we know that d0d1<=0.0 */             
+  }
+  else if(D0D2>0.0f)
+    {
+    /* here we know that d0d1<=0.0 */
     calc_isect2(VERT1,VERT0,VERT2,VV1,VV0,VV2,D1,D0,D2,isect0,isect1,isectpoint0,isectpoint1);
-  }                                                  
-  else if(D1*D2>0.0f || !NEAR_ZERO(D0,SMALL_FASTF))   
-  {                                   
+  }
+  else if(D1*D2>0.0f || !NEAR_ZERO(D0,SMALL_FASTF))
+  {
     /* here we know that d0d1<=0.0 or that D0!=0.0 */
-    calc_isect2(VERT0,VERT1,VERT2,VV0,VV1,VV2,D0,D1,D2,isect0,isect1,isectpoint0,isectpoint1);   
-  }                                                  
-  else if(!NEAR_ZERO(D1, SMALL_FASTF))                                  
-  {                                               
-    calc_isect2(VERT1,VERT0,VERT2,VV1,VV0,VV2,D1,D0,D2,isect0,isect1,isectpoint0,isectpoint1); 
-  }                                         
-  else if(!NEAR_ZERO(D2, SMALL_FASTF))                                  
-  {                                                   
-    calc_isect2(VERT2,VERT0,VERT1,VV2,VV0,VV1,D2,D0,D1,isect0,isect1,isectpoint0,isectpoint1);     
-  }                                                 
-  else                                               
-  {                                                   
-    /* triangles are coplanar */    
+    calc_isect2(VERT0,VERT1,VERT2,VV0,VV1,VV2,D0,D1,D2,isect0,isect1,isectpoint0,isectpoint1);
+  }
+  else if(!NEAR_ZERO(D1, SMALL_FASTF))
+  {
+    calc_isect2(VERT1,VERT0,VERT2,VV1,VV0,VV2,D1,D0,D2,isect0,isect1,isectpoint0,isectpoint1);
+  }
+  else if(!NEAR_ZERO(D2, SMALL_FASTF))
+  {
+    calc_isect2(VERT2,VERT0,VERT1,VV2,VV0,VV1,D2,D0,D1,isect0,isect1,isectpoint0,isectpoint1);
+  }
+  else
+  {
+    /* triangles are coplanar */
     return 1;
   }
   return 0;
 }
 
-int bn_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2, 
-                            point_t U0, point_t U1, point_t U2, 
-                            int *coplanar, point_t *isectpt1, point_t *isectpt2)
+int bn_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2,
+			    point_t U0, point_t U1, point_t U2,
+			    int *coplanar, point_t *isectpt1, point_t *isectpt2)
 {
   point_t E1, E2;
   point_t N1, N2;
@@ -530,7 +530,7 @@ int bn_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2,
   fastf_t up0,up1,up2;
   fastf_t b,c,max;
   int smallest1,smallest2;
-  
+
   /* compute plane equation of triangle(V0,V1,V2) */
   VSUB2(E1,V1,V0);
   VSUB2(E2,V2,V0);
@@ -575,7 +575,7 @@ int bn_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2,
 
   dv0dv1=dv0*dv1;
   dv0dv2=dv0*dv2;
-        
+
   if(dv0dv1>0.0f && dv0dv2>0.0f) /* same sign on all of them + not equal 0 ? */
     return 0;                    /* no intersection occurs */
 
@@ -594,7 +594,7 @@ int bn_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2,
   vp0=V0[index];
   vp1=V1[index];
   vp2=V2[index];
-  
+
   up0=U0[index];
   up1=U1[index];
   up2=U2[index];
@@ -602,7 +602,7 @@ int bn_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2,
   /* compute interval for triangle 1 */
   *coplanar=compute_intervals_isectline(V0,V1,V2,vp0,vp1,vp2,dv0,dv1,dv2,
 				       dv0dv1,dv0dv2,&isect1[0],&isect1[1],isectpointA1,isectpointA2);
-  if(*coplanar) return coplanar_tri_tri(N1,V0,V1,V2,U0,U1,U2);     
+  if(*coplanar) return coplanar_tri_tri(N1,V0,V1,V2,U0,U1,U2);
 
 
   /* compute interval for triangle 2 */
@@ -640,12 +640,12 @@ int bn_tri_tri_isect_with_line(point_t V0, point_t V1, point_t V2,
     if(isect2[1]>isect1[1])
     {
       if(smallest1==0) { VMOVE(*isectpt2,isectpointA2); }
-      else { VMOVE(*isectpt2,isectpointA1); }      
+      else { VMOVE(*isectpt2,isectpointA1); }
     }
     else
     {
       if(smallest2==0) { VMOVE(*isectpt2,isectpointB2); }
-      else { VMOVE(*isectpt2,isectpointB1); } 
+      else { VMOVE(*isectpt2,isectpointB1); }
     }
   }
   return 1;
