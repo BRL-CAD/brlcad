@@ -111,16 +111,16 @@
   Cy=V0[i1]-U0[i1];                                   \
   f=Ay*Bx-Ax*By;                                      \
   d=By*Cx-Bx*Cy;                                      \
-  if((f>0 && d>0 && d<f && !NEAR_ZERO(d-f, EPSILON)) || (f<0 && d<0 && d>f && !NEAR_ZERO(d-f, EPSILON)))      \
+  if((f>0 && d>0 && d<f && !NEAR_EQUAL(d, f, EPSILON)) || (f<0 && d<0 && d>f && !NEAR_EQUAL(d, f, EPSILON)))      \
   {                                                   \
    e=Ax*Cy-Ay*Cx;                                     \
-    if(f>0 && !NEAR_ZERO(f, EPSILON))                 \
+    if(f>EPSILON)                 \
     {                                                 \
-      if(e>0 && !NEAR_ZERO(e, EPSILON) && e<f && !NEAR_ZERO(e-f, EPSILON)) return 1;                          \
+      if(e>EPSILON && e<f && !NEAR_EQUAL(e, f, EPSILON)) return 1;                          \
     }                                                 \
     else                                              \
     {                                                 \
-      if(e<0 && !NEAR_ZERO(e, EPSILON) && e>f && !NEAR_ZERO(e-f, EPSILON)) return 1;                          \
+      if(e<EPSILON && e>f && !NEAR_EQUAL(e, f, EPSILON)) return 1;                          \
     }                                                 \
   }
 
