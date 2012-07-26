@@ -3069,24 +3069,24 @@ surface_surface_intersection(const ON_Surface* surfA,
 	NodePairs tmp_pairs;
 	if (h) {
 	    for (NodePairs::iterator i = nodepairs.begin(); i != nodepairs.end(); i++) {
-		int j_max = 4, k_max = 4;
-		if ((*i).first->m_children[0] == NULL) {
-		    if ((*i).first->Split()) { // Split failed, just copy itself
-			delete (*i).first->m_children[0];
-			(*i).first->m_children[0] = new Subsurface(*((*i).first));
-			j_max = 1;
+		int ret1 = (*i).first->Split();
+		int ret2 = (*i).second->Split();
+		if (ret1) {
+		    if (ret2) { /* both splits failed */
+			tmp_pairs.push_back(*i);
+			h = INTERSECT_MAX_DEPTH;
+		    } else { /* the first failed */
+			for (int j = 0; j < 4; j++)
+			    tmp_pairs.push_back(std::make_pair((*i).first, (*i).second->m_children[j]));
 		    }
-		}
-		if ((*i).second->m_children[0] == NULL) {
-		    if ((*i).second->Split()) { // Split failed, just copy itself
-			delete (*i).second->m_children[0];
-			(*i).second->m_children[0] = new Subsurface(*((*i).second));
-			k_max = 1;
-		    }
-		}
-		for (int j = 0; j < j_max; j++) {
-		    for (int k = 0; k < k_max; k++) {
-			tmp_pairs.push_back(std::make_pair((*i).first->m_children[j], (*i).second->m_children[k]));
+		} else {
+		    if (ret2) { /* the second failed */
+			for (int j = 0; j < 4; j++)
+			    tmp_pairs.push_back(std::make_pair((*i).first->m_children[j], (*i).second));
+		    } else { /* both success */
+			for (int j = 0; j < 4; j++)
+			    for (int k = 0; k < 4; k++)
+				tmp_pairs.push_back(std::make_pair((*i).first->m_children[j], (*i).second->m_children[k]));
 		    }
 		}
 	    }
