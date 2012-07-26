@@ -889,26 +889,17 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
             );
 }
 
-
-/* currently, each arbn_pt needs to know the plane equation of
- * the face for which it is a vertice, since ccw needs the plane
- * equation to compare two points and it's impossible to
- * determine a plane given only two points. */
-struct arbn_pt
+struct poly_face
 {
-    point_t pt;
-    plane_t plane_eqn;
-};
-
-
-struct arbn_face
-{
-    int npts;
-    struct arbn_pt *pts;
+    size_t npts;
+    point_t *pts;
     plane_t plane_eqn;
     fastf_t area;
 };
 
+
+/* plane used by ccw to compare 2 points */
+static plane_t *cmp_plane = NULL;
 
 /* qsort helper function, used to sort points into
  * counter-clockwise order */
@@ -916,8 +907,8 @@ static int
 ccw(const void *x, const void *y)
 {
     vect_t tmp;
-    VCROSS(tmp, ((struct arbn_pt *)x)->pt, ((struct arbn_pt *)y)->pt);
-    return VDOT(((struct arbn_pt *)x)->plane_eqn, tmp);
+    VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
+    return VDOT(*cmp_plane, tmp);
 }
 
 
@@ -925,19 +916,21 @@ ccw(const void *x, const void *y)
  * sorts face->pts into counter-clockwise order
  * unsigned area of face in face->area */
 static void
-analyze_arbn_face(struct ged *gedp, struct arbn_face *face, int face_idx, row_t *row)
+analyze_arbn_face(struct ged *gedp, struct poly_face *face, int face_idx, row_t *row)
 {
-    int i;
+    size_t i;
     vect_t tmp, sum = VINIT_ZERO;
     fastf_t angles[5];
 
     findang(angles, face->plane_eqn);
 
     /* sort points into counter-clockwise order */
-    qsort(face->pts, face->npts, sizeof(struct arbn_pt), ccw);
+    cmp_plane = &face->plane_eqn;
+    qsort(face->pts, face->npts, sizeof(point_t), ccw);
+    cmp_plane = NULL;
     for (i = 0; i < face->npts; i++) {
         /* walk edges of face, summing cross products of vertices as we go to calculate area */
-        VCROSS(tmp, face->pts[i].pt, face->pts[i + 1 == face->npts ? 0 : i + 1].pt);
+        VCROSS(tmp, face->pts[i], face->pts[i + 1 == face->npts ? 0 : i + 1]);
         VADD2(sum, sum, tmp);
     }
 
@@ -957,9 +950,9 @@ analyze_arbn_face(struct ged *gedp, struct arbn_face *face, int face_idx, row_t 
             face->area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
 }
 
+
 #define ADD_POINT(face) { \
-    VMOVE((face).pts[(face).npts].pt, pt); \
-    HMOVE((face).pts[(face).npts].plane_eqn, (face).plane_eqn); \
+    VMOVE((face).pts[(face).npts], pt); \
     (face).npts++; \
 }
 
@@ -970,16 +963,16 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     size_t i, j, k, l;
     fastf_t tot_vol = 0.0, tot_area = 0.0;
     table_t table;
-    struct arbn_face *faces;
+    struct poly_face *faces;
     struct rt_arbn_internal *aip = (struct rt_arbn_internal *)ip->idb_ptr;
 
     /* allocate array of face structs */
-    faces = (struct arbn_face *)bu_calloc(aip->neqn, sizeof(struct arbn_face), "analyze_arbn: faces");
+    faces = (struct poly_face *)bu_calloc(aip->neqn, sizeof(struct poly_face), "analyze_arbn: faces");
     for (i = 0; i < aip->neqn; i++) {
         HMOVE(faces[i].plane_eqn, aip->eqn[i]);
         VUNITIZE(faces[i].plane_eqn);
         /* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
-        faces[i].pts = (struct arbn_pt *)bu_calloc(aip->neqn - 1, sizeof(struct arbn_pt), "analyze_arbn: pts");
+        faces[i].pts = (point_t *)bu_calloc(aip->neqn - 1, sizeof(point_t), "analyze_arbn: pts");
     }
 
     /* find all vertices */
@@ -1012,14 +1005,14 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     }
 
     for (i = 0; i < aip->neqn; i++) {
-		vect_t tmp;
+        vect_t tmp;
         /* calculate surface area */
         analyze_arbn_face(gedp, &faces[i], i, &table.rows[i]);
         tot_area += faces[i].area;
 
         /* calculate volume */
         VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
-        tot_vol += VDOT(faces[i].pts[0].pt, tmp);
+        tot_vol += VDOT(faces[i].pts[0], tmp);
     }
     tot_vol /= 3.0;
 
