@@ -3069,8 +3069,12 @@ surface_surface_intersection(const ON_Surface* surfA,
 	NodePairs tmp_pairs;
 	if (h) {
 	    for (NodePairs::iterator i = nodepairs.begin(); i != nodepairs.end(); i++) {
-		int ret1 = (*i).first->Split();
-		int ret2 = (*i).second->Split();
+		int ret1 = 0;
+		if ((*i).first->m_children[0] == NULL)
+		    ret1 = (*i).first->Split();
+		int ret2 = 0;
+		if ((*i).second->m_children[0] == NULL)
+		    ret2 = (*i).second->Split();
 		if (ret1) {
 		    if (ret2) { /* both splits failed */
 			tmp_pairs.push_back(*i);
