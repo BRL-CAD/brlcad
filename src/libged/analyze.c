@@ -626,6 +626,38 @@ void print_faces_table(struct ged *gedp, table_t *table)
     bu_vls_printf(gedp->ged_result_str, "-+\n");
 }
 
+
+/* general analyze function for primitives that can be analyzed using volume
+ * and surface area functions from the rt_functab.
+ * Currently can be used for:
+ *  - ell
+ *  - tor
+ *  - tgc
+ *  - rpc
+ *  - eto
+ *  - epa
+ *  - part
+ */
+static void
+analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
+{
+    fastf_t vol, area = -1;
+    rt_functab[ip->idb_minor_type].ft_volume(&vol, ip);
+    rt_functab[ip->idb_minor_type].ft_surf_area(&area, ip);
+
+    print_volume_table(gedp,
+            vol
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            area
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            vol/GALLONS_TO_MM3
+            );
+}
+
+
 /*
  * F I N D A N G
  *
@@ -1011,47 +1043,6 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
             );
 }
 
-/* analyze a torus */
-static void
-analyze_tor(struct ged *gedp, const struct rt_db_internal *ip)
-{
-    fastf_t vol, area;
-    rt_functab[ID_TOR].ft_volume(&vol, ip);
-    rt_functab[ID_TOR].ft_surf_area(&area, ip);
-
-    print_volume_table(gedp,
-            vol
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local,
-            area
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local,
-            vol/GALLONS_TO_MM3
-            );
-}
-
-
-/* analyze an ell */
-static void
-analyze_ell(struct ged *gedp, const struct rt_db_internal *ip)
-{
-    fastf_t vol, area = -1;
-    rt_functab[ID_ELL].ft_volume(&vol, ip);
-    rt_functab[ID_ELL].ft_surf_area(&area, ip);
-
-    print_volume_table(gedp,
-            vol
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local,
-            area
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local,
-            vol/GALLONS_TO_MM3
-            );
-}
-
 
 #define PROLATE 1
 #define OBLATE 2
@@ -1155,54 +1146,6 @@ print_results:
 }
 
 
-/* analyze tgc */
-static void
-analyze_tgc(struct ged *gedp, const struct rt_db_internal *ip)
-{
-    fastf_t vol, area = -1;
-    rt_functab[ID_TGC].ft_volume(&vol, ip);
-    rt_functab[ID_TGC].ft_surf_area(&area, ip);
-
-    /* TODO: implement per-face analysis */
-    /*bu_vls_printf(gedp->ged_result_str, "Surface Areas:  base(AxB)=%.8f  top(CxD)=%.8f  side=%.8f\n",*/
-
-    print_volume_table(gedp,
-            vol
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local,
-            area
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local,
-            vol/GALLONS_TO_MM3
-            );
-}
-
-
-/* analyze rpc */
-static void
-analyze_rpc(struct ged *gedp, const struct rt_db_internal *ip)
-{
-    fastf_t vol, area;
-    rt_functab[ID_RPC].ft_volume(&vol, ip);
-    rt_functab[ID_RPC].ft_surf_area(&area, ip);
-
-    /* TODO: implement per-face analysis */
-    /*bu_vls_printf(gedp->ged_result_str, "Surface Areas:  front(BxR)=%.8f  top(RxH)=%.8f  body=%.8f\n",*/
-
-    print_volume_table(gedp,
-            vol
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local,
-            area
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local,
-            vol/GALLONS_TO_MM3
-            );
-}
-
-
 /* analyze rhc */
 static void
 analyze_rhc(struct ged *gedp, const struct rt_db_internal *ip)
@@ -1244,48 +1187,6 @@ analyze_rhc(struct ged *gedp, const struct rt_db_internal *ip)
 		  (2*area_hyperb+2*r*h+2*area_body)*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
 		  vol_hyperb*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
 		  vol_hyperb/GALLONS_TO_MM3);
-}
-
-
-/* analyze eto */
-static void
-analyze_eto(struct ged *gedp, const struct rt_db_internal *ip)
-{
-    fastf_t area, vol;
-    rt_functab[ID_ETO].ft_volume(&vol, ip);
-    rt_functab[ID_ETO].ft_surf_area(&area, ip);
-
-    print_volume_table(gedp,
-            vol
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local,
-            area
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local,
-            vol/GALLONS_TO_MM3
-            );
-}
-
-
-/* analyze epa */
-static void
-analyze_epa(struct ged *gedp, const struct rt_db_internal *ip)
-{
-    fastf_t area, vol;
-    rt_functab[ID_EPA].ft_volume(&vol, ip);
-    rt_functab[ID_EPA].ft_surf_area(&area, ip);
-
-    print_volume_table(gedp,
-            vol
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local,
-            area
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local,
-            vol/GALLONS_TO_MM3
-            );
 }
 
 
@@ -1396,28 +1297,6 @@ analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
 	bu_free((char *)faces, "analyze_bot: faces");
 }
 
-
-/* analyze part */
-void
-analyze_part(struct ged *gedp, const struct rt_db_internal *ip)
-{
-    fastf_t vol, area;
-    rt_functab[ID_PARTICLE].ft_volume(&vol, ip);
-    rt_functab[ID_PARTICLE].ft_surf_area(&area, ip);
-
-     print_volume_table(gedp,
-            vol
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local,
-            area
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local,
-            vol/GALLONS_TO_MM3
-            );
-}
-
-
 /* analyze sketch */
 static void
 analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
@@ -1455,19 +1334,19 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
         break;
 
     case ID_TGC:
-        analyze_tgc(gedp, ip);
+        analyze_general(gedp, ip);
         break;
 
     case ID_ELL:
-        analyze_ell(gedp, ip);
+        analyze_general(gedp, ip);
         break;
 
     case ID_TOR:
-        analyze_tor(gedp, ip);
+        analyze_general(gedp, ip);
         break;
 
     case ID_RPC:
-        analyze_rpc(gedp, ip);
+        analyze_general(gedp, ip);
         break;
 
     case ID_RHC:
@@ -1479,7 +1358,7 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
         break;
 
     case ID_ETO:
-        analyze_eto(gedp, ip);
+        analyze_general(gedp, ip);
         break;
 
     case ID_ARBN:
@@ -1487,11 +1366,11 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
         break;
 
     case ID_EPA:
-        analyze_epa(gedp, ip);
+        analyze_general(gedp, ip);
         break;
 
     case ID_PARTICLE:
-        analyze_part(gedp, ip);
+        analyze_general(gedp, ip);
         break;
 
     case ID_SKETCH:
