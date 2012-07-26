@@ -2822,9 +2822,9 @@ struct Triangle {
 	M[1][0] = A[1], M[1][1] = B[1], M[1][2] = C[1];
 	M[2][0] = A[2], M[2][1] = B[2], M[2][2] = C[2];
 	M.Invert(0.0);
-	ON_Matrix B(3, 1);
-	B[0][0] = pt[0], B[1][0] = pt[1], B[2][0] = pt[2];
-	M.Multiply(M, B);
+	ON_Matrix MX(3, 1);
+	MX[0][0] = pt[0], MX[1][0] = pt[1], MX[2][0] = pt[2];
+	M.Multiply(M, MX);
 	return ON_3dPoint(M[0][0], M[1][0], M[2][0]);
     }
 };
