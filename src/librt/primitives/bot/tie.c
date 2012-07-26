@@ -306,6 +306,10 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	    v0 = VDOT( tri->data[1].v,  ray->dir);
 	    t.dist = -(tri->data[2].v[0] + u0) / v0;
 
+	    if (isnan(t.dist)) {
+		t.dist = INFINITY;
+	    }
+
 	    /*
 	     * Intersection point on triangle must lie within the kdtree node or it is rejected
 	     * Apply TIE_PREC to near and far such that triangles that lie on orthogonal planes
