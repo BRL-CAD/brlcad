@@ -85,19 +85,19 @@ check_format_chars()
 
       /* for the moment we only have one such handler */
       if (vp_part ^ VP_LENGTH_MOD) /* same as !(vp_part & VP_LENGTH_MOD) */
-        continue;
+	continue;
 
       if (!handle_format_part(vp_part, &f, c, VP_NOPRINT)) {
-        /* tell user */
-        printf("Unhandled valid char '%c'                                    [FAIL]\n", c);
-        status = 1;
+	/* tell user */
+	printf("Unhandled valid char '%c'                                    [FAIL]\n", c);
+	status = 1;
       }
     } else if (flags & VP_OBSOLETE) {
       /* we need an obsolete part handler */
       if (!handle_obsolete_format_char(c, VP_NOPRINT)) {
-        /* tell user */
-        printf("Unhandled obsolete char '%c'                                 [FAIL]\n", c);
-        status = 1;
+	/* tell user */
+	printf("Unhandled obsolete char '%c'                                 [FAIL]\n", c);
+	status = 1;
       }
     }
   }
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
     }
 
 
-    sscanf(argv[1], "%d", &test_num);    
+    sscanf(argv[1], "%d", &test_num);
 
 
     switch (test_num) {
@@ -161,14 +161,14 @@ main(int argc, char *argv[])
 	    return test_vls("%zu %zd", (size_t)123, (ssize_t)-123);
 	case 17:
 	    return test_vls("%jd %td", (intmax_t)123, (ptrdiff_t)-123);
-        /* various widths */
+	/* various widths */
 	case 18:
 	    return test_vls("he%*so", 2, "ll");
 	case 19:
 	    return test_vls("he%*so", 2, "llll");
 	case 20:
 	    return test_vls("he%*so", 4, "ll");
-        /* various precisions */
+	/* various precisions */
 	case 21:
 	    return test_vls("he%.*so", 2, "ll");
 	case 22:
@@ -182,7 +182,7 @@ main(int argc, char *argv[])
 	    return test_vls("%#-.10lx", 123);
 	case 26:
 	    return test_vls("%#lf", 123.0);
-        /* two-character length modifiers */
+	/* two-character length modifiers */
 	case 27:
 	    return test_vls("he%10dllo", 123);
 	case 28:
@@ -208,7 +208,7 @@ main(int argc, char *argv[])
 	case 36:
 	    f = p = 2;
 	    return test_vls("|%*s|%-*s|", f, word, f, word);
-        /* min field width; max string length ('precision'); string */
+	/* min field width; max string length ('precision'); string */
 	case 37:
 	    f = 2; p = 4;
 	    printf("fw=%d, prec=%d, '%s': '%%%d.%ds'\n", f, p, word, f, p);
@@ -261,10 +261,10 @@ main(int argc, char *argv[])
 	/* from "two-character length modifiers" */
 	case 49:
 	    return test_vls("%ld %lld", 123, -123LL);
-        /* unsigned variant */
+	/* unsigned variant */
 	case 50:
 	    return test_vls("%lu %llu", 123, 123ULL);
-        /* from "two-character length modifiers" */
+	/* from "two-character length modifiers" */
 	case 51:
 	    return test_vls("%ld %lld", 123, -123);
 	/* unsigned variant */
@@ -272,7 +272,7 @@ main(int argc, char *argv[])
 	    return test_vls("%lu %llu", 123, 123);
 	case 53:
 	    return test_vls("%hd %hhd", 123, -123);
-        /* misc */
+	/* misc */
 	case 54:
 	    return test_vls("% d % d", 123, -123);
 	case 55:
@@ -286,27 +286,27 @@ main(int argc, char *argv[])
 	    return test_vls("%H", 123);
 	 */
 
-        /* obsolete but usable */
-        /*
-           test_vls("%S", (wchar_t *)"hello");
-           test_vls("%qd %qd", 123, -123);
-         */
+	/* obsolete but usable */
+	/*
+	   test_vls("%S", (wchar_t *)"hello");
+	   test_vls("%qd %qd", 123, -123);
+	 */
 
-        /* EXPECTED FAILURES (don't use in production code):                                             
-         *
-         * Notes:
-         *
-         *   1. For these tests have the return value increment 'expfails'.
-         *   2. Test with both 'make vsl-regress' and 'make regress' because
-         *        some other tests use this function in unpredictable ways.
-         *   3. After a test is fixed, change the return value to increment
-         *        'fails', move it to the EXPECTED PASS group above, and add
-         *        some info about it as necessary to help those who may be
-         *        forced to revisit this.
-         *
-         */
+	/* EXPECTED FAILURES (don't use in production code):
+	 *
+	 * Notes:
+	 *
+	 *   1. For these tests have the return value increment 'expfails'.
+	 *   2. Test with both 'make vsl-regress' and 'make regress' because
+	 *        some other tests use this function in unpredictable ways.
+	 *   3. After a test is fixed, change the return value to increment
+	 *        'fails', move it to the EXPECTED PASS group above, and add
+	 *        some info about it as necessary to help those who may be
+	 *        forced to revisit this.
+	 *
+	 */
 
-         /* obsolete - expected failures 
+	 /* obsolete - expected failures
 	case 10000:
 	    return !test_vls("%C", 'N');
 	case 10001:
@@ -315,7 +315,7 @@ main(int argc, char *argv[])
 	    return !test_vls("%O %O", 123, -123);
 	case 10003:
 	    return !test_vls("%U %U", 123, -123);a
-        */
+	*/
     }
 
     return 1;

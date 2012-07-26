@@ -29,7 +29,6 @@
 #include "bu.h"
 
 
-
 int
 test_bu_bitv_or(char *inp1 , char *inp2 , char *exp)
 {

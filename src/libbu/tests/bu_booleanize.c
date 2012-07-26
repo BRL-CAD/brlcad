@@ -99,9 +99,9 @@ int main(int argc, char *argv[])
 
     if (argc == 1) {
        pass = automatic_test(NULL);
-       return !pass;  
+       return !pass;
     }
- 
+
     if (argc > 1) {
        pass = automatic_test(argv[1]);
     }

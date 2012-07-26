@@ -58,7 +58,7 @@ automatic_test(const char *input)
 	printf("%24s -> %24s [PASSED]\n", input, res);
     else
 	bu_exit(EXIT_FAILURE, "%24s -> %24s (should be: %s) [FAIL]\n", input, res, ans);
-    
+
     bu_free(res, NULL);
 #else
     printf("BASENAME not available on this platform\n");

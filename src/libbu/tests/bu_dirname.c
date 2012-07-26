@@ -56,14 +56,14 @@ automatic_test(const char *input)
 
     if (BU_STR_EQUAL(res, ans)) {
 	printf("%24s -> %24s [PASSED]\n", input, res);
-        pass = 1;
+	pass = 1;
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", input, res, ans);
     }
 
     bu_free(res, NULL);
     return pass;
-#else 
+#else
     printf("%s untested - dirname not implemented on this platform\n", input);
     return 1;
 #endif

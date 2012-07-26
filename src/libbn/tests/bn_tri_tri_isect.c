@@ -57,7 +57,7 @@ main(int argc, char **argv)
     sscanf(argv[6], "%f,%f,%f", &f1, &f2, &f3);
     U2[0] = f1; U2[1] = f2; U2[2] = f3;
     sscanf(argv[7], "%d", &expected_result);
-    
+
     actual_result = bn_tri_tri_isect(V0,V1,V2,U0,U1,U2);
 
     bu_log("result: %d\n", actual_result);

@@ -56,7 +56,7 @@ main(int argc, char **argv)
        printf("Usage: %s test_num\n", argv[0]);
        return 1;
     }
-    
+
     sscanf(argv[1], "%d", &test_num);
 
     switch (test_num) {

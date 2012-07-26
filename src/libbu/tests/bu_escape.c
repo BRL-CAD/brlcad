@@ -24,15 +24,15 @@
 
 #include "bu.h"
 
-static int 
+static int
 compare(const char *input, const char *output, const char *correct)
 {
     if (BU_STR_EQUAL(output, correct)) {
 	printf("%24s -> %28s [PASS]\n", input, output);
-        return 1;
+	return 1;
     } else {
 	printf("%24s -> %28s [FAIL]  (should be '%s')\n", input, output, correct);
-        return 0;
+	return 0;
     }
 }
 
@@ -48,8 +48,8 @@ main(int ac, char *av[])
     if (ac < 3)
 	printf("Usage: %s function_to_test test_number\n", av[0]);
 
-    sscanf(av[1], "%d", &function_num); 
-    sscanf(av[2], "%d", &test_num); 
+    sscanf(av[1], "%d", &function_num);
+    sscanf(av[2], "%d", &test_num);
 
     if (function_num == 1) {
 #define CMP_UNESC(in, out) compare((in), bu_str_unescape((in), buffer, 32), (out))
@@ -174,7 +174,7 @@ main(int ac, char *av[])
     }
 
     if (function_num == 3) {
-        int pass = 0;
+	int pass = 0;
 	switch (test_num) {
 	    case 1:
 		bufp = bu_str_unescape(bu_str_escape("abc", "b", buffer, 32), NULL, 0);

@@ -52,7 +52,7 @@ main(int ac, char *av[])
 	printf("%s: %24s -> %24s [PASSED]\n", label, "unset", res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
-        pass++;
+	pass++;
     }
 
     /* CASE 1: try again unset */
@@ -64,7 +64,7 @@ main(int ac, char *av[])
 	printf("%s: %24s -> %24s [PASSED]\n", label, "unset#2", res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
-        pass++;
+	pass++;
     }
 
     /* CASE 2: set NULL, then get */
@@ -77,7 +77,7 @@ main(int ac, char *av[])
 	printf("%s: %24s -> %24s [PASSED]\n", label, "NULL", res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
-        pass++;
+	pass++;
     }
 
     /* CASE 3: set, then get */
@@ -90,7 +90,7 @@ main(int ac, char *av[])
 	printf("%s: %24s -> %24s [PASSED]\n", label, "av[0]", res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
-        pass++;
+	pass++;
     }
 
     /* CASE 4: set full, then get */
@@ -103,7 +103,7 @@ main(int ac, char *av[])
 	printf("%s: %24s -> %24s [PASSED]\n", label, ans, res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
-        pass++;
+	pass++;
     }
 
     /* CASE 5: set 2x, then get */
@@ -117,7 +117,7 @@ main(int ac, char *av[])
 	printf("%s: %24s -> %24s [PASSED]\n", label, ans, res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
-        pass++;
+	pass++;
     }
 
     /* CASE 5: set 2x full path, then get */
@@ -131,7 +131,7 @@ main(int ac, char *av[])
 	printf("%s: %24s -> %24s [PASSED]\n", label, "/monkey/see/monkey/do", res);
     } else {
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
-        pass++;
+	pass++;
     }
 
     return pass;
