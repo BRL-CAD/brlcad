@@ -501,6 +501,8 @@ $c information.
 "
 	;;
     xPD)
+	block="${block}
+"
 	echo "Public domain specified, no license applies."
 	;;
     *)
