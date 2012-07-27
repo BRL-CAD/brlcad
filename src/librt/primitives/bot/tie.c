@@ -55,6 +55,7 @@ TIE_VAL(tie_tri_prep)(struct tie_s *tie)
     TIE_3 v1, v2, u, v;
     unsigned int i, i1, i2;
     struct tie_tri_s *tri;
+    fastf_t mag_sq;
 
     for (i = 0; i < tie->tri_num; i++) {
 	tri = &tie->tri_list[i];
@@ -67,7 +68,15 @@ TIE_VAL(tie_tri_prep)(struct tie_s *tie)
 	VSUB2(v.v,  tri->data[2].v,  tri->data[0].v);
 	VCROSS(tri->data[1].v,  u.v,  v.v);
 
-	VUNITIZE(tri->data[1].v);
+	/* Unitize Normal */
+	mag_sq = MAGSQ(tri->data[1].v);
+	if (mag_sq < SMALL_FASTF) {
+	    /* Can not unitize normal, most likely we have a zero area
+	     * triangle (ie degenerate) so skip it.
+	     */
+	    continue;
+	}
+	VSCALE(tri->data[1].v, tri->data[1].v, 1.0/sqrt(mag_sq));
 
 	/* Compute i1 and i2 */
 	u.v[0] = fabs(tri->data[1].v[0]);
@@ -304,13 +313,6 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	    tri = data->tri_list[i];
 	    u0 = VDOT( tri->data[1].v,  ray->pos);
 	    v0 = VDOT( tri->data[1].v,  ray->dir);
-
-	    /* skip rays that are practically perpendicular so we
-	     * don't try to divide by zero and propagate NaN (or
-	     * crash).
-	     */
-	    if (v0 < RT_DOT_TOL)
-		continue;
 	    t.dist = -(tri->data[2].v[0] + u0) / v0;
 
 	    /*
