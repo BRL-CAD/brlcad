@@ -72,6 +72,23 @@ static const int nedge[5][24] = {
     {0, 1, 1, 2, 2, 3, 0, 3, 0, 4, 4, 5, 1, 5, 5, 6, 6, 7, 4, 7, 3, 7, 2, 6},               /* ARB8 */
 };
 
+
+/* contains information used to analyze a polygonal face */
+struct poly_face
+{
+    char label[4];
+    size_t npts;
+    point_t *pts;
+    plane_t plane_eqn;
+    fastf_t area;
+};
+
+#define ADD_POINT(face, pt) { \
+    VMOVE((face).pts[(face).npts], (pt)); \
+    (face).npts++; \
+}
+
+
 /* structures and subroutines for analyze pretty printing */
 
 #define FBUFSIZ 100
@@ -627,9 +644,12 @@ void print_faces_table(struct ged *gedp, table_t *table)
 }
 
 
-/* general analyze function for primitives that can be analyzed using volume
+/**
+ * A N A L Y Z E _ G E N E R A L
+ *
+ * general analyze function for primitives that can be analyzed using volume
  * and surface area functions from the rt_functab.
- * Currently can be used for:
+ * Currently used for:
  *  - ell
  *  - tor
  *  - tgc
@@ -658,7 +678,7 @@ analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
-/*
+/**
  * F I N D A N G
  *
  * finds direction cosines and rotation, fallback angles of a unit vector
@@ -711,78 +731,92 @@ findang(fastf_t *angles, fastf_t *unitv)
 }
 
 
-/* Analyzes an arb face */
-static fastf_t
-analyze_face(struct ged *gedp, int face, fastf_t *center_pt,
-             const struct rt_arb_internal *arb, int type,
-             const struct bn_tol *tol, row_t *row)
+/* plane used by ccw to compare 2 points */
+static plane_t *cmp_plane = NULL;
+
+/* qsort helper function, used to sort points into
+ * counter-clockwise order */
+static int
+ccw(const void *x, const void *y)
 {
-    int a, b, c, d;         /* 4 points of face to look at */
-    fastf_t angles[5];      /* direction cosines, rot, fb */
-    fastf_t face_area;
-    plane_t plane;
-    vect_t c_a, d_b, tmp;   /* tmp vectors to store intermediate calculations */
+    vect_t tmp;
+    VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
+    return VDOT(*cmp_plane, tmp);
+}
 
-    a = rt_arb_faces[type][face*4+0];
-    b = rt_arb_faces[type][face*4+1];
-    c = rt_arb_faces[type][face*4+2];
-    d = rt_arb_faces[type][face*4+3];
+/**
+ * A N A L Y Z E _ P O L Y _ F A C E
+ *
+ * general analyze function for polygonal faces.
+ * Currently used for:
+ *  - arb8
+ *  - arbn
+ *  - bot
+ *
+ * returns:
+ *  - area in face->area
+ *  - print_faces_table() information in row
+ *  - sorts vertices in face->pts into ccw order if face->npts > 4
+ */
+static void
+analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
+{
+    size_t i;
+    vect_t sum = VINIT_ZERO;
+    vect_t v1, v2, tmp;
+    fastf_t angles[5];
 
-    if (a == -1) {
-        row->nfields = 0;
-        return 0;
+    findang(angles, face->plane_eqn);
+
+    switch (face->npts) {
+    case (3):
+        /* Triangular Face - for triangular face T:V0,V1,V2,
+         * area = 0.5 * [(V2 - V0) x (V1 - V0)] */
+        VSUB2(v1, face->pts[1], face->pts[0]);
+        VSUB2(v2, face->pts[2], face->pts[0]);
+        VCROSS(tmp, v2, v1);
+        face->area = MAGNITUDE(tmp) * 0.5;
+        break;
+    case (4):
+        /* Quadrilateral Face - for planar quadrilateral
+         * Q:V0,V1,V2,V3 with unit normal N,
+         * area = N/2 ⋅ [(V2 - V0) x (V3 - V1)] */
+        VSUB2(v1, face->pts[2], face->pts[0]);
+        VSUB2(v2, face->pts[3], face->pts[1]);
+        VCROSS(tmp, v2, v1);
+        face->area = fabs(VDOT(face->plane_eqn, tmp)) / 2.0;
+        break;
+    default:
+        /* N-Sided Face - Sort points, and compute area using Green's Theorem */
+        cmp_plane = &face->plane_eqn;
+        qsort(face->pts, face->npts, sizeof(point_t), ccw);
+        cmp_plane = NULL;
+        for (i = 0; i < face->npts; i++) {
+            VCROSS(tmp, face->pts[i], face->pts[i + 1 == face->npts ? 0 : i + 1]);
+            VADD2(sum, sum, tmp);
+        }
+        face->area = fabs(VDOT(face->plane_eqn, sum)) / 2.0;
+        break;
     }
 
-    /* find plane eqn for this face */
-    if (bn_mk_plane_3pts(plane, arb->pt[a], arb->pt[b], arb->pt[c], tol) < 0) {
-        bu_vls_printf(gedp->ged_result_str, "| %d%d%d%d |         ***NOT A PLANE***                                          |\n",
-                a+1, b+1, c+1, d+1);
-        /* this row has 1 special fields */
-        row->nfields = NOT_A_PLANE;
-        return 0;
-    }
-
-    /* The plane equations returned by bn_mk_plane_3pts above do
-     * not necessarily point outward. Use the reference center
-     * point for the arb and reverse direction for any errant planes.
-     * This corrects the output rotation, fallback angles so that
-     * they always give the outward pointing normal vector. */
-    if (DIST_PT_PLANE(center_pt, plane) > 0.0) {
-        HSCALE(plane, plane, -1.0);
-    }
-
-    /* plane[] contains normalized eqn of plane of this face
-     * find the dir cos, rot, fb angles */
-    findang(angles, plane);
-
-    /* find the surface area of this face.
-     * for planar quadrilateral Q:V0,V1,V2,V3 with unit normal N,
-     * area = N/2 ⋅ [(V2 - V0) x (V3 - V1)] */
-    VSUB2(c_a, arb->pt[c], arb->pt[a]);
-    VSUB2(d_b, arb->pt[d], arb->pt[b]);
-    VCROSS(tmp, c_a, d_b);
-
-    face_area = fabs(VDOT(plane, tmp)) / 2.0;
-
-    /* don't printf, just sprintf! */
-    /* these rows have 8 fields */
+    /* store face information for pretty printing */
     row->nfields = 8;
-    row->fields[0].nchars = sprintf(row->fields[0].buf, "%4d", prface[type][face]);
+    row->fields[0].nchars = sprintf(row->fields[0].buf, "%4s", face->label);
     row->fields[1].nchars = sprintf(row->fields[1].buf, "%10.8f", angles[3]);
     row->fields[2].nchars = sprintf(row->fields[2].buf, "%10.8f", angles[4]);
-    row->fields[3].nchars = sprintf(row->fields[3].buf, "%10.8f", plane[X]);
-    row->fields[4].nchars = sprintf(row->fields[4].buf, "%10.8f", plane[Y]);
-    row->fields[5].nchars = sprintf(row->fields[5].buf, "%10.8f", plane[Z]);
+    row->fields[3].nchars = sprintf(row->fields[3].buf, "%10.8f", face->plane_eqn[X]);
+    row->fields[4].nchars = sprintf(row->fields[4].buf, "%10.8f", face->plane_eqn[Y]);
+    row->fields[5].nchars = sprintf(row->fields[5].buf, "%10.8f", face->plane_eqn[Z]);
     row->fields[6].nchars = sprintf(row->fields[6].buf, "%10.8f",
-            plane[W]*gedp->ged_wdbp->dbip->dbi_base2local);
+            face->plane_eqn[W]*gedp->ged_wdbp->dbip->dbi_base2local);
     row->fields[7].nchars = sprintf(row->fields[7].buf, "%10.8f",
-            face_area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
-
-    return face_area;
+            face->area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
 }
 
 
-/* Analyzes arb edges - finds lengths */
+/**
+ * A N A L Y Z E _ E D G E
+ */
 static void
 analyze_edge(struct ged *gedp, const int edge, const struct rt_arb_internal *arb,
         const int type, row_t *row)
@@ -802,19 +836,20 @@ analyze_edge(struct ged *gedp, const int edge, const struct rt_arb_internal *arb
 }
 
 
-/*
- * A R B _ A N A L
+/**
+ * A N A L Y Z E _ A R B 8
  */
 static void
-analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
+analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 {
     int i, type;
     int cgtype;     /* COMGEOM arb type: # of vertices */
     fastf_t tot_vol = 0.0, tot_area = 0.0;
     point_t center_pt;
     table_t table;  /* holds table data from child functions */
-    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
+    struct poly_face face;
     struct rt_arb_internal earb;
+    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
     /* find the specific arb type, in GIFT order. */
@@ -833,13 +868,53 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
     /* analyze each face, use center point of arb for reference */
     rt_arb_centroid(center_pt, arb, cgtype);
 
-    /* collect table data */
-    table.nrows = 0;
-    for (i = 0; i < 6; i++) {
-        tot_area += analyze_face(gedp, i, center_pt, arb, type, &gedp->ged_wdbp->wdb_tol,
-                &(table.rows[i]));
-        table.nrows += 1;
+    /* initialize pts array, maximum 4 verts per arb8 face */
+    face.pts = (point_t *)bu_calloc(4, sizeof(point_t), "analyze_arb8: pts");
+
+    table.nrows = 6;
+    for (face.npts = 0, i = 0; i < 6; face.npts = 0, i++) {
+        int a, b, c, d; /* 4 indices to face vertices */
+
+        a = rt_arb_faces[type][i*4+0];
+        b = rt_arb_faces[type][i*4+1];
+        c = rt_arb_faces[type][i*4+2];
+        d = rt_arb_faces[type][i*4+3];
+
+        if (a == -1) {
+            table.rows[i].nfields = 0;
+            continue;
+        }
+
+        /* find plane eqn for this face */
+        if (bn_mk_plane_3pts(face.plane_eqn, arb->pt[a], arb->pt[b], arb->pt[c], &gedp->ged_wdbp->wdb_tol) < 0) {
+            bu_vls_printf(gedp->ged_result_str, "| %d%d%d%d |         ***NOT A PLANE***                                          |\n",
+                    a+1, b+1, c+1, d+1);
+            /* this row has 1 special fields */
+            table.rows[i].nfields = NOT_A_PLANE;
+            continue;
+        }
+
+        ADD_POINT(face, arb->pt[a]);
+        ADD_POINT(face, arb->pt[b]);
+        ADD_POINT(face, arb->pt[c]);
+        ADD_POINT(face, arb->pt[d]);
+
+        /* The plane equations returned by bn_mk_plane_3pts above do
+         * not necessarily point outward. Use the reference center
+         * point for the arb and reverse direction for any errant planes.
+         * This corrects the output rotation, fallback angles so that
+         * they always give the outward pointing normal vector. */
+        if (DIST_PT_PLANE(center_pt, face.plane_eqn) > 0.0) {
+            HSCALE(face.plane_eqn, face.plane_eqn, -1.0);
+        }
+
+        sprintf(face.label, "%d", prface[type][i]);
+
+        analyze_poly_face(gedp, &face, &(table.rows[i]));
+        tot_area += face.area;
     }
+
+    bu_free((char *)face.pts, "analyze_arb8: pts");
 
     /* and print it */
     print_faces_table(gedp, &table);
@@ -851,17 +926,14 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
     bu_vls_printf(gedp->ged_result_str, "\n");
 
     /* set up the records for arb4's and arb6's */
-    /* also collect table data */
-    table.nrows = 0;
-
     earb = *arb; /* struct copy */
-
     if (cgtype == 4) {
         VMOVE(earb.pt[3], earb.pt[4]);
     } else if (cgtype == 6) {
         VMOVE(earb.pt[5], earb.pt[6]);
     }
 
+    table.nrows = 0;
     for (i = 0; i < 12; i++) {
         analyze_edge(gedp, i, &earb, type, &(table.rows[i]));
         if (nedge[type][i*2] == -1) {
@@ -889,74 +961,10 @@ analyze_arb(struct ged *gedp, const struct rt_db_internal *ip)
             );
 }
 
-struct poly_face
-{
-    size_t npts;
-    point_t *pts;
-    plane_t plane_eqn;
-    fastf_t area;
-};
 
-
-/* plane used by ccw to compare 2 points */
-static plane_t *cmp_plane = NULL;
-
-/* qsort helper function, used to sort points into
- * counter-clockwise order */
-static int
-ccw(const void *x, const void *y)
-{
-    vect_t tmp;
-    VCROSS(tmp, ((fastf_t *)x), ((fastf_t *)y));
-    return VDOT(*cmp_plane, tmp);
-}
-
-
-/* implicit returns:
- * sorts face->pts into counter-clockwise order
- * unsigned area of face in face->area */
-static void
-analyze_arbn_face(struct ged *gedp, struct poly_face *face, int face_idx, row_t *row)
-{
-    size_t i;
-    vect_t tmp, sum = VINIT_ZERO;
-    fastf_t angles[5];
-
-    findang(angles, face->plane_eqn);
-
-    /* sort points into counter-clockwise order */
-    cmp_plane = &face->plane_eqn;
-    qsort(face->pts, face->npts, sizeof(point_t), ccw);
-    cmp_plane = NULL;
-    for (i = 0; i < face->npts; i++) {
-        /* walk edges of face, summing cross products of vertices as we go to calculate area */
-        VCROSS(tmp, face->pts[i], face->pts[i + 1 == face->npts ? 0 : i + 1]);
-        VADD2(sum, sum, tmp);
-    }
-
-    face->area = fabs(VDOT(face->plane_eqn, sum)) / 2.0;
-
-    /* store face information for pretty printing */
-    row->nfields = 8;
-    row->fields[0].nchars = sprintf(row->fields[0].buf, "%4d", face_idx);
-    row->fields[1].nchars = sprintf(row->fields[1].buf, "%10.8f", angles[3]);
-    row->fields[2].nchars = sprintf(row->fields[2].buf, "%10.8f", angles[4]);
-    row->fields[3].nchars = sprintf(row->fields[3].buf, "%10.8f", face->plane_eqn[X]);
-    row->fields[4].nchars = sprintf(row->fields[4].buf, "%10.8f", face->plane_eqn[Y]);
-    row->fields[5].nchars = sprintf(row->fields[5].buf, "%10.8f", face->plane_eqn[Z]);
-    row->fields[6].nchars = sprintf(row->fields[6].buf, "%10.8f",
-            face->plane_eqn[W]*gedp->ged_wdbp->dbip->dbi_base2local);
-    row->fields[7].nchars = sprintf(row->fields[7].buf, "%10.8f",
-            face->area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
-}
-
-
-#define ADD_POINT(face) { \
-    VMOVE((face).pts[(face).npts], pt); \
-    (face).npts++; \
-}
-
-/* analyze an arbn */
+/**
+ * A N A L Y Z E _ A R B N
+ */
 static void
 analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 {
@@ -996,18 +1004,21 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
         }
         /* found a good point, add it to each of the intersecting faces */
         if (keep_point) {
-            ADD_POINT(faces[i]);
-            ADD_POINT(faces[j]);
-            ADD_POINT(faces[k]);
+            ADD_POINT(faces[i], pt);
+            ADD_POINT(faces[j], pt);
+            ADD_POINT(faces[k], pt);
         }
     }
     }
     }
 
+    table.nrows = aip->neqn;
     for (i = 0; i < aip->neqn; i++) {
         vect_t tmp;
+        sprintf(faces[i].label, "%4zu", i);
+
         /* calculate surface area */
-        analyze_arbn_face(gedp, &faces[i], i, &table.rows[i]);
+        analyze_poly_face(gedp, &faces[i], &table.rows[i]);
         tot_area += faces[i].area;
 
         /* calculate volume */
@@ -1021,9 +1032,78 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     }
     bu_free((char *)faces, "analyze_arbn: faces");
 
-    table.nrows = aip->neqn;
     print_faces_table(gedp, &table);
+    print_volume_table(gedp,
+            tot_vol
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            tot_area
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            tot_vol/GALLONS_TO_MM3
+            );
+}
 
+
+#define BOT_POINT(idx) (&bot->vertices[(idx) * ELEMENTS_PER_POINT])
+
+/**
+ * A N A L Y Z E _ B O T
+ */
+static void
+analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
+{
+    size_t i;
+    fastf_t tot_area = 0.0, tot_vol = 0.0;
+    table_t table;
+    struct poly_face face;
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+    RT_BOT_CK_MAGIC(bot);
+
+    /* allocate pts array, 3 vertices per bot face */
+    face.pts = (point_t *)bu_calloc(3, sizeof(point_t), "analyze_bot: pts");
+
+    table.nrows = bot->num_faces;
+    for (face.npts = 0, i = 0; i < bot->num_faces; face.npts = 0, i++) {
+        int a, b, c;
+        vect_t tmp;
+
+        /* find indices of the 3 vertices that make up this face */
+        a = bot->faces[i * ELEMENTS_PER_POINT + 0];
+        b = bot->faces[i * ELEMENTS_PER_POINT + 1];
+        c = bot->faces[i * ELEMENTS_PER_POINT + 2];
+
+        /* find normal, needed to calculate volume later */
+        if (bot->bot_flags == RT_BOT_HAS_SURFACE_NORMALS && bot->normals) {
+            /* bot->normals array already exists, use those instead */
+            VMOVE(face.plane_eqn, &bot->normals[i * ELEMENTS_PER_VECT]);
+        } else if (UNLIKELY(bn_mk_plane_3pts(face.plane_eqn, BOT_POINT(a), BOT_POINT(b), BOT_POINT(c), &gedp->ged_wdbp->wdb_tol) < 0)) {
+            bu_vls_printf(gedp->ged_result_str,
+                    "analyze_bot: bad BOT, points (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f) do not form a plane\n",
+                    V3ARGS(BOT_POINT(a)), V3ARGS(BOT_POINT(b)), V3ARGS(BOT_POINT(c)));
+            continue;
+        }
+
+        ADD_POINT(face, BOT_POINT(a));
+        ADD_POINT(face, BOT_POINT(b));
+        ADD_POINT(face, BOT_POINT(c));
+
+        sprintf(face.label, "%d%d%d", a, b, c);
+
+        /* surface area */
+        analyze_poly_face(gedp, &face, &table.rows[i]);
+        tot_area += face.area;
+
+        /* volume */
+        VSCALE(tmp, face.plane_eqn, face.area);
+        tot_vol += fabs(VDOT(face.pts[0], tmp));
+    }
+    tot_vol /= 3.0;
+
+    bu_free((char *)face.pts, "analyze_bot: pts");
+
+    print_faces_table(gedp, &table);
     print_volume_table(gedp,
             tot_vol
             * gedp->ged_wdbp->dbip->dbi_base2local
@@ -1040,7 +1120,9 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 #define PROLATE 1
 #define OBLATE 2
 
-/* analyze an superell */
+/**
+ * A N A L Y Z E _ S U P E R E L L
+ */
 static void
 analyze_superell(struct ged *gedp, const struct rt_db_internal *ip)
 {
@@ -1140,6 +1222,8 @@ print_results:
 
 
 /* analyze rhc */
+/* XXX: this is completely incorrect, better to have nothing instead? */
+#if 0
 static void
 analyze_rhc(struct ged *gedp, const struct rt_db_internal *ip)
 {
@@ -1181,116 +1265,12 @@ analyze_rhc(struct ged *gedp, const struct rt_db_internal *ip)
 		  vol_hyperb*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local,
 		  vol_hyperb/GALLONS_TO_MM3);
 }
+#endif
 
 
-struct bot_face
-{
-    size_t idx;     /* face index, 0 <= idx < num_faces */
-    point_t pt;     /* a point on the face */
-    plane_t normal;
-    fastf_t area;
-};
-
-
-static void
-analyze_bot_face(struct ged *gedp, struct bot_face *face, const struct rt_bot_internal *bot, row_t *row)
-{
-    int a, b, c;        /* indexes into bot->vertices */
-    point_t p1, p2, p3;
-    vect_t p2_p1, p3_p1, tmp;
-    fastf_t angles[5];
-
-    /* find the 3 vertices that make up this face */
-    a = bot->faces[face->idx * ELEMENTS_PER_POINT + 0];
-    b = bot->faces[face->idx * ELEMENTS_PER_POINT + 1];
-    c = bot->faces[face->idx * ELEMENTS_PER_POINT + 2];
-
-    VMOVE(p1, &bot->vertices[a * ELEMENTS_PER_POINT]);
-    VMOVE(p2, &bot->vertices[b * ELEMENTS_PER_POINT]);
-    VMOVE(p3, &bot->vertices[c * ELEMENTS_PER_POINT]);
-    VMOVE(face->pt, p1);
-
-    /* find normal, needed to calculate volume */
-    if (bot->bot_flags != RT_BOT_HAS_SURFACE_NORMALS) {
-        if (UNLIKELY(bn_mk_plane_3pts(face->normal, p1, p2, p3, &gedp->ged_wdbp->wdb_tol) < 0)) {
-            bu_vls_printf(gedp->ged_result_str,
-                    "analyze_bot: bad BOT, points (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f) do not form a plane\n",
-                    V3ARGS(p1), V3ARGS(p2), V3ARGS(p3));
-            return;
-        }
-    } else if (bot->normals) {
-        /* if bot->normals array already exists, use those instead */
-        VMOVE(face->normal, &bot->normals[face->idx * ELEMENTS_PER_VECT]);
-    }
-
-    findang(angles, face->normal);
-
-    /* calculate area, take cross product of two legs
-     * of the bot face and divide by 2 */
-    VSUB2(p2_p1, p2, p1);
-    VSUB2(p3_p1, p3, p1);
-    VCROSS(tmp, p3_p1, p2_p1);
-    face->area = MAGNITUDE(tmp) * 0.5;
-
-    /* store face information for pretty printing */
-    row->nfields = 8;
-    row->fields[0].nchars = sprintf(row->fields[0].buf, "%d%d%d ", a, b, c);
-    row->fields[1].nchars = sprintf(row->fields[1].buf, "%10.8f", angles[3]);
-    row->fields[2].nchars = sprintf(row->fields[2].buf, "%10.8f", angles[4]);
-    row->fields[3].nchars = sprintf(row->fields[3].buf, "%10.8f", face->normal[X]);
-    row->fields[4].nchars = sprintf(row->fields[4].buf, "%10.8f", face->normal[Y]);
-    row->fields[5].nchars = sprintf(row->fields[5].buf, "%10.8f", face->normal[Z]);
-    row->fields[6].nchars = sprintf(row->fields[6].buf, "%10.8f",
-            face->normal[W]*gedp->ged_wdbp->dbip->dbi_base2local);
-    row->fields[7].nchars = sprintf(row->fields[7].buf, "%10.8f",
-            face->area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
-}
-
-
-/* analyze bot */
-static void
-analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
-{
-    size_t i;
-    fastf_t tot_area = 0.0, tot_vol = 0.0;
-    table_t table;
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
-	struct bot_face *faces;
-
-    RT_BOT_CK_MAGIC(bot);
-	faces = (struct bot_face *)bu_calloc(bot->num_faces, sizeof(struct bot_face), "analyze_bot: faces");
-
-    for (i = 0; i < bot->num_faces; i++) {
-		vect_t tmp;
-        /* surface area */
-        faces[i].idx = i;
-        analyze_bot_face(gedp, &faces[i], bot, &table.rows[i]);
-        tot_area += faces[i].area;
-
-        /* volume */
-        VSCALE(tmp, faces[i].normal, faces[i].area);
-        tot_vol += fabs(VDOT(faces[i].pt, tmp));
-    }
-    tot_vol /= 3.0;
-
-    table.nrows = bot->num_faces;
-    print_faces_table(gedp, &table);
-
-    print_volume_table(gedp,
-            tot_vol
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local,
-            tot_area
-            * gedp->ged_wdbp->dbip->dbi_base2local
-            * gedp->ged_wdbp->dbip->dbi_base2local,
-            tot_vol/GALLONS_TO_MM3
-            );
-
-	bu_free((char *)faces, "analyze_bot: faces");
-}
-
-/* analyze sketch */
+/**
+ * A N A L Y Z E _ S K E T C H
+ */
 static void
 analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
 {
@@ -1319,11 +1299,15 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
     switch (ip->idb_type) {
 
     case ID_ARB8:
-        analyze_arb(gedp, ip);
+        analyze_arb8(gedp, ip);
         break;
 
     case ID_BOT:
         analyze_bot(gedp, ip);
+        break;
+
+    case ID_ARBN:
+        analyze_arbn(gedp, ip);
         break;
 
     case ID_TGC:
@@ -1342,20 +1326,8 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
         analyze_general(gedp, ip);
         break;
 
-    case ID_RHC:
-        analyze_rhc(gedp, ip);
-        break;
-
-    case ID_SUPERELL:
-        analyze_superell(gedp, ip);
-        break;
-
     case ID_ETO:
         analyze_general(gedp, ip);
-        break;
-
-    case ID_ARBN:
-        analyze_arbn(gedp, ip);
         break;
 
     case ID_EPA:
@@ -1364,6 +1336,10 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 
     case ID_PARTICLE:
         analyze_general(gedp, ip);
+        break;
+
+    case ID_SUPERELL:
+        analyze_superell(gedp, ip);
         break;
 
     case ID_SKETCH:
