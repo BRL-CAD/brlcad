@@ -70,7 +70,7 @@ TIE_VAL(tie_tri_prep)(struct tie_s *tie)
 
 	/* Unitize Normal */
 	mag_sq = MAGSQ(tri->data[1].v);
-	if (mag_sq < SMALL_FASTF) {
+	if (UNLIKELY(mag_sq < SMALL_FASTF)) {
 	    /* Can not unitize normal, most likely we have a zero area
 	     * triangle (ie degenerate) so skip it.
 	     */
