@@ -4241,7 +4241,7 @@ namespace eval ArcherCore {
     set cgdata [$itk_component(ged) get $ctext]
     set ctype [lindex $cgdata 0]
 
-    if {$ctype == "comb"} {
+    if {$ctype == "comb" && [info exists mPNode2CList($cnode)]} {
 	# If this node has never been opened ...
 	if {[addTreeNodeTag $cnode $TREE_OPENED_TAG]} {
 	    # Remove placeholder
