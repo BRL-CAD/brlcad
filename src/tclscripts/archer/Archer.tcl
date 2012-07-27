@@ -182,8 +182,9 @@ package provide Archer 1.0
 	method Load                {_target}
 	method saveDb              {}
 	method units               {args}
-	method initImages          {}
+	method initCombImages          {}
 	method initFbImages        {}
+	method initImages          {}
 	method setDefaultBindingMode {_mode}
 
 	# Object Edit Management
@@ -242,6 +243,8 @@ package provide Archer 1.0
 	method fbToggle {}
 	method rtEndCallback {_aborted}
 	method getRayBotNormalCos {_start _target _bot}
+	method editMotionDeltaCallback {args}
+	method toggleMatrixMode {}
 
 	#XXX Need to split up menuStatusCB into one method per menu
 	method menuStatusCB {_w}
@@ -1631,6 +1634,7 @@ package provide Archer 1.0
     set mSavedViewEyePt ""
     set mSavedSize ""
 
+    $itk_component(ged) edit_motion_delta_callback_all [::itcl::code $this editMotionDeltaCallback]
     $itk_component(ged) refresh_on
     $itk_component(ged) refresh_all
     SetNormalCursor $this
@@ -1667,6 +1671,47 @@ package provide Archer 1.0
 }
 
 
+::itcl::body Archer::initCombImages {} {
+    set mImage_matrixModeAbove [image create photo \
+				    -file [file join $mImgDir matrixModeAbove.png]]
+    set mImage_matrixModeBelow [image create photo \
+				    -file [file join $mImgDir matrixModeBelow.png]]
+
+    $itk_component(primaryToolbar) itemconfigure comb \
+	-image [image create photo \
+		    -file [file join $mImgDir combination.png]]
+
+    if {$mObjMatrixMode == $MATRIX_ABOVE_MODE} {
+	$itk_component(primaryToolbar) itemconfigure matrixmode \
+	    -image $mImage_matrixModeAbove
+    } else {
+	$itk_component(primaryToolbar) itemconfigure matrixmode \
+	    -image $mImage_matrixModeBelow
+    }
+}
+
+
+::itcl::body Archer::initFbImages {} {
+    set mImage_fbOff [image create photo -file [file join $mImgDir framebuffer_off.png]]
+    set mImage_fbOn [image create photo -file [file join $mImgDir framebuffer.png]]
+    set mImage_fbInterlay [image create photo -file [file join $mImgDir framebuffer_interlay.png]]
+    set mImage_fbOverlay [image create photo -file [file join $mImgDir framebuffer_overlay.png]]
+    set mImage_fbUnderlay [image create photo -file [file join $mImgDir framebuffer_underlay.png]]
+    set mImage_rt [image create photo -file [file join $mImgDir raytrace.png]]
+    set mImage_rtAbort [image create photo -file [file join $mImgDir raytrace_abort.png]]
+
+    $itk_component(primaryToolbar) itemconfigure toggle_fb \
+	-image $mImage_fbOn
+    $itk_component(primaryToolbar) itemconfigure toggle_fb_mode \
+	-image $mImage_fbUnderlay
+    $itk_component(primaryToolbar) itemconfigure raytrace \
+	-image $mImage_rt
+    $itk_component(primaryToolbar) itemconfigure clear_fb \
+	-image [image create photo \
+		    -file [file join $mImgDir framebuffer_clear.png]]
+}
+
+
 ::itcl::body Archer::initImages {} {
     if {$mInstanceInit} {
 	return
@@ -1694,9 +1739,6 @@ package provide Archer 1.0
 	$itk_component(primaryToolbar) itemconfigure preferences \
 	    -image [image create photo \
 			-file [file join $mImgDir configure.png]]
-	$itk_component(primaryToolbar) itemconfigure comb \
-	    -image [image create photo \
-			-file [file join $mImgDir combination.png]]
 	#	$itk_component(primaryToolbar) itemconfigure arb6 \
 	    -image [image create photo \
 			-file [file join $mImgDir primitive_arb6.png]]
@@ -1820,28 +1862,8 @@ package provide Archer 1.0
 			-file [file join $mImgDir rtimage.png]]
     }
 
+    initCombImages
     initFbImages
-}
-
-
-::itcl::body Archer::initFbImages {} {
-    set mImage_fbOff [image create photo -file [file join $mImgDir framebuffer_off.png]]
-    set mImage_fbOn [image create photo -file [file join $mImgDir framebuffer.png]]
-    set mImage_fbInterlay [image create photo -file [file join $mImgDir framebuffer_interlay.png]]
-    set mImage_fbOverlay [image create photo -file [file join $mImgDir framebuffer_overlay.png]]
-    set mImage_fbUnderlay [image create photo -file [file join $mImgDir framebuffer_underlay.png]]
-    set mImage_rt [image create photo -file [file join $mImgDir raytrace.png]]
-    set mImage_rtAbort [image create photo -file [file join $mImgDir raytrace_abort.png]]
-
-    $itk_component(primaryToolbar) itemconfigure toggle_fb \
-	-image $mImage_fbOn
-    $itk_component(primaryToolbar) itemconfigure toggle_fb_mode \
-	-image $mImage_fbUnderlay
-    $itk_component(primaryToolbar) itemconfigure raytrace \
-	-image $mImage_rt
-    $itk_component(primaryToolbar) itemconfigure clear_fb \
-	-image [image create photo \
-		    -file [file join $mImgDir framebuffer_clear.png]]
 }
 
 
@@ -3956,6 +3978,129 @@ proc title_node_handler {node} {
 }
 
 
+::itcl::body Archer::editMotionDeltaCallback {args} {
+    set argslen [llength $args]
+    if {$argslen < 2} {
+	return
+    }
+
+    if {$mObjMatrixMode == $MATRIX_ABOVE_MODE && $mSelectedObjPath != $mSelectedObj} {
+	set plist [split $mSelectedObjPath /]
+	set pobj [lindex $plist end-1]
+    } else {
+	set pobj $mSelectedObjPath
+    }
+
+    switch -- [lindex $args 0] {
+	"orotate" {
+	    if {$argslen != 4} {
+		return
+	    }
+
+	    set rx [lindex $args 1]
+	    set ry [lindex $args 2]
+	    set rz [lindex $args 3]
+
+	    if {$mObjMatrixMode == $MATRIX_ABOVE_MODE && $mSelectedObjPath != $mSelectedObj} {
+		set ocenter [gedCmd ocenter $mSelectedObjPath]
+		set cx [lindex $ocenter 0]
+		set cy [lindex $ocenter 1]
+		set cz [lindex $ocenter 2]
+
+		set cmd "$itk_component(ged) combmem -r 3 $pobj "
+		foreach item [split [$itk_component(ged) combmem -i 3 $pobj] "\n"] {
+		    set obj [lindex $item 1]
+
+		    if {$obj == $mSelectedObj} {
+			set item [lreplace $item 2 end $rx $ry $rz $cx $cy $cz]
+		    }
+
+		    append cmd " $item"
+		}
+	    } else {
+		set cmd "orotate $pobj $rx $ry $rz"
+	    }
+	}
+	"otranslate" {
+	    if {$argslen != 4} {
+		return
+	    }
+
+	    set dx [lindex $args 1]
+	    set dy [lindex $args 2]
+	    set dz [lindex $args 3]
+
+	    if {$mObjMatrixMode == $MATRIX_ABOVE_MODE && $mSelectedObjPath != $mSelectedObj} {
+		set cmd "$itk_component(ged) combmem -r 5 $pobj "
+		foreach item [split [$itk_component(ged) combmem -i 5 $pobj] "\n"] {
+		    set obj [lindex $item 1]
+
+		    if {$obj == $mSelectedObj} {
+			set item [lreplace $item 2 end $dx $dy $dz]
+		    }
+
+		    append cmd " $item"
+		}
+	    } else {
+		set cmd "otranslate $pobj $dx $dy $dz"
+	    }
+	}
+	"oscale" {
+	    if {$argslen != 2} {
+		return
+	    }
+
+	    set sf [lindex $args 1]
+
+	    if {$mObjMatrixMode == $MATRIX_ABOVE_MODE && $mSelectedObjPath != $mSelectedObj} {
+		set ocenter [gedCmd ocenter $mSelectedObjPath]
+		set cx [lindex $ocenter 0]
+		set cy [lindex $ocenter 1]
+		set cz [lindex $ocenter 2]
+
+		set cmd "$itk_component(ged) combmem -r 6 $pobj "
+		foreach item [split [$itk_component(ged) combmem -i 6 $pobj] "\n"] {
+		    set obj [lindex $item 1]
+
+		    if {$obj == $mSelectedObj} {
+			set item [lreplace $item 2 end $sf 1 1 1 $cx $cy $cz]
+		    }
+
+		    append cmd " $item"
+		}
+	    } else {
+		set cmd "oscale $pobj $sf"
+	    }
+	}
+	default {
+	    return
+	}
+    }
+
+    eval $cmd
+    redrawObj $pobj 0
+}
+
+
+::itcl::body Archer::toggleMatrixMode {} {
+    if {$mObjMatrixMode == $MATRIX_ABOVE_MODE} {
+	set mObjMatrixMode $MATRIX_BELOW_MODE
+	set mStatusStr "Toggle matrix mode. Currently set to \"Below\""
+	$itk_component(primaryToolbar) itemconfigure matrixmode \
+	    -image $mImage_matrixModeBelow \
+	    -balloonstr "Toggle matrix mode. Currently set to \"Below\"" \
+	    -helpstr "Toggle matrix mode. Currently set to \"Below\""
+    } else {
+	set mObjMatrixMode $MATRIX_ABOVE_MODE
+	set mStatusStr "Toggle matrix mode. Currently set to \"Aove\""
+	$itk_component(primaryToolbar) itemconfigure matrixmode \
+	    -image $mImage_matrixModeAbove \
+	    -balloonstr "Toggle matrix mode. Currently set to \"Above\"" \
+	    -helpstr "Toggle matrix mode. Currently set to \"Above\""
+    }
+}
+
+
 ::itcl::body Archer::menuStatusCB {_w} {
     if {$mDoStatus} {
 	# entry might not support -label (i.e. tearoffs)
@@ -4258,9 +4403,11 @@ proc title_node_handler {node} {
     if {$_on} {
 	$itk_component(primaryToolbar) itemconfigure other -state normal
 	$itk_component(primaryToolbar) itemconfigure comb -state normal
+	$itk_component(primaryToolbar) itemconfigure matrixmode -state normal
     } else {
 	$itk_component(primaryToolbar) itemconfigure other -state disabled
 	$itk_component(primaryToolbar) itemconfigure comb -state disabled
+	$itk_component(primaryToolbar) itemconfigure matrixmode -state disabled
     }
 }
 
@@ -4365,13 +4512,13 @@ proc title_node_handler {node} {
 
     buildWizardMenu
     
-    $itk_component(primaryToolbar) insert rotate frame fill4 \
+#    $itk_component(primaryToolbar) insert rotate frame fill4 \
 	-relief flat \
 	-width 3
-    $itk_component(primaryToolbar) insert rotate frame sep2 \
+#    $itk_component(primaryToolbar) insert rotate frame sep2 \
 	-relief sunken \
 	-width 2
-    $itk_component(primaryToolbar) insert rotate frame fill5 \
+#    $itk_component(primaryToolbar) insert rotate frame fill5 \
 	-relief flat \
 	-width 3
 
@@ -4423,13 +4570,13 @@ proc title_node_handler {node} {
 	-relief flat
 
     # half-size spacer
-    $itk_component(primaryToolbar) insert rotate frame fill6 \
+#    $itk_component(primaryToolbar) insert rotate frame fill6 \
 	-relief flat \
 	-width 3
-    $itk_component(primaryToolbar) insert rotate frame sep3 \
+#    $itk_component(primaryToolbar) insert rotate frame sep3 \
 	-relief sunken \
 	-width 2
-    $itk_component(primaryToolbar) insert rotate frame fill7 \
+#    $itk_component(primaryToolbar) insert rotate frame fill7 \
 	-relief flat \
 	-width 3
 
@@ -4441,6 +4588,21 @@ proc title_node_handler {node} {
 	-overrelief raised \
 	-command [::itcl::code $this createObj comb]
 
+    $itk_component(primaryToolbar) insert rotate button matrixmode \
+	-state disabled \
+	-relief flat \
+	-overrelief raised \
+	-command [::itcl::code $this toggleMatrixMode]
+
+    if {$mObjMatrixMode == $MATRIX_ABOVE_MODE} {
+	$itk_component(primaryToolbar) itemconfigure matrixmode \
+	    -balloonstr "Toggle matrix mode. Currently set to \"Above\"" \
+	    -helpstr "Toggle matrix mode. Currently set to \"Above\""
+    } else {
+	$itk_component(primaryToolbar) itemconfigure matrixmode \
+	    -balloonstr "Toggle matrix mode. Currently set to \"Below\"" \
+	    -helpstr "Toggle matrix mode. Currently set to \"Below\""
+    }
 
     set parent [$itk_component(primaryToolbar) component other]
     itk_component add primitiveMenu {
@@ -5975,17 +6137,24 @@ proc title_node_handler {node} {
     set vy [lindex $vl 1]
     set vcenter [list $vx $vy [lindex $ovcenter 2]]
 
-    set ocenter [vscale [eval gedCmd pane_v2m_point $_dm $vcenter] [gedCmd base2local]]
+    set new_ocenter [vscale [eval gedCmd pane_v2m_point $_dm $vcenter] [gedCmd base2local]]
 
     set ret [catch {
-	if {$GeometryEditFrame::mEditCommand != ""} {
-	    gedCmd $GeometryEditFrame::mEditCommand $_obj $GeometryEditFrame::mEditParam1 $ocenter
+	# The value of _obj is expected to be the same as mSelectedObjPath
+	if {$mObjMatrixMode == $MATRIX_ABOVE_MODE && $mSelectedObjPath != $mSelectedObj} {
+	    set diff [vsub2 $new_ocenter $ocenter]
+	    eval editMotionDeltaCallback otranslate $diff
 	} else {
-	    eval gedCmd ocenter $_obj $ocenter
+	    if {$GeometryEditFrame::mEditCommand != ""} {
+		gedCmd $GeometryEditFrame::mEditCommand $_obj $GeometryEditFrame::mEditParam1 $new_ocenter
+	    } else {
+		eval gedCmd ocenter $_obj $new_ocenter
+	    }
+
+	    redrawObj $_obj 0
 	}
     } msg]
 
-    redrawObj $_obj 0
     initEdit 0
 
     if {$ret} {
@@ -8793,7 +8962,7 @@ proc title_node_handler {node} {
 	}
     }
 
-    if {$mTreeMode == $TREE_MODE_LIST} {
+    if {$mEnableListView} {
 	fillTree {} $name 1
     } else {
 	fillTree {} $name 0

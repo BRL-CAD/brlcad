@@ -152,6 +152,8 @@ set(archer_images
   invalid_intersect.png
   invalid_subtract.png
   invalid_union.png
+  matrixModeAbove.png
+  matrixModeBelow.png
   measure.png
   metaball.png
   metaball_intersect.png

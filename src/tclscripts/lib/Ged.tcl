@@ -248,6 +248,8 @@ package provide cadwidgets::Ged 1.0
 	method mirror {args}
 	method model2view {args}
 	method model_axes {args}
+	method edit_motion_delta_callback {args}
+	method edit_motion_delta_callback_all {args}
 	method more_args_callback {args}
 	method mouse_append_pipept {args}
 	method mouse_constrain_rot {args}
@@ -319,6 +321,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_lookat {_pane args}
 	method pane_m2v_point {_pane args}
 	method pane_model2view {_pane args}
+	method pane_edit_motion_delta_callback {_pane args}
 	method pane_move_arb_edge_mode {_pane args}
 	method pane_move_arb_face_mode {_pane args}
 	method pane_move_pipept_mode {_pane args}
@@ -1716,6 +1719,16 @@ package provide cadwidgets::Ged 1.0
     return $ret
 }
 
+::itcl::body cadwidgets::Ged::edit_motion_delta_callback {args} {
+    eval $mGed edit_motion_delta_callback $args
+}
+
+::itcl::body cadwidgets::Ged::edit_motion_delta_callback_all {args} {
+    foreach dm {ur ul ll lr} {
+	eval $mGed edit_motion_delta_callback $itk_component($dm) $args
+    }
+}
+
 ::itcl::body cadwidgets::Ged::more_args_callback {args} {
     eval $mGed more_args_callback $args
 }
@@ -2003,6 +2016,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_model2view {_pane args} {
     eval $mGed model2view $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_edit_motion_delta_callback {_pane args} {
+    eval $mGed edit_motion_delta_callback $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_move_arb_edge_mode {_pane args} {

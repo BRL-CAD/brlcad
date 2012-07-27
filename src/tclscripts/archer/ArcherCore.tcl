@@ -75,6 +75,9 @@ namespace eval ArcherCore {
 	common OBJECT_CENTER_MODE 10
 	common FIRST_FREE_BINDING_MODE 11
 
+	common MATRIX_ABOVE_MODE 0
+	common MATRIX_BELOW_MODE 1
+
 	common OBJ_EDIT_VIEW_MODE 0
 	common OBJ_ATTR_VIEW_MODE 1
 	common OBJ_TOOL_VIEW_MODE 2
@@ -512,6 +515,7 @@ namespace eval ArcherCore {
 	variable mDefaultBindingMode 0
 	variable mPrevObjViewMode 0
 	variable mObjViewMode 0
+	variable mObjMatrixMode $MATRIX_BELOW_MODE
 
 	# This is mostly a list of wrapped Ged commands. However, it also contains
 	# a few commands that are implemented here in ArcherCore.
@@ -751,6 +755,9 @@ namespace eval ArcherCore {
 	variable mImage_fbUnderlay ""
 	variable mImage_rt ""
 	variable mImage_rtAbort ""
+
+	variable mImage_matrixModeAbove ""
+	variable mImage_matrixModeBelow ""
 
 	# variables for the new tree
 	variable mCNode2PList

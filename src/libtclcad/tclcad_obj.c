@@ -308,6 +308,12 @@ HIDDEN int to_model_axes(struct ged *gedp,
 			 ged_func_ptr func,
 			 const char *usage,
 			 int maxargs);
+HIDDEN int to_edit_motion_delta_callback(struct ged *gedp,
+					 int argc,
+					 const char *argv[],
+					 ged_func_ptr func,
+					 const char *usage,
+					 int maxargs);
 HIDDEN int to_more_args_callback(struct ged *gedp,
 				 int argc,
 				 const char *argv[],
@@ -954,6 +960,7 @@ static struct to_cmdtab to_cmds[] = {
     {"mirror",	(char *)0, TO_UNLIMITED, to_mirror, GED_FUNC_PTR_NULL},
     {"model2view",	"vname", 2, to_view_func, ged_model2view},
     {"model_axes",	"???", TO_UNLIMITED, to_model_axes, GED_FUNC_PTR_NULL},
+    {"edit_motion_delta_callback",	"vname [args]", TO_UNLIMITED, to_edit_motion_delta_callback, GED_FUNC_PTR_NULL},
     {"more_args_callback",	"set/get the \"more args\" callback", TO_UNLIMITED, to_more_args_callback, GED_FUNC_PTR_NULL},
     {"move_arb_edge",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_move_arb_edge},
     {"move_arb_edge_mode",	"obj edge x y", TO_UNLIMITED, to_move_arb_edge_mode, GED_FUNC_PTR_NULL},
@@ -1262,6 +1269,7 @@ to_deleteProc(ClientData clientData)
 	BU_LIST_DEQUEUE(&(gdvp->l));
 	bu_vls_free(&gdvp->gdv_name);
 	bu_vls_free(&gdvp->gdv_callback);
+	bu_vls_free(&gdvp->gdv_edit_motion_delta_callback);
 	DM_CLOSE(gdvp->gdv_dmp);
 	bu_free((genptr_t)gdvp->gdv_view, "ged_view");
 
@@ -4908,6 +4916,7 @@ to_deleteViewProc(ClientData clientData)
     BU_LIST_DEQUEUE(&(gdvp->l));
     bu_vls_free(&gdvp->gdv_name);
     bu_vls_free(&gdvp->gdv_callback);
+    bu_vls_free(&gdvp->gdv_edit_motion_delta_callback);
     DM_CLOSE(gdvp->gdv_dmp);
     bu_free((genptr_t)gdvp->gdv_view, "ged_view");
     bu_free((genptr_t)gdvp, "ged_dm_view");
@@ -5962,6 +5971,53 @@ to_model_axes(struct ged *gedp,
     return to_axes(gedp, gdvp, &gdvp->gdv_view->gv_model_axes, argc, argv, usage);
 }
 
+
+HIDDEN int
+to_edit_motion_delta_callback(struct ged *gedp,
+			      int argc,
+			      const char *argv[],
+			      ged_func_ptr UNUSED(func),
+			      const char *usage,
+			      int UNUSED(maxargs))
+{
+    register int i;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
+	return GED_ERROR;
+    }
+
+    /* get the callback string */
+    if (argc == 2) {
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&gdvp->gdv_edit_motion_delta_callback));
+	
+	return GED_OK;
+    }
+
+    /* set the callback string */
+    bu_vls_trunc(&gdvp->gdv_edit_motion_delta_callback, 0);
+    for (i = 2; i < argc; ++i)
+	bu_vls_printf(&gdvp->gdv_edit_motion_delta_callback, "%s ", argv[i]);
+
+    return GED_OK;
+}
+
+
 HIDDEN int
 to_more_args_callback(struct ged *gedp,
 		      int argc,
@@ -6657,8 +6713,6 @@ to_mouse_orotate(struct ged *gedp,
 		 const char *usage,
 		 int UNUSED(maxargs))
 {
-    int ret;
-    char *av[6];
     fastf_t x, y;
     fastf_t dx, dy;
     point_t model;
@@ -6727,24 +6781,35 @@ to_mouse_orotate(struct ged *gedp,
     bu_vls_printf(&rot_z_vls, "%lf", model[Z]);
 
     gedp->ged_gvp = gdvp->gdv_view;
-    av[0] = "orotate";
-    av[1] = (char *)argv[2];
-    av[2] = bu_vls_addr(&rot_x_vls);
-    av[3] = bu_vls_addr(&rot_y_vls);
-    av[4] = bu_vls_addr(&rot_z_vls);
-    av[5] = (char *)0;
 
-    ret = ged_orotate(gedp, 5, (const char **)av);
+    if (0 < bu_vls_strlen(&gdvp->gdv_edit_motion_delta_callback)) {
+	struct bu_vls tcl_cmd;
+
+	bu_vls_init(&tcl_cmd);
+	bu_vls_printf(&tcl_cmd, "%V orotate %V %V %V", &gdvp->gdv_edit_motion_delta_callback, &rot_x_vls, &rot_y_vls, &rot_z_vls);
+	Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
+	bu_vls_free(&tcl_cmd);
+    } else {
+	char *av[6];
+
+	av[0] = "orotate";
+	av[1] = (char *)argv[2];
+	av[2] = bu_vls_addr(&rot_x_vls);
+	av[3] = bu_vls_addr(&rot_y_vls);
+	av[4] = bu_vls_addr(&rot_z_vls);
+	av[5] = (char *)0;
+
+	if (ged_orotate(gedp, 5, (const char **)av) == GED_OK) {
+	    av[0] = "draw";
+	    av[1] = (char *)argv[2];
+	    av[2] = (char *)0;
+	    to_edit_redraw(gedp, 2, (const char **)av);
+	}
+    }
+
     bu_vls_free(&rot_x_vls);
     bu_vls_free(&rot_y_vls);
     bu_vls_free(&rot_z_vls);
-
-    if (ret == GED_OK) {
-	av[0] = "draw";
-	av[1] = (char *)argv[2];
-	av[2] = (char *)0;
-	to_edit_redraw(gedp, 2, (const char **)av);
-    }
 
     return GED_OK;
 }
@@ -6757,8 +6822,6 @@ to_mouse_oscale(struct ged *gedp,
 		const char *usage,
 		int UNUSED(maxargs))
 {
-    int ret;
-    char *av[6];
     fastf_t x, y;
     fastf_t dx, dy;
     fastf_t sf;
@@ -6824,20 +6887,31 @@ to_mouse_oscale(struct ged *gedp,
     bu_vls_printf(&sf_vls, "%lf", sf);
 
     gedp->ged_gvp = gdvp->gdv_view;
-    av[0] = "oscale";
-    av[1] = (char *)argv[2];
-    av[2] = bu_vls_addr(&sf_vls);
-    av[3] = (char *)0;
 
-    ret = ged_oscale(gedp, 3, (const char **)av);
-    bu_vls_free(&sf_vls);
+    if (0 < bu_vls_strlen(&gdvp->gdv_edit_motion_delta_callback)) {
+	struct bu_vls tcl_cmd;
 
-    if (ret == GED_OK) {
-	av[0] = "draw";
+	bu_vls_init(&tcl_cmd);
+	bu_vls_printf(&tcl_cmd, "%V oscale %V", &gdvp->gdv_edit_motion_delta_callback, &sf_vls);
+	Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
+	bu_vls_free(&tcl_cmd);
+    } else {
+	char *av[6];
+
+	av[0] = "oscale";
 	av[1] = (char *)argv[2];
-	av[2] = (char *)0;
-	to_edit_redraw(gedp, 2, (const char **)av);
+	av[2] = bu_vls_addr(&sf_vls);
+	av[3] = (char *)0;
+
+	if (ged_oscale(gedp, 3, (const char **)av) == GED_OK) {
+	    av[0] = "draw";
+	    av[1] = (char *)argv[2];
+	    av[2] = (char *)0;
+	    to_edit_redraw(gedp, 2, (const char **)av);
+	}
     }
+
+    bu_vls_free(&sf_vls);
 
     return GED_OK;
 }
@@ -6850,8 +6924,6 @@ to_mouse_otranslate(struct ged *gedp,
 		    const char *usage,
 		    int UNUSED(maxargs))
 {
-    int ret;
-    char *av[6];
     fastf_t x, y;
     fastf_t dx, dy;
     fastf_t inv_width;
@@ -6922,24 +6994,35 @@ to_mouse_otranslate(struct ged *gedp,
     bu_vls_printf(&tran_z_vls, "%lf", model[Z]);
 
     gedp->ged_gvp = gdvp->gdv_view;
-    av[0] = "otranslate";
-    av[1] = (char *)argv[2];
-    av[2] = bu_vls_addr(&tran_x_vls);
-    av[3] = bu_vls_addr(&tran_y_vls);
-    av[4] = bu_vls_addr(&tran_z_vls);
-    av[5] = (char *)0;
 
-    ret = ged_otranslate(gedp, 5, (const char **)av);
+    if (0 < bu_vls_strlen(&gdvp->gdv_edit_motion_delta_callback)) {
+	struct bu_vls tcl_cmd;
+
+	bu_vls_init(&tcl_cmd);
+	bu_vls_printf(&tcl_cmd, "%V otranslate %V %V %V", &gdvp->gdv_edit_motion_delta_callback, &tran_x_vls, &tran_y_vls, &tran_z_vls);
+	Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
+	bu_vls_free(&tcl_cmd);
+    } else {
+	char *av[6];
+
+	av[0] = "otranslate";
+	av[1] = (char *)argv[2];
+	av[2] = bu_vls_addr(&tran_x_vls);
+	av[3] = bu_vls_addr(&tran_y_vls);
+	av[4] = bu_vls_addr(&tran_z_vls);
+	av[5] = (char *)0;
+
+	if (ged_otranslate(gedp, 5, (const char **)av) == GED_OK) {
+	    av[0] = "draw";
+	    av[1] = (char *)argv[2];
+	    av[2] = (char *)0;
+	    to_edit_redraw(gedp, 2, (const char **)av);
+	}
+    }
+
     bu_vls_free(&tran_x_vls);
     bu_vls_free(&tran_y_vls);
     bu_vls_free(&tran_z_vls);
-
-    if (ret == GED_OK) {
-	av[0] = "draw";
-	av[1] = (char *)argv[2];
-	av[2] = (char *)0;
-	to_edit_redraw(gedp, 2, (const char **)av);
-    }
 
     return GED_OK;
 }
@@ -8462,6 +8545,7 @@ to_new_view(struct ged *gedp,
     new_gdvp->gdv_gop = current_top->to_gop;
     bu_vls_init(&new_gdvp->gdv_name);
     bu_vls_init(&new_gdvp->gdv_callback);
+    bu_vls_init(&new_gdvp->gdv_edit_motion_delta_callback);
     bu_vls_printf(&new_gdvp->gdv_name, argv[name_index]);
     ged_view_init(new_gdvp->gdv_view);
     BU_LIST_INSERT(&current_top->to_gop->go_head_views.l, &new_gdvp->l);
@@ -8611,6 +8695,8 @@ to_oscale_mode(struct ged *gedp,
     return GED_OK;
 }
 
+
+/* to_model_delta_mode */
 HIDDEN int
 to_otranslate_mode(struct ged *gedp,
 		   int argc,
@@ -8667,6 +8753,7 @@ to_otranslate_mode(struct ged *gedp,
 
     return GED_OK;
 }
+
 
 HIDDEN int
 to_paint_rect_area(struct ged *gedp,
@@ -10563,6 +10650,7 @@ to_view_axes(struct ged *gedp,
     return to_axes(gedp, gdvp, &gdvp->gdv_view->gv_view_axes, argc, argv, usage);
 }
 
+
 HIDDEN int
 to_view_callback(struct ged *gedp,
 		 int argc,
@@ -10607,6 +10695,7 @@ to_view_callback(struct ged *gedp,
 
     return GED_OK;
 }
+
 
 HIDDEN int
 to_view_win_size(struct ged *gedp,
