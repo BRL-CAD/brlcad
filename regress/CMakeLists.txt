@@ -61,10 +61,10 @@ if(SH_EXEC)
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/red.sh ${CMAKE_SOURCE_DIR}
     DEPENDS mged
     )
-  add_custom_target(regress-vls_vprintf
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/vls_vprintf.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS test_vls_vprintf
-    )
+  #add_custom_target(regress-vls_vprintf
+  #  ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/vls_vprintf.sh ${CMAKE_SOURCE_DIR}
+  #  DEPENDS test_vls_vprintf
+  #  )
   add_custom_target(regress-nirt
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/nirt.sh ${CMAKE_SOURCE_DIR}
     DEPENDS mged nirt
@@ -81,10 +81,10 @@ if(SH_EXEC)
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/g-dot.sh ${CMAKE_SOURCE_DIR}
     DEPENDS mged g-dot
     )
-  add_custom_target(regress-quote
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/quote.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS test_quote
-    )
+  #add_custom_target(regress-quote
+  #  ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/quote.sh ${CMAKE_SOURCE_DIR}
+  #  DEPENDS test_quote
+  #  )
   add_custom_target(regress-rtwizard
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/rtwizard.sh ${CMAKE_SOURCE_DIR}
     DEPENDS btclsh rt rtedge fbclear fbserv pix-fb fb-pix pix-bw bw-pix 
