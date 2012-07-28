@@ -1,4 +1,5 @@
 SET(perplex_ignore_files
+    CMake
     mbo_getopt.h
     parser.y
     perplex.h
