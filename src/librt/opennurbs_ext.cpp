@@ -2971,14 +2971,19 @@ public:
 	    m_children[i] = new Subsurface();
 	ON_Surface *temp_surf1 = NULL, *temp_surf2 = NULL;
 	ON_BOOL32 ret = true;
-	ret = ((ON_NurbsSurface*)m_surf)->Split(0, m_u.Mid(), temp_surf1, temp_surf2);
-	if (!ret)
+	ret = m_surf->Split(0, m_u.Mid(), temp_surf1, temp_surf2);
+	if (!ret) {
+	    delete temp_surf1;
+	    delete temp_surf2;
 	    return -1;
+	}
 
 	ret = temp_surf1->Split(1, m_v.Mid(), m_children[0]->m_surf, m_children[1]->m_surf);
 	delete temp_surf1;
-	if (!ret)
+	if (!ret) {
+	    delete temp_surf2;
 	    return -1;
+	}
 	m_children[0]->m_u = ON_Interval(m_u.Min(), m_u.Mid());
 	m_children[0]->m_v = ON_Interval(m_v.Min(), m_v.Mid());
 	m_children[0]->SetBBox(m_children[0]->m_surf->BoundingBox());
@@ -3026,7 +3031,9 @@ public:
 int
 surface_surface_intersection(const ON_Surface* surfA,
 			     const ON_Surface* surfB,
-			     ON_SimpleArray<ON_NurbsCurve*> &intersect,
+			     ON_SimpleArray<ON_NurbsCurve*> &intersect3d,
+			     ON_SimpleArray<ON_NurbsCurve*> &intersect_uv2d,
+			     ON_SimpleArray<ON_NurbsCurve*> &intersect_st2d,
 			     double max_dis,
 			     double)
 {
@@ -3249,7 +3256,7 @@ surface_surface_intersection(const ON_Surface* surfA,
     }
     std::sort(ptpairs.begin(), ptpairs.end());
 
-    std::vector<ON_Polyline*> polylines(curvept.Count());
+    std::vector<ON_SimpleArray<int>*> polylines(curvept.Count());
     int *index = (int*)bu_malloc(curvept.Count() * sizeof(int), "int");
     // index[i] = j means curvept[i] is a startpoint/endpoint of polylines[j]
     int *startpt = (int*)bu_malloc(curvept.Count() * sizeof(int), "int");
@@ -3258,14 +3265,14 @@ surface_surface_intersection(const ON_Surface* surfA,
 
     // Initialize each polyline with only one point.
     for (int i = 0; i < curvept.Count(); i++) {
-	ON_3dPointArray single;
-	single.Append(curvept[i]);
-	polylines[i] = new ON_Polyline(single);
+	ON_SimpleArray<int> *single = new ON_SimpleArray<int>();
+	single->Append(i);
+	polylines[i] = single;
 	index[i] = i;
 	startpt[i] = i;
 	endpt[i] = i;
     }
-
+    
     // Merge polylines with distance less than max_dis.
     for (unsigned int i = 0; i < ptpairs.size(); i++) {
 	int index1 = index[ptpairs[i].indexA], index2 = index[ptpairs[i].indexB];
@@ -3273,12 +3280,12 @@ surface_surface_intersection(const ON_Surface* surfA,
 	    continue;
 	index[startpt[index1]] = index[endpt[index1]] = index1;
 	index[startpt[index2]] = index[endpt[index2]] = index1;
-	ON_Polyline *line1 = polylines[index1];
-	ON_Polyline *line2 = polylines[index2];
+	ON_SimpleArray<int> *line1 = polylines[index1];
+	ON_SimpleArray<int> *line2 = polylines[index2];
 	if (line1 != NULL && line2 != NULL && line1 != line2) {
-	    ON_Polyline *unionline = new ON_Polyline();
-	    if ((*line1)[0] == curvept[ptpairs[i].indexA]) {
-		if ((*line2)[0] == curvept[ptpairs[i].indexB]) {
+	    ON_SimpleArray<int> *unionline = new ON_SimpleArray<int>();
+	    if ((*line1)[0] == ptpairs[i].indexA) {
+		if ((*line2)[0] == ptpairs[i].indexB) {
 		    // Case 1: endA -- startA -- startB -- endB
 		    line1->Reverse();
 		    unionline->Append(line1->Count(), line1->Array());
@@ -3293,7 +3300,7 @@ surface_surface_intersection(const ON_Surface* surfA,
 		    endpt[index1] = endpt[index1];
 		}
 	    } else {
-		if ((*line2)[0] == curvept[ptpairs[i].indexB]) {
+		if ((*line2)[0] == ptpairs[i].indexB) {
 		    // Case 3: startA -- endA -- startB -- endB
 		    unionline->Append(line1->Count(), line1->Array());
 		    unionline->Append(line2->Count(), line2->Array());
@@ -3310,10 +3317,10 @@ surface_surface_intersection(const ON_Surface* surfA,
 	    }
 	    polylines[index1] = unionline;
 	    polylines[index2] = NULL;
-	    if (line1->PointCount() >= 2) {
+	    if (line1->Count() >= 2) {
 		index[ptpairs[i].indexA] = -1;
 	    }
-	    if (line2->PointCount() >= 2) {
+	    if (line2->Count() >= 2) {
 		index[ptpairs[i].indexB] = -1;
 	    }
 	    delete line1;
@@ -3324,23 +3331,53 @@ surface_surface_intersection(const ON_Surface* surfA,
     // Generate NURBS curves from the polylines.
     for (unsigned int i = 0; i < polylines.size(); i++) {
 	if (polylines[i] != NULL) {
-	    ON_3dPoint *startpoint = polylines[i]->At(0);
-	    ON_3dPoint *endpoint = polylines[i]->At(polylines[i]->Count() - 1);
-	    if (startpoint->DistanceTo(*endpoint) < max_dis) {
-		polylines[i]->Append(*startpoint);
+	    int startpoint = (*polylines[i])[0];
+	    int endpoint = (*polylines[i])[polylines[i]->Count() - 1];
+	    if (curvept[startpoint].DistanceTo(curvept[endpoint]) < max_dis) {
+		polylines[i]->Append(startpoint);
 	    }
+
+	    // The intersection curves in the 3d space
 	    ON_3dPointArray ptarray;
-	    ptarray.Append(polylines[i]->Count(), polylines[i]->Array());
+	    for (int j = 0; j < polylines[i]->Count(); j++)
+		ptarray.Append(curvept[(*polylines[i])[j]]);
 	    ON_PolylineCurve curve(ptarray);
 	    ON_NurbsCurve *nurbscurve = ON_NurbsCurve::New();
 	    if (curve.GetNurbForm(*nurbscurve)) {
-		intersect.Append(nurbscurve);
+		intersect3d.Append(nurbscurve);
 	    }
+
+	    // The intersection curves in the 2d UV parameter space (surfA)
+	    ptarray.Empty();
+	    for (int j = 0; j < polylines[i]->Count(); j++) {
+		ON_2dPoint &pt2d = curveuv[(*polylines[i])[j]];
+		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
+	    }
+	    curve = ON_PolylineCurve(ptarray);
+	    curve.ChangeDimension(2);
+	    nurbscurve = ON_NurbsCurve::New();
+	    if (curve.GetNurbForm(*nurbscurve)) {
+		intersect_uv2d.Append(nurbscurve);
+	    }
+
+	    // The intersection curves in the 2d UV parameter space (surfB)
+	    ptarray.Empty();
+	    for (int j = 0; j < polylines[i]->Count(); j++) {
+		ON_2dPoint &pt2d = curvest[(*polylines[i])[j]];
+		ptarray.Append(ON_3dPoint(pt2d.x, pt2d.y, 0.0));
+	    }
+	    curve = ON_PolylineCurve(ptarray);
+	    curve.ChangeDimension(2);
+	    nurbscurve = ON_NurbsCurve::New();
+	    if (curve.GetNurbForm(*nurbscurve)) {
+		intersect_st2d.Append(nurbscurve);
+	    }
+
 	    delete polylines[i];
 	}
     }
-
-    bu_log("Segments: %d\n", intersect.Count());
+    
+    bu_log("Segments: %d\n", intersect3d.Count());
     bu_free(index, "int");
     bu_free(startpt, "int");
     bu_free(endpt, "int");

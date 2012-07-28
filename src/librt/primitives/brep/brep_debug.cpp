@@ -2567,6 +2567,8 @@ int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern
     ON_NurbsSurface surf1;
     ON_NurbsSurface surf2;
     ON_SimpleArray<ON_NurbsCurve*> curve;
+    ON_SimpleArray<ON_NurbsCurve*> curve_uv;
+    ON_SimpleArray<ON_NurbsCurve*> curve_st;
 
     if (i < 0 || i >= brep1->m_S.Count() || j < 0 || j >= brep2->m_S.Count()) {
 	bu_log("Out of range: \n");
@@ -2578,7 +2580,7 @@ int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern
     brep1->m_S[i]->GetNurbForm(surf1);
     brep2->m_S[j]->GetNurbForm(surf2);
 
-    if (brlcad::surface_surface_intersection(&surf1, &surf2, curve, max_dis)) {
+    if (brlcad::surface_surface_intersection(&surf1, &surf2, curve, curve_uv, curve_st, max_dis)) {
 	bu_log("Intersection failed\n");
 	return -1;
     }
@@ -2588,6 +2590,34 @@ int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern
     for (int k = 0; k < curve.Count(); k++) {
 	plotcurve(*(curve[k]), vbp, 1000, GREEN);
 	delete curve[k];
+    }
+
+    /* plot the returned 2d curves in UV parameter spaces */
+    for (int k = 0; k < curve_uv.Count(); k++) {
+	ON_3dPointArray ptarray3d;
+	for (int l = 0; l < 1000; l++) {
+	    ON_3dPoint pt2d = curve_uv[k]->PointAt(curve_uv[k]->Domain().ParameterAt(l/1000.0));
+	    ON_3dPoint pt3d = surf1.PointAt(pt2d.x, pt2d.y);
+	    ptarray3d.Append(ON_3dPoint(pt3d));
+	}
+	ON_PolylineCurve polycurve(ptarray3d);
+	ON_NurbsCurve nurbscurve;
+	polycurve.GetNurbForm(nurbscurve);
+	plotcurve(nurbscurve, vbp, 1000, PEACH);
+	delete curve_uv[k];
+    }
+    for (int k = 0; k < curve_st.Count(); k++) {
+	ON_3dPointArray ptarray3d;
+	for (int l = 0; l < 1000; l++) {
+	    ON_3dPoint pt2d = curve_st[k]->PointAt(curve_st[k]->Domain().ParameterAt(l/1000.0));
+	    ON_3dPoint pt3d = surf2.PointAt(pt2d.x, pt2d.y);
+	    ptarray3d.Append(ON_3dPoint(pt3d));
+	}
+	ON_PolylineCurve polycurve(ptarray3d);
+	ON_NurbsCurve nurbscurve;
+	polycurve.GetNurbForm(nurbscurve);
+	plotcurve(nurbscurve, vbp, 1000, DARKVIOLET);
+	delete curve_st[k];
     }
 
     return 0;
