@@ -107,7 +107,7 @@ if(SH_EXEC)
     regress-solids regress-shaders regress-spdi regress-iges
     regress-weight regress-gqa regress-fastgen regress-bots
     regress-repository regress-red regress-nirt
-    regress-vls_vprintf regress-comgeom regress-gnff regress-gdot
+    regress-comgeom regress-gnff regress-gdot
     regress-dsp regress-asc2dsp
     )
 
