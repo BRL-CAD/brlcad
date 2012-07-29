@@ -31,6 +31,7 @@ add_test(bu_basename_p__p_                                  tester_bu_basename "
 add_test(bu_basename_p__p__p_                               tester_bu_basename "...")
 add_test(bu_basename_sp__sp__sp_                            tester_bu_basename "   ")
 
+if(ENABLE_BITV_TESTS)
 #
 #  ************ bitv.c tests *************
 #
@@ -76,6 +77,8 @@ BRLCAD_ADDEXEC(tester_bu_hex_to_bitv bu_hex_to_bitv.c libbu NO_INSTALL LOCAL)
 add_test(bu_hex_to_bitv_test1 tester_bu_hex_to_bitv "33323130" "0123" 0)
 add_test(bu_hex_to_bitv_test2 tester_bu_hex_to_bitv "30" "0" 0)
 add_test(bu_hex_to_bitv_error tester_bu_hex_to_bitv "303" "" 1)
+
+endif(ENABLE_BITV_TESTS)
 
 #
 #  ************ booleanize.c tests *************
