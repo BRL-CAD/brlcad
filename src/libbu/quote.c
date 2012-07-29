@@ -49,6 +49,9 @@ bu_vls_encode(struct bu_vls *vp, const char *str)
 	    if (*str == DQUOTE) {
 		bu_vls_putc(vp, ESCAPE);
 	    }
+	    if (*str == ESCAPE) {
+		bu_vls_putc(vp, ESCAPE);
+	    }
 	    bu_vls_putc(vp, *str);
 	}
     } else {
@@ -56,6 +59,9 @@ bu_vls_encode(struct bu_vls *vp, const char *str)
 	bu_vls_putc(vp, DQUOTE);
 	for (; *str != '\0'; str++) {
 	    if (*str == DQUOTE) {
+		bu_vls_putc(vp, ESCAPE);
+	    }
+	    if (*str == ESCAPE) {
 		bu_vls_putc(vp, ESCAPE);
 	    }
 	    bu_vls_putc(vp, *str);
