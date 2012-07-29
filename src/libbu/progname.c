@@ -206,6 +206,7 @@ bu_setprogname(const char *argv0)
 #endif
 
     if (argv0) {
+	memset(&bu_progname[0], '\0', sizeof(bu_progname));
 	snprintf(bu_progname, MAXPATHLEN, "%s", argv0);
 	if (strlen(bu_argv0_buffer) == 0)
 	    snprintf(bu_argv0_buffer, MAXPATHLEN, "%s", argv0);
