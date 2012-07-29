@@ -106,6 +106,11 @@ main(int ac, char *av[])
 	pass++;
     }
 
+/* These two tests only make sense if bu_setprogname is supposed to override
+ * a program name from argv0 - until that is decided (and if so decided, the
+ * behavior of bu_setprogname and bu_getprogname needs to be made to match that)
+ * turn off these two tests.*/
+#if 0
     /* CASE 5: set 2x, then get */
     label = "CASE 5";
     bu_setprogname(av[0]);
@@ -133,7 +138,7 @@ main(int ac, char *av[])
 	printf("%24s -> %24s (should be: %s) [FAIL]\n", label, res, ans);
 	pass++;
     }
-
+#endif
     return pass;
 }
 
