@@ -418,13 +418,62 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
 
     bu_log("Added %d objects.\n", dag->object_nr);
 
-    ged_close(gedp);
+    //ged_close(gedp);
+
 
     /* Free memory. */
     bu_vls_free(&dp_name_vls);
     free_hash_values(objects);
     bu_hash_tbl_free(objects);
 
+    return GED_OK;
+}
+
+
+/**
+ * This routine calls the add_objects() method for a given database if the "view"
+ * subcommand is used.
+ */
+int
+ged_graph_structure(struct ged *gedp, int argc, const char *argv[])
+{
+    struct _ged_dag_data *dag;
+    size_t len;
+    const char *cmd = argv[0];
+    const char *sub;
+    static const char *usage = "view\n";
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+        bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc < 2) {
+            bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+            return GED_ERROR;
+    }
+if(argc >= 2) {
+    /* determine subcommand */
+    sub = argv[1];
+    len = strlen(sub);
+
+    if(bu_strncmp(sub, "view", len) == 0) {
+        dag = (struct _ged_dag_data *) bu_malloc(sizeof(_ged_dag_data), "DAG structure");
+        dag->router = new Avoid::Router(Avoid::PolyLineRouting);
+        add_objects(gedp, dag);
+
+        dag->router->outputInstanceToSVG("dag2");
+        dag->router->outputDiagramSVG("dag3");
+
+        bu_free(dag, "free DAG");
+    } else {
+        bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!", cmd, sub);
+        return GED_ERROR;
+    }
+}
     return GED_OK;
 }
 

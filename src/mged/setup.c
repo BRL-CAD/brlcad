@@ -170,6 +170,9 @@ static struct cmdtab mged_cmdtab[] = {
     {"get_sed", f_get_sedit, GED_FUNC_PTR_NULL},
     {"get_sed_menus", f_get_sedit_menus, GED_FUNC_PTR_NULL},
     {"get_solid_keypoint", f_get_solid_keypoint, GED_FUNC_PTR_NULL},
+#ifdef HAVE_ADAPTAGRAMS
+    {"graph_structure", cmd_ged_plain_wrapper, ged_graph_structure},
+#endif
     {"gqa", cmd_ged_gqa, ged_gqa},
     {"grid2model_lu", cmd_ged_plain_wrapper, ged_grid2model_lu},
     {"grid2view_lu", cmd_ged_plain_wrapper, ged_grid2view_lu},

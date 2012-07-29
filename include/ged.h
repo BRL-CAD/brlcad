@@ -1909,6 +1909,10 @@ GED_EXPORT extern int ged_zoom(struct ged *gedp, int argc, const char *argv[]);
  */
 GED_EXPORT extern int ged_voxelize(struct ged *gedp, int argc, const char *argv[]);
 
+/**
+ * Query or manipulate properties of a graph.
+ */
+GED_EXPORT extern int ged_graph_structure(struct ged *gedp, int argc, const char *argv[]);
 
 GED_EXPORT extern ged_polygon *ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model);
 GED_EXPORT extern ged_polygon *ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model);

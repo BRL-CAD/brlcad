@@ -918,6 +918,9 @@ static struct to_cmdtab to_cmds[] = {
     {"get_type",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_get_type},
     {"glob",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_glob},
     {"gqa",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_gqa},
+#ifdef HAVE_ADAPTAGRAMS
+    {"graph",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_graph_structure},
+#endif
     {"grid",	"args", 6, to_view_func, ged_grid},
     {"handle_expose",	"vname count", TO_UNLIMITED, to_handle_expose, GED_FUNC_PTR_NULL},
     {"hide",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_hide},
