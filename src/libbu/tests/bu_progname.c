@@ -46,7 +46,7 @@ main(int ac, char *av[])
     /* CASE 0: getting unset name */
     label = "CASE 0";
     res = bu_getprogname();
-    ans = NULL;
+    ans = "(BRL-CAD)";
 
     if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(av[0]))) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, "unset", res);
@@ -58,7 +58,7 @@ main(int ac, char *av[])
     /* CASE 1: try again unset */
     label = "CASE 1";
     res = bu_getprogname();
-    ans = NULL;
+    ans = "(BRL-CAD)";
 
     if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(av[0]))) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, "unset#2", res);
@@ -71,7 +71,7 @@ main(int ac, char *av[])
     label = "CASE 2";
     bu_setprogname(NULL);
     res = bu_getprogname();
-    ans = NULL;
+    ans = "(BRL-CAD)";
 
     if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, bu_basename(av[0]))) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, "NULL", res);
@@ -120,7 +120,7 @@ main(int ac, char *av[])
 	pass++;
     }
 
-    /* CASE 5: set 2x full path, then get */
+    /* CASE 6: set 2x full path, then get */
     label = "CASE 6";
     bu_setprogname(bu_argv0_full_path());
     bu_setprogname("/monkey/see/monkey/do");
