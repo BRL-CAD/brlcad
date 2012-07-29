@@ -72,6 +72,7 @@ set(LIBDM_SRCS
   dm-plot.c
   dm-ps.c
   dm_obj.c
+  dm_util.c
   focus.c
   grid.c
   knob.c
@@ -99,6 +100,7 @@ set(libdm_ignore_files
   TODO
   )
 CMAKEFILES(${libdm_ignore_files})
+CMAKEFILES(dm_util.h)
 CMAKEFILES(Makefile.am)
 
 # Local Variables:
