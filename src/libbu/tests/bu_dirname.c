@@ -37,17 +37,20 @@ automatic_test(const char *input)
 #ifdef HAVE_DIRNAME
     char *ans = NULL;
     char buf_input[1000];
+    char dirname_buf_input[1000];
     char *res = NULL;
     int pass = 0;
 
-    if (input)
+    if (input) {
 	bu_strlcpy(buf_input, input, strlen(input)+1);
+	bu_strlcpy(dirname_buf_input, input, strlen(input)+1);
+    }
 
     /* build UNIX 'dirname' command */
     if (!input)
 	ans = dirname(NULL);
     else
-	ans = dirname(buf_input);
+	ans = dirname(dirname_buf_input);
 
     if (!input)
 	res = bu_dirname(NULL);
