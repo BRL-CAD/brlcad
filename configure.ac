@@ -4246,6 +4246,7 @@ AC_CONFIG_FILES([
 	src/tclscripts/archer/images/Makefile
 	src/tclscripts/boteditor/Makefile
 	src/tclscripts/geometree/Makefile
+	src/tclscripts/graph/Makefile
 	src/tclscripts/hv3/Makefile
 	src/tclscripts/lib/Makefile
 	src/tclscripts/mged/Makefile

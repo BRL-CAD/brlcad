@@ -1,37 +1,10 @@
 
-SUBDIRS = \
-	archer \
-	boteditor \
-	geometree \
-        graph \
-	hv3 \
-	lib \
-	mged \
-	pl-dm \
-	rtwizard \
-	sdialogs \
-	swidgets \
-	util
-
-this_dir = tclscripts
+this_dir = tclscripts/graph
 tcldir = $(BRLCAD_DATA)/$(this_dir)
 
 scripties = \
-	ami.tcl \
-	ampi.tcl \
-	cad_clrpick.tcl \
-	cad_dialog.tcl \
-	chkexterns.tcl \
-	fs_dialog.tk \
-	helpcomm.tcl \
-	helplib.tcl \
-	hoc.tcl \
-	html_library.tcl \
-	libdm.tcl \
-	man_browser.tcl \
-	menu_override.tcl \
-	mouse.tcl \
-	vmath.tcl
+        GraphEditor.tcl \
+        graph.tcl
 
 BUILT_SOURCES = \
 	pkgIndex.tcl \
@@ -41,7 +14,7 @@ tcl_SCRIPTS = \
 	$(BUILT_SOURCES) \
 	$(scripties)
 
-EXTRA_DIST = $(tcl_SCRIPTS) hv3_man_browser_test.tcl CMakeLists.txt
+EXTRA_DIST = $(tcl_SCRIPTS) CMakeLists.txt
 
 # CLEANFILES = $(BUILT_SOURCES)
 
