@@ -431,6 +431,24 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
 
 
 /**
+ * This routine returns a vector of vectors of points.
+ * A vector of points defines a polygon shape that corresponds to an object in the database.
+ */
+std::vector<std::vector<Avoid::Point> >
+ged_graph_objects_positions(struct _ged_dag_data *dag) {
+    std::vector<std::vector<Avoid::Point> > positions;
+    ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
+    positions.reserve(dag->object_nr);
+
+    for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
+        positions[(*it)->id()] = (*it)->polygon().ps;
+    }
+
+    return positions;
+}
+
+
+/**
  * This routine calls the add_objects() method for a given database if the "view"
  * subcommand is used.
  */
