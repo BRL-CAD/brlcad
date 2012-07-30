@@ -31,7 +31,7 @@ set(fedex_python_SOURCES
     ../fedex_plus/write.cc 
     ../fedex_plus/print.cc
 )
-SCL_ADDEXEC(fedex_python "${fedex_python_SOURCES}" "libexppp express base")
+SCL_ADDEXEC(fedex_python "${fedex_python_SOURCES}" "libexppp;express;base")
 
 add_dependencies( fedex_python version_string )
 endif(SCL_PYTHON_GENERATOR)

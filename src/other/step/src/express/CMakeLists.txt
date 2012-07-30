@@ -115,7 +115,7 @@ SET(EXPRESS_PRIVATE_HDRS
 SCL_ADDLIB(express "${EXPRESS_SOURCES}" "base")
 add_dependencies(express express_verify)
 add_dependencies(express version_string)
-SCL_ADDEXEC("check-express" "${CHECK_EXPRESS_SOURCES}" "express base" )
+SCL_ADDEXEC("check-express" "${CHECK_EXPRESS_SOURCES}" "express;base" )
 
 # Local Variables:
 # tab-width: 8

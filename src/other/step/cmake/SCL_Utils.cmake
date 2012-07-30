@@ -58,9 +58,7 @@ ENDMACRO(EXCLUDE_OR_INSTALL target dest arg_3 )
 # optional 4th argument of "TESTABLE", passed to EXCLUDE_OR_INSTALL macro
 # optional args can also be used by MSVC-specific code, but it looks like these two uses
 # will not conflict because the MSVC args must contain "STRICT"
-MACRO(SCL_ADDEXEC execname srcs libs)
-    STRING(REGEX REPLACE " " ";" srcslist "${srcs}")
-    STRING(REGEX REPLACE " " ";" libslist "${libs}")
+MACRO(SCL_ADDEXEC execname srcslist libslist)
     add_executable(${execname} ${srcslist})
     target_link_libraries(${execname} ${libslist})
     DEFINE_DLL_IMPORTS(${execname} "${libslist}")  #add import definitions for all libs that the executable is linked to
@@ -75,15 +73,13 @@ MACRO(SCL_ADDEXEC execname srcs libs)
     IF(LOCAL_COMPILE_FLAGS)
         SET_TARGET_PROPERTIES(${execname} PROPERTIES COMPILE_FLAGS ${LOCAL_COMPILE_FLAGS})
     ENDIF(LOCAL_COMPILE_FLAGS)
-ENDMACRO(SCL_ADDEXEC execname srcs libs)
+ENDMACRO(SCL_ADDEXEC execname srcslist libslist)
 
 #SCL_ADDLIB( libname "source files" "linked libs" ["TESTABLE"] ["MSVC flag" ...])
 # optional 4th argument of "TESTABLE", passed to EXCLUDE_OR_INSTALL macro
 # optional args can also be used by MSVC-specific code, but it looks like these two uses
 # will not conflict because the MSVC args must contain "STRICT"
-MACRO(SCL_ADDLIB libname srcs libs)
-  STRING(REGEX REPLACE " " ";" srcslist "${srcs}")
-  STRING(REGEX REPLACE " " ";" libslist1 "${libs}")
+MACRO(SCL_ADDLIB libname srcslist libslist)
   STRING(REGEX REPLACE "-framework;" "-framework " libslist "${libslist1}")
   IF(SCL_BUILD_SHARED_LIBS)
       add_library(${libname} SHARED ${srcslist})
@@ -134,4 +130,4 @@ MACRO(SCL_ADDLIB libname srcs libs)
           SET_TARGET_PROPERTIES(${libname}-static PROPERTIES COMPILE_FLAGS ${LOCAL_COMPILE_FLAGS})
       ENDIF(BUILD_STATIC_LIBS AND NOT MSVC)
   ENDIF(LOCAL_COMPILE_FLAGS)
-ENDMACRO(SCL_ADDLIB libname srcs libs)
+ENDMACRO(SCL_ADDLIB libname srcslist libslist)

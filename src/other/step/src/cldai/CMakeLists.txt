@@ -34,4 +34,4 @@ include_directories(
     ${SCL_SOURCE_DIR}/src/clutils
 )
 
-SCL_ADDLIB(stepdai "${LIBSTEPDAI_SRCS}" "steputils base")
+SCL_ADDLIB(stepdai "${LIBSTEPDAI_SRCS}" "steputils;base")

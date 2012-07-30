@@ -41,4 +41,4 @@ include_directories(
     ${SCL_SOURCE_DIR}/src/clutils
 )
 
-SCL_ADDLIB(stepeditor "${LIBSTEPEDITOR_SRCS}" "stepcore stepdai steputils base")
+SCL_ADDLIB(stepeditor "${LIBSTEPEDITOR_SRCS}" "stepcore;stepdai;steputils;base")
