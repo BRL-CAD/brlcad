@@ -425,7 +425,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	    currentdegree--;
 	    for (unsigned int y = 0; y < dsp_ip->dsp_ycnt; y++) {
 		for (unsigned int x = 0; x <= currentdegree; x++) {
-		    reducedsurf->SetCV(x, y, (*bezcurvarray[y])[(const int)x]);
+		    reducedsurf->SetCV(x, y, (*bezcurvarray[(const int)y])[(const int)x]);
 		}
 	    }
 	}
