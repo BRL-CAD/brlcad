@@ -699,6 +699,36 @@ plotcurve(ON_Curve &curve, struct bn_vlblock *vbp, int plotres, const int red = 
 }
 
 
+void plotcurveonsurface(ON_Curve *curve,
+			ON_Surface *surface,
+			struct bn_vlblock *vbp,
+			int plotres,
+			const int red = 255,
+			const int green = 255,
+			const int blue = 0)
+{
+    if (curve->Dimension() != 2)
+	return;
+    register struct bu_list *vhead;
+    vhead = rt_vlblock_find(vbp, red, green, blue);
+
+    for (int i = 0; i <= plotres; i++) {
+	ON_2dPoint pt2d;
+	ON_3dPoint pt3d;
+	ON_3dPoint pt1, pt2;
+	pt2d = curve->PointAt(curve->Domain().ParameterAt((double)i/plotres));
+	pt3d = surface->PointAt(pt2d.x, pt2d.y);
+	pt1 = pt2;
+	pt2 = pt3d;
+	if (i != 0) {
+	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	}
+    }
+    return;
+}
+
+
 void
 plottrim(const ON_Curve &curve, double from, double to)
 {
@@ -2552,7 +2582,8 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
 }
 
 
-int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp, double max_dis) {
+int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp, double max_dis)
+{
     RT_CK_DB_INTERNAL(intern1);
     RT_CK_DB_INTERNAL(intern2);
     struct rt_brep_internal *bi1, *bi2;
@@ -2594,29 +2625,11 @@ int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern
 
     /* plot the returned 2d curves in UV parameter spaces */
     for (int k = 0; k < curve_uv.Count(); k++) {
-	ON_3dPointArray ptarray3d;
-	for (int l = 0; l < 1000; l++) {
-	    ON_3dPoint pt2d = curve_uv[k]->PointAt(curve_uv[k]->Domain().ParameterAt(l/1000.0));
-	    ON_3dPoint pt3d = surf1.PointAt(pt2d.x, pt2d.y);
-	    ptarray3d.Append(ON_3dPoint(pt3d));
-	}
-	ON_PolylineCurve polycurve(ptarray3d);
-	ON_NurbsCurve nurbscurve;
-	polycurve.GetNurbForm(nurbscurve);
-	plotcurve(nurbscurve, vbp, 1000, PEACH);
+	plotcurveonsurface(curve_uv[k], &surf1, vbp, curve_uv[k]->KnotCount() - 1, PEACH);
 	delete curve_uv[k];
     }
     for (int k = 0; k < curve_st.Count(); k++) {
-	ON_3dPointArray ptarray3d;
-	for (int l = 0; l < 1000; l++) {
-	    ON_3dPoint pt2d = curve_st[k]->PointAt(curve_st[k]->Domain().ParameterAt(l/1000.0));
-	    ON_3dPoint pt3d = surf2.PointAt(pt2d.x, pt2d.y);
-	    ptarray3d.Append(ON_3dPoint(pt3d));
-	}
-	ON_PolylineCurve polycurve(ptarray3d);
-	ON_NurbsCurve nurbscurve;
-	polycurve.GetNurbForm(nurbscurve);
-	plotcurve(nurbscurve, vbp, 1000, DARKVIOLET);
+	plotcurveonsurface(curve_st[k], &surf2, vbp, curve_st[k]->KnotCount() - 1, DARKVIOLET);
 	delete curve_st[k];
     }
 
