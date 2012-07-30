@@ -784,7 +784,7 @@ analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
         VSUB2(v1, face->pts[2], face->pts[0]);
         VSUB2(v2, face->pts[3], face->pts[1]);
         VCROSS(tmp, v2, v1);
-        face->area = fabs(VDOT(face->plane_eqn, tmp)) / 2.0;
+        face->area = fabs(VDOT(face->plane_eqn, tmp)) * 0.5;
         break;
     default:
         /* N-Sided Face - Sort points, and compute area using Green's Theorem */
@@ -795,7 +795,7 @@ analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
             VCROSS(tmp, face->pts[i], face->pts[i + 1 == face->npts ? 0 : i + 1]);
             VADD2(sum, sum, tmp);
         }
-        face->area = fabs(VDOT(face->plane_eqn, sum)) / 2.0;
+        face->area = fabs(VDOT(face->plane_eqn, sum)) * 0.5;
         break;
     }
 
@@ -905,7 +905,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
          * This corrects the output rotation, fallback angles so that
          * they always give the outward pointing normal vector. */
         if (DIST_PT_PLANE(center_pt, face.plane_eqn) > 0.0) {
-            HSCALE(face.plane_eqn, face.plane_eqn, -1.0);
+            HREVERSE(face.plane_eqn, face.plane_eqn);
         }
 
         sprintf(face.label, "%d", prface[type][i]);
