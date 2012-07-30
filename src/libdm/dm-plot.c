@@ -51,8 +51,6 @@
 #include "solid.h"
 #include "plot3.h"
 
-#include "./dm_util.h"
-
 /* Display Manager package interface */
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
@@ -400,7 +398,15 @@ plot_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fas
 HIDDEN int
 plot_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
-    return draw_Line3D(dmp, pt1, pt2);
+    if (!dmp)
+	return TCL_ERROR;
+
+    if (bn_pt3_pt3_equal(pt1, pt2, NULL)) {
+	/* nothing to do for a singular point */
+	return TCL_OK;
+    }
+
+    return TCL_OK;
 }
 
 

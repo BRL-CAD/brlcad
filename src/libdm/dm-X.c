@@ -62,7 +62,6 @@
 #include "dm_xvars.h"
 #include "solid.h"
 
-#include "./dm_util.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
@@ -1206,7 +1205,14 @@ X_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 HIDDEN int
 X_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
-    return draw_Line3D(dmp, pt1, pt2);
+    if (!dmp)
+	return TCL_ERROR;
+
+    if (bn_pt3_pt3_equal(pt1, pt2, NULL)) {
+	/* nothing to do for a singular point */
+	return TCL_OK;
+    }
+    return TCL_OK;
 }
 
 

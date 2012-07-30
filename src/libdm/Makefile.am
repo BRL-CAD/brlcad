@@ -51,7 +51,6 @@ libdm_la_SOURCES = \
 	dm-ps.c \
 	dm-wgl.c \
 	dm_obj.c \
-	dm_util.c \
 	focus.c \
 	grid.c \
 	knob.c \
@@ -85,7 +84,6 @@ libdm_la_LIBADD = \
 
 EXTRA_DIST = \
 	TODO \
-        dm_util.h \
 	CMakeLists.txt
 
 DEPENDS = src/librt src/libfb src/libged
