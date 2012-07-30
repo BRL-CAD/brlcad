@@ -35,7 +35,7 @@ class InstMgr;
 // the DisplayNode, and removes itself from any list it is in.
 //////////////////////////////////////////////////////////////////////////////
 
-class SCL_EDITOR_EXPORT MgrNode : public GenericNode {
+class SCL_CORE_EXPORT MgrNode : public GenericNode {
         friend class GenNodeList;
         friend class MgrNodeList;
         friend class InstMgr;

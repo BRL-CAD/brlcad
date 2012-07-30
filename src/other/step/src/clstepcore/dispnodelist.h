@@ -29,7 +29,7 @@
 //  This will be used to represent the display state lists.
 //////////////////////////////////////////////////////////////////////////////
 
-class SCL_EDITOR_EXPORT DisplayNodeList : public GenNodeList {
+class SCL_CORE_EXPORT DisplayNodeList : public GenNodeList {
     public:
         DisplayNodeList( displayStateEnum type );
         ~DisplayNodeList() { }

@@ -32,7 +32,7 @@ class MgrNode;
 // class DisplayNode
 //////////////////////////////////////////////////////////////////////////////
 
-class SCL_EDITOR_EXPORT DisplayNode : public GenericNode {
+class SCL_CORE_EXPORT DisplayNode : public GenericNode {
     protected:
         friend class GenNodeList;
         friend class DisplayNodeList;

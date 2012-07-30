@@ -25,6 +25,13 @@ set(LIBSTEPCORE_SRCS
     match-ors.cc
     trynext.cc
     print.cc
+    instmgr.cc
+    mgrnode.cc
+    mgrnodearray.cc
+    mgrnodelist.cc
+    dispnode.cc
+    dispnodelist.cc
+    needFunc.cc
 )
 
 SET(LIBSTEPCORE_PRIVATE_HDRS
@@ -43,6 +50,13 @@ SET(LIBSTEPCORE_PRIVATE_HDRS
     STEPattributeList.h
     STEPcomplex.h
     STEPundefined.h
+    instmgr.h
+    mgrnode.h
+    mgrnodearray.h
+    mgrnodelist.h
+    dispnode.h
+    dispnodelist.h
+    needFunc.h
 )
 
 include_directories(

@@ -38,7 +38,7 @@
 // If you delete this object it deletes all of the entries it points to.
 //////////////////////////////////////////////////////////////////////////////
 
-class SCL_EDITOR_EXPORT MgrNodeArray : public GenNodeArray {
+class SCL_CORE_EXPORT MgrNodeArray : public GenNodeArray {
     public:
         MgrNodeArray( int defaultSize = ARRAY_DEFAULT_SIZE );
         ~MgrNodeArray();
@@ -70,7 +70,7 @@ class SCL_EDITOR_EXPORT MgrNodeArray : public GenNodeArray {
 // If you delete this object it won't delete the entries it points to.
 //////////////////////////////////////////////////////////////////////////////
 
-class SCL_EDITOR_EXPORT MgrNodeArraySorted : public GenNodeArray {
+class SCL_CORE_EXPORT MgrNodeArraySorted : public GenNodeArray {
     public:
         MgrNodeArraySorted( int defaultSize = ARRAY_DEFAULT_SIZE );
         ~MgrNodeArraySorted() { }

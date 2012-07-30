@@ -3,7 +3,7 @@
 // define this to be the name of the display window object for
 // STEP entity instance editing or define your own.
 
-class SCL_EDITOR_EXPORT StepEntityEditor {
+class SCL_CORE_EXPORT StepEntityEditor {
     public:
         StepEntityEditor() {};
         ~StepEntityEditor() {};

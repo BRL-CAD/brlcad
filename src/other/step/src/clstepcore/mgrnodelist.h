@@ -29,7 +29,7 @@
 
 class MgrNode;
 
-class SCL_EDITOR_EXPORT MgrNodeList : public GenNodeList {
+class SCL_CORE_EXPORT MgrNodeList : public GenNodeList {
     public:
         MgrNodeList( stateEnum type );
         virtual ~MgrNodeList() { }

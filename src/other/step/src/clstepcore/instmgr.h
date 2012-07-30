@@ -37,7 +37,7 @@
 
 #include <mgrnodearray.h>
 
-class SCL_EDITOR_EXPORT InstMgr {
+class SCL_CORE_EXPORT InstMgr {
     protected:
         int maxFileId;
         int _ownsInstances; // if true will delete instances inside destructor

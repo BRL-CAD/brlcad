@@ -7,6 +7,14 @@ core classes use a common set of virtual functions for reading and
 writing to exchange files, reading and writing user interface formats,
 and validating their data.
 
+This directory also contains the InstMgr class and the classes which
+help implement it. These were moved into core from the editor library
+in order to break a cyclic dependency. InstMgr is used in the public
+methods of both the core and editor libraries. Until it is known for
+certain that no code passes InstMgr objects between the methods of
+the two libraries, it will not be safe to simply remove usages from
+either library in order to break the interdependency.
+
 Directory Contents:
 
 sdaiEnum.cc, sdaiEnum.h
@@ -76,3 +84,27 @@ This file is basically a bunch of #include statements for all of the
 header files corresponding to the specifications in Annex D of Part 22
 (the proposaed SDAI/C++ language binding).  Defines STEPentity, the
 abstract base class of all generated entity classes.
+
+from cleditor:
+dispnode.cc, dispnode.h
+Defines DisplayNode, a class encapsulating all display information for
+an entity.
+
+dispnodelist.cc, dispnodelist.h
+Implements list operations for DisplayNode objects.
+
+instmgr.cc, instmgr.h
+Defines InstMgr, a class that keeps a master list of instances in the
+current editing session.
+
+mgrnode.cc, mgrnode.h
+Defines the class MgrNode, used to represent a STEPentity along with
+its state information and its display information.  By associating a
+STEPentity with a DisplayNode, this class hides the implementation of
+an application's user interface from the application model.
+
+mgrnodearray.cc, mgrnodearray.h
+Implements array operations for MgrNode objects.
+
+mgrnodelist.cc, mgrnodelist.h
+Implements list operations for MgrNode objects.
