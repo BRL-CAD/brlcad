@@ -2,6 +2,9 @@
 #define SCL_MEMMGR_H
 
 #include <scl_export.h>
+#include <stdlib.h>
+
+#if defined(SCL_MEMMGR_ENABLE_CHECKS)
 
 /**
     Platform specific defines
@@ -76,5 +79,12 @@ inline void operator delete[]( void * addr ) THROW_EMPTY {
 #endif /* __cplusplus */
 
 #endif /* SCL_MEMMGR_CC */
+
+#else
+#define scl_malloc(size)            malloc(size)
+#define scl_calloc(count, size)     calloc(count, size)
+#define scl_realloc(addr, size)     realloc(addr, size)
+#define scl_free(addr)              free(addr)
+#endif /* SCL_MEMMGR_ENABLE_CHECKS */
 
 #endif /* SCL_MEMMGR_H */
