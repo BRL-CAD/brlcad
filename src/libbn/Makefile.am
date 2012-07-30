@@ -57,7 +57,8 @@ EXTRA_DIST = \
 	bntester.dat \
 	ulp.c \
 	CMakeLists.txt \
-	README
+	README \
+	tests
 
 DEPENDS = src/libbu
 
