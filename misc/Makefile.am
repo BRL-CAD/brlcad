@@ -26,7 +26,6 @@ EXTRA_DIST = \
 	Makefile.defs \
 	archlinux/PKGBUILD \
 	archlinux/brlcad.install \
-	archlinux/brlcad.sh \
 	batch-indent-region.el \
 	brlcad-config \
 	brlcad-config.in \
