@@ -29,7 +29,7 @@
 #include "common.h"
 
 #ifdef DEBUG
-#define REPORT_ERROR(arg) std::cerr << __FILE__ << ":" << __LINE__ << ":" << __func__ << ":" << arg << std::endl
+#define REPORT_ERROR(arg) std::cerr << __FILE__ << ":" << __LINE__ << ":" << arg << std::endl
 #else
 #define REPORT_ERROR(arg)
 #endif
