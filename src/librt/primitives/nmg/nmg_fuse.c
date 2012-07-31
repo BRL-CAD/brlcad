@@ -42,6 +42,16 @@
 #include "nurb.h"
 
 
+/* The global variable edge_ref_dot is used by function nmg_edge_g_fuse
+ * and the compare function for qsort "e_comp". This is an array
+ * containing the dot product of the unitized e_dir of edge_g_lseg and
+ * a unitized refererence vector. The absolute value of the dot product
+ * is stored.
+ */
+fastf_t *edge_x_ref_dot;
+fastf_t *edge_y_ref_dot;
+fastf_t *edge_z_ref_dot;
+
 extern int debug_file_count;
 
 struct pt_list
@@ -1127,54 +1137,172 @@ nmg_model_edge_fuse(struct model *m, const struct bn_tol *tol)
 }
 
 
+/* compare function for qsort within function nmg_edge_g_fuse */
+static int
+ez_comp(const void *p1, const void *p2)
+{
+    fastf_t i, j;
+
+    i = edge_z_ref_dot[(*((size_t *)p1))];
+    j = edge_z_ref_dot[(*((size_t *)p2))];
+
+    if (EQUAL(i, j))
+        return 0;
+    else if (i > j)
+        return 1;
+    return -1;
+}
+
+
+/* compare function for qsort within function nmg_edge_g_fuse */
+static int
+ey_comp(const void *p1, const void *p2)
+{
+    fastf_t i, j;
+
+    i = edge_y_ref_dot[(*((size_t *)p1))];
+    j = edge_y_ref_dot[(*((size_t *)p2))];
+
+    if (EQUAL(i, j))
+        return 0;
+    else if (i > j)
+        return 1;
+    return -1;
+}
+
+
+/* compare function for qsort within function nmg_edge_g_fuse */
+static int
+ex_comp(const void *p1, const void *p2)
+{
+    fastf_t i, j;
+
+    i = edge_x_ref_dot[(*((size_t *)p1))];
+    j = edge_x_ref_dot[(*((size_t *)p2))];
+
+    if (EQUAL(i, j))
+        return 0;
+    else if (i > j)
+        return 1;
+    return -1;
+}
+
+
 /**
  * N M G _ E D G E _ G _ F U S E
  *
- * The present algorithm is a consequence of the old edge geom ptr structure.
- * XXX This might be better formulated by generating a list of all
- * edge_g structs in the model, and comparing *them* pairwise.
+ * Fuse edge_g structs.
  */
 int
 nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 {
+    int total = 0;
+    register size_t i, j;
+    fastf_t dot;
     struct bu_ptbl etab;
-    long total = 0;
-    register long i, j;
+    size_t etab_cnt;
+    fastf_t *edge_ref_dot; 
+    vect_t ref_x = {1.0, 0.0, 0.0};
+    vect_t ref_y = {0.0, 1.0, 0.0};
+    vect_t ref_z = {0.0, 0.0, 1.0};
+    vect_t *unit_e_dir ;  /* Array containing the unitized edge direction 
+			   * for each edge in table "etab".
+			   */
+    size_t *sort_idx;  /* Index into the "u" and "edge_ref_dot" arrays
+			* and the "etab" table sorted based on the
+			* "edge_ref_dot" array. 
+			*/
+
+    /* vertices are expected to be fused so make sure they are */
+    (void)nmg_vertex_fuse(magic_p, tol);
 
     /* Make a list of all the edge geometry structs in the model */
     nmg_edge_g_tabulate(&etab, magic_p);
 
-    for (i = BU_PTBL_END(&etab)-1; i >= 0; i--) {
+    /* number of edges in table etab */
+    etab_cnt = BU_PTBL_LEN(&etab);
+
+    if (etab_cnt == 0) {
+	return 0;
+    }
+
+    unit_e_dir = (vect_t *)bu_calloc(etab_cnt, sizeof(vect_t), "unit_e_dir");
+    sort_idx = (size_t *)bu_calloc(etab_cnt, sizeof(size_t), "sort_idx");
+    edge_ref_dot = (fastf_t *)bu_calloc(etab_cnt*3, sizeof(fastf_t), "edge_x_ref_dot");
+    edge_x_ref_dot = edge_ref_dot;
+    edge_y_ref_dot = &(edge_ref_dot[etab_cnt]);
+    edge_z_ref_dot = &(edge_ref_dot[etab_cnt*2]);
+
+    /* compute dot product of each edge_g relative to the x, y and z axis */
+    for (i = 0 ; i < etab_cnt ; i++) {
+	register struct edge_g_lseg *eg1;
+	eg1 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, i);
+	VMOVE(unit_e_dir[i], eg1->e_dir);
+	VUNITIZE(unit_e_dir[i]);
+	sort_idx[i] = i;
+	edge_x_ref_dot[i] = fabs(VDOT(unit_e_dir[i], ref_x));
+	edge_y_ref_dot[i] = fabs(VDOT(unit_e_dir[i], ref_y));
+	edge_z_ref_dot[i] = fabs(VDOT(unit_e_dir[i], ref_z));
+    }
+
+    /* sort sort_idx array based on dot product of each edge_g relative to x, y and z axis */
+    qsort(sort_idx, etab_cnt, sizeof(size_t), (int (*)(const void *a, const void *b))ez_comp);
+    qsort(sort_idx, etab_cnt, sizeof(size_t), (int (*)(const void *a, const void *b))ey_comp);
+    qsort(sort_idx, etab_cnt, sizeof(size_t), (int (*)(const void *a, const void *b))ex_comp);
+ 
+
+    for (i = 0 ; i < etab_cnt ; i++) {
 	register struct edge_g_lseg *eg1;
 	register struct edgeuse *eu1;
 
-	eg1 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, i);
+	eg1 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, sort_idx[i]);
+
+	if (!eg1) {
+	    continue;
+	}
 
 	/* XXX Need routine to compare two cnurbs geometricly */
-	if (eg1->l.magic == NMG_EDGE_G_CNURB_MAGIC) {
+	if (UNLIKELY(eg1->l.magic == NMG_EDGE_G_CNURB_MAGIC)) {
 	    continue;
 	}
 
 	eu1 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg1->eu_hd2), l2);
 
-	for (j = i-1; j >= 0; j--) {
+	for (j = i+1; j < etab_cnt ; j++) {
 	    register struct edge_g_lseg *eg2;
 	    register struct edgeuse *eu2;
 
-	    eg2 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, j);
-	    if (eg2->l.magic == NMG_EDGE_G_CNURB_MAGIC) continue;
+	    eg2 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, sort_idx[j]);
+
+	    if (!eg2) {
+		continue;
+	    }
+
+	    if (UNLIKELY(eg2->l.magic == NMG_EDGE_G_CNURB_MAGIC)) continue;
+
 	    eu2 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg2->eu_hd2), l2);
 
-	    if (!nmg_2edgeuse_g_coincident(eu1, eu2, tol)) continue;
+	    if (!(((eu1->vu_p->v_p->vg_p == eu2->eumate_p->vu_p->v_p->vg_p) &&
+		(eu1->eumate_p->vu_p->v_p->vg_p == eu2->vu_p->v_p->vg_p)) ||
+		((eu1->vu_p->v_p->vg_p == eu2->vu_p->v_p->vg_p) &&
+		(eu1->eumate_p->vu_p->v_p->vg_p == eu2->eumate_p->vu_p->v_p->vg_p)))) {
+
+		dot = VDOT(unit_e_dir[sort_idx[i]], unit_e_dir[sort_idx[j]]);
+		if (!BN_VECT_ARE_PARALLEL(dot, tol)) break;
+		if (!nmg_2edgeuse_g_coincident(eu1, eu2, tol)) continue;
+	    }
 
 	    total++;
-	    nmg_jeg(eg2, eg1);
-	    BU_PTBL_GET(&etab, i) = (long *)NULL;
-	    break;
+	    nmg_jeg(eg1, eg2);
+
+	    BU_PTBL_SET(&etab, sort_idx[j], NULL);
 	}
     }
 
     bu_ptbl_free(&etab);
+    bu_free(unit_e_dir, "unit_e_dir");
+    bu_free(sort_idx, "sort_idx");
+    bu_free(edge_ref_dot, "edge_ref_dot");
 
     if (rt_g.NMG_debug & DEBUG_BASIC && total > 0)
 	bu_log("nmg_edge_g_fuse(): %d edge_g_lseg's fused\n", total);
@@ -3307,3 +3435,4 @@ nmg_r_radial_check(const struct nmgregion *r, const struct bn_tol *tol)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
