@@ -2159,6 +2159,7 @@ int
 brep_conversion(struct rt_db_internal* intern, ON_Brep** brep)
 {
     *brep = ON_Brep::New();
+    ON_Brep *old = *brep;
     struct bn_tol tol;
     tol.magic = BN_TOL_MAGIC;
     tol.dist = BN_TOL_DIST;
@@ -2166,10 +2167,13 @@ brep_conversion(struct rt_db_internal* intern, ON_Brep** brep)
     tol.perp = SMALL_FASTF;
     tol.para = 1.0 - tol.perp;
     if (intern->idb_meth->ft_brep == NULL) {
+	delete old;
+	*brep = NULL;
 	return -1;
     }
     intern->idb_meth->ft_brep(brep, intern, &tol);
     if (*brep == NULL) {
+	delete old;
 	return -2;
     }
     return 0;
@@ -2177,21 +2181,23 @@ brep_conversion(struct rt_db_internal* intern, ON_Brep** brep)
 
 
 int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtree, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm) {
-    int ret;
+    int ret = 0;
     *newtree = *oldtree;
+    rt_comb_internal *comb = NULL;
     switch (oldtree->tr_op) {
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    /* convert right */
-	    rt_comb_internal *comb;
-	    BU_GET(comb, struct rt_comb_internal);
-	    BU_GET(newtree->tr_b.tb_right, union tree);
+	    comb = new rt_comb_internal;
+	    newtree->tr_b.tb_right = new tree;
 	    RT_TREE_INIT(newtree->tr_b.tb_right);
 	    ret = brep_conversion_tree(db, oldtree->tr_b.tb_right, newtree->tr_b.tb_right, suffix, wdbp, local2mm);
-	    if (ret)
-		return ret;
+	    if (ret) {
+		delete newtree->tr_b.tb_right;
+		break;
+	    }
 	    /* fall through */
 	case OP_NOT:
 	case OP_GUARD:
@@ -2200,9 +2206,12 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 	    BU_GET(newtree->tr_b.tb_left, union tree);
 	    RT_TREE_INIT(newtree->tr_b.tb_left);
 	    ret = brep_conversion_tree(db, oldtree->tr_b.tb_left, newtree->tr_b.tb_left, suffix, wdbp, local2mm);
-	    if (ret)
-		return ret;
-	    comb->tree = newtree;
+	    if (!ret) {
+		comb->tree = newtree;
+	    } else {
+		delete newtree->tr_b.tb_left;
+		delete newtree->tr_b.tb_right;
+	    }
 	    break;
 	case OP_DB_LEAF:
 	    char *tmpname;
@@ -2223,7 +2232,8 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 			ret = brep_conversion_comb(intern, tmpname, suffix, wdbp, local2mm);
 			if (ret) {
 			    bu_free(tmpname, "char");
-			    return ret;
+			    rt_db_free_internal(intern);
+			    break;
 			}
 			bu_strlcpy(newtree->tr_l.tl_name, tmpname, strlen(tmpname)+1);
 			bu_free(tmpname, "char");
@@ -2240,19 +2250,20 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 			    bu_log("The brep conversion of %s is unsuccessful.\n", oldname);
 			    newtree = NULL;
 			    bu_free(tmpname, "char");
-			    return -1;
+			    bu_free(brep, "ON_Brep*");
+			    break;
 			} else if (ret == -2) {
 			    ret = wdb_export(wdbp, tmpname, intern->idb_ptr, intern->idb_type, local2mm);
 			    if (ret) {
 				bu_log("ERROR: failure writing [%s] to disk\n", tmpname);
-				bu_free(tmpname, "char");
-				return ret;
+			    } else {
+				bu_log("The conversion of [%s] (type: %s) is skipped. Implicit form remains as %s.\n",
+				       oldname, intern->idb_meth->ft_label, tmpname);
+				bu_strlcpy(newtree->tr_l.tl_name, tmpname, strlen(tmpname)+1);
 			    }
-			    bu_log("The conversion of [%s] (type: %s) is skipped. Implicit form remains as %s.\n",
-				   oldname, intern->idb_meth->ft_label, tmpname);
-			    bu_strlcpy(newtree->tr_l.tl_name, tmpname, strlen(tmpname)+1);
 			    bu_free(tmpname, "char");
-			    return ret;
+			    bu_free(brep, "ON_Brep*");
+			    break;
 			}
 		    }
 		    if (brep != NULL) {
@@ -2262,35 +2273,35 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 			bi->brep = *brep;
 			ret = wdb_export(wdbp, tmpname, (genptr_t)bi, ID_BREP, local2mm);
 			if (ret) {
-			    bu_log("ERROR: failure writing [%s] to disk\n", tmpname);
-			    bu_free(tmpname, "char");
-			    return ret;
+			    bu_log("ERROR: failure writing [%s] to disk\n", tmpname);    
+			} else {
+			    bu_log("%s is made.\n", tmpname);
+			    bu_strlcpy(newtree->tr_l.tl_name, tmpname, strlen(tmpname)+1);
 			}
-			bu_log("%s is made.\n", tmpname);
-			bu_strlcpy(newtree->tr_l.tl_name, tmpname, strlen(tmpname)+1);
 		    } else {
 			bu_log("The brep conversion of %s is unsuccessful.\n", oldname);
 			newtree = NULL;
-			bu_free(tmpname, "char");
-			return -1;
+			ret = -1;
 		    }
+		    bu_free(brep, "ON_Brep*");
 		} else {
 		    bu_log("Cannot find %s.\n", oldname);
 		    newtree = NULL;
-		    bu_free(tmpname, "char");
-		    return -1;
+		    ret = -1;
 		}
 	    } else {
 		bu_log("%s already exists.\n", tmpname);
 		bu_strlcpy(newtree->tr_l.tl_name, tmpname, strlen(tmpname)+1);
-		//return -1;
 	    }
+	    bu_free(tmpname, "char");
 	    break;
 	default:
 	    bu_log("OPCODE NOT IMPLEMENTED: %d\n", oldtree->tr_op);
-	    return -1;
+	    ret = -1;
     }
-    return 0;
+    if (comb)
+	delete comb;
+    return ret;
 }
 
 
@@ -2313,21 +2324,23 @@ brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suff
     union tree *oldtree = comb_internal->tree;
 
     rt_comb_internal *new_internal;
-    BU_GET(new_internal, struct rt_comb_internal);
+    new_internal = (struct rt_comb_internal*)bu_malloc(sizeof(struct rt_comb_internal), "rt_comb_internal");
     *new_internal = *comb_internal;
-    BU_GET(new_internal->tree, union tree);
+    new_internal->tree = (union tree*)bu_malloc(sizeof(union tree), "tree");
     RT_TREE_INIT(new_internal->tree);
     union tree *newtree = new_internal->tree;
 
     ret = brep_conversion_tree(wdbp->dbip, oldtree, newtree, suffix, wdbp, local2mm);
-    if (ret)
-	return ret;
+    if (!ret) {
+	ret = wdb_export(wdbp, name, (genptr_t)new_internal, ID_COMBINATION, local2mm);
+    } else {
+	bu_free(new_internal->tree, "tree");
+	bu_free(new_internal, "rt_comb_internal");
+    }
+    if (!ret)
+	bu_log("%s is made.\n", name);
 
-    ret = wdb_export(wdbp, name, (genptr_t)new_internal, ID_COMBINATION, local2mm);
-    if (ret)
-	return ret;
-    bu_log("%s is made.\n", name);
-    return 0;
+    return ret;
 }
 
 
