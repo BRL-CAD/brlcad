@@ -1203,6 +1203,7 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
     table.nrows = nfaces;
 
     bu_free((char *)face.pts, "analyze_ars: pts");
+    bu_vls_free(&tmpstr);
 
     print_faces_table(gedp, &table);
     print_volume_table(gedp,
