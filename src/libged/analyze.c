@@ -969,6 +969,7 @@ static void
 analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 {
     size_t i, j, k, l;
+    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
     fastf_t tot_vol = 0.0, tot_area = 0.0;
     table_t table;
     struct poly_face *faces;
@@ -1015,7 +1016,8 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     table.nrows = aip->neqn;
     for (i = 0; i < aip->neqn; i++) {
         vect_t tmp;
-        sprintf(faces[i].label, "%4zu", i);
+        bu_vls_printf(&tmpstr, "%4zu", i);
+        sprintf(faces[i].label, "%s", bu_vls_addr(&tmpstr));
 
         /* calculate surface area */
         analyze_poly_face(gedp, &faces[i], &table.rows[i]);
@@ -1031,6 +1033,7 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
         bu_free((char *)faces[i].pts, "analyze_arbn: pts");
     }
     bu_free((char *)faces, "analyze_arbn: faces");
+    bu_vls_free(&tmpstr);
 
     print_faces_table(gedp, &table);
     print_volume_table(gedp,
