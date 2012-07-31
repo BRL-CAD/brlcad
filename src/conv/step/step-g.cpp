@@ -43,10 +43,7 @@
 #include <SdaiCONFIG_CONTROL_DESIGN.h>
 
 #include "Factory.h"
-
-
-extern void SchemaInit (class Registry &);
-
+#include "schema.h"
 
 void
 usage()
