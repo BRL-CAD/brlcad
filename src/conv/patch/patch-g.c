@@ -641,7 +641,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     bu_free((char *)verts, "build_solid: verts");
 
     /* fuse vertices */
-    (void)nmg_model_vertex_fuse(m, tol);
+    (void)nmg_vertex_fuse(&m->magic, tol);
 
     /* FASTGEN targets may have vertices that should be part of an
      * adjoining edge. Use nmg_break_long_edges to fix this

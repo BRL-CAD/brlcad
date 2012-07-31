@@ -150,7 +150,7 @@ main(int argc, char *argv[])
 		}
 		nmg_rebound(m, &tol);
 		(void)nmg_break_long_edges(s, &tol);
-		(void)nmg_model_vertex_fuse(m, &tol);
+		(void)nmg_vertex_fuse(&m->magic, &tol);
 		nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), &tol);
 		nmg_fix_normals(s, &tol);
 

@@ -2979,7 +2979,7 @@ output_to_nmg(struct ga_t *ga,
 	    bu_log("Fused (%d) entities in obj file face grouping name (%s), obj file face grouping index (%zu)\n", num_entities_fused, bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
 
-	/* run nmg_gluefaces, run nmg_model_vertex_fuse before nmg_gluefaces */
+	/* run nmg_gluefaces, run nmg_vertex_fuse before nmg_gluefaces */
 	if ((verbose > 1) || debug) {
 	    bu_log("Running nmg_gluefaces on (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_END(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	}
@@ -3023,7 +3023,7 @@ output_to_nmg(struct ga_t *ga,
 	    if ((verbose > 1) || debug) {
 		bu_log("Completed nmg_rebound for obj file face grouping name (%s), obj file face grouping index (%zu)\n", bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	    }
-	    /* run nmg_model_vertex_fuse before nmg_check_closed_shell */
+	    /* run nmg_vertex_fuse before nmg_check_closed_shell */
 	    if ((verbose > 1) || debug) {
 		bu_log("Running nmg_check_closed_shell with approx (%ld) faces from obj file face grouping name (%s), obj file face grouping index (%zu)\n", BU_PTBL_END(&faces), bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 	    }

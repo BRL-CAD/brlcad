@@ -5083,10 +5083,10 @@ RT_EXPORT extern int nmg_ptbl_vfuse(struct bu_ptbl *t,
 				    const struct bn_tol *tol);
 RT_EXPORT extern int	nmg_region_both_vfuse(struct bu_ptbl *t1,
 					      struct bu_ptbl *t2,
-					      const struct bn_tol	*tol);
-/* nmg_two_region_vertex_fuse replaced with nmg_model_vertex_fuse */
-RT_EXPORT extern int nmg_model_vertex_fuse(struct model *m,
-					   const struct bn_tol *tol);
+					      const struct bn_tol *tol);
+/* nmg_two_region_vertex_fuse replaced with nmg_vertex_fuse */
+RT_EXPORT extern int nmg_vertex_fuse(const uint32_t *magic_p,
+				     const struct bn_tol *tol);
 RT_EXPORT extern int nmg_cnurb_is_linear(const struct edge_g_cnurb *cnrb);
 RT_EXPORT extern int nmg_snurb_is_planar(const struct face_g_snurb *srf,
 					 const struct bn_tol *tol);

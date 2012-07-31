@@ -272,7 +272,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 			jfile, i+1);
     }
 
-    nmg_model_vertex_fuse(m, &tol);
+    nmg_vertex_fuse(&m->magic, &tol);
 
     /* Associate the face geometry. */
     for (i = 0, fail = 0; i < face; i++)

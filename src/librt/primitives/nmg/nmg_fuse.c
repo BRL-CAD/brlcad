@@ -186,7 +186,7 @@ x_comp(const void *p1, const void *p2)
  * Working from the end to the front, scan for geometric duplications
  * within a single list of vertex structures.
  *
- * Exists primarily as a support routine for nmg_model_vertex_fuse().
+ * Exists primarily as a support routine for nmg_vertex_fuse().
  */
 int
 nmg_ptbl_vfuse(struct bu_ptbl *t, const struct bn_tol *tol)
@@ -304,21 +304,20 @@ nmg_region_both_vfuse(struct bu_ptbl *t1, struct bu_ptbl *t2, const struct bn_to
 
 
 /**
- * N M G _ M O D E L _ V E R T E X _ F U S E
+ * N M G _ V E R T E X _ F U S E
  *
- * Fuse together any vertices in the nmgmodel that are geometricly
+ * Fuse together any vertices that are geometrically
  * identical, within the tolerance.
  */
 int
-nmg_model_vertex_fuse(struct model *m, const struct bn_tol *tol)
+nmg_vertex_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 {
     struct bu_ptbl t1;
     int total = 0;
 
-    NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
 
-    nmg_vertex_tabulate(&t1, &m->magic);
+    nmg_vertex_tabulate(&t1, magic_p);
 
     /* if there are no vertex, do nothing */
     if (!BU_PTBL_END(&t1)) {
@@ -330,7 +329,7 @@ nmg_model_vertex_fuse(struct model *m, const struct bn_tol *tol)
     bu_ptbl_free(&t1);
 
     if (rt_g.NMG_debug & DEBUG_BASIC && total > 0)
-	bu_log("nmg_model_vertex_fuse() %d\n", total);
+	bu_log("nmg_vertex_fuse() %d\n", total);
     return total;
 }
 
@@ -1718,7 +1717,7 @@ nmg_model_fuse(struct model *m, const struct bn_tol *tol)
     /* Step 1 -- the vertices. */
     if (rt_g.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_model_fuse: vertices\n");
-    total += nmg_model_vertex_fuse(m, tol);
+    total += nmg_vertex_fuse(&m->magic, tol);
 
     /* Step 1.5 -- break edges on vertices, before fusing edges */
     if (rt_g.NMG_debug & DEBUG_BASIC)

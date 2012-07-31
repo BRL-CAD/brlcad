@@ -555,8 +555,8 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     }
 
     if ( debug )
-	bu_log( "Calling nmg_model_vertex_fuse()\n" );
-    (void)nmg_model_vertex_fuse( m, &tol );
+	bu_log( "Calling nmg_vertex_fuse()\n" );
+    (void)nmg_vertex_fuse(&m->magic, &tol );
 
     /* Break edges on vertices */
     if ( debug )

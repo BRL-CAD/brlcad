@@ -325,7 +325,7 @@ main(int argc, char **argv)
 	    }
 	}
 
-	(void)nmg_model_vertex_fuse(m, &tol);
+	(void)nmg_vertex_fuse(&m->magic, &tol);
 
 	/* calculate plane equations for faces */
 	NMG_CK_SHELL(s);

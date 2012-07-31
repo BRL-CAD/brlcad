@@ -716,7 +716,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	nmg_pr_s_briefly(sB, 0);
     }
 
-    (void)nmg_model_vertex_fuse(m, tol);
+    (void)nmg_vertex_fuse(&m->magic, tol);
 
     (void)nmg_kill_anti_loops(sA);
     (void)nmg_kill_anti_loops(sB);
