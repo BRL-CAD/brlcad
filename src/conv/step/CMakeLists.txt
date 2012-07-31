@@ -461,6 +461,10 @@ CMAKEFILES(${stepg_HDRS})
 
 BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "libwdb;librt;libbu;steputils;stepcore;stepdai;stepeditor;${OPENNURBS_LIBRARY}" NOSTRICT)
 
+if(MSVC)
+  set_target_properties(step-g PROPERTIES COMPILE_DEFINITIONS "SCL_UTILS_DLL_IMPORTS;SCL_CORE_DLL_IMPORTS;SCL_DAI_DLL_IMPORTS;SCL_EDITOR_DLL_IMPORTS")
+endif(MSVC)
+
 DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)
 CMAKEFILES(Makefile.am)
 
