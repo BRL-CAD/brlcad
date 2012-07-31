@@ -752,6 +752,7 @@ ccw(const void *x, const void *y)
  *  - arb8
  *  - arbn
  *  - bot
+ *  - ars
  *
  * returns:
  *  - area in face->area
@@ -1120,6 +1121,103 @@ analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
+#define ARS_PT(ii, jj)	(&arip->curves[i+(ii)][(j+(jj))*ELEMENTS_PER_VECT])
+
+/**
+ * A N A L Y Z E _ A R S
+ */
+static void
+analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
+{
+    size_t i, j, k;
+    size_t nfaces = 0;
+    fastf_t tot_area = 0.0, tot_vol = 0.0;
+    table_t table;
+    struct poly_face face;
+    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
+    struct rt_ars_internal *arip = (struct rt_ars_internal *)ip->idb_ptr;
+    RT_ARS_CK_MAGIC(arip);
+
+    /* allocate pts array, max 3 pts per triangular face */
+    face.pts = (point_t *)bu_calloc(3, sizeof(point_t), "analyze_ars: pts");
+
+    k = arip->pts_per_curve - 2;
+    for (i = 0; i < arip->ncurves - 1; i++) {
+        int double_ended;
+
+        if (k != 1 && VEQUAL(&arip->curves[i][ELEMENTS_PER_VECT], &arip->curves[i][k * ELEMENTS_PER_VECT])) {
+            double_ended = 1;
+        } else {
+            double_ended = 0;
+        }
+
+        for (j = 0; j < arip->pts_per_curve; j++) {
+            vect_t tmp;
+
+            if (double_ended && i != 0 && (j == 0 || j == k || j == arip->pts_per_curve - 1)) {
+                continue;
+            }
+
+            /* first triangular face */
+            if (bn_mk_plane_3pts(face.plane_eqn, ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), &gedp->ged_wdbp->wdb_tol) == 0) {
+                ADD_POINT(face, ARS_PT(0, 0));
+                ADD_POINT(face, ARS_PT(1, 1));
+                ADD_POINT(face, ARS_PT(0, 1));
+
+                bu_vls_printf(&tmpstr, "%zu%zu", i, j);
+                sprintf(face.label, "%s", bu_vls_addr(&tmpstr));
+
+                /* surface area */
+                analyze_poly_face(gedp, &face, &(table.rows[nfaces]));
+                tot_area += face.area;
+
+                /* volume */
+                VSCALE(tmp, face.plane_eqn, face.area);
+                tot_vol += fabs(VDOT(face.pts[0], tmp));
+
+                face.npts = 0;
+                nfaces++;
+            }
+
+            /* second triangular face */
+            if (bn_mk_plane_3pts(face.plane_eqn, ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), &gedp->ged_wdbp->wdb_tol) == 0) {
+                ADD_POINT(face, ARS_PT(1, 0));
+                ADD_POINT(face, ARS_PT(1, 1));
+                ADD_POINT(face, ARS_PT(0, 0));
+
+                bu_vls_printf(&tmpstr, "%zu%zu", i, j);
+                sprintf(face.label, "%s", bu_vls_addr(&tmpstr));
+
+                analyze_poly_face(gedp, &face, &table.rows[nfaces]);
+                tot_area += face.area;
+
+                VSCALE(tmp, face.plane_eqn, face.area);
+                tot_vol += fabs(VDOT(face.pts[0], tmp));
+
+                face.npts = 0;
+                nfaces++;
+            }
+        }
+    }
+    tot_vol /= 3.0;
+    table.nrows = nfaces;
+
+    bu_free((char *)face.pts, "analyze_ars: pts");
+
+    print_faces_table(gedp, &table);
+    print_volume_table(gedp,
+            tot_vol
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            tot_area
+            * gedp->ged_wdbp->dbip->dbi_base2local
+            * gedp->ged_wdbp->dbip->dbi_base2local,
+            tot_vol/GALLONS_TO_MM3
+            );
+}
+
+
 #define PROLATE 1
 #define OBLATE 2
 
@@ -1311,6 +1409,10 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 
     case ID_ARBN:
         analyze_arbn(gedp, ip);
+        break;
+
+    case ID_ARS:
+        analyze_ars(gedp, ip);
         break;
 
     case ID_TGC:
