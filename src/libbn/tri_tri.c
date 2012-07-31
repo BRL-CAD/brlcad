@@ -426,7 +426,7 @@ int bn_tri_tri_isect(point_t V0, point_t V1, point_t V2,
 }
 
 
-inline void calc_isect2(point_t VTX0, point_t VTX1, point_t VTX2, fastf_t VV0, fastf_t VV1,
+void calc_isect2(point_t VTX0, point_t VTX1, point_t VTX2, fastf_t VV0, fastf_t VV1,
 			fastf_t VV2, fastf_t D0, fastf_t D1, fastf_t D2, fastf_t *isect0,
 			fastf_t *isect1, point_t isectpoint0, point_t isectpoint1)
 {
@@ -444,7 +444,7 @@ inline void calc_isect2(point_t VTX0, point_t VTX1, point_t VTX2, fastf_t VV0, f
 }
 
 
-inline int compute_intervals_isectline(point_t VERT0, point_t VERT1, point_t VERT2,
+int compute_intervals_isectline(point_t VERT0, point_t VERT1, point_t VERT2,
 				       fastf_t VV0, fastf_t VV1, fastf_t VV2, fastf_t D0, fastf_t D1, fastf_t D2,
 				       fastf_t D0D1, fastf_t D0D2, fastf_t *isect0, fastf_t *isect1,
 				       point_t isectpoint0, point_t isectpoint1)
