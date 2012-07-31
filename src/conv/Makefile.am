@@ -259,7 +259,8 @@ g_voxel_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
 g_voxel_LDADD = \
 	${RT} \
 	${BU} \
-	${WDB} 
+	${WDB} \
+ 	${ANALYZE}
 
 g_obj_SOURCES = g-obj.c
 g_obj_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
