@@ -10,6 +10,9 @@ BRLCAD_ADDEXEC(tester_bn_tri_tri_isect bn_tri_tri_isect.c "libbu;libbn" NO_INSTA
 # flag tells the function whether or not to require non-zero area for an
 # overlap in coplanar cases.
 
+# TODO - need some tests with floating point vertices that are down around the EPSILON threshold - that's
+# where the NEAR_ZERO components of the bn_coplanar_tri_tri_isect logic become important.
+
 add_test(bn_coplanar_tri_tri_isect_null_noarea   tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1.00001,1,0  0  0) 
 add_test(bn_coplanar_tri_tri_isect_vertex_noarea tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1.00001,0,0 2,0,0 1,1,0        0  1)
 add_test(bn_coplanar_tri_tri_isect_edge_noarea   tester_bn_coplanar_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        0  1)
