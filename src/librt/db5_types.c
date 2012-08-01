@@ -697,6 +697,8 @@ db5_sync_comb_to_attr(struct bu_attribute_value_set *avs, const struct rt_comb_i
     if (comb->rgb_valid) {
 	bu_vls_sprintf(&newval, "%d/%d/%d", comb->rgb[0], comb->rgb[1], comb->rgb[2]);
 	(void)bu_avs_add_vls(avs, db5_standard_attribute(ATTR_COLOR), &newval);
+    } else {
+	bu_avs_remove(avs, db5_standard_attribute(ATTR_COLOR));
     }
 
     /* Shader - may be redundant */
