@@ -81,12 +81,11 @@ else("${STL_LIB_TEST}" EQUAL 1)
 
   set(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES_BAK}")
 
-  mark_as_advanced(STDCXX_LIBRARIES)
-
   # handle the QUIETLY and REQUIRED arguments 
   include(FindPackageHandleStandardArgs)
   FIND_PACKAGE_HANDLE_STANDARD_ARGS(STL DEFAULT_MSG STDCXX_LIBRARIES)
 endif("${STL_LIB_TEST}" EQUAL 1)
+mark_as_advanced(STDCXX_LIBRARIES)
 
 # Local Variables:
 # tab-width: 8
