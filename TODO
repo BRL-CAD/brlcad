@@ -58,6 +58,15 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* implement a "bu_locate" function to consolidate bu_brlcad_root,
+  bu_brlcad_data, and bu_brlcad_dir.  Pass in a bu_locate_t enum,
+  the relative path, and the log/no-log flag.  Intent is to support
+  flexibility implied by presence of BIN_DIR, LIB_DIR, etc. build
+  settings.  Will need great care to ensure correct behavior is
+  preserved - bu_brlcad_root and bu_brlcad_data will need verbose
+  deprecation process, once bu_locate is implemented.  Also will
+  need matching tcl function.
+
 * rendering of the 'part' primitive is wrong for cases where H is less
   than r1 (i.e., smaller cap is partially or fully within the larger
   cap's radius).  It ends up rendering the larger sphere.
