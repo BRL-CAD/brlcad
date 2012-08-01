@@ -1017,8 +1017,8 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     table.nrows = aip->neqn;
     for (i = 0; i < aip->neqn; i++) {
         vect_t tmp;
-        bu_vls_printf(&tmpstr, "%4zu", i);
-        sprintf(faces[i].label, "%s", bu_vls_addr(&tmpstr));
+        bu_vls_sprintf(&tmpstr, "%4zu", i);
+        snprintf(faces[i].label, 5, "%s", bu_vls_addr(&tmpstr));
 
         /* calculate surface area */
         analyze_poly_face(gedp, &faces[i], &table.rows[i]);
