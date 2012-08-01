@@ -47,6 +47,8 @@
 #include "dm_xvars.h"
 #include "solid.h"
 
+#include "./dm_util.h"
+
 #define VIEWFACTOR      (1.0/(*dmp->dm_vp))
 #define VIEWSIZE        (2.0*(*dmp->dm_vp))
 
@@ -1346,44 +1348,7 @@ wgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 HIDDEN int
 wgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
-    static float black[4] = {0.0, 0.0, 0.0, 0.0};
-
-    if (dmp->dm_debugLevel)
-	bu_log("wgl_drawLine3D()\n");
-
-    if (dmp->dm_debugLevel) {
-	GLfloat pmat[16];
-
-	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
-	bu_log("projection matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-	glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
-	bu_log("modelview matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-    }
-
-    if (dmp->dm_light) {
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-
-	if (dmp->dm_transparency)
-	    glDisable(GL_BLEND);
-    }
-
-    glBegin(GL_LINES);
-    glVertex3dv(pt1);
-    glVertex3dv(pt2);
-    glEnd();
-
-    return TCL_OK;
+    return drawLine3D(dmp, pt1, pt2, "wgl_drawLine3D()\n", wireColor);
 }
 
 
@@ -1394,53 +1359,7 @@ wgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 HIDDEN int
 wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag)
 {
-    register int i;
-    static float black[4] = {0.0, 0.0, 0.0, 0.0};
-
-    if (dmp->dm_debugLevel)
-	bu_log("wgl_drawLine3D()\n");
-
-    if (dmp->dm_debugLevel) {
-	GLfloat pmat[16];
-
-	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
-	bu_log("projection matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-	glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
-	bu_log("modelview matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-    }
-
-    if (npoints < 2 || (!sflag && npoints%2))
-	return TCL_OK;
-
-    if (dmp->dm_light) {
-	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
-
-	if (dmp->dm_transparency)
-	    glDisable(GL_BLEND);
-    }
-
-    if (sflag)
-	glBegin(GL_LINE_STRIP);
-    else
-	glBegin(GL_LINES);
-
-    for (i = 0; i < npoints; ++i)
-	glVertex3dv(points[i]);
-
-    glEnd();
-
-    return TCL_OK;
+    return drawLines3D(dmp, npoints, points, sflag, "wgl_drawLine3D()\n", wireColor);
 }
 
 

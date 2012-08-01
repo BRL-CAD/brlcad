@@ -59,6 +59,8 @@
 #include "dm_xvars.h"
 #include "solid.h"
 
+#include "./dm_util.h"
+
 #define VIEWFACTOR (1.0/(*dmp->dm_vp))
 #define VIEWSIZE (2.0*(*dmp->dm_vp))
 
@@ -2038,32 +2040,7 @@ HIDDEN int
 rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
 
-    if (dmp->dm_debugLevel)
-	bu_log("rtgl_drawLine2D()\n");
-
-    if (dmp->dm_debugLevel) {
-	GLfloat pmat[16];
-
-	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
-	bu_log("projection matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-	glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
-	bu_log("modelview matrix:\n");
-	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
-	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
-	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
-	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
-    }
-
-    glBegin(GL_LINES);
-    glVertex2f(x1, y1);
-    glVertex2f(x2, y2);
-    glEnd();
-
-    return TCL_OK;
+    return drawLine2D(dmp, x1, y1, x2, y2, "rtgl_drawLine2D()\n");
 }
 
 
