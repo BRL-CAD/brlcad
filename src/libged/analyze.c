@@ -83,7 +83,7 @@ struct poly_face
     fastf_t area;
 };
 
-#define ADD_POINT(face, pt) { \
+#define ADD_PT(face, pt) { \
     VMOVE((face).pts[(face).npts], (pt)); \
     (face).npts++; \
 }
@@ -869,7 +869,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
     /* analyze each face, use center point of arb for reference */
     rt_arb_centroid(center_pt, arb, cgtype);
 
-    /* initialize pts array, maximum 4 verts per arb8 face */
+    /* allocate pts array, maximum 4 verts per arb8 face */
     face.pts = (point_t *)bu_calloc(4, sizeof(point_t), "analyze_arb8: pts");
 
     table.nrows = 6;
@@ -895,10 +895,10 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
             continue;
         }
 
-        ADD_POINT(face, arb->pt[a]);
-        ADD_POINT(face, arb->pt[b]);
-        ADD_POINT(face, arb->pt[c]);
-        ADD_POINT(face, arb->pt[d]);
+        ADD_PT(face, arb->pt[a]);
+        ADD_PT(face, arb->pt[b]);
+        ADD_PT(face, arb->pt[c]);
+        ADD_PT(face, arb->pt[d]);
 
         /* The plane equations returned by bn_mk_plane_3pts above do
          * not necessarily point outward. Use the reference center
@@ -1006,9 +1006,9 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
         }
         /* found a good point, add it to each of the intersecting faces */
         if (keep_point) {
-            ADD_POINT(faces[i], pt);
-            ADD_POINT(faces[j], pt);
-            ADD_POINT(faces[k], pt);
+            ADD_PT(faces[i], pt);
+            ADD_PT(faces[j], pt);
+            ADD_PT(faces[k], pt);
         }
     }
     }
@@ -1050,7 +1050,7 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
-#define BOT_POINT(idx) (&bot->vertices[(idx) * ELEMENTS_PER_POINT])
+#define BOT_PT(idx) (&bot->vertices[(idx) * ELEMENTS_PER_POINT])
 
 /**
  * A N A L Y Z E _ B O T
@@ -1082,16 +1082,16 @@ analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
         if (bot->bot_flags == RT_BOT_HAS_SURFACE_NORMALS && bot->normals) {
             /* bot->normals array already exists, use those instead */
             VMOVE(face.plane_eqn, &bot->normals[i * ELEMENTS_PER_VECT]);
-        } else if (UNLIKELY(bn_mk_plane_3pts(face.plane_eqn, BOT_POINT(a), BOT_POINT(b), BOT_POINT(c), &gedp->ged_wdbp->wdb_tol) < 0)) {
+        } else if (UNLIKELY(bn_mk_plane_3pts(face.plane_eqn, BOT_PT(a), BOT_PT(b), BOT_PT(c), &gedp->ged_wdbp->wdb_tol) < 0)) {
             bu_vls_printf(gedp->ged_result_str,
                     "analyze_bot: bad BOT, points (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f), (%.3f, %.3f, %.3f) do not form a plane\n",
-                    V3ARGS(BOT_POINT(a)), V3ARGS(BOT_POINT(b)), V3ARGS(BOT_POINT(c)));
+                    V3ARGS(BOT_PT(a)), V3ARGS(BOT_PT(b)), V3ARGS(BOT_PT(c)));
             continue;
         }
 
-        ADD_POINT(face, BOT_POINT(a));
-        ADD_POINT(face, BOT_POINT(b));
-        ADD_POINT(face, BOT_POINT(c));
+        ADD_PT(face, BOT_PT(a));
+        ADD_PT(face, BOT_PT(b));
+        ADD_PT(face, BOT_PT(c));
 
         sprintf(face.label, "%d%d%d", a, b, c);
 
@@ -1160,9 +1160,9 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 
             /* first triangular face */
             if (bn_mk_plane_3pts(face.plane_eqn, ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), &gedp->ged_wdbp->wdb_tol) == 0) {
-                ADD_POINT(face, ARS_PT(0, 0));
-                ADD_POINT(face, ARS_PT(1, 1));
-                ADD_POINT(face, ARS_PT(0, 1));
+                ADD_PT(face, ARS_PT(0, 0));
+                ADD_PT(face, ARS_PT(1, 1));
+                ADD_PT(face, ARS_PT(0, 1));
 
                 bu_vls_printf(&tmpstr, "%zu%zu", i, j);
                 sprintf(face.label, "%s", bu_vls_addr(&tmpstr));
@@ -1181,9 +1181,9 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 
             /* second triangular face */
             if (bn_mk_plane_3pts(face.plane_eqn, ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), &gedp->ged_wdbp->wdb_tol) == 0) {
-                ADD_POINT(face, ARS_PT(1, 0));
-                ADD_POINT(face, ARS_PT(1, 1));
-                ADD_POINT(face, ARS_PT(0, 0));
+                ADD_PT(face, ARS_PT(1, 0));
+                ADD_PT(face, ARS_PT(1, 1));
+                ADD_PT(face, ARS_PT(0, 0));
 
                 bu_vls_printf(&tmpstr, "%zu%zu", i, j);
                 sprintf(face.label, "%s", bu_vls_addr(&tmpstr));
@@ -1386,7 +1386,7 @@ analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
 }
 
 
-/*
+/**
  * Analyze command - prints loads of info about a solid
  * Format:	analyze [name]
  * if 'name' is missing use solid being edited
