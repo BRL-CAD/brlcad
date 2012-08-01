@@ -154,7 +154,7 @@ drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, char 
 }
 #endif
 
-inline int
+int
 draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
     if (!dmp)
