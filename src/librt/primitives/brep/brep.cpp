@@ -3227,6 +3227,67 @@ rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *)
 }
 
 
+int
+rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const int UNUSED(operation))
+{
+    RT_CK_DB_INTERNAL(ip1);
+    RT_CK_DB_INTERNAL(ip2);
+    struct rt_brep_internal *bip1, *bip2;
+    bip1 = (struct rt_brep_internal *)ip1->idb_ptr;
+    bip2 = (struct rt_brep_internal *)ip2->idb_ptr;
+    RT_BREP_CK_MAGIC(bip1);
+    RT_BREP_CK_MAGIC(bip2);
+
+    ON_Brep *brep1, *brep2, *brep_out;
+    brep1 = bip1->brep;
+    brep2 = bip2->brep;
+    brep_out = ON_Brep::New();
+
+    int facecount1 = brep1->m_F.Count();
+    int facecount2 = brep2->m_F.Count();
+    ON_SimpleArray<ON_BrepFace *> facearray(facecount1 + facecount2);
+    ON_SimpleArray<ON_SimpleArray<ON_NurbsCurve *> > curvesarray(facecount1 + facecount2);
+
+    
+    for (int i = 0; i < facecount1; i++) {
+	facearray.Append(&(brep1->m_F[i]));
+    }
+    for (int i = 0; i < facecount2; i++) {
+	facearray.Append(&(brep2->m_F[i]));
+    }
+
+    for (int i = 0; i < facecount1; i++) {
+	for (int j = 0; j < facecount2; j++) {
+	    ON_SimpleArray<ON_NurbsCurve *> curve_uv, curve_st, curve_3d;
+	    if (brlcad::surface_surface_intersection(brep1->m_S[brep1->m_F[i].m_si],
+						     brep2->m_S[brep2->m_F[j].m_si],
+						     curve_3d,
+						     curve_uv,
+						     curve_st))
+		continue;
+	    for (int k = 0; k < curve_3d.Count(); k++) {
+		delete curve_3d[k];
+	    }
+	    curvesarray[i].Append(curve_uv.Count(), curve_uv.Array());
+	    curvesarray[facecount1 + j].Append(curve_st.Count(), curve_st.Array());
+	}
+    }
+
+    struct rt_brep_internal *bip_out;
+    bip_out = (struct rt_brep_internal *)bu_malloc(sizeof(struct rt_brep_internal), "allocate structure");
+    bip_out->magic = RT_BREP_INTERNAL_MAGIC;
+    bip_out->brep = brep_out;
+    RT_DB_INTERNAL_INIT(out);
+    out->idb_ptr = (genptr_t)bip_out;
+    out->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    out->idb_meth = &rt_functab[ID_BREP];
+    out->idb_minor_type = ID_BREP;
+
+    // WIP
+    return 0;
+}
+
+
 /** @} */
 
 /*
