@@ -3229,8 +3229,8 @@ surface_surface_intersection(const ON_Surface* surfA,
     // Here we use polyline approximation.
     // TODO: Find a better fitting algorithm unless this is good enough.
 
-    if (max_dis == 0.0) {
-	// max_dis = 0.0 means that we need to automatically generate a threshold.
+    if (!(max_dis > 0.0)) {
+	// max_dis <= 0.0 means that we need to automatically generate a threshold.
 	if (ZERO(surfA->BoundingBox().Volume())) {
 	    max_dis = pow(surfB->BoundingBox().Volume(), 1.0/3.0) * 0.2;
 	} else if (ZERO(surfB->BoundingBox().Volume())) {
