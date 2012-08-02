@@ -3228,6 +3228,33 @@ rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *)
 
 
 int
+curve_intersect(const ON_NurbsCurve *curveA, const ON_NurbsCurve *curveB, ON_3dPointArray *intersect)
+{
+    int countA = curveA->CVCount();
+    int countB = curveB->CVCount();
+    for (int i = 0; i < countA - 1; i++) {
+	ON_3dPoint fromA, toA;
+	curveA->GetCV(i, fromA);
+	curveA->GetCV(i + 1, toA);
+	ON_Line lineA(fromA, toA);
+	for (int j = 0; j < countB - 1; j++) {
+	    ON_3dPoint fromB, toB;
+	    curveB->GetCV(j, fromB);
+	    curveB->GetCV(j + 1, toB);
+	    ON_Line lineB(fromB, toB);
+	    double tA, tB;
+	    if (ON_Intersect(lineA, lineB, &tA, &tB) != true)
+		continue;
+	    if (tA >= 0.0 && tA <= 1.0 && tB >= 0.0 && tB <= 1.0) {
+		intersect->Append(lineA.PointAt(tA));
+	    }
+	}
+    }
+    return 0;
+}
+
+
+int
 rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const int UNUSED(operation))
 {
     RT_CK_DB_INTERNAL(ip1);
