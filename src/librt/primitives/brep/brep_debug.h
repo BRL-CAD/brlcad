@@ -45,7 +45,7 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 
-#include "../../../libnurbs/opennurbs_ext.h"
+#include "nurbs.h"
 
 
 #define fastf_t double

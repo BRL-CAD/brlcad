@@ -37,10 +37,7 @@
 #include "jama_lu.h"
 #include "brep.h"
 
-/* FIXME: should not be peeking into a private header and cannot be a
- * public header (of librt).
- */
-#include "../../libnurbs/opennurbs_ext.h"
+#include "nurbs.h"
 
 /* interface header */
 #include "PullbackCurve.h"

@@ -24,7 +24,6 @@ set(LIBNURBS_SOURCES
   )
 
 set(librt_ignored_files
-  opennurbs_ext.h
   opennurbs_fit.h
   opennurbs_fit.cpp
   )

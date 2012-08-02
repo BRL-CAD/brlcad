@@ -38,8 +38,7 @@
 #include "brep.h"
 #include "dvec.h"
 
-/* our interface header */
-#include "./opennurbs_ext.h"
+#include "nurbs.h"
 
 
 #define RANGE_HI 0.55

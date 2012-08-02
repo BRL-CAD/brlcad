@@ -94,11 +94,7 @@ class SDAI_Application_instance;
 #include "AdvancedBrepShapeRepresentation.h"
 #include "PullbackCurve.h"
 
-
-/* FIXME: should not be peeking into a private header and cannot be a
- * public header (of librt).
- */
-#include "../../libnurbs/opennurbs_ext.h"
+#include "nurbs.h"
 
 
 ON_Brep *
