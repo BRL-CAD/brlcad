@@ -242,7 +242,7 @@ int main(int argc, char** argv) {
 
     FILE* archive_fp = ON::OpenFile(inputFileName, "rb");
     if ( !archive_fp ) {
-	dump->Print("  Unable to open file.\n" );
+	dump->Print("  Unable to open input file.\n" );
     }
 
     // create achive object from file pointer
