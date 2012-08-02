@@ -60,8 +60,6 @@ set(LIBRT_SOURCES
   mater.c
   memalloc.c
   mkbundle.c
-  opennurbs_ext.cpp
-  #opennurbs_fit.cpp
   oslo_calc.c
   oslo_map.c
   pr.c
@@ -252,9 +250,6 @@ set(librt_ignored_files
   librt.3
   librt_private.h
   namegen.c
-  opennurbs_ext.h
-  opennurbs_fit.h
-  opennurbs_fit.cpp
   test_nurbsfit.cpp
   test_botpatches.cpp
   prcomb.c
@@ -288,20 +283,7 @@ else(MSVC)
   set(LIBRT_SOURCES ${LIBRT_SOURCES} timer42.c)
 endif(MSVC)
 
-# Initialize librt_DEFINES in case of reconfiguration
-set(librt_DEFINES "")
-
-# Set librt compile definitions
-get_property(librt_DEFINES GLOBAL PROPERTY librt_DEFINES)
-list(APPEND librt_DEFINES "OBJ_BREP=1")
-#list(APPEND librt_DEFINES "EIGEN_NO_DEBUG")
-#list(APPEND librt_DEFINES "EIGEN_USE_NEW_STDVECTOR")
-if(CPP_DLL_DEFINES)
-  list(APPEND librt_DEFINES "ON_DLL_IMPORTS")
-endif(CPP_DLL_DEFINES)
-set_property(GLOBAL PROPERTY librt_DEFINES "${librt_DEFINES}")
-
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "libbn;libbu;${OPENNURBS_LIBRARY};${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NOSTRICTCXX)
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "libbn;libbu;${OPENNURBS_LIBRARY};libnurbs;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NOSTRICTCXX)
 if(BUILD_STATIC_LIBS)
   SET_PROPERTY(TARGET librt-static APPEND PROPERTY COMPILE_DEFINITIONS "OBJ_BREP=1")
 endif(BUILD_STATIC_LIBS)

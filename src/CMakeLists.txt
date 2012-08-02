@@ -32,6 +32,7 @@ set(level_1_dirs
   libbu
   libbn
   libsysv
+  libnurbs
   librt
   )
 
@@ -156,7 +157,7 @@ while(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
   endforeach(subdir ${level_${current_level}_dirs})
 endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
 
-CMAKEFILES(README external libnurbs)
+CMAKEFILES(README external)
 CMAKEFILES(Makefile.am)
 
 # Local Variables:

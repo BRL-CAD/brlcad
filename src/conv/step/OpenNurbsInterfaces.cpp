@@ -98,7 +98,7 @@ class SDAI_Application_instance;
 /* FIXME: should not be peeking into a private header and cannot be a
  * public header (of librt).
  */
-#include "../../librt/opennurbs_ext.h"
+#include "../../libnurbs/opennurbs_ext.h"
 
 
 ON_Brep *

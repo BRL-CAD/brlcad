@@ -40,7 +40,7 @@
 /* FIXME: should not be peeking into a private header and cannot be a
  * public header (of librt).
  */
-#include "../../librt/opennurbs_ext.h"
+#include "../../libnurbs/opennurbs_ext.h"
 
 /* interface header */
 #include "PullbackCurve.h"

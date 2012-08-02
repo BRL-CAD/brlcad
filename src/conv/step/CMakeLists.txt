@@ -461,6 +461,7 @@ CMAKEFILES(${stepg_HDRS})
 
 set(stepg_LIBS
   libbu
+  libnurbs
   librt
   libwdb
   stepcore

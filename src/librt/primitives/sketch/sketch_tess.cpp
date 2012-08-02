@@ -34,7 +34,7 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "vmath.h"
-#include "../../opennurbs_ext.h"
+#include "../../../libnurbs/opennurbs_ext.h"
 
 
 /* returns the incenter of the inscribed circle inside the triangle defined by
