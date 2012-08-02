@@ -156,7 +156,7 @@ while(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
   endforeach(subdir ${level_${current_level}_dirs})
 endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
 
-CMAKEFILES(README external)
+CMAKEFILES(README external libnurbs)
 CMAKEFILES(Makefile.am)
 
 # Local Variables:
