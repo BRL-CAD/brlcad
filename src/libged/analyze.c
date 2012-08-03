@@ -875,7 +875,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
     /* allocate pts array, maximum 4 verts per arb8 face */
     face.pts = (point_t *)bu_calloc(4, sizeof(point_t), "analyze_arb8: pts");
 
-    table.nrows = 6;
+    table.nrows = 0;
     for (face.npts = 0, i = 0; i < 6; face.npts = 0, i++) {
         int a, b, c, d; /* 4 indices to face vertices */
 
@@ -916,6 +916,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 
         analyze_poly_face(gedp, &face, &(table.rows[i]));
         tot_area += face.area;
+        table.nrows++;
     }
 
     bu_free((char *)face.pts, "analyze_arb8: pts");
