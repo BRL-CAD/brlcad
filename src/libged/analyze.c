@@ -41,7 +41,6 @@
 
 /**
  * TODO: primitives that still need implementing
- * ars
  * ehy
  * metaball
  * nmg
@@ -76,12 +75,14 @@ static const int nedge[5][24] = {
 /* contains information used to analyze a polygonal face */
 struct poly_face
 {
-    char label[4];
+    char label[5];
     size_t npts;
     point_t *pts;
     plane_t plane_eqn;
     fastf_t area;
 };
+
+#define POLY_FACE_INIT_ZERO { { 0, 0, 0, 0, 0 }, 0, NULL, HINIT_ZERO, 0.0 }
 
 #define ADD_PT(face, pt) { \
     VMOVE((face).pts[(face).npts], (pt)); \
@@ -757,7 +758,7 @@ ccw(const void *x, const void *y)
  * returns:
  *  - area in face->area
  *  - print_faces_table() information in row
- *  - sorts vertices in face->pts into ccw order if face->npts > 4
+ *  - sorts vertices in face->pts into ccw order
  */
 static void
 analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
@@ -768,6 +769,11 @@ analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
     fastf_t angles[5];
 
     findang(angles, face->plane_eqn);
+
+    /* sort points */
+    cmp_plane = &face->plane_eqn;
+    qsort(face->pts, face->npts, sizeof(point_t), ccw);
+    cmp_plane = NULL;
 
     switch (face->npts) {
     case (3):
@@ -788,10 +794,7 @@ analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
         face->area = fabs(VDOT(face->plane_eqn, tmp)) * 0.5;
         break;
     default:
-        /* N-Sided Face - Sort points, and compute area using Green's Theorem */
-        cmp_plane = &face->plane_eqn;
-        qsort(face->pts, face->npts, sizeof(point_t), ccw);
-        cmp_plane = NULL;
+        /* N-Sided Face - compute area using Green's Theorem */
         for (i = 0; i < face->npts; i++) {
             VCROSS(tmp, face->pts[i], face->pts[i + 1 == face->npts ? 0 : i + 1]);
             VADD2(sum, sum, tmp);
@@ -848,7 +851,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
     fastf_t tot_vol = 0.0, tot_area = 0.0;
     point_t center_pt;
     table_t table;  /* holds table data from child functions */
-    struct poly_face face;
+    struct poly_face face = POLY_FACE_INIT_ZERO;
     struct rt_arb_internal earb;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(arb);
@@ -909,7 +912,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
             HREVERSE(face.plane_eqn, face.plane_eqn);
         }
 
-        sprintf(face.label, "%d", prface[type][i]);
+        snprintf(face.label, sizeof(face.label), "%d", prface[type][i]);
 
         analyze_poly_face(gedp, &face, &(table.rows[i]));
         tot_area += face.area;
@@ -1018,7 +1021,7 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     for (i = 0; i < aip->neqn; i++) {
         vect_t tmp;
         bu_vls_sprintf(&tmpstr, "%4zu", i);
-        snprintf(faces[i].label, 5, "%s", bu_vls_addr(&tmpstr));
+        snprintf(faces[i].label, sizeof(faces[i].label), "%s", bu_vls_addr(&tmpstr));
 
         /* calculate surface area */
         analyze_poly_face(gedp, &faces[i], &table.rows[i]);
@@ -1061,7 +1064,7 @@ analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
     size_t i;
     fastf_t tot_area = 0.0, tot_vol = 0.0;
     table_t table;
-    struct poly_face face;
+    struct poly_face face = POLY_FACE_INIT_ZERO;
     struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
@@ -1093,7 +1096,7 @@ analyze_bot(struct ged *gedp, const struct rt_db_internal *ip)
         ADD_PT(face, BOT_PT(b));
         ADD_PT(face, BOT_PT(c));
 
-        sprintf(face.label, "%d%d%d", a, b, c);
+        snprintf(face.label, sizeof(face.label), "%d%d%d", a, b, c);
 
         /* surface area */
         analyze_poly_face(gedp, &face, &table.rows[i]);
@@ -1133,7 +1136,7 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
     size_t nfaces = 0;
     fastf_t tot_area = 0.0, tot_vol = 0.0;
     table_t table;
-    struct poly_face face;
+    struct poly_face face = POLY_FACE_INIT_ZERO;
     struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
     struct rt_ars_internal *arip = (struct rt_ars_internal *)ip->idb_ptr;
     RT_ARS_CK_MAGIC(arip);
@@ -1164,8 +1167,8 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
                 ADD_PT(face, ARS_PT(1, 1));
                 ADD_PT(face, ARS_PT(0, 1));
 
-                bu_vls_printf(&tmpstr, "%zu%zu", i, j);
-                sprintf(face.label, "%s", bu_vls_addr(&tmpstr));
+                bu_vls_sprintf(&tmpstr, "%zu%zu", i, j);
+                snprintf(face.label, sizeof(face.label), "%s", bu_vls_addr(&tmpstr));
 
                 /* surface area */
                 analyze_poly_face(gedp, &face, &(table.rows[nfaces]));
@@ -1185,8 +1188,8 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
                 ADD_PT(face, ARS_PT(1, 1));
                 ADD_PT(face, ARS_PT(0, 0));
 
-                bu_vls_printf(&tmpstr, "%zu%zu", i, j);
-                sprintf(face.label, "%s", bu_vls_addr(&tmpstr));
+                bu_vls_sprintf(&tmpstr, "%zu%zu", i, j);
+                snprintf(face.label, sizeof(face.label), "%s", bu_vls_addr(&tmpstr));
 
                 analyze_poly_face(gedp, &face, &table.rows[nfaces]);
                 tot_area += face.area;
