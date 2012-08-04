@@ -460,14 +460,14 @@ set(stepg_HDRS
 CMAKEFILES(${stepg_HDRS})
 
 set(stepg_LIBS
+  libwdb
+  librt
   libbu
   libnurbs
-  librt
-  libwdb
-  stepcore
-  stepdai
-  stepeditor
   steputils
+  stepeditor
+  stepdai
+  stepcore
   ${OPENNURBS_LIBRARY}
   )
 list(APPEND stepg_LIBS ${stepg_LIBS})
