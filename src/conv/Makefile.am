@@ -257,10 +257,10 @@ g_nmg_LDADD = ${WDB}
 g_voxel_SOURCES = g-voxel.c
 g_voxel_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
 g_voxel_LDADD = \
+ 	${ANALYZE} \
 	${RT} \
 	${BU} \
-	${WDB} \
- 	${ANALYZE}
+	${WDB}
 
 g_obj_SOURCES = g-obj.c
 g_obj_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
