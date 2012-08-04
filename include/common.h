@@ -72,7 +72,7 @@
 /* Functions local to one file IN A LIBRARY should be declared HIDDEN.
  * Disabling the static classifier is sometimes helpful for debugging.
  * It can help prevent some compilers from inlining functions that one
- * might want to set a breakpoint on.
+ * might want to set a breakpoint on.  Do not use on variables.
  */
 #if !defined(HIDDEN)
 #  if defined(NDEBUG)

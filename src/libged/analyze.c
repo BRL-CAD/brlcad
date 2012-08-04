@@ -53,7 +53,7 @@
 
 
 /* ARB face printout array */
-HIDDEN const int prface[5][6] = {
+static const int prface[5][6] = {
     {123, 124, 234, 134, -111, -111},		/* ARB4 */
     {1234, 125, 235, 345, 145, -111},		/* ARB5 */
     {1234, 2365, 1564, 512, 634, -111},		/* ARB6 */
@@ -63,7 +63,7 @@ HIDDEN const int prface[5][6] = {
 
 
 /* edge definition array */
-HIDDEN const int nedge[5][24] = {
+static const int nedge[5][24] = {
     {0, 1, 1, 2, 2, 0, 0, 3, 3, 2, 1, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},   /* ARB4 */
     {0, 1, 1, 2, 2, 3, 0, 3, 0, 4, 1, 4, 2, 4, 3, 4, -1, -1, -1, -1, -1, -1, -1, -1},       /* ARB5 */
     {0, 1, 1, 2, 2, 3, 0, 3, 0, 4, 1, 4, 2, 5, 3, 5, 4, 5, -1, -1, -1, -1, -1, -1},         /* ARB6 */
@@ -734,7 +734,7 @@ findang(fastf_t *angles, fastf_t *unitv)
 
 
 /* plane used by ccw to compare 2 points */
-HIDDEN plane_t *cmp_plane = NULL;
+static plane_t *cmp_plane = NULL;
 
 /* qsort helper function, used to sort points into
  * counter-clockwise order */
@@ -1477,7 +1477,7 @@ ged_analyze(struct ged *gedp, int argc, const char *argv[])
     struct directory *ndp;
     int i;
     struct rt_db_internal intern;
-    HIDDEN const char *usage = "object(s)";
+    static const char *usage = "object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
