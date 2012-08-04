@@ -36,13 +36,9 @@
  */
 HIDDEN void
 setRegionName(struct bu_vls **vp, const char **nameSource, const char **nameDestination) {
-    size_t newlen;
 
     *vp = bu_vls_vlsinit();
-    newlen = strlen(*nameSource);
-    bu_vls_setlen(*vp,newlen);
-    (*vp)->vls_str = (char *)(*nameSource);
-
+    bu_vls_strcpy(*vp, *nameSource);
     *nameDestination = bu_vls_strgrab(*vp);
 }
 
