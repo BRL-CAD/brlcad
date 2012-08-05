@@ -418,9 +418,6 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
 
     bu_log("Added %d objects.\n", dag->object_nr);
 
-    //ged_close(gedp);
-
-
     /* Free memory. */
     bu_vls_free(&dp_name_vls);
     free_hash_values(objects);
@@ -434,17 +431,44 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
  * This routine returns a vector of vectors of points.
  * A vector of points defines a polygon shape that corresponds to an object in the database.
  */
-std::vector<std::vector<Avoid::Point> >
-ged_graph_objects_positions(struct _ged_dag_data *dag) {
-    std::vector<std::vector<Avoid::Point> > positions;
-    ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
-    positions.reserve(dag->object_nr);
+int
+ged_graph_objects_positions(struct ged *gedp, int argc, const char *argv[])
+{
+    struct _ged_dag_data *dag;
+    const char *cmd = argv[0];
 
-    for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
-        positions[(*it)->id()] = (*it)->polygon().ps;
+    /* The bounding positions of the rectangle corresponding to one object. */
+    double minX;
+    double minY;
+    double maxX;
+    double maxY;
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc > 1 || argc == 0) {
+            bu_vls_printf(gedp->ged_result_str, "Usage: %s", cmd);
+            return GED_ERROR;
     }
 
-    return positions;
+    if(argc == 1) {
+        dag = (struct _ged_dag_data *) bu_malloc(sizeof(_ged_dag_data), "DAG structure");
+        dag->router = new Avoid::Router(Avoid::PolyLineRouting);
+        add_objects(gedp, dag);
+
+        ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
+        for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
+            (*it)->polygon().getBoundingRect(&minX, &minY, &maxX, &maxY);
+            bu_vls_printf(gedp->ged_result_str, "%f %f %f %f\n", minX, minY, maxX, maxY);
+        }
+
+        bu_free(dag, "free DAG");
+    }
+
+    return GED_OK;
 }
 
 
@@ -466,38 +490,76 @@ ged_graph_structure(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
-        bu_vls_trunc(gedp->ged_result_str, 0);
+    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc < 2) {
             bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
             return GED_ERROR;
     }
-if(argc >= 2) {
-    /* determine subcommand */
-    sub = argv[1];
-    len = strlen(sub);
+    if(argc >= 2) {
+        /* determine subcommand */
+        sub = argv[1];
+        len = strlen(sub);
 
-    if(bu_strncmp(sub, "view", len) == 0) {
-        dag = (struct _ged_dag_data *) bu_malloc(sizeof(_ged_dag_data), "DAG structure");
-        dag->router = new Avoid::Router(Avoid::PolyLineRouting);
-        add_objects(gedp, dag);
+        if(bu_strncmp(sub, "view", len) == 0) {
+            dag = (struct _ged_dag_data *) bu_malloc(sizeof(_ged_dag_data), "DAG structure");
+            dag->router = new Avoid::Router(Avoid::PolyLineRouting);
+            add_objects(gedp, dag);
 
-        dag->router->outputInstanceToSVG("dag2");
-        dag->router->outputDiagramSVG("dag3");
+            dag->router->outputInstanceToSVG("dag2");
+            dag->router->outputDiagramSVG("dag3");
 
-        bu_free(dag, "free DAG");
-    } else {
-        bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!", cmd, sub);
-        return GED_ERROR;
+            bu_free(dag, "free DAG");
+        } else {
+            bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!", cmd, sub);
+            return GED_ERROR;
+        }
     }
-}
     return GED_OK;
 }
 
 
 #define PARALLEL BRLCAD_PARALLEL
 #undef BRLCAD_PARALLEL
+
+
+#else
+
+#include "ged_private.h"
+
+/**
+ * Dummy graph functions in case no Adaptagrams library found
+ */
+int
+ged_graph_structure(struct ged *gedp, int argc, const char *argv[])
+{
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* Initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    bu_vls_printf(gedp->ged_result_str, "%s : ERROR This command is disabled due to the absence of Adaptagrams library",
+          argv[0]);
+    return GED_ERROR;
+}
+
+
+int
+ged_graph_objects_positions(struct ged *gedp, int argc, const char *argv[])
+{
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* Initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    bu_vls_printf(gedp->ged_result_str, "%s : ERROR This command is disabled due to the absence of Adaptagrams library",
+          argv[0]);
+    return GED_ERROR;
+}
+
 
 #endif
 

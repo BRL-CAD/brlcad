@@ -202,6 +202,7 @@ package provide cadwidgets::Ged 1.0
 	method get_type {args}
 	method glob {args}
 	method gqa {args}
+        method graph_objects_positions{args}
 	method grid {args}
 	method handle_expose {args}
 	method hide {args}
@@ -1458,6 +1459,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::gqa {args} {
     eval $mGed gqa $args
+}
+
+::itcl::body cadwidgets::Ged::graph_objects_positions {args} {
+    eval $mGed graph_objects_positions $args
 }
 
 ::itcl::body cadwidgets::Ged::grid {args} {
@@ -4859,6 +4864,7 @@ package provide cadwidgets::Ged 1.0
     $help add get_type		{{object} {returns the object type}}
     $help add glob		{{expression} {returns a list of objects specified by expression}}
     $help add gqa		{{options object(s)} {perform quantitative analysis checks on geometry}}
+    $help add graph_objects_positions {{} {returns a string with the name of the objects and the positions of the shapes that represent them in the graph}}
     $help add grid		{{color|draw|help|mrh|mrv|rh|rv|snap|vars|vsnap [args]} {get/set grid attributes}}
     $help add help		{{cmd} {returns a help string for cmd}}
     $help add hide		{{[objects]} {set the "hidden" flag for the specified objects so they do not appear in a "t" or "ls" command output}}

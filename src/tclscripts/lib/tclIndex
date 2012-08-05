@@ -1123,6 +1123,7 @@ set auto_index(::cadwidgets::Ged::get_type) [list source [file join $dir Ged.tcl
 set auto_index(::cadwidgets::Ged::get_vdraw_color) [list source [file join $dir Ged.tcl]]
 set auto_index(::cadwidgets::Ged::glob) [list source [file join $dir Ged.tcl]]
 set auto_index(::cadwidgets::Ged::gqa) [list source [file join $dir Ged.tcl]]
+set auto_index(::cadwidgets::Ged::graph_objects_positions) [list source [file join $dir Ged.tcl]]
 set auto_index(::cadwidgets::Ged::grid) [list source [file join $dir Ged.tcl]]
 set auto_index(::cadwidgets::Ged::gridEnable) [list source [file join $dir Ged.tcl]]
 set auto_index(::cadwidgets::Ged::gridSnap) [list source [file join $dir Ged.tcl]]

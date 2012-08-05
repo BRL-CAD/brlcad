@@ -1910,6 +1910,11 @@ GED_EXPORT extern int ged_zoom(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_voxelize(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Get the names and positions in a graph of objects from a database.
+ */
+GED_EXPORT extern int ged_graph_objects_positions(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Query or manipulate properties of a graph.
  */
 GED_EXPORT extern int ged_graph_structure(struct ged *gedp, int argc, const char *argv[]);
