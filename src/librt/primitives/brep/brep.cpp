@@ -3228,7 +3228,11 @@ rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *)
 
 
 int
-curve_intersect(const ON_NurbsCurve *curveA, const ON_NurbsCurve *curveB, ON_3dPointArray *intersect)
+curve_intersect(const ON_NurbsCurve *curveA,
+		const ON_NurbsCurve *curveB,
+		ON_3dPointArray *intersect,
+		ON_SimpleArray<std::pair<int, int> > *CV,
+		ON_2dPointArray *parameter)
 {
     int countA = curveA->CVCount();
     int countB = curveB->CVCount();
@@ -3247,9 +3251,43 @@ curve_intersect(const ON_NurbsCurve *curveA, const ON_NurbsCurve *curveB, ON_3dP
 		continue;
 	    if (tA >= 0.0 && tA <= 1.0 && tB >= 0.0 && tB <= 1.0) {
 		intersect->Append(lineA.PointAt(tA));
+		CV->Append(std::make_pair(i, j));
+		parameter->Append(ON_2dPoint(tA, tB));
 	    }
 	}
     }
+    return 0;
+}
+
+
+int
+split_curve(ON_NurbsCurve *out1, ON_NurbsCurve *out2, const ON_NurbsCurve *curve, const int CVindex, const double t)
+{
+    if (out1 == NULL || out2 == NULL)
+	return -1;
+    
+    // Split the curve using polyline curves.
+    ON_3dPointArray pts1, pts2;
+    for (int i = 0; i <= CVindex; i++) {
+	ON_3dPoint point;
+	curve->GetCV(i, point);
+	pts1.Append(point);
+    }
+    ON_3dPoint start, end;
+    curve->GetCV(CVindex, start);
+    curve->GetCV(CVindex + 1, end);
+    ON_Line line(start, end);
+    pts1.Append(line.PointAt(t));
+    pts2.Append(line.PointAt(t));
+    for (int i = CVindex + 1; i < curve->CVCount(); i++) {
+	ON_3dPoint point;
+	curve->GetCV(i, point);
+	pts2.Append(point);
+    }
+
+    ON_PolylineCurve poly1(pts1), poly2(pts2);
+    poly1.GetNurbForm(*out1);
+    poly2.GetNurbForm(*out2);
     return 0;
 }
 
@@ -3273,9 +3311,11 @@ int
 split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, const ON_NurbsCurve* curve)
 {
     ON_SimpleArray<ON_3dPointArray> intersect(in->outerloop.Count());
+    ON_SimpleArray<ON_SimpleArray<std::pair<int, int> > > CV(in->outerloop.Count());
+    ON_SimpleArray<ON_2dPointArray> parameter(in->outerloop.Count());
     int sum = 0;
     for (int i = 0; i < in->outerloop.Count(); i++) {
-	curve_intersect(&(in->outerloop[i]), curve, &(intersect[i]));
+	curve_intersect(&(in->outerloop[i]), curve, &(intersect[i]), &(CV[i]), &(parameter[i]));
 	sum += intersect[i].Count();
     }
     if (sum == 0) {
@@ -3289,11 +3329,53 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 		TrimmedFace *newface = in->Duplicate();
 		newface->innerloop.Append(*curve);
 		out.Append(newface);
+		newface = new TrimmedFace();
+		newface->face = in->face;
+		newface->outerloop.Append(*curve);
+		out.Append(newface);
 		return 0;
 	    }
 	}
     } else if (sum >= 2) {
 	// intersect the outerloop (TODO)
+	// Now we only consider sum == 2 and the two intersection points are
+	// not on the same curve of the outer loop.
+	int start = -1;
+	for (int i = 0; i < intersect.Count(); i++) {
+	    if (intersect[i].Count() != 0) {
+		start = i;
+		break;
+	    }
+	}
+	TrimmedFace *newface = new TrimmedFace();
+	newface->face = in->face;
+	ON_NurbsCurve curve1, curve2;
+	split_curve(&curve1, &curve2, &(in->outerloop[start]), CV[start][0].first, parameter[start][0][0]);
+	newface->outerloop.Append(curve2);
+	int i;
+	for (i = start + 1; i != start; i = (i+1)%intersect.Count()) {
+	    if (intersect[i].Count() == 0) {
+		newface->outerloop.Append(in->outerloop[i]);
+	    } else {
+		break;
+	    }
+	}
+	ON_NurbsCurve curve3, curve4;
+	split_curve(&curve3, &curve4, &(in->outerloop[i]), CV[i][0].first, parameter[i][0][0]);
+	newface->outerloop.Append(curve3);
+	newface->outerloop.Append(*curve);
+	out.Append(newface);
+	newface = new TrimmedFace();
+	newface->face = in->face;
+	newface->outerloop.Append(curve4);
+	for (; i != start; i = (i+1)%intersect.Count()) {
+	    if (intersect[i].Count() == 0) {
+		newface->outerloop.Append(in->outerloop[i]);
+	    }
+	}
+	newface->outerloop.Append(curve1);
+	newface->outerloop.Append(*curve);
+	out.Append(newface);
 	return 0;
     }
 
