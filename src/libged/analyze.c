@@ -1166,7 +1166,7 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 
         /* first triangular face, make sure its not a duplicate */
         if (bn_mk_plane_3pts(face.plane_eqn, ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), &gedp->ged_wdbp->wdb_tol) == 0
-            && !HEQUAL(old_plane, face.plane_eqn)) {
+            && !HNEAR_EQUAL(old_plane, face.plane_eqn, gedp->ged_wdbp->wdb_tol.dist)) {
             HMOVE(old_plane, face.plane_eqn);
             ADD_PT(face, ARS_PT(0, 1));
             ADD_PT(face, ARS_PT(0, 0));
@@ -1189,7 +1189,7 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 
         /* second triangular face, make sure its not a duplicate */
         if (bn_mk_plane_3pts(face.plane_eqn, ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), &gedp->ged_wdbp->wdb_tol) == 0
-            && !HEQUAL(old_plane, face.plane_eqn)) {
+            && !HNEAR_EQUAL(old_plane, face.plane_eqn, gedp->ged_wdbp->wdb_tol.dist)) {
             HMOVE(old_plane, face.plane_eqn);
             ADD_PT(face, ARS_PT(1, 0));
             ADD_PT(face, ARS_PT(0, 0));
