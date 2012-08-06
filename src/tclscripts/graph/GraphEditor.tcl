@@ -147,6 +147,21 @@ body GraphEditor::constructor {} {
             -alwaysquery 1
     }
 
+    itk_component add cv {
+        ::iwidgets::scrolledcanvas $itk_interior.cv \
+            -textbackground gray \
+            -autoresize 0 \
+            -vscrollmode dynamic \
+            -hscrollmode dynamic
+    } {
+        keep -xscrollincrement
+        keep -xscrollincrement
+        keep -selectbackground -selectforeground
+        keep -width -height
+    }
+
+    pack $itk_interior.cv -padx 0 -pady 0 -expand yes -fill both
+
     # save hooks to the cadtree pop-up menus for efficiency and convenience
     set _itemMenu [ $itk_interior.cadtree component itemMenu ]
     set _bgMenu [ $itk_interior.cadtree component bgMenu ]
@@ -165,13 +180,41 @@ body GraphEditor::constructor {} {
     # save the index of this menu entry so we may modify its label later
     set _autorenderBgMenuIndex [ $_bgMenu index end ]
 
-    grid $itk_component(pw_pane) -sticky nsew
-
     grid rowconfigure $itk_interior 0 -weight 1
     grid columnconfigure $itk_interior 0 -weight 1
 
     bind $_itemMenu <ButtonRelease> {::tk::MenuInvoke %W 1}
     bind $_bgMenu <ButtonRelease> {::tk::MenuInvoke %W 1}
+
+    # get objects' positions within the graph
+    set objectsPositionsCommand "graph_objects_positions"
+
+    if [ catch $objectsPositionsCommand positions ] {
+        return
+    }
+
+    set i 0
+    foreach position $positions {
+        if { $i == 0 } {
+            incr i
+        } elseif { $i == 1 } {
+            set x1 $position
+            incr i
+        } elseif { $i == 2 } {
+            set y1 $position
+            incr i
+        } elseif { $i == 3 } {
+            set x2 $position
+            incr i
+        } else {
+            set y2 $position
+            set i 0
+            #draw a rectangle for this object within the graph
+            $itk_interior.cv create rectangle $x1 $y1 $x2 $y2 \
+            -fill    red \
+            -tags    rectangle
+        }
+    }
 }
 
 

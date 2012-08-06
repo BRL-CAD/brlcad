@@ -59,6 +59,7 @@ struct output {
  */
 struct _ged_dag_data {
     Avoid::Router *router;
+    struct bu_hash_tbl *ids;
     uint16_t object_nr;
     uint16_t last_connref_id;
 };
@@ -110,8 +111,8 @@ free_hash_values(struct bu_hash_tbl *htbl)
     entry = bu_hash_tbl_first(htbl, &rec);
 
     while (entry) {
-    bu_free(bu_get_hash_value(entry), "hash entry");
-    entry = bu_hash_tbl_next(&rec);
+        bu_free(bu_get_hash_value(entry), "hash entry");
+        entry = bu_hash_tbl_next(&rec);
     }
 }
 
@@ -356,6 +357,7 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
 
     /* Create the master "objects" hash table. It will have at most 64 entries. */
     objects = bu_create_hash_tbl(1);
+    dag->ids = bu_create_hash_tbl(1);
 
     /* Sets a spacing distance for overlapping orthogonal connectors to be nudged apart. */
     dag->router->setOrthogonalNudgeDistance(25);
@@ -394,6 +396,10 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
 
                     /* Set the id value for this object */
                     bu_set_hash_value(hsh_entry, (unsigned char *)id);
+
+                    /* Add the ID of this object as a key and its name as a value. */
+                    hsh_entry = bu_hash_add_entry(dag->ids, (unsigned char *)id, strlen(id) + 1, &new_entry);
+                    bu_set_hash_value(hsh_entry, (unsigned char *)dp->d_namep);
                 }
             } else {
                 bu_log("ERROR: Unable to locate [%s] within input database, skipping.\n",  bu_vls_addr(&dp_name_vls));
@@ -461,8 +467,16 @@ ged_graph_objects_positions(struct ged *gedp, int argc, const char *argv[])
 
         ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
         for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
-            (*it)->polygon().getBoundingRect(&minX, &minY, &maxX, &maxY);
-            bu_vls_printf(gedp->ged_result_str, "%f %f %f %f\n", minX, minY, maxX, maxY);
+            char *id = (char *)bu_malloc((size_t)6, "hash entry value");
+            sprintf(id, "%d", (*it)->id());
+
+            struct bu_hash_entry *prev = NULL;
+            unsigned long idx;
+            struct bu_hash_entry *hsh_entry= bu_find_hash_entry(dag->ids, (unsigned char *)id, strlen(id) + 1, &prev, &idx);
+            if(hsh_entry) {
+                (*it)->polygon().getBoundingRect(&minX, &minY, &maxX, &maxY);
+                bu_vls_printf(gedp->ged_result_str, "%s %f %f %f %f\n", hsh_entry->value, minX, minY, maxX, maxY);
+            }
         }
 
         bu_free(dag, "free DAG");
