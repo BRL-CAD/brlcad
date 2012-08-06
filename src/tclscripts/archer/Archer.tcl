@@ -2701,12 +2701,6 @@ proc title_node_handler {node} {
 	    -command [::itcl::code $this affectedNodeHighlightCallback]
     } {}
 
-    itk_component add listViewCB {
-	::ttk::checkbutton $itk_component(generalF).listViewCB \
-	    -text "List View" \
-	    -variable [::itcl::scope mEnableListViewPref]
-    } {}
-
     itk_component add listViewAllAffectedCB {
 	::ttk::checkbutton $itk_component(generalF).listViewAllAffectedCB \
 	    -text "All Affected Nodes Highlighted (List View Only)" \
@@ -2785,12 +2779,6 @@ proc title_node_handler {node} {
 	-row $i \
 	-sticky sw
     grid rowconfigure $itk_component(generalF) $i -weight 1
-    incr i
-    grid $itk_component(listViewCB) \
-	-columnspan 2 \
-	-column 0 \
-	-row $i \
-	-sticky sw
     incr i
     grid $itk_component(listViewAllAffectedCB) \
 	-columnspan 2 \
@@ -8023,11 +8011,6 @@ proc title_node_handler {node} {
 	set cflag 1
     }
 
-    if {$mEnableListView != $mEnableListViewPref} {
-	set mEnableListView $mEnableListViewPref
-	set lflag 1
-    }
-
     if {$mEnableListViewAllAffected != $mEnableListViewAllAffectedPref} {
 	set mEnableListViewAllAffected $mEnableListViewAllAffectedPref
 	set tflag 1
@@ -8038,18 +8021,7 @@ proc title_node_handler {node} {
 	set tflag 1
     }
 
-    if {$lflag} {
-	setTreeView 1
-
-	if {$cflag && $mTreeAttrColumns == {}} {
-	    set twidth [expr {[winfo width $itk_component(newtree)] - 4}]
-	    set c0width [$itk_component(newtree) column \#0 -width]
-
-	    if {$c0width < $twidth} {
-		$itk_component(newtree) column \#0 -width $twidth
-	    }
-	}
-    } elseif {$cflag} {
+    if {$cflag} {
 	rebuildTree
 
 	if {$mTreeAttrColumns == {}} {
@@ -8542,7 +8514,6 @@ proc title_node_handler {node} {
     set mScaleColorPref $mScaleColor
     set mViewingParamsColorPref $mViewingParamsColor
     set mTreeAttrColumnsPref $mTreeAttrColumns
-    set mEnableListViewPref $mEnableListView
     set mEnableListViewAllAffectedPref $mEnableListViewAllAffected
     set mEnableAffectedNodeHighlightPref $mEnableAffectedNodeHighlight
     set mSeparateCommandWindowPref $mSeparateCommandWindow
@@ -8708,7 +8679,6 @@ proc title_node_handler {node} {
     puts $_pfile "set mScaleColor \"$mScaleColor\""
     puts $_pfile "set mViewingParamsColor \"$mViewingParamsColor\""
     puts $_pfile "set mTreeAttrColumns \"$mTreeAttrColumns\""
-    puts $_pfile "set mEnableListView $mEnableListView"
     puts $_pfile "set mEnableListViewAllAffected $mEnableListViewAllAffected"
     puts $_pfile "set mEnableAffectedNodeHighlight $mEnableAffectedNodeHighlight"
     puts $_pfile "set mSeparateCommandWindow $mSeparateCommandWindow"
