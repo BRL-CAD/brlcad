@@ -51,7 +51,7 @@ anti-normalward towards the center of each triangle from outside the model
 bounding box. If the triangle currently under consideration appears as the
 first object hit along the ray, then that triangle is included in the
 VTK polydata output (thus retaining only exterior triangles). Non-BOT
-primitives ancountered along the rays may hide BOT triangles, but non-BOT
+primitives encountered along the rays may hide BOT triangles, but non-BOT
 primitives do not contribute to the output.
 The
 .I -m
@@ -64,7 +64,7 @@ If the
 option is specified, the the output will include vertex normals in the
 VTK output. If the BOT primitives of the input BRL-CAD model do not
 have vertex normal information, this option will not add any information
-to the output, but will greatly increase the size of the outout file.
+to the output, but will greatly increase the size of the output file.
 If the
 .I -g
 option is specified, then the rays are fired from a uniform grid for
