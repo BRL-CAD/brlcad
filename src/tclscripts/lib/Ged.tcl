@@ -188,6 +188,7 @@ package provide cadwidgets::Ged 1.0
 	method exists {args}
 	method faceplate {args}
 	method facetize {args}
+	method voxelize {args}
 	method fb2pix {args}
 	method find_pipept {args}
 	method fontsize {args}
@@ -1398,6 +1399,11 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::facetize {args} {
     eval $mGed facetize $args
+}
+
+
+::itcl::body cadwidgets::Ged::voxelize {args} {
+    eval $mGed voxelize $args
 }
 
 ::itcl::body cadwidgets::Ged::fb2pix {args} {
@@ -4854,6 +4860,7 @@ package provide cadwidgets::Ged 1.0
     $help add eye_pos		{{mx my mz} {set eye position to given model coordinates}}
     $help add exists		{{object} {check for the existence of object}}
     $help add facetize		{{[-m] [-n] [-t] [-T] new_obj old_obj [old_obj2 old_obj3 ...]} {create a new bot object by facetizing the specified objects}}
+    $help add voxelize		{{gg} {dfdf}}
     $help add form		{{objType} {returns form of objType}}
     $help add fracture		{{} {}}
     $help add g			{{groupname <objects>} {group objects}}

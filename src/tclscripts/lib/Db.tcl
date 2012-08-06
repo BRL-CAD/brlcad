@@ -55,6 +55,7 @@
 	method edmater {args}
 	method expand {args}
 	method facetize {args}
+	method voxelize {args}
 	method find {args}
 	method form {args}
 	method g {args}
@@ -292,6 +293,11 @@
 
 ::itcl::body Db::facetize {args} {
     eval $db facetize $args
+}
+
+
+::itcl::body Db::voxelize {args} {
+    eval $db voxelize $args
 }
 
 ::itcl::body Db::kill {args} {

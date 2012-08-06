@@ -75,6 +75,7 @@ option add *Mged.height 400 widgetDefault
 	method ev {args}
 	method expand {args}
 	method facetize {args}
+	method voxelize {args}
 	method find {args}
 	method form {args}
 	method g {args}
@@ -311,6 +312,11 @@ option add *Mged.height 400 widgetDefault
 
 ::itcl::body Mged::facetize {args} {
     eval $db facetize $args
+}
+
+
+::itcl::body Mged::voxelize {args} {
+    eval $db voxelize $args
 }
 
 ::itcl::body Mged::kill {args} {
