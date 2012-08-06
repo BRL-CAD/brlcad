@@ -402,16 +402,16 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define VEQUAL(_a, _b) VNEAR_EQUAL((_a), (_b), SMALL_FASTF)
 
 /**
- * @brief Compare two vectors for EXACT equality.  Use carefully.
- * Version for degree 2 vectors.  FIXME: no such thing as exact.
+ * @brief Return truthfully whether two 2D vectors are equal within
+ * a minimum representation tolerance.
  */
-#define V2EQUAL(a, b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y])
+#define V2EQUAL(_a, _b) V2NEAR_EQUAL((_a), (_b), SMALL_FASTF)
 
 /**
- * @brief Compare two vectors for EXACT equality.  Use carefully.
- * Version for degree 4 vectors.   FIXME: no such thing as exact.
+ * @brief Return truthfully whether two higher degree vectors are
+ * equal within a minimum representation tolerance.
  */
-#define HEQUAL(a, b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y] && (a)[Z]==(b)[Z] && (a)[W]==(b)[W])
+#define HEQUAL(_a, _b)  HNEAR_EQUAL((_a), (_b), SMALL_FASTF)
 
 
 /**
