@@ -16,10 +16,10 @@ Recent Bugs
 -----------
 
 * metaball tessellation enters either an infinite loop or an absurdly
-  long tessellation process - observed on Linux 64 bit sytem - quick 
+  long tessellation process - observed on Linux 64 bit system - quick
   test:
 
-  rm -f metaball.g && mged -c metaball.g "make m.s metaball; facetize m.bot m.s" 
+  rm -f metaball.g && mged -c metaball.g "make m.s metaball; facetize m.bot m.s"
 
 * corruption/crash issue rendering terra.g without terra.dsp,
   possibly/probably parallel-related in libbn/noise.c's
@@ -38,7 +38,7 @@ Recent Bugs
   yet performed).
 
 * idents command is reporting a bogus region count in the region
-  ouptut table listing (first column).
+  output table listing (first column).
 
 * yacc 1.9 will not output a header if a path is given to the -o
   option.  yacc should be run from the binary directory instead of the
@@ -74,7 +74,7 @@ Recent Bugs
 * revolve raytracing seems to be busted.. at least with the example
   csgbrep revolve shape
 
-* torus with a near zero inner diamater results in zero-length edges
+* torus with a near zero inner diameter results in zero-length edges
   during tessellation.
 
 * opening a database in archer with the same name as a command doesn't
@@ -119,7 +119,7 @@ Recent Bugs
 
 * mged/tcl "gets" command doesn't work if you run the "source" command
   to read in a script that uses gets on stdin.  it just hangs until
-  muliple sigint's are received.
+  multiple sigint's are received.
 
 * invoking mged from a system menu seems to be broken.  reported by a
   reliable ArchLinux user.  probably exhibits cross-platform on KDE,
@@ -182,7 +182,7 @@ Recent Bugs
   quit, mged crashes on exit.
 
 * CMD-b and CMD-f navigates the mged command window text widget on Mac
-  and trivally causes problems with the cursor and text injection.
+  and trivially causes problems with the cursor and text injection.
 
 * ogl display manager still crashes on attach in mged on Mac OS X 10.5
 
@@ -196,7 +196,7 @@ Recent Bugs
   mged -c moss.g "puts OK ; tops ; puts OK2 ; title ; puts DONE"
 
   Note that this is consistent with doing the same thing on the MGED
-  Command Window's command prompt - if the above is a bug it is 
+  Command Window's command prompt - if the above is a bug it is
   apparently not restricted to command/classic mode.
 
   Further investigation suggests that this is a consequence of
@@ -209,14 +209,14 @@ Recent Bugs
 * mged rotation halts after a few events and after zooming in/out at
   least once (Mac OS X 10.5)
   More info:  This problem appears to be specific to a particular
-  X11 version or versions - it has been observed with 
+  X11 version or versions - it has been observed with
   xorg-server-1.4.2-apple33 on 10.5.  It does not occur with the
   community XQuartz 2.5.0 (xorg-server 1.7.6), nor does it occur
   when Tk 8.5.8 is compiled to use the Aqua backend. At least one other
-  (possibly earlier) verison of X11 from Apple on a 10.5 Mac did not
-  exhibit bad rotate behavior. The problem is not specifically the 
+  (possibly earlier) version of X11 from Apple on a 10.5 Mac did not
+  exhibit bad rotate behavior. The problem is not specifically the
   zooming action - rather, the zoom triggers
-  a Tk focus call on the display manager window (rather than the 
+  a Tk focus call on the display manager window (rather than the
   Tk parent window) and the problem manifests when focus is on the
   display manager window.  mged classic mode, where there is no
   parent window, exhibits the bad rotate behavior immediately.
@@ -236,7 +236,7 @@ Recent Bugs
 
 * fastgen plate mode bots are reporting invalid shotline segments.
   depending on whether you shoot from the front or back can result in
-  bogus lists visiable with nirt in mged, entirely missing the bot, or
+  bogus lists visible with nirt in mged, entirely missing the bot, or
   mismatched entry/exit/overlap segments.
 
 * nirt -e "xyz val val val" doesn't work due to the space after the -e
@@ -251,7 +251,7 @@ Recent Bugs
 * mged 'facetize -n' command is giving many errors:
     ERROR: color index out of range (-128 > 255)
   and it shouldn't.  seems to be happening on 3-manifold surfaces but
-  only for particuar faces.  looks like the painting algorithm that is
+  only for particular faces.  looks like the painting algorithm that is
   being used is flawed (and an incomplete implementation).
 
 * running 'keep' on too many objects (hundreds is causing a usage
@@ -332,7 +332,7 @@ Recent Bugs
   (seems to be Mac OS X specific)
 
 * turning on Framebuffer->Rectangle Area in mged disables the
-  embedded framebuffer diplay on Mac OS X when you sweep a raytrace
+  embedded framebuffer display on Mac OS X when you sweep a raytrace
   rectangle.  sweeping still works if you leave it at All.
 
 * invalid shaders result in an "Unable to locate where BRL-CAD ... is
