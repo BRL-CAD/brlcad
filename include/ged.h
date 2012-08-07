@@ -816,6 +816,11 @@ GED_EXPORT extern int ged_bot_face_sort(struct ged *gedp, int argc, const char *
 GED_EXPORT extern int ged_bot_flip(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Fuse bot
+ */
+GED_EXPORT extern int ged_bot_fuse(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Create bot_dest by merging the bot sources.
  */
 GED_EXPORT extern int ged_bot_merge(struct ged *gedp, int argc, const char *argv[]);

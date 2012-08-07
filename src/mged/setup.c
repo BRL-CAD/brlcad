@@ -94,6 +94,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"bot_face_fuse", cmd_ged_plain_wrapper, ged_bot_face_fuse},
     {"bot_face_sort", cmd_ged_plain_wrapper, ged_bot_face_sort},
     {"bot_flip", cmd_ged_plain_wrapper, ged_bot_flip},
+    {"bot_fuse", cmd_ged_plain_wrapper, ged_bot_fuse},
     {"bot_merge", cmd_ged_plain_wrapper, ged_bot_merge},
     {"bot_smooth", cmd_ged_plain_wrapper, ged_bot_smooth},
     {"bot_split", cmd_ged_plain_wrapper, ged_bot_split},

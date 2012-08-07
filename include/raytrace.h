@@ -4389,6 +4389,12 @@ RT_EXPORT extern void rt_bot_list_free(struct rt_bot_list *headRblp,
 RT_EXPORT extern int rt_bot_same_orientation(const int *a,
 					     const int *b);
 
+RT_EXPORT extern int rt_bot_tess(struct nmgregion **r,
+				 struct model *m,
+				 struct rt_db_internal *ip,
+				 const struct rt_tess_tol *ttol,
+				 const struct bn_tol *tol);
+
 /* From nmg_tri.c */
 RT_EXPORT extern void nmg_triangulate_shell(struct shell *s,
 					    const struct bn_tol  *tol);

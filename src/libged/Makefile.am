@@ -27,6 +27,7 @@ libged_nil_la_SOURCES = \
 	bot_dump.c \
 	bot_face_fuse.c \
 	bot_face_sort.c \
+	bot_fuse.c \
 	bot_flip.c \
 	bot_merge.c \
 	bot_smooth.c \
