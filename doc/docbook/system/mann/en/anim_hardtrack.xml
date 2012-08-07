@@ -33,7 +33,7 @@
       are rigidly fixed in place with respect to the vehicle. The main
       difference between <command>anim_hardtrack</command> and <emphasis remap="I">anim_track</emphasis>
       is that <emphasis remap="I">anim_track</emphasis> handles vehicles with dynamic axles. Both are 
-      designed to be use in conjunction with <emphasis remap="I">anim_script,</emphasis>
+      designed to be used in conjunction with <emphasis remap="I">anim_script,</emphasis>
       to achieve the final result.
     </para>
     
