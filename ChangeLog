@@ -3766,75 +3766,75 @@
 	  The
 	  approach is also intended to ease maintenance and future
 	  enhancements.
-	  
+
 	  The function specification has also been modified somewhat.
-	  
+
 	  More specifically:
-	  
+
 	  src/libbu/vls_internals.h
 	  =========================
-	  
+
 	  + make VP_* bit flags available for multiple files
 	  + expand the set of VP_* bit flags
 	  + make the vflags_t type available for multiple files
 	  + make three of the vls_vprintf helper functions available for
 	  multiple files
-	  
+
 	  src/libbu/test_vls_vprintf.c
 	  ============================
-	  
+
 	  + add new test function 'check_format_chars' to ensure consistent
 	  coverage of the defined valid and obsolete format characaters
-	  
+
 	  src/libbu/vls_vprintf.c
 	  =======================
-	  
+
 	  + hoist the vflags_t definition into vls_internals.h for use by
 	  the
 	  regression test (test_vls_vprinf.c)
-	  
+
 	  + move functions
-	  
+
 	  + consolidate vls_printf helper functions into four:
-	  
+
 	  - format_part_status: uses bit flags to define, for each
 	  character,
 	  what category it's in and whether it's valid, obsolete, or
 	  unknown
-	  
+
 	  - handle_obsolete_format_char: contains helper info messages for
 	  the
 	  user of obsolete chars
-	  
+
 	  - reset flags: resets an instance of the vflags_t to known values
-	  
+
 	  - handle_format_part: consolidates handling of the different
 	  categories of valid format characters; only turned on at the
 	  moment for
 	  length modifier type
-	  
+
 	  + use the new 'handle_format_part' function to hoist handling of
 	  the
 	  length modifiers (LMs) out of the format parsing loop
-	  
+
 	  + add the formerly implicit handling of the 'c' conversion
 	  specifier (CS)
 	  to the CS handling section
-	  
+
 	  + consolidate CS error handling in the default section of the CS
 	  switch statement
-	  
+
 	  + do some ws and style tidying
-	  
+
 	  Future changes planned
 	  ======================
-	  
+
 	  + turn on modular handling of other categories of format chars
-	  
+
 	  + incorporate modular handling of compiler oddities such as the
 	  'z'
 	  length modifier for Visual Studio C
-	  
+
 	  + improve error handling
 
 2012-05-30 16:48  n_reed
@@ -9529,11 +9529,11 @@
 	  intuitive in
 	  that actual field size is entered and the last character is not
 	  chopped
-	  
+
 	  The problem prevented successful conversion on any input deck,
 	  and
 	  with the fix it now works on a complex TGM input file.
-	  
+
 	  A successful round trip was also made with the same TGM. Note
 	  that
 	  "success" is within the constraints of the vdeck <-=> comgeom-g
@@ -9541,7 +9541,7 @@
 	  differently so one has to track the objects carefully to ensure
 	  the
 	  trip was made correctly.
-	  
+
 	  {above is from Tom Browder e-mail to brlcad-devel on 7 April
 	  2012}
 
@@ -26078,13 +26078,13 @@
 	  without being explicit function parameters. Remove most of the
 	  deprecated/obsolete object API declarations while we're at it so
 	  further use isn't encouraged.
-	  
+
 	  While moderately equivalent to the prior behavior, this patch
 	  does change numerous command outputs from going to the Tcl
 	  channel to instead getting output through bu_log. Of course, even
 	  through most of the caller code is deprecated, more testing is
 	  warranted (particularly for archer).
-	  
+
 	  This involved approximately 26 hours of continuous effort. My
 	  pinky is tired.
 
@@ -29079,7 +29079,7 @@
 
 	* [r47380] src/libged/simulate/simrt.c,
 	  src/libged/simulate/simrt.h, src/libged/simulate/simulate.h:
-	  
+
 
 2011-11-01 16:42  abhi2011
 
@@ -29097,7 +29097,7 @@
 	  src/libged/simulate/simrt.h, src/libged/simulate/simulate.c,
 	  src/libged/simulate/simulate.h, src/libged/simulate/simutils.c,
 	  src/libged/simulate/simutils.h:
-	  
+
 
 2011-10-31 14:54  erikgreenwald
 
