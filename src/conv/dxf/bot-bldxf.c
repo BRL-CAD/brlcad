@@ -114,7 +114,7 @@ static int tbl[19][8] = {
 
 /*
  *	Compare two successive triangles to see if they are coplanar and
- *	share two verticies.
+ *	share two vertices.
  *
  */
 int
@@ -141,7 +141,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, size_t faceidx, int vidx[4])
     }
     /* compare the surface normals */
 
-    /* if the first vertex is greater than the number of verticies
+    /* if the first vertex is greater than the number of vertices
      * this is probably a bogus face, and something bad has happened
      */
     if ((size_t)vnum[0] > bot->num_vertices-1) {
@@ -190,7 +190,7 @@ tris_are_planar_quad(struct rt_bot_internal *bot, size_t faceidx, int vidx[4])
 		(long unsigned int)vnum[0], (long unsigned int)vnum[1], (long unsigned int)vnum[2], (long unsigned int)vnum[3], (long unsigned int)vnum[4], (long unsigned int)vnum[5]);
     }
 
-    /* find adjacent/matching verticies */
+    /* find adjacent/matching vertices */
 
     for (i=0; i < 18; i++) {
 	int *t;
@@ -286,7 +286,7 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
     fprintf(FH, "254\n");
     fprintf(FH, "70\n");
     fprintf(FH, "64\n");
-    fprintf(FH, "71\n"); /* number of verticies */
+    fprintf(FH, "71\n"); /* number of vertices */
 
     fprintf(FH, "%lu\n", (long unsigned int)num_vertices);
 
@@ -298,7 +298,7 @@ void write_dxf(struct rt_bot_internal *bot, char *name)
 
 
     if (debug&DEBUG_STATS)
-	fprintf(stderr, "writing %lu verticies\n", (long unsigned int)num_vertices);
+	fprintf(stderr, "writing %lu vertices\n", (long unsigned int)num_vertices);
     for (i=0; i < num_vertices; i++) {
 	fprintf(FH, "VERTEX\n");
 	fprintf(FH, "8\n");
