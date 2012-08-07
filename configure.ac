@@ -2947,7 +2947,7 @@ AC_SUBST(LIBTK)
 
 
 dnl *** incrTcl ***
-dnl See if libitcl and libitk seem to work, make sure it's not dependant upon libtcl
+dnl See if libitcl and libitk seem to work, make sure it's not dependent upon libtcl
 itcl_works=no
 AC_MSG_CHECKING(for incrTcl library functionality)
 PRELIBS="$LIBS"
@@ -3088,7 +3088,7 @@ int main() {
 	return 1;
     }
     if (Itcl_Init(interp) == TCL_ERROR) {
-	printf("ITCL interp failed to initaliaze: %s\n", Tcl_GetStringResult(interp));
+	printf("ITCL interp failed to initialize: %s\n", Tcl_GetStringResult(interp));
 	return 1;
     }
     res = Tcl_Eval(interp, cmd);
@@ -3356,7 +3356,7 @@ AC_MSG_RESULT([$socket_link_works])
 AC_SUBST(LIBSOCKET)
 
 dnl *** libnsl ***
-AC_MSG_CHECKING(for system network socket library availablity)
+AC_MSG_CHECKING(for system network socket library availability)
 AC_MSG_RESULT([$nsl_link_works])
 AC_SUBST(LIBNSL)
 
