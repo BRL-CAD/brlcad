@@ -342,7 +342,7 @@ can be opened read-only within MGED where geometry can be inspected,
 drawn, exported via the "keep" command, and updated to the newer
 (platform-independent) v5 geometry database file format via the
 "dbupgrade" command.  In order to override the otherwise automatic
-binary-incomaptible v4 detection, MGED's "opendb" command provides a
+binary-incompatible v4 detection, MGED's "opendb" command provides a
 new -f flip option and all applications can override behavior with a
 LIBRT_V4FLIP environment variable.
 
@@ -383,7 +383,7 @@ This release includes the initial release of a new Bag of Triangle
 (BoT) editing interface for MGED and Archer.  Nicholas Reed developed
 the new graphical user interface (GUI) in order to consolidate the
 numerous BoT editing commands and processing steps into one unified
-easy-to-use interface.  The new GUI grealy simplifies BoT processing
+easy-to-use interface.  The new GUI greatly simplifies BoT processing
 steps and can save modelers considerable time.
 
 * ported benchmark suite to Windows (requires 'sh') - Erik Greenwald
@@ -608,7 +608,7 @@ undo support and graphical editing, are expanded upon.
 
 * initial step-g geometry importer - Keith Bowman
 * added '-u' flag to 3dm-g - uses UUID for import names - Cliff Yapp
-* improved fb-png and pix-png defaut gamma correction - Sean Morrison
+* improved fb-png and pix-png default gamma correction - Sean Morrison
 * added a '-g' gamma correction option to pix-png - Sean Morrison
 * added mged '-a' option for attaching display manager - Sean Morrison
 * increased maximum size of framebuffer windows - Sean Morrison
@@ -861,7 +861,7 @@ invalid geometry is now more robust.
 * fixed mged 'dbconcat' hang when not specifying an affix - Bob Parker
 * fixed primitive selection solid_illum bug in mged - Bob Parker
 * fix bug in tire tool's geometry causing 'nicks' in tread - C. Yapp
-* increased raytrace performace of pipe primitive - John Anderson
+* increased raytrace performance of pipe primitive - John Anderson
 * fixed bugs handling invalid extrude objects - Sean Morrison
 * fixed dependency bug in library pkg-config files - Sean Morrison
 * platform installers now use a more consistent naming convention
@@ -973,7 +973,7 @@ continuous active development.
 * fixed browser-based mged help on Mac OS X - Sean Morrison
 * added rest of BRL-CAD's geometry converters for Windows - Bob Parker
 * added more missing framebuffer tools to Windows port - Bob Parker
-* rtwizard enhancments for ghosting and display - Bob Parker
+* rtwizard enhancements for ghosting and display - Bob Parker
 * mged reports failure if ray-tracer returns non-zero - Sean Morrison
 * improved mged corrupt geometry file handling - Sean Morrison
 * improved dbconcat object suffix and prefix options - Sean Morrison
@@ -1162,7 +1162,7 @@ for more details.
 
 * support for handling larger hierarchies in archer - Doug Howard
 * added distance measurement tool to archer - Bob Parker
-* added component selection capabilites to archer - Bob Parker
+* added component selection capabilities to archer - Bob Parker
 * new script to extract gforge task items - Lee Butler, Sean Morrison
 * substantial additions and mods to source documentation - Lee Butler
 * added scripts to facetize all regions in a database - Lee Butler
@@ -1262,7 +1262,7 @@ tested further.
 Other noteworthy enhancements provided in this release include new
 sample applications that demonstrate the capabilities of the libpkg
 networking library, in-memory geometry database processing, reshooting
-of rays from analysis codes for testing pursposes, and the librt root
+of rays from analysis codes for testing purposes, and the librt root
 solver.  For analysts and modelers alike, the MGED modeler also
 acquires a few new commands including reid and remat that respectively
 assist with the assignment of region and material identifiers.
@@ -1334,7 +1334,7 @@ creation commands read point data sets in a simple text file format,
 recognizing categories and collections of points.  Using
 point-acquisition devices such as X-Station Vulcan advanced surveying
 systems from Arc Second Inc., points may be collected and used in MGED
-to factilitate the generation of geometry models.  Collection
+to facilitate the generation of geometry models.  Collection
 techniques are recognized for polygonal plates, cylinders, spheres,
 point clouds, and more.
 
@@ -1438,7 +1438,7 @@ toolset includes a master job manager, a slave compute daemon for
 network distributed processing, and a client for observing job
 progress.
 
-Driven by user requests, the 'rtarea' command now reports signifcantly
+Driven by user requests, the 'rtarea' command now reports significantly
 more information than before including area details for all assemblies
 and regions being rendered.  Both the presented and exposed areas are
 now computed too, including details on how many regions/assemblies are
