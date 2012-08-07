@@ -1029,7 +1029,7 @@ nmg_cnurb_is_on_crv(const struct edgeuse *eu, const struct edge_g_cnurb *cnrb, c
     return coincident;
 }
 
-/* compare function for qsort within function nmg_model_edge_fuse */
+/* compare function for qsort within function nmg_edge_fuse */
 static int
 v_ptr_comp(const void *p1, const void *p2)
 {
@@ -1047,10 +1047,10 @@ v_ptr_comp(const void *p1, const void *p2)
 
 
 /**
- * N M G _ M O D E L _ E D G E _ F U S E
+ * N M G _ E D G E _ F U S E
  */
 int
-nmg_model_edge_fuse(struct model *m, const struct bn_tol *tol)
+nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 {
     typedef size_t (*edgeuse_vert_list_t)[2];
     edgeuse_vert_list_t edgeuse_vert_list;
@@ -1066,7 +1066,7 @@ nmg_model_edge_fuse(struct model *m, const struct bn_tol *tol)
     register struct vertex *v2;
 
     bu_ptbl_init(&eu_list, 64, "eu1_list1 buffer");
-    nmg_edgeuse_tabulate(&eu_list, &m->magic);
+    nmg_edgeuse_tabulate(&eu_list, magic_p);
 
     nelem = BU_PTBL_END(&eu_list) * 2;
     if (nelem == 0)
@@ -1922,7 +1922,7 @@ nmg_model_fuse(struct model *m, const struct bn_tol *tol)
     /* Step 3 -- edges */
     if (rt_g.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_model_fuse: edges\n");
-    total += nmg_model_edge_fuse(m, tol);
+    total += nmg_edge_fuse(&m->magic, tol);
 
     /* Step 4 -- edge geometry */
     if (rt_g.NMG_debug & DEBUG_BASIC)

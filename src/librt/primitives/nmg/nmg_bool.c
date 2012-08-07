@@ -758,7 +758,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
     (void)nmg_model_break_e_on_v(m, tol);
 
-    (void)nmg_model_edge_fuse(m, tol);
+    (void)nmg_edge_fuse(&m->magic, tol);
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
 	/* Sometimes the tessllations of non-participating regions

@@ -607,7 +607,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     /* Glue faceuses together. */
     if ( debug )
 	bu_log( "Glueing faces\n" );
-    (void)nmg_model_edge_fuse( m, &tol );
+    (void)nmg_edge_fuse( &m->magic, &tol );
 
     /* Compute "geometry" for model, region, and shell */
     if ( debug )

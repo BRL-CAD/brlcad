@@ -131,8 +131,8 @@ ged_bot_fuse(struct ged *gedp, int argc, const char *argv[])
     bu_log("%s: %s, %d faces fused\n", argv[0], argv[2], count);
 
     /* Step 3 -- edges */
-    bu_log("%s: running nmg_model_edge_fuse\n", argv[0]);
-    count = nmg_model_edge_fuse(m, tol);
+    bu_log("%s: running nmg_edge_fuse\n", argv[0]);
+    count = nmg_edge_fuse(&m->magic, tol);
     total += count;
 
     bu_log("%s: %s, %d edges fused\n", argv[0], argv[2], count);

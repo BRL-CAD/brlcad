@@ -305,7 +305,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 	  empty_model = nmg_kill_zero_length_edgeuses(m);
 
 	  /* Glue edges of outward pointing face uses together. */
-	  if (!empty_model) nmg_model_edge_fuse(m, &tol);
+	  if (!empty_model) nmg_edge_fuse(&m->magic, &tol);
 	}
     }
 
