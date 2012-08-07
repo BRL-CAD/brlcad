@@ -42,15 +42,12 @@
 #include "nurb.h"
 
 
-/* The global variable edge_ref_dot is used by function nmg_edge_g_fuse
- * and the compare function for qsort "e_comp". This is an array
- * containing the dot product of the unitized e_dir of edge_g_lseg and
- * a unitized refererence vector. The absolute value of the dot product
- * is stored.
+/* The global variable edge_rr_xyp is used by function nmg_edge_g_fuse
+ * and the compare function for qsort "e_rr_xyp_comp". This is an array
+ * containing the rise over run ratios in the xy plane for each edge.
  */
-fastf_t *edge_x_ref_dot;
-fastf_t *edge_y_ref_dot;
-fastf_t *edge_z_ref_dot;
+fastf_t *edge_rr_xyp;
+
 
 extern int debug_file_count;
 
@@ -1139,46 +1136,12 @@ nmg_model_edge_fuse(struct model *m, const struct bn_tol *tol)
 
 /* compare function for qsort within function nmg_edge_g_fuse */
 static int
-ez_comp(const void *p1, const void *p2)
+e_rr_xyp_comp(const void *p1, const void *p2)
 {
     fastf_t i, j;
 
-    i = edge_z_ref_dot[(*((size_t *)p1))];
-    j = edge_z_ref_dot[(*((size_t *)p2))];
-
-    if (EQUAL(i, j))
-        return 0;
-    else if (i > j)
-        return 1;
-    return -1;
-}
-
-
-/* compare function for qsort within function nmg_edge_g_fuse */
-static int
-ey_comp(const void *p1, const void *p2)
-{
-    fastf_t i, j;
-
-    i = edge_y_ref_dot[(*((size_t *)p1))];
-    j = edge_y_ref_dot[(*((size_t *)p2))];
-
-    if (EQUAL(i, j))
-        return 0;
-    else if (i > j)
-        return 1;
-    return -1;
-}
-
-
-/* compare function for qsort within function nmg_edge_g_fuse */
-static int
-ex_comp(const void *p1, const void *p2)
-{
-    fastf_t i, j;
-
-    i = edge_x_ref_dot[(*((size_t *)p1))];
-    j = edge_x_ref_dot[(*((size_t *)p2))];
+    i = edge_rr_xyp[(*((size_t *)p1))];
+    j = edge_rr_xyp[(*((size_t *)p2))];
 
     if (EQUAL(i, j))
         return 0;
@@ -1196,25 +1159,25 @@ ex_comp(const void *p1, const void *p2)
 int
 nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 {
-    int total = 0;
     register size_t i, j;
-    fastf_t dot;
-    struct bu_ptbl etab;
-    size_t etab_cnt;
-    fastf_t *edge_ref_dot; 
-    vect_t ref_x = {1.0, 0.0, 0.0};
-    vect_t ref_y = {0.0, 1.0, 0.0};
-    vect_t ref_z = {0.0, 0.0, 1.0};
-    vect_t *unit_e_dir ;  /* Array containing the unitized edge direction 
-			   * for each edge in table "etab".
-			   */
-    size_t *sort_idx;  /* Index into the "u" and "edge_ref_dot" arrays
-			* and the "etab" table sorted based on the
-			* "edge_ref_dot" array. 
-			*/
+    register struct edge_g_lseg *eg1, *eg2;
+    register struct edgeuse *eu1, *eu2;
+    register struct vertex *eu1v1, *eu1v2, *eu2v1, *eu2v2;
+    struct bu_ptbl etab; /* edge table */
+    size_t etab_cnt; /* edge count */
+    int total;
+    fastf_t tmp;
 
-    /* vertices are expected to be fused so make sure they are */
-    (void)nmg_vertex_fuse(magic_p, tol);
+    /* rise over run arrays for the xz and yz planes */
+    fastf_t *edge_rr_xzp, *edge_rr_yzp;
+
+    /* index into all arrays sorted by the contents of array edge_rr_xyp */
+    size_t *sort_idx_xyp;
+
+    /* arrays containing special case flags for each edge in the xy, xz and yz planes */
+    /* 0 = no special case, 1 = infinit ratio, 2 = zero ratio, 3 = point in plane (no ratio) */
+    char *edge_sc_xyp, *edge_sc_xzp, *edge_sc_yzp;
+
 
     /* Make a list of all the edge geometry structs in the model */
     nmg_edge_g_tabulate(&etab, magic_p);
@@ -1226,53 +1189,102 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 	return 0;
     }
 
-    unit_e_dir = (vect_t *)bu_calloc(etab_cnt, sizeof(vect_t), "unit_e_dir");
-    sort_idx = (size_t *)bu_calloc(etab_cnt, sizeof(size_t), "sort_idx");
-    edge_ref_dot = (fastf_t *)bu_calloc(etab_cnt*3, sizeof(fastf_t), "edge_x_ref_dot");
-    edge_x_ref_dot = edge_ref_dot;
-    edge_y_ref_dot = &(edge_ref_dot[etab_cnt]);
-    edge_z_ref_dot = &(edge_ref_dot[etab_cnt*2]);
+    sort_idx_xyp = (size_t *)bu_calloc(etab_cnt, sizeof(size_t), "sort_idx_xyp");
 
-    /* compute dot product of each edge_g relative to the x, y and z axis */
+    /* rise over run in xy plane */
+    edge_rr_xyp = (fastf_t *)bu_calloc(etab_cnt, sizeof(fastf_t), "edge_rr_xyp");
+    /* special cases in xy plane */
+    edge_sc_xyp = (char *)bu_calloc(etab_cnt, sizeof(char), "edge_sc_xyp");
+
+    /* rise over run in xz plane */
+    edge_rr_xzp = (fastf_t *)bu_calloc(etab_cnt, sizeof(fastf_t), "edge_rr_xzp");
+    /* special cases in xz plane */
+    edge_sc_xzp = (char *)bu_calloc(etab_cnt, sizeof(char), "edge_sc_xzp");
+
+    /* rise over run in yz plane */
+    edge_rr_yzp = (fastf_t *)bu_calloc(etab_cnt, sizeof(fastf_t), "edge_rr_yzp");
+    /* special cases in yz plane */
+    edge_sc_yzp = (char *)bu_calloc(etab_cnt, sizeof(char), "edge_sc_yzp");
+
+    /* load arrays */
     for (i = 0 ; i < etab_cnt ; i++) {
-	register struct edge_g_lseg *eg1;
+	fastf_t *pt1, *pt2;
+
 	eg1 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, i);
-	VMOVE(unit_e_dir[i], eg1->e_dir);
-	VUNITIZE(unit_e_dir[i]);
-	sort_idx[i] = i;
-	edge_x_ref_dot[i] = fabs(VDOT(unit_e_dir[i], ref_x));
-	edge_y_ref_dot[i] = fabs(VDOT(unit_e_dir[i], ref_y));
-	edge_z_ref_dot[i] = fabs(VDOT(unit_e_dir[i], ref_z));
+	eu1 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg1->eu_hd2), l2);
+
+	pt1 = eu1->vu_p->v_p->vg_p->coord;
+	pt2 = eu1->eumate_p->vu_p->v_p->vg_p->coord;
+
+	sort_idx_xyp[i] = i;
+
+	if (NEAR_ZERO(pt2[X] - pt1[X], tol->dist) && !NEAR_ZERO(pt2[Y] - pt1[Y], tol->dist)) {
+	    edge_rr_xyp[i] = 0.0;
+	    edge_sc_xyp[i] = 1; /* no angle in xy plane, vertical line (along y-axis) */
+	} else if (!NEAR_ZERO(pt2[X] - pt1[X], tol->dist) && NEAR_ZERO(pt2[Y] - pt1[Y], tol->dist)) {
+	    edge_rr_xyp[i] = 0.0;
+	    edge_sc_xyp[i] = 2; /* no angle in xy plane, horz line (along x-axis) */
+	} else if (NEAR_ZERO(pt2[X] - pt1[X], tol->dist) && NEAR_ZERO(pt2[Y] - pt1[Y], tol->dist)) {
+	    edge_rr_xyp[i] = 0.0;
+	    edge_sc_xyp[i] = 3; /* only a point in the xy plane */
+	} else {
+	    edge_rr_xyp[i] = (pt2[Y] - pt1[Y]) / (pt2[X] - pt1[X]); /* rise over run */
+	    edge_sc_xyp[i] = 0; /* no special case */
+	}
+
+	if (NEAR_ZERO(pt2[X] - pt1[X], tol->dist) && !NEAR_ZERO(pt2[Z] - pt1[Z], tol->dist)) {
+	    edge_rr_xzp[i] = 0.0;
+	    edge_sc_xzp[i] = 1; /* no angle in xz plane, vertical line (along z-axis) */
+	} else if (!NEAR_ZERO(pt2[X] - pt1[X], tol->dist) && NEAR_ZERO(pt2[Z] - pt1[Z], tol->dist)) {
+	    edge_rr_xzp[i] = 0.0;
+	    edge_sc_xzp[i] = 2; /* no angle in xz plane, horz line (along x-axis) */
+	} else if (NEAR_ZERO(pt2[X] - pt1[X], tol->dist) && NEAR_ZERO(pt2[Z] - pt1[Z], tol->dist)) {
+	    edge_rr_xzp[i] = 0.0;
+	    edge_sc_xzp[i] = 3; /* only a point in the xz plane */
+	} else {
+	    edge_rr_xzp[i] = (pt2[Z] - pt1[Z]) / (pt2[X] - pt1[X]); /* rise over run */
+	    edge_sc_xzp[i] = 0; /* no special case */
+	}
+
+	if (NEAR_ZERO(pt2[Y] - pt1[Y], tol->dist) && !NEAR_ZERO(pt2[Z] - pt1[Z], tol->dist)) {
+	    edge_rr_yzp[i] = 0.0;
+	    edge_sc_yzp[i] = 1; /* no angle in yz plane, vertical line (along z-axis) */
+	} else if (!NEAR_ZERO(pt2[Y] - pt1[Y], tol->dist) && NEAR_ZERO(pt2[Z] - pt1[Z], tol->dist)) {
+	    edge_rr_yzp[i] = 0.0;
+	    edge_sc_yzp[i] = 2; /* no angle in yz plane, horz line (along y-axis) */
+	} else if (NEAR_ZERO(pt2[Y] - pt1[Y], tol->dist) && NEAR_ZERO(pt2[Z] - pt1[Z], tol->dist)) {
+	    edge_rr_yzp[i] = 0.0;
+	    edge_sc_yzp[i] = 3; /* only a point in the yz plane */
+	} else {
+	    edge_rr_yzp[i] = (pt2[Z] - pt1[Z]) / (pt2[Y] - pt1[Y]); /* rise over run */
+	    edge_sc_yzp[i] = 0; /* no special case */
+	}
     }
 
-    /* sort sort_idx array based on dot product of each edge_g relative to x, y and z axis */
-    qsort(sort_idx, etab_cnt, sizeof(size_t), (int (*)(const void *a, const void *b))ez_comp);
-    qsort(sort_idx, etab_cnt, sizeof(size_t), (int (*)(const void *a, const void *b))ey_comp);
-    qsort(sort_idx, etab_cnt, sizeof(size_t), (int (*)(const void *a, const void *b))ex_comp);
- 
+    /* create sort index based on array edge_rr_xyp */
+    qsort(sort_idx_xyp, etab_cnt, sizeof(size_t), (int (*)(const void *a, const void *b))e_rr_xyp_comp);
 
+    /* main loop */
+    total = 0;
     for (i = 0 ; i < etab_cnt ; i++) {
-	register struct edge_g_lseg *eg1;
-	register struct edgeuse *eu1;
 
-	eg1 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, sort_idx[i]);
-
+	eg1 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, sort_idx_xyp[i]);
+ 	
 	if (!eg1) {
 	    continue;
 	}
 
-	/* XXX Need routine to compare two cnurbs geometricly */
 	if (UNLIKELY(eg1->l.magic == NMG_EDGE_G_CNURB_MAGIC)) {
 	    continue;
 	}
 
 	eu1 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg1->eu_hd2), l2);
+	eu1v1 = eu1->vu_p->v_p;
+	eu1v2 = eu1->eumate_p->vu_p->v_p;
 
 	for (j = i+1; j < etab_cnt ; j++) {
-	    register struct edge_g_lseg *eg2;
-	    register struct edgeuse *eu2;
 
-	    eg2 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, sort_idx[j]);
+	    eg2 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, sort_idx_xyp[j]);
 
 	    if (!eg2) {
 		continue;
@@ -1281,30 +1293,66 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 	    if (UNLIKELY(eg2->l.magic == NMG_EDGE_G_CNURB_MAGIC)) continue;
 
 	    eu2 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg2->eu_hd2), l2);
+	    eu2v1 = eu2->vu_p->v_p;
+	    eu2v2 = eu2->eumate_p->vu_p->v_p;
 
-	    if (!(((eu1->vu_p->v_p->vg_p == eu2->eumate_p->vu_p->v_p->vg_p) &&
-		(eu1->eumate_p->vu_p->v_p->vg_p == eu2->vu_p->v_p->vg_p)) ||
-		((eu1->vu_p->v_p->vg_p == eu2->vu_p->v_p->vg_p) &&
-		(eu1->eumate_p->vu_p->v_p->vg_p == eu2->eumate_p->vu_p->v_p->vg_p)))) {
+	    if (!(((eu1v1 == eu2v2) && (eu1v2 == eu2v1)) || ((eu1v1 == eu2v1) && (eu1v2 == eu2v2)))) {
+		/* true when vertices are not fused */
 
-		dot = VDOT(unit_e_dir[sort_idx[i]], unit_e_dir[sort_idx[j]]);
-		if (!BN_VECT_ARE_PARALLEL(dot, tol)) break;
-		if (!nmg_2edgeuse_g_coincident(eu1, eu2, tol)) continue;
+		/* xy plane tests */
+		if (edge_sc_xyp[sort_idx_xyp[i]] != edge_sc_xyp[sort_idx_xyp[j]]) {
+		    /* not parallel in xy plane */
+		    break;
+		} else if (edge_sc_xyp[sort_idx_xyp[i]] == 0) {
+		    tmp = edge_rr_xyp[sort_idx_xyp[i]] - edge_rr_xyp[sort_idx_xyp[j]];
+		    if (!NEAR_ZERO(tmp, tol->dist)) {
+			/* not parallel in xy plane */
+			break;
+		    }
+		}
+		if (edge_sc_xzp[sort_idx_xyp[i]] != edge_sc_xzp[sort_idx_xyp[j]]) {
+		    /* not parallel in xz plane */
+		    continue;
+		} else if (edge_sc_xzp[sort_idx_xyp[i]] == 0) {
+		    tmp = edge_rr_xzp[sort_idx_xyp[i]] - edge_rr_xzp[sort_idx_xyp[j]];
+		    if (!NEAR_ZERO(tmp, tol->dist)) {
+			/* not parallel in xz plane */
+			continue;
+		    }
+		}
+		if (edge_sc_yzp[sort_idx_xyp[i]] != edge_sc_yzp[sort_idx_xyp[j]]) {
+		    /* not parallel in xz plane */
+		    continue;
+		} else if (edge_sc_yzp[sort_idx_xyp[i]] == 0) {
+		    tmp = edge_rr_yzp[sort_idx_xyp[i]] - edge_rr_yzp[sort_idx_xyp[j]];
+		    if (!NEAR_ZERO(tmp, tol->dist)) {
+			/* not parallel in yz plane */
+			continue;
+		    }
+		}
+
+		if (!nmg_2edgeuse_g_coincident(eu1, eu2, tol)) {
+		    continue;
+		}
 	    }
 
 	    total++;
 	    nmg_jeg(eg1, eg2);
 
-	    BU_PTBL_SET(&etab, sort_idx[j], NULL);
+	    BU_PTBL_SET(&etab, sort_idx_xyp[j], NULL);
 	}
     }
 
     bu_ptbl_free(&etab);
-    bu_free(unit_e_dir, "unit_e_dir");
-    bu_free(sort_idx, "sort_idx");
-    bu_free(edge_ref_dot, "edge_ref_dot");
+    bu_free(edge_rr_xyp, "edge_rr_xyp,");
+    bu_free(edge_rr_xzp, "edge_rr_xzp,");
+    bu_free(edge_rr_yzp, "edge_rr_yzp,");
+    bu_free(edge_sc_xyp, "edge_sc_xyp");
+    bu_free(edge_sc_xzp, "edge_sc_xzp");
+    bu_free(edge_sc_yzp, "edge_sc_yzp");
+    bu_free(sort_idx_xyp, "sort_idx_xyp");
 
-    if (rt_g.NMG_debug & DEBUG_BASIC && total > 0)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_BASIC && total > 0))
 	bu_log("nmg_edge_g_fuse(): %d edge_g_lseg's fused\n", total);
 
     return total;
