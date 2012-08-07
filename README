@@ -89,8 +89,8 @@ default install (starting with a source tarball):
 where "X.Y.Z" is the version number of BRL-CAD.  For those who prefer
 a curses interface, substitute ccmake for cmake above. If the graphical
 interface available from CMake is installed cmake-gui may be
-substituted for cmake.  These interfaces will display the various 
-configuration options available when building BRL-CAD, or the options 
+substituted for cmake.  These interfaces will display the various
+configuration options available when building BRL-CAD, or the options
 may be set directly via command line -D options.
 The configure wrapper script may be substituted for cmake in the above
 steps for a more autotools-like configuration experience.
@@ -114,7 +114,7 @@ BENCHMARK
 After the build successfully completes, you will be able to verify
 basic functionality by running the BRL-CAD Benchmark.  Running the
 benchmark suite is integrated into the build system such that any time
-after running CMake (in the cmake gui, configure and generate must both 
+after running CMake (in the cmake gui, configure and generate must both
 be performed) you may run:
 
   make benchmark
@@ -264,7 +264,7 @@ distribution at the beginning of every month, usually being posted
 sometime within the first week of every month.
 
 Depending on need, demand, and activity, additional releases may also
-be made.  The additional releases will be heavily dependant upon the
+be made.  The additional releases will be heavily dependent upon the
 level of user involvement and contributions in particular.
 Information about new releases will be routinely provided by
 electronic mail to recipients of this software as well as to the
