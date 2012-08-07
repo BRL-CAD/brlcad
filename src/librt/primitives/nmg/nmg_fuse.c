@@ -1056,7 +1056,8 @@ nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
     edgeuse_vert_list_t edgeuse_vert_list;
     int count=0;
     size_t nelem;
-    struct bu_ptbl eu_list;
+    struct bu_ptbl *eu_list;
+    struct bu_ptbl tmp;
     struct edge *e1;
     struct edgeuse *eu, *eu1;
     struct vertex *v1;
@@ -1065,18 +1066,23 @@ nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
     register struct edgeuse *eu2;
     register struct vertex *v2;
 
-    bu_ptbl_init(&eu_list, 64, "eu1_list1 buffer");
-    nmg_edgeuse_tabulate(&eu_list, magic_p);
+    if (*magic_p == BU_PTBL_MAGIC) {
+	eu_list = (struct bu_ptbl *)magic_p; 
+    } else {
+	bu_ptbl_init(&tmp, 64, "eu1_list1 buffer");
+	nmg_edgeuse_tabulate(&tmp, magic_p);
+	eu_list = &tmp;
+    }
 
-    nelem = BU_PTBL_END(&eu_list) * 2;
+    nelem = BU_PTBL_END(eu_list) * 2;
     if (nelem == 0)
        return 0;
 
     edgeuse_vert_list = (edgeuse_vert_list_t)bu_calloc(nelem, 2 * sizeof(size_t), "edgeuse_vert_list");
 
     j = 0;
-    for (i = 0; i < (size_t)BU_PTBL_END(&eu_list) ; i++) {
-	eu = (struct edgeuse *)BU_PTBL_GET(&eu_list, i);
+    for (i = 0; i < (size_t)BU_PTBL_END(eu_list) ; i++) {
+	eu = (struct edgeuse *)BU_PTBL_GET(eu_list, i);
 	edgeuse_vert_list[j][0] = (size_t)eu;
 	edgeuse_vert_list[j][1] = (size_t)eu->vu_p->v_p;
 	j++;
@@ -1128,7 +1134,11 @@ nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
     }
 
     bu_free((char *)edgeuse_vert_list, "edgeuse_vert_list");
-    bu_ptbl_free(&eu_list);
+
+    /* if bu_ptbl was passed into this function don't free it here */
+    if (*magic_p != BU_PTBL_MAGIC) {
+	bu_ptbl_free(eu_list);
+    }
 
     return count;
 }
