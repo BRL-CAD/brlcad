@@ -214,7 +214,7 @@ set(BRLCAD_VERSION "${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PAT
 #---------------------------------------------------------------------
 # Define relative install locations.  Don't set these if they have already
 # been set by some other means (like a higher level CMakeLists.txt file
-# including this one.)  
+# including this one.)
 
 # The location in which to install BRL-CAD executables.
 if(NOT BIN_DIR)
@@ -256,7 +256,7 @@ set(INSTALL_DIRS BIN INCLUDE LIB CONF DATA MAN DOC)
 foreach(instdir ${INSTALL_DIRS})
   get_filename_component(instdir_full ${${instdir}_DIR} ABSOLUTE)
   if("${${instdir}_DIR}" STREQUAL "${instdir_full}")
-    message(FATAL_ERROR "Error - absolute path supplied for ${instdir}_DIR.  This path must be relative - e.g. \"bin\" instead of \"/usr/bin\"") 
+    message(FATAL_ERROR "Error - absolute path supplied for ${instdir}_DIR.  This path must be relative - e.g. \"bin\" instead of \"/usr/bin\"")
     set(HAVE_INSTALL_DIR_FULL_PATH 1)
   endif("${${instdir}_DIR}" STREQUAL "${instdir_full}")
 endforeach(instdir ${INSTALL_DIRS})
@@ -407,7 +407,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # check that the file is part of the source tree and not itself a
   # generated file, but not reject full-path entries since there are quite a
   # few of them. This means that, unlike CMAKEFILES's reliance on full vs.
-  # relative path comparisions, generated files supplied to configure_file
+  # relative path comparisons, generated files supplied to configure_file
   # need to have the GENERATED property set in order to reliably tell which
   # files should be added to the build system's lists.  Not
   # so critical with not-in-src-dir builds, but makes a big difference
@@ -441,7 +441,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     endif(NOT ${targetfile} MATCHES "distclean")
   endfunction(configure_file)
 
-  # Override and wrap add_subdirctory.
+  # Override and wrap add_subdirectory.
   function(add_subdirectory name)
     _add_subdirectory(${name} ${ARGN})
     set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${name}")
@@ -1041,7 +1041,7 @@ if(NOT WIN32)
   endif(APPLE)
 endif(NOT WIN32)
 
-# Enable features requring OPENGL
+# Enable features requiring OPENGL
 # Be smart about this - if we don't have X11 or Aqua and we're
 # not on Windows, we're non-graphical and that means OpenGL is
 # a no-go.  The Windows version would have to be some sort of
@@ -1107,7 +1107,7 @@ mark_as_advanced(BRLCAD_ENABLE_JOVE)
 #----------------------------------------------------------------------
 # There are extra documentation files available requiring DocBook
 # They are quite useful in graphical interfaces, but also add considerably
-# to the overall build time.  If necesssary BRL-CAD  provides its own
+# to the overall build time.  If necessary BRL-CAD  provides its own
 # xsltproc (see src/other/xmltools), so the html and man page
 # outputs are always potentially available.  PDF output, on the other hand,
 # needs Apache FOP.  FOP is not a candidate for bundling with BRL-CAD for
@@ -1996,7 +1996,7 @@ DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/PATH)
 # we are detecting a configuration change by looking at the previous version
 # of the CMakeCache.txt file and looking for changes between values stored
 # there and settings in the current environment.  This has the disadvantage
-# of not spotting completely new variables in the current enviornment, but
+# of not spotting completely new variables in the current environment, but
 # the internal CMake variable list is too noisy so at the moment this looks
 # like the best alternative we have.
 
@@ -2104,7 +2104,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(CPACK_SOURCE_DIR ${CMAKE_SOURCE_DIR})
     set(CPACK_DATA_DIR "${DATA_DIR}")
     # There is a bug in NSI that does not handle full unix paths properly. Make
-    # sure there is at least one set of four (4) backlasshes.
+    # sure there is at least one set of four (4) backslashes.
     set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\brlcad.ico")
     set(CPACK_NSIS_MUI_UNIICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\uninstall.ico")
     set(CPACK_NSIS_DISPLAY_NAME "BRL-CAD")
