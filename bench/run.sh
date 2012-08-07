@@ -278,7 +278,7 @@ test the performance of a system by iteratively rendering several
 well-known datasets into 512x512 images where performance metrics are
 documented and fairly well understood.  The local machine's
 performance is compared to the base system (called VGR) and a numeric
-"VGR" mulitplier of performance is computed.  This number is a
+"VGR" multiplier of performance is computed.  This number is a
 simplified metric from which one may qualitatively compare cpu and
 cache performance, versions of BRL-CAD, and different compiler
 characteristics.
@@ -318,7 +318,7 @@ additional rays are hypersampled but without any jitter, so it's
 effectively performing a multiplier amount of work over the initial
 frame.
 
-Plese send your BRL-CAD Benchmark results to the developers along with
+Please send your BRL-CAD Benchmark results to the developers along with
 detailed system information to <devs@brlcad.org>.  Include at least:
 
   0) Compiler name and version (e.g. gcc --version)
@@ -619,7 +619,7 @@ if test ! "x${ret}" = "x0" ; then
     $ECHO
     $ECHO "ERROR:  ELP does not seem to work as expected"
     exit 2
-fi 
+fi
 
 
 # utility function to set a variable if it's not already set to something
@@ -1176,7 +1176,7 @@ perf ( ) {
     done
 
     # extract the RTFM values from the log files, use TR to convert
-    # newlines to tabs.  the trailing tab is signficant in case there
+    # newlines to tabs.  the trailing tab is significant in case there
     # are not enough results.
     #
     # FIXME: should really iterate one file at a time so we don't
@@ -1342,7 +1342,7 @@ $ECHO "Total testing time elapsed: `$ELP $start`"
 # see if we fail
 if test ! "x$ret" = "x0" ; then
     $ECHO
-    $ECHO "THE BENCHARK ANALYSIS DID NOT COMPLETE SUCCESSFULLY." 
+    $ECHO "THE BENCHMARK ANALYSIS DID NOT COMPLETE SUCCESSFULLY."
     $ECHO
     $ECHO "A benchmark failure means this is not a viable install of BRL-CAD.  This may be"
     $ECHO "a new bug or (more likely) is a compilation configuration error.  Ensure your"
