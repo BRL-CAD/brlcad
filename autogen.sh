@@ -1149,7 +1149,7 @@ download_gnulib_config_guess () {
 	opts=""
 	case ${__cmd} in
 	    wget)
-		opts="-O" 
+		opts="-O"
 		;;
 	    curl)
 		opts="-o"
