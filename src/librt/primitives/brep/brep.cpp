@@ -3232,7 +3232,7 @@ curve_intersect(const ON_NurbsCurve *curveA,
 		const ON_NurbsCurve *curveB,
 		ON_3dPointArray *intersect,
 		ON_SimpleArray<std::pair<int, int> > *CV,
-		ON_2dPointArray *parameter)
+		ON_SimpleArray<std::pair<double, double> > *parameter)
 {
     int countA = curveA->CVCount();
     int countB = curveB->CVCount();
@@ -3252,7 +3252,7 @@ curve_intersect(const ON_NurbsCurve *curveA,
 	    if (tA >= 0.0 && tA <= 1.0 && tB >= 0.0 && tB <= 1.0) {
 		intersect->Append(lineA.PointAt(tA));
 		CV->Append(std::make_pair(i, j));
-		parameter->Append(ON_2dPoint(tA, tB));
+		parameter->Append(std::make_pair(tA, tB));
 	    }
 	}
     }
@@ -3307,18 +3307,88 @@ struct TrimmedFace {
 };
 
 
+struct IntersectPoint {
+    ON_3dPoint m_pt;
+    int m_seg;
+    int m_t;
+    int m_type;
+    int m_rank;
+    int m_seg_for_rank;
+    int m_t_for_rank;
+    bool m_in_out;
+
+};
+
+
 int
-split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, const ON_NurbsCurve* curve)
+compare_seg_t(IntersectPoint* const *a, IntersectPoint* const *b)
 {
-    ON_SimpleArray<ON_3dPointArray> intersect(in->outerloop.Count());
-    ON_SimpleArray<ON_SimpleArray<std::pair<int, int> > > CV(in->outerloop.Count());
-    ON_SimpleArray<ON_2dPointArray> parameter(in->outerloop.Count());
+    if ((*a)->m_seg != (*b)->m_seg)
+	return (*a)->m_seg - (*b)->m_seg;
+    return (*a)->m_t - (*b)->m_t;
+}
+
+
+int
+compare_for_rank(IntersectPoint* const *a, IntersectPoint* const *b)
+{
+    if ((*a)->m_seg_for_rank != (*b)->m_seg_for_rank)
+	return (*a)->m_seg_for_rank - (*b)->m_seg_for_rank;
+    return (*a)->m_t_for_rank - (*b)->m_t_for_rank;
+}
+
+
+int
+split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, const ON_SimpleArray<ON_NurbsCurve*> &curves)
+{
+    /* We followed the algorithms described in:
+     * S. Krishnan, A. Narkhede, and D. Manocha. BOOLE: A System to Compute
+     * Boolean Combinations of Sculptured Solids. Technical Report TR95-008,
+     * Department of Computer Science, University of North Carolina, 1995.
+     * Appendix B: Partitioning a Simple Polygon using Non-Intersecting
+     * Chains.
+     */
+
+    ON_SimpleArray<IntersectPoint> intersect;
     int sum = 0;
+    int CVCount_sum = 0;
     for (int i = 0; i < in->outerloop.Count(); i++) {
-	curve_intersect(&(in->outerloop[i]), curve, &(intersect[i]), &(CV[i]), &(parameter[i]));
-	sum += intersect[i].Count();
+	for (int j = 0; j < curves.Count(); j++) {
+	    ON_3dPointArray intersect_pt;
+	    ON_SimpleArray<std::pair<int, int> > CV;
+	    ON_SimpleArray<std::pair<double, double> > parameter;
+	    curve_intersect(&(in->outerloop[i]), curves[j], &intersect_pt, &CV, &parameter);
+	    for (int k = 0; k < intersect_pt.Count(); k++) {
+		IntersectPoint tmp_pt;
+		tmp_pt.m_pt = intersect_pt[j];
+		tmp_pt.m_seg = CVCount_sum + CV[j].first;
+		tmp_pt.m_t = parameter[j].first;
+		tmp_pt.m_type = j;
+		tmp_pt.m_seg_for_rank = CV[j].second;
+		tmp_pt.m_t_for_rank = parameter[j].second;
+		intersect.Append(tmp_pt);
+	    }
+	    sum += intersect_pt.Count();
+	}
     }
-    if (sum == 0) {
+
+    // rank these intersection points
+    ON_SimpleArray<ON_SimpleArray<IntersectPoint*> > pts_on_curves(curves.Count());
+    ON_SimpleArray<IntersectPoint*> sorted_pointers;
+    for (int i = 0; i < intersect.Count(); i++) {
+	pts_on_curves[intersect[i].m_type].Append(&(intersect[i]));
+	sorted_pointers.Append(&(intersect[i]));
+    }
+    for (int i = 0; i < curves.Count(); i++) {
+	pts_on_curves[i].QuickSort(compare_for_rank);
+	for (int j = 0; j < pts_on_curves[i].Count(); j++)
+	    pts_on_curves[i][j]->m_rank = j;
+    }
+    sorted_pointers.QuickSort(compare_seg_t);
+
+    // WIP
+    // The follows commented out are out of date.
+    /* if (sum == 0) {
 	// no intersection points with the outerloop
 	ON_BoundingBox bbox_outerloop;
 	for (int i = 0; i < in->outerloop.Count(); i++) {
@@ -3377,7 +3447,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	newface->outerloop.Append(*curve);
 	out.Append(newface);
 	return 0;
-    }
+    }*/
 
     // default case: no splitting
     TrimmedFace *newface = in->Duplicate();
@@ -3444,21 +3514,12 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
 		}
 	    }
 	}
-	ON_SimpleArray<TrimmedFace*> trimmedfaces, trimmedfaces2;
+	ON_SimpleArray<TrimmedFace*> trimmedfaces;
 	TrimmedFace *first = new TrimmedFace();
 	first->face = &(brep1->m_F[i]);
 	first->innerloop = innercurves;
 	first->outerloop = outercurves;
-	for (int j = 0; j < curvesarray[i].Count(); j++) {
-	    trimmedfaces2.Empty();
-	    for (int k = 0; k < trimmedfaces.Count(); k++) {
-		ON_SimpleArray<TrimmedFace*> generated;
-		split_trimmed_face(generated, trimmedfaces[k], curvesarray[i][j]);
-		trimmedfaces2.Append(generated.Count(), generated.Array());
-		delete trimmedfaces[k];
-	    }
-	    trimmedfaces = trimmedfaces2;
-	}
+	split_trimmed_face(trimmedfaces, first, curvesarray[i]);
     }
 
     // make the final rt_db_internal
