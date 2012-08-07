@@ -26,11 +26,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * bu_bomb not printing stack trace as it is supposed to
 
 * g-nff man page is out of sync with g-nff options
- 
-* investigate bu_vls_encode/decode failures on g-dot.c (see that 
+
+* investigate bu_vls_encode/decode failures on g-dot.c (see that
   file for FIXME note); add tests for both functions (note only
   g-dot.c wants to use the functions at the moment)
- 
+
 * fix bottie crash on 32b builds
 
 * investigate bottie '1 unit closer' issue indianlarry saw in frv
@@ -110,9 +110,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * work on vdeck/comgeom-g converters needed:
   - primitives recognized by comgeom-g but not vdeck:
       ehy, epa, eto, rhc, rpc
-  - primitives recognized by comgeom-g (but not vdeck) but 
+  - primitives recognized by comgeom-g (but not vdeck) but
     with possible equivalent versions in BRL-CAD:
-      haf (half), rvw (right vertical wedge), raw (arb8), wed (DoE name 
+      haf (half), rvw (right vertical wedge), raw (arb8), wed (DoE name
       for 'raw'), wir (pipe), arw (arbitrary wedge [ERIM?])
   - generate new comgeom-g tests with tgms from old GIFT docs
 
@@ -296,7 +296,7 @@ comp.r4 ID 5678 material code 5 LOS 75
         named reference(s):        hull.r
         above/below/left/right:    below
         offset:                    33.4
-                (e.g., "at 1.0,3.5,2.1" or "below hull.r offset 33.4" or "at hull.r", etc)        
+                (e.g., "at 1.0,3.5,2.1" or "below hull.r offset 33.4" or "at hull.r", etc)
 
   Text:
         user-defined string:     my awesome component -----> .
@@ -372,7 +372,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 * make bu_basename/bu_dirname not allocation memory.  have caller pass
   buffer in as a parameter with size ala snprintf/memcpy.
 
-* solids regression is failing in optimized builds  - 3 off by many. 
+* solids regression is failing in optimized builds  - 3 off by many.
   Looks to be floating fuzz overlap/pick issue? pixel 131329.
 
 * restore libged axis/grid commands code made in r44153 but with
@@ -589,7 +589,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 
   # same as mvall -f file.txt
   batch file.txt -exec "mvall \$*"
-  
+
   # create an alternate hierarchy based on some mapping file
   batch file.txt -exec "g \$*"
 
@@ -603,7 +603,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   # parent assembly and set a specified material ID
   search . -name "*.r" -exec batch file.txt -field 1 -eq {} -exec "g \$1 {}" -exec "mater {} \$3" \;
 
-  # run awk, get 4th column, run sed to change name, 
+  # run awk, get 4th column, run sed to change name,
   batch file.txt -awk '{print $4}' -sed 's/^r\.(.*)/\1\.r/g' -exec "mv \$1 \$$"
 
   # outside of MGED, the above would have been similar to:
@@ -670,7 +670,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 * complete conversion of existing manual pages into docbook format
 
   note that Eric Raymond's "manlifter" (a driver for his "doclifter")
-  can be used to aid the project (see 
+  can be used to aid the project (see
   http://www.catb.org/~esr/doclifter/)
 
 * add an option to bot_dump for outputting surface normals.  Make sure
@@ -751,7 +751,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   number of cores and speed of cpu increases.  resource contention on
   semaphores slows everything down substantially.
 
-* g_qa (gqa in mged) needs to be more informative when it runs - 
+* g_qa (gqa in mged) needs to be more informative when it runs -
   needs a header letting you know what it's doing, and if possible
   a "progress report" for longer runs that provides some notion of
   how much of the total job is done.
@@ -763,7 +763,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   ignore or not ignore them, ideally the latter.
 
 * libfb needs to have the fb_open/close_existing functions refactored
-  into the function table and hav the #ifdef sections removed.
+  into the function table and have the #ifdef sections removed.
 
 * integrate library tester into regression suite that validates
   exported library symbols published in headers.  make sure they at
@@ -841,7 +841,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 * deprecate either orot or rotobj
 
 * refactor mged's signal handling to make it possible to safely
-  interrtupt long-running commands
+  interrupt long-running commands
 
 * add a -color option to all mged commands that draw geometry (B, eid,
   and E come to mind)
@@ -874,7 +874,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * readd support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
-  command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901 
+  command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
 
 * make Mac OS X universal binaries actually work.
 
@@ -1035,7 +1035,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 * add verification and validation tests confirming behavior of the
   ray-tracer and computations of area, mass, volume, etc
 
-* testing suite for all binaries: 
+* testing suite for all binaries:
 
      for cmd2 in $(for cmd in `find . -name Makefile.am | xargs cat | perl -pi -e 's/\\\\\n//g'| grep -E "PROGRAMS ?=" | sed 's/.*=//g'` ; do echo $cmd ; done | sort | uniq ) ; do echo command: $cmd2 ; done
 
@@ -1230,7 +1230,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 * design plugin system to allow domain specific tools (say, for example,
   a tool to create propeller parts) to identify themselves and their
   features to BRL-CAD, and to allow BRL-CAD to incorporate those features
-  as an integrated part of interaction environments.  
+  as an integrated part of interaction environments.
 
 * see if it is possible to use tec/ehy primitives to create a proc-db
   for airfoil/wing shapes.  Interesting possibilities with boolean combinations
@@ -1240,17 +1240,17 @@ comp.r4 ID 5678 material code 5 LOS 75
 * incorporate some variety of spatial partitioning into the facetize command
   (may involve just rewriting it) to try and realize MUCH faster tessellation
   of CSG geometry.  Current routines are doing a lot of unnecessary work that
-  tends to result in explosive completion times for worst-case scenarios - 
+  tends to result in explosive completion times for worst-case scenarios -
   try to get closer to the "only do the work we need to" ideal.  Once a new
   idea is proven in that command, it should be made into a libgcv routine
   and convertors/other commands retargeted to use it.
 
-* write up some documentation on other build tools besides make - 
+* write up some documentation on other build tools besides make -
   CMake supports other generators, wouldn't hurt to detail how to
   trigger builds in them (MSVC is partially covered, make sure to
   coverage is complete - others include Eclipse, XCode once we get
-  the kinks ironed out there, CodeBlocks.  New experimental ninja 
-  build tool and its (also experimental) CMake support are promising - 
+  the kinks ironed out there, CodeBlocks.  New experimental ninja
+  build tool and its (also experimental) CMake support are promising -
   if/when CMake support goes mainstream, document that too.)
 
 * refactor .density file and density database reading code in files
@@ -1265,7 +1265,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * we need to define a libbu api for option handling that supports more
   features than getopt:
-   
+
   - need support for long options (e.g. --help and --color, not just -h
     and -C)
 
@@ -1277,11 +1277,11 @@ comp.r4 ID 5678 material code 5 LOS 75
       there to other formats than vice versa.
 
     + should support printing out the options and documentation in formatted
-      structures that allow our build system to build the command and have 
+      structures that allow our build system to build the command and have
       the command itself supply a generated snippit of text or markup that
-      could be incorporated into the final document - e.g. the DocBook 
+      could be incorporated into the final document - e.g. the DocBook
       man page for a command would be set up to expect the <command>_options.xml
-      file generated by <command> --print-options DocBook (or some other 
+      file generated by <command> --print-options DocBook (or some other
       mechanism, that's just an idea) and the CMake build could first build and
       then run the command at compilation time to provide the absolute most
       current option listing and short descriptions for the other docs.
@@ -1295,7 +1295,7 @@ comp.r4 ID 5678 material code 5 LOS 75
     definitions API - i.e. in the C definition of an option, there could
     be optional parameters to indicate the type and bounds of valid input
     to that option.  Won't always be possible, but may be a good feature
-    to have if it can save lots of repetivite coding of bounds checking in
+    to have if it can save lots of repetitive coding of bounds checking in
     programs.
 
   *might* be worth taking a look at http://rpm5.org/files/popt/ to see if
@@ -1475,7 +1475,7 @@ LIBPC
 * Make better pc_pc_set, pc_param and pc_constraint structures
 instead of the current ugly ones.
 
-* Test constraint solution via Read->Generate->Solve->Update routine 
+* Test constraint solution via Read->Generate->Solve->Update routine
 
 * Implement Non-deterministic solution techniques:  Backjumping,
 Backmarking
@@ -1484,7 +1484,7 @@ Backmarking
 
 * Check STL structures in public API ; wrapping with bu_list
 
-* Boost constrained_value based functor integration for 'compiled' 
+* Boost constrained_value based functor integration for 'compiled'
 constraints
 
 * Implement Hypergraph representation system
@@ -1574,15 +1574,15 @@ CMAKE
      printout, was my (CY) understanding...
 
 * move cmake documentation files into place
-   
-  -- Have done so now that the deprecation warning is directing 
-     users to INSTALL, but will still need to look over old 
+
+  -- Have done so now that the deprecation warning is directing
+     users to INSTALL, but will still need to look over old
      INSTALL docs when reviewing option documentation coverage.
 
 * investigate ignoring .hidden directories/files from dist packing so
   that internal build directories can be used instead of external ones
 
-  -- is this needed?  what's not working with make package and 
+  -- is this needed?  what's not working with make package and
      make package_source?
 
 ODDITIES
@@ -1672,7 +1672,7 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 
     png-pix   file.png > file.pix
     pix-bw  < file.pix > file.bw
- 
+
   (desired style to be determined)
 
 FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
@@ -1714,7 +1714,7 @@ DOCUMENTATION
 
 * Introduction to BRL-CAD Tutorial
 	mged, rt, pix-png, rtcheck, rtarea, rtweight, g_qa, fbserv,
-	nirt.  Succint overview of less than 10% of the core
+	nirt.  Succinct overview of less than 10% of the core
 	functionality in 10 pages or less (plus pictures).
 
 * Technical Overview of BRL-CAD
