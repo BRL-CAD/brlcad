@@ -245,7 +245,7 @@ received corrections and improvements.  The introductory article
 * added man documentation command to archer - Brandon Hinesley
 * improved File->New dialog in mged - Brandon Hinesley
 * all cmake files now included in dist - Erik Greenwald, Sean Morrison
- 
+
 
 ----------------------------------------------------------------------
 --- 2011-05-27  Release 7.20.0                                     ---
