@@ -904,6 +904,7 @@ static struct to_cmdtab to_cmds[] = {
     {"exists",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_exists},
     {"faceplate",	"center_dot|prim_labels|view_params|view_scale color|draw [val(s)]", TO_UNLIMITED, to_faceplate, GED_FUNC_PTR_NULL},
     {"facetize",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_facetize},
+    {"voxelize",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_voxelize},
     {"fb2pix",  	"[-h -i -c] [-s squaresize] [-w width] [-n height] [file.pix]", TO_UNLIMITED, to_view_func, ged_fb2pix},
     {"find_pipept",	"pipe x y z", 6, to_view_func, ged_find_pipept_nearest_pt},
     {"fontsize",	"[fontsize]", 3, to_fontsize, GED_FUNC_PTR_NULL},

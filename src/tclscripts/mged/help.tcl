@@ -168,6 +168,7 @@ set mged_help_data(eye_pt)	$helplib_data(vo_eye)
 set mged_help_data(e_muves)	{{MUVES_component_1 MUVES_component2 ...}	{DEPRECATED: display listed MUVES components/systems}}
 set mged_help_data(facedef)	{{####}	{define new face for an arb}}
 set mged_help_data(facetize)	{{[-mntT] [-P#] new_obj old_obj(s)}	{convert objects to faceted BOT objects (or NMG for -n option, with -m for marching cubes) at current tol}}
+set mged_help_data(voxelize)	{{} {}}
 set mged_help_data(form)	$helplib_data(wdb_form)
 set mged_help_data(fracture)	{{NMGsolid [prefix]}	{fracture an NMG solid into many NMG solids, each containing one face}}
 set mged_help_data(g)		$helplib_data(wdb_group)
