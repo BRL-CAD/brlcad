@@ -170,6 +170,9 @@ Cad_AppInit(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
+    /* Initialize command history object */
+    Cho_Init(interp);
+
     return TCL_OK;
 }
 
