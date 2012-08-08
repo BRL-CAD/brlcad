@@ -20,8 +20,8 @@ made (Feb-87, July-87), along with two editions of the associated
 400 page manual. The package includes a powerful  solid  modeling
 capability and a network-distributed image-processing capability.
 This software is now running at over  300  sites.   It  has  been
-distributed to 42 acedemic institutions in twenty states and four
-contries including Yale, Princeton, Stanford, MIT, USC, and UCLA.
+distributed to 42 academic institutions in twenty states and four
+countries including Yale, Princeton, Stanford, MIT, USC, and UCLA.
 The University of California - San Diego is using the package for
 rendering  brains  in  their  Brain  Mapping   Project   at   the
 Quantitative Morphology Laboratory.  75 different businesses have
@@ -30,7 +30,7 @@ companies   including:   General  Motors,  AT&T,  Crysler  Motors
 Corporation,  Boeing,  McDonnell   Douglas,   Lockheed,   General
 Dynamics,  LTV  Aerospace & Defense Co., and Hewlett Packard.  16
 government organizations representing all  three  services,  NSA,
-NASA,  NBS  and  the Veterns Administration are running the code.
+NASA,  NBS  and  the Veterans Administration are running the code.
 Three of the four national laboratories have copies  of  the  BRL
 CAD  package.   More  than  500  copies  of  the manual have been
 distributed.
@@ -99,7 +99,7 @@ o X-Ray calculation
 BRL-CAD source code has been distributed to approximately 300
 computer sites, several dozen outside the US.
 
-With the addtion of the PATCH geometry, requested and funded by the JTCG,
+With the addition of the PATCH geometry, requested and funded by the JTCG,
 the BRL-CAD environment will provide the superset environment of the
 combined Army/Navy/Air-Force vulnerability communities.
 
