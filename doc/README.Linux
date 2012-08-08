@@ -15,10 +15,10 @@ PPC64 Linux
 
 Parallel Builds
 ---------------
-BRL-CAD compilation can take advantage of multiple CPUs.  With 
+BRL-CAD compilation can take advantage of multiple CPUs.  With
 Make based builds, this is done using the "-j" flag - e.g. a
 six core machine will build faster using "make -j6" to utilize
-all cores.  
+all cores.
 
 
 64-bit Compile (on a platform that defaults to 32-bit)
@@ -32,7 +32,7 @@ cmake ../brlcad -DBRLCAD_WORD_SIZE=32BIT
 cmake ../brlcad -DBRLCAD_WORD_SIZE=64BIT
 
 * Note that in both of the above situations you need both a compiler that
-works in the alternate mode and system libraries of the correct type. 
+works in the alternate mode and system libraries of the correct type.
 
 
 Arch Linux
@@ -66,11 +66,11 @@ headers installed:
   apt-get install xserver-xorg-dev libx11-dev libxi-dev libxext-dev
 
 Other development packages needed to build on Debian-based platforms:
-  
+
   for building the Tcl/Tk libraries:  libfontconfig-dev
-  
+
   for OpenGL: libglu1-mesa-dev
-  
+
 Note there is a supported Debian package generation script in file
 'sh/make_deb.sh' which can function only on a Debian or Ubuntu system.
 It can be used like so:
@@ -78,10 +78,10 @@ It can be used like so:
   $ cd <BRL-CAD source directory>
 
   # get help for the script:
-  $ ./sh/make_deb.sh 
+  $ ./sh/make_deb.sh
 
   # create a binary package:
-  $ ./sh/make_deb.sh -b 
+  $ ./sh/make_deb.sh -b
 
 You can customize the script's cmake build options by modifying the
 file 'misc/debian/rules'.  Note that the BRL-CAD source directory
