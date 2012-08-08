@@ -8,8 +8,8 @@ I encountered a rather perplexing phenomenon.  The Cray-2 and XMP
 seem to give very slightly different answers for floating point
 divisions.  I would have expected them to give the same answers.
 
-For example, the calcuation 196.0 / 112.0 gives "1.75" on both
-machines, but differing by one bit, ie:
+For example, the calculation 196.0 / 112.0 gives "1.75" on both
+machines, but differing by one bit, i.e.:
 
 XMP	4001E00000000000
 Cray-2	4001DFFFFFFFFFFF
@@ -39,7 +39,7 @@ ISSUES
 *)  Is this behavior intrinsic to the "hardware" (repirocal) divide
 units, or is the rounding behavior programmable?
 
-*)  For this particular calcuation, the LSB behavior is not significant.
+*)  For this particular calculation, the LSB behavior is not significant.
 However, for some iterative calculations, the LSB behavior may be
 significant.  It would be useful to understand why the two Crays give
 differing results.  I can live with a difference, as long as I know
