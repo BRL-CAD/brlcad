@@ -44,7 +44,7 @@ mass point 1 corresponds to "m1" on the diagram, and mass point 12 is
 "m12" on the diagram.  The position of a two additional points (0 and
 13) are guessed within the program, with mass point 0 being the outer
 edge of the breach block, and mass point 13 being the muzzle end, but
-these two points are not specified in the input file.  Eg,
+these two points are not specified in the input file.  E.g.,
 
 TIME 0.02
 1 0.01 0.00035 0.00000075
