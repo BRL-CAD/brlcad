@@ -102,7 +102,7 @@ blank_line     = re.compile( r'(?m)^\s+$' )
 #    --- OLDFILENAME OLDTIMESTAMP
 #    +++ NEWFILENAME NEWTIMESTAMP
 #    @@ -OLDSTART,OLDLENGTH +NEWSTART,NEWLENGTH @@
-#    ... Changes where preceeding "+" is add, "-" is remove, " " is unchanged.
+#    ... Changes where preceding "+" is add, "-" is remove, " " is unchanged.
 #
 #    ",OLDLENGTH" and ",NEWLENGTH" are optional  (they default to 1).
 #    GNU unified diff format doesn't normally output "Index:"; you use
@@ -126,7 +126,7 @@ blank_line     = re.compile( r'(?m)^\s+$' )
 # We're only supporting unified format directly; if you have an older diff
 # format, use "patch" to apply it, and then use "diff -u" to create a
 # unified format.
-# 
+#
 
 diff_index_filename = re.compile( r'^Index:\s+(?P<filename>.*)' )
 diff_newfile = re.compile( r'^\+\+\+\s(?P<filename>.*)$' )
@@ -451,7 +451,7 @@ def extract_c_parameters(text, pos=0):
 # so will get confused by patterns like  gettext("hi") + function("bye")
 # In practice, this doesn't seem to be a problem; gettext() is usually
 # wrapped around the entire parameter.
-# The ?s makes it posible to match multi-line strings.
+# The ?s makes it possible to match multi-line strings.
 gettext_pattern = re.compile(r'(?s)^\s*' + 'gettext' + r'\s*\((.*)\)\s*$')
 undersc_pattern = re.compile(r'(?s)^\s*' + '_(T(EXT)?)?' + r'\s*\((.*)\)\s*$')
 
@@ -1108,7 +1108,7 @@ c_ruleset = {
 
   "gsignal|ssignal":
      (normal, 2,
-      "These functions are considered obsolete on most systems, and very non-poertable (Linux-based systems handle them radically different, basically if gsignal/ssignal were the same as raise/signal respectively, while System V considers them a separate set and obsolete)",
+      "These functions are considered obsolete on most systems, and very non-portable (Linux-based systems handle them radically different, basically if gsignal/ssignal were the same as raise/signal respectively, while System V considers them a separate set and obsolete)",
       "Switch to raise/signal, or some other signalling approach",
       "obsolete", "", {}),
 
@@ -1265,7 +1265,7 @@ def process_c_file(f, patch_infos):
       return
     try:
       input = open(f, "r")
-    except: 
+    except:
       print "Error: failed to open", h(f)
       sys.exit(1)
 
@@ -1549,7 +1549,7 @@ flawfinder [--help] [--context]  [-c]  [--columns | -C] [--html]
               line number) of each hit; this is shown after the line number
               by adding a colon and the column number in the line (the first
               character in a line is column number 1).
-  
+
   --html      Display as HTML output.
 
   -m X
@@ -1584,7 +1584,7 @@ flawfinder [--help] [--context]  [-c]  [--columns | -C] [--html]
   --D
   --dataonly  Don't display the headers and footers of the analysis;
               use this along with --quiet to get just the results.
-  
+
   --listrules List the rules in the ruleset (rule database).
 
   --loadhitlist=F
