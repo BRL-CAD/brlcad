@@ -6,7 +6,7 @@ INTRODUCTION
 MGED is the latest BRL graphics editor and is similar in operation
 to its predecessors, GED and VGED.
 This booklet is intended to serve as a guide to MGED users and assumes
-some general knowledge of the GED envirnoment.
+some general knowledge of the GED environment.
 For further GED background, read BRL report ARBRL-TR-02480.
 This booklet will cover the major differences between MGED and VGED/GED.
 All the commands will be discussed and a command summary table presented.
@@ -31,7 +31,7 @@ Tektronix 4014, or "nu" for any alphanumeric terminal.
 During the editing process the processor being used can be dropped by
 entering "release".
 At this point the present processor is dropped and the null one is put into use.
-To use another processer, enter "attach type" where type is vg, mg, rat, or tek.
+To use another processor, enter "attach type" where type is vg, mg, rat, or tek.
 .NH
 DATA STRUCTURE DIFFERENCES AND CONVERSIONS
 .PP
@@ -71,7 +71,7 @@ As before, the only way out of solid editing is to accept or
 reject what you have done (see Figure 1).
 .bp
 .sp 6i
-This page saved for fiqure 1.
+This page saved for figure 1.
 .bp
 .sp 5
 .NH
@@ -650,9 +650,9 @@ This command will "fix" (restart) the display device after a hardware error.
 .ce
 rt <-fxxx>
 .sp 2
-This command will produce a color shaded iamge of objects on the display.
+This command will produce a color shaded image of objects on the display.
 This color shaded image will appear on a framebuffer (IKONAS).
-The resolution of the iamge (number of rays) is equal to xxx from the "-f"
+The resolution of the image (number of rays) is equal to xxx from the "-f"
 option.
 If the -f option is absent, 64x64 ray resolution will be used.
 .bp
@@ -786,7 +786,7 @@ The following is a listing of the remaining acceptable strings for
 
        reset          reset the view
        save           save the present view
-       restore        restor the saved view
+       restore        restore the saved view
        adc            display the angle-distance cursor
        oill           begin object illumination (pick)
        sill           begin solid illumination (pick)
@@ -859,11 +859,11 @@ most buttons and three knobs have dual functions.
 .PP
 To toggle the functions of the buttons, use the upper right button (toggle button).
 When the light on this button is ON, the functions listed on the RIGHT above
-each button is the current funtion.
+each button is the current function.
 When the light on the "toggle" button is OFF, the functions labeled on the
 LEFT are then in effect.
 The left/right meaning of these buttons is grouped generally according to
-viewing funtions on the left and editing functions on the right.
+viewing functions on the left and editing functions on the right.
 .PP
 A similar situation is in effect in the case of the Megatek knobs.
 The second function of the first three knobs is only in effect when
@@ -904,7 +904,7 @@ The procedure is as follows:
 
 Since there are no knobs or buttons on the tek4014 class of terminals, one
 is forced to use the "press" and "knob" commands to emulate these peripherals.
-Other commands whcih can/should be used are:
+Other commands which can/should be used are:
 
 .nf
            ill     put up a desired path
