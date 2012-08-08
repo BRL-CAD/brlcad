@@ -7,13 +7,13 @@ Benchmark suite.  Through the 80's and most of the 90's, BRL-CAD was
 compiled for and maintained on VGR running 4.3 BSD until the hardware
 was finally decommissioned.
 
-BRL-CAD has been successfuly compiled for and run under the simh
+BRL-CAD has been successfully compiled for and run under the simh
 Computer History Simulation Project's VAX simulator.  Using this
 simulator, it's feasible to install one of the BSD variants
-(e.g. NetBSD) and the GCC compiler.  
+(e.g. NetBSD) and the GCC compiler.
 
-No one has tried bootstrapping CMake on a VAX simh NetBSD image yet, so it 
-is not known what problems may occur - the basic boostrap procedure is:
+No one has tried bootstrapping CMake on a VAX simh NetBSD image yet, so it
+is not known what problems may occur - the basic bootstrap procedure is:
 
 1.  Download the source from http://www.cmake.org/cmake/resources/software.html
 2.  unzip the tarball: gunzip cmake-X.Y.Z.tar.gz
@@ -23,12 +23,12 @@ is not known what problems may occur - the basic boostrap procedure is:
 6.  gmake
 7.  gmake install
 
-As of the last effort involved in compiling BRL-CAD under this 
-environment (using GNU Autotools), there were a few steps 
+As of the last effort involved in compiling BRL-CAD under this
+environment (using GNU Autotools), there were a few steps
 necessary that included the following:
 
-  - Define the preprocessor symbol "vax"
-	
+  - Define the preprocessor symbol "vax".
+
   - Disable compilation of libfft and sig.  The FFT library builds
     convolution kernels that are too large for the usual VAX memory
     sizes.
