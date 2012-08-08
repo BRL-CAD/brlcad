@@ -2918,8 +2918,8 @@ triangle_intersection(const struct Triangle &TriA, const struct Triangle &TriB, 
 	std::swap(t[1], t[0]);
     if (t[2] > t[3])
 	std::swap(t[3], t[2]);
-    int left = (int)std::max(t[0], t[2]);
-    int right = (int)std::min(t[1], t[3]);
+    double left = std::max(t[0], t[2]);
+    double right = std::min(t[1], t[3]);
     if (left > right)
 	return false;
     center = intersect.PointAt((left+right)/2);
