@@ -195,7 +195,7 @@ BRL-CAD to IGES
  *   1.  Intersection - for a point, there are three possible categories of of intersection:
  *   	    * Identical - point values identical and all bound values identical
  *
- *                                              * * * * * * * * 
+ *                                              * * * * * * * *
  *                                              *             *
  *                                              *    1   2    *
  *                                              *      *      *
@@ -206,8 +206,8 @@ BRL-CAD to IGES
  *   	    * Contained - values not all identical but bounds of the point of interest all smaller than bounds of
  *   	                  point it is being compared to
  *
- *             		                         
- *                            * * * * * * * * * *             * * * * * * * * * * 
+ *
+ *                            * * * * * * * * * *             * * * * * * * * * *
  *                            *        1        *             *                 *
  *                            *       * * * * * *             *     * * * * *   *
  *                            *       *       * *             *     *  1    *   *
@@ -222,26 +222,26 @@ BRL-CAD to IGES
  *   	    		  bound of one point is equal to the lower bound of the other - this is defined to be
  *   	    		  overlapping.)
  *
- *                              
- *             	        * * * * * * * *              * * * * * * * *              * * * * * * * *              
- *             	        *             *              *             *              *             *              
- *                      *      1      *              *   * * * * * * * * *        *   * * * * * * * * *        
- *                      *     * * * * * * * *        *   *  1      *     *        *   *  1      *     *        
- *                      *     *       *     *        *   *         *     *        *   *         *     *        
- *                      * * * * * * * *     *        * * * * * * * *     *        *   *      2  *     *        
- *                            *      2      *            *        2      *        * * * * * * * *     *        
- *                            *             *            *               *            *               *        
+ *
+ *             	        * * * * * * * *              * * * * * * * *              * * * * * * * *
+ *             	        *             *              *             *              *             *
+ *                      *      1      *              *   * * * * * * * * *        *   * * * * * * * * *
+ *                      *     * * * * * * * *        *   *  1      *     *        *   *  1      *     *
+ *                      *     *       *     *        *   *         *     *        *   *         *     *
+ *                      * * * * * * * *     *        * * * * * * * *     *        *   *      2  *     *
+ *                            *      2      *            *        2      *        * * * * * * * *     *
+ *                            *             *            *               *            *               *
  *                            * * * * * * * *            * * * * * * * * *            * * * * * * * * *
- *                                              
+ *
  *
  *   2.  Outside - "If the points are not identical in value and/or error bounds, is the point of interest and its error
- *       bounds contained or overlapping with the comparison point, or vice versa?  If not, the point of interest is 
+ *       bounds contained or overlapping with the comparison point, or vice versa?  If not, the point of interest is
  *       outside the comparison point.
  *
  *       Contained and Overlapping points present a problem.  Take the case where two points have an overlapping bound
  *       and a third point must decide its relationship with each of them:
  *
- *                                              * * * * * * * * 
+ *                                              * * * * * * * *
  *                                              *             *
  *                                              *      1      *
  *                                              *             *
@@ -252,12 +252,12 @@ BRL-CAD to IGES
  *                            	        *             *   *             *
  *                            	        *             *   *             *
  *                            	        * * * * * * * *   * * * * * * * *
- *                                    
+ *
  *       Point 1 and Point 2 overlap and may intersect.  When Point 3 evaluates its relationships with Point 1 and
  *       Point 2, it finds that it overlaps and may intersect Point 1, but it does NOT overlap Point 3.  This means
  *       tht Point 1 may intersect Point 2 OR Point 3, but NOT both at the same time.  Any assumption of equality
  *       involving any of these three points must decide how to handle this situation, and the decision must be both
- *       consistent and reproducable.  The possible decisions are:
+ *       consistent and reproduceable.  The possible decisions are:
  *
  *       1 = 2, 1 != 3
  *       1 != 2, 1 = 3
@@ -267,17 +267,17 @@ BRL-CAD to IGES
  *       points which might impact the decisions of which points are identical in this particular case) and resolve the
  *       question amongst all of them.  One possibility would be to assemble all the guaranteed non-equalities among
  *       the set, search for the shortest distance between values among the remaining possible relationships, and assign
- *       intersection status based on those results.  (This may not be sufficient - bounding box size may also be  
- *       important.)  For the original two points supplied, the question of intersection or non-intersection is now 
+ *       intersection status based on those results.  (This may not be sufficient - bounding box size may also be
+ *       important.)  For the original two points supplied, the question of intersection or non-intersection is now
  *       resolved as long as no geometry changes are made to any element that has bounds overlapping their individual
  *       bound.
- *   	    		  
+ *
  *       Once this near space evaluation is done, each point's list of intersecting and non-intersecting points is updated.
  *       A query routine with two points can first check the points' own intersection/non-intersection lists to see if
  *       the answer is already pre-determined.  If it is not, determining via the bounds inside/outside is straightforward
  *       and deterministic and it cannot be intersecting.
  *
  *       One question is what to do when the geometry DOES change. New geometry may potentially change the decisions
- *       on what is and is not intersecting - perhaps it should?  Potential trouble there with overlaping vs. non-
+ *       on what is and is not intersecting - perhaps it should?  Potential trouble there with overlapping vs. non-
  *       overlapping regions.
  */
