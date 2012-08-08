@@ -5,7 +5,7 @@ Building on IRIX is one of the most tricky platforms to support
 without installing up-to-date compilation tools.  That said, the build
 has and should work just fine with either the MIPSPro or GCC
 compilers.  The best performance is usually achieved with the MIPSPro
-compiler, whereas GCC will compile faster with less fuss. 
+compiler, whereas GCC will compile faster with less fuss.
 
 Kitware provides CMake binaries for IRIX64 platforms:
 http://www.cmake.org/cmake/resources/software.html
@@ -13,13 +13,13 @@ http://www.cmake.org/cmake/resources/software.html
 
 Parallel building
 -----------------
-For parallel compilation on IRIX, the -P option enables parallel 
-build mode and the PARALLEL environment variable sets the number 
+For parallel compilation on IRIX, the -P option enables parallel
+build mode and the PARALLEL environment variable sets the number
 of CPUs (default is two):
 
 PARALLEL=4 make -P
 
- 
+
 Potential problems you may encounter
 ------------------------------------
 
