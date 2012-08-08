@@ -39,15 +39,15 @@
 
 digraph BRLCADDeps{
 	//overlap=scale
-	rankdir=LR;	
+	rankdir=LR;
 	label="BRL-CAD Open Source Ecosystem\nClifford Yapp October 2011";
 
 	{
 	     node [shape=plaintext, fontsize=12];
 	     "BRL-CAD Applications" -> "BRL-CAD Libraries" -> "3rd Party Resources" -> "System Requirements";
 	};
-	
-	
+
+
 	// Libraries
 
 	tcltk [color = "blue", style = bold, shape = box, label = "Tcl/Tk"];
@@ -56,7 +56,7 @@ digraph BRLCADDeps{
 	tktable [color = "blue", style = bold, shape = box, label = "tktable"];
 	togl [color = "blue", style = bold, shape = box, label = "Tk OpenGL widget (togl)"];
 	incrTcl [color = "blue", style = bold, shape = box, label = "IncrTcl"];
-	
+
 
 	boost [color = "blue", style = bold, shape = box, label = "Boost"];
 	libpng [color = "blue", style = bold, shape = box, label = "libpng"];
@@ -90,9 +90,9 @@ digraph BRLCADDeps{
 	//apr [color = "purple", style = bold, shape = box, label = "Apache Portable Runtime"];
 	//uuid [color = "purple", style = bold, shape = box, label = "Universally Unique Identifiers (OSSP uuid)"];
 	sqlite [color = "purple", style = bold, shape = box, label = "SQLite"];
-	
+
 	{ rank = same; "3rd Party Resources"; subversion; sqlite; }
-	
+
 	// System (not bundled)
 	X11 [color = "red", style = bold, shape = box, label = "X11"];
 	autotools [color = "red", style = bold, shape = box, label = "GNU Autotools"];
@@ -105,7 +105,7 @@ digraph BRLCADDeps{
 	xsltproc [color = "red", style = bold, shape = box, label = "XSLT processor (xsltproc)"];
 	yacc [color = "red", style = bold, shape = box, label = "Yacc (GNU Bison/byacc)"];
 	crun [color = "red", style = bold, shape = box, label = "C/C++ Runtime"];
-	
+
 	{ rank = same; "System Requirements"; X11; autotools; cmake; crun; fop; lex; make; mesa; unixtools; xsltproc; yacc; }
 
 	// BRL-CAD components
@@ -118,7 +118,7 @@ digraph BRLCADDeps{
 	libtclcad [color = "green", style = bold, shape = box, label = "Tcl CAD library (libtclcad)"];
 	libtermio [color = "green", style = bold, shape = box, label = "Terminal IO library (libtermio)"];
 
-	{ rank = same; "BRL-CAD Libraries"; libbu; libpc; librt; libdm; libged; libtclcad; libtermio; }	
+	{ rank = same; "BRL-CAD Libraries"; libbu; libpc; librt; libdm; libged; libtclcad; libtermio; }
 
 	// BRL-CAD Application Categories
 	geomedit [color = "green", style = bold, shape = box, label = "Geometry Editing"];
@@ -127,8 +127,8 @@ digraph BRLCADDeps{
 	imageproc [color = "green", style = bold, shape = box, label = "Image Processing"];
 	experimental [color = "green", style = bold, shape = box, label = "Experimental Work"];
 
-	{ rank = same; "BRL-CAD Applications"; geomedit; geomconv; datautil; imageproc; experimental; }	
-	
+	{ rank = same; "BRL-CAD Applications"; geomedit; geomconv; datautil; imageproc; experimental; }
+
 
 	/* Relationships */
 
@@ -137,25 +137,25 @@ digraph BRLCADDeps{
 
 	libpc -> boost;
 	libpc -> opennurbs;
-	
+
 	librt -> libregex;
 	librt -> tnt;
 	librt -> opennurbs;
-	
+
 	libdm -> tcltk;
 	libdm -> libpng;
 
 	libfb -> tcltk;
-	
+
 	libged -> libregex;
 	libged -> libpng;
-	
+
 	libtclcad -> tcltk;
 	libtclcad -> incrTcl;
 	libtclcad -> libpng;
 
 	libtermio -> libtermlib;
-	
+
 	experimental -> osl;
 	experimental -> oiio;
 	experimental -> openexr;
@@ -195,6 +195,6 @@ digraph BRLCADDeps{
 	imageproc -> libbu;
 	imageproc -> libutahrle;
 	imageproc -> zlib;
-	
 
-}	
+
+}
