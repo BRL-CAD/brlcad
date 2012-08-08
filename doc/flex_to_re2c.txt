@@ -98,7 +98,7 @@ symbols implicitly include unmarked rules. %x is used to specify
     /* unmarked rules have initial AND inclusive states */
     <INITIAL,S1,S2>/rule3/
 
-re2c does not allow unmakred rules if start conditions are used! Each rule has
+re2c does not allow unmarked rules if start conditions are used! Each rule has
 only the marked conditions and no others. Thus, if your flex app uses
 inclusive (%s) symbols, you will need to explicitly mark any unmarked rules
 with the inclusive symbols.
