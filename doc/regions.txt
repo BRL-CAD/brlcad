@@ -151,7 +151,7 @@ are finished it is time to create the region[s], which tell how to combine
 the solids to represent the object.  The region[s] are then given
 the desired item/air and material codes.  I usually use the "edcodes"
 command to do this.  The region[s] are then put into a group, usually
-for function.  A group is just a collection of objectslity definition.
+for function.  A group is just a collection of objects
 for functionality definition.  A group really has no operation as such,
 and is really just a collection of objects.
 
@@ -256,7 +256,7 @@ a single region if possible.  Back in the days of GIFT, it was common
 practice to describe a component with more than one region.  We tried to
 stay away from complex regions mainly because the more complicated the
 region, the harder it is to figure out what is going on and what effects
-a single change might have. Therfore, a component was often a series of
+a single change might have. Therefore, a component was often a series of
 simple regions with the same ident code.  I use the term "component" to
 refer to an object with a particular ident code, but I'm not sure this
 is still the accepted definition.  I have no qualms about letting "mged"
