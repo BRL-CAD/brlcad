@@ -151,7 +151,7 @@ Issues:
   more efficient edge checking, evaluation optimization, etc...
 
 
-The current issue seems to be that we're missing surfaces altogther or
+The current issue seems to be that we're missing surfaces altogether or
 getting extra intersections! or something funky is happening during
 trimming and edge checking. (BTW Pro/E seems to output overlapping
 surfaces, relying on the outer boundary loop to trim it - this implies
