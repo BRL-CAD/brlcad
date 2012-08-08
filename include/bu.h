@@ -524,10 +524,10 @@ BU_EXPORT extern int bu_cv_itemlen(int cookie);
  			exit
  		fi
  	fi
- 
+
  	while not done {
  		from = in;
- 
+
  		if (inIsHost == net) {
  			ntoh?(from, t1);
  			from = t1;
@@ -541,7 +541,7 @@ BU_EXPORT extern int bu_cv_itemlen(int cookie);
  			castdbl(from, to);
  			from = to;
  		fi
- 
+
  		if (outfmt == double) {
  			if (outIsHost == net) {
  				hton?(from, out);
@@ -1132,7 +1132,7 @@ typedef struct bu_list bu_list_t;
     ((struct structure *)(((struct bu_list *)(p))->back->back))
 
 /**
- * Return pointer to circular next element; ie, ignoring the list head
+ * Return pointer to circular next element; i.e., ignoring the list head
  */
 #define BU_LIST_PNEXT_CIRC(structure, p)	\
     ((BU_LIST_FIRST_MAGIC((struct bu_list *)(p)) == BU_LIST_HEAD_MAGIC) ? \
@@ -1140,7 +1140,7 @@ typedef struct bu_list bu_list_t;
      BU_LIST_PNEXT(structure, p))
 
 /**
- * Return pointer to circular last element; ie, ignoring the list head
+ * Return pointer to circular last element; i.e., ignoring the list head
  */
 #define BU_LIST_PPREV_CIRC(structure, p)	\
     ((BU_LIST_LAST_MAGIC((struct bu_list *)(p)) == BU_LIST_HEAD_MAGIC) ? \
@@ -1303,7 +1303,7 @@ typedef unsigned char bitv_t;
  * or an extra subtraction.
  *
  * Application code should *never* peek at the bit-buffer; use the
- * macros.  The external hex form is most signigicant byte first (bit
+ * macros.  The external hex form is most significant byte first (bit
  * 0 is at the right).  Note that MUVES does it differently.
  */
 struct bu_bitv {
@@ -2579,8 +2579,8 @@ BU_EXPORT extern struct bu_attribute_value_set *bu_avs_new(int len,
 							   const char *str);
 
 /**
- * If the given attribute exists it will recieve the new value,
- * othwise the set will be extended to have a new attribute/value
+ * If the given attribute exists it will receive the new value,
+ * otherwise the set will be extended to have a new attribute/value
  * pair.
  *
  * Returns -
@@ -2984,7 +2984,7 @@ BU_EXPORT extern size_t bu_file_glob(const char *pattern, char ***matches);
 
 /**
  * Call canonicalization routines to both expand and validate
- * a path name.  
+ * a path name.
  *
  * returns a pointer to the canonical path.  Caller must free
  * the path.
@@ -3040,7 +3040,7 @@ BU_EXPORT extern size_t bu_dir_list(const char *path, const char *pattern, char 
 
 /**
  * Call canonicalization routines to both expand and validate
- * a path name.  
+ * a path name.
  *
  * Returns a pointer to the canonical path. If resolved_path is
  * NULL, caller is responsible for freeing the returned path
@@ -3113,7 +3113,7 @@ BU_EXPORT extern char *bu_getcwd(char *buf, size_t size);
  *
  *   bin     - Directory containing binary applications
  *   lib     - Directory containing libraries
- *   include - Directory containing headers 
+ *   include - Directory containing headers
  *   data    - Directory containing shared data
  *   share   - Directory containing shared data
  *   doc     - Directory containing documentation
@@ -3211,12 +3211,12 @@ BU_EXPORT extern const char *bu_whereis(const char *cmd);
  @code
  	static int n = 0;
  	FILE *fp;
- 
+
  	fp = bu_fopen_uniq("writing to %s for results", "output%d.pl", n++);
  	...
  	fclose(fp);
- 
- 
+
+
  	fp = bu_fopen_uniq((char *)NULL, "output%d.pl", n++);
  	...
  	fclose(fp);
@@ -3358,7 +3358,7 @@ BU_EXPORT extern void bu_hist_pr(const struct bu_hist *histp, const char *title)
  *
  * Library routines for conversion between the local host 64-bit
  * ("double precision") representation, and 64-bit IEEE double
- * precision representation, in "network order", ie, big-endian, the
+ * precision representation, in "network order", i.e., big-endian, the
  * MSB in byte [0], on the left.
  *
  * As a quick review, the IEEE double precision format is as follows:
@@ -3376,7 +3376,7 @@ BU_EXPORT extern void bu_hist_pr(const struct bu_hist *histp, const char *title)
  *		msb of mantissa=1:  quiet NAN
  *
  * Note that neither the input or output buffers need be word aligned,
- * for greatest flexability in converting data, even though this
+ * for greatest flexibility in converting data, even though this
  * imposes a speed penalty here.
  *
  * These subroutines operate on a sequential block of numbers, to save
@@ -3674,7 +3674,7 @@ BU_EXPORT extern void bu_flog(FILE *, const char *, ...) _BU_ATTR_PRINTF23;
  *
  *  - %V and %#V have been added as valid conversions. Both expect a pointer to
  *    a struct bu_vls as their argument.
- *   
+ *
  *    %V is comparable to %[^]. It instructs bu_vsscanf to read arbitrary
  *    characters from the source and store them in the vls buffer. The default
  *    maximum field width is infinity.
@@ -3804,7 +3804,7 @@ BU_EXPORT extern void bu_ck_malloc_ptr(genptr_t ptr, const char *str);
 
 /**
  * Check *all* entries in the memory debug table for barrier word
- * corruption.  Intended to be called periodicly through an
+ * corruption.  Intended to be called periodically through an
  * application during debugging.  Has to run single-threaded, to
  * prevent table mutation.
  *
@@ -4025,7 +4025,7 @@ BU_EXPORT extern int bu_avail_cpus();
  * would be preferable.
  * Alas, very very few systems put the load average in /proc,
  * most still grunge the avenrun[3] array out of /dev/kmem,
- * which requires special privleges to open.
+ * which requires special privileges to open.
  */
 BU_EXPORT extern fastf_t bu_get_load_average();
 
@@ -4034,7 +4034,7 @@ BU_EXPORT extern fastf_t bu_get_load_average();
  * and should not be relied upon.  a future implementation will
  * utilize environment variables instead of temporary files.
  *
- * A general mechanism for non-privleged users of a server system to
+ * A general mechanism for non-privileged users of a server system to
  * control how many processors of their server get consumed by
  * multi-thread cruncher processes, by leaving a world-writable file.
  *
@@ -4348,7 +4348,7 @@ BU_EXPORT extern int bu_str_false(const char *str);
  * @param   v		the integer with the bits in it
  * @param   bits	a string which starts with the desired base (8 or 16)
  * as \\010 or \\020, followed by
- * words preceeded with embedded low-value bytes indicating
+ * words preceded with embedded low-value bytes indicating
  * bit number plus one,
  * in little-endian order, eg:
  * "\010\2Bit_one\1BIT_zero"
@@ -4804,7 +4804,7 @@ BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visi
  * whatever storage is needed to implement each semaphore.
  *
  * Note that these routines can't use bu_log() for error logging,
- * because bu_log() accquires semaphore #0 (BU_SEM_SYSCALL).
+ * because bu_log() acquires semaphore #0 (BU_SEM_SYSCALL).
  */
 
 /*
@@ -4958,7 +4958,7 @@ BU_EXPORT extern char *bu_vls_strdup(const struct bu_vls *vp);
  * Like bu_vls_strdup(), but destructively grab the string from the
  * source argument 'vp'.  This is more efficient than bu_vls_strdup()
  * for those instances where the source argument 'vp' is no longer
- * needed by the caller, as it avoides a potentially long buffer copy.
+ * needed by the caller, as it avoids a potentially long buffer copy.
  *
  * The source string is destroyed, as if bu_vls_free() had been
  * called.
@@ -5144,7 +5144,7 @@ BU_EXPORT extern int bu_vls_print_positions_used(const struct bu_vls *vp);
 BU_EXPORT extern void bu_vls_detab(struct bu_vls *vp);
 
 /**
- * Add a string to the begining of the vls.
+ * Add a string to the beginning of the vls.
  */
 BU_EXPORT extern void bu_vls_prepend(struct bu_vls *vp,
 				     char *str);
@@ -5220,7 +5220,7 @@ BU_EXPORT extern void bu_vlb_write(struct bu_vlb *vlb,
 
 /**
  * Reset the bu_vlb counter to the start of its byte array. This
- * essentially ignores any bytes currenty in the buffer, but does not
+ * essentially ignores any bytes currently in the buffer, but does not
  * free any memory.
  *
  * @param vlb Pointer to the bu_vlb structure to be reset
@@ -5376,7 +5376,7 @@ BU_EXPORT extern int bu_strncasecmp(const char *string1, const char *string2, si
  */
 
 /**
- * Escapes an input string with preceeding '\'s for any characters
+ * Escapes an input string with preceding '\'s for any characters
  * defined in the 'expression' string.  The input string is written to the
  * specified output buffer of 'size' capacity.  The input and output
  * pointers may overlap or be the same memory (assuming adequate space
@@ -5419,7 +5419,7 @@ BU_EXPORT extern int bu_strncasecmp(const char *string1, const char *string2, si
  *
  * A non-NULL output string is always returned.  This allows
  * expression chaining and embedding as function arguments but care
- * should be taken to free the dynamic memory beging returned when
+ * should be taken to free the dynamic memory being returned when
  * 'output' is NULL.
  *
  * If output 'size' is inadequate for holding the escaped input
@@ -5451,7 +5451,7 @@ BU_EXPORT extern char *bu_str_escape(const char *input, const char *expression, 
  *
  * A non-NULL output string is always returned.  This allows
  * expression chaining and embedding as function arguments but care
- * should be taken to free the dynamic memory beging returned when
+ * should be taken to free the dynamic memory being returned when
  * 'output' is NULL.
  *
  * If output 'size' is inadequate for holding the unescaped input
@@ -5499,7 +5499,7 @@ BU_EXPORT extern double bu_units_conversion(const char *str);
  * Given a conversion factor to mm, search the table to find what unit
  * this represents.
  *
- * To accomodate floating point fuzz, a "near miss" is allowed.  The
+ * To accommodate floating point fuzz, a "near miss" is allowed.  The
  * algorithm depends on the table being sorted small-to-large.
  *
  * Returns -
@@ -5562,7 +5562,7 @@ BU_EXPORT extern void bu_mm_cvt(const struct bu_structparse *sdp,
  * big-endian, twos-compliment fixed point, and IEEE floating point.
  *
  * Routines to insert/extract short/long's into char arrays,
- * independend of machine byte order and word-alignment.
+ * independent of machine byte order and word-alignment.
  * Uses encoding compatible with routines found in libpkg,
  * and BSD system routines htonl(), htons(), ntohl(), ntohs().
  *
@@ -5750,7 +5750,7 @@ BU_EXPORT extern long int bu_mread(int fd, void *bufp, long int n);
 /** @file libbu/hash.c
  *
  * @brief
- * An implimentation of hash tables.
+ * An implementation of hash tables.
  */
 
 /**
@@ -6066,7 +6066,7 @@ BU_EXPORT extern char **bu_dup_argv(int argc, const char *argv[]);
  * If insert is negative, the insertArgv array elements will be
  * prepended into the new argv array.  If insert is greater than or
  * equal to argc, the insertArgv array elements will be appended after
- * all duplicated elementes in the specified argv array.  Otherwise,
+ * all duplicated elements in the specified argv array.  Otherwise,
  * the insert argument is the position where the insertArgv array
  * elements will be merged with the specified argv array.
  */
