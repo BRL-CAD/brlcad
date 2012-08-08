@@ -36,7 +36,7 @@ f = 1.75, x4001e00000000000
 
 ISSUES
 
-*)  Is this behavior intrinsic to the "hardware" (repirocal) divide
+*)  Is this behavior intrinsic to the "hardware" (reciprocal) divide
 units, or is the rounding behavior programmable?
 
 *)  For this particular calculation, the LSB behavior is not significant.
