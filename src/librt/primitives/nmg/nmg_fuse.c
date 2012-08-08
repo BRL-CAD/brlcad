@@ -1179,14 +1179,14 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
     fastf_t tmp;
 
     /* rise over run arrays for the xz and yz planes */
-    fastf_t *edge_rr_xzp, *edge_rr_yzp;
+    fastf_t *edge_rr, *edge_rr_xzp, *edge_rr_yzp;
 
     /* index into all arrays sorted by the contents of array edge_rr_xyp */
     size_t *sort_idx_xyp;
 
     /* arrays containing special case flags for each edge in the xy, xz and yz planes */
     /* 0 = no special case, 1 = infinit ratio, 2 = zero ratio, 3 = point in plane (no ratio) */
-    char *edge_sc_xyp, *edge_sc_xzp, *edge_sc_yzp;
+    char *edge_sc, *edge_sc_xyp, *edge_sc_xzp, *edge_sc_yzp;
 
 
     /* Make a list of all the edge geometry structs in the model */
@@ -1201,24 +1201,27 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 
     sort_idx_xyp = (size_t *)bu_calloc(etab_cnt, sizeof(size_t), "sort_idx_xyp");
 
+    edge_rr = (fastf_t *)bu_calloc(etab_cnt * 3, sizeof(fastf_t), "edge_rr_xyp");
     /* rise over run in xy plane */
-    edge_rr_xyp = (fastf_t *)bu_calloc(etab_cnt, sizeof(fastf_t), "edge_rr_xyp");
-    /* special cases in xy plane */
-    edge_sc_xyp = (char *)bu_calloc(etab_cnt, sizeof(char), "edge_sc_xyp");
-
+    edge_rr_xyp = edge_rr;
     /* rise over run in xz plane */
-    edge_rr_xzp = (fastf_t *)bu_calloc(etab_cnt, sizeof(fastf_t), "edge_rr_xzp");
-    /* special cases in xz plane */
-    edge_sc_xzp = (char *)bu_calloc(etab_cnt, sizeof(char), "edge_sc_xzp");
-
+    edge_rr_xzp = edge_rr + etab_cnt;
     /* rise over run in yz plane */
-    edge_rr_yzp = (fastf_t *)bu_calloc(etab_cnt, sizeof(fastf_t), "edge_rr_yzp");
+    edge_rr_yzp = edge_rr + (etab_cnt * 2);
+
+    edge_sc = (char *)bu_calloc(etab_cnt * 3, sizeof(char), "edge_sc_xyp");
+    /* special cases in xy plane */
+    edge_sc_xyp = edge_sc;
+    /* special cases in xz plane */
+    edge_sc_xzp = edge_sc + etab_cnt;
     /* special cases in yz plane */
-    edge_sc_yzp = (char *)bu_calloc(etab_cnt, sizeof(char), "edge_sc_yzp");
+    edge_sc_yzp = edge_sc + (etab_cnt * 2);
 
     /* load arrays */
     for (i = 0 ; i < etab_cnt ; i++) {
-	fastf_t *pt1, *pt2;
+	register fastf_t *pt1, *pt2;
+	register fastf_t xdif, ydif, zdif;
+	register fastf_t dist = tol->dist;
 
 	eg1 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, i);
 	eu1 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg1->eu_hd2), l2);
@@ -1226,48 +1229,39 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 	pt1 = eu1->vu_p->v_p->vg_p->coord;
 	pt2 = eu1->eumate_p->vu_p->v_p->vg_p->coord;
 
+	xdif = fabs(pt2[X] - pt1[X]);
+	ydif = fabs(pt2[Y] - pt1[Y]);
+	zdif = fabs(pt2[Z] - pt1[Z]);
 	sort_idx_xyp[i] = i;
 
-	if (NEAR_ZERO(pt2[X] - pt1[X], tol->dist) && !NEAR_ZERO(pt2[Y] - pt1[Y], tol->dist)) {
-	    edge_rr_xyp[i] = 0.0;
+	if ((xdif < dist) && (ydif > dist)) {
 	    edge_sc_xyp[i] = 1; /* no angle in xy plane, vertical line (along y-axis) */
-	} else if (!NEAR_ZERO(pt2[X] - pt1[X], tol->dist) && NEAR_ZERO(pt2[Y] - pt1[Y], tol->dist)) {
-	    edge_rr_xyp[i] = 0.0;
+	} else if ((xdif > dist) && (ydif < dist)) {
 	    edge_sc_xyp[i] = 2; /* no angle in xy plane, horz line (along x-axis) */
-	} else if (NEAR_ZERO(pt2[X] - pt1[X], tol->dist) && NEAR_ZERO(pt2[Y] - pt1[Y], tol->dist)) {
-	    edge_rr_xyp[i] = 0.0;
+	} else if ((xdif < dist) && (ydif < dist)) {
 	    edge_sc_xyp[i] = 3; /* only a point in the xy plane */
 	} else {
 	    edge_rr_xyp[i] = (pt2[Y] - pt1[Y]) / (pt2[X] - pt1[X]); /* rise over run */
-	    edge_sc_xyp[i] = 0; /* no special case */
 	}
 
-	if (NEAR_ZERO(pt2[X] - pt1[X], tol->dist) && !NEAR_ZERO(pt2[Z] - pt1[Z], tol->dist)) {
-	    edge_rr_xzp[i] = 0.0;
+	if ((xdif < dist) && (zdif > dist)) {
 	    edge_sc_xzp[i] = 1; /* no angle in xz plane, vertical line (along z-axis) */
-	} else if (!NEAR_ZERO(pt2[X] - pt1[X], tol->dist) && NEAR_ZERO(pt2[Z] - pt1[Z], tol->dist)) {
-	    edge_rr_xzp[i] = 0.0;
+	} else if ((xdif > dist) && (zdif < dist)) {
 	    edge_sc_xzp[i] = 2; /* no angle in xz plane, horz line (along x-axis) */
-	} else if (NEAR_ZERO(pt2[X] - pt1[X], tol->dist) && NEAR_ZERO(pt2[Z] - pt1[Z], tol->dist)) {
-	    edge_rr_xzp[i] = 0.0;
+	} else if ((xdif < dist) && (zdif < dist)) {
 	    edge_sc_xzp[i] = 3; /* only a point in the xz plane */
 	} else {
 	    edge_rr_xzp[i] = (pt2[Z] - pt1[Z]) / (pt2[X] - pt1[X]); /* rise over run */
-	    edge_sc_xzp[i] = 0; /* no special case */
 	}
 
-	if (NEAR_ZERO(pt2[Y] - pt1[Y], tol->dist) && !NEAR_ZERO(pt2[Z] - pt1[Z], tol->dist)) {
-	    edge_rr_yzp[i] = 0.0;
+	if ((ydif < dist) && (zdif > dist)) {
 	    edge_sc_yzp[i] = 1; /* no angle in yz plane, vertical line (along z-axis) */
-	} else if (!NEAR_ZERO(pt2[Y] - pt1[Y], tol->dist) && NEAR_ZERO(pt2[Z] - pt1[Z], tol->dist)) {
-	    edge_rr_yzp[i] = 0.0;
+	} else if ((ydif > dist) && (zdif < dist)) {
 	    edge_sc_yzp[i] = 2; /* no angle in yz plane, horz line (along y-axis) */
-	} else if (NEAR_ZERO(pt2[Y] - pt1[Y], tol->dist) && NEAR_ZERO(pt2[Z] - pt1[Z], tol->dist)) {
-	    edge_rr_yzp[i] = 0.0;
+	} else if ((ydif < dist) && (zdif < dist)) {
 	    edge_sc_yzp[i] = 3; /* only a point in the yz plane */
 	} else {
 	    edge_rr_yzp[i] = (pt2[Z] - pt1[Z]) / (pt2[Y] - pt1[Y]); /* rise over run */
-	    edge_sc_yzp[i] = 0; /* no special case */
 	}
     }
 
@@ -1300,7 +1294,14 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 		continue;
 	    }
 
-	    if (UNLIKELY(eg2->l.magic == NMG_EDGE_G_CNURB_MAGIC)) continue;
+	    if (UNLIKELY(eg2->l.magic == NMG_EDGE_G_CNURB_MAGIC)) {
+		continue;
+	    }
+
+	    if (UNLIKELY(eg1 == eg2)) {
+		BU_PTBL_SET(&etab, sort_idx_xyp[j], NULL);
+		continue;
+	    }
 
 	    eu2 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg2->eu_hd2), l2);
 	    eu2v1 = eu2->vu_p->v_p;
@@ -1315,27 +1316,31 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 		    break;
 		} else if (edge_sc_xyp[sort_idx_xyp[i]] == 0) {
 		    tmp = edge_rr_xyp[sort_idx_xyp[i]] - edge_rr_xyp[sort_idx_xyp[j]];
-		    if (!NEAR_ZERO(tmp, tol->dist)) {
+		    if (fabs(tmp) > tol->dist) {
 			/* not parallel in xy plane */
 			break;
 		    }
 		}
+
+		/* xz plane tests */
 		if (edge_sc_xzp[sort_idx_xyp[i]] != edge_sc_xzp[sort_idx_xyp[j]]) {
 		    /* not parallel in xz plane */
 		    continue;
 		} else if (edge_sc_xzp[sort_idx_xyp[i]] == 0) {
 		    tmp = edge_rr_xzp[sort_idx_xyp[i]] - edge_rr_xzp[sort_idx_xyp[j]];
-		    if (!NEAR_ZERO(tmp, tol->dist)) {
+		    if (fabs(tmp) > tol->dist) {
 			/* not parallel in xz plane */
 			continue;
 		    }
 		}
+
+		/* yz plane tests */
 		if (edge_sc_yzp[sort_idx_xyp[i]] != edge_sc_yzp[sort_idx_xyp[j]]) {
 		    /* not parallel in xz plane */
 		    continue;
 		} else if (edge_sc_yzp[sort_idx_xyp[i]] == 0) {
 		    tmp = edge_rr_yzp[sort_idx_xyp[i]] - edge_rr_yzp[sort_idx_xyp[j]];
-		    if (!NEAR_ZERO(tmp, tol->dist)) {
+		    if (fabs(tmp) > tol->dist) {
 			/* not parallel in yz plane */
 			continue;
 		    }
@@ -1354,13 +1359,8 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
     }
 
     bu_ptbl_free(&etab);
-    bu_free(edge_rr_xyp, "edge_rr_xyp,");
-    bu_free(edge_rr_xzp, "edge_rr_xzp,");
-    bu_free(edge_rr_yzp, "edge_rr_yzp,");
-    bu_free(edge_sc_xyp, "edge_sc_xyp");
-    bu_free(edge_sc_xzp, "edge_sc_xzp");
-    bu_free(edge_sc_yzp, "edge_sc_yzp");
-    bu_free(sort_idx_xyp, "sort_idx_xyp");
+    bu_free(edge_rr, "edge_rr,");
+    bu_free(edge_sc, "edge_sc");
 
     if (UNLIKELY(rt_g.NMG_debug & DEBUG_BASIC && total > 0))
 	bu_log("nmg_edge_g_fuse(): %d edge_g_lseg's fused\n", total);
