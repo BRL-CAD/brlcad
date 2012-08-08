@@ -156,9 +156,9 @@
 # a prefix of 12, followed by their ID number in the FCOMP database.
 
 12099	1.12700		A-150 Tissue-Equivalent Plastic
-12100	0.78990		Acetone 
-12101	0.00109670	Acetylene 
-12102	1.35000		Adenine 
+12100	0.78990		Acetone
+12101	0.00109670	Acetylene
+12102	1.35000		Adenine
 12103	9.20000		Adipose Tissue (ICRP)
 12104	0.00120479	Air, Dry (near sea level)
 12105	1.42000		Alanine
@@ -169,7 +169,7 @@
 12110	1.28300		Anthracene
 12111	1.45000		B-100 Bone-Equivalent Plastic
 12112	1.25000		Bakelite
-12113	4.89000		Barium Fluoride 
+12113	4.89000		Barium Fluoride
 12114	4.50000		Barium Sulfate
 12115	0.878650	Benzene
 12116	3.01000		Beryllium oxide
@@ -197,17 +197,17 @@
 12138	1.49000		Cellulose Nitrate
 12139	1.03000		Ceric Sulfate Dosimeter Solution
 12140	4.11500		Cesium Fluoride
-12141	4.51000		Cesium Iodide 
+12141	4.51000		Cesium Iodide
 12142	1.10580		Chlorobenzene
 12143	1.48320		Chloroform
 12144	2.30000		Concrete, Portland
 12145	0.779000	Cyclohexane
-12146	1.30480		1,2-Ddihlorobenzene 
-12147	1.21990		Dichlorodiethyl Ether 
+12146	1.30480		1,2-Ddihlorobenzene
+12147	1.21990		Dichlorodiethyl Ether
 12148	1.23510		1,2-Dichloroethane
-12149	0.713780	Diethyl Ether 
-12150	0.948700	N,N-Dimethyl Formamide 
-12151	1.10140		Dimethyl Sulfoxide 
+12149	0.713780	Diethyl Ether
+12150	0.948700	N,N-Dimethyl Formamide
+12151	1.10140		Dimethyl Sulfoxide
 12152	0.00125324	Ethane
 12153	0.789300	Ethyl Alcohol
 12154	1.13000		Ethyl Cellulose
@@ -215,34 +215,34 @@
 12156	1.10000		Eye Lens (ICRP)
 12157	5.20000		Ferric Oxide
 12158	7.15000		Ferroboride
-12159	5.70000		Ferrous Oxide 
-12160	1.02400		Ferrous Sulfate Dosimeter Solution 
-12161	1.12000		Freon-12 
-12162	1.80000		Freon-12B2 
-12163	0.95000		Freon-13 
+12159	5.70000		Ferrous Oxide
+12160	1.02400		Ferrous Sulfate Dosimeter Solution
+12161	1.12000		Freon-12
+12162	1.80000		Freon-12B2
+12163	0.95000		Freon-13
 12164	1.50000		Freon-13B1
-12165	1.80000		Freon-13I1 
+12165	1.80000		Freon-13I1
 12166	7.44000		Gadolinium Oxysulfide
-12167	5.31000		Gallium Arsenide 
+12167	5.31000		Gallium Arsenide
 12168	1.29140		Gel in Photographic Emulsion
 12169	2.23000		Glass, Pyrex
-12170	6.22000		Glass, Lead 
+12170	6.22000		Glass, Lead
 12171	2.40000		Glass, Plate
 12172	1.54000		Glucose
-12173	1.46000		Glutamine 
+12173	1.46000		Glutamine
 12174	1.26130		Glycerol
 12175	1.58000		Guanine
 12176	2.32000		Gypsum, Plaster of Paris
-12177	0.683760	N-Heptane 
+12177	0.683760	N-Heptane
 12178	0.660300	N-Hexane
-12179	1.42000		Kapton Polyimide Film 
-12180	6.28000		Lanthanum Oxybromide 
-12181	5.86000		Lanthanum Oxysulfide 
+12179	1.42000		Kapton Polyimide Film
+12180	6.28000		Lanthanum Oxybromide
+12181	5.86000		Lanthanum Oxysulfide
 12182	9.53000		Lead Oxide
-12183	1.17800		Lithium Amide 
-12184	2.11000		Lithium Carbonate 
+12183	1.17800		Lithium Amide
+12184	2.11000		Lithium Carbonate
 12185	2.63500		Lithium Fluoride
-12186	0.820000	Lithium Hydride 
+12186	0.820000	Lithium Hydride
 12187	3.49400		Lithium Iodide
 12188	2.01300		Lithium Oxide
 12189	2.44000		Lithium Tetraborate
@@ -268,70 +268,70 @@
 12209	1.14000		Nylon, type 6 and type 6/6
 12210	1.14000		Nylon, type 6/10
 12211	1.42500		Nylon, type 11 (Rilsan)
-12212	0.702600	Octane, Liquid 
-12213	0.930000	Paraffin Wax 
-12214	0.626200	N-Pentane 
-12215	3.81500		Photographic Emulsion 
+12212	0.702600	Octane, Liquid
+12213	0.930000	Paraffin Wax
+12214	0.626200	N-Pentane
+12215	3.81500		Photographic Emulsion
 12216	1.03200		Plastic Scintillator (Vinyltoluene based)
-12217	1.14600		Plutonium Dioxide 
-12218	1.17000		Polyacrylonitrile 
+12217	1.14600		Plutonium Dioxide
+12218	1.17000		Polyacrylonitrile
 12219	1.20000		Polycarbonate (Makrolon, Lexan)
-12220	1.30000		Polychlorostyrene 
-12221	0.940000	Polyethylene 
+12220	1.30000		Polychlorostyrene
+12221	0.940000	Polyethylene
 12222	1.40000		Polyethylene Terephthalate (Mylar)
 12223	1.19000		Polymethyl Methacralate (Lucite, Perspex)
 12224	1.42500		Polyoxymethylene
 12225	0.900000	Polypropylene
 12226	1.06000		Polystyrene
-12227	2.20000		Polytetrafluoroethylene (Teflon) 
+12227	2.20000		Polytetrafluoroethylene (Teflon)
 12228	2.10000		Polytrifluorochloroethylene
 12229	1.19000		Polyvinyl Acetate
-12230	1.30000		Polyvinyl Alcohol 
+12230	1.30000		Polyvinyl Alcohol
 12231	1.12000		Polyvinyl Butyral
-12232	1.30000		Polyvinyl Chloride 
+12232	1.30000		Polyvinyl Chloride
 12233	1.70000		Polyvinylidene Chloride, Saran
-12234	1.76000		Polyvinylidene Fluoride 
+12234	1.76000		Polyvinylidene Fluoride
 12235	1.25000		Polyvinyl Pyrrolidone
-12236	3.13000		Potassium Iodide 
-12237	2.32000		Potassium Oxide 
+12236	3.13000		Potassium Iodide
+12237	2.32000		Potassium Oxide
 12238	0.00187939	Propane
-12239	0.430000	Propane, Liquid 
+12239	0.430000	Propane, Liquid
 12240	0.803500	N-Propyl Alcohol
 12241	0.981900	Pyridine
-12242	0.920000	Rubber, Butyl 
-12243	0.920000	Rubber, Natural 
+12242	0.920000	Rubber, Butyl
+12243	0.920000	Rubber, Natural
 12244	1.23000		Rubber, Neoprene
-12245	2.32000		Silicon Dioxide 
-12246	6.47300		Silver Bromide 
-12247	5.56000		Silver Chloride 
-12248	6.47000		Silver Halides in Photographic Emulsion 
-12249	6.01000		Silver Iodide 
-12250	1.10000		Skin (ICRP) 
-12251	2.53200		Sodium Carbonate 
-12252	3.66700		Sodium Iodide 
-12253	2.27000		Sodium Monoxide 
-12254	2.26100		Sodium Nitrate 
+12245	2.32000		Silicon Dioxide
+12246	6.47300		Silver Bromide
+12247	5.56000		Silver Chloride
+12248	6.47000		Silver Halides in Photographic Emulsion
+12249	6.01000		Silver Iodide
+12250	1.10000		Skin (ICRP)
+12251	2.53200		Sodium Carbonate
+12252	3.66700		Sodium Iodide
+12253	2.27000		Sodium Monoxide
+12254	2.26100		Sodium Nitrate
 12255	0.970700	Stilbene
 12256	1.58050		Sucrose
-12257	1.23400		Terphenyl 
-12258	1.04000		Testes (ICRP) 
+12257	1.23400		Terphenyl
+12258	1.04000		Testes (ICRP)
 12259	1.62500		Tetrachloroethylene
-12260	7.00400		Thallium Chloride 
+12260	7.00400		Thallium Chloride
 12261	1.00000		Tissue, Soft (ICRP)
 12262	1.00000		Tissue, Soft (ICRU four-component)
-12263	0.00106409	Tissue-Equivalent GAS (Methane based) 
-12264	0.00182628	Tissue-Equivalent GAS (Propane based) 
-12265	4.26000		Titanium Dioxide 
+12263	0.00106409	Tissue-Equivalent GAS (Methane based)
+12264	0.00182628	Tissue-Equivalent GAS (Propane based)
+12265	4.26000		Titanium Dioxide
 12266	0.866900	Toluene
-12267	1.46000		Trichloroethylene 
+12267	1.46000		Trichloroethylene
 12268	1.07000		Triethyl Phosphate
-12269	2.40000		Tungsten Hexafluoride 
-12270	11.2800		Uranium Dicarbide 
+12269	2.40000		Tungsten Hexafluoride
+12270	11.2800		Uranium Dicarbide
 12271	13.6300		Uranium Monocarbide
 12272	10.9600		Uranium Oxide
 12273	1.32300		Urea
 12274	1.23000		Valine
 12275	1.80000		Viton Fluoroelastomer
-12276	1.00000		Water, Liquid 
+12276	1.00000		Water, Liquid
 12277	0.000756182	Water Vapor
 12278	0.870000	Xylene
