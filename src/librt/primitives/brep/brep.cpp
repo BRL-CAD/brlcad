@@ -30,6 +30,7 @@
 
 #include <vector>
 #include <list>
+#include <stack>
 #include <iostream>
 #include <algorithm>
 #include <set>
@@ -3316,7 +3317,7 @@ struct IntersectPoint {
     int m_seg_for_rank;
     int m_t_for_rank;
     bool m_in_out;
-
+    std::list<ON_3dPoint>::iterator m_pos;
 };
 
 
@@ -3350,7 +3351,10 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
      */
 
     ON_SimpleArray<IntersectPoint> intersect;
-    int sum = 0;
+    ON_SimpleArray<bool> have_intersect(curves.Count());
+    for (int i = 0; i < curves.Count(); i++)
+	have_intersect[i] = false;
+
     int CVCount_sum = 0;
     for (int i = 0; i < in->outerloop.Count(); i++) {
 	for (int j = 0; j < curves.Count(); j++) {
@@ -3360,15 +3364,38 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    curve_intersect(&(in->outerloop[i]), curves[j], &intersect_pt, &CV, &parameter);
 	    for (int k = 0; k < intersect_pt.Count(); k++) {
 		IntersectPoint tmp_pt;
-		tmp_pt.m_pt = intersect_pt[j];
-		tmp_pt.m_seg = CVCount_sum + CV[j].first;
-		tmp_pt.m_t = parameter[j].first;
+		tmp_pt.m_pt = intersect_pt[k];
+		tmp_pt.m_seg = CVCount_sum + CV[k].first;
+		tmp_pt.m_t = parameter[k].first;
 		tmp_pt.m_type = j;
-		tmp_pt.m_seg_for_rank = CV[j].second;
-		tmp_pt.m_t_for_rank = parameter[j].second;
+		tmp_pt.m_seg_for_rank = CV[k].second;
+		tmp_pt.m_t_for_rank = parameter[k].second;
 		intersect.Append(tmp_pt);
 	    }
-	    sum += intersect_pt.Count();
+	    if (intersect_pt.Count())
+		have_intersect[j] = true;
+	}
+	CVCount_sum += in->outerloop[i].CVCount();
+    }
+
+    // deal with the situations where there is no intersection
+    for (int i = 0; i < curves.Count(); i++) {
+	if (!have_intersect[i]) {
+	    ON_BoundingBox bbox_outerloop;
+	    for (int j = 0; j < in->outerloop.Count(); j++) {
+		bbox_outerloop.Union(in->outerloop[j].BoundingBox());
+	    }
+	    if (bbox_outerloop.Includes(curves[i]->BoundingBox())) {
+		if (curves[i]->IsClosed()) {
+		    TrimmedFace *newface = in->Duplicate();
+		    newface->innerloop.Append(*(curves[i]));
+		    out.Append(newface);
+		    newface = new TrimmedFace();
+		    newface->face = in->face;
+		    newface->outerloop.Append(*(curves[i]));
+		    out.Append(newface);
+		}
+	    }
 	}
     }
 
@@ -3385,6 +3412,92 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    pts_on_curves[i][j]->m_rank = j;
     }
     sorted_pointers.QuickSort(compare_seg_t);
+
+    for (int i = 0; i < intersect.Count(); i++) {
+	// We assume that the starting point is outside.
+	if (intersect[i].m_rank % 2 == 0) {
+	    intersect[i].m_in_out = false; // in
+	} else {
+	    intersect[i].m_in_out = true; // out
+	}
+    }
+
+    std::list<ON_3dPoint> outerloop;
+    int count = 0;
+    int isect_iter = 0;
+    for (int i = 0; i < in->outerloop.Count(); i++) {
+	const ON_NurbsCurve *curve_on_loop = &(in->outerloop[i]);
+	for (int j = 0; j < curve_on_loop->CVCount(); j++) {
+	    ON_3dPoint cvpt;
+	    curve_on_loop->GetCV(j, cvpt);
+	    outerloop.push_back(cvpt);
+	    count++;
+	    for (; sorted_pointers[isect_iter]->m_seg < count; isect_iter++) {
+		outerloop.push_back(sorted_pointers[isect_iter]->m_pt);
+		sorted_pointers[isect_iter]->m_pos = --outerloop.end();
+	    }
+	}
+    }
+    outerloop.push_back(in->outerloop[0].PointAtStart());
+
+    std::stack<int> s;
+    s.push(0);
+    for (int i = 1; i < sorted_pointers.Count(); i++) {
+	IntersectPoint *p = sorted_pointers[s.top()];
+	IntersectPoint *q = sorted_pointers[i];
+	if (q->m_type != p->m_type) {
+	    s.push(i);
+	    continue;
+	} else if (q->m_rank - p->m_rank == 1 && q->m_in_out == false && p->m_in_out == true) {
+	    s.pop();
+	} else if (p->m_rank - q->m_rank == 1 && p->m_in_out == false && q->m_in_out == true) {
+	    s.pop();
+	} else {
+	    s.push(i);
+	    continue;
+	}
+
+	// need to form a new loop
+	if (compare_seg_t(&p, &q) > 0)
+	    std::swap(p, q);
+	ON_3dPointArray newloop;
+	std::list<ON_3dPoint> newsegment;
+	std::list<ON_3dPoint>::iterator iter;
+	for (iter = p->m_pos; iter != q->m_pos; iter++) {
+	    newloop.Append(*iter);
+	}
+	newloop.Append(q->m_pt);
+	if (p->m_seg_for_rank < q->m_seg_for_rank) {
+	    for (int j = p->m_seg_for_rank + 1; j <= q->m_seg_for_rank; j++) {
+		ON_3dPoint cvpt;
+		curves[p->m_type]->GetCV(j, cvpt);
+		newloop.Append(cvpt);
+		newsegment.push_back(cvpt);
+	    }
+	} else if (p->m_seg_for_rank > q->m_seg_for_rank) {
+	    for (int j = p->m_seg_for_rank; j > q->m_seg_for_rank; j--) {
+		ON_3dPoint cvpt;
+		curves[p->m_type]->GetCV(j, cvpt);
+		newloop.Append(cvpt);
+		newsegment.push_back(cvpt);
+	    }
+	}
+	newloop.Append(p->m_pt);
+
+	// Append a surface with newloop as its outerloop
+	ON_PolylineCurve polycurve(newloop);
+	ON_NurbsCurve nurbscurve;
+	polycurve.GetNurbForm(nurbscurve);
+	TrimmedFace *newface = new TrimmedFace();
+	newface->face = in->face;
+	newface->outerloop.Append(nurbscurve);
+
+	// adjust the outerloop
+	std::list<ON_3dPoint>::iterator first = p->m_pos;
+	outerloop.erase(++first, q->m_pos);
+	first = p->m_pos;
+	outerloop.insert(++first, newsegment.begin(), newsegment.end());
+    }
 
     // WIP
     // The follows commented out are out of date.
@@ -3448,10 +3561,6 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	out.Append(newface);
 	return 0;
     }*/
-
-    // default case: no splitting
-    TrimmedFace *newface = in->Duplicate();
-    out.Append(newface);
 
     return 0;
 }
@@ -3520,6 +3629,28 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
 	first->innerloop = innercurves;
 	first->outerloop = outercurves;
 	split_trimmed_face(trimmedfaces, first, curvesarray[i]);
+
+	/* TODO: Perform inside-outside test to decide whether the trimmed face
+	 * should be used in the final b-rep structure or not.
+	 * Another solution is to use connectivity graphs which represents the
+	 * topological structure of the b-rep. This can reduce time-consuming
+	 * inside-outside tests.
+	 * Here we just use all of these trimmed faces.
+	 */
+	for (int j = 0; j < trimmedfaces.Count(); j++) {
+	    ON_Surface *new_surf = brep1->m_S[i]->Duplicate();
+	    int surfindex = brep_out->AddSurface(new_surf);
+	    ON_BrepFace& face = brep_out->NewFace(surfindex);
+	    ON_BrepLoop *loop = brep_out->NewOuterLoop(surfindex);
+	    ON_SimpleArray<ON_NurbsCurve> &oloop = trimmedfaces[j]->outerloop;
+	    for (int k = 0; k < oloop.Count(); k++) {
+		loop->m_ti.Append(brep_out->AddTrimCurve(&(oloop[k])));
+	    }
+	    new_surf->SetDomain(0, loop->m_pbox.m_min.x, loop->m_pbox.m_max.x);
+	    new_surf->SetDomain(1, loop->m_pbox.m_min.y, loop->m_pbox.m_max.y);
+	    brep_out->SetTrimIsoFlags(face);
+	    brep_out->FlipFace(face);
+	}
     }
 
     // make the final rt_db_internal
