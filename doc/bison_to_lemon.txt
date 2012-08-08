@@ -200,7 +200,7 @@ In Bison, you typically create a union that specifies the possible types of toke
 
 Lemon considers all tokens to be of the same type which is typically a struct/union or a pointer to a struct/union. WARNING: The default token type appears to be (void*), but the Lemon documentation claims that it's (int)!
 
-You don't declare the types of tokens. In fact you don't declare tokens at all, lemon identifies them automatically by case. However, you must specify the types of tokens explicitly within actions. 
+You don't declare the types of tokens. In fact you don't declare tokens at all, lemon identifies them automatically by case. However, you must specify the types of tokens explicitly within actions.
 
     /* included from custom header file - this is basically what Bison would
      * generate from its %union directive
@@ -226,7 +226,7 @@ You don't declare the types of tokens. In fact you don't declare tokens at all, 
     }
 
 NOTE: While all terminals have the same type, non-terminals can be associated with a type using the %type directive. Non-terminals with an associated type
-will be cast to their type automatically, so frequenlty used terminals may be
+will be cast to their type automatically, so frequently used terminals may be
 wrapped in non-terminals to save typing:
 
     %type coord { double }
