@@ -105,7 +105,7 @@ bu.h xdr API
         bu_glong() -> ntohl() [deprecated 7.18]
         bu_pshort() -> htons() [deprecated 7.18]
         bu_plong() -> htonl() [deprecated 7.18]
-        bu_plonglong() -> htonll() [deprecated 7.18] 
+        bu_plonglong() -> htonll() [deprecated 7.18]
 db.h
         rt_fastf_float() -> ntohf() [deprecated 7.18]
         rt_mat_dbmat() -> htonf() [deprecated 7.18]
@@ -406,7 +406,7 @@ extensively tested, use with caution.
 
 Unless noted otherwise, expressions are shown using Perl syntax and
 may need adjustment (particularly quoting of '(', ')', and '|'
-characters) for other environments.  Most expressions will apply with:        
+characters) for other environments.  Most expressions will apply with:
 	perl -0777 -pi -e 'EXPRESSION' FILE
 
 
@@ -757,7 +757,7 @@ s/bu_vlb_getBuffer\(/bu_vlb_addr(/g
         bu_vlb_getBuffer() remamed to bu_vlb_addr() [7.18]
 
 s/bu_vlb_getBufferLength\(/bu_vlb_buflen(/g
-        bu_vlb_getBufferLength() remamed to bu_vlb_buflen() [7.18]
+        bu_vlb_getBufferLength() renamed to bu_vlb_buflen() [7.18]
 
 s/V2APPROXEQUAL\(/V2NEAR_EQUAL(/g
         V2APPROXEQUAL() renamed to V2NEAR_EQUAL() [7.18]
@@ -864,4 +864,4 @@ s/bu_list_path\(([^,]*),([^,]*),[[:space:]]([^)]*)\)/bu_dir_list(\1,\2, &(\3))/g
 s/bu_count_path(.*)\);/bu_dir_list\1, NULL);/g
 	made bu_dir_list() return the number of entries [7.21]
 s/bu_strcmpm\((.*),([^,]*)\)/bu_strcmp(\1)/g
-        no use for label paramter, convert to bu_strcmp() [7.21]
+        no use for label parameter, convert to bu_strcmp() [7.21]
