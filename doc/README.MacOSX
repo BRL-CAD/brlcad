@@ -50,18 +50,18 @@ multiprocessor systems, you can enjoy the benefits of decreased
 compile times by utilizing the "-j" option to make.  After running
 configure, run "make -j2" to build on a 2-processor system.
 
-Universal Builds 
+Universal Builds
 ----------------
 
 Universal builds have not been fully vetted due to how BRL-CAD
 serializes data to disk. BRL-CAD's CMake logic is not currently
-set up to support this type of build, but plans to in the future. 
+set up to support this type of build, but plans to in the future.
 
 CMake and Mac OSX
 -----------------
 
 On a default configuration, CMake has some problems performing parallel
-builds on OSX - typically this will manifest itself as a series of 
+builds on OSX - typically this will manifest itself as a series of
 "too many open files" errors.  So far, the way to work around this in
 OSX 10.5 is to set the following system control variables to 50,000:
 
@@ -80,7 +80,7 @@ we get a better feel for various platforms we can assemble a table of
 required settings.  Other programs have this issue as well, so searching
 online may prove fruitful.
 
-So far, if parallel building doesn't work due to the above issue a 
+So far, if parallel building doesn't work due to the above issue a
 non-parallel build will still succeed.  Another workaround is to build
 just subdirectories (e.g. src/other, doc, etc.) individually and then
 do a toplevel make in non-parallel mode to finalize the build.
