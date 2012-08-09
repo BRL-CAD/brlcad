@@ -20,7 +20,7 @@
  */
 /** @file anim_time.c
  *
- * Given an animation path consiting of time stamps and 3-d points,
+ * Given an animation path consisting of time stamps and 3-d points,
  * estimate new time stamps based on the distances between points, the
  * given starting and ending times, and optionally specified starting
  * and ending velocities.
