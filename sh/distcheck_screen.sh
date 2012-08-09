@@ -49,11 +49,11 @@
 #
 # If you want more windows for more than just the standard distcheck,
 # uncomment the "split/focus/select 3" lines + the tail command pertaining
-# to -p 3 below and add as many more similar lines as are needed.  Other 
-# window geometries are possible - this is just intended as a convenience 
+# to -p 3 below and add as many more similar lines as are needed.  Other
+# window geometries are possible - this is just intended as a convenience
 # for running the common pre-defined cases.
 #
-# To exit from the whole thing, hault the build (if necessary) and type 
+# To exit from the whole thing, halt the build (if necessary) and type
 # screen -X quit in the same window the toplevel distcheck make is being run.
 ###
 
