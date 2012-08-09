@@ -87,7 +87,7 @@ if(SH_EXEC)
   #  )
   add_custom_target(regress-rtwizard
     ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/rtwizard.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS btclsh rt rtedge fbclear fbserv pix-fb fb-pix pix-bw bw-pix 
+    DEPENDS btclsh rt rtedge fbclear fbserv pix-fb fb-pix pix-bw bw-pix
     pixmatte asc2g asc2pix pixdiff util_tclIndex util_pkgIndex.tcl
     rtwizard_lib_tclIndex rtwizard_lib_pkgIndex.tcl rtwizard_tclIndex
     rtwizard_pkgIndex.tcl rtwizard_TCLSCRIPTS_cp lib_tclIndex
