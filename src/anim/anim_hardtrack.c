@@ -352,7 +352,7 @@ main(int argc, char *argv[])
     /* get track information from specified file */
 
     if (!(stream = fopen(*(argv+bu_optind), "rb"))) {
-	fprintf(stderr, "Anim_hardtrack: Could not open file %s.\n", *(argv+bu_optind));
+	fprintf(stderr, "anim_hardtrack: Could not open file %s.\n", *(argv+bu_optind));
 	return 0;
     }
 
