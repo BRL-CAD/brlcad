@@ -71,17 +71,17 @@ extern "C" {
 #endif
 
 /**
- * A composite set of parameters constraints with respect to those 
+ * A composite set of parameters constraints with respect to those
  * parameters. Used for declaration by each geometry object
  */
 struct pc_param {
     struct bu_list l;
     struct bu_vls name; /** Name of the parameter */
-    
+
     /** @todo convert to enum after pc becomes a dependency of rt */
     int ctype;	/** Container type used for storing data */
     int dtype; 	/** Data type of the data pointed to */
-    
+
     union {		/** The Actual data / pointer */
     	struct bu_vls expression;
     	void * ptr;
