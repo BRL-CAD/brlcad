@@ -123,7 +123,7 @@ fcheck fakeroot x
 
 if test "$1" = "-b" ;then
     fcheck build-essential
-    fcheck make 
+    fcheck make
     fcheck cmake x
     fcheck sed x
     fcheck bison x
