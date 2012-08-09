@@ -57,7 +57,7 @@ macro(AUTO_OPTION username varname debug_state release_state)
     set(${varname} ${${username}})
   endif(NOT ${${username}} MATCHES "AUTO")
 
-  # If we we don't understand the build type and have an AUTO setting 
+  # If we don't understand the build type and have an AUTO setting,
   # varname is not set.
   if(CMAKE_BUILD_TYPE AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Release" AND NOT "${CMAKE_BUILD_TYPE}" MATCHES "Debug")
     if(NOT ${${username}} MATCHES "AUTO")
