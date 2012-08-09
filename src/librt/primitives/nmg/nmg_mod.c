@@ -1427,51 +1427,25 @@ nmg_fu_planeeqn(struct faceuse *fu, const struct bn_tol *tol)
 void
 nmg_gluefaces(struct faceuse **fulist, int n, const struct bn_tol *tol)
 {
-    struct shell *s;
+    register int i;
     struct loopuse *lu;
     struct edgeuse *eu;
-    register int i;
-    int f_no;		/* Face number */
+    struct bu_ptbl ftab; /* faceuse table */
 
-    NMG_CK_FACEUSE(fulist[0]);
-    s = fulist[0]->s_p;
-    NMG_CK_SHELL(s);
-
-    /* First, perform some checks */
+    bu_ptbl_init(&ftab, 64, "ftab buffer");
     for (i = 0; i < n; ++i) {
-	register struct faceuse *fu;
-
-	fu = fulist[i];
-	if (fu->s_p != s) {
-	    bu_log("nmg_gluefaces() in %s at %d. faceuses don't share parent\n",
-		   __FILE__, __LINE__);
-	    bu_bomb("nmg_gluefaces\n");
-	}
-    }
-
-    for (i=0; i < n; ++i) {
 	for (BU_LIST_FOR(lu, loopuse, &fulist[i]->lu_hd)) {
-
-	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
 		continue;
-
+	    }
 	    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-		for (f_no = i+1; f_no < n; f_no++) {
-		    struct loopuse *lu2;
-		    register struct edgeuse *eu2;
-
-		    for (BU_LIST_FOR(lu2, loopuse, &fulist[f_no]->lu_hd)) {
-			if (BU_LIST_FIRST_MAGIC(&lu2->down_hd) != NMG_EDGEUSE_MAGIC)
-			    continue;
-			for (BU_LIST_FOR(eu2, edgeuse, &lu2->down_hd)) {
-			    if (EDGESADJ(eu, eu2))
-				nmg_radial_join_eu(eu, eu2, tol);
-			}
-		    }
-		}
+		bu_ptbl_ins(&ftab, (long *)eu);
 	    }
 	}
     }
+
+    nmg_edge_fuse((const uint32_t *)&ftab, tol);
+    bu_ptbl_free(&ftab);
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_gluefaces(fulist=x%x, n=%d)\n", fulist, n);
