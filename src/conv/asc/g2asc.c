@@ -452,7 +452,7 @@ char *encode_name(char *str)
 /*
  *			G E T _ E X T
  *
- *  Take "ngran" granueles, and put them in memory.
+ *  Take "ngran" granules, and put them in memory.
  *  The first granule comes from the global extern "record",
  *  the remainder are read from ifp.
  */
@@ -861,7 +861,7 @@ arbn_dump(void)
 /*
  *			C O M B D U M P
  *
- *  Note that for compatability with programs such as FRED that
+ *  Note that for compatibility with programs such as FRED that
  *  (inappropriately) read .asc files, the member count has to be
  *  recalculated here.
  *
@@ -980,7 +980,7 @@ combdump(void)	/* Print out Combination record information */
  *			M E M B D U M P
  *
  *  Print out Member record information.
- *  Intented to be called by combdump only.
+ *  Intended to be called by combdump only.
  */
 void
 membdump(union record *rp)
