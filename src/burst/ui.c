@@ -611,7 +611,7 @@ MburstAir(HmItem *itemp)
     else
 	airfile[0] = NUL;
     if ((airfp = fopen(airfile, "rb")) == NULL) {
-	(void) snprintf(scrbuf, LNBUFSZ, 
+	(void) snprintf(scrbuf, LNBUFSZ,
 			"Read access denied for \"%s\"",
 			airfile);
 	warning(scrbuf);
@@ -643,7 +643,7 @@ MburstArmor(HmItem *itemp)
     else
 	armorfile[0] = NUL;
     if ((armorfp = fopen(armorfile, "rb")) == NULL) {
-	(void) snprintf(scrbuf, LNBUFSZ, 
+	(void) snprintf(scrbuf, LNBUFSZ,
 			"Read access denied for \"%s\"",
 			armorfile);
 	warning(scrbuf);
@@ -692,7 +692,7 @@ MburstFile(HmItem *itemp)
     else
 	outfile[0] = NUL;
     if ((outfp = fopen(outfile, "wb")) == NULL) {
-	(void) snprintf(scrbuf, LNBUFSZ, 
+	(void) snprintf(scrbuf, LNBUFSZ,
 			"Write access denied for \"%s\"",
 			outfile);
 	warning(scrbuf);
@@ -740,7 +740,7 @@ McolorFile(HmItem *itemp)
     else
 	colorfile[0] = NUL;
     if ((colorfp = fopen(colorfile, "rb")) == NULL) {
-	(void) snprintf(scrbuf, LNBUFSZ, 
+	(void) snprintf(scrbuf, LNBUFSZ,
 			"Read access denied for \"%s\"",
 			colorfile);
 	warning(scrbuf);
@@ -811,7 +811,7 @@ McritComp(HmItem *itemp)
     else
 	critfile[0] = NUL;
     if ((critfp = fopen(critfile, "rb")) == NULL) {
-	(void) snprintf(scrbuf, LNBUFSZ, 
+	(void) snprintf(scrbuf, LNBUFSZ,
 			"Read access denied for \"%s\"",
 			critfile);
 	warning(scrbuf);
@@ -878,7 +878,7 @@ MenclosePortion(HmItem *itemp)
     GetVar(gridrt, ip, unitconv);
     GetVar(griddn, ip, unitconv);
     GetVar(gridup, ip, unitconv);
-    (void) snprintf(scrbuf, LNBUFSZ, 
+    (void) snprintf(scrbuf, LNBUFSZ,
 		    "%s\t\t%g %g %g %g",
 		    itemp != NULL ? itemp->text : cmdname,
 		    gridlf, gridrt, griddn, gridup);
@@ -896,7 +896,7 @@ MenclosePortion(HmItem *itemp)
 static void
 MencloseTarget(HmItem *itemp)
 {
-    (void) snprintf(scrbuf, LNBUFSZ, 
+    (void) snprintf(scrbuf, LNBUFSZ,
 		    "%s",
 		    itemp != NULL ? itemp->text : cmdname);
     logCmd(scrbuf);
@@ -942,7 +942,7 @@ Mexecute(HmItem *itemp)
 {
     static int gottree = 0;
     int loaderror = 0;
-    (void) snprintf(scrbuf, LNBUFSZ, 
+    (void) snprintf(scrbuf, LNBUFSZ,
 		    "%s",
 		    itemp != NULL ? itemp->text : cmdname);
     logCmd(scrbuf);
@@ -974,7 +974,7 @@ Mexecute(HmItem *itemp)
 	    (void) snprintf(scrbuf, LNBUFSZ, "Loading \"%s\"", obj);
 	    notify(scrbuf, NOTIFY_APPEND);
 	    if (rt_gettree(rtip, obj) != 0) {
-		(void) snprintf(scrbuf, LNBUFSZ, 
+		(void) snprintf(scrbuf, LNBUFSZ,
 				"Bad object \"%s\".",
 				obj);
 		warning(scrbuf);
@@ -1036,7 +1036,7 @@ MgedFile(HmItem *itemp)
 	bu_strlcpy(gedfile, ip->buffer, LNBUFSZ);
 
     if (!bu_file_exists(gedfile, NULL)) {
-	(void) snprintf(scrbuf, LNBUFSZ, 
+	(void) snprintf(scrbuf, LNBUFSZ,
 			"Unable to find file \"%s\"",
 			gedfile);
 	warning(scrbuf);
@@ -1063,7 +1063,7 @@ MgridFile(HmItem *itemp)
     else
 	histfile[0] = NUL;
     if ((gridfp = fopen(gridfile, "wb")) == NULL) {
-	(void) snprintf(scrbuf, LNBUFSZ, 
+	(void) snprintf(scrbuf, LNBUFSZ,
 			"Write access denied for \"%s\"",
 			gridfile);
 	warning(scrbuf);
@@ -1133,7 +1133,7 @@ MhistFile(HmItem *itemp)
     else
 	histfile[0] = NUL;
     if ((histfp = fopen(histfile, "wb")) == NULL) {
-	(void) snprintf(scrbuf, LNBUFSZ, 
+	(void) snprintf(scrbuf, LNBUFSZ,
 			"Write access denied for \"%s\"",
 			histfile);
 	warning(scrbuf);
@@ -1308,7 +1308,7 @@ MplotFile(HmItem *itemp)
     else
 	plotfile[0] = NUL;
     if ((plotfp = fopen(plotfile, "wb")) == NULL) {
-	(void) snprintf(scrbuf, LNBUFSZ, 
+	(void) snprintf(scrbuf, LNBUFSZ,
 			"Write access denied for \"%s\"",
 			plotfile);
 	warning(scrbuf);
@@ -1333,7 +1333,7 @@ Mread2dShotFile(HmItem *itemp)
     if (getInput(ip))
 	bu_strlcpy(shotfile, ip->buffer, LNBUFSZ);
     if ((shotfp = fopen(shotfile, "rb")) == NULL) {
-	(void) snprintf(scrbuf, LNBUFSZ, 
+	(void) snprintf(scrbuf, LNBUFSZ,
 			"Read access denied for \"%s\"",
 			shotfile);
 	warning(scrbuf);
@@ -1359,7 +1359,7 @@ Mread3dShotFile(HmItem *itemp)
     if (getInput(ip))
 	bu_strlcpy(shotfile, ip->buffer, LNBUFSZ);
     if ((shotfp = fopen(shotfile, "rb")) == NULL) {
-	(void) snprintf(scrbuf, LNBUFSZ, 
+	(void) snprintf(scrbuf, LNBUFSZ,
 			"Read access denied for \"%s\"",
 			shotfile);
 	warning(scrbuf);
@@ -1385,7 +1385,7 @@ MreadBurstFile(HmItem *itemp)
     if (getInput(ip))
 	bu_strlcpy(burstfile, ip->buffer, LNBUFSZ);
     if ((burstfp = fopen(burstfile, "rb")) == NULL) {
-	(void) snprintf(scrbuf, LNBUFSZ, 
+	(void) snprintf(scrbuf, LNBUFSZ,
 			"Read access denied for \"%s\"",
 			burstfile);
 	warning(scrbuf);
@@ -1413,7 +1413,7 @@ MreadCmdFile(HmItem *UNUSED(itemp))
     if (getInput(ip)) {
       bu_strlcpy(cmdfile, ip->buffer, LNBUFSZ);
       if ((cmdfp = fopen(cmdfile, "rb")) == NULL) {
-	(void) snprintf(scrbuf, LNBUFSZ, 
+	(void) snprintf(scrbuf, LNBUFSZ,
 	    "Read access denied for \"%s\"",
 	    cmdfile);
 	warning(scrbuf);
@@ -1536,7 +1536,7 @@ MwriteCmdFile(HmItem *UNUSED(itemp))
     if (getInput(ip)) {
       bu_strlcpy(cmdfile, ip->buffer, LNBUFSZ);
       if ((cmdfp = fopen(cmdfile, "wb")) == NULL) {
-	(void) snprintf(scrbuf, LNBUFSZ, 
+	(void) snprintf(scrbuf, LNBUFSZ,
 	    "Write access denied for \"%s\"",
 	    cmdfile);
 	warning(scrbuf);
@@ -1545,7 +1545,7 @@ MwriteCmdFile(HmItem *UNUSED(itemp))
     }
 
     if ((inpfp = fopen(tmpfname, "rb")) == NULL) {
-	(void) snprintf(scrbuf, LNBUFSZ, 
+	(void) snprintf(scrbuf, LNBUFSZ,
 			"Read access denied for \"%s\"",
 			tmpfname);
 	warning(scrbuf);
