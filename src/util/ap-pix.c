@@ -32,7 +32,7 @@
 #include "bu.h"
 
 
-/* Dots are least most signifigant bit first in increasing index */
+/* Dots are least most significant bit first in increasing index */
 struct app_record {
     unsigned char ml[432];
     unsigned char yl[432];
