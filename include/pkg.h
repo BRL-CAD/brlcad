@@ -134,7 +134,7 @@ PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_open, (const char *host, const char *
 PKG_EXPORT PKG_EXTERN(void pkg_close, (struct pkg_conn* pc));
 
 /**
- * 
+ *
  */
 PKG_EXPORT PKG_EXTERN(int pkg_process, (struct pkg_conn *));
 
