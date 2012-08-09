@@ -794,7 +794,7 @@ combbld(void)
     cp = nxt_spc(cp);
     aircode = (short)atoi(cp);
     cp = nxt_spc(cp);
-    /* DEPRECTED: number of members expected */
+    /* DEPRECATED: number of members expected */
     cp = nxt_spc(cp);
     /* DEPRECATED: Comgeom reference number */
     cp = nxt_spc(cp);
@@ -1314,7 +1314,7 @@ botbld(void)
  * P I P E B L D
  *
  * This routine reads pipe data from standard in, constructs a
- * doublely linked list of pipe points, and sends this list to
+ * doubly linked list of pipe points, and sends this list to
  * mk_pipe().
  */
 void
