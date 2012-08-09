@@ -44,7 +44,7 @@ main(int argc, char **argv)
     double hd, hh;		/* Diameter & height of bolt head. */
     double wd, wh;		/* Diameter & height of washer. */
     double sd, sh;		/* Diameter & height of bolt stem. */
-    double leg, hyp;		/* Length of leg & hypotenus of triangle. */
+    double leg, hyp;		/* Length of leg & hypotenuse of triangle. */
     point_t pts[8];		/* Eight points of arb8. */
     point_t bs;			/* Base of rcc. */
     vect_t ht;			/* Height of rcc. */
@@ -65,7 +65,7 @@ main(int argc, char **argv)
     struct wmember comb1;	/* Used to make groups. */
     int ret;
 
-    /* Zero all dimnsions of bolt. */
+    /* Zero all dimensions of bolt. */
     iopt = 0;
     hd = 0;
     hh = 0;
