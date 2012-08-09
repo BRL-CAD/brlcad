@@ -130,7 +130,7 @@ Mac OS X Disk Mounting Image:
 Mount the .dmg and run the Installer .pkg contained therein.  This
 will install into /usr/brlcad/rel-X.Y.Z and will only require confirming that
 your environment is set up properly (i.e. add /usr/brlcad/rel-X.Y.Z/bin to your
-path) as described in the Quck Installation section.
+path) as described in the Quick Installation section.
 
 
 INSTALLING FROM SOURCE
@@ -325,7 +325,7 @@ files.
 System PATH:
 
 Normally, BRL-CAD's install directories are not in system PATH lists and
-consequently BRL-CAD's exectuables will not be invokable without specifying
+consequently BRL-CAD's executables will not be invokable without specifying
 their full path.  This is normally handled in Unix environments by adding
 the desired BRL-CAD installation's binary directory to the user's local path:
 
@@ -422,7 +422,7 @@ Aliases:  ENABLE_STRICT, ENABLE_STRICT_COMPILE, ENABLE_STRICT_COMPILE_FLAGS
 
 Option for enabling and disabling compilation of the Regular Expression Library
 provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
-toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
+toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
 BRLCAD_BUNDLED_LIBS is also AUTO.
 
 Aliases:  ENABLE_REGEX
@@ -432,7 +432,7 @@ Aliases:  ENABLE_REGEX
 
 Option for enabling and disabling compilation of the zlib
 library provided with BRL-CAD's source distribution.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
 BRLCAD_BUNDLED_LIBS is also AUTO.
 
 Aliases:  ENABLE_ZLIB, ENABLE_LIBZ
@@ -442,7 +442,7 @@ Aliases:  ENABLE_ZLIB, ENABLE_LIBZ
 
 Option for enabling and disabling compilation of the lemon parser
 provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
-toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
+toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
 BRLCAD_BUNDLED_LIBS is also AUTO.
 
 Aliases:  ENABLE_LEMON
@@ -452,7 +452,7 @@ Aliases:  ENABLE_LEMON
 
 Option for enabling and disabling compilation of the re2c scanner utility
 provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
-toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
+toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
 BRLCAD_BUNDLED_LIBS is also AUTO.
 
 Aliases:  ENABLE_RE2C
@@ -462,7 +462,7 @@ Aliases:  ENABLE_RE2C
 
 Option for enabling and disabling compilation of the perplex scanner generator
 provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
-toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
+toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
 BRLCAD_BUNDLED_LIBS is also AUTO.  perplex requires a working re2c.
 
 Aliases:  ENABLE_PERPLEX
@@ -471,9 +471,9 @@ Aliases:  ENABLE_PERPLEX
 --- BRLCAD_XSLTPROC ---
 
 Option for enabling and disabling compilation of the xsltproc XML
-transformation utilty provided with BRL-CAD's source distribution.  Used 
+transformation utility provided with BRL-CAD's source distribution.  Used
 for DocBook documentation processing.  Default is AUTO, responsive to the
-toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
+toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
 BRLCAD_BUNDLED_LIBS is also AUTO.  Depends on BRLCAD_EXTRADOCS.
 
 Aliases:  ENABLE_XSLTPROC
@@ -482,9 +482,9 @@ Aliases:  ENABLE_XSLTPROC
 --- BRLCAD_XMLLINT ---
 
 Option for enabling and disabling compilation of the xmllint XML
-validation utilty provided with BRL-CAD's source distribution.  Used 
+validation utilty provided with BRL-CAD's source distribution.  Used
 for DocBook documentation validation.  Default is AUTO, responsive to the
-toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
+toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
 BRLCAD_BUNDLED_LIBS is also AUTO.
 
 Aliases:  ENABLE_XMLLINT
@@ -494,7 +494,7 @@ Aliases:  ENABLE_XMLLINT
 
 Option for enabling and disabling compilation of the termlib library
 provided with BRL-CAD's source distribution.  Default is AUTO, responsive to the
-toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if 
+toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
 BRLCAD_BUNDLED_LIBS is also AUTO. (Except when building with Visual Studio,
 where it is disabled. Windows does not support the termlib API.)
 
@@ -505,7 +505,7 @@ Aliases:  ENABLE_TERMLIB
 
 Option for enabling and disabling compilation of the Portable Network
 Graphics library provided with BRL-CAD's source distribution.  Default is
-AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing 
+AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 
 Aliases:  ENABLE_PNG
@@ -514,8 +514,8 @@ Aliases:  ENABLE_PNG
 --- BRLCAD_UTAHRLE ---
 
 Option for enabling and disabling compilation of the Utah Raster Toolkit
-library provided with BRL-CAD's source code.  Default is AUTO, responsive 
-to the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system 
+library provided with BRL-CAD's source code.  Default is AUTO, responsive
+to the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 
 Aliases:  ENABLE_UTAHRLE
@@ -523,9 +523,9 @@ Aliases:  ENABLE_UTAHRLE
 
 --- BRLCAD_TCL ---
 
-Option for enabling and disabling compilation of the Tcl library 
-provided with BRL-CAD's source code.  Default is AUTO, responsive 
-to the toplevel BRLCAD_BUNDLED_LIBS option and testing first for 
+Option for enabling and disabling compilation of the Tcl library
+provided with BRL-CAD's source code.  Default is AUTO, responsive
+to the toplevel BRLCAD_BUNDLED_LIBS option and testing first for
 a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 
 Aliases:  ENABLE_TCL
@@ -533,14 +533,14 @@ Aliases:  ENABLE_TCL
 
 --- BRLCAD_TK ---
 
-Option for enabling and disabling compilation of the Tk library 
-provided with BRL-CAD's source code.  Default is AUTO, responsive 
-to the BRLCAD_TCL option and testing first for 
+Option for enabling and disabling compilation of the Tk library
+provided with BRL-CAD's source code.  Default is AUTO, responsive
+to the BRLCAD_TCL option and testing first for
 a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 Option for enabling and disabling compilation of the Tk graphics package for
 Tcl provided with BRL-CAD's source distribution.  Default is AUTO,
-auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first for 
-a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_TK is 
+auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first for
+a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_TK is
 set to BUNDLED, local copy is built even if a system version is present.
 This option also depends on BRLCAD_ENABLE_TK being ON.
 
@@ -551,8 +551,8 @@ Aliases:  ENABLE_TK
 
 Option for enabling and disabling compilation of the IncrTcl package for
 Tcl objects provided with BRL-CAD's source distribution.  Default is AUTO,
-auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first for 
-a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL is 
+auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first for
+a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL is
 set to BUNDLED, local copy is built even if a system version is present.
 
 Aliases:  ENABLE_ITCL
@@ -562,8 +562,8 @@ Aliases:  ENABLE_ITCL
 
 Option for enabling and disabling compilation of the IncrTcl itk package for
 Tk objects provided with BRL-CAD's source distribution.  Default is AUTO,
-auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first for 
-a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL is 
+auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first for
+a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL is
 set to BUNDLED, local copy is built even if a system version is present.  This
 package will be disabled if BRLCAD_ENABLE_TK is OFF.
 
@@ -574,10 +574,10 @@ Aliases:  ENABLE_ITK
 
 Option for enabling and disabling compilation of the Togl package for
 Tcl/Tk OpenGL support provided with BRL-CAD's source distribution.  Default is AUTO,
-auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first for 
-a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL is 
+auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first for
+a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL is
 set to BUNDLED, local copy is built even if a system version is present.  This
-package will be disabled if either BRLCAD_ENABLE_OPENGL or BRLCAD_ENABLE_TK 
+package will be disabled if either BRLCAD_ENABLE_OPENGL or BRLCAD_ENABLE_TK
 are OFF.
 
 Aliases:  ENABLE_TOGL
@@ -585,11 +585,11 @@ Aliases:  ENABLE_TOGL
 
 --- BRLCAD_IWIDGETS ---
 
-Option for enabling and disabling compilation of the IWidgets Tk widget 
+Option for enabling and disabling compilation of the IWidgets Tk widget
 package provided with BRL-CAD's source distribution.  Default is AUTO,
-auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first 
-for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL 
-is set to BUNDLED, local copy is built even if a system version is present.  
+auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first
+for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL
+is set to BUNDLED, local copy is built even if a system version is present.
 This package will be disabled if BRLCAD_ENABLE_TK is OFF.
 
 Aliases:  ENABLE_IWIDGETS
@@ -599,9 +599,9 @@ Aliases:  ENABLE_IWIDGETS
 
 Option for enabling and disabling compilation of the Tkhtml HTML viewing
 package provided with BRL-CAD's source distribution.  Default is AUTO,
-auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first 
-for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL 
-is set to BUNDLED, local copy is built even if a system version is present.  
+auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first
+for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL
+is set to BUNDLED, local copy is built even if a system version is present.
 This package will be disabled if BRLCAD_ENABLE_TK is OFF.
 
 Aliases:  ENABLE_TKHTML
@@ -611,9 +611,9 @@ Aliases:  ENABLE_TKHTML
 
 Option for enabling and disabling compilation of the tkpng PNG image viewing
 package provided with BRL-CAD's source distribution.  Default is AUTO,
-auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first 
-for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL 
-is set to BUNDLED, local copy is built even if a system version is present.  
+auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first
+for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL
+is set to BUNDLED, local copy is built even if a system version is present.
 This package will be disabled if BRLCAD_ENABLE_TK is OFF.
 
 Aliases:  ENABLE_TKPNG
@@ -623,9 +623,9 @@ Aliases:  ENABLE_TKPNG
 
 Option for enabling and disabling compilation of the Tktable graphical table
 widget package provided with BRL-CAD's source distribution.  Default is AUTO,
-auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first 
-for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL 
-is set to BUNDLED, local copy is built even if a system version is present.  
+auto-enabling if the BRLCAD_TCL option is set to BUNDLED and testing first
+for a system version if BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_ITCL
+is set to BUNDLED, local copy is built even if a system version is present.
 This package will be disabled if BRLCAD_ENABLE_TK is OFF.
 
 Aliases:  ENABLE_TKTABLE
@@ -635,7 +635,7 @@ Aliases:  ENABLE_TKTABLE
 
 Option for enabling and disabling compilation of the openNURBS
 library provided with BRL-CAD's source code.  Default is
-AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and 
+AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 
 Aliases:  ENABLE_OPENNURBS
@@ -645,7 +645,7 @@ Aliases:  ENABLE_OPENNURBS
 
 Option for enabling and disabling compilation of the NIST Step Class
 Libraries provided with BRL-CAD's source code.  Default is
-AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing 
+AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 
 Aliases:  ENABLE_SCL, ENABLE_STEP, ENABLE_STEP_CLASS_LIBRARIES
