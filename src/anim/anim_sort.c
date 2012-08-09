@@ -81,7 +81,7 @@ main(int argc, char *argv[])
     if (!get_args(argc, argv))
 	fprintf(stderr, "Get_args error\n");
 
-    /* copy any lines preceeding the first "start" command */
+    /* copy any lines preceding the first "start" command */
     last_pos = ftell(stdin);
     while (bu_fgets(line, MAXLEN, stdin)!=NULL) {
 	if (bu_strncmp(line, "start", 5)) {
