@@ -452,7 +452,7 @@ main(int argc, char *argv[])
     MAT_IDN(m_rev_axes);
 
     if (!get_args(argc, argv))
-	fprintf(stderr, "Anim_track: Argument error.\n");
+	fprintf(stderr, "anim_track: Argument error.\n");
 
     if (axes || cent) {
 	/* vehicle has own reference frame */
