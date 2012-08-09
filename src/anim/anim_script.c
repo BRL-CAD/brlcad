@@ -199,7 +199,7 @@ main(int argc, char *argv[])
 	}
 
 	if (val < needed) {
-	    /* ie. scanf not completely successful */
+	    /* i.e. scanf not completely successful */
 	    /* with steering option, must go extra loop after end of file */
 	    if (steer && !last_steer)
 		last_steer = 1;
