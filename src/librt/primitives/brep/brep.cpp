@@ -77,6 +77,7 @@ extern "C" {
     int rt_brep_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr);
     int rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, const char **argv);
     int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
+    RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const int operation);
 #ifdef __cplusplus
 }
 #endif
@@ -3294,8 +3295,8 @@ split_curve(ON_NurbsCurve *out1, ON_NurbsCurve *out2, const ON_NurbsCurve *curve
 
 
 struct TrimmedFace {
-    ON_SimpleArray<ON_NurbsCurve> outerloop;
-    ON_SimpleArray<ON_NurbsCurve> innerloop;
+    ON_SimpleArray<ON_NurbsCurve*> outerloop;
+    ON_SimpleArray<ON_NurbsCurve*> innerloop;
     ON_BrepFace *face;
     TrimmedFace *Duplicate() const
     {
@@ -3361,7 +3362,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    ON_3dPointArray intersect_pt;
 	    ON_SimpleArray<std::pair<int, int> > CV;
 	    ON_SimpleArray<std::pair<double, double> > parameter;
-	    curve_intersect(&(in->outerloop[i]), curves[j], &intersect_pt, &CV, &parameter);
+	    curve_intersect(in->outerloop[i], curves[j], &intersect_pt, &CV, &parameter);
 	    for (int k = 0; k < intersect_pt.Count(); k++) {
 		IntersectPoint tmp_pt;
 		tmp_pt.m_pt = intersect_pt[k];
@@ -3375,7 +3376,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	    if (intersect_pt.Count())
 		have_intersect[j] = true;
 	}
-	CVCount_sum += in->outerloop[i].CVCount();
+	CVCount_sum += in->outerloop[i]->CVCount();
     }
 
     // deal with the situations where there is no intersection
@@ -3383,16 +3384,16 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	if (!have_intersect[i]) {
 	    ON_BoundingBox bbox_outerloop;
 	    for (int j = 0; j < in->outerloop.Count(); j++) {
-		bbox_outerloop.Union(in->outerloop[j].BoundingBox());
+		bbox_outerloop.Union(in->outerloop[j]->BoundingBox());
 	    }
 	    if (bbox_outerloop.Includes(curves[i]->BoundingBox())) {
 		if (curves[i]->IsClosed()) {
 		    TrimmedFace *newface = in->Duplicate();
-		    newface->innerloop.Append(*(curves[i]));
+		    newface->innerloop.Append(curves[i]);
 		    out.Append(newface);
 		    newface = new TrimmedFace();
 		    newface->face = in->face;
-		    newface->outerloop.Append(*(curves[i]));
+		    newface->outerloop.Append(curves[i]);
 		    out.Append(newface);
 		}
 	    }
@@ -3426,19 +3427,19 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
     int count = 0;
     int isect_iter = 0;
     for (int i = 0; i < in->outerloop.Count(); i++) {
-	const ON_NurbsCurve *curve_on_loop = &(in->outerloop[i]);
+	const ON_NurbsCurve *curve_on_loop = in->outerloop[i];
 	for (int j = 0; j < curve_on_loop->CVCount(); j++) {
 	    ON_3dPoint cvpt;
 	    curve_on_loop->GetCV(j, cvpt);
 	    outerloop.push_back(cvpt);
 	    count++;
-	    for (; sorted_pointers[isect_iter]->m_seg < count; isect_iter++) {
+	    for (; isect_iter < sorted_pointers.Count() && sorted_pointers[isect_iter]->m_seg < count; isect_iter++) {
 		outerloop.push_back(sorted_pointers[isect_iter]->m_pt);
 		sorted_pointers[isect_iter]->m_pos = --outerloop.end();
 	    }
 	}
     }
-    outerloop.push_back(in->outerloop[0].PointAtStart());
+    outerloop.push_back(in->outerloop[0]->PointAtStart());
 
     std::stack<int> s;
     s.push(0);
@@ -3486,8 +3487,8 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 
 	// Append a surface with newloop as its outerloop
 	ON_PolylineCurve polycurve(newloop);
-	ON_NurbsCurve nurbscurve;
-	polycurve.GetNurbForm(nurbscurve);
+	ON_NurbsCurve *nurbscurve = ON_NurbsCurve::New();
+	polycurve.GetNurbForm(*nurbscurve);
 	TrimmedFace *newface = new TrimmedFace();
 	newface->face = in->face;
 	newface->outerloop.Append(nurbscurve);
@@ -3561,7 +3562,7 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	out.Append(newface);
 	return 0;
     }*/
-
+    bu_log("Split to %d faces.\n", out.Count());
     return 0;
 }
 
@@ -3584,7 +3585,7 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
 
     int facecount1 = brep1->m_F.Count();
     int facecount2 = brep2->m_F.Count();
-    ON_SimpleArray<ON_SimpleArray<ON_NurbsCurve *> > curvesarray(facecount1 + facecount2);
+    ON_SimpleArray<ON_NurbsCurve *> *curvesarray = new ON_SimpleArray<ON_NurbsCurve *> [facecount1 + facecount2];
 
     // calculate intersection curves
     for (int i = 0; i < facecount1; i++) {
@@ -3606,15 +3607,15 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
 
     // split the surfaces with the intersection curves
     for (int i = 0; i < facecount1; i++) {
-	ON_SimpleArray<ON_NurbsCurve> innercurves, outercurves;
+	ON_SimpleArray<ON_NurbsCurve*> innercurves, outercurves;
 	ON_SimpleArray<int> &loopindex = brep1->m_F[i].m_li;
 	for (int j = 0; j < loopindex.Count(); j++) {
 	    ON_BrepLoop &loop = brep1->m_L[loopindex[j]];
 	    ON_SimpleArray<int> &trimindex = loop.m_ti;
 	    for (int k = 0; k < trimindex.Count(); k++) {
 		ON_Curve *curve2d = brep1->m_C2[brep1->m_T[trimindex[k]].m_c2i];
-		ON_NurbsCurve nurbscurve;
-		if (curve2d->GetNurbForm(nurbscurve))
+		ON_NurbsCurve *nurbscurve = ON_NurbsCurve::New();
+		if (!curve2d->GetNurbForm(*nurbscurve))
 		    continue;
 		if (j == 0) {
 		    outercurves.Append(nurbscurve);
@@ -3641,13 +3642,35 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
 	    ON_Surface *new_surf = brep1->m_S[i]->Duplicate();
 	    int surfindex = brep_out->AddSurface(new_surf);
 	    ON_BrepFace& face = brep_out->NewFace(surfindex);
-	    ON_BrepLoop *loop = brep_out->NewOuterLoop(surfindex);
-	    ON_SimpleArray<ON_NurbsCurve> &oloop = trimmedfaces[j]->outerloop;
+	    ON_BrepLoop &loop = brep_out->NewLoop(ON_BrepLoop::outer, face);
+	    ON_SimpleArray<ON_NurbsCurve*> &oloop = trimmedfaces[j]->outerloop;
 	    for (int k = 0; k < oloop.Count(); k++) {
-		loop->m_ti.Append(brep_out->AddTrimCurve(&(oloop[k])));
+		// TODO: Add edges and vertices to make the brep valid.
+		int ti = brep_out->AddTrimCurve(oloop[k]);
+		ON_BrepTrim trim;
+		trim.m_c2i = ti;
+		trim.SetProxyCurve(oloop[k]);
+		trim.m_tolerance[0] = trim.m_tolerance[1] = 0.0;
+		loop.m_ti.Append(ti);
+		brep_out->m_T.Append(trim);
 	    }
-	    new_surf->SetDomain(0, loop->m_pbox.m_min.x, loop->m_pbox.m_max.x);
-	    new_surf->SetDomain(1, loop->m_pbox.m_min.y, loop->m_pbox.m_max.y);
+	    
+	    ON_SimpleArray<ON_NurbsCurve*> &iloop = trimmedfaces[j]->innerloop;
+	    if (iloop.Count()) {
+		ON_BrepLoop &inloop = brep_out->NewLoop(ON_BrepLoop::inner, face);
+		for (int k = 0; k < iloop.Count(); k++) {
+		    // TODO: Add edges and vertices to make the brep valid.
+		    int ti = brep_out->AddTrimCurve(iloop[k]);
+		    ON_BrepTrim trim;
+		    trim.m_c2i = ti;
+		    trim.SetProxyCurve(iloop[k]);
+		    trim.m_tolerance[0] = trim.m_tolerance[1] = 0.0;
+		    inloop.m_ti.Append(ti);
+		    brep_out->m_T.Append(trim);
+		}
+	    }
+	    new_surf->SetDomain(0, loop.m_pbox.m_min.x, loop.m_pbox.m_max.x);
+	    new_surf->SetDomain(1, loop.m_pbox.m_min.y, loop.m_pbox.m_max.y);
 	    brep_out->SetTrimIsoFlags(face);
 	    brep_out->FlipFace(face);
 	}
@@ -3665,6 +3688,7 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     out->idb_minor_type = ID_BREP;
 
     // WIP
+    delete [] curvesarray;
     return 0;
 }
 

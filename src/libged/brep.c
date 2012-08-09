@@ -41,6 +41,7 @@ RT_EXPORT extern int brep_command(struct bu_vls *vls, struct brep_specific* bs, 
 RT_EXPORT extern int brep_conversion(struct rt_db_internal *intern, ON_Brep **brep);
 RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, char *name, char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
 RT_EXPORT extern int brep_intersect(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp, double max_dis);
+RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const int operation);
 #else
 extern int brep_surface_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int index);
 #endif
@@ -143,6 +144,34 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	
 	rt_db_free_internal(&intern);
 	rt_db_free_internal(&intern2);
+	return GED_OK;
+    }
+
+    if (BU_STR_EQUAL(argv[2], "u")) {
+	struct rt_db_internal intern2, intern_res;
+	struct rt_brep_internal *bip;
+	
+	if (argc != 5)
+	    return GED_ERROR;
+
+	if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  argv[3], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", argv[3]);
+	    return GED_ERROR;
+	} else {
+	    real_flag = (ndp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
+	}
+
+	if (!real_flag) {
+	    /* solid doesnt exists - don't kill */
+	    bu_vls_printf(gedp->ged_result_str, "Error: %s is not a real solid", argv[3]);
+	    return GED_OK;
+	}
+
+	GED_DB_GET_INTERNAL(gedp, &intern2, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+
+	rt_brep_boolean(&intern_res, &intern, &intern2, 0);
+	bip = (struct rt_brep_internal*)intern_res.idb_ptr;
+	mk_brep(gedp->ged_wdbp, argv[4], bip->brep);
 	return GED_OK;
     }
 
