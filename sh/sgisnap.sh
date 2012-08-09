@@ -64,7 +64,7 @@ FILES="$*"
 for i in $FILES ; do
     WIDTH=0
     HEIGHT=0
-    
+
     BASENAME=`basename $i`
     if test `basename $BASENAME .pix`.pix = $BASENAME ; then
 		# .pix file
@@ -130,7 +130,7 @@ for i in $FILES ; do
 		shift
 	    done
 	    shift           # eliminate getopt provided "--" from $1
-	    
+
 	    if test $WIDTH -ge 1024 -a $HEIGHT -eq 1024 ; then
 				# crunch colormap, to avoid ruining fbgamma
 		rle-fb -c $i
@@ -147,7 +147,7 @@ for i in $FILES ; do
 	    fi
 	fi
     fi
-    
+
     echo "$i: now -w $WIDTH -n $HEIGHT"
     RETVAL=99
     while test $WIDTH -gt 0 -a $RETVAL -ne 0 ; do
