@@ -1048,6 +1048,14 @@ v_ptr_comp(const void *p1, const void *p2)
 
 /**
  * N M G _ E D G E _ F U S E
+ *
+ * Note: If a bu_ptbl structure is passed into this function, the 
+ *       structure must contain edgeuse. Vertices will then be fused
+ *       at the shell level. If an NMG structure is passed into this
+ *       function, if the structure is an NMG region or model, vertices
+ *       will be fused at the model level. If the NMG structure passed
+ *       in is a shell or anything lower, vertices will be fused at the
+ *       shell level.
  */
 int
 nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
@@ -1065,11 +1073,33 @@ nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
     register struct edge *e2;
     register struct edgeuse *eu2;
     register struct vertex *v2;
+    struct shell *s;
+    struct model *m;
+    const uint32_t *tmp_magic_p;
 
     if (*magic_p == BU_PTBL_MAGIC) {
-	eu_list = (struct bu_ptbl *)magic_p; 
+	tmp_magic_p = (const uint32_t *)BU_PTBL_GET((struct bu_ptbl *)magic_p, 0);
+	if (*tmp_magic_p != NMG_EDGEUSE_MAGIC) {
+	    bu_bomb("nmg_edge_fuse(): passed bu_ptbl structure not containing edgeuse");
+	}
     } else {
-	bu_ptbl_init(&tmp, 64, "eu1_list1 buffer");
+	tmp_magic_p = magic_p;
+    }
+    if (*tmp_magic_p == NMG_REGION_MAGIC || *tmp_magic_p == NMG_MODEL_MAGIC) {
+	if (*tmp_magic_p == NMG_MODEL_MAGIC) {
+	    m = (struct model *)tmp_magic_p;
+	} else {
+	    m = ((struct nmgregion *)tmp_magic_p)->m_p;
+	}
+	(void)nmg_vertex_fuse(&m->magic, tol);
+    } else {
+	s = nmg_find_shell(tmp_magic_p);
+	(void)nmg_vertex_fuse(&s->l.magic, tol);
+    }
+    if (*magic_p == BU_PTBL_MAGIC) {
+	eu_list = (struct bu_ptbl *)magic_p;
+    } else {
+	bu_ptbl_init(&tmp, 64, "eu_list buffer");
 	nmg_edgeuse_tabulate(&tmp, magic_p);
 	eu_list = &tmp;
     }
