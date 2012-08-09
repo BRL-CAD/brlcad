@@ -1,7 +1,7 @@
 # Minimal directories required for any BRL-CAD functionality
 
 # Define some common definitions here that are used
-# in most BRL-CAD directories 
+# in most BRL-CAD directories
 
 add_definitions(
   -DHAVE_CONFIG_H
