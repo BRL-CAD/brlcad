@@ -135,7 +135,7 @@ main(int argc, char *argv[])
 
 	if (count) {
 	    /* not first time through */
-	    /* calculate matrices corrsponding to last position*/
+	    /* calculate matrices corresponding to last position*/
 	    anim_y_p_r2mat(m_to_world, angle, 0.0, 0.0);
 	    anim_add_trans(m_to_world, front, zero);
 	    anim_y_p_r2mat(m_from_world, -angle, 0.0, 0.0);
