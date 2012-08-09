@@ -108,7 +108,7 @@ main(int argc, char *argv[])
     fastf_t eyept[3] = {0.0}, viewrot[16] = {0.0}, angle[3] = {0.0}, quat[4] = {0.0};
 
     if (!get_args(argc, argv))
-	fprintf(stderr, "anim_keyread: get_args error");
+	fprintf(stderr, "anim_keyread: get_args error\n");
 
     while (!feof(stdin)) {
 	/* read one keyframe */
