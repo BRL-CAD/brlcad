@@ -171,7 +171,7 @@ main (int argc, char *argv[])
     read_cen1 = read_cen2 = read_rot1 = read_rot2 = 1;
 
     if (!get_args(argc, argv))
-	fprintf(stderr, "anim_cascade: Argument error.");
+	fprintf(stderr, "anim_cascade: Argument error.\n");
 
     switch (output_mode) {
 	case CASCADE_A:
