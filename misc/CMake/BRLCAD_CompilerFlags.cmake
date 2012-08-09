@@ -109,7 +109,7 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   BRLCAD_CHECK_CXX_FLAG(Winline)
 
   # Need this for tcl.h
-  BRLCAD_CHECK_C_FLAG(Wno-long-long) 
+  BRLCAD_CHECK_C_FLAG(Wno-long-long)
   BRLCAD_CHECK_CXX_FLAG(Wno-long-long)
 
   # Need this for X11 headers using variadic macros
