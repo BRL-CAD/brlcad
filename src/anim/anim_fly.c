@@ -219,14 +219,14 @@ main(int argc, char *argv[])
     yaw = pch = rll = 0.0;
 
     if (!get_args(argc, argv))
-	fprintf(stderr, "Anim_fly: Get_args error");
+	fprintf(stderr, "Anim_fly: Get_args error\n");
 
     /* read first two lines of table to determine the time step used */
     /* (a constant time step is assumed throughout the rest of the file)*/
     count = scanf("%lf %lf %lf %lf", first, first+1, first+2, first+3);
     count += scanf("%lf %lf %lf %lf", second, second+1, second+2, second+3);
     stepsize = second[0]-first[0];
-    
+
     if (count != 8) {
 	bu_exit(1, "%s: ERROR: expecting at least eight values (in the first two lines of the table) to determine the time step used\n", argv[0]);
     }
@@ -251,7 +251,7 @@ main(int argc, char *argv[])
     if (num_read<4) {
 	fprintf(stderr, "Anim_fly: Not enough lines in input table.\n");
 	fprintf(stderr, "Increase number of lines or reduce the minimum stepsize with -s.\n");
-	fprintf(stderr, "Currently the minumum step size is %g seconds.\n", desired_step);
+	fprintf(stderr, "Currently the minimum step size is %g seconds.\n", desired_step);
 	return 0;
     }
 
