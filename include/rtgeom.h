@@ -111,13 +111,13 @@ struct rt_superell_internal {
  * an unordered set of control points. Each control point contains a
  * 3d location, a "field strength", and possibly a "blobbiness" value
  * (called "goo" in rt_metaball_add_point).
- *  
+ *
  * There are three method ID's defined:
- *  
+ *
  * 1. "metaball", which is the Tokyo Metaball approximation of the
  *    Blinn Blobby Surface. This method is not implemented yet.
- *  
- * 2. "blob", the Blinn method. 
+ *
+ * 2. "blob", the Blinn method.
  *
  * 3. "iso", which is a simple computation like you'd see for
  *    computing gravitational magnitude or point charge in a basic
@@ -126,11 +126,11 @@ struct rt_superell_internal {
  @code
 		\Sum_{i}\frac{f_{i}}{d^{2}}
  @endcode
- *  
+ *
  * The surface of the primitive exists where the summation of the
  * points contribution is equal to the threshold, with the general
  * fldstr/distance^2 pattern.
- *  
+ *
  * The blobbiness value is only used in the blob method, and modifies
  * the gusseting effect.
  *
@@ -187,7 +187,7 @@ struct rt_half_internal  {
 struct rt_grip_internal {
     uint32_t magic;
     point_t	center;
-    /* Remaining elemnts are used for display purposes only */
+    /* Remaining elements are used for display purposes only */
     vect_t	normal;
     fastf_t	mag;
 };
@@ -512,7 +512,7 @@ struct nurb_seg		/**< @brief  NURB curve segment */
     int			pt_type;	/**< @brief  type of NURB curve */
     struct knot_vector	k;		/**< @brief  knot vector for NURB curve */
     int			c_size;		/**< @brief  number of control points */
-    int			*ctl_points;	/**< @brief  array of indicies for control points */
+    int			*ctl_points;	/**< @brief  array of indices for control points */
     fastf_t		*weights;	/**< @brief  array of weights for control points (NULL if non_rational) */
 };
 
@@ -668,14 +668,14 @@ struct rt_bot_list {
     struct rt_bot_internal *bot;
 };
 
-/* orientationss for BOT */
+/* orientations for BOT */
 #define	RT_BOT_UNORIENTED		1	/**< @brief  unoriented triangles */
 #define RT_BOT_CCW			2	/**< @brief  oriented counter-clockwise */
 #define RT_BOT_CW			3	/**< @brief  oriented clockwise */
 
 /* modes for BOT */
 #define RT_BOT_SURFACE			1	/**< @brief  triangles represent a surface (no volume) */
-#define RT_BOT_SOLID			2	/**< @brief  triangles respresent the boundary of a solid object */
+#define RT_BOT_SOLID			2	/**< @brief  triangles represent the boundary of a solid object */
 
 /**
  * triangles represent plates. Thicknesses are specified in
