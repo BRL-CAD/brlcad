@@ -34,7 +34,7 @@
  *
  * The "-m" option specifies that triangles that are first or last on
  * each ray should be included in the output. This can improve
- * performance, but can also degrade performance considerabley. With
+ * performance, but can also degrade performance considerably. With
  * the "-m" option, "onehit" processing is turned off.
  *
  * If a "-g" option is provided, then rays are shot from a uniform
