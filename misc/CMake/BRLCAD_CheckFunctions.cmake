@@ -114,7 +114,7 @@ macro(BRLCAD_TYPE_SIZE typename headers)
   string(REGEX REPLACE "[^a-zA-Z0-9]" "_" var ${typename})
   string(TOUPPER "${var}" var)
   # Proceed with type check.  To make sure checks are re-run when
-  # re-testing the same type with different headers, create a test 
+  # re-testing the same type with different headers, create a test
   # variable incorporating both the typename and the headers string
   string(REGEX REPLACE "[^a-zA-Z0-9]" "_" testvar "HAVE_${typename}${headers}")
   string(TOUPPER "${testvar}" testvar)
