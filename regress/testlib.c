@@ -65,7 +65,7 @@ main(int ac, char *av[])
 	printf("couldn't open libbu\n");
     }
 
-    for (i = 1; i < ac; i++) { 
+    for (i = 1; i < ac; i++) {
 	printf("Loading %s\n", av[i]);
 	func = (func_t)dlsym(handle, av[i]);
 	error = dlerror();
