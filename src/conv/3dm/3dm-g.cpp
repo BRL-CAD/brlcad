@@ -279,7 +279,7 @@ int main(int argc, char** argv) {
 
 	dump->Print("\n\nObject %d of %d:\n\n", i + 1, model.m_object_table.Count());
 
-	// object's attibutes
+	// object's attributes
 	ON_3dmObjectAttributes myAttributes = model.m_object_table[i].m_attributes;
 
 	std::string geom_base;
