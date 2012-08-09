@@ -111,6 +111,62 @@ nmg_find_model(const uint32_t *magic_p_arg)
 }
 
 
+/**
+ * N M G _ F I N D _ S H E L L
+ *
+ * Given a pointer to the magic number in any NMG data structure,
+ * return a pointer to the shell structure that contains that NMG item.
+ *
+ * The reason for the register variable is to leave the argument variable
+ * unmodified;  this may aid debugging in event of a core dump.
+ */
+struct shell *
+nmg_find_shell(const uint32_t *magic_p)
+{
+ top:
+    if (magic_p == NULL) {
+	bu_log("nmg_find_shell(x%x) enountered null pointer\n", magic_p);
+	bu_bomb("nmg_find_shell() null pointer\n");
+    }
+
+    switch (*magic_p) {
+	case NMG_SHELL_MAGIC:
+	    return (struct shell *)magic_p;
+	case NMG_FACEUSE_MAGIC:
+	    magic_p = &((struct faceuse *)magic_p)->s_p->l.magic;
+	    goto top;
+	case NMG_FACE_MAGIC:
+	    magic_p = &((struct face *)magic_p)->fu_p->l.magic;
+	    goto top;
+	case NMG_LOOP_MAGIC:
+	    magic_p = ((struct loop *)magic_p)->lu_p->up.magic_p;
+	    goto top;
+	case NMG_LOOPUSE_MAGIC:
+	    magic_p = ((struct loopuse *)magic_p)->up.magic_p;
+	    goto top;
+	case NMG_EDGE_MAGIC:
+	    magic_p = ((struct edge *)magic_p)->eu_p->up.magic_p;
+	    goto top;
+	case NMG_EDGEUSE_MAGIC:
+	    magic_p = ((struct edgeuse *)magic_p)->up.magic_p;
+	    goto top;
+	case NMG_VERTEX_MAGIC:
+	    magic_p = &(BU_LIST_FIRST(vertexuse,
+				      &((struct vertex *)magic_p)->vu_hd)->l.magic);
+	    goto top;
+	case NMG_VERTEXUSE_MAGIC:
+	    magic_p = ((struct vertexuse *)magic_p)->up.magic_p;
+	    goto top;
+
+	default:
+	    bu_log("nmg_find_shell() can't get shell for magic=x%x (%s)\n",
+		   *magic_p, bu_identify_magic(*magic_p));
+	    bu_bomb("nmg_find_shell() failure\n");
+    }
+    return (struct shell *)NULL;
+}
+
+
 void
 nmg_model_bb(fastf_t *min_pt, fastf_t *max_pt, const struct model *m)
 {

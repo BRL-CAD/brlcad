@@ -3941,6 +3941,7 @@ RT_EXPORT extern void nmg_mv_vu_between_shells(struct shell *dest,
 /* From nmg_info.c */
 /* Model routines */
 RT_EXPORT extern struct model *nmg_find_model(const uint32_t *magic_p);
+RT_EXPORT extern struct shell *nmg_find_shell(const uint32_t *magic_p);
 RT_EXPORT extern void nmg_model_bb(point_t min_pt,
 				   point_t max_pt,
 				   const struct model *m);
