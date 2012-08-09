@@ -63,7 +63,7 @@ set(PATH_LABELS CMAKE_INSTALL_PREFIX BIN_DIR LIB_DIR MAN_DIR DATA_DIR)
 # Initialize length var
 set(PATH_LABEL_LENGTH 0)
 
-# Find longest label string for installation directories 
+# Find longest label string for installation directories
 foreach(path_label ${PATH_LABELS})
   string(LENGTH "${${path_label}_LABEL}" CURRENT_LENGTH)
   if (${CURRENT_LENGTH} GREATER ${PATH_LABEL_LENGTH})
@@ -245,8 +245,8 @@ set(BRLCAD_INSTALL_EXAMPLE_GEOMETRY_LABEL "Install example geometry models ")
 set(BRLCAD_DOCBOOK_BUILD_LABEL "Generate extra docs ")
 
 # Make sets to use for iteration over all report items
-set(BUILD_REPORT_ITEMS 
-    TCL TK INCRTCL IWIDGETS TKHTML TKPNG TKTABLE PNG REGEX ZLIB 
+set(BUILD_REPORT_ITEMS
+    TCL TK INCRTCL IWIDGETS TKHTML TKPNG TKTABLE PNG REGEX ZLIB
     TERMLIB UTAHRLE OPENNURBS SCL)
 
 set(FEATURE_REPORT_ITEMS
@@ -254,9 +254,9 @@ set(FEATURE_REPORT_ITEMS
     BRLCAD_ENABLE_RUNTIME_DEBUG)
 
 set(OTHER_REPORT_ITEMS
-    BRLCAD_ARCH_BITSETTING BRLCAD_OPTIMIZED_BUILD 
+    BRLCAD_ARCH_BITSETTING BRLCAD_OPTIMIZED_BUILD
     BRLCAD_FLAGS_DEBUG BRLCAD_ENABLE_PROFILING
-    BRLCAD_ENABLE_SMP BUILD_STATIC_LIBS BUILD_SHARED_LIBS 
+    BRLCAD_ENABLE_SMP BUILD_STATIC_LIBS BUILD_SHARED_LIBS
     BRLCAD_ENABLE_COMPILER_WARNINGS BRLCAD_ENABLE_VERBOSE_PROGRESS
     BRLCAD_INSTALL_EXAMPLE_GEOMETRY BRLCAD_DOCBOOK_BUILD)
 
@@ -302,8 +302,8 @@ endforeach(label ${ALL_LABELS})
 #                  Third Party                    #
 #                                                 #
 ###################################################
-# The actual build state (as opposed to the AUTO/BUNDLED/SYSTEM setting) 
-# of the third party libraries is not present in the global cache and 
+# The actual build state (as opposed to the AUTO/BUNDLED/SYSTEM setting)
+# of the third party libraries is not present in the global cache and
 # must be explicitly pulled from src/other
 macro(GET_BUILD_STATE ITEM)
   get_directory_property(BRLCAD_${ITEM}_BUILD DIRECTORY src/other DEFINITION BRLCAD_${ITEM}_BUILD)
