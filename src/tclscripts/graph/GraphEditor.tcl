@@ -186,33 +186,58 @@ body GraphEditor::constructor {} {
     bind $_itemMenu <ButtonRelease> {::tk::MenuInvoke %W 1}
     bind $_bgMenu <ButtonRelease> {::tk::MenuInvoke %W 1}
 
-    # get objects' positions within the graph
+    # get objects' names, types and positions within the graph
     set objectsPositionsCommand "graph_objects_positions"
 
     if [ catch $objectsPositionsCommand positions ] {
         return
     }
 
+    # set constant values for the following type of objects: primitive, combination and something else
+    set primitive 1
+    set combination 2
+
     set i 0
-    foreach position $positions {
+    foreach element $positions {
         if { $i == 0 } {
+            # set the name of the object
+            set name $element
             incr i
         } elseif { $i == 1 } {
-            set x1 $position
+            # set the color depending on the type of object: primitive / combination / something else
+            if { [string equal $element $primitive] } {
+                set color red
+            } elseif { [string equal $element $combination] } {
+                set color green
+            } else {
+                set color yellow
+            }
             incr i
         } elseif { $i == 2 } {
-            set y1 $position
+            # set the x coordinate for the lower left corner
+            set x1 $element
             incr i
         } elseif { $i == 3 } {
-            set x2 $position
+            # set the y coordinate for the lower left corner
+            set y1 $element
+            incr i
+        } elseif { $i == 4 } {
+            # set the x coordinate for the upper right corner
+            set x2 $element
             incr i
         } else {
-            set y2 $position
+            # set the y coordinate for the upper right corner
+            set y2 $element
             set i 0
-            #draw a rectangle for this object within the graph
+
+            # draw a rectangle for this object within the graph
             $itk_interior.cv create rectangle $x1 $y1 $x2 $y2 \
-            -fill    red \
+            -fill    $color \
             -tags    rectangle
+
+            # write the object's name inside the rectangle
+            $itk_interior.cv create text [expr "($x1 + $x2)/2" ] [expr "($y1 + $y2)/2" ] \
+            -text    $name
         }
     }
 }

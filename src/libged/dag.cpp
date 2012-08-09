@@ -34,7 +34,7 @@
 
 #define BRLCAD_PARALLEL PARALLEL
 #undef PARALLEL
-#define POSITION_COORDINATE 10.0
+#define POSITION_COORDINATE 30.0
 
 /* Adaptagrams Header */
 #include "libavoid/libavoid.h"
@@ -60,6 +60,7 @@ struct output {
 struct _ged_dag_data {
     Avoid::Router *router;
     struct bu_hash_tbl *ids;
+    struct bu_hash_tbl *object_types;
     uint16_t object_nr;
     uint16_t last_connref_id;
 };
@@ -114,6 +115,23 @@ free_hash_values(struct bu_hash_tbl *htbl)
         bu_free(bu_get_hash_value(entry), "hash entry");
         entry = bu_hash_tbl_next(&rec);
     }
+}
+
+
+/**
+ * Method that "decorates" each object depending on its type: primitive / combination / something else.
+ * A new entry is added into the objects_types hash table with the name of the object as a key and
+ * the type of the object as a value.
+ */
+void
+decorate_object(struct _ged_dag_data *dag, char *object_name, int object_type)
+{
+    int new_entry;
+    struct bu_hash_entry *hsh_entry = bu_hash_add_entry(dag->object_types, (unsigned char *)object_name, strlen(object_name) + 1, &new_entry);
+
+    char *type = (char *)bu_malloc((size_t)1, "hash entry value");
+    sprintf(type, "%d", object_type);
+    bu_set_hash_value(hsh_entry, (unsigned char *)type);
 }
 
 
@@ -303,6 +321,9 @@ put_me_in_a_bucket(struct directory *dp, struct directory *ndp, struct db_i *dbi
             std::string name((const char *)dp->d_namep);
             o->primitives.push_back(name);
 
+            /* "Decorate" the object. Add its name and type into the hash table. */
+            decorate_object(dag, dp->d_namep, dp->d_flags);
+
             /* Check if a shape was already created for this subnode. */
             bool shape_exists = false;
             ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
@@ -323,6 +344,9 @@ put_me_in_a_bucket(struct directory *dp, struct directory *ndp, struct db_i *dbi
     } else if (dp->d_flags & RT_DIR_COMB) {
         bu_log("Adding COMB object [%s]\n", bu_vls_addr(&dp_name_vls));
         dag_comb(dbip, ndp, o, dag, objects);
+
+        /* "Decorate" the object. Add its name and type into the hash table. */
+        decorate_object(dag, dp->d_namep, dp->d_flags);
     } else {
         bu_log("Something else: [%s]\n", bu_vls_addr(&dp_name_vls));
         prev = NULL;
@@ -332,6 +356,9 @@ put_me_in_a_bucket(struct directory *dp, struct directory *ndp, struct db_i *dbi
             o->non_geometries.reserve(o->non_geometries.size() + 1);
             std::string name((const char *)dp->d_namep);
             o->non_geometries.push_back(name);
+
+            /* "Decorate" the object. Add its name and type into the hash table. */
+            decorate_object(dag, dp->d_namep, dp->d_flags);
         }
     }
 
@@ -358,6 +385,7 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
     /* Create the master "objects" hash table. It will have at most 64 entries. */
     objects = bu_create_hash_tbl(1);
     dag->ids = bu_create_hash_tbl(1);
+    dag->object_types = bu_create_hash_tbl(1);
 
     /* Sets a spacing distance for overlapping orthogonal connectors to be nudged apart. */
     dag->router->setOrthogonalNudgeDistance(25);
@@ -472,16 +500,22 @@ ged_graph_objects_positions(struct ged *gedp, int argc, const char *argv[])
 
             struct bu_hash_entry *prev = NULL;
             unsigned long idx;
-            struct bu_hash_entry *hsh_entry= bu_find_hash_entry(dag->ids, (unsigned char *)id, strlen(id) + 1, &prev, &idx);
+            struct bu_hash_entry *hsh_entry = bu_find_hash_entry(dag->ids, (unsigned char *)id, strlen(id) + 1, &prev, &idx);
             if(hsh_entry) {
                 (*it)->polygon().getBoundingRect(&minX, &minY, &maxX, &maxY);
-                bu_vls_printf(gedp->ged_result_str, "%s %f %f %f %f\n", hsh_entry->value, minX, minY, maxX, maxY);
+
+                prev = NULL;
+                struct bu_hash_entry *hsh_entry_type = bu_find_hash_entry(dag->object_types, hsh_entry->value,
+                                                                          strlen((char *)hsh_entry->value) + 1, &prev, &idx);
+                if(hsh_entry_type) {
+                    bu_vls_printf(gedp->ged_result_str, "%s %s %f %f %f %f\n", hsh_entry->value, hsh_entry_type->value, minX,
+                                  minY, maxX, maxY);
+                }
             }
         }
 
         bu_free(dag, "free DAG");
     }
-
     return GED_OK;
 }
 
