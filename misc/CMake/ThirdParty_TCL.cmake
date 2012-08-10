@@ -40,16 +40,16 @@
 # a Tcl/Tk extension:
 #
 # 1.  Are the variables listed in required_vars enabled?  If one or more
-#     of them is not, there is never any point in building or searching for 
-#     packages requiring those variables. Examples of variables used here 
+#     of them is not, there is never any point in building or searching for
+#     packages requiring those variables. Examples of variables used here
 #     include BRLCAD_ENABLE_TK and BRLCAD_ENABLE_OPENGL.  If the BRLCAD_<PKG>
 #     variable is set to SYSTEM, the only impact this will have if triggered
 #     is to disable the execution of the system test.
 # 2.  Is the extension variable set to SYSTEM explicitly?  If so, the
 #     extension will not be built under any circumstances.  Whether it
 #     is tested for depends on condition 1 above.  If it is tested for and
-#     not detected (e.g. BRL-CAD's Tk features are enabled and Tkhtml 
-#     is not found) a BRLCAD_<PKG>_NOTFOUND variable will be set, but 
+#     not detected (e.g. BRL-CAD's Tk features are enabled and Tkhtml
+#     is not found) a BRLCAD_<PKG>_NOTFOUND variable will be set, but
 #     the extension will not be enabled.
 # 3.  Is the extension variable set to BUNDLED explicitly?  If so, only
 #     a disabled required_vars variable will disable it, and only then if
@@ -61,12 +61,12 @@
 #     found, BRLCAD_<PKG>_NOTFOUND will also be set in this instance.
 # 5.  If BRLCAD_TCL has been automatically set to SYSTEM as a consequence
 #     of BRLCAD_BUNDLED_LIBS being set to SYSTEM, the situation is
-#     regarded as identical to conditon 4 above. If not found, 
+#     regarded as identical to condition 4 above. If not found,
 #     BRLCAD_<PKG>_NOTFOUND will also be set in this instance.
 # 6.  If BRLCAD_TCL_BUILD is ON (either because BRLCAD_TCL is set to
 #     BUNDLED explicitly, because it has been set to BUNDLED (Auto) due
-#     to BRLCAD_BUNDLED_LIBS being set to BUNDLED, or because the AUTO 
-#     search failed to find an acceptable Tcl on the system) Tcl/Tk 
+#     to BRLCAD_BUNDLED_LIBS being set to BUNDLED, or because the AUTO
+#     search failed to find an acceptable Tcl on the system) Tcl/Tk
 #     extensions also default to ON, subject to the above conditions.
 #     If the extension has been forced to OFF for any reason other than
 #     a feature-based disabling and BRLCAD_TCL is hard-set to
@@ -76,24 +76,24 @@
 #     workable - even if it somehow compiled and ran, the probability
 #     of subtle issues would be high.
 # 7.  If none of the above conditions preclude the usefulness of doing
-#     so, test the available Tcl/Tk to see if it supplies the package 
-#     in question.  If NEEDS_LIBS is populated, the Tcl/Tk "package require" 
-#     mechanism is not enough and a system version of the package must 
-#     also have locatable C libraries  If a system version is found that 
-#     satisfies all criteria, compilation of the extension is disabled - 
+#     so, test the available Tcl/Tk to see if it supplies the package
+#     in question.  If NEEDS_LIBS is populated, the Tcl/Tk "package require"
+#     mechanism is not enough and a system version of the package must
+#     also have locatable C libraries  If a system version is found that
+#     satisfies all criteria, compilation of the extension is disabled -
 #
 #     Note:  For the time being, this routine does not attempt to address
 #     the problem of header identification.  In principle it should do so,
-#     but the current reality is that oftentimes "private" headers will be 
-#     needed by BRL-CAD when using Tcl/Tk extensions - these headers may 
-#     not be installed on system versions of packages, or may be in 
-#     non-standard places if they are.  In those situations, if the system 
-#     version of the Tcl/Tk package in question is compatible with the 
+#     but the current reality is that oftentimes "private" headers will be
+#     needed by BRL-CAD when using Tcl/Tk extensions - these headers may
+#     not be installed on system versions of packages, or may be in
+#     non-standard places if they are.  In those situations, if the system
+#     version of the Tcl/Tk package in question is compatible with the
 #     copy in src/other (usually the case, since BRL-CAD requires a fairly
-#     modern Tcl/Tk to work), the build can use the system package with 
+#     modern Tcl/Tk to work), the build can use the system package with
 #     the *local* copy of the package's private headers, even when building
 #     with system extensions.  This is sub-optimal, and eventually logic
-#     should be added to 
+#     should be added to
 
 #-----------------------------------------------------------------------------
 macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LIBS aliases description)
@@ -123,19 +123,19 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
   set(${PKGNAME_UPPER}_DISABLE_TEST 0)
   set(${PKGNAME_UPPER}_MET_CONDITION 0)
 
-  # 1. First up - If any of the required flags are off, not only is this extension 
+  # 1. First up - If any of the required flags are off, not only is this extension
   # build a no-go but so is the test - BRL-CAD doesn't require it.
-  set(DISABLE_STR "") 
+  set(DISABLE_STR "")
   foreach(item ${required_vars})
     if(NOT ${item})
       set(${PKGNAME_UPPER}_DISABLED 1)
       set(${PKGNAME_UPPER}_DISABLE_TEST 1)
       set(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD OFF)
-      if(NOT DISABLE_STR) 
+      if(NOT DISABLE_STR)
 	set(DISABLE_STR "${item}")
-      else(NOT DISABLE_STR) 
+      else(NOT DISABLE_STR)
 	set(DISABLE_STR "${DISABLE_STR},${item}")
-      endif(NOT DISABLE_STR) 
+      endif(NOT DISABLE_STR)
     endif(NOT ${item})
   endforeach(item ${required_vars})
   if(DISABLE_STR)
@@ -187,7 +187,7 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
   endif("${${CMAKE_PROJECT_NAME}_TCL}" STREQUAL "SYSTEM")
 
 
-  # 5. If BRLCAD_TCL matches SYSTEM and BRLCAD_BUNDLED_LIBS is *exactly* 
+  # 5. If BRLCAD_TCL matches SYSTEM and BRLCAD_BUNDLED_LIBS is *exactly*
   # SYSTEM, compilation is off. (Testing depends on #1).
   if("${${CMAKE_PROJECT_NAME}_TCL}" MATCHES "SYSTEM" AND "${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS}" STREQUAL "SYSTEM")
     if(NOT ${PKGNAME_UPPER}_MET_CONDITION)
@@ -198,7 +198,7 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
   endif("${${CMAKE_PROJECT_NAME}_TCL}" MATCHES "SYSTEM" AND "${${CMAKE_PROJECT_NAME}_BUNDLED_LIBS}" STREQUAL "SYSTEM")
 
   # 6. If we're building Tcl itself (for whatever reason) and we aren't
-  # already off, default to compilation.  If we're building, no point 
+  # already off, default to compilation.  If we're building, no point
   # in testing - disable.
   if(${CMAKE_PROJECT_NAME}_TCL_BUILD)
     if(NOT ${PKGNAME_UPPER}_MET_CONDITION)
@@ -209,8 +209,8 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
   endif(${CMAKE_PROJECT_NAME}_TCL_BUILD)
   # Check for the bizarre case of bundled Tcl + system package - error out if that
   # combination has been specified, since there is no expectation that a package
-  # provided for a system installation of Tcl/Tk would work with BRL-CAD's local 
-  # copy.  If the feature was disabled it doesn't matter, since that's a 
+  # provided for a system installation of Tcl/Tk would work with BRL-CAD's local
+  # copy.  If the feature was disabled it doesn't matter, since that's a
   # "disabled" condition instead of a SYSTEM condition.  If we don't hit such a
   # case, properly set ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}
   if(NOT ${PKGNAME_UPPER}_DISABLED)
@@ -231,8 +231,8 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
     set(${PKGNAME_UPPER}_TEST_FAIL 0)
     set(${PKGNAME_UPPER}_TCL_PASSED 0)
     set(${PKGNAME_UPPER}_LIBS_FAIL 0)
-    # Stash the previous results (if any) so we don't repeatedly 
-    # call out the tests - only report if something actually 
+    # Stash the previous results (if any) so we don't repeatedly
+    # call out the tests - only report if something actually
     # changes in subsequent runs.
     set(${PKGNAME_UPPER}_FOUND_STATUS ${${PKGNAME_UPPER}_FOUND})
 
@@ -261,7 +261,7 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
 
     # 3.  After 2, we *almost* know what to do.  Check if we need to base
     # the decision on C libraries and headers, as well.  If we didn't pass
-    # the package version test, then the libraries and headers are moot - 
+    # the package version test, then the libraries and headers are moot -
     # we can't assume the package is set up correctly, and need to build
     # our own or report find failure, as the case may be.
     #
@@ -273,7 +273,7 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
     # CMake build settings, we don't want to let build-target settings satisfy
     # the requirements.
     #
-    # To handle this, each library variable is first checked to see if it's 
+    # To handle this, each library variable is first checked to see if it's
     # full path expansion matches the default variable setting.  If so, accept
     # the setting.  If not, the setting is assumed to be a build target from
     # a bundled configuration and cleared.  (If the bundled sources are built
@@ -285,7 +285,7 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
 	foreach(libname ${NEEDS_LIBS})
 	  # get the uppercase version of the lib name
 	  string(TOUPPER "${libname}" LIBNAME_UPPER)
-	  # deduce the variable to hold the library results 
+	  # deduce the variable to hold the library results
 	  if(${LIBNAME_UPPER} STREQUAL ${PKGNAME_UPPER})
 	    set(LOOKFOR_LIBRARY "${PKGNAME_UPPER}_LIBRARY")
 	    set(CORENAME ${pkgname})
@@ -349,7 +349,7 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
       if(${PKGNAME_UPPER}_TEST_FAIL OR ${PKGNAME_UPPER}_LIBS_FAIL OR NOT ${PKGNAME_UPPER}_TCL_PASSED)
 	set(BRLCAD_${PKGNAME_UPPER}_NOTFOUND 1)
 	if(NOT "${wishcmd}" STREQUAL "" AND NOT "${wishcmd}" MATCHES "NOTFOUND")
-	  message(WARNING "Local compilation of Tcl/Tk extension ${pkgname} was disabled, but system version not found!")	
+	  message(WARNING "Local compilation of Tcl/Tk extension ${pkgname} was disabled, but system version not found!")
 	endif(NOT "${wishcmd}" STREQUAL "" AND NOT "${wishcmd}" MATCHES "NOTFOUND")
       endif(${PKGNAME_UPPER}_TEST_FAIL OR ${PKGNAME_UPPER}_LIBS_FAIL OR NOT ${PKGNAME_UPPER}_TCL_PASSED)
     endif(${PKGNAME_UPPER}_MET_CONDITION STREQUAL "4" OR ${PKGNAME_UPPER}_MET_CONDITION STREQUAL "5")
@@ -391,7 +391,7 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
   endif(NOT ${PKGNAME_UPPER}_MET_CONDITION)
 
   OPTION_ALIASES("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" "${aliases}" "ABS")
-  OPTION_DESCRIPTION("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" "${aliases}" "${description}") 
+  OPTION_DESCRIPTION("${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}" "${aliases}" "${description}")
 
   # For drop-down menus in CMake gui - set STRINGS property
   set_property(CACHE ${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER} PROPERTY STRINGS AUTO BUNDLED SYSTEM)
