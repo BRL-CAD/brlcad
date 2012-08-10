@@ -307,7 +307,7 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
     tribuf[2] = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3, "triangle tribuffer");
 
     (void) db_walk_tree(dbip,
-			argc,			/* number of toplevel regions */			
+			argc,			/* number of toplevel regions */
 			argv,			/* region names */
 			1,			/* ncpu */
 			&tree_state,		/* initial tree state */
