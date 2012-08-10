@@ -206,8 +206,8 @@ if test "x$want_boost" = "xyes"; then
 
 	if test "$succeeded" != "yes" ; then
 		if test "$_version" = "0" ; then
-			BOOST_CPPFLAGS='-I${top_srcdir}/src/other'			
-			AC_SUBST(BOOST_CPPFLAGS)			
+			BOOST_CPPFLAGS='-I${top_srcdir}/src/other'
+			AC_SUBST(BOOST_CPPFLAGS)
 		fi
 	else
 		AC_SUBST(BOOST_CPPFLAGS)
