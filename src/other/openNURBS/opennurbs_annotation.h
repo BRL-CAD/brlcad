@@ -2,12 +2,12 @@
 /*
 //
 // Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -39,10 +39,10 @@ public:
   Parameters:
     text_log - [in] if the object is not valid and text_log
         is not NULL, then a brief englis description of the
-        reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
+        reason the object is not valid is appended to the log.
+        The information appended to text_log is suitable for
+        low-level debugging purposes by programmers and is
+        not intended to be useful as a high level user
         interface tool.
   Returns:
     @untitled table
@@ -88,10 +88,10 @@ public:
   Parameters:
     text_log - [in] if the object is not valid and text_log
         is not NULL, then a brief englis description of the
-        reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
+        reason the object is not valid is appended to the log.
+        The information appended to text_log is suitable for
+        low-level debugging purposes by programmers and is
+        not intended to be useful as a high level user
         interface tool.
   Returns:
     @untitled table
@@ -128,7 +128,7 @@ public:
          ON_BOOL32 = false  // true means grow box
          ) const;
 
-  ON_BOOL32 Transform( 
+  ON_BOOL32 Transform(
          const ON_Xform&
          );
 
@@ -190,10 +190,10 @@ public:
   Parameters:
     text_log - [in] if the object is not valid and text_log
         is not NULL, then a brief englis description of the
-        reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
+        reason the object is not valid is appended to the log.
+        The information appended to text_log is suitable for
+        low-level debugging purposes by programmers and is
+        not intended to be useful as a high level user
         interface tool.
   Returns:
     @untitled table
@@ -229,7 +229,7 @@ public:
          ON_BOOL32 = false  // true means grow box
          ) const;
 
-  ON_BOOL32 Transform( 
+  ON_BOOL32 Transform(
          const ON_Xform&
          );
 
@@ -284,7 +284,7 @@ public:
   ON_wString m_usertext;               // "<>", or user override
   ON_wString m_defaulttext;            // The displayed text string
 
-  bool m_userpositionedtext;           // true: User has positioned text 
+  bool m_userpositionedtext;           // true: User has positioned text
                                        // false: use default location
 };
 
