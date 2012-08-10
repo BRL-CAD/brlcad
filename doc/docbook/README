@@ -78,7 +78,7 @@ nroff, troff, or groff) to DocBook xml.
 DOCBOOK PROCESSING
 ------------------
 
-Currently there are three products generated from DB source:  
+Currently there are three products generated from DB source:
 
   * man pages
 
@@ -133,7 +133,7 @@ documents:
         a powerful and free vector drawing editor (see
         http://inkscape.org)
 
-    * math2svg 
+    * math2svg
         a program (from the SVGMath suite) to convert MathML xml
         format to SVG xml format (see
         http://http://grigoriev.ru/svgmath/ and
@@ -160,7 +160,7 @@ external tools that are not presently part of the BRL-CAD package:
 
   For the 'msv' validation method (a recommended method):
 
-    * msv 
+    * msv
         Oracle Multi-Schema XML Validator (MSV) (see http://msv.java.net/)
 
     * Java
@@ -169,7 +169,7 @@ external tools that are not presently part of the BRL-CAD package:
   For the 'nvdl' validation method:
 
     * onvdl.jar
-        a Java jar file with the oNVDL validation tool (see 
+        a Java jar file with the oNVDL validation tool (see
         https://sourceforge.net/projects/onvdl/
 
     * Java
@@ -193,8 +193,8 @@ Once the correct file is present, configure CMake with options
 similar to the following (alter for your specific tool):
 
 cmake .. -DBRLCAD_EXTRADOCS_VALIDATE=ON -DVALIDATE_EXECUTABLE=msv
-    
- 
+
+
 OTHER CONSIDERATIONS
 --------------------
 
@@ -217,7 +217,7 @@ Notes:
 * When rendered to html output and placed on a server, there may arise
   a problem where the server supplies the page as ISO-8859-1 encoded
   despite them actually using UTF-8.  To combat this problem in the
-  case of the Apache web server, an .htaccess file in the directory 
+  case of the Apache web server, an .htaccess file in the directory
   with the line:
 
     AddDefaultCharset UTF-8
