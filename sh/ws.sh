@@ -84,7 +84,7 @@ files="$*"
 if [ "x$WS" = "x" ] ; then
     # run everything
     # NOTE: step f is disabled
-    WS=abcdefghijklmnopqrstuvwxyz
+    WS=abcdeghijklmnopqrstuvwxyz
 fi
 if [ "x$WS_SUCCESSIVE" = "x" ] ; then
     # how many blank lines in a row (max)
