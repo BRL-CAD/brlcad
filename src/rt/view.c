@@ -38,7 +38,7 @@
  *
  * Notes -
  * The normals on all surfaces point OUT of the solid.
- * The incomming light rays point IN.
+ * The incoming light rays point IN.
  *
  */
 
@@ -157,7 +157,7 @@ int a_onehit = -1;
 static int overlay = 0;
 
 /* Viewing module specific "set" variables:
- * 
+ *
  * Note: The actual byte offsets will get set at run time in
  * application_init. Also, the variables associated with bounces,
  * ireflect and background are globals that live in liboptical. These
@@ -472,7 +472,7 @@ view_pixel(struct application *ap)
 
 		/* Scanline buffered mode */
 		bu_semaphore_acquire(RT_SEM_RESULTS);
-	
+
 		tmp_pixel = bu_calloc(pwidth, sizeof(fastf_t), "tmp_pixel");
 		VMOVE(tmp_pixel, ap->a_color);
 		if (rpt_dist) {
@@ -493,16 +493,16 @@ view_pixel(struct application *ap)
 		       the nearest integer */
 		    tmp_color = psum_p[i]*255.0/full_incr_sample + 0.5;
 		    /* clamp */
-		    pixelp[i] = tmp_color < 0 ? 0 : tmp_color > 255 ? 255 : tmp_color; 
+		    pixelp[i] = tmp_color < 0 ? 0 : tmp_color > 255 ? 255 : tmp_color;
 		}
 		bu_free(tmp_pixel, "tmp_pixel");
 
 		bu_semaphore_release(RT_SEM_RESULTS);
 		if (--(slp->sl_left) <= 0)
 		    do_eol = 1;
-	    }		    
+	    }
 	    break;
-    
+
 	default:
 	    bu_exit(EXIT_FAILURE, "bad buf_mode: %d", buf_mode);
     }
@@ -610,7 +610,7 @@ void
 view_end(struct application *ap)
 {
     /* FIXME: this should work on windows after the bu_timer() is
-     * created to replace the librt timing mechansim.
+     * created to replace the librt timing mechanism.
      */
 #if !defined(_WIN32) || defined(__CYGWIN__)
     /* If the heat graph is on, render it after all pixels completed */
@@ -980,9 +980,9 @@ ambientOcclusion(struct application *ap, struct partition *pp)
 	    } while (MAGSQ(randScale) > 1.0);
 	}
 
-	VJOIN3(amb_ap.a_ray.r_dir, origin, 
-	       randScale[X], uAxis, 
-	       randScale[Y], vAxis, 
+	VJOIN3(amb_ap.a_ray.r_dir, origin,
+	       randScale[X], uAxis,
+	       randScale[Y], vAxis,
 	       randScale[Z], inormal);
 
 	VUNITIZE(amb_ap.a_ray.r_dir);
@@ -1081,7 +1081,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 		return 0;
 	    }
 	}
-	
+
     }
 
 
@@ -1204,7 +1204,7 @@ vdraw open oray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw write n 1 %g %g %g;vdraw send\n",
 	       i, i, i,
 	       V3ARGS(inhit), V3ARGS(outhit));
-	
+
     }
 
     memset((char *)&sw, 0, sizeof(sw));
@@ -1244,7 +1244,7 @@ out:
     }
 
 
-    if (ambSamples > 0) 
+    if (ambSamples > 0)
 	ambientOcclusion(ap, pp);
 
     RT_CK_REGION(ap->a_uptr);
@@ -1325,7 +1325,7 @@ int viewit(struct application *ap,
 		return 0;
 	    }
 	}
-	
+
     }
 
     hitp = pp->pt_inhit;
@@ -1687,7 +1687,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	 */
 	per_processor_chunk = width;
 	buf_mode = BUFMODE_SCANLINE;
-    } 
+    }
     else {
 	buf_mode = BUFMODE_DYNAMIC;
     }
@@ -1779,7 +1779,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 		for (i=0; i<height; i++)
 		    scanline[i].sl_left = width;
 	    }
-	    
+
 	    break;
         case BUFMODE_ACC:
 	    for (i=0; i<height; i++)
@@ -1855,11 +1855,11 @@ view_2init(struct application *ap, char *UNUSED(framename))
 		if (BU_LIST_IS_EMPTY(&(LightHead.l))
 		    || !BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
 		    if (R_DEBUG&RDEBUG_SHOWERR)bu_log("No explicit light\n");
-		    light_maker(1, view2model);	
+		    light_maker(1, view2model);
 		}
 		break;
 	    }
-	    
+
 	default:
 	    bu_exit(EXIT_FAILURE, "bad lighting model #");
     }
@@ -1868,7 +1868,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 
     /* Now OK to delete invisible light regions.  Actually we just
      * remove the references to these regions from the soltab
-     * structures in the space paritioning tree
+     * structures in the space partitioning tree
      */
     bu_ptbl_init(&stps, 8, "soltabs to delete");
     if (R_DEBUG & RDEBUG_LIGHT) {
