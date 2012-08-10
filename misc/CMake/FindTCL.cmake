@@ -45,20 +45,20 @@
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 # * Redistributions of source code must retain the above copyright
 # notice, this list of conditions and the following disclaimer.
-# 
+#
 # * Redistributions in binary form must reproduce the above copyright
 # notice, this list of conditions and the following disclaimer in the
 # documentation and/or other materials provided with the distribution.
-# 
+#
 # * Neither the names of Kitware, Inc., the Insight Software Consortium,
 # the United States Government, the U.S. Army Research Laboratory,
 # nor the names of their contributors may be used to endorse or promote
 # products derived from this software without specific prior written
 # permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -73,18 +73,18 @@
 #
 #-----------------------------------------------------------------------
 #
-# There are quite a number of potential compilcations when it comes to
+# There are quite a number of potential complications when it comes to
 # Tcl/Tk, particularly in cases where multiple versions of Tcl/Tk are
 # present on a system and the case of OSX, which my have Tk built for
 # either X11 or Aqua.  On Windows there may be Cygwin installs of
-# Tcl/Tk as well. 
+# Tcl/Tk as well.
 #
 # Several "design philosophy" decisions have to be made - what to report
 # when multiple instances of Tcl/Tk are available, how much control to
 # allow users, how to expose those controls, etc.  Here are the rules
 # this particular implementation of FindTCL will strive to express:
 #
-# 1. If a parent CMakeLists.txt defines a specific TCL_PREFIX 
+# 1. If a parent CMakeLists.txt defines a specific TCL_PREFIX
 #    directory, don't look for or return any settings using
 #    other Tcl/Tk installations, even if nothing is found
 #    below TCL_PREFIX and other installations are present.
@@ -119,7 +119,7 @@
 #    TK_NATIVE_GRAPHICS
 #    TK_X11_GRAPHICS
 #
-#    If NATIVE_GRAPHICS is set to ON, a Tcl/Tk system is 
+#    If NATIVE_GRAPHICS is set to ON, a Tcl/Tk system is
 #    reported found only if the reported graphics system
 #    matches that of the current platform.  If X11_GRAPHICS
 #    is on, a match is reported only if the windowing system
@@ -135,7 +135,7 @@
 #    by specifying additional paths in this variable, which will
 #    be checked before the system path.  Essentially, this lets
 #    a configure process do a "soft set" of the TCL prefix - look
-#    here first but if not found or constraints aren't satisfied 
+#    here first but if not found or constraints aren't satisfied
 #    check system paths:
 #
 #    TCL_ADDITIONAL_SEARCH_PATHS
@@ -144,16 +144,16 @@
 #    Tcl/Tk. By default, FindTCL will start with this version
 #    on OSX platforms if no TCL_PREFIX is specified, but will
 #    move on to another installation if the Framework Tcl/Tk doesn't
-#    satisfy other criteria.  If a developer wishes to REQUIRE a 
+#    satisfy other criteria.  If a developer wishes to REQUIRE a
 #    Framework build of Tcl/Tk and reject other installs even though
-#    they may satisfy other criteria, they can enable the following 
+#    they may satisfy other criteria, they can enable the following
 #    option:
 #
 #    TCL_USE_FRAMEWORK_ONLY
 #
 # 6. If a developer needs ONLY Tcl, without the Tk graphics library,
 #    they can disable the following option (on by default)
-#  
+#
 #    TCL_REQUIRE_TK
 #
 # 7. If a developer needs Threads support in Tcl, they can enable
@@ -193,7 +193,7 @@
 #  TCL_STUB_LIBRARIES       (will also include Tk stub libraries if Tk is enabled)
 #  TCL_TCLSH_EXECUTABLE     (path to tclsh binary)
 #  TCL_WISH_EXECUTABLE      (path to wish binary, set only if Tk is enabled)
-#  TCL_ROOT_PATH 
+#  TCL_ROOT_PATH
 #  TCL_FOUND                (set if all required features (Tk, threads, etc.) are found)
 #  TCL_VERSION_STRING       (in the case where both Tcl and Tk are returned they,
 #  TCL_VERSION_MAJOR         should both share the same version information.  If
@@ -208,7 +208,7 @@
 #
 # The readme.txt file discourages the use of XXX_LIBRARY settings in CMakeLists.txt files,
 # but in the specific case of Tcl/Tk it is quite plausible to desire to specifically use
-# only (say) the Tcl library, even if in the broader system Tk usage is also present.  
+# only (say) the Tcl library, even if in the broader system Tk usage is also present.
 # For that reason, the following variables will be maintained:
 #
 #  TCL_LIBRARY              (path to just the Tcl library)
@@ -227,7 +227,7 @@
 #  TK_INCLUDE_PATH    = path to directory containing tk.h
 #  TCL_TCLSH          = full path to tclsh binary
 #  TK_WISH            = full path wo wish binary
-#  
+#
 # Note:  In the special case where headers are not required, the *LIBRARIES, *LIBRARY,
 # *CONF_PREFIX, and *_INCLUDE_DIRS variables are also not required. If
 # all that is required is tclsh and/or wish, those are the only fixed
@@ -235,7 +235,7 @@
 # but it is not guaranteed.
 
 # Tcl/Tk tends to name things using version numbers, so we need a
-# list of numbers to check 
+# list of numbers to check
 set(TCL_POSSIBLE_MAJOR_VERSIONS 8)
 set(TCL_POSSIBLE_MINOR_VERSIONS 6 5 4 3 2 1 0)
 
@@ -258,7 +258,7 @@ if(WIN32 OR APPLE)
 endif(WIN32 OR APPLE)
 
 #-----------------------------------------------------------------------------
-# 
+#
 #                  Run-Time testing for Tcl/Tk features
 #
 #  This section specifically contains macros that write tcl scripts to
@@ -269,7 +269,7 @@ endif(WIN32 OR APPLE)
 #
 #-----------------------------------------------------------------------------
 
-# Set up the logic for determing the tk windowingsystem.  
+# Set up the logic for determining the tk windowingsystem.
 set(tkwin_script "
 set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM\"
 set fileId [open $filename \"w\"]
@@ -334,10 +334,10 @@ exit
 	  string(REGEX REPLACE "([0-9]*).[0-9]*.?[0-9]*" "\\1" ${versionnum}_MAJOR "${${versionnum}}")
 	  string(REGEX REPLACE "[0-9]*.([0-9]*).?[0-9]*" "\\1" ${versionnum}_MINOR "${${versionnum}}")
 	  string(REGEX REPLACE "[0-9]*.[0-9]*.?([0-9]*)" "\\1" ${versionnum}_PATCH "${${versionnum}}")
-	endmacro()    
+	endmacro()
 
 	# If version information is supplied, use it to restrict the search space.  If EXACT,
-	# peg min and max at the same value.  
+	# peg min and max at the same value.
 	if(TCL_FIND_VERSION_MAJOR)
 	  set(TCL_POSSIBLE_MAJOR_VERSIONS ${TCL_FIND_VERSION_MAJOR})
 	endif(TCL_FIND_VERSION_MAJOR)
@@ -381,7 +381,7 @@ exit
 	      endif()
 	    else()
 	      set(vmaxpass 1)
-	    endif() 
+	    endif()
 	    if(${vminpass} EQUAL 1 AND ${vmaxpass} EQUAL 1)
 	      set(${vstatus} 1)
 	    else()
@@ -403,8 +403,8 @@ exit
 	macro(WIN32TCLPATHS vararray extension)
 	  if(WIN32)
 	    get_filename_component(
-	      ActiveTcl_CurrentVersion 
-	      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActiveTcl;CurrentVersion]" 
+	      ActiveTcl_CurrentVersion
+	      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActiveTcl;CurrentVersion]"
 	      NAME)
 	    set(${vararray} ${${vararray}}
 	      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\ActiveState\\ActiveTcl\\${ActiveTcl_CurrentVersion}]/${extension}")
@@ -538,7 +538,7 @@ exit
 	      endforeach(MINORNUM ${TCL_POSSIBLE_MINOR_VERSIONS})
 	    endforeach(MAJORNUM ${TCL_POSSIBLE_MAJOR_VERSIONS})
 	    set(CONFIG_SEARCH_PATHS "${CONFIG_SEARCH_PATHS};${CONFGENPATHS}")
-	    set(conffile "${filename}-NOTFOUND") 
+	    set(conffile "${filename}-NOTFOUND")
 	    find_file(conffile ${filename} PATHS ${CONFIG_SEARCH_PATHS} NO_SYSTEM_PATH)
 	    if(NOT conffile MATCHES "NOTFOUND$")
 	      set(${TARGET_LIST} "${${TARGET_LIST}}${conffile};")
@@ -765,23 +765,23 @@ exit
 
 	#-----------------------------------------------------------------------------
 	#
-	#            Main Search Logic - Search for Tcl/Tk installations 
+	#            Main Search Logic - Search for Tcl/Tk installations
 	#
 	# The general rules for searching are as follows:
 	#
-	# 1.  If a prefix is specified, use only that prefix in the search - 
+	# 1.  If a prefix is specified, use only that prefix in the search -
 	#     do not attempt to find Tcl/Tk elsewhere on the system.
 	#
 	# 2.  If on Apple, check for Framework installations - they will be the
 	#     first to be checked - potentially the only one(s) checked, depending
 	#     on option settings.
-	# 
+	#
 	# 3.  If options allow/dictate, pull all environment variables that might
 	#     point to Tcl/Tk paths and look for tclsh/wish/libtcl/libtk variations
 	#     in those paths.  Use the paths that contain at least one of the
 	#     binary/library files as a basis for generating paths to look for
 	#     config files.
-	# 
+	#
 	# 4.  Search for config files, and if found read key variables from the
 	#     files.  Config files are preferred when available, since they
 	#     help to ensure the Find routines don't accidentally find mis-matched
@@ -866,7 +866,7 @@ exit
 	      include(CMakeFindFrameworks)
 	      CMAKE_FIND_FRAMEWORKS(Tcl)
 	      foreach(dir ${Tcl_FRAMEWORKS})
-		set(tclconf "tclConfig.sh-NOTFOUND") 
+		set(tclconf "tclConfig.sh-NOTFOUND")
 		find_file(tclconf tclConfig.sh PATHS ${dir})
 		mark_as_advanced(tclconf)
 		if(NOT tclconf MATCHES "NOTFOUND$")
@@ -876,7 +876,7 @@ exit
 	      if(TCL_REQUIRE_TK)
 		CMAKE_FIND_FRAMEWORKS(Tk)
 		foreach(dir ${Tk_FRAMEWORKS})
-		  set(tkconf "tkConfig.sh-NOTFOUND") 
+		  set(tkconf "tkConfig.sh-NOTFOUND")
 		  find_file(tkconf tkConfig.sh PATHS ${dir})
 		  mark_as_advanced(tkconf)
 		  if(NOT tkconf MATCHES "NOTFOUND$")
@@ -885,7 +885,7 @@ exit
 		endforeach(dir ${Tk_FRAMEWORKS})
 	      endif(TCL_REQUIRE_TK)
 	    endif(APPLE)
-	    if(NOT APPLE OR NOT TCL_USE_FRAMEWORK_ONLY)                                                                      
+	    if(NOT APPLE OR NOT TCL_USE_FRAMEWORK_ONLY)
 	      set(PATHLIST "$ENV{LD_LIBRARY_PATH}:$ENV{DYLD_LIBRARY_PATH}:$ENV{DYLD_FALLBACK_LIBRARY_PATH}:$ENV{PATH}")
 	      set(PATHLIST "${TCL_ADDITIONAL_SEARCH_PATHS}:${PATHLIST}")
 	      if(WIN32)
@@ -912,13 +912,13 @@ exit
 	      endif(TCL_REQUIRE_TK)
 	      # Hunt up tclConfig.sh files
 	      FIND_CONFIG_FILES(TCLPATHLIST TCLCONFIG_LIST tclConfig.sh)
-	      # Hunt up tkConfig.sh files 
+	      # Hunt up tkConfig.sh files
 	      FIND_CONFIG_FILES(TKPATHLIST TKCONFIG_LIST tkConfig.sh)
 	    endif(NOT APPLE OR NOT TCL_USE_FRAMEWORK_ONLY)
 	  endif(TCL_PREFIX)
 	  set(TCLVALID 0)
 	  RESET_TCL_VARS()
-	  foreach(tcl_config_file ${TCLCONFIG_LIST}) 
+	  foreach(tcl_config_file ${TCLCONFIG_LIST})
 	    if(NOT TCLVALID)
 	      RESET_TCL_VARS()
 	      READ_TCLCONFIG_file(${tcl_config_file})
@@ -968,13 +968,13 @@ exit
 		endif(TCL_REQUIRE_TK)
 	      endif(TCLVALID)
 	    endif(NOT TCLVALID)
-	  endforeach(tcl_config_file ${TCLCONFIG_LIST}) 
+	  endforeach(tcl_config_file ${TCLCONFIG_LIST})
 
 	  # If we still don't have anything by now, we may have a system without tclConfig.sh and tkConfig.sh
-	  # Back to trying to guess values, using the TCLPATHLIST and TKPATHLIST arrays of paths. This is 
+	  # Back to trying to guess values, using the TCLPATHLIST and TKPATHLIST arrays of paths. This is
 	  # attempted ONLY if we are looking for a Tcl/Tk installation to call as a scripting engine and not
-	  # as C libraries to build against - the autotools/TEA based Tcl/Tk world requires those files be 
-	  # present and any ExternalProject build attempting to use a Tcl/Tk installation without them would 
+	  # as C libraries to build against - the autotools/TEA based Tcl/Tk world requires those files be
+	  # present and any ExternalProject build attempting to use a Tcl/Tk installation without them would
 	  # not succeed.
 	  if(NOT TCLVALID AND NOT TCL_NEED_HEADERS)
 	    set(PATHLIST "${TCLPATHLIST};${TKPATHLIST}")
@@ -1002,7 +1002,7 @@ exit
 			  set(TCLVALID 0)
 			  RESET_TCL_VARS()
 			  RESET_TK_VARS()
-			endif(NOT TKVALID)	
+			endif(NOT TKVALID)
 		      endif(TCL_REQUIRE_TK)
 		    else(TCLVALID)
 		      RESET_TCL_VARS()
@@ -1015,9 +1015,9 @@ exit
 
 	  # By this point we have found everything we're going to find - set variables to be exposed as results
 	  set(TCL_TCLSH ${TCL_TCLSH_EXECUTABLE})
-	  set(TK_WISH ${TCL_WISH_EXECUTABLE}) 
+	  set(TK_WISH ${TCL_WISH_EXECUTABLE})
 	  set(TK_LIBRARY ${TCL_TK_LIBRARY}) # Deprecated
-	  set(TK_STUB_LIBRARY ${TCL_TK_STUB_LIBRARY}) 
+	  set(TK_STUB_LIBRARY ${TCL_TK_STUB_LIBRARY})
 	  set(TCL_INCLUDE_DIRS ${TCL_INCLUDE_PATH} ${TK_INCLUDE_PATH})
 	  set(TCL_LIBRARIES ${TCL_LIBRARY} ${TK_LIBRARY})
 	  set(TCL_STUB_LIBRARIES ${TCL_STUB_LIBRARY} ${TK_STUB_LIBRARY})
