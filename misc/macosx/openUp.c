@@ -5,7 +5,7 @@
  *
  * The contents of this file constitute Original Code
  * as defined in and are subject to the
- * Apple               
+ * Apple
  * Public             ( quell
  * Source               ohloh
  * License              license
