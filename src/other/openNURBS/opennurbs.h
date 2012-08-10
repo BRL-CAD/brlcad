@@ -7,7 +7,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -31,7 +31,7 @@
 
 #include "opennurbs_defines.h"      /* openNURBS defines and enums */
 #include "opennurbs_error.h"        /* error handling */
-#include "opennurbs_memory.h"       /* memory managment (onmalloc(), onrealloc(), onfree(), ...) */
+#include "opennurbs_memory.h"       /* memory management (onmalloc(), onrealloc(), onfree(), ...) */
 #include "opennurbs_rand.h"         /* random number generator */
 #include "opennurbs_crc.h"          /* cyclic redundancy check tool */
 #include "opennurbs_uuid.h"         /* universally unique identifiers (UUID, a.k.a, GUID) */
@@ -39,7 +39,7 @@
 #if defined(ON_CPLUSPLUS)
 
 #include "opennurbs_string.h"         // dynamic string classes (single and double byte)
-#include "opennurbs_base64.h"         // base64 encodeing and decoding
+#include "opennurbs_base64.h"         // base64 encoding and decoding
 #include "opennurbs_color.h"          // R G B color
 #include "opennurbs_linestyle.h"      // line pattern, scale, and width
 #include "opennurbs_point.h"          // double precision 2d, 3d, 4d points and 2d, 3d vectors
