@@ -35,6 +35,90 @@
 #include "./ged_private.h"
 
 
+void
+_ged_show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name)
+{
+    struct loopuse *lu;
+    struct edgeuse *eu;
+    const struct edgeuse *eur;
+    struct faceuse *newfu;
+    struct bu_ptbl faces;
+    struct face *fp;
+    struct faceuse *fu, *fu1, *fu2;
+    int done;
+    const char *manifolds = NULL;
+    struct bn_vlblock *vbp;
+    struct bu_list *vhead;
+    point_t pt1, pt2;
+    size_t i;
+    struct shell *s;
+    struct model *m;
+    struct nmgregion *r;
+
+    if (*magic_p == NMG_REGION_MAGIC) {
+	r = (struct nmgregion *)magic_p;
+	s = BU_LIST_FIRST(shell, &r->s_hd);
+    } else if (*magic_p == NMG_MODEL_MAGIC) {
+	m = (struct model *)magic_p;
+	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
+	s = BU_LIST_FIRST(shell, &r->s_hd);
+    } else {
+	s = nmg_find_shell(magic_p);
+    }
+
+    vbp = rt_vlblock_init();
+    vhead = rt_vlblock_find(vbp, 0xFF, 0xFF, 0x00);
+ 
+    bu_ptbl_init(&faces, 64, "faces buffer");
+    nmg_face_tabulate(&faces, magic_p);
+
+    for (i = 0; i < (size_t)BU_PTBL_END(&faces) ; i++) {
+        fp = (struct face *)BU_PTBL_GET(&faces, i);
+	NMG_CK_FACE(fp);
+	fu = fu1 = fp->fu_p;
+	NMG_CK_FACEUSE(fu1);
+	fu2 = fp->fu_p->fumate_p;
+	NMG_CK_FACEUSE(fu2);
+	done = 0;
+	while (!done) {
+	    NMG_CK_FACEUSE(fu);
+	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		NMG_CK_LOOPUSE(lu);
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+			NMG_CK_EDGEUSE(eu);
+			eur = nmg_radial_face_edge_in_shell(eu);
+			newfu = eur->up.lu_p->up.fu_p;
+			while (manifolds &&
+			       NMG_MANIFOLDS(manifolds, newfu) &
+			       NMG_2MANIFOLD && 
+			       eur != eu->eumate_p) {
+			    eur = nmg_radial_face_edge_in_shell(eur->eumate_p);
+			    newfu = eur->up.lu_p->up.fu_p;
+			}
+			if (eur == eu->eumate_p) {
+			    VMOVE(pt1, eu->vu_p->v_p->vg_p->coord);
+			    VMOVE(pt2, eu->eumate_p->vu_p->v_p->vg_p->coord);
+			    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, pt1, BN_VLIST_LINE_MOVE);
+			    BN_ADD_VLIST(vbp->free_vlist_hd, vhead, pt2, BN_VLIST_LINE_DRAW);
+			}
+		    }
+		}
+	    }
+	    if (fu == fu1) fu = fu2;
+	    if (fu == fu2) done = 1;
+        };
+
+    }
+
+    /* Add overlay */
+    _ged_cvt_vlblock_to_solids(gedp, vbp, (char *)name, 0);
+
+    rt_vlblock_free(vbp);
+    bu_ptbl_free(&faces);
+}
+
+
 int
 ged_bot_fuse(struct ged *gedp, int argc, const char *argv[])
 {
