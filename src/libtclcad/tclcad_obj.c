@@ -96,7 +96,7 @@
 #define TO_UNLIMITED -1
 
 /*
- * Weird upper limit from clipper ---> sqrt(2^63 -1)/2   
+ * Weird upper limit from clipper ---> sqrt(2^63 -1)/2
  * Probably should be sqrt(2^63 -1)
  */
 #define CLIPPER_MAX 1518500249
@@ -1205,7 +1205,7 @@ to_cmd(ClientData clientData,
     Tcl_DStringInit(&ds);
 
     if (argc < 2) {
-	Tcl_DStringAppend(&ds, "subcommand not specfied; must be one of: ", -1);
+	Tcl_DStringAppend(&ds, "subcommand not specified; must be one of: ", -1);
 	for (ctp = to_cmds; ctp->to_name != (char *)NULL; ctp++) {
 	    Tcl_DStringAppend(&ds, " ", -1);
 	    Tcl_DStringAppend(&ds, ctp->to_name, -1);
@@ -1373,14 +1373,14 @@ Usage: go_open\n\
     if (argc == 3 || BU_STR_EQUAL(argv[2], "db")) {
 	if (argc == 3) {
 	    dbname = argv[2];
-	    gedp = ged_open("filename", dbname, 0); 
+	    gedp = ged_open("filename", dbname, 0);
 	} else {
 	    dbname = argv[3];
-	    gedp = ged_open("db", dbname, 0); 
+	    gedp = ged_open("db", dbname, 0);
 	}
     } else {
 	dbname = argv[3];
-	gedp = ged_open(argv[2], dbname, 0); 
+	gedp = ged_open(argv[2], dbname, 0);
     }
 
     if (gedp == GED_NULL) {
@@ -3338,7 +3338,7 @@ to_data_polygons(struct ged *gedp,
 {
     struct ged_dm_view *gdvp;
     ged_data_polygon_state *gdpsp;
-    
+
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -3820,7 +3820,7 @@ to_data_polygons(struct ged *gedp,
 
     /* Usage: import sketch_name
      *
-     * Import sketch_name and append 
+     * Import sketch_name and append
      */
     if (BU_STR_EQUAL(argv[2], "import")) {
 	ged_polygon *gpp;
@@ -4187,7 +4187,7 @@ to_data_move(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[2], "data_arrows")) {
-	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_data_arrows; 
+	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_data_arrows;
 
 	/* Silently ignore */
 	if (dindex >= gdvp->gdv_view->gv_data_arrows.gdas_num_points)
@@ -4228,7 +4228,7 @@ to_data_move(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[2], "sdata_arrows")) {
-	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_sdata_arrows; 
+	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_sdata_arrows;
 
 	/* Silently ignore */
 	if (dindex >= gdvp->gdv_view->gv_sdata_arrows.gdas_num_points)
@@ -4269,7 +4269,7 @@ to_data_move(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[2], "data_axes")) {
-	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes; 
+	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes;
 
 	/* Silently ignore */
 	if (dindex >= gdvp->gdv_view->gv_data_axes.gdas_num_points)
@@ -4286,7 +4286,7 @@ to_data_move(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[2], "sdata_axes")) {
-	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes; 
+	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes;
 
 	/* Silently ignore */
 	if (dindex >= gdvp->gdv_view->gv_sdata_axes.gdas_num_points)
@@ -4304,7 +4304,7 @@ to_data_move(struct ged *gedp,
 
 
     if (BU_STR_EQUAL(argv[2], "data_labels")) {
-	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_data_labels; 
+	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_data_labels;
 
 	/* Silently ignore */
 	if (dindex >= gdvp->gdv_view->gv_data_labels.gdls_num_labels)
@@ -4321,7 +4321,7 @@ to_data_move(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[2], "sdata_labels")) {
-	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_sdata_labels; 
+	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_sdata_labels;
 
 	/* Silently ignore */
 	if (dindex >= gdvp->gdv_view->gv_sdata_labels.gdls_num_labels)
@@ -4338,7 +4338,7 @@ to_data_move(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[2], "data_lines")) {
-	struct ged_data_line_state *gdlsp = &gdvp->gdv_view->gv_data_lines; 
+	struct ged_data_line_state *gdlsp = &gdvp->gdv_view->gv_data_lines;
 
 	/* Silently ignore */
 	if (dindex >= gdvp->gdv_view->gv_data_lines.gdls_num_points)
@@ -4379,7 +4379,7 @@ to_data_move(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[2], "sdata_lines")) {
-	struct ged_data_line_state *gdlsp = &gdvp->gdv_view->gv_sdata_lines; 
+	struct ged_data_line_state *gdlsp = &gdvp->gdv_view->gv_sdata_lines;
 
 	/* Silently ignore */
 	if (dindex >= gdvp->gdv_view->gv_sdata_lines.gdls_num_points)
@@ -4846,7 +4846,7 @@ to_data_pick(struct ged *gedp,
     /* check for axes points */
     if (gdvp->gdv_view->gv_data_axes.gdas_draw &&
 	gdvp->gdv_view->gv_data_axes.gdas_num_points) {
-	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes; 
+	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes;
 
 	for (i = 0; i < gdasp->gdas_num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -4875,7 +4875,7 @@ to_data_pick(struct ged *gedp,
     /* check for selected axes points */
     if (gdvp->gdv_view->gv_sdata_axes.gdas_draw &&
 	gdvp->gdv_view->gv_sdata_axes.gdas_num_points) {
-	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes; 
+	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes;
 
 	for (i = 0; i < gdasp->gdas_num_points; ++i) {
 	    fastf_t minX, maxX;
@@ -6009,7 +6009,7 @@ to_edit_motion_delta_callback(struct ged *gedp,
     /* get the callback string */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&gdvp->gdv_edit_motion_delta_callback));
-	
+
 	return GED_OK;
     }
 
@@ -6038,7 +6038,7 @@ to_more_args_callback(struct ged *gedp,
     /* get the callback string */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&current_top->to_gop->go_more_args_callback));
-	
+
 	return GED_OK;
     }
 
@@ -7115,7 +7115,7 @@ to_mouse_poly_circ(struct ged *gedp,
 	 * results in segments approximately 4 pixels in length.
 	 *
 	 * circumference / 4 = PI * diameter / 4
-	 * 
+	 *
 	 */
 	nsegs = M_PI * r * 0.5 * gdvp->gdv_view->gv_scale;
 
@@ -7347,7 +7347,7 @@ to_mouse_poly_ell(struct ged *gedp,
 	 * results in segments approximately 4 pixels in length.
 	 *
 	 * circumference / 4 = PI * diameter / 4
-	 * 
+	 *
 	 */
 	nsegs = M_PI * FMAX(a, b) * 0.5 * gdvp->gdv_view->gv_scale;
 
@@ -9929,7 +9929,7 @@ to_rt_end_callback(struct ged *gedp,
     /* get the callback string */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&current_top->to_gop->go_rt_end_callback));
-	
+
 	return GED_OK;
     }
 
@@ -10688,7 +10688,7 @@ to_view_callback(struct ged *gedp,
     /* get the callback string */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&gdvp->gdv_callback));
-	
+
 	return GED_OK;
     }
 
@@ -11254,7 +11254,7 @@ to_more_args_func(struct ged *gedp,
 		break;
 	    }
 	}
-	
+
 	if (Tcl_SplitList(current_top->to_interp, bu_vls_addr(&temp), &ac_more, &av_more) != TCL_OK) {
 	    continue;
 	}
@@ -11510,7 +11510,7 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
     if (gdvp->gdv_fbs.fbs_fbp != FBIO_NULL)
 	return TCL_OK;
 
-    /* don't use bu_calloc so we can fail slightly more gradefully */
+    /* don't use bu_calloc so we can fail slightly more gracefully */
     if ((gdvp->gdv_fbs.fbs_fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
 	Tcl_Obj *obj;
 
@@ -11935,7 +11935,7 @@ go_dm_draw_polys(struct dm *dmp, ged_data_polygon_state *gdpsp, int mode)
 		       1, 1.0);
 
 	/* set the linewidth and linestyle for polygon i */
-	DM_SET_LINE_ATTR(dmp, 
+	DM_SET_LINE_ATTR(dmp,
 			 gdpsp->gdps_polygons.gp_polygon[i].gp_line_width,
 			 gdpsp->gdps_polygons.gp_polygon[i].gp_line_style);
 
