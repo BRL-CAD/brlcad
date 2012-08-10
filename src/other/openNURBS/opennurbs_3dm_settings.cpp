@@ -2,12 +2,12 @@
 /*
 //
 // Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -88,7 +88,7 @@ bool ON_UnitSystem::Read( ON_BinaryArchive& file )
 
   int major_version = 0;
   int minor_version = 0;
-  
+
   if ( !file.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version) )
     return false;
 
@@ -116,7 +116,7 @@ bool ON_UnitSystem::Write( ON_BinaryArchive& file ) const
 
 
   // values saved in the file
-  //no_unit_system =  0, 
+  //no_unit_system =  0,
   //microns        =  1,  // 1.0e-6 meters
   //millimeters    =  2,  // 1.0e-3 meters
   //centimeters    =  3,  // 1.0e-2 meters
@@ -276,7 +276,7 @@ ON_3dmUnitsAndTolerances::ON_3dmUnitsAndTolerances(const ON_3dmUnitsAndTolerance
 
 ON_3dmUnitsAndTolerances& ON_3dmUnitsAndTolerances::operator=(const ON_3dmUnitsAndTolerances& src )
 {
-  if ( this != &src ) 
+  if ( this != &src )
   {
     m_unit_system = src.m_unit_system;
     m_absolute_tolerance = src.m_absolute_tolerance;
@@ -480,17 +480,17 @@ ON_3dmRenderSettings& ON_3dmRenderSettings::operator=(const ON_3dmRenderSettings
     m_shadowmap_width = src.m_shadowmap_width;
     m_shadowmap_height = src.m_shadowmap_height;
     m_shadowmap_offset = src.m_shadowmap_offset;
-    
+
     m_background_bottom_color = src.m_background_bottom_color;
     m_bUsesAmbientAttr      = src.m_bUsesAmbientAttr;
     m_bUsesBackgroundAttr   = src.m_bUsesBackgroundAttr;
-    m_bUsesBackfaceAttr     = src.m_bUsesBackfaceAttr;  
-    m_bUsesPointsAttr       = src.m_bUsesPointsAttr;        
-    m_bUsesCurvesAttr       = src.m_bUsesCurvesAttr;       
-    m_bUsesIsoparmsAttr     = src.m_bUsesIsoparmsAttr;      
-    m_bUsesMeshEdgesAttr    = src.m_bUsesMeshEdgesAttr;     
-    m_bUsesAnnotationAttr   = src.m_bUsesAnnotationAttr;    
-    m_bUsesHiddenLightsAttr = src.m_bUsesHiddenLightsAttr;  
+    m_bUsesBackfaceAttr     = src.m_bUsesBackfaceAttr;
+    m_bUsesPointsAttr       = src.m_bUsesPointsAttr;
+    m_bUsesCurvesAttr       = src.m_bUsesCurvesAttr;
+    m_bUsesIsoparmsAttr     = src.m_bUsesIsoparmsAttr;
+    m_bUsesMeshEdgesAttr    = src.m_bUsesMeshEdgesAttr;
+    m_bUsesAnnotationAttr   = src.m_bUsesAnnotationAttr;
+    m_bUsesHiddenLightsAttr = src.m_bUsesHiddenLightsAttr;
   }
   return *this;
 }
@@ -542,55 +542,55 @@ bool ON_3dmRenderSettings::Read( ON_BinaryArchive& file )
   Default();
   int version = 0;
   bool rc = file.ReadInt( &version );
-  if ( rc && version >= 100 && version < 200 ) 
+  if ( rc && version >= 100 && version < 200 )
   {
-    if (rc) 
+    if (rc)
       rc = file.ReadInt( &m_bCustomImageSize );
-    if (rc) 
+    if (rc)
       rc = file.ReadInt( &m_image_width );
-    if (rc) 
+    if (rc)
       rc = file.ReadInt( &m_image_height );
-    if (rc) 
+    if (rc)
       rc = file.ReadColor( m_ambient_light );
-    if (rc) 
+    if (rc)
       rc = file.ReadInt( &m_background_style );
-    if (rc) 
+    if (rc)
       rc = file.ReadColor( m_background_color );
-    if (rc) 
+    if (rc)
       rc = file.ReadString( m_background_bitmap_filename );
-    if (rc) 
+    if (rc)
       rc = file.ReadInt( &m_bUseHiddenLights );
-    if (rc) 
+    if (rc)
       rc = file.ReadInt( &m_bDepthCue );
-    if (rc) 
+    if (rc)
       rc = file.ReadInt( &m_bFlatShade );
-    if (rc) 
+    if (rc)
       rc = file.ReadInt( &m_bRenderBackfaces );
-    if (rc) 
+    if (rc)
       rc = file.ReadInt( &m_bRenderPoints );
-    if (rc) 
+    if (rc)
       rc = file.ReadInt( &m_bRenderCurves );
-    if (rc) 
+    if (rc)
       rc = file.ReadInt( &m_bRenderIsoparams );
-    if (rc) 
+    if (rc)
       rc = file.ReadInt( &m_bRenderMeshEdges );
-    if (rc) 
+    if (rc)
       rc = file.ReadInt( &m_bRenderAnnotation );
-    if (rc) 
+    if (rc)
       rc = file.ReadInt( &m_antialias_style );
-    if (rc) 
+    if (rc)
       rc = file.ReadInt( &m_shadowmap_style );
-    if (rc) 
+    if (rc)
       rc = file.ReadInt( &m_shadowmap_width );
-    if (rc) 
+    if (rc)
       rc = file.ReadInt( &m_shadowmap_height );
-    if (rc) 
+    if (rc)
       rc = file.ReadDouble( &m_shadowmap_offset );
-    if (rc && version >= 101) 
+    if (rc && version >= 101)
     {
-      if (rc) 
+      if (rc)
         rc = file.ReadDouble( &m_image_dpi );
-      if (rc) 
+      if (rc)
       {
         int i;
         rc = file.ReadInt(&i);
@@ -598,7 +598,7 @@ bool ON_3dmRenderSettings::Read( ON_BinaryArchive& file )
           m_image_us = ON::UnitSystem(i);
       }
     }
-    if (rc && version >= 102) 
+    if (rc && version >= 102)
       rc = file.ReadColor( m_background_bottom_color );
   }
   return rc;
@@ -697,7 +697,7 @@ bool ON_3dmAnnotationSettings::Read( ON_BinaryArchive& file )
 
       {
         int i;
-        if (rc) 
+        if (rc)
         {
           rc = file.ReadInt( &i );
           if (rc)
@@ -741,7 +741,7 @@ bool ON_3dmAnnotationSettings::Write( ON_BinaryArchive& file ) const
   if (rc) rc = file.WriteInt( m_angleformat );
   int textalign = (int)m_textalign;
 
-  // 8-20-03 lw 
+  // 8-20-03 lw
   // How the hell did this get changed?
   if( file.Archive3dmVersion() <= 2)
   {
@@ -788,7 +788,7 @@ ON_3dmConstructionPlane::ON_3dmConstructionPlane(const ON_3dmConstructionPlane& 
 }
 ON_3dmConstructionPlane& ON_3dmConstructionPlane::operator=(const ON_3dmConstructionPlane& src)
 {
-  if ( this != &src ) 
+  if ( this != &src )
   {
     m_plane = src.m_plane;
     m_grid_spacing = src.m_grid_spacing;
@@ -843,7 +843,7 @@ bool ON_3dmConstructionPlane::Read( ON_BinaryArchive& file )
   int major_version = 0;
   int minor_version = 0;
   bool rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-  if (rc && major_version==1) 
+  if (rc && major_version==1)
   {
     if (rc) rc = file.ReadPlane(m_plane);
     if (rc) rc = file.ReadDouble(&m_grid_spacing);
@@ -997,7 +997,7 @@ bool ON_3dmViewPosition::Write( ON_BinaryArchive& file ) const
   int minor_version =  ( file.Archive3dmVersion() >= 5 ) ? 1 : 0;
 
   bool rc = file.Write3dmChunkVersion(1,minor_version);
-  if (rc) 
+  if (rc)
   {
     if (rc) rc = file.WriteInt( m_bMaximized );
     if (rc) rc = file.WriteDouble( m_wnd_left );
@@ -1024,7 +1024,7 @@ bool ON_3dmViewPosition::Read( ON_BinaryArchive& file )
   bool rc = file.Read3dmChunkVersion(&major_version,&minor_version);
   double x;
   Default();
-  if (rc && major_version==1) 
+  if (rc && major_version==1)
   {
     if (rc) rc = file.ReadInt( &m_bMaximized );
     if (rc) rc = file.ReadDouble( &m_wnd_left );
@@ -1044,20 +1044,20 @@ bool ON_3dmViewPosition::Read( ON_BinaryArchive& file )
   if ( m_wnd_left > m_wnd_right ) {
     x = m_wnd_left; m_wnd_left = m_wnd_right; m_wnd_right = x;
   }
-  if ( m_wnd_left  < 0.0 ) 
-    m_wnd_left  = 0.0; 
-  if ( m_wnd_right >= 1.0 ) 
+  if ( m_wnd_left  < 0.0 )
+    m_wnd_left  = 0.0;
+  if ( m_wnd_right >= 1.0 )
     m_wnd_right = 1.0;
   if ( m_wnd_left >= m_wnd_right ) {
     m_wnd_left = 0.0;
     m_wnd_right = 1.0;
   }
-  
+
   if ( m_wnd_top > m_wnd_bottom ) {
     x = m_wnd_top; m_wnd_top = m_wnd_bottom; m_wnd_bottom = x;
   }
-  if ( m_wnd_top  < 0.0 ) 
-    m_wnd_top  = 0.0; 
+  if ( m_wnd_top  < 0.0 )
+    m_wnd_top  = 0.0;
   if ( m_wnd_bottom >= 1.0 )
     m_wnd_bottom = 1.0;
   if ( m_wnd_top >= m_wnd_bottom ) {
@@ -1097,7 +1097,7 @@ bool ON_3dmViewTraceImage::Write( ON_BinaryArchive& file ) const
   // opennurbs version  < 200307300 - version 1.0 or 1.1 chunk
   // opennurbs version >= 200307300 - version 1.2 chunk
   bool rc = file.Write3dmChunkVersion(1,3);
-  if (rc) 
+  if (rc)
   {
     if (rc) rc = file.WriteString( m_bitmap_filename );
     if (rc) rc = file.WriteDouble( m_width );
@@ -1109,7 +1109,7 @@ bool ON_3dmViewTraceImage::Write( ON_BinaryArchive& file ) const
 
     // version 1.2
     if (rc) rc = file.WriteBool( m_bHidden );
-    
+
     // version 1.3
     if (rc) rc = file.WriteBool( m_bFiltered );
   }
@@ -1133,11 +1133,11 @@ bool ON_3dmViewTraceImage::Read( ON_BinaryArchive& file )
     if ( minor_version >= 1 )
     {
       if (rc) rc = file.ReadBool(&m_bGrayScale);
-      
+
       if ( minor_version >= 2 )
       {
         if (rc) rc = file.ReadBool(&m_bHidden);
-        
+
         if ( minor_version >= 3 )
         {
           if (rc) rc = file.ReadBool( &m_bFiltered );
@@ -1167,7 +1167,7 @@ bool ON_3dmViewTraceImage::operator==( const ON_3dmViewTraceImage& other ) const
     return false;
   if ( m_bFiltered != other.m_bFiltered )
     return false;
-    
+
   return true;
 }
 
@@ -1212,7 +1212,7 @@ bool ON_3dmWallpaperImage::Write( ON_BinaryArchive& file ) const
   // version  < 200307300 - version 1.0 chunk
   // version >= 200307300 - version 1.1 chunk
   bool rc = file.Write3dmChunkVersion(1,1);
-  if (rc) 
+  if (rc)
   {
     if (rc) rc = file.WriteString( m_bitmap_filename );
     if (rc) rc = file.WriteBool( m_bGrayScale );
@@ -1480,7 +1480,7 @@ bool ON_3dmPageSettings::Read(ON_BinaryArchive& archive)
 ON_3dmView::ON_3dmView()
 {
   Default();
-} 
+}
 
 ON_3dmView::~ON_3dmView()
 {
@@ -1492,7 +1492,7 @@ void ON_3dmView::Dump( ON_TextLog& dump ) const
   if ( !sViewName )
     sViewName = L"";
   ON::view_projection proj = m_vp.Projection();
-  
+
 
   ON_3dPoint camLoc;
   ON_3dVector camX, camY, camZ;
@@ -1508,7 +1508,7 @@ void ON_3dmView::Dump( ON_TextLog& dump ) const
   case ON::parallel_view: sProjectionName = "parallel"; break;
   case ON::perspective_view: sProjectionName = "perspective"; break;
   case ON::unknown_view:
-  default: 
+  default:
     sProjectionName = "unknown";
     break;
   }
@@ -1516,7 +1516,7 @@ void ON_3dmView::Dump( ON_TextLog& dump ) const
 
   dump.PushIndent();
 
-  if ( bValidCamera ) 
+  if ( bValidCamera )
   {
     dump.Print("viewport camera frame\n"
            "  location = %g, %g, %g\n"
@@ -1586,7 +1586,7 @@ void ON_3dmView::Default()
 
   m_vp.Initialize();
   // ON_3dmView::m_target is obsolete - keep it in sync with m_vp.m_target_point
-  OBSOLETE_3DM_VIEW_TARGET = m_vp.TargetPoint(); 
+  OBSOLETE_3DM_VIEW_TARGET = m_vp.TargetPoint();
 
   m_cplane.Default();
   m_display_mode_id = ON_nil_uuid;
@@ -1714,7 +1714,7 @@ bool ON_3dmView::IsValid(ON_TextLog* text_log) const
       //  rc = false;
       //}
 
-      //if ( !m_nested_view_position.IsValid() 
+      //if ( !m_nested_view_position.IsValid()
       //     || m_nested_view_position.m_min.x >= m_nested_view_position.m_max.x
       //     || m_nested_view_position.m_min.y >= m_nested_view_position.m_max.y
       //     || m_nested_view_position.m_min.z != m_nested_view_position.m_max.z )
@@ -1748,7 +1748,7 @@ bool ON_3dmView::IsValid(ON_TextLog* text_log) const
 
 bool ON_3dmView::Write( ON_BinaryArchive& file ) const
 {
-  // Everything in a view is in a subchunk so new records can 
+  // Everything in a view is in a subchunk so new records can
   // be added to a view and old I/O code will still
   // work.
   bool rc = true;
@@ -1767,17 +1767,17 @@ bool ON_3dmView::Write( ON_BinaryArchive& file ) const
         rc = false;
     }
   }
-  if(rc && 0 != m_vp.FirstUserData() && file.Archive3dmVersion() >= 4) 
+  if(rc && 0 != m_vp.FirstUserData() && file.Archive3dmVersion() >= 4)
   {
     rc = file.BeginWrite3dmChunk( TCODE_VIEW_VIEWPORT_USERDATA, 0 );
-    if(rc) 
+    if(rc)
     {
       rc = file.WriteObjectUserData(m_vp);
-      // write a "fake" TCODE_OPENNURBS_CLASS_END end of class 
+      // write a "fake" TCODE_OPENNURBS_CLASS_END end of class
       // mark so I can use
-      // ON_BinaryArchive::ReadObjectUserData() 
+      // ON_BinaryArchive::ReadObjectUserData()
       // to read this user data.
-      if ( file.BeginWrite3dmChunk( TCODE_OPENNURBS_CLASS_END, 0 ) ) 
+      if ( file.BeginWrite3dmChunk( TCODE_OPENNURBS_CLASS_END, 0 ) )
       {
         if ( !file.EndWrite3dmChunk() )
           rc = false;
@@ -1853,34 +1853,34 @@ bool ON_3dmView::Write( ON_BinaryArchive& file ) const
   }
   if(rc) {
     rc = file.BeginWrite3dmChunk( TCODE_VIEW_TRACEIMAGE, 0 );
-    if(rc) 
+    if(rc)
     {
-      if(rc) 
+      if(rc)
         rc = m_trace_image.Write(file);
       if ( !file.EndWrite3dmChunk() )
         rc = false;
     }
   }
-  if(rc) 
+  if(rc)
   {
     rc = file.BeginWrite3dmChunk( TCODE_VIEW_WALLPAPER, 0 );
-    if(rc) 
+    if(rc)
     {
       if(rc) rc = file.WriteString(m_wallpaper_image.m_bitmap_filename);
       if ( !file.EndWrite3dmChunk() )
         rc = false;
     }
   }
-  if(rc && file.Archive3dmVersion() >= 3 ) 
+  if(rc && file.Archive3dmVersion() >= 3 )
   {
     // Added 5 June 2003 to support additional wallpaper attributes.
     // Older versions of Rhino/opennurbs
     // will just skip this chunk and get filename from the
     // TCODE_VIEW_WALLPAPER chunk written above.
     rc = file.BeginWrite3dmChunk( TCODE_VIEW_WALLPAPER_V3, 0 );
-    if(rc) 
+    if(rc)
     {
-      if(rc) 
+      if(rc)
         rc = m_wallpaper_image.Write(file);
       if ( !file.EndWrite3dmChunk() )
         rc = false;
@@ -1892,7 +1892,7 @@ bool ON_3dmView::Write( ON_BinaryArchive& file ) const
     // 23 March 2005 Dale Lear:
     //   The "chunks" above trace their history back to Rhino 1.0;
     //   The TCODE_VIEW_ATTRIBUTES chunk uses a chunk version so that
-    //   new view information can be added without inventing a new 
+    //   new view information can be added without inventing a new
     //   TCODE for each new piece of information.
 
     rc = file.BeginWrite3dmChunk( TCODE_VIEW_ATTRIBUTES, 0 );
@@ -1905,7 +1905,7 @@ bool ON_3dmView::Write( ON_BinaryArchive& file ) const
         // 1.1 fields (there are no 1.0 fields)
         rc = file.WriteInt( m_view_type );
         if (!rc) break;
-        
+
         // obsolete values - superceded by m_page_settings
         rc = file.WriteDouble( m_page_settings.m_width_mm );
         if (!rc) break;
@@ -1956,7 +1956,7 @@ bool ON_3dmView::Write( ON_BinaryArchive& file ) const
 
 bool ON_3dmView::Read( ON_BinaryArchive& file )
 {
-  // Everything in a view is in a subchunk so new records can 
+  // Everything in a view is in a subchunk so new records can
   // be added to a view and old I/O code will still
   // work.
   unsigned int tcode = 0;
@@ -1974,7 +1974,7 @@ bool ON_3dmView::Read( ON_BinaryArchive& file )
     rc = file.BeginRead3dmBigChunk(&tcode,&big_value);
     if (!rc)
       break;
-    switch(tcode) 
+    switch(tcode)
     {
     case TCODE_VIEW_CPLANE:
       rc = m_cplane.Read(file);
@@ -1989,7 +1989,7 @@ bool ON_3dmView::Read( ON_BinaryArchive& file )
       //   I added support for saving userdata attached to
       //   the m_vp ON_Viewport.  Ideally, the ON_Viewport
       //   would be read by calling file.ReadObject(), but
-      //   userdata support is being added years after 
+      //   userdata support is being added years after
       //   millions of files have been written by calling
       //   m_vp.Write()/Read().
       rc = file.ReadObjectUserData(m_vp);
@@ -2039,9 +2039,9 @@ bool ON_3dmView::Read( ON_BinaryArchive& file )
         int minor_version = 0;
         rc = file.Read3dmChunkVersion(&major_version,&minor_version);
         // there are no 1.0 fields in this chunk
-        while ( rc 
-                && major_version == 1 && minor_version >= 1 
-                && file.Archive3dmVersion() >= 4 
+        while ( rc
+                && major_version == 1 && minor_version >= 1
+                && file.Archive3dmVersion() >= 4
                 && file.ArchiveOpenNURBSVersion() >= 200503170 )
         {
           // Added 23 March 2005 Dale Lear
@@ -2050,7 +2050,7 @@ bool ON_3dmView::Read( ON_BinaryArchive& file )
           rc = file.ReadInt( &i32 );
           if (!rc) break;
           m_view_type = ON::ViewType(i32);
-          
+
           rc = file.ReadDouble( &m_page_settings.m_width_mm );
           if (!rc) break;
 
@@ -2081,7 +2081,7 @@ bool ON_3dmView::Read( ON_BinaryArchive& file )
             }
           }
 
-          // Add new inforamation here - ask Dale Lear for help.
+          // Add new information here - ask Dale Lear for help.
 
           break;
         }
@@ -2095,7 +2095,7 @@ bool ON_3dmView::Read( ON_BinaryArchive& file )
       break;
   }
 
-  if (    bHaveViewport 
+  if (    bHaveViewport
        && bHaveTargetPoint
        && target_point.IsValid()
        && !OBSOLETE_3DM_VIEW_TARGET.IsValid()
@@ -2138,7 +2138,7 @@ void ON_EarthAnchorPoint::Default()
 
   m_id = ON_nil_uuid;
   m_name.Destroy();
-  m_description.Destroy(); 
+  m_description.Destroy();
   m_url.Destroy();
   m_url_tag.Destroy();
 }
@@ -2222,7 +2222,7 @@ int ON_EarthAnchorPoint::CompareEarthLocation(const ON_EarthAnchorPoint* a, cons
     if ( xa > xb ) return 1;
   }
 
-  return 0;   
+  return 0;
 }
 
 int ON_EarthAnchorPoint::CompareModelDirection(const ON_EarthAnchorPoint* a, const ON_EarthAnchorPoint* b)
@@ -2245,7 +2245,7 @@ int ON_EarthAnchorPoint::CompareModelDirection(const ON_EarthAnchorPoint* a, con
       i = ON_ComparePoint(3,false,&a->m_model_east.x,&b->m_model_east.x);
     }
   }
-  return i;  
+  return i;
 }
 
 int ON_EarthAnchorPoint::CompareIdentification(const ON_EarthAnchorPoint* a, const ON_EarthAnchorPoint* b)
@@ -2276,7 +2276,7 @@ int ON_EarthAnchorPoint::CompareIdentification(const ON_EarthAnchorPoint* a, con
       }
     }
   }
-  return i;  
+  return i;
 }
 
 int ON_EarthAnchorPoint::Compare(const ON_EarthAnchorPoint* a, const ON_EarthAnchorPoint* b)
@@ -2450,7 +2450,7 @@ bool ON_EarthAnchorPoint::GetModelToEarthXform(
   const double lat_radians = m_earth_basepoint_latitude/180.0*ON_PI;
   const double cos_lat = cos(lat_radians);
   const double sin_lat = sin(lat_radians);
-  
+
   // get radius of earth at this latitude
   const double earth_polar_radius      = 6356750.0; // Earth's radius at poles (meters)
   const double earth_equatorial_radius = 6378135.0; // Earth's radius at equator (meters)
@@ -2501,8 +2501,8 @@ void ON_3dmSettings::Default()
   m_CustomRenderMeshSettings.Default();
 
   m_IO_settings.Default();
-  
-  // 28 Febuary 2003 Dale Lear:
+
+  // 28 February 2003 Dale Lear:
   //     Add analysis mesh default settings
   m_AnalysisMeshSettings.DefaultAnalysisMeshParameters();
 
@@ -2640,16 +2640,16 @@ static bool ON_3dmSettings_Read_v1_TCODE_CPLANE(ON_BinaryArchive& file, ON_3dmCo
   if (rc) rc = file.ReadPoint( origin );
   if (rc) rc = file.ReadVector( xaxis );
   if (rc) rc = file.ReadVector( yaxis );
-  if (rc) 
+  if (rc)
   {
     rc = file.ReadDouble(&gridsize);
-    if (rc) 
+    if (rc)
     {
       rc = file.ReadInt(&gridsections);
-      if (rc) 
+      if (rc)
       {
         rc = file.ReadInt(&gridthicksections);
-        if (rc) 
+        if (rc)
         {
           cplane.m_plane.CreateFromFrame(origin,xaxis,yaxis);
           cplane.m_grid_line_count = gridsections;
@@ -2703,12 +2703,12 @@ static bool ON_3dmSettings_Read_v1_TCODE_VIEW(ON_BinaryArchive& file, ON_3dmView
           angle3,
           viewsize,
           cameradist,
-          100, // screen_width, 
+          100, // screen_width,
           100, // screen_height,
           view.m_vp
           );
     // keep obsolete view.m_target in sync with view.m_vp.m_target_point
-    view.OBSOLETE_3DM_VIEW_TARGET = view.m_vp.TargetPoint(); 
+    view.OBSOLETE_3DM_VIEW_TARGET = view.m_vp.TargetPoint();
     break;
   }
 
@@ -2723,7 +2723,7 @@ static bool ON_3dmSettings_Read_v1_TCODE_NAMED_VIEW(ON_BinaryArchive& file, ON_3
   unsigned int tcode;
   ON__INT64 big_value;
 
-  while(rc) 
+  while(rc)
   {
     rc = file.BeginRead3dmBigChunk( &tcode, &big_value );
     if (!rc )
@@ -2745,15 +2745,15 @@ static bool ON_3dmSettings_Read_v1_TCODE_NAMED_VIEW(ON_BinaryArchive& file, ON_3
     case TCODE_SHOWGRID:
       view.m_bShowConstructionGrid = big_value?true:false;
       break;
-						
+
     case TCODE_SHOWGRIDAXES:
       view.m_bShowConstructionAxes = big_value?true:false;
       break;
-						
+
     case TCODE_SHOWWORLDAXES:
       view.m_bShowWorldAxes = big_value?true:false;
-      break; 			
-      
+      break;
+
     }
     if ( !file.EndRead3dmChunk() )
       rc = false;
@@ -2772,7 +2772,7 @@ static bool ON_3dmSettings_Read_v1_TCODE_NAMED_CPLANE(ON_BinaryArchive& file, ON
   unsigned int tcode;
   ON__INT64 big_value;
 
-  while(rc) 
+  while(rc)
   {
     rc = file.BeginRead3dmBigChunk( &tcode, &big_value );
     if (!rc )
@@ -2801,11 +2801,11 @@ static bool ON_3dmSettings_Read_v1_TCODE_UNIT_AND_TOLERANCES(ON_BinaryArchive& f
   int v = 0;
   int us = 0;
   UnitsAndTolerances.Default();
-  if (rc) 
+  if (rc)
     rc = file.ReadInt( &v ); // should get v = 1
-  if (rc) 
+  if (rc)
     rc = file.ReadInt( &us );
-  switch (us) 
+  switch (us)
   {
   case 0: // NO_UNIT_SYSTEM:
     UnitsAndTolerances.m_unit_system.m_unit_system = ON::no_unit_system;
@@ -2876,7 +2876,7 @@ static bool ON_3dmSettings_Read_v1_TCODE_VIEWPORT(ON_BinaryArchive& file, ON_3dm
     case TCODE_SNAPSIZE:
       rc = file.ReadDouble(&snapsize);
       break;
-      
+
     case TCODE_NAME:
       rc = ON_3dmSettings_Read_v1_TCODE_NAME(file,view.m_name);
       break;
@@ -2892,22 +2892,22 @@ static bool ON_3dmSettings_Read_v1_TCODE_VIEWPORT(ON_BinaryArchive& file, ON_3dm
     case TCODE_SHOWGRID:
       view.m_bShowConstructionGrid = big_value?true:false;
       break;
-						
+
     case TCODE_SHOWGRIDAXES:
       view.m_bShowConstructionAxes = big_value?true:false;
       break;
-						
+
     case TCODE_SHOWWORLDAXES:
       view.m_bShowWorldAxes = big_value?true:false;
-      break; 			
-      
+      break;
+
     case TCODE_VIEWPORT_POSITION:
       rc = file.ReadDouble(&view.m_position.m_wnd_left);
       rc = file.ReadDouble(&view.m_position.m_wnd_top);
       rc = file.ReadDouble(&view.m_position.m_wnd_right);
       rc = file.ReadDouble(&view.m_position.m_wnd_bottom);
       break;
-						
+
     case TCODE_VIEWPORT_TRACEINFO:
       {
         ON_3dPoint origin;
@@ -2921,25 +2921,25 @@ static bool ON_3dmSettings_Read_v1_TCODE_VIEWPORT(ON_BinaryArchive& file, ON_3dm
         if (rc) rc = ON_3dmSettings_Read_v1_TCODE_NAME(file,view.m_trace_image.m_bitmap_filename);
       }
       break;
-      
+
     case TCODE_VIEWPORT_WALLPAPER:
       rc = ON_3dmSettings_Read_v1_TCODE_NAME(file,view.m_wallpaper_image.m_bitmap_filename);
       break;
-						
+
     case TCODE_HIDE_TRACE:
-      // TCODE_HIDE_TRACE was used in early 1.0 betas.  
+      // TCODE_HIDE_TRACE was used in early 1.0 betas.
       // It should have add the short bit set and it is no longer used.
       // This case is here so that these old files will read correctly.
       tcode |= TCODE_SHORT; // so goo skip will work
       break;
-      
+
     case TCODE_MAXIMIZED_VIEWPORT:
       if ( big_value )
         view.m_position.m_bMaximized = true;
-      break; 
+      break;
 
     case TCODE_VIEWPORT_DISPLAY_MODE: // short TCODE with display mode value
-      switch ( big_value ) 
+      switch ( big_value )
       {
       case 0: // wireframe working mode
         view.m_display_mode = ON::wireframe_display;
@@ -2949,7 +2949,7 @@ static bool ON_3dmSettings_Read_v1_TCODE_VIEWPORT(ON_BinaryArchive& file, ON_3dm
         break;
       }
       break;
-						
+
     }
     if ( !file.EndRead3dmChunk() )
       rc = false;
@@ -2970,12 +2970,12 @@ bool ON_3dmSettings::Read_v1( ON_BinaryArchive& file )
   ON__UINT32 tcode;
   ON__INT64 big_value;
   rc = file.SeekFromStart(32)?true:false; // skip 32 byte header
-  
+
   int chunk_count = 0; // debugging counter
   for ( chunk_count = 0; rc; chunk_count++ )
   {
     rc = file.BeginRead3dmBigChunk( &tcode, &big_value );
-    if ( !rc ) 
+    if ( !rc )
       break; // assume we are at the end of the file
 
     switch(tcode) {
@@ -3008,7 +3008,7 @@ bool ON_3dmSettings::Read_v1( ON_BinaryArchive& file )
           m_named_views.Append(view);
       }
       break;
-    
+
     case TCODE_UNIT_AND_TOLERANCES:
       bGotSomething = true;
       rc = ON_3dmSettings_Read_v1_TCODE_UNIT_AND_TOLERANCES(file,m_ModelUnitsAndTolerances);
@@ -3028,7 +3028,7 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
   ON__UINT32 tcode;
   ON__INT64 big_value;
 
-  while(rc) 
+  while(rc)
   {
     tcode = 0;
     big_value = 0;
@@ -3036,9 +3036,9 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
     if ( !rc )
       break;
 
-    switch(tcode) 
+    switch(tcode)
     {
-    case TCODE_SETTINGS_PLUGINLIST: 
+    case TCODE_SETTINGS_PLUGINLIST:
       {
         int major_version = 0, minor_version = 0, count = 0, i;
         rc = file.Read3dmChunkVersion(&major_version,&minor_version);
@@ -3055,7 +3055,7 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
         }
       }
       break;
-      
+
     case TCODE_SETTINGS_UNITSANDTOLS: // units and tolerances
       rc = m_ModelUnitsAndTolerances.Read(file);
       // Copy model settings to page settings so reading old files
@@ -3063,19 +3063,19 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
       // units and tolerances in it, they get read later.
       m_PageUnitsAndTolerances = m_ModelUnitsAndTolerances;
       break;
-      
+
     case TCODE_SETTINGS_RENDERMESH:
       rc = m_RenderMeshSettings.Read(file);
       break;
-      
+
     case TCODE_SETTINGS_ANALYSISMESH:
       rc = m_AnalysisMeshSettings.Read(file);
       break;
-      
+
     case TCODE_SETTINGS_ANNOTATION:
       rc = m_AnnotationSettings.Read(file);
       break;
-      
+
     case TCODE_SETTINGS_NAMED_CPLANE_LIST: // named cplanes
       {
         m_named_cplanes.Empty();
@@ -3099,7 +3099,7 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
         }
       }
       break;
-      
+
     case TCODE_SETTINGS_NAMED_VIEW_LIST: // named views
       {
         m_named_views.Empty();
@@ -3107,14 +3107,14 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
         ON__INT64 subvalue = 0;
         int count, i;
         rc = file.ReadInt(&count);
-        for ( i = 0; i < count && rc ; i++ ) 
+        for ( i = 0; i < count && rc ; i++ )
         {
           rc = file.BeginRead3dmBigChunk( &subtcode, &subvalue );
-          if (rc ) 
+          if (rc )
           {
             if ( subtcode != TCODE_VIEW_RECORD )
               rc = false;
-            else 
+            else
             {
               ON_3dmView& cplane = m_named_views.AppendNew();
               rc = cplane.Read(file);
@@ -3127,7 +3127,7 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
         }
       }
       break;
-      
+
     case TCODE_SETTINGS_VIEW_LIST: // active view is first in list
       {
         m_views.Empty();
@@ -3136,14 +3136,14 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
         int count, i;
         rc = file.ReadInt(&count);
         m_views.Reserve(count);
-        for ( i = 0; i < count && rc ; i++ ) 
+        for ( i = 0; i < count && rc ; i++ )
         {
           rc = file.BeginRead3dmBigChunk( &subtcode, &subvalue );
-          if (rc ) 
+          if (rc )
           {
             if ( subtcode != TCODE_VIEW_RECORD )
               rc = false;
-            else 
+            else
             {
               ON_3dmView& view = m_views.AppendNew();
               rc = view.Read(file);
@@ -3156,7 +3156,7 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
         }
       }
       break;
-      
+
     case TCODE_SETTINGS__NEVER__USE__THIS:
       {
         if ( 28 == big_value )
@@ -3182,7 +3182,7 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
         m_current_layer_index = (int)big_value;
       }
       break;
-      
+
     case TCODE_SETTINGS_CURRENT_FONT_INDEX:
       if ( big_value < -1 || big_value > 0x7FFFFFFF )
       {
@@ -3194,7 +3194,7 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
         m_current_font_index = (int)big_value;
       }
       break;
-      
+
     case TCODE_SETTINGS_CURRENT_DIMSTYLE_INDEX:
       if ( big_value < -1 || big_value > 0x7FFFFFFF )
       {
@@ -3206,7 +3206,7 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
         m_current_dimstyle_index = (int)big_value;
       }
       break;
-      
+
     case TCODE_SETTINGS_CURRENT_MATERIAL_INDEX:
       {
         int i32 = 0;
@@ -3215,7 +3215,7 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
         if (rc) m_current_material_source = ON::ObjectMaterialSource(i32);
       }
       break;
-      
+
     case TCODE_SETTINGS_CURRENT_COLOR:
       {
         int i32 = 0;
@@ -3224,7 +3224,7 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
         if (rc) m_current_color_source = ON::ObjectColorSource(i32);
       }
       break;
-      
+
     case TCODE_SETTINGS_CURRENT_WIRE_DENSITY:
       if ( big_value < -2 || big_value > 0x7FFFFFFF )
       {
@@ -3235,7 +3235,7 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
         m_current_wire_density = (int)big_value;
       }
       break;
-      
+
     case TCODE_SETTINGS_RENDER:
       rc = m_RenderSettings.Read(file);
       break;
@@ -3264,7 +3264,7 @@ bool ON_3dmSettings::Read_v2(ON_BinaryArchive& file )
 
             rc = file.ReadColor(m_current_plot_color);
             if (!rc) break;
-  
+
             int i;
             rc = file.ReadInt(&i);
             if (!rc) break;
@@ -3347,13 +3347,13 @@ bool ON_3dmSettings::Read(ON_BinaryArchive& file )
 
   Default();
 
-  if ( 1 == file.Archive3dmVersion() ) 
+  if ( 1 == file.Archive3dmVersion() )
   {
-    rc = Read_v1(file); 
+    rc = Read_v1(file);
   }
   else
   {
-    rc = Read_v2(file); 
+    rc = Read_v2(file);
   }
 
   return rc;
@@ -3365,12 +3365,12 @@ static bool ON_3dmSettings_Write_v1_TCODE_UNIT_AND_TOLERANCES(ON_BinaryArchive& 
   bool rc = true;
   int v = 1, us = 0;
   if (rc) rc = file.WriteInt( v ); // v = 1
-  switch (UnitsAndTolerances.m_unit_system.m_unit_system) 
+  switch (UnitsAndTolerances.m_unit_system.m_unit_system)
   {
-  case ON::no_unit_system: 
+  case ON::no_unit_system:
     us=0; // NO_UNIT_SYSTEM
     break;
-  case ON::microns: 
+  case ON::microns:
     us=1; // MICRONS
     break;
   case ON::millimeters:
@@ -3438,7 +3438,7 @@ bool ON_3dmSettings::Write_v2(ON_BinaryArchive& file) const
     // The plug-in list chunk needs to be first, so the plug-ins that save
     // userdata on views can be loaded as needed.
     rc = file.BeginWrite3dmChunk(TCODE_SETTINGS_PLUGINLIST,0);
-    if ( rc ) 
+    if ( rc )
     {
       if (rc) rc = file.Write3dmChunkVersion(1,0);
       if (rc) rc = file.WriteInt( m_plugin_list.Count() );
@@ -3626,7 +3626,7 @@ bool ON_3dmSettings::Write_v2(ON_BinaryArchive& file) const
     if ( !file.EndWrite3dmChunk() )
       rc = false;
   }
-    
+
   // TCODE_SETTINGS_CURRENT_DIMSTYLE_INDEX - added 10 June 2002
   if (rc) {
     rc = file.BeginWrite3dmChunk( TCODE_SETTINGS_CURRENT_DIMSTYLE_INDEX, m_current_dimstyle_index );
@@ -3652,7 +3652,7 @@ bool ON_3dmSettings::Write_v2(ON_BinaryArchive& file) const
         // 1.6 -  7 June  2006
         rc = file.Write3dmChunkVersion(1,6);
 
-        // version 1.0 fields 
+        // version 1.0 fields
         rc = file.WriteDouble( m_linetype_display_scale );
         if (!rc) break;
 
@@ -3726,13 +3726,13 @@ bool ON_3dmSettings::Write_v2(ON_BinaryArchive& file) const
 bool ON_3dmSettings::Write(ON_BinaryArchive& file) const
 {
   bool rc = false;
-  if ( 1 == file.Archive3dmVersion() ) 
+  if ( 1 == file.Archive3dmVersion() )
   {
-    rc = Write_v1(file); 
+    rc = Write_v1(file);
   }
   else
   {
-    rc = Write_v2(file); 
+    rc = Write_v2(file);
   }
   return rc;
 }
@@ -3742,7 +3742,7 @@ void ON_3dmSettings::Dump( ON_TextLog& dump ) const
   int i;
 
   const wchar_t* model_URL = m_model_URL;
-  if ( model_URL && *model_URL ) 
+  if ( model_URL && *model_URL )
   {
     dump.Print("Model URL: %S\n",model_URL);
   }
