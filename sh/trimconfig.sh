@@ -109,13 +109,13 @@ for cac in $ARGS ; do
 	cacfuncs="`echo \"$cacfuncs\" | perl -lape 's/.*AC_CHECK_FUNCS\([[:space:]]*\[?[[:space:]]*(.*)/\1/g'`"
 	cacfuncs="`echo \"$cacfuncs\" | perl -lape 's/[[:space:]]*\]*\)+//g'`"
 	cacfuncs="`echo $cacfuncs | perl -lape 's/[[:space:]]+/ /g'`"
-	
+
 	echo
 	echo "Functions being checked"
 	echo "-----------------------"
 	echo "$cacfuncs"
 	echo
-	
+
 	for func in $cacfuncs ; do
 	    upfunc="`echo $func | tr \"a-z-\" \"A-Z_\"`"
 	    upfunc="HAVE_$upfunc"
@@ -151,13 +151,13 @@ for cac in $ARGS ; do
 	cacheads="`echo \"$cacheads\" | perl -lape 's/.*AC_CHECK_HEADERS\([[:space:]]*\[?[[:space:]]*(.*)/\1/g'`"
 	cacheads="`echo \"$cacheads\" | perl -lape 's/[[:space:]]*\]*\)+//g'`"
 	cacheads="`echo $cacheads | perl -lape 's/[[:space:]]+/ /g'`"
-	
+
 	echo
 	echo "Headers being checked"
 	echo "---------------------"
 	echo "$cacheads"
 	echo
-	
+
 	for head in $cacheads ; do
 	    uphead="`echo $head | tr \"a-z-/.\" \"A-Z___\"`"
 	    uphead="HAVE_$uphead"
@@ -183,7 +183,7 @@ for cac in $ARGS ; do
 		echo
 	    fi
 	done
-	
+
     fi # SKIP_HEADERS
 
     if [ "x$SKIP_DEFINES" = "x" ] ; then
@@ -192,13 +192,13 @@ for cac in $ARGS ; do
 	cacdefs="`echo \"$cacdefs\" | perl -lape 's/.*(AC_DEFINE|AC_DEFINE_UNQUOTED)\([[:space:]]*\[?[[:space:]]*(.*)/\2/g'`"
 	cacdefs="`echo \"$cacdefs\" | perl -lape 's/[[:space:]]*[,\]\)].*//g'`"
 	cacdefs="`echo $cacdefs | perl -lape 's/[[:space:]]+/ /g'`"
-	
+
 	echo
 	echo "Defines being checked"
 	echo "---------------------"
 	echo "$cacdefs"
 	echo
-	
+
 	for def in $cacdefs ; do
 	    printf "Searching for $def ... "
 	    cmd="find $dir -type f \( `echo $srcfiles` \) -not \( `echo $excludes` \) -exec grep \"$def\" {} /dev/null \; | grep -v \"$def[A-Z_]\""
