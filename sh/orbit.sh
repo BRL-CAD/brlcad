@@ -52,7 +52,7 @@ set -- `getopt e:s:S:w:n:W:N: $*`
 while : ; do
     case $1 in
 	-e)
-	    ELEVATION=$2; shift;;	
+	    ELEVATION=$2; shift;;
 	-s|-S)
 	    WIDTH=$2; HEIGHT=$2; shift;;
 	-w|-W)
