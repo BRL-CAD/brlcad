@@ -286,7 +286,7 @@ for file in $files ; do
 		fi
 		cmd1="perl -pi -e $step_g_regex1 \"$file.ws.new\""
 		cmd2="perl -pi -e $step_g_regex2 \"$file.ws.new\""
-		
+
 		# regex woes, nasty hack -- iterate to clean up
 		# indentation one tab at a time.
 		count=0
@@ -297,7 +297,7 @@ for file in $files ; do
 		done
 		;;
 	esac
-	
+
     done
 
     # if the file changed, move it into place and keep a backup
