@@ -51,20 +51,6 @@ _ged_show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *
     struct bu_list *vhead;
     point_t pt1, pt2;
     size_t i;
-    struct shell *s;
-    struct model *m;
-    struct nmgregion *r;
-
-    if (*magic_p == NMG_REGION_MAGIC) {
-	r = (struct nmgregion *)magic_p;
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-    } else if (*magic_p == NMG_MODEL_MAGIC) {
-	m = (struct model *)magic_p;
-	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-    } else {
-	s = nmg_find_shell(magic_p);
-    }
 
     vbp = rt_vlblock_init();
     vhead = rt_vlblock_find(vbp, 0xFF, 0xFF, 0x00);
