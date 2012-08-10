@@ -78,7 +78,7 @@ static int cgtype = 8;
 static int uvec[8];
 static int svec[11];
 static int j;
-			
+
 
 int writesolid(void), readsolid(void);
 
@@ -289,7 +289,7 @@ writesolid(void)
 	    (void)fprintf(fp, "Normal: %.9f %.9f %.9f%s", V3BASE2LOCAL(eto->eto_N), eol);
 	    (void)fprintf(fp, "Semi-major axis: %.9f %.9f %.9f%s", V3BASE2LOCAL(eto->eto_C), eol);
 	    (void)fprintf(fp, "Semi-minor length: %.9f%s", eto->eto_rd * base2local, eol);
-	    (void)fprintf(fp, "Radius of roation: %.9f%s", eto->eto_r * base2local, eol);
+	    (void)fprintf(fp, "Radius of rotation: %.9f%s", eto->eto_r * base2local, eol);
 	    break;
 	case ID_SUPERELL:
 	    superell = (struct rt_superell_internal *)es_int.idb_ptr;
@@ -965,7 +965,7 @@ get_editor_string(struct bu_vls *editstring)
 	 * work within the mged terminal (i.e. no launching a separate
 	 * gui, regardless of EDITOR settings. In this situation, emacs
 	 * will be invoked with the -nw option.
-	 * 
+	 *
 	 * Standard:  emacs, vim, vi, ed, jove
 	 * Windows: jove
 	 *
@@ -975,7 +975,7 @@ get_editor_string(struct bu_vls *editstring)
 	/* Test for any of the editor conditions that will require intervention.
 	 * Unfortunately, because we can't be certain that a user supplied EDITOR
 	 * will work in console mode, if it's not one of the known good cases
-	 * we have to attempt to set one of the known working editor configs. 
+	 * we have to attempt to set one of the known working editor configs.
 	 * Hence, check for known working AND known not-working up front - need
 	 * to satisfy both that there IS a working config already and that one
 	 * of the non-working configs isn't set.*/
@@ -997,7 +997,7 @@ get_editor_string(struct bu_vls *editstring)
 	count += BU_STR_EQUAL(editor, JOVE_EDITOR);
 	count += BU_STR_EQUAL(editor, MAC_EDITOR);
 	if (count > 0) {
-	    /* start with emacs... */ 
+	    /* start with emacs... */
 	    editor = bu_which(EMACS_EDITOR);
 	    /* if emacs is found, set editor_opt */
 	    if (editor) {
@@ -1024,7 +1024,7 @@ get_editor_string(struct bu_vls *editstring)
 		}
 	    }
 	}
-    } else { 
+    } else {
     	/* Spell out in which situations we need a terminal.
 	 */
     	if (BU_STR_EQUAL(os, "Darwin")) {
@@ -1045,9 +1045,9 @@ get_editor_string(struct bu_vls *editstring)
 		    terminal_opt = "-e";
     	    }
     	}
-	
+
     	/* For now, assume there aren't any situations where Windows will use a terminal */
-	
+
     	/* If it's not mac, and it's not Windows, we need a controlling terminal */
     	if (!BU_STR_EQUAL(os, "Darwin") && !BU_STR_EQUAL(os, "Windows 95") && !BU_STR_EQUAL(os, "Windows NT")) {
     	    if (BU_STR_EQUAL(editor, EMACS_EDITOR)) {
