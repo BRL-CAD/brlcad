@@ -172,7 +172,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	 */
 	rt_prep_timer();
     }
-    
+
     /* Obtain fresh copy of global application struct */
     a = APP;				/* struct copy */
     a.a_resource = &resource[cpu];
@@ -423,7 +423,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
     /* bu_log("2: [%d, %d] : [%.2f, %.2f, %.2f]\n", pixelnum%width, pixelnum/width, a.a_color[0], a.a_color[1], a.a_color[2]); */
 
     /* FIXME: this should work on windows after the bu_timer() is
-     * created to replace the librt timing mechansim.
+     * created to replace the librt timing mechanism.
      */
 #if !defined(_WIN32) || defined(__CYGWIN__)
     /* Add get_pixel_timer here to get total time taken to get pixel, when asked */
@@ -517,8 +517,8 @@ pat_found:
 	    }
 	}
     } else if (random_mode) {
-	
-	while (1) { 
+
+	while (1) {
 	    /* Generate a random pixel id between 0 and last_pixel
 	       inclusive - TODO: check if there is any issue related
 	       with multi-threaded RNG */
@@ -591,7 +591,7 @@ grid_setup(void)
     }
 
     /*
-     * Optional GIFT compatabilty, mostly for RTG3.  Round coordinates
+     * Optional GIFT compatibilty, mostly for RTG3.  Round coordinates
      * of lower left corner to fall on integer- valued coordinates, in
      * "gift_grid_rounding" units.
      */
