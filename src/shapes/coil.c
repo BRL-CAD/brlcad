@@ -424,7 +424,7 @@ main(int ac, char *av[])
 
     if (BU_LIST_IS_EMPTY(&sections)) {
 
-	if (mean_outer_diameter < 0 || wire_diameter < 0 || helix_angle < 0 || pitch < 0 || nt < 0 || start_cap_type < 0 || end_cap_type < 0) 
+	if (mean_outer_diameter < 0 || wire_diameter < 0 || helix_angle < 0 || pitch < 0 || nt < 0 || start_cap_type < 0 || end_cap_type < 0)
 	    bu_exit(-1, " Error - negative value in one or more arguments supplied to coil");
 
         if (ZERO(wire_diameter) && ZERO(mean_outer_diameter)) {
@@ -470,7 +470,7 @@ main(int ac, char *av[])
 
     if (!ZERO(overall_length)) {
 	bu_log("NOTE:  Length clamping overrides other specified values. If supplied values are\n"
-	       "inconsistent with specified length, they will be overriden in this order:\n\n"
+	       "inconsistent with specified length, they will be overridden in this order:\n\n"
 	       "When Shrinking:  pitch, number of turns, wire diameter\n"
 	       "When Expanding:  number of turns, pitch\n\n");
 
@@ -518,9 +518,9 @@ main(int ac, char *av[])
 		coil_data->nt--;
 		coil_data->p = (overall_length - coil_data->wd)/coil_data->nt;
 	    }
-	} 
+	}
         }
-    }	
+    }
 
     /* Generate Name - this needs some thought for multiple section coils*/
     bu_vls_printf(&name, "coil");
