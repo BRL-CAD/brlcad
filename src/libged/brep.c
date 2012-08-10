@@ -98,7 +98,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (!real_flag) {
-	/* solid doesnt exists - don't kill */
+	/* solid doesn't exist - don't kill */
 	bu_vls_printf(gedp->ged_result_str, "Error: %s is not a real solid", solid_name);
 	return GED_OK;
     }
@@ -121,7 +121,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (!real_flag) {
-	    /* solid doesnt exists - don't kill */
+	    /* solid doesn't exist - don't kill */
 	    bu_vls_printf(gedp->ged_result_str, "Error: %s is not a real solid", argv[3]);
 	    return GED_OK;
 	}
@@ -141,7 +141,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	_ged_cvt_vlblock_to_solids(gedp, vbp, namebuf, 0);
 	rt_vlblock_free(vbp);
 	vbp = (struct bn_vlblock *)NULL;
-	
+
 	rt_db_free_internal(&intern);
 	rt_db_free_internal(&intern2);
 	return GED_OK;
@@ -150,7 +150,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     if (BU_STR_EQUAL(argv[2], "u")) {
 	struct rt_db_internal intern2, intern_res;
 	struct rt_brep_internal *bip;
-	
+
 	if (argc != 5)
 	    return GED_ERROR;
 
@@ -162,7 +162,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (!real_flag) {
-	    /* solid doesnt exists - don't kill */
+	    /* solid doesn't exist - don't kill */
 	    bu_vls_printf(gedp->ged_result_str, "Error: %s is not a real solid", argv[3]);
 	    return GED_OK;
 	}
