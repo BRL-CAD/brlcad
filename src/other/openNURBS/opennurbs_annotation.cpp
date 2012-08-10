@@ -2,12 +2,12 @@
 /*
 //
 // Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -96,9 +96,9 @@ bool ON_Annotation::IsText() const { return Type() == ON::dtTextBlock; }
 bool ON_Annotation::IsLeader() const { return Type() == ON::dtLeader; }
 bool ON_Annotation::IsDimension() const { if( IsText() || IsLeader()) return false; return true; }
 
-//virtual 
+//virtual
 double ON_Annotation::NumericValue() { return 0.0; }
-//virtual 
+//virtual
 void ON_Annotation::SetTextToDefault() { SetDefaultText( L""); }
 
 void ON_Annotation::SetType( ON::eAnnotationType type ) { m_type = type; }
@@ -160,21 +160,21 @@ ON_BOOL32 ON_Annotation::Write( ON_BinaryArchive& file ) const
 {
   int i;
   ON_BOOL32 rc = file.Write3dmChunkVersion( 1, 0 );
-    // TODO: use 
+    // TODO: use
     //    if (rc) rc = file.WritePoint(....);
     //    if (rc) rc = file.WriteString(....);
     //    if (rc) rc = file.WriteDouble(....);
     // to write object.
   i = m_type;
-  if (rc) 
+  if (rc)
     rc = file.WriteInt( i );
-  if (rc) 
+  if (rc)
     rc = file.WritePlane( m_plane );
-  if (rc) 
+  if (rc)
     rc = file.WriteArray( m_points );
-  if (rc) 
+  if (rc)
     rc = file.WriteString( m_usertext );
-  if (rc) 
+  if (rc)
     rc = file.WriteString( m_defaulttext );
   if( rc )
     rc = file.WriteInt( m_userpositionedtext );
@@ -187,7 +187,7 @@ ON_BOOL32 ON_Annotation::Read( ON_BinaryArchive& file )
   int major_version = 0;
   int minor_version = 0;
   ON_BOOL32 rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-  if ( rc && major_version == 1 ) 
+  if ( rc && major_version == 1 )
   {
     int i;
     if (rc)
@@ -233,7 +233,7 @@ ON::object_type ON_Annotation::ObjectType() const
 
 int ON_Annotation::Dimension() const
 {
-  return 3; 
+  return 3;
 }
 
 ON_BOOL32 ON_Annotation::GetBBox( // returns true if successful
@@ -245,11 +245,11 @@ ON_BOOL32 ON_Annotation::GetBBox( // returns true if successful
   // TODO:
   //   If the class is not valid, return false.
   //
-  //   If the class is valid and bGrowBox is false, 
+  //   If the class is valid and bGrowBox is false,
   //   return the 3d bounding box of the annotation.
   //
-  //   If the class is valid and bGrowBox is true, 
-  //   return the union of the input box and the 3d bounding 
+  //   If the class is valid and bGrowBox is true,
+  //   return the union of the input box and the 3d bounding
   //   box of the annotation.
   if( !bGrowBox )
   {
@@ -263,7 +263,7 @@ ON_BOOL32 ON_Annotation::GetBBox( // returns true if successful
   for( int i = 0; i < m_points.Count(); i++ )
   {
     wpt = m_points[i];
-    
+
     if( wpt.y < boxmin[1] )
       boxmin[1] = wpt.y;
     if( wpt.z < boxmin[2] )
@@ -286,11 +286,11 @@ ON_BOOL32 ON_Annotation::Transform( const ON_Xform& xform )
   return m_plane.Transform( xform );
 }
 
-// Converts 2d points in annotation to 3d WCS points 
+// Converts 2d points in annotation to 3d WCS points
 bool ON_Annotation::GetECStoWCSXform( ON_Xform& xform ) const
 {
   ON_3dVector z = ON_CrossProduct( m_plane.xaxis, m_plane.yaxis );
-  return xform.ChangeBasis( m_plane.origin, m_plane.xaxis, m_plane.yaxis, z, 
+  return xform.ChangeBasis( m_plane.origin, m_plane.xaxis, m_plane.yaxis, z,
                             ON_origin, ON_xaxis, ON_yaxis, ON_zaxis );
 }
 
@@ -307,7 +307,7 @@ void ON_Annotation::SetPoint( int idx, ON_3dPoint point )
   if( idx >= 0 && idx < m_points.Count() )
     m_points[idx] = point;
 }
-  
+
 ON_2dPoint ON_Annotation::Point( int idx ) const
 {
   if( idx >= 0 && idx < m_points.Count() )
@@ -348,9 +348,9 @@ double ON_LinearDimension::NumericValue()
 {
   return (Point( 1) - Point( 3)).Length();
 }
-void ON_LinearDimension::SetTextToDefault() 
-{ 
-  SetUserText( L"<>"); 
+void ON_LinearDimension::SetTextToDefault()
+{
+  SetUserText( L"<>");
 }
 
 
@@ -388,14 +388,14 @@ double ON_RadialDimension::NumericValue()
   return d;
 }
 
-void ON_RadialDimension::SetTextToDefault() 
-{ 
-  ON_wString s; 
-  if( Type() == ON::dtDimDiameter) 
-    s.Format( L"%c<>", ON_Annotation::diametersym); 
-  else 
-    s.Format( L"%c<>", ON_Annotation::radiussym); 
-  SetUserText( s); 
+void ON_RadialDimension::SetTextToDefault()
+{
+  ON_wString s;
+  if( Type() == ON::dtDimDiameter)
+    s.Format( L"%c<>", ON_Annotation::diametersym);
+  else
+    s.Format( L"%c<>", ON_Annotation::radiussym);
+  SetUserText( s);
 }
 
 //----- ON_AngularDimension -----------------------------------------
@@ -460,11 +460,11 @@ double ON_AngularDimension::NumericValue()
   return Angle() * 180.0 / ON_PI;
 }
 
-void ON_AngularDimension::SetTextToDefault() 
-{ 
-  ON_wString s; 
-  s.Format( L"<>%c", ON_Annotation::degreesym); 
-  SetUserText( s); 
+void ON_AngularDimension::SetTextToDefault()
+{
+  ON_wString s;
+  s.Format( L"<>%c", ON_Annotation::degreesym);
+  SetUserText( s);
 }
 
 //----- ON_TextEntity -----------------------------------------------
