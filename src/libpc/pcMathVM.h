@@ -52,7 +52,7 @@ struct Node {
 
     /** Clone method */
     virtual boost::shared_ptr<Node> clone() const = 0;
-    
+
     /** Branch Methods */
     virtual std::size_t branchSize() const { return 0; }
     virtual Stack *branch(std::size_t) { return 0; }
@@ -73,7 +73,7 @@ public:
     Stack() {}
     Stack(Stack const &);
 
-    /** Data access/mnodification methods */
+    /** Data access/modification methods */
     size_type size() const;
     bool empty() const;
     void push_back(Node *n);
@@ -122,7 +122,7 @@ struct MathFunction
     MathFunction() {}
     MathFunction(std::string const &);
     virtual ~MathFunction() {}
-    
+
     virtual UserFunction *asUserFunction();
 
     /** Data access methods */
@@ -141,7 +141,7 @@ private:
 };
 
 
-/** Implemation of various convenience Function types*/
+/** Implementation of various convenience Function types*/
 
 /** Unary function */
 template<typename T>
@@ -154,7 +154,7 @@ struct MathF1 : public MathFunction
 	: MathFunction(function_name),
 	  funct(fp)
     {}
-    
+
     /* Implementation of the virtual function in MathFunction class
      * to return an arity of 1
      */
@@ -308,7 +308,7 @@ struct BranchNode : public FunctionNode
 private:
     struct BranchFunc : public MathFunction {
 	BranchFunc(Stack const & stack1, Stack const & stack2);
-	
+
 	std::size_t arity() const;
 	double evalp(std::vector<double> const & params) const;
 
