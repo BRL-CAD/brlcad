@@ -70,8 +70,8 @@ static double proe_to_brl_conv=25.4;	/* inches to mm */
 static ProBool do_facets_only;	/* flag to indicate no CSG should be done */
 static ProBool get_normals;	/* flag to indicate surface normals should be extracted from geometry */
 static ProBool do_elims;	/* flag to indicate that small features are to be eliminated */
-static double max_error=1.5;	/* (mm) maximimum allowable error in facetized approximation */
-static double min_error=1.5;	/* (mm) maximimum allowable error in facetized approximation */
+static double max_error=1.5;	/* (mm) maximum allowable error in facetized approximation */
+static double min_error=1.5;	/* (mm) maximum allowable error in facetized approximation */
 static double tol_dist=0.0005;	/* (mm) minimum distance between two distinct vertices */
 static double max_angle_cntrl=0.5;	/* max angle control for tessellation ( 0.0 - 1.0 ) */
 static double min_angle_cntrl=0.5;	/* min angle control for tessellation ( 0.0 - 1.0 ) */
@@ -168,7 +168,7 @@ struct csg_ops *csg_root;
 static int hole_no=0;	/* hole counter for unique names */
 static char *tgc_format="tgc V {%.25G %.25G %.25G} H {%.25G %.25G %.25G} A {%.25G %.25G %.25G} B {%.25G %.25G %.25G} C {%.25G %.25G %.25G} D {%.25G %.25G %.25G}\n";
 
-/* structure to hold info about a member of the current asssembly
+/* structure to hold info about a member of the current assembly
  * this structure is created during feature visit
  */
 struct asm_member {
@@ -211,7 +211,7 @@ do_initialize()
 {
     int i;
 
-    /* initailize */
+    /* initialize */
     bu_ptbl_init( &search_path_list, 8, "search_path" );
 
     ProStringToWstring( assem_ext, "asm" );
@@ -949,7 +949,7 @@ add_triangle( int v1, int v2, int v3 )
 	/* allocate more memory for triangles */
 	max_tri += TRI_BLOCK;
 	part_tris = (ProTriangle *)bu_realloc( part_tris, sizeof( ProTriangle ) * max_tri,
-					       "part rtiangles");
+					       "part triangles");
 	if ( !part_tris ) {
 	    (void)ProMessageDisplay(MSGFIL, "USER_ERROR",
 				    "Failed to allocate memory for part triangles" );
@@ -1687,7 +1687,7 @@ remove_holes_from_id_list( ProMdl model )
 	    int j;
 
 	    if ( logger_type == LOGGER_TYPE_ALL ) {
-		fprintf( logger, "\tRemoving feature id %d from deltion list\n",
+		fprintf( logger, "\tRemoving feature id %d from deletion list\n",
 			 feat_ids_to_delete[i] );
 	    }
 	    feat_id_count--;
@@ -2285,7 +2285,7 @@ output_part( ProMdl model )
 		fprintf( stderr, "Failed to create dialog box for proe-brl, error = %d\n", status );
 		return 0;
 	    }
-	    snprintf( err_mess, 512, 
+	    snprintf( err_mess, 512,
 		      "During the conversion %d features of part %s\n"
 		      "were suppressed. After the conversion was complete, an\n"
 		      "attempt was made to unsuppress these same features.\n"
@@ -2923,7 +2923,7 @@ create_name_hash( FILE *name_fd )
 	}
 	part_no = bu_strdup( ptr );
 	lower_case( part_no );
-		
+
 	/* match up to the EOL, everything up to it minus surrounding ws is the name */
 	ptr = strtok( (char *)NULL, "\n" );
 	if ( !ptr ) {
@@ -3715,7 +3715,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	min_chamfer_dim = 0.0;
     }
 
-    /* initailize */
+    /* initialize */
     do_initialize();
 
     /* open output file */
