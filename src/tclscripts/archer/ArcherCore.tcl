@@ -2495,7 +2495,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::shootRay {_start _op _target _prep _no_bool _onehit _bot_dflag} {
-    objects [gedCmd who]
+    set objects [gedCmd who]
     shootRay_doit $_start $_op $_target $_prep $_no_bool $_onehit $_bot_dflag $objects
 }
 
