@@ -92,7 +92,7 @@ get_args(int argc, char **argv, size_t *width, size_t *height, FILE **infp, FILE
 		}
 		break;
 	    }
-		
+
 	    case '?':
 	    case 'h':
 	    default: /* help */
