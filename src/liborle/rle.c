@@ -150,7 +150,7 @@ rle_rlen(int *xlen, int *ylen)
 void
 rle_wlen(int xlen, int ylen, int mode)
 {
-	
+
     if (mode == 0) {
 	/* Read mode.				*/
 	r_setup.h_xlen = xlen;
@@ -249,7 +249,7 @@ prnt_XSetup(char *msg, register Xtnd_Rle_Header *setup)
 
 /* r l e _ r h d r ()
    This routine should be called before 'rle_decode_ln()' or 'rle_rmap()'
-   to position the file pointer correctily and set up the global flags
+   to position the file pointer correctly and set up the global flags
    _bw_flag and _cm_flag, and to fill in _bg_pixel if necessary, and
    to pass information back to the caller in flags and bgpixel.
 
@@ -843,7 +843,7 @@ rle_encode_ln(register FILE *fp, RLEpixel (*scan_buf))
 	if (_bw_flag && color != 2)
 	    continue;
 	SetColor(color);
-	if (runs[0].first != scan_p) {	
+	if (runs[0].first != scan_p) {
 	    int runlen = runs[0].first-scan_p;
 	    SkipPixels(runlen);
 	}
