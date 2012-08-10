@@ -911,11 +911,12 @@ ged_move_pipept(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    /*XXXX At the moment, ps_pt is expected to be in base units. Might need to change to local units for the "p" command. */
     if (sscanf(argv[3], "%lf %lf %lf", &ps_pt[X], &ps_pt[Y], &ps_pt[Z]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[3]);
 	return GED_ERROR;
     }
+
+    VSCALE(ps_pt, ps_pt, gedp->ged_wdbp->dbip->dbi_local2base);
 
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR)
 	return GED_ERROR;
