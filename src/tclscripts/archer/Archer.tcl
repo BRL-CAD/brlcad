@@ -6066,8 +6066,10 @@ proc title_node_handler {node} {
     updateSaveMode
     initEdit 0
 
-    set center [$itk_component(ged) ocenter $_obj]
-    addHistory "ocenter $_obj $center"
+    if {$mSelectedObjType != "pipe" || $GeometryEditFrame::mEditParam1 == ""} {
+	set center [$itk_component(ged) ocenter $_obj]
+	addHistory "ocenter $_obj $center"
+    }
 }
 
 
@@ -6100,11 +6102,18 @@ proc title_node_handler {node} {
 ::itcl::body Archer::endObjTranslate {_dm _obj _mx _my} {
     $itk_component(ged) pane_idle_mode $_dm
 
-    set ocenter [gedCmd ocenter $_obj]
-    set vcenter [gedCmd pane_m2v_point $_dm $ocenter]
-    set screen [gedCmd pane_view2screen $_dm $vcenter]
+    if {$mSelectedObjType == "pipe" && $GeometryEditFrame::mEditParam1 != ""} {
+	set sx $_mx
+	set sy $_my
+    } else {
+	set ocenter [gedCmd ocenter $_obj]
+	set vcenter [gedCmd pane_m2v_point $_dm $ocenter]
+	set screen [gedCmd pane_view2screen $_dm $vcenter]
+	set sx [lindex $screen 0]
+	set sy [lindex $screen 1]
+    }
 
-    handleObjCenter $_dm $_obj [lindex $screen 0] [lindex $screen 1]
+    handleObjCenter $_dm $_obj $sx $sy
     endObjCenter $_obj
 }
 
