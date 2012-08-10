@@ -67,7 +67,7 @@ ShadingAttribStateRef OSLRenderer::AddShader(ShaderGroupInfo &group_info){
 	    shadingsys->Shader("surface", sh_info.shadername.c_str(), NULL);
 	else
 	    shadingsys->Shader("surface", sh_info.shadername.c_str(), sh_info.layername.c_str());
-    }	
+    }
 
     /* Set the edges between shader layers */
     for(size_t i = 0; i < group_info.shader_edges.size(); i++){
@@ -77,12 +77,12 @@ ShadingAttribStateRef OSLRenderer::AddShader(ShaderGroupInfo &group_info){
 				  sh_param2.layername.c_str(), sh_param2.paramname.c_str());
 
     }
-    
+
     shadingsys->ShaderGroupEnd();
-    
+
     ShadingAttribStateRef sh_ref = shadingsys->state();
     shadingsys->clear_state();
-    
+
     return sh_ref;
 }
 
@@ -114,7 +114,7 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info) const {
 	if(prim->category() == OSL::ClosurePrimitive::BSDF) {
 	    // evaluate bsdf closure
 	    BSDFClosure *bsdf = (BSDFClosure*)prim;
-	    
+
 	    // Eval the reflection weight from each light source
 	    size_t nlights = info->light_dirs.size();
 	    float pdf = 0.0;
@@ -142,11 +142,11 @@ Color3 OSLRenderer::QueryColor(RenderInfo *info) const {
 	    Vec3 omega_in, zero(0.0f);
 	    Color3 eval;
 	    float pdf = 0.0;
-	    
+
 	    ustring ulabel = bsdf->sample(globals.Ng, globals.I, zero, zero,
 					  erand48(Xi), erand48(Xi),
 					  omega_in, zero, zero, pdf, eval);
-	    
+
 	    if(ulabel == OSL::Labels::REFLECT)
 		info->out_ray_type |= RAY_REFLECT;
 	    else if(ulabel == OSL::Labels::TRANSMIT)
@@ -217,7 +217,7 @@ ExecuteShaders(ShaderGlobals &globals, RenderInfo *info) const {
     ctx->execute(ShadUseSurface, *(info->shader_ref),
 		 globals);
     ssi->release_context(ctx, info->thread_info);
-    
+
     return globals.Ci;
 }
 
@@ -277,7 +277,7 @@ void OSLRenderer::SamplePrimitiveRecurse(const ClosurePrimitive*& r_prim, Color3
     }
     else if(closure->type == ClosureColor::ADD) {
 	ClosureAdd *add = (ClosureAdd*)closure;
-	
+
 	SamplePrimitiveRecurse(r_prim, r_weight, add->closureA, weight, totw, r);
 	SamplePrimitiveRecurse(r_prim, r_weight, add->closureB, weight, totw, r);
     }
