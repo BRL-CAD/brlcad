@@ -454,7 +454,7 @@ int main(int argc, const char **argv)
 	int frame_retval;
 
 	def_tree(rtip);		/* Load the default trees */
-	/* orientation command has not been used */	
+	/* orientation command has not been used */
 	if (!orientflag)
 	    do_ae(azimuth, elevation);
 	frame_retval = do_frame(curframe);
