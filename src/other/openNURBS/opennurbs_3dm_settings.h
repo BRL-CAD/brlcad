@@ -2,12 +2,12 @@
 /*
 //
 // Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -39,7 +39,7 @@ public:
 
   //////////
   // Returns scale factor that needs to be applied to change from
-  // the argument's unit system to m_unit_system.  
+  // the argument's unit system to m_unit_system.
   // When m_unit_system is not ON::custom_unit_system,
   // Scale(us) = ON::UnitScale(us,m_unit_system).  When Scale(us)
   // When m_unit_system is ON::custom_unit_system,
@@ -140,8 +140,8 @@ public:
                            // this is the same distance as grid spacing.
 	int m_grid_line_count;   // number of grid lines in each direction
   int m_grid_thick_frequency; // thick line frequency
-                            // 0: none, 
-                            // 1: all lines are thick, 
+                            // 0: none,
+                            // 1: all lines are thick,
                             // 2: every other is thick, ...
 
   ON_BOOL32 m_bShowGrid;
@@ -179,8 +179,8 @@ public:
                            // this is the same distance as grid spacing.
 	int m_grid_line_count;   // number of grid lines in each direction
   int m_grid_thick_frequency; // thick line frequency
-                            // 0: none, 
-                            // 1: all lines are thick, 
+                            // 0: none,
+                            // 1: all lines are thick,
                             // 2: every other is thick, ...
   bool m_bDepthBuffer; // false=grid is always drawn behind 3d geometry
                        // true=grid is drawn at its depth as a 3d plane
@@ -191,7 +191,7 @@ public:
 
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
+// handles templates and DLLs.  See Microsoft's knowledge base
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )
@@ -363,7 +363,7 @@ public:
   /*
   Returns:
     Target point.  This point is saved on m_vp.m_target_point.
-    The default constructor sets the target point to 
+    The default constructor sets the target point to
     ON_3dPoint::UnsetPoint. You must explicitly set the target
     point if you want to use it.
   Remarks:
@@ -376,7 +376,7 @@ public:
 
   /*
   Description:
-    Sets the target point. 
+    Sets the target point.
   Parameters:
     target_point - [in]
       When in double, the point m_vp.FrustumCenterPoint(ON_UNSET_VALUE)
@@ -404,7 +404,7 @@ public:
   ///////////////////////////////////////////////////////////////////////
 
   ON_wString  m_name;   // name on window
-  
+
   // If m_display_mode_id is nil, then use m_display_mode
   // to show one of the "standard" (wireframe, shaded, rendered)
   // display modes.  If m_display_mode_id is not nil, then
@@ -412,7 +412,7 @@ public:
   ON_UUID m_display_mode_id;
   ON::display_mode m_display_mode;
 
-  // position of view in parent window 
+  // position of view in parent window
   // (relative display device coordinates)
   ON_3dmViewPosition m_position;
 
@@ -440,7 +440,7 @@ public:
 
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
+// handles templates and DLLs.  See Microsoft's knowledge base
 // article ID Q168958 for details.
 #pragma warning( push )
 #pragma warning( disable : 4231 )
@@ -475,16 +475,16 @@ public:
   int  m_image_width;   // image width in pixels
   int  m_image_height;  // image height in pixels
   ////////
-  // Number of dots/inch (dots=pixels) to use when printing and 
+  // Number of dots/inch (dots=pixels) to use when printing and
   // saving bitmaps. The default is 72.0 dots/inch.
-  double m_image_dpi; 
+  double m_image_dpi;
   //////////
   // unit system to use when converting image pixel size and dpi
   // information into a print size.  Default = inches
   ON::unit_system m_image_us;
 
   ON_Color m_ambient_light;
-  
+
   int m_background_style; // 0 = solid color, 1 = "wallpaper" image, 2 = Gradient
   ON_Color m_background_color; // also Top color of gradient...
   ON_wString m_background_bitmap_filename;
@@ -507,9 +507,9 @@ public:
   int m_shadowmap_width;
   int m_shadowmap_height;
   double m_shadowmap_offset;
-  
+
   ON_Color  m_background_bottom_color;
-  
+
   // Flags that are used to determine which render settings a render
   // plugin uses, and which ones the display pipeline should use.
   // Note: Render plugins set these, and they don't need to persist
@@ -541,25 +541,25 @@ public:
 
   static
   int Compare(
-          const ON_EarthAnchorPoint*, 
+          const ON_EarthAnchorPoint*,
           const ON_EarthAnchorPoint*
           );
 
   static
   int CompareEarthLocation(
-          const ON_EarthAnchorPoint*, 
+          const ON_EarthAnchorPoint*,
           const ON_EarthAnchorPoint*
           );
 
   static
   int CompareModelDirection(
-          const ON_EarthAnchorPoint*, 
+          const ON_EarthAnchorPoint*,
           const ON_EarthAnchorPoint*
           );
 
   static
   int CompareIdentification(
-          const ON_EarthAnchorPoint*, 
+          const ON_EarthAnchorPoint*,
           const ON_EarthAnchorPoint*
           );
 
@@ -570,7 +570,7 @@ public:
   // Point on the Earth
   //   Latitude (degrees):  +90 = north pole, 0 = equator, -90 = south pole
   //   Longitude (degrees):   0 = prime meridian (Greenwich meridian)
-  //   Elevation (meters):    
+  //   Elevation (meters):
   double m_earth_basepoint_latitude;  // in decimal degrees
   double m_earth_basepoint_longitude; // in decimal degrees
   double m_earth_basepoint_elevation; // in meters
@@ -588,7 +588,7 @@ public:
   // Identification information about this location
   ON_UUID    m_id;           // unique id for this anchor point
   ON_wString m_name;
-  ON_wString m_description; 
+  ON_wString m_description;
   ON_wString m_url;
   ON_wString m_url_tag;      // UI link text for m_url
 
@@ -599,15 +599,15 @@ public:
       yaxis points North and zaxis points up.  The origin
       is set to m_model_basepoint.
   */
-  bool GetModelCompass( 
-          ON_Plane& model_compass 
+  bool GetModelCompass(
+          ON_Plane& model_compass
           ) const;
 
   /*
   Description:
     Get a transformation from model coordinates to earth coordinates.
     This transformation assumes the model is small enough that
-    the curvature of the earth can be ignored.  
+    the curvature of the earth can be ignored.
   Parameters:
     model_unit_system - [in]
     model_to_earth - [out]
@@ -615,13 +615,13 @@ public:
       (degrees latitude,degrees longitude,elevation in meters)
   Remarks:
     If M is a point in model coordinates and E = model_to_earth*M,
-    then 
+    then
        E.x = latitude in decimal degrees
        E.y = longitude in decimal degrees
        E.z = elevation in meters above mean sea level
 
     Because the earth is not flat, there is a small amount of error
-    when using a linear transformation to calculate oblate spherical 
+    when using a linear transformation to calculate oblate spherical
     coordinates.  This error is small.  If the distance from P to M
     is d meters, then the approximation error is
 
@@ -664,11 +664,11 @@ public:
                            //       prompting embedded or linked idefs get updated.
                            // 1 = prompt
                            //       Ignore m_idef_update_type settings.
-                           //       If an embedded or linked idef needs to 
+                           //       If an embedded or linked idef needs to
                            //       be updated, ask the user what to do.
                            // 2 = always update - no prompting
                            //       Ignore m_idef_update_type settings.
-                           //       If an embedded or linked idef needs to 
+                           //       If an embedded or linked idef needs to
                            //       be updated, silently update it.
                            // 3 = never update - no prompting
                            //       Ignore m_idef_update_type settings.
@@ -733,7 +733,7 @@ public:
   ON_ClassArray<ON_3dmConstructionPlane> m_named_cplanes;
   ON_ClassArray<ON_3dmView>              m_named_views;
   ON_ClassArray<ON_3dmView>              m_views; // current viewports
-  ON_UUID m_active_view_id; // id of "active" viewport              
+  ON_UUID m_active_view_id; // id of "active" viewport
 
   // These fields determine what layer, material, color, line style, and
   // wire density are used for new objects.
@@ -741,7 +741,7 @@ public:
 
   int m_current_material_index;
   ON::object_material_source m_current_material_source;
-  
+
   ON_Color m_current_color;
   ON::object_color_source m_current_color_source;
 
@@ -754,13 +754,13 @@ public:
   int m_current_font_index;
 
   int m_current_dimstyle_index;
- 
+
   // Surface wireframe density
   //
   //   @untitled table
-  //   0       boundary + "knot" wires 
+  //   0       boundary + "knot" wires
   //   1       boundary + "knot" wires + 1 interior wire if no interior "knots"
-  //   N>=2    boundry + "knot" wires + (N-1) interior wires
+  //   N>=2    boundary + "knot" wires + (N-1) interior wires
   int m_current_wire_density;
 
   ON_3dmRenderSettings m_RenderSettings;
