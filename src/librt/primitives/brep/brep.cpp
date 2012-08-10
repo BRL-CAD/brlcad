@@ -3633,40 +3633,71 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
 
 	/* TODO: Perform inside-outside test to decide whether the trimmed face
 	 * should be used in the final b-rep structure or not.
+	 * Different operations should be dealt with accordingly.
 	 * Another solution is to use connectivity graphs which represents the
 	 * topological structure of the b-rep. This can reduce time-consuming
 	 * inside-outside tests.
 	 * Here we just use all of these trimmed faces.
 	 */
 	for (int j = 0; j < trimmedfaces.Count(); j++) {
+	    // Add the surfaces, faces, loops, trims, vertices, edges, etc.
+	    // to the brep structure.
 	    ON_Surface *new_surf = brep1->m_S[i]->Duplicate();
 	    int surfindex = brep_out->AddSurface(new_surf);
 	    ON_BrepFace& face = brep_out->NewFace(surfindex);
 	    ON_BrepLoop &loop = brep_out->NewLoop(ON_BrepLoop::outer, face);
 	    ON_SimpleArray<ON_NurbsCurve*> &oloop = trimmedfaces[j]->outerloop;
+	    int start_index = brep_out->m_V.Count();
 	    for (int k = 0; k < oloop.Count(); k++) {
-		// TODO: Add edges and vertices to make the brep valid.
 		int ti = brep_out->AddTrimCurve(oloop[k]);
-		ON_BrepTrim trim;
-		trim.m_c2i = ti;
-		trim.SetProxyCurve(oloop[k]);
-		trim.m_tolerance[0] = trim.m_tolerance[1] = 0.0;
-		loop.m_ti.Append(ti);
-		brep_out->m_T.Append(trim);
+		ON_2dPoint start = oloop[k]->PointAtStart(), end = oloop[k]->PointAtEnd();
+		ON_BrepVertex& start_v = k > 0 ? brep_out->m_V[brep_out->m_V.Count() - 1] : 
+		    brep_out->NewVertex(brep1->m_F[i].SurfaceOf()->PointAt(start.x, start.y), 0.0);
+		ON_BrepVertex& end_v = oloop[k]->IsClosed() ? start_v :
+		    brep_out->NewVertex(brep1->m_F[i].SurfaceOf()->PointAt(end.x, end.y), 0.0);
+		if (k == oloop.Count() - 1) {
+		    if (!oloop[k]->IsClosed())
+			brep_out->m_V.Remove(brep_out->m_V.Count() - 1);
+		    end_v = brep_out->m_V[start_index];
+		}
+		ON_Curve *c3d = oloop[k]->Duplicate();
+		c3d->ChangeDimension(3); // 3d curve required
+		brep_out->AddEdgeCurve(c3d);
+		ON_BrepEdge &edge = brep_out->NewEdge(start_v, end_v,
+		    brep_out->m_C3.Count() - 1, (const ON_Interval *)0, MAX_FASTF);
+		brep_out->m_V[start_v.m_vertex_index] = start_v;
+		brep_out->m_V[end_v.m_vertex_index] = end_v;
+		ON_BrepTrim &trim = brep_out->NewTrim(edge, 0, loop, ti);
+		trim.m_tolerance[0] = trim.m_tolerance[1] = MAX_FASTF;
 	    }
+	    if (brep_out->m_V.Count() < brep_out->m_V.Capacity())
+		brep_out->m_V[brep_out->m_V.Count()].m_ei.Empty();
 	    
 	    ON_SimpleArray<ON_NurbsCurve*> &iloop = trimmedfaces[j]->innerloop;
+	    start_index = brep_out->m_V.Count();
 	    if (iloop.Count()) {
 		ON_BrepLoop &inloop = brep_out->NewLoop(ON_BrepLoop::inner, face);
 		for (int k = 0; k < iloop.Count(); k++) {
-		    // TODO: Add edges and vertices to make the brep valid.
 		    int ti = brep_out->AddTrimCurve(iloop[k]);
-		    ON_BrepTrim trim;
-		    trim.m_c2i = ti;
-		    trim.SetProxyCurve(iloop[k]);
-		    trim.m_tolerance[0] = trim.m_tolerance[1] = 0.0;
-		    inloop.m_ti.Append(ti);
-		    brep_out->m_T.Append(trim);
+		    ON_2dPoint start = iloop[k]->PointAtStart(), end = iloop[k]->PointAtEnd();
+		    ON_BrepVertex& start_v = k > 0 ? brep_out->m_V[brep_out->m_V.Count() - 1] : 
+			brep_out->NewVertex(brep1->m_F[i].SurfaceOf()->PointAt(start.x, start.y), 0.0);
+		    ON_BrepVertex& end_v = iloop[k]->IsClosed() ? start_v :
+			brep_out->NewVertex(brep1->m_F[i].SurfaceOf()->PointAt(end.x, end.y), 0.0);
+		    if (k == iloop.Count() - 1) {
+			if (!iloop[k]->IsClosed())
+			    brep_out->m_V.Remove(brep_out->m_V.Count() - 1);
+			end_v = brep_out->m_V[start_index];
+		    }
+		    ON_Curve *c3d = iloop[k]->Duplicate();
+		    c3d->ChangeDimension(3); // 3d curve required
+		    brep_out->AddEdgeCurve(c3d);
+		    ON_BrepEdge &edge = brep_out->NewEdge(start_v, end_v,
+			brep_out->m_C3.Count() - 1, (const ON_Interval *)0, MAX_FASTF);
+		    brep_out->m_V[start_v.m_vertex_index] = start_v;
+		    brep_out->m_V[end_v.m_vertex_index] = end_v;
+		    ON_BrepTrim &trim = brep_out->NewTrim(edge, 0, inloop, ti);
+		    trim.m_tolerance[0] = trim.m_tolerance[1] = MAX_FASTF;
 		}
 	    }
 	    new_surf->SetDomain(0, loop.m_pbox.m_min.x, loop.m_pbox.m_max.x);
@@ -3675,6 +3706,17 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
 	    brep_out->FlipFace(face);
 	}
     }
+    
+    // Check IsValid() and output the message.
+    ON_wString ws;
+    ON_TextLog log(ws);
+    brep_out->IsValid(&log);
+    char s[1000] = {0};
+    for (int k = 0; k < ws.Length(); k++) {
+	s[k] = ws[k];
+    }
+    s[ws.Length()] = 0;
+    bu_log("%s", s);
 
     // make the final rt_db_internal
     struct rt_brep_internal *bip_out;
