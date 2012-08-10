@@ -322,7 +322,7 @@ if {![info exists ::RtWizard::wizard_state(occmode)]} { set ::RtWizard::wizard_s
 if {![info exists ::RtWizard::wizard_state(ghosting_intensity)]} { set ::RtWizard::wizard_state(ghosting_intensity) 12 }
 # Pix width
 if {![info exists ::RtWizard::wizard_state(width)]} { set ::RtWizard::wizard_state(width) 512 }
-# Pix height (number of scan lines) 
+# Pix height (number of scan lines)
 if {![info exists ::RtWizard::wizard_state(scanlines)]} { set ::RtWizard::wizard_state(scanlines) 512 }
 # Color objects
 if {![info exists ::RtWizard::wizard_state(color_objlist)]} { set ::RtWizard::wizard_state(color_objlist) {} }
@@ -336,13 +336,13 @@ package require cadwidgets::RtImage
 
 # Set verbosity if not already set
 if {![info exists ::RtWizard::wizard_state(verbose)]} {
-    set ::RtWizard::wizard_state(verbose) 0 
+    set ::RtWizard::wizard_state(verbose) 0
 }
 
-# If we're launching without enough arguments to fully specify an rtwizard 
+# If we're launching without enough arguments to fully specify an rtwizard
 # run or a gui run has been specifically requested, go graphical
 if {[info exists ::use_gui]} {
-   # Have to do these loads until we get "package require tclcad" and "package require dm" 
+   # Have to do these loads until we get "package require tclcad" and "package require dm"
    # working - bwish loads them for us by default, but since rtwizard may be either
    # graphical or command line we need to start with btclsh
    if {$tcl_platform(platform) == "windows"} {
@@ -365,7 +365,7 @@ if {[info exists ::use_gui]} {
    }
    if {[info exists ::RtWizard::wizard_state(output_filename)]} {
      if {[file exists $::RtWizard::wizard_state(output_filename)]} {
-        puts "Error - cannot create output file, $::RtWizard::wizard_state(output_filename) alread exists."
+        puts "Error - cannot create output file, $::RtWizard::wizard_state(output_filename) already exists."
         if {[info exists argv]} {exit}
      }
    }
@@ -388,7 +388,7 @@ if {[info exists ::use_gui]} {
    # Check whether the framebuffer already exists.  If it does, and if
    # it was specified on the command line, go with it.
    if { [catch {exec [file join [bu_brlcad_root bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error ] } {
-      catch {exec [file join [bu_brlcad_root bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device) &} pid 
+      catch {exec [file join [bu_brlcad_root bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device) &} pid
       if {[info exists pid]} {
         set fbserv_pid $pid
         # Wait a few milliseconds to make sure fbserv has completed its work and is available
@@ -397,9 +397,9 @@ if {[info exists ::use_gui]} {
         if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) failed!"}
         incr ::RtWizard::wizard_state(fbserv_port)
       }
-   } 
+   }
 
-   # If we didn't have a pre-specified port number and the default didn't work, start counting up 
+   # If we didn't have a pre-specified port number and the default didn't work, start counting up
    if { ! $port_number_specified && ! [info exists fbserv_pid] } {
        incr ::RtWizard::wizard_state(fbserv_port)
        while { ! [catch {exec [file join [bu_brlcad_root bin] fbclear] -F $::RtWizard::wizard_state(fbserv_port) } error ] } {
@@ -435,17 +435,17 @@ if {[info exists ::use_gui]} {
 
      if {[llength $::RtWizard::wizard_state(color_objlist)]} {
         foreach item $::RtWizard::wizard_state(color_objlist) {
-	  db draw $item 
+	  db draw $item
         }
-     } 
+     }
      if {[llength $::RtWizard::wizard_state(line_objlist)]} {
         foreach item $::RtWizard::wizard_state(line_objlist) {
-	  db draw $item 
+	  db draw $item
         }
-     } 
+     }
      if {[llength $::RtWizard::wizard_state(ghost_objlist)]} {
         foreach item $::RtWizard::wizard_state(ghost_objlist) {
-	  db draw $item 
+	  db draw $item
         }
      }
 
@@ -471,7 +471,7 @@ if {[info exists ::use_gui]} {
 			$::RtWizard::wizard_state(color_objlist) \
 			$::RtWizard::wizard_state(ghost_objlist) \
 			$::RtWizard::wizard_state(line_objlist)
-		
+
    if {[info exists ::RtWizard::wizard_state(output_filename)]} {
       set output_generated 0
       if {[file extension $::RtWizard::wizard_state(output_filename)] == ".png"} {
