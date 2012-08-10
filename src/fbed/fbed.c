@@ -124,7 +124,7 @@ HIDDEN void fix_Rect2D(Rect2D *rectp);
 HIDDEN void pushPoint(Point *pt, PtStack **spp);
 HIDDEN void put_Fb_Panel(Rect2D *, RGBpixel *);
 
-HIDDEN int 
+HIDDEN int
     /* ^X  */ f_Exec_Function(),
     /* ^I  */ f_Nop(),
     /* ^H  */ f_Win_Lft(),
@@ -430,7 +430,7 @@ main(int argc, char **argv)
 
 HIDDEN int
 drawRect2D(Rect2D *rectp, unsigned char *pixelp)
-{	
+{
     int x, y;
     y = rectp->r_origin.p_y;
     x = rectp->r_origin.p_x;
@@ -457,7 +457,7 @@ fillRect2D(Rect2D *rectp, RGBpixel (*pixelp))
     int rgt = rectp->r_corner.p_x;
     int lft = rectp->r_origin.p_x;
     for (; btm <= top; btm++ )
-    {	
+    {
 	int x = lft;
 	(void) fb_seek( fbp, x, btm );
 	for (; x <= rgt; x++ )
@@ -507,7 +507,7 @@ paintSolidRegion(unsigned char *regionpix, Point *pt)
 
 HIDDEN void
 pushPoint(Point *pt, PtStack **spp)
-{	
+{
     PtStack *newp;
     if ( (newp = (PtStack *) malloc( sizeof(PtStack) )) == NULL )
     {
@@ -613,7 +613,7 @@ getColor(unsigned char *pixelp, char *prompt, char *buffer)
     static char promptbuf[PROMPT_LEN];
     static int red, grn, blu;
     (void) snprintf( promptbuf, PROMPT_LEN, "%s [r g b] : ", prompt );
-    
+
     if ( ! get_Input( buffer, CLR_LEN, promptbuf ) )
 	return false;
     if (	sscanf( buffer, "%d %d %d", &red, &grn, &blu ) == 3
@@ -637,7 +637,7 @@ getColor(unsigned char *pixelp, char *prompt, char *buffer)
 
 HIDDEN int
 f_Tolerance()
-{	
+{
     static char tol_str[4];
     if ( ! get_Input( tol_str, 4, "Enter tolerance for color match : " ) )
 	return 0;
@@ -655,7 +655,7 @@ f_ChngRegionColor()
     RGBpixel currentpix;
     Point pivot;
     PtStack *regionsp = NULL;
-    
+
     /* Grab pixel color under cursor. */
     if ( fb_read( fbp, cursor_pos.p_x, cursor_pos.p_y,
 		  (unsigned char *) currentpix, 1 ) == -1 )
@@ -688,7 +688,7 @@ f_FillRegion()
     RGBpixel borderpix = {0, 0, 0};
     Point pivot;
     PtStack *regionsp = NULL;
-    
+
     if ( ! getColor( borderpix, "Enter region border pixel color", buffer ) )
 	return 0;
     pushPoint( &cursor_pos, &regionsp );
@@ -809,7 +809,7 @@ f_Stop() /* Stop program. */
 
 HIDDEN int
 f_Exec_Function()
-{	
+{
     Func_Tab	*ftbl;
     static char name[MAX_LN];
     if ( (ftbl = get_Func_Name( name, MAX_LN, ": " )) == FT_NULL )
@@ -1494,7 +1494,7 @@ f_Save_RLE() /* Save framebuffer image with Run-Length Encoding. */
     {
 	char answer[2];
 	char question[MAX_LN+32];
-	(void) snprintf( question, MAX_LN+32, 
+	(void) snprintf( question, MAX_LN+32,
 			 "File \"%s\" exists, remove [n=no] ? ",
 			 rle_file_nm
 	    );
