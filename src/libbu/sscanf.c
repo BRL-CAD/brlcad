@@ -204,7 +204,7 @@ again:
 	    }
 	    UPDATE_COUNTS;
 	    continue;
-	
+
 
 	/* MODIFIER */
 	case '*':
@@ -218,7 +218,7 @@ again:
 	    goto again;
 	case 'l':
 	    if (!(flags & LONG)) {
-		/* First occurance of 'l' in this conversion specifier. */
+		/* First occurrence of 'l' in this conversion specifier. */
 		flags |= LONG;
 	    } else {
 		/* Since LONG is set, the previous conversion character must
@@ -255,7 +255,7 @@ again:
 	    goto again;
 	case 'h':
 	    if (!(flags & SHORT)) {
-		/* First occurance of 'h' in this conversion specifier. */
+		/* First occurrence of 'h' in this conversion specifier. */
 		flags |= SHORT;
 	    } else {
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
@@ -279,8 +279,8 @@ again:
 	/* MAXIMUM FIELD WIDTH */
 #define NUMERIC_CHAR_TO_INT(c) (c - '0')
 	case '0':
-	    /* distingish default width from width set to 0 */
-	    flags |= HAVEWIDTH; 
+	    /* distinguish default width from width set to 0 */
+	    flags |= HAVEWIDTH;
 	    /* FALLTHROUGH */
 	case '1': case '2': case '3': case '4':
 	case '5': case '6': case '7': case '8': case '9':
@@ -402,7 +402,7 @@ again:
 
 	case '\0':
 	    /* Format string ends with bare '%'. Returning EOF regardless of
-	     * successfull assignments is a backwards compatability behavior.
+	     * successful assignments is a backwards compatibility behavior.
 	     */
 	    EXIT_DUE_TO_MISC_ERROR;
 
@@ -445,7 +445,7 @@ if (flags & UNSIGNED) { \
 	    }
 
 	    /* Leading input whitespace is skipped for %#V, and for %V iff the
-	     * conversion specification is preceeded by at least one whitespace
+	     * conversion specification is preceded by at least one whitespace
 	     * character.
 	     */
 	    if (isspace(*bu_vls_addr(&partFmt)) || flags & ALTERNATE) {
@@ -519,7 +519,7 @@ if (flags & UNSIGNED) { \
 		EXIT_DUE_TO_MISC_ERROR;
 	    }
 
-	    /* unsupressed %s or %[...] conversion */
+	    /* unsuppressed %s or %[...] conversion */
 	    if (!(flags & SUPPRESS)) {
 		if (width == 0) {
 		    if (flags & HAVEWIDTH) {
@@ -532,7 +532,7 @@ if (flags & UNSIGNED) { \
 			 *
 			 * The assignment wasn't suppressed, so we'll assume
 			 * the caller provided a pointer and wants us to write
-			 * to it. Just write '\0' and call it a successfull
+			 * to it. Just write '\0' and call it a successful
 			 * assignment.
 			 */
 			*va_arg(ap, char*) = '\0';
