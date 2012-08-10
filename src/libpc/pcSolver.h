@@ -102,7 +102,7 @@ bool PCSolver<T>::generator() {
     j--;
     //while (--j != i && (Vp (*j))->atUpperBoundary());
     while ((Vp (*j))->atCriticalBelow() && j != i) j--;
-    
+
     /*k = j;
       for (; i != ++k; ++i)
       //if (! (Vp (*i))->atUpperBoundary())
@@ -209,7 +209,7 @@ bool GTSolver<T>::generator() {
     tie(vertex_u, vertex_v) = vertices(N->G);
     vertex_end = vertex_v;
     while (--vertex_v != vertex_u && N->G[*vertex_v]->atUpperBoundary());
-    
+
     if (N->G[*vertex_u]->getValue() == N->G[*vertex_v]->getLast())
         return false;
     /* Increment one variable , set other variables to the first value */
@@ -293,7 +293,7 @@ bool BackTrackSolver<T>::check()
     for (; i != end; ++i) {
 	typedef std::list<std::string> Vlist;
 	Vlist variables = (*i)->getVariableList();
-	Vlist::iterator j = variables.begin();	
+	Vlist::iterator j = variables.begin();
 	for (; j != variables.end(); ++j) {
 	    Varlist::iterator k = vars_.begin();
 	    bool varisrelevant = false;
@@ -326,7 +326,7 @@ bool BackTrackSolver<T>::backtrack()
     }
     while (labels[*i] && i != vars_.end())
 	++i;
-    
+
     labels[*i] = true;
     Vp vptr = Vp (*i);
     for (vptr->minimize(); ! vptr->atUpperBoundary(); ++(*vptr)) {
@@ -351,7 +351,7 @@ bool BackTrackSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
     vcs  = &vcset;
 
     std::string av =""; /* Actual varying variables in the network */
-    std::string ov = ""; /* Constant or non constrained variables */    
+    std::string ov = ""; /* Constant or non constrained variables */
     vcset.store();
 
     for (; i != end; ++i)
