@@ -55,9 +55,9 @@ std::vector<struct resource *> visited_addrs;
 std::vector<void *> thread_infos;
 
 /* Save default a_hit */
-int (*default_a_hit)(struct application *, struct partition *, struct seg *);	
+int (*default_a_hit)(struct application *, struct partition *, struct seg *);
 /* Save default a_miss */
-int (*default_a_miss)(struct application *);	
+int (*default_a_miss)(struct application *);
 
 /*
  * The shader specific structure contains all variables which are unique
@@ -85,11 +85,11 @@ struct bu_structparse osl_print_tab[] = {
 
 extern "C" {
 
-    HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm, 
-			 genptr_t *dpp, const struct mfuncs *mfp, 
+    HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
+			 genptr_t *dpp, const struct mfuncs *mfp,
 			 struct rt_i *rtip);
 
-    HIDDEN int osl_render(struct application *ap, const struct partition *pp, 
+    HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 			  struct shadework *swp, genptr_t dp);
     HIDDEN void osl_print(register struct region *rp, genptr_t dp);
     HIDDEN void osl_free(genptr_t cp);
@@ -109,12 +109,12 @@ struct mfuncs osl_mfuncs[] = {
     {0,		(char *)0,	0,		0,		0,     0,		0,		0,		0 }
 };
 
-int 
+int
 osl_parse_edge(char *edge, ShaderEdge &sh_edge)
 {
     /* Split string arount # */
     const char *item;
-    
+
     ShaderParam sh_param1, sh_param2;
 
     /* Name of the first shader */
@@ -148,7 +148,7 @@ osl_parse_edge(char *edge, ShaderEdge &sh_edge)
     sh_edge = std::make_pair(sh_param1, sh_param2);
 }
 
-int 
+int
 osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 {
 
@@ -156,7 +156,7 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
     const char *item;
     item = strtok(shadername, "#");
     /* We are going to look for shader in ../shaders/ */
-    sh_info.shadername = "../shaders/" + std::string(item);  
+    sh_info.shadername = "../shaders/" + std::string(item);
 
     /* Check for parameters */
     while((item = strtok(NULL, "#")) != NULL){
@@ -242,7 +242,7 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 			    fprintf(stderr, "[Error] Missing %d-th component of matrix value\n", i*4 + j);
 			    return -1;
 			}
-			mat_value[i][j] = atof(item); 
+			mat_value[i][j] = atof(item);
 			fprintf(stderr, "%.2lf ", mat_value[i][j]);
 		    }
 		fprintf(stderr, "\n");
@@ -260,7 +260,7 @@ osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 	    else {
 		/* FIXME: add support to TypePoint, TypeVector, TypeNormal parameters */
 		fprintf(stderr, "[Error] Unknown parameter type\n");
-		return -1;			
+		return -1;
 	    }
 	}
     }
@@ -369,8 +369,8 @@ osl_parse(const struct bu_vls *in_vls, ShaderGroupInfo &group_info)
 
 extern "C" {
 
-HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm, 
-		     genptr_t *dpp, const struct mfuncs *mfp, 
+HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
+		     genptr_t *dpp, const struct mfuncs *mfp,
 		     struct rt_i *rtip)
 {
     register struct osl_specific *osl_sp;
@@ -409,7 +409,7 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
 	oslr = new OSLRenderer();
     }
     /* Add this shader to OSL system */
-    osl_sp->shader_ref = oslr->AddShader(group_info); 
+    osl_sp->shader_ref = oslr->AddShader(group_info);
 
     if (rdebug&RDEBUG_SHADE) {
 	bu_struct_print(" Parameters:", osl_print_tab, (char *)osl_sp);
@@ -417,7 +417,7 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
 
     return 1;
 }
-    
+
 /*
  * O S L _ P R I N T
  */
@@ -496,7 +496,7 @@ osl_refraction_hit(struct application *ap, struct partition *PartHeadp, struct s
 	sw.sw_segs = finished_segs;
 	VSETALL(sw.sw_color, 1);
 	VSETALL(sw.sw_basecolor, 1);
-    
+
 	rp = pp->pt_regionp;
 	mfp = (struct mfuncs *)pp->pt_regionp->reg_mfuncs;
 
@@ -525,14 +525,14 @@ osl_refraction_hit(struct application *ap, struct partition *PartHeadp, struct s
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.
  */
-HIDDEN int osl_render(struct application *ap, const struct partition *pp, 
+HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 		      struct shadework *swp, genptr_t dp)
 /* defined in ../h/shadework.h */
 /* ptr to the shader-specific struct */
 {
     register struct osl_specific *osl_sp =
 	(struct osl_specific *)dp;
-    
+
     void * thread_info;
 
     int nsamples; /* Number of samples */
@@ -541,13 +541,13 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     RT_AP_CHECK(ap);
     RT_CHECK_PT(pp);
     CK_OSL_SP(osl_sp);
-    
+
     if (rdebug&RDEBUG_SHADE)
 	bu_struct_print("osl_render Parameters:", osl_print_tab,
 			(char *)osl_sp);
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    
+
     /* Check if it is the first time this thread is calling this function */
     bool visited = false;
     for(size_t i = 0; i < visited_addrs.size(); i++){
@@ -556,7 +556,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	    thread_info = thread_infos[i];
 	    break;
 	}
-    } 
+    }
     if(!visited){
 	visited_addrs.push_back(ap->a_resource);
 	/* Get thread specific information from OSLRender system */
@@ -579,26 +579,26 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     RenderInfo info;
     /* Set hit point */
     VMOVE(info.P, swp->sw_hit.hit_point);
-    
-    /* Set normal at the poit */
+
+    /* Set normal at the point */
     VMOVE(info.N, swp->sw_hit.hit_normal);
-    
+
     /* Set incidence ray direction */
     VMOVE(info.I, ap->a_ray.r_dir);
-    
+
     /* U-V mapping stuff */
     info.u = swp->sw_uv.uv_u;
     info.v = swp->sw_uv.uv_v;
     VSETALL(info.dPdu, 0.0f);
     VSETALL(info.dPdv, 0.0f);
-    
+
     /* x and y pixel coordinates */
     info.screen_x = ap->a_x;
     info.screen_y = ap->a_y;
-    
+
     info.depth = ap->a_level;
     info.surfacearea = 1.0f;
-    
+
     info.shader_ref = osl_sp->shader_ref;
 
     /* We assume that the only information that will be written is thread_info,
@@ -614,7 +614,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
      * -----------------------------------
      */
     light_obs(ap, swp, MFI_NORMAL|MFI_HIT|MFI_UV);
-    
+
     for (int i = ap->a_rt_i->rti_nlights-1; i >= 0; i--) {
 
 	struct light_specific *lp;
@@ -631,7 +631,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     info.reflect_weight = Color3(0.0);
     info.transmit_weight = Color3(0.0);
     Color3 weight = oslr->QueryColor(&info);
-    
+
     /* If the weight of reflection is greater than zero, we shoot another ray */
     fastf_t reflect_W = 0;
     for(size_t i = 0; i < 3; i++)
@@ -650,13 +650,13 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 
 	struct application new_ap;
 	RT_APPLICATION_INIT(&new_ap);
-	
+
 	new_ap = *ap;                     /* struct copy */
 	new_ap.a_onehit = 1;
 	new_ap.a_hit = default_a_hit;
 	new_ap.a_level = info.depth + 1;
 	new_ap.a_flag = 0;
-	
+
 	VMOVE(new_ap.a_ray.r_dir, R);
 	VMOVE(new_ap.a_ray.r_pt, info.P);
 	VMOVE(swp->sw_color, info.reflect_weight);
@@ -664,10 +664,10 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     else {
 	VMOVE(swp->sw_color, weight);
     }
-    
+
 
 // Path-tracing (global illumination)
-#else    
+#else
 
     /* We only perform reflection if application decides to */
     info.doreflection = 0;
@@ -677,10 +677,10 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 
     /* Fire another ray */
     if((info.out_ray_type & RAY_REFLECT) || (info.out_ray_type & RAY_TRANSMIT)){
-	
+
 	struct application new_ap;
 	RT_APPLICATION_INIT(&new_ap);
-	
+
 	new_ap = *ap;                     /* struct copy */
 	new_ap.a_onehit = 1;
 	new_ap.a_hit = default_a_hit;
@@ -689,10 +689,10 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 
 	VMOVE(new_ap.a_ray.r_dir, info.out_ray.dir);
 	VMOVE(new_ap.a_ray.r_pt, info.out_ray.origin);
-	
+
 	/* This next ray represents refraction */
 	if (info.out_ray_type & RAY_TRANSMIT){
-	    
+
 	    /* Displace the hit point a little bit in the direction
 	       of the next ray */
 	    Vec3 tmp;
@@ -703,13 +703,13 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
 	    new_ap.a_refrac_index = 1.5;
 	    new_ap.a_flag = 2; /* mark as refraction */
 	    new_ap.a_hit = osl_refraction_hit;
-	}	
+	}
 
 	(void)rt_shootray(&new_ap);
 
 	Color3 rec;
 	VMOVE(rec, new_ap.a_color);
- 
+
 	Color3 res = rec*weight;
 
 	VMOVE(swp->sw_color, res);
