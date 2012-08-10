@@ -3225,6 +3225,77 @@ bn_isect_lseg_rpp(fastf_t *a,
     return 1;		/* HIT */
 }
 
+int
+bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t sg1pt2, 
+			const point_t sg2pt1, const point_t sg2pt2, 
+			const struct bn_tol *tol)
+{
+    vect_t e_dif[2]    = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
+    vect_t e_dif_a[2]  = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
+    fastf_t e_rr[2][3] = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};
+    char e_sc[2][3] = {{0, 0, 0}, {0, 0, 0}};
+    fastf_t dist = tol->dist;
+    fastf_t tmp;
+    register int i, j;
+
+    VSUB2(e_dif[0], sg1pt2, sg1pt1);
+    VSUB2(e_dif[1], sg2pt2, sg2pt1);
+
+    for ( i = 0 ; i < 2 ; i++ ) {
+	for ( j = 0 ; j < 3 ; j++ ) {
+	    e_dif_a[i][j] = fabs(e_dif[i][j]);
+	}
+    }
+
+    for ( i = 0 ; i < 2 ; i++ ) {
+	if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Y] > dist)) {
+	    e_sc[i][0] = 1;
+	} else if ((e_dif_a[i][X] > dist) && (e_dif_a[i][Y] < dist)) {
+	    e_sc[i][0] = 2;
+	} else if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Y] < dist)) {
+	    e_sc[i][0] = 3;
+	} else {
+	    e_rr[i][0] = e_dif[i][Y] / e_dif[i][X];
+	    e_sc[i][0] = 0;
+	}
+	if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Z] > dist)) {
+	    e_sc[i][1] = 1;
+	} else if ((e_dif_a[i][X] > dist) && (e_dif_a[i][Z] < dist)) {
+	    e_sc[i][1] = 2;
+	} else if ((e_dif_a[i][X] < dist) && (e_dif_a[i][Z] < dist)) {
+	    e_sc[i][1] = 3;
+	} else {
+	    e_rr[i][1] = e_dif[i][Z] / e_dif[i][X];
+	    e_sc[i][1] = 0;
+	}
+	if ((e_dif_a[i][Y] < dist) && (e_dif_a[i][Z] > dist)) {
+	    e_sc[i][2] = 1;
+	} else if ((e_dif_a[i][Y] > dist) && (e_dif_a[i][Z] < dist)) {
+	    e_sc[i][2] = 2;
+	} else if ((e_dif_a[i][Y] < dist) && (e_dif_a[i][Z] < dist)) {
+	    e_sc[i][2] = 3;
+	} else {
+	    e_rr[i][2] = e_dif[i][Z] / e_dif[i][Y];
+	    e_sc[i][2] = 0;
+	}
+    }
+
+    /* loop thru (rise/run) ratios from xy, xz and yz planes */
+    for ( i = 0 ; i < 3 ; i++ ) {
+	if (e_sc[0][i] != e_sc[1][i]) {
+	    return 0;
+	}
+	if (e_sc[0][i] == 0) {
+	    tmp = e_rr[0][i] - e_rr[1][i];
+	    if (fabs(tmp) > dist) {
+		return 0;
+	    }
+	}
+    }
+
+    return 1;
+}
+
 
 /** @} */
 /*

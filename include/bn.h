@@ -857,6 +857,9 @@ BN_EXPORT extern int bn_isect_lseg3_lseg3(fastf_t *dist,
 					      const point_t p, const vect_t pdir,
 					      const point_t q, const vect_t qdir,
 					      const struct bn_tol *tol);
+BN_EXPORT extern int bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t sg1pt2,
+					     const point_t sg2pt1, const point_t sg2pt2,
+					     const struct bn_tol *tol);
 BN_EXPORT extern int bn_isect_line3_line3(fastf_t *s, fastf_t *t,
 					      const point_t p0,
 					      const vect_t u,
