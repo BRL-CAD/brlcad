@@ -216,16 +216,16 @@ rem_open(register FBIO *ifp, const char *file, int width, int height)
     char portname[MAX_HOSTNAME] = {0};
     char device[MAX_HOSTNAME] = {0};
     int port = 0;
-    
+
     FB_CK_FBIO(ifp);
-    
+
     if (file == NULL || parse_file(file, hostname, &port, device, MAX_HOSTNAME) < 0) {
 	/* too wild for our tastes */
 	fb_log("rem_open: bad device name \"%s\"\n", file == NULL ? "(null)" : file);
 	return -2;
     }
     /*printf("hostname = \"%s\", port = %d, device = \"%s\"\n", hostname, port, device);*/
-    
+
     if (port != 5558) {
 	sprintf(portname, "%d", port);
 	if ((pc = pkg_open(hostname, portname, 0, 0, 0, pkgswitch, rem_log)) == PKC_ERROR) {
@@ -244,23 +244,23 @@ rem_open(register FBIO *ifp, const char *file, int width, int height)
     }
     PCPL(ifp) = (char *)pc;		/* stash in u1 */
     ifp->if_fd = pc->pkc_fd;		/* unused */
-	
+
 #ifdef HAVE_SYS_SOCKET_H
     {
 	int n;
 	int val;
 	val = 32767;
 	n = setsockopt(pc->pkc_fd, SOL_SOCKET, SO_SNDBUF, (char *)&val, sizeof(val));
-	if (n < 0) 
+	if (n < 0)
 	    perror("setsockopt: SO_SNDBUF");
-	
+
 	val = 32767;
 	n = setsockopt(pc->pkc_fd, SOL_SOCKET, SO_RCVBUF, (char *)&val, sizeof(val));
 	if (n < 0)
 	    perror("setsockopt: SO_RCVBUF");
     }
 #endif
-    
+
     *(uint32_t *)&buf[0*NET_LONG_LEN] = htonl(width);
     *(uint32_t *)&buf[1*NET_LONG_LEN] = htonl(height);
     bu_strlcpy(&buf[2*NET_LONG_LEN], device, 128-2*NET_LONG_LEN);
@@ -268,7 +268,7 @@ rem_open(register FBIO *ifp, const char *file, int width, int height)
     i = strlen(device)+2*NET_LONG_LEN;
     if ((size_t)pkg_send(MSG_FBOPEN, buf, i, pc) != i)
 	return -5;
-    
+
     /* return code, max_width, max_height, width, height as longs */
     if (pkg_waitfor (MSG_RETURN, buf, sizeof(buf), pc) < 5*NET_LONG_LEN)
 	return -6;
