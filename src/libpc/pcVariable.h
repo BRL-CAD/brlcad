@@ -66,7 +66,7 @@ public:
     Domain() {}
     ~Domain() {}
     Domain(T low, T high, T step);
-    
+
     /** Data access methods */
     int size() { return Interv.size(); }
     Interval<T> & getInterval(T) throw(pcException);
@@ -80,7 +80,7 @@ public:
     void addInterval(const Interval<T>);
     void addInterval(T, T, T);
     void intersectInterval(Interval<T>);
-    
+
     /** Iterator methods */
     iterator begin();
     iterator end();
@@ -91,7 +91,7 @@ public:
     iterator erase(iterator begin, iterator end);
 
     iterator insert(iterator location, Interval<T> *I);
-    
+
     /** Emptiness check */
     bool isEmpty();
 
@@ -104,7 +104,7 @@ public:
     /** Comparison */
     bool operator==(Domain<T> & d) {
 	if (Interv == d.Interv) return true;
-	else return false; } 
+	else return false; }
     /** Display method */
     void display();
 private:
@@ -144,11 +144,11 @@ class Variable : public VariableAbstract {
 public:
 /* TODO: Implement functionality to search which domain the variable belongs to
    and increment according to the stepvalue of that domain */
-    
+
     /* Constructor and Destructor */
     Variable(std::string vid = "" , T vvalue = 0);
     virtual ~Variable();
-    
+
     /* Data Access methods */
     T getValue() { return value; }
     T getFirst() { return D.getFirst(); }
@@ -157,7 +157,7 @@ public:
     void setValue(T t) { value = t; }
     void minimize() { value = D.getFirst(); }
     void maximize() { value = D.getLast(); }
-    
+
     /* Value storing and restoring methods to assist in iteration */
     void store() { vcopy_ = value; }
     void restore() { value = vcopy_; }
@@ -170,13 +170,13 @@ public:
 
     /* value location in domain check methods */
     bool atUpperBoundary();
-    bool atLowerBoundary(); 
+    bool atLowerBoundary();
     bool atCriticalBelow();
     bool atCriticalAbove();
 
     /* Variable display method */
     void display();
-    
+
     Variable& operator++();
     /*Variable operator++(T) { value++; return this; }*/
 private:
@@ -375,7 +375,7 @@ Interval<T> & Domain<T>::getInterval(T t) throw(pcException)
   i++;
   return *i;
   }
-  throw new pcException("Variable not in domain");    
+  throw new pcException("Variable not in domain");
   }
 */
 template<class T>
@@ -529,7 +529,7 @@ void Variable<T>::addInterval(T low, T high, T step)
 template<class T>
 void Variable<T>::display()
 {
-    std::cout << "!-- " << getID() << " = " << getValue() 
+    std::cout << "!-- " << getID() << " = " << getValue()
 	      << "\tType = "<< VariableAbstract::type
 	      << "\tConstant = "<< VariableAbstract::const_
 	      << std::endl;
@@ -652,20 +652,20 @@ void Solution<T>::cdisplay()
 	typename DomSet::iterator j;
         typename Domains::iterator k;
 	std::vector<double> minmax;
-	
-        std::cout << "Solution Ranges are shown due to existance of non-unique solutions." << std::endl;
+
+        std::cout << "Solution Ranges are shown due to existence of non-unique solutions." << std::endl;
 	for (i = Varset_.begin(); i != Varset_.end(); i++) {
 	    if (*i) std::cout << (*i)->getID() << "\t";
 	}
         std::cout << std::endl;
-	
+
 	if (!Domset_.empty()) {
 	    j = Domset_.begin();
 	    for (k = j->begin(), l=0; k != j->end(); ++k, ++l) {
 	        minmax.push_back(k->getFirst());
 	        minmax.push_back(k->getFirst());
 	    }
-	    
+
 	    for (j = Domset_.begin(); j != Domset_.end(); ++j) {
 		for (k = j->begin(), l = 0; k != j->end(); ++k, ++l) {
 		    T value = k->getFirst();
@@ -684,12 +684,12 @@ void Solution<T>::cdisplay()
 		std::cout << "to" << "\t";
 	}
 	std::cout << std::endl;
-    
+
 	for (l = 0; l < minmax.size()/2; ++l) {
 	    if (!ZERO(minmax[2*l] - minmax[2*l+1])) /* TODO: needs proper tolerancing */
 		std::cout << minmax[2*l+1] << "\t";
 	}
-    
+
 	std::cout << std::endl << "Number of Solutions: " << Domset_.size() << std::endl;
     }
 }

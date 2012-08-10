@@ -83,7 +83,7 @@ __BEGIN_DECLS
 #define DEBUG_DB	0x00000010	/**< @brief 5 Database debugging */
 #define DEBUG_SOLIDS	0x00000020	/**< @brief 6 Print prep'ed solids */
 #define DEBUG_REGIONS	0x00000040	/**< @brief 7 Print regions & boolean trees */
-#define DEBUG_ARB8	0x00000080	/**< @brief 8 Print voluminus ARB8 details */
+#define DEBUG_ARB8	0x00000080	/**< @brief 8 Print voluminous ARB8 details */
 #define DEBUG_SPLINE	0x00000100	/**< @brief 9 Splines */
 #define DEBUG_ANIM	0x00000200	/**< @brief 10 Animation */
 #define DEBUG_ANIM_FULL	0x00000400	/**< @brief 11 Animation matrices */
@@ -182,7 +182,7 @@ __BEGIN_DECLS
  * R T _ T E S S _ T O L
  *
  * Tessellation (geometric) tolerances, different beasts than the
- * calcuation tolerance in bn_tol.
+ * calculation tolerance in bn_tol.
  */
 struct rt_tess_tol {
     uint32_t magic;
@@ -446,7 +446,7 @@ struct seg {
 
 
 /**
- * Macros to operate on Right Rectangular Parallelpipeds (RPPs).
+ * Macros to operate on Right Rectangular Parallelepipeds (RPPs).
  * TODO: move to vmath.h
  */
 struct bound_rpp {
@@ -502,7 +502,7 @@ struct soltab {
 #define ID_ARS		5	/**< @brief ARS */
 #define ID_HALF		6	/**< @brief Half-space */
 #define ID_REC		7	/**< @brief Right Elliptical Cylinder [TGC special] */
-#define ID_POLY		8	/**< @brief Polygonal facted object */
+#define ID_POLY		8	/**< @brief Polygonal faceted object */
 #define ID_BSPLINE	9	/**< @brief B-spline object */
 #define ID_SPH		10	/**< @brief Sphere */
 #define	ID_NMG		11	/**< @brief n-Manifold Geometry solid */
@@ -547,7 +547,7 @@ struct soltab {
 #define ID_METABALL	36	/**< @brief Metaball */
 #define ID_BREP         37      /**< @brief B-rep object */
 #define ID_HYP		38	/**< @brief Hyperboloid of one sheet */
-#define ID_REVOLVE	40	/**< @brief Solid of Revolutin */
+#define ID_REVOLVE	40	/**< @brief Solid of Revolution */
 #define ID_PNTS         41      /**< @brief Collection of Points */
 #define ID_ANNOTATION   42      /**< @brief Annotation */
 
@@ -586,7 +586,7 @@ struct region {
     int			reg_transmit;	/**< @brief flag:  material transmits light */
     long		reg_instnum;	/**< @brief instance number, from d_uses */
     short		reg_all_unions;	/**< @brief 1=boolean tree is all unions */
-    short		reg_is_fastgen;	/**< @brief FASTGEN-compatability mode? */
+    short		reg_is_fastgen;	/**< @brief FASTGEN-compatibility mode? */
 #define REGION_NON_FASTGEN	0
 #define REGION_FASTGEN_PLATE	1
 #define REGION_FASTGEN_VOLUME	2
@@ -1642,7 +1642,7 @@ struct application {
     int			a_y;		/**< @brief  Screen Y of ray, if applicable */
     char *		a_purpose;	/**< @brief  Debug string:  purpose of ray */
     fastf_t		a_rbeam;	/**< @brief  initial beam radius (mm) */
-    fastf_t		a_diverge;	/**< @brief  slope of beam divergance/mm */
+    fastf_t		a_diverge;	/**< @brief  slope of beam divergence/mm */
     int			a_return;	/**< @brief  Return of a_hit()/a_miss() */
     int			a_no_booleans;	/**< @brief  1= partitions==segs, no booleans */
     char **		attrs;		/**< @brief  null terminated list of attributes
@@ -1661,7 +1661,7 @@ struct application {
     /* THEY ARE NEVER EXAMINED BY THE LIBRARY. */
     int			a_user;		/**< @brief  application-specific value */
     genptr_t		a_uptr;		/**< @brief  application-specific pointer */
-    struct bn_tabdata *	a_spectrum;	/**< @brief  application-specific bn_tabdata prointer */
+    struct bn_tabdata *	a_spectrum;	/**< @brief  application-specific bn_tabdata pointer */
     fastf_t		a_color[3];	/**< @brief  application-specific color */
     fastf_t		a_dist;		/**< @brief  application-specific distance */
     vect_t		a_uvec;		/**< @brief  application-specific vector */
@@ -1684,7 +1684,7 @@ struct application {
  *
  *	- b_ap		Members in this single ray application structure should be set
  *	 		in a similar fashion as when used with rt_shootray() with the
- *	 		exception of a_hit() and a_miss(). Default implementaions of
+ *	 		exception of a_hit() and a_miss(). Default implementations of
  *	 		these routines are provided that simple update hit/miss counters
  *	 		and attach the hit partitions and segments to the
  *	 		partition_bundle structure. Users can still override this default
@@ -1698,7 +1698,7 @@ struct application {
  *  b_return.
  *
  *  An integer field b_user and a genptr_t field b_uptr are
- *  provided in the structure for custome user data.
+ *  provided in the structure for custom user data.
  *
  */
 struct application_bundle
@@ -2184,7 +2184,7 @@ struct rt_shootray_status {
 #define HMG_HIT_ON_ON	0x22
 #define HMG_HIT_OUT_ON	0x42
 #define HMG_HIT_ON_OUT	0x24
-#define HMG_HIT_ANY_ANY	0x88	/**< @brief  hit on non-3-mainifold */
+#define HMG_HIT_ANY_ANY	0x88	/**< @brief  hit on non-3-manifold */
 
 #define	NMG_VERT_ENTER 1
 #define NMG_VERT_ENTER_LEAVE 0
@@ -2363,8 +2363,8 @@ struct ray_data {
 struct nmg_radial {
     struct bu_list	l;
     struct edgeuse	*eu;
-    struct faceuse	*fu;		/**< @brief  Derrived from eu */
-    struct shell	*s;		/**< @brief  Derrived from eu */
+    struct faceuse	*fu;		/**< @brief  Derived from eu */
+    struct shell	*s;		/**< @brief  Derived from eu */
     int			existing_flag;	/**< @brief  !0 if this eu exists on dest edge */
     int			is_crack;	/**< @brief  This eu is part of a crack. */
     int			is_outie;	/**< @brief  This crack is an "outie" */
@@ -2618,7 +2618,7 @@ RT_EXPORT extern void rt_cut_clean(struct rt_i *rtip);
 /* Find the bounding box given a struct rt_db_internal : bbox.c */
 RT_EXPORT extern int rt_bound_internal(struct db_i *dbip,
 				       struct directory *dp,
-                                       point_t rpp_min, 
+                                       point_t rpp_min,
                                        point_t rpp_max);
 
 /* cmd.c */
@@ -2753,7 +2753,7 @@ RT_EXPORT extern int db_full_path_search(const struct db_full_path *a,
 
 /**
  * search the database using a supplied list of filter criteria.
- * db_search_full_paths returns a bu_list of db_full_path structs to 
+ * db_search_full_paths returns a bu_list of db_full_path structs to
  * instances of objects matching the filter criteria.  Note that this is
  * a full path tree search of the entire database, not just the toplevel
  * objects that would be reported by the ls command.  E.g., a
@@ -2768,20 +2768,20 @@ RT_EXPORT extern int db_full_path_search(const struct db_full_path *a,
  *  /r1/s1
  *
  * and
- *  
+ *
  *  /r2/s1
  *
- * instead of just s1.  To iterate over the results, see examples of 
- * iterating over bu_list structures.  (Bear in mind the db_full_path 
- * structures in the list are indiviually malloced.)
+ * instead of just s1.  To iterate over the results, see examples of
+ * iterating over bu_list structures.  (Bear in mind the db_full_path
+ * structures in the list are individually malloced.)
  *
  * To return only unique objects, use
- * db_search_unique_objects, which would return just 
+ * db_search_unique_objects, which would return just
  *
  * s1
  *
- * in the above example.  db_search_unique_objects returns a bu_ptbl of 
- * (struct directory *) pointers.  To iterate over this list use 
+ * in the above example.  db_search_unique_objects returns a bu_ptbl of
+ * (struct directory *) pointers.  To iterate over this list use
  * BU_PTBL_LEN to get the size of the table and BU_PTBL_GET in a for
  * loop to access each element.
  *

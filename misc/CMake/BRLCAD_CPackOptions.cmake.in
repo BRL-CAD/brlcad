@@ -35,7 +35,7 @@
 ###
 # This file is configured at cmake time, and loaded at cpack time.
 # To pass variables to cpack from cmake, they must be configured
-# in this file.  
+# in this file.
 
 # Don't want to use the install prefix when we're making source
 # tarballs.  Also, target the source directory prepared by distcheck
@@ -46,7 +46,7 @@ if(CPACK_GENERATOR MATCHES "ZIP" OR CPACK_GENERATOR MATCHES "TGZ" OR CPACK_GENER
     file(REMOVE_RECURSE "@CMAKE_BINARY_DIR@/source_archive_contents")
     file(STRINGS @CMAKE_BINARY_DIR@/cmakefiles.cmake source_tree_files)
     file(STRINGS @CMAKE_BINARY_DIR@/cmakedirs.cmake ignored_dirctories)
-    string(REPLACE "@BRLCAD_SOURCE_DIR@" "------BRLCAD_SOURCE_DIR----" ignored_directories "${ignored_directories}")
+    string(REPLACE "@BRLCAD_SOURCE_DIR@" "------BRLCAD_SOURCE_DIR----" ignored_dirctories "${ignored_dirctories}")
     foreach(ITEM ${ignored_dirctories})
       file(GLOB_RECURSE dir_files "${ITEM}/*")
       list(APPEND source_tree_files ${dir_files})
