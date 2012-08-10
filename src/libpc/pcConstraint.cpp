@@ -35,7 +35,7 @@ ConstraintInterface::ConstraintInterface(pc_constrnt *c) : a(NULL), fp_(NULL), n
         dimension_ = c->data.cf.dimension;
         fp_ = c->data.cf.fp;
         a = new double*[nargs_];
-	
+
 	for (int i =0; i< nargs_; i++) {
 	    a[i] = new double[dimension_];
 	}
@@ -105,7 +105,7 @@ Constraint::Constraint(VCSet &vcs, std::string Cid, std::string Cexpression, fun
     expression(Cexpression),
     Variables(Vid),
     eval(pf)
-{ 
+{
     std::list<std::string>::iterator i = Variables.begin();
     std::list<std::string>::iterator end = Variables.end();
     for (; i != end; ++i)
