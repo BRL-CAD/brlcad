@@ -2,12 +2,12 @@
 /*
 //
 // Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -57,7 +57,7 @@ public:
   ON_BOOL32 GetDescription( ON_wString& description );
 
   // override virtual ON_UserData::Archive function
-  ON_BOOL32 Archive() const; 
+  ON_BOOL32 Archive() const;
 
 
 
@@ -67,11 +67,11 @@ public:
   void SetText( const char* s );
   void SetText( const wchar_t* s );
 
-  // m_rect is a Windows gdi RECT that bounds text 
+  // m_rect is a Windows gdi RECT that bounds text
   // ("x" increases to the right and "y" increases downwards).
   // If all fields are 0, then m_rect is not set.
-  // If left < right and top < bottom, then the rect bounds 
-  // the text when it is drawn with its font's 
+  // If left < right and top < bottom, then the rect bounds
+  // the text when it is drawn with its font's
   // lfHeight=ON_Font::normal_font_height and (0,0) left baseline
   // point of the leftmost character on the first line
   // of text. If (x,y) is a point on the drawn text, then
@@ -90,7 +90,7 @@ public:
 
   static
   ON_TextExtra* TextExtension(class ON_TextEntity2* pDim, bool bCreate);
-  static const 
+  static const
   ON_TextExtra* TextExtension(const class ON_TextEntity2* pDim, bool bCreate);
 
   void SetDefaults();
@@ -111,7 +111,7 @@ public:
   ON_BOOL32 GetDescription( ON_wString& description );
 
   // override virtual ON_UserData::Archive function
-  ON_BOOL32 Archive() const; 
+  ON_BOOL32 Archive() const;
 
   ON_UUID ParentUUID() const;
   void SetParentUUID( ON_UUID parent_uuid);
@@ -139,7 +139,7 @@ public:
   ON_Color m_mask_color;     // Color to use for mask if m_color_source is 2
 
   double   m_border_offset;  // Offset for the border around text to the rectangle used to draw the mask
-                             // This number * HeightOfI for the text is the offset on each side of the 
+                             // This number * HeightOfI for the text is the offset on each side of the
                              // tight rectangle around the text characters to the mask rectangle.
 };
 
@@ -154,7 +154,7 @@ public:
 
   static
   ON_DimensionExtra* DimensionExtension(class ON_LinearDimension2* pDim, bool bCreate);
-  static const 
+  static const
   ON_DimensionExtra* DimensionExtension(const class ON_LinearDimension2* pDim, bool bCreate);
 
   void SetDefaults();
@@ -175,7 +175,7 @@ public:
   ON_BOOL32 GetDescription( ON_wString& description );
 
   // override virtual ON_UserData::Archive function
-  ON_BOOL32 Archive() const; 
+  ON_BOOL32 Archive() const;
 
   ON_UUID ParentUUID() const;
   void SetParentUUID( ON_UUID parent_uuid);
@@ -215,7 +215,7 @@ public:
 
   int m_arrow_position;
 
-  // This is either NULL or an array of GDI rects for the substrings 
+  // This is either NULL or an array of GDI rects for the substrings
   // that make up the dimension string.
   // If the dimension text is all on the same line, there is just one
   // rectangle needed to bound the text and that is the same as the
@@ -411,7 +411,7 @@ public:
     Leader:      ON_UNSET_VALUE
     Text:        ON_UNSET_VALUE
   */
-  virtual 
+  virtual
   double NumericValue() const;
 
   /*
@@ -494,7 +494,7 @@ public:
     Returns:
       const ON_wString&    The object's UserText
     Remarks:
-      UserText is the string that gets printed when the dimensoin is drawn.
+      UserText is the string that gets printed when the dimension is drawn.
       If it contains the token "<>", that token is replaced with the measured
       value for the dimension, formatted according to the DimStyle settings.
       "<>" is the default for linear dimensions.
@@ -508,7 +508,7 @@ public:
       Set or get a flag indication that the dimension text has been moved
       from the default location.
     Parameters:
-      bUserPositionedText - [in] 
+      bUserPositionedText - [in]
                true to indicate that the text has been placed by the user.
                false to indicate that it hasn't
     Returns:
@@ -592,7 +592,7 @@ public:
       False    Failure
     See Also:  ON_AngularDimension::ConvertBack()
   */
-  virtual 
+  virtual
   void ConvertBack( ON_Annotation& target);
 
   /*
@@ -611,7 +611,7 @@ public:
   virtual
   void SetJustification( unsigned int justification);
 
-  virtual 
+  virtual
   unsigned int Justification();
 
   /*
@@ -620,19 +620,19 @@ public:
       text to world coordinates.
       Added Oct 30, 07 LW
     Parameters:
-      gdi_text_rect - [in] 
+      gdi_text_rect - [in]
               Windows gdi rect of text when it is drawn with
               LOGFONT lfHeight = ON_Font::normal_font_height.
       gdi_height_of_I - [in]
          Value returned by ON_Font::HeightOfI().
       dimstyle_textheight - [in]
          Height of text in world units.  If the annotation is
-         an ON_TextEntity2, this is the m_textheight value.  
-         If the annotation is not an ON_TextEntity2, pass in 
-         the value returned by the dimension style's 
-         ON_DimStyle::TextHeight() 
+         an ON_TextEntity2, this is the m_textheight value.
+         If the annotation is not an ON_TextEntity2, pass in
+         the value returned by the dimension style's
+         ON_DimStyle::TextHeight()
       dimstyle_textgap - [in]
-         The value of the annotation's dimension style's 
+         The value of the annotation's dimension style's
          ON_DimStyle::TextGap().
       dimstyle_textalignment - [in]
          ON::TextDisplayMode(ON_DimStyle::TextAlignment()).
@@ -646,14 +646,14 @@ public:
          zero or the view's unit camera right vector
       cameraY - [in]
          zero or the view's unit camera up vector
-      model_xform - [in] transforms the text's parent entity 
+      model_xform - [in] transforms the text's parent entity
          to world coordinates in case its instance geometry
          NULL == Identity
       text_xform - [out]
     Returns:
       True if text_xform is set.
   */
-  bool GetTextXform( 
+  bool GetTextXform(
         ON_RECT gdi_text_rect,
         int gdi_height_of_I,
         double dimstyle_textheight,
@@ -670,25 +670,25 @@ public:
     Description:
 
     This function has been replaced with a version that
-    takes a model transform to transform block instance 
+    takes a model transform to transform block instance
     geometry to world coordinates  Oct 30, 07 LW
 
       Get the transformation that maps the annotation's
       text to world coordinates.
     Parameters:
-      gdi_text_rect - [in] 
+      gdi_text_rect - [in]
               Windows gdi rect of text when it is drawn with
               LOGFONT lfHeight = ON_Font::normal_font_height.
       gdi_height_of_I - [in]
          Value returned by ON_Font::HeightOfI().
       dimstyle_textheight - [in]
          Height of text in world units.  If the annotation is
-         an ON_TextEntity2, this is the m_textheight value.  
-         If the annotation is not an ON_TextEntity2, pass in 
-         the value returned by the dimension style's 
-         ON_DimStyle::TextHeight() 
+         an ON_TextEntity2, this is the m_textheight value.
+         If the annotation is not an ON_TextEntity2, pass in
+         the value returned by the dimension style's
+         ON_DimStyle::TextHeight()
       dimstyle_textgap - [in]
-         The value of the annotation's dimension style's 
+         The value of the annotation's dimension style's
          ON_DimStyle::TextGap().
       dimstyle_textalignment - [in]
          ON::TextDisplayMode(ON_DimStyle::TextAlignment()).
@@ -706,7 +706,7 @@ public:
     Returns:
       True if xform is set.
   */
-  bool GetTextXform( 
+  bool GetTextXform(
         ON_RECT gdi_text_rect,
         int gdi_height_of_I,
         double dimstyle_textheight,
@@ -724,7 +724,7 @@ public:
       text to world coordinates.
       Oct 30, 07 LW
     Parameters:
-      gdi_text_rect - [in] 
+      gdi_text_rect - [in]
               Windows gdi rect of text when it is drawn with
               LOGFONT lfHeight = ON_Font::normal_font_height.
       font - [in]
@@ -736,14 +736,14 @@ public:
          If you are using the OpenNURBS IO toolkit, this value
          is on ON_3dmSettings::m_AnnotationSettings.m_dimscale.
       vp - [in]
-      model_xform - [in] transforms the text's parent entity 
+      model_xform - [in] transforms the text's parent entity
          to world coordinates in case its instance geometry
          NULL == Identity
       text_xform - [out]
     Returns:
       True if text_xform is set.
   */
-  bool GetTextXform( 
+  bool GetTextXform(
       const ON_RECT gdi_text_rect,
       const ON_Font& font,
       const ON_DimStyle& dimstyle,
@@ -757,13 +757,13 @@ public:
     Description:
 
     This function has been replaced with a version that
-    takes a model transform because the viewport doesn't 
+    takes a model transform because the viewport doesn't
     contain block instance transform info  Oct 30, 07 LW
 
       Get the transformation that maps the annotation's
       text to world coordinates.
     Parameters:
-      gdi_text_rect - [in] 
+      gdi_text_rect - [in]
               Windows gdi rect of text when it is drawn with
               LOGFONT lfHeight = ON_Font::normal_font_height.
       font - [in]
@@ -779,7 +779,7 @@ public:
     Returns:
       True if xform is set.
   */
-  bool GetTextXform( 
+  bool GetTextXform(
       ON_RECT gdi_text_rect,
       const ON_Font& font,
       const ON_DimStyle& dimstyle,
@@ -817,7 +817,7 @@ public:
   // All parts of the annotation that are not
   // text lie in this plane. If
   // m_textdisplaymode != dtHorizontal, then
-  // the text lies in the plane too.  
+  // the text lies in the plane too.
   // (ECS reference plane in WCS coordinates.)
   ON_Plane m_plane;
 
@@ -832,8 +832,8 @@ public:
   ON_2dPointArray m_points;
 
   // With the addition of tolerances and therefore multi-line
-  // text, the ON_wString in m_usertext will hold multiple 
-  // strings with NULLs between them.  
+  // text, the ON_wString in m_usertext will hold multiple
+  // strings with NULLs between them.
   // The strings will be in this order:
   // Result of expanding "<>", or user override
   // Alternate dimension
@@ -845,7 +845,7 @@ public:
   // Suffix
   // Alt prefix
   // Alt suffix
-  // 
+  //
   ON_Annotation2Text m_usertext;
 
   // true: User has positioned text
@@ -876,8 +876,8 @@ public:
 
   /*
     The annotation's dimstyle controls the position of TEXT,
-    the size of the arrowheads, and the amount the ends of 
-    linear dimension's extension lines extend beyond the 
+    the size of the arrowheads, and the amount the ends of
+    linear dimension's extension lines extend beyond the
     dimension lines.
 
     In the picture below, [n] means ON_Annotation2::m_points[n].
@@ -904,10 +904,10 @@ public:
 
   enum POINT_INDEX
   {
-    // Do not change these enum values.  They are saved in files as the 
+    // Do not change these enum values.  They are saved in files as the
     // ON_COMPONENT_INDEX.m_index value.
     //
-    // Indices of linear dimension definition points in 
+    // Indices of linear dimension definition points in
     // the m_points[] array
     ext0_pt_index    = 0, // end of first extension line
     arrow0_pt_index  = 1, // arrowhead tip on first extension line
@@ -984,8 +984,8 @@ public:
          ) const;
 
   // overrides virual ON_Geometry::GetTightBoundingBox
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+	bool GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
@@ -1021,7 +1021,7 @@ public:
 // 6-23-03 lw Added v2 file writing of annotation
   void GetV2Form( ON_LinearDimension& dim);
 
-  bool CreateFromV2( 
+  bool CreateFromV2(
       const ON_Annotation& v2_ann,
       const ON_3dmAnnotationSettings& settings,
       int dimstyle_index
@@ -1032,19 +1032,19 @@ public:
     Get the annotation plane x coordinates of the dimension
     line. The y coordinate of the dimension line is m_ponts[1].y.
   Parameters:
-    gdi_text_rect - [in] 
+    gdi_text_rect - [in]
        Windows rect (left < right, top < bottom) that bounds text.
        The baseline of the text should be at y=0 in the rect coordinates.
-    gdi_height_of_I - [in] 
+    gdi_height_of_I - [in]
        Height of an I in the text in the same.
-    gdi_to_world - [in] 
+    gdi_to_world - [in]
        transform returned by ON_Annotation2::GetTextXform().
     dimstyle - [in]
       dimscale - [in]
     vp - [in]
     x - [out] plane x coordinates of the dimension line.
               The y coordinate = m_points[arrow0_pt_index].y
-    bInside - [out] true if arrowheads go inside extension lines, 
+    bInside - [out] true if arrowheads go inside extension lines,
                     false if they go outside
   Returns:
     0: the input or class is not valid
@@ -1052,7 +1052,7 @@ public:
         Arrowtips at x[4] & x[5]
     2: Two lines from x[0] to x[1] and from x[1] to x[2].  The
         Arrowtips at x[4] & x[5]
-       
+
   */
   int GetDimensionLineSegments(
       ON_RECT gdi_text_rect,
@@ -1106,10 +1106,10 @@ public:
 
   enum POINT_INDEX
   {
-    // Do not change these enum values.  They are saved in files as the 
+    // Do not change these enum values.  They are saved in files as the
     // ON_COMPONENT_INDEX.m_index value.
     //
-    // Indices of radial dimension definition points in 
+    // Indices of radial dimension definition points in
     // the m_points[] array
     center_pt_index = 0, // location of + (usually at center of circle)
     arrow_pt_index  = 1, // arrow tip
@@ -1174,8 +1174,8 @@ public:
          ) const;
 
   // overrides virual ON_Geometry::GetTightBoundingBox
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+	bool GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
@@ -1194,10 +1194,10 @@ public:
       true     Success
       false    Failure
   */
-  bool CreateFromPoints( 
-          ON_3dPoint center, 
-          ON_3dPoint arrowtip, 
-          ON_3dVector xaxis, 
+  bool CreateFromPoints(
+          ON_3dPoint center,
+          ON_3dPoint arrowtip,
+          ON_3dVector xaxis,
           ON_3dVector normal,
           double offset_distance
           );
@@ -1234,7 +1234,7 @@ public:
 // 6-23-03 lw Added v2 file writing of annotation
   void GetV2Form( ON_RadialDimension& dim);
 
-  bool CreateFromV2( 
+  bool CreateFromV2(
       const ON_Annotation& v2_ann,
       const ON_3dmAnnotationSettings& settings,
       int dimstyle_index
@@ -1255,8 +1255,8 @@ public:
 
   /*
     The annotation's dimstyle controls the position of TEXT,
-    the size of the arrowheads, and the amount the ends of 
-    linear dimension's extension lines extend beyond the 
+    the size of the arrowheads, and the amount the ends of
+    linear dimension's extension lines extend beyond the
     dimension lines.
 
     In the picture below, [n] means ON_Annotation2::m_points[n].
@@ -1270,7 +1270,7 @@ public:
           The distance from center to [1] can be any value.
     [2] = a point somewhere on the line from the center through the end point.
           The distance from center to [2] can be any value.
-    [3] = a point on the interior of the arc.  The distance 
+    [3] = a point on the interior of the arc.  The distance
           from (0,0) to [3] is the radius of the arc.
 
 
@@ -1289,12 +1289,12 @@ public:
 
   enum POINT_INDEX
   {
-    // Do not change these enum values.  They are saved in files as the 
+    // Do not change these enum values.  They are saved in files as the
     // ON_COMPONENT_INDEX.m_index value.
     //
-    // Indices of angular dimension definition points in 
+    // Indices of angular dimension definition points in
     // the m_points[] array
-    userpositionedtext_pt_index  = 0, // 
+    userpositionedtext_pt_index  = 0, //
     start_pt_index = 1, // point on the start ray (not necessarily on arc)
     end_pt_index   = 2, // point on the end ray (not necessarily on arc)
     arc_pt_index   = 3, // point on the interior of dimension arc
@@ -1305,7 +1305,7 @@ public:
     arcstart_pt   = 10001,
     arcend_pt     = 10002,
     arcmid_pt     = 10003,
-    arccenter_pt  = 10004, // center of circle arc lies on  
+    arccenter_pt  = 10004, // center of circle arc lies on
     extension0_pt = 10005, // point where first extension line starts
     extension1_pt = 10006  // point where second extension line starts
   };
@@ -1357,8 +1357,8 @@ public:
          ) const;
 
   // overrides virual ON_Geometry::GetTightBoundingBox
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+	bool GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
@@ -1383,20 +1383,20 @@ public:
                   (center of arc)
       p0 - [in] 3d point on first line
       p1 - [in] 3d point on second line
-      arcpt - [in] 3d point on dimension arc 
+      arcpt - [in] 3d point on dimension arc
                    (determines radius of arc)
       Normal - [in] normal of the plane on which to make the dimension
-                    (must be perpendicular to p0-apex and p1-apex) 
+                    (must be perpendicular to p0-apex and p1-apex)
     Returns:
       @untitled table
       true     Success
       false    Failure
   */
-  bool CreateFromPoints( 
-    const ON_3dPoint& apex, 
-    const ON_3dPoint& p0, 
-    const ON_3dPoint& p1, 
-    ON_3dPoint& arcpt, 
+  bool CreateFromPoints(
+    const ON_3dPoint& apex,
+    const ON_3dPoint& p0,
+    const ON_3dPoint& p1,
+    ON_3dPoint& arcpt,
     ON_3dVector& Normal
     );
 
@@ -1410,11 +1410,11 @@ public:
       true     Success
       false    Failure
   */
-  bool CreateFromArc( 
+  bool CreateFromArc(
     const ON_Arc& arc
     );
 
-  bool CreateFromV2( 
+  bool CreateFromV2(
       const ON_Annotation& v2_ann,
       const ON_3dmAnnotationSettings& settings,
       int dimstyle_index
@@ -1484,9 +1484,9 @@ public:
   Parameters:
     gdi_text_rect - [in] Windows rect (left < right, top < bottom)
        that bounds text.
-    gdi_height_of_I - [in] 
+    gdi_height_of_I - [in]
        Height of an I in the text.
-    gdi_to_world - [in] 
+    gdi_to_world - [in]
        transform returned by ON_Annotation2::GetTextXform().
     dimstyle - [in]
       dimscale - [in]
@@ -1512,7 +1512,7 @@ public:
       bool& bInside
       ) const;
 
-  
+
   /*
   Description:
     Get distance from dimension apex to extension line offset points
@@ -1532,7 +1532,7 @@ public:
     offset - [in] Value to set
   */
   void SetDimpointOffset(
-    int index, 
+    int index,
     double offset);
 };
 
@@ -1566,7 +1566,7 @@ public:
  [plane origin]                                      [plane origin]
                                                            +
 
-      or - Measures in Y direction                                                   *---[1]       
+      or - Measures in Y direction                                                   *---[1]
                                                                                     /
                                                                                    /
                    [0]--------------------[1]                   [0]---------------*
@@ -1575,7 +1575,7 @@ public:
                                                                               * = calculated, not stored
 
 
-       +     
+       +
  [plane origin]
 
 
@@ -1587,17 +1587,17 @@ public:
       If Direction is "x" and [1][x] <> [0][x], an offset segment is drawn
       If Direction is "y" and [1][y] <> [0][y], an offset segment is drawn
       The dimension lines are always drawn in the X or Y directions of the entity plane
-      The distance represented by the dimension is measured from the 
+      The distance represented by the dimension is measured from the
         plane origin to point [0], parallel to the appropriate axis.
       The points of the offset segment are calculated rather than stored
   */
 
   enum POINT_INDEX
   {
-    // Do not change these enum values.  They are saved in files as the 
+    // Do not change these enum values.  They are saved in files as the
     // ON_COMPONENT_INDEX.m_index value.
     //
-    // Indices of linear dimension definition points in 
+    // Indices of linear dimension definition points in
     // the m_points[] array
     definition_pt_index    = 0, // First end of the dimension line
     leader_end_pt_index    = 1, // Other end of the leader (near the text)
@@ -1664,8 +1664,8 @@ public:
          ) const;
 
   // overrides virual ON_Geometry::GetTightBoundingBox
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+	bool GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
@@ -1709,7 +1709,7 @@ public:
       0: measures parallel to the entity plane x axis
       1: measures parallel to the entity plane y axis
     Remarks:
-      This does not consider the dimension's explicit Direction setting 
+      This does not consider the dimension's explicit Direction setting
   */
   int ImpliedDirection() const;
 
@@ -1745,13 +1745,13 @@ public:
 
   /*
     Description:
-      Returns or sets the offset distance parallel to the dimension 
-      line direction of from the text end of the dimension line to 
-      the offset point 
-      If the offset point hasn't been explicitly defined, returns 
+      Returns or sets the offset distance parallel to the dimension
+      line direction of from the text end of the dimension line to
+      the offset point
+      If the offset point hasn't been explicitly defined, returns
       ON_UNSET_VALUE and a default should be used to find the point.
     Parameters:
-      index [in] - which offset distance to return 
+      index [in] - which offset distance to return
                    (0 is closer to the text)
       offset [in] - the offset distance to set
   */
@@ -1759,7 +1759,7 @@ public:
   void SetKinkOffset( int index, double offset);
 
 
-  int m_direction;   // -1 == underermined
+  int m_direction;   // -1 == undetermined
                      //  0 == x direction
                      //  1 == y direction
 
@@ -1780,7 +1780,7 @@ public:
       The offsets must be set to the right values before calling this, or
       If they are ON_UNSET_VALUE, they will be set to the defaults
   */
-  void CalcKinkPoints( ON_2dPoint p0, ON_2dPoint p1, 
+  void CalcKinkPoints( ON_2dPoint p0, ON_2dPoint p1,
                        int direction, double default_offset,
                        ON_2dPoint& k0, ON_2dPoint& k1) const;
 
@@ -1824,8 +1824,8 @@ public:
   // overrides virual ON_Geometry::GetTightBoundingBox
   // This just adds the text base point to the box
   // There is no calculation of the size of the text or its bounds
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+	bool GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
@@ -1865,7 +1865,7 @@ public:
   void SetMaskColor(ON_Color color);
 
   // Offset for the border around text to the rectangle used to draw the mask
-  // This number * CRhinoAnnotation::TextHeight() for the text is the offset 
+  // This number * CRhinoAnnotation::TextHeight() for the text is the offset
   // on each side of the tight rectangle around the text characters to the mask rectangle.
   double MaskOffsetFactor() const;
   void SetMaskOffsetFactor(double offset);
@@ -1882,8 +1882,8 @@ public:
 
   /*
     The annotation's dimstyle controls the position of TEXT,
-    the size of the arrowheads, and the amount the ends of 
-    linear dimension's extension lines extend beyond the 
+    the size of the arrowheads, and the amount the ends of
+    linear dimension's extension lines extend beyond the
     dimension lines.
 
     Leaders:
@@ -1907,10 +1907,10 @@ public:
 
   enum POINT_INDEX
   {
-    // Do not change these enum values.  They are saved in files as the 
+    // Do not change these enum values.  They are saved in files as the
     // ON_COMPONENT_INDEX.m_index value.
     //
-    // Indices of angular dimension definition points in 
+    // Indices of angular dimension definition points in
     // the m_points[] array
     arrow_pt_index  = 0, // arrow tip
 
@@ -1972,8 +1972,8 @@ public:
          ) const;
 
   // overrides virual ON_Geometry::GetTightBoundingBox
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+	bool GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
@@ -1999,7 +1999,7 @@ public:
       leader [out] - the result of the conversion
   */
   void GetV2Form( ON_Leader& leader);
-  bool CreateFromV2( 
+  bool CreateFromV2(
       const ON_Annotation& v2_ann,
       const ON_3dmAnnotationSettings& settings,
       int dimstyle_index
@@ -2036,7 +2036,7 @@ public:
   Paramters:
     text_log - [in] if the object is not valid and text_log
         is not NULL, then a brief english description of the
-        reason the object is not valid is appened to the log.
+        reason the object is not valid is appended to the log.
         The information appended to text_log is suitable for
         low-level debugging purposes by programmers and is
         not intended to be useful as a high level user
@@ -2136,7 +2136,7 @@ public:
   const wchar_t* FontFace() const;
   void SetFontFace( const wchar_t* face);
 
-  
+
   /*
     Description:
       Get or Set whether the dot is drawn "On Top" of other geometry
@@ -2194,7 +2194,7 @@ public:
   int m_height;        // in points
   ON_wString m_text;
   ON_wString m_fontface;
-  int m_display;       // some future display flags - 
+  int m_display;       // some future display flags -
 };
 
 
