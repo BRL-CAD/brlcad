@@ -121,7 +121,7 @@ Stack & Stack::operator+=(Stack const & other)
  * Indirect iterators from bost are generated using wrapper functions.
  * Indirect iterator adapts an iterator by applying an extra dereference inside
  * of operator*(). For example, this iterator adaptor makes it possible to view
- * a container of pointers (e.g. list<foo*>) as if it were a container of the 
+ * a container of pointers (e.g. list<foo*>) as if it were a container of the
  * pointed-to type (e.g. list<foo>).
  *
  */
@@ -191,7 +191,7 @@ void MathVM::display()
 }
 
 
-/** 
+/**
  * MathFunction methods
  */
 
@@ -212,7 +212,7 @@ UserFunction *MathFunction::asUserFunction()
 }
 
 
-/** 
+/**
  * eval() is effectively a wrapper function over the private evaluation
  * function . It does an arity check to match the number of provided
  * arguments with the expected.
@@ -224,7 +224,7 @@ double MathFunction::eval(std::vector<double> const & args) const
 }
 
 
-/** 
+/**
  * updateStack Functions
  * updates the stack members according to the variable table provided.
  * uses std::map internally for creating a map between source and destination
@@ -254,7 +254,7 @@ void updateStack(Stack & s, std::map<double *, double *> const & pmap)
 	std::size_t const nbranches = i->branchSize();
 	if (nbranches == 0)
 	    continue;
-	
+
 	for (std::size_t k =0; k !=nbranches; ++k) {
 	    Stack *stk = i->branch(k);
 	    if (!stk)
@@ -273,7 +273,7 @@ void updateStack(Stack & s,
     using boost::spirit::classic::find;
     if (s.empty())
 	return;
-    /** create a map between data adresses in destination Variable table
+    /** create a map between data addresses in destination Variable table
      * and source Variable table
      */
     typedef std::map<double *, double *> mapd;
@@ -287,7 +287,7 @@ void updateStack(Stack & s,
 }
 
 
-/** 
+/**
  * UserFunction methods
  */
 
@@ -348,10 +348,10 @@ double UserFunction::evalp(std::vector<double> const & args) const
 {
     /** assert that the size of arguments is as expected */
     assert(argnames.size() == arity_);
-    
+
     /** create a copy of symbol table*/
     symboltable temp = localvariables_;
-    
+
     /** store data from args into the copy */
     std::size_t const size = argnames.size();
     for (std::size_t i =0; i != size ; ++i) {
@@ -359,7 +359,7 @@ double UserFunction::evalp(std::vector<double> const & args) const
 	assert(p);
 	*p = args[i];
     }
-    
+
     Stack stackcopy = stack;
     updateStack(stackcopy, temp, localvariables_, argnames);
 
@@ -389,7 +389,7 @@ double ConstantNode::getValue() const
 
 
 VariableNode::VariableNode(double *p)
-    : pd(p) 
+    : pd(p)
 {
     /** Assert that pointer to double(pd) is not NULL */
     assert(pd);
@@ -636,7 +636,7 @@ double evaluate(Stack s)
 
     if (s.empty())
 	return 0.0;
-    
+
     /* If stack size = 1 */
     BOOST_ASSERT(s.size() == 1) ;
     return getNumberNode(s.begin())->getValue();
