@@ -907,7 +907,7 @@ ged_move_pipept(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (sscanf(argv[2], "%d", &seg_i) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[3]);
+	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
 
