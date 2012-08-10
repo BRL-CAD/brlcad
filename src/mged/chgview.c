@@ -3766,7 +3766,7 @@ cmd_tra(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
 	    return TCL_ERROR;
 	}
-	
+
 	return mged_etran(coord, tvec);
     } else {
 	int ret;
