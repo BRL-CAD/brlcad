@@ -210,7 +210,7 @@ hit_voxelize(struct application *ap, struct partition *PartHeadp, struct seg*UNU
  * voxelize function takes raytrace instance and user parameters as inputs
  */
 void
-voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*printFunction)(genptr_t callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), genptr_t callBackData){
+voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*create_boxes)(genptr_t callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), genptr_t callBackData){
 
     struct application ap;
     struct rayInfo voxelHits;
@@ -292,17 +292,18 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*prin
 
 		    if(voxelHits.regionList[k].regionName==NULL){
 
-			printFunction(callBackData, k, j, i, "air", 1.0);
+			create_boxes(callBackData, k, j, i, "air", 0.0);
 
 		    } else {
 
 			tmp = voxelHits.regionList + k;
-			printFunction(callBackData, k, j, i, tmp->regionName, tmp->regionDistance / effectiveDistance);
+			create_boxes(callBackData, k, j, i, tmp->regionName, tmp->regionDistance / effectiveDistance);
+
 			old = tmp->nextRegion;
 
 			while(old != NULL) {
 			    tmp = old;
-			    printFunction(callBackData, k, j, i, tmp->regionName, tmp->regionDistance / effectiveDistance);
+			    create_boxes(callBackData, k, j, i, tmp->regionName, tmp->regionDistance / effectiveDistance);    
 			    old = tmp->nextRegion;
 			    /* free the space allocated for new regions */
 			    bu_free(tmp, "");
