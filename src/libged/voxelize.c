@@ -34,31 +34,53 @@
 
 #include "./ged_private.h"
 #include "analyze.h"
+#include "wdb.h"
 
 
-/**
- * Function to print values to Screen
- */
-/*HIDDEN void
-printToScreen(genptr_t callBackData, int x, int y, int z, const char* a, fastf_t fill) {
-    fastf_t *threshold = (fastf_t *)callBackData;
+struct voxelizeData
+{
+    fastf_t threshold;
+    fastf_t *bbMin;
+    fastf_t sizeVoxel[3];
+    struct rt_wdb *wdbp;
+};
 
-    printf("%f\t(%4d,%4d,%4d)\t%s\t%f\n", *threshold, x, y, z, a, fill);
+HIDDEN void 
+create_boxes(genptr_t callBackData, int x, int y, int z, const char *UNUSED(a), fastf_t fill)
+{
+    fastf_t min[3], max[3];
+    
+    struct bu_vls *vp;
+    char bufx[50], bufy[50], bufz[50];
+    char *nameDestination;
+    
+    struct voxelizeData *dataValues = (struct voxelizeData *)callBackData;
+    
+    sprintf(bufx, "%d", x);
+    sprintf(bufy, "%d", y);
+    sprintf(bufz, "%d", z);
+    if(dataValues->threshold <= fill) {
+	vp = bu_vls_vlsinit();
+	bu_vls_strcat(vp, "x");
+	bu_vls_strcat(vp, bufx);
+	bu_vls_strcat(vp, "y");
+	bu_vls_strcat(vp, bufy);
+	bu_vls_strcat(vp, "z");
+	bu_vls_strcat(vp, bufz);
+	bu_vls_strcat(vp, ".s");
+
+        min[0] = (dataValues->bbMin)[0] + (x * (dataValues->sizeVoxel)[0]);
+	min[1] = (dataValues->bbMin)[1] + (y * (dataValues->sizeVoxel)[1]);
+	min[2] = (dataValues->bbMin)[2] + (z * (dataValues->sizeVoxel)[2]);
+        max[0] = (dataValues->bbMin)[0] + ( (x + 1.0) * (dataValues->sizeVoxel)[0]);
+	max[1] = (dataValues->bbMin)[1] + ( (y + 1.0) * (dataValues->sizeVoxel)[1]);
+        max[2] = (dataValues->bbMin)[2] + ( (z + 1.0) * (dataValues->sizeVoxel)[2]);
+
+        nameDestination = bu_vls_strgrab(vp);
+        mk_rpp(dataValues->wdbp,nameDestination, min, max);
+        
+    }
 }
-*/
-/**
- * Function to print values to File
- */
-
-HIDDEN void printToFile(genptr_t callBackData, int x, int y, int z, const char *a, fastf_t fill) {
-    fastf_t *threshold = (fastf_t *)callBackData;
-    FILE *fp;
-
-    fp = fopen("voxels1.txt","a");
-    fprintf(fp, "%f\t(%4d,%4d,%4d)\t%s\t%f\n", *threshold, x, y, z, a, fill);
-    fclose(fp);
-}
-
 
 int
 ged_voxelize(struct ged *gedp, int argc, const char *argv[])
@@ -68,7 +90,7 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
     fastf_t sizeVoxel[3], threshold;
     int levelOfDetail;
     genptr_t callBackData;
-
+    struct voxelizeData voxDat;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -95,6 +117,11 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
 	argv++;
     }
 
+    /* get bounding box values etc */
+    rt_prep_parallel(rtip, 1);
+
+
+
     /* user parameters are being given values directly here*/
     sizeVoxel[0] = 1.0;
     sizeVoxel[1] = 1.0;
@@ -103,11 +130,17 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
     threshold = 0.5;
     levelOfDetail = 4;
 
-    callBackData = (void *)(& threshold);
+    voxDat.sizeVoxel[0] = sizeVoxel[0];
+    voxDat.sizeVoxel[1] = sizeVoxel[1];
+    voxDat.sizeVoxel[2] = sizeVoxel[2];
+    voxDat.threshold = threshold;
+    voxDat.wdbp = gedp->ged_wdbp;
+    voxDat.bbMin = rtip->mdl_min;
+    
+    callBackData = (void*)(&voxDat);
 
-    /* voxelize function is called here with rtip(ray trace instance), userParameters and printToFile/printToScreen options */
-    voxelize(rtip, sizeVoxel, levelOfDetail, printToFile, callBackData);
-
+   /* voxelize function is called here with rtip(ray trace instance), userParameter and create_boxes function */
+    voxelize(rtip, sizeVoxel, levelOfDetail, create_boxes, callBackData);
     rt_free_rti(rtip);
 
     return GED_OK;
