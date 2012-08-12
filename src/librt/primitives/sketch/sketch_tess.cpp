@@ -23,9 +23,19 @@
  *
  * An extension of sketch.c for functions using the openNURBS library. Includes
  * support for approximation of Bezier curves using circular arcs.
- *
  */
 /** @} */
+
+/* NOTE: Current Bezier approximation routine is meant to handle cubic and lower
+ * degree Bezier curves, and may not work properly for higher degrees.
+ *
+ * TODO:
+ * rt_sketch_surf_area: add logic to determine if part of a sketch
+ * "removes" area from the total area, eg. a sketch of a circumscribed square
+ * has area less than the sum of the areas of the square and circle.
+ *
+ * rt_sketch_tess: implement this.
+ */
 
 #include "common.h"
 
@@ -80,12 +90,14 @@ make_biarc(const ON_BezierCurve& bezier)
 
 
 /* NOTE: MINSTEP and MAXSTEP were determined by experimentation. If MINSTEP is
- * much lower (ie. 0.00001), approx_bezier() slows significantly on curves with
+ * much smaller (ie. 0.00001), approx_bezier() slows significantly on curves with
  * high curvature over a large part of its domain. MAXSTEP represents a step
  * size of 1/10th the domain of a Bezier curve, and MINSTEP represents 1/10000th.
  */
 #define MINSTEP 0.0001
 #define MAXSTEP 0.1
+
+#define GETSTEPSIZE(step) ((step) > MAXSTEP ? MAXSTEP : ((step) < MINSTEP ? MINSTEP : (step)))
 
 #define POW3(x) ((x)*(x)*(x))
 #define SIGN(x) ((x) >= 0 ? 1 : -1)
@@ -107,7 +119,7 @@ bezier_inflection(const ON_BezierCurve& bezier, fastf_t& inflection_pt)
     bezier.Ev2Der(0, tmp, d1, d2);
     crv = CURVATURE(d1, d2);
     // step size decreases as |crv| -> 0
-    step = fabs(crv) > MAXSTEP ? MAXSTEP : (fabs(crv) < MINSTEP ? MINSTEP : fabs(crv));
+    step = GETSTEPSIZE(fabs(crv));
 
     sign = SIGN(crv);
 
@@ -119,7 +131,7 @@ bezier_inflection(const ON_BezierCurve& bezier, fastf_t& inflection_pt)
             inflection_pt = t;
             return true;
         }
-        step = fabs(crv) > MAXSTEP ? MAXSTEP : (fabs(crv) < MINSTEP ? MINSTEP : fabs(crv));
+        step = GETSTEPSIZE(fabs(crv));
     }
     return false;
 }
@@ -135,7 +147,6 @@ approx_bezier(const ON_BezierCurve& bezier, const ON_Arc& biarc, const struct bn
 {
     fastf_t t, step;
     fastf_t crv, err, max_t, max_err = 0.0;
-    ON_BezierCurve head, tail;
     ON_3dPoint test;
     ON_3dVector d1, d2;
 
@@ -150,16 +161,15 @@ approx_bezier(const ON_BezierCurve& bezier, const ON_Arc& biarc, const struct bn
         }
         crv = CURVATURE(d1, d2);
         // step size decreases as |crv| -> 1
-        step = 1.0 - fabs(crv) > MAXSTEP ? MAXSTEP : (1.0 - fabs(crv) < MINSTEP ? MINSTEP : 1.0 - fabs(crv));
+        step = GETSTEPSIZE(1.0 - fabs(crv));
     }
 
     if (max_err + VDIVIDE_TOL < tol->dist) {
-        // bezier doesn't deviate from biarc by the given tolerance, add the biarc
-        // approximation
+        // max deviation is less than the given tolerance, add the biarc approximation
         approx.push_back(biarc);
     } else {
-        // split bezier at point of maximum deviation and recurse on the new
-        // subsections
+        ON_BezierCurve head, tail;
+        // split bezier at point of maximum deviation and recurse on the new subsections
         bezier.Split(max_t, head, tail);
         approx_bezier(head, make_biarc(head), tol, approx);
         approx_bezier(tail, make_biarc(tail), tol, approx);
@@ -173,23 +183,23 @@ approx_bezier(const ON_BezierCurve& bezier, const ON_Arc& biarc, const struct bn
 HIDDEN void
 bezier_to_carcs(const ON_BezierCurve& bezier, const struct bn_tol *tol, std::vector<ON_Arc>& carcs)
 {
-    bool curvature_changed = false;
+    bool skip_while = true, curvature_changed = false;
     fastf_t inflection_pt, biarc_angle;
     ON_Arc biarc;
-    ON_BezierCurve current, tmp;
+    ON_BezierCurve current, next;
     std::vector<ON_BezierCurve> rest;
 
-    // get inflection point, if it exists
+    // find inflection point, if it exists
     if (bezier_inflection(bezier, inflection_pt)) {
         curvature_changed = true;
-        bezier.Split(inflection_pt, current, tmp);
-        rest.push_back(tmp);
+        bezier.Split(inflection_pt, current, next);
+        rest.push_back(next);
     } else {
         current = bezier;
     }
 
-    do {
-bez_to_carcs_loop:
+    while (skip_while || !rest.empty()) {
+    if (skip_while) skip_while = false;
     biarc = make_biarc(current);
     if ((biarc_angle = biarc.AngleRadians()) <= M_PI_2) {
         // approximate the current bezier segment and add its biarc
@@ -197,15 +207,11 @@ bez_to_carcs_loop:
         approx_bezier(current, biarc, tol, carcs);
     } else if (biarc_angle <= M_PI) {
         // divide the current bezier segment in half
-        current.Split(0.5, current, tmp);
-        rest.push_back(tmp);
+        current.Split(0.5, current, next);
         // approximate first bezier segment
         approx_bezier(current, biarc, tol, carcs);
-        // get next bezier section and pop it
-        current = rest.back();
-        rest.pop_back();
         // approximate second bezier segment
-        approx_bezier(current, biarc, tol, carcs);
+        approx_bezier(next, biarc, tol, carcs);
     } else {
         fastf_t t = 1.0;
         ON_Arc test_biarc;
@@ -214,32 +220,28 @@ bez_to_carcs_loop:
         // have an approximating biarc segment <=90 degrees
         do {
             t *= 0.5;
-            current.Split(t, test_bezier, tmp);
+            current.Split(t, test_bezier, next);
             test_biarc = make_biarc(test_bezier);
         } while(test_biarc.AngleRadians() > M_PI_2);
-        rest.push_back(tmp);
 
         approx_bezier(test_bezier, test_biarc, tol, carcs);
-
-        current = rest.back();
-        rest.pop_back();
-        goto bez_to_carcs_loop;
+        current = next;
+        skip_while = true;
+        continue;
     }
 
     if (curvature_changed) {
         curvature_changed = false;
         current = rest.back();
         rest.pop_back();
-        // dont check while() condition, we want to continue even if we just
-        // popped the last element
-        // XXX - find a better solution for this!
-        goto bez_to_carcs_loop;
+        // continue even if we just popped the last element
+        skip_while = true;
     }
-    } while (!rest.empty());
+    }
 }
 
 
-#define SKETCHPT(idx) sketch_ip->verts[(idx)]
+#define SKETCH_PT(idx) sketch_ip->verts[(idx)]
 
 /**
  * R T _ S K E T C H _ S U R F _ A R E A
@@ -290,19 +292,19 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
         case CURVE_LSEG_MAGIC:
             lsg = (struct line_seg *)lng;
             // calculate area for polygon edge
-            poly_area += V2CROSS(SKETCHPT(lsg->start), SKETCHPT(lsg->end));
+            poly_area += V2CROSS(SKETCH_PT(lsg->start), SKETCH_PT(lsg->end));
             break;
         case CURVE_CARC_MAGIC:
             csg = (struct carc_seg *)lng;
             if (csg->radius < 0) {
                 // calculate full circle area
-                carc_area += M_PI * DIST_PT_PT_SQ(SKETCHPT(csg->start), SKETCHPT(csg->end));
+                carc_area += M_PI * DIST_PT_PT_SQ(SKETCH_PT(csg->start), SKETCH_PT(csg->end));
             } else {
                 fastf_t theta, side_ratio;
                 // calculate area for polygon edge
-                poly_area += V2CROSS(SKETCHPT(csg->start), SKETCHPT(csg->end));
+                poly_area += V2CROSS(SKETCH_PT(csg->start), SKETCH_PT(csg->end));
                 // calculate area for circular segment
-                side_ratio = DIST_PT_PT(SKETCHPT(csg->start), SKETCHPT(csg->end)) / (2.0 * csg->radius);
+                side_ratio = DIST_PT_PT(SKETCH_PT(csg->start), SKETCH_PT(csg->end)) / (2.0 * csg->radius);
                 theta = asin(side_ratio);
                 carc_area += 0.5 * csg->radius * csg->radius * (theta - side_ratio);
             }
@@ -313,7 +315,7 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
             std::vector<ON_Arc> carcs;
             // convert struct bezier_seg into ON_BezierCurve
             for (j = 0; j < bsg->degree + 1; j++) {
-                bez_pts.Append(SKETCHPT(bsg->ctl_points[j]));
+                bez_pts.Append(SKETCH_PT(bsg->ctl_points[j]));
             }
             // approximate bezier curve by a set of circular arcs
             bezier_to_carcs(ON_BezierCurve(bez_pts), &tol, carcs);
