@@ -2,12 +2,12 @@
 /*
 //
 // Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -23,13 +23,13 @@ Description:
   ON_ArcCurve.IsCircle() returns true if the curve
   is a complete circle.
 Details:
-	an ON_ArcCurve is a subcurve of a circle, with a 
+	an ON_ArcCurve is a subcurve of a circle, with a
 	constant speed parameterization. The parameterization is
 	an affine linear reparameterzation of the underlying arc
 	m_arc onto the domain m_t.
-	
+
 	A valid ON_ArcCurve has Radius()>0 and  0<AngleRadians()<=2*PI
-	and a strictly increasing Domain(). 
+	and a strictly increasing Domain().
 */
 class ON_CLASS ON_ArcCurve : public ON_Curve
 {
@@ -50,8 +50,8 @@ public:
   Description:
     Create an arc curve with domain (0,arc.Length()).
   */
-  ON_ArcCurve( 
-      const ON_Arc& arc 
+  ON_ArcCurve(
+      const ON_Arc& arc
       );
 
   /*
@@ -66,7 +66,7 @@ public:
 
   /*
   Description:
-    Creates a curve that is a complete circle with 
+    Creates a curve that is a complete circle with
     domain (0,circle.Length()).
   */
   ON_ArcCurve(
@@ -94,25 +94,25 @@ public:
 
   /*
   Description:
-    Creates a curve that is a complete circle with 
+    Creates a curve that is a complete circle with
     domain (0,circle.Length()).
   */
 	ON_ArcCurve& operator=(const ON_Circle& circle);
-  
+
   /////////////////////////////////////////////////////////////////
   // ON_Object overrides
 
   /*
   Description:
 		A valid ON_ArcCurve has Radius()>0 and  0<AngleRadians()<=2*PI
-		and a strictly increasing Domain(). 
+		and a strictly increasing Domain().
   Parameters:
     text_log - [in] if the object is not valid and text_log
-        is not NULL, then a brief englis description of the
-        reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
+        is not NULL, then a brief English description of the
+        reason the object is not valid is appended to the log.
+        The information appended to text_log is suitable for
+        low-level debugging purposes by programmers and is
+        not intended to be useful as a high level user
         interface tool.
   Returns:
     @untitled table
@@ -149,25 +149,25 @@ public:
     Get tight bounding box of the arc.
 	Parameters:
 		tight_bbox - [in/out] tight bounding box
-		bGrowBox -[in]	(default=false)			
+		bGrowBox -[in]	(default=false)
       If true and the input tight_bbox is valid, then returned
-      tight_bbox is the union of the input tight_bbox and the 
+      tight_bbox is the union of the input tight_bbox and the
       arc's tight bounding box.
 		xform -[in] (default=NULL)
       If not NULL, the tight bounding box of the transformed
       arc is calculated.  The arc is not modified.
 	Returns:
-    True if the returned tight_bbox is set to a valid 
+    True if the returned tight_bbox is set to a valid
     bounding box.
   */
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+	bool GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
 
 
-  ON_BOOL32 Transform( 
+  ON_BOOL32 Transform(
          const ON_Xform&
          );
 
@@ -183,8 +183,8 @@ public:
   // Returns:
   //   true if successful.
   ON_BOOL32 SetDomain(
-        double t0, 
-        double t1 
+        double t0,
+        double t1
         );
 
   ON_Interval Domain() const;
@@ -193,19 +193,19 @@ public:
           int desired_dimension
           );
 
-  ON_BOOL32 ChangeClosedCurveSeam( 
-            double t 
+  ON_BOOL32 ChangeClosedCurveSeam(
+            double t
             );
 
   int SpanCount() const; // number of smooth spans in curve
 
-  ON_BOOL32 GetSpanVector( // span "knots" 
-         double* // array of length SpanCount() + 1 
-         ) const; // 
+  ON_BOOL32 GetSpanVector( // span "knots"
+         double* // array of length SpanCount() + 1
+         ) const; //
 
-  int Degree( // returns maximum algebraic degree of any span 
+  int Degree( // returns maximum algebraic degree of any span
                   // ( or a good estimate if curve spans are not algebraic )
-    ) const; 
+    ) const;
 
   ON_BOOL32 IsLinear( // true if curve locus is a line segment between
                  // between specified points
@@ -237,12 +237,12 @@ public:
                   // periodic.)
 
   ON_BOOL32 IsPeriodic(  // true if curve is a single periodic segment
-        void 
+        void
         ) const;
-  
+
   bool IsContinuous(
     ON::continuity c,
-    double t, 
+    double t,
     int* hint = NULL,
     double point_tolerance=ON_ZERO_TOLERANCE,
     double d1_tolerance=ON_ZERO_TOLERANCE,
@@ -251,7 +251,7 @@ public:
     double curvature_tolerance=ON_SQRT_EPSILON
     ) const;
 
-  ON_BOOL32 Reverse();       // reverse parameterizatrion
+  ON_BOOL32 Reverse();       // reverse parameterization
                         // Domain changes from [a,b] to [-b,-a]
 
   /*
@@ -299,7 +299,7 @@ public:
          double*,        // array of length stride*(ndir+1)
          int = 0,        // optional - determines which side to evaluate from
                          //         0 = default
-                         //      <  0 to evaluate from below, 
+                         //      <  0 to evaluate from below,
                          //      >  0 to evaluate from above
          int* = 0        // optional - evaluation hint (int) used to speed
                          //            repeated evaluations
@@ -310,10 +310,10 @@ public:
   // Description:
   //   Where possible, analytically extends curve to include domain.
   // Parameters:
-  //   domain - [in] if domain is not included in curve domain, 
-  //   curve will be extended so that its domain includes domain.  
+  //   domain - [in] if domain is not included in curve domain,
+  //   curve will be extended so that its domain includes domain.
   //   Will not work if curve is closed. Original curve is identical
-  //   to the restriction of the resulting curve to the original curve domain, 
+  //   to the restriction of the resulting curve to the original curve domain,
   // Returns:
   //   true if successful.
   bool Extend(
@@ -322,11 +322,11 @@ public:
 
   /*
   Description:
-    Splits (divides) the arc at the specified parameter.  
+    Splits (divides) the arc at the specified parameter.
     The parameter must be in the interior of the arc's domain.
-    The ON_Curve pointers passed to ON_ArcCurve::Split must 
+    The ON_Curve pointers passed to ON_ArcCurve::Split must
     either be NULL or point to ON_ArcCurve objects.
-    If a pointer is NULL, then an ON_ArcCurve will be created 
+    If a pointer is NULL, then an ON_ArcCurve will be created
     in Split().  You may pass "this" as left_side or right_side.
   Parameters:
     t - [in] parameter to split the curve at in the
@@ -348,7 +348,7 @@ public:
   //////////
   // Find parameter of the point on a curve that is closest to test_point.
   // If the maximum_distance parameter is > 0, then only points whose distance
-  // to the given point is <= maximum_distance will be returned.  Using a 
+  // to the given point is <= maximum_distance will be returned.  Using a
   // positive value of maximum_distance can substantially speed up the search.
   // If the sub_domain parameter is not NULL, then the search is restricted
   // to the specified portion of the curve.
@@ -362,8 +362,8 @@ public:
           ) const;
 
   //////////
-  // Find parameter of the point on a curve that is locally closest to 
-  // the test_point.  The search for a local close point starts at 
+  // Find parameter of the point on a curve that is locally closest to
+  // the test_point.  The search for a local close point starts at
   // seed_parameter. If the sub_domain parameter is not NULL, then
   // the search is restricted to the specified portion of the curve.
   //
@@ -376,7 +376,7 @@ public:
           ) const;
 
   // virtual ON_Curve override
-  int IntersectSelf( 
+  int IntersectSelf(
           ON_SimpleArray<ON_X_EVENT>& x,
           double intersection_tolerance = 0.0,
           const ON_Interval* curve_domain = 0
@@ -405,7 +405,7 @@ public:
   Parameters:
     tolerance - [in] (>=0)
     sub_domain - [in] If not NULL, the test is performed
-      on the interval that is the intersection of 
+      on the interval that is the intersection of
       sub_domain with Domain().
   Returns:
     True if the length of the curve is <= tolerance.
@@ -420,7 +420,7 @@ public:
 
   // Description:
   //   virtual ON_Curve::GetNormalizedArcLengthPoint override.
-  //   Get the parameter of the point on the curve that is a 
+  //   Get the parameter of the point on the curve that is a
   //   prescribed arc length from the start of the curve.
   // Parameters:
   //   s - [in] normalized arc length parameter.  E.g., 0 = start
@@ -443,13 +443,13 @@ public:
   /*
   Description:
     virtual ON_Curve::GetNormalizedArcLengthPoints override.
-    Get the parameter of the point on the curve that is a 
+    Get the parameter of the point on the curve that is a
     prescribed arc length from the start of the curve.
   Parameters:
     count - [in] number of parameters in s.
     s - [in] array of normalized arc length parameters. E.g., 0 = start
          of curve, 1/2 = midpoint of curve, 1 = end of curve.
-    t - [out] array of curve parameters such that the length of the 
+    t - [out] array of curve parameters such that the length of the
        curve from its start to t[i] is s[i]*curve_length.
     absolute_tolerance - [in] if absolute_tolerance > 0, then the difference
         between (s[i+1]-s[i])*curve_length and the length of the curve
@@ -478,9 +478,9 @@ public:
                    //            matches the curve's to wthe desired accuracy
                    //         2: success - returned NURBS point locus matches
                    //            the curve's to the desired accuracy but, on
-                   //            the interior of the curve's domain, the 
+                   //            the interior of the curve's domain, the
                    //            curve's parameterization and the NURBS
-                   //            parameterization may not match to the 
+                   //            parameterization may not match to the
                    //            desired accuracy.
         ON_NurbsCurve&,
         double = 0.0,
@@ -494,9 +494,9 @@ public:
                    //            matches the curve's
                    //         2: success - returned NURBS point locus matches
                    //            the curve'sbut, on
-                   //            the interior of the curve's domain, the 
+                   //            the interior of the curve's domain, the
                    //            curve's parameterization and the NURBS
-                   //            parameterization may not match to the 
+                   //            parameterization may not match to the
                    //            desired accuracy.
         ) const;
 
@@ -511,8 +511,8 @@ public:
         double, // curve_t
         double* // nurbs_t
         ) const;
-  
-  
+
+
   /*
   Description:
     Returns true if this arc curve is a complete circle.
@@ -535,10 +535,10 @@ public:
   /////////////////////////////////////////////////////////////////
 
   ON_Arc   m_arc;
-  
+
   // evaluation domain (always increasing)
   // ( m_t[i] corresponds to m_arc.m_angle[i] )
-  ON_Interval m_t;  
+  ON_Interval m_t;
 
   // The dimension of a arc curve can be 2 or 3.
   // (2 so ON_ArcCurve can be used as a trimming curve)
