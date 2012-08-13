@@ -584,7 +584,7 @@
     set i [lsearch $alist $_aval]
     if {$i != -1} {
 	$mArchersGed erase -oA $attr $_aval
-	
+
 	set alist [lreplace $alist $i $i]
 	set glist [list $gname $attr $alist]
 	set mMasterAttrGroups [lreplace $mMasterAttrGroups $gindex $gindex $glist]
@@ -835,7 +835,7 @@
 	}
 
 	lappend rmap($rid) $region
-    }    
+    }
 
     set sflag 0
     foreach line $lines {
