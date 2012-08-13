@@ -561,23 +561,13 @@ nmg_loop_is_a_crack(const struct loopuse *lu)
  *
  */
 int
-nmg_loop_is_ccw(const struct loopuse *lu, const fastf_t *norm, const struct bn_tol *tol)
+nmg_loop_is_ccw(const struct loopuse *lu, const fastf_t *UNUSED(norm), const struct bn_tol *tol)
 {
     fastf_t area;
-    fastf_t dot;
     plane_t pl;
-    int ret;
+    int ret = 1;
 
-    area = nmg_loop_plane_area(lu, pl);
-
-    if (area <= 0.0) {
-	if (RT_G_DEBUG & DEBUG_MATH) {
-	    bu_log("nmg_loop_is_ccw: Loop has no area\n");
-	    nmg_pr_lu_briefly(lu, " ");
-	}
-	ret = 0;
-	goto out;
-    }
+    area = nmg_loop_plane_area2(lu, pl, tol);
 
     if (NEAR_ZERO(area, tol->dist_sq)) {
 	if (RT_G_DEBUG & DEBUG_MATH) {
@@ -588,22 +578,10 @@ nmg_loop_is_ccw(const struct loopuse *lu, const fastf_t *norm, const struct bn_t
 	goto out;
     }
 
-    dot = VDOT(norm, pl);
-
-    if (NEAR_ZERO(dot, tol->perp)) {
-	if (RT_G_DEBUG & DEBUG_MATH) {
-	    bu_log("nmg_loop_is_ccw: normal (%g %g %g) is in plane of loop (%g %g %g %g), dot = %g\n",
-		   V3ARGS(norm), V4ARGS(pl), dot);
-	    nmg_pr_lu_briefly(lu, " ");
-	}
-	ret = 0;
+    if (area < -SMALL_FASTF) {
+	ret = -1;
 	goto out;
     }
-
-    if (dot < 0.0)
-	ret = (-1);
-    else
-	ret = 1;
 
  out:
     if (rt_g.NMG_debug & DEBUG_BASIC)
