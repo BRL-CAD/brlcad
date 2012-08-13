@@ -309,7 +309,7 @@ get_obliq(fastf_t *ray, fastf_t *normal)
     fastf_t cos_obl;
     fastf_t obliquity;
 
-    cos_obl = fabs(VDOT(ray, normal) * MAGNITUDE(normal) / MAGNITUDE(ray));
+    cos_obl = fabs(VDOT(ray, normal) / (MAGNITUDE(normal) * MAGNITUDE(ray)));
     if (cos_obl < 1.001) {
 	if (cos_obl > 1)
 	    cos_obl = 1;
