@@ -1,7 +1,7 @@
 # BotEditor class for editing a BoT primitive
 #
 # Usage: BotEditor <instance name> <bot name> [-prefix <Archer instance name>]
-# 
+#
 # The -prefix option is used when this class is instanced in Archer,
 # where the ged commands are methods of the Archer mega-widget instance.
 #
@@ -19,7 +19,7 @@ if {[catch {
 } errMsg] > 0} {
     puts "Couldn't load \"$script\"\n$errMsg"
     exit
-} 
+}
 
 ::itcl::class BotEditor {
     inherit ::itk::Toplevel
@@ -28,7 +28,7 @@ if {[catch {
 
     public {
 	common _ ""
-	
+
 	proc defineCommands {prefix}
 	proc localizeDialog {d}
 	proc focusOnEnter {d}
@@ -40,7 +40,7 @@ if {[catch {
 	method accept {}
 	method reject {}
 	method cancel {}
-    }    
+    }
 
     private {
 	variable original ""
@@ -104,7 +104,7 @@ if {[catch {
 	    -text {Start Over} \
 	    -command "$this cancel"
     } {}
-    
+
     # add widgets to close frame
     itk_component add accept {
 	ttk::button $itk_component(closeframe).accept \
@@ -170,9 +170,9 @@ if {[catch {
 
     if {$show} {
 
-	# append '*' to title to indicate unapplyed change
+	# append '*' to title to indicate unapplied change
 	set title [eval $this cget -title]
-	
+
 	if {[regexp ^.*\\*$ $title] == 0} {
 	    $this configure -title $title*
 	}
@@ -211,7 +211,7 @@ if {[catch {
     # initialize
     set cmdDone 0
     set lastTime [clock milliseconds]
-    $itk_component(progress) configure -value 0 
+    $itk_component(progress) configure -value 0
 
     # display bar
     raise $itk_component(progress)
@@ -307,7 +307,7 @@ if {[catch {
 # discard all changes
 ::itcl::body BotEditor::cancel {} {
 
-    # overwirte copy with original
+    # overwrite copy with original
     set cmd "kill $copy; cp $original $copy; $this onChange"
 
     # get confirmation
@@ -339,7 +339,7 @@ if {[catch {
     set width [winfo reqwidth $d]
     set height [winfo reqheight $d]
 
-    # draw again, properly centered 
+    # draw again, properly centered
     set x [expr "$px + ($pwidth - $width) / 2"]
     set y [expr "$py + ($pheight - $height) / 2"]
     wm geometry $d ${width}x${height}+${x}+${y}
@@ -379,7 +379,7 @@ if {[catch {
 	itk_component add msg {
 	    ttk::label $itk_component(info).message \
 		-text $itk_option(-text) \
-		-wraplength 300 
+		-wraplength 300
 	} {}
 	itk_component add yes {
 	    ttk::button $itk_component(act).confirm \
