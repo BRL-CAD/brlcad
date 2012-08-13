@@ -669,7 +669,7 @@ package provide Archer 1.0
     }
 
     foreach plugindir [list $pluginPath] {
-	set utilities_list [concat [lsort [glob -nocomplain $plugindir/Utility/*]]] 
+	set utilities_list [concat [lsort [glob -nocomplain $plugindir/Utility/*]]]
 	set wizards_list [concat [lsort [glob -nocomplain $plugindir/Wizards/*]]]
 	set plugins_list [concat $utilities_list $wizards_list]
 	foreach filename $plugins_list {
@@ -782,7 +782,7 @@ package provide Archer 1.0
 ## - importFg4Sections
 #
 #
-# Note - it's up to the caller to delete existing combinatons/
+# Note - it's up to the caller to delete existing combinations/
 #        groups if desired. However, if a leaf solid already
 #        exists an error will be thrown. For the moment its also
 #        up to the caller to remove like-named members from any
@@ -1017,12 +1017,12 @@ package provide Archer 1.0
 			--eye_pt [list $eye_pt] \
 			-C [list $bcolor] --line-color [list $ecolor] \
 			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
-			-G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
+			-G $mRtWizardGhostIntensity -O $mRtWizardOccMode
 		}  {
 		    eval $itk_component(ged) rtwizard \
 			-C [list $bcolor] --line-color [list $ecolor] \
 			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
-			-G $mRtWizardGhostIntensity -O $mRtWizardOccMode 
+			-G $mRtWizardGhostIntensity -O $mRtWizardOccMode
 		}
 	    }
 	} else {
@@ -1135,7 +1135,7 @@ package provide Archer 1.0
 	set cosa [getRayBotNormalCos $start $target $item]
 	if {$cosa == ""} {
 	    # Try firing another ray. This time use points from the first triangle.
-	    
+
 	    if {[catch {$itk_component(ged) get $item V} bot_vertices]} {
 		incr skip_count
 		append skip_string "$item: unable to get vertices\n"
@@ -1720,7 +1720,7 @@ package provide Archer 1.0
     ArcherCore::initImages
 
     if {!$mViewOnly} {
-	# Primary 
+	# Primary
 	$itk_component(primaryToolbar) itemconfigure checkpoint \
 	    -image [image create photo \
 			-file [file join $mImgDir checkpoint.png]]
@@ -2354,11 +2354,11 @@ proc title_node_handler {node} {
 	} {}
 	set docstoc $itk_component(archerHelpToC)
 	pack $docstoc -side left -expand yes -fill y
-	
+
 	# HTML widget
 	set docstoclist [::hv3::hv3 $docstoc.htmlview -width 250 -requestcmd Archer::html_help_display]
 	set docstochtml [$docstoclist html]
-	$docstochtml configure -parsemode html 
+	$docstochtml configure -parsemode html
 	set help_fd [lindex [list [file join [bu_brlcad_data "doc/html"] toc.html]] 0]
 	get_html_data $help_fd
 	$docstochtml parse $archer_help_data
@@ -2380,7 +2380,7 @@ proc title_node_handler {node} {
 	} {}
 
 	set sfcs $itk_component(archerHelpF)
-	pack $sfcs -expand yes -fill both 
+	pack $sfcs -expand yes -fill both
 
 	# HTML widget
 	set hv3htmlviewer [::hv3::hv3 $sfcs.htmlview]
@@ -2398,7 +2398,7 @@ proc title_node_handler {node} {
 
 	pack $itk_component(archerHelpF) -side left -expand yes -fill both
 
-    } 
+    }
 
     wm geometry $itk_component(archerHelp) "1100x800"
     $itk_component(archerHelp) center
@@ -4499,7 +4499,7 @@ proc title_node_handler {node} {
     }
 
     buildWizardMenu
-    
+
 #    $itk_component(primaryToolbar) insert rotate frame fill4 \
 	-relief flat \
 	-width 3
@@ -6442,7 +6442,7 @@ proc title_node_handler {node} {
 	"Occlusion Mode:" \
 	{0 1 2 3}
 
-    
+
     itk_component add ghostIntensityL {
 	::ttk::label $parent.ghostIntensityL \
 	    -anchor se \
