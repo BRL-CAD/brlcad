@@ -19,8 +19,8 @@
 #
 ###
 #
-# Allows primitives to be added or removed from a group by selecting 
-# them on the MGED display using a selection box (rubber band).  
+# Allows primitives to be added or removed from a group by selecting
+# them on the MGED display using a selection box (rubber band).
 # Drawing the selection box (left to right), only primitives completely
 # in the box are selected. Drawing the selection box (right to left),
 # primitives completely and partly in the box are selected. Primitives
@@ -47,7 +47,7 @@ set erase_status ""
 proc gr_remdup { GroupName } {
 
     set ItemList [search $GroupName]
-    set ItemList [lrange $ItemList 1 end] 
+    set ItemList [lrange $ItemList 1 end]
 
     set ItemList [lsort -unique $ItemList]
 
@@ -62,7 +62,7 @@ proc gr_remdup { GroupName } {
 
     eval g $tmp_grp $ItemList
 
-    kill $GroupName 
+    kill $GroupName
 
     mv $tmp_grp $GroupName
 }
@@ -74,17 +74,17 @@ proc gr_getObjInRectangle {} {
     set sizeY [lindex $size 1].0
     set adjX [expr {($sizeX / 2.0) - 1.0}]
     set adjY [expr {($sizeY / 2.0) - 1.0}]
-    set dim [rset r dim]     
-    set dimX [lindex $dim 0].0     
-    set dimY [lindex $dim 1].0    
+    set dim [rset r dim]
+    set dimX [lindex $dim 0].0
+    set dimY [lindex $dim 1].0
 
     if { $dimX == 0.0 || $dimY == 0.0 } {
 	return "invalid_selection"
     }
 
-    set pos [rset r pos]     
-    set posX [lindex $pos 0].0     
-    set posY [lindex $pos 1].0  
+    set pos [rset r pos]
+    set posX [lindex $pos 0].0
+    set posY [lindex $pos 1].0
     set posX [expr ($posX - $adjX) / $adjX]
     set posY [expr ($posY - $adjY) / $adjY]
     set dimX [expr ($dimX / $adjX)]
@@ -147,14 +147,14 @@ proc grouper { GroupName Boolean { ListLimit 0 } } {
     uplevel #0 {set fb_all_orig [rset var fb_all]}
     uplevel #0 {set listen_orig [rset var listen]}
 
-    set mged_gui($id,mouse_behavior) p     
-    set_mouse_behavior $id     
+    set mged_gui($id,mouse_behavior) p
+    set_mouse_behavior $id
 
-    rset vars fb 0     
-    rset r draw 1     
+    rset vars fb 0
+    rset r draw 1
 
     bind $mged_gui($id,active_dm) <ButtonRelease-2> " winset $mged_gui($id,active_dm); dm idle; do_grouper $GroupName $Boolean $ListLimit"
-    bind $mged_gui($id,active_dm) <Control-ButtonRelease-2> " winset $mged_gui($id,active_dm); dm idle; done_grouper" 
+    bind $mged_gui($id,active_dm) <Control-ButtonRelease-2> " winset $mged_gui($id,active_dm); dm idle; done_grouper"
 
     # highlight in yellow current group
     if { [search -name $GroupName] != "" } {
@@ -218,7 +218,7 @@ proc do_grouper { GroupName Boolean ListLimit } {
 	    catch {rm $GroupName $obj} tmp_msg
 	}
     }
-	
+
     if { ([search -name $GroupName] != "") && ($Boolean == "+") } {
 	gr_remdup $GroupName
     }
