@@ -513,26 +513,43 @@ nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat)
 
 
 static int
-is_convex(struct pt2d *a, struct pt2d *b, struct pt2d *c, const struct bn_tol *tol)
+is_convex(struct pt2d *a1, struct pt2d *b1, struct pt2d *c1, const struct bn_tol *tol)
 {
     vect_t ab, bc, pv, N;
     double angle;
+    point_t a, b, c;
 
-    NMG_CK_PT2D(a);
-    NMG_CK_PT2D(b);
-    NMG_CK_PT2D(c);
+    NMG_CK_PT2D(a1);
+    NMG_CK_PT2D(b1);
+    NMG_CK_PT2D(c1);
 
-    /* invent surface normal */
-    VSET(N, 0.0, 0.0, 1.0);
+    VMOVE(a, a1->coord);
+    VMOVE(b, b1->coord);
+    VMOVE(c, c1->coord);
+
+    VSETALL(N, 0.0);
+
+    /* compute normal */
+    N[X] += ((a[Y] - b[Y]) * (a[Z] + b[Z]));
+    N[Y] += ((a[Z] - b[Z]) * (a[X] + b[X]));
+    N[Z] += ((a[X] - b[X]) * (a[Y] + b[Y]));
+    N[X] += ((b[Y] - c[Y]) * (b[Z] + c[Z]));
+    N[Y] += ((b[Z] - c[Z]) * (b[X] + c[X]));
+    N[Z] += ((b[X] - c[X]) * (b[Y] + c[Y]));
+    N[X] += ((c[Y] - a[Y]) * (c[Z] + a[Z]));
+    N[Y] += ((c[Z] - a[Z]) * (c[X] + a[X]));
+    N[Z] += ((c[X] - a[X]) * (c[Y] + a[Y]));
+
+    VUNITIZE(N);
 
     /* form vector from a->b */
-    VSUB2(ab, b->coord, a->coord);
+    VSUB2(ab, b, a);
 
     /* Form "left" vector */
     VCROSS(pv, N, ab);
 
     /* form vector from b->c */
-    VSUB2(bc, c->coord, b->coord);
+    VSUB2(bc, c, b);
 
     /* find angle about normal in "pv" direction from a->b to b->c */
     angle = bn_angle_measure(bc, ab, pv);
