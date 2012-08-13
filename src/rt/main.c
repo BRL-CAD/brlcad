@@ -198,7 +198,7 @@ int main(int argc, const char **argv)
 #if defined(DEBUG)
     (void)fprintf(stderr, "Compile-time debug symbols are available\n");
 #endif
-#if defined(NO_BOMBING_MACROS) || defined(NO_MAGIC_CHECKING) || defined(NO_BADRAY_CECHKING) || defined(NO_DEBUG_CHECKING)
+#if defined(NO_BOMBING_MACROS) || defined(NO_MAGIC_CHECKING) || defined(NO_BADRAY_CHECKING) || defined(NO_DEBUG_CHECKING)
     (void)fprintf(stderr, "WARNING: Run-time debugging is disabled and may enhance performance\n");
 #endif
 
