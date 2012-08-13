@@ -38,7 +38,7 @@ if {[catch {
     source $script
 } errMsg] > 0} {
     puts "Couldn't load \"$script\"\n$errMsg"
-} 
+}
 
 ::itcl::class BotUtility {
     inherit Utility
@@ -99,7 +99,7 @@ if {[catch {
 	    ttk::label $itk_interior.noticeLbl \
 		-text {There are no bots to edit.}
 	} {}
-	
+
 	grid $itk_component(noBots)
 
     } else {
@@ -150,7 +150,7 @@ if {[catch {
     # auto-select first bot
     # - initialize selectedbot variable to first bot
     # - make combobox show firstbot
-    namespace eval :: "$this configure -selectedbot [lindex $bots 0]"    
+    namespace eval :: "$this configure -selectedbot [lindex $bots 0]"
     $itk_component(combo) current 0
 
     # will update selectedbot variable whenever user changes combobox selection
@@ -208,9 +208,9 @@ if {[catch {
     # close original plugin window
     set top [winfo toplevel $itk_interior]
     destroy $top
-    
+
 }
-	
+
 # Local Variables:
 # mode: Tcl
 # tab-width: 8
