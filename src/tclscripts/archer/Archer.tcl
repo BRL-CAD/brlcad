@@ -1692,8 +1692,8 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::initFbImages {} {
-    set mImage_fbOff [image create photo -file [file join $mImgDir framebuffer_off.png]]
-    set mImage_fbOn [image create photo -file [file join $mImgDir framebuffer.png]]
+    set mImage_fbOff [image create photo -file [file join $mImgDir framebuffer.png]]
+    set mImage_fbOn [image create photo -file [file join $mImgDir framebuffer_off.png]]
     set mImage_fbInterlay [image create photo -file [file join $mImgDir framebuffer_interlay.png]]
     set mImage_fbOverlay [image create photo -file [file join $mImgDir framebuffer_overlay.png]]
     set mImage_fbUnderlay [image create photo -file [file join $mImgDir framebuffer_underlay.png]]
