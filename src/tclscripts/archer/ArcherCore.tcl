@@ -4573,7 +4573,7 @@ namespace eval ArcherCore {
 }
 
 #
-# Delete any use of _node and its descendents in the data
+# Delete any use of _node and its descendants in the data
 # variables that are used to interact with the tree viewer.
 #
 ::itcl::body ArcherCore::purgeNodeData {_node} {
@@ -5061,7 +5061,7 @@ namespace eval ArcherCore {
 		set mStatusStr "Draw object as wireframe"
 	    }
 	    "Shaded" {
-		set mStatusStr "Draw object as shaded if a bot or polysolid (unevalutated)"
+		set mStatusStr "Draw object as shaded if a bot or polysolid (unevaluated)"
 	    }
 	    "Hidden Line" {
 		set mStatusStr "Draw object as hidden line"
