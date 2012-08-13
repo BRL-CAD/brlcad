@@ -784,7 +784,7 @@ package provide Archer 1.0
 #
 # Note - it's up to the caller to delete existing combinations/
 #        groups if desired. However, if a leaf solid already
-#        exists an error will be thrown. For the moment its also
+#        exists an error will be thrown. For the moment it's also
 #        up to the caller to remove like-named members from any
 #        relevant groups/regions.
 #
@@ -868,7 +868,7 @@ package provide Archer 1.0
 		    error "importFg4Sections: $gname is not a group!"
 		}
 
-		# Add gmember only if its not already there
+		# Add gmember only if it's not already there
 		regsub -all {(\{[ul])|([{}]+)} $tree " " tmembers
 		if {[lsearch $tmembers $gmember] == -1} {
 		    $itk_component(ged) g $gname $gmember
