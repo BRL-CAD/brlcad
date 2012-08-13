@@ -2,12 +2,12 @@
 /*
 //
 // Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
-// Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
+// Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -18,16 +18,16 @@
 
 /*
 Description:
-	An ON_Arc is a subcurve of 3d circle. 
+	An ON_Arc is a subcurve of 3d circle.
 Details:
-	The curve is parameterized by	an angle expressed in radians.   For an IsValid() arc 
+	The curve is parameterized by	an angle expressed in radians.   For an IsValid() arc
 	the total subtended angle 	AngleRadians() = Domain()(1) - Domain()(0) must satisfy
 				0< AngleRadians() <2*Pi .
-	
+
 	The parameterization of the ON_Arc is inherited from the ON_Circle it is derived from.
 	In particular
-			 t -> center + cos(t)*radius*xaxis + sin(t)*radius*yaxis	
-	where xaxis and yaxis, (part of ON_Circle::m_plane) form an othonormal frame of the plane 
+			 t -> center + cos(t)*radius*xaxis + sin(t)*radius*yaxis
+	where xaxis and yaxis, (part of ON_Circle::m_plane) form an othonormal frame of the plane
 	containing the circle.
 */
 class ON_CLASS ON_Arc : public ON_Circle
@@ -124,7 +124,7 @@ public:
     );
 
   //////////
-  // Create an arc parallel to plane from a center point, radius, 
+  // Create an arc parallel to plane from a center point, radius,
   // and angle in radians.  The arc starts at center+radius*plane.xaxis.
   bool Create(
     const ON_Plane&,   // [IN] circle will be parallel to this plane
@@ -187,7 +187,7 @@ public:
   //   true if the arc is valid.
   bool IsValid() const;
 
-  // Description: 
+  // Description:
   //   Get arc's 3d axis aligned bounding box.
   // Returns:
   //   3d bounding box.
@@ -198,9 +198,9 @@ public:
   //   union of the input box with the arc's bounding box.
   // Parameters:
   //   bbox - [in/out] 3d axis aligned bounding box
-  //   bGrowBox - [in] (default=false) 
-  //     If true, then the union of the input bbox and the 
-  //     arc's bounding box is returned in bbox.  
+  //   bGrowBox - [in] (default=false)
+  //     If true, then the union of the input bbox and the
+  //     arc's bounding box is returned in bbox.
   //     If false, the arc's bounding box is returned in bbox.
   // Returns:
   //   true if arc has bounding box and calculation was successful.
@@ -214,9 +214,9 @@ public:
     Get tight bounding box.
 	Parameters:
 		tight_bbox - [in/out] tight bounding box
-		bGrowBox -[in]	(default=false)			
+		bGrowBox -[in]	(default=false)
       If true and the input tight_bbox is valid, then returned
-      tight_bbox is the union of the input tight_bbox and the 
+      tight_bbox is the union of the input tight_bbox and the
       arc's tight bounding box.
 		xform -[in] (default=NULL)
       If not NULL, the tight bounding box of the transformed
@@ -224,8 +224,8 @@ public:
 	Returns:
     True if a valid tight_bbox is returned.
   */
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
+	bool GetTightBoundingBox(
+			ON_BoundingBox& tight_bbox,
       int bGrowBox = false,
 			const ON_Xform* xform = 0
       ) const;
@@ -273,11 +273,11 @@ public:
   Description:
     Set arc's angle interval in radians.
   Parameters:
-    angle_in_radians - [in] increasing interval with 
+    angle_in_radians - [in] increasing interval with
                             start and end angle in radians.
                             Length of the interval <= 2.0*ON_PI.
   Returns:
-    true if successful. 
+    true if successful.
   */
   bool SetAngleIntervalRadians(
     ON_Interval angle_in_radians
@@ -321,8 +321,8 @@ public:
   //       is closest to test_point.  If test_point is the center
   //       of the arc, then the starting point of the arc is
   //       (arc.Domain()[0]) returned.
-  bool ClosestPointTo( 
-         const ON_3dPoint& test_point, 
+  bool ClosestPointTo(
+         const ON_3dPoint& test_point,
          double* t
          ) const;
 
@@ -332,9 +332,9 @@ public:
   //   test_point - [in]
   // Returns:
   //   The point on the arc that is closest to test_point.
-  //   If test_point is the center of the arc, then the 
+  //   If test_point is the center of the arc, then the
   //   starting point of the arc is returned.
-  ON_3dPoint ClosestPointTo( 
+  ON_3dPoint ClosestPointTo(
          const ON_3dPoint& test_point
          ) const;
 
@@ -350,9 +350,9 @@ public:
   // Description:
   //   Get a rational degree 2 NURBS curve representation
   //   of the arc.  Note that the parameterization of NURBS curve
-  //   does not match  arc's transcendental paramaterization.  
+  //   does not match  arc's transcendental parameterization.
   //   Use GetRadianFromNurbFormParameter() and
-  //   GetParameterFromRadian() to convert between the NURBS curve 
+  //   GetParameterFromRadian() to convert between the NURBS curve
   //   parameter and the transcendental parameter
   // Parameters:
   //   nurbs_curve - [out] nurbs_curve returned here.
@@ -360,7 +360,7 @@ public:
   //   0 for failure and 2 for success.
   int GetNurbForm(
         ON_NurbsCurve& nurbs_curve
-        ) const; 
+        ) const;
 
   /*
   Description:
@@ -383,7 +383,7 @@ public:
 
   Remarks:
     The NURBS curve parameter is with respect to the NURBS curve
-    created by ON_Arc::GetNurbForm.  At nurbs parameter values of 
+    created by ON_Arc::GetNurbForm.  At nurbs parameter values of
     0.0, 0.5*ON_PI, ON_PI, 1.5*ON_PI, and 2.0*ON_PI, the nurbs
     parameter and radian parameter are the same.  At all other
     values the nurbs and radian parameter values are different.
@@ -416,7 +416,7 @@ public:
 
   Remarks:
     The NURBS curve parameter is with respect to the NURBS curve
-    created by ON_Arc::GetNurbForm.  At radian values of 
+    created by ON_Arc::GetNurbForm.  At radian values of
     0.0, 0.5*ON_PI, ON_PI, 1.5*ON_PI, and 2.0*ON_PI, the nurbs
     parameter and radian parameter are the same.  At all other
     values the nurbs and radian parameter values are different.
