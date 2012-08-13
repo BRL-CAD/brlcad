@@ -1613,28 +1613,16 @@ bn_isect_line3_line3(fastf_t *pdist,        /* see above */
 
     VSUB2(p0_to_q1, q1, p0);
 
-    d1 = bn_distsq_line3_pt3(q0,qdir,p0);
-    d2 = bn_distsq_line3_pt3(q0,qdir,p1);
-    d3 = bn_distsq_line3_pt3(p0,pdir,q0);
-    d4 = bn_distsq_line3_pt3(p0,pdir,q1);
-
-    /* if all distances are within distance tolerance of each
-     * other then they a parallel
-     */
-    if (NEAR_EQUAL(d1, d2, tol->dist_sq) &&
-	NEAR_EQUAL(d1, d3, tol->dist_sq) &&
-	NEAR_EQUAL(d1, d4, tol->dist_sq) &&
-	NEAR_EQUAL(d2, d3, tol->dist_sq) &&
-	NEAR_EQUAL(d2, d4, tol->dist_sq) &&
-	NEAR_EQUAL(d3, d4, tol->dist_sq)) {
+    if (bn_lseg3_lseg3_parallel(p0, p1, q0, q1, tol)) {
 	parallel = 1;
-    }
-
-    if (NEAR_ZERO(d1, tol->dist_sq) &&
-	NEAR_ZERO(d2, tol->dist_sq) &&
-	NEAR_ZERO(d3, tol->dist_sq) &&
-	NEAR_ZERO(d4, tol->dist_sq)) {
-	colinear = 1;
+	d1 = bn_distsq_line3_pt3(q0,qdir,p0);
+	d2 = bn_distsq_line3_pt3(q0,qdir,p1);
+	d3 = bn_distsq_line3_pt3(p0,pdir,q0);
+	d4 = bn_distsq_line3_pt3(p0,pdir,q1);
+	if (NEAR_ZERO(d1, tol->dist_sq) && NEAR_ZERO(d2, tol->dist_sq) &&
+	    NEAR_ZERO(d3, tol->dist_sq) && NEAR_ZERO(d4, tol->dist_sq)) {
+	    colinear = 1;
+	}
     }
 
     VSUB2(w0, p0, q0);
@@ -1683,21 +1671,52 @@ bn_isect_line3_line3(fastf_t *pdist,        /* see above */
 
     sc_numerator = (b * e - qdir_mag_sq * d);
     tc_numerator = (pdir_mag_sq * e - b * d);
-    sc = sc_numerator / denominator;
-    tc = tc_numerator / denominator;
+
+    if (NEAR_ZERO(denominator, tol->dist) && !NEAR_ZERO(sc_numerator, tol->dist)) {
+        denominator = 0.0;
+        sc = MAX_FASTF;
+    } else if (!NEAR_ZERO(denominator, tol->dist) && NEAR_ZERO(sc_numerator, tol->dist)) {
+        sc_numerator = 0.0;
+        sc = 0.0;
+    } else if (NEAR_ZERO(denominator, tol->dist) && NEAR_ZERO(sc_numerator, tol->dist)) {
+        sc_numerator = 0.0;
+        denominator = 0.0;
+        sc = 1.0;
+    } else {
+        sc = sc_numerator / denominator;
+    }
+    if (NEAR_ZERO(denominator, tol->dist) && !NEAR_ZERO(tc_numerator, tol->dist)) {
+        denominator = 0.0;
+        tc = MAX_FASTF;
+    } else if (!NEAR_ZERO(denominator, tol->dist) && NEAR_ZERO(tc_numerator, tol->dist)) {
+        tc_numerator = 0.0;
+        tc = 0.0;
+    } else if (NEAR_ZERO(denominator, tol->dist) && NEAR_ZERO(tc_numerator, tol->dist)) {
+        tc_numerator = 0.0;
+        denominator = 0.0;
+        tc = 1.0;
+    } else {
+        tc = tc_numerator / denominator;
+    }
 
     VSCALE(u_scaled, pdir, sc_numerator);
     VSCALE(v_scaled, qdir, tc_numerator);
     VSUB2(v_scaled_to_u_scaled, u_scaled, v_scaled);
-    VSCALE(tmp_vec, v_scaled_to_u_scaled, 1.0/denominator);
+
+    if (ZERO(denominator)) {
+        VSCALE(tmp_vec, v_scaled_to_u_scaled, MAX_FASTF);
+    } else {
+        VSCALE(tmp_vec, v_scaled_to_u_scaled, 1.0/denominator);
+    }
+
     VADD2(qc_to_pc, w0, tmp_vec);
 
     if (MAGSQ(qc_to_pc) <= tol->dist_sq) {
-	*pdist = sc * sqrt(pdir_mag_sq);
-	*qdist = tc * sqrt(qdir_mag_sq);
-	return 1; /* intersection */
+        *pdist = sc * sqrt(pdir_mag_sq);
+        *qdist = tc * sqrt(qdir_mag_sq);
+        return 1; /* intersection */
     } else {
-	return -1; /* no intersection */
+        return -1; /* no intersection */
     }
 }
 
