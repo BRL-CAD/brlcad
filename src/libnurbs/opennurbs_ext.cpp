@@ -3065,9 +3065,6 @@ surface_surface_intersection(const ON_Surface* surfA,
      * The children will be generated only when they are needed, using the
      * method of splitting a NURBS surface.
      * So finally only a small subset of the surface tree is created.
-     * TODO: the tolerance value should be adapted instead of using
-     * INTERSECT_MAX_DEPTH. We stop going deeper when we get small enough
-     * bounding boxes and intersection points that are accurate enough.
      */
     for (int h = 0; h <= INTERSECT_MAX_DEPTH; h++) {
 	if (nodepairs.empty())
