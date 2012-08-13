@@ -3720,16 +3720,16 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
 	    // to the brep structure.
 	    ON_Surface *new_surf = face.SurfaceOf()->Duplicate();
 	    int surfindex = brep_out->AddSurface(new_surf);
-	    ON_BrepFace& face = brep_out->NewFace(surfindex);
+	    ON_BrepFace& new_face = brep_out->NewFace(surfindex);
 	    
-	    add_elements(brep_out, face, trimmedfaces[j]->outerloop, ON_BrepLoop::outer);
+	    add_elements(brep_out, new_face, trimmedfaces[j]->outerloop, ON_BrepLoop::outer);
 	    ON_BrepLoop &loop = brep_out->m_L[brep_out->m_L.Count() - 1];
-	    add_elements(brep_out, face, trimmedfaces[j]->innerloop, ON_BrepLoop::inner);
+	    add_elements(brep_out, new_face, trimmedfaces[j]->innerloop, ON_BrepLoop::inner);
 	    
 	    new_surf->SetDomain(0, loop.m_pbox.m_min.x, loop.m_pbox.m_max.x);
 	    new_surf->SetDomain(1, loop.m_pbox.m_min.y, loop.m_pbox.m_max.y);
-	    brep_out->SetTrimIsoFlags(face);
-	    brep_out->FlipFace(face);
+	    brep_out->SetTrimIsoFlags(new_face);
+	    brep_out->FlipFace(new_face);
 	}
     }
     
