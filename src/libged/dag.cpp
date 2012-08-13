@@ -34,7 +34,9 @@
 
 #define BRLCAD_PARALLEL PARALLEL
 #undef PARALLEL
-#define POSITION_COORDINATE 30.0
+#define POSITION_COORDINATE 50.0
+#define X_WIDTH 30.0
+#define Y_HEIGHT 30.0
 
 /* Adaptagrams Header */
 #include "libavoid/libavoid.h"
@@ -73,14 +75,124 @@ static void
 conn_callback(void *ptr)
 {
     Avoid::ConnRef *connRef = (Avoid::ConnRef *) ptr;
+    connRef->route();
+}
 
-    const Avoid::PolyLine& route = connRef->route();
-    bu_log("\tNew path: ");
-    for (size_t i = 0; i < route.ps.size(); ++i) {
-        bu_log("%s(%f, %f)", (i > 0) ? "-" : "",
-                route.ps[i].x, route.ps[i].y);
+
+/**
+ * Routine that returns the root nodes within the graph.
+ */
+std::vector<unsigned int>
+find_roots(_ged_dag_data *dag)
+{
+    std::vector<unsigned int> roots;
+    ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
+
+    for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
+        Avoid::IntList shapes_runningFrom;
+        dag->router->attachedShapes(shapes_runningFrom, (*it)->id(), Avoid::runningFrom);
+
+        /* Check if there is no edge that goes in this node and that there exist edges going out of it. */
+        if (shapes_runningFrom.size() == 0) {
+            roots.push_back((*it)->id());
+        }
     }
-    bu_log("\n");
+    return roots;
+}
+
+
+/**
+ * This routine sets the position of the node depending on its level within the tree
+ * and on the maximum X coordinate on that level.
+ */
+void
+position_node(_ged_dag_data *dag, bool has_parent, Avoid::ShapeRef *parent, Avoid::ShapeRef *child, unsigned int &level, std::vector<double> &maxX_level)
+{
+    double new_x, new_y, new_x1, new_y1;
+
+    child->polygon().getBoundingRect(&new_x, &new_y, &new_x1, &new_y1);
+
+    /* If it has a parent it means that is not the root node.
+     * Therefore, set the child's position depending on the parent's position.
+     */
+    if (has_parent) {
+        double parent_x, parent_y, parent_x1, parent_y1;
+
+        parent->polygon().getBoundingRect(&parent_x, &parent_y, &parent_x1, &parent_y1);
+
+        /* If the child node is not already on that level. Reset its y coordinate. */
+        if (!NEAR_EQUAL(new_y, parent_y + POSITION_COORDINATE, 0.001)) {
+            new_y = parent_y + POSITION_COORDINATE;
+        } else {
+            maxX_level[level] = std::max(new_x1, maxX_level[level]);
+            return;
+        }
+    } else {
+        /* This means that it is a root node. */
+        new_y = POSITION_COORDINATE - 20.0;
+    }
+    new_x = maxX_level[level] + POSITION_COORDINATE;
+    new_x1 = new_x + X_WIDTH;
+    new_y1 = new_y + Y_HEIGHT;
+
+    /* Construct a new polygon. */
+    Avoid::Point srcPt(new_x, new_y);
+    Avoid::Point dstPt(new_x1, new_y1);
+    Avoid::Rectangle shapeRect(srcPt, dstPt);
+
+    /* Move the shape by setting its new polygon. */
+    dag->router->moveShape(child, shapeRect, true);
+    maxX_level[level] = std::max(new_x1, maxX_level[level]);
+}
+
+
+/**
+ * Routine that sets the layout of the graph.
+ * It recurses over all nodes of a tree, starting from the root node.
+ */
+void
+set_layout(_ged_dag_data *dag, bool has_parent, unsigned long int parent_id, unsigned long int child_id, unsigned int &level, std::vector<double> &maxX_level)
+{
+    Avoid::ShapeRef *parent = NULL;
+    Avoid::ShapeRef *child = NULL;
+    std::list<unsigned int> children;
+
+    /* Find references to the parent and child shapes. */
+    ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
+    for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
+        if (has_parent && (*it)->id() == parent_id) {
+            parent = dynamic_cast<ShapeRef *>(*it);
+        } else if ((*it)->id() == child_id) {
+            child = dynamic_cast<ShapeRef *>(*it);
+
+            /* Find the child's children. */
+            dag->router->attachedShapes(children, child_id, Avoid::runningTo);
+        }
+        if ((parent && child) || (child && !has_parent)) {
+            break;
+        }
+    }
+
+    /* Set the position of the child node. */
+    position_node(dag, has_parent, parent, child, level, maxX_level);
+    dag->router->processTransaction();
+
+    if (children.size() == 0) {
+        return;
+    } else {
+        has_parent = true;
+        std::list<unsigned int>::iterator it;
+
+        level ++;
+        if (maxX_level.size() <= level) {
+            maxX_level.reserve(level + 1);
+            maxX_level.push_back(0.0);
+        }
+        for ( it=children.begin() ; it != children.end(); it++) {
+            set_layout(dag, has_parent, child_id, *it, level, maxX_level);
+        }
+        level --;
+    }
 }
 
 
@@ -92,7 +204,7 @@ add_object(struct _ged_dag_data *dag, unsigned int id)
 {
     Avoid::Point srcPt(dag->object_nr * POSITION_COORDINATE + 2.0, dag->object_nr * POSITION_COORDINATE + 2.0);
     Avoid::Point dstPt(POSITION_COORDINATE + dag->object_nr * POSITION_COORDINATE, POSITION_COORDINATE +
-        dag->object_nr * POSITION_COORDINATE);
+                       dag->object_nr * POSITION_COORDINATE);
     Avoid::Rectangle shapeRect(srcPt, dstPt);
     Avoid::ShapeRef *shapeRef = new Avoid::ShapeRef(dag->router, shapeRect, id);
 
@@ -175,17 +287,17 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
 
     /* Check if a shape was already created for this subnode. */
     bool shape_exists = false;
-        ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
-        for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
-            if ((*it)->id() == comb_id) {
-                /* Don't create another shape because it already exists a corresponding one.
-                 * Get a reference to the shape that corresponds to the current node of the subtree.
-                 */
-                shapeRef1 = dynamic_cast<ShapeRef *>(*it);
-                shape_exists = true;
-                break;
-            }
+    ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
+    for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
+        if ((*it)->id() == comb_id) {
+            /* Don't create another shape because it already exists a corresponding one.
+             * Get a reference to the shape that corresponds to the current node of the subtree.
+             */
+            shapeRef1 = dynamic_cast<ShapeRef *>(*it);
+            shape_exists = true;
+            break;
         }
+    }
     if (!shape_exists) {
         /* Create a shape for the current node of the subtree */
         dag->object_nr++;
@@ -249,17 +361,17 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
 
             /* Check if a shape was already created for this subnode. */
             shape_exists = false;
-                finish = dag->router->m_obstacles.end();
-                for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
-                    if ((*it)->id() == subnode_id) {
-                        /* Don't create another shape because it already exists a corresponding one.
-                         * Get a reference to the shape that corresponds to the current node of the subtree.
-                         */
-                        shapeRef2 = dynamic_cast<ShapeRef *>(*it);
-                        shape_exists = true;
-                        break;
-                    }
+            finish = dag->router->m_obstacles.end();
+            for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
+                if ((*it)->id() == subnode_id) {
+                    /* Don't create another shape because it already exists a corresponding one.
+                     * Get a reference to the shape that corresponds to the current node of the subtree.
+                     */
+                    shapeRef2 = dynamic_cast<ShapeRef *>(*it);
+                    shape_exists = true;
+                    break;
                 }
+            }
             if (!shape_exists) {
                 /* Create a shape for the current node of the subtree */
                 dag->object_nr++;
@@ -462,8 +574,8 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
 
 
 /**
- * This routine returns a vector of vectors of points.
- * A vector of points defines a polygon shape that corresponds to an object in the database.
+ * This routine provides the name of the objects in a database along with their
+ * type and positions within the graph.
  */
 int
 ged_graph_objects_positions(struct ged *gedp, int argc, const char *argv[])
@@ -480,7 +592,7 @@ ged_graph_objects_positions(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-    /* initialize result */
+    /* Initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc > 1 || argc == 0) {
@@ -493,6 +605,36 @@ ged_graph_objects_positions(struct ged *gedp, int argc, const char *argv[])
         dag->router = new Avoid::Router(Avoid::PolyLineRouting);
         add_objects(gedp, dag);
 
+        /* Find the root nodes. */
+        std::vector<unsigned int> root_ids = find_roots(dag);
+        std::vector<double> maxX_level;
+        unsigned int level;
+        unsigned int size = root_ids.size();
+
+        /* Traverse the root nodes and for each tree set the positions of all the nodes. */
+        for (unsigned int i = 0; i < size; i++) {
+            char *root = (char *)bu_malloc((size_t)6, "hash entry value");
+            sprintf(root, "%u", root_ids[i]);
+            struct bu_hash_entry *prev_root = NULL;
+            unsigned long idx_root;
+            struct bu_hash_entry *hsh_entry_root = bu_find_hash_entry(dag->ids, (unsigned char *)root, strlen(root) + 1, &prev_root, &idx_root);
+
+            if(hsh_entry_root) {
+                level = 0;
+                if (i == 0) {
+                    /* First root node: set the maximum X coordinate to be 0.0. */
+                    maxX_level.reserve(1);
+                    maxX_level.push_back(0.0);
+                }
+
+                /* Set the layout for the tree that starts with this root node. */
+                set_layout(dag, false, root_ids[i], root_ids[i], level, maxX_level);
+            }
+        }
+
+        /* Traverse each shape within the graph and pass on the name, type and coordinates
+         * of the object.
+         */
         ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
         for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
             char *id = (char *)bu_malloc((size_t)6, "hash entry value");
@@ -514,6 +656,20 @@ ged_graph_objects_positions(struct ged *gedp, int argc, const char *argv[])
             }
         }
 
+        /* Provide the positions of the points via which the connection's route passes. */
+        double x, y;
+        bu_vls_printf(gedp->ged_result_str, "edges\n");
+        Avoid::ConnRefList::const_iterator fin = dag->router->connRefs.end();
+        for (Avoid::ConnRefList::const_iterator i = dag->router->connRefs.begin(); i != fin; ++i) {
+            Avoid::Polygon polyline = (*i)->displayRoute();
+            size = polyline.ps.size();
+            for (unsigned int j = 0; j < size; j ++) {
+                x = polyline.ps[j].x;
+                y = polyline.ps[j].y;
+                bu_vls_printf(gedp->ged_result_str, "%f %f\n", x, y);
+            }
+            bu_vls_printf(gedp->ged_result_str, "edges\n");
+        }
         bu_free(dag, "free DAG");
     }
     return GED_OK;

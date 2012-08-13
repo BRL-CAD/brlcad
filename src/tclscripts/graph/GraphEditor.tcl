@@ -151,8 +151,9 @@ body GraphEditor::constructor {} {
         ::iwidgets::scrolledcanvas $itk_interior.cv \
             -textbackground gray \
             -autoresize 0 \
-            -vscrollmode dynamic \
-            -hscrollmode dynamic
+            -width 800 -height 400 \
+            -vscrollmode static \
+            -hscrollmode static
     } {
         keep -xscrollincrement
         keep -xscrollincrement
@@ -198,46 +199,66 @@ body GraphEditor::constructor {} {
     set combination 2
 
     set i 0
+    set look_for_edges 0
     foreach element $positions {
-        if { $i == 0 } {
-            # set the name of the object
-            set name $element
-            incr i
-        } elseif { $i == 1 } {
-            # set the color depending on the type of object: primitive / combination / something else
-            if { [string equal $element $primitive] } {
-                set color red
-            } elseif { [string equal $element $combination] } {
-                set color green
-            } else {
-                set color yellow
+        if { [string equal $element edges] } {
+            if { $look_for_edges == 1} {
+                # construct the polyline that defines the connection between two nodes
+                $itk_interior.cv create line $points \
+                -width 0.05 \
+                -arrow first
             }
-            incr i
-        } elseif { $i == 2 } {
-            # set the x coordinate for the lower left corner
-            set x1 $element
-            incr i
-        } elseif { $i == 3 } {
-            # set the y coordinate for the lower left corner
-            set y1 $element
-            incr i
-        } elseif { $i == 4 } {
-            # set the x coordinate for the upper right corner
-            set x2 $element
+            set points []
+            set look_for_edges 1
+            set i 0
+            continue
+        }
+
+        if { $look_for_edges == 1 } {
+            lappend points $element
             incr i
         } else {
-            # set the y coordinate for the upper right corner
-            set y2 $element
-            set i 0
+            if { $i == 0 } {
+                # set the name of the object
+                set name $element
+                incr i
+            } elseif { $i == 1 } {
+                # set the color depending on the type of object: primitive / combination / something else
+                if { [string equal $element $primitive] } {
+                    set color red
+                } elseif { [string equal $element $combination] } {
+                    set color green
+                } else {
+                    set color yellow
+                }
+                incr i
+            } elseif { $i == 2 } {
+                # set the x coordinate for the lower left corner
+                set x1 $element
+                incr i
+            } elseif { $i == 3 } {
+                # set the y coordinate for the lower left corner
+                set y1 $element
+                incr i
+            } elseif { $i == 4 } {
+                # set the x coordinate for the upper right corner
+                set x2 $element
+                incr i
+            } else {
+                # set the y coordinate for the upper right corner
+                set y2 $element
+                set i 0
 
-            # draw a rectangle for this object within the graph
-            $itk_interior.cv create rectangle $x1 $y1 $x2 $y2 \
-            -fill    $color \
-            -tags    rectangle
+                # draw a rectangle for this object within the graph
+                $itk_interior.cv create rectangle $x1 $y1 $x2 $y2 \
+                -fill $color \
+                -tags rectangle
 
-            # write the object's name inside the rectangle
-            $itk_interior.cv create text [expr "($x1 + $x2)/2" ] [expr "($y1 + $y2)/2" ] \
-            -text    $name
+                # write the object's name inside the rectangle
+                $itk_interior.cv create text $x1 $y1 \
+                -anchor nw \
+                -text $name
+            }
         }
     }
 }
