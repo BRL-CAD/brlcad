@@ -1038,7 +1038,7 @@ namespace eval ArcherCore {
 	itk_component add canvas {
 	    ::frame $itk_component(canvasF).canvas \
 		-borderwidth 0 \
-		-relief flat 
+		-relief flat
 	} {}
 
 	grid $itk_component(canvas) -row 0 -column 0 -columnspan 3 -sticky news
@@ -1186,7 +1186,7 @@ namespace eval ArcherCore {
     }
 
 #    Load ""
- 
+
     if {!$mNoToolbar} {
 	$itk_component(primaryToolbar) itemconfigure open -state normal
     }
@@ -2897,7 +2897,7 @@ namespace eval ArcherCore {
     foreach item $_plist {
 	lappend new_plist [file tail $item]
     }
-    
+
     return [lsort -unique -dictionary $new_plist]
 }
 
@@ -3337,9 +3337,9 @@ namespace eval ArcherCore {
 		default {
 		    return "Union"
 		}
-		
+
 	    }
-	    return 
+	    return
 	}
     }
 
@@ -3464,7 +3464,7 @@ namespace eval ArcherCore {
 
     $itk_component(ged) refresh_on
     $itk_component(ged) refresh_all
- 
+
     # Turn ground plane back on if it was on before the draw
     if {$saveGroundPlane} {
 	set mShowGroundPlane 1
@@ -4947,7 +4947,7 @@ namespace eval ArcherCore {
 		set mStatusStr "Draw object as wireframe"
 	    }
 	    "Shaded" {
-		set mStatusStr "Draw object as shaded if a bot or polysolid (unevalutated)"
+		set mStatusStr "Draw object as shaded if a bot or polysolid (unevaluated)"
 	    }
 	    "Hidden Line" {
 		set mStatusStr "Draw object as hidden line"
@@ -5521,7 +5521,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::dbExpand {args} {
-    # parse out preceeding options
+    # parse out preceding options
     set searchType "-glob"
     set options {}
     set objects {}
