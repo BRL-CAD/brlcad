@@ -1106,7 +1106,7 @@ ON_BOOL32 ON_ArcCurve::GetLocalClosestPoint( const ON_3dPoint& test_point,
 int ON_ArcCurve::GetNurbForm( // returns 0: unable to create NURBS representation
                  //            with desired accuracy.
                  //         1: success - returned NURBS parameterization
-                 //            matches the curve's to wthe desired accuracy
+                 //            matches the curve's to the desired accuracy
                  //         2: success - returned NURBS point locus matches
                  //            the curve's to the desired accuracy but, on
                  //            the interior of the curve's domain, the
@@ -1141,7 +1141,7 @@ int ON_ArcCurve::GetNurbForm( // returns 0: unable to create NURBS representatio
 int ON_ArcCurve::HasNurbForm( // returns 0: unable to create NURBS representation
                  //            with desired accuracy.
                  //         1: success - returned NURBS parameterization
-                 //            matches the curve's to wthe desired accuracy
+                 //            matches the curve's to the desired accuracy
                  //         2: success - returned NURBS point locus matches
                  //            the curve's to the desired accuracy but, on
                  //            the interior of the curve's domain, the
