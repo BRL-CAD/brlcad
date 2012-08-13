@@ -203,7 +203,7 @@ package provide cadwidgets::Ged 1.0
 	method get_type {args}
 	method glob {args}
 	method gqa {args}
-        method graph_objects_positions{args}
+        method graph_objects_positions {args}
 	method grid {args}
 	method handle_expose {args}
 	method hide {args}
