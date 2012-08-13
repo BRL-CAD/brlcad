@@ -4207,6 +4207,9 @@ RT_EXPORT extern void nmg_loop_plane_newell(const struct loopuse *lu,
 					    plane_t pl);
 RT_EXPORT extern fastf_t nmg_loop_plane_area(const struct loopuse *lu,
 					     plane_t pl);
+RT_EXPORT extern fastf_t nmg_loop_plane_area2(const struct loopuse *lu,
+					      plane_t pl,
+					      const struct bn_tol *tol);
 RT_EXPORT extern int nmg_calc_face_plane(struct faceuse *fu_in,
 					 plane_t pl);
 RT_EXPORT extern int nmg_calc_face_g(struct faceuse *fu);

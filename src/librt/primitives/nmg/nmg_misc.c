@@ -1433,6 +1433,109 @@ nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
 
 
 /**
+ * N M G _ L O O P _ P L A N E _ A R E A 2
+ *
+ * Calculates a plane equation and the area of a loop
+ *
+ * returns:
+ * the area of the loop
+ * postive area is ccw loop (relative to fu normal)
+ * negative area is cw loop (relative to fu normal)
+ * zero is no area or degenerate loop
+ *
+ * pl is assigned the plane equation for the loop
+ */
+fastf_t
+nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol *tol)
+{
+
+    mat_t mat;
+    point_t pt, pt_next;
+    struct edgeuse *eu;
+    struct faceuse *fu;
+    int cnt;
+    int can_flip;
+    int do_reverse_area;
+    fastf_t area;
+    vect_t vec_to = {0.0, 0.0, 1.0};
+    vect_t sum, cog;
+
+    NMG_CK_LOOPUSE(lu);
+
+    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+	HSETALL(pl, 0.0); 
+	return 0.0;
+    }
+
+    do_reverse_area = 0;
+    can_flip = 0;
+    if (*lu->up.magic_p == NMG_FACEUSE_MAGIC) {
+	can_flip = 1;
+	fu = lu->up.fu_p;
+	NMG_CK_FACEUSE(fu);
+    }
+
+    HSETALL(pl, 0.0); 
+    VSETALL(sum, 0.0);
+    cnt = 0;
+    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	NMG_CK_EDGEUSE(eu);
+        VMOVE(pt, eu->vu_p->v_p->vg_p->coord);
+        VMOVE(pt_next, (BU_LIST_PNEXT_CIRC(edgeuse, &eu->l))->vu_p->v_p->vg_p->coord);
+        pl[X] += ((pt[Y] - pt_next[Y]) * (pt[Z] + pt_next[Z]));
+        pl[Y] += ((pt[Z] - pt_next[Z]) * (pt[X] + pt_next[X]));
+        pl[Z] += ((pt[X] - pt_next[X]) * (pt[Y] + pt_next[Y]));
+        VADD2(sum, sum, pt);
+        cnt++;
+    }
+    if (cnt < 3) {
+	HSETALL(pl, 0.0); 
+	return 0.0;
+    }
+
+    if (NEAR_ZERO(pl[X], tol->dist) && NEAR_ZERO(pl[Y], tol->dist) && NEAR_ZERO(pl[Z], tol->dist)) {
+	HSETALL(pl, 0.0); 
+	return 0.0;
+    }
+    if (NEAR_ZERO(pl[X], tol->dist)) {
+	pl[X] = 0.0;
+    }
+    if (NEAR_ZERO(pl[Y], tol->dist)) {
+	pl[Y] = 0.0;
+    }
+    if (NEAR_ZERO(pl[Z], tol->dist)) {
+	pl[Z] = 0.0;
+    }
+
+    VSCALE(cog, sum, 1.0/cnt);
+    VUNITIZE(pl);
+    pl[H] = VDOT(cog, pl);
+
+    if (can_flip) {
+	if ((fu->orientation != OT_SAME) != (fu->f_p->flip != 0)) {
+	    HREVERSE(pl, pl);
+	    do_reverse_area = 1;
+	}
+    }
+
+    bn_mat_fromto(mat, pl, vec_to); /* rotate to xy plane */
+    area = 0.0;
+    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+        MAT4X3PNT(pt, mat, eu->vu_p->v_p->vg_p->coord);
+        MAT4X3PNT(pt_next, mat, (BU_LIST_PNEXT_CIRC(edgeuse, &eu->l))->vu_p->v_p->vg_p->coord);
+	area += ((pt[X]*pt_next[Y]) - (pt_next[X]*pt[Y]));
+    }
+    area = area / 2.0;
+
+    if (do_reverse_area) {
+	area = -area;
+    }
+
+    return area;
+}
+
+
+/**
  * N M G _ C A L C _ F A C E _ P L A N E
  *
  * Calculate face geometry using a least squares fit or Newell's
@@ -11073,3 +11176,4 @@ nmg_vlist_to_eu(struct bu_list *vlist, struct shell *s)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
