@@ -3351,6 +3351,12 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
      * Chains.
      */
 
+    if (curves.Count() == 0) {
+	// No curve, no splitting
+	out.Append(in->Duplicate());
+	return 0;
+    }
+
     ON_SimpleArray<IntersectPoint> intersect;
     ON_SimpleArray<bool> have_intersect(curves.Count());
     for (int i = 0; i < curves.Count(); i++)
@@ -3401,16 +3407,21 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
     }
 
     // rank these intersection points
-    ON_SimpleArray<ON_SimpleArray<IntersectPoint*> > pts_on_curves(curves.Count());
+    ON_SimpleArray<ON_SimpleArray<IntersectPoint*>*> pts_on_curves(curves.Count());
     ON_SimpleArray<IntersectPoint*> sorted_pointers;
+    for (int i = 0; i < curves.Count(); i++)
+	pts_on_curves[i] = new ON_SimpleArray<IntersectPoint*>();
     for (int i = 0; i < intersect.Count(); i++) {
-	pts_on_curves[intersect[i].m_type].Append(&(intersect[i]));
+	pts_on_curves[intersect[i].m_type]->Append(&(intersect[i]));
 	sorted_pointers.Append(&(intersect[i]));
     }
     for (int i = 0; i < curves.Count(); i++) {
-	pts_on_curves[i].QuickSort(compare_for_rank);
-	for (int j = 0; j < pts_on_curves[i].Count(); j++)
-	    pts_on_curves[i][j]->m_rank = j;
+	pts_on_curves[i]->QuickSort(compare_for_rank);
+	for (int j = 0; j < pts_on_curves[i]->Count(); j++)
+	    (*pts_on_curves[i])[j]->m_rank = j;
+    }
+    for (int i = 0; i < curves.Count(); i++) {
+	delete pts_on_curves[i];
     }
     sorted_pointers.QuickSort(compare_seg_t);
 
@@ -3562,8 +3573,71 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 	out.Append(newface);
 	return 0;
     }*/
+
+    if (out.Count() == 0) {
+	out.Append(in->Duplicate());
+    }
     bu_log("Split to %d faces.\n", out.Count());
     return 0;
+}
+
+
+void
+add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_NurbsCurve*> &loop, ON_BrepLoop::TYPE loop_type)
+{
+    if (!loop.Count())
+	return;
+
+    ON_BrepLoop &breploop = brep->NewLoop(loop_type, face);
+    int start_index = brep->m_V.Count();
+    for (int k = 0; k < loop.Count(); k++) {
+	int ti = brep->AddTrimCurve(loop[k]);
+	ON_2dPoint start = loop[k]->PointAtStart(), end = loop[k]->PointAtEnd();
+	ON_BrepVertex& start_v = k > 0 ? brep->m_V[brep->m_V.Count() - 1] : 
+	    brep->NewVertex(face.SurfaceOf()->PointAt(start.x, start.y), 0.0);
+	ON_BrepVertex& end_v = loop[k]->IsClosed() ? start_v :
+	    brep->NewVertex(face.SurfaceOf()->PointAt(end.x, end.y), 0.0);
+	if (k == loop.Count() - 1) {
+	    if (!loop[k]->IsClosed())
+		brep->m_V.Remove(brep->m_V.Count() - 1);
+	    end_v = brep->m_V[start_index];
+	}
+	int start_idx = start_v.m_vertex_index;
+	int end_idx = end_v.m_vertex_index;
+
+	ON_NurbsCurve *c3d;
+	if (loop[k]->CVCount() == 2) {
+	    // A closed curve with two control points
+	    // TODO: Sometimes we need a sigular trim.
+	    c3d = ON_NurbsCurve::New();
+	    ON_3dPointArray ptarray(101);
+	    for (int l = 0; l <= 100; l++) {
+		ON_3dPoint pt2d;
+		pt2d = loop[k]->PointAt(loop[k]->Domain().NormalizedParameterAt(l/100.0));
+		ptarray.Append(face.SurfaceOf()->PointAt(pt2d.x, pt2d.y));
+	    }
+	    ON_PolylineCurve polycurve(ptarray);
+	    polycurve.GetNurbForm(*c3d);
+	} else {
+	    c3d = loop[k]->Duplicate();
+	    c3d->ChangeDimension(3);
+	    for (int l = 0; l < loop[k]->CVCount(); l++) {
+		ON_3dPoint pt2d;
+		loop[k]->GetCV(l, pt2d);
+		ON_3dPoint pt3d = face.SurfaceOf()->PointAt(pt2d.x, pt2d.y);
+		c3d->SetCV(l, pt3d);
+	    }
+	}
+	brep->AddEdgeCurve(c3d);
+	ON_BrepEdge &edge = brep->NewEdge(brep->m_V[start_idx], brep->m_V[end_idx],
+	    brep->m_C3.Count() - 1, (const ON_Interval *)0, MAX_FASTF);
+	ON_BrepTrim &trim = brep->NewTrim(edge, 0, breploop, ti);
+	trim.m_tolerance[0] = trim.m_tolerance[1] = MAX_FASTF;
+
+	// TODO: Deal with split seam trims to pass ON_Brep::IsValid()
+    }
+    if (brep->m_V.Count() < brep->m_V.Capacity())
+	brep->m_V[brep->m_V.Count()].m_ei.Empty();
 }
 
 
@@ -3606,14 +3680,16 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     }
 
     // split the surfaces with the intersection curves
-    for (int i = 0; i < facecount1; i++) {
+    for (int i = 0; i < facecount1 + facecount2; i++) {
 	ON_SimpleArray<ON_NurbsCurve*> innercurves, outercurves;
-	ON_SimpleArray<int> &loopindex = brep1->m_F[i].m_li;
+	ON_BrepFace &face = i < facecount1 ? brep1->m_F[i] : brep2->m_F[i - facecount1];
+	ON_Brep *brep = i < facecount1 ? brep1 : brep2;
+	ON_SimpleArray<int> &loopindex = face.m_li;
 	for (int j = 0; j < loopindex.Count(); j++) {
-	    ON_BrepLoop &loop = brep1->m_L[loopindex[j]];
+	    ON_BrepLoop &loop = brep->m_L[loopindex[j]];
 	    ON_SimpleArray<int> &trimindex = loop.m_ti;
 	    for (int k = 0; k < trimindex.Count(); k++) {
-		ON_Curve *curve2d = brep1->m_C2[brep1->m_T[trimindex[k]].m_c2i];
+		ON_Curve *curve2d = brep1->m_C2[brep->m_T[trimindex[k]].m_c2i];
 		ON_NurbsCurve *nurbscurve = ON_NurbsCurve::New();
 		if (!curve2d->GetNurbForm(*nurbscurve))
 		    continue;
@@ -3626,7 +3702,7 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
 	}
 	ON_SimpleArray<TrimmedFace*> trimmedfaces;
 	TrimmedFace *first = new TrimmedFace();
-	first->face = &(brep1->m_F[i]);
+	first->face = &face;
 	first->innerloop = innercurves;
 	first->outerloop = outercurves;
 	split_trimmed_face(trimmedfaces, first, curvesarray[i]);
@@ -3642,64 +3718,14 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
 	for (int j = 0; j < trimmedfaces.Count(); j++) {
 	    // Add the surfaces, faces, loops, trims, vertices, edges, etc.
 	    // to the brep structure.
-	    ON_Surface *new_surf = brep1->m_S[i]->Duplicate();
+	    ON_Surface *new_surf = face.SurfaceOf()->Duplicate();
 	    int surfindex = brep_out->AddSurface(new_surf);
 	    ON_BrepFace& face = brep_out->NewFace(surfindex);
-	    ON_BrepLoop &loop = brep_out->NewLoop(ON_BrepLoop::outer, face);
-	    ON_SimpleArray<ON_NurbsCurve*> &oloop = trimmedfaces[j]->outerloop;
-	    int start_index = brep_out->m_V.Count();
-	    for (int k = 0; k < oloop.Count(); k++) {
-		int ti = brep_out->AddTrimCurve(oloop[k]);
-		ON_2dPoint start = oloop[k]->PointAtStart(), end = oloop[k]->PointAtEnd();
-		ON_BrepVertex& start_v = k > 0 ? brep_out->m_V[brep_out->m_V.Count() - 1] : 
-		    brep_out->NewVertex(brep1->m_F[i].SurfaceOf()->PointAt(start.x, start.y), 0.0);
-		ON_BrepVertex& end_v = oloop[k]->IsClosed() ? start_v :
-		    brep_out->NewVertex(brep1->m_F[i].SurfaceOf()->PointAt(end.x, end.y), 0.0);
-		if (k == oloop.Count() - 1) {
-		    if (!oloop[k]->IsClosed())
-			brep_out->m_V.Remove(brep_out->m_V.Count() - 1);
-		    end_v = brep_out->m_V[start_index];
-		}
-		ON_Curve *c3d = oloop[k]->Duplicate();
-		c3d->ChangeDimension(3); // 3d curve required
-		brep_out->AddEdgeCurve(c3d);
-		ON_BrepEdge &edge = brep_out->NewEdge(start_v, end_v,
-		    brep_out->m_C3.Count() - 1, (const ON_Interval *)0, MAX_FASTF);
-		brep_out->m_V[start_v.m_vertex_index] = start_v;
-		brep_out->m_V[end_v.m_vertex_index] = end_v;
-		ON_BrepTrim &trim = brep_out->NewTrim(edge, 0, loop, ti);
-		trim.m_tolerance[0] = trim.m_tolerance[1] = MAX_FASTF;
-	    }
-	    if (brep_out->m_V.Count() < brep_out->m_V.Capacity())
-		brep_out->m_V[brep_out->m_V.Count()].m_ei.Empty();
 	    
-	    ON_SimpleArray<ON_NurbsCurve*> &iloop = trimmedfaces[j]->innerloop;
-	    start_index = brep_out->m_V.Count();
-	    if (iloop.Count()) {
-		ON_BrepLoop &inloop = brep_out->NewLoop(ON_BrepLoop::inner, face);
-		for (int k = 0; k < iloop.Count(); k++) {
-		    int ti = brep_out->AddTrimCurve(iloop[k]);
-		    ON_2dPoint start = iloop[k]->PointAtStart(), end = iloop[k]->PointAtEnd();
-		    ON_BrepVertex& start_v = k > 0 ? brep_out->m_V[brep_out->m_V.Count() - 1] : 
-			brep_out->NewVertex(brep1->m_F[i].SurfaceOf()->PointAt(start.x, start.y), 0.0);
-		    ON_BrepVertex& end_v = iloop[k]->IsClosed() ? start_v :
-			brep_out->NewVertex(brep1->m_F[i].SurfaceOf()->PointAt(end.x, end.y), 0.0);
-		    if (k == iloop.Count() - 1) {
-			if (!iloop[k]->IsClosed())
-			    brep_out->m_V.Remove(brep_out->m_V.Count() - 1);
-			end_v = brep_out->m_V[start_index];
-		    }
-		    ON_Curve *c3d = iloop[k]->Duplicate();
-		    c3d->ChangeDimension(3); // 3d curve required
-		    brep_out->AddEdgeCurve(c3d);
-		    ON_BrepEdge &edge = brep_out->NewEdge(start_v, end_v,
-			brep_out->m_C3.Count() - 1, (const ON_Interval *)0, MAX_FASTF);
-		    brep_out->m_V[start_v.m_vertex_index] = start_v;
-		    brep_out->m_V[end_v.m_vertex_index] = end_v;
-		    ON_BrepTrim &trim = brep_out->NewTrim(edge, 0, inloop, ti);
-		    trim.m_tolerance[0] = trim.m_tolerance[1] = MAX_FASTF;
-		}
-	    }
+	    add_elements(brep_out, face, trimmedfaces[j]->outerloop, ON_BrepLoop::outer);
+	    ON_BrepLoop &loop = brep_out->m_L[brep_out->m_L.Count() - 1];
+	    add_elements(brep_out, face, trimmedfaces[j]->innerloop, ON_BrepLoop::inner);
+	    
 	    new_surf->SetDomain(0, loop.m_pbox.m_min.x, loop.m_pbox.m_max.x);
 	    new_surf->SetDomain(1, loop.m_pbox.m_min.y, loop.m_pbox.m_max.y);
 	    brep_out->SetTrimIsoFlags(face);
@@ -3711,12 +3737,13 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     ON_wString ws;
     ON_TextLog log(ws);
     brep_out->IsValid(&log);
-    char s[1000] = {0};
+    char *s = new char [ws.Length() + 1];
     for (int k = 0; k < ws.Length(); k++) {
 	s[k] = ws[k];
     }
     s[ws.Length()] = 0;
     bu_log("%s", s);
+    delete s;
 
     // make the final rt_db_internal
     struct rt_brep_internal *bip_out;
