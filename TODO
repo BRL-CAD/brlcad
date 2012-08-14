@@ -1423,7 +1423,7 @@ NMG/BoT
   raytracing code.
 
 * optimization of NMG ray tracing.  the hitmiss bookkeeping presently
-  used has a malloc/free occuring per shot().  allocations need to
+  used has a malloc/free occurring per shot().  allocations need to
   occur during prep only.  the presently render more than an order of
   magnitude slower than tracing that nmg converted to an equivalent
   BoT due to malloc/free calls being made during shot(). Confirmable
