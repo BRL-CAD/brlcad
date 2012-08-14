@@ -42,6 +42,7 @@
 
 #include "brep.h"
 #include "dvec.h"
+#include "nurbs.h"
 
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -531,8 +532,6 @@ public:
 
 
 typedef std::list<brep_hit> HitList;
-
-
 
 
 typedef enum {
