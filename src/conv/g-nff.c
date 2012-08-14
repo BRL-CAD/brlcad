@@ -40,15 +40,8 @@
 #include "raytrace.h"
 
 
-extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
-
-static char usage[] = "\
-Usage: %s [-v][-i][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n\
-[-e error_file ][-D dist_calc_tol] -o output_file_name brlcad_db.g object(s)\n";
-
 static int NMG_debug;			/* saved arg of -X, for longjmp handling */
 static int verbose;
-static int ncpu = 1;			/* Number of processors */
 static char *output_file = NULL;	/* output filename */
 static char *error_file = NULL;		/* error filename */
 static FILE *fp;			/* temp Output file pointer */
@@ -70,244 +63,6 @@ static point_t model_max;
 static point_t model_min;
 
 #define COPY_BUF_SIZE 512
-
-/*
- * M A I N
- */
-int
-main(int argc, char *argv[])
-{
-    FILE *fpf = NULL;	/* final output file */
-    point_t model_center;
-    vect_t view_dir;
-    vect_t model_diag;
-    fastf_t bounding_radius;
-    fastf_t dist_to_eye;
-    point_t from;
-    point_t light_loc;
-    char buf[COPY_BUF_SIZE];
-    size_t read_size;
-    int c;
-    double percent;
-    int i;
-
-    bu_setprogname(argv[0]);
-    bu_setlinebuf(stderr);
-
-    VSETALL(model_min, MAX_FASTF);
-    VREVERSE(model_max, model_min);
-
-    tree_state = rt_initial_tree_state;	/* struct copy */
-    tree_state.ts_tol = &tol;
-    tree_state.ts_ttol = &ttol;
-    tree_state.ts_m = &the_model;
-
-    ttol.magic = RT_TESS_TOL_MAGIC;
-    /* Defaults, updated by command line options. */
-    ttol.abs = 0.0;
-    ttol.rel = 0.01;
-    ttol.norm = 0.0;
-
-    /* FIXME: These need to be improved */
-    tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
-    tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-6;
-    tol.para = 1 - tol.perp;
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
-    the_model = nmg_mm();
-    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
-
-    /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:n:o:r:vx:D:P:X:e:i")) != -1) {
-	switch (c) {
-	    case 'a':		/* Absolute tolerance. */
-		ttol.abs = atof(bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'o':		/* Output file name. */
-		output_file = bu_optarg;
-		break;
-	    case 'r':		/* Relative tolerance. */
-		ttol.rel = atof(bu_optarg);
-		break;
-	    case 'v':
-		verbose++;
-		break;
-	    case 'P':
-		ncpu = atoi(bu_optarg);
-		rt_g.debug = 1;
-		break;
-	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
-		break;
-	    case 'D':
-		tol.dist = atof(bu_optarg);
-		tol.dist_sq = tol.dist * tol.dist;
-		rt_pr_tol(&tol);
-		break;
-	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
-		NMG_debug = rt_g.NMG_debug;
-		break;
-	    case 'e':		/* Error file name. */
-		error_file = bu_optarg;
-		break;
-	    case 'i':
-		inches = 1;
-		break;
-	    default:
-		bu_exit(1, usage, argv[0]);
-		break;
-	}
-    }
-
-    if (bu_optind+1 >= argc) {
-	bu_exit(1, usage, argv[0]);
-    }
-
-    if (!output_file) {
-	bu_exit(1, "No output file specified!\n");
-    }
-
-    /* Open output file */
-    if ((fpf = fopen(output_file, "wb+")) == NULL) {
-	perror(argv[0]);
-	bu_exit(1, "Cannot open output file (%s) for writing\n", output_file);
-    }
-
-    /* Open temporary ouitput file */
-    fp = bu_temp_file(NULL, 0);
-
-    /* Open error log file */
-    if (!error_file) {
-	fpe = stderr;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	setmode(fileno(fpe), O_BINARY);
-#endif
-    } else if ((fpe=fopen(error_file, "wb")) == NULL) {
-	perror(argv[0]);
-	bu_exit(1, "Cannot open output file (%s) for writing\n", error_file);
-    }
-
-    /* Open BRL-CAD database */
-    argc -= bu_optind;
-    argv += bu_optind;
-    if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
-	perror(argv[0]);
-	bu_exit(1, "ERROR: unable to open geometry database file (%s)\n", argv[0]);
-    }
-    if (db_dirbuild(dbip)) {
-	bu_exit(1, "db_dirbuild failed\n");
-    }
-
-    BN_CK_TOL(tree_state.ts_tol);
-    RT_CK_TESS_TOL(tree_state.ts_ttol);
-
-    fprintf(fpe, "Model: %s\n", argv[0]);
-    fprintf(fpe, "Objects:");
-    for (i = 1; i < argc; i++)
-	fprintf(fpe, " %s", argv[i]);
-    fprintf(fpe, "\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
-	    tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
-    fprintf(fpe, "Calculational tolerances:\n\tdist = %g mm perp = %g\n",
-	    tree_state.ts_tol->dist, tree_state.ts_tol->perp);
-
-    bu_log("Model: %s\n", argv[0]);
-    bu_log("Objects:");
-    for (i = 1; i < argc; i++)
-	bu_log(" %s", argv[i]);
-    bu_log("\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
-	   tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
-    bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
-	   tree_state.ts_tol->dist, tree_state.ts_tol->perp);
-
-    /* Walk indicated tree(s).  Each region will be output separately */
-    (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-			1,			/* ncpu */
-			&tree_state,
-			0,			/* take all regions */
-			do_region_end,
-			nmg_booltree_leaf_tess,
-			(genptr_t)NULL);	/* in librt/nmg_bool.c */
-
-    percent = 0;
-    if (regions_tried > 0) {
-	percent = ((double)regions_converted * 100) / regions_tried;
-	printf("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
-	       regions_tried, regions_converted, percent);
-    }
-    percent = 0;
-
-    if (regions_tried > 0) {
-	percent = ((double)regions_written * 100) / regions_tried;
-	printf("                  %d triangulated successfully. %g%%\n",
-	       regions_written, percent);
-    }
-
-    bu_log("%ld triangles written\n", tot_polygons);
-    fprintf(fpe, "%ld triangles written\n", tot_polygons);
-
-    /* Release dynamic storage */
-    nmg_km(the_model);
-    rt_vlist_cleanup();
-    db_close(dbip);
-
-    /* write view information in the NFF file */
-    fprintf(fpf, "v\n");
-    VADD2(model_center, model_max, model_min);
-    VSCALE(model_center, model_center, 0.5);
-    VSET(view_dir, cos(M_PI_4) * cos(M_PI_4), cos(M_PI_4) * sin(M_PI_4), sin(M_PI_4));
-    VSUB2(model_diag, model_max, model_min);
-    bounding_radius = 0.5 * MAGNITUDE(model_diag);
-    dist_to_eye = 2.0 * bounding_radius / tan(M_PI_4);
-    VJOIN1(from, model_center, dist_to_eye, view_dir);
-
-    /* from */
-    fprintf(fpf, "from %g %g %g\n", V3ARGS(from));
-
-    /* at */
-    fprintf(fpf, "at %g %g %g\n", V3ARGS(model_center));
-
-    /* up
-     * this will only work for 45, 45 view
-     */
-    fprintf(fpf, "up %g %g %g\n", -view_dir[X], -view_dir[Y], view_dir[Z]);
-
-    /* angle */
-    fprintf(fpf, "angle 45\n");
-
-    /* hither */
-    fprintf(fpf, "hither 0.0\n");
-
-    /* resolution */
-    fprintf(fpf, "resolution 512 512\n");
-
-    /* a light */
-    VJOIN1(light_loc, model_center, dist_to_eye + 10.0, view_dir);
-    fprintf(fpf, "l %g %g %g 1 1 1\n", V3ARGS(light_loc));
-
-
-    /* copy the temporary file to the final file */
-    rewind(fp);
-    while ((read_size=fread(buf, 1, COPY_BUF_SIZE, fp))) {
-	size_t ret;
-	ret = fwrite(buf, read_size, 1, fpf);
-	if (ret < 1)
-	    perror("fwrite");
-    }
-
-    fclose(fpf);
-    fclose(fp);
-
-    return 0;
-}
 
 
 static void
@@ -578,6 +333,245 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
     RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
     return curtree;
+}
+
+
+/*
+ * M A I N
+ */
+int
+main(int argc, char *argv[])
+{
+    FILE *fpf = NULL;	/* final output file */
+    point_t model_center;
+    vect_t view_dir;
+    vect_t model_diag;
+    fastf_t bounding_radius;
+    fastf_t dist_to_eye;
+    point_t from;
+    point_t light_loc;
+    char buf[COPY_BUF_SIZE];
+    size_t read_size;
+    int c;
+    double percent;
+    int i;
+
+    const char usage[] = "\
+Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n\
+[-e error_file ] [-D dist_calc_tol] [-o output.nff] database.g object(s)\n";
+
+    bu_setprogname(argv[0]);
+    bu_setlinebuf(stderr);
+
+    VSETALL(model_min, MAX_FASTF);
+    VREVERSE(model_max, model_min);
+
+    tree_state = rt_initial_tree_state;	/* struct copy */
+    tree_state.ts_tol = &tol;
+    tree_state.ts_ttol = &ttol;
+    tree_state.ts_m = &the_model;
+
+    ttol.magic = RT_TESS_TOL_MAGIC;
+    /* Defaults, updated by command line options. */
+    ttol.abs = 0.0;
+    ttol.rel = 0.01;
+    ttol.norm = 0.0;
+
+    /* FIXME: These need to be improved */
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.0005;
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = 1e-6;
+    tol.para = 1 - tol.perp;
+
+    rt_init_resource(&rt_uniresource, 0, NULL);
+
+    the_model = nmg_mm();
+    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
+
+    /* Get command line arguments. */
+    while ((c = bu_getopt(argc, argv, "a:n:o:r:vx:D:P:X:e:i")) != -1) {
+	switch (c) {
+	    case 'a':		/* Absolute tolerance. */
+		ttol.abs = atof(bu_optarg);
+		ttol.rel = 0.0;
+		break;
+	    case 'n':		/* Surface normal tolerance. */
+		ttol.norm = atof(bu_optarg);
+		ttol.rel = 0.0;
+		break;
+	    case 'o':		/* Output file name. */
+		output_file = bu_optarg;
+		break;
+	    case 'r':		/* Relative tolerance. */
+		ttol.rel = atof(bu_optarg);
+		break;
+	    case 'v':
+		verbose++;
+		break;
+	    case 'x':
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.debug);
+		break;
+	    case 'D':
+		tol.dist = atof(bu_optarg);
+		tol.dist_sq = tol.dist * tol.dist;
+		rt_pr_tol(&tol);
+		break;
+	    case 'X':
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
+		NMG_debug = rt_g.NMG_debug;
+		break;
+	    case 'e':		/* Error file name. */
+		error_file = bu_optarg;
+		break;
+	    case 'i':
+		inches = 1;
+		break;
+	    default:
+		bu_exit(1, usage, argv[0]);
+		break;
+	}
+    }
+
+    if (bu_optind+1 >= argc) {
+	bu_exit(1, usage, argv[0]);
+    }
+
+    if (!output_file) {
+	bu_exit(1, "No output file specified!\n");
+    }
+
+    /* Open output file */
+    if ((fpf = fopen(output_file, "wb+")) == NULL) {
+	perror(argv[0]);
+	bu_exit(1, "Cannot open output file (%s) for writing\n", output_file);
+    }
+
+    /* Open temporary ouitput file */
+    fp = bu_temp_file(NULL, 0);
+
+    /* Open error log file */
+    if (!error_file) {
+	fpe = stderr;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	setmode(fileno(fpe), O_BINARY);
+#endif
+    } else if ((fpe=fopen(error_file, "wb")) == NULL) {
+	perror(argv[0]);
+	bu_exit(1, "Cannot open output file (%s) for writing\n", error_file);
+    }
+
+    /* Open BRL-CAD database */
+    argc -= bu_optind;
+    argv += bu_optind;
+    if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
+	perror(argv[0]);
+	bu_exit(1, "ERROR: unable to open geometry database file (%s)\n", argv[0]);
+    }
+    if (db_dirbuild(dbip)) {
+	bu_exit(1, "db_dirbuild failed\n");
+    }
+
+    BN_CK_TOL(tree_state.ts_tol);
+    RT_CK_TESS_TOL(tree_state.ts_ttol);
+
+    fprintf(fpe, "Model: %s\n", argv[0]);
+    fprintf(fpe, "Objects:");
+    for (i = 1; i < argc; i++)
+	fprintf(fpe, " %s", argv[i]);
+    fprintf(fpe, "\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
+	    tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
+    fprintf(fpe, "Calculational tolerances:\n\tdist = %g mm perp = %g\n",
+	    tree_state.ts_tol->dist, tree_state.ts_tol->perp);
+
+    bu_log("Model: %s\n", argv[0]);
+    bu_log("Objects:");
+    for (i = 1; i < argc; i++)
+	bu_log(" %s", argv[i]);
+    bu_log("\nTesselation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
+	   tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
+    bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
+	   tree_state.ts_tol->dist, tree_state.ts_tol->perp);
+
+    /* Walk indicated tree(s).  Each region will be output separately */
+    (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
+			1,			/* ncpu */
+			&tree_state,
+			0,			/* take all regions */
+			do_region_end,
+			nmg_booltree_leaf_tess,
+			(genptr_t)NULL);	/* in librt/nmg_bool.c */
+
+    percent = 0;
+    if (regions_tried > 0) {
+	percent = ((double)regions_converted * 100) / regions_tried;
+	printf("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
+	       regions_tried, regions_converted, percent);
+    }
+    percent = 0;
+
+    if (regions_tried > 0) {
+	percent = ((double)regions_written * 100) / regions_tried;
+	printf("                  %d triangulated successfully. %g%%\n",
+	       regions_written, percent);
+    }
+
+    bu_log("%ld triangles written\n", tot_polygons);
+    fprintf(fpe, "%ld triangles written\n", tot_polygons);
+
+    /* Release dynamic storage */
+    nmg_km(the_model);
+    rt_vlist_cleanup();
+    db_close(dbip);
+
+    /* write view information in the NFF file */
+    fprintf(fpf, "v\n");
+    VADD2(model_center, model_max, model_min);
+    VSCALE(model_center, model_center, 0.5);
+    VSET(view_dir, cos(M_PI_4) * cos(M_PI_4), cos(M_PI_4) * sin(M_PI_4), sin(M_PI_4));
+    VSUB2(model_diag, model_max, model_min);
+    bounding_radius = 0.5 * MAGNITUDE(model_diag);
+    dist_to_eye = 2.0 * bounding_radius / tan(M_PI_4);
+    VJOIN1(from, model_center, dist_to_eye, view_dir);
+
+    /* from */
+    fprintf(fpf, "from %g %g %g\n", V3ARGS(from));
+
+    /* at */
+    fprintf(fpf, "at %g %g %g\n", V3ARGS(model_center));
+
+    /* up
+     * this will only work for 45, 45 view
+     */
+    fprintf(fpf, "up %g %g %g\n", -view_dir[X], -view_dir[Y], view_dir[Z]);
+
+    /* angle */
+    fprintf(fpf, "angle 45\n");
+
+    /* hither */
+    fprintf(fpf, "hither 0.0\n");
+
+    /* resolution */
+    fprintf(fpf, "resolution 512 512\n");
+
+    /* a light */
+    VJOIN1(light_loc, model_center, dist_to_eye + 10.0, view_dir);
+    fprintf(fpf, "l %g %g %g 1 1 1\n", V3ARGS(light_loc));
+
+
+    /* copy the temporary file to the final file */
+    rewind(fp);
+    while ((read_size=fread(buf, 1, COPY_BUF_SIZE, fp))) {
+	size_t ret;
+	ret = fwrite(buf, read_size, 1, fpf);
+	if (ret < 1)
+	    perror("fwrite");
+    }
+
+    fclose(fpf);
+    fclose(fp);
+
+    return 0;
 }
 
 
