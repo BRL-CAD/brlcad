@@ -21,7 +21,7 @@
 /** @{ */
 /** @file brep.h
  *
- * Define surface and curve structures for Non Rational Uniform
+ * Define surface and curve structures for Non-Uniform Rational
  * B-Spline (NURBS) curves and surfaces. Uses openNURBS library.
  *
  */
