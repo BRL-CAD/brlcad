@@ -864,7 +864,7 @@ public:
     // the center of the parametric domain
     ON_3dPoint m_estimate;
 
-    // Normal at the m_estiamte point
+    // Normal at the m_estimate point
     ON_3dVector m_normal;
 
     // Test whether a ray intersects the 3D bounding volume
@@ -873,7 +873,7 @@ public:
     bool intersectedBy(ON_Ray& ray, double* tnear = 0, double* tfar = 0);
     bool intersectsHierarchy(ON_Ray& ray, std::list<BVNode<ON_BoundingBox>*>& results);
 
-    // Report if a given uv point is within the uv boundardies
+    // Report if a given uv point is within the uv boundaries
     // defined by a node.
     bool containsUV(const ON_2dPoint& uv);
 
@@ -1592,7 +1592,7 @@ extern ON_Curve* pullback_curve(ON_BrepFace* face,
  * parameter spaces.
  *
  * approach:
- * 
+ *
  * - Generate the bounding box of the two surfaces.
  *
  * - If their bounding boxes intersect:
@@ -1609,7 +1609,7 @@ extern ON_Curve* pullback_curve(ON_BrepFace* face,
  *   points of the triangles (both in 3d space and two surfaces' UV
  *   space)
  *
- * - Fit the intersetion points into polyline curves, and then to NURBS
+ * - Fit the intersection points into polyline curves, and then to NURBS
  *   curves. Points with distance less than max_dis are considered in
  *   one curve.
  *
