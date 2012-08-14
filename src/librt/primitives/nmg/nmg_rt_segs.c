@@ -682,15 +682,8 @@ state4(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
     return ret_val;
 }
 
-
-HIDDEN int
-state5(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
-
-
+static inline int
+state5and6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol, int ret_val_7)
 {
     int ret_val = -1;
     double delta;
@@ -752,7 +745,7 @@ state5(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 	    BN_CK_TOL(tol);
 	    delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
 	    if (delta < tol->dist) {
-		ret_val = 5;
+		ret_val = ret_val_7;
 	    } else {
 		/* complete the segment */
 		BU_LIST_MAGIC_SET(&((*seg_p)->l), RT_SEG_MAGIC);
@@ -776,6 +769,17 @@ state5(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
     return ret_val;
 }
 
+HIDDEN int
+state5(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
+    /* intersection w/ ray */
+    /* The segment we're building */
+    /* The number of valid segments built */
+    /* The input hit point */
+
+{
+    return state5and6(seghead, seg_p, seg_count, a_hit, stp, ap, tol, 5);
+}
+
 
 HIDDEN int
 state6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
@@ -784,90 +788,8 @@ state6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
     /* The number of valid segments built */
     /* The input hit point */
 
-
 {
-    int ret_val = -1;
-    double delta;
-
-    NMG_CK_HITMISS(a_hit);
-
-    switch (a_hit->in_out) {
-	case HMG_HIT_OUT_ON:
-	case HMG_HIT_OUT_IN:
-	    CK_SEGP(seg_p);
-	    BN_CK_TOL(tol);
-	    delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
-	    if (delta < tol->dist) {
-		ret_val = 5;
-	    } else {
-		/* complete the segment */
-		BU_LIST_MAGIC_SET(&((*seg_p)->l), RT_SEG_MAGIC);
-		BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l));
-		(*seg_count)++;
-
-		/* start new segment */
-		(*seg_p) = (struct seg *)NULL;
-		set_inpoint(seg_p, a_hit, stp, ap);
-		ret_val = 1;
-	    }
-	    break;
-	case HMG_HIT_IN_IN:
-	case HMG_HIT_ON_IN:
-	case HMG_HIT_IN_ON:
-	case HMG_HIT_ON_ON:
-	    ret_val = 1;
-	    break;
-	case HMG_HIT_ON_OUT:
-	case HMG_HIT_IN_OUT:
-	    set_outpoint(seg_p, a_hit);
-	    ret_val = 2;
-	    break;
-	case HMG_HIT_OUT_OUT:
-	    CK_SEGP(seg_p);
-	    BN_CK_TOL(tol);
-	    delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
-	    if (delta < tol->dist) {
-		ret_val = 6;
-	    } else {
-		/* complete the segment */
-		BU_LIST_MAGIC_SET(&((*seg_p)->l), RT_SEG_MAGIC);
-		BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l));
-		(*seg_count)++;
-
-		/* start new segment */
-		(*seg_p) = (struct seg *)NULL;
-		set_inpoint(seg_p, a_hit, stp, ap);
-		set_outpoint(seg_p, a_hit);
-		ret_val = 3;
-	    }
-	    break;
-	case HMG_HIT_ANY_ANY:
-	    CK_SEGP(seg_p);
-	    BN_CK_TOL(tol);
-	    delta = fabs((*seg_p)->seg_in.hit_dist - a_hit->hit.hit_dist);
-	    if (delta < tol->dist) {
-		ret_val = 6;
-	    } else {
-		/* complete the segment */
-		BU_LIST_MAGIC_SET(&((*seg_p)->l), RT_SEG_MAGIC);
-		BU_LIST_INSERT(&(seghead->l), &((*seg_p)->l));
-		(*seg_count)++;
-
-		/* start new segment */
-		(*seg_p) = (struct seg *)NULL;
-		set_inpoint(seg_p, a_hit, stp, ap);
-		set_outpoint(seg_p, a_hit);
-		ret_val = 4;
-	    }
-	    break;
-	default:
-	    bu_log("%s[line:%d]: bogus hit in/out status\n",
-		   __FILE__, __LINE__);
-	    nmg_rt_segs_exit("Goodbye\n");
-	    break;
-    }
-
-    return ret_val;
+    return state5and6(seghead, seg_p, seg_count, a_hit, stp, ap, tol, 6);
 }
 
 
