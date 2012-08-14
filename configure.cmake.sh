@@ -180,6 +180,6 @@ do
      *) 	   	          echo "Warning: unknown option $1";
      		   	          shift;;
    esac
-done 
+done
 echo cmake $options
 cmake $options
