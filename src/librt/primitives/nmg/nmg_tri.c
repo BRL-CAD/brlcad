@@ -3463,6 +3463,7 @@ validate_tbl2d(const char *str, struct bu_list *tbl2d, struct faceuse *fu)
     }
 }
 
+#define NEW_CUT_UNIMONOTONE 1
 
 /**
  * C U T _ U N I M O N O T O N E
@@ -3484,9 +3485,12 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
     int isect_vertex = 0;
 
     vect_t fu_normal;
+#ifndef NEW_CUT_UNIMONOTONE
     vect_t v0, v1, v2;
     fastf_t dot00, dot01, dot02, dot11, dot12;
-    fastf_t invDenom, u, v;
+    fastf_t invDenom;
+    fastf_t u, v;
+#endif
     fastf_t dist;
 
     struct pt2d *min, *max, *newpt, *first, *prev, *next, *current, *tmp;
@@ -3569,11 +3573,13 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 	prev = PT2D_PREV(tbl2d, current);
 	next = PT2D_NEXT(tbl2d, current);
 
+#ifndef NEW_CUT_UNIMONOTONE
 	VSETALL(v0, 0.0);
 	VSETALL(v1, 0.0);
 	VSETALL(v2, 0.0);
 	dot00 = dot01 = dot02 = dot11 = dot12 = 0.0;
 	invDenom = u = v = 0.0;
+#endif
 	prev_vg_p = (struct vertex_g *)NULL;
 
 	/* test if any of the loopuse vertices are within the triangle
@@ -3608,7 +3614,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 
 		/* skips processing the same vertex */
 		if (prev_vg_p != pt->vu_p->v_p->vg_p) {
-#if 1
+#ifdef NEW_CUT_UNIMONOTONE
 		    int isect_result;
 		    isect_result = nmg_isect_pt_facet(pt->vu_p->v_p, prev->vu_p->v_p, 
 						      current->vu_p->v_p, next->vu_p->v_p, tol);
