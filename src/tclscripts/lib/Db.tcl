@@ -55,7 +55,6 @@
 	method edmater {args}
 	method expand {args}
 	method facetize {args}
-	method voxelize {args}
 	method find {args}
 	method form {args}
 	method g {args}
@@ -117,6 +116,7 @@
 	method unhide {args}
 	method units {args}
 	method version {args}
+	method voxelize {args}
 	method whatid {args}
 	method whichair {args}
 	method whichid {args}

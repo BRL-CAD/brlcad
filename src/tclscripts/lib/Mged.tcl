@@ -75,7 +75,6 @@ option add *Mged.height 400 widgetDefault
 	method ev {args}
 	method expand {args}
 	method facetize {args}
-	method voxelize {args}
 	method find {args}
 	method form {args}
 	method g {args}
@@ -144,6 +143,7 @@ option add *Mged.height 400 widgetDefault
 	method unhide {args}
 	method units {args}
 	method vdraw {args}
+	method voxelize {args}
 	method whatid {args}
 	method whichair {args}
 	method whichid {args}
