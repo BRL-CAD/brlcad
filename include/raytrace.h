@@ -601,7 +601,7 @@ struct region {
  * Partitions of a ray.  Passed from rt_shootray() into user's a_hit()
  * function.
  *
- * Not changed to a bu_list for backwards compatability, but you can
+ * Not changed to a bu_list for backwards compatibility, but you can
  * iterate the whole list by writing:
  *
  * for (BU_LIST_FOR(pp, partition, (struct bu_list *)PartHeadp))
@@ -962,12 +962,12 @@ struct rt_comb_internal {
     union tree *	tree;		/**< @brief Leading to tree_db_leaf leaves */
     char		region_flag;	/**< @brief !0 ==> this COMB is a REGION */
     char		is_fastgen;	/**< @brief REGION_NON_FASTGEN/_PLATE/_VOLUME */
-    /* Begin GIFT compatability */
+    /* Begin GIFT compatibility */
     long		region_id;      /* DEPRECATED, use attribute */
     long		aircode;        /* DEPRECATED, use attribute */
     long		GIFTmater;      /* DEPRECATED, use attribute */
     long		los;            /* DEPRECATED, use attribute */
-    /* End GIFT compatability */
+    /* End GIFT compatibility */
     char		rgb_valid;	/**< @brief !0 ==> rgb[] has valid color */
     unsigned char	rgb[3];
     float		temperature;	/**< @brief > 0 ==> region temperature */
@@ -1551,7 +1551,7 @@ struct rt_reprep_obj_list {
 /**
  * P I X E L _ E X T
  *
- * This structure is intended to descrbe the area and/or volume
+ * This structure is intended to describe the area and/or volume
  * represented by a ray.  In the case of the "rt" program it
  * represents the extent in model coordinates of the prism behind the
  * pixel being rendered.
