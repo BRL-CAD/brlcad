@@ -26,10 +26,16 @@
 #ifndef __OPENNURBS_EXT
 #define __OPENNURBS_EXT
 
-#include "opennurbs.h"
+#include "common.h"
+
 #include <vector>
 #include <list>
 #include <iostream>
+#include <assert.h>
+
+#include "dvec.h"
+#include "opennurbs.h"
+
 #include "vmath.h"
 #include "dvec.h"
 
@@ -42,6 +48,7 @@ public:
     vect_t n2;
     fastf_t d2;
 };
+
 
 /**
  * These definitions were added to opennurbs_curve.h - they are
@@ -791,10 +798,6 @@ private:
 // Bounding volume hierarchy classes
 
 template<class BV>
-class BVNode;
-
-
-template<class BV>
 class BVNode {
 public:
     BVNode();
@@ -894,6 +897,7 @@ private:
 
 
 typedef BVNode<ON_BoundingBox> BBNode;
+
 
 //--------------------------------------------------------------------------------
 // Template Implementation
@@ -1057,7 +1061,7 @@ BVNode<BV>::intersectedBy(ON_Ray& ray, double* tnear_opt, double* tfar_opt)
 	    if (t2 < tfar) tfar = t2;
 	    if (tnear > tfar) /* box is missed */ untrimmedresult = false;
 	    /* go ahead and solve hits behind us
-	    if (tfar < 0)  untrimmedresult = false;
+	       if (tfar < 0) untrimmedresult = false;
 	    */
 	}
     }
@@ -1581,7 +1585,6 @@ extern ON_Curve* pullback_curve(ON_BrepFace* face,
 				double flatness = 1.0e-3);
 
 
-
 extern int surface_surface_intersection(const ON_Surface* surfA,
 					const ON_Surface* surfB,
 					ON_SimpleArray<ON_NurbsCurve*> &intersect3dy,
@@ -1591,6 +1594,7 @@ extern int surface_surface_intersection(const ON_Surface* surfA,
 					double tolerance = 1.0e-3);
 
 }
+
 #endif
 
 /*
