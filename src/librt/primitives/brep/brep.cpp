@@ -3306,6 +3306,10 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
     std::stack<int> s;
     s.push(0);
     for (int i = 1; i < sorted_pointers.Count(); i++) {
+	if (s.empty()) {
+	    s.push(i);
+	    continue;
+	}
 	IntersectPoint *p = sorted_pointers[s.top()];
 	IntersectPoint *q = sorted_pointers[i];
 	if (q->m_type != p->m_type) {
@@ -3456,11 +3460,16 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_NurbsCurve*> &l
 	int start_idx = start_v.m_vertex_index;
 	int end_idx = end_v.m_vertex_index;
 
-	ON_NurbsCurve *c3d;
-	if (loop[k]->CVCount() == 2) {
+	ON_NurbsCurve *c3d = ON_NurbsCurve::New();
+	// First, try the ON_Surface::Pushup() method.
+	// If Pushup() does not succeed, use sampling method.
+	ON_Curve *curve_pt = face.SurfaceOf()->Pushup(*(loop[k]), 1e-3);
+	if (curve_pt) {
+	    curve_pt->GetNurbForm(*c3d);
+	    delete curve_pt;
+	} else if (loop[k]->CVCount() == 2) {
 	    // A closed curve with two control points
 	    // TODO: Sometimes we need a sigular trim.
-	    c3d = ON_NurbsCurve::New();
 	    ON_3dPointArray ptarray(101);
 	    for (int l = 0; l <= 100; l++) {
 		ON_3dPoint pt2d;
@@ -3470,6 +3479,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_NurbsCurve*> &l
 	    ON_PolylineCurve polycurve(ptarray);
 	    polycurve.GetNurbForm(*c3d);
 	} else {
+	    delete c3d;
 	    c3d = loop[k]->Duplicate();
 	    c3d->ChangeDimension(3);
 	    for (int l = 0; l < loop[k]->CVCount(); l++) {
