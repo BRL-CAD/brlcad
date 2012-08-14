@@ -2188,11 +2188,25 @@ mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
 mark_as_advanced(EXECUTABLE_OUTPUT_PATH)
 mark_as_advanced(LIBRARY_OUTPUT_PATH)
 
+# ----------------------------------------------------------------------------
 # If options have been defined that we are going to document, by now they've
 # been documented.  Make an updated copy of the "INSTALL" file and see whether
-# anything has changed - we're not going to overwrite the copy in the src
-# directory (principle of this build is to leave the src dir pristine after
-# configuration and compilation) but check for changes and report if found.
+# anything has changed. 
+#
+# Although the general principle of this build is to leave the src dir 
+# pristine after configuration and compilation, the INSTALL and configure files 
+# represent one of two cases where the default behavior is to alter the files
+# if changes have occurred.  (The other is cached generated outputs from tools
+# such as re2c and lemon.)  For the purposes of this project, a given
+# option's documetation is defined in the CMakeLists.txt source file with 
+# the option definiton logic - the text in INSTALL is simply an output from
+# that, and is never the correct place for manual changes.
+#
+# As with generated outputs, this auto-updating behavior can be overridden
+# by setting the CMake variable LOCKED_SOURCE_DIR to ON - in that case, a
+# warning about out-of-sync files is printed but no automatic updating takes
+# place in the source tree.
+
 file(READ ${BRLCAD_SOURCE_DIR}/INSTALL SRC_INSTALL_STR)
 string(REGEX REPLACE "${CONFIG_OPT_STRING}.*" "" INSTALL_PREFIX	"${SRC_INSTALL_STR}")
 file(WRITE ${BRLCAD_BINARY_DIR}/INSTALL.new "${INSTALL_PREFIX}")
@@ -2209,12 +2223,12 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
   RESULT_VARIABLE IS_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
   DIFF_ERROR)
 if(IS_DIFFERENT)
-  if(LOCK_SOURCE_DIR)
+  if(LOCKED_SOURCE_DIR)
     message(WARNING "\n${BRLCAD_SOURCE_DIR}/INSTALL is out of date.  An updated version has been generated at ${BRLCAD_BINARY_DIR}/INSTALL.new\nTo clear this warning, replace ${BRLCAD_SOURCE_DIR}/INSTALL with ${BRLCAD_BINARY_DIR}/INSTALL.new\n")
-  else(LOCK_SOURCE_DIR)
+  else(LOCKED_SOURCE_DIR)
     set_source_files_properties(${BRLCAD_BINARY_DIR}/INSTALL.new PROPERTIES GENERATED TRUE)
     configure_file(${BRLCAD_BINARY_DIR}/INSTALL.new ${BRLCAD_SOURCE_DIR}/INSTALL COPYONLY)
-  endif(LOCK_SOURCE_DIR)
+  endif(LOCKED_SOURCE_DIR)
 endif(IS_DIFFERENT)
 
 # Do the same thing for the configure shell script - finish it and check
@@ -2227,12 +2241,12 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
   RESULT_VARIABLE IS_CONFIG_SH_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
   DIFF_ERROR)
 if(IS_CONFIG_SH_DIFFERENT)
-  if(LOCK_SOURCE_DIR)
+  if(LOCKED_SOURCE_DIR)
     message(WARNING "\n${BRLCAD_SOURCE_DIR}/configure.cmake.sh is out of date. An updated version has been generated at ${BRLCAD_BINARY_DIR}/configure.new\nTo clear this warning, replace ${BRLCAD_SOURCE_DIR}/configure.cmake.sh with ${BRLCAD_BINARY_DIR}/configure.new\n")
-  else(LOCK_SOURCE_DIR)
+  else(LOCKED_SOURCE_DIR)
     set_source_files_properties(${BRLCAD_BINARY_DIR}/configure.new PROPERTIES GENERATED TRUE)
     configure_file(${BRLCAD_BINARY_DIR}/configure.new ${BRLCAD_SOURCE_DIR}/configure.cmake.sh COPYONLY)
-  endif(LOCK_SOURCE_DIR)
+  endif(LOCKED_SOURCE_DIR)
 endif(IS_CONFIG_SH_DIFFERENT)
 
 
