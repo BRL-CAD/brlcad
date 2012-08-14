@@ -31,7 +31,17 @@
 #include <list>
 #include <iostream>
 #include "vmath.h"
+#include "dvec.h"
 
+
+class plane_ray {
+public:
+    vect_t n1;
+    fastf_t d1;
+
+    vect_t n2;
+    fastf_t d2;
+};
 
 /**
  * These definitions were added to opennurbs_curve.h - they are
@@ -98,6 +108,10 @@ public:
     }
 };
 
+void brep_get_plane_ray(ON_Ray& r, plane_ray& pr);
+void brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R);
+void brep_newton_iterate(plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv);
+void brep_newton_iterate(const ON_Surface* UNUSED(surf), plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv);
 
 ON_DECL
 bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);

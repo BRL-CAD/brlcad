@@ -48,6 +48,7 @@
 
 #include "brep_debug.h"
 
+#include "nurbs.h"
 
 #define BN_VMATH_PREFIX_INDICES 1
 #define ROOT_TOL 1.E-7
@@ -436,40 +437,6 @@ rt_brep_print(const struct soltab *stp)
 //================================================================================
 // shot support
 
-class plane_ray {
-public:
-    vect_t n1;
-    fastf_t d1;
-
-    vect_t n2;
-    fastf_t d2;
-};
-
-
-void
-brep_get_plane_ray(ON_Ray& r, plane_ray& pr)
-{
-    vect_t v1;
-    VMOVE(v1, r.m_dir);
-    fastf_t min = MAX_FASTF;
-    int index = -1;
-    for (int i = 0; i < 3; i++) {
-	// find the smallest component
-	if (fabs(v1[i]) < min) {
-	    min = fabs(v1[i]);
-	    index = i;
-	}
-    }
-    v1[index] += 1; // alter the smallest component
-    VCROSS(pr.n1, v1, r.m_dir); // n1 is perpendicular to v1
-    VUNITIZE(pr.n1);
-    VCROSS(pr.n2, pr.n1, r.m_dir);       // n2 is perpendicular to v1 and n1
-    VUNITIZE(pr.n2);
-    pr.d1 = VDOT(pr.n1, r.m_origin);
-    pr.d2 = VDOT(pr.n2, r.m_origin);
-    TRACE1("n1:" << ON_PRINT3(pr.n1) << " n2:" << ON_PRINT3(pr.n2) << " d1:" << pr.d1 << " d2:" << pr.d2);
-}
-
 
 class brep_hit {
 public:
@@ -566,121 +533,6 @@ public:
 typedef std::list<brep_hit> HitList;
 
 
-void
-brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R)
-{
-    assert(surf->Ev1Der(uv[0], uv[1], pt, su, sv));
-    R[0] = VDOT(pr.n1, ((fastf_t*)pt)) - pr.d1;
-    R[1] = VDOT(pr.n2, ((fastf_t*)pt)) - pr.d2;
-}
-
-
-void
-brep_newton_iterate(plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
-{
-    mat2d_t jacob = { VDOT(pr.n1, ((fastf_t*)su)), VDOT(pr.n1, ((fastf_t*)sv)),
-		      VDOT(pr.n2, ((fastf_t*)su)), VDOT(pr.n2, ((fastf_t*)sv)) };
-    mat2d_t inv_jacob;
-    if (mat2d_inverse(inv_jacob, jacob)) {
-	// check inverse validity
-	pt2d_t tmp;
-	mat2d_pt2d_mul(tmp, inv_jacob, R);
-	pt2dsub(out_uv, uv, tmp);
-    } else {
-	TRACE2("inverse failed"); // XXX how to handle this?
-	move(out_uv, uv);
-    }
-}
-
-
-int
-brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
-    plane_ray pr;
-    const ON_Surface *surf = node->m_face->SurfaceOf();
-    double umin, umax;
-    double vmin, vmax;
-    surf->GetDomain(0, &umin, &umax);
-    surf->GetDomain(1, &vmin, &vmax);
-
-    ON_3dVector dir = node->m_normal;
-    dir.Reverse();
-    ON_Ray ray((ON_3dPoint&)pt, dir);
-    brep_get_plane_ray(ray, pr);
-
-    //know use this as guess to iterate to closer solution
-    pt2d_t Rcurr;
-    pt2d_t new_uv;
-    ON_3dVector su, sv;
-    bool found=false;
-    fastf_t Dlast = MAX_FASTF;
-    pt2d_t nuv;
-    nuv[0] = (node->m_u[1] + node->m_u[0])/2.0;
-    nuv[1] = (node->m_v[1] + node->m_v[0])/2.0;
-    ON_3dPoint newpt;
-    for (int i = 0; i < BREP_MAX_ITERATIONS; i++) {
-	brep_r(surf, pr, nuv, newpt, su, sv, Rcurr);
-	fastf_t d = v2mag(Rcurr);
-
-	if (d < BREP_INTERSECTION_ROOT_EPSILON) {
-	    TRACE1("R:"<<ON_PRINT2(Rcurr));
-	    found = true;
-	    break;
-	} else if (d < BREP_INTERSECTION_ROOT_SETTLE) {
-	    found = true;
-	}
-	brep_newton_iterate(pr, Rcurr, su, sv, nuv, new_uv);
-
-	//Check for closed surface wrap around
-	if (surf->IsClosed(0)) {
-	    if (new_uv[0] < umin) {
-		new_uv[0] = umin;
-	    } else if (new_uv[0] > umax) {
-		new_uv[0] = umax;
-	    }
-	}
-	if (surf->IsClosed(1)) {
-	    if (new_uv[1] < vmin) {
-		new_uv[1] = vmin;
-	    } else if (new_uv[1] > vmax) {
-		new_uv[1] = vmax;
-	    }
-	}
-#ifdef HOOD
-	//push answer back to within node bounds
-	double ufluff = (node->m_u[1] - node->m_u[0])*0.01;
-	double vfluff = (node->m_v[1] - node->m_v[0])*0.01;
-#else
-	//push answer back to within node bounds
-	double ufluff = 0.0;
-	double vfluff = 0.0;
-#endif
-	if (new_uv[0] < node->m_u[0] - ufluff)
-	    new_uv[0] = node->m_u[0];
-	else if (new_uv[0] > node->m_u[1] + ufluff)
-	    new_uv[0] = node->m_u[1];
-
-	if (new_uv[1] < node->m_v[0] - vfluff)
-	    new_uv[1] = node->m_v[0];
-	else if (new_uv[1] > node->m_v[1] + vfluff)
-	    new_uv[1] = node->m_v[1];
-
-
-	surf->EvNormal(new_uv[0], new_uv[1], newpt, ray.m_dir);
-	ray.m_dir.Reverse();
-	brep_get_plane_ray(ray, pr);
-
-	if (d < Dlast) {
-	    move(nuv, new_uv);
-	    Dlast = d;
-	}
-    }
-    if (found) {
-	uv.x = nuv[0];
-	uv.y = nuv[1];
-	return 1;
-    }
-    return -1;
-}
 
 
 typedef enum {

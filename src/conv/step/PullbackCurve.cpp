@@ -59,76 +59,12 @@ typedef struct _bspline
 } BSpline;
 
 
-class plane_ray
-{
-public:
-    vect_t n1;
-    fastf_t d1;
-
-    vect_t n2;
-    fastf_t d2;
-};
-
-
 bool
 isFlat(const ON_2dPoint& p1, const ON_2dPoint& m, const ON_2dPoint& p2, double flatness)
 {
     ON_Line line = ON_Line(ON_3dPoint(p1), ON_3dPoint(p2));
     return line.DistanceTo(ON_3dPoint(m)) <= flatness;
 }
-
-
-void
-brep_get_plane_ray(ON_Ray& r, plane_ray& pr)
-{
-    vect_t v1;
-    VMOVE(v1, r.m_dir);
-    fastf_t min = MAX_FASTF;
-    int index = -1;
-    for (int i = 0; i < 3; i++) {
-	// find the smallest component
-	if (fabs(v1[i]) < min) {
-	    min = fabs(v1[i]);
-	    index = i;
-	}
-    }
-    v1[index] += 1; // alter the smallest component
-    VCROSS(pr.n1, v1, r.m_dir); // n1 is perpendicular to v1
-    VUNITIZE(pr.n1);
-    VCROSS(pr.n2, pr.n1, r.m_dir);       // n2 is perpendicular to v1 and n1
-    VUNITIZE(pr.n2);
-    pr.d1 = VDOT(pr.n1, r.m_origin);
-    pr.d2 = VDOT(pr.n2, r.m_origin);
-    TRACE1("n1:" << ON_PRINT3(pr.n1) << " n2:" << ON_PRINT3(pr.n2) << " d1:" << pr.d1 << " d2:" << pr.d2);
-}
-
-
-void
-brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R)
-{
-    assert(surf->Ev1Der(uv[0], uv[1], pt, su, sv));
-    R[0] = VDOT(pr.n1, ((fastf_t*)pt)) - pr.d1;
-    R[1] = VDOT(pr.n2, ((fastf_t*)pt)) - pr.d2;
-}
-
-
-void
-brep_newton_iterate(const ON_Surface* UNUSED(surf), plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
-{
-    mat2d_t jacob = { VDOT(pr.n1, ((fastf_t*)su)), VDOT(pr.n1, ((fastf_t*)sv)),
-		      VDOT(pr.n2, ((fastf_t*)su)), VDOT(pr.n2, ((fastf_t*)sv)) };
-    mat2d_t inv_jacob;
-    if (mat2d_inverse(inv_jacob, jacob)) {
-	// check inverse validity
-	pt2d_t tmp;
-	mat2d_pt2d_mul(tmp, inv_jacob, R);
-	pt2dsub(out_uv, uv, tmp);
-    } else {
-	TRACE2("inverse failed"); // FIXME: how to handle this?
-	move(out_uv, uv);
-    }
-}
-
 
 void
 utah_ray_planes(const ON_Ray &r, ON_3dVector &p1, double &p1d, ON_3dVector &p2, double &p2d)
