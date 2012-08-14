@@ -2626,6 +2626,167 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
     }
 }
 
+/*
+ * 0 = no isect (out)
+ * 1 = isect edge, but not vertex (on)
+ * 2 = isect vertex (shared, vertex fused)
+ * 3 = isect vertex (non-shared, vertex not fused)
+ * 4 = inside (on)
+ */
+
+int
+nmg_isect_pt_facet(struct vertex *v, struct vertex *v0, struct vertex *v1, struct vertex *v2, const struct bn_tol *tol)
+{
+    fastf_t *p, *p0, *p1, *p2;
+    fastf_t dp0p1, dp0p2, dp1p2; /* dist p0->p1, p0->p2, p1->p2 */
+    fastf_t dpp0, dpp1, dpp2;    /* dist p->p0, p->p1, p->p2 */
+    point_t bb_min, bb_max;
+    vect_t p0_p2, p0_p1, p0_p;
+    fastf_t p0_p2_magsq, p0_p1_magsq;
+    fastf_t p0_p2__p0_p1, p0_p2__p0_p, p0_p1__p0_p;
+    fastf_t u, v00, u_numerator, v_numerator, denom;
+    int degen_p0p1, degen_p0p2, degen_p1p2;
+    int para_p0_p1__p0_p;
+    int para_p0_p2__p0_p;
+    int para_p1_p2__p1_p;
+
+    NMG_CK_VERTEX(v);
+    NMG_CK_VERTEX(v0);
+    NMG_CK_VERTEX(v1);
+    NMG_CK_VERTEX(v2);
+    NMG_CK_VERTEX_G(v->vg_p);
+    NMG_CK_VERTEX_G(v0->vg_p);
+    NMG_CK_VERTEX_G(v1->vg_p);
+    NMG_CK_VERTEX_G(v2->vg_p);
+
+    p = v->vg_p->coord;
+    p0 = v0->vg_p->coord;
+    p1 = v1->vg_p->coord;
+    p2 = v2->vg_p->coord;
+
+    degen_p0p1 = degen_p0p2 = degen_p1p2 = 0;
+    if (v0 == v1) {
+	degen_p0p1 = 1;
+    }
+    if (v0 == v2) {
+	degen_p0p2 = 1;
+    }
+    if (v1 == v2) {
+	degen_p1p2 = 1;
+    }
+
+    if (v == v0 || v == v1 || v == v2) {
+	return 2; /* isect vertex (shared, vertex fused) */
+    }
+
+    /* find facet bounding box */
+    VSETALL(bb_min, MAX_FASTF);
+    VSETALL(bb_max, -MAX_FASTF);
+    VMINMAX(bb_min, bb_max, p0);
+    VMINMAX(bb_min, bb_max, p1);
+    VMINMAX(bb_min, bb_max, p2);
+
+    if (V3PT_OUT_RPP_TOL(p, bb_min, bb_max, tol->dist)) {
+	return 0; /* no isect */
+    }
+
+    dp0p1 = bn_dist_pt3_pt3(p0, p1);
+    dp0p2 = bn_dist_pt3_pt3(p0, p2);
+    dp1p2 = bn_dist_pt3_pt3(p1, p2);
+
+    if (!degen_p0p1 && (dp0p1 < tol->dist)) {
+	degen_p0p1 = 2;
+    }
+    if (!degen_p0p2 && (dp0p2 < tol->dist)) {
+	degen_p0p2 = 2;
+    }
+    if (!degen_p1p2 && (dp1p2 < tol->dist)) {
+	degen_p1p2 = 2;
+    }
+
+    dpp0 = bn_dist_pt3_pt3(p, p0);
+    dpp1 = bn_dist_pt3_pt3(p, p1);
+    dpp2 = bn_dist_pt3_pt3(p, p2);
+
+    if (dpp0 < tol->dist || dpp1 < tol->dist || dpp2 < tol->dist) {
+	return 3; /* isect vertex (non-shared, vertex not fused) */
+    }
+
+    para_p0_p1__p0_p = para_p0_p2__p0_p = para_p1_p2__p1_p = 0;
+    /* test p against edge p0->p1 */
+    if (!degen_p0p1 && bn_lseg3_lseg3_parallel(p0, p1, p0, p, tol)) {
+	/* p might be on edge p0->p1 */
+	para_p0_p1__p0_p = 1;
+	if (NEAR_EQUAL(dpp0 + dpp1, dp0p1, tol->dist)) {
+	    /* p on edge p0->p1 */
+	    return 1; /* isect edge, but not vertex (on) */
+	}
+    }
+    /* test p against edge p0->p2 */
+    if (!degen_p0p2 && bn_lseg3_lseg3_parallel(p0, p2, p0, p, tol)) {
+	/* p might be on edge p0->p2 */
+	para_p0_p2__p0_p = 1;
+	if (NEAR_EQUAL(dpp0 + dpp2, dp0p2, tol->dist)) {
+	    /* p on edge p0->p2 */
+	    return 1; /* isect edge, but not vertex (on) */
+	}
+    }
+    /* test p against edge p1->p2 */
+    if (!degen_p1p2 && bn_lseg3_lseg3_parallel(p1, p2, p1, p, tol)) {
+	/* p might be on edge p1->p2 */
+	para_p1_p2__p1_p = 1;
+	if (NEAR_EQUAL(dpp1 + dpp2, dp1p2, tol->dist)) {
+	    /* p on edge p1->p2 */
+	    return 1; /* isect edge, but not vertex (on) */
+	}
+    }
+
+    if (degen_p0p1 || degen_p0p2 || degen_p1p2) {
+	return 0; /* no isect (out) */
+    }
+    if (para_p0_p1__p0_p || para_p0_p2__p0_p || para_p1_p2__p1_p) {
+	return 0; /* no isect (out) */
+    }
+
+    VSUB2(p0_p2, p2, p0);
+    VSUB2(p0_p1, p1, p0);
+    VSUB2(p0_p, p, p0);
+
+    p0_p2_magsq = MAGSQ(p0_p2);
+    p0_p1_magsq = MAGSQ(p0_p1);
+    p0_p2__p0_p1 = VDOT(p0_p2, p0_p1);
+    p0_p2__p0_p = VDOT(p0_p2, p0_p);
+    p0_p1__p0_p = VDOT(p0_p1, p0_p);
+
+    u_numerator = ( p0_p1_magsq * p0_p2__p0_p - p0_p2__p0_p1 * p0_p1__p0_p );
+    v_numerator = ( p0_p2_magsq * p0_p1__p0_p - p0_p2__p0_p1 * p0_p2__p0_p );
+    denom = ( p0_p2_magsq * p0_p1_magsq - p0_p2__p0_p1 * p0_p2__p0_p1 );
+
+    if (ZERO(denom)) {
+	denom = 1.0;
+    }
+
+    if (NEAR_ZERO(u_numerator, tol->dist)) {
+	u_numerator = 0.0;
+	u = 0.0;
+    } else {
+	u = u_numerator / denom;
+    }
+
+    if (NEAR_ZERO(v_numerator, tol->dist)) {
+	v_numerator = 0.0;
+	v00 = 0.0;
+    } else {
+	v00 = v_numerator / denom;
+    }
+
+    if ((u > SMALL_FASTF) && (v00 > SMALL_FASTF) && ((u + v00) < (1.0 - SMALL_FASTF))) {
+	return 4; /* inside (on) */
+    }
+
+    return 0; /* no isect (out) */
+}
+
 
 /**
  * N M G _ I S E C T _ L S E G 3 _ E U
@@ -3447,6 +3608,16 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 
 		/* skips processing the same vertex */
 		if (prev_vg_p != pt->vu_p->v_p->vg_p) {
+#if 1
+		    int isect_result;
+		    isect_result = nmg_isect_pt_facet(pt->vu_p->v_p, prev->vu_p->v_p, 
+						      current->vu_p->v_p, next->vu_p->v_p, tol);
+		    if (isect_result == 4 || isect_result == 3) {
+			inside_triangle = 1;
+		    } else {
+			inside_triangle = 0;
+		    }
+#else
 		    VSUB2(v0, next->coord, prev->coord);
 		    VSUB2(v1, current->coord, prev->coord);
 		    VSUB2(v2, pt->coord, prev->coord);
@@ -3476,6 +3647,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 				    is_convex(prev, current, next, tol));
 			}
 		    }
+#endif
 		}
 		prev_vg_p = pt->vu_p->v_p->vg_p;
 	    } /* end of if-statement to skip testing vertices not in the current loopuse */
@@ -3540,7 +3712,10 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 
 
 	    if (next->vu_p == prev->vu_p) {
+		return;
+#if 0
 		bu_bomb("cut_unimonotone(): trying to cut to/from same vertexuse\n");
+#endif
 	    }
 
 	    if (rt_g.NMG_debug & DEBUG_TRI) {
@@ -3624,9 +3799,11 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 		 */
 		verts = tmp_vert_cnt;
 
+#if 0
 		if (verts > 3) {
 		    bu_bomb("cut_unimonotone(): can not determine loopuse cw/ccw and loopuse contains > 3 vertices\n");
 		}
+#endif
 
 	    } else if (ccw_result == -1) {
 		/* true if the loopuse has a cw rotation */
@@ -4417,7 +4594,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 	    if (vert_count > 3) {
 		/* test loopuse rotation */
 		ccw_result = nmg_loop_is_ccw(lu, fu_normal, tol);
-		if (ccw_result == 1) {
+		if (ccw_result == 1 || ccw_result == 0) {
 		    /* true when loopuse rotation is ccw */
 		    if (lu->orientation != OT_SAME) {
 			/* set loopuse orientation to OT_SAME */
@@ -4426,7 +4603,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 		    /* ear clip loopuse */
 		    cut_unimonotone(tbl2d, lu, tol);
 		    cut = 1;
-		} else if (ccw_result == -1 || ccw_result == 0) {
+		} else if (ccw_result == -1) {
 		    /* true when loopuse rotation is cw or unknown */
 		    bu_log("nmg_triangulate_fu(): lu = 0x%lx ccw_result = %d\n",
 			   (unsigned long)lu, ccw_result);
