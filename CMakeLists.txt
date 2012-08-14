@@ -2198,7 +2198,7 @@ mark_as_advanced(LIBRARY_OUTPUT_PATH)
 # represent one of two cases where the default behavior is to alter the files
 # if changes have occurred.  (The other is cached generated outputs from tools
 # such as re2c and lemon.)  For the purposes of this project, a given
-# option's documetation is defined in the CMakeLists.txt source file with 
+# option's documentation is defined in the CMakeLists.txt source file with 
 # the option definiton logic - the text in INSTALL is simply an output from
 # that, and is never the correct place for manual changes.
 #
