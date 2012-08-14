@@ -208,10 +208,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cgeometree",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#ifdef HAVE_ADAPTAGRAMS
         bu_vls_printf(&auto_path, "%c%s%ctclscripts%cgraph",
                       BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#endif
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%crtwizard",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%carcher",
@@ -249,10 +247,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%cgeometree",
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#ifdef HAVE_ADAPTAGRAMS
         bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%cgraph",
                       BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#endif
 	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%crtwizard",
 		      BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%csrc%ctclscripts%carcher",
@@ -290,10 +286,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%cgeometree",
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#ifdef HAVE_ADAPTAGRAMS
             bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%cgraph",
                           BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#endif
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%crtwizard",
 			  BU_PATH_SEPARATOR, srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	    bu_vls_printf(&auto_path, "%c%s%c..%csrc%ctclscripts%carcher",
@@ -329,10 +323,8 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%cgeometree",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#ifdef HAVE_ADAPTAGRAMS
         bu_vls_printf(&auto_path, "%c%s%ctclscripts%cgraph",
                       BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-#endif
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%crtwizard",
 		      BU_PATH_SEPARATOR, data, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts%carcher",

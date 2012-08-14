@@ -208,6 +208,7 @@ namespace eval ArcherCore {
 	method exit                {args}
 	method facetize            {args}
 	method fracture            {args}
+	method graph               {args}
 	method hide                {args}
 	method human               {args}
 	method g                   {args}
@@ -526,7 +527,7 @@ namespace eval ArcherCore {
 	    c cd clear clone closedb color comb comb_color combmem \
 	    copy copyeval copymat cp cpi dbconcat dbExpand decompose \
 	    delete draw E edcodes edcolor edcomb edit edmater erase ev \
-	    exit facetize fracture g group hide human i \
+	    exit facetize fracture g graph group hide human i \
 	    importFg4Section in inside item kill killall killrefs \
 	    killtree l ls make make_bb make_pnts man mater mirror move \
 	    move_arb_edge move_arb_face mv mvall nmg_collapse \
@@ -5725,6 +5726,11 @@ namespace eval ArcherCore {
 ::itcl::body ArcherCore::g {args} {
     eval group $args
 }
+
+::itcl::body ArcherCore::graph {args} {
+    eval ::graph $args
+}
+
 
 ::itcl::body ArcherCore::group {args} {
     eval gedWrapper g 1 1 1 2 $args
