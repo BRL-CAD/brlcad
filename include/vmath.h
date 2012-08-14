@@ -249,7 +249,7 @@ typedef enum bn_vector_component_ {
 
 /**
  * Locations of deltas (MD*) and scaling values (MS*) in a 4x4
- * Homogenous Transform matrix
+ * Homogeneous Transform matrix
  */
 typedef enum bn_matrix_component_ {
     MSX = 0,
@@ -573,7 +573,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(_m)[MSZ] -= (_v)[Z]; \
 }
 
-/** @brief multipy scaling elements in a 4x4 matrix from xyz. */
+/** @brief multiply scaling elements in a 4x4 matrix from xyz. */
 #define MAT_SCALE_MUL(_m, _x, _y, _z) { \
 	(_m)[MSX] *= _x; \
 	(_m)[MSY] *= _y; \
@@ -663,7 +663,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(a)[Y] = (c); \
 }
 
-/** @brief Set 4D vector at `a' to homogenous coordinates `b', `c', `d', and `e'. */
+/** @brief Set 4D vector at `a' to homogeneous coordinates `b', `c', `d', and `e'. */
 #define HSET(a, b, c, d, e) { \
 	(a)[X] = (b); \
 	(a)[Y] = (c); \
@@ -1306,7 +1306,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /**
  * @brief Given a direction vector, compute the inverses of each element.
- * When division by zero would have occured, mark inverse as INFINITY.
+ * When division by zero would have occurred, mark inverse as INFINITY.
  */
 #define VINVDIR(_inv, _dir) { \
 	if ((_dir)[X] < -SQRT_SMALL_FASTF || (_dir)[X] > SQRT_SMALL_FASTF) { \
@@ -1651,7 +1651,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /**
  * Macros for dealing with 3-D "extents", aka bounding boxes, that are
- * represented as axis-aligned right parallelpipeds (RPPs).  This is
+ * represented as axis-aligned right parallelepipeds (RPPs).  This is
  * stored as two points: a min point, and a max point.  RPP 1 is
  * defined by lo1, hi1, RPP 2 by lo2, hi2.
  */
@@ -1789,7 +1789,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define V2INIT_ZERO {0.0, 0.0}
 
 /**
- * 4D homogenous vector macro suitable for declaration statement
+ * 4D homogeneous vector macro suitable for declaration statement
  * initialization.  this sets all vector elements to zero similar to
  * calling VSETALLN(hvect_t,0.0,4) but as an initializer array
  * declaration instead of as a statement.
