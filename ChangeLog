@@ -9074,7 +9074,7 @@
 2012-04-15 05:05  brlcad
 
 	* [r50037] src/librt/primitives/dsp/dsp.c:
-	  addresses several CHECKED_RETURN issues reporte by coverity (cid
+	  addresses several CHECKED_RETURN issues reported by coverity (cid
 	  142), not checking return value of nmg_kill_cracks().
 
 2012-04-15 04:58  brlcad
