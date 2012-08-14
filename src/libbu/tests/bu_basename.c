@@ -63,6 +63,8 @@ automatic_test(const char *input)
 #else
     printf("BASENAME not available on this platform\n");
 #endif
+
+    /* FIXME: this does not functionally halt */
 }
 
 
