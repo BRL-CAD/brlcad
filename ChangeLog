@@ -98,7 +98,7 @@
 2012-06-24 00:12  crdueck
 
 	* [r51303] src/libged/analyze.c:
-	  rewrote analyze_face() to use much more efficent algorithm for
+	  rewrote analyze_face() to use much more efficient algorithm for
 	  calculating the surface area of a face, some ws changes
 
 2012-06-23 23:09  tbrowder2
@@ -209,7 +209,7 @@
 	* [r51301] NEWS:
 	  this is easily the biggest release we've made since going open
 	  source. add write-up details on some of the bigger changes
-	  occuring with this release including the completion of coverity
+	  occurring with this release including the completion of coverity
 	  fixes, nurbs enhancements and v&v, importer improvements, doc
 	  translations, introduction of the socis simulation project,
 	  ambient occlusion, integration of rtwizard, and more. should have
@@ -398,7 +398,7 @@
 2012-06-20 20:27  tbrowder2
 
 	* [r51269] src/libbu/redblack.3:
-	  change man catergory number to remove B suffix
+	  change man category number to remove B suffix
 
 2012-06-20 17:53  n_reed
 
@@ -1543,7 +1543,7 @@
 2012-06-13 20:41  starseeker
 
 	* [r51101] src/tclscripts/rtwizard/rtwizard.tcl:
-	  Handle port number being suppled as argument to -F
+	  Handle port number being supplied as argument to -F
 
 2012-06-13 19:33  starseeker
 
@@ -1735,7 +1735,7 @@
 	  src/other/step/src/fedex_plus/classes.c,
 	  src/other/step/src/fedex_plus/classes_misc.c,
 	  src/other/step/src/fedex_plus/selects.c:
-	  remove 'backwards compatiblity' symbols; SCL git 1481950 and
+	  remove 'backwards compatibility' symbols; SCL git 1481950 and
 	  a63ac73
 
 2012-06-12 18:40  bob1961
@@ -1843,7 +1843,7 @@
 	* [r51059] src/tclscripts/mged/grouper.tcl:
 	  Updates to the mged 'gr/grouper' command. Made the listing of
 	  selected objects optional. Fixed a bug where the script would
-	  hang when a large number of objects (ie vertices) were selected.
+	  hang when a large number of objects (i.e. vertices) were selected.
 	  Removed unnecessary logic.
 
 2012-06-11 17:12  n_reed
@@ -3686,7 +3686,7 @@
 	* [r50778] src/librt/memalloc.c:
 	  prevent memory corruption if we end up with a null pointer.
 	  probably implies someting is wrong elsewhere in the book-keeping,
-	  but since this is old v4 code there's minmal value hunting it
+	  but since this is old v4 code there's minimal value hunting it
 	  down. just avoids corruption which was leading to a bogus
 	  rt_freemem() debug message getting printed extensively after the
 	  endianness flip.
@@ -3784,7 +3784,7 @@
 	  ============================
 
 	  + add new test function 'check_format_chars' to ensure consistent
-	  coverage of the defined valid and obsolete format characaters
+	  coverage of the defined valid and obsolete format characters
 
 	  src/libbu/vls_vprintf.c
 	  =======================
@@ -3923,7 +3923,7 @@
 2012-05-29 22:58  crdueck
 
 	* [r50748] src/libbu/fgets.c, src/libbu/lex.c:
-	  accidently added to many files in r50747
+	  accidentally added to many files in r50747
 
 2012-05-29 22:51  crdueck
 
@@ -4131,7 +4131,7 @@
 
 	* [r50716] src/libbu/vls_vprintf.c:
 	  move vars to file scope, change some back to macros because
-	  intializers aren't constant
+	  initializers aren't constant
 
 2012-05-27 19:23  tbrowder2
 
@@ -5363,7 +5363,7 @@
 2012-05-12 11:42  starseeker
 
 	* [r50525] src/tclscripts/rtwizard/rtwizard.tcl:
-	  Fully specifiy RtWizard namespace as a child of the toplevel
+	  Fully specify RtWizard namespace as a child of the toplevel
 	  namespace in getopt variables
 
 2012-05-11 20:30  starseeker
@@ -5439,7 +5439,7 @@
 
 	* [r50514] NEWS:
 	  cliff added new command-line support to rtwizard including added
-	  new manual page documentation. inclued are a variety of options
+	  new manual page documentation. included are a variety of options
 	  that provide a way to avoid the need for graphically picking
 	  components. not yet fully non-graphical, but moving in support of
 	  that end for regression testing.
@@ -5586,7 +5586,7 @@
 	* [r50500] src/libtclcad/tclcad.c, src/libtclcad/tclcad_obj.c,
 	  src/libtclcad/tclcad_private.h:
 	  we should not be introducing new globals in libraries. their cost
-	  is far too great, are exceptionally error-prone, inherintly
+	  is far too great, are exceptionally error-prone, inherently
 	  unsafe, and they pollute the API. convert to an initialization
 	  function holding the flag instead.
 
@@ -5893,13 +5893,13 @@
 2012-05-07 16:22  r_weiss
 
 	* [r50454] doc/docbook/system/mann/en/CMakeLists.txt:
-	  Updated file 'CMakeLists.txt' to add the documention for the mged
+	  Updated file 'CMakeLists.txt' to add the documentation for the mged
 	  command 'lc'.
 
 2012-05-07 16:21  r_weiss
 
 	* [r50453] doc/docbook/system/mann/en/lc.xml:
-	  Added documention for the new mged command 'lc'. Added file
+	  Added documentation for the new mged command 'lc'. Added file
 	  'lc.xml'.
 
 2012-05-07 15:36  brlcad
@@ -5982,7 +5982,7 @@
 
 	* [r50440] src/other/perplex/CMakeLists.txt,
 	  src/other/re2c/CMakeLists.txt:
-	  the conditional wasn't working, but shouldn't even be necessarly
+	  the conditional wasn't working, but shouldn't even be necessarily
 	  since it's empty/unset when not found.
 
 2012-05-03 21:33  brlcad
@@ -6227,14 +6227,14 @@
 	  src/tclscripts/mged/Makefile.am:
 	  Updated files 'CMakeLists.txt' and 'Makefile.am' to add the tcl
 	  script 'lc.tcl' to mged. This adds a new command called 'lc' to
-	  mged which lists the codes (ie attributes) of regions within a
+	  mged which lists the codes (i.e. attributes) of regions within a
 	  group.
 
 2012-05-02 15:18  r_weiss
 
 	* [r50406] src/tclscripts/mged/lc.tcl:
 	  Added tcl script 'lc.tcl' for a new mged command 'lc' to list the
-	  region codes (ie attributes) within a group.
+	  region codes (i.e. attributes) within a group.
 
 2012-05-02 03:55  starseeker
 
@@ -6269,7 +6269,7 @@
 	  revert, tighten up the deprecation language to specify two minor
 	  release needing to include the deprecation notice. include an
 	  example so it's even more explicit and not subject to
-	  intepretation. strictly speaking, this reduces our deprecation
+	  interpretation. strictly speaking, this reduces our deprecation
 	  window by a minor but makes the policy about as tight as it can
 	  get without being reckless or non-existent.
 
@@ -7700,7 +7700,7 @@
 2012-04-20 14:28  bob1961
 
 	* [r50193] src/tclscripts/lib/Ged.tcl:
-	  Updated cadwidgets::Ged::init_poly_rect to accomodate the
+	  Updated cadwidgets::Ged::init_poly_rect to accommodate the
 	  enhanced poly_rect_mode command (i.e. can also draw squares).
 
 2012-04-20 14:24  bob1961
@@ -8327,7 +8327,7 @@
 2012-04-17 22:13  brlcad
 
 	* [r50156] src/fb/gif2fb.c:
-	  we're in main() so just return when we're preceeded by a printing
+	  we're in main() so just return when we're preceded by a printing
 	  statement. should quell cid 1475.
 
 2012-04-17 22:08  brlcad
@@ -9112,7 +9112,7 @@
 	  code resulting in the original head node getting incremented. fix
 	  is to make sure we're not incrementing what we started with
 	  (since if it's a nugrid node, it should have been set to
-	  soemthing else on the first pass).
+	  something else on the first pass).
 
 2012-04-15 00:23  tbrowder2
 
@@ -9303,7 +9303,7 @@
 2012-04-13 11:58  tbrowder2
 
 	* [r49996] include/bu.h:
-	  expand note further highlighting possible errors in impementation
+	  expand note further highlighting possible errors in implementation
 
 2012-04-13 11:42  tbrowder2
 
@@ -9826,7 +9826,7 @@
 	  Well, flawfinder is running now alright. Complaining about chmod
 	  use in libbu's fchmod.c, but we're already using fchmod whenever
 	  we can - chmod is for Windows situations where nothing better(?)
-	  is available. Don't want to hault regression on that, so remove
+	  is available. Don't want to halt regression on that, so remove
 	  flawfinder regression from the overall list but leave the target
 	  defined in case it's needed.
 
@@ -10133,7 +10133,7 @@
 
 	* [r49886] misc/CMake/BRLCAD_Targets.cmake,
 	  src/tclscripts/CMakeLists.txt:
-	  typo, overly agressive quoting
+	  typo, overly aggressive quoting
 
 2012-04-03 02:22  starseeker
 
@@ -10567,7 +10567,7 @@
 2012-03-28 15:48  n_reed
 
 	* [r49830] src/other/step/src/clutils/README:
-	  remove references to non-existant dir.h and SCLString to match
+	  remove references to non-existent dir.h and SCLString to match
 	  SCL git a0353bc version
 
 2012-03-28 14:30  starseeker
@@ -11051,7 +11051,7 @@
 2012-03-22 18:08  n_reed
 
 	* [r49796] src/other/step.dist:
-	  whoops, ignoring non-existant file
+	  whoops, ignoring non-existent file
 
 2012-03-22 18:04  starseeker
 
@@ -11994,7 +11994,7 @@
 
 	* [r49687] src/other/step/src/fedex_plus/classes.c:
 	  Address warnings about non-explicit base class initialization by
-	  adding intialization list to generated copy constructors.
+	  adding initialization list to generated copy constructors.
 
 2012-03-13 21:03  starseeker
 
@@ -13303,7 +13303,7 @@
 2012-02-22 19:40  starseeker
 
 	* [r49495] CMakeLists.txt, misc/CMake/BRLCAD_CheckFunctions.cmake:
-	  bite the bullet - we need to be able to specifiy additional
+	  bite the bullet - we need to be able to specify additional
 	  directories in some cases when looking for headers, so add that
 	  ability to BRLCAD_INCLUDE_FILE.
 
@@ -13435,7 +13435,7 @@
 	  src/other/step/src/fedex_plus/selects.c,
 	  src/other/step/src/test/generate_express/generate_express.cc:
 	  try to fix strings changed to std::string that still called
-	  non-existant chars member function
+	  non-existent chars member function
 
 2012-02-17 19:53  bob1961
 
@@ -13607,7 +13607,7 @@
 	  actually makes distribution testing of multiple build/configure
 	  settings independent. So if distcheck needs to test both Debug
 	  and Release CMAKE_BUILD_TYPE settings (which looks like a good
-	  idea) a make -j9 distcheck will do the repo verifiction, build
+	  idea) a make -j9 distcheck will do the repo verification, build
 	  the source archives and launch multiple builds of BRL-CAD in
 	  parallel. On massively parallel machines this means not only C
 	  source compilations in parallel but multiple CMake configures
@@ -13620,7 +13620,7 @@
 	  standard distcheck target will do Debug and Release, but there is
 	  also a distcheck-full target that will run ALL defined
 	  configurations. Right now there aren't any more, but there are
-	  some obvious candiates like a non-Tk build, and they can be added
+	  some obvious candidates like a non-Tk build, and they can be added
 	  to distcheck-full with a single definition line in
 	  Distcheck.cmake
 
@@ -14500,7 +14500,7 @@
 2012-02-07 09:45  brlcad
 
 	* [r49308] include/db.h:
-	  preceed comment with warning, not after it
+	  precede comment with warning, not after it
 
 2012-02-07 09:43  brlcad
 
@@ -15887,7 +15887,7 @@
 2012-01-27 19:19  n_reed
 
 	* [r49130] src/libbu/test_sscanf.c:
-	  add tests for string termation behavior and support of literal
+	  add tests for string termination behavior and support of literal
 	  ']' and '-' in character classes
 
 2012-01-27 16:28  erikgreenwald
@@ -16168,7 +16168,7 @@
 2012-01-25 21:48  n_reed
 
 	* [r49082] src/libbu/sscanf.c:
-	  Doh! Accidently overwrote conversion type var before switching on
+	  Doh! Accidentally overwrote conversion type var before switching on
 	  it.
 
 2012-01-25 21:01  starseeker
@@ -16327,7 +16327,7 @@
 	* [r49065] src/conv/intaval/read_dra.cpp:
 	  gcc complains about not initializing the remainder of the struct
 	  members if we're going to perform static initialization this way.
-	  a memset() might be more apropriate, but this does the trick with
+	  a memset() might be more appropriate, but this does the trick with
 	  no runtime overhead.
 
 2012-01-24 23:41  starseeker
@@ -16839,7 +16839,7 @@
 	  misc/CMake/msv.cmake.in, misc/CMake/rnv.cmake.in,
 	  misc/CMake/xmllint.cmake.in, misc/CMake/xsltproc.cmake.in:
 	  Have a go at standardizing the case of built-in CMake function
-	  calls in our .cmake files, for readibility improvement. Not
+	  calls in our .cmake files, for readability improvement. Not
 	  hitting the CMakeLists.txt files yet.
 
 2012-01-24 04:00  brlcad
@@ -17282,7 +17282,7 @@
 2012-01-21 04:37  starseeker
 
 	* [r48951] misc/CMake/ThirdParty.cmake:
-	  Whoops - put this inside the if conditon...
+	  Whoops - put this inside the if condition...
 
 2012-01-20 22:30  starseeker
 
@@ -17307,8 +17307,8 @@
 2012-01-20 21:44  erikgreenwald
 
 	* [r48946] CMakeLists.txt:
-	  Bump requried CMake version to 2.8.4. osX couldn't find
-	  dependancies (namely xsl-expand while building docbook articles)
+	  Bump required CMake version to 2.8.4. osX couldn't find
+	  dependencies (namely xsl-expand while building docbook articles)
 	  even though the dep worked as a target on 2.8.3.
 
 2012-01-20 20:41  starseeker
@@ -19051,7 +19051,7 @@
 2012-01-17 19:40  brlcad
 
 	* [r48888] TODO:
-	  Apparently the latest libpng might resovle the ld failure
+	  Apparently the latest libpng might resolve the ld failure
 	  encountered on FC16, ppc64.
 
 2012-01-17 17:45  tbrowder2
@@ -19927,7 +19927,7 @@
 2012-01-13 17:50  brlcad
 
 	* [r48757] src/librt/primitives/nmg/nmg_fcut.c:
-	  looks like the section of code immediately preceeding handles the
+	  looks like the section of code immediately preceding handles the
 	  WEDGE2_IDENTICAL case, and was intentionally added back in r7584
 	  by mike to test for TOUCHing wedges first. so can remove the
 	  prior stale case detected by coverity DEADCODE check (cid 210).
@@ -19950,7 +19950,7 @@
 2012-01-13 17:38  erikgreenwald
 
 	* [r48753] src/vdeck/vdeck.c:
-	  explicitely track remaining buffer and use that for dirname copy
+	  explicitly track remaining buffer and use that for dirname copy
 	  bound. Cov1272
 
 2012-01-13 17:36  starseeker
@@ -20466,7 +20466,7 @@
 2012-01-13 14:30  indianlarry
 
 	* [r48662] src/conv/step/MeasureValue.cpp:
-	  Added initializers accidently skipped in initial fix. Relates to
+	  Added initializers accidentally skipped in initial fix. Relates to
 	  Run 8 CIDs 1987 1989
 
 2012-01-13 14:30  bob1961
@@ -21249,7 +21249,7 @@
 2012-01-12 16:35  erikgreenwald
 
 	* [r48517] src/librt/db5_io.c:
-	  force addr/phony to unsigned explicitely to avoid coverity
+	  force addr/phony to unsigned explicitly to avoid coverity
 	  warning about a possible negative later. CID 368
 
 2012-01-12 16:29  erikgreenwald
@@ -21881,7 +21881,7 @@
 	* [r48412] src/libfb/if_X.c:
 	  If we're going to check for ifp, don't do anything that might
 	  require ifp without the OK. Not entirely clear if there should be
-	  some failure case here, of the 'sliently ignore' behavior is
+	  some failure case here, of the 'silently ignore' behavior is
 	  preferred... CID 270
 
 2012-01-11 17:44  indianlarry
@@ -22161,7 +22161,7 @@
 2012-01-11 00:21  starseeker
 
 	* [r48369] src/conv/proe-g.c:
-	  Check for wmem before we start playing with matricies - if we
+	  Check for wmem before we start playing with matrices - if we
 	  don't have it, warn and ignore. CID 256
 
 2012-01-10 23:57  starseeker
@@ -22169,7 +22169,7 @@
 	* [r48368] src/librt/primitives/nmg/nmg_misc.c:
 	  This one's a bit more interesting. Coverity doesn't think the
 	  tol->dist comparison with the -1 settings of dist1 and dist2 is
-	  enough to guanantee a continue in the bad case, and if that's so
+	  enough to guarantee a continue in the bad case, and if that's so
 	  then next_fus->vp being check for NULL earlier and then being
 	  used may imply a problem. I doubt we're getting negative
 	  tolerances, but since the tol type is double it's not forbidden.
@@ -22584,7 +22584,7 @@
 
 	* [r48301] src/libged/dg_obj.c:
 	  Updated file 'dg_obj.c' function 'dgo_nmg_region_start'. Changed
-	  a test for an idenity matrix from a null pointer test to testing
+	  a test for an identity matrix from a null pointer test to testing
 	  the contents of the matrix.
 
 2012-01-10 16:32  erikgreenwald
@@ -22596,7 +22596,7 @@
 
 	* [r48299] src/libged/draw.c:
 	  Updated function 'draw_nmg_region_start' in file 'draw.c'.
-	  Changed a test for an idenity matrix from a null pointer test to
+	  Changed a test for an identity matrix from a null pointer test to
 	  testing the contents of the matrix.
 
 2012-01-10 16:28  starseeker
@@ -22735,7 +22735,7 @@
 2012-01-10 14:42  erikgreenwald
 
 	* [r48276] src/conv/g-egg.c:
-	  check file and object name existance. Cov1524
+	  check file and object name existence. Cov1524
 
 2012-01-10 14:42  starseeker
 
@@ -23076,7 +23076,7 @@
 2012-01-09 16:08  erikgreenwald
 
 	* [r48215] src/adrt/librender/camera.c:
-	  explicitely promote time sizes (unsigned shorts) to unsigned int
+	  explicitly promote time sizes (unsigned shorts) to unsigned int
 	  (coverity 2-1256)
 
 2012-01-09 16:05  starseeker
@@ -23496,7 +23496,7 @@
 2011-12-22 17:55  brlcad
 
 	* [r48143] include/bu.h:
-	  document the extensively expaned support being added to
+	  document the extensively expanded support being added to
 	  bu_str_escape() to make the previous 'chars' parameter actually
 	  represent a full-fledged regular bracket expression. this
 	  includes support for negative (^) expressions and named character
@@ -24286,7 +24286,7 @@
 2011-12-16 16:22  starseeker
 
 	* [r48018] src/other/CMakeLists.txt:
-	  Needing the C library from a Tcl/Tk package is compilcating
+	  Needing the C library from a Tcl/Tk package is complicating
 	  things... however, a bit of a pattern is emerging...
 
 2011-12-16 06:12  starseeker
@@ -24457,7 +24457,7 @@
 	  not altered - instead, a new file is generated (INSTALL.new) and
 	  a warning is printed at the end of the configure process
 	  notifying the developer of the changed file. It is then up to the
-	  develper to review the new INSTALL.new and copy it manually into
+	  developer to review the new INSTALL.new and copy it manually into
 	  the source tree. The major benefit of this method is the
 	  autogeneration of the alias lists - the same lists used by the
 	  logic actually defining the aliases in CMake are also used to
@@ -24839,7 +24839,7 @@
 
 	* [r47948] include/nmg.h:
 	  Update to file 'nmg.h' to add a pointer to a manifolds list
-	  within the nmg 'model' structure. This is necesary to globally
+	  within the nmg 'model' structure. This is necessary to globally
 	  track the current manifolds in the nmg model.
 
 2011-12-14 19:29  n_reed
@@ -24971,7 +24971,7 @@
 	  Don't use the rng schema with xmllint, per advice from the libxml
 	  list - fortunately, we can also use a more standard schema. Also,
 	  rather than defining the flags somewhere other than the 'command'
-	  file, make it self contained - in prinicple, that should make
+	  file, make it self contained - in principle, that should make
 	  swapping in a different validator as simple as defining a
 	  .cmake.in file for that command and setting a toplevel setting.
 	  Need to experiment a little.
@@ -25810,7 +25810,7 @@
 	* [r47836] src/libgcv/CMakeLists.txt, src/libgcv/Makefile.am,
 	  src/libgcv/bottess.c, src/libgcv/soup.h,
 	  src/libgcv/tri_intersect.c, src/libgcv/tri_intersect.h:
-	  break moller triangle intersection stuff out into seperate file
+	  break moller triangle intersection stuff out into separate file
 
 2011-12-07 17:57  erikgreenwald
 
@@ -26583,7 +26583,7 @@
 2011-12-05 05:58  brlcad
 
 	* [r47767] src/mged/CMakeLists.txt:
-	  apparently doing seomthing wrong, so document the FIXME
+	  apparently doing something wrong, so document the FIXME
 	  accordingly mged needs to depend on the tclscripts or it won't
 	  work for non default and make install target builds (e.g., make
 	  regress)
@@ -27580,7 +27580,7 @@
 	  using consistent printing statements (e.g., they might not be
 	  libs), relax to substring matching and reduced logic where we
 	  can. inject blank lines, separators, and comments for improved
-	  readabaility.
+	  readability.
 
 2011-11-23 18:52  starseeker
 
@@ -28667,7 +28667,7 @@
 2011-11-07 20:40  n_reed
 
 	* [r47445] src/other/re2c/parser.y.lemon:
-	  finished bison to lemon syntax converion
+	  finished bison to lemon syntax conversion
 
 2011-11-07 18:13  starseeker
 
@@ -28839,7 +28839,7 @@
 2011-11-03 21:27  brlcad
 
 	* [r47417] src/librt/primitives/dsp/dsp.c:
-	  do what was done for v4, validate the dsp dimensinos are non-zero
+	  do what was done for v4, validate the dsp dimensions are non-zero
 
 2011-11-03 21:21  brlcad
 
