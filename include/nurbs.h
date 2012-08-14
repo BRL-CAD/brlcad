@@ -1585,9 +1585,44 @@ extern ON_Curve* pullback_curve(ON_BrepFace* face,
 				double flatness = 1.0e-3);
 
 
+/**
+ * Calculate the intersection curves of two NURBS surfaces.
+ *
+ * Output intersection curves in 3d space and in both surfaces' UV
+ * parameter spaces.
+ *
+ * approach:
+ * 
+ * - Generate the bounding box of the two surfaces.
+ *
+ * - If their bounding boxes intersect:
+ *
+ * -- Split the two surfaces, both into four parts, and calculate the
+ *    sub-surfaces' bounding boxes
+ *
+ * -- Calculate the intersection of sub-surfaces' bboxes, if they do
+ *    intersect, go deeper with splitting surfaces and smaller bboxes,
+ *    otherwise trace back.
+ *
+ * - After getting the intersecting bboxes, approximate the surface
+ *   inside the bbox as two triangles, and calculate the intersection
+ *   points of the triangles (both in 3d space and two surfaces' UV
+ *   space)
+ *
+ * - Fit the intersetion points into polyline curves, and then to NURBS
+ *   curves. Points with distance less than max_dis are considered in
+ *   one curve.
+ *
+ * See: Adarsh Krishnamurthy, Rahul Khardekar, Sara McMains, Kirk Haller,
+ * and Gershon Elber. 2008.
+ * Performing efficient NURBS modeling operations on the GPU.
+ * In Proceedings of the 2008 ACM symposium on Solid and physical modeling
+ * (SPM '08). ACM, New York, NY, USA, 257-268. DOI=10.1145/1364901.1364937
+ * http://doi.acm.org/10.1145/1364901.1364937
+ */
 extern int surface_surface_intersection(const ON_Surface* surfA,
 					const ON_Surface* surfB,
-					ON_SimpleArray<ON_NurbsCurve*> &intersect3dy,
+					ON_SimpleArray<ON_NurbsCurve*> &intersect3d,
 					ON_SimpleArray<ON_NurbsCurve*> &intersect_uv2d,
 					ON_SimpleArray<ON_NurbsCurve*> &intersect_st2d,
 					double max_dis = 0.0,
