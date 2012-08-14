@@ -188,7 +188,6 @@ package provide cadwidgets::Ged 1.0
 	method exists {args}
 	method faceplate {args}
 	method facetize {args}
-	method voxelize {args}
 	method fb2pix {args}
 	method find_pipept {args}
 	method fontsize {args}
@@ -535,6 +534,7 @@ package provide cadwidgets::Ged 1.0
 	method viewdir {args}
 	method vmake {args}
 	method vnirt {args}
+	method voxelize {args}
 	method vslew {args}
 	method wcodes {args}
 	method whatid {args}
