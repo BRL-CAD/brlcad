@@ -54,6 +54,7 @@ set(brlcadinclude_wanted
 	mater.h
 	nmg.h
 	nurb.h
+	nurbs.h
         obj.h
 	optical.h
 	orle.h
