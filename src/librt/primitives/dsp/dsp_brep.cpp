@@ -45,9 +45,7 @@ int DegreeReduction(int n, ON_3dPointArray &bezcurv, fastf_t tol, fastf_t &maxer
      * http://www.yamnuska.ca/geek/degreeReductionBezier.pdf
      * NOTE: This may cause quite inaccurate results, especially in the middle
      * of the curve when n is big.
-     * TODO: Calculate the accumulated deviation. A torelance value TOL might
-     * be used to decide whether the result is acceptable or not. Or replace it
-     * with a better algorithm.
+     * TODO: Find a better algorithm unless this one is good enough.
      */
 
     if (tol < 0.0)
@@ -72,15 +70,14 @@ int DegreeReduction(int n, ON_3dPointArray &bezcurv, fastf_t tol, fastf_t &maxer
     fastf_t sum = 0.0;
     for (int i = 0; i < n; i++) {
 	ON_3dPoint newpt;
-	// newpt = i < n/2 ? left[i] : right[i];
-	fastf_t lumbda = pow(2.0, 1 - 2*n);
+	fastf_t lambda = pow(2.0, 1 - 2*n);
 	sum += C[2*n][2*i];
-	lumbda *= sum;
-	if (NEAR_ZERO(lumbda, 1e-6))
-	    lumbda = 0.0;
-	if (NEAR_EQUAL(lumbda, 1.0, 1e-6))
-	    lumbda = 1.0;
-	newpt = (1 - lumbda) * left[i] + lumbda * right[i];
+	lambda *= sum;
+	if (NEAR_ZERO(lambda, 1e-6))
+	    lambda = 0.0;
+	if (NEAR_EQUAL(lambda, 1.0, 1e-6))
+	    lambda = 1.0;
+	newpt = (1 - lambda) * left[i] + lambda * right[i];
 	tmpcurve.Append(newpt);
     }
     // Calculate the deviation
@@ -150,13 +147,13 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     MOVEPT(p3);
     plane_y_dir = ON_3dPoint(p3);
 
-    ON_Plane *bottom_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
-    ON_PlaneSurface *bottom_surf = new ON_PlaneSurface(*bottom_plane);
-    bottom_surf->SetDomain(0, 0.0, DIST_PT_PT(p_origin, p2));
-    bottom_surf->SetDomain(1, 0.0, DIST_PT_PT(p_origin, p3));
-    bottom_surf->SetExtents(0, bottom_surf->Domain(0));
-    bottom_surf->SetExtents(1, bottom_surf->Domain(1));
-    ON_BrepFace *bottomface = (*b)->NewFace(*bottom_surf);
+    ON_Plane bottom_plane(plane_origin, plane_x_dir, plane_y_dir);
+    ON_PlaneSurface bottom_surf(bottom_plane);
+    bottom_surf.SetDomain(0, 0.0, DIST_PT_PT(p_origin, p2));
+    bottom_surf.SetDomain(1, 0.0, DIST_PT_PT(p_origin, p3));
+    bottom_surf.SetExtents(0, bottom_surf.Domain(0));
+    bottom_surf.SetExtents(1, bottom_surf.Domain(1));
+    ON_BrepFace *bottomface = (*b)->NewFace(bottom_surf);
     (*b)->FlipFace(*bottomface);
 
     // Second step, the "walls"
@@ -167,7 +164,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 
     point_t s1p1, s1p2, s1p3, s1p4;
     ON_3dPoint s1pt1, s1pt2, s1pt3, s1pt4;
-    ON_3dPointArray *bezpoints1 = new ON_3dPointArray(256);
+    ON_3dPointArray bezpoints1(256);
 
     VSET(p_temp, 0, 0, 0);
     MOVEPT(s1p1);
@@ -181,8 +178,8 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     s1pt2 = ON_3dPoint(s1p2);
     s1pt3 = ON_3dPoint(s1p3);
     s1pt4 = ON_3dPoint(s1p4);
-    ON_Plane *s1_plane = new ON_Plane(s1pt1, s1pt2, s1pt4);
-    ON_PlaneSurface *s1_surf = new ON_PlaneSurface(*s1_plane);
+    ON_Plane s1_plane(s1pt1, s1pt2, s1pt4);
+    ON_PlaneSurface *s1_surf = new ON_PlaneSurface(s1_plane);
     // Need 3 linear curves and a spline curve
     ON_Curve *s1c1 = new ON_LineCurve(s1pt1, s1pt2);
     boundary.Append(s1c1);
@@ -193,11 +190,11 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	VSET(p_temp, x, 0, DSP(dsp_ip, x, 0));
 	MOVEPT(p_ctrl);
 	ON_3dPoint *ctrlpt = new ON_3dPoint(p_ctrl);
-	bezpoints1->Append(*ctrlpt);
+	bezpoints1.Append(*ctrlpt);
     }
-    ON_BezierCurve *s1_bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints1);
+    ON_BezierCurve s1_bez3d((const ON_3dPointArray)bezpoints1);
     ON_NurbsCurve* s1_beznurb3d = ON_NurbsCurve::New();
-    s1_bez3d->GetNurbForm(*s1_beznurb3d);
+    s1_bez3d.GetNurbForm(*s1_beznurb3d);
     s1_beznurb3d->SetDomain(0.0, 1.0);
     boundary.Append(s1_beznurb3d);
     ON_Curve *s1c4 = new ON_LineCurve(s1pt4, s1pt1);
@@ -216,7 +213,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 
     point_t s2p1, s2p2, s2p3, s2p4;
     ON_3dPoint s2pt1, s2pt2, s2pt3, s2pt4;
-    ON_3dPointArray *bezpoints2 = new ON_3dPointArray(256);
+    ON_3dPointArray bezpoints2(256);
 
     boundary.Empty();
     VSET(p_temp, 0, 0, 0);
@@ -231,8 +228,8 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     s2pt2 = ON_3dPoint(s2p2);
     s2pt3 = ON_3dPoint(s2p3);
     s2pt4 = ON_3dPoint(s2p4);
-    ON_Plane *s2_plane = new ON_Plane(s2pt1, s2pt2, s2pt4);
-    ON_PlaneSurface *s2_surf = new ON_PlaneSurface(*s2_plane);
+    ON_Plane s2_plane(s2pt1, s2pt2, s2pt4);
+    ON_PlaneSurface *s2_surf = new ON_PlaneSurface(s2_plane);
     // Need 3 linear curves and a spline curve
     ON_Curve *s2c1 = new ON_LineCurve(s2pt1, s2pt2);
     boundary.Append(s2c1);
@@ -242,12 +239,12 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	point_t p_ctrl;
 	VSET(p_temp, 0, y, DSP(dsp_ip, 0, y));
 	MOVEPT(p_ctrl);
-	ON_3dPoint *ctrlpt = new ON_3dPoint(p_ctrl);
-	bezpoints2->Append(*ctrlpt);
+	ON_3dPoint ctrlpt(p_ctrl);
+	bezpoints2.Append(ctrlpt);
     }
-    ON_BezierCurve *s2_bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints2);
+    ON_BezierCurve s2_bez3d((const ON_3dPointArray)bezpoints2);
     ON_NurbsCurve* s2_beznurb3d = ON_NurbsCurve::New();
-    s2_bez3d->GetNurbForm(*s2_beznurb3d);
+    s2_bez3d.GetNurbForm(*s2_beznurb3d);
     s2_beznurb3d->SetDomain(0.0, 1.0);
     boundary.Append(s2_beznurb3d);
     ON_Curve *s2c4 = new ON_LineCurve(s2pt4, s2pt1);
@@ -267,7 +264,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 
     point_t s3p1, s3p2, s3p3, s3p4;
     ON_3dPoint s3pt1, s3pt2, s3pt3, s3pt4;
-    ON_3dPointArray *bezpoints3 = new ON_3dPointArray(256);
+    ON_3dPointArray bezpoints3(256);
 
     boundary.Empty();
     VSET(p_temp, dsp_ip->dsp_xcnt - 1, dsp_ip->dsp_ycnt - 1, 0);
@@ -282,8 +279,8 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     s3pt2 = ON_3dPoint(s3p2);
     s3pt3 = ON_3dPoint(s3p3);
     s3pt4 = ON_3dPoint(s3p4);
-    ON_Plane *s3_plane = new ON_Plane(s3pt1, s3pt2, s3pt4);
-    ON_PlaneSurface *s3_surf = new ON_PlaneSurface(*s3_plane);
+    ON_Plane s3_plane(s3pt1, s3pt2, s3pt4);
+    ON_PlaneSurface *s3_surf = new ON_PlaneSurface(s3_plane);
     // Need 3 linear curves and a spline curve
     ON_Curve *s3c1 = new ON_LineCurve(s3pt1, s3pt2);
     boundary.Append(s3c1);
@@ -293,12 +290,12 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	point_t p_ctrl;
 	VSET(p_temp, x, dsp_ip->dsp_ycnt - 1, DSP(dsp_ip, x, dsp_ip->dsp_ycnt - 1));
 	MOVEPT(p_ctrl);
-	ON_3dPoint *ctrlpt = new ON_3dPoint(p_ctrl);
-	bezpoints3->Append(*ctrlpt);
+	ON_3dPoint ctrlpt(p_ctrl);
+	bezpoints3.Append(ctrlpt);
     }
-    ON_BezierCurve *s3_bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints3);
+    ON_BezierCurve s3_bez3d((const ON_3dPointArray)bezpoints3);
     ON_NurbsCurve* s3_beznurb3d = ON_NurbsCurve::New();
-    s3_bez3d->GetNurbForm(*s3_beznurb3d);
+    s3_bez3d.GetNurbForm(*s3_beznurb3d);
     s3_beznurb3d->SetDomain(0.0, 1.0);
     boundary.Append(s3_beznurb3d);
     ON_Curve *s3c4 = new ON_LineCurve(s3pt4, s3pt1);
@@ -317,7 +314,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 
     point_t s4p1, s4p2, s4p3, s4p4;
     ON_3dPoint s4pt1, s4pt2, s4pt3, s4pt4;
-    ON_3dPointArray *bezpoints4 = new ON_3dPointArray(256);
+    ON_3dPointArray bezpoints4(256);
 
     boundary.Empty();
     VSET(p_temp, dsp_ip->dsp_xcnt - 1, dsp_ip->dsp_ycnt - 1, 0);
@@ -332,8 +329,8 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     s4pt2 = ON_3dPoint(s4p2);
     s4pt3 = ON_3dPoint(s4p3);
     s4pt4 = ON_3dPoint(s4p4);
-    ON_Plane *s4_plane = new ON_Plane(s4pt1, s4pt2, s4pt4);
-    ON_PlaneSurface *s4_surf = new ON_PlaneSurface(*s4_plane);
+    ON_Plane s4_plane(s4pt1, s4pt2, s4pt4);
+    ON_PlaneSurface *s4_surf = new ON_PlaneSurface(s4_plane);
     // Need 3 linear curves and a spline curve
     ON_Curve *s4c1 = new ON_LineCurve(s4pt1, s4pt2);
     boundary.Append(s4c1);
@@ -343,12 +340,12 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	point_t p_ctrl;
 	VSET(p_temp, dsp_ip->dsp_xcnt - 1, y, DSP(dsp_ip, dsp_ip->dsp_xcnt - 1, y));
 	MOVEPT(p_ctrl);
-	ON_3dPoint *ctrlpt = new ON_3dPoint(p_ctrl);
-	bezpoints4->Append(*ctrlpt);
+	ON_3dPoint ctrlpt(p_ctrl);
+	bezpoints4.Append(ctrlpt);
     }
-    ON_BezierCurve *s4_bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints4);
+    ON_BezierCurve s4_bez3d((const ON_3dPointArray)bezpoints4);
     ON_NurbsCurve* s4_beznurb3d = ON_NurbsCurve::New();
-    s4_bez3d->GetNurbForm(*s4_beznurb3d);
+    s4_bez3d.GetNurbForm(*s4_beznurb3d);
     s4_beznurb3d->SetDomain(0.0, 1.0);
     boundary.Append(s4_beznurb3d);
     ON_Curve *s4c4 = new ON_LineCurve(s4pt4, s4pt1);
@@ -390,7 +387,6 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	}
     }
     fastf_t max_delta = max - min;
-    bu_log("%lf\n", max_delta);
     fastf_t tol = max_delta * 5.0 * dsp_ip->dsp_ycnt;
     fastf_t maxerr = 0.0;
     // Calculate the combinations
@@ -417,7 +413,6 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	for (unsigned int y = 0; y < dsp_ip->dsp_ycnt; y++) {
 	    if (DegreeReduction(currentdegree - 1, *bezcurvarray[(const int)y], tol, maxerr) == -1) {
 		exceedtol = true;
-		bu_log("%lf\n", maxerr);
 		break;
 	    }
 	}
@@ -451,7 +446,6 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	for (int x = 0; x < reducedsurf->m_order[0]; x++) {
 	    if (DegreeReduction(currentdegree - 1, *bezcurvarray[x], tol, maxerr) == -1) {
 		exceedtol = true;
-		bu_log("%lf\n", maxerr);
 		break;
 	    }
 	}
