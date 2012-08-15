@@ -57,8 +57,8 @@ macro(BRLCAD_TARGET_NAME input_string outputvar)
   string(REGEX REPLACE "/" "_" targetstr ${input_string})
   string(REGEX REPLACE "\\." "_" targetstr ${targetstr})
   string(LENGTH "${targetstr}" STRLEN)
-  # If the input string is longer than 30 characters, generate a 
-  # shorter string using the md5 hash.  It will be cryptic but 
+  # If the input string is longer than 30 characters, generate a
+  # shorter string using the md5 hash.  It will be cryptic but
   # the odds are very good it'll be a unique target name
   # and the string will be short enough, which is what we need.
   if ("${STRLEN}" GREATER 30)
@@ -75,7 +75,7 @@ endmacro(BRLCAD_TARGET_NAME)
 
 
 #-----------------------------------------------------------------------------
-# It is sometimes convenient to be able to supply both a filename and a 
+# It is sometimes convenient to be able to supply both a filename and a
 # variable name containing a list of files to a single macro.
 # This routine handles both forms of input - separate variables are
 # used to indicate which variable names are supposed to contain the
@@ -125,7 +125,7 @@ macro(NORMALIZE_FILE_LIST inlist targetvar fullpath_targetvar)
 endmacro(NORMALIZE_FILE_LIST)
 
 #-----------------------------------------------------------------------------
-# Some of the more advanced build system features in BRL-CAD's CMake build 
+# Some of the more advanced build system features in BRL-CAD's CMake build
 # need to know whether symlink support is present on the current OS - go
 # ahead and do this test up front, caching the results.
 if(NOT DEFINED HAVE_SYMLINK)
@@ -178,14 +178,14 @@ endmacro(BRLCAD_GET_DIR_LIST_CONTENTS)
 # We need a way to tell whether one path is a subpath of another path without
 # relying on regular expressions, since file paths may have characters in them
 # that will trigger regex matching behavior when we don't want it.  (To test,
-# for example, use a build directory name of build++) 
+# for example, use a build directory name of build++)
 #
 # Sets ${result_var} to 1 if the candidate subpath is actually a subpath of
 # the supplied "full" path, otherwise sets it to 0.
 #
 # The routine below does the check without using regex matching, in order to
 # handle path names that contain characters that would be interpreted as active
-# in a regex string. 
+# in a regex string.
 macro(IS_SUBPATH in_candidate_subpath in_full_path result_var)
   # Convert paths to lists of directories - regex based
   # matching won't work reliably, so instead look at each
@@ -204,7 +204,7 @@ macro(IS_SUBPATH in_candidate_subpath in_full_path result_var)
   if("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
     set(${result_var} 0)
   else("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
-    # OK, maybe it's a subpath - time to actually check 
+    # OK, maybe it's a subpath - time to actually check
     string(REPLACE "/" ";" full_path_list "${full_path}")
     string(REPLACE "/" ";" candidate_subpath_list "${candidate_subpath}")
     set(found_difference 0)
