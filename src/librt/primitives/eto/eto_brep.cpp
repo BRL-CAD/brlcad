@@ -74,21 +74,21 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
 
-    const ON_Plane* ell_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
+    const ON_Plane ell_plane(plane_origin, plane_x_dir, plane_y_dir);
 
 
     //  Once the plane has been created, create the ellipse
     //  within the plane.
     ell_axis_len_1 = MAGNITUDE(eip->eto_C);
     ell_axis_len_2 = eip->eto_rd;
-    ON_Ellipse* ellipse = new ON_Ellipse(*ell_plane, ell_axis_len_1, ell_axis_len_2);
+    ON_Ellipse ellipse(ell_plane, ell_axis_len_1, ell_axis_len_2);
 
 
     //  Generate an ON_Curve from the ellipse and revolve it
     //  around eto_N
 
     ON_NurbsCurve ellcurve;
-    ellipse->GetNurbForm(ellcurve);
+    ellipse.GetNurbForm(ellcurve);
     point_t eto_endvertex;
     VADD2(eto_endvertex, eip->eto_V, eip->eto_N);
     ON_3dPoint eto_vertex_pt = ON_3dPoint(eip->eto_V);
