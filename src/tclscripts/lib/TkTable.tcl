@@ -439,6 +439,11 @@
 		return
 	    }
 
+	    if {$itk_option(-singleSelectCallback) != ""} {
+		selectSingleRow $row
+		return
+	    }
+
 	    if {[set [subst $mTableDataVar\($index\)]] == "*"} {
 		setTableVal $index ""
 		$itk_component(table) tag cell {} $index
