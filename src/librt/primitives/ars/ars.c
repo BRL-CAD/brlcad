@@ -544,7 +544,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     verts = (struct vertex **)bu_calloc(arip->ncurves * (arip->pts_per_curve+1),
 					sizeof(struct vertex *),
-					"rt_tor_tess *verts[]");
+					"rt_ars_tess *verts[]");
 
     /*
      * Draw the "waterlines", by tracing each curve.  n+1th point is
