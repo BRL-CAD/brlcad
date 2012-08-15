@@ -65,6 +65,7 @@ rt_extrude_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
     ON_Brep& brep = *(*b);
     ON_BrepExtrudeFace(brep, 0, *extrudepath, true);
     bu_free(tmp_internal, "free temporary rt_db_internal");
+    delete extrudepath;
 }
 
 
