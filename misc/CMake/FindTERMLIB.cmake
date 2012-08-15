@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-# - Find termlib 
+# - Find termlib
 # Find a curses or other terminal library
 #
 #  TERMLIB_LIBRARY       - terminal library.
@@ -73,7 +73,7 @@ else(NOT LIBTERM_RESULT)
 endif(NOT LIBTERM_RESULT)
 mark_as_advanced(TERMLIB_LIBRARY)
 set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
-# handle the QUIETLY and REQUIRED arguments and set TERMLIB_FOUND to TRUE if 
+# handle the QUIETLY and REQUIRED arguments and set TERMLIB_FOUND to TRUE if
 # all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(TERMLIB DEFAULT_MSG TERMLIB_LIBRARY TERMLIB_INCLUDE_DIR)
