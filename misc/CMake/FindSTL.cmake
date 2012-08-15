@@ -81,7 +81,7 @@ else("${STL_LIB_TEST}" EQUAL 1)
 
   set(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES_BAK}")
 
-  # handle the QUIETLY and REQUIRED arguments 
+  # handle the QUIETLY and REQUIRED arguments
   include(FindPackageHandleStandardArgs)
   FIND_PACKAGE_HANDLE_STANDARD_ARGS(STL DEFAULT_MSG STDCXX_LIBRARIES)
 endif("${STL_LIB_TEST}" EQUAL 1)
