@@ -144,7 +144,7 @@ main(int argc, char **argv)
 	(void)fputs(usage, stderr);
 	bu_exit (1, NULL);
     }
-    
+
     bu_log("DEPRECATED: pix-orle is no longer being maintained.  Use pix-rle instead.\n");
 
     scan_buf = (RGBpixel *)malloc(sizeof(RGBpixel) * file_width);
