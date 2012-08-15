@@ -103,6 +103,7 @@ set(LIBGED_SOURCES
   dup.c
   eac.c
   echo.c
+  edbot.c
   edcodes.c
   edcomb.c
   edit.c

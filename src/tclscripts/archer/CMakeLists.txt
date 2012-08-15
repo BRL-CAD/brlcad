@@ -9,6 +9,7 @@ set(archer_TCLSCRIPTS
   Archer.tcl
   ArcherCore.tcl
   AttrGroupsDisplayUtility.tcl
+  BotEditFrame.tcl
   BotUtility.tcl
   CombEditFrame.tcl
   DataUtils.tcl

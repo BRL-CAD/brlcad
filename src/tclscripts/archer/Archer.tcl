@@ -153,6 +153,7 @@ package provide Archer 1.0
 
 	method importFg4Sections   {_slist _wlist _delta}
 	method initAppendPipePoint {_obj _button _callback}
+	method initFindBotPoint {_obj _button _callback}
 	method initFindPipePoint {_obj _button _callback}
 	method initPrependPipePoint {_obj _button _callback}
 
@@ -744,6 +745,18 @@ package provide Archer 1.0
     # things through to PipeEditFrame.
 
     $itk_component(ged) init_append_pipept $_obj $_button $_callback
+}
+
+
+::itcl::body Archer::initFindBotPoint {_obj _button _callback} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    # This deselects the selected mouse mode in the primary toolbar
+    set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+
+    $itk_component(ged) init_find_botpt $_obj $_button $_callback
 }
 
 
@@ -5771,11 +5784,7 @@ proc title_node_handler {node} {
 	return
     }
 
-    if {$mSelectedObjType != "bot"} {
-	set odata [lrange [gedCmd get $mSelectedObj] 1 end]
-    } else {
-	set odata ""
-    }
+    set odata [lrange [gedCmd get $mSelectedObj] 1 end]
 
     if {$_initEditMode && [info exists GeometryEditFrame::mEditCommand]} {
 	set GeometryEditFrame::mEditMode 0
@@ -6023,7 +6032,11 @@ proc title_node_handler {node} {
 	set win [$itk_component(ged) component $dname]
 
 	if {$GeometryEditFrame::mEditCommand != ""} {
-	    bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 %x %y; break"
+	    if {$mSelectedObjType == "bot"} {
+		bind $win <1> "$itk_component(botView) moveBotPtMode $dname $obj %x %y; break"
+	    } else {
+		bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 %x %y; break"
+	    }
 	} else {
 	    bind $win <1> "$itk_component(ged) pane_otranslate_mode $dname $obj %x %y; break"
 	}
@@ -6066,7 +6079,8 @@ proc title_node_handler {node} {
     updateSaveMode
     initEdit 0
 
-    if {$mSelectedObjType != "pipe" || $GeometryEditFrame::mEditParam1 == ""} {
+    if {$GeometryEditFrame::mEditParam1 == "" ||
+	($mSelectedObjType != "pipe" && $mSelectedObjType != "bot")} {
 	set center [$itk_component(ged) ocenter $_obj]
 	addHistory "ocenter $_obj $center"
     }
@@ -6102,18 +6116,12 @@ proc title_node_handler {node} {
 ::itcl::body Archer::endObjTranslate {_dm _obj _mx _my} {
     $itk_component(ged) pane_idle_mode $_dm
 
-    if {$mSelectedObjType == "pipe" && $GeometryEditFrame::mEditParam1 != ""} {
-	set sx $_mx
-	set sy $_my
-    } else {
-	set ocenter [gedCmd ocenter $_obj]
-	set vcenter [gedCmd pane_m2v_point $_dm $ocenter]
-	set screen [gedCmd pane_view2screen $_dm $vcenter]
-	set sx [lindex $screen 0]
-	set sy [lindex $screen 1]
+    if {![$itk_component(ged) pane_grid $_dm snap]} {
+	endObjCenter $_obj
+	return
     }
 
-    handleObjCenter $_dm $_obj $sx $sy
+    handleObjCenter $_dm $_obj $_mx $_my
     endObjCenter $_obj
 }
 
@@ -6143,7 +6151,12 @@ proc title_node_handler {node} {
 	    eval editMotionDeltaCallback otranslate $diff
 	} else {
 	    if {$GeometryEditFrame::mEditCommand != ""} {
-		gedCmd $GeometryEditFrame::mEditCommand $_obj $GeometryEditFrame::mEditParam1 $new_ocenter
+		if {$mSelectedObjType == "bot"} {
+		    set sl [gedCmd pane_view2screen $_dm [list $vx $vy]]
+		    $itk_component(botView) moveBotPt $_dm $_obj [lindex $sl 0] [lindex $sl 1]
+		} else {
+		    $itk_component(ged) $GeometryEditFrame::mEditCommand $_obj $GeometryEditFrame::mEditParam1 $new_ocenter
+		}
 	    } else {
 		eval gedCmd ocenter $_obj $new_ocenter
 	    }
@@ -6209,9 +6222,6 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::buildBotEditView {} {
-    #XXX Not ready yet
-    return
-
     set parent $itk_component(objEditView)
     itk_component add botView {
 	BotEditFrame $parent.botview \
@@ -6825,22 +6835,19 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::initBotEditView {odata} {
-    #XXX Not ready yet
-    return
+    $itk_component(botView) configure \
+	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
+	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
+	-mged $itk_component(ged) \
+	-labelFont $mFontText \
+	-boldLabelFont $mFontTextBold \
+	-entryFont $mFontText
+    $itk_component(botView) initGeometry $odata
 
-    #     $itk_component(botView) configure \
-	# 	-geometryObject $mSelectedObj \
-	#       -geometryObjectPath $mSelectedObjPath \
-	# 	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
-	# 	-mged $itk_component(ged) \
-	# 	-labelFont $mFontText \
-	# 	-boldLabelFont $mFontTextBold \
-	# 	-entryFont $mFontText
-    #     $itk_component(botView) initGeometry $odata
-
-    #     pack $itk_component(botView) \
-	# 	-expand yes \
-	# 	-fill both
+    pack $itk_component(botView) \
+	-expand yes \
+	-fill both
 }
 
 
@@ -9006,9 +9013,6 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::createBot {name} {
-    #XXX Not ready yet
-    return
-
     if {![info exists itk_component(botView)]} {
 	buildBotEditView
 	$itk_component(botView) configure \

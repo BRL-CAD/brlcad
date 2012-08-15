@@ -1078,6 +1078,11 @@ GED_EXPORT extern int ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_find(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Find the bot point nearest the specified point in view coordinates.
+ */
+GED_EXPORT extern int ged_find_botpt_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Find the pipe point nearest the specified point in model coordinates.
  */
 GED_EXPORT extern int ged_find_pipept_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
@@ -1338,6 +1343,11 @@ GED_EXPORT extern int ged_move_all(struct ged *gedp, int argc, const char *argv[
  * Move an arb's face through point
  */
 GED_EXPORT extern int ged_move_arb_face(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Move the specified bot point.
+ */
+GED_EXPORT extern int ged_move_botpt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Move the specified pipe point.
