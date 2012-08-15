@@ -3535,7 +3535,6 @@ surface_surface_intersection(const ON_Surface* surfA,
     delete rootA;
     delete rootB;
 
-    // WIP
     return 0;
 }
 
