@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-# - Find xmllint executable 
+# - Find xmllint executable
 #
 #  The module defines the following variables:
 #  XSLTPROC_FOUND - true is xsltproc executable is found
