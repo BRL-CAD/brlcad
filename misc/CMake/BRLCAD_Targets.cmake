@@ -70,7 +70,7 @@ endmacro(GET_TARGET_DEFINES)
 macro(GET_TARGET_DLL_DEFINES targetname target_libs)
   if(CPP_DLL_DEFINES)
     # In case of re-running cmake, make sure the DLL_IMPORTS define
-    # for this specific library is removed, since for the actual target 
+    # for this specific library is removed, since for the actual target
     # we need to export, not import.
     get_property(${targetname}_DLL_DEFINES GLOBAL PROPERTY ${targetname}_DLL_DEFINES)
     if(${targetname}_DLL_DEFINES)
@@ -110,8 +110,8 @@ macro(GET_TARGET_FLAGS targetname target_libs)
   endforeach(lang ${FLAG_LANGUAGES})
 endmacro(GET_TARGET_FLAGS)
 
-# When a build target source file list contains files that are NOT all 
-# one lanaguage, we need to apply flags on a per-file basis
+# When a build target source file list contains files that are NOT all
+# one language, we need to apply flags on a per-file basis
 macro(FLAGS_TO_FILES srcslist targetname)
   foreach(srcfile ${srcslist})
     get_property(file_language SOURCE ${srcfile} PROPERTY LANGUAGE)
@@ -182,10 +182,10 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
     endif(NOT CMAKE_CONFIGURATION_TYPES)
   endif(LOCAL_EXEC)
 
-  # Use the list of libraries to be linked into this target to 
+  # Use the list of libraries to be linked into this target to
   # accumulate the necessary definitions and compilation flags.
   GET_TARGET_DEFINES(${execname} "${libslist}")
-  # For DLL libraries, we may need additional flags 
+  # For DLL libraries, we may need additional flags
   GET_TARGET_DLL_DEFINES(${execname} "${libslist}")
   GET_TARGET_FLAGS(${execname} "${libslist}")
 
@@ -210,7 +210,7 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
       set_property(TARGET ${execname} APPEND PROPERTY COMPILE_FLAGS "${lib_flag}")
     endforeach(lib_flag ${${execname}_${exec_type}_FLAGS})
   endif(${exec_type} STREQUAL "MIXED")
-  
+
   # If this target is marked as incompatible with the strict flags, disable them
   foreach(extraarg ${ARGN})
     if(${extraarg} MATCHES "NOSTRICT$" AND BRLCAD_ENABLE_STRICT)
@@ -233,14 +233,14 @@ endmacro(BRLCAD_ADDEXEC execname srcslist libslist)
 # statement will cover both automatically
 macro(BRLCAD_ADDLIB libname srcslist libslist)
 
-  # Add ${libname} to the list of BRL-CAD libraries	
+  # Add ${libname} to the list of BRL-CAD libraries
   list(APPEND BRLCAD_LIBS ${libname})
   list(REMOVE_DUPLICATES BRLCAD_LIBS)
   set(BRLCAD_LIBS "${BRLCAD_LIBS}" CACHE STRING "BRL-CAD libraries" FORCE)
 
   # Collect the definitions and flags needed by this library
   GET_TARGET_DEFINES(${libname} "${libslist}")
-  # For DLL libraries, we may need additional flags 
+  # For DLL libraries, we may need additional flags
   GET_TARGET_DLL_DEFINES(${libname} "${libslist}")
   GET_TARGET_FLAGS(${libname} "${libslist}")
 
@@ -256,14 +256,14 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
 
   # Handle "shared" libraries (with MSVC, these would be dynamic libraries)
   if(BUILD_SHARED_LIBS)
-   
+
     add_library(${libname} SHARED ${srcslist})
 
     # Make sure we don't end up with outputs named liblib...
     if(${libname} MATCHES "^lib*")
       set_target_properties(${libname} PROPERTIES PREFIX "")
     endif(${libname} MATCHES "^lib*")
-  
+
     # Generate the upper case abbrevation of the library that is used for
     # DLL definitions.  If We are using DLLs, we need to define export
     # for this library.
@@ -279,7 +279,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
     endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
 
     # Call install to setup the installation logic.
-    install(TARGETS ${libname} 
+    install(TARGETS ${libname}
       RUNTIME DESTINATION ${BIN_DIR}
       LIBRARY DESTINATION ${LIB_DIR}
       ARCHIVE DESTINATION ${LIB_DIR})
@@ -356,7 +356,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
     endforeach(extraarg ${ARGN})
   endif(BUILD_STATIC_LIBS)
 
-  # C++ STRICTNESS is handled separately (on a per-file basis) if we have mixed 
+  # C++ STRICTNESS is handled separately (on a per-file basis) if we have mixed
   # sources via the NOSTRICTCXX flag
   if(${lib_type} STREQUAL "MIXED")
     CXX_NOSTRICT("${srcslist}" "${ARGN}")
@@ -374,14 +374,14 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
 endmacro(BRLCAD_ADDLIB libname srcslist libslist)
 
 #-----------------------------------------------------------------------------
-# For situations when a local 3rd party library (say, zlib) has been chosen in 
-# preference to a system version of that library, it is important to ensure 
-# that the local header(s) get included before the system headers.  Normally 
-# this is handled by explicitly specifying the local include paths (which, 
-# being explicitly specified and non-standard, are checked prior to default 
-# system locations) but there are some situations (macports being a classic 
-# example) where *other* "non-standard" installed copies of libraries may 
-# exist and be found if those directories are included ahead of the desired 
+# For situations when a local 3rd party library (say, zlib) has been chosen in
+# preference to a system version of that library, it is important to ensure
+# that the local header(s) get included before the system headers.  Normally
+# this is handled by explicitly specifying the local include paths (which,
+# being explicitly specified and non-standard, are checked prior to default
+# system locations) but there are some situations (macports being a classic
+# example) where *other* "non-standard" installed copies of libraries may
+# exist and be found if those directories are included ahead of the desired
 # local copy.  An observed case:
 #
 # 1.  macports is installed on OSX
@@ -437,7 +437,7 @@ macro(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
     # add anything that might be left
     set(NEW_DIR_LIST ${NEW_DIR_LIST} ${${DIR_LIST}})
 
-    # remove any duplicates	
+    # remove any duplicates
     list(REMOVE_DUPLICATES NEW_DIR_LIST)
 
     # put the results into DIR_LIST
@@ -459,35 +459,35 @@ macro(BRLCAD_LIB_INCLUDE_DIRS libname DIR_LIST LOCAL_DIR_LIST)
   mark_as_advanced(${DIR_LIST})
 
   set(ALL_INCLUDES ${${DIR_LIST}} ${${LOCAL_DIR_LIST}})
-  BRLCAD_SORT_INCLUDE_DIRS(ALL_INCLUDES)	
+  BRLCAD_SORT_INCLUDE_DIRS(ALL_INCLUDES)
   include_directories(${ALL_INCLUDES})
 endmacro(BRLCAD_LIB_INCLUDE_DIRS)
 
 
 #-----------------------------------------------------------------------------
-# Files needed by BRL-CAD need to be both installed and copied into the 
+# Files needed by BRL-CAD need to be both installed and copied into the
 # correct locations in the build directories to allow executables to run
-# at build time.  Ideally, we would like any error messages returned when 
+# at build time.  Ideally, we would like any error messages returned when
 # running from the build directory to direct back to the copies of files in
 # the source tree, since those are the ones that should be edited.
 # On platforms that support symlinks, this is possible - build directory
 # "copies" of files are symlinks to the source tree version.  On platforms
 # without symlink support, we are forced to copy the files into place in
 # the build directories.  In both cases we have a build target that is
-# triggered if source files are edited in order to allow the build system 
+# triggered if source files are edited in order to allow the build system
 # to take further actions (for example, re-generating tclIndex and pkgIndex.tcl
 # files when the source .tcl files change).
 #
 # Because BRLCAD_MANAGE_FILES defines custom commands and specifies the files it is
-# to copy/symlink as dependencies, there is a potential for file names to 
-# conflict with build target names. (This has actually been observed with 
+# to copy/symlink as dependencies, there is a potential for file names to
+# conflict with build target names. (This has actually been observed with
 # MSVC - our file INSTALL in the toplevel source directory conflicts with the
-# MSVC target named INSTALL.)  To avoid conflicts and make the dependencies 
+# MSVC target named INSTALL.)  To avoid conflicts and make the dependencies
 # of the custom commands robust we supply full file paths as dependencies to
-# the file copying custom commands.  
+# the file copying custom commands.
 
 macro(BRLCAD_MANAGE_FILES inputdata targetdir)
-  # Handle both a list of one or more files and variable holding a list of files - 
+  # Handle both a list of one or more files and variable holding a list of files -
   # find out what we've got.
   NORMALIZE_FILE_LIST("${inputdata}" datalist fullpath_datalist targetname)
 
@@ -523,8 +523,8 @@ macro(BRLCAD_MANAGE_FILES inputdata targetdir)
       endif(NOT CMAKE_CONFIGURATION_TYPES)
     endforeach(filename ${fullpath_datalist})
 
-    # The custom command is still necessary - since it depends on the original source files, 
-    # this will be the trigger that tells other commands depending on this data that 
+    # The custom command is still necessary - since it depends on the original source files,
+    # this will be the trigger that tells other commands depending on this data that
     # they need to re-run one one of the source files is changed.
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel
