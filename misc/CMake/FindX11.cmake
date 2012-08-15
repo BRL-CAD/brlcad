@@ -74,23 +74,23 @@
 #=============================================================================
 # Copyright 2001-2009 Kitware, Inc.
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-# 
+#
 # * Redistributions of source code must retain the above copyright
 #   notice, this list of conditions and the following disclaimer.
-# 
+#
 # * Redistributions in binary form must reproduce the above copyright
 #   notice, this list of conditions and the following disclaimer in the
 #   documentation and/or other materials provided with the distribution.
-# 
+#
 # * Neither the names of Kitware, Inc., the Insight Software Consortium,
 #   nor the names of their contributors may be used to endorse or promote
 #   products derived from this software without specific prior written
 #   permission.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 # "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -102,32 +102,32 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# 
+#
 # ------------------------------------------------------------------------------
-# 
+#
 # The above copyright and license notice applies to distributions of
 # CMake in source and binary form.  Some source files contain additional
 # notices of original copyright by their contributors; see each source
 # for details.  Third-party software packages supplied with CMake under
 # compatible licenses provide their own copyright notices documented in
 # corresponding subdirectories.
-# 
+#
 # ------------------------------------------------------------------------------
-# 
+#
 # CMake was initially developed by Kitware with the following sponsorship:
-# 
+#
 #  * National Library of Medicine at the National Institutes of Health
 #    as part of the Insight Segmentation and Registration Toolkit (ITK).
-# 
+#
 #  * US National Labs (Los Alamos, Livermore, Sandia) ASC Parallel
 #    Visualization Initiative.
-# 
+#
 #  * National Alliance for Medical Image Computing (NAMIC) is funded by the
 #    National Institutes of Health through the NIH Roadmap for Medical Research,
 #    Grant U54 EB005149.
-# 
+#
 #  * Kitware, Inc.
-# 
+#
 #=============================================================================
 
 MACRO(X11_FIND_INCLUDE_PATH component header)
@@ -160,7 +160,7 @@ if(UNIX)
   # See whether we're looking for 32 or 64 bit libraries,
   # and organize our search directories accordingly.  The
   # common convention is to use lib64 for 64 bit versions of
-  # libraries, but some distributions (notably archlinux) 
+  # libraries, but some distributions (notably archlinux)
   # use lib32 for 32 bit and lib for 64 bit.
   get_property(SEARCH_64BIT GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
   if(SEARCH_64BIT)
@@ -206,7 +206,7 @@ if(UNIX)
   set(X11_HDR_PATHS)
   set(X11_LIB_VARS)
   set(X11_LIB_PATHS)
-  
+
   # Find primary X11 headers
   X11_FIND_INCLUDE_PATH(X11		X11/X.h)
   X11_FIND_INCLUDE_PATH(Xlib		X11/Xlib.h)
@@ -240,7 +240,7 @@ if(UNIX)
   X11_FIND_INCLUDE_PATH(Xutil		X11/Xutil.h)
   X11_FIND_INCLUDE_PATH(Xt		X11/Intrinsic.h)
   X11_FIND_INCLUDE_PATH(Xv		X11/extensions/Xvlib.h)
-  
+
 
   # Find primary X11 library
   X11_FIND_LIB_PATH(X11			X11)
@@ -289,7 +289,7 @@ if(UNIX)
     set(X11_Xshape_FOUND TRUE)
     set(X11_INCLUDE_DIR ${X11_INCLUDE_DIR} ${X11_Xshape_INCLUDE_PATH})
   endif(X11_Xshape_INCLUDE_PATH)
-  
+
   # We'll need a variable containing all X11 libraries found
   set(X11_LIBRARIES) # start with empty list
 
@@ -507,7 +507,7 @@ if(UNIX)
     # Build the final list of libraries.
     set(X11_LIBRARIES ${X11_X_PRE_LIBS} ${X11_LIBRARIES} ${X11_X_EXTRA_LIBS})
 
-    # Check whether we're pulling headers from multiple directoreis
+    # Check whether we're pulling headers from multiple directories
     list(LENGTH X11_HDR_PATHS HDR_PATH_CNT)
     if("${HDR_PATH_CNT}" GREATER 1)
       message("\nNote: FindX11 is returning headers found in multiple paths.  The user may wish to verify that components are not being returned from multiple X11 installations.\n")
