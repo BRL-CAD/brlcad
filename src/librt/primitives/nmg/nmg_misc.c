@@ -1346,8 +1346,6 @@ nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
     fastf_t area;
     fastf_t pt_count=0.0;
     fastf_t pt_dot_plane=0.0;
-    fastf_t vect_mag;
-    fastf_t vect_mag_inv;
     plane_t plane = HINIT_ZERO;
     struct edgeuse *eu;
     vect_t trans;
@@ -1404,16 +1402,10 @@ nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
 	VADD2(plane, plane, cross);
     }
 
-    vect_mag = MAGNITUDE(plane);
+    area = 0.5 * MAGNITUDE(plane);
 
     /* Error if the area is too small to unitize the normal vector */
-    if (vect_mag <= SMALL_FASTF)
-	return (fastf_t)(-1.0);
-
-    area = 0.5 * vect_mag;
-    vect_mag_inv = 1.0/vect_mag;
-
-    VSCALE(plane, plane, vect_mag_inv);
+    VUNITIZE_RET(plane, (fastf_t)(-1.0));
 
     /* calculate plane[W] as average distance to plane */
     for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
