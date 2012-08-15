@@ -37,7 +37,7 @@
 
 # The following variables are set:
 #
-# SH_EXEC 
+# SH_EXEC
 # CP_EXEC
 # MV_EXEC
 # RM_EXEC
