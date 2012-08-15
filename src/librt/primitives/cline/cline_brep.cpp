@@ -47,7 +47,7 @@ rt_cline_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol 
     cip = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cip);
 
-    BU_GET(pip, struct rt_pipe_internal);
+    pip = (struct rt_pipe_internal *)bu_malloc(sizeof(struct rt_pipe_internal), "pipe internal");
     rt_cline_to_pipe(pip, ip);
 
     struct rt_db_internal tmp_internal;
@@ -57,6 +57,8 @@ rt_cline_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol 
     tmp_internal.idb_minor_type = ID_PIPE;
     tmp_internal.idb_meth = &rt_functab[ID_PIPE];
     rt_pipe_brep(b, &tmp_internal, tol);
+
+    bu_free(pip, "pipe internal");
 }
 
 
