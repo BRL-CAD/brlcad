@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-# - Find regex 
+# - Find regex
 # Find the native REGEX includes and library
 #
 #  REGEX_INCLUDE_DIR   - where to find regex.h, etc.
@@ -60,7 +60,7 @@ endforeach(rname ${REGEX_NAMES})
 
 mark_as_advanced(REGEX_LIBRARY REGEX_INCLUDE_DIR)
 
-# handle the QUIETLY and REQUIRED arguments and set REGEX_FOUND to TRUE if 
+# handle the QUIETLY and REQUIRED arguments and set REGEX_FOUND to TRUE if
 # all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(REGEX DEFAULT_MSG REGEX_INCLUDE_DIR REGEX_LIBRARY)
