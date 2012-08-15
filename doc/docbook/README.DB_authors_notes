@@ -5,10 +5,10 @@ Some special characters for DB inline equations:
 
  LE  &#x2264;   less than or equal to
  GE  &#x2265;   greater than or equal to
- x   &#x00D7;   multiply                   
+ x   &#x00D7;   multiply
  div &#x00F7;   divide
  add &#x002B;   add
- pm  &#x00B1;   plus or minus              
+ pm  &#x00B1;   plus or minus
  ne  &#x2260;   not equal to
  dot &#x2219;   dot operator (multiply)
  pi  &#x03C0;   small Greek letter pi
@@ -16,9 +16,9 @@ Some special characters for DB inline equations:
 
 Dashes:
 
-  figure dash     &#x2012; 
-  en dash         &#x2013;       
-  em dash         &#x2014; 
+  figure dash     &#x2012;
+  en dash         &#x2013;
+  em dash         &#x2014;
   quotation dash  &#x2015;
   swung dash      &#x2053;
 
@@ -36,7 +36,7 @@ Some unicode characters for spaces (see p. 330 in Bob Stayton's book):
  &#x200A; &hairsp;  thinner than thin space
 
 Other symbols:
- 
+
  &#x00A9;           copyright
  &#x00AE;           registered sign
  &#x00B0;           degree symbol
@@ -94,7 +94,7 @@ Include the svg file in the desired place in DocBook source like this:
 <informalfigure>
 <mediaobject>
   <imageobject role='xhtml'>
-    <!-- centering title taken care of in css --> 
+    <!-- centering title taken care of in css -->
     <imagedata
        width='3in' scalefit='1'
        fileref="./X.svg"
@@ -119,7 +119,7 @@ Note there can be font problems for pdf with complex equations.  Querying the
 fop mailing list sheds light on the situation:
 
 <quote>
-from: Vincent Hennebert vhennebert@gmail.com via xmlgraphics.apache.org 
+from: Vincent Hennebert vhennebert@gmail.com via xmlgraphics.apache.org
 sender-time: Sent at 05:07 (GMT+01:00). Current time there: 2:23 PM.
 reply-to: fop-users@xmlgraphics.apache.org
 to: fop-users@xmlgraphics.apache.org
@@ -187,7 +187,7 @@ The default marks for html nested itemized lists are:
       square
 
 and they appear as small marks in html.  Note that html only
-recognizes those mark names so we acdept those defaults and they look
+recognizes those mark names so we accept those defaults and they look
 okay.
 
 For pdf, the same mark names appear too large and we have customized
