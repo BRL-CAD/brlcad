@@ -168,7 +168,6 @@ set mged_help_data(eye_pt)	$helplib_data(vo_eye)
 set mged_help_data(e_muves)	{{MUVES_component_1 MUVES_component2 ...}	{DEPRECATED: display listed MUVES components/systems}}
 set mged_help_data(facedef)	{{####}	{define new face for an arb}}
 set mged_help_data(facetize)	{{[-mntT] [-P#] new_obj old_obj(s)}	{convert objects to faceted BOT objects (or NMG for -n option, with -m for marching cubes) at current tol}}
-set mged_help_data(voxelize)	{{} {}}
 set mged_help_data(form)	$helplib_data(wdb_form)
 set mged_help_data(fracture)	{{NMGsolid [prefix]}	{fracture an NMG solid into many NMG solids, each containing one face}}
 set mged_help_data(g)		$helplib_data(wdb_group)
@@ -334,6 +333,15 @@ set mged_help_data(vars)	{{[var=opt]}	{get/set mged variables}}
 set mged_help_data(vdraw)	{{write|insert|delete|read|length|send [args]}	{Expermental drawing (cnuzman)}}
 set mged_help_data(view)	{{center|size|eye|ypr|quat|aet}	{get/set view parameters (local units).}}
 set mged_help_data(vnirt)	{{x y}  	{trace a single ray from x y}}
+set mged_help_data(voxelize)	{{[-s "dx dy dz"] [-d n] [-t f] new_obj old_obj [old_obj2 old_obj3 ...]} {convert object to its constituent voxels, i.e.the RPPs which approximate it.
+
+Options:
+	-d n		    - Specifies the level of detail(precision in approximation of volume) required. An input of n means that n * n rays will be shot through each row, and an approximation of volume filled is reached averaging these n * n values 
+
+	-s "dx dy dz"       - Specifies the voxel size in each direction.
+
+	-t f		    - Specifies the threshold volume to decide if voxel is to be included in the voxelized output.
+  }}
 set mged_help_data(vquery_ray)	{{x y}  	{trace a single ray from x y}}
 #set mged_help_data(vrmgr)	{{host {master|slave|overview}}	{link with Virtual Reality manager}}
 set mged_help_data(vrot)	$helplib_data(vo_vrot)
