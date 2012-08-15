@@ -58,20 +58,20 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     plane1_origin = ON_3dPoint(p1_origin);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
-    const ON_Plane* epa_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
+    const ON_Plane epa_bottom_plane = ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
 
     //  Next, create an ellipse in the plane corresponding to the edge of the epa.
 
-    ON_Ellipse* ellipse1 = new ON_Ellipse(*epa_bottom_plane, eip->epa_r1, eip->epa_r2);
-    ON_NurbsCurve* ellcurve1 = ON_NurbsCurve::New();
-    ellipse1->GetNurbForm((*ellcurve1));
-    ellcurve1->SetDomain(0.0, 1.0);
+    ON_Ellipse ellipse1 = ON_Ellipse(epa_bottom_plane, eip->epa_r1, eip->epa_r2);
+    ON_NurbsCurve ellcurve1;
+    ellipse1.GetNurbForm(ellcurve1);
+    ellcurve1.SetDomain(0.0, 1.0);
 
     // Generate the bottom cap
     ON_SimpleArray<ON_Curve*> boundary;
-    boundary.Append(ON_Curve::Cast(ellcurve1));
+    boundary.Append(ON_Curve::Cast(&ellcurve1));
     ON_PlaneSurface* bp = new ON_PlaneSurface();
-    bp->m_plane = (*epa_bottom_plane);
+    bp->m_plane = epa_bottom_plane;
     bp->SetDomain(0, -100.0, 100.0);
     bp->SetDomain(1, -100.0, 100.0);
     bp->SetExtents(0, bp->Domain(0));
