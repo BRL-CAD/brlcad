@@ -82,20 +82,20 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     plane1_origin = ON_3dPoint(p1_origin);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
-    const ON_Plane* ehy_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
+    const ON_Plane ehy_bottom_plane(plane1_origin, plane_x_dir, plane_y_dir);
 
     //  Next, create an ellipse in the plane corresponding to the edge of the ehy.
 
-    ON_Ellipse* ellipse1 = new ON_Ellipse(*ehy_bottom_plane, eip->ehy_r1, eip->ehy_r2);
+    ON_Ellipse ellipse1(ehy_bottom_plane, eip->ehy_r1, eip->ehy_r2);
     ON_NurbsCurve* ellcurve1 = ON_NurbsCurve::New();
-    ellipse1->GetNurbForm((*ellcurve1));
+    ellipse1.GetNurbForm((*ellcurve1));
     ellcurve1->SetDomain(0.0, 1.0);
 
     // Generate the bottom cap
     ON_SimpleArray<ON_Curve*> boundary;
     boundary.Append(ON_Curve::Cast(ellcurve1));
     ON_PlaneSurface* bp = new ON_PlaneSurface();
-    bp->m_plane = (*ehy_bottom_plane);
+    bp->m_plane = ehy_bottom_plane;
     bp->SetDomain(0, -100.0, 100.0);
     bp->SetDomain(1, -100.0, 100.0);
     bp->SetExtents(0, bp->Domain(0));
@@ -110,6 +110,7 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     bp->SetExtents(0, bp->Domain(0));
     bp->SetExtents(1, bp->Domain(1));
     (*b)->SetTrimIsoFlags(bface);
+    delete ellcurve1;
 
     //  Now, the hard part.  Need an elliptical hyperboloic NURBS surface
     //  First step is to create a nurbs curve.
@@ -160,6 +161,10 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     // Get the NURBS form of the surface
     ON_NurbsSurface *ehycurvedsurf = ON_NurbsSurface::New();
     hyp_surf->GetNurbForm(*ehycurvedsurf, 0.0);
+
+    delete hyp_surf;
+    delete tnurbscurve;
+    delete bcurve;
 
     // Transformations
 
