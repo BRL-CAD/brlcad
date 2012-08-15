@@ -2191,15 +2191,15 @@ mark_as_advanced(LIBRARY_OUTPUT_PATH)
 # ----------------------------------------------------------------------------
 # If options have been defined that we are going to document, by now they've
 # been documented.  Make an updated copy of the "INSTALL" file and see whether
-# anything has changed. 
+# anything has changed.
 #
-# Although the general principle of this build is to leave the src dir 
-# pristine after configuration and compilation, the INSTALL and configure files 
+# Although the general principle of this build is to leave the src dir
+# pristine after configuration and compilation, the INSTALL and configure files
 # represent one of two cases where the default behavior is to alter the files
 # if changes have occurred.  (The other is cached generated outputs from tools
 # such as re2c and lemon.)  For the purposes of this project, a given
-# option's documentation is defined in the CMakeLists.txt source file with 
-# the option definiton logic - the text in INSTALL is simply an output from
+# option's documentation is defined in the CMakeLists.txt source file with
+# the option definition logic - the text in INSTALL is simply an output from
 # that, and is never the correct place for manual changes.
 #
 # As with generated outputs, this auto-updating behavior can be overridden
