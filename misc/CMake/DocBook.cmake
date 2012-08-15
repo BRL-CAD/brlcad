@@ -37,14 +37,14 @@
 # In principle, DocBook conversion and validation can be accomplished
 # with multiple programs.  BRL-CAD's CMake logic uses variables to
 # hold the "active" tools for each conversion operation, but will
-# set defaults if the user does not manually set them.  
+# set defaults if the user does not manually set them.
 
 # If a user wishes to use their own validation and/or conversion
-# tools, they can set the following variables to their executable 
+# tools, they can set the following variables to their executable
 # names and create <exec_name>.cmake.in files in misc/CMake.  To work,
 # the cmake.in files will need to produce the same validity "stamp"
-# files and fatal errors as the default tools upon success or failure.  
-# For a worked example, see rnv.cmake.in - to test it, install rnv from 
+# files and fatal errors as the default tools upon success or failure.
+# For a worked example, see rnv.cmake.in - to test it, install rnv from
 # http://sourceforge.net/projects/rnv/ and configure BRL-CAD as follows:
 #
 # cmake .. -DBRLCAD_EXTRADOCS_VALIDATE=ON -DVALIDATE_EXECUTABLE=rnv
@@ -61,7 +61,7 @@ else(NOT DEFINED VALIDATE_EXECUTABLE)
   endif(NOT EXISTS ${BRLCAD_SOURCE_DIR}/misc/CMake/${VALIDATE_EXECUTABLE}.cmake.in)
 endif(NOT DEFINED VALIDATE_EXECUTABLE)
 
-# Handle default exec and sanity checking for XSLT 
+# Handle default exec and sanity checking for XSLT
 if(NOT DEFINED XSLT_EXECUTABLE)
   set(XSLT_EXECUTABLE "xsltproc")
 else(NOT DEFINED XSLT_EXECUTABLE)
@@ -87,7 +87,7 @@ else(CMAKE_CONFIGURATION_TYPES)
 endif(CMAKE_CONFIGURATION_TYPES)
 
 # xsltproc is finicky about slashes in names - do some
-# sanity scrubbing of the full root path string in 
+# sanity scrubbing of the full root path string in
 # preparation for generating DocBook scripts
 string(REGEX REPLACE "/+" "/" bin_root "${bin_root}")
 string(REGEX REPLACE "/$" "" bin_root "${bin_root}")
@@ -127,9 +127,9 @@ macro(DB_SCRIPT targetname outdir executable)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     set(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${targetname}.cmake)
   endif(NOT CMAKE_CONFIGURATION_TYPES OR "${CMAKE_CFG_INTDIR}" STREQUAL ".")
-endmacro(DB_SCRIPT) 
+endmacro(DB_SCRIPT)
 
-# Macro to define individual validation build targets and generate the script files 
+# Macro to define individual validation build targets and generate the script files
 # used to run the validation step during build
 macro(DB_VALIDATE_TARGET targetname targetdir filename_root)
   # Man page root names are not unique (and other documents' root names are not guaranteed to be
@@ -140,7 +140,7 @@ macro(DB_VALIDATE_TARGET targetname targetdir filename_root)
   set(validate_target ${root2}_${root1}_${filename_root}_validate)
   set(db_outfile ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${filename_root}.valid)
   # If we're already set up, no need to do it twice (CMake doesn't like it anyway)
-  # Handle this by getting a TARGET_NAME property on the target that we set when 
+  # Handle this by getting a TARGET_NAME property on the target that we set when
   # creating the target. If the target doesn't exist yet, the get returns NOTFOUND
   # and we know to create the target.  Otherwise, the target exists and this xml
   # file has handled - skip it.
@@ -173,8 +173,8 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
       foreach(extra_out ${EXTRA_OUTPUTS})
 	set(EXTRAS ${EXTRAS} ${bin_root}/${DOC_DIR}/${targetdir}/${extra_out})
       endforeach(extra_out ${EXTRA_OUTPUTS})
-     
-      # Generate the script that will be used to run the XSLT executable 
+
+      # Generate the script that will be used to run the XSLT executable
       DB_SCRIPT("${targetname}" "${DOC_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
 
       if(BRLCAD_EXTRADOCS_VALIDATE)
@@ -227,7 +227,7 @@ macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir deps_li
       foreach(extra_out ${EXTRA_OUTPUTS})
 	set(EXTRAS ${EXTRAS} ${bin_root}/${MAN_DIR}/${targetdir}/${extra_out})
       endforeach(extra_out ${EXTRA_OUTPUTS})
- 
+
       # Generate the script that will be used to run the XSLT executable
       DB_SCRIPT("${targetname}" "${MAN_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
 
@@ -315,7 +315,7 @@ macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir deps_list)
       install(FILES ${outfile} DESTINATION ${DOC_DIR}/${targetdir})
       get_property(BRLCAD_EXTRADOCS_PDF_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS)
       set(BRLCAD_EXTRADOCS_PDF_TARGETS ${BRLCAD_EXTRADOCS_PDF_TARGETS} ${targetname})
-      set_property(GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS "${BRLCAD_EXTRADOCS_PDF_TARGETS}") 
+      set_property(GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS "${BRLCAD_EXTRADOCS_PDF_TARGETS}")
     endforeach(filename ${${xml_files}})
   endif(BRLCAD_EXTRADOCS_PDF)
   CMAKEFILES(${${xml_files}})
