@@ -42,8 +42,8 @@
 # setting may be one of:
 #
 # SYSTEM - Use the system libraries in preference to Fink or MacPorts
-# FINK - Prefer the Fink libraries 
-# MACPORTS - Prefer the MacPorts libraries 
+# FINK - Prefer the Fink libraries
+# MACPORTS - Prefer the MacPorts libraries
 #
 # Library and header path variables are defined to allow for more
 # controlled searching:
@@ -71,8 +71,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set(CMAKE_SEARCH_OSX_PATHS "SYSTEM")
       endif(NOT ${CMAKE_SEARCH_OSX_PATHS} STREQUAL "SYSTEM" AND NOT ${CMAKE_SEARCH_OSX_PATHS} STREQUAL "MACPORTS" AND NOT ${CMAKE_SEARCH_OSX_PATHS} STREQUAL "FINK")
     endif(CMAKE_SEARCH_OSX_PATHS)
-    
-    # List out the viable options for this platform 
+
+    # List out the viable options for this platform
     set(OSX_PATH_OPTIONS "SYSTEM")
     if(PORT_EXEC)
       set(OSX_PATH_OPTIONS ${OSX_PATH_OPTIONS} "MACPORTS")
@@ -84,7 +84,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     # If we don't already have a value set, set one.
     if(NOT CMAKE_SEARCH_OSX_PATHS)
       if(PORT_EXEC AND NOT FINK_EXEC)
-	set(CMAKE_SEARCH_OSX_PATHS "MACPORTS" CACHE STRING "Use Macports")
+	set(CMAKE_SEARCH_OSX_PATHS "MACPORTS" CACHE STRING "Use MacPorts")
       endif(PORT_EXEC AND NOT FINK_EXEC)
       if(FINK_EXEC AND NOT PORT_EXEC)
 	set(CMAKE_SEARCH_OSX_PATHS "FINK" CACHE STRING "Use Fink")
@@ -93,17 +93,17 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set(CMAKE_SEARCH_OSX_PATHS "SYSTEM" CACHE STRING "Use System")
       endif(NOT CMAKE_SEARCH_OSX_PATHS)
     endif(NOT CMAKE_SEARCH_OSX_PATHS)
-    
-    # Set our properties for CMake-GUI 
+
+    # Set our properties for CMake-GUI
     set_property(CACHE CMAKE_SEARCH_OSX_PATHS PROPERTY STRINGS ${OSX_PATH_OPTIONS})
 
     # If the user has picked a setting that is unsupported by the system, warn
-    # them and fix it... 
-    if(${CMAKE_SEARCH_OSX_PATHS} STREQUAL "MACPORTS" AND NOT PORT_EXEC) 
+    # them and fix it...
+    if(${CMAKE_SEARCH_OSX_PATHS} STREQUAL "MACPORTS" AND NOT PORT_EXEC)
       message(WARNING "CMAKE_SEARCH_OSX_PATHS set to MACPORTS, but port executable not found - defaulting to SYSTEM")
       set(CMAKE_SEARCH_OSX_PATHS "SYSTEM")
-    endif(${CMAKE_SEARCH_OSX_PATHS} STREQUAL "MACPORTS" AND NOT PORT_EXEC) 
-    if(${CMAKE_SEARCH_OSX_PATHS} STREQUAL "FINK" AND NOT FINK_EXEC) 
+    endif(${CMAKE_SEARCH_OSX_PATHS} STREQUAL "MACPORTS" AND NOT PORT_EXEC)
+    if(${CMAKE_SEARCH_OSX_PATHS} STREQUAL "FINK" AND NOT FINK_EXEC)
       message(WARNING "CMAKE_SEARCH_OSX_PATHS set to FINK, but fink executable not found - defaulting to SYSTEM")
       set(CMAKE_SEARCH_OSX_PATHS "SYSTEM")
     endif(${CMAKE_SEARCH_OSX_PATHS} STREQUAL "FINK" AND NOT FINK_EXEC)
@@ -131,8 +131,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	list(REMOVE_ITEM CMAKE_SYSTEM_IGNORE_PATH "${CMAKE_FINK_LIBRARY_PATH}")
       endif(CMAKE_SYSTEM_IGNORE_PATH)
     endif(FINK_EXEC)
-    
-    # If we're using MACPORTS, set some variables accordingly 
+
+    # If we're using MACPORTS, set some variables accordingly
     if(${CMAKE_SEARCH_OSX_PATHS} STREQUAL "MACPORTS")
       set(CMAKE_LIBRARY_PATH ${CMAKE_MACPORTS_LIBRARY_PATH} ${CMAKE_LIBRARY_PATH})
       set(CMAKE_INCLUDE_PATH ${CMAKE_MACPORTS_INCLUDE_PATH} ${CMAKE_INCLUDE_PATH})
@@ -152,7 +152,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       endif("${CMAKE_FINK_LIBRARY_PATH}" STREQUAL "${CMAKE_MACPORTS_LIBRARY_PATH}")
     endif(${CMAKE_SEARCH_OSX_PATHS} STREQUAL "MACPORTS")
 
-    # If we're using FINK, set some variables accordingly 
+    # If we're using FINK, set some variables accordingly
     if(${CMAKE_SEARCH_OSX_PATHS} STREQUAL "FINK")
       set(CMAKE_LIBRARY_PATH ${CMAKE_FINK_LIBRARY_PATH} ${CMAKE_LIBRARY_PATH})
       set(CMAKE_INCLUDE_PATH ${CMAKE_FINK_INCLUDE_PATH} ${CMAKE_INCLUDE_PATH})
