@@ -446,7 +446,7 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
  * of the map
  */
 struct bu_list *
-nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat)
+nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat, const struct bn_tol *tol)
 {
     static const vect_t twoDspace = { 0.0, 0.0, 1.0 };
     struct bu_list *tbl2d;
@@ -454,6 +454,8 @@ nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat)
     struct loopuse *lu;
     struct edgeuse *eu;
     vect_t Normal;
+    point_t origin = VINIT_ZERO;
+    fastf_t dot;
 
     NMG_CK_FACEUSE(fu);
 
@@ -470,7 +472,16 @@ nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat)
 
     /* construct the matrix that maps the 3D coordinates into 2D space */
     NMG_GET_FU_NORMAL(Normal, fu);
-    bn_mat_fromto(TformMat, Normal, twoDspace);
+
+    if (bn_lseg3_lseg3_parallel(origin, twoDspace, origin, Normal, tol)) {
+	dot = VDOT(twoDspace, Normal);
+	MAT_IDN(TformMat);
+	if (dot < -SMALL_FASTF) {
+	    QUAT_FROM_ROT_DEG(TformMat, 180.0, 0.0, 1.0, 0.0);
+	}
+    } else {
+	bn_mat_fromto(TformMat, Normal, twoDspace);
+    }
 
     if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
 	bn_mat_print("TformMat", TformMat);
@@ -4558,7 +4569,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
     }
 
     /* convert 3D face to face in the X-Y plane */
-    tbl2d = nmg_flatten_face(fu, TformMat);
+    tbl2d = nmg_flatten_face(fu, TformMat, tol);
 
     if (rt_g.NMG_debug & DEBUG_TRI) {
 	validate_tbl2d("before nmg_triangulate_rm_holes", tbl2d, fu);
