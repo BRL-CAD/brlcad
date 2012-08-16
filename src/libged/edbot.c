@@ -81,9 +81,6 @@ ged_find_botpt_nearest_pt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    /* This won't be used by rt_bot_find_v_nearest. Setting it anyway. */
-    view[Z] = 0.0;
-
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return GED_ERROR;
