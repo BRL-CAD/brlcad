@@ -107,7 +107,7 @@ main(int argc, char **argv)
 	return 3;
     wdb_import(fp, &ip, solnam, (matp_t)NULL);
     ip.idb_meth->ft_params(&pcs, &ip);
-    
+
     /* Todo: Free pcs parametric set */
 
     wdb_close(fp);
