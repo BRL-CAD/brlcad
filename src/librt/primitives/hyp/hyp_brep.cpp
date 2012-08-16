@@ -57,29 +57,29 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     plane1_origin = ON_3dPoint(p1_origin);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
-    const ON_Plane* hyp_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
+    const ON_Plane hyp_bottom_plane(plane1_origin, plane_x_dir, plane_y_dir);
 
     VADD2(p2_origin, eip->hyp_Vi, eip->hyp_Hi);
     plane2_origin = ON_3dPoint(p2_origin);
-    const ON_Plane* hyp_top_plane = new ON_Plane(plane2_origin, plane_x_dir, plane_y_dir);
+    const ON_Plane hyp_top_plane(plane2_origin, plane_x_dir, plane_y_dir);
 
     // Next, create ellipses in the planes corresponding to the edges of the hyp
 
-    ON_Ellipse* b_ell = new ON_Ellipse(*hyp_bottom_plane, MAGNITUDE(eip->hyp_A), eip->hyp_b);
+    ON_Ellipse b_ell(hyp_bottom_plane, MAGNITUDE(eip->hyp_A), eip->hyp_b);
     ON_NurbsCurve* bcurve = ON_NurbsCurve::New();
-    b_ell->GetNurbForm((*bcurve));
+    b_ell.GetNurbForm((*bcurve));
     bcurve->SetDomain(0.0, 1.0);
 
-    ON_Ellipse* t_ell = new ON_Ellipse(*hyp_top_plane, MAGNITUDE(eip->hyp_A), eip->hyp_b);
+    ON_Ellipse t_ell(hyp_top_plane, MAGNITUDE(eip->hyp_A), eip->hyp_b);
     ON_NurbsCurve* tcurve = ON_NurbsCurve::New();
-    t_ell->GetNurbForm((*tcurve));
+    t_ell.GetNurbForm((*tcurve));
     tcurve->SetDomain(0.0, 1.0);
 
     // Generate the bottom cap
     ON_SimpleArray<ON_Curve*> boundary;
     boundary.Append(ON_Curve::Cast(bcurve));
     ON_PlaneSurface* bp = new ON_PlaneSurface();
-    bp->m_plane = (*hyp_bottom_plane);
+    bp->m_plane = hyp_bottom_plane;
     bp->SetDomain(0, -100.0, 100.0);
     bp->SetDomain(1, -100.0, 100.0);
     bp->SetExtents(0, bp->Domain(0));
@@ -96,11 +96,12 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     (*b)->FlipFace(bface);
     (*b)->SetTrimIsoFlags(bface);
     boundary.Empty();
+    delete bcurve;
 
     // Generate the top cap
     boundary.Append(ON_Curve::Cast(tcurve));
     ON_PlaneSurface* tp = new ON_PlaneSurface();
-    tp->m_plane = (*hyp_top_plane);
+    tp->m_plane = hyp_top_plane;
     tp->SetDomain(0, -100.0, 100.0);
     tp->SetDomain(1, -100.0, 100.0);
     tp->SetExtents(0, bp->Domain(0));
@@ -115,6 +116,7 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     tp->SetExtents(0, bp->Domain(0));
     tp->SetExtents(1, bp->Domain(1));
     (*b)->SetTrimIsoFlags(tface);
+    delete tcurve;
 
     //  Now, the hard part.  Need an elliptical hyperboloic NURBS surface
     //  First step is to create a nurbs curve.
@@ -139,6 +141,7 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 
     ON_NurbsCurve* tnurbscurve = ON_NurbsCurve::New();
     bezcurve->GetNurbForm(*tnurbscurve);
+    delete bezcurve;
 
     ON_3dPoint revpnt1 = ON_3dPoint(0, 0, -0.5*MAGNITUDE(eip->hyp_Hi));
     ON_3dPoint revpnt2 = ON_3dPoint(0, 0, 0.5*MAGNITUDE(eip->hyp_Hi));
@@ -152,6 +155,7 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     // Get the NURBS form of the surface
     ON_NurbsSurface *hypcurvedsurf = ON_NurbsSurface::New();
     hyp_surf->GetNurbForm(*hypcurvedsurf, 0.0);
+    delete hyp_surf;
 
     for (int i = 0; i < hypcurvedsurf->CVCount(0); i++) {
 	for (int j = 0; j < hypcurvedsurf->CVCount(1); j++) {
@@ -159,7 +163,7 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	    ON_4dPoint ctrlpt;
 	    hypcurvedsurf->GetCV(i, j, ctrlpt);
 
-	    //Scale and shear
+	    // Scale and shear
 	    vect_t proj_ah;
 	    vect_t proj_ax;
 	    fastf_t factor;
@@ -169,7 +173,7 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	    factor = VDOT(eip->hyp_A, eip->hyp_Hi)>0 ? 1.0 : -1.0;
 	    cvpt[2] += factor*cvpt[0]/MAGNITUDE(proj_ax)*MAGNITUDE(proj_ah) + 0.5*MAGNITUDE(eip->hyp_Hi)*ctrlpt.w;
 
-	    //Rotate
+	    // Rotate
 	    vect_t Au, Bu, Hu;
 	    mat_t R;
 	    point_t new_cvpt;
@@ -185,7 +189,7 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	    VEC3X3MAT(new_cvpt, cvpt, R);
 	    VMOVE(cvpt, new_cvpt);
 
-	    //Translate
+	    // Translate
 	    vect_t scale_v;
 	    VSCALE(scale_v, eip->hyp_Vi, ctrlpt.w);
 	    VADD2(cvpt, cvpt, scale_v);
