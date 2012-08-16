@@ -54,8 +54,8 @@ endif(NOT BUILD_TYPE_NEW)
 
 # The installation directory is compiled in, so to that extent at least a build time configuration
 # change that results in a different installation path requires a re-compile.  Write to a temp file
-# to allow the build target to avoid changing the PATH file unless there is an actual path change - 
-# this minimizes recompilation based on PATH to actual installation path changes, rather than 
+# to allow the build target to avoid changing the PATH file unless there is an actual path change -
+# this minimizes recompilation based on PATH to actual installation path changes, rather than
 # just configuration changes - if CMAKE_INSTALL_PREFIX is not defined based on the build configuration,
 # PATH is constant.
 string(REPLACE "----BUILD_TYPE----" "${BUILD_TYPE_NEW}" CMAKE_INSTALL_PREFIX_CFG "@CMAKE_INSTALL_PREFIX_CFG@")
@@ -63,12 +63,12 @@ file(WRITE "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/PATH.tmp" "\"${CMAKE_INSTAL
 
 # We have no way to tell the build tool at build time what string we want
 # it to use for the installation path - it only knows its build configuration
-# type.  Hence, we update the cmake_install.cmake files to let them know 
-# directly.  Only do this if we need to - i.e. we're using a string other 
+# type.  Hence, we update the cmake_install.cmake files to let them know
+# directly.  Only do this if we need to - i.e. we're using a string other
 # than the build type string itself in the install path.
 #
 # In the event of multiple configuration switches we need to avoid matching failures
-# due to previous substitutions, so the first time we do this stash the original 
+# due to previous substitutions, so the first time we do this stash the original
 # contents in cmake_install.cmake.orig file.
 string(REPLACE "----BUILD_TYPE----" "\${BUILD_TYPE}" CMAKE_INSTALL_PREFIX_CFG_ORIG "@CMAKE_INSTALL_PREFIX_CFG@")
 if(NOT "${BUILD_TYPE_NEW}" STREQUAL "${BUILD_TYPE}")
