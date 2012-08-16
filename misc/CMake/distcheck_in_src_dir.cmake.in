@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-set(dir_initial_status_script 
+set(dir_initial_status_script
 "file(GLOB_RECURSE SOURCE_ARCHIVE_CONTENTS RELATIVE \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME}\" \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME}/*\")
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/initial_src_contents.txt \"\${SOURCE_ARCHIVE_CONTENTS}\")")
 
@@ -113,7 +113,7 @@ add_custom_target(distcheck-${TARGET_SUFFIX}
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Cleanup..."
   COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-${TARGET_SUFFIX}
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Cleanup... Done."
-  COMMENT "[distcheck-${TARGET_SUFFIX}] Peforming distcheck - ${TARGET_SUFFIX} configuration..."
+  COMMENT "[distcheck-${TARGET_SUFFIX}] Performing distcheck - ${TARGET_SUFFIX} configuration..."
   DEPENDS distcheck-source_archives
   )
 
