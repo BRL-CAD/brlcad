@@ -1,5 +1,5 @@
 # Defines two macros - PERPLEX_TARGET, which takes perplex inputs and
-# runs both perplex and re2c to generate C source code/headers, and 
+# runs both perplex and re2c to generate C source code/headers, and
 # ADD_PERPLEX_LEMON_DEPENDENCY which is used to set up dependencies between
 # scanner and parser targets when necessary.
 #
@@ -21,7 +21,7 @@
 #      ${PERPLEX_MyScanner_OUTPUTS}
 #   )
 #  ====================================================================
-# 
+#
 #=============================================================================
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
@@ -31,18 +31,18 @@
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-#  
+#
 # * Redistributions of source code must retain the above copyright
 #   notice, this list of conditions and the following disclaimer.
-# 
+#
 # * Redistributions in binary form must reproduce the above copyright
 #   notice, this list of conditions and the following disclaimer in the
 #   documentation and/or other materials provided with the distribution.
-# 
+#
 # * The names of the authors may not be used to endorse or promote
 #   products derived from this software without specific prior written
 #   permission.
@@ -74,7 +74,7 @@ macro(PERPLEX_TARGET Name Input OutputSrc OutputHeader)
     if(PERPLEX_TEMPLATE)
       set(Template ${PERPLEX_TEMPLATE})
     else(PERPLEX_TEMPLATE)
-      message(FATAL_ERROR "\nNo Perplex template file specifed - please specify the file using the PERPLEX_TEMPLATE variable:\ncmake .. -DPERPLEX_TEMPLATE=/path/to/template_file.c\n")
+      message(FATAL_ERROR "\nNo Perplex template file specified - please specify the file using the PERPLEX_TEMPLATE variable:\ncmake .. -DPERPLEX_TEMPLATE=/path/to/template_file.c\n")
     endif(PERPLEX_TEMPLATE)
   endif(${ARGC} GREATER 4)
 
