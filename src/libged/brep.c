@@ -110,9 +110,15 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     bi = (struct rt_brep_internal*)intern.idb_ptr;
 
     if (BU_STR_EQUAL(argv[2], "intersect")) {
+	/* handle surface-surface intersection */
 	struct rt_db_internal intern2;
 	int i, j;
 
+	/* we need at least 6 arguments */
+	if (argc < 6)
+	    return GED_ERROR;
+	
+	/* get the other solid */
 	if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  argv[3], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", argv[3]);
 	    return GED_ERROR;
@@ -148,12 +154,14 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (BU_STR_EQUAL(argv[2], "u")) {
+	/* test booleans on brep, just union here */
 	struct rt_db_internal intern2, intern_res;
 	struct rt_brep_internal *bip;
 
 	if (argc != 5)
 	    return GED_ERROR;
 
+	/* get the other solid */
 	if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  argv[3], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", argv[3]);
 	    return GED_ERROR;
@@ -172,6 +180,8 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	rt_brep_boolean(&intern_res, &intern, &intern2, 0);
 	bip = (struct rt_brep_internal*)intern_res.idb_ptr;
 	mk_brep(gedp->ged_wdbp, argv[4], bip->brep);
+	rt_db_free_internal(&intern);
+	rt_db_free_internal(&intern2);
 	return GED_OK;
     }
 
