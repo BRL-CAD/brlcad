@@ -225,6 +225,7 @@ set(docbook_mann_EN
   view.xml
   viewsize.xml
   vnirt.xml
+  voxelize.xml
   vquery_ray.xml
   vrmgr.xml
   vrot.xml
