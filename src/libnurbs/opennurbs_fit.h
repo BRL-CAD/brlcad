@@ -47,11 +47,6 @@
 #include <map>
 #include <stdio.h>
 
-#undef Success
-#include <Eigen/StdVector>
-#undef Success
-#include <Eigen/Dense>
-
 namespace on_fit
 {
 
@@ -59,17 +54,15 @@ namespace on_fit
 // * from nurbs_data.h *
 // **********************
 
-// http://eigen.tuxfamily.org/dox-devel/TopicStlContainers.html
-typedef std::vector<Eigen::Vector2i, Eigen::aligned_allocator<Eigen::Vector2i> > vector_vec2i;
-typedef std::vector<Eigen::Vector2d, Eigen::aligned_allocator<Eigen::Vector2d> > vector_vec2d;
-typedef std::vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d> > vector_vec3d;
+typedef std::vector<ON_2dVector > vector_vec2d;
+typedef std::vector<ON_3dVector > vector_vec3d;
 
 /** \brief Data structure for NURBS surface fitting
  * (FittingSurface, FittingSurfaceTDM, FittingCylinder, GlobalOptimization, GlobalOptimizationTDM) */
 struct NurbsDataSurface
 {
-  Eigen::Matrix3d eigenvectors;
-  Eigen::Vector3d mean;
+  ON_Matrix *eigenvectors;
+  ON_3dVector mean;
 
   vector_vec3d interior; ///<< input
   std::vector<double> interior_weight; ///<< input
@@ -141,20 +134,17 @@ class NurbsTools
 {
 public:
 
-  //      static std::list<unsigned>
-  //      getClosestPoints (const Eigen::Vector2d &p, const vector_vec2d &data, unsigned s);
+  /** \brief Get the closest point with respect to 'point'
+   *  \param[in] point The point to which the closest point is searched for.
+   *  \param[in] data Vector containing the set of points for searching. */
+  static unsigned
+  getClosestPoint (const ON_2dPoint &point, const vector_vec2d &data);
 
   /** \brief Get the closest point with respect to 'point'
    *  \param[in] point The point to which the closest point is searched for.
    *  \param[in] data Vector containing the set of points for searching. */
   static unsigned
-  getClosestPoint (const Eigen::Vector2d &point, const vector_vec2d &data);
-
-  /** \brief Get the closest point with respect to 'point'
-   *  \param[in] point The point to which the closest point is searched for.
-   *  \param[in] data Vector containing the set of points for searching. */
-  static unsigned
-  getClosestPoint (const Eigen::Vector3d &point, const vector_vec3d &data);
+  getClosestPoint (const ON_3dPoint &point, const vector_vec3d &data);
 
   /** \brief Get the closest point with respect to 'point' in Non-Euclidean metric
    *  \brief Related paper: TODO
@@ -163,16 +153,16 @@ public:
    *  \param[in] data Vector containing the set of points for searching.
    *  \param[out] idxcp Closest point with respect to Euclidean metric. */
   static unsigned
-  getClosestPoint (const Eigen::Vector2d &point, const Eigen::Vector2d &dir, const vector_vec2d &data,
+  getClosestPoint (const ON_2dPoint &point, const ON_2dVector &dir, const vector_vec2d &data,
                    unsigned &idxcp);
 
   /** \brief Compute the mean of a set of points
    *  \param[in] data Set of points.     */
-  static Eigen::Vector3d
+  static ON_3dVector
   computeMean (const vector_vec3d &data);
   /** \brief Compute the mean of a set of points
    *  \param[in] data Set of points.     */
-  static Eigen::Vector2d
+  static ON_2dVector
   computeMean (const vector_vec2d &data);
 
   /** \brief PCA - principal-component-analysis
@@ -181,8 +171,8 @@ public:
    *  \param[out] eigenvectors Matrix containing column-wise the eigenvectors of the set of points.
    *  \param[out] eigenvalues The eigenvalues of the set of points with respect to the eigenvectors. */
   static void
-      pca (const vector_vec3d &data, Eigen::Vector3d &mean, Eigen::Matrix3d &eigenvectors,
-           Eigen::Vector3d &eigenvalues);
+      pca (const vector_vec3d &data, ON_3dVector &mean, ON_Matrix &eigenvectors,
+           ON_3dVector &eigenvalues);
 
   /** \brief Downsample data points to a certain size.
    *  \param[in] data1 The original set of points.
@@ -323,8 +313,7 @@ public:
   solve ();
 
   /** \brief Compute the difference between solution K*x and target f */
-  Eigen::MatrixXd
-  diff ();
+  ON_Matrix *diff ();
 
   /** \brief Enable/Disable debug outputs in console. */
   inline void
@@ -336,9 +325,9 @@ public:
 private:
   bool m_quiet;
   SparseMat m_Ksparse;
-  Eigen::MatrixXd m_Keig;
-  Eigen::MatrixXd m_xeig;
-  Eigen::MatrixXd m_feig;
+  ON_Matrix *m_Keig;
+  ON_Matrix *m_xeig;
+  ON_Matrix *m_feig;
 
 };
 
@@ -362,10 +351,10 @@ public:
   public:
     int side;
     double hint;
-    myvec (int side, double hint)
+    myvec (int in_side, double in_hint)
     {
-      this->side = side;
-      this->hint = hint;
+      this->side = in_side;
+      this->hint = in_hint;
     }
   };
 
@@ -403,7 +392,7 @@ public:
    * \param[in] order the polynomial order of the B-Spline surface.
    * \param[in] data pointer to the 2D point-cloud data to be fit.
    * \param[in] z vector defining front face of surface.        */
-  FittingSurface (int order, NurbsDataSurface *data, Eigen::Vector3d z = Eigen::Vector3d (0.0, 0.0, 1.0));
+  FittingSurface (int order, NurbsDataSurface *data, ON_3dVector z = ON_3dVector(0.0, 0.0, 1.0));
 
   /** \brief Refines surface by inserting a knot in the middle of each element.
    *  \param[in] dim dimension of refinement (0,1)  */
@@ -448,17 +437,17 @@ public:
    *  \param[in] maxSteps maximum number of iterations.
    *  \param[in] accuracy convergence criteria: if error is lower than accuracy the function returns
    *  \return closest point on surface in parametric domain.*/
-  static Eigen::Vector2d
-  inverseMapping (const ON_NurbsSurface &nurbs, const Eigen::Vector3d &pt, const Eigen::Vector2d &hint,
-                  double &error, Eigen::Vector3d &p, Eigen::Vector3d &tu, Eigen::Vector3d &tv, int maxSteps = 100,
+  static ON_2dPoint 
+  inverseMapping (const ON_NurbsSurface &nurbs, const ON_3dPoint &pt, const ON_2dPoint &hint,
+                  double &error, ON_3dPoint &p, ON_3dVector &tu, ON_3dVector &tv, int maxSteps = 100,
                   double accuracy = 1e-6, bool quiet = true);
 
   /** \brief Given a point pt, the function finds the closest midpoint of the elements of the surface.
    *  \param[in] nurbs the B-Spline surface.
    *  \param[in] pt the point to which the closest midpoint of the elements will be computed.
    *  return closest midpoint in parametric domain. */
-  static Eigen::Vector2d
-  findClosestElementMidPoint (const ON_NurbsSurface &nurbs, const Eigen::Vector3d &pt);
+  static ON_2dPoint
+  findClosestElementMidPoint (const ON_NurbsSurface &nurbs, const ON_3dPoint &pt);
 
   /** \brief Inverse mapping / point inversion: Given a point pt, this function finds the closest
    * point on the boundary of the B-Spline surface using Newtons method and point-distance (L2-, Euclidean norm).
@@ -471,9 +460,9 @@ public:
    *  \param[in] maxSteps maximum number of iterations.
    *  \param[in] accuracy convergence criteria: if error is lower than accuracy the function returns
    *  \return closest point on surface in parametric domain.*/
-  static Eigen::Vector2d
-  inverseMappingBoundary (const ON_NurbsSurface &nurbs, const Eigen::Vector3d &pt, double &error,
-                          Eigen::Vector3d &p, Eigen::Vector3d &tu, Eigen::Vector3d &tv, int maxSteps = 100,
+  static ON_2dPoint
+  inverseMappingBoundary (const ON_NurbsSurface &nurbs, const ON_3dPoint &pt, double &error,
+                          ON_3dPoint &p, ON_3dVector &tu, ON_3dVector &tv, int maxSteps = 100,
                           double accuracy = 1e-6, bool quiet = true);
 
   /** \brief Inverse mapping / point inversion: Given a point pt, this function finds the closest
@@ -490,9 +479,9 @@ public:
    *  \param[in] maxSteps maximum number of iterations.
    *  \param[in] accuracy convergence criteria: if error is lower than accuracy the function returns
    *  \return closest point on surface in parametric domain.*/
-  static Eigen::Vector2d
-  inverseMappingBoundary (const ON_NurbsSurface &nurbs, const Eigen::Vector3d &pt, int side, double hint,
-                          double &error, Eigen::Vector3d &p, Eigen::Vector3d &tu, Eigen::Vector3d &tv,
+  static ON_2dPoint
+  inverseMappingBoundary (const ON_NurbsSurface &nurbs, const ON_3dPoint &pt, int side, double hint,
+                          double &error, ON_3dPoint &p, ON_3dVector &tu, ON_3dVector &tv,
                           int maxSteps = 100, double accuracy = 1e-6, bool quiet = true);
 
   /** \brief Initializing a B-Spline surface using 4 corners */
@@ -501,11 +490,11 @@ public:
 
   /** \brief Initializing a B-Spline surface using principal-component-analysis and eigen values */
   static ON_NurbsSurface
-  initNurbsPCA (int order, NurbsDataSurface *data, Eigen::Vector3d z = Eigen::Vector3d (0.0, 0.0, 1.0));
+  initNurbsPCA (int order, NurbsDataSurface *data, ON_3dVector z = ON_3dVector(0.0, 0.0, 1.0));
 
   /** \brief Initializing a B-Spline surface using principal-component-analysis and bounding box of points */
   static ON_NurbsSurface
-  initNurbsPCABoundingBox (int order, NurbsDataSurface *data, Eigen::Vector3d z = Eigen::Vector3d (0.0, 0.0, 1.0));
+  initNurbsPCABoundingBox (int order, NurbsDataSurface *data, ON_3dVector z = ON_3dVector(0.0, 0.0, 1.0));
 
   /** \brief Enable/Disable debug outputs in console. */
   inline void
@@ -531,7 +520,7 @@ protected:
 
   /** \brief Add minimization constraint: point-to-surface distance (point-distance-minimization). */
   virtual void
-  addPointConstraint (const Eigen::Vector2d &params, const Eigen::Vector3d &point, double weight, unsigned &row);
+  addPointConstraint (const ON_2dVector &params, const ON_3dPoint &point, double weight, unsigned &row);
   //  void addBoundaryPointConstraint(double paramU, double paramV, double weight, unsigned &row);
 
   /** \brief Add minimization constraint: interior smoothness by control point regularisation. */

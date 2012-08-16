@@ -41,6 +41,8 @@
 #include <map>
 #include <algorithm>
 #include "opennurbs_fit.h"
+#include "bu.h"
+#include "vmath.h"
 
 using namespace on_fit;
 
@@ -87,7 +89,7 @@ NurbsTools::downsample_random (vector_vec3d &data, unsigned size)
 }
 
 unsigned
-NurbsTools::getClosestPoint (const Eigen::Vector2d &p, const vector_vec2d &data)
+NurbsTools::getClosestPoint (const ON_2dPoint &p, const vector_vec2d &data)
 {
   if (data.empty ())
     throw std::runtime_error ("[NurbsTools::getClosestPoint(2d)] Data empty.\n");
@@ -96,7 +98,8 @@ NurbsTools::getClosestPoint (const Eigen::Vector2d &p, const vector_vec2d &data)
   double dist2 (DBL_MAX);
   for (unsigned i = 0; i < data.size (); i++)
   {
-    double d2 = (data[i] - p).squaredNorm ();
+    ON_2dVector v = (data[i] - p);
+    double d2 = ON_DotProduct(v, v);  // Was the squaredNorm in Eigen 
     if (d2 < dist2)
     {
       idx = i;
@@ -107,7 +110,7 @@ NurbsTools::getClosestPoint (const Eigen::Vector2d &p, const vector_vec2d &data)
 }
 
 unsigned
-NurbsTools::getClosestPoint (const Eigen::Vector3d &p, const vector_vec3d &data)
+NurbsTools::getClosestPoint (const ON_3dPoint &p, const vector_vec3d &data)
 {
   if (data.empty ())
     throw std::runtime_error ("[NurbsTools::getClosestPoint(2d)] Data empty.\n");
@@ -116,7 +119,8 @@ NurbsTools::getClosestPoint (const Eigen::Vector3d &p, const vector_vec3d &data)
   double dist2 (DBL_MAX);
   for (unsigned i = 0; i < data.size (); i++)
   {
-    double d2 = (data[i] - p).squaredNorm ();
+    ON_3dVector v = (data[i] - p);
+    double d2 = ON_DotProduct(v, v);  // Was the squaredNorm in Eigen 
     if (d2 < dist2)
     {
       idx = i;
@@ -127,7 +131,7 @@ NurbsTools::getClosestPoint (const Eigen::Vector3d &p, const vector_vec3d &data)
 }
 
 unsigned
-NurbsTools::getClosestPoint (const Eigen::Vector2d &p, const Eigen::Vector2d &dir, const vector_vec2d &data,
+NurbsTools::getClosestPoint (const ON_2dPoint &p, const ON_2dVector &dir, const vector_vec2d &data,
                              unsigned &idxcp)
 {
   if (data.empty ())
@@ -139,8 +143,8 @@ NurbsTools::getClosestPoint (const Eigen::Vector2d &p, const Eigen::Vector2d &di
   double dist2cp (DBL_MAX);
   for (unsigned i = 0; i < data.size (); i++)
   {
-    Eigen::Vector2d v = (data[i] - p);
-    double d2 = v.squaredNorm ();
+    ON_2dVector v = (data[i] - p);
+    double d2 = ON_DotProduct(v, v); 
 
     if (d2 < dist2cp)
     {
@@ -148,12 +152,12 @@ NurbsTools::getClosestPoint (const Eigen::Vector2d &p, const Eigen::Vector2d &di
       dist2cp = d2;
     }
 
-    if (d2 == 0.0)
+    if (NEAR_ZERO(d2, SMALL_FASTF))
       return i;
 
-    v.normalize ();
+    v.Unitize();
 
-    double d1 = dir.dot (v);
+    double d1 = ON_DotProduct(dir, v);
     if (d1 / d2 > dist2)
     {
       idx = i;
@@ -163,10 +167,10 @@ NurbsTools::getClosestPoint (const Eigen::Vector2d &p, const Eigen::Vector2d &di
   return idx;
 }
 
-Eigen::Vector3d
+ON_3dVector
 NurbsTools::computeMean (const vector_vec3d &data)
 {
-  Eigen::Vector3d u (0.0, 0.0, 0.0);
+  ON_3dVector u(0.0, 0.0, 0.0);
 
   unsigned s = data.size ();
   double ds = 1.0 / s;
@@ -177,10 +181,10 @@ NurbsTools::computeMean (const vector_vec3d &data)
   return u;
 }
 
-Eigen::Vector2d
+ON_2dVector
 NurbsTools::computeMean (const vector_vec2d &data)
 {
-  Eigen::Vector2d u (0.0, 0.0);
+  ON_2dVector u (0.0, 0.0);
 
   unsigned s = data.size ();
   double ds = 1.0 / s;
@@ -192,8 +196,8 @@ NurbsTools::computeMean (const vector_vec2d &data)
 }
 
 void
-NurbsTools::pca (const vector_vec3d &data, Eigen::Vector3d &mean, Eigen::Matrix3d &eigenvectors,
-                 Eigen::Vector3d &eigenvalues)
+NurbsTools::pca (const vector_vec3d &data, ON_3dVector &mean, ON_Matrix &UNUSED(eigenvectors),
+                 ON_3dVector &UNUSED(eigenvalues))
 {
   if (data.empty ())
   {
@@ -205,13 +209,21 @@ NurbsTools::pca (const vector_vec3d &data, Eigen::Vector3d &mean, Eigen::Matrix3
 
   unsigned s = data.size ();
 
-  Eigen::MatrixXd Q (3, s);
+  ON_Matrix Q(3, s);
 
-  for (unsigned i = 0; i < s; i++)
-    Q.col (i) << (data[i] - mean);
+  for (unsigned i = 0; i < s; i++) {
+    Q[0][i] = data[i].x - mean.x;
+    Q[1][i] = data[i].y - mean.y;
+    Q[2][i] = data[i].z - mean.z;
+  }
 
-  Eigen::Matrix3d C = Q * Q.transpose ();
+  ON_Matrix Qt = Q;
+  Qt.Transpose();
 
+  ON_Matrix C;
+  C.Multiply(Q,Qt);
+
+#if 0
   Eigen::SelfAdjointEigenSolver < Eigen::Matrix3d > eigensolver (C);
   if (eigensolver.info () != Eigen::Success)
   {
@@ -227,6 +239,7 @@ NurbsTools::pca (const vector_vec3d &data, Eigen::Vector3d &mean, Eigen::Matrix3
     else
       eigenvectors.col (i) = eigensolver.eigenvectors ().col (2 - i);
   }
+#endif
 }
 
 // ***********************
@@ -287,7 +300,7 @@ SparseMat::set (int i, int j, double v)
     return;
   }
 
-  if (v == 0.0)
+  if (NEAR_ZERO(v, SMALL_FASTF))
   {
     // delete entry
 
@@ -303,8 +316,9 @@ SparseMat::set (int i, int j, double v)
       return;
 
     it_row->second.erase (it_col);
-    if (it_row->second.empty ())
+    if (it_row->second.empty ()) {
       ;
+    }
     m_mat.erase (it_row);
 
   }
@@ -444,57 +458,67 @@ SparseMat::print ()
 void
 NurbsSolve::assign (unsigned rows, unsigned cols, unsigned dims)
 {
-  m_Keig = Eigen::MatrixXd::Zero (rows, cols);
-  m_xeig = Eigen::MatrixXd::Zero (cols, dims);
-  m_feig = Eigen::MatrixXd::Zero (rows, dims);
+  m_Keig = new ON_Matrix(rows, cols);
+  m_Keig->Zero();
+  m_xeig = new ON_Matrix(cols,dims);
+  m_xeig->Zero();
+  m_feig = new ON_Matrix(rows, dims);
+  m_feig->Zero();
 }
 
 void
 NurbsSolve::K (unsigned i, unsigned j, double v)
 {
-  m_Keig (i, j) = v;
+  (*m_Keig)[i][j] = v;
 }
 void
 NurbsSolve::x (unsigned i, unsigned j, double v)
 {
-  m_xeig (i, j) = v;
+  (*m_xeig)[i][j] = v;
 }
 void
 NurbsSolve::f (unsigned i, unsigned j, double v)
 {
-  m_feig (i, j) = v;
+  (*m_feig)[i][j] = v;
 }
 
 double
 NurbsSolve::K (unsigned i, unsigned j)
 {
-  return m_Keig (i, j);
+  return (*m_Keig)[i][j];
 }
 double
 NurbsSolve::x (unsigned i, unsigned j)
 {
-  return m_xeig (i, j);
+  return (*m_xeig)[i][j];
 }
 double
 NurbsSolve::f (unsigned i, unsigned j)
 {
-  return m_feig (i, j);
+  return (*m_feig)[i][j];
 }
 
 void
 NurbsSolve::resizeF (unsigned rows)
 {
-  m_feig.conservativeResize (rows, m_feig.cols ());
+  ON_Matrix *new_feig = new ON_Matrix(rows, (*m_feig).ColCount());
+  for (int i = 0; i < (*m_feig).RowCount(); i++) {
+     for (int j = 0; j < (*m_feig).ColCount(); j++) {
+         (*new_feig)[i][j] = (*m_feig)[i][j];
+     }
+  }
+  delete m_feig;
+  m_feig = new_feig;
 }
 
 void
 NurbsSolve::printK ()
 {
-  for (unsigned r = 0; r < m_Keig.rows (); r++)
+  for (int r = 0; r < (*m_Keig).RowCount(); r++)
   {
-    for (unsigned c = 0; c < m_Keig.cols (); c++)
+    for (int c = 0; c < (*m_Keig).ColCount(); c++)
     {
-      printf (" %f", m_Keig (r, c));
+      printf (" %f", (*m_Keig)[r][c]);
     }
     printf ("\n");
   }
@@ -503,11 +527,11 @@ NurbsSolve::printK ()
 void
 NurbsSolve::printX ()
 {
-  for (unsigned r = 0; r < m_xeig.rows (); r++)
+  for (int r = 0; r < (*m_xeig).RowCount(); r++)
   {
-    for (unsigned c = 0; c < m_xeig.cols (); c++)
+    for (int c = 0; c < (*m_xeig).ColCount(); c++)
     {
-      printf (" %f", m_xeig (r, c));
+      printf (" %f", (*m_xeig)[r][c]);
     }
     printf ("\n");
   }
@@ -516,11 +540,11 @@ NurbsSolve::printX ()
 void
 NurbsSolve::printF ()
 {
-  for (unsigned r = 0; r < m_feig.rows (); r++)
+  for (int r = 0; r < (*m_feig).RowCount(); r++)
   {
-    for (unsigned c = 0; c < m_feig.cols (); c++)
+    for (int c = 0; c < (*m_feig).ColCount(); c++)
     {
-      printf (" %f", m_feig (r, c));
+      printf (" %f", (*m_feig)[r][c]);
     }
     printf ("\n");
   }
@@ -533,9 +557,7 @@ NurbsSolve::solve ()
   clock_t time_start, time_end;
   time_start = clock ();
 
-  //  m_xeig = m_Keig.colPivHouseholderQr().solve(m_feig);
-  //  Eigen::MatrixXd x = A.householderQr().solve(b);
-  m_xeig = m_Keig.jacobiSvd (Eigen::ComputeThinU | Eigen::ComputeThinV).solve (m_feig);
+  //m_xeig = m_Keig.jacobiSvd (Eigen::ComputeThinU | Eigen::ComputeThinV).solve (m_feig);
 
   time_end = clock ();
 
@@ -549,40 +571,47 @@ NurbsSolve::solve ()
   return true;
 }
 
-Eigen::MatrixXd
+ON_Matrix *
 NurbsSolve::diff ()
 {
-  Eigen::MatrixXd f = m_Keig * m_xeig;
-  return (f - m_feig);
+  ON_Matrix *diff_matrix = new ON_Matrix((*m_feig).RowCount(), (*m_feig).ColCount());
+  ON_Matrix local_f((*m_feig).RowCount(), (*m_feig).ColCount());
+  ON_Matrix m_feig_neg((*m_feig).RowCount(), (*m_feig).ColCount());
+  local_f.Multiply((*m_Keig),(*m_xeig));
+  m_feig_neg = (*m_feig);
+  m_feig_neg.Scale(-1.0);
+  (*diff_matrix).Add(local_f,m_feig_neg); 
+  return diff_matrix;
 }
 
 // ********************************
 // * from fitting_surface_pdm.cpp *
 // ********************************
 
-FittingSurface::FittingSurface (int order, NurbsDataSurface *m_data, Eigen::Vector3d z)
+FittingSurface::FittingSurface (int order, NurbsDataSurface *in_m_data, ON_3dVector z)
 {
   if (order < 2)
-    throw std::runtime_error ("[FittingSurface::FittingSurface] Error order to low (order<2).");
+    throw std::runtime_error ("[FittingSurface::FittingSurface] Error order too low (order<2).");
 
   ON::Begin ();
 
-  this->m_data = m_data;
+  this->m_data = in_m_data;
   m_nurbs = initNurbsPCA (order, m_data, z);
 
   this->init ();
 }
 
-FittingSurface::FittingSurface (NurbsDataSurface *m_data, const ON_NurbsSurface &ns)
+FittingSurface::FittingSurface (NurbsDataSurface *in_m_data, const ON_NurbsSurface &ns)
 {
   ON::Begin ();
 
   this->m_nurbs = ON_NurbsSurface (ns);
-  this->m_data = m_data;
+  this->m_data = in_m_data;
 
   this->init ();
 }
 
+#if 0
 void
 FittingSurface::refine (int dim)
 {
@@ -1744,7 +1773,7 @@ FittingSurface::inverseMappingBoundary (const ON_NurbsSurface &nurbs, const Eige
 
   return params;
 }
-
+#endif
 /*
  * Local Variables:
  * tab-width: 8

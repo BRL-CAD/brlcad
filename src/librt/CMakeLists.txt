@@ -13,7 +13,6 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${REGEX_INCLUDE_DIR}
   ${TNT_INCLUDE_DIR}
-  #${BRLCAD_SOURCE_DIR}/src/other/Eigen
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
@@ -301,7 +300,11 @@ endif(CPP_DLL_DEFINES)
 install(FILES librt.3 DESTINATION ${MAN_DIR}/man3)
 CMAKEFILES(Makefile.am)
 
-#BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbu" NOSTRICT NO_INSTALL)
+#include_directories(
+#  ${CMAKE_SOURCE_DIR}/src/other/Eigen
+#  ${CMAKE_CURRENT_SOURCE_DIR}/../libnurbs
+#  )
+#BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libnurbs;libbu" NOSTRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_botpatches test_botpatches.cpp "librt;libwdb;libbu" NOSTRICT NO_INSTALL)
 
 # Local Variables:

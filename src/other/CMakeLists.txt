@@ -206,7 +206,7 @@ THIRD_PARTY_EXECUTABLE(xsltproc xmltools "BRLCAD_EXTRADOCS;BRLCAD_LEVEL3" xsltpr
 set(xmllint_ALIASES ENABLE_XMLLINT)
 set(xmllint_DESCRIPTION "
 Option for enabling and disabling compilation of the xmllint XML
-validation utilty provided with BRL-CAD's source distribution.  Used
+validation utility provided with BRL-CAD's source distribution.  Used
 for DocBook documentation validation.  Default is AUTO, responsive to the
 toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system version if
 BRLCAD_BUNDLED_LIBS is also AUTO.
