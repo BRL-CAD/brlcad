@@ -89,8 +89,8 @@ find_program(SVN_EXEC svn)
 if(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 
   message(" --- Building file list from Subversion manifests: ...")
- 
-  # Get the file list 
+
+  # Get the file list
   set(SVN_FILES "")
   execute_process(COMMAND ${SVN_EXEC} info -R @CMAKE_SOURCE_DIR@ OUTPUT_VARIABLE SVN_RAWOUT)
   SVN_INFO_TO_PATH_list(SVN_RAWOUT SVN_FILES)
@@ -123,21 +123,21 @@ if(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
     set(NOT_DISTCHECK_READY 1)
   endif(SVN_TREE_MODIFIED)
 
-  message(" --- Building file list from Subversion manifests: Done") 
+  message(" --- Building file list from Subversion manifests: Done")
 
 endif(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 
 # The build system has kindly created lists of files and directories for us,
 # but in order to compare the build system's lists to the others generated
 # by this script we need the fully expanded list.  Read and expand...
-message(" --- Building list of files known to the build system: ...") 
+message(" --- Building list of files known to the build system: ...")
 file(STRINGS @CMAKE_BINARY_DIR@/cmakefiles.cmake BUILD_FILES)
 file(STRINGS @CMAKE_BINARY_DIR@/cmakedirs.cmake IGNORED_DIRECTORIES)
 
-# Having read in the raw data, we process all the ignored directories to 
+# Having read in the raw data, we process all the ignored directories to
 # get explicit lists of what they contain.  If we have Subversion use
 # that to tell us what *should* be in those directories - this lets us
-# spot stray files even in ignored directories.  If we don't have 
+# spot stray files even in ignored directories.  If we don't have
 # Subversion, use GLOB_RECURSE.
 foreach(ITEM ${IGNORED_DIRECTORIES})
   if(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
@@ -166,7 +166,7 @@ list(SORT BUILD_FILES)
 list(REMOVE_DUPLICATES BUILD_FILES)
 string(REPLACE ";" "\n" BUILD_FILES "${BUILD_FILES}")
 file(WRITE @CMAKE_BINARY_DIR@/build_files_list.txt "${BUILD_FILES}")
-message(" --- Building list of files known to the build system: Done") 
+message(" --- Building list of files known to the build system: Done")
 
 # Get the CPack ignore build path value from the parent CMake build
 set(CPACK_IGNORE_BUILD_PATH "@CPACK_IGNORE_BUILD_PATH@")
@@ -177,7 +177,7 @@ set(CPACK_IGNORE_BUILD_PATH "@CPACK_IGNORE_BUILD_PATH@")
 # files that CPack knows to ignore (i.e., things that will not be included in a
 # source archive.) This list is collected with CMake globbing and information
 # based on CPack's settings.
-message(" --- Building 'ground truth' list of files actually present in source tree: ...") 
+message(" --- Building 'ground truth' list of files actually present in source tree: ...")
 file(WRITE @CMAKE_BINARY_DIR@/ground_truth.txt "")
 file(GLOB_RECURSE GROUND_TRUTH_RAW RELATIVE @CMAKE_SOURCE_DIR@ "@CMAKE_SOURCE_DIR@/*")
 
@@ -202,19 +202,19 @@ if(GROUND_TRUTH)
   string(REGEX REPLACE ";" "\n" GROUND_TRUTH "${GROUND_TRUTH}")
   file(WRITE @CMAKE_BINARY_DIR@/ground_truth.txt "${GROUND_TRUTH}")
 else(GROUND_TRUTH)
-    message("No files found in ground truth search?? ") 
+    message("No files found in ground truth search?? ")
 endif(GROUND_TRUTH)
-message(" --- Building 'ground truth' list of files actually present in source tree: Done") 
+message(" --- Building 'ground truth' list of files actually present in source tree: Done")
 
 
-# To generate lists of "interesting" files - things the build system knows about but 
+# To generate lists of "interesting" files - things the build system knows about but
 # subversion doesn't, files the Subversion system knows about that the build system
 # doesn't, and files present in the source tree that *neither* system knows about,
 # we need to generate relative compliment sets of the various lists.  Using a technique
 # from Eric Noulard on the CMake mailing list:
 #
 # http://www.cmake.org/pipermail/cmake/2011-September/046214.html
-message(" --- Performing comparisons...") 
+message(" --- Performing comparisons...")
 
 # Read in the text files as lists
 file(STRINGS @CMAKE_BINARY_DIR@/build_files_list.txt BUILD_FILES)
@@ -224,7 +224,7 @@ endif(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
 file(STRINGS @CMAKE_BINARY_DIR@/ground_truth.txt GROUND_TRUTH)
 list(REMOVE_DUPLICATES BUILD_FILES)
 
-# If we have Subversion, we can do lots more interesting comparisions.
+# If we have Subversion, we can do lots more interesting comparisons.
 # Otherwise, just look for files the build system doesn't know about.
 if(SVN_EXEC AND EXISTS @CMAKE_SOURCE_DIR@/.svn)
   set(BUILD_FILES_NOT_IN_SVN ${BUILD_FILES})
