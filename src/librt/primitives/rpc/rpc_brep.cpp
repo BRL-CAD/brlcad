@@ -60,7 +60,7 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     plane1_origin = ON_3dPoint(p1_origin);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
-    const ON_Plane* rpc_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
+    const ON_Plane rpc_bottom_plane = ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
 
     // Next, create a parabolic NURBS curve corresponding to the shape
     // of the parabola in the two planes.
@@ -95,7 +95,7 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     boundary.Append(ON_Curve::Cast(straightedge));
 
     ON_PlaneSurface* bp = new ON_PlaneSurface();
-    bp->m_plane = (*rpc_bottom_plane);
+    bp->m_plane = rpc_bottom_plane;
     bp->SetDomain(0, -100.0, 100.0);
     bp->SetDomain(1, -100.0, 100.0);
     bp->SetExtents(0, bp->Domain(0));
@@ -118,6 +118,7 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(eip->rpc_V), ON_3dPoint(vp2));
     ON_Brep& brep = *(*b);
     ON_BrepExtrudeFace(brep, 0, *extrudepath, true);
+    delete extrudepath;
 
 }
 

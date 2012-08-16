@@ -58,7 +58,7 @@ rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     VJOIN2(startpoint, pip->part_V, pip->part_vrad*cos(temp), r, sin(temp)*pip->part_vrad/MAGNITUDE(pip->part_H), pip->part_H);
     VJOIN2(endpoint, VaddH, pip->part_hrad*cos(temp), r, sin(temp)*pip->part_hrad/MAGNITUDE(pip->part_H), pip->part_H);
     ON_Line line = ON_Line(ON_3dPoint(startpoint), ON_3dPoint(endpoint));
-    ON_LineCurve lcurve(line);
+    ON_LineCurve *lcurve = new ON_LineCurve(line);
 
     point_t revpoint1, revpoint2;
     VMOVE(revpoint1, pip->part_V);
@@ -68,11 +68,12 @@ rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     ON_Line revaxis(rpnt1, rpnt2);
 
     ON_RevSurface* part_surf = ON_RevSurface::New();
-    part_surf->m_curve = &lcurve;
+    part_surf->m_curve = lcurve;
     part_surf->m_axis = revaxis;
     part_surf->m_angle = ON_Interval(0, 2*ON_PI);
     ON_NurbsSurface *part_nurbs_surf = ON_NurbsSurface::New();
     part_surf->GetNurbForm(*part_nurbs_surf, 0.0);
+    delete part_surf;
 
     if (!EQUAL(fabs(temp), ON_PI/2.0)) {
 	(*b)->m_S.Append(part_nurbs_surf);
@@ -99,6 +100,7 @@ rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     v_sph_surf->m_angle = ON_Interval(0, 2*ON_PI);
     ON_NurbsSurface *v_nurbs_surf = ON_NurbsSurface::New();
     v_sph_surf->GetNurbForm(*v_nurbs_surf, 0.0);
+    delete v_sph_surf;
 
     if (!EQUAL(temp, -ON_PI/2.0)) {
 	(*b)->m_S.Append(v_nurbs_surf);
@@ -123,6 +125,7 @@ rt_part_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     h_sph_surf->m_angle = ON_Interval(0, 2*ON_PI);
     ON_NurbsSurface *h_nurbs_surf = ON_NurbsSurface::New();
     h_sph_surf->GetNurbForm(*h_nurbs_surf, 0.0);
+    delete h_sph_surf;
 
     if (!EQUAL(temp, ON_PI/2.0)) {
 	(*b)->m_S.Append(h_nurbs_surf);

@@ -98,17 +98,17 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis, const fastf_t ang) {
     double maxdist = 0.0;
     int largest_loop_index = 0;
     for (int i = 0; i <= loopcount ; i++) {
-	ON_BoundingBox *lbbox = new ON_BoundingBox();
+	ON_BoundingBox lbbox;
 	for (int j = 0; j < (*b)->m_C3.Count(); j++) {
 	    if (curvearray[j] == i) {
 		ON_Curve *currcurve = (*b)->m_C3[j];
-		currcurve->GetBoundingBox(*lbbox, true);
+		currcurve->GetBoundingBox(lbbox, true);
 	    }
 	}
 	point_t minpt, maxpt;
 	double currdist;
-	VSET(minpt, lbbox->m_min[0], lbbox->m_min[1], lbbox->m_min[2]);
-	VSET(maxpt, lbbox->m_max[0], lbbox->m_max[1], lbbox->m_max[2]);
+	VSET(minpt, lbbox.m_min[0], lbbox.m_min[1], lbbox.m_min[2]);
+	VSET(maxpt, lbbox.m_max[0], lbbox.m_max[1], lbbox.m_max[2]);
 	currdist = DIST_PT_PT(minpt, maxpt);
 	if (currdist > maxdist) {
 	    maxdist = currdist;
@@ -136,6 +136,8 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis, const fastf_t ang) {
 	    (*b)->FlipFace(*face);
 	}
     }
+
+    bu_free(curvearray, "sketch edge list");
 }
 
 
@@ -169,13 +171,13 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
     plane_origin = ON_3dPoint(startpoint);
     plane_x_dir = ON_3dVector(eip->u_vec);
     plane_y_dir = ON_3dVector(eip->v_vec);
-    const ON_Plane* sketch_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
+    const ON_Plane sketch_plane = ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
 
     //  For the brep, need the list of 3D vertex points.  In sketch, they
     //  are stored as 2D coordinates, so use the sketch_plane to define 3 space
     //  points for the vertices.
     for (size_t i = 0; i < eip->vert_count; i++) {
-	(*b)->NewVertex(sketch_plane->PointAt(eip->verts[i][0], eip->verts[i][1]), 0.0);
+	(*b)->NewVertex(sketch_plane.PointAt(eip->verts[i][0], eip->verts[i][1]), 0.0);
     }
 
     // Create the brep elements corresponding to the sketch lines, curves
@@ -202,9 +204,9 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 		if (csg->radius < 0) { {
 		    ON_3dPoint cntrpt = (*b)->m_V[csg->end].Point();
 		    ON_3dPoint edgept = (*b)->m_V[csg->start].Point();
-		    ON_Plane* cplane = new ON_Plane(cntrpt, plane_x_dir, plane_y_dir);
-		    ON_Circle* c3dcirc = new ON_Circle(*cplane, cntrpt.DistanceTo(edgept));
-		    ON_Curve* c3d = new ON_ArcCurve((const ON_Circle)*c3dcirc);
+		    ON_Plane cplane = ON_Plane(cntrpt, plane_x_dir, plane_y_dir);
+		    ON_Circle c3dcirc = ON_Circle(cplane, cntrpt.DistanceTo(edgept));
+		    ON_Curve* c3d = new ON_ArcCurve((const ON_Circle)c3dcirc);
 		    c3d->SetDomain(0.0, 1.0);
 		    (*b)->m_C3.Append(c3d);
 		}
@@ -216,13 +218,13 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
 		{
-		    ON_3dPointArray *bezpoints = new ON_3dPointArray(bsg->degree + 1);
+		    ON_3dPointArray bezpoints = ON_3dPointArray(bsg->degree + 1);
 		    for (int j = 0; j < bsg->degree + 1; j++) {
-			bezpoints->Append((*b)->m_V[bsg->ctl_points[j]].Point());
+			bezpoints.Append((*b)->m_V[bsg->ctl_points[j]].Point());
 		    }
-		    ON_BezierCurve* bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints);
+		    ON_BezierCurve bez3d = ON_BezierCurve((const ON_3dPointArray)bezpoints);
 		    ON_NurbsCurve* beznurb3d = ON_NurbsCurve::New();
-		    bez3d->GetNurbForm(*beznurb3d);
+		    bez3d.GetNurbForm(*beznurb3d);
 		    beznurb3d->SetDomain(0.0, 1.0);
 		    (*b)->m_C3.Append(beznurb3d);
 		}

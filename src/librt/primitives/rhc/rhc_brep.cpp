@@ -60,7 +60,7 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     plane1_origin = ON_3dPoint(p1_origin);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
-    const ON_Plane* rhc_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
+    const ON_Plane rhc_bottom_plane = ON_Plane(plane1_origin, plane_x_dir, plane_y_dir);
 
     // Next, create a hyperbolic curve corresponding to the shape of
     // the hyperboloid in the plane.  See if the following webpage
@@ -98,6 +98,7 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     ON_NurbsCurve* hypnurbscurve = ON_NurbsCurve::New();
 
     bcurve->GetNurbForm(*hypnurbscurve);
+    delete bcurve;
 
     // Also need a staight line from the beginning to the end to
     // complete the loop.
@@ -110,7 +111,7 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     boundary.Append(ON_Curve::Cast(straightedge));
 
     ON_PlaneSurface* bp = new ON_PlaneSurface();
-    bp->m_plane = (*rhc_bottom_plane);
+    bp->m_plane = rhc_bottom_plane;
     bp->SetDomain(0, -100.0, 100.0);
     bp->SetDomain(1, -100.0, 100.0);
     bp->SetExtents(0, bp->Domain(0));
@@ -133,6 +134,7 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(eip->rhc_V), ON_3dPoint(vp2));
     ON_Brep& brep = *(*b);
     ON_BrepExtrudeFace(brep, 0, *extrudepath, true);
+    delete extrudepath;
 
 }
 

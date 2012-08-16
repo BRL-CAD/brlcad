@@ -73,8 +73,8 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     plane2_x_dir = ON_3dVector(x2_dir);
     plane2_y_dir = ON_3dVector(y2_dir);
 
-    const ON_Plane* ell1_plane = new ON_Plane(plane1_origin, plane1_x_dir, plane1_y_dir);
-    const ON_Plane* ell2_plane = new ON_Plane(plane2_origin, plane2_x_dir, plane2_y_dir);
+    const ON_Plane ell1_plane = ON_Plane(plane1_origin, plane1_x_dir, plane1_y_dir);
+    const ON_Plane ell2_plane = ON_Plane(plane2_origin, plane2_x_dir, plane2_y_dir);
 
     // Once the planes have been created, create the ellipses within
     // the planes.
@@ -83,14 +83,14 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     ell2_axis_len_1 = MAGNITUDE(eip->c);
     ell2_axis_len_2 = MAGNITUDE(eip->d);
 
-    ON_Ellipse* ellipse1 = new ON_Ellipse(*ell1_plane, ell1_axis_len_1, ell1_axis_len_2);
-    ON_Ellipse* ellipse2 = new ON_Ellipse(*ell2_plane, ell2_axis_len_1, ell2_axis_len_2);
+    ON_Ellipse ellipse1 = ON_Ellipse(ell1_plane, ell1_axis_len_1, ell1_axis_len_2);
+    ON_Ellipse ellipse2 = ON_Ellipse(ell2_plane, ell2_axis_len_1, ell2_axis_len_2);
 
     // Generate an ON_Curves from the ellipses
     ON_NurbsCurve* ellcurve1 = ON_NurbsCurve::New();
-    ellipse1->GetNurbForm((*ellcurve1));
+    ellipse1.GetNurbForm((*ellcurve1));
     ON_NurbsCurve* ellcurve2 = ON_NurbsCurve::New();
-    ellipse2->GetNurbForm((*ellcurve2));
+    ellipse2.GetNurbForm((*ellcurve2));
     ellcurve1->SetDomain(0.0, 1.0);
     ellcurve2->SetDomain(0.0, 1.0);
 
@@ -102,7 +102,7 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     ON_SimpleArray<ON_Curve*> bottomboundary;
     bottomboundary.Append(ON_Curve::Cast(ellcurve1));
     ON_PlaneSurface* bp = new ON_PlaneSurface();
-    bp->m_plane = (*ell1_plane);
+    bp->m_plane = ell1_plane;
     bp->SetDomain(0, -100.0, 100.0);
     bp->SetDomain(1, -100.0, 100.0);
     bp->SetExtents(0, bp->Domain(0));
@@ -121,7 +121,7 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     ON_SimpleArray<ON_Curve*> topboundary;
     topboundary.Append(ON_Curve::Cast(ellcurve2));
     ON_PlaneSurface* tp = new ON_PlaneSurface();
-    tp->m_plane = (*ell2_plane);
+    tp->m_plane = ell2_plane;
     tp->SetDomain(0, -100.0, 100.0);
     tp->SetDomain(1, -100.0, 100.0);
     tp->SetExtents(0, tp->Domain(0));

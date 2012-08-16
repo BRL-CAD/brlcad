@@ -106,10 +106,10 @@ make_curved_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
     point_t rev;
     VADD2(rev, bend_center, norm);
 
-    ON_Line *revaxis = new ON_Line(ON_3dPoint(bend_center), ON_3dPoint(rev));
+    ON_Line revaxis = ON_Line(ON_3dPoint(bend_center), ON_3dPoint(rev));
     ON_RevSurface* revsurf = ON_RevSurface::New();
     revsurf->m_curve = *startoutercurves[0];
-    revsurf->m_axis = *revaxis;
+    revsurf->m_axis = revaxis;
     revsurf->m_angle = ON_Interval(2*ON_PI - angle, 2*ON_PI);
     ON_BrepFace *face = (*b)->NewFace(*revsurf);
     (*b)->FlipFace(*face);
@@ -117,7 +117,7 @@ make_curved_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
     if (startinnercurves->Count() > 0) {
 	revsurf = ON_RevSurface::New();
 	revsurf->m_curve = *startinnercurves[0];
-	revsurf->m_axis = *revaxis;
+	revsurf->m_axis = revaxis;
 	revsurf->m_angle = ON_Interval(2*ON_PI - angle, 2*ON_PI);
 	(void)(*b)->NewFace(*revsurf);
     }
@@ -144,7 +144,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     ON_3dPoint plane_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
 
-    ON_Plane *endplane;
+    ON_Plane endplane;
     ON_BrepLoop *bloop;
 
     RT_CK_DB_INTERNAL(ip);
@@ -183,12 +183,12 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     plane_origin = ON_3dPoint(prevp->pp_coord);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
-    endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
+    endplane = ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
 
-    generate_curves(prevp->pp_id, prevp->pp_od, endplane, &endoutercurves, &endinnercurves);
+    generate_curves(prevp->pp_id, prevp->pp_od, &endplane, &endoutercurves, &endinnercurves);
 
     ON_PlaneSurface* bp = new ON_PlaneSurface();
-    bp->m_plane = (*endplane);
+    bp->m_plane = endplane;
     bp->SetDomain(0, -100.0, 100.0);
     bp->SetDomain(1, -100.0, 100.0);
     bp->SetExtents(0, bp->Domain(0));
@@ -235,8 +235,8 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	    plane_origin = ON_3dPoint(curp->pp_coord);
 	    plane_x_dir = ON_3dVector(x_dir);
 	    plane_y_dir = ON_3dVector(y_dir);
-	    endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
-	    generate_curves(curp->pp_id, curp->pp_od, endplane, &endoutercurves, &endinnercurves);
+	    endplane = ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
+	    generate_curves(curp->pp_id, curp->pp_od, &endplane, &endoutercurves, &endinnercurves);
 	    make_linear_surfaces(b, &startoutercurves, &endoutercurves, &startinnercurves, &endinnercurves);
 	    break;
 	}
@@ -260,8 +260,8 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 		plane_origin = ON_3dPoint(curp->pp_coord);
 		plane_x_dir = ON_3dVector(x_dir);
 		plane_y_dir = ON_3dVector(y_dir);
-		endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
-		generate_curves(curp->pp_id, curp->pp_od, endplane, &endoutercurves, &endinnercurves);
+		endplane = ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
+		generate_curves(curp->pp_id, curp->pp_od, &endplane, &endoutercurves, &endinnercurves);
 		make_linear_surfaces(b, &startoutercurves, &endoutercurves, &startinnercurves, &endinnercurves);
 		VMOVE(current_point, curp->pp_coord);
 	    } else {
@@ -281,8 +281,8 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 		plane_origin = ON_3dPoint(bend_start);
 		plane_x_dir = ON_3dVector(x_dir);
 		plane_y_dir = ON_3dVector(y_dir);
-		endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
-		generate_curves(curp->pp_id, curp->pp_od, endplane, &endoutercurves, &endinnercurves);
+		endplane = ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
+		generate_curves(curp->pp_id, curp->pp_od, &endplane, &endoutercurves, &endinnercurves);
 		make_linear_surfaces(b, &startoutercurves, &endoutercurves, &startinnercurves, &endinnercurves);
 
 		// Now do curved section
@@ -299,8 +299,8 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 		plane_origin = ON_3dPoint(bend_end);
 		plane_x_dir = ON_3dVector(x_dir);
 		plane_y_dir = ON_3dVector(y_dir);
-		endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
-		generate_curves(curp->pp_id, curp->pp_od, endplane, &startoutercurves, &startinnercurves);
+		endplane = ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
+		generate_curves(curp->pp_id, curp->pp_od, &endplane, &startoutercurves, &startinnercurves);
 
 		VMOVE(current_point, bend_end);
 	    }
@@ -320,12 +320,12 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     plane_origin = ON_3dPoint(curp->pp_coord);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
-    endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
+    endplane = ON_Plane(plane_origin, plane_x_dir, plane_y_dir);
 
-    generate_curves(curp->pp_id, curp->pp_od, endplane, &endoutercurves, &endinnercurves);
+    generate_curves(curp->pp_id, curp->pp_od, &endplane, &endoutercurves, &endinnercurves);
 
     ON_PlaneSurface* ebp = new ON_PlaneSurface();
-    ebp->m_plane = (*endplane);
+    ebp->m_plane = endplane;
     ebp->SetDomain(0, -100.0, 100.0);
     ebp->SetDomain(1, -100.0, 100.0);
     ebp->SetExtents(0, bp->Domain(0));
