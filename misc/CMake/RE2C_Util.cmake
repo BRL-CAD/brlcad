@@ -6,7 +6,7 @@
 # which creates a custom command  to generate the <RE2COutput> file from
 # the <RE2CInput> file.  If  COMPILE_FLAGS option is specified, the next
 # parameter is added to the re2c  command line. Name is an alias used to
-# get  details of  this custom  command.  
+# get  details of  this custom  command.
 
 # This module also defines a macro:
 #  ADD_RE2C_LEMON_DEPENDENCY(RE2CTarget LemonTarget)
@@ -38,18 +38,18 @@
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-#  
+#
 # * Redistributions of source code must retain the above copyright
 #   notice, this list of conditions and the following disclaimer.
-# 
+#
 # * Redistributions in binary form must reproduce the above copyright
 #   notice, this list of conditions and the following disclaimer in the
 #   documentation and/or other materials provided with the distribution.
-# 
+#
 # * The names of the authors may not be used to endorse or promote
 #   products derived from this software without specific prior written
 #   permission.
