@@ -125,6 +125,11 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		    return GED_ERROR;
 		}
+		else {
+		    sizeVoxel[0] = sizeVoxel[0] * gedp->ged_wdbp->dbip->dbi_local2base;
+		    sizeVoxel[1] = sizeVoxel[1] * gedp->ged_wdbp->dbip->dbi_local2base;
+		    sizeVoxel[2] = sizeVoxel[2] * gedp->ged_wdbp->dbip->dbi_local2base;
+		}
 		break;
 
 	    case 'd':
