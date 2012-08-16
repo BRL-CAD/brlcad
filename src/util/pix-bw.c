@@ -114,7 +114,7 @@ main(int argc, char **argv)
 #endif
 
     foutp = stdout;
-    
+
     if (isatty(fileno(finp)) || isatty(fileno(foutp))) {
 	bu_exit(2, "%s", usage);
     }
