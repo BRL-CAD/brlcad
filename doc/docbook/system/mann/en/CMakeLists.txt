@@ -95,6 +95,7 @@ set(docbook_mann_EN
   gastank.xml
   gqa.xml
   gr.xml
+  graph.xml
   gui.xml
   handle.xml
   help.xml
