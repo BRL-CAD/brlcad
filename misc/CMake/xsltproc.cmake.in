@@ -42,7 +42,7 @@ execute_process(COMMAND "@XSLTPROC_EXECUTABLE@" -nonet -xinclude -o "@outfile@" 
 
 # For some reason, xsltproc doesn't always seem to respect the
 # output variable when doing man pages.  Add a backup check
-# to move the man page to the right location if xsltproc insists 
+# to move the man page to the right location if xsltproc insists
 # on putting it in the current directory.
 get_filename_component(base_output_name "@outfile@" NAME)
 get_filename_component(base_output_path "@outfile@" PATH)
