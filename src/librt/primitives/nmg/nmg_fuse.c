@@ -1218,12 +1218,6 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
     /* 0 = no special case, 1 = infinit ratio, 2 = zero ratio, 3 = point in plane (no ratio) */
     char *edge_sc, *edge_sc_xyp, *edge_sc_xzp, *edge_sc_yzp;
 
-    vect_t vec_from = {1.0, 0.0, 0.0};
-    vect_t vec_to = {0.577350269189625842, 0.577350269189625842, 0.577350269189625842};
-    mat_t mat;
-
-    bn_mat_fromto(mat, vec_from, vec_to);
-
     /* Make a list of all the edge geometry structs in the model */
     nmg_edge_g_tabulate(&etab, magic_p);
 
@@ -1261,9 +1255,8 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 	eg1 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, i);
 	eu1 = BU_LIST_MAIN_PTR(edgeuse, BU_LIST_FIRST(bu_list, &eg1->eu_hd2), l2);
 
-	/* rotate the edges to reduce the number of edges parallel with the x and y axis */
-	MAT4X3PNT(pt1, mat, eu1->vu_p->v_p->vg_p->coord);
-	MAT4X3PNT(pt2, mat, eu1->eumate_p->vu_p->v_p->vg_p->coord);
+	VMOVE(pt1, eu1->vu_p->v_p->vg_p->coord);
+	VMOVE(pt2, eu1->eumate_p->vu_p->v_p->vg_p->coord);
 
 	xdif = fabs(pt2[X] - pt1[X]);
 	ydif = fabs(pt2[Y] - pt1[Y]);
