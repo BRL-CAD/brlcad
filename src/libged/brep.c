@@ -117,7 +117,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	/* we need at least 6 arguments */
 	if (argc < 6)
 	    return GED_ERROR;
-	
+
 	/* get the other solid */
 	if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  argv[3], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", argv[3]);
