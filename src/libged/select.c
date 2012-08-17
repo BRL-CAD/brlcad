@@ -280,7 +280,7 @@ ged_select(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
-    
+
     /* Process the -p option */
     if (argc > 1 && argv[1][0] == '-' && argv[1][1] == 'p' && argv[1][2] == '\0') {
 	pflag = 1;
