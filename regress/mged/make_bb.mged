@@ -15,7 +15,7 @@ make_bb comb_bb3.s bb_prim3.c
 comb bb_prim4.c u make_bb_rcc.s u make_bb_rec.s u make_bb_rhc.s u make_bb_rpc.s u make_bb_rpp.s
 make_bb comb_bb4.s bb_prim4.c
 comb bb_prim5.c u make_bb_sketch.s u make_bb_sph.s u make_bb_tec.s u make_bb_tgc.s u make_bb_tor.s u make_bb_trc.s
-make_bb comb_bb5.s bb_prim5.c 
+make_bb comb_bb5.s bb_prim5.c
 comb bb_all.c u bb_prim1.c u bb_prim2.c u bb_prim3.c u bb_prim4.c u bb_prim5.c
 make_bb bb_all.s bb_all.c
 
