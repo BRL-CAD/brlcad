@@ -155,7 +155,7 @@ void print_volume_table(struct ged *gedp
     table.nrows = 3;
     table.rows = (row_t *)bu_calloc(3, sizeof(row_t), "print_volume_table: rows");
     for (i = 0; i < table.nrows; ++i) {
-	double val = 0.0;
+	fastf_t val = 0.0;
 
 	/* field 0 */
 	field = 0;
@@ -1143,8 +1143,8 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
     size_t i, j, k;
     size_t nfaces = 0;
     fastf_t tot_area = 0.0, tot_vol = 0.0;
-    plane_t old_plane;
     table_t table;
+    plane_t old_plane = HINIT_ZERO;
     struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
     struct poly_face face = POLY_FACE_INIT_ZERO;
     struct rt_ars_internal *arip = (struct rt_ars_internal *)ip->idb_ptr;
