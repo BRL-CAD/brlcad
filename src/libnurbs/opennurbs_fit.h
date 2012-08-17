@@ -171,7 +171,7 @@ public:
    *  \param[out] eigenvectors Matrix containing column-wise the eigenvectors of the set of points.
    *  \param[out] eigenvalues The eigenvalues of the set of points with respect to the eigenvectors. */
   static void
-      pca (const vector_vec3d &data, ON_3dVector &mean, ON_Matrix &eigenvectors,
+      pca (const vector_vec3d &data, ON_3dVector &mean, ON_Matrix **eigenvectors,
            ON_3dVector &eigenvalues);
 
   /** \brief Downsample data points to a certain size.
@@ -437,7 +437,7 @@ public:
    *  \param[in] maxSteps maximum number of iterations.
    *  \param[in] accuracy convergence criteria: if error is lower than accuracy the function returns
    *  \return closest point on surface in parametric domain.*/
-  static ON_2dPoint 
+  static ON_2dPoint
   inverseMapping (const ON_NurbsSurface &nurbs, const ON_3dPoint &pt, const ON_2dPoint &hint,
                   double &error, ON_3dPoint &p, ON_3dVector &tu, ON_3dVector &tv, int maxSteps = 100,
                   double accuracy = 1e-6, bool quiet = true);

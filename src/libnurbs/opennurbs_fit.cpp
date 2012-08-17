@@ -196,7 +196,7 @@ NurbsTools::computeMean (const vector_vec2d &data)
 }
 
 void
-NurbsTools::pca (const vector_vec3d &data, ON_3dVector &mean, ON_Matrix &UNUSED(eigenvectors),
+NurbsTools::pca (const vector_vec3d &data, ON_3dVector &mean, ON_Matrix **UNUSED(eigenvectors),
                  ON_3dVector &UNUSED(eigenvalues))
 {
   if (data.empty ())
@@ -611,7 +611,6 @@ FittingSurface::FittingSurface (NurbsDataSurface *in_m_data, const ON_NurbsSurfa
   this->init ();
 }
 
-#if 0
 void
 FittingSurface::refine (int dim)
 {
@@ -763,10 +762,10 @@ FittingSurface::updateSurf (double damp)
 }
 
 void
-FittingSurface::setInvMapParams (unsigned in_max_steps, double in_accuracy)
+FittingSurface::setInvMapParams (unsigned max_steps, double accuracy)
 {
-  this->in_max_steps = in_max_steps;
-  this->in_accuracy = in_accuracy;
+  this->in_max_steps = max_steps;
+  this->in_accuracy = accuracy;
 }
 
 std::vector<double>
@@ -790,7 +789,7 @@ FittingSurface::getElementVector (const ON_NurbsSurface &nurbs, int dim) // !
   for (int E = idx_min + 1; E <= idx_max; E++)
   {
 
-    if (knots[E] != knots[E - 1]) // do not count double knots
+    if (!NEAR_EQUAL(knots[E], knots[E - 1], SMALL_FASTF)) // do not count double knots
       result.push_back (knots[E]);
 
   }
@@ -808,11 +807,12 @@ FittingSurface::assembleInterior (double wInt, unsigned &row)
   unsigned nInt = m_data->interior.size ();
   for (unsigned p = 0; p < nInt; p++)
   {
-    Eigen::Vector3d &pcp = m_data->interior[p];
+    ON_3dVector &pcp = m_data->interior[p];
 
     // inverse mapping
-    Eigen::Vector2d params;
-    Eigen::Vector3d pt, tu, tv, n;
+    ON_2dVector params;
+    ON_3dPoint pt;
+    ON_3dVector tu, tv, n;
     double error;
     if (p < m_data->interior_param.size ())
     {
@@ -827,8 +827,8 @@ FittingSurface::assembleInterior (double wInt, unsigned &row)
     }
     m_data->interior_error.push_back (error);
 
-    n = tu.cross (tv);
-    n.normalize ();
+    n = ON_CrossProduct(tu, tv);
+    n.Unitize();
 
     m_data->interior_normals.push_back (n);
     m_data->interior_line_start.push_back (pcp);
@@ -852,11 +852,12 @@ FittingSurface::assembleBoundary (double wBnd, unsigned &row)
   unsigned nBnd = m_data->boundary.size ();
   for (unsigned p = 0; p < nBnd; p++)
   {
-    Eigen::Vector3d &pcp = m_data->boundary[p];
+    ON_3dVector &pcp = m_data->boundary[p];
 
     double error;
-    Eigen::Vector3d pt, tu, tv, n;
-    Eigen::Vector2d params = inverseMappingBoundary (m_nurbs, pcp, error, pt, tu, tv, in_max_steps, in_accuracy);
+    ON_3dPoint pt;
+    ON_3dVector tu, tv, n;
+    ON_2dVector params = inverseMappingBoundary (m_nurbs, pcp, error, pt, tu, tv, in_max_steps, in_accuracy);
     m_data->boundary_error.push_back (error);
 
     if (p < m_data->boundary_param.size ())
@@ -868,8 +869,8 @@ FittingSurface::assembleBoundary (double wBnd, unsigned &row)
       m_data->boundary_param.push_back (params);
     }
 
-    n = tu.cross (tv);
-    n.normalize ();
+    n = ON_CrossProduct(tu, tv);
+    n.Unitize();
 
     m_data->boundary_normals.push_back (n);
     m_data->boundary_line_start.push_back (pcp);
@@ -924,68 +925,70 @@ FittingSurface::initNurbs4Corners (int order, ON_3dPoint ll, ON_3dPoint lr, ON_3
 }
 
 ON_NurbsSurface
-FittingSurface::initNurbsPCA (int order, NurbsDataSurface *m_data, Eigen::Vector3d z)
+FittingSurface::initNurbsPCA (int order, NurbsDataSurface *m_data, ON_3dVector UNUSED(z))
 {
-  Eigen::Vector3d mean;
-  Eigen::Matrix3d eigenvectors;
-  Eigen::Vector3d eigenvalues;
+  ON_3dVector mean;
+  ON_Matrix **eigenvectors = NULL;
+  ON_3dVector eigenvalues;
 
-  unsigned s = m_data->interior.size ();
+  //unsigned s = m_data->interior.size ();
 
   NurbsTools::pca (m_data->interior, mean, eigenvectors, eigenvalues);
 
   m_data->mean = mean;
-  m_data->eigenvectors = eigenvectors;
+  m_data->eigenvectors = (*eigenvectors);
 
   bool flip (false);
-  if (eigenvectors.col (2).dot (z) < 0.0)
-    flip = true;
+  //if (eigenvectors.col (2).dot (z) < 0.0)
+  //  flip = true;
 
-  eigenvalues = eigenvalues / s; // seems that the eigenvalues are dependent on the number of points (???)
+  //eigenvalues = eigenvalues / s; // seems that the eigenvalues are dependent on the number of points (???)
 
-  Eigen::Vector3d sigma (sqrt (eigenvalues (0)), sqrt (eigenvalues (1)), sqrt (eigenvalues (2)));
+  ON_3dVector sigma(sqrt(eigenvalues[0]), sqrt(eigenvalues[1]), sqrt(eigenvalues[2]));
 
   ON_NurbsSurface nurbs (3, false, order, order, order, order);
   nurbs.MakeClampedUniformKnotVector (0, 1.0);
   nurbs.MakeClampedUniformKnotVector (1, 1.0);
 
   // +- 2 sigma -> 95,45 % aller Messwerte
-  double dcu = (4.0 * sigma (0)) / (nurbs.Order (0) - 1);
-  double dcv = (4.0 * sigma (1)) / (nurbs.Order (1) - 1);
+  double dcu = (4.0 * sigma[0]) / (nurbs.Order (0) - 1);
+  double dcv = (4.0 * sigma[1]) / (nurbs.Order (1) - 1);
 
-  Eigen::Vector3d cv_t, cv;
+  ON_3dVector cv_t, cv;
   for (int i = 0; i < nurbs.Order (0); i++)
   {
     for (int j = 0; j < nurbs.Order (1); j++)
     {
-      cv (0) = -2.0 * sigma (0) + dcu * i;
-      cv (1) = -2.0 * sigma (1) + dcv * j;
-      cv (2) = 0.0;
-      cv_t = eigenvectors * cv + mean;
+      cv[0] = -2.0 * sigma[0] + dcu * i;
+      cv[1] = -2.0 * sigma[1] + dcv * j;
+      cv[2] = 0.0;
+      // TODO - need to figure out the line below in OpenNURBS terms
+      //cv_t = eigenvectors * cv + mean;
       if (flip)
-        nurbs.SetCV (nurbs.Order (0) - 1 - i, j, ON_3dPoint (cv_t (0), cv_t (1), cv_t (2)));
+        nurbs.SetCV (nurbs.Order (0) - 1 - i, j, ON_3dPoint (cv_t[0], cv_t[1], cv_t[2]));
       else
-        nurbs.SetCV (i, j, ON_3dPoint (cv_t (0), cv_t (1), cv_t (2)));
+        nurbs.SetCV (i, j, ON_3dPoint (cv_t[0], cv_t[1], cv_t[2]));
     }
   }
   return nurbs;
 }
 
 ON_NurbsSurface
-FittingSurface::initNurbsPCABoundingBox (int order, NurbsDataSurface *m_data, Eigen::Vector3d z)
+FittingSurface::initNurbsPCABoundingBox (int order, NurbsDataSurface *m_data, ON_3dVector UNUSED(z))
 {
-  Eigen::Vector3d mean;
-  Eigen::Matrix3d eigenvectors;
-  Eigen::Vector3d eigenvalues;
+  ON_3dVector mean;
+  ON_Matrix **eigenvectors = NULL;
+  ON_3dVector eigenvalues;
 
-  unsigned s = m_data->interior.size ();
+  //unsigned s = m_data->interior.size ();
   m_data->interior_param.clear ();
 
   NurbsTools::pca (m_data->interior, mean, eigenvectors, eigenvalues);
 
   m_data->mean = mean;
-  m_data->eigenvectors = eigenvectors;
+  m_data->eigenvectors = (*eigenvectors);
 
+#if 0
   bool flip (false);
   if (eigenvectors.col (2).dot (z) < 0.0)
     flip = true;
@@ -993,35 +996,35 @@ FittingSurface::initNurbsPCABoundingBox (int order, NurbsDataSurface *m_data, Ei
   eigenvalues = eigenvalues / s; // seems that the eigenvalues are dependent on the number of points (???)
   Eigen::Matrix3d eigenvectors_inv = eigenvectors.inverse ();
 
-  Eigen::Vector3d v_max (0.0, 0.0, 0.0);
-  Eigen::Vector3d v_min (DBL_MAX, DBL_MAX, DBL_MAX);
+  ON_3dVector v_max(0.0, 0.0, 0.0);
+  ON_3dVector v_min(DBL_MAX, DBL_MAX, DBL_MAX);
   for (unsigned i = 0; i < s; i++)
   {
-    Eigen::Vector3d p = eigenvectors_inv * (m_data->interior[i] - mean);
-    m_data->interior_param.push_back (Eigen::Vector2d (p (0), p (1)));
+    ON_3dVector p = eigenvectors_inv * (m_data->interior[i] - mean);
+    m_data->interior_param.push_back (ON_2dPoint(p[0], p[1]));
 
-    if (p (0) > v_max (0))
-      v_max (0) = p (0);
-    if (p (1) > v_max (1))
-      v_max (1) = p (1);
-    if (p (2) > v_max (2))
-      v_max (2) = p (2);
+    if (p[0] > v_max[0])
+      v_max[0] = p[0];
+    if (p[1] > v_max[1])
+      v_max[1] = p[1];
+    if (p[2] > v_max[2])
+      v_max[2] = p[2];
 
-    if (p (0) < v_min (0))
-      v_min (0) = p (0);
-    if (p (1) < v_min (1))
-      v_min (1) = p (1);
-    if (p (2) < v_min (2))
-      v_min (2) = p (2);
+    if (p[0] < v_min[0])
+      v_min[0] = p[0];
+    if (p[1] < v_min[1])
+      v_min[1] = p[1];
+    if (p[2] < v_min[2])
+      v_min[2] = p[2];
   }
 
   for (unsigned i = 0; i < s; i++)
   {
-    Eigen::Vector2d &p = m_data->interior_param[i];
-    if (v_max (0) > v_min (0) && v_max (0) > v_min (0))
+    ON_2dPoint &p = m_data->interior_param[i];
+    if (v_max[0] > v_min[0] && v_max[0] > v_min[0])
     {
-      p (0) = (p (0) - v_min (0)) / (v_max (0) - v_min (0));
-      p (1) = (p (1) - v_min (1)) / (v_max (1) - v_min (1));
+      p[0] = (p[0] - v_min[0]) / (v_max[0] - v_min[0]);
+      p[1] = (p[1] - v_min[1]) / (v_max[1] - v_min[1]);
     }
     else
     {
@@ -1029,47 +1032,50 @@ FittingSurface::initNurbsPCABoundingBox (int order, NurbsDataSurface *m_data, Ei
     }
   }
 
+#endif
   ON_NurbsSurface nurbs (3, false, order, order, order, order);
+#if 0
   nurbs.MakeClampedUniformKnotVector (0, 1.0);
   nurbs.MakeClampedUniformKnotVector (1, 1.0);
 
-  double dcu = (v_max (0) - v_min (0)) / (nurbs.Order (0) - 1);
-  double dcv = (v_max (1) - v_min (1)) / (nurbs.Order (1) - 1);
+  double dcu = (v_max[0] - v_min[0]) / (nurbs.Order (0) - 1);
+  double dcv = (v_max[1] - v_min[1]) / (nurbs.Order (1) - 1);
 
-  Eigen::Vector3d cv_t, cv;
+  ON_3dPoint cv_t, cv;
   for (int i = 0; i < nurbs.Order (0); i++)
   {
     for (int j = 0; j < nurbs.Order (1); j++)
     {
-      cv (0) = v_min (0) + dcu * i;
-      cv (1) = v_min (1) + dcv * j;
-      cv (2) = 0.0;
+      cv[0] = v_min[0] + dcu * i;
+      cv[1] = v_min[1] + dcv * j;
+      cv[2] = 0.0;
       cv_t = eigenvectors * cv + mean;
       if (flip)
-        nurbs.SetCV (nurbs.Order (0) - 1 - i, j, ON_3dPoint (cv_t (0), cv_t (1), cv_t (2)));
+        nurbs.SetCV (nurbs.Order (0) - 1 - i, j, cv_t);
       else
-        nurbs.SetCV (i, j, ON_3dPoint (cv_t (0), cv_t (1), cv_t (2)));
+        nurbs.SetCV (i, j, cv_t);
     }
   }
+#endif
   return nurbs;
 }
-
+#if 0
 void
-FittingSurface::addPointConstraint (const Eigen::Vector2d &params, const Eigen::Vector3d &point, double weight,
+FittingSurface::addPointConstraint (const ON_2dVector &params, const ON_3dPoint &point, double weight,
                                     unsigned &row)
 {
   double N0[m_nurbs.Order (0) * m_nurbs.Order (0)];
   double N1[m_nurbs.Order (1) * m_nurbs.Order (1)];
 
-  int E = ON_NurbsSpanIndex (m_nurbs.m_order[0], m_nurbs.m_cv_count[0], m_nurbs.m_knot[0], params (0), 0, 0);
-  int F = ON_NurbsSpanIndex (m_nurbs.m_order[1], m_nurbs.m_cv_count[1], m_nurbs.m_knot[1], params (1), 0, 0);
+  int E = ON_NurbsSpanIndex (m_nurbs.m_order[0], m_nurbs.m_cv_count[0], m_nurbs.m_knot[0], params[0], 0, 0);
+  int F = ON_NurbsSpanIndex (m_nurbs.m_order[1], m_nurbs.m_cv_count[1], m_nurbs.m_knot[1], params[1], 0, 0);
 
-  ON_EvaluateNurbsBasis (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, params (0), N0);
-  ON_EvaluateNurbsBasis (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, params (1), N1);
+  ON_EvaluateNurbsBasis (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, params[0], N0);
+  ON_EvaluateNurbsBasis (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, params[1], N1);
 
-  m_solver.f (row, 0, point (0) * weight);
-  m_solver.f (row, 1, point (1) * weight);
-  m_solver.f (row, 2, point (2) * weight);
+  m_solver.f (row, 0, point[0] * weight);
+  m_solver.f (row, 1, point[1] * weight);
+  m_solver.f (row, 2, point[2] * weight);
 
   for (int i = 0; i < m_nurbs.Order (0); i++)
   {
@@ -1086,6 +1092,7 @@ FittingSurface::addPointConstraint (const Eigen::Vector2d &params, const Eigen::
   row++;
 
 }
+#endif
 
 void
 FittingSurface::addCageInteriorRegularisation (double weight, unsigned &row)
@@ -1221,6 +1228,7 @@ FittingSurface::addCageCornerRegularisation (double weight, unsigned &row)
 
 }
 
+#if 0
 void
 FittingSurface::addInteriorRegularisation (int order, int resU, int resV, double weight, unsigned &row)
 {
@@ -1427,18 +1435,19 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
   }
 
 }
+#endif
 
-Eigen::Vector2d
-FittingSurface::inverseMapping (const ON_NurbsSurface &nurbs, const Eigen::Vector3d &pt, const Eigen::Vector2d &hint, double &error,
-                                Eigen::Vector3d &p, Eigen::Vector3d &tu, Eigen::Vector3d &tv, int maxSteps, double accuracy, bool quiet)
+ON_2dPoint
+FittingSurface::inverseMapping (const ON_NurbsSurface &nurbs, const ON_3dPoint &pt, const ON_2dPoint &hint, double &error,
+                                ON_3dPoint &p, ON_3dVector &tu, ON_3dVector &tv, int maxSteps, double accuracy, bool quiet)
 {
 
   double pointAndTangents[9];
 
-  Eigen::Vector2d current, delta;
-  Eigen::Matrix2d A;
-  Eigen::Vector2d b;
-  Eigen::Vector3d r;
+  ON_2dVector current, delta;
+  ON_Matrix A(2,2);
+  ON_2dVector b;
+  ON_3dVector r;
   std::vector<double> elementsU = getElementVector (nurbs, 0);
   std::vector<double> elementsV = getElementVector (nurbs, 1);
   double minU = elementsU[0];
@@ -1451,33 +1460,34 @@ FittingSurface::inverseMapping (const ON_NurbsSurface &nurbs, const Eigen::Vecto
   for (int k = 0; k < maxSteps; k++)
   {
 
-    nurbs.Evaluate (current (0), current (1), 1, 3, pointAndTangents);
-    p (0) = pointAndTangents[0];
-    p (1) = pointAndTangents[1];
-    p (2) = pointAndTangents[2];
-    tu (0) = pointAndTangents[3];
-    tu (1) = pointAndTangents[4];
-    tu (2) = pointAndTangents[5];
-    tv (0) = pointAndTangents[6];
-    tv (1) = pointAndTangents[7];
-    tv (2) = pointAndTangents[8];
+    nurbs.Evaluate (current[0], current[1], 1, 3, pointAndTangents);
+    p[0] = pointAndTangents[0];
+    p[1] = pointAndTangents[1];
+    p[2] = pointAndTangents[2];
+    tu[0] = pointAndTangents[3];
+    tu[1] = pointAndTangents[4];
+    tu[2] = pointAndTangents[5];
+    tv[0] = pointAndTangents[6];
+    tv[1] = pointAndTangents[7];
+    tv[2] = pointAndTangents[8];
 
     r = p - pt;
 
-    b (0) = -r.dot (tu);
-    b (1) = -r.dot (tv);
+    b[0] = -ON_DotProduct(r,tu);
+    b[1] = -ON_DotProduct(r,tv);
 
-    A (0, 0) = tu.dot (tu);
-    A (0, 1) = tu.dot (tv);
-    A (1, 0) = A (0, 1);
-    A (1, 1) = tv.dot (tv);
+    A[0][0] = ON_DotProduct(tu,tu);
+    A[0][1] = ON_DotProduct(tu,tv);
+    A[1][0] = A[0][1];
+    A[1][1] = ON_DotProduct(tv,tv);
 
+#if 0
     delta = A.ldlt ().solve (b);
-
-    if (delta.norm () < accuracy)
+#endif
+    if (sqrt(ON_DotProduct(delta,delta)) < accuracy)
     {
 
-      error = r.norm ();
+      error = sqrt(ON_DotProduct(r,r));
       return current;
 
     }
@@ -1485,37 +1495,36 @@ FittingSurface::inverseMapping (const ON_NurbsSurface &nurbs, const Eigen::Vecto
     {
       current = current + delta;
 
-      if (current (0) < minU)
-        current (0) = minU;
-      else if (current (0) > maxU)
-        current (0) = maxU;
+      if (current[0] < minU)
+        current[0] = minU;
+      else if (current[0] > maxU)
+        current[0] = maxU;
 
-      if (current (1) < minV)
-        current (1) = minV;
-      else if (current (1) > maxV)
-        current (1) = maxV;
+      if (current[1] < minV)
+        current[1] = minV;
+      else if (current[1] > maxV)
+        current[1] = maxV;
 
     }
 
   }
 
-  error = r.norm ();
-
+  error = sqrt(ON_DotProduct(r,r));
   if (!quiet)
   {
     printf ("[FittingSurface::inverseMapping] Warning: Method did not converge (%e %d)\n", accuracy, maxSteps);
-    printf ("  %f %f ... %f %f\n", hint (0), hint (1), current (0), current (1));
+    printf ("  %f %f ... %f %f\n", hint[0], hint[1], current[0], current[1]);
   }
 
   return current;
 
 }
 
-Eigen::Vector2d
-FittingSurface::findClosestElementMidPoint (const ON_NurbsSurface &nurbs, const Eigen::Vector3d &pt)
+ON_2dPoint
+FittingSurface::findClosestElementMidPoint (const ON_NurbsSurface &nurbs, const ON_3dPoint &pt)
 {
-  Eigen::Vector2d hint;
-  Eigen::Vector3d r;
+  ON_2dPoint hint;
+  ON_3dVector r;
   std::vector<double> elementsU = getElementVector (nurbs, 0);
   std::vector<double> elementsV = getElementVector (nurbs, 1);
 
@@ -1531,17 +1540,17 @@ FittingSurface::findClosestElementMidPoint (const ON_NurbsSurface &nurbs, const 
       double eta = elementsV[j] + 0.5 * (elementsV[j + 1] - elementsV[j]);
 
       nurbs.Evaluate (xi, eta, 0, 3, points);
-      r (0) = points[0] - pt (0);
-      r (1) = points[1] - pt (1);
-      r (2) = points[2] - pt (2);
+      r[0] = points[0] - pt[0];
+      r[1] = points[1] - pt[1];
+      r[2] = points[2] - pt[2];
 
-      d = r.squaredNorm ();
+      d = ON_DotProduct(r,r);
 
       if ((i == 0 && j == 0) || d < d_shortest)
       {
         d_shortest = d;
-        hint (0) = xi;
-        hint (1) = eta;
+        hint[0] = xi;
+        hint[1] = eta;
       }
     }
   }
@@ -1549,16 +1558,17 @@ FittingSurface::findClosestElementMidPoint (const ON_NurbsSurface &nurbs, const 
   return hint;
 }
 
-Eigen::Vector2d
-FittingSurface::inverseMappingBoundary (const ON_NurbsSurface &nurbs, const Eigen::Vector3d &pt, double &error, Eigen::Vector3d &p,
-                                        Eigen::Vector3d &tu, Eigen::Vector3d &tv, int maxSteps, double accuracy, bool quiet)
+ON_2dPoint
+FittingSurface::inverseMappingBoundary (const ON_NurbsSurface &nurbs, const ON_3dPoint &pt, double &error, ON_3dPoint &p,
+                                        ON_3dVector &tu, ON_3dVector &tv, int maxSteps, double accuracy, bool quiet)
 {
 
-  Eigen::Vector2d result;
+  ON_2dPoint result;
   double min_err = 100.0;
   std::vector<myvec> ini_points;
   double err_tmp;
-  Eigen::Vector3d p_tmp, tu_tmp, tv_tmp;
+  ON_3dPoint p_tmp;
+  ON_3dVector tu_tmp, tv_tmp;
 
   std::vector<double> elementsU = getElementVector (nurbs, 0);
   std::vector<double> elementsV = getElementVector (nurbs, 1);
@@ -1580,7 +1590,7 @@ FittingSurface::inverseMappingBoundary (const ON_NurbsSurface &nurbs, const Eige
   for (unsigned i = 0; i < ini_points.size (); i++)
   {
 
-    Eigen::Vector2d params = inverseMappingBoundary (nurbs, pt, ini_points[i].side, ini_points[i].hint, err_tmp, p_tmp,
+    ON_2dPoint params = inverseMappingBoundary (nurbs, pt, ini_points[i].side, ini_points[i].hint, err_tmp, p_tmp,
                                               tu_tmp, tv_tmp, maxSteps, accuracy, quiet);
 
     if (i == 0 || err_tmp < min_err)
@@ -1598,16 +1608,16 @@ FittingSurface::inverseMappingBoundary (const ON_NurbsSurface &nurbs, const Eige
 
 }
 
-Eigen::Vector2d
-FittingSurface::inverseMappingBoundary (const ON_NurbsSurface &nurbs, const Eigen::Vector3d &pt, int side, double hint,
-                                        double &error, Eigen::Vector3d &p, Eigen::Vector3d &tu, Eigen::Vector3d &tv, int maxSteps,
+ON_2dPoint
+FittingSurface::inverseMappingBoundary (const ON_NurbsSurface &nurbs, const ON_3dPoint &pt, int side, double hint,
+                                        double &error, ON_3dPoint &p, ON_3dVector &tu, ON_3dVector &tv, int maxSteps,
                                         double accuracy, bool quiet)
 {
 
   double pointAndTangents[9];
   double current, delta;
-  Eigen::Vector3d r, t;
-  Eigen::Vector2d params;
+  ON_3dVector r, t;
+  ON_2dPoint params;
 
   current = hint;
 
@@ -1626,72 +1636,72 @@ FittingSurface::inverseMappingBoundary (const ON_NurbsSurface &nurbs, const Eige
 
       case WEST:
 
-        params (0) = minU;
-        params (1) = current;
+        params[0] = minU;
+        params[1] = current;
         nurbs.Evaluate (minU, current, 1, 3, pointAndTangents);
-        p (0) = pointAndTangents[0];
-        p (1) = pointAndTangents[1];
-        p (2) = pointAndTangents[2];
-        tu (0) = pointAndTangents[3];
-        tu (1) = pointAndTangents[4];
-        tu (2) = pointAndTangents[5];
-        tv (0) = pointAndTangents[6];
-        tv (1) = pointAndTangents[7];
-        tv (2) = pointAndTangents[8];
+        p[0] = pointAndTangents[0];
+        p[1] = pointAndTangents[1];
+        p[2] = pointAndTangents[2];
+        tu[0] = pointAndTangents[3];
+        tu[1] = pointAndTangents[4];
+        tu[2] = pointAndTangents[5];
+        tv[0] = pointAndTangents[6];
+        tv[1] = pointAndTangents[7];
+        tv[2] = pointAndTangents[8];
 
         t = tv; // use tv
 
         break;
       case SOUTH:
 
-        params (0) = current;
-        params (1) = maxV;
+        params[0] = current;
+        params[1] = maxV;
         nurbs.Evaluate (current, maxV, 1, 3, pointAndTangents);
-        p (0) = pointAndTangents[0];
-        p (1) = pointAndTangents[1];
-        p (2) = pointAndTangents[2];
-        tu (0) = pointAndTangents[3];
-        tu (1) = pointAndTangents[4];
-        tu (2) = pointAndTangents[5];
-        tv (0) = pointAndTangents[6];
-        tv (1) = pointAndTangents[7];
-        tv (2) = pointAndTangents[8];
+        p[0] = pointAndTangents[0];
+        p[1] = pointAndTangents[1];
+        p[2] = pointAndTangents[2];
+        tu[0] = pointAndTangents[3];
+        tu[1] = pointAndTangents[4];
+        tu[2] = pointAndTangents[5];
+        tv[0] = pointAndTangents[6];
+        tv[1] = pointAndTangents[7];
+        tv[2] = pointAndTangents[8];
 
         t = tu; // use tu
 
         break;
       case EAST:
 
-        params (0) = maxU;
-        params (1) = current;
+        params[0] = maxU;
+        params[1] = current;
         nurbs.Evaluate (maxU, current, 1, 3, pointAndTangents);
-        p (0) = pointAndTangents[0];
-        p (1) = pointAndTangents[1];
-        p (2) = pointAndTangents[2];
-        tu (0) = pointAndTangents[3];
-        tu (1) = pointAndTangents[4];
-        tu (2) = pointAndTangents[5];
-        tv (0) = pointAndTangents[6];
-        tv (1) = pointAndTangents[7];
-        tv (2) = pointAndTangents[8];
+        p[0] = pointAndTangents[0];
+        p[1] = pointAndTangents[1];
+        p[2] = pointAndTangents[2];
+        tu[0] = pointAndTangents[3];
+        tu[1] = pointAndTangents[4];
+        tu[2] = pointAndTangents[5];
+        tv[0] = pointAndTangents[6];
+        tv[1] = pointAndTangents[7];
+        tv[2] = pointAndTangents[8];
 
         t = tv; // use tv
 
         break;
       case NORTH:
 
-        params (0) = current;
-        params (1) = minV;
+        params[0] = current;
+        params[1] = minV;
         nurbs.Evaluate (current, minV, 1, 3, pointAndTangents);
-        p (0) = pointAndTangents[0];
-        p (1) = pointAndTangents[1];
-        p (2) = pointAndTangents[2];
-        tu (0) = pointAndTangents[3];
-        tu (1) = pointAndTangents[4];
-        tu (2) = pointAndTangents[5];
-        tv (0) = pointAndTangents[6];
-        tv (1) = pointAndTangents[7];
-        tv (2) = pointAndTangents[8];
+        p[0] = pointAndTangents[0];
+        p[1] = pointAndTangents[1];
+        p[2] = pointAndTangents[2];
+        tu[0] = pointAndTangents[3];
+        tu[1] = pointAndTangents[4];
+        tu[2] = pointAndTangents[5];
+        tv[0] = pointAndTangents[6];
+        tv[1] = pointAndTangents[7];
+        tv[2] = pointAndTangents[8];
 
         t = tu; // use tu
 
@@ -1701,16 +1711,16 @@ FittingSurface::inverseMappingBoundary (const ON_NurbsSurface &nurbs, const Eige
 
     }
 
-    r (0) = pointAndTangents[0] - pt (0);
-    r (1) = pointAndTangents[1] - pt (1);
-    r (2) = pointAndTangents[2] - pt (2);
+    r[0] = pointAndTangents[0] - pt[0];
+    r[1] = pointAndTangents[1] - pt[1];
+    r[2] = pointAndTangents[2] - pt[2];
 
-    delta = -0.5 * r.dot (t) / t.dot (t);
+    delta = -0.5 * ON_DotProduct(r,t) / ON_DotProduct(t,t);
 
     if (fabs (delta) < accuracy)
     {
 
-      error = r.norm ();
+      error = sqrt(ON_DotProduct(r,r));
       return params;
 
     }
@@ -1728,12 +1738,12 @@ FittingSurface::inverseMappingBoundary (const ON_NurbsSurface &nurbs, const Eige
         case EAST:
           if (current < minV)
           {
-            params (1) = minV;
+            params[1] = minV;
             stop = true;
           }
           else if (current > maxV)
           {
-            params (1) = maxV;
+            params[1] = maxV;
             stop = true;
           }
 
@@ -1743,12 +1753,12 @@ FittingSurface::inverseMappingBoundary (const ON_NurbsSurface &nurbs, const Eige
         case SOUTH:
           if (current < minU)
           {
-            params (0) = minU;
+            params[0] = minU;
             stop = true;
           }
           else if (current > maxU)
           {
-            params (0) = maxU;
+            params[0] = maxU;
             stop = true;
           }
 
@@ -1757,7 +1767,7 @@ FittingSurface::inverseMappingBoundary (const ON_NurbsSurface &nurbs, const Eige
 
       if (stop)
       {
-        error = r.norm ();
+        error = sqrt(ON_DotProduct(r,r));
         return params;
       }
 
@@ -1765,15 +1775,15 @@ FittingSurface::inverseMappingBoundary (const ON_NurbsSurface &nurbs, const Eige
 
   }
 
-  error = r.norm ();
+  error = sqrt(ON_DotProduct(r,r));
   if (!quiet)
     printf (
             "[FittingSurface::inverseMappingBoundary] Warning: Method did not converge! (residual: %f, delta: %f, params: %f %f)\n",
-            error, delta, params (0), params (1));
+            error, delta, params[0], params[1]);
 
   return params;
 }
-#endif
+
 /*
  * Local Variables:
  * tab-width: 8
