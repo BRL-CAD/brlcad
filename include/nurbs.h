@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file opennurbs_ext.h
+/** @file nurbs.h
  *
  * Extensions to the openNURBS library
  *
@@ -39,6 +39,17 @@
 #include "vmath.h"
 #include "dvec.h"
 
+#ifndef NURBS_EXPORT
+#  if defined(NURBS_DLL_EXPORTS) && defined(NURBS_DLL_IMPORTS)
+#    error "Only NURBS_DLL_EXPORTS or NURBS_DLL_IMPORTS can be defined, not both."
+#  elif defined(NURBS_DLL_EXPORTS)
+#    define NURBS_EXPORT __declspec(dllexport)
+#  elif defined(NURBS_DLL_IMPORTS)
+#    define NURBS_EXPORT __declspec(dllimport)
+#  else
+#    define NURBS_EXPORT
+#  endif
+#endif
 
 class plane_ray {
 public:
@@ -115,13 +126,12 @@ public:
     }
 };
 
-void brep_get_plane_ray(ON_Ray& r, plane_ray& pr);
-void brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R);
-void brep_newton_iterate(plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv);
-void brep_newton_iterate(const ON_Surface* UNUSED(surf), plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv);
+NURBS_EXPORT void brep_get_plane_ray(ON_Ray& r, plane_ray& pr);
+NURBS_EXPORT void brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R);
+NURBS_EXPORT void brep_newton_iterate(plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv);
+NURBS_EXPORT void brep_newton_iterate(const ON_Surface* UNUSED(surf), plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv);
 
-ON_DECL
-bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
+NURBS_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 
 /* Maximum per-surface BVH depth */
 #define BREP_MAX_FT_DEPTH 8
@@ -752,7 +762,7 @@ extern bool sortY(BRNode* first, BRNode* second);
 
 //--------------------------------------------------------------------------------
 // CurveTree declaration
-class CurveTree {
+class NURBS_EXPORT CurveTree {
 public:
     CurveTree(ON_BrepFace* face);
     ~CurveTree();
@@ -1485,7 +1495,7 @@ BVNode<BV>::prepTrims()
 
 //--------------------------------------------------------------------------------
 // SurfaceTree declaration
-class SurfaceTree {
+class NURBS_EXPORT SurfaceTree {
 private:
     bool m_removeTrimmed;
 
@@ -1620,7 +1630,7 @@ extern ON_Curve* pullback_curve(ON_BrepFace* face,
  * (SPM '08). ACM, New York, NY, USA, 257-268. DOI=10.1145/1364901.1364937
  * http://doi.acm.org/10.1145/1364901.1364937
  */
-extern int surface_surface_intersection(const ON_Surface* surfA,
+extern NURBS_EXPORT int surface_surface_intersection(const ON_Surface* surfA,
 					const ON_Surface* surfB,
 					ON_SimpleArray<ON_NurbsCurve*> &intersect3d,
 					ON_SimpleArray<ON_NurbsCurve*> &intersect_uv2d,
