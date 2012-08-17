@@ -38,8 +38,6 @@ class GraphEditor {
     destructor {}
 
     public {
-        method setDisplayedToColor { { color "" } } {}
-
         method clearDisplay {} {}
         method autosizeDisplay {} {}
         method zoomDisplay { { zoom "in" } } {}
@@ -101,7 +99,6 @@ body GraphEditor::constructor {} {
 
     # pick some randomly high port for preview rendering and hope it, or one of
     # its neighbors is open.
-
     if [ catch { set port } _fbservPort ] {
         set _fbservPort 0
     }
@@ -190,8 +187,15 @@ body GraphEditor::constructor {} {
     # get objects' names, types and positions within the graph
     set objectsPositionsCommand "graph_objects_positions"
 
-    if [ catch $objectsPositionsCommand positions ] {
-        return
+    if { [ catch $objectsPositionsCommand positions error] } {
+        # check if there is an error saying that Adaptagrams isn't available
+        if { [ string first "$objectsPositionsCommand : ERROR This command is disabled due to the absence of Adaptagrams library" $::errorInfo ] != -1 } {
+            # get the name of the calling procedure
+            set calling_proc [lindex [split [info level [expr [info level] - 1]]] 0]
+
+            # Return an error message to the calling procedure
+            error "Error: $calling_proc : ERROR This command is disabled due to the absence of Adaptagrams library"
+        }
     }
 
     # set constant values for the following type of objects: primitive, combination and something else
@@ -201,7 +205,7 @@ body GraphEditor::constructor {} {
     set i 0
     set look_for_edges 0
     foreach element $positions {
-        if { [string equal $element edges] } {
+        if { [string equal $element edge] } {
             if { $look_for_edges == 1} {
                 # construct the polyline that defines the connection between two nodes
                 $itk_interior.cv create line $points \

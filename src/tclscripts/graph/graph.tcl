@@ -36,24 +36,27 @@ proc graph { } {
     global mged_players
 
     # determine the framebuffer window id
-    if { [ catch { set mged_players } _mgedFramebufferId ] } {
-        puts $_mgedFramebufferId
-        puts "assuming default mged framebuffer id: id_0"
-        set _mgedFramebufferId "id_0"
+    if [info exists mged_players] {
+        if { [ catch {set mged_players} _mgedFramebufferId ] } {
+            puts $_mgedFramebufferId
+            puts "assuming default mged framebuffer id: id_0"
+            set _mgedFramebufferId "id_0"
+        }
     }
-    # just in case there are more than one returned
-    set _mgedFramebufferId [ lindex $_mgedFramebufferId 0 ]
 
-    set gt .$_mgedFramebufferId.graph
+    # just in case there are more than one returned
+    set _mgedFramebufferId "id_0"
+
+    set ge .$_mgedFramebufferId.graph
 
     # see if the window is already open.  If so, just raise it up.
-    if [ winfo exists $gt ] {
-        raise $gt
+    if [ winfo exists $ge ] {
+        raise $ge
         return
     }
 
     # just to quell the tk name returned and report fatal errors
-    if [ catch { GraphEditor $gt } geName ] {
+    if [ catch { GraphEditor $ge } geName ] {
         puts $geName
     }
 }
