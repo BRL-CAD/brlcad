@@ -40,9 +40,9 @@ if {![info exists make_primitives_list]} {
   proc in_ars {cmdname {mid_str ""} {extension ".s"}} {in [format %s_ars%s%s $cmdname $mid_str $extension] ars 3 3 0 0 0 0 0 100 100 0 100 100 100 100 0 0 200 }
   proc in_bot {cmdname {mid_str ""} {extension ".s"}} {in [format %s_bot%s%s $cmdname $mid_str $extension] bot 4 4 2 1 0 0 0 10 10 0 -10 10 0 0 10 10 0 1 2 1 2 3 3 2 0 0 3 1 }
   proc in_ehy {cmdname {mid_str ""} {extension ".s"}} {in [format %s_ehy%s%s $cmdname $mid_str $extension] ehy 0 0 0 0 10 10 10 0 0 10 3 }
-  proc in_ell {cmdname {mid_str ""} {extension ".s"}} {in [format %s_ell%s%s $cmdname $mid_str $extension] ell 10 0 0 -12 0 0 0 -3 0 0 0 5 } 
+  proc in_ell {cmdname {mid_str ""} {extension ".s"}} {in [format %s_ell%s%s $cmdname $mid_str $extension] ell 10 0 0 -12 0 0 0 -3 0 0 0 5 }
   proc in_ell1 {cmdname {mid_str ""} {extension ".s"}} {in [format %s_ell1%s%s $cmdname $mid_str $extension] ell1 3 2 8 3 -1 8 4 }
-  proc in_epa {cmdname {mid_str ""} {extension ".s"}} {in [format %s_epa%s%s $cmdname $mid_str $extension] epa 0 0 0 3 0 0 0 5 0 3 } 
+  proc in_epa {cmdname {mid_str ""} {extension ".s"}} {in [format %s_epa%s%s $cmdname $mid_str $extension] epa 0 0 0 3 0 0 0 5 0 3 }
   proc in_eto {cmdname {mid_str ""} {extension ".s"}} {in [format %s_eto%s%s $cmdname $mid_str $extension] eto 0 0 0 1 1 1 10 0 2 2 1.5 }
   proc in_grip {cmdname {mid_str ""} {extension ".s"}} {in [format %s_grip%s%s $cmdname $mid_str $extension] grip 0 0 0 3 0 0 6 }
   proc in_half {cmdname {mid_str ""} {extension ".s"}} {in [format %s_half%s%s $cmdname $mid_str $extension] half 1 1 1 5 }
@@ -64,7 +64,7 @@ if {![info exists make_primitives_list]} {
 
   proc in_sketch {{cmdname "extrude"} {mid_str ""} {extension ""}} {put [format {%s_sketch%s%s} $cmdname $mid_str $extension] sketch V {10 20 30} A {1 0 0} B {0 1 0} VL { {250 0} {500 0} {500 500} {0 500} {0 250} {250 250} {125 125} {0 125} {125 0} {200 200} } SL { { bezier D 4 P { 4 7 9 8 0 } } { line S 0 E 1 } { line S 1 E 2 } { line S 2 E 3 } { line S 3 E 4 } { carc S 6 E 5 R -1 L 0 O 0 } }}
 
-  proc in_extrude {cmdname {mid_str ""} {extension ".s"} {sketch "extrude_sketch"}} { in [format %s_extrude%s%s $cmdname $mid_str $extension] extrude 0 0 0 0 0 1000 10 0 0 0 10 0 $sketch} 
+  proc in_extrude {cmdname {mid_str ""} {extension ".s"} {sketch "extrude_sketch"}} { in [format %s_extrude%s%s $cmdname $mid_str $extension] extrude 0 0 0 0 0 1000 10 0 0 0 10 0 $sketch}
 
   # A convenience routine is defined for cases where one wants to
   # use in to create an instance of each primitive.
@@ -74,7 +74,7 @@ if {![info exists make_primitives_list]} {
      foreach x $make_primitives_list {
 	  if {![string match "extrude" $x] } {in_$x $cmdname "" .s}
      }
-     
+
      # Extrude's in command needs more args, handle it outside
      # of the loop.
      in_extrude $cmdname "" .s [format %s_sketch.s $cmdname]
@@ -131,12 +131,12 @@ if {![info exists make_primitives_list]} {
 	make_bb [format make_bb_box_%s.s $x] [format make_bb_%s.s $x]
      }
   }
- 
-  # translate all primitives 
+
+  # translate all primitives
   proc translate_all_prims {cmdname coord1 coord2 coord3} {
      global make_primitives_list
      foreach x $make_primitives_list {
-      # for now, in nmg isn't producing sensible results 
+      # for now, in nmg isn't producing sensible results
       if {![string match nmg $x]} {
 	e [format %s_%s.s $cmdname $x]
 	sed [format %s_%s.s $cmdname $x]
@@ -148,11 +148,11 @@ if {![info exists make_primitives_list]} {
      }
   }
 
-  # translate all combinations 
+  # translate all combinations
   proc translate_all_combs {cmdname coord1 coord2 coord3} {
      global make_primitives_list
      foreach x $make_primitives_list {
-      # for now, in nmg isn't producing sensible results 
+      # for now, in nmg isn't producing sensible results
       if {![string match nmg $x]} {
         e [format %s_%s.c $cmdname $x]
         oed / [format %s_%s.c/%s_%s.s $cmdname $x $cmdname $x]
@@ -164,11 +164,11 @@ if {![info exists make_primitives_list]} {
      }
   }
 
-  # rotate all primitives 
+  # rotate all primitives
   proc rot_all_prims {cmdname coord1 coord2 coord3} {
      global make_primitives_list
      foreach x $make_primitives_list {
-      # for now, in nmg isn't producing sensible results 
+      # for now, in nmg isn't producing sensible results
       if {![string match nmg $x]} {
 	e [format %s_%s.s $cmdname $x]
 	sed [format %s_%s.s $cmdname $x]
