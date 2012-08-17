@@ -6,7 +6,7 @@ cp clone_eto_a.s clone_eto_b.s
 clone -b 10 100 100 100 clone_eto_b.s
 g clone_eto_b.c clone_eto_b.s*
 cp clone_eto_b.s clone_eto_c.s
-clone -i 30 -m x 10 -n 1 clone_eto_c.s 
+clone -i 30 -m x 10 -n 1 clone_eto_c.s
 g clone_eto_c.c clone_eto_c.s*
 cp clone_eto_c.s clone_eto_d.s
 clone -i 5 -p 30 30 30 -r 10 10 15 -n 20 clone_eto_d.s
