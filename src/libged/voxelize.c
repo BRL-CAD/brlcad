@@ -47,17 +47,17 @@ struct voxelizeData
     struct wmember content;
 };
 
-HIDDEN void 
+HIDDEN void
 create_boxes(genptr_t callBackData, int x, int y, int z, const char *UNUSED(a), fastf_t fill)
 {
     fastf_t min[3], max[3];
-    
+
     struct bu_vls *vp;
     char bufx[50], bufy[50], bufz[50];
     char *nameDestination;
-    
+
     struct voxelizeData *dataValues = (struct voxelizeData *)callBackData;
-    
+
     sprintf(bufx, "%d", x);
     sprintf(bufy, "%d", y);
     sprintf(bufz, "%d", z);
@@ -144,7 +144,7 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		    return GED_ERROR;
 		}
-		break;				
+		break;
 
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
@@ -193,14 +193,14 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
     voxDat.wdbp = gedp->ged_wdbp;
     voxDat.bbMin = rtip->mdl_min;
     BU_LIST_INIT(&voxDat.content.l);
-    
+
     callBackData = (void*)(&voxDat);
 
    /* voxelize function is called here with rtip(ray trace instance), userParameter and create_boxes function */
     voxelize(rtip, sizeVoxel, levelOfDetail, create_boxes, callBackData);
-    
+
     mk_comb(gedp->ged_wdbp, voxDat.newname, &voxDat.content.l, 1, "plastic", "sh=4 sp=0.5 di=0.5 re=0.1", 0, 1000, 0, 0, 100, 0, 0, 0);
-    
+
     mk_freemembers(&voxDat.content.l);
     rt_free_rti(rtip);
 
