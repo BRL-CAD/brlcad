@@ -57,17 +57,17 @@ if {![string match $top_bindir ""]} {
       set candidate_name $top_bindir/src/$test_binary_name/$test_binary_name
       if {[file executable $candidate_name] && ![file isdirectory $candidate_name]} {
          global CMD_NAME candidate_name
-	 set CMD_NAME $candidate_name      
+	 set CMD_NAME $candidate_name
       }
    } else {
       global CMD_NAME test_binary_name top_bindir
-      if {[string match $test_binary_name [file tail $top_bindir]] &&     
-          [file executable $top_bindir]} {   
+      if {[string match $test_binary_name [file tail $top_bindir]] &&
+          [file executable $top_bindir]} {
           global CMD_NAME top_bindir
           set CMD_NAME $top_bindir
-      } 
+      }
    }
-  
+
    # If we don't have a CMD_NAME, wipeout
    if {[string match $CMD_NAME ""]} {
       global top_bindir test_binary_name
@@ -76,10 +76,10 @@ if {![string match $top_bindir ""]} {
       return 0
    }
 } else {
-   # OK, top_bindir is empty and we're on our own for a binary directory.  
-   # Check ../../src/$binaryname/$binaryname first, since both in and out of source 
-   # builds should have (for example) mged located there.  If that fails, check 
-   # $top_srcdir/src/$binaryname/$binaryname, which could be different if top_srcdir 
+   # OK, top_bindir is empty and we're on our own for a binary directory.
+   # Check ../../src/$binaryname/$binaryname first, since both in and out of source
+   # builds should have (for example) mged located there.  If that fails, check
+   # $top_srcdir/src/$binaryname/$binaryname, which could be different if top_srcdir
    # is not equivalent to ../../ - if THAT fails, stop
    #
    global CMD_NAME top_srcdir test_binary_name
@@ -94,7 +94,7 @@ if {![string match $top_bindir ""]} {
             global CMD_NAME candidate_name
             set CMD_NAME $candidate_name
       }
-  } 
+  }
    # If we don't have a CMD_NAME, wipeout
    if {[string match $CMD_NAME ""]} {
       global top_srcdir test_binary_name
@@ -132,7 +132,7 @@ proc run_test {cmdname {testfilename ""}} {
      if {[file exists $testfilename]} {
         exec $CMD_NAME -c [format %s.g $cmdname] < $testfilename >>& [format %s.log $cmdname]
      } else {
-        add_test $cmdname 
+        add_test $cmdname
         exec $CMD_NAME -c [format %s.g $cmdname] < $testfilename >>& [format %s.log $cmdname]
         file delete [format %s_test.mged $cmdname]
      }
