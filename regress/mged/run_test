@@ -27,7 +27,7 @@
 # of individual *.mged test files.
 
 
-# Script level 
+# Script level
 
 # It shouldn't matter much which tclsh is used to run the test, as
 # long as it works - tclsh is just being used to invoke mged and
@@ -64,7 +64,7 @@ if {[string match $top_srcdir ""]} {
 }
 
 if {![string match $top_bindir ""]} {
-   # We've been given a $top_bindir, try to validate it.   
+   # We've been given a $top_bindir, try to validate it.
    global CMD_NAME test_binary_name top_bindir
 
    # Try legal directory and file options
@@ -73,17 +73,17 @@ if {![string match $top_bindir ""]} {
       set candidate_name $top_bindir/src/$test_binary_name/$test_binary_name
       if {[file executable $candidate_name] && ![file isdirectory $candidate_name]} {
          global CMD_NAME candidate_name
-	 set CMD_NAME $candidate_name      
+	 set CMD_NAME $candidate_name
       }
    } else {
       global CMD_NAME test_binary_name top_bindir
-      if {[string match $test_binary_name [file tail $top_bindir]] &&     
-          [file executable $top_bindir]} {   
+      if {[string match $test_binary_name [file tail $top_bindir]] &&
+          [file executable $top_bindir]} {
           global CMD_NAME top_bindir
           set CMD_NAME $top_bindir
-      } 
+      }
    }
-  
+
    # If we don't have a CMD_NAME, assume mged is somewhere in the path and
    # go with it
    if {[string match $CMD_NAME ""]} {
@@ -92,7 +92,7 @@ if {![string match $top_bindir ""]} {
       set CMD_NAME mged
    }
 } else {
-   # OK, top_bindir is empty and we're on our own for a binary directory.  
+   # OK, top_bindir is empty and we're on our own for a binary directory.
    global CMD_NAME top_srcdir test_binary_name
    set candidate_name ../../src/$test_binary_name/$test_binary_name
    if {[file executable $candidate_name] && ![file isdirectory $candidate_name]} {
@@ -124,7 +124,7 @@ proc add_test {cmdname} {
 proc run_test {cmdname} {
      global CMD_NAME
      global test_binary_name
-     add_test $cmdname 
+     add_test $cmdname
      exec $CMD_NAME -c [format %s.g $cmdname] < [format %s_test.%s $cmdname $test_binary_name] >>& [format %s.log $cmdname]
      file delete [format %s_test.%s $cmdname $test_binary_name]
 }
