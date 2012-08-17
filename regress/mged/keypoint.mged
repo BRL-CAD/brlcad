@@ -16,7 +16,7 @@ d keypoint_arb4.s
 puts "keypoint arb5 primitive:"
 e keypoint_arb5.s
 sed keypoint_arb5.s
-keypoint 
+keypoint
 press accept
 d keypoint_arb5.s
 
@@ -24,7 +24,7 @@ d keypoint_arb5.s
 puts "keypoint arb6 primitive:"
 e keypoint_arb6.s
 sed keypoint_arb6.s
-keypoint 
+keypoint
 press accept
 d keypoint_arb6.s
 
@@ -32,7 +32,7 @@ d keypoint_arb6.s
 puts "keypoint arb7 primitive:"
 e keypoint_arb7.s
 sed keypoint_arb7.s
-keypoint 
+keypoint
 press accept
 d keypoint_arb7.s
 
@@ -40,7 +40,7 @@ d keypoint_arb7.s
 puts "keypoint arb8 primitive:"
 e keypoint_arb8.s
 sed keypoint_arb8.s
-keypoint 
+keypoint
 press accept
 d keypoint_arb8.s
 
@@ -48,7 +48,7 @@ d keypoint_arb8.s
 puts "keypoint arbn primitive:"
 e keypoint_arbn.s
 sed keypoint_arbn.s
-keypoint 
+keypoint
 press accept
 d keypoint_arbn.s
 
@@ -56,7 +56,7 @@ d keypoint_arbn.s
 puts "keypoint ars primitive:"
 e keypoint_ars.s
 sed keypoint_ars.s
-keypoint 
+keypoint
 press accept
 d keypoint_ars.s
 
@@ -64,7 +64,7 @@ d keypoint_ars.s
 puts "keypoint bot primitive:"
 e keypoint_bot.s
 sed keypoint_bot.s
-keypoint 
+keypoint
 press accept
 d keypoint_bot.s
 
@@ -72,7 +72,7 @@ d keypoint_bot.s
 puts "keypoint ehy primitive:"
 e keypoint_ehy.s
 sed keypoint_ehy.s
-keypoint 
+keypoint
 press accept
 d keypoint_ehy.s
 
@@ -80,7 +80,7 @@ d keypoint_ehy.s
 puts "keypoint ell primitive:"
 e keypoint_ell.s
 sed keypoint_ell.s
-keypoint 
+keypoint
 press accept
 d keypoint_ell.s
 
@@ -88,7 +88,7 @@ d keypoint_ell.s
 puts "keypoint ell1 primitive:"
 e keypoint_ell1.s
 sed keypoint_ell1.s
-keypoint 
+keypoint
 press accept
 d keypoint_ell1.s
 
@@ -96,7 +96,7 @@ d keypoint_ell1.s
 puts "keypoint epa primitive:"
 e keypoint_epa.s
 sed keypoint_epa.s
-keypoint 
+keypoint
 press accept
 d keypoint_epa.s
 
@@ -104,7 +104,7 @@ d keypoint_epa.s
 puts "keypoint eto primitive:"
 e keypoint_eto.s
 sed keypoint_eto.s
-keypoint 
+keypoint
 press accept
 d keypoint_eto.s
 
@@ -120,7 +120,7 @@ d keypoint_extrude.s
 puts "keypoint grip primitive:"
 e keypoint_grip.s
 sed keypoint_grip.s
-keypoint 
+keypoint
 press accept
 d keypoint_grip.s
 
@@ -128,7 +128,7 @@ d keypoint_grip.s
 puts "keypoint half primitive:"
 e keypoint_half.s
 sed keypoint_half.s
-keypoint 
+keypoint
 press accept
 d keypoint_half.s
 
@@ -136,7 +136,7 @@ d keypoint_half.s
 puts "keypoint hyp primitive:"
 e keypoint_hyp.s
 sed keypoint_hyp.s
-keypoint 
+keypoint
 press accept
 d keypoint_hyp.s
 
@@ -144,7 +144,7 @@ d keypoint_hyp.s
 puts "keypoint nmg primitive:"
 e keypoint_nmg.s
 sed keypoint_nmg.s
-keypoint 
+keypoint
 press accept
 d keypoint_nmg.s
 
@@ -152,7 +152,7 @@ d keypoint_nmg.s
 puts "keypoint part primitive:"
 e keypoint_part.s
 sed keypoint_part.s
-keypoint 
+keypoint
 press accept
 d keypoint_part.s
 
@@ -160,7 +160,7 @@ d keypoint_part.s
 puts "keypoint pipe primitive:"
 e keypoint_pipe.s
 sed keypoint_pipe.s
-keypoint 
+keypoint
 press accept
 d keypoint_pipe.s
 
@@ -168,7 +168,7 @@ d keypoint_pipe.s
 puts "keypoint rcc primitive:"
 e keypoint_rcc.s
 sed keypoint_rcc.s
-keypoint 
+keypoint
 press accept
 d keypoint_rcc.s
 
@@ -176,7 +176,7 @@ d keypoint_rcc.s
 puts "keypoint rec primitive:"
 e keypoint_rec.s
 sed keypoint_rec.s
-keypoint 
+keypoint
 press accept
 d keypoint_rec.s
 
@@ -184,7 +184,7 @@ d keypoint_rec.s
 puts "keypoint rhc primitive:"
 e keypoint_rhc.s
 sed keypoint_rhc.s
-keypoint 
+keypoint
 press accept
 d keypoint_rhc.s
 
@@ -192,7 +192,7 @@ d keypoint_rhc.s
 puts "keypoint rpc primitive:"
 e keypoint_rpc.s
 sed keypoint_rpc.s
-keypoint 
+keypoint
 press accept
 d keypoint_rpc.s
 
@@ -200,7 +200,7 @@ d keypoint_rpc.s
 puts "keypoint rpp primitive:"
 e keypoint_rpp.s
 sed keypoint_rpp.s
-keypoint 
+keypoint
 press accept
 d keypoint_rpp.s
 
@@ -208,7 +208,7 @@ d keypoint_rpp.s
 puts "keypoint sph primitive:"
 e keypoint_sph.s
 sed keypoint_sph.s
-keypoint 
+keypoint
 press accept
 d keypoint_sph.s
 
@@ -216,7 +216,7 @@ d keypoint_sph.s
 puts "keypoint tec primitive:"
 e keypoint_tec.s
 sed keypoint_tec.s
-keypoint 
+keypoint
 press accept
 d keypoint_tec.s
 
@@ -224,7 +224,7 @@ d keypoint_tec.s
 puts "keypoint tgc primitive:"
 e keypoint_tgc.s
 sed keypoint_tgc.s
-keypoint 
+keypoint
 press accept
 d keypoint_tgc.s
 
@@ -232,7 +232,7 @@ d keypoint_tgc.s
 puts "keypoint tor primitive:"
 e keypoint_tor.s
 sed keypoint_tor.s
-keypoint 
+keypoint
 press accept
 d keypoint_tor.s
 
@@ -240,7 +240,7 @@ d keypoint_tor.s
 puts "keypoint trc primitive:"
 e keypoint_trc.s
 sed keypoint_trc.s
-keypoint 
+keypoint
 press accept
 d keypoint_trc.s
 
