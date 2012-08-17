@@ -69,7 +69,7 @@ if(TOGL_LIBRARIES AND BRLCAD_ENABLE_OPENGL)
   else(WIN32)
     target_link_libraries(issttcltk librender ${TCL_LIBRARIES} ${TOGL_LIBRARIES})
   endif(WIN32)
-  install(TARGETS issttcltk 
+  install(TARGETS issttcltk
     RUNTIME DESTINATION ${BIN_DIR}/isst0.1
     LIBRARY DESTINATION ${LIB_DIR}/
     ARCHIVE DESTINATION ${LIB_DIR}/isst0.1)
