@@ -1059,13 +1059,13 @@ FittingSurface::initNurbsPCABoundingBox (int order, NurbsDataSurface *m_data, ON
 #endif
   return nurbs;
 }
-#if 0
+
 void
 FittingSurface::addPointConstraint (const ON_2dVector &params, const ON_3dPoint &point, double weight,
                                     unsigned &row)
 {
-  double N0[m_nurbs.Order (0) * m_nurbs.Order (0)];
-  double N1[m_nurbs.Order (1) * m_nurbs.Order (1)];
+  double *N0 = new double[m_nurbs.Order (0) * m_nurbs.Order (0)];
+  double *N1 = new double[m_nurbs.Order (1) * m_nurbs.Order (1)];
 
   int E = ON_NurbsSpanIndex (m_nurbs.m_order[0], m_nurbs.m_cv_count[0], m_nurbs.m_knot[0], params[0], 0, 0);
   int F = ON_NurbsSpanIndex (m_nurbs.m_order[1], m_nurbs.m_cv_count[1], m_nurbs.m_knot[1], params[1], 0, 0);
@@ -1091,8 +1091,10 @@ FittingSurface::addPointConstraint (const ON_2dVector &params, const ON_3dPoint 
 
   row++;
 
+  delete [] N0;
+  delete [] N1;
+
 }
-#endif
 
 void
 FittingSurface::addCageInteriorRegularisation (double weight, unsigned &row)
@@ -1228,12 +1230,12 @@ FittingSurface::addCageCornerRegularisation (double weight, unsigned &row)
 
 }
 
-#if 0
+
 void
-FittingSurface::addInteriorRegularisation (int order, int resU, int resV, double weight, unsigned &row)
+FittingSurface::addInteriorRegularisation (int order, int resU, int resV, double UNUSED(weight), unsigned &row)
 {
-  double N0[m_nurbs.Order (0) * m_nurbs.Order (0)];
-  double N1[m_nurbs.Order (1) * m_nurbs.Order (1)];
+  double *N0 = new double[m_nurbs.Order (0) * m_nurbs.Order (0)];
+  double *N1 = new double[m_nurbs.Order (1) * m_nurbs.Order (1)];
 
   double dU = (m_maxU - m_minU) / resU;
   double dV = (m_maxV - m_minV) / resV;
@@ -1243,17 +1245,17 @@ FittingSurface::addInteriorRegularisation (int order, int resU, int resV, double
     for (int v = 0; v < resV; v++)
     {
 
-      Eigen::Vector2d params;
-      params (0) = m_minU + u * dU + 0.5 * dU;
-      params (1) = m_minV + v * dV + 0.5 * dV;
+      ON_2dPoint params;
+      params[0] = m_minU + u * dU + 0.5 * dU;
+      params[1] = m_minV + v * dV + 0.5 * dV;
 
       //			printf("%f %f, %f %f\n", m_minU, dU, params(0), params(1));
 
-      int E = ON_NurbsSpanIndex (m_nurbs.m_order[0], m_nurbs.m_cv_count[0], m_nurbs.m_knot[0], params (0), 0, 0);
-      int F = ON_NurbsSpanIndex (m_nurbs.m_order[1], m_nurbs.m_cv_count[1], m_nurbs.m_knot[1], params (1), 0, 0);
+      int E = ON_NurbsSpanIndex (m_nurbs.m_order[0], m_nurbs.m_cv_count[0], m_nurbs.m_knot[0], params[0], 0, 0);
+      int F = ON_NurbsSpanIndex (m_nurbs.m_order[1], m_nurbs.m_cv_count[1], m_nurbs.m_knot[1], params[1], 0, 0);
 
-      ON_EvaluateNurbsBasis (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, params (0), N0);
-      ON_EvaluateNurbsBasis (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, params (1), N1);
+      ON_EvaluateNurbsBasis (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, params[0], N0);
+      ON_EvaluateNurbsBasis (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, params[1], N1);
       ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, order, N0); // derivative order?
       ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, order, N1);
 
@@ -1267,8 +1269,8 @@ FittingSurface::addInteriorRegularisation (int order, int resU, int resV, double
         for (int j = 0; j < m_nurbs.Order (1); j++)
         {
 
-          m_solver.K (row, lrc2gl (E, F, i, j),
-                      weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
+          //m_solver.K (row, lrc2gl (E, F, i, j),
+          //            weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
 
         } // i
 
@@ -1278,14 +1280,15 @@ FittingSurface::addInteriorRegularisation (int order, int resU, int resV, double
 
     }
   }
-
+  delete [] N0;
+  delete [] N1;
 }
 
 void
-FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double weight, unsigned &row)
+FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double UNUSED(weight), unsigned &row)
 {
-  double N0[m_nurbs.Order (0) * m_nurbs.Order (0)];
-  double N1[m_nurbs.Order (1) * m_nurbs.Order (1)];
+  double *N0 = new double[m_nurbs.Order (0) * m_nurbs.Order (0)];
+  double *N1 = new double[m_nurbs.Order (1) * m_nurbs.Order (1)];
 
   double dU = (m_maxU - m_minU) / resU;
   double dV = (m_maxV - m_minV) / resV;
@@ -1293,21 +1296,21 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
   for (int u = 0; u < resU; u++)
   {
 
-    Eigen::Vector2d params;
-    params (0) = m_minU + u * dU + 0.5 * dU;
-    params (1) = m_minV;
+    ON_2dPoint params;
+    params[0] = m_minU + u * dU + 0.5 * dU;
+    params[1] = m_minV;
 
-    int E = ON_NurbsSpanIndex (m_nurbs.m_order[0], m_nurbs.m_cv_count[0], m_nurbs.m_knot[0], params (0), 0, 0);
-    int F = ON_NurbsSpanIndex (m_nurbs.m_order[1], m_nurbs.m_cv_count[1], m_nurbs.m_knot[1], params (1), 0, 0);
+    int E = ON_NurbsSpanIndex (m_nurbs.m_order[0], m_nurbs.m_cv_count[0], m_nurbs.m_knot[0], params[0], 0, 0);
+    int F = ON_NurbsSpanIndex (m_nurbs.m_order[1], m_nurbs.m_cv_count[1], m_nurbs.m_knot[1], params[1], 0, 0);
 
-    ON_EvaluateNurbsBasis (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, params (0), N0);
-    ON_EvaluateNurbsBasis (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, params (1), N1);
+    ON_EvaluateNurbsBasis (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, params[0], N0);
+    ON_EvaluateNurbsBasis (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, params[1], N1);
     ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, order, N0); // derivative order?
     ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, order, N1);
 
-    m_solver.f (row, 0, 0.0);
-    m_solver.f (row, 1, 0.0);
-    m_solver.f (row, 2, 0.0);
+    //m_solver.f (row, 0, 0.0);
+    //m_solver.f (row, 1, 0.0);
+    //m_solver.f (row, 2, 0.0);
 
     for (int i = 0; i < m_nurbs.Order (0); i++)
     {
@@ -1315,8 +1318,8 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
       for (int j = 0; j < m_nurbs.Order (1); j++)
       {
 
-        m_solver.K (row, lrc2gl (E, F, i, j),
-                    weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
+        //m_solver.K (row, lrc2gl (E, F, i, j),
+         //           weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
 
       } // i
 
@@ -1329,21 +1332,21 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
   for (int u = 0; u < resU; u++)
   {
 
-    Eigen::Vector2d params;
-    params (0) = m_minU + u * dU + 0.5 * dU;
-    params (1) = m_maxV;
+    ON_2dPoint params;
+    params[0] = m_minU + u * dU + 0.5 * dU;
+    params[1] = m_maxV;
 
-    int E = ON_NurbsSpanIndex (m_nurbs.m_order[0], m_nurbs.m_cv_count[0], m_nurbs.m_knot[0], params (0), 0, 0);
-    int F = ON_NurbsSpanIndex (m_nurbs.m_order[1], m_nurbs.m_cv_count[1], m_nurbs.m_knot[1], params (1), 0, 0);
+    int E = ON_NurbsSpanIndex (m_nurbs.m_order[0], m_nurbs.m_cv_count[0], m_nurbs.m_knot[0], params[0], 0, 0);
+    int F = ON_NurbsSpanIndex (m_nurbs.m_order[1], m_nurbs.m_cv_count[1], m_nurbs.m_knot[1], params[1], 0, 0);
 
-    ON_EvaluateNurbsBasis (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, params (0), N0);
-    ON_EvaluateNurbsBasis (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, params (1), N1);
+    ON_EvaluateNurbsBasis (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, params[0], N0);
+    ON_EvaluateNurbsBasis (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, params[1], N1);
     ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, order, N0); // derivative order?
     ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, order, N1);
 
-    m_solver.f (row, 0, 0.0);
-    m_solver.f (row, 1, 0.0);
-    m_solver.f (row, 2, 0.0);
+    //m_solver.f (row, 0, 0.0);
+    //m_solver.f (row, 1, 0.0);
+    //m_solver.f (row, 2, 0.0);
 
     for (int i = 0; i < m_nurbs.Order (0); i++)
     {
@@ -1351,8 +1354,8 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
       for (int j = 0; j < m_nurbs.Order (1); j++)
       {
 
-        m_solver.K (row, lrc2gl (E, F, i, j),
-                    weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
+        //m_solver.K (row, lrc2gl (E, F, i, j),
+        //            weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
 
       } // i
 
@@ -1365,21 +1368,21 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
   for (int v = 0; v < resV; v++)
   {
 
-    Eigen::Vector2d params;
-    params (0) = m_minU;
-    params (1) = m_minV + v * dV + 0.5 * dV;
+    ON_2dPoint params;
+    params[0] = m_minU;
+    params[1] = m_minV + v * dV + 0.5 * dV;
 
-    int E = ON_NurbsSpanIndex (m_nurbs.m_order[0], m_nurbs.m_cv_count[0], m_nurbs.m_knot[0], params (0), 0, 0);
-    int F = ON_NurbsSpanIndex (m_nurbs.m_order[1], m_nurbs.m_cv_count[1], m_nurbs.m_knot[1], params (1), 0, 0);
+    int E = ON_NurbsSpanIndex (m_nurbs.m_order[0], m_nurbs.m_cv_count[0], m_nurbs.m_knot[0], params[0], 0, 0);
+    int F = ON_NurbsSpanIndex (m_nurbs.m_order[1], m_nurbs.m_cv_count[1], m_nurbs.m_knot[1], params[1], 0, 0);
 
-    ON_EvaluateNurbsBasis (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, params (0), N0);
-    ON_EvaluateNurbsBasis (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, params (1), N1);
+    ON_EvaluateNurbsBasis (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, params[0], N0);
+    ON_EvaluateNurbsBasis (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, params[1], N1);
     ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, order, N0); // derivative order?
     ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, order, N1);
 
-    m_solver.f (row, 0, 0.0);
-    m_solver.f (row, 1, 0.0);
-    m_solver.f (row, 2, 0.0);
+    //m_solver.f (row, 0, 0.0);
+    //m_solver.f (row, 1, 0.0);
+    //m_solver.f (row, 2, 0.0);
 
     for (int i = 0; i < m_nurbs.Order (0); i++)
     {
@@ -1387,8 +1390,8 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
       for (int j = 0; j < m_nurbs.Order (1); j++)
       {
 
-        m_solver.K (row, lrc2gl (E, F, i, j),
-                    weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
+        //m_solver.K (row, lrc2gl (E, F, i, j),
+        //            weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
 
       } // i
 
@@ -1401,21 +1404,21 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
   for (int v = 0; v < resV; v++)
   {
 
-    Eigen::Vector2d params;
-    params (0) = m_maxU;
-    params (1) = m_minV + v * dV + 0.5 * dV;
+    ON_2dPoint params;
+    params[0] = m_maxU;
+    params[1] = m_minV + v * dV + 0.5 * dV;
 
-    int E = ON_NurbsSpanIndex (m_nurbs.m_order[0], m_nurbs.m_cv_count[0], m_nurbs.m_knot[0], params (0), 0, 0);
-    int F = ON_NurbsSpanIndex (m_nurbs.m_order[1], m_nurbs.m_cv_count[1], m_nurbs.m_knot[1], params (1), 0, 0);
+    int E = ON_NurbsSpanIndex (m_nurbs.m_order[0], m_nurbs.m_cv_count[0], m_nurbs.m_knot[0], params[0], 0, 0);
+    int F = ON_NurbsSpanIndex (m_nurbs.m_order[1], m_nurbs.m_cv_count[1], m_nurbs.m_knot[1], params[1], 0, 0);
 
-    ON_EvaluateNurbsBasis (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, params (0), N0);
-    ON_EvaluateNurbsBasis (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, params (1), N1);
+    ON_EvaluateNurbsBasis (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, params[0], N0);
+    ON_EvaluateNurbsBasis (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, params[1], N1);
     ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, order, N0); // derivative order?
     ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, order, N1);
 
-    m_solver.f (row, 0, 0.0);
-    m_solver.f (row, 1, 0.0);
-    m_solver.f (row, 2, 0.0);
+    //m_solver.f (row, 0, 0.0);
+    //m_solver.f (row, 1, 0.0);
+    //m_solver.f (row, 2, 0.0);
 
     for (int i = 0; i < m_nurbs.Order (0); i++)
     {
@@ -1423,8 +1426,8 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
       for (int j = 0; j < m_nurbs.Order (1); j++)
       {
 
-        m_solver.K (row, lrc2gl (E, F, i, j),
-                    weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
+        //m_solver.K (row, lrc2gl (E, F, i, j),
+        //            weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
 
       } // i
 
@@ -1433,9 +1436,9 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
     row++;
 
   }
-
+  delete [] N0;
+  delete [] N1;
 }
-#endif
 
 ON_2dPoint
 FittingSurface::inverseMapping (const ON_NurbsSurface &nurbs, const ON_3dPoint &pt, const ON_2dPoint &hint, double &error,
