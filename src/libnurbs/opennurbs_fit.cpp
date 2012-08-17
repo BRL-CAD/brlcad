@@ -196,8 +196,8 @@ NurbsTools::computeMean (const vector_vec2d &data)
 }
 
 void
-NurbsTools::pca (const vector_vec3d &data, ON_3dVector &mean, ON_Matrix **UNUSED(eigenvectors),
-                 ON_3dVector &UNUSED(eigenvalues))
+NurbsTools::pca (const vector_vec3d &data, ON_3dVector &mean, Eigen::Matrix3d &eigenvectors,
+                 Eigen::Vector3d &eigenvalues)
 {
   if (data.empty ())
   {
@@ -220,10 +220,16 @@ NurbsTools::pca (const vector_vec3d &data, ON_3dVector &mean, ON_Matrix **UNUSED
   ON_Matrix Qt = Q;
   Qt.Transpose();
 
-  ON_Matrix C;
-  C.Multiply(Q,Qt);
+  ON_Matrix oC;
+  oC.Multiply(Q,Qt);
 
-#if 0
+  Eigen::Matrix3d C(3,3);
+  for (unsigned i = 0; i < 3; i++) {
+      for (unsigned j = 0; j < 3; j++) {
+          C(i,j) = oC[i][j];
+      }
+  }
+
   Eigen::SelfAdjointEigenSolver < Eigen::Matrix3d > eigensolver (C);
   if (eigensolver.info () != Eigen::Success)
   {
@@ -239,7 +245,6 @@ NurbsTools::pca (const vector_vec3d &data, ON_3dVector &mean, ON_Matrix **UNUSED
     else
       eigenvectors.col (i) = eigensolver.eigenvectors ().col (2 - i);
   }
-#endif
 }
 
 // ***********************
@@ -557,7 +562,33 @@ NurbsSolve::solve ()
   clock_t time_start, time_end;
   time_start = clock ();
 
-  //m_xeig = m_Keig.jacobiSvd (Eigen::ComputeThinU | Eigen::ComputeThinV).solve (m_feig);
+  Eigen::MatrixXd e_m_Keig = Eigen::MatrixXd::Zero ((*m_Keig).RowCount(), (*m_Keig).ColCount());
+  Eigen::MatrixXd e_m_xeig = Eigen::MatrixXd::Zero ((*m_xeig).RowCount(), (*m_xeig).ColCount());
+  Eigen::MatrixXd e_m_feig = Eigen::MatrixXd::Zero ((*m_feig).RowCount(), (*m_feig).ColCount());
+
+  for(int i = 0; i < (*m_Keig).RowCount(); i++) {
+      for(int j = 0; j < (*m_Keig).ColCount(); j++) {
+         e_m_Keig (i,j) = (*m_Keig)[i][j];
+      }
+  }
+  for(int i = 0; i < (*m_xeig).RowCount(); i++) {
+      for(int j = 0; j < (*m_xeig).ColCount(); j++) {
+         e_m_xeig (i,j) = (*m_xeig)[i][j];
+      }
+  }
+  for(int i = 0; i < (*m_feig).RowCount(); i++) {
+      for(int j = 0; j < (*m_feig).ColCount(); j++) {
+         e_m_feig (i,j) = (*m_feig)[i][j];
+      }
+  }
+
+  e_m_xeig = e_m_Keig.jacobiSvd (Eigen::ComputeThinU | Eigen::ComputeThinV).solve (e_m_feig);
+
+  for(int i = 0; i < (*m_xeig).RowCount(); i++) {
+      for(int j = 0; j < (*m_xeig).ColCount(); j++) {
+          (*m_xeig)[i][j] = e_m_xeig (i,j);
+      }
+  }
 
   time_end = clock ();
 
@@ -925,24 +956,25 @@ FittingSurface::initNurbs4Corners (int order, ON_3dPoint ll, ON_3dPoint lr, ON_3
 }
 
 ON_NurbsSurface
-FittingSurface::initNurbsPCA (int order, NurbsDataSurface *m_data, ON_3dVector UNUSED(z))
+FittingSurface::initNurbsPCA (int order, NurbsDataSurface *m_data, ON_3dVector z)
 {
   ON_3dVector mean;
-  ON_Matrix **eigenvectors = NULL;
-  ON_3dVector eigenvalues;
+  Eigen::Matrix3d eigenvectors;
+  Eigen::Vector3d eigenvalues;
 
-  //unsigned s = m_data->interior.size ();
+  unsigned s = m_data->interior.size ();
 
   NurbsTools::pca (m_data->interior, mean, eigenvectors, eigenvalues);
 
   m_data->mean = mean;
-  m_data->eigenvectors = (*eigenvectors);
+  //m_data->eigenvectors = (*eigenvectors);
 
   bool flip (false);
-  //if (eigenvectors.col (2).dot (z) < 0.0)
-  //  flip = true;
+  Eigen::Vector3d ez(z[0],z[1],z[2]);
+  if (eigenvectors.col (2).dot (ez) < 0.0)
+     flip = true;
 
-  //eigenvalues = eigenvalues / s; // seems that the eigenvalues are dependent on the number of points (???)
+  eigenvalues = eigenvalues / s; // seems that the eigenvalues are dependent on the number of points (???)
 
   ON_3dVector sigma(sqrt(eigenvalues[0]), sqrt(eigenvalues[1]), sqrt(eigenvalues[2]));
 
@@ -955,6 +987,8 @@ FittingSurface::initNurbsPCA (int order, NurbsDataSurface *m_data, ON_3dVector U
   double dcv = (4.0 * sigma[1]) / (nurbs.Order (1) - 1);
 
   ON_3dVector cv_t, cv;
+  Eigen::Vector3d ecv_t, ecv;
+  Eigen::Vector3d emean(mean[0], mean[1], mean[2]);
   for (int i = 0; i < nurbs.Order (0); i++)
   {
     for (int j = 0; j < nurbs.Order (1); j++)
@@ -964,6 +998,13 @@ FittingSurface::initNurbsPCA (int order, NurbsDataSurface *m_data, ON_3dVector U
       cv[2] = 0.0;
       // TODO - need to figure out the line below in OpenNURBS terms
       //cv_t = eigenvectors * cv + mean;
+      ecv (0) = -2.0 * sigma[0] + dcu * i;
+      ecv (1) = -2.0 * sigma[1] + dcv * j;
+      ecv (2) = 0.0;
+      ecv_t = eigenvectors * ecv + emean;
+      cv_t[0] = ecv_t (0);
+      cv_t[1] = ecv_t (1);
+      cv_t[2] = ecv_t (2);
       if (flip)
         nurbs.SetCV (nurbs.Order (0) - 1 - i, j, ON_3dPoint (cv_t[0], cv_t[1], cv_t[2]));
       else
@@ -974,23 +1015,23 @@ FittingSurface::initNurbsPCA (int order, NurbsDataSurface *m_data, ON_3dVector U
 }
 
 ON_NurbsSurface
-FittingSurface::initNurbsPCABoundingBox (int order, NurbsDataSurface *m_data, ON_3dVector UNUSED(z))
+FittingSurface::initNurbsPCABoundingBox (int order, NurbsDataSurface *m_data, ON_3dVector z)
 {
   ON_3dVector mean;
-  ON_Matrix **eigenvectors = NULL;
-  ON_3dVector eigenvalues;
+  Eigen::Matrix3d eigenvectors;
+  Eigen::Vector3d eigenvalues;
 
-  //unsigned s = m_data->interior.size ();
+  unsigned s = m_data->interior.size ();
   m_data->interior_param.clear ();
 
   NurbsTools::pca (m_data->interior, mean, eigenvectors, eigenvalues);
 
   m_data->mean = mean;
-  m_data->eigenvectors = (*eigenvectors);
+  //m_data->eigenvectors = (*eigenvectors);
 
-#if 0
   bool flip (false);
-  if (eigenvectors.col (2).dot (z) < 0.0)
+  Eigen::Vector3d ez(z[0],z[1],z[2]);
+  if (eigenvectors.col (2).dot (ez) < 0.0)
     flip = true;
 
   eigenvalues = eigenvalues / s; // seems that the eigenvalues are dependent on the number of points (???)
@@ -998,9 +1039,12 @@ FittingSurface::initNurbsPCABoundingBox (int order, NurbsDataSurface *m_data, ON
 
   ON_3dVector v_max(0.0, 0.0, 0.0);
   ON_3dVector v_min(DBL_MAX, DBL_MAX, DBL_MAX);
+  Eigen::Vector3d emean(mean[0], mean[1], mean[2]);
   for (unsigned i = 0; i < s; i++)
   {
-    ON_3dVector p = eigenvectors_inv * (m_data->interior[i] - mean);
+    Eigen::Vector3d eint(m_data->interior[i][0], m_data->interior[i][1], m_data->interior[i][2]);
+    Eigen::Vector3d ep = eigenvectors_inv * (eint - emean);
+    ON_3dPoint p(ep (0), ep (1), ep(2)); 
     m_data->interior_param.push_back (ON_2dPoint(p[0], p[1]));
 
     if (p[0] > v_max[0])
@@ -1020,7 +1064,7 @@ FittingSurface::initNurbsPCABoundingBox (int order, NurbsDataSurface *m_data, ON
 
   for (unsigned i = 0; i < s; i++)
   {
-    ON_2dPoint &p = m_data->interior_param[i];
+    ON_2dVector &p = m_data->interior_param[i];
     if (v_max[0] > v_min[0] && v_max[0] > v_min[0])
     {
       p[0] = (p[0] - v_min[0]) / (v_max[0] - v_min[0]);
@@ -1032,9 +1076,8 @@ FittingSurface::initNurbsPCABoundingBox (int order, NurbsDataSurface *m_data, ON
     }
   }
 
-#endif
   ON_NurbsSurface nurbs (3, false, order, order, order, order);
-#if 0
+  
   nurbs.MakeClampedUniformKnotVector (0, 1.0);
   nurbs.MakeClampedUniformKnotVector (1, 1.0);
 
@@ -1042,6 +1085,8 @@ FittingSurface::initNurbsPCABoundingBox (int order, NurbsDataSurface *m_data, ON
   double dcv = (v_max[1] - v_min[1]) / (nurbs.Order (1) - 1);
 
   ON_3dPoint cv_t, cv;
+  Eigen::Vector3d ecv_t2, ecv2;
+  Eigen::Vector3d emean2(mean[0],mean[1],mean[2]);
   for (int i = 0; i < nurbs.Order (0); i++)
   {
     for (int j = 0; j < nurbs.Order (1); j++)
@@ -1049,14 +1094,16 @@ FittingSurface::initNurbsPCABoundingBox (int order, NurbsDataSurface *m_data, ON
       cv[0] = v_min[0] + dcu * i;
       cv[1] = v_min[1] + dcv * j;
       cv[2] = 0.0;
-      cv_t = eigenvectors * cv + mean;
+      ecv2 (0) = cv[0];
+      ecv2 (1) = cv[1];
+      ecv2 (2) = cv[2];
+      ecv_t2 = eigenvectors * ecv2 + emean2;
       if (flip)
         nurbs.SetCV (nurbs.Order (0) - 1 - i, j, cv_t);
       else
         nurbs.SetCV (i, j, cv_t);
     }
   }
-#endif
   return nurbs;
 }
 
@@ -1484,9 +1531,20 @@ FittingSurface::inverseMapping (const ON_NurbsSurface &nurbs, const ON_3dPoint &
     A[1][0] = A[0][1];
     A[1][1] = ON_DotProduct(tv,tv);
 
-#if 0
-    delta = A.ldlt ().solve (b);
-#endif
+    Eigen::Vector2d eb(b[0],b[1]);
+    Eigen::Vector2d edelta;
+    Eigen::Matrix2d eA;
+
+    eA (0, 0) = A[0][0];   
+    eA (0, 1) = A[0][1];   
+    eA (1, 0) = A[1][0];   
+    eA (1, 1) = A[1][1];   
+ 
+    edelta = eA.ldlt ().solve (eb);
+
+    delta[0] = edelta (0);
+    delta[1] = edelta (1);
+
     if (sqrt(ON_DotProduct(delta,delta)) < accuracy)
     {
 

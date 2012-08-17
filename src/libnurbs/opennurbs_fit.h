@@ -47,6 +47,11 @@
 #include <map>
 #include <stdio.h>
 
+#undef Success
+#include <Eigen/StdVector>  
+#undef Success
+#include <Eigen/Dense>
+
 namespace on_fit
 {
 
@@ -171,8 +176,8 @@ public:
    *  \param[out] eigenvectors Matrix containing column-wise the eigenvectors of the set of points.
    *  \param[out] eigenvalues The eigenvalues of the set of points with respect to the eigenvectors. */
   static void
-      pca (const vector_vec3d &data, ON_3dVector &mean, ON_Matrix **eigenvectors,
-           ON_3dVector &eigenvalues);
+      pca (const vector_vec3d &data, ON_3dVector &mean, Eigen::Matrix3d &eigenvectors,
+           Eigen::Vector3d &eigenvalues);
 
   /** \brief Downsample data points to a certain size.
    *  \param[in] data1 The original set of points.
