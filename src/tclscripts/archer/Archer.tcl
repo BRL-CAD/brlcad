@@ -153,12 +153,14 @@ package provide Archer 1.0
 
 	method importFg4Sections   {_slist _wlist _delta}
 	method initAppendPipePoint {_obj _button _callback}
+	method initFindBotFace {_obj _button _callback}
 	method initFindBotPoint {_obj _button _callback}
 	method initFindPipePoint {_obj _button _callback}
 	method initPrependPipePoint {_obj _button _callback}
 
 	# General
 	method askToRevert {}
+	method bot_find_face {_bot _mx _my}
 	method bot_fix_all {}
 	method bot_fix_all_wrapper {}
 	method bot_flip_check      {args}
@@ -748,6 +750,18 @@ package provide Archer 1.0
 }
 
 
+::itcl::body Archer::initFindBotFace {_obj _button _callback} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    # This deselects the selected mouse mode in the primary toolbar
+    set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+
+    $itk_component(ged) init_find_bot_face $_obj $_button [expr {$mZClipFrontMax * $mZClipFront}] $_callback
+}
+
+
 ::itcl::body Archer::initFindBotPoint {_obj _button _callback} {
     if {![info exists itk_component(ged)]} {
 	return
@@ -1064,6 +1078,11 @@ package provide Archer 1.0
     }
 
     return 0
+}
+
+
+::itcl::body Archer::bot_find_face {_bot _mx _my} {
+#    set view [lreplace $view 2 2 [expr {$mZClipFrontMax * $mZClipFront}]]
 }
 
 

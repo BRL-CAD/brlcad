@@ -34,17 +34,25 @@
 
     public {
 	common SELECT_COL 0
+	common A_COL 1
+	common B_COL 2
+	common C_COL 3
 	common X_COL 1
 	common Y_COL 2
 	common Z_COL 3
 
-	common selectPoint 1
-	common movePoint 2
+	common movePoint 1
+	common selectFace 2
+	common selectPoint 3
+	common splitFace 4
 
-	common mDetailHeadings {{} X Y Z}
+	common mVertDetailHeadings {{} X Y Z}
+	common mFaceDetailHeadings {{} A B C}
 	common mEditLabels {
-	    {Select Point}
 	    {Move Point}
+	    {Select Face}
+	    {Select Point}
+	    {Split Face}
 	}
 
 	# Override what's in GeometryEditFrame
@@ -57,8 +65,10 @@
     }
 
     protected {
-	variable mDetail
+	variable mVertDetail
+	variable mFaceDetail
 	variable mCurrentBotPoint 1
+	variable mCurrentBotFace 1
 
 	# Methods used by the constructor
 	# override methods in GeometryEditFrame
@@ -70,11 +80,14 @@
 	method initEditState {}
 
 	method applyData {}
+	method botFaceSelectCallback {_pindex}
+	method botFaceSplitCallback {_pindex}
+	method botPointSelectCallback {_pindex}
 	method detailBrowseCommand {_row _col}
 	method handleDetailPopup {_index _X _Y}
 	method handleEnter {_row _col}
-	method botPointSelectCallback {_pindex}
-	method singleSelectCallback {_pindex}
+	method singleFaceSelectCallback {_pindex}
+	method singlePointSelectCallback {_pindex}
 	method validateDetailEntry {_row _col _newval _clientdata}
     }
 
@@ -104,12 +117,21 @@
 # Initialize the variables containing the object's specification.
 #
 ::itcl::body BotEditFrame::initGeometry {gdata} {
-    unset mDetail
-    set mDetail(active) ""
+    unset mVertDetail
+    unset mFaceDetail
+
+    set mVertDetail(active) ""
+    set mFaceDetail(active) ""
 
     set col 0
-    foreach heading $mDetailHeadings {
-	set mDetail(0,$col) $heading
+    foreach heading $mVertDetailHeadings {
+	set mVertDetail(0,$col) $heading
+	incr col
+    }
+
+    set col 0
+    foreach heading $mFaceDetailHeadings {
+	set mFaceDetail(0,$col) $heading
 	incr col
     }
 
@@ -124,14 +146,22 @@
 	    "V" {
 		set index 1
 		foreach item $val {
-		    set mDetail($index,$SELECT_COL) ""
-		    set mDetail($index,$X_COL) [lindex $item 0]
-		    set mDetail($index,$Y_COL) [lindex $item 1]
-		    set mDetail($index,$Z_COL) [lindex $item 2]
+		    set mVertDetail($index,$SELECT_COL) ""
+		    set mVertDetail($index,$X_COL) [lindex $item 0]
+		    set mVertDetail($index,$Y_COL) [lindex $item 1]
+		    set mVertDetail($index,$Z_COL) [lindex $item 2]
 		    incr index
 		}
 	    }
 	    "F" {
+		set index 1
+		foreach item $val {
+		    set mFaceDetail($index,$SELECT_COL) ""
+		    set mFaceDetail($index,$A_COL) [lindex $item 0]
+		    set mFaceDetail($index,$B_COL) [lindex $item 1]
+		    set mFaceDetail($index,$C_COL) [lindex $item 2]
+		    incr index
+		}
 	    }
 	    default {
 		# Shouldn't get here
@@ -161,7 +191,7 @@
     set pipe_spec {}
     set pt {}
 
-    foreach aname [lsort [array names mDetail]] {
+    foreach aname [lsort [array names mVertDetail]] {
 	set alist [split $aname ","]
 	if {[llength $alist] != 2} {
 	    continue
@@ -180,25 +210,25 @@
 
 	switch -- $col \
 	    $OD_COL {
-		lappend pipe_spec O$index $mDetail($row,$col)
+		lappend pipe_spec O$index $mVertDetail($row,$col)
 	    } \
 	    $ID_COL {
-		lappend pipe_spec I$index $mDetail($row,$col)
+		lappend pipe_spec I$index $mVertDetail($row,$col)
 	    } \
 	    $RADIUS_COL {
-		lappend pipe_spec R$index $mDetail($row,$col)
+		lappend pipe_spec R$index $mVertDetail($row,$col)
 	    } \
 	    $PX_COL - \
 	    $PY_COL {
-		lappend pt $mDetail($row,$col)
+		lappend pt $mVertDetail($row,$col)
 	    } \
 	    $PZ_COL {
-		lappend pt $mDetail($row,$col)
+		lappend pt $mVertDetail($row,$col)
 		lappend pipe_spec V$index $pt
 		set pt {}
 	    } \
 	    default {
-		puts "Encountered bad one - $mDetail($row,$col)"
+		puts "Encountered bad one - $mVertDetail($row,$col)"
 	    }
     }
 
@@ -272,10 +302,16 @@
 ::itcl::body BotEditFrame::buildUpperPanel {} {
     set parent [$this childsite]
 
-    itk_component add detailTab {
-	::cadwidgets::TkTable $parent.detailTab \
-	    [::itcl::scope mDetail] \
-	    $mDetailHeadings \
+    itk_component add vertTabLF {
+	::ttk::labelframe $parent.vertTabLF \
+	    -text "Bot Vertices" \
+	    -labelanchor n
+    } {}
+
+    itk_component add vertTab {
+	::cadwidgets::TkTable $itk_component(vertTabLF).vertTab \
+	    [::itcl::scope mVertDetail] \
+	    $mVertDetailHeadings \
 	    -cursor arrow \
 	    -height 0 \
 	    -maxheight 2000 \
@@ -285,17 +321,50 @@
 	    -validate 1 \
 	    -validatecommand [::itcl::code $this validateDetailEntry] \
 	    -tablePopupHandler [::itcl::code $this handleDetailPopup] \
-	    -entercommand [::itcl::code $this handleEnter] \
-	    -singleSelectCallback [::itcl::code $this singleSelectCallback]
+	    -singleSelectCallback [::itcl::code $this singlePointSelectCallback]
     } {}
+#	    -entercommand [::itcl::code $this handleEnter]
 #	    -browsecommand [::itcl::code $this detailBrowseCommand %r %c]
 #	    -dataCallback [::itcl::code $this applyData]
 
-    # Set width of column 0
-    $itk_component(detailTab) width 0 3
 
-    pack $itk_component(detailTab) -expand yes -fill both
-    pack $parent -expand yes -fill both
+    itk_component add faceTabLF {
+	::ttk::labelframe $parent.faceTabLF \
+	    -text "Bot Faces" \
+	    -labelanchor n
+    } {}
+
+    itk_component add faceTab {
+	::cadwidgets::TkTable $itk_component(faceTabLF).faceTab \
+	    [::itcl::scope mFaceDetail] \
+	    $mFaceDetailHeadings \
+	    -cursor arrow \
+	    -height 0 \
+	    -maxheight 2000 \
+	    -width 0 \
+	    -rows 100000 \
+	    -colstretchmode unset \
+	    -validate 1 \
+	    -validatecommand [::itcl::code $this validateDetailEntry] \
+	    -tablePopupHandler [::itcl::code $this handleDetailPopup] \
+	    -singleSelectCallback [::itcl::code $this singleFaceSelectCallback]
+    } {}
+
+    # Set width of column 0
+    $itk_component(vertTab) width 0 3
+    $itk_component(faceTab) width 0 3
+
+    pack $itk_component(vertTab) -expand yes -fill both
+    pack $itk_component(faceTab) -expand yes -fill both
+
+    set row 0
+    grid $itk_component(vertTabLF) -row $row -sticky nsew
+    grid rowconfigure $parent $row -weight 1
+    incr row
+    grid $itk_component(faceTabLF) -row $row -sticky nsew
+    grid rowconfigure $parent $row -weight 1
+
+    grid columnconfigure $parent 0 -weight 1
 }
 
 ::itcl::body BotEditFrame::buildLowerPanel {} {
@@ -338,24 +407,24 @@
 
 	switch -regexp -- $attr {
 	    {[Vv][0-9]+} {
-		if {$mDetail($index,$PX_COL) != [lindex $val 0] ||
-		    $mDetail($index,$PY_COL) != [lindex $val 1] ||
-		    $mDetail($index,$PZ_COL) != [lindex $val 2]} {
+		if {$mVertDetail($index,$PX_COL) != [lindex $val 0] ||
+		    $mVertDetail($index,$PY_COL) != [lindex $val 1] ||
+		    $mVertDetail($index,$PZ_COL) != [lindex $val 2]} {
 		    set doUpdate 1
 		}
 	    }
 	    {[Oo][0-9]+} {
-		if {$mDetail($index,$OD_COL) != $val} {
+		if {$mVertDetail($index,$OD_COL) != $val} {
 		    set doUpdate 1
 		}
 	    }
 	    {[Ii][0-9]+} {
-		if {$mDetail($index,$ID_COL) != $val} {
+		if {$mVertDetail($index,$ID_COL) != $val} {
 		    set doUpdate 1
 		}
 	    }
 	    {[Rr][0-9]+} {
-		if {$mDetail($index,$RADIUS_COL) != $val} {
+		if {$mVertDetail($index,$RADIUS_COL) != $val} {
 		    set doUpdate 1
 		}
 	    }
@@ -378,17 +447,30 @@
 #    configure -valueUnits "mm"
 
     set mEditPCommand [::itcl::code $this p]
-    set mEditParam1 [expr {$mCurrentBotPoint - 1}]
 
     switch -- $mEditMode \
-	$selectPoint {
-	    set mEditCommand ""
-	    set mEditClass ""
-	    $::ArcherCore::application initFindBotPoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this botPointSelectCallback]
-	} \
 	$movePoint {
 	    set mEditCommand move_botpt
 	    set mEditClass $EDIT_CLASS_TRANS
+	    set mEditParam1 [expr {$mCurrentBotPoint - 1}]
+	} \
+	$selectFace {
+	    set mEditCommand ""
+	    set mEditClass ""
+	    set mEditParam1 [expr {$mCurrentBotFace - 1}]
+	    $::ArcherCore::application initFindBotFace $itk_option(-geometryObjectPath) 1 [::itcl::code $this botFaceSelectCallback]
+	} \
+	$selectPoint {
+	    set mEditCommand ""
+	    set mEditClass ""
+	    set mEditParam1 [expr {$mCurrentBotPoint - 1}]
+	    $::ArcherCore::application initFindBotPoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this botPointSelectCallback]
+	} \
+	$splitFace {
+	    set mEditCommand ""
+	    set mEditClass ""
+	    set mEditParam1 [expr {$mCurrentBotFace - 1}]
+	    $::ArcherCore::application initFindBotFace $itk_option(-geometryObjectPath) 1 [::itcl::code $this botFaceSplitCallback]
 	}
 
     GeometryEditFrame::initEditState
@@ -397,12 +479,34 @@
 ::itcl::body BotEditFrame::applyData {} {
 }
 
+::itcl::body BotEditFrame::botFaceSelectCallback {_pindex} {
+    set mEditParam1 $_pindex
+    incr _pindex
+    set mCurrentBotFace $_pindex
+    $itk_component(faceTab) selectSingleRow $_pindex
+}
+
+::itcl::body BotEditFrame::botFaceSplitCallback {_pindex} {
+    set mEditParam1 $_pindex
+    incr _pindex
+    set mCurrentBotFace $_pindex
+    $itk_component(faceTab) selectSingleRow $_pindex
+    $itk_option(-mged) bot_face_split $itk_option(-geometryObjectPath) $mEditParam1
+}
+
+::itcl::body BotEditFrame::botPointSelectCallback {_pindex} {
+    set mEditParam1 $_pindex
+    incr _pindex
+    set mCurrentBotPoint $_pindex
+    $itk_component(vertTab) selectSingleRow $_pindex
+}
+
 ::itcl::body BotEditFrame::detailBrowseCommand {_row _col} {
-    if {![info exists mDetail($_row,0)]} {
+    if {![info exists mVertDetail($_row,0)]} {
 	return 0
     }
 
-    $itk_component(detailTab) see $_row,$_col
+    $itk_component(vertTab) see $_row,$_col
 }
 
 ::itcl::body BotEditFrame::handleDetailPopup {_index _X _Y} {
@@ -420,21 +524,22 @@
     updateGeometryIfMod
 }
 
-::itcl::body BotEditFrame::botPointSelectCallback {_pindex} {
-    set mEditParam1 $_pindex
-    incr _pindex
-    set mCurrentBotPoint $_pindex
-    $itk_component(detailTab) selectSingleRow $_pindex
+::itcl::body BotEditFrame::singleFaceSelectCallback {_pindex} {
+    set mCurrentBotFace $_pindex
+    set mEditParam1 [expr {$mCurrentBotFace - 1}]
+    initEditState
 }
 
-::itcl::body BotEditFrame::singleSelectCallback {_pindex} {
+::itcl::body BotEditFrame::singlePointSelectCallback {_pindex} {
     set mCurrentBotPoint $_pindex
     set mEditParam1 [expr {$mCurrentBotPoint - 1}]
     initEditState
 }
 
 ::itcl::body BotEditFrame::validateDetailEntry {_row _col _newval _clientdata} {
-    if {![info exists mDetail($_row,0)]} {
+    return 0
+
+    if {![info exists mVertDetail($_row,0)]} {
 	return 0
     }
 

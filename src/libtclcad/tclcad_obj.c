@@ -131,6 +131,12 @@ HIDDEN int to_blast(struct ged *gedp,
 		    ged_func_ptr func,
 		    const char *usage,
 		    int maxargs);
+HIDDEN int to_bot_face_split(struct ged *gedp,
+			     int argc,
+			     const char *argv[],
+			     ged_func_ptr func,
+			     const char *usage,
+			     int maxargs);
 HIDDEN int to_bounds(struct ged *gedp,
 		     int argc,
 		     const char *argv[],
@@ -871,6 +877,7 @@ static struct to_cmdtab to_cmds[] = {
     {"bot_dump",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_dump},
     {"bot_face_fuse",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_face_fuse},
     {"bot_face_sort",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_face_sort},
+    {"bot_face_split",	"bot face", TO_UNLIMITED, to_bot_face_split, GED_FUNC_PTR_NULL},
     {"bot_flip",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_flip},
     {"bot_fuse",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_fuse},
     {"bot_merge",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_merge},
@@ -1458,6 +1465,7 @@ Usage: go_open\n\
 
 
 /*************************** Local Command Functions ***************************/
+
 HIDDEN int
 to_autoview(struct ged *gedp,
 	    int argc,
@@ -10892,6 +10900,39 @@ to_snap_view(struct ged *gedp,
 
     return GED_OK;
 }
+
+
+HIDDEN int
+to_bot_face_split(struct ged *gedp,
+		  int argc,
+		  const char *argv[],
+		  ged_func_ptr UNUSED(func),
+		  const char *UNUSED(usage),
+		  int UNUSED(maxargs))
+{
+    int ret;
+
+    if ((ret = ged_bot_face_split(gedp, argc, argv)) == GED_OK) {
+	char *av[3];
+	struct bu_vls save_result;
+
+	bu_vls_init(&save_result);
+
+	av[0] = "draw";
+	av[1] = (char *)argv[1];
+	av[2] = (char *)0;
+	to_edit_redraw(gedp, 2, (const char **)av);
+
+	bu_vls_trunc(gedp->ged_result_str, 0);
+	bu_vls_printf(gedp->ged_result_str, "%V", &save_result);
+	bu_vls_free(&save_result);
+
+	return GED_OK;
+    }
+
+    return ret;
+}
+
 
 HIDDEN int
 to_translate_mode(struct ged *gedp,

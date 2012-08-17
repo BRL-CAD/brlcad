@@ -5364,12 +5364,7 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::shootRay_doit {_start _op _target _prep _no_bool _onehit _bot_dflag _objects} {
-    eval $itk_component(ged) rt_gettrees ray -i -u $_objects
-    ray prep $_prep
-    ray set no_bool $_no_bool
-    ray set onehit $_onehit
-    ray set bot_reverse_normal_disabled $_bot_dflag
-
+    init_shoot_ray ray $_prep $_no_bool $_onehit $_bot_dflag $_objects
     return [ray shootray $_start $_op $_target]
 }
 

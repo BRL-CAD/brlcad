@@ -811,6 +811,11 @@ GED_EXPORT extern int ged_bot_face_fuse(struct ged *gedp, int argc, const char *
 GED_EXPORT extern int ged_bot_face_sort(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Split the specified bot face into three parts (i.e. by adding a point to the center)
+ */
+GED_EXPORT extern int ged_bot_face_split(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Flip/reverse the specified bot's orientation.
  */
 GED_EXPORT extern int ged_bot_flip(struct ged *gedp, int argc, const char *argv[]);

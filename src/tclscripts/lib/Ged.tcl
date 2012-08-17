@@ -128,6 +128,7 @@ package provide cadwidgets::Ged 1.0
 	method bot_dump {args}
 	method bot_face_fuse {args}
 	method bot_face_sort {args}
+	method bot_face_split {args}
 	method bot_flip {args}
 	method bot_merge {args}
 	method bot_smooth {args}
@@ -334,6 +335,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_mouse_append_pipept {_pane args}
 	method pane_mouse_constrain_rot {_pane args}
 	method pane_mouse_constrain_trans {_pane args}
+	method pane_mouse_find_bot_face {_pane _bot _viewz _mx _my}
 	method pane_mouse_find_botpt {_pane args}
 	method pane_mouse_find_pipept {_pane args}
 	method pane_mouse_move_arb_edge {_pane args}
@@ -609,6 +611,7 @@ package provide cadwidgets::Ged 1.0
 	method init_data_poly_cont {{_button 1}}
 	method init_data_poly_ell {{_button 1}}
 	method init_data_poly_rect {{_button 1} {_sflag 0}}
+	method init_find_bot_face {_obj {_button 1} {_viewz 1.0} {_callback {}}}
 	method init_find_botpt {_obj {_button 1} {_callback {}}}
 	method init_find_pipept {_obj {_button 1} {_callback {}}}
 	method init_prepend_pipept {_obj {_button 1} {_callback {}}}
@@ -627,7 +630,9 @@ package provide cadwidgets::Ged 1.0
 	method pane_mouse_data_pick {_pane _x _y}
 	method pane_mouse_ray {_pane _x _y {_pflag 0}}
 	method pane {args}
-	method shoot_ray {_start _op _target _prep _no_bool _onehit}
+	method init_shoot_ray {_rayname _prep _no_bool _onehit _bot_dflag _objects}
+	method shoot_ray_who {_start _op _target _prep _no_bool _onehit _bot_dflag}
+	method shoot_ray {_rayname _start _op _target _prep _no_bool _onehit _bot_dflag _objects}
 
 	method add_begin_data_arrow_callback {_callback}
 	method clear_begin_data_arrow_callback_list {}
@@ -702,6 +707,7 @@ package provide cadwidgets::Ged 1.0
 	variable mGed ""
 	variable mSharedGed 0
 	variable mHistoryCallback ""
+	variable mBotFaceCallback ""
 	variable mBotPointCallback ""
 	variable mPipePointCallback ""
 	variable mMeasuringStickColorVDraw2D ff00ff
@@ -740,7 +746,7 @@ package provide cadwidgets::Ged 1.0
 	variable mPolyEllCallbacks ""
 	variable mPolyRectCallbacks ""
 
-	variable mRay "ray"
+	variable mRay "ged_ray"
 	variable mRayCurrWho ""
 	variable mRayLastWho ""
 	variable mRayNeedGettrees 1
@@ -1106,6 +1112,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::bot_face_sort {args} {
     eval $mGed bot_face_sort $args
+}
+
+::itcl::body cadwidgets::Ged::bot_face_split {args} {
+    eval $mGed bot_face_split $args
 }
 
 ::itcl::body cadwidgets::Ged::bot_flip {args} {
@@ -1770,11 +1780,7 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::mouse_find_pipept {args} {
-    set i [eval $mGed mouse_find_pipept $itk_component($itk_option(-pane)) $args]
-
-    if {$mPipePointCallback != ""} {
-	catch {$mPipePointCallback $i}
-    }
+    eval $mGed mouse_find_pipept $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::mouse_move_arb_edge {args} {
@@ -2090,9 +2096,37 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_constrain_rot $itk_component($_pane) $args
 }
 
+
 ::itcl::body cadwidgets::Ged::pane_mouse_constrain_trans {_pane args} {
     eval $mGed mouse_constrain_trans $itk_component($_pane) $args
 }
+
+
+::itcl::body cadwidgets::Ged::pane_mouse_find_bot_face {_pane _bot _viewz _mx _my} {
+    if {[get_type $_bot] != "bot"} {
+	return ""
+    }
+
+    set view [pane_screen2view $_pane $_mx $_my]
+    set target [eval pane_v2m_point $_pane $view]
+
+    set view [lreplace $view 2 2 $_viewz]
+    set start [eval pane_v2m_point $_pane $view]
+
+    set partitions [shoot_ray bot_ray $start "at" $target 1 1 1 1 $_bot]
+    set partition [lindex $partitions 0]
+    if {[catch {bu_get_value_by_keyword in $partition} in] ||
+	[catch {bu_get_value_by_keyword surfno $in} surfno]} {
+	return ""
+    }
+
+    if {$mBotFaceCallback != ""} {
+	catch {$mBotFaceCallback $surfno}
+    }
+
+    return $surfno
+}
+
 
 ::itcl::body cadwidgets::Ged::pane_mouse_find_botpt {_pane args} {
     set i [eval $mGed mouse_find_botpt $itk_component($_pane) $args]
@@ -2104,6 +2138,7 @@ package provide cadwidgets::Ged 1.0
     return $i
 }
 
+
 ::itcl::body cadwidgets::Ged::pane_mouse_find_pipept {_pane args} {
     set i [eval $mGed mouse_find_pipept $itk_component($_pane) $args]
 
@@ -2113,6 +2148,7 @@ package provide cadwidgets::Ged 1.0
 
     return $i
 }
+
 
 ::itcl::body cadwidgets::Ged::pane_mouse_move_arb_edge {_pane args} {
     eval $mGed mouse_move_arb_edge $itk_component($_pane) $args
@@ -3873,6 +3909,18 @@ package provide cadwidgets::Ged 1.0
 }
 
 
+::itcl::body cadwidgets::Ged::init_find_bot_face {_obj {_button 1} {_viewz 1.0} {_callback {}}} {
+    measure_line_erase
+
+    set mBotFaceCallback $_callback
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_find_bot_face $dm $_obj $_viewz %x %y]; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
+}
+
+
 ::itcl::body cadwidgets::Ged::init_find_botpt {_obj {_button 1} {_callback {}}} {
     measure_line_erase
 
@@ -4119,7 +4167,7 @@ package provide cadwidgets::Ged 1.0
     set mLastMouseRayStart [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] $vZ]
     set mLastMouseRayTarget [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] 0]
 
-    if {[catch {shoot_ray $mLastMouseRayStart "at" $mLastMouseRayTarget 1 1 0} partitions]} {
+    if {[catch {shoot_ray_who $mLastMouseRayStart "at" $mLastMouseRayTarget 1 1 0 1} partitions]} {
 	return $partitions
     }
 
@@ -4272,26 +4320,43 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
-::itcl::body cadwidgets::Ged::shoot_ray {_start _op _target _prep _no_bool _onehit} {
+
+::itcl::body cadwidgets::Ged::init_shoot_ray {_rayname _prep _no_bool _onehit _bot_dflag _objects} {
+    eval rt_gettrees $_rayname -i -u $_objects
+    $_rayname prep $_prep
+    $_rayname set no_bool $_no_bool
+    $_rayname set onehit $_onehit
+    $_rayname set bot_reverse_normal_disabled $_bot_dflag
+}
+
+
+::itcl::body cadwidgets::Ged::shoot_ray {_rayname _start _op _target _prep _no_bool _onehit _bot_dflag _objects} {
+    SetWaitCursor $this
+
+    init_shoot_ray $_rayname $_prep $_no_bool $_onehit $_bot_dflag $_objects
+    set result [$_rayname shootray $_start $_op $_target]
+
+    SetNormalCursor $this
+    return $result
+}
+
+
+::itcl::body cadwidgets::Ged::shoot_ray_who {_start _op _target _prep _no_bool _onehit _bot_dflag} {
     SetWaitCursor $this
 
     set result ""
     catch {
 	if {$mRayCurrWho != $mRayLastWho || $mRayNeedGettrees} {
 	    set mRayCurrWho [$mGed who]
-	    eval $mGed rt_gettrees $mRay -i -u $mRayCurrWho
-	    $mRay prep $_prep
-	    $mRay no_bool $_no_bool
-	    $mRay onehit $_onehit
 	    set mRayLastWho $mRayCurrWho
 	    set mRayNeedGettrees 0
+	    init_shoot_ray $mRay $_prep $_no_bool $_onehit $_bot_dflag $mRayCurrWho
 	}
 
 	set result [$mRay shootray $_start $_op $_target]
     }
 
     SetNormalCursor $this
-
     return $result
 }
 
