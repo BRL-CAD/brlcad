@@ -1285,7 +1285,7 @@ FittingSurface::addInteriorRegularisation (int order, int resU, int resV, double
 }
 
 void
-FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double UNUSED(weight), unsigned &row)
+FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double weight, unsigned &row)
 {
   double *N0 = new double[m_nurbs.Order (0) * m_nurbs.Order (0)];
   double *N1 = new double[m_nurbs.Order (1) * m_nurbs.Order (1)];
@@ -1308,9 +1308,9 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
     ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, order, N0); // derivative order?
     ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, order, N1);
 
-    //m_solver.f (row, 0, 0.0);
-    //m_solver.f (row, 1, 0.0);
-    //m_solver.f (row, 2, 0.0);
+    m_solver.f (row, 0, 0.0);
+    m_solver.f (row, 1, 0.0);
+    m_solver.f (row, 2, 0.0);
 
     for (int i = 0; i < m_nurbs.Order (0); i++)
     {
@@ -1318,8 +1318,8 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
       for (int j = 0; j < m_nurbs.Order (1); j++)
       {
 
-        //m_solver.K (row, lrc2gl (E, F, i, j),
-         //           weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
+        m_solver.K (row, lrc2gl (E, F, i, j),
+                   weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
 
       } // i
 
@@ -1344,9 +1344,9 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
     ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, order, N0); // derivative order?
     ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, order, N1);
 
-    //m_solver.f (row, 0, 0.0);
-    //m_solver.f (row, 1, 0.0);
-    //m_solver.f (row, 2, 0.0);
+    m_solver.f (row, 0, 0.0);
+    m_solver.f (row, 1, 0.0);
+    m_solver.f (row, 2, 0.0);
 
     for (int i = 0; i < m_nurbs.Order (0); i++)
     {
@@ -1354,8 +1354,8 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
       for (int j = 0; j < m_nurbs.Order (1); j++)
       {
 
-        //m_solver.K (row, lrc2gl (E, F, i, j),
-        //            weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
+        m_solver.K (row, lrc2gl (E, F, i, j),
+                    weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
 
       } // i
 
@@ -1380,9 +1380,9 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
     ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, order, N0); // derivative order?
     ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, order, N1);
 
-    //m_solver.f (row, 0, 0.0);
-    //m_solver.f (row, 1, 0.0);
-    //m_solver.f (row, 2, 0.0);
+    m_solver.f (row, 0, 0.0);
+    m_solver.f (row, 1, 0.0);
+    m_solver.f (row, 2, 0.0);
 
     for (int i = 0; i < m_nurbs.Order (0); i++)
     {
@@ -1390,8 +1390,8 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
       for (int j = 0; j < m_nurbs.Order (1); j++)
       {
 
-        //m_solver.K (row, lrc2gl (E, F, i, j),
-        //            weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
+        m_solver.K (row, lrc2gl (E, F, i, j),
+                    weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
 
       } // i
 
@@ -1416,9 +1416,9 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
     ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (0), m_nurbs.m_knot[0] + E, order, N0); // derivative order?
     ON_EvaluateNurbsBasisDerivatives (m_nurbs.Order (1), m_nurbs.m_knot[1] + F, order, N1);
 
-    //m_solver.f (row, 0, 0.0);
-    //m_solver.f (row, 1, 0.0);
-    //m_solver.f (row, 2, 0.0);
+    m_solver.f (row, 0, 0.0);
+    m_solver.f (row, 1, 0.0);
+    m_solver.f (row, 2, 0.0);
 
     for (int i = 0; i < m_nurbs.Order (0); i++)
     {
@@ -1426,8 +1426,8 @@ FittingSurface::addBoundaryRegularisation (int order, int resU, int resV, double
       for (int j = 0; j < m_nurbs.Order (1); j++)
       {
 
-        //m_solver.K (row, lrc2gl (E, F, i, j),
-        //            weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
+        m_solver.K (row, lrc2gl (E, F, i, j),
+                    weight * (N0[order * m_nurbs.Order (0) + i] * N1[j] + N0[i] * N1[order * m_nurbs.Order (1) + j]));
 
       } // i
 
