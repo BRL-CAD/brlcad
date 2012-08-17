@@ -225,7 +225,7 @@ const struct bu_structparse rt_part_parse[] = {
  * Compute the bounding RPP for a particle
  */
 int
-rt_part_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_part_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_part_internal *pip;
     vect_t tip_pt, tmp_min, tmp_max;
     RT_CK_DB_INTERNAL(ip);
@@ -300,7 +300,7 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     part->part_int = *pip;			/* struct copy */
     pip = &part->part_int;
 
-    if(rt_part_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if(rt_part_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     if (pip->part_type == RT_PARTICLE_TYPE_SPHERE) {
 	/* Compute bounding sphere*/
@@ -1126,7 +1126,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     /* R is rotation from model coords to unit sphere */
     /* For rotation of the particle, +H (model) becomes +Z (unit sph) */
     VSET(zz, 0, 0, 1);
-    bn_mat_fromto(R, pip->part_H, zz);
+    bn_mat_fromto(R, pip->part_H, zz, tol);
     bn_mat_trn(invR, R);			/* inv of rot mat is trn */
 
     /*** Upper (H) ***/

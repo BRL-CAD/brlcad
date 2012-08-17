@@ -61,7 +61,7 @@ extern void rt_sketch_bounds(struct rt_sketch_internal *, fastf_t *);
  * Calculate a bounding RPP around a sketch
  */
 int
-rt_revolve_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_revolve_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_revolve_internal *rip;
     vect_t zUnit;
     fastf_t bounds[4]; /* 2D sketch bounds */

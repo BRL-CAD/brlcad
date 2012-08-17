@@ -746,7 +746,7 @@ rt_vol_ifree(struct rt_db_internal *ip)
  * Calculate bounding RPP for vol
  */
 int
-rt_vol_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+rt_vol_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     register struct rt_vol_internal *vip;
     vect_t v1, localspace;
@@ -808,7 +808,7 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_specific = (genptr_t)volp;
 
     /* Find bounding RPP of rotated local RPP */
-    if (rt_vol_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (rt_vol_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
     VSET(volp->vol_large,
 	 volp->vol_i.xdim*vip->cellsize[0], volp->vol_i.ydim*vip->cellsize[1], volp->vol_i.zdim*vip->cellsize[2]);/* type conversion */
 

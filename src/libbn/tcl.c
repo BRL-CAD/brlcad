@@ -395,13 +395,16 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     } else if (math_func == bn_mat_fromto) {
 	mat_t o;
 	vect_t from, to;
+	static const struct bn_tol tol = {
+	    BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
+	};
 
 	if (argc < 3 || bn_decode_vect(from, argv[1]) < 3 ||
 	    bn_decode_vect(to, argv[2]) < 3) {
 	    bu_vls_printf(&result, "usage: %s vecFrom vecTo", argv[0]);
 	    goto error;
 	}
-	bn_mat_fromto(o, from, to);
+	bn_mat_fromto(o, from, to, &tol);
 	bn_encode_mat(&result, o);
     } else if (math_func == bn_mat_xrot || math_func == bn_mat_yrot ||
 	       math_func == bn_mat_zrot) {

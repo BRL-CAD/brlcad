@@ -190,7 +190,7 @@ rt_bot_prep_pieces(struct bot_specific *bot,
  * Calculate an RPP for a BoT
  */
 int
-rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_bot_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_bot_internal *bot_ip;
     size_t vert_index;
 

@@ -586,7 +586,7 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const uint32_t *assoc_use)
 	 * by centering calculations around it.
 	 */
 	VSET(to, 0, 0, 1);
-	bn_mat_fromto(is->proj, n, to);
+	bn_mat_fromto(is->proj, n, to, &is->tol);
 	VADD2SCALE(centroid, f1->max_pt, f1->min_pt, 0.5);
 	MAT4X3PNT(centroid_proj, is->proj, centroid);
 	centroid_proj[Z] = n[W];	/* pull dist from origin off newZ */
@@ -610,7 +610,7 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const uint32_t *assoc_use)
 	 * Translate the edge start point to the origin.
 	 */
 	VSET(to, 1, 0, 0);
-	bn_mat_fromto(is->proj, eg->e_dir, to);
+	bn_mat_fromto(is->proj, eg->e_dir, to, &is->tol);
 	MAT_DELTAS_VEC_NEG(is->proj, eg->e_pt);
     } else {
 	bu_bomb("nmg_isect2d_prep() bad assoc_use magic\n");

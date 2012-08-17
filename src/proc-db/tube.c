@@ -207,12 +207,12 @@ main(int argc, char **argv)
 
 	VSET(from, 0, -1, 0);
 	VSET(to, 1, 0, 0);		/* to X axis */
-	bn_mat_fromto(rot1, from, to);
+	bn_mat_fromto(rot1, from, to, &outfp->wdb_tol);
 
 	VSET(from, 1, 0, 0);
 	/* Projectile is 480mm long -- use center pt, not end */
 	xfinddir(to, projectile_pos + 480.0/2, offset);
-	bn_mat_fromto(rot2, from, to);
+	bn_mat_fromto(rot2, from, to, &outfp->wdb_tol);
 
 	MAT_IDN(xlate);
 	MAT_DELTAS_VEC(xlate, offset);

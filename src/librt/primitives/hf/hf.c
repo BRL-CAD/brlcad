@@ -197,7 +197,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
  * Calculate the bounding RPP for an hf
  */
 int
-rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt) {
+rt_hf_bbox(struct rt_db_internal *ip, point_t *min_pt, point_t *max_pt, const struct bn_tol *UNUSED(tol)) {
     struct rt_hf_internal *hip;
     vect_t height, work;
     vect_t hf_N, hf_X, hf_Y;

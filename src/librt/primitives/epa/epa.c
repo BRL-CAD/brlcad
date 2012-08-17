@@ -189,7 +189,7 @@ const struct bu_structparse rt_epa_parse[] = {
  * Create a bounding RPP for an epa
  */
 int
-rt_epa_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_epa_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_epa_internal *xip;
     vect_t epa_A, epa_B, epa_An, epa_Bn, epa_H;
     vect_t pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8;
@@ -253,7 +253,7 @@ rt_epa_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
  * stp->st_specific for use by epa_shot().
  */
 int
-rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(rtip))
+rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_epa_internal *xip;
     struct epa_specific *epa;
@@ -335,7 +335,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(r
     stp->st_aradius = stp->st_bradius;
 
     /* Calcuate bounding box (RPP) */
-    if (rt_epa_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (rt_epa_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     return 0;			/* OK */
 }

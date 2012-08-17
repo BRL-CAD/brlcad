@@ -1510,7 +1510,7 @@ nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol 
 	}
     }
 
-    bn_mat_fromto(mat, pl, vec_to); /* rotate to xy plane */
+    bn_mat_fromto(mat, pl, vec_to, tol); /* rotate to xy plane */
     area = 0.0;
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
         MAT4X3PNT(pt, mat, eu->vu_p->v_p->vg_p->coord);

@@ -163,7 +163,7 @@ rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_me
  * Calculate a bounding RPP around a metaball
  */
 int
-rt_metaball_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+rt_metaball_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     struct rt_metaball_internal *mb;
     point_t center;
@@ -230,7 +230,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     /* generate a bounding box around the sphere...
      * XXX this can be optimized greatly to reduce the BSP presense... */
-    if (rt_metaball_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (rt_metaball_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
     stp->st_specific = (void *)nmb;
     return 0;
 }

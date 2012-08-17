@@ -480,7 +480,7 @@ nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat, const struct bn_tol *tol
 	    QUAT_FROM_ROT_DEG(TformMat, 180.0, 0.0, 1.0, 0.0);
 	}
     } else {
-	bn_mat_fromto(TformMat, Normal, twoDspace);
+	bn_mat_fromto(TformMat, Normal, twoDspace, tol);
     }
 
     if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)

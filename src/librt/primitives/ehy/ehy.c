@@ -191,7 +191,7 @@ const struct bu_structparse rt_ehy_parse[] = {
  * Create a bounding RPP for an ehy
  */
 int
-rt_ehy_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_ehy_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_ehy_internal *xip;
     vect_t ehy_A, ehy_B, ehy_An, ehy_Bn, ehy_H;
     vect_t pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8;
@@ -255,7 +255,7 @@ rt_ehy_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
  * stp->st_specific for use by ehy_shot().
  */
 int
-rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(rtip))
+rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_ehy_internal *xip;
     struct ehy_specific *ehy;
@@ -334,7 +334,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(r
     /* approximate bounding radius */
     stp->st_aradius = stp->st_bradius;
 
-    if (rt_ehy_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (rt_ehy_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     return 0;			/* OK */
 }

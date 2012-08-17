@@ -875,7 +875,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
  * Calculate the bounding box for a dsp.
  */
 int
-rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_dsp_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_dsp_internal *dsp_ip;
     register struct dsp_specific *dsp;
     unsigned short dsp_min, dsp_max;

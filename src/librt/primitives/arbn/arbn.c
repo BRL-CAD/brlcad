@@ -48,7 +48,7 @@
  * Calculate a bounding RPP for an ARBN
  */
 int
-rt_arbn_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_arbn_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     size_t i,j,k;
     struct rt_arbn_internal *aip;
     RT_CK_DB_INTERNAL(ip);

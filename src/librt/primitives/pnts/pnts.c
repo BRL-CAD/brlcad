@@ -62,7 +62,7 @@ pnts_unpack_double(unsigned char *buf, unsigned char *data, unsigned int count)
  * Calculate a bounding box for a set of points
  */
 int
-rt_pnts_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_pnts_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_pnts_internal *pnts;
     struct bu_list *head;
     struct pnt *point;

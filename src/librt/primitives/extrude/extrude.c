@@ -95,7 +95,7 @@ static struct bn_tol extr_tol={
  * Calculate a bounding RPP for an extruded sketch
  */
 int
-rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol)
 {
     struct rt_extrude_internal *eip;
     struct extrude_specific *extr;
@@ -132,7 +132,7 @@ rt_extrude_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
      * z-axis
      */
     VSET(tmp, 0, 0, 1);
-    bn_mat_fromto(extr->rot, eip->h, tmp);
+    bn_mat_fromto(extr->rot, eip->h, tmp, tol);
 
     /* and translate to origin */
     extr->rot[MDX] = -VDOT(eip->V, &extr->rot[0]);
@@ -376,7 +376,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
      * z-axis
      */
     VSET(tmp, 0, 0, 1);
-    bn_mat_fromto(extr->rot, eip->h, tmp);
+    bn_mat_fromto(extr->rot, eip->h, tmp, &rtip->rti_tol);
 
     /* and translate to origin */
     extr->rot[MDX] = -VDOT(eip->V, &extr->rot[0]);

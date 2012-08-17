@@ -869,7 +869,7 @@ rt_ebm_ifree(struct rt_db_internal *ip)
  * Calculate bounding RPP for ebm
  */
 int
-rt_ebm_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+rt_ebm_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     register struct rt_ebm_internal *eip;
     vect_t v1, localspace;
@@ -931,7 +931,7 @@ rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_specific = (genptr_t)ebmp;
 
     /* Find bounding RPP of rotated local RPP */
-    rt_ebm_bbox(ip, &(stp->st_min), &(stp->st_max));
+    rt_ebm_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol);
     VSET(ebmp->ebm_large, ebmp->ebm_i.xdim, ebmp->ebm_i.ydim, ebmp->ebm_i.tallness);
 
     /* for now, EBM origin in ideal coordinates is at origin */

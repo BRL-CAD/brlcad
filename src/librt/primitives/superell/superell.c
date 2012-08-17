@@ -176,7 +176,7 @@ struct superell_specific {
  * Calculate a bounding RPP for a superell
  */
 int
-rt_superell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_superell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
 
     struct rt_superell_internal *eip;
     fastf_t magsq_a, magsq_b, magsq_c;
@@ -366,7 +366,7 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     stp->st_aradius = stp->st_bradius = sqrt(f);
 
     /* Compute bounding RPP */
-    if (rt_superell_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (rt_superell_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     return 0;			/* OK */
 }

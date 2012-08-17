@@ -54,7 +54,7 @@ HIDDEN int rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, 
  * Calculate the bounding RPP for a poly
  */
 int
-rt_pg_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+rt_pg_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     struct rt_pg_internal *pgp;
     size_t i;
@@ -105,7 +105,7 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
 
-    if (rt_pg_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (rt_pg_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     for (p = 0; p < pgp->npoly; p++) {
 	vect_t work[3];

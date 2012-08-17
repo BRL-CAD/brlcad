@@ -68,7 +68,7 @@
     extern void rt_##name##_make(const struct rt_functab *ftp, struct rt_db_internal *intern); \
     extern int rt_##name##_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip, struct resource *resp); \
     extern int rt_##name##_params(struct pc_pc_set *ps, const struct rt_db_internal *ip); \
-    extern int rt_##name##_bbox(struct rt_db_internal *ip, point_t *min, point_t *max); \
+    extern int rt_##name##_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *tol); \
     extern int rt_##name##_mirror(struct rt_db_internal *ip, const plane_t *plane); \
     extern const struct bu_structparse rt_##name##_parse[]; \
     extern void rt_##name##_volume(fastf_t *vol, const struct rt_db_internal *ip); \

@@ -186,7 +186,7 @@ do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsig
      * then xlate to final position.
      */
     VSET(from, 0, 0, -1);
-    bn_mat_fromto(rot, from, dir);
+    bn_mat_fromto(rot, from, dir, &outfp->wdb_tol);
     MAT_IDN(xlate);
     MAT_DELTAS_VEC(xlate, pos);
     bn_mat_mul(both, xlate, rot);

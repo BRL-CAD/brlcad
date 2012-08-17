@@ -162,7 +162,7 @@ struct rec_specific {
  * Calculate the RPP for an REC
  */
 int
-rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_rec_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     mat_t R;
     vect_t P, w1;
     fastf_t f, tmp, z;
@@ -380,7 +380,7 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     {
 	fastf_t dx, dy, dz;	/* For bounding sphere */
 
-	if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+	if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
 
 	VSET(stp->st_center,
 	     (stp->st_max[X] + stp->st_min[X])/2,

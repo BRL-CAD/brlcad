@@ -68,7 +68,7 @@ const struct bu_structparse rt_cline_parse[] = {
  * Calculate bounding RPP for cline
  */
 int
-rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_cline_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_cline_internal *cline_ip;
     vect_t rad, work;
     point_t top;
@@ -144,7 +144,7 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_aradius = sqrt(tmp*tmp + cline_ip->radius*cline_ip->radius);
     stp->st_bradius = stp->st_aradius + max_tr;
 
-    if (rt_cline_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (rt_cline_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     return 0;
 }

@@ -307,7 +307,7 @@ _ged_cm_lookat_pt(int argc, char **argv)
 	vect_t neg_Z_axis;
 
 	VSET(neg_Z_axis, 0.0, 0.0, -1.0);
-	bn_mat_fromto(_ged_viewrot, dir, neg_Z_axis);
+	bn_mat_fromto(_ged_viewrot, dir, neg_Z_axis, &_ged_current_gedp->ged_wdbp->wdb_tol);
     }
 #else
     bn_mat_lookat(_ged_viewrot, dir, yflip);

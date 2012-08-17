@@ -200,7 +200,7 @@ const struct bu_structparse rt_rpc_parse[] = {
  * Calculate the RPP for an RPC
  */
 int
-rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     struct rt_rpc_internal *xip;
     vect_t rinv, rvect, rv2, working;
     RT_CK_DB_INTERNAL(ip);
@@ -263,7 +263,7 @@ rt_rpc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
  * stp->st_specific for use by rpc_shot().
  */
 int
-rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(rtip))
+rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_rpc_internal *xip;
     struct rpc_specific *rpc;
@@ -347,7 +347,7 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(r
     /* approximate bounding radius */
     stp->st_aradius = stp->st_bradius;
     /* bounding RPP */
-    if (rt_rpc_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (rt_rpc_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
     return 0;			/* OK */
 }
 

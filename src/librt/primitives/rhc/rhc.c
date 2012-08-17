@@ -205,7 +205,7 @@ const struct bu_structparse rt_rhc_parse[] = {
  * Calculate the bounding RPP for an RHC
  */
 int
-rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_rhc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
 
     struct rt_rhc_internal *xip;
     vect_t rinv, rvect, rv2, working;
@@ -355,7 +355,7 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* approximate bounding radius */
     stp->st_aradius = stp->st_bradius;
 
-    if (rt_rhc_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (rt_rhc_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     return 0;			/* OK */
 }

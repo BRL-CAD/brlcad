@@ -171,7 +171,7 @@ struct ell_specific {
  * Compute the bounding RPP for an ellipsoid
  */
 int
-rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     vect_t w1, w2, P;
     vect_t Au, Bu, Cu;	/* A, B, C with unit length */
     fastf_t magsq_a, magsq_b, magsq_c, f;
@@ -363,7 +363,7 @@ rt_ell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_aradius = stp->st_bradius = sqrt(f);
 
     /* Compute bounding RPP */
-    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
     return 0;			/* OK */
 }
 

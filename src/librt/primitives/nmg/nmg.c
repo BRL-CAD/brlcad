@@ -67,7 +67,7 @@ struct tmp_v {
  * Calculate the bounding box for an N-Manifold Geometry
  */
 int
-rt_nmg_bbox(struct rt_db_internal *ip, point_t *min, point_t * max) {
+rt_nmg_bbox(struct rt_db_internal *ip, point_t *min, point_t * max, const struct bn_tol *UNUSED(tol)) {
     struct model *m;
 
     RT_CK_DB_INTERNAL(ip);
@@ -92,7 +92,7 @@ rt_nmg_bbox(struct rt_db_internal *ip, point_t *min, point_t * max) {
  * address is stored in stp->st_specific for use by nmg_shot().
  */
 int
-rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(rtip))
+rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct model *m;
     struct nmg_specific *nmg_s;
@@ -102,7 +102,7 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *UNUSED(r
     m = (struct model *)ip->idb_ptr;
     NMG_CK_MODEL(m);
 
-    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
 
     VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
     VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);

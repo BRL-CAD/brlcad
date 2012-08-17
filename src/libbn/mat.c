@@ -779,14 +779,14 @@ bn_vec_perp(vect_t new, const vect_t old)
  * The input 'from' and 'to' vectors need not be unit length.
  * MAT4X3VEC(to, m, from) is the identity that is created.
  *
- * FIXME: make tolerance configurable
  */
 void
-bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
+bn_mat_fromto(mat_t m, const vect_t from, const vect_t to, const struct bn_tol *tol)
 {
     vect_t test_to;
     vect_t unit_from, unit_to;
     fastf_t dot;
+    point_t origin = VINIT_ZERO;
 
     /**
      * The method used here is from Graphics Gems, A. Glasner, ed.
@@ -809,15 +809,14 @@ bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
      * needed, because the cross product isn't defined.  asin(0.00001)
      * = 0.0005729 degrees (1/2000 degree)
      */
-    dot = VDOT(unit_from, unit_to);
-    if (dot > 1.0 - 0.00001) {
-	/* dot == 1, return identity matrix */
-	MAT_IDN(m);
-	return;
-    }
-    if (dot < -1.0 + 0.00001) {
-	/* dot == -1, select random perpendicular N vector */
-	bn_vec_perp(N, unit_from);
+    if (bn_lseg3_lseg3_parallel(origin, from, origin, to, tol)) {
+	dot = VDOT(from, to);
+	if (dot > SMALL_FASTF) {
+	    MAT_IDN(m);
+	    return;
+	} else {
+	    bn_vec_perp(N, unit_from);
+	}
     } else {
 	VCROSS(N, unit_from, unit_to);
 	VUNITIZE(N);			/* should be unnecessary */
@@ -846,12 +845,10 @@ bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
 
     /* Verify that it worked */
     MAT4X3VEC(test_to, m, unit_from);
-    dot = VDOT(unit_to, test_to);
-    if (UNLIKELY(dot < 0.98 || dot > 1.02)) {
+    if (UNLIKELY(!bn_lseg3_lseg3_parallel(origin, unit_to, origin, test_to, tol))) {
+	dot = VDOT(unit_to, test_to);
 	bu_log("bn_mat_fromto() ERROR!  from (%g, %g, %g) to (%g, %g, %g) went to (%g, %g, %g), dot=%g?\n",
-	       V3ARGS(from),
-	       V3ARGS(to),
-	       V3ARGS(test_to), dot);
+	       V3ARGS(from), V3ARGS(to), V3ARGS(test_to), dot);
     }
 }
 
@@ -1426,7 +1423,7 @@ bn_mat_is_non_unif (const mat_t m)
  * given "point" and "direc".
  */
 void
-bn_wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t point, const vect_t direc)
+bn_wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t point, const vect_t direc, const struct bn_tol *tol)
 {
     static mat_t t1;
     static mat_t pt_to_origin, origin_to_pt;
@@ -1443,7 +1440,7 @@ bn_wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t 
 
     /* build "direc to zaxis" matrix */
     VSET(zaxis, 0.0, 0.0, 1.0);
-    bn_mat_fromto(d_to_zaxis, direc, zaxis);
+    bn_mat_fromto(d_to_zaxis, direc, zaxis, tol);
 
     /* build "zaxis to direc" matrix */
     bn_mat_inv(zaxis_to_d, d_to_zaxis);

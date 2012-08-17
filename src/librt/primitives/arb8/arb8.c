@@ -615,7 +615,7 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
  * Find the bounding RPP of an arb
  */
 int
-rt_arb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_arb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     int i;
     struct rt_arb_internal *aip;
     aip = (struct rt_arb_internal *)ip->idb_ptr;

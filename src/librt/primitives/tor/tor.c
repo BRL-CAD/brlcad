@@ -160,7 +160,7 @@ struct tor_specific {
  * Compute the bounding RPP for a circular torus.
  */
 int
-rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_tor_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     vect_t P, w1;	/* for RPP calculation */
     fastf_t f;
     struct rt_tor_internal *tip = (struct rt_tor_internal *)ip->idb_ptr;
@@ -293,7 +293,7 @@ rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VMOVE(stp->st_center, tor->tor_V);
     stp->st_aradius = stp->st_bradius = tor->tor_r1 + tip->r_h;
 
-    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) {
+    if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) {
 	return 1;
     }
 

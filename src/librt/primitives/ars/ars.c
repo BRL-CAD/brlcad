@@ -668,7 +668,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * TODO:  produces bboxes that are waaay too big.
  */
 int
-rt_ars_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+rt_ars_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     register size_t i;
     register size_t j;
@@ -722,7 +722,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     int ret;
 
     /*point_t min, max;*/
-    /*if (rt_ars_bbox(ip, &min, &max)) return -1;*/
+    /*if (rt_ars_bbox(ip, &min, &max, &rtip->rti_tol)) return -1;*/
 
     m = nmg_mm();
     r = BU_LIST_FIRST(nmgregion, &m->r_hd);

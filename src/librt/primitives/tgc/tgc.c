@@ -93,7 +93,7 @@ const struct bu_structparse rt_tgc_parse[] = {
  * Compute the bounding RPP for a truncated general cone
  */
 int
-rt_tgc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
+rt_tgc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
     vect_t work, temp;
 
     struct rt_tgc_internal *tip = (struct rt_tgc_internal *)ip->idb_ptr;
@@ -325,7 +325,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* Compute bounding sphere and RPP */
     {
 	fastf_t dx, dy, dz;	/* For bounding sphere */
-	if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max))) return 1;
+	if (stp->st_meth->ft_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
 	VSET(stp->st_center,
 	     (stp->st_max[X] + stp->st_min[X])/2,
 	     (stp->st_max[Y] + stp->st_min[Y])/2,

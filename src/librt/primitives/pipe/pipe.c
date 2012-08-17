@@ -312,7 +312,7 @@ rt_linear_pipe_prep(struct bu_list *head, fastf_t *pt1, fastf_t id1, fastf_t od1
  * Calculate a bounding RPP for a pipe
  */
 int
-rt_pipe_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
+rt_pipe_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
 {
     struct rt_pipe_internal *pip;
     struct wdb_pipept *pp1, *pp2, *pp3;

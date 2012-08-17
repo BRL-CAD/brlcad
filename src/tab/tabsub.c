@@ -272,6 +272,13 @@ do_lines(FILE *fp, char *buffer)
 int
 multi_words( char *words[], int	word_count )
 {
+    struct bn_tol tol;
+
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.0005;
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = 1e-6;
+    tol.para = 1 - tol.perp;
 
     if ( BU_STR_EQUAL( words[0], "rot" ) )  {
 	mat_t	mat;
@@ -457,7 +464,7 @@ multi_words( char *words[], int	word_count )
 	VSET( next, atof(words[5]), atof(words[6]), atof(words[7]) );
 	VSUB2( to, next, cur );
 	VUNITIZE(to);
-	bn_mat_fromto( mat, from, to );
+	bn_mat_fromto( mat, from, to, &tol );
 	/* Check to see if it worked. */
 	{
 	    vect_t	got;
