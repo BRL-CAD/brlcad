@@ -145,7 +145,7 @@ isst_load_g(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
 
     argv = (char **)malloc(sizeof(char *) * (strlen(Tcl_GetString(objv[3])) + 1));	/* allocate way too much. */
     argc = bu_argv_from_string(argv, strlen(Tcl_GetString(objv[3])), Tcl_GetString(objv[3]));
-    
+
     load_g(isst->tie, Tcl_GetString(objv[2]), argc, (const char **)argv, &(isst->meshes));
     free(argv);
 
@@ -184,7 +184,7 @@ static int
 list_geometry(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
 {
     static struct db_i *dbip;
-    struct directory *dp;   
+    struct directory *dp;
     int i;
     struct bu_vls tclstr = BU_VLS_INIT_ZERO;
 
@@ -208,8 +208,8 @@ list_geometry(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_O
     db_close(dbip);
     bu_vls_free(&tclstr);
     return TCL_OK;
-} 
-   
+}
+
 
 static int
 paint_window(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *const *objv)
@@ -227,7 +227,7 @@ paint_window(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Ob
     if (Togl_GetToglFromObj(interp, objv[1], &togl) != TCL_OK) {
         return TCL_ERROR;
     }
-    
+
     isst = (struct isst_s *) Togl_GetClientData(togl);
 
     isst->t2 = bu_gettime();
@@ -471,7 +471,7 @@ move_strafe(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc),
         return TCL_ERROR;
 
     VSET(up, 0, 0, 1);
-    
+
     if (flag >= 0) {
         VSUB2(dir, isst->camera.focus, isst->camera.pos);
         VCROSS(vec, dir, up);
@@ -484,7 +484,7 @@ move_strafe(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(objc),
         VSCALE(vec, vec, -0.1 * isst->tie->radius);
         VADD2(isst->camera.pos, isst->camera.pos, vec);
         VADD2(isst->camera.focus, isst->camera.pos, dir);
-    } 
+    }
 
     isst->dirty = 1;
     return TCL_OK;
@@ -544,7 +544,7 @@ aetolookat(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj 
     VUNITIZE(vecdfoc);
     VSCALE(vecdfoc, vecdfoc, mag_vec);
     VADD2(isst->camera.focus, isst->camera.pos, vecdfoc);
-   
+
     isst->dirty = 1;
     return TCL_OK;
 }
@@ -635,7 +635,7 @@ Isst_Init(Tcl_Interp *interp)
         return TCL_ERROR;
     }
 
-    /* 
+    /*
      * Initialize Tcl and the Togl widget module.
      */
     if (Tcl_InitStubs(interp, "8.1", 0) == NULL
@@ -643,7 +643,7 @@ Isst_Init(Tcl_Interp *interp)
         return TCL_ERROR;
     }
 
-    /* 
+    /*
      * Specify the C callback functions for widget creation, display,
      * and reshape.
      */
