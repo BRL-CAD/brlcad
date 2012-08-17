@@ -800,6 +800,11 @@ GED_EXPORT extern int ged_bot_dump(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_dbot_dump(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Split the specified bot edge. This splits the triangles that share the edge.
+ */
+GED_EXPORT extern int ged_bot_edge_split(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Create new_bot by fusing faces in old_bot
  */
 GED_EXPORT extern int ged_bot_face_fuse(struct ged *gedp, int argc, const char *argv[]);
@@ -1081,6 +1086,11 @@ GED_EXPORT extern int ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
  * Find combinations that reference object
  */
 GED_EXPORT extern int ged_find(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Find the bot edge nearest the specified point in view coordinates.
+ */
+GED_EXPORT extern int ged_find_bot_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Find the bot point nearest the specified point in view coordinates.

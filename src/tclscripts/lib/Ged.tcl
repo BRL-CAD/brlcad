@@ -126,6 +126,7 @@ package provide cadwidgets::Ged 1.0
 	method bot_condense {args}
 	method bot_decimate {args}
 	method bot_dump {args}
+	method bot_edge_split {args}
 	method bot_face_fuse {args}
 	method bot_face_sort {args}
 	method bot_face_split {args}
@@ -256,6 +257,7 @@ package provide cadwidgets::Ged 1.0
 	method mouse_append_pipept {args}
 	method mouse_constrain_rot {args}
 	method mouse_constrain_trans {args}
+	method mouse_find_bot_edge {args}
 	method mouse_find_botpt {args}
 	method mouse_find_pipept {args}
 	method mouse_move_arb_edge {args}
@@ -335,6 +337,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_mouse_append_pipept {_pane args}
 	method pane_mouse_constrain_rot {_pane args}
 	method pane_mouse_constrain_trans {_pane args}
+	method pane_mouse_find_bot_edge {_pane args}
 	method pane_mouse_find_bot_face {_pane _bot _viewz _mx _my}
 	method pane_mouse_find_botpt {_pane args}
 	method pane_mouse_find_pipept {_pane args}
@@ -611,6 +614,7 @@ package provide cadwidgets::Ged 1.0
 	method init_data_poly_cont {{_button 1}}
 	method init_data_poly_ell {{_button 1}}
 	method init_data_poly_rect {{_button 1} {_sflag 0}}
+	method init_find_bot_edge {_obj {_button 1} {_callback {}}}
 	method init_find_bot_face {_obj {_button 1} {_viewz 1.0} {_callback {}}}
 	method init_find_botpt {_obj {_button 1} {_callback {}}}
 	method init_find_pipept {_obj {_button 1} {_callback {}}}
@@ -707,6 +711,7 @@ package provide cadwidgets::Ged 1.0
 	variable mGed ""
 	variable mSharedGed 0
 	variable mHistoryCallback ""
+	variable mBotEdgeCallback ""
 	variable mBotFaceCallback ""
 	variable mBotPointCallback ""
 	variable mPipePointCallback ""
@@ -1104,6 +1109,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::bot_dump {args} {
     eval $mGed bot_dump $args
+}
+
+::itcl::body cadwidgets::Ged::bot_edge_split {args} {
+    eval $mGed bot_edge_split $args
 }
 
 ::itcl::body cadwidgets::Ged::bot_face_fuse {args} {
@@ -1775,6 +1784,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_constrain_trans $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::mouse_find_bot_edge {args} {
+    eval $mGed mouse_find_bot_edge $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::mouse_find_botpt {args} {
     eval $mGed mouse_find_botpt $itk_component($itk_option(-pane)) $args
 }
@@ -2099,6 +2112,17 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_mouse_constrain_trans {_pane args} {
     eval $mGed mouse_constrain_trans $itk_component($_pane) $args
+}
+
+
+::itcl::body cadwidgets::Ged::pane_mouse_find_bot_edge {_pane args} {
+    set elist [eval $mGed mouse_find_bot_edge $itk_component($_pane) $args]
+
+    if {$mBotEdgeCallback != ""} {
+	catch {$mBotEdgeCallback $elist}
+    }
+
+    return $elist
 }
 
 
@@ -3905,6 +3929,18 @@ package provide cadwidgets::Ged 1.0
     foreach dm {ur ul ll lr} {
 	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_poly_rect]; $mGed poly_rect_mode $itk_component($dm) %x %y $_sflag; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_poly_rect $dm]; break"
+    }
+}
+
+
+::itcl::body cadwidgets::Ged::init_find_bot_edge {_obj {_button 1} {_callback {}}} {
+    measure_line_erase
+
+    set mBotEdgeCallback $_callback
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_find_bot_edge $dm $_obj %x %y]; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> ""
     }
 }
 

@@ -131,12 +131,6 @@ HIDDEN int to_blast(struct ged *gedp,
 		    ged_func_ptr func,
 		    const char *usage,
 		    int maxargs);
-HIDDEN int to_bot_face_split(struct ged *gedp,
-			     int argc,
-			     const char *argv[],
-			     ged_func_ptr func,
-			     const char *usage,
-			     int maxargs);
 HIDDEN int to_bounds(struct ged *gedp,
 		     int argc,
 		     const char *argv[],
@@ -227,6 +221,18 @@ HIDDEN int to_dlist_on(struct ged *gedp,
 		       ged_func_ptr func,
 		       const char *usage,
 		       int maxargs);
+HIDDEN int to_bot_edge_split(struct ged *gedp,
+			     int argc,
+			     const char *argv[],
+			     ged_func_ptr func,
+			     const char *usage,
+			     int maxargs);
+HIDDEN int to_bot_face_split(struct ged *gedp,
+			     int argc,
+			     const char *argv[],
+			     ged_func_ptr func,
+			     const char *usage,
+			     int maxargs);
 HIDDEN int to_fontsize(struct ged *gedp,
 		       int argc,
 		       const char *argv[],
@@ -257,12 +263,6 @@ HIDDEN int to_faceplate(struct ged *gedp,
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
-HIDDEN int to_find_botpt(struct ged *gedp,
-			 int argc,
-			 const char *argv[],
-			 ged_func_ptr func,
-			 const char *usage,
-			 int maxargs);
 HIDDEN int to_handle_expose(struct ged *gedp,
 			    int argc,
 			    const char *argv[],
@@ -350,6 +350,12 @@ HIDDEN int to_mouse_constrain_trans(struct ged *gedp,
 				    ged_func_ptr func,
 				    const char *usage,
 				    int maxargs);
+HIDDEN int to_mouse_find_bot_edge(struct ged *gedp,
+				  int argc,
+				  const char *argv[],
+				  ged_func_ptr func,
+				  const char *usage,
+				  int maxargs);
 HIDDEN int to_mouse_find_botpt(struct ged *gedp,
 			       int argc,
 			       const char *argv[],
@@ -877,6 +883,7 @@ static struct to_cmdtab to_cmds[] = {
     {"bot_dump",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_dump},
     {"bot_face_fuse",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_face_fuse},
     {"bot_face_sort",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_face_sort},
+    {"bot_edge_split",	"bot face", TO_UNLIMITED, to_bot_edge_split, GED_FUNC_PTR_NULL},
     {"bot_face_split",	"bot face", TO_UNLIMITED, to_bot_face_split, GED_FUNC_PTR_NULL},
     {"bot_flip",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_flip},
     {"bot_fuse",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_bot_fuse},
@@ -944,7 +951,8 @@ static struct to_cmdtab to_cmds[] = {
     {"facetize",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_facetize},
     {"voxelize",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_voxelize},
     {"fb2pix",  	"[-h -i -c] [-s squaresize] [-w width] [-n height] [file.pix]", TO_UNLIMITED, to_view_func, ged_fb2pix},
-    {"find_botpt",	"pipe vx vy", 5, to_view_func, ged_find_botpt_nearest_pt},
+    {"find_bot_edge",	"bot vx vy", 5, to_view_func, ged_find_bot_edge_nearest_pt},
+    {"find_botpt",	"bot vx vy", 5, to_view_func, ged_find_botpt_nearest_pt},
     {"find_pipept",	"pipe x y z", 6, to_view_func, ged_find_pipept_nearest_pt},
     {"fontsize",	"[fontsize]", 3, to_fontsize, GED_FUNC_PTR_NULL},
     {"form",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_form},
@@ -1015,6 +1023,7 @@ static struct to_cmdtab to_cmds[] = {
     {"mouse_append_pipept",	"obj x y", TO_UNLIMITED, to_mouse_append_pipept_common, ged_append_pipept},
     {"mouse_constrain_rot",	"coord x y", TO_UNLIMITED, to_mouse_constrain_rot, GED_FUNC_PTR_NULL},
     {"mouse_constrain_trans",	"coord x y", TO_UNLIMITED, to_mouse_constrain_trans, GED_FUNC_PTR_NULL},
+    {"mouse_find_bot_edge",	"obj mx my", TO_UNLIMITED, to_mouse_find_bot_edge, GED_FUNC_PTR_NULL},
     {"mouse_find_botpt",	"obj mx my", TO_UNLIMITED, to_mouse_find_botpt, GED_FUNC_PTR_NULL},
     {"mouse_find_pipept",	"obj x y", TO_UNLIMITED, to_mouse_find_pipept, GED_FUNC_PTR_NULL},
     {"mouse_move_arb_edge",	"obj edge x y", TO_UNLIMITED, to_mouse_move_arb_edge, GED_FUNC_PTR_NULL},
@@ -6395,6 +6404,76 @@ to_mouse_constrain_trans(struct ged *gedp,
     return GED_OK;
 }
 
+
+HIDDEN int
+to_mouse_find_bot_edge(struct ged *gedp,
+		       int argc,
+		       const char *argv[],
+		       ged_func_ptr UNUSED(func),
+		       const char *usage,
+		       int UNUSED(maxargs))
+{
+    char *av[6];
+    fastf_t x, y;
+    fastf_t inv_width;
+    fastf_t inv_height;
+    fastf_t inv_aspect;
+    point_t view;
+    struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 5) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
+	return GED_ERROR;
+    }
+
+    if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
+	bu_sscanf(argv[4], "%lf", &y) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
+    inv_height = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_height;
+    inv_aspect = (fastf_t)gdvp->gdv_dmp->dm_height / (fastf_t)gdvp->gdv_dmp->dm_width;
+    x = x * inv_width * 2.0 - 1.0;
+    y = (y * inv_height * -2.0 + 1.0) * inv_aspect;
+    VSET(view, x, y, 0.0);
+
+    bu_vls_printf(&pt_vls, "%lf %lf %lf", view[X], view[Y], view[Z]);
+
+    gedp->ged_gvp = gdvp->gdv_view;
+    av[0] = "find_bot_edge_nearest_pt";
+    av[1] = (char *)argv[2];
+    av[2] = bu_vls_addr(&pt_vls);
+    av[3] = (char *)0;
+
+    (void)ged_find_bot_edge_nearest_pt(gedp, 3, (const char **)av);
+    bu_vls_free(&pt_vls);
+
+    return GED_OK;
+}
+
+
 HIDDEN int
 to_mouse_find_botpt(struct ged *gedp,
 		    int argc,
@@ -10899,6 +10978,38 @@ to_snap_view(struct ged *gedp,
     bu_vls_printf(gedp->ged_result_str, "%lf %lf", vx, vy);
 
     return GED_OK;
+}
+
+
+HIDDEN int
+to_bot_edge_split(struct ged *gedp,
+		  int argc,
+		  const char *argv[],
+		  ged_func_ptr UNUSED(func),
+		  const char *UNUSED(usage),
+		  int UNUSED(maxargs))
+{
+    int ret;
+
+    if ((ret = ged_bot_edge_split(gedp, argc, argv)) == GED_OK) {
+	char *av[3];
+	struct bu_vls save_result;
+
+	bu_vls_init(&save_result);
+
+	av[0] = "draw";
+	av[1] = (char *)argv[1];
+	av[2] = (char *)0;
+	to_edit_redraw(gedp, 2, (const char **)av);
+
+	bu_vls_trunc(gedp->ged_result_str, 0);
+	bu_vls_printf(gedp->ged_result_str, "%V", &save_result);
+	bu_vls_free(&save_result);
+
+	return GED_OK;
+    }
+
+    return ret;
 }
 
 

@@ -153,6 +153,7 @@ package provide Archer 1.0
 
 	method importFg4Sections   {_slist _wlist _delta}
 	method initAppendPipePoint {_obj _button _callback}
+	method initFindBotEdge {_obj _button _callback}
 	method initFindBotFace {_obj _button _callback}
 	method initFindBotPoint {_obj _button _callback}
 	method initFindPipePoint {_obj _button _callback}
@@ -747,6 +748,18 @@ package provide Archer 1.0
     # things through to PipeEditFrame.
 
     $itk_component(ged) init_append_pipept $_obj $_button $_callback
+}
+
+
+::itcl::body Archer::initFindBotEdge {_obj _button _callback} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    # This deselects the selected mouse mode in the primary toolbar
+    set mDefaultBindingMode FIRST_FREE_BINDING_MODE
+
+    $itk_component(ged) init_find_bot_edge $_obj $_button $_callback
 }
 
 

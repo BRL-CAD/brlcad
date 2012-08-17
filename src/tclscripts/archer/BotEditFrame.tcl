@@ -44,7 +44,8 @@
 	common movePoint 1
 	common selectFace 2
 	common selectPoint 3
-	common splitFace 4
+	common splitEdge 4
+	common splitFace 5
 
 	common mVertDetailHeadings {{} X Y Z}
 	common mFaceDetailHeadings {{} A B C}
@@ -52,6 +53,7 @@
 	    {Move Point}
 	    {Select Face}
 	    {Select Point}
+	    {Split Edge}
 	    {Split Face}
 	}
 
@@ -67,6 +69,7 @@
     protected {
 	variable mVertDetail
 	variable mFaceDetail
+	variable mCurrentBotEdge ""
 	variable mCurrentBotPoint 1
 	variable mCurrentBotFace 1
 
@@ -80,6 +83,7 @@
 	method initEditState {}
 
 	method applyData {}
+	method botEdgeSplitCallback {_elist}
 	method botFaceSelectCallback {_pindex}
 	method botFaceSplitCallback {_pindex}
 	method botPointSelectCallback {_pindex}
@@ -466,6 +470,12 @@
 	    set mEditParam1 [expr {$mCurrentBotPoint - 1}]
 	    $::ArcherCore::application initFindBotPoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this botPointSelectCallback]
 	} \
+	$splitEdge {
+	    set mEditCommand ""
+	    set mEditClass ""
+	    set mEditParam1 $mCurrentBotEdge
+	    $::ArcherCore::application initFindBotEdge $itk_option(-geometryObjectPath) 1 [::itcl::code $this botEdgeSplitCallback]
+	} \
 	$splitFace {
 	    set mEditCommand ""
 	    set mEditClass ""
@@ -479,6 +489,15 @@
 ::itcl::body BotEditFrame::applyData {} {
 }
 
+
+::itcl::body BotEditFrame::botEdgeSplitCallback {_elist} {
+    set mEditParam1 $_elist
+    set mCurrentBotEdge $_elist
+    $itk_option(-mged) bot_edge_split $itk_option(-geometryObjectPath) $mEditParam1
+    $::ArcherCore::application setSave
+}
+
+
 ::itcl::body BotEditFrame::botFaceSelectCallback {_pindex} {
     set mEditParam1 $_pindex
     incr _pindex
@@ -486,13 +505,16 @@
     $itk_component(faceTab) selectSingleRow $_pindex
 }
 
+
 ::itcl::body BotEditFrame::botFaceSplitCallback {_pindex} {
     set mEditParam1 $_pindex
     incr _pindex
     set mCurrentBotFace $_pindex
     $itk_component(faceTab) selectSingleRow $_pindex
     $itk_option(-mged) bot_face_split $itk_option(-geometryObjectPath) $mEditParam1
+    $::ArcherCore::application setSave
 }
+
 
 ::itcl::body BotEditFrame::botPointSelectCallback {_pindex} {
     set mEditParam1 $_pindex
@@ -500,6 +522,7 @@
     set mCurrentBotPoint $_pindex
     $itk_component(vertTab) selectSingleRow $_pindex
 }
+
 
 ::itcl::body BotEditFrame::detailBrowseCommand {_row _col} {
     if {![info exists mVertDetail($_row,0)]} {
@@ -509,8 +532,10 @@
     $itk_component(vertTab) see $_row,$_col
 }
 
+
 ::itcl::body BotEditFrame::handleDetailPopup {_index _X _Y} {
 }
+
 
 ::itcl::body BotEditFrame::handleEnter {_row _col} {
     if {$itk_option(-mged) == "" ||
