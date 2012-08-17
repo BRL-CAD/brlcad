@@ -1134,6 +1134,16 @@ GED_EXPORT extern int ged_glob(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_gqa(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Get the names and positions in a graph of objects from a database.
+ */
+GED_EXPORT extern int ged_graph_objects_positions(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Query or manipulate properties of a graph.
+ */
+GED_EXPORT extern int ged_graph_structure(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Grid utility command.
  */
 GED_EXPORT extern int ged_grid(struct ged *gedp, int argc, const char *argv[]);
@@ -1923,16 +1933,6 @@ GED_EXPORT extern int ged_zoom(struct ged *gedp, int argc, const char *argv[]);
  * Voxelize the specified objects
  */
 GED_EXPORT extern int ged_voxelize(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Get the names and positions in a graph of objects from a database.
- */
-GED_EXPORT extern int ged_graph_objects_positions(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Query or manipulate properties of a graph.
- */
-GED_EXPORT extern int ged_graph_structure(struct ged *gedp, int argc, const char *argv[]);
 
 GED_EXPORT extern ged_polygon *ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model);
 GED_EXPORT extern ged_polygon *ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model);

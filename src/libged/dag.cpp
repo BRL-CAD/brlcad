@@ -658,7 +658,7 @@ ged_graph_objects_positions(struct ged *gedp, int argc, const char *argv[])
 
         /* Provide the positions of the points via which the connection's route passes. */
         double x, y;
-        bu_vls_printf(gedp->ged_result_str, "edges\n");
+        bu_vls_printf(gedp->ged_result_str, "edge\n");
         Avoid::ConnRefList::const_iterator fin = dag->router->connRefs.end();
         for (Avoid::ConnRefList::const_iterator i = dag->router->connRefs.begin(); i != fin; ++i) {
             Avoid::Polygon polyline = (*i)->displayRoute();
@@ -668,7 +668,7 @@ ged_graph_objects_positions(struct ged *gedp, int argc, const char *argv[])
                 y = polyline.ps[j].y;
                 bu_vls_printf(gedp->ged_result_str, "%f %f\n", x, y);
             }
-            bu_vls_printf(gedp->ged_result_str, "edges\n");
+            bu_vls_printf(gedp->ged_result_str, "edge\n");
         }
         bu_free(dag, "free DAG");
     }
@@ -710,9 +710,6 @@ ged_graph_structure(struct ged *gedp, int argc, const char *argv[])
             dag = (struct _ged_dag_data *) bu_malloc(sizeof(_ged_dag_data), "DAG structure");
             dag->router = new Avoid::Router(Avoid::PolyLineRouting);
             add_objects(gedp, dag);
-
-            dag->router->outputInstanceToSVG("dag2");
-            dag->router->outputDiagramSVG("dag3");
 
             bu_free(dag, "free DAG");
         } else {

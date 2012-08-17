@@ -478,6 +478,7 @@ set auto_index(::ArcherCore::getTreeNodes) [list source [file join $dir ArcherCo
 set auto_index(::ArcherCore::getTreeOp) [list source [file join $dir ArcherCore.tcl]]
 set auto_index(::ArcherCore::getTreePath) [list source [file join $dir ArcherCore.tcl]]
 set auto_index(::ArcherCore::getVDrawColor) [list source [file join $dir ArcherCore.tcl]]
+set auto_index(::ArcherCore::graph) [list source [file join $dir ArcherCore.tcl]]
 set auto_index(::ArcherCore::group) [list source [file join $dir ArcherCore.tcl]]
 set auto_index(::ArcherCore::handleMoreArgs) [list source [file join $dir ArcherCore.tcl]]
 set auto_index(::ArcherCore::handleTreeClose) [list source [file join $dir ArcherCore.tcl]]
