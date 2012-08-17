@@ -55,8 +55,8 @@ proc ::isst::overwin {x y W} {
     global selectedobjs
     set rootxmin [winfo rootx $W]
     set rootymin [winfo rooty $W]
-    set rootxmax [expr $rootxmin + [winfo width $W]] 
-    set rootymax [expr $rootymin + [winfo height $W]] 
+    set rootxmax [expr $rootxmin + [winfo width $W]]
+    set rootymax [expr $rootymin + [winfo height $W]]
     set currpointerx [winfo pointerx $W]
     set currpointery [winfo pointery $W]
     if { $currpointerx <= $rootxmax && $currpointerx >= $rootxmin &&
@@ -98,13 +98,13 @@ proc ::isst::geomlist {filename} {
     foreach object $objects {
         .geomlist.listing.l insert end $object
     }
-    pack .geomlist.listing -side top -expand yes -fill both 
+    pack .geomlist.listing -side top -expand yes -fill both
 
     frame .geomlist.gl
-    pack .geomlist.gl -side bottom 
+    pack .geomlist.gl -side bottom
     button .geomlist.gl.b1 -text " OK " -command "::isst::buildlist .geomlist.listing.l .geomlist $filename"
     pack .geomlist.gl.b1 -side left -anchor w -padx 5
-} 
+}
 
 proc ::isst::loaddatabase {} {
     global oglwin selectedobjs
@@ -130,7 +130,7 @@ proc ::isst::setup {} {
     . configure -menu .mb
     .mb add cascade -label "File" -menu .mb.file -underline 0
     menu .mb.file -tearoff 0
-    
+
     .mb.file add command -label "Open Database" -underline 0 -command ::isst::loaddatabase
 
     .mb.file add command -label "Exit" -underline 0 -command exit
@@ -140,7 +140,7 @@ proc ::isst::setup {} {
     bind . <Key-3> {if {[::isst::overwin %X %Y $oglwin]} {render_mode $oglwin depth}}
     bind . <Key-4> {if {[::isst::overwin %X %Y $oglwin]} {render_mode $oglwin component}}
     bind . <Key-0> {if {[::isst::overwin %X %Y $oglwin]} {reset $oglwin}}
-     
+
     bind . <Key-w> {if {[::isst::overwin %X %Y $oglwin]} {::isst::MoveForward $oglwin}}
     bind . <Key-s> {if {[::isst::overwin %X %Y $oglwin]} {::isst::MoveBackward $oglwin}}
     bind . <Key-a> {if {[::isst::overwin %X %Y $oglwin]} {::isst::MoveLeft $oglwin}}
@@ -152,7 +152,7 @@ proc ::isst::setup {} {
     bind . <Key-equal> {if {[::isst::overwin %X %Y $oglwin]} {::isst::Resolution $oglwin 1}}
     bind . <Control-Key-minus> {if {[::isst::overwin %X %Y $oglwin]} {::isst::Resolution $oglwin [expr 1 - $resolution] }}
     bind . <Control-Key-equal> {if {[::isst::overwin %X %Y $oglwin]} {::isst::Resolution $oglwin [expr 20 - $resolution] }}
-     
+
     bind . <ButtonPress-1> {if {[::isst::overwin %X %Y $oglwin]} {::isst::RotStart %x %y $oglwin}}
     bind . <ButtonPress-3> {if {[::isst::overwin %X %Y $oglwin]} {::isst::RotStart %x %y $oglwin}}
     bind . <B1-Motion> {if {[::isst::overwin %X %Y $oglwin]} {::isst::RotMove %x %y $oglwin}}
@@ -160,8 +160,8 @@ proc ::isst::setup {} {
     drawview .w0 10
 
     frame .f
-    pack .f -side bottom 
-    button .f.b1 -text " Quit " -command exit 
+    pack .f -side bottom
+    button .f.b1 -text " Quit " -command exit
     pack .f.b1 -side left -anchor w -padx 5
 
 }
@@ -234,7 +234,7 @@ if { [info script] == $argv0 } {
     if {$argc == 2} {
        load_g $oglwin [lindex $argv 0] [lindex $argv 1]
     }
-    # Do a couple operations to make sure 
+    # Do a couple operations to make sure
     # the view is properly initialized on OSX
     update
     walk $oglwin 1
