@@ -706,7 +706,7 @@ HmTtyReset(void)
   void HmInit(int x, int y, int maxvis)
 
   Initialize position of top-level menu.  Specify maximum
-  number of menu items visable at once.  Place these values
+  number of menu items visible at once.  Place these values
   in global variables.  Determine as best we can whether MYX
   is available and place int result in HmMyxflag.  Return
   true for success and false for failure to open "/dev/tty".
