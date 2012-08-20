@@ -105,6 +105,7 @@ set(docbook_mann_EN
   history.xml
   i.xml
   idents.xml
+  igraph.xml
   ill.xml
   in.xml
   inside.xml

@@ -10,14 +10,14 @@
 
 <refnamediv xml:id="name">
   <refname>graph</refname>
-  <refpurpose> Used to interact with a graph based visualization of the structure of .g databases.</refpurpose>
+  <refpurpose> Used to query and manipulate properties of the graph that corresponds to the currently opened .g database.</refpurpose>
 </refnamediv>
 
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>graph</command>
-    <arg choice="opt" rep="norepeat">view</arg>
+    <arg choice="opt" rep="norepeat">show</arg>
     <arg choice="opt" rep="norepeat">positions</arg>
   </cmdsynopsis>
 </refsynopsisdiv>
@@ -25,10 +25,11 @@
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
 
   <para>
-    Used to interact with a graph based visualization of the structure of .g databases.
-    The "view" subcommand launches a window in which the graph for the .g database is displayed.
+    Used to query and manipulate properties of the graph that corresponds to the currently opened .g database.
+    The "show" subcommand displays a list of names and types of the objects from the database along with
+    the positions within the graph of their corresponding nodes and their connection edges.
     The "positions" subcommand displays for each object in the geometric database
-    its name, type, node and vertex positions within the graph.
+    its name, type, and node and positions within the graph.
   </para>
 </refsection>
 
@@ -36,29 +37,29 @@
 
   <para>
     The examples demonstrate the use of the <command>graph</command> command and subcommands to
-    view the corresponding graph of a .g database and access information about it.
+    access information about the representation of the objects of a database.
   </para>
-  <example><info><title>Launches a new window that displays the graph that corresponds to a .g database.</title></info>
+  <example><info><title>Displays a list with the name and type of the objects along with the nodes' and edges' positions.</title></info>
 
     <variablelist>
       <varlistentry>
-        <term><prompt>mged&gt;</prompt><userinput>graph view</userinput></term>
+        <term><prompt>mged&gt;</prompt><userinput>graph show</userinput></term>
         <listitem>
           <para>
-            Displays a graph that corresponds to the currently opened .g database.
+            Displays a list with the name and type of the objects along with the nodes' and edges' positions.
           </para>
         </listitem>
       </varlistentry>
     </variablelist>
   </example>
 
-  <example><info><title>Lists the names, types, positions of the corresponding nodes and vertices within the graph for the objects in the .g database.</title></info>
+  <example><info><title>Lists the names, types, positions of the corresponding nodes within the graph for the objects in the .g database.</title></info>
 
     <variablelist>
       <varlistentry>
         <term><prompt>mged&gt;</prompt><userinput>graph positions</userinput></term>
         <para>
-          Lists the names, types, positions of the corresponding nodes and vertices
+          Lists the names, types, positions of the corresponding nodes
           within the graph for the objects in the currently opened .g database.
         </para>
       </varlistentry>
