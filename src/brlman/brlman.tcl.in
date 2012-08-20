@@ -99,7 +99,7 @@ if {[info exists argv]} {
        if {[info exists argv]} {exit}
     }
   }
-} 
+}
 
 # Default to English
 if {![info exists ::man_language]} {set ::man_language "en"}
@@ -114,7 +114,7 @@ if {[llength $argv2] == 2} {
    # Count how many potentially valid section numbers we have
    set numcount 0
    foreach manarg $argv2 {
-     if {[string is integer -strict "$manarg"] || $manarg == "n"} {incr numcount} 
+     if {[string is integer -strict "$manarg"] || $manarg == "n"} {incr numcount}
    }
    if {$numcount == 0} {
       puts stderr "Usage - brlman \[section \#\] name"
@@ -135,7 +135,7 @@ if {[llength $argv2] == 2} {
 # See if we have man available.
 set have_man [expr ![catch {exec man man} output]]
 
-# See if we have Tk avaialble.
+# See if we have Tk available.
 set have_tk [file exists [file join [bu_brlcad_root bin] bwish$os_ext]]
 
 # If we don't have any viable means of viewing man pages, report that and quit.
@@ -221,7 +221,7 @@ if {[info exists ::enable_gui]} {
   package require ManBrowser 1.0
   wm state . withdrawn
   set w [ ManBrowser .browser -useToC 0 ]
-  $w buttonconfigure 0 -text Close -command ::exit 
+  $w buttonconfigure 0 -text Close -command ::exit
   wm title .browser "BRL-CAD Man Page ($section_number) - $argv2"
   wm protocol .browser WM_DELETE_WINDOW ::exit
   bind $w <Escape> ::exit
@@ -233,7 +233,7 @@ if {[info exists ::enable_gui]} {
   $w activate
   $w center
   vwait forever
-  
+
   update
   puts "Graphical mode done."
 } else {
