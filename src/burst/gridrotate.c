@@ -36,7 +36,7 @@
 
   Creates the unit vectors H and V which are the horizontal
   and vertical components of the grid in target coordinates.
-  The vectors are found from the azimuth and elivation of the
+  The vectors are found from the azimuth and elevation of the
   viewing angle according to a simplification of the rotation
   matrix from grid coordinates to target coordinates.
   To see that the vectors are, indeed, unit vectors, recall
@@ -51,14 +51,14 @@ gridRotate(fastf_t azim, fastf_t elev, fastf_t roll, fastf_t *des_H, fastf_t *de
     fastf_t sn_azm = sin(azim);
     fastf_t cs_azm = cos(azim);
     fastf_t sn_elv = sin(elev);
-    
+
     des_H[0] = -sn_azm;
     des_H[1] =  cs_azm;
     des_H[2] =  0.0;
     des_V[0] = -sn_elv*cs_azm;
     des_V[1] = -sn_elv*sn_azm;
     des_V[2] =  cos(elev);
-    
+
     if (!ZERO(roll)) {
 	fastf_t tmp_V[3], tmp_H[3], prime_V[3];
 	fastf_t sn_roll = sin(roll);
