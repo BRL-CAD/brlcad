@@ -104,7 +104,7 @@ get_args(int argc, char **argv)
 	}
     }
 
-    /* XXX - backward compatability hack */
+    /* XXX - backward compatibility hack */
     if (bu_optind+5 == argc) {
 	file_name = argv[bu_optind++];
 	if ((buffp = fopen(file_name, "r")) == NULL) {
@@ -169,7 +169,7 @@ fill_buffer(int y)
 	/* bu_exit (3, NULL); */
     }
     ret = fread(buffer, scanlen, buflines, buffp);
-    if (ret != (size_t)buflines) 
+    if (ret != (size_t)buflines)
 	perror("fread");
 }
 
@@ -249,7 +249,7 @@ binterp(FILE *ofp, int ix, int iy, int ox, int oy)
 	}
 
 	ret = fwrite(outbuf, 1, ox, ofp);
-	if (ret != (size_t)ox) 
+	if (ret != (size_t)ox)
 	    perror("fwrite");
     }
 }
@@ -294,7 +294,7 @@ ninterp(FILE *ofp, int ix, int iy, int ox, int oy)
 	}
 
 	ret = fwrite(outbuf, 1, ox, ofp);
-	if (ret != (size_t)ox) 
+	if (ret != (size_t)ox)
 	    perror("fwrite");
     }
 }
@@ -382,7 +382,7 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
 		bu_bomb("unexpected buffer overrun");
 	}
 	ret = fwrite(outbuf, 1, ox, ofp);
-	if (ret != (size_t)ox) 
+	if (ret != (size_t)ox)
 	    perror("fwrite");
     }
     return 1;
