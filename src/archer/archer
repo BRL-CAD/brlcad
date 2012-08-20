@@ -59,17 +59,17 @@ done
 exec "$WISH" "$0" "$@"
 
 # If we're running from a build directory but an installed BRL-CAD
-# already exists in the configured install path, all tcl scripts 
-# will be pulled from the installed location and not the local 
-# build location.  This is an inevitable consequence of how 
-# bu_brlcad_root has to work (there are security implication to 
-# NOT using the installed files if they are present) but it also 
-# makes for a subtle and vexing problem if a developer is trying 
+# already exists in the configured install path, all tcl scripts
+# will be pulled from the installed location and not the local
+# build location.  This is an inevitable consequence of how
+# bu_brlcad_root has to work (there are security implication to
+# NOT using the installed files if they are present) but it also
+# makes for a subtle and vexing problem if a developer is trying
 # to tweak tcl scripts in the source tree and forgets that
-# there is alread an installed copy of that script.  It will look like
+# there is already an installed copy of that script.  It will look like
 # changes being made to the script are having no effect, because the
-# installed file will be loaded instead of the edited version.  
-# Warn if it looks like this situation is occurring by checking 
+# installed file will be loaded instead of the edited version.
+# Warn if it looks like this situation is occurring by checking
 # the root path against the argv0 path.
 set check_root_dir [file normalize [bu_brlcad_root [bu_brlcad_dir bin]]]
 set check_bin_dir [file dirname [file normalize $argv0]]
@@ -250,7 +250,7 @@ proc exitArcher {archer} {
 proc main {} {
     global env
     global tcl_platform
-    global argv 
+    global argv
 
     if {$::ArcherCore::inheritFromToplevel} {
 	set ::ArcherCore::application [Archer .\#auto]
