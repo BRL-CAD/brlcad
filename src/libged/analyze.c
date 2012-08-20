@@ -84,17 +84,12 @@ struct poly_face
 
 #define POLY_FACE_INIT_ZERO { { 0, 0, 0, 0, 0 }, 0, NULL, HINIT_ZERO, 0.0 }
 
-#define ADD_PT(face, pt) { \
-    VMOVE((face).pts[(face).npts], (pt)); \
-    (face).npts++; \
-}
-
+#define ADD_PT(face, pt) VMOVE((face).pts[(face).npts++], (pt))
 
 /* structures and subroutines for analyze pretty printing */
 
 #define FBUFSIZ 100
 #define NFIELDS   9
-/*#define NROWS    12*/
 #define NOT_A_PLANE -1
 typedef struct row_field
 {
@@ -776,14 +771,14 @@ analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
     cmp_plane = NULL;
 
     switch (face->npts) {
-    case (3):
+    case 3:
         /* Triangular Face - for triangular face T:V0,V1,V2,
          * area = 0.5 * [(V2 - V0) x (V1 - V0)] */
         VSUB2(v1, face->pts[1], face->pts[0]);
         VSUB2(v2, face->pts[2], face->pts[0]);
         VCROSS(tot, v2, v1);
         break;
-    case (4):
+    case 4:
         /* Quadrilateral Face - for planar quadrilateral
          * Q:V0,V1,V2,V3 with unit normal N,
          * area = N/2 ⋅ [(V2 - V0) x (V3 - V1)] */
@@ -846,9 +841,9 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 {
     int i, type;
     int cgtype;     /* COMGEOM arb type: # of vertices */
+    table_t table;  /* holds table data from child functions */
     fastf_t tot_vol = 0.0, tot_area = 0.0;
     point_t center_pt;
-    table_t table;  /* holds table data from child functions */
     struct poly_face face = POLY_FACE_INIT_ZERO;
     struct rt_arb_internal earb;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
