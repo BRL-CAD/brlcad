@@ -2,7 +2,7 @@ TODO List for integrating MGED features into Archer
 
 Intended as a "list of work to be done" for porting MGED features to Archer.  The absence of a feature
 does not necessarily mean it is intended that this feature be added, particularly for "minor" features
-or features that are currently not working well in MGED to start with - these are primarly discussion
+or features that are currently not working well in MGED to start with - these are primarily discussion
 points.
 
 Starting with a "walkthrough" of the MGED menu:
