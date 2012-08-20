@@ -16,7 +16,7 @@ Export Database                     |    keep available on command line, no GUI 
 Load Script                         |    no GUI dialog available, presumably command line works?
 Raytrace Control Panel              |       DONE - reworked panel in Archer, improved on MGED version
 Render View options                 |    Will become Export View - INCOMPLETE
-Preferences->Units                  |   			  DONE 
+Preferences->Units                  |   			  DONE
 Preferences->Command Line Edit      |    Add to Preferences panel under the General tab
 Preferences->Special Characters     |    Refers to globbing - per Bob this is currently being handled per
                                     |    command in Archer, so a global setting may not make sense.  A
@@ -28,7 +28,7 @@ Preferences->Colors                 |    	    Handled in local per-topic prefere
 Preferences->Fonts                  |                    INCOMPLETE, lower priority
 Create/Update .mgedrc               |    .archerrc exists, needs to be expanded as more preferences are
                                     |    implemented in Archer - ONGOING
-Clear Command Window                |    clear command works on command line, Menu item judged not 
+Clear Command Window                |    clear command works on command line, Menu item judged not
                                     |    necessary - DONE
 Exit                                |                             DONE
 Primitive Selection                 |    Need to integrate this functionality into the "component pick"
@@ -38,9 +38,9 @@ Primitive Selection                 |    Need to integrate this functionality in
 Matrix Selection                    |    Some work needed to do this correctly - implement a matrix
                                     |    tab that is shown for every object in the right panel, which will
                                     |    have controls to set things like translation vectors and rotations
-                                    |    to generate the matricies that hang "above" objects.  Do NOT, at
+                                    |    to generate the matrices that hang "above" objects.  Do NOT, at
                                     |    the GUI level, allow direct numerical editing of matrix values - that
-                                    |    is an invitation to invalid matricies and not especially intuitive.
+                                    |    is an invitation to invalid matrices and not especially intuitive.
                                     |    Ensure working command line level functionality for direct matrix
                                     |    manipulation if needed.  For items without a matrix show the tab with
                                     |    either no values specified or the identity matrix as the starting
@@ -49,12 +49,12 @@ Matrix Selection                    |    Some work needed to do this correctly -
 				    |    awareness of full path targets vs. toplevel targets.
 Primitive Editor                    |    Functionality covered elsewhere, can be dangerous in that it accepts
                                     |    invalid inputs - remove
-Combination Editor                  |    Functionality covered in General tab for objects in right panel, 
+Combination Editor                  |    Functionality covered in General tab for objects in right panel,
                                     |    except need color picker for rgb attribute - remove as separate entity
 Attribute Editor                    |    This is a more general case of what is currently the General tab in
                                     |    Archer for objects - make this into a CAD widget with the layout of
                                     |    the General tab and the functionality of the Attribute editor -
-                                    |    General tab will become Attribute tab.  Will need to be able to 
+                                    |    General tab will become Attribute tab.  Will need to be able to
                                     |    customize the standard attribute/value display to support things like
                                     |    the color picker for rgb attribute
 Geometry Browser                    |    Functionality should be covered by tree viewer - to ensure proper
@@ -62,7 +62,7 @@ Geometry Browser                    |    Functionality should be covered by tree
                                     |    multiple trees - the current global tree in one tab, a flat list of
                                     |    all objects in another (e.g. like the output of ls - select any item
                                     |    as a tree root node), in another display tree(s) currently visible in
-                                    |    display (simiilar to what who outputs, just with the ability to expand
+                                    |    display (similar to what who outputs, just with the ability to expand
                                     |    trees).  Probably some other possible modes to explore, even make
                                     |    configurable.
 Create Primitives                   |    This functionality will be handled by the graphical primitive buttons
@@ -111,7 +111,7 @@ Modes -> Display Lists              |             Remove - no need to expose thi
 Misc -> Z Clipping                  |             DONE - Wrapped up in Lighting setting
 Misc -> Perspective                 |                           INCOMPLETE
 Misc -> Faceplate                   |                            DONE
-Misc -> Faceplate GUI               |             Maintin for classic mode, don't expose in Archer GUI
+Misc -> Faceplate GUI               |             Maintain for classic mode, don't expose in Archer GUI
 Misc -> Keystroke Forwarding        |                           REMOVE
 Tools -> ADC Control Panel          |             INCOMPLETE - Include, but only using the controls in the Tool panel
                                     |                          don't integrate in-display-manager mouse bindings
@@ -148,8 +148,8 @@ Other Issues
 * archer reports "invalid command" on 'aet' and other commands until a
   database is opened.  it shouldn't.
 
-* archer doesn't have the -c option to run command-line or sans Tk -  need to "port" 
-  archer to the C code startup that MGED uses - some preliminary work has been done, 
+* archer doesn't have the -c option to run command-line or sans Tk -  need to "port"
+  archer to the C code startup that MGED uses - some preliminary work has been done,
   but needs to be made more robust and tested.
 
 * add ability to undo transaction sets
@@ -168,5 +168,5 @@ Tests to Pass
 New Features
 ------------
 
-* undo ability for selection sequences, other actions currently assumed to not change 
+* undo ability for selection sequences, other actions currently assumed to not change
   the db geometry (may be a natural consequence of transactional libged commands?)
