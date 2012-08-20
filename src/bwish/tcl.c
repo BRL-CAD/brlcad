@@ -48,7 +48,7 @@
 
 /* We need to be careful about tty resetting - xcodebuild
  * and resetTty were locking up.  Add a tty check
- * along the lines of 
+ * along the lines of
  * http://stackoverflow.com/questions/1594251/how-to-check-if-stdin-is-still-opened-without-blocking
  */
 #ifdef HAVE_SYS_SELECT_H
