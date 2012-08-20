@@ -24,6 +24,8 @@
 
   <para>
     Used to interact with a graph based visualization of the structure of .g databases.
+  </para>
+
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
