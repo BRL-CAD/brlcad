@@ -739,7 +739,7 @@ static void
 HmWidHgtMenu(HmWindow *win)
 {
     HmItem *itemp;
-    
+
     /* Determine width of menu, allowing for border.		*/
     for (itemp = win->menup->item; itemp->text != (char *) NULL; itemp++) {
 	int len = 0;
