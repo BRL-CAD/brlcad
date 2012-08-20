@@ -1,5 +1,5 @@
 #!/bin/sh
-#                   G R A P H . T C L
+#                   I G R A P H . T C L
 # BRL-CAD
 #
 # Copyright (c) 2012 United States Government as represented by
@@ -30,24 +30,8 @@ exec bwish "$0" "$@"
 package require GraphEditor
 
 ### # All GraphEditor stuff is in the GraphEditor namespace
-proc graph { } {
-    global mged_gui
-    global ::tk::Priv
-    global mged_players
-
-    # determine the framebuffer window id
-    if [info exists mged_players] {
-        if { [ catch {set mged_players} _mgedFramebufferId ] } {
-            puts $_mgedFramebufferId
-            puts "assuming default mged framebuffer id: id_0"
-            set _mgedFramebufferId "id_0"
-        }
-    }
-
-    # just in case there are more than one returned
-    set _mgedFramebufferId "id_0"
-
-    set ge .$_mgedFramebufferId.graph
+proc igraph { } {
+    set ge .igraph
 
     # see if the window is already open.  If so, just raise it up.
     if [ winfo exists $ge ] {

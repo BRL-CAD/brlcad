@@ -38,6 +38,9 @@
 #define X_WIDTH 30.0
 #define Y_HEIGHT 30.0
 
+/* Maximum dimension of a subcommand's name. */
+#define NAME_SIZE 10
+
 /* Adaptagrams Header */
 #include "libavoid/libavoid.h"
 using namespace Avoid;
@@ -45,6 +48,22 @@ using namespace Avoid;
 /* Public Header */
 #include "ged.h"
 
+
+/**
+ * Subcommand name information, for a table of available subcommands.
+ */
+struct graph_subcmd_tab {
+    char *name;
+};
+
+/**
+ * Table of graph subcommand functions.
+ */
+static const struct graph_subcmd_tab graph_subcmds[] = {
+    {(char *)"show"},
+    {(char *)"positions"},
+    {(char *)NULL}
+};
 
 /**
  * This structure has fields that correspond to three lists for primitive, combination and non-geometry type objects of a database.
@@ -577,117 +596,138 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
  * This routine provides the name of the objects in a database along with their
  * type and positions within the graph.
  */
-int
-ged_graph_objects_positions(struct ged *gedp, int argc, const char *argv[])
+HIDDEN void
+graph_positions(struct ged *gedp, struct _ged_dag_data *dag)
 {
-    struct _ged_dag_data *dag;
-    const char *cmd = argv[0];
-
     /* The bounding positions of the rectangle corresponding to one object. */
     double minX;
     double minY;
     double maxX;
     double maxY;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-    /* Initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
+    add_objects(gedp, dag);
 
-    if (argc > 1 || argc == 0) {
-            bu_vls_printf(gedp->ged_result_str, "Usage: %s", cmd);
-            return GED_ERROR;
+    /* Find the root nodes. */
+    std::vector<unsigned int> root_ids = find_roots(dag);
+    std::vector<double> maxX_level;
+    unsigned int level;
+    unsigned int size = root_ids.size();
+
+    /* Traverse the root nodes and for each tree set the positions of all the nodes. */
+    for (unsigned int i = 0; i < size; i++) {
+        char *root = (char *)bu_malloc((size_t)6, "hash entry value");
+        sprintf(root, "%u", root_ids[i]);
+        struct bu_hash_entry *prev_root = NULL;
+        unsigned long idx_root;
+        struct bu_hash_entry *hsh_entry_root = bu_find_hash_entry(dag->ids, (unsigned char *)root, strlen(root) + 1, &prev_root, &idx_root);
+
+        if (hsh_entry_root) {
+            level = 0;
+            if (i == 0) {
+                /* First root node: set the maximum X coordinate to be 0.0. */
+                maxX_level.reserve(1);
+                maxX_level.push_back(0.0);
+            }
+
+            /* Set the layout for the tree that starts with this root node. */
+            set_layout(dag, false, root_ids[i], root_ids[i], level, maxX_level);
+        }
     }
 
-    if(argc == 1) {
-        dag = (struct _ged_dag_data *) bu_malloc(sizeof(_ged_dag_data), "DAG structure");
-        dag->router = new Avoid::Router(Avoid::PolyLineRouting);
-        add_objects(gedp, dag);
+    /* Traverse each shape within the graph and pass on the name, type and coordinates
+     * of the object.
+     */
+    ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
+    for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
+        char *id = (char *)bu_malloc((size_t)6, "hash entry value");
+        sprintf(id, "%d", (*it)->id());
 
-        /* Find the root nodes. */
-        std::vector<unsigned int> root_ids = find_roots(dag);
-        std::vector<double> maxX_level;
-        unsigned int level;
-        unsigned int size = root_ids.size();
+        struct bu_hash_entry *prev = NULL;
+        unsigned long idx;
+        struct bu_hash_entry *hsh_entry = bu_find_hash_entry(dag->ids, (unsigned char *)id, strlen(id) + 1, &prev, &idx);
+        if(hsh_entry) {
+            (*it)->polygon().getBoundingRect(&minX, &minY, &maxX, &maxY);
 
-        /* Traverse the root nodes and for each tree set the positions of all the nodes. */
-        for (unsigned int i = 0; i < size; i++) {
-            char *root = (char *)bu_malloc((size_t)6, "hash entry value");
-            sprintf(root, "%u", root_ids[i]);
-            struct bu_hash_entry *prev_root = NULL;
-            unsigned long idx_root;
-            struct bu_hash_entry *hsh_entry_root = bu_find_hash_entry(dag->ids, (unsigned char *)root, strlen(root) + 1, &prev_root, &idx_root);
-
-            if(hsh_entry_root) {
-                level = 0;
-                if (i == 0) {
-                    /* First root node: set the maximum X coordinate to be 0.0. */
-                    maxX_level.reserve(1);
-                    maxX_level.push_back(0.0);
-                }
-
-                /* Set the layout for the tree that starts with this root node. */
-                set_layout(dag, false, root_ids[i], root_ids[i], level, maxX_level);
+            prev = NULL;
+            struct bu_hash_entry *hsh_entry_type = bu_find_hash_entry(dag->object_types, hsh_entry->value,
+                                                                      strlen((char *)hsh_entry->value) + 1, &prev, &idx);
+            if(hsh_entry_type) {
+                bu_vls_printf(gedp->ged_result_str, "%s %s %f %f %f %f\n", hsh_entry->value, hsh_entry_type->value, minX,
+                              minY, maxX, maxY);
             }
         }
-
-        /* Traverse each shape within the graph and pass on the name, type and coordinates
-         * of the object.
-         */
-        ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
-        for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
-            char *id = (char *)bu_malloc((size_t)6, "hash entry value");
-            sprintf(id, "%d", (*it)->id());
-
-            struct bu_hash_entry *prev = NULL;
-            unsigned long idx;
-            struct bu_hash_entry *hsh_entry = bu_find_hash_entry(dag->ids, (unsigned char *)id, strlen(id) + 1, &prev, &idx);
-            if(hsh_entry) {
-                (*it)->polygon().getBoundingRect(&minX, &minY, &maxX, &maxY);
-
-                prev = NULL;
-                struct bu_hash_entry *hsh_entry_type = bu_find_hash_entry(dag->object_types, hsh_entry->value,
-                                                                          strlen((char *)hsh_entry->value) + 1, &prev, &idx);
-                if(hsh_entry_type) {
-                    bu_vls_printf(gedp->ged_result_str, "%s %s %f %f %f %f\n", hsh_entry->value, hsh_entry_type->value, minX,
-                                  minY, maxX, maxY);
-                }
-            }
-        }
-
-        /* Provide the positions of the points via which the connection's route passes. */
-        double x, y;
-        bu_vls_printf(gedp->ged_result_str, "edge\n");
-        Avoid::ConnRefList::const_iterator fin = dag->router->connRefs.end();
-        for (Avoid::ConnRefList::const_iterator i = dag->router->connRefs.begin(); i != fin; ++i) {
-            Avoid::Polygon polyline = (*i)->displayRoute();
-            size = polyline.ps.size();
-            for (unsigned int j = 0; j < size; j ++) {
-                x = polyline.ps[j].x;
-                y = polyline.ps[j].y;
-                bu_vls_printf(gedp->ged_result_str, "%f %f\n", x, y);
-            }
-            bu_vls_printf(gedp->ged_result_str, "edge\n");
-        }
-        bu_free(dag, "free DAG");
     }
+}
+
+
+/**
+ * Routine that sets a list of names, types, and positions that correspond to the objects in the gedp database.
+ * The positions refer to the coordinates that determine the nodes within the graph.
+ * This routine is called when the "positions" subcommand is used.
+ */
+int
+_ged_graph_positions(struct ged *gedp)
+{
+    struct _ged_dag_data *dag;
+
+    dag = (struct _ged_dag_data *) bu_malloc(sizeof(_ged_dag_data), "DAG structure");
+    dag->router = new Avoid::Router(Avoid::PolyLineRouting);
+
+    /* Get the name, type and position within the graph for each object. */
+    graph_positions(gedp, dag);
+    bu_free(dag, "free DAG");
+
     return GED_OK;
 }
 
 
 /**
- * This routine calls the add_objects() method for a given database if the "view"
- * subcommand is used.
+ * Routine that sets a list of names, types, and positions that correspond to the objects in the gedp database,
+ * along with the positions of the edges that connect the nodes from the graph.
+ * The positions refer to the coordinates that determine the nodes within the graph.
+ * This routine is called when the "show" subcommand is used.
  */
 int
-ged_graph_structure(struct ged *gedp, int argc, const char *argv[])
+_ged_graph_show(struct ged *gedp)
 {
     struct _ged_dag_data *dag;
-    size_t len;
+
+    dag = (struct _ged_dag_data *) bu_malloc(sizeof(_ged_dag_data), "DAG structure");
+    dag->router = new Avoid::Router(Avoid::PolyLineRouting);
+
+    /* Get the name, type and position within the graph for each object. */
+    graph_positions(gedp, dag);
+
+    /* Provide the positions of the points via which the connection's route passes. */
+    double x, y;
+    Avoid::ConnRefList::const_iterator fin = dag->router->connRefs.end();
+    for (Avoid::ConnRefList::const_iterator i = dag->router->connRefs.begin(); i != fin; ++i) {
+        bu_vls_printf(gedp->ged_result_str, "edge\n");
+        Avoid::Polygon polyline = (*i)->displayRoute();
+        unsigned int size = polyline.ps.size();
+
+        for (unsigned int j = 0; j < size; j ++) {
+            x = polyline.ps[j].x;
+            y = polyline.ps[j].y;
+            bu_vls_printf(gedp->ged_result_str, "%f %f\n", x, y);
+        }
+    }
+    bu_free(dag, "free DAG");
+
+    return GED_OK;
+}
+
+
+/**
+ * The libged graph function.
+ * This function constructs the graph structure corresponding to the given database.
+ */
+int
+ged_graph(struct ged *gedp, int argc, const char *argv[])
+{
     const char *cmd = argv[0];
-    const char *sub;
-    static const char *usage = "view\n";
+    const char *subcommand;
+    static const char *usage = "subcommand\n";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -696,31 +736,37 @@ ged_graph_structure(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* must be wanting help */
-    if (argc < 2) {
-            bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-            return GED_ERROR;
-    }
-    if(argc >= 2) {
-        /* determine subcommand */
-        sub = argv[1];
-        len = strlen(sub);
+    /* Didn't provide any subcommand. Must be wanting help */
+    if (argc != 2) {
+        bu_vls_printf(gedp->ged_result_str, "Usage: %s %sAvailable subcommands: ", cmd, usage);
 
-        if(bu_strncmp(sub, "view", len) == 0) {
-            dag = (struct _ged_dag_data *) bu_malloc(sizeof(_ged_dag_data), "DAG structure");
-            dag->router = new Avoid::Router(Avoid::PolyLineRouting);
-            add_objects(gedp, dag);
+        /* Output the available subcommands. */
+        for (int i = 0; graph_subcmds[i].name; ++i) {
+            bu_vls_printf(gedp->ged_result_str, "%s ", graph_subcmds[i].name);
+        }
+        return GED_ERROR;
+    } else if (argc == 2) {
+        /* Determine subcommand. */
+        subcommand = argv[1];
 
-            bu_free(dag, "free DAG");
+        /* Check if it's the "show" subcommand. */
+        if (BU_STR_EQUAL(graph_subcmds[0].name, subcommand)) {
+            return _ged_graph_show(gedp);
+        } else if (BU_STR_EQUAL(graph_subcmds[1].name, subcommand)) {
+            /* It is the "positions" subcommand. */
+            return _ged_graph_positions(gedp);
         } else {
-            bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!", cmd, sub);
+            bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!\nAvailable subcommands: ", cmd, subcommand);
+
+            /* Output the available subcommands. */
+            for (int i = 0; graph_subcmds[i].name; ++i) {
+                bu_vls_printf(gedp->ged_result_str, "%s ", graph_subcmds[i].name);
+            }
             return GED_ERROR;
         }
     }
     return GED_OK;
 }
-
-
 #define PARALLEL BRLCAD_PARALLEL
 #undef BRLCAD_PARALLEL
 
@@ -730,25 +776,10 @@ ged_graph_structure(struct ged *gedp, int argc, const char *argv[])
 #include "ged_private.h"
 
 /**
- * Dummy graph functions in case no Adaptagrams library found
+ * Dummy graph function in case no Adaptagrams library is found.
  */
 int
-ged_graph_structure(struct ged *gedp, int argc, const char *argv[])
-{
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    /* Initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
-    bu_vls_printf(gedp->ged_result_str, "%s : ERROR This command is disabled due to the absence of Adaptagrams library",
-          argv[0]);
-    return GED_ERROR;
-}
-
-
-int
-ged_graph_objects_positions(struct ged *gedp, int argc, const char *argv[])
+ged_graph(struct ged *gedp, int argc, const char *argv[])
 {
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);

@@ -1,10 +1,10 @@
-set(graph_TCLSCRIPTS
+set(igraph_TCLSCRIPTS
   GraphEditor.tcl
-  graph.tcl
+  igraph.tcl
   )
-BRLCAD_ADDDATA(graph_TCLSCRIPTS tclscripts/graph)
-pkgIndex_BUILD(graph tclscripts/graph)
-tclIndex_BUILD(graph tclscripts/graph)
+BRLCAD_ADDDATA(igraph_TCLSCRIPTS tclscripts/igraph)
+pkgIndex_BUILD(igraph tclscripts/igraph)
+tclIndex_BUILD(igraph tclscripts/igraph)
 
 CMAKEFILES(pkgIndex.tcl tclIndex)
 CMAKEFILES(Makefile.am)

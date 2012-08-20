@@ -214,6 +214,7 @@ namespace eval ArcherCore {
 	method g                   {args}
 	method group               {args}
 	method i                   {args}
+        method igraph              {args}
 	method importFg4Section    {args}
 	method in                  {args}
 	method inside              {args}
@@ -527,7 +528,7 @@ namespace eval ArcherCore {
 	    c cd clear clone closedb color comb comb_color combmem \
 	    copy copyeval copymat cp cpi dbconcat dbExpand decompose \
 	    delete draw E edcodes edcolor edcomb edit edmater erase ev \
-	    exit facetize fracture g graph group hide human i \
+            exit facetize fracture g graph group hide human i igraph \
 	    importFg4Section in inside item kill killall killrefs \
 	    killtree l ls make make_bb make_pnts man mater mirror move \
 	    move_arb_edge move_arb_face mv mvall nmg_collapse \
@@ -5723,9 +5724,8 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::graph {args} {
-    eval ::graph $args
+    eval gedWrapper graph 0 1 1 1 $args
 }
-
 
 ::itcl::body ArcherCore::group {args} {
     eval gedWrapper g 1 1 1 2 $args
@@ -5742,6 +5742,10 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::i {args} {
     eval gedWrapper i 0 1 1 1 $args
+}
+
+::itcl::body ArcherCore::igraph {args} {
+    eval ::igraph $args
 }
 
 ::itcl::body ArcherCore::importFg4Section {args} {

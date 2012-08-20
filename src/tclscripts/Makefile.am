@@ -3,7 +3,7 @@ SUBDIRS = \
 	archer \
 	boteditor \
 	geometree \
-        graph \
+        igraph \
 	hv3 \
 	lib \
 	mged \

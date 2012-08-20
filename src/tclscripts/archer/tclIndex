@@ -488,6 +488,7 @@ set auto_index(::ArcherCore::handleTreeSelect) [list source [file join $dir Arch
 set auto_index(::ArcherCore::hide) [list source [file join $dir ArcherCore.tcl]]
 set auto_index(::ArcherCore::human) [list source [file join $dir ArcherCore.tcl]]
 set auto_index(::ArcherCore::i) [list source [file join $dir ArcherCore.tcl]]
+set auto_index(::ArcherCore::igraph) [list source [file join $dir ArcherCore.tcl]]
 set auto_index(::ArcherCore::importFg4Section) [list source [file join $dir ArcherCore.tcl]]
 set auto_index(::ArcherCore::in) [list source [file join $dir ArcherCore.tcl]]
 set auto_index(::ArcherCore::initBrlcadBindings) [list source [file join $dir ArcherCore.tcl]]

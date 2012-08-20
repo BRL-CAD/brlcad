@@ -18,4 +18,4 @@ set auto_index(::GraphEditor::toggleAutorender) [list source [file join $dir Gra
 set auto_index(::GraphEditor::toggleDebug) [list source [file join $dir GraphEditor.tcl]]
 set auto_index(::GraphEditor::rgbToHex) [list source [file join $dir GraphEditor.tcl]]
 set auto_index(::GraphEditor::checkAutoRender) [list source [file join $dir GraphEditor.tcl]]
-set auto_index(graph) [list source [file join $dir graph.tcl]]
+set auto_index(igraph) [list source [file join $dir igraph.tcl]]

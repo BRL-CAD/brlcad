@@ -105,15 +105,6 @@ body GraphEditor::constructor {} {
 
     set _weStartedFbserv 0
 
-    # determine the framebuffer window id
-    if { [ catch { set mged_players } _mgedFramebufferId ] } {
-        puts $_mgedFramebufferId
-        puts "assuming default mged framebuffer id: id_0"
-        set _mgedFramebufferId "id_0"
-    }
-    # just in case there are more than one returned
-    set _mgedFramebufferId [ lindex $_mgedFramebufferId 0 ]
-
     # set the window title
     $this configure -title "Graph Editor"
 
@@ -185,16 +176,30 @@ body GraphEditor::constructor {} {
     bind $_bgMenu <ButtonRelease> {::tk::MenuInvoke %W 1}
 
     # get objects' names, types and positions within the graph
-    set objectsPositionsCommand "graph_objects_positions"
+    set graphViewCommand "graph show"
 
-    if { [ catch $objectsPositionsCommand positions error] } {
+    if { [ catch $graphViewCommand positions error] } {
         # check if there is an error saying that Adaptagrams isn't available
-        if { [ string first "$objectsPositionsCommand : ERROR This command is disabled due to the absence of Adaptagrams library" $::errorInfo ] != -1 } {
+        if { [ string first "graph : ERROR This command is disabled due to the absence of Adaptagrams library" $::errorInfo ] != -1 } {
             # get the name of the calling procedure
             set calling_proc [lindex [split [info level [expr [info level] - 1]]] 0]
 
             # Return an error message to the calling procedure
             error "Error: $calling_proc : ERROR This command is disabled due to the absence of Adaptagrams library"
+        } elseif { [ string first "invalid command name \"graph\"" $::errorInfo ] != -1 } {
+            # get the name of the calling procedure
+            set calling_proc [lindex [split [info level [expr [info level] - 1]]] 0]
+
+            #check if the name of the command has the "::" characters before it; if yes, erase them
+            if { [ string first "::" $calling_proc ] != -1 } {
+                #string replace $calling_proc 0 1 "" calling_proc
+                set calling_proc [string trimleft $calling_proc :]
+            }
+
+            # Return an error message to the calling procedure
+            error "Error: $calling_proc : ERROR This command is not available yet in Archer"
+        } elseif { [ string first "A database is not open!" $::errorInfo ] != -1 } {
+            error "Error: A database is not open!"
         }
     }
 
@@ -530,8 +535,10 @@ body GraphEditor::toggleAutosizing { { state "" } } {
     if { [ string compare $state "same" ] == 0 } {
         # this one is used by the constructor to set the label to the current state
         # we return the current state as the label
-        if { [ set autosize ] == 0 } {
-            return "Turn Autosizing On"
+        if [info exists autosize] {
+            if { [ set autosize ] == 0 } {
+                return "Turn Autosizing On"
+            }
         }
         return "Turn Autosizing Off"
 

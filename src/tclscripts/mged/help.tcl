@@ -173,6 +173,7 @@ set mged_help_data(fracture)	{{NMGsolid [prefix]}	{fracture an NMG solid into ma
 set mged_help_data(g)		$helplib_data(wdb_group)
 set mged_help_data(garbage_collect)	{{}	{eliminate unused space in database file}}
 set mged_help_data(get)		$helplib_data(wdb_get)
+set mged_help_data(graph)       {{}    {query and manipulate properties of the graph that corresponds to the currently opened .g database}}
 set mged_help_data(gui)	{{[-config b|c|g] [-d display_string]
     [-gd graphics_display_string] [-dt graphics_type]
     [-id name] [-c -h -j -s]}	{create display/command window pair}}
@@ -183,6 +184,7 @@ set mged_help_data(hide)        $helplib_data(wdb_hide)
 set mged_help_data(history)	{{[-delays]}	{list command history}}
 set mged_help_data(i)		$helplib_data(wdb_instance)
 set mged_help_data(idents)		{{file object(s)}	{make ascii summary of region idents}}
+set mged_help_data(igraph)      {{}    {interactive graph for the objects of the currently opened .g database}}
 set mged_help_data(ill)		{{name}	{illuminate object}}
 set mged_help_data(in)		{{[-f] [-s] parameters...}	{keyboard entry of solids.  -f for no drawing, -s to enter solid edit}}
 set mged_help_data(inside)	{{[outside_solid new_inside_solid thicknesses]}	{finds inside solid per specified thicknesses. Note that in an edit mode the edited solid is used for the outside_solid and should not appear on the command line }}

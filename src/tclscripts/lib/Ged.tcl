@@ -204,7 +204,7 @@ package provide cadwidgets::Ged 1.0
 	method get_type {args}
 	method glob {args}
 	method gqa {args}
-        method graph_objects_positions {args}
+        method graph {args}
 	method grid {args}
 	method handle_expose {args}
 	method hide {args}
@@ -213,6 +213,7 @@ package provide cadwidgets::Ged 1.0
 	method i {args}
 	method idents {args}
 	method idle_mode {args}
+        method igraph {args}
 	method illum {args}
 	method importFg4Section {args}
 	method in {args}
@@ -1495,8 +1496,8 @@ package provide cadwidgets::Ged 1.0
     eval $mGed gqa $args
 }
 
-::itcl::body cadwidgets::Ged::graph_objects_positions {args} {
-    eval $mGed graph_objects_positions $args
+::itcl::body cadwidgets::Ged::graph {args} {
+    eval $mGed graph $args
 }
 
 ::itcl::body cadwidgets::Ged::grid {args} {
@@ -1527,6 +1528,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::idents {args} {
     eval $mGed idents $args
+}
+
+::itcl::body cadwidgets::Ged::igraph {args} {
+    eval $mGed igraph $args
 }
 
 ::itcl::body cadwidgets::Ged::idle_mode {args} {
@@ -5032,13 +5037,14 @@ package provide cadwidgets::Ged 1.0
     $help add get_type		{{object} {returns the object type}}
     $help add glob		{{expression} {returns a list of objects specified by expression}}
     $help add gqa		{{options object(s)} {perform quantitative analysis checks on geometry}}
-    $help add graph_objects_positions {{} {returns a string with the name of the objects and the positions of the shapes that represent them in the graph}}
+    $help add graph             {{} {query and manipulate properties of the graph that corresponds to the currently opened .g database}}
     $help add grid		{{color|draw|help|mrh|mrv|rh|rv|snap|vars|vsnap [args]} {get/set grid attributes}}
     $help add help		{{cmd} {returns a help string for cmd}}
     $help add hide		{{[objects]} {set the "hidden" flag for the specified objects so they do not appear in a "t" or "ls" command output}}
     $help add how		{{obj} {returns how an object is being displayed}}
     $help add i			{{obj combination [operation]} {add instance of obj to comb}}
     $help add idents		{{file object(s)} {dump the idents for the specified objects to file}}
+    $help add igraph            {{} {interactive graph for the objects of the currently opened .g database}}
     $help add illum		{{name} {illuminate object}}
     $help add importFg4Section	{{obj section} {create an object by importing the specified section}}
     $help add in		{{args} {creates a primitive by prompting the user for input}}
