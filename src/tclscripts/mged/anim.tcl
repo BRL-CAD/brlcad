@@ -1365,8 +1365,8 @@ proc sketch_vupdate {} {
 			   [expr $i + $mged_sketch_cmdlen($cmd) - 1] ]
 	    set str [concat $str $cmd $cargs]
 	    incr i $mged_sketch_cmdlen($cmd)
-    	eval view $str
-    	set str ""
+	eval view $str
+	set str ""
 	}
 	if { $i != $len } {
 	    puts "sketch_vupdate: expected $i columns, got $len"
@@ -2710,10 +2710,10 @@ proc sketch_objanim { objorview } {
     upvar #0 mged_sketch_objncols ncols
 
     if { $objorview != "view" } {
-        # make sure animated object exists (this will create an error if it doesn't)
-        set tmp 0
-        set tmp [db get $mged_sketch_objname]
-        if { $tmp == 0 } return
+	# make sure animated object exists (this will create an error if it doesn't)
+	set tmp 0
+	set tmp [db get $mged_sketch_objname]
+	if { $tmp == 0 } return
     }
 
     set anim_fly [file join ${mged_sketch_anim_path} anim_fly]
@@ -4151,13 +4151,13 @@ proc sketch_text_from_table {tid {needcol -1}} {
 proc animmate { id {p .} } {
     global mged_gui
     global ::tk::Priv
-    
+
     if {[opendb] == ""} {
 	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "No database." \
 	    "No database has been opened!" info 0 OK
 	    return
     }
-    
+
     sketch_popup_main $p
 }
 

@@ -68,7 +68,7 @@ rt_superell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_t
     tmp_brep->m_S[0]->GetNurbForm(*surf);
 
     // Calculate the weight value
-    // See: Joe F. Thompson, B. K. Soni, N. P. Weatherill. Handbook of Grid Generation. 
+    // See: Joe F. Thompson, B. K. Soni, N. P. Weatherill. Handbook of Grid Generation.
     // Ch.30.3.5 Superellipse to NURBS Curve.
     const fastf_t cos45 = cos(ON_PI/4.0);
     fastf_t weight_e = (pow(cos45, sip->e) - 0.5) / (1 - pow(cos45, sip->e));

@@ -509,7 +509,7 @@ light_gen_sample_pts(struct application *upap,
     ap.a_logoverlap = upap->a_logoverlap;
     ap.a_uptr = (genptr_t)lsp;
 
-    /* get the bounding box of the light source 
+    /* get the bounding box of the light source
      * Return if we can't get the bounding tree dimensions */
     if (rt_bound_tree(lsp->lt_rp->reg_treetop, tree_min, tree_max) < 0) return;
 

@@ -82,26 +82,26 @@ public:
 
     ON_Ray& operator=(const ON_Ray& r)
     {
-        m_origin = r.m_origin;
-        m_dir = r.m_dir;
-        return *this;
+	m_origin = r.m_origin;
+	m_dir = r.m_dir;
+	return *this;
     }
 
     ON_3dPoint PointAt(double t) const
     {
-        return m_origin + m_dir * t;
+	return m_origin + m_dir * t;
     }
 
     double DistanceTo(const ON_3dPoint& pt, double* out_t = NULL) const
     {
-        ON_3dVector w = pt - m_origin;
-        double c1 = w * m_dir;
-        if (c1 <= 0) return pt.DistanceTo(m_origin);
-        double c2 = m_dir * m_dir;
-        double b = c1 / c2;
-        ON_3dPoint p = m_dir * b + m_origin;
-        if (out_t != NULL) *out_t = b;
-        return p.DistanceTo(pt);
+	ON_3dVector w = pt - m_origin;
+	double c1 = w * m_dir;
+	if (c1 <= 0) return pt.DistanceTo(m_origin);
+	double c2 = m_dir * m_dir;
+	double b = c1 / c2;
+	ON_3dPoint p = m_dir * b + m_origin;
+	if (out_t != NULL) *out_t = b;
+	return p.DistanceTo(pt);
     }
 
     /**
@@ -115,14 +115,14 @@ public:
      */
     bool IntersectRay(const ON_Ray& v, ON_2dPoint& isect) const
     {
-        double uxv, q_pxv;
-        // consider parallel and collinear cases
-        if (ZERO(uxv = V2CROSS(m_dir, v.m_dir))
-            || (ZERO(q_pxv = V2CROSS(v.m_origin - m_origin, v.m_dir)))) {
-            return false;
-        }
-        isect = PointAt(q_pxv / uxv);
-        return true;
+	double uxv, q_pxv;
+	// consider parallel and collinear cases
+	if (ZERO(uxv = V2CROSS(m_dir, v.m_dir))
+	    || (ZERO(q_pxv = V2CROSS(v.m_origin - m_origin, v.m_dir)))) {
+	    return false;
+	}
+	isect = PointAt(q_pxv / uxv);
+	return true;
     }
 };
 

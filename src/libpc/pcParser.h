@@ -56,14 +56,14 @@ public:
     template<typename ScannerT>
     struct definition
     {
-        boost::spirit::classic::rule<ScannerT> variable;
+	boost::spirit::classic::rule<ScannerT> variable;
 	/*boost::spirit::rule<ScannerT> expression;*/
 	definition(Variable_grammar const &self) {
 	    /*expression
 	      =    boost::spirit::real_p[varvalue(self.pcparser)]
 	      ;*/
 	    variable
-	        =    *(boost::spirit::classic::alnum_p)[Generators::varname(self.vcset)]
+		=    *(boost::spirit::classic::alnum_p)[Generators::varname(self.vcset)]
 		    >> '='
 		    >>boost::spirit::classic::real_p[Generators::varvalue(self.vcset)]
 		/* expression*/
@@ -84,7 +84,7 @@ public:
     template<typename ScannerT>
     struct definition
     {
-        boost::spirit::classic::rule<ScannerT> variable;
+	boost::spirit::classic::rule<ScannerT> variable;
 	boost::spirit::classic::rule<ScannerT> term;
 	boost::spirit::classic::rule<ScannerT> operat;
 	boost::spirit::classic::rule<ScannerT> expression;
@@ -92,23 +92,23 @@ public:
 	boost::spirit::classic::rule<ScannerT> constraint;
 	definition(Constraint_grammar const &self) {
 	    variable
-	        =    boost::spirit::classic::alnum_p
+		=    boost::spirit::classic::alnum_p
 		;
 	    term
-	        =    boost::spirit::classic::real_p
+		=    boost::spirit::classic::real_p
 		|    variable
 		;
 	    eq
-	        =    '<'
+		=    '<'
 		|    '='
 		|    '>'
 		;
-            expression
-	        =    term
+	    expression
+		=    term
 		    >> *(operat >> term)
 		;
 	    constraint
-	        =    '('
+		=    '('
 		    >> expression
 		    >> eq
 		    >> expression
@@ -141,7 +141,7 @@ public:
     virtual ~Parser();
     void parse(struct pc_pc_set *pcs);
     //void pushChar(char c) { name.push_back(c); }
-    //void setValue(double v) { value = v; } 
+    //void setValue(double v) { value = v; }
     void display() { std::cout<< "Result of Parsing:" << name << " = " << value << std::endl; }
 };
 

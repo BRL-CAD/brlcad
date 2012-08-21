@@ -241,10 +241,10 @@ drawSolid(struct solid *sp,
 	sp->s_flag = UP;
 	curr_dm_list->dml_ndrawn++;
     } else {
-        if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
-            sp->s_flag = UP;
-            curr_dm_list->dml_ndrawn++;
-        }
+	if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
+	    sp->s_flag = UP;
+	    curr_dm_list->dml_ndrawn++;
+	}
     }
 }
 
@@ -360,15 +360,15 @@ dozoom(int which_eye)
     /* dm rtgl has its own way of drawing */
     if (IS_DM_TYPE_RTGL(dmp->dm_type)) {
 
-        /* dm-rtgl needs database info for ray tracing */
-        RTGL_GEDP = gedp;
+	/* dm-rtgl needs database info for ray tracing */
+	RTGL_GEDP = gedp;
 
 	/* will ray trace visible objects and draw the intersection points */
-        DM_DRAW_VLIST(dmp, (struct bn_vlist *)NULL);
+	DM_DRAW_VLIST(dmp, (struct bn_vlist *)NULL);
 	/* force update if needed */
 	dirty = RTGL_DIRTY;
 
-        return;
+	return;
     }
 #endif
 

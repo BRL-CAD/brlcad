@@ -56,7 +56,7 @@ void dump(FILE *fd)
     static char buf[DUMPLEN];    /* input buffer */
 
     if (offset != 0) {
-  	/* skip over "offset" bytes first */
+	/* skip over "offset" bytes first */
 	if (fseek(fd, offset, 0)) {
 
 	    /* If fseek fails, try reading our way to the desired offset.

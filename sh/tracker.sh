@@ -615,14 +615,14 @@ for _item in $_itemURLS ; do
     # extract the date last updated
     _lowValue="`echo \"$_itemData\" | grep -n '<th align=middle><font color="#000000"><b>Old Value<b></font></th>' | cut -d: -f1`"
     if isint $_lowValue ; then
-        _highValue="`echo \"$_itemData\" | wc -l | cut -d' ' -f1`"
-        _numLines="`expr $_highValue - $_lowValue + 1`"
-        _itemDateLastUpdated="`echo \"$_itemData\" | tail -n $_numLines`"
-        _highValue="`echo \"$_itemDateLastUpdated\" | grep -n '</table>' | head -n 1 | cut -d: -f1`"
-        _itemDateLastUpdated="`echo \"$_itemDateLastUpdated\" | head -n $_highValue`"
-        _itemDateLastUpdated="`echo \"$_itemDateLastUpdated\" | grep '[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}' | sed 's/^[ ]*//' | sort | tail -n 1`"
+	_highValue="`echo \"$_itemData\" | wc -l | cut -d' ' -f1`"
+	_numLines="`expr $_highValue - $_lowValue + 1`"
+	_itemDateLastUpdated="`echo \"$_itemData\" | tail -n $_numLines`"
+	_highValue="`echo \"$_itemDateLastUpdated\" | grep -n '</table>' | head -n 1 | cut -d: -f1`"
+	_itemDateLastUpdated="`echo \"$_itemDateLastUpdated\" | head -n $_highValue`"
+	_itemDateLastUpdated="`echo \"$_itemDateLastUpdated\" | grep '[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}' | sed 's/^[ ]*//' | sort | tail -n 1`"
     else
-        _itemDateLastUpdated="$_itemDateSubmitted"
+	_itemDateLastUpdated="$_itemDateSubmitted"
     fi
     [ $VERBOSE -gt 1 ] && echo "${_itemID}: Date Last Updated is $_itemDateLastUpdated"
     _itemLine="$_itemLine,$_itemDateLastUpdated"

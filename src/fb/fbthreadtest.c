@@ -80,7 +80,7 @@ TclThreadIncrement(
 
     testevt = (TestEvent *) bu_malloc(sizeof(TestEvent), "test event");
     testevt->header.proc = TestEventProc;
-    testevt->testnum = increment;   
+    testevt->testnum = increment;
     Tcl_ThreadQueueEvent(threadId, (Tcl_Event *)testevt, TCL_QUEUE_TAIL);
     Tcl_ThreadAlert(threadId);
     printf("increment val: %d\n", *increment);
@@ -167,7 +167,7 @@ main(int argc, char **argv)
      *
      * Might as well use one block and set the three things
      * that actually change in tk_write
-     */   
+     */
     Tk_PhotoImageBlock bblock = {
 	NULL, /*Pointer to first pixel*/
 	0,    /*Width of block in pixels*/
@@ -200,7 +200,7 @@ main(int argc, char **argv)
 
 
     /* set the screen size */
-    scr_width = 512; 
+    scr_width = 512;
     scr_height = 512;
 
     binterp = Tcl_CreateInterp();
@@ -286,18 +286,18 @@ main(int argc, char **argv)
     for (y = 0; y < scr_height; y++) {
 	/*sleep(1);*/
 	printf("y: %d\n", y);
-        n = bu_mread(infd, (char *)scanline, scanbytes);
-        if (n <= 0) break;
-        bblock.pixelPtr = (unsigned char *)scanline;
-        bblock.width = 512;
-        bblock.pitch = 3 * scr_width;
+	n = bu_mread(infd, (char *)scanline, scanbytes);
+	if (n <= 0) break;
+	bblock.pixelPtr = (unsigned char *)scanline;
+	bblock.width = 512;
+	bblock.pitch = 3 * scr_width;
 #if defined(TK_MAJOR_VERSION) && TK_MAJOR_VERSION == 8 && defined(TK_MINOR_VERSION) && TK_MINOR_VERSION < 5
 	Tk_PhotoPutBlock(binterp, &bblock, 0, 512-y, 512, 1, TK_PHOTO_COMPOSITE_SET);
 #else
 	Tk_PhotoPutBlock(binterp, bphoto, &bblock, 0, 512-y, 512, 1, TK_PHOTO_COMPOSITE_SET);
 #endif
 	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-        /* slop at the end of the line? */
+	/* slop at the end of the line? */
     }
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 

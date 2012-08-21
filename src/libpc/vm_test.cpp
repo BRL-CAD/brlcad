@@ -59,7 +59,7 @@ boost::shared_ptr<MathFunction> make_function(char const *name, function1_ptr f1
 }
 
 
-/* Arity based function maker 
+/* Arity based function maker
    boost::shared_ptr<MathFunction> make_function(char const *name, int arity)
    {
    return boost::shared_ptr<MathFunction>(new UserFunction(name, arity));

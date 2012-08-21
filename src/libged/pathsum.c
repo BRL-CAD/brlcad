@@ -41,11 +41,11 @@ ged_pathsum(struct ged *gedp, int argc, const char *argv[])
     struct _ged_trace_data gtd;
 
     /* listeval */
-    static const char *usage1 = 
+    static const char *usage1 =
 	"[-t] {path}\n{path} may be specified by '/' or space separated components, but not both";
 
     /* paths */
-    static const char *usage2 = 
+    static const char *usage2 =
 	"{path_start}\n{path_start} may be specified by '/' or space separated components, but not both";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

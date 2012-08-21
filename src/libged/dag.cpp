@@ -108,13 +108,13 @@ find_roots(_ged_dag_data *dag)
     ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
 
     for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
-        Avoid::IntList shapes_runningFrom;
-        dag->router->attachedShapes(shapes_runningFrom, (*it)->id(), Avoid::runningFrom);
+	Avoid::IntList shapes_runningFrom;
+	dag->router->attachedShapes(shapes_runningFrom, (*it)->id(), Avoid::runningFrom);
 
-        /* Check if there is no edge that goes in this node and that there exist edges going out of it. */
-        if (shapes_runningFrom.size() == 0) {
-            roots.push_back((*it)->id());
-        }
+	/* Check if there is no edge that goes in this node and that there exist edges going out of it. */
+	if (shapes_runningFrom.size() == 0) {
+	    roots.push_back((*it)->id());
+	}
     }
     return roots;
 }
@@ -135,20 +135,20 @@ position_node(_ged_dag_data *dag, bool has_parent, Avoid::ShapeRef *parent, Avoi
      * Therefore, set the child's position depending on the parent's position.
      */
     if (has_parent) {
-        double parent_x, parent_y, parent_x1, parent_y1;
+	double parent_x, parent_y, parent_x1, parent_y1;
 
-        parent->polygon().getBoundingRect(&parent_x, &parent_y, &parent_x1, &parent_y1);
+	parent->polygon().getBoundingRect(&parent_x, &parent_y, &parent_x1, &parent_y1);
 
-        /* If the child node is not already on that level. Reset its y coordinate. */
-        if (!NEAR_EQUAL(new_y, parent_y + POSITION_COORDINATE, 0.001)) {
-            new_y = parent_y + POSITION_COORDINATE;
-        } else {
-            maxX_level[level] = std::max(new_x1, maxX_level[level]);
-            return;
-        }
+	/* If the child node is not already on that level. Reset its y coordinate. */
+	if (!NEAR_EQUAL(new_y, parent_y + POSITION_COORDINATE, 0.001)) {
+	    new_y = parent_y + POSITION_COORDINATE;
+	} else {
+	    maxX_level[level] = std::max(new_x1, maxX_level[level]);
+	    return;
+	}
     } else {
-        /* This means that it is a root node. */
-        new_y = POSITION_COORDINATE - 20.0;
+	/* This means that it is a root node. */
+	new_y = POSITION_COORDINATE - 20.0;
     }
     new_x = maxX_level[level] + POSITION_COORDINATE;
     new_x1 = new_x + X_WIDTH;
@@ -179,17 +179,17 @@ set_layout(_ged_dag_data *dag, bool has_parent, unsigned long int parent_id, uns
     /* Find references to the parent and child shapes. */
     ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
     for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
-        if (has_parent && (*it)->id() == parent_id) {
-            parent = dynamic_cast<ShapeRef *>(*it);
-        } else if ((*it)->id() == child_id) {
-            child = dynamic_cast<ShapeRef *>(*it);
+	if (has_parent && (*it)->id() == parent_id) {
+	    parent = dynamic_cast<ShapeRef *>(*it);
+	} else if ((*it)->id() == child_id) {
+	    child = dynamic_cast<ShapeRef *>(*it);
 
-            /* Find the child's children. */
-            dag->router->attachedShapes(children, child_id, Avoid::runningTo);
-        }
-        if ((parent && child) || (child && !has_parent)) {
-            break;
-        }
+	    /* Find the child's children. */
+	    dag->router->attachedShapes(children, child_id, Avoid::runningTo);
+	}
+	if ((parent && child) || (child && !has_parent)) {
+	    break;
+	}
     }
 
     /* Set the position of the child node. */
@@ -197,20 +197,20 @@ set_layout(_ged_dag_data *dag, bool has_parent, unsigned long int parent_id, uns
     dag->router->processTransaction();
 
     if (children.size() == 0) {
-        return;
+	return;
     } else {
-        has_parent = true;
-        std::list<unsigned int>::iterator it;
+	has_parent = true;
+	std::list<unsigned int>::iterator it;
 
-        level ++;
-        if (maxX_level.size() <= level) {
-            maxX_level.reserve(level + 1);
-            maxX_level.push_back(0.0);
-        }
-        for ( it=children.begin() ; it != children.end(); it++) {
-            set_layout(dag, has_parent, child_id, *it, level, maxX_level);
-        }
-        level --;
+	level ++;
+	if (maxX_level.size() <= level) {
+	    maxX_level.reserve(level + 1);
+	    maxX_level.push_back(0.0);
+	}
+	for ( it=children.begin() ; it != children.end(); it++) {
+	    set_layout(dag, has_parent, child_id, *it, level, maxX_level);
+	}
+	level --;
     }
 }
 
@@ -223,7 +223,7 @@ add_object(struct _ged_dag_data *dag, unsigned int id)
 {
     Avoid::Point srcPt(dag->object_nr * POSITION_COORDINATE + 2.0, dag->object_nr * POSITION_COORDINATE + 2.0);
     Avoid::Point dstPt(POSITION_COORDINATE + dag->object_nr * POSITION_COORDINATE, POSITION_COORDINATE +
-                       dag->object_nr * POSITION_COORDINATE);
+		       dag->object_nr * POSITION_COORDINATE);
     Avoid::Rectangle shapeRect(srcPt, dstPt);
     Avoid::ShapeRef *shapeRef = new Avoid::ShapeRef(dag->router, shapeRect, id);
 
@@ -243,8 +243,8 @@ free_hash_values(struct bu_hash_tbl *htbl)
     entry = bu_hash_tbl_first(htbl, &rec);
 
     while (entry) {
-        bu_free(bu_get_hash_value(entry), "hash entry");
-        entry = bu_hash_tbl_next(&rec);
+	bu_free(bu_get_hash_value(entry), "hash entry");
+	entry = bu_hash_tbl_next(&rec);
     }
 }
 
@@ -296,7 +296,7 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
 
     /* Look for the ID of the current combination */
     if ((hsh_entry_comb = bu_find_hash_entry(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx))) {
-        comb_id = atoi((const char*)hsh_entry_comb->value);
+	comb_id = atoi((const char*)hsh_entry_comb->value);
     }
 
     /* Add the combination name to the vector */
@@ -308,19 +308,19 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
     bool shape_exists = false;
     ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
     for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
-        if ((*it)->id() == comb_id) {
-            /* Don't create another shape because it already exists a corresponding one.
-             * Get a reference to the shape that corresponds to the current node of the subtree.
-             */
-            shapeRef1 = dynamic_cast<ShapeRef *>(*it);
-            shape_exists = true;
-            break;
-        }
+	if ((*it)->id() == comb_id) {
+	    /* Don't create another shape because it already exists a corresponding one.
+	     * Get a reference to the shape that corresponds to the current node of the subtree.
+	     */
+	    shapeRef1 = dynamic_cast<ShapeRef *>(*it);
+	    shape_exists = true;
+	    break;
+	}
     }
     if (!shape_exists) {
-        /* Create a shape for the current node of the subtree */
-        dag->object_nr++;
-        shapeRef1 = add_object(dag, comb_id);
+	/* Create a shape for the current node of the subtree */
+	dag->object_nr++;
+	shapeRef1 = add_object(dag, comb_id);
     }
 
     /* FIXME: this is yet-another copy of the commonly-used code that
@@ -333,90 +333,90 @@ dag_comb(struct db_i *dbip, struct directory *dp, genptr_t out, struct _ged_dag_
     struct rt_tree_array *rt_tree_array = NULL;
 
     if (db_ck_v4gift_tree(comb->tree) < 0) {
-        db_non_union_push(comb->tree, &rt_uniresource);
-        if (db_ck_v4gift_tree(comb->tree) < 0) {
-            bu_log("INTERNAL_ERROR: Cannot flatten tree of [%s] for listing", dp->d_namep);
-            return;
-        }
+	db_non_union_push(comb->tree, &rt_uniresource);
+	if (db_ck_v4gift_tree(comb->tree) < 0) {
+	    bu_log("INTERNAL_ERROR: Cannot flatten tree of [%s] for listing", dp->d_namep);
+	    return;
+	}
     }
 
     node_count = db_tree_nleaves(comb->tree);
     if (node_count > 0) {
-        rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
-        actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 1, &rt_uniresource) - rt_tree_array;
-        BU_ASSERT_SIZE_T(actual_count, ==, node_count);
-        comb->tree = TREE_NULL;
+	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
+	actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array, comb->tree, OP_UNION, 1, &rt_uniresource) - rt_tree_array;
+	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
+	comb->tree = TREE_NULL;
     } else {
-        actual_count = 0;
-        rt_tree_array = NULL;
+	actual_count = 0;
+	rt_tree_array = NULL;
     }
 
     bu_log("%d subnode(s)\n", actual_count);
 
     for (i = 0; i < actual_count; i++) {
-        char op;
+	char op;
 
-        switch (rt_tree_array[i].tl_op) {
-            case OP_UNION:
-                op = '+';
-                break;
-            case OP_INTERSECT:
-                op = 'x';
-                break;
-            case OP_SUBTRACT:
-                op = '-';
-                break;
-            default:
-                op = '?';
-                break;
-        }
+	switch (rt_tree_array[i].tl_op) {
+	    case OP_UNION:
+		op = '+';
+		break;
+	    case OP_INTERSECT:
+		op = 'x';
+		break;
+	    case OP_SUBTRACT:
+		op = '-';
+		break;
+	    default:
+		op = '?';
+		break;
+	}
 
-        bu_log("\t\"%s\" -> \"%s\" [ label=\"%c\" ];\n", dp->d_namep, rt_tree_array[i].tl_tree->tr_l.tl_name, op);
-        struct bu_hash_entry *hsh_entry;
-        hsh_entry = bu_find_hash_entry(objects, (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name) + 1, &prev, &idx);
+	bu_log("\t\"%s\" -> \"%s\" [ label=\"%c\" ];\n", dp->d_namep, rt_tree_array[i].tl_tree->tr_l.tl_name, op);
+	struct bu_hash_entry *hsh_entry;
+	hsh_entry = bu_find_hash_entry(objects, (unsigned char *)rt_tree_array[i].tl_tree->tr_l.tl_name, strlen(rt_tree_array[i].tl_tree->tr_l.tl_name) + 1, &prev, &idx);
 
-        if (hsh_entry) {
-            subnode_id = atoi((const char*)hsh_entry->value);
+	if (hsh_entry) {
+	    subnode_id = atoi((const char*)hsh_entry->value);
 
-            /* Check if a shape was already created for this subnode. */
-            shape_exists = false;
-            finish = dag->router->m_obstacles.end();
-            for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
-                if ((*it)->id() == subnode_id) {
-                    /* Don't create another shape because it already exists a corresponding one.
-                     * Get a reference to the shape that corresponds to the current node of the subtree.
-                     */
-                    shapeRef2 = dynamic_cast<ShapeRef *>(*it);
-                    shape_exists = true;
-                    break;
-                }
-            }
-            if (!shape_exists) {
-                /* Create a shape for the current node of the subtree */
-                dag->object_nr++;
-                shapeRef2 = add_object(dag, subnode_id);
-            }
+	    /* Check if a shape was already created for this subnode. */
+	    shape_exists = false;
+	    finish = dag->router->m_obstacles.end();
+	    for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
+		if ((*it)->id() == subnode_id) {
+		    /* Don't create another shape because it already exists a corresponding one.
+		     * Get a reference to the shape that corresponds to the current node of the subtree.
+		     */
+		    shapeRef2 = dynamic_cast<ShapeRef *>(*it);
+		    shape_exists = true;
+		    break;
+		}
+	    }
+	    if (!shape_exists) {
+		/* Create a shape for the current node of the subtree */
+		dag->object_nr++;
+		shapeRef2 = add_object(dag, subnode_id);
+	    }
 
-            /* Create connection pins on shapes for linking the parent node with the subnode. */
-            new Avoid::ShapeConnectionPin(shapeRef1, CENTRE, Avoid::ATTACH_POS_CENTRE, Avoid::ATTACH_POS_CENTRE);
-            new Avoid::ShapeConnectionPin(shapeRef2, CENTRE, Avoid::ATTACH_POS_CENTRE, Avoid::ATTACH_POS_CENTRE);
+	    /* Create connection pins on shapes for linking the parent node with the subnode. */
+	    new Avoid::ShapeConnectionPin(shapeRef1, CENTRE, Avoid::ATTACH_POS_CENTRE, Avoid::ATTACH_POS_CENTRE);
+	    new Avoid::ShapeConnectionPin(shapeRef2, CENTRE, Avoid::ATTACH_POS_CENTRE, Avoid::ATTACH_POS_CENTRE);
 
-            /* Create connector from each shape shapeRef2 to the input pin on shapeRef1. */
-            Avoid::ConnEnd dstEnd(shapeRef1, CENTRE);
-            Avoid::ConnEnd srcEnd(shapeRef2, CENTRE);
-            dag->last_connref_id++;
-            Avoid::ConnRef *connRef = new Avoid::ConnRef(dag->router, srcEnd, dstEnd, dag->last_connref_id);
+	    /* Create connector from each shape shapeRef2 to the input pin on shapeRef1. */
+	    Avoid::ConnEnd dstEnd(shapeRef1, CENTRE);
+	    Avoid::ConnEnd srcEnd(shapeRef2, CENTRE);
+	    dag->last_connref_id++;
+	    Avoid::ConnRef *connRef = new Avoid::ConnRef(dag->router, srcEnd, dstEnd, dag->last_connref_id);
 
-            connRef->setCallback(conn_callback, connRef);
-            dag->router->processTransaction();
-        }
+	    connRef->setCallback(conn_callback, connRef);
+	    dag->router->processTransaction();
+	}
 
-        db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
+	db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
     }
     bu_vls_free(&vls);
 
     if (rt_tree_array)
-        bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
+	bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
     }
 
     rt_db_free_internal(&intern);
@@ -439,58 +439,58 @@ put_me_in_a_bucket(struct directory *dp, struct directory *ndp, struct db_i *dbi
     bu_vls_sprintf(&dp_name_vls, "%s%s", "", dp->d_namep);
 
     if(dp->d_flags & RT_DIR_SOLID) {
-        bu_log("Adding PRIMITIVE object [%s]\n", bu_vls_addr(&dp_name_vls));
+	bu_log("Adding PRIMITIVE object [%s]\n", bu_vls_addr(&dp_name_vls));
 
-        /* Check if this solid is in the objects list. */
-        prev = NULL;
-        hsh_entry = bu_find_hash_entry(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
+	/* Check if this solid is in the objects list. */
+	prev = NULL;
+	hsh_entry = bu_find_hash_entry(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
 
-        if (hsh_entry) {
-            object_id = atoi((const char*)hsh_entry->value);
+	if (hsh_entry) {
+	    object_id = atoi((const char*)hsh_entry->value);
 
-            o->primitives.reserve(o->primitives.size() + 1);
-            std::string name((const char *)dp->d_namep);
-            o->primitives.push_back(name);
+	    o->primitives.reserve(o->primitives.size() + 1);
+	    std::string name((const char *)dp->d_namep);
+	    o->primitives.push_back(name);
 
-            /* "Decorate" the object. Add its name and type into the hash table. */
-            decorate_object(dag, dp->d_namep, dp->d_flags);
+	    /* "Decorate" the object. Add its name and type into the hash table. */
+	    decorate_object(dag, dp->d_namep, dp->d_flags);
 
-            /* Check if a shape was already created for this subnode. */
-            bool shape_exists = false;
-            ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
-            for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
-                if ((*it)->id() == object_id) {
-                    /* Don't create another shape because it already exists a corresponding one. */
-                    shape_exists = true;
-                    break;
-                }
-            }
-            if (!shape_exists) {
-                /* Create a shape for the current node of the subtree */
-                dag->object_nr++;
-                add_object(dag, object_id);
-                dag->router->processTransaction();
-            }
-        }
+	    /* Check if a shape was already created for this subnode. */
+	    bool shape_exists = false;
+	    ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
+	    for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
+		if ((*it)->id() == object_id) {
+		    /* Don't create another shape because it already exists a corresponding one. */
+		    shape_exists = true;
+		    break;
+		}
+	    }
+	    if (!shape_exists) {
+		/* Create a shape for the current node of the subtree */
+		dag->object_nr++;
+		add_object(dag, object_id);
+		dag->router->processTransaction();
+	    }
+	}
     } else if (dp->d_flags & RT_DIR_COMB) {
-        bu_log("Adding COMB object [%s]\n", bu_vls_addr(&dp_name_vls));
-        dag_comb(dbip, ndp, o, dag, objects);
+	bu_log("Adding COMB object [%s]\n", bu_vls_addr(&dp_name_vls));
+	dag_comb(dbip, ndp, o, dag, objects);
 
-        /* "Decorate" the object. Add its name and type into the hash table. */
-        decorate_object(dag, dp->d_namep, dp->d_flags);
+	/* "Decorate" the object. Add its name and type into the hash table. */
+	decorate_object(dag, dp->d_namep, dp->d_flags);
     } else {
-        bu_log("Something else: [%s]\n", bu_vls_addr(&dp_name_vls));
-        prev = NULL;
-        hsh_entry = bu_find_hash_entry(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
+	bu_log("Something else: [%s]\n", bu_vls_addr(&dp_name_vls));
+	prev = NULL;
+	hsh_entry = bu_find_hash_entry(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
 
-        if (hsh_entry) {
-            o->non_geometries.reserve(o->non_geometries.size() + 1);
-            std::string name((const char *)dp->d_namep);
-            o->non_geometries.push_back(name);
+	if (hsh_entry) {
+	    o->non_geometries.reserve(o->non_geometries.size() + 1);
+	    std::string name((const char *)dp->d_namep);
+	    o->non_geometries.push_back(name);
 
-            /* "Decorate" the object. Add its name and type into the hash table. */
-            decorate_object(dag, dp->d_namep, dp->d_flags);
-        }
+	    /* "Decorate" the object. Add its name and type into the hash table. */
+	    decorate_object(dag, dp->d_namep, dp->d_flags);
+	}
     }
 
     bu_vls_free(&dp_name_vls);
@@ -534,51 +534,51 @@ add_objects(struct ged *gedp, struct _ged_dag_data *dag)
 
     /* Traverse the database 'gedp' and for each object add its name and an ID into the "objects" hash table. */
     for (i = 0; i < RT_DBNHASH; i++) {
-        for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-            bu_vls_sprintf(&dp_name_vls, "%s%s", "", dp->d_namep);
-            ndp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&dp_name_vls), 1);
-            if (ndp) {
-                /* Check if this object is already in the hash table. If not, add it to the objects hash table. */
-                int new_entry;
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    bu_vls_sprintf(&dp_name_vls, "%s%s", "", dp->d_namep);
+	    ndp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&dp_name_vls), 1);
+	    if (ndp) {
+		/* Check if this object is already in the hash table. If not, add it to the objects hash table. */
+		int new_entry;
 
-                hsh_entry1 = bu_find_hash_entry(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
+		hsh_entry1 = bu_find_hash_entry(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &prev, &idx);
 
-                if (!hsh_entry1) {
-                    bu_log("Adding object [%s]\n", bu_vls_addr(&dp_name_vls));
+		if (!hsh_entry1) {
+		    bu_log("Adding object [%s]\n", bu_vls_addr(&dp_name_vls));
 
-                    /* This object hasn't been registered yet. Add it into the solids hash table and create a shape for it. */
-                    object_nr++;
+		    /* This object hasn't been registered yet. Add it into the solids hash table and create a shape for it. */
+		    object_nr++;
 
-                    struct bu_hash_entry *hsh_entry = bu_hash_add_entry(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &new_entry);
-                    char *id = (char *)bu_malloc((size_t)6, "hash entry value");
-                    sprintf(id, "%d", object_nr);
+		    struct bu_hash_entry *hsh_entry = bu_hash_add_entry(objects, (unsigned char *)dp->d_namep, strlen(dp->d_namep) + 1, &new_entry);
+		    char *id = (char *)bu_malloc((size_t)6, "hash entry value");
+		    sprintf(id, "%d", object_nr);
 
-                    /* Set the id value for this object */
-                    bu_set_hash_value(hsh_entry, (unsigned char *)id);
+		    /* Set the id value for this object */
+		    bu_set_hash_value(hsh_entry, (unsigned char *)id);
 
-                    /* Add the ID of this object as a key and its name as a value. */
-                    hsh_entry = bu_hash_add_entry(dag->ids, (unsigned char *)id, strlen(id) + 1, &new_entry);
-                    bu_set_hash_value(hsh_entry, (unsigned char *)dp->d_namep);
-                }
-            } else {
-                bu_log("ERROR: Unable to locate [%s] within input database, skipping.\n",  bu_vls_addr(&dp_name_vls));
-            }
-        }
+		    /* Add the ID of this object as a key and its name as a value. */
+		    hsh_entry = bu_hash_add_entry(dag->ids, (unsigned char *)id, strlen(id) + 1, &new_entry);
+		    bu_set_hash_value(hsh_entry, (unsigned char *)dp->d_namep);
+		}
+	    } else {
+		bu_log("ERROR: Unable to locate [%s] within input database, skipping.\n",  bu_vls_addr(&dp_name_vls));
+	    }
+	}
     }
 
     /* Traverse the database 'gedp' and for each object check its type (primitive, combination or non-geometry)
      * and add its name into the corresponding list.
      */
     for (i = 0; i < RT_DBNHASH; i++) {
-        for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-            bu_vls_sprintf(&dp_name_vls, "%s%s", "", dp->d_namep);
-            ndp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&dp_name_vls), 1);
-            if (ndp) {
-                put_me_in_a_bucket(dp, ndp, dbip, objects, &o, dag);
-            } else {
-                bu_log("ERROR: Unable to locate [%s] within input database, skipping.\n",  bu_vls_addr(&dp_name_vls));
-            }
-        }
+	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    bu_vls_sprintf(&dp_name_vls, "%s%s", "", dp->d_namep);
+	    ndp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&dp_name_vls), 1);
+	    if (ndp) {
+		put_me_in_a_bucket(dp, ndp, dbip, objects, &o, dag);
+	    } else {
+		bu_log("ERROR: Unable to locate [%s] within input database, skipping.\n",  bu_vls_addr(&dp_name_vls));
+	    }
+	}
     }
 
     bu_log("Added %d objects.\n", dag->object_nr);
@@ -615,23 +615,23 @@ graph_positions(struct ged *gedp, struct _ged_dag_data *dag)
 
     /* Traverse the root nodes and for each tree set the positions of all the nodes. */
     for (unsigned int i = 0; i < size; i++) {
-        char *root = (char *)bu_malloc((size_t)6, "hash entry value");
-        sprintf(root, "%u", root_ids[i]);
-        struct bu_hash_entry *prev_root = NULL;
-        unsigned long idx_root;
-        struct bu_hash_entry *hsh_entry_root = bu_find_hash_entry(dag->ids, (unsigned char *)root, strlen(root) + 1, &prev_root, &idx_root);
+	char *root = (char *)bu_malloc((size_t)6, "hash entry value");
+	sprintf(root, "%u", root_ids[i]);
+	struct bu_hash_entry *prev_root = NULL;
+	unsigned long idx_root;
+	struct bu_hash_entry *hsh_entry_root = bu_find_hash_entry(dag->ids, (unsigned char *)root, strlen(root) + 1, &prev_root, &idx_root);
 
-        if (hsh_entry_root) {
-            level = 0;
-            if (i == 0) {
-                /* First root node: set the maximum X coordinate to be 0.0. */
-                maxX_level.reserve(1);
-                maxX_level.push_back(0.0);
-            }
+	if (hsh_entry_root) {
+	    level = 0;
+	    if (i == 0) {
+		/* First root node: set the maximum X coordinate to be 0.0. */
+		maxX_level.reserve(1);
+		maxX_level.push_back(0.0);
+	    }
 
-            /* Set the layout for the tree that starts with this root node. */
-            set_layout(dag, false, root_ids[i], root_ids[i], level, maxX_level);
-        }
+	    /* Set the layout for the tree that starts with this root node. */
+	    set_layout(dag, false, root_ids[i], root_ids[i], level, maxX_level);
+	}
     }
 
     /* Traverse each shape within the graph and pass on the name, type and coordinates
@@ -639,23 +639,23 @@ graph_positions(struct ged *gedp, struct _ged_dag_data *dag)
      */
     ObstacleList::const_iterator finish = dag->router->m_obstacles.end();
     for (ObstacleList::const_iterator it = dag->router->m_obstacles.begin(); it != finish; ++it) {
-        char *id = (char *)bu_malloc((size_t)6, "hash entry value");
-        sprintf(id, "%d", (*it)->id());
+	char *id = (char *)bu_malloc((size_t)6, "hash entry value");
+	sprintf(id, "%d", (*it)->id());
 
-        struct bu_hash_entry *prev = NULL;
-        unsigned long idx;
-        struct bu_hash_entry *hsh_entry = bu_find_hash_entry(dag->ids, (unsigned char *)id, strlen(id) + 1, &prev, &idx);
-        if(hsh_entry) {
-            (*it)->polygon().getBoundingRect(&minX, &minY, &maxX, &maxY);
+	struct bu_hash_entry *prev = NULL;
+	unsigned long idx;
+	struct bu_hash_entry *hsh_entry = bu_find_hash_entry(dag->ids, (unsigned char *)id, strlen(id) + 1, &prev, &idx);
+	if(hsh_entry) {
+	    (*it)->polygon().getBoundingRect(&minX, &minY, &maxX, &maxY);
 
-            prev = NULL;
-            struct bu_hash_entry *hsh_entry_type = bu_find_hash_entry(dag->object_types, hsh_entry->value,
-                                                                      strlen((char *)hsh_entry->value) + 1, &prev, &idx);
-            if(hsh_entry_type) {
-                bu_vls_printf(gedp->ged_result_str, "%s %s %f %f %f %f\n", hsh_entry->value, hsh_entry_type->value, minX,
-                              minY, maxX, maxY);
-            }
-        }
+	    prev = NULL;
+	    struct bu_hash_entry *hsh_entry_type = bu_find_hash_entry(dag->object_types, hsh_entry->value,
+								      strlen((char *)hsh_entry->value) + 1, &prev, &idx);
+	    if(hsh_entry_type) {
+		bu_vls_printf(gedp->ged_result_str, "%s %s %f %f %f %f\n", hsh_entry->value, hsh_entry_type->value, minX,
+			      minY, maxX, maxY);
+	    }
+	}
     }
 }
 
@@ -702,15 +702,15 @@ _ged_graph_show(struct ged *gedp)
     double x, y;
     Avoid::ConnRefList::const_iterator fin = dag->router->connRefs.end();
     for (Avoid::ConnRefList::const_iterator i = dag->router->connRefs.begin(); i != fin; ++i) {
-        bu_vls_printf(gedp->ged_result_str, "edge\n");
-        Avoid::Polygon polyline = (*i)->displayRoute();
-        unsigned int size = polyline.ps.size();
+	bu_vls_printf(gedp->ged_result_str, "edge\n");
+	Avoid::Polygon polyline = (*i)->displayRoute();
+	unsigned int size = polyline.ps.size();
 
-        for (unsigned int j = 0; j < size; j ++) {
-            x = polyline.ps[j].x;
-            y = polyline.ps[j].y;
-            bu_vls_printf(gedp->ged_result_str, "%f %f\n", x, y);
-        }
+	for (unsigned int j = 0; j < size; j ++) {
+	    x = polyline.ps[j].x;
+	    y = polyline.ps[j].y;
+	    bu_vls_printf(gedp->ged_result_str, "%f %f\n", x, y);
+	}
     }
     bu_free(dag, "free DAG");
 
@@ -738,32 +738,32 @@ ged_graph(struct ged *gedp, int argc, const char *argv[])
 
     /* Didn't provide any subcommand. Must be wanting help */
     if (argc != 2) {
-        bu_vls_printf(gedp->ged_result_str, "Usage: %s %sAvailable subcommands: ", cmd, usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %sAvailable subcommands: ", cmd, usage);
 
-        /* Output the available subcommands. */
-        for (int i = 0; graph_subcmds[i].name; ++i) {
-            bu_vls_printf(gedp->ged_result_str, "%s ", graph_subcmds[i].name);
-        }
-        return GED_ERROR;
+	/* Output the available subcommands. */
+	for (int i = 0; graph_subcmds[i].name; ++i) {
+	    bu_vls_printf(gedp->ged_result_str, "%s ", graph_subcmds[i].name);
+	}
+	return GED_ERROR;
     } else if (argc == 2) {
-        /* Determine subcommand. */
-        subcommand = argv[1];
+	/* Determine subcommand. */
+	subcommand = argv[1];
 
-        /* Check if it's the "show" subcommand. */
-        if (BU_STR_EQUAL(graph_subcmds[0].name, subcommand)) {
-            return _ged_graph_show(gedp);
-        } else if (BU_STR_EQUAL(graph_subcmds[1].name, subcommand)) {
-            /* It is the "positions" subcommand. */
-            return _ged_graph_positions(gedp);
-        } else {
-            bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!\nAvailable subcommands: ", cmd, subcommand);
+	/* Check if it's the "show" subcommand. */
+	if (BU_STR_EQUAL(graph_subcmds[0].name, subcommand)) {
+	    return _ged_graph_show(gedp);
+	} else if (BU_STR_EQUAL(graph_subcmds[1].name, subcommand)) {
+	    /* It is the "positions" subcommand. */
+	    return _ged_graph_positions(gedp);
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!\nAvailable subcommands: ", cmd, subcommand);
 
-            /* Output the available subcommands. */
-            for (int i = 0; graph_subcmds[i].name; ++i) {
-                bu_vls_printf(gedp->ged_result_str, "%s ", graph_subcmds[i].name);
-            }
-            return GED_ERROR;
-        }
+	    /* Output the available subcommands. */
+	    for (int i = 0; graph_subcmds[i].name; ++i) {
+		bu_vls_printf(gedp->ged_result_str, "%s ", graph_subcmds[i].name);
+	    }
+	    return GED_ERROR;
+	}
     }
     return GED_OK;
 }
@@ -788,7 +788,7 @@ ged_graph(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     bu_vls_printf(gedp->ged_result_str, "%s : ERROR This command is disabled due to the absence of Adaptagrams library",
-          argv[0]);
+	  argv[0]);
     return GED_ERROR;
 }
 

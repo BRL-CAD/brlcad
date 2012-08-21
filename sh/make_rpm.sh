@@ -76,7 +76,7 @@ fcheck(){
 	LLIST=$LLIST" "$1
 	E=1
     else
-        echo "Found package $1..."
+	echo "Found package $1..."
     fi
 }
 

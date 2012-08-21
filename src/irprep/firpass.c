@@ -939,9 +939,9 @@ int main(int argc, char **argv)
 	    if (ifire == 0)
 	    {
 		/*  START # 1040  */
-              if ((!ZERO(region[i].cumvol[0])) &&
-                  (!ZERO(region[i].cumvol[1])) &&
-                  (!ZERO(region[i].cumvol[2])))
+	      if ((!ZERO(region[i].cumvol[0])) &&
+		  (!ZERO(region[i].cumvol[1])) &&
+		  (!ZERO(region[i].cumvol[2])))
 		{
 		    /*  START # 1045  */
 		    diff = region[i].cumvol[0] - region[i].cumvol[1];
@@ -1002,9 +1002,9 @@ int main(int argc, char **argv)
 	    if (ifire == 0)
 	    {
 		/*  START # 1050  */
-              if ((!ZERO(region[i].surarea[0])) &&
-                  (!ZERO(region[i].surarea[1])) &&
-                  (!ZERO(region[i].surarea[2])))
+	      if ((!ZERO(region[i].surarea[0])) &&
+		  (!ZERO(region[i].surarea[1])) &&
+		  (!ZERO(region[i].surarea[2])))
 		{
 		    /*  START # 1055  */
 		    diff = region[i].surarea[0] - region[i].surarea[1];
@@ -1023,7 +1023,7 @@ int main(int argc, char **argv)
 		    if ((diff / region[i].surarea[2]) > VOLVAR) flag = 1;
 		}					/*  END # 1055  */
 
-                else if ((ZERO(region[i].surarea[0])) ||
+		else if ((ZERO(region[i].surarea[0])) ||
 			 (ZERO(region[i].surarea[1])) ||
 			 (ZERO(region[i].surarea[2])))
 		{
@@ -1077,9 +1077,9 @@ int main(int argc, char **argv)
 		    if (ifire == 0)
 		    {
 			/*  START # 1060  */
-                      if ((!ZERO(region[i].ssurarea[0][j])) &&
-                          (!ZERO(region[i].ssurarea[1][j])) &&
-                          (!ZERO(region[i].ssurarea[2][j])))
+		      if ((!ZERO(region[i].ssurarea[0][j])) &&
+			  (!ZERO(region[i].ssurarea[1][j])) &&
+			  (!ZERO(region[i].ssurarea[2][j])))
 			{
 			    /*  START # 1065  */
 			    diff = region[i].ssurarea[0][j]
@@ -1107,9 +1107,9 @@ int main(int argc, char **argv)
 				flag = 1;
 			}				/*  END # 1065  */
 
-                      else if ((ZERO(region[i].ssurarea[0][j])) ||
-                               (ZERO(region[i].ssurarea[1][j])) ||
-                               (ZERO(region[i].ssurarea[2][j])))
+		      else if ((ZERO(region[i].ssurarea[0][j])) ||
+			       (ZERO(region[i].ssurarea[1][j])) ||
+			       (ZERO(region[i].ssurarea[2][j])))
 			{
 			    flag = 2;
 			}
@@ -1159,9 +1159,9 @@ int main(int argc, char **argv)
 		if (ifire == 0)
 		{
 		    /*  START # 1080  */
-                  if ((!ZERO(region[i].cumfs[k][0])) &&
-                      (!ZERO(region[i].cumfs[k][1])) &&
-                      (!ZERO(region[i].cumfs[k][2])))
+		  if ((!ZERO(region[i].cumfs[k][0])) &&
+		      (!ZERO(region[i].cumfs[k][1])) &&
+		      (!ZERO(region[i].cumfs[k][2])))
 		    {
 			/*  START # 1090  */
 			diff = region[i].cumfs[k][0]
@@ -1189,9 +1189,9 @@ int main(int argc, char **argv)
 			    flag = 1;
 		    }				/*  END # 1090  */
 
-                  else if ((ZERO(region[i].cumfs[k][0])) ||
-                           (ZERO(region[i].cumfs[k][1])) ||
-                           (ZERO(region[i].cumfs[k][2])))
+		  else if ((ZERO(region[i].cumfs[k][0])) ||
+			   (ZERO(region[i].cumfs[k][1])) ||
+			   (ZERO(region[i].cumfs[k][2])))
 		    {
 			flag = 2;
 		    }
@@ -2168,7 +2168,7 @@ int main(int argc, char **argv)
 	(void)fflush(fp3);
 	for (i = 0; i < num; i++)
 	{
-            if (EQUAL(region[i].cumvol[1],1.0))
+	    if (EQUAL(region[i].cumvol[1],1.0))
 	    {
 		(void)fprintf(fp3, "region %d:  ", (i + 1));
 		(void)fprintf(fp3, "large variance on volume:  %f\n",
@@ -2186,7 +2186,7 @@ int main(int argc, char **argv)
 
 	    for (j = 0; j < num; j++)
 	    {
-                if (EQUAL(region[i].ssurarea[1][j],1.0))
+		if (EQUAL(region[i].ssurarea[1][j],1.0))
 		{
 		    (void)fprintf(fp3, "region %d:  adjacent region %d:\n",
 				  (i + 1), (j + 1));
@@ -2199,7 +2199,7 @@ int main(int argc, char **argv)
 	    for (j = 0; j < 7; j++)
 	    {
 		/*  START # 2000  */
-                if (EQUAL(region[i].cumfs[j][1],1.0))
+		if (EQUAL(region[i].cumfs[j][1],1.0))
 		{
 		    /*  START # 2010  */
 		    if (j == 0)

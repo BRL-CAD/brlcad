@@ -781,7 +781,7 @@
     $itk_component(combMembersOpMenu) delete 0 end
 
     set ilist [split $_index ,]
-    set row [lindex $ilist 0] 
+    set row [lindex $ilist 0]
     if {$row == 0} {
 	# Ignore if in header
 	return
@@ -831,7 +831,7 @@
 	    $itk_component(combMembersMenu) add cascade \
 		-label "Select Op" \
 		-menu $itk_component(combMembersOpMenu)
-	    
+
 	    $itk_component(combMembersOpMenu) add command \
 		-label "Union" \
 		-command "$itk_component(combMembers$tname) setTableVal $_index u"
@@ -1045,7 +1045,7 @@
     foreach aindex [lsearch -all -regexp $anames "\[0-9\]+,$_col"] {
 	set index [lindex $anames $aindex]
 	set ilist [split $index ,]
-	set row [lindex $ilist 0] 
+	set row [lindex $ilist 0]
 	if {$row == 0 || $row == $_row} {
 	    # Ignore if in header
 	    continue

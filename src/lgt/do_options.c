@@ -543,7 +543,7 @@ f_Buffer(char **args)
     {
 	HMitem	*itemptr;
 	if (! tty)
-	{   
+	{
 	  if (args == NULL) {
 	    bu_log("f_Buffer - no args!\n");
 	    return	-1;
@@ -1237,7 +1237,7 @@ f_Animate()
 	    bu_log("Illegal input (%s).\n", input_ln);
 	    return	-1;
 	}
-	if (! ready_Output_Device(0)) 
+	if (! ready_Output_Device(0))
 	  return -1;
 	(void) signal(SIGINT, abort_RT);
 	for (frame_no = 0; ! user_interrupt; frame_no++)
@@ -1307,7 +1307,7 @@ static int
 f_GridConfig(char **args)
 {
     if (args != NULL && args[1] != NULL && args[2] == NULL)
-    { 
+    {
 	/* Old style 'G' command for upward compatibility of
 	   'lgt' scripts. */
 	if (sscanf(args[1], "%d", &grid_sz) != 1)
@@ -1642,7 +1642,7 @@ f_Rd_Raw_IR(char **args)
 	bu_strlcpy(ir_file, args[1], MAX_LN);
     else
 	if (tty) {
-	    (void) snprintf(prompt, MAX_LN, 
+	    (void) snprintf(prompt, MAX_LN,
 			    "Name of IR data file ? (%s) ",
 			    ir_file
 		);
@@ -2133,9 +2133,9 @@ f_Parallel(char **args)
 	rt_g.rtg_parallel = 1;
     else
 	rt_g.rtg_parallel = 0;
-    
+
     bu_semaphore_init(RT_SEM_LAST);
-    
+
     return 1;
 }
 
@@ -2224,7 +2224,7 @@ f_Wrt_Mat_Db(char **args)
 	bu_strlcpy(mat_db_file, args[1], MAX_LN);
     else
 	if (tty) {
-	    (void) snprintf(prompt, MAX_LN, 
+	    (void) snprintf(prompt, MAX_LN,
 			    "Name for material data base file ? (%s) ",
 			    mat_db_file
 		);
@@ -2795,7 +2795,7 @@ f_Entr_Lgt_Db(char **args)
     if ((args == NULL || args[1] == NULL) && tty)
     {
 	(void) sprintf(input_ln, "%d", light_id);
-	(void) snprintf(prompt, MAX_LN, 
+	(void) snprintf(prompt, MAX_LN,
 			"Light source id ? [0 to %d](%s) ",
 			MAX_LGTS-1,
 			input_ln
@@ -2830,7 +2830,7 @@ f_Entr_Mat_Db(char **args)
     if ((args == NULL || args[1] == NULL) && tty)
     {
 	(void) sprintf(input_ln, "%d", material_id);
-	(void) snprintf(prompt, MAX_LN, 
+	(void) snprintf(prompt, MAX_LN,
 			"Material id ? [0 to 99](%s) ",
 			input_ln
 	    );
@@ -3232,7 +3232,7 @@ setup_Lgts(int frame)
 	   depends on whether we want perspective or not.
 	*/
 	if (!ZERO(rel_perspective))
-	{ 
+	{
 	    /* Perspective used in animation. */
 	    fastf_t	grid_delta[3], f;
 	    f = EYE_SIZE * rel_perspective;

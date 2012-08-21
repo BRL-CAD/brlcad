@@ -83,16 +83,16 @@ rtwizard_prep () {
 rtwizard_check () {
 NUMBER_WRONG=1
 if [ ! -f rtwizard_test1.pix ] ; then
-        echo "rtwizard failed to create an image - Test #$1"
-        echo '-> rtwizard.sh FAILED'
-        exit 1
+	echo "rtwizard failed to create an image - Test #$1"
+	echo '-> rtwizard.sh FAILED'
+	exit 1
 else
-        if [ ! -f "$TOP_SRCDIR/regress/rtwizard/rtwizard_test$1_ref.asc.gz" ] ; then
-                echo No reference file for $TOP_SRCDIR/regress/rtwizard_test$1.pix
-        else
+	if [ ! -f "$TOP_SRCDIR/regress/rtwizard/rtwizard_test$1_ref.asc.gz" ] ; then
+		echo No reference file for $TOP_SRCDIR/regress/rtwizard_test$1.pix
+	else
 		$GZIP -d -c "$TOP_SRCDIR/regress/rtwizard/rtwizard_test$1_ref.asc.gz" > rtwizard_test$1_ref.asc
-                $ASC2PIX < rtwizard_test$1_ref.asc > rtwizard_test$1_ref.pix
-                $PIXDIFF rtwizard_test$1.pix rtwizard_test$1_ref.pix > rtwizard_test$1.diff.pix 2> rtwizard_test$1.pixdiff.log
+		$ASC2PIX < rtwizard_test$1_ref.asc > rtwizard_test$1_ref.pix
+		$PIXDIFF rtwizard_test$1.pix rtwizard_test$1_ref.pix > rtwizard_test$1.diff.pix 2> rtwizard_test$1.pixdiff.log
 
 		NUMBER_WRONG=`tr , '\012' < rtwizard_test$1.pixdiff.log | awk '/many/ {print $1}' | tail -${TAIL_N}1`
 		export NUMBER_WRONG
@@ -101,9 +101,9 @@ else
 		else
 		  echo "rtwizard_test$1.pix $NUMBER_WRONG off by many"
 		  echo '-> rtwizard.sh FAILED'
-                  exit 1
+		  exit 1
 		fi
-        fi
+	fi
 fi
 }
 

@@ -36,7 +36,7 @@ proc dmtype {args} {
   global mged_players
   global mged_display
   set id $mged_players
-  
+
   set argc [llength $args]
   if {$argc == 0} {
     return $mged_gui($id,dtype)
@@ -53,20 +53,20 @@ proc dmtype {args} {
   }
   set dtype [lindex $args 1]
 
-  set oldaet [_mged_ae] 
- 
+  set oldaet [_mged_ae]
+
   # New dm type is requested
   catch { release $mged_gui($id,top).ur }
   catch { release $mged_gui($id,top).ul }
   catch { release $mged_gui($id,top).lr }
   catch { release $mged_gui($id,top).ll }
-  destroy $mged_gui($id,top).ulF 
+  destroy $mged_gui($id,top).ulF
   destroy $mged_gui($id,top).urF
   destroy $mged_gui($id,top).llF
   destroy $mged_gui($id,top).lrF
 
   openmv $id $mged_gui($id,top) $mged_gui($id,dmc) $mged_default(display) $dtype
- 
+
   grid $mged_gui($id,dmc).$mged_gui($id,dm_loc)\F -in $mged_gui($id,dmc) -sticky "nsew" -row 0 -column 0
 
   set mged_gui($id,dtype) $dtype

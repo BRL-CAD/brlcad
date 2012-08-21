@@ -32,9 +32,9 @@ ConstraintInterface::ConstraintInterface(pc_constrnt *c) : a(NULL), fp_(NULL), n
 {
     if (c) {
 	nargs_ = c->data.cf.nargs;
-        dimension_ = c->data.cf.dimension;
-        fp_ = c->data.cf.fp;
-        a = new double*[nargs_];
+	dimension_ = c->data.cf.dimension;
+	fp_ = c->data.cf.fp;
+	a = new double*[nargs_];
 
 	for (int i =0; i< nargs_; i++) {
 	    a[i] = new double[dimension_];
@@ -59,7 +59,7 @@ bool ConstraintInterface::operator() (VCSet & vcset, std::list<std::string> Vid)
     typedef Variable<double> *Vi;
 
     for (int i =0; i < nargs_; i++) {
-        for (int j = 0; j < dimension_; j++) {
+	for (int j = 0; j < dimension_; j++) {
 	    a[i][j] = ((Vi) vcset.getVariablebyID(Vid.front()))->getValue();
 	    Vid.pop_front();
 	}
@@ -152,9 +152,9 @@ Constraint::Constraint(VCSet &vcs, pc_constrnt *c) :
 bool Constraint::solved()
 {
     if (status == 0)
-        return false;
+	return false;
     else
-        return true;
+	return true;
 }
 
 

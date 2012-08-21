@@ -156,12 +156,12 @@ if {[catch {
 	-columnspan 2 \
 	-sticky ew
     grid $itk_component(status) -row 1 -column 0 \
-        -sticky ew
+	-sticky ew
     grid $itk_component(progress) -row 1 -column 1 \
-        -sticky ew \
+	-sticky ew \
 	-padx {5 20}
     grid $itk_component(mask) -row 1 -column 1 \
-        -sticky news \
+	-sticky news \
 	-padx {5 20}
 }
 

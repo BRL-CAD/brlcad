@@ -8,7 +8,7 @@ BRLCAD_ADDEXEC(tester_bu_sscanf bu_sscanf.c libbu NO_INSTALL LOCAL)
 #      bu_basename testing    #
 ###############################
 BRLCAD_ADDEXEC(tester_bu_basename    bu_basename.c    libbu NO_INSTALL LOCAL)
-add_test(bu_basename_null                                   tester_bu_basename) # tests NULL 
+add_test(bu_basename_null                                   tester_bu_basename) # tests NULL
 add_test(bu_basename_empty                                  tester_bu_basename "")
 add_test(bu_basename_sl_usr_sl_dir_sl_file                  tester_bu_basename "/usr/dir/file")
 add_test(bu_basename_sl_usr_sl_dir_sl_                      tester_bu_basename "/usr/dir/")
@@ -90,7 +90,7 @@ endif(ENABLE_BITV_TESTS)
 #      bu_booleanize testing    #
 #################################
 BRLCAD_ADDEXEC(tester_bu_booleanize bu_booleanize.c libbu NO_INSTALL LOCAL)
-add_test(bu_booleanize_null         tester_bu_booleanize) # tests NULL 
+add_test(bu_booleanize_null         tester_bu_booleanize) # tests NULL
 add_test(bu_booleanize_empty        tester_bu_booleanize "")
 add_test(bu_booleanize_n            tester_bu_booleanize "n")
 add_test(bu_booleanize_nabcd        tester_bu_booleanize "nabcd")
@@ -116,14 +116,14 @@ add_test(bu_booleanize_abcd         tester_bu_booleanize "abcd")
 #      bu_str_isprint testing    #
 ##################################
 # Note - because of the special characters needed in these tests, the strings
-# don't work well when fed in from the command line.  
+# don't work well when fed in from the command line.
 BRLCAD_ADDEXEC(tester_bu_str_isprint bu_str_isprint.c libbu NO_INSTALL LOCAL)
-add_test(bu_str_isprint_basic                tester_bu_str_isprint 1) 
+add_test(bu_str_isprint_basic                tester_bu_str_isprint 1)
 add_test(bu_str_isprint_eol                  tester_bu_str_isprint 2)
 add_test(bu_str_isprint_double_slash         tester_bu_str_isprint 3)
 add_test(bu_str_isprint_horiz_tab            tester_bu_str_isprint 4)
 add_test(bu_str_isprint_non-alphanumeric     tester_bu_str_isprint 5)
-add_test(bu_str_isprint_eol_non-alphanumeric tester_bu_str_isprint 6) 
+add_test(bu_str_isprint_eol_non-alphanumeric tester_bu_str_isprint 6)
 add_test(bu_str_isprint_carriage_return      tester_bu_str_isprint 7)
 
 #
@@ -230,8 +230,8 @@ add_test(bu_str_escape_31  tester_bu_escape 2 31)    # "aaa", "^aaa"
 ##############################################
 #      escape/unescape round trip testing    #
 ##############################################
-add_test(bu_escape_roundtrip_1  tester_bu_escape 3 1) # "abc", "b" 
-add_test(bu_escape_roundtrip_2  tester_bu_escape 3 2) # "abc\\cba", "b" 
+add_test(bu_escape_roundtrip_1  tester_bu_escape 3 1) # "abc", "b"
+add_test(bu_escape_roundtrip_2  tester_bu_escape 3 2) # "abc\\cba", "b"
 add_test(bu_escape_roundtrip_3  tester_bu_escape 3 3) # "abc\\\\cba", "b"
 add_test(bu_escape_roundtrip_4  tester_bu_escape 3 4) # "abc\\\\\\c\\ba\\"
 
@@ -256,7 +256,7 @@ add_test(bu_progname_tests tester_bu_progname)
 # Like many string functions using escaped characters the input strings are
 # left in C to minimize pass-through errors.
 BRLCAD_ADDEXEC(tester_bu_quote bu_quote.c libbu NO_INSTALL LOCAL)
-add_test(bu_quote_test_1  tester_bu_quote 1)   # NULL                 
+add_test(bu_quote_test_1  tester_bu_quote 1)   # NULL
 add_test(bu_quote_test_2  tester_bu_quote 2)   # ""
 add_test(bu_quote_test_3  tester_bu_quote 3)   # " "
 add_test(bu_quote_test_4  tester_bu_quote 4)   # "hello"
@@ -284,7 +284,7 @@ add_test(bu_quote_test_23 tester_bu_quote 23)  # "\"\"\"hello\"\"\""
 #  ************ timer.c tests *************
 #
 BRLCAD_ADDEXEC(tester_bu_timer bu_timer.c libbu NO_INSTALL LOCAL)
-add_test(bu_gettime_test tester_bu_timer)                 
+add_test(bu_gettime_test tester_bu_timer)
 
 #
 #  ************ vls_vprintf.c tests *************

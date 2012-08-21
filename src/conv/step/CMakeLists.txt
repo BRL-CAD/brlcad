@@ -37,14 +37,14 @@ set(fedex_srcs
 	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.cc
 	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.init.cc
 	${SCHEMA_OUT_DIR}/SdaiAll.cc
-	${SCHEMA_OUT_DIR}/compstructs.cc 
+	${SCHEMA_OUT_DIR}/compstructs.cc
 	${SCHEMA_OUT_DIR}/schema.cc
 )
 
-set(FEDEX_OUTPUT 
+set(FEDEX_OUTPUT
 	${fedex_srcs}
 	${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
-	${SCHEMA_OUT_DIR}/Sdaiclasses.h 
+	${SCHEMA_OUT_DIR}/Sdaiclasses.h
 	${SCHEMA_OUT_DIR}/schema.h
 	)
 

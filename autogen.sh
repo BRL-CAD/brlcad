@@ -489,7 +489,7 @@ for sig in 1 2 13 15; do
 
 	    $VERBOSE_ECHO "rm -f acinclude.m4.$$.backup"
 	    rm -f acinclude.m4.$$.backup
-        fi
+	fi
 
 	{ (exit 1); exit 1; }
 ' $sig
@@ -1141,7 +1141,7 @@ download_gnulib_config_guess () {
 	ret=$?
 	if [ ! $ret = 0 ] ; then
 	    continue
-        fi
+	fi
 
 	__cmd_version=`${__cmd} --version | head -n 1 | sed -e 's/^[^0-9]\+//' -e 's/ .*//'`
 	$VERBOSE_ECHO "Found ${__cmd} ${__cmd_version}"
@@ -1190,7 +1190,6 @@ libtoolize_needed () {
     done
     return ${ret}
 }
-
 
 
 ############################################
@@ -1530,7 +1529,7 @@ EOF
 	    $VERBOSE_ECHO "$automake_output"
 
 	    if [ ! $ret = 0 ] ; then
-	 	# test if libtool is busted
+		# test if libtool is busted
 		libtool_failure "$automake_output"
 
 		# let the user know what went wrong

@@ -54,11 +54,11 @@ proc place_near_mouse {top} {
     }
 
     if {$y < 0} {
-        if {[tk windowingsystem] eq "aqua"} {
-          set y 22
-  	} else {
+	if {[tk windowingsystem] eq "aqua"} {
+	  set y 22
+	} else {
 	  set y 0
-        }
+	}
     } elseif {[expr {$y + $height}] > $screenheight} {
 	set y [expr {$screenheight - $height}]
     }

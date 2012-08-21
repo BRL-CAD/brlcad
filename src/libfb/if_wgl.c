@@ -903,7 +903,7 @@ wgl_final_close(FBIO *ifp)
 
     if (SGIL(ifp) != NULL) {
 	/* free up memory associated with image */
-      
+
 	/* free private memory */
 	(void)free(ifp->if_mem);
 	/* free state information */

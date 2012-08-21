@@ -261,8 +261,6 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
 }
 
 
-
-
 /**
  *	C O M P A R E _ M I S S --- compares missed ray to real ray
  */
@@ -537,12 +535,6 @@ free_rays(struct fitness_state *fstate)
 
   }
 */
-
-
-
-
-
-
 
 
 /*

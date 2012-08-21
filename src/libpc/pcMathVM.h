@@ -285,7 +285,7 @@ struct OrNode : public FunctionNode
     Stack *branch(std::size_t);
 private:
     struct OrFunc : public MathFunction {
-    	OrFunc(Stack const &);
+	OrFunc(Stack const &);
 
 	std::size_t arity() const;
 	double evalp(std::vector<double> const & params) const;
@@ -324,7 +324,7 @@ struct UserFuncExpression
     UserFuncExpression(std::vector<std::string> const & arnam, \
 		       boost::shared_ptr<boost::spirit::classic::symbols<double> > const & locvar,
 		       Stack const & s)
-    	: argnames(arnam), localvars(locvar), stack(s)
+	: argnames(arnam), localvars(locvar), stack(s)
     {}
     std::vector<std::string> argnames;
     boost::shared_ptr<boost::spirit::classic::symbols<double> > localvars;
@@ -335,7 +335,7 @@ struct UserFuncExpression
 struct FuncDefNode : public Node
 {
     FuncDefNode(boost::shared_ptr<MathFunction> const & funcptr, \
-    		UserFuncExpression const & value);
+		UserFuncExpression const & value);
     boost::shared_ptr<Node> clone() const;
     void assign() const;
 private:

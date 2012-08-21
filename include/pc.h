@@ -83,8 +83,8 @@ struct pc_param {
     int dtype; 	/** Data type of the data pointed to */
 
     union {		/** The Actual data / pointer */
-    	struct bu_vls expression;
-    	void * ptr;
+	struct bu_vls expression;
+	void * ptr;
     } data;
 };
 
@@ -99,7 +99,7 @@ struct pc_constrnt {
     struct bu_vls name;
     int ctype;
     union {
-    	struct bu_vls expression;
+	struct bu_vls expression;
 	struct pc_constraint_fp cf;
     } data;
     const char **args;

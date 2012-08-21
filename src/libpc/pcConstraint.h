@@ -66,11 +66,11 @@ public:
     Constraint(VCSet &vcs, std::string Cid, std::string Cexpr, functor, \
 	       int count, va_list *args);
     Constraint(VCSet &vcs, pc_constrnt *);
-    
+
     bool solved();
     bool check();
     void evalfunction(functor pf) { eval = pf; };
-    
+
     /** Data access/modification methods */
     std::string getID() const { return id; }
     std::string getExp() const { return expression; }
@@ -86,7 +86,7 @@ private:
     std::string id;
     std::string expression;
     std::list<std::string> Variables;
-    functor eval; 
+    functor eval;
 };
 #endif
 /** @} */

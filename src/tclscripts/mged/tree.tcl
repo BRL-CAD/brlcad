@@ -64,7 +64,7 @@ proc tree {args} {
 		    return [_mged_tree]
 		}
 	    }
-	    -d 
+	    -d
 	    -
 	    -depth {
 		incr i

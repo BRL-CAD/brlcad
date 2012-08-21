@@ -1,4 +1,4 @@
-.PHONY : regression regress test mged 
+.PHONY : regression regress test mged
 
 regression: Makefile clean mged
 	@${ECHO} ---
@@ -107,6 +107,6 @@ CLEANFILES = \
 
 MOSTLYCLEANFILES = \
 	mged_test.mged \
-	mged.log 
+	mged.log
 
 include $(top_srcdir)/misc/Makefile.defs

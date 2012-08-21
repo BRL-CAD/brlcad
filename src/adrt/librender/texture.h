@@ -68,7 +68,6 @@ BU_EXPORT extern void texture_bump_free(struct texture_s *texture);
 BU_EXPORT extern void texture_bump_work(__TEXTURE_WORK_PROTOTYPE__);
 
 
-
 struct texture_camo_s {
     fastf_t size;
     int octaves;

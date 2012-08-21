@@ -340,7 +340,7 @@ tell application "Finder"
 	    set icon size to 96
 	    set arrangement to arranged by kind
 	    try
-                set background picture to imageFile
+		set background picture to imageFile
 	    end try
 	end tell
     end tell

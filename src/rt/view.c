@@ -543,7 +543,7 @@ view_pixel(struct application *ap)
 	    }
 	    break;
 
-        case BUFMODE_ACC:
+	case BUFMODE_ACC:
 	case BUFMODE_SCANLINE:
 	case BUFMODE_DYNAMIC:
 	    if (fbp != FBIO_NULL) {
@@ -638,8 +638,8 @@ view_end(struct application *ap)
     }
 
     if (scanline) {
-    	free_scanlines(height, scanline);
-    	scanline = NULL;
+	free_scanlines(height, scanline);
+	scanline = NULL;
     }
 
     if (psum_buffer) {
@@ -1056,8 +1056,8 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 		    pp->pt_inseg->seg_stp = kut_soltab;
 		    break;
 		} else if (pp->pt_inhit->hit_dist > dist) {
-                    break;
-                }
+		    break;
+		}
 	    }
 	    if (pp == PartHeadp) {
 		/* we ignored everything, this is now a miss */
@@ -1356,7 +1356,7 @@ int viewit(struct application *ap,
 	    break;
 	case 4:
 	    {
-                struct curvature cv = {{0.0, 0.0, 0.0}, 0.0, 0.0};
+		struct curvature cv = {{0.0, 0.0, 0.0}, 0.0, 0.0};
 		fastf_t f;
 
 		RT_CURVATURE(&cv, hitp, pp->pt_inflip, pp->pt_inseg->seg_stp);
@@ -1377,7 +1377,7 @@ int viewit(struct application *ap,
 	    break;
 	case 5:
 	    {
-                struct curvature cv = {{0.0, 0.0, 0.0}, 0.0, 0.0};
+		struct curvature cv = {{0.0, 0.0, 0.0}, 0.0, 0.0};
 
 		RT_CURVATURE(&cv, hitp, pp->pt_inflip, pp->pt_inseg->seg_stp);
 
@@ -1388,7 +1388,7 @@ int viewit(struct application *ap,
 	    break;
 	case 6:
 	    {
-                struct uvcoord uv = {0.0, 0.0, 0.0, 0.0};
+		struct uvcoord uv = {0.0, 0.0, 0.0, 0.0};
 
 		/* Exactly like 'testmap' shader: UV debug */
 		RT_HIT_UVCOORD(ap, pp->pt_inseg->seg_stp, hitp, &uv);
@@ -1659,9 +1659,9 @@ view_2init(struct application *ap, char *UNUSED(framename))
      * one in incremental mode)
      */
     if (((!incr_mode && !full_incr_mode) || !scanline) && !fullfloat_mode) {
-        if (scanline)
-            free_scanlines(height, scanline);
-        scanline = alloc_scanlines(height);
+	if (scanline)
+	    free_scanlines(height, scanline);
+	scanline = alloc_scanlines(height);
     }
     /* On fully incremental mode, allocate the scanline as the total
        size of the image */
@@ -1781,7 +1781,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	    }
 
 	    break;
-        case BUFMODE_ACC:
+	case BUFMODE_ACC:
 	    for (i=0; i<height; i++)
 		scanline[i].sl_left = width;
 	    bu_log("Multiple-sample, average buffering\n");

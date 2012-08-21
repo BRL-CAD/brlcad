@@ -99,7 +99,7 @@ mkbldg_makeframe(struct bu_vls *name, struct rt_wdb *db_fileptr, point_t p1, poi
     mk_rpp(db_fileptr, bu_vls_addr(newName), leftP1, leftP2);
     /* Add to child list. */
     (void)mk_addmember(bu_vls_addr(newName), child_list, NULL, WMOP_UNION);
- 
+
     /*
      * Right
      */
@@ -114,7 +114,7 @@ mkbldg_makeframe(struct bu_vls *name, struct rt_wdb *db_fileptr, point_t p1, poi
     mk_rpp(db_fileptr, bu_vls_addr(newName), rightP1, rightP2);
     /* Add to child list. */
     (void)mk_addmember(bu_vls_addr(newName), child_list, NULL, WMOP_UNION);
-	   
+
 
     /* make the combo */
     VSET(rgb, 64, 180, 96);

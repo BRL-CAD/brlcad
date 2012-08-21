@@ -91,12 +91,12 @@ void
 pc_pushparam_struct(struct pc_pc_set *pcsp, const char *name, int type, void *ptr)
 {
     struct pc_param *par;
-    
+
     pc_getparameter(&par, PC_DB_BYSTRUCT);
     bu_vls_strcat(&(par->name), name);
     par->ctype = PC_DB_BYSTRUCT;
     par->data.ptr = ptr;
-    
+
     switch (type) {
 	case PC_DB_FASTF_T :
 	    par->dtype = PC_DB_FASTF_T;
@@ -177,7 +177,7 @@ pc_pushconstraint_struct(struct pc_pc_set *pcsp, const char *name, int nargs, in
 {
     struct pc_constrnt *con;
     int i;
-    
+
     pc_getconstraint_struct(&con, nargs);
     bu_vls_strcat(&(con->name), name);
     for (i =0; i < nargs; i++)
@@ -209,9 +209,9 @@ pc_free_constraint(struct pc_constrnt *c)
 {
     bu_vls_free(&(c->name));
     if (c->ctype == PC_DB_BYEXPR)
-        bu_vls_free(&(c->data.expression));
-    if (c->ctype == PC_DB_BYSTRUCT) 
-        free(c->args);
+	bu_vls_free(&(c->data.expression));
+    if (c->ctype == PC_DB_BYSTRUCT)
+	free(c->args);
 }
 
 
@@ -224,22 +224,22 @@ pc_free_constraint(struct pc_constrnt *c)
  *
  */
 void
-pc_free_pcset(struct pc_pc_set *pcs) 
+pc_free_pcset(struct pc_pc_set *pcs)
 {
     struct pc_param *par;
     struct pc_constrnt *con;
-    while (BU_LIST_WHILE(par, pc_param, &(pcs->ps->l))) { 
-        bu_vls_free(&(par->name));
+    while (BU_LIST_WHILE(par, pc_param, &(pcs->ps->l))) {
+	bu_vls_free(&(par->name));
 	if (par->ctype == PC_DB_BYEXPR)
 	    bu_vls_free(&(par->data.expression));
-        BU_LIST_DEQUEUE(&(par->l));
+	BU_LIST_DEQUEUE(&(par->l));
 	bu_free(par, "free parameter");
     }
     bu_free(pcs->ps, "free parameter");
     while (BU_LIST_WHILE(con, pc_constrnt, &(pcs->cs->l))) {
 	pc_free_constraint(con);
-        BU_LIST_DEQUEUE(&(con->l));
-        bu_free(con, "free constraint");
+	BU_LIST_DEQUEUE(&(con->l));
+	bu_free(con, "free constraint");
     }
     bu_free(pcs->cs, "free constraint");
 }

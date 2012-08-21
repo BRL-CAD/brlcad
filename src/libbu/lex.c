@@ -43,31 +43,31 @@ lex_getone(int *used, struct bu_vls *rtstr)
     BU_CK_VLS(rtstr);
     cp = bu_vls_addr(rtstr);
     while (1) {
-        if (bu_lex_reading_comment) {
-            do {
-                /* looking at two consecutive chars */
-                tc = *cp; cp++;
-                if (!tc) {
-                    return 0;
-                }
-            } while (!(tc == '*' && *cp == '/'));
-            cp++;   /* skip the '/' */
-            bu_lex_reading_comment = 0;
-        }
-        /* skip leading blanks */
-        while (*cp && isspace((int)(*cp))) cp++;
-        /* is this a comment? '#' to end of line is */
-        if (!*cp || *cp == '#') {
-            return 0;
+	if (bu_lex_reading_comment) {
+	    do {
+		/* looking at two consecutive chars */
+		tc = *cp; cp++;
+		if (!tc) {
+		    return 0;
+		}
+	    } while (!(tc == '*' && *cp == '/'));
+	    cp++;   /* skip the '/' */
+	    bu_lex_reading_comment = 0;
+	}
+	/* skip leading blanks */
+	while (*cp && isspace((int)(*cp))) cp++;
+	/* is this a comment? '#' to end of line is */
+	if (!*cp || *cp == '#') {
+	    return 0;
 
-        }
-        /* is this a 'C' multi-line comment? */
-        if (*cp == '/' && *(cp+1) == '*') {
-            cp += 2;
-            bu_lex_reading_comment = 1;
-        } else /* we are done reading comments */ {
-            break;
-        }
+	}
+	/* is this a 'C' multi-line comment? */
+	if (*cp == '/' && *(cp+1) == '*') {
+	    cp += 2;
+	    bu_lex_reading_comment = 1;
+	} else /* we are done reading comments */ {
+	    break;
+	}
     }
     /* cp points to the first non-blank character */
     sp = cp;		/* start pointer */

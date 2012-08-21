@@ -96,9 +96,9 @@ void doit(FILE *fd)
 	for (i = 0; i < 1<<24; ++i)
 	    if ((vals[i>>3] & (1<<(i & 0x07))))
 		(void)printf("%3d %3d %3d\n",
-                             i & 0x0ff,
-                             (i >> 8) & 0x0ff,
-                             (i >> 16) & 0x0ff);
+			     i & 0x0ff,
+			     (i >> 8) & 0x0ff,
+			     (i >> 16) & 0x0ff);
 }
 
 

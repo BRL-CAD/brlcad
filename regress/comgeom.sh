@@ -120,11 +120,11 @@ if [ X$STATUS != X0 ] ; then
 else
     ERR=`grep error comgeom-g.log`
     if test "x$ERR" = "x" ; then
-        echo "comgeom-g v5 test succeeded (2 of 3)"
+	echo "comgeom-g v5 test succeeded (2 of 3)"
     else
-        echo "comgeom-g v5 errors, see  'comgeom-g.log'"
-        FAILURES="`expr $FAILURES + 1`"
-        export FAILURES
+	echo "comgeom-g v5 errors, see  'comgeom-g.log'"
+	FAILURES="`expr $FAILURES + 1`"
+	export FAILURES
     fi
 fi
 
@@ -140,11 +140,11 @@ if [ X$STATUS != X0 ] ; then
 else
     ERR=`grep error comgeom-g.log`
     if test "x$ERR" = "x" ; then
-        echo "comgeom-g v4 test succeeded (3 of 3)"
+	echo "comgeom-g v4 test succeeded (3 of 3)"
     else
-        echo "comgeom-g v4 errors, see  'comgeom-g.log'"
-        FAILURES="`expr $FAILURES + 1`"
-        export FAILURES
+	echo "comgeom-g v4 errors, see  'comgeom-g.log'"
+	FAILURES="`expr $FAILURES + 1`"
+	export FAILURES
     fi
 fi
 

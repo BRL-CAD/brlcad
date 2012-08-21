@@ -38,7 +38,6 @@
 #include "STEPWrapper.h"
 
 
-
 class STEPEntity;
 typedef STEPEntity* (*FactoryMethod)(STEPWrapper*,SDAI_Application_instance*);
 typedef std::map<std::string,FactoryMethod> FACTORYMAP;

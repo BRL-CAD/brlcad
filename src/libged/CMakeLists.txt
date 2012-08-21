@@ -16,7 +16,7 @@ MACRO(GED_ADD_CMD sources)
     set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} CACHE INTERNAL "libged cmd includes" FORCE)
   endif(${ARGV1})
   if(${ARGV2})
-    set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${${ARGV2}}) 
+    set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${${ARGV2}})
     LIST(REMOVE_DUPLICATES LIBGED_CMD_LIBS_LIST)
     set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} CACHE INTERNAL	"libged cmd libs" FORCE)
   endif(${ARGV2})
@@ -26,11 +26,11 @@ ENDMACRO(GED_ADD_CMD)
 # verification (sh/cmakecheck.sh) will fail on dist-hook.
 if(BULLET_FOUND)
   GED_ADD_CMD(LIBGED_SIM_SOURCES BULLET_INCLUDE_DIR BULLET_LIBRARIES)
-  set(SIM_SRCS 
-    simulate/simphysics.cpp 
+  set(SIM_SRCS
+    simulate/simphysics.cpp
     simulate/simulate.c
-    simulate/simcollisionalgo.cpp 
-    simulate/simutils.c 
+    simulate/simcollisionalgo.cpp
+    simulate/simutils.c
     simulate/simrt.c
     )
   CMAKEFILES(simulate/simrt.h simulate/simutils.h)

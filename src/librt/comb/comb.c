@@ -468,7 +468,7 @@ rt_comb_export5(
  */
 int
 rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
-                const mat_t mat, const struct db_i *dbip, struct resource *resp)
+		const mat_t mat, const struct db_i *dbip, struct resource *resp)
 {
     struct rt_comb_internal *comb;
     unsigned char *cp;
@@ -1068,7 +1068,7 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
     /* Make sure the attributes have gotten the message */
     db5_sync_comb_to_attr(&intern->idb_avs, comb);
     db5_standardize_avs(&intern->idb_avs);
-    
+
     return BRLCAD_OK;
 
 not_region:

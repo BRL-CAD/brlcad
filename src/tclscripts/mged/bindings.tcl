@@ -292,7 +292,7 @@ proc default_mouse_bindings { w } {
 	    bind $w <Option-ButtonPress-1> "winset $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
 	    # Mac command-key emulates mouse 3
 	    bind $w <Mod2-ButtonPress-1> "winset $w; zoom 2.0; break"
-        } 
+	}
     } else {
 	bind $w <1> "winset $w; focus $w; zoom 0.5; break"
 	bind $w <2> "winset $w; focus $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"

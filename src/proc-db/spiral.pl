@@ -65,14 +65,14 @@ for ($j = $t_min; $j <= $t_max; $j += $t_max / $granularity, $i++) {
 
   # command to create a hollowed box segment, rotate, and move it into place
   $command .= "in box_$i.s rpp $xmin $xmax $ymin $ymax $zmin $zmax ;
-               in hole_$i.s rpp $xmin2 $xmax2 $ymin2 $ymax2 $zmin2 $zmax2 ;
-               comb seg_$i.c u box_$i.s - hole_$i.s ;
-               draw seg_$i.c ;
-               oed / /seg_$i.c/box_$i.s ;
-               keypoint $xkey $ykey 0 ;
-               rot 0 0 $ang ;
-               translate $x $y 0 ;
-               accept ;";
+	       in hole_$i.s rpp $xmin2 $xmax2 $ymin2 $ymax2 $zmin2 $zmax2 ;
+	       comb seg_$i.c u box_$i.s - hole_$i.s ;
+	       draw seg_$i.c ;
+	       oed / /seg_$i.c/box_$i.s ;
+	       keypoint $xkey $ykey 0 ;
+	       rot 0 0 $ang ;
+	       translate $x $y 0 ;
+	       accept ;";
 
   # create 100 segments at a time to reduce process initialization overhead
   if ($i % 100 == 0) {

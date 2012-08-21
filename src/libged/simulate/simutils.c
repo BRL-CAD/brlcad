@@ -128,9 +128,9 @@ find_solid(struct db_i *dbip,
 
     obj_name = (char *)object;
     if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, obj_name))
-    	return FOUND;
+	return FOUND;
     else
-    	return NOT_FOUND;
+	return NOT_FOUND;
 }
 
 
@@ -161,7 +161,7 @@ check_tree_funcleaf(
 	case OP_XOR:
 	    rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_left, leaf_func, user_ptr1);
 	    if(rv == NOT_FOUND)
-	    	rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_right, leaf_func, user_ptr1);
+		rv = check_tree_funcleaf(dbip, comb, comb_tree->tr_b.tb_right, leaf_func, user_ptr1);
 	    break;
 	default:
 	    bu_log("check_tree_funcleaf: bad op %d\n", comb_tree->tr_op);
@@ -171,7 +171,6 @@ check_tree_funcleaf(
 
     return rv;
 }
-
 
 
 int

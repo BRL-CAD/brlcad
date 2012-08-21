@@ -1267,7 +1267,7 @@
 
     after idle "$dialog center"
 }
-    
+
 ::itcl::body Arb8EditFrame::invokeRotationPointDialog {_choices} {
     $mRotationPointCB configure -values $_choices
     $mRotationPointDialog activate

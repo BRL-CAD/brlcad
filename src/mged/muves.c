@@ -101,7 +101,7 @@ struct muves_sys
 static char *regionmap_delims=" \t";
 static char *sysdef_delims=" \t\n@?!~&-^><|*+";
 
-static struct muves_sys muves_sys_head = { 
+static struct muves_sys muves_sys_head = {
     {BU_LIST_HEAD_MAGIC, &muves_sys_head.l, &muves_sys_head.l}, /* l */
     (char *)NULL,  /* muves_name */
     {
@@ -110,7 +110,7 @@ static struct muves_sys muves_sys_head = {
 	{NULL} /* member_head.mem */
     }
 };
-static struct muves_comp muves_comp_head = { 
+static struct muves_comp muves_comp_head = {
     {BU_LIST_HEAD_MAGIC, &muves_comp_head.l, &muves_comp_head.l}, /* l */
     (char *)NULL, /* muves_name */
     {

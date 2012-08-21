@@ -104,7 +104,7 @@ struct rigid_body {
      * pipeline immediately after creation thus allowing the next one to replace it
      */
     struct sim_manifold rt_manifold; /**< @brief only 1 manifold struct needed as the manifold is used
-     	 	 	 	 	 	 	 	 	 immediately after being generated in the nearphase callback*/
+									 immediately after being generated in the nearphase callback*/
 
     /* Debugging */
     int iter;

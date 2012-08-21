@@ -140,7 +140,7 @@ _ged_trace(struct directory *dp,
 		if (gtdp->gtd_path[i]->d_addr != gtdp->gtd_obj[i]->d_addr) {
 		    /* not the desired path */
 		    return;
-	    	}
+		}
 	    } else {
 		/* not the desired path */
 		return;

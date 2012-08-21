@@ -76,10 +76,10 @@ Evalxform()
 	    while (ptr != NULL) {
 		if (!dir[ptr->index]->referenced) {
 #if defined(USE_BN_MULT_)
-                    /* a <= a X b */
-                    bn_mat_mul2(rot, *dir[ptr->index]->rot);
+		    /* a <= a X b */
+		    bn_mat_mul2(rot, *dir[ptr->index]->rot);
 #else
-                    /* a X b => o */
+		    /* a X b => o */
 		    Matmult(rot, *dir[ptr->index]->rot, rot);
 #endif
 		    for (j = 0; j < 16; j++)

@@ -36,7 +36,6 @@
 #define MUT_STEP 0.8
 
 
-
 struct name{
     char n[256];
     int i;
@@ -77,9 +76,6 @@ void pop_gop(int gop, char *parent1, char *parent2, char * child1, char *child2,
 	     struct db_i *dbi_c, struct resource *resp);
 int pop_put_internal(const char *n, struct directory *dp, struct db_i *dbip, struct rt_db_internal *ip,
 		     struct resource *resp);
-
-
-
 
 
 #endif /* __POPULATION_H__ */

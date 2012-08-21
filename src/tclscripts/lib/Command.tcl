@@ -46,7 +46,7 @@
     private method do_get_more_args {}
     public method get_more_args {}
     public method putstring {str}
-    public method reinitialize {} 
+    public method reinitialize {}
 
     private method invoke {}
     private method invokeMaster {hcmd}

@@ -39,7 +39,6 @@
 #include "ShapeRepresentation.h"
 
 
-
 class AdvancedBrepShapeRepresentation : public ShapeRepresentation
 {
  private:

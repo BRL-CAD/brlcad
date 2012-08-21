@@ -54,12 +54,12 @@ _ged_show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *
 
     vbp = rt_vlblock_init();
     vhead = rt_vlblock_find(vbp, 0xFF, 0xFF, 0x00);
- 
+
     bu_ptbl_init(&faces, 64, "faces buffer");
     nmg_face_tabulate(&faces, magic_p);
 
     for (i = 0; i < (size_t)BU_PTBL_END(&faces) ; i++) {
-        fp = (struct face *)BU_PTBL_GET(&faces, i);
+	fp = (struct face *)BU_PTBL_GET(&faces, i);
 	NMG_CK_FACE(fp);
 	fu = fu1 = fp->fu_p;
 	NMG_CK_FACEUSE(fu1);
@@ -77,7 +77,7 @@ _ged_show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *
 			newfu = eur->up.lu_p->up.fu_p;
 			while (manifolds &&
 			       NMG_MANIFOLDS(manifolds, newfu) &
-			       NMG_2MANIFOLD && 
+			       NMG_2MANIFOLD &&
 			       eur != eu->eumate_p) {
 			    eur = nmg_radial_face_edge_in_shell(eur->eumate_p);
 			    newfu = eur->up.lu_p->up.fu_p;
@@ -93,7 +93,7 @@ _ged_show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *
 	    }
 	    if (fu == fu1) fu = fu2;
 	    if (fu == fu2) done = 1;
-        };
+	};
 
     }
 
@@ -179,19 +179,19 @@ ged_bot_fuse(struct ged *gedp, int argc, const char *argv[])
     bu_log("%s: %s, %d broke 'e' on 'v'\n", argv[0], argv[2], count);
 
     if (total) {
-        struct nmgregion *r2;
-        struct shell *s;
+	struct nmgregion *r2;
+	struct shell *s;
 
 	bu_log("%s: running nmg_make_faces_within_tol\n", argv[0]);
 
-        /* vertices and/or edges have been moved,
-         * may have created out-of-tolerance faces
-         */
+	/* vertices and/or edges have been moved,
+	 * may have created out-of-tolerance faces
+	 */
 
-        for (BU_LIST_FOR(r2, nmgregion, &m->r_hd)) {
-            for (BU_LIST_FOR(s, shell, &r2->s_hd))
-                nmg_make_faces_within_tol(s, tol);
-        }
+	for (BU_LIST_FOR(r2, nmgregion, &m->r_hd)) {
+	    for (BU_LIST_FOR(s, shell, &r2->s_hd))
+		nmg_make_faces_within_tol(s, tol);
+	}
     }
 
     /* Step 2 -- the face geometry */
@@ -219,7 +219,7 @@ ged_bot_fuse(struct ged *gedp, int argc, const char *argv[])
 	nmg_km(m);
     } else {
 	/* catch */
-            BU_UNSETJUMP;
+	    BU_UNSETJUMP;
 	    bu_vls_printf(gedp->ged_result_str, "%s: %s fuse failed (2).\n", argv[0], argv[2]);
 	    return GED_ERROR;
     }
@@ -248,4 +248,3 @@ ged_bot_fuse(struct ged *gedp, int argc, const char *argv[])
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

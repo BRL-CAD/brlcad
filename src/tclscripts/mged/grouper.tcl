@@ -107,7 +107,7 @@ proc gr_getObjInRectangle {} {
     foreach obj $objs {
 	set obj2 [file tail $obj]
 	lappend objs2 $obj2
-        unset obj2
+	unset obj2
     }
 
     return $objs2
@@ -251,7 +251,7 @@ proc do_grouper { GroupName Boolean ListLimit } {
 	foreach obj $objs {
 	    incr objcnt
 	    if { $objcnt > $ListLimit } {
-        	puts -nonewline stdout "\nListed $ListLimit of $tot_obj_in_rect selected objects."
+		puts -nonewline stdout "\nListed $ListLimit of $tot_obj_in_rect selected objects."
 		break;
 	    }
 	    puts -nonewline stdout "$obj "
@@ -262,7 +262,7 @@ proc do_grouper { GroupName Boolean ListLimit } {
 	foreach obj $objs {
 	    incr objcnt
 	    if { $objcnt > $ListLimit } {
-        	puts -nonewline stdout "\nListed $ListLimit of $tot_obj_in_rect selected objects."
+		puts -nonewline stdout "\nListed $ListLimit of $tot_obj_in_rect selected objects."
 		break;
 	    }
 	    puts stdout "$objcnt\t$obj"

@@ -178,11 +178,11 @@ main(int argc, char *argv[])
 	printf("viewsize %.10g;\n", viewsize);
 
     if (rotate&&quaternion) {
-    	needed = 4;
+	needed = 4;
     } else if (rotate || translate) {
-    	needed = 3;
+	needed = 3;
     } else {
-    	needed = 1;
+	needed = 1;
     }
 
     while (1) {

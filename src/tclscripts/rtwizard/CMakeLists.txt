@@ -24,11 +24,11 @@ else(HAVE_SYMLINK)
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
       add_custom_command(
-        OUTPUT ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard.bat
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.bat ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard.bat
-        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.bat
-        )
+	OUTPUT ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard.bat
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.bat ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard.bat
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard.bat
+	)
       set(rtwizard_cmd_outputs ${rtwizard_cmd_outputs} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/rtwizard.bat)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   endif(NOT CMAKE_CONFIGURATION_TYPES)

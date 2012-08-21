@@ -229,10 +229,10 @@ void readPipe
 	form.npts = 2;
     else {
 	is >> form.npts;
-        if (form.npts > MAX_NPTS) {
+	if (form.npts > MAX_NPTS) {
 	   bu_log("Bad form.npts count in readPipe!\n");
 	   return;
-        }
+	}
     }
 
     for (size_t i = 0; i<form.npts; ++i)

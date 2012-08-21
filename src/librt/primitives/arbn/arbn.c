@@ -648,7 +648,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     /* Check for duplicate points */
     for (i=0; i<point_count; i++) {
 	for (j=i+1; j<point_count; j++) {
-        if (DIST_PT_PT_SQ(pts[i].pt, pts[j].pt) < tol->dist_sq) {
+	if (DIST_PT_PT_SQ(pts[i].pt, pts[j].pt) < tol->dist_sq) {
 		    /* These two points should point to the same vertex */
 		    pts[j].vp = pts[i].vp;
 		}

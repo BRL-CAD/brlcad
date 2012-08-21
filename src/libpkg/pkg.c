@@ -552,7 +552,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     int on = 1;
 #endif
 
-    if (service == NULL) 
+    if (service == NULL)
       return -1;
 
     _pkg_ck_debug();
@@ -1496,7 +1496,7 @@ pkg_bwaitfor (int type, struct pkg_conn *pc)
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
 	    "pkg_bwaitfor: _pkg_inget %ld gave %ld\n", (long)pc->pkc_len, (long)i);
 	(pc->pkc_errlog)(_pkg_errbuf);
-      } 
+      }
     } else {
       snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_bwaitfor: tried to read from null pc->pkc_buf!\n");
       return (char *)0;

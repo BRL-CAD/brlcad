@@ -156,7 +156,6 @@ struct bn_tol {
     (((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
 
 
-
 /** @} */
 /*----------------------------------------------------------------------*/
 /* anim.c */
@@ -1688,29 +1687,29 @@ BN_EXPORT extern struct bn_tabdata *bn_tabdata_mk_linear_filter(const struct bn_
  */
 
 BN_EXPORT extern int bn_coplanar_tri_tri_isect(point_t V0,
-                                               point_t V1,
-                                               point_t V2,
-                                               point_t U0,
-                                               point_t U1,
-                                               point_t U2,
-                                               int area_flag);
+					       point_t V1,
+					       point_t V2,
+					       point_t U0,
+					       point_t U1,
+					       point_t U2,
+					       int area_flag);
 
 BN_EXPORT extern int bn_tri_tri_isect(point_t V0,
-                                      point_t V1,
-                                      point_t V2,
-                                      point_t U0,
-                                      point_t U1,
-                                      point_t U2);
+				      point_t V1,
+				      point_t V2,
+				      point_t U0,
+				      point_t U1,
+				      point_t U2);
 
 BN_EXPORT extern int bn_tri_tri_isect_with_line(point_t V0,
-                                                point_t V1,
-                                                point_t V2,
-                                                point_t U0,
-                                                point_t U1,
-                                                point_t U2,
-                                                int *coplanar,
-                                                point_t *isectpt1,
-                                                point_t *isectp2);
+						point_t V1,
+						point_t V2,
+						point_t U0,
+						point_t U1,
+						point_t U2,
+						int *coplanar,
+						point_t *isectpt1,
+						point_t *isectp2);
 
 /*----------------------------------------------------------------------*/
 /* vlist.c */

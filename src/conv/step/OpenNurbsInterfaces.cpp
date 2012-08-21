@@ -1295,15 +1295,15 @@ Path::ShiftSurfaceSeam(ON_Brep *brep, double *t)
 
     face = loop->Face();
     if (!face){
-    	/* nothing to do */
-    	return false;
-        }
+	/* nothing to do */
+	return false;
+	}
 
     surface = face->SurfaceOf();
     if (!surface){
-    	/* nothing to do */
-    	return false;
-        }
+	/* nothing to do */
+	return false;
+	}
 
     if (surface->IsCone() || surface->IsCylinder()) {
 	if (surface->IsClosed(0)) {

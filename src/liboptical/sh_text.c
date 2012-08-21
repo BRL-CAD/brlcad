@@ -964,7 +964,6 @@ envmap_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *UNUSE
 	bu_log("envmap_setup() material '%s' failed\n", env_region.reg_mater);
 
 
-
     return 0;		/* This region should be dropped */
 }
 

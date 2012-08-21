@@ -213,7 +213,7 @@ toon_render(struct application *ap, const struct partition *pp, struct shadework
 	VSCALE(swp->sw_color, swp->sw_color, scale);
 	return 1;
     }
-    
+
     /* no paths to light source, so just paint it black */
     VSETALL(swp->sw_color, 0);
 

@@ -44,7 +44,7 @@
  *  5. Tree structure - please retain tree structure to the extent that
  *     you can and try not to re-create prims or combs used more than once.
  *     No warning needed for redundant copies.  Warnings can come later...
- * D6. Display - do display clones but do not resize or re-center view. 
+ * D6. Display - do display clones but do not resize or re-center view.
  */
 
 #include "common.h"
@@ -248,21 +248,21 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 	bu_vls_trunc(newname, 0);
 	bu_vls_strcpy(newname, prefix);
 
-        if ((dp->d_flags & RT_DIR_SOLID) || (dp->d_flags & RT_DIR_REGION)) {
+	if ((dp->d_flags & RT_DIR_SOLID) || (dp->d_flags & RT_DIR_REGION)) {
 	    /* primitives and regions */
-    	    if (suffix[0] != 0)
-    		if ((i == 1) && is_in_list(obj_list, buf)) {
-    		    j = index_in_list(obj_list, buf);
-    		    snprintf(buf, CLONE_BUFSIZE, "%s%d", prefix, num);	/* save the name for the next pass */
+	    if (suffix[0] != 0)
+		if ((i == 1) && is_in_list(obj_list, buf)) {
+		    j = index_in_list(obj_list, buf);
+		    snprintf(buf, CLONE_BUFSIZE, "%s%d", prefix, num);	/* save the name for the next pass */
 		    /* clear and set the name */
 		    bu_vls_trunc(newname, 0);
 		    bu_vls_printf(newname, "%V%s", obj_list.names[j].dest[iter], suffix);
-    		} else
+		} else
 		    bu_vls_printf(newname, "%zu%s", num+i*state->incr, suffix);
-    	    else
-    		bu_vls_printf(newname, "%zu", num + i*state->incr);
+	    else
+		bu_vls_printf(newname, "%zu", num + i*state->incr);
 	} else /* non-region combinations */
-    	    bu_vls_printf(newname, "%d", (num==0)?i+1:i+num);
+	    bu_vls_printf(newname, "%d", (num==0)?i+1:i+num);
 	i++;
     } while (db_lookup(_dbip, bu_vls_addr(newname), LOOKUP_QUIET) != NULL);
     return newname;
@@ -382,7 +382,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
     /* rotation */
     if (state->rot[W] > SMALL_FASTF) {
-    	mat_t m2, t;
+	mat_t m2, t;
 
 	bn_mat_angles(m2, state->rot[X], state->rot[Y], state->rot[Z]);
 	if (state->rpnt[W] > SMALL_FASTF) {
@@ -930,7 +930,7 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
     if (argc < arg+1) {
 	Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter prototype link name: ", (char *)NULL);
-        fclose(points);
+	fclose(points);
 	return TCL_ERROR;
     }
 

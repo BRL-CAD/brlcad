@@ -34,8 +34,8 @@
 
 /**
  * M O D E L 2 V I E W
- * 
- * Given a point in model space coordinates (in mm) convert it to 
+ *
+ * Given a point in model space coordinates (in mm) convert it to
  * view (screen) coordinates which must be scaled to correspond to
  * actual screen coordinates. If no input coordinates are supplied,
  * the model2view matrix is displayed.
@@ -66,8 +66,8 @@ ged_model2view(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (sscanf(argv[1], "%lf", &model_pt[X]) != 1 ||
-        sscanf(argv[2], "%lf", &model_pt[Y]) != 1 ||
-        sscanf(argv[3], "%lf", &model_pt[Z]) != 1) {
+	sscanf(argv[2], "%lf", &model_pt[Y]) != 1 ||
+	sscanf(argv[3], "%lf", &model_pt[Z]) != 1) {
 	goto bad;
     }
 

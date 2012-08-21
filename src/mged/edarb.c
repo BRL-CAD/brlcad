@@ -575,7 +575,7 @@ f_mirface(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     memcpy((char *)&larb, (char *)arb, sizeof(struct rt_arb_internal));
 
     if (es_type == ARB6 && face < 1000) {
-  	/* 3 point face */
+	/* 3 point face */
 	pt[0] = face / 100;
 	i = face - (pt[0]*100);
 	pt[1] = i / 10;

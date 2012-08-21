@@ -362,7 +362,7 @@ Convert_assy(char *line)
 		bu_log("\tmember (%s)\n", brlcad_name);
 	    wmem = mk_addmember(brlcad_name, &head.l, NULL, WMOP_UNION);
 	} else if (!bu_strncmp(&line1[start], "matrix", 6) || !bu_strncmp(&line1[start], "MATRIX", 6)) {
-          if (wmem) {
+	  if (wmem) {
 	    size_t j;
 	    double scale, inv_scale;
 
@@ -412,9 +412,9 @@ Convert_assy(char *line)
 	    }
 	    if (debug)
 		bn_mat_print("final matrix", wmem->wm_mat);
-          } else {
-               bu_log("Matrix present before wmem is initialized! (%s)\n", brlcad_name);
-          }
+	  } else {
+	       bu_log("Matrix present before wmem is initialized! (%s)\n", brlcad_name);
+	  }
 	} else {
 	    bu_log("Unrecognized line in assembly (%s)\n%s\n", name, line1);
 	}

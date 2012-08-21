@@ -845,9 +845,9 @@ void view_cleanup(struct rt_i *UNUSED(rtip))
 /**
  * end of each frame
  */
-void view_end(struct application *UNUSED(ap)) { 
+void view_end(struct application *UNUSED(ap)) {
     if (bif)
-	icv_image_save_close(bif); 
+	icv_image_save_close(bif);
     bif = NULL;
 }
 
@@ -1306,7 +1306,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
 	a2.a_uptr = (genptr_t)&above;
 	rt_shootray(&a2);
- 
+
 	VADD2(a2.a_ray.r_pt, ap->a_ray.r_pt, dx_model); /* right */
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
 	a2.a_uptr = (genptr_t)&right;
@@ -1328,8 +1328,8 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
      * check on edges as well since right side and top edges are
      * actually misses.
      */
-    if (occlusion_mode != OCCLUSION_MODE_NONE) 
-	if (me.c_ishit || edge) 
+    if (occlusion_mode != OCCLUSION_MODE_NONE)
+	if (me.c_ishit || edge)
 	    oc = occludes(ap, &me);
 
     /*

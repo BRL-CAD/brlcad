@@ -103,8 +103,8 @@ Time Stamp: Day Mon  0 00:00:00 0000
 Total volume = 0.999991 cm^3
 
 Centroid: X = 0.5 cm
-          Y = 0.5 cm
-          Z = 0.5 cm
+	  Y = 0.5 cm
+	  Z = 0.5 cm
 
 Total mass = 7.82943 grams
 
@@ -162,7 +162,7 @@ cat > .density <<EOF
 3    2.7       Aluminum, 6061-T6
 4    2.74      Aluminum, 7079-T6
 #  Incomplete line following
-    	       Copper, pure
+	       Copper, pure
 6    19.32     Gold, pure
 7    8.03      Stainless, 18Cr-8Ni
 #  Comment
@@ -213,7 +213,7 @@ Material  Density(g/cm^3)  Name
   ID   Weight  Region Names
 ----- -------- --------------------
  1000   15.843 /boxes/box1.r
-               /boxes/box2.r
+	       /boxes/box2.r
  1010    3.001 /boxes/box3.r
 RT Weight Program Output:
 
@@ -224,8 +224,8 @@ Time Stamp: Sat Jan 14 09:01:50 2012
 Total volume = 2.99933 cm^3
 
 Centroid: X = 1.98812 cm
-          Y = 1.98833 cm
-          Z = 1.98831 cm
+	  Y = 1.98833 cm
+	  Z = 1.98831 cm
 
 Total mass = 18.8433 grams
 

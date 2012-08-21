@@ -43,7 +43,6 @@
 RT_EXPORT extern struct bn_tol *rt_tol_default(struct bn_tol *tol);
 
 
-
 /*
  * Local Variables:
  * tab-width: 8

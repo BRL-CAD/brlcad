@@ -175,10 +175,10 @@ do
      --disable-step-class-libraries)                options="$options -DBRLCAD_SCL=SYSTEM";
                                   shift;;
      --prefix=*)   	          inputstr=$1;
-     		   	          options="$options -DCMAKE_INSTALL_PREFIX=${inputstr#--prefix=}";
-     		   	          shift;;
+				  options="$options -DCMAKE_INSTALL_PREFIX=${inputstr#--prefix=}";
+				  shift;;
      *) 	   	          echo "Warning: unknown option $1";
-     		   	          shift;;
+				  shift;;
    esac
 done
 echo cmake $options

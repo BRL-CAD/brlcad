@@ -63,11 +63,11 @@ output_netshort(char *buf, unsigned *nchars, FILE *fpo)
     uint16_t netshort;
 
     if (!*nchars)
-        return;
+	return;
 
     if (*nchars > BUFSZ - 1) {
-        bu_log("asc2dsp: nchars (%ud) > %ud (%d)\n", *nchars, BUFSZ - 1);
-        bu_exit(1, "asc2dsp: FATAL");
+	bu_log("asc2dsp: nchars (%ud) > %ud (%d)\n", *nchars, BUFSZ - 1);
+	bu_exit(1, "asc2dsp: FATAL");
     }
 
     /* close buffer to use as string */
@@ -77,8 +77,8 @@ output_netshort(char *buf, unsigned *nchars, FILE *fpo)
     /* note strtoul should ignore leading zeroes: verified by testing with '011' input */
     val = strtoul(buf, 0, 10);
     if (val > UINT16_MAX) {
-        bu_log("asc2dsp: hostshort (%lu) > UINT16_MAX (%lu)\n", val, UINT16_MAX);
-        bu_exit(1, "asc2dsp: FATAL");
+	bu_log("asc2dsp: hostshort (%lu) > UINT16_MAX (%lu)\n", val, UINT16_MAX);
+	bu_exit(1, "asc2dsp: FATAL");
     }
 
     hostshort = (uint16_t)strtoul(buf, 0, 10);
@@ -118,11 +118,11 @@ main(int argc, char **argv)
 
     fpi = fopen(argv[1], "r");
     if (!fpi)
-        perror(argv[1]);
+	perror(argv[1]);
 
     fpo = fopen(argv[2], "wb");
     if (!fpo)
-        perror(argv[2]);
+	perror(argv[2]);
     if (fpi == NULL || fpo == NULL) {
 	bu_exit(1, "asc2dsp: can't open files.");
     }
@@ -133,16 +133,16 @@ main(int argc, char **argv)
     while ((d = fgetc(fpi)) != EOF) {
       unsigned char c = (unsigned char)d;
       if (isspace(c)) {
-          /* may be end of a chunk of digits indicating need to process buffer */
-          /* there should be nchars > 0 if anything is there */
-          if (nchars) {
-              /* note that the following call resets the buffer and nchars */
-              output_netshort(buf, &nchars, fpo);
-          }
-          continue;
+	  /* may be end of a chunk of digits indicating need to process buffer */
+	  /* there should be nchars > 0 if anything is there */
+	  if (nchars) {
+	      /* note that the following call resets the buffer and nchars */
+	      output_netshort(buf, &nchars, fpo);
+	  }
+	  continue;
       } else if (c < '0' || c > '9') {
-          /* invalid char--bail */
-          bu_log("asc2dsp: invalid char '%c'\n", c);
+	  /* invalid char--bail */
+	  bu_log("asc2dsp: invalid char '%c'\n", c);
 	  bu_exit(1, "asc2dsp: FATAL");
       }
 
@@ -153,7 +153,7 @@ main(int argc, char **argv)
 
     /* there may be data in the buffer at EOF */
     if (nchars) {
-        output_netshort(buf, &nchars, fpo);
+	output_netshort(buf, &nchars, fpo);
     }
     fclose(fpo);
 

@@ -114,9 +114,9 @@ if (idx > MAX_INDEX) { \
 	    if (UNLIKELY(b > 255))
 		b = 255;
 
- 	    rxb[ r ][ b ]++;
- 	    rxg[ r ][ g ]++;
- 	    bxg[ b ][ g ]++;
+	    rxb[ r ][ b ]++;
+	    rxg[ r ][ g ]++;
+	    bxg[ b ][ g ]++;
 	}
     }
 

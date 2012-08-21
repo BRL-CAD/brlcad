@@ -69,8 +69,6 @@ ged_zoom(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-
-
 HIDDEN int
 zoom_load(struct ged *gedp)
 {

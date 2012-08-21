@@ -94,23 +94,23 @@ E=0
 fcheck() {
     T="install ok installed"
     if test ! `dpkg -s $1 2>/dev/null | grep "$T" | wc -l` -eq 0 ; then
-        # success
-        echo "Found package $1..."
-        return
+	# success
+	echo "Found package $1..."
+	return
     fi
 
     # need to check for local, non-package versions
     # check for binaries
     if test "$2" = "x" ; then
-        if [ -f /usr/bin/$1 ]; then
-            # success
-            echo "Found /usr/bin/$1..."
-            return
-        elif [ -f /usr/local/bin/$1 ]; then
-            # success
-            echo "Found /usr/local/bin/$1..."
-            return
-        fi
+	if [ -f /usr/bin/$1 ]; then
+	    # success
+	    echo "Found /usr/bin/$1..."
+	    return
+	elif [ -f /usr/local/bin/$1 ]; then
+	    # success
+	    echo "Found /usr/local/bin/$1..."
+	    return
+	fi
     fi
 
     echo "* Missing $1..."

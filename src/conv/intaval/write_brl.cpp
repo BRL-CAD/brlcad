@@ -144,10 +144,10 @@ void writePipe
 	point_t pipePoint;
 
 	if (translate) {
-          VADD2(pipePoint, form.pt[i-1], form.tr_vec);
+	  VADD2(pipePoint, form.pt[i-1], form.tr_vec);
 	} else {
-          VMOVE(pipePoint, form.pt[i-1]);
-        }
+	  VMOVE(pipePoint, form.pt[i-1]);
+	}
 
 	VSCALE(pipePoint, pipePoint, IntavalUnitInMm);
 
@@ -253,10 +253,10 @@ void writeRingModeBox
 
     if (translate) {
 	for(size_t i = 0; i < form.npts; ++i)
-          VADD2(outer[i], form.pt[i], form.tr_vec);
+	  VADD2(outer[i], form.pt[i], form.tr_vec);
     } else {
       for(size_t i = 0; i < form.npts; ++i) {
-          VMOVE(outer[i], form.pt[i]);
+	  VMOVE(outer[i], form.pt[i]);
       }
     }
 
@@ -270,17 +270,17 @@ void writeRingModeBox
     for(size_t i2 = 0; i2 < form.npts; ++i2) {
 	vect_t a, b, c;
 
-        VMOVE(a, outer[i2]);
-        if (i2 == 0) {
-          VMOVE(b, outer[i2 + 1]);
-          VMOVE(c, outer[form.npts-1]);
-        } else if (i2 == form.npts-1) {
-          VMOVE(b, outer[0]);
-          VMOVE(c, outer[i2 - 1]);
-        } else {
-          VMOVE(b, outer[i2 + 1]);
-          VMOVE(c, outer[i2 - 1]);
-        }
+	VMOVE(a, outer[i2]);
+	if (i2 == 0) {
+	  VMOVE(b, outer[i2 + 1]);
+	  VMOVE(c, outer[form.npts-1]);
+	} else if (i2 == form.npts-1) {
+	  VMOVE(b, outer[0]);
+	  VMOVE(c, outer[i2 - 1]);
+	} else {
+	  VMOVE(b, outer[i2 + 1]);
+	  VMOVE(c, outer[i2 - 1]);
+	}
 
 	vect_t b_v, c_v;
 	VSUB2(b_v, b, a);
@@ -294,7 +294,7 @@ void writeRingModeBox
 	VCROSS(width_b_v, b_v, n_v);
 
 	if (VDOT(width_b_v, c_v) < 0)
-          VREVERSE(width_b_v, width_b_v);
+	  VREVERSE(width_b_v, width_b_v);
 
 	VUNITIZE(width_b_v);
 	VSCALE(width_b_v, width_b_v, form.width * IntavalUnitInMm);
@@ -304,7 +304,7 @@ void writeRingModeBox
 	VCROSS(width_c_v, c_v, n_v);
 
 	if (VDOT(width_c_v, b_v) < 0)
-          VREVERSE(width_c_v, width_c_v);
+	  VREVERSE(width_c_v, width_c_v);
 
 	VUNITIZE(width_c_v);
 	VSCALE(width_c_v, width_c_v, form.width * IntavalUnitInMm);
@@ -330,8 +330,8 @@ void writeRingModeBox
 
 	    VMOVE(inner[i2], res);
 	} else {
-          VMOVE(inner[i2], outer[i2]);
-        }
+	  VMOVE(inner[i2], outer[i2]);
+	}
     }
 
     // bot parameters

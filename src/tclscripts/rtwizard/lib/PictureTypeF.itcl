@@ -123,103 +123,103 @@ namespace eval RtWizard {
     #
     itcl::body PictureTypeF::rtimage {w h} {
 
-        #
-        # get a framebuffer
-        #
-        set fb [$::fbp getFrameBuffer $w $h]
-        set fbarray [split $fb " "]
-        if { [llength $fbarray] > 1 } {
-           set fb [lindex $fbarray 0]
-           set fbpid [lindex $fbarray 1]
-           set filename [lindex $fbarray 2]
-        }
+	#
+	# get a framebuffer
+	#
+	set fb [$::fbp getFrameBuffer $w $h]
+	set fbarray [split $fb " "]
+	if { [llength $fbarray] > 1 } {
+	   set fb [lindex $fbarray 0]
+	   set fbpid [lindex $fbarray 1]
+	   set filename [lindex $fbarray 2]
+	}
 
-        #
-        # Get the view info
-        #
-        set viewPage [$::exp getViewPage]
-        set viewInfo [$viewPage getEyeModel]
-        set view_info [regsub -all ";" $viewInfo ""]
-        set vdata [split $view_info "\n"]
-        set viewsize [lindex [lindex $vdata 0] 1]
-        set orientation [lrange [lindex $vdata 1] 1 end]
-        set eye_pt [lrange [lindex $vdata 2] 1 end]
+	#
+	# Get the view info
+	#
+	set viewPage [$::exp getViewPage]
+	set viewInfo [$viewPage getEyeModel]
+	set view_info [regsub -all ";" $viewInfo ""]
+	set vdata [split $view_info "\n"]
+	set viewsize [lindex [lindex $vdata 0] 1]
+	set orientation [lrange [lindex $vdata 1] 1 end]
+	set eye_pt [lrange [lindex $vdata 2] 1 end]
 
-        #
-        # Get the background color
-        #
-        set bgHex [$fp getBackgroundColor]
-        set bg [hexToRGB $bgHex]
+	#
+	# Get the background color
+	#
+	set bgHex [$fp getBackgroundColor]
+	set bg [hexToRGB $bgHex]
 
-        # Get the ghosting intensity
-        set gamma [$gp getIntensity]
+	# Get the ghosting intensity
+	set gamma [$gp getIntensity]
 
-        #
-        # get occlusion mode
-        #
-        set occMode [$lp getOcclusionMode]
-        if {! $occMode} {set occMode 1}
+	#
+	# get occlusion mode
+	#
+	set occMode [$lp getOcclusionMode]
+	if {! $occMode} {set occMode 1}
 
-        #
-        # Get the edge color color
-        #
-        set objPage $lp
-        set lineHex [$objPage getLineColor]
-        set l [hexToRGB $lineHex]
+	#
+	# Get the edge color color
+	#
+	set objPage $lp
+	set lineHex [$objPage getLineColor]
+	set l [hexToRGB $lineHex]
 
-        #
-        # Get the non-line color
-        #
-        set nonLineHex [$objPage getNonLineColor]
-        set nl [hexToRGB $nonLineHex]
+	#
+	# Get the non-line color
+	#
+	set nonLineHex [$objPage getNonLineColor]
+	set nl [hexToRGB $nonLineHex]
 
-        #
-        # Get the object lists, the file is global
-        #
-        set objPage $gp
-        set ghost_objects [$objPage getObjects]
-        set objPage $fp
-        set color_objects [$objPage getObjects]
-        set objPage $lp
-        set line_objects [$objPage getObjects]
+	#
+	# Get the object lists, the file is global
+	#
+	set objPage $gp
+	set ghost_objects [$objPage getObjects]
+	set objPage $fp
+	set color_objects [$objPage getObjects]
+	set objPage $lp
+	set line_objects [$objPage getObjects]
 
-        # Get the perspective angle
-        #
-        set perspective [$viewPage getPerspective]
+	# Get the perspective angle
+	#
+	set perspective [$viewPage getPerspective]
 
-        ::cadwidgets::rtimage $::RtWizard::wizard_state(dbFile) $fb \
-            $w $h \
-            $viewsize $orientation $eye_pt $perspective\
-            $bg $l $nl\
-            $occMode $gamma \
-            $color_objects \
-            $ghost_objects \
-            $line_objects
+	::cadwidgets::rtimage $::RtWizard::wizard_state(dbFile) $fb \
+	    $w $h \
+	    $viewsize $orientation $eye_pt $perspective\
+	    $bg $l $nl\
+	    $occMode $gamma \
+	    $color_objects \
+	    $ghost_objects \
+	    $line_objects
 
-        # If we're outputting a file, write it out and close down
-        # the in-memory fbserv
-        if {[info exists filename]} {
-           if {[string length $filename] > 0 } {
-               set output_generated 0
-               if {[file extension $filename] == ".png"} {
-                  exec [file join [bu_brlcad_root bin] fb-png] -w $w -n $h -F $fb $filename
-                  set output_generated 1
-               }
-               if {!$output_generated} {
-                  exec [file join [bu_brlcad_root bin] fb-pix] -w $w -n $h -F $fb $filename
-                  set output_generated 1
-               }
-               if {$::tcl_platform(platform) == "windows"} {
-                   set kill_cmd [auto_execok taskkill]
-               } else {
-                   set kill_cmd [auto_execok kill]
-               }
+	# If we're outputting a file, write it out and close down
+	# the in-memory fbserv
+	if {[info exists filename]} {
+	   if {[string length $filename] > 0 } {
+	       set output_generated 0
+	       if {[file extension $filename] == ".png"} {
+		  exec [file join [bu_brlcad_root bin] fb-png] -w $w -n $h -F $fb $filename
+		  set output_generated 1
+	       }
+	       if {!$output_generated} {
+		  exec [file join [bu_brlcad_root bin] fb-pix] -w $w -n $h -F $fb $filename
+		  set output_generated 1
+	       }
+	       if {$::tcl_platform(platform) == "windows"} {
+		   set kill_cmd [auto_execok taskkill]
+	       } else {
+		   set kill_cmd [auto_execok kill]
+	       }
 
-               if {$kill_cmd != ""} {
-                   exec $kill_cmd $fbpid
-               }
-           }
-        }
+	       if {$kill_cmd != ""} {
+		   exec $kill_cmd $fbpid
+	       }
+	   }
+	}
     }
 
 
@@ -235,7 +235,7 @@ namespace eval RtWizard {
 
 	set h [$::fbp getHeight]
 	set h2 [ expr $h / 2 ]
-	
+
 	rtimage $w2 $h2
     }
 

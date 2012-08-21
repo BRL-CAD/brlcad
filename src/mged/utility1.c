@@ -93,7 +93,7 @@ editit(const char *command, const char *tempfile) {
     get_editor_string(&editstring);
 
     av[0] = command;
-    av[1] = "-e"; 
+    av[1] = "-e";
     av[2] = bu_vls_addr(&editstring);
     av[3] = "-f";
     av[4] = tempfile;

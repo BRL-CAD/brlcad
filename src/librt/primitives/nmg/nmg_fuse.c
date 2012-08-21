@@ -1049,7 +1049,7 @@ v_ptr_comp(const void *p1, const void *p2)
 /**
  * N M G _ E D G E _ F U S E
  *
- * Note: If a bu_ptbl structure is passed into this function, the 
+ * Note: If a bu_ptbl structure is passed into this function, the
  *       structure must contain edgeuse. Vertices will then be fused
  *       at the shell level. If an NMG structure is passed into this
  *       function, if the structure is an NMG region or model, vertices
@@ -1184,9 +1184,9 @@ e_rr_xyp_comp(const void *p1, const void *p2)
     j = edge_rr_xyp[(*((size_t *)p2))];
 
     if (EQUAL(i, j))
-        return 0;
+	return 0;
     else if (i > j)
-        return 1;
+	return 1;
     return -1;
 }
 
@@ -1304,7 +1304,7 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
     for (i = 0 ; i < etab_cnt ; i++) {
 
 	eg1 = (struct edge_g_lseg *)BU_PTBL_GET(&etab, sort_idx_xyp[i]);
- 	
+
 	if (!eg1) {
 	    continue;
 	}
@@ -3524,4 +3524,3 @@ nmg_r_radial_check(const struct nmgregion *r, const struct bn_tol *tol)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

@@ -269,7 +269,7 @@ main(int argc, char *argv[])
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
 		NMG_debug = rt_g.NMG_debug;
 		break;
-            case 'o':		/* Output file name. */
+	    case 'o':		/* Output file name. */
 		output_file = bu_optarg;
 		break;
 	    case 'P':

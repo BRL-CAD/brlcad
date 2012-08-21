@@ -2203,7 +2203,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
     if (!NEAR_EQUAL(VDOT(swp->sw_hit.hit_normal, Refl), 1.0, MIKE_TOL)) {
 	VCROSS(Yaxis, swp->sw_hit.hit_normal, Refl);
     } else {
- 	/* R and N are the same vector. */
+	/* R and N are the same vector. */
 	bn_vec_ortho(Yaxis, swp->sw_hit.hit_normal);
     }
     VCROSS(Horiz, Yaxis, swp->sw_hit.hit_normal);

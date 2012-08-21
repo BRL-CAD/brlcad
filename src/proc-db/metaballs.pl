@@ -103,7 +103,7 @@ sub parse_metaballs {
 	       'y' => $y,
 	       'z' => $z,
 	       'r' => $r,
-               );
+	       );
       if (exists($href->{$name}{points})) {
 	push @{$href->{$name}{points}}, {%p};
       }

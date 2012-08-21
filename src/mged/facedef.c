@@ -403,7 +403,7 @@ get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
     plane[2] = sin(fb);
 
     if (argv[2][0] == 'v') {
-      	/* vertex given */
+	/* vertex given */
 	/* strip off 'v', subtract 1 */
 	temp = atoi(argv[2]+1) - 1;
 	plane[W]= VDOT(&plane[0], arb->pt[temp]);

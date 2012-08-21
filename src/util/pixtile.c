@@ -209,7 +209,7 @@ main(int argc, char **argv)
 	    }
 	    if (fd > 0) close(fd);
 	}
-        ret = write(1, obuf, swathbytes);
+	ret = write(1, obuf, swathbytes);
 	if (ret < 0)
 	    perror("write");
 

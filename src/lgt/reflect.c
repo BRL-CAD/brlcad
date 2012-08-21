@@ -927,7 +927,7 @@ correct_Lgt(struct application *ap, struct partition *pp, Lgt_Source *lgt_entry)
     fastf_t lgt_dir[3];
 
     if (lgt_entry == NULL) {
-        bu_log("Error - correct_Lgt - null lgt_entry supplied!\n");
+	bu_log("Error - correct_Lgt - null lgt_entry supplied!\n");
 	return  energy_attenuation;
     }
 

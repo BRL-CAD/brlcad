@@ -123,7 +123,7 @@ typedef struct HmMenu
     short prevtop;		/* Top entry currently visable */
     short prevhit;		/* Offset from top of last select */
     int sticky;			/* If true, menu stays around after
-			   	   SELECT, and until QUIT. */
+				   SELECT, and until QUIT. */
 }
 HmMenu;
 

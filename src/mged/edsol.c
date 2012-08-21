@@ -3380,8 +3380,8 @@ pscale(void)
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
 		    es_scale = es_para[0];
-		} 
-		VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, es_scale);    
+		}
+		VSCALE(hyp->hyp_Hi, hyp->hyp_Hi, es_scale);
 	    }
 	    break;
 
@@ -3396,8 +3396,8 @@ pscale(void)
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
 		    es_scale = es_para[0];
-		} 
-		VSCALE(hyp->hyp_A, hyp->hyp_A, es_scale);    
+		}
+		VSCALE(hyp->hyp_A, hyp->hyp_A, es_scale);
 	    }
 	    break;
 
@@ -3412,8 +3412,8 @@ pscale(void)
 		    /* take es_mat[15] (path scaling) into account */
 		    es_para[0] *= es_mat[15];
 		    es_scale = es_para[0];
-		} 
-		hyp->hyp_b = hyp->hyp_b * es_scale;    
+		}
+		hyp->hyp_b = hyp->hyp_b * es_scale;
 	    }
 	    break;
 
@@ -3430,9 +3430,9 @@ pscale(void)
 		    es_para[0] *= es_mat[15];
 		    es_scale = es_para[0];
 		}
-		if (hyp->hyp_bnr * es_scale <= 1.0) { 
+		if (hyp->hyp_bnr * es_scale <= 1.0) {
 		    hyp->hyp_bnr = hyp->hyp_bnr * es_scale;
-		}    
+		}
 	    }
 	    break;
 
@@ -8285,12 +8285,12 @@ label_edited_solid(
 		struct rt_hyp_internal *hyp =
 		    (struct rt_hyp_internal *)es_int.idb_ptr;
 		vect_t vB;
-	    
+
 		RT_HYP_CK_MAGIC(hyp);
 
 		MAT4X3PNT(pos_view, xform, hyp->hyp_Vi);
 		POINT_LABEL(pos_view, 'V');
-	    
+
 		VADD2(work, hyp->hyp_Vi, hyp->hyp_Hi);
 		MAT4X3PNT(pos_view, xform, work);
 		POINT_LABEL(pos_view, 'H');

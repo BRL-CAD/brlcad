@@ -118,9 +118,9 @@ static void fill_table (char *f_name)
 	if ((*bp == '#') || (*bp == '\0'))
 	    continue;
 	if (! bu_str_to_rgb(bp, rgb)) {
-            fclose(fp);
+	    fclose(fp);
 	    bu_exit(1, "Illegal color: '%s' on line %d of file '%s'\n", bp, line_nm, f_name);
-        }
+	}
 	add_to_table(rgb);
     }
     fclose(fp);

@@ -55,7 +55,7 @@ set(brlcadinclude_wanted
 	nmg.h
 	nurb.h
 	nurbs.h
-        obj.h
+	obj.h
 	optical.h
 	orle.h
 	photonmap.h
@@ -70,7 +70,7 @@ set(brlcadinclude_wanted
 	spectrum.h
 	spm.h
 	tie.h
-        tol.h
+	tol.h
 	vectfont.h
 	vector_fpu.h
 	vector_x86.h

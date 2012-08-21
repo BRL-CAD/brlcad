@@ -70,7 +70,7 @@ usage(const char *msg, const char *argv0)
 static void
 validate_port(int port) {
     if (port < 0 || port > 0xffff) {
-        bu_bomb("Invalid negative port range\n");
+	bu_bomb("Invalid negative port range\n");
     }
 }
 
@@ -127,10 +127,10 @@ run_client(const char *server, int port, const char *file)
     char *buffer;
     /** our callbacks for each message type */
     struct pkg_switch callbacks[] = {
-        {MSG_HELO, server_helo, "HELO", NULL},
-        {MSG_DATA, server_data, "DATA", NULL},
-        {MSG_CIAO, server_ciao, "CIAO", NULL},
-        {0, 0, (char *)0, (void*)0}
+	{MSG_HELO, server_helo, "HELO", NULL},
+	{MSG_DATA, server_data, "DATA", NULL},
+	{MSG_CIAO, server_ciao, "CIAO", NULL},
+	{0, 0, (char *)0, (void*)0}
     };
 
     buffer = (char *)bu_calloc(TPKG_BUFSIZE, 1, "buffer allocation");
@@ -154,7 +154,7 @@ run_client(const char *server, int port, const char *file)
     stash.server = server;
     stash.port = port;
     stash.connection->pkc_switch = callbacks;
-   
+
 
     /* let the server know we're cool. */
     bytes = pkg_send(MSG_HELO, MAGIC_ID, strlen(MAGIC_ID) + 1, stash.connection);
@@ -169,31 +169,31 @@ run_client(const char *server, int port, const char *file)
      */
     bu_log("Processing data from server\n");
     do {
-        /* process packets potentially received in a processing callback */
-        pkg_result = pkg_process(stash.connection);
-        if (pkg_result < 0) {
-            bu_log("Unable to process packets? Weird.\n");
-        } else {
-            bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
-        }
+	/* process packets potentially received in a processing callback */
+	pkg_result = pkg_process(stash.connection);
+	if (pkg_result < 0) {
+	    bu_log("Unable to process packets? Weird.\n");
+	} else {
+	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
+	}
 
-        /* suck in data from the network */
-        pkg_result = pkg_suckin(stash.connection);
-        if (pkg_result < 0) {
-            bu_log("Seemed to have trouble sucking in packets.\n");
-            break;
-        } else if (pkg_result == 0) {
-            bu_log("Client closed the connection.\n");
-            break;
-        }
+	/* suck in data from the network */
+	pkg_result = pkg_suckin(stash.connection);
+	if (pkg_result < 0) {
+	    bu_log("Seemed to have trouble sucking in packets.\n");
+	    break;
+	} else if (pkg_result == 0) {
+	    bu_log("Client closed the connection.\n");
+	    break;
+	}
 
-        /* process new packets received */
-        pkg_result = pkg_process(stash.connection);
-        if (pkg_result < 0) {
-            bu_log("Unable to process packets? Weird.\n");
-        } else {
-            bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
-        }
+	/* process new packets received */
+	pkg_result = pkg_process(stash.connection);
+	if (pkg_result < 0) {
+	    bu_log("Unable to process packets? Weird.\n");
+	} else {
+	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
+	}
 	bu_log("buffer: %s\n", stash.connection->pkc_inbuf);
     } while (stash.connection->pkc_type != MSG_CIAO);
 

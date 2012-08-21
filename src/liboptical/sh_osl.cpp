@@ -502,7 +502,7 @@ osl_refraction_hit(struct application *ap, struct partition *PartHeadp, struct s
 
 	/* Determine the hit point */
 	sw.sw_hit = *(pp->pt_outhit);		/* struct copy */
-    	VJOIN1(sw.sw_hit.hit_point, ap->a_ray.r_pt, sw.sw_hit.hit_dist, ap->a_ray.r_dir);
+	VJOIN1(sw.sw_hit.hit_point, ap->a_ray.r_pt, sw.sw_hit.hit_dist, ap->a_ray.r_dir);
 
 	/* Determine the normal point */
 	stp = pp->pt_outseg->seg_stp;

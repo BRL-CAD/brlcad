@@ -36,7 +36,6 @@
 #include "STEPWrapper.h"
 
 
-
 class RepresentationItem;
 class RepresentationContext;
 

@@ -32,7 +32,7 @@
 #define CLASSNAME "ProductDefinitionFormationWithSpecifiedSource"
 #define ENTITYNAME "Product_Definition_Formation_With_Specified_Source"
 string ProductDefinitionFormationWithSpecifiedSource::entityname = Factory::RegisterClass(ENTITYNAME,
-        (FactoryMethod) ProductDefinitionFormationWithSpecifiedSource::Create);
+	(FactoryMethod) ProductDefinitionFormationWithSpecifiedSource::Create);
 
 ProductDefinitionFormationWithSpecifiedSource::ProductDefinitionFormationWithSpecifiedSource()
 {

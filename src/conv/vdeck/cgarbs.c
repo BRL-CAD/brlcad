@@ -181,11 +181,11 @@ arb_mv(point_t pts[8],
  */
 int
 redoarb(point_t pts[8],
-        const struct rt_arb_internal *gp,
-        int uniq[8],
-        int svec[11],
-        const int numvec,
-        const int cgtype
+	const struct rt_arb_internal *gp,
+	int uniq[8],
+	int svec[11],
+	const int numvec,
+	const int cgtype
     )
 {
     int	i, j;

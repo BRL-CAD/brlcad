@@ -1146,7 +1146,7 @@ rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip
 
     if (!ip)
 	return -1;
-    
+
     RT_CK_DB_INTERNAL(ip);
     cip = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cip);
@@ -1176,7 +1176,7 @@ rt_cline_to_pipe(struct rt_pipe_internal *pipep, const struct rt_db_internal *ip
 
     return 0;
 }
-    
+
 
 /** @} */
 /*

@@ -69,7 +69,7 @@
 	method toggleFbMode {}
 	method toggleFB {}
 	method updateControlPanel {}
-    }    
+    }
 
     protected {
 	variable pmGlobalPhotonsEntry 16384
@@ -408,7 +408,7 @@
     wm geometry $itk_component(hull) $win_geom
     wm deiconify $itk_component(hull)
 
-    set_size 
+    set_size
 }
 
 ::itcl::body RtControl::activate_adv {} {
@@ -437,8 +437,8 @@
     set win_geom_adv [wm geometry $itk_component(adv)]
     wm withdraw $itk_component(adv)
 
-    bind $itk_component(hull) <Visibility> $saveVisibilityBinding 
-    bind $itk_component(hull) <FocusOut> $saveFocusOutBinding 
+    bind $itk_component(hull) <Visibility> $saveVisibilityBinding
+    bind $itk_component(hull) <FocusOut> $saveFocusOutBinding
     raise $itk_component(hull)
 }
 
@@ -706,7 +706,7 @@
     if {$itk_option(-fb_enabled)} {
 	set itk_option(-fb_enabled) 0
     } else {
-	set_size 
+	set_size
 	set itk_option(-fb_enabled) 1
     }
 
@@ -1019,7 +1019,7 @@
     }
 
     set rtPrevColor $rtColor
-    
+
     set bg [eval ::cadwidgets::Ged::rgb_to_tk $rtColor]
     $itk_component(bgcolorpatchL) configure -background $bg
 }

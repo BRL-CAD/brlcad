@@ -35,13 +35,13 @@ proc igraph { } {
 
     # see if the window is already open.  If so, just raise it up.
     if [ winfo exists $ge ] {
-        raise $ge
-        return
+	raise $ge
+	return
     }
 
     # just to quell the tk name returned and report fatal errors
     if [ catch { GraphEditor $ge } geName ] {
-        puts $geName
+	puts $geName
     }
 }
 

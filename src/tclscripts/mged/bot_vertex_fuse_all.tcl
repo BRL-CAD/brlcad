@@ -48,7 +48,7 @@ proc bot_vertex_fuse_all {} {
 
 	puts stdout "$cnt remaining bots; processing $bot_vert_cnt vertices in bot \"$bot\" ..."
 
-	after 1 {set fused_msg [bot_vertex_fuse $tmp_name $bot_global]} 
+	after 1 {set fused_msg [bot_vertex_fuse $tmp_name $bot_global]}
 
 	vwait fused_msg
 
@@ -60,9 +60,8 @@ proc bot_vertex_fuse_all {} {
 	    kill $bot
 	    mv $tmp_name $bot
 	}
- 
+
 	puts stdout "$fused_num vertex fused.\n"
     }
     puts stdout "Done."
 }
-

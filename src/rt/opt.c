@@ -477,18 +477,18 @@ get_args(int argc, const char *argv[])
 		}
 		break;
 	    case 'u':
-	    	if (BU_STR_EQUAL(bu_optarg,"model")) {
-	    		model_units = 1;
-	    		default_units = 0;
-	    	} else {
-	    		units = bu_units_conversion(bu_optarg);
-	    		if (units <= 0.0) {
-	    			units = 1.0;
-	    			default_units = 1;
-	    			bu_log("WARNING: bad units, using default (%s)\n", bu_units_string(units));
-	    		} else {
-	    			default_units = 0;
-	    		}
+		if (BU_STR_EQUAL(bu_optarg,"model")) {
+			model_units = 1;
+			default_units = 0;
+		} else {
+			units = bu_units_conversion(bu_optarg);
+			if (units <= 0.0) {
+				units = 1.0;
+				default_units = 1;
+				bu_log("WARNING: bad units, using default (%s)\n", bu_units_string(units));
+			} else {
+				default_units = 0;
+			}
 			}
 		break;
 	    case 'v': /* Set level of "non-debug" debugging output */

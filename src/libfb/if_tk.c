@@ -59,7 +59,7 @@ int p[2] = {0, 0};
  *
  * Might as well use one block and set the three things
  * that actually change in tk_write
- */   
+ */
 Tk_PhotoImageBlock block = {
     NULL, /*Pointer to first pixel*/
     0,    /*Width of block in pixels*/
@@ -229,7 +229,7 @@ fb_tk_open(FBIO *ifp, const char *file, int width, int height)
 
     sprintf (reportcolorcmd,
 	     "bind . <Button-2> {puts \"At image (%%x, [expr %d - %%y]), real RGB = ([fb_tk_photo get %%x %%y])\n\"}", height);
-    
+
     if (Tcl_Eval(fbinterp, canvas_create_cmd) != TCL_OK) {
 	fb_log("Error returned attempting to create canvas in fb_open.");
     }
@@ -262,7 +262,7 @@ fb_tk_open(FBIO *ifp, const char *file, int width, int height)
     if (Tcl_Eval(fbinterp, reportcolorcmd) != TCL_OK) {
 	fb_log("Error binding middle mouse button.");
     }
- 
+
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
     /* FIXME: malloc() is necessary here because there are callers
@@ -293,7 +293,7 @@ fb_tk_open(FBIO *ifp, const char *file, int width, int height)
 	/* parent */
 	while (y[0] >= 0) {
 	    int count;
-	    
+
 	    /* If the Tk window gets a close event, bail */
 	    if (BU_STR_EQUAL(Tcl_GetVar(fbinterp, "CloseWindow", 0), "close")) {
 		free(buffer);
@@ -301,8 +301,8 @@ fb_tk_open(FBIO *ifp, const char *file, int width, int height)
 		free(tkwrite_buffer);
 		fclose(stdin);
 		printf("Close Window event\n");
-    		Tcl_Eval(fbinterp, "destroy .");
-    	    	bu_exit(0, NULL);
+		Tcl_Eval(fbinterp, "destroy .");
+		bu_exit(0, NULL);
 	    }
 
 	    /* Unpack inputs from pipe */
@@ -326,7 +326,7 @@ fb_tk_open(FBIO *ifp, const char *file, int width, int height)
 #else
 	    Tk_PhotoPutBlock(fbinterp, &block, 0, ifp->if_height-y[0], count, 1, TK_PHOTO_COMPOSITE_SET);
 #endif
-		    
+
 	    do {
 		i = Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
 	    } while (i);
@@ -409,11 +409,11 @@ tk_write(FBIO *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size_t co
     line[0] = htonl(y);
     line[1] = htonl((long)count);
     line[2] = 0;
-    
+
     memcpy(tkwrite_buffer, line, sizeof(uint32_t)*3);
     memcpy(tkwrite_buffer+sizeof(uint32_t)*3, block.pixelPtr, 3 * ifp->if_width);
-   
-    /* Send values and data to parent for display */ 
+
+    /* Send values and data to parent for display */
     if (write(p[1], tkwrite_buffer, 3 * ifp->if_width + 3*sizeof(uint32_t)) == -1) {
 	perror("Unable to write to pipe");
 	sleep(1);

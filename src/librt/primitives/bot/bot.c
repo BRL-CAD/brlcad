@@ -599,7 +599,7 @@ rt_bot_centroid(point_t *cent, const struct rt_db_internal *ip)
     rt_bot_condense(bot_ip);
     VSETALL(*cent, 0.0);
     for (i = 0; i < bot_ip->num_vertices; i++) {
-        VADD2(*cent, *cent, &bot_ip->vertices[i*3]);
+	VADD2(*cent, *cent, &bot_ip->vertices[i*3]);
     }
     VSCALE(*cent, *cent, 1.0 / (fastf_t)bot_ip->num_vertices);
 }
@@ -4915,11 +4915,11 @@ rt_bot_patches(struct rt_bot_internal *bot)
 	fastf_t tmp = 0.0;
 	VSETALLN(results, 0, 6);
 
-        tpp = &alltpp[i];
+	tpp = &alltpp[i];
 	tpp->tri = i;
-        tpp->a = bot->faces[i*3+0];
-        tpp->b = bot->faces[i*3+1];
-        tpp->c = bot->faces[i*3+2];
+	tpp->a = bot->faces[i*3+0];
+	tpp->b = bot->faces[i*3+1];
+	tpp->c = bot->faces[i*3+2];
 
 	VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
 	VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);

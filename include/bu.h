@@ -480,10 +480,10 @@ BU_EXPORT extern int bu_cv_itemlen(int cookie);
  *
  * A worst case would be:	ns16 on vax to ns32
  @code
- 	ns16 	-> hs16
- 		-> hd
- 		-> hs32
- 		-> ns32
+	ns16 	-> hs16
+		-> hd
+		-> hs32
+		-> ns32
  @endcode
  * The worst case is probably the easiest to deal with because all
  * steps are done.  The more difficult cases are when only a subset of
@@ -491,70 +491,70 @@ BU_EXPORT extern int bu_cv_itemlen(int cookie);
  *
  * @par Method:
  @code
- 	HOSTDBL defined as true or false
- 	if ! hostother then
- 		hostother = (Endian == END_BIG) ? SAME : DIFFERENT;
- 	fi
- 	if (infmt == double) then
- 		if (HOSTDBL == SAME) {
- 			inIsHost = host;
- 		fi
- 	else
- 		if (hostother == SAME) {
- 			inIsHost = host;
- 		fi
- 	fi
- 	if (outfmt == double) then
- 		if (HOSTDBL == SAME) {
- 			outIsHost == host;
- 	else
- 		if (hostother == SAME) {
- 			outIsHost = host;
- 		fi
- 	fi
- 	if (infmt == outfmt) {
- 		if (inIsHost == outIsHost) {
- 			copy(in, out)
- 			exit
- 		else if (inIsHost == net) {
- 			ntoh?(in, out);
- 			exit
- 		else
- 			hton?(in, out);
- 			exit
- 		fi
- 	fi
+	HOSTDBL defined as true or false
+	if ! hostother then
+		hostother = (Endian == END_BIG) ? SAME : DIFFERENT;
+	fi
+	if (infmt == double) then
+		if (HOSTDBL == SAME) {
+			inIsHost = host;
+		fi
+	else
+		if (hostother == SAME) {
+			inIsHost = host;
+		fi
+	fi
+	if (outfmt == double) then
+		if (HOSTDBL == SAME) {
+			outIsHost == host;
+	else
+		if (hostother == SAME) {
+			outIsHost = host;
+		fi
+	fi
+	if (infmt == outfmt) {
+		if (inIsHost == outIsHost) {
+			copy(in, out)
+			exit
+		else if (inIsHost == net) {
+			ntoh?(in, out);
+			exit
+		else
+			hton?(in, out);
+			exit
+		fi
+	fi
 
- 	while not done {
- 		from = in;
+	while not done {
+		from = in;
 
- 		if (inIsHost == net) {
- 			ntoh?(from, t1);
- 			from = t1;
- 		fi
- 		if (infmt != double) {
- 			if (outIsHost == host) {
- 				to = out;
- 			else
- 				to = t2;
- 			fi
- 			castdbl(from, to);
- 			from = to;
- 		fi
+		if (inIsHost == net) {
+			ntoh?(from, t1);
+			from = t1;
+		fi
+		if (infmt != double) {
+			if (outIsHost == host) {
+				to = out;
+			else
+				to = t2;
+			fi
+			castdbl(from, to);
+			from = to;
+		fi
 
- 		if (outfmt == double) {
- 			if (outIsHost == net) {
- 				hton?(from, out);
- 			fi
- 		else
- 			if (outIsHost == host) {
- 				dblcast(from, out);
- 			else
- 				dblcast(from, t3);
- 				hton?(t3, out);
- 			fi
- 		fi
- 	done
+		if (outfmt == double) {
+			if (outIsHost == net) {
+				hton?(from, out);
+			fi
+		else
+			if (outIsHost == host) {
+				dblcast(from, out);
+			else
+				dblcast(from, t3);
+				hton?(t3, out);
+			fi
+		fi
+	done
  @endcode
  */
 BU_EXPORT extern size_t bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in, int incookie, size_t count);
@@ -659,10 +659,10 @@ BU_EXPORT extern size_t bu_cv_htonul(genptr_t,
 #  define BU_CKMAG(_ptr, _magic, _str) IGNORE((_ptr))
 #else
 #  define BU_CKMAG(_ptr, _magic, _str) { \
-        uintptr_t _ptrval = (uintptr_t)(_ptr); \
-        if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
-            bu_badmagic((uint32_t *)(_ptr), (uint32_t)_magic, _str, __FILE__, __LINE__); \
-        } \
+	uintptr_t _ptrval = (uintptr_t)(_ptr); \
+	if (UNLIKELY((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
+	    bu_badmagic((uint32_t *)(_ptr), (uint32_t)_magic, _str, __FILE__, __LINE__); \
+	} \
     }
 #endif
 
@@ -685,7 +685,6 @@ BU_EXPORT extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const cha
  * error might have been made.
  */
 BU_EXPORT extern const char *bu_identify_magic(uint32_t magic);
-
 
 
 /*----------------------------------------------------------------------*/
@@ -2293,7 +2292,6 @@ typedef struct bu_color bu_color_t;
 #define BU_COLOR_IS_INITIALIZED(_c) (((struct bu_color *)(_c) != BU_COLOR_NULL) && LIKELY((_c)->magic == BU_COLOR_MAGIC))
 
 
-
 /*----------------------------------------------------------------------*/
 /** @addtogroup rb */
 /** @ingroup container */
@@ -3209,17 +3207,17 @@ BU_EXPORT extern const char *bu_whereis(const char *cmd);
  *
  * Typical usage:
  @code
- 	static int n = 0;
- 	FILE *fp;
+	static int n = 0;
+	FILE *fp;
 
- 	fp = bu_fopen_uniq("writing to %s for results", "output%d.pl", n++);
- 	...
- 	fclose(fp);
+	fp = bu_fopen_uniq("writing to %s for results", "output%d.pl", n++);
+	...
+	fclose(fp);
 
 
- 	fp = bu_fopen_uniq((char *)NULL, "output%d.pl", n++);
- 	...
- 	fclose(fp);
+	fp = bu_fopen_uniq((char *)NULL, "output%d.pl", n++);
+	...
+	fclose(fp);
  @endcode
  *
  */
@@ -6195,7 +6193,6 @@ BU_EXPORT extern void bu_pool_put(void *ptr, size_t elem_byte_size);
  *
  */
 BU_EXPORT extern int bu_str_isprint(const char *cp);
-
 
 
 __END_DECLS

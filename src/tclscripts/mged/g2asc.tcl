@@ -45,17 +45,17 @@ proc init_g2asc { id } {
     set default_name [file tail [file rootname $db_name]].asc
     set ftypes {{{Ascii Database} {.asc}} {{All Files} {*}}}
     set filename [tk_getSaveFile -parent .$id -filetypes $ftypes \
-                                 -initialdir $mged_gui(databaseDir) \
-                                 -initialfile $default_name \
-                                 -title "Extract Ascii Database"]
+				 -initialdir $mged_gui(databaseDir) \
+				 -initialfile $default_name \
+				 -title "Extract Ascii Database"]
 
-    if { $filename != "" } {  
-        # save the current directory for subsequent file saves
-        set mged_gui(databaseDir) [ file dirname $filename ]
+    if { $filename != "" } {
+	# save the current directory for subsequent file saves
+	set mged_gui(databaseDir) [ file dirname $filename ]
 
-        # convert binary database to ascii
-        set g2asc [bu_brlcad_root "bin/g2asc"]
-        catch {exec $g2asc $db_name $filename} msg
+	# convert binary database to ascii
+	set g2asc [bu_brlcad_root "bin/g2asc"]
+	catch {exec $g2asc $db_name $filename} msg
     }
 }
 

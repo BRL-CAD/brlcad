@@ -79,7 +79,7 @@ CompositeCurve::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 	for(i=l->begin();i!=l->end();i++) {
 	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
-	    	CompositeCurveSegment *aCCS = dynamic_cast<CompositeCurveSegment *>(Factory::CreateObject(sw,entity));
+		CompositeCurveSegment *aCCS = dynamic_cast<CompositeCurveSegment *>(Factory::CreateObject(sw,entity));
 
 		segments.push_back(aCCS);
 	    } else {

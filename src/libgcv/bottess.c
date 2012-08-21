@@ -133,7 +133,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 #define ALL_INT  (VERT_INT|LINE_INT|FACE_INT)
 
 #if NOISY
-    printf("Cutting % 2.2g,% 2.2g,% 2.2g | % 2.2g,% 2.2g,% 2.2g | % 2.2g,% 2.2g,% 2.2g along % 2.2g,% 2.2g,% 2.2g <-> % 2.2g,% 2.2g,% 2.2g\n", 
+    printf("Cutting % 2.2g,% 2.2g,% 2.2g | % 2.2g,% 2.2g,% 2.2g | % 2.2g,% 2.2g,% 2.2g along % 2.2g,% 2.2g,% 2.2g <-> % 2.2g,% 2.2g,% 2.2g\n",
 	    V3ARGS(s->faces[fid].vert[0]),
 	    V3ARGS(s->faces[fid].vert[1]),
 	    V3ARGS(s->faces[fid].vert[2]),

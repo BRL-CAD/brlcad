@@ -48,8 +48,8 @@
 ################################### Public Section ###################################
 
 ::itcl::body DataUtils::appendGlobalData {_ged _archer _group
-                                          _attr_name _data_cmd _data_subcmd
-                                          _data _index_begin _index_end} {
+					  _attr_name _data_cmd _data_subcmd
+					  _data _index_begin _index_end} {
     if {$_group == ""} {
 	$_archer putString "Please select a group before appending to $_attr_name."
 	return
@@ -83,10 +83,10 @@
 }
 
 ::itcl::body DataUtils::dataPick {_ged _archer _group
-                                  _pdata _data_arrows_name _sdata_arrows_name
-                                  _data_axes_name _sdata_axes_name
-                                  _data_labels_name _sdata_labels_name
-                                  _data_lines_name _sdata_lines_name} {
+				  _pdata _data_arrows_name _sdata_arrows_name
+				  _data_axes_name _sdata_axes_name
+				  _data_labels_name _sdata_labels_name
+				  _data_lines_name _sdata_lines_name} {
 
     if {$_pdata == ""} {
 	return
@@ -564,16 +564,16 @@
 	set ptB [lrange $dataB $_pindex $pindex_end]
 	set dist [vmagnitude [vsub2 $ptB $ptA]]
 	set dist [expr {$dist * [$_ged base2local]}]
-        } msg]} {
+	} msg]} {
 	return
     }
-    
+
     $_archer putString "Measured distance between data points: $dist [$_ged units -s]."
     $_archer setStatusString "Measured distance between data points: $dist [$_ged units -s]."
 }
 
 ::itcl::body DataUtils::updateData {_ged _archer _group
-                                    _attr_name _data_cmd _data_subcmd} {
+				    _attr_name _data_cmd _data_subcmd} {
     if {[catch {$_ged attr get _GLOBAL $_attr_name} dal]} {
 	set dal {}
     }

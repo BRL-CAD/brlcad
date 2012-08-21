@@ -415,9 +415,9 @@
 
     if {$mHighlightedAttr != ""} {
 	set i [lsearch $alist $mHighlightedAttr]
-        if {$i != -1} {
-            $itk_component(alist) itemconfigure $i -background white
-        }
+	if {$i != -1} {
+	    $itk_component(alist) itemconfigure $i -background white
+	}
 
 	set rlist [getAttrArgs $mCurrentAttr $mHighlightedAttr]
 	set slist [lindex $rlist 0]
@@ -434,9 +434,9 @@
     set mHighlightedAttr [getSelectedAttr]
     if {$mHighlightedAttr != ""} {
 	set i [lsearch $alist $mHighlightedAttr]
-        if {$i != -1} {
-            $itk_component(alist) itemconfigure $i -background \#c3c3c3
-        }
+	if {$i != -1} {
+	    $itk_component(alist) itemconfigure $i -background \#c3c3c3
+	}
     }
     set rlist [highlightCurrentAttr]
     if {$rlist != {}} {
@@ -723,7 +723,7 @@
 
     set csindex [lsearch -index 0 $mMasterAttrGroups $cs]
     if {$csindex == -1} {
-        return
+	return
     }
 
     set glist [lindex $mMasterAttrGroups $csindex]
@@ -739,10 +739,10 @@
     }
 
     if {$mCurrentGroup != ""} {
-        set i [lsearch -index 0 $mMasterAttrGroups $mCurrentGroup]
-        if {$i != -1} {
-            $itk_component(glist) itemconfigure $i -background white
-        }
+	set i [lsearch -index 0 $mMasterAttrGroups $mCurrentGroup]
+	if {$i != -1} {
+	    $itk_component(glist) itemconfigure $i -background white
+	}
     }
     $itk_component(glist) itemconfigure $csindex -background \#c3c3c3
 

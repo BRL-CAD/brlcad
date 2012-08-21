@@ -124,9 +124,9 @@ namespace eval RtWizard {
 	set fbarray [split $fb " "]
 	if { [llength $fbarray] > 1 } {
 	   set fb [lindex $fbarray 0]
-           set fbpid [lindex $fbarray 1]
-           set filename [lindex $fbarray 2]
-        }
+	   set fbpid [lindex $fbarray 1]
+	   set filename [lindex $fbarray 2]
+	}
 
 	#
 	# Get the view info
@@ -142,27 +142,27 @@ namespace eval RtWizard {
 	#
 	# Get the background color
 	#
-        set objPage $fcp
+	set objPage $fcp
 	set bgHex [$objPage getBackgroundColor]
 	set bg [hexToRGB $bgHex]
 
-        #
-        # Get the object list, the file is global
-        #
-        set color_objects [$objPage getObjects]
-            
-        # Get the perspective angle
-        #
-        set perspective [$viewPage getPerspective]
+	#
+	# Get the object list, the file is global
+	#
+	set color_objects [$objPage getObjects]
 
-        ::cadwidgets::rtimage $::RtWizard::wizard_state(dbFile) $fb \
-            $w $h \
-            $viewsize $orientation $eye_pt $perspective\
-            $bg "" ""\
-            "" "" \
-            $color_objects \
-            "" \
-            "" 
+	# Get the perspective angle
+	#
+	set perspective [$viewPage getPerspective]
+
+	::cadwidgets::rtimage $::RtWizard::wizard_state(dbFile) $fb \
+	    $w $h \
+	    $viewsize $orientation $eye_pt $perspective\
+	    $bg "" ""\
+	    "" "" \
+	    $color_objects \
+	    "" \
+	    ""
 
 	# If we're outputting a file, write it out and close down
 	# the in-memory fbserv
@@ -170,11 +170,11 @@ namespace eval RtWizard {
 	   if {[string length $filename] > 0 } {
 	       set output_generated 0
 	       if {[file extension $filename] == ".png"} {
-	          exec [file join [bu_brlcad_root bin] fb-png] -w $w -n $h -F $fb $filename
-	          set output_generated 1
+		  exec [file join [bu_brlcad_root bin] fb-png] -w $w -n $h -F $fb $filename
+		  set output_generated 1
 	       }
 	       if {!$output_generated} {
-	          exec [file join [bu_brlcad_root bin] fb-pix] -w $w -n $h -F $fb $filename
+		  exec [file join [bu_brlcad_root bin] fb-pix] -w $w -n $h -F $fb $filename
 		  set output_generated 1
 	       }
 	       if {$::tcl_platform(platform) == "windows"} {
@@ -186,8 +186,8 @@ namespace eval RtWizard {
 	       if {$kill_cmd != ""} {
 		   exec $kill_cmd $fbpid
 	       }
- 	   }
-        }
+	   }
+	}
     }
 
 

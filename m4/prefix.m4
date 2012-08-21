@@ -118,7 +118,7 @@ if test "x$BRLCAD_ROOT" = "x/usr" ; then
 		    x*)
 			AC_MSG_NOTICE([Please answer 'yes' or 'no'])
 			;;
-	        esac
+		esac
 	    else
 		AC_MSG_NOTICE([Unable to read response, continuing])
 		break

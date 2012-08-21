@@ -686,7 +686,7 @@ int main(int argc, char **argv) {
 	       )!= -1)
     {
 	switch (c) {
-            case 'c':
+	    case 'c':
 		bu_strlcpy(comp_host, bu_optarg, 64);
 		break;
 
@@ -694,32 +694,32 @@ int main(int argc, char **argv) {
 		go_daemon_mode = 1;
 		break;
 
-            case 'h':
+	    case 'h':
 		help();
 		return EXIT_SUCCESS;
 
-            case 'o':
+	    case 'o':
 		obs_port = atoi(bu_optarg);
 		break;
 
-            case 'p':
+	    case 'p':
 		port = atoi(bu_optarg);
 		break;
 
-            case 'l':
+	    case 'l':
 		bu_strlcpy(list, bu_optarg, 64);
 		break;
 
-            case 'e':
+	    case 'e':
 		bu_strlcpy(exec, bu_optarg, 64);
 		break;
 
-            case 'b':
+	    case 'b':
 		printf("adrt_master build: %s %s\n", __DATE__, __TIME__);
 		return EXIT_SUCCESS;
 		break;
 
-            case 'v':
+	    case 'v':
 		if(!(bu_debug & BU_DEBUG_UNUSED_1))
 		    bu_debug |= BU_DEBUG_UNUSED_1;
 		else if(!(bu_debug & BU_DEBUG_UNUSED_2))
@@ -730,7 +730,7 @@ int main(int argc, char **argv) {
 		    bu_log("Too verbose!\n");
 		break;
 
-            default:
+	    default:
 		help();
 		return EXIT_FAILURE;
 	}

@@ -172,7 +172,7 @@ read_psurf_vertices(FILE *fp, struct vlist *vert)
 
     /* Read vertices. */
     for (i = 0; fscanf(fp, "%lf %lf %lf", &x, &y, &z) == 3; i++) {
-        if (i >= MAX_NUM_PTS) {
+	if (i >= MAX_NUM_PTS) {
 	    bomb = 1;
 	} else {
 	    vert->pt[3*i+0] = x * 10.;	/* Convert cm to mm. */
@@ -294,7 +294,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 
     if (face)
     {
-        int empty_model;
+	int empty_model;
 	empty_model = nmg_kill_zero_length_edgeuses(m);
 	if (!empty_model) {
 

@@ -136,7 +136,7 @@ format_part_status(const char c)
 	  status |= VP_MISC;
 	  break;
 
-          /* OBSOLETE ===================================== */
+	  /* OBSOLETE ===================================== */
 	  /* obsolete or not recommended (considered obsolete for bu_vls): */
       case 'm': /* glibc extension for printing strerror(errno) (not same as %m$ or %*mS) */
       case 'C': /* Synonym for lc. (Not in C99, but in SUSv2. Don't use.) */
@@ -466,7 +466,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		}
 		/* all length modifiers below here */
 	    } else if (format_part_status(c) == (VP_VALID | VP_LENGTH_MOD)) {
- 	        handle_format_part(VP_LENGTH_MOD, &f, c, VP_PRINT);
+		handle_format_part(VP_LENGTH_MOD, &f, c, VP_PRINT);
 	    } else {
 		/* Anything else must be the end of the fmt specifier
 		   (i.e., the conversion specifier)*/
@@ -809,16 +809,16 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    fprintf(stderr, "  Status flags: %x.\n", format_part_status(c));
 		    bu_bomb("ERROR: Shouldn't get here.\n");
 		}
-                /* try to get some kind of output, assume it's an int */
-                {
+		/* try to get some kind of output, assume it's an int */
+		{
 		    int d = va_arg(ap, int);
 		    if (f.flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbufp, f.fieldlen, d);
 		    else
 			snprintf(buf, BUFSIZ, fbufp, d);
-                }
+		}
 		bu_vls_strcat(vls, buf);
-                break;
+		break;
 	}
 	sp = ep + 1;
     }

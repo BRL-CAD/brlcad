@@ -23,4 +23,3 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReason, LPVOID lpReserved)
 
 
 static bool initialized = bootstrap();
-

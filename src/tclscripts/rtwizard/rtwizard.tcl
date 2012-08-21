@@ -68,39 +68,39 @@ namespace eval RtWizard {}
 # results of its parsing directly in that array
 package require GetOpt
 getopt::init {
-        # GUI controls
-        {gui 			""  	{::use_gui}}
-        {no-gui 		""  	{::disable_gui}}
+	# GUI controls
+	{gui 			""  	{::use_gui}}
+	{no-gui 		""  	{::disable_gui}}
 	# Input/output files and framebuffer servers
-        {input	 		i  	{::have_gfile ::RtWizard::wizard_state(dbFile)}}
-        {output   		o  	{::output ::RtWizard::wizard_state(output_filename)}}
-        {fbserv-device		d  	{::fbserv_device ::RtWizard::wizard_state(fbserv_device)}}
-        {fbserv-port		p  	{::fbserv_port ::RtWizard::wizard_state(fbserv_port)}}
-        {width 			w	{::have_width ::RtWizard::wizard_state(width)}}
-        {height 		n 	{::have_scanlines ::RtWizard::wizard_state(scanlines)}}
+	{input	 		i  	{::have_gfile ::RtWizard::wizard_state(dbFile)}}
+	{output   		o  	{::output ::RtWizard::wizard_state(output_filename)}}
+	{fbserv-device		d  	{::fbserv_device ::RtWizard::wizard_state(fbserv_device)}}
+	{fbserv-port		p  	{::fbserv_port ::RtWizard::wizard_state(fbserv_port)}}
+	{width 			w	{::have_width ::RtWizard::wizard_state(width)}}
+	{height 		n 	{::have_scanlines ::RtWizard::wizard_state(scanlines)}}
 	# Objects to raytrace
-        {color-objects		c	{::have_full_color_objs ::RtWizard::wizard_state(color_objlist) ...}}
-        {ghost-objects		g	{::have_ghost_objs ::RtWizard::wizard_state(ghost_objlist) ...}}
-        {line-objects		l	{::have_line_objs ::RtWizard::wizard_state(line_objlist) ...}}
+	{color-objects		c	{::have_full_color_objs ::RtWizard::wizard_state(color_objlist) ...}}
+	{ghost-objects		g	{::have_ghost_objs ::RtWizard::wizard_state(ghost_objlist) ...}}
+	{line-objects		l	{::have_line_objs ::RtWizard::wizard_state(line_objlist) ...}}
 	# Settings
-        {background-color 	C 	{::have_bg_color ::RtWizard::wizard_state(bg_color)}}
-        {ghosting-intensity 	G	{::have_ghosting_intensity ::RtWizard::wizard_state(ghosting_intensity)}}
-        {line-color		""	{::have_line_color ::RtWizard::wizard_state(e_color)}}
-        {non-line-color 	"" 	{::have_non_line_color ::RtWizard::wizard_state(ne_color)}}
-        {occlusion 		O 	{::have_occlusion_mode ::RtWizard::wizard_state(occmode)}}
+	{background-color 	C 	{::have_bg_color ::RtWizard::wizard_state(bg_color)}}
+	{ghosting-intensity 	G	{::have_ghosting_intensity ::RtWizard::wizard_state(ghosting_intensity)}}
+	{line-color		""	{::have_line_color ::RtWizard::wizard_state(e_color)}}
+	{non-line-color 	"" 	{::have_non_line_color ::RtWizard::wizard_state(ne_color)}}
+	{occlusion 		O 	{::have_occlusion_mode ::RtWizard::wizard_state(occmode)}}
 	# Image type
-        {type 			t 	{::have_picture_type ::RtWizard::wizard_state(picture_type)}}
+	{type 			t 	{::have_picture_type ::RtWizard::wizard_state(picture_type)}}
 	# View
-        {azimuth 		a  	{::have_azimuth ::RtWizard::wizard_state(init_azimuth)}}
-        {elevation 		e 	{::have_elevation ::RtWizard::wizard_state(init_elevation)}}
-        {twist 			"" 	{::have_twist ::RtWizard::wizard_state(init_twist)}}
+	{azimuth 		a  	{::have_azimuth ::RtWizard::wizard_state(init_azimuth)}}
+	{elevation 		e 	{::have_elevation ::RtWizard::wizard_state(init_elevation)}}
+	{twist 			"" 	{::have_twist ::RtWizard::wizard_state(init_twist)}}
 	{perspective		P	{::have_perspective ::RtWizard::wizard_state(perspective)}}
-        {zoom 			z 	{::have_zoom ::RtWizard::wizard_state(zoom)}}
+	{zoom 			z 	{::have_zoom ::RtWizard::wizard_state(zoom)}}
 	{center			""	{::have_center ::RtWizard::wizard_state(x_center) ::RtWizard::wizard_state(y_center) ::RtWizard::wizard_state(z_center)}}
 	{viewsize		""	{::have_viewsize ::RtWizard::wizard_state(viewsize)}}
 	{orientation		""	{::have_orientation ::RtWizard::wizard_state(orientation)}}
 	{eye_pt			""	{::have_eye_pt ::RtWizard::wizard_state(eye_pt)}}
-        # Debugging info
+	# Debugging info
 	{verbose		v 	{::RtWizard::wizard_state(verbose)}}
 }
 
@@ -157,7 +157,7 @@ if {[info exists argv2]} {
 	    set ::RtWizard::wizard_state(output_filename) $item
 	 } else {
 	    puts "Note - $item potentially specifies an output file, but $::RtWizard::wizard_state(output_filename) is already set as the output file."
-            lappend residualArgs $item
+	    lappend residualArgs $item
 	 }
      } else {
        lappend residualArgs $item
@@ -173,10 +173,10 @@ if {[info exists argv2]} {
 if {[info exists argv2]} {
     if {[string length $argv2]} {
       if {![info exists ::RtWizard::wizard_state(color_objlist)]} {
-         set ::RtWizard::wizard_state(color_objlist) {}
+	 set ::RtWizard::wizard_state(color_objlist) {}
       }
       foreach item $argv2 {
-         lappend ::RtWizard::wizard_state(color_objlist) $item
+	 lappend ::RtWizard::wizard_state(color_objlist) $item
       }
     }
 }
@@ -187,88 +187,88 @@ if {[info exists ::have_picture_type] && ![info exists ::use_gui]} {
   switch $::RtWizard::wizard_state(picture_type) {
     A   -
     1	{
-          if {![info exists ::RtWizard::wizard_state(color_objlist)]} {
-             if ([info exists ::disable_gui]) {
-               puts "Error - picture type $RtWizard::wizard_state(picture_type) specified, but no full color objects listed"
-               puts "Please specify full color objects using the -c option\n"
-               exit
-             } else {
-               set ::use_gui 1
-             }
-          }
-        }
+	  if {![info exists ::RtWizard::wizard_state(color_objlist)]} {
+	     if ([info exists ::disable_gui]) {
+	       puts "Error - picture type $RtWizard::wizard_state(picture_type) specified, but no full color objects listed"
+	       puts "Please specify full color objects using the -c option\n"
+	       exit
+	     } else {
+	       set ::use_gui 1
+	     }
+	  }
+	}
     B   -
     2	{
-          if {![info exists ::RtWizard::wizard_state(line_objlist)]} {
-             if ([info exists ::disable_gui]) {
-               puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no line objects listed"
-               puts "Please specify line objects using the -e option\n"
-               exit
-             } else {
-               set ::use_gui 1
-             }
-          }
-        }
+	  if {![info exists ::RtWizard::wizard_state(line_objlist)]} {
+	     if ([info exists ::disable_gui]) {
+	       puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no line objects listed"
+	       puts "Please specify line objects using the -e option\n"
+	       exit
+	     } else {
+	       set ::use_gui 1
+	     }
+	  }
+	}
     C   -
     D   -
     3	-
     4	{
-          if {![info exists ::RtWizard::wizard_state(color_objlist)] || ![info exists ::RtWizard::wizard_state(line_objlist)]} {
-            if (![info exists ::disable_gui]) {
-               set ::use_gui 1
-            } else {
-              if {![info exists ::RtWizard::wizard_state(line_objlist)]} {
-                puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no line objects listed"
-                puts "Please specify line objects using the -e option\n"
-              }
-              if {![info exists ::RtWizard::wizard_state(color_objlist)]} {
-                puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no color objects listed"
-                puts "Please specify full color objects using the -c option\n"
-              }
-             exit
-            }
-          }
-        }
+	  if {![info exists ::RtWizard::wizard_state(color_objlist)] || ![info exists ::RtWizard::wizard_state(line_objlist)]} {
+	    if (![info exists ::disable_gui]) {
+	       set ::use_gui 1
+	    } else {
+	      if {![info exists ::RtWizard::wizard_state(line_objlist)]} {
+		puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no line objects listed"
+		puts "Please specify line objects using the -e option\n"
+	      }
+	      if {![info exists ::RtWizard::wizard_state(color_objlist)]} {
+		puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no color objects listed"
+		puts "Please specify full color objects using the -c option\n"
+	      }
+	     exit
+	    }
+	  }
+	}
     E   -
     5	{
-          if {![info exists ::RtWizard::wizard_state(color_objlist)] || ![info exists ::RtWizard::wizard_state(ghost_objlist)]} {
-            if (![info exists ::disable_gui]) {
-               set ::use_gui 1
-            } else {
-              if {![info exists ::RtWizard::wizard_state(ghost_objlist)]} {
-                puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no ghost objects listed"
-                puts "Please specify ghost objects using the -g option\n"
-              }
-              if {![info exists ::RtWizard::wizard_state(color_objlist)]} {
-                puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no color objects listed"
-                puts "Please specify full color objects using the -c option\n"
-              }
-             exit
-            }
-          }
-        }
+	  if {![info exists ::RtWizard::wizard_state(color_objlist)] || ![info exists ::RtWizard::wizard_state(ghost_objlist)]} {
+	    if (![info exists ::disable_gui]) {
+	       set ::use_gui 1
+	    } else {
+	      if {![info exists ::RtWizard::wizard_state(ghost_objlist)]} {
+		puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no ghost objects listed"
+		puts "Please specify ghost objects using the -g option\n"
+	      }
+	      if {![info exists ::RtWizard::wizard_state(color_objlist)]} {
+		puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no color objects listed"
+		puts "Please specify full color objects using the -c option\n"
+	      }
+	     exit
+	    }
+	  }
+	}
     F   -
     6	{
-          if {![info exists ::RtWizard::wizard_state(color_objlist)] || ![info exists ::RtWizard::wizard_state(line_objlist)] || ![info exists ::RtWizard::wizard_state(ghost_objlist)]} {
-            if (![info exists ::disable_gui]) {
-               set ::use_gui 1
-            } else {
-              if {![info exists ::RtWizard::wizard_state(ghost_objlist)]} {
-                puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no ghost objects listed"
-                puts "Please specify ghost objects using the -g option\n"
-              }
-              if {![info exists ::RtWizard::wizard_state(color_objlist)]} {
-                puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no color objects listed"
-                puts "Please specify full color objects using the -c option\n"
-              }
-              if {![info exists ::RtWizard::wizard_state(line_objlist)]} {
-                puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no line objects listed"
-                puts "Please specify line objects using the -e option\n"
-              }
-             exit
-            }
-          }
-        }
+	  if {![info exists ::RtWizard::wizard_state(color_objlist)] || ![info exists ::RtWizard::wizard_state(line_objlist)] || ![info exists ::RtWizard::wizard_state(ghost_objlist)]} {
+	    if (![info exists ::disable_gui]) {
+	       set ::use_gui 1
+	    } else {
+	      if {![info exists ::RtWizard::wizard_state(ghost_objlist)]} {
+		puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no ghost objects listed"
+		puts "Please specify ghost objects using the -g option\n"
+	      }
+	      if {![info exists ::RtWizard::wizard_state(color_objlist)]} {
+		puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no color objects listed"
+		puts "Please specify full color objects using the -c option\n"
+	      }
+	      if {![info exists ::RtWizard::wizard_state(line_objlist)]} {
+		puts "Error - picture type $::RtWizard::wizard_state(picture_type) specified, but no line objects listed"
+		puts "Please specify line objects using the -e option\n"
+	      }
+	     exit
+	    }
+	  }
+	}
     default {puts "Error - unknown picture type $::RtWizard::wizard_state(picture_type)\n"; exit}
   }
 }
@@ -360,13 +360,13 @@ if {[info exists ::use_gui]} {
    if {![info exists ::RtWizard::wizard_state(output_filename)] && ![info exists ::RtWizard::wizard_state(fbserv_port)] && ![info exists ::RtWizard::wizard_state(fbserv_device)]} {
      set ::RtWizard::wizard_state(output_filename) rtwizard.pix
      if {![file exists $::RtWizard::wizard_state(output_filename)]} {
-        puts "Warning - no output file or framebuffer specified - using file rtwizard.pix for output."
+	puts "Warning - no output file or framebuffer specified - using file rtwizard.pix for output."
      }
    }
    if {[info exists ::RtWizard::wizard_state(output_filename)]} {
      if {[file exists $::RtWizard::wizard_state(output_filename)]} {
-        puts "Error - cannot create output file, $::RtWizard::wizard_state(output_filename) already exists."
-        if {[info exists argv]} {exit}
+	puts "Error - cannot create output file, $::RtWizard::wizard_state(output_filename) already exists."
+	if {[info exists argv]} {exit}
      }
    }
 
@@ -390,12 +390,12 @@ if {[info exists ::use_gui]} {
    if { [catch {exec [file join [bu_brlcad_root bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error ] } {
       catch {exec [file join [bu_brlcad_root bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device) &} pid
       if {[info exists pid]} {
-        set fbserv_pid $pid
-        # Wait a few milliseconds to make sure fbserv has completed its work and is available
-        while { [catch {exec [file join [bu_brlcad_root bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error] } {after 300}
+	set fbserv_pid $pid
+	# Wait a few milliseconds to make sure fbserv has completed its work and is available
+	while { [catch {exec [file join [bu_brlcad_root bin] fblabel] -F $::RtWizard::wizard_state(fbserv_port) 1 1 " "} error] } {after 300}
       } else {
-        if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) failed!"}
-        incr ::RtWizard::wizard_state(fbserv_port)
+	if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) failed!"}
+	incr ::RtWizard::wizard_state(fbserv_port)
       }
    }
 
@@ -403,7 +403,7 @@ if {[info exists ::use_gui]} {
    if { ! $port_number_specified && ! [info exists fbserv_pid] } {
        incr ::RtWizard::wizard_state(fbserv_port)
        while { ! [catch {exec [file join [bu_brlcad_root bin] fbclear] -F $::RtWizard::wizard_state(fbserv_port) } error ] } {
-             if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) is already in use."}
+	     if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $::RtWizard::wizard_state(fbserv_port) is already in use."}
 	     incr ::RtWizard::wizard_state(fbserv_port)
        }
       catch {exec [file join [bu_brlcad_root bin] fbserv] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(fbserv_device) &} pid
@@ -425,28 +425,28 @@ if {[info exists ::use_gui]} {
 
    } else {
      if {[info exists ::RtWizard::wizard_state(viewsize)] || [info exists ::RtWizard::wizard_state(orientation)] || [info exists ::RtWizard::wizard_state(eye_pt)]} {
-        if {! [info exists ::have_viewsize]} {puts "Error - when specifying view model directly, need viewsize"}
-        if {! [info exists ::have_orientation]} {puts "Error - when specifying view model directly, need orientation"}
-        if {! [info exists ::have_eye_pt]} {puts "Error - when specifying view model directly, need eye_pt"}
-        if {[info exists argv]} {exit}
+	if {! [info exists ::have_viewsize]} {puts "Error - when specifying view model directly, need viewsize"}
+	if {! [info exists ::have_orientation]} {puts "Error - when specifying view model directly, need orientation"}
+	if {! [info exists ::have_eye_pt]} {puts "Error - when specifying view model directly, need eye_pt"}
+	if {[info exists argv]} {exit}
      }
      set db [go_open db db $::RtWizard::wizard_state(dbFile)]
      db new_view v1 nu
 
      if {[llength $::RtWizard::wizard_state(color_objlist)]} {
-        foreach item $::RtWizard::wizard_state(color_objlist) {
+	foreach item $::RtWizard::wizard_state(color_objlist) {
 	  db draw $item
-        }
+	}
      }
      if {[llength $::RtWizard::wizard_state(line_objlist)]} {
-        foreach item $::RtWizard::wizard_state(line_objlist) {
+	foreach item $::RtWizard::wizard_state(line_objlist) {
 	  db draw $item
-        }
+	}
      }
      if {[llength $::RtWizard::wizard_state(ghost_objlist)]} {
-        foreach item $::RtWizard::wizard_state(ghost_objlist) {
+	foreach item $::RtWizard::wizard_state(ghost_objlist) {
 	  db draw $item
-        }
+	}
      }
 
      db autoview v1
@@ -454,7 +454,7 @@ if {[info exists ::use_gui]} {
      db zoom v1 $::RtWizard::wizard_state(zoom)
      db perspective v1 $::RtWizard::wizard_state(perspective)
      if {[info exists ::RtWizard::wizard_state(x_center)] && [info exists ::RtWizard::wizard_state(y_center)] && [info exists ::RtWizard::wizard_state(z_center)]} {
-        db center v1 $::RtWizard::wizard_state(x_center) $::RtWizard::wizard_state(y_center) $::RtWizard::wizard_state(z_center)
+	db center v1 $::RtWizard::wizard_state(x_center) $::RtWizard::wizard_state(y_center) $::RtWizard::wizard_state(z_center)
      }
      set view_info [regsub -all ";" [db get_eyemodel v1] ""]
      set vdata [split $view_info "\n"]
@@ -475,12 +475,12 @@ if {[info exists ::use_gui]} {
    if {[info exists ::RtWizard::wizard_state(output_filename)]} {
       set output_generated 0
       if {[file extension $::RtWizard::wizard_state(output_filename)] == ".png"} {
-         exec [file join [bu_brlcad_root bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(output_filename)
-         set output_generated 1
+	 exec [file join [bu_brlcad_root bin] fb-png] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(output_filename)
+	 set output_generated 1
       }
       if {!$output_generated} {
-         exec [file join [bu_brlcad_root bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(output_filename)
-         set output_generated 1
+	 exec [file join [bu_brlcad_root bin] fb-pix] -w $::RtWizard::wizard_state(width) -n $::RtWizard::wizard_state(scanlines) -F $::RtWizard::wizard_state(fbserv_port) $::RtWizard::wizard_state(output_filename)
+	 set output_generated 1
       }
 
    }
@@ -488,16 +488,16 @@ if {[info exists ::use_gui]} {
 
    if {$::RtWizard::wizard_state(fbserv_device) == "/dev/mem"} {
        if {[info exists fbserv_pid]} {
-          if {$tcl_platform(platform) == "windows"} {
+	  if {$tcl_platform(platform) == "windows"} {
 	      set kill_cmd [auto_execok taskkill]
-              set kill_args [list $kill_cmd "/F" "/PID" $fbserv_pid]
-          } else {
+	      set kill_args [list $kill_cmd "/F" "/PID" $fbserv_pid]
+	  } else {
 	      set kill_cmd [auto_execok kill]
-              set kill_args [list $kill_cmd $fbserv_pid]
-          }
-          if {$kill_cmd != ""} {
+	      set kill_args [list $kill_cmd $fbserv_pid]
+	  }
+	  if {$kill_cmd != ""} {
 	      exec {*}$kill_args
-          }
+	  }
       }
    }
 }

@@ -67,8 +67,8 @@ DerivedUnitElement::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 	    //unit = dynamic_cast<NamedUnit*>(Factory::CreateNamedUnitObject(sw,se));
 	    unit = dynamic_cast<NamedUnit*>(Factory::CreateObject(sw,se));
 	    if (unit == NULL) {
-	    	std::cout << CLASSNAME << ":Error loading member field \"unit\"." << std::endl;
-	    	return false;
+		std::cout << CLASSNAME << ":Error loading member field \"unit\"." << std::endl;
+		return false;
 	    }
 	} else {
 	    std::cout << CLASSNAME << ":Error loading member field \"unit\"." << std::endl;

@@ -353,19 +353,19 @@ namespace eval RtWizard {
 	# Add to the pages array
 	#
 	set pages($token) $pageName
-	
+
 	#
 	# Pack it!
 	#
 	pack $pageName \
 	    -fill both -expand 1
 	pack propagate $pageName
-	
+
 	set currentPageToken $token
-	
+
 	return $pageName
     }
-    
+
     #
     # select
     #

@@ -43,28 +43,28 @@ AC_ARG_WITH([boost],
     if test "$withval" = "no"; then
 		want_boost="no"
     elif test "$withval" = "yes"; then
-        want_boost="yes"
-        ac_boost_path=""
+	want_boost="yes"
+	ac_boost_path=""
     else
 	    want_boost="yes"
-        ac_boost_path="$withval"
+	ac_boost_path="$withval"
 	fi
     ],
     [want_boost="yes"])
 
 
 AC_ARG_WITH([boost-libdir],
-        AS_HELP_STRING([--with-boost-libdir=LIB_DIR],
-        [Force given directory for boost libraries. Note that this will overwrite library path detection, so use this parameter only if default library detection fails and you know exactly where your boost libraries are located.]),
-        [
-        if test -d $withval
-        then
-                ac_boost_lib_path="$withval"
-        else
-                AC_MSG_ERROR(--with-boost-libdir expected directory name)
-        fi
-        ],
-        [ac_boost_lib_path=""]
+	AS_HELP_STRING([--with-boost-libdir=LIB_DIR],
+	[Force given directory for boost libraries. Note that this will overwrite library path detection, so use this parameter only if default library detection fails and you know exactly where your boost libraries are located.]),
+	[
+	if test -d $withval
+	then
+		ac_boost_lib_path="$withval"
+	else
+		AC_MSG_ERROR(--with-boost-libdir expected directory name)
+	fi
+	],
+	[ac_boost_lib_path=""]
 )
 
 if test "x$want_boost" = "xyes"; then
@@ -75,7 +75,7 @@ if test "x$want_boost" = "xyes"; then
 	boost_lib_version_req_sub_minor=`expr $boost_lib_version_req : '[[0-9]]*\.[[0-9]]*\.\([[0-9]]*\)'`
 	if test "x$boost_lib_version_req_sub_minor" = "x" ; then
 		boost_lib_version_req_sub_minor="0"
-    	fi
+	fi
 	WANT_BOOST_VERSION=`expr $boost_lib_version_req_major \* 100000 \+  $boost_lib_version_req_minor \* 100 \+ $boost_lib_version_req_sub_minor`
 	AC_MSG_CHECKING(for boostlib >= $boost_lib_version_req)
 	succeeded=no
@@ -111,7 +111,7 @@ if test "x$want_boost" = "xyes"; then
 	export LDFLAGS
 
 	AC_LANG_PUSH(C++)
-     	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 	@%:@include <boost/version.hpp>
 	]], [[
 	#if BOOST_VERSION >= $WANT_BOOST_VERSION
@@ -120,13 +120,12 @@ if test "x$want_boost" = "xyes"; then
 	#  error Boost version is too old
 	#endif
 	]])],[
-        AC_MSG_RESULT(yes)
+	AC_MSG_RESULT(yes)
 	succeeded=yes
 	found_system=yes
-       	],[
-       	])
+	],[
+	])
 	AC_LANG_POP([C++])
-
 
 
 	dnl if we found no boost with system layout we search for boost libraries
@@ -153,7 +152,7 @@ if test "x$want_boost" = "xyes"; then
 						V_CHECK=`expr $_version_tmp \> $_version`
 						if test "$V_CHECK" = "1" ; then
 							_version=$_version_tmp
-	               					best_path=$ac_boost_path
+							best_path=$ac_boost_path
 						fi
 					done
 				fi
@@ -161,24 +160,24 @@ if test "x$want_boost" = "xyes"; then
 
 			VERSION_UNDERSCORE=`echo $_version | sed 's/\./_/'`
 			BOOST_CPPFLAGS="-I$best_path/include/boost-$VERSION_UNDERSCORE"
-            if test "$ac_boost_lib_path" = ""
-            then
-               BOOST_LDFLAGS="-L$best_path/lib"
-            fi
+	    if test "$ac_boost_lib_path" = ""
+	    then
+	       BOOST_LDFLAGS="-L$best_path/lib"
+	    fi
 
-	    		if test "x$BOOST_ROOT" != "x"; then
+			if test "x$BOOST_ROOT" != "x"; then
 				if test -d "$BOOST_ROOT" && test -r "$BOOST_ROOT" && test -d "$BOOST_ROOT/stage/lib" && test -r "$BOOST_ROOT/stage/lib"; then
 					version_dir=`expr //$BOOST_ROOT : '.*/\(.*\)'`
 					stage_version=`echo $version_dir | sed 's/boost_//' | sed 's/_/./g'`
-			        	stage_version_shorten=`expr $stage_version : '\([[0-9]]*\.[[0-9]]*\)'`
+					stage_version_shorten=`expr $stage_version : '\([[0-9]]*\.[[0-9]]*\)'`
 					V_CHECK=`expr $stage_version_shorten \>\= $_version`
-                    if test "$V_CHECK" = "1" -a "$ac_boost_lib_path" = "" ; then
+		    if test "$V_CHECK" = "1" -a "$ac_boost_lib_path" = "" ; then
 						AC_MSG_NOTICE(We will use a staged boost library from $BOOST_ROOT)
 						BOOST_CPPFLAGS="-I$BOOST_ROOT"
 						BOOST_LDFLAGS="-L$BOOST_ROOT/stage/lib"
 					fi
 				fi
-	    		fi
+			fi
 		fi
 
 		CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
@@ -187,7 +186,7 @@ if test "x$want_boost" = "xyes"; then
 		export LDFLAGS
 
 		AC_LANG_PUSH(C++)
-	     	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 		@%:@include <boost/version.hpp>
 		]], [[
 		#if BOOST_VERSION >= $WANT_BOOST_VERSION
@@ -196,11 +195,11 @@ if test "x$want_boost" = "xyes"; then
 		#  error Boost version is too old
 		#endif
 		]])],[
-        	AC_MSG_RESULT(yes)
+		AC_MSG_RESULT(yes)
 		succeeded=yes
 		found_system=yes
-       		],[
-	       	])
+		],[
+		])
 		AC_LANG_POP([C++])
 	fi
 
@@ -215,8 +214,8 @@ if test "x$want_boost" = "xyes"; then
 		AC_DEFINE(HAVE_BOOST,,[define if the Boost library is available])
 	fi
 
-        CPPFLAGS="$CPPFLAGS_SAVED"
-       	LDFLAGS="$LDFLAGS_SAVED"
+	CPPFLAGS="$CPPFLAGS_SAVED"
+	LDFLAGS="$LDFLAGS_SAVED"
 fi
 
 ])

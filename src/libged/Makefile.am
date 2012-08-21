@@ -303,7 +303,7 @@ libged_la_LIBADD = \
 
 EXTRA_DIST = \
 	CMakeLists.txt \
-        dag.cpp
+	dag.cpp
 
 DEPENDS = src/librt src/libwdb src/libanalyze src/libfb
 

@@ -63,11 +63,11 @@ load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polyg
 	for (k = 0; k < n; k++) {
 	    point_t vpoint;
 
- 	    /* Convert to view coordinates */
- 	    MAT4X3PNT(vpoint, mat, gpoly->gp_contour[j].gpc_point[k]);
- 
- 	    curr_poly[k].X = (ClipperLib::long64)(vpoint[X] * sf);
- 	    curr_poly[k].Y = (ClipperLib::long64)(vpoint[Y] * sf);
+	    /* Convert to view coordinates */
+	    MAT4X3PNT(vpoint, mat, gpoly->gp_contour[j].gpc_point[k]);
+
+	    curr_poly[k].X = (ClipperLib::long64)(vpoint[X] * sf);
+	    curr_poly[k].Y = (ClipperLib::long64)(vpoint[Y] * sf);
 	}
 
 	try {
@@ -327,7 +327,6 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
     }
 
 
-
     GED_DB_DIRADD(gedp, dp, sname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
@@ -489,11 +488,11 @@ ged_find_polygon_area(ged_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t
 	for (k = 0; k < n; k++) {
 	    point_t vpoint;
 
- 	    /* Convert to view coordinates */
- 	    MAT4X3PNT(vpoint, model2view, gpoly->gp_contour[j].gpc_point[k]);
- 
- 	    poly[k].X = (ClipperLib::long64)(vpoint[X] * sf);
- 	    poly[k].Y = (ClipperLib::long64)(vpoint[Y] * sf);
+	    /* Convert to view coordinates */
+	    MAT4X3PNT(vpoint, model2view, gpoly->gp_contour[j].gpc_point[k]);
+
+	    poly[k].X = (ClipperLib::long64)(vpoint[X] * sf);
+	    poly[k].Y = (ClipperLib::long64)(vpoint[Y] * sf);
 	}
 
 	area += (fastf_t)ClipperLib::Area(poly);

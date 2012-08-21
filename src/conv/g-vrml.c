@@ -1200,7 +1200,7 @@ bot2vrml(struct plate_mode *pmp, const struct db_full_path *pathp, int region_id
 		     (long unsigned int)vert_count+bot->faces[i*3],
 		     (long unsigned int)vert_count+bot->faces[i*3+1],
 		     (long unsigned int)vert_count+bot->faces[i*3+2]);
-        }
+	}
 	vert_count += bot->num_vertices;
     }
     fprintf(fp_out, "\t\t\t\t]\n\t\t\t\tnormalPerVertex FALSE\n");

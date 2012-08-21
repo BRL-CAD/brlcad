@@ -124,11 +124,11 @@ package provide Archer 1.0
 	# Public Class Variables
 	common plugins ""
 	common pluginMajorTypeCore "Core"
-   	common pluginMajorTypeCommand "Command"
-   	common pluginMajorTypeWizard "Wizard"
-   	common pluginMajorTypeUtility "Utility"
-   	common pluginMinorTypeMged "Mged"
-   	common pluginMinorTypeAll "All"
+	common pluginMajorTypeCommand "Command"
+	common pluginMajorTypeWizard "Wizard"
+	common pluginMajorTypeUtility "Utility"
+	common pluginMinorTypeMged "Mged"
+	common pluginMinorTypeAll "All"
 
 	# Plugins Section
 	proc initArcher {}
@@ -147,7 +147,7 @@ package provide Archer 1.0
 	proc pluginUnregister {_name}
 
 	method pluginGetMinAllowableRid {}
-   	method pluginUpdateProgressBar {percent}
+	method pluginUpdateProgressBar {percent}
 	method pluginUpdateSaveMode {mode}
 	method pluginUpdateStatusBar {msg}
 
@@ -684,10 +684,10 @@ package provide Archer 1.0
 		    ".itk" -
 		    ".itcl" {
 			uplevel \#0 source \"$filename\"
-	    	    }
-	            default {
-		        # silently ignore
-	            }
+		    }
+		    default {
+			# silently ignore
+		    }
 		}
 	    }
 	}
@@ -1319,7 +1319,7 @@ package provide Archer 1.0
     }
 
     if {$miss_count == 1} {
-        append ret_string "$miss_count item missed\n"
+	append ret_string "$miss_count item missed\n"
     } else {
 	append ret_string "$miss_count items missed\n"
     }
@@ -2163,7 +2163,6 @@ package provide Archer 1.0
 }
 
 
-
 ################################### Miscellaneous Section ###################################
 
 ::itcl::body Archer::buildAboutDialog {} {
@@ -2391,7 +2390,7 @@ proc title_node_handler {node} {
 
 
     if {[file exists [file join [bu_brlcad_data "doc/html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]] &&
-        [file exists [file join [bu_brlcad_data "doc/html"] toc.html]] } {
+	[file exists [file join [bu_brlcad_data "doc/html"] toc.html]] } {
 
 	# Table of Contents
 	itk_component add archerHelpToC {
@@ -6700,7 +6699,7 @@ proc title_node_handler {node} {
 ::itcl::body Archer::buildPipeEditView {} {
     set parent $itk_component(objEditView)
     itk_component add pipeView {
-     	PipeEditFrame $parent.pipeview \
+	PipeEditFrame $parent.pipeview \
 	    -units "mm"
     } {}
 }
@@ -9246,7 +9245,6 @@ proc title_node_handler {node} {
     set mNeedSave 0
     updateSaveMode
 }
-
 
 
 ################################### End Object Edit Management ###################################

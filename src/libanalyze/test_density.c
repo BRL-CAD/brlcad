@@ -28,7 +28,7 @@ main(int argc, char **argv)
 {
   struct density_entry *densities = NULL;
   static int num_densities = 1028;
-  
+
   struct stat sb;
   FILE *fp = (FILE *)NULL;
   char *buf = NULL;
@@ -57,14 +57,14 @@ main(int argc, char **argv)
     bu_log("Error reading file %s\n", argv[1]);
     bu_exit(EXIT_FAILURE, NULL);
   }
-  
+
   densities = bu_calloc(num_densities, sizeof(struct density_entry), "density entries");
 
   ret = parse_densities_buffer(buf, (unsigned long)sb.st_size, densities, NULL, &num_densities);
 
   for (i = 0; i < num_densities; i++) {
       if (densities[i].name)
-          bu_log("densities[%i]: %s, %d\n", i, densities[i].name, densities[i].grams_per_cu_mm);
+	  bu_log("densities[%i]: %s, %d\n", i, densities[i].name, densities[i].grams_per_cu_mm);
   }
- 
+
 }

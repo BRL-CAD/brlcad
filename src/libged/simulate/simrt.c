@@ -51,16 +51,14 @@ struct hit_reg airgap_list[MAX_AIRGAPS];
 struct rayshot_results rt_result;
 
 
-
 void
 print_overlap_node(int i)
 {
 	bu_log("--------- Index %d -------\n", overlap_list[i].index);
 
 
-
     bu_log("insol :%s -->> outsol :%s \n", overlap_list[i].insol->st_name,
-    									   overlap_list[i].outsol->st_name);
+									   overlap_list[i].outsol->st_name);
 
 
     bu_log("Entering at (%f,%f,%f) at distance of %f",
@@ -69,16 +67,16 @@ print_overlap_node(int i)
 	   V3ARGS(overlap_list[i].out_point), overlap_list[i].out_dist);
 
 	bu_log("in_normal: %f,%f,%f  -->> out_normal: %f,%f,%f",
-	    	       V3ARGS(overlap_list[i].in_normal),
-	    	       V3ARGS(overlap_list[i].out_normal) );
+		       V3ARGS(overlap_list[i].in_normal),
+		       V3ARGS(overlap_list[i].out_normal) );
 
 	bu_log("incurve pdir : (%f,%f,%f), curv in dir c1: %f, curv opp dir c2: %f",
 	   V3ARGS(overlap_list[i].incur.crv_pdir), overlap_list[i].incur.crv_c1,
-	   	   	   	   	   	   	   	   	   	   	   overlap_list[i].incur.crv_c2);
+											   overlap_list[i].incur.crv_c2);
 
 	bu_log("outcurve pdir : (%f,%f,%f), curv in dir c1: %f, curv opp dir c2: %f",
 		   V3ARGS(overlap_list[i].outcur.crv_pdir), overlap_list[i].outcur.crv_c1,
-		   	   	   	   	   	   	   	   	   	   	    overlap_list[i].outcur.crv_c2);
+												    overlap_list[i].outcur.crv_c2);
 
 
 }
@@ -170,15 +168,15 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 	     * the primitives encountered on entry and exit.
 	     */
 	    bu_log("\n--- Hit region %s (in %s, out %s), RegionID=%d, AIRCode=%d, MaterialCode=%d\n",
-	    			pp->pt_regionp->reg_name,
-	    			pp->pt_inseg->seg_stp->st_name,
-	    			pp->pt_outseg->seg_stp->st_name,
-	    			pp->pt_regionp->reg_regionid,
-	    			pp->pt_regionp->reg_aircode,
-	    			pp->pt_regionp->reg_gmater);
+				pp->pt_regionp->reg_name,
+				pp->pt_inseg->seg_stp->st_name,
+				pp->pt_outseg->seg_stp->st_name,
+				pp->pt_regionp->reg_regionid,
+				pp->pt_regionp->reg_aircode,
+				pp->pt_regionp->reg_gmater);
 
 	    if(pp->pt_regionp->reg_aircode != 0)
-	    	 bu_log("AIR REGION FOUND !!");
+		 bu_log("AIR REGION FOUND !!");
 
 
 	    /* Insert partition */
@@ -186,9 +184,9 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 
 	    /* Insert solid data into list node */
 	    if(pp->pt_regionp->reg_name[0] == '/')
-	    	hit_list[i].reg_name = (pp->pt_regionp->reg_name) + 1;
+		hit_list[i].reg_name = (pp->pt_regionp->reg_name) + 1;
 	    else
-	    	hit_list[i].reg_name = pp->pt_regionp->reg_name;
+		hit_list[i].reg_name = pp->pt_regionp->reg_name;
 
 	    hit_list[i].in_stp   = pp->pt_inseg->seg_stp;
 	    hit_list[i].out_stp  = pp->pt_outseg->seg_stp;
@@ -320,8 +318,6 @@ if_hit(struct application *ap, struct partition *part_headp, struct seg *UNUSED(
 					bu_log("if_hit: WARNING Skipping AIR region as maximum AIR regions reached");
 
 			}
-
-
 
 
 		}
@@ -488,18 +484,17 @@ exists_normal(vect_t n)
 }
 
 
-
 int
 add_normal(vect_t n)
 {
     if(rt_result.num_normals < MAX_NORMALS){
-    	VMOVE(rt_result.normals[rt_result.num_normals], n);
-    	rt_result.num_normals++;
-    	return 1;
+	VMOVE(rt_result.normals[rt_result.num_normals], n);
+	rt_result.num_normals++;
+	return 1;
     }
     else{
-    	bu_log("add_normal: WARNING Number of normals have been exceeded, only %d allowed, (%f,%f,%f) not added",
-    			MAX_NORMALS, V3ARGS(n));
+	bu_log("add_normal: WARNING Number of normals have been exceeded, only %d allowed, (%f,%f,%f) not added",
+			MAX_NORMALS, V3ARGS(n));
     }
 
     return 0;
@@ -569,8 +564,8 @@ traverse_xray_lists(
 		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
 								 comb,
 								 comb->tree,
-						 	 	 find_solid,
-						 	 	 (genptr_t)(overlap_list[i].outsol->st_name));
+								 find_solid,
+								 (genptr_t)(overlap_list[i].outsol->st_name));
 		if(rv == FOUND && !exists_normal(overlap_list[i].out_normal) ){
 			/* It does, so sum the in_normal */
 			bu_log("traverse_xray_lists: %s is present in %s", overlap_list[i].outsol->st_name,
@@ -602,7 +597,6 @@ traverse_yray_lists(
     /*struct hit_reg *hrp;*/
     struct bu_vls reg_vls = BU_VLS_INIT_ZERO;
     struct rt_comb_internal *comb =(struct rt_comb_internal *)NULL;
-
 
 
     /* Draw all the overlap regions : lines are added for overlap segments
@@ -656,8 +650,8 @@ traverse_yray_lists(
 		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
 								 comb,
 								 comb->tree,
-						 	 	 find_solid,
-						 	 	 (genptr_t)(overlap_list[i].outsol->st_name));
+								 find_solid,
+								 (genptr_t)(overlap_list[i].outsol->st_name));
 		if(rv == FOUND && !exists_normal(overlap_list[i].out_normal) ){
 			/* It does, so sum the out_normal */
 			bu_log("traverse_yray_lists: %s is present in %s", overlap_list[i].outsol->st_name,
@@ -742,8 +736,8 @@ traverse_zray_lists(
 		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
 								 comb,
 								 comb->tree,
-						 	 	 find_solid,
-						 	 	 (genptr_t)(overlap_list[i].outsol->st_name));
+								 find_solid,
+								 (genptr_t)(overlap_list[i].outsol->st_name));
 		if(rv == FOUND && !exists_normal(overlap_list[i].out_normal) ){
 			/* It does, so sum the out_normal */
 			bu_log("traverse_zray_lists: %s is present in %s", overlap_list[i].outsol->st_name,
@@ -818,10 +812,10 @@ traverse_normalray_lists(
 		/* Check if the in solid belongs to rbA */
 		comb = (struct rt_comb_internal *)mf->rbA->intern.idb_ptr;
 		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
-				 	 	 		 comb,
-				 	 	 		 comb->tree,
-				 	 	 		 find_solid,
-				 	 	 		 (genptr_t)(overlap_list[i].insol->st_name));
+								 comb,
+								 comb->tree,
+								 find_solid,
+								 (genptr_t)(overlap_list[i].insol->st_name));
 
 		if(rv == NOT_FOUND)
 			continue;
@@ -829,10 +823,10 @@ traverse_normalray_lists(
 		/* Check if the out solid belongs to rbB */
 		comb = (struct rt_comb_internal *)mf->rbB->intern.idb_ptr;
 		rv = check_tree_funcleaf(sim_params->gedp->ged_wdbp->dbip,
-						 	 	 comb,
-						 	 	 comb->tree,
-						 	 	 find_solid,
-						 	 	 (genptr_t)(overlap_list[i].outsol->st_name));
+								 comb,
+								 comb->tree,
+								 find_solid,
+								 (genptr_t)(overlap_list[i].outsol->st_name));
 
 		if(rv == NOT_FOUND)
 			continue;
@@ -874,7 +868,6 @@ traverse_normalray_lists(
 	} /* end-for overlap */
 
 
-
     /* Investigate hit regions, only if no overlap was found for the ENTIRE bunch of
      * rays being shot, thus rt_result.overlap_found is set to FALSE, before a single
      * ray is fired and its value is valid across all the different ray shots
@@ -883,10 +876,10 @@ traverse_normalray_lists(
 	 */
     if(!rt_result.overlap_found){
 
-    	bu_log("traverse_normalray_lists : No overlap found yet, checking hit regions");
+	bu_log("traverse_normalray_lists : No overlap found yet, checking hit regions");
 
 
-    	/* Draw the hit regions */
+	/* Draw the hit regions */
 		for(i=0; i<num_hits; i++){
 
 			bu_vls_sprintf(&reg_vls, "ray_hit_%s_%d_%d_%d_%f_%f_%f_%f_%f_%f_%d",
@@ -931,7 +924,6 @@ traverse_normalray_lists(
 			add_to_comb(sim_params->gedp, sim_params->sim_comb_name, bu_vls_addr(&reg_vls));
 
 
-
 		} /* end-for hits */
     }
 
@@ -967,12 +959,12 @@ shoot_x_rays(struct sim_manifold *current_manifold,
 	 */
     incr_z = TOL;
     if(diff[Z] < TOL){
-    	incr_z = diff[Z]*0.5;
+	incr_z = diff[Z]*0.5;
     }
 
     incr_y = TOL;
     if(diff[Y] < TOL){
-    	incr_y = diff[Y]*0.5;
+	incr_y = diff[Y]*0.5;
     }
 
     startz = overlap_min[Z] - incr_z;
@@ -1048,12 +1040,12 @@ shoot_y_rays(struct sim_manifold *current_manifold,
 	 */
     incr_z = TOL;
     if(diff[Z] < TOL){
-    	incr_z = diff[Z]*0.5;
+	incr_z = diff[Z]*0.5;
     }
 
     incr_x = TOL;
     if(diff[X] < TOL){
-    	incr_x = diff[X]*0.5;
+	incr_x = diff[X]*0.5;
     }
 
     startz = overlap_min[Z] - incr_z;
@@ -1128,12 +1120,12 @@ shoot_z_rays(struct sim_manifold *current_manifold,
 	 */
     incr_y = TOL;
     if(diff[Y] < TOL){
-    	incr_y = diff[Y]*0.5;
+	incr_y = diff[Y]*0.5;
     }
 
     incr_x = TOL;
     if(diff[X] < TOL){
-    	incr_x = diff[X]*0.5;
+	incr_x = diff[X]*0.5;
     }
 
     starty = overlap_min[Y] - incr_y;
@@ -1185,9 +1177,9 @@ shoot_z_rays(struct sim_manifold *current_manifold,
 
 int
 shoot_normal_rays(struct sim_manifold *current_manifold,
-	     	 	 struct simulation_params *sim_params,
-	     	 	 vect_t overlap_min,
-	     	 	 vect_t overlap_max)
+			 struct simulation_params *sim_params,
+			 vect_t overlap_min,
+			 vect_t overlap_max)
 {
 	vect_t diff, up_vec, ref_axis;
 	point_t overlap_center;

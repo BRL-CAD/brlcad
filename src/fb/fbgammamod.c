@@ -72,8 +72,8 @@ do_file(void)
 
     if ( (ofp = fopen( output_file, "wb" )) == NULL )  {
 	perror(output_file);
-        fclose(ifp);
-        bu_free(output_file, "output_file");
+	fclose(ifp);
+	bu_free(output_file, "output_file");
 	bu_exit(2, NULL);
     }
     bu_free(output_file, "output_file");

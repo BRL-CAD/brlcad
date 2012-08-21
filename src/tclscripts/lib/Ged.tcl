@@ -104,7 +104,7 @@ package provide cadwidgets::Ged 1.0
 
 	method 3ptarb {args}
 	method adc {args}
- 	method adjust {args}
+	method adjust {args}
 	method ae {args}
 	method ae2dir {args}
 	method aet {args}
@@ -204,7 +204,7 @@ package provide cadwidgets::Ged 1.0
 	method get_type {args}
 	method glob {args}
 	method gqa {args}
-        method graph {args}
+	method graph {args}
 	method grid {args}
 	method handle_expose {args}
 	method hide {args}
@@ -213,7 +213,7 @@ package provide cadwidgets::Ged 1.0
 	method i {args}
 	method idents {args}
 	method idle_mode {args}
-        method igraph {args}
+	method igraph {args}
 	method illum {args}
 	method importFg4Section {args}
 	method in {args}
@@ -692,7 +692,7 @@ package provide cadwidgets::Ged 1.0
 	method delete_view_rect_callback {_callback}
 
 	method set_data_point_callback {_callback}
- 
+
 	#XXX Still needs to be resolved
 	method set_outputHandler {args}
 	method fb_active {args}
@@ -862,7 +862,6 @@ package provide cadwidgets::Ged 1.0
 	rename $mGed ""
     }
 }
-
 
 
 ############################### Configuration Options ###############################
@@ -1232,7 +1231,7 @@ package provide cadwidgets::Ged 1.0
     if {$len < 2} {
 	return [eval $mGed data_arrows $itk_component($itk_option(-pane)) $args]
     }
- 
+
     foreach dm {ur ul ll lr} {
 	eval $mGed data_arrows $itk_component($dm) $args
     }
@@ -3385,7 +3384,7 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::end_data_move {_pane} {
     $mGed idle_mode $itk_component($_pane)
 
-    if {$mLastMousePos == "" || $mLastDataType == ""} { 
+    if {$mLastMousePos == "" || $mLastDataType == ""} {
 	return
     }
 
@@ -3456,7 +3455,6 @@ package provide cadwidgets::Ged 1.0
     refresh_on
     refresh_all
 }
-
 
 
 ::itcl::body cadwidgets::Ged::end_data_poly_move {_pane} {
@@ -4005,7 +4003,7 @@ package provide cadwidgets::Ged 1.0
 	brlcad {
 	    foreach pane {ul ur ll lr} {
 		$mGed init_view_bindings $itk_component($pane)
-	    }	    
+	    }
 	}
 	default {
 	    foreach pane {ul ur ll lr} {
@@ -4951,33 +4949,33 @@ package provide cadwidgets::Ged 1.0
     $help add arced     	{{a/b anim_cmd ...} {edit the matrix, etc., along an arc}}
     $help add arot		{{x y z angle} {rotate about axis x,y,z by angle (degrees)}}
     $help add attr      	{{{set|get|rm|append} object [args]}
-	      		{set, get, remove or append to attribute values for the specified object.
-	    		for the "set" subcommand, the arguments are attribute name/value pairs
+			{set, get, remove or append to attribute values for the specified object.
+			for the "set" subcommand, the arguments are attribute name/value pairs
 			for the "get" subcommand, the arguments are attribute names
-	    		for the "rm" subcommand, the arguments are attribute names
-	    		for the "append" subcommand, the arguments are attribute name/value pairs}}
+			for the "rm" subcommand, the arguments are attribute names
+			for the "append" subcommand, the arguments are attribute name/value pairs}}
     $help add autoview		{{view_obj} {set the view object's size and center}}
     $help add bb		{{object} {Report the size of the bounding box (rpp) containing the specified object}}
     $help add bev		{{[P|t] new_obj obj1 op obj2 ...} {boolean evaluation of objects via NMG's}}
     $help add blast		{{"-C#/#/# <objects>"} {clear screen, draw objects}}
     $help add bo		{{(-i|-o) major_type minor_type dest source}
-	      		{manipulate opaque objects.
-	    		Must specify one of -i (for creating or adjusting objects (input))
-	    		or -o for extracting objects (output).
-	    		If the major type is "u" the minor type must be one of:
-	    		"f" -> float
-	    		"d" -> double
-	    		"c" -> char (8 bit)
-	    		"s" -> short (16 bit)
-	    		"i" -> int (32 bit)
-	    		"l" -> long (64 bit)
-	    		"C" -> unsigned char (8 bit)
-	    		"S" -> unsigned short (16 bit)
-	    		"I" -> unsigned int (32 bit)
-	    		"L" -> unsigned long (64 bit)
-	    		For input, source is a file name and dest is an object name.
-	    		For output source is an object name and dest is a file name.
-	    		Only uniform array binary objects (major_type=u) are currently supported}}
+			{manipulate opaque objects.
+			Must specify one of -i (for creating or adjusting objects (input))
+			or -o for extracting objects (output).
+			If the major type is "u" the minor type must be one of:
+			"f" -> float
+			"d" -> double
+			"c" -> char (8 bit)
+			"s" -> short (16 bit)
+			"i" -> int (32 bit)
+			"l" -> long (64 bit)
+			"C" -> unsigned char (8 bit)
+			"S" -> unsigned short (16 bit)
+			"I" -> unsigned int (32 bit)
+			"L" -> unsigned long (64 bit)
+			For input, source is a file name and dest is an object name.
+			For output source is an object name and dest is a file name.
+			Only uniform array binary objects (major_type=u) are currently supported}}
     $help add bot_condense	{{new_bot old_bot} {create a new bot by condensing the old bot}}
     $help add bot_decimate	{{[options] new_bot old_bot} {create a new bot by decimating the old bot}}
     $help add bot_dump	{{[-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n} {dump the specified bots}}

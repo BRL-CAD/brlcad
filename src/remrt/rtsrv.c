@@ -65,7 +65,6 @@
 #include "./protocol.h"
 
 
-
 struct bu_list	WorkHead;
 
 struct pkg_queue {

@@ -591,7 +591,7 @@ dm_draw_labels(struct dm *dmp,
     if (db_follow_path_for_state(&ts, &path, name, 1)) {
       db_free_full_path(&path);
       return BRLCAD_OK;
-    } 
+    }
 
     dp = DB_FULL_PATH_CUR_DIR(&path);
 

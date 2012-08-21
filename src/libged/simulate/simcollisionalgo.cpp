@@ -86,7 +86,6 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* col0,
 #endif //USE_PERSISTENT_CONTACTS
 
 
-
     //------------------- DEBUG ---------------------------
 
     int i;
@@ -108,7 +107,7 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* col0,
 		   VMOVE(ptB, rt_mf->contacts[i].ptB);
 		   VMOVE(normalWorldOnB, rt_mf->contacts[i].normalWorldOnB);
 
-		   //Negative depth for penetration 
+		   //Negative depth for penetration
 		   resultOut->addContactPoint(normalWorldOnB, ptB, rt_mf->contacts[i].depth);
 
 		   bu_log("processCollision: Added RT contact %d, A(ignore): %s(%f, %f, %f) , \

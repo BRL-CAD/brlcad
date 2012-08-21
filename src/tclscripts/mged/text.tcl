@@ -303,7 +303,7 @@ proc gets {channelId args} {
     if {$len != 0 && $len != 1} {
 	error "Usage: gets channelId ?varName?"
     }
-   
+
     upvar $args [lindex $args 0]
 
     if {$channelId != "stdin"} {
@@ -2142,12 +2142,12 @@ proc set_text_key_bindings { id } {
 
     bind $w <Prior> {
 	tk::TextScrollPages %W -1
- 	break
+	break
     }
 
     bind $w <Next> {
 	tk::TextScrollPages %W 1
- 	break
+	break
     }
 }
 

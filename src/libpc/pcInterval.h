@@ -37,7 +37,7 @@ public:
     /** Constructors */
     Interval();
     Interval(const T l, const T h, const T s);
-    
+
     /** Data access & modification methods */
     void assign(const T l, const T h, const T s);
     void setLow(const T l);
@@ -51,7 +51,7 @@ public:
     /** Interval related checking functions */
     bool inInterval(T);
     bool isUnique();
-    
+
     /** Operator overloading for Interval comparison */
     bool operator<(Interval<T> &U) const;
     bool operator>(Interval<T> &U) const;
@@ -72,7 +72,7 @@ Interval<T>::Interval()
 
 
 template<class T>
-Interval<T>::Interval(T l, T h, T s) : 
+Interval<T>::Interval(T l, T h, T s) :
     low(l),
     high(h),
     step(s)

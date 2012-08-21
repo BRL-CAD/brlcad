@@ -55,20 +55,20 @@ main(void)
 
     /* set all to "unused" */
     for (i = 0; i < 256; i++)
-        rmap[i] = -1;
+	rmap[i] = -1;
 
     /* note that all input chars of interest use only low 4 bits */
     /* set chars '0' - '9' */
     for (i = 0; i < 10; i++)
-        rmap['0' + i] = i;
+	rmap['0' + i] = i;
 
     /* set chars 'A' - 'F' */
     for (i = 10; i < 16; i++)
-        rmap['A' - 10 + i] = i;
+	rmap['A' - 10 + i] = i;
 
     /* set chars 'a' - 'f' */
     for (i = 10; i < 16; i++)
-        rmap['a' - 10 + i] = i;
+	rmap['a' - 10 + i] = i;
 
     /* Init lmap */
     /* copy defined chars in rmap to lmap's corresponding int but
@@ -81,14 +81,14 @@ main(void)
     }
 
     for (;;) {
-        /* get a valid hex char in i */
+	/* get a valid hex char in i */
 	do {
 	    a = getchar();
 	    if (a == EOF || a < 0 || a > 255)
-                goto OUT;
+		goto OUT;
 	} while ((i = lmap[a]) < 0);
 
-        /* get the next hex char */
+	/* get the next hex char */
 	b = getchar();
 	if (b == EOF || b < 0 || b > 255) {
 	    fprintf(stderr, "asc2pix: unexpected EOF in middle of hex number\n");
@@ -100,7 +100,7 @@ main(void)
 	    return 1;
 	}
 
-        /* now output the two 4-bit chars combined as a single byte  */
+	/* now output the two 4-bit chars combined as a single byte  */
 	putc((i | b), stdout);
     }
 

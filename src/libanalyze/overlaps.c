@@ -77,7 +77,7 @@ add_unique_pair(struct region_pair *list, /* list to add into */
     return rpair;
 }
 
-    
+
 /*
  * Local Variables:
  * tab-width: 8

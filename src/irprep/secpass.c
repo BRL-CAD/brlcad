@@ -149,7 +149,7 @@ int main(int argc, char **argv)
     }
 
     else {
-    	/* START # 2 */
+	/* START # 2 */
 
 	/* Ask if output goes to standard out or to a file.  */
 	(void)fprintf(stdout, "Write output to standard out (0) or a file(1) ");
@@ -784,7 +784,7 @@ int main(int argc, char **argv)
 	    /* computes the ENTIRE matrix.  */
 
 	    for (j=(i+1); j<numreg; j++) {
-	    	/* START # 7 */
+		/* START # 7 */
 
 		if (!ZERO(cond[i].avglen[j])) {
 		    /* START # 8 */
@@ -966,7 +966,7 @@ int main(int argc, char **argv)
 	for (i=0; i<numreg; i++) {
 	    /* START # 9 */
 	    for (j=0; j<numreg; j++) {
-	    	/* START # 10 */
+		/* START # 10 */
 		if (!ZERO(cond[i].shrarea[j])) {
 		    /* START # 11 */
 		    a1 = cond[i].shrarea[j] * 1.e-6;
@@ -1097,7 +1097,7 @@ hit(struct application *UNUSED(ap_p), struct partition *PartHeadp, struct seg *U
 
     pp = PartHeadp->pt_forw;
     for (; pp != PartHeadp; pp = pp->pt_forw) {
-    	/* START # 2H */
+	/* START # 2H */
 	icur = pp->pt_regionp->reg_bit;	/* Number of region hit.  */
 
 	/* Find hit point of entering ray.  */
@@ -1120,7 +1120,7 @@ hit(struct application *UNUSED(ap_p), struct partition *PartHeadp, struct seg *U
 	    if (d[Z] < 0) d[Z] = (-d[Z]);
 
 	    if ((d[X] < ADJTOL) && (d[Y] < ADJTOL) && (d[Z] < ADJTOL)) {
-	    	/* START # 4H */
+		/* START # 4H */
 		/* Find length for previous region. */
 		dist = ((cond[iprev].centroid[X] - enterpt[X])
 			* (cond[iprev].centroid[X] - enterpt[X])) +

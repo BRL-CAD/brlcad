@@ -1455,7 +1455,7 @@ nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol 
     NMG_CK_LOOPUSE(lu);
 
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
-	HSETALL(pl, 0.0); 
+	HSETALL(pl, 0.0);
 	return 0.0;
     }
 
@@ -1467,26 +1467,26 @@ nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol 
 	NMG_CK_FACEUSE(fu);
     }
 
-    HSETALL(pl, 0.0); 
+    HSETALL(pl, 0.0);
     VSETALL(sum, 0.0);
     cnt = 0;
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	NMG_CK_EDGEUSE(eu);
-        VMOVE(pt, eu->vu_p->v_p->vg_p->coord);
-        VMOVE(pt_next, (BU_LIST_PNEXT_CIRC(edgeuse, &eu->l))->vu_p->v_p->vg_p->coord);
-        pl[X] += ((pt[Y] - pt_next[Y]) * (pt[Z] + pt_next[Z]));
-        pl[Y] += ((pt[Z] - pt_next[Z]) * (pt[X] + pt_next[X]));
-        pl[Z] += ((pt[X] - pt_next[X]) * (pt[Y] + pt_next[Y]));
-        VADD2(sum, sum, pt);
-        cnt++;
+	VMOVE(pt, eu->vu_p->v_p->vg_p->coord);
+	VMOVE(pt_next, (BU_LIST_PNEXT_CIRC(edgeuse, &eu->l))->vu_p->v_p->vg_p->coord);
+	pl[X] += ((pt[Y] - pt_next[Y]) * (pt[Z] + pt_next[Z]));
+	pl[Y] += ((pt[Z] - pt_next[Z]) * (pt[X] + pt_next[X]));
+	pl[Z] += ((pt[X] - pt_next[X]) * (pt[Y] + pt_next[Y]));
+	VADD2(sum, sum, pt);
+	cnt++;
     }
     if (cnt < 3) {
-	HSETALL(pl, 0.0); 
+	HSETALL(pl, 0.0);
 	return 0.0;
     }
 
     if (NEAR_ZERO(pl[X], tol->dist) && NEAR_ZERO(pl[Y], tol->dist) && NEAR_ZERO(pl[Z], tol->dist)) {
-	HSETALL(pl, 0.0); 
+	HSETALL(pl, 0.0);
 	return 0.0;
     }
     if (NEAR_ZERO(pl[X], tol->dist)) {
@@ -1513,8 +1513,8 @@ nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol 
     bn_mat_fromto(mat, pl, vec_to, tol); /* rotate to xy plane */
     area = 0.0;
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-        MAT4X3PNT(pt, mat, eu->vu_p->v_p->vg_p->coord);
-        MAT4X3PNT(pt_next, mat, (BU_LIST_PNEXT_CIRC(edgeuse, &eu->l))->vu_p->v_p->vg_p->coord);
+	MAT4X3PNT(pt, mat, eu->vu_p->v_p->vg_p->coord);
+	MAT4X3PNT(pt_next, mat, (BU_LIST_PNEXT_CIRC(edgeuse, &eu->l))->vu_p->v_p->vg_p->coord);
 	area += ((pt[X]*pt_next[Y]) - (pt_next[X]*pt[Y]));
     }
     area = area / 2.0;
@@ -11168,4 +11168,3 @@ nmg_vlist_to_eu(struct bu_list *vlist, struct shell *s)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

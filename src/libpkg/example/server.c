@@ -59,7 +59,7 @@ usage(const char *msg, const char *argv0)
 static void
 validate_port(int port) {
     if (port < 0 || port > 0xffff) {
-        bu_bomb("Invalid negative port range\n");
+	bu_bomb("Invalid negative port range\n");
     }
 }
 

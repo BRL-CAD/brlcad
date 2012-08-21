@@ -281,32 +281,32 @@ comp.r4 ID 5678 material code 5 LOS 75
 
   Types of annotations:
 	text:                   text.
-                                                   text --,
-        leader:                 text ---->.                \
-                                      .            .        \           .        .         .  .
-        linear dimension:             |            |         .          |        |         |  |
-                            .         |<-- text -->|                --->|  text  |<--   -->|  |<---- text
+						   text --,
+	leader:                 text ---->.                \
+				      .            .        \           .        .         .  .
+	linear dimension:             |            |         .          |        |         |  |
+			    .         |<-- text -->|                --->|  text  |<--   -->|  |<---- text
 	angular dimension:   \  text
-                              \_____.
+			      \_____.
 
   Annotation placement:
-        xyz position:             (1.0, 3.5, 2.1)
-        named reference(s):        hull.r
-        above/below/left/right:    below
-        offset:                    33.4
-                (e.g., "at 1.0,3.5,2.1" or "below hull.r offset 33.4" or "at hull.r", etc)
+	xyz position:             (1.0, 3.5, 2.1)
+	named reference(s):        hull.r
+	above/below/left/right:    below
+	offset:                    33.4
+		(e.g., "at 1.0,3.5,2.1" or "below hull.r offset 33.4" or "at hull.r", etc)
 
   Text:
-        user-defined string:     my awesome component -----> .
+	user-defined string:     my awesome component -----> .
 
-        named/point reference:        hull.r1 -----> .
-                                                  .               .
-        automatic dimension (two points):         |_______________|
-                                   .        .           5.4 mm
-        custom dimension label:    |<------>|<--.
-                                                 \ Length of hull.r1: 5.4mm
+	named/point reference:        hull.r1 -----> .
+						  .               .
+	automatic dimension (two points):         |_______________|
+				   .        .           5.4 mm
+	custom dimension label:    |<------>|<--.
+						 \ Length of hull.r1: 5.4mm
 
-              (custom label specified via format specifier: "Length of %target: %size")
+	      (custom label specified via format specifier: "Length of %target: %size")
 
   Text properties:
        font name
@@ -321,8 +321,8 @@ comp.r4 ID 5678 material code 5 LOS 75
        tail style (point o-, arrow_to >-, arrow_from, <-, square #-)
        line weight (thickness)                    .___.                     target        .---- text
        2d points:               text  ._____.     |    \                    .     .      /
-                                             \    |     .---> target        |     |     /
-                                              .___.                      -->|     |<---.
+					     \    |     .---> target        |     |     /
+					      .___.                      -->|     |<---.
   Symbol type:
        degree:   (superscript circle)
        radius:   ('R', e.g., 'R10.5')
@@ -609,7 +609,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 
   The command becomes more of a stream processor on the input file, as
   if piped on the shell line.  To embed awk, sed, cut, see qse:
-          http://code.google.com/p/qse/
+	  http://code.google.com/p/qse/
 
   The search and batch commands probably can't nor shouldn't use the
   same replacement markers, with batch using $*, $1, $2, etc, to
@@ -696,7 +696,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   to select specific objects and create/return a temporary reference
   name. this provides a command-line mechanism for implementing band
   selection in the GUI, area-based selections, and object highlighting
-        - can replace unpublished 'sphgroup' command with this
+	- can replace unpublished 'sphgroup' command with this
 
 * make gqa overlap reporting suck less.  uselessly reports the same
   objects multiple times instead of keeping track of uniquely
@@ -777,16 +777,16 @@ comp.r4 ID 5678 material code 5 LOS 75
   minimally should probably support the basic drafting elements
   (predominantly from collada, dxf, iges, and step specifications):
 
-        point := x, y, z
-        line := start point, end point
-        polyline := various (closed, open, paired, modified, etc)
-        circle := center point, radius
-        ellipse := center point, major radius, minor radius
-        hyperbola := center point, major radius, minor radius
-        parabola := center point, focal length
-        arc := center point, radius, start angle, end angle
-        spline := degree, control points, knot values
-        text := string, insertion point, size, style, alignment
+	point := x, y, z
+	line := start point, end point
+	polyline := various (closed, open, paired, modified, etc)
+	circle := center point, radius
+	ellipse := center point, major radius, minor radius
+	hyperbola := center point, major radius, minor radius
+	parabola := center point, focal length
+	arc := center point, radius, start angle, end angle
+	spline := degree, control points, knot values
+	text := string, insertion point, size, style, alignment
 
 * make _plot() callbacks fill in plot objects instead of returning
   line segments.
@@ -1716,18 +1716,18 @@ DOCUMENTATION
 	functionality in 10 pages or less (plus pictures).
 
 * Technical Overview of BRL-CAD
-        Describes everything in the package succinctly yet
-        comprehensively.  Survey of all the major features,
-        methodologies, and tools implemented in BRL-CAD with coverage
-        on code maturity, library encapsulation, and tool aggregation.
+	Describes everything in the package succinctly yet
+	comprehensively.  Survey of all the major features,
+	methodologies, and tools implemented in BRL-CAD with coverage
+	on code maturity, library encapsulation, and tool aggregation.
 
 * BRL-CAD Validation and Verification
-        Overview of how contributions to BRL-CAD are reviewed and
-        tested including regression, performance, and system
-        integration testing as well as independent ARL configuration
-        review.  This specifically addresses the issue of world-wide
-        and potentially anonymous contributions to BRL-CAD and how
-        those changes are managed.
+	Overview of how contributions to BRL-CAD are reviewed and
+	tested including regression, performance, and system
+	integration testing as well as independent ARL configuration
+	review.  This specifically addresses the issue of world-wide
+	and potentially anonymous contributions to BRL-CAD and how
+	those changes are managed.
 
 * DoD V/L M&S Industry Diagram
 	Similar to existing Industry Diagram.  Survey of all the major
@@ -1738,26 +1738,26 @@ DOCUMENTATION
 	codes interoperate in terms of features and scope.
 
 * Commercial CAD Comparison Diagram
-        Comparison of how BRL-CAD overlaps feature-wise with various
-        major commercial CAD systems.
+	Comparison of how BRL-CAD overlaps feature-wise with various
+	major commercial CAD systems.
 
 * Solid Geometry Representation Comparisons
-        Describe the implications, tradeoffs, and conversion issues
-        involved when converting between different geometry
-        representations.  Includes describing implicit geometry,
-        explicit polygonal boundary representations, explicit spline
-        surface representations, volumetric models, wireframes,
-        boolean operations, feature edit operations, and parametric
-        modeling.
+	Describe the implications, tradeoffs, and conversion issues
+	involved when converting between different geometry
+	representations.  Includes describing implicit geometry,
+	explicit polygonal boundary representations, explicit spline
+	surface representations, volumetric models, wireframes,
+	boolean operations, feature edit operations, and parametric
+	modeling.
 
 * BRL-CAD Primitives
-        An overview of the various primitive object types in BRL-CAD,
-        their range of features, and a description of their input
-        parameters.
+	An overview of the various primitive object types in BRL-CAD,
+	their range of features, and a description of their input
+	parameters.
 
 * BRL-CAD Ray Tracing Shaders
-        An overview of the various shaders and shader options
-        available in BRL-CAD.
+	An overview of the various shaders and shader options
+	available in BRL-CAD.
 
 * BRL-CAD Open Source
 	An overview of how BRL-CAD is organized as an open source
@@ -1768,38 +1768,38 @@ DOCUMENTATION
 	and the basic "why and how" it works.
 
 * History of BRL-CAD
-        Covers the 30-years development history of BRL-CAD, from 1979
-        to 2009, documenting the origins of the project, major
-        development achievements, the conversion to open source, and
-        lesson's learned.
+	Covers the 30-years development history of BRL-CAD, from 1979
+	to 2009, documenting the origins of the project, major
+	development achievements, the conversion to open source, and
+	lesson's learned.
 
 * BRL-CAD Manifesto
 	Vision & Scope
 
 * BRL-CAD Taxonomy
-        Description of the common terminology used throughout BRL-CAD,
-        conventions employed, and tool categorization.
+	Description of the common terminology used throughout BRL-CAD,
+	conventions employed, and tool categorization.
 
 * Implementing a BRL-CAD Primitive
-        How-To for creating a new primitive in BRL-CAD that can be
-        ray-traced, tessellated, plotted, and transformed seamlessly.
+	How-To for creating a new primitive in BRL-CAD that can be
+	ray-traced, tessellated, plotted, and transformed seamlessly.
 
 * Procedural Geometry in BRL-CAD
-        How-To for creating new tools that create geometry.
+	How-To for creating new tools that create geometry.
 
 * BRL-CAD Ray Tracing Shader Development
-        How-To for creating new shaders.
+	How-To for creating new shaders.
 
 * Geometry Conversion with BRL-CAD
-        Overview of the various geometry conversion facilities in
-        BRL-CAD and how they related to solid geometry
-        representations.
+	Overview of the various geometry conversion facilities in
+	BRL-CAD and how they related to solid geometry
+	representations.
 
 * A Developer's Introduction to BRL-CAD
-        An overview of BRL-CAD from a developer perspective intended
-        for new developers.  Provides overview of structure, important
-        sections, operating procedures, and answers to FAQ development
-        questions.
+	An overview of BRL-CAD from a developer perspective intended
+	for new developers.  Provides overview of structure, important
+	sections, operating procedures, and answers to FAQ development
+	questions.
 
 ---
 See the feature request and bug trackers for more tasks and future

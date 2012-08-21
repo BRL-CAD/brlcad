@@ -65,7 +65,6 @@
 #endif
 
 
-
 void tienet_sem_init(tienet_sem_t *sem, int val)
 {
     pthread_mutex_init(&sem->mut, 0);
@@ -91,12 +90,10 @@ void tienet_sem_wait(tienet_sem_t *sem)
 {
     pthread_mutex_lock(&sem->mut);
     if (!sem->val)
-        pthread_cond_wait(&sem->cond, &sem->mut);
+	pthread_cond_wait(&sem->cond, &sem->mut);
     sem->val--;
     pthread_mutex_unlock(&sem->mut);
 }
-
-
 
 
 typedef struct tienet_master_data_s {

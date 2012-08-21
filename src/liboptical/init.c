@@ -58,7 +58,6 @@ struct region env_region;
     { extern struct mfuncs _name[]; mlib_add_shader(headp, _name); }
 
 
-
 void
 optical_shader_init(struct mfuncs **headp)
 {

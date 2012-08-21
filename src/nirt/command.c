@@ -411,12 +411,12 @@ shoot(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
 	    set_diameter(rtip);
 
 	/*
-	 * calculate the distance from a plane normal to the ray direction through the center of 
+	 * calculate the distance from a plane normal to the ray direction through the center of
 	 * the bounding sphere and a plane normal to the ray direction through the aim point.
 	 */
 	VADD2SCALE(center_bsphere, rtip->mdl_max, rtip->mdl_min, 0.5);
 
-	dist_to_target = DIST_PT_PT(center_bsphere, ray_point); 
+	dist_to_target = DIST_PT_PT(center_bsphere, ray_point);
 
 	VSUB2(dvec, ray_point, center_bsphere);
 	VUNITIZE(dvec);

@@ -586,7 +586,7 @@ do_frame(int framenumber)
     int lim = 0;
     vect_t work, temp;
     quat_t quat;
-    
+
     if (rt_verbosity & VERBOSE_FRAMENUMBER)
 	bu_log("\n...................Frame %5d...................\n",
 	       framenumber);
@@ -838,10 +838,10 @@ do_frame(int framenumber)
 
 	    do_run(0, (1<<incr_level)*(1<<incr_level)-1);
 	}
-    } 
+    }
     else if (full_incr_mode){
 	/* Multiple frame buffer mode */
-	for(full_incr_sample = 1; full_incr_sample <= full_incr_nsamples; 
+	for(full_incr_sample = 1; full_incr_sample <= full_incr_nsamples;
 	    full_incr_sample++){
 	    if(full_incr_sample > 1) /* first sample was already initialized */
 		view_2init(&APP, framename);

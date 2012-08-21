@@ -2247,7 +2247,7 @@ struct hitmiss {
 #else
 #  define NMG_CK_HITMISS_LISTS(rd) \
     { \
-        struct hitmiss *_a_hit; \
+	struct hitmiss *_a_hit; \
 	for (BU_LIST_FOR(_a_hit, hitmiss, &rd->rd_hit)) {NMG_CK_HITMISS(_a_hit);} \
 	for (BU_LIST_FOR(_a_hit, hitmiss, &rd->rd_miss)) {NMG_CK_HITMISS(_a_hit);} \
     }
@@ -2619,8 +2619,8 @@ RT_EXPORT extern void rt_cut_clean(struct rt_i *rtip);
 /* Find the bounding box given a struct rt_db_internal : bbox.c */
 RT_EXPORT extern int rt_bound_internal(struct db_i *dbip,
 				       struct directory *dp,
-                                       point_t rpp_min,
-                                       point_t rpp_max);
+				       point_t rpp_min,
+				       point_t rpp_max);
 
 /* cmd.c */
 /* Read semi-colon terminated line */

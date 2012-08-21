@@ -34,8 +34,6 @@ namespace OSL {
 using namespace OSL;
 
 
-
-
 class SimpleRenderer : public RendererServices
 {
 public:
@@ -46,7 +44,7 @@ public:
     ~SimpleRenderer () { }
 
     virtual bool get_matrix (Matrix44 &result, TransformationPtr xform,
-                             float time);
+			     float time);
     virtual bool get_matrix (Matrix44 &result, ustring from, float time);
 
     virtual bool get_matrix (Matrix44 &result, TransformationPtr xform);
@@ -54,26 +52,26 @@ public:
 
     void name_transform (const char *name, const Transformation &xform);
 
-    virtual bool get_array_attribute (void *renderstate, bool derivatives, 
-                                      ustring object, TypeDesc type, ustring name,
-                                      int index, void *val );
+    virtual bool get_array_attribute (void *renderstate, bool derivatives,
+				      ustring object, TypeDesc type, ustring name,
+				      int index, void *val );
     virtual bool get_attribute (void *renderstate, bool derivatives, ustring object,
-                                TypeDesc type, ustring name, void *val);
-    virtual bool get_userdata (bool derivatives, ustring name, TypeDesc type, 
-                               void *renderstate, void *val);
+				TypeDesc type, ustring name, void *val);
+    virtual bool get_userdata (bool derivatives, ustring name, TypeDesc type,
+			       void *renderstate, void *val);
     virtual bool has_userdata (ustring name, TypeDesc type, void *renderstate);
     virtual void *get_pointcloud_attr_query (ustring *attr_names,
-                                             TypeDesc *attr_types, int nattrs);
+					     TypeDesc *attr_types, int nattrs);
     virtual int  pointcloud (ustring filename, const OSL::Vec3 &center, float radius,
-                             int max_points, void *attr_query, void **attr_outdata);
+			     int max_points, void *attr_query, void **attr_outdata);
 
     virtual int pointcloud_search (ustring filename, const OSL::Vec3 &center,
-                                   float radius, int max_points, size_t *out_indices,
-                                   float *out_distances, int derivs_offset);
+				   float radius, int max_points, size_t *out_indices,
+				   float *out_distances, int derivs_offset);
 
     virtual int pointcloud_get (ustring filename, size_t *indices, int count,
-                                ustring attr_name, TypeDesc attr_type,
-                                void *out_data);
+				ustring attr_name, TypeDesc attr_type,
+				void *out_data);
 private:
     typedef std::map <ustring, shared_ptr<Transformation> > TransformMap;
     TransformMap m_named_xforms;
@@ -87,13 +85,13 @@ private:
     // returns
     struct AttrQuery
     {
-        // Names of the attributes to query
-        std::vector<ustring> attr_names;
-        // Types as (enum Partio::ParticleAttributeType) of the
-        // attributes in the query
-        std::vector<int>     attr_partio_types;
-        // For sanity checks, capacity of the output arrays
-        int                  capacity;
+	// Names of the attributes to query
+	std::vector<ustring> attr_names;
+	// Types as (enum Partio::ParticleAttributeType) of the
+	// attributes in the query
+	std::vector<int>     attr_partio_types;
+	// For sanity checks, capacity of the output arrays
+	int                  capacity;
     };
 
     // We will left this function as an exercise. It is only responsible
@@ -106,7 +104,6 @@ private:
     std::list<AttrQuery> m_attr_queries;
 #endif
 };
-
 
 
 }; // namespace OSL

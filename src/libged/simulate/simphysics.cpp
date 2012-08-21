@@ -38,7 +38,6 @@
 #include "simrt.h"
 
 
-
 struct simulation_params *sim_params;
 
 /**
@@ -95,7 +94,7 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 
     for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
 
-    	current_node->iter = sim_params->iter;
+	current_node->iter = sim_params->iter;
 
 	// Check if we should add a ground plane
 	if (BU_STR_EQUAL(current_node->rb_namep, sim_params->ground_plane_name)) {
@@ -107,11 +106,11 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 
 
 	    btDefaultMotionState* groundMotionState = new btDefaultMotionState(
-	    									   btTransform(btQuaternion(0, 0, 0, 1),
+										   btTransform(btQuaternion(0, 0, 0, 1),
 											   btVector3(current_node->bb_dims[0]/2,
 													     current_node->bb_dims[1]/2,
 													     current_node->bb_dims[2]/2)
-													     	 	 	 	   ));
+																	   ));
 
 	    //Copy the transform matrix
 	    MAT_COPY(m, current_node->m);
@@ -131,8 +130,8 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 
 	    bu_log("Added static ground plane : %s to simulation with mass %f Kg at (%f,%f,%f)\n",
 			  current_node->rb_namep, 0.f, current_node->bb_dims[0]/2,
-			     	 	 	 	 	 	   current_node->bb_dims[1]/2,
-			     	 	 	 	 	 	   current_node->bb_dims[2]/2);
+									   current_node->bb_dims[1]/2,
+									   current_node->bb_dims[2]/2);
 
 	} else{
 	    //Nope, its a rigid body
@@ -152,11 +151,11 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 	    btDefaultMotionState* bb_MotionState = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1),
 											btVector3(0, 0, 0)));
 	    /*btDefaultMotionState* bb_MotionState = new btDefaultMotionState(
-	    	    									   btTransform(btQuaternion(0, 0, 0, 1),
-	    											   btVector3(current_node->bb_dims[0]/2,
-	    													     current_node->bb_dims[1]/2,
-	    													     current_node->bb_dims[2]/2)
-	    													     	 	 	 	   ));*/
+											   btTransform(btQuaternion(0, 0, 0, 1),
+												   btVector3(current_node->bb_dims[0]/2,
+														     current_node->bb_dims[1]/2,
+														     current_node->bb_dims[2]/2)
+																		   ));*/
 
 	    //Copy the transform matrix
 	    MAT_COPY(m, current_node->m);
@@ -177,11 +176,11 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 	    dynamicsWorld->addRigidBody(bb_RigidBody);
 
 	    bu_log("Added new rigid body : %s to simulation with mass %f Kg \
-	    		 at (%f,%f,%f)\n",
+			 at (%f,%f,%f)\n",
 			  current_node->rb_namep, mass,
 			  current_node->bb_dims[0]/2,
 			  current_node->bb_dims[1]/2,
-	 	 	  current_node->bb_dims[2]/2);
+			  current_node->bb_dims[2]/2);
 
 	}
 
@@ -359,7 +358,7 @@ struct broadphase_callback : public btOverlapFilterCallback
 
 			bu_log("broadphase_callback: %s (%f,%f,%f):(%f,%f,%f)",
 							   rbA->rb_namep, V3ARGS(rbA->btbb_min),
-							   	   	   	      V3ARGS(rbA->btbb_max));
+										      V3ARGS(rbA->btbb_max));
 
 			//Get BB length, width, height & BB center
 			VSUB2(rbA->btbb_dims, rbA->btbb_max, rbA->btbb_min);
@@ -372,7 +371,7 @@ struct broadphase_callback : public btOverlapFilterCallback
 
 			bu_log("broadphase_callback: %s (%f,%f,%f):(%f,%f,%f)",
 							   rbB->rb_namep, V3ARGS(rbB->btbb_min),
-							   	   	   	   	  V3ARGS(rbB->btbb_max));
+											  V3ARGS(rbB->btbb_max));
 
 			//Get BB length, width, height & BB center
 			VSUB2(rbB->btbb_dims, rbB->btbb_max, rbB->btbb_min);
@@ -403,14 +402,14 @@ nearphase_callback(btBroadphasePair& collisionPair,
     btRigidBody* box1 = (btRigidBody*)(collisionPair.m_pProxy1->m_clientObject);
     if (box0 != NULL && box0 != NULL) {
 
-    	struct rigid_body *rbA = (struct rigid_body *)box0->getUserPointer();
-    	struct rigid_body *rbB = (struct rigid_body *)box1->getUserPointer();
+	struct rigid_body *rbA = (struct rigid_body *)box0->getUserPointer();
+	struct rigid_body *rbB = (struct rigid_body *)box1->getUserPointer();
 
 
-    	va = box0->getLinearVelocity();
-    	VMOVE(rbA->linear_velocity, va);
-    	vb = box1->getLinearVelocity();
-    	VMOVE(rbB->linear_velocity, vb);
+	va = box0->getLinearVelocity();
+	VMOVE(rbA->linear_velocity, va);
+	vb = box1->getLinearVelocity();
+	VMOVE(rbB->linear_velocity, vb);
 
 
 		bu_log("nearphase_callback : Creating manifold between A:%s(v=%f,%f,%f) & B:%s(v=%f,%f,%f)\n",
@@ -518,11 +517,11 @@ run_simulation(struct simulation_params *sp)
     //in bullet, the movement will not be like a box however, but according to
     //the collisions detected by rt and therefore should follow any arbitrary shape correctly
     /*dispatcher->registerCollisionCreateFunc(SPHERE_SHAPE_PROXYTYPE,
-    										SPHERE_SHAPE_PROXYTYPE,
-    										new btRTCollisionAlgorithm::CreateFunc);*/
+										SPHERE_SHAPE_PROXYTYPE,
+										new btRTCollisionAlgorithm::CreateFunc);*/
     dispatcher->registerCollisionCreateFunc(BOX_SHAPE_PROXYTYPE,
-        										BOX_SHAPE_PROXYTYPE,
-        										new btRTCollisionAlgorithm::CreateFunc);
+											BOX_SHAPE_PROXYTYPE,
+											new btRTCollisionAlgorithm::CreateFunc);
 
     btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
 

@@ -455,7 +455,7 @@ EOF
 	# method had to be executed in the current shell environment.
 
 	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && `touch "./${obj}.nmg.extl"` && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
-        spid=$!
+	spid=$!
 
 	# convert NMG
 	nmg=fail
@@ -488,13 +488,13 @@ EOF
 	    nmg_count=`expr $nmg_count + 1`
 	fi
 	if [ -e "./${obj}.nmg.extl" ] ; then
-            `rm "./${obj}.nmg.extl"`
+	    `rm "./${obj}.nmg.extl"`
 	    nmg=extl
 	fi
 
 	# start the limit timer, same as above.
 	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'`" != "x" && `touch "./${obj}.bot.extl"` && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.bot" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
-        spid=$!
+	spid=$!
 
 	# convert BoT
 	bot=fail
@@ -522,13 +522,13 @@ EOF
 	    bot_count=`expr $bot_count + 1`
 	fi
 	if [ -e "./${obj}.bot.extl" ] ; then
-            `rm "./${obj}.bot.extl"`
+	    `rm "./${obj}.bot.extl"`
 	    bot=extl
 	fi
 
 	# start the limit timer, same as above.
 	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'`" != "x" && `touch "./${obj}.brep.extl"` && kill -9 `ps auxwww | grep "$work" | grep brep | grep "${obj}.brep" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
-        spid=$!
+	spid=$!
 
 	# convert Brep
 	brep=fail
@@ -562,7 +562,7 @@ EOF
 	    fi
 	fi
 	if [ -e "./${obj}.brep.extl" ] ; then
-            `rm "./${obj}.brep.extl"`
+	    `rm "./${obj}.brep.extl"`
 	    brep=extl
 	fi
 
@@ -576,8 +576,8 @@ EOF
 
 	SECONDS=`echo $real_nmg $real_bot $real_brep | awk '{print ($1+$2+$3)}'`
 	$ECHO "%-4s\tnmg: %s %ss\tbot: %s %ss\tbrep: %s %ss %6.2fs %*s%.0f %s:%s" \
-               \"$status\" \"$nmg\" \"$real_nmg\" \"$bot\" \"$real_bot\" \"$brep\" \"$real_brep\" \"$SECONDS\" \
-               \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
+	       \"$status\" \"$nmg\" \"$real_nmg\" \"$bot\" \"$real_bot\" \"$brep\" \"$real_brep\" \"$SECONDS\" \
+	       \"`expr 7 - $count : '.*'`\" \"#\" $count \"$file\" \"$object\"
 
     done
 

@@ -39,7 +39,6 @@ extern int viewshade(struct application *ap,
 		     register struct shadework *swp);
 
 
-
 int max_ireflect = 5;	/* Maximum internal reflection level */
 int max_bounces = 5;	/* Maximum recursion level */
 

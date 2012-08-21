@@ -2273,7 +2273,7 @@ int brep_conversion_tree(struct db_i *db, union tree *oldtree, union tree *newtr
 			bi->brep = *brep;
 			ret = wdb_export(wdbp, tmpname, (genptr_t)bi, ID_BREP, local2mm);
 			if (ret) {
-			    bu_log("ERROR: failure writing [%s] to disk\n", tmpname);    
+			    bu_log("ERROR: failure writing [%s] to disk\n", tmpname);
 			} else {
 			    bu_log("%s is made.\n", tmpname);
 			    bu_strlcpy(newtree->tr_l.tl_name, tmpname, strlen(tmpname)+1);

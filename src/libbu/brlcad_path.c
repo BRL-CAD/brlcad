@@ -228,7 +228,7 @@ bu_brlcad_dir(const char *dirkey, int fail_quietly)
 #else
 	snprintf(result, MAXPATHLEN, "%s", "bin");
 #endif
-        return result;
+	return result;
     }
     if (BU_STR_EQUAL(dirkey, "lib")) {
 #if defined(BRLCAD_LIB_DIR)
@@ -236,7 +236,7 @@ bu_brlcad_dir(const char *dirkey, int fail_quietly)
 #else
 	snprintf(result, MAXPATHLEN, "%s", "lib");
 #endif
-        return result;
+	return result;
     }
     if (BU_STR_EQUAL(dirkey, "include")) {
 #if defined(BRLCAD_INCLUDE_DIR)
@@ -244,7 +244,7 @@ bu_brlcad_dir(const char *dirkey, int fail_quietly)
 #else
 	snprintf(result, MAXPATHLEN, "%s", "include");
 #endif
-        return result;
+	return result;
     }
     if (BU_STR_EQUAL(dirkey, "data") || BU_STR_EQUAL(dirkey, "share")) {
 #if defined(BRLCAD_DATA_DIR)
@@ -252,7 +252,7 @@ bu_brlcad_dir(const char *dirkey, int fail_quietly)
 #else
 	snprintf(result, MAXPATHLEN, "%s", "share");
 #endif
-        return result;
+	return result;
     }
     if (BU_STR_EQUAL(dirkey, "doc")) {
 #if defined(BRLCAD_DOC_DIR)
@@ -260,7 +260,7 @@ bu_brlcad_dir(const char *dirkey, int fail_quietly)
 #else
 	snprintf(result, MAXPATHLEN, "%s", "doc");
 #endif
-        return result;
+	return result;
     }
     if (BU_STR_EQUAL(dirkey, "man")) {
 #if defined(BRLCAD_MAN_DIR)
@@ -268,13 +268,13 @@ bu_brlcad_dir(const char *dirkey, int fail_quietly)
 #else
 	snprintf(result, MAXPATHLEN, "%s", "share/man");
 #endif
-        return result;
+	return result;
     }
 
 
     if (!fail_quietly) {
 	snprintf(result, MAXPATHLEN, "Unknown directory key %s", dirkey);
-        return result;
+	return result;
     }
     return NULL;
 }

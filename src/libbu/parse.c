@@ -500,7 +500,7 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
     ext->ext_buf = buf;
     i = ((long)((unsigned char *)(ext->ext_buf))[0] << 8) |
 	((long)((unsigned char *)(ext->ext_buf))[1]);
-    len = 
+    len =
 	((long)((unsigned char *)(ext->ext_buf))[2] << 24) |
 	((long)((unsigned char *)(ext->ext_buf))[3] << 16) |
 	((long)((unsigned char *)(ext->ext_buf))[4] << 8) |
@@ -1207,7 +1207,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		}
 		break;
 	    case 'p':
-	    	{
+		{
 		    struct bu_structparse *tbl = (struct bu_structparse *)sdp->sp_offset;
 
 		    BU_ASSERT(sdp->sp_count == 1);

@@ -82,7 +82,6 @@
 # ------------------------------------------------------------
 
 
-
 # ------------------------------------------------------------
 #                      CONSTRUCTOR
 # ------------------------------------------------------------
@@ -215,7 +214,7 @@
     # Don't allow pasting into the title cells
     #
     if {[$itk_component(table) tag includes title active]} {
-        return
+	return
     }
 
     set savestate [$itk_component(table) cget -state]
@@ -572,8 +571,8 @@
 ::itcl::body cadwidgets::TkTable::toggleSelect {_win _x _y} {
     set index [$_win index @$_x,$_y]
     set ilist [split $index ,]
-    set row [lindex $ilist 0] 
-    set col [lindex $ilist 1] 
+    set row [lindex $ilist 0]
+    set col [lindex $ilist 1]
 
     if {$col != 0} {
 	set mDoBreak 0
@@ -655,7 +654,6 @@
     # Always valid
     return 1
 }
-
 
 
 # Local Variables:

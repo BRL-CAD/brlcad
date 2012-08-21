@@ -146,7 +146,7 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
     LIST_OF_FACES::iterator i;
     int facecnt = 0;
     for(i=cfs_faces.begin(); i != cfs_faces.end(); ++i) {
-    	//if (facecnt == 5)
+	//if (facecnt == 5)
 	if ( !(*i)->LoadONBrep(brep) ) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;

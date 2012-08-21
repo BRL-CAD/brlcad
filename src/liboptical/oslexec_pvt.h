@@ -91,7 +91,7 @@ class Dictionary;
 
 /// Signature of the function that LLVM generates to run the shader
 /// group.
-typedef void (*RunLLVMGroupFunc)(void* /* shader globals */, void*); 
+typedef void (*RunLLVMGroupFunc)(void* /* shader globals */, void*);
 
 
 // Prefix for OSL shade up declarations, so LLVM can find them
@@ -102,8 +102,7 @@ typedef void (*RunLLVMGroupFunc)(void* /* shader globals */, void*);
 #endif
 
 
-
-/// Like an int (of type T), but also internally keeps track of the 
+/// Like an int (of type T), but also internally keeps track of the
 /// maximum value is has held, and the total "requested" deltas.
 /// You really shouldn't use an unsigned type for T, for two reasons:
 /// (1) Our implementation of '-=' will fail; and (2) you actually
@@ -118,7 +117,7 @@ public:
     /// Reset all counts to zero.
     ///
     void clear () {
-        m_current = 0;  m_requested = 0;  m_peak = 0;
+	m_current = 0;  m_requested = 0;  m_peak = 0;
     }
     /// Return the current value.
     ///
@@ -137,30 +136,30 @@ public:
     /// Reassign the current value, adjust peak and requested as necessary.
     ///
     const value_t operator= (value_t newval) {
-        value_t cur = m_current;
-        if (newval > cur)
-            m_requested += (cur-newval);
-        m_current = newval;
-        if (newval > m_peak)
-            m_peak = newval;
-        return m_current;
+	value_t cur = m_current;
+	if (newval > cur)
+	    m_requested += (cur-newval);
+	m_current = newval;
+	if (newval > m_peak)
+	    m_peak = newval;
+	return m_current;
     }
     /// Add to current value, adjust peak and requested as necessary.
     ///
     const value_t operator+= (value_t sz) {
-        m_current += sz;
-        if (sz > 0) {
-            m_requested += sz;
-            if (m_current > m_peak)
-                m_peak = m_current;
-        }
-        return m_current;
+	m_current += sz;
+	if (sz > 0) {
+	    m_requested += sz;
+	    if (m_current > m_peak)
+		m_peak = m_current;
+	}
+	return m_current;
     }
     /// Subtract from current value
     ///
     const value_t operator-= (value_t sz) {
-        *this += (-sz);
-        return m_current;
+	*this += (-sz);
+	return m_current;
     }
 
     const value_t operator++ ()    { *this += 1;  return m_current; }
@@ -170,21 +169,20 @@ public:
 
     friend std::ostream & operator<< (std::ostream &out, const PeakCounter &p)
     {
-        out << p.requested() << " requested, " << p.peak() << " peak, "
-            << p.current() << " current";
-        return out;
+	out << p.requested() << " requested, " << p.peak() << " peak, "
+	    << p.current() << " current";
+	return out;
     }
 
     std::string memstat () const {
-        return Strutil::memformat(requested()) + " requested, "
-             + Strutil::memformat(peak()) + " peak, "
-             + Strutil::memformat(current()) + " current";
+	return Strutil::memformat(requested()) + " requested, "
+	     + Strutil::memformat(peak()) + " peak, "
+	     + Strutil::memformat(current()) + " current";
     }
 
 private:
     value_t m_current, m_requested, m_peak;
 };
-
 
 
 /// Template to count a vector's allocated size, in bytes.
@@ -208,11 +206,9 @@ inline void stlfree (T &v)
 }
 
 
-
-
 /// ShaderMaster is the full internal representation of a complete
 /// shader that would be a .oso file on disk: symbols, instructions,
-/// arguments, you name it.  A master copy is shared by all the 
+/// arguments, you name it.  A master copy is shared by all the
 /// individual instances of the shader.
 class ShaderMaster : public RefCnt {
 public:
@@ -267,7 +263,6 @@ private:
 };
 
 
-
 /// Describe one end of a parameter connetion: the parameter number, and
 /// optinally an array index and/or channel number within that parameter.
 struct ConnectedParam {
@@ -283,7 +278,6 @@ struct ConnectedParam {
 };
 
 
-
 /// Describe a parameter connection to an earlier layer.
 ///
 struct Connection {
@@ -292,15 +286,13 @@ struct Connection {
     ConnectedParam dst;    ///< Which destination parameter (or part thereof)
 
     Connection (int srclay, const ConnectedParam &srccon,
-                const ConnectedParam &dstcon)
-        : srclayer (srclay), src (srccon), dst (dstcon)
+		const ConnectedParam &dstcon)
+	: srclayer (srclay), src (srccon), dst (dstcon)
     { }
 };
 
 
-
 typedef std::vector<Connection> ConnectionVec;
-
 
 
 /// ShaderInstance is a particular instance of a shader, with its own
@@ -329,7 +321,7 @@ public:
     ShadingSystemImpl & shadingsys () const { return m_master->shadingsys(); }
 
     /// Apply pending parameters
-    /// 
+    ///
     void parameters (const ParamValueList &params);
 
     /// Find the named symbol, return its index in the symbol array, or
@@ -353,7 +345,7 @@ public:
     /// Add a connection
     ///
     void add_connection (int srclayer, const ConnectedParam &srccon,
-                         const ConnectedParam &dstcon);
+			 const ConnectedParam &dstcon);
 
     /// How many connections to earlier layers do we have?
     ///
@@ -397,13 +389,13 @@ public:
     /// Return a begin/end Symbol* pair for the set of param symbols
     /// that is suitable to pass as a range for BOOST_FOREACH.
     friend std::pair<Symbol *,Symbol *> param_range (ShaderInstance *i) {
-        return std::pair<Symbol*,Symbol*> (i->symbol(i->firstparam()),
-                                           i->symbol(i->lastparam()));
+	return std::pair<Symbol*,Symbol*> (i->symbol(i->firstparam()),
+					   i->symbol(i->lastparam()));
     }
 
     friend std::pair<const Symbol *,const Symbol *> param_range (const ShaderInstance *i) {
-        return std::pair<const Symbol*,const Symbol*> (i->symbol(i->firstparam()),
-                                                       i->symbol(i->lastparam()));
+	return std::pair<const Symbol*,const Symbol*> (i->symbol(i->firstparam()),
+						       i->symbol(i->lastparam()));
     }
 
     int Psym () const { return m_Psym; }
@@ -457,14 +449,12 @@ private:
 };
 
 
-
 /// Macro to loop over just the params & output params of an instance,
 /// with each iteration providing a Symbol& to symbolref.  Use like this:
 ///        FOREACH_PARAM (Symbol &s, inst) { ... stuff with s... }
 ///
 #define FOREACH_PARAM(symboldecl,inst) \
     BOOST_FOREACH (symboldecl, param_range(inst))
-
 
 
 /// A ShaderGroup consists of one or more layers (each of which is a
@@ -482,8 +472,8 @@ public:
     /// Append a new shader instance on to the end of this group
     ///
     void append (ShaderInstanceRef newlayer) {
-        ASSERT (! m_optimized && "should not append to optimized group");
-        m_layers.push_back (newlayer);
+	ASSERT (! m_optimized && "should not append to optimized group");
+	m_layers.push_back (newlayer);
     }
 
     /// How many layers are in this group?
@@ -501,18 +491,18 @@ public:
     void llvm_groupdata_size (size_t size) { m_llvm_groupdata_size = size; }
 
     RunLLVMGroupFunc llvm_compiled_version() const {
-        return m_llvm_compiled_version;
+	return m_llvm_compiled_version;
     }
     void llvm_compiled_version (RunLLVMGroupFunc func) {
-        m_llvm_compiled_version = func;
+	m_llvm_compiled_version = func;
     }
 
     /// Is this shader group equivalent to ret void?
     bool does_nothing() const {
-        return m_does_nothing;
+	return m_does_nothing;
     }
     void does_nothing(bool new_val) {
-        m_does_nothing = new_val;
+	m_does_nothing = new_val;
     }
 
     long long int executions () const { return m_executions; }
@@ -535,38 +525,37 @@ private:
 };
 
 
-
 class ClosureRegistry {
 public:
 
     struct ClosureEntry {
-        // normally a closure is fully identified by its
-        // name, but we might want to have an internal id
-        // for fast dispatching
-        int                       id;
-        // The name again
-        ustring                   name;
-        // Number of formal arguments
-        int                       nformal;
-        // Number of keyword arguments
-        int                       nkeyword;
-        // The parameters
-        std::vector<ClosureParam> params;
-        // the needed size for the structure
-        int                       struct_size;
-        // Creation callbacks
-        PrepareClosureFunc        prepare;
-        SetupClosureFunc          setup;
-        CompareClosureFunc        compare;
+	// normally a closure is fully identified by its
+	// name, but we might want to have an internal id
+	// for fast dispatching
+	int                       id;
+	// The name again
+	ustring                   name;
+	// Number of formal arguments
+	int                       nformal;
+	// Number of keyword arguments
+	int                       nkeyword;
+	// The parameters
+	std::vector<ClosureParam> params;
+	// the needed size for the structure
+	int                       struct_size;
+	// Creation callbacks
+	PrepareClosureFunc        prepare;
+	SetupClosureFunc          setup;
+	CompareClosureFunc        compare;
     };
 
     void register_closure (const char *name, int id, const ClosureParam *params, int size,
-                           PrepareClosureFunc prepare, SetupClosureFunc setup, CompareClosureFunc compare);
+			   PrepareClosureFunc prepare, SetupClosureFunc setup, CompareClosureFunc compare);
 
     const ClosureEntry *get_entry (ustring name) const;
     const ClosureEntry *get_entry (int id) const {
-        DASSERT((size_t)id < m_closure_table.size());
-        return &m_closure_table[id];
+	DASSERT((size_t)id < m_closure_table.size());
+	return &m_closure_table[id];
     }
 
     bool empty () const { return m_closure_table.empty(); }
@@ -582,13 +571,12 @@ private:
 };
 
 
-
 class OSLEXECPUBLIC ShadingSystemImpl : public ShadingSystem
 {
 public:
     ShadingSystemImpl (RendererServices *renderer=NULL,
-                       TextureSystem *texturesystem=NULL,
-                       ErrorHandler *err=NULL);
+		       TextureSystem *texturesystem=NULL,
+		       ErrorHandler *err=NULL);
     virtual ~ShadingSystemImpl ();
 
     virtual bool attribute (const std::string &name, TypeDesc type, const void *val);
@@ -596,12 +584,12 @@ public:
 
     virtual bool Parameter (const char *name, TypeDesc t, const void *val);
     virtual bool Shader (const char *shaderusage,
-                         const char *shadername=NULL,
-                         const char *layername=NULL);
+			 const char *shadername=NULL,
+			 const char *layername=NULL);
     virtual bool ShaderGroupBegin (void);
     virtual bool ShaderGroupEnd (void);
     virtual bool ConnectShaders (const char *srclayer, const char *srcparam,
-                                 const char *dstlayer, const char *dstparam);
+				 const char *dstlayer, const char *dstparam);
     virtual ShadingAttribStateRef state () const;
     virtual void clear_state ();
 
@@ -686,12 +674,12 @@ public:
     llvm::ExecutionEngine* ExecutionEngine () { return m_llvm_exec; }
 
     virtual void register_closure(const char *name, int id, const ClosureParam *params, int size,
-                                  PrepareClosureFunc prepare, SetupClosureFunc setup, CompareClosureFunc compare);
+				  PrepareClosureFunc prepare, SetupClosureFunc setup, CompareClosureFunc compare);
     const ClosureRegistry::ClosureEntry *find_closure(ustring name) const {
-        return m_closure_registry.get_entry(name);
+	return m_closure_registry.get_entry(name);
     }
     const ClosureRegistry::ClosureEntry *find_closure(int id) const {
-        return m_closure_registry.get_entry(id);
+	return m_closure_registry.get_entry(id);
     }
 
     /// Convert a color in the named space to RGB.
@@ -717,24 +705,24 @@ private:
     /// ConnectShaders, and will issue error messages on its behalf.
     /// The return value will not be valid() if there is an error.
     ConnectedParam decode_connected_param (const char *connectionname,
-                               const char *layername, ShaderInstance *inst);
+			       const char *layername, ShaderInstance *inst);
 
     struct PerThreadInfo {
-        std::stack<ShadingContext *> context_pool;
+	std::stack<ShadingContext *> context_pool;
 
-        ShadingContext *pop_context ();  ///< Get the pool top and then pop
-        ~PerThreadInfo ();
+	ShadingContext *pop_context ();  ///< Get the pool top and then pop
+	~PerThreadInfo ();
     };
 
     /// Get the per-thread info, create it if necessary.
     ///
     PerThreadInfo *get_perthread_info () const {
-        PerThreadInfo *p = m_perthread_info.get ();
-        if (! p) {
-            p = new PerThreadInfo;
-            m_perthread_info.reset (p);
-        }
-        return p;
+	PerThreadInfo *p = m_perthread_info.get ();
+	if (! p) {
+	    p = new PerThreadInfo;
+	    m_perthread_info.reset (p);
+	}
+	return p;
     }
 
     /// Set up LLVM -- make sure we have a Context, Module, ExecutionEngine,
@@ -806,7 +794,7 @@ private:
     double m_stat_llvm_setup_time;        ///<     llvm setup time
     double m_stat_llvm_irgen_time;        ///<     llvm IR generation time
     double m_stat_llvm_opt_time;          ///<     llvm IR optimization time
-    double m_stat_llvm_jit_time;          ///<     llvm JIT time 
+    double m_stat_llvm_jit_time;          ///<     llvm JIT time
 
     PeakCounter<off_t> m_stat_memory;     ///< Stat: all shading system memory
 
@@ -839,32 +827,31 @@ private:
 };
 
 
-
 template<int BlockSize>
 class SimplePool {
 public:
     SimplePool() {
-        m_blocks.push_back(new char[BlockSize]);
-        m_block_offset = BlockSize;
-        m_current_block = 0;
+	m_blocks.push_back(new char[BlockSize]);
+	m_block_offset = BlockSize;
+	m_current_block = 0;
     }
 
     ~SimplePool() {
-        for (size_t i =0; i < m_blocks.size(); ++i)
-            delete [] m_blocks[i];
+	for (size_t i =0; i < m_blocks.size(); ++i)
+	    delete [] m_blocks[i];
     }
 
     char * alloc(size_t size) {
-        ASSERT(size < BlockSize);
-        if (size <= m_block_offset) {
-            m_block_offset -= size;
-        } else {
-            m_current_block++;
-            m_block_offset = BlockSize - size;
-            if (m_blocks.size() == m_current_block)
-                m_blocks.push_back(new char[BlockSize]);
-        }
-        return m_blocks[m_current_block] + m_block_offset;
+	ASSERT(size < BlockSize);
+	if (size <= m_block_offset) {
+	    m_block_offset -= size;
+	} else {
+	    m_current_block++;
+	    m_block_offset = BlockSize - size;
+	    if (m_blocks.size() == m_current_block)
+		m_blocks.push_back(new char[BlockSize]);
+	}
+	return m_blocks[m_current_block] + m_block_offset;
     }
 
     void clear () { m_current_block = 0; m_block_offset = BlockSize; }
@@ -874,7 +861,6 @@ private:
     size_t              m_current_block;
     size_t              m_block_offset;
 };
-
 
 
 /// The full context for executing a shader group.
@@ -896,45 +882,45 @@ public:
     /// ShadUseSurface). If runflags are not supplied, they will be
     /// auto-generated with all points turned on.
     void execute (ShaderUse use, ShadingAttribState &sas,
-                  ShaderGlobals &ssg);
+		  ShaderGlobals &ssg);
 
     /// Return the current shader use being executed.
     ///
     ShaderUse use () const { return (ShaderUse) m_curuse; }
 
     ClosureComponent * closure_component_allot(int id, size_t prim_size, int nattrs) {
-        size_t needed = sizeof(ClosureComponent) + (prim_size >= 4 ? prim_size - 4 : 0)
-                                                 + sizeof(ClosureComponent::Attr) * nattrs;
-        ClosureComponent *comp = (ClosureComponent *) m_closure_pool.alloc(needed);
-        comp->type = ClosureColor::COMPONENT;
-        comp->id = id;
-        comp->size = prim_size;
-        comp->nattrs = nattrs;
-        return comp;
+	size_t needed = sizeof(ClosureComponent) + (prim_size >= 4 ? prim_size - 4 : 0)
+						 + sizeof(ClosureComponent::Attr) * nattrs;
+	ClosureComponent *comp = (ClosureComponent *) m_closure_pool.alloc(needed);
+	comp->type = ClosureColor::COMPONENT;
+	comp->id = id;
+	comp->size = prim_size;
+	comp->nattrs = nattrs;
+	return comp;
     }
 
     ClosureMul *closure_mul_allot (const Color3 &w, const ClosureColor *c) {
-        ClosureMul *mul = (ClosureMul *) m_closure_pool.alloc(sizeof(ClosureMul));
-        mul->type = ClosureColor::MUL;
-        mul->weight = w;
-        mul->closure = c;
-        return mul;
+	ClosureMul *mul = (ClosureMul *) m_closure_pool.alloc(sizeof(ClosureMul));
+	mul->type = ClosureColor::MUL;
+	mul->weight = w;
+	mul->closure = c;
+	return mul;
     }
 
     ClosureMul *closure_mul_allot (float w, const ClosureColor *c) {
-        ClosureMul *mul = (ClosureMul *) m_closure_pool.alloc(sizeof(ClosureMul));
-        mul->type = ClosureColor::MUL;
-        mul->weight.setValue (w,w,w);
-        mul->closure = c;
-        return mul;
+	ClosureMul *mul = (ClosureMul *) m_closure_pool.alloc(sizeof(ClosureMul));
+	mul->type = ClosureColor::MUL;
+	mul->weight.setValue (w,w,w);
+	mul->closure = c;
+	return mul;
     }
 
     ClosureAdd *closure_add_allot (const ClosureColor *a, const ClosureColor *b) {
-        ClosureAdd *add = (ClosureAdd *) m_closure_pool.alloc(sizeof(ClosureAdd));
-        add->type = ClosureColor::ADD;
-        add->closureA = a;
-        add->closureB = b;
-        return add;
+	ClosureAdd *add = (ClosureAdd *) m_closure_pool.alloc(sizeof(ClosureAdd));
+	add->type = ClosureColor::ADD;
+	add->closureA = a;
+	add->closureB = b;
+	return add;
     }
 
 
@@ -985,7 +971,7 @@ private:
     /// runflags are not supplied, they will be auto-generated with all
     /// points turned on.
     void execute_llvm (ShaderUse use, Runflag *rf=NULL,
-                       int *ind=NULL, int nind=0);
+		       int *ind=NULL, int nind=0);
 
     void free_dict_resources ();
 
@@ -1009,12 +995,7 @@ private:
 };
 
 
-
-
 }; // namespace pvt
-
-
-
 
 
 class ShadingAttribState
@@ -1027,7 +1008,7 @@ public:
     /// Return a reference to the shader group for a particular use
     ///
     ShaderGroup & shadergroup (ShaderUse use) {
-        return m_shaders[(int)use];
+	return m_shaders[(int)use];
     }
 
     /// Called when the shaders of the attrib state change (invalidate LLVM ?)
@@ -1036,7 +1017,6 @@ public:
 private:
     OSL::pvt::ShaderGroup m_shaders[OSL::pvt::ShadUseLast];
 };
-
 
 
 namespace Strings {

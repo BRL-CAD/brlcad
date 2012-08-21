@@ -54,20 +54,20 @@ static char *usage="Usage:\n\t%s [-a] [-s grid_size] [-p] [-v] [-o object] model
 int
 loadGeometry( char *fileName, struct bu_ptbl *objs) {
     int sess_id = -1;
-    
+
     if ( BU_PTBL_LEN( objs ) > 0 ) {
 	char **objects;
-        int i;
+	int i;
 
 	objects = (char **)bu_malloc( BU_PTBL_LEN( objs ) * sizeof( char *), "objects" );
 	for ( i=0; i<(int)BU_PTBL_LEN( objs ); i++ ) {
 	    objects[i] = (char *)BU_PTBL_GET( objs, i );
 	}
 	sess_id = rts_load_geometry(fileName, BU_PTBL_LEN( objs ), objects);
-        bu_free( objects, "objects");
+	bu_free( objects, "objects");
     } else {
-        fprintf( stderr, "No BRL-CAD model objects specified\n" );
-        bu_exit(1, usage, "rtserverTest");
+	fprintf( stderr, "No BRL-CAD model objects specified\n" );
+	bu_exit(1, usage, "rtserverTest");
     }
     return sess_id;
 }
@@ -79,51 +79,51 @@ countHits(struct bu_vlb *vlb)
     int numRays = 0;
     int rayNum;
     int hitCount = 0;
-    
+
     c = bu_vlb_addr(vlb);
     numRays = BU_GLONG(c);
-    
+
     c += SIZEOF_NETWORK_LONG;
-    
+
     for(rayNum=0 ; rayNum<numRays ; rayNum++) {
-        int numPartitions = 0;
-        int partNo;
-        
-        numPartitions = BU_GLONG(c);
-        c += SIZEOF_NETWORK_LONG;
-        
-        for(partNo=0 ; partNo<numPartitions ; partNo++) {
-            point_t enterPt;
-            point_t exitPt;
-            vect_t enterNorm;
-            vect_t exitNorm;
-            double inObl;
-            double outObl;
-            /* UNUSED: int regionIndex; */
-            
-            ntohd((unsigned char *)enterPt, c, 3);
-            c += SIZEOF_NETWORK_DOUBLE * 3;
-            
-            ntohd((unsigned char *)exitPt, c, 3);
-            c += SIZEOF_NETWORK_DOUBLE * 3;
-            
-            ntohd((unsigned char *)enterNorm, c, 3);
-            c += SIZEOF_NETWORK_DOUBLE * 3;
-            
-            ntohd((unsigned char *)exitNorm, c, 3);
-            c += SIZEOF_NETWORK_DOUBLE * 3;
-            
-            ntohd((unsigned char*)&inObl, c, 1);
-            c += SIZEOF_NETWORK_DOUBLE;
-            
-            ntohd((unsigned char*)&outObl, c, 1);
-            c += SIZEOF_NETWORK_DOUBLE;
-            
-            /* UNUSED: regionIndex = BU_GLONG(c); */
-            c += SIZEOF_NETWORK_LONG;
-            
-            hitCount++;
-        }
+	int numPartitions = 0;
+	int partNo;
+
+	numPartitions = BU_GLONG(c);
+	c += SIZEOF_NETWORK_LONG;
+
+	for(partNo=0 ; partNo<numPartitions ; partNo++) {
+	    point_t enterPt;
+	    point_t exitPt;
+	    vect_t enterNorm;
+	    vect_t exitNorm;
+	    double inObl;
+	    double outObl;
+	    /* UNUSED: int regionIndex; */
+
+	    ntohd((unsigned char *)enterPt, c, 3);
+	    c += SIZEOF_NETWORK_DOUBLE * 3;
+
+	    ntohd((unsigned char *)exitPt, c, 3);
+	    c += SIZEOF_NETWORK_DOUBLE * 3;
+
+	    ntohd((unsigned char *)enterNorm, c, 3);
+	    c += SIZEOF_NETWORK_DOUBLE * 3;
+
+	    ntohd((unsigned char *)exitNorm, c, 3);
+	    c += SIZEOF_NETWORK_DOUBLE * 3;
+
+	    ntohd((unsigned char*)&inObl, c, 1);
+	    c += SIZEOF_NETWORK_DOUBLE;
+
+	    ntohd((unsigned char*)&outObl, c, 1);
+	    c += SIZEOF_NETWORK_DOUBLE;
+
+	    /* UNUSED: regionIndex = BU_GLONG(c); */
+	    c += SIZEOF_NETWORK_LONG;
+
+	    hitCount++;
+	}
     }
     return hitCount;
 }
@@ -150,7 +150,7 @@ main( int argc, char *argv[] )
     point_t mdl_min;
     point_t mdl_max;
     struct bu_vlb *vlb;
-    
+
     /* Things like bu_malloc() must have these initialized for use with parallel processing */
     bu_semaphore_init( RT_SEM_LAST );
 
@@ -177,49 +177,49 @@ main( int argc, char *argv[] )
 		bu_exit(1, usage, argv[0]);
 	}
     }
-    
+
     if (bu_debug & BU_DEBUG_MEM_CHECK) {
-        bu_prmem("initial memory map");
-        bu_mem_barriercheck();
+	bu_prmem("initial memory map");
+	bu_mem_barriercheck();
     }
 
 
     /* shoot a ray ten times, cleaning and loading geometry each time */
     for(i=0 ; i<10 ; i++) {
-        /* load geometry */
-        my_session_id = loadGeometry( argv[bu_optind], &objs );
+	/* load geometry */
+	my_session_id = loadGeometry( argv[bu_optind], &objs );
 
 
-        if ( my_session_id < 0 ) {
-            bu_exit(2, "Failed to load geometry from file (%s)\n", argv[bu_optind] );
-        }
+	if ( my_session_id < 0 ) {
+	    bu_exit(2, "Failed to load geometry from file (%s)\n", argv[bu_optind] );
+	}
 
-        get_model_extents( my_session_id, mdl_min, mdl_max );
-        VSET( xdir, 1, 0, 0 );
-        VSET( zdir, 0, 0, 1 );
-        VSUB2( model_size, mdl_max, mdl_min );
-        
-        ap = NULL;
-        getApplication(&ap);
-        VJOIN2( ap->a_ray.r_pt, mdl_min,
-                model_size[Z]/2.0, zdir,
-                model_size[X]/2.0, xdir );
-        VSET( ap->a_ray.r_dir, 0, 1, 0 );
-        rts_shootray(ap);
+	get_model_extents( my_session_id, mdl_min, mdl_max );
+	VSET( xdir, 1, 0, 0 );
+	VSET( zdir, 0, 0, 1 );
+	VSUB2( model_size, mdl_max, mdl_min );
 
-        vlb = (struct bu_vlb*)ap->a_uptr;
-        printHits(vlb);
+	ap = NULL;
+	getApplication(&ap);
+	VJOIN2( ap->a_ray.r_pt, mdl_min,
+		model_size[Z]/2.0, zdir,
+		model_size[X]/2.0, xdir );
+	VSET( ap->a_ray.r_dir, 0, 1, 0 );
+	rts_shootray(ap);
 
-        freeApplication(ap);
-        /*rts_clean( my_session_id );*/
-        bu_log( "\n\n********* %d\n", i);
-        if (bu_debug & BU_DEBUG_MEM_CHECK) {
-            bu_prmem("memory after shutdown");
-        }
+	vlb = (struct bu_vlb*)ap->a_uptr;
+	printHits(vlb);
+
+	freeApplication(ap);
+	/*rts_clean( my_session_id );*/
+	bu_log( "\n\n********* %d\n", i);
+	if (bu_debug & BU_DEBUG_MEM_CHECK) {
+	    bu_prmem("memory after shutdown");
+	}
     }
 
     my_session_id = loadGeometry( argv[bu_optind], &objs );
-    
+
     /* submit some jobs */
     fprintf( stderr, "\nfiring a grid (%dx%d) of rays at",
 	     grid_size, grid_size );
@@ -242,9 +242,9 @@ main( int argc, char *argv[] )
 	    fprintf( stderr, "shooting row %d\n", i );
 	}
 	for ( j=0; j<grid_size; j++ ) {
-            int hitCount;
-            
-            getApplication(&ap);
+	    int hitCount;
+
+	    getApplication(&ap);
 	    ap->a_user = my_session_id;
 	    VJOIN2( ap->a_ray.r_pt,
 		    mdl_min,
@@ -254,18 +254,18 @@ main( int argc, char *argv[] )
 		    xdir );
 	    ap->a_ray.index = ap->a_user;
 	    VSET( ap->a_ray.r_dir, 0, 1, 0 );
-            rts_shootray(ap);
-            if( do_plot ) {
-                hitCount = countHits(ap->a_uptr);
-                if ( hitCount == 0 ) {
-                    result_map[i][j] = ' ';
-                } else if ( hitCount <= 9 ) {
-                    result_map[i][j] = '0' + hitCount;
-                } else {
-                    result_map[i][j] = '*';
-                }
-            }
-            freeApplication(ap);
+	    rts_shootray(ap);
+	    if( do_plot ) {
+		hitCount = countHits(ap->a_uptr);
+		if ( hitCount == 0 ) {
+		    result_map[i][j] = ' ';
+		} else if ( hitCount <= 9 ) {
+		    result_map[i][j] = '0' + hitCount;
+		} else {
+		    result_map[i][j] = '*';
+		}
+	    }
+	    freeApplication(ap);
 	    job_count++;
 	}
     }

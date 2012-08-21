@@ -73,25 +73,25 @@ public:
     /// Allocate space enough for n T's, and return a pointer to the
     /// start of that space.
     T * alloc (size_t n) {
-        lock_guard lock (m_mutex);
-        // Check each block in the block list to see if it has enough space
-        BOOST_FOREACH (block_t &block, m_block_list) {
-            size_t s = block.size();
-            if ((s+n) <= block.capacity()) {
-                // Enough space in this block.  Use it.
-                block.resize (s+n);
-                return &block[s];
-            }
-        }
-        // If we got here, there were no mini-blocks in the list with enough
-        // space.  Make a new one.
-        m_block_list.push_front (block_t());
-        block_t &block (m_block_list.front());
-        size_t s = std::max (m_quanta, n);
-        block.reserve (s);
-        m_total += s * sizeof(T);
-        block.resize (n);
-        return &block[0];
+	lock_guard lock (m_mutex);
+	// Check each block in the block list to see if it has enough space
+	BOOST_FOREACH (block_t &block, m_block_list) {
+	    size_t s = block.size();
+	    if ((s+n) <= block.capacity()) {
+		// Enough space in this block.  Use it.
+		block.resize (s+n);
+		return &block[s];
+	    }
+	}
+	// If we got here, there were no mini-blocks in the list with enough
+	// space.  Make a new one.
+	m_block_list.push_front (block_t());
+	block_t &block (m_block_list.front());
+	size_t s = std::max (m_quanta, n);
+	block.reserve (s);
+	m_total += s * sizeof(T);
+	block.resize (n);
+	return &block[0];
     }
 
 private:
@@ -101,7 +101,6 @@ private:
     size_t m_total;    ///< Total memory allocated (bytes!)
     mutex m_mutex;     ///< Thread-safe lock
 };
-
 
 
 }; // namespace OSL::pvt

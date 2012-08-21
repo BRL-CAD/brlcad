@@ -1544,7 +1544,7 @@ rt_rpc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     area_base = 4.0/3.0 * mag_b * mag_r;
 
     area_shell = 0.5 * sqrt(magsq_r + 4.0 * magsq_b) + 0.25 * magsq_r /
-        mag_b * asinh(2.0 * mag_b / mag_r);
+	mag_b * asinh(2.0 * mag_b / mag_r);
     area_shell *= 2.0;
 
     area_rect = 2.0 * mag_r * mag_h;

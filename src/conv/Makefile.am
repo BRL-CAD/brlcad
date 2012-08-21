@@ -17,7 +17,7 @@ EXTRA_DIST = \
 	shp/README \
 	shp/shapelib/LICENSE.LGPL \
 	shp/shapelib/license.html \
-        step \
+	step \
 	walk_example.c
 
 if ONLY_BENCHMARK
@@ -25,7 +25,7 @@ if ONLY_BENCHMARK
 SUBDIRS = .
 
 bin_PROGRAMS = \
-        asc2dsp \
+	asc2dsp \
 	asc2g \
 	asc2pix \
 	g2asc \
@@ -48,7 +48,7 @@ DIST_SUBDIRS = \
 bin_PROGRAMS = \
 	3dm-g \
 	asc-nmg \
-        asc2dsp \
+	asc2dsp \
 	asc2g \
 	asc2pix \
 	bot-bldxf \
@@ -257,7 +257,7 @@ g_nmg_LDADD = ${WDB}
 g_voxel_SOURCES = g-voxel.c
 g_voxel_CFLAGS = ${STRICT_FLAGS} ${TCL_CPPFLAGS}
 g_voxel_LDADD = \
- 	${ANALYZE} \
+	${ANALYZE} \
 	${RT} \
 	${BU} \
 	${WDB}

@@ -13,9 +13,9 @@ html pathName ?options?
 .nf
 -height
 -width
--xscrollcommand   
+-xscrollcommand
 -xscrollincrement
--yscrollcommand   
+-yscrollcommand
 -yscrollincrement
 .fi
 .RE
@@ -32,10 +32,10 @@ Database Class: Defaultstyle
 This option is used to set the default style-sheet for the
 widget. The option value should be the entire text of the
 default style-sheet, or an empty string, in which case a
-built-in default stylesheet (for HTML) is used. 
+built-in default stylesheet (for HTML) is used.
 
 At the moment, this option is not very useful. The default
-stylesheet defines things that are "built-in" to the 
+stylesheet defines things that are "built-in" to the
 document - for example the behaviour of <p> or <img> tags
 in html. The idea behind making it flexible is to allow
 Tkhtml to display anything that looks roughly like an XML
@@ -158,7 +158,7 @@ that appears between the start and end tags of the node is
 appended to script and the resulting list evaluated
 as a Tcl command.
 
-Handler callbacks are always made from within 
+Handler callbacks are always made from within
 [pathName parse] commands. The callback for a given node
 is made as soon as the node is completely parsed.  This can
 happen because an implicit or explicit closing tag is
@@ -173,11 +173,11 @@ occurs in a handler script?
 pathName image
 .br
 .RS
-This command returns the name of a new Tk image containing 
-the rendered document. Where Tk widgets would be mapped in a 
+This command returns the name of a new Tk image containing
+the rendered document. Where Tk widgets would be mapped in a
 live display, the image contains blank space.
 
-The returned image should be deleted when the script has 
+The returned image should be deleted when the script has
 finished with it, for example:
 .RS
 
@@ -188,7 +188,7 @@ image delete $img
 .fi
 .RE
 
-This command is included mainly for automated testing and 
+This command is included mainly for automated testing and
 should be used with care, as large documents can result in very
 large images that take a long time to create and use vast
 amounts of memory.
@@ -206,19 +206,19 @@ are omitted, then the handle returned is the root-node of the
 document, or an empty string if the document has no root-node
 (i.e. an empty document).
 
-If the x and y arguments are present, then a list of node 
+If the x and y arguments are present, then a list of node
 handles is returned. The list contains one handle for each
 node that generates content currently located at viewport
 coordinates (x, y). Usually this is only a single node, but
 floating boxes and other overlapped content can cause
 this command to return more than one node.  If no content is
 located at the specified coordinates or the widget window is
-not mapped, then an empty string is returned. 
+not mapped, then an empty string is returned.
 
-If the -index option is specified along with the x and y 
+If the -index option is specified along with the x and y
 coordinates, then instead of a list of node handles, a list of
 two elements is returned. The first element of the list is the
-node-handle associated with the generated text closest to 
+node-handle associated with the generated text closest to
 the specified (x, y) coordinates. The second list value is an
 index into the text obtainable by [nodeHandle text] for the
 character closest to coordinates (x, y). The index may be used
@@ -232,7 +232,7 @@ pathName parse ?-final? html-text
 .br
 .RS
 Append extra text to the end of the (possibly empty)
-document currently stored by the widget. 
+document currently stored by the widget.
 
 If the -final option is present, this indicates that the
 supplied text is the last of the document. Any subsequent
@@ -245,7 +245,7 @@ pathName reset
 .RS
 This is used to clear the internal contents of the widget
 prior to parsing a new document. The widget is reset such
-that the document tree is empty (as if no calls to 
+that the document tree is empty (as if no calls to
 [pathName parse] had ever been made) and no stylesheets
 except the default stylesheet are loaded (as if no
 invocations of [pathName style] had occured).
@@ -293,7 +293,7 @@ document nodes (see chapter 6 of the CSS specification for
 more detail on this process).  The first part of the
 style-sheet id must be one of the strings "agent", "user"
 or "author". Following this, a style-sheet id may contain
-any text.  
+any text.
 
 When comparing two style-ids to determine which stylesheet
 takes priority, the widget uses the following approach: If
@@ -311,7 +311,7 @@ text. Each time an @import directive is encountered, if the
 URI to be imported is appended to the option value and the
 resulting list evaluated as a Tcl script. The return value
 of the script is ignored. If the script raises an error,
-then it is propagated up the call-chain to the 
+then it is propagated up the call-chain to the
 [pathName style] caller.
 
 The -urlcmd option is used to supply a script to translate
@@ -343,7 +343,7 @@ implemented by the canvas and text widgets.
 There are several interfaces by which a script can obtain a "node
 handle".  Each node handle is a Tcl command that may be used to
 access the document node that it represents. A node handle is valid
-from the time it is obtained until the next call to 
+from the time it is obtained until the next call to
 [pathName reset]. The node handle may be used to query and
 manipulate the document node via the following subcommands:
 
@@ -421,9 +421,9 @@ Option                   Default Value
 .RE
 
 When a replacement object is no longer being used by the
-widget (e.g. because the node has been deleted or 
+widget (e.g. because the node has been deleted or
 [pathName reset] is invoked), the value of the
--deletecmd option is evaluated as Tcl script. 
+-deletecmd option is evaluated as Tcl script.
 
 If it is not set to an empty string (the default) each time
 the nodes CSS properties are recalculated, a serialized
@@ -491,12 +491,12 @@ command.
 
 As well as any stylesheets specified by the application,
 stylesheets may be included in HTML documents by document authors
-in several ways: 
+in several ways:
 .RS
 .IP * 2
 Embedded in the document itself, using a <style> tag. To
 handle this case an application script must register a
-"script" type handler for <style> tags using the 
+"script" type handler for <style> tags using the
 [pathName handler] command. The handler command should
 call [pathName style] to configure the widget with the
 stylesheet text.
@@ -528,13 +528,13 @@ proc script_handler {tagcontents} {
 
 proc link_handler {node} {
     if {[node attr rel] == "stylesheet"} {
-        set URI [node attr href]
-        set stylesheet [<LOAD URI CONTENTS>]
+	set URI [node attr href]
+	set stylesheet [<LOAD URI CONTENTS>]
 
-        incr ::stylecount
-        set id "author.[format %.4d $::stylecount]"
-        set handler "import_handler $id"
-        .html style -id $id.9999 -importcmd $handler $stylesheet
+	incr ::stylecount
+	set id "author.[format %.4d $::stylecount]"
+	set handler "import_handler $id"
+	.html style -id $id.9999 -importcmd $handler $stylesheet
     }
 }
 
@@ -557,7 +557,7 @@ set ::stylecount 0
 .RE
 
 The complicated part of the example code above is the generation of
-stylesheet-ids, the values passed to the -id option of the 
+stylesheet-ids, the values passed to the -id option of the
 [.html style] command. Stylesheet-ids are used to determine the
 precedence of each stylesheet passed to the widget, and the role it
 plays in the CSS cascade algorithm used to assign properties to
@@ -586,9 +586,9 @@ if they are being downloaded from a network server or servers).
 <html><head>
     <link rel="stylesheet" href="A.css">
     <style>
-        @import uri("B.css")
-        @import uri("C.css")
-        ... rules ...
+	@import uri("B.css")
+	@import uri("C.css")
+	... rules ...
     </style>
     <link rel="stylesheet" href="D.css">
 ... remainder of document ...
@@ -624,7 +624,7 @@ passed to the six [pathName style] commands must sort
 lexigraphically in the same order as the stylesheet precedence
 determined by the above two rules. The example code above shows one
 approach to this. Using the example code, stylesheets would
-be associated with stylesheet-ids as follows: 
+be associated with stylesheet-ids as follows:
 .RS
 
 .nf
@@ -661,10 +661,10 @@ Before a new document (html file) is loaded, any previous document
 should be purged from memory using the [pathName reset] command.
 The portion of the new document that is read is passed to the
 widget using the [pathName parse] command. As new chunks of the
-document are downloaded, they should also be passed to 
+document are downloaded, they should also be passed to
 [pathName parse]. When the final chunk of the document file is
 passed to the [pathName parse] command the -final option should
-be specified. This ensures node-handler callbacks (see the 
+be specified. This ensures node-handler callbacks (see the
 description of the [pathname handler] command above) are made
 for tags that are closed implicitly by the end of the document.
 
@@ -674,7 +674,7 @@ each invocation of the [pathName parse] command.
 TODO: Finish this section.
 
 .SH "HTML SPECIFIC PROCESSING"
-TODO: Detail implicit opening and closing tag rules here. LATER: If 
+TODO: Detail implicit opening and closing tag rules here. LATER: If
 only I could figure them out...
 
 .SH "REFERENCES"

@@ -531,7 +531,7 @@
 	    set mEditCommand ptranslate
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditParam1 h
-        } \
+	} \
 	$rotH {
 	    set mEditCommand protate
 	    set mEditClass $EDIT_CLASS_ROT

@@ -223,8 +223,8 @@ static int	bot=0;
  */
 static int
 a_overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp),
-          struct region *UNUSED(reg1), struct region *UNUSED(reg2),
-          struct partition *UNUSED(pheadp))
+	  struct region *UNUSED(reg1), struct region *UNUSED(reg2),
+	  struct partition *UNUSED(pheadp))
 {
     return 1;
 }
@@ -272,76 +272,76 @@ Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
     switch (status) {
 	case 3:		/* bottom faces */
 #if MAKE_TRIANGLES
-            MAKE_FACE(lpart[1]->in, lpart[1]->out, lpart[0]->out, s);
-            MAKE_FACE(lpart[1]->in, lpart[0]->out, lpart[0]->in, s);
+	    MAKE_FACE(lpart[1]->in, lpart[1]->out, lpart[0]->out, s);
+	    MAKE_FACE(lpart[1]->in, lpart[0]->out, lpart[0]->in, s);
 #else
-            MAKE_FACE_R(lpart[1]->in, lpart[1]->out, lpart[0]->out, lpart[0]->in, s);
+	    MAKE_FACE_R(lpart[1]->in, lpart[1]->out, lpart[0]->out, lpart[0]->in, s);
 #endif
-            break;
+	    break;
 	case 6:		/* right side faces */
 #if MAKE_TRIANGLES
-            MAKE_FACE(lpart[2]->in, lpart[2]->out, lpart[1]->out, s);
-            MAKE_FACE(lpart[2]->in, lpart[1]->out, lpart[1]->in, s);
+	    MAKE_FACE(lpart[2]->in, lpart[2]->out, lpart[1]->out, s);
+	    MAKE_FACE(lpart[2]->in, lpart[1]->out, lpart[1]->in, s);
 #else
-            MAKE_FACE_R(lpart[2]->in, lpart[2]->out, lpart[1]->out, lpart[1]->in, s);
+	    MAKE_FACE_R(lpart[2]->in, lpart[2]->out, lpart[1]->out, lpart[1]->in, s);
 #endif
-            break;
+	    break;
 	case 7:		/* partial front and back faces and a diagonal face */
-            MAKE_FACE(lpart[0]->in, lpart[1]->in, lpart[2]->in, s);
-            MAKE_FACE(lpart[2]->out, lpart[1]->out, lpart[0]->out, s);
+	    MAKE_FACE(lpart[0]->in, lpart[1]->in, lpart[2]->in, s);
+	    MAKE_FACE(lpart[2]->out, lpart[1]->out, lpart[0]->out, s);
 #if MAKE_TRIANGLES
-            MAKE_FACE(lpart[2]->in, lpart[2]->out, lpart[0]->out, s);
-            MAKE_FACE(lpart[2]->in, lpart[0]->out, lpart[0]->in, s);
+	    MAKE_FACE(lpart[2]->in, lpart[2]->out, lpart[0]->out, s);
+	    MAKE_FACE(lpart[2]->in, lpart[0]->out, lpart[0]->in, s);
 #else
-            MAKE_FACE_R(lpart[2]->in, lpart[2]->out, lpart[0]->out, lpart[0]->in, s);
+	    MAKE_FACE_R(lpart[2]->in, lpart[2]->out, lpart[0]->out, lpart[0]->in, s);
 #endif
-            break;
+	    break;
 	case 9:		/* left side faces */
 #if MAKE_TRIANGLES
-            MAKE_FACE(lpart[0]->in, lpart[0]->out, lpart[3]->out, s);
-            MAKE_FACE(lpart[0]->in, lpart[3]->out, lpart[3]->in, s);
+	    MAKE_FACE(lpart[0]->in, lpart[0]->out, lpart[3]->out, s);
+	    MAKE_FACE(lpart[0]->in, lpart[3]->out, lpart[3]->in, s);
 #else
-            MAKE_FACE_R(lpart[0]->in, lpart[0]->out, lpart[3]->out, lpart[3]->in, s);
+	    MAKE_FACE_R(lpart[0]->in, lpart[0]->out, lpart[3]->out, lpart[3]->in, s);
 #endif
-            break;
+	    break;
 	case 11:	/* partial front and back faces and a diagonal face */
-            MAKE_FACE(lpart[0]->in, lpart[1]->in, lpart[3]->in, s);
-            MAKE_FACE(lpart[3]->out, lpart[1]->out, lpart[0]->out, s);
+	    MAKE_FACE(lpart[0]->in, lpart[1]->in, lpart[3]->in, s);
+	    MAKE_FACE(lpart[3]->out, lpart[1]->out, lpart[0]->out, s);
 #if MAKE_TRIANGLES
-            MAKE_FACE(lpart[1]->in, lpart[1]->out, lpart[3]->out, s);
-            MAKE_FACE(lpart[1]->in, lpart[3]->out, lpart[3]->in, s);
+	    MAKE_FACE(lpart[1]->in, lpart[1]->out, lpart[3]->out, s);
+	    MAKE_FACE(lpart[1]->in, lpart[3]->out, lpart[3]->in, s);
 #else
-            MAKE_FACE_R(lpart[1]->in, lpart[1]->out, lpart[3]->out, lpart[3]->in, s)
+	    MAKE_FACE_R(lpart[1]->in, lpart[1]->out, lpart[3]->out, lpart[3]->in, s)
 #endif
-              break;
+	      break;
 	case 12:	/* top faces */
 #if MAKE_TRIANGLES
-            MAKE_FACE(lpart[3]->in, lpart[3]->out, lpart[2]->out, s);
-            MAKE_FACE(lpart[3]->in, lpart[2]->out, lpart[2]->in, s);
+	    MAKE_FACE(lpart[3]->in, lpart[3]->out, lpart[2]->out, s);
+	    MAKE_FACE(lpart[3]->in, lpart[2]->out, lpart[2]->in, s);
 #else
-            MAKE_FACE_R(lpart[3]->in, lpart[3]->out, lpart[2]->out, lpart[2]->in, s);
+	    MAKE_FACE_R(lpart[3]->in, lpart[3]->out, lpart[2]->out, lpart[2]->in, s);
 #endif
-            break;
+	    break;
 	case 13:	/* partial front and back faces and a diagonal face */
-            MAKE_FACE(lpart[0]->in, lpart[2]->in, lpart[3]->in, s);
-            MAKE_FACE(lpart[3]->out, lpart[2]->out, lpart[0]->out, s);
+	    MAKE_FACE(lpart[0]->in, lpart[2]->in, lpart[3]->in, s);
+	    MAKE_FACE(lpart[3]->out, lpart[2]->out, lpart[0]->out, s);
 #if MAKE_TRIANGLES
-            MAKE_FACE(lpart[0]->in, lpart[0]->out, lpart[2]->out, s);
-            MAKE_FACE(lpart[0]->in, lpart[2]->out, lpart[2]->in, s);
+	    MAKE_FACE(lpart[0]->in, lpart[0]->out, lpart[2]->out, s);
+	    MAKE_FACE(lpart[0]->in, lpart[2]->out, lpart[2]->in, s);
 #else
-            MAKE_FACE_R(lpart[0]->in, lpart[0]->out, lpart[2]->out, lpart[2]->in, s);
+	    MAKE_FACE_R(lpart[0]->in, lpart[0]->out, lpart[2]->out, lpart[2]->in, s);
 #endif
-            break;
+	    break;
 	case 14:	/* partial front and back faces and a diagonal face */
-            MAKE_FACE(lpart[1]->in, lpart[2]->in, lpart[3]->in, s);
-            MAKE_FACE(lpart[3]->out, lpart[2]->out, lpart[1]->out, s);
+	    MAKE_FACE(lpart[1]->in, lpart[2]->in, lpart[3]->in, s);
+	    MAKE_FACE(lpart[3]->out, lpart[2]->out, lpart[1]->out, s);
 #if MAKE_TRIANGLES
-            MAKE_FACE(lpart[3]->in, lpart[3]->out, lpart[1]->out, s);
-            MAKE_FACE(lpart[3]->in, lpart[1]->out, lpart[1]->in, s);
+	    MAKE_FACE(lpart[3]->in, lpart[3]->out, lpart[1]->out, s);
+	    MAKE_FACE(lpart[3]->in, lpart[1]->out, lpart[1]->in, s);
 #else
-            MAKE_FACE_R(lpart[3]->in, lpart[3]->out, lpart[1]->out, lpart[1]->in, s);
+	    MAKE_FACE_R(lpart[3]->in, lpart[3]->out, lpart[1]->out, lpart[1]->in, s);
 #endif
-            break;
+	    break;
 	case 15:	/* front and back faces */
 	    ave_y = 0;
 	    for (i = 0; i < 4; i++)
@@ -357,13 +357,13 @@ Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
 		    max_diff = i;
 	    }
 	    if (max_diff == 1 || max_diff == 3) {
-                MAKE_FACE(lpart[0]->in, lpart[1]->in, lpart[2]->in, s);
-                MAKE_FACE(lpart[0]->in, lpart[2]->in, lpart[3]->in, s);
-            }
+		MAKE_FACE(lpart[0]->in, lpart[1]->in, lpart[2]->in, s);
+		MAKE_FACE(lpart[0]->in, lpart[2]->in, lpart[3]->in, s);
+	    }
 	    else {
-                MAKE_FACE(lpart[0]->in, lpart[1]->in, lpart[3]->in, s);
-                MAKE_FACE(lpart[3]->in, lpart[1]->in, lpart[2]->in, s);
-            }
+		MAKE_FACE(lpart[0]->in, lpart[1]->in, lpart[3]->in, s);
+		MAKE_FACE(lpart[3]->in, lpart[1]->in, lpart[2]->in, s);
+	    }
 
 	    ave_y = 0;
 	    for (i = 0; i < 4; i++)
@@ -379,20 +379,20 @@ Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
 		    max_diff = i;
 	    }
 	    if (max_diff == 1 || max_diff == 3) {
-                MAKE_FACE(lpart[2]->out, lpart[1]->out, lpart[0]->out, s);
-                MAKE_FACE(lpart[2]->out, lpart[0]->out, lpart[3]->out, s);
-            }
+		MAKE_FACE(lpart[2]->out, lpart[1]->out, lpart[0]->out, s);
+		MAKE_FACE(lpart[2]->out, lpart[0]->out, lpart[3]->out, s);
+	    }
 	    else {
-                MAKE_FACE(lpart[3]->out, lpart[1]->out, lpart[0]->out, s);
-                MAKE_FACE(lpart[2]->out, lpart[1]->out, lpart[3]->out, s);
-            }
+		MAKE_FACE(lpart[3]->out, lpart[1]->out, lpart[0]->out, s);
+		MAKE_FACE(lpart[2]->out, lpart[1]->out, lpart[3]->out, s);
+	    }
 	    break;
     }
 }
 
 static int
 Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss,
-             char *manifolds, fastf_t *hit1, fastf_t *hit2)
+	     char *manifolds, fastf_t *hit1, fastf_t *hit2)
 {
     struct model *m;
     struct ray_data rd;
@@ -518,7 +518,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	if ((ap->a_user == X || NEAR_EQUAL(ap->a_ray.r_pt[X], vg->coord[X], tol.dist)) &&
 	     (ap->a_user == Y || NEAR_EQUAL(ap->a_ray.r_pt[Y], vg->coord[Y], tol.dist)) &&
 	     (ap->a_user == Z || NEAR_EQUAL(ap->a_ray.r_pt[Z], vg->coord[Z], tol.dist))
-            ) {
+	    ) {
 	    dist = vg->coord[ap->a_user] - ap->a_ray.r_pt[ap->a_user];
 	    if (dist < extreme_dist1) {
 		extreme_dist1 = dist;
@@ -583,7 +583,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 
 	if (dist2 >= dist1) {
 	    if (debug)
-	        bu_log("\t\teliminating hit2_v\n");
+		bu_log("\t\teliminating hit2_v\n");
 	    hit2_v = (struct vertex *)NULL;
 	}
 	else {
@@ -652,91 +652,91 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     }
 
     if (hit1_v) {
-        struct vertexuse *vu;
+	struct vertexuse *vu;
 
 	if (debug)
-            bu_log("Moving first hit vg x%x from (%g %g %g) to (%g %g %g)\n", hit1_v->vg_p,
-                   V3ARGS(hit1_v->vg_p->coord), V3ARGS(mhit1));
+	    bu_log("Moving first hit vg x%x from (%g %g %g) to (%g %g %g)\n", hit1_v->vg_p,
+		   V3ARGS(hit1_v->vg_p->coord), V3ARGS(mhit1));
 	VMOVE(hit1_v->vg_p->coord, mhit1);
-        for (BU_LIST_FOR(vu, vertexuse, &hit1_v->vu_hd)) {
-            struct faceuse *fu;
-            struct face *f;
-            struct edgeuse *eu;
-            struct edge_g_lseg *eg;
-            pointp_t pt;
+	for (BU_LIST_FOR(vu, vertexuse, &hit1_v->vu_hd)) {
+	    struct faceuse *fu;
+	    struct face *f;
+	    struct edgeuse *eu;
+	    struct edge_g_lseg *eg;
+	    pointp_t pt;
 
-            if (*vu->up.magic_p != NMG_EDGEUSE_MAGIC)
-                continue;
+	    if (*vu->up.magic_p != NMG_EDGEUSE_MAGIC)
+		continue;
 
-            eu = vu->up.eu_p;
-            eg = eu->g.lseg_p;
+	    eu = vu->up.eu_p;
+	    eg = eu->g.lseg_p;
 
-            VMOVE(eg->e_pt, mhit1);
-            pt = eu->eumate_p->vu_p->v_p->vg_p->coord;
-            VSUB2(eg->e_dir, eg->e_pt, pt);
+	    VMOVE(eg->e_pt, mhit1);
+	    pt = eu->eumate_p->vu_p->v_p->vg_p->coord;
+	    VSUB2(eg->e_dir, eg->e_pt, pt);
 
-            fu = nmg_find_fu_of_eu(eu);
-            if (!fu)
-              continue;
-            if (fu->orientation != OT_SAME)
-              continue;
+	    fu = nmg_find_fu_of_eu(eu);
+	    if (!fu)
+	      continue;
+	    if (fu->orientation != OT_SAME)
+	      continue;
 
-            nmg_calc_face_g(fu);
-            f = fu->f_p;
-            nmg_face_bb(f, &tol);
+	    nmg_calc_face_g(fu);
+	    f = fu->f_p;
+	    nmg_face_bb(f, &tol);
 
-            VMINMAX(sa->min_pt, sa->max_pt, f->min_pt);
-            VMINMAX(sa->min_pt, sa->max_pt, f->max_pt);
-        }
+	    VMINMAX(sa->min_pt, sa->max_pt, f->min_pt);
+	    VMINMAX(sa->min_pt, sa->max_pt, f->max_pt);
+	}
 
 	VMINMAX(ra->min_pt, ra->max_pt, sa->min_pt);
-        VMINMAX(ra->min_pt, ra->max_pt, sa->max_pt);
+	VMINMAX(ra->min_pt, ra->max_pt, sa->max_pt);
 
-        bu_ptbl_zero(&verts, (long *)hit1_v);
+	bu_ptbl_zero(&verts, (long *)hit1_v);
     }
 
     if (hit2_v) {
-        struct vertexuse *vu;
+	struct vertexuse *vu;
 
 	if (debug)
 	    bu_log("Moving last hit vg x%x from (%g %g %g) to (%g %g %g)\n", hit2_v->vg_p,
-                   V3ARGS(hit2_v->vg_p->coord), V3ARGS(mhit2));
+		   V3ARGS(hit2_v->vg_p->coord), V3ARGS(mhit2));
 	VMOVE(hit2_v->vg_p->coord, mhit2);
-        for (BU_LIST_FOR(vu, vertexuse, &hit2_v->vu_hd)) {
-            struct faceuse *fu;
-            struct face *f;
-            struct edgeuse *eu;
-            struct edge_g_lseg *eg;
-            pointp_t pt;
+	for (BU_LIST_FOR(vu, vertexuse, &hit2_v->vu_hd)) {
+	    struct faceuse *fu;
+	    struct face *f;
+	    struct edgeuse *eu;
+	    struct edge_g_lseg *eg;
+	    pointp_t pt;
 
-            if (*vu->up.magic_p != NMG_EDGEUSE_MAGIC)
-                continue;
+	    if (*vu->up.magic_p != NMG_EDGEUSE_MAGIC)
+		continue;
 
-            eu = vu->up.eu_p;
-            eg = eu->g.lseg_p;
+	    eu = vu->up.eu_p;
+	    eg = eu->g.lseg_p;
 
-            VMOVE(eg->e_pt, mhit2);
-            pt = eu->eumate_p->vu_p->v_p->vg_p->coord;
-            VSUB2(eg->e_dir, eg->e_pt, pt);
+	    VMOVE(eg->e_pt, mhit2);
+	    pt = eu->eumate_p->vu_p->v_p->vg_p->coord;
+	    VSUB2(eg->e_dir, eg->e_pt, pt);
 
-            fu = nmg_find_fu_of_eu(eu);
-            if (!fu)
-              continue;
-            if (fu->orientation != OT_SAME)
-              continue;
+	    fu = nmg_find_fu_of_eu(eu);
+	    if (!fu)
+	      continue;
+	    if (fu->orientation != OT_SAME)
+	      continue;
 
-            nmg_calc_face_g(fu);
-            f = fu->f_p;
-            nmg_face_bb(f, &tol);
+	    nmg_calc_face_g(fu);
+	    f = fu->f_p;
+	    nmg_face_bb(f, &tol);
 
-            VMINMAX(sa->min_pt, sa->max_pt, f->min_pt);
-            VMINMAX(sa->min_pt, sa->max_pt, f->max_pt);
-        }
+	    VMINMAX(sa->min_pt, sa->max_pt, f->min_pt);
+	    VMINMAX(sa->min_pt, sa->max_pt, f->max_pt);
+	}
 
 	VMINMAX(ra->min_pt, ra->max_pt, sa->min_pt);
-        VMINMAX(ra->min_pt, ra->max_pt, sa->max_pt);
+	VMINMAX(ra->min_pt, ra->max_pt, sa->max_pt);
 
-        bu_ptbl_zero(&verts, (long *)hit2_v);
+	bu_ptbl_zero(&verts, (long *)hit2_v);
     }
 
     return 1;
@@ -855,9 +855,9 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		vg_tmp = eu_tmp->eumate_p->vu_p->v_p->vg_p;
 
 		if ((EQUAL(cur_dir, X) && (EQUAL(vg_tmp->coord[Y], vg1b->coord[Y]) && EQUAL(vg_tmp->coord[Z], vg1b->coord[Z]))) ||
-                    (EQUAL(cur_dir, Y) && (EQUAL(vg_tmp->coord[X], vg1b->coord[X]) && EQUAL(vg_tmp->coord[Z], vg1b->coord[Z]))) ||
-                    (EQUAL(cur_dir, Z) && (EQUAL(vg_tmp->coord[X], vg1b->coord[X]) && EQUAL(vg_tmp->coord[Y], vg1b->coord[Y])))
-                    ) {
+		    (EQUAL(cur_dir, Y) && (EQUAL(vg_tmp->coord[X], vg1b->coord[X]) && EQUAL(vg_tmp->coord[Z], vg1b->coord[Z]))) ||
+		    (EQUAL(cur_dir, Z) && (EQUAL(vg_tmp->coord[X], vg1b->coord[X]) && EQUAL(vg_tmp->coord[Y], vg1b->coord[Y])))
+		    ) {
 		    eu1 = eu_tmp;
 		    vg1a = vg1b;
 		    vg1b = vg_tmp;
@@ -875,9 +875,9 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		vg_tmp = eu_tmp->eumate_p->vu_p->v_p->vg_p;
 
 		if ((EQUAL(cur_dir, X) && (EQUAL(vg_tmp->coord[Y], vg2b->coord[Y]) && EQUAL(vg_tmp->coord[Z], vg2b->coord[Z]))) ||
-                    (EQUAL(cur_dir, Y) && (EQUAL(vg_tmp->coord[X], vg2b->coord[X]) && EQUAL(vg_tmp->coord[Z], vg2b->coord[Z]))) ||
-                    (EQUAL(cur_dir, Z) && (EQUAL(vg_tmp->coord[X], vg2b->coord[X]) && EQUAL(vg_tmp->coord[Y], vg2b->coord[Y])))
-                    ) {
+		    (EQUAL(cur_dir, Y) && (EQUAL(vg_tmp->coord[X], vg2b->coord[X]) && EQUAL(vg_tmp->coord[Z], vg2b->coord[Z]))) ||
+		    (EQUAL(cur_dir, Z) && (EQUAL(vg_tmp->coord[X], vg2b->coord[X]) && EQUAL(vg_tmp->coord[Y], vg2b->coord[Y])))
+		    ) {
 		    eu2 = eu_tmp;
 		    vg2a = vg2b;
 		    vg2b = vg_tmp;
@@ -1013,27 +1013,27 @@ shrink_wrap(struct shell *s)
 	    case X:
 		for (i = 0; i < cell_count[Y]; i++) {
 		    for (j = 0; j < cell_count[Z]; j++) {
-                        VMOVE(ap.a_ray.r_pt, yz_rays[YZ_CELL(i, j)].r_pt);
-                        VMOVE(ap.a_ray.r_dir, yz_rays[YZ_CELL(i, j)].r_dir);
-                        (void)rt_shootray(&ap);
+			VMOVE(ap.a_ray.r_pt, yz_rays[YZ_CELL(i, j)].r_pt);
+			VMOVE(ap.a_ray.r_dir, yz_rays[YZ_CELL(i, j)].r_dir);
+			(void)rt_shootray(&ap);
 		    }
 		}
 		break;
 	    case Y:
 		for (i = 0; i < cell_count[X]; i++) {
 		    for (j = 0; j < cell_count[Z]; j++) {
-                        VMOVE(ap.a_ray.r_pt, xz_rays[XZ_CELL(i, j)].r_pt);
-                        VMOVE(ap.a_ray.r_dir, xz_rays[XZ_CELL(i, j)].r_dir);
-                        (void)rt_shootray(&ap);
+			VMOVE(ap.a_ray.r_pt, xz_rays[XZ_CELL(i, j)].r_pt);
+			VMOVE(ap.a_ray.r_dir, xz_rays[XZ_CELL(i, j)].r_dir);
+			(void)rt_shootray(&ap);
 		    }
 		}
 		break;
 	    case Z:
 		for (i = 0; i < cell_count[X]; i++) {
 		    for (j = 0; j < cell_count[Y]; j++) {
-                        VMOVE(ap.a_ray.r_pt, xy_rays[XY_CELL(i, j)].r_pt);
-                        VMOVE(ap.a_ray.r_dir, xy_rays[XY_CELL(i, j)].r_dir);
-                        (void)rt_shootray(&ap);
+			VMOVE(ap.a_ray.r_pt, xy_rays[XY_CELL(i, j)].r_pt);
+			VMOVE(ap.a_ray.r_dir, xy_rays[XY_CELL(i, j)].r_dir);
+			(void)rt_shootray(&ap);
 		    }
 		}
 		break;
@@ -1355,12 +1355,12 @@ refine_edges(struct shell *s)
 	    vgb = eu1->eumate_p->vu_p->v_p->vg_p;
 
 	    VSUB2(v3, vgb->coord, vga->coord);
-            VUNITIZE(v3);
-            VMOVE(v2, norm1);
-            VCROSS(v1, v2, v3);
-            VUNITIZE(v1);
-            VCROSS(v4, v3, norm2);
-            alpha = atan2(VDOT(v4, v2), VDOT(v4, v1));
+	    VUNITIZE(v3);
+	    VMOVE(v2, norm1);
+	    VCROSS(v1, v2, v3);
+	    VUNITIZE(v1);
+	    VCROSS(v4, v3, norm2);
+	    alpha = atan2(VDOT(v4, v2), VDOT(v4, v1));
 	    if (alpha < 0.0)
 		alpha += bn_twopi;
 	    alpha = alpha / 2.0;
@@ -1368,7 +1368,7 @@ refine_edges(struct shell *s)
 	    sina = sin(alpha);
 	    VBLEND2(ave_norm, cosa, v1, sina, v2);
 
-            VBLEND2(mid_pt, 0.5, vga->coord, 0.5, vgb->coord);
+	    VBLEND2(mid_pt, 0.5, vga->coord, 0.5, vgb->coord);
 	    VJOIN1(ap.a_ray.r_pt, mid_pt, (2.0*cell_size), ave_norm);
 	    VREVERSE(ap.a_ray.r_dir, ave_norm);
 	    ref_data.fu1 = fu1;
@@ -1598,40 +1598,40 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
     switch (cur_dir) {
 	case X:
 	    VSET(lpart->in->pt,
-                 yz_rays[ap->a_user].r_pt[X] + first_pp->pt_inhit->hit_dist,
-                 yz_rays[ap->a_user].r_pt[Y],
-                 yz_rays[ap->a_user].r_pt[Z]);
+		 yz_rays[ap->a_user].r_pt[X] + first_pp->pt_inhit->hit_dist,
+		 yz_rays[ap->a_user].r_pt[Y],
+		 yz_rays[ap->a_user].r_pt[Z]);
 	    lpart->out->v = (struct vertex *)NULL;
 	    VSET(lpart->out->pt,
-                 yz_rays[ap->a_user].r_pt[X] + last_pp->pt_outhit->hit_dist,
-                 yz_rays[ap->a_user].r_pt[Y],
-                 yz_rays[ap->a_user].r_pt[Z]);
+		 yz_rays[ap->a_user].r_pt[X] + last_pp->pt_outhit->hit_dist,
+		 yz_rays[ap->a_user].r_pt[Y],
+		 yz_rays[ap->a_user].r_pt[Z]);
 	    BU_LIST_INSERT(&yz_parts[ap->a_user].l, &lpart->l);
-            break;
+	    break;
 	case Y:
 	    VSET(lpart->in->pt,
-                 xz_rays[ap->a_user].r_pt[X],
-                 xz_rays[ap->a_user].r_pt[Y] + first_pp->pt_inhit->hit_dist,
-                 xz_rays[ap->a_user].r_pt[Z]);
+		 xz_rays[ap->a_user].r_pt[X],
+		 xz_rays[ap->a_user].r_pt[Y] + first_pp->pt_inhit->hit_dist,
+		 xz_rays[ap->a_user].r_pt[Z]);
 	    lpart->out->v = (struct vertex *)NULL;
 	    VSET(lpart->out->pt,
-                 xz_rays[ap->a_user].r_pt[X],
-                 xz_rays[ap->a_user].r_pt[Y] + last_pp->pt_outhit->hit_dist,
-                 xz_rays[ap->a_user].r_pt[Z]);
+		 xz_rays[ap->a_user].r_pt[X],
+		 xz_rays[ap->a_user].r_pt[Y] + last_pp->pt_outhit->hit_dist,
+		 xz_rays[ap->a_user].r_pt[Z]);
 	    BU_LIST_INSERT(&xz_parts[ap->a_user].l, &lpart->l);
-            break;
+	    break;
 	case Z:
 	    VSET(lpart->in->pt,
-                 xy_rays[ap->a_user].r_pt[X],
-                 xy_rays[ap->a_user].r_pt[Y],
-                 xy_rays[ap->a_user].r_pt[Z] + first_pp->pt_inhit->hit_dist);
+		 xy_rays[ap->a_user].r_pt[X],
+		 xy_rays[ap->a_user].r_pt[Y],
+		 xy_rays[ap->a_user].r_pt[Z] + first_pp->pt_inhit->hit_dist);
 	    lpart->out->v = (struct vertex *)NULL;
 	    VSET(lpart->out->pt,
-                 xy_rays[ap->a_user].r_pt[X],
-                 xy_rays[ap->a_user].r_pt[Y],
-                 xy_rays[ap->a_user].r_pt[Z] + last_pp->pt_outhit->hit_dist);
+		 xy_rays[ap->a_user].r_pt[X],
+		 xy_rays[ap->a_user].r_pt[Y],
+		 xy_rays[ap->a_user].r_pt[Z] + last_pp->pt_outhit->hit_dist);
 	    BU_LIST_INSERT(&xy_parts[ap->a_user].l, &lpart->l);
-            break;
+	    break;
     }
     return 1;
 }
@@ -1853,12 +1853,12 @@ main(int argc, char **argv)
 
     for (i = 0; i < cell_count[Y]; i++) {
 	for (j = 0; j < cell_count[Z]; j++) {
-            VSET(yz_rays[YZ_CELL(i, j)].r_dir, 1.0, 0.0, 0.0);
-            VSET(yz_rays[YZ_CELL(i, j)].r_pt,
-                 rtip->mdl_min[X] - cell_size,
-                 y_start + (fastf_t)i * cell_size,
-                 z_start + (fastf_t)j * cell_size);
-            yz_parts[YZ_CELL(i, j)].is_void = UNKNOWN;
+	    VSET(yz_rays[YZ_CELL(i, j)].r_dir, 1.0, 0.0, 0.0);
+	    VSET(yz_rays[YZ_CELL(i, j)].r_pt,
+		 rtip->mdl_min[X] - cell_size,
+		 y_start + (fastf_t)i * cell_size,
+		 z_start + (fastf_t)j * cell_size);
+	    yz_parts[YZ_CELL(i, j)].is_void = UNKNOWN;
 	    yz_parts[YZ_CELL(i, j)].in_coord = -MAX_FASTF;
 	    yz_parts[YZ_CELL(i, j)].out_coord = -MAX_FASTF;
 	    yz_parts[YZ_CELL(i, j)].in = (struct end_pt *)NULL;
@@ -1869,12 +1869,12 @@ main(int argc, char **argv)
 
     for (i = 0; i < cell_count[X]; i++) {
 	for (j = 0; j < cell_count[Y]; j++) {
-            VSET(xy_rays[XY_CELL(i, j)].r_dir, 0.0, 0.0, 1.0);
-            VSET(xy_rays[XY_CELL(i, j)].r_pt,
-                 x_start + (fastf_t)i * cell_size,
-                 y_start + (fastf_t)j * cell_size,
-                 rtip->mdl_min[Z] - cell_size);
-            xy_parts[XY_CELL(i, j)].is_void = UNKNOWN;
+	    VSET(xy_rays[XY_CELL(i, j)].r_dir, 0.0, 0.0, 1.0);
+	    VSET(xy_rays[XY_CELL(i, j)].r_pt,
+		 x_start + (fastf_t)i * cell_size,
+		 y_start + (fastf_t)j * cell_size,
+		 rtip->mdl_min[Z] - cell_size);
+	    xy_parts[XY_CELL(i, j)].is_void = UNKNOWN;
 	    xy_parts[XY_CELL(i, j)].in_coord = -MAX_FASTF;
 	    xy_parts[XY_CELL(i, j)].out_coord = -MAX_FASTF;
 	    xy_parts[XY_CELL(i, j)].in = (struct end_pt *)NULL;
@@ -1883,12 +1883,12 @@ main(int argc, char **argv)
 	}
 
 	for (j = 0; j < cell_count[Z]; j++) {
-            VSET(xz_rays[XZ_CELL(i, j)].r_dir, 0.0, 1.0, 0.0);
-            VSET(xz_rays[XZ_CELL(i, j)].r_pt,
-                 x_start + (fastf_t)i * cell_size,
-                 rtip->mdl_min[Y] - cell_size,
-                 z_start + (fastf_t)j * cell_size);
-            xz_parts[XZ_CELL(i, j)].is_void = UNKNOWN;
+	    VSET(xz_rays[XZ_CELL(i, j)].r_dir, 0.0, 1.0, 0.0);
+	    VSET(xz_rays[XZ_CELL(i, j)].r_pt,
+		 x_start + (fastf_t)i * cell_size,
+		 rtip->mdl_min[Y] - cell_size,
+		 z_start + (fastf_t)j * cell_size);
+	    xz_parts[XZ_CELL(i, j)].is_void = UNKNOWN;
 	    xz_parts[XZ_CELL(i, j)].in_coord = -MAX_FASTF;
 	    xz_parts[XZ_CELL(i, j)].out_coord = -MAX_FASTF;
 	    xz_parts[XZ_CELL(i, j)].in = (struct end_pt *)NULL;
@@ -1907,8 +1907,8 @@ main(int argc, char **argv)
 		    ap.a_y = j;
 		    ap.a_user = YZ_CELL(i, j);
 		    VMOVE(ap.a_ray.r_pt, yz_rays[YZ_CELL(i, j)].r_pt);
-                    VMOVE(ap.a_ray.r_dir, yz_rays[YZ_CELL(i, j)].r_dir);
-                    (void)rt_shootray(&ap);
+		    VMOVE(ap.a_ray.r_dir, yz_rays[YZ_CELL(i, j)].r_dir);
+		    (void)rt_shootray(&ap);
 		}
 	    }
 	    break;
@@ -1919,8 +1919,8 @@ main(int argc, char **argv)
 		    ap.a_y = j;
 		    ap.a_user = XZ_CELL(i, j);
 		    VMOVE(ap.a_ray.r_pt, xz_rays[XZ_CELL(i, j)].r_pt);
-                    VMOVE(ap.a_ray.r_dir, xz_rays[XZ_CELL(i, j)].r_dir);
-                    (void)rt_shootray(&ap);
+		    VMOVE(ap.a_ray.r_dir, xz_rays[XZ_CELL(i, j)].r_dir);
+		    (void)rt_shootray(&ap);
 		}
 	    }
 	    break;
@@ -1931,8 +1931,8 @@ main(int argc, char **argv)
 		    ap.a_y = j;
 		    ap.a_user = XY_CELL(i, j);
 		    VMOVE(ap.a_ray.r_pt, xy_rays[XY_CELL(i, j)].r_pt);
-                    VMOVE(ap.a_ray.r_dir, xy_rays[XY_CELL(i, j)].r_dir);
-                    (void)rt_shootray(&ap);
+		    VMOVE(ap.a_ray.r_dir, xy_rays[XY_CELL(i, j)].r_dir);
+		    (void)rt_shootray(&ap);
 		}
 	    }
 	    break;

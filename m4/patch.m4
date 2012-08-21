@@ -63,7 +63,7 @@ for script in $ac_top_builddir $ac_abs_builddir $ac_builddir . ; do
 		# paths so wrapper scripts will run and find the
 		# bundled Tcl/Tk before the system Tcl/Tk frameworks.
 		#
-	        darwin*)
+		darwin*)
 		    sed 's/-all_load.*convenience//g' < $libtoolscript > ${libtoolscript}.sed
 		    if test ! "x`cat ${libtoolscript}`" = "x`cat ${libtoolscript}.sed`" ; then
 			AC_MSG_RESULT([Found -all_load in libtool script, removing])
@@ -84,7 +84,7 @@ for script in $ac_top_builddir $ac_abs_builddir $ac_builddir . ; do
 		linux*)
 		    sed 's/^link_all_deplibs=no/link_all_deplibs=unknown/g' < $libtoolscript > ${libtoolscript}.sed
 		    if test ! "x`cat ${libtoolscript}`" = "x`cat ${libtoolscript}.sed`" ; then
-		       	AC_MSG_RESULT([Found link_all_deplibs=no in libtool script, reverting])
+			AC_MSG_RESULT([Found link_all_deplibs=no in libtool script, reverting])
 			cp ${libtoolscript}.sed ${libtoolscript}
 		    fi
 		    rm -f ${libtoolscript}.sed

@@ -109,7 +109,7 @@ f_tedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
     if (writesolid()) {
 	bu_file_delete(tmpfil);
-        fclose(fp);
+	fclose(fp);
 	return TCL_ERROR;
     }
 
@@ -893,9 +893,9 @@ get_editor_string(struct bu_vls *editstring)
     /* still unset? try windows */
     if (!editor || editor[0] == '\0') {
 	if (BU_STR_EQUAL(os, "Windows 95") || BU_STR_EQUAL(os, "Windows NT")) {
-    	    editor = WIN_EDITOR;
+	    editor = WIN_EDITOR;
 	} else {
-    	    editor = (char *)NULL;
+	    editor = (char *)NULL;
 	}
     }
 
@@ -928,7 +928,7 @@ get_editor_string(struct bu_vls *editstring)
 
     /* still unset? try ed */
     if (!editor) {
-       	editor = bu_which(ED_EDITOR);
+	editor = bu_which(ED_EDITOR);
     }
 
     /* still unset? default to jove */
@@ -1025,13 +1025,13 @@ get_editor_string(struct bu_vls *editstring)
 	    }
 	}
     } else {
-    	/* Spell out in which situations we need a terminal.
+	/* Spell out in which situations we need a terminal.
 	 */
-    	if (BU_STR_EQUAL(os, "Darwin")) {
-    	    /* on the mac, if it's not mac editor assume a terminal is needed. Until
+	if (BU_STR_EQUAL(os, "Darwin")) {
+	    /* on the mac, if it's not mac editor assume a terminal is needed. Until
 	     * we figure out how to use Mac terminal, use X11 xterm */
-    	    if (!BU_STR_EQUAL(editor, MAC_EDITOR)) {
-    		terminal = bu_which(XTERM_COMMAND);
+	    if (!BU_STR_EQUAL(editor, MAC_EDITOR)) {
+		terminal = bu_which(XTERM_COMMAND);
 
 		/* look a little harder if we found nothing */
 		if (!terminal) {
@@ -1043,45 +1043,45 @@ get_editor_string(struct bu_vls *editstring)
 
 		if (terminal)
 		    terminal_opt = "-e";
-    	    }
-    	}
+	    }
+	}
 
-    	/* For now, assume there aren't any situations where Windows will use a terminal */
+	/* For now, assume there aren't any situations where Windows will use a terminal */
 
-    	/* If it's not mac, and it's not Windows, we need a controlling terminal */
-    	if (!BU_STR_EQUAL(os, "Darwin") && !BU_STR_EQUAL(os, "Windows 95") && !BU_STR_EQUAL(os, "Windows NT")) {
-    	    if (BU_STR_EQUAL(editor, EMACS_EDITOR)) {
-    		terminal = bu_which(XTERM_COMMAND);
+	/* If it's not mac, and it's not Windows, we need a controlling terminal */
+	if (!BU_STR_EQUAL(os, "Darwin") && !BU_STR_EQUAL(os, "Windows 95") && !BU_STR_EQUAL(os, "Windows NT")) {
+	    if (BU_STR_EQUAL(editor, EMACS_EDITOR)) {
+		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
-    	    }
-    	    if (BU_STR_EQUAL(editor, VIM_EDITOR)) {
-    		terminal = bu_which(XTERM_COMMAND);
+	    }
+	    if (BU_STR_EQUAL(editor, VIM_EDITOR)) {
+		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
-    	    }
-    	    if (BU_STR_EQUAL(editor, VI_EDITOR)) {
-    		terminal = bu_which(XTERM_COMMAND);
+	    }
+	    if (BU_STR_EQUAL(editor, VI_EDITOR)) {
+		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
-    	    }
+	    }
 	    if (BU_STR_EQUAL(editor, NANO_EDITOR)) {
 		    terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
-    	    }
-    	    if (BU_STR_EQUAL(editor, ED_EDITOR)) {
-    		terminal = bu_which(XTERM_COMMAND);
+	    }
+	    if (BU_STR_EQUAL(editor, ED_EDITOR)) {
+		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
-    	    }
-    	    if (BU_STR_EQUAL(editor, JOVE_EDITOR)) {
-    		terminal = bu_which(XTERM_COMMAND);
+	    }
+	    if (BU_STR_EQUAL(editor, JOVE_EDITOR)) {
+		terminal = bu_which(XTERM_COMMAND);
 		if (terminal)
 		    terminal_opt = "-e";
-    	    }
-    	}
-    	/* if it's not something we know about, assume no terminal - user can arrange for one if needed */
+	    }
+	}
+	/* if it's not something we know about, assume no terminal - user can arrange for one if needed */
     }
 
     bu_vls_sprintf(editstring, "%s %s %s %s", terminal?terminal:"(null)", terminal_opt?terminal_opt:"(null)", editor, editor_opt?editor_opt:"(null)");

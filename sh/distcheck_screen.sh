@@ -84,4 +84,3 @@ screen -X -p 2 exec tail --retry --follow=name distcheck-release.log
 #screen -X -p 3 exec tail --retry --follow=name distcheck-no_tk.log
 
 screen -X -p 0 exec cmake ../brlcad -DBRLCAD_BUNDLED_LIBS=ON
-

@@ -1673,30 +1673,30 @@ bn_isect_line3_line3(fastf_t *pdist,        /* see above */
     tc_numerator = (pdir_mag_sq * e - b * d);
 
     if (NEAR_ZERO(denominator, tol->dist) && !NEAR_ZERO(sc_numerator, tol->dist)) {
-        denominator = 0.0;
-        sc = MAX_FASTF;
+	denominator = 0.0;
+	sc = MAX_FASTF;
     } else if (!NEAR_ZERO(denominator, tol->dist) && NEAR_ZERO(sc_numerator, tol->dist)) {
-        sc_numerator = 0.0;
-        sc = 0.0;
+	sc_numerator = 0.0;
+	sc = 0.0;
     } else if (NEAR_ZERO(denominator, tol->dist) && NEAR_ZERO(sc_numerator, tol->dist)) {
-        sc_numerator = 0.0;
-        denominator = 0.0;
-        sc = 1.0;
+	sc_numerator = 0.0;
+	denominator = 0.0;
+	sc = 1.0;
     } else {
-        sc = sc_numerator / denominator;
+	sc = sc_numerator / denominator;
     }
     if (NEAR_ZERO(denominator, tol->dist) && !NEAR_ZERO(tc_numerator, tol->dist)) {
-        denominator = 0.0;
-        tc = MAX_FASTF;
+	denominator = 0.0;
+	tc = MAX_FASTF;
     } else if (!NEAR_ZERO(denominator, tol->dist) && NEAR_ZERO(tc_numerator, tol->dist)) {
-        tc_numerator = 0.0;
-        tc = 0.0;
+	tc_numerator = 0.0;
+	tc = 0.0;
     } else if (NEAR_ZERO(denominator, tol->dist) && NEAR_ZERO(tc_numerator, tol->dist)) {
-        tc_numerator = 0.0;
-        denominator = 0.0;
-        tc = 1.0;
+	tc_numerator = 0.0;
+	denominator = 0.0;
+	tc = 1.0;
     } else {
-        tc = tc_numerator / denominator;
+	tc = tc_numerator / denominator;
     }
 
     VSCALE(u_scaled, pdir, sc_numerator);
@@ -1704,19 +1704,19 @@ bn_isect_line3_line3(fastf_t *pdist,        /* see above */
     VSUB2(v_scaled_to_u_scaled, u_scaled, v_scaled);
 
     if (ZERO(denominator)) {
-        VSCALE(tmp_vec, v_scaled_to_u_scaled, MAX_FASTF);
+	VSCALE(tmp_vec, v_scaled_to_u_scaled, MAX_FASTF);
     } else {
-        VSCALE(tmp_vec, v_scaled_to_u_scaled, 1.0/denominator);
+	VSCALE(tmp_vec, v_scaled_to_u_scaled, 1.0/denominator);
     }
 
     VADD2(qc_to_pc, w0, tmp_vec);
 
     if (MAGSQ(qc_to_pc) <= tol->dist_sq) {
-        *pdist = sc * sqrt(pdir_mag_sq);
-        *qdist = tc * sqrt(qdir_mag_sq);
-        return 1; /* intersection */
+	*pdist = sc * sqrt(pdir_mag_sq);
+	*qdist = tc * sqrt(qdir_mag_sq);
+	return 1; /* intersection */
     } else {
-        return -1; /* no intersection */
+	return -1; /* no intersection */
     }
 }
 
@@ -3245,8 +3245,8 @@ bn_isect_lseg_rpp(fastf_t *a,
 }
 
 int
-bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t sg1pt2, 
-			const point_t sg2pt1, const point_t sg2pt2, 
+bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t sg1pt2,
+			const point_t sg2pt1, const point_t sg2pt2,
 			const struct bn_tol *tol)
 {
     vect_t e_dif[2]    = {{0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}};

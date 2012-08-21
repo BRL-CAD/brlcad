@@ -15,5 +15,3 @@ proc bot_askforname {parent screen} {
     }
     BotEditor .botedit $botname
 }
-
-

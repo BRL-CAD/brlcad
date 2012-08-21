@@ -503,7 +503,6 @@ struct mfuncs noise_mfuncs[] = {
 };
 
 
-
 /*
  * Local Variables:
  * mode: C

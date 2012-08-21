@@ -2173,7 +2173,7 @@ ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
 	wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
 		       ((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc);
 #else
-        glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 		       ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc);
 #endif
@@ -2230,8 +2230,8 @@ ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
 	    bu_free(pixels, "pixels");
 	}
     } else {
-    	bu_log("ogl_getDisplayImage: Display type not set as OGL or WGL\n");
-    	return TCL_ERROR;
+	bu_log("ogl_getDisplayImage: Display type not set as OGL or WGL\n");
+	return TCL_ERROR;
     }
 
     return TCL_OK; /* caller will need to bu_free(idata, "image data"); */

@@ -193,7 +193,6 @@ struct bn_tol mged_tol;	/* calculation tolerance */
 struct rt_tess_tol mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
 
 
-
 #if !defined(_WIN32) || defined(__CYGWIN__)
 Tcl_FileProc stdin_input;
 Tcl_FileProc std_out_or_err;
@@ -531,30 +530,30 @@ do_tab_expansion()
     bu_vls_free(&tab_expansion);
 
     if (ret == TCL_OK) {
-        result = Tcl_GetObjResult(INTERP);
-        Tcl_ListObjIndex(INTERP, result, 0, &newCommand);
-        Tcl_ListObjIndex(INTERP, result, 1, &matches);
-        Tcl_ListObjLength(INTERP, matches, &numExpansions);
-        if (numExpansions > 1) {
-            /* show the possible matches */
-            bu_log("\n%s\n", Tcl_GetString(matches));
-        }
+	result = Tcl_GetObjResult(INTERP);
+	Tcl_ListObjIndex(INTERP, result, 0, &newCommand);
+	Tcl_ListObjIndex(INTERP, result, 1, &matches);
+	Tcl_ListObjLength(INTERP, matches, &numExpansions);
+	if (numExpansions > 1) {
+	    /* show the possible matches */
+	    bu_log("\n%s\n", Tcl_GetString(matches));
+	}
 
 	/* display the expanded line */
-        pr_prompt(interactive);
-        input_str_index = 0;
-        bu_vls_trunc(&input_str, 0);
-        bu_vls_strcat(&input_str, Tcl_GetString(newCommand));
+	pr_prompt(interactive);
+	input_str_index = 0;
+	bu_vls_trunc(&input_str, 0);
+	bu_vls_strcat(&input_str, Tcl_GetString(newCommand));
 
 	/* only one match remaining, pad space so we can keep going */
 	if (numExpansions == 1)
 	    bu_vls_strcat(&input_str, " ");
 
-        input_str_index = bu_vls_strlen(&input_str);
-        bu_log("%V", &input_str);
+	input_str_index = bu_vls_strlen(&input_str);
+	bu_log("%V", &input_str);
     } else {
-        bu_log("ERROR\n");
-        bu_log("%s\n", Tcl_GetStringResult(INTERP));
+	bu_log("ERROR\n");
+	bu_log("%s\n", Tcl_GetStringResult(INTERP));
     }
 }
 
@@ -723,9 +722,9 @@ mged_process_char(char ch)
 	    --input_str_index;
 	    escaped = bracketed = 0;
 	    break;
-        case '\t':                      /* do TAB expansion */
-            do_tab_expansion();
-            break;
+	case '\t':                      /* do TAB expansion */
+	    do_tab_expansion();
+	    break;
 	case CTRL_A:                    /* Go to beginning of line */
 	    pr_prompt(interactive);
 	    input_str_index = 0;

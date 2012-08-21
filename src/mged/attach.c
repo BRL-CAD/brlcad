@@ -641,46 +641,46 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
 
     if (BU_STR_EQUAL(argv[1], "valid")) {
 	if (argc < 3) {
-    	    bu_vls_printf(&vls, "help dm");
-    	    Tcl_Eval(interpreter, bu_vls_addr(&vls));
-    	    bu_vls_free(&vls);
-    	    return TCL_ERROR;
-    	}
+	    bu_vls_printf(&vls, "help dm");
+	    Tcl_Eval(interpreter, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	}
 #ifdef DM_X
-    	if (BU_STR_EQUAL(argv[argc-1], "X")) {
-    	    Tcl_AppendResult(interpreter, "X", (char *)NULL);
-    	}
+	if (BU_STR_EQUAL(argv[argc-1], "X")) {
+	    Tcl_AppendResult(interpreter, "X", (char *)NULL);
+	}
 #endif /* DM_X */
 #if 0
 #ifdef DM_TK
-    	if (BU_STR_EQUAL(argv[argc-1], "tk")) {
-    	    Tcl_AppendResult(interpreter, "tk", (char *)NULL);
-    	}
+	if (BU_STR_EQUAL(argv[argc-1], "tk")) {
+	    Tcl_AppendResult(interpreter, "tk", (char *)NULL);
+	}
 #endif /* DM_TK */
 #endif
 #ifdef DM_WGL
-    	if (BU_STR_EQUAL(argv[argc-1], "wgl")) {
+	if (BU_STR_EQUAL(argv[argc-1], "wgl")) {
 	    Tcl_AppendResult(interpreter, "wgl", (char *)NULL);
 	}
 #endif /* DM_WGL */
 #ifdef DM_OGL
-    	if (BU_STR_EQUAL(argv[argc-1], "ogl")) {
+	if (BU_STR_EQUAL(argv[argc-1], "ogl")) {
 	    Tcl_AppendResult(interpreter, "ogl", (char *)NULL);
 	}
 #endif /* DM_OGL */
 #ifdef DM_RTGL
-    	if (BU_STR_EQUAL(argv[argc-1], "rtgl")) {
+	if (BU_STR_EQUAL(argv[argc-1], "rtgl")) {
 	    Tcl_AppendResult(interpreter, "rtgl", (char *)NULL);
 	}
 #endif /* DM_RTGL */
 #ifdef DM_GLX
-    	if (BU_STR_EQUAL(argv[argc-1], "glx")) {
+	if (BU_STR_EQUAL(argv[argc-1], "glx")) {
 	    Tcl_AppendResult(interpreter, "glx", (char *)NULL);
 	}
 #endif /* DM_GLX */
 	return TCL_OK;
-    }       
-    
+    }
+
     if (!cmd_hook) {
 	Tcl_AppendResult(interpreter, "The '", dmp->dm_name,
 			 "' display manager does not support local commands.\n",

@@ -41,7 +41,7 @@ proc openmv { id w wc dpy dtype } {
     attach -d $dpy -t 0 -n $w.ul $dtype
     dm set zclip $mged_default(zclip)
     if { $dtype == "rtgl" } {
-        dm set zclip 1
+	dm set zclip 1
 	dm set zbuffer 1
     }
     if { $dtype == "ogl" } {
@@ -55,7 +55,7 @@ proc openmv { id w wc dpy dtype } {
     attach -d $dpy -t 0 -n $w.ur $dtype
     dm set zclip $mged_default(zclip)
     if { $dtype == "rtgl" } {
-        dm set zclip 1
+	dm set zclip 1
 	dm set zbuffer 1
     }
     if { $dtype == "ogl" } {
@@ -69,7 +69,7 @@ proc openmv { id w wc dpy dtype } {
     attach -d $dpy -t 0 -n $w.ll $dtype
     dm set zclip $mged_default(zclip)
     if { $dtype == "rtgl" } {
-        dm set zclip 1
+	dm set zclip 1
 	dm set zbuffer 1
     }
     if { $dtype == "ogl" } {
@@ -83,7 +83,7 @@ proc openmv { id w wc dpy dtype } {
     attach -d $dpy -t 0 -n $w.lr $dtype
     dm set zclip $mged_default(zclip)
     if { $dtype == "rtgl" } {
-        dm set zclip 1
+	dm set zclip 1
 	dm set zbuffer 1
     }
     if { $dtype == "ogl" } {

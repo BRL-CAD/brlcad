@@ -122,7 +122,7 @@ Stretch_Fatal(const char *str)
 	Message("Error closing input frame buffer");
 	src_fbp = FBIO_NULL;
     }
-    
+
     if (dst_fbp != FBIO_NULL && fb_close(dst_fbp) == -1) {
 	Message("Error closing output frame buffer");
 	src_fbp = FBIO_NULL;

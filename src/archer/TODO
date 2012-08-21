@@ -19,68 +19,68 @@ Render View options                 |    Will become Export View - INCOMPLETE
 Preferences->Units                  |   			  DONE
 Preferences->Command Line Edit      |    Add to Preferences panel under the General tab
 Preferences->Special Characters     |    Refers to globbing - per Bob this is currently being handled per
-                                    |    command in Archer, so a global setting may not make sense.  A
-                                    |    possible alternative is to have two lists of commands - globbing
-                                    |    and non-globbing - and the ability to select and move them from
-                                    |    one list to the other (kind of like traditional ftp clients) in
-                                    |    a Preferences tab
+				    |    command in Archer, so a global setting may not make sense.  A
+				    |    possible alternative is to have two lists of commands - globbing
+				    |    and non-globbing - and the ability to select and move them from
+				    |    one list to the other (kind of like traditional ftp clients) in
+				    |    a Preferences tab
 Preferences->Colors                 |    	    Handled in local per-topic preferences
 Preferences->Fonts                  |                    INCOMPLETE, lower priority
 Create/Update .mgedrc               |    .archerrc exists, needs to be expanded as more preferences are
-                                    |    implemented in Archer - ONGOING
+				    |    implemented in Archer - ONGOING
 Clear Command Window                |    clear command works on command line, Menu item judged not
-                                    |    necessary - DONE
+				    |    necessary - DONE
 Exit                                |                             DONE
 Primitive Selection                 |    Need to integrate this functionality into the "component pick"
-                                    |    button - straightforward enough, button already reports what is
-                                    |    "picked" and just needs to do the internal logic to focus the
-                                    |    pick for editing operations
+				    |    button - straightforward enough, button already reports what is
+				    |    "picked" and just needs to do the internal logic to focus the
+				    |    pick for editing operations
 Matrix Selection                    |    Some work needed to do this correctly - implement a matrix
-                                    |    tab that is shown for every object in the right panel, which will
-                                    |    have controls to set things like translation vectors and rotations
-                                    |    to generate the matrices that hang "above" objects.  Do NOT, at
-                                    |    the GUI level, allow direct numerical editing of matrix values - that
-                                    |    is an invitation to invalid matrices and not especially intuitive.
-                                    |    Ensure working command line level functionality for direct matrix
-                                    |    manipulation if needed.  For items without a matrix show the tab with
-                                    |    either no values specified or the identity matrix as the starting
-                                    |    template.  Full functionality here will require "limited xpush"
+				    |    tab that is shown for every object in the right panel, which will
+				    |    have controls to set things like translation vectors and rotations
+				    |    to generate the matrices that hang "above" objects.  Do NOT, at
+				    |    the GUI level, allow direct numerical editing of matrix values - that
+				    |    is an invitation to invalid matrices and not especially intuitive.
+				    |    Ensure working command line level functionality for direct matrix
+				    |    manipulation if needed.  For items without a matrix show the tab with
+				    |    either no values specified or the identity matrix as the starting
+				    |    template.  Full functionality here will require "limited xpush"
 				    |    abilities - xpushing only to a specified depth, and possibly some
 				    |    awareness of full path targets vs. toplevel targets.
 Primitive Editor                    |    Functionality covered elsewhere, can be dangerous in that it accepts
-                                    |    invalid inputs - remove
+				    |    invalid inputs - remove
 Combination Editor                  |    Functionality covered in General tab for objects in right panel,
-                                    |    except need color picker for rgb attribute - remove as separate entity
+				    |    except need color picker for rgb attribute - remove as separate entity
 Attribute Editor                    |    This is a more general case of what is currently the General tab in
-                                    |    Archer for objects - make this into a CAD widget with the layout of
-                                    |    the General tab and the functionality of the Attribute editor -
-                                    |    General tab will become Attribute tab.  Will need to be able to
-                                    |    customize the standard attribute/value display to support things like
-                                    |    the color picker for rgb attribute
+				    |    Archer for objects - make this into a CAD widget with the layout of
+				    |    the General tab and the functionality of the Attribute editor -
+				    |    General tab will become Attribute tab.  Will need to be able to
+				    |    customize the standard attribute/value display to support things like
+				    |    the color picker for rgb attribute
 Geometry Browser                    |    Functionality should be covered by tree viewer - to ensure proper
-                                    |    ability to easily select objects, need tabbed tree view widget with
-                                    |    multiple trees - the current global tree in one tab, a flat list of
-                                    |    all objects in another (e.g. like the output of ls - select any item
-                                    |    as a tree root node), in another display tree(s) currently visible in
-                                    |    display (similar to what who outputs, just with the ability to expand
-                                    |    trees).  Probably some other possible modes to explore, even make
-                                    |    configurable.
+				    |    ability to easily select objects, need tabbed tree view widget with
+				    |    multiple trees - the current global tree in one tab, a flat list of
+				    |    all objects in another (e.g. like the output of ls - select any item
+				    |    as a tree root node), in another display tree(s) currently visible in
+				    |    display (similar to what who outputs, just with the ability to expand
+				    |    trees).  Probably some other possible modes to explore, even make
+				    |    configurable.
 Create Primitives                   |    This functionality will be handled by the graphical primitive buttons
-                                    |    make them into drop-down lists categorized like the MGED Create
-                                    |    Primitive menu, hopefully with example images for all types.
+				    |    make them into drop-down lists categorized like the MGED Create
+				    |    Primitive menu, hopefully with example images for all types.
 View                                |                             DONE  (duplicated elsewhere)
 ViewRing			    |    Useful aspects handled by loadview and saveview - may be worth reworking
-                                    |    later but not a high priority currently.
+				    |    later but not a high priority currently.
 Settings -> Mouse Behavior          |    Per item breakdown:
-         Pick Edit Primitive        |    Replaced by combination of "component pick" button and tree widget
-         Pick Edit Matrix           |    Replaced by matrix tab discussed under "Matrix Selection" item
-         Pick Edit Combination      |    Replaced by combination of "component pick" button and tree widget
-         Sweep Raytrace-Rect.       |    INCOMPLETE (will be handled differently in the UI as well, not under Settings)
-         Pick Raytrace Objects      |    			REMOVE
-         Query Ray                  |    INCOMPLETE (nirt functionality exists, need mouse mode)
-         Sweep Paint Rectangle      |    Incorporate into Sweep Raytrace-Rect. functionality
-         Sweep Zoom Rectangle       |    Need to see if this can be integrated as an option to the scale mode -
-	 			    |    possibly as a left mouse button option to drag a rectangle to "zoom" to
+	 Pick Edit Primitive        |    Replaced by combination of "component pick" button and tree widget
+	 Pick Edit Matrix           |    Replaced by matrix tab discussed under "Matrix Selection" item
+	 Pick Edit Combination      |    Replaced by combination of "component pick" button and tree widget
+	 Sweep Raytrace-Rect.       |    INCOMPLETE (will be handled differently in the UI as well, not under Settings)
+	 Pick Raytrace Objects      |    			REMOVE
+	 Query Ray                  |    INCOMPLETE (nirt functionality exists, need mouse mode)
+	 Sweep Paint Rectangle      |    Incorporate into Sweep Raytrace-Rect. functionality
+	 Sweep Zoom Rectangle       |    Need to see if this can be integrated as an option to the scale mode -
+				    |    possibly as a left mouse button option to drag a rectangle to "zoom" to
 Settings -> Transform               |    Angle/Distance Cursor not implemented yet - needs documentation as well
 Settings -> Constraint Coords.      |    This is worth preserving, but needs some though on how to integrate it.
 Settings -> Rotate About            |    Save ability to rotate around view and maybe a specified keypoint to allow
@@ -114,8 +114,8 @@ Misc -> Faceplate                   |                            DONE
 Misc -> Faceplate GUI               |             Maintain for classic mode, don't expose in Archer GUI
 Misc -> Keystroke Forwarding        |                           REMOVE
 Tools -> ADC Control Panel          |             INCOMPLETE - Include, but only using the controls in the Tool panel
-                                    |                          don't integrate in-display-manager mouse bindings
-                                    |                          new measurement tool more usable in most cases
+				    |                          don't integrate in-display-manager mouse bindings
+				    |                          new measurement tool more usable in most cases
 Tools -> AniMate                    |     Low priority - better approach might be to export to Blender for animation
 Tools -> Grid Control Panel         |                            DONE
 Tools -> Query Ray                  |             INCOMPLETE - convert to preferences tab or tool
@@ -133,8 +133,6 @@ Help -> Command Manual Pages        |                           DONE
 Help -> Shift Grips                 |                           DONE
 Help -> Apropos                     |   INCOMPLETE, not working well in MGED either?
 Help -> Manual                      |   INCOMPLETE, even in MGED needs web browser, should use docbook/tkhtml
-
-
 
 
 Other Issues

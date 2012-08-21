@@ -374,7 +374,7 @@ again:
 		 * requested assignment of the current count of consumed
 		 * characters, but then suppressed the assignment they
 		 * requested!
-	         */
+		 */
 		continue;
 	    }
 
@@ -633,7 +633,7 @@ if (flags & UNSIGNED) { \
 	    EXIT_DUE_TO_INPUT_FAILURE;
 	}
 
-        /* check that assignment was successful */
+	/* check that assignment was successful */
 	if (!(flags & SUPPRESS) && partAssigned < 1) {
 	    EXIT_DUE_TO_MATCH_FAILURE;
 	}

@@ -370,7 +370,7 @@ bu_cv_ntohul(register long unsigned int *out, size_t size, register genptr_t in,
     if (limit < count) count = limit;
 
     for (i=0; i<count; i++) {
-	*out++ = 
+	*out++ =
 	    (unsigned long)((unsigned char *)in)[0] << 24 |
 	    (unsigned long)((unsigned char *)in)[1] << 16 |
 	    (unsigned long)((unsigned char *)in)[2] <<  8 |

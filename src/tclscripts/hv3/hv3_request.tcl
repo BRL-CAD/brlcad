@@ -16,7 +16,7 @@ catch {namespace eval hv3 { set {version($Id$)} 1 }}
 #
 # HOW CHARSETS ARE HANDLED:
 #
-#     The protocol implementation (the thing that calls [$download append] 
+#     The protocol implementation (the thing that calls [$download append]
 #     and [$download finish]) passes binary data to this object. This
 #     object converts the binary data to utf-8 text, based on the encoding
 #     assigned to the request. An encoding may be assigned either by an
@@ -25,7 +25,7 @@ catch {namespace eval hv3 { set {version($Id$)} 1 }}
 #     Assuming the source of the data is http (or https), then the
 #     encoding may be specified by way of a Content-Type HTTP header.
 #     In this case, when the protocol configures the -header option
-#     (which it does before calling [append] for the first time) the 
+#     (which it does before calling [append] for the first time) the
 #     -encoding option will be automatically set.
 #
 #
@@ -45,10 +45,10 @@ catch {namespace eval hv3 { set {version($Id$)} 1 }}
 #
 #       -hv3
 #
-#     These are set by the requestor before the request is made to 
-#     configure callbacks invoked by this object when requested data 
+#     These are set by the requestor before the request is made to
+#     configure callbacks invoked by this object when requested data
 #     is available:
-#    
+#
 #       -incrscript
 #       -finscript
 #
@@ -117,13 +117,13 @@ namespace eval ::hv3::request {
     #
     set O(-hv3) ""
 
-    # The protocol implementation sets this option to contain the 
+    # The protocol implementation sets this option to contain the
     # HTTP header (or it's equivalent). The format is a serialised array.
     # Example:
-    # 
+    #
     #     {Set-Cookie safe-search=on Location http://www.google.com}
     #
-    # The following http-header types are handled locally by the 
+    # The following http-header types are handled locally by the
     # configure-header method, as soon as the -header option is set:
     #
     #     Set-Cookie         (Call ::hv3::the_cookie_manager method)
@@ -131,20 +131,20 @@ namespace eval ::hv3::request {
     #     Content-Length     (Set the -expectedsize option)
     #
     set O(-header) ""
-  
+
     set O(-requestheader) ""
-  
+
     # Expected size of the resource being requested. This is used
     # for displaying a progress bar when saving remote resources
     # to the local filesystem (aka downloadin').
     #
     set O(-expectedsize) ""
-  
+
     # Callbacks configured by the requestor.
     #
     set O(-incrscript) ""
     set O(-finscript) ""
-  
+
     # This -encoding option is used to specify explicit conversion of
     # incoming http/file data.
     # When this option is set, [http::geturl -binary] is used.
@@ -153,8 +153,8 @@ namespace eval ::hv3::request {
     # See also [encoding] and [suggestedEncoding] methods.
     #
     set O(-encoding) ""
-  
-    # True if the -encoding option has been set by the transport layer. 
+
+    # True if the -encoding option has been set by the transport layer.
     # If this is true, then any encoding specified via a <meta> element
     # in the main document is ignored.
     #
@@ -164,28 +164,28 @@ namespace eval ::hv3::request {
     #----------------------------
 
     set O(chunksize) 2048
-  
-    # The binary data returned by the protocol implementation is 
+
+    # The binary data returned by the protocol implementation is
     # accumulated in this variable.
     set O(myRaw) {}
     set O(myRawMode) 0
-  
+
     # If this variable is non-zero, then the first $myRawPos bytes of
-    # $myRaw have already been passed to Hv3 via the -incrscript 
+    # $myRaw have already been passed to Hv3 via the -incrscript
     # callback.
     set O(myRawPos) 0
-  
+
     # These objects are referenced counted. Initially the reference count
     # is 1. It is increased by calls to the [reference] method and decreased
-    # by the [release] method. The object is deleted when the ref-count 
+    # by the [release] method. The object is deleted when the ref-count
     # reaches zero.
     set O(myRefCount) 1
-  
+
     set O(myIsText) 1; # Whether mimetype is text/* or not.
-  
+
     # Make sure finish is processed only once.
     set O(myIsFinished) 0
-  
+
     # Destroy-hook scripts configured using the [finish_hook] method.
     set O(myFinishHookList) [list]
 
@@ -198,7 +198,7 @@ namespace eval ::hv3::request {
     upvar $me O
     set O(myDestroying) 1
     foreach hook $O(myFinishHookList) {
-      eval $hook 
+      eval $hook
     }
     rename $me {}
     array unset $me
@@ -255,23 +255,23 @@ namespace eval ::hv3::request {
     upvar $me O
     foreach {name value} $O(-header) {
       switch -- [string tolower $name] {
-        set-cookie {
-          catch {
-            ::hv3::the_cookie_manager SetCookie $O(-uri) $value
-          }
-        }
-        content-type {
-          set parsed [hv3::string::parseContentType $value]
-          foreach {major minor charset} $parsed break
-          set O(-mimetype) $major/$minor
-          if {$charset ne ""} {
-            set O(-hastransportencoding) 1
-            set O(-encoding) [::hv3::encoding_resolve $charset]
-          }
-        }
-        content-length {
-          set O(-expectedsize) $value
-        }
+	set-cookie {
+	  catch {
+	    ::hv3::the_cookie_manager SetCookie $O(-uri) $value
+	  }
+	}
+	content-type {
+	  set parsed [hv3::string::parseContentType $value]
+	  foreach {major minor charset} $parsed break
+	  set O(-mimetype) $major/$minor
+	  if {$charset ne ""} {
+	    set O(-hastransportencoding) 1
+	    set O(-encoding) [::hv3::encoding_resolve $charset]
+	  }
+	}
+	content-length {
+	  set O(-expectedsize) $value
+	}
       }
     }
   }
@@ -309,27 +309,27 @@ namespace eval ::hv3::request {
     ::append O(myRaw) $raw
 
     if {$O(-incrscript) != ""} {
-      # There is an -incrscript callback configured. If enough data is 
+      # There is an -incrscript callback configured. If enough data is
       # available, invoke it.
 
       set nLast 0
       foreach zWhite [list " " "\n" "\t"] {
-        set n [string last $zWhite $O(myRaw)]
-        if {$n>$nLast} {set nLast $n ; break}
+	set n [string last $zWhite $O(myRaw)]
+	if {$n>$nLast} {set nLast $n ; break}
       }
       set nAvailable [expr {$nLast-$O(myRawPos)}]
       if {$nAvailable > $O(chunksize)} {
 
-        set zDecoded [string range $O(myRaw) $O(myRawPos) $nLast]
-        if {$O(myIsText)} {
-          set zDecoded [::encoding convertfrom [encoding $me] $zDecoded]
-        }
-        set O(myRawPos) [expr {$nLast+1}]
-        if {$O(chunksize) < 30000} {
-          set O(chunksize) [expr $O(chunksize) * 2]
-        }
+	set zDecoded [string range $O(myRaw) $O(myRawPos) $nLast]
+	if {$O(myIsText)} {
+	  set zDecoded [::encoding convertfrom [encoding $me] $zDecoded]
+	}
+	set O(myRawPos) [expr {$nLast+1}]
+	if {$O(chunksize) < 30000} {
+	  set O(chunksize) [expr $O(chunksize) * 2]
+	}
 
-        eval [linsert $O(-incrscript) end $zDecoded] 
+	eval [linsert $O(-incrscript) end $zDecoded]
       }
     }
   }
@@ -345,7 +345,7 @@ namespace eval ::hv3::request {
 
     if {$O(myRawMode)} {
       foreach hook $O(myFinishHookList) {
-        eval $hook
+	eval $hook
       }
       eval [linsert $O(-finscript) end $raw]
       return
@@ -363,7 +363,7 @@ namespace eval ::hv3::request {
     }
     set O(myFinishHookList) [list]
     set O(myRawPos) [string length $O(myRaw)]
-    eval [linsert $O(-finscript) end $zDecoded] 
+    eval [linsert $O(-finscript) end $zDecoded]
   }
 
   proc isFinished {me} {
@@ -386,4 +386,3 @@ namespace eval ::hv3::request {
 }
 
 ::hv3::make_constructor ::hv3::request
-

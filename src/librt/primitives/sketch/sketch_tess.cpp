@@ -124,14 +124,14 @@ bezier_inflection(const ON_BezierCurve& bezier, fastf_t& inflection_pt)
     sign = SIGN(crv);
 
     for (t = step; t <= 1.0; t += step) {
-        bezier.Ev2Der(t, tmp, d1, d2);
-        crv = CURVATURE(d1, d2);
-        // if sign changes, t is an inflection point
-        if (sign != SIGN(crv)) {
-            inflection_pt = t;
-            return true;
-        }
-        step = GETSTEPSIZE(fabs(crv));
+	bezier.Ev2Der(t, tmp, d1, d2);
+	crv = CURVATURE(d1, d2);
+	// if sign changes, t is an inflection point
+	if (sign != SIGN(crv)) {
+	    inflection_pt = t;
+	    return true;
+	}
+	step = GETSTEPSIZE(fabs(crv));
     }
     return false;
 }
@@ -152,27 +152,27 @@ approx_bezier(const ON_BezierCurve& bezier, const ON_Arc& biarc, const struct bn
 
     // walk the bezier curve at interval given by step
     for (t = 0; t <= 1.0; t += step) {
-        bezier.Ev2Der(t, test, d1, d2);
-        err = fabs((test - biarc.Center()).Length() - biarc.Radius());
-        // find the maximum point of deviation
-        if (err > max_err) {
-            max_t = t;
-            max_err = err;
-        }
-        crv = CURVATURE(d1, d2);
-        // step size decreases as |crv| -> 1
-        step = GETSTEPSIZE(1.0 - fabs(crv));
+	bezier.Ev2Der(t, test, d1, d2);
+	err = fabs((test - biarc.Center()).Length() - biarc.Radius());
+	// find the maximum point of deviation
+	if (err > max_err) {
+	    max_t = t;
+	    max_err = err;
+	}
+	crv = CURVATURE(d1, d2);
+	// step size decreases as |crv| -> 1
+	step = GETSTEPSIZE(1.0 - fabs(crv));
     }
 
     if (max_err + VDIVIDE_TOL < tol->dist) {
-        // max deviation is less than the given tolerance, add the biarc approximation
-        approx.push_back(biarc);
+	// max deviation is less than the given tolerance, add the biarc approximation
+	approx.push_back(biarc);
     } else {
-        ON_BezierCurve head, tail;
-        // split bezier at point of maximum deviation and recurse on the new subsections
-        bezier.Split(max_t, head, tail);
-        approx_bezier(head, make_biarc(head), tol, approx);
-        approx_bezier(tail, make_biarc(tail), tol, approx);
+	ON_BezierCurve head, tail;
+	// split bezier at point of maximum deviation and recurse on the new subsections
+	bezier.Split(max_t, head, tail);
+	approx_bezier(head, make_biarc(head), tol, approx);
+	approx_bezier(tail, make_biarc(tail), tol, approx);
     }
 }
 
@@ -191,51 +191,51 @@ bezier_to_carcs(const ON_BezierCurve& bezier, const struct bn_tol *tol, std::vec
 
     // find inflection point, if it exists
     if (bezier_inflection(bezier, inflection_pt)) {
-        curvature_changed = true;
-        bezier.Split(inflection_pt, current, next);
-        rest.push_back(next);
+	curvature_changed = true;
+	bezier.Split(inflection_pt, current, next);
+	rest.push_back(next);
     } else {
-        current = bezier;
+	current = bezier;
     }
 
     while (skip_while || !rest.empty()) {
     if (skip_while) skip_while = false;
     biarc = make_biarc(current);
     if ((biarc_angle = biarc.AngleRadians()) <= M_PI_2) {
-        // approximate the current bezier segment and add its biarc
-        // approximation to carcs
-        approx_bezier(current, biarc, tol, carcs);
+	// approximate the current bezier segment and add its biarc
+	// approximation to carcs
+	approx_bezier(current, biarc, tol, carcs);
     } else if (biarc_angle <= M_PI) {
-        // divide the current bezier segment in half
-        current.Split(0.5, current, next);
-        // approximate first bezier segment
-        approx_bezier(current, biarc, tol, carcs);
-        // approximate second bezier segment
-        approx_bezier(next, biarc, tol, carcs);
+	// divide the current bezier segment in half
+	current.Split(0.5, current, next);
+	// approximate first bezier segment
+	approx_bezier(current, biarc, tol, carcs);
+	// approximate second bezier segment
+	approx_bezier(next, biarc, tol, carcs);
     } else {
-        fastf_t t = 1.0;
-        ON_Arc test_biarc;
-        ON_BezierCurve test_bezier;
-        // divide the current bezier such that the first curve segment would
-        // have an approximating biarc segment <=90 degrees
-        do {
-            t *= 0.5;
-            current.Split(t, test_bezier, next);
-            test_biarc = make_biarc(test_bezier);
-        } while(test_biarc.AngleRadians() > M_PI_2);
+	fastf_t t = 1.0;
+	ON_Arc test_biarc;
+	ON_BezierCurve test_bezier;
+	// divide the current bezier such that the first curve segment would
+	// have an approximating biarc segment <=90 degrees
+	do {
+	    t *= 0.5;
+	    current.Split(t, test_bezier, next);
+	    test_biarc = make_biarc(test_bezier);
+	} while(test_biarc.AngleRadians() > M_PI_2);
 
-        approx_bezier(test_bezier, test_biarc, tol, carcs);
-        current = next;
-        skip_while = true;
-        continue;
+	approx_bezier(test_bezier, test_biarc, tol, carcs);
+	current = next;
+	skip_while = true;
+	continue;
     }
 
     if (curvature_changed) {
-        curvature_changed = false;
-        current = rest.back();
-        rest.pop_back();
-        // continue even if we just popped the last element
-        skip_while = true;
+	curvature_changed = false;
+	current = rest.back();
+	rest.pop_back();
+	// continue even if we just popped the last element
+	skip_while = true;
     }
     }
 }
@@ -273,7 +273,7 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     // a sketch with no curves has no area
     if (UNLIKELY(crv.count == 0)) {
-        return;
+	return;
     }
 
     tol.magic = BN_TOL_MAGIC;
@@ -282,55 +282,55 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     // iterate through each curve segment in the sketch
     for (i = 0; i < crv.count; i++) {
-        const struct line_seg *lsg;
-        const struct carc_seg *csg;
-        const struct bezier_seg *bsg;
+	const struct line_seg *lsg;
+	const struct carc_seg *csg;
+	const struct bezier_seg *bsg;
 
-        const uint32_t *lng = (uint32_t *)crv.segment[i];
+	const uint32_t *lng = (uint32_t *)crv.segment[i];
 
-        switch (*lng) {
-        case CURVE_LSEG_MAGIC:
-            lsg = (struct line_seg *)lng;
-            // calculate area for polygon edge
-            poly_area += V2CROSS(SKETCH_PT(lsg->start), SKETCH_PT(lsg->end));
-            break;
-        case CURVE_CARC_MAGIC:
-            csg = (struct carc_seg *)lng;
-            if (csg->radius < 0) {
-                // calculate full circle area
-                carc_area += M_PI * DIST_PT_PT_SQ(SKETCH_PT(csg->start), SKETCH_PT(csg->end));
-            } else {
-                fastf_t theta, side_ratio;
-                // calculate area for polygon edge
-                poly_area += V2CROSS(SKETCH_PT(csg->start), SKETCH_PT(csg->end));
-                // calculate area for circular segment
-                side_ratio = DIST_PT_PT(SKETCH_PT(csg->start), SKETCH_PT(csg->end)) / (2.0 * csg->radius);
-                theta = asin(side_ratio);
-                carc_area += 0.5 * csg->radius * csg->radius * (theta - side_ratio);
-            }
-            break;
-        case CURVE_BEZIER_MAGIC: {
-            bsg = (struct bezier_seg *)lng;
-            ON_2dPointArray bez_pts(bsg->degree + 1);
-            std::vector<ON_Arc> carcs;
-            // convert struct bezier_seg into ON_BezierCurve
-            for (j = 0; j < bsg->degree + 1; j++) {
-                bez_pts.Append(SKETCH_PT(bsg->ctl_points[j]));
-            }
-            // approximate bezier curve by a set of circular arcs
-            bezier_to_carcs(ON_BezierCurve(bez_pts), &tol, carcs);
-            for (std::vector<ON_Arc>::iterator it = carcs.begin(); it != carcs.end(); ++it) {
-                // calculate area for each polygon edge
-                poly_area += V2CROSS(it->StartPoint(), it->EndPoint());
-                // calculate area for each circular segment
-                carc_area += 0.5 * it->Radius() * it->Radius() * (it->AngleRadians() - sin(it->AngleRadians()));
-            }
-            }
-            break;
-        case CURVE_NURB_MAGIC:
-        default:
-            break;
-        }
+	switch (*lng) {
+	case CURVE_LSEG_MAGIC:
+	    lsg = (struct line_seg *)lng;
+	    // calculate area for polygon edge
+	    poly_area += V2CROSS(SKETCH_PT(lsg->start), SKETCH_PT(lsg->end));
+	    break;
+	case CURVE_CARC_MAGIC:
+	    csg = (struct carc_seg *)lng;
+	    if (csg->radius < 0) {
+		// calculate full circle area
+		carc_area += M_PI * DIST_PT_PT_SQ(SKETCH_PT(csg->start), SKETCH_PT(csg->end));
+	    } else {
+		fastf_t theta, side_ratio;
+		// calculate area for polygon edge
+		poly_area += V2CROSS(SKETCH_PT(csg->start), SKETCH_PT(csg->end));
+		// calculate area for circular segment
+		side_ratio = DIST_PT_PT(SKETCH_PT(csg->start), SKETCH_PT(csg->end)) / (2.0 * csg->radius);
+		theta = asin(side_ratio);
+		carc_area += 0.5 * csg->radius * csg->radius * (theta - side_ratio);
+	    }
+	    break;
+	case CURVE_BEZIER_MAGIC: {
+	    bsg = (struct bezier_seg *)lng;
+	    ON_2dPointArray bez_pts(bsg->degree + 1);
+	    std::vector<ON_Arc> carcs;
+	    // convert struct bezier_seg into ON_BezierCurve
+	    for (j = 0; j < bsg->degree + 1; j++) {
+		bez_pts.Append(SKETCH_PT(bsg->ctl_points[j]));
+	    }
+	    // approximate bezier curve by a set of circular arcs
+	    bezier_to_carcs(ON_BezierCurve(bez_pts), &tol, carcs);
+	    for (std::vector<ON_Arc>::iterator it = carcs.begin(); it != carcs.end(); ++it) {
+		// calculate area for each polygon edge
+		poly_area += V2CROSS(it->StartPoint(), it->EndPoint());
+		// calculate area for each circular segment
+		carc_area += 0.5 * it->Radius() * it->Radius() * (it->AngleRadians() - sin(it->AngleRadians()));
+	    }
+	    }
+	    break;
+	case CURVE_NURB_MAGIC:
+	default:
+	    break;
+	}
     }
     *area = 0.5 * fabs(poly_area) + carc_area;
 }

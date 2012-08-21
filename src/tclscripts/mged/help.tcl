@@ -338,7 +338,7 @@ set mged_help_data(vnirt)	{{x y}  	{trace a single ray from x y}}
 set mged_help_data(voxelize)	{{[-s "dx dy dz"] [-d n] [-t f] new_obj old_obj [old_obj2 old_obj3 ...]} {convert object to its constituent voxels, i.e.the RPPs which approximate it.
 
 Options:
-	-d n		    - Specifies the level of detail(precision in approximation of volume) required. An input of n means that n * n rays will be shot through each row, and an approximation of volume filled is reached averaging these n * n values 
+	-d n		    - Specifies the level of detail(precision in approximation of volume) required. An input of n means that n * n rays will be shot through each row, and an approximation of volume filled is reached averaging these n * n values
 
 	-s "dx dy dz"       - Specifies the voxel size in each direction.
 

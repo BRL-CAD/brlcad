@@ -44,7 +44,7 @@ gcv_fisect2(
     point_t VTX0, point_t VTX1, point_t VTX2,
     fastf_t VV0, fastf_t VV1, fastf_t VV2,
     fastf_t D0, fastf_t D1, fastf_t D2,
-    fastf_t *isect0, fastf_t *isect1, 
+    fastf_t *isect0, fastf_t *isect1,
     point_t *isectpoint0, point_t *isectpoint1)
 {
     fastf_t tmp=D0/(D0-D1);

@@ -16,7 +16,7 @@ if {![info exists make_primitives_list]} {
   proc make_all_prims {cmdname {size "-1"} {extratext1 ""} {extratext2 ""} } {
      global make_primitives_list
      foreach x $make_primitives_list {
-        if {$size == -1} {
+	if {$size == -1} {
 	  make [format %s_%s%s.s%s $cmdname $extratext1 $x $extratext2] $x
 	} else {
 	  make -s $size [format %s_%s%s.s%s $cmdname $extratext1 $x $extratext2] $x
@@ -94,12 +94,11 @@ if {![info exists make_primitives_list]} {
 	  Z
 	  e [format %s_%s.s $cmdname $x]
 	  sed [format %s_%s.s $cmdname $x]
-          $cmdname $args1 [format %s_%s.s $cmdname $x] $args2
+	  $cmdname $args1 [format %s_%s.s $cmdname $x] $args2
 	  accept
 	  Z
      }
   }
-
 
 
   #  Often it is desirable to insert a large number of primitives with
@@ -108,7 +107,7 @@ if {![info exists make_primitives_list]} {
   #  last item in the name.
 
   proc batch_insert {cmdname primname extension startnum endnum increment} {
-  	for {set i $startnum} {$i < [expr {$endnum + 1}]} {set i [expr {$i + $increment}]} {
+	for {set i $startnum} {$i < [expr {$endnum + 1}]} {set i [expr {$i + $increment}]} {
 	   in_$primname $cmdname $extension $i
 	}
   }
@@ -154,8 +153,8 @@ if {![info exists make_primitives_list]} {
      foreach x $make_primitives_list {
       # for now, in nmg isn't producing sensible results
       if {![string match nmg $x]} {
-        e [format %s_%s.c $cmdname $x]
-        oed / [format %s_%s.c/%s_%s.s $cmdname $x $cmdname $x]
+	e [format %s_%s.c $cmdname $x]
+	oed / [format %s_%s.c/%s_%s.s $cmdname $x $cmdname $x]
 	translate $coord1 $coord2 $coord3
 	accept
 	puts "Translated $x combination"

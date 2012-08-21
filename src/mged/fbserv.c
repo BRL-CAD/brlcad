@@ -184,7 +184,7 @@ HIDDEN struct pkg_conn *fbserv_makeconn(int fd, const struct pkg_switch *switchp
 HIDDEN void
 fbserv_new_client(struct pkg_conn *pcp,
 		  Tcl_Channel chan)
-	   
+
 {
     int i;
 

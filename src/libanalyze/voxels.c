@@ -303,7 +303,7 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
 
 			while(old != NULL) {
 			    tmp = old;
-			    create_boxes(callBackData, k, j, i, tmp->regionName, tmp->regionDistance / effectiveDistance);    
+			    create_boxes(callBackData, k, j, i, tmp->regionName, tmp->regionDistance / effectiveDistance);
 			    old = tmp->nextRegion;
 			    /* free the space allocated for new regions */
 			    bu_free(tmp, "");

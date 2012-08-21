@@ -33,4 +33,3 @@ CODING PLAN
 *  Generate math expressions and the *_eval/*_eval_generate from strings via parser
 *  Test Constraint Evaluation
 *  Test Network Solution
-

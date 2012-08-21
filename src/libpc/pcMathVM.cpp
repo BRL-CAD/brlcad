@@ -540,7 +540,7 @@ std::size_t BranchNode::nbranches() const
 Stack *BranchNode::branch(std::size_t i)
 {
     if (i > 1)
-        return 0;
+	return 0;
     return i == 0 ? &func_.stack1_ : &func_.stack2_;
 }
 

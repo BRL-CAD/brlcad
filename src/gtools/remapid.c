@@ -827,7 +827,7 @@ print_usage(void)
 {
     bu_exit(1, "Usage: 'remapid [-{g|t}] {file.g|file.tankill} [spec_file]'\n\
   Note: The '-g' option modifies file.g in place\n\
-        the '-t' option writes a modified file.tankill to stdout\n");
+	the '-t' option writes a modified file.tankill to stdout\n");
 }
 
 

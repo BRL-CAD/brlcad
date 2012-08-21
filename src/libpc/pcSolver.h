@@ -82,11 +82,11 @@ template <typename T>
 void PCSolver<T>::initiate() {
     if (!initiated_) {
 	std::list<VariableAbstract *>::iterator i;
-        for (i = vars_.begin(); i != vars_.end(); ++i) {
+	for (i = vars_.begin(); i != vars_.end(); ++i) {
 	    typedef Variable<T> *Vp;
 	    (Vp (*i))->store();
 	    //(Vp (*i))->setValue((Vp (*i))->getFirst());
-        }
+	}
 	initiated_ = true;
     }
 }
@@ -110,7 +110,7 @@ bool PCSolver<T>::generator() {
       atend = false;
       if (atend)*/
     if (i == j && (Vp (*i))->atCriticalBelow())
-        return false;
+	return false;
     /* Increment one variable , set other variables to the first value */
     ++(*(Vp (*j)));
     while (++j != vars_.end())
@@ -195,7 +195,7 @@ GTSolver<T>::GTSolver()
 template <typename T>
 void GTSolver<T>::initiate() {
     if (!initiated_) {
-        typename GraphTraits::vertex_iterator v_i, v_end;
+	typename GraphTraits::vertex_iterator v_i, v_end;
 	for (tie(v_i, v_end) = vertices(N->G); v_i != v_end; ++v_i)
 	    N->G[*v_i]->setValue(N->G[*v_i]->getFirst());
 	initiated_ = true;
@@ -211,11 +211,11 @@ bool GTSolver<T>::generator() {
     while (--vertex_v != vertex_u && N->G[*vertex_v]->atUpperBoundary());
 
     if (N->G[*vertex_u]->getValue() == N->G[*vertex_v]->getLast())
-        return false;
+	return false;
     /* Increment one variable , set other variables to the first value */
     ++(*(N->G[*vertex_v]));
     if (vertex_v != vertex_u) {
-        ++vertex_v;
+	++vertex_v;
 	while (vertex_v != vertex_end) {
 	    N->G[*vertex_v]->setValue(N->G[*vertex_v]->getFirst());
 	    ++vertex_v;
@@ -370,7 +370,7 @@ bool BackTrackSolver<T>::solve(VCSet & vcset, Solution<T>& S) {
 
     backtrack();
     if (vcset.check()) {
-    	S.addSolution(vcset.Vars);
+	S.addSolution(vcset.Vars);
 	vcset.restore();
 	return true;
     }
@@ -475,7 +475,7 @@ bool BTSolver<T>::solve(class BinaryNetwork<T>& BN, Solution<T>& S) {
     }
     backtrack();
     if (N->check()) {
-    	S.addSolution(vars_);
+	S.addSolution(vars_);
 	return true;
     }
     return false;

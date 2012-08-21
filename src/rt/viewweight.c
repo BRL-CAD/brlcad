@@ -166,8 +166,8 @@ miss(register struct application *UNUSED(ap))
 
 int
 overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp),
-        struct region *UNUSED(reg1), struct region *UNUSED(reg2),
-        struct partition *UNUSED(hp))
+	struct region *UNUSED(reg1), struct region *UNUSED(reg2),
+	struct partition *UNUSED(hp))
 {
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     noverlaps++;
@@ -184,7 +184,7 @@ overlap(struct application *UNUSED(ap), struct partition *UNUSED(pp),
  */
 int
 view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
-          int minus_o, int UNUSED(minus_F))
+	  int minus_o, int UNUSED(minus_F))
 {
     register size_t i;
     char buf[BUFSIZ+1];
@@ -220,7 +220,7 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
 
     if ((densityfp = fopen(densityfile, "r")) == (FILE *)0) {
 	snprintf(densityfile, i, "%s/%s", homedir, DENSITY_FILE);
-        if ((densityfp = fopen(densityfile, "r")) == (FILE *)0) {
+	if ((densityfp = fopen(densityfile, "r")) == (FILE *)0) {
 	    bu_log("Unable to load density file \"%s\" for reading\n", densityfile);
 	    perror(densityfile);
 	    bu_exit(-1, NULL);
@@ -233,34 +233,34 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj),
        scanning at first failure or error and we get an infinite loop */
     line = 0;
     while (bu_fgets(linebuf, BUFSIZ+1, densityfp)) {
-        const int cmt = '#';
-        int idx;
-        float dens;
-        char* c;
+	const int cmt = '#';
+	int idx;
+	float dens;
+	char* c;
 
-        ++line;
+	++line;
 
-        /* delete comments before processing */
-        if ((c = strchr(linebuf, cmt)) != NULL) {
-            /* close linebuf with a newline and a null char */
-            *c++ = '\n';
-            *c   = '\0';
-        }
-        i = sscanf(linebuf, "%d %f %[^\n]", &idx, &dens, buf);
+	/* delete comments before processing */
+	if ((c = strchr(linebuf, cmt)) != NULL) {
+	    /* close linebuf with a newline and a null char */
+	    *c++ = '\n';
+	    *c   = '\0';
+	}
+	i = sscanf(linebuf, "%d %f %[^\n]", &idx, &dens, buf);
 	if (i != 3) {
 	    bu_log("error parsing line %d of density file.\n  %zu args recognized instead of 3\n",
-                   line, i);
+		   line, i);
 	    bu_log("  line buffer reads : %s\n", linebuf);
-            continue;
+	    continue;
 	}
 
 	if (idx > 0 && idx < MAXMATLS ) {
 	    density[idx] = dens;
 	    dens_name[idx] = bu_strdup(buf);
-        } else {
+	} else {
 	    bu_log("Material index %d in '%s' is out of range.\n",
-                   idx, densityfile );
-        }
+		   idx, densityfile );
+	}
     }
 
     ap->a_hit = hit;
@@ -297,7 +297,7 @@ view_eol(struct application *UNUSED(ap))
 
 /* a region ID sort comparison for use with qsort on a region array */
 int region_ID_cmp(const void *p1,
-                  const void *p2)
+		  const void *p2)
 {
     /* cast into correct type--note the incoming pointer type is a
        pointer to a pointer which must be dereferenced! */
@@ -383,163 +383,163 @@ view_end(struct application *ap)
     fprintf(outfp, "Time Stamp: %s\n\nDensity Table Used:%s\n\n", timeptr, densityfile);
     fprintf(outfp, "Material  Density(g/cm^3)  Name\n");
     {
-        register int i;
-        for (i = 1; i < MAXMATLS; i++) {
+	register int i;
+	for (i = 1; i < MAXMATLS; i++) {
 	    if (density[i] >= 0)
-                fprintf(outfp, "%5d     %10.4f       %s\n",
-                        i, density[i], dens_name[i]);
+		fprintf(outfp, "%5d     %10.4f       %s\n",
+			i, density[i], dens_name[i]);
       }
     }
 
     /* is this test really necessary? or can we return if !rpt_overlap? */
     if (rpt_overlap) {
-        /* move block scope variables here */
-        fastf_t *item_wt;
-        int start_ridx;
+	/* move block scope variables here */
+	fastf_t *item_wt;
+	int start_ridx;
 
-        /* grind through the region list WITHOUT printing but track region
-           IDs used and count regions for later use; also do bookkeeping
-           chores */
-        for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
+	/* grind through the region list WITHOUT printing but track region
+	   IDs used and count regions for later use; also do bookkeeping
+	   chores */
+	for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
 	    register fastf_t weight = 0;
-            register fastf_t *ptr;
+	    register fastf_t *ptr;
 
-            ++nregions; /* this is needed to create the region array */
+	    ++nregions; /* this is needed to create the region array */
 
-            /* keep track of the highest region ID */
-            if (max_item < rp->reg_regionid)
-                max_item = rp->reg_regionid;
+	    /* keep track of the highest region ID */
+	    if (max_item < rp->reg_regionid)
+		max_item = rp->reg_regionid;
 
-            for (dp = (struct datapoint *)rp->reg_udata;
-                 dp != (struct datapoint *)NULL; dp = dp->next) {
-                sum_x  += dp->weight * dp->centroid[X];
-                sum_y  += dp->weight * dp->centroid[Y];
-                sum_z  += dp->weight * dp->centroid[Z];
-                weight += dp->weight;
-                volume += dp->volume;
-            }
+	    for (dp = (struct datapoint *)rp->reg_udata;
+		 dp != (struct datapoint *)NULL; dp = dp->next) {
+		sum_x  += dp->weight * dp->centroid[X];
+		sum_y  += dp->weight * dp->centroid[Y];
+		sum_z  += dp->weight * dp->centroid[Z];
+		weight += dp->weight;
+		volume += dp->volume;
+	    }
 
-            weight *= conversion;
-            total_weight += weight;
+	    weight *= conversion;
+	    total_weight += weight;
 
-            ptr = (fastf_t *)bu_malloc(sizeof(fastf_t), "ptr");
-            *ptr = weight;
-            /* FIXME: shouldn't the existing reg_udata be bu_free'd first (see previous loop) */
-            /* FIXME: isn't the region list a "shared resource"? if so, can we use reg_udata so cavalierly? */
-            rp->reg_udata = (genptr_t)ptr;
-        }
+	    ptr = (fastf_t *)bu_malloc(sizeof(fastf_t), "ptr");
+	    *ptr = weight;
+	    /* FIXME: shouldn't the existing reg_udata be bu_free'd first (see previous loop) */
+	    /* FIXME: isn't the region list a "shared resource"? if so, can we use reg_udata so cavalierly? */
+	    rp->reg_udata = (genptr_t)ptr;
+	}
 
-        /* make room for a zero ID number and an "end ID " so we can
-           use ID indexing and our usual loop idiom */
-        max_item += 2;
+	/* make room for a zero ID number and an "end ID " so we can
+	   use ID indexing and our usual loop idiom */
+	max_item += 2;
 
-        item_wt = (fastf_t *)bu_malloc(sizeof(fastf_t) * (max_item + 1), "item_wt");
-        for (id = 1; id < max_item; id++)
-            item_wt[id] = -1.0;
+	item_wt = (fastf_t *)bu_malloc(sizeof(fastf_t) * (max_item + 1), "item_wt");
+	for (id = 1; id < max_item; id++)
+	    item_wt[id] = -1.0;
 
-        /* create and fill an array for handling region names and region IDs */
-        rp_array = (struct region **)bu_malloc(sizeof(struct region *)
-                                               * nregions, "rp_array");
+	/* create and fill an array for handling region names and region IDs */
+	rp_array = (struct region **)bu_malloc(sizeof(struct region *)
+					       * nregions, "rp_array");
 
-        ridx = 0; /* separate index for region array */
-        for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
-            rp_array[ridx++] = rp;
+	ridx = 0; /* separate index for region array */
+	for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
+	    rp_array[ridx++] = rp;
 
-            id = rp->reg_regionid;
+	    id = rp->reg_regionid;
 
-            /* FIXME: shouldn't we bu_free reg_udata after using here? */
+	    /* FIXME: shouldn't we bu_free reg_udata after using here? */
 	    if (item_wt[id] < 0)
-                item_wt[id] = *(fastf_t *)rp->reg_udata;
+		item_wt[id] = *(fastf_t *)rp->reg_udata;
 	    else
-                item_wt[id] += *(fastf_t *)rp->reg_udata;
-        }
+		item_wt[id] += *(fastf_t *)rp->reg_udata;
+	}
 
-        /* sort the region array by ID, then by name */
-        qsort(rp_array, nregions, sizeof(struct region *), region_ID_cmp);
+	/* sort the region array by ID, then by name */
+	qsort(rp_array, nregions, sizeof(struct region *), region_ID_cmp);
 
-        /* WEIGHT BY REGION NAME =============== */
-        /* ^L is char code for FormFeed/NewPage */
+	/* WEIGHT BY REGION NAME =============== */
+	/* ^L is char code for FormFeed/NewPage */
 	fprintf(outfp, "Weight by region name (in %s, density given in g/cm^3):\n\n", units);
 	fprintf(outfp, " Weight   Matl  LOS  Material Name  Density Name\n");
 	fprintf(outfp, "-------- ------ --- --------------- ------- -------------\n");
 
-        start_ridx = 0; /* region array is indexed from 0 */
-        for (id = 1; id < max_item; ++id) {
-            const int flen = 37; /* desired size of name field */
+	start_ridx = 0; /* region array is indexed from 0 */
+	for (id = 1; id < max_item; ++id) {
+	    const int flen = 37; /* desired size of name field */
 
-            if (item_wt[id] < 0)
-                continue;
+	    if (item_wt[id] < 0)
+		continue;
 
-            /* since we're sorted by ID, we only need to start and end with the current ID */
-            for (ridx = start_ridx; ridx < nregions; ++ridx) {
-                struct region *r = rp_array[ridx];
-                if (r->reg_regionid == id) {
-                    fastf_t weight = *(fastf_t *)r->reg_udata;
-                    register size_t len = strlen(r->reg_name);
-                    len = len > (size_t)flen ? len - (size_t)flen : 0;
-                    fprintf(outfp, "%8.3f %5d  %3d %-15.15s %7.4f %-*.*s\n",
-                            weight,
-                            r->reg_gmater, r->reg_los,
-                            dens_name[r->reg_gmater],
-                            density[r->reg_gmater],
-                            flen, flen, &r->reg_name[len]);
-                }
-                else if (r->reg_regionid > id) {
-                    /* FIXME: an "else" alone should be good enough
-                       because the test should not be necessary if we
-                       trust the sorted array */
-                    /* end loop and save this region index value for the next id iteration */
-                    start_ridx = ridx;
-                    break;
-                }
-            }
-        }
+	    /* since we're sorted by ID, we only need to start and end with the current ID */
+	    for (ridx = start_ridx; ridx < nregions; ++ridx) {
+		struct region *r = rp_array[ridx];
+		if (r->reg_regionid == id) {
+		    fastf_t weight = *(fastf_t *)r->reg_udata;
+		    register size_t len = strlen(r->reg_name);
+		    len = len > (size_t)flen ? len - (size_t)flen : 0;
+		    fprintf(outfp, "%8.3f %5d  %3d %-15.15s %7.4f %-*.*s\n",
+			    weight,
+			    r->reg_gmater, r->reg_los,
+			    dens_name[r->reg_gmater],
+			    density[r->reg_gmater],
+			    flen, flen, &r->reg_name[len]);
+		}
+		else if (r->reg_regionid > id) {
+		    /* FIXME: an "else" alone should be good enough
+		       because the test should not be necessary if we
+		       trust the sorted array */
+		    /* end loop and save this region index value for the next id iteration */
+		    start_ridx = ridx;
+		    break;
+		}
+	    }
+	}
 
-        /* WEIGHT BY REGION ID =============== */
-        fprintf(outfp, "Weight by region ID (in %s):\n\n", units);
-        fprintf(outfp, "  ID   Weight  Region Names\n");
-        fprintf(outfp, "----- -------- --------------------\n");
+	/* WEIGHT BY REGION ID =============== */
+	fprintf(outfp, "Weight by region ID (in %s):\n\n", units);
+	fprintf(outfp, "  ID   Weight  Region Names\n");
+	fprintf(outfp, "----- -------- --------------------\n");
 
-        start_ridx = 0; /* region array is indexed from 0 */
-        for (id = 1; id < max_item; ++id) {
-            const int flen = 65; /* desired size of name field */
-            int CR = 0;
-            const int ns = 15;
+	start_ridx = 0; /* region array is indexed from 0 */
+	for (id = 1; id < max_item; ++id) {
+	    const int flen = 65; /* desired size of name field */
+	    int CR = 0;
+	    const int ns = 15;
 
-            if (item_wt[id] < 0)
-               continue;
+	    if (item_wt[id] < 0)
+	       continue;
 
-            /* the following format string has 15 spaces before the region name: */
-            fprintf(outfp, "%5d %8.3f ", id, item_wt[id]);
+	    /* the following format string has 15 spaces before the region name: */
+	    fprintf(outfp, "%5d %8.3f ", id, item_wt[id]);
 
-            /* since we're sorted by ID, we only need to start and end with the current ID */
-            for (ridx = start_ridx; ridx < nregions; ++ridx) {
-                struct region *r = rp_array[ridx];
-                if (r->reg_regionid == id) {
-                    register size_t len = strlen(r->reg_name);
-                    len = len > (size_t)flen ? len - (size_t)flen : 0;
-                    if (CR) {
-                        /* need leading spaces */
-                        fprintf(outfp, "%*.*s", ns, ns, " ");
-                    }
-                    fprintf(outfp, "%-*.*s\n", flen, flen, &r->reg_name[len]);
-                    CR = 1;
-                }
-                else if (r->reg_regionid > id) {
-                    /* FIXME: an "else" alone should be good enough
-                       because the test should not be necessary if we
-                       trust the sorted array */
-                    /* end loop and save this region index value for the next id iteration */
-                    start_ridx = ridx;
-                    break;
-                }
-            }
-        }
+	    /* since we're sorted by ID, we only need to start and end with the current ID */
+	    for (ridx = start_ridx; ridx < nregions; ++ridx) {
+		struct region *r = rp_array[ridx];
+		if (r->reg_regionid == id) {
+		    register size_t len = strlen(r->reg_name);
+		    len = len > (size_t)flen ? len - (size_t)flen : 0;
+		    if (CR) {
+			/* need leading spaces */
+			fprintf(outfp, "%*.*s", ns, ns, " ");
+		    }
+		    fprintf(outfp, "%-*.*s\n", flen, flen, &r->reg_name[len]);
+		    CR = 1;
+		}
+		else if (r->reg_regionid > id) {
+		    /* FIXME: an "else" alone should be good enough
+		       because the test should not be necessary if we
+		       trust the sorted array */
+		    /* end loop and save this region index value for the next id iteration */
+		    start_ridx = ridx;
+		    break;
+		}
+	    }
+	}
 
-        /* now finished with heap variables */
-        bu_free(item_wt, "item_wt");
-        /* FIXME: shouldn't we bu_free reg_udata before freeing the region array? */
-        bu_free(rp_array, "rp_array");
+	/* now finished with heap variables */
+	bu_free(item_wt, "item_wt");
+	/* FIXME: shouldn't we bu_free reg_udata before freeing the region array? */
+	bu_free(rp_array, "rp_array");
     }
 
     volume *= (dbp->dbi_base2local*dbp->dbi_base2local*dbp->dbi_base2local);

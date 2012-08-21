@@ -68,12 +68,12 @@ Fatal(FBIO *fbp, const char *format, ...)
     va_start(ap, format);
     VMessage(format, ap);
     va_end(ap);
-    
+
     if (fbp != FBIO_NULL && fb_close(fbp) == -1) {
 	Message("Error closing frame buffer");
 	fbp = FBIO_NULL;
     }
-    
+
     bu_exit(EXIT_FAILURE, NULL);
     /* NOT REACHED */
 }

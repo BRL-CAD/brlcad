@@ -36,7 +36,6 @@
 #include "wdb.h"
 
 
-
 int
 ged_bot_edge_split(struct ged *gedp, int argc, const char *argv[])
 {
@@ -129,7 +128,7 @@ ged_bot_edge_split(struct ged *gedp, int argc, const char *argv[])
     /* Create the new point. We're using the average of the edge's points */
     VADD2(new_pt, &botip->vertices[v1_i*3], &botip->vertices[v2_i*3]);
     VSCALE(new_pt, new_pt, 0.5);
-    
+
     /* Add the new point to the last position in the list of vertices. */
     VMOVE(&botip->vertices[last_vi*3], new_pt);
 
@@ -269,7 +268,7 @@ ged_bot_face_split(struct ged *gedp, int argc, const char *argv[])
 	  &botip->vertices[botip->faces[face_i*3+1]*3],
 	  &botip->vertices[botip->faces[face_i*3+2]*3]);
     VSCALE(new_pt, new_pt, sf);
-    
+
     /* Add the new point to the last position in the list of vertices. */
     VMOVE(&botip->vertices[last_vi*3], new_pt);
 
@@ -538,7 +537,6 @@ ged_move_botpt(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
-
 
 
 /*

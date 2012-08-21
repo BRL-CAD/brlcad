@@ -214,7 +214,7 @@ namespace eval ArcherCore {
 	method g                   {args}
 	method group               {args}
 	method i                   {args}
-        method igraph              {args}
+	method igraph              {args}
 	method importFg4Section    {args}
 	method in                  {args}
 	method inside              {args}
@@ -528,7 +528,7 @@ namespace eval ArcherCore {
 	    c cd clear clone closedb color comb comb_color combmem \
 	    copy copyeval copymat cp cpi dbconcat dbExpand decompose \
 	    delete draw E edcodes edcolor edcomb edit edmater erase ev \
-            exit facetize fracture g graph group hide human i igraph \
+	    exit facetize fracture g graph group hide human i igraph \
 	    importFg4Section in inside item kill killall killrefs \
 	    killtree l ls make make_bb make_pnts man mater mirror move \
 	    move_arb_edge move_arb_face mv mvall nmg_collapse \
@@ -5473,7 +5473,7 @@ namespace eval ArcherCore {
     Load ""
 
     if {[llength $args] != 0} {
-        return "Usage: closedb\nWarning - ignored unsupported argument(s) \"$args\""
+	return "Usage: closedb\nWarning - ignored unsupported argument(s) \"$args\""
     }
 }
 
@@ -5809,9 +5809,9 @@ namespace eval ArcherCore {
 
     if {$args != {}} {
 	set page $args
-        if {![$archerMan select $page]} {
-            error "couldn't find manual page \"$page\""
-        }
+	if {![$archerMan select $page]} {
+	    error "couldn't find manual page \"$page\""
+	}
     }
     $archerMan center [namespace tail $this]
     ::update idletasks
@@ -5869,9 +5869,9 @@ namespace eval ArcherCore {
     set ret ""
 
     switch [llength $args] {
-        0 {set ret $mTarget}
-        1 {Load [lindex $args 0]}
-        default {set ret "Usage: opendb \[database.g\]"}
+	0 {set ret $mTarget}
+	1 {Load [lindex $args 0]}
+	default {set ret "Usage: opendb \[database.g\]"}
     }
 
     return $ret
@@ -6653,7 +6653,6 @@ namespace eval ArcherCore {
 
     set mAccordianCallbackActive 0
 }
-
 
 
 # Local Variables:

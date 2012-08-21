@@ -481,16 +481,16 @@ bindings." }
 
     label $top.gapL -text "Gap" -anchor e
     hoc_register_data $top.gapL "Gap Format String"\
-        { { summary "Enter/edit the gap format string." }
-            { see_also "nirt" } }
+	{ { summary "Enter/edit the gap format string." }
+	    { see_also "nirt" } }
     entry $top.gapE -relief sunken -bd 2 -width 80 -textvar qray_control($id,fmt_gap)
     hoc_register_data $top.gapE "Gap Format String"\
-        { { summary "Enter/edit the gap format string. Note that the
+	{ { summary "Enter/edit the gap format string. Note that the
 middle mouse button can be used to scroll
 the entry widget. Also, by default, the
 entry widget supports some emacs style
 bindings." }
-            { see_also "nirt" } }
+	    { see_also "nirt" } }
 
     label $top.scriptL -text "Script" -anchor e
     hoc_register_data $top.scriptL "Script String"\

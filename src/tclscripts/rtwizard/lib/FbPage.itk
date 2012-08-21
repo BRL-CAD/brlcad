@@ -436,13 +436,13 @@ namespace eval RtWizard {
 	if { [string match $mode "toFile"] && \
 		 [string length $fbFile] > 0 && \
 		 [string match $screenOnly "false"] } {
-            # Will be generating a file - need in-memory fb
+	    # Will be generating a file - need in-memory fb
 	    set port 0
-            while { ! [catch {exec [file join [bu_brlcad_root bin] fbclear] -F $port } error ] } {
+	    while { ! [catch {exec [file join [bu_brlcad_root bin] fbclear] -F $port } error ] } {
 		if {$::RtWizard::wizard_state(verbose)} {puts "fbserv port $fbserv_port is already in use."}
 		incr port
-            }
-            catch {exec [file join [bu_brlcad_root bin] fbserv] -w $width -n $height $port /dev/mem &} pid
+	    }
+	    catch {exec [file join [bu_brlcad_root bin] fbserv] -w $width -n $height $port /dev/mem &} pid
 	    return "$port $pid $fbFile"
 	}
 	set binpath [bu_brlcad_root "bin"]

@@ -44,7 +44,7 @@ proc lc {args} {
     set sort_column_flag_cnt 0
 
     if { [llength $args] == 0 } {
-	puts stdout "Usage: \[-d\] \[-z\] \[-2|-3|-4\] \[-f {FileName}\] {GroupName}" 
+	puts stdout "Usage: \[-d\] \[-z\] \[-2|-3|-4\] \[-f {FileName}\] {GroupName}"
 	return
     }
 
@@ -61,24 +61,24 @@ proc lc {args} {
 
     # test arg type counts
     if { $file_name_flag_cnt > 1 } {
-	puts stdout "Error: '-f' used more than once." 
+	puts stdout "Error: '-f' used more than once."
 	incr error_cnt
     }
     if { $sort_column_flag_cnt > 1 } {
-	puts stdout "Error: Sort column defined more than once." 
+	puts stdout "Error: Sort column defined more than once."
 	incr error_cnt
     }
     if { $name_cnt > 2 } {
-	puts stdout "Error: More than one group name and/or file name was specified." 
+	puts stdout "Error: More than one group name and/or file name was specified."
 	incr error_cnt
     } elseif { $name_cnt == 0 && $file_name_flag_cnt == 0 } {
-	puts stdout "Error: Group name not specified." 
+	puts stdout "Error: Group name not specified."
 	incr error_cnt
     } elseif { $name_cnt == 2 && $file_name_flag_cnt == 0 } {
-	puts stdout "Error: More than one group name was specified." 
+	puts stdout "Error: More than one group name was specified."
 	incr error_cnt
     } elseif { $name_cnt == 0 && $file_name_flag_cnt == 1 } {
-	puts stdout "Error: Group name and file name not specified." 
+	puts stdout "Error: Group name and file name not specified."
 	incr error_cnt
     }
     if { $error_cnt > 0 } {
@@ -103,15 +103,15 @@ proc lc {args} {
 	    set file_name $arg
 	    continue
 	}
-	if { $arg == "-f" } { 
+	if { $arg == "-f" } {
 	    set file_name_flag_cnt 1
 	    continue
 	}
-	if { $arg == "-d" } { 
+	if { $arg == "-d" } {
 	    set find_duplicates_flag_cnt 1
 	    continue
 	}
-	if { $arg == "-z" } { 
+	if { $arg == "-z" } {
 	    set descending_sort_flag_cnt 1
 	    continue
 	}
@@ -128,24 +128,24 @@ proc lc {args} {
     set chan ""
     if { $file_name_flag_cnt == 1 && $file_name_set == 0 } {
 	puts stdout "Error: File name not specified."
-	incr error_cnt 
+	incr error_cnt
     }
     if { $group_name_set == 0 } {
 	puts stdout "Error: Group name not specified."
-	incr error_cnt 
+	incr error_cnt
     }
     if { $file_name_set == 1 } {
 	if { [string index $file_name 0] == "-" } {
 	    puts stdout "Error: File name can not start with '-'."
-	    incr error_cnt 
+	    incr error_cnt
 	} elseif { [file exists $file_name] == 1 } {
 	    set norm_name [file normalize $file_name]
 	    puts stdout "Error: File '$norm_name' already exists."
-	    incr error_cnt 
+	    incr error_cnt
 	} else {
 	    if { [catch {set chan [open $file_name a]} tmp_msg] } {
 		puts stdout "Error: $tmp_msg"
-		incr error_cnt 
+		incr error_cnt
 	    }
 	    set norm_name [file normalize $file_name]
 	    puts stdout "Output filename: '$norm_name'"
@@ -154,7 +154,7 @@ proc lc {args} {
     if { $error_cnt > 0 } {
 	return
     }
- 
+
     if { [search -name $group_name] == "" } {
 	puts stdout "Error: Group '$group_name' does not exist."
 	return
@@ -203,17 +203,17 @@ proc lc {args} {
 	if { [llength $lines2] == 0 } {
 	    if { $file_name_set == 1 } {
 		puts $chan "Command args: '$args'"
-		puts $chan "No duplicate region_id" 
-		puts stdout "No duplicate region_id" 
+		puts $chan "No duplicate region_id"
+		puts stdout "No duplicate region_id"
 		close $chan
 	    } else {
-		puts stdout "No duplicate region_id" 
+		puts stdout "No duplicate region_id"
 	    }
-	    puts stdout "Done." 
+	    puts stdout "Done."
 	    return
 	}
 	set lines $lines2
-	unset lines2 
+	unset lines2
     }
 
     # minimum column width to accomidate column headers
@@ -240,7 +240,7 @@ proc lc {args} {
 	}
     }
     set w1 [expr ($region_id_len_max + 1)]
-    set w2 [expr ($material_id_len_max + 1)]    
+    set w2 [expr ($material_id_len_max + 1)]
     set w3 [expr ($los_len_max + 1)]
 
     set lines2 {}
@@ -292,4 +292,3 @@ proc lc {args} {
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=4 tabstop=8
-

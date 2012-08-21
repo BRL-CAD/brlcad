@@ -34,7 +34,7 @@
  *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
- 
+
  *
  */
 
@@ -48,7 +48,7 @@
 #include <stdio.h>
 
 #undef Success
-#include <Eigen/StdVector>  
+#include <Eigen/StdVector>
 #undef Success
 #include <Eigen/Dense>
 
@@ -159,7 +159,7 @@ public:
    *  \param[out] idxcp Closest point with respect to Euclidean metric. */
   static unsigned
   getClosestPoint (const ON_2dPoint &point, const ON_2dVector &dir, const vector_vec2d &data,
-                   unsigned &idxcp);
+		   unsigned &idxcp);
 
   /** \brief Compute the mean of a set of points
    *  \param[in] data Set of points.     */
@@ -177,7 +177,7 @@ public:
    *  \param[out] eigenvalues The eigenvalues of the set of points with respect to the eigenvectors. */
   static void
       pca (const vector_vec3d &data, ON_3dVector &mean, Eigen::Matrix3d &eigenvectors,
-           Eigen::Vector3d &eigenvalues);
+	   Eigen::Vector3d &eigenvalues);
 
   /** \brief Downsample data points to a certain size.
    *  \param[in] data1 The original set of points.
@@ -378,10 +378,10 @@ public:
     unsigned regularisation_resV;
 
     Parameter (double intW = 1.0, double intS = 0.000001, double intR = 0.0, double bndW = 1.0,
-               double bndS = 0.000001, double bndR = 0.0, unsigned regU = 0, unsigned regV = 0) :
+	       double bndS = 0.000001, double bndR = 0.0, unsigned regU = 0, unsigned regV = 0) :
       interior_weight (intW), interior_smoothness (intS), interior_regularisation (intR), boundary_weight (bndW),
-          boundary_smoothness (bndS), boundary_regularisation (bndR), regularisation_resU (regU),
-          regularisation_resV (regV)
+	  boundary_smoothness (bndS), boundary_regularisation (bndR), regularisation_resU (regU),
+	  regularisation_resV (regV)
     {
 
     }
@@ -444,8 +444,8 @@ public:
    *  \return closest point on surface in parametric domain.*/
   static ON_2dPoint
   inverseMapping (const ON_NurbsSurface &nurbs, const ON_3dPoint &pt, const ON_2dPoint &hint,
-                  double &error, ON_3dPoint &p, ON_3dVector &tu, ON_3dVector &tv, int maxSteps = 100,
-                  double accuracy = 1e-6, bool quiet = true);
+		  double &error, ON_3dPoint &p, ON_3dVector &tu, ON_3dVector &tv, int maxSteps = 100,
+		  double accuracy = 1e-6, bool quiet = true);
 
   /** \brief Given a point pt, the function finds the closest midpoint of the elements of the surface.
    *  \param[in] nurbs the B-Spline surface.
@@ -467,8 +467,8 @@ public:
    *  \return closest point on surface in parametric domain.*/
   static ON_2dPoint
   inverseMappingBoundary (const ON_NurbsSurface &nurbs, const ON_3dPoint &pt, double &error,
-                          ON_3dPoint &p, ON_3dVector &tu, ON_3dVector &tv, int maxSteps = 100,
-                          double accuracy = 1e-6, bool quiet = true);
+			  ON_3dPoint &p, ON_3dVector &tu, ON_3dVector &tv, int maxSteps = 100,
+			  double accuracy = 1e-6, bool quiet = true);
 
   /** \brief Inverse mapping / point inversion: Given a point pt, this function finds the closest
    * point on one side of the boundary of the B-Spline surface using Newtons method and
@@ -486,8 +486,8 @@ public:
    *  \return closest point on surface in parametric domain.*/
   static ON_2dPoint
   inverseMappingBoundary (const ON_NurbsSurface &nurbs, const ON_3dPoint &pt, int side, double hint,
-                          double &error, ON_3dPoint &p, ON_3dVector &tu, ON_3dVector &tv,
-                          int maxSteps = 100, double accuracy = 1e-6, bool quiet = true);
+			  double &error, ON_3dPoint &p, ON_3dVector &tu, ON_3dVector &tv,
+			  int maxSteps = 100, double accuracy = 1e-6, bool quiet = true);
 
   /** \brief Initializing a B-Spline surface using 4 corners */
   static ON_NurbsSurface

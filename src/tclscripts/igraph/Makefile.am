@@ -3,8 +3,8 @@ this_dir = tclscripts/graph
 tcldir = $(BRLCAD_DATA)/$(this_dir)
 
 scripties = \
-        GraphEditor.tcl \
-        graph.tcl
+	GraphEditor.tcl \
+	graph.tcl
 
 BUILT_SOURCES = \
 	pkgIndex.tcl \

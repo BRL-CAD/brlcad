@@ -676,8 +676,8 @@ gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct
 	    /* XXX */
 	default:
 	    (void) fprintf(stderr,
-                           "vdeck: '%s' Primitive type %s has no corresponding COMGEOM primitive, skipping\n",
-                           dp->d_namep, ip->idb_meth->ft_name);
+			   "vdeck: '%s' Primitive type %s has no corresponding COMGEOM primitive, skipping\n",
+			   dp->d_namep, ip->idb_meth->ft_name);
 	    vls_itoa(&sol, stp->st_bit+delsol, 5);
 	    bu_vls_strcat(&sol, ip->idb_meth->ft_name);
 	    vls_blanks(&sol, 5*10);
@@ -1288,8 +1288,8 @@ deck(char *prefix)
     /*  Build the whole card deck.	*/
     /*  '1' indicates one CPU.  This code isn't ready for parallelism */
     if (db_walk_tree(dbip, curr_ct, (const char **)curr_list,
-                     1, &rt_initial_tree_state,
-                     0, region_end, gettree_leaf, (genptr_t)NULL) < 0) {
+		     1, &rt_initial_tree_state,
+		     0, region_end, gettree_leaf, (genptr_t)NULL) < 0) {
 	fprintf(stderr, "Unable to treewalk any trees!\n");
 	bu_exit(11, NULL);
     }
@@ -1442,7 +1442,7 @@ insert(char *args[], int ct)
 	}
 	if (nomatch)
 	    (void) fprintf(stderr,
-                           "Object \"%s\" not found.\n", args[i]);
+			   "Object \"%s\" not found.\n", args[i]);
     }
     return	curr_ct;
 }
@@ -1484,8 +1484,8 @@ delete(char *args[])
 	    else	++j;
 	if (nomatch)
 	    (void) fprintf(stderr,
-                           "Object \"%s\" not found.\n",
-                           args[i]
+			   "Object \"%s\" not found.\n",
+			   args[i]
 		);
     }
     return curr_ct;
@@ -1616,7 +1616,7 @@ vls_ftoa(struct bu_vls *v, double f, int w, int d)
 
     if (w <= d + 2) {
 	(void) fprintf(stderr,
-                       "ftoascii: incorrect format  need w.df  stop"
+		       "ftoascii: incorrect format  need w.df  stop"
 	   );
 	bu_exit(10, NULL);
     }

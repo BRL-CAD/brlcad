@@ -56,6 +56,3 @@ EOF
 done
 
 exit $FAILED
-
-
-

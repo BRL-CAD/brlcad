@@ -449,7 +449,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
     register struct soltab *stp;
     fastf_t out;
     point_t inpt, outpt;
-    vect_t inormal, onormal; 
+    vect_t inormal, onormal;
     struct curvature cur;
     cur.crv_c1 = 0.0;
     cur.crv_c2 = 0.0;

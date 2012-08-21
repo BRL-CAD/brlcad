@@ -517,12 +517,12 @@ main(int argc, char *argv[])
 
     /* Walk indicated tree(s) just for layer names to put in TABLES section */
     (void)db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-                       1,			/* ncpu */
-                       &tree_state,
-                       0,			/* take all regions */
-                       get_layer,
-                       NULL,
-                       (genptr_t)NULL);	/* in librt/nmg_bool.c */
+		       1,			/* ncpu */
+		       &tree_state,
+		       0,			/* take all regions */
+		       get_layer,
+		       NULL,
+		       (genptr_t)NULL);	/* in librt/nmg_bool.c */
 
     /* end of layers section, start of ENTOTIES SECTION */
     fprintf(fp, "0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n");

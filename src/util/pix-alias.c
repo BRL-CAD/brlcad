@@ -81,7 +81,7 @@ void doit(void)
     for (n=y-1; n >= 0; --n)
 	if (fread(&image[n*x*3], x*3, 1, stdin) != 1) {
 	    (void) fprintf(stderr, "Error reading image at scanline %u\n", n);
-            free(image);
+	    free(image);
 	    bu_exit (-2, NULL);
 	}
 

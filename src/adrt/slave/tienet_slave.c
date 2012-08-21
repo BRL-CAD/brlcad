@@ -58,9 +58,9 @@ typedef void tienet_slave_fcb_free_t();
 tienet_slave_fcb_free_t	*tienet_slave_fcb_free;
 
 void tienet_slave_init(int port, char *host,
-                       void fcb_work(tienet_buffer_t *work, tienet_buffer_t *result),
-                       void fcb_free(void),
-                       int ver_key)
+		       void fcb_work(tienet_buffer_t *work, tienet_buffer_t *result),
+		       void fcb_free(void),
+		       int ver_key)
 {
     tienet_slave_fcb_work = fcb_work;
     tienet_slave_fcb_free = fcb_free;

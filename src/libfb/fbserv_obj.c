@@ -361,8 +361,8 @@ fbs_rfbclear(struct pkg_conn *pcp, char *buf)
     char rbuf[NET_LONG_LEN+1];
 
     if(!buf) {
-        bu_log("fbs_rfbclear: null buffer\n");
-        return;
+	bu_log("fbs_rfbclear: null buffer\n");
+	return;
     }
 
     bg[RED] = buf[0];
@@ -386,8 +386,8 @@ fbs_rfbread(struct pkg_conn *pcp, char *buf)
     static size_t buflen = 0;
 
     if(!buf) {
-        bu_log("fbs_rfbread: null buffer\n");
-        return;
+	bu_log("fbs_rfbread: null buffer\n");
+	return;
     }
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
@@ -425,8 +425,8 @@ fbs_rfbwrite(struct pkg_conn *pcp, char *buf)
     int type;
 
     if(!buf) {
-        bu_log("fbs_rfbwrite: null buffer\n");
-        return;
+	bu_log("fbs_rfbwrite: null buffer\n");
+	return;
     }
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
@@ -457,8 +457,8 @@ fbs_rfbreadrect(struct pkg_conn *pcp, char *buf)
     static size_t buflen = 0;
 
     if(!buf) {
-        bu_log("fbs_rfbreadrect: null buffer\n");
-        return;
+	bu_log("fbs_rfbreadrect: null buffer\n");
+	return;
     }
 
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
@@ -502,8 +502,8 @@ fbs_rfbwriterect(struct pkg_conn *pcp, char *buf)
     int type;
 
     if(!buf) {
-        bu_log("fbs_rfbwriterect: null buffer\n");
-        return;
+	bu_log("fbs_rfbwriterect: null buffer\n");
+	return;
     }
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
@@ -537,8 +537,8 @@ fbs_rfbbwreadrect(struct pkg_conn *pcp, char *buf)
     static int buflen = 0;
 
     if(!buf) {
-        bu_log("fbs_rfbbwreadrect: null buffer\n");
-        return;
+	bu_log("fbs_rfbbwreadrect: null buffer\n");
+	return;
     }
 
     xmin = pkg_glong(&buf[0*NET_LONG_LEN]);
@@ -582,8 +582,8 @@ fbs_rfbbwwriterect(struct pkg_conn *pcp, char *buf)
     int type;
 
     if(!buf) {
-        bu_log("fbs_rfbbwwriterect: null buffer\n");
-        return;
+	bu_log("fbs_rfbbwwriterect: null buffer\n");
+	return;
     }
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
@@ -610,8 +610,8 @@ fbs_rfbcursor(struct pkg_conn *pcp, char *buf)
     char rbuf[NET_LONG_LEN+1];
 
     if(!buf) {
-        bu_log("fbs_rfbcursor: null buffer\n");
-        return;
+	bu_log("fbs_rfbcursor: null buffer\n");
+	return;
     }
 
     mode = pkg_glong(&buf[0*NET_LONG_LEN]);
@@ -653,8 +653,8 @@ fbs_rfbsetcursor(struct pkg_conn *pcp, char *buf)
     int xorig, yorig;
 
     if(!buf) {
-        bu_log("fbs_rfsetcursor: null buffer\n");
-        return;
+	bu_log("fbs_rfsetcursor: null buffer\n");
+	return;
     }
 
     xbits = pkg_glong(&buf[0*NET_LONG_LEN]);
@@ -681,8 +681,8 @@ fbs_rfbscursor(struct pkg_conn *pcp, char *buf)
     char rbuf[NET_LONG_LEN+1];
 
     if(!buf) {
-        bu_log("fbs_rfbscursor: null buffer\n");
-        return;
+	bu_log("fbs_rfbscursor: null buffer\n");
+	return;
     }
 
     mode = pkg_glong(&buf[0*NET_LONG_LEN]);
@@ -703,8 +703,8 @@ fbs_rfbwindow(struct pkg_conn *pcp, char *buf)
     char rbuf[NET_LONG_LEN+1];
 
     if(!buf) {
-        bu_log("fbs_rfbwindow: null buffer\n");
-        return;
+	bu_log("fbs_rfbwindow: null buffer\n");
+	return;
     }
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
@@ -725,8 +725,8 @@ fbs_rfbzoom(struct pkg_conn *pcp, char *buf)
     char rbuf[NET_LONG_LEN+1];
 
     if(!buf) {
-        bu_log("fbs_rfbzoom: null buffer\n");
-        return;
+	bu_log("fbs_rfbzoom: null buffer\n");
+	return;
     }
 
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
@@ -746,8 +746,8 @@ fbs_rfbview(struct pkg_conn *pcp, char *buf)
     char rbuf[NET_LONG_LEN+1];
 
     if(!buf) {
-        bu_log("fbs_rfbview: null buffer\n");
-        return;
+	bu_log("fbs_rfbview: null buffer\n");
+	return;
     }
 
     xcenter = pkg_glong(&buf[0*NET_LONG_LEN]);
@@ -823,8 +823,8 @@ fbs_rfbwmap(struct pkg_conn *pcp, char *buf)
     ColorMap map;
 
     if(!buf) {
-        bu_log("fbs_rfbwmap: null buffer\n");
-        return;
+	bu_log("fbs_rfbwmap: null buffer\n");
+	return;
     }
 
     if (pcp->pkc_len == 0) {
@@ -887,8 +887,8 @@ fbs_rfbhelp(struct pkg_conn *pcp, char *buf)
     char rbuf[NET_LONG_LEN+1];
 
     if(!buf) {
-        bu_log("fbs_rfbhelp: null buffer\n");
-        return;
+	bu_log("fbs_rfbhelp: null buffer\n");
+	return;
     }
 
     (void)pkg_glong(&buf[0*NET_LONG_LEN]);
@@ -1048,7 +1048,7 @@ fbs_open(struct fbserv_obj *fbsp, int port)
 	    break;
 	}
 #else /* if defined(_WIN32) && !defined(__CYGWIN__) */
-        char portname[32] = {0};
+	char portname[32] = {0};
 	sprintf(portname, "%d", available_port);
 	fbsp->fbs_listener.fbsl_fd = pkg_permserver(portname, 0, 0, comm_error);
 	if (fbsp->fbs_listener.fbsl_fd >= 0)

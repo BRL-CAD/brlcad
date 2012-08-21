@@ -88,7 +88,7 @@ parse_densities_buffer(char *buf, size_t len, struct density_entry *densities, s
 	if (!*p)
 	    break;
 
-        q = strchr(p, '\n');
+	q = strchr(p, '\n');
 	if (q)
 	    *q++ = '\0';
 	else
@@ -124,4 +124,3 @@ parse_densities_buffer(char *buf, size_t len, struct density_entry *densities, s
 
     return ANALYZE_OK;
 }
-

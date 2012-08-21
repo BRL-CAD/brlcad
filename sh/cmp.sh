@@ -81,8 +81,8 @@ printf "\n=== $i ===\n"
 if ! test -r "$base.base.rt" ; then
     mged -c "$dbfile" "e $base ; ae 35 25 ; zoom 1.25 ; saveview -e ./run.me -l /dev/stdout $base.base.rt"
     if ! test -r "$base.base.rt" ; then
-        printf "ERROR: couldn't saveview from $dbfile to $base.base.rt\n"
-        continue
+	printf "ERROR: couldn't saveview from $dbfile to $base.base.rt\n"
+	continue
     fi
 fi
 
@@ -295,7 +295,7 @@ if ! test "x$bare" = "x" ; then
     area="`sh $i.rt -o /dev/null -s$SZ 2>&1 | tee $i.rtarea.log | grep Cumulative | awk '{print $7}'`"
     devi=`dc -e "3k 100.0 $bare $area - d * v $bare / 100.0 * - d [0] sa 0.0 >a p"`
     if test "x$devi" = "x" ; then
-        devi="-1"
+	devi="-1"
     fi
     printf -- "%10.1f %%%13s ($bare $area)\n" "$devi" " "
 else
@@ -317,12 +317,12 @@ if ! test "x$bvol" = "x" && ! test "x$bvol" = "x0.0" ; then
     vol="`g_qa $GQTOL -Av $dbfile $i 2>&1 | tee $i.gqa.log | tail -n 5 | grep total | awk '{print $4}'`"
     vol=`printf "%.1f" $vol`
     if test "x$vol" = "x" ; then
-        vol="0"
+	vol="0"
     fi
     devi=`dc -e "3k 100.0 $bvol $vol - d * v $bvol / 100.0 * - d [0] sa 0.0 >a p"`
     devi=`printf "%.1f" $devi`
     if test "x$devi" = "x" ; then
-        devi="-1"
+	devi="-1"
     fi
     printf -- "%10.1f %%%13s ($vol $bvol)\n" "$devi" " "
 else

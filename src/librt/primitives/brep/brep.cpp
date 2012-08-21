@@ -3118,7 +3118,7 @@ split_curve(ON_NurbsCurve *out1, ON_NurbsCurve *out2, const ON_NurbsCurve *curve
 {
     if (out1 == NULL || out2 == NULL)
 	return -1;
-    
+
     // Split the curve using polyline curves.
     ON_3dPointArray pts1, pts2;
     for (int i = 0; i <= CVindex; i++) {
@@ -3448,7 +3448,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_NurbsCurve*> &l
     for (int k = 0; k < loop.Count(); k++) {
 	int ti = brep->AddTrimCurve(loop[k]);
 	ON_2dPoint start = loop[k]->PointAtStart(), end = loop[k]->PointAtEnd();
-	ON_BrepVertex& start_v = k > 0 ? brep->m_V[brep->m_V.Count() - 1] : 
+	ON_BrepVertex& start_v = k > 0 ? brep->m_V[brep->m_V.Count() - 1] :
 	    brep->NewVertex(face.SurfaceOf()->PointAt(start.x, start.y), 0.0);
 	ON_BrepVertex& end_v = loop[k]->IsClosed() ? start_v :
 	    brep->NewVertex(face.SurfaceOf()->PointAt(end.x, end.y), 0.0);
@@ -3582,18 +3582,18 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
 	    ON_Surface *new_surf = face.SurfaceOf()->Duplicate();
 	    int surfindex = brep_out->AddSurface(new_surf);
 	    ON_BrepFace& new_face = brep_out->NewFace(surfindex);
-	    
+
 	    add_elements(brep_out, new_face, trimmedfaces[j]->outerloop, ON_BrepLoop::outer);
 	    ON_BrepLoop &loop = brep_out->m_L[brep_out->m_L.Count() - 1];
 	    add_elements(brep_out, new_face, trimmedfaces[j]->innerloop, ON_BrepLoop::inner);
-	    
+
 	    new_surf->SetDomain(0, loop.m_pbox.m_min.x, loop.m_pbox.m_max.x);
 	    new_surf->SetDomain(1, loop.m_pbox.m_min.y, loop.m_pbox.m_max.y);
 	    brep_out->SetTrimIsoFlags(new_face);
 	    brep_out->FlipFace(new_face);
 	}
     }
-    
+
     // Check IsValid() and output the message.
     ON_wString ws;
     ON_TextLog log(ws);

@@ -78,15 +78,15 @@ image create photo b_dir -data {
     BAEAAAQALAAAAAAQABAAAAM2SLrc/jA2QKkEIWcAsdZVpQBCaZ4lMBDk525r+34qK8x0fOOwzfcy
 (op    Xi2IG4aOoRVhwGw6nYQEADs=
 }
-    
+
 event add <<RetEnt>> <Return> <KP_Enter>
-    
+
 itcl::class swidgets::tkgetdir {
     inherit itk::Toplevel
-    
+
     constructor {args} {}
     destructor  {}
-    
+
     itk_option define -initialdir initialDir InitialDir ""
     itk_option define -ok ok Text " OK "
     itk_option define -open open Text "Open"

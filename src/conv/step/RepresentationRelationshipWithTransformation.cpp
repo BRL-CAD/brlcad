@@ -33,7 +33,7 @@
 #define CLASSNAME "RepresentationRelationshipWithTransformation"
 #define ENTITYNAME "Representation_Relationship_With_Transformation"
 string RepresentationRelationshipWithTransformation::entityname = Factory::RegisterClass(ENTITYNAME,
-        (FactoryMethod) RepresentationRelationshipWithTransformation::Create);
+	(FactoryMethod) RepresentationRelationshipWithTransformation::Create);
 
 RepresentationRelationshipWithTransformation::RepresentationRelationshipWithTransformation()
 {

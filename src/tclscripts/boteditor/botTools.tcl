@@ -1,5 +1,5 @@
 # BotTools class for wrapping BoT commands
-#     
+#
 # Usage: BotTools <instance name> <bot name> \
 #    [-command <callback>] \
 #    [-output <callback>]
@@ -9,7 +9,7 @@
 #
 # The callback function passed in the -output option will ocassionally be
 # passed notification strings. It should take a single string argument.
-# 
+#
 package require Tk
 package require Itcl
 package require Itk
@@ -41,7 +41,7 @@ package require Itk
 	method validateEdgeEntry {value}
     }
 
-    
+
     private {
 	variable panes 0
 	variable bot ""
@@ -188,25 +188,25 @@ package require Itk
 	-sticky nw
     set padx 5; set pady 2
     grid $itk_component(normalCheck) -row 1 -column 0 \
-        -sticky nw \
+	-sticky nw \
 	-padx $padx -pady $pady
     grid $itk_component(normalEntry) -row 1 -column 1 \
-        -sticky nw \
+	-sticky nw \
 	-padx $padx -pady $pady
     grid $itk_component(chordCheck) -row 2 -column 0 \
-        -sticky nw \
+	-sticky nw \
 	-padx $padx -pady $pady
     grid $itk_component(chordEntry) -row 2 -column 1 \
-        -sticky nw \
+	-sticky nw \
 	-padx $padx -pady $pady
     grid $itk_component(edgeCheck) -row 3 -column 0 \
-        -sticky nw \
+	-sticky nw \
 	-padx $padx -pady $pady
     grid $itk_component(edgeEntry) -row 3 -column 1 \
-        -sticky nw \
+	-sticky nw \
 	-padx $padx -pady $pady
 
-    # allow entries to maintain focus when being edited 
+    # allow entries to maintain focus when being edited
     keepFocus $itk_component(normalEntry)
     keepFocus $itk_component(chordEntry)
     keepFocus $itk_component(edgeEntry)
@@ -255,16 +255,16 @@ package require Itk
     # draw simplify components
     set padx 3; set pady 2
     grid $itk_component(simplify) -row 0 -column 0 \
-        -padx $padx -pady $pady \
+	-padx $padx -pady $pady \
 	-sticky nw
     grid $itk_component(condenseCheck) -row 1 -column 0 \
-        -padx $padx -pady $pady \
+	-padx $padx -pady $pady \
 	-sticky nw
     grid $itk_component(verticesCheck) -row 2 -column 0 \
-        -padx $padx -pady $pady \
+	-padx $padx -pady $pady \
 	-sticky nw
     grid $itk_component(facesCheck) -row 3 -column 0 \
-        -padx $padx -pady $pady \
+	-padx $padx -pady $pady \
 	-sticky nw
 
     return $pane
@@ -299,9 +299,9 @@ package require Itk
 
     # draw sort components
     grid $itk_component(sort) -row 0 -column 0 \
-        -sticky nw
+	-sticky nw
     grid $itk_component(gframe) -row 1 -column 0 \
-        -sticky new
+	-sticky new
     pack $itk_component(groupsEntry) -side right
     pack $itk_component(groupsLbl) -side right -padx 3
 
@@ -363,7 +363,7 @@ package require Itk
     $itk_component(verticesCheck) configure -state normal
     $itk_component(facesCheck) configure -state normal
 
-    # only re-enable button if we didn't do everything 
+    # only re-enable button if we didn't do everything
     validateSimplifyChecks
 
     print "done"
@@ -513,8 +513,8 @@ package require Itk
 # set suggested decimate values
 ::itcl::body BotTools::loadDecimateSuggestions {} {
 
-    set ::${itk_interior}NormalEntry "" 
-    set ::${itk_interior}ChordEntry "" 
+    set ::${itk_interior}NormalEntry ""
+    set ::${itk_interior}ChordEntry ""
 
     if {$lastEdge == ""} {
 	set min [bot get minEdge $bot]
@@ -526,8 +526,8 @@ package require Itk
 #	regexp {min \{\}} $bbMinMax match minX minY minZ
 #	regexp {max \{\}} $bbMinMax match maxX maxY maxZ
 
-	# calculate magnitude of bounding box max diagonal 
-#	set x [expr $maxX - $minX]; set y [expr $maxY - $minY]; set z [expr $maxZ - $minZ] 
+	# calculate magnitude of bounding box max diagonal
+#	set x [expr $maxX - $minX]; set y [expr $maxY - $minY]; set z [expr $maxZ - $minZ]
 #	set mag [::tcl::mathfunc::sqrt [expr $x*$x + $y*$y + $z*$z]]
 
 #	set lastEdge [expr $min + $min * ($max/$mag)]
@@ -546,7 +546,7 @@ package require Itk
     set chord [set ::${itk_interior}ChordCheck]
     set edge [set ::${itk_interior}EdgeCheck]
 
-    # need at least one constraint 
+    # need at least one constraint
     if {[expr {$normal + $chord + $edge}] == 0} {
 
 	$itk_component(decimate) configure -state disabled
@@ -558,7 +558,7 @@ package require Itk
 	set chordVal [set ::${itk_interior}ChordEntry]
 	set edgeVal [set ::${itk_interior}EdgeEntry]
 
-	# need constraints to be valid 
+	# need constraints to be valid
 	if {[expr {$normal && $normalVal == ""} || \
 	    {$chord && [expr {[regexp {\d} $chordVal] == 0} || {$chordVal == 0}]} || \
 	    {$edge && [expr {[regexp {\d} $edgeVal] == 0} || {$edgeVal == 0}]}]

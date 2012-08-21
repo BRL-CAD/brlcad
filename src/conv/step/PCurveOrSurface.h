@@ -35,9 +35,9 @@ class Surface;
 class PCurveOrSurface : virtual public STEPEntity {
 public:
     enum pcurve_or_surface_type {
-    	PCURVE,
-    	SURFACE,
-    	UNKNOWN
+	PCURVE,
+	SURFACE,
+	UNKNOWN
     };
 
 private:

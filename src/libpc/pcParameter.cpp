@@ -128,17 +128,17 @@ Vector::Vector(VCSet & vcs, std::string n, void *ptr)
 	std::string t;
 	VariableAbstract *var;
 
-	t = Parameter::name; 
+	t = Parameter::name;
 	t += "[x]";
 	var = vcset.addVariable<double>(t, *(p+0), -10.0, 10.0, 0.1);
 	Variables.push_back(var);
 
-	t = Parameter::name; 
+	t = Parameter::name;
 	t += "[y]";
 	var = vcset.addVariable<double>(t, *(p+1), -10.0, 10.0, 0.1);
 	Variables.push_back(var);
 
-	t = Parameter::name; 
+	t = Parameter::name;
 	t += "[z]";
 	var = vcset.addVariable<double>(t, *(p+2), -10.0, 10.0, 0.1);
 	Variables.push_back(var);
@@ -159,17 +159,17 @@ Point::Point(VCSet & vcs, std::string n, void *ptr)
 	std::string t;
 	VariableAbstract *var;
 
-	t = Parameter::name; 
+	t = Parameter::name;
 	t += "[x]";
 	var = vcset.addVariable<double>(t, *(p+0), -10.0, 10.0, 0.1);
 	Variables.push_back(var);
 
-	t = Parameter::name; 
+	t = Parameter::name;
 	t += "[y]";
 	var = vcset.addVariable<double>(t, *(p+1), -10.0, 10.0, 0.1);
 	Variables.push_back(var);
 
-	t = Parameter::name; 
+	t = Parameter::name;
 	t += "[z]";
 	var = vcset.addVariable<double>(t, *(p+2), -10.0, 10.0, 0.1);
 	Variables.push_back(var);
@@ -188,7 +188,7 @@ FastF::FastF(VCSet & vcs, std::string n, void *ptr)
     Parameter::setType(PC_DB_FASTF_T);
     fastf_t *p = (fastf_t *) ptr;
     if (ptr) {
-	std::string t = Parameter::name; 
+	std::string t = Parameter::name;
 	VariableAbstract *var = vcset.addVariable<double>(t, *(p+0), -10.0, 10.0, 0.1);
 	Variables.push_back(var);
     }

@@ -56,15 +56,15 @@ if {![string match $top_bindir ""]} {
       global CMD_NAME test_binary_name top_bindir
       set candidate_name $top_bindir/src/$test_binary_name/$test_binary_name
       if {[file executable $candidate_name] && ![file isdirectory $candidate_name]} {
-         global CMD_NAME candidate_name
+	 global CMD_NAME candidate_name
 	 set CMD_NAME $candidate_name
       }
    } else {
       global CMD_NAME test_binary_name top_bindir
       if {[string match $test_binary_name [file tail $top_bindir]] &&
-          [file executable $top_bindir]} {
-          global CMD_NAME top_bindir
-          set CMD_NAME $top_bindir
+	  [file executable $top_bindir]} {
+	  global CMD_NAME top_bindir
+	  set CMD_NAME $top_bindir
       }
    }
 
@@ -91,8 +91,8 @@ if {![string match $top_bindir ""]} {
       global candidate_name CMD_NAME top_srcdir test_binary_name
       set candidate_name $top_srcdir/src/$test_binary_name/$test_binary_name
       if {[file executable $candidate_name] && ![file isdirectory $candidate_name]} {
-            global CMD_NAME candidate_name
-            set CMD_NAME $candidate_name
+	    global CMD_NAME candidate_name
+	    set CMD_NAME $candidate_name
       }
   }
    # If we don't have a CMD_NAME, wipeout
@@ -111,15 +111,15 @@ proc add_test {cmdname {testfilerootname ""}} {
      global test_binary_name
      set testfilename ""
      if {[string match $testfilerootname ""]} {
-        set testfilename [format ./%s_test.%s $cmdname $test_binary_name]
+	set testfilename [format ./%s_test.%s $cmdname $test_binary_name]
      } else {
-        set testfilename [format ./%s_test.%s $testfilerootname $test_binary_name]
+	set testfilename [format ./%s_test.%s $testfilerootname $test_binary_name]
      }
      set testfile [open $testfilename a]
      puts $testfile "source [format %s/regress/%s/regression_resources.tcl $top_srcdir $test_binary_name]"
      set inputtestfile [open [format %s/regress/%s/%s.%s $top_srcdir $test_binary_name $cmdname $test_binary_name] r]
      while {[gets $inputtestfile line] >= 0} {
-        puts $testfile $line
+	puts $testfile $line
      }
      close $testfile
      close $inputtestfile
@@ -130,11 +130,11 @@ proc run_test {cmdname {testfilename ""}} {
      global test_binary_name
      if {[string match $testfilename ""]} {set testfilename [format %s_test.%s $cmdname $test_binary_name]}
      if {[file exists $testfilename]} {
-        exec $CMD_NAME -c [format %s.g $cmdname] < $testfilename >>& [format %s.log $cmdname]
+	exec $CMD_NAME -c [format %s.g $cmdname] < $testfilename >>& [format %s.log $cmdname]
      } else {
-        add_test $cmdname
-        exec $CMD_NAME -c [format %s.g $cmdname] < $testfilename >>& [format %s.log $cmdname]
-        file delete [format %s_test.mged $cmdname]
+	add_test $cmdname
+	exec $CMD_NAME -c [format %s.g $cmdname] < $testfilename >>& [format %s.log $cmdname]
+	file delete [format %s_test.mged $cmdname]
      }
 }
 
@@ -242,5 +242,3 @@ add_test adc mged
 
 #  Having assembled the tests, run them:
 run_test mged
-
-

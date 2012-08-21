@@ -44,9 +44,9 @@ pc_isperpendicular(double **v)
       (v[0][0]*v[1][0] + v[0][1]*v[1][1] +v[0][2]*v[1][2]));
     */
     if (ZERO((VDOT(v[0], v[1])))) /* TODO: this needs to be toleranced properly */
-    	return 0;
+	return 0;
     else
-    	return -1;
+	return -1;
 }
 
 
@@ -54,7 +54,7 @@ void
 pc_mk_isperpendicular(struct pc_constrnt **c, const char *name, const char **args)
 {
     int i;
-    
+
     pc_getconstraint_struct(c, 2);
     bu_vls_strcat(&((*c)->name), name);
     (*c)->data.cf.fp = &pc_isperpendicular;
@@ -68,11 +68,11 @@ pc_mk_isperpendicular(struct pc_constrnt **c, const char *name, const char **arg
 int
 pc_isfixed(double **v)
 {
-    
+
     if (ZERO(MAGSQ(v[0]))) /* TODO: this needs to be toleranced properly */
-    	return 0;
+	return 0;
     else
-    	return -1;
+	return -1;
 }
 
 

@@ -214,7 +214,7 @@ received corrections and improvements.  The introductory article
 * fixed mged 'mater' command inheritance setting bug - Richard Weiss
 * fixed mged crash removing comb members during edit - Richard Weiss
 * modified archer startup to not require html documentation files
-        - Cliff Yapp, Brandon Hinesley
+	- Cliff Yapp, Brandon Hinesley
 * improved mged/archer/bwish run-time path behavior on Windows
 	- Cliff Yapp, Bob Parker
 * upgraded libpng to version 1.5.4 - Cliff Yapp
@@ -2039,7 +2039,7 @@ features are:
 mged:
     - A dedication page has been added in memory of Mike Muuss
     - Solids are now referred to as Primitive Shapes or "prims" in
-        much of the user interface
+	much of the user interface
     - The 'make' command now properly distinguishes between "ell" and
       "ell1"
     - 'autoview' command added for resetting the view size and center

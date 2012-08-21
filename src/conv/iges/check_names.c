@@ -46,7 +46,7 @@ Add_brl_name(name)
     while (ptr) {
 	if (BU_STR_EQUAL(ptr->name, name)) {
 	    return ptr->name;
-        }
+	}
 	ptr = ptr->next;
     }
 
@@ -69,80 +69,80 @@ Make_unique_brl_name(char *name) {
     char char_value;
 
     if (!name) {
-        bu_exit(1, "iges-g; name is null pointer\n");
-        return (char *)NULL;
+	bu_exit(1, "iges-g; name is null pointer\n");
+	return (char *)NULL;
     }
 
     found_str_end = 0;
     for (i = 0; i < NAMESIZE + 1; i++) {
-        if (name[i] == '\0') {
-            found_str_end = 1;
-            namelen = i;
-            break;
-        }
+	if (name[i] == '\0') {
+	    found_str_end = 1;
+	    namelen = i;
+	    break;
+	}
     }
 
     if (!found_str_end) {
-        bu_exit(1, "iges-g; corrupt name string\n");
-        return (char *)NULL;
+	bu_exit(1, "iges-g; corrupt name string\n");
+	return (char *)NULL;
     }
 
     /* replace white space */
     for (i = 0; i < namelen; i++) {
-        if (isspace(name[i]) || name[i] == '/') {
-            name[i] = '_';
-        }
+	if (isspace(name[i]) || name[i] == '/') {
+	    name[i] = '_';
+	}
     }
 
     if (namelen > 0) {
-        ptr = name_root;
-        name_unique = 1;
-        while (ptr) {
-            if (BU_STR_EQUAL(name, ptr->name)) {
-                name_unique = 0;
-                break;
-            }
-            ptr = ptr->next;
-        }
-        if (name_unique) {
-            return Add_brl_name(name);
-        }
+	ptr = name_root;
+	name_unique = 1;
+	while (ptr) {
+	    if (BU_STR_EQUAL(name, ptr->name)) {
+		name_unique = 0;
+		break;
+	    }
+	    ptr = ptr->next;
+	}
+	if (name_unique) {
+	    return Add_brl_name(name);
+	}
     }
 
     idx = namelen;
     char_value = 'A';
     name_unique = 0;
     while (!name_unique && idx < NAMESIZE) {
-        if (idx == 0 && char_value == 'A') {
-            name[idx] = char_value;
-            name[idx+1] = '\0';
-            char_value++;
-        }
-        ptr = name_root;
-        name_unique = 1;
-        while (ptr) {
-            if (BU_STR_EQUAL(name, ptr->name)) {
-                name_unique = 0;
-                break;
-            }
-            ptr = ptr->next;
-        }
-        if (!name_unique) {
-            name[idx] = char_value;
-            name[idx+1] = '\0';
-            if (char_value == 'Z') {
-                char_value = 'a';
-            } else if (char_value == 'z') {
-                idx++;
-                char_value = 'A';
-            } else {
-                char_value++;
-            }
-        }
+	if (idx == 0 && char_value == 'A') {
+	    name[idx] = char_value;
+	    name[idx+1] = '\0';
+	    char_value++;
+	}
+	ptr = name_root;
+	name_unique = 1;
+	while (ptr) {
+	    if (BU_STR_EQUAL(name, ptr->name)) {
+		name_unique = 0;
+		break;
+	    }
+	    ptr = ptr->next;
+	}
+	if (!name_unique) {
+	    name[idx] = char_value;
+	    name[idx+1] = '\0';
+	    if (char_value == 'Z') {
+		char_value = 'a';
+	    } else if (char_value == 'z') {
+		idx++;
+		char_value = 'A';
+	    } else {
+		char_value++;
+	    }
+	}
     }
 
     if (name_unique) {
-        return Add_brl_name(name);
+	return Add_brl_name(name);
     }
 
     bu_exit(1, "Could not make name unique: (%s)\n", name);
@@ -650,4 +650,3 @@ Check_names()
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

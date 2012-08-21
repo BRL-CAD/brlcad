@@ -110,7 +110,6 @@ parse_args (int ac, char *av[], struct beset_options *opts)
 }
 
 
-
 int main(int argc, char *argv[]) {
     int i, g; /* generation and parent counters */
     int parent1, parent2;
@@ -157,7 +156,6 @@ int main(int argc, char *argv[]) {
 	pop.db_c = db_create(dbname, 5);
 
 	pop_gop(REPRODUCE, argv[ac+2], NULL, argv[ac+2], NULL, source_db, pop.db_c, &rt_uniresource);
-
 
 
 	/* calculate sum of all fitnesses and find
@@ -222,7 +220,6 @@ int main(int argc, char *argv[]) {
 	}
 
 
-
 	/* Close parent db and move children
 	 * to parent database and population
 	 * Note: pop size is constant so we
@@ -250,7 +247,6 @@ int main(int argc, char *argv[]) {
     fit_clean(&fstate);
     return 0;
 }
-
 
 
 /*

@@ -72,8 +72,8 @@ f2a(float f, char *s, int w, int d)
 		i++,	j--)
     {
 	c    = s[i];
-        s[i] = s[j];
-        s[j] =    c;
+	s[i] = s[j];
+	s[j] =    c;
     }
 }
 

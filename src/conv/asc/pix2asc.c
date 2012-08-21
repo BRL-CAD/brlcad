@@ -38,18 +38,18 @@ main(int UNUSED(ac), char **UNUSED(argv))
 #endif
 
     while (!feof(stdin)
-           && fread((void *)pix, sizeof(unsigned char) * 3, 1, stdin) == 1) {
-        /* Input validation of the individual R, G, and B bytes
-           (required by Coverity) */
-        int i;
+	   && fread((void *)pix, sizeof(unsigned char) * 3, 1, stdin) == 1) {
+	/* Input validation of the individual R, G, and B bytes
+	   (required by Coverity) */
+	int i;
 	for (i = 0; i < 3; ++i) {
-            /* the cast to int is necessary to avoid a gcc warning of
-               an always true test */
-            int d = (int)pix[i];
+	    /* the cast to int is necessary to avoid a gcc warning of
+	       an always true test */
+	    int d = (int)pix[i];
 	    if (d < 0 || d > UCHAR_MAX) {
-                bu_bomb("Corrupt file!");
-            }
-            printf("%02X", pix[i]);
+		bu_bomb("Corrupt file!");
+	    }
+	    printf("%02X", pix[i]);
 	}
 	printf("\n");
     }

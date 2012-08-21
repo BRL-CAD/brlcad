@@ -554,85 +554,85 @@
     configure -valueUnits "mm"
 
     switch -- $mEditMode \
-	$movePoint1 { 
+	$movePoint1 {
 	    set mEditCommand move_arb_edge
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditParam1 1
 	    updateUpperPanel {} {1 2 3 4}
 	} \
-	$movePoint2 { 
+	$movePoint2 {
 	    set mEditCommand move_arb_edge
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditParam1 2
-	    updateUpperPanel {} {1 2 3 4} 
+	    updateUpperPanel {} {1 2 3 4}
 	} \
-	$movePoint3 { 
+	$movePoint3 {
 	    set mEditCommand move_arb_edge
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditParam1 3
-	    updateUpperPanel {} {1 2 3 4} 
+	    updateUpperPanel {} {1 2 3 4}
 	} \
-	$movePoint4 { 
+	$movePoint4 {
 	    set mEditCommand move_arb_edge
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditParam1 5
-	    updateUpperPanel {} {1 2 3 4} 
+	    updateUpperPanel {} {1 2 3 4}
 	} \
-	$moveFace123 { 
+	$moveFace123 {
 	    set mEditCommand move_arb_face
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditParam1 1
-	    updateUpperPanel {} {1 2 3 4} 
+	    updateUpperPanel {} {1 2 3 4}
 	} \
-	$moveFace124 { 
+	$moveFace124 {
 	    set mEditCommand move_arb_face
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditParam1 2
-	    updateUpperPanel {} {1 2 3 4} 
+	    updateUpperPanel {} {1 2 3 4}
 	} \
-	$moveFace234 { 
+	$moveFace234 {
 	    set mEditCommand move_arb_face
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditParam1 3
-	    updateUpperPanel {} {1 2 3 4} 
+	    updateUpperPanel {} {1 2 3 4}
 	} \
-	$moveFace134 { 
+	$moveFace134 {
 	    set mEditCommand move_arb_face
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditParam1 4
-	    updateUpperPanel {} {1 2 3 4} 
+	    updateUpperPanel {} {1 2 3 4}
 	} \
-	$rotateFace123 { 
+	$rotateFace123 {
 	    set mEditCommand rotate_arb_face
 	    set mEditClass $EDIT_CLASS_ROT
 	    set mEditParam1 1
 	    set mEditParam2 1
 	    invokeRotationPointDialog {1 2 3}
-	    updateUpperPanel {1 2 3} {4} 
+	    updateUpperPanel {1 2 3} {4}
 	} \
-	$rotateFace124 { 
+	$rotateFace124 {
 	    set mEditCommand rotate_arb_face
 	    set mEditClass $EDIT_CLASS_ROT
 	    set mEditParam1 2
 	    set mEditParam2 1
 	    invokeRotationPointDialog {1 2 4}
-	    updateUpperPanel {1 2 4} {3} 
+	    updateUpperPanel {1 2 4} {3}
 	} \
-	$rotateFace234 { 
+	$rotateFace234 {
 	    set mEditCommand rotate_arb_face
 	    set mEditClass $EDIT_CLASS_ROT
 	    set mEditParam1 3
 	    set mEditParam2 2
 	    invokeRotationPointDialog {2 3 4}
-	    updateUpperPanel {2 3 4} {1} 
+	    updateUpperPanel {2 3 4} {1}
 	} \
-	$rotateFace134 { 
+	$rotateFace134 {
 	    set mEditCommand rotate_arb_face
 	    set mEditClass $EDIT_CLASS_ROT
 	    set mEditParam1 4
 	    set mEditParam2 1
 	    invokeRotationPointDialog {1 3 4}
-	    updateUpperPanel {1 3 4} {2} 
+	    updateUpperPanel {1 3 4} {2}
 	}
 
     GeometryEditFrame::initEditState

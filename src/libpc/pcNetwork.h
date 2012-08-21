@@ -92,7 +92,7 @@ public:
     BinaryNetwork();
     BinaryNetwork(std::vector<Variable<T> *>, std::vector<Constraint *>);
     BinaryNetwork(VCSet & vcset);
-    
+
     /** Data access methods */
     void getVertexbyID(std::string, Vertex&);
 

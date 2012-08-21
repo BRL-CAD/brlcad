@@ -553,7 +553,7 @@ bool Variable<T>::atLowerBoundary()
 {
     T st = D.getInterval(getFirst()).getStep();
     if (value - getFirst() < st)
-    	return true;
+	return true;
     else
 	return false;
 }
@@ -650,20 +650,20 @@ void Solution<T>::cdisplay()
 	size_t l;
 	VarSet::iterator i;
 	typename DomSet::iterator j;
-        typename Domains::iterator k;
+	typename Domains::iterator k;
 	std::vector<double> minmax;
 
-        std::cout << "Solution Ranges are shown due to existence of non-unique solutions." << std::endl;
+	std::cout << "Solution Ranges are shown due to existence of non-unique solutions." << std::endl;
 	for (i = Varset_.begin(); i != Varset_.end(); i++) {
 	    if (*i) std::cout << (*i)->getID() << "\t";
 	}
-        std::cout << std::endl;
+	std::cout << std::endl;
 
 	if (!Domset_.empty()) {
 	    j = Domset_.begin();
 	    for (k = j->begin(), l=0; k != j->end(); ++k, ++l) {
-	        minmax.push_back(k->getFirst());
-	        minmax.push_back(k->getFirst());
+		minmax.push_back(k->getFirst());
+		minmax.push_back(k->getFirst());
 	    }
 
 	    for (j = Domset_.begin(); j != Domset_.end(); ++j) {

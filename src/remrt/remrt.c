@@ -1419,7 +1419,7 @@ scan_frame_for_finished_pixels(struct frame *fr)
     }
     bu_log("%s Scanning %s complete, %d non-black spans, %d non-black pixels\n",
 	   stamp(), fr->fr_filename, nspans, npix );
-    fclose(fp); 
+    fclose(fp);
     return 0;
 }
 
@@ -2879,7 +2879,7 @@ host_helper(FILE *fp)
 	}
 
 	if ( cnt == 3 )  {
-	    snprintf(cmd, 128, 
+	    snprintf(cmd, 128,
 		     "cd %s; rtsrv %s %d",
 		     rem_dir, our_hostname, port );
 	    if (rem_debug)  {
@@ -2910,7 +2910,7 @@ host_helper(FILE *fp)
 		(void)wait(0);
 	    }
 	} else {
-	    snprintf(cmd, 128, 
+	    snprintf(cmd, 128,
 		     "g2asc<%s|%s %s \"cd %s; asc2g>%s; rtsrv %s %d\"",
 		     loc_db,
 		     RSH, host,

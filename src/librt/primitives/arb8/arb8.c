@@ -186,7 +186,7 @@ rt_arb_get_cgtype(
     int si = 2;         /* working index into svec */
     int dup_list = 0;   /* index for the first two entries in svec */
     int idx = 1;        /* index to the beginning of a list of duplicate vertices in svec,
-                         * compared against si to determine length of list */
+			 * compared against si to determine length of list */
     RT_ARB_CK_MAGIC(arb);
     BN_CK_TOL(tol);
 
@@ -194,78 +194,78 @@ rt_arb_get_cgtype(
     /* compare each point against every other point
      * to find duplicates */
     for (i = 0; i < 7; i++) {
-        unique = 1;
-        /* store possible duplicate point,
-         * will be overwritten if no duplicate is found */
-        svec[si] = i;
-        for (j = i + 1; j < 8; j++) {
-            /* check if points are "equal" */
-            if (VNEAR_EQUAL(arb->pt[i], arb->pt[j], tol->dist)) {
-                svec[++si] = j;
-                unique = 0;
-            }
-        }
-        if (!unique) {
-            /* record length */
-            svec[dup_list] = si - idx;
+	unique = 1;
+	/* store possible duplicate point,
+	 * will be overwritten if no duplicate is found */
+	svec[si] = i;
+	for (j = i + 1; j < 8; j++) {
+	    /* check if points are "equal" */
+	    if (VNEAR_EQUAL(arb->pt[i], arb->pt[j], tol->dist)) {
+		svec[++si] = j;
+		unique = 0;
+	    }
+	}
+	if (!unique) {
+	    /* record length */
+	    svec[dup_list] = si - idx;
 
-            /* arb5 only has one set of duplicates, end early */
-            if (si == 5 && svec[5] >= 6) break;
-            /* second list of duplicates, done looking */
-            if (dup_list) break;
+	    /* arb5 only has one set of duplicates, end early */
+	    if (si == 5 && svec[5] >= 6) break;
+	    /* second list of duplicates, done looking */
+	    if (dup_list) break;
 
-            /* remember the current index so we can compare
-             * the new value of si to it later */
-            idx = si++;
-            dup_list = 1;
-        }
+	    /* remember the current index so we can compare
+	     * the new value of si to it later */
+	    idx = si++;
+	    dup_list = 1;
+	}
     }
 
     /* mark invalid entries */
     for (i = svec[0] + svec[1] + 2; i < 11; i++) {
-        svec[i] = -1;
+	svec[i] = -1;
     }
 
     /* find the unique points */
     numuvec = 0;
     for (i = 0; i < 8; i++) {
-        unique = 1;
-        for (j = 2; j < svec[0] + svec[1] + 2; j++) {
-            if (i == svec[j]) {
-                unique = 0;
-                break;
-            }
-        }
-        if (unique) {
-            uvec[numuvec++] = i;
-        }
+	unique = 1;
+	for (j = 2; j < svec[0] + svec[1] + 2; j++) {
+	    if (i == svec[j]) {
+		unique = 0;
+		break;
+	    }
+	}
+	if (unique) {
+	    uvec[numuvec++] = i;
+	}
     }
 
     /* Figure out what kind of ARB this is */
     switch (numuvec) {
     case 8:
-        *cgtype = ARB8;     /* ARB8 */
-        break;
+	*cgtype = ARB8;     /* ARB8 */
+	break;
 
     case 6:
-        *cgtype = ARB7;     /* ARB7 */
-        break;
+	*cgtype = ARB7;     /* ARB7 */
+	break;
 
     case 4:
-        if (svec[0] == 2)
-            *cgtype = ARB6; /* ARB6 */
-        else
-            *cgtype = ARB5; /* ARB5 */
-        break;
+	if (svec[0] == 2)
+	    *cgtype = ARB6; /* ARB6 */
+	else
+	    *cgtype = ARB5; /* ARB5 */
+	break;
 
     case 2:
-        *cgtype = ARB4;     /* ARB4 */
-        break;
+	*cgtype = ARB4;     /* ARB4 */
+	break;
 
     default:
-        bu_log("rt_arb_get_cgtype: bad number of unique vectors (%d)\n",
-                numuvec);
-        return 0;
+	bu_log("rt_arb_get_cgtype: bad number of unique vectors (%d)\n",
+		numuvec);
+	return 0;
     }
     return numuvec;
 }
@@ -2182,28 +2182,28 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
     tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
 
     for (i = 0; i < 6; i++) {
-        /* a, b, c = base of the arb4 */
-        a = farb4[i][0];
-        b = farb4[i][1];
-        c = farb4[i][2];
-        /* d = "top" point of the arb4 */
-        d = farb4[i][3];
+	/* a, b, c = base of the arb4 */
+	a = farb4[i][0];
+	b = farb4[i][1];
+	c = farb4[i][2];
+	/* d = "top" point of the arb4 */
+	d = farb4[i][3];
 
-        /* create a plane from a,b,c */
-        if (bn_mk_plane_3pts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
-            continue;
-        }
+	/* create a plane from a,b,c */
+	if (bn_mk_plane_3pts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
+	    continue;
+	}
 
-        /* height of arb4 is distance from the plane created using the
-         * points of the base, and the top point 'd' */
-        arb4_height = fabs(DIST_PT_PLANE(aip->pt[d], plane));
+	/* height of arb4 is distance from the plane created using the
+	 * points of the base, and the top point 'd' */
+	arb4_height = fabs(DIST_PT_PLANE(aip->pt[d], plane));
 
-        /* calculate area of arb4 base */
-        VSUB2(b_a, aip->pt[b], aip->pt[a]);
-        VSUB2(c_a, aip->pt[c], aip->pt[a]);
-        VCROSS(area, b_a, c_a);
+	/* calculate area of arb4 base */
+	VSUB2(b_a, aip->pt[b], aip->pt[a]);
+	VSUB2(c_a, aip->pt[c], aip->pt[a]);
+	VCROSS(area, b_a, c_a);
 
-        *vol += MAGNITUDE(area) * arb4_height;
+	*vol += MAGNITUDE(area) * arb4_height;
     }
     *vol /= 6.0;
 }

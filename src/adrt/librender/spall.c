@@ -54,7 +54,6 @@ struct render_spall_hit_s {
 };
 
 
-
 void
 render_spall_free(render_t *render)
 {

@@ -314,12 +314,12 @@ csg_comb_func(struct db_i *db, struct directory *dp, genptr_t UNUSED(ptr))
 	name = (&(dp->d_namep));
 
 	(void) db_walk_tree(db, 1, (const char **)name,
-                            1,
-                            &tree_state,
-                            0,
-                            do_region_end,
-                            nmg_booltree_leaf_tess,
-                            (genptr_t)NULL);
+			    1,
+			    &tree_state,
+			    0,
+			    do_region_end,
+			    nmg_booltree_leaf_tess,
+			    (genptr_t)NULL);
 
 	/* Release dynamic storage */
 	nmg_km(the_model);
@@ -410,10 +410,10 @@ csg_comb_func(struct db_i *db, struct directory *dp, genptr_t UNUSED(ptr))
     }
 
     if (mk_lrcomb(fp_out, dp->d_namep, &headp, comb->region_flag,
-                  matname, matparm,
-                  color, comb->region_id,
-                  comb->aircode, comb->GIFTmater, comb->los,
-                  comb->inherit)) {
+		  matname, matparm,
+		  color, comb->region_id,
+		  comb->aircode, comb->GIFTmater, comb->los,
+		  comb->inherit)) {
 	bu_log("G-nmg: error in making region (%s)\n", dp->d_namep);
     }
 }

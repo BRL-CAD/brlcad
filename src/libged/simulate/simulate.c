@@ -116,8 +116,8 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 
 	    /* Get the directory pointer for the object just added */
 	    if ((ndp=db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&dp_name_vls), LOOKUP_QUIET)) == RT_DIR_NULL) {
-	    	bu_vls_printf(gedp->ged_result_str, "add_regions: db_lookup(%s) failed", bu_vls_addr(&dp_name_vls));
-	    	return GED_ERROR;
+		bu_vls_printf(gedp->ged_result_str, "add_regions: db_lookup(%s) failed", bu_vls_addr(&dp_name_vls));
+		return GED_ERROR;
 	    }
 
 
@@ -141,13 +141,13 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 
 	    /* Setup the linked list */
 	    if (prev_node == NULL) {
-	    	/* first node */
-	    	prev_node = current_node;
-	    	sim_params->head_node = current_node;
+		/* first node */
+		prev_node = current_node;
+		sim_params->head_node = current_node;
 	    } else {
-	    	/* past 1st node now */
-	    	prev_node->next = current_node;
-	    	prev_node = prev_node->next;
+		/* past 1st node now */
+		prev_node->next = current_node;
+		prev_node = prev_node->next;
 	    }
 
 	    /* Add the new region to the simulation result */

@@ -126,7 +126,7 @@ enum
 	if (_s > _b.size) { \
 	    _b.data = bu_realloc(_b.data, _s, "tienet buffer size"); \
 	    _b.size = _s; \
-        } }
+	} }
 
 typedef struct tienet_buffer_s {
     uint8_t *data;

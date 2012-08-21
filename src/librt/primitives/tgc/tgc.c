@@ -3081,17 +3081,17 @@ rt_tgc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 #define GET_TGC_TYPE(type, a, b, c, d) \
 { \
     if (EQUAL((a), (b)) && EQUAL((c), (d))) { \
-        if (EQUAL((a), (c))) { \
-            (type) = RCC; \
-        } else { \
-            (type) = TRC; \
-        } \
+	if (EQUAL((a), (c))) { \
+	    (type) = RCC; \
+	} else { \
+	    (type) = TRC; \
+	} \
     } else { \
-        if (EQUAL((a), (c)) && EQUAL((b), (d))) { \
-            (type) = REC; \
-        } else { \
-            (type) = TEC; \
-        } \
+	if (EQUAL((a), (c)) && EQUAL((b), (d))) { \
+	    (type) = REC; \
+	} else { \
+	    (type) = TEC; \
+	} \
     } \
 }
 
@@ -3118,19 +3118,19 @@ rt_tgc_volume(fastf_t *vol, const struct rt_db_internal *ip)
     switch (tgc_type) {
     case RCC:
     case REC:
-        *vol = M_PI * mag_h * mag_a * mag_b;
-        break;
+	*vol = M_PI * mag_h * mag_a * mag_b;
+	break;
     case TRC:
-        /* TRC could fall through, but this formula avoids a sqrt and
-        * so will probably be more accurate */
-        *vol = M_PI * mag_h * (mag_a * mag_a + mag_c * mag_c + mag_a * mag_c) / 3.0;
-        break;
+	/* TRC could fall through, but this formula avoids a sqrt and
+	* so will probably be more accurate */
+	*vol = M_PI * mag_h * (mag_a * mag_a + mag_c * mag_c + mag_a * mag_c) / 3.0;
+	break;
     case TEC:
-        *vol = M_PI * mag_h * (mag_a * mag_b + mag_c * mag_d + sqrt(mag_a * mag_b * mag_c * mag_d)) / 3.0;
-        break;
+	*vol = M_PI * mag_h * (mag_a * mag_b + mag_c * mag_d + sqrt(mag_a * mag_b * mag_c * mag_d)) / 3.0;
+	break;
     default:
-        /* never reached */
-        bu_log("rt_tgc_volume(): cannot find volume\n");
+	/* never reached */
+	bu_log("rt_tgc_volume(): cannot find volume\n");
     }
 }
 
@@ -3162,20 +3162,20 @@ rt_tgc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     switch (tgc_type) {
     case RCC:
-        *area = 2.0 * M_PI * mag_a * (mag_a + mag_h);
-        break;
+	*area = 2.0 * M_PI * mag_a * (mag_a + mag_h);
+	break;
     case TRC:
-        *area = M_PI * ((mag_a + mag_c) * sqrt((mag_a - mag_c) * (mag_a - mag_c) + magsq_h) + magsq_a + magsq_c);
-        break;
+	*area = M_PI * ((mag_a + mag_c) * sqrt((mag_a - mag_c) * (mag_a - mag_c) + magsq_h) + magsq_a + magsq_c);
+	break;
     case REC:
-        area_base = M_PI * mag_a * mag_b;
-        /* approximation */
-        c = ELL_CIRCUMFERENCE(mag_a, mag_b);
-        *area = c * mag_h + 2.0 * area_base;
-        break;
+	area_base = M_PI * mag_a * mag_b;
+	/* approximation */
+	c = ELL_CIRCUMFERENCE(mag_a, mag_b);
+	*area = c * mag_h + 2.0 * area_base;
+	break;
     case TEC:
     default:
-        bu_log("rt_tgc_surf_area(): cannot find surface area\n");
+	bu_log("rt_tgc_surf_area(): cannot find surface area\n");
     }
 }
 
@@ -3206,18 +3206,18 @@ rt_tgc_centroid(point_t *cent, const struct rt_db_internal *ip)
     switch (tgc_type) {
     case RCC:
     case REC:
-        scalar = 0.5;
-        VJOIN1(*cent, tip->v, scalar, tip->h);
-        break;
+	scalar = 0.5;
+	VJOIN1(*cent, tip->v, scalar, tip->h);
+	break;
     case TRC:
-        scalar = 0.25 * (magsq_a + 2.0 * mag_a * mag_c + 3.0 * magsq_c) /
-            (magsq_a + mag_a * mag_c + magsq_c);
-        VJOIN1(*cent, tip->v, scalar, tip->h);
-        break;
+	scalar = 0.25 * (magsq_a + 2.0 * mag_a * mag_c + 3.0 * magsq_c) /
+	    (magsq_a + mag_a * mag_c + magsq_c);
+	VJOIN1(*cent, tip->v, scalar, tip->h);
+	break;
     case TEC:
-        /* need to confirm formula */
+	/* need to confirm formula */
     default:
-        bu_log("rt_tgc_centroid(): cannot find centroid\n");
+	bu_log("rt_tgc_centroid(): cannot find centroid\n");
     }
 }
 

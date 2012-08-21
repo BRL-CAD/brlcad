@@ -160,7 +160,6 @@ spm_print(register struct region *rp, genptr_t dp)
 }
 
 
-
 /*
  * Local Variables:
  * mode: C

@@ -156,13 +156,13 @@ if {[catch {
     # will update selectedbot variable whenever user changes combobox selection
     # 0 return value prevents user from editing the combobox entry
     $itk_component(combo) configure \
-        -validate all \
+	-validate all \
 	-validatecommand "$this configure -selectedbot %s; return 0"
 
     # create button that starts editing for the selected bot
     itk_component add button {
-        ttk::button $itk_component(sframe).editButton \
-            -text {Edit Selected} \
+	ttk::button $itk_component(sframe).editButton \
+	    -text {Edit Selected} \
 	    -command "$this editSelected"
     } {}
 

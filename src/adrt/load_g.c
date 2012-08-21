@@ -52,7 +52,6 @@
 #include "adrt_struct.h"
 
 
-
 static struct bn_tol tol;		/* calculation tolerance */
 static struct tie_s *cur_tie;
 static struct db_i *dbip;

@@ -58,11 +58,11 @@ public:
     std::list<Constraint *> Constraints;
 
     virtual ~VCSet();
-    
+
     /** Private Data modification methods */
     void pushChar(char c) { name.push_back(c); }
-    void setValue(double v) { value = v; } 
-    
+    void setValue(double v) { value = v; }
+
     /** Element addition methods */
     void pushVar();
     template<typename T>
@@ -73,12 +73,12 @@ public:
     void addConstraint(std::string cid, functor f, std::list<std::string> Vid);
     void addConstraint(pc_constrnt *c);
     void addParameter(std::string pname, int type, void *ptr);
-    
+
     /** Variable access method */
     VariableAbstract *getVariablebyID(std::string vid);
     void store();
     void restore();
-    
+
     /** Parameter table data access */
     Parameter *getParameter(std::string pid);
     std::list<std::string> getParamVariables(const char *);

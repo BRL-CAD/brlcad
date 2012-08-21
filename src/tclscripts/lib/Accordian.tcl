@@ -99,7 +99,6 @@
 }
 
 
-
 ################################# Public Methods ################################
 
 
@@ -239,7 +238,7 @@
 	set name "$ACC_PREFIX[regsub -all { } $item "_"]"
 
 	if {[lsearch $mItemList $item] != -1} {
- 	    puts "Accordian::insert: $item has already been added."
+	    puts "Accordian::insert: $item has already been added."
 	    continue
 	}
 
@@ -328,7 +327,6 @@
     set item [lindex $mItemList $i]
     toggleDisplay $item
 }
-
 
 
 ################################# Protected Methods ################################

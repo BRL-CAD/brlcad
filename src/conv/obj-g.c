@@ -1419,7 +1419,7 @@ populate_triangle_indexes(struct ga_t *ga,
 	    nmg_km(fu->s_p->r_p->m_p);
 	} else {
 	    triangulateFace(&triFaces, &num_new_tri, facePoints, numFacePoints, *tol);
-	} 
+	}
     } else {
 	num_new_tri = 0;
     }
@@ -3319,8 +3319,8 @@ main(int argc, char **argv)
     tol->para = 1 - tol->perp;
 
     if (argc < 2) {
-        bu_vls_free(&input_file_name);
-        bu_vls_free(&brlcad_file_name);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
 	usage(argv[0]);
 	bu_exit(1, NULL);
     }
@@ -3361,8 +3361,8 @@ main(int argc, char **argv)
 		dist_tmp = (double)atof(bu_optarg);
 		if (dist_tmp <= 0.0) {
 		    bu_log("Distance tolerance must be greater then zero.\n");
-                    bu_vls_free(&input_file_name);
-                    bu_vls_free(&brlcad_file_name);
+		    bu_vls_free(&input_file_name);
+		    bu_vls_free(&brlcad_file_name);
 		    bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
 		}
 		tol->dist = dist_tmp;
@@ -3387,8 +3387,8 @@ main(int argc, char **argv)
 			break;
 		    default:
 			bu_log("Invalid mode option '%c'.\n", bu_optarg[0]);
-                        bu_vls_free(&input_file_name);
-                        bu_vls_free(&brlcad_file_name);
+			bu_vls_free(&input_file_name);
+			bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
 				argv[0]);
 			break;
@@ -3396,8 +3396,8 @@ main(int argc, char **argv)
 		break;
 	    case 'u': /* units */
 		if (str2mm(bu_optarg, &conv_factor)) {
-                    bu_vls_free(&input_file_name);
-                    bu_vls_free(&brlcad_file_name);
+		    bu_vls_free(&input_file_name);
+		    bu_vls_free(&brlcad_file_name);
 		    bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
 		}
 		break;
@@ -3412,8 +3412,8 @@ main(int argc, char **argv)
 			break;
 		    default:
 			bu_log("Invalid grouping option '%c'.\n", bu_optarg[0]);
-                        bu_vls_free(&input_file_name);
-                        bu_vls_free(&brlcad_file_name);
+			bu_vls_free(&input_file_name);
+			bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
 				argv[0]);
 			break;
@@ -3433,8 +3433,8 @@ main(int argc, char **argv)
 		    default:
 			bu_log("Invalid open surface 'native-bot' output bot "
 			       "type '%c'.\n", bu_optarg[0]);
-                        bu_vls_free(&input_file_name);
-                        bu_vls_free(&brlcad_file_name);
+			bu_vls_free(&input_file_name);
+			bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
 				argv[0]);
 			break;
@@ -3454,24 +3454,24 @@ main(int argc, char **argv)
 		    default:
 			bu_log("Invalid bot orientation type '%c'.\n",
 				bu_optarg[0]);
-                        bu_vls_free(&input_file_name);
-                        bu_vls_free(&brlcad_file_name);
+			bu_vls_free(&input_file_name);
+			bu_vls_free(&brlcad_file_name);
 			bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n",
 				argv[0]);
 		}
 		break;
 	    default:
 		bu_log("Invalid option '%c'.\n", c);
-                bu_vls_free(&input_file_name);
-                bu_vls_free(&brlcad_file_name);
+		bu_vls_free(&input_file_name);
+		bu_vls_free(&brlcad_file_name);
 		bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
 		break;
 	}
     }
 
     if (argc - bu_optind != 2) {
-        bu_vls_free(&input_file_name);
-        bu_vls_free(&brlcad_file_name);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
 	bu_exit(EXIT_FAILURE, "Invalid number of arguments.\nType '%s' for "
 		"usage.\n", argv[0]);
     }
@@ -3488,8 +3488,8 @@ main(int argc, char **argv)
 				       || (open_bot_output_mode == RT_BOT_PLATE_NOCOS)))
     {
 	bu_log("'plate_thickness' was not specified but is required\n");
-        bu_vls_free(&input_file_name);
-        bu_vls_free(&brlcad_file_name);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
 	bu_exit(EXIT_FAILURE, "Type '%s' for usage.\n", argv[0]);
     }
 
@@ -3594,16 +3594,16 @@ main(int argc, char **argv)
     if ((my_stream = fopen(bu_vls_addr(&input_file_name), "r")) == NULL) {
 	bu_log("Cannot open input file (%s)\n", bu_vls_addr(&input_file_name));
 	perror(prog);
-        bu_vls_free(&input_file_name);
-        bu_vls_free(&brlcad_file_name);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
 	return EXIT_FAILURE;
     }
 
     if ((fd_out = wdb_fopen(bu_vls_addr(&brlcad_file_name))) == NULL) {
 	bu_log("Cannot create new BRL-CAD file (%s)\n", bu_vls_addr(&brlcad_file_name));
 	perror(prog);
-        bu_vls_free(&input_file_name);
-        bu_vls_free(&brlcad_file_name);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
 	bu_exit(1, NULL);
     }
 
@@ -3625,8 +3625,8 @@ main(int argc, char **argv)
 	}
 
 	perror(prog);
-        bu_vls_free(&input_file_name);
-        bu_vls_free(&brlcad_file_name);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
 	return EXIT_FAILURE;
     }
 
@@ -3652,8 +3652,8 @@ main(int argc, char **argv)
 	    bu_log("Unable to close file.\n");
 	}
 
-        bu_vls_free(&input_file_name);
-        bu_vls_free(&brlcad_file_name);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
 	return EXIT_FAILURE;
     }
 
@@ -3830,7 +3830,7 @@ main(int argc, char **argv)
 			switch (mode_option) {
 			    case 'b':
 				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
-						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation, 
+						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
 						      native_face_test_type);
 				break;
 			    case 'n':
@@ -3935,8 +3935,8 @@ main(int argc, char **argv)
     if (fclose(my_stream) != 0) {
 	bu_log("Unable to close file.\n");
 	perror(prog);
-        bu_vls_free(&input_file_name);
-        bu_vls_free(&brlcad_file_name);
+	bu_vls_free(&input_file_name);
+	bu_vls_free(&brlcad_file_name);
 	return EXIT_FAILURE;
     }
 

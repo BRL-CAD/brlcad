@@ -157,10 +157,10 @@ get_args(int argc, char **argv)
 	}
 	bu_free(ifname,"ifname alloc from bu_realpath");
     }
-    
+
     if (argc > ++bu_optind)
 	(void)fprintf(stderr, "bwmod: excess argument(s) ignored\n");
-    
+
     return 1;		/* OK */
 }
 

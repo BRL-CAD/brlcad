@@ -103,7 +103,7 @@ int main()
 
     Parser myparser(vc_set); /* generate vc_set from pcs using parser */
     myparser.parse(&pcs);
-   
+
     /* modify/access parameter property in vc_set using getParameter */
     vc_set.getParameter("G")->setConst(true);
 
@@ -111,18 +111,18 @@ int main()
     vc_set.display();
     GBTS.solve(vc_set, S1);
     std::cout << "\nSolution using Generic BackTracking Solver "
-              << GBTS.numChecks() << "\t" << GBTS.numSolutions() << std::endl;
+	      << GBTS.numChecks() << "\t" << GBTS.numSolutions() << std::endl;
     S1.display();
     S1.clear();
 
     vc_set.display();
     GPCS.solve(vc_set, S1);
     std::cout << "\nSolution using Generic Solver "
-              << GPCS.numChecks() << "\t" << GPCS.numSolutions() << std::endl;
+	      << GPCS.numChecks() << "\t" << GPCS.numSolutions() << std::endl;
     S1.cdisplay();
 
     pc_free_pcset(&pcs);
-#if 0    
+#if 0
     /** Testing PCSolver Methods */
 
     VCSet myvcset;
@@ -133,14 +133,14 @@ int main()
     myvcset.addVariable<int>("B", 3, 0, 5, 1);
     myvcset.addVariable<int>("C", 2, 0, 5, 1);
     myvcset.addVariable<int>("D", 0, 0, 5, 1);
-    
+
     /* add Constraints to VCSet */
     myvcset.addConstraint("0", "A * B = 12", f1, 2, "A", "B");
     myvcset.addConstraint("1", "B + C < 5", f2, 2, "B", "C");
     myvcset.addConstraint("2", "A - D = 2", f3, 2, "A", "D");
     myvcset.addConstraint("3", "A * C = 4", f4, 2, "A", "C");
     myvcset.display();
-    
+
     BinaryNetwork<int > N(myvcset);
     N.display();
 
@@ -161,7 +161,7 @@ int main()
     std::cout << "-----------------------------" << std::endl;
     PCS.solve(myvcset, S);
     std::cout << "Solution using Generic GT Solver" << std::endl;
-    S.display();    
+    S.display();
     std::cout << "-----------------------------" << std::endl;
     std::cout << "Number of Constraint checks performed" << std::endl;
     std::cout << "Generate-Test:" << GTS.numChecks() << std::endl;

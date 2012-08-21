@@ -3627,7 +3627,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 		if (prev_vg_p != pt->vu_p->v_p->vg_p) {
 #ifdef NEW_CUT_UNIMONOTONE
 		    int isect_result;
-		    isect_result = nmg_isect_pt_facet(pt->vu_p->v_p, prev->vu_p->v_p, 
+		    isect_result = nmg_isect_pt_facet(pt->vu_p->v_p, prev->vu_p->v_p,
 						      current->vu_p->v_p, next->vu_p->v_p, tol);
 		    if (isect_result == 4 || isect_result == 3) {
 			inside_triangle = 1;

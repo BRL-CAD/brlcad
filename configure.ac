@@ -1164,7 +1164,7 @@ dnl *** X11 ***
 if test "x$bc_with_x11" != "xno" ; then
 
     if test "x$bc_with_x11_val" != "x" ; then
-        if test "x$bc_with_x11_val" != "xyes" ; then
+	if test "x$bc_with_x11_val" != "xyes" ; then
 	    if test "x$x_includes" = "xNONE"; then
 		x_includes="$bc_with_x11_val/include"
 		ac_x_includes="$x_includes"
@@ -1457,9 +1457,9 @@ if test "xbc_with_agl" != "xno" ; then
     GLboolean values;
     void (*func)() = glBegin;
     if (GL_FALSE) {
-        func(GL_POINTS);
-        glGetBooleanv(GL_DEPTH_TEST, &values);
-        glEnd();
+	func(GL_POINTS);
+	glGetBooleanv(GL_DEPTH_TEST, &values);
+	glEnd();
     }
     ], [framework_opengl=yes ; FRAMEWORK_OPENGL="-framework OpenGL"])
     LIBS="$PRELIBS"
@@ -1649,7 +1649,7 @@ if test "x$bc_with_opengl" != "xno" -o "x$bc_with_wgl" != "xno" ; then
 	    CPPFLAGS="$PRECPPFLAGS $GLX_H_CPPFLAGS"
 	    AC_MSG_NOTICE([ .. looking in $bc_dir for glx.h])
 	    AC_CHECK_HEADER([GL/glx.h], [
-	    	AC_DEFINE(HAVE_GL_GLX_H, 1, [Define to 1 if you have the <GL/glx.h> header file.])
+		AC_DEFINE(HAVE_GL_GLX_H, 1, [Define to 1 if you have the <GL/glx.h> header file.])
 		glx_include_works="yes"
 		break
 	    ], [unset ac_cv_header_GL_glx_h])
@@ -1786,7 +1786,7 @@ if test "x$bc_with_proe" != "xno" ; then
    found_protk_h=no
    if test "x$bc_with_proe" = "xyes" ; then
       if test "x$bc_with_proe_val" = "x" ; then
-            found_proe_base=no
+	    found_proe_base=no
 	    proe_base=/usr/local/ptc/proeWildfire3.0
 	    if test -e "$proe_base" ; then
 	       found_proe_base=yes
@@ -1802,11 +1802,11 @@ if test "x$bc_with_proe" != "xno" ; then
 	       fi
 	    fi
       else
-        PROE_CFLAGS="-I$bc_with_proe_val/protoolkit/includes -I$bc_with_proe_val/prodevelop/includes"
-        CFLAGS="$CFLAGS $PROE_CFLAGS"
-        AC_CHECK_HEADER(ProToolkit.h,
-		        AC_DEFINE(HAVE_PROTOOLKIT,1,[Define to 1 if you have Pro/TOOLKIT header files])
-		        found_protk_h=yes)
+	PROE_CFLAGS="-I$bc_with_proe_val/protoolkit/includes -I$bc_with_proe_val/prodevelop/includes"
+	CFLAGS="$CFLAGS $PROE_CFLAGS"
+	AC_CHECK_HEADER(ProToolkit.h,
+			AC_DEFINE(HAVE_PROTOOLKIT,1,[Define to 1 if you have Pro/TOOLKIT header files])
+			found_protk_h=yes)
       fi
    fi
    CFLAGS="$PRE_CFLAGS"
@@ -2099,8 +2099,8 @@ if test "x$bc_use_debug" != "xno" ; then
 
 	if test "x$bc_debug_flag_works" = "xyes" ; then
 		# debug works
-	   	if test "x$bc_use_debug " = "xauto" ; then
-		   	# convert 'auto' to 'yes'
+		if test "x$bc_use_debug " = "xauto" ; then
+			# convert 'auto' to 'yes'
 			bc_use_debug="yes"
 		fi
 	else
@@ -2767,7 +2767,7 @@ if test "x$build_brlcad_tcl" = "xyes" ; then
 	 darwin*)
 	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION $THREADS_LIBS"
 	     ;;
-    	 *)
+	 *)
 	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL} ${LIBM} $THREADS_LIBS"
 	     ;;
     esac
@@ -2842,7 +2842,7 @@ int main() {
 	Tcl_GetStringResult(interp)); return -1; }
     ATTEMPT(Tcl_Init(interp) == TCL_ERROR,"Tcl_Init returned error");
     ATTEMPT(Tk_ParseArgv(interp, NULL, &argl, arg, argtbl,
- 	TK_ARGV_DONT_SKIP_FIRST_ARG) != TCL_OK, "Tk_ParseArgv");
+	TK_ARGV_DONT_SKIP_FIRST_ARG) != TCL_OK, "Tk_ParseArgv");
 #if TK_MAJOR_VERSION < 8
     fprintf(stderr, "major version < 8  (it's %d)\n", TK_MAJOR_VERSION);
     return 1;
@@ -2897,7 +2897,7 @@ if test "x$build_against_tk" = "xyes" ; then
     AC_MSG_CHECKING(whether to build Tk)
     if test "x$build_brlcad_tk" = "xyes" ; then
 	AC_MSG_RESULT(yes)
-    	SC_ENABLE_THREADS
+	SC_ENABLE_THREADS
 	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION} $THREADS_LIBS"
 	TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION} $THREADS_LIBS"
 	TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
@@ -2927,7 +2927,7 @@ if test "x$build_against_tk" = "xyes" ; then
 	else
 	    AC_MSG_WARN([Unable to link against a system Tkstub library])
 	    sleep 1
-        fi
+	fi
     fi
     AC_DEFINE(HAVE_TK, 1, [Support for a Tk GUI is enabled])
 else
@@ -3041,7 +3041,7 @@ if test "x$build_against_tk" = "xno" ; then
     build_brlcad_itk=no
 else
     if test "$bc_build_aquatk" = "xno" && test "x$build_against_x11" = "xno" ; then
-        build_brlcad_itk=no
+	build_brlcad_itk=no
     fi
 fi
 AC_MSG_RESULT($build_brlcad_itk)
@@ -3099,7 +3099,7 @@ int main() {
 	while(b=strtok(b?NULL:Tcl_GetStringResult(interp)," "))
 	  if(!strncmp(b,"Iwidgets",8))
 	    return 0;
-        return 1;
+	return 1;
     }
     return 0;
 }
@@ -3663,7 +3663,7 @@ main(int argc, char *argv[]) {
     void (*func)() = glBegin;
     wglMakeCurrent(NULL, NULL);
     if (GL_FALSE || argc > 1) {
-        func(GL_POINTS);
+	func(GL_POINTS);
 	glGetBooleanv(GL_DEPTH_TEST, &values);
 	glEnd();
     }

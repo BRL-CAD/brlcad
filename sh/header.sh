@@ -393,24 +393,24 @@ $c"
 
 if [ "x$COPY" = "x" ] ; then
     if [ "x$LICE" = "xPD" ] ; then
-        block="${block}
+	block="${block}
 $c Published in $copyright by the United States Government.
 $c This work is in the public domain.
 $c"
     else
-        block="${block}
+	block="${block}
 $c Copyright (c) $copyright United States Government as represented by
 $c the U.S. Army Research Laboratory.
 $c"
     fi
 else
     if [ "x$LICE" = "xPD" ] ; then
-        block="${block}
+	block="${block}
 $c Published in $copyright by $COPY
 $c This work is in the public domain.
 $c"
     else
-        block="${block}
+	block="${block}
 $c Copyright (c) $copyright $COPY
 $c"
     fi

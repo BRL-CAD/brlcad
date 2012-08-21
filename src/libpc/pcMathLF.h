@@ -119,7 +119,7 @@ struct size_impl {
     template <typename T>
     std::size_t operator()(T const & t) const
     {
-    	return t.size();
+	return t.size();
     }
 };
 phoenix::function<size_impl> const size = size_impl();

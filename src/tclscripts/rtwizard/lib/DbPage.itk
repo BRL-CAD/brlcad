@@ -157,7 +157,7 @@ namespace eval RtWizard {
 	itk_component add fileSelect {
 	    ::iwidgets::fileselectionbox $cs.#auto \
 		-height 340 \
-		-selectfilecommand [::itcl::code $this activateOKButton] 
+		-selectfilecommand [::itcl::code $this activateOKButton]
 	} {
 	    usual
 	}

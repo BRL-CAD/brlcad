@@ -3280,7 +3280,7 @@ surface_surface_intersection(const ON_Surface* surfA,
 		    cornerB[2] = surfB->PointAt(s_max, t_min);
 		    cornerB[3] = surfB->PointAt(s_max, t_max);
 
-		    /* We approximate each surface sub-patch inside the bounding-box with two 
+		    /* We approximate each surface sub-patch inside the bounding-box with two
 		     * triangles that share an edge.
 		     * The intersection of the surface sub-patches is approximated as the
 		     * intersection of triangles.
@@ -3423,7 +3423,7 @@ surface_surface_intersection(const ON_Surface* surfA,
 	startpt[i] = i;
 	endpt[i] = i;
     }
-    
+
     // Merge polylines with distance less than max_dis.
     for (unsigned int i = 0; i < ptpairs.size(); i++) {
 	int index1 = index[ptpairs[i].indexA], index2 = index[ptpairs[i].indexB];
@@ -3527,7 +3527,7 @@ surface_surface_intersection(const ON_Surface* surfA,
 	    delete polylines[i];
 	}
     }
-    
+
     bu_log("Segments: %d\n", intersect3d.Count());
     bu_free(index, "int");
     bu_free(startpt, "int");

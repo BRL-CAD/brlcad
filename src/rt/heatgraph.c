@@ -57,8 +57,8 @@ static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 
 /**
  * P R E P _ P I X E L _ T I M E R
- * 
- * Prep the timer for each pixel 
+ *
+ * Prep the timer for each pixel
  */
 void prep_pixel_timer(void)
 {
@@ -68,7 +68,7 @@ void prep_pixel_timer(void)
 }
 
 /**
- * T V S U B 
+ * T V S U B
  */
 
 static void
@@ -83,7 +83,7 @@ tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 
 /**
  * G E T _ P I X E L _ T I M E R
- * 
+ *
  * Get the length of time the pixel
  * was being made.
  */
@@ -97,33 +97,33 @@ get_pixel_timer(double *total)
     struct timeval td;
     double totalTime = 0;
     double elapsed_secs = 0;
-    
+
     getrusage(RUSAGE_SELF, &ru1);
     getrusage(RUSAGE_CHILDREN, &ru1c);
     gettimeofday(&timeEnd, (struct timezone *)0);
-    
-    elapsed_secs = (timeEnd.tv_sec - timeStart.tv_sec) + 
+
+    elapsed_secs = (timeEnd.tv_sec - timeStart.tv_sec) +
 	(timeEnd.tv_usec - timeStart.tv_usec)/1000000.0;
-    
+
     tvsub(&td, &ru1.ru_utime, &ruA.ru_utime);
     totalTime = td.tv_sec + ((double)td.tv_usec)/1000000.0;
-    
+
     tvsub(&td, &ru1c.ru_utime, &ruAc.ru_utime);
     totalTime += td.tv_sec + ((double)td.tv_usec) / 1000000.0;
-    
+
     if (totalTime < 0.00001) totalTime = 0.00001;
     if (elapsed_secs < 0.00001) elapsed_secs = totalTime;
 
     if (total) *total = totalTime;
-    
+
     return totalTime;
 }
 
 
 /**
  * T I M E T A B L E _ I N I T
- * 
- * This function creates the table of values that will store the 
+ *
+ * This function creates the table of values that will store the
  * time taken to complete pixels during a raytrace. Returns a
  * pointer to the table.
  */
@@ -169,13 +169,13 @@ timeTable_init(int x, int y)
  *
  * Frees up the time table array.
  */
-void 
+void
 timeTable_free(fastf_t **timeTable)
 {
     /* Temporarily assigned variables, until real ones are found */
     int y = height;
     int i = 0;
-    
+
     for (i = 0; i < y; i++)
 	bu_free(timeTable[i], "timeTable[]");
     bu_free(timeTable, "timeTable");
@@ -183,13 +183,13 @@ timeTable_free(fastf_t **timeTable)
 
 
 /**
- * T I M E T A B L E _ I N P U T 
+ * T I M E T A B L E _ I N P U T
  *
  * This function inputs the time taken to complete a pixel during a
  * raytrace and places it into the timeTable for use in creating a
  * heat graph light model.
  */
-void 
+void
 timeTable_input(int x, int y, fastf_t timeval, fastf_t **timeTable)
 {
     /* bu_log("Enter timeTable input\n"); */
@@ -208,7 +208,7 @@ timeTable_input(int x, int y, fastf_t timeval, fastf_t **timeTable)
 
 /**
  * T I M E T A B L E _ S I N G L E P R O C E S S
- * 
+ *
  * This function processes the time table 1 pixel at a time, as
  * opposed to all at once like timeTable_process. Heat values are
  * bracketed to certain values, instead of normalized.
@@ -223,15 +223,15 @@ timeTable_singleProcess(struct application *app, fastf_t **timeTable, fastf_t *t
     fastf_t Rcolor = 0;	/* 1-255 value of color */
     fastf_t Gcolor = 0;	/* 1-255 value of color */
     fastf_t Bcolor = 0;	/* 1-255 value of color */
-    
+
     /* bu_log("Time is %lf :", timeval); */
-    
+
     /* Eventually the time taken will also span the entire color spectrum (0-255!)
      * For now, the darkest color (1,1,1) will be set to any time slower or equal
      * to 0.00001 sec, and (255,255,255) will be set to any time longer than 0.01 sec,
      * making a gradient of black-white in between.
      */
-    
+
     if (timeval < 0.00001 || EQUAL(timeval, 0.00001)) {
 	Rcolor = 1;
 	Gcolor = 1;
@@ -248,7 +248,7 @@ timeTable_singleProcess(struct application *app, fastf_t **timeTable, fastf_t *t
 	Rcolor = Bcolor = 0;
 	Gcolor = 255;
     }
-    
+
     timeColor[0] = Rcolor;
     timeColor[1] = Gcolor;
     timeColor[2] = Bcolor;
@@ -258,11 +258,11 @@ timeTable_singleProcess(struct application *app, fastf_t **timeTable, fastf_t *t
 
 /**
  * T I M E T A B L E _ P R O C E S S
- * 
- * This function takes the contents of the time table, and produces the 
+ *
+ * This function takes the contents of the time table, and produces the
  * heat graph based on time taken for each pixel.
  */
-void 
+void
 timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *fbp)
 {
     fastf_t maxTime = -MAX_FASTF;		/* The 255 value */
@@ -326,11 +326,11 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *fb
 	    }
 	    if (timeTable[x][y] > maxTime)
 		Rcolor = 255;
-	    
+
 	    p[0]=Rcolor;
 	    p[1]=Gcolor;
 	    p[2]=Bcolor;
-	    
+
 	    if (fbp != FBIO_NULL) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		npix = fb_write(fbp, x, y, (unsigned char *)p, 1);
@@ -338,7 +338,7 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *fb
 		if (npix < 1)
 		    bu_exit(EXIT_FAILURE, "pixel fb_write error");
 	    }
- 	}
+	}
     }
     if (fbp != FBIO_NULL) {
       zoomH = fb_getheight(fbp) / height;

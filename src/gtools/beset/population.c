@@ -120,7 +120,6 @@ pop_spawn (struct population *p)
 	}
 
 
-
 	p->parent[i].fitness = 0.0;
 	p->parent[i].id = i;
 	/*
@@ -301,10 +300,6 @@ pop_mutate(int type, genptr_t ptr)
 	    break;
     }
 }
-
-
-
-
 
 
 void
@@ -515,8 +510,6 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    */
 
 
-
-
 	default:
 	    bu_exit(EXIT_FAILURE, "illegal genetic operator\nfailed to execute genetic op");
     }
@@ -529,7 +522,6 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
       bu_exit(EXIT_FAILURE, "Database write failure");
     rt_db_free_internal(&in1);
 }
-
 
 
 /** @} */
