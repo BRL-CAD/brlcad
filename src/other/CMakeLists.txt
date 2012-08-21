@@ -740,7 +740,7 @@ Libraries provided with BRL-CAD's source code.  Default is
 AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(scl step "LEMON_EXECUTABLE;PERPLEX_EXECUTABLE;NOT_MSVC;BRLCAD_LEVEL3"  scl_ALIASES scl_DESCRIPTION NOSYS)
+THIRD_PARTY(scl step "LEMON_EXECUTABLE;PERPLEX_EXECUTABLE;BRLCAD_LEVEL3"  scl_ALIASES scl_DESCRIPTION NOSYS)
 if(BRLCAD_SCL_BUILD)
   set(FEDEX_PLUS_EXEC fedex_plus CACHE STRING "Fedex plus executable" FORCE)
   set(FEDEX_PLUS_EXECUTABLE_TARGET fedex_plus CACHE STRING "Fedex plus executable target" FORCE)

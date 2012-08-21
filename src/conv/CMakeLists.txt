@@ -1,6 +1,15 @@
-if(NOT MSVC)
-  add_subdirectory(step)
-endif(NOT MSVC)
+if(MSVC)
+  add_definitions(
+    -DON_DLL_IMPORTS
+    )
+endif(MSVC)
+
+add_definitions(
+  -D_CONSOLE
+  -DBRLCAD_DLL
+  )
+
+add_subdirectory(step)
 
 add_subdirectory(iges)
 add_subdirectory(intaval)
@@ -22,17 +31,6 @@ set(CONV_INCLUDE_DIRS
 
 LIST(REMOVE_DUPLICATES CONV_INCLUDE_DIRS)
 include_directories(${CONV_INCLUDE_DIRS})
-
-if(MSVC)
-  add_definitions(
-    -DON_DLL_IMPORTS
-    )
-endif(MSVC)
-
-add_definitions(
-  -D_CONSOLE
-  -DBRLCAD_DLL
-  )
 
 BRLCAD_ADDEXEC(3dm-g 3dm/3dm-g.cpp "libwdb;${OPENNURBS_LIBRARY}" NOSTRICT)
 
