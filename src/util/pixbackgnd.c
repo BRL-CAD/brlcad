@@ -59,7 +59,7 @@ or	r g b\n\
  *
  * convert red green blue to hue saturation value
  */
-void
+static void
 rgbhsv(double *rgb, double *hsv)
 {
     double s, v, r, g, b, x;
@@ -106,8 +106,7 @@ rgbhsv(double *rgb, double *hsv)
  *
  * convert hue saturation and value to red, green, blue
  */
-
-void
+static void
 hsvrgb(double *hsv, double *rgb)
 {
     double r, g, b, m, n, k, foo;
@@ -164,7 +163,7 @@ hsvrgb(double *hsv, double *rgb)
 }
 
 
-int
+static int
 get_args(int argc, char **argv)
 {
     int c;
@@ -226,7 +225,8 @@ get_args(int argc, char **argv)
     return 1;			/* OK */
 }
 
-void
+
+static void
 flood(unsigned char *horiz_buf, unsigned char *vert_buf, unsigned char *vp, int line)
 {
     unsigned char *op;
@@ -242,6 +242,7 @@ flood(unsigned char *horiz_buf, unsigned char *vert_buf, unsigned char *vp, int 
     if (ret < 0)
 	perror("write");
 }
+
 
 int
 main(int argc, char **argv)
