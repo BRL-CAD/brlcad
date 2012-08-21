@@ -130,7 +130,6 @@ if [ "x$files" = "x" ] ; then
 	-name '*.[cC][pP]' -or \
 	-name '*.[cC][pP][pP]' -or \
 	-name '*.[cC][xX][xX]' -or \
-	-name '*.[dD][sS][pP]' -or \
 	-name '*.[eE][lL]' -or \
 	-name '*.[fF]' -or \
 	-name '*.[fF][mM][tT]' -or \
