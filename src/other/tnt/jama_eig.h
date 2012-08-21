@@ -900,9 +900,9 @@ public:
 
    Eigenvalue(const TNT::Array2D<Real> &A) {
       n = A.dim2();
-      V = Array2D<Real>(n,n);
-      d = Array1D<Real>(n);
-      e = Array1D<Real>(n);
+      V = TNT::Array2D<Real>(n,n);
+      d = TNT::Array1D<Real>(n);
+      e = TNT::Array1D<Real>(n);
 
       issymmetric = 1;
       for (int j = 0; (j < n) && issymmetric; j++) {
@@ -1006,7 +1006,7 @@ public:
 
 */
    void getD (TNT::Array2D<Real> &D) {
-      D = Array2D<Real>(n,n);
+      D = TNT::Array2D<Real>(n,n);
       for (int i = 0; i < n; i++) {
          for (int j = 0; j < n; j++) {
             D[i][j] = 0.0;
