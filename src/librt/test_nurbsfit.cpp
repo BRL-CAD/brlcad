@@ -11,7 +11,7 @@ BoT2Vector3d(struct rt_bot_internal *ip, on_fit::vector_vec3d &data)
   int i = 0;
   for (i = 0; i < ip->num_vertices; i++) {
       printf("v %f %f %f\n", V3ARGS(&ip->vertices[3*i]));
-      data.push_back (Eigen::Vector3d (V3ARGS(&ip->vertices[3*i])));
+      data.push_back (ON_3dPoint(V3ARGS(&ip->vertices[3*i])));
   }
 }
 
