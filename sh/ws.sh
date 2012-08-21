@@ -147,6 +147,7 @@ if [ "x$files" = "x" ] ; then
 	-name '*.[tT][cC][lL]' -or \
 	-name '*.[tT][kK]' -or \
 	-name '*.[tT][xX][tT]' -or \
+	-name '*.[xX][mM][lL]' -or \
 	-name 'AUTHORS*' -or \
 	-name 'COPYING*' -or \
 	-name 'DEVINFO*' -or \
@@ -157,9 +158,7 @@ if [ "x$files" = "x" ] ; then
 	\) | \
 	grep -v '/other/' | \
 	grep -v '/CVS/' | \
-	grep -v '/\.svn/' | \
-	grep -v '/\.deps/' | \
-	grep -v '/\.libs/' | \
+	grep -v '/\.' | \
 	grep -v 'autom4te.cache' | \
 	grep -v 'aclocal.m4' | \
 	grep -v '.ws.bak' | \
@@ -231,21 +230,21 @@ for file in $files ; do
 	case x$step in
 	    x[aA])
 		# remove whitespace on lines with only whitespace
-	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    printf "a"
 		fi
 		perl -pi -e 's/^[ \t]*$//g' "$file.ws.new"
 		;;
 	    x[bB])
 		# remove whitespace at end of all lines
-	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    printf "b"
 		fi
 		perl -pi -e 's/[ \t]*$//g' "$file.ws.new"
 		;;
 	    x[cC])
 		# remove successive blank lines
-	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    printf "c"
 		fi
 		cmd="perl -0777 -pi -e $step_c_regex \"$file.ws.new\""
@@ -253,21 +252,21 @@ for file in $files ; do
 		;;
 	    x[dD])
 		# remove all blank lines from end of file
-	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    printf "d"
 		fi
 		perl -0777 -pi -e 's/\n\n*$/\n/' "$file.ws.new"
 		;;
 	    x[eE])
 		# ensure there is a trailing newline
-	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    printf "e"
 		fi
 		perl -0777 -pi -e 's/([^\n])\z/\1\n/' "$file.ws.new"
 		;;
 	    x[fF])
 		# convert embedded tabs to spaces
-	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    printf "f"
 		fi
 		if [ -f "$file.ws.expand" ] ; then
@@ -281,7 +280,7 @@ for file in $files ; do
 		;;
 	    x[gG])
 		# convert leading whitespace and tabs, insert tabs
-	        if [ "x$WS_PROGRESS" = "xyes" ] ; then
+		if [ "x$WS_PROGRESS" = "xyes" ] ; then
 		    printf "g"
 		fi
 		cmd1="perl -pi -e $step_g_regex1 \"$file.ws.new\""
