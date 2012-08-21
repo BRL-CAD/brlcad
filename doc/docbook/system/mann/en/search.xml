@@ -19,7 +19,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>search</command>    
+    <command>search</command>
     <arg choice="opt" rep="norepeat"><replaceable>path1</replaceable></arg>
     <arg choice="opt" rep="repeat"><replaceable>path2</replaceable></arg>
     <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
@@ -27,11 +27,11 @@
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>
-    <command>search</command> works in a fashion similar to Unix-style 
-    find commands (internally it is based on OpenBSD's and NetBSD's find 
-    code) but searches <emphasis remap="I">objects</emphasis> in the 
+    <command>search</command> works in a fashion similar to Unix-style
+    find commands (internally it is based on OpenBSD's and NetBSD's find
+    code) but searches <emphasis remap="I">objects</emphasis> in the
     current open database in MGED rather than files in a file system.  There
     are two modes of search output.  The default mode returns a list of all objects
     found matching the criteria.  A second mode returns a list of full paths
@@ -40,7 +40,7 @@
     will produce a full path instance list, while all other paths will produce the
     unique object list.  One search command may use paths indicating both modes - such
     a "mixed mode" search will return a list of full paths and objects in the order
-    paths were supplied to search.  Matching of objects is done according to boolean 
+    paths were supplied to search.  Matching of objects is done according to boolean
     expressions formed using the
     <link linkend="primitives">PRIMITIVES</link> and
     <link linkend="operators">OPERATORS</link>
@@ -55,20 +55,20 @@
 </refsection>
 
 <refsection xml:id="primitives"><info><title>PRIMITIVES:</title></info>
-  
+
   <variablelist remap="TP">
     <varlistentry>
       <term><emphasis remap="B" role="bold">-attr</emphasis> <emphasis remap="I">attrib[&gt;/&lt;/=val]</emphasis></term>
       <listitem>
 	<para>
 	  Returns TRUE if the object has attribute
-	  <emphasis remap="I">attrib</emphasis>. If a specific value is 
-	  also supplied for the attribute with an equal condition, TRUE is returned if 
+	  <emphasis remap="I">attrib</emphasis>. If a specific value is
+	  also supplied for the attribute with an equal condition, TRUE is returned if
 	  the object both has the attribute and the attribute is set to value
 	  <emphasis remap="I">val.</emphasis>  In the case of &gt;, &lt;, &gt;=, and &lt;=
 	  there are two possibilities - if <emphasis remap="I">val</emphasis> is numerical
 	  a numerical comparison is performed, otherwise a string comparison is performed.
-	  Both <emphasis remap="I">attrib</emphasis> and <emphasis remap="I">val</emphasis> 
+	  Both <emphasis remap="I">attrib</emphasis> and <emphasis remap="I">val</emphasis>
 	  are treated as patterns under shell pattern matching rules when a string comparison
 	  is performed, but in numerical mode only the attribute name is pattern matched.
 	</para>
@@ -78,7 +78,7 @@
       <term><emphasis remap="B" role="bold">-iname</emphasis> <emphasis remap="I">pattern</emphasis></term>
       <listitem>
 	<para>
-	  Like <emphasis remap="B" role="bold">name</emphasis> except the match is 
+	  Like <emphasis remap="B" role="bold">name</emphasis> except the match is
 	  case insensitive.
 	</para>
       </listitem>
@@ -105,7 +105,7 @@
       <term><emphasis remap="B" role="bold">-mindepth</emphasis> <emphasis remap="I">n</emphasis></term>
       <listitem>
 	<para>
-	  True if the depth of the object in the tree is greater than 
+	  True if the depth of the object in the tree is greater than
 	  or equal to <emphasis remap="I">n</emphasis>.
 	</para>
       </listitem>
@@ -115,7 +115,7 @@
       <listitem>
 	<para>
 	  True if the object name (not the full path, just the name) matches
-	  <emphasis remap="I">pattern</emphasis>. The evaluation is done according 
+	  <emphasis remap="I">pattern</emphasis>. The evaluation is done according
 	  to shell pattern matching rules.
 	</para>
       </listitem>
@@ -125,9 +125,9 @@
       <listitem>
 	<para>
 	  True if the object is a combination and has <emphasis remap="I">n</emphasis> nodes.  This
-          option also supports supplying &lt;, &gt;, &lt;=, and &gt;= in front of the number to support
-          returning true for objects with node counts less than, greater than, less than or equal to,
-          and greater than or equal to <emphasis remap="I">n</emphasis>.
+	  option also supports supplying &lt;, &gt;, &lt;=, and &gt;= in front of the number to support
+	  returning true for objects with node counts less than, greater than, less than or equal to,
+	  and greater than or equal to <emphasis remap="I">n</emphasis>.
 	</para>
       </listitem>
     </varlistentry>
@@ -161,10 +161,10 @@
       <term><emphasis remap="B" role="bold">-stdattr</emphasis></term>
       <listitem>
 	<para>
-	  Returns TRUE if an object has ONLY standard attributes associated with it.  
+	  Returns TRUE if an object has ONLY standard attributes associated with it.
 	  Standard attributes in BRL-CAD are:
 	  <table><info><title>Standard Attributes</title></info>
-	    
+
 	    <tgroup cols="2">
 	      <tbody>
 		<row><entry>GIFTmater</entry><entry>inherit</entry></row>
@@ -183,7 +183,7 @@
 	  Returns TRUE if the type of the object matches <emphasis remap="I">pattern.</emphasis>
 	  Pattern evaluation is done using shell pattern matching.  Types recognized include:
 	  <table><info><title>Primitives</title></info>
-	    
+
 	    <tgroup cols="6">
 	      <tbody>
 		<row>
@@ -203,7 +203,7 @@
 		  <entry>ebm</entry>
 		</row>
 		<row>
-	          <entry>ehy</entry>
+		  <entry>ehy</entry>
 		  <entry>ell</entry>
 		  <entry>epa</entry>
 		  <entry>eto</entry>
@@ -211,7 +211,7 @@
 		  <entry>grip</entry>
 		 </row>
 		<row>
-	          <entry>half</entry>
+		  <entry>half</entry>
 		  <entry>hf</entry>
 		  <entry>joint</entry>
 		  <entry>nmg</entry>
@@ -219,7 +219,7 @@
 		  <entry>pipe</entry>
 		</row>
 		<row>
-	          <entry>poly</entry>
+		  <entry>poly</entry>
 		  <entry>rec</entry>
 		  <entry>rhc</entry>
 		  <entry>rpc</entry>
@@ -227,7 +227,7 @@
 		  <entry>sph</entry>
 		</row>
 		<row>
-	          <entry>spline</entry>
+		  <entry>spline</entry>
 		  <entry>submodel</entry>
 		  <entry>tgc</entry>
 		  <entry>tor</entry>
@@ -237,9 +237,9 @@
 	      </tbody>
 	    </tgroup>
 	  </table>
-	  
+
 	  <table><info><title>Combinations</title></info>
-	    
+
 	    <tgroup cols="2">
 	      <thead>
 		<row>
@@ -263,11 +263,11 @@
       </listitem>
     </varlistentry>
   </variablelist>
-  
+
 </refsection>
 
 <refsection xml:id="operators"><info><title>OPERATORS</title></info>
-  
+
   <variablelist remap="TP">
     <varlistentry>
       <term><emphasis remap="B" role="bold">(</emphasis> <emphasis remap="I">expression</emphasis> <emphasis remap="B" role="bold">)</emphasis></term>
@@ -285,7 +285,7 @@
 	  The above operator applies the expression to every object above the current
 	  object in the full path to that object, and returns TRUE if one or more of
 	  them satisfies the expression - e.g -above -name s\* applied to
-	  /component/region.r/start_comb.c/prim1.s would return TRUE for /component and 
+	  /component/region.r/start_comb.c/prim1.s would return TRUE for /component and
 	  /component/region.r as both being "above" start_comb.c, but would return FALSE
 	  the deeper objects.
 	</para>
@@ -296,7 +296,7 @@
       <listitem>
 	<para>
 	  The and operator operates like the logical AND operator - TRUE only if both
-	  expressions are true.  AND is the default operator assumed if two expressions 
+	  expressions are true.  AND is the default operator assumed if two expressions
 	  are present with no operator explicitly defined.
 	</para>
       </listitem>
@@ -333,7 +333,7 @@
 </refsection>
 
 <refsection xml:id="a_note_on_expressions"><info><title>A Note on Expressions</title></info>
-  
+
   <para>
     All primaries and operands must be expressed as separate arguments to search.
     In practice, this means that there must be a space between each element in a
@@ -345,18 +345,18 @@
   <para>
     While this may seem like a rather verbose way of writing the expression, it greatly
     simplifies the parsing of the expression and is standard for virtually all
-    <emphasis remap="B" role="bold">find</emphasis> type commands. Because [a-z] and [0-9] are atomic 
+    <emphasis remap="B" role="bold">find</emphasis> type commands. Because [a-z] and [0-9] are atomic
     arguments as far as search is concerned, they should NOT be expanded in a similar fashion.
   </para>
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>
     The following are run from the MGED command prompt:
   </para>
   <example><info><title>Shell Globbing Based Pattern Match of Object Name</title></info>
-    
+
     <para>
       <userinput>search -name *.s</userinput>
     </para>
@@ -366,7 +366,7 @@
   </example>
 
   <example><info><title>Full Path Instance Reporting of Search Results</title></info>
-    
+
     <para>
       <userinput>search / -name *.s</userinput>
     </para>
@@ -377,7 +377,7 @@
 
 
   <example><info><title>Name Pattern Matching at Depth &gt;= 3</title></info>
-    
+
     <para>
       <userinput>search / -name *.s -mindepth 3</userinput>
     </para>
@@ -388,7 +388,7 @@
   </example>
 
   <example><info><title>Finding all Objects in a Subtree</title></info>
-    
+
     <para>
       <userinput>search group1 -name *.r</userinput>
     </para>
@@ -400,19 +400,19 @@
   </example>
 
   <example><info><title>Finding all Instances of Objects in a Subtree</title></info>
-    
+
     <para>
       <userinput>search /group1 -name *.r</userinput>
     </para>
     <para>
 	    Find all instances of objects below group1 in the database that have names ending in ".r"
-	    Note that, unlike the previous example,  this will return the full path information 
+	    Note that, unlike the previous example,  this will return the full path information
 	    associated with each instance of the objects matched.
     </para>
   </example>
 
   <example><info><title>Searching by Type</title></info>
-    
+
     <para>
       <userinput>search . -type eto</userinput>
     </para>
@@ -423,18 +423,18 @@
   </example>
 
  <example><info><title>Finding all Instances of Nested Regions</title></info>
-    
+
     <para>
       <userinput>search / -type region -above -type region</userinput>
     </para>
     <para>
-      Find all instances of objects of type region that contain a region.  This searches for 
+      Find all instances of objects of type region that contain a region.  This searches for
       regions being used within the subtrees of other regions, which is considered bad practice in BRL-CAD.
     </para>
   </example>
 
   <example><info><title>Finding all Assemblies</title></info>
-    
+
     <para>
       <userinput>search / -below -type region ! -type region</userinput>
     </para>
@@ -445,7 +445,7 @@
   </example>
 
   <example><info><title>Finding all Combinations below Regions</title></info>
-    
+
     <para>
       <userinput>search / ! ( -below -type region ) ! -type region -type comb</userinput>
     </para>
@@ -455,7 +455,7 @@
   </example>
 
   <example><info><title>Finding all Empty Combinations</title></info>
-    
+
     <para>
       <userinput>search -nnodes 0</userinput>
     </para>
@@ -465,7 +465,7 @@
   </example>
 
   <example><info><title>Finding all Combinations With 10 or More Nodes</title></info>
-    
+
     <para>
       <userinput>search -nnodes &gt;=10</userinput>
     </para>
@@ -474,11 +474,11 @@
     </para>
   </example>
 
- 
+
 </refsection>
 
 <refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
-  
+
   <para>
     Errors will be returned if parsing of the arguments fails, or one of the primaries's
     evaluation functions returns an error.
@@ -493,7 +493,7 @@
 </info>
 
 <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
-  
+
   <para>
     This software is Copyright (c) 2008-2012 United States Government as
     represented by the U.S. Army Research Laboratory. All rights reserved.
@@ -504,7 +504,7 @@
 </refsection>
 
 <refsection xml:id="bugs"><info><title>BUGS</title></info>
-  
+
   <para>
     Bugs resulting from incorrect parsing of shell pattern expressions are the
     result of libbu's fnmatch.
@@ -512,7 +512,7 @@
 </refsection>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

@@ -18,12 +18,12 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>loadtk</command>    
+    <command>loadtk</command>
      </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>Loads the initialization for the Tk window library. This is
 	normally done automatically when the user attaches any display manager for MGED.
 	If no display manager is attached, then the user must execute <emphasis>loadtk</emphasis> prior to 	using any Tk facilities.
@@ -31,11 +31,11 @@
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>The example shows the use of the <command>loadtk</command> command to load the initialization for 	the Tk window library.
     </para>
   <example><info><title>Load the initialization of the Tk library.</title></info>
-    
+
     <variablelist>
       <varlistentry>
 	   <term><prompt>mged&gt;</prompt> <userinput>loadtk</userinput></term>
@@ -45,14 +45,14 @@
       </varlistentry>
     </variablelist>
   </example>
-   
-  
+
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

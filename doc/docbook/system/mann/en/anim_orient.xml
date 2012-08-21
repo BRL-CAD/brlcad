@@ -11,7 +11,7 @@
     <refname>anim_orient</refname>
     <refpurpose>convert between orientation formats</refpurpose>
   </refnamediv>
-  
+
   <!-- body begins here -->
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
@@ -39,7 +39,7 @@
 
 
   <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-    
+
     <para>
       <emphasis remap="I">Anim_orient</emphasis> is a filter which translates a table of orientation
       information from one format to another. The method used is to convert
@@ -49,7 +49,7 @@
       <emphasis remap="B" role="bold">q</emphasis> (quaternion), <emphasis remap="B" role="bold">y</emphasis>
       (yaw,pitch, and roll), <emphasis remap="B" role="bold">a</emphasis> (azimuth, elevation, and twist),
       <emphasis remap="B" role="bold">z</emphasis> (x-y-z angles), or <emphasis remap="B" role="bold">m</emphasis>
-      (rotation matrix).  In addition, the output format may be modified by the 
+      (rotation matrix).  In addition, the output format may be modified by the
       <emphasis remap="B" role="bold">u</emphasis> option, and the input and output formats may be modified by the
       <emphasis remap="B" role="bold">r</emphasis>, <emphasis remap="B" role="bold">i</emphasis>,
       and <emphasis remap="B" role="bold">v</emphasis> options. The <emphasis remap="B" role="bold">r</emphasis>
@@ -86,7 +86,7 @@
     </para>
 
     <para>The input and output format codes are:</para>
-    
+
     <variablelist remap="TP">
       <varlistentry>
 	<term><emphasis remap="B" role="bold">q:</emphasis></term>
@@ -143,7 +143,7 @@
 	</listitem>
       </varlistentry>
     </variablelist>
-    
+
     <para>The input and ouput modification codes are:</para>
     <variablelist remap="TP">
       <varlistentry>
@@ -163,7 +163,7 @@
 	  a given matrix represents the orientation an object should be placed
 	  in so that applying the matrix puts it back in the default
 	  orientation.</para>
-	  
+
 	  <para>One common use of the
 	  <emphasis remap="B" role="bold">i</emphasis>
 	  option is for handling "Viewrot" matrices used
@@ -196,12 +196,12 @@
       </varlistentry>
     </variablelist>
   </refsection>
-  
+
   <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-    
-  
+
+
     <example><info><title>Normalize Quaternions to Unit Magnitude</title></info>
-      
+
       <para>
 	<userinput>anim_orient &lt; in.table &gt; out.table</userinput>
       </para>
@@ -212,7 +212,7 @@
     </example>
 
     <example><info><title>XYZ Angles -&gt; Rotation Matrix</title></info>
-      
+
       <para>
 	<userinput>anim_orient z m &lt; in.table &gt; out.table</userinput>
       </para>
@@ -220,9 +220,9 @@
 	change xyz angles to a rotation matrix
       </para>
     </example>
-  
+
     <example><info><title>az/el/tw -&gt; viewrot</title></info>
-      
+
       <para>
 	<userinput>anim_orient a miv &lt; in.table &gt; out.table</userinput>
       </para>
@@ -231,17 +231,17 @@
 	<emphasis remap="I">rt</emphasis> viewrot command.
       </para>
     </example>
-    
+
     <example><info><title>Transpose Matricies</title></info>
-      
+
       <para>
 	<userinput>anim_orient m mi &lt; in.table &gt; out.table</userinput>
       </para>
     </example>
 
-    
+
     <example><info><title>xyz angles -&gt; yaw-pitch-roll</title></info>
-      
+
       <para>
 	<userinput>anim_orient zr y &lt; in.table &gt; out.table</userinput>
       </para>
@@ -249,9 +249,9 @@
 	change radian xyz angles to yaw-pitch-roll in degrees
       </para>
     </example>
-    
+
     <example><info><title>Camera Turning Quaternion</title></info>
-      
+
       <para>
 	<userinput>anim_orient q qv &lt; in.table &gt; out.table</userinput>
       </para>
@@ -261,9 +261,9 @@
 	<emphasis remap="I">rt</emphasis>'s orientation command
       </para>
     </example>
-    
+
     <example><info><title>Default Restoring yaw-pitch-roll</title></info>
-      
+
       <para>
 	<userinput>anim_orient y yi &lt; in.table &gt; out.table</userinput>
       </para>
@@ -272,9 +272,9 @@
 	roll which would bring it back to the default position.
       </para>
     </example>
-    
+
     <example><info><title>Orient "right-side "</title></info>
-      
+
       <para>
 	<userinput>anim_orient qv qvu &lt; in.table &gt; out.table</userinput>
       </para>
@@ -286,7 +286,7 @@
   </refsection>
 
   <refsection xml:id="bugs"><info><title>BUGS</title></info>
-    
+
     <para>
       There are built-in trouble spots which occur, in ypr, xyz, or aet
       formats, when the pitch, y-rotation, or elevation is an odd multiple of 90
@@ -296,20 +296,20 @@
       and gives a warning to that effect on stderr.
     </para>
   </refsection>
- 
+
   <info>
     <author>
       <personname>Carl J. Nuzman</personname>
       <contrib></contrib>
     </author>
   </info>
- 
+
   <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
-    
+
     <para>This software is Copyright (c) 1993-2012 by the United States
     Government as represented by U.S. Army Research Laboratory.</para>
   </refsection>
-  
+
   <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
   <para>Reports of bugs or problems should be submitted via electronic
   mail to &lt;devs@brlcad.org&gt;.</para>

@@ -2,7 +2,7 @@
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Learning Viewing Options in <application>MGED</application></title>
-    
+
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
@@ -13,23 +13,23 @@
 
     <para xml:id="learning_viewing_options_overviewlist">
      In this lesson, you will:
-      
+
       <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Create a model radio.</para>
-	</listitem> 
+	</listitem>
 	<listitem>
 	  <para>Locate  viewing information in the Command Window.</para>
-	</listitem> 
+	</listitem>
 	<listitem>
 	  <para>Identify elements of the <application>MGED</application> viewing system.</para>
-	</listitem> 
+	</listitem>
 	<listitem>
 	  <para>View your radio from different angles.</para>
-	</listitem> 
+	</listitem>
 	<listitem>
 	  <para>Work with Shift Grips.</para>
-	</listitem> 
+	</listitem>
       </itemizedlist>
     </para>
 
@@ -40,16 +40,16 @@
       both the geometry and the view of the geometry that is presented in the
       Graphics Window.
     </para>
-    
+
     <para xml:id="learning_viewing_options_intropara2">
       <application>MGED</application> offers a default view and a variety of optional views. You can switch
       back and forth between these views during and after model creation. This
       lesson is designed to help you understand the viewing process and options.
     </para>
-    
+
     <section xml:id="creating_radio"><info><title>Creating a Radio</title></info>
-      
-     
+
+
       <para>
 	To gain practice viewing actual geometry, let's build a simple geometric
 	object-a "walkie-talkie" radio. Note that the commands we use to do this
@@ -58,48 +58,48 @@
 	commands in detail. Begin by launching <application>MGED</application> and creating a new database
 	named radio.g. Remember that one way to do this is to type the following
 	command in a Terminal Window:
-	
+
 	<command>$ mged radio.g</command>
       </para>
-      
+
       <para>
 	Type the following in the Command Window, carefully checking each line
 	before pressing ENTER. If you make a mistake, use BACKSPACE or the left/
 	right arrow keys to make corrections before pressing ENTER (see Appendix B
 	for the editing command list).
       </para>
-      
+
       <note>
 	<para>
-       Be especially careful to note the difference between the numeral one  
+       Be especially careful to note the difference between the numeral one
        [1] and the letter l [l] in ell1 on the third line.
 	</para>
       </note>
-      
+
       <literallayout class="normal">
        <command>in body.s rpp 0 16 0 32 0 48[ENTER]</command>
-       
+
        <command>in btn.s rec 8 30 36 0 3 0 4 0 0 0 0 2[ENTER]</command>
-       
+
        <command>in btn2.s ell1 8 33 36 4 0 0 2[ENTER]</command>
-       
+
        <command>in spkr.s tor 16 16 16 1 0 0 12 1[ENTER]</command>
-       
+
        <command>in ant.s rcc 2 2 46 0 0 48 1[ENTER]</command>
-       
+
        <command>in knob.s rcc 4 4 40 8 0 0 5[ENTER]</command>
       </literallayout>
-      
-      
+
+
       <note>
 	<para>
-	  Note that in the preceding Command Line expressions, btn is an        
-	  abbreviation for button, ant is an abbreviation for antenna, and spkr 
-	  is an abbreviation for speaker. Also note that the numbers could have 
-	  been separated by single spaces. The extra spaces were inserted       
-	  simply to improve readability. For some usages (e.g., the r and comb  
-	  commands, which are discussed later), the number of spaces has to be  
-	  exact.                   
+	  Note that in the preceding Command Line expressions, btn is an
+	  abbreviation for button, ant is an abbreviation for antenna, and spkr
+	  is an abbreviation for speaker. Also note that the numbers could have
+	  been separated by single spaces. The extra spaces were inserted
+	  simply to improve readability. For some usages (e.g., the r and comb
+	  commands, which are discussed later), the number of spaces has to be
+	  exact.
 	</para>
       </note>
 
@@ -114,7 +114,7 @@
 	  </imageobject>
 	  <caption>
 	    <para>
-	     Default View of a Radio 
+	     Default View of a Radio
 	    </para>
 	  </caption>
 	</mediaobject>
@@ -122,21 +122,21 @@
 
       </para>
     </section>
-    
+
     <section xml:id="locating_viewing_info_cmd_window"><info><title>Locating Viewing Information in the Command Window</title></info>
-      
+
       <para>
 	Now take a minute to look at the Command Window. Even if nothing is in the
 	window, enclosed in the bottom border is a string of information about the
 	Graphics Window. An example string might read:
-	
+
 	<literal>cent=(8.000 16.000 24.000) sz=96.000 mm az=35.00 el=25.00 tw=-0.00
 	ang=(0.00 0.00 0.00)</literal>
       </para>
       <para>
 	As detailed in the following table, this information contains four groups
 	of viewing data about the Graphics Window.
-	
+
 	<table frame="all"><title>Viewing Data at the Bottom of the Command Window</title>
 	<tgroup cols="5" align="center" colsep="1" rowsep="1">
 	  <colspec colname="c1"/>
@@ -196,12 +196,12 @@
 	</table>
       </para>
     </section>
-     
+
     <section xml:id="viewing_system_elements"><info><title>Identifying Elements of the <application>MGED</application> Viewing System</title></info>
-      
-     
+
+
       <section><info><title>Center of View</title></info>
-	
+
 	<para>
 	  The first set of information tells you the center of what you are viewing.
 	  You can change the center of where you are looking through both the GUI
@@ -218,18 +218,18 @@
 	  To change the center of view using the Command Window, simply type at the
 	  prompt the word center followed by three values for x, y, and z  (which is
 	  the 3-D coordinate system mentioned previously). For example:
-	  
+
 	  <command>center 0 15 325.735[Enter]</command>
-	  
+
 	  As you change your view of the geometry, notice that the numbers in the
 	  brackets after the cent= title will change to reflect the new center of
 	  the view.
 	</para>
       </section>
-      
+
       <section><info><title>Size of View</title></info>
-	
-     
+
+
 	<para>
 	  The size of the view is the amount of model space that is shown in the
 	  Graphics Window. For example, consider using a camera with a zoom lens to
@@ -240,7 +240,7 @@
 	  for the image on the right might represent 100 mm across. In both cases,
 	  however, the actual size of the rose is the same.
 	</para>
-	
+
 	<informaltable frame="none" pgwide="1">
 	  <tgroup cols="2" align="center">
 	    <tbody>
@@ -250,13 +250,13 @@
 	      </row>
 	      <row>
 		<entry>Zoom In to View Details (small size of view)</entry>
-		<entry>Zoom Out to View Object 
+		<entry>Zoom Out to View Object
 		in Relation to Environment (large size of view)</entry>
 	      </row>
 	    </tbody>
 	  </tgroup>
 	</informaltable>
-	
+
 	<para>
 	  To change the view size of your radio through the GUI, click the right
 	  mouse button to zoom in and the left mouse button to zoom out. Each time
@@ -280,21 +280,21 @@
 	  You can control the view size of your radio more accurately with the
 	  Command Window. To set the size to 100 (of whichever units you have
 	  selected), type at the prompt:
-	  
+
 	  <command>size 100[Enter]</command>
 	</para>
 	<para>
 	  You can also zoom in or out on a design by typing zoom on the Command
 	  Line. To make your radio appear 50% smaller, you would type:
-	  
+
 	  <command>zoom 0.5[Enter]</command>
 	</para>
 	<para>
 	  To make your radio appear twice as large, you would type:
-	  
+
 	  <command>zoom 2[Enter]</command>
 	</para>
-	
+
 	<note>
 	  <para>
 	    Remember that changing the view size does NOT affect the size of the
@@ -302,10 +302,10 @@
 	  </para>
 	</note>
       </section>
-      
+
       <section><info><title>Angle of View</title></info>
-	
-	
+
+
 	<para>
 	  Azimuth, elevation, and twist (all measured in degrees) determine where
 	  you are in relation to the object you are viewing. Azimuth determines
@@ -324,7 +324,7 @@
 	  Standing behind it would put you at 180'0 azimuth. If you were facing the
 	  passenger's side, you would be at 270'0 azimuth.
 	</para>
-	
+
 	<note>
 	  <para>
 	    The terms azimuth, elevation, and twist are similar to the terms yaw,
@@ -332,13 +332,13 @@
 	    aerospace industry.
 	  </para>
 	</note>
-	
-	
+
+
 	<informaltable frame="none" pgwide="1">
 	  <tgroup cols="2" align="center">
 	    <colspec colwidth="1*"/>
 	    <colspec colwidth="3*"/>
-  	    <tbody>
+	    <tbody>
 	      <row>
 		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged02_truck_front.png"/></imageobject></inlinemediaobject></entry>
 		<entry><inlinemediaobject><imageobject><imagedata fileref="../../lessons/en/images/mged02_truck_35_0.png"/></imageobject></inlinemediaobject></entry>
@@ -350,7 +350,7 @@
 	    </tbody>
 	  </tgroup>
 	</informaltable>
-	
+
 	<informaltable frame="none" pgwide="1">
 	  <tgroup cols="2" align="center">
 	    <colspec colwidth="3*"/>
@@ -367,7 +367,7 @@
 	    </tbody>
 	  </tgroup>
 	</informaltable>
-	
+
 	<informaltable frame="none" pgwide="1">
 	  <tgroup cols="1" align="center">
 	    <tbody>
@@ -380,7 +380,7 @@
 	    </tbody>
 	  </tgroup>
 	</informaltable>
-	
+
 	<para>
 	  Elevation, on the other hand, involves the viewer's position above or
 	  below an object. In the preceding example, you circled around a truck
@@ -392,7 +392,7 @@
 	  facing down, you would be at 90'0 elevation. If you crawled under the
 	  truck and looked directly up at it, you would be at -90'0 elevation.
 	</para>
-	
+
 	<informaltable frame="none" pgwide="1">
 	  <tgroup cols="2" align="center">
 	    <tbody>
@@ -423,7 +423,7 @@
 	    </tbody>
 	  </tgroup>
 	</informaltable>
-	
+
 	<para>
 	  Finally, twist (which is an optional setting in <application>MGED</application>) specifies a rotation
 	  about the viewing direction. This rotation is applied to the view after
@@ -434,7 +434,7 @@
 	  again that it is not the truck that is tipped up, but simply your view of
 	  it. For more information on specifying twist, see the <command>ae</command> command in
 	  Appendix A.
-	  
+
 	  <informaltable frame="none" pgwide="1">
 	    <tgroup cols="1" align="center">
 	      <tbody>
@@ -450,10 +450,10 @@
 	</para>
       </section>
     </section>
-    
+
     <section xml:id="coord_sys_summary"><info><title>Summing up on Azimuth and Elevation and the xyz Coordinate System</title></info>
-      
-     
+
+
       <para>
 	As mentioned at the start of this lesson, <application>MGED</application> operates in a
 	three-dimensional coordinate system (determined by the x, y, and z axes).
@@ -462,7 +462,7 @@
 	from the positive x axis toward and past the positive y axis. Negative
 	azimuth angles are measured in the other direction.
       </para>
-      
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -475,7 +475,7 @@
 	  </caption>
 	</mediaobject>
       </informalfigure>
-      
+
       <para>
 	If the azimuth angle is 0, then elevation is measured in the xz plane with
 	+90'0 corresponding to the positive z direction and -90'0 corresponding to
@@ -483,10 +483,10 @@
 	in a plane aligned with the azimuth direction.
       </para>
     </section>
-    
+
     <section xml:id="view_radio_angles"><info><title>Viewing Your Radio from Different Angles</title></info>
-      
-      
+
+
       <para>
 	Let's now experiment with different views of your radio. <application>MGED</application> has several
 	standard default views, which you've already seen in the preceding truck
@@ -494,11 +494,11 @@
 	(az270, el0); Left (az90, el0); Front (az0, el0); Rear (az180, el0); az35,
 	el25; and az45, el45.
       </para>
-      
+
       <para>
 	Go to the View menu and try viewing your radio from different angles.
       </para>
-      
+
       <informaltable frame="none" pgwide="1">
 	<tgroup cols="2" align="center">
 	  <tbody>
@@ -521,17 +521,17 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-      
+
       <para>
 	You can also select any azimuth-elevation combination from the Command
 	Line. For example, at the prompt type
-	
+
 	<command>ae 128 17[Enter]</command>
-	
+
 	As with many of the Command Line options, this method of selecting views
 	provides a finer degree of control/precision when you need it.
       </para>
-      
+
       <para>
 	<application>MGED</application> can also display multiple views simultaneously. Go to the Modes menu
 	and select Multipane. Four small panes with different views should
@@ -549,13 +549,13 @@
 	    </para>
 	  </caption>
 	</mediaobject>
-      </informalfigure>      
+      </informalfigure>
 
     </section>
 
     <section xml:id="shift_grips"><info><title>Working with Shift Grips</title></info>
-      
-      
+
+
       <para>
 	The Shift Grip options of <application>MGED</application> are handy hot-key and mouse button
 	combinations that can be used in two different ways. With regard to our
@@ -566,7 +566,7 @@
 	both cases, the Shift Grips appear to do the same thing, so it is
 	important always to know the mode in which you are operating.
       </para>
-      
+
       <para>
 	In general, the SHIFT key translates (moves), the CTRL key rotates, and
 	the ALT key constrains (or limits) translation or rotation to a particular
@@ -578,10 +578,10 @@
 	this action). The following table lists all of the key bindings and their
 	functions.
       </para>
-      
+
       <table frame="all">
 	<title>Shift Grip Keys and Effects</title>
-	
+
 	<tgroup cols="5" align="center" colsep="1" rowsep="1">
 	  <colspec colname="c1"/>
 	  <colspec colname="c2"/>
@@ -649,42 +649,42 @@
 	  </tbody>
 	</tgroup>
       </table>
-      
+
       <caution>
 	<para>
-	  Depending on your window manager or desktop environment settings,     
-	  some key combinations may already be designated to perform other      
-	  tasks (e.g., resizing or moving a window). If so, you may need to     
-	  adjust settings to allow the Shift Grip options to function.          
-	  Furthermore, left-handed users may have switched the behavior of the  
-	  left and right mouse buttons in their system configurations. In such  
-	  instances, the terms left mouse button and right mouse button should  
-	  be switched throughout this document.                                 
+	  Depending on your window manager or desktop environment settings,
+	  some key combinations may already be designated to perform other
+	  tasks (e.g., resizing or moving a window). If so, you may need to
+	  adjust settings to allow the Shift Grip options to function.
+	  Furthermore, left-handed users may have switched the behavior of the
+	  left and right mouse buttons in their system configurations. In such
+	  instances, the terms left mouse button and right mouse button should
+	  be switched throughout this document.
 	</para>
       </caution>
-      
+
       <para>
 	Probably the easiest way to familiarize yourself with the Shift Grip
 	options is to try them out on your radio. Using the preceding table as a
 	guide, experiment with translating, rotating, constraining translation and
 	rotation to particular axes, and sizing your radio view.
       </para>
-      
+
       <note>
 	<para>
-	  Remember, although the Shift Grip options may appear to be            
-	  manipulating objects, unless you are in Edit mode they are only       
-	  manipulating your view of the objects.                                
+	  Remember, although the Shift Grip options may appear to be
+	  manipulating objects, unless you are in Edit mode they are only
+	  manipulating your view of the objects.
 	</para>
       </note>
     </section>
-    
+
     <section xml:id="learning_viewing_options_review"><info><title>Review</title></info>
-      
-      
+
+
       <para>
 	In this lesson, you:
-	
+
 	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Created a model radio.</para>

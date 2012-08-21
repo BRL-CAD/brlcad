@@ -2,10 +2,10 @@
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>
-	Crear el modelo de una taza utilizando la interfaz de 
+	Crear el modelo de una taza utilizando la interfaz de
 	<application>MGED</application>
     </title>
-    
+
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
@@ -21,7 +21,7 @@
 	  <para>Crear la figura de una taza desde el GUI.</para>
 	</listitem>
 	<listitem>
-	  <para>Usar nuevas figuras para crear el asa y el reborde suave de la 
+	  <para>Usar nuevas figuras para crear el asa y el reborde suave de la
 		taza.
 	  </para>
 	</listitem>
@@ -36,15 +36,15 @@
 	</listitem>
 	<listitem>
 	  <para>
-	    Asignar propiedades de los materiales usando el editor de 
+	    Asignar propiedades de los materiales usando el editor de
 	    combinaciones (Combination Editor).
 	  </para>
 	</listitem>
       </itemizedlist>
     </para>
     <para xml:id="mug_through_gui_intro1">
-      En los anteriores dos tutoriales, usted creó una taza mediante es uso de 
-      comandos desde el prompt de la ventana de comandos. Ahora usted creará 
+      En los anteriores dos tutoriales, usted creó una taza mediante es uso de
+      comandos desde el prompt de la ventana de comandos. Ahora usted creará
       la misma figura desde el GUI.
     </para>
 
@@ -53,11 +53,11 @@
     </para>
 
     <section xml:id="mug_gui_create_body"><info><title>Crear el cuerpo de la taza</title></info>
-      
+
       <para>
-	Diríjase al menú Create (Crear) y seleccione rcc (right circular 
-	cylinder = cilindro circular recto) bajo la categoría Cones and 
-	Cylinders (Conos y cilindros). Ingrese el nombre del rcc. 
+	Diríjase al menú Create (Crear) y seleccione rcc (right circular
+	cylinder = cilindro circular recto) bajo la categoría Cones and
+	Cylinders (Conos y cilindros). Ingrese el nombre del rcc.
 	Llámelo outside.s.
       </para>
       <para>
@@ -111,41 +111,41 @@
 	  </tgroup>
 	</informaltable>
       </para>
-      
+
 	<para>
 	Nota:
-	La primera columna incluye funciones específicas de figuras. Las otras 
+	La primera columna incluye funciones específicas de figuras. Las otras
 	columnas son opciones comunes a cualquier figura.
 	</para>
-      
+
       <para>
-	Seleccione Set H. Desde una vista frontal, mueva el cursor del ratón a 
-	la mitad inferior de la pantalla y haga clic en el botón central del 
-	ratón para reducir la escala de la altura del cilindro. A continuación, 
-	seleccione el conjunto A, B, C, D. Mueva el cursor del ratón a la 
-	mitad superior de la pantalla y haga clic en el botón central del ratón 
-	para aumentar el diámetro del cilindro. Aceptar los cambios cuando el 
+	Seleccione Set H. Desde una vista frontal, mueva el cursor del ratón a
+	la mitad inferior de la pantalla y haga clic en el botón central del
+	ratón para reducir la escala de la altura del cilindro. A continuación,
+	seleccione el conjunto A, B, C, D. Mueva el cursor del ratón a la
+	mitad superior de la pantalla y haga clic en el botón central del ratón
+	para aumentar el diámetro del cilindro. Aceptar los cambios cuando el
 	objeto aparece similar al que se muestra en la siguiente figura.
       </para>
 
 	<para>
 	  Nota:
-	  Si en algún momento en que edite a través de la GUI no está 
+	  Si en algún momento en que edite a través de la GUI no está
 	  satisfecho con los cambios, puede rechazar los cambios o
-	  restablecerlos desde las opciones del cuadro de diálogo para devolver 
-	  las variables a su valor original. Sin embargo, si las rechaza, 
+	  restablecerlos desde las opciones del cuadro de diálogo para devolver
+	  las variables a su valor original. Sin embargo, si las rechaza,
 	  tendrá que volver a entrar en el estado primitivo de edición descrito
- 	  anteriormente.
+	  anteriormente.
 	</para>
 
       <para>
-	A continuación, cree una figura en el interior del cilindro circular 
-	recto con nombre inside.s. Edite el cilindro de la misma manera que 	
-	editó el cilindro exterior. Antes de que usted acepte los cambios, 
-	cambie la opción View (Vista) a Up (arriba) y asegúrese de que los 
-	cilindros estén alineados. Si los cilindros están fuera de alineación, 	
-	utilice la tecla SHIFT y el botón izquierdo del ratón para arrastrar el 
-	cilindro interior en su posición. Devuelva su vista al frente y acepte 
+	A continuación, cree una figura en el interior del cilindro circular
+	recto con nombre inside.s. Edite el cilindro de la misma manera que
+	editó el cilindro exterior. Antes de que usted acepte los cambios,
+	cambie la opción View (Vista) a Up (arriba) y asegúrese de que los
+	cilindros estén alineados. Si los cilindros están fuera de alineación,
+	utilice la tecla SHIFT y el botón izquierdo del ratón para arrastrar el
+	cilindro interior en su posición. Devuelva su vista al frente y acepte
 	los cambios cuando los cilindros estén alineados.
 	Su cilindros deben asemejarse a los del ejemplo siguiente:
       <informalfigure>
@@ -162,26 +162,26 @@
       </informalfigure>
 
       </para>
-      
+
 	<para>
 	Nota:
-	Recuerde que cuando se cambia la escala de una forma, la posición del 
-	puntero del ratón en la ventana de gráficos determinará qué tan grande 
-	o pequeño será el cambio. Cuanto más se acerque el puntero del ratón 
-	al centro de la línea horizontal de la ventana, menor será el cambio, 
+	Recuerde que cuando se cambia la escala de una forma, la posición del
+	puntero del ratón en la ventana de gráficos determinará qué tan grande
+	o pequeño será el cambio. Cuanto más se acerque el puntero del ratón
+	al centro de la línea horizontal de la ventana, menor será el cambio,
 	y viceversa.
 	</para>
 
     </section>
 
     <section xml:id="mug_gui_create_handle"><info><title>Crear el asa de la taza</title></info>
-      
+
 
       <para>
-	Anteriormente, hemos hecho el asa de la taza con un toro elíptico. En 
-	este tutorial, haremos la manija seleccionando un toro (que es una figura 
-	con forma de rosquilla) en el menú de formas. 
-	Nómbrelo handle.s. El menú Edición ahora ofrecerá un conjunto diferente 
+	Anteriormente, hemos hecho el asa de la taza con un toro elíptico. En
+	este tutorial, haremos la manija seleccionando un toro (que es una figura
+	con forma de rosquilla) en el menú de formas.
+	Nómbrelo handle.s. El menú Edición ahora ofrecerá un conjunto diferente
 	de parámetros detallados en la siguiente lista:
 <informaltable>
 	  <tgroup cols="4">
@@ -220,10 +220,10 @@
 	    </tbody>
 	  </tgroup>
 	</informaltable>
-	En este caso, Set Radio 1 cambia la distancia desde el centro del 
+	En este caso, Set Radio 1 cambia la distancia desde el centro del
 	orificio del toro a la mitad del cuerpo del mismo.
-	Set Radio 2 cambia el radio del toro, el cual define su grosor. Con la 
-	misma técnica utilizada en la edición de las formas rcc, modificar el 
+	Set Radio 2 cambia el radio del toro, el cual define su grosor. Con la
+	misma técnica utilizada en la edición de las formas rcc, modificar el
 	tamaño del toro hasta que se vea similar los siguientes ejemplos:
 	<informaltable>
 	  <tgroup cols="2">
@@ -244,23 +244,23 @@
 	  </tgroup>
 	</informaltable>
 
-	Visualice su taza desde arriba para asegurarse de que esté alineada. 
+	Visualice su taza desde arriba para asegurarse de que esté alineada.
 	Acepte los cambios cuando esté terminada.
       </para>
     </section>
-    
+
     <section xml:id="mug_gui_create_rim"><info><title>Creando el borde de la boca de la taza</title></info>
-      
-      
+
+
       <para>
-	Para hacer el borde de la taza, seleccione del menú Create (Crear), 
-	la opción tor (toro) y cree un toro con el nombre rim.s. 
+	Para hacer el borde de la taza, seleccione del menú Create (Crear),
+	la opción tor (toro) y cree un toro con el nombre rim.s.
 	Seleccione el comando Rotate (Rotación) y tipee en la línea de comandos:
-	
+
 	<command>p 0 90 0[Enter]</command>
-	
-	para girar el toro sobre sí mismo (90'0 en torno al eje y). Luego, 
-	escale y edite los distintos parámetros del toro con las vistas frontal 
+
+	para girar el toro sobre sí mismo (90'0 en torno al eje y). Luego,
+	escale y edite los distintos parámetros del toro con las vistas frontal
 	y superior hasta que la taza se vea similar a la del ejemplo siguiente.
 	Asegúrese de aceptar sus cambios cuando haya terminado.
 
@@ -278,43 +278,43 @@
       </informalfigure>
       </para>
     </section>
-    
+
     <section xml:id="mug_gui_create_combinations"><info><title>Crear combinaciones de varias figuras</title></info>
-      
+
 
       <para>
-	Para combinar las distintas figuras de su taza, tipee los siguientes 
+	Para combinar las distintas figuras de su taza, tipee los siguientes
 	comandos en el prompt de la ventana de comandos:
-	
+
 	<command>comb mug.c u outside.s - inside.s[Enter]</command>
-	
+
 	<command>comb handle.c u handle.s - outside.s[Enter]</command>
-	
+
 	<command>comb mug.c u rim.s[Enter]</command>
-	
-	Nota: 
-	Regrese a los dos tutoriales anteriores a éste para recordar cómo 
+
+	Nota:
+	Regrese a los dos tutoriales anteriores a éste para recordar cómo
 	trabaja cada uno de estos comandos.
-	
+
       </para>
     </section>
 
     <section xml:id="mug_gui_make_region"><info><title>Crear una region con las combinaciones</title></info>
-      
+
 
       <para>
-	Para crear una región partiendo de las combinaciones que acaba de 
+	Para crear una región partiendo de las combinaciones que acaba de
 	crear, tipee en la línea de comandos:
-	
+
 	<command>r mug.r u mug.c u handle.c[Enter]</command>
       </para>
     </section>
 
     <section xml:id="mug_gui_check_tree"><info><title>Controlando el árbol de datos (Data Tree)</title></info>
-      
+
 
       <para>
-	Antes de continuar, sería recomendable controlar el árbol de datos. 
+	Antes de continuar, sería recomendable controlar el árbol de datos.
 	Asegúrese de que está de acuerdo con el siguiente árbol:
 	<literallayout class="normal">
    mug.r/R
@@ -333,57 +333,57 @@
 
    - outside.s
 	</literallayout>
-	  Si su árbol de datos no se parece a este ejemplo, tendrá que volver 
-	  y averiguar dónde ha ido mal. De ser necesario, puede eliminar una 
-	  forma, una combinación, o una región escribiendo en el prompt de la 
+	  Si su árbol de datos no se parece a este ejemplo, tendrá que volver
+	  y averiguar dónde ha ido mal. De ser necesario, puede eliminar una
+	  forma, una combinación, o una región escribiendo en el prompt de la
 	  ventana de comandos:
-	
+
 	<command>kill [name of shape, combination, or region][Enter]</command>
 
       </para>
       <para>
-	Por ejemplo, en este tutorial usted ha creado una figura extra llamada 
+	Por ejemplo, en este tutorial usted ha creado una figura extra llamada
 	rim2.s, que ya no utilizará. Para eiminar esta figura deberá tipear:
 
 	<command>kill rim2.s[Enter]</command>
-	
+
       </para>
     </section>
 
     <section xml:id="mug_gui_comb_edit_props"><info><title>
-	Asignar propiedades de los materiales utilizando el Combination 
+	Asignar propiedades de los materiales utilizando el Combination
 	Editor (Editor de combinaciones)
       </title></info>
-     
+
 
       <para>
 	Vaya al menú Edit (Edición) y seleccione la combinación Editor (Editor).
-	Escriba mug.r en la caja de entrada de Nombre. Pulse ENTER. 
-	Tipee 0 148 0 en el cuadro de entrada de color. Seleccione un sombreado 
-	de plástico. Marque la casilla Boolean Expression (Expresión booleana) 
+	Escriba mug.r en la caja de entrada de Nombre. Pulse ENTER.
+	Tipee 0 148 0 en el cuadro de entrada de color. Seleccione un sombreado
+	de plástico. Marque la casilla Boolean Expression (Expresión booleana)
 	para asegurarse de que diga:
 	<literallayout class="normal">
    u mug.c
 
    u handle.c
 	</literallayout>
-	
-	Cuando esté terminado cliquee en Apply (Aplicar) y luego en Dismiss 
+
+	Cuando esté terminado cliquee en Apply (Aplicar) y luego en Dismiss
 	(Despedir). En la venana de comandos tipee en el prompt:
-	
+
 	<command>B mug.r[Enter]</command>
 
       </para>
     </section>
 
     <section xml:id="mug_gui_raytracing"><info><title>Haciendo el trazado de rayos (Raytracing) del diseño</title></info>
-      
+
       <para>
 	Ir a la opción View (Vista) de la barra de menús y seleccione az35, el25.
-	Ir a File (Archivo) y luego a Raytrace. Seleccione un color de fondo 
-	blanco y genere el trazado de su diseño. Haga clic en Overlay 
-	(Superposición). Cuando el trazado de rayos se termina, debe verse como 
-	el siguiente ejemplo: 
+	Ir a File (Archivo) y luego a Raytrace. Seleccione un color de fondo
+	blanco y genere el trazado de su diseño. Haga clic en Overlay
+	(Superposición). Cuando el trazado de rayos se termina, debe verse como
+	el siguiente ejemplo:
 
       <informalfigure>
 	<mediaobject>
@@ -401,7 +401,7 @@
     </section>
 
     <section xml:id="mug_through_gui_review"><info><title>Repasemos...</title></info>
-      
+
       <para>
 	En este tutorial usted aprenderá a:
 	<itemizedlist mark="bullet">
@@ -424,7 +424,7 @@
 	</listitem>
 	<listitem>
 	  <para>
-	    Asignar propiedades de los materiales usando el editor de 
+	    Asignar propiedades de los materiales usando el editor de
 	    combinaciones (Combination Editor).
 	  </para>
 	</listitem>

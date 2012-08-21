@@ -2,7 +2,7 @@
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Assigning Material Properties and Raytracing in <application>MGED</application></title>
-    
+
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
@@ -13,7 +13,7 @@
 
     <para xml:id="assigning_material_properties_and_raytracing_overviewlist">
       In this lesson, you will:
-      
+
       <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Recall primitive shapes made previously.</para>
@@ -40,26 +40,26 @@
     </para>
 
     <section xml:id="assigning_material_properties_and_raytracing_opendb"><info><title>Opening the Database</title></info>
-      
-      
+
+
       <para>
 	To recall the primitive shapes made in the previous lesson, start <application>MGED</application> and
 	go to the File menu and select Open. A control panel will appear with a
 	list of folders and files. Select shapes.g and Open. A new box will
 	appear, and you should select OK.
       </para>
-      
+
       <para>
 	You should now have two windows prominently displayed on your screen. At
 	the <application>MGED</application> prompt in the Command Window, type:
-	
+
 	<command>draw sph2.s rcc2.s[Enter]</command>
       </para>
     </section>
-    
+
     <section xml:id="create_region"><info><title>Creating a Region</title></info>
-      
-      
+
+
       <para>
 	Before you can raytrace your design, you have to make a region of the two
 	shapes. A region is an object that has uniform material properties. Most
@@ -68,24 +68,24 @@
 	operations of union, intersection, and subtraction, which are discussed in
 	the next chapter.
       </para>
-      
+
       <para>
 	At the <application>MGED</application> prompt, type:
-	
+
 	<command>r shapes2.r u sph2.s u rcc2.s[Enter]</command>
-	
+
       </para>
-      
+
       <note>
 	<para>
-	  Make sure you key in the information correctly before you press ENTER. 
+	  Make sure you key in the information correctly before you press ENTER.
 	  Spaces, or the lack thereof, are important.
 	</para>
       </note>
-      
+
       <para>
 	This command tells <application>MGED</application> to:
-	
+
 	<informaltable>
 	  <tgroup cols="6">
 	    <tbody>
@@ -110,31 +110,31 @@
 	</informaltable>
       </para>
     </section>
-    
+
     <section xml:id="assign_material_prop"><info><title>Assigning Material Properties to a Region</title></info>
-      
+
 
       <para>
 	Now type in:
-	
+
 	<command>mater shapes2.r[Enter]</command>
-	
+
 	<application>MGED</application> will respond with:
-	
+
       </para>
       <literallayout class="normal">
    shader=
-   
+
    Shader? ('del' to delete, CR to skip)
       </literallayout>
-      
+
       <para>
 	Type in:
-	
+
 	<command>plastic[Enter]</command>
-	
+
 	<application>MGED</application> will ask:
-	
+
       </para>
       <literallayout class="normal">
    Color = (no color specified)
@@ -144,9 +144,9 @@
 
       <para>
 	Type in:
-     
+
 	<command>0 255 0[Enter]</command>
-	
+
 	This will assign a light green color to the region. <application>MGED</application> will now ask:
       </para>
 
@@ -158,13 +158,13 @@
 
       <para>
 	Type:
-	
+
 	<command>0[Enter]</command>
-	
+
 	When you have completed this set of commands, your Command Window should
 	look like the following example:
       </para>
-      
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -172,20 +172,20 @@
 	  </imageobject>
 	  <caption>
 	    <para>
-	     The Command Window Screen 
+	     The Command Window Screen
 	    </para>
 	  </caption>
 	</mediaobject>
       </informalfigure>
- 
+
       <para>
 	The one-line version of this set of commands would be:
-	
+
 	<command>mater shapes2.r plastic 0 255 0 0[Enter]</command>
-	
+
 	Diagrammed, this command says to:
       </para>
-      
+
       <informaltable>
 	<tgroup cols="5">
 	  <tbody>
@@ -207,19 +207,19 @@
 	</tgroup>
       </informaltable>
     </section>
-    
+
     <section xml:id="clear_window_new_region"><info><title>Clearing the Graphics Window and Drawing the New Region</title></info>
-      
+
 
       <para>
 	An easy way to clear the Graphics Window of the old design and draw the
 	new region is to type at the <application>MGED</application> prompt:
-	
+
 	<command>B shapes2.r[Enter]</command>
-	
+
 	This command tells <application>MGED</application> to:
       </para>
-      
+
       <informaltable>
 	<tgroup cols="2">
 	  <tbody>
@@ -234,16 +234,16 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-      
+
       <para>
 	The Blast command is shorthand for the combination of the Z and draw
 	commands.
       </para>
     </section>
-    
+
     <section xml:id="raytrace_model"><info><title>Raytracing Your Model</title></info>
-      
-      
+
+
       <para>
 	Now go to the File menu and select Raytrace. A dialog box called the
 	Raytrace Control Panel will appear. At the top are menus for Framebuffer
@@ -252,18 +252,18 @@
 	Make sure the Active, All, and Underlay options are activated (as shown by
 	the presence of a red indicator to the left of each choice). Select OK.
       </para>
-      
+
       <note>
 	<para>
-	  Note: When you select Raytrace from this dialog window, you start an  
-	  auxiliary program (rt) of the <application>BRL-CAD</application> package. The program only       
-	  raytraces objects that have been drawn in the Graphics Window. You    
-	  may have many shapes, regions, or combinations in a database, but if  
-	  they aren't currently drawn in the Graphics Window, the raytracer     
-	  will ignore them.                       
+	  Note: When you select Raytrace from this dialog window, you start an
+	  auxiliary program (rt) of the <application>BRL-CAD</application> package. The program only
+	  raytraces objects that have been drawn in the Graphics Window. You
+	  may have many shapes, regions, or combinations in a database, but if
+	  they aren't currently drawn in the Graphics Window, the raytracer
+	  will ignore them.
 	</para>
       </note>
-      
+
       <para>
 	Change the background color produced by the raytracer by selecting
 	Background Color  in the Raytrace Control Panel. A drop-down menu will
@@ -271,14 +271,14 @@
 	white option. The select button should now appear white, in accordance
 	with your selection.
       </para>
-      
+
       <para>
 	Next select Raytrace from the four options along the bottom of the box.
 	The Graphics Window should start changing, and you will soon see your
 	design in shades of green with the wireframe superimposed on the design,
 	as shown in the following example:
       </para>
-      
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -291,12 +291,12 @@
 	  </caption>
 	</mediaobject>
       </informalfigure>
-      
+
       <para>
 	As we have seen, you can specify the background color for the raytraced
 	image.
       </para>
-      
+
       <para>
 	You can also fill the entire framebuffer with the background color. To do
 	this, select the desired color and then click the fbclear (framebuffer
@@ -305,8 +305,8 @@
     </section>
 
     <section xml:id="layers_graphics_window"><info><title>Changing Layers of the Graphics Window</title></info>
-      
-      
+
+
       <para>
 	The Graphics Window of <application>MGED</application> is used to display different types of
 	graphical information: 3D wireframes and 2D pixels (or images).
@@ -316,7 +316,7 @@
 	transparencies, and the order in which they are stacked and displayed can
 	be changed.
       </para>
-      
+
       <para>
 	As mentioned previously, there is a Framebuffer menu within the Raytrace
 	Control Panel. At the top of this menu is a toggle button labeled Active.
@@ -328,7 +328,7 @@
 	option is similar to the overlay mode. The subtle difference is an
 	advanced topic not covered here.
       </para>
-      
+
       <informaltable frame="none">
 	<tgroup cols="2">
 	  <tbody>
@@ -343,7 +343,7 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-      
+
       <para>
 	To see how this works, go to the framebuffer menu and select Overlay.
 	Notice that the wireframe representation disappears. Where does it go? If
@@ -351,7 +351,7 @@
 	model's geometry, you would have to make the framebuffer inactive or
 	select underlay  mode.
       </para>
-      
+
       <para>
 	The wireframe layer has a yellow dot in the center that marks the center
 	of the view talked about in Lesson 2. This allows you to determine whether
@@ -360,7 +360,7 @@
 	geometry and the Graphics Window seems to remain blank, you are probably
 	seeing a blank framebuffer masking the wireframe layer.
       </para>
-      
+
       <para>
 	Note that you can change the view in the wireframe, but the view in the
 	framebuffer does not automatically update to match. It is not possible to
@@ -368,17 +368,17 @@
 	in order to update the framebuffer image.
       </para>
     </section>
-    
+
     <section xml:id="clear_graphics_window"><info><title>Clearing the Graphics Window</title></info>
-      
-      
+
+
       <para>
 	To completely clear the Graphics Window, you have to handle both the
 	wireframe and framebuffer layers. Recall that you can clear the wireframe
 	layer with the Z command. For the framebuffer layer, there is the fbclear
 	button on the Raytrace Control Panel.
       </para>
-      
+
       <para>
 	In some instances, you may prefer to turn off the framebuffer instead of
 	clearing it. When the framebuffer is turned off, <application>MGED</application> runs faster because
@@ -386,24 +386,24 @@
 	display. You can turn the framebuffer on and off by toggling the Active
 	item in the Raytrace Control Panel's framebuffer menu.
       </para>
-      
+
       <note>
 	<para>
-	  Note that in <application>BRL-CAD</application> versions 5.1 and later, turning off the          
-	  framebuffer does not destroy the image it contains. Turning it back   
-	  on displays the same image. However, in earlier versions of the       
-	  package, the contents of the framebuffer are lost when it is turned   
-	  off.                          
+	  Note that in <application>BRL-CAD</application> versions 5.1 and later, turning off the
+	  framebuffer does not destroy the image it contains. Turning it back
+	  on displays the same image. However, in earlier versions of the
+	  package, the contents of the framebuffer are lost when it is turned
+	  off.
 	</para>
       </note>
     </section>
-    
+
     <section xml:id="assigning_material_properties_and_raytracing_review"><info><title>Review</title></info>
-      
-      
+
+
       <para>
 	In this lesson you:
-	
+
 	<itemizedlist mark="bullet">
 	  <listitem>
 	    <para>Recalled primitive shapes made previously.</para>

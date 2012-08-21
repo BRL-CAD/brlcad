@@ -7,7 +7,7 @@
     <refmiscinfo class="source">BRL-CAD</refmiscinfo>
     <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-  
+
   <refnamediv xml:id="name">
     <refname>build_region</refname>
     <refpurpose>
@@ -15,45 +15,45 @@
       specifically formatted names based on the provided tags and numbers.
     </refpurpose>
   </refnamediv>
-  
+
   <!-- body begins here -->
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
-      <command>build_region</command>    
+      <command>build_region</command>
       <arg choice="opt" rep="norepeat">-a <replaceable>region_num</replaceable></arg>
       <arg choice="req" rep="norepeat"><replaceable>tag start_num end_num</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
-  
+
   <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-    
+
     <para>
-      Builds a region from existing solids that have specifically formatted names 
+      Builds a region from existing solids that have specifically formatted names
       based on the provided tags and numbers. The created region will be named "tag.rx,"
-      where "x" is the first number (starting from 1) that produces an unused region 
+      where "x" is the first number (starting from 1) that produces an unused region
       name. If the <emphasis>-a</emphasis> option is used, then the specified
       "region_num" will be used for "x." If that region already exists, this operation will
-      append the new geometry to the existing region definition. If that region does not 
-      exist, a new one will be created. The solids that will be involved in this operation 
-      are those with names of the form "tag.s#" or "tag.s#o@," where "#" is a number 
-      between <emphasis>start_num</emphasis> and <emphasis>end_num</emphasis> inclusive, 
+      append the new geometry to the existing region definition. If that region does not
+      exist, a new one will be created. The solids that will be involved in this operation
+      are those with names of the form "tag.s#" or "tag.s#o@," where "#" is a number
+      between <emphasis>start_num</emphasis> and <emphasis>end_num</emphasis> inclusive,
       "o" is either "u," "-," or "+," and "@" is any number.
       The operators and numbers coded into the solid names are used to build the region.
     </para>
   </refsection>
-  
+
   <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-    
-    <para>The example demonstrates how to use the <command>build_region</command> command to 
+
+    <para>The example demonstrates how to use the <command>build_region</command> command to
     build a region from existing solids.
     </para>
     <example><info><title>Build a region from existing solids</title></info>
-      
+
       <variablelist>
 	<varlistentry>
 	  <term><prompt>mged&gt;</prompt> <userinput>buid_region abc 1 2</userinput></term>
 	  <listitem>
-	    <para>Creates a region named "abc.r1" consisting of: 
+	    <para>Creates a region named "abc.r1" consisting of:
 	    <simplelist type="vert">
 	      <member>u abc.s1</member>
 	      <member>u abc.s2</member>
@@ -67,11 +67,11 @@
       </variablelist>
     </example>
   </refsection>
-  
+
   <info><corpauthor>BRL-CAD Team</corpauthor></info>
-  
+
   <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-    
+
     <para>
       Reports of bugs or problems should be submitted via electronic
       mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

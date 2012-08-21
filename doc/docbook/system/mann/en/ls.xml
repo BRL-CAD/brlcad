@@ -20,14 +20,14 @@ command.  If the object argument is supplied, only those objects are listed.
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>ls</command>    
+    <command>ls</command>
       <arg choice="opt" rep="norepeat">-A -o -a -c -r -s -p -l -q</arg>
-    	<arg choice="opt" rep="norepeat"><replaceable>objects</replaceable></arg>
+	<arg choice="opt" rep="norepeat"><replaceable>objects</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>The command with no <emphasis>object</emphasis> argument lists the name of every object in the
 	database (in alphabetical order) except for those marked as hidden with the <command>hide</command>
 	command.  If the <emphasis>object</emphasis> argument is supplied, only those <emphasis>objects</emphasis> 	are listed.  The <emphasis>object</emphasis> argument may include regular expressions. If the <emphasis>-A	</emphasis> option is used, then the arguments are expected to be a list of attribute name/value pairs, and 	objects having attributes that match the provided list are listed. By default, an object must match all
@@ -73,24 +73,24 @@ command.  If the object argument is supplied, only those objects are listed.
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
-  <para>The examples show the use of the <command>ls</command> command and its options to list objects, primitives, regions, or combinations having a specific object. 
+
+  <para>The examples show the use of the <command>ls</command> command and its options to list objects, primitives, regions, or combinations having a specific object.
   </para>
   <example><info><title>List all objects beginning with a particular name.</title></info>
-    
+
     <variablelist>
       <varlistentry>
 	   <term><prompt>mged&gt;</prompt> <userinput>ls shape*</userinput></term>
 	   <listitem>
 	     <para>Lists all objects with names beginning with "shape" (output is formatted).
-	      	     </para>
+		     </para>
 	   </listitem>
       </varlistentry>
     </variablelist>
   </example>
-       
+
   <example><info><title>List all objects beginning with a particular name.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>ls -a shape*</userinput>
     </para>
@@ -98,7 +98,7 @@ command.  If the object argument is supplied, only those objects are listed.
     </para>
   </example>
   <example><info><title>List all primitives beginning with a particular name.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>ls -p wheel*</userinput>
     </para>
@@ -106,7 +106,7 @@ command.  If the object argument is supplied, only those objects are listed.
     </para>
   </example>
  <example><info><title>List all regions beginning with a particular name.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>ls -r wheel*</userinput>
     </para>
@@ -114,7 +114,7 @@ command.  If the object argument is supplied, only those objects are listed.
     </para>
   </example>
  <example><info><title>List all combinations beginning with a particular name.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>ls -c suspension*</userinput>
     </para>
@@ -122,7 +122,7 @@ command.  If the object argument is supplied, only those objects are listed.
     </para>
   </example>
   <example><info><title>List all regions having particular attributes.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>ls -A -o -r Comment{First comment} Comment{Second comment}</userinput>
     </para>
@@ -135,7 +135,7 @@ command.  If the object argument is supplied, only those objects are listed.
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

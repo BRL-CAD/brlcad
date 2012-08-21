@@ -20,7 +20,7 @@
   </info>
 
   <section xml:id="article-body">
-    
+
     <para>
       BRL-CAD is a powerful cross-platform Open Source combinatorial
       Constructive Solid Geometry (CSG) solid modeling system that
@@ -87,10 +87,10 @@
 
     <note>
       <para>
-        Mike Muuss began the initial architecture and design of
-        BRL-CAD back in 1979.  Development as a unified package began
-        in 1983.  The first public release was made in 1984.  BRL-CAD
-        became an open source project on 21 December 2004.
+	Mike Muuss began the initial architecture and design of
+	BRL-CAD back in 1979.  Development as a unified package began
+	in 1983.  The first public release was made in 1984.  BRL-CAD
+	became an open source project on 21 December 2004.
       </para>
     </note>
 

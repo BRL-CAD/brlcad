@@ -18,8 +18,8 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>preview</command>    
-    
+    <command>preview</command>
+
     <arg choice="opt" rep="norepeat">-v</arg>
     <arg choice="opt" rep="norepeat">-d <replaceable>delay</replaceable></arg>
     <arg choice="opt" rep="norepeat">-D <replaceable>start_frame_number</replaceable></arg>
@@ -29,32 +29,32 @@
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>Allows the user to <emphasis>preview</emphasis> animation scripts in MGED. The
-	<emphasis>-d</emphasis> option provides a delay in seconds to be applied between each frame (the 	default is no delay). The <emphasis>-D</emphasis> option allows the user to specify a starting frame 	number, and the <emphasis>-K</emphasis> option allows the specification of an ending frame number. The 	<emphasis>-v</emphasis> flag indicates that the objects displayed in the MGED graphics window should be 	displayed in evaluated mode, as would be the result of the <command>ev</command> command. Note that 	this may significantly slow the <emphasis>preview</emphasis>. 
+	<emphasis>-d</emphasis> option provides a delay in seconds to be applied between each frame (the 	default is no delay). The <emphasis>-D</emphasis> option allows the user to specify a starting frame 	number, and the <emphasis>-K</emphasis> option allows the specification of an ending frame number. The 	<emphasis>-v</emphasis> flag indicates that the objects displayed in the MGED graphics window should be 	displayed in evaluated mode, as would be the result of the <command>ev</command> command. Note that 	this may significantly slow the <emphasis>preview</emphasis>.
   </para>
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
-  <para>The example shows the use of the <command>preview</command> command to preview specified frames of an animation script. 
+
+  <para>The example shows the use of the <command>preview</command> command to preview specified frames of an animation script.
    </para>
-         
+
   <example><info><title>Preview an animation script.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>preview -D 101 -K 237 script.rt</userinput>
     </para>
     <para>Displays the animation script stored in the file named <emphasis>script.rt</emphasis> from frame number 101 through frame number 237.
     </para>
   </example>
- 
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

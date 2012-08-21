@@ -2,7 +2,7 @@
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Creating a Globe in a Display Box</title>
-    
+
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
@@ -32,23 +32,23 @@
       </listitem>
     </itemizedlist>
   </para>
-    
+
     <section xml:id="globe_in_display_newdb"><info><title>Create a New Database</title></info>
-      
+
       <para>
 	Begin by creating a new database. Name your new file cube.g.
       </para>
     </section>
-    
+
     <section xml:id="globe_create_display_box"><info><title>Creating the Display Box</title></info>
-      
+
       <para>
 	Go to the Create menu, select the Arbs category, and then select an arb8
 	(arbitrary convex polyhedron with eight vertices). When asked to provide a
 	name for the arb8, name it cube1.s. Click on Apply. Go to the Edit menu
 	and select Accept. You now have a cube for the outside of the display
 	box, as in the following:
- 
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -63,14 +63,14 @@
       </informalfigure>
 
       </para>
-      
+
       <para>
 	Repeat the first part of this process to produce another arb8, this time
 	calling this shape cube2.s. Go to the Edit menu and select Scale. Place
 	the mouse pointer in the lower half of the Graphics Window screen and
 	click the middle mouse button until the second cube is slightly smaller
 	than the first cube, as follows:
-      
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -85,7 +85,7 @@
       </informalfigure>
 
       </para>
-      
+
       <para>
 	Go to the View menu and change view to Front. Go to the Edit menu and
 	select Translate (move). Hold down the SHIFT key and drag the inside
@@ -97,23 +97,23 @@
     </section>
 
     <section xml:id="create_globe_in_box"><info><title>Create a Globe Inside the Display Box</title></info>
-      
+
       <para>
 	Go to the Create menu and select sph from the list of Ellipsoids. Name the
 	shape globe1.s and select Apply.
       </para>
-      
+
       <para>
 	A sphere should appear inside the cube in the Graphics Window. Change View
 	to Front.
       </para>
-      
+
       <para>
 	Go to the Edit menu and select Scale. Reduce the size of the sphere until
 	it will fit inside of the cube and then drag it into the center of the
 	cube. Go to Edit and Accept your changes. Your globe and box should appear
 	similar to the following in the az35, el25 view:
-	
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -128,27 +128,27 @@
       </informalfigure>
 
       </para>
-      
+
       <para>
 	To view contents of the database, type at the Command Window prompt:
-	
+
 	<command>ls[Enter]</command>
       </para>
-      
+
       <para>
 	You should see cube1.s, cube2.s, and globe1.s listed as shapes you have
 	created. To make regions of these shapes, type at the prompt:
-	
+
 	<command>r cube1.r u cube1.s - cube2.s[Enter]</command>
-	
+
 	<command>r globe1.r u globe1.s[Enter]</command>
       </para>
     </section>
-    
+
     <section xml:id="globe_assign_mater_prop"><info><title>Using the Combination Editor to Assign Material Properties that Make
       the Objects Appear More Realistic</title></info>
-      
-      
+
+
       <para>
 	Go to Edit and select Combination Editor. In the dialog box, click the
 	button next to the Name entry box. Select globe1.r from Select From All or
@@ -157,39 +157,39 @@
 	the region is made up of u globe1.s. Click on Apply to accept your
 	choices. Go to View and select az35, el25.
       </para>
-      
+
       <para>
 	Go back to Name and select cube1.r from the Select From All menu. Assign
 	this region a Shader of glass. The glass shader is a shortcut to
 	individually changing the attributes of the plastic shader to make it
 	appear like glass.
       </para>
-      
+
       <para>
 	Go to the Color option and enter the values 244 255 255. This will give
 	your glass box a light cyan color. Click on Apply to accept your changes.
       </para>
-      
+
       <para>
 	Before you can raytrace your design, you need to clear the Graphics Window
 	by typing Z at the Command Window prompt because both shapes and regions
 	are being displayed at this point. Next, type in the Command Window:
-	
+
 	<command>draw cube1.r globe1.r[Enter]</command>
       </para>
-      
+
       <para>
 	The display box and globe should reappear in the Graphics Window. Go to
 	the File menu and select Raytrace. Next, select the white option for
 	Background Color. Click on Raytrace.
       </para>
-      
+
       <para>
 	Your design should show a light cyan-colored glass cube with a blue globe
 	inside. To eliminate the wireframing, go to Framebuffer (in the Raytrace
 	Panel) and select Overlay. The display should appear similar to the
 	following illustration:
-	
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -204,11 +204,11 @@
       </informalfigure>
 
       </para>
-      
+
       <para>
 	To make this design more interesting, you can place the globe on a base.
 	Do this by going back to Framebuffer and clicking on Active to deactivate
-	the framebuffer. Next, go to the Create menu and select the trc 
+	the framebuffer. Next, go to the Create menu and select the trc
 	(truncated right cone) under the Cones and Cylinders category. Name the
 	shape base1.s. Working from a Front view, go to the Edit menu and select
 	Scale. Click the middle mouse button to reduce the trc in size until the
@@ -221,9 +221,9 @@
 	do not select Accept yet, as we have more changes to make.
       </para>
     </section>
-    
+
     <section xml:id="globe_move_rotate"><info><title>Moving and Rotating an Object</title></info>
-      
+
       <para>
 	As with other features in <application>MGED</application>, moving and rotating objects can be
 	accomplished in several ways, according to the amount of precision
@@ -234,7 +234,7 @@
 	specific parameter numbers can be entered in the Command Window. In this
 	lesson, we will experiment with both methods.
       </para>
-      
+
       <para>
 	With your trc still in edit mode and still in a Front view, use the SHIFT
 	key and the left mouse button to drag your shape (the bottom of the base)
@@ -243,24 +243,24 @@
 	on the Command Line to move the trc to an exact location; however, in this
 	case, aligning the shape with the drag-and-drop "eyeballing" method was
 	appropriate. At this point, you may notice that your trc needs to be
-	resized a little to better fit the globe. Use Scale and Set H as needed 
+	resized a little to better fit the globe. Use Scale and Set H as needed
 	and then Accept your changes.
       </para>
-      
+
       <para>
 	Now we need to make a second trc named base2.s, which we will use for the
 	top of the base. On the Command Line, type:
-	
+
 	<command>cp base1.s base2.s</command>
       </para>
-      
+
       <para>
 	The second trc will appear directly on top of the first trc, so we will
 	have to use Primitive Selection under the edit menu to put base2.s in edit
 	mode so that we can flip it upside down and then drag it to the top of the
 	first trc.
       </para>
-      
+
       <para>
 	To do this, we could use  the CTRL and ALT (constrained rotation) keys and
 	left mouse button and then move the mouse up or down until the trc is
@@ -270,10 +270,10 @@
 	use a more precise method to flip the shape. Select Rotate under Edit and
 	then type in the following parameters (abbreviated as p) on the Command
 	Line:
-	
+
 	<command>p 180 0 0[Enter]</command>
       </para>
-      
+
       <para>
 	Our shape should have flipped upside down and jumped to the bottom of the
 	first trc. (The two zeros you input indicate no rotation along the y and z
@@ -282,14 +282,14 @@
 	which to hold your globe. Check your alignment using multiple views and
 	then Accept your changes.
       </para>
-      
+
       <para>
 	Go to Edit and Primitive Selection and select
 	globe1.r/globe1.s. As you did with the trc shapes, use the
 	Shift Grips to drag the globe down until it is in place on the
 	base. Go back to the Edit menu and select Accept. Your design
 	should look as follows:
-	
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -303,36 +303,36 @@
 	</mediaobject>
       </informalfigure>
       </para>
-      
+
       <para>
 	To make a region of the base, type in the Command Window:
-	
+
 	<command>r base1.r u base1.s u base2.s[Enter]</command>
       </para>
     </section>
-    
+
     <section xml:id="globe_use_color_tool"><info><title>Use the Color Tool of the Combination Editor to Produce Customized
       Colors.</title></info>
-      
-      
+
+
       <para>
 	In the Combination Editor window, click the button  to the right of the
 	Name entry box and then Select From All. Choose base1.r. Assign the base a
 	Shader of plastic. In the Color box, enter the numbers:
-	
+
 	<command>217 217 217</command>
       </para>
-      
+
       <para>
 	Apply your changes. Before you can raytrace your completed design, you
 	must first clear the Graphics Window and rebuild your design by typing at
 	the Command Window prompt:
-	
+
 	<command>Z[Enter]</command>
-	
+
 	<command>draw cube1.r globe1.r base1.r[Enter]</command>
       </para>
-      
+
       <para>
 	Change your view to az35, el25 and then raytrace your design, which should
 	appear similar to the following:
@@ -344,13 +344,13 @@
 	  </imageobject>
 	</mediaobject>
       </informalfigure>
- 
+
 
      </para>
     </section>
-    
+
     <section xml:id="globe_in_display_box_review"><info><title>Review</title></info>
-      
+
       <para>
 	In this lesson, you:
 	<itemizedlist mark="bullet">

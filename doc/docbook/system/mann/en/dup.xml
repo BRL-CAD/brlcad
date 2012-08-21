@@ -12,60 +12,60 @@
 <refnamediv xml:id="name">
   <refname>dup</refname>
   <refpurpose>Checks the specified <emphasis>file</emphasis> (which is expected
-  	to contain a <emphasis>BRL-CAD</emphasis> model) for names that are the same as those in the current model.
+	to contain a <emphasis>BRL-CAD</emphasis> model) for names that are the same as those in the current model.
    </refpurpose>
 </refnamediv>
 
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>dup</command>    
-    
+    <command>dup</command>
+
     <arg choice="req" rep="norepeat"><replaceable>file</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>prefix</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>Checks the specified <emphasis>file</emphasis> (which is expected to contain a
- 	<emphasis>BRL-CAD</emphasis> model) for names that are the same as those in the current model. If a 	<emphasis>prefix</emphasis> is included on the command line, all names in the specified <emphasis>file	</emphasis> will have that <emphasis>prefix</emphasis> added to their names before comparison with the 	current model. This command is often used prior to invoking the <command>dbconcat</command> command to 	ensure that there are no name clashes.
+	<emphasis>BRL-CAD</emphasis> model) for names that are the same as those in the current model. If a 	<emphasis>prefix</emphasis> is included on the command line, all names in the specified <emphasis>file	</emphasis> will have that <emphasis>prefix</emphasis> added to their names before comparison with the 	current model. This command is often used prior to invoking the <command>dbconcat</command> command to 	ensure that there are no name clashes.
   </para>
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>The first example shows the use of the <command>dup</command> command to check for files having the same name as those in the current model. The second example shows how to prefix the file names in the other model before comparing them with the names of the current model files.
-    
+
   </para>
   <example><info><title>Check for files having the same name as those in the current model. </title></info>
-    
+
     <variablelist>
       <varlistentry>
 	   <term><prompt>mged&gt;</prompt> <userinput>dup other_model.g</userinput></term>
 	   <listitem>
 	     <para>Checks <emphasis>other_model.g</emphasis> for names duplicating those in the current model.
-      	     </para>
+	     </para>
 	   </listitem>
       </varlistentry>
     </variablelist>
   </example>
-             
+
   <example><info><title/></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>dup other_model.g abc</userinput>
     </para>
     <para>Does the same check as in the first example, but prefixes all the names in <emphasis>other_model.g        	    </emphasis>with <emphasis>abc</emphasis> before comparing with the names in the current model.
     </para>
   </example>
- 
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

@@ -18,14 +18,14 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>kill</command>    
+    <command>kill</command>
      <arg choice="opt" rep="norepeat">-f</arg>
      <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>
     Deletes the specified <emphasis>objects</emphasis> from the current database.
 	This command affects only the <emphasis>objects</emphasis> actually listed on the command 	line. If a combination is killed, its members are not affected. If the <emphasis>-f	</emphasis>option is specified, then kill will not complain if some, or all, of the 	<emphasis>objects</emphasis> specified do not actually exist in the database. Note that 	the <emphasis>objects</emphasis> are killed immediately. There is no need for a <command>	write file</command> command in MGED, and there is no <command>undo</command> command. 	<emphasis remap="B" role="bold">Use this command with caution.</emphasis> Other commands 	that remove objects from the database are <command>killall</command> and <command>killtree	</command>.
@@ -33,11 +33,11 @@
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>The example shows the use of the <command>kill</command> command to delete specified 	objects from the database.
   </para>
   <example><info><title>Delete objects from the database.</title></info>
-    
+
     <variablelist>
       <varlistentry>
 	   <term><prompt>mged&gt;</prompt> <userinput>kill group1 region2 shapeb</userinput></term>
@@ -48,13 +48,13 @@
       </varlistentry>
     </variablelist>
   </example>
-  
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

@@ -31,9 +31,9 @@ resources/
 system/
 	Documentation similar to traditional Unix "man" pages - focused
 	documentation on specific parts of BRL-CAD.  There is a template
-        for authors of mged command man pages at:
+	for authors of mged command man pages at:
 
-          ./system/mann/mged_cmd_template.xml
+	  ./system/mann/mged_cmd_template.xml
 
 presentations/
 	Copies of briefings (slides or slides converted to documents,
@@ -92,55 +92,55 @@ documents:
   For all DB documents (man, html, and pdf):
 
     * xsltproc
-        a program that comes with libxslt (see http://xmlsoft.org/XSLT/)
+	a program that comes with libxslt (see http://xmlsoft.org/XSLT/)
 
     * saxon-he
-        an Open Source java xslt processor (capable of using XSLT 2.0
-        and the new DB XSLT 2.0 stylesheets released on 2011-08-25
-        [not yet used or provided with BRL-CAD]) (see
-        http://saxon.sourceforge.net/)
+	an Open Source java xslt processor (capable of using XSLT 2.0
+	and the new DB XSLT 2.0 stylesheets released on 2011-08-25
+	[not yet used or provided with BRL-CAD]) (see
+	http://saxon.sourceforge.net/)
 
   For pdf documents:
 
     * fop
-        a java program provide by the Apache Software Foundation; note
-        that a minimum of version 1.0 is required to use the
-        hyphenation binaries provided in thre resources sub-directory
-        (see http://xmlgraphics.apache.org/fop/).  Also, version 1.0
-        has some new font support features and we recommend using that
-        version (or later) for DB processing.
+	a java program provide by the Apache Software Foundation; note
+	that a minimum of version 1.0 is required to use the
+	hyphenation binaries provided in thre resources sub-directory
+	(see http://xmlgraphics.apache.org/fop/).  Also, version 1.0
+	has some new font support features and we recommend using that
+	version (or later) for DB processing.
 
     * Java
-        a working Java run-time environment
+	a working Java run-time environment
 
     * scribus
-        an Open Source page layout program; use to convert eps to svg
-        (see http://www.scribus.net)
+	an Open Source page layout program; use to convert eps to svg
+	(see http://www.scribus.net)
 
   For checking the well-formedness of any xml document:
 
     * xmllint
-        a program that comes with libxml2 (see http://xmlsoft.org/)
+	a program that comes with libxml2 (see http://xmlsoft.org/)
 
   For creating and editing svg equations:
 
     * LibreOffice
-        a free office suite whose text editor can be used to create
-        and edit equations and export them to MathML (mml) files (see
-        http://www.libreoffice.org/)
+	a free office suite whose text editor can be used to create
+	and edit equations and export them to MathML (mml) files (see
+	http://www.libreoffice.org/)
 
     * Inkscape
-        a powerful and free vector drawing editor (see
-        http://inkscape.org)
+	a powerful and free vector drawing editor (see
+	http://inkscape.org)
 
     * math2svg
-        a program (from the SVGMath suite) to convert MathML xml
-        format to SVG xml format (see
-        http://http://grigoriev.ru/svgmath/ and
-        http://sourceforge.net/projects/svgmath/)
+	a program (from the SVGMath suite) to convert MathML xml
+	format to SVG xml format (see
+	http://http://grigoriev.ru/svgmath/ and
+	http://sourceforge.net/projects/svgmath/)
 
-        Note that the output sometimes needs further editing either
-        manually or by inkscape.
+	Note that the output sometimes needs further editing either
+	manually or by inkscape.
 
 See this link for help in installing fop 1.0 and saxon-he on Ubuntu:
 
@@ -161,28 +161,28 @@ external tools that are not presently part of the BRL-CAD package:
   For the 'msv' validation method (a recommended method):
 
     * msv
-        Oracle Multi-Schema XML Validator (MSV) (see http://msv.java.net/)
+	Oracle Multi-Schema XML Validator (MSV) (see http://msv.java.net/)
 
     * Java
-        a working Java run-time environment
+	a working Java run-time environment
 
   For the 'nvdl' validation method:
 
     * onvdl.jar
-        a Java jar file with the oNVDL validation tool (see
-        https://sourceforge.net/projects/onvdl/
+	a Java jar file with the oNVDL validation tool (see
+	https://sourceforge.net/projects/onvdl/
 
     * Java
-        a working Java run-time environment
+	a working Java run-time environment
 
   For the 'rnv' validation method:
 
     * rnv
-        http://sourceforge.net/projects/rnv/
+	http://sourceforge.net/projects/rnv/
 
     * expat library
-        present in most Linux/Unix distributions, see
-        http://expat.sourceforge.net/
+	present in most Linux/Unix distributions, see
+	http://expat.sourceforge.net/
 
 To use these tools, a <toolname>.cmake.in file must be present
 in the misc/CMake source directory.  This file tells CMake how

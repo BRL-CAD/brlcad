@@ -46,8 +46,8 @@
     <synopfragment xml:id="to">
       <arg><option>-n</option></arg>
       <group>
-        <arg choice="plain"><option choice="plain">-a</option></arg>
-        <arg choice="plain"><option choice="plain">-r</option></arg>
+	<arg choice="plain"><option choice="plain">-a</option></arg>
+	<arg choice="plain"><option choice="plain">-r</option></arg>
       </group>
       <group choice="req">
 	<arg choice="plain">
@@ -100,8 +100,8 @@
     <sbr/>
     <synopfragment xml:id="obj">
       <arg choice="plain">
-        <arg><replaceable>path/</replaceable></arg>
-        <arg choice="plain"><replaceable>object</replaceable></arg>
+	<arg><replaceable>path/</replaceable></arg>
+	<arg choice="plain"><replaceable>object</replaceable></arg>
       </arg>
       <arg>
 	<synopfragmentref linkend="coord">offset_distance</synopfragmentref>
@@ -120,7 +120,7 @@
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>
     Used to move one or more instances of primitive or combination
     objects. The positions of <emphasis>object</emphasis>'s are
@@ -168,14 +168,14 @@
     </info>
     <variablelist>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
+	<term>
+	  <prompt>&gt; </prompt>
 	  <userinput>
 	    edit translate -a -z obj1 obj2 obj3 obj4 obj5
 	  </userinput>
-        </term>
-        <listitem>
-          <para>
+	</term>
+	<listitem>
+	  <para>
 	    The <emphasis>from</emphasis> point defaults to the
 	    bounding box center of the first target
 	    <emphasis>object</emphasis>, which is obj2. Every instance
@@ -196,14 +196,14 @@
     </info>
     <variablelist>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
+	<term>
+	  <prompt>&gt; </prompt>
 	  <userinput>
 	    edit translate -k . -a -z obj1 obj2 obj3 obj4 obj5
 	  </userinput>
-        </term>
-        <listitem>
-          <para>
+	</term>
+	<listitem>
+	  <para>
 	    Sets the elevation of obj[2-5] to the elevation of obj1.
 	    Each object uses its own bounding box center as the
 	    <emphasis>from</emphasis> point in an operation that moves
@@ -220,14 +220,14 @@
     </info>
     <variablelist>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
+	<term>
+	  <prompt>&gt; </prompt>
 	  <userinput>
 	    edit translate -k . -a obj1 obj2 obj3 obj4 obj5
 	  </userinput>
-        </term>
-        <listitem>
-          <para>
+	</term>
+	<listitem>
+	  <para>
 	    Each object uses its own bounding box center as the
 	    <emphasis>from</emphasis> point in an operation that moves
 	    <emphasis>to</emphasis> the bounding box center of obj1.
@@ -242,12 +242,12 @@
   <example><info><title>Explicitly set the z-axis of an obj.</title></info>
     <variablelist>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
-          <userinput>edit translate -a -z 7.8 obj</userinput>
-        </term>
-        <listitem>
-          <para>
+	<term>
+	  <prompt>&gt; </prompt>
+	  <userinput>edit translate -a -z 7.8 obj</userinput>
+	</term>
+	<listitem>
+	  <para>
 	    Moves obj <emphasis>from</emphasis> its bounding
 	    box center <emphasis>to</emphasis> 7.8 on the
 	    z-axis.
@@ -265,12 +265,12 @@
     </info>
     <variablelist>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
-          <userinput>edit translate -n -k . -a . obj1 obj2 obj3</userinput>
-        </term>
-        <listitem>
-          <para>
+	<term>
+	  <prompt>&gt; </prompt>
+	  <userinput>edit translate -n -k . -a . obj1 obj2 obj3</userinput>
+	</term>
+	<listitem>
+	  <para>
 	    The <emphasis>object</emphasis>s are moved from their own
 	    natural origins to their own bounding box centers.
 	  </para>
@@ -288,12 +288,12 @@
     </info>
     <variablelist>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
+	<term>
+	  <prompt>&gt; </prompt>
 	  <userinput>edit translate -n -a -z obj2/obj3 obj1</userinput>
-        </term>
-        <listitem>
-          <para>
+	</term>
+	<listitem>
+	  <para>
 	    Moves obj1 up or down <emphasis>from</emphasis> the
 	    elevation of its bounding box center
 	    <emphasis>to</emphasis> the apparent elevation of the
@@ -314,18 +314,18 @@
     </info>
     <variablelist>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
+	<term>
+	  <prompt>&gt; </prompt>
 	  <userinput>
 	    edit translate -n -k obj1 -n -a -z obj2/obj3 obj1
 	  </userinput>
-        </term>
+	</term>
       </varlistentry>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
+	<term>
+	  <prompt>&gt; </prompt>
 	  <userinput>edit translate -n -k . -n -a -z obj2/obj3 obj1</userinput>
-        </term>
+	</term>
       </varlistentry>
     </variablelist>
   </example>
@@ -339,12 +339,12 @@
     </info>
     <variablelist>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
+	<term>
+	  <prompt>&gt; </prompt>
 	  <userinput>edit translate -a -x 8 -z 42 obj1/obj2/obj3</userinput>
-        </term>
-        <listitem>
-          <para>
+	</term>
+	<listitem>
+	  <para>
 	    Moves the instance of ob3 in obj2
 	    <emphasis>from</emphasis> the apparent bounding box center
 	    of obj3 <emphasis>as offset by</emphasis> obj1/obj2,
@@ -366,20 +366,20 @@
   <example><info><title>Translations using relative positions.</title></info>
     <variablelist>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
-          <userinput>edit translate -k obj1 -r -z 5 obj2</userinput>
-        </term>
+	<term>
+	  <prompt>&gt; </prompt>
+	  <userinput>edit translate -k obj1 -r -z 5 obj2</userinput>
+	</term>
       </varlistentry>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
-          <userinput>edit translate -a -z obj1 0 0 5 obj2</userinput>
-        </term>
+	<term>
+	  <prompt>&gt; </prompt>
+	  <userinput>edit translate -a -z obj1 0 0 5 obj2</userinput>
+	</term>
       </varlistentry>
       <varlistentry>
-        <listitem>
-          <para>
+	<listitem>
+	  <para>
 	    These commands perform the same function. The z-coordinate
 	    of the bounding box center of obj2 is moved to the
 	    z-coordinate of the bounding box center of obj1
@@ -398,15 +398,15 @@
   </info>
     <variablelist>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
+	<term>
+	  <prompt>&gt; </prompt>
 	  <userinput>
 	    edit translate -k -x c/obj1 1.5 -y c/obj2 0 3 -z c/obj3 0 0 10
 	    -a -x b/c/obj4 2 -y b/c/obj5 0 4 -z b/c/obj6 0 0 20 obj7 obj8
 	  </userinput>
-        </term>
-        <listitem>
-          <para>
+	</term>
+	<listitem>
+	  <para>
 	    Every use of <command>translate</command> involves a
 	    <emphasis>from</emphasis> point and a
 	    <emphasis>to</emphasis> point.  One of the more flexible
@@ -419,30 +419,30 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
+	<term>
+	  <prompt>&gt; </prompt>
 	  <userinput>
 	    edit translate -k -x c/obj1 1.5 -a -x b/c/obj4 2 obj7 obj8
 	  </userinput>
-        </term>
+	</term>
       </varlistentry>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
+	<term>
+	  <prompt>&gt; </prompt>
 	  <userinput>
 	    edit translate -k -y c/obj2 0 3 -a -y b/c/obj5 0 4 obj7 obj8
 	  </userinput>
-        </term>
+	</term>
       </varlistentry>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
+	<term>
+	  <prompt>&gt; </prompt>
 	  <userinput>
 	    edit translate -k -z c/obj3 0 0 10 -a -z b/c/obj6 0 0 20 obj7 obj8
 	  </userinput>
-        </term>
-        <listitem>
-          <para>
+	</term>
+	<listitem>
+	  <para>
 	    In the first shortened command, the
 	    <emphasis>from</emphasis> point is set to the x-coordinate
 	    of the apparent point of the bounding box center of the
@@ -456,7 +456,7 @@
 	    distance from each other.The other shortened commands are
 	    similar.
 	  </para>
-          <para>
+	  <para>
 	    By splitting the larger command, an interesting detail was
 	    revealed. In the larger command, every point was set
 	    explicityly, so none defaulted. In the first shortened
@@ -478,7 +478,7 @@
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

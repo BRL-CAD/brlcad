@@ -19,13 +19,13 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>permute</command>    
+    <command>permute</command>
       <arg choice="req" rep="norepeat"><replaceable>tuple</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>Permutes the vertex labels for the face of an ARB shape
 	that is currently being edited. The <emphasis>tuple</emphasis> indicates which face is affected and also
 	indicates the desired result. The tuple is formed by concatenating the list of vertex
@@ -37,12 +37,12 @@
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>The example shows the use of the <command>permute</command> command to rearrange the vertices of the ARB being edited according to the specified tuple.
      </para>
-  
+
   <example><info><title>Rearrange the vertices of an ARB being edited.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>permute 321</userinput>
     </para>
@@ -50,13 +50,13 @@
 	vertex 1, vertex 2 remains 2, and vertex 1 becomes 3.
     </para>
   </example>
- 
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

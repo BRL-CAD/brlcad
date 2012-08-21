@@ -156,9 +156,9 @@
     <emphasis>from</emphasis> argument is similar to the concept
     of a keypoint). Reference points may be incomplete, and
     specify only one or two coordinates.
-  </para> 
+  </para>
   <para>
-    The format of the standard options accepted by subcommands, 
+    The format of the standard options accepted by subcommands,
     <option>-n</option>,
     <option>-k</option>,
     <option>-a</option>/<option>-r</option>, and
@@ -171,7 +171,7 @@
     All edit commands interpret a lone point
     (<arg choice="plain"> . </arg>) as a special
     operator, called the batch operator. The batch operator is
-    accepted as an argument to the options 
+    accepted as an argument to the options
     <option>-k</option>, <option>-a</option>, and <option>-r</option>.
     In a batch operation, each individual
     <emphasis>object</emphasis> is operated on using the bounding
@@ -221,7 +221,7 @@
 	<para>
 	  Sets the keypoint <emphasis>from</emphasis> to either
 	  <emphasis>from_object</emphasis>'s bounding box center or
-	  <emphasis>from_position</emphasis>. 
+	  <emphasis>from_position</emphasis>.
 	</para>
       </listitem>
     </varlistentry>
@@ -231,7 +231,7 @@
 	<para>
 	  Sets the destination point <emphasis>to</emphasis> to
 	  either <emphasis>to_object</emphasis>'s bounding box center
-	  or <emphasis>to_position</emphasis>. 
+	  or <emphasis>to_position</emphasis>.
 	</para>
       </listitem>
     </varlistentry>
@@ -239,7 +239,7 @@
       <term><option>-r</option></term>
       <listitem>
 	<para>
-	  Sets the destination point <emphasis>to</emphasis> to 
+	  Sets the destination point <emphasis>to</emphasis> to
 	  a point offset by <emphasis>to_position</emphasis> from
 	  the <emphasis>from</emphasis> point.
 	</para>
@@ -291,14 +291,14 @@
   <example><info><title>Get the usage of a subcommand.</title></info>
     <variablelist>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
-          <userinput>edit translate</userinput>
-        </term>
-        <listitem>
-          <para>
+	<term>
+	  <prompt>&gt; </prompt>
+	  <userinput>edit translate</userinput>
+	</term>
+	<listitem>
+	  <para>
 	    Print usage of the translate subcommand
-          </para>
+	  </para>
 	</listitem>
       </varlistentry>
     </variablelist>
@@ -342,12 +342,12 @@
     </title></info>
     <variablelist>
       <varlistentry>
-        <term>
-          <prompt>&gt; </prompt>
-          <userinput>edit fake_subcmd -B 12 -k sph.s 1.5 7 -a 0 0 0 cube.s</userinput>
-        </term>
-        <listitem>
-          <para>
+	<term>
+	  <prompt>&gt; </prompt>
+	  <userinput>edit fake_subcmd -B 12 -k sph.s 1.5 7 -a 0 0 0 cube.s</userinput>
+	</term>
+	<listitem>
+	  <para>
 	    The nonstandard <option>-B</option> option is unique to
 	    <command>fake_subcmd</command>. An explanation of how it
 	    is used would be found in the manual for fake_subcmd, if
@@ -359,18 +359,18 @@
 	    The interpretation of the vector created by these points
 	    would be defined in the <command>fake_subcmd</command>
 	    manual.
-          </para>
+	  </para>
 	</listitem>
       </varlistentry>
     </variablelist>
   </example>
-       
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

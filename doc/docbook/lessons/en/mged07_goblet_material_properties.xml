@@ -2,7 +2,7 @@
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Assigning Material Properties to a Goblet</title>
-    
+
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
@@ -13,7 +13,7 @@
 
     <para xml:id="goblet_material_properties_overviewlist">
       In this lesson, you will:
-      
+
       <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Review how to open an existing database.</para>
@@ -29,7 +29,7 @@
 	</listitem>
       </itemizedlist>
     </para>
-    
+
     <para xml:id="goblet_material_properties_intro1">
       In this lesson, you will add material properties to the goblet you created
       in the previous lesson. The finished goblet should appear similar to the
@@ -51,16 +51,16 @@
     </para>
 
     <section xml:id="goblet_review_opening_db"><info><title>Review of Opening an Existing Database</title></info>
-      
-      
+
+
       <para>
 	If you exited after the last lesson, open your goblet database (goblet.g)
 	again. The easiest way to do this is to open the database from the
 	Terminal Window when first starting <application>MGED</application>. To do this, type at the prompt:
-	
+
 	<command>mged goblet.g[Enter]</command>
       </para>
-      
+
       <para>
 	Alternatively, you could start the <application>MGED</application> program, and select File from the
 	menu bar and then Open. A dialog box will appear and ask you to enter an
@@ -69,17 +69,17 @@
 	database was successfully opened and it is using millimeters for its unit
 	of measure. Click on OK.
       </para>
-      
+
       <section><info><title>Drawing the Goblet in the Graphics Window</title></info>
-	
-	
+
+
 	<para>
 	  To draw the goblet you made in the previous lesson, move the mouse pointer
 	  to the Command Window and type at the prompt:
-	  
+
 	  <command>draw goblet1.c[Enter]</command>
 	</para>
-	
+
 	<para>
 	  A wireframe representation of the goblet should appear in the Graphics
 	  Window.
@@ -88,7 +88,7 @@
     </section>
 
     <section xml:id="goblet_assign_colors"><info><title>Assigning Colors and the Plastic Shader to Regions of the Goblet</title></info>
-      
+
       <para>
 	Go to the Edit menu and select Combination Editor. To select the various
 	regions of the goblet you made in the last lesson, go back to the Name box
@@ -97,7 +97,7 @@
 	for this database will appear, including base1.r, basin1.r, and stem1.r.
 	double click on base1.r to select that region.
       </para>
-      
+
       <para>
 	Click on the button to the right of Color in the Combination
 	Editor, and a drop-down menu will appear with a list of
@@ -109,29 +109,29 @@
 	Apply to assign the color blue and the plastic shader to the
 	goblet base.
       </para>
-      
+
       <para>
 	Repeat this process to assign the color green and plastic shader to the
 	stem1.r region and the color yellow and plastic shader to the basin1.r
 	region. When you are finished, select OK to dismiss the Combination
 	Editor box.
       </para>
-      
+
       <para>
 	Although the changes have been made to the database, the display in the
 	Graphics Window doesn't reflect them yet. So, return the mouse pointer to
 	the Command Window and type at the prompt:
-	
+
 	<command>B goblet1.c[Enter]</command>
       </para>
-      
+
       <para>
 	This command clears the screen and redraws the goblet with the color
 	selections applied.
       </para>
-      
+
       <section><info><title>Raytracing the Goblet</title></info>
-	
+
 	<para>
 	  To raytrace the goblet, go to the File menu and select Raytrace. The
 	  Raytrace Control Panel will appear. Move your mouse pointer to the button
@@ -140,16 +140,16 @@
 	  smaller before you open the raytrace panel. When the window is resized,
 	  select Raytrace to start the raytrace process.
 	</para>
-	
+
 	<note>
 	  <para>
-	    Note: As mentioned previously, it is undesirable to have regions that 
-	    overlap. Although having overlaps may not always affect the           
-	    raytracing process, if the model were going to be statistically       
+	    Note: As mentioned previously, it is undesirable to have regions that
+	    overlap. Although having overlaps may not always affect the
+	    raytracing process, if the model were going to be statistically
 	    analyzed, overlaps would create problems.
 	  </para>
 	</note>
-	
+
 	<para>
 	  While the goblet is raytracing, move your mouse cursor to the Framebuffer
 	  option of the Raytrace Control Panel menu bar and select Overlay. When
@@ -172,9 +172,9 @@
 	</para>
       </section>
     </section>
-    
+
     <section xml:id="goblet_transparency_mirror"><info><title>Using the Transparency and Mirror Reflectance Shader Options</title></info>
-      
+
       <para>
 	The raytraced goblet looks fairly realistic, but it could be enhanced by
 	using other options of the Combination Editor. When you selected the
@@ -183,14 +183,14 @@
 	Transparency. You can adjust this property on individual regions by
 	entering any value between 0.0  (opaque) and 1.0 (transparent).
       </para>
-      
+
       <para>
 	Just as you applied color and a shader to each of the goblet's three
 	regions, you can adjust the transparency of each region by (1) selecting
 	the region in the Combination Editor, (2) left clicking on the box next to
 	Transparency, and (3) entering any value between 0.0 and 1.0.
       </para>
-      
+
       <para>
 	For this lesson, open the Combination Editor, click the button to the
 	right of the Name box, choose Select From All Regions in the drop-down
@@ -211,9 +211,9 @@
 	  </caption>
 	</mediaobject>
       </informalfigure>
-	
+
       </para>
-      
+
       <para>
 	The colors of the semi-transparent goblet are brighter than those of the
 	opaque goblet because more light is allowed to penetrate the plastic
@@ -224,10 +224,10 @@
 	available light to be reflected off the surface of the goblet.
       </para>
     </section>
-    
+
     <section xml:id="goblet_newforms_raytrace"><info><title>Raytracing the New Forms of the Goblet</title></info>
-      
-      
+
+
       <para>
 	Click on Apply and Raytrace the design. The new image should appear
 	similar to the following example:
@@ -244,21 +244,21 @@
 	  </caption>
 	</mediaobject>
       </informalfigure>
-	
+
       </para>
-      
+
       <para>
 	The new image is substantially different in appearance from the original
 	image. Continue changing the values of transparency and mirror reflectance
 	to see how they impact the resulting image.
       </para>
-      
+
       <para>
 	Remember that when using these options, the combined value of both options
 	should be less than 1.0. The following table shows you just some of the
 	many possible combinations you could use:
       </para>
-      
+
       <informaltable frame="all">
 	<tgroup cols="2">
 	  <thead>
@@ -292,10 +292,10 @@
 	</tgroup>
       </informaltable>
     </section>
-    
+
     <section xml:id="goblet_material_properties_review"><info><title>Review</title></info>
-      
-      
+
+
       <para>
 	In this lesson, you:
 	<itemizedlist mark="bullet">

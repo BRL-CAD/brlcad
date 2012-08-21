@@ -2,7 +2,7 @@
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Using the Pipe Primitive</title>
-    
+
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
@@ -12,7 +12,7 @@
   </info>
 
   <section xml:id="pipe_general_use"><info><title>General Use</title></info>
-    
+
     <para>
 
     </para>
@@ -78,16 +78,16 @@
     </para>
 
     <figure><info><title>Basic pipe with parameters.</title></info>
-      
+
       <mediaobject>
 	<imageobject>
 	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig01.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
-  
+
     <figure><info><title>Various bend radii.</title></info>
-      
+
       <mediaobject>
 	<imageobject>
 	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig02.png" format="PNG"/>
@@ -96,7 +96,7 @@
     </figure>
 
     <figure><info><title>Example of special uses of the pipe.</title></info>
-      
+
       <mediaobject>
 	<imageobject>
 	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig03.png" format="PNG"/>
@@ -127,7 +127,7 @@
   </section>
 
   <section xml:id="pipe_make_coil"><info><title>Making a Coil</title></info>
-    
+
     <para>
       In addition to using the pipe primitive to make tubular objects such as
       electrical and hydraulic lines, it can be used to make other types of
@@ -179,7 +179,7 @@
     </para>
 
     <figure><info><title>Determining the point positions for the copper coil.</title></info>
-      
+
       <mediaobject>
 	<imageobject>
 	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig04.png" format="PNG"/>
@@ -192,11 +192,11 @@
       section is to use half of the coil diameter as an offset. The first and
       the last points in the coil must lie on the pipe's path. These points are
       easily determined at
-        90&#x00B0; <!-- degree symbol -->
-        intervals from the center of the pipe (or, with
+	90&#x00B0; <!-- degree symbol -->
+	intervals from the center of the pipe (or, with
       a bit of trigonometry, at any interval). The rest of the points for the
       pipe are located at
-        &#x00B1; <!-- plus/minus symbol -->
+	&#x00B1; <!-- plus/minus symbol -->
       offsets in whichever plane is perpendicular to the
       pipe height vector from the center of the pipe with the proper height
       delta (which will generally be 1/4 of the height per coil section).
@@ -326,7 +326,7 @@
     </para>
 
     <figure><info><title>Raytraced coil segment.</title></info>
-      
+
       <mediaobject>
 	<imageobject>
 	  <imagedata align="center" fileref="../../articles/en/images/pipes_fig13.png" format="PNG"/>
@@ -335,54 +335,54 @@
     </figure>
 
     <note><info><title>Important Points to Remember About the Pipe</title></info>
-      
+
       <itemizedlist mark="bullet" xml:id="pipes_summary_list">
 	<listitem>
 	  <para>
-	    Even the end points of a pipe have a bend radius (although it is  
+	    Even the end points of a pipe have a bend radius (although it is
 	    not used unless the point is changed to an interior point).
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    Each bend radius value must be greater than half the value of its 
-	    corresponding outer diameter. 
+	    Each bend radius value must be greater than half the value of its
+	    corresponding outer diameter.
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    The pipe primitive does not have to be used for hollow tubes. The 
-	    inner diameter can be 0, making the object solid. 
+	    The pipe primitive does not have to be used for hollow tubes. The
+	    inner diameter can be 0, making the object solid.
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    The bend radius at each point constrains the pipe in such a way   
-	    that the path of the pipe often touches only end points, not      
+	    The bend radius at each point constrains the pipe in such a way
+	    that the path of the pipe often touches only end points, not
 	    those in between.
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    BRL-CAD will not allow points to be added, deleted, or moved if   
-	    the result of such actions would create pipes with mathematically 
+	    BRL-CAD will not allow points to be added, deleted, or moved if
+	    the result of such actions would create pipes with mathematically
 	    invalid characteristics.
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    Points may not be coincident; they must be offset by at least     
+	    Points may not be coincident; they must be offset by at least
 	    0.0001 mm.
 	  </para>
 	</listitem>
       <listitem>
 	<para>
-	  When modeling a tube with fluid inside of it, model both the tube 
-	  and fluid as solid pipes and subtract the fluid from the tube.  
+	  When modeling a tube with fluid inside of it, model both the tube
+	  and fluid as solid pipes and subtract the fluid from the tube.
 	</para>
       </listitem>
       </itemizedlist>
     </note>
   </section>
-  
+
 </article>

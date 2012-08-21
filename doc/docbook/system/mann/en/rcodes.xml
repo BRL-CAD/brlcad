@@ -19,42 +19,42 @@ regions listed.
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>rcodes</command>    
+    <command>rcodes</command>
      <arg choice="req" rep="norepeat"><replaceable>file_name</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>Reads the specified file and assigns the region attributes to the
 regions listed. The file is expected to be in the format produced by the <command>wcodes</command>
 command.
-  
+
   </para>
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>The example shows the use of the <command>rcodes</command> command to set the region-specific attributes according to the values found in the specified file.
-    
+
   </para>
-        
+
   <example><info><title>Assign region-specific attributes to listed regions.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>rcodes region_codes</userinput>
     </para>
     <para>Reads the file named <emphasis>region_codes</emphasis> and sets the region-specific attributes 	according to the values found in the file.
-       
+
     </para>
   </example>
- 
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

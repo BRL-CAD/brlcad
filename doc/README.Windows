@@ -43,4 +43,3 @@ ALL_BUILD.  Start compiling that target.
 Once compilation is successfully complete, you may want to produce an
 NSIS installer.  If so, locate a target named PACKAGE and run it.  The
 end result should be an .exe file capable of installing BRL-CAD.
-

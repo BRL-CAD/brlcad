@@ -19,10 +19,10 @@
      <title>Introduction to Tcl/Tk</title>
 
      <author>
-        <personname>
-          <firstname>TraNese</firstname>
-          <surname>Christy</surname>
-        </personname>
+	<personname>
+	  <firstname>TraNese</firstname>
+	  <surname>Christy</surname>
+	</personname>
      </author>
 
      <legalnotice>
@@ -1414,7 +1414,7 @@
     </listitem>
 
     <listitem>
-        <para>Reads and executes the file as a Tcl script.</para>
+	<para>Reads and executes the file as a Tcl script.</para>
     </listitem>
 
     <listitem>

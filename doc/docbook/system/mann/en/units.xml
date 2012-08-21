@@ -19,15 +19,15 @@ MGED is using.
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>units</command>    
-    
+    <command>units</command>
+
     <arg choice="opt" rep="norepeat"><replaceable>units_type</replaceable></arg>
-    
+
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>With no arguments, will return the current type of units that
 MGED is using. If a <emphasis>units_type</emphasis> is specified, MGED will switch to editing in the
 indicated units. The actual database is always stored in millimeters, and the display is
@@ -35,7 +35,7 @@ adjusted to the user's choice of units. If the <emphasis>units_type</emphasis> s
 is one of the types allowed, it will be written to the database file as the preferred units
 and succeeding invocations will use those units. The <emphasis>units_type</emphasis> strings that will be
 remembered as the preferred editing unit are as follows:</para>
-  
+
   <itemizedlist mark="bullet">
 <listitem>
 <para>mm -- millimeters
@@ -218,27 +218,27 @@ editing units, are as follows:
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
-  <para>The example shows the use of the <command>units</command> command with a <emphasis>units_type</emphasis> argument to switch 	the editing units. 
+
+  <para>The example shows the use of the <command>units</command> command with a <emphasis>units_type</emphasis> argument to switch 	the editing units.
    </para>
-  
-      
+
+
   <example><info><title>Switch the editing units to inches.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>units in</userinput>
     </para>
     <para>Switch to editing in inches and remember this as the preferred editing units for
-	this database.       
+	this database.
     </para>
   </example>
- 
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

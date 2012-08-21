@@ -20,15 +20,15 @@ delete all or part of the list.   </refpurpose>
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>vdraw</command>    
-    
+    <command>vdraw</command>
+
     <arg choice="req" rep="norepeat"><replaceable>command</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>args</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>Allows drawing of lines and polygons (optionally with per
 vertex normals) in the MGED graphics display. It is used to build a named list of
 drawing commands for MGED, send the list to the MGED display, modify the list, or
@@ -148,13 +148,13 @@ command lists.</para>
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>The eight examples show the use of the <command>vdraw</command> command with four different commands and various arguments to build a list of commands to draw a square.
    </para>
-  
-       
+
+
   <example><info><title>Open a specified list.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>vdraw open square</userinput>
     </para>
@@ -162,52 +162,52 @@ command lists.</para>
     </para>
   </example>
  <example><info><title>Set the color.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>vdraw params color ff00</userinput>
     </para>
     <para>Sets the color to green.
-    
+
     </para>
   </example>
 <example><info><title>Start a line at the origin.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>vdraw write next 0 0 0 0</userinput>
     </para>
     <para>Starts a line at the origin.
-       
+
     </para>
   </example>
 <example><info><title>Draw a line from the previous point to a specified point.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>vdraw write next 1 100 0 0</userinput>
     </para>
     <para>Draws a line from the origin to (100 0 0).
-       
+
     </para>
   </example>
 <example><info><title>Draw a line from the previous point to a specified point.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>vdraw write next 1 100 100 0</userinput>
     </para>
     <para>Draws a line from the previous point to (100 100 0).
-       
+
     </para>
   </example>
 <example><info><title>Draw a line from the previous point to a specified point.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>vdraw write next 1 0 100 0</userinput>
     </para>
     <para> Draws a line from the previous point to (0 100 0).
-       
+
     </para>
   </example>
 <example><info><title>Draw a line from the previous point to the origin.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>vdraw write next 1 0 0 0</userinput>
     </para>
@@ -216,12 +216,12 @@ command lists.</para>
     </para>
   </example>
 <example><info><title>Send the command list to the display manager.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>vdraw send</userinput>
     </para>
     <para>Draws the square in the MGED display.
-       
+
     </para>
   </example>
 
@@ -231,7 +231,7 @@ command lists.</para>
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

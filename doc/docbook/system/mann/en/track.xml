@@ -19,42 +19,42 @@ such as a tank.
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>track</command>    
-    
+    <command>track</command>
+
     <arg choice="opt" rep="norepeat"><replaceable>parameters&gt;</replaceable></arg>
-    
+
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>Builds a simple representation of the linked track of a vehicle
 such as a tank. With no command line arguments, the track command will prompt
 for all the required input. The vehicle is assumed to be axis-aligned with the front in
 the +<emphasis>x</emphasis> direction. A combination name for the track is built by appending a unique
 number to the string track. The information about the track may be included on the
 command line, and is order-dependent. The parameters are (in order):</para>
-  
+
 <itemizedlist mark="bullet">
 <listitem>
 	<para><emphasis>x</emphasis> coordinate of center of frontmost roadwheel.
-  	</para>
+	</para>
 </listitem>
 <listitem>
 	<para><emphasis>x </emphasis>coordinate of center of rearmost roadwheel.
- 	</para>
+	</para>
 </listitem>
 <listitem>
 	<para><emphasis>z </emphasis>coordinate of center of all roadwheels.
-  	</para>
+	</para>
 </listitem>
 <listitem>
 	<para>radius of all roadwheels.
- 	</para>
+	</para>
 </listitem>
 <listitem>
 	<para><emphasis>x</emphasis> coordinate of center of drive wheel (rear).
-  	</para>
+	</para>
 </listitem>
 <listitem>
 	<para><emphasis>z </emphasis>coordinate of center of drive wheel (rear).
@@ -62,58 +62,58 @@ command line, and is order-dependent. The parameters are (in order):</para>
 </listitem>
 <listitem>
 	<para>radius of drive wheel.
-  	</para>
+	</para>
 </listitem>
 <listitem>
 	<para><emphasis>x</emphasis> coordinate of center of idler wheel (front).
-  	</para>
+	</para>
 </listitem>
 <listitem>
 	<para><emphasis>z</emphasis>coordinate of center of idler wheel (front).
-  	</para>
+	</para>
 </listitem>
 <listitem>
 	<para>radius of idler wheel.
-  	</para>
+	</para>
 </listitem>
 <listitem>
 	<para><emphasis>y</emphasis> coordinate of right side of track.
-  	</para>
+	</para>
 </listitem>
 <listitem>
 	<para><emphasis>y</emphasis> coordinate of left side of track.
-  	</para>
+	</para>
 </listitem>
 <listitem>
 	<para>track thickness.
-  	</para>
+	</para>
 </listitem>
 </itemizedlist>
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>The example shows the use of the <command>track</command> command with arguments to build a simple track.
-    
+
   </para>
-  
-       
+
+
   <example><info><title>Build a simple track.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>track 500 0 10 10 -50 50 10 550 50 10 -50 -20 2</userinput>
     </para>
     <para>Builds a simple track using the provided arguments.
-       
+
     </para>
   </example>
- 
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

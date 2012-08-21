@@ -1,10 +1,10 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0"
-         xmlns:xi="http://www.w3.org/2001/XInclude"
+	 xmlns:xi="http://www.w3.org/2001/XInclude"
 >
   <info><title>Setting Up a .mgedrc File</title>
-    
+
 
     <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
@@ -46,8 +46,8 @@
 
   <note xml:id="mgedrc4">
     <para>
-      Remember that when creating/updating .mgedrc files, if any            
-      conflicting/repeated commands are found, BRL-CAD "obeys" the last     
+      Remember that when creating/updating .mgedrc files, if any
+      conflicting/repeated commands are found, BRL-CAD "obeys" the last
       command listed.
     </para>
   </note>
@@ -61,7 +61,7 @@
 
   <figure xml:id="mgedrc6"><info><title>The two basic parts of the .mgedrc file: (1) information before header, and (2) information
     after header.</title></info>
-    
+
     <mediaobject>
       <imageobject>
 	<imagedata align="center" fileref="../../articles/en/images/mgedrc_fig01.png" format="PNG"/>
@@ -71,7 +71,7 @@
 
   <para xml:id="mgedrc7">
     Each command includes the following four basic components:
-    
+
     <itemizedlist>
       <listitem>
 	<para>
@@ -93,7 +93,7 @@
 	 the body (i.e., commands that MGED should execute).
 	</para>
       </listitem>
-    </itemizedlist>  
+    </itemizedlist>
   </para>
 
   <para xml:id="mgedrc8">
@@ -112,19 +112,19 @@
     in a window 256 pixels high and wide, with a background color of white,
     and with the ambient light set to 0.7, the following text would have to be
     typed:
-    
+
     <literallayout class="normal">
 rt -s256 -C255/255/255 -A.7
     </literallayout>
-    
+
     However, it is a simple matter to add a line to the user's .mgedrc file to
     automate the calling of this instruction. The user's line might be as
     follows:
-    
+
     <literallayout class="normal">
 proc 256wa {} {rt -s256 -C255/255/255 -A.7}
     </literallayout>
-    
+
     Diagrammed, this line breaks down as follows:
     <informaltable>
       <tgroup cols="4">
@@ -149,7 +149,7 @@ proc 256wa {} {rt -s256 -C255/255/255 -A.7}
 	</tbody>
       </tgroup>
     </informaltable>
-	
+
     Now, all the user has to type on the command line to execute a rendering with the previously
     listed options is the following procedure name:
 
@@ -169,14 +169,14 @@ proc 256wa {} {rt -s256 -C255/255/255 -A.7}
     The .mgedrc file can also be used to create shortcuts for other types of command line or GUI
     commands. For example, the syntax for creating a shortcut for accepting and rejecting edits
     from the command line might be as follows:
-    
+
     <literallayout class="normal">
 proc acc {} {press accept}
 proc rej {} {press reject}
     </literallayout>
 
     In addition, a possible shortcut for calling a standard viewing geometry might be as follows:
-    
+
     <literallayout class="normal">
 proc 145 {} {ae 145 25}
     </literallayout>
@@ -203,7 +203,7 @@ proc cps {oldprim newprim} {cp $oldprim $newprim; sed $newprim}
   </para>
 
   <figure xml:id="mgedrc13"><info><title>Sample elements and functionality of a .mgedrc file.</title></info>
-    
+
     <mediaobject>
       <imageobject>
 	<imagedata align="center" fileref="../../articles/en/images/mgedrc_fig02.png" format="PNG"/>
@@ -255,7 +255,7 @@ proc cps {oldprim newprim} {cp $oldprim $newprim; sed $newprim}
   </para>
 
   <figure xml:id="mgedrc16"><info><title>Sample window dimension input and positioning.</title></info>
-    
+
     <mediaobject>
       <imageobject>
 	<imagedata align="center" fileref="../../articles/en/images/mgedrc_fig03.png" format="PNG"/>

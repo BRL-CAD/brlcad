@@ -19,12 +19,12 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>rfarb</command>    
+    <command>rfarb</command>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>Creates a new ARB8 shape based on rotation and fallback
 	angles. The command prompts the user for all the required information. In addition
 	to the name for the new shape and the rotation and fallback angles, the user is
@@ -33,31 +33,31 @@
 	of each of these vertices is calculated in order to ensure that the face is planar. The
 	user is then prompted for a thickness, and the first face is extruded normally by the
 	specified thickness to complete the ARB8.
-  
+
   </para>
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
-  <para>The example shows the use of the <command>rfarb</command> command to create a new ARB8 	shape. 
+
+  <para>The example shows the use of the <command>rfarb</command> command to create a new ARB8 	shape.
    </para>
-  
+
   <example><info><title>Create a new ARB8 shape.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>rfarb</userinput>
     </para>
     <para>Creates a new ARB8 shape according to arguments supplied in responses to prompts.
-       
+
     </para>
   </example>
- 
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

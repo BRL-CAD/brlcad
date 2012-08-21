@@ -4,35 +4,35 @@
       xmlns:xi="http://www.w3.org/2001/XInclude"
 >
   <info><title><application>BRL-CAD</application> Tutorial Series: Volume III - Principles of Effective Modeling</title>
-    
+
     <xi:include href="./tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
     <publishername>Army Research Laboratory</publishername>
     <biblioid class="pubsnumber">ARL-SR-119</biblioid>
     <pubdate>September 2003</pubdate>
-    
+
     <legalnotice>
       <para>Approved for public release; distribution is unlimited</para>
-      
+
       <para>The findings in this report are not to be construed as an
-      official Department of the Army position unless so designated 
+      official Department of the Army position unless so designated
       by other authorized documents.</para>
-      
+
       <para>Citation of manufacturer's or trade names does not constitute
       an official endorsement or approval of the use thereof.</para>
-      
+
       <para>Destroy this report when it is no longer needed. Do not return
       it to the originator.</para>
 
       <para>Note that the name BRL-CAD and the BRL-CAD eagle logo are
       trademarks of the U.S. Army.</para>
-    </legalnotice>      
-    
-    
+    </legalnotice>
+
+
   </info>
 
   <preface><info><title>Acknowledgements</title></info>
-    
+
 
     <para>
       The authors would like to acknowledge Mr. John Anderson, Mr. Sean
@@ -58,7 +58,7 @@
   </preface>
 
   <chapter xml:id="volIIIintro"><info><title>Introduction</title></info>
-    
+
     <para>
       Since 1979, the U.S. Army Research Laboratory (ARL) has been developing
       and distributing the U.S. Army Ballistic Research Laboratory -
@@ -95,12 +95,12 @@
       Future volumes in the tutorial series are planned to discuss geometry
       format conversion, advanced modeling features, and programming options.
     </para>
-  </chapter> 
+  </chapter>
 
   <chapter xml:id="volIIImodelprocess"><info><title>The Model Process</title></info>
-    
+
     <section><info><title>The Importance of the Model Mission</title></info>
-      
+
       <para>
 	The key to knowing how to build successful, effective models in BRL-CAD is
 	to know why you are building them. Thus, before any measurements are
@@ -137,7 +137,7 @@
       </para>
 
       <figure><info><title>Ballistic penetration model with transparent exterior.</title></info>
-	
+
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig01.png" format="PNG"/>
@@ -146,7 +146,7 @@
       </figure>
 
       <figure><info><title>External detail commonly used in radar signature models.</title></info>
-	
+
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig02.png" format="PNG"/>
@@ -164,8 +164,8 @@
     </section>
 
     <section><info><title>M-O-D-E-L: A Five-Step Approach to Creating Effective Models</title></info>
-      
-      
+
+
       <para>
 	After one has explicitly and unequivocally established the "why" of a
 	model, the "how" of a model can be addressed. Unfortunately, there is no
@@ -224,14 +224,14 @@
       </para>
 
       <figure><info><title>M-O-D-E-L: the five-stage modeling process.</title></info>
-	
+
 	<mediaobject>
 	  <imageobject>
 	    <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig03.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
       </figure>
-      
+
       <para>
 	For example, the organization phase is often the first step in large or
 	complex modeling projects because it helps the modeler establish a tree
@@ -246,8 +246,8 @@
   </chapter>
 
   <chapter xml:id="volIIImeasuringdata"><info><title>Measuring data</title></info>
-    
-    
+
+
     <para>
       Unless a modeler is creating a conceptually new geometry, he must work
       from a variety of information sources to build a model. In some cases,
@@ -261,7 +261,7 @@
 
     <table>
       <title>Various modeling data sources.</title>
-      
+
       <tgroup cols="3" align="center">
 	<tbody>
 	  <row>
@@ -285,13 +285,13 @@
 	      </para>
 	    </entry>
 	    <entry>
-	      Can save time/resources by providing precise measurements with minimal data collection 
-	      effort.  Can also suggest ways to structure the model (e.g., by providing wiring diagrams, 
+	      Can save time/resources by providing precise measurements with minimal data collection
+	      effort.  Can also suggest ways to structure the model (e.g., by providing wiring diagrams,
 	      subsystem schematics, etc.).
 	    </entry>
 	    <entry>
-	      Can sometimes be difficult to read.  Do not always show all needed measurements or views.  
-	      Are not always consistent with the actual objects they represent (e.g., design changes 
+	      Can sometimes be difficult to read.  Do not always show all needed measurements or views.
+	      Are not always consistent with the actual objects they represent (e.g., design changes
 	      sometimes occur during development or manufacturing).
 	    </entry>
 	  </row>
@@ -305,11 +305,11 @@
 	      </para>
 	    </entry>
 	    <entry>
-	      Can arguably provide the best source of verifiable information by providing hands-on 
+	      Can arguably provide the best source of verifiable information by providing hands-on
 	      access to the actual objects being modeled.
 	    </entry>
 	    <entry>
-	      Can be resource and labor intensive and can be limited by the objects’ availability, 
+	      Can be resource and labor intensive and can be limited by the objects’ availability,
 	      accessibility, and measurability, resulting in missed measurements.
 	    </entry>
 	  </row>
@@ -326,8 +326,8 @@
 	      Can offer significant savings in data collection and/or measurement efforts.
 	    </entry>
 	    <entry>
-	      Can have missing data, unfamiliar naming schemes, and alternate/dissimilar geometry 
-	      formats (e.g., feature-based objects, splines, etc.).  Can also be unsuitable for a 
+	      Can have missing data, unfamiliar naming schemes, and alternate/dissimilar geometry
+	      formats (e.g., feature-based objects, splines, etc.).  Can also be unsuitable for a
 	      given application because the original model was developed for a different purpose.
 	    </entry>
 	  </row>
@@ -386,13 +386,13 @@
 	  </para>
 	  <note>
 	    <para>
-	      For a series of uniformly spaced objects, it is good practice to      
-	      measure the total length of the series and divide by the number of    
-	      objects. This helps spread out any inaccuracies along the span and    
-	      prevents them from accumulating at the last object. For example, in a 
-	      row of 20 bolts at 50-mm intervals, a measurement error of just 2 mm  
-	      between bolts could result in the last bolt being nearly 40 mm out of 
-	      position.                                                             
+	      For a series of uniformly spaced objects, it is good practice to
+	      measure the total length of the series and divide by the number of
+	      objects. This helps spread out any inaccuracies along the span and
+	      prevents them from accumulating at the last object. For example, in a
+	      row of 20 bolts at 50-mm intervals, a measurement error of just 2 mm
+	      between bolts could result in the last bolt being nearly 40 mm out of
+	      position.
 	    </para>
 	  </note>
 	</listitem>
@@ -457,9 +457,9 @@
 		  abbreviations that are commonly used when recording measurements.
 		</para>
 		<figure><info><title>Commonly used measurement symbols and abbreviations.</title></info>
-		  
+
 		    <mediaobject>
-	               <imageobject>
+		       <imageobject>
 			   <imagedata fileref="../../books/en/images/tutorial_series_volIII_table_image_1.png" format="PNG"/>
 		       </imageobject>
 		       <caption>
@@ -475,9 +475,9 @@
 	</listitem>
       </itemizedlist>
     </chapter>
- 
+
   <chapter xml:id="volIIIorganizing"><info><title>Organizing the Structure</title></info>
-    
+
      <para>
        Taking the time to map out a tree structure of an object before building
        it is another important step in the modeling process, especially if the
@@ -507,7 +507,7 @@
      <para>
        The following list provides some tips to achieve good model structuring:
      </para>
-     
+
      <itemizedlist>
 	<listitem>
 	  <para>
@@ -547,7 +547,7 @@
 	    inefficiency and frustration. Thus, the following general recommendations
 	    are provided to help modelers efficiently organize and track what they
 	    build.
-	    
+
 	    <itemizedlist>
 	      <listitem>
 		<para>
@@ -572,7 +572,7 @@
 		  Appendix C of BRL-CAD Tutorial Volume II (Butler et al., 2001).
 		</para>
 		<table><title>Examples of naming conventions.</title>
-		  
+
 		  <tgroup cols="2" align="center">
 		    <tbody>
 		      <row>
@@ -592,11 +592,11 @@ sph.c1
 			  </literallayout>
 			</entry>
 			<entry>
-			  Associates the name with primitive shape type (sphere), order of creation (1), 
-			  and MGED object type (shape [.s], region [.r], or combination [.c]).  Often used 
-			  for training or testing BRL-CAD functionality but not recommended for large, 
-			  complex models<footnote><para>Sometimes the primitive shape tags are used to name 
-			  temporary objects that the modeler knows will be replaced or discarded.  In this case, 
+			  Associates the name with primitive shape type (sphere), order of creation (1),
+			  and MGED object type (shape [.s], region [.r], or combination [.c]).  Often used
+			  for training or testing BRL-CAD functionality but not recommended for large,
+			  complex models<footnote><para>Sometimes the primitive shape tags are used to name
+			  temporary objects that the modeler knows will be replaced or discarded.  In this case,
 			  a more intuitive, functional name, such as “temp,” is recommended.</para></footnote>
 			</entry>
 		      </row>
@@ -604,13 +604,13 @@ sph.c1
 			<entry>
 			  <literallayout class="monospaced">
 ant.s1,
-ant.r1, 
+ant.r1,
 ant.c1
 			  </literallayout>
 			</entry>
 			<entry>
-			  Associates the name with type of function (antenna), order of creation (1), and MGED 
-			  object type (shape [.s], region [.r], or shape combination [.c]).  
+			  Associates the name with type of function (antenna), order of creation (1), and MGED
+			  object type (shape [.s], region [.r], or shape combination [.c]).
 			</entry>
 		      </row>
 		      <row>
@@ -622,19 +622,19 @@ frf.s1
 			  </literallayout>
 			</entry>
 			<entry>
-			  Associates the name with function (front face), MGED object type and order of 
-			  creation (.s1), and type of Boolean operation performed (subtraction [−] and 
-			  intersection [+]).<footnote><para>Note that we have chosen not to associate a 
-			  suffix for objects that are unioned.  In this naming convention, objects without 
-			  a Boolean operation suffix are understood to be unioned.</para></footnote>  
+			  Associates the name with function (front face), MGED object type and order of
+			  creation (.s1), and type of Boolean operation performed (subtraction [−] and
+			  intersection [+]).<footnote><para>Note that we have chosen not to associate a
+			  suffix for objects that are unioned.  In this naming convention, objects without
+			  a Boolean operation suffix are understood to be unioned.</para></footnote>
 			  This is the notation currently used with the Build Pattern tool.
 			</entry>
 		      </row>
 		      <row>
 			<entry>
 			  <literallayout class="monospaced">
-front_face.a, 
-right_antenna.a, 
+front_face.a,
+right_antenna.a,
 left_roadwheel.a
 			  </literallayout>
 			</entry>
@@ -646,13 +646,13 @@ left_roadwheel.a
 		      <row>
 			<entry>
 			  <literallayout class="monospaced">
-Driver  Main_Gun 
+Driver  Main_Gun
 M1A1
 			  </literallayout>
 			</entry>
 			<entry>
-			  Gives top-level assemblies human-readable descriptions of overall composition 
-			  and/or functionality.  Uses initial capitalization to show higher tree level 
+			  Gives top-level assemblies human-readable descriptions of overall composition
+			  and/or functionality.  Uses initial capitalization to show higher tree level
 			  and disregards traditional MGED suffix.
 			</entry>
 		      </row>
@@ -714,42 +714,42 @@ M1A1
 		      Use lowercase Arabic letters (except for the previously mentioned
 		      initial capitalization used for top-level assemblies).
 		    </para>
-		  </listitem> 
+		  </listitem>
 		  <listitem>
 		    <para>
 		      Use numerals without internal commas (e.g., "5000" not "5,000").
 		    </para>
-		  </listitem> 
+		  </listitem>
 		  <listitem>
 		    <para>
 		      Avoid using numerals to begin a name.
 		    </para>
-		  </listitem> 
+		  </listitem>
 		  <listitem>
 		    <para>
 		      Do not use a space between words; use an underline or capitalize the
 		      first character of each word (i.e., Hungarian notation).
 		    </para>
-		  </listitem> 
+		  </listitem>
 		  <listitem>
 		    <para>
 		      Avoid using special characters. Restrict the use of "+" and """
 		      symbols to the suffix of primitive shape combinations, and do not  use the
 		      "/".
 		    </para>
-		  </listitem> 
+		  </listitem>
 		  <listitem>
 		    <para>
 		      Restrict the use of the period to the suffix of MGED object types.
 		      Avoid using other punctuation (e.g., "?," "!," etc.).
 		    </para>
-		  </listitem> 
+		  </listitem>
 		  <listitem>
 		    <para>
 		      Avoid using the lowercase letter "l" by itself (to avoid possible
 		      confusion with the number "1").
 		    </para>
-		  </listitem> 
+		  </listitem>
 		</itemizedlist>
 	      </listitem>
 	    </itemizedlist>
@@ -771,27 +771,27 @@ M1A1
 	  </para>
 	  <note>
 	    <para>
-	      Note that it is not unusual for a modeler to select relatively        
-	      arbitrary names when shapes and parts are first made and then go back 
-	      and rename them as the model develops. There are two commands to      
+	      Note that it is not unusual for a modeler to select relatively
+	      arbitrary names when shapes and parts are first made and then go back
+	      and rename them as the model develops. There are two commands to
 	      rename database objects.
 	    </para>
-	    <para>                                                                           
-	      To rename only the database object, type the following:               
+	    <para>
+	      To rename only the database object, type the following:
 	      <literallayout class="monospaced">
-mv  oldname newname                          
+mv  oldname newname
 	      </literallayout>
 	    </para>
 	    <para>
-	      Note that this command changes only the name of a particular object   
-	      and not any references to the object that may occur in combinations   
-	      throughout the database.                                              
+	      Note that this command changes only the name of a particular object
+	      and not any references to the object that may occur in combinations
+	      throughout the database.
 	    </para>
 	    <para>
-	      To change an object's name and all references to that object, the     
-	      mvall (move all) command can be used as follows:                      
+	      To change an object's name and all references to that object, the
+	      mvall (move all) command can be used as follows:
 	      <literallayout class="monospaced">
-mvall oldname newname                       
+mvall oldname newname
 	      </literallayout>
 	    </para>
 	  </note>
@@ -806,7 +806,7 @@ mvall oldname newname
 	    based on location, and Figure 5 shows a structure based on functionality.
 	  </para>
 	  <figure><info><title>Location-based structure of the radio in Volume II.</title></info>
-	    
+
 	    <mediaobject>
 	      <imageobject>
 		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig04.png" format="PNG"/>
@@ -814,7 +814,7 @@ mvall oldname newname
 	    </mediaobject>
 	  </figure>
 	  <figure><info><title>Function-based structure of the radio in Volume II.</title></info>
-	    
+
 	    <mediaobject>
 	      <imageobject>
 		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig05.png" format="PNG"/>
@@ -851,14 +851,14 @@ mvall oldname newname
   </chapter>
 
   <chapter xml:id="volIIIdevgeometry"><info><title>Developing Geometry</title></info>
-    
+
     <para>
       In the end, the heart of the modeling process is the actual construction
       of the geometry. All the best measurement, organization, evaluation, and
       documentation would be ineffective unless the geometric shapes that make
       up a model are built and built correctly.
     </para>
-    
+
     <para>
       Basically, there are two steps to geometry development: (1) <emphasis>creating
       geometry</emphasis>, and (2) <emphasis>positioning geometry</emphasis>. Of course, as with all the other
@@ -910,7 +910,7 @@ mvall oldname newname
 	  </para>
 
 	  <table><title>The four modeling levels in BRL-CAD</title>
-	    
+
 	    <tgroup cols="2" align="center">
 	      <tbody>
 		<row>
@@ -926,8 +926,8 @@ mvall oldname newname
 		    Primitive level (.s)
 		  </entry>
 		  <entry>
-		    This level is where one performs three-dimensional (3-D) CAD “sculpting,” working with 
-		    the primitive shapes to represent the target geometry in coordinate space.  Objects at this 
+		    This level is where one performs three-dimensional (3-D) CAD “sculpting,” working with
+		    the primitive shapes to represent the target geometry in coordinate space.  Objects at this
 		    level are not recognized as having volume or material properties.
 		  </entry>
 		</row>
@@ -936,8 +936,8 @@ mvall oldname newname
 		    Combination level (.c)
 		  </entry>
 		  <entry>
-		    This level is an optional intermediate level between primitives and regions or regions 
-		    and assemblies.  It allows Booleaned objects to be subtracted and intersected.  All 
+		    This level is an optional intermediate level between primitives and regions or regions
+		    and assemblies.  It allows Booleaned objects to be subtracted and intersected.  All
 		    nonprimitive objects are stored as combinations.
 		  </entry>
 		</row>
@@ -946,10 +946,10 @@ mvall oldname newname
 		    Region level (.r)
 		  </entry>
 		  <entry>
-		    This level is the lowest level at which geometry occupies 3-D space and can have material 
-		    properties. It is where one assembles primitives and defines positive volume using Boolean 
-		    logic.  A region must be composed of one material, should be interconnected, and should 
-		    perform the same function.  
+		    This level is the lowest level at which geometry occupies 3-D space and can have material
+		    properties. It is where one assembles primitives and defines positive volume using Boolean
+		    logic.  A region must be composed of one material, should be interconnected, and should
+		    perform the same function.
 		  </entry>
 		</row>
 		<row>
@@ -957,8 +957,8 @@ mvall oldname newname
 		    Assembly level (.a or .g)
 		  </entry>
 		  <entry>
-		    This is the level at which subparts are organized into parts and parts are organized 
-		    into assemblies.  This is also where meaningful names and appropriate hierarchical structure 
+		    This is the level at which subparts are organized into parts and parts are organized
+		    into assemblies.  This is also where meaningful names and appropriate hierarchical structure
 		    are applied.
 		  </entry>
 		</row>
@@ -981,7 +981,7 @@ mvall oldname newname
 	  </para>
 
 	  <table><title>The major BRL-CAD primitives and parameters.</title>
-	    
+
 	    <tgroup cols="2" align="center">
 	      <tbody>
 		<row>
@@ -989,7 +989,7 @@ mvall oldname newname
 		    Primitive Shape/BRL-CAD Abbreviation
 		  </entry>
 		  <entry>
-		    Input Parameters/Definitions<footnote><para>To maximize database efficiency, some shape 
+		    Input Parameters/Definitions<footnote><para>To maximize database efficiency, some shape
 		    types are stored as other types (e.g., all arbs are stored as arb8's), but this behavior
 		    is invisible to the user.</para></footnote>
 		  </entry>
@@ -1025,7 +1025,7 @@ mvall oldname newname
 		      </listitem>
 		      <listitem>
 			<para>
-			  Illegal variations include the following: 
+			  Illegal variations include the following:
 			</para>
 			<para>
 			  <inlinemediaobject><imageobject><imagedata fileref="../../books/en/images/tutorial_series_volIII_fig23.png"/></imageobject></inlinemediaobject>
@@ -1060,7 +1060,7 @@ mvall oldname newname
 		      </listitem>
 		      <listitem>
 			<para>
-			  Stored as an arb8, where point 8 is coincident with point 5 and point 7 is      
+			  Stored as an arb8, where point 8 is coincident with point 5 and point 7 is
 			  coincident with point 6
 			</para>
 		      </listitem>
@@ -1077,7 +1077,7 @@ mvall oldname newname
 			  </imageobject>
 			  <caption>
 			    <para>
-			      Sphere (sph) 
+			      Sphere (sph)
 			    </para>
 			  </caption>
 			</mediaobject>
@@ -1098,7 +1098,7 @@ mvall oldname newname
 		      </listitem>
 		      <listitem>
 			<para>
-			  Stored as an ellipsoid (ell).  
+			  Stored as an ellipsoid (ell).
 			</para>
 		      </listitem>
 		      <listitem>
@@ -1119,12 +1119,12 @@ mvall oldname newname
 			  </imageobject>
 			  <caption>
 			    <para>
-			     Right circular cylinder (rcc) 
+			     Right circular cylinder (rcc)
 			    </para>
 			  </caption>
 			</mediaobject>
 		      </informalfigure>
-		    </para>		    
+		    </para>
 		  </entry>
 		  <entry>
 		    <itemizedlist mark="dash">
@@ -1150,7 +1150,7 @@ mvall oldname newname
 		      </listitem>
 		      <listitem>
 			<para>
-			  Vectors A and B have equal lengths, C and D have equal lengths, and all vectors are   
+			  Vectors A and B have equal lengths, C and D have equal lengths, and all vectors are
 			  perpendicular to H.
 			</para>
 		      </listitem>
@@ -1172,7 +1172,7 @@ mvall oldname newname
 			  </caption>
 			</mediaobject>
 		      </informalfigure>
-		    </para>		    
+		    </para>
 		  </entry>
 		  <entry>
 		    <itemizedlist mark="dash">
@@ -1214,23 +1214,23 @@ mvall oldname newname
 			  </caption>
 			</mediaobject>
 		      </informalfigure>
-		    </para>		    
+		    </para>
 		  </entry>
 		  <entry>
 		    <itemizedlist mark="dash">
 		      <listitem>
 			<para>
-			  Outer diameter (OD). 
+			  Outer diameter (OD).
 			</para>
 		      </listitem>
 		      <listitem>
 			<para>
-			  Inner diameter (ID). 
+			  Inner diameter (ID).
 			</para>
 		      </listitem>
 		      <listitem>
 			<para>
-			  Bend radius (equivalent to an r1 value of a torus). 
+			  Bend radius (equivalent to an r1 value of a torus).
 			</para>
 		      </listitem>
 		      <listitem>
@@ -1240,7 +1240,7 @@ mvall oldname newname
 		      </listitem>
 		      <listitem>
 			<para>
-			  Is effectively a subregion combination of cylinders and bounded tori whose path is    
+			  Is effectively a subregion combination of cylinders and bounded tori whose path is
 			  defined by a series of coordinates.
 			</para>
 		      </listitem>
@@ -1253,10 +1253,10 @@ mvall oldname newname
 
 	  <note>
 	    <para>
-	      For a list of all the primary primitives and their shapes, see        
-	      Appendix C of BRL-CAD Tutorial Volume II (Butler et al., 2001) or     
-	      consult http://ftp.arl.army.mil/brlcad/ (U.S. ARL, 2003). For       
-	      detailed guidance on using the pipe and the extruded bitmap (ebm)     
+	      For a list of all the primary primitives and their shapes, see
+	      Appendix C of BRL-CAD Tutorial Volume II (Butler et al., 2001) or
+	      consult http://ftp.arl.army.mil/brlcad/ (U.S. ARL, 2003). For
+	      detailed guidance on using the pipe and the extruded bitmap (ebm)
 	      primitives, see Appendices A and C of this volume.
 	    </para>
 	  </note>
@@ -1306,9 +1306,9 @@ mvall oldname newname
 	    but the origin is located on the front nose of the airframe (see Figures 8
 	    and 9).
 	  </para>
-	  
+
 	  <table><title>Various ways to build primitives.</title>
-	    
+
 	    <tgroup cols="4" align="center">
 	      <tbody>
 		<row>
@@ -1333,8 +1333,8 @@ mvall oldname newname
 		    Creates a “generic” primitive shape based on the user’s screen size and center.
 		  </entry>
 		  <entry>
-		    Creates shape without having to input parameter/location values; primitive usually 
-		    requires further editing; puts user into edit mode. 
+		    Creates shape without having to input parameter/location values; primitive usually
+		    requires further editing; puts user into edit mode.
 		  </entry>
 		  <entry>
 		    Graphical user interface (GUI)
@@ -1348,7 +1348,7 @@ mvall oldname newname
 		    Creates a “generic” primitive shape based on the user’s screen size and center.
 		  </entry>
 		  <entry>
-		    Creates shape without having to input parameter/location values; primitive 
+		    Creates shape without having to input parameter/location values; primitive
 		    requires further editing.
 		  </entry>
 		  <entry>
@@ -1374,11 +1374,11 @@ mvall oldname newname
 		    inside
 		  </entry>
 		  <entry>
-		    Creates a primitive shape by referencing a previously created shape and applying user-defined 
+		    Creates a primitive shape by referencing a previously created shape and applying user-defined
 		    positive/negative thicknesses to faces (e.g., making an interior wall).
 		  </entry>
 		  <entry>
-		    Allows user to create a shape based on a specified primitive by applying wall thicknesses 
+		    Allows user to create a shape based on a specified primitive by applying wall thicknesses
 		    without having to further edit it.
 		  </entry>
 		  <entry>
@@ -1393,7 +1393,7 @@ mvall oldname newname
 		    Creates a duplicate of a previously defined object.
 		  </entry>
 		  <entry>
-		    Copies the parameters of an object to a new object of the same type.  Takes advantage of 
+		    Copies the parameters of an object to a new object of the same type.  Takes advantage of
 		    previously defined measurements and locations.
 		  </entry>
 		  <entry>
@@ -1405,11 +1405,11 @@ mvall oldname newname
 		    cpi (copy index)
 		  </entry>
 		  <entry>
-		    Originally created to model wiring or piping runs; creates a duplicate cylinder whose 
+		    Originally created to model wiring or piping runs; creates a duplicate cylinder whose
 		    base vertex is coincident with the top of the original cylinder.
 		  </entry>
 		  <entry>
-		    Can only be used with cylinders; takes advantage of previously defined measurements 
+		    Can only be used with cylinders; takes advantage of previously defined measurements
 		    and locations; puts user into edit mode automatically.
 		  </entry>
 		  <entry>
@@ -1421,11 +1421,11 @@ mvall oldname newname
 		    mirror
 		  </entry>
 		  <entry>
-		    Creates a duplicate primitive shape, region, or assembly and locates it across 
+		    Creates a duplicate primitive shape, region, or assembly and locates it across
 		    the x axis, y axis, z axis, or an arbitrary axis specified by a point and a direction.
 		  </entry>
 		  <entry>
-		    Takes advantage of previously defined measurements and locations; can mirror across 
+		    Takes advantage of previously defined measurements and locations; can mirror across
 		    only one axis at a time but across any point along that axis.
 		  </entry>
 		  <entry>
@@ -1437,12 +1437,12 @@ mvall oldname newname
 		    pattern
 		  </entry>
 		  <entry>
-		    Creates a rectangular, spherical, or cylindrical pattern of primitive shapes, regions, 
-		    or assemblies by referencing a previously created object and applying user-defined offsets 
+		    Creates a rectangular, spherical, or cylindrical pattern of primitive shapes, regions,
+		    or assemblies by referencing a previously created object and applying user-defined offsets
 		    and parameters.
 		  </entry>
 		  <entry>
-		    Takes advantage of previously defined measurements and locations; requires extra 
+		    Takes advantage of previously defined measurements and locations; requires extra
 		    positioning measurements.
 		  </entry>
 		  <entry>
@@ -1452,20 +1452,20 @@ mvall oldname newname
 	      </tbody>
 	    </tgroup>
 	  </table>
-	  
+
 	  <note>
 	    <para>
-	      Note the in and inside commands are often the best ways to create a   
-	      primitive in the right size/location if the modeler knows the         
-	      parameters. Also, using the cp and mirror commands to create          
-	      primitives can often save time by taking advantage of previously      
+	      Note the in and inside commands are often the best ways to create a
+	      primitive in the right size/location if the modeler knows the
+	      parameters. Also, using the cp and mirror commands to create
+	      primitives can often save time by taking advantage of previously
 	      established measurements/positioning.
 	    </para>
 	  </note>
 
 
 	  <figure><title>Coordinate axes of a turreted ground vehicle.</title>
-	    
+
 	    <mediaobject>
 	      <imageobject>
 		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig06.png" format="PNG"/>
@@ -1473,7 +1473,7 @@ mvall oldname newname
 	    </mediaobject>
 	  </figure>
 	  <figure><info><title>Coordinate axes of a nonturreted ground vehicle.</title></info>
-	    
+
 	    <mediaobject>
 	      <imageobject>
 		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig07.png" format="PNG"/>
@@ -1481,7 +1481,7 @@ mvall oldname newname
 	    </mediaobject>
 	  </figure>
 	  <figure><info><title>Coordinate axes of a fixed-wing aircraft.</title></info>
-	    
+
 	    <mediaobject>
 	      <imageobject>
 		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig08.png" format="PNG"/>
@@ -1489,7 +1489,7 @@ mvall oldname newname
 	    </mediaobject>
 	  </figure>
 	  <figure><info><title>Coordinate axes of a rotary-wing aircraft.</title></info>
-	    
+
 	    <mediaobject>
 	      <imageobject>
 		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig09.png" format="PNG"/>
@@ -1529,7 +1529,7 @@ mvall oldname newname
 	  </para>
 
 	  <figure><info><title>Building multiple occurrences through replication.</title></info>
-	    
+
 	    <mediaobject>
 	      <imageobject>
 		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig10.png" format="PNG"/>
@@ -1538,16 +1538,16 @@ mvall oldname newname
 	  </figure>
 
 	  <figure><info><title>Building multiple occurrences through referencing.</title></info>
-	    
+
 	    <mediaobject>
 	      <imageobject>
 		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig11.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
-	  
+
 	  <table><title>Advantages and disadvantages of replication vs. referencing.</title>
-	    
+
 	    <tgroup cols="3" align="center">
 	      <tbody>
 		<row>
@@ -1563,7 +1563,7 @@ mvall oldname newname
 		</row>
 		<row>
 		  <entry>
-		   Replication 
+		   Replication
 		  </entry>
 		  <entry>
 		    <itemizedlist>
@@ -1663,7 +1663,7 @@ mvall oldname newname
 	    that all occurrences be replicated to the primitive level without
 	    matrices.
 	  </para>
-	  
+
 	  <para>
 	    There are several other tools that can make the duplication process
 	    easier--namely, the Build Pattern tool and the keep and dbconcat commands.
@@ -1690,7 +1690,7 @@ mvall oldname newname
 	    local coordinate system used in constructing objects is lost.
 	  </para>
 	</listitem>
-	
+
 	<listitem>
 	  <para>
 	    <emphasis>Use the best method for exporting and importing pieces of a database:</emphasis>
@@ -1772,7 +1772,7 @@ mged&gt;  dbconcat [-s, -p] filename.g [prefix]
 	    smaller, more compact bounding primitives is recommended (see Figure 14).
 	  </para>
 	  <figure><info><title>Target geometry.</title></info>
-	    
+
 	    <mediaobject>
 	      <imageobject>
 		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig12.png" format="PNG"/>
@@ -1780,7 +1780,7 @@ mged&gt;  dbconcat [-s, -p] filename.g [prefix]
 	    </mediaobject>
 	  </figure>
 	  <figure><info><title>Example of an Overly Large Bounding Primitive.</title></info>
-	    
+
 	    <mediaobject>
 	      <imageobject>
 		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig13.png" format="PNG"/>
@@ -1788,7 +1788,7 @@ mged&gt;  dbconcat [-s, -p] filename.g [prefix]
 	    </mediaobject>
 	  </figure>
 	  <figure><info><title>Example of a compact bounding primitive.</title></info>
-	    
+
 	    <mediaobject>
 	      <imageobject>
 		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig14.png" format="PNG"/>
@@ -1798,10 +1798,10 @@ mged&gt;  dbconcat [-s, -p] filename.g [prefix]
 
 	  <note>
 	    <para>
-	      The half space is a prime example of an overly large bounding         
-	      primitive. Because its extent is infinite, it is always larger than   
-	      needed. Therefore, whenever possible, the modeler should use an arb8  
-	      or other primitive that can be dimensioned to meet the modeling       
+	      The half space is a prime example of an overly large bounding
+	      primitive. Because its extent is infinite, it is always larger than
+	      needed. Therefore, whenever possible, the modeler should use an arb8
+	      or other primitive that can be dimensioned to meet the modeling
 	      needs.
 	    </para>
 	  </note>
@@ -1826,7 +1826,7 @@ mged&gt;  dbconcat [-s, -p] filename.g [prefix]
 	    shown in Figure 15).
 
 	    <figure><info><title>Example of grouping objects for articulation.</title></info>
-	      
+
 	    <mediaobject>
 	      <imageobject>
 		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig15.png" format="PNG"/>
@@ -1834,7 +1834,7 @@ mged&gt;  dbconcat [-s, -p] filename.g [prefix]
 	    </mediaobject>
 	    </figure>
 	    In the example shown in Figure 15, we would want to create a turret_asy
-	    assembly with turret_armor, main_gun, and commanders_hatch in it.	    
+	    assembly with turret_armor, main_gun, and commanders_hatch in it.
 	  </para>
 	  <para>
 	    Also, as discussed in Lesson 16 of Volume II (Butler et al., 2001),
@@ -1857,7 +1857,7 @@ mged&gt;  dbconcat [-s, -p] filename.g [prefix]
 	    4, a combination is the BRL-CAD database record that stores Boolean
 	    operations. It can take one of three forms:
 	  </para>
-	  
+
 	  <itemizedlist>
 	    <listitem>
 	      <para>
@@ -1885,26 +1885,26 @@ mged&gt;  dbconcat [-s, -p] filename.g [prefix]
 	      </para>
 	    </listitem>
 	  </itemizedlist>
-	  
+
 	  <figure><info><title>Sample Boolean operations.</title></info>
-	    
+
 	    <mediaobject>
 	      <imageobject>
 		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig16.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
-	  
+
 	  <para>
 	    Combinations can be created with a variety of commands, depending on the
 	    user's requirements. These commands include the following:
 	  </para>
-	  
+
 	  <itemizedlist>
 	    <listitem>
 	      <para>
 		<emphasis>comb</emphasis> - creates a combination using Boolean expressions in GIFT
-		<footnote><para>Geometric information for targets (GIFT) is the single-level operator 
+		<footnote><para>Geometric information for targets (GIFT) is the single-level operator
 		hierarchy format that is the traditional (and default)
 		notation used in BRL-CAD.</para></footnote> format.
 		Proceeding left to right, intersections (+) and subtractions (") are
@@ -1935,21 +1935,21 @@ comb comb_name u a - b + c
 	      </para>
 	    </listitem>
 	    <listitem>
-	      
+
 	      <para>
 		<emphasis>g</emphasis>creates a combination by automatically unioning all user-specified
 		elements together. Thus, this command does not accept any sort of Boolean
-		operators from the user.<footnote><para>The <command>g</command> command is derived from “group,” 
+		operators from the user.<footnote><para>The <command>g</command> command is derived from “group,”
 		the term sometimes used for <emphasis>assembly combination</emphasis>.</para></footnote>
 	      </para>
 	    </listitem>
-	  </itemizedlist>		  
+	  </itemizedlist>
 
 	  <para>
 	    In addition, there are several general recommended practices when dealing
 	    with Boolean operations. They are as follows:
 	  </para>
-	  
+
 	  <itemizedlist>
 	    <listitem>
 	      <para>
@@ -1970,33 +1970,33 @@ comb comb_name u a - b + c
 		Figure 17, if that region consists of two unioned primitives--head.s and
 		shaft.s--the subtraction in the region must follow the shaft primitive.
 		Alternatively, if the hole is subtracted from the head, the subtraction
-		will have no effect because head.s and hole.s do not share any volume.		  
+		will have no effect because head.s and hole.s do not share any volume.
 	      </para>
 	    </listitem>
 	  </itemizedlist>
-	  
+
 	  <figure><info><title>Properly (top) and improperly (bottom) ordered regions.</title></info>
-	    
+
 	    <mediaobject>
 	      <imageobject>
 		<imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig17.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
-	  
+
 	  <note>
 	    <para>
-	      Note that in BRL-CAD releases 6.0 and later, fully parenthesized      
-	      Boolean expressions are available for the c command. This allows the  
-	      user to designate operator precedence on the command line based on    
-	      standard parenthetical notation as opposed to the order-of-occurrence 
-	      and union-last methodology, which is the previously described         
+	      Note that in BRL-CAD releases 6.0 and later, fully parenthesized
+	      Boolean expressions are available for the c command. This allows the
+	      user to designate operator precedence on the command line based on
+	      standard parenthetical notation as opposed to the order-of-occurrence
+	      and union-last methodology, which is the previously described
 	      functionality in BRL-CAD.
 	    </para>
 	  </note>
-	  
+
 	</listitem>
-	
+
 	<listitem>
 	  <para>
 	    <emphasis>Follow or develop standardized conventions for colorizing objects:</emphasis>
@@ -2037,7 +2037,7 @@ comb comb_name u a - b + c
       </itemizedlist>
 
       <table xml:id="mgedcolors"><title>Traditionally used MGED colors.</title>
-	
+
 	<tgroup cols="2" align="center">
 	  <tbody>
 	    <row>
@@ -2258,7 +2258,7 @@ comb comb_name u a - b + c
 	    </row>
 	    <row>
 	      <entry>
-		Lime green	
+		Lime green
 	      </entry>
 	      <entry>
 		50 204 50
@@ -2565,7 +2565,7 @@ comb comb_name u a - b + c
       </table>
 
       <table xml:id="system-color-codes"><title>Commonly used system-color codes.</title>
-	
+
 	<tgroup cols="3" align="center">
 	  <tbody>
 	    <row>
@@ -2804,28 +2804,28 @@ comb comb_name u a - b + c
       </table>
 
       <note><info><title>
-	  A Final Word About Modeling Ease vs. Modeling Precision 
+	  A Final Word About Modeling Ease vs. Modeling Precision
 	</title></info>
-	
-        <para>                                                                   
-	  Modelers can be tempted to use the "quickest" methods of creating and 
-	  aligning objects (e.g., using mouse clicks to size objects and the    
-	  shift/control grips and "eyeballing" to position them).               
+
+	<para>
+	  Modelers can be tempted to use the "quickest" methods of creating and
+	  aligning objects (e.g., using mouse clicks to size objects and the
+	  shift/control grips and "eyeballing" to position them).
 	</para>
 	<para>
-	  However, using precision MGED tools (e.g., the analyze and extrude    
-	  commands, the snap-to-grid feature, etc.), listing primitives, making 
-	  temporary assemblies, etc., is often more efficient. In addition, as  
-	  the user becomes more familiar with these tools and features, they    
-	  become easier to use. For more information on these specific          
-	  features, see the appropriate on-line help in MGED.  
+	  However, using precision MGED tools (e.g., the analyze and extrude
+	  commands, the snap-to-grid feature, etc.), listing primitives, making
+	  temporary assemblies, etc., is often more efficient. In addition, as
+	  the user becomes more familiar with these tools and features, they
+	  become easier to use. For more information on these specific
+	  features, see the appropriate on-line help in MGED.
 	</para>
       </note>
 
   </chapter>
 
   <chapter><info><title>Evaluating Geometry</title></info>
-    
+
     <para>
       Evaluating geometry for correctness is an important companion to building
       real-world models. In fact, without testing the validity of the geometry's
@@ -2846,11 +2846,11 @@ comb comb_name u a - b + c
     </para>
     <note>
       <para>
-	Because all of the volume within a region is considered to be one     
-	material, it is acceptable for primitives within a region to          
-	"overlap" without error (e.g., spheres rounding cylinder ends).       
-	However, it is good modeling practice to minimize this wherever       
-	practical to simplify Boolean logic and keep primitives as compact as 
+	Because all of the volume within a region is considered to be one
+	material, it is acceptable for primitives within a region to
+	"overlap" without error (e.g., spheres rounding cylinder ends).
+	However, it is good modeling practice to minimize this wherever
+	practical to simplify Boolean logic and keep primitives as compact as
 	possible.
       </para>
     </note>
@@ -2862,7 +2862,7 @@ comb comb_name u a - b + c
     </para>
 
     <figure><info><title>Shotline through a tank.</title></info>
-      
+
       <mediaobject>
 	<imageobject>
 	  <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig18.png" format="PNG"/>
@@ -2936,28 +2936,28 @@ comb comb_name u a - b + c
     </para>
 
     <figure><info><title>Example of overlaps in the graphics window.</title></info>
-      
+
       <mediaobject>
 	<imageobject>
 	  <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig19.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
-    
+
     <note>
       <para>
-	When first checking larger assemblies, it is wise to use a relatively 
-	low-resolution rtcheck grid size--say, 128 × 128 pixels. Often,      
-	there are simple errors that produce large numbers of overlaps, and   
-	reporting them all takes a long time. Starting with low resolution,   
-	however, allows the user to quickly find and eliminate gross errors   
-	and proceed to the insidious small overlaps using a tighter grid and  
-	more specific view parameters.   
+	When first checking larger assemblies, it is wise to use a relatively
+	low-resolution rtcheck grid size--say, 128 × 128 pixels. Often,
+	there are simple errors that produce large numbers of overlaps, and
+	reporting them all takes a long time. Starting with low resolution,
+	however, allows the user to quickly find and eliminate gross errors
+	and proceed to the insidious small overlaps using a tighter grid and
+	more specific view parameters.
       </para>
     </note>
 
     <figure><info><title>Example of an overlap report in the command window.</title></info>
-      
+
       <mediaobject>
 	<imageobject>
 	  <imagedata align="center" fileref="../../books/en/images/tutorial_series_volIII_fig20.png" format="PNG"/>
@@ -3055,8 +3055,8 @@ comb comb_name u a - b + c
   </chapter>
 
   <chapter><info><title>Logging Documentation</title></info>
-    
- 
+
+
     <para>
       The final step in the modeling process--documentation--is extremely
       important and can mean the difference between models that are useful for a
@@ -3196,10 +3196,10 @@ dbbinary -i u c documentation /home/fred/doc.txt
 
   </chapter>
 
- 
+
   <bibliography><info><title>References</title></info>
-    
-    
+
+
     <biblioentry xreflabel="dummyentry1">
       <authorgroup>
 	<author><personname><firstname>John</firstname><surname>Smith</surname></personname></author>
@@ -3219,14 +3219,14 @@ dbbinary -i u c documentation /home/fred/doc.txt
 
 
   <appendix label="A"><info><title>Using the Pipe Primitive</title></info>
-    
+
     <xi:include href="../../articles/en/pipes.xml" xpointer="pipe_general_use"/>
     <xi:include href="../../articles/en/pipes.xml" xpointer="pipe_make_coil"/>
 
   </appendix>
 
   <appendix label="B"><info><title>Using the Projection Shader</title></info>
-    
+
     <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_general"/>
     <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_getimage"/>
     <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_resize"/>
@@ -3238,9 +3238,9 @@ dbbinary -i u c documentation /home/fred/doc.txt
     <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_render"/>
     <xi:include href="../../articles/en/projection_shader.xml" xpointer="projshader_projectfront"/>
   </appendix>
-    
+
   <appendix label="C"><info><title>Using the Extruded Bitmap Primitive</title></info>
-    
+
     <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm1"/>
     <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm2"/>
     <xi:include href="../../articles/en/ebm_primitive.xml" xpointer="ebm3"/>
@@ -3253,7 +3253,7 @@ dbbinary -i u c documentation /home/fred/doc.txt
   </appendix>
 
   <appendix label="D"><info><title>Setting Up a .mgedrc File</title></info>
-    
+
     <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc1"/>
     <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc2"/>
     <xi:include href="../../articles/en/mgedrc.xml" xpointer="mgedrc3"/>
@@ -3273,7 +3273,7 @@ dbbinary -i u c documentation /home/fred/doc.txt
   </appendix>
 
   <appendix label="E"><info><title>Using the Build Pattern Tool</title></info>
-    
+
     <xi:include href="../../articles/en/build_pattern.xml" xpointer="build_pattern_generalinfo"/>
     <xi:include href="../../articles/en/build_pattern.xml" xpointer="build_pattern_names"/>
     <xi:include href="../../articles/en/build_pattern.xml" xpointer="build_pattern_fields"/>
@@ -3284,7 +3284,7 @@ dbbinary -i u c documentation /home/fred/doc.txt
   </appendix>
 
   <appendix label="F"><info><title>Using the build_region Command</title></info>
-    
+
     <xi:include href="../../articles/en/build_region.xml" xpointer="build_region1"/>
     <xi:include href="../../articles/en/build_region.xml" xpointer="build_region2"/>
     <xi:include href="../../articles/en/build_region.xml" xpointer="build_region3"/>

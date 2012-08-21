@@ -2,7 +2,7 @@
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Using the Extruded Bitmap Primitive</title>
-    
+
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
@@ -26,25 +26,25 @@
   </para>
 
   <figure xml:id="ebm3"><info><title>Example of the .bw image used for ebm.</title></info>
-    
+
     <mediaobject>
       <imageobject>
 	<imagedata align="center" fileref="../../articles/en/images/ebm_primitive_fig01.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
-  
+
   <figure xml:id="ebm4"><info><title>Example of ebm.</title></info>
-    
+
     <mediaobject>
       <imageobject>
 	<imagedata align="center" fileref="../../articles/en/images/ebm_primitive_fig02.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
-  
+
   <figure xml:id="ebm5"><info><title>Example of the ebm with projection shader added.</title></info>
-    
+
     <mediaobject>
       <imageobject>
 	<imagedata align="center" fileref="../../articles/en/images/ebm_primitive_fig03.png" format="PNG"/>
@@ -85,24 +85,24 @@
   </informaltable>
 
   <note xml:id="ebm9"><info><title>Points to Remember About the ebm</title></info>
-    
+
     <itemizedlist mark="bullet">
       <listitem>
 	<para>
-	  The ebm cannot be created with the make, create, or inside        
+	  The ebm cannot be created with the make, create, or inside
 	  commands.
 	</para>
       </listitem>
       <listitem>
 	<para>
-	  The desired width and height of the ebm are input as pixel        
-	  values, but the extrusion distance can be expressed in any        
-	  working units.   
+	  The desired width and height of the ebm are input as pixel
+	  values, but the extrusion distance can be expressed in any
+	  working units.
 	</para>
       </listitem>
       <listitem>
 	<para>
-	  Extrusions are made in the +Z direction, although after an ebm is 
+	  Extrusions are made in the +Z direction, although after an ebm is
 	  made, the shape can be rotated, translated, or scaled.
 	</para>
       </listitem>

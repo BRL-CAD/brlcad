@@ -11,20 +11,20 @@
     <refname>rtcheck</refname>
     <refpurpose>Make UNIX-Plot of overlaps in an mged model, using raytracing</refpurpose>
   </refnamediv>
-  
+
   <!-- body begins here -->
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
-      <command>rtcheck</command>    
+      <command>rtcheck</command>
       <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
       <arg choice="plain" rep="norepeat"><replaceable>model.g</replaceable></arg>
       <arg choice="plain" rep="repeat"><replaceable>objects</replaceable></arg> &gt; <arg choice="plain" rep="norepeat"><replaceable>overlaps.pl</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
-  
-  
+
+
   <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-    
+
     <para>
       <emphasis remap="I">Rtcheck</emphasis> operates on the indicated
       <emphasis remap="I">objects</emphasis> in the input
@@ -32,18 +32,18 @@
       <citerefentry><refentrytitle>plot</refentrytitle><manvolnum>5</manvolnum></citerefentry>
       format file on standard output, in millimeters.
     </para>
-    
+
     <para>
       The orientation of the rays to be fired may be specified by the
-      <option>-a</option> and <option>-e</option> options, in which case the 
-      model will be autosized, and the grid will be centered on the centroid of the 
+      <option>-a</option> and <option>-e</option> options, in which case the
+      model will be autosized, and the grid will be centered on the centroid of the
       model, with ray spacing chosen to span the entire set of <emphasis remap="I">objects.</emphasis>
-      Alternatively, with the <option>-M</option> option, a transformation matrix may 
+      Alternatively, with the <option>-M</option> option, a transformation matrix may
       be provided on standard input which maps model-space to view-space.
       In this case, the grid ranges from -1.0 &lt; = X,Y &lt; = +1.0 in view space,
       with the size of the grid (number of rays fired) specified with the
       <option>-s</option> option. The <option>-M</option> option is most useful when
-      <command>rtcheck</command> is being automatically invoked from within 
+      <command>rtcheck</command> is being automatically invoked from within
       <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
       using the <command>rtcheck</command> command in <emphasis remap="I">mged</emphasis>.
     </para>
@@ -136,13 +136,13 @@
 	</listitem>
       </varlistentry>
     </variablelist>
-    
+
     <para>
       <command>rtcheck</command> also accepts all other options that the
       <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
       program implements, such as for non-square views, perspective, etc.
     </para>
-    
+
     <para>
       The <command>rtcheck</command> program is a simple front-end to
       <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
@@ -155,23 +155,23 @@
       etc.
     </para>
   </refsection>
-  
+
   <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
-    
+
     <para>
       <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtpp</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-sgi</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>tplot</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
     </para>
   </refsection>
-  
+
   <refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
-    
+
     <para>
-      Numerous error conditions are possible. Descriptive messages are printed on stderr 
+      Numerous error conditions are possible. Descriptive messages are printed on stderr
       (file descriptor 2).
     </para>
   </refsection>
-  
+
   <info>
     <author>
        <personname>Michael John Muuss</personname>
@@ -182,25 +182,25 @@
        <contrib></contrib>
     </author>
   </info>
-  
+
   <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
-    
+
     <para>
       This software is Copyright (c) 1988-2012 United States Government as
       represented by the U.S. Army Research Laboratory. All rights reserved.
     </para>
   </refsection>
-  
+
   <refsection xml:id="bugs"><info><title>BUGS</title></info>
   <para>
     Most deficiencies observed while using the <command>rtcheck</command>
-    program are a consequence of problems in 
+    program are a consequence of problems in
     <citerefentry><refentrytitle>librt.</refentrytitle><manvolnum>3</manvolnum></citerefentry>
   </para>
   </refsection>
-  
+
   <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-    
+
     <para>
       Reports of bugs or problems should be submitted via electronic
       mail to &lt;devs@brlcad.org&gt;.</para>

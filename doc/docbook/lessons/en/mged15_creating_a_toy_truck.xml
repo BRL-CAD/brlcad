@@ -2,7 +2,7 @@
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Creating a Toy Truck</title>
-    
+
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
@@ -52,7 +52,7 @@
       objects. This lesson focuses on creating a slightly more complex object, a
       toy truck, from the Command Window. Your completed truck should look
       similar to the following truck:
-      
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -73,18 +73,18 @@
     </para>
 
     <section xml:id="truck_cab_in_cmd"><info><title>Creating an rpp for the Cab of the Truck Using the In Command</title></info>
-      
+
       <para>
 	To make the cab of the truck, you will create a right parallel piped using
 	the in (insert) command. At the Command Window prompt, type:
-	
+
 	<command>in cab1.s rpp[Enter]</command>
-	
+
 	<application>MGED</application> will ask you to enter values for XMIN, XMAX, YMIN, YMAX, ZMIN, and
 	ZMAX. Type at the prompt:
-	
+
 	<command>0 1 0 1 0 1[Enter]</command>
-	
+
 	This will tell <application>MGED</application> to:
 	<informaltable>
 	  <tgroup cols="6">
@@ -111,11 +111,11 @@
       </para>
       <para>
 	You could also have used the streamlined version of:
-	
+
 	<command>in cab1.s rpp 0 1 0 1 0 1[Enter]</command>
-	
+
 	A cube shape should appear in the Graphics Window, as follows:
-	
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -133,7 +133,7 @@
     </section>
 
     <section xml:id="truck_hood_in_cmd"><info><title>Using the Inside Command to Create an rpp for the Hood of the Cab</title></info>
-      
+
       <para>
 	To make the hood of the cab, you will need to make another rpp shape, this
 	time using the inside command. This special command was originally created
@@ -145,9 +145,9 @@
       <para>
 	If you are using <application>BRL-CAD</application> version 6.0 or later, at the Command Window
 	prompt, type:
-	
+
 	<command>inside cab1.s caboff1.s .5 -.1 .7 -.1 -.1 -.1[Enter]</command>
-	
+
 	The inside command tells <application>MGED</application> to:
 	<informaltable>
 	  <tgroup cols="9">
@@ -177,7 +177,7 @@
 	    </tbody>
 	  </tgroup>
 	</informaltable>
-	
+
       </para>
       <note>
 	<para>
@@ -187,22 +187,22 @@
       </note>
       <note>
 	<para>
-	  Note that in <application>BRL-CAD</application> versions 6.0 and later, the faces of an rpp are  
-	  numbered in a different order than in previous versions. So, if you   
-	  are using a pre-6.0 release of the package, the following parameter   
-	  order must be used for the aforementioned inside command:             
-	  
+	  Note that in <application>BRL-CAD</application> versions 6.0 and later, the faces of an rpp are
+	  numbered in a different order than in previous versions. So, if you
+	  are using a pre-6.0 release of the package, the following parameter
+	  order must be used for the aforementioned inside command:
+
 	  <command>inside cab1.s caboff1.s -.1 .7 -.1 -.1 .5 -.1[Enter]</command>
-	  
-	  (The order of faces in this case is front, rear, right, left, bottom, 
-	  top instead of that specified for versions 6.0 and later.)            
+
+	  (The order of faces in this case is front, rear, right, left, bottom,
+	  top instead of that specified for versions 6.0 and later.)
 	</para>
       </note>
-     
+
       <para>
 	When in Multipane mode, the design should resemble the following
 	illustration.
-	
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -220,13 +220,13 @@
     </section>
 
     <section xml:id="truck_cab_wheel_well"><info><title>Using an rcc to Create a Wheel Well in the Cab</title></info>
-      
+
       <para>
 	Make a cylinder (rcc) to use for cutting away a space for the first wheel
 	of the cab. At the Command Window prompt, type:
-	
+
 	<command>make well1.s rcc[Enter]</command>
-	
+
 	Go to the Edit menu and click on Primitive Selection, then well1.s. After
 	selecting a Left view, go back to Edit and select Scale. Reduce the size
 	of the rcc until its diameter is about the right size for a wheel well. Go
@@ -236,15 +236,15 @@
 	labels overlap. However, because we know we want to flip the object
 	exactly 90'0 along the x axis, a better choice is to use the Command Line
 	and type:
-	
+
 	<command>p 90 0 0[Enter]</command>
-	
+
 	After doing so, you may still have to use the Set H and Scale
 	editing options to resize and the SHIFT key and left mouse
 	button to position your wheel well. When satisfied, select
 	Accept on the Edit menu. Your design should look similar to
 	the following in Multipane mode:
-	
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -262,7 +262,7 @@
     </section>
 
     <section xml:id="ok_accept_apply_reset_cancel_dismiss"><info><title>The Difference Between OK, Accept, Apply, Reset, Cancel, and Dismiss</title></info>
-      
+
       <para>
 	The GUI environment of <application>MGED</application> offers
 	users several options for applying, accepting, or rejecting
@@ -298,7 +298,7 @@
     </section>
 
     <section xml:id="truck_wheel_well_prim_edit_cpy"><info><title>Using the Primitive Editor to Make a Copy of the Wheel Well</title></info>
-      
+
       <para>
 	To make a copy of your wheel well, go to the Edit menu and select
 	Primitive Editor, which will contain information about the last shape
@@ -308,7 +308,7 @@
 	box). The parameter values of the old shape will be replaced by those of
 	the new shape. The Primitive Editor will change and look something like
 	the following example:
-	
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -348,14 +348,14 @@
     </section>
 
     <section xml:id="truck_cab_shape_comb"><info><title>Making a Combination of the Cab Shapes</title></info>
-      
+
       <para>
 	It is now time to make a combination of the various cab shapes.
-	
+
 	<command>comb cab1.c u cab1.s - caboff1.s - well1.s - well2.s[Enter]</command>
-	
+
 	This command tells <application>MGED</application> to:
-	
+
 	<informaltable>
 	  <tgroup cols="10">
 	    <tbody>
@@ -402,7 +402,7 @@
 
    - well2.s
 	</literallayout>
-	
+
       </para>
       <para>
 	If you type ls (list) at the Command Window prompt, you should find that
@@ -414,12 +414,12 @@
     </section>
 
     <section xml:id="truck_body_in_cmd"><info><title>Creating an rpp for the Body of the Truck Using the In Command</title></info>
-      
+
       <para>
 	To make the body of the truck, type at the Command Window prompt:
-	
+
 	<command>in body1.s rpp 0 2 0 1 0 1.5[Enter]</command>
-	
+
 	By now, you should know what this command tells <application>MGED</application> to do. If you have
 	forgotten, refer back to making the cab of the truck.
       </para>
@@ -428,7 +428,7 @@
 	cab's back face. Check different views to make sure the body lines up
 	correctly with the cab. Accept your changes when you are done, and then
 	Blast your design. Your truck should now look like the following:
-   
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -446,13 +446,13 @@
     </section>
 
     <section xml:id="prim_ed_wheel_wells"><info><title>Using the Primitive Editor to Make Two More Wheel Wells</title></info>
-      
+
       <para>
 	To make two wheel wells for the body of the truck, repeat the steps used
 	in making the second wheel well. Name your new shapes well3.s and well4.s.
 	Using multiple views, move the new shapes into position so that your truck
 	now looks similar to the following:
-   
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -470,13 +470,13 @@
     </section>
 
     <section xml:id="truck_body_wheel_wells_comb"><info><title>Making a Combination of the Truck Body and Wheel Wells</title></info>
-      
+
       <para>
 	Make a combination of the truck body and the two new wheel wells. Name it
 	body1.c.
-	
+
 	The tree for body1.c should say:
-	
+
 	<literallayout class="normal">
    body1.c/
 
@@ -490,17 +490,17 @@
     </section>
 
     <section xml:id="truck_cab_body_region"><info><title>Making a Region of the Cab and Body</title></info>
-      
+
       <para>
 	Before adding wheels to the truck, you need to make a region of the cab
 	and body. At the Command Window prompt, type:
-	
+
 	<command>r truck1.r u cab1.c u body1.c[Enter]</command>
       </para>
     </section>
 
     <section xml:id="truck_wheels"><info><title>Making Wheels for the Truck</title></info>
-      
+
       <para>
 	Perhaps the best shape for making wheels is the torus. You can create a
 	shape through the Command Window that has the correct size and placement
@@ -509,9 +509,9 @@
       </para>
       <para>
 	To make the first wheel, type at the Command Window prompt:
-	
+
 	<command>in wheel1.s tor 0 0 0 .5774 .5774 .5774 .18 .08[Enter]</command>
-	
+
 	This command tells <application>MGED</application> to:
 	<informaltable>
 	  <tgroup cols="7">
@@ -549,7 +549,7 @@
 	Using the Primitive Editor, make the second, third, and fourth wheels.
 	Move each of these wheels into position until your truck looks like the
 	following:
-	
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -567,7 +567,7 @@
     </section>
 
     <section xml:id="truck_wheels_region"><info><title>Making a Region of the Wheels</title></info>
-      
+
       <para>
 	Make a region of the four wheels. When you are finished, your data tree
 	for wheel1.r should say:
@@ -587,7 +587,7 @@
     </section>
 
     <section xml:id="truck_regions_mater_props"><info><title>Assigning Material Properties to the Truck Regions</title></info>
-      
+
       <para>
 	Your truck is composed of two regions: truck1.r and wheel1.r. Use the
 	Combination Editor and select truck1.r.
@@ -601,7 +601,7 @@
 	design proportional to the truck, select a Noise Size of .25 and then
 	Apply the selections. The Combination Editor window for the camo shader
 	should look like this:
-	
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -623,7 +623,7 @@
     </section>
 
     <section xml:id="on_screen_help"><info><title>Using the On-Screen Help Option</title></info>
-      
+
       <para>
 	You have probably noticed that many of the <application>MGED</application> menus offer a wide variety
 	of options from which to choose. With so many choices available, it is
@@ -641,7 +641,7 @@
     </section>
 
     <section xml:id="stacker_shading"><info><title>The Stacker Option</title></info>
-      
+
       <para>
 	In previous lessons, you applied color and a shader to an object to make
 	it appear realistic. Sometimes, however, you will need to apply two or
@@ -684,7 +684,7 @@
     </section>
 
     <section xml:id="using_stacker_shading"><info><title>Using the Stacker Option</title></info>
-      
+
       <para>
 	To use the stacker option, open the Combination Editor and select
 	truck1.r. Click on the button to the right of the Shader entry box and
@@ -703,24 +703,24 @@
 
       <caution>
 	<para>
-	  When using the stacker option, you need to keep track of the 
-	  number of characters and spaces in the shader text box. <application>MGED</application> versions 
-	  prior to release 6.0 will only recognize 64 characters/spaces, so be  
-	  careful stacking shaders with complex attributes.                     
+	  When using the stacker option, you need to keep track of the
+	  number of characters and spaces in the shader text box. <application>MGED</application> versions
+	  prior to release 6.0 will only recognize 64 characters/spaces, so be
+	  careful stacking shaders with complex attributes.
 	</para>
       </caution>
     </section>
 
     <section xml:id="truck_combine_regions"><info><title>Making a Combination of the Truck Regions</title></info>
-      
+
       <para>
 	To make a combination of the two truck regions, type at the Command Window
 	prompt:
-	
+
 	<command>comb truck1.c u truck1.r u wheel1.r[Enter]</command>
-	
+
 	<command>B truck1.c[Enter]</command>
-	
+
 	Your data tree for truck1.c should read:
 	<literallayout class="normal">
    truck1.c/
@@ -759,7 +759,7 @@
     </section>
 
     <section xml:id="truck_raytracing"><info><title>Raytracing the Truck</title></info>
-      
+
       <para>
 	The last step in creating your truck is to raytrace your design. When the
 	raytracer has finished, notice that the top and one side of the truck are
@@ -800,7 +800,7 @@
     </section>
 
     <section xml:id="creating_toy_truck_review"><info><title>Review</title></info>
-      
+
       <para>
 	In this lesson, you:
 	<itemizedlist mark="bullet">

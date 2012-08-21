@@ -18,8 +18,8 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>facedef</command>    
-    
+    <command>facedef</command>
+
     <arg choice="req" rep="norepeat"><replaceable>####</replaceable></arg>
     <group choice="opt" rep="norepeat">
 	<arg choice="opt" rep="norepeat">a</arg>
@@ -32,56 +32,56 @@
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>Allows the user to redefine any face of an ARB8 shape.  The
 	user must be in Primitive Edit Mode with an <emphasis>ARB</emphasis> selected for editing. The optional 	parameters may be omitted, and MGED will prompt for the missing values. The
 	options are as follows:</para>
-        <variablelist>
-          <varlistentry><term><emphasis>a</emphasis></term>
-            <listitem>
-              <para>
-	          Specify the new location of this face by providing coefficients for its plane
-	          equation:
-                  <informalequation>Ax + By + Cz = D.</informalequation>
-              </para>
-            </listitem>
-         </varlistentry>
-        <varlistentry><term><emphasis>b</emphasis></term>
-          <listitem>
-             <para>Specify the new location of this face using three points.
+	<variablelist>
+	  <varlistentry><term><emphasis>a</emphasis></term>
+	    <listitem>
+	      <para>
+		  Specify the new location of this face by providing coefficients for its plane
+		  equation:
+		  <informalequation>Ax + By + Cz = D.</informalequation>
+	      </para>
+	    </listitem>
+	 </varlistentry>
+	<varlistentry><term><emphasis>b</emphasis></term>
+	  <listitem>
+	     <para>Specify the new location of this face using three points.
 		 </para>
-	    </listitem>	
+	    </listitem>
 	  </varlistentry>
 	 <varlistentry><term><emphasis>c</emphasis></term>
-          <listitem>
-             <para>
-	         Specify the new location of this face using rotation and fallback angles. 
-             </para>
-           </listitem>
+	  <listitem>
+	     <para>
+		 Specify the new location of this face using rotation and fallback angles.
+	     </para>
+	   </listitem>
        </varlistentry>
        <varlistentry><term><emphasis>d</emphasis></term>
-          <listitem>
-             <para>Specify the new location of this face by changing the <emphasis>D</emphasis> value in the 		    plane equation.
+	  <listitem>
+	     <para>Specify the new location of this face by changing the <emphasis>D</emphasis> value in the 		    plane equation.
 		 </para>
-	    </listitem>	
+	    </listitem>
 	 </varlistentry>
 	 <varlistentry><term><emphasis>q</emphasis></term>
-          <listitem>
-             <para>Return to MGED prompt.
+	  <listitem>
+	     <para>Return to MGED prompt.
 		 </para>
-	    </listitem>	
+	    </listitem>
 	 </varlistentry>
        </variablelist>
-  
- 
+
+
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
      <para>The first example shows the use of the <command>facedef</command> command with the <emphasis>a 	 </emphasis> option to redefine a specified face so that it is in another plane.  The second example shows 	the use of the <command>facedef</command> command with the <emphasis>b</emphasis> option to redefine a 	face so that it is in another plane formed by three points.
      </para>
   <example><info><title>Moving a specified face so that it is in another plane.</title></info>
-    
+
     <variablelist>
       <varlistentry>
 	   <term><prompt>mged&gt;</prompt> <userinput>facedef 1234 a 1 0 0 20</userinput></term>
@@ -93,7 +93,7 @@
     </variablelist>
    </example>
   <example><info><title> Moving a specified face so that it is in another plane formed by three points.</title></info>
-     
+
     <variablelist>
       <varlistentry>
 	   <term><prompt>mged</prompt> <userinput>facedef 5678 b 0 0 10 10 0 10 10 10 10</userinput></term>
@@ -106,14 +106,14 @@
       </varlistentry>
     </variablelist>
   </example>
-  
-  
+
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

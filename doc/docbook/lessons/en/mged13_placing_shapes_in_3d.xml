@@ -2,7 +2,7 @@
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Placing Shapes in 3-D Space</title>
-    
+
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
@@ -13,7 +13,7 @@
 
     <para xml:id="placing_shapes_in_3d_overviewlist">
       In this lesson, you will:
-      
+
       <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Create, edit, and place shapes in 3-D space.</para>
@@ -31,7 +31,7 @@
 
     </para>
 
-    <para xml:id="placing_shapes_in_3d_intro1"> 
+    <para xml:id="placing_shapes_in_3d_intro1">
       In previous lessons, you created and edited shapes. You also placed
       objects in three-dimensional space. This lesson will provide more advanced
       practice on creating and editing shapes and placing them in 3-D space.
@@ -63,7 +63,7 @@
     </para>
 
     <section xml:id="candle_create_tabletop"><info><title>Creating the Tabletop</title></info>
-      
+
       <para>
 	Create an arb8 from the GUI. Name the shape arb8.s. Go to View and select
 	Front.
@@ -101,19 +101,19 @@
       </para>
       <para>
 	Make a region of the tabletop by typing at the Command Window prompt:
-	
+
 	<command>r table1.r u arb8.s[Enter]</command>
       </para>
     </section>
 
     <section xml:id="candle_create_base"><info><title>Creating the Candle Base</title></info>
-      
+
       <para>
 	Create an eto and name it eto1.s. To create the bottom of the candle base,
 	you will need to flip the eto 180'0. Type at the Command Window prompt:
-	
+
 	<command>rot 0 180 0[Enter]</command>
-	
+
 	This tells <application>MGED</application> to rotate the shape 180'0 along the y axis. Next, select
 	Scale and make the eto a little smaller than its default size. Place the
 	eto on the tabletop by using the SHIFT key and left mouse button to drag
@@ -226,13 +226,13 @@ Move End H
       <para>
 	Make a region of the three shapes of the base. Name it base1.r. Your
 	Boolean expression should read:
-	
+
 	<command>r base1.r u eto1.s u rcc1.s u eto2.s</command>
-	
+
 	Note that we could have written it
-	
+
 	<command>r base1.r u eto1.s u eto2.s u rcc1.s</command>
-	
+
 	but the first expression is preferred to be consistent with the order of a
 	later example. In a moment, we will want to remove some material that
 	eto2.s gives us. By placing eto2.s last in the list, we can perform this
@@ -241,7 +241,7 @@ Move End H
     </section>
 
     <section xml:id="candle_create_candle"><info><title>Creating the Candle</title></info>
-      
+
       <para>
 	Create an rcc and name it rcc2.s. Edit the shape as you did the previous
 	rcc. When you are done, it should look similar to the one in the following
@@ -265,21 +265,21 @@ Move End H
       </para>
       <para>
 	Make a region of the candle. Your Boolean statement should read:
-	
+
 	<command>r candle1.r u rcc2.s</command>
-	
+
 	Now we create a cylindrical cutout in the base for the candle to sit in.
 	To do this we can use the shape of the candle, as follows:
-	
+
 	<command>r base1.r - rcc2.s</command>
-	
+
 	Earlier we had mentioned that we would want to remove some material that
 	we got from eto2.s. Now we have done it.
       </para>
     </section>
 
     <section xml:id="candle_create_flame"><info><title>Creating the Candle Flame</title></info>
-      
+
 
       <para>
 	Create a particle (part) and name it part1.s. Edit and position the shape
@@ -299,24 +299,24 @@ Move End H
       </informalfigure>
 
 	Make a region of the flame by typing at the Command Window prompt:
-	
+
 	<command>r flame1.r u part1.s[Enter]</command>
       </para>
     </section>
-    
+
     <section xml:id="candle_create_combination"><info><title>Making a Combination of the Base, Candle, and Flame</title></info>
-      
+
 
       <para>
 	To make a combination of the parts of the candle, type at the Command
 	Window prompt:
-	
+
 	<command>comb candle1.c u base1.r u candle1.r u flame1.r[Enter]</command>
       </para>
     </section>
 
     <section xml:id="candle_check_data_tree"><info><title>Checking the Data Tree</title></info>
-      
+
       <para>
 	Now that you have made a number of regions and a combination, it would be
 	a good time to check your data tree and make sure it agrees with the
@@ -324,14 +324,14 @@ Move End H
 	parts of the tree, you can change them in the Boolean Expression box of
 	the Combination Editor (refer to Lesson 5). At the Command Line prompt,
 	type:
-	
+
 	<command>tree candle1.c[Enter]</command>
-	
+
 	Your Boolean expression should read:
-	
+
 	<literallayout class="normal">
    candle1.c/
-	
+
    u base1.r/R
 
    u eto1.s
@@ -354,12 +354,12 @@ Move End H
     </section>
 
     <section xml:id="candle_assign_mater_prop"><info><title>Assigning Material Properties to the Elements of the Design</title></info>
-      
+
       <para>
 	To assign material properties to your design, go to the Edit menu and
 	select the Combination Editor. Assign the following material properties to
 	each of the elements:
-	
+
 	<informaltable frame="all">
 	  <tgroup cols="4">
 	    <thead>
@@ -426,28 +426,28 @@ Move End H
 
       <note>
 	<para>
-	  As discussed previously, a color is made up of three numbers, ranging 
-	  from 0 to 255. The first number represents the amount of red, the     
-	  second represents the amount of green, and the third represents the   
-	  amount of blue used to make the color. A color of 0 0 0 is black, and 
-	  255 255 255 is white. This method of creating colors is different     
-	  from mixing pigment colors used in painting because you are dealing   
-	  with light. While it may seem strange at first, most <application>MGED</application> users       
-	  quickly become adept at creating RGB colors.                          
+	  As discussed previously, a color is made up of three numbers, ranging
+	  from 0 to 255. The first number represents the amount of red, the
+	  second represents the amount of green, and the third represents the
+	  amount of blue used to make the color. A color of 0 0 0 is black, and
+	  255 255 255 is white. This method of creating colors is different
+	  from mixing pigment colors used in painting because you are dealing
+	  with light. While it may seem strange at first, most <application>MGED</application> users
+	  quickly become adept at creating RGB colors.
 	</para>
       </note>
     </section>
 
     <section xml:id="candle_raytrace"><info><title>Raytracing Your Design</title></info>
-      
-      
+
+
       <para>
 	Before raytracing, change the View to az35, el25 to give a better view of
 	the completed design and then Blast the old design by typing at the
 	Command Window prompt:
-	
+
 	<command>B table1.r candle1.c[Enter]</command>
-	
+
 	This command tells the <application>MGED</application> program to:
 	<informaltable>
 	  <tgroup cols="3">
@@ -487,9 +487,9 @@ Move End H
     </section>
 
     <section xml:id="placing_shapes_in_3d_review"><info><title>Review</title></info>
-      
+
       <para>
-	
+
 	In this lesson, you:
 	<itemizedlist mark="bullet">
 	  <listitem>

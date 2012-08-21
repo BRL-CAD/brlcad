@@ -19,33 +19,33 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="tire_synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>tire</command>    
+    <command>tire</command>
     <arg choice="opt" rep="repeat"><replaceable>options ...</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>name</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="tire_description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>
     <command>tire</command> creates a curved sidewall tire in either the current
     open database (when run from within MGED) or in <emphasis remap="I">tire.g</emphasis>
     when run from the command line.  If no dimensions are supplied defaults are used.  The
-    default is to <emphasis remap="I">not</emphasis> model tread (due to performance 
+    default is to <emphasis remap="I">not</emphasis> model tread (due to performance
     issues) but tread modeling is implemented and available as a user option with the
     <option>-t</option> flag.
   </para>
   <para>
-    <option>-a #</option> instructs <command>tire</command> to automatically add 
-    dimensional information to the toplevel object name used in the generated BRL-CAD 
-    database tree.  Works with the <option>-n</option> option or standalone.  Output 
-    format uses '-' instead of '/' because the latter has significance in BRL-CAD 
+    <option>-a #</option> instructs <command>tire</command> to automatically add
+    dimensional information to the toplevel object name used in the generated BRL-CAD
+    database tree.  Works with the <option>-n</option> option or standalone.  Output
+    format uses '-' instead of '/' because the latter has significance in BRL-CAD
     object trees.
   </para>
 </refsection>
 
 <refsection xml:id="tire_options"><info><title>OPTIONS:</title></info>
-  
+
   <variablelist remap="TP">
     <varlistentry>
       <term><option>-c count</option></term>
@@ -90,7 +90,7 @@
 	<para>
 	  Specify the ratio of the sidewall height to the maximum tire width.  This
 	  option overrides the -d option if used together, or the default if used
-	  alone.  Can be used with the -W and -D flags.  Unlike the -d flag, allows 
+	  alone.  Can be used with the -W and -D flags.  Unlike the -d flag, allows
 	floating point input for more precise definition of ratio.
 	</para>
       </listitem>
@@ -101,7 +101,7 @@
 	<para>
 	  Specify the diameter of the rim (a.k.a the steel wheel) in inches. This
 	  option overrides the -d option if used together, or the default if used
-	  alone.  Can be used with the -W and -R flags.  Unlike the -d flag, allows 
+	  alone.  Can be used with the -W and -R flags.  Unlike the -d flag, allows
 	  floating point input for more precise definition of rim diameter.
 	</para>
       </listitem>
@@ -136,7 +136,7 @@
       <term><option>-p type#</option></term>
       <listitem>
 	<para>
-	  Select tread pattern to model.  Note: tread modeling can SIGNIFICANTLY 
+	  Select tread pattern to model.  Note: tread modeling can SIGNIFICANTLY
 	  lengthen raytracing times, depending on the tread.
 	</para>
       </listitem>
@@ -145,7 +145,7 @@
       <term><option>-s radius#</option></term>
       <listitem>
 	<para>
-	  Set the radius from the tire center of the maximum width point on the 
+	  Set the radius from the tire center of the maximum width point on the
 	  sidewall.
 	</para>
       </listitem>
@@ -154,7 +154,7 @@
       <term><option>-t type#</option></term>
       <listitem>
 	<para>
-	  Select tread shape to model.  Note: tread modeling can SIGNIFICANTLY 
+	  Select tread shape to model.  Note: tread modeling can SIGNIFICANTLY
 	  lengthen raytracing times, depending on the tread.
 	</para>
       </listitem>
@@ -178,17 +178,17 @@
 </refsection>
 
 <refsection xml:id="tire_examples"><info><title>EXAMPLE</title></info>
-  
+
   <para>
     The following will create a tire with width=185mm, ratio=65mm, and wheel
-    diameter = 15in.  The <option>-t</option> flag will instruct the procedure to 
-    model using tread type one, the <option>-n</option> flag will set the root 
+    diameter = 15in.  The <option>-t</option> flag will instruct the procedure to
+    model using tread type one, the <option>-n</option> flag will set the root
     name to 'autowheel' instead of tire, and the <option>-a</option>
     flag will append '-185-65R15' to 'autowheel' to create the final
     toplevel name 'autowheel-185-65R15' in the database rather than 'tire'.
   </para>
   <example><info><title>Creating a 185/65R15 tire with wheel</title></info>
-    
+
     <para>
       <userinput>tire -d 185/65R15 -t 1 -a -n autowheel</userinput>
     </para>
@@ -197,7 +197,7 @@
 </refsection>
 
 <refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
-  
+
   <para>
     Not much error checking yet - need to add.
   </para>
@@ -211,7 +211,7 @@
 </info>
 
 <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
-  
+
   <para>
     This software is Copyright (c) 2008-2012 United States Government as
     represented by the U.S. Army Research Laboratory. All rights reserved.
@@ -219,7 +219,7 @@
 </refsection>
 
 <refsection xml:id="bugs"><info><title>BUGS</title></info>
-  
+
   <para>
     There is a known problem where specifying very thin tires with a large
     inner wheel will cause incorrect geometry to be produced - this has to do
@@ -229,7 +229,7 @@
 </refsection>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

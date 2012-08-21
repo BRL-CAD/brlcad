@@ -14,7 +14,7 @@
   <!-- body begins here -->
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
-      <command>anim_fly</command>    
+      <command>anim_fly</command>
       <arg choice="opt" rep="norepeat">-f <replaceable>factor</replaceable></arg>
       <arg choice="opt" rep="norepeat">-r </arg>
       <arg choice="opt" rep="norepeat">-p <replaceable>integer</replaceable></arg>
@@ -26,20 +26,20 @@
   </refsynopsisdiv>
 
   <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-    
+
     <para>
       This filter is designed to simulate the motion of an airplane.
       Given a four-column table specifying the desired 3D position of the
       airplane at each relevant time step, <command>anim_fly</command>
-      produces a seven-column file which also includes the orientation 
-      of the plane in terms of yaw, pitch, and roll. The yaw and pitch 
-      are manipulated so that the plane faces the direction of motion, 
+      produces a seven-column file which also includes the orientation
+      of the plane in terms of yaw, pitch, and roll. The yaw and pitch
+      are manipulated so that the plane faces the direction of motion,
       while the roll is used to do banking.
     </para>
   </refsection>
-  
+
   <refsection xml:id="options"><info><title>OPTIONS</title></info>
-    
+
     <variablelist remap="TP">
       <varlistentry>
 	<term><option>-f#</option></term>
@@ -52,7 +52,7 @@
 	    If the slightest curve throws the plane into a 90-degree bank, the factor is
 	    too large; if it doesn't bank enough, the factor is too small. The size
 	    of the best factor varies inversely with the size of the imagined
-	    aircraft plane. If a factor of 0 is used, there will be no banking. This would be 
+	    aircraft plane. If a factor of 0 is used, there will be no banking. This would be
 	    appropriate for animating a ground vehicle.
 	  </para>
 	</listitem>
@@ -73,8 +73,8 @@
 	<listitem>
 	  <para>
 	    Suppress vertical loop smoothing.  A special case occurs if the aircraft is to perform a vertical
-	    loop. Normally, the algorithm likes to keep the aircraft right-side up. This would cause the 
-	    airplane to do an instantaneous 180-degree roll as it hits the vertical portion of the loop. 
+	    loop. Normally, the algorithm likes to keep the aircraft right-side up. This would cause the
+	    airplane to do an instantaneous 180-degree roll as it hits the vertical portion of the loop.
 	    To counter this, a capability was built in which prevents this sudden roll, allowing the aircraft to go
 	    upside-down in a loop situation. This feature can be suppressed with the
 	    <option>-r</option> flag.
@@ -85,8 +85,8 @@
 	<term><option>-p</option></term>
 	<listitem>
 	  <para>
-	    Specify the ratio of input rows to output rows, which must be an integer. The default, of course, 
-	    is one. The accuracy of the output depends on having a large number of input lines, which is not 
+	    Specify the ratio of input rows to output rows, which must be an integer. The default, of course,
+	    is one. The accuracy of the output depends on having a large number of input lines, which is not
 	    usually a problem in animations, which require a large number of frames per
 	    second, anyway. If a test animation with a small number of frames per
 	    second is being created, the user should still use an input table
@@ -128,9 +128,9 @@
       <contrib></contrib>
     </author>
   </info>
-  
+
   <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
-    
+
     <para>
       This software is Copyright (c) 1993-2012 by the United States
       Government as represented by U.S. Army Research Laboratory.
@@ -138,7 +138,7 @@
   </refsection>
 
   <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-    
+
     <para>
       Reports of bugs or problems should be submitted via electronic
       mail to &lt;devs@brlcad.org&gt;.</para>

@@ -23,7 +23,7 @@
   <section xml:id="some-descriptive-tag">
     <!-- the xml:id tag is just something descriptive that you can
     reference if you wanted to use CSS to modify the layout. -->
-    
+
     <para>
       First paragraph goes here.
     </para>

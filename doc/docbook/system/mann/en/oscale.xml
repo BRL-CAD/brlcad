@@ -19,13 +19,13 @@ scale operation.
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>oscale</command>    
+    <command>oscale</command>
       <arg choice="req" rep="norepeat"><replaceable>scale_factor</replaceable></arg>
     </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>This command of matrix edit mode modifies the matrix to perform a uniform
 scale operation. A <emphasis>scale_factor</emphasis> of 2 doubles the size of the associated object, and a
 <emphasis>scale_factor</emphasis> of 0.5 reduces it by half.
@@ -33,25 +33,25 @@ scale operation. A <emphasis>scale_factor</emphasis> of 2 doubles the size of th
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>The example shows the use of the <command>oscale</command> command to increase the size of a currently edited object by a specified factor.
    </para>
-       
+
   <example><info><title>Increase a currently edited object by a specified factor.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>oscale 3</userinput>
     </para>
     <para>Increases the size of the currently edited object by a factor of 3.
      </para>
   </example>
- 
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

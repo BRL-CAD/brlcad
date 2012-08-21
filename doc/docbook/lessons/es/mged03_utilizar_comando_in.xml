@@ -1,11 +1,11 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0"
-         xmlns:xi="http://www.w3.org/2001/XInclude"
+	 xmlns:xi="http://www.w3.org/2001/XInclude"
 >
-  <info><title>Usar el comando Insert en <application>MGED</application> para 
+  <info><title>Usar el comando Insert en <application>MGED</application> para
     dimensionar y ubicar figuras</title>
-    
+
 
     <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
@@ -16,10 +16,10 @@
 
     <para xml:id="using_insert_command_overviewlist">
       En este tutorial usted aprenderá a:
-      
+
       <itemizedlist mark="bullet">
 	<listitem>
-	  <para>Crear una esfera y un cilindro circular recto (rcc por sus 
+	  <para>Crear una esfera y un cilindro circular recto (rcc por sus
 	  siglas en inglés: right circular cylinder)usando el comando make
 	  </para>
 	</listitem>
@@ -27,70 +27,70 @@
 	  <para>Crear ambas figuras usando el comando in (de insert).</para>
 	</listitem>
 	<listitem>
-	  <para>Combinar argumentos mediante línea de comandos para racionalizar 
+	  <para>Combinar argumentos mediante línea de comandos para racionalizar
 	  la entrada de variables.</para>
 	</listitem>
 	<listitem>
-	  <para>Desarrollar un formato de comando combinado para ayudar a 	 
+	  <para>Desarrollar un formato de comando combinado para ayudar a
 	  manejar las variables de línea de comandos.</para>
 	</listitem>
 	<listitem>
-	  <para>Considerar las convenciones para la elección de los nombres de 	
+	  <para>Considerar las convenciones para la elección de los nombres de
 	  sus objetos.</para>
 	</listitem>
 	<listitem>
-	  <para>Visualizar sus figuras desde distintas perspectivas utilizando 
+	  <para>Visualizar sus figuras desde distintas perspectivas utilizando
 	  las opciones del menú View (Vistas).</para>
 	</listitem>
 	<listitem>
 	  <para>Cerrar el programa <application>MGED</application>.</para>
 	</listitem>
-      </itemizedlist>  
+      </itemizedlist>
     </para>
-    
+
     <para xml:id="using_insert_command_intropara1">
-	Esta lección se centra en la creación de formas a partir de la ventana 	
-	de comandos utilizando los comandos in y make. Va a crear una esfera 
-	(SPH) y un cilindro circular recto (RCC), utilizando los comandos de 
-	modo que usted puede ver cómo trabaja cada comando. Luego, practicará 
+	Esta lección se centra en la creación de formas a partir de la ventana
+	de comandos utilizando los comandos in y make. Va a crear una esfera
+	(SPH) y un cilindro circular recto (RCC), utilizando los comandos de
+	modo que usted puede ver cómo trabaja cada comando. Luego, practicará
 	las vistas de su modelo desde diferentes ángulos.
 
     </para>
-    
+
     <section xml:id="new_db_myShapes"><info><title>Crear una nueva base de datos desde la línea de comandos.</title></info>
-      
-      
+
+
       <para>
-	Crear una nueva base de datos y nombrarla shapes.g. Agréguele como 
+	Crear una nueva base de datos y nombrarla shapes.g. Agréguele como
 	título el nombre myShapes.
       </para>
     </section>
 
     <section xml:id="sphere_make"><info><title>Crear una esfera utilizando el comando make.</title></info>
-      
-    
+
+
       <para>
-	Comience por activar la ventana (por lo general, se logra haciendo clic 
-	en cualquier parte la ventana). Luego, en el prompt de 	
+	Comience por activar la ventana (por lo general, se logra haciendo clic
+	en cualquier parte la ventana). Luego, en el prompt de
 	<application>MGED</application> tipee el siguiente comando:
-	
+
 	<command>make sph1.s sph [Enter]</command>
       </para>
-      
+
       <para>
 	Como pudo apreciar en el tuorial #1, este comando le dice a <application>MGED</application> que:
-	
+
 	<informaltable frame="all">
 	  <tgroup cols="3">
 	    <tbody>
 	      <row><entry>make</entry><entry>sph1.s</entry><entry>sph</entry></row>
 	      <row><entry>Cree una figura</entry><entry>La nombre sph1.s</entry>
-                   <entry>Que sea una esfera</entry>
+		   <entry>Que sea una esfera</entry>
 	      </row>
 	    </tbody>
 	  </tgroup>
 	</informaltable>
-	
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -104,20 +104,20 @@
 	</mediaobject>
       </informalfigure>
       </para>
-      
+
       <para>
-	La figura de una esfera fue creada y en su ventana gráfica aparecerá un 
+	La figura de una esfera fue creada y en su ventana gráfica aparecerá un
 	dibujo de la misma en forma de wireframe.
       </para>
       <para>
 	Para crear el rcc desde la ventana de comandos tipee en el prompt:
-	
+
 	<command>make rcc1.s rcc [Enter]</command>
       </para>
-      
+
       <para>
-	Su ventana gráfica deberá mostrar un rcc grande, con la vista por 
-	defecto de az35, el25, viéndose como si entersectara con la esfera 
+	Su ventana gráfica deberá mostrar un rcc grande, con la vista por
+	defecto de az35, el25, viéndose como si entersectara con la esfera
 	previamente creada.
       <informalfigure>
 	<mediaobject>
@@ -132,141 +132,141 @@
 	</mediaobject>
       </informalfigure>
       </para>
-      
+
       <para>
-	Utilizar el comando make es la forma más fácil y rápida de crear una 
-	figura. De todas maneras, la mayoría de los modelos requieren figuras 
-	con parámetros específicos, como altura y radio. Por lo tanto, la manera 
+	Utilizar el comando make es la forma más fácil y rápida de crear una
+	figura. De todas maneras, la mayoría de los modelos requieren figuras
+	con parámetros específicos, como altura y radio. Por lo tanto, la manera
 	más precisa de crear estas figuras es utilizando el comando in (insert).
       </para>
     </section>
-   
+
     <section xml:id="using_in"><info><title>Utilizar el comando in para crear figuras</title></info>
-      
-      
+
+
       <para>
-	Una vez que la ventana de comandos esté activa al cliquear sobre ella, 
-	use el comando Z (zap) para despejar la ventana gráfica. Ya está listo 
-	para crear una esfera utilizando el comando in. En el prompt de 
+	Una vez que la ventana de comandos esté activa al cliquear sobre ella,
+	use el comando Z (zap) para despejar la ventana gráfica. Ya está listo
+	para crear una esfera utilizando el comando in. En el prompt de
 	<application>MGED</application> tipee:
-	
+
 	<command>in sph2.s sph[Enter]</command>
       </para>
 
       <para>
 	<application>MGED</application> responderá con:
-	
+
 	<literal>Enter X, Y, Z of vertex:</literal>
 	<literal>(Ingrese X, Y, Z del vértice:)</literal>
       </para>
-      
+
       <para>
-	Debe responderle a <application>MGED</application> con la posición del 
-	vértice (centro) de la esfera en el espacio. Tipee entonces en el prompt 
+	Debe responderle a <application>MGED</application> con la posición del
+	vértice (centro) de la esfera en el espacio. Tipee entonces en el prompt
 	de <application>MGED</application>:
-	
+
 	<command>4 4 4[Enter]</command>
       </para>
-      
+
 	<para>
-	  NOTA: Al trabajar con <application>MGED</application>, recibirá 
+	  NOTA: Al trabajar con <application>MGED</application>, recibirá
 	  algunas preguntas sobre el valor de vectores o vértices.
 
-	  En <application>MGED</application>, un vector representa la distancia 
-	  y dirección desde un punto del espacio a otro, y el vértice es sólo un 
+	  En <application>MGED</application>, un vector representa la distancia
+	  y dirección desde un punto del espacio a otro, y el vértice es sólo un
 	  punto en el espacio.
-	  Los valores ingresados para un vector, generalmente son utilizados 	
-	  para crear objetos con dimensiones específicas. Los valores ingresador 
+	  Los valores ingresados para un vector, generalmente son utilizados
+	  para crear objetos con dimensiones específicas. Los valores ingresador
 	  para el vértice ubican los objetos en el espacio.
 	</para>
-      
+
       <para>
-	Su esfera estará ahora ubicada en(x,y,z)=(4,4,4), medido en milímetros. 	Recuerde que los valores se ingresan separados por un espacio y se 
-	presiona la tecla ENTER luego. <application>MGED</application> le 
+	Su esfera estará ahora ubicada en(x,y,z)=(4,4,4), medido en milímetros. 	Recuerde que los valores se ingresan separados por un espacio y se
+	presiona la tecla ENTER luego. <application>MGED</application> le
 	preguntará entonces.
-      </para>  
+      </para>
       <literallayout class="normal">
       <prompt>Enter radius:</prompt>
       <prompt>(Ingrese radio:)</prompt>
       Tipee.
-      
+
       <command>3[Enter]</command>
       </literallayout>
-    
+
       <para>
-	El radio de la esfera será de 3 mm. El siguiente cuadro de diálogo 
-	aparecerá en la ventana de comandos (incluyendo las respuestas 
+	El radio de la esfera será de 3 mm. El siguiente cuadro de diálogo
+	aparecerá en la ventana de comandos (incluyendo las respuestas
 	correspondientes):
-	
+
 	<command><prompt>mged&gt;</prompt> in sph2.s sph</command>
-	
+
 	<literal>Enter X, Y, Z of vertex: 4 4 4</literal>
-	
+
 	<literal>Enter radius: 3</literal>
-	
+
 	<literal>51 vectors in 0.000543 sec</literal>
-	
-	La última línea de este diálogo es simplemente un registro de la 
-	velocidad de la computadora en dibujar la forma. No tiene ninguna 
+
+	La última línea de este diálogo es simplemente un registro de la
+	velocidad de la computadora en dibujar la forma. No tiene ninguna
 	utilidad real para el usuario en este punto.
       </para>
-      
+
       <para>
-	La esfera ha sido creada y su wireframe (marco de alambre), similar al 
+	La esfera ha sido creada y su wireframe (marco de alambre), similar al
 	de la esfera creada con el comando make aparecerá en su ventana gráfica.
       </para>
-      
+
       <para>
 	Para crear el RCC correcto, tipee en el prompt de la línea de comandos:
-	
+
 	<command>in rcc2.s rcc[Enter]</command>
-	
-	<application>MGED</application> le pedirá que ingrese los valores x, y, 
-	z de los vértices (donde quiere que el centro de un extremo de la RCC 
+
+	<application>MGED</application> le pedirá que ingrese los valores x, y,
+	z de los vértices (donde quiere que el centro de un extremo de la RCC
 	sea colocado en el espacio). Tipee.
 
 	<command>4 4 0[Enter]</command>
-	
+
 	Asegúrese de dejar espacios entre cada valor.
       </para>
-      
+
       <para>
-	<application>MGED</application> le pedirá ahora que ingrese los valores 
-	x, y, z para la altura (H: de height) del vector (que determinará que 
+	<application>MGED</application> le pedirá ahora que ingrese los valores
+	x, y, z para la altura (H: de height) del vector (que determinará que
 	tal alto desea que sea su rcc). Tipee:
-	
+
 	<command>0 0 4[Enter]</command>
-	
+
 	El último valor requerido será el radio del RCC. Tipee:
-	
+
 	<command>3[Enter]</command>
-	
-	El diálogo en la ventana de comandos para la creación de RCC debería 
+
+	El diálogo en la ventana de comandos para la creación de RCC debería
 	verso como el siguiente:
       </para>
-      
+
       <literallayout class="normal">
       <prompt>mged&gt;</prompt> in rcc2.s rcc
-      
+
       Enter X, Y, Z of vertex: 4 4 0
-      
+
       Enter X, Y, Z of height (H) vector: 0 0 4
-      
+
       Enter radius: 3
-      
+
       42 vectors in 0.000214 sec
       </literallayout>
-    
+
       <para>
-	Deberías tener ahora nuevas versiones de la esfera y del RCC. Compare 
-	las dimensiones de éstos con los creados anteriormente. El rcc está 
-	ahora en proporción con la esfera y posicionado en el espacio a la 
-	izquierda en la ventana gráfica. Al especificar las dimensiones de las 
-	formas y sus ubicaciones en el espacio, se ha podido crear el modelo de 
+	Deberías tener ahora nuevas versiones de la esfera y del RCC. Compare
+	las dimensiones de éstos con los creados anteriormente. El rcc está
+	ahora en proporción con la esfera y posicionado en el espacio a la
+	izquierda en la ventana gráfica. Al especificar las dimensiones de las
+	formas y sus ubicaciones en el espacio, se ha podido crear el modelo de
 	mayor precisión.
 
       </para>
-      
+
       <informaltable>
 	<tgroup cols="2">
 	  <tbody>
@@ -283,29 +283,29 @@
       </informaltable>
 
     </section>
-   
+
     <section xml:id="args_on_one_line"><info><title>Combinar arugmentos en una línea</title></info>
-      
-      
+
+
       <para>
-	Otra forma de usar el comando in es combinar toda la información 
-	requerida en una línea. Una vez que se familiariarice con el comando in, 
-	preferirá probablemente este método ya que permite mayor velocidad en el 
+	Otra forma de usar el comando in es combinar toda la información
+	requerida en una línea. Una vez que se familiariarice con el comando in,
+	preferirá probablemente este método ya que permite mayor velocidad en el
 	ingreso de parámetros.
       </para>
-      
+
       <para>
-	Despejar la ventana gráfica con el comando Z. Ahora cree una nueva 
+	Despejar la ventana gráfica con el comando Z. Ahora cree una nueva
 	esfera tipeando en el prompt de <application>MGED</application>:
-	
+
 	<command>in sph3.s sph 4 4 4 3[Enter]</command>
       </para>
-      
+
       <para>
 	Esta forma larga de ingresar el comando significa:
       </para>
-      
-      
+
+
       <informaltable>
 	<tgroup cols="7">
 	  <tbody>
@@ -330,18 +330,18 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-      
+
       <para>
-	Para hacer un RCC correctamente usando este método, tipee en la línea de 
+	Para hacer un RCC correctamente usando este método, tipee en la línea de
 	comandos:
-	
+
 	<command>in rcc3.s rcc 4 4 0 0 0 4 3[Enter]</command>
       </para>
-      
+
       <para>
 	Este comando significa:
       </para>
-      
+
       <informaltable>
 	<tgroup cols="10" align="center" colsep="1" rowsep="1">
 	  <colspec colname="c1"/>
@@ -370,13 +370,13 @@
 	    <row>
 	      <entry morerows="1" valign="top">Insertar una figura primitiva</entry>
 	      <entry morerows="1" valign="top">Llamarla rcc3.s</entry>
-	      <entry morerows="1" valign="top">Hacer de la figura primitiva un 
+	      <entry morerows="1" valign="top">Hacer de la figura primitiva un
 		cilindro circular recto (RCC)</entry>
-	      <entry morerows="1" valign="top">Dar a la x del vértice el valor 
+	      <entry morerows="1" valign="top">Dar a la x del vértice el valor
 		4</entry>
-	      <entry morerows="1" valign="top">Dar a la y del vértice el valor 
+	      <entry morerows="1" valign="top">Dar a la y del vértice el valor
 		4</entry>
-	      <entry morerows="1" valign="top">Dar a la z del vértice el valor 
+	      <entry morerows="1" valign="top">Dar a la z del vértice el valor
 		0</entry>
 	      <entry>Dar a la x del vector de altura el valor 0</entry>
 	      <entry>Dar a la y del vector de altura el valor 0</entry>
@@ -384,30 +384,30 @@
 	      <entry morerows="1" valign="top">Dar al radio el valor de 3</entry>
 	    </row>
 	    <row>
-	      <entry namest="c7" nameend="c9" align="center">Hacer la forma de 
-		cuatro unidades de largo, apuntando directamente hacia z 
+	      <entry namest="c7" nameend="c9" align="center">Hacer la forma de
+		cuatro unidades de largo, apuntando directamente hacia z
 		positivo</entry>
 	    </row>
 	  </tbody>
 	</tgroup>
       </informaltable>
     </section>
-    
+
     <section xml:id="command_combined_in"><info><title>Desarrollar un formato de comando combinado para el comando in
       </title></info>
-      
-      
+
+
       <para>
-	Cuando usted comienza a usar <application> MGED </application>, si 
-	desea utilizar la ventana de comandos en lugar de la interfaz gráfica de 
-	usuario, probablemente querrá hacer algunos formularios en blanco de 
-	comandos combinados para cada tipo de forma primitiva que usted esté 
-	creando. Esto puede acelerar el proceso de diseño y ayudar a recordar 
-	que los valores deben ser presentados para cada forma. Una forma de la 
+	Cuando usted comienza a usar <application> MGED </application>, si
+	desea utilizar la ventana de comandos en lugar de la interfaz gráfica de
+	usuario, probablemente querrá hacer algunos formularios en blanco de
+	comandos combinados para cada tipo de forma primitiva que usted esté
+	creando. Esto puede acelerar el proceso de diseño y ayudar a recordar
+	que los valores deben ser presentados para cada forma. Una forma de la
 	esfera podría ser:
 
       </para>
-      
+
       <informaltable>
 	<tgroup cols="10" align="center" colsep="1" rowsep="1">
 	  <colspec colname="c1"/>
@@ -442,11 +442,11 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-      
+
       <para>
 	Un ejemplo para el RCC puede ser:
       </para>
-      
+
       <informaltable>
 	<tgroup cols="10" align="center" colsep="1" rowsep="1">
 	  <colspec colname="c1"/>
@@ -471,7 +471,7 @@
 	    <row>
 	      <entry morerows="1" valign="top">Insertar figura primitiva</entry>
 	      <entry morerows="1" valign="top">Nombre de la figura</entry>
-	      <entry morerows="1" valign="top">La figura es un cilindro circular 
+	      <entry morerows="1" valign="top">La figura es un cilindro circular
 		recto</entry>
 	      <entry>Valor de x</entry>
 	      <entry>Valor de y</entry>
@@ -490,22 +490,22 @@
 	</tgroup>
       </informaltable>
     </section>
-    
-    <section xml:id="mged_naming_conventions"><info><title>Considerar los nombres convencionales para las figuras en 
+
+    <section xml:id="mged_naming_conventions"><info><title>Considerar los nombres convencionales para las figuras en
 	<application>MGED</application>
       </title></info>
-      
-      
+
+
       <para>
 	Usted puede haber notado que cada vez que se crea una esfera o CCR, se
-	han asignado nombres diferentes. A <application> MGED </application> no 
+	han asignado nombres diferentes. A <application> MGED </application> no
 	le afecta en nada el nombre que le dé a una forma, pero puede ayudar el
-	uso de convenciones sobre los nombres de las formas. Sólo tenga en 
-	cuenta también que cada nombre debe ser único en la base de datos, y 
-	para las versiones anteriores a <application> BRL-CAD </application> 
+	uso de convenciones sobre los nombres de las formas. Sólo tenga en
+	cuenta también que cada nombre debe ser único en la base de datos, y
+	para las versiones anteriores a <application> BRL-CAD </application>
 	6.0, los nombres están limitados a 16 caracteres de longitud.
       </para>
-      
+
       <para>
 	En esta lección le asignamos nombres a las formas en función de su
 	tipo de figura y el orden en el que los creó. Lo hicimos porque las
@@ -513,74 +513,74 @@
       </para>
 
       <para>
-	Al crear modelos reales, sin embargo, es probable que quiera asignar 
-	nombres como hemos hecho con los nombres de los componentes del radio, 
-	que se basan en sus funciones (por ejemplo, btn para el botón, ant para 
+	Al crear modelos reales, sin embargo, es probable que quiera asignar
+	nombres como hemos hecho con los nombres de los componentes del radio,
+	que se basan en sus funciones (por ejemplo, btn para el botón, ant para
 	la antena, etc.)
       </para>
-      
+
       <para>
-	Si usted trabaja con otros modeladores con experiencia, consulte con 
-	ellos para ver qué conjunto de convenciones utilizarán. Si trabaja solo, 
-	desarrolle su un conjunto de convenciones al nombrar sus figuras de 
+	Si usted trabaja con otros modeladores con experiencia, consulte con
+	ellos para ver qué conjunto de convenciones utilizarán. Si trabaja solo,
+	desarrolle su un conjunto de convenciones al nombrar sus figuras de
 	forma que funcione para usted, y úselo de forma coherente.
       </para>
     </section>
-    
+
     <section xml:id="view_shapes"><info><title>Visualización de las figuras </title></info>
-	 
+
 
       <para>
-	Practique ver sus nuevas formas mediante el menú View (Vistas). 
-	Manipule la vista con las diferentes combinaciones entre el mouse y las 
+	Practique ver sus nuevas formas mediante el menú View (Vistas).
+	Manipule la vista con las diferentes combinaciones entre el mouse y las
 	teclas identificadas en el tutorial anterior.
       </para>
     </section>
-    
+
     <section xml:id="using_insert_command_quit"><info><title>Salir de <application> MGED </application> </title></info>
-	
+
 
       <para>
-	Si desea salir de <application> MGED </application> tipee la letra q o 
-	la palabra quit luego del prompt de la ventana de comandos y luego 
-	presione ENTER. También puede cerrar el programa seleccionando Exit 
+	Si desea salir de <application> MGED </application> tipee la letra q o
+	la palabra quit luego del prompt de la ventana de comandos y luego
+	presione ENTER. También puede cerrar el programa seleccionando Exit
 	(Salir) en el menú File (Archivo).
       </para>
     </section>
-    
+
     <section xml:id="using_insert_command_review"><info><title>Repasemos</title></info>
-      
-      
+
+
       <para>
 	En este tutorial usted aprendió a:
       </para>
 <itemizedlist mark="bullet">
 	<listitem>
-	<para>Crear una esfera y un cilindro circular recto usando el comando 
+	<para>Crear una esfera y un cilindro circular recto usando el comando
 	make.</para>
 	</listitem>
 	<listitem>
 	  <para>Crear ambas figuras usando el comando in (de insert).</para>
 	</listitem>
 	<listitem>
-	  <para>Combinar argumentos mediante línea de comandos para racionalizar 
+	  <para>Combinar argumentos mediante línea de comandos para racionalizar
 	  la entrada de variables.</para>
 	</listitem>
 	<listitem>
-	  <para>Desarrollar un formato de comando combinado para ayudar a 	 
+	  <para>Desarrollar un formato de comando combinado para ayudar a
 	  manejar las variables de línea de comandos.</para>
 	</listitem>
 	<listitem>
-	  <para>Considerar las convenciones para la elección de los nombres de 	
+	  <para>Considerar las convenciones para la elección de los nombres de
 	  sus objetos.</para>
 	</listitem>
 	<listitem>
-	  <para>Visualizar sus figuras desde distintas perspectivas utilizando 
+	  <para>Visualizar sus figuras desde distintas perspectivas utilizando
 	  las opciones del menú View (Vistas).</para>
 	</listitem>
 	<listitem>
 	  <para>Cerrar el programa <application>MGED</application>.</para>
-    	</listitem>
+	</listitem>
       </itemizedlist>
     </section>
 

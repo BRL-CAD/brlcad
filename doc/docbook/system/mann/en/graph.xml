@@ -43,12 +43,12 @@
 
     <variablelist>
       <varlistentry>
-        <term><prompt>mged&gt;</prompt><userinput>graph show</userinput></term>
-        <listitem>
-          <para>
-            Displays a list with the name and type of the objects along with the nodes' and edges' positions.
-          </para>
-        </listitem>
+	<term><prompt>mged&gt;</prompt><userinput>graph show</userinput></term>
+	<listitem>
+	  <para>
+	    Displays a list with the name and type of the objects along with the nodes' and edges' positions.
+	  </para>
+	</listitem>
       </varlistentry>
     </variablelist>
   </example>
@@ -57,11 +57,11 @@
 
     <variablelist>
       <varlistentry>
-        <term><prompt>mged&gt;</prompt><userinput>graph positions</userinput></term>
-        <para>
-          Lists the names, types, positions of the corresponding nodes
-          within the graph for the objects in the currently opened .g database.
-        </para>
+	<term><prompt>mged&gt;</prompt><userinput>graph positions</userinput></term>
+	<para>
+	  Lists the names, types, positions of the corresponding nodes
+	  within the graph for the objects in the currently opened .g database.
+	</para>
       </varlistentry>
     </variablelist>
   </example>

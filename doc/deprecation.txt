@@ -73,77 +73,77 @@ mged
 7.20
 ----
 liborle
-        remove liborle and the tools using it, fb-orle, orle-fb, orle-pix and
+	remove liborle and the tools using it, fb-orle, orle-fb, orle-pix and
 	pix-orle [deprecated 7.20]
 tclscripts/lib
-        Mged, Database, Db, Dm, Drawable, Display, QuadDisplay, View -> Ged [deprecated 7.20]
+	Mged, Database, Db, Dm, Drawable, Display, QuadDisplay, View -> Ged [deprecated 7.20]
 librt
-        bspline primitive [deprecated 7.20]
-        poly primitive [deprecated 7.20]
-        hf primitive [deprecated 7.20]
+	bspline primitive [deprecated 7.20]
+	poly primitive [deprecated 7.20]
+	hf primitive [deprecated 7.20]
 bu.h
-        bu_vls_init_if_uninit() -> bu_vls_init() [deprecated 7.20]
+	bu_vls_init_if_uninit() -> bu_vls_init() [deprecated 7.20]
 autogen.sh && configure
-        GNU Autotools build system -> CMake build system [deprecated 7.20]
-        ./configure -> cmake . [deprecated 7.20]
+	GNU Autotools build system -> CMake build system [deprecated 7.20]
+	./configure -> cmake . [deprecated 7.20]
 raytrace.h
 	rt_load_attrs() -> rt_gettrees_and_attrs() or db5_import_attributs() [deprecated 7.20]
-        db_regexp_match() -> !bu_fnmatch() [deprecated 7.20]
+	db_regexp_match() -> !bu_fnmatch() [deprecated 7.20]
 
 7.18
 ----
 raytrace.h rt_comb_internal members
-        region_id -> region_id attribute [deprecated 7.18]
-        aircode -> air attribute [deprecated 7.18]
-        GIFTmater -> material_id attribute [deprecated 7.18]
-        los -> los attribute [deprecated 7.18]
+	region_id -> region_id attribute [deprecated 7.18]
+	aircode -> air attribute [deprecated 7.18]
+	GIFTmater -> material_id attribute [deprecated 7.18]
+	los -> los attribute [deprecated 7.18]
 bu.h xdr API
-        BU_GLONGLONG() -> ntohll() [deprecated 7.18]
-        BU_GLONG() -> ntohl() [deprecated 7.18]
-        BU_GSHORT() -> ntohs() [deprecated 7.18]
-        bu_gshort() -> ntohs() [deprecated 7.18]
-        bu_glong() -> ntohl() [deprecated 7.18]
-        bu_pshort() -> htons() [deprecated 7.18]
-        bu_plong() -> htonl() [deprecated 7.18]
-        bu_plonglong() -> htonll() [deprecated 7.18]
+	BU_GLONGLONG() -> ntohll() [deprecated 7.18]
+	BU_GLONG() -> ntohl() [deprecated 7.18]
+	BU_GSHORT() -> ntohs() [deprecated 7.18]
+	bu_gshort() -> ntohs() [deprecated 7.18]
+	bu_glong() -> ntohl() [deprecated 7.18]
+	bu_pshort() -> htons() [deprecated 7.18]
+	bu_plong() -> htonl() [deprecated 7.18]
+	bu_plonglong() -> htonll() [deprecated 7.18]
 db.h
-        rt_fastf_float() -> ntohf() [deprecated 7.18]
-        rt_mat_dbmat() -> htonf() [deprecated 7.18]
-        rt_dbmat_mat() -> ntohf() [deprecated 7.18]
+	rt_fastf_float() -> ntohf() [deprecated 7.18]
+	rt_mat_dbmat() -> htonf() [deprecated 7.18]
+	rt_dbmat_mat() -> ntohf() [deprecated 7.18]
 dbcp
-        dbcp -> dd [deprecated 7.18]
+	dbcp -> dd [deprecated 7.18]
 mged
-        ?(*) -> ? -(*) [deprecated 7.18]
-        apropos(*) -> apropos -(*) [deprecated 7.18]
-        dbconcat -> db concat [deprecated 7.18]
-        dbupgrade -> db upgrade [deprecated 7.18]
-        dbversion -> db version [deprecated 7.18]
-        dbfind -> search [deprecated 7.18]
-        debug* -> debug [deprecated 7.18]
-        comb_std -> comb [deprecated 7.18]
-        comb_color -> comb [deprecated 7.18]
-        combmem -> comb [deprecated 7.18]
-        kill(*) -> kill [deprecated 7.18]
-        rotobj -> rot [deprecated 7.18]
-        qvrot -> rot -q -v [deprecated 7.18]
-        qorot -> rot -q [deprecated 7.18]
-        ([amov])rot -> rot -([amv]) [deprecated 7.18]
-        ([op])scale -> sca -(p) [deprecated 7.18]
-        ([op])translate -> tra -(p) [deprecated 7.18]
-        nmg_(*) -> nmg (*) [deprecated 7.18]
-        bot_(*) -> bot (*) [deprecated 7.18]
-        [so]ed -> edit [deprecated 7.18]
-        [tr]ed -> edit -t [deprecated 7.18]
-        ls -oA -> ls -O [deprecated 7.18]
-        draw -oA -> draw -O [deprecated 7.18]
-        erase -oA -> erase -O [deprecated 7.18]
-        erase_all -> erase -r [deprecated 7.18]
-        move_all -> move -r [deprecated 7.18]
-        query_ray -> nirt [deprecated 7.18]
-        vdraw -> draw -v [deprecated 7.18]
-        vnirt -> nirt -v [deprecated 7.18]
-        vquery_ray -> nirt -v [deprecated 7.18]
-        xpush -> push -x [deprecated 7.18]
+	?(*) -> ? -(*) [deprecated 7.18]
+	apropos(*) -> apropos -(*) [deprecated 7.18]
+	dbconcat -> db concat [deprecated 7.18]
+	dbupgrade -> db upgrade [deprecated 7.18]
+	dbversion -> db version [deprecated 7.18]
+	dbfind -> search [deprecated 7.18]
+	debug* -> debug [deprecated 7.18]
+	comb_std -> comb [deprecated 7.18]
+	comb_color -> comb [deprecated 7.18]
+	combmem -> comb [deprecated 7.18]
+	kill(*) -> kill [deprecated 7.18]
+	rotobj -> rot [deprecated 7.18]
+	qvrot -> rot -q -v [deprecated 7.18]
+	qorot -> rot -q [deprecated 7.18]
+	([amov])rot -> rot -([amv]) [deprecated 7.18]
+	([op])scale -> sca -(p) [deprecated 7.18]
+	([op])translate -> tra -(p) [deprecated 7.18]
+	nmg_(*) -> nmg (*) [deprecated 7.18]
+	bot_(*) -> bot (*) [deprecated 7.18]
+	[so]ed -> edit [deprecated 7.18]
+	[tr]ed -> edit -t [deprecated 7.18]
+	ls -oA -> ls -O [deprecated 7.18]
+	draw -oA -> draw -O [deprecated 7.18]
+	erase -oA -> erase -O [deprecated 7.18]
+	erase_all -> erase -r [deprecated 7.18]
+	move_all -> move -r [deprecated 7.18]
+	query_ray -> nirt [deprecated 7.18]
+	vdraw -> draw -v [deprecated 7.18]
+	vnirt -> nirt -v [deprecated 7.18]
+	vquery_ray -> nirt -v [deprecated 7.18]
+	xpush -> push -x [deprecated 7.18]
 
 7.16
 ----
@@ -172,22 +172,22 @@ genptr_t/GENPTR_NULL
 pl*
 	pl* -> plot3* [deprecated 7.16]
 any-png.sh
-        use pix tools [deprecated 7.16]
+	use pix tools [deprecated 7.16]
 cadbug.sh
-        use sf.net tracker [deprecated 7.16]
+	use sf.net tracker [deprecated 7.16]
 cray.sh
-        obsolete hardware [deprecated 7.16]
+	obsolete hardware [deprecated 7.16]
 pixwrite.sh
-        obsolete hardware [deprecated 7.16]
+	obsolete hardware [deprecated 7.16]
 pixread.sh
-        obsolete hardware [deprecated 7.16]
+	obsolete hardware [deprecated 7.16]
 sgisnap.sh
-        obsolete hardware [deprecated 7.16]
+	obsolete hardware [deprecated 7.16]
 include/bu.h
-        bu_argv0() -> bu_basename(bu_argv0_full_path()); [deprecated 7.16]
+	bu_argv0() -> bu_basename(bu_argv0_full_path()); [deprecated 7.16]
 include/raytrace.h
-        rt_prep_timer() -> bu_timer() [deprecated 7.16]
-        rt_get_timer() -> bu_elapsed() [deprecated 7.16]
+	rt_prep_timer() -> bu_timer() [deprecated 7.16]
+	rt_get_timer() -> bu_elapsed() [deprecated 7.16]
 mged
 	make_bb -> bb [deprecated 7.16]
 
@@ -196,7 +196,7 @@ mged
 include/dm_color.h
 	dm_color.h -> dm.h [deprecated 7.14]
 include/fb.h
-        FB_WPIXEL -> fb_wpixel [deprecated 7.14]
+	FB_WPIXEL -> fb_wpixel [deprecated 7.14]
 src/gtools
 	g_[toolname] -> g[toolname] [deprecated 7.14]
 src/other/jove
@@ -206,11 +206,11 @@ include/raytrace.h
 	rt_reldiff -> NEAR_ZERO [deprecated 7.14]
 	DIR_* -> RT_DIR_* [deprecated 7.14]
 include/bu.h
-        bu_fopen_uniq -> fopen [deprecated 7.14]
+	bu_fopen_uniq -> fopen [deprecated 7.14]
 mged
 	tops -g -u -> now default behavior [deprecated 7.14]
 	-n option -> -c option [deprecated 7.14]
-        bots, per_line [deprecated 7.14]
+	bots, per_line [deprecated 7.14]
 include/vmath.h
 	VADD2_2D -> V2ADD2 [deprecated 7.14]
 	VSUB2_2D -> V2SUB2 [deprecated 7.14]
@@ -252,7 +252,7 @@ include/bu.h
 7.20.2
 ------
 cat-fb
-        obsolete hardware
+	obsolete hardware
 include/vmath.h
 	ELEMENTS_PER_PT -> ELEMENTS_PER_POINT [deprecated 7.12]
 	HVECT_LEN -> ELEMENTS_PER_HVECT [deprecated 7.12]
@@ -286,7 +286,7 @@ src/vas4
 7.16.4
 ------
 include/raytrace.h
-        get_solidbitv() -> rt_get_solidbitv() [deprecated 7.16]
+	get_solidbitv() -> rt_get_solidbitv() [deprecated 7.16]
 
 7.14.4
 ------
@@ -726,7 +726,7 @@ g/BU_BU_/s//BU_/g
 g/bu_bu_/s//bu_/g
 g/bn_bn_/s//bn_/g
 g/bn_pipe/s//rt_pipe/g
-        major API overhaul [6.0]
+	major API overhaul [6.0]
 7.14
 ----
 s/rt_db_free_internal\(([^,]+),[^\)]*\)/rt_db_free_internal(\1)/g
@@ -735,7 +735,7 @@ s/rt_db_free_internal\(([^,]+),[^\)]*\)/rt_db_free_internal(\1)/g
 7.16
 ----
 s/rt_ptalloc\(\);/(struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");/g
-        rt_ptalloc() removed [7.16]
+	rt_ptalloc() removed [7.16]
 
 7.18
 ----
@@ -748,77 +748,77 @@ s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_INS_UNIQUE([^\)]*)\)/bu_ptbl_ins_unique(\
 s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_RM([^\)]*)\)/bu_ptbl_rm(\1\2)/g
 s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_CAT([^\)]*)\)/bu_ptbl_cat(\1\2)/g
 s/bu_ptbl\(([^,]*),[[:space:]]*BU_PTBL_FREE([^\)]*)\)/bu_ptbl_free(\1)/g
-        bu_ptbl() removed [7.18]
+	bu_ptbl() removed [7.18]
 
 s/nmg_struct_counts\(/nmg_pr_m_struct_counts(/g
-        nmg_struct_counts() renamed to nmg_pr_m_struct_counts() [7.18]
+	nmg_struct_counts() renamed to nmg_pr_m_struct_counts() [7.18]
 
 s/bu_vlb_getBuffer\(/bu_vlb_addr(/g
-        bu_vlb_getBuffer() remamed to bu_vlb_addr() [7.18]
+	bu_vlb_getBuffer() remamed to bu_vlb_addr() [7.18]
 
 s/bu_vlb_getBufferLength\(/bu_vlb_buflen(/g
-        bu_vlb_getBufferLength() renamed to bu_vlb_buflen() [7.18]
+	bu_vlb_getBufferLength() renamed to bu_vlb_buflen() [7.18]
 
 s/V2APPROXEQUAL\(/V2NEAR_EQUAL(/g
-        V2APPROXEQUAL() renamed to V2NEAR_EQUAL() [7.18]
+	V2APPROXEQUAL() renamed to V2NEAR_EQUAL() [7.18]
 
 s/VAPPROXEQUAL\(/VNEAR_EQUAL(/g
-        VAPPROXEQUAL() renamed to VNEAR_EQUAL() [7.18]
+	VAPPROXEQUAL() renamed to VNEAR_EQUAL() [7.18]
 
 s/db_get_version\(/db_version(/g
-        db_get_version() renamed to db_version() [7.18]
+	db_get_version() renamed to db_version() [7.18]
 
 s/db_get_directory_size\(/db_directory_size(/g
-        db_get_directory_size() renamed to db_directory_size() [7.18]
+	db_get_directory_size() renamed to db_directory_size() [7.18]
 
 s/db_get_directory\(/db_alloc_directory_block(/g
-        db_get_directory() renamed to db_alloc_directory_block() [7.18]
+	db_get_directory() renamed to db_alloc_directory_block() [7.18]
 
 s/rt_get_seg\(/rt_alloc_sed_block(/g
-        rt_get_seg() renamed to rt_alloc_seg_block() [7.18]
+	rt_get_seg() renamed to rt_alloc_seg_block() [7.18]
 
 s/db_shader_mat\(/rt_shader_mat(/g
-        db_shader_mat() renamed to rt_shader_mat() [7.18]
+	db_shader_mat() renamed to rt_shader_mat() [7.18]
 
 s/SMALL([^_])/SMALL_FAST\1/g
-        SMALL renamed to SMALL_FASTF [7.18]
+	SMALL renamed to SMALL_FASTF [7.18]
 
 7.20
 ----
 s/spm_([^\)]*)/bn_spm_\1/g
-        spm functions and types renamed to bn_spm [7.20]
+	spm functions and types renamed to bn_spm [7.20]
 
 s/RT_CK_SPM/BN_CK_SPM_MAP/g
-        RT_CK_SPM macro renamed to BN_CK_SPM MAP [7.20]
+	RT_CK_SPM macro renamed to BN_CK_SPM MAP [7.20]
 
 s/SPM_MAGIC/BN_SPM_MAGIC/g
-        SPM_MAGIC renamed to BN_SPM_MAGIC [7.20]
+	SPM_MAGIC renamed to BN_SPM_MAGIC [7.20]
 
 s/SPM_NULL/BN_SPM_MAP_NULL/g
-        SPM_NULL renamed to BN_SPM_MAP_NULL [7.20]
+	SPM_NULL renamed to BN_SPM_MAP_NULL [7.20]
 
 s/BU_EXTERN[[:space:]]*\([[:space:]]*([^,]*?)[[:space:]]*,[[:space:]]*\([[:space:]]*([^)]*)[[:space:]]*\)[[:space:]]*\)/extern \1(\2)/g
-        BU_EXTERN() no longer necessary due to C89 minimum, use extern [7.20]
+	BU_EXTERN() no longer necessary due to C89 minimum, use extern [7.20]
 
 s/[[:space:]]*BU_ARGS[[:space:]]*\([[:space:]]*([^)]*[[:space:]]*)[[:space:]]*\)/\1/g
-        BU_ARGS() no longer necessary due to C89 minimum, list args [7.20]
+	BU_ARGS() no longer necessary due to C89 minimum, list args [7.20]
 
 s/BU_LIST_UNINITIALIZED/!BU_LIST_IS_INITIALIZED/g
-        BU_LIST_IS_INITIALIZED() removed for consistency [7.20]
+	BU_LIST_IS_INITIALIZED() removed for consistency [7.20]
 
 s/BU_INIT_EXTERNAL/BU_EXTERNAL_INIT/g
-        renamed for API consistency [7.20]
+	renamed for API consistency [7.20]
 
 s/RT_CK_DBTR/RT_CK_DB_TRAVERSE/g
 s/RT_DBTR_MAGIC/RT_DB_TRAVERSE_MAGIC/g
-        renamed for API consistency [7.20]
+	renamed for API consistency [7.20]
 
 s/RT_INIT_([A-Z_]*)/RT_\1_INIT/g
-        renamed all RT_INIT_[type] macros to RT_[type]_INIT for API consistency [7.20]
+	renamed all RT_INIT_[type] macros to RT_[type]_INIT for API consistency [7.20]
 
 s/BU_LIST_MAGIC_OK/BU_LIST_MAGIC_EQUAL/g
 s/BU_LIST_MAGIC_WRONG/!BU_LIST_MAGIC_EQUAL/g
-        renamed and consolidated to be consistent with libbn [7.20]
+	renamed and consolidated to be consistent with libbn [7.20]
 
 s/nmg_moveeu/nmg_je/g
 	function has been renamed
@@ -829,15 +829,15 @@ s/nmg_moveeu/nmg_je/g
 s/rt_dist_pt3_line3/bn_dist_pt3_line3/g
 s/rt_dist_line3_line3/bn_dist_line3_line3/g
 s/rt_dist_line3_lseg3/bn_dist_line3_lseg3/g
-        functions moved from librt to libbn [7.21]
+	functions moved from librt to libbn [7.21]
 s/bu_tcl_setup/Bu_Init/g
-        removed bu_tcl_setup() in favor of Bu_Init() [7.21]
+	removed bu_tcl_setup() in favor of Bu_Init() [7.21]
 s/bu_tcl_([^(]*)\([^,]*?[[:space:]]*,[^,]*?[[:space:]]*,(.*)/bu_\1(\2/g
-        removed all bu_tcl_*() functions, leaving off interp and using native bu function [7.21]
+	removed all bu_tcl_*() functions, leaving off interp and using native bu function [7.21]
 s/bu_badmagic_tcl\([^,]*?[[:space:]]*,(.*)/bu_badmagic(\1/g
-        removed bu_badmagic_tcl() in favor of bu_badmagic() [7.21]
+	removed bu_badmagic_tcl() in favor of bu_badmagic() [7.21]
 s/(.*)_CK(.*)_TCL\([^,]*?[[:space:]]*,(.*)/\1_CK\2(\3/g
-        removed all *_CK*_TCL() macros (e.g., BU_CKMAG_TCL, RT_CK_DBI_TCL, etc) in favor of non-TCL macros [7.21]
+	removed all *_CK*_TCL() macros (e.g., BU_CKMAG_TCL, RT_CK_DBI_TCL, etc) in favor of non-TCL macros [7.21]
 s/bu_image/icv_image/g
 	moved bu_image* functions to libicv as icv_image* [7.21]
 s/BU_IMAGE/ICV_IMAGE/g
@@ -845,7 +845,7 @@ s/BU_IMAGE/ICV_IMAGE/g
 s/bu_cmd\(([^,]*?),[[:space:]]*([^,]*?),[[:space:]]*([^,]*?),[[:space:]]*([^,)]*?),[[:space:]]*([^)]*?)\)/bu_cmd(\4, \2, \3, \5, \1, NULL)/g
 	inputs then outputs.  swapped bu_cmd's 4th parameter to 1st, 1st to 5th, and added a new return value hook last. [7.21]
 s/V3(.*)_TOL\(([^,]*,)([^,]*,)([^,]*,)([^)]*)\)/V3\1_TOL(\1\2\3(\4)->dist)/g
-        V3RPP_OVERLAP_TOL(), V3PT_IN_RPP_TOL(), and V3PT_OUT_RPP_TOL() tol parameter changed to value [7.21]
+	V3RPP_OVERLAP_TOL(), V3PT_IN_RPP_TOL(), and V3PT_OUT_RPP_TOL() tol parameter changed to value [7.21]
 s/BU_GETSTRUCT\([[:space:]]*([^,)]+,)[[:space:]]*([^)]+)[[:space:]]*\)/BU_GET(\1 struct \2)/g
 	BU_GETSTRUCT(ptr, struct_type) changed to BU_GET(ptr, struct struct_t) [7.21]
 s/BU_GETUNION\([[:space:]]*([^,)]+,)[[:space:]]*([^)]+)[[:space:]]*\)/BU_GET(\1 union \2)/g
@@ -853,15 +853,15 @@ s/BU_GETTYPE\([[:space:]]*([^,)]+,)[[:space:]]*([^)]+)[[:space:]]*\)/BU_GET(\1 \
 	BU_GETUNION() and BU_GETTYPE() macros changed to BU_GET() [7.21]
 s/CMD_NULL/BU_CMD_NULL/g
 s/CMDHIST/BU_CMDHIST/g
-        prefix the cmd.h defines with BU_ since they are part of libbu [7.21]
+	prefix the cmd.h defines with BU_ since they are part of libbu [7.21]
 s/bu_shader_to_tcl_list/bu_shader_to_list/g
-        renamed as it applies to any list in {} form, tcl or otherwise [7.21]
+	renamed as it applies to any list in {} form, tcl or otherwise [7.21]
 s/bu_(add|delete|call)_hook/bu_hook_\1/g
-        renamed hook functions to be consistent with other libbu API [7.21]
+	renamed hook functions to be consistent with other libbu API [7.21]
 s/bu_file_exists\(([^)]*)\)/bu_file_exists(\1, NULL)/g
 	new file descriptor parameter added [7.21]
 s/bu_list_path\(([^,]*),([^,]*),[[:space:]]([^)]*)\)/bu_dir_list(\1,\2, &(\3))/g
 s/bu_count_path(.*)\);/bu_dir_list\1, NULL);/g
 	made bu_dir_list() return the number of entries [7.21]
 s/bu_strcmpm\((.*),([^,]*)\)/bu_strcmp(\1)/g
-        no use for label parameter, convert to bu_strcmp() [7.21]
+	no use for label parameter, convert to bu_strcmp() [7.21]

@@ -18,28 +18,28 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>whatid</command>    
-    
+    <command>whatid</command>
+
     <arg choice="req" rep="norepeat"><replaceable>region_name</replaceable></arg>
-    
+
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>Lists the ident number of the specified <emphasis>region</emphasis>.
 
-  
+
   </para>
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>The example shows the use of the <command>whatid</command> command to list the ident number of a specified region.
   </para>
-       
+
   <example><info><title>List the ident number of a specified region.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>whatid regiona</userinput>
     </para>
@@ -47,13 +47,13 @@
        Gets the ident number for regiona.
     </para>
   </example>
- 
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

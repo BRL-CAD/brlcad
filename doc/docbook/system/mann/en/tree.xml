@@ -20,8 +20,8 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>tree</command>    
-    
+    <command>tree</command>
+
     <arg choice="req" rep="norepeat"><replaceable>objects(s)</replaceable></arg>
     <arg choice="opt" rep="norepeat">-a</arg>
     <arg choice="opt" rep="norepeat">-c</arg>
@@ -32,43 +32,43 @@
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>Lists the contents of the specified <emphasis>objects</emphasis> in a tree-like format
 	that displays the hierarchical structure of the objects, and all objects referenced by
 	them, down to the primitive shape level. If <emphasis>-c</emphasis> is given, the shapes
-        are not printed.
-        The <emphasis>-a</emphasis> option adds a list of any attributes for each object.
-        Attributes are shown with a leading "@ " and are followed by their values.
-        The <emphasis>-o outfile</emphasis> option prints the results to <emphasis>outfile</emphasis>.
-        The <emphasis>-i #</emphasis> option allows the user to set the number of spaces to indent.
+	are not printed.
+	The <emphasis>-a</emphasis> option adds a list of any attributes for each object.
+	Attributes are shown with a leading "@ " and are followed by their values.
+	The <emphasis>-o outfile</emphasis> option prints the results to <emphasis>outfile</emphasis>.
+	The <emphasis>-i #</emphasis> option allows the user to set the number of spaces to indent.
   </para>
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>The first example shows the use of the <command>tree</command> command to list the contents of specified objects  	hierarchically.  The second and third examples show the use of the <command>tree</command> command with arguments.
   </para>
-  
-       
+
+
   <example><info><title>Show the structure of an object down to the primitive shape level.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>tree group1</userinput>
     </para>
     <para>Shows the structure of the tree rooted at <emphasis>group1</emphasis> down to the primitive shape level.
-       
+
     </para>
   </example>
  <example><info><title>Specify the amount of indentation in the tree.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>tree -i2 group1</userinput>
     </para>
-    <para> Uses two spaces for each level of indentation.       
+    <para> Uses two spaces for each level of indentation.
     </para>
   </example>
   <example><info><title>Specify that no shapes are to be printed.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>tree -c group1</userinput>
     </para>
@@ -77,7 +77,7 @@
   </example>
 
   <example><info><title>Specify that attributes are listed for each object printed.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>tree -a -c group1</userinput>
     </para>
@@ -90,7 +90,7 @@
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

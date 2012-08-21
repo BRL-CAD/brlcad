@@ -125,4 +125,3 @@ If you happen to be installing on a ppc64 Linux system, the binaries
 may not resolve correctly without being installed first.  Be sure to
 install before testing applications (i.e., even before running the
 benchmark or "make test").
-

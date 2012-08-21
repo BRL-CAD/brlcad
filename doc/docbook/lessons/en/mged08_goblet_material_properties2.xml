@@ -2,7 +2,7 @@
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Assigning More Material Properties to a Goblet</title>
-    
+
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
@@ -31,12 +31,12 @@
 	</listitem>
       </itemizedlist>
     </para>
-    
+
     <para xml:id="goblet_material_properties2_intro1">
       Open the goblet.g database using whichever method you prefer. Go to the
       Edit menu and select Combination Editor.  Select basin1.r.
     </para>
-    
+
     <para xml:id="goblet_material_properties2_intro2">
       In the last lesson, we assigned values for two shader
       attributes-transparency and mirror reflectance. In this lesson, we will
@@ -67,11 +67,11 @@
 
     <note xml:id="goblet_material_properties2_intro3">
       <para>
-	Note that in <application>BRL-CAD</application> versions prior to 5.2, the default values are    
-	used, but they are not displayed in the shader attribute boxes.       
+	Note that in <application>BRL-CAD</application> versions prior to 5.2, the default values are
+	used, but they are not displayed in the shader attribute boxes.
       </para>
     </note>
-   
+
     <para xml:id="goblet_material_properties2_intro4">
       In this example, the shader entry box indicates that the transparency (tr)
       is set at .5 and the mirror reflectance (re) is set at .45. The eight
@@ -96,9 +96,9 @@
       </tgroup>
     </informaltable>
     </para>
-  
+
     <section xml:id="goblet_specular_diffuse"><info><title>Specular and Diffuse Reflectivity</title></info>
-      
+
       <para>
 	When light reflects off of a shiny surface, it produces two types of
 	reflections. The most noticeable highlights are caused by specular
@@ -108,7 +108,7 @@
 	with a wall painted with flat paint, the more diffuse reflectivity that is
 	produced. A model of the relationship between these reflectivities is
 	shown in the following illustration:
-      
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -130,14 +130,14 @@
 	the maximum value for diffuse reflectivity (1.0), and as a result, its
 	surface color is uniform.
       </para>
-      
+
       <para>
 	Specular reflectivity, on the other hand, reflects the color of a light
 	source. The lowest right ball, with the maximum value for specular
 	reflectivity (1.0), shows a white light source being reflected off the
 	surface of the ball.
       </para>
-      
+
       <para>
 	The range for both specular and diffuse reflectivity is 0.0 through 1.0.
 	However, combined values for these are typically equal to 1.0. Remember,
@@ -146,10 +146,10 @@
 	combination of the values equals 1.0.
       </para>
     </section>
-    
+
     <section xml:id="goblet_refractive_index"><info><title>Refractive Index</title></info>
-      
-      
+
+
       <para>
 	When light passes through one medium (e.g., air) into another medium
 	(e.g., water), it bends from its original path. The degree to which the
@@ -160,13 +160,13 @@
 	(approximately 2.42) whereas optical glass would have a lower refractive
 	index (approximately 1.71).
       </para>
-      
+
       <para>
 	The range of index of refraction for <application>MGED</application> is 1.0 (the index for air) or
 	greater. This parameter is only useful for materials that have a
 	transparency greater than 0. The following drawing of sunlight passing
 	through water shows how refraction works.
-            
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -181,9 +181,9 @@
       </informalfigure>
       </para>
     </section>
-    
+
     <section xml:id="goblet_shininess"><info><title>Shininess</title></info>
-      
+
       <para>
 	The shininess of an object affects the size of the specular component of
 	the plastic shader. The shinier an object's surface is, the smaller the
@@ -191,9 +191,9 @@
 	for shininess is typically an integer value from 1 to 10.
       </para>
     </section>
-    
+
     <section xml:id="goblet_extinction"><info><title>Extinction</title></info>
-      
+
       <para>
 	The term extinction applies to the transmissive component of the plastic
 	shader, and it indicates the amount of light absorbed by the object's
@@ -202,17 +202,17 @@
 	the shader, especially the refractive index.
       </para>
     </section>
-    
+
     <section xml:id="goblet_emission"><info><title>Emission</title></info>
-      
+
       <para>
 	Emission is a relatively new feature that has been added to the <application>BRL-CAD</application>
 	package. It concerns the amount of artificial brightness of the object.
       </para>
     </section>
-    
+
     <section xml:id="goblet_shader_attributes"><info><title> Applying Attributes of the Plastic Shader to the Goblet</title></info>
-      
+
       <para>
 	Now that you understand the various attributes of the plastic shader, it
 	is time to experiment with how they affect the final product-the goblet
@@ -225,7 +225,7 @@
 	models using the plastic shader. Remember to click Apply in the
 	Combination Editor to actually incorporate the changes.
       </para>
-      
+
       <para>
 	As you change the values for the attributes of the plastic shader, you
 	will notice that some changes do not significantly alter the design. This
@@ -233,7 +233,7 @@
 	object. The following are two examples of the goblet with various values
 	of the plastic attributes (which do create a noticeable difference)
 	applied to basin1.r.
-      
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -246,7 +246,7 @@
 	  </caption>
 	</mediaobject>
       </informalfigure>
-	
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -261,12 +261,12 @@
       </informalfigure>
 
       </para>
-      
+
       <para>
 	By the time you have finished experimenting with changing attributes of
 	the plastic shader, your Combination Editor window might look something
 	like this:
-	
+
       <informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -280,16 +280,16 @@
 	</mediaobject>
       </informalfigure>
       </para>
-      
+
       <para>
 	Notice that while the shader string entry box reflects the values set by
 	the user in the attribute entry boxes (e.g., the Transparency of .5), it
 	does not reflect the default values (e.g., the Shininess of 10).
       </para>
     </section>
-    
+
     <section xml:id="goblet_material_properties2_review"><info><title>Review</title></info>
-      
+
       <para>
 	In this lesson, you:
 	<itemizedlist mark="bullet">

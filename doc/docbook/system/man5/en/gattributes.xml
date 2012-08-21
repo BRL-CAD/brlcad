@@ -18,7 +18,7 @@
 
 <!-- body begins here -->
 <refsection xml:id="gift_background"><info><title>BACKGROUND</title></info>
-  
+
   <para>
 	Starting with BRL-CAD database format version 5, BRL-CAD supports
 	the storage of arbitrary attribute/value data on any database object.
@@ -51,7 +51,7 @@
 	one or more features that require specific attributes to be present.  Conventions
 	for attribute names that do not involve tool support should be documented
 	in appropriate user-level documentation.  In documenting attributes, one
-	additional distinction is made.  Attributes that exist only as post-v5 attribute/value 
+	additional distinction is made.  Attributes that exist only as post-v5 attribute/value
 	pairs are referred to as non-core attributes; older
 	attributes (which may also be represented in core data structures) are referred
 	to as core attributes.
@@ -59,7 +59,7 @@
 </refsection>
 
 <refsection xml:id="core_attributes"><info><title>CORE ATTRIBUTES</title></info>
-  
+
   <para>
 	The following table lists all known core BRL-CAD attributes and
 	aliases.  Any code setting or reading the value of one of these attributes
@@ -69,7 +69,7 @@
 
   <para>
 	<table><info><title>Core Attributes</title></info>
-	   
+
 	   <tgroup cols="7">
 	     <colspec colname="c1"/>
 	     <colspec colname="c2"/>
@@ -81,84 +81,84 @@
 	     <tbody>
 	       <row>
 		 <entry>Property</entry>
-	         <entry namest="c2" nameend="c6" align="center">Attribute Name(s)</entry>
-	         <entry>Typical Value(s)</entry>
+		 <entry namest="c2" nameend="c6" align="center">Attribute Name(s)</entry>
+		 <entry>Typical Value(s)</entry>
 	       </row>
 	       <row>
 		 <entry>Region Flag</entry>
-	         <entry>region</entry>
-	         <entry>REGION</entry>
-	         <entry/>
-	         <entry/>
-	         <entry/>
-		 <entry>Yes, R or 1</entry>
-               </row>
-      	       <row>
-		 <entry>Region Identifier Number</entry>
-	         <entry>region_id</entry>
-	         <entry>REGION_ID</entry>
-	         <entry>id</entry>
-	         <entry>ID</entry>
-	         <entry/>
-		 <entry>-1, 0, and positive integers</entry>
-               </row>
-               <row>
-		 <entry>Material Identifier Number</entry>
-	         <entry>material_id</entry>
-	         <entry>MATERIAL_ID</entry>
-	         <entry>GIFTmater</entry>
-	         <entry>GIFT_MATERIAL</entry>
-	         <entry>mat</entry>
-		 <entry>0 and positive integers</entry>
-               </row>
-               <row>
-		 <entry>Air Code</entry>
-	         <entry>air</entry>
-	         <entry>AIR</entry>
-	         <entry>AIRCODE</entry>
-	         <entry/>
-	         <entry/>
-		 <entry>0 or 1</entry>
-               </row>
-               <row>
-		 <entry>Line Of Sight Thickness Equivalence</entry>
-	         <entry>los</entry>
-	         <entry>LOS</entry>
-	         <entry/>
-	         <entry/>
-	         <entry/>
-	         <entry/>
-               </row>
-               <row>
-		 <entry>Color (Red Green Blue)</entry>
-	         <entry>color</entry>
-	         <entry>rgb</entry>
-	         <entry>RGB</entry>
-	         <entry>COLOR</entry>
-	         <entry/>
-		 <entry>###/###/###</entry>
-               </row>
-               <row>
-		 <entry>Shader Name</entry>
-	         <entry>oshader</entry>
-	         <entry>SHADER</entry>
-	         <entry/>
-	         <entry/>
-	         <entry/>
-		 <entry>string</entry>
-               </row>
-               <row>
-		 <entry>Inherit Properties</entry>
-	         <entry>inherit</entry>
-	         <entry>INHERIT</entry>
-	         <entry/>
+		 <entry>region</entry>
+		 <entry>REGION</entry>
 		 <entry/>
-	         <entry/>
-	         <entry>Yes or 1</entry>
-               </row>
-             </tbody>
+		 <entry/>
+		 <entry/>
+		 <entry>Yes, R or 1</entry>
+	       </row>
+	       <row>
+		 <entry>Region Identifier Number</entry>
+		 <entry>region_id</entry>
+		 <entry>REGION_ID</entry>
+		 <entry>id</entry>
+		 <entry>ID</entry>
+		 <entry/>
+		 <entry>-1, 0, and positive integers</entry>
+	       </row>
+	       <row>
+		 <entry>Material Identifier Number</entry>
+		 <entry>material_id</entry>
+		 <entry>MATERIAL_ID</entry>
+		 <entry>GIFTmater</entry>
+		 <entry>GIFT_MATERIAL</entry>
+		 <entry>mat</entry>
+		 <entry>0 and positive integers</entry>
+	       </row>
+	       <row>
+		 <entry>Air Code</entry>
+		 <entry>air</entry>
+		 <entry>AIR</entry>
+		 <entry>AIRCODE</entry>
+		 <entry/>
+		 <entry/>
+		 <entry>0 or 1</entry>
+	       </row>
+	       <row>
+		 <entry>Line Of Sight Thickness Equivalence</entry>
+		 <entry>los</entry>
+		 <entry>LOS</entry>
+		 <entry/>
+		 <entry/>
+		 <entry/>
+		 <entry/>
+	       </row>
+	       <row>
+		 <entry>Color (Red Green Blue)</entry>
+		 <entry>color</entry>
+		 <entry>rgb</entry>
+		 <entry>RGB</entry>
+		 <entry>COLOR</entry>
+		 <entry/>
+		 <entry>###/###/###</entry>
+	       </row>
+	       <row>
+		 <entry>Shader Name</entry>
+		 <entry>oshader</entry>
+		 <entry>SHADER</entry>
+		 <entry/>
+		 <entry/>
+		 <entry/>
+		 <entry>string</entry>
+	       </row>
+	       <row>
+		 <entry>Inherit Properties</entry>
+		 <entry>inherit</entry>
+		 <entry>INHERIT</entry>
+		 <entry/>
+		 <entry/>
+		 <entry/>
+		 <entry>Yes or 1</entry>
+	       </row>
+	     </tbody>
 	   </tgroup>
-         </table>
+	 </table>
    </para>
 
    <para>
@@ -170,24 +170,24 @@
 	 <term><emphasis remap="B" role="bold">Region Flag:</emphasis></term>
 	 <listitem>
 	   <para>
-	   The Region Flag identifies a particular geometric combination as being a solid material - 
+	   The Region Flag identifies a particular geometric combination as being a solid material -
 	   in other words, any geometry below this combination in the tree can overlap without the
 	   overlap being regarded as a non-physical description, since it is the combination of all
 	   descriptions in the region object that define the physical volume in space.
 	   </para>
 	 </listitem>
        </varlistentry>
-       <varlistentry>                                                                                              
-         <term><emphasis remap="B" role="bold">Region ID Flag:</emphasis></term>                     
-         <listitem>                                                                                                
-           <para>                                                                                                  
-           The Region ID Flag identifies a particular region with a unique number.  This allows
+       <varlistentry>
+	 <term><emphasis remap="B" role="bold">Region ID Flag:</emphasis></term>
+	 <listitem>
+	   <para>
+	   The Region ID Flag identifies a particular region with a unique number.  This allows
 	   multiple region objects to be regarded as being the same type of region, without
 	   requiring that they be included in the same combination object.
-           </para>
-	 </listitem>        
+	   </para>
+	 </listitem>
        </varlistentry>
-        <varlistentry>
+	<varlistentry>
 	 <term><emphasis remap="B" role="bold">Material ID Number:</emphasis></term>
 	 <listitem>
 	   <para>
@@ -239,12 +239,12 @@
 
      </variablelist>
    </para>
-       
+
 
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>
   </para>
 </refsection>
@@ -256,7 +256,7 @@
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

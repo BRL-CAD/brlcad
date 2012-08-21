@@ -18,63 +18,63 @@ them to nirt.</refpurpose>
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>vnirt</command>    
-    
+    <command>vnirt</command>
+
     <arg choice="opt" rep="norepeat"><replaceable>nirt args</replaceable></arg>
     <arg choice="req" rep="norepeat"><replaceable>x y</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>Interprets <emphasis>x</emphasis> and <emphasis>y</emphasis> as view coordinates (i.e., +-2047) and converts them to model coordinates (local units) using a value of 2047 for view <emphasis>z</emphasis> before passing
 them to nirt. All other arguments are passed to nirt without modification.
-  
+
   </para>
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>
-    
+
   </para>
   <example><info><title/></info>
-    
+
     <variablelist>
       <varlistentry>
 	   <term><prompt/> <userinput/></term>
 	   <listitem>
 	     <para>
-	      	     </para>
+		     </para>
 	   </listitem>
       </varlistentry>
       <varlistentry>
 	   <term><prompt/> <userinput/></term>
 	   <listitem>
 	     <para>
-		
+
 	     </para>
 	   </listitem>
       </varlistentry>
     </variablelist>
   </example>
-       
+
   <example><info><title/></info>
-    
+
     <para>
       <prompt/><userinput/>
     </para>
     <para>
-       
+
     </para>
   </example>
- 
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

@@ -13,27 +13,27 @@
   <refname>ev</refname>
   <refpurpose>Evaluates the <emphasis>objects</emphasis> specified by tessellating all primitive shapes
 	in the objects and then performing any Boolean operations specified in the <emphasis>objects</emphasis>.
-	The result is then displayed in the MGED display according to specified options. 
+	The result is then displayed in the MGED display according to specified options.
    </refpurpose>
 </refnamediv>
 
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>ev</command>    
-    	<arg choice="opt" rep="norepeat">-dfnrstuvwST</arg>
+    <command>ev</command>
+	<arg choice="opt" rep="norepeat">-dfnrstuvwST</arg>
       <arg choice="opt" rep="norepeat">-P <replaceable>#</replaceable></arg>
-  	<arg choice="opt" rep="norepeat">-C <replaceable>#/#/#</replaceable></arg>
+	<arg choice="opt" rep="norepeat">-C <replaceable>#/#/#</replaceable></arg>
       <arg choice="req" rep="norepeat">objects</arg>
     <arg choice="opt" rep="norepeat"/>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>Evaluates the <emphasis>objects</emphasis> specified by tessellating all primitive shapes
-	in the objects and then performing any Boolean operations specified in them. 
-	The result is then displayed in the MGED display according to specified options.</para> 
+	in the objects and then performing any Boolean operations specified in them.
+	The result is then displayed in the MGED display according to specified options.</para>
 
 <itemizedlist mark="bullet">
 <listitem>
@@ -107,11 +107,11 @@
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>The first example shows the use of the <command>ev</command> command to display two evaluated objects as shaded  	polygons.  The second example shows the use of the <command>ev</command> command to display an evaluated object as 	wireframe without triangulating.
    </para>
   <example><info><title>Display evaluted objects as polygons.</title></info>
-    
+
     <variablelist>
       <varlistentry>
 	   <term><prompt>mged&gt;</prompt> <userinput>ev region1 shapea</userinput></term>
@@ -122,23 +122,23 @@
       </varlistentry>
      </variablelist>
   </example>
-       
+
   <example><info><title>Display an evaluated object as wireframe without triangulation.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt> <userinput>ev -wT region1</userinput>
     </para>
     <para>Displays an evaluated object, <emphasis>region1</emphasis>, as wireframe without triangulation.
-      
+
     </para>
   </example>
- 
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

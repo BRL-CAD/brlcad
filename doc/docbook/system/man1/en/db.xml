@@ -1,14 +1,14 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="db">
-  
+
   <refmeta>
     <refentrytitle>DB</refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo class="source">BRL-CAD</refmiscinfo>
     <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-  
+
   <refnamediv xml:id="name">
     <refname>db</refname>
     <refpurpose>
@@ -16,24 +16,24 @@
       routines.
     </refpurpose>
   </refnamediv>
-  
+
   <!-- body begins here -->
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
-      <command>db</command>    
+      <command>db</command>
       <arg choice="req" rep="norepeat"><replaceable>command</replaceable></arg>
       <arg choice="opt" rep="norepeat"><replaceable>arguments</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
-  
+
   <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-    
+
     <para>
       Provides an interface to a number of database manipulation
       routines. Note that this command always operates in units of millimeters. The
       <emphasis>command</emphasis> must be one of the following with appropriate arguments:
     </para>
-    
+
     <variablelist>
       <varlistentry>
 	<term><emphasis>match [regular_exp]</emphasis></term>
@@ -44,7 +44,7 @@
 	  </para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><emphasis>get shape_or_path [attribute]</emphasis></term>
 	<listitem>
@@ -52,34 +52,34 @@
 	    Returns information about the primitive shape at the end of the <emphasis>shape_or_path</emphasis>.
 	    If a path is specified, the transformation matrices encountered along that path will
 	    be accumulated and applied to the leaf shape before displaying the information. If
-	    no <emphasis>attribute</emphasis> is specified, all the details about the shape are returned. 
+	    no <emphasis>attribute</emphasis> is specified, all the details about the shape are returned.
 	    If a specific <emphasis>attribute</emphasis> is listed, then only that information is returned.
 	  </para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><emphasis>put shape_name shape_type attributes</emphasis></term>
 	<listitem>
 	  <para>
 	    Creates shape named <emphasis>shape_name</emphasis> of type <emphasis>shape_type</emphasis>
-	    with attributes as listed in <emphasis>attributes</emphasis>. The arguments to the 
-	    <emphasis>put</emphasis> command are the same as those returned by the <emphasis>get</emphasis> 
+	    with attributes as listed in <emphasis>attributes</emphasis>. The arguments to the
+	    <emphasis>put</emphasis> command are the same as those returned by the <emphasis>get</emphasis>
 	    command.
 	  </para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><emphasis>adjust shape_name attribute new_value1 [new_value2 new_value3...]</emphasis></term>
 	<listitem>
 	  <para>
-	    Modifies the shape named <emphasis>shape_name</emphasis> by adjusting the value of its 
+	    Modifies the shape named <emphasis>shape_name</emphasis> by adjusting the value of its
 	    <emphasis>attribute</emphasis> to the <emphasis>new_values</emphasis>.
 	  </para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><emphasis>form object_type</emphasis></term>
 	<listitem>
@@ -88,84 +88,84 @@
 	  </para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><emphasis>tops</emphasis></term>
 	<listitem>
 	  <para>Returns all top-level objects.</para>
 	</listitem>
       </varlistentry>
-      
+
       <varlistentry>
 	<term><emphasis>close</emphasis></term>
 	<listitem>
 	  <para>Closes the previously opened database and deletes the associated command.</para>
 	</listitem>
       </varlistentry>
-    </variablelist> 
+    </variablelist>
   </refsection>
-  
+
   <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-    
+
     <para>
-      The following examples show the uses of the <command>db</command> command to list various 
+      The following examples show the uses of the <command>db</command> command to list various
       objects and attributes from the database, as well as to create new TGC shapes, adjust a vertex attribute,
       and display command formats.
     </para>
     <example><info><title>List all objects in the database that end with ".s"</title></info>
-      
+
       <para><prompt>mged&gt;</prompt> <userinput>db match *.s</userinput></para>
       <para>Gets a list of all objects in the database that end with ".s".</para>
     </example>
-    
+
     <example><info><title>List all attributes and their values for <emphasis>cone.s</emphasis></title></info>
-      
+
       <para><prompt>mged&gt;</prompt><userinput>db get cone.s</userinput></para>
       <para>
 	Gets a list of all the attributes and their values for shape <emphasis>cone.s</emphasis>.
       </para>
     </example>
-    
+
     <example><info><title>Get the value of the vertex attribute of <emphasis>cone.s</emphasis></title></info>
-      
+
       <para><prompt>mged&gt;</prompt><userinput>db get cone.s V</userinput></para>
       <para>
 	Gets the value of the <emphasis>V</emphasis> (vertex) attribute of shape <emphasis>cone.s</emphasis>
-      </para>  
+      </para>
     </example>
-    
+
     <example><info><title>Create a new TGC shape named <emphasis>new_cone.s</emphasis> with specified attributes.</title></info>
-      
+
       <para><prompt>mged&gt;</prompt><userinput>db put new_cone.s tgc V {0 0 0} H {0 0 1} A {1 0 0} B {0 1 0} C {5 0 0} D {0 5 0}</userinput></para>
       <para>
 	Creates a new TGC shape named <emphasis>new_cone.s</emphasis> with the specified attributes.
-      </para> 
+      </para>
     </example>
-    
+
     <example><info><title>Adjust the vertex attribute of <emphasis>new_cone.s</emphasis> to a given value.</title></info>
-      
+
       <para><prompt>mged&gt;</prompt><userinput>db adjust new_cone.s V {0 0 10}</userinput></para>
       <para>
-	Adjusts the <emphasis>V</emphasis> (vertex) attribute of <emphasis>new_cone.s</emphasis> 
+	Adjusts the <emphasis>V</emphasis> (vertex) attribute of <emphasis>new_cone.s</emphasis>
 	to the value {0 0 10}.
-      </para> 
+      </para>
     </example>
-    
-    <example><info><title>Display the format used by the <command>get</command> and <command>put</command> commands 
+
+    <example><info><title>Display the format used by the <command>get</command> and <command>put</command> commands
       for the TGC shape type.</title></info>
-      
+
       <para><prompt>mged&gt;</prompt><userinput>db form tgc</userinput></para>
       <para>
-	Displays the format used by the <command>get</command> and <command>put</command> commands 
+	Displays the format used by the <command>get</command> and <command>put</command> commands
 	for the TGC shape type.
-      </para> 
+      </para>
     </example>
   </refsection>
-  
+
   <info><corpauthor>BRL-CAD Team</corpauthor></info>
-  
+
   <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-    
+
     <para>
       Reports of bugs or problems should be submitted via electronic
       mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

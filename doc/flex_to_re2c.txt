@@ -87,7 +87,7 @@ symbols implicitly include unmarked rules. %x is used to specify
     /* ...this... */
     <S1>/rule1/
     <X1>/rule2/
-        /rule3/
+	/rule3/
 
     /* ...is equivalent to this */
 

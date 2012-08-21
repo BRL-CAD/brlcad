@@ -19,66 +19,66 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>wire</command>    
+    <command>wire</command>
     <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>
     <command>wire</command> is a program to create a BRL-CAD database of solid
-    wires or fuel lines.  The user enters the coordinates of the starting and 
+    wires or fuel lines.  The user enters the coordinates of the starting and
     ending points of the different segments of wires along with the radius at each
-    of these points.  Currently the program is limited to 10 segments.  This 
-    number may be changed by changing the variable MAXSEG.  MAXSEG may be no greater 
-    than 100 with out changing other parts of the program.  The wires are composed 
+    of these points.  Currently the program is limited to 10 segments.  This
+    number may be changed by changing the variable MAXSEG.  MAXSEG may be no greater
+    than 100 with out changing other parts of the program.  The wires are composed
     of cones and spheres.  This program is designed to be run interactively.
  </para>
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <example><info><title>Interactive <command>wire</command> Session</title></info>
-    
+
     <para>
     <literallayout class="normal">
 Enter mged file name (25 char max).
-        wire.g
+	wire.g
 Enter the number of segments (maximum of 10).
-        3
+	3
 Enter starting point of segment # 1.
-        0 0 0
+	0 0 0
 Enter radius at the starting point of segment # 1.
-        .25
+	.25
 Enter ending point of segment # 1.
-        0 5 -3
+	0 5 -3
 Enter radius at the ending point of segment # 1.
-        .25
+	.25
 Enter ending point of segment # 2.
-        0 10 -3
+	0 10 -3
 Enter radius at the ending point of segment # 2.
-        .25
+	.25
 Enter ending point of segment # 3.
-        0 12 -2
+	0 12 -2
 Enter radius at the ending point of segment # 3.
-        .25
+	.25
 
 
 mged file created:  wire.g
 Segment # 1:  (0.000000, 0.000000, 0.000000) 0.250000
-              (0.000000, 5.000000, -3.000000)0.250000
+	      (0.000000, 5.000000, -3.000000)0.250000
 Segment # 2:  (0.000000, 5.000000, -3.000000) 0.250000
-              (0.000000, 10.000000, -3.000000)0.250000
+	      (0.000000, 10.000000, -3.000000)0.250000
 Segment # 3:  (0.000000, 10.000000, -3.000000) 0.250000
-              (0.000000, 12.000000, -2.000000)0.250000
+	      (0.000000, 12.000000, -2.000000)0.250000
     </literallayout>
     </para>
   </example>
 
   <para>
   In this example a wire of three segments is made.  These
-  segments  are  joined together with spheres.  All dimensions 
+  segments  are  joined together with spheres.  All dimensions
   are in millimeters.
   </para>
 
@@ -92,7 +92,7 @@ Segment # 3:  (0.000000, 10.000000, -3.000000) 0.250000
 </info>
 
 <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
-  
+
   <para>
     This software is Copyright (c) 2005-2012 United States Government as
     represented by the U.S. Army Research Laboratory. All rights reserved.
@@ -100,14 +100,14 @@ Segment # 3:  (0.000000, 10.000000, -3.000000) 0.250000
 </refsection>
 
 <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
-  
+
   <para>
   bolt(1), handle(1), window(1), window_frame(1), gastank(1)
   </para>
 </refsection>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

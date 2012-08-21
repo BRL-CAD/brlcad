@@ -4,7 +4,7 @@
   xmlns:xi="http://www.w3.org/2001/XInclude"
 >
   <info><title>Using the Build Pattern Tool</title>
-    
+
 
     <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
@@ -14,7 +14,7 @@
   </info>
 
   <section xml:id="build_pattern_generalinfo"><info><title>General Pattern Information</title></info>
-    
+
     <para>
       As mentioned previously, the Build Pattern tool automates the process of
       making copies of existing geometry in rectangular, spherical, or
@@ -45,7 +45,7 @@
   </section>
 
   <section xml:id="build_pattern_names"><info><title>Pattern Names</title></info>
-    
+
     <para>
       As shown in Figure E-1, the tool appends three numbers to all patterned
       objects (unless you are using the increment option for primitives, in
@@ -61,7 +61,7 @@
   </section>
 
   <section xml:id="build_pattern_fields"><info><title>Common Fields for all Patterns:</title></info>
-    
+
     <para>
       There are several fields in the pattern tool GUI that are common to all
       types of patterns.
@@ -78,19 +78,19 @@
     </para>
 
     <figure><info><title>Example of pattern-generated assembly names.</title></info>
-      
+
       <mediaobject>
 	<imageobject>
 	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig01.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
-  
+
     <para>
       The Increment field is only for use when duplicating to the primitive level.
-      It is added to the leftmost number field of each primitive. To determine the 
-      increment, examine the primitives of the object(s) you wish to pattern and find 
-      the largest span. For example, to create a pattern to the primitive level with 
+      It is added to the leftmost number field of each primitive. To determine the
+      increment, examine the primitives of the object(s) you wish to pattern and find
+      the largest span. For example, to create a pattern to the primitive level with
       the following primitives (which may or may not be in regions or
       assemblies),
 
@@ -100,7 +100,7 @@ part.s22 part.s22-1 part.s23 part.s24 part.s24+1 part.s24-1 part.s25,
 
       one needs to determine the span. Note that the leftmost numbers in these
       primitives range from
-        22&#x2013;25. <!-- en dash symbol -->
+	22&#x2013;25. <!-- en dash symbol -->
       Thus, as shown in the following expression, the span is
       four (inclusively).
 
@@ -111,8 +111,8 @@ part.s22 part.s22-1 part.s23 part.s24 part.s24+1 part.s24-1 part.s25,
       <literallayout class="normal">
 part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
       </literallayout>
-      
-      Although it is acceptable to use a greater increment, gaps in numbers may be 
+
+      Although it is acceptable to use a greater increment, gaps in numbers may be
       troublesome if one is using this capability extensively.
     </para>
 
@@ -123,14 +123,14 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
   </section>
 
   <section xml:id="build_pattern_stringsub"><info><title>String Substitution</title></info>
-    
+
     <para>
      It is also possible to create a pattern in which a string of characters in
      each element in the object is changed (e.g., "l_" -&gt; "r_"). This is useful
      for symmetry applications (e.g., left - right) or series (e.g., 1 - n).
      Each element of the object must have the source string so the user must be
      thorough and name each primitive, region, and assembly properly. Consider
-     the following example: 
+     the following example:
 
      <inlinemediaobject><imageobject><imagedata fileref="../../articles/en/images/build_pattern_fig07.png"/></imageobject></inlinemediaobject>
     </para>
@@ -141,36 +141,36 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
       <literallayout class="normal">
 /pattern group
        /COPIED assemblies [MATRICES]
-            /assemblies
-                  /regions
-                        /primitives
+	    /assemblies
+		  /regions
+			/primitives
       </literallayout>
-      
+
       Region-level duplications copy all assembly and regions and reference from the
       region level down with matrices.
 
       <literallayout class="normal">
 /pattern group
        /COPIED assemblies
-            /COPIED regions [MATRICES]
+	    /COPIED regions [MATRICES]
 /primitives
       </literallayout>
-      
-      Primitive-level duplications copy the entire tree structure to the primitive 
+
+      Primitive-level duplications copy the entire tree structure to the primitive
       level without matrices using an increment on all primitives.
 
       <literallayout class="normal">
 /pattern group
        /COPIED assemblies       NO MATRICES
-            /COPIED regions
-                 /COPIED primitives
+	    /COPIED regions
+		 /COPIED primitives
       </literallayout>
     </para>
-    
+
   </section>
 
   <section xml:id="build_pattern_recpatterns"><info><title>Rectangular Patterns</title></info>
-    
+
     <para>
       The rectangular pattern GUI (shown in Figure E-2) is designed to
       facilitate one-, two-, or three-dimensional rectangular patterns. The
@@ -184,18 +184,18 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
     </para>
 
     <figure><info><title>The user interface for building rectangular patterns.</title></info>
-      
+
       <mediaobject>
 	<imageobject>
 	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig02.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
-  
+
   </section>
 
   <section xml:id="build_pattern_spherical"><info><title>Spherical Patterns</title></info>
-    
+
     <para>
       The spherical pattern GUI (shown in Figure E-3) facilitates sphere-shaped
       patterns rotated around a center vertex using user-specified radii with
@@ -238,7 +238,7 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
     </para>
 
     <figure><info><title>The user interface for building spherical patterns.</title></info>
-      
+
       <mediaobject>
 	<imageobject>
 	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig03.png" format="PNG"/>
@@ -261,7 +261,7 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
 
 
     <figure><info><title>Examples of different spherical pattern orientations.</title></info>
-      
+
       <mediaobject>
 	<imageobject>
 	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig04.png" format="PNG"/>
@@ -271,7 +271,7 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
 
 
     <figure><info><title>Implementation of spherical patterns.</title></info>
-      
+
       <mediaobject>
 	<imageobject>
 	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig05.png" format="PNG"/>
@@ -282,7 +282,7 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
   </section>
 
   <section xml:id="build_pattern_cylind"><info><title>Cylindrical Patterns</title></info>
-    
+
     <para>
       The cylindrical pattern GUI (shown in Figure E-6) facilitates the creation
       of cylinder-shaped patterns with user-defined center, direction, height,
@@ -296,7 +296,7 @@ part.s26 part.s26-1 part.s27 part.s28 part.s28+1 part.s28-1 part.s29
     </para>
 
     <figure><info><title>The user interface for building cylindrical patterns.</title></info>
-      
+
       <mediaobject>
 	<imageobject>
 	  <imagedata align="center" fileref="../../articles/en/images/build_pattern_fig06.png" format="PNG"/>

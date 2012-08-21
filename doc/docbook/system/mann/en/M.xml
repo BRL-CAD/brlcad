@@ -8,56 +8,56 @@
     <refmiscinfo class="source">BRL-CAD</refmiscinfo>
     <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-  
+
   <refnamediv xml:id="name">
     <refname>M</refname>
     <refpurpose>
       Send an <emphasis>mged</emphasis> mouse event
     </refpurpose>
   </refnamediv>
-  
+
   <!-- body begins here -->
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
-      <command>M</command>    
+      <command>M</command>
       <arg choice="req" rep="norepeat">1/0</arg>
       <arg choice="req" rep="norepeat"><replaceable>xpos ypos</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
-  
+
   <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-    
+
     <para>
-      Sends an <emphasis>mged</emphasis> mouse (i.e., defaults to a middle 
-      mouse button) event. The first argument indicates whether the event 
-      should be a button press <emphasis>(1)</emphasis> or release 
-      <emphasis>(0)</emphasis>. The <emphasis>xpos</emphasis> and 
-      <emphasis>ypos</emphasis> arguments specify the mouse position in 
-      <emphasis>mged</emphasis> screen coordinates between -2047 and +2047. 
+      Sends an <emphasis>mged</emphasis> mouse (i.e., defaults to a middle
+      mouse button) event. The first argument indicates whether the event
+      should be a button press <emphasis>(1)</emphasis> or release
+      <emphasis>(0)</emphasis>. The <emphasis>xpos</emphasis> and
+      <emphasis>ypos</emphasis> arguments specify the mouse position in
+      <emphasis>mged</emphasis> screen coordinates between -2047 and +2047.
       With the default bindings, an <emphasis>mged</emphasis> mouse event while in
-      the viewing mode moves the view so that the point currently at screen 
-      position (<emphasis>xpos,ypos</emphasis>) is repositioned to the center 
+      the viewing mode moves the view so that the point currently at screen
+      position (<emphasis>xpos,ypos</emphasis>) is repositioned to the center
       of the <emphasis>mged</emphasis> display (compare to the center
-      command). The <command>M</command> command may also be used in other 
+      command). The <command>M</command> command may also be used in other
       editing modes to simulate an <emphasis>mged</emphasis> mouse event.
     </para>
   </refsection>
-  
+
   <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-    
+
     <para>
-      Translate the point at specified screen coordinates to the center of the 
+      Translate the point at specified screen coordinates to the center of the
       display.
     </para>
     <example><info><title>Translate the point at screen coordinates (100,100) to the center of the <emphasis>mged</emphasis>
       display.</title></info>
-      
+
       <variablelist>
 	<varlistentry>
 	  <term><prompt>mged</prompt> <userinput>M 1 100 100</userinput></term>
 	  <listitem>
 	    <para>
-	      The point at screen coordinates (100,100)is repositioned to the 
+	      The point at screen coordinates (100,100)is repositioned to the
 	      center of the display.
 	    </para>
 	  </listitem>
@@ -65,11 +65,11 @@
       </variablelist>
     </example>
   </refsection>
-  
+
   <info><corpauthor>BRL-CAD Team</corpauthor></info>
-  
+
   <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-    
+
     <para>
       Reports of bugs or problems should be submitted via electronic
       mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

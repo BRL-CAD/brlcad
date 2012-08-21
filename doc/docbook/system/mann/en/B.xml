@@ -1,28 +1,28 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="B">
-  
+
   <refmeta>
     <refentrytitle>B</refentrytitle>
     <manvolnum>nged</manvolnum>
     <refmiscinfo class="source">BRL-CAD</refmiscinfo>
     <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-  
+
   <refnamediv xml:id="name">
     <refname>B</refname>
     <refpurpose>
-      Clears the <emphasis>mged</emphasis> display of any currently 
-      displayed objects, then displays the list of objects provided in 
+      Clears the <emphasis>mged</emphasis> display of any currently
+      displayed objects, then displays the list of objects provided in
       the parameter list.
     </refpurpose>
   </refnamediv>
-  
+
   <!-- body begins here -->
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
       <command>B</command>
-      <group choice="opt" rep="norepeat">    
+      <group choice="opt" rep="norepeat">
 	<arg choice="opt" rep="norepeat">-A -o</arg>
 	<arg choice="plain" rep="repeat"><replaceable>attribute name</replaceable> {<replaceable>value</replaceable>}</arg>
       </group>
@@ -32,29 +32,29 @@
       <arg choice="opt" rep="norepeat"><replaceable>objects</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
-  
+
   <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-    
+
     <para>
       Clears the mged display of any currently displayed objects, then displays the list of
       objects provided in the parameter list. Equivalent to the <command>Z</command> command followed by the
-      command <command>draw</command> <emphasis>&lt;objects&gt;</emphasis>. The <emphasis>-C</emphasis> option 
-      provides the user a way to specify a color that overrides all other color specifications including 
-      combination colors and region id-based colors. The <emphasis>-A </emphasis>and <emphasis>-o</emphasis> 
-      options allow the user to select objects by attribute. The <emphasis>-s</emphasis> option specifies 
-      that subtracted and intersected objects should be drawn with solid lines rather than dot-dash lines. 
+      command <command>draw</command> <emphasis>&lt;objects&gt;</emphasis>. The <emphasis>-C</emphasis> option
+      provides the user a way to specify a color that overrides all other color specifications including
+      combination colors and region id-based colors. The <emphasis>-A </emphasis>and <emphasis>-o</emphasis>
+      options allow the user to select objects by attribute. The <emphasis>-s</emphasis> option specifies
+      that subtracted and intersected objects should be drawn with solid lines rather than dot-dash lines.
       The -R option means do not automatically resize the view if no other objects are displayed.
       See the <command>draw</command> command for a detailed description of the options.
     </para>
   </refsection>
-  
+
   <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-    
+
     <para>
       The following are run from the MGED command prompt.
     </para>
     <example><info><title>Display a named object</title></info>
-      
+
       <variablelist>
 	<varlistentry>
 	  <term><prompt>mged&gt;</prompt> <userinput>B some_object</userinput></term>
@@ -66,23 +66,23 @@
 	</varlistentry>
       </variablelist>
     </example>
-    
+
     <example><info><title>Draw objects having an attribute with a value </title></info>
-      
+
       <para>
 	<prompt>mged&gt;</prompt><userinput>B -A -o Comment {First comment} Comment {Second comment}</userinput>
       </para>
       <para>
-	The display clears, then draws objects that have a "Comment" attribute with a value of either 
+	The display clears, then draws objects that have a "Comment" attribute with a value of either
 	"First comment" or "Second comment."
       </para>
     </example>
   </refsection>
-  
+
   <info><corpauthor>BRL-CAD Team</corpauthor></info>
-  
+
   <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-    
+
     <para>
       Reports of bugs or problems should be submitted via electronic
       mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

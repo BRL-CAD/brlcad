@@ -49,4 +49,3 @@ Workaround: Compile in whatever directory is failing with -O0 instead:
 	make
 	cd ../..
 	make
-

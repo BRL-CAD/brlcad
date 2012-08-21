@@ -19,13 +19,13 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>paths</command>    
+    <command>paths</command>
      <arg choice="req" rep="norepeat"><replaceable>path_start</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>Lists all existing paths that start from the specified <emphasis>path_start</emphasis>
 	and end at a primitive shape. The <emphasis>path_start</emphasis> may be specified by / separated
 	components, or they may be separated by spaces (but not both).
@@ -33,25 +33,25 @@
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>The example shows the use of the <command>paths</command> command to list all existing paths that start 	from the specified path start and end at a primitive shape.
   </para>
-      
+
   <example><info><title>List all paths that start from a specified path start and end at a primitive shape.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>paths group1 region2</userinput>
     </para>
     <para>Lists all existing paths that start from <emphasis>group1/region2</emphasis> and end at a primitive 		shape.
     </para>
   </example>
- 
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

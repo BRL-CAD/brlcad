@@ -21,11 +21,11 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>gr</command>    
+    <command>gr</command>
        <arg choice="req" rep="norepeat"><replaceable>GroupName</replaceable></arg>
        <group choice="req" rep="norepeat">
-         <arg choice="plain" rep="norepeat"><replaceable>+</replaceable></arg>
-         <arg choice="plain" rep="norepeat"><replaceable>-</replaceable></arg>
+	 <arg choice="plain" rep="norepeat"><replaceable>+</replaceable></arg>
+	 <arg choice="plain" rep="norepeat"><replaceable>-</replaceable></arg>
        </group>
        <arg choice="opt" rep="norepeat"><replaceable>ListLimit</replaceable></arg>
      </cmdsynopsis>
@@ -64,9 +64,9 @@
     <varlistentry>
       <term><option>GroupName</option></term>
       <listitem>
-        <para>
-          The name of the group to add or remove primitives.
-        </para>
+	<para>
+	  The name of the group to add or remove primitives.
+	</para>
       </listitem>
     </varlistentry>
 
@@ -74,23 +74,23 @@
       <term><option>+</option></term>
       <term><option>-</option></term>
       <listitem>
-        <para>
-          Indicates if to add or remove primitives.
-        </para>
+	<para>
+	  Indicates if to add or remove primitives.
+	</para>
       </listitem>
     </varlistentry>
 
     <varlistentry>
       <term><option>ListLimit</option></term>
       <listitem>
-        <para>
-          As primitives are selected using a selection box, the names of the
-          primitives can be listed. This option controls the number of
-          entries which will be listed. By default this value is zero. All
-          selected primitives will be listed, assuming the 'ListLimit' is
-          high enough, even if they are not added to the group. This will
-          happen if some of the selected primitives are already in the group.
-        </para>
+	<para>
+	  As primitives are selected using a selection box, the names of the
+	  primitives can be listed. This option controls the number of
+	  entries which will be listed. By default this value is zero. All
+	  selected primitives will be listed, assuming the 'ListLimit' is
+	  high enough, even if they are not added to the group. This will
+	  happen if some of the selected primitives are already in the group.
+	</para>
       </listitem>
     </varlistentry>
   </variablelist>
@@ -99,11 +99,10 @@
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
 </refsection>
 </refentry>
-

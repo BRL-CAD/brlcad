@@ -19,8 +19,8 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>ps</command>    
-    
+    <command>ps</command>
+
     <arg choice="opt" rep="norepeat">-f <replaceable>font</replaceable></arg>
     <arg choice="opt" rep="norepeat">-t <replaceable>title</replaceable></arg>
     <arg choice="opt" rep="norepeat">-c <replaceable>creator</replaceable></arg>
@@ -32,19 +32,19 @@
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>Temporarily attaches the <emphasis>Postscript</emphasis> display manager and outputs
 	the current MGED display to the specified <emphasis>output_file</emphasis> in <emphasis>PostScript	</emphasis> format. The <emphasis>-f</emphasis> option allows the <emphasis>font</emphasis> to be user-	specified. The <emphasis>-t</emphasis> option allows the user to provide a title (the default is No 	Title). The <emphasis>-c</emphasis> option allows the user to specify the creator of the file (the 	default is LIBDM dm-ps). The <emphasis>s</emphasis> specifies the size of the drawing in inches. The 	<emphasis>l</emphasis> specifies the width of the lines drawn.
     </para>
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>The first example shows the use of the <command>ps</command> command to place a <emphasis>PostScript	</emphasis> version of the current MGED display in a specified file and give it a particular title.  The 	second example is much like the first except that a line width is specified and the title and output file 	names are different.
   </para>
-       
+
   <example><info><title>Place a <emphasis>PostScript</emphasis> version of the current MGED display in a specified file.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>ps -t "Test Title" test.ps</userinput>
     </para>
@@ -52,21 +52,21 @@
     </para>
   </example>
   <example><info><title>Specify the line width of a <emphasis>PostScript</emphasis> version of the current MGED display in a 	specified file.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>ps -l 10 -t "Test Fat Lines" fat_lines.ps</userinput>
     </para>
     <para>Places a <emphasis>PostScript</emphasis> version of the current MGED display with fat lines in a file 	named <emphasis>fat_lines.ps</emphasis> and titles it Test Fat Lines.
     </para>
   </example>
- 
+
 
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

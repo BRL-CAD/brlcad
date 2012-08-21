@@ -20,18 +20,18 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>exists</command>    
+    <command>exists</command>
     <arg choice="req" rep="norepeat">expression</arg>
     <arg choice="opt" rep="repeat"><replaceable>expression</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>
-    <command>exists</command> works in a fashion similar to Unix-style 
-    test commands (internally it is based on NetBSD's test code) but tests 
-    <emphasis remap="I">objects</emphasis> in the current open database rather than 
+    <command>exists</command> works in a fashion similar to Unix-style
+    test commands (internally it is based on NetBSD's test code) but tests
+    <emphasis remap="I">objects</emphasis> in the current open database rather than
     files in a file system.  If an object matching a valid expression or expressions is
     found 1 is returned, otherwise 0 is returned.  Expressions are formed using
     <link linkend="primaries">PRIMARIES</link> and
@@ -41,7 +41,7 @@
 </refsection>
 
 <refsection xml:id="primaries"><info><title>PRIMARIES:</title></info>
-  
+
   <variablelist remap="TP">
     <varlistentry>
       <term><emphasis remap="B" role="bold">-c</emphasis> <emphasis remap="I">object</emphasis></term>
@@ -81,7 +81,7 @@
       <term><emphasis remap="B" role="bold">-v</emphasis> <emphasis remap="I">object</emphasis></term>
       <listitem>
 	<para>
-	       Returns TRUE if the object exists and has a bounding box with non-zero volume.  (A sketch primitive would not pass this test.)	
+	       Returns TRUE if the object exists and has a bounding box with non-zero volume.  (A sketch primitive would not pass this test.)
 	</para>
       </listitem>
     </varlistentry>
@@ -180,9 +180,9 @@
 </refsection>
 
 <refsection xml:id="operators"><info><title>OPERATORS:</title></info>
-  
+
 	<para>primaries can be combined with the following operators:</para>
-  
+
   <variablelist remap="TP">
     <varlistentry>
       <term><emphasis remap="B" role="bold">!</emphasis> <emphasis remap="I">expression</emphasis></term>
@@ -197,8 +197,8 @@
       <listitem>
 	<para>
 	  The and operator operates like the logical AND operator - TRUE only if both
-	  expressions are true.  
-        </para>
+	  expressions are true.
+	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
@@ -224,7 +224,7 @@
 </refsection>
 
 <refsection xml:id="a_note_on_expressions"><info><title>A Note on Expressions</title></info>
-  
+
   <para>
     All primaries and operands must be expressed as separate arguments to exists.
     In practice, this means that there must be a space between each element in a
@@ -236,28 +236,28 @@
   <para>
     While this may seem like a rather verbose way of writing the expression, it greatly
     simplifies the parsing of the expression and is standard for virtually all
-    <emphasis remap="B" role="bold">test</emphasis> type commands. 
+    <emphasis remap="B" role="bold">test</emphasis> type commands.
   </para>
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>
     The following are run from the MGED command prompt:
   </para>
   <example><info><title>Example1</title></info>
-    
+
     <para>
       <userinput>exists object1.s</userinput>
     </para>
     <para>
     </para>
   </example>
- 
+
 </refsection>
 
 <refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
-  
+
   <para>
     Errors will be returned if parsing of the arguments fails, or one of the primaries's
     evaluation functions returns an error.
@@ -272,7 +272,7 @@
 </info>
 
 <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
-  
+
   <para>
     This software is Copyright (c) 2008-2012 United States Government as
     represented by the U.S. Army Reexists Laboratory. All rights reserved.
@@ -283,14 +283,14 @@
 </refsection>
 
 <refsection xml:id="bugs"><info><title>BUGS</title></info>
-  
+
   <para>
     TODO.
   </para>
 </refsection>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

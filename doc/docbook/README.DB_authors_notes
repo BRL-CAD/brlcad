@@ -244,21 +244,21 @@ attributes and values.  See Reference 2, p. 290, for much more detail.
     <title>???</title>
     <mediaobject>
       <imageobject role='html'>
-        <imagedata
-           align="center"
-           contwidthwidth='4.5in' scalefit='1'
-           fileref="./images/vbox/"
-         />
+	<imagedata
+	   align="center"
+	   contwidthwidth='4.5in' scalefit='1'
+	   fileref="./images/vbox/"
+	 />
       </imageobject>
       <imageobject role='fo'>
-        <imagedata
-           align="center"
-           width='4.5in' scalefit='1'
-           fileref="./images/vbox/"
-         />
+	<imagedata
+	   align="center"
+	   width='4.5in' scalefit='1'
+	   fileref="./images/vbox/"
+	 />
       </imageobject>
       <textobject>
-        <phrase>a picture</phrase>
+	<phrase>a picture</phrase>
       </textobject>
     </mediaobject>
   </figure>

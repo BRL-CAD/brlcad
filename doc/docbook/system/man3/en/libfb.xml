@@ -19,7 +19,7 @@
 <!-- body begins here -->
 
 <refsection xml:id="libfbgeneric"><info><title>Generic frame buffer routines</title></info>
-  
+
   <funcprototype>
     <funcdef><function>FBIO</function> *fb_open</funcdef>
     <paramdef>* <parameter>fbfile</parameter></paramdef>
@@ -29,7 +29,7 @@
   <funcsynopsisinfo>
     RGBpixel *addr;
     long count;
-    
+
   </funcsynopsisinfo>
   <funcprototype>
     <funcdef>int <function>fb_write</function></funcdef>
@@ -39,29 +39,29 @@
     <paramdef>int fb_rmap ( fbp , cmap ) FBIO * <parameter>fbp</parameter></paramdef>
     <paramdef>ColorMap * <parameter>cmap</parameter></paramdef>
   </funcprototype>
-  
+
   <funcprototype>
     <funcdef>int <function>fb_wmap</function></funcdef>
     <paramdef>* <parameter>fbp</parameter></paramdef>
     <paramdef>ColorMap * <parameter>cmap</parameter></paramdef>
   </funcprototype>
-  
+
   <funcprototype>
     <funcdef>int <function>fb_clear</function></funcdef>
     <paramdef>* <parameter>fbp</parameter></paramdef>
     <paramdef>RGBpixel * <parameter>colorp</parameter></paramdef>
   </funcprototype>
-  
+
   <funcprototype>
     <funcdef>char *<function>fb_gettype</function></funcdef>
     <paramdef>* <parameter>fbp</parameter></paramdef>
   </funcprototype>
-  
+
   <funcprototype>
     <funcdef>int <function>fb_getwidth</function></funcdef>
     <paramdef>* <parameter>fbp</parameter></paramdef>
   </funcprototype>
-  
+
   <funcprototype>
     <funcdef>int <function>fb_getheight</function></funcdef>
     <paramdef>* <parameter>fbp</parameter></paramdef>
@@ -69,7 +69,7 @@
 </refsection>
 
 <refsection xml:id="libfbhardware"><info><title>Hardware specific frame buffer routines</title></info>
-  
+
   <funcprototype>
     <funcdef>int <function>fb_cursor</function></funcdef>
     <paramdef>* <parameter>fbp</parameter></paramdef>
@@ -80,7 +80,7 @@
   <funcsynopsisinfo>
     int xbits, ybits;
     int xorig, yorig;
-    
+
   </funcsynopsisinfo>
   <funcprototype>
     <funcdef>int <function>fb_window</function></funcdef>
@@ -88,31 +88,31 @@
     <paramdef>int fb_zoom ( fbp , x , y ) FBIO * <parameter>fbp</parameter></paramdef>
     <paramdef>/ *Buffered frame buffer I/O: */ int fb_ioinit ( fbp ) FBIO * <parameter>fbp</parameter></paramdef>
   </funcprototype>
-  
+
   <funcprototype>
     <funcdef>int <function>fb_seek</function></funcdef>
     <paramdef>* <parameter>fbp</parameter></paramdef>
     <paramdef>void fb_tell ( fbp , xp , yp ) FBIO * <parameter>fbp</parameter></paramdef>
     <paramdef>int *xp , * <parameter>yp</parameter></paramdef>
   </funcprototype>
-  
+
   <funcprototype>
     <funcdef>int <function>fb_rpixel</function></funcdef>
     <paramdef>* <parameter>fbp</parameter></paramdef>
     <paramdef>RGBpixel * <parameter>pixelp</parameter></paramdef>
   </funcprototype>
-  
+
   <funcprototype>
     <funcdef>int <function>fb_wpixel</function></funcdef>
     <paramdef>* <parameter>fbp</parameter></paramdef>
     <paramdef>RGBpixel * <parameter>pixelp</parameter></paramdef>
   </funcprototype>
-  
+
   <funcprototype>
     <funcdef>int <function>fb_flush</function></funcdef>
     <paramdef>* <parameter>fbp</parameter></paramdef>
   </funcprototype>
-  
+
   <funcprototype>
     <funcdef>void <function>fb_log</function></funcdef>
     <paramdef>format [ <parameter/></paramdef>
@@ -121,12 +121,12 @@
 </refsection>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>
     These routines are designed to provide a device-independent
     method of using frame buffers or files containing frame buffer
-    images. The coordinate system used is first-quadrant (0..width-1, 
-    0..height-1), with integer addressing.  Translation to hardware 
+    images. The coordinate system used is first-quadrant (0..width-1,
+    0..height-1), with integer addressing.  Translation to hardware
   coordinate systems is handled by the library.
   </para>
 
@@ -143,8 +143,8 @@
 
   <para>
     The exact interpretation of color maps tends to be somewhat device
-    specific. The three ColorMap arrays each have 256 entries of unsigned 
-    16-bit values. In order to accomodate color maps with differing amounts 
+    specific. The three ColorMap arrays each have 256 entries of unsigned
+    16-bit values. In order to accomodate color maps with differing amounts
     of output resolution, the color map entries are fixed-point fractions
     in the range (0.0..1.0).  In integer notation, the range is (0..65525).
     For devices with less than 16 bits of output from their color maps,
@@ -152,11 +152,11 @@
   </para>
 
   <para>
-    <emphasis remap="I">Fb_open</emphasis> is used to open a frame buffer 
+    <emphasis remap="I">Fb_open</emphasis> is used to open a frame buffer
     file <emphasis remap="I">fbfile</emphasis>. The file may be either the
     name of a supported frame buffer interface, referenced as "/dev/interface",
-    or the name of a UNIX file. The routine will try to determine if the 
-    file opened was a real frame buffer by examining the name, and if so 
+    or the name of a UNIX file. The routine will try to determine if the
+    file opened was a real frame buffer by examining the name, and if so
     will perform whatever initialization actions are necessary.
     If the value of <emphasis remap="I">fbfile</emphasis> is
     <!-- B elided -->
@@ -165,44 +165,44 @@
     <envar>FB_FILE</envar> is set, then the value of <envar>FB_FILE</envar>
     is used; otherwise the default frame buffer device for the system is used.
     See below for more details. The <emphasis remap="I">width</emphasis>
-    and <emphasis remap="I">height</emphasis> parameters specify the initial 
-    size of display desired. If these are zero the default sizes for that 
-    device will be used. On a successful open, the frame buffer I/O (FBIO) 
-    structure pointer is returned. This structure contains size you were 
-    actually given, as well as the maximum possible size for the selected 
+    and <emphasis remap="I">height</emphasis> parameters specify the initial
+    size of display desired. If these are zero the default sizes for that
+    device will be used. On a successful open, the frame buffer I/O (FBIO)
+    structure pointer is returned. This structure contains size you were
+    actually given, as well as the maximum possible size for the selected
     device. A return of FBIO_NULL indicates failure.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_close</emphasis> simply closes the frame buffer.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_read</emphasis> reads
-    <emphasis remap="I">count</emphasis> pixels from the frame buffer 
+    <emphasis remap="I">count</emphasis> pixels from the frame buffer
     starting at the location specified by <emphasis remap="I">x</emphasis>
-    and <emphasis remap="I">y</emphasis>, and places them at program 
+    and <emphasis remap="I">y</emphasis>, and places them at program
     memory address specified by <emphasis remap="I">addr</emphasis>.
-    <emphasis remap="I">Fb_read</emphasis> returns the number of 
+    <emphasis remap="I">Fb_read</emphasis> returns the number of
     pixels actually read, or -1 on error.
   </para>
-  
+
   <para>
-    <emphasis remap="I">Fb_write</emphasis> writes 
+    <emphasis remap="I">Fb_write</emphasis> writes
     <emphasis remap="I">count</emphasis> pixels from program address
-    <emphasis remap="I">addr</emphasis> into the frame buffer starting 
+    <emphasis remap="I">addr</emphasis> into the frame buffer starting
     at the location specified by <emphasis remap="I">x</emphasis>
     and <emphasis remap="I">y</emphasis>. <emphasis remap="I">Fb_write</emphasis>
     returns the number of pixels actually written, or -1 on error.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_rmap</emphasis>
     reads in the color map from the frame buffer and
     leaves at the location pointed to by
     <emphasis remap="I">cmap</emphasis>.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_wmap</emphasis>
     writes the color map pointed to by
@@ -214,7 +214,7 @@
     <acronym>NULL</acronym>
     then a linear color map is used as the default.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_clear</emphasis>
     erases the frame buffer by setting all pixels to the given
@@ -224,25 +224,25 @@
     frame buffer displays
     this can be done in less than a second by a special command.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_gettype</emphasis>
     returns a pointer to a string describing the frame buffer
     specified by the FBIO pointer.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_getwidth</emphasis>
     and <emphasis remap="I">Fb_getheight</emphasis>
     returns the current size of the FBIO frame buffer.
   </para>
-  
+
   <para>
     The following routines work in conjunction with those described above
     to provide functions which only apply if the frame buffer
     file is actually a hardware frame buffer display.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_cursor</emphasis>
     places the cursor at the image space coordinates given by
@@ -252,7 +252,7 @@
     If the mode is non-zero, the cursor is made visible, and
     if mode is zero, the cursor is turned off.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_scursor</emphasis>
     is the same as
@@ -265,7 +265,7 @@
     and
     <emphasis remap="I">y</emphasis>.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_setcursor</emphasis>
     allows the user to set the bitmap used to represent the cursor,
@@ -276,7 +276,7 @@
     and <emphasis remap="I">ybits</emphasis>
     specify the size of the cursor bitmap.  The number of bytes in the
     <varname role="parameter">bits</varname> array will be the width rounded
-    up to a mutiple of eight (so that the cursor "scanlines" are byte aligned) 
+    up to a mutiple of eight (so that the cursor "scanlines" are byte aligned)
     times the height.
     <varname role="parameter">bits</varname>[0]
     is the lower left corner,
@@ -291,7 +291,7 @@
     specified in the cursor move routines.  Again, a first quadrant coordinate
     system is used.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_window</emphasis>
     sets the frame buffer window center position to the image space coordinates
@@ -299,7 +299,7 @@
     This command is usually used in conjunction with the
     <emphasis remap="I">fb_zoom</emphasis> routine.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_zoom</emphasis>
     sets the zoom factor for the X coordinate to
@@ -308,7 +308,7 @@
     <emphasis remap="I">y</emphasis>.
     Zooming is generally done by pixel replication in hardware.
   </para>
-  
+
   <para>
     The following routines work in conjunction with those described above
     to provide buffered reading and writing of frame buffer images
@@ -317,25 +317,25 @@
     the image in core. Since horizontal bands are buffered, the
     ideal motion is to scan left to right, then bottom to top.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_ioinit</emphasis>
     should be called before using any of the other buffered I/O routines and
     repeated whenever the frame buffer is reopened.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_seek</emphasis>
     is used to position the current read/write pointer to
     the location to the next position to be read or written.
     It is not necessary to do a <emphasis remap="I">fb_seek</emphasis>
     after every read or write since both <emphasis remap="I">fb_rpixel</emphasis>
-    and <emphasis remap="I">fb_wpixel</emphasis> imply an automatic move to 
+    and <emphasis remap="I">fb_wpixel</emphasis> imply an automatic move to
     the next pixel. If you read or write the last pixel on a scan line,
     the pointer will automatically move to the beginning
     of the following scan line.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_tell</emphasis>
     returns the current location of the read write pointer
@@ -343,35 +343,35 @@
     The X and Y values are returned into the integers pointed to
     by <emphasis remap="I">xp</emphasis> and <emphasis remap="I">yp</emphasis>.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_rpixel</emphasis>
     reads the pixel at the current frame buffer location
     and returns it into the location specifed
     by <emphasis remap="I">pixelp</emphasis>.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_wpixel</emphasis>
     writes the pixel pointed to by <emphasis remap="I">pixelp</emphasis>
     at the current frame buffer location.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_flush</emphasis>
     caused any current buffered frame buffer pages to be written out.
     Unnecessary writes are avoided by the use of page reference bits.
   </para>
-  
+
   <para>
     The following is a printing routine which this library uses to
     indicate errors.
   </para>
-  
+
   <para>
     <emphasis remap="I">Fb_log</emphasis> will convert, format and print its
     <emphasis remap="I">args</emphasis> under control of
-    <emphasis remap="I">format</emphasis> to the standard error output. 
+    <emphasis remap="I">format</emphasis> to the standard error output.
     For more detailed information on the specification of the control string,
     see <citerefentry><refentrytitle>printf</refentrytitle>
     <manvolnum>3S</manvolnum></citerefentry>.
@@ -381,7 +381,7 @@
 </refsection>
 
 <refsection xml:id="fb_file_devices"><info><title>FB_FILE DEVICES</title></info>
-  
+
   <para>
     The following devices are supported by the library; not all may
     be available on any given system.  New device support can be
@@ -427,12 +427,12 @@
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>
     <emphasis remap="I">Libfb</emphasis>
     can be loaded with any C program:
   </para>
-  
+
   <literallayout remap="RS" class="normal">
 <synopsis format="linespecific">
 $  <filename>/bin/cc  program.c  -lfb -l\&lt;system-library...\&gt;</filename>
@@ -448,7 +448,7 @@ $  <filename>/bin/cc  program.c  -lfb -l\&lt;system-library...\&gt;</filen
 </refsection>
 
 <refsection xml:id="return_values"><info><title>RETURN VALUES</title></info>
-  
+
   <para>
     <emphasis remap="I">fb_close</emphasis>,
     <emphasis remap="I">fb_write</emphasis>,
@@ -487,7 +487,7 @@ $  <filename>/bin/cc  program.c  -lfb -l\&lt;system-library...\&gt;</filen
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

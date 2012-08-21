@@ -18,12 +18,12 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>reid</command>    
+    <command>reid</command>
        <group choice="opt" rep="norepeat">
-         <arg choice="plain" rep="norepeat">-n</arg>
-         <group choice="req" rep="norepeat">
-           <arg choice="plain" rep="norepeat"><replaceable>num</replaceable></arg>
-         </group>
+	 <arg choice="plain" rep="norepeat">-n</arg>
+	 <group choice="req" rep="norepeat">
+	   <arg choice="plain" rep="norepeat"><replaceable>num</replaceable></arg>
+	 </group>
        </group>
        <arg choice="req" rep="norepeat">assembly</arg>
        <arg choice="req" rep="norepeat">regionID</arg>
@@ -42,25 +42,25 @@
     <varlistentry>
       <term><option>-n num</option></term>
       <listitem>
-        <para>
-          Increment between consecutive 'region_id'. The default is one.
-        </para>
+	<para>
+	  Increment between consecutive 'region_id'. The default is one.
+	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
       <term><option>assembly</option></term>
       <listitem>
-        <para>
-          Group name
-        </para>
+	<para>
+	  Group name
+	</para>
       </listitem>
     </varlistentry>
     <varlistentry>
       <term><option>regionID</option></term>
       <listitem>
-        <para>
-          Renumber start number
-        </para>
+	<para>
+	  Renumber start number
+	</para>
       </listitem>
     </varlistentry>
   </variablelist>
@@ -69,11 +69,10 @@
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
   </para>
 </refsection>
 </refentry>
-

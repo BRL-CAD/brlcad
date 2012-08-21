@@ -11,7 +11,7 @@
     <refname>mged</refname>
     <refpurpose>multi-display interactive combinatorial solid geometry editor</refpurpose>
   </refnamediv>
-  
+
   <!-- body begins here -->
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
@@ -29,10 +29,10 @@
       <arg choice="opt" rep="norepeat"><replaceable>mged_command</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
-  
+
 
   <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-    
+
     <para>
       <application>MGED</application>, a.k.a the "Multi-Device Geometry Editor" is the
       central interaction environment for the BRL-CAD package.  It offers both command line
@@ -41,9 +41,9 @@
       manipulation.
     </para>
     <para>
-      <application>MGED</application>'s history traces back to the earlier "GED" (a.k.a "Geometry 
+      <application>MGED</application>'s history traces back to the earlier "GED" (a.k.a "Geometry
       Editor",) and much of GED's functionality is preserved in <application>MGED</application>.
-      A full description of MGED's abilities is beyond the scope of this document - 
+      A full description of MGED's abilities is beyond the scope of this document -
       the reader is referred to Volumes II and III of the BRL-CAD Tutorial Series, available
       at http://brlcad.org, for a more comprehensive introduction.  This document will deal
       with the various options available when it comes to starting MGED.
@@ -58,35 +58,35 @@
     </para>
     <para>
       Technically, <application>MGED</application> can be opened without a database file
-      being supplied, but until one <emphasis>is</emphasis> supplied it will not be terribly useful.  
+      being supplied, but until one <emphasis>is</emphasis> supplied it will not be terribly useful.
       This can be done either by supplying a file name on the command line or by opening a database from
       with <application>MGED</application> using the File-&gt;Open... menu or the <command>opendb</command>
-      command.  
+      command.
     </para>
-  
+
     <variablelist remap="TP">
       <varlistentry>
-        <term><option>-a attach</option></term>
-        <listitem>
-          <para>
-            The <option>-a</option> option specifies a display manager to automatically attach to
-            when starting <application>MGED</application>.
-          </para>
-          <para>
+	<term><option>-a attach</option></term>
+	<listitem>
+	  <para>
+	    The <option>-a</option> option specifies a display manager to automatically attach to
+	    when starting <application>MGED</application>.
+	  </para>
+	  <para>
 	    Without specifying the <option>-a</option> attach option,
 	    <application>MGED</application> will prompt which display manager to attach during
 	    startup: <prompt>attach (nu|X|ogl)[nu]?</prompt>
-          </para>
-          <para>
-            The list of available display managers varies from platform to platform and across
+	  </para>
+	  <para>
+	    The list of available display managers varies from platform to platform and across
 	    releases.  However, some commonly available options are the <emphasis>nu</emphasis>
 	    (NULL) display manager, which will start <application>MGED</application> without any
 	    display manager attached; the <emphasis>X</emphasis> display manager, which provides an
 	    X11 graphical wireframe display; and the <emphasis>ogl</emphasis> display manager, which
 	    is similar to <emphasis>X</emphasis> but starts up a display manager that uses the
 	    OpenGL protocol for drawing wireframes.
-          </para>
-        </listitem>
+	  </para>
+	</listitem>
       </varlistentry>
       <varlistentry>
 	<term><option>-b </option></term>
@@ -115,11 +115,11 @@
 	<term><option>-d display</option></term>
 	<listitem>
 	  <para>
-            The <option>-d</option> option to <application>MGED</application> specifies which X
-            server to connect to for platforms that have a running X11 server available.  This
-            option is an analogous alternative to setting the DISPLAY environment variable.  You can
-            specify a local or remote display in X11 HOST:PORT format (e.g., "-d :0" or "-d host:0")
-            and <application>MGED</application> should draw windows to that display.
+	    The <option>-d</option> option to <application>MGED</application> specifies which X
+	    server to connect to for platforms that have a running X11 server available.  This
+	    option is an analogous alternative to setting the DISPLAY environment variable.  You can
+	    specify a local or remote display in X11 HOST:PORT format (e.g., "-d :0" or "-d host:0")
+	    and <application>MGED</application> should draw windows to that display.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -127,7 +127,7 @@
 	<term><option>-h </option></term>
 	<listitem>
 	  <para>
-	    Prints out a brief help statement showing the options available when starting 
+	    Prints out a brief help statement showing the options available when starting
 	    <application>MGED</application>.
 	  </para>
 	</listitem>
@@ -167,9 +167,9 @@
     </variablelist>
 
   </refsection>
-  
+
   <refsection xml:id="hints"><info><title>HINTS</title></info>
-    
+
     <para>
       <application>MGED</application> database names conventionally end with
       <markup>.g</markup>.
@@ -205,14 +205,14 @@
   </refsection>
 
   <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-    
+
     <para>
       The following are run from the operating system command prompt:
     </para>
-     
+
     <example><info><title>Running the <application>MGED</application> <command>l</command> from the operating
       system command line.</title></info>
-      
+
       <para>
 	<prompt>user:~ </prompt><userinput>mged /usr/brlcad/share/brlcad/7.12.2/db/m35.g l component</userinput>
 	<literallayout class="normal">
@@ -229,7 +229,7 @@ component:  --
     </example>
 
     <example><info><title>Running <application>MGED</application> without a dislay manager.</title></info>
-      
+
       <para>
 	<prompt>user:~ </prompt><userinput>mged -c</userinput>
 	<literallayout class="normal">
@@ -238,50 +238,50 @@ BRL-CAD Release 7.13.0  Geometry Editor (MGED)
     user@localhost:/usr/brlcad/
 
 attach (nu|X|ogl)[nu]? <userinput>nu</userinput>
-mged&gt; 
+mged&gt;
 	</literallayout>
       </para>
     </example>
 
     <example><info><title>Running <application>MGED</application> and bypassing the attach prompt by specifying
       the X11 dislay manager.</title></info>
-      
+
       <para>
-        <prompt>user:~ </prompt><userinput>mged -a X -c</userinput>
-        <literallayout class="normal">
+	<prompt>user:~ </prompt><userinput>mged -a X -c</userinput>
+	<literallayout class="normal">
 BRL-CAD Release 7.15.0  Geometry Editor (MGED)
     Tue, 22 Sep 2009 12:40:01 -0400, Compilation 1
     user@localhost:/usr/brlcad/
 
 ATTACHING X (X Window System (X11))
 
-mged&gt; 
-        </literallayout>
+mged&gt;
+	</literallayout>
       </para>
     </example>
 
   </refsection>
-  
+
   <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
-    
+
     <para>
-      <emphasis remap="I">Computer Graphics for Target Descriptions</emphasis>, BRL Technical Report ARBRL-TR-02480, <emphasis remap="I">GED:  An Interactive Solid Modeling System for Vulnerability Assessments</emphasis>     
+      <emphasis remap="I">Computer Graphics for Target Descriptions</emphasis>, BRL Technical Report ARBRL-TR-02480, <emphasis remap="I">GED:  An Interactive Solid Modeling System for Vulnerability Assessments</emphasis>
     </para>
     <para>
     <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>comgeom-g</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>vdeck</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
     </para>
   </refsection>
-  
+
   <refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
-    
+
     <para>Error messages are intended to be self-explanatory.</para>
   </refsection>
-  
+
   <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 
   <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-    
+
     <para>
       Reports of bugs or problems should be submitted via electronic
       mail to &lt;devs@brlcad.org&gt;.

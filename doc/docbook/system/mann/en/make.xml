@@ -17,16 +17,16 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>make</command>    
+    <command>make</command>
     <arg choice="opt" rep="norepeat">-t</arg>
     <arg choice="opt" rep="norepeat"><replaceable>new_shape type</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>Creates a <emphasis>new_shape</emphasis> of the indicated type.
-  	The <emphasis>new_shape</emphasis> is sized according to the current view size and is dependent on the 	<emphasis>type</emphasis>. The possible values for <emphasis>type</emphasis> are:
+	The <emphasis>new_shape</emphasis> is sized according to the current view size and is dependent on the 	<emphasis>type</emphasis>. The possible values for <emphasis>type</emphasis> are:
   </para>
 <itemizedlist mark="bullet">
 <listitem>
@@ -169,11 +169,11 @@
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>The first example shows the use of the <command>make</command> command to create a sphere with a specified 	name.  The second example shows the use of the <command>make</command> command with the <emphasis>-t	</emphasis> argument to generate a list of shape types handled by <command>make</command>.
   </para>
   <example><info><title>Create a sphere having a specified name.</title></info>
-    
+
     <variablelist>
       <varlistentry>
 	   <term><prompt>mged&gt;</prompt> <userinput>make shapea sph</userinput></term>
@@ -185,7 +185,7 @@
     </variablelist>
   </example>
   <example><info><title>Generate a list of shape types handled by <command>make</command>.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>make -t</userinput>
     </para>
@@ -193,13 +193,13 @@
        Lists the shape types handled by <command>make</command>.
     </para>
   </example>
- 
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

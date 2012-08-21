@@ -2,27 +2,26 @@
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Object Editing - the <command>oed</command> Command</title>
-    
+
     <author><personname><firstname>Clifford</firstname><surname>Yapp</surname></personname></author>
 
     <legalnotice>
       <para>Approved for public release; distribution is unlimited.</para>
-      <para>Date approved:  05/09/2008</para> 
+      <para>Date approved:  05/09/2008</para>
     </legalnotice>
 
   </info>
 
-  
-  
+
   <section><info><title><command>oed</command> - Basic Syntax and Operations</title></info>
-    
-    
+
+
     <para> The syntax of <command>oed</command> is fairly
     straightforward:
     <footnote>
-      <para>Note: <emphasis>lhs</emphasis> is an abbreviation for left 
-      hand side and rhs similarly stands for right hand side, given the 
-      assumption that a path is displayed as an ASCII stream with left 
+      <para>Note: <emphasis>lhs</emphasis> is an abbreviation for left
+      hand side and rhs similarly stands for right hand side, given the
+      assumption that a path is displayed as an ASCII stream with left
       to right text orientation (e.g. /toplevel/level-1/level-2/etc.)
       </para>
     </footnote>
@@ -33,27 +32,27 @@
       <arg choice="req" rep="norepeat"><replaceable>path_lhs</replaceable></arg>
       <arg choice="req" rep="norepeat"><replaceable>path_rhs</replaceable></arg>
     </cmdsynopsis>
-    
+
     <para><command>oed</command> serves primarily to make working with
     combinations and regions practical when there are large numbers of
-    primitives involved.  It is of course possible to move primitives 
-    one by one to desired locations, but the process is extremely 
-    tedious for any non-trivial combination of primitives and the 
+    primitives involved.  It is of course possible to move primitives
+    one by one to desired locations, but the process is extremely
+    tedious for any non-trivial combination of primitives and the
     result is inflexible - for example,if the modeler wished to return
-    the primitives in a combination to their original position after 
-    moving them <emphasis>as primitives</emphasis> the process of 
-    moving them would need to be reversed one by one as well.  Barring 
-    being able to do everything perfectly the first time, individual 
+    the primitives in a combination to their original position after
+    moving them <emphasis>as primitives</emphasis> the process of
+    moving them would need to be reversed one by one as well.  Barring
+    being able to do everything perfectly the first time, individual
     primitive placement is impractical.</para>
-    
-    <para>The notion of <emphasis>path</emphasis> in this context 
-    refers to the tree of objects that traditionally makes up a CSG 
+
+    <para>The notion of <emphasis>path</emphasis> in this context
+    refers to the tree of objects that traditionally makes up a CSG
     model. Primitives will be combined with other primitives to make
-    groups of objects, and the "path" to any individual shape within 
-    the combinations is described by the series of nodes in the tree 
+    groups of objects, and the "path" to any individual shape within
+    the combinations is described by the series of nodes in the tree
     that identify the object of interest.  For example, take a simple
     model of a lollipop:</para>
-    
+
     <para>
     <screenshot>
       <mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig01.png"/></imageobject></mediaobject>
@@ -62,47 +61,47 @@
 
     <para> If we examine the tree structure of this object, we see it
     resembles a file system - combinations and regions act a bit like
-    "folders" which can hold other folders and files. 
+    "folders" which can hold other folders and files.
     <footnote>
       <para> When tree structures are displayed, a "/" suffix denotes
       a combination and a "/R" denotes a combination that is a region.
       </para>
     </footnote>
-    
+
     <literallayout class="monospaced">
 mged&gt; tree lollipop
 lollipop/
-        u outer-candy-shell.r/R
-                u outer-candy-sphere.c/
-                        u outer-candy-sphere.s
-                        - core.s
-                        - stick.s
-                u outer-candy-cyl.c/
-                        u outer-candy-cyl.s
-                        - outer-candy-sphere.s
-        u stick.r/R
-                u stick.s
-        u core.r/R
-                u core.s
-                - stick.s
+	u outer-candy-shell.r/R
+		u outer-candy-sphere.c/
+			u outer-candy-sphere.s
+			- core.s
+			- stick.s
+		u outer-candy-cyl.c/
+			u outer-candy-cyl.s
+			- outer-candy-sphere.s
+	u stick.r/R
+		u stick.s
+	u core.r/R
+		u core.s
+		- stick.s
     </literallayout>
-    
-    In the "file system" of a BRL-CAD object combinations can 
+
+    In the "file system" of a BRL-CAD object combinations can
     hold combinations, regions and primitives.  Regions
     can hold combinations and primitives.
     <footnote>
-      <para>Regions will accept other regions as constructive arguments 
-      if given, but this is not good practice - BRL-CAD assumes a 
-      region is composed of combinations and primitives which share a 
+      <para>Regions will accept other regions as constructive arguments
+      if given, but this is not good practice - BRL-CAD assumes a
+      region is composed of combinations and primitives which share a
       material type.</para>
-    </footnote> 
-    Primitives are always leaves on the tree - they do not "contain" 
-    anything.  Combinations, regions, and primitives can have 
-    associated with them transformation data (sort of like metadata in 
-    a file system) that tells BRL-CAD how to manipulate the combination, 
-    region, or primitive in question.  It is this data that will be 
-    acted upon when the <command>oed</command> command is used.  So in 
-    the above example the full "path" of the outer-candy-sphere.c 
+    </footnote>
+    Primitives are always leaves on the tree - they do not "contain"
+    anything.  Combinations, regions, and primitives can have
+    associated with them transformation data (sort of like metadata in
+    a file system) that tells BRL-CAD how to manipulate the combination,
+    region, or primitive in question.  It is this data that will be
+    acted upon when the <command>oed</command> command is used.  So in
+    the above example the full "path" of the outer-candy-sphere.c
     combination used in lollipop would be:
 
     <literallayout class="monospaced">
@@ -110,58 +109,58 @@ lollipop/
     </literallayout>
 
     Note that if we wish to operate on this combination it is not enough
-    to specify /lollipop/outer-candy-shell.r for the lhs and 
-    outer-candy-sphere.c for the rhs - <emphasis>combinations and 
+    to specify /lollipop/outer-candy-shell.r for the lhs and
+    outer-candy-sphere.c for the rhs - <emphasis>combinations and
     regions do not themselves have default control points.</emphasis> In
-    other words, if you want to rotate a combination there must be a 
+    other words, if you want to rotate a combination there must be a
     point around which that rotation occurs - a combination will have no
-    default point assigned.  This is the reason the rhs must always end 
-    with a  primitive - even though the intent is not to edit the 
-    primitive, information necessary for most operations on the 
+    default point assigned.  This is the reason the rhs must always end
+    with a  primitive - even though the intent is not to edit the
+    primitive, information necessary for most operations on the
     combination will use information (such as default keypoint settings)
     that the primitive <emphasis>does</emphasis> have.  So,
-    
+
     <literallayout class="monospaced">oed /lollipop/outer-candy-shell.r outer-candy-sphere.c</literallayout>
-    
+
     is not enough.  Either
-    
-    <literallayout class="monospaced">oed /lollipop/outer-candy-shell.r 
+
+    <literallayout class="monospaced">oed /lollipop/outer-candy-shell.r
     outer-candy-sphere.c/outer-candy-sphere.s</literallayout>
-    
+
     or
-    
+
     <literallayout class="monospaced">oed /lollipop/outer-candy-shell.r outer-candy-sphere.c/core.s</literallayout>
 
     or
-    
+
     <literallayout class="monospaced">oed /lollipop/outer-candy-shell.r outer-candy-sphere.c/stick.s</literallayout>
-    
-    
+
+
     is needed to have <command>oed</command> actually enter edit mode on
     lollipop's outer-candy-sphere.c.  Because they are primitives in the
-    outer-candy-sphere.c combination, outer-candy-sphere.s, core.s and 
-    stick.s are all legal - there will be illustrations later of the 
+    outer-candy-sphere.c combination, outer-candy-sphere.s, core.s and
+    stick.s are all legal - there will be illustrations later of the
     consequences of different primitive choices.</para>
-    
-    <para>To demonstrate basic <command>oed</command> behavior an 
-    example is in order.  
+
+    <para>To demonstrate basic <command>oed</command> behavior an
+    example is in order.
     <footnote>
-      <para>Bear in mind that these examples will be using very basic 
-      primitives for the sake of simplicity and it is not guaranteed 
-      that they will behave well for things like raytracing. In this 
+      <para>Bear in mind that these examples will be using very basic
+      primitives for the sake of simplicity and it is not guaranteed
+      that they will behave well for things like raytracing. In this
       document raytraced screenshots are included to aid visualization.
-      Most of them are simple but there are sometimes a number of extra 
-      steps needed to actually allow the objects to be raytraced with 
+      Most of them are simple but there are sometimes a number of extra
+      steps needed to actually allow the objects to be raytraced with
       the results seen here.</para>
     </footnote>
     <footnote>
-      <para><emphasis>path_lhs</emphasis> will be set to "/" for these 
-      simple cases - this means either we will be working with 
+      <para><emphasis>path_lhs</emphasis> will be set to "/" for these
+      simple cases - this means either we will be working with
       combinations that are not contained within any other combination/region
       or the intent is to transform <emphasis>every</emphasis> instance of
       the combination/region present regardless of where it appears in the
       tree structure.  "/" denotes the toplevel lhs path, or the "root of all
-      trees" in the database.  Because every object in the database exists 
+      trees" in the database.  Because every object in the database exists
       "on its own" at the top level as well as inside tree structures,
       operating on any object with a "/" path_lhs will always edit the matrix
       associated with that particular combination/region independently
@@ -169,52 +168,52 @@ lollipop/
     </footnote>
     </para>
 
-    <para> In an empty MGED session, create a new geometry database 
-    called <emphasis>oed_examples.g</emphasis>.  Enable the model 
-    coordinate axes display by entering the MGED command 
+    <para> In an empty MGED session, create a new geometry database
+    called <emphasis>oed_examples.g</emphasis>.  Enable the model
+    coordinate axes display by entering the MGED command
     <command>rset ax model_draw 1</command>. Create two primitives:
     <footnote>
-      <para> This document will respect the normal BRL-CAD naming 
-      convention: use the .s extension for primitives, the .c 
-      extension for combinations below regions, and the .r extension 
+      <para> This document will respect the normal BRL-CAD naming
+      convention: use the .s extension for primitives, the .c
+      extension for combinations below regions, and the .r extension
       for regions.  Combinations above regions have no extension.</para>
     </footnote>
-    
+
     <literallayout class="monospaced">in sphere.s sph 0 0 0 4</literallayout>
     <literallayout class="monospaced">in cube.s arb8 5 5 0 8 5 0 8 5 3 5 5 3 5 8 0 8 8 0 8 8 3 5 8 3</literallayout>
-    
+
     There should now be a sphere and a cube visible on the screen.  Next
     create a combination of these two primitives:
-    
+
     <literallayout class="monospaced">comb object1.c u sphere.s u cube.s</literallayout>
-    
+
     After this command both the primitives and the combination are
-    present in the display, which will result in overlaps.  Use the 
-    <command>B</command> command to reduce the display to just the 
+    present in the display, which will result in overlaps.  Use the
+    <command>B</command> command to reduce the display to just the
     combination.
     <footnote>
-      <para>The <command>B</command> abbreviation stands for "blast" - 
-      i.e. remove all objects from being displayed, and draw only the 
+      <para>The <command>B</command> abbreviation stands for "blast" -
+      i.e. remove all objects from being displayed, and draw only the
       specified objects.</para>
     </footnote>
-    
+
     <literallayout class="monospaced">B object1.c</literallayout>
     </para>
-    
+
     <para>
       <screenshot>
 	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig02.png"/></imageobject></mediaobject>
       </screenshot>
     </para>
-    
-    <para> Before beginning the editing process, the 
-    <command>l</command> command (a.k.a the "list" command) can be used to view both the 
+
+    <para> Before beginning the editing process, the
+    <command>l</command> command (a.k.a the "list" command) can be used to view both the
     combination and its component primitives:
     <note>
-      <para>Note that the list command uses the lower case letter L (l) and 
+      <para>Note that the list command uses the lower case letter L (l) and
       not the numeral one (1).</para>
     </note>
-    
+
     <literallayout class="monospaced">
 mged&gt; l object1.c
 object1.c:  --
@@ -223,40 +222,40 @@ object1.c:  --
 
 mged&gt; l sphere.s
 sphere.s:  ellipsoid (ELL)
-        V (0, 0, 0)
-        A (4, 0, 0) mag=4
-        B (0, 4, 0) mag=4
-        C (0, 0, 4) mag=4
-        A direction cosines=(0, 90, 90)
-        A rotation angle=0, fallback angle=0
-        B direction cosines=(90, 0, 90)
-        B rotation angle=90, fallback angle=0
-        C direction cosines=(90, 90, 0)
-        C rotation angle=0, fallback angle=90
+	V (0, 0, 0)
+	A (4, 0, 0) mag=4
+	B (0, 4, 0) mag=4
+	C (0, 0, 4) mag=4
+	A direction cosines=(0, 90, 90)
+	A rotation angle=0, fallback angle=0
+	B direction cosines=(90, 0, 90)
+	B rotation angle=90, fallback angle=0
+	C direction cosines=(90, 90, 0)
+	C rotation angle=0, fallback angle=90
 
 mged&gt; l cube.s
 cube.s:  ARB8
-        1 (5, 5, 0)
-        2 (8, 5, 0)
-        3 (8, 5, 3)
-        4 (5, 5, 3)
-        5 (5, 8, 0)
-        6 (8, 8, 0)
-        7 (8, 8, 3)
-        8 (5, 8, 3)
+	1 (5, 5, 0)
+	2 (8, 5, 0)
+	3 (8, 5, 3)
+	4 (5, 5, 3)
+	5 (5, 8, 0)
+	6 (8, 8, 0)
+	7 (8, 8, 3)
+	8 (5, 8, 3)
     </literallayout>
 
-    For the first task the goal is to shift both the sphere and the 
-    arb8 5 mm up the z axis.  First, select the combination for 
-    editing: 
-    
+    For the first task the goal is to shift both the sphere and the
+    arb8 5 mm up the z axis.  First, select the combination for
+    editing:
+
     <literallayout class="monospaced">oed / object1.c/sphere.s</literallayout>
-    
+
     <note>
       <para> Changes made during an object edit are not written to
-      the database file unless and until they are accepted.  So if in the course 
+      the database file unless and until they are accepted.  So if in the course
       of editing an object you make a mistake, you can
-      type <command>reject</command> to revert to the 
+      type <command>reject</command> to revert to the
       pre-object-edit-mode values and exit object edit mode.
       </para>
     </note>
@@ -270,7 +269,7 @@ cube.s:  ARB8
       </screenshot>
     </para>
 
-    <para>Once selected, use the <command>translate</command> command 
+    <para>Once selected, use the <command>translate</command> command
     to shift the combination up the z axis.
 
     <literallayout class="monospaced">translate 0 0 5</literallayout>
@@ -283,7 +282,7 @@ cube.s:  ARB8
       </screenshot>
     </para>
 
-    <para>To accept the edit and end object edit mode type 
+    <para>To accept the edit and end object edit mode type
     <command>accept</command>:
 
     <literallayout class="monospaced">accept</literallayout>
@@ -294,60 +293,60 @@ cube.s:  ARB8
 	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig05.png"/></imageobject></mediaobject>
       </screenshot>
     </para>
-    
-    <para>Now, use <command>l</command> to again examine the 
+
+    <para>Now, use <command>l</command> to again examine the
     combination and its component primitives.
-    
+
     <literallayout class="monospaced">
 mged&gt; l object1.c
 object1.c:  --
    u sphere.s <emphasis>[0,0,5]</emphasis>
    u cube.s <emphasis>[0,0,5]</emphasis>
-   
+
 mged&gt; l sphere.s
 sphere.s:  ellipsoid (ELL)
-        V (0, 0, 0)
-        A (4, 0, 0) mag=4
-        B (0, 4, 0) mag=4
-        C (0, 0, 4) mag=4
-        A direction cosines=(0, 90, 90)
-        A rotation angle=0, fallback angle=0
-        B direction cosines=(90, 0, 90)
-        B rotation angle=90, fallback angle=0
-        C direction cosines=(90, 90, 0)
-        C rotation angle=0, fallback angle=90
+	V (0, 0, 0)
+	A (4, 0, 0) mag=4
+	B (0, 4, 0) mag=4
+	C (0, 0, 4) mag=4
+	A direction cosines=(0, 90, 90)
+	A rotation angle=0, fallback angle=0
+	B direction cosines=(90, 0, 90)
+	B rotation angle=90, fallback angle=0
+	C direction cosines=(90, 90, 0)
+	C rotation angle=0, fallback angle=90
 
 mged&gt; l cube.s
 cube.s:  ARB8
-        1 (5, 5, 0)
-        2 (8, 5, 0)
-        3 (8, 5, 3)
-        4 (5, 5, 3)
-        5 (5, 8, 0)
-        6 (8, 8, 0)
-        7 (8, 8, 3)
-        8 (5, 8, 3)
+	1 (5, 5, 0)
+	2 (8, 5, 0)
+	3 (8, 5, 3)
+	4 (5, 5, 3)
+	5 (5, 8, 0)
+	6 (8, 8, 0)
+	7 (8, 8, 3)
+	8 (5, 8, 3)
     </literallayout>
     </para>
 
-    <para> Notice that the primitives have not changed, but the 
-    combination now contains additional information.  It has recorded 
+    <para> Notice that the primitives have not changed, but the
+    combination now contains additional information.  It has recorded
     that both sphere.s and cube.s have been shifted up the z axis 5 mm.
     Select object1.c again and apply a rotation as well:
-    
+
     <literallayout class="monospaced">oed / object1.c/sphere.s</literallayout>
     <literallayout class="monospaced">rot 0 0 90</literallayout>
     <literallayout class="monospaced">accept</literallayout>
     </para>
-    
+
     <para>
       <screenshot>
 	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig06.png"/></imageobject></mediaobject>
       </screenshot>
     </para>
-    
-    <para>Another check with <command>l</command> shows still more 
-    information stored at the combination level, but the primitives are 
+
+    <para>Another check with <command>l</command> shows still more
+    information stored at the combination level, but the primitives are
     again unchanged.
 
     <literallayout class="monospaced">
@@ -358,40 +357,40 @@ object1.c:  --
 
 mged&gt; l sphere.s
 sphere.s:  ellipsoid (ELL)
-        V (0, 0, 0)
-        A (4, 0, 0) mag=4
-        B (0, 4, 0) mag=4
-        C (0, 0, 4) mag=4
-        A direction cosines=(0, 90, 90)
-        A rotation angle=0, fallback angle=0
-        B direction cosines=(90, 0, 90)
-        B rotation angle=90, fallback angle=0
-        C direction cosines=(90, 90, 0)
-        C rotation angle=0, fallback angle=90
+	V (0, 0, 0)
+	A (4, 0, 0) mag=4
+	B (0, 4, 0) mag=4
+	C (0, 0, 4) mag=4
+	A direction cosines=(0, 90, 90)
+	A rotation angle=0, fallback angle=0
+	B direction cosines=(90, 0, 90)
+	B rotation angle=90, fallback angle=0
+	C direction cosines=(90, 90, 0)
+	C rotation angle=0, fallback angle=90
 
 mged&gt; l cube.s
 cube.s:  ARB8
-        1 (5, 5, 0)
-        2 (8, 5, 0)
-        3 (8, 5, 3)
-        4 (5, 5, 3)
-        5 (5, 8, 0)
-        6 (8, 8, 0)
-        7 (8, 8, 3)
-        8 (5, 8, 3)
+	1 (5, 5, 0)
+	2 (8, 5, 0)
+	3 (8, 5, 3)
+	4 (5, 5, 3)
+	5 (5, 8, 0)
+	6 (8, 8, 0)
+	7 (8, 8, 3)
+	8 (5, 8, 3)
     </literallayout>
     </para>
 
-    <para> What if a modeler DID want the primitives to be the 
-    elements changed?  There exists a command called 
-    <command>push</command> that will perform this operation.  (So 
-    called because it "pushes" the transformations at the upper levels 
-    down to the primitives.)  Be warned that this change, once 
+    <para> What if a modeler DID want the primitives to be the
+    elements changed?  There exists a command called
+    <command>push</command> that will perform this operation.  (So
+    called because it "pushes" the transformations at the upper levels
+    down to the primitives.)  Be warned that this change, once
     done, is difficult to undo.  Witness its effect on this example:
-    
+
 
     <literallayout class="monospaced">push object1.c</literallayout>
-    
+
     <literallayout class="monospaced">
 mged&gt; l object1.c
 object1.c:  --
@@ -400,56 +399,56 @@ object1.c:  --
 
 mged&gt; l sphere.s
 sphere.s:  ellipsoid (ELL)
-        V (0, 0, <emphasis>5</emphasis>)
-        A (<emphasis>0</emphasis>, <emphasis>-4</emphasis>, 0) mag=4
-        B (<emphasis>4</emphasis>, <emphasis>0</emphasis>, 0) mag=4
-        C (0, 0, 4) mag=4
-        A direction cosines=(<emphasis>90</emphasis>, <emphasis>180</emphasis>, <emphasis>90</emphasis>)
-        A rotation angle=<emphasis>270</emphasis>, fallback angle=0
-        B direction cosines=(<emphasis>0</emphasis>, <emphasis>90</emphasis>, 90)
-        B rotation angle=<emphasis>0</emphasis>, fallback angle=0
-        C direction cosines=(90, 90, 0)
-        C rotation angle=0, fallback angle=90
+	V (0, 0, <emphasis>5</emphasis>)
+	A (<emphasis>0</emphasis>, <emphasis>-4</emphasis>, 0) mag=4
+	B (<emphasis>4</emphasis>, <emphasis>0</emphasis>, 0) mag=4
+	C (0, 0, 4) mag=4
+	A direction cosines=(<emphasis>90</emphasis>, <emphasis>180</emphasis>, <emphasis>90</emphasis>)
+	A rotation angle=<emphasis>270</emphasis>, fallback angle=0
+	B direction cosines=(<emphasis>0</emphasis>, <emphasis>90</emphasis>, 90)
+	B rotation angle=<emphasis>0</emphasis>, fallback angle=0
+	C direction cosines=(90, 90, 0)
+	C rotation angle=0, fallback angle=90
 
 mged&gt; l cube.s
 cube.s:  ARB8
-        1 <emphasis>(5, -5, 5)</emphasis>
-        2 <emphasis>(5, -8, 5)</emphasis>
-        3 <emphasis>(5, -8, 8)</emphasis>
-        4 <emphasis>(5, -5, 8)</emphasis>
-        5 <emphasis>(8, -5, 5)</emphasis>
-        6 <emphasis>(8, -8, 5)</emphasis>
-        7 <emphasis>(8, -8, 8)</emphasis>
-        8 <emphasis>(8, -5, 8)</emphasis>
+	1 <emphasis>(5, -5, 5)</emphasis>
+	2 <emphasis>(5, -8, 5)</emphasis>
+	3 <emphasis>(5, -8, 8)</emphasis>
+	4 <emphasis>(5, -5, 8)</emphasis>
+	5 <emphasis>(8, -5, 5)</emphasis>
+	6 <emphasis>(8, -8, 5)</emphasis>
+	7 <emphasis>(8, -8, 8)</emphasis>
+	8 <emphasis>(8, -5, 8)</emphasis>
     </literallayout>
 
-    Now the primitives have changed, and the combination is back to 
-    being just a boolean operation on primitives.  These operations 
+    Now the primitives have changed, and the combination is back to
+    being just a boolean operation on primitives.  These operations
     COULD be undone, but there is no equivalent "pull" command to automatically undo
     them.  By design, <command>push</command> replaces the stored transformations
     by their results and removes the transformation information.  This means reversing
-    a <command>push</command> requires additional transformations and another push to 
+    a <command>push</command> requires additional transformations and another push to
     return things to their original state.  Any complex sequence of transformations
     becomes hard to undo - use <command>push</command> with care!</para>
-    
+
   </section>
 
-  <section><info><title>Right Hand Path Selection - Reasons and 
+  <section><info><title>Right Hand Path Selection - Reasons and
     Implications</title></info>
-    
-  
-    <para> Notice in the previous section that sphere.s was selected 
-    when using the <command>oed</command> command as part of the 
-    path_rhs. What would the impact have been had cube.s been selected 
+
+
+    <para> Notice in the previous section that sphere.s was selected
+    when using the <command>oed</command> command as part of the
+    path_rhs. What would the impact have been had cube.s been selected
     instead?
     </para>
 
-    <para>Using the commands shown below, clear the old object1.c tree 
-    from MGED, re-insert the primitives, and make a combination as 
-    before. This time make two objects using the same primitives, for 
-    later use.  At the moment, only the object2.c combination will be 
+    <para>Using the commands shown below, clear the old object1.c tree
+    from MGED, re-insert the primitives, and make a combination as
+    before. This time make two objects using the same primitives, for
+    later use.  At the moment, only the object2.c combination will be
     displayed.
-    
+
     <literallayout class="monospaced">killtree object1.c</literallayout>
     <literallayout class="monospaced">in sphere.s sph 0 0 0 4</literallayout>
     <literallayout class="monospaced">in cube.s arb8 5 5 0 8 5 0 8 5 3 5 5 3 5 8 0 8 8 0 8 8 3 5 8 3</literallayout>
@@ -457,64 +456,64 @@ cube.s:  ARB8
     <literallayout class="monospaced">comb object2.c u sphere.s u cube.s</literallayout>
     <literallayout class="monospaced">B object2.c</literallayout>
 
-    In the previous section, the <command>translate</command> command 
-    was used to shift the object up the z axis.  That was a deliberate 
-    choice - <command>translate</command> moves to an absolute rather 
-    than a relative position.  Attempt the same operation, this time 
+    In the previous section, the <command>translate</command> command
+    was used to shift the object up the z axis.  That was a deliberate
+    choice - <command>translate</command> moves to an absolute rather
+    than a relative position.  Attempt the same operation, this time
     with the cube.s primitive selected:
-    
+
     <literallayout class="monospaced">oed / object2.c/cube.s</literallayout>
     <literallayout class="monospaced">translate 0 0 5</literallayout>
     <literallayout class="monospaced">accept</literallayout>
     </para>
-    
+
     <para>
       <screenshot>
 	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig07.png"/></imageobject></mediaobject>
       </screenshot>
     </para>
-    
-    <para>Compare the results to the previous section. The model is 
+
+    <para>Compare the results to the previous section. The model is
     indeed shifted up the z axis, but the distance is somewhat different
-    and the cube now has one edge lined up with the z axis.  This is 
+    and the cube now has one edge lined up with the z axis.  This is
     how <command>translate</command> works - it interprets its arguments
     as a <emphasis>point</emphasis> at which the object should be positioned, rather than
     as a vector along which it should be shifted.  (To translate the object using
     a vector interpretation use the <command>tra</command> command
-    instead - its arguments  (dx, dy, dz) are treated as how far to move something 
-    relative to the current position.)   In 
-    the previous section, the sphere's origin was the reference point. 
-    Now, the cube's first coordinate is being moved to the same 
+    instead - its arguments  (dx, dy, dz) are treated as how far to move something
+    relative to the current position.)   In
+    the previous section, the sphere's origin was the reference point.
+    Now, the cube's first coordinate is being moved to the same
     absolute position - with different overall results for the model.
     </para>
 
-    <para>As one further illustration, attempt a <command>rot</command> 
-    command with the cube selected and then again with the sphere 
+    <para>As one further illustration, attempt a <command>rot</command>
+    command with the cube selected and then again with the sphere
     selected:
-  
+
     <literallayout class="monospaced">oed / object2.c/cube.s</literallayout>
     <literallayout class="monospaced">rot 0 90 0 </literallayout>
     <literallayout class="monospaced">accept</literallayout>
     <literallayout class="monospaced">oed / object2.c/sphere.s</literallayout>
     <literallayout class="monospaced">rot 0 90 0</literallayout>
     <literallayout class="monospaced">accept</literallayout>
-    
-    The first <command>rot</command> command rotated the model 
+
+    The first <command>rot</command> command rotated the model
     around a line parallel to the y axis using the first coordinate of cube.s.
-    The second rotation started from the results of the previous rotation and 
-    rotated again around a line parallel to the y axis, but this time using the origin of 
+    The second rotation started from the results of the previous rotation and
+    rotated again around a line parallel to the y axis, but this time using the origin of
     sphere.s.
     </para>
-    
-    <para>The <command>l</command> command provides a look at the final 
+
+    <para>The <command>l</command> command provides a look at the final
     result:</para>
-    
+
     <para>
       <screenshot>
 	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig08.png"/></imageobject></mediaobject>
       </screenshot>
     </para>
-    
+
     <para>
       <literallayout class="monospaced">
 mged&gt; l object2.c
@@ -523,11 +522,11 @@ object2.c:  --
    u cube.s az=180, el=0,  [-5,5,5]
       </literallayout>
     </para>
-    
-    <para>Selection of a particular primitive when using 
-    <command>oed</command> will depend on the particular situation.  
-    Combinations do not have control points of their own, and thus 
-    cannot provide any basis for these operations - a primitive MUST be 
+
+    <para>Selection of a particular primitive when using
+    <command>oed</command> will depend on the particular situation.
+    Combinations do not have control points of their own, and thus
+    cannot provide any basis for these operations - a primitive MUST be
     supplied for every <command>oed</command> operation.
     </para>
 
@@ -536,56 +535,56 @@ object2.c:  --
 
   <section><info><title>Flexible Manipulation with <emphasis>keypoint</emphasis>
     </title></info>
-    
-    
+
+
     <para> It might be reasonable to expect the <command>oed</command>
-    command to use the center of the combination bounding box as a 
-    default if no primitive is supplied and/or take as an optional 
-    parameter an explicit keypoint setting, but this is not the 
-    current behavior of BRL-CAD as of version 7.12 - a primitive is 
-    required. As seen in the previous section, the <command>oed</command> 
-    uses the specified primitive to select a point from which 
+    command to use the center of the combination bounding box as a
+    default if no primitive is supplied and/or take as an optional
+    parameter an explicit keypoint setting, but this is not the
+    current behavior of BRL-CAD as of version 7.12 - a primitive is
+    required. As seen in the previous section, the <command>oed</command>
+    uses the specified primitive to select a point from which
     translations/rotations/etc. are defined.
     BRL-CAD's term for this point is the <emphasis>keypoint</emphasis>.
     For cases where it is not practical to select a primitive that will
     provide the correct keypoint, BRL-CAD does offer an option for explicitly
     setting the keypoint.
     </para>
-    
-    <para> For example, to rotate object2.c around the z axis 
-    intersecting point (2,2,0) the keypoint must be set explicitly - 
+
+    <para> For example, to rotate object2.c around the z axis
+    intersecting point (2,2,0) the keypoint must be set explicitly -
     this is not a point that can be selected by identifying a primitive.
     </para>
 
-    <para> First, check the current keypoint value: 
+    <para> First, check the current keypoint value:
     <footnote>
-      <para>Note that keypoint is a meaningless concept until in object 
+      <para>Note that keypoint is a meaningless concept until in object
       edit mode, so the first step is to enter that mode.
       </para>
     </footnote>
-    
+
     <literallayout class="monospaced">oed / object2.c/sphere.s</literallayout>
     <literallayout class="monospaced">keypoint</literallayout>
     <literallayout class="monospaced">(null) (-5, 5, 5)</literallayout>
 
-    In order to set a new keypoint, we simply supply an x y z 
+    In order to set a new keypoint, we simply supply an x y z
     style coordinate option to the keypoint command:
-    
+
     <literallayout class="monospaced">keypoint 2 2 0</literallayout>
     <literallayout class="monospaced">keypoint</literallayout>
     <literallayout class="monospaced">user-specified (2, 2, 0)</literallayout>
-        
-    Notice that the keynote report identifies this keypoint as 
-    user-specified.  Having set this new keypoint, we can now rotate 
+
+    Notice that the keynote report identifies this keypoint as
+    user-specified.  Having set this new keypoint, we can now rotate
     about it:
-    
+
     <literallayout class="monospaced">rot 0 0 90</literallayout>
     <literallayout class="monospaced">accept</literallayout>
 
     <screenshot>
       <mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig09.png"/></imageobject></mediaobject>
     </screenshot>
-        
+
     <literallayout class="monospaced">
 mged&gt; l object2.c
 object2.c:  --
@@ -595,21 +594,21 @@ object2.c:  --
     </literallayout>
     </para>
 
-    <para>Notice that it is getting increasingly difficult to identify 
+    <para>Notice that it is getting increasingly difficult to identify
     the transformations that will restore the original shape positions.
-    There is no keypoint history mechanism so remember to carefully 
+    There is no keypoint history mechanism so remember to carefully
     track what is done if retracing the steps performed on an object is
     important.</para>
-    
-  </section>
-  
-  <section><info><title>Sub-Combination Editing - using Left Hand Path 
-    Selection</title></info>
-    
 
-    <para> The importance of the <emphasis>path_lhs</emphasis> portion 
-    of the <command>oed</command> command is better understood in the 
-    case of more complex objects.  To illustrate such a case, a new 
+  </section>
+
+  <section><info><title>Sub-Combination Editing - using Left Hand Path
+    Selection</title></info>
+
+
+    <para> The importance of the <emphasis>path_lhs</emphasis> portion
+    of the <command>oed</command> command is better understood in the
+    case of more complex objects.  To illustrate such a case, a new
     shape and additional combination structures are added:
 
     <literallayout class="monospaced">in cone.s trc -4 0 4 0 0 4 2 .01</literallayout>
@@ -617,32 +616,32 @@ object2.c:  --
     <literallayout class="monospaced">r bigobject.r u object1.c u object3.c</literallayout>
     <literallayout class="monospaced">B bigobject.r</literallayout>
     </para>
-    
+
     <para>
       <screenshot>
 	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig10.png"/></imageobject></mediaobject>
       </screenshot>
     </para>
-    
+
     <para>
       <literallayout class="monospaced">
 mged&gt; tree bigobject.r
 bigobject.r/R
-        u object1.c/
-                u sphere.s
-                u cube.s
-        u object3.c/
-                u cone.s
-                u object1.c/
-                        u sphere.s
-                        u cube.s
+	u object1.c/
+		u sphere.s
+		u cube.s
+	u object3.c/
+		u cone.s
+		u object1.c/
+			u sphere.s
+			u cube.s
       </literallayout>
     </para>
-    
-    <para>The first goal is to translate object1.c inside bigobject.r 
-    4mm in the positive z direction without impacting any other part of 
+
+    <para>The first goal is to translate object1.c inside bigobject.r
+    4mm in the positive z direction without impacting any other part of
     the model. This means the object1.c inside object3.c inside
-    bigobject.r should NOT be changed.  A first attempt might be to 
+    bigobject.r should NOT be changed.  A first attempt might be to
     work directly with object1.c:
 
     <literallayout class="monospaced">
@@ -654,13 +653,13 @@ object1.c:  --
     </literallayout>
     <literallayout class="monospaced">oed / object1.c/sphere.s</literallayout>
     <literallayout class="monospaced">Error: Unable to find solid matching path</literallayout></para>
-    
-    <para>An error is returned, because this command attempts to edit 
-    object1.c as a top level object and it is not currently in display 
+
+    <para>An error is returned, because this command attempts to edit
+    object1.c as a top level object and it is not currently in display
     as a top level object due to the previous <command>B</command>
-    cleanup.  However, MGED does not <emphasis>force</emphasis> 
+    cleanup.  However, MGED does not <emphasis>force</emphasis>
     object1.c out of the display when bigobject.r is displayed. Assuming
-    it was still present (simulate this by entering 
+    it was still present (simulate this by entering
     <command>B bigobject.r object1.c</command> into the MGED prompt) the
     previous command would have a different result:
 
@@ -675,7 +674,7 @@ object1.c:  --
     </para>
 
     <para>BRL-CAD is now in object edit mode, and visually it looks like
-    it is highlighting precisely the part of the model targeted for 
+    it is highlighting precisely the part of the model targeted for
     translation.  However, when translated:
 
     <literallayout class="monospaced">tra 0 0 4</literallayout>
@@ -688,18 +687,18 @@ object1.c:  --
 	<mediaobject><imageobject><imagedata align="center" fileref="../../articles/en/images/oed_fig12.png"/></imageobject></mediaobject>
       </screenshot>
     </para>
-    
-    <para>BOTH the object1.c present in bigobject.r and the definition 
-    of object1.c in object3.c have been translated - only one instance 
-    of the sphere and cube combination is visible.  This is a subtle 
-    problem, but remember the original goal was to move ONLY the 
+
+    <para>BOTH the object1.c present in bigobject.r and the definition
+    of object1.c in object3.c have been translated - only one instance
+    of the sphere and cube combination is visible.  This is a subtle
+    problem, but remember the original goal was to move ONLY the
     object1.c inside bigobject.r - this technique moved more than that.
     It would be especially problematic if a modeler didn't realize that
     object1.c was still in the display (assuming it is intended only as
-    a sub-object for other objects) and the above command visually "did 
-    the right thing" - before re-running the <command>B</command> 
-    command the result would look correct. There are two reliable hints 
-    something is wrong. If the <command>l</command> is run on 
+    a sub-object for other objects) and the above command visually "did
+    the right thing" - before re-running the <command>B</command>
+    command the result would look correct. There are two reliable hints
+    something is wrong. If the <command>l</command> is run on
     bigobject.r, no transformation matrix is observed next to object1.c:
 
     <literallayout class="monospaced">
@@ -709,8 +708,8 @@ bigobject.r:  REGION id=1005  (air=0, los=100, GIFTmater=1) --
    u object3.c
     </literallayout>
 
-    and examining the <command>l</command> readout for all object1.c 
-    instances the results are identical, when the bigobject.r's 
+    and examining the <command>l</command> readout for all object1.c
+    instances the results are identical, when the bigobject.r's
     object1.c was intended to change:
 
     <literallayout class="monospaced">
@@ -731,11 +730,11 @@ object1.c:  --
     </literallayout>
     </para>
 
-    <para>The correct way to do the above task would be to use 
-    <emphasis>path_lhs</emphasis> to identify precisely where the 
+    <para>The correct way to do the above task would be to use
+    <emphasis>path_lhs</emphasis> to identify precisely where the
     transformation is to occur.  Remember in the beginning of the
-    article the lollipop example showed instances of lhs path usage - 
-    this is an example where it is needed.  First, object2.c must be 
+    article the lollipop example showed instances of lhs path usage -
+    this is an example where it is needed.  First, object2.c must be
     returned to its previous position:
 
     <literallayout class="monospaced">oed / object1.c/sphere.s</literallayout>
@@ -744,7 +743,7 @@ object1.c:  --
     <literallayout class="monospaced">B bigobject.r</literallayout>
 
     Next the correct commands are entered:
-    
+
     <literallayout class="monospaced">oed /bigobject.r object1.c/sphere.s</literallayout>
     <literallayout class="monospaced">tra 0 0 4</literallayout>
     <literallayout class="monospaced">accept</literallayout>
@@ -755,12 +754,12 @@ object1.c:  --
     </screenshot>
     </para>
 
-    <para>Visually it is already clearer - there are now two offset 
-    object1.c combinations in the display.  Repeating the 
+    <para>Visually it is already clearer - there are now two offset
+    object1.c combinations in the display.  Repeating the
     <command>l</command> command also shows the expected results, with
-    the combination showing a transformation matrix and the object1.c 
+    the combination showing a transformation matrix and the object1.c
     reports showing differences:
-    
+
     <literallayout class="monospaced">
 mged&gt; l bigobject.r
 bigobject.r:  REGION id=1005  (air=0, los=100, GIFTmater=1) --
@@ -785,12 +784,12 @@ object1.c:  --
     </para>
 
     <para> There is a lot of potential here for unintended consequences.
-    On the other hand, in some cases the modeler may 
-    <emphasis>want</emphasis> all instances of object1.c to pick up the 
-    changes.  Awareness of the dangers inherent to this type of 
+    On the other hand, in some cases the modeler may
+    <emphasis>want</emphasis> all instances of object1.c to pick up the
+    changes.  Awareness of the dangers inherent to this type of
     operation is an important skill for a modeler to acquire.
     <footnote>
-      <para>(Obviously, this example was intended for behavior 
+      <para>(Obviously, this example was intended for behavior
       demonstration and not as an example of best-practice modeling.)
       </para>
     </footnote>
@@ -798,53 +797,53 @@ object1.c:  --
   </section>
 
   <section><info><title>Summary</title></info>
-      
+
     <para>
       The major points of the <command>oed</command> command are:
-      
+
       <itemizedlist mark="bullet">
 	<listitem>
 	  <para>
-	    <command>oed</command> is the standard tool when working 
+	    <command>oed</command> is the standard tool when working
 	    with combinations and regions instead of primitives.
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    Object edit mode does not alter primitives directly but 
+	    Object edit mode does not alter primitives directly but
 	    instead works on a transformation matrix that BRL-CAD uses
 	    when interpreting the primitive.
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	  BRL-CAD requires that a primitive shape be supplied at the 
-	  end of the <emphasis>path_rhs</emphasis> for all object edit 
+	  BRL-CAD requires that a primitive shape be supplied at the
+	  end of the <emphasis>path_rhs</emphasis> for all object edit
 	  mode operations.
 	  </para>
 	</listitem>
       <listitem>
 	<para>
 	  <command>push</command> is used to force changes corresponding
-	  to the transformation down to the primitives, but the 
+	  to the transformation down to the primitives, but the
 	  operation is destructive in that it replaces the previous
 	  information defining the primitive.
 	</para>
       </listitem>
       <listitem>
 	<para>
-	  <emphasis>keypoint</emphasis> is used in object edit mode as 
+	  <emphasis>keypoint</emphasis> is used in object edit mode as
 	  the point moved by <command>translate</command> operations and
-	  around with rotations occur - it is set from the primitive 
-	  supplied to <command>oed</command> but can also be set 
+	  around with rotations occur - it is set from the primitive
+	  supplied to <command>oed</command> but can also be set
 	  manually when in object edit mode with the <command>keynote</command>
 	  command.
 	</para>
       </listitem>
       <listitem>
 	<para>
-	  When editing objects inside other objects it is important to 
-	  remember to use <emphasis>path_lhs</emphasis> to precisely 
+	  When editing objects inside other objects it is important to
+	  remember to use <emphasis>path_lhs</emphasis> to precisely
 	  identify the shape to be worked on - subtle and messy errors
 	  are possible if the wrong path is used.
 	</para>
@@ -852,8 +851,8 @@ object1.c:  --
       <listitem>
 	<para>
 	  When using <command>oed</command> in a script, the object must be in view so a
-          <command>B</command> or <command>draw</command> command to select the object must
-          be entered before using the <command>oed</command> command on it.
+	  <command>B</command> or <command>draw</command> command to select the object must
+	  be entered before using the <command>oed</command> command on it.
 	</para>
       </listitem>
       </itemizedlist>

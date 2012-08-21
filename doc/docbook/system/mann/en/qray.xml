@@ -18,90 +18,90 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>qray</command>    
+    <command>qray</command>
    <arg choice="opt" rep="norepeat"><replaceable>subcommand</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
   <para>Gets/sets <emphasis>query ray</emphasis> characteristics. Without a subcommand, the usage message is
 printed. The <emphasis>qray</emphasis> command accepts the following subcommands:</para>
 <variablelist>
-  <varlistentry><term><command>vars</command></term> 
+  <varlistentry><term><command>vars</command></term>
 	<listitem>
-	  <para> Prints a list of all query ray variables.  
-	 </para> 
-     </listitem> 
+	  <para> Prints a list of all query ray variables.
+	 </para>
+     </listitem>
   </varlistentry>
 
-  <varlistentry><term><command>basename</command> [<emphasis>str</emphasis>]</term> 
+  <varlistentry><term><command>basename</command> [<emphasis>str</emphasis>]</term>
     <listitem>
        <para> If <emphasis>str</emphasis> is specified, then set basename to <emphasis>str</emphasis>. 			Otherwise, return the basename. Note that the basename is the name used to create the fake shape 		names corresponding to the query ray. There will be one fake shape for every color used along the 		ray.
-  	 </para> 
+	 </para>
    </listitem>
   </varlistentry>
-  
-<varlistentry><term><command>effects</command>[<emphasis>t|g|b</emphasis>]</term> 
+
+<varlistentry><term><command>effects</command>[<emphasis>t|g|b</emphasis>]</term>
    <listitem>
-      <para>Set or get the type of <emphasis>effects</emphasis> that will occur when firing a query ray. The 		effects of firing a ray can be either <emphasis>t</emphasis> for textual output, <emphasis>g			</emphasis> for graphical output, or <emphasis>b</emphasis> for both textual and graphical.   
-      </para> 
-   </listitem> 
+      <para>Set or get the type of <emphasis>effects</emphasis> that will occur when firing a query ray. The 		effects of firing a ray can be either <emphasis>t</emphasis> for textual output, <emphasis>g			</emphasis> for graphical output, or <emphasis>b</emphasis> for both textual and graphical.
+      </para>
+   </listitem>
   </varlistentry>
 
-<varlistentry><term><command>echo</command> [<emphasis>0|1</emphasis>]</term> 
+<varlistentry><term><command>echo</command> [<emphasis>0|1</emphasis>]</term>
    <listitem>
- 	<para> Sets or gets the value of <emphasis>echo</emphasis>.  If set to 1, the actual <command>nirt		</command> command used will be echoed to the screen.  
+	<para> Sets or gets the value of <emphasis>echo</emphasis>.  If set to 1, the actual <command>nirt		</command> command used will be echoed to the screen.
 	</para>
-   </listitem> 
+   </listitem>
 </varlistentry>
 
-<varlistentry><term><command>oddcolor</command> [<emphasis>r g b</emphasis>]</term> 
+<varlistentry><term><command>oddcolor</command> [<emphasis>r g b</emphasis>]</term>
    <listitem>
       <para>Sets or gets the color of odd partitions.
 	</para>
-   </listitem> 
-</varlistentry>
-
-<varlistentry><term><command>evencolor</command> [<emphasis>r g b</emphasis>]</term> 
-   <listitem>
- 	<para>Sets or gets the color of even partitions. 
-	</para> 
-   </listitem> 
-</varlistentry>
-
-<varlistentry><term><command>voidcolor</command> [<emphasis>r g b</emphasis>]</term> 
-   <listitem>
- 	<para>Sets or gets the color of areas where the ray passes through nothing.
-	</para>
-   </listitem> 
-</varlistentry>
-
-<varlistentry><term><command>overlapcolor</command> [<emphasis>r g b</emphasis>]</term> 
-   <listitem>
-	<para>Sets or gets the color of areas that overlap.
-	</para> 
-   </listitem> 
-</varlistentry>
-
-<varlistentry><term><command>fmt</command> [<emphasis>r|h|p|f|m|o</emphasis> [<emphasis>str</emphasis>]]</term> 
-   <listitem>
-  	<para>Sets or gets the format string(s). See the <emphasis>man</emphasis> page of <command>nirt</command> 	for more details. </para> 
    </listitem>
 </varlistentry>
 
-<varlistentry><term><command>script</command> [<emphasis>str</emphasis>]</term> 
+<varlistentry><term><command>evencolor</command> [<emphasis>r g b</emphasis>]</term>
    <listitem>
-  	<para>Sets or gets the <command>nirt</command> script string.
-	</para> 
-   </listitem> 
+	<para>Sets or gets the color of even partitions.
+	</para>
+   </listitem>
 </varlistentry>
 
-<varlistentry><term><command>help</command></term> 
+<varlistentry><term><command>voidcolor</command> [<emphasis>r g b</emphasis>]</term>
    <listitem>
- 	<para>Prints the usage message.
-	</para> 
-   </listitem> 
+	<para>Sets or gets the color of areas where the ray passes through nothing.
+	</para>
+   </listitem>
+</varlistentry>
+
+<varlistentry><term><command>overlapcolor</command> [<emphasis>r g b</emphasis>]</term>
+   <listitem>
+	<para>Sets or gets the color of areas that overlap.
+	</para>
+   </listitem>
+</varlistentry>
+
+<varlistentry><term><command>fmt</command> [<emphasis>r|h|p|f|m|o</emphasis> [<emphasis>str</emphasis>]]</term>
+   <listitem>
+	<para>Sets or gets the format string(s). See the <emphasis>man</emphasis> page of <command>nirt</command> 	for more details. </para>
+   </listitem>
+</varlistentry>
+
+<varlistentry><term><command>script</command> [<emphasis>str</emphasis>]</term>
+   <listitem>
+	<para>Sets or gets the <command>nirt</command> script string.
+	</para>
+   </listitem>
+</varlistentry>
+
+<varlistentry><term><command>help</command></term>
+   <listitem>
+	<para>Prints the usage message.
+	</para>
+   </listitem>
 </varlistentry>
 
 </variablelist>
@@ -109,22 +109,22 @@ printed. The <emphasis>qray</emphasis> command accepts the following subcommands
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>The four examples show the use of the <command>qray</command> command without a subcommand and with three of the listed subcommands.
     </para>
-  
-       
+
+
   <example><info><title>Print the usage message.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>qray</userinput>
     </para>
     <para>Prints the usage message.
     </para>
   </example>
- 
+
  <example><info><title>Return the overlap format string.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>qray fmt o</userinput>
     </para>
@@ -133,7 +133,7 @@ printed. The <emphasis>qray</emphasis> command accepts the following subcommands
   </example>
 
 <example><info><title>Return the rgb color used to color odd partitions.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>qray oddcolor</userinput>
     </para>
@@ -142,7 +142,7 @@ printed. The <emphasis>qray</emphasis> command accepts the following subcommands
   </example>
 
 <example><info><title>Set the odd partition color to red.</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>qray oddcolor 255 0 0</userinput>
     </para>
@@ -151,13 +151,12 @@ printed. The <emphasis>qray</emphasis> command accepts the following subcommands
   </example>
 
 
-
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

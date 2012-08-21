@@ -2,7 +2,7 @@
 
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Learning About Boolean Expressions</title>
-    
+
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
 
@@ -13,7 +13,7 @@
 
     <para xml:id="learning_boolean_expressions_overviewlist">
       In this lesson, you will:
-      
+
       <itemizedlist mark="bullet">
 	<listitem>
 	  <para>Learn about combinations and regions.</para>
@@ -25,32 +25,32 @@
 	  <para>Make regions with Boolean operations.</para>
 	</listitem>
       </itemizedlist>
-      
+
       <caution>
 	<para>
-	  This is an important lesson because Boolean operations are critical   
-	  to the modeling process. The order in which shapes are combined and   
-	  the operators used to combine the shapes will determine how the <application>MGED</application>  
-	  program interprets your model.                                        
+	  This is an important lesson because Boolean operations are critical
+	  to the modeling process. The order in which shapes are combined and
+	  the operators used to combine the shapes will determine how the <application>MGED</application>
+	  program interprets your model.
 	</para>
-	
+
 	<para>
-	  The correct use of Boolean expressions to modify geometric shapes is  
-	  a key skill in constructive solid modeling. It important to review    
-	  these concepts as many times as necessary. If it is difficult to      
+	  The correct use of Boolean expressions to modify geometric shapes is
+	  a key skill in constructive solid modeling. It important to review
+	  these concepts as many times as necessary. If it is difficult to
 	  absorb them all now, come back to them later.
 	</para>
       </caution>
     </para>
 
     <section xml:id="boolean_tools"><info><title>Combinations and Regions: Boolean Tools</title></info>
-      
-      
+
+
       <para>
 	There are conceptually two objects in <application>MGED</application> that support Boolean
 	operations. One is called a combination, the other is called a region.
       </para>
-      
+
       <para>
 	As mentioned earlier, a typical geometric shape in <application>MGED</application> is called a
 	primitive. However, single primitives are often insufficient to fully
@@ -59,7 +59,7 @@
 	Boolean operators allows you to artfully imitate the shape and form of
 	most complicated objects.
       </para>
-      
+
       <para>
 	The previous chapter noted that material properties are associated with
 	regions. Like combinations, regions use Boolean operations to create
@@ -67,7 +67,7 @@
 	material properties. They occupy three-dimensional space, rather than
 	simply defining a shape in space.
       </para>
-      
+
       <para>
 	You can think of primitives and combinations as a blueprint for an object.
 	The actual object is created when a region is made. For example, you might
@@ -75,7 +75,7 @@
 	mug from different types of material (e.g., ceramic or glass). Regardless
 	of the material, the blueprint is the same.
       </para>
-      
+
       <para>
 	When Boolean operations are used to build up complex shapes from simpler
 	shapes, we can call the result a shape combination. When they are used to
@@ -83,36 +83,36 @@
 	result may be referred to as a group or an assembly combination.
       </para>
     </section>
-    
+
     <section xml:id="boolean_operations"><info><title>Boolean Operations</title></info>
-      
-      
+
+
       <para>
 	The three Boolean operators employed by the <application>MGED</application> program are union,
 	subtraction, and intersection. You can use Boolean operations to combine
 	shapes to produce more complex shapes.
-	
+
 	<itemizedlist>
 	  <listitem>
 	    <para>Union Shapes: Merge two shapes.</para>
-	  </listitem> 
+	  </listitem>
 	  <listitem>
 	    <para>Subtract Shapes: Remove the volume of one shape from another.</para>
-	  </listitem> 
+	  </listitem>
 	  <listitem>
 	    <para>Intersect Shapes: Use only the parts of the two shapes that overlap.</para>
-	  </listitem> 
+	  </listitem>
 	</itemizedlist>
       </para>
-      
+
       <section><info><title>Union</title></info>
-	
+
 	<para>
 	  The union operator, u, joins shapes so that any point in at least one of
 	  them will be part of the result. Union is a powerful and frequently used
 	  operator.
 	</para>
-	
+
 	<informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -126,9 +126,9 @@
 	</mediaobject>
       </informalfigure>
       </section>
-      
+
       <section><info><title>Subtraction</title></info>
-	
+
 	<para>
 	  When a primitive shape has a second, overlapping shape subtracted from it,
 	  the result is that the second shape disappears, together with any common
@@ -138,7 +138,7 @@
 	  accounting for edge intersections of walls, plates, piping, or other
 	  connected shapes.
 	</para>
-	
+
 	<para>
 	  In the following example, a dotted red line indicates that the sphere
 	  being subtracted extends inside the sphere on the right. This overlapping
@@ -161,8 +161,8 @@
       </section>
 
       <section><info><title>Intersection</title></info>
-	
-	
+
+
 	<para>
 	  The Boolean intersection operation, signified by a + (plus sign) operator,
 	  combines two primitive shapes that overlap each other, saving only their
@@ -170,14 +170,14 @@
 	  to understand intersections is to think of shapes as roads. The
 	  intersection is the place where two roads overlap.
 	</para>
-	
+
 	<para>
 	  Although many people find intersection operations harder to understand
 	  than unions and subtractions, unusual/complex shapes can be expressed
 	  using the intersection operator. For example, you can model a magnifying
 	  lens as the intersection of two spheres.
 	</para>
-	
+
 	<para>
 	  The intersection operation is rarely useful unless, as shown in the
 	  following figure, at least two shapes overlap. The intersection of two
@@ -207,20 +207,20 @@
 	</para>
       </section>
     </section>
-    
+
     <section xml:id="making_regions_bool_ops"><info><title>Making Regions with Boolean Operations</title></info>
-      
-      
+
+
       <para>
 	Begin by opening the database shapes.g that you created in Lesson 3. At
 	the Command Window prompt, type:
-	
+
 	<command>draw sph2.s rcc2.s[Enter]</command>
-	
+
 	This lets us see the shapes we will be using to create our regions. As
 	seen earlier, the two shapes should look something like the following:
       </para>
-      
+
 	<informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -233,16 +233,16 @@
 	  </caption>
 	</mediaobject>
       </informalfigure>
-      
+
       <para>
 	In this lesson, we will create different shapes to demonstrate the
 	function of Boolean operations. In the Command Window, type the following:
-	
+
 	<command>r part1.r u rcc2.s - sph2.s[Enter]</command>
-	
+
 	This command tells <application>MGED</application> to:
       </para>
-      
+
       <informaltable>
 	<tgroup cols="6">
 	  <tbody>
@@ -265,16 +265,16 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-      
+
       <note>
 	<para>
-	  Note: The first member always has a lowercase u for an operator. The  
-	  second and subsequent members can use -, +, or u as needed. The       
-	  process of determining which operators to use, and in what order, is  
-	  discussed in a more advanced tutorial.                                
+	  Note: The first member always has a lowercase u for an operator. The
+	  second and subsequent members can use -, +, or u as needed. The
+	  process of determining which operators to use, and in what order, is
+	  discussed in a more advanced tutorial.
 	</para>
       </note>
-      
+
       <para>
 	In the previous lesson, we applied material properties to
 	objects from the Command Line. Now we are going to use the
@@ -298,25 +298,25 @@
 	  </caption>
 	</mediaobject>
       </informalfigure>
-      
+
       <para>
 	Click on the button next to Color and select red from the pull-down menu.
       </para>
-      
+
       <para>
 	Now click the OK button at the bottom left of the dialog window. This will
 	apply your changes and close the panel.
       </para>
-      
+
       <para>
 	At the moment, we have only the primitive shapes displayed, not the
 	region. Before we can raytrace, we must remove the primitive shapes from
 	the display, and draw the region. Otherwise, we will not be able to see
 	the region with the color properties we applied. We can do this by typing:
-	
+
 	<command>B part1.r</command>
       </para>
-      
+
       <para>
 	We are now ready to raytrace this object. From the File menu, bring up the
 	Raytrace Control Panel and click the Raytrace button. The image you get
@@ -324,7 +324,7 @@
 	take several minutes to raytrace the window, depending on the speed of
 	your particular system.
       </para>
-      
+
       <informaltable>
 	<tgroup cols="2">
 	  <tbody>
@@ -339,66 +339,66 @@
 	  </tbody>
 	</tgroup>
       </informaltable>
-      
+
       <para>
 	You should see that a spherical "bite" has been taken out of the top of
 	the cylinder.
       </para>
-      
+
       <para>
 	Next we will make a blue region using the intersection operator instead of
 	subtraction. Once again, we start by creating a region:
-	
+
 	<command>r part2.r u rcc2.s + sph2.s[Enter]</command>
       </para>
-      
+
       <para>
 	For comparison to the GUI approach used to make part1.r, let's use the
 	Command Line to assign the color to part2.r:
-	
+
 	<command>mater part2.r plastic 0 0 255 0[Enter]</command>
       </para>
-      
+
       <para>
 	Finally, Blast this new region onto the display as follows:
-	
+
 	<command>B part2.r[Enter]</command>
       </para>
-      
+
       <para>
 	Now raytrace the object. It should look similar to the preceding
 	right-hand image.
       </para>
-      
+
       <note>
 	<para>
-	  Note: Remember to clear the Graphics Window and draw your new region  
-	  or combination before trying to raytrace the model. The raytracer     
-	  ignores a region or combination that is not drawn in the Graphics     
-	  Window. The color of the wireframe is your clue. If it doesn't        
-	  reflect the colors you've assigned (e.g., everything is drawn in red  
-	  even though you've assigned other colors), then you haven't cleared   
-	  the screen of the primitive shapes and drawn the new region or        
-	  combination since the time you made it.             
+	  Note: Remember to clear the Graphics Window and draw your new region
+	  or combination before trying to raytrace the model. The raytracer
+	  ignores a region or combination that is not drawn in the Graphics
+	  Window. The color of the wireframe is your clue. If it doesn't
+	  reflect the colors you've assigned (e.g., everything is drawn in red
+	  even though you've assigned other colors), then you haven't cleared
+	  the screen of the primitive shapes and drawn the new region or
+	  combination since the time you made it.
 	</para>
       </note>
-      
+
       <para>
 	When you use the intersection operator, the order in which you specify the
 	shapes doesn't matter. We would have gotten the same results if we had
 	specified the Boolean operation as
-	
+
 	<command>r part2.r u sph2.s + rcc2.s</command>
       </para>
-      
+
       <para>
 	However, when using the subtraction operator, the order of the two shapes
 	is very important. Let's make a region with the order of the shapes
 	reversed from that used for part1.r:
-	
+
 	<command>r part3.r u sph2.s - rcc2.s</command>
       </para>
-      
+
       <para>
 	This time we won't bother to set a color. (When no color is set for
 	objects, the raytracer (rt) will use a color of white. However, these
@@ -418,14 +418,14 @@
 	  </caption>
 	</mediaobject>
       </informalfigure>
-      
+
       <para>
 	Now let's raytrace all three objects we have created together. To draw the
 	three regions at once, we could type:
-	
+
 	<command>B part1.r part2.r part3.r</command>
       </para>
-      
+
       <para>
 	Doing this once is no problem. However, if these were three parts that
 	made up some complex object, we might like to be able to draw all of them
@@ -433,15 +433,15 @@
 	easier, we create an assembly combination to gather them all together. We
 	will create one called dome.c for our three regions. This is accomplished
 	by the following command:
-	
+
 	<command>comb dome.c u part1.r u part2.r u part3.r</command>
       </para>
-      
+
       <para>
 	Notice the similarity between this command and the r command we used to
 	create the regions.
       </para>
-      
+
       <para>
 	Remember from the discussion at the beginning of this lesson, the
 	difference between a region and a combination is that combinations are not
@@ -449,30 +449,30 @@
 	different materials can make up an assembly combination such as the one we
 	have just created.
       </para>
-      
+
       <note>
 	<para>
-	  Because creating assembly combinations is a very common task, there   
-	  is a shortcut command-the g (for group) command-to help make the task 
-	  easier. Creating dome.c using this command would look as follows:     
-	  
-	  <command>g dome.c part1.r part2.r part3.r</command> 
-	  
-	  Notice that you don't have to type the u Boolean operators. The g     
-	  command unions all of its arguments.                                  
+	  Because creating assembly combinations is a very common task, there
+	  is a shortcut command-the g (for group) command-to help make the task
+	  easier. Creating dome.c using this command would look as follows:
+
+	  <command>g dome.c part1.r part2.r part3.r</command>
+
+	  Notice that you don't have to type the u Boolean operators. The g
+	  command unions all of its arguments.
 	</para>
       </note>
-      
+
       <para>
 	All that is necessary to draw all three objects is the much simpler
 	command:
-	
+
 	<command>B dome.c</command>
       </para>
       <para>
 	Now we can raytrace the collected set and get the following image:
       </para>
-      
+
 	<informalfigure>
 	<mediaobject>
 	  <imageobject>
@@ -487,10 +487,10 @@
       </informalfigure>
 
     </section>
-    
+
     <section xml:id="operator_precedence"><info><title>Operator Precedence</title></info>
-      
-      
+
+
       <para>
 	The shapes we have created here are fairly simple. In each case, a single
 	primitive shape is unioned, and subtraction or intersection operations are
@@ -500,20 +500,20 @@
 	of the Boolean operations. In the Boolean notation we are using, the
 	subtraction and intersection operators both have higher precedence than
 	the union operator has. So, for example:
-	
+
 	<command>comb demo.c u shape1 - shape2 u shape3 - shape4 + shape5</command>
       </para>
-      
+
       <para>
 	This would result in the following Boolean expression:
-	
+
 	<literal>(shape1 - shape2) u ( (shape3 - shape4) + shape5)</literal>
       </para>
     </section>
-    
+
     <section xml:id="learning_boolean_operations_review"><info><title>Review</title></info>
-      
-      
+
+
       <para>
 	In this lesson, you:
 	<itemizedlist mark="bullet">

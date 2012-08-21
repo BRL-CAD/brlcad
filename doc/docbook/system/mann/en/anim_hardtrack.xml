@@ -11,7 +11,7 @@
     <refname>anim_hardtrack</refname>
     <refpurpose>make an animation script for the links and/or wheels of a tracked vehicle with rigid axles.</refpurpose>
   </refnamediv>
-  
+
   <!-- body begins here -->
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
@@ -24,19 +24,19 @@
       <arg choice="plain" rep="norepeat"><replaceable>out.script</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
-  
+
   <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-    
+
     <para>
       <emphasis remap="I">Anim_hardtrack</emphasis> is designed to produce an animation script for the
       animation of a track and/or the wheels defining a track, where the wheels
       are rigidly fixed in place with respect to the vehicle. The main
       difference between <command>anim_hardtrack</command> and <emphasis remap="I">anim_track</emphasis>
-      is that <emphasis remap="I">anim_track</emphasis> handles vehicles with dynamic axles. Both are 
+      is that <emphasis remap="I">anim_track</emphasis> handles vehicles with dynamic axles. Both are
       designed to be used in conjunction with <emphasis remap="I">anim_script,</emphasis>
       to achieve the final result.
     </para>
-    
+
     <para>
       <emphasis remap="B" role="B">in.table</emphasis> is the file that will be used to animate the
       vehicle itself. By default, it is assumed that it contains a time column,
@@ -45,14 +45,14 @@
       automatically, then the table should contain only time and position, and the
       <option>-s</option> option should be used.
     </para>
-    
+
     <para>
       The track's geometry is defined by <emphasis remap="B" role="B">wheelfile</emphasis>,
       a table which contains one row for each wheel defining the track. The
       first three columns of the table specify the x, y, and z coordinates of
       the wheel centers. The fourth column specifies the radius of each wheel.
     </para>
-    
+
     <para>
       The order in which the wheels are listed should be the order in which a
       link of the track would move around the wheels when the vehicle is moving
@@ -64,7 +64,7 @@
       vehicle's left-right axis is the y-axis. If the modeled vehicle has some
       other orientation, this must be specified with the <option>-b</option> option.
     </para>
-    
+
     <para>
       By default, it is assumed that all of the link objects are modeled at the model origin,
       with the wheel-contacting surface centered on the origin and the
@@ -73,16 +73,16 @@
       <emphasis remap="I">Anim_hardtrack</emphasis> prints the appropriate
       commands to move the links from the origin to the correct place around the wheels.
     </para>
-    
+
     <para>
       If the links are modeled in place around the wheels to begin with, the <option>-p</option>
       and <option>-i</option> options are needed.
     </para>
-    
+
   </refsection>
-  
+
   <refsection xml:id="options"><info><title>OPTIONS:</title></info>
-    
+
     <para>
       One or both of the first two options should always be specified.
     </para>
@@ -96,10 +96,10 @@
 	    different links named <emphasis remap="I">linkname</emphasis>.0,
 	    <emphasis remap="I">linkname</emphasis>.1, up through
 	    <emphasis remap="I">linkname</emphasis>.(<emphasis remap="I">num</emphasis>-1).
-	    A typical example of a linkname might be "tank/righttrack/links/link." The full 
-	    pathname must be specified, because <command>anim_hardtrack</command>'s method is 
-	    to roll the links around within the vehicle's tree structure so that when the 
-	    whole vehicle "tank" is animated, the complete combination of rolling around 
+	    A typical example of a linkname might be "tank/righttrack/links/link." The full
+	    pathname must be specified, because <command>anim_hardtrack</command>'s method is
+	    to roll the links around within the vehicle's tree structure so that when the
+	    whole vehicle "tank" is animated, the complete combination of rolling around
 	    and translating is achieved.
 	  </para>
 	</listitem>
@@ -108,10 +108,10 @@
 	<term><option>-w wheelname</option></term>
 	<listitem>
 	  <para>
-	    Print animation scripts to rotate each wheel. The wheels are named 
+	    Print animation scripts to rotate each wheel. The wheels are named
 	    <emphasis remap="I">wheelname</emphasis>.0, <emphasis remap="I">wheelname</emphasis>.1,
 	    and so on, where <emphasis remap="I">wheelname</emphasis>.0 is the first wheel listed in
-	    <emphasis remap="B" role="B">wheelfile</emphasis>. As with the links, the full pathname 
+	    <emphasis remap="B" role="B">wheelfile</emphasis>. As with the links, the full pathname
 	    for the wheels should be specified.
 	  </para>
 	</listitem>
@@ -120,7 +120,7 @@
 	<term><option>-b # # #</option></term>
 	<listitem>
 	  <para>
-	    Specify the yaw, pitch, and roll of the vehicle's axes with respect to the world axes. 
+	    Specify the yaw, pitch, and roll of the vehicle's axes with respect to the world axes.
 	    By default, the vehicle is assumed to have a yaw, pitch, and roll of 0.
 	  </para>
 	</listitem>
@@ -129,7 +129,7 @@
 	<term><option>-d # # #</option></term>
 	<listitem>
 	  <para>
-	    Specify (in world coordinates) the centroid of the vehicle of which the track is a part. 
+	    Specify (in world coordinates) the centroid of the vehicle of which the track is a part.
 	    By default, the vehicle is assumed centered at the origin.
 	  </para>
 	</listitem>
@@ -156,7 +156,7 @@
 	<term><option>-s</option></term>
 	<listitem>
 	  <para>Automatic steering. In this case, <emphasis remap="B" role="B">in.table</emphasis>
-	  specifies only the time and position of the vehicle. The orientation is calculated to always 
+	  specifies only the time and position of the vehicle. The orientation is calculated to always
 	  face the vehicle in the direction of motion. This should be used when the <option>-s</option>
 	  option is used by <emphasis remap="I">anim_script</emphasis> to animate the vehicle.
 	  </para>
@@ -178,7 +178,7 @@
 	    In order for placed links to be animated, they must be equally spaced
 	    around the wheels defining the track. The track must be formed of arcs
 	    around the wheels and straight lines between the wheels, and the links
-	    must be numbered clockwise as seen from the right.  By default, it is assumed 
+	    must be numbered clockwise as seen from the right.  By default, it is assumed
 	    that the center of the first link, linkname.0, is at the beginning of the
 	    straight track segment between wheel.(n-1) and wheel.0. If this is
 	    not the case, the position of the first link must be identified with the
@@ -197,8 +197,8 @@
 	    track from the default position to the actual desired offset. If the
 	    links are modeled at the origin, the user can choose any offset. This
 	    can be useful for lining up the links with gears of a drive wheel, for
-	    example.  If the <option>-p</option> option is being used to animate preplaced 
-	    links, then it is essential that the actual offset of the first preplaced link 
+	    example.  If the <option>-p</option> option is being used to animate preplaced
+	    links, then it is essential that the actual offset of the first preplaced link
 	    be specified.
 	  </para>
 	</listitem>
@@ -220,7 +220,7 @@
       <varlistentry>
 	<term><option>-mw&lt;string&gt;</option></term>
 	<listitem>
-	  <para>Use <emphasis remap="B" role="B">&lt;string&gt;</emphasis> for the wheel command. 
+	  <para>Use <emphasis remap="B" role="B">&lt;string&gt;</emphasis> for the wheel command.
 	  Defaults to "lmul."
 	  </para>
 	</listitem>
@@ -232,9 +232,9 @@
 	</listitem>
       </varlistentry>
     </variablelist>
-    
+
     <refsection xml:id="output"><info><title>Output:</title></info>
-      
+
       <para>
 	The output is a script containing as many frames as there are positions in
 	<emphasis remap="B" role="B">in.table</emphasis>. If there are <emphasis remap="I">n</emphasis>
@@ -256,7 +256,7 @@ for 0&lt;=i&lt;n and 0&lt;=j&lt;k.
   </refsection>
 
   <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-    
+
     <para>
       Suppose you want to make an animation of a tank rolling across
       flat ground. A list of desired positions is created, perhaps by
@@ -296,7 +296,7 @@ for 0&lt;=i&lt;n and 0&lt;=j&lt;k.
     <para>
       The appropriate call to <command>anim_hardtrack</command> is now:
     </para>
-    
+
     <para>
       <userinput>
       anim_hardtrack -d 0 0 1000 -b 90 0 0 -w tank/rwheel -l 80 tank/rtrack/link
@@ -333,7 +333,7 @@ for 0&lt;=i&lt;n and 0&lt;=j&lt;k.
       that is, at the point (2000,1500,-1000) in the vehicle's coordinates.
       If, instead, the first link is initially centered halfway between the
       two roadwheels, this must be specified with the <option>-i#</option>
-      option. If the link's actual position is 2000 units farther around the 
+      option. If the link's actual position is 2000 units farther around the
       track than expected:
     </para>
 
@@ -350,21 +350,21 @@ for 0&lt;=i&lt;n and 0&lt;=j&lt;k.
     should then be used at the end to replace all instances of the
     conventional name with the real name; for example, in this case it may
     be necessary to replace "rwheel.1" with "r_drivewheel".</para>
-    
+
     <para><emphasis remap="B" role="B">Tank.script</emphasis>,
     <emphasis remap="B" role="B">rtrack.script</emphasis>, and <emphasis remap="B" role="B">ltrack.script</emphasis>
     can be combined with <emphasis remap="I">anim_sort</emphasis> to make the complete script.</para>
 
   </refsection>
-  
+
   <refsection xml:id="bugs"><info><title>BUGS</title></info>
-    
+
     <para>Tracks must have at least two wheels, and they must be listed in clockwise
     order, or the results are unpredictable.</para>
   </refsection>
 
   <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
-    
+
     <para><citerefentry><refentrytitle>anim_script</refentrytitle><manvolnum>nged</manvolnum></citerefentry>, <citerefentry><refentrytitle>anim_track</refentrytitle><manvolnum>nged</manvolnum></citerefentry></para>
   </refsection>
 
@@ -374,15 +374,15 @@ for 0&lt;=i&lt;n and 0&lt;=j&lt;k.
       <contrib></contrib>
     </author>
   </info>
-  
+
   <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
-    
+
     <para>This software is Copyright (c) 1993-2012 by the United States
     Government as represented by U.S. Army Research Laboratory.</para>
   </refsection>
-  
+
   <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-    
+
     <para>Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;.</para>
   </refsection>

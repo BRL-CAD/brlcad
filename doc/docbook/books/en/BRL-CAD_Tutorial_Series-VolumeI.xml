@@ -2,10 +2,9 @@
 
 <book xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title><application>BRL-CAD</application> Tutorial Series: Volume I - An Overview of BRL-CAD</title>
-    
+
   </info>
 
-    
 
   <chapter xml:id="whatisbrlcad"><info><title>What is BRL-CAD?</title></info>
 
@@ -78,14 +77,14 @@
 	<mediaobject>
 	  <imageobject role="html">
 	    <imagedata
-               width="6in"
-               fileref="../../books/en/images/tutorial_series_volI_fig01.png" format="PNG"/>
+	       width="6in"
+	       fileref="../../books/en/images/tutorial_series_volI_fig01.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
 	    <imagedata
-               width="100%"
-               scalefit="1"
-               fileref="../../books/en/images/tutorial_series_volI_fig01.png" format="PNG"/>
+	       width="100%"
+	       scalefit="1"
+	       fileref="../../books/en/images/tutorial_series_volI_fig01.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
 
@@ -105,12 +104,12 @@
       <itemizedlist>
 	<listitem>
 	  <para>
-	    	libbu - a basic utility (bu) library containing fundamental computer science types of routines, including manipulating data (e.g., converting from host format data to network format data), parallel processing, parsing parameters, handling variable-length strings, performing error checks, converting units from one format to another, manipulating bit vectors, running parallel-safe versions of input/output (I/O) routines, and maintaining symbol tables.
+		libbu - a basic utility (bu) library containing fundamental computer science types of routines, including manipulating data (e.g., converting from host format data to network format data), parallel processing, parsing parameters, handling variable-length strings, performing error checks, converting units from one format to another, manipulating bit vectors, running parallel-safe versions of input/output (I/O) routines, and maintaining symbol tables.
 	  </para>
 	</listitem>
 	<listitem>
 	  <para>
-	    	libbn - a library of routines to support basic numerical (bn) handling, including 2-D/3-D vector, matrix, and quaternion manipulation; 3-D plotting support; automatic inference of image size (BRL-CAD images have no internal header; image dimensions are intuited from the size of the file); and wavelet decomposition and reconstruction, etc.
+		libbn - a library of routines to support basic numerical (bn) handling, including 2-D/3-D vector, matrix, and quaternion manipulation; 3-D plotting support; automatic inference of image size (BRL-CAD images have no internal header; image dimensions are intuited from the size of the file); and wavelet decomposition and reconstruction, etc.
 	  </para>
 	</listitem>
 	<listitem>
@@ -170,7 +169,7 @@
 	<listitem>
 	  <para>
 		Tools for raytracing and interrogating raytraced geometric objects.
-            <itemizedlist>
+	    <itemizedlist>
 		<listitem>
 		  <para>
 			rt - the main raytracer for rendering images in BRL-CAD.
@@ -268,113 +267,113 @@
 
      <table frame="none" rowsep="0" colsep="0" pgwide="1">
 
-        <title>Standard Benchmark Images</title>
+	<title>Standard Benchmark Images</title>
 
-        <tgroup cols="3" align="center">
-          <tbody>
-            <row>
+	<tgroup cols="3" align="center">
+	  <tbody>
+	    <row>
 	      <entry><inlinemediaobject>
-                <imageobject role="html">
-                  <imagedata
-                      width="2in"
-                      scalefit="1"
-                      fileref="../../books/en/images/tutorial_series_volI_fig02.png"
-                    />
-                </imageobject>
-                <imageobject role="fo">
-                  <imagedata
-                      fileref="../../books/en/images/tutorial_series_volI_fig02.png"
-                    />
-                </imageobject>
-              </inlinemediaobject></entry>
+		<imageobject role="html">
+		  <imagedata
+		      width="2in"
+		      scalefit="1"
+		      fileref="../../books/en/images/tutorial_series_volI_fig02.png"
+		    />
+		</imageobject>
+		<imageobject role="fo">
+		  <imagedata
+		      fileref="../../books/en/images/tutorial_series_volI_fig02.png"
+		    />
+		</imageobject>
+	      </inlinemediaobject></entry>
 	      <entry><inlinemediaobject>
-                 <imageobject role="html">
-                   <imagedata
-                      width="2in"
-                      scalefit="1"
-                       fileref="../../books/en/images/tutorial_series_volI_fig03.png"
-                     />
-                 </imageobject>
-                 <imageobject role="fo">
-                   <imagedata
-                       fileref="../../books/en/images/tutorial_series_volI_fig03.png"
-                     />
-                 </imageobject>
-              </inlinemediaobject></entry>
+		 <imageobject role="html">
+		   <imagedata
+		      width="2in"
+		      scalefit="1"
+		       fileref="../../books/en/images/tutorial_series_volI_fig03.png"
+		     />
+		 </imageobject>
+		 <imageobject role="fo">
+		   <imagedata
+		       fileref="../../books/en/images/tutorial_series_volI_fig03.png"
+		     />
+		 </imageobject>
+	      </inlinemediaobject></entry>
 	      <entry><inlinemediaobject>
-                 <imageobject role="html">
-                   <imagedata
-                      width="2in"
-                      scalefit="1"
-                       fileref="../../books/en/images/tutorial_series_volI_fig04.png"
-                     />
-                 </imageobject>
-                 <imageobject role="fo">
-                   <imagedata
-                       fileref="../../books/en/images/tutorial_series_volI_fig04.png"
-                     />
-                 </imageobject>
-              </inlinemediaobject></entry>
-            </row>
+		 <imageobject role="html">
+		   <imagedata
+		      width="2in"
+		      scalefit="1"
+		       fileref="../../books/en/images/tutorial_series_volI_fig04.png"
+		     />
+		 </imageobject>
+		 <imageobject role="fo">
+		   <imagedata
+		       fileref="../../books/en/images/tutorial_series_volI_fig04.png"
+		     />
+		 </imageobject>
+	      </inlinemediaobject></entry>
+	    </row>
 
-            <row>
-              <entry>Moss</entry>
-              <entry>World</entry>
-              <entry>Star</entry>
-            </row>
+	    <row>
+	      <entry>Moss</entry>
+	      <entry>World</entry>
+	      <entry>Star</entry>
+	    </row>
 
-            <row>
+	    <row>
 	      <entry><inlinemediaobject>
-                <imageobject role="html">
-                  <imagedata
-                      width="2in"
-                      scalefit="1"
-                      fileref="../../books/en/images/tutorial_series_volI_fig05.png"
-                    />
-                </imageobject>
-                <imageobject role="fo">
-                  <imagedata
-                      fileref="../../books/en/images/tutorial_series_volI_fig05.png"
-                    />
-                </imageobject>
-              </inlinemediaobject></entry>
+		<imageobject role="html">
+		  <imagedata
+		      width="2in"
+		      scalefit="1"
+		      fileref="../../books/en/images/tutorial_series_volI_fig05.png"
+		    />
+		</imageobject>
+		<imageobject role="fo">
+		  <imagedata
+		      fileref="../../books/en/images/tutorial_series_volI_fig05.png"
+		    />
+		</imageobject>
+	      </inlinemediaobject></entry>
 	      <entry><inlinemediaobject>
-                <imageobject role="html">
-                  <imagedata
-                      width="2in"
-                      scalefit="1"
-                      fileref="../../books/en/images/tutorial_series_volI_fig06.png"
-                    />
-                </imageobject>
-                <imageobject role="fo">
-                  <imagedata
-                      fileref="../../books/en/images/tutorial_series_volI_fig06.png"
-                    />
-                </imageobject>
-              </inlinemediaobject></entry>
+		<imageobject role="html">
+		  <imagedata
+		      width="2in"
+		      scalefit="1"
+		      fileref="../../books/en/images/tutorial_series_volI_fig06.png"
+		    />
+		</imageobject>
+		<imageobject role="fo">
+		  <imagedata
+		      fileref="../../books/en/images/tutorial_series_volI_fig06.png"
+		    />
+		</imageobject>
+	      </inlinemediaobject></entry>
 	      <entry><inlinemediaobject>
-                <imageobject role="html">
-                  <imagedata
-                      width="2in"
-                      scalefit="1"
-                      fileref="../../books/en/images/tutorial_series_volI_fig07.png"
-                    />
-                </imageobject>
-                <imageobject role="fo">
-                  <imagedata
-                      fileref="../../books/en/images/tutorial_series_volI_fig07.png"
-                      />
-                </imageobject>
-              </inlinemediaobject></entry>
-            </row>
+		<imageobject role="html">
+		  <imagedata
+		      width="2in"
+		      scalefit="1"
+		      fileref="../../books/en/images/tutorial_series_volI_fig07.png"
+		    />
+		</imageobject>
+		<imageobject role="fo">
+		  <imagedata
+		      fileref="../../books/en/images/tutorial_series_volI_fig07.png"
+		      />
+		</imageobject>
+	      </inlinemediaobject></entry>
+	    </row>
 
-            <row>
-              <entry>Bldg 391</entry>
-              <entry>M35</entry>
-              <entry>Sphflake</entry>
-            </row>
-          </tbody>
-        </tgroup>
+	    <row>
+	      <entry>Bldg 391</entry>
+	      <entry>M35</entry>
+	      <entry>Sphflake</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
       </table>
 
   </chapter>
@@ -388,5 +387,5 @@
 	In addition, the authors would like to especially acknowledge Mike Muuss, a team member and the original architect of BRL-CAD, who passed away in the fall of 2000. Without his vision, this work would not have been possible. Therefore, the BRL-CAD Tutorial Series is dedicated to his memory.
 	</para>
   </chapter>
- 
+
 </book>

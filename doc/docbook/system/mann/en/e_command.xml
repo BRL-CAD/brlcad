@@ -20,18 +20,18 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
-    <command>e</command>    
+    <command>e</command>
     <arg choice="opt" rep="norepeat">-A <replaceable>attribute name/value pairs</replaceable></arg>
     <arg choice="opt" rep="norepeat">-s</arg>
     <arg choice="opt" rep="norepeat">-A -o<replaceable>attribute name/value pairs</replaceable></arg>
     <arg choice="opt" rep="norepeat">-C#/#/#</arg>
     <arg choice="opt" rep="norepeat"><replaceable>-m1</replaceable></arg>
-    <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg> 
+    <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg>
  </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-  
+
  <para> Adds the objects in the argument list to the display list so that
  they will appear on the <emphasis>MGED</emphasis> display. This is a
  synonym for the <command>draw</command> command; see that entry for a full
@@ -50,14 +50,14 @@
 </refsection>
 
 <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-  
+
   <para>The following examples show the use of the <command>e</command>
   command to draw particular objects, to specify color, to draw with shape
   lines rather than dot-dash lines, and to limit the objects to be drawn to
   those having specific attribute names and value pairs.</para>
 
   <example><info><title>Draw specific objects in the <emphasis>MGED</emphasis> display.</title></info>
-    
+
     <variablelist>
       <varlistentry>
 	   <term><prompt>mged&gt;</prompt> <userinput>e object1 object2</userinput></term>
@@ -67,10 +67,10 @@
       </varlistentry>
     </variablelist>
   </example>
-       
+
   <example><info><title>Limit the objects to be drawn to those having specific attribute names and value pairs.
 	</title></info>
-    
+
     <para>
       <prompt>mged&gt;</prompt><userinput>e -A -o Comment {First comment} Comment {Second comment} </userinput>
     </para>
@@ -79,13 +79,13 @@
 	 comment" or "Second comment."
     </para>
   </example>
- 
+
 </refsection>
 
 <info><corpauthor>BRL-CAD Team</corpauthor></info>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-  
+
   <para>
     Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.

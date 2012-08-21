@@ -21,17 +21,17 @@
 
     <author>
       <contrib>
-        Armenian Translation
+	Armenian Translation
       </contrib>
       <personname>
-        <firstname>Karen</firstname>
-        <surname>Mgebrova</surname>
+	<firstname>Karen</firstname>
+	<surname>Mgebrova</surname>
       </personname>
     </author>
   </info>
 
   <section xml:id="article-body">
-    
+
     <para>
       BRL-CAD հզոր խաչաձեւ հարթակի Open Source համակցական
       կառուցողական Պինդ Geometry (CSG) մոդելավորման ամուր համակարգ,
@@ -104,10 +104,10 @@
 
     <note>
       <para>
-        Mike Muuss սկսեց սկզբնական ճարտարապետության եւ նախագծման
-        BRL-CAD դեռեւս 1979 թ. Մշակում, որպես միասնական փաթեթի սկսվել է
-        1983 թ. Առաջին հրապարակային թողարկումն իրականացվել է 1984
-        թ. BRL-CAD դարձավ բաց կոդով նախագիծ է 21 դեկտեմբերի 2004 թ.
+	Mike Muuss սկսեց սկզբնական ճարտարապետության եւ նախագծման
+	BRL-CAD դեռեւս 1979 թ. Մշակում, որպես միասնական փաթեթի սկսվել է
+	1983 թ. Առաջին հրապարակային թողարկումն իրականացվել է 1984
+	թ. BRL-CAD դարձավ բաց կոդով նախագիծ է 21 դեկտեմբերի 2004 թ.
       </para>
     </note>
 

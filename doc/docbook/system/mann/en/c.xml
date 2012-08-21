@@ -1,66 +1,66 @@
 <!-- Converted by db4-upgrade version 1.0 -->
 
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="c">
-  
+
   <refmeta>
     <refentrytitle>C</refentrytitle>
     <manvolnum>nged</manvolnum>
     <refmiscinfo class="source">BRL-CAD</refmiscinfo>
     <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
-  
+
   <refnamediv xml:id="name">
     <refname>c</refname>
     <refpurpose>Creates a BRL-CAD combination with the name
     <emphasis>combination_name</emphasis>.
     </refpurpose>
   </refnamediv>
-  
+
   <!-- body begins here -->
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
-      <command>c</command>    
+      <command>c</command>
       <arg choice="opt" rep="norepeat">-c</arg>
       <arg choice="opt" rep="norepeat">-r</arg>
       <arg choice="req" rep="norepeat"><replaceable>combination_name</replaceable> </arg>
       <arg choice="opt" rep="norepeat"><replaceable>Boolean_expression</replaceable> </arg>
     </cmdsynopsis>
   </refsynopsisdiv>
-  
+
   <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
-    
-    <para>The <command>c</command> command creates a <emphasis>BRL-CAD</emphasis> combination 
-    with the name <emphasis>combination_name</emphasis>. The <emphasis>-r</emphasis> option 
-    indicates that the combination is a <emphasis>BRL-CAD </emphasis>region. The 
-    <emphasis>-c</emphasis> option is the default and indicates that the combination is not 
-    a region. The <emphasis>Boolean_expression</emphasis> allows parentheses. Where no order 
-    is specified, intersections are performed before subtractions or unions; then subtractions 
+
+    <para>The <command>c</command> command creates a <emphasis>BRL-CAD</emphasis> combination
+    with the name <emphasis>combination_name</emphasis>. The <emphasis>-r</emphasis> option
+    indicates that the combination is a <emphasis>BRL-CAD </emphasis>region. The
+    <emphasis>-c</emphasis> option is the default and indicates that the combination is not
+    a region. The <emphasis>Boolean_expression</emphasis> allows parentheses. Where no order
+    is specified, intersections are performed before subtractions or unions; then subtractions
     and unions are performed, left to right. Where there is no <emphasis>Boolean_expression</emphasis>
-    and <emphasis>combination_name</emphasis>, a new 
-    empty combination will be created. If no <emphasis>Boolean_expression</emphasis> is provided, 
-    and <emphasis>combination_name</emphasis> does already exist and one of <emphasis>-c</emphasis> 
-    or <emphasis>-r</emphasis> is specified, then <emphasis>combination_name</emphasis> is 
-    flagged to agree with the indicated option. If a new  <emphasis>region</emphasis> is created 
-    or an existing combination is flagged as a region with this command, its region-specific 
-    attributes will be set according to the current defaults (see <command>regdef</command>). 
-    The <command>comb</command> and <command>r</command> commands may also be used to create 
+    and <emphasis>combination_name</emphasis>, a new
+    empty combination will be created. If no <emphasis>Boolean_expression</emphasis> is provided,
+    and <emphasis>combination_name</emphasis> does already exist and one of <emphasis>-c</emphasis>
+    or <emphasis>-r</emphasis> is specified, then <emphasis>combination_name</emphasis> is
+    flagged to agree with the indicated option. If a new  <emphasis>region</emphasis> is created
+    or an existing combination is flagged as a region with this command, its region-specific
+    attributes will be set according to the current defaults (see <command>regdef</command>).
+    The <command>comb</command> and <command>r</command> commands may also be used to create
     combinations.
     </para>
   </refsection>
-  
+
   <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-    
+
     <para>
-      The example shows how to use the <command>c</command> command to create a combination 
+      The example shows how to use the <command>c</command> command to create a combination
       according to a given formula.
     </para>
     <example><info><title>Creating a combination according to a formula.</title></info>
-      
+
       <variablelist>
 	<varlistentry>
 	  <term><prompt>mged&gt;</prompt> <userinput>c -c abc (a u b)-(a + d)</userinput></term>
 	  <listitem>
-	    <para>Creates a combination named <emphasis>abc</emphasis> according to the formula 
+	    <para>Creates a combination named <emphasis>abc</emphasis> according to the formula
 	    <emphasis>(a u b) - (a + d)</emphasis>.
 	    </para>
 	  </listitem>
@@ -68,11 +68,11 @@
       </variablelist>
     </example>
   </refsection>
-  
+
   <info><corpauthor>BRL-CAD Team</corpauthor></info>
-  
+
   <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
-    
+
     <para>
       Reports of bugs or problems should be submitted via electronic
       mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
