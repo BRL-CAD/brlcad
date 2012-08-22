@@ -159,7 +159,7 @@ color bgcolor = {0, 0, 0};
  *
  * detect_ids -> detect boundaries region id codes.
  * detect_regions -> detect region boundaries.
- * detect_distance -> detect noticable differences in hit distance.
+ * detect_distance -> detect noticeable differences in hit distance.
  * detect_normals -> detect rapid change in surface normals
  */
 int detect_ids = 1;
@@ -289,7 +289,7 @@ usage(const char *argv0)
     bu_log(" -x #		librt debug flags\n");
     bu_log(" -N #		NMG debug flags\n");
     bu_log(" -X #		rt debug flags\n");
-    bu_log(" -c		Auxillary commands (see man page)\n");
+    bu_log(" -c		Auxiliary commands (see man page)\n");
 }
 
 
@@ -557,7 +557,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	bu_log("view_init: deactivating parallelism due to -o option.\n");
 	/*
 	 * The overlay and blend cannot be used in -o mode.  Note that
-	 * the overlay directive takes precendence, they can't be used
+	 * the overlay directive takes precedence, they can't be used
 	 * together.
 	 */
 	overlay = 0;
