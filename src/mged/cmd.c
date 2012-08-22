@@ -2018,7 +2018,7 @@ cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int arg
 extern int emuves_com(int argc, const char *argv[]);	/* from chgview.c */
 
 /**
- * Add regions with attribute MUVES_Component haveing the specified values
+ * Add regions with attribute MUVES_Component having the specified values
  * Format: em value [value value ...]
  */
 int
