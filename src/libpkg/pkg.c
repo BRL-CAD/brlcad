@@ -1407,7 +1407,7 @@ pkg_waitfor (int type, char *buf, size_t len, struct pkg_conn *pc)
     if (pc->pkc_len == 0)
 	return 0;
 
-    /* See if incomming message is larger than user's buffer */
+    /* See if incoming message is larger than user's buffer */
     if (pc->pkc_len > len) {
 	char *bp;
 	size_t excess;
