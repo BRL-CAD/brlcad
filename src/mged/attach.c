@@ -244,7 +244,7 @@ release(char *name, int need_close)
     }
 
     /*
-     * This saves the state of the resoures to the "nu" display
+     * This saves the state of the resources to the "nu" display
      * manager, which is beneficial only if closing the last display
      * manager. So when another display manager is opened, it looks
      * like the last one the user had open. This depends on "nu"
@@ -364,7 +364,7 @@ f_attach(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 	return TCL_OK;
     }
 
-    /* Look at last argument, skipping over any options which preceed it */
+    /* Look at last argument, skipping over any options which precede it */
     for (wp = &which_dm[2]; wp->type != -1; wp++)
 	if (BU_STR_EQUAL(argv[argc - 1], wp->name))
 	    break;
