@@ -55,7 +55,7 @@ int
 soup_rm_face(struct soup_s *s, unsigned long int i)
 {
     if(i>=s->nfaces) {
-	bu_log("trying to remove a nonexisant face? %lu/%lu\n", i, s->nfaces);
+	bu_log("trying to remove a nonexistent face? %lu/%lu\n", i, s->nfaces);
 	bu_bomb("Asploding\n");
     }
     memcpy(&s->faces[i], &s->faces[s->nfaces-1], sizeof(struct face_s));
