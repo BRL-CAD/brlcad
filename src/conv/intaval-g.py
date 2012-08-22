@@ -28,13 +28,13 @@ component_db = { }
 if (len(sys.argv) > 3):
     matl = open(sys.argv[3], 'r')
     matl.readline()
-    
+
     tok = matl.readline().split()
     while tok[0] != '-1' > 0:
         name = mashup(tok[3:])
         component_db[int(tok[0])] = [tok[1], tok[2], name]
         tok = matl.readline().split()
-            
+
 # uniquely number primitives
 prim = 1
 
@@ -81,7 +81,7 @@ used_components = []
 #
 def assign_material(name, id):
     global used_materials
-    global used_components 
+    global used_components
 
     if component_db.has_key(id):
         comp = component_db[id]
@@ -95,7 +95,7 @@ def assign_material(name, id):
             mat_type = material_names[int(comp[0])]
 
             outfile.write('shader %s {plastic {tr %g}}\n' % (name, mat_type[2]))
-            
+
             args = [name] + [int(x*255.0) for x in mat_type[1]]
             outfile.write('adjust %s rgb { %d %d %d }\n' % tuple(args))
             outfile.write('g %s %s\n' % (mat_type[0], name))
@@ -140,7 +140,7 @@ def cad_box(v, m, s, fd):
     outfile.write(cmd+'\n')
     outfile.write('r %d.r u %d_cad_box\n' % (prim, prim))
     assign_material('%d.r' % prim, m)
-    
+
 
 #
 #  Wish we had examples of this to develop with
@@ -153,7 +153,7 @@ def ring_box(v, m, s, fd):
     b = float(fd.readline())
     for i in xrange(0, v):
         tup = [float(x) for x in fd.readline().split()]
-    
+
 
 #
 # Triangle strip, like a FASTGEN plate-mode thing.
@@ -198,7 +198,7 @@ def replica(v, m, s, fd):
     m = fd.readline()
     s = fd.readline()
     tup = [float(x) for x in fd.readline().split()]
-        
+
 #
 #  The documentation calls for butt-aligned cylinders here.
 #  I've put spheres in.  Should probably change this
@@ -220,7 +220,7 @@ def multiwire(v, m, s, fd):
         comb += ' ' + name
         args = [name] + pts[i-1] + v + [r]
         outfile.write('in %s rcc %g %g %g %g %g %g %g\n' % tuple(args))
-                  
+
         if i < (n-1):
             name = '%d_pipe_s%d' % (prim, i)
             comb += ' ' + name
