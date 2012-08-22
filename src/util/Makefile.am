@@ -235,7 +235,7 @@ bwrect_SOURCES = bwrect.c
 bwrect_LDADD = ${BU}
 
 bwrot_SOURCES = bwrot.c
-bwrot_LDADD = ${BU} 
+bwrot_LDADD = ${BU}
 
 bwscale_SOURCES = bwscale.c
 bwscale_LDADD = ${BU}
