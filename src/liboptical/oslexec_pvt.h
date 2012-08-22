@@ -263,7 +263,7 @@ private:
 };
 
 
-/// Describe one end of a parameter connetion: the parameter number, and
+/// Describe one end of a parameter connection: the parameter number, and
 /// optinally an array index and/or channel number within that parameter.
 struct ConnectedParam {
     int param;            ///< Parameter number (in the symbol table)
@@ -926,7 +926,7 @@ public:
 
     /// Find the named symbol in the (already-executed!) stack of
     /// shaders of the given use, with priority given to
-    /// later laters over earlier layers (if they name the same symbol).
+    /// later layers over earlier layers (if they name the same symbol).
     /// Return NULL if no such symbol is found.
     Symbol * symbol (ShaderUse use, ustring name);
 
