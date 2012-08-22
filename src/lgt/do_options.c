@@ -583,7 +583,7 @@ HMitem	debug_items[] =
     { "RGB", "trace color computation", 0, 0, 0, 0, DEBUG_RGB },
     { "refraction", "stats on refracted rays", 0, 0, 0, 0, DEBUG_REFRACT },
     { "normals", "info on surface normal checking", 0, 0, 0, 0, DEBUG_NORML },
-    { "shadows", "stats on shadowed vs. illumated pixels", 0, 0, 0, 0, DEBUG_SHADOW },
+    { "shadows", "stats on shadowed vs. illuminated pixels", 0, 0, 0, 0, DEBUG_SHADOW },
     { "cell size", "no help", 0, 0, 0, 0, DEBUG_CELLSIZE },
     { "octree", "dumps octree data structure", 0, 0, 0, 0, DEBUG_OCTREE },
     { 0, 0, 0, 0, 0, 0, 0 }
