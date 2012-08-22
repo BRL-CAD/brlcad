@@ -22,7 +22,7 @@
  * Controller for network ray-tracing
  *
  * Operating as both a network client and server, starts remote
- * invocations of "rtsrv" via "rsh", then handles incomming
+ * invocations of "rtsrv" via "rsh", then handles incoming
  * connections offering cycles, accepting input (solicited and
  * unsolicited) via the pkg.c routines, and storing the results in
  * files and/or a framebuffer.
@@ -182,7 +182,7 @@ struct servers {
     double		sr_s_e;		/* sum of all elapsed seconds */
     double		sr_s_sq_cpu;	/* sum of cpu times squared */
     double		sr_s_sq_pix;	/* sum of pixels squared */
-    double		sr_s_sq_e;	/* sum of all elapsed seceonds squared */
+    double		sr_s_sq_e;	/* sum of all elapsed seconds squared */
     int		sr_nsamp;	/* number of samples summed over */
     double		sr_prep_cpu;	/* sum of cpu time for preps */
     double		sr_l_percent;	/* last: percent of CPU */
@@ -390,7 +390,7 @@ int		rem_debug;		/* dispatcher debugging flag */
 int	work_allocate_method = OPT_MOVIE;
 char *allocate_method[] = {
     "Frame",
-    "Load Avaraging",
+    "Load Averaging",
     "One per Frame"};
 
 
@@ -999,7 +999,7 @@ start_servers(struct timeval *nowp)
 /*
  *			I S _ N I G H T
  *
- *  Indicate whether the given time is "night", ie, off-peak time.
+ *  Indicate whether the given time is "night", i.e., off-peak time.
  *  The simple algorithm used here does not take into account
  *  using machines in another time zone, nor is it nice to
  *  machines used by hackers who stay up late.
@@ -1023,7 +1023,7 @@ is_night( struct timeval *tv )
 /*
  *			I S _ H A C K E R S _ N I G H T
  *
- *  Indicate whether the given time is "night", ie, off-peak time,
+ *  Indicate whether the given time is "night", i.e., off-peak time,
  *  for a computer hacker, who stays up late.
  *  The simple algorithm used here does not take into account
  *  using machines in another time zone.
@@ -1679,7 +1679,7 @@ all_done(void)
  *  If there is work to do, and a free server, send work.
  *  One assignment will be given to each free server.  If there are
  *  servers that do not have a proper number of assignments (to ensure
- *  good pipelining), then additional passes will be made, untill all
+ *  good pipelining), then additional passes will be made, until all
  *  servers have a proper number of assignments.
  *
  *  There could be some difficulties with the linked lists changing
@@ -2826,7 +2826,7 @@ add_host(struct ihost *ihp)
     }
     fflush( helper_fp );
 
-    /* Wait briefly to try and catch the incomming connection,
+    /* Wait briefly to try and catch the incoming connection,
      * in case there are several of these spawned in a row.
      */
     check_input(1);
