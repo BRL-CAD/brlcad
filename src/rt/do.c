@@ -131,9 +131,9 @@ old_way(FILE *fp)
 
     viewsize = -42.0;
 
-    /* Sneek a peek at the first character, and then put it back */
+    /* Sneak a peek at the first character, and then put it back */
     if ((c = fgetc(fp)) == EOF) {
-	/* Claim old way, all (ie, nothing) done */
+	/* Claim old way, all (i.e., nothing) done */
 	return 1;
     }
     if (ungetc(c, fp) != c)
@@ -868,9 +868,9 @@ do_frame(int framenumber)
 	bu_debug &= ~BU_DEBUG_MEM_LOG;
 
     /*
-     * Certain parallel systems (eg, Alliant) count the entire
+     * Certain parallel systems (e.g., Alliant) count the entire
      * multi-processor complex as one computer, and charge only once.
-     * This matches the desired behavior here.  Other vendors (eg,
+     * This matches the desired behavior here.  Other vendors (e.g.,
      * SGI) count each processor separately, and charge for all of
      * them.  These results need to be normalized.  Otherwise, all we
      * would know is that a given workload takes about the same amount
@@ -892,8 +892,8 @@ do_frame(int framenumber)
 #endif
 	nutime = utime;
 
-    /* prevent a bogus near-zero time to prevent infinate and
-     * near-infinate results without relying on IEEE floating point
+    /* prevent a bogus near-zero time to prevent infinite and
+     * near-infinite results without relying on IEEE floating point
      * zero comparison.
      */
     if (NEAR_ZERO(nutime, VDIVIDE_TOL)) {
