@@ -99,7 +99,7 @@ usage(const char *argv0)
 	   "\t\t\ts = surface (default)\n"
 	   "  -p\t\tCreates a plot/overlay (.pl) file of open edges for bots that\n"
 	   "\t\taren't closed volumes. <bot_name>.pl will be created in the\n"
-	   "\t\tcurrent directory and will overwrite any exisiting file with the\n"
+	   "\t\tcurrent directory and will overwrite any existing file with the\n"
 	   "\t\tsame name.\n"
 	   "  -r orient\tSelect the bot orientation mode:\n"
 	   "\t\t\t1 = unoriented (default)\n"
@@ -382,7 +382,7 @@ collect_global_obj_file_attributes(struct ga_t *ga)
     bu_log("\tNumber of oriented polygonal faces; numNorFaces = (%zu)\n", ga->numNorFaces);
 
     ga->numFaces = obj_polygonal_v_faces(ga->contents, &ga->attindex_arr_v_faces);
-    bu_log("\tNumber of polygonal faces only identifed by vertices; numFaces = (%zu)\n", ga->numFaces);
+    bu_log("\tNumber of polygonal faces only identified by vertices; numFaces = (%zu)\n", ga->numFaces);
 
     ga->numTexFaces = obj_polygonal_tv_faces(ga->contents, &ga->attindex_arr_tv_faces);
     bu_log("\tNumber of textured polygonal faces; numTexFaces = (%zu)\n", ga->numTexFaces);
@@ -1071,7 +1071,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 
 	    /* set face_type, grouping_type, grouping_index inside gfi
 	     * structure, the purpose of this is so functions called
-	     * later do not need to pass this in seperately
+	     * later do not need to pass this in separately
 	     */
 	    (*gfi)->face_type = face_type;
 	    (*gfi)->grouping_type = grouping_type;
@@ -2432,7 +2432,7 @@ fuse_vertex(struct ga_t *ga,
  * edge of triangle 1 to determine this is a closed edge. Note: In the
  * diagram below, the top vertex of triangle 1 is the same vertex as
  * the top left vertex of triangle 2, the same goes for the bottom
- * right vertex of trinagle 1 and the bottom vertex of triangle 3. The
+ * right vertex of triangle 1 and the bottom vertex of triangle 3. The
  * bottom vertex of triangle 2 (i.e. top left vertex of triangle 3)
  * does not exist in triangle 1.
  *
@@ -2609,10 +2609,10 @@ test_closure(struct ga_t *ga,
  * file for the current grouping of faces will be included in the bot
  * primitive. If the provided normals are smoothing normals, the
  * resulting raytrace of the bot will be smooth. The type of bot
- * created is choosen by the bot_output_mode. If the type of bot
+ * created is chosen by the bot_output_mode. If the type of bot
  * selected is RT_BOT_PLATE or RT_BOT_PLATE_NOCOS the thickness of the
  * bot plates is defined by the parameter bot_thickness. This function
- * will return a non-zero value if an error occured. Bot primitives
+ * will return a non-zero value if an error occurred. Bot primitives
  * will be named according to the grouping name in the obj file with
  * the following exceptions. Characters invalid for BRL-CAD primitive
  * names and operating system file names are converted to
