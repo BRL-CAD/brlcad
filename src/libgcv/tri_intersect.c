@@ -20,7 +20,7 @@
 
 /** @file libgcv/tri_intersect.c
  *
- * Intersect 2 triangles using a modified Möller routine.
+ * Intersect 2 triangles using a modified Moller routine.
  */
 
 #include "common.h"
@@ -134,7 +134,7 @@ int
 gcv_point_in_tri(point_t V0, point_t U0, point_t U1, point_t U2, int i0, int i1)
 {
     fastf_t a, b, c, d0, d1, d2;
-    /* is T1 completly inside T2? */
+    /* is T1 completely inside T2? */
     /* check if V0 is inside tri(U0, U1, U2) */
     a=U1[i1]-U0[i1];
     b=-(U1[i0]-U0[i0]);
