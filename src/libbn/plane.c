@@ -264,7 +264,7 @@ bn_npts_distinct(const int npt, const point_t *pts, const struct bn_tol *tol)
  * @param[in]	a	point 1
  * @param[in]	b	point 2
  * @param[in]	c	point 3
- * @param[in]	tol	Tolerance values for doing calcualtion
+ * @param[in]	tol	Tolerance values for doing calculation
  */
 int
 bn_mk_plane_3pts(fastf_t *plane,
@@ -474,7 +474,7 @@ bn_dist_pt3_line3(fastf_t *dist, fastf_t *pca, const fastf_t *a, const fastf_t *
     vect_t unit_dir;	/* unitized dir vector */
     fastf_t A_P_sq;	/* |P-A|**2 */
     fastf_t t;		/* distance along ray of projection of P */
-    fastf_t dsq;	/* sqaure of distance from p to line */
+    fastf_t dsq;	/* square of distance from p to line */
 
     if (UNLIKELY(bu_debug & BU_DEBUG_MATH))
 	bu_log("bn_dist_pt3_line3(a=(%f %f %f), dir=(%f %f %f), p=(%f %f %f)\n" ,
@@ -593,7 +593,7 @@ bn_dist_line3_line3(fastf_t *dist, const fastf_t *p1, const fastf_t *d1, const f
 
 /**
  * calculate intersection or closest approach of a line and a line
- * segement.
+ * segment.
  *
  * returns:
  *	-2 -> line and line segment are parallel and collinear.
@@ -671,7 +671,7 @@ bn_dist_line3_lseg3(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fas
  * Intersect an infinite line (specified in point and direction vector
  * form) with a plane that has an outward pointing normal.  The
  * direction vector need not have unit length.  The first three
- * elements of the plane equation must form a unit lengh vector.
+ * elements of the plane equation must form a unit length vector.
  *
  * @return -2	missed (ray is outside halfspace)
  * @return -1	missed (ray is inside)
@@ -921,7 +921,7 @@ bn_isect_line2_line2(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fa
      * [ Dy  -Cy ]   [ u ]   [ Hy ]
      *
      * This system can be solved by direct substitution, or by finding
-     * the determinants by Cramers rule:
+     * the determinants by Cramer's rule:
      *
      *	             [ Dx  -Cx ]
      *	det(M) = det [         ] = -Dx * Cy + Cx * Dy
@@ -1045,7 +1045,7 @@ bn_isect_line2_line2(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fa
  *
  * @return -4	A and B are not distinct points
  * @return -3	Lines do not intersect
- * @return -2	Intersection exists, but outside segemnt, < A
+ * @return -2	Intersection exists, but outside segment, < A
  * @return -1	Intersection exists, but outside segment, > B
  * @return 0	Lines are co-linear (special meaning of dist[1])
  * @return 1	Intersection at vertex A
@@ -1221,7 +1221,7 @@ bn_isect_line2_lseg2(fastf_t *dist,
 	goto out;
     }
 
-    /* Check for ctoly intersection with one of the verticies */
+    /* Check for ctoly intersection with one of the vertices */
     if (dist[1] < ctol) {
 	dist[1] = 0;
 	ret = 1;		/* Intersection at A */
@@ -1366,9 +1366,9 @@ bn_isect_lseg2_lseg2(fastf_t *dist,
  *
  *      CLARIFICATION: This function 'bn_isect_lseg3_lseg3'
  *      returns distance values scaled where an intersect at the start
- *      point of the line segement (within tol->dist) results in 0.0
+ *      point of the line segment (within tol->dist) results in 0.0
  *      and when the intersect is at the end point of the line
- *      segement (within tol->dist), the result is 1.0.  Intersects
+ *      segment (within tol->dist), the result is 1.0.  Intersects
  *      before the start point return a negative distance.  Intersects
  *      after the end point result in a return value > 1.0.
  *
@@ -1559,7 +1559,7 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
  *
  *		When return = 1, pdist is the distance along line p0->p1 to the
  *		intersect with line q0->q1. If the intersect is along p0->p1 but
- *		in the opposite direction of vector pdir_i (i.e. occuring before
+ *		in the opposite direction of vector pdir_i (i.e. occurring before
  *		p0 on line p0->p1) then the distance will be negative. The value
  *		if qdist is the same as pdist except it is the distance along line
  *		q0->q1 to the intersect with line p0->p1.
@@ -1798,11 +1798,11 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
 	return 2;
     }
 
-    /* just check that the vertices of the line segement are
+    /* just check that the vertices of the line segment are
      * within distance tolerance of the ray. it may cause problems
      * to also require the ray start and end points to be within
      * distance tolerance of the infinite line associated with
-     * the line segement.
+     * the line segment.
      */
     d1 = bn_distsq_line3_pt3(p,d,a); /* distance of point a to ray */
     d2 = bn_distsq_line3_pt3(p,d,b); /* distance of point b to ray */
@@ -1905,12 +1905,12 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
 	*t = dist1;
 
 	if (a_to_isect_pt_mag_sq < tol->dist_sq) {
-	    /* isect at point a of line segement */
+	    /* isect at point a of line segment */
 	    return 1;
 	}
 
 	if (b_to_isect_pt_mag_sq < tol->dist_sq) {
-	    /* isect at point b of line segement */
+	    /* isect at point b of line segment */
 	    return 2;
 	}
 
@@ -1934,7 +1934,7 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
 	    return -2;
 	}
 
-	return 3; /* isect on line segement a->b but
+	return 3; /* isect on line segment a->b but
 		   * not on the end points
 		   */
     }
@@ -2819,7 +2819,7 @@ bn_does_ray_isect_tri(
     plane_t pl;
     fastf_t dist;
 
-    /* insersect with plane */
+    /* intersect with plane */
 
     VSUB2(VA, A, V);
     VSUB2(VB, B, V);
@@ -2937,7 +2937,7 @@ bn_isect_ray_tri(dist_p, N_p, Alpha_p, Beta_p, pt, dir, V, A, B)
     VSUB2(pt_V, V, pt);
     VCROSS(VPP, pt_V, dir);
 
-    /* alpha is projection of VPP onto VA (not necessaily in plane)
+    /* alpha is projection of VPP onto VA (not necessarily in plane)
      * If alpha < 0.0 then p is "before" point V on line V->A
      * No-one can figure out why alpha > NdotDir is important.
      */
@@ -2945,7 +2945,7 @@ bn_isect_ray_tri(dist_p, N_p, Alpha_p, Beta_p, pt, dir, V, A, B)
     if (alpha < 0.0 || alpha > fabs(NdotDir)) return 0;
 
 
-    /* beta is projection of VPP onto VB (not necessaily in plane) */
+    /* beta is projection of VPP onto VB (not necessarily in plane) */
     beta = VDOT(VB, VPP) * (-1 * entleave);
     if (beta < 0.0 || beta > fabs(NdotDir)) return 0;
 
@@ -3014,7 +3014,7 @@ min = (%g, %g, %g), max = (%g, %g, %g), half_eqn = (%g, %g, %g, %g)\n",
  * Calculate the square of the distance of closest approach for two
  * lines.
  *
- * The lines are specifed as a point and a vector each.  The vectors
+ * The lines are specified as a point and a vector each.  The vectors
  * need not be unit length.  P and d define one line; Q and e define
  * the other.
  *
@@ -3028,10 +3028,10 @@ min = (%g, %g, %g), max = (%g, %g, %g), half_eqn = (%g, %g, %g, %g)\n",
  * pt1 is the point of closest approach on the first line
  * pt2 is the point of closest approach on the second line
  *
- * This algoritm is based on expressing the distance sqaured, taking
+ * This algorithm is based on expressing the distance squared, taking
  * partials with respect to the two unknown parameters (dist[0] and
- * dist[1]), seeting the two partails equal to 0, and solving the two
- * simutaneous equations
+ * dist[1]), setting the two partails equal to 0, and solving the two
+ * simultaneous equations
  */
 int
 bn_distsq_line3_line3(fastf_t *dist, fastf_t *P, fastf_t *d_in, fastf_t *Q, fastf_t *e_in, fastf_t *pt1, fastf_t *pt2)
@@ -3166,7 +3166,7 @@ bn_isect_planes(fastf_t *pt, const fastf_t (*planes)[4], const size_t pl_count)
 /**
  * B N _ I S E C T _ L S E G _ R P P
  *@brief
- * Intersect a line segment with a rectangular parallelpiped (RPP)
+ * Intersect a line segment with a rectangular parallelepiped (RPP)
  * that has faces parallel to the coordinate planes (a clipping RPP).
  * The RPP is defined by a minimum point and a maximum point.  This is
  * a very close relative to rt_in_rpp() from librt/shoot.c
