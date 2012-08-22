@@ -577,7 +577,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
     }
     /*
      * If we get to this point then the input format is known to be of
-     * a diffrent type than the output format.  This will require a
+     * a different type than the output format.  This will require a
      * cast to, from or to and from double.
      *
      * Because the number of steps is not known initially, we get
@@ -819,7 +819,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	    }
 	    from = hold;
 	    /*
-	     * The input is now pointing to a host formated buffer of
+	     * The input is now pointing to a host formatted buffer of
 	     * the requested output format.
 	     */
 
