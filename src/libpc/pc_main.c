@@ -48,7 +48,7 @@ pc_init_pcset(struct pc_pc_set *pcsp)
 
 /**
  * PC_GETPARAMETER
- * allocates memory for the parameter if parameter storage accoring to
+ * allocates memory for the parameter if parameter storage according to
  * the integer argument
  *
  * 0 : data storage by expression
