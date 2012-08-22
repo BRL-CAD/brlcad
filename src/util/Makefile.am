@@ -209,7 +209,7 @@ bw_ps_LDADD = ${BU}
 bw_ps_SOURCES = bw-ps.c
 
 # per-program CPPFLAGS wasn't added until automake 1.7
-bw_rle_SOURCES = bw-rle.c
+bw_rle_SOURCES = bw-rle.c rle_args.c rle_args.h
 bw_rle_LDADD = ${RLE} ${BU} ${SYSV}
 bw_rle_CFLAGS = ${RLE_CPPFLAGS}
 
@@ -235,7 +235,7 @@ bwrect_SOURCES = bwrect.c
 bwrect_LDADD = ${BU}
 
 bwrot_SOURCES = bwrot.c
-bwrot_LDADD = ${BU}
+bwrot_LDADD = ${BU} 
 
 bwscale_SOURCES = bwscale.c
 bwscale_LDADD = ${BU}
@@ -327,7 +327,7 @@ pix_ps_SOURCES = pix-ps.c
 pix_ps_LDADD = ${BU}
 
 # per-program CPPFLAGS wasn't added until automake 1.7
-pix_rle_SOURCES = pix-rle.c
+pix_rle_SOURCES = pix-rle.c rle_args.c rle_args.h
 pix_rle_LDADD = ${RLE} ${BU} ${SYSV}
 pix_rle_CFLAGS = ${RLE_CPPFLAGS}
 

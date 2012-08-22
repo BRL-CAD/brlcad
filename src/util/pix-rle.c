@@ -39,9 +39,10 @@
  */
 #include "rle.h"
 
+#include "./rle_args.h"
 
 static rle_hdr outrle;
-#define outfp outrle.rle_file
+
 static char comment[128];
 #if HAVE_GETHOSTNAME
 static char host[128];
@@ -50,10 +51,10 @@ static rle_pixel **rows;
 static time_t now;
 static char *who;
 
-static FILE *infp;
-static char *infile;
+static FILE *infp = NULL;
+static char *infile = NULL;
 
-static int background[3];
+static int background[3] = {0, 0, 0};
 
 static size_t file_width = 512;
 static size_t file_height = 512;
@@ -65,79 +66,6 @@ Usage: pix-rle [-h] [-s squarefilesize]  [-C r/g/b]\n\
 If omitted, the .pix file is taken from stdin\n\
 and the .rle file is written to stdout\n";
 
-
-/*
- * G E T _ A R G S
- */
-static int
-get_args(int argc, char **argv)
-{
-    int c;
-
-    while ((c = bu_getopt(argc, argv, "hs:w:n:C:")) != -1) {
-	switch (c) {
-	    case 'h':
-		/* high-res */
-		file_height = file_width = 1024;
-		break;
-	    case 's':
-		/* square file size */
-		file_height = file_width = atoi(bu_optarg);
-		break;
-	    case 'w':
-		file_width = atoi(bu_optarg);
-		break;
-	    case 'n':
-		file_height = atoi(bu_optarg);
-		break;
-	    case 'C':
-		{
-		    char *cp = bu_optarg;
-		    int *conp = background;
-
-		    /* premature null => atoi gives zeros */
-		    for (c=0; c < 3; c++) {
-			*conp++ = atoi(cp);
-			while (*cp && *cp++ != '/')
-			    ;
-		    }
-		}
-		break;
-	    default:
-	    case '?':
-		return 0;
-	}
-    }
-    if (argv[bu_optind] != NULL) {
-	if ((infp = fopen((infile=argv[bu_optind]), "r")) == NULL) {
-	    perror(infile);
-	    return 0;
-	}
-	bu_optind++;
-    } else {
-	infile = "-";
-    }
-    if (argv[bu_optind] != NULL) {
-	if (bu_file_exists(argv[bu_optind], NULL)) {
-	    (void) fprintf(stderr,
-			   "\"%s\" already exists.\n",
-			   argv[bu_optind]);
-	    bu_exit (1, NULL);
-	}
-	if ((outfp = fopen(argv[bu_optind], "w")) == NULL) {
-	    perror(argv[bu_optind]);
-	    return 0;
-	}
-    }
-    if (argc > ++bu_optind)
-	(void) fprintf(stderr, "pix-rle: Excess arguments ignored\n");
-
-    if (isatty(fileno(infp)) || isatty(fileno(outfp)))
-	return 0;
-    return 1;
-}
-
-
 /*
  * M A I N
  */
@@ -148,8 +76,8 @@ main(int argc, char **argv)
     size_t y;
 
     infp = stdin;
-    outfp = stdout;
-    if (!get_args(argc, argv)) {
+    outrle.rle_file = stdout;
+    if (!get_args(argc, argv, &outrle, &infp, &infile, (int **)&background, &file_width, &file_height)) {
 	(void)fputs(usage, stderr);
 	bu_exit (1, NULL);
     }
@@ -221,7 +149,7 @@ main(int argc, char **argv)
     rle_puteof(&outrle);
 
     fclose(infp);
-    fclose(outfp);
+    fclose(outrle.rle_file);
 
     return 0;
 }
