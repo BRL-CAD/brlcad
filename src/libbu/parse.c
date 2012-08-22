@@ -608,7 +608,7 @@ HIDDEN int
 parse_struct_lookup(register const struct bu_structparse *sdp, register const char *name, const char *base, const char *const value)
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     register char *loc;
@@ -1250,7 +1250,7 @@ void
 bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sdp, const char *base)
 /* vls to print into */
 /* structure description */
-/* structure ponter */
+/* structure pointer */
 {
     register char *loc;
     register int lastoff = -1;
@@ -1550,7 +1550,7 @@ void
 bu_parse_mm(const struct bu_structparse *sdp, const char *name, char *base, const char *value)
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     double *p = (double *)(base+sdp->sp_offset);
