@@ -394,7 +394,7 @@ fb_genhelp(void)
  * F B _ I S _ L I N E A R _ C M A P
  *
  * Check for a color map being linear in the upper 8 bits of R, G, and
- * B.  Returns 1 for linear map, 0 for non-linear map (ie,
+ * B.  Returns 1 for linear map, 0 for non-linear map (i.e.,
  * non-identity map).
  */
 int
