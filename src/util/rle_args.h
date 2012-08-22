@@ -17,15 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/rle_args.h
- */
+
+#include "common.h"
 
 #include <stdlib.h>
 
 #include "rle.h"
-#define outfp outrle->rle_file
 
-int
+
+extern int
 get_args(int argc, char **argv, rle_hdr *outrle, FILE** infp, char** infile, int **background, size_t* file_width, size_t* file_height);
 
 /*

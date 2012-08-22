@@ -17,21 +17,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/rle_args.c
- */
 
 #include "./rle_args.h"
 
 #include "bu.h"
 #include "bio.h"
-/*
- * G E T _ A R G S
- */
+
+
 int
 get_args(int argc, char **argv, rle_hdr *outrle, FILE** infp, char** infile, int **background, size_t* file_width, size_t* file_height)
 {
     int c;
-    (void)file_height;
 
     while ((c = bu_getopt(argc, argv, "hs:w:n:C:")) != -1) {
 	switch (c) {
@@ -83,7 +79,7 @@ get_args(int argc, char **argv, rle_hdr *outrle, FILE** infp, char** infile, int
 			   argv[bu_optind]);
 	    bu_exit(1, NULL);
 	}
-	if ((outfp = fopen(argv[bu_optind], "w")) == NULL) {
+	if ((outrle->rle_file = fopen(argv[bu_optind], "w")) == NULL) {
 	    perror(argv[bu_optind]);
 	    return 0;
 	}
@@ -91,7 +87,7 @@ get_args(int argc, char **argv, rle_hdr *outrle, FILE** infp, char** infile, int
     if (argc > ++bu_optind)
 	(void) fprintf(stderr, "pix-rle: Excess arguments ignored\n");
 
-    if (isatty(fileno(*infp)) || isatty(fileno(outfp)))
+    if (isatty(fileno(*infp)) || isatty(fileno(outrle->rle_file)))
 	return 0;
     return 1;
 }
