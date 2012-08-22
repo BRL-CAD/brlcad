@@ -20,7 +20,7 @@
 
 /** @file libgcv/tri_intersect.h
  *
- * Intersect 2 triangles using a modified Möller routine.
+ * Intersect 2 triangles using a modified Moller routine.
  */
 
 
