@@ -24,7 +24,7 @@
  * Math Grammar
  *
  * Plan:
- *	1. Expression grammar definiton
+ *	1. Expression grammar definition
  *	2. Variable grammar completion
  *	3. lazy function evaluation
  *
