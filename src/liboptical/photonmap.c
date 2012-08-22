@@ -19,7 +19,7 @@
  */
 /** @file liboptical/photonmap.c
  *
- * Implemention of Photon Mapping
+ * Implementation of Photon Mapping
  *
  */
 
@@ -46,7 +46,7 @@ struct Photon *Emit[PM_MAPS];	/* Emitted Photons */
 struct Photon CurPh;
 vect_t BBMin;			/* Min Bounding Box */
 vect_t BBMax;			/* Max Bounding Box */
-int Depth;			/* Used to determine how many times the photon has propogated */
+int Depth;			/* Used to determine how many times the photon has propagated */
 int PType;			/* Used to determine the type of Photon: Direct, Indirect, Specular, Caustic */
 int PInit;
 int EPL;			/* Emitted Photons For the Light */
@@ -1555,7 +1555,7 @@ HeapUp(struct PhotonSearch *S, int ind)
 /*
   Sift the new Root node down, by choosing the child with the highest number
   since choosing a child with the highest number may reduce the number of
-  recursions the number will have to propogate
+  recursions the number will have to propagate
 */
 void
 HeapDown(struct PhotonSearch *S, int ind)
@@ -1608,7 +1608,7 @@ IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_t nor
 	}
 
 	/* There is no precomputed irradiance for this point, allocate space
-	   for a new one if neccessary. */
+	   for a new one if necessary. */
 	if (IC[idx].Num) {
 	    IC[idx].List = (struct IrradNode*)bu_realloc(IC[idx].List, sizeof(struct IrradNode)*(IC[idx].Num+1), "List");
 	}
