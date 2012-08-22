@@ -281,6 +281,12 @@ add_test(bu_quote_test_22 tester_bu_quote 22)  # "\"\"hello\"\""
 add_test(bu_quote_test_23 tester_bu_quote 23)  # "\"\"\"hello\"\"\""
 
 #
+#  ************ rb_*.c tests *************
+#
+BRLCAD_ADDEXEC(tester_bu_redblack bu_redblack.c libbu NO_INSTALL LOCAL)
+add_test(bu_redblack_test tester_bu_redblack)
+
+#
 #  ************ timer.c tests *************
 #
 BRLCAD_ADDEXEC(tester_bu_timer bu_timer.c libbu NO_INSTALL LOCAL)
