@@ -1372,7 +1372,7 @@ retry:
 	     * (since the light on the surface from such would be
 	     * very small).  We also tolerance the normal on the
 	     * light to the visibility ray so that points on the
-	     * perimiter of the presented area of the light source
+	     * perimeter of the presented area of the light source
 	     * are not chosen.  This helps avoid shooting at points
 	     * on the light source which machine floating-point
 	     * inaccuracies would cause the ray to miss.
@@ -1449,7 +1449,7 @@ retry:
 
 	if (rdebug & RDEBUG_LIGHT)
 	    bu_log("shooting at approximating sphere\n");
-	/* We're going to shoot at a point on the apporximating
+	/* We're going to shoot at a point on the approximating
 	 * sphere for the light source.  We pick a point on the
 	 * circle (presented area) for the light source from this
 	 * angle.  This is done by picking random radius and angle
