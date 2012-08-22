@@ -153,7 +153,7 @@ SUBDIRS = \
 	${TKHTMLDIR} \
 	${TKTABLEDIR} \
 	${OPENNURBSDIR} \
-	${TNTDIR} 
+	${TNTDIR}
 
 endif
 # end ONLY_RTS
