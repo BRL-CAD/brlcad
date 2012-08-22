@@ -3126,8 +3126,11 @@ nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, const struct
     return;
 }
 
-
-void
+/*
+ * return 1 when faceuse is empty, otherwise return 0
+ *
+ */
+int
 nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 {
     struct loopuse *lu;
@@ -3144,6 +3147,7 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
     int done = 0;
     int match = 0;
     int killed_lu = 0;
+    int ret = 0;
 
     BN_CK_TOL(tol);
     NMG_CK_FACEUSE(fu);
@@ -3203,10 +3207,12 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 			    (unsigned long)fu, loopuse_count_tmp, (unsigned long)lu_tmp);
 		}
 		if (loopuse_count_tmp < 1) {
-		    lu_done = 1;
-		    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- contains no loopuse\n",
-			    (unsigned long)fu);
-		    bu_bomb("nmg_triangulate_rm_degen_loopuse(): faceuse contains no loopuse\n");
+		    if (rt_g.NMG_debug & DEBUG_TRI) {
+			bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse 0x%lx -- contains no loopuse\n",
+				(unsigned long)fu);
+		    }
+		    ret = 1;
+		    goto out;
 		}
 
 		lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
@@ -3279,8 +3285,11 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 			bu_log("nmg_triangulate_rm_degen_loopuse(): %d remaining loopuse in faceuse after killing loopuse 0x%lx\n", loopuse_count_tmp, (unsigned long)lu_tmp);
 		    }
 		    if (loopuse_count_tmp < 1) {
-			lu_done = 1;
-			bu_bomb("nmg_triangulate_rm_degen_loopuse(): faceuse contains no loopuse\n");
+			if (rt_g.NMG_debug & DEBUG_TRI) {
+			    bu_log("nmg_triangulate_rm_degen_loopuse(): faceuse contains no loopuse\n");
+			}
+			ret = 1;
+			goto out;
 		    }
 
 		    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
@@ -3292,8 +3301,9 @@ nmg_triangulate_rm_degen_loopuse(struct faceuse *fu, const struct bn_tol *tol)
 	}
     }
 
+out:
     bu_free(book_keeping_array, "book_keeping_array");
-    return;
+    return ret;
 }
 
 
@@ -4466,12 +4476,16 @@ nmg_build_loopuse_tree(struct faceuse *fu, struct loopuse_tree_node **root, cons
     }
 }
 
-
-void
+/*
+ * return 1 when faceuse is empty, otherwise return 0.
+ *
+ */
+int
 nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 {
     int ccw_result;
     int vert_count = 0;
+    int ret = 0;
 
     /* boolean variables */
     int cut = 0;
@@ -4535,7 +4549,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 	}
     }
     if (!need_triangulation) {
-	return;
+	goto out2;
     }
 
     /* do some cleanup before anything else */
@@ -4549,15 +4563,11 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 	nmg_lu_reorient(lu);
     }
 
-    /* remove loopuse with < 3 vertices i.e. degenerate loopuse, this
-     * function does not check if returning faceuse contains no loopuse.
-     * the above cleanup can create loopuse with < 3 vertices
-     */
-    nmg_triangulate_rm_degen_loopuse(fu, tol);
-
-    if (BU_LIST_IS_EMPTY(&fu->lu_hd)) {
-	/* faceuse contains no loopuse */
-	return;
+    /* remove loopuse with < 3 vertices i.e. degenerate loopuse */
+    if (nmg_triangulate_rm_degen_loopuse(fu, tol)) {
+	/* true when faceuse is empty */
+	ret = 1;
+	goto out2;
     }
 
     if (rt_g.NMG_debug & DEBUG_TRI) {
@@ -4677,8 +4687,11 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
     }
 
     /* removes loopuse with < 3 vertices i.e. degenerate loopuse */
-    /* does not check if returning faceuse contains no loopuse */
-    nmg_triangulate_rm_degen_loopuse(fu, tol);
+    if (nmg_triangulate_rm_degen_loopuse(fu, tol)) {
+	/* true when faceuse is empty */
+	ret = 1;
+	goto out1;
+    }
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	/* set the loopuse orientation to OT_SAME */
@@ -4689,12 +4702,16 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 	validate_tbl2d("nmg_triangulate_fu() after triangulation, after lu_reorient", tbl2d, fu);
     }
 
+out1:
     while (BU_LIST_WHILE(pt, pt2d, tbl2d)) {
 	BU_LIST_DEQUEUE(&pt->l);
 	bu_free((char *)pt, "pt2d free");
     }
 
     bu_free((char *)tbl2d, "discard tbl2d");
+
+out2:
+    return ret;
 }
 
 
@@ -4901,27 +4918,53 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 void
 nmg_triangulate_shell(struct shell *s, const struct bn_tol *tol)
 {
-    struct faceuse *fu;
+    struct faceuse *fu, *fu_next;
 
     BN_CK_TOL(tol);
     NMG_CK_SHELL(s);
 
-    if (rt_g.NMG_debug & DEBUG_TRI) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_TRI)) {
 	bu_log("nmg_triangulate_shell(): Triangulating NMG shell.\n");
     }
 
     (void)nmg_edge_g_fuse(&s->l.magic, tol);
     (void)nmg_unbreak_region_edges(&s->l.magic);
 
-    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
+    while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
 	NMG_CK_FACEUSE(fu);
-	if (fu->orientation == OT_SAME)
-	    nmg_triangulate_fu(fu, tol);
+	fu_next = BU_LIST_PNEXT(faceuse, &fu->l);
+
+	if (UNLIKELY(fu->orientation != OT_SAME && fu->orientation != OT_OPPOSITE)) {
+	    /* sanity check */
+	    bu_bomb("nmg_triangulate_shell(): Invalid faceuse orientation. (1)\n");
+	}
+
+	if (fu->orientation == OT_SAME) {
+	    if (fu_next == fu->fumate_p) {
+		/* Make sure that fu_next is not the mate of fu
+		 * because if fu is killed so will its mate
+		 * resulting in an invalid fu_next.
+		 */
+		fu_next = BU_LIST_PNEXT(faceuse, &fu_next->l);
+	    }
+	    if (UNLIKELY(fu->fumate_p->orientation != OT_OPPOSITE)) {
+		/* sanity check */
+		bu_bomb("nmg_triangulate_shell(): Invalid faceuse orientation. (2)\n");
+	    }
+	    if (nmg_triangulate_fu(fu, tol)) {
+		/* true when faceuse is empty */
+		if (nmg_kfu(fu)) {
+		    bu_bomb("nmg_triangulate_shell(): Shell contains no faceuse.\n");
+		}
+	    }
+	}
+	fu = fu_next;
     }
 
     nmg_vsshell(s, s->r_p);
 
-    if (rt_g.NMG_debug & DEBUG_TRI) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_TRI)) {
 	bu_log("nmg_triangulate_shell(): Triangulating NMG shell completed.\n");
     }
 }

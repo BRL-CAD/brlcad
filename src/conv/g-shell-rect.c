@@ -983,10 +983,7 @@ shrink_wrap(struct shell *s)
     bu_ptbl_init(&verts, 128, "verts");
     Split_side_faces(s, &verts);
 
-    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
-	if (fu->orientation == OT_SAME)
-	    nmg_triangulate_fu(fu, &tol);
-    }
+    nmg_triangulate_shell(s, &tol);
 
     nmg_split_loops_into_faces(&s->l.magic, &tol);
 

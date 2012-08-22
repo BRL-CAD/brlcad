@@ -49,7 +49,8 @@ static const char *usage="Usage:\n\t%s [-d] [-v] [-x librt_debug_flag] [-X NMG_d
 static long polygons=0;
 static int stats=0;
 
-static void
+/* returns 1 if faceuse was not written because it was empty */
+static int
 write_fu_as_sgp( fu )
     struct faceuse *fu;
 {
@@ -57,7 +58,9 @@ write_fu_as_sgp( fu )
 
     NMG_CK_FACEUSE( fu );
 
-    nmg_triangulate_fu( fu, &tol );
+    if (nmg_triangulate_fu( fu, &tol )) {
+	return 1;
+    }
 
     for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
     {
@@ -77,28 +80,38 @@ write_fu_as_sgp( fu )
 	    fprintf( fp_out, "%f %f %f\n", vg->coord[X], -vg->coord[Y], -vg->coord[Z] );
 	}
     }
+    return 0;
 }
 
 static void
-write_model_as_sgp( m )
-    struct model *m;
+write_model_as_sgp(struct model *m)
 {
     struct nmgregion *r;
     struct shell *s;
-    struct faceuse *fu;
+    struct faceuse *fu, *fu_next;
 
-    NMG_CK_MODEL( m );
+    NMG_CK_MODEL(m);
 
-    for ( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
-    {
-	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
-	{
-	    for ( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
-	    {
-		if ( fu->orientation != OT_SAME )
-		    continue;
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 
-		write_fu_as_sgp( fu );
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+
+	    fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
+	    while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
+
+		NMG_CK_FACEUSE(fu);
+		fu_next = BU_LIST_PNEXT(faceuse, &fu->l);
+		if (fu->orientation == OT_SAME) {
+		    if (fu_next == fu->fumate_p) {
+			fu_next = BU_LIST_PNEXT(faceuse, &fu_next->l);
+		    }
+		    if (write_fu_as_sgp(fu)) {
+			if (nmg_kfu(fu)) {
+			    bu_bomb("write_model_as_sgp() shell is empty");
+			}
+		    }
+		}
+		fu = fu_next;
 	    }
 	}
     }

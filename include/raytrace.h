@@ -4407,8 +4407,8 @@ RT_EXPORT extern void nmg_triangulate_shell(struct shell *s,
 
 RT_EXPORT extern void nmg_triangulate_model(struct model *m,
 					    const struct bn_tol *tol);
-RT_EXPORT extern void nmg_triangulate_fu(struct faceuse *fu,
-					 const struct bn_tol *tol);
+RT_EXPORT extern int nmg_triangulate_fu(struct faceuse *fu,
+					const struct bn_tol *tol);
 RT_EXPORT extern void nmg_dump_model(struct model *m);
 
 /*  nmg_tri_mc.c */

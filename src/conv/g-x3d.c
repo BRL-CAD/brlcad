@@ -568,6 +568,13 @@ process_non_light(struct model *m) {
 		    continue;
 		}
 
+		if ( fu->fumate_p == next_fu )
+		{
+		    /* make sure next_fu is not the mate of fu */
+		    next_fu = BU_LIST_PNEXT( faceuse, &next_fu->l );
+		}
+
+
 		/* check if this faceuse has any holes */
 		for ( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 		{
@@ -580,7 +587,15 @@ process_non_light(struct model *m) {
 			if ( !BU_SETJUMP )
 			{
 			    /* try */
-			    nmg_triangulate_fu( fu, &tol );
+			    if ( nmg_triangulate_fu( fu, &tol ) )
+			    {
+				if ( nmg_kfu( fu ) )
+				{
+				    (void) nmg_ks( s );
+				    shell_is_dead = 1;
+
+				}
+			    }
 			} else {
 			    /* catch */
 			    bu_log( "A face has failed triangulation!\n" );

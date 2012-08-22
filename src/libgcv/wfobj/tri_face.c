@@ -221,7 +221,11 @@ triangulateFace(
     }
 
     /* triangulate face */
-    nmg_triangulate_fu(fu, &tol);
+    if (nmg_triangulate_fu(fu, &tol)) {
+	*faces = NULL;
+	*numFaces = 0;
+	return;
+    }
 
     /* face now composed of triangular loops */
     *numFaces = 0;

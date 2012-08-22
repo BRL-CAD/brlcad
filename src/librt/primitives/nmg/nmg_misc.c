@@ -8609,6 +8609,7 @@ nmg_make_faces_within_tol(struct shell *s, const struct bn_tol *tol)
     }
 
     for (i = 0; i < BU_PTBL_END(&faceuses); i++) {
+
 	fu = (struct faceuse *)BU_PTBL_GET(&faceuses, i);
 
 	/* check if all the vertices for this face lie on the plane */
@@ -8616,7 +8617,10 @@ nmg_make_faces_within_tol(struct shell *s, const struct bn_tol *tol)
 	    plane_t pl = HINIT_ZERO; /* sanity */
 
 	    /* Need to triangulate this face */
-	    nmg_triangulate_fu(fu, tol);
+	    if (nmg_triangulate_fu(fu, tol)) {
+		/* true when faceuse is empty */
+		continue;
+	    }
 
 	    /* split each triangular loop into its own face */
 	    (void)nmg_split_loops_into_faces(&fu->l.magic, tol);
