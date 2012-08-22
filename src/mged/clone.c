@@ -118,7 +118,7 @@ struct nametbl {
 static struct nametbl obj_list;
 
 /**
- * a polynamial value for representing knots
+ * a polynomial value for representing knots
  */
 struct knot {
     vect_t pt;
@@ -127,7 +127,7 @@ struct knot {
 
 
 /**
- * a spline path with various segments, break points, and polynamial
+ * a spline path with various segments, break points, and polynomial
  * values.
  */
 struct spline {
@@ -631,7 +631,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 	    }
 
 	    if ((dp=db_diradd(wdbp->dbip, bu_vls_addr(name), -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == RT_DIR_NULL) {
-		bu_log("An error has occured while adding a new object to the database.");
+		bu_log("An error has occurred while adding a new object to the database.");
 		return NULL;
 	    }
 
@@ -775,7 +775,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 
 
 /**
- * copy an object, recursivley copying all of the object's contents
+ * copy an object, recursively copying all of the object's contents
  * if it's a combination/region.
  */
 static struct directory *
