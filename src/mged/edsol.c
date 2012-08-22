@@ -971,7 +971,7 @@ arb5_edge(int arg)
     es_menu = arg;
     es_edflag = EARB;
     if (arg == 8) {
-	/* move point 5 at loaction 4 */
+	/* move point 5 at location 4 */
 	es_edflag = PTARB;
 	es_menu = 4;
     }
@@ -5325,7 +5325,7 @@ sedit(void)
 	    break;
 
 	case ECMD_HYP_ROT_H:
-	    /* rotate hyperolid height vector */
+	    /* rotate hyperbolid height vector */
 	    {
 		struct rt_hyp_internal *hyp =
 		    (struct rt_hyp_internal *)es_int.idb_ptr;
@@ -6256,7 +6256,7 @@ sedit(void)
 		    plane_t view_pl;
 		    fastf_t dist;
 
-		    /* construct a plane perpendiculr to view direction
+		    /* construct a plane perpendicular to view direction
 		     * that passes through ARS point being moved
 		     */
 		    VSET(view_dir, 0.0, 0.0, 1.0);
@@ -6309,7 +6309,7 @@ sedit(void)
 		    plane_t view_pl;
 		    fastf_t dist;
 
-		    /* construct a plane perpendiculr to view direction
+		    /* construct a plane perpendicular to view direction
 		     * that passes through ARS point being moved
 		     */
 		    VSET(view_dir, 0.0, 0.0, 1.0);
@@ -6361,7 +6361,7 @@ sedit(void)
 		    plane_t view_pl;
 		    fastf_t dist;
 
-		    /* construct a plane perpendiculr to view direction
+		    /* construct a plane perpendicular to view direction
 		     * that passes through ARS point being moved
 		     */
 		    VSET(view_dir, 0.0, 0.0, 1.0);
