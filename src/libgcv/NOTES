@@ -10,7 +10,7 @@ http://colladamaya.svn.sourceforge.net/viewvc/colladamaya/trunk/FCollada/)
 
 Inventor files: (LGPL license)
 http://oss.sgi.com/projects/inventor/
-http://www.mevislab.de/inventor/ (website changed, see src/libgcv in dmtogl 
+http://www.mevislab.de/inventor/ (website changed, see src/libgcv in dmtogl
                                   branch of BRL-CAD for patch)
 http://fl-inventor.sourceforge.net/
 
