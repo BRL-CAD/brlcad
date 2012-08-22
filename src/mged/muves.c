@@ -633,7 +633,7 @@ f_e_muves(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int argc, c
 
 /* F _ L _ M U V E S
  *
- * routine to list the muves comoponents
+ * routine to list the muves components
  */
 int
 f_l_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
@@ -709,7 +709,7 @@ f_l_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
 /* F _ T _ M U V E S
  *
- * routine to list the muves comoponents
+ * routine to list the muves components
  */
 int
 f_t_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc), const char *UNUSED(argv[]))
