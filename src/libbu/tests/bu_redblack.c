@@ -32,6 +32,7 @@
 #include "bu.h"
 #include "./rb_internals.h"
 
+
 /**
  * C O M P A R E F U N C ()
  * Generic Comparison function that internally casts
@@ -39,24 +40,29 @@
  *
  * Comment to be deleted if considered useless.
  */
-int compareFunc(const void* a, const void* b)
+static int
+compareFunc(const void* a, const void* b)
 {
     if (*(int*)a > *(int*)b) return(1);
     if (*(int*)a < *(int*)b) return(-1);
     return(0);
 }
 
+
 /**
  * D I S P L A Y N O D E ( )
  * Function  to be applied to every node of the
  * red-black tree.
  */
-void displayNode(void* data, int dep)
+static void
+displayNode(void* data, int dep)
 {
     printf("Depth = %d Value = %s, ", dep, (char*)data);
 }
 
-int main()
+
+int
+main(int ac, char *av[])
 {
     struct bu_rb_tree *testTree;
     void *searchedValue;
@@ -64,29 +70,34 @@ int main()
     int i = 0;
     int passed = 0;
     int diagnosisOption = 0;
-    
+
+    if (ac > 1) {
+	printf("uh oh, unexpected args after %s\n", av[0]);
+	return 1;
+    }
+
     testTree = bu_rb_create1("TestingTree", compareFunc);
     for (i = 0; i < 6; i++)
-        bu_rb_insert(testTree, sources[i]);
+	bu_rb_insert(testTree, sources[i]);
 
     printf("SEARCH TEST: \n\tSEARCHING AN EXISTING VALUE:\n");
     searchedValue = bu_rb_search(testTree, 0, "h");
 
     if (searchedValue == NULL) {
-        printf("\t\t\t[FAILED]\n\t\t\tShould be h \n");
+	printf("\t\t\t[FAILED]\n\t\t\tShould be h \n");
     } else {
-        printf("\t\t\t[PASSED]\n");
-        passed++;
+	printf("\t\t\t[PASSED]\n");
+	passed++;
     }
 
     printf("\tSEARCHING AN INEXISTENT VALUE:\n");
     searchedValue = bu_rb_search(testTree, 0, "not");
 
     if (searchedValue == 0) {
-        printf("\t\t\t[PASSED]\n");
-        passed++;
+	printf("\t\t\t[PASSED]\n");
+	passed++;
     } else {
-        printf("\t\t\t[FAILED]\n\t\t\tShould be NULL\n");
+	printf("\t\t\t[FAILED]\n\t\t\tShould be NULL\n");
     }
 
     printf("DELETE TEST: \n\tDELETING AN EXISTENT VALUE:\n");
@@ -97,50 +108,50 @@ int main()
     searchedValue = bu_rb_search(testTree, 0, "a");
 
     if (searchedValue == 0) {
-        printf("\t\t\t[PASSED]\n");
-        passed++;
+	printf("\t\t\t[PASSED]\n");
+	passed++;
     } else {
-        printf("\t\t\t[FAILED]\n\t\t\tShould be NULL\n");
+	printf("\t\t\t[FAILED]\n\t\t\tShould be NULL\n");
     }
-    
+
     /* user tests */
     printf("/RED-BLACK TREE WALKING TESTS :\n");
     printf("Input 1 to display the values walk or 0 for a more"
-           " detailed diagnosis display\n.");
+	   " detailed diagnosis display\n.");
     scanf("%d", &diagnosisOption);
 
     if (diagnosisOption != 1 && diagnosisOption != 0) {
-        printf("ERROR AT CHOICE INPUT\n");
-        return 1;
+	printf("ERROR AT CHOICE INPUT\n");
+	return 1;
     }
     if (diagnosisOption == 1) {
-        printf("\nPREORDER:\n");
-        bu_rb_walk(testTree, 0, displayNode, 0);
-        searchedValue = bu_rb_search(testTree, 0, "h");
-        rb_rot_right(testTree->rbt_current, 0);
-        printf("\nPREORDER AFTER ROTATE RIGH:\n");
-        bu_rb_walk(testTree, 0, displayNode, 0);
-        printf("\nINORDER:\n");
-        bu_rb_walk(testTree, 0, displayNode, 1);
-        printf("\n");
-        printf("\nPOSTORDER\n");
-        bu_rb_walk(testTree, 0, displayNode, 2);
-        printf("\n");
+	printf("\nPREORDER:\n");
+	bu_rb_walk(testTree, 0, displayNode, 0);
+	searchedValue = bu_rb_search(testTree, 0, "h");
+	rb_rot_right(testTree->rbt_current, 0);
+	printf("\nPREORDER AFTER ROTATE RIGH:\n");
+	bu_rb_walk(testTree, 0, displayNode, 0);
+	printf("\nINORDER:\n");
+	bu_rb_walk(testTree, 0, displayNode, 1);
+	printf("\n");
+	printf("\nPOSTORDER\n");
+	bu_rb_walk(testTree, 0, displayNode, 2);
+	printf("\n");
     } else {
-        printf("\nPREORDER:\n");
-        bu_rb_diagnose_tree(testTree, 0, 0);
-        searchedValue = bu_rb_search(testTree, 0, "h");
-        rb_rot_right(testTree->rbt_current, 0);
-        printf("\nPREORDER AFTER ROTATE RIGH:\n");
-        bu_rb_diagnose_tree(testTree, 0, 0);
-        printf("\nINORDER:\n");
-        bu_rb_diagnose_tree(testTree, 0, 1);
-        printf("\nPOSTORDER\n");
-        bu_rb_diagnose_tree(testTree, 0, 2);
+	printf("\nPREORDER:\n");
+	bu_rb_diagnose_tree(testTree, 0, 0);
+	searchedValue = bu_rb_search(testTree, 0, "h");
+	rb_rot_right(testTree->rbt_current, 0);
+	printf("\nPREORDER AFTER ROTATE RIGH:\n");
+	bu_rb_diagnose_tree(testTree, 0, 0);
+	printf("\nINORDER:\n");
+	bu_rb_diagnose_tree(testTree, 0, 1);
+	printf("\nPOSTORDER\n");
+	bu_rb_diagnose_tree(testTree, 0, 2);
     }
 
     if (passed != 3)
-        return 1;
+	return 1;
     return 0;
 }
 
