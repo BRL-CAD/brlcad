@@ -82,7 +82,7 @@ struct RenderInfo {
     Color3 reflect_weight;            /* Color that will be multiplied by the
 					 color returned by the reflected ray */
     Color3 transmit_weight;           /* Color that will be multiplied by the
-					 color returned by the transmited ray */
+					 color returned by the transmitted ray */
 };
 
 /* Required structure to initialize an OSL shader */
@@ -91,7 +91,7 @@ struct ShaderInfo {
     typedef std::pair< TypeDesc, Vec3 > TypeVec;
 
     std::string shadername; // Name of the shader (type of shader)
-    std::string layername;  // Name of the layer  (name of this partilar instance)
+    std::string layername;  // Name of the layer  (name of this particular instance)
     std::vector< std::pair<std::string, int> > iparam;         // int parameters
     std::vector< std::pair<std::string, float> > fparam;       // float parameters
     std::vector< std::pair<std::string, Color3> > cparam;      // color parameters
