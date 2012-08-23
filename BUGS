@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* step-g crashing on mac with lazy symbol load failure missing:
+  brlcad::SurfaceTree::SurfaceTree(ON_BrepFace*, bool, int)
+
 * metaball tessellation enters either an infinite loop or an absurdly
   long tessellation process - observed on Linux 64 bit system - quick
   test:
