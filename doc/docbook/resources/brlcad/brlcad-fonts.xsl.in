@@ -39,7 +39,7 @@
             <!--     <xsl:call-template name="inline.charseq"/> -->
         </fo:inline>
     </xsl:template>
-    
+
     <!-- ============== Bold AND Italic fonts  ================== -->
     <xsl:template match="d:emphasis[@role='bold-italic']|d:emphasis[@role='italic-bold']">
         <fo:inline font-weight="bold" font-style="italic">
@@ -53,20 +53,20 @@
         <fo:inline text-decoration="underline">
             <xsl:apply-templates/>
         </fo:inline>
-    </xsl:template>   
+    </xsl:template>
     <xsl:template match="d:emphasis[@role='underline-bold']|d:emphasis[@role='bold-underline']">
         <fo:inline font-weight="bold" text-decoration="underline">
             <xsl:apply-templates/>
         </fo:inline>
     </xsl:template>
-    
+
     <!-- ============== Strike Through fonts  ================== -->
     <xsl:template match="d:emphasis[@role='strikethrough']">
         <fo:inline text-decoration="line-through">
             <xsl:apply-templates/>
         </fo:inline>
     </xsl:template>
- 
+
     <!-- Change the font size of a para (from Dean Nelson) -->
     <xsl:template match="d:para[@font-size]">
        <fo:block font-size="{@font-size}">
