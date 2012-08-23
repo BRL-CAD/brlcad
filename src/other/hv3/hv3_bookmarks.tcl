@@ -13,7 +13,7 @@ Changes made to the bookmarks system are saved in the state-file
 selected by the -statefile command-line option. If no -statefile option
 is supplied, then changes are discarded when the browser window is closed.
 
-Initially, there are no folders in the database. Folders can be 
+Initially, there are no folders in the database. Folders can be
 added to the bookmarks list by pressing the "New Folder" button. You can then
 organize existing bookmarks into folders by dragging and dropping them.
 Clicking the folder icon beside a folder expands or hides it's contents.
@@ -31,17 +31,17 @@ SNAPSHOTS:
 
 Hv3's bookmarks system has one unique feature - it allows you to save a
 copy of a bookmarked document in the database along with the bookmark
-itself. This copy is called a snapshot. The snapshot contains all 
+itself. This copy is called a snapshot. The snapshot contains all
 document content and style information, but any scripts are discarded
 before it is saved. Images are not saved. Snapshots are useful for two
-reasons - they can be viewed when the original resource is not available 
+reasons - they can be viewed when the original resource is not available
 (i.e. because you are not online) and they make it easier to search the
 bookmarks database (see below).
 
 You can tell if a bookmark has an accompanying snapshot by looking at
 it's icon. This document (INSTRUCTIONS) has a document icon, indicating
 that it has a snapshot and if the accompanying hyperlink is clicked the
-default action is to load the snapshot into the right-hand frame (this 
+default action is to load the snapshot into the right-hand frame (this
 window). The four Hv3 related links have a different icon, one that
 indicates no snapshot is saved in the database for this link.
 
@@ -56,17 +56,17 @@ When bookmarking a webpage using Ctrl-B or the "File->New Bookmark" menu,
 you can save a snapshot along with the bookmark by checking the "Save website
 text in database" checkbox on the create new bookmark dialog.
 
-Documents can also be imported from the local file system by clicking 
-"Import Data...", then "Import Document Tree". This allows you to select a 
+Documents can also be imported from the local file system by clicking
+"Import Data...", then "Import Document Tree". This allows you to select a
 file-system directory to import. All *.html or *.htm documents within the
-selected directory and any sub-directories are saved with snapshots to 
+selected directory and any sub-directories are saved with snapshots to
 the database. This is useful for creating a searchable full-text database
 of downloaded documentation distributed in html format.
 
 SEARCHING:
 
-You can search the bookmarks database using SQLite's FTS3 extension by 
-entering a string in the search box at the top of this frame and 
+You can search the bookmarks database using SQLite's FTS3 extension by
+entering a string in the search box at the top of this frame and
 pressing enter.
   }
 
@@ -187,7 +187,7 @@ pressing enter.
       if {$rc == 0} {
         set ::hv3::bookmarks::fts3_warning {
           <DIV style="font-size:small;color:darkred">
-          <APPLET 
+          <APPLET
             style="float:right"
             class=bookmarks_button
             text="Rebuild Fts3 Database"
@@ -220,7 +220,7 @@ pressing enter.
     set controller [$html_hv3 win].controller
     set treewidget [$tree_hv3 html].treewidget
 
-    controller $controller $browser $html_hv3 $treewidget 
+    controller $controller $browser $html_hv3 $treewidget
     treewidget $treewidget $browser $controller
 
     #pack $controller -before [$html_hv3 win] -side top -fill x
@@ -247,7 +247,7 @@ pressing enter.
 
     set N [::hv3::sqlitedb one {SELECT max(linkid) FROM bm_tree2}]
     incr N
-    
+
     if {($target_type eq "f") && (
          $inFolder || $drag_type eq "b" || $target_id <= 0
         )
@@ -256,20 +256,20 @@ pressing enter.
       lappend new_items $N $target_id $drag_type $drag_id
     } else {
       set targetfolder [::hv3::sqlitedb one {
-        SELECT folderid 
-        FROM bm_tree2 
+        SELECT folderid
+        FROM bm_tree2
         WHERE objecttype = $target_type AND objectid = $target_id
       }]
     }
 
     ::hv3::sqlitedb eval {
-      SELECT objecttype, objectid 
+      SELECT objecttype, objectid
       FROM bm_tree2
       WHERE folderid = $targetfolder
       ORDER BY linkid ASC
     } {
       set isTarget [expr {
-          $objecttype eq $target_type && 
+          $objecttype eq $target_type &&
           $objectid == $target_id
       }]
       if {!$insertAfter && $isTarget} {
@@ -296,9 +296,9 @@ pressing enter.
     }
   }
 
-  # The argument is a tkhtml3 widget. This proc generates an HTML 
+  # The argument is a tkhtml3 widget. This proc generates an HTML
   # document equivalent to the one currently loaded into the widget.
-  # All style information is inlined in a <STYLE> block in the 
+  # All style information is inlined in a <STYLE> block in the
   # document head.
   #
   proc create_snapshot {hv3} {
@@ -446,7 +446,7 @@ pressing enter.
 
           # Create the bm_tree2 record.
           ::hv3::sqlitedb eval {
-            INSERT INTO bm_tree2(folderid, objecttype, objectid) 
+            INSERT INTO bm_tree2(folderid, objecttype, objectid)
             VALUES($iParentId, 'f', $iFolderId)
           }
 
@@ -494,7 +494,7 @@ pressing enter.
           -font Hv3DefaultFont       \
           -borderwidth 1             \
           -relief raised             \
-          -pady 1                    
+          -pady 1
 
       set menu [::hv3::menu ${win}.importexport.menu]
       ${win}.importexport configure -menu $menu
@@ -512,10 +512,10 @@ pressing enter.
           -command [list ::hv3::bookmarks::import_dom]
       ::hv3::button ${win}.newfolder                        \
           -text "New Folder"                                \
-          -command [list $self click_new_folder] 
+          -command [list $self click_new_folder]
       ::hv3::button ${win}.newbookmark                      \
           -text "New Bookmark"                              \
-          -command [list $self click_new_bookmark] 
+          -command [list $self click_new_bookmark]
       ::hv3::button ${win}.expand                           \
           -text "Expand All"                                \
           -command [list $self expand_all]
@@ -548,8 +548,8 @@ pressing enter.
 
     method open_folders {objecttype objectid} {
       set parent [::hv3::sqlitedb one {
-        SELECT folderid 
-        FROM bm_tree2 
+        SELECT folderid
+        FROM bm_tree2
         WHERE objecttype = $objecttype AND objectid = $objectid
       }]
       if {$parent eq "" || $parent == 0} return
@@ -596,7 +596,7 @@ pressing enter.
 
       set myTreeStart $y
       incr y $yincr
-      ::hv3::sqlitedb transaction { 
+      ::hv3::sqlitedb transaction {
 
         if {$isAutoOpen} {
           foreach {page pageid} [$myController current] {}
@@ -609,7 +609,7 @@ pressing enter.
             $self open_folders $page $pageid
           }
         }
-  
+
         # Color for special links.
         #
         set c darkblue
@@ -631,7 +631,7 @@ pressing enter.
         #
         set y [$self drawSubTree $x $y 0]
         incr y $yincr
-  
+
         # Create the special "trash" folder.
         #
         set f Hv3DefaultFont
@@ -665,7 +665,7 @@ pressing enter.
             $C create text $x2 $y -text "History" -anchor sw -font $f -fill $c
         ]
         set myTextId($tid) {recent -1 "Click to view all recently viewed URIs"}
-  
+
         $C configure -scrollregion [concat 0 0 [lrange [$C bbox all] 2 3]]
 
         if {$isAutoOpen} {
@@ -706,7 +706,7 @@ pressing enter.
 
       if {
           $myDragObject eq "" &&
-          $myPressedItem ne "" && 
+          $myPressedItem ne "" &&
           (abs($myPressedX-$x) > 6 || abs($myPressedY-$y)>6)
       } {
         $self set_drag_tag $myPressedItem
@@ -771,14 +771,14 @@ pressing enter.
       ::hv3::bookmarks::refresh_gui
     }
 
-    method release_event {x y} { 
+    method release_event {x y} {
       if {$myPressedItem eq ""} return
 
       set C ${win}.canvas
       if {[$C type $myPressedItem] eq "text"} {
         $C itemconfigure $myPressedItem -fill $myPressedItemColor
       }
-      
+
       set x [$C canvasx $x]
       set y [$C canvasy $y]
 
@@ -811,7 +811,7 @@ pressing enter.
           if {$dropid ne "" && $myDragObject ne ""} {
             $self drop $dropid $myDragObject [expr $myDragY > $myPressedY]
           }
-        
+
           $self populate_tree
         }
       } else {
@@ -820,7 +820,7 @@ pressing enter.
           $self click_event $item
         }
       }
-   
+
       # Clear the DragObject and PressedItem variables. This has to
       # be in a [catch] block as the call to [click_event] above may
       # have destroyed the whole widget.
@@ -835,7 +835,7 @@ pressing enter.
 
       if {$click eq ""} return
       set clicktype [$C type $click]
- 
+
       if {$clicktype eq "text"} {
         foreach {type id msg} $myTextId($click) {}
         switch -exact -- $type {
@@ -875,8 +875,8 @@ pressing enter.
           }
           bookmark {
             ::hv3::sqlitedb eval {
-              UPDATE bm_bookmark2 SET has_snapshot = 
-                CASE WHEN has_snapshot = 0 THEN 0 
+              UPDATE bm_bookmark2 SET has_snapshot =
+                CASE WHEN has_snapshot = 0 THEN 0
                      WHEN has_snapshot = 1 THEN 2
                      ELSE 1 END
               WHERE bookmarkid = $id
@@ -910,7 +910,7 @@ pressing enter.
       ::hv3::sqlitedb eval {
         SELECT bookmarkid, caption, uri, has_snapshot
         FROM bm_tree2, bm_bookmark2
-        WHERE 
+        WHERE
           bm_tree2.folderid = $folderid AND
           bm_tree2.objecttype = 'b' AND
           bm_tree2.objectid = bm_bookmark2.bookmarkid
@@ -939,15 +939,15 @@ pressing enter.
       }
 
       ::hv3::sqlitedb eval {
-        SELECT 
-          bm_folder2.folderid AS thisfolderid, 
+        SELECT
+          bm_folder2.folderid AS thisfolderid,
           name
         FROM bm_tree2, bm_folder2
-        WHERE 
+        WHERE
           bm_tree2.folderid = $folderid AND
           bm_tree2.objecttype = 'f' AND
           bm_tree2.objectid = bm_folder2.folderid
-        ORDER BY bm_tree2.linkid 
+        ORDER BY bm_tree2.linkid
       } {
         set font Hv3DefaultFont
         if {$page eq "folder" && $pageid eq $thisfolderid} {
@@ -1004,8 +1004,8 @@ pressing enter.
     set Template {
       <STYLE>
         :visited { color: darkblue; }
-        .lastvisited, .uri, .description { 
-          display: block ; padding-left: 10ex 
+        .lastvisited, .uri, .description {
+          display: block ; padding-left: 10ex
         }
         .time,.info {font-size: small; text-align: center; font-style: italic}
         .info { margin: 0 10px }
@@ -1058,7 +1058,7 @@ pressing enter.
     set applet ""
     if {$id != 0} {
       set applet "
-        <APPLET 
+        <APPLET
           style=\"float:right\"
           class=bookmarks_button
           text=\"Edit Bookmark...\"
@@ -1088,19 +1088,19 @@ pressing enter.
 
     append zRes [start_page "Recently Visited URIs"]
 
-    set sql { 
-      SELECT uri, title, lastvisited 
-      FROM visiteddb 
+    set sql {
+      SELECT uri, title, lastvisited
+      FROM visiteddb
       WHERE title IS NOT NULL
-      ORDER BY oid DESC 
+      ORDER BY oid DESC
       LIMIT 200
     }
     set N 0
-    ::hv3::sqlitedb eval { 
-      SELECT uri, title, lastvisited 
-      FROM visiteddb 
+    ::hv3::sqlitedb eval {
+      SELECT uri, title, lastvisited
+      FROM visiteddb
       WHERE title IS NOT NULL
-      ORDER BY oid DESC 
+      ORDER BY oid DESC
       LIMIT 200
     } {
       incr N
@@ -1121,7 +1121,7 @@ pressing enter.
     ::hv3::sqlitedb transaction {
       ::hv3::sqlitedb eval {
         DELETE FROM bm_fulltext2;
-        INSERT INTO bm_fulltext2(docid, caption, snapshot) 
+        INSERT INTO bm_fulltext2(docid, caption, snapshot)
           SELECT bookmarkid, caption, html_to_text(snapshot)
           FROM bm_bookmark2;
         DROP TABLE IF EXISTS bm_rebuild_fulltext2;
@@ -1140,16 +1140,16 @@ pressing enter.
 
     if {$::hv3::have_fts3} {
       set sql {
-        SELECT 
-          bookmarkid, 
+        SELECT
+          bookmarkid,
           bm_bookmark2.caption AS caption,
           bm_bookmark2.uri AS uri,
           bm_bookmark2.description AS description,
           bm_bookmark2.has_snapshot AS has_snapshot,
           snippet(bm_fulltext2) AS snippet
         FROM bm_fulltext2, bm_bookmark2
-        WHERE 
-          bm_fulltext2 MATCH $search AND 
+        WHERE
+          bm_fulltext2 MATCH $search AND
           bm_fulltext2.docid = bookmarkid
         ORDER BY result_transform(offsets(bm_fulltext2)) DESC
         LIMIT 500
@@ -1157,15 +1157,15 @@ pressing enter.
     } else {
       set like "%${search}%"
       set sql {
-        SELECT 
-          bookmarkid, 
+        SELECT
+          bookmarkid,
           bm_bookmark2.caption AS caption,
           bm_bookmark2.uri AS uri,
           bm_bookmark2.description AS description,
           bm_bookmark2.has_snapshot AS has_snapshot,
           '' AS snippet
         FROM bm_bookmark2
-        WHERE 
+        WHERE
           caption     LIKE $like OR
           description LIKE $like OR
           uri         LIKE $like
@@ -1201,7 +1201,7 @@ pressing enter.
         SELECT name FROM bm_folder2 WHERE folderid = $folderid
       }]
       append zRes [start_page "$name
-        <APPLET 
+        <APPLET
           style=\"float:right\"
           class=bookmarks_button
           text=\"Rename Folder...\"
@@ -1214,7 +1214,7 @@ pressing enter.
       }
       if {$folderid == -1} {
         append zRes [start_page "Trash
-          <APPLET 
+          <APPLET
             style=\"float:right\"
             class=bookmarks_button
             text=\"Permanently delete trashcan contents\"
@@ -1223,14 +1223,14 @@ pressing enter.
         "]
       }
     }
- 
+
     append zRes $::hv3::bookmarks::fts3_warning
 
     set N 0
     ::hv3::sqlitedb eval {
       SELECT bookmarkid, caption, uri, description, image, has_snapshot
       FROM bm_tree2, bm_bookmark2
-      WHERE 
+      WHERE
         bm_tree2.folderid = $folderid AND
         bm_tree2.objecttype = 'b' AND
         bm_tree2.objectid = bm_bookmark2.bookmarkid
@@ -1245,14 +1245,14 @@ pressing enter.
     append zRes <HR>
     ::hv3::sqlitedb eval {
       SELECT linkid, folderid AS thisfolderid, '.. (parent folder)' AS name
-      FROM bm_tree2 
+      FROM bm_tree2
       WHERE objecttype = 'f' AND objectid = $folderid
 
       UNION ALL
 
       SELECT linkid, bm_folder2.folderid AS thisfolderid, name
       FROM bm_tree2, bm_folder2
-      WHERE 
+      WHERE
         bm_tree2.folderid = $folderid AND
         bm_tree2.objecttype = 'f' AND
         bm_tree2.objectid = bm_folder2.folderid
@@ -1314,7 +1314,7 @@ pressing enter.
       ::hv3::label ${win}.filter_label -text "Search: " -background white
       ::hv3::entry  ${win}.filter
       ::hv3::button ${win}.go -text Go -command $searchcmd
-  
+
       pack ${win}.filter_label -side left -padx 5 -pady 10
       pack ${win}.filter -side left
       pack ${win}.go -side left
@@ -1328,13 +1328,13 @@ pressing enter.
 
     method TargetCmd {node} {
       set bookmarks_page [$node attr -default "" bookmarks_page]
- 
+
       if {$myPage eq "snapshot" && [$node tag] eq "a"} {
         set obj [::tkhtml::uri [$myHv3 resolve_uri [$node attr href]]]
         set uri [$obj get_no_fragment]
 
         set bookmarkid [::hv3::sqlitedb one {
-          SELECT bookmarkid FROM bm_bookmark2 
+          SELECT bookmarkid FROM bm_bookmark2
           WHERE uri = $uri AND has_snapshot
           ORDER BY bookmarkid DESC
         }]
@@ -1349,7 +1349,7 @@ pressing enter.
           return ::hv3::bookmarks::noop
         }
       }
-      
+
       if {$bookmarks_page ne ""} {
         $myHv3 goto "home://bookmarks/[join $bookmarks_page /]"
         return ::hv3::bookmarks::noop
@@ -1371,8 +1371,8 @@ pressing enter.
       $myHv3 parse {
         <STYLE>
           :visited { color: darkblue; }
-          .lastvisited, .uri, .description { 
-            display: block ; padding-left: 10ex 
+          .lastvisited, .uri, .description {
+            display: block ; padding-left: 10ex
           }
           .time,.info {font-size: small; text-align: center; font-style: italic}
           .info { margin: 0 10px }
@@ -1407,7 +1407,7 @@ pressing enter.
       expr {([winfo reqheight $win] + $descent - $ascent) / 2}
     }
 
-    method set_page_id {page pageid} { 
+    method set_page_id {page pageid} {
       set myPage $page
       set myPageId $pageid
       $myTree populate_tree 1
@@ -1420,8 +1420,8 @@ pressing enter.
 
   proc db_delete_folder_contents {folderid} {
     ::hv3::sqlitedb eval {
-      SELECT objectid AS thisfolderid 
-      FROM bm_tree2 
+      SELECT objectid AS thisfolderid
+      FROM bm_tree2
       WHERE folderid = $folderid AND objecttype = 'f'
     } {
       db_delete_folder_contents $thisfolderid
@@ -1430,7 +1430,7 @@ pressing enter.
     if {$::hv3::have_fts3} {
       ::hv3::sqlitedb eval {
         DELETE FROM bm_fulltext2 WHERE rowid IN (
-          SELECT objectid FROM bm_tree2 
+          SELECT objectid FROM bm_tree2
           WHERE folderid = $folderid AND objecttype = 'b'
         );
       }
@@ -1440,11 +1440,11 @@ pressing enter.
 
     ::hv3::sqlitedb eval {
       DELETE FROM bm_folder2 WHERE folderid IN (
-        SELECT objectid FROM bm_tree2 
+        SELECT objectid FROM bm_tree2
         WHERE folderid = $folderid AND objecttype = 'f'
       );
       DELETE FROM bm_bookmark2 WHERE bookmarkid IN (
-        SELECT objectid FROM bm_tree2 
+        SELECT objectid FROM bm_tree2
         WHERE folderid = $folderid AND objecttype = 'b'
       );
       DELETE FROM bm_tree2 WHERE folderid = $folderid
@@ -1458,7 +1458,7 @@ pressing enter.
   }
 
   #
-  # Each match is worth a number of points based on whether it was 
+  # Each match is worth a number of points based on whether it was
   # found in the caption (0), description (1) or snapshot (2) column.
   # Matches with large scores are displayed before those with smaller
   # scores.
@@ -1534,7 +1534,7 @@ pressing enter.
 
     ::hv3::sqlitedb eval {
       INSERT INTO bm_bookmark2
-      (caption, uri, description, has_snapshot, snapshot) 
+      (caption, uri, description, has_snapshot, snapshot)
       VALUES($zCaption, $zUri, $zDescription, $iSnapshot, $zSnapshot)
     }
 
@@ -1589,16 +1589,16 @@ pressing enter.
 
     ::hv3::sqlitedb transaction {
       ::hv3::sqlitedb eval {
-        UPDATE bm_bookmark2 
+        UPDATE bm_bookmark2
         SET caption = $caption, uri = $uri, description = $description
         WHERE bookmarkid = $bookmarkid
       }
       if {$::hv3::have_fts3} {
         ::hv3::sqlitedb eval {
-          UPDATE bm_fulltext2 
+          UPDATE bm_fulltext2
           SET caption = $caption, description = $description
           WHERE rowid = $bookmarkid
-        } 
+        }
       } else {
         catch { ::hv3::sqlitedb eval {CREATE TABLE bm_rebuild_fulltext2(a)} }
       }
@@ -1687,7 +1687,7 @@ pressing enter.
     grid .new.l_desc    .new.desc -pady 5 -padx 5
 
     grid configure .new.caption -columnspan 3 -sticky ew
-    grid configure .new.uri -columnspan 3 -sticky ew 
+    grid configure .new.uri -columnspan 3 -sticky ew
     grid configure .new.desc -columnspan 3 -sticky ewns
 
     grid configure .new.l_caption -sticky e
@@ -1738,8 +1738,8 @@ pressing enter.
 
     focus .new.caption
     ::hv3::sqlitedb eval {
-      SELECT caption, uri, description 
-      FROM bm_bookmark2 
+      SELECT caption, uri, description
+      FROM bm_bookmark2
       WHERE bookmarkid = $bookmarkid
     } {}
     .new.caption insert 0 $caption
@@ -1809,7 +1809,7 @@ pressing enter.
 
         # Create the bm_tree2 record.
         ::hv3::sqlitedb eval {
-          INSERT INTO bm_tree2(folderid, objecttype, objectid) 
+          INSERT INTO bm_tree2(folderid, objecttype, objectid)
           VALUES($iParentId, 'f', $iFolderId)
         }
 
@@ -1927,7 +1927,7 @@ pressing enter.
     $hv3 reset 0
     $hv3 goto $zUri
     set zSnapshot [create_snapshot $hv3]
-   
+
     set titlenode [$hv3 html search title]
     if {$titlenode ne "" && [llength [$titlenode children]]>0} {
       set zCaption [[lindex [$titlenode children] 0] text]
@@ -1979,7 +1979,7 @@ pressing enter.
       set iElemFolder  [
         db_store_new_folder $iTreeFolder "HTMLElement Sub-classes"
       ]
-      
+
       #set fname [file normalize [file join $::hv3::scriptdir dom_events.html]]
       #import_local_uri $iFolder file://$fname
 
@@ -1998,15 +1998,15 @@ pressing enter.
         } elseif { [string match *Event* $localcmd] } {
           set folder $iEventFolder
         } elseif { [lsearch \
-          {History Location Screen Window Navigator FramesList} $localcmd]>=0 
+          {History Location Screen Window Navigator FramesList} $localcmd]>=0
         } {
           set folder $iNSFolder
         } elseif { [lsearch \
-          {HTMLDocument HTMLElement NodePrototype Text} $localcmd]>=0 
+          {HTMLDocument HTMLElement NodePrototype Text} $localcmd]>=0
         } {
           set folder $iTreeFolder
         } elseif { [lsearch \
-          {NodeListC NodeListS HTMLCollectionC HTMLCollectionS} $localcmd]>=0 
+          {NodeListC NodeListS HTMLCollectionC HTMLCollectionS} $localcmd]>=0
         } {
           set folder $iContFolder
         } elseif { [lsearch {CSSStyleDeclaration} $localcmd]>=0 } {
