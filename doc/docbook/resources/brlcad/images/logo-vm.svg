@@ -156,19 +156,19 @@
   <style
    id="style3501"
    type="text/css">
-   
+
     .str0 {stroke:#373435;stroke-width:0.319958}
     .fil0 {fill:url(#id0)}
     .fil1 {fill:url(#id1)}
     .fil2 {fill:url(#id2)}
     .fil4 {fill:url(#id3)}
     .fil3 {fill:url(#id4)}
-   
+
   </style>
 
-  
-  
-  
+
+
+
  <filter
    id="filter3795"
    inkscape:collect="always">
@@ -743,7 +743,7 @@
  <style
    id="style4535"
    type="text/css">
-   
+
     .str1 {stroke:#373435;stroke-width:0.247442}
     .str0 {stroke:#373435;stroke-width:0.247442;stroke-linejoin:bevel}
     .fil1 {fill:none}
@@ -794,7 +794,7 @@
     .fil4 {fill:#A1A1A1}
     .fil5 {fill:#A3A3A3}
     .fil41 {fill:#A8A8A8}
-   
+
   </style>
 
   <filter
@@ -840,8 +840,8 @@
    fy="389.50504"
    r="148.85715" />
 
-  
-  
+
+
  <radialGradient
    inkscape:collect="always"
    xlink:href="#linearGradient2254"
