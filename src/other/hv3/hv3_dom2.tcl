@@ -153,33 +153,33 @@ snit::type ::hv3::dom::HTMLDocument {
   #-------------------------------------------------------------------------
   # The document collections (DOM level 1)
   #
-  #     HTMLDocument.images[] 
+  #     HTMLDocument.images[]
   #     HTMLDocument.forms[]
   #     HTMLDocument.anchors[]
   #     HTMLDocument.links[]
-  #     HTMLDocument.applets[] 
+  #     HTMLDocument.applets[]
   #
   # TODO: applets[] is supposed to contain "all the OBJECT elements that
   # include applets and APPLET (deprecated) elements in a document". Here
   # only the APPLET elements are collected.
   #
-  js_getobject images  { 
-    hv3::dom::HTMLCollection %AUTO% [$self dom] $myHv3 img 
+  js_getobject images  {
+    hv3::dom::HTMLCollection %AUTO% [$self dom] $myHv3 img
   }
-  js_getobject forms { 
-    hv3::dom::HTMLCollection %AUTO% [$self dom] $myHv3 form 
+  js_getobject forms {
+    hv3::dom::HTMLCollection %AUTO% [$self dom] $myHv3 form
   }
-  js_getobject anchors { 
-    hv3::dom::HTMLCollection %AUTO% [$self dom] $myHv3 {a[name]} 
+  js_getobject anchors {
+    hv3::dom::HTMLCollection %AUTO% [$self dom] $myHv3 {a[name]}
   }
-  js_getobject links { 
-    hv3::dom::HTMLCollection %AUTO% [$self dom] $myHv3 {area,a[href]} 
+  js_getobject links {
+    hv3::dom::HTMLCollection %AUTO% [$self dom] $myHv3 {area,a[href]}
   }
-  js_getobject applets { 
-    hv3::dom::HTMLCollection %AUTO% [$self dom] $myHv3 applet 
+  js_getobject applets {
+    hv3::dom::HTMLCollection %AUTO% [$self dom] $myHv3 applet
   }
 
-  js_scall getElementsByTagName {THIS tag} { 
+  js_scall getElementsByTagName {THIS tag} {
     set obj [hv3::dom::HTMLCollection %AUTO% [$self dom] $myHv3 $tag]
     $obj configure -finalizable 1
     list object $obj
@@ -193,11 +193,11 @@ snit::type ::hv3::dom::HTMLDocument {
   # returns the value stored by Put).
   #
   # When setting the cookies property, at most a single cookie is added
-  # to the cookies database. 
+  # to the cookies database.
   #
   # The implementations of the following get and put methods interface
   # directly with the ::hv3::the_cookie_manager object. Todo: Are there
-  # security implications here (in concert with the location property 
+  # security implications here (in concert with the location property
   # perhaps)?
   #
   js_get cookie {
@@ -215,7 +215,7 @@ snit::type ::hv3::dom::HTMLDocument {
   # to calling "document.location.assign(VALUE)".
   #
   js_getobject location { ::hv3::dom::Location %AUTO% [$self dom] $myHv3 }
-  js_put location value { 
+  js_put location value {
     set location [lindex [$self Get location] 1]
     set assign [lindex [$location Get assign] 1]
     $assign Call THIS $value
@@ -228,7 +228,7 @@ snit::type ::hv3::dom::HTMLDocument {
   # by either the "name" or "id" HTML attribute.
   #
   # 1: Have to find some reference for this behaviour...
-  # 2: Maybe this is too inefficient. Maybe it should go to the 
+  # 2: Maybe this is too inefficient. Maybe it should go to the
   #    document.images and document.forms collections.
   #
   js_get * {
@@ -239,7 +239,7 @@ snit::type ::hv3::dom::HTMLDocument {
     # Selectors to use to find document nodes.
     set nameselector [subst -nocommands {[name="$property"]}]
     set idselector   [subst -nocommands {[id="$property"]}]
- 
+
     foreach selector [list $nameselector $idselector] {
       set node [lindex [$myHv3 search $selector] 0]
       if {$node ne "" && [lsearch $tags [$node tag]] >= 0} {
@@ -296,12 +296,12 @@ namespace eval ::hv3::dom {
   #
   } $DOM0Events_ElementCode {
 
-    js_get tagName { 
+    js_get tagName {
       list string [string toupper [$myNode tag]]
     }
-  
+
     js_getobject style { ::hv3::dom::InlineStyle %AUTO% [$self dom] $myNode }
-  
+
     # Get/Put functions for the attributes of $myNode:
     #
     method GetBooleanAttribute {prop} {
@@ -315,7 +315,7 @@ namespace eval ::hv3::dom {
     method PutBooleanAttribute {prop value} {
       $myNode attribute $prop [lindex $value 1]
     }
-  
+
     #-------------------------------------------------------------------
     # The following string attributes are common to all elements:
     #
@@ -334,19 +334,19 @@ namespace eval ::hv3::dom {
     js_get nodeType { list number 1 ;# 1 -> ELEMENT_NODE }
 
     js_getobject childNodes { ::hv3::dom::NodeList %AUTO% [$self dom] $myNode }
-  
+
     #-------------------------------------------------------------------
-    # Get and set the innerHTML property. The implmenetation of this
+    # Get and set the innerHTML property. The implementation of this
     # is in hv3_dom2.tcl.
     #
     js_get innerHTML { list string [::hv3::dom::get_inner_html $myNode] }
-    js_put innerHTML {value} { 
+    js_put innerHTML {value} {
       set code [[$self see] tostring $value ]
       ::hv3::dom::set_inner_html $myHv3 $myNode $code
     }
-  
+
     js_finish {}
-  
+
     method node {} {return $myNode}
   }
 }
@@ -383,7 +383,7 @@ namespace eval ::hv3::dom {
 #
 #     Hv3 will eventually feature a fully-featured XMLHttpRequest object,
 #     similar to that described here:
-#     
+#
 #         http://www.w3.org/TR/XMLHttpRequest/
 #
 #     For now, this is a partial implementation to make the
@@ -430,7 +430,7 @@ namespace eval ::hv3::dom {
         error "Cannot call XMLHttpRequest.open() in state $myReadyState"
       }
 
-      set myRequestHandle [::hv3::download %AUTO%] 
+      set myRequestHandle [::hv3::download %AUTO%]
       $myRequestHandle configure -uri $myUri
       $myRequestHandle configure -finscript [mymethod RequestFinished]
       $myHv3 makerequest $myRequestHandle
