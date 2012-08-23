@@ -26,7 +26,7 @@
       form {
         margin: 0;
       }
-  
+
       .bookmark[active="true"]:hover {
          background-color: #DDDDDD;
        }
@@ -44,7 +44,7 @@
 
         display: block;
         position: relative;
-  
+
         float: left;
         width: 45%;
         min-width: 180px;
@@ -54,7 +54,7 @@
         color: black;
         display: block;
       }
-  
+
       ul {
         padding: 0;
         margin: auto auto auto 15px;
@@ -66,7 +66,7 @@
         display: table;
         position: relative;
       }
-  
+
       #controls {
         border-bottom: solid black 2px;
         background: white;
@@ -85,18 +85,18 @@
         font-weight: normal;
         padding-right: 5px;
       }
-  
+
       body {
         margin-top: 3em;
       }
-  
+
       #searchbox {
         width:100%;
       }
       #searchbox[active="1"] {
         border-color: red;
       }
-  
+
       #undelete {
         display:block;
         float:right;
@@ -363,7 +363,7 @@ function folder_mousedown(elem, event) {
 
 function bookmark_submit(form) {
   var elem = form.parentNode.parentNode
-  
+
   var new_name = form.n.value
   var new_uri =  form.u.value
   var new_tags = form.t.value
@@ -377,7 +377,7 @@ function bookmark_submit(form) {
   a.href = new_uri
 
   app.version = hv3_bookmarks.bookmark_edit(elem)
- 
+
   bookmark_edit(elem)
   return 0
 }
