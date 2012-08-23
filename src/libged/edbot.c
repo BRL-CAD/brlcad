@@ -539,6 +539,108 @@ ged_move_botpt(struct ged *gedp, int argc, const char *argv[])
 }
 
 
+int
+ged_move_botpts(struct ged *gedp, int argc, const char *argv[])
+{
+    static const char *usage = "bot vec vertex_1 [vertex_2 ... vertex_n]";
+    struct directory *dp;
+    struct rt_db_internal intern;
+    struct rt_bot_internal *botip;
+    mat_t mat;
+    vect_t vec;
+    register int i;
+    size_t vertex_i;
+    char *last;
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 4) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    if ((last = strrchr(argv[1], '/')) == NULL)
+	last = (char *)argv[1];
+    else
+	++last;
+
+    if (last[0] == '\0') {
+	bu_vls_printf(gedp->ged_result_str, "%s: illegal input - %s", argv[0], argv[1]);
+	return GED_ERROR;
+    }
+
+    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
+	return GED_ERROR;
+    }
+
+    if (sscanf(argv[2], "%lf %lf %lf", &vec[X], &vec[Y], &vec[Z]) != 3) {
+	bu_vls_printf(gedp->ged_result_str, "%s: bad vector - %s", argv[0], argv[2]);
+	return GED_ERROR;
+    }
+
+    VSCALE(vec, vec, gedp->ged_wdbp->dbip->dbi_local2base);
+
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR) {
+	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
+	return GED_ERROR;
+    }
+
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+	bu_vls_printf(gedp->ged_result_str, "Object is not a BOT");
+	rt_db_free_internal(&intern);
+
+	return GED_ERROR;
+    }
+
+    botip = (struct rt_bot_internal *)intern.idb_ptr;
+
+    for (i = 3; i < argc; ++i) {
+	if (sscanf(argv[i], "%zu", &vertex_i) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad bot vertex index - %s\n", argv[0], argv[i]);
+	    continue;
+	}
+
+	if (vertex_i >= botip->num_vertices) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad bot vertex index - %s\n", argv[0], argv[i]);
+	    continue;
+	}
+
+	VADD2(&botip->vertices[vertex_i*3], vec, &botip->vertices[vertex_i*3]);
+    }
+
+    {
+	mat_t invmat;
+	point_t curr_pt;
+	size_t idx;
+
+	bn_mat_inv(invmat, mat);
+	for (idx = 0; idx < botip->num_vertices; idx++) {
+	    MAT4X3PNT(curr_pt, invmat, &botip->vertices[idx*3]);
+	    VMOVE(&botip->vertices[idx*3], curr_pt);
+	}
+    }
+
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+    rt_db_free_internal(&intern);
+
+    return GED_OK;
+}
+
+
+
 /*
  * Local Variables:
  * mode: C

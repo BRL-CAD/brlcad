@@ -386,6 +386,12 @@ HIDDEN int to_mouse_move_botpt(struct ged *gedp,
 			       ged_func_ptr func,
 			       const char *usage,
 			       int maxargs);
+HIDDEN int to_mouse_move_botpts(struct ged *gedp,
+				int argc,
+				const char *argv[],
+				ged_func_ptr func,
+				const char *usage,
+				int maxargs);
 HIDDEN int to_mouse_move_pipept(struct ged *gedp,
 				int argc,
 				const char *argv[],
@@ -506,12 +512,24 @@ HIDDEN int to_move_botpt(struct ged *gedp,
 			 ged_func_ptr func,
 			 const char *usage,
 			 int maxargs);
+HIDDEN int to_move_botpts(struct ged *gedp,
+			  int argc,
+			  const char *argv[],
+			  ged_func_ptr func,
+			  const char *usage,
+			  int maxargs);
 HIDDEN int to_move_botpt_mode(struct ged *gedp,
 			      int argc,
 			      const char *argv[],
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
+HIDDEN int to_move_botpts_mode(struct ged *gedp,
+			       int argc,
+			       const char *argv[],
+			       ged_func_ptr func,
+			       const char *usage,
+			       int maxargs);
 HIDDEN int to_move_pipept(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
@@ -1016,36 +1034,39 @@ static struct to_cmdtab to_cmds[] = {
     {"move_arb_face",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_move_arb_face},
     {"move_arb_face_mode",	"obj face x y", TO_UNLIMITED, to_move_arb_face_mode, GED_FUNC_PTR_NULL},
     {"move_botpt",	(char *)0, TO_UNLIMITED, to_move_botpt, GED_FUNC_PTR_NULL},
-    {"move_botpt_mode",	"obj i x y", TO_UNLIMITED, to_move_botpt_mode, GED_FUNC_PTR_NULL},
+    {"move_botpts",	(char *)0, TO_UNLIMITED, to_move_botpts, GED_FUNC_PTR_NULL},
+    {"move_botpt_mode",	"obj i mx my", TO_UNLIMITED, to_move_botpt_mode, GED_FUNC_PTR_NULL},
+    {"move_botpts_mode",	"mx my obj i1 [i2 ... iN]", TO_UNLIMITED, to_move_botpts_mode, GED_FUNC_PTR_NULL},
     {"move_pipept",	(char *)0, TO_UNLIMITED, to_move_pipept, GED_FUNC_PTR_NULL},
-    {"move_pipept_mode",	"obj seg_i x y", TO_UNLIMITED, to_move_pipept_mode, GED_FUNC_PTR_NULL},
-    {"mouse_append_pipept",	"obj x y", TO_UNLIMITED, to_mouse_append_pipept_common, ged_append_pipept},
-    {"mouse_constrain_rot",	"coord x y", TO_UNLIMITED, to_mouse_constrain_rot, GED_FUNC_PTR_NULL},
-    {"mouse_constrain_trans",	"coord x y", TO_UNLIMITED, to_mouse_constrain_trans, GED_FUNC_PTR_NULL},
+    {"move_pipept_mode",	"obj seg_i mx my", TO_UNLIMITED, to_move_pipept_mode, GED_FUNC_PTR_NULL},
+    {"mouse_append_pipept",	"obj mx my", TO_UNLIMITED, to_mouse_append_pipept_common, ged_append_pipept},
+    {"mouse_constrain_rot",	"coord mx my", TO_UNLIMITED, to_mouse_constrain_rot, GED_FUNC_PTR_NULL},
+    {"mouse_constrain_trans",	"coord mx my", TO_UNLIMITED, to_mouse_constrain_trans, GED_FUNC_PTR_NULL},
     {"mouse_find_bot_edge",	"obj mx my", TO_UNLIMITED, to_mouse_find_bot_edge, GED_FUNC_PTR_NULL},
     {"mouse_find_botpt",	"obj mx my", TO_UNLIMITED, to_mouse_find_botpt, GED_FUNC_PTR_NULL},
-    {"mouse_find_pipept",	"obj x y", TO_UNLIMITED, to_mouse_find_pipept, GED_FUNC_PTR_NULL},
-    {"mouse_move_arb_edge",	"obj edge x y", TO_UNLIMITED, to_mouse_move_arb_edge, GED_FUNC_PTR_NULL},
-    {"mouse_move_arb_face",	"obj face x y", TO_UNLIMITED, to_mouse_move_arb_face, GED_FUNC_PTR_NULL},
-    {"mouse_move_botpt",	"[-r] obj i x y", TO_UNLIMITED, to_mouse_move_botpt, GED_FUNC_PTR_NULL},
-    {"mouse_move_pipept",	"obj i x y", TO_UNLIMITED, to_mouse_move_pipept, GED_FUNC_PTR_NULL},
-    {"mouse_orotate",	"obj x y", TO_UNLIMITED, to_mouse_orotate, GED_FUNC_PTR_NULL},
-    {"mouse_oscale",	"obj x y", TO_UNLIMITED, to_mouse_oscale, GED_FUNC_PTR_NULL},
-    {"mouse_otranslate",	"obj x y", TO_UNLIMITED, to_mouse_otranslate, GED_FUNC_PTR_NULL},
-    {"mouse_poly_circ",	"x y", TO_UNLIMITED, to_mouse_poly_circ, GED_FUNC_PTR_NULL},
-    {"mouse_poly_cont",	"x y", TO_UNLIMITED, to_mouse_poly_cont, GED_FUNC_PTR_NULL},
-    {"mouse_poly_ell",	"x y", TO_UNLIMITED, to_mouse_poly_ell, GED_FUNC_PTR_NULL},
-    {"mouse_poly_rect",	"x y", TO_UNLIMITED, to_mouse_poly_rect, GED_FUNC_PTR_NULL},
-    {"mouse_prepend_pipept",	"obj x y", TO_UNLIMITED, to_mouse_append_pipept_common, ged_prepend_pipept},
-    {"mouse_ray",	"x y", TO_UNLIMITED, to_mouse_ray, GED_FUNC_PTR_NULL},
-    {"mouse_rect",	"x y", TO_UNLIMITED, to_mouse_rect, GED_FUNC_PTR_NULL},
-    {"mouse_rot",	"x y", TO_UNLIMITED, to_mouse_rot, GED_FUNC_PTR_NULL},
-    {"mouse_rotate_arb_face",	"obj face v x y", TO_UNLIMITED, to_mouse_rotate_arb_face, GED_FUNC_PTR_NULL},
-    {"mouse_scale",	"x y", TO_UNLIMITED, to_mouse_scale, GED_FUNC_PTR_NULL},
-    {"mouse_protate",	"obj attribute x y", TO_UNLIMITED, to_mouse_protate, GED_FUNC_PTR_NULL},
-    {"mouse_pscale",	"obj attribute x y", TO_UNLIMITED, to_mouse_pscale, GED_FUNC_PTR_NULL},
-    {"mouse_ptranslate",	"obj attribute x y", TO_UNLIMITED, to_mouse_ptranslate, GED_FUNC_PTR_NULL},
-    {"mouse_trans",	"x y", TO_UNLIMITED, to_mouse_trans, GED_FUNC_PTR_NULL},
+    {"mouse_find_pipept",	"obj mx my", TO_UNLIMITED, to_mouse_find_pipept, GED_FUNC_PTR_NULL},
+    {"mouse_move_arb_edge",	"obj edge mx my", TO_UNLIMITED, to_mouse_move_arb_edge, GED_FUNC_PTR_NULL},
+    {"mouse_move_arb_face",	"obj face mx my", TO_UNLIMITED, to_mouse_move_arb_face, GED_FUNC_PTR_NULL},
+    {"mouse_move_botpt",	"[-r] obj i mx my", TO_UNLIMITED, to_mouse_move_botpt, GED_FUNC_PTR_NULL},
+    {"mouse_move_botpts",	"mx my obj i1 [i2 ... iN]", TO_UNLIMITED, to_mouse_move_botpts, GED_FUNC_PTR_NULL},
+    {"mouse_move_pipept",	"obj i mx my", TO_UNLIMITED, to_mouse_move_pipept, GED_FUNC_PTR_NULL},
+    {"mouse_orotate",	"obj mx my", TO_UNLIMITED, to_mouse_orotate, GED_FUNC_PTR_NULL},
+    {"mouse_oscale",	"obj mx my", TO_UNLIMITED, to_mouse_oscale, GED_FUNC_PTR_NULL},
+    {"mouse_otranslate",	"obj mx my", TO_UNLIMITED, to_mouse_otranslate, GED_FUNC_PTR_NULL},
+    {"mouse_poly_circ",	"mx my", TO_UNLIMITED, to_mouse_poly_circ, GED_FUNC_PTR_NULL},
+    {"mouse_poly_cont",	"mx my", TO_UNLIMITED, to_mouse_poly_cont, GED_FUNC_PTR_NULL},
+    {"mouse_poly_ell",	"mx my", TO_UNLIMITED, to_mouse_poly_ell, GED_FUNC_PTR_NULL},
+    {"mouse_poly_rect",	"mx my", TO_UNLIMITED, to_mouse_poly_rect, GED_FUNC_PTR_NULL},
+    {"mouse_prepend_pipept",	"obj mx my", TO_UNLIMITED, to_mouse_append_pipept_common, ged_prepend_pipept},
+    {"mouse_ray",	"mx my", TO_UNLIMITED, to_mouse_ray, GED_FUNC_PTR_NULL},
+    {"mouse_rect",	"mx my", TO_UNLIMITED, to_mouse_rect, GED_FUNC_PTR_NULL},
+    {"mouse_rot",	"mx my", TO_UNLIMITED, to_mouse_rot, GED_FUNC_PTR_NULL},
+    {"mouse_rotate_arb_face",	"obj face v mx my", TO_UNLIMITED, to_mouse_rotate_arb_face, GED_FUNC_PTR_NULL},
+    {"mouse_scale",	"mx my", TO_UNLIMITED, to_mouse_scale, GED_FUNC_PTR_NULL},
+    {"mouse_protate",	"obj attribute mx my", TO_UNLIMITED, to_mouse_protate, GED_FUNC_PTR_NULL},
+    {"mouse_pscale",	"obj attribute mx my", TO_UNLIMITED, to_mouse_pscale, GED_FUNC_PTR_NULL},
+    {"mouse_ptranslate",	"obj attribute mx my", TO_UNLIMITED, to_mouse_ptranslate, GED_FUNC_PTR_NULL},
+    {"mouse_trans",	"mx my", TO_UNLIMITED, to_mouse_trans, GED_FUNC_PTR_NULL},
     {"mv",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_move},
     {"mvall",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_move_all},
     {"new_view",	"vname type [args]", TO_UNLIMITED, to_new_view, GED_FUNC_PTR_NULL},
@@ -6992,6 +7013,120 @@ to_mouse_move_botpt(struct ged *gedp,
 
 
 HIDDEN int
+to_mouse_move_botpts(struct ged *gedp,
+		     int argc,
+		     const char *argv[],
+		     ged_func_ptr UNUSED(func),
+		     const char *usage,
+		     int UNUSED(maxargs))
+{
+    int ret;
+    const char *cmd;
+    fastf_t x, y;
+    fastf_t dx, dy, dz;
+    fastf_t inv_width;
+    point_t model;
+    point_t view;
+    mat_t v2m_mat;
+    struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    cmd = argv[0];
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 6) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+	bu_vls_printf(gedp->ged_result_str, "%s: View not found - %s", argv[0], argv[1]);
+	return GED_ERROR;
+    }
+
+    if (bu_sscanf(argv[2], "%lf", &x) != 1 ||
+	bu_sscanf(argv[3], "%lf", &y) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    inv_width = 1.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
+
+    dx = x - gdvp->gdv_view->gv_prevMouseX;
+    dy = gdvp->gdv_view->gv_prevMouseY - y;
+    dz = 0.0;
+
+    gdvp->gdv_view->gv_prevMouseX = x;
+    gdvp->gdv_view->gv_prevMouseY = y;
+
+    if (dx < gdvp->gdv_view->gv_minMouseDelta)
+	dx = gdvp->gdv_view->gv_minMouseDelta;
+    else if (gdvp->gdv_view->gv_maxMouseDelta < dx)
+	dx = gdvp->gdv_view->gv_maxMouseDelta;
+
+    if (dy < gdvp->gdv_view->gv_minMouseDelta)
+	dy = gdvp->gdv_view->gv_minMouseDelta;
+    else if (gdvp->gdv_view->gv_maxMouseDelta < dy)
+	dy = gdvp->gdv_view->gv_maxMouseDelta;
+
+    bn_mat_inv(v2m_mat, gdvp->gdv_view->gv_rotation);
+
+    dx *= inv_width * gdvp->gdv_view->gv_size;
+    dy *= inv_width * gdvp->gdv_view->gv_size;
+
+    VSET(view, dx, dy, dz);
+    MAT4X3PNT(model, v2m_mat, view);
+
+    /* ged_move_botpts expects things to be in local units */
+    VSCALE(model, model, gedp->ged_wdbp->dbip->dbi_base2local);
+    bu_vls_printf(&pt_vls, "%lf %lf %lf", model[X], model[Y], model[Z]);
+
+    gedp->ged_gvp = gdvp->gdv_view;
+
+    {
+	register int i, j;
+	int ac = argc - 2;
+	char **av = (char **)bu_calloc(ac, sizeof(char *), "to_mouse_move_botpts: av[]");
+	av[0] = "move_botpts";
+
+	av[1] = (char *)argv[4];
+	av[2] = bu_vls_addr(&pt_vls);
+	av[ac-1] = (char *)0;
+
+	for (i=3, j=5; i < ac; ++i, ++j)
+	    av[i] = (char *)argv[j];
+
+	ret = ged_move_botpts(gedp, ac, (const char **)av);
+	bu_vls_free(&pt_vls);
+
+	if (ret == GED_OK) {
+	    av[0] = "draw";
+	    av[1] = (char *)argv[4];
+	    av[2] = (char *)0;
+	    to_edit_redraw(gedp, 2, (const char **)av);
+	}
+
+	bu_free((genptr_t)av, "to_mouse_move_botpts: av[]");
+    }
+
+    return GED_OK;
+}
+
+
+HIDDEN int
 to_mouse_move_pipept(struct ged *gedp,
 		     int argc,
 		     const char *argv[],
@@ -8774,6 +8909,31 @@ to_move_botpt(struct ged *gedp,
 
 
 HIDDEN int
+to_move_botpts(struct ged *gedp,
+	       int argc,
+	       const char *argv[],
+	       ged_func_ptr UNUSED(func),
+	       const char *UNUSED(usage),
+	       int UNUSED(maxargs))
+{
+    int ret;
+
+    if ((ret = ged_move_botpts(gedp, argc, argv)) == GED_OK) {
+	char *av[3];
+
+	av[0] = "draw";
+	av[1] = (char *)argv[1];
+	av[2] = (char *)0;
+	to_edit_redraw(gedp, 2, (const char **)av);
+
+	return GED_OK;
+    }
+
+    return ret;
+}
+
+
+HIDDEN int
 to_move_botpt_mode(struct ged *gedp,
 		   int argc,
 		   const char *argv[],
@@ -8825,6 +8985,70 @@ to_move_botpt_mode(struct ged *gedp,
 		  &gdvp->gdv_name,
 		  argv[2],
 		  argv[3]);
+    Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+    bu_vls_free(&bindings);
+
+    return GED_OK;
+}
+
+
+HIDDEN int
+to_move_botpts_mode(struct ged *gedp,
+		    int argc,
+		    const char *argv[],
+		    ged_func_ptr UNUSED(func),
+		    const char *usage,
+		    int UNUSED(maxargs))
+{
+    register int i;
+    fastf_t x, y;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 6) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+	if (BU_STR_EQUAL(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
+	bu_vls_printf(gedp->ged_result_str, "%s: View not found - %s", argv[0], argv[1]);
+	return GED_ERROR;
+    }
+
+    if (bu_sscanf(argv[2], "%lf", &x) != 1 ||
+	bu_sscanf(argv[3], "%lf", &y) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    gdvp->gdv_view->gv_prevMouseX = x;
+    gdvp->gdv_view->gv_prevMouseY = y;
+    gdvp->gdv_view->gv_mode = TCLCAD_MOVE_BOT_POINTS_MODE;
+
+    bu_vls_printf(&bindings, "bind %V <Motion> {%V mouse_move_botpts %V %%x %%y %s ",
+		  &gdvp->gdv_dmp->dm_pathName,
+		  &current_top->to_gop->go_name,
+		  &gdvp->gdv_name,
+		  argv[4]);
+
+    for (i = 5; i < argc; ++i)
+	bu_vls_printf(&bindings, "%s ", argv[i]);
+    bu_vls_printf(&bindings, "}");
+
     Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     bu_vls_free(&bindings);
 

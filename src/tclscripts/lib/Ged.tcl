@@ -285,7 +285,9 @@ package provide cadwidgets::Ged 1.0
 	method move_arb_face {args}
 	method move_arb_face_mode {args}
 	method move_botpt {args}
+	method move_botpts {args}
 	method move_botpt_mode {args}
+	method move_botpts_mode {args}
 	method move_pipept {args}
 	method move_pipept_mode {args}
 	method mv {args}
@@ -334,6 +336,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_move_arb_edge_mode {_pane args}
 	method pane_move_arb_face_mode {_pane args}
 	method pane_move_botpt_mode {_pane args}
+	method pane_move_botpts_mode {_pane args}
 	method pane_move_pipept_mode {_pane args}
 	method pane_mouse_append_pipept {_pane args}
 	method pane_mouse_constrain_rot {_pane args}
@@ -692,7 +695,8 @@ package provide cadwidgets::Ged 1.0
 	method delete_view_rect_callback {_callback}
 
 	method set_data_point_callback {_callback}
-
+	method clear_bot_callbacks {}
+ 
 	#XXX Still needs to be resolved
 	method set_outputHandler {args}
 	method fb_active {args}
@@ -1809,7 +1813,6 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::mouse_move_pipept {args} {
-    puts "cadwidgets::Ged::pane_mouse_move_pipept $_pane $args"
     eval $mGed mouse_move_pipept $itk_component($itk_option(-pane)) $args
 }
 
@@ -1897,8 +1900,16 @@ package provide cadwidgets::Ged 1.0
     eval $mGed move_botpt $args
 }
 
+::itcl::body cadwidgets::Ged::move_botpts {args} {
+    eval $mGed move_botpts $args
+}
+
 ::itcl::body cadwidgets::Ged::move_botpt_mode {args} {
     eval $mGed move_botpt_mode $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::move_botpts_mode {args} {
+    eval $mGed move_botpts_mode $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::move_pipept {args} {
@@ -2095,6 +2106,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_move_botpt_mode {_pane args} {
     eval $mGed move_botpt_mode $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_move_botpts_mode {_pane args} {
+    eval $mGed move_botpts_mode $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_move_pipept_mode {_pane args} {
@@ -4662,6 +4677,14 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::set_data_point_callback {_callback} {
     set mDataPointCallback $_callback
 }
+
+
+::itcl::body cadwidgets::Ged::clear_bot_callbacks {} {
+    set mBotEdgeCallback ""
+    set mBotFaceCallback ""
+    set mBotPointCallback ""
+}
+
 
 ::itcl::body cadwidgets::Ged::get_ged_color {_color} {
     switch -- $_color {

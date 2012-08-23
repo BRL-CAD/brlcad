@@ -1365,9 +1365,14 @@ GED_EXPORT extern int ged_move_all(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_move_arb_face(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Move the specified bot point.
+ * Move the specified bot point. This can be relative or absolute.
  */
 GED_EXPORT extern int ged_move_botpt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * Move the specified bot points. This movement is always relative.
+ */
+GED_EXPORT extern int ged_move_botpts(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Move the specified pipe point.

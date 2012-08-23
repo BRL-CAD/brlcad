@@ -172,6 +172,7 @@ package provide Archer 1.0
 	method bot_sync_all {}
 	method bot_sync_all_wrapper {}
 	method fbclear {}
+	method getZClipState {}
 	method raytracePlus {{_batch_list {}}}
 
 	# ArcherCore Override Section
@@ -977,6 +978,11 @@ package provide Archer 1.0
 
 ::itcl::body Archer::fbclear {} {
     $itk_component(rtcntrl) clear
+}
+
+
+::itcl::body Archer::getZClipState {} {
+    return [list [expr {$mZClipFrontMax * $mZClipFront}] [expr {$mZClipBackMax * $mZClipBack}]]
 }
 
 
@@ -6064,7 +6070,7 @@ proc title_node_handler {node} {
 
 	if {$GeometryEditFrame::mEditCommand != ""} {
 	    if {$mSelectedObjType == "bot"} {
-		bind $win <1> "$itk_component(botView) moveBotPtMode $dname $obj %x %y; break"
+		bind $win <1> "$itk_component(botView) $GeometryEditFrame::mEditCommand $dname $obj %x %y; break"
 	    } else {
 		bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 %x %y; break"
 	    }
@@ -6184,7 +6190,7 @@ proc title_node_handler {node} {
 	    if {$GeometryEditFrame::mEditCommand != ""} {
 		if {$mSelectedObjType == "bot"} {
 		    set sl [gedCmd pane_view2screen $_dm [list $vx $vy]]
-		    $itk_component(botView) moveBotPt $_dm $_obj [lindex $sl 0] [lindex $sl 1]
+		    $itk_component(botView) moveBotElement $_dm $_obj [lindex $sl 0] [lindex $sl 1]
 		} else {
 		    $itk_component(ged) $GeometryEditFrame::mEditCommand $_obj $GeometryEditFrame::mEditParam1 $new_ocenter
 		}

@@ -42,17 +42,21 @@
 	common Z_COL 3
 
 	common movePoint 1
-	common selectFace 2
-	common selectPoint 3
-	common splitEdge 4
-	common splitFace 5
+	common moveEdge 2
+	common moveFace 3
+	common selectPoint 4
+	common selectFace 5
+	common splitEdge 6
+	common splitFace 7
 
 	common mVertDetailHeadings {{} X Y Z}
 	common mFaceDetailHeadings {{} A B C}
 	common mEditLabels {
 	    {Move Point}
-	    {Select Face}
+	    {Move Edge}
+	    {Move Face}
 	    {Select Point}
+	    {Select Face}
 	    {Split Edge}
 	    {Split Face}
 	}
@@ -62,6 +66,9 @@
 	method updateGeometry {}
 	method createGeometry {_name}
 	method p {obj args}
+	method moveBotEdgeMode {_dname _obj _x _y}
+	method moveBotElement {_dname _obj _x _y}
+	method moveBotFaceMode {_dname _obj _x _y}
 	method moveBotPtMode {_dname _obj _x _y}
 	method moveBotPt {_dname _obj _x _y}
     }
@@ -84,8 +91,9 @@
 
 	method applyData {}
 	method botEdgeSplitCallback {_elist}
-	method botFaceSelectCallback {_pindex}
-	method botFaceSplitCallback {_pindex}
+	method botFaceMoveCallback {_face}
+	method botFaceSelectCallback {_face}
+	method botFaceSplitCallback {_face}
 	method botPointSelectCallback {_pindex}
 	method detailBrowseCommand {_row _col}
 	method handleDetailPopup {_index _X _Y}
@@ -180,7 +188,9 @@
 	set mCurrentBotPoint 1
 	set mPrevGeometryObject $itk_option(-geometryObject)
     }
+
     botPointSelectCallback [expr {$mCurrentBotPoint - 1}]
+    botFaceSelectCallback [expr {$mCurrentBotFace - 1}]
 }
 
 ::itcl::body BotEditFrame::updateGeometry {} {
@@ -288,14 +298,55 @@
 }
 
 
+::itcl::body BotEditFrame::moveBotEdgeMode {_dname _obj _x _y} {
+    $itk_option(-mged) clear_bot_callbacks
+    set mCurrentBotEdge [$itk_option(-mged) pane_mouse_find_bot_edge $_dname $_obj $_x $_y]
+    eval $itk_option(-mged) pane_move_botpts_mode $_dname $_x $_y $_obj $mCurrentBotEdge
+}
+
+
+::itcl::body BotEditFrame::moveBotElement {_dname _obj _x _y} {
+    switch -- $mEditMode \
+	$movePoint {
+	    moveBotPt $_dname $_obj $_x $_y
+	} \
+	$moveEdge {
+	    $::ArcherCore::application putString "This mode is not ready for edges."
+	} \
+	$moveFace {
+	    $::ArcherCore::application putString "This mode is not ready for faces."
+	}
+}
+
+
+::itcl::body BotEditFrame::moveBotFaceMode {_dname _obj _x _y} {
+    $itk_option(-mged) clear_bot_callbacks
+    set zlist [ $::ArcherCore::application getZClipState]
+    set viewz [lindex $zlist 0]
+
+    set face [$itk_option(-mged) pane_mouse_find_bot_face $_dname $_obj $viewz $_x $_y]
+    if {$face == ""} {
+	return
+    }
+
+    set flist [$itk_option(-mged) get $_obj F]
+    eval $itk_option(-mged) pane_move_botpts_mode $_dname $_x $_y $_obj [lindex $flist $face]
+
+    botFaceSelectCallback $face
+}
+
+
 ::itcl::body BotEditFrame::moveBotPtMode {_dname _obj _x _y} {
-    set mEditParam1 [$itk_option(-mged) pane_mouse_find_botpt $_dname $_obj $_x $_y]
-    $itk_option(-mged) pane_move_botpt_mode $_dname $_obj $mEditParam1 $_x $_y
+    $itk_option(-mged) clear_bot_callbacks
+    set pindex [$itk_option(-mged) pane_mouse_find_botpt $_dname $_obj $_x $_y]
+    $itk_option(-mged) pane_move_botpt_mode $_dname $_obj $pindex $_x $_y
+
+    botPointSelectCallback $pindex
 }
 
 
 ::itcl::body BotEditFrame::moveBotPt {_dname _obj _x _y} {
-    $itk_option(-mged) pane_mouse_move_botpt $_dname $_obj $mEditParam1 $_x $_y
+    $itk_option(-mged) pane_mouse_move_botpt $_dname $_obj [expr {$mCurrentBotPoint - 1}] $_x $_y
 }
 
 
@@ -451,35 +502,39 @@
 #    configure -valueUnits "mm"
 
     set mEditPCommand [::itcl::code $this p]
+    set mEditParam1 ""
 
     switch -- $mEditMode \
 	$movePoint {
-	    set mEditCommand move_botpt
+	    set mEditCommand moveBotPtMode
 	    set mEditClass $EDIT_CLASS_TRANS
-	    set mEditParam1 [expr {$mCurrentBotPoint - 1}]
 	} \
-	$selectFace {
-	    set mEditCommand ""
-	    set mEditClass ""
-	    set mEditParam1 [expr {$mCurrentBotFace - 1}]
-	    $::ArcherCore::application initFindBotFace $itk_option(-geometryObjectPath) 1 [::itcl::code $this botFaceSelectCallback]
+	$moveEdge {
+	    set mEditCommand moveBotEdgeMode
+	    set mEditClass $EDIT_CLASS_TRANS
+	} \
+	$moveFace {
+	    set mEditCommand moveBotFaceMode
+	    set mEditClass $EDIT_CLASS_TRANS
 	} \
 	$selectPoint {
 	    set mEditCommand ""
 	    set mEditClass ""
-	    set mEditParam1 [expr {$mCurrentBotPoint - 1}]
 	    $::ArcherCore::application initFindBotPoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this botPointSelectCallback]
+	} \
+	$selectFace {
+	    set mEditCommand ""
+	    set mEditClass ""
+	    $::ArcherCore::application initFindBotFace $itk_option(-geometryObjectPath) 1 [::itcl::code $this botFaceSelectCallback]
 	} \
 	$splitEdge {
 	    set mEditCommand ""
 	    set mEditClass ""
-	    set mEditParam1 $mCurrentBotEdge
 	    $::ArcherCore::application initFindBotEdge $itk_option(-geometryObjectPath) 1 [::itcl::code $this botEdgeSplitCallback]
 	} \
 	$splitFace {
 	    set mEditCommand ""
 	    set mEditClass ""
-	    set mEditParam1 [expr {$mCurrentBotFace - 1}]
 	    $::ArcherCore::application initFindBotFace $itk_option(-geometryObjectPath) 1 [::itcl::code $this botFaceSplitCallback]
 	}
 
@@ -491,33 +546,36 @@
 
 
 ::itcl::body BotEditFrame::botEdgeSplitCallback {_elist} {
-    set mEditParam1 $_elist
     set mCurrentBotEdge $_elist
-    $itk_option(-mged) bot_edge_split $itk_option(-geometryObjectPath) $mEditParam1
+    $itk_option(-mged) bot_edge_split $itk_option(-geometryObjectPath) $mCurrentBotEdge
     $::ArcherCore::application setSave
 }
 
 
-::itcl::body BotEditFrame::botFaceSelectCallback {_pindex} {
-    set mEditParam1 $_pindex
-    incr _pindex
-    set mCurrentBotFace $_pindex
-    $itk_component(faceTab) selectSingleRow $_pindex
+::itcl::body BotEditFrame::botFaceMoveCallback {_face} {
+    incr _face
+    set mCurrentBotFace $_face
+    $itk_component(faceTab) selectSingleRow $_face
 }
 
 
-::itcl::body BotEditFrame::botFaceSplitCallback {_pindex} {
-    set mEditParam1 $_pindex
-    incr _pindex
-    set mCurrentBotFace $_pindex
-    $itk_component(faceTab) selectSingleRow $_pindex
-    $itk_option(-mged) bot_face_split $itk_option(-geometryObjectPath) $mEditParam1
+::itcl::body BotEditFrame::botFaceSelectCallback {_face} {
+    incr _face
+    set mCurrentBotFace $_face
+    $itk_component(faceTab) selectSingleRow $_face
+}
+
+
+::itcl::body BotEditFrame::botFaceSplitCallback {_face} {
+    incr _face
+    set mCurrentBotFace $_face
+    $itk_component(faceTab) selectSingleRow $_face
+    $itk_option(-mged) bot_face_split $itk_option(-geometryObjectPath) [expr {$mCurrentBotFace - 1}]
     $::ArcherCore::application setSave
 }
 
 
 ::itcl::body BotEditFrame::botPointSelectCallback {_pindex} {
-    set mEditParam1 $_pindex
     incr _pindex
     set mCurrentBotPoint $_pindex
     $itk_component(vertTab) selectSingleRow $_pindex
@@ -551,13 +609,11 @@
 
 ::itcl::body BotEditFrame::singleFaceSelectCallback {_pindex} {
     set mCurrentBotFace $_pindex
-    set mEditParam1 [expr {$mCurrentBotFace - 1}]
     initEditState
 }
 
 ::itcl::body BotEditFrame::singlePointSelectCallback {_pindex} {
     set mCurrentBotPoint $_pindex
-    set mEditParam1 [expr {$mCurrentBotPoint - 1}]
     initEditState
 }
 
