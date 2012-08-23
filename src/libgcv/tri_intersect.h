@@ -20,7 +20,7 @@
 
 /** @file libgcv/tri_intersect.h
  *
- * Intersect 2 triangles using a modified Moller routine.
+ * Intersect 2 triangles using a modified Möller routine.
  */
 
 
@@ -39,6 +39,7 @@ int gcv_tri_tri_intersect_with_isectline(
  * mode: C
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
+ * coding: utf-8
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
