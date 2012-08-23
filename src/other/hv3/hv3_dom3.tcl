@@ -11,13 +11,13 @@ namespace eval ::hv3::dom {
 }
 
 #-----------------------------------------------------------------------
-# ::hv3::dom::InlineStyle 
+# ::hv3::dom::InlineStyle
 #
 #     This Snit type implements a javascript element.style object, used to
 #     provide access to the "style" attribute of an HTML element.
-# 
+#
 set InlineStyleDefn {
-  js_init {dom node} { 
+  js_init {dom node} {
     set myNode $node
   }
 }
@@ -64,7 +64,7 @@ unset InlineStyleDefn
 
 
 namespace eval ::hv3::dom {
-  
+
   # List of DOM Level 0 events.
   #
   set DOM0Events_EventList [list                                         \
@@ -80,9 +80,9 @@ namespace eval ::hv3::dom {
     variable myEventFunctionsCompiled 0
 
     # This method loops through all the DOM Level 0 event attributes of
-    # html widget node $myNode (onclick, onfocus etc.). For each defined 
+    # html widget node $myNode (onclick, onfocus etc.). For each defined
     # attribute, compile the value of the attribute into the body of
-    # a javascript function object. Set the event property of the 
+    # a javascript function object. Set the event property of the
     # parent object to the compiled function object.
     #
     method CompileEventFunctions {} {
