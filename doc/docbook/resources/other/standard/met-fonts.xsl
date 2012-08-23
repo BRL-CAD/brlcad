@@ -10,9 +10,9 @@
   <xsl:param name="title.font.family" select="'DejaVuSans'"/>
   <xsl:param name="monospace.font.family" select="'DejaVuSansMono'"/>
   <xsl:param name="body.font.master" select="'10.1'"/>
-  
-  <xsl:param name="symbol.font.family" select="'DejaVuSansMono'"/> 
-  
+
+  <xsl:param name="symbol.font.family" select="'DejaVuSansMono'"/>
+
 <!--    <xsl:param name="symbol.font.family" select="'Arialuni'"/> -->
 
 
@@ -25,40 +25,40 @@
             <!--     <xsl:call-template name="inline.charseq"/> -->
         </fo:inline>
     </xsl:template>
-    
+
     <!-- ============== Bold AND Italic fonts  ================== -->
     <xsl:template match="emphasis[@role='bold-italic']|emphasis[@role='italic-bold']">
         <fo:inline font-weight="bold" font-style="italic">
             <xsl:apply-templates/>
         </fo:inline>
     </xsl:template>
-    
+
     <!-- ============== Underline fonts  ================== -->
     <xsl:template match="emphasis[@role='underline']">
         <fo:inline text-decoration="underline">
             <xsl:apply-templates/>
         </fo:inline>
-    </xsl:template>   
+    </xsl:template>
     <xsl:template match="emphasis[@role='underline-bold']|emphasis[@role='bold-underline']">
         <fo:inline font-weight="bold" text-decoration="underline">
             <xsl:apply-templates/>
         </fo:inline>
     </xsl:template>
-    
+
     <!-- ============== Strike Through fonts  ================== -->
     <xsl:template match="emphasis[@role='strikethrough']">
         <fo:inline text-decoration="line-through">
             <xsl:apply-templates/>
         </fo:inline>
     </xsl:template>
- 
-	 <!-- Change the font size of the emphasis --> 
+
+	 <!-- Change the font size of the emphasis -->
 	<xsl:template match="emphasis[@font-size]">
 	           <fo:inline font-size="{@font-size}">
 	               <xsl:apply-templates/>
 	          </fo:inline>
 	</xsl:template>
- 
- 
- 
+
+
+
 </xsl:stylesheet>
