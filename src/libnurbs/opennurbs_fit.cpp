@@ -1,6 +1,6 @@
 /** @file opennurbs_fit.cpp
  *
- * Extensions to the openNURBS library, based off of Thomas Moerwald's
+ * Extensions to the openNURBS library, based off of Thomas Mörwald's
  * surface fitting code in the Point Cloud Library (pcl). His code is
  # BSD licensed:
  *
@@ -1851,6 +1851,7 @@ FittingSurface::inverseMappingBoundary (const ON_NurbsSurface &nurbs, const ON_3
  * mode: C++
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
+ * coding: utf-8
  * End:
  * ex: shiftwidth=4 tabstop=8
  */

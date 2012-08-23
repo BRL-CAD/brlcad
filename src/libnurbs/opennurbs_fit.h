@@ -1,11 +1,10 @@
-
 /** @file opennurbs_fit.h
  *
- * Extensions to the openNURBS library, based off of Thomas Moerwald's
+ * Extensions to the openNURBS library, based off of Thomas Mörwald's
  * surface fitting code in the Point Cloud Library (pcl). His code is
  * BSD licensed:
  *
- *  Copyright (c) 2011, Thomas Moerwald, Jonathan Balzer, Inc.
+ *  Copyright (c) 2011, Thomas Mörwald, Jonathan Balzer, Inc.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -18,7 +17,7 @@
  *     copyright notice, this list of conditions and the following
  *     disclaimer in the documentation and/or other materials provided
  *     with the distribution.
- *   * Neither the name of Thomas Moerwald or Jonathan Balzer nor the names of its
+ *   * Neither the name of Thomas Mörwald or Jonathan Balzer nor the names of its
  *     contributors may be used to endorse or promote products derived
  *     from this software without specific prior written permission.
  *
@@ -34,7 +33,6 @@
  *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
-
  *
  */
 
@@ -595,6 +593,7 @@ protected:
  * mode: C++
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
+ * coding: utf-8
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
