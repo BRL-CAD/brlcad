@@ -1,7 +1,7 @@
 catch {namespace eval hv3 { set {version($Id$)} 1 }}
 
 # This file contains the mega-widget hv3::hv3 that is at the core
-# of the Hv3 web browser implementation. An instance of this widget 
+# of the Hv3 web browser implementation. An instance of this widget
 # displays a single HTML frame. Documentation for the published
 # interface to this widget is found at:
 #
@@ -14,7 +14,7 @@ catch {namespace eval hv3 { set {version($Id$)} 1 }}
 #
 #-------------------------------------------------------------------
 #
-# 
+#
 #
 # Standard Functionality:
 #
@@ -24,7 +24,7 @@ catch {namespace eval hv3 { set {version($Id$)} 1 }}
 #     -yscrollcommand
 #     -width
 #     -height
-# 
+#
 # Widget Specific Options:
 #
 #     -requestcmd
@@ -36,7 +36,7 @@ catch {namespace eval hv3 { set {version($Id$)} 1 }}
 #     -targetcmd
 #         If not an empty string, this option specifies a script for
 #         the widget to invoke when a hyperlink is clicked on or a form
-#         submitted. The script is invoked with the node handle of the 
+#         submitted. The script is invoked with the node handle of the
 #         clicked hyper-link element appended. The script must return
 #         the name of an hv3 widget to load the new document into. This
 #         is intended to be used to implement frameset handling.
@@ -64,30 +64,30 @@ catch {namespace eval hv3 { set {version($Id$)} 1 }}
 # Widget Sub-commands:
 #
 #     goto URI ?OPTIONS?
-#         Load the content at the specified URI into the widget. 
+#         Load the content at the specified URI into the widget.
 #
 #     stop
 #         Cancel all pending downloads.
 #
-#     node        
+#     node
 #         Caching wrapper around html widget [node] command.
 #
-#     reset        
+#     reset
 #         Wrapper around the html widget command of the same name. Also
 #         resets all document related state stored by the mega-widget.
 #
-#     html        
+#     html
 #         Return the path of the underlying html widget. This should only
 #         be used to determine paths for child widgets. Bypassing hv3 and
 #         accessing the html widget interface directly may confuse hv3.
 #
-#     title        
+#     title
 #         Return the "title" of the currently loaded document.
 #
-#     location        
+#     location
 #         Return the location URI of the widget.
 #
-#     selected        
+#     selected
 #         Return the currently selected text, or an empty string if no
 #         text is currently selected.
 #
@@ -120,7 +120,7 @@ catch {namespace eval hv3 { set {version($Id$)} 1 }}
 # ::hv3::hv3 is, of course, the main mega-widget class. Class
 # ::hv3::request is part of the public interface to ::hv3::hv3. A
 # single instance of ::hv3::request represents a resource request made
-# by the mega-widget package - for document, stylesheet, image or 
+# by the mega-widget package - for document, stylesheet, image or
 # object data.
 #
 # The three "manager" classes all implement the following interface. Each
@@ -152,8 +152,8 @@ if {[info commands ::hv3::make_constructor] eq ""} {
 #--------------------------------------------------------------------------
 # Class ::hv3::hv3::mousemanager
 #
-#     This type contains code for the ::hv3::hv3 widget to manage 
-#     dispatching mouse events that occur in the HTML widget to the 
+#     This type contains code for the ::hv3::hv3 widget to manage
+#     dispatching mouse events that occur in the HTML widget to the
 #     rest of the application. The following HTML4 events are handled:
 #
 #     Pointer movement:
@@ -193,7 +193,7 @@ namespace eval ::hv3::hv3::mousemanager {
     # an empty string.
     #
     # If not set to an empty string, this option is set to the name
-    # of the ::hv3::dom object to dispatch events too. The DOM 
+    # of the ::hv3::dom object to dispatch events too. The DOM
     # is a special client because it may cancel the "default action"
     # of mouse-clicks (it may also cancel other events, but they are
     # dispatched by other sub-systems).
@@ -218,23 +218,23 @@ namespace eval ::hv3::hv3::mousemanager {
     # For "click" events, if the $O(-dom) script returns false, then
     # the "click" event is not dispatched to any subscribers (this happens
     # when some javascript calls the Event.preventDefault() method). If it
-    # returns true, proceed as normal. Other event types ignore the return 
+    # returns true, proceed as normal. Other event types ignore the return
     # value of the $O(-dom) script.
     #
     set O(-dom) ""
-  
+
     # This variable is set to the node-handle that the pointer is currently
     # hovered over. Used by code that dispatches the "mouseout", "mouseover"
     # and "mousemove" to the DOM.
     #
     set O(myCurrentDomNode) ""
-  
+
     # The "top" node from the ${me}.hovernodes array. This is the node
-    # that determines the pointer to display (via the CSS2 'cursor' 
+    # that determines the pointer to display (via the CSS2 'cursor'
     # property).
     #
     set O(myTopHoverNode) ""
-  
+
     set O(myCursor) ""
     set O(myCursorWin) [$hv3 hull]
 
@@ -254,7 +254,7 @@ namespace eval ::hv3::hv3::mousemanager {
     #   ${me}.hovernodes
     #   ${me}.activenodes
     #
-  
+
     set w [$hv3 win]
     bind $w <Motion>          "+[list $me Motion  %W %x %y]"
     bind $w <ButtonPress-1>   "+[list $me Press   %W %x %y]"
@@ -328,7 +328,7 @@ namespace eval ::hv3::hv3::mousemanager {
     # has been generated), maybe this should consider all overlapping nodes
     # as "hovered".
     set nodelist [lindex [$O(myHtml) node $x $y] end]
-    
+
     # Handle the 'cursor' property.
     #
     set topnode [lindex $nodelist end]
@@ -371,7 +371,7 @@ namespace eval ::hv3::hv3::mousemanager {
       eval $script $N $x $y
     }
 
-    # After the loop runs, hovernodes will contain the list of 
+    # After the loop runs, hovernodes will contain the list of
     # currently hovered nodes.
     array set hovernodes [list]
 
@@ -426,7 +426,7 @@ namespace eval ::hv3::hv3::mousemanager {
       set rc [$O(-dom) mouseevent mousedown $N $x $y]
     }
 
-    # If the DOM implementation called preventDefault(), do 
+    # If the DOM implementation called preventDefault(), do
     # not start selecting text. But every mouseclick should clear
     # the current selection, otherwise the browser window can get
     # into an annoying state.
@@ -461,7 +461,7 @@ namespace eval ::hv3::hv3::mousemanager {
     # Dispatch the "mouseup" event to the DOM, if any.
     #
     # In Tk, the equivalent of the "mouseup" (<ButtonRelease>) is always
-    # dispatched to the same widget as the "mousedown" (<ButtonPress>). 
+    # dispatched to the same widget as the "mousedown" (<ButtonPress>).
     # But in the DOM things are different - the event target for "mouseup"
     # depends on the current cursor location only.
     #
@@ -487,7 +487,7 @@ namespace eval ::hv3::hv3::mousemanager {
     foreach node [array names ${me}.activenodes] {
       lappend eventlist onmouseup $node
     }
-    
+
     if {$domrc ne "prevent"} {
       set onclick_nodes [list]
       for {set n $N} {$n ne ""} {set n [$n parent]} {
@@ -533,18 +533,18 @@ namespace eval ::hv3::hv3::selectionmanager {
     #
     set O(myState) false             ;# True when left-button is held down
     set O(myMode) char
-  
+
     # The ::hv3::hv3 widget.
     #
     set O(myHv3) $hv3
     set O(myHtml) [$hv3 html]
-  
+
     set O(myFromNode) ""
     set O(myFromIdx) ""
-  
+
     set O(myToNode) ""
     set O(myToIdx) ""
-  
+
     set O(myIgnoreMotion) 0
 
     set w [$hv3 win]
@@ -577,7 +577,7 @@ namespace eval ::hv3::hv3::selectionmanager {
     motion $me $N $x $y
   }
 
-  # Given a node-handle/index pair identifying a character in the 
+  # Given a node-handle/index pair identifying a character in the
   # current document, return the index values for the start and end
   # of the word containing the character.
   #
@@ -666,7 +666,7 @@ namespace eval ::hv3::hv3::selectionmanager {
 
     set O(myState) false
 
-    # Unset the myFromNode variable, since the node handle it (may) refer 
+    # Unset the myFromNode variable, since the node handle it (may) refer
     # to is now invalid. If this is not done, a future call to the [selected]
     # method of this object will cause an error by trying to use the
     # (now invalid) node-handle value in $myFromNode.
@@ -683,7 +683,7 @@ namespace eval ::hv3::hv3::selectionmanager {
 
     # $N containst the node-handle for the node that the cursor is
     # currently hovering over (according to the mousemanager component).
-    # If $N is in a different stacking-context to the closest text, 
+    # If $N is in a different stacking-context to the closest text,
     # do not update the highlighted region in this event.
     #
     if {$N ne "" && [info exists toNode]} {
@@ -693,13 +693,13 @@ namespace eval ::hv3::hv3::selectionmanager {
     }
 
     if {[llength $to] > 0} {
-  
+
       if {$O(myFromNode) eq ""} {
         set O(myFromNode) $toNode
         set O(myFromIdx) $toIdx
       }
-  
-      # This block is where the "selection" tag is added to the HTML 
+
+      # This block is where the "selection" tag is added to the HTML
       # widget (so that the selected text is highlighted). If some
       # javascript has been messing with the tree, then either or
       # both of $myFromNode and $myToNode may be orphaned or deleted.
@@ -717,36 +717,36 @@ namespace eval ::hv3::hv3::selectionmanager {
                 selection own [$O(myHv3) win]
               }
             }
-    
+
             word {
               if {$O(myToNode) ne ""} {
                 $O(myHtml) tag remove selection $O(myToNode) $O(myToIdx) $toNode $toIdx
                 $me UntagWord $O(myToNode) $O(myToIdx)
               }
-    
+
               $O(myHtml) tag add selection $O(myFromNode) $O(myFromIdx) $toNode $toIdx
               $me TagWord $toNode $toIdx
               $me TagWord $O(myFromNode) $O(myFromIdx)
               selection own [$O(myHv3) win]
             }
-    
+
             block {
               set to_block2  [$me ToBlock $toNode $toIdx]
               set from_block [$me ToBlock $O(myFromNode) $O(myFromIdx)]
-    
+
               if {$O(myToNode) ne ""} {
                 set to_block [$me ToBlock $O(myToNode) $O(myToIdx)]
                 $O(myHtml) tag remove selection $O(myToNode) $O(myToIdx) $toNode $toIdx
                 eval $O(myHtml) tag remove selection $to_block
               }
-    
+
               $O(myHtml) tag add selection $O(myFromNode) $O(myFromIdx) $toNode $toIdx
               eval $O(myHtml) tag add selection $to_block2
               eval $O(myHtml) tag add selection $from_block
               selection own [$O(myHv3) win]
             }
           }
-    
+
           set O(myToNode) $toNode
           set O(myToIdx) $toIdx
         }
@@ -817,7 +817,7 @@ namespace eval ::hv3::hv3::selectionmanager {
       set stridx_b [string first "\n" $t $stridx_b]
       if {$stridx_b < 0} {set stridx_b [string length $t]}
     }
-  
+
     set T [string range $t $stridx_a [expr $stridx_b - 1]]
     set T [string range $T $offset [expr $offset + $maxChars]]
 
@@ -880,7 +880,7 @@ namespace eval ::hv3::hv3::dynamicmanager {
 #     * -targetcmd option and associate callbacks
 #     * -isvisitedcmd option and associate callbacks
 #     * Modifying the cursor to the hand shape when over a hyperlink
-#     * Setting the :link or :visited dynamic condition on hyperlink 
+#     * Setting the :link or :visited dynamic condition on hyperlink
 #       elements (depending on the return value of -isvisitedcmd).
 #
 # This class installs a node handler for <a> elements. It also subscribes
@@ -912,8 +912,8 @@ namespace eval ::hv3::hv3::hyperlinkmanager {
   }
 
   # This is the configure method for the -isvisitedcmd option. This
-  # option configures a callback script that sets or clears the 'visited' 
-  # and 'link' properties of an <a href="..."> element. This is a 
+  # option configures a callback script that sets or clears the 'visited'
+  # and 'link' properties of an <a href="..."> element. This is a
   # performance critical operation because it is called so many times.
   #
   proc configure-isvisitedcmd {me} {
@@ -969,10 +969,10 @@ namespace eval ::hv3::hv3::hyperlinkmanager {
 
   # This method is called whenever an onclick event occurs. If the
   # node is an <A> with an "href" attribute that is not "#" or the
-  # empty string, call the [goto] method of some hv3 widget to follow 
+  # empty string, call the [goto] method of some hv3 widget to follow
   # the hyperlink.
   #
-  # The particular hv3 widget is located by evaluating the -targetcmd 
+  # The particular hv3 widget is located by evaluating the -targetcmd
   # callback script. This allows the upper layer to implement frames,
   # links that open in new windows/tabs - all that irritating stuff :)
   #
@@ -1037,11 +1037,11 @@ namespace eval ::hv3::hv3::framelog {
   proc get {me args} {
     upvar $me O
     switch -- [lindex $args 0] {
-      html { 
+      html {
         return $O(myHtmlDocument)
       }
 
-      css { 
+      css {
         return $O(myStyleErrors)
       }
     }
@@ -1081,8 +1081,8 @@ namespace eval ::hv3::hv3 {
       <style>
         body {background-color: #c3c3c3}
         pre  {
-          margin: 20px 30px; 
-          background-color: #d9d9d9; 
+          margin: 20px 30px;
+          background-color: #d9d9d9;
           background-color: white;
           padding: 5px;
           border: 1px solid;
@@ -1095,7 +1095,7 @@ namespace eval ::hv3::hv3 {
   proc new {me args} {
     upvar #0 $me O
     set win $O(win)
-	   
+
     # The scrolled html widget.
     # set O(myHtml) [::hv3::scrolled html $win.html]
     set O(myHtml) $O(hull)
@@ -1122,15 +1122,15 @@ namespace eval ::hv3::hv3 {
     # The option to display images (default true).
     set O(-enableimages) 1
 
-    # The option to execute javascript (default false). 
+    # The option to execute javascript (default false).
     #
     # When javascript is enabled, the O(myDom) variable is set to the name of
     # an object of type [::hv3::dom]. When it is not enabled, O(myDom) is
     # an empty string.
     #
     # When the -enablejavascript option is changed from true to false,
-    # the O(myDom) object is deleted (and O(myDom) set to the empty 
-    # string). But the dom object is not created immediately when 
+    # the O(myDom) object is deleted (and O(myDom) set to the empty
+    # string). But the dom object is not created immediately when
     # -enablejavascript is changed from false to true. Instead, we
     # wait until the next time the hv3 widget is reset.
     #
@@ -1151,19 +1151,19 @@ namespace eval ::hv3::hv3 {
     # but the name of the HTTP header, "Referer", has only one.
     #
     set O(myReferrer) ""
-  
+
     # Used to assign internal stylesheet ids.
     set O(myStyleCount) 0
-  
+
     # This variable may be set to "unknown", "quirks" or "standards".
     set O(myQuirksmode) unknown
-  
+
     set O(myFirstReset) 1
-  
+
     # Current value to set the -cachecontrol option of download handles to.
     #
     set O(myCacheControl) normal
-  
+
     # This variable stores the current type of resource being displayed.
     # When valid, it is set to one of the following:
     #
@@ -1174,17 +1174,17 @@ namespace eval ::hv3::hv3 {
     # has been requested, but has not yet arrived.
     #
     set O(myMimetype) ""
-  
+
     # This variable is only used when ($O(myMimetype) eq "image"). It stores
     # the data for the image about to be displayed. Once the image
     # has finished downloading, the data in this variable is loaded into
     # a Tk image and this variable reset to "".
     #
     set O(myImageData) ""
-  
+
     # If this variable is not set to the empty string, it is the id of an
-    # [after] event that will refresh the current document (i.e from a 
-    # Refresh header or <meta type=http-equiv> markup). This scheduled 
+    # [after] event that will refresh the current document (i.e from a
+    # Refresh header or <meta type=http-equiv> markup). This scheduled
     # event should be cancelled when the [reset] method is called.
     #
     # There should only be one Refresh event scheduled at any one time.
@@ -1192,32 +1192,32 @@ namespace eval ::hv3::hv3 {
     # cancels any pending event before scheduling a new one.
     #
     set O(myRefreshEventId) ""
-  
+
     # This boolean variable is set to zero until the first call to [goto].
     # Before that point it is safe to change the values of the -enableimages
     # option without reloading the document.
     #
     set O(myGotoCalled) 0
-  
+
     # This boolean variable is set after the DOM "onload" event is fired.
     # It is cleared by the [reset] method.
     set O(myOnloadFired) 0
-  
+
     set O(myFragmentSeek) ""
-  
+
     # The ::hv3::request object used to retrieve the main document.
     #
     set O(myDocumentHandle) ""
-  
+
     # List of handle objects that should be released after the page has
     # loaded. This is part of the hack to work around the polipo bug.
     #
     set O(myShelvedHandles) [list]
-  
+
     # List of all active download handles.
     #
     set O(myActiveHandles) [list]
-  
+
     set O(myTitleVar) ""
 
     $O(myMouseManager) subscribe motion [list $O(mySelectionManager) motion]
@@ -1225,7 +1225,7 @@ namespace eval ::hv3::hv3 {
     $O(myFormManager) configure -getcmd  [list $me Formcmd get]
     $O(myFormManager) configure -postcmd [list $me Formcmd post]
 
-    # Attach an image callback to the html widget. Store images as 
+    # Attach an image callback to the html widget. Store images as
     # pixmaps only when possible to save memory.
     $O(myHtml) configure -imagecmd [list $me Imagecmd] -imagepixmapify 1
 
@@ -1308,16 +1308,16 @@ namespace eval ::hv3::hv3 {
 
   # Return the location URI of the widget.
   #
-  proc location {me} { 
+  proc location {me} {
     upvar #0 $me O
-    return [$O(myUri) get] 
+    return [$O(myUri) get]
   }
 
   # Return the referrer URI of the widget.
   #
-  proc referrer {me} { 
+  proc referrer {me} {
     upvar #0 $me O
-    return $O(myReferrer) 
+    return $O(myReferrer)
   }
 
   proc Forget {me handle} {
@@ -1326,8 +1326,8 @@ namespace eval ::hv3::hv3 {
     set O(myActiveHandles) [lreplace $O(myActiveHandles) $idx $idx]
   }
 
-  # The argument download-handle contains a configured request. This 
-  # method initiates the request. 
+  # The argument download-handle contains a configured request. This
+  # method initiates the request.
   #
   # This method is used by hv3 and it's component objects (i.e. code in
   # hv3_object_handler). Also the dom code, for XMLHTTPRequest.
@@ -1380,9 +1380,9 @@ namespace eval ::hv3::hv3 {
     }
   }
 
-  proc onload_fired {me } { 
+  proc onload_fired {me } {
     upvar #0 $me O
-    return $O(myOnloadFired) 
+    return $O(myOnloadFired)
   }
 
   # PUBLIC METHOD.
@@ -1400,9 +1400,9 @@ namespace eval ::hv3::hv3 {
   # This proc is registered as the -imagecmd script for the Html widget.
   # The argument is the URI of the image required.
   #
-  # This proc creates a Tk image immediately. It also kicks off a fetch 
+  # This proc creates a Tk image immediately. It also kicks off a fetch
   # request to obtain the image data. When the fetch request is complete,
-  # the contents of the Tk image are set to the returned data in proc 
+  # the contents of the Tk image are set to the returned data in proc
   # ::hv3::imageCallback.
   #
   proc Imagecmd {me uri} {
@@ -1419,7 +1419,7 @@ namespace eval ::hv3::hv3 {
 
     if {$uri ne ""} {
       set full_uri [$me resolve_uri $uri]
-    
+
       # Create and execute a download request. For now, "expect" a mime-type
       # of image/gif. This should be enough to tell the protocol handler to
       # expect a binary file (of course, this is not correct, the real
@@ -1447,7 +1447,7 @@ namespace eval ::hv3::hv3 {
   proc HandleLocation {me handle} {
     upvar #0 $me O
     # Check for a "Location" header. TODO: Handling Location
-    # should be done in one common location for everything except 
+    # should be done in one common location for everything except
     # the main document. The main document is a bit different...
     # or is it?
     set location ""
@@ -1491,7 +1491,7 @@ namespace eval ::hv3::hv3 {
 
   # Request the resource located at URI $full_uri and treat it as
   # a stylesheet. The parent stylesheet id is $parent_id. This
-  # method is used for stylesheets obtained by either HTML <link> 
+  # method is used for stylesheets obtained by either HTML <link>
   # elements or CSS "@import {...}" directives.
   #
   proc Requeststyle {me parent_id full_uri} {
@@ -1554,14 +1554,14 @@ namespace eval ::hv3::hv3 {
            ![::hv3::encoding_isequal $enc [$me encoding]]
         } {
           # This occurs when a document contains a <meta> element that
-          # specifies a character encoding and the document was 
+          # specifies a character encoding and the document was
           # delivered without a transport-layer encoding (Content-Type
           # header). We need to start reparse the document from scratch
           # using the new encoding.
           #
           # We need to be careful to work around a polipo bug here: If
           # there are more than two requests for a single resource
-          # to a single polipo process, and one of the requests is 
+          # to a single polipo process, and one of the requests is
           # cancelled, then the other (still active) request is truncated
           # by polipo. The polipo developers acknowledge that this is
           # a bug, but as it doesn't come up very often in normal polipo
@@ -1569,13 +1569,13 @@ namespace eval ::hv3::hv3 {
           #
           # It's a problem for Hv3 because if the following [reset] cancels
           # any requests, then when reparsing the same document with a
-          # different encoding the same resources are requested, we are 
+          # different encoding the same resources are requested, we are
           # likely to trigger this bug.
           #
           puts "INFO: This page triggers meta enc reload"
-          
+
           # For all active handles except the document handle, configure
-          # the -incrscript as a no-op, and have the finscript simply 
+          # the -incrscript as a no-op, and have the finscript simply
           # release the handle reference. This means the polipo bug will
           # not be triggered.
           foreach h $O(myActiveHandles) {
@@ -1596,19 +1596,19 @@ namespace eval ::hv3::hv3 {
     }
   }
 
-  # Return the default encoding that should be used for 
+  # Return the default encoding that should be used for
   # javascript and CSS resources.
   proc encoding {me} {
     upvar #0 $me O
-    if {$O(myDocumentHandle) eq ""} { 
-      return [encoding system] 
+    if {$O(myDocumentHandle) eq ""} {
+      return [encoding system]
     }
     return [$O(myDocumentHandle) encoding]
   }
 
   # This method is called to handle "Refresh" and "Location" headers
   # delivered as part of the response to a request for a document to
-  # display in the main window. Refresh headers specified as 
+  # display in the main window. Refresh headers specified as
   # <meta type=http-equiv> markup are also handled. The $content argument
   # contains a the content portion of the Request header, for example:
   #
@@ -1677,7 +1677,7 @@ namespace eval ::hv3::hv3 {
   # Node handler script for <body> tags. The purpose of this handler
   # and the [body_style_handler] method immediately below it is
   # to handle the 'overflow' property on the document root element.
-  # 
+  #
   proc body_node_handler {me node} {
     upvar #0 $me O
     $node replace dumO(my) -stylecmd [list $me body_style_handler $node]
@@ -1724,7 +1724,7 @@ namespace eval ::hv3::hv3 {
     if {
         [string match *stylesheet* $rel] &&
         ![string match *alternat* $rel] &&
-        $href ne "" && 
+        $href ne "" &&
         [regexp all|screen $media]
     } {
       set full_uri [$me resolve_uri $href]
@@ -1785,7 +1785,7 @@ namespace eval ::hv3::hv3 {
           set selector [format {[id="%s"]} $fragment]
           set goto_node [lindex [$O(myHtml) search $selector] 0]
         }
-  
+
         if {$goto_node ne ""} {
           $O(myHtml) yview $goto_node
         }
@@ -1799,10 +1799,10 @@ namespace eval ::hv3::hv3 {
     # A fragment was specified as part of the URI that has just started
     # loading. Set O(myFragmentSeek) to the fragment name. Each time some
     # more of the document or a stylesheet loads, the [goto_fragment]
-    # method will try to align the vertical scrollbar so that the 
+    # method will try to align the vertical scrollbar so that the
     # named fragment is at the top of the view.
     #
-    # If and when the user manually scrolls the viewport, the 
+    # If and when the user manually scrolls the viewport, the
     # O(myFragmentSeek) variable is cleared. This is so we don't wrest
     # control of the vertical scrollbar after the user has manually
     # positioned it.
@@ -1828,7 +1828,7 @@ namespace eval ::hv3::hv3 {
     upvar #0 $me O
 
     if {$O(myMimetype) eq ""} {
-  
+
       # TODO: Real mimetype parser...
       set mimetype  [string tolower [string trim [$handle cget -mimetype]]]
       foreach {major minor} [split $mimetype /] {}
@@ -1849,7 +1849,7 @@ namespace eval ::hv3::hv3 {
             set O(myMimetype) text
 	  }
         }
-  
+
         image {
           set O(myImageData) ""
           $me reset $savestate
@@ -1871,7 +1871,7 @@ namespace eval ::hv3::hv3 {
       }
 
       set isImmediateRefresh [$me Refresh $refreshheader]
-  
+
       if {!$isImmediateRefresh && $O(myMimetype) eq ""} {
         # Neither text nor an image. This is the upper layers problem.
         if {$O(-downloadcmd) ne ""} {
@@ -1898,7 +1898,7 @@ namespace eval ::hv3::hv3 {
       }
 
       set O(myReferrer) $referrer
-  
+
       if {$O(myCacheControl) ne "relax-transparency"} {
         $me seek_to_fragment [$O(myUri) fragment]
       }
@@ -2021,9 +2021,9 @@ namespace eval ::hv3::hv3 {
   #     yview               $O(myHtml)
   #     html                N/A
   #     hull                N/A
-  #   
+  #
 
-  proc dom {me} { 
+  proc dom {me} {
     upvar #0 $me O
     if {$O(myDom) eq ""} { return ::hv3::ignore_script }
     return $O(myDom)
@@ -2042,13 +2042,13 @@ namespace eval ::hv3::hv3 {
   #     -referer URI
   #     -history_handle  DOWNLOAD-HANDLE
   #
-  # The -cachecontrol option (default "normal") specifies the value 
-  # that will be used for all ::hv3::request objects issued as a 
+  # The -cachecontrol option (default "normal") specifies the value
+  # that will be used for all ::hv3::request objects issued as a
   # result of this load URI operation.
   #
-  # Normally, a <<SaveState>> event is generated. If -nosave is specified, 
+  # Normally, a <<SaveState>> event is generated. If -nosave is specified,
   # this is suppressed.
-  # 
+  #
   proc goto {me uri args} {
     upvar #0 $me O
 
@@ -2115,7 +2115,7 @@ namespace eval ::hv3::hv3 {
       }
       $O(myUri) load $uri
 
-      # If the cache-mode is "relax-transparency", then the history 
+      # If the cache-mode is "relax-transparency", then the history
       # system is controlling this document load. It has already called
       # [seek_to_yview] to provide a seek offset.
       if {$cachecontrol ne "relax-transparency"} {
@@ -2157,7 +2157,7 @@ namespace eval ::hv3::hv3 {
           kit  { set mimetype application/binary }
         }
       }
-  
+
       # Create a download request for this resource. We expect an html
       # document, but at this juncture the URI may legitimately refer
       # to kind of resource.
@@ -2170,11 +2170,11 @@ namespace eval ::hv3::hv3 {
       ]
       $handle configure                                                        \
         -incrscript [list $me documentcallback $handle $referer $savestate 0]\
-        -finscript  [list $me documentcallback $handle $referer $savestate 1] 
+        -finscript  [list $me documentcallback $handle $referer $savestate 1]
       if {$referer ne ""} {
         $handle configure -requestheader [list Referer $referer]
       }
-  
+
       $me makerequest $handle
     } else {
       # The history system has supplied the data to load into the widget.
@@ -2189,17 +2189,17 @@ namespace eval ::hv3::hv3 {
     $uri_obj destroy
   }
 
-  # Abandon all currently pending downloads. This method is 
+  # Abandon all currently pending downloads. This method is
   # part of the public interface.
   #
   proc stop {me } {
     upvar #0 $me O
 
-    foreach dl $O(myActiveHandles) { 
+    foreach dl $O(myActiveHandles) {
       if {$dl eq $O(myDocumentHandle)} {
         set O(myDocumentHandle) ""
       }
-      $dl release 
+      $dl release
     }
 
     if {$O(myStorevisitedDone) == 0 && $O(-storevisitedcmd) ne ""} {
@@ -2293,7 +2293,7 @@ namespace eval ::hv3::hv3 {
     upvar #0 $me O
     return [llength $O(myActiveHandles)]
   }
-  proc html {me args}     { 
+  proc html {me args}     {
     upvar #0 $me O
     if {[llength $args]>0} {
       eval [$O(myHtml) widget] $args
@@ -2301,7 +2301,7 @@ namespace eval ::hv3::hv3 {
       $O(myHtml) widget
     }
   }
-  proc hull {me}     { 
+  proc hull {me}     {
     upvar #0 $me O
     return $O(hull)
   }
@@ -2334,7 +2334,7 @@ namespace eval ::hv3::hv3 {
   #}
   #namespace unknown unknown
 
-  proc node {me args} { 
+  proc node {me args} {
     upvar #0 $me O
     eval $O(myHtml) node $args
   }
