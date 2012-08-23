@@ -600,7 +600,7 @@ struct menu_item ehy_menu[] = {
 
 
 struct menu_item  hyp_menu[] = {
-    { "HYPERBOLID MENU", (void (*)())NULL, 0 },
+    { "HYP MENU", (void (*)())NULL, 0 },
     { "Set H", hyp_ed, MENU_HYP_H },
     { "Set A", hyp_ed, MENU_HYP_SCALE_A },
     { "Set B", hyp_ed, MENU_HYP_SCALE_B },
@@ -5325,7 +5325,7 @@ sedit(void)
 	    break;
 
 	case ECMD_HYP_ROT_H:
-	    /* rotate hyperbolid height vector */
+	    /* rotate hyperboloid height vector */
 	    {
 		struct rt_hyp_internal *hyp =
 		    (struct rt_hyp_internal *)es_int.idb_ptr;
