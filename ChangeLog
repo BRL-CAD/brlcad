@@ -20058,7 +20058,7 @@
 2012-01-13 16:46  erikgreenwald
 
 	* [r48735] src/util/pl-pl.c:
-	  collapse logic, removing a variable. Explicitely cast to short on
+	  collapse logic, removing a variable. Explicitly cast to short on
 	  return. Cov331
 
 2012-01-13 16:45  brlcad
