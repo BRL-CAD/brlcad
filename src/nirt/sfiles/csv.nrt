@@ -2,7 +2,7 @@
 # Description: csv       - Comma Separated Value Output Formatting
 fmt r "Ray:\nx_orig,y_orig,z_orig,d_orig,h,v,x_dir,y_dir,z_dir,az,el\n%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f,%.8f \n\n" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e
 fmt h "Results:\nreg_name,path_name,reg_id,x_in,y_in,z_in,d_in,x_out,y_out,z_out,d_out,los,scaled_los,obliq_in,obliq_out,surf_num_in,surf_num_out\n"
-fmt p "\"%s\",\"%s\",%d,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%d,%d\n" reg_name path_name reg_id x_in y_in z_in d_in x_out y_out z_out d_out los scaled_los obliq_in obliq_out surf_num_in surf_num_out 
+fmt p "\"%s\",\"%s\",%d,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%8f,%d,%d\n" reg_name path_name reg_id x_in y_in z_in d_in x_out y_out z_out d_out los scaled_los obliq_in obliq_out surf_num_in surf_num_out
 fmt f "\n"
 fmt m "You missed the target\n\n"
 fmt o "\nOVERLAP:,over_reg1_name,over_reg2_name,ov_x_in,ov_y_in,ov_z_in,ov_los\n ,\"%s\",\"%s\",%.8f,%.8f,%.8f,%.8f\n\n" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los
