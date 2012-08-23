@@ -1322,7 +1322,7 @@ void Clipper::DisposeOutRec(PolyOutList::size_type index, bool ignorePts)
 void Clipper::SetWindingCount(TEdge &edge)
 {
   TEdge *e = edge.prevInAEL;
-  //find the edge of the same polytype that immediately preceeds 'edge' in AEL
+  //find the edge of the same polytype that immediately precedes 'edge' in AEL
   while ( e  && e->polyType != edge.polyType ) e = e->prevInAEL;
   if ( !e )
   {
@@ -1410,11 +1410,11 @@ bool Clipper::IsContributing(const TEdge& edge) const
 
   switch(pft)
   {
-    case pftEvenOdd: 
+    case pftEvenOdd:
     case pftNonZero:
       if (Abs(edge.windCnt) != 1) return false;
       break;
-    case pftPositive: 
+    case pftPositive:
       if (edge.windCnt != 1) return false;
       break;
     default: //pftNegative
@@ -1426,46 +1426,46 @@ bool Clipper::IsContributing(const TEdge& edge) const
     case ctIntersection:
       switch(pft2)
       {
-        case pftEvenOdd: 
-        case pftNonZero: 
+        case pftEvenOdd:
+        case pftNonZero:
           return (edge.windCnt2 != 0);
-        case pftPositive: 
+        case pftPositive:
           return (edge.windCnt2 > 0);
-        default: 
+        default:
           return (edge.windCnt2 < 0);
       }
     case ctUnion:
       switch(pft2)
       {
-        case pftEvenOdd: 
-        case pftNonZero: 
+        case pftEvenOdd:
+        case pftNonZero:
           return (edge.windCnt2 == 0);
-        case pftPositive: 
+        case pftPositive:
           return (edge.windCnt2 <= 0);
-        default: 
+        default:
           return (edge.windCnt2 >= 0);
       }
     case ctDifference:
       if (edge.polyType == ptSubject)
         switch(pft2)
         {
-          case pftEvenOdd: 
-          case pftNonZero: 
+          case pftEvenOdd:
+          case pftNonZero:
             return (edge.windCnt2 == 0);
-          case pftPositive: 
+          case pftPositive:
             return (edge.windCnt2 <= 0);
-          default: 
+          default:
             return (edge.windCnt2 >= 0);
         }
       else
         switch(pft2)
         {
-          case pftEvenOdd: 
-          case pftNonZero: 
+          case pftEvenOdd:
+          case pftNonZero:
             return (edge.windCnt2 != 0);
-          case pftPositive: 
+          case pftPositive:
             return (edge.windCnt2 > 0);
-          default: 
+          default:
             return (edge.windCnt2 < 0);
         }
   }
@@ -1764,28 +1764,28 @@ void Clipper::IntersectEdges(TEdge *e1, TEdge *e2,
 
   if ( e1Contributing && e2contributing )
   {
-    if ( e1stops || e2stops || 
+    if ( e1stops || e2stops ||
       (e1Wc != 0 && e1Wc != 1) || (e2Wc != 0 && e2Wc != 1) ||
       (e1->polyType != e2->polyType && m_ClipType != ctXor) )
-        AddLocalMaxPoly(e1, e2, pt); 
+        AddLocalMaxPoly(e1, e2, pt);
     else
         DoBothEdges( e1, e2, pt );
   }
   else if ( e1Contributing )
   {
-    if ((e2Wc == 0 || e2Wc == 1) && 
-      (m_ClipType != ctIntersection || 
-      e2->polyType == ptSubject || (e2->windCnt2 != 0))) 
+    if ((e2Wc == 0 || e2Wc == 1) &&
+      (m_ClipType != ctIntersection ||
+      e2->polyType == ptSubject || (e2->windCnt2 != 0)))
         DoEdge1(e1, e2, pt);
   }
   else if ( e2contributing )
   {
-    if ((e1Wc == 0 || e1Wc == 1) && 
-      (m_ClipType != ctIntersection || 
-      e1->polyType == ptSubject || (e1->windCnt2 != 0))) 
+    if ((e1Wc == 0 || e1Wc == 1) &&
+      (m_ClipType != ctIntersection ||
+      e1->polyType == ptSubject || (e1->windCnt2 != 0)))
         DoEdge2(e1, e2, pt);
-  } 
-  else if ( (e1Wc == 0 || e1Wc == 1) && 
+  }
+  else if ( (e1Wc == 0 || e1Wc == 1) &&
     (e2Wc == 0 || e2Wc == 1) && !e1stops && !e2stops )
   {
     //neither edge is currently contributing ...
@@ -1817,10 +1817,10 @@ void Clipper::IntersectEdges(TEdge *e1, TEdge *e2,
             AddLocalMinPoly(e1, e2, pt);
           break;
         case ctDifference:
-          if ((e1->polyType == ptClip && e2->polyType == ptClip && 
-              e1Wc2 > 0 && e2Wc2 > 0) || 
-              (e1->polyType == ptSubject && e2->polyType == ptSubject && 
-              e1Wc2 <= 0 && e2Wc2 <= 0)) 
+          if ((e1->polyType == ptClip && e2->polyType == ptClip &&
+              e1Wc2 > 0 && e2Wc2 > 0) ||
+              (e1->polyType == ptSubject && e2->polyType == ptSubject &&
+              e1Wc2 <= 0 && e2Wc2 <= 0))
                 AddLocalMinPoly(e1, e2, pt);
           break;
         case ctXor:
@@ -3036,7 +3036,7 @@ Polygon BuildArc(const IntPoint &pt,
 
 DoublePoint GetUnitNormal( const IntPoint &pt1, const IntPoint &pt2)
 {
-  if(pt2.X == pt1.X && pt2.Y == pt1.Y) 
+  if(pt2.X == pt1.X && pt2.Y == pt1.Y)
     return DoublePoint(0, 0);
 
   double dx = (double)(pt2.X - pt1.X);
@@ -3060,7 +3060,7 @@ private:
   size_t m_i, m_j, m_k;
   static const int buffLength = 128;
   JoinType m_jointype;
- 
+
 public:
 
 PolyOffsetBuilder(const Polygons& in_polys, Polygons& out_polys,
@@ -3078,7 +3078,7 @@ PolyOffsetBuilder(const Polygons& in_polys, Polygons& out_polys,
     this->m_jointype = jointype;
     if (MiterLimit <= 1) MiterLimit = 1;
     m_RMin = 2/(MiterLimit*MiterLimit);
- 
+
     double deltaSq = delta*delta;
     out_polys.clear();
     out_polys.resize(in_polys.size());
@@ -3111,7 +3111,7 @@ PolyOffsetBuilder(const Polygons& in_polys, Polygons& out_polys,
         normals[len-1] = GetUnitNormal(in_polys[m_i][len-1], in_polys[m_i][0]);
         for (m_j = 0; m_j < len -1; ++m_j)
             normals[m_j] = GetUnitNormal(in_polys[m_i][m_j], in_polys[m_i][m_j+1]);
-        
+
         m_k = len -1;
         for (m_j = 0; m_j < len; ++m_j)
         {
