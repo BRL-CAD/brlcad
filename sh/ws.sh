@@ -153,6 +153,7 @@ if [ "x$files" = "x" ] ; then
 	-name 'DEVINFO*' -or \
 	-name 'HACKING*' -or \
 	-name 'NEWS*' -or \
+	-name 'NOTES*' -or \
 	-name 'README*' -or \
 	-name 'TODO*' \
 	\) | \
