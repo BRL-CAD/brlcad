@@ -3,7 +3,7 @@ namespace eval hv3 { set {version($Id$)} 1 }
 #--------------------------------------------------------------------------
 # Snit types in this file:
 #
-#     ::hv3::dom                       -- One object per js interpreter. 
+#     ::hv3::dom                       -- One object per js interpreter.
 #     ::hv3::dom::logscript            -- Logging data for debugging.
 #
 
@@ -46,7 +46,7 @@ snit::type ::hv3::dom {
   # Logging command.
   option -logcmd -default "" -configuremethod ConfigureLogcmd
 
-  # Used to assign unique ids to each block of script evaluated. 
+  # Used to assign unique ids to each block of script evaluated.
   # This is used by the script debugging gui.
   variable myNextCodeblockNumber 1
 
@@ -67,7 +67,7 @@ snit::type ::hv3::dom {
     }
   }
 
-  destructor { 
+  destructor {
     catch { $mySee destroy }
   }
 
@@ -95,7 +95,7 @@ snit::type ::hv3::dom {
   method NewFilename {} {
     return "$self.[incr myNextCodeblockNumber]"
   }
-  
+
   # This method is called as a Tkhtml3 "script handler" for elements
   # of type <SCRIPT>. I.e. this should be registered with the html widget
   # as follows:
@@ -118,7 +118,7 @@ snit::type ::hv3::dom {
       if {[$myHv3 encoding] ne ""} {
         $handle configure -encoding [$myHv3 encoding]
       }
-	  
+
       set fin [mymethod ScriptCallback $attr $handle]
       $handle configure -finscript $fin
       $myHv3 makerequest $handle
@@ -127,19 +127,19 @@ snit::type ::hv3::dom {
     }
     return ""
   }
-  
+
   # If a <SCRIPT> element has a "src" attribute, then the [script]
-  # method will have issued a GET request for it. This is the 
+  # method will have issued a GET request for it. This is the
   # successful callback.
   #
   method ScriptCallback {attr downloadHandle script} {
     set title ""
-    if {$downloadHandle ne ""} { 
+    if {$downloadHandle ne ""} {
       # Handle an HTTP redirect or a Location header:
       #
       if {[$myHv3 HandleLocation $downloadHandle]} return
       set title [$downloadHandle cget -uri]
-      $downloadHandle release 
+      $downloadHandle release
     }
 
     if {$title eq ""} {
@@ -195,10 +195,10 @@ snit::type ::hv3::dom {
       # Window object).
       #
       # According to "DOM Level 2 Events", the load event does not
-      # bubble and is not cancelable.
+      # bubble and is not cancellable.
       #
       set fs [[$node html] search frameset -index 0]
-      if {$fs ne ""} { 
+      if {$fs ne ""} {
         $self InitWindowEvents $fs
         return
       }
@@ -214,7 +214,7 @@ snit::type ::hv3::dom {
       ::hv3::dom::dispatchHtmlEvent $self $event $js_obj
     } msg]
 
-    # If an error occured, log it in the debugging window.
+    # If an error occurred, log it in the debugging window.
     #
     if {$rc} {
       set name [string map {blob error} [$self NewFilename]]
@@ -235,7 +235,7 @@ snit::type ::hv3::dom {
       ::hv3::dom::dispatchHtmlEvent $self $event $js_obj
     } msg]
 
-    # If an error occured, log it in the debugging window.
+    # If an error occurred, log it in the debugging window.
     #
     if {$rc} {
       set objtype [lindex $js_obj 0]
@@ -250,7 +250,7 @@ snit::type ::hv3::dom {
   method DoFramesetLoadEvents {node} {
     set frame [[winfo parent [$node html]] me]
 
-    # If $frame is a replacement object for an <IFRAME> element, 
+    # If $frame is a replacement object for an <IFRAME> element,
     # then fire the load event on the <IFRAME> element.
     if {[$frame cget -iframe] ne ""} {
       set iframe [$frame cget -iframe]
@@ -263,7 +263,7 @@ snit::type ::hv3::dom {
 
     set p [$frame parent_frame]
     if {$p eq ""} return
-    
+
     foreach c [$p child_frames] {
       if {0 == [[$c hv3] onload_fired]} {
         return
@@ -276,22 +276,22 @@ snit::type ::hv3::dom {
     $self DispatchHtmlEvent load $js_obj
   }
 
-  # This method is called by the ::hv3::mousemanager object to 
+  # This method is called by the ::hv3::mousemanager object to
   # dispatch a mouse-event into DOM country. Argument $event
   # is one of the following:
   #
-  #     onclick 
-  #     onmouseout 
+  #     onclick
+  #     onmouseout
   #     onmouseover
-  #     onmouseup 
-  #     onmousedown 
-  #     onmousemove 
+  #     onmouseup
+  #     onmousedown
+  #     onmousemove
   #     ondblclick
   #
-  # Argument $node is the Tkhtml node that the mouse-event is 
+  # Argument $node is the Tkhtml node that the mouse-event is
   # to be dispatched against. $x and $y are the viewport coordinates
   # as returned by the Tk [bind] commands %x and %y directives. Any
-  # addition arguments ($args) are passed through to 
+  # addition arguments ($args) are passed through to
   # [::hv3::dom::dispatchMouseEvent].
   #
   method mouseevent {event node x y args} {
@@ -366,11 +366,11 @@ snit::type ::hv3::dom {
 #
 snit::type ::hv3::dom::logscript {
   option -rc      -default ""
-  option -heading -default "" 
-  option -script  -default "" 
-  option -result  -default "" 
-  option -name    -default "" 
-  option -isevent -default 0 
+  option -heading -default ""
+  option -script  -default ""
+  option -result  -default ""
+  option -name    -default ""
+  option -isevent -default 0
 }
 
 #-----------------------------------------------------------------------
@@ -403,7 +403,7 @@ proc ::hv3::dom_init {{init_docs 0}} {
 
 #-----------------------------------------------------------------------
 # Initialise the scripting environment. This tries to load the javascript
-# interpreter library. If it fails, then we have a scriptless browser. 
+# interpreter library. If it fails, then we have a scriptless browser.
 # The test for whether or not the browser is script-enabled is:
 #
 #     if {[info commands ::see::interp] ne ""} {
@@ -426,7 +426,7 @@ proc ::hv3::enable_javascript {} {
 }
 
 namespace eval ::hv3::DOM {
-  # Given an html-widget node-handle, return the corresponding 
+  # Given an html-widget node-handle, return the corresponding
   # ::hv3::DOM::HTMLDocument object. i.e. the thing needed for
   # the Node.ownerDocument javascript property of an HTMLElement or
   # Text Node.
