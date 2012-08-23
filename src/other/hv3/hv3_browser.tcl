@@ -5,8 +5,8 @@ package require Tkhtml 3.0
 
 proc sourcefile {file} [string map              \
   [list %HV3_DIR% [file dirname [info script]]] \
-{ 
-  return [file join {%HV3_DIR%} $file] 
+{
+  return [file join {%HV3_DIR%} $file]
 }]
 
 source [sourcefile snit.tcl]
@@ -43,18 +43,18 @@ source [sourcefile hv3_object.tcl]
 #         * Overrides the default -targetcmd supplied by ::hv3::hv3
 #           to respect the "target" attribute of <a> and <form> elements.
 #
-#     For more detail on handling the "target" attribute, see HTML 4.01. 
+#     For more detail on handling the "target" attribute, see HTML 4.01.
 #     In particular the following from appendix B.8:
-# 
+#
 #         1. If the target name is a reserved word as described in the
 #            normative text, apply it as described.
-#         2. Otherwise, perform a depth-first search of the frame hierarchy 
-#            in the window that contained the link. Use the first frame whose 
+#         2. Otherwise, perform a depth-first search of the frame hierarchy
+#            in the window that contained the link. Use the first frame whose
 #            name is an exact match.
 #         3. If no such frame was found in (2), apply step 2 to each window,
 #            in a front-to-back ordering. Stop as soon as you encounter a frame
 #            with exactly the same name.
-#         4. If no such frame was found in (3), create a new window and 
+#         4. If no such frame was found in (3), create a new window and
 #            assign it the target name.
 #
 #     Hv3 currently only implements steps 1 and 2.
@@ -64,7 +64,7 @@ namespace eval ::hv3::browser_frame {
   proc new {me browser args} {
     upvar #0 $me O
 
-    # The name of this frame (as specified by the "name" attribute of 
+    # The name of this frame (as specified by the "name" attribute of
     # the <frame> element).
     set O(-name) ""
     set O(oldname) ""
@@ -89,7 +89,7 @@ namespace eval ::hv3::browser_frame {
     # If "Copy Link Location" has been selected, store the selected text
     # (a URI) in set $O(myCopiedLinkLocation).
     set O(myCopiedLinkLocation) ""
- 
+
     #set O(myHv3)      [::hv3::hv3 $O(win).hv3]
     #pack $O(myHv3) -expand true -fill both
     set O(myHv3) $O(hull)
@@ -105,8 +105,8 @@ namespace eval ::hv3::browser_frame {
     #bind $O(win) <2>       [list $me goto_selection]
     bind $O(win) <2>       [list $me middleclick %x %y]
 
-    # When the hyperlink menu "owns" the selection (happens after 
-    # "Copy Link Location" is selected), invoke method 
+    # When the hyperlink menu "owns" the selection (happens after
+    # "Copy Link Location" is selected), invoke method
     # [GetCopiedLinkLocation] with no arguments to retrieve it.
 
     # Register a handler command to handle <frameset>.
@@ -140,7 +140,7 @@ namespace eval ::hv3::browser_frame {
   }
 
   proc configure-name {me} {
-    update_parent_dom $me [[$me hv3 dom] see] 
+    update_parent_dom $me [[$me hv3 dom] see]
   }
   proc update_parent_dom {me my_see} {
     upvar #0 $me O
@@ -151,9 +151,9 @@ namespace eval ::hv3::browser_frame {
 
     set parent [$me parent_frame]
     if {$parent ne ""} {
-      set parent_see [[$parent hv3 dom] see] 
+      set parent_see [[$parent hv3 dom] see]
 
-      if {$parent_see ne ""} { 
+      if {$parent_see ne ""} {
         if {$O(oldname) ne ""} {
           $parent_see global $O(oldname) undefined
         }
@@ -185,7 +185,7 @@ namespace eval ::hv3::browser_frame {
       "_self"   { set widget $O(myHv3) }
       "_top"    { set widget $theTopFrame }
 
-      "_parent" { 
+      "_parent" {
         set w [winfo parent $O(myHv3)]
         while {$w ne "" && [lsearch [$O(myBrowser) get_frames] $w] < 0} {
           set w [winfo parent $w]
@@ -198,7 +198,7 @@ namespace eval ::hv3::browser_frame {
       }
 
       # This is incorrect. The correct behaviour is to open a new
-      # top-level window. But hv3 doesn't support this (and because 
+      # top-level window. But hv3 doesn't support this (and because
       # reasonable people don't like new top-level windows) we load
       # the resource into the "_top" frame instead.
       "_blank"  { set widget $theTopFrame }
@@ -295,8 +295,8 @@ namespace eval ::hv3::browser_frame {
     }
   }
 
-  # This callback is invoked when the user right-clicks on this 
-  # widget. If the mouse cursor is currently hovering over a hyperlink, 
+  # This callback is invoked when the user right-clicks on this
+  # widget. If the mouse cursor is currently hovering over a hyperlink,
   # popup the hyperlink menu. Otherwise launch the tree browser.
   #
   # Arguments $x and $y are the the current cursor position relative to
@@ -386,9 +386,9 @@ namespace eval ::hv3::browser_frame {
   proc menu_select {me option uri} {
     upvar #0 $me O
     switch -- $option {
-      open { 
+      open {
         set top_frame [lindex [$O(myBrowser) get_frames] 0]
-        $top_frame goto $uri 
+        $top_frame goto $uri
       }
       opentab { set new [.notebook addbg $uri] }
       download { $O(myBrowser) saveuri $uri }
@@ -473,7 +473,7 @@ namespace eval ::hv3::browser_frame {
       }
     }
   }
- 
+
   #--------------------------------------------------------------------------
   # PUBLIC INTERFACE
   #--------------------------------------------------------------------------
@@ -491,16 +491,16 @@ namespace eval ::hv3::browser_frame {
     ::HtmlDebug::browse $O(myHv3) [$O(myHv3) node]
   }
 
-  proc hv3 {me args} { 
+  proc hv3 {me args} {
     upvar #0 $me O
     if {[llength $args] == 0} {return $O(myHv3)}
     eval $O(myHv3) $args
   }
   proc browser {me} {
     upvar #0 $me O
-    return $O(myBrowser) 
+    return $O(myBrowser)
   }
-  proc dom {me} { 
+  proc dom {me} {
     upvar #0 $me O
     return [$O(myHv3) dom]
   }
@@ -512,7 +512,7 @@ namespace eval ::hv3::browser_frame {
   proc isframeset {me} {
     upvar #0 $me O
     # When a <FRAMESET> tag is parsed, a node-handler in hv3_frameset.tcl
-    # creates a widget to manage the frames and then uses [place] to 
+    # creates a widget to manage the frames and then uses [place] to
     # map it on top of the html widget created by this ::hv3::browser_frame
     # widget. Todo: It would be better if this code was in the same file
     # as the node-handler, otherwise this test is a bit obscure.
@@ -563,7 +563,7 @@ namespace eval ::hv3::browser_frame {
 ::hv3::make_constructor ::hv3::browser_frame ::hv3::hv3
 
 # An instance of this widget represents a top-level browser frame (not
-# a toplevel window - an html frame not contained in any frameset 
+# a toplevel window - an html frame not contained in any frameset
 # document). These are the things managed by the notebook widget.
 #
 namespace eval ::hv3::browser {
@@ -579,7 +579,7 @@ namespace eval ::hv3::browser {
     set O(-unsafe) 0
 
     # Variables passed to [$myProtocol configure -statusvar] and
-    # the same option of $myMainFrame. Used to create the value for 
+    # the same option of $myMainFrame. Used to create the value for
     # $myStatusVar.
     set O(myProtocolStatus) ""
     set O(myFrameStatus) ""
@@ -588,7 +588,7 @@ namespace eval ::hv3::browser {
     set O(myLocationVar) ""
 
     # List of all ::hv3::browser_frame objects using this object as
-    # their toplevel browser. 
+    # their toplevel browser.
     set O(myFrames) [list]
 
     # Create the protocol object.
@@ -644,10 +644,10 @@ namespace eval ::hv3::browser {
     if {$O(myHistory) ne ""}  { $O(myHistory) destroy }
   }
 
-  proc statusvar {me} { 
+  proc statusvar {me} {
     return ${me}(myStatusVar)
   }
-  proc titlevar {me args} { 
+  proc titlevar {me args} {
     upvar #0 $me O
     eval $O(myMainFrame) titlevar $args
   }
@@ -700,7 +700,7 @@ namespace eval ::hv3::browser {
     return $O(myFrames)
   }
 
-  # Return a list describing the current structure of the frameset 
+  # Return a list describing the current structure of the frameset
   # displayed by this browser.
   #
   proc frames_tree {me {head {}}} {
@@ -721,7 +721,7 @@ namespace eval ::hv3::browser {
       }
       set A($f) $new
     }
-    
+
     set A($head)
   }
 
@@ -751,7 +751,7 @@ namespace eval ::hv3::browser {
   proc pendingcmd {me isPending} {
     upvar #0 $me O
     if {$O(-stopbutton) ne "" && $O(myIsPending) != $isPending} {
-      if {$isPending} { 
+      if {$isPending} {
         $O(hull) configure -cursor watch
         $O(-stopbutton) configure        \
             -command [list $O(myMainFrame) stop]  \
@@ -809,7 +809,7 @@ namespace eval ::hv3::browser {
       set initval [${fdname}.entry get]
       ::destroy $fdname
     }
-  
+
     ::hv3::findwidget $fdname $me
 
     $me packwidget $fdname
@@ -817,7 +817,7 @@ namespace eval ::hv3::browser {
 
     # Bind up, down, next and prior key-press events to scroll the
     # main hv3 widget. This means you can use the keyboard to scroll
-    # window (vertically) without shifting focus from the 
+    # window (vertically) without shifting focus from the
     # find-as-you-type box.
     #
     set hv3 [$me hv3]
@@ -826,7 +826,7 @@ namespace eval ::hv3::browser {
     bind ${fdname} <KeyPress-Next>  [list $hv3 yview scroll  1 pages]
     bind ${fdname} <KeyPress-Prior> [list $hv3 yview scroll -1 pages]
 
-    # When the findwidget is destroyed, return focus to the html widget. 
+    # When the findwidget is destroyed, return focus to the html widget.
     bind ${fdname} <KeyPress-Escape> gui_escape
 
     ${fdname}.entry insert 0 $initval
@@ -909,5 +909,5 @@ namespace eval ::hv3::browser {
 
 ::hv3::make_constructor ::hv3::browser
 
-set ::hv3::maindir [file dirname [info script]] 
+set ::hv3::maindir [file dirname [info script]]
 
