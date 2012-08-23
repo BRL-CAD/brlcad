@@ -25,6 +25,6 @@ special characters to box the preceding letter.  The special characters are
 that control the start, transition and end of boxed characters these include
 “{” [left curly bracket] , “|” [vertical line] ,”}” [right curly bracket] ,
 ”æ” [latin ae] ”ç” [latin c with cedilla] , ”è” [latin e with grave] among
-others. 
+others.
 
 Source:  http://p-00-kanold.com/?page_id=7
