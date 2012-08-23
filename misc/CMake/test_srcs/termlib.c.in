@@ -1,6 +1,6 @@
 #cmakedefine HAVE_TERMLIB_H
 #cmakedefine HAVE_NCURSES_H
-#cmakedefine HAVE_CURSES_H 
+#cmakedefine HAVE_CURSES_H
 #cmakedefine HAVE_TERMCAP_H
 #cmakedefine HAVE_TERMINFO_H
 #cmakedefine HAVE_TINFO_H
