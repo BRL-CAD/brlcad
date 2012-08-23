@@ -248,7 +248,7 @@ namespace eval ::hv3::hv3::mousemanager {
     set O(scripts.motion) ""
 
     # There are also two arrays that store lists of nodes currently "hovered"
-    # over and "active". An entry in the correspondoing array indicates the
+    # over and "active". An entry in the corresponding array indicates the
     # condition is true. The arrays are named:
     #
     #   ${me}.hovernodes
