@@ -4726,6 +4726,12 @@ BU_EXPORT extern int bu_rb_rank(struct bu_rb_tree *tree,
 				int order);
 #define bu_rb_rank1(t) bu_rb_rank1((t), 0)
 
+/** @file libbu/rb_rotate.c
+ *
+ */
+BU_EXPORT extern void *bu_rb_left(struct bu_rb_node *x, int order);
+BU_EXPORT extern void *bu_rb_right(struct bu_rb_node *y, int order);
+
 /**
  * This function has three parameters: the tree in which to search,
  * the order on which to do the searching, and the rank of interest.
