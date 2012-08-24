@@ -1304,6 +1304,9 @@ comp.r4 ID 5678 material code 5 LOS 75
 * add per-face analysis of primitives like tgc, arb to their respective
   analyze commands in libged
 
+* investigate the libngpcore and libngput libraries from the ngPlant
+  project as a possible means of procedurally generating plant models
+  in BRL-CAD (libraries are BSD licensed: http://ngplant.sourceforge.net)
 
 CONVERTERS
 ----------
