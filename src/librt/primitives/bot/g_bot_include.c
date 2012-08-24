@@ -405,12 +405,15 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
 
 	surfno = hits[i].hit_surfno;
 
-	if (bot->bot_mode == RT_BOT_PLATE_NOCOS)
-	    los = bot->bot_thickness[surfno];
-	else {
-	    los = bot->bot_thickness[surfno] / hits[i].hit_vpriv[X];
-	    if (los < 0.0)
-		los = -los;
+	los = 0.0;
+	if (bot->bot_thickness) {
+	    if (bot->bot_mode == RT_BOT_PLATE_NOCOS) {
+		los = bot->bot_thickness[surfno];
+	    } else {
+		los = bot->bot_thickness[surfno] / hits[i].hit_vpriv[X];
+		if (los < 0.0)
+		    los = -los;
+	    }
 	}
 
 	if (BU_BITTEST(bot->bot_facemode, hits[i].hit_surfno)) {
