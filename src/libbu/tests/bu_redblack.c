@@ -26,7 +26,6 @@
 /* system headers */
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/time.h>
 
 /* interface headers */
 #include "bu.h"
