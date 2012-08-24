@@ -416,7 +416,7 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
 	    }
 	}
 
-	if (BU_BITTEST(bot->bot_facemode, hits[i].hit_surfno)) {
+	if (bot->bot_facemode && BU_BITTEST(bot->bot_facemode, hits[i].hit_surfno)) {
 
 	    /* append thickness to hit point */
 	    RT_GET_SEG(segp, ap->a_resource);
