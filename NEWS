@@ -420,7 +420,7 @@ steps and can save modelers considerable time.
 --- 2010-08-04  Release 7.16.10                                    ---
 ----------------------------------------------------------------------
 
-The release concludes a phenomenal effort by Jesica Guidice who
+The release concludes a phenomenal effort by Jesica Giudice who
 meticulously translated approximately 150 pages of MGED tutorial
 documentation from English to Spanish.  The 16 tutorials are now fully
 converted and work continues on the technical side to develop
@@ -535,7 +535,7 @@ alpha release status as BRL-CAD's next generation geometry editor.
 Considerable effort continues towards improving BRL-CAD's
 documentation.  Janine Gettier has now converted the documentation for
 approximately 200 of MGED's commands into the Docbook XML format.
-Jesica Guidice has translated 4 of MGED's 16 introductory tutorials to
+Jesica Giudice has translated 4 of MGED's 16 introductory tutorials to
 Spanish.  Cliff Yapp continues to work extensively with both to get
 their efforts integrated so that HTML and PDF documentation are
 cleanly generated.
