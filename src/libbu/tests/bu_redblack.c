@@ -127,8 +127,7 @@ main(int ac, char *av[])
 	printf("\nPREORDER:\n");
 	bu_rb_walk(testTree, 0, displayNode, 0);
 	searchedValue = bu_rb_search(testTree, 0, "h");
-	rb_rot_right(testTree->rbt_current, 0);
-	printf("\nPREORDER AFTER ROTATE RIGH:\n");
+	printf("\nPREORDER AFTER SEARCH:\n");
 	bu_rb_walk(testTree, 0, displayNode, 0);
 	printf("\nINORDER:\n");
 	bu_rb_walk(testTree, 0, displayNode, 1);
@@ -140,8 +139,7 @@ main(int ac, char *av[])
 	printf("\nPREORDER:\n");
 	bu_rb_diagnose_tree(testTree, 0, 0);
 	searchedValue = bu_rb_search(testTree, 0, "h");
-	rb_rot_right(testTree->rbt_current, 0);
-	printf("\nPREORDER AFTER ROTATE RIGH:\n");
+	printf("\nPREORDER AFTER SEARCH:\n");
 	bu_rb_diagnose_tree(testTree, 0, 0);
 	printf("\nINORDER:\n");
 	bu_rb_diagnose_tree(testTree, 0, 1);
