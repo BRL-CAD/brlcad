@@ -145,7 +145,7 @@ extern struct bu_rb_node *rb_neighbor(struct bu_rb_node *node, int order, int se
  * the routine called LEFT-ROTATE on p. 266 of Cormen et al, with
  * modification on p. 285.
  */
-extern void rb_rot_left(struct bu_rb_node *x, int order);
+BU_EXPORT extern void rb_rot_left(struct bu_rb_node *x, int order);
 
 /**
  * R B _ R O T _ R I G H T
@@ -156,7 +156,7 @@ extern void rb_rot_left(struct bu_rb_node *x, int order);
  * and the order to be rotated.  rb_rot_right() is hacked from
  * rb_rot_left() above.
  */
-extern void rb_rot_right(struct bu_rb_node *y, int order);
+BU_EXPORT extern void rb_rot_right(struct bu_rb_node *y, int order);
 
 /**
  * R B _ W A L K
