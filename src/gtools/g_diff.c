@@ -1076,12 +1076,12 @@ main(int argc, char **argv)
 	different = 1;
     }
 
-    /* let the user know if there are no differences */
-    if (different == 0) {
+    if (!different) {
+	/* let the user know if there are no differences */
 	printf("No differences.\n");
     }
 
-    return 0;
+    return different;
 }
 
 /*
