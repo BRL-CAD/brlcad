@@ -1443,8 +1443,8 @@ nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol 
 
     mat_t mat;
     point_t pt, pt_next;
-    struct edgeuse *eu;
-    struct faceuse *fu;
+    struct edgeuse *eu = NULL;
+    struct faceuse *fu = NULL;
     int cnt;
     int can_flip;
     int do_reverse_area;
@@ -1503,7 +1503,7 @@ nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol 
     VUNITIZE(pl);
     pl[H] = VDOT(cog, pl);
 
-    if (can_flip) {
+    if (can_flip && fu) {
 	if ((fu->orientation != OT_SAME) != (fu->f_p->flip != 0)) {
 	    HREVERSE(pl, pl);
 	    do_reverse_area = 1;
