@@ -57,7 +57,6 @@
 #include <string>
 #include <cstddef>
 #include <sys/types.h>
-#include <iostream>
 
 #define SET_SYNTAX_ERROR \
     static_cast<obj::objCombinedState*> \
@@ -139,16 +138,20 @@ inline static size_t real_index(int val, std::size_t nvert)
 }
 
 template<typename charT>
-inline static bool index_check(int raw, std::size_t index,
-			       size_t vertices, const charT *log,
-			       yyscan_t scanner)
+static bool index_check(int raw, std::size_t index,
+			size_t vertices, const charT *log,
+			yyscan_t scanner)
 {
     if (!raw || index >= vertices) {
-	std::stringstream err;
-	err << "index '" << raw << "': " << log;
-	std::string str = err.str();
-	obj_parser_error(scanner, str.c_str());
-	return true;
+	std::string err;
+        char buf[256];
+	// stringstream gives internal compiler error with gcc 4.2, so
+	// using snprintf instead.
+        snprintf(buf, sizeof(buf), "index '%d': ", raw);
+        err = buf;
+        err += log;
+        obj_parser_error(scanner, err.c_str());
+        return true;
     }
     return false;
 }
