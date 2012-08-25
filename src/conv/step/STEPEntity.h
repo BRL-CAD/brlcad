@@ -55,6 +55,7 @@ public:
 	virtual ~STEPEntity();
 
 	int GetId() {return id;}
+	void SetId(int nid) {id = nid;}
 	int GetONId() {return ON_id;}
 	void SetONId(int on_id) {ON_id = on_id;}
 	int STEPid();
