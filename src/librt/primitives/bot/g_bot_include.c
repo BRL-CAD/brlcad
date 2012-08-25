@@ -406,7 +406,7 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
 	surfno = hits[i].hit_surfno;
 
 	los = 0.0;
-	if (bot->bot_thickness) {
+	if (LIKELY(bot->bot_thickness != NULL)) {
 	    if (bot->bot_mode == RT_BOT_PLATE_NOCOS) {
 		los = bot->bot_thickness[surfno];
 	    } else {
@@ -416,7 +416,7 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
 	    }
 	}
 
-	if (bot->bot_facemode && BU_BITTEST(bot->bot_facemode, hits[i].hit_surfno)) {
+	if (LIKELY(bot->bot_facemode != NULL) && BU_BITTEST(bot->bot_facemode, hits[i].hit_surfno)) {
 
 	    /* append thickness to hit point */
 	    RT_GET_SEG(segp, ap->a_resource);
