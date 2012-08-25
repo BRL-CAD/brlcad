@@ -1762,6 +1762,7 @@ void LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
 
         fprintf( file, "        /* Set this to point to the head entity. */\n" );
         fprintf( file, "    HeadEntity(se);\n" );
+        fprintf( file, "    (void)addAttrs; /* quell potentially unused var */\n" );
 
         fprintf( file, "\n" );
         list = ENTITYget_supertypes( entity );
