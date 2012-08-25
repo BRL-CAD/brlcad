@@ -580,7 +580,8 @@ static void nmg_eu_coords(const struct edgeuse *eu, fastf_t *base, fastf_t *tip6
  */
 static void nmg_eu_radial(const struct edgeuse *eu, fastf_t *tip)
 {
-    point_t b2, t2;
+    point_t b2 = VINIT_ZERO;
+    point_t t2 = VINIT_ZERO;
 
     NMG_CK_EDGEUSE(eu->radial_p);
     NMG_CK_VERTEXUSE(eu->radial_p->vu_p);
@@ -918,10 +919,11 @@ nmg_vlblock_e(struct bn_vlblock *vbp, const struct edge *e, long *tab, int red, 
 void
 nmg_vlblock_eu(struct bn_vlblock *vbp, const struct edgeuse *eu, long *tab, int red, int green, int blue, int fancy)
 {
-    point_t base, tip;
-    point_t radial_tip;
-    point_t next_base;
-    struct bu_list *vh;
+    point_t base = VINIT_ZERO;
+    point_t next_base = VINIT_ZERO;
+    point_t radial_tip = VINIT_ZERO;
+    point_t tip = VINIT_ZERO;
+    struct bu_list *vh = NULL;
 
     BN_CK_VLBLOCK(vbp);
     NMG_CK_EDGEUSE(eu);
