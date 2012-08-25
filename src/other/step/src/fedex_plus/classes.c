@@ -711,7 +711,7 @@ void ATTRprint_access_methods_put_head( CONST char * entnm, Variable a, FILE * f
     generate_attribute_func_name( a, funcnm );
 
     strncpy( ctype, AccessType( t ), BUFSIZ );
-    fprintf( file, "\nvoid \n%s::%s (const %s x)\n\n", entnm, funcnm, ctype );
+    fprintf( file, "\nvoid\n%s::%s (const %s x)\n\n", entnm, funcnm, ctype );
 
     return;
 }
@@ -791,7 +791,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
             fprintf( file, "    }\n" );
             fprintf( file, "#endif\n" );
         }
-	fprintf( file, "    return (%s) _%s; \n}\n", ctype, attrnm );
+	fprintf( file, "    return (%s) _%s;\n}\n", ctype, attrnm );
 
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
@@ -819,7 +819,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
             fprintf( file, "    }\n" );
             fprintf( file, "#endif\n" );
         }
-	fprintf( file, "    _%s = x; \n}\n", attrnm );
+	fprintf( file, "    _%s = x;\n}\n", attrnm );
 
         return;
     }
@@ -860,7 +860,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
             fprintf( file, "    }\n" );
             fprintf( file, "#endif\n" );
         }
-        fprintf( file, "    _%s.put (x); \n}\n", attrnm );
+        fprintf( file, "    _%s.put (x);\n}\n", attrnm );
         return;
     }
     /*    case TYPE_ENUM:   */
@@ -882,7 +882,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
                      "            *logStream << \"unset\" << std::endl;\n        }\n    }\n" );
             fprintf( file, "#endif\n" );
         }
-        fprintf( file, "    return (%s) _%s; \n}\n",
+        fprintf( file, "    return (%s) _%s;\n}\n",
                  EnumName( TYPEget_name( t ) ), attrnm );
 
         ATTRprint_access_methods_put_head( entnm, a, file );
@@ -897,7 +897,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
             fprintf( file, "    }\n" );
             fprintf( file, "#endif\n" );
         }
-        fprintf( file, "    _%s.put (x); \n}\n", attrnm );
+        fprintf( file, "    _%s.put (x);\n}\n", attrnm );
         return;
     }
     /*    case TYPE_SELECT: */
@@ -931,7 +931,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
             fprintf( file, "#endif\n" );
 
         }
-	fprintf( file, "    return (const %s) _%s; \n}\n", ctype, attrnm );
+	fprintf( file, "    return (const %s) _%s;\n}\n", ctype, attrnm );
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
         if( print_logging ) {
@@ -949,7 +949,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
                      "            *logStream << \"unset\" << std::endl;\n        }\n    }\n" );
             fprintf( file, "#endif\n" );
         }
-        fprintf( file, "    _%s = x; \n}\n", attrnm );
+        fprintf( file, "    _%s = x;\n}\n", attrnm );
         return;
     }
     /*      case TYPE_INTEGER:  */
@@ -972,7 +972,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
         }
         /*  default:  INTEGER   */
         /*  is the same type as the data member  */
-        fprintf( file, "    return (const %s) _%s; \n}\n", ctype, attrnm );
+        fprintf( file, "    return (const %s) _%s;\n}\n", ctype, attrnm );
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
         if( print_logging ) {
@@ -992,7 +992,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
             /*  default:  INTEGER   */
             /*  is the same type as the data member  */
         }
-        fprintf( file, "    _%s = x; \n}\n", attrnm );
+        fprintf( file, "    _%s = x;\n}\n", attrnm );
     }
 
     /*      case TYPE_REAL:
@@ -1014,7 +1014,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
                      "            *logStream << \"unset\" << std::endl;\n        }\n    }\n" );
             fprintf( file, "#endif\n" );
         }
-        fprintf( file, "    return (const %s) _%s; \n}\n", ctype, attrnm );
+        fprintf( file, "    return (const %s) _%s;\n}\n", ctype, attrnm );
         ATTRprint_access_methods_put_head( entnm, a, file );
         fprintf( file, "{\n" );
         if( print_logging ) {
@@ -1032,7 +1032,7 @@ void ATTRprint_access_methods( CONST char * entnm, Variable a, FILE * file ) {
                      "            *logStream << \"unset\" << std::endl;\n        }\n    }\n" );
             fprintf( file, "#endif\n" );
         }
-        fprintf( file, "    _%s = x; \n}\n", attrnm );
+        fprintf( file, "    _%s = x;\n}\n", attrnm );
     }
 }
 
@@ -1246,19 +1246,19 @@ void MemberFunctionSign( Entity entity, Linked_List neededAttr, FILE * file ) {
 
     strncpy( entnm, ENTITYget_classname( entity ), BUFSIZ ); /*  assign entnm  */
 
-    fprintf( file, "  public:  \n" );
+    fprintf( file, "  public: \n" );
 
     /*  put in member functions which belong to all entities    */
     /*  constructor:    */
-    fprintf( file, "\n        %s ( ); \n", entnm );
+    fprintf( file, "\n        %s ( );\n", entnm );
 
-    fprintf( file, "        %s (SDAI_Application_instance *se, int *addAttrs = 0); \n", entnm );
+    fprintf( file, "        %s (SDAI_Application_instance *se, int *addAttrs = 0);\n", entnm );
     /*  copy constructor*/
-    fprintf( file, "        %s (%s& e ); \n", entnm, entnm );
+    fprintf( file, "        %s (%s& e );\n", entnm, entnm );
     /*  destructor: */
     fprintf( file, "        ~%s ();\n", entnm );
 
-    fprintf( file, "        int opcode ()  { return %d ; } \n",
+    fprintf( file, "        int opcode ()  { return %d ; }\n",
              entcode++ );
 
     /*  print signature of access functions for attributes      */
@@ -1403,7 +1403,7 @@ void LIBcopy_constructor( Entity ent, FILE * file ) {
     const char * StrToLower( const char * word );
 
     /*mjm7/10/91 copy constructor definition  */
-    fprintf( file, "        %s::%s(%s& e ) \n", entnm, entnm, entnm );
+    fprintf( file, "        %s::%s(%s& e )\n", entnm, entnm, entnm );
     fprintf( file, "  {" );
 
     /*  attributes  */
@@ -1504,7 +1504,7 @@ int get_attribute_number( Entity entity ) {
         if( found ) {
             return i;
         } else printf( "Internal error:  %s:%d\n"
-                           "Attribute %s not found. \n"
+                           "Attribute %s not found.\n"
                            , __FILE__, __LINE__, EXPget_name( VARget_name( a ) ) );
     }
 
@@ -1542,7 +1542,7 @@ void LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
     int first = 1;
 
     /*  constructor definition  */
-    fprintf( file, "%s::%s( ) \n", entnm, entnm );
+    fprintf( file, "%s::%s( )\n", entnm, entnm );
     fprintf( file, "{\n" );
 
     /* ////MULTIPLE INHERITANCE//////// */
@@ -1565,34 +1565,34 @@ void LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
                          "        /* part of the main inheritance hierarchy */" );
                 principalSuper = e; /* principal SUPERTYPE */
             } else {
-                fprintf( file, "    HeadEntity(this); \n" );
-                fprintf( file, "#if 1 \n" );
+                fprintf( file, "    HeadEntity(this);\n" );
+                fprintf( file, "#if 1\n" );
                 fprintf( file,
-                         "        /* Optionally use the following to replace the line following \n" );
+                         "        /* Optionally use the following to replace the line following\n" );
                 fprintf( file,
-                         "           the endif. Use this to turn off adding attributes in \n" );
+                         "           the endif. Use this to turn off adding attributes in\n" );
                 fprintf( file,
                          "           diamond shaped hierarchies for each additional parent at this\n" );
                 fprintf( file,
                          "           level. You currently must hand edit this for it to work. */\n" );
-                fprintf( file, "    int attrFlags[3]; // e.g. \n" );
+                fprintf( file, "    int attrFlags[3]; // e.g.\n" );
                 fprintf( file, "    attrFlags[0] = 1; // add parents attrs\n" );
                 fprintf( file,
                          "    attrFlags[1] = 0; // add parent of parents attrs\n" );
                 fprintf( file,
                          "    attrFlags[2] = 0; // do not add parent of parent of parents attrs\n" );
                 fprintf( file,
-                         "      // In *imaginary* hierarchy turn off attrFlags[2] since it \n" );
+                         "      // In *imaginary* hierarchy turn off attrFlags[2] since it\n" );
                 fprintf( file,
                          "      // would be the parent that has more than one path to it.\n" );
                 fprintf( file,
-                         "    AppendMultInstance(new %s(this, attrFlags)); \n",
+                         "    AppendMultInstance(new %s(this, attrFlags));\n",
                          ENTITYget_classname( e ) );
-                fprintf( file, "#else \n" );
+                fprintf( file, "#else\n" );
 
-                fprintf( file, "    AppendMultInstance(new %s(this)); \n",
+                fprintf( file, "    AppendMultInstance(new %s(this));\n",
                          ENTITYget_classname( e ) );
-                fprintf( file, "#endif \n" );
+                fprintf( file, "#endif\n" );
 
                 if( super_cnt == 2 ) {
                     printf( "\nMULTIPLE INHERITANCE for entity: %s\n",
@@ -1674,7 +1674,7 @@ void LIBstructor_print( Entity entity, FILE * file, Schema schema ) {
     /*  copy constructor  */
     /*  LIBcopy_constructor (entity, file); */
     entnm = ENTITYget_classname( entity );
-    fprintf( file, "%s::%s (%s& e ) \n", entnm, entnm, entnm );
+    fprintf( file, "%s::%s (%s& e )\n", entnm, entnm, entnm );
 
     /* include explicit initialization of base class */
     if( principalSuper ) {
@@ -1752,7 +1752,7 @@ void LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
         entnm = ENTITYget_classname( entity );
         /*  constructor definition  */
         if( parent )
-            fprintf( file, "%s::%s (SDAI_Application_instance *se, int *addAttrs) : %s(se, (addAttrs ? &addAttrs[1] : 0)) \n", entnm, entnm,
+            fprintf( file, "%s::%s (SDAI_Application_instance *se, int *addAttrs) : %s(se, (addAttrs ? &addAttrs[1] : 0))\n", entnm, entnm,
                      parentnm );
         else {
             fprintf( file, "%s::%s( SDAI_Application_instance *se, int *addAttrs)\n", entnm, entnm );
@@ -1761,7 +1761,7 @@ void LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
         fprintf( file, "{\n" );
 
         fprintf( file, "        /* Set this to point to the head entity. */\n" );
-        fprintf( file, "    HeadEntity(se); \n" );
+        fprintf( file, "    HeadEntity(se);\n" );
 
         fprintf( file, "\n" );
         list = ENTITYget_supertypes( entity );
@@ -1779,30 +1779,30 @@ void LIBstructor_print_w_args( Entity entity, FILE * file, Schema schema ) {
                          "        /* Ignore the first parent since it is */\n %s\n",
                          "        /* part of the main inheritance hierarchy */" );
             }  else {
-                fprintf( file, "#if 0 \n" );
+                fprintf( file, "#if 0\n" );
                 fprintf( file,
-                         "        /* Optionally use the following to replace the line following \n" );
+                         "        /* Optionally use the following to replace the line following\n" );
                 fprintf( file,
-                         "           the endif. Use this to turn off adding attributes in \n" );
+                         "           the endif. Use this to turn off adding attributes in\n" );
                 fprintf( file,
                          "           diamond shaped hierarchies for each additional parent at this\n" );
                 fprintf( file,
                          "           level. You currently must hand edit this for it to work. */\n" );
-                fprintf( file, "    int attrFlags[3]; // e.g. \n" );
+                fprintf( file, "    int attrFlags[3]; // e.g.\n" );
                 fprintf( file, "    attrFlags[0] = 1; // add parents attrs\n" );
                 fprintf( file,
                          "    attrFlags[1] = 1; // add parent of parents attrs\n" );
                 fprintf( file,
                          "    attrFlags[2] = 0; // do not add parent of parent of parents attrs\n" );
                 fprintf( file,
-                         "      // In *imaginary* hierarchy turn off attrFlags[2] since it \n" );
+                         "      // In *imaginary* hierarchy turn off attrFlags[2] since it\n" );
                 fprintf( file,
                          "      // would be the parent that has more than one path to it.\n" );
                 fprintf( file,
-                         "    se->AppendMultInstance(new %s(se, attrFlags)); \n",
+                         "    se->AppendMultInstance(new %s(se, attrFlags));\n",
                          ENTITYget_classname( e ) );
-                fprintf( file, "#endif \n" );
-                fprintf( file, "    se->AppendMultInstance(new %s(se, 0)); \n",
+                fprintf( file, "#endif\n" );
+                fprintf( file, "    se->AppendMultInstance(new %s(se, 0));\n",
                          ENTITYget_classname( e ) );
             }
             LISTod;
@@ -2033,7 +2033,7 @@ void print_typechain( FILES * files, const Type t, char * buf, Schema schema, co
 
             fprintf( files->init,
                      "        %s%d->AssignAggrCreator((AggregateCreator) create_%s);%s",
-                     TD_PREFIX, count, ctype, "        // Creator function \n" );
+                     TD_PREFIX, count, ctype, "        // Creator function\n" );
 
             s = sprintf( name_buf, "%s%d", TD_PREFIX, count );
             assert( ( s > 0 ) && ( s < MAX_LEN ) );
@@ -2790,7 +2790,7 @@ void TYPEenum_lib_print( const Type type, FILE * f ) {
 
     /*  set up the dictionary info  */
 
-    fprintf( f, "const char * \n%s::element_at (int n) const  {\n", n );
+    fprintf( f, "const char *\n%s::element_at (int n) const  {\n", n );
     fprintf( f, "  switch (n)  {\n" );
     DICTdo_type_init( ENUM_TYPEget_items( type ), &de, OBJ_ENUM );
     while( 0 != ( expr = ( Expression )DICTdo( &de ) ) ) {
@@ -3318,7 +3318,7 @@ static void printEnumCreateBody( FILE * lib, const Type type )
 
     strncpy( tdnm, TYPEtd_name( type ), BUFSIZ );
 
-    fprintf( lib, "\nSDAI_Enum * \ncreate_%s () \n{\n", nm );
+    fprintf( lib, "\nSDAI_Enum *\ncreate_%s ()\n{\n", nm );
     fprintf( lib, "    return new %s( \"\", %s );\n}\n\n", nm, tdnm );
 }
 
@@ -3336,7 +3336,7 @@ static void printEnumAggrCrBody( FILE * lib, const Type type ) {
 
     strncpy( tdnm, TYPEtd_name( type ), BUFSIZ );
 
-    fprintf( lib, "\nSTEPaggregate * \ncreate_%s_agg ()\n{\n", n );
+    fprintf( lib, "\nSTEPaggregate *\ncreate_%s_agg ()\n{\n", n );
     fprintf( lib, "    return new %s_agg( %s );\n}\n", n, tdnm );
 }
 
