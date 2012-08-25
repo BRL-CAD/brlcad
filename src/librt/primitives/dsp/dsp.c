@@ -2021,13 +2021,11 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 		    continue;
 		}
 
-		/* create seg with hits[i].hit_point); as out point */
-		if (RT_G_DEBUG & DEBUG_HF) {
-		    /* int/float conv */
-		    VMOVE(bbmin, dsp_bb->dspb_rpp.dsp_min);
-		    VMOVE(bbmax, dsp_bb->dspb_rpp.dsp_max);
-		}
+		/* int/float conv */
+		VMOVE(bbmin, dsp_bb->dspb_rpp.dsp_min);
+		VMOVE(bbmax, dsp_bb->dspb_rpp.dsp_max);
 
+		/* create seg with hits[i].hit_point as out point */
 		if (ADD_SEG(isect, hitp, &hits[i], bbmin, bbmax, 255, 255, 255))
 		    return 1;
 
