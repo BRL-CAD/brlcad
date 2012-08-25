@@ -1766,6 +1766,9 @@ STEPaggregate * AggrTypeDescriptor::CreateAggregate() {
     }
 }
 
+void AggrTypeDescriptor::AssignAggrCreator(AggregateCreator f) {
+    CreateNewAggr = f;
+}
 
 AggrTypeDescriptor::AggrTypeDescriptor( ) :
     _uniqueElements( "UNKNOWN_TYPE" ) {

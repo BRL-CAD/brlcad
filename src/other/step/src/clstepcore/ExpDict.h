@@ -1672,9 +1672,7 @@ class SCL_CORE_EXPORT AggrTypeDescriptor  :    public TypeDescriptor  {
 
     public:
 
-        void AssignAggrCreator( AggregateCreator f = 0 ) {
-            CreateNewAggr = f;
-        }
+        void AssignAggrCreator( AggregateCreator f = 0 );
 
         STEPaggregate * CreateAggregate();
 
