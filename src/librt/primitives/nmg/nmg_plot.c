@@ -541,7 +541,7 @@ nmg_offset_eu_vert(fastf_t *base, const struct edgeuse *eu, const fastf_t *face_
  */
 static void nmg_eu_coords(const struct edgeuse *eu, fastf_t *base, fastf_t *tip60)
 {
-    point_t tip;
+    point_t tip = VINIT_ZERO;
 
     NMG_CK_EDGEUSE(eu);
 
@@ -1651,9 +1651,10 @@ show_broken_eu(struct bn_vlblock *vbp, const struct edgeuse *eu, int fancy)
 {
     struct bu_list *vh;
     int red, green, blue;
-    point_t base, tip;
-    point_t radial_tip;
-    point_t next_base;
+    point_t base = VINIT_ZERO;
+    point_t tip = VINIT_ZERO;
+    point_t radial_tip = VINIT_ZERO;
+    point_t next_base = VINIT_ZERO;
 
     NMG_CK_EDGEUSE(eu);
     NMG_CK_EDGE(eu->e_p);
