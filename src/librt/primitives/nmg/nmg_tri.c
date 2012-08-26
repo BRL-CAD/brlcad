@@ -454,8 +454,6 @@ nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat, const struct bn_tol *tol
     struct loopuse *lu;
     struct edgeuse *eu;
     vect_t Normal;
-    point_t origin = VINIT_ZERO;
-    fastf_t dot;
 
     NMG_CK_FACEUSE(fu);
 
@@ -472,16 +470,7 @@ nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat, const struct bn_tol *tol
 
     /* construct the matrix that maps the 3D coordinates into 2D space */
     NMG_GET_FU_NORMAL(Normal, fu);
-
-    if (bn_lseg3_lseg3_parallel(origin, twoDspace, origin, Normal, tol)) {
-	dot = VDOT(twoDspace, Normal);
-	MAT_IDN(TformMat);
-	if (dot < -SMALL_FASTF) {
-	    QUAT_FROM_ROT_DEG(TformMat, 180.0, 0.0, 1.0, 0.0);
-	}
-    } else {
-	bn_mat_fromto(TformMat, Normal, twoDspace, tol);
-    }
+    bn_mat_fromto(TformMat, Normal, twoDspace, tol);
 
     if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug)
 	bn_mat_print("TformMat", TformMat);
@@ -524,43 +513,26 @@ nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat, const struct bn_tol *tol
 
 
 static int
-is_convex(struct pt2d *a1, struct pt2d *b1, struct pt2d *c1, const struct bn_tol *tol)
+is_convex(struct pt2d *a, struct pt2d *b, struct pt2d *c, const struct bn_tol *tol)
 {
     vect_t ab, bc, pv, N;
     double angle;
-    point_t a, b, c;
 
-    NMG_CK_PT2D(a1);
-    NMG_CK_PT2D(b1);
-    NMG_CK_PT2D(c1);
+    NMG_CK_PT2D(a);
+    NMG_CK_PT2D(b);
+    NMG_CK_PT2D(c);
 
-    VMOVE(a, a1->coord);
-    VMOVE(b, b1->coord);
-    VMOVE(c, c1->coord);
-
-    VSETALL(N, 0.0);
-
-    /* compute normal */
-    N[X] += ((a[Y] - b[Y]) * (a[Z] + b[Z]));
-    N[Y] += ((a[Z] - b[Z]) * (a[X] + b[X]));
-    N[Z] += ((a[X] - b[X]) * (a[Y] + b[Y]));
-    N[X] += ((b[Y] - c[Y]) * (b[Z] + c[Z]));
-    N[Y] += ((b[Z] - c[Z]) * (b[X] + c[X]));
-    N[Z] += ((b[X] - c[X]) * (b[Y] + c[Y]));
-    N[X] += ((c[Y] - a[Y]) * (c[Z] + a[Z]));
-    N[Y] += ((c[Z] - a[Z]) * (c[X] + a[X]));
-    N[Z] += ((c[X] - a[X]) * (c[Y] + a[Y]));
-
-    VUNITIZE(N);
+    /* invent surface normal */
+    VSET(N, 0.0, 0.0, 1.0);
 
     /* form vector from a->b */
-    VSUB2(ab, b, a);
+    VSUB2(ab, b->coord, a->coord);
 
     /* Form "left" vector */
     VCROSS(pv, N, ab);
 
     /* form vector from b->c */
-    VSUB2(bc, c, b);
+    VSUB2(bc, c->coord, b->coord);
 
     /* find angle about normal in "pv" direction from a->b to b->c */
     angle = bn_angle_measure(bc, ab, pv);
@@ -3484,7 +3456,6 @@ validate_tbl2d(const char *str, struct bu_list *tbl2d, struct faceuse *fu)
     }
 }
 
-#define NEW_CUT_UNIMONOTONE 1
 
 /**
  * C U T _ U N I M O N O T O N E
@@ -3506,12 +3477,9 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
     int isect_vertex = 0;
 
     vect_t fu_normal;
-#ifndef NEW_CUT_UNIMONOTONE
     vect_t v0, v1, v2;
     fastf_t dot00, dot01, dot02, dot11, dot12;
-    fastf_t invDenom;
-    fastf_t u, v;
-#endif
+    fastf_t invDenom, u, v;
     fastf_t dist;
 
     struct pt2d *min, *max, *newpt, *first, *prev, *next, *current, *tmp;
@@ -3594,13 +3562,11 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 	prev = PT2D_PREV(tbl2d, current);
 	next = PT2D_NEXT(tbl2d, current);
 
-#ifndef NEW_CUT_UNIMONOTONE
 	VSETALL(v0, 0.0);
 	VSETALL(v1, 0.0);
 	VSETALL(v2, 0.0);
 	dot00 = dot01 = dot02 = dot11 = dot12 = 0.0;
 	invDenom = u = v = 0.0;
-#endif
 	prev_vg_p = (struct vertex_g *)NULL;
 
 	/* test if any of the loopuse vertices are within the triangle
@@ -3635,16 +3601,6 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 
 		/* skips processing the same vertex */
 		if (prev_vg_p != pt->vu_p->v_p->vg_p) {
-#ifdef NEW_CUT_UNIMONOTONE
-		    int isect_result;
-		    isect_result = nmg_isect_pt_facet(pt->vu_p->v_p, prev->vu_p->v_p,
-						      current->vu_p->v_p, next->vu_p->v_p, tol);
-		    if (isect_result == 4 || isect_result == 3) {
-			inside_triangle = 1;
-		    } else {
-			inside_triangle = 0;
-		    }
-#else
 		    VSUB2(v0, next->coord, prev->coord);
 		    VSUB2(v1, current->coord, prev->coord);
 		    VSUB2(v2, pt->coord, prev->coord);
@@ -3674,7 +3630,6 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 				    is_convex(prev, current, next, tol));
 			}
 		    }
-#endif
 		}
 		prev_vg_p = pt->vu_p->v_p->vg_p;
 	    } /* end of if-statement to skip testing vertices not in the current loopuse */
@@ -3739,10 +3694,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 
 
 	    if (next->vu_p == prev->vu_p) {
-		return;
-#if 0
 		bu_bomb("cut_unimonotone(): trying to cut to/from same vertexuse\n");
-#endif
 	    }
 
 	    if (rt_g.NMG_debug & DEBUG_TRI) {
@@ -3826,11 +3778,9 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 		 */
 		verts = tmp_vert_cnt;
 
-#if 0
 		if (verts > 3) {
 		    bu_bomb("cut_unimonotone(): can not determine loopuse cw/ccw and loopuse contains > 3 vertices\n");
 		}
-#endif
 
 	    } else if (ccw_result == -1) {
 		/* true if the loopuse has a cw rotation */
@@ -5005,3 +4955,4 @@ nmg_triangulate_model(struct model *m, const struct bn_tol *tol)
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
