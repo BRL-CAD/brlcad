@@ -2772,16 +2772,16 @@ nmg_isect_pt_facet(struct vertex *v, struct vertex *v0, struct vertex *v1, struc
 
 
 /**
- * N M G _ I S E C T _ L S E G 3 _ E U
+ * N M G _ I S E C T _ P O T C U T _ F U
  *
- * Given the faceuse 'fu' test if the line segment, defined by
- * vertexuse vu1 and vu2, intersects any edgeuse of any loopuse of
+ * Given the faceuse 'fu' test if the potential cut, defined by an
+ * edgeuse from 'eu1->vu_p' to 'eu2->vu_p', intersects any edgeuse of
  * the faceuse.
  *
  * Return 1 if intersect found otherwise return 0.
  */
 int
-nmg_isect_lseg3_eu(struct vertexuse *vu1, struct vertexuse *vu2, struct faceuse *fu, const struct bn_tol *tol)
+nmg_isect_potcut_fu(struct edgeuse *eu1, struct edgeuse *eu2, struct faceuse *fu, const struct bn_tol *tol)
 {
     point_t p1, p2, q1, q2;
     vect_t  pdir, qdir;
@@ -2790,10 +2790,20 @@ nmg_isect_lseg3_eu(struct vertexuse *vu1, struct vertexuse *vu2, struct faceuse 
     int hit = 0;
     struct loopuse *lu;
     struct edgeuse *eu;
+    struct vertexuse *vu1b, *vu2b;
+    struct vertexuse *vu1, *vu2;
+
+    vu1 = eu1->vu_p;
+    vu1b = (BU_LIST_PNEXT_CIRC(edgeuse, &eu1->eumate_p->l))->vu_p;
+    vu2 = eu2->vu_p;
+    vu2b = (BU_LIST_PNEXT_CIRC(edgeuse, &eu2->eumate_p->l))->vu_p;
+
+    /* vu1b and vu2b are the vertexuse of the faceuse mate that shares
+     * the same vertex as vu1 and vu2, respectively.
+     */
 
     BN_CK_TOL(tol);
     NMG_CK_FACEUSE(fu);
-
 
     /* Loop thru all loopuse, looking for intersections */
     hit = 0;
@@ -2801,6 +2811,12 @@ nmg_isect_lseg3_eu(struct vertexuse *vu1, struct vertexuse *vu2, struct faceuse 
 	NMG_CK_LOOPUSE(lu);
 
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+
+	    /* skip testing eu1 and eu2 */
+	    if (eu->vu_p == vu1 || eu->vu_p == vu1b || eu->vu_p == vu2 || eu->vu_p == vu2b) {
+		continue;
+	    } 
+
 	    NMG_CK_EDGEUSE(eu);
 
 	    NMG_CK_VERTEXUSE(vu2);
@@ -2996,7 +3012,9 @@ nmg_triangulate_rm_holes(struct faceuse *fu, struct bu_list *tbl2d, const struct
 				    continue;
 				}
 
-				hit = nmg_isect_lseg3_eu(eu1->vu_p, eu2->vu_p, fu, tol);
+				/* eu1 part of hole lu */
+				/* eu2 part of non-hole lu */
+				hit = nmg_isect_potcut_fu(eu1, eu2, fu, tol);
 
 				if (!hit) {
 				    /* perform cut */
