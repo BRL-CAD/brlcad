@@ -380,7 +380,7 @@ template<class BA>
 inline void
 BANode<BA>::removeChild(const BA& child)
 {
-    // FIXME: implement
+    removeChild(&child);
 }
 
 
@@ -388,7 +388,13 @@ template<class BA>
 inline void
 BANode<BA>::removeChild(BANode<BA>* child)
 {
-    // FIXME: implement
+    typename ChildList::iterator i;
+    for (i = m_children.begin(); i < m_children.end(); ++i) {
+	if (*i == child) {
+	    delete *i;
+	    m_children.erase(i);
+        }
+    }
 }
 
 
@@ -1017,7 +1023,7 @@ template<class BV>
 inline void
 BVNode<BV>::removeChild(const BV& child)
 {
-    // FIXME: implement
+    removeChild(&child);
 }
 
 
@@ -1025,7 +1031,13 @@ template<class BV>
 inline void
 BVNode<BV>::removeChild(BVNode<BV>* child)
 {
-    // FIXME: implement
+    typename ChildList::iterator i;
+    for (i = m_children.begin(); i < m_children.end(); ++i) {
+	if (*i == child) {
+	    delete *i;
+	    m_children.erase(i);
+        }
+    }
 }
 
 
