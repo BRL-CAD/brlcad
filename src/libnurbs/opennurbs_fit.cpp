@@ -247,214 +247,6 @@ NurbsTools::pca (const vector_vec3d &data, ON_3dVector &mean, Eigen::Matrix3d &e
   }
 }
 
-// ***********************
-// * from sparse_mat.cpp *
-// ***********************
-
-void
-SparseMat::get (std::vector<int> &i, std::vector<int> &j, std::vector<double> &v)
-{
-  std::map<int, std::map<int, double> >::iterator it_row;
-  std::map<int, double>::iterator it_col;
-
-  i.clear ();
-  j.clear ();
-  v.clear ();
-
-  it_row = m_mat.begin ();
-  while (it_row != m_mat.end ())
-  {
-    it_col = it_row->second.begin ();
-    while (it_col != it_row->second.end ())
-    {
-      i.push_back (it_row->first);
-      j.push_back (it_col->first);
-      v.push_back (it_col->second);
-      it_col++;
-    }
-    it_row++;
-  }
-
-}
-
-double
-SparseMat::get (int i, int j)
-{
-  std::map<int, std::map<int, double> >::iterator it_row;
-  std::map<int, double>::iterator it_col;
-
-  it_row = m_mat.find (i);
-  if (it_row == m_mat.end ())
-    return 0.0;
-
-  it_col = it_row->second.find (j);
-  if (it_col == it_row->second.end ())
-    return 0.0;
-
-  return it_col->second;
-
-}
-
-void
-SparseMat::set (int i, int j, double v)
-{
-
-  if (i < 0 || j < 0)
-  {
-    printf ("[SparseMat::set] Warning index out of bounds (%d,%d)\n", i, j);
-    return;
-  }
-
-  if (NEAR_ZERO(v, SMALL_FASTF))
-  {
-    // delete entry
-
-    std::map<int, std::map<int, double> >::iterator it_row;
-    std::map<int, double>::iterator it_col;
-
-    it_row = m_mat.find (i);
-    if (it_row == m_mat.end ())
-      return;
-
-    it_col = it_row->second.find (j);
-    if (it_col == it_row->second.end ())
-      return;
-
-    it_row->second.erase (it_col);
-    if (it_row->second.empty ()) {
-      ;
-    }
-    m_mat.erase (it_row);
-
-  }
-  else
-  {
-    // update entry
-    m_mat[i][j] = v;
-
-  }
-
-}
-
-void
-SparseMat::deleteRow (int i)
-{
-
-  std::map<int, std::map<int, double> >::iterator it_row;
-
-  it_row = m_mat.find (i);
-  if (it_row != m_mat.end ())
-    m_mat.erase (it_row);
-
-}
-
-void
-SparseMat::deleteColumn (int j)
-{
-  std::map<int, std::map<int, double> >::iterator it_row;
-  std::map<int, double>::iterator it_col;
-
-  it_row = m_mat.begin ();
-  while (it_row != m_mat.end ())
-  {
-    it_col = it_row->second.find (j);
-    if (it_col != it_row->second.end ())
-      it_row->second.erase (it_col);
-    it_row++;
-  }
-
-}
-
-void
-SparseMat::size (int &si, int &sj)
-{
-  std::map<int, std::map<int, double> >::iterator it_row;
-  std::map<int, double>::iterator it_col;
-
-  if (m_mat.empty ())
-  {
-    si = 0;
-    sj = 0;
-    return;
-  }
-
-  si = 0;
-  sj = 0;
-
-  it_row = m_mat.begin ();
-  while (it_row != m_mat.end ())
-  {
-    it_col = it_row->second.end ();
-    it_col--;
-    if (sj < ((*it_col).first + 1))
-      sj = (*it_col).first + 1;
-
-    it_row++;
-  }
-
-  it_row = m_mat.end ();
-  it_row--;
-  si = (*it_row).first + 1;
-
-}
-
-int
-SparseMat::nonzeros ()
-{
-  std::map<int, std::map<int, double> >::iterator it_row;
-  int s = 0;
-
-  it_row = m_mat.begin ();
-  while (it_row != m_mat.end ())
-  {
-
-    s += it_row->second.size ();
-
-    it_row++;
-  }
-
-  return s;
-
-}
-
-void
-SparseMat::printLong ()
-{
-  std::map<int, std::map<int, double> >::iterator it_row;
-  std::map<int, double>::iterator it_col;
-
-  int si, sj;
-  size (si, sj);
-
-  for (int i = 0; i < si; i++)
-  {
-    for (int j = 0; j < sj; j++)
-    {
-      printf ("%f ", get (i, j));
-    }
-    printf ("\n");
-  }
-}
-
-void
-SparseMat::print ()
-{
-  std::map<int, std::map<int, double> >::iterator it_row;
-  std::map<int, double>::iterator it_col;
-
-  it_row = m_mat.begin ();
-  while (it_row != m_mat.end ())
-  {
-    it_col = it_row->second.begin ();
-    while (it_col != it_row->second.end ())
-    {
-      printf ("[%d,%d] %f ", it_row->first, it_col->first, it_col->second);
-      it_col++;
-    }
-    printf ("\n");
-    it_row++;
-  }
-}
 
 // ******************************
 // * from nurbs_solve_eigen.cpp *
@@ -463,18 +255,23 @@ SparseMat::print ()
 void
 NurbsSolve::assign (unsigned rows, unsigned cols, unsigned dims)
 {
-  m_Keig = new ON_Matrix(rows, cols);
-  m_Keig->Zero();
+  m_Ksparse.resize(rows, cols);
+  std::cout << "m_Ksparse(rows=" << rows << ",cols=" << cols << "\n";
+  m_Ksparse.setZero();
   m_xeig = new ON_Matrix(cols,dims);
   m_xeig->Zero();
+  std::cout << "m_xeig(rows=" << cols << ",cols=" << dims << "\n";
   m_feig = new ON_Matrix(rows, dims);
   m_feig->Zero();
+  std::cout << "m_feig(rows=" << rows << ",cols=" << dims << "\n";
 }
 
 void
 NurbsSolve::K (unsigned i, unsigned j, double v)
 {
-  (*m_Keig)[i][j] = v;
+  m_Ksparse.insert(i,j) = v;
+  //std::cout << "m_Ksparse count: " << m_Ksparse.nonZeros() << "\n";
+  //std::cout << "m_Ksparse item(" << i << "," << j << "):" << m_Ksparse.coeffRef(i,j) << "\n";
 }
 void
 NurbsSolve::x (unsigned i, unsigned j, double v)
@@ -490,7 +287,7 @@ NurbsSolve::f (unsigned i, unsigned j, double v)
 double
 NurbsSolve::K (unsigned i, unsigned j)
 {
-  return (*m_Keig)[i][j];
+   return m_Ksparse.coeffRef(i,j);
 }
 double
 NurbsSolve::x (unsigned i, unsigned j)
@@ -516,43 +313,31 @@ NurbsSolve::resizeF (unsigned rows)
   m_feig = new_feig;
 }
 
-void
-NurbsSolve::printK ()
+bool
+solveSparseLinearSystemLQ (Eigen::SparseMatrix<double>* A, Eigen::MatrixXd* b, Eigen::MatrixXd* x)
 {
-  for (int r = 0; r < (*m_Keig).RowCount(); r++)
-  {
-    for (int c = 0; c < (*m_Keig).ColCount(); c++)
-    {
-      printf (" %f", (*m_Keig)[r][c]);
-    }
-    printf ("\n");
-  }
-}
+      Eigen::SparseMatrix<double> At(A->cols(), A->rows());
+      Eigen::MatrixXd Atb(A->cols(), b->cols());
 
-void
-NurbsSolve::printX ()
-{
-  for (int r = 0; r < (*m_xeig).RowCount(); r++)
-  {
-    for (int c = 0; c < (*m_xeig).ColCount(); c++)
-    {
-      printf (" %f", (*m_xeig)[r][c]);
-    }
-    printf ("\n");
-  }
-}
+      At = A->transpose();
+      Eigen::SparseMatrix<double> AtA = At * (*A);
+      Atb = At * (*b);
 
-void
-NurbsSolve::printF ()
-{
-  for (int r = 0; r < (*m_feig).RowCount(); r++)
-  {
-    for (int c = 0; c < (*m_feig).ColCount(); c++)
-    {
-      printf (" %f", (*m_feig)[r][c]);
-    }
-    printf ("\n");
-  }
+      Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > solver;
+      solver.compute(AtA);
+      if(solver.info()!=Eigen::Success) {
+	  // decomposition failed
+          std::cout << "decomposition failed\n";
+      }      
+
+      (*x) = solver.solve(Atb);
+
+      if(solver.info()!=Eigen::Success) {
+          std::cout << "solver failed: " << solver.info() << "\n";
+	  return false;
+      } else {
+          return true;
+      }
 }
 
 bool
@@ -562,15 +347,9 @@ NurbsSolve::solve ()
   clock_t time_start, time_end;
   time_start = clock ();
 
-  Eigen::MatrixXd e_m_Keig = Eigen::MatrixXd::Zero ((*m_Keig).RowCount(), (*m_Keig).ColCount());
   Eigen::MatrixXd e_m_xeig = Eigen::MatrixXd::Zero ((*m_xeig).RowCount(), (*m_xeig).ColCount());
   Eigen::MatrixXd e_m_feig = Eigen::MatrixXd::Zero ((*m_feig).RowCount(), (*m_feig).ColCount());
-
-  for(int i = 0; i < (*m_Keig).RowCount(); i++) {
-      for(int j = 0; j < (*m_Keig).ColCount(); j++) {
-	 e_m_Keig (i,j) = (*m_Keig)[i][j];
-      }
-  }
+  
   for(int i = 0; i < (*m_xeig).RowCount(); i++) {
       for(int j = 0; j < (*m_xeig).ColCount(); j++) {
 	 e_m_xeig (i,j) = (*m_xeig)[i][j];
@@ -582,7 +361,11 @@ NurbsSolve::solve ()
       }
   }
 
-  e_m_xeig = e_m_Keig.jacobiSvd (Eigen::ComputeThinU | Eigen::ComputeThinV).solve (e_m_feig);
+  bool success = solveSparseLinearSystemLQ (&m_Ksparse, &e_m_feig, &e_m_xeig);
+  if(!success) {
+     std::cout << "solver failed!\n";
+     return false;
+  }
 
   for(int i = 0; i < (*m_xeig).RowCount(); i++) {
       for(int j = 0; j < (*m_xeig).ColCount(); j++) {
@@ -595,24 +378,10 @@ NurbsSolve::solve ()
   if (!m_quiet)
   {
     double solve_time = (double)(time_end - time_start) / (double)(CLOCKS_PER_SEC);
-    printf ("[NurbsSolve[Eigen]::solve_eigen()] solution found! (%f sec)\n", solve_time);
-    printf ("[NurbsSolve[Eigen]::solve()] Warning: Using dense solver is quite inefficient, use UmfPack instead.\n");
+    printf ("[NurbsSolve[Eigen::SimplicialLDLT]::solve_()] solution found! (%f sec)\n", solve_time);
   }
 
   return true;
-}
-
-ON_Matrix *
-NurbsSolve::diff ()
-{
-  ON_Matrix *diff_matrix = new ON_Matrix((*m_feig).RowCount(), (*m_feig).ColCount());
-  ON_Matrix local_f((*m_feig).RowCount(), (*m_feig).ColCount());
-  ON_Matrix m_feig_neg((*m_feig).RowCount(), (*m_feig).ColCount());
-  local_f.Multiply((*m_Keig),(*m_xeig));
-  m_feig_neg = (*m_feig);
-  m_feig_neg.Scale(-1.0);
-  (*diff_matrix).Add(local_f,m_feig_neg);
-  return diff_matrix;
 }
 
 // ********************************
