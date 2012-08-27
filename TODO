@@ -98,8 +98,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * change fbserv usage to require a flag for its non-daemon mode
 
-* default IF_OGL to single-buffer mode
-
 * make sure we can run db_dirbuild() multiple times without creating
   duplicate entries.
 
