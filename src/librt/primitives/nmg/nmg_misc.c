@@ -1485,17 +1485,17 @@ nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol 
 	return 0.0;
     }
 
-    if (NEAR_ZERO(pl[X], tol->dist) && NEAR_ZERO(pl[Y], tol->dist) && NEAR_ZERO(pl[Z], tol->dist)) {
+    if (ZERO(pl[X]) && ZERO(pl[Y]) && ZERO(pl[Z])) {
 	HSETALL(pl, 0.0);
 	return 0.0;
     }
-    if (NEAR_ZERO(pl[X], tol->dist)) {
+    if (ZERO(pl[X])) {
 	pl[X] = 0.0;
     }
-    if (NEAR_ZERO(pl[Y], tol->dist)) {
+    if (ZERO(pl[Y])) {
 	pl[Y] = 0.0;
     }
-    if (NEAR_ZERO(pl[Z], tol->dist)) {
+    if (ZERO(pl[Z])) {
 	pl[Z] = 0.0;
     }
 
