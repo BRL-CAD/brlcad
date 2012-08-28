@@ -1395,6 +1395,7 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
     fastf_t ptol, qtol;	/* length in parameter space == tol->dist */
     fastf_t pmag, qmag;
     int status;
+    int ret;
 
     BN_CK_TOL(tol);
     if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
@@ -1423,7 +1424,8 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
 	if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
 	    bu_log("bn_isect_lseg3_lseg3(): MISS, line segments do not intersect and are not parallel\n");
 	}
-	return -3; /* missed */
+	ret = -3; /* missed */
+	goto out;
     }
 
     if (status == -2) {
@@ -1431,7 +1433,8 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
 	if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
 	    bu_log("bn_isect_lseg3_lseg3(): MISS, line segments are parallel, i.e. do not intersect\n");
 	}
-	return -2; /* missed (line segments are parallel) */
+	ret = -2; /* missed (line segments are parallel) */
+	goto out;
     }
 
     pmag = MAGNITUDE(pdir);
@@ -1463,9 +1466,9 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
     }
 
     /* If 'p' within tol of either endpoint (0.0, 1.0), make exact. */
-    if (dist[0] > -ptol && dist[0] < ptol) {
+    if (NEAR_ZERO(dist[0], ptol)) {
 	dist[0] = 0.0;
-    } else if (dist[0] > 1.0-ptol && dist[0] < 1.0+ptol) {
+    } else if (NEAR_EQUAL(dist[0], 1.0, ptol)) {
 	dist[0] = 1.0;
     }
 
@@ -1475,16 +1478,16 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
 	 * therefore dist[1] must use tolerance ptol not qtol.
 	 * If 'q' within tol of either endpoint (0.0, 1.0), make exact.
 	 */
-	if (dist[1] > -ptol && dist[1] < ptol) {
+	if (NEAR_ZERO(dist[1], ptol)) {
 	    dist[1] = 0.0;
-	} else if (dist[1] > 1.0-ptol && dist[1] < 1.0+ptol) {
+	} else if (NEAR_EQUAL(dist[1], 1.0, ptol)) {
 	    dist[1] = 1.0;
 	}
     } else {
 	/* If 'q' within tol of either endpoint (0.0, 1.0), make exact. */
-	if (dist[1] > -qtol && dist[1] < qtol) {
+	if (NEAR_ZERO(dist[1], qtol)) {
 	    dist[1] = 0.0;
-	} else if (dist[1] > 1.0-qtol && dist[1] < 1.0+qtol) {
+	} else if (NEAR_EQUAL(dist[1], 1.0, qtol)) {
 	    dist[1] = 1.0;
 	}
     }
@@ -1495,14 +1498,16 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
 	    if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
 		bu_log("bn_isect_lseg3_lseg3(): MISS, line segments are colinear but not overlapping!\n");
 	    }
-	    return -1;   /* line segments are colinear but not overlapping */
+	    ret = -1;   /* line segments are colinear but not overlapping */
+	    goto out;
 	}
 
 	if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
 	    bu_log("bn_isect_lseg3_lseg3(): HIT, line segments are colinear and overlapping!\n");
 	}
 
-	return 0; /* line segments are colinear and overlapping */
+	ret = 0; /* line segments are colinear and overlapping */
+	goto out;
     }
 
     /* At this point we know the infinite lines intersect and are not colinear */
@@ -1512,7 +1517,8 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
 	if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
 	    bu_log("bn_isect_lseg3_lseg3(): MISS, infinite lines intersect but line segments do not!\n");
 	}
-	return -3;  /* missed, infinite lines intersect but line segments do not */
+	ret = -3;  /* missed, infinite lines intersect but line segments do not */
+	goto out;
     }
 
     if (UNLIKELY(bu_debug & BU_DEBUG_MATH)) {
@@ -1524,7 +1530,11 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
 	bu_bomb("bn_isect_lseg3_lseg3(): INTERNAL ERROR, intersect distance values must be in the range 0-1\n");
     }
 
-    return 1; /* hit, line segments intersect */
+    ret = 1; /* hit, line segments intersect */
+
+out:
+
+    return ret;
 }
 
 
@@ -1631,6 +1641,7 @@ bn_isect_line3_line3(fastf_t *pdist,        /* see above */
     e = VDOT(qdir, w0);
     denominator = pdir_mag_sq * qdir_mag_sq - b * b;
 
+
     if (UNLIKELY(!parallel && colinear)) {
 	bu_bomb("bn_isect_line3_line3(): logic error, lines colinear but not parallel\n");
     }
@@ -1672,26 +1683,26 @@ bn_isect_line3_line3(fastf_t *pdist,        /* see above */
     sc_numerator = (b * e - qdir_mag_sq * d);
     tc_numerator = (pdir_mag_sq * e - b * d);
 
-    if (NEAR_ZERO(denominator, tol->dist) && !NEAR_ZERO(sc_numerator, tol->dist)) {
+    if (ZERO(denominator) && !ZERO(sc_numerator)) {
 	denominator = 0.0;
 	sc = MAX_FASTF;
-    } else if (!NEAR_ZERO(denominator, tol->dist) && NEAR_ZERO(sc_numerator, tol->dist)) {
+    } else if (!ZERO(denominator) && ZERO(sc_numerator)) {
 	sc_numerator = 0.0;
 	sc = 0.0;
-    } else if (NEAR_ZERO(denominator, tol->dist) && NEAR_ZERO(sc_numerator, tol->dist)) {
+    } else if (ZERO(denominator) && ZERO(sc_numerator)) {
 	sc_numerator = 0.0;
 	denominator = 0.0;
 	sc = 1.0;
     } else {
 	sc = sc_numerator / denominator;
     }
-    if (NEAR_ZERO(denominator, tol->dist) && !NEAR_ZERO(tc_numerator, tol->dist)) {
+    if (ZERO(denominator) && !ZERO(tc_numerator)) {
 	denominator = 0.0;
 	tc = MAX_FASTF;
-    } else if (!NEAR_ZERO(denominator, tol->dist) && NEAR_ZERO(tc_numerator, tol->dist)) {
+    } else if (!ZERO(denominator) && ZERO(tc_numerator)) {
 	tc_numerator = 0.0;
 	tc = 0.0;
-    } else if (NEAR_ZERO(denominator, tol->dist) && NEAR_ZERO(tc_numerator, tol->dist)) {
+    } else if (ZERO(denominator) && ZERO(tc_numerator)) {
 	tc_numerator = 0.0;
 	denominator = 0.0;
 	tc = 1.0;
