@@ -13,7 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-07-XX  Release 7.22.2                                     ---
 ----------------------------------------------------------------------
 
-* ogl framebuffer now defaults to single-buffering - Niculaescu Oana
+* ogl/wgl framebuffers default to single-buffering - Niculaescu Oana
 * fixed TIE raytracing bugs shotlining plate-mode BoTs - Sean Morrison
 * g_diff gives non-zero return code if .g files differ - Sean Morrison
 * fixed typographical errors in numerous tools and docs - Carl Moore
