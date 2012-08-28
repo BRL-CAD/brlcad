@@ -567,6 +567,7 @@ nmg_loop_is_ccw(const struct loopuse *lu, const fastf_t *UNUSED(norm), const str
     plane_t pl;
     int ret = 1;
 
+    HSETALL(pl, 0.0); /* sanity */
     area = nmg_loop_plane_area2(lu, pl, tol);
 
     if (NEAR_ZERO(area, tol->dist_sq)) {
@@ -584,8 +585,9 @@ nmg_loop_is_ccw(const struct loopuse *lu, const fastf_t *UNUSED(norm), const str
     }
 
  out:
-    if (rt_g.NMG_debug & DEBUG_BASIC)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_BASIC)) {
 	bu_log("nmg_loop_is_ccw(lu=x%x) ret=%d\n", lu, ret);
+    }
 
     return ret;
 }

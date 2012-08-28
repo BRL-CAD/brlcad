@@ -1438,7 +1438,7 @@ nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
  * pl is assigned the plane equation for the loop
  */
 fastf_t
-nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol *tol)
+nmg_loop_plane_area2(const struct loopuse *lu, plane_t pl, const struct bn_tol *tol)
 {
 
     mat_t mat;
@@ -1454,7 +1454,7 @@ nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol 
 
     NMG_CK_LOOPUSE(lu);
 
-    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+    if (UNLIKELY(BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)) {
 	HSETALL(pl, 0.0);
 	return 0.0;
     }
