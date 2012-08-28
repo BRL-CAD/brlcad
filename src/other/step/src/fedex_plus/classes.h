@@ -1,3 +1,5 @@
+#ifndef CLASSES_H
+#define CLASSES_H
 /*
 ** Fed-x parser output module for generating C++  class definitions
 ** December  5, 1989
@@ -146,4 +148,6 @@ void            getMCPrint( Express, FILE *, FILE * );
 int             sameSchema( Scope, Scope );
 
 void            USEREFout( Schema schema, Dictionary refdict, Linked_List reflist, char * type, FILE * file );
+
+#endif
 
