@@ -715,9 +715,7 @@ int
 rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
 #ifdef ALTERNATE_PLOTTING
-/* Draws elliptical cross-sections along each of the ell's vectors. The number
- * of cross sections along the vectors and the number of points used for each
- * ellipse can be adjusted.
+/* Draws elliptical cross-sections along each of the ell's vectors.
  *
  * algorithm overview:
  *  1 pretend the ellipsoid is at the origin with a aligned to x, b to y,
@@ -726,23 +724,24 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  *  3 calculate the axis vectors for the cross-section ellipse at that step,
  *    using the standard euclidean ellipse equation to find the correct
  *    magnitude of the ellipse axes
- *  4 calculate multiple points along the ellipse to define the cross-section,
+ *  4 draw multiple points along the ellipse to define the cross-section,
  *    using a parametric vector equation to calculate ellipse points for a
  *    given radian value and translating them to the ellipsoid surface
- *  5 add the ellipse cross-section to the draw list
- *  6 repeat 1-5 for the y and z axes
+ *  5 repeat 1-4 for the y and z axes
  */
     int i, j;
     struct rt_ell_internal *eip;
     int num_ellipse_points = 16;
-    int num_vector_cross_sections = 1;
+    int num_a_cross_sections = 1;
+    int num_b_cross_sections = 1;
+    int num_c_cross_sections = 1;
     double radian_step;
     double cross_section_step;
     double ell_a_mag, ell_b_mag, ell_c_mag;
-    double ellipse_a_mag, ellipse_b_mag, radians;
+    double ellipse_a_mag, ellipse_b_mag;
     double ellipse_x, ellipse_y, ellipse_z;
-    vect_t *ellipse_plot_points;
     vect_t ellipse_a, ellipse_b, ellipse_c;
+    vect_t ellipse_point;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -753,15 +752,31 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     ell_b_mag = MAGNITUDE(eip->b);
     ell_c_mag = MAGNITUDE(eip->c);
 
-    ellipse_plot_points = (vect_t*)bu_malloc(
-	    sizeof(vect_t) * num_ellipse_points, "ell ellipse_plot_points");
-
     radian_step = 2.0 * M_PI / num_ellipse_points;
 
+#define CALCULATE_ELLIPSE_POINT(radians) \
+	/* Use the calculated ellipse axis vectors to get the relative ellipse \
+	 * point for the current radian, and then translate it using the ellipsoid \
+	 * center and the current cross section offset. \
+	 */ \
+	VJOIN2(ellipse_point, eip->v, cos((radians)), ellipse_a, \
+		sin((radians)), ellipse_b); \
+	VADD2(ellipse_point, ellipse_point, ellipse_c);
+
+#define DRAW_ELLIPSE \
+    for (j = 0; j < num_ellipse_points; ++j) { \
+	if (j == 0) { \
+	    CALCULATE_ELLIPSE_POINT((num_ellipse_points - 1) * radian_step); \
+	    RT_ADD_VLIST(vhead, ellipse_point, BN_VLIST_LINE_MOVE); \
+	} \
+	CALCULATE_ELLIPSE_POINT(j * radian_step); \
+	RT_ADD_VLIST(vhead, ellipse_point, BN_VLIST_LINE_DRAW); \
+    }
+
     /* draw cross sections along vect A (i.e. the direction of movement is from -A to A) */
-    cross_section_step = 2.0 * ell_a_mag / (num_vector_cross_sections + 1);
+    cross_section_step = 2.0 * ell_a_mag / (num_a_cross_sections + 1);
     ellipse_x = -ell_a_mag;
-    for (i = 0; i < num_vector_cross_sections; ++i) {
+    for (i = 0; i < num_a_cross_sections; ++i) {
 	ellipse_x += cross_section_step;
 
 	/* We need to calculate the major axis vectors, a and b, for this ellipse
@@ -778,35 +793,16 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	VSCALE(ellipse_a, eip->b, ellipse_a_mag / ell_b_mag);
 	VSCALE(ellipse_b, eip->c, ellipse_b_mag / ell_c_mag);
 	
-	/* Translate the axis vectors by the correct offset. */
+	/* Calculate offset vector. */
 	VSCALE(ellipse_c, eip->a, ellipse_x / ell_a_mag);
-	VADD2(ellipse_a, ellipse_a, ellipse_c);
-	VADD2(ellipse_b, ellipse_b, ellipse_c);
 
-	for (j = 0; j < num_ellipse_points; ++j) {
-	    radians = j * radian_step;
-
-	    /* Use the calculated ellipse axis vectors to get the relative ellipse
-	     * point for the current radian, and then move it the the actual ellipse
-	     * surface by adding the ellipsoid center.
-	     */
-	    VJOIN2(ellipse_plot_points[j], eip->v, cos(radians), ellipse_a,
-		    sin(radians), ellipse_b);
-	}
-
-	/* move to last point */
-	RT_ADD_VLIST(vhead, ellipse_plot_points[num_ellipse_points - 1], BN_VLIST_LINE_MOVE);
-
-	/* draw from the first to last point */
-	for (j = 0; j < num_ellipse_points; ++j) {
-	    RT_ADD_VLIST(vhead, ellipse_plot_points[j], BN_VLIST_LINE_DRAW);
-	}
+	DRAW_ELLIPSE;
     }
 
     /* draw cross sections along vect B */
-    cross_section_step = 2.0 * MAGNITUDE(eip->b) / (num_vector_cross_sections + 1);
-    ellipse_y = -MAGNITUDE(eip->b);
-    for (i = 0; i < num_vector_cross_sections; ++i) {
+    cross_section_step = 2.0 * ell_b_mag / (num_b_cross_sections + 1);
+    ellipse_y = -ell_b_mag;
+    for (i = 0; i < num_b_cross_sections; ++i) {
 	ellipse_y += cross_section_step;
 
 	ellipse_a_mag = get_x_fromyz(eip, ellipse_y, 0);
@@ -815,25 +811,14 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	VSCALE(ellipse_a, eip->a, ellipse_a_mag / ell_a_mag);
 	VSCALE(ellipse_b, eip->c, ellipse_b_mag / ell_c_mag);
 	VSCALE(ellipse_c, eip->b, ellipse_y / ell_b_mag);
-	VADD2(ellipse_a, ellipse_a, ellipse_c);
-	VADD2(ellipse_b, ellipse_b, ellipse_c);
 
-	for (j = 0; j < num_ellipse_points; ++j) {
-	    radians = j * radian_step;
-	    VJOIN2(ellipse_plot_points[j], eip->v, cos(radians), ellipse_a,
-		    sin(radians), ellipse_b);
-	}
-
-	RT_ADD_VLIST(vhead, ellipse_plot_points[num_ellipse_points - 1], BN_VLIST_LINE_MOVE);
-	for (j = 0; j < num_ellipse_points; ++j) {
-	    RT_ADD_VLIST(vhead, ellipse_plot_points[j], BN_VLIST_LINE_DRAW);
-	}
+	DRAW_ELLIPSE;
     }
 
     /* draw cross sections along vect C */
-    cross_section_step = 2.0 * MAGNITUDE(eip->c) / (num_vector_cross_sections + 1);
-    ellipse_z = -MAGNITUDE(eip->c);
-    for (i = 0; i < num_vector_cross_sections; ++i) {
+    cross_section_step = 2.0 * ell_c_mag / (num_c_cross_sections + 1);
+    ellipse_z = -ell_c_mag;
+    for (i = 0; i < num_c_cross_sections; ++i) {
 	ellipse_z += cross_section_step;
 
 	ellipse_a_mag = get_x_fromyz(eip, 0, ellipse_z);
@@ -842,22 +827,9 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	VSCALE(ellipse_a, eip->a, ellipse_a_mag / ell_a_mag);
 	VSCALE(ellipse_b, eip->b, ellipse_b_mag / ell_b_mag);
 	VSCALE(ellipse_c, eip->c, ellipse_z / ell_c_mag);
-	VADD2(ellipse_a, ellipse_a, ellipse_c);
-	VADD2(ellipse_b, ellipse_b, ellipse_c);
 
-	for (j = 0; j < num_ellipse_points; ++j) {
-	    radians = j * radian_step;
-	    VJOIN2(ellipse_plot_points[j], eip->v, cos(radians), ellipse_a,
-		    sin(radians), ellipse_b);
-	}
-
-	RT_ADD_VLIST(vhead, ellipse_plot_points[num_ellipse_points - 1], BN_VLIST_LINE_MOVE);
-	for (j = 0; j < num_ellipse_points; ++j) {
-	    RT_ADD_VLIST(vhead, ellipse_plot_points[j], BN_VLIST_LINE_DRAW);
-	}
+	DRAW_ELLIPSE;
     }
-
-    bu_free(ellipse_plot_points, "ell ellipse_plot_points");
 
 #else
     register int i;
