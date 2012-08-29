@@ -6853,13 +6853,13 @@ to_mouse_move_botpt(struct ged *gedp,
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	return GED_HELP;
     }
 
     if (argc == 7) {
 	if (argv[1][0] != '-' || argv[1][1] != 'r' || argv[1][2] != '\0') {
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	    return GED_ERROR;
 	}
 
@@ -6870,7 +6870,7 @@ to_mouse_move_botpt(struct ged *gedp,
 	rflag = 0;
 
     if (argc != 6) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	return GED_ERROR;
     }
 
@@ -6880,13 +6880,13 @@ to_mouse_move_botpt(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(gedp->ged_result_str, "%s: View not found - %s", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: View not found - %s", cmd, argv[1]);
 	return GED_ERROR;
     }
 
     if (bu_sscanf(argv[4], "%lf", &x) != 1 ||
 	bu_sscanf(argv[5], "%lf", &y) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	return GED_ERROR;
     }
 
@@ -7038,12 +7038,12 @@ to_mouse_move_botpts(struct ged *gedp,
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	return GED_HELP;
     }
 
     if (argc < 6) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	return GED_ERROR;
     }
 
@@ -7053,13 +7053,13 @@ to_mouse_move_botpts(struct ged *gedp,
     }
 
     if (BU_LIST_IS_HEAD(&gdvp->l, &current_top->to_gop->go_head_views.l)) {
-	bu_vls_printf(gedp->ged_result_str, "%s: View not found - %s", argv[0], argv[1]);
+	bu_vls_printf(gedp->ged_result_str, "%s: View not found - %s", cmd, argv[1]);
 	return GED_ERROR;
     }
 
     if (bu_sscanf(argv[2], "%lf", &x) != 1 ||
 	bu_sscanf(argv[3], "%lf", &y) != 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	return GED_ERROR;
     }
 
