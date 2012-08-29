@@ -79,7 +79,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, const Patch *patch, on_fit::ve
     std::set<size_t>::iterator v_it;
     unsigned int i = 0;
     for (i = 0; i < bot->num_vertices; i++) {
-	printf("v(%d): %f %f %f\n", i, V3ARGS(&bot->vertices[3*i]));
+	//printf("v(%d): %f %f %f\n", i, V3ARGS(&bot->vertices[3*i]));
     }
     for (f_it = patch->faces.begin(); f_it != patch->faces.end(); f_it++) {
 	verts.insert(bot->faces[(*f_it)*3+0]);
@@ -87,8 +87,8 @@ void PatchToVector3d(struct rt_bot_internal *bot, const Patch *patch, on_fit::ve
 	verts.insert(bot->faces[(*f_it)*3+2]);
     }
     for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
-	printf("vert %d\n", (int)(*v_it));
-	printf("vert(%d): %f %f %f\n", (int)(*v_it), V3ARGS(&bot->vertices[(*v_it)*3]));
+	//printf("vert %d\n", (int)(*v_it));
+	//printf("vert(%d): %f %f %f\n", (int)(*v_it), V3ARGS(&bot->vertices[(*v_it)*3]));
 	data.push_back(ON_3dVector(V3ARGS(&bot->vertices[(*v_it)*3])));
     }
 }
