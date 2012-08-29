@@ -10,7 +10,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "plot3.h"
-//#include "opennurbs_fit.h"
+#include "opennurbs_fit.h"
 
 typedef std::pair<size_t, size_t> Edge;
 typedef std::map< size_t, std::set<Edge> > VertToEdge;
@@ -71,13 +71,13 @@ class Patch
 
 
 typedef std::set<ThreeDPoint> VectList;
-#if 0
+
 void PatchToVector3d(struct rt_bot_internal *bot, const Patch *patch, on_fit::vector_vec3d &data)
 {
     FaceList::iterator f_it;
     std::set<size_t> verts;
     std::set<size_t>::iterator v_it;
-    int i = 0;
+    unsigned int i = 0;
     for (i = 0; i < bot->num_vertices; i++) {
 	printf("v(%d): %f %f %f\n", i, V3ARGS(&bot->vertices[3*i]));
     }
@@ -89,10 +89,9 @@ void PatchToVector3d(struct rt_bot_internal *bot, const Patch *patch, on_fit::ve
     for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
 	printf("vert %d\n", (int)(*v_it));
 	printf("vert(%d): %f %f %f\n", (int)(*v_it), V3ARGS(&bot->vertices[(*v_it)*3]));
-	data.push_back(Eigen::Vector3d(V3ARGS(&bot->vertices[(*v_it)*3])));
+	data.push_back(ON_3dVector(V3ARGS(&bot->vertices[(*v_it)*3])));
     }
 }
-#endif
 
 
 // To plot specific groups of curves in MGED, do the following:
@@ -828,14 +827,14 @@ main(int argc, char *argv[])
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_bot_internal *bot_ip = NULL;
-    //struct rt_wdb *wdbp;
+    struct rt_wdb *wdbp;
     struct bu_vls name;
-    //char *bname;
+    char *bname;
 
     VectList vectors;
     std::set<Patch> patches;
     std::set<Patch>::iterator p_it;
-    //ON_Brep *brep = ON_Brep::New();
+    ON_Brep *brep = ON_Brep::New();
     FaceList::iterator f_it;
 
     ON_SimpleArray<ON_NurbsCurve> edges;
@@ -888,7 +887,7 @@ main(int argc, char *argv[])
     RT_BOT_CK_MAGIC(bot_ip);
 
     make_structure(bot_ip, &vectors, &patches, &edges, plot);
-#if 0
+
     for (p_it = patches.begin(); p_it != patches.end(); p_it++) {
 	std::cout << "Found patch " << (*p_it).id << "\n";
 	unsigned order(3);
@@ -924,7 +923,6 @@ main(int argc, char *argv[])
 	bu_log("Generated brep object %s\n", bname);
     }
     bu_free(bname, "char");
-#endif
 
     return 0;
 }
