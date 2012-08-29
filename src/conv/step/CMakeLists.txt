@@ -19,6 +19,7 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/src/other/step/src/test
   ${CMAKE_BINARY_DIR}/src/other/step/include
   ${TNT_INCLUDE_DIR}
+  ${BRLCAD_SOURCE_DIR}/src/libnurbs #Temporary until headers reworked
   )
 
 set(SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/step/data/ap203/ap203.exp)
@@ -187,7 +188,6 @@ set(stepg_SOURCES
   ProductDefinitionShape.cpp
   ProductRelatedProductCategory.cpp
   PropertyDefinition.cpp
-  PullbackCurve.cpp
   QuasiUniformCurve.cpp
   QuasiUniformSurface.cpp
   RatioContextDependentUnit.cpp
@@ -388,7 +388,6 @@ set(stepg_HDRS
   ProductDefinitionShape.h
   ProductRelatedProductCategory.h
   PropertyDefinition.h
-  PullbackCurve.h
   QuasiUniformCurve.h
   QuasiUniformSurface.h
   RatioContextDependentUnit.h

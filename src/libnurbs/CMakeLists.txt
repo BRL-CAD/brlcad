@@ -21,11 +21,13 @@ BRLCAD_LIB_INCLUDE_DIRS(nurbs NURBS_INCLUDE_DIRS NURBS_LOCAL_INCLUDE_DIRS)
 set(LIBNURBS_SOURCES
   opennurbs_ext.cpp
   #opennurbs_fit.cpp
+  PullbackCurve.cpp
   )
 
 set(librt_ignored_files
   opennurbs_fit.h
   opennurbs_fit.cpp
+  PullbackCurve.h
   )
 CMAKEFILES(${librt_ignored_files})
 
@@ -41,7 +43,7 @@ endif(CPP_DLL_DEFINES)
 set_property(GLOBAL PROPERTY libnurbs_DEFINES "${libnurbs_DEFINES}")
 
 BRLCAD_ADDLIB(libnurbs "${LIBNURBS_SOURCES}" "libbn;libbu;${OPENNURBS_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NOSTRICTCXX)
-#set_property(TARGET libnurbs APPEND PROPERTY COMPILE_FLAGS "-Wno-shadow -Wno-float-equal")
+set_property(TARGET libnurbs APPEND PROPERTY COMPILE_FLAGS "-Wno-shadow -Wno-float-equal")
 
 if(BUILD_STATIC_LIBS)
   set_property(TARGET libnurbs-static APPEND PROPERTY COMPILE_DEFINITIONS "OBJ_BREP=1")
