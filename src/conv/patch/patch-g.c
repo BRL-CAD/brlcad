@@ -1352,7 +1352,7 @@ proc_plate(int cnt)
     int cpts;
     char shflg, mrflg, ctflg;
     char name[NAMESIZE+1], mirror_name[NAMESIZE+1];
-    plane_t pl;
+    plane_t pl = HINIT_ZERO;
     point_t last;
     point_t centroid;
 
