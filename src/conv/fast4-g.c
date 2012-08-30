@@ -350,7 +350,7 @@ Check_names(void)
 	ptr = ptr->rright;
     }
 
-    /* alpabetical order */
+    /* alphabetical order */
     ptr = name_root;
     while (1) {
 	while (ptr) {
