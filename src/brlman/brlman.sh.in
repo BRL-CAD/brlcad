@@ -36,7 +36,7 @@
 ###
 #
 #  A minimal wrapper around the core Tcl logic of brlman.  Because Tcl
-#  doesn't support lanuching man from a script interactively, this
+#  doesn't support launching man from a script interactively, this
 #  minimal wrapper is needed - thanks to Nick Reed for the idea.
 #
 ###
