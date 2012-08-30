@@ -577,7 +577,7 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 		    prntSeg(ap, pp, OUTSIDE_AIR,
 			    entrynorm, exitnorm, pp == bp);
 		} else
-		    /* If air expicitly follows, output space code. */
+		    /* If air explicitly follows, output space code. */
 		    if (np != pt_headp && Air(nregp)) {
 			/* Check for interior burst point. */
 #if DEBUG_GRID
