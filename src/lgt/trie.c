@@ -180,7 +180,7 @@ get_Trie(char *name, Trie *triep)
 		    )
 		    ;
 		if ( triep == TRIE_NULL )
-		    /* Non-existant name, truncate bad part.*/
+		    /* Non-existent name, truncate bad part.*/
 		{
 		    *name = NUL;
 		    return	OCLIST_NULL;
