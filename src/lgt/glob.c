@@ -101,7 +101,7 @@ fastf_t	degtorad = 0.0174532925;
 /* Translations of grid in plane of view.				*/
 fastf_t	x_grid_offset = 0.0, y_grid_offset = 0.0;
 
-/* Distance of grid from the model centroid measured in milimeters.	*/
+/* Distance of grid from the model centroid measured in millimeters.	*/
 fastf_t	grid_dist = 0.0;
 
 /* Rotation of grid around viewing axis (radians).			*/
