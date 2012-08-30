@@ -1336,7 +1336,7 @@ Subtract_hole()
 
     /* make a replacement hole using CSG */
     if ( hole_type == PRO_HLE_NEW_TYPE_STRAIGHT ) {
-	/* plain old striaght hole */
+	/* plain old straight hole */
 
 	if ( diameter < min_hole_diameter )
 	    return 1;
@@ -1965,7 +1965,7 @@ output_part( ProMdl model )
     }
 
     /* can get bounding box of a solid using "ProSolidOutlineGet"
-     * may want to use this to implement relative facetization talerance
+     * may want to use this to implement relative facetization tolerance
      */
 
     /* tessellate part */
@@ -3336,7 +3336,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	name_hash = bu_create_hash_tbl( 512 );
     }
 
-    /* get the curently displayed model in Pro/E */
+    /* get the currently displayed model in Pro/E */
     status = ProMdlCurrentGet( &model );
     if ( status == PRO_TK_BAD_CONTEXT ) {
 	(void)ProMessageDisplay(MSGFIL, "USER_NO_MODEL" );
@@ -3615,7 +3615,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
     }
 
 #else
-    /* get the curently displayed model in Pro/E */
+    /* get the currently displayed model in Pro/E */
     status = ProMdlCurrentGet( &model );
     if ( status == PRO_TK_BAD_CONTEXT ) {
 	ProName dialog_label;
