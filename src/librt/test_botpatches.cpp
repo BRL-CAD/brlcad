@@ -21,7 +21,7 @@ typedef std::map< Edge, std::set<size_t> > EdgeToFace;
 typedef std::set<Edge> EdgeList;
 typedef std::set<size_t> FaceList;
 
-typedef std::map< ON_3dPoint, std::set<size_t> > FaceCategorization;
+typedef std::map< size_t, std::set<size_t> > FaceCategorization;
 
 class Curve
 {
@@ -669,7 +669,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 
 }
 
-void make_structure(struct rt_bot_internal *bot, std::set<ON_3dPoint> *vects, std::set<Patch> *patches, ON_SimpleArray<ON_NurbsCurve> *bedges, FILE *plot)
+void make_structure(struct rt_bot_internal *bot, ON_3dPointArray *vects, std::set<Patch> *patches, ON_SimpleArray<ON_NurbsCurve> *bedges, FILE *plot)
 {
     FaceCategorization face_groups;
     FaceCategorization::iterator fg_it;
@@ -678,12 +678,10 @@ void make_structure(struct rt_bot_internal *bot, std::set<ON_3dPoint> *vects, st
     EdgeToPatch edge_to_patch;
     int patch_cnt = 1;
 
-    std::set<ON_3dPoint>::iterator vect_it;
     // Break apart the bot based on angles between faces and bounding rpp planes
     for (size_t i=0; i < bot->num_faces; ++i) {
 	size_t pt_A, pt_B, pt_C;
-	size_t count = 0;
-	const ON_3dPoint *result_max;
+	size_t result_max;
 	fastf_t vdot = 0.0;
 	fastf_t result = 0.0;
 	vect_t a, b, dir, norm_dir;
@@ -699,17 +697,16 @@ void make_structure(struct rt_bot_internal *bot, std::set<ON_3dPoint> *vects, st
 	VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);
 	VCROSS(norm_dir, a, b);
 	VUNITIZE(norm_dir);
-	for (vect_it = vects->begin(); vect_it != vects->end(); vect_it++) {
-	    count++;
-	    VSET(dir, (*vect_it).x, (*vect_it).y, (*vect_it).z);
+        for (size_t j=0; j < (size_t)vects->Count(); j++) {
+	    VSET(dir, vects->At(j)->x, vects->At(j)->y, vects->At(j)->z);
 	    VUNITIZE(dir);
 	    vdot = VDOT(dir, norm_dir);
 	    if (vdot > result) {
-		result_max = &(*vect_it);
+		result_max = j;
 		result = vdot;
 	    }
 	}
-	face_groups[*result_max].insert(i);
+	face_groups[result_max].insert(i);
     }
     // For each "sub-bot", identify contiguous patches.
     for (fg_it = face_groups.begin(); fg_it != face_groups.end(); fg_it++) {
@@ -721,7 +718,7 @@ void make_structure(struct rt_bot_internal *bot, std::set<ON_3dPoint> *vects, st
 	    size_t pt_A, pt_B, pt_C;
 	    Patch curr_patch;
 	    curr_patch.id = patch_cnt;
-	    curr_patch.category_plane = new ON_3dPoint((*fg_it).first.x, (*fg_it).first.y, (*fg_it).first.z);
+	    curr_patch.category_plane = vects->At((*fg_it).first);
 	    patch_cnt++;
 	    std::queue<size_t> face_queue;
 	    FaceList::iterator f_it;
@@ -789,7 +786,7 @@ main(int argc, char *argv[])
     struct bu_vls name;
     char *bname;
 
-    std::set<ON_3dPoint> vectors;
+    ON_3dPointArray vectors;
     std::set<Patch> patches;
     std::set<Patch>::iterator p_it;
     ON_Brep *brep = ON_Brep::New();
@@ -797,12 +794,12 @@ main(int argc, char *argv[])
 
     ON_SimpleArray<ON_NurbsCurve> edges;
 
-    vectors.insert(ON_3dPoint(-1,0,0));
-    vectors.insert(ON_3dPoint(0,-1,0));
-    vectors.insert(ON_3dPoint(0,0,-1));
-    vectors.insert(ON_3dPoint(1,0,0));
-    vectors.insert(ON_3dPoint(0,1,0));
-    vectors.insert(ON_3dPoint(0,0,1));
+    vectors.Append(ON_3dPoint(-1,0,0));
+    vectors.Append(ON_3dPoint(0,-1,0));
+    vectors.Append(ON_3dPoint(0,0,-1));
+    vectors.Append(ON_3dPoint(1,0,0));
+    vectors.Append(ON_3dPoint(0,1,0));
+    vectors.Append(ON_3dPoint(0,0,1));
 
     bu_vls_init(&name);
 
