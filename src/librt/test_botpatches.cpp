@@ -10,6 +10,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "plot3.h"
+#include "opennurbs.h"
 #include "opennurbs_fit.h"
 
 typedef std::pair<size_t, size_t> Edge;
@@ -20,24 +21,7 @@ typedef std::map< Edge, std::set<size_t> > EdgeToFace;
 typedef std::set<Edge> EdgeList;
 typedef std::set<size_t> FaceList;
 
-class ThreeDPoint
-{
-    public:
-	fastf_t x, y, z;
-	ThreeDPoint(fastf_t, fastf_t, fastf_t);
-	bool operator< (const ThreeDPoint &other) const {
-	    return (100*x + 10*y + z) < (100*other.x + 10*other.y + other.z);
-	}
-};
-
-ThreeDPoint::ThreeDPoint(fastf_t a, fastf_t b, fastf_t c)
-{
-    x = a;
-    y = b;
-    z = c;
-}
-
-typedef std::map< ThreeDPoint, std::set<size_t> > FaceCategorization;
+typedef std::map< ON_3dPoint, std::set<size_t> > FaceCategorization;
 
 class Curve
 {
@@ -59,7 +43,7 @@ class Patch
 {
     public:
 	size_t id;
-	ThreeDPoint *category_plane;
+	ON_3dPoint *category_plane;
 	EdgeList edges;
 	LoopList loops;
 	FaceList faces;
@@ -68,9 +52,6 @@ class Patch
 	    return id < other.id;
 	}
 };
-
-
-typedef std::set<ThreeDPoint> VectList;
 
 void PatchToVector3d(struct rt_bot_internal *bot, const Patch *patch, on_fit::vector_vec3d &data)
 {
@@ -227,7 +208,7 @@ void make_new_patch(struct rt_bot_internal *bot, std::set<Patch> *patches, Patch
     // Set up the new patch and add the overlapping face
     new_patch->id = *patch_cnt;
     (*patch_cnt)++;
-    new_patch->category_plane = new ThreeDPoint(orig_patch->category_plane->x,orig_patch->category_plane->y,orig_patch->category_plane->z);
+    new_patch->category_plane = new ON_3dPoint(orig_patch->category_plane->x,orig_patch->category_plane->y,orig_patch->category_plane->z);
     new_patch->faces.insert(overlap_face);
     orig_patch->faces.erase(overlap_face);
 
@@ -688,7 +669,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 
 }
 
-void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch> *patches, ON_SimpleArray<ON_NurbsCurve> *bedges, FILE *plot)
+void make_structure(struct rt_bot_internal *bot, std::set<ON_3dPoint> *vects, std::set<Patch> *patches, ON_SimpleArray<ON_NurbsCurve> *bedges, FILE *plot)
 {
     FaceCategorization face_groups;
     FaceCategorization::iterator fg_it;
@@ -697,12 +678,12 @@ void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch
     EdgeToPatch edge_to_patch;
     int patch_cnt = 1;
 
-    VectList::iterator vect_it;
+    std::set<ON_3dPoint>::iterator vect_it;
     // Break apart the bot based on angles between faces and bounding rpp planes
     for (size_t i=0; i < bot->num_faces; ++i) {
 	size_t pt_A, pt_B, pt_C;
 	size_t count = 0;
-	const ThreeDPoint *result_max;
+	const ON_3dPoint *result_max;
 	fastf_t vdot = 0.0;
 	fastf_t result = 0.0;
 	vect_t a, b, dir, norm_dir;
@@ -740,7 +721,7 @@ void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch
 	    size_t pt_A, pt_B, pt_C;
 	    Patch curr_patch;
 	    curr_patch.id = patch_cnt;
-	    curr_patch.category_plane = new ThreeDPoint((*fg_it).first.x, (*fg_it).first.y, (*fg_it).first.z);
+	    curr_patch.category_plane = new ON_3dPoint((*fg_it).first.x, (*fg_it).first.y, (*fg_it).first.z);
 	    patch_cnt++;
 	    std::queue<size_t> face_queue;
 	    FaceList::iterator f_it;
@@ -808,7 +789,7 @@ main(int argc, char *argv[])
     struct bu_vls name;
     char *bname;
 
-    VectList vectors;
+    std::set<ON_3dPoint> vectors;
     std::set<Patch> patches;
     std::set<Patch>::iterator p_it;
     ON_Brep *brep = ON_Brep::New();
@@ -816,12 +797,12 @@ main(int argc, char *argv[])
 
     ON_SimpleArray<ON_NurbsCurve> edges;
 
-    vectors.insert(*(new ThreeDPoint(-1,0,0)));
-    vectors.insert(*(new ThreeDPoint(0,-1,0)));
-    vectors.insert(*(new ThreeDPoint(0,0,-1)));
-    vectors.insert(*(new ThreeDPoint(1,0,0)));
-    vectors.insert(*(new ThreeDPoint(0,1,0)));
-    vectors.insert(*(new ThreeDPoint(0,0,1)));
+    vectors.insert(ON_3dPoint(-1,0,0));
+    vectors.insert(ON_3dPoint(0,-1,0));
+    vectors.insert(ON_3dPoint(0,0,-1));
+    vectors.insert(ON_3dPoint(1,0,0));
+    vectors.insert(ON_3dPoint(0,1,0));
+    vectors.insert(ON_3dPoint(0,0,1));
 
     bu_vls_init(&name);
 
