@@ -614,7 +614,7 @@ f_HL_Hit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED(
 }
 
 
-#define MA_WHITESP ", \t"	/* seperators for parameter list */
+#define MA_WHITESP ", \t"	/* separators for parameter list */
 #define MA_MID "mid"
 /*
   int getMaMID(struct mater_info *map, int *id)
@@ -993,7 +993,7 @@ correct_Lgt(struct application *ap, struct partition *pp, Lgt_Source *lgt_entry)
 	}
 	cos_angl = VDOT(lgt_cntr, lgt_dir);
 	if (NEAR_ZERO(cos_angl, EPSILON))
-	    /* Negligable intensity. */
+	    /* Negligible intensity. */
 	    return 0.0;
 	ang_dist = sqrt(1.0 - pow(cos_angl, 2));
 	rel_radius = lgt_entry->radius / pp->pt_inhit->hit_dist;
@@ -1193,7 +1193,7 @@ inside_ray :
 	    goto inside_ray;
 	}
     } else {
-	/* Exceeded max bounces, total absorbtion of light. */
+	/* Exceeded max bounces, total absorption of light. */
 	VSETALL(ap->a_color, 0.0);
 	if (RT_G_DEBUG & DEBUG_REFRACT)
 	    bu_log("\t\tExceeded max bounces with internal reflections, recursion level (%d)\n", ap_ref.a_level);
@@ -1541,9 +1541,9 @@ model_Reflectance(struct application *ap, struct partition *pp, Mat_Db_Entry *md
     /* Calculate diffuse reflectance from light source. */
     if ((cos_il = VDOT(norml, lgt_dir)) < 0.0)
 	cos_il = 0.0;
-    /* Facter in light source intensity and diffuse weighting. */
+    /* Factor in light source intensity and diffuse weighting. */
     ff = cos_il * lgt_energy * mdb_entry->wgt_diffuse;
-    /* Facter in light source color. */
+    /* Factor in light source color. */
     VSCALE(ap->a_color, lgt_entry->coef, ff);
     if (RT_G_DEBUG & DEBUG_RGB) {
 	bu_log("\tDiffuse reflectance:\n");
@@ -1555,7 +1555,7 @@ model_Reflectance(struct application *ap, struct partition *pp, Mat_Db_Entry *md
 	       mdb_entry->wgt_diffuse);
 	V_Print("\tdiffuse coeffs", ap->a_color, bu_log);
     }
-    /* Facter in material color (diffuse reflectance coeffs) */
+    /* Factor in material color (diffuse reflectance coeffs) */
     ff = RGB_INVERSE; /* Scale RGB values to coeffs (0.0 .. 1.0) */
     ap->a_color[0] *= mdb_entry->df_rgb[0] * ff;
     ap->a_color[1] *= mdb_entry->df_rgb[1] * ff;
