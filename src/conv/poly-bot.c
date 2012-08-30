@@ -134,7 +134,7 @@ main(int argc, char **argv)
 		for ( i=0; i<num_rec; i++ )
 		{
 		    if ( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
-			bu_exit(1, "Unexpected EOF encountered while copying an EXTUSION\n" );
+			bu_exit(1, "Unexpected EOF encountered while copying an EXTRUSION\n" );
 		    if ( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 			bu_exit(1, "Write failed!\n" );
 		}
