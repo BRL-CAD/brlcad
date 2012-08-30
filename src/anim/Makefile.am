@@ -82,7 +82,7 @@ include $(top_srcdir)/misc/Makefile.defs
 FAST_OBJECTS = \
 	$(anim_cascade_OBJECTS) \
 	$(anim_fly_OBJECTS) \
-	$(anim_harddrack_OBJECTS) \
+	$(anim_hardtrack_OBJECTS) \
 	$(anim_keyread_OBJECTS) \
 	$(anim_lookat_OBJECTS) \
 	$(anim_offset_OBJECTS) \
