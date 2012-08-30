@@ -980,7 +980,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 * validate primitives during export so that it is guaranteed that
   illegal primitives will not be written to file
 
-* implement a region annointment command where the user can turn an
+* implement a region anointment command where the user can turn an
   assembly into a region and change all lower or higher regions into
   combinations
 
