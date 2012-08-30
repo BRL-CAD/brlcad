@@ -493,7 +493,7 @@ prntRayHeader(fastf_t *raydir /* burst ray direction vector */, fastf_t *shotdir
   struct partition *pp, fastf_t entrynorm[3],
   fastf_t exitnorm[3])
 
-  Burst Point Libary: intersection along burst ray.
+  Burst Point Library: intersection along burst ray.
   Ref. Figure 20., Line Number 20 of ICD.
 */
 void
