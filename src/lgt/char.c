@@ -97,7 +97,7 @@ do_line(int xpos, int ypos, char *line)
 }
 
 /*	d o _ c h a r ( )
-	Outputs pixel representation of a chararcter by reading a row of a
+	Outputs pixel representation of a character by reading a row of a
 	bitmap from the character font file.  The file pointer is assumed
 	to be in the correct position.
 */
