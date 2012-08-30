@@ -499,7 +499,7 @@ exit
 		  endforeach(targetbin ${targetbinnames})
 		  foreach(targetlib ${targetbinnames})
 		    if(TCL_CURRENTPATH MATCHES "NOTFOUND$")
-		      find_library(TCL_CURRENTPATH NAMES ${targetlib}${MAJORNUM}.${MINORNUM} ${targetlib}${MAJORNUM}${MINORNUM} PATHS ${LIB_POSSIBE_PATHS} ${options})
+		      find_library(TCL_CURRENTPATH NAMES ${targetlib}${MAJORNUM}.${MINORNUM} ${targetlib}${MAJORNUM}${MINORNUM} PATHS ${LIB_POSSIBLE_PATHS} ${options})
 		    endif(TCL_CURRENTPATH MATCHES "NOTFOUND$")
 		  endforeach(targetlib ${targetbinnames})
 		endif(dosearch)
