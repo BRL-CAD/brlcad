@@ -445,7 +445,7 @@ hmenuhit(HMenu *menup, int menux, int menuy)
 	/*prnt_HMllist( llhead.next );*/
 
 	/* Steal the field that the user isn't using temporarily to
-	   emmulate the static allocation of menu items.
+	   emulate the static allocation of menu items.
 	*/
 	if ( i > 0 )
 	{
