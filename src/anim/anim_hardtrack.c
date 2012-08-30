@@ -407,7 +407,7 @@ main(int argc, char *argv[])
     VSET(to_front, 1.0, 0.0, 0.0);
 
     if ((!print_link)&&(!print_wheel)) {
-	fprintf(stderr, "anim_hardtrack: no ouput requested. Use -l or -w.\n");
+	fprintf(stderr, "anim_hardtrack: no output requested. Use -l or -w.\n");
 	bu_exit(0, NULL);
     }
     /* main loop */
