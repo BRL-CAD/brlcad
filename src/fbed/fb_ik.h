@@ -67,7 +67,7 @@
 #define BPS	IK(020500, 0)	/* beginning of bps registers */
 #define BPSPC	IK(020500, 0)	/* bps program counter (read only) */
 #define BPSSTAT	IK(020500, 0)	/* bps status register (write only) */
-#define SR	IK(020200, 0)	/* beginnig of scratch pad registers */
+#define SR	IK(020200, 0)	/* beginning of scratch pad registers */
 #define MCM	IK(020000, 0)	/* beginning of microcode memory */
 #define MA	IK(020400, 0)	/* beginning of multiplier/accumulator */
 #define MACM	IK(020400, 0)	/* ma coefficient memory */
