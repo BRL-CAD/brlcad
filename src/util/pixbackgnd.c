@@ -19,7 +19,7 @@
  */
 /** @file util/pixbackgnd.c
  *
- * Backgound Maker
+ * Background Maker
  *
  * Given Hue and Saturation for background, make top light and bottom dark.
  * Generates a pix(5) stream on stdout.
@@ -207,7 +207,7 @@ get_args(int argc, char **argv)
     if (bu_optind+1 >= argc)
 	return 0;		/* only 0 or 1 args */
     if (bu_optind+2 == argc) {
-	/* Paramaters are H S */
+	/* Parameters are H S */
 	HSV[0] = atof(argv[bu_optind++]);
 	HSV[1] = atof(argv[bu_optind]);
 	HSV[2] = h_start;
