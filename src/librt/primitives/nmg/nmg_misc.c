@@ -1442,52 +1442,80 @@ nmg_loop_plane_area2(const struct loopuse *lu, plane_t pl, const struct bn_tol *
 {
 
     mat_t mat;
-    point_t pt, pt_next;
+    point_t pt, pt_next, pt_1st;
     struct edgeuse *eu = NULL;
-    struct faceuse *fu = NULL;
-    int cnt;
-    int can_flip;
-    int do_reverse_area;
+    size_t cnt;
     fastf_t area;
     vect_t vec_to = {0.0, 0.0, 1.0};
     vect_t sum, cog;
+    fastf_t scale = 1000.0;
 
     NMG_CK_LOOPUSE(lu);
 
     if (UNLIKELY(BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)) {
 	HSETALL(pl, 0.0);
-	return 0.0;
+	area = 0.0;
+	goto out;
     }
 
-    do_reverse_area = 0;
-    can_flip = 0;
-    if (*lu->up.magic_p == NMG_FACEUSE_MAGIC) {
-	can_flip = 1;
-	fu = lu->up.fu_p;
-	NMG_CK_FACEUSE(fu);
+    cnt = 0;
+    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	cnt++;
+    }
+
+    if (cnt < 3) {
+	HSETALL(pl, 0.0);
+	area = 0.0;
+	goto out;
     }
 
     HSETALL(pl, 0.0);
     VSETALL(sum, 0.0);
-    cnt = 0;
+    VMOVE(pt_1st, (BU_LIST_FIRST(edgeuse, &eu->l))->vu_p->v_p->vg_p->coord);
+    if (ZERO(pt_1st[X])) {
+	pt_1st[X] = 0.0;
+    }
+    if (ZERO(pt_1st[Y])) {
+	pt_1st[Y] = 0.0;
+    }
+    if (ZERO(pt_1st[Z])) {
+	pt_1st[Z] = 0.0;
+    }
+    VSCALE(pt_1st, pt_1st, scale);
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	NMG_CK_EDGEUSE(eu);
-	VMOVE(pt, eu->vu_p->v_p->vg_p->coord);
-	VMOVE(pt_next, (BU_LIST_PNEXT_CIRC(edgeuse, &eu->l))->vu_p->v_p->vg_p->coord);
-	pl[X] += ((pt[Y] - pt_next[Y]) * (pt[Z] + pt_next[Z]));
-	pl[Y] += ((pt[Z] - pt_next[Z]) * (pt[X] + pt_next[X]));
-	pl[Z] += ((pt[X] - pt_next[X]) * (pt[Y] + pt_next[Y]));
+	VSCALE(pt, eu->vu_p->v_p->vg_p->coord, scale);
+	VSCALE(pt_next, (BU_LIST_PNEXT_CIRC(edgeuse, &eu->l))->vu_p->v_p->vg_p->coord, scale);
+	VSUB2(pt, pt, pt_1st);
+	VSUB2(pt_next, pt_next, pt_1st);
+	if (ZERO(pt[X])) {
+	    pt[X] = 0.0;
+	}
+	if (ZERO(pt[Y])) {
+	    pt[Y] = 0.0;
+	}
+	if (ZERO(pt[Z])) {
+	    pt[Z] = 0.0;
+	}
+	if (ZERO(pt_next[X])) {
+	    pt_next[X] = 0.0;
+	}
+	if (ZERO(pt_next[Y])) {
+	    pt_next[Y] = 0.0;
+	}
+	if (ZERO(pt_next[Z])) {
+	    pt_next[Z] = 0.0;
+	}
+        pl[X] += (EQUAL(pt[Y], pt_next[Y]) ? (0.0) : (pt[Y] - pt_next[Y])) * (pt[Z] + pt_next[Z]);
+        pl[Y] += (EQUAL(pt[Z], pt_next[Z]) ? (0.0) : (pt[Z] - pt_next[Z])) * (pt[X] + pt_next[X]);
+        pl[Z] += (EQUAL(pt[X], pt_next[X]) ? (0.0) : (pt[X] - pt_next[X])) * (pt[Y] + pt_next[Y]);
 	VADD2(sum, sum, pt);
-	cnt++;
-    }
-    if (cnt < 3) {
-	HSETALL(pl, 0.0);
-	return 0.0;
     }
 
     if (ZERO(pl[X]) && ZERO(pl[Y]) && ZERO(pl[Z])) {
 	HSETALL(pl, 0.0);
-	return 0.0;
+	area = 0.0;
+	goto out;
     }
     if (ZERO(pl[X])) {
 	pl[X] = 0.0;
@@ -1499,16 +1527,9 @@ nmg_loop_plane_area2(const struct loopuse *lu, plane_t pl, const struct bn_tol *
 	pl[Z] = 0.0;
     }
 
-    VSCALE(cog, sum, 1.0/cnt);
+    VSCALE(cog, sum, 1.0/(cnt * scale));
     VUNITIZE(pl);
     pl[H] = VDOT(cog, pl);
-
-    if (can_flip && fu) {
-	if ((fu->orientation != OT_SAME) != (fu->f_p->flip != 0)) {
-	    HREVERSE(pl, pl);
-	    do_reverse_area = 1;
-	}
-    }
 
     bn_mat_fromto(mat, pl, vec_to, tol); /* rotate to xy plane */
     area = 0.0;
@@ -1519,9 +1540,7 @@ nmg_loop_plane_area2(const struct loopuse *lu, plane_t pl, const struct bn_tol *
     }
     area = area / 2.0;
 
-    if (do_reverse_area) {
-	area = -area;
-    }
+out:
 
     return area;
 }
