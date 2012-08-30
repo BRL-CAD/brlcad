@@ -2870,7 +2870,7 @@ main(int argc, char **argv)
 		color_file = bu_optarg;
 		break;
 	    default:
-		bu_log("Unrecognzed option (%c)\n", c);
+		bu_log("Unrecognized option (%c)\n", c);
 		usage();
 		break;
 	}
