@@ -738,7 +738,6 @@ void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch
 	// All faces must belong to some patch - continue until all faces are processed
 	while (!group_faces.empty()) {
 	    size_t pt_A, pt_B, pt_C;
-	    Edge e1, e2, e3;
 	    Patch curr_patch;
 	    curr_patch.id = patch_cnt;
 	    curr_patch.category_plane = new ThreeDPoint((*fg_it).first.x, (*fg_it).first.y, (*fg_it).first.z);
@@ -756,40 +755,18 @@ void make_structure(struct rt_bot_internal *bot, VectList *vects, std::set<Patch
 		pt_A = bot->faces[face_num*3+0]*3;
 		pt_B = bot->faces[face_num*3+1]*3;
 		pt_C = bot->faces[face_num*3+2]*3;
-		if (pt_A <= pt_B) {
-		    e1.first = pt_A;
-		    e1.second= pt_B;
-		} else {
-		    e1.first = pt_B;
-		    e1.second= pt_A;
-		}
-		face_edges.insert(e1);
-		edge_to_patch[e1].insert(curr_patch.id);
-		vert_to_patch[e1.first].insert(curr_patch.id);
-		vert_to_patch[e1.second].insert(curr_patch.id);
-		if (pt_B <= pt_C) {
-		    e2.first = pt_B;
-		    e2.second= pt_C;
-		} else {
-		    e2.first = pt_C;
-		    e2.second= pt_B;
-		}
-		face_edges.insert(e2);
-		edge_to_patch[e2].insert(curr_patch.id);
-		vert_to_patch[e2.first].insert(curr_patch.id);
-		vert_to_patch[e2.second].insert(curr_patch.id);
-
-		if (pt_C <= pt_A) {
-		    e3.first = pt_C;
-		    e3.second= pt_A;
-		} else {
-		    e3.first = pt_A;
-		    e3.second= pt_C;
-		}
-		face_edges.insert(e3);
-		edge_to_patch[e3].insert(curr_patch.id);
-		vert_to_patch[e3.first].insert(curr_patch.id);
-		vert_to_patch[e3.second].insert(curr_patch.id);
+                face_edges.insert(mk_edge(pt_A,pt_B));
+                edge_to_patch[mk_edge(pt_A,pt_B)].insert(curr_patch.id);
+                vert_to_patch[mk_edge(pt_A,pt_B).first].insert(curr_patch.id);
+                vert_to_patch[mk_edge(pt_A,pt_B).second].insert(curr_patch.id);
+                face_edges.insert(mk_edge(pt_B,pt_C));
+                edge_to_patch[mk_edge(pt_B,pt_C)].insert(curr_patch.id);
+                vert_to_patch[mk_edge(pt_B,pt_C).first].insert(curr_patch.id);
+                vert_to_patch[mk_edge(pt_B,pt_C).second].insert(curr_patch.id);
+                face_edges.insert(mk_edge(pt_C,pt_A));
+                edge_to_patch[mk_edge(pt_C,pt_A)].insert(curr_patch.id);
+                vert_to_patch[mk_edge(pt_C,pt_A).first].insert(curr_patch.id);
+                vert_to_patch[mk_edge(pt_C,pt_A).second].insert(curr_patch.id);
 
 		for (face_edges_it = face_edges.begin(); face_edges_it != face_edges.end(); face_edges_it++) {
 		    std::set<size_t> faces_from_edge = edge_to_face[(*face_edges_it)];
