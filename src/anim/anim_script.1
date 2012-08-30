@@ -86,14 +86,14 @@ ability to specify a reference position and orientation, as explained
 below.
 .PP
 The objectname is the name of the object which is to be
-animated, as it will appear in the ouput script. For example, if
+animated, as it will appear in the output script. For example, if
 "hatch1"
 is a member of "turret" which is a member of "tank" which is one of the
 objects specified on the command line of the call to
 .I rt,
 then the objectname "tank/turret/hatch1" or simply "turret/hatch1" would be used to
 animate the hatch. The tank itself would be referred to by the name,
-"/tank". Note that toplevel objects should be preceeded by a slash.
+"/tank". Note that toplevel objects should be preceded by a slash.
 If view animation is being performed, no objectname
 should be included.
 .PP
@@ -156,7 +156,7 @@ is positive, the command:
 .sp
 viewsize #;
 .sp
-will be placed at the beginning of the ouput file. If it is
+will be placed at the beginning of the output file. If it is
 zero, the `viewsize' command is omitted from the output script. If it is
 negative, then the
 viewsize for each frame is expected to be in the first column after the
@@ -218,7 +218,7 @@ translations are with respect to the object's axes. See the examples below.
 When the
 .B \-v
 option is used, the virtual camera is the object
-being animated, and so the meaning of the preceeding four options
+being animated, and so the meaning of the preceding four options
 changes somewhat. The
 .B \-c
 and
@@ -312,7 +312,7 @@ column specifying the roll of the wheel (How much it is to be twisted).
 anim_script -r -a -135 30 0 -c 700 800 2400 truck/steering_column/wheel <
 roll.table > steer.table
 .sp
-Alternativly, if the turning of the wheel was stored in the yaw
+Alternatively, if the turning of the wheel was stored in the yaw
 (second) column of a file,
 .BR turn.table ,
 a different set of axes would be
@@ -328,7 +328,7 @@ vector of (0,0,1) means move one unit upward, instead of move to the
 point (0,0,1). For each little man, we specify his position in the
 model using the
 .B \-c
-option. Then we can use the same backflip instuctions
+option. Then we can use the same backflip instructions
 for each of the little men.
 .sp
 anim_script -c 12 34 5 /little.man.one < generic.backflip.table >
@@ -341,7 +341,7 @@ and so on.
 .sp
 .sp
 .SS Camera examples
-If we know the desired postion of the camera and its orientation
+If we know the desired position of the camera and its orientation
 at each time, it's very simple. The
 .B -v#
 option indicates that the view is
