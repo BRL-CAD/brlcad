@@ -120,7 +120,7 @@ typedef struct HmMenu
 {
     HmItem *item;		/* List of menu items or 0.		*/
     HmItem *(*generator)();	/* If item == 0, generates items.	*/
-    short prevtop;		/* Top entry currently visable */
+    short prevtop;		/* Top entry currently visible */
     short prevhit;		/* Offset from top of last select */
     int sticky;			/* If true, menu stays around after
 				   SELECT, and until QUIT. */
@@ -151,7 +151,7 @@ HmWindow;
  * HmInit() must be called before any other routines in the Hm package
  * to initialize the screen position of the top-left corner of the
  * top-level menu to x and y and to set the maximum number of menu
- * entries which will be visable at one time to maxvis.  If the number
+ * entries which will be visible at one time to maxvis.  If the number
  * of entries in a menu exceeds maxvis, the menu will scroll to
  * accommodate them.  The values of x, y and maxvis are stored in
  * these external variables:
@@ -223,7 +223,7 @@ extern int HmTtyFd;
  * Attempting to move the cursor below the bottom entry of the menu
  * will cause the menu to scroll half a page or until the entries run
  * out, which ever comes first.  If there are no entries to scroll the
- * terminal will beep.  The analagous holds true for attempting to
+ * terminal will beep.  The analogous holds true for attempting to
  * move upward past the top entry of the menu.  If a DMD terminal with
  * MYX running is used, a special cursor will appear, and the user may
  * use the mouse rather than the keyboard as follows: Clicking button
