@@ -87,7 +87,7 @@ fb_log( const char *fmt, ... )
 	    } else
 		(void) vfprintf( stdout, fmt, ap );
 	(void) fflush( stdout );
-	/* End of line detected by existance of a newline.	*/
+	/* End of line detected by existence of a newline.	*/
 	newline = fmt[strlen( fmt )-1] == '\n';
 	hmredraw();
     } else {
