@@ -102,7 +102,7 @@ echo "Getting BoT orientations"
 
 rh="`$MGED -c bots.g get sph.volume.rh.bot orient 2>&1 | grep -v Using`"
 if test "x`echo $rh`" != "xrh" ; then
-    echo "ERROR: right-hand BoT orientation (faceitize) failure [$rh]"
+    echo "ERROR: right-hand BoT orientation (facetize) failure [$rh]"
     FAILED="`expr $FAILED + 1`"
 fi
 lh="`$MGED -c bots.g get sph.volume.lh.bot orient 2>&1 | grep -v Using`"
