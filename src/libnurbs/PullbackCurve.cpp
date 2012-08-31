@@ -164,16 +164,22 @@ toUV(brlcad::SurfaceTree *surftree, const ON_Curve *curve, ON_2dPoint& out_pt, d
 	pt2d_t new_uv;
 	ON_3dPoint pt;
 	ON_3dVector su, sv;
+#ifdef SHOW_UNUSED
 	bool found=false;
+#endif
 	fastf_t Dlast = MAX_FASTF;
 	for (int i = 0; i < 10; i++) {
 	    brep_r(surf, pr, uv, pt, su, sv, Rcurr);
 	    fastf_t d = v2mag(Rcurr);
 	    if (d < BREP_INTERSECTION_ROOT_EPSILON) {
 		TRACE1("R:"<<ON_PRINT2(Rcurr));
+#ifdef SHOW_UNUSED
 		found = true; break;
+#endif
 	    } else if (d > Dlast) {
+#ifdef SHOW_UNUSED
 		found = false; //break;
+#endif
 		break;
 		//return brep_edge_check(found, sbv, face, surf, ray, hits);
 	    }
@@ -958,7 +964,9 @@ pullback_samples_from_closed_surface(PBCData* data,
 			has_dir = true;
 			if(has_prev_dir && (j>1)) {
 			    double dot = prev_dir * dir;
+#ifdef SHOW_UNUSED
 			    double lastgood=0.0,lastbad=0.0;
+#endif
 			    ON_2dPoint lastgoodpoint;
 			    ON_2dPoint lastbadpoint;
 			    ON_2dPoint workingpoint;
@@ -968,7 +976,9 @@ pullback_samples_from_closed_surface(PBCData* data,
 				while (step > steptol) {
 				    step = step/2.0;
 				    if (dot < dottol) {
+#ifdef SHOW_UNUSED
 					lastbad = at;
+#endif
 					lastbadpoint = workingpoint;
 					at = at - step;
 					if (toUV(*data, workingpoint, at, PBC_FROM_OFFSET)) {
@@ -977,7 +987,9 @@ pullback_samples_from_closed_surface(PBCData* data,
 					    dot = prev_dir * dir;
 					}
 				    } else {
+#ifdef SHOW_UNUSED
 					lastgood = at;
+#endif
 					lastgoodpoint = workingpoint;
 					at = at + step;
 					if (toUV(*data, workingpoint, at, PBC_FROM_OFFSET)) {
@@ -988,10 +1000,14 @@ pullback_samples_from_closed_surface(PBCData* data,
 				    }
 				}
 				if (dot < dottol) {
+#ifdef SHOW_UNUSED
 				    lastbad = at;
+#endif
 				    lastbadpoint = workingpoint;
 				} else {
+#ifdef SHOW_UNUSED
 				    lastgood = at;
+#endif
 				    lastgoodpoint = workingpoint;
 				}
 				samples->Append(lastgoodpoint);
@@ -1087,7 +1103,9 @@ pullback_samples_from_closed_surface(PBCData* data,
 			has_dir = true;
 			if(has_prev_dir && (j>1)) {
 			    double dot = prev_dir * dir;
+#ifdef SHOW_UNUSED
 			    double lastgood=0.0,lastbad=0.0;
+#endif
 			    ON_2dPoint lastgoodpoint;
 			    ON_2dPoint lastbadpoint;
 			    ON_2dPoint workingpoint;
@@ -1098,7 +1116,9 @@ pullback_samples_from_closed_surface(PBCData* data,
 				while (step > steptol) {
 				    step = step/2.0;
 				    if (dot < dottol) {
+#ifdef SHOW_UNUSED
 					lastbad = at;
+#endif
 					lastbadpoint = workingpoint;
 					at = at - step;
 					if (toUV(*data, workingpoint, at, -PBC_FROM_OFFSET)) {
@@ -1107,7 +1127,9 @@ pullback_samples_from_closed_surface(PBCData* data,
 					    dot = prev_dir * dir;
 					}
 				    } else {
+#ifdef SHOW_UNUSED
 					lastgood = at;
+#endif
 					lastgoodpoint = workingpoint;
 					at = at + step;
 					if (toUV(*data, workingpoint, at, -PBC_FROM_OFFSET)) {
@@ -1118,10 +1140,14 @@ pullback_samples_from_closed_surface(PBCData* data,
 				    }
 				}
 				if (dot < dottol) {
+#ifdef SHOW_UNUSED
 				    lastbad = at;
+#endif
 				    lastbadpoint = workingpoint;
 				} else {
+#ifdef SHOW_UNUSED
 				    lastgood = at;
+#endif
 				    lastgoodpoint = workingpoint;
 				}
 				samples->Append(lastgoodpoint);
@@ -1240,8 +1266,10 @@ refit_edge(const ON_BrepEdge* edge, double UNUSED(tolerance))
 {
     double edge_tolerance = 0.01;
     ON_Brep *brep = edge->Brep();
+#ifdef SHOW_UNUSED
     ON_3dPoint start = edge->PointAtStart();
     ON_3dPoint end = edge->PointAtEnd();
+#endif
 
     ON_BrepTrim& trim1 = brep->m_T[edge->m_ti[0]];
     ON_BrepTrim& trim2 = brep->m_T[edge->m_ti[1]];
@@ -1258,6 +1286,7 @@ refit_edge(const ON_BrepEdge* edge, double UNUSED(tolerance))
     curve->GetDomain(&t0, &t1);
     ON_Plane plane;
     curve->FrameAt(t0, plane);
+#ifdef SHOW_UNUSED
     ON_3dPoint origin = plane.Origin();
     ON_3dVector xaxis = plane.Xaxis();
     ON_3dVector yaxis = plane.Yaxis();
@@ -1265,6 +1294,7 @@ refit_edge(const ON_BrepEdge* edge, double UNUSED(tolerance))
     ON_3dPoint px = origin + xaxis;
     ON_3dPoint py = origin + yaxis;
     ON_3dPoint pz = origin + zaxis;
+#endif
 
     int numKnots = curve->SpanCount();
     double *knots = new double[numKnots+1];
@@ -1953,12 +1983,18 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 	PBCData *data = (*cs);
 	const ON_Surface *surf = data->surftree->getSurface();
 
-	double umin, umax, umid;
-	double vmin, vmax, vmid;
+	double umin, umax;
+	double vmin, vmax;
+#ifdef SHOW_UNUSED
+	double umid;
+	double vmid;
+#endif
 	surf->GetDomain(0, &umin, &umax);
 	surf->GetDomain(1, &vmin, &vmax);
+#ifdef SHOW_UNUSED
 	umid = (umin+umax)/2.0;
 	vmid = (vmin+vmax)/2.0;
+#endif
 
 	std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
 	while (si != data->segments.end()) {
@@ -2296,11 +2332,15 @@ pullback_curve(const brlcad::SurfaceTree* surfacetree,
     }
 
     ON_2dPoint p1, p2;
+#ifdef SHOW_UNUSED
     const ON_Surface *surf = (data.surftree)->getSurface();
+#endif
 
     if (toUV(data, p1, tmin, PBC_TOL) && toUV(data, p2, tmax, -PBC_TOL)) {
+#ifdef SHOW_UNUSED
 	ON_3dPoint a = surf->PointAt(p1.x, p1.y);
 	ON_3dPoint b = surf->PointAt(p2.x, p2.y);
+#endif
 
 	p = curve->PointAt(tmax);
 	from = curve->PointAt(tmax-0.0001);
