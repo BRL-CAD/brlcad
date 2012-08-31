@@ -62,7 +62,7 @@ fdist fedora
 fdist openSUSE
 
 if test "$DNAME" = "" ;then
-    ferror "Only \"fedora\" and \"openSUSE\" suported at this time" "Exiting..."
+    ferror "Only \"fedora\" and \"openSUSE\" supported at this time" "Exiting..."
 fi
 
 # check needed packages
