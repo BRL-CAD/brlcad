@@ -451,7 +451,7 @@ EOF
 	# start the limit timer.  this will kill the upcoming facetize
 	# job if more than MAXTIME seconds have elapsed.  in order for
 	# this to work while still ECHO'ing a message and without
-	# leaving orphaned 'sleep' processes that accumualte, this
+	# leaving orphaned 'sleep' processes that accumulate, this
 	# method had to be executed in the current shell environment.
 
 	{ sleep $MAXTIME && test "x`ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'`" != "x" && `touch "./${obj}.nmg.extl"` && kill -9 `ps auxwww | grep "$work" | grep facetize | grep "${obj}.nmg" | awk '{print $2}'` 2>&4 & } 4>&2 2>/dev/null
