@@ -4,6 +4,7 @@
 #include <set>
 #include <queue>
 #include <list>
+#include <vector>
 #include <iostream>
 
 #include "vmath.h"
@@ -154,13 +155,15 @@ void pnt_project(point_t orig_pt, point_t *new_pt, point_t normal) {
     VSUB2(*new_pt, p1, norm_scale);
 }
 
-void find_edge_segments(struct rt_bot_internal *bot, const Patch *patch, EdgeList *patch_edges, VertToEdge *vert_to_edge)
+// Given a patch consisting of a set of faces find the
+// set of edges that forms the outer edge of the patch
+void find_edge_segments(struct rt_bot_internal *bot, std::set<size_t> *faces, EdgeList *patch_edges, VertToEdge *vert_to_edge)
 {
     size_t pt_A, pt_B, pt_C;
     std::set<size_t>::iterator it;
     std::map<std::pair<size_t, size_t>, size_t> edge_face_cnt;
     std::map<std::pair<size_t, size_t>, size_t>::iterator efc_it;
-    for (it = patch->faces.begin(); it != patch->faces.end(); it++) {
+    for (it = faces->begin(); it != faces->end(); it++) {
 	pt_A = bot->faces[(*it)*3+0]*3;
 	pt_B = bot->faces[(*it)*3+1]*3;
 	pt_C = bot->faces[(*it)*3+2]*3;
@@ -233,7 +236,7 @@ void make_new_patch(struct rt_bot_internal *bot, std::set<Patch> *patches, Patch
 /* We start by checking faces along the edges - due to the nature of the
  * segmentation already done, any triangle overlaps in the projection are
  * going to have member triangles along the edges of the bot.*/
-void partition_edge_repair(struct rt_bot_internal *bot, std::map< size_t, std::set<size_t> > *patches, EdgeToFace *edge_to_face)
+void partition_edge_repair(struct rt_bot_internal *bot, std::map< size_t, std::set<size_t> > *patches, EdgeToFace *edge_to_face, VertToEdge *vert_to_edge)
 {
     size_t pt_A, pt_B, pt_C;
     FaceList edge_faces;
@@ -570,7 +573,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
     LoopList patch_loops_all;
 
     // Find the edges of the patch
-    find_edge_segments(bot, (const Patch *)patch, &patch_edges, &vert_to_edge);
+    //find_edge_segments(bot, patch->faces, &patch_edges, &vert_to_edge);
 
     std::cout << "Patch " << patch->id << " edge total: " << patch_edges.size() << "\n";
 
@@ -674,7 +677,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 
 void bot_partition(struct rt_bot_internal *bot, ON_3dPointArray *vects, std::map< size_t, std::set<size_t> > *patches, EdgeToFace *edge_to_face, VertToPatch *vert_to_patch, EdgeToPatch *edge_to_patch)
 {
-    std::set<size_t> faces;
+    std::map< size_t, std::set<size_t> > face_groups;
     std::map< std::pair<size_t, size_t>, fastf_t > norm_results;
     std::map< size_t, size_t > face_to_plane;
     // Calculate face normals dot product with bounding rpp planes
@@ -706,47 +709,75 @@ void bot_partition(struct rt_bot_internal *bot, ON_3dPointArray *vects, std::map
 		result = vdot;
 	    }
 	}
-	faces.insert(i);
+	face_groups[result_max].insert(i);
         face_to_plane[i]=result_max;
     }
+    // Sort the groups by their face count - we want to start with the group containing
+    // either the least or the most faces - try most.
+    std::map< size_t, std::set<size_t> >::iterator fg_it;
+    std::vector<size_t> ordered_vects(vects->Count());
+    std::set<int> face_group_set;
+    for (int i = 0; i < vects->Count(); i++) {face_group_set.insert(i);}
+    size_t array_pos = 0;
+    while (!face_group_set.empty()) {
+        size_t curr_max = 0;
+        size_t curr_vect = 0;
+	for (fg_it = face_groups.begin(); fg_it != face_groups.end(); fg_it++) {
+	    if((*fg_it).second.size() > curr_max) {
+		if (face_group_set.find((*fg_it).first) != face_group_set.end()) {
+		    curr_max = (*fg_it).second.size();
+		    curr_vect = (*fg_it).first;
+		}
+	    }
+	}
+	std::cout << array_pos << " is group " << curr_vect << ",  size: " << curr_max << "\n";
+        ordered_vects.at(array_pos) = curr_vect;
+        face_group_set.erase(curr_vect);
+        array_pos++;
+    }
+
     int patch_cnt = -1;
     // All faces must belong to some patch - continue until all faces are processed
-    while (!faces.empty()) {
-	size_t pt_A, pt_B, pt_C;
-	patch_cnt++;
-	std::queue<size_t> face_queue;
-	FaceList::iterator f_it;
-	face_queue.push(*(faces.begin()));
-	faces.erase(face_queue.front());
-        size_t current_plane = face_to_plane[face_queue.front()];
-	while (!face_queue.empty()) {
-	    std::set<Edge> face_edges;
-	    std::set<Edge>::iterator face_edges_it;
-	    size_t face_num = face_queue.front();
-	    face_queue.pop();
-	    (*patches)[patch_cnt].insert(face_num);
-	    pt_A = bot->faces[face_num*3+0]*3;
-	    pt_B = bot->faces[face_num*3+1]*3;
-	    pt_C = bot->faces[face_num*3+2]*3;
-	    face_edges.insert(mk_edge(pt_A, pt_B));
-	    face_edges.insert(mk_edge(pt_B, pt_C));
-	    face_edges.insert(mk_edge(pt_C, pt_A));
-	    for (face_edges_it = face_edges.begin(); face_edges_it != face_edges.end(); face_edges_it++) {
-		(*edge_to_patch)[(*face_edges_it)].insert(patch_cnt);
-		(*vert_to_patch)[(*face_edges_it).first].insert(patch_cnt);
-		(*vert_to_patch)[(*face_edges_it).second].insert(patch_cnt);
-	    }
+    for (int i = 0; i < 6; i++) {
+        fg_it = face_groups.find(ordered_vects.at(i));
+        std::set<size_t> *faces = &((*fg_it).second);
+	while (!faces->empty()) {
+	    size_t pt_A, pt_B, pt_C;
+	    patch_cnt++;
+	    std::queue<size_t> face_queue;
+	    FaceList::iterator f_it;
+	    face_queue.push(*(faces->begin()));
+	    face_groups[face_to_plane[face_queue.front()]].erase(face_queue.front());
+	    size_t current_plane = face_to_plane[face_queue.front()];
+	    while (!face_queue.empty()) {
+		std::set<Edge> face_edges;
+		std::set<Edge>::iterator face_edges_it;
+		size_t face_num = face_queue.front();
+		face_queue.pop();
+		(*patches)[patch_cnt].insert(face_num);
+		pt_A = bot->faces[face_num*3+0]*3;
+		pt_B = bot->faces[face_num*3+1]*3;
+		pt_C = bot->faces[face_num*3+2]*3;
+		face_edges.insert(mk_edge(pt_A, pt_B));
+		face_edges.insert(mk_edge(pt_B, pt_C));
+		face_edges.insert(mk_edge(pt_C, pt_A));
+		for (face_edges_it = face_edges.begin(); face_edges_it != face_edges.end(); face_edges_it++) {
+		    (*edge_to_patch)[(*face_edges_it)].insert(patch_cnt);
+		    (*vert_to_patch)[(*face_edges_it).first].insert(patch_cnt);
+		    (*vert_to_patch)[(*face_edges_it).second].insert(patch_cnt);
+		}
 
-	    // Be "greedy" when assigning triangles to patches
-	    for (face_edges_it = face_edges.begin(); face_edges_it != face_edges.end(); face_edges_it++) {
-		std::set<size_t> faces_from_edge = (*edge_to_face)[(*face_edges_it)];
-		std::set<size_t>::iterator ffe_it;
-		for (ffe_it = faces_from_edge.begin(); ffe_it != faces_from_edge.end() ; ffe_it++) {
-		    if ((*ffe_it) != face_num) {
-			if (faces.find((*ffe_it)) != faces.end()) {
-			    if (norm_results[std::make_pair((*ffe_it), current_plane)] >= 0.45) {
-				face_queue.push((*ffe_it));
-				faces.erase(*ffe_it);
+		// Be "greedy" when assigning triangles to patches
+		for (face_edges_it = face_edges.begin(); face_edges_it != face_edges.end(); face_edges_it++) {
+		    std::set<size_t> faces_from_edge = (*edge_to_face)[(*face_edges_it)];
+		    std::set<size_t>::iterator ffe_it;
+		    for (ffe_it = faces_from_edge.begin(); ffe_it != faces_from_edge.end() ; ffe_it++) {
+			if ((*ffe_it) != face_num) {
+			    if (face_groups[face_to_plane[(*ffe_it)]].find((*ffe_it)) != face_groups[face_to_plane[(*ffe_it)]].end()) {
+				if (norm_results[std::make_pair((*ffe_it), current_plane)] >= 0.45) {
+				    face_queue.push((*ffe_it));
+				    face_groups[face_to_plane[(*ffe_it)]].erase((*ffe_it));
+				}
 			    }
 			}
 		    }
@@ -754,7 +785,6 @@ void bot_partition(struct rt_bot_internal *bot, ON_3dPointArray *vects, std::map
 	    }
 	}
     }
-
 
     std::cout << "Patch count: " << patch_cnt << "\n";
     static FILE* patch_plot = fopen("patches.pl", "w");
