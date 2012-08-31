@@ -804,24 +804,6 @@ void bot_partition(struct rt_bot_internal *bot, ON_3dPointArray *vects, std::map
 	}
     }
 
-    std::cout << "Patch count: " << patch_cnt << "\n";
-    static FILE* patch_plot = fopen("patches.pl", "w");
-    for (int i = 0; i < patch_cnt; i++) {
-	int r = int(256*drand48() + 1.0);
-	int g = int(256*drand48() + 1.0);
-	int b = int(256*drand48() + 1.0);
-        std::set<size_t> *faces = &(*patches)[i];
-        std::set<size_t> verts;
-        std::set<size_t>::iterator f_it;
-	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
-	    plot_face(&bot->vertices[bot->faces[(*f_it)*3+0]*3],
-                      &bot->vertices[bot->faces[(*f_it)*3+1]*3],
-                      &bot->vertices[bot->faces[(*f_it)*3+2]*3],
-	              r, g ,b, patch_plot);
-        }
-    }
-    fclose(patch_plot);
-
     //	    patches->insert(curr_patch);
 
     //    std::cout << "Patch count: " << patches->size() << "\n";
@@ -905,6 +887,26 @@ main(int argc, char *argv[])
     RT_BOT_CK_MAGIC(bot_ip);
 
     bot_partition(bot_ip, &vectors, &patches, &edge_to_face, &vert_to_patch, &edge_to_patch);
+
+    std::cout << "Patch count: " << patches.size() << "\n";
+    static FILE* patch_plot = fopen("patches.pl", "w");
+    for (int i = 0; i < (int)patches.size(); i++) {
+	int r = int(256*drand48() + 1.0);
+	int g = int(256*drand48() + 1.0);
+	int b = int(256*drand48() + 1.0);
+        std::set<size_t> *faces = &(patches[i]);
+        std::set<size_t> verts;
+        std::set<size_t>::iterator f_it;
+	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	    plot_face(&bot_ip->vertices[bot_ip->faces[(*f_it)*3+0]*3],
+                      &bot_ip->vertices[bot_ip->faces[(*f_it)*3+1]*3],
+                      &bot_ip->vertices[bot_ip->faces[(*f_it)*3+2]*3],
+	              r, g ,b, patch_plot);
+        }
+    }
+    fclose(patch_plot);
+
+
     //partition_edge_repair(bot_ip, &curr_patch, patches, &patch_cnt, &edge_to_face);
 #if 0
     for (p_it = patches.begin(); p_it != patches.end(); p_it++) {
