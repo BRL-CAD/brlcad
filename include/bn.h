@@ -641,8 +641,8 @@ BN_EXPORT extern void bn_eigen2x2(fastf_t *val1,
 BN_EXPORT extern void bn_vec_perp(vect_t new_vec,
 				  const vect_t old_vec);
 BN_EXPORT extern void bn_mat_fromto(mat_t m,
-				    const vect_t from,
-				    const vect_t to,
+				    const fastf_t *from,
+				    const fastf_t *to,
 				    const struct bn_tol *tol);
 BN_EXPORT extern void bn_mat_xrot(mat_t m,
 				  double sinx,

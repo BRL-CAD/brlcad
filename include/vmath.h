@@ -420,6 +420,23 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define CLAMP(_v, _l, _h) if ((_v) < (_l)) _v = _l; else if ((_v) > (_h)) _v = _h
 
 
+/** Clamp a 3D vector to zero if within tolerance of zero. */
+#define VCLAMP(a) { \
+        if (ZERO((a)[X])) (a)[X] = 0.0; \
+        if (ZERO((a)[Y])) (a)[Y] = 0.0; \
+        if (ZERO((a)[Z])) (a)[Z] = 0.0; \
+}
+
+
+/** Clamp a 4D vector to zero if within tolerance of zero. */
+#define HCLAMP(a) { \
+        if (ZERO((a)[X])) (a)[X] = 0.0; \
+        if (ZERO((a)[Y])) (a)[Y] = 0.0; \
+        if (ZERO((a)[Z])) (a)[Z] = 0.0; \
+        if (ZERO((a)[H])) (a)[H] = 0.0; \
+}
+
+
 /** @brief Compute distance from a point to a plane. */
 #define DIST_PT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[W])
 

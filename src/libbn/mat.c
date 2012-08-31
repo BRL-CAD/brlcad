@@ -781,7 +781,7 @@ bn_vec_perp(vect_t new, const vect_t old)
  *
  */
 void
-bn_mat_fromto(mat_t m, const vect_t from, const vect_t to, const struct bn_tol *tol)
+bn_mat_fromto(mat_t m, const fastf_t *from, const fastf_t *to, const struct bn_tol *tol)
 {
     vect_t test_to;
     vect_t unit_from, unit_to;

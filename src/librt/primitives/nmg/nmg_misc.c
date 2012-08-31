@@ -1429,83 +1429,92 @@ nmg_loop_plane_area(const struct loopuse *lu, fastf_t *pl)
  *
  * Calculates a plane equation and the area of a loop
  *
+ * This function only works correctly when the loop represents a
+ * "simple polygon" (i.e. simple meaning not self intersecting) and
+ * the loop is "not" a "weakly simple polygon" (i.e. weakly simple 
+ * meaning is simple and at least one vertex is reused by the polygon).
+ *
  * returns:
  * the area of the loop
- * postive area is ccw loop (relative to fu normal)
- * negative area is cw loop (relative to fu normal)
+ * postive area is ccw loop
+ * negative area is cw loop
  * zero is no area or degenerate loop
  *
  * pl is assigned the plane equation for the loop
+ *
+ * NOTE: The rotation cw/ccw is actual, meaning not relative to the 
+ *       faceuse normal.
  */
 fastf_t
-nmg_loop_plane_area2(const struct loopuse *lu, plane_t pl, const struct bn_tol *tol)
+nmg_loop_plane_area2(const struct loopuse *lu, fastf_t *pl, const struct bn_tol *tol)
 {
-
+    struct edgeuse *eu;
+    size_t cnt;
+    vect_t zaxis = {0.0, 0.0, 1.0};
+    vect_t sum, cog;
     mat_t mat;
     point_t pt, pt_next, pt_1st;
-    struct edgeuse *eu = NULL;
-    size_t cnt;
-    fastf_t area;
-    vect_t vec_to = {0.0, 0.0, 1.0};
-    vect_t sum, cog;
-    fastf_t scale = 1000.0;
+    fastf_t scale;
+    fastf_t area = 0.0;
+    fastf_t min, abs_coord, mag;
+    fastf_t *tmp;
+    int i;
 
     NMG_CK_LOOPUSE(lu);
 
+    HSETALL(pl, 0.0);
+
     if (UNLIKELY(BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)) {
-	HSETALL(pl, 0.0);
 	area = 0.0;
 	goto out;
     }
 
     cnt = 0;
+    min = MAX_FASTF;
+    /* find the smallest floating point value which will be used
+     * to determine the scaling factor, which is done to improve
+     * floating point precision
+     */ 
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	tmp = eu->vu_p->v_p->vg_p->coord;
+	for (i = 0; i < 3 ; i++) {
+	    abs_coord = fabs(tmp[i]);
+	    if ((abs_coord) < min && (abs_coord > SMALL_FASTF)) {
+		min = abs_coord;
+	    }
+	}
 	cnt++;
     }
 
     if (cnt < 3) {
-	HSETALL(pl, 0.0);
 	area = 0.0;
 	goto out;
     }
 
-    HSETALL(pl, 0.0);
-    VSETALL(sum, 0.0);
+    scale = 0.5 / min;
+    if (scale < 1.0) {
+	scale = 1.0;
+    } else if (scale > (1.0 / tol->dist)) {
+	scale = 1.0 / tol->dist;
+    }
+
+    /* find and scale first vertex of polygon */
     VMOVE(pt_1st, (BU_LIST_FIRST(edgeuse, &eu->l))->vu_p->v_p->vg_p->coord);
-    if (ZERO(pt_1st[X])) {
-	pt_1st[X] = 0.0;
-    }
-    if (ZERO(pt_1st[Y])) {
-	pt_1st[Y] = 0.0;
-    }
-    if (ZERO(pt_1st[Z])) {
-	pt_1st[Z] = 0.0;
-    }
+    VCLAMP(pt_1st);
     VSCALE(pt_1st, pt_1st, scale);
+
+    VSETALL(sum, 0.0);
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	NMG_CK_EDGEUSE(eu);
+	/* scale up the coordinates to reduce floating point error */
 	VSCALE(pt, eu->vu_p->v_p->vg_p->coord, scale);
 	VSCALE(pt_next, (BU_LIST_PNEXT_CIRC(edgeuse, &eu->l))->vu_p->v_p->vg_p->coord, scale);
+	/* move polygon to origin */
 	VSUB2(pt, pt, pt_1st);
 	VSUB2(pt_next, pt_next, pt_1st);
-	if (ZERO(pt[X])) {
-	    pt[X] = 0.0;
-	}
-	if (ZERO(pt[Y])) {
-	    pt[Y] = 0.0;
-	}
-	if (ZERO(pt[Z])) {
-	    pt[Z] = 0.0;
-	}
-	if (ZERO(pt_next[X])) {
-	    pt_next[X] = 0.0;
-	}
-	if (ZERO(pt_next[Y])) {
-	    pt_next[Y] = 0.0;
-	}
-	if (ZERO(pt_next[Z])) {
-	    pt_next[Z] = 0.0;
-	}
+	/* clamp coordinates to zero if they are within tolerance of zero */
+	VCLAMP(pt);
+	VCLAMP(pt_next);
         pl[X] += (EQUAL(pt[Y], pt_next[Y]) ? (0.0) : (pt[Y] - pt_next[Y])) * (pt[Z] + pt_next[Z]);
         pl[Y] += (EQUAL(pt[Z], pt_next[Z]) ? (0.0) : (pt[Z] - pt_next[Z])) * (pt[X] + pt_next[X]);
         pl[Z] += (EQUAL(pt[X], pt_next[X]) ? (0.0) : (pt[X] - pt_next[X])) * (pt[Y] + pt_next[Y]);
@@ -1517,23 +1526,32 @@ nmg_loop_plane_area2(const struct loopuse *lu, plane_t pl, const struct bn_tol *
 	area = 0.0;
 	goto out;
     }
-    if (ZERO(pl[X])) {
-	pl[X] = 0.0;
-    }
-    if (ZERO(pl[Y])) {
-	pl[Y] = 0.0;
-    }
-    if (ZERO(pl[Z])) {
-	pl[Z] = 0.0;
-    }
 
+    /* clamp coordinates to zero if they are within tolerance of zero */
+    VCLAMP(pl);
+
+    /* undo scaling of center of polygon (i.e. center of gravity) */
     VSCALE(cog, sum, 1.0/(cnt * scale));
-    VUNITIZE(pl);
+
+    /* Unitize plane. If magnitude is zero, the plane is undefined and
+     * we can not compute the area with this function.
+     */
+    mag = MAGNITUDE(pl);
+    if (ZERO(mag)) {
+	HSETALL(pl, 0.0);
+	area = 0.0;
+	goto out;
+    }
+    VSCALE(pl, pl, 1.0/mag);
     pl[H] = VDOT(cog, pl);
 
-    bn_mat_fromto(mat, pl, vec_to, tol); /* rotate to xy plane */
+    /* find rotation matrix of polygon normal to z-axis */
+    bn_mat_fromto(mat, (const fastf_t *)pl, (const fastf_t *)zaxis, tol);
+
+    /* compute area of polygon */
     area = 0.0;
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+	/* rotate coordinates to xy plane */
 	MAT4X3PNT(pt, mat, eu->vu_p->v_p->vg_p->coord);
 	MAT4X3PNT(pt_next, mat, (BU_LIST_PNEXT_CIRC(edgeuse, &eu->l))->vu_p->v_p->vg_p->coord);
 	area += ((pt[X]*pt_next[Y]) - (pt_next[X]*pt[Y]));
@@ -1541,7 +1559,6 @@ nmg_loop_plane_area2(const struct loopuse *lu, plane_t pl, const struct bn_tol *
     area = area / 2.0;
 
 out:
-
     return area;
 }
 
