@@ -87,7 +87,7 @@ static struct funtab joint_tab[] = {
      f_jfhelp, 0, FUNTAB_UNLIMITED, FALSE},
     {"accept", "[joints]", "accept a series of moves",
      f_jaccept, 1, FUNTAB_UNLIMITED, FALSE},
-    {"debug", "[hex code]", "Show/set debuging bit vector for joints",
+    {"debug", "[hex code]", "Show/set debugging bit vector for joints",
      f_jdebug, 1, 2, FALSE},
     {"help", "[commands]", "give usage message for given joint commands",
      f_jhelp, 0, FUNTAB_UNLIMITED, FALSE},
@@ -2451,14 +2451,14 @@ reject_move(void)
 /* Constraint system solver.
  *
  * The basic idea is that we are called with some priority level.
- * We will attempted to solve all constraints at that level with out
- * permenently damaging a joint of a higher priority.
+ * We will attempt to solve all constraints at that level without
+ * permenantly damaging a joint of a higher priority.
  *
  * Returns:
  * -1 This system could not be made better without damage
  * to a higher priority system.
  * 0 All systems at a higher priority stayed stable or
- * got better and thise priority level got better.
+ * got better and this priority level got better.
  * 1 All systems at a higher priority stayed stable or
  * got better and this system is at at min.
  * Method:
@@ -2693,8 +2693,8 @@ f_jsolve(int argc, char *argv[])
 
     /*
      * because this routine calls "mesh" in the middle, the command
-     * arguements can be reused.  We cons up a new argv vector and
-     * copy all of the arguements before we do any processing.
+     * arguments can be reused.  We cons up a new argv vector and
+     * copy all of the arguments before we do any processing.
      */
     myargc = argc;
     myargv = (char **)bu_malloc(sizeof(char *)*argc, "param pointers");
