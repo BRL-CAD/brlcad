@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* overlay command reports an error when trying to load a file
+  names edges.pl, but succeeds when the file is called patches.pl
+  Need to see why edges.pl is not accepted.
+
 * step-g crashing on mac with lazy symbol load failure missing:
   brlcad::SurfaceTree::SurfaceTree(ON_BrepFace*, bool, int)
 
