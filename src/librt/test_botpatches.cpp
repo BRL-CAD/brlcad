@@ -146,6 +146,33 @@ Edge mk_edge(size_t pt_A, size_t pt_B) {
     }
 }
 
+void get_face_edges(struct rt_bot_internal *bot, size_t face_num, std::set<Edge> *face_edges) {
+    size_t pt_A, pt_B, pt_C;
+    pt_A = bot->faces[face_num*3+0]*3;
+    pt_B = bot->faces[face_num*3+1]*3;
+    pt_C = bot->faces[face_num*3+2]*3;
+    face_edges->insert(mk_edge(pt_A, pt_B));
+    face_edges->insert(mk_edge(pt_B, pt_C));
+    face_edges->insert(mk_edge(pt_C, pt_A));
+}
+
+void get_connected_faces(struct rt_bot_internal *bot, size_t face_num, EdgeToFace *edge_to_face, std::set<size_t> *faces) {
+    std::set<Edge> face_edges;
+    std::set<Edge>::iterator face_edges_it;
+    get_face_edges(bot, face_num, &face_edges);
+    for (face_edges_it = face_edges.begin(); face_edges_it != face_edges.end(); face_edges_it++) {
+	std::set<size_t> faces_from_edge = (*edge_to_face)[(*face_edges_it)];
+	std::set<size_t>::iterator ffe_it;
+	for (ffe_it = faces_from_edge.begin(); ffe_it != faces_from_edge.end() ; ffe_it++) {
+	    if ((*ffe_it) != face_num) {
+               faces->insert((*ffe_it));
+            }
+        }
+     }
+}
+
+
+
 void pnt_project(point_t orig_pt, point_t *new_pt, point_t normal) {
     point_t p1, norm_scale;
     fastf_t dotP;
@@ -742,7 +769,6 @@ void bot_partition(struct rt_bot_internal *bot, ON_3dPointArray *vects, std::map
         fg_it = face_groups.find(ordered_vects.at(i));
         std::set<size_t> *faces = &((*fg_it).second);
 	while (!faces->empty()) {
-	    size_t pt_A, pt_B, pt_C;
 	    patch_cnt++;
 	    std::queue<size_t> face_queue;
 	    FaceList::iterator f_it;
@@ -755,12 +781,7 @@ void bot_partition(struct rt_bot_internal *bot, ON_3dPointArray *vects, std::map
 		size_t face_num = face_queue.front();
 		face_queue.pop();
 		(*patches)[patch_cnt].insert(face_num);
-		pt_A = bot->faces[face_num*3+0]*3;
-		pt_B = bot->faces[face_num*3+1]*3;
-		pt_C = bot->faces[face_num*3+2]*3;
-		face_edges.insert(mk_edge(pt_A, pt_B));
-		face_edges.insert(mk_edge(pt_B, pt_C));
-		face_edges.insert(mk_edge(pt_C, pt_A));
+                get_face_edges(bot, face_num, &face_edges);    
 		for (face_edges_it = face_edges.begin(); face_edges_it != face_edges.end(); face_edges_it++) {
 		    (*edge_to_patch)[(*face_edges_it)].insert(patch_cnt);
 		    (*vert_to_patch)[(*face_edges_it).first].insert(patch_cnt);
@@ -768,17 +789,14 @@ void bot_partition(struct rt_bot_internal *bot, ON_3dPointArray *vects, std::map
 		}
 
 		// Be "greedy" when assigning triangles to patches
-		for (face_edges_it = face_edges.begin(); face_edges_it != face_edges.end(); face_edges_it++) {
-		    std::set<size_t> faces_from_edge = (*edge_to_face)[(*face_edges_it)];
-		    std::set<size_t>::iterator ffe_it;
-		    for (ffe_it = faces_from_edge.begin(); ffe_it != faces_from_edge.end() ; ffe_it++) {
-			if ((*ffe_it) != face_num) {
-			    if (face_groups[face_to_plane[(*ffe_it)]].find((*ffe_it)) != face_groups[face_to_plane[(*ffe_it)]].end()) {
-				if (norm_results[std::make_pair((*ffe_it), current_plane)] >= 0.45) {
-				    face_queue.push((*ffe_it));
-				    face_groups[face_to_plane[(*ffe_it)]].erase((*ffe_it));
-				}
-			    }
+                std::set<size_t> connected_faces;
+		std::set<size_t>::iterator cf_it;
+                get_connected_faces(bot, face_num, edge_to_face, &connected_faces);
+		for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
+		    if (face_groups[face_to_plane[(*cf_it)]].find((*cf_it)) != face_groups[face_to_plane[(*cf_it)]].end()) {
+			if (norm_results[std::make_pair((*cf_it), current_plane)] >= 0.45) {
+			    face_queue.push((*cf_it));
+			    face_groups[face_to_plane[(*cf_it)]].erase((*cf_it));
 			}
 		    }
 		}
