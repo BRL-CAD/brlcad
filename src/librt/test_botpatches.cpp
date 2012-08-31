@@ -829,6 +829,9 @@ main(int argc, char *argv[])
 
 
     std::map< size_t, std::set<size_t> > patches;
+    std::map< size_t, std::set<size_t> >::iterator p_it;
+    std::map< size_t, EdgeList > patch_edges;
+    VertToEdge vert_to_edge;
     EdgeToFace edge_to_face;
     VertToPatch vert_to_patch;
     EdgeToPatch edge_to_patch;
@@ -906,6 +909,21 @@ main(int argc, char *argv[])
     }
     fclose(patch_plot);
 
+    for (int i = 0; i < (int)patches.size(); i++) {
+        find_edge_segments(bot_ip, &(patches[i]), &(patch_edges[i]), &vert_to_edge);
+    }
+
+    // Warning - do NOT use edges.pl for a filename, MGED doesn't seem to like that???
+    static FILE* edge_plot = fopen("patch_edges.pl", "w");
+    pl_color(edge_plot, 255, 255, 255);
+    for (int i = 0; i < (int)patches.size(); i++) {
+	EdgeList::iterator e_it;
+	for (e_it = patch_edges[i].begin(); e_it != patch_edges[i].end(); e_it++) {
+	    pdv_3move(edge_plot, &bot_ip->vertices[(*e_it).first]);
+	    pdv_3cont(edge_plot, &bot_ip->vertices[(*e_it).second]);
+	}
+    }
+    fclose(edge_plot);
 
     //partition_edge_repair(bot_ip, &curr_patch, patches, &patch_cnt, &edge_to_face);
 #if 0
