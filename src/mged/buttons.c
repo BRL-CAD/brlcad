@@ -325,7 +325,7 @@ f_press(ClientData clientData,
  * L A B E L _ B U T T O N
  *
  * For a given GED button number, return the "press" ID string.
- * Useful for displays with programable button lables, etc.
+ * Useful for displays with programmable button labels, etc.
  */
 char *
 label_button(int bnum)
@@ -502,7 +502,7 @@ bv_45_45() {
 
 int
 bv_35_25() {
-    /* Use Azmuth=35, Elevation=25 in GIFT's backwards space */
+    /* Use Azimuth=35, Elevation=25 in GIFT's backwards space */
     setview(270.0+25.0, 0.0, 270.0-35.0);
     return TCL_OK;
 }
