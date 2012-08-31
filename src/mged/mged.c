@@ -19,7 +19,7 @@
  */
 /** @file mged/mged.c
  *
- * Mainline portion of the Mutliple-display Graphics EDitor (MGED)
+ * Mainline portion of the Multiple-display Graphics EDitor (MGED)
  *
  */
 
@@ -1465,7 +1465,7 @@ main(int argc, char *argv[])
 	do_rc();
 
 	/*
-	 * Initialze variables here in case the user specified changes
+	 * Initialize variables here in case the user specified changes
 	 * to the defaults in their .mgedrc file.
 	 */
 
