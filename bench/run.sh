@@ -1197,7 +1197,7 @@ perf ( ) {
 
     # Trick: Force args $1 through $6 to the numbers in $perf_CURVALS
     # This should be "set -- $perf_CURVALS", but 4.2BSD /bin/sh can't
-    # handle it, and perf_CURVALS are all positive (ie, no leading
+    # handle it, and perf_CURVALS are all positive (i.e., no leading
     # dashes), so this is safe.
 
     set $perf_CURVALS
