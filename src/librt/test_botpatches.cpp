@@ -20,6 +20,7 @@ typedef std::map< size_t, std::set<size_t> > VertToPatch;
 typedef std::map< Edge, std::set<size_t> > EdgeToPatch;
 typedef std::map< Edge, std::set<size_t> > EdgeToFace;
 typedef std::map< size_t, size_t > FaceToPatch;
+typedef std::map< size_t, size_t > PatchToPlane;
 typedef std::set<Edge> EdgeList;
 typedef std::set<size_t> FaceList;
 
@@ -29,6 +30,7 @@ struct Manifold_Info {
     EdgeToFace edge_to_face;
     EdgeToPatch edge_to_patch;
     FaceToPatch face_to_patch;
+    PatchToPlane patch_to_plane;
     std::map< std::pair<size_t, size_t>, fastf_t > norm_results;
 };
 
@@ -202,59 +204,6 @@ int find_major_patch(struct rt_bot_internal *bot, size_t face_num, struct Manifo
     return (int)max_patch; 
 }
 
-// Given a list of edges and the "current" patch, find triangles that share more edges with
-// a different patch.  If the corresponding normals allow, move the triangles in question to
-// the patch with which they share the most edges.  Return the number of triangles shifted.
-// This won't fully "smooth" an edge in a given pass, but an iterative approach should converge
-// to edges with triangles in their correct "major" patches
-size_t shift_edge_triangles(struct rt_bot_internal *bot, std::map< size_t, std::set<size_t> > *patches, size_t curr_patch, EdgeList *edges, struct Manifold_Info *info) {
-    std::set<size_t> patch_edgefaces;
-    std::map<size_t, size_t> faces_to_shift;
-    std::map<size_t, size_t>::iterator f_it;
-    EdgeList::iterator e_it;
-    std::set<size_t>::iterator sizet_it;
-    // 1. build triangle set of edge triangles in patch.
-    for (e_it = edges->begin(); e_it != edges->end(); e_it++) {
-	std::set<size_t> faces_from_edge = info->edge_to_face[(*e_it)];
-	for (sizet_it = faces_from_edge.begin(); sizet_it != faces_from_edge.end() ; sizet_it++) {
-	    if (info->face_to_patch[(*sizet_it)] == curr_patch) {
-		patch_edgefaces.insert((*sizet_it));
-	    }
-	}
-
-    }
-    // 2. build triangle set of edge triangles with major patch other than current patch 
-    //    and a normal that permits movement to the major patch
-    for (sizet_it = patch_edgefaces.begin(); sizet_it != patch_edgefaces.end() ; sizet_it++) {
-        int major_patch = find_major_patch(bot, (*sizet_it), info);
-        if (major_patch != (int)curr_patch && major_patch != -1) {
-	    if (info->norm_results[std::make_pair((*sizet_it), major_patch)] >= 0) {
-               faces_to_shift[(*sizet_it)] = major_patch;
-	    } else {
-               //std::cout << "Merge failed! (facenum:" << (*sizet_it) << ",candidate_patch:" << major_patch << "): " << info->norm_results[std::make_pair((*sizet_it), major_patch)] << "\n";
-            }
-	}
-    }
-
-    // 3. move triangles to their major patch. 
-    for (f_it = faces_to_shift.begin(); f_it != faces_to_shift.end(); f_it++) {
-        (*patches)[info->face_to_patch[(*f_it).first]].erase((*f_it).first); 
-        (*patches)[(*f_it).second].insert((*f_it).first); 
-	info->face_to_patch[(*f_it).first] = (*f_it).second;
-    }
-
-    return faces_to_shift.size();
-}
-
-
-void pnt_project(point_t orig_pt, point_t *new_pt, point_t normal) {
-    point_t p1, norm_scale;
-    fastf_t dotP;
-    VMOVE(p1, orig_pt);
-    dotP = VDOT(p1, normal);
-    VSCALE(norm_scale, normal, dotP);
-    VSUB2(*new_pt, p1, norm_scale);
-}
 
 // Given a patch consisting of a set of faces find the
 // set of edges that forms the outer edge of the patch
@@ -264,6 +213,7 @@ void find_edge_segments(struct rt_bot_internal *bot, std::set<size_t> *faces, Ed
     std::set<size_t>::iterator it;
     std::map<std::pair<size_t, size_t>, size_t> edge_face_cnt;
     std::map<std::pair<size_t, size_t>, size_t>::iterator efc_it;
+    patch_edges->clear();
     for (it = faces->begin(); it != faces->end(); it++) {
 	pt_A = bot->faces[(*it)*3+0]*3;
 	pt_B = bot->faces[(*it)*3+1]*3;
@@ -280,6 +230,59 @@ void find_edge_segments(struct rt_bot_internal *bot, std::set<size_t> *faces, Ed
 	    patch_edges->insert((*efc_it).first);
 	}
     }
+}
+
+
+// Given a list of edges and the "current" patch, find triangles that share more edges with
+// a different patch.  If the corresponding normals allow, move the triangles in question to
+// the patch with which they share the most edges.  Return the number of triangles shifted.
+// This won't fully "smooth" an edge in a given pass, but an iterative approach should converge
+// to edges with triangles in their correct "major" patches
+size_t shift_edge_triangles(struct rt_bot_internal *bot, std::map< size_t, std::set<size_t> > *patches, std::map< size_t, EdgeList> *patch_edges, EdgeList *edges, struct Manifold_Info *info) {
+    std::set<size_t> patch_edgefaces;
+    std::map<size_t, size_t> faces_to_shift;
+    std::map<size_t, size_t>::iterator f_it;
+    EdgeList::iterator e_it;
+    std::set<size_t>::iterator sizet_it;
+    // 1. build triangle set of edge triangles in patch.
+    for (e_it = edges->begin(); e_it != edges->end(); e_it++) {
+	std::set<size_t> faces_from_edge = info->edge_to_face[(*e_it)];
+	for (sizet_it = faces_from_edge.begin(); sizet_it != faces_from_edge.end() ; sizet_it++) {
+	    patch_edgefaces.insert((*sizet_it));
+	}
+
+    }
+    // 2. build triangle set of edge triangles with major patch other than current patch 
+    //    and a normal that permits movement to the major patch
+    for (sizet_it = patch_edgefaces.begin(); sizet_it != patch_edgefaces.end() ; sizet_it++) {
+        int major_patch = find_major_patch(bot, (*sizet_it), info);
+        size_t curr_patch = info->face_to_patch[(*sizet_it)];
+        if (major_patch != (int)curr_patch && major_patch != -1) {
+	    if (info->norm_results[std::make_pair((*sizet_it), info->patch_to_plane[major_patch])] >= 0.05) {
+               faces_to_shift[(*sizet_it)] = major_patch;
+               patch_edgefaces.erase((*sizet_it));
+            }
+	}
+    }
+
+    // 3. move triangles to their major patch. 
+    for (f_it = faces_to_shift.begin(); f_it != faces_to_shift.end(); f_it++) {
+	(*patches)[info->face_to_patch[(*f_it).first]].erase((*f_it).first); 
+        (*patches)[(*f_it).second].insert((*f_it).first); 
+	info->face_to_patch[(*f_it).first] = (*f_it).second;
+    }
+
+    return faces_to_shift.size();
+}
+
+
+void pnt_project(point_t orig_pt, point_t *new_pt, point_t normal) {
+    point_t p1, norm_scale;
+    fastf_t dotP;
+    VMOVE(p1, orig_pt);
+    dotP = VDOT(p1, normal);
+    VSCALE(norm_scale, normal, dotP);
+    VSUB2(*new_pt, p1, norm_scale);
 }
 
 /* Assemble a new patch starting from an overlapping triangle.
@@ -854,6 +857,7 @@ void bot_partition(struct rt_bot_internal *bot, ON_3dPointArray *vects, std::map
 		size_t face_num = face_queue.front();
 		face_queue.pop();
 		(*patches)[patch_cnt].insert(face_num);
+                info->patch_to_plane[patch_cnt] = current_plane;
                 info->face_to_patch[face_num] = patch_cnt;
                 get_face_edges(bot, face_num, &face_edges);    
 		for (face_edges_it = face_edges.begin(); face_edges_it != face_edges.end(); face_edges_it++) {
@@ -996,13 +1000,9 @@ main(int argc, char *argv[])
     }
     fclose(edge_plot);
 
-    size_t shaved_cnt = 1;
-    while (shaved_cnt != 0) {
-	shaved_cnt = 0;
-	for (int i = 0; i < (int)patches.size(); i++) {
-	    shaved_cnt += shift_edge_triangles(bot_ip, &patches, i, &(patch_edges[i]), &info);
-	}
-	std::cout << "Total edge shifts " << shaved_cnt << "\n";
+    size_t shaved_cnt = 0;
+    for (int i = 0; i < (int)patches.size(); i++) {
+	shaved_cnt += shift_edge_triangles(bot_ip, &patches, &patch_edges, &(patch_edges[i]), &info);
     }
     static FILE* shaved_plot = fopen("patches_shaved.pl", "w");
     for (int i = 0; i < (int)patches.size(); i++) {
