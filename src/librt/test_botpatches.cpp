@@ -29,6 +29,7 @@ struct Manifold_Info {
     EdgeToFace edge_to_face;
     EdgeToPatch edge_to_patch;
     FaceToPatch face_to_patch;
+    std::map< std::pair<size_t, size_t>, fastf_t > norm_results;
 };
 
 class Curve
@@ -178,6 +179,62 @@ void get_connected_faces(struct rt_bot_internal *bot, size_t face_num, EdgeToFac
      }
 }
 
+// For a given face, determine which patch shares the majority of its edges.  If no one patch
+// has a majority, return -1
+int find_major_patch(struct rt_bot_internal *bot, size_t face_num, struct Manifold_Info *info) {
+    std::map<size_t, size_t> patch_cnt;
+    std::map<size_t, size_t>::iterator patch_cnt_itr;
+    std::set<size_t> connected_faces;
+    std::set<size_t>::iterator cf_it;
+    size_t max_patch = 0;
+    size_t max_patch_edge_cnt = 0;
+    get_connected_faces(bot, face_num, &(info->edge_to_face), &connected_faces);
+    for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
+        patch_cnt[info->face_to_patch[*cf_it]] += 1;
+    }
+    for (patch_cnt_itr = patch_cnt.begin(); patch_cnt_itr != patch_cnt.end() ; patch_cnt_itr++) {
+        if ((*patch_cnt_itr).second > max_patch_edge_cnt) {
+           max_patch_edge_cnt = (*patch_cnt_itr).second;
+           max_patch = (*patch_cnt_itr).first;
+        } 
+    }
+    if (max_patch_edge_cnt == 1) return -1;
+    return (int)max_patch; 
+}
+
+// Given a list of edges and the "current" patch, find triangles that share more edges with
+// a different patch.  If the corresponding normals allow, move the triangles in question to
+// the patch with which they share the most edges.  Return the number of triangles shifted.
+// This won't fully "smooth" an edge in a given pass, but an iterative approach should converge
+// to edges with triangles in their correct "major" patches
+size_t shift_edge_triangles(struct rt_bot_internal *bot, size_t curr_patch, EdgeList *edges, struct Manifold_Info *info) {
+    std::set<size_t> patch_edgefaces;
+    std::set<size_t> faces_to_shift;
+    EdgeList::iterator e_it;
+    std::set<size_t>::iterator sizet_it;
+    size_t shifted_cnt = 0;
+    // 1. build triangle set of edge triangles in patch.
+    for (e_it = edges->begin(); e_it != edges->end(); e_it++) {
+	std::set<size_t> faces_from_edge = info->edge_to_face[(*e_it)];
+	for (sizet_it = faces_from_edge.begin(); sizet_it != faces_from_edge.end() ; sizet_it++) {
+	    if (info->face_to_patch[(*sizet_it)] == curr_patch) {
+		patch_edgefaces.insert((*sizet_it));
+	    }
+	}
+
+    }
+    // 2. build triangle set of edge triangles with major patch other than current patch 
+    //    and a normal that permits movement to the major patch
+    for (sizet_it = patch_edgefaces.begin(); sizet_it != patch_edgefaces.end() ; sizet_it++) {
+        int major_patch = find_major_patch(bot, (*sizet_it), info);
+        if (major_patch != (int)curr_patch && major_patch != -1) {
+        }
+    }
+
+    // 3. move triangles to their major patch. 
+
+    return shifted_cnt;
+}
 
 
 void pnt_project(point_t orig_pt, point_t *new_pt, point_t normal) {
@@ -712,7 +769,6 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 void bot_partition(struct rt_bot_internal *bot, ON_3dPointArray *vects, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info)
 {
     std::map< size_t, std::set<size_t> > face_groups;
-    std::map< std::pair<size_t, size_t>, fastf_t > norm_results;
     std::map< size_t, size_t > face_to_plane;
     // Calculate face normals dot product with bounding rpp planes
     for (size_t i=0; i < bot->num_faces; ++i) {
@@ -737,7 +793,7 @@ void bot_partition(struct rt_bot_internal *bot, ON_3dPointArray *vects, std::map
 	    VSET(dir, vects->At(j)->x, vects->At(j)->y, vects->At(j)->z);
 	    VUNITIZE(dir);
 	    vdot = VDOT(dir, norm_dir);
-	    norm_results[std::make_pair(i, j)] = vdot;
+	    info->norm_results[std::make_pair(i, j)] = vdot;
 	    if (vdot > result) {
 		result_max = j;
 		result = vdot;
@@ -802,7 +858,7 @@ void bot_partition(struct rt_bot_internal *bot, ON_3dPointArray *vects, std::map
                 get_connected_faces(bot, face_num, &(info->edge_to_face), &connected_faces);
 		for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
 		    if (face_groups[face_to_plane[(*cf_it)]].find((*cf_it)) != face_groups[face_to_plane[(*cf_it)]].end()) {
-			if (norm_results[std::make_pair((*cf_it), current_plane)] >= 0.55) {
+			if (info->norm_results[std::make_pair((*cf_it), current_plane)] >= 0.55) {
 			    face_queue.push((*cf_it));
 			    face_groups[face_to_plane[(*cf_it)]].erase((*cf_it));
 			}
