@@ -64,24 +64,23 @@ class Patch
 	}
 };
 
-void PatchToVector3d(struct rt_bot_internal *bot, const Patch *patch, on_fit::vector_vec3d &data)
+void PatchToVector3d(struct rt_bot_internal *bot, std::set<size_t> *faces, on_fit::vector_vec3d &data)
 {
-    FaceList::iterator f_it;
+    std::set<size_t>::iterator f_it;
     std::set<size_t> verts;
-    std::set<size_t>::iterator v_it;
     unsigned int i = 0;
     for (i = 0; i < bot->num_vertices; i++) {
 	//printf("v(%d): %f %f %f\n", i, V3ARGS(&bot->vertices[3*i]));
     }
-    for (f_it = patch->faces.begin(); f_it != patch->faces.end(); f_it++) {
+    for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
 	verts.insert(bot->faces[(*f_it)*3+0]);
 	verts.insert(bot->faces[(*f_it)*3+1]);
 	verts.insert(bot->faces[(*f_it)*3+2]);
     }
-    for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
-	//printf("vert %d\n", (int)(*v_it));
-	//printf("vert(%d): %f %f %f\n", (int)(*v_it), V3ARGS(&bot->vertices[(*v_it)*3]));
-	data.push_back(ON_3dVector(V3ARGS(&bot->vertices[(*v_it)*3])));
+    for (f_it = verts.begin(); f_it != verts.end(); f_it++) {
+	//printf("vert %d\n", (int)(*f_it));
+	//printf("vert(%d): %f %f %f\n", (int)(*f_it), V3ARGS(&bot->vertices[(*f_it)*3]));
+	data.push_back(ON_3dVector(V3ARGS(&bot->vertices[(*f_it)*3])));
     }
 }
 
@@ -963,6 +962,7 @@ main(int argc, char *argv[])
     }
     RT_BOT_CK_MAGIC(bot_ip);
 
+    // Do the initial partitioning of the mesh into patches
     bot_partition(bot_ip, &vectors, &patches, &info);
 
     std::cout << "Patch count: " << patches.size() << "\n";
@@ -983,6 +983,7 @@ main(int argc, char *argv[])
     }
     fclose(patch_plot);
 
+    // Now that we have a patch breakout, find the edges
     for (int i = 0; i < (int)patches.size(); i++) {
         find_edge_segments(bot_ip, &(patches[i]), &(patch_edges[i]), &info);
     }
@@ -999,14 +1000,26 @@ main(int argc, char *argv[])
     }
     fclose(edge_plot);
 
+    // "Shave" sharp triangles off of the edges by shifting them from one patch to
+    // another - doesn't avoid all sharp corners, but does produce some cleanup.
     size_t shaved_cnt = 1;
     while (shaved_cnt != 0) {
 	shaved_cnt = 0;
 	for (int i = 0; i < (int)patches.size(); i++) {
 	    shaved_cnt += shift_edge_triangles(bot_ip, &patches, i, &(patch_edges[i]), &info);
 	}
-	std::cout << "Total edge shifts " << shaved_cnt << "\n";
+	//std::cout << "Total edge shifts " << shaved_cnt << "\n";
     }
+
+    // Clean out empty patches
+    for (int i = 0; i < (int)patches.size(); i++) {
+	if (patches[i].size() == 0) {
+	    patches.erase(i);
+	    patch_edges.erase(i);
+	}
+    }
+
+    std::cout << "Patch count: " << patches.size() << "\n";
     static FILE* shaved_plot = fopen("patches_shaved.pl", "w");
     for (int i = 0; i < (int)patches.size(); i++) {
 	int r = int(256*drand48() + 1.0);
@@ -1027,32 +1040,34 @@ main(int argc, char *argv[])
 
 
     //partition_edge_repair(bot_ip, &curr_patch, patches, &patch_cnt, &edge_to_face);
-#if 0
-    for (p_it = patches.begin(); p_it != patches.end(); p_it++) {
-	std::cout << "Found patch " << (*p_it).id << "\n";
-	unsigned order(3);
-	on_fit::NurbsDataSurface data;
-	PatchToVector3d(bot_ip, &(*p_it), data.interior);
-	ON_NurbsSurface nurbs = on_fit::FittingSurface::initNurbsPCABoundingBox(order, &data);
-	on_fit::FittingSurface fit(&data, nurbs);
-	on_fit::FittingSurface::Parameter params;
-	params.interior_smoothness = 0.15;
-	params.interior_weight = 1.0;
-	params.boundary_smoothness = 0.15;
-	params.boundary_weight = 0.0;
-	// NURBS refinement
-	for (unsigned i = 0; i < 5; i++) {
-	    fit.refine(0);
-	    fit.refine(1);
-	}
 
-	// fitting iterations
-	for (unsigned i = 0; i < 2; i++) {
-	    fit.assemble(params);
-	    bu_log("Solving %d - iteration %d\n", (*p_it).id, i);
-	    fit.solve();
+    for (int p = 0; p < (int)patches.size(); p++) {
+	if (patches[p].size() != 0) {
+	    std::cout << "Found patch " << p << " with " << patches[p].size() << " faces\n";
+	    unsigned order(3);
+	    on_fit::NurbsDataSurface data;
+	    PatchToVector3d(bot_ip, &(patches[p]), data.interior);
+	    ON_NurbsSurface nurbs = on_fit::FittingSurface::initNurbsPCABoundingBox(order, &data);
+	    on_fit::FittingSurface fit(&data, nurbs);
+	    on_fit::FittingSurface::Parameter params;
+	    params.interior_smoothness = 0.15;
+	    params.interior_weight = 1.0;
+	    params.boundary_smoothness = 0.15;
+	    params.boundary_weight = 0.0;
+	    // NURBS refinement
+	    for (unsigned i = 0; i < 5; i++) {
+		fit.refine(0);
+		fit.refine(1);
+	    }
+
+	    // fitting iterations
+	    for (unsigned i = 0; i < 2; i++) {
+		fit.assemble(params);
+		bu_log("Solving %d - iteration %d\n", p, i);
+		fit.solve();
+	    }
+	    brep->NewFace(fit.m_nurbs);
 	}
-	brep->NewFace(fit.m_nurbs);
     }
 
     wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
@@ -1063,7 +1078,7 @@ main(int argc, char *argv[])
 	bu_log("Generated brep object %s\n", bname);
     }
     bu_free(bname, "char");
-#endif
+    
     return 0;
 }
 
