@@ -228,9 +228,11 @@ size_t shift_edge_triangles(struct rt_bot_internal *bot, std::map< size_t, std::
     for (sizet_it = patch_edgefaces.begin(); sizet_it != patch_edgefaces.end() ; sizet_it++) {
         int major_patch = find_major_patch(bot, (*sizet_it), info);
         if (major_patch != (int)curr_patch && major_patch != -1) {
-	    if (info->norm_results[std::make_pair((*sizet_it), major_patch)] >= 0.35) {
+	    if (info->norm_results[std::make_pair((*sizet_it), major_patch)] >= 0) {
                faces_to_shift[(*sizet_it)] = major_patch;
-	    }
+	    } else {
+               //std::cout << "Merge failed! (facenum:" << (*sizet_it) << ",candidate_patch:" << major_patch << "): " << info->norm_results[std::make_pair((*sizet_it), major_patch)] << "\n";
+            }
 	}
     }
 
@@ -993,6 +995,33 @@ main(int argc, char *argv[])
 	}
     }
     fclose(edge_plot);
+
+    size_t shaved_cnt = 1;
+    while (shaved_cnt != 0) {
+	shaved_cnt = 0;
+	for (int i = 0; i < (int)patches.size(); i++) {
+	    shaved_cnt += shift_edge_triangles(bot_ip, &patches, i, &(patch_edges[i]), &info);
+	}
+	std::cout << "Total edge shifts " << shaved_cnt << "\n";
+    }
+    static FILE* shaved_plot = fopen("patches_shaved.pl", "w");
+    for (int i = 0; i < (int)patches.size(); i++) {
+	int r = int(256*drand48() + 1.0);
+	int g = int(256*drand48() + 1.0);
+	int b = int(256*drand48() + 1.0);
+        std::set<size_t> *faces = &(patches[i]);
+        std::set<size_t> verts;
+        std::set<size_t>::iterator f_it;
+	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	    plot_face(&bot_ip->vertices[bot_ip->faces[(*f_it)*3+0]*3],
+                      &bot_ip->vertices[bot_ip->faces[(*f_it)*3+1]*3],
+                      &bot_ip->vertices[bot_ip->faces[(*f_it)*3+2]*3],
+	              r, g ,b, shaved_plot);
+        }
+    }
+    fclose(shaved_plot);
+
+
 
     //partition_edge_repair(bot_ip, &curr_patch, patches, &patch_cnt, &edge_to_face);
 #if 0
