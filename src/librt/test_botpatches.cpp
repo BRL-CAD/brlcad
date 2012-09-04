@@ -207,12 +207,12 @@ int find_major_patch(struct rt_bot_internal *bot, size_t face_num, struct Manifo
 // the patch with which they share the most edges.  Return the number of triangles shifted.
 // This won't fully "smooth" an edge in a given pass, but an iterative approach should converge
 // to edges with triangles in their correct "major" patches
-size_t shift_edge_triangles(struct rt_bot_internal *bot, size_t curr_patch, EdgeList *edges, struct Manifold_Info *info) {
+size_t shift_edge_triangles(struct rt_bot_internal *bot, std::map< size_t, std::set<size_t> > *patches, size_t curr_patch, EdgeList *edges, struct Manifold_Info *info) {
     std::set<size_t> patch_edgefaces;
-    std::set<size_t> faces_to_shift;
+    std::map<size_t, size_t> faces_to_shift;
+    std::map<size_t, size_t>::iterator f_it;
     EdgeList::iterator e_it;
     std::set<size_t>::iterator sizet_it;
-    size_t shifted_cnt = 0;
     // 1. build triangle set of edge triangles in patch.
     for (e_it = edges->begin(); e_it != edges->end(); e_it++) {
 	std::set<size_t> faces_from_edge = info->edge_to_face[(*e_it)];
@@ -228,12 +228,20 @@ size_t shift_edge_triangles(struct rt_bot_internal *bot, size_t curr_patch, Edge
     for (sizet_it = patch_edgefaces.begin(); sizet_it != patch_edgefaces.end() ; sizet_it++) {
         int major_patch = find_major_patch(bot, (*sizet_it), info);
         if (major_patch != (int)curr_patch && major_patch != -1) {
-        }
+	    if (info->norm_results[std::make_pair((*sizet_it), major_patch)] >= 0.35) {
+               faces_to_shift[(*sizet_it)] = major_patch;
+	    }
+	}
     }
 
     // 3. move triangles to their major patch. 
+    for (f_it = faces_to_shift.begin(); f_it != faces_to_shift.end(); f_it++) {
+        (*patches)[info->face_to_patch[(*f_it).first]].erase((*f_it).first); 
+        (*patches)[(*f_it).second].insert((*f_it).first); 
+	info->face_to_patch[(*f_it).first] = (*f_it).second;
+    }
 
-    return shifted_cnt;
+    return faces_to_shift.size();
 }
 
 
