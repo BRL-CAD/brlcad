@@ -858,12 +858,14 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
     if (npts != 0 && npts != 2 && npts != 4) {
 	/* these are printed in 'mm' regardless of local units */
+#if 0
 	bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n", stp->st_name, npts);
 	bu_log("\tray: pt = (%g %g %g), dir = (%g %g %g), units in mm\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
 	for (i=0; i<npts; i++) {
 	    bu_log("\t%g", k[i]*t_scale);
 	}
 	bu_log("\n");
+#endif
 	return 0;			/* No hit */
     }
 
