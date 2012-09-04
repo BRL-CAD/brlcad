@@ -19,10 +19,17 @@ typedef std::map< size_t, std::set<Edge> > VertToEdge;
 typedef std::map< size_t, std::set<size_t> > VertToPatch;
 typedef std::map< Edge, std::set<size_t> > EdgeToPatch;
 typedef std::map< Edge, std::set<size_t> > EdgeToFace;
+typedef std::map< size_t, size_t > FaceToPatch;
 typedef std::set<Edge> EdgeList;
 typedef std::set<size_t> FaceList;
 
-typedef std::map< size_t, std::set<size_t> > FaceCategorization;
+struct Manifold_Info {
+    VertToEdge vert_to_edge;
+    VertToPatch vert_to_patch;
+    EdgeToFace edge_to_face;
+    EdgeToPatch edge_to_patch;
+    FaceToPatch face_to_patch;
+};
 
 class Curve
 {
@@ -184,7 +191,7 @@ void pnt_project(point_t orig_pt, point_t *new_pt, point_t normal) {
 
 // Given a patch consisting of a set of faces find the
 // set of edges that forms the outer edge of the patch
-void find_edge_segments(struct rt_bot_internal *bot, std::set<size_t> *faces, EdgeList *patch_edges, VertToEdge *vert_to_edge)
+void find_edge_segments(struct rt_bot_internal *bot, std::set<size_t> *faces, EdgeList *patch_edges, struct Manifold_Info *info)
 {
     size_t pt_A, pt_B, pt_C;
     std::set<size_t>::iterator it;
@@ -201,8 +208,8 @@ void find_edge_segments(struct rt_bot_internal *bot, std::set<size_t> *faces, Ed
 
     for (efc_it = edge_face_cnt.begin(); efc_it!=edge_face_cnt.end(); efc_it++) {
 	if ((*efc_it).second == 1) {
-	    (*vert_to_edge)[(*efc_it).first.first].insert((*efc_it).first);
-	    (*vert_to_edge)[(*efc_it).first.second].insert((*efc_it).first);
+	    info->vert_to_edge[(*efc_it).first.first].insert((*efc_it).first);
+	    info->vert_to_edge[(*efc_it).first.second].insert((*efc_it).first);
 	    patch_edges->insert((*efc_it).first);
 	}
     }
@@ -702,7 +709,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 
 }
 
-void bot_partition(struct rt_bot_internal *bot, ON_3dPointArray *vects, std::map< size_t, std::set<size_t> > *patches, EdgeToFace *edge_to_face, VertToPatch *vert_to_patch, EdgeToPatch *edge_to_patch)
+void bot_partition(struct rt_bot_internal *bot, ON_3dPointArray *vects, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info)
 {
     std::map< size_t, std::set<size_t> > face_groups;
     std::map< std::pair<size_t, size_t>, fastf_t > norm_results;
@@ -718,9 +725,9 @@ void bot_partition(struct rt_bot_internal *bot, ON_3dPointArray *vects, std::map
 	pt_A = bot->faces[i*3+0]*3;
 	pt_B = bot->faces[i*3+1]*3;
 	pt_C = bot->faces[i*3+2]*3;
-	(*edge_to_face)[mk_edge(pt_A, pt_B)].insert(i);
-	(*edge_to_face)[mk_edge(pt_B, pt_C)].insert(i);
-	(*edge_to_face)[mk_edge(pt_C, pt_A)].insert(i);
+	info->edge_to_face[mk_edge(pt_A, pt_B)].insert(i);
+	info->edge_to_face[mk_edge(pt_B, pt_C)].insert(i);
+	info->edge_to_face[mk_edge(pt_C, pt_A)].insert(i);
 	// Categorize face
 	VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
 	VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);
@@ -781,17 +788,18 @@ void bot_partition(struct rt_bot_internal *bot, ON_3dPointArray *vects, std::map
 		size_t face_num = face_queue.front();
 		face_queue.pop();
 		(*patches)[patch_cnt].insert(face_num);
+                info->face_to_patch[face_num] = patch_cnt;
                 get_face_edges(bot, face_num, &face_edges);    
 		for (face_edges_it = face_edges.begin(); face_edges_it != face_edges.end(); face_edges_it++) {
-		    (*edge_to_patch)[(*face_edges_it)].insert(patch_cnt);
-		    (*vert_to_patch)[(*face_edges_it).first].insert(patch_cnt);
-		    (*vert_to_patch)[(*face_edges_it).second].insert(patch_cnt);
+		    info->edge_to_patch[(*face_edges_it)].insert(patch_cnt);
+		    info->vert_to_patch[(*face_edges_it).first].insert(patch_cnt);
+		    info->vert_to_patch[(*face_edges_it).second].insert(patch_cnt);
 		}
 
 		// Be "greedy" when assigning triangles to patches
                 std::set<size_t> connected_faces;
 		std::set<size_t>::iterator cf_it;
-                get_connected_faces(bot, face_num, edge_to_face, &connected_faces);
+                get_connected_faces(bot, face_num, &(info->edge_to_face), &connected_faces);
 		for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
 		    if (face_groups[face_to_plane[(*cf_it)]].find((*cf_it)) != face_groups[face_to_plane[(*cf_it)]].end()) {
 			if (norm_results[std::make_pair((*cf_it), current_plane)] >= 0.55) {
@@ -831,10 +839,7 @@ main(int argc, char *argv[])
     std::map< size_t, std::set<size_t> > patches;
     std::map< size_t, std::set<size_t> >::iterator p_it;
     std::map< size_t, EdgeList > patch_edges;
-    VertToEdge vert_to_edge;
-    EdgeToFace edge_to_face;
-    VertToPatch vert_to_patch;
-    EdgeToPatch edge_to_patch;
+    Manifold_Info info;
 
     ON_3dPointArray vectors;
     ON_Brep *brep = ON_Brep::New();
@@ -889,7 +894,7 @@ main(int argc, char *argv[])
     }
     RT_BOT_CK_MAGIC(bot_ip);
 
-    bot_partition(bot_ip, &vectors, &patches, &edge_to_face, &vert_to_patch, &edge_to_patch);
+    bot_partition(bot_ip, &vectors, &patches, &info);
 
     std::cout << "Patch count: " << patches.size() << "\n";
     static FILE* patch_plot = fopen("patches.pl", "w");
@@ -910,7 +915,7 @@ main(int argc, char *argv[])
     fclose(patch_plot);
 
     for (int i = 0; i < (int)patches.size(); i++) {
-        find_edge_segments(bot_ip, &(patches[i]), &(patch_edges[i]), &vert_to_edge);
+        find_edge_segments(bot_ip, &(patches[i]), &(patch_edges[i]), &info);
     }
 
     // Warning - do NOT use edges.pl for a filename, MGED doesn't seem to like that???
