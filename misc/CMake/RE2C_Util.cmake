@@ -1,4 +1,4 @@
-#                  F I N D R E 2 C . C M A K E
+#                  R E 2 C _ U T I L . C M A K E
 #
 # Provides a macro to generate custom build rules:
 
