@@ -794,7 +794,7 @@ void bot_partition(struct rt_bot_internal *bot, ON_3dPointArray *vects, std::map
                 get_connected_faces(bot, face_num, edge_to_face, &connected_faces);
 		for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
 		    if (face_groups[face_to_plane[(*cf_it)]].find((*cf_it)) != face_groups[face_to_plane[(*cf_it)]].end()) {
-			if (norm_results[std::make_pair((*cf_it), current_plane)] >= 0.45) {
+			if (norm_results[std::make_pair((*cf_it), current_plane)] >= 0.55) {
 			    face_queue.push((*cf_it));
 			    face_groups[face_to_plane[(*cf_it)]].erase((*cf_it));
 			}
