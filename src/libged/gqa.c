@@ -2316,8 +2316,6 @@ summary_reports(struct cstate *state)
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "%s hit only %zu times (< %zu)\n",
 			      regp->reg_name, hits, require_num_hits);
 	    }
-
-	    return;
 	}
     }
 }
