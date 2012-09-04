@@ -447,6 +447,8 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     struct hit *hitp;	/* pointer to hit point */
     int nhits = 0;	/* Number of hit points */
 
+    memset(hits, 0, 4 * sizeof(struct hit));
+
     hitp = &hits[0];
 
     /* out, Mat, vect */
