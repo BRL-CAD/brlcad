@@ -31,7 +31,8 @@ struct Manifold_Info {
     EdgeToPatch edge_to_patch;
     FaceToPatch face_to_patch;
     PatchToPlane patch_to_plane;
-    ON_3dPointArray vectors;
+    ON_3dVectorArray face_normals;
+    ON_3dVectorArray vectors;
     std::map< std::pair<size_t, size_t>, fastf_t > norm_results;
 };
 
@@ -284,54 +285,6 @@ void find_edge_segments(struct rt_bot_internal *bot, std::set<size_t> *faces, Ed
     }
 }
 
-/* Assemble a new patch starting from an overlapping triangle.
- *
- * Faces that share an edge with the overlapping triangle
- * and are in the original patch are added to the edge_faces list.
- * Test them to see if they also overlap.  If they do, and do NOT
- * overlap with any triangle in the new patch, add them to the
- * new patch.  If they overlap with BOTH, put them in a queue to
- * be handled as a new patch.  When the faces that overlap and share
- * an edge with triangles in the new patch have been categorized,
- * work on the overlapping triangles that didn't fit into the first
- * new patch.  Continue until all triangles are in patches without
- * internal overlaps.
- */
-void make_new_patch(struct rt_bot_internal *bot, std::set<Patch> *patches, Patch *orig_patch, int *patch_cnt, size_t overlap_face, FaceList *edge_faces, EdgeToFace *edge_to_face) {
-    std::cout << "patch_id: " << orig_patch->id << " face: " << overlap_face << "\n";
-    size_t pt_A, pt_B, pt_C;
-    EdgeList overlap_edges;
-    EdgeList::iterator o_it;
-    FaceList candidate_faces;
-    Patch *new_patch = new Patch;
-    pt_A = bot->faces[overlap_face*3+0]*3;
-    pt_B = bot->faces[overlap_face*3+1]*3;
-    pt_C = bot->faces[overlap_face*3+2]*3;
-    overlap_edges.insert(mk_edge(pt_A, pt_B));
-    overlap_edges.insert(mk_edge(pt_B, pt_C));
-    overlap_edges.insert(mk_edge(pt_C, pt_A));
-
-    // Set up the new patch and add the overlapping face
-    new_patch->id = *patch_cnt;
-    (*patch_cnt)++;
-    new_patch->category_plane = new ON_3dPoint(orig_patch->category_plane->x,orig_patch->category_plane->y,orig_patch->category_plane->z);
-    new_patch->faces.insert(overlap_face);
-    orig_patch->faces.erase(overlap_face);
-
-    // Add triangle(s) that will now become edge triangles to the edge_faces list
-    for(o_it = overlap_edges.begin(); o_it != overlap_edges.end(); o_it++) {
-	std::set<size_t>::iterator ffe_it;
-	std::set<size_t> faces_from_edge = (*edge_to_face)[(*o_it)];
-	for (ffe_it = faces_from_edge.begin(); ffe_it != faces_from_edge.end() ; ffe_it++) {
-	    FaceList::iterator this_it = orig_patch->faces.find((*ffe_it));
-	    if (this_it != orig_patch->faces.end()) {
-		edge_faces->insert((*ffe_it));
-	    }
-	}
-    }
-
-    patches->insert(*new_patch);
-}
 #if 0
 // Given a list of edges and the "current" patch, find triangles that overlap when projected into
 // the patch domain.  Returns the number of triangles identified as overlapping.
@@ -396,6 +349,7 @@ size_t overlapping_edge_triangles(struct rt_bot_internal *bot, std::map< size_t,
 
 }
 #endif
+
 // Assemble edges into curves.  A curve is shared between two
 // and only two patches, and all vertex points except the endpoints
 // are used by only two edges (edges in this case referring to face
@@ -757,9 +711,9 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
     for (size_t i=0; i < bot->num_faces; ++i) {
 	size_t pt_A, pt_B, pt_C;
 	size_t result_max;
-	fastf_t vdot = 0.0;
-	fastf_t result = 0.0;
-	vect_t a, b, dir, norm_dir;
+	double vdot = 0.0;
+	double result = 0.0;
+	vect_t a, b, norm_dir;
 	// Add vert -> edge and edge -> face mappings to global map.
 	pt_A = bot->faces[i*3+0]*3;
 	pt_B = bot->faces[i*3+1]*3;
@@ -772,10 +726,10 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
 	VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);
 	VCROSS(norm_dir, a, b);
 	VUNITIZE(norm_dir);
+        info->face_normals.Append(ON_3dVector(norm_dir[0], norm_dir[1], norm_dir[2]));  
+	(*info).face_normals.At(i)->Unitize();
 	for (size_t j=0; j < (size_t)(*info).vectors.Count(); j++) {
-	    VSET(dir, (*info).vectors.At(j)->x, (*info).vectors.At(j)->y, (*info).vectors.At(j)->z);
-	    VUNITIZE(dir);
-	    vdot = VDOT(dir, norm_dir);
+            vdot = ON_DotProduct(*(*info).vectors.At(j), *(*info).face_normals.At(i));
 	    info->norm_results[std::make_pair(i, j)] = vdot;
 	    if (vdot > result) {
 		result_max = j;
@@ -842,17 +796,42 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
 		for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
 		    if (face_groups[face_to_plane[(*cf_it)]].find((*cf_it)) != face_groups[face_to_plane[(*cf_it)]].end()) {
 			if (threshold > 0.0 && threshold < 1.0) {
-                            // A "normal" value for threshold should be around 0.55 or 0.60
+			    // A "normal" value for threshold should be around 0.55 or 0.60
 			    if (info->norm_results[std::make_pair((*cf_it), current_plane)] >= threshold) {
-				face_queue.push((*cf_it));
-				face_groups[face_to_plane[(*cf_it)]].erase((*cf_it));
+                                // Large patches pose a problem for feature preservation - make an attempt to ensure "large"
+                                // patches are flat.  The metric of a face count of 1/100th or more of the total bot count
+                                // is for current convenience - it will need to be a parameter.
+				if((*patches)[patch_cnt].size() > bot->num_faces / 100) {
+				    vect_t origin;
+				    size_t ok = 1;
+				    VMOVE(origin, &bot->vertices[bot->faces[(face_num)*3]*3]);
+				    ON_Plane plane(ON_3dPoint(origin[0], origin[1], origin[2]), *(*info).face_normals.At((face_num)));
+				    for(int pt = 0; pt < 3; pt++) {
+					point_t cpt;
+					VMOVE(cpt, &bot->vertices[bot->faces[((*cf_it))*3+pt]*3]);
+					double dist_to_plane = plane.DistanceTo(ON_3dPoint(cpt[0], cpt[1], cpt[2]));
+					//std::cout << "Distance[" << face_num << "," << (*cf_it) << "](" <<  pt << "): " << dist_to_plane << "\n";
+					if (dist_to_plane > 0) {
+					    double dist = DIST_PT_PT(origin, cpt);
+					    double angle = atan(dist_to_plane/dist);
+					    if (angle > 0.05) ok = 0;
+					}
+				    }
+				    if (ok) {
+					face_queue.push((*cf_it));
+					face_groups[face_to_plane[(*cf_it)]].erase((*cf_it));
+				    }
+				} else {
+				    face_queue.push((*cf_it));
+				    face_groups[face_to_plane[(*cf_it)]].erase((*cf_it));
+				}
 			    }
 			} else {
 			    if (face_to_plane[(*cf_it)] == current_plane) {
 				face_queue.push((*cf_it));
 				face_groups[face_to_plane[(*cf_it)]].erase((*cf_it));
 			    }
-                        }
+			}
 		    }
 		}
 	    }
@@ -893,12 +872,12 @@ main(int argc, char *argv[])
 
     ON_SimpleArray<ON_NurbsCurve> edges;
 
-    info.vectors.Append(ON_3dPoint(-1,0,0));
-    info.vectors.Append(ON_3dPoint(0,-1,0));
-    info.vectors.Append(ON_3dPoint(0,0,-1));
-    info.vectors.Append(ON_3dPoint(1,0,0));
-    info.vectors.Append(ON_3dPoint(0,1,0));
-    info.vectors.Append(ON_3dPoint(0,0,1));
+    info.vectors.Append(ON_3dVector(-1,0,0));
+    info.vectors.Append(ON_3dVector(0,-1,0));
+    info.vectors.Append(ON_3dVector(0,0,-1));
+    info.vectors.Append(ON_3dVector(1,0,0));
+    info.vectors.Append(ON_3dVector(0,1,0));
+    info.vectors.Append(ON_3dVector(0,0,1));
 
     bu_vls_init(&name);
 
@@ -1041,7 +1020,6 @@ main(int argc, char *argv[])
 	    // fitting iterations
 	    for (unsigned i = 0; i < 2; i++) {
 		fit.assemble(params);
-		bu_log("Solving %d - iteration %d\n", p, i);
 		fit.solve();
 	    }
 	    brep->NewFace(fit.m_nurbs);
