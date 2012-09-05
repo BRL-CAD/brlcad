@@ -2539,7 +2539,7 @@ get_closest_point(ON_2dPoint& outpt,
     bool found = false;
     double d_last = DBL_MAX;
     pt2d_t curr_grad;
-    pt2d_t new_uv;
+    pt2d_t new_uv = {0.0, 0.0};
     GCPData data;
     data.surf = face->SurfaceOf();
     data.pt = point;
@@ -2554,7 +2554,7 @@ get_closest_point(ON_2dPoint& outpt,
     }
     ON_Interval u, v;
     ON_2dPoint est = a_tree->getClosestPointEstimate(point, u, v);
-    pt2d_t uv = { est[0], est[1] };
+    pt2d_t uv = {est[0], est[1]};
 
     // do the newton iterations
     // terminates on 1 of 3 conditions:
@@ -2576,8 +2576,13 @@ try_again:
 	    TRACE("diverged!");
 	    diverge_count++;
 	}
-	gcp_newton_iteration(new_uv, data, curr_grad, uv);
-	move(uv, new_uv);
+	if (gcp_newton_iteration(new_uv, data, curr_grad, uv)) {
+	    move(uv, new_uv);
+	} else {
+	    // iteration failed, nudge diagonally
+	    uv[0] += VUNITIZE_TOL;
+	    uv[1] += VUNITIZE_TOL;
+	}
 	d_last = d;
     }
     if (found) {
