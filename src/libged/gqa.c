@@ -2306,12 +2306,35 @@ summary_reports(struct cstate *state)
 
     for (BU_LIST_FOR (regp, region, &(state->rtip->HeadRegion))) {
 	size_t hits;
+	struct region_pair *rp;
+	int is_overlap_only_hit;
 
 	RT_CK_REGION(regp);
 	hits = (size_t)((struct per_region_data *)regp->reg_udata)->hits;
 	if (hits < require_num_hits) {
 	    if (hits == 0) {
-		bu_vls_printf(_ged_current_gedp->ged_result_str, "%s was not hit\n", regp->reg_name);
+		is_overlap_only_hit = 0;
+		if (analysis_flags & ANALYSIS_OVERLAPS) {
+		    /* If the region is in the overlap list, it has
+		     * been hit even though the hit count is zero.
+		     * Do not report zero hit regions if they are in
+		     * the overlap list.
+		     */
+		    for (BU_LIST_FOR (rp, region_pair, &(overlapList.l))) {
+			if (rp->r.r1->reg_name == regp->reg_name) {
+			    is_overlap_only_hit = 1;
+			    break;
+			} else if (rp->r2) {
+			    if (rp->r2->reg_name == regp->reg_name) {
+				is_overlap_only_hit = 1;
+				break;
+			    }
+			}
+		    }
+		}
+		if (!is_overlap_only_hit) {
+		    bu_vls_printf(_ged_current_gedp->ged_result_str, "%s was not hit\n", regp->reg_name);
+		}
 	    } else {
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "%s hit only %zu times (< %zu)\n",
 			      regp->reg_name, hits, require_num_hits);
