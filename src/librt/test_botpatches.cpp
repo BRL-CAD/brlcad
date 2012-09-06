@@ -223,6 +223,27 @@ void get_connected_faces(struct rt_bot_internal *bot, size_t face_num, EdgeToFac
      }
 }
 
+// face_to_patch is built and maintained during the initial partitioning, but the
+// edge and vertex mappings are not tracked during the intial process.  Call this
+// function to populate them, after the initial partitioning is complete.
+void sync_structure_maps(struct rt_bot_internal *bot, struct Manifold_Info *info) {
+    std::map< size_t, std::set<size_t> >::iterator p_it;
+    for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
+        std::set<size_t>::iterator f_it;
+        std::set<size_t> *faces = &((*p_it).second);
+	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	    std::set<Edge> face_edges;
+	    std::set<Edge>::iterator face_edges_it;
+	    get_face_edges(bot, (*f_it), &face_edges);    
+	    for (face_edges_it = face_edges.begin(); face_edges_it != face_edges.end(); face_edges_it++) {
+		info->edge_to_patch[(*face_edges_it)].insert((*p_it).first);
+		info->vert_to_patch[(*face_edges_it).first].insert((*p_it).first);
+		info->vert_to_patch[(*face_edges_it).second].insert((*p_it).first);
+	    }
+	}
+    }
+}
+
 // For a given face, determine which patch shares the majority of its edges.  If no one patch
 // has a majority, return -1
 int find_major_patch(struct rt_bot_internal *bot, size_t face_num, struct Manifold_Info *info, size_t curr_patch, size_t patch_count) {
@@ -482,19 +503,11 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
 	    face_groups[face_to_plane[face_queue.front()]].erase(face_queue.front());
 	    size_t current_plane = face_to_plane[face_queue.front()];
 	    while (!face_queue.empty()) {
-		std::set<Edge> face_edges;
-		std::set<Edge>::iterator face_edges_it;
 		size_t face_num = face_queue.front();
 		face_queue.pop();
 		(*patches)[info->patch_cnt].insert(face_num);
                 info->patch_to_plane[info->patch_cnt] = current_plane;
                 info->face_to_patch[face_num] = info->patch_cnt;
-                get_face_edges(bot, face_num, &face_edges);    
-		for (face_edges_it = face_edges.begin(); face_edges_it != face_edges.end(); face_edges_it++) {
-		    info->edge_to_patch[(*face_edges_it)].insert(info->patch_cnt);
-		    info->vert_to_patch[(*face_edges_it).first].insert(info->patch_cnt);
-		    info->vert_to_patch[(*face_edges_it).second].insert(info->patch_cnt);
-		}
 
                 std::set<size_t> connected_faces;
 		std::set<size_t>::iterator cf_it;
@@ -1066,6 +1079,10 @@ int main(int argc, char *argv[])
     std::cout << "Patch count, third pass: " << info.patches.size() << "\n";
     plot_faces(bot_ip, &info, "patches_pass_3.pl");
     plot_patch_borders(bot_ip, &info, "patch_borders_pass_3.pl");
+
+    // Now that the mesh is fully partitioned, build the maps needed for curve discovery
+    sync_structure_maps(bot_ip, &info);
+
 
     // Actually fit the NURBS surfaces
     for (int p = 0; p < (int)info.patches.size(); p++) {
