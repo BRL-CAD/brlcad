@@ -330,21 +330,20 @@ size_t overlapping_edge_triangles(struct rt_bot_internal *bot, size_t curr_patch
     }
     // 2. build triangle set of edge triangles with major patch other than current patch 
     //    and a normal that permits movement to the major patch
-    std::set<size_t>::iterator ef_it;
-    std::set<size_t>::iterator ef_it2;
     for (sizet_it = patch_edgefaces.begin(); sizet_it != patch_edgefaces.end() ; sizet_it++) {
 	int this_overlaps = 0;
 	point_t normal;
 	point_t v0, v1, v2;
 	VSET(normal, info->vectors.At(info->patch_to_plane[curr_patch])->x, info->vectors.At(info->patch_to_plane[curr_patch])->y, info->vectors.At(info->patch_to_plane[curr_patch])->z);
-	pnt_project(&bot->vertices[bot->faces[(*ef_it)*3+0]*3], &v0, normal);
-	pnt_project(&bot->vertices[bot->faces[(*ef_it)*3+1]*3], &v1, normal);
-	pnt_project(&bot->vertices[bot->faces[(*ef_it)*3+2]*3], &v2, normal);
+	pnt_project(&bot->vertices[bot->faces[(*sizet_it)*3+0]*3], &v0, normal);
+	pnt_project(&bot->vertices[bot->faces[(*sizet_it)*3+1]*3], &v1, normal);
+	pnt_project(&bot->vertices[bot->faces[(*sizet_it)*3+2]*3], &v2, normal);
+	std::set<size_t>::iterator ef_it2;
 	for (ef_it2 = patch_edgefaces.begin(); ef_it2!=patch_edgefaces.end(); ef_it2++) {
 	    struct bu_vls name;
 	    static FILE* plot = NULL;
 	    bu_vls_init(&name);
-	    if ((*ef_it) != (*ef_it2)) {
+	    if ((*sizet_it) != (*ef_it2)) {
 		point_t u0, u1, u2;
 		pnt_project(&bot->vertices[bot->faces[(*ef_it2)*3+0]*3], &u0, normal);
 		pnt_project(&bot->vertices[bot->faces[(*ef_it2)*3+1]*3], &u1, normal);
@@ -354,12 +353,12 @@ size_t overlapping_edge_triangles(struct rt_bot_internal *bot, size_t curr_patch
 		overlap = bn_coplanar_tri_tri_isect(v0, v1, v2, u0, u1, u2, 1);
 		if(overlap) {
 		    this_overlaps = 1;
-		    std::cout << "Overlap: " << (*ef_it) << " and " << (*ef_it2) << "\n";
-		    bu_vls_printf(&name, "overlaps.pl", (int) (*ef_it), (int) (*ef_it2));
+		    std::cout << "Overlap: " << (*sizet_it) << " and " << (*ef_it2) << "\n";
+		    bu_vls_printf(&name, "overlaps.pl", (int) (*sizet_it), (int) (*ef_it2));
 		    plot = fopen(bu_vls_addr(&name), "a");
 		    plot_face(v0,v1,v2,255,0,0,plot);
 		    plot_face(u0,u1,u2,255,0,0,plot);
-		    plot_face(&bot->vertices[bot->faces[(*ef_it)*3+0]*3], &bot->vertices[bot->faces[(*ef_it)*3+1]*3], &bot->vertices[bot->faces[(*ef_it)*3+2]*3],0,0,255,plot);
+		    plot_face(&bot->vertices[bot->faces[(*sizet_it)*3+0]*3], &bot->vertices[bot->faces[(*sizet_it)*3+1]*3], &bot->vertices[bot->faces[(*sizet_it)*3+2]*3],0,0,255,plot);
 		    plot_face(&bot->vertices[bot->faces[(*ef_it2)*3+0]*3], &bot->vertices[bot->faces[(*ef_it2)*3+1]*3], &bot->vertices[bot->faces[(*ef_it2)*3+2]*3],0,0,255,plot);
 		    fclose(plot);
                     overlap_cnt++;
@@ -778,7 +777,6 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
 		}
 	    }
 	}
-	std::cout << array_pos << " is group " << curr_vect << ",  size: " << curr_max << "\n";
         ordered_vects.at(array_pos) = curr_vect;
         face_group_set.erase(curr_vect);
         array_pos++;
@@ -856,16 +854,6 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
 	    }
 	}
     }
-
-    //	    patches->insert(curr_patch);
-
-    //    std::cout << "Patch count: " << patches->size() << "\n";
-
-    // Build edges
-    //    std::set<Patch>::iterator patch_it;
-    //    for (patch_it = (*patches).begin(); patch_it != (*patches).end(); patch_it++) {
-    //	find_edges(bot, &(*patch_it), plot, bedges, &edge_to_patch, &vert_to_patch);
-    //    }
 }
 
 
@@ -1020,6 +1008,14 @@ main(int argc, char *argv[])
         }
     }
     fclose(shaved_plot);
+
+    size_t overlap_cnt = 0;
+    for (pe_it = patch_edges.begin(); pe_it != patch_edges.end(); pe_it++) {
+	overlap_cnt = overlapping_edge_triangles(bot_ip, (*pe_it).first, &((*pe_it).second), &info);
+        if(overlap_cnt > 0)
+        std::cout << "Overlap count(" << (*pe_it).first << "): " << overlap_cnt << "\n";
+    }
+
 
     //partition_edge_repair(bot_ip, &curr_patch, patches, &patch_cnt, &edge_to_face);
 
