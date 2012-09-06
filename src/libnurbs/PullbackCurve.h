@@ -68,26 +68,11 @@ enum seam_direction {
     UNKNOWN_SEAM_DIRECTION
 };
 
-
 #define PBC_TOL 0.000001
 #define PBC_FROM_OFFSET 0.001
 #define PBC_SEAM_TOL 0.01
 
-typedef struct pbc_data {
-    double tolerance;
-    double flatness;
-    const ON_Curve* curve;
-    brlcad::SurfaceTree* surftree;
-    std::list<ON_2dPointArray *> segments;
-    const ON_BrepEdge* edge;
-    bool order_reversed;
-} PBCData;
-
 extern enum seam_direction seam_direction(ON_2dPoint uv1, ON_2dPoint uv2);
-
-extern ON_Curve*
-interpolateCurve(ON_2dPointArray& samples);
-
 
 extern ON_Curve*
 refit_edge(const ON_BrepEdge* edge,
@@ -104,18 +89,6 @@ test2_pullback_curve(const brlcad::SurfaceTree* surfacetree,
 		     const ON_Curve* curve,
 		     double tolerance = 1.0e-6,
 		     double flatness = 1.0e-3);
-
-extern PBCData *
-pullback_samples(const brlcad::SurfaceTree* surfacetree,
-		 const ON_Curve* curve,
-		 double tolerance = 1.0e-6,
-		 double flatness = 1.0e-3);
-
-extern bool
-check_pullback_data(std::list<PBCData*> &pbcs);
-
-extern int
-check_pullback_singularity_bridge(const ON_Surface *surf, const ON_2dPoint &p1, const ON_2dPoint &p2);
 
 extern int
 check_pullback_seam_bridge(const ON_Surface *surf, const ON_2dPoint &p1, const ON_2dPoint &p2);

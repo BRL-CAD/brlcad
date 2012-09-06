@@ -1653,6 +1653,31 @@ extern NURBS_EXPORT int surface_surface_intersection(const ON_Surface* surfA,
 
 }
 
+typedef struct pbc_data {
+    double tolerance;
+    double flatness;
+    const ON_Curve* curve;
+    brlcad::SurfaceTree* surftree;
+    std::list<ON_2dPointArray *> segments;
+    const ON_BrepEdge* edge;
+    bool order_reversed;
+} PBCData;
+
+extern NURBS_EXPORT PBCData*
+pullback_samples(const brlcad::SurfaceTree* surfacetree,
+                 const ON_Curve* curve,
+                 double tolerance = 1.0e-6,
+                 double flatness = 1.0e-3);
+
+extern NURBS_EXPORT bool
+check_pullback_data(std::list<PBCData*> &pbcs);
+
+extern NURBS_EXPORT ON_Curve*
+interpolateCurve(ON_2dPointArray& samples);
+
+extern NURBS_EXPORT int
+check_pullback_singularity_bridge(const ON_Surface *surf, const ON_2dPoint &p1, const ON_2dPoint &p2);
+
 #endif
 
 /*
@@ -1664,3 +1689,4 @@ extern NURBS_EXPORT int surface_surface_intersection(const ON_Surface* surfA,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
