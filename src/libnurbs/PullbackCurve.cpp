@@ -48,15 +48,16 @@
 #define UNIVERSAL_SAMPLE_COUNT 1001
 
 
-typedef struct _bspline
-{
+/* FIXME: duplicated with opennurbs_ext.cpp */
+class BSpline {
+public:
     int p; // degree
     int m; // num_knots-1
     int n; // num_samples-1 (aka number of control points)
     std::vector<double> params;
     std::vector<double> knots;
     ON_2dPointArray controls;
-} BSpline;
+};
 
 
 bool

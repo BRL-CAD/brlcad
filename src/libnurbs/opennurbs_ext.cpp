@@ -2615,7 +2615,8 @@ try_again:
 
 //--------------------------------------------------------------------------------
 // pullback_curve implementation
-typedef struct pbc_data {
+class PBCData {
+public:
     double tolerance;
     double flatness;
     const ON_Curve* curve;
@@ -2623,17 +2624,18 @@ typedef struct pbc_data {
     ON_BrepFace* face;
     SurfaceTree* tree;
     ON_2dPointArray samples;
-} PBCData;
+};
 
 
-typedef struct _bspline {
+class BSpline {
+public:
     int p; // degree
     int m; // num_knots-1
     int n; // num_samples-1 (aka number of control points)
     std::vector<double> params;
     std::vector<double> knots;
     ON_2dPointArray controls;
-} BSpline;
+};
 
 
 bool
