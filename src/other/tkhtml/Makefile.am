@@ -124,7 +124,7 @@ DEFS		= @DEFS@ $(PKG_CFLAGS)
 CONFIG_CLEAN_FILES = Makefile
 
 CPPFLAGS	= @CPPFLAGS@
-LIBS		= -L/usr/lib -L/usr/local/lib @PKG_LIBS@ @LIBS@
+LIBS		= -L/usr/lib -L/usr/local/lib -L/usr/X11/lib @PKG_LIBS@ @LIBS@
 LDFLAGS		= @LDFLAGS@
 AR		= @AR@
 CFLAGS		= @CFLAGS@
