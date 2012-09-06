@@ -125,10 +125,10 @@ DEPRECATION NOTICE:
 i=0
 while test $i -lt 10 ; do
     sleep 1
-    echo -n "."
+    echo $ECHO_N ".$ECHO_C"
     i=`expr $i + 1`
 done
-echo "done.  You've been duly warned.  Proceeding with old build."
+echo "okay.  You've been duly warned.  Proceeding with old build."
 echo
 
 # keep track of cmd-line options for later
