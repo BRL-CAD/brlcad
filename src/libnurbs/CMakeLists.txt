@@ -43,6 +43,10 @@ endif(CPP_DLL_DEFINES)
 set_property(GLOBAL PROPERTY libnurbs_DEFINES "${libnurbs_DEFINES}")
 
 BRLCAD_ADDLIB(libnurbs "${LIBNURBS_SOURCES}" "libbn;libbu;${OPENNURBS_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NOSTRICTCXX)
+# Line below used to suppress Eigen specific warnings when working on new
+# fitting code - these are temporary, and will disappear once Eigen is
+# properly fixed.
+#set_property(TARGET libnurbs APPEND PROPERTY COMPILE_FLAGS "-Wno-shadow -Wno-float-equal")
 
 if(BUILD_STATIC_LIBS)
   set_property(TARGET libnurbs-static APPEND PROPERTY COMPILE_DEFINITIONS "OBJ_BREP=1")
