@@ -3912,6 +3912,7 @@ ICV='${top_builddir}/src/libicv/libicv.la'
 GCV='${top_builddir}/src/libgcv/libgcv.la'
 GED='${top_builddir}/src/libged/libged.la'
 MULTISPECTRAL='${top_builddir}/src/libmultispectral/libmultispectral.la'
+NURBS='${top_builddir}/src/libnurbs/libnurbs.la'
 OPTICAL='${top_builddir}/src/liboptical/liboptical.la'
 ORLE='${top_builddir}/src/liborle/liborle.la'
 PC='${top_builddir}/src/libpc/libpc.la'
@@ -3942,6 +3943,7 @@ WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS} ${TCL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
 OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${OPTICAL} ${OPTICAL_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
+NURBS_LIBS="${LIBSTDCXX} ${BU} ${BU_LIBS} ${BN} ${BN_LIBS}"
 PC_LIBS="${LIBSTDCXX} ${BU} ${BU_LIBS}"
 if test "x$build_against_x11" = "xno" ; then
     if test "x$bc_build_aquatk" = "xyes" ; then
@@ -3968,6 +3970,7 @@ AC_SUBST(ICV)
 AC_SUBST(GCV)
 AC_SUBST(GED)
 AC_SUBST(MULTISPECTRAL)
+AC_SUBST(NURBS)
 AC_SUBST(OPTICAL)
 AC_SUBST(ORLE)
 AC_SUBST(PKG)
@@ -3992,6 +3995,7 @@ AC_SUBST(ICV_LIBS)
 AC_SUBST(GCV_LIBS)
 AC_SUBST(GED_LIBS)
 AC_SUBST(MULTISPECTRAL_LIBS)
+AC_SUBST(NURBS_LIBS)
 AC_SUBST(OPTICAL_LIBS)
 AC_SUBST(ORLE_LIBS)
 AC_SUBST(PC_LIBS)
@@ -4181,6 +4185,7 @@ AC_CONFIG_FILES([
 	src/libged/Makefile
 	src/libicv/Makefile
 	src/libmultispectral/Makefile
+	src/libnurbs/Makefile
 	src/liboptical/Makefile
 	src/liborle/Makefile
 	src/libpc/Makefile
