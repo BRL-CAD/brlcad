@@ -34,6 +34,8 @@ struct Manifold_Info {
     ON_3dVectorArray face_normals;
     ON_3dVectorArray vectors;
     std::map< std::pair<size_t, size_t>, fastf_t > norm_results;
+    size_t patch_size_threshold;
+    double neighbor_angle_threshold;
 };
 
 class Curve
@@ -184,7 +186,7 @@ void get_connected_faces(struct rt_bot_internal *bot, size_t face_num, EdgeToFac
 
 // For a given face, determine which patch shares the majority of its edges.  If no one patch
 // has a majority, return -1
-int find_major_patch(struct rt_bot_internal *bot, size_t face_num, struct Manifold_Info *info) {
+int find_major_patch(struct rt_bot_internal *bot, size_t face_num, struct Manifold_Info *info, size_t curr_patch, size_t patch_count) {
     std::map<size_t, size_t> patch_cnt;
     std::map<size_t, size_t>::iterator patch_cnt_itr;
     std::set<size_t> connected_faces;
@@ -201,8 +203,28 @@ int find_major_patch(struct rt_bot_internal *bot, size_t face_num, struct Manifo
            max_patch = (*patch_cnt_itr).first;
         } 
     }
-    if (max_patch_edge_cnt == 1) return -1;
-    return (int)max_patch; 
+    if (max_patch_edge_cnt == 1) {
+	if (patch_count > 3) {
+	    return -1;
+	} else {
+            // A patch with three or fewer triangles is considered a small patch - if one of the shared 
+            // faces is a viable candidate, return it.
+            int candidate_patch = -1; 
+            double candidate_patch_norm = 0; 
+	    for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
+                if (info->face_to_patch[*cf_it] != curr_patch) {
+		    double current_norm = info->norm_results[std::make_pair(face_num, info->patch_to_plane[info->face_to_patch[(*cf_it)]])];
+                    if(current_norm > candidate_patch_norm) {
+                      candidate_patch = info->face_to_patch[(*cf_it)];
+                      candidate_patch_norm = current_norm;
+                    }
+                }
+	    }
+            return candidate_patch;
+        }
+    } else {
+	return (int)max_patch; 
+    }
 }
 
 // Given a list of edges and the "current" patch, find triangles that share more edges with
@@ -229,7 +251,7 @@ size_t shift_edge_triangles(struct rt_bot_internal *bot, std::map< size_t, std::
     // 2. build triangle set of edge triangles with major patch other than current patch 
     //    and a normal that permits movement to the major patch
     for (sizet_it = patch_edgefaces.begin(); sizet_it != patch_edgefaces.end() ; sizet_it++) {
-        int major_patch = find_major_patch(bot, (*sizet_it), info);
+        int major_patch = find_major_patch(bot, (*sizet_it), info, curr_patch, (*patches)[curr_patch].size());
         if (major_patch != (int)curr_patch && major_patch != -1) {
 	    if (info->norm_results[std::make_pair((*sizet_it), info->patch_to_plane[major_patch])] >= 0) {
                faces_to_shift[(*sizet_it)] = major_patch;
@@ -801,7 +823,7 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
                                 // Large patches pose a problem for feature preservation - make an attempt to ensure "large"
                                 // patches are flat.  The metric of a face count of 1/100th or more of the total bot count
                                 // is for current convenience - it will need to be a parameter.
-				if((*patches)[patch_cnt].size() > bot->num_faces / 100) {
+				if((*patches)[patch_cnt].size() > info->patch_size_threshold) {
 				    vect_t origin;
 				    size_t ok = 1;
 				    VMOVE(origin, &bot->vertices[bot->faces[(face_num)*3]*3]);
@@ -814,7 +836,7 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
 					if (dist_to_plane > 0) {
 					    double dist = DIST_PT_PT(origin, cpt);
 					    double angle = atan(dist_to_plane/dist);
-					    if (angle > 0.05) ok = 0;
+					    if (angle > info->neighbor_angle_threshold) ok = 0;
 					}
 				    }
 				    if (ok) {
@@ -865,19 +887,21 @@ main(int argc, char *argv[])
     std::map< size_t, std::set<size_t> > patches;
     std::map< size_t, std::set<size_t> >::iterator p_it;
     std::map< size_t, EdgeList > patch_edges;
-    Manifold_Info info;
 
     ON_Brep *brep = ON_Brep::New();
     FaceList::iterator f_it;
 
     ON_SimpleArray<ON_NurbsCurve> edges;
 
+    Manifold_Info info;
     info.vectors.Append(ON_3dVector(-1,0,0));
     info.vectors.Append(ON_3dVector(0,-1,0));
     info.vectors.Append(ON_3dVector(0,0,-1));
     info.vectors.Append(ON_3dVector(1,0,0));
     info.vectors.Append(ON_3dVector(0,1,0));
     info.vectors.Append(ON_3dVector(0,0,1));
+    info.patch_size_threshold = 100;
+    info.neighbor_angle_threshold = 0.05;
 
     bu_vls_init(&name);
 
