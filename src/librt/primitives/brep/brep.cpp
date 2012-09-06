@@ -590,36 +590,6 @@ utah_Fv(const ON_3dVector &Sv, const ON_3dVector &p1, const ON_3dVector &p2, dou
 }
 
 
-void
-utah_ray_planes(const ON_Ray &r, ON_3dVector &p1, double &p1d, ON_3dVector &p2, double &p2d)
-{
-    ON_3dPoint ro(r.m_origin);
-    ON_3dVector rdir(r.m_dir);
-    double rdx, rdy, rdz;
-    double rdxmag, rdymag, rdzmag;
-
-    rdx = rdir.x;
-    rdy = rdir.y;
-    rdz = rdir.z;
-
-    rdxmag = fabs(rdx);
-    rdymag = fabs(rdy);
-    rdzmag = fabs(rdz);
-
-    if (rdxmag > rdymag && rdxmag > rdzmag)
-	p1 = ON_3dVector(rdy, -rdx, 0);
-    else
-	p1 = ON_3dVector(0, rdz, -rdy);
-    // keith test
-    p1.Unitize();
-    //keith
-    p2 = ON_CrossProduct(p1, rdir);
-
-    p1d = -(p1 * ro);
-    p2d = -(p2 * ro);
-}
-
-
 double
 utah_calc_t(const ON_Ray &r, ON_3dPoint &S)
 {

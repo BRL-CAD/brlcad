@@ -130,6 +130,7 @@ NURBS_EXPORT void brep_get_plane_ray(ON_Ray& r, plane_ray& pr);
 NURBS_EXPORT void brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R);
 NURBS_EXPORT void brep_newton_iterate(plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv);
 NURBS_EXPORT void brep_newton_iterate(const ON_Surface* UNUSED(surf), plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv);
+NURBS_EXPORT void utah_ray_planes(const ON_Ray &r, ON_3dVector &p1, double &p1d, ON_3dVector &p2, double &p2d);
 
 NURBS_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 
