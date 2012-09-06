@@ -86,7 +86,7 @@ ged_bot_edge_split(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%zu %zu", &v1_i, &v2_i) != 2) {
+    if (bu_sscanf(argv[2], "%zu %zu", &v1_i, &v2_i) != 2) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad bot edge - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
@@ -228,7 +228,7 @@ ged_bot_face_split(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%zu", &face_i) != 1) {
+    if (bu_sscanf(argv[2], "%zu", &face_i) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad bot vertex index - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
@@ -331,7 +331,7 @@ ged_find_bot_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf %lf %lf", &view[X], &view[Y], &view[Z]) != 3) {
+    if (bu_sscanf(argv[2], "%lf %lf %lf", &view[X], &view[Y], &view[Z]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad view location - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
@@ -397,7 +397,7 @@ ged_find_botpt_nearest_pt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf %lf %lf", &view[X], &view[Y], &view[Z]) != 3) {
+    if (bu_sscanf(argv[2], "%lf %lf %lf", &view[X], &view[Y], &view[Z]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad view location - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
@@ -481,12 +481,12 @@ ged_move_botpt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%zu", &vertex_i) != 1) {
+    if (bu_sscanf(argv[2], "%zu", &vertex_i) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad bot vertex index - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
+    if (bu_sscanf(argv[3], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[3]);
 	return GED_ERROR;
     }
@@ -585,7 +585,7 @@ ged_move_botpts(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf %lf %lf", &vec[X], &vec[Y], &vec[Z]) != 3) {
+    if (bu_sscanf(argv[2], "%lf %lf %lf", &vec[X], &vec[Y], &vec[Z]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad vector - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
@@ -608,7 +608,7 @@ ged_move_botpts(struct ged *gedp, int argc, const char *argv[])
     botip = (struct rt_bot_internal *)intern.idb_ptr;
 
     for (i = 3; i < argc; ++i) {
-	if (sscanf(argv[i], "%zu", &vertex_i) != 1) {
+	if (bu_sscanf(argv[i], "%zu", &vertex_i) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad bot vertex index - %s\n", argv[0], argv[i]);
 	    continue;
 	}
