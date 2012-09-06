@@ -290,6 +290,7 @@ void find_edge_segments(struct rt_bot_internal *bot, std::set<size_t> *faces, Ed
     std::set<size_t>::iterator it;
     std::map<std::pair<size_t, size_t>, size_t> edge_face_cnt;
     std::map<std::pair<size_t, size_t>, size_t>::iterator efc_it;
+    patch_edges->clear();
     for (it = faces->begin(); it != faces->end(); it++) {
 	pt_A = bot->faces[(*it)*3+0]*3;
 	pt_B = bot->faces[(*it)*3+1]*3;
@@ -308,10 +309,10 @@ void find_edge_segments(struct rt_bot_internal *bot, std::set<size_t> *faces, Ed
     }
 }
 
-#if 0
 // Given a list of edges and the "current" patch, find triangles that overlap when projected into
 // the patch domain.  Returns the number of triangles identified as overlapping.
-size_t overlapping_edge_triangles(struct rt_bot_internal *bot, std::map< size_t, std::set<size_t> > *overlaps_list, size_t curr_patch, EdgeList *edges, struct Manifold_Info *info) {
+size_t overlapping_edge_triangles(struct rt_bot_internal *bot, size_t curr_patch, EdgeList *edges, struct Manifold_Info *info) {
+    size_t overlap_cnt = 0;
     std::set<size_t> patch_edgefaces;
     std::map<size_t, size_t> faces_to_shift;
     std::map<size_t, size_t>::iterator f_it;
@@ -329,15 +330,17 @@ size_t overlapping_edge_triangles(struct rt_bot_internal *bot, std::map< size_t,
     }
     // 2. build triangle set of edge triangles with major patch other than current patch 
     //    and a normal that permits movement to the major patch
+    std::set<size_t>::iterator ef_it;
+    std::set<size_t>::iterator ef_it2;
     for (sizet_it = patch_edgefaces.begin(); sizet_it != patch_edgefaces.end() ; sizet_it++) {
 	int this_overlaps = 0;
 	point_t normal;
 	point_t v0, v1, v2;
-	VSET(normal, patch->category_plane->x, patch->category_plane->y, patch->category_plane->z);
+	VSET(normal, info->vectors.At(info->patch_to_plane[curr_patch])->x, info->vectors.At(info->patch_to_plane[curr_patch])->y, info->vectors.At(info->patch_to_plane[curr_patch])->z);
 	pnt_project(&bot->vertices[bot->faces[(*ef_it)*3+0]*3], &v0, normal);
 	pnt_project(&bot->vertices[bot->faces[(*ef_it)*3+1]*3], &v1, normal);
 	pnt_project(&bot->vertices[bot->faces[(*ef_it)*3+2]*3], &v2, normal);
-	for (ef_it2 = edge_faces.begin(); ef_it2!=edge_faces.end(); ef_it2++) {
+	for (ef_it2 = patch_edgefaces.begin(); ef_it2!=patch_edgefaces.end(); ef_it2++) {
 	    struct bu_vls name;
 	    static FILE* plot = NULL;
 	    bu_vls_init(&name);
@@ -352,8 +355,6 @@ size_t overlapping_edge_triangles(struct rt_bot_internal *bot, std::map< size_t,
 		if(overlap) {
 		    this_overlaps = 1;
 		    std::cout << "Overlap: " << (*ef_it) << " and " << (*ef_it2) << "\n";
-		    //bu_vls_printf(&name, "%d_overlaps_%d.pl", (int) (*ef_it), (int) (*ef_it2));
-		    //plot = fopen(bu_vls_addr(&name), "w");
 		    bu_vls_printf(&name, "overlaps.pl", (int) (*ef_it), (int) (*ef_it2));
 		    plot = fopen(bu_vls_addr(&name), "a");
 		    plot_face(v0,v1,v2,255,0,0,plot);
@@ -361,17 +362,14 @@ size_t overlapping_edge_triangles(struct rt_bot_internal *bot, std::map< size_t,
 		    plot_face(&bot->vertices[bot->faces[(*ef_it)*3+0]*3], &bot->vertices[bot->faces[(*ef_it)*3+1]*3], &bot->vertices[bot->faces[(*ef_it)*3+2]*3],0,0,255,plot);
 		    plot_face(&bot->vertices[bot->faces[(*ef_it2)*3+0]*3], &bot->vertices[bot->faces[(*ef_it2)*3+1]*3], &bot->vertices[bot->faces[(*ef_it2)*3+2]*3],0,0,255,plot);
 		    fclose(plot);
+                    overlap_cnt++;
+		    //(*overlaps_list).insert((*ef_it));
 		}
 	    }
 	}
-	if (this_overlaps) {
-    
-	}
-	edge_faces.erase((*ef_it));
     }
-
+    return overlap_cnt;
 }
-#endif
 
 // Assemble edges into curves.  A curve is shared between two
 // and only two patches, and all vertex points except the endpoints
@@ -886,6 +884,7 @@ main(int argc, char *argv[])
     std::map< size_t, std::set<size_t> > patches;
     std::map< size_t, std::set<size_t> >::iterator p_it;
     std::map< size_t, EdgeList > patch_edges;
+    std::map< size_t, EdgeList >::iterator pe_it;
 
     ON_Brep *brep = ON_Brep::New();
     FaceList::iterator f_it;
@@ -930,9 +929,7 @@ main(int argc, char *argv[])
     dp = db_lookup(dbip, argv[2], LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_exit(1, "ERROR: Unable to look up object %s\n", argv[2]);
-    } else {
-	bu_log("Got %s\n", dp->d_namep);
-    }
+    } 
 
     RT_DB_INTERNAL_INIT(&intern)
 	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
@@ -947,15 +944,16 @@ main(int argc, char *argv[])
     RT_BOT_CK_MAGIC(bot_ip);
 
     // Do the initial partitioning of the mesh into patches
+    bu_log("Performing initial partitioning of %s\n", dp->d_namep);
     bot_partition(bot_ip, &patches, &info);
 
-    std::cout << "Patch count: " << patches.size() << "\n";
+    std::cout << "Patch count, first pass: " << patches.size() << "\n";
     static FILE* patch_plot = fopen("patches.pl", "w");
-    for (int i = 0; i < (int)patches.size(); i++) {
+    for (p_it = patches.begin(); p_it != patches.end(); p_it++) {
 	int r = int(256*drand48() + 1.0);
 	int g = int(256*drand48() + 1.0);
 	int b = int(256*drand48() + 1.0);
-        std::set<size_t> *faces = &(patches[i]);
+        std::set<size_t> *faces = &((*p_it).second);
         std::set<size_t> verts;
         std::set<size_t>::iterator f_it;
 	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
@@ -967,32 +965,21 @@ main(int argc, char *argv[])
     }
     fclose(patch_plot);
 
-    // Now that we have a patch breakout, find the edges
-    for (int i = 0; i < (int)patches.size(); i++) {
-        find_edge_segments(bot_ip, &(patches[i]), &(patch_edges[i]), &info);
-    }
-
-    // Warning - do NOT use edges.pl for a filename, MGED doesn't seem to like that???
-    static FILE* edge_plot = fopen("patch_edges.pl", "w");
-    pl_color(edge_plot, 255, 255, 255);
-    for (int i = 0; i < (int)patches.size(); i++) {
-	EdgeList::iterator e_it;
-	for (e_it = patch_edges[i].begin(); e_it != patch_edges[i].end(); e_it++) {
-	    pdv_3move(edge_plot, &bot_ip->vertices[(*e_it).first]);
-	    pdv_3cont(edge_plot, &bot_ip->vertices[(*e_it).second]);
-	}
-    }
-    fclose(edge_plot);
-
     // "Shave" sharp triangles off of the edges by shifting them from one patch to
     // another - doesn't avoid all sharp corners, but does produce some cleanup.
     size_t shaved_cnt = 1;
-    while (shaved_cnt != 0) {
+    size_t edge_smoothing_count = 0;
+    while (shaved_cnt != 0 && edge_smoothing_count <= 20) {
 	shaved_cnt = 0;
-	for (int i = 0; i < (int)patches.size(); i++) {
-	    shaved_cnt += shift_edge_triangles(bot_ip, &patches, i, &(patch_edges[i]), &info);
+	edge_smoothing_count++; 
+	for (p_it = patches.begin(); p_it != patches.end(); p_it++) {
+	    find_edge_segments(bot_ip, &((*p_it).second), &(patch_edges[(*p_it).first]), &info);
 	}
-	//std::cout << "Total edge shifts " << shaved_cnt << "\n";
+
+	for (p_it = patches.begin(); p_it != patches.end(); p_it++) {
+	    shaved_cnt += shift_edge_triangles(bot_ip, &patches, (*p_it).first, &(patch_edges[(*p_it).first]), &info);
+	}
+	std::cout << "Triangle shifts in smoothing pass " << edge_smoothing_count << ": " << shaved_cnt << "\n";
     }
 
     // Clean out empty patches
@@ -1002,14 +989,27 @@ main(int argc, char *argv[])
 	    patch_edges.erase(i);
 	}
     }
+    
+    std::cout << "Patch count, second pass: " << patches.size() << "\n";
 
-    std::cout << "Patch count: " << patches.size() << "\n";
+    // Warning - do NOT use edges.pl for a filename, MGED doesn't seem to like that???
+    static FILE* edge_plot = fopen("patch_edges.pl", "w");
+    pl_color(edge_plot, 255, 255, 255);
+    for (p_it = patches.begin(); p_it != patches.end(); p_it++) {
+	EdgeList::iterator e_it;
+	for (e_it = patch_edges[(*p_it).first].begin(); e_it != patch_edges[(*p_it).first].end(); e_it++) {
+	    pdv_3move(edge_plot, &bot_ip->vertices[(*e_it).first]);
+	    pdv_3cont(edge_plot, &bot_ip->vertices[(*e_it).second]);
+	}
+    }
+    fclose(edge_plot);
+
     static FILE* shaved_plot = fopen("patches_shaved.pl", "w");
-    for (int i = 0; i < (int)patches.size(); i++) {
+    for (p_it = patches.begin(); p_it != patches.end(); p_it++) {
 	int r = int(256*drand48() + 1.0);
 	int g = int(256*drand48() + 1.0);
 	int b = int(256*drand48() + 1.0);
-        std::set<size_t> *faces = &(patches[i]);
+        std::set<size_t> *faces = &((*p_it).second);
         std::set<size_t> verts;
         std::set<size_t>::iterator f_it;
 	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
@@ -1020,8 +1020,6 @@ main(int argc, char *argv[])
         }
     }
     fclose(shaved_plot);
-
-
 
     //partition_edge_repair(bot_ip, &curr_patch, patches, &patch_cnt, &edge_to_face);
 
