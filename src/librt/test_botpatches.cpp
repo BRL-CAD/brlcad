@@ -27,6 +27,7 @@ typedef std::set<size_t> FaceList;
 struct Manifold_Info {
     std::map< size_t, std::set<size_t> > patches;
     std::map< size_t, EdgeList > patch_edges;
+    std::map< size_t, std::set<EdgeList> > patch_edge_polycurves;
     VertToEdge vert_to_edge;
     VertToPatch vert_to_patch;
     EdgeToFace edge_to_face;
@@ -72,26 +73,11 @@ class Patch
 	}
 };
 
-void PatchToVector3d(struct rt_bot_internal *bot, std::set<size_t> *faces, on_fit::vector_vec3d &data)
-{
-    std::set<size_t>::iterator f_it;
-    std::set<size_t> verts;
-    unsigned int i = 0;
-    for (i = 0; i < bot->num_vertices; i++) {
-	//printf("v(%d): %f %f %f\n", i, V3ARGS(&bot->vertices[3*i]));
-    }
-    for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
-	verts.insert(bot->faces[(*f_it)*3+0]);
-	verts.insert(bot->faces[(*f_it)*3+1]);
-	verts.insert(bot->faces[(*f_it)*3+2]);
-    }
-    for (f_it = verts.begin(); f_it != verts.end(); f_it++) {
-	//printf("vert %d\n", (int)(*f_it));
-	//printf("vert(%d): %f %f %f\n", (int)(*f_it), V3ARGS(&bot->vertices[(*f_it)*3]));
-	data.push_back(ON_3dVector(V3ARGS(&bot->vertices[(*f_it)*3])));
-    }
-}
-
+/**********************************************************************************
+ *
+ *   Debugging code for plotting structures commonly generated during fitting
+ *
+ **********************************************************************************/
 
 // To plot specific groups of curves in MGED, do the following:
 // set glob_compat_mode 0
@@ -154,6 +140,14 @@ void plot_face(point_t p1, point_t p2, point_t p3, int r, int g, int b, FILE *c_
     pdv_3move(c_plot, p2);
     pdv_3cont(c_plot, p3);
 }
+
+
+/**********************************************************************************
+ *
+ *   Code for partitioning a mesh into patches suitable for NURBS surface fitting 
+ *
+ **********************************************************************************/
+
 
 Edge mk_edge(size_t pt_A, size_t pt_B) {
     if (pt_A <= pt_B) {
@@ -387,6 +381,146 @@ size_t overlapping_edge_triangles(struct rt_bot_internal *bot, size_t curr_patch
     }
     return max_overlap_face;
 }
+
+void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info)
+{
+    std::map< size_t, std::set<size_t> > face_groups;
+    std::map< size_t, size_t > face_to_plane;
+    // Calculate face normals dot product with bounding rpp planes
+    for (size_t i=0; i < bot->num_faces; ++i) {
+	size_t pt_A, pt_B, pt_C;
+	size_t result_max;
+	double vdot = 0.0;
+	double result = 0.0;
+	vect_t a, b, norm_dir;
+	// Add vert -> edge and edge -> face mappings to global map.
+	pt_A = bot->faces[i*3+0]*3;
+	pt_B = bot->faces[i*3+1]*3;
+	pt_C = bot->faces[i*3+2]*3;
+	info->edge_to_face[mk_edge(pt_A, pt_B)].insert(i);
+	info->edge_to_face[mk_edge(pt_B, pt_C)].insert(i);
+	info->edge_to_face[mk_edge(pt_C, pt_A)].insert(i);
+	// Categorize face
+	VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
+	VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);
+	VCROSS(norm_dir, a, b);
+	VUNITIZE(norm_dir);
+        info->face_normals.Append(ON_3dVector(norm_dir[0], norm_dir[1], norm_dir[2]));  
+	(*info).face_normals.At(i)->Unitize();
+	for (size_t j=0; j < (size_t)(*info).vectors.Count(); j++) {
+            vdot = ON_DotProduct(*(*info).vectors.At(j), *(*info).face_normals.At(i));
+	    info->norm_results[std::make_pair(i, j)] = vdot;
+	    if (vdot > result) {
+		result_max = j;
+		result = vdot;
+	    }
+	}
+	face_groups[result_max].insert(i);
+        face_to_plane[i]=result_max;
+    }
+    // Sort the groups by their face count - we want to start with the group containing
+    // either the least or the most faces - try most.
+    std::map< size_t, std::set<size_t> >::iterator fg_it;
+    std::vector<size_t> ordered_vects((*info).vectors.Count());
+    std::set<int> face_group_set;
+    for (int i = 0; i < (*info).vectors.Count(); i++) {face_group_set.insert(i);}
+    size_t array_pos = 0;
+    while (!face_group_set.empty()) {
+        size_t curr_max = 0;
+        size_t curr_vect = 0;
+	for (fg_it = face_groups.begin(); fg_it != face_groups.end(); fg_it++) {
+	    if((*fg_it).second.size() > curr_max) {
+		if (face_group_set.find((*fg_it).first) != face_group_set.end()) {
+		    curr_max = (*fg_it).second.size();
+		    curr_vect = (*fg_it).first;
+		}
+	    }
+	}
+        ordered_vects.at(array_pos) = curr_vect;
+        face_group_set.erase(curr_vect);
+        array_pos++;
+    }
+
+    // All faces must belong to some patch - continue until all faces are processed
+    for (int i = 0; i < 6; i++) {
+        fg_it = face_groups.find(ordered_vects.at(i));
+        std::set<size_t> *faces = &((*fg_it).second);
+	while (!faces->empty()) {
+	    info->patch_cnt++;
+	    std::queue<size_t> face_queue;
+	    FaceList::iterator f_it;
+	    face_queue.push(*(faces->begin()));
+	    face_groups[face_to_plane[face_queue.front()]].erase(face_queue.front());
+	    size_t current_plane = face_to_plane[face_queue.front()];
+	    while (!face_queue.empty()) {
+		std::set<Edge> face_edges;
+		std::set<Edge>::iterator face_edges_it;
+		size_t face_num = face_queue.front();
+		face_queue.pop();
+		(*patches)[info->patch_cnt].insert(face_num);
+                info->patch_to_plane[info->patch_cnt] = current_plane;
+                info->face_to_patch[face_num] = info->patch_cnt;
+                get_face_edges(bot, face_num, &face_edges);    
+		for (face_edges_it = face_edges.begin(); face_edges_it != face_edges.end(); face_edges_it++) {
+		    info->edge_to_patch[(*face_edges_it)].insert(info->patch_cnt);
+		    info->vert_to_patch[(*face_edges_it).first].insert(info->patch_cnt);
+		    info->vert_to_patch[(*face_edges_it).second].insert(info->patch_cnt);
+		}
+
+                std::set<size_t> connected_faces;
+		std::set<size_t>::iterator cf_it;
+                get_connected_faces(bot, face_num, &(info->edge_to_face), &connected_faces);
+		for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
+		    if (face_groups[face_to_plane[(*cf_it)]].find((*cf_it)) != face_groups[face_to_plane[(*cf_it)]].end()) {
+			if (info->face_plane_parallel_threshold > 0.0 && info->face_plane_parallel_threshold < 1.0) {
+			    if (info->norm_results[std::make_pair((*cf_it), current_plane)] >= info->face_plane_parallel_threshold) {
+                                // Large patches pose a problem for feature preservation - make an attempt to ensure "large"
+                                // patches are flat.  
+				if((*patches)[info->patch_cnt].size() > info->patch_size_threshold) {
+				    vect_t origin;
+				    size_t ok = 1;
+				    VMOVE(origin, &bot->vertices[bot->faces[(face_num)*3]*3]);
+				    ON_Plane plane(ON_3dPoint(origin[0], origin[1], origin[2]), *(*info).face_normals.At((face_num)));
+				    for(int pt = 0; pt < 3; pt++) {
+					point_t cpt;
+					VMOVE(cpt, &bot->vertices[bot->faces[((*cf_it))*3+pt]*3]);
+					double dist_to_plane = plane.DistanceTo(ON_3dPoint(cpt[0], cpt[1], cpt[2]));
+					//std::cout << "Distance[" << face_num << "," << (*cf_it) << "](" <<  pt << "): " << dist_to_plane << "\n";
+					if (dist_to_plane > 0) {
+					    double dist = DIST_PT_PT(origin, cpt);
+					    double angle = atan(dist_to_plane/dist);
+					    if (angle > info->neighbor_angle_threshold) ok = 0;
+					}
+				    }
+				    if (ok) {
+					face_queue.push((*cf_it));
+					face_groups[face_to_plane[(*cf_it)]].erase((*cf_it));
+				    }
+				} else {
+				    face_queue.push((*cf_it));
+				    face_groups[face_to_plane[(*cf_it)]].erase((*cf_it));
+				}
+			    }
+			} else {
+			    if (face_to_plane[(*cf_it)] == current_plane) {
+				face_queue.push((*cf_it));
+				face_groups[face_to_plane[(*cf_it)]].erase((*cf_it));
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+}
+
+/**********************************************************************************
+ *
+ *   Code for moving from patches with edge segments to a structured group of
+ *   fitted 3D NURBS curve segments and loops.
+ *
+ **********************************************************************************/
+
 
 // Assemble edges into curves.  A curve is shared between two
 // and only two patches, and all vertex points except the endpoints
@@ -741,141 +875,34 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 
 }
 
-void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info)
+/**********************************************************************************
+ *
+ *              Code for fitted 3D NURBS surfaces to patches.
+ *
+ **********************************************************************************/
+
+void PatchToVector3d(struct rt_bot_internal *bot, std::set<size_t> *faces, on_fit::vector_vec3d &data)
 {
-    std::map< size_t, std::set<size_t> > face_groups;
-    std::map< size_t, size_t > face_to_plane;
-    // Calculate face normals dot product with bounding rpp planes
-    for (size_t i=0; i < bot->num_faces; ++i) {
-	size_t pt_A, pt_B, pt_C;
-	size_t result_max;
-	double vdot = 0.0;
-	double result = 0.0;
-	vect_t a, b, norm_dir;
-	// Add vert -> edge and edge -> face mappings to global map.
-	pt_A = bot->faces[i*3+0]*3;
-	pt_B = bot->faces[i*3+1]*3;
-	pt_C = bot->faces[i*3+2]*3;
-	info->edge_to_face[mk_edge(pt_A, pt_B)].insert(i);
-	info->edge_to_face[mk_edge(pt_B, pt_C)].insert(i);
-	info->edge_to_face[mk_edge(pt_C, pt_A)].insert(i);
-	// Categorize face
-	VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
-	VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);
-	VCROSS(norm_dir, a, b);
-	VUNITIZE(norm_dir);
-        info->face_normals.Append(ON_3dVector(norm_dir[0], norm_dir[1], norm_dir[2]));  
-	(*info).face_normals.At(i)->Unitize();
-	for (size_t j=0; j < (size_t)(*info).vectors.Count(); j++) {
-            vdot = ON_DotProduct(*(*info).vectors.At(j), *(*info).face_normals.At(i));
-	    info->norm_results[std::make_pair(i, j)] = vdot;
-	    if (vdot > result) {
-		result_max = j;
-		result = vdot;
-	    }
-	}
-	face_groups[result_max].insert(i);
-        face_to_plane[i]=result_max;
+    std::set<size_t>::iterator f_it;
+    std::set<size_t> verts;
+    unsigned int i = 0;
+    for (i = 0; i < bot->num_vertices; i++) {
+	//printf("v(%d): %f %f %f\n", i, V3ARGS(&bot->vertices[3*i]));
     }
-    // Sort the groups by their face count - we want to start with the group containing
-    // either the least or the most faces - try most.
-    std::map< size_t, std::set<size_t> >::iterator fg_it;
-    std::vector<size_t> ordered_vects((*info).vectors.Count());
-    std::set<int> face_group_set;
-    for (int i = 0; i < (*info).vectors.Count(); i++) {face_group_set.insert(i);}
-    size_t array_pos = 0;
-    while (!face_group_set.empty()) {
-        size_t curr_max = 0;
-        size_t curr_vect = 0;
-	for (fg_it = face_groups.begin(); fg_it != face_groups.end(); fg_it++) {
-	    if((*fg_it).second.size() > curr_max) {
-		if (face_group_set.find((*fg_it).first) != face_group_set.end()) {
-		    curr_max = (*fg_it).second.size();
-		    curr_vect = (*fg_it).first;
-		}
-	    }
-	}
-        ordered_vects.at(array_pos) = curr_vect;
-        face_group_set.erase(curr_vect);
-        array_pos++;
+    for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	verts.insert(bot->faces[(*f_it)*3+0]);
+	verts.insert(bot->faces[(*f_it)*3+1]);
+	verts.insert(bot->faces[(*f_it)*3+2]);
     }
-
-    // All faces must belong to some patch - continue until all faces are processed
-    for (int i = 0; i < 6; i++) {
-        fg_it = face_groups.find(ordered_vects.at(i));
-        std::set<size_t> *faces = &((*fg_it).second);
-	while (!faces->empty()) {
-	    info->patch_cnt++;
-	    std::queue<size_t> face_queue;
-	    FaceList::iterator f_it;
-	    face_queue.push(*(faces->begin()));
-	    face_groups[face_to_plane[face_queue.front()]].erase(face_queue.front());
-	    size_t current_plane = face_to_plane[face_queue.front()];
-	    while (!face_queue.empty()) {
-		std::set<Edge> face_edges;
-		std::set<Edge>::iterator face_edges_it;
-		size_t face_num = face_queue.front();
-		face_queue.pop();
-		(*patches)[info->patch_cnt].insert(face_num);
-                info->patch_to_plane[info->patch_cnt] = current_plane;
-                info->face_to_patch[face_num] = info->patch_cnt;
-                get_face_edges(bot, face_num, &face_edges);    
-		for (face_edges_it = face_edges.begin(); face_edges_it != face_edges.end(); face_edges_it++) {
-		    info->edge_to_patch[(*face_edges_it)].insert(info->patch_cnt);
-		    info->vert_to_patch[(*face_edges_it).first].insert(info->patch_cnt);
-		    info->vert_to_patch[(*face_edges_it).second].insert(info->patch_cnt);
-		}
-
-                std::set<size_t> connected_faces;
-		std::set<size_t>::iterator cf_it;
-                get_connected_faces(bot, face_num, &(info->edge_to_face), &connected_faces);
-		for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
-		    if (face_groups[face_to_plane[(*cf_it)]].find((*cf_it)) != face_groups[face_to_plane[(*cf_it)]].end()) {
-			if (info->face_plane_parallel_threshold > 0.0 && info->face_plane_parallel_threshold < 1.0) {
-			    if (info->norm_results[std::make_pair((*cf_it), current_plane)] >= info->face_plane_parallel_threshold) {
-                                // Large patches pose a problem for feature preservation - make an attempt to ensure "large"
-                                // patches are flat.  
-				if((*patches)[info->patch_cnt].size() > info->patch_size_threshold) {
-				    vect_t origin;
-				    size_t ok = 1;
-				    VMOVE(origin, &bot->vertices[bot->faces[(face_num)*3]*3]);
-				    ON_Plane plane(ON_3dPoint(origin[0], origin[1], origin[2]), *(*info).face_normals.At((face_num)));
-				    for(int pt = 0; pt < 3; pt++) {
-					point_t cpt;
-					VMOVE(cpt, &bot->vertices[bot->faces[((*cf_it))*3+pt]*3]);
-					double dist_to_plane = plane.DistanceTo(ON_3dPoint(cpt[0], cpt[1], cpt[2]));
-					//std::cout << "Distance[" << face_num << "," << (*cf_it) << "](" <<  pt << "): " << dist_to_plane << "\n";
-					if (dist_to_plane > 0) {
-					    double dist = DIST_PT_PT(origin, cpt);
-					    double angle = atan(dist_to_plane/dist);
-					    if (angle > info->neighbor_angle_threshold) ok = 0;
-					}
-				    }
-				    if (ok) {
-					face_queue.push((*cf_it));
-					face_groups[face_to_plane[(*cf_it)]].erase((*cf_it));
-				    }
-				} else {
-				    face_queue.push((*cf_it));
-				    face_groups[face_to_plane[(*cf_it)]].erase((*cf_it));
-				}
-			    }
-			} else {
-			    if (face_to_plane[(*cf_it)] == current_plane) {
-				face_queue.push((*cf_it));
-				face_groups[face_to_plane[(*cf_it)]].erase((*cf_it));
-			    }
-			}
-		    }
-		}
-	    }
-	}
+    for (f_it = verts.begin(); f_it != verts.end(); f_it++) {
+	//printf("vert %d\n", (int)(*f_it));
+	//printf("vert(%d): %f %f %f\n", (int)(*f_it), V3ARGS(&bot->vertices[(*f_it)*3]));
+	data.push_back(ON_3dVector(V3ARGS(&bot->vertices[(*f_it)*3])));
     }
 }
 
 
-    int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     struct db_i *dbip;
     struct directory *dp;
