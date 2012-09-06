@@ -6,7 +6,7 @@ noinst_LTLIBRARIES = \
 
 BREP_TEST = brep_test
 BREP_CPPFLAGS = ${SSE} -DOBJ_BREP=1 ${TNT_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
-BREP_LIBADD = ${OPENNURBS}
+BREP_LIBADD = ${OPENNURBS} ${NURBS} ${NURBS_LIBS}
 
 brep_test_SOURCES = brep_test.cpp
 # cannot set per-target CPPFLAGS until automake 1.7+
@@ -77,7 +77,6 @@ librt_nil_la_SOURCES = \
 	mater.c \
 	memalloc.c \
 	mkbundle.c \
-	opennurbs_ext.cpp \
 	oslo_calc.c \
 	oslo_map.c \
 	pr.c \
@@ -293,7 +292,6 @@ parsetest_LDADD = \
 
 noinst_HEADERS = \
 	librt_private.h \
-	opennurbs_ext.h \
 	primitives/bot/btg.h \
 	primitives/bot/tieprivate.h \
 	primitives/brep/brep_debug.h \
@@ -331,7 +329,7 @@ if BUILD_REGEX
 DEPADD = src/other/libregex
 endif
 
-DEPENDS = src/libbn src/libsysv src/other/openNURBS ${DEPADD}
+DEPENDS = src/libbn src/libsysv src/libnurbs src/other/openNURBS ${DEPADD}
 
 include $(top_srcdir)/misc/Makefile.defs
 
