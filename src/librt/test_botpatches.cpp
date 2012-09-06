@@ -818,7 +818,7 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
                 get_connected_faces(bot, face_num, &(info->edge_to_face), &connected_faces);
 		for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
 		    if (face_groups[face_to_plane[(*cf_it)]].find((*cf_it)) != face_groups[face_to_plane[(*cf_it)]].end()) {
-			if (info->face_plane_parallel_threshold 0.0 && info->face_plane_parallel_threshold < 1.0) {
+			if (info->face_plane_parallel_threshold > 0.0 && info->face_plane_parallel_threshold < 1.0) {
 			    if (info->norm_results[std::make_pair((*cf_it), current_plane)] >= info->face_plane_parallel_threshold) {
                                 // Large patches pose a problem for feature preservation - make an attempt to ensure "large"
                                 // patches are flat.  
