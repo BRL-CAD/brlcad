@@ -35,6 +35,7 @@ struct Manifold_Info {
     ON_3dVectorArray vectors;
     std::map< std::pair<size_t, size_t>, fastf_t > norm_results;
     size_t patch_size_threshold;
+    double face_plane_parallel_threshold;
     double neighbor_angle_threshold;
 };
 
@@ -725,7 +726,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
 
 }
 
-void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info, double threshold)
+void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info)
 {
     std::map< size_t, std::set<size_t> > face_groups;
     std::map< size_t, size_t > face_to_plane;
@@ -817,12 +818,10 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
                 get_connected_faces(bot, face_num, &(info->edge_to_face), &connected_faces);
 		for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
 		    if (face_groups[face_to_plane[(*cf_it)]].find((*cf_it)) != face_groups[face_to_plane[(*cf_it)]].end()) {
-			if (threshold > 0.0 && threshold < 1.0) {
-			    // A "normal" value for threshold should be around 0.55 or 0.60
-			    if (info->norm_results[std::make_pair((*cf_it), current_plane)] >= threshold) {
+			if (info->face_plane_parallel_threshold 0.0 && info->face_plane_parallel_threshold < 1.0) {
+			    if (info->norm_results[std::make_pair((*cf_it), current_plane)] >= info->face_plane_parallel_threshold) {
                                 // Large patches pose a problem for feature preservation - make an attempt to ensure "large"
-                                // patches are flat.  The metric of a face count of 1/100th or more of the total bot count
-                                // is for current convenience - it will need to be a parameter.
+                                // patches are flat.  
 				if((*patches)[patch_cnt].size() > info->patch_size_threshold) {
 				    vect_t origin;
 				    size_t ok = 1;
@@ -900,8 +899,12 @@ main(int argc, char *argv[])
     info.vectors.Append(ON_3dVector(1,0,0));
     info.vectors.Append(ON_3dVector(0,1,0));
     info.vectors.Append(ON_3dVector(0,0,1));
+    // Smaller values here will do better at preserving detail but will increase patch count.
     info.patch_size_threshold = 100;
+    // Smaller values mean more detail preservation, but result in higher patch counts.
     info.neighbor_angle_threshold = 0.05;
+    // A "normal" value for the "parallel to projection plane" face check should be around 0.55
+    info.face_plane_parallel_threshold = 0.55;
 
     bu_vls_init(&name);
 
@@ -944,7 +947,7 @@ main(int argc, char *argv[])
     RT_BOT_CK_MAGIC(bot_ip);
 
     // Do the initial partitioning of the mesh into patches
-    bot_partition(bot_ip, &patches, &info, 0.55);
+    bot_partition(bot_ip, &patches, &info);
 
     std::cout << "Patch count: " << patches.size() << "\n";
     static FILE* patch_plot = fopen("patches.pl", "w");
