@@ -50,6 +50,7 @@ libged_nil_la_SOURCES = \
 	copymat.c \
 	copyeval.c \
 	cpi.c \
+	dag.cpp \
 	dbip.c \
 	debugbu.c \
 	debugdir.c \
@@ -65,6 +66,7 @@ libged_nil_la_SOURCES = \
 	dup.c \
 	eac.c \
 	echo.c \
+	edbot.c \
 	edcodes.c \
 	edcomb.c \
 	edpipe.c \
@@ -302,8 +304,7 @@ libged_la_LIBADD = \
 	${GED_LIBS}
 
 EXTRA_DIST = \
-	CMakeLists.txt \
-	dag.cpp
+	CMakeLists.txt
 
 DEPENDS = src/librt src/libwdb src/libanalyze src/libfb
 
