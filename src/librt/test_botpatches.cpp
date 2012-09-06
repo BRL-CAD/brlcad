@@ -1024,6 +1024,10 @@ main(int argc, char *argv[])
     }
     fclose(shaved_plot);
 
+    // This is not optimal - just creating individual 1 triangle faces when a problem is encountered
+    // in projection space.  Ideally, should try to create local patches that are safe for some
+    // planar projection, even if it's not one of the six original planes, and/or check to see if
+    // they can be merged into another patch without introducing a new problem.
     size_t overlap_cnt = 1;
     while (overlap_cnt != 0) {
         overlap_cnt = 0;
