@@ -24,14 +24,15 @@ set(LIBNURBS_SOURCES
   PullbackCurve.cpp
   )
 
-set(librt_ignored_files
+set(libnurbs_ignored_files
   opennurbs_fit.h
   opennurbs_fit.cpp
   PullbackCurve.h
   )
-CMAKEFILES(${librt_ignored_files})
+CMAKEFILES(${libnurbs_ignored_files})
+CMAKEFILES(Makefile.am)
 
-# Initialize librt_DEFINES in case of reconfiguration
+# Initialize libnurbs_DEFINES in case of reconfiguration
 set(libnurbs_DEFINES "")
 
 # Set libnurbs compile definitions
