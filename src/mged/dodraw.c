@@ -1032,11 +1032,7 @@ replot_modified_solid(
  * This parallels much of the code in dodraw.c
  */
 int
-invent_solid(
-    const char *name,
-    struct bu_list *vhead,
-    long rgb,
-    int copy)
+invent_solid(const char *name, struct bu_list *vhead, long rgb, int copy)
 {
     struct ged_display_list *gdlp;
     struct solid *sp;
