@@ -1225,6 +1225,11 @@ GED_EXPORT extern int ged_isize(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_item(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+  * Joint command ported to the libged library. 
+  */
+GED_EXPORT extern int ged_joint(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Save/keep the specified objects in the specified file
  */
 GED_EXPORT extern int ged_keep(struct ged *gedp, int argc, const char *argv[]);
