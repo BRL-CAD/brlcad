@@ -185,7 +185,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"in", cmd_ged_in, ged_in},
     {"inside", cmd_ged_inside, ged_inside},
     {"item", cmd_ged_plain_wrapper, ged_item},
-    {"joint", f_joint, GED_FUNC_PTR_NULL},
+    {"joint", cmd_ged_plain_wrapper, ged_joint},
     {"journal", f_journal, GED_FUNC_PTR_NULL},
     {"keep", cmd_ged_plain_wrapper, ged_keep},
     {"keypoint", f_keypoint, GED_FUNC_PTR_NULL},

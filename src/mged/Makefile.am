@@ -63,7 +63,6 @@ bin_PROGRAMS = \
 
 mged_SOURCES = \
 	adc.c \
-	animedit.c \
 	arbs.c \
 	attach.c \
 	axes.c \
@@ -174,7 +173,6 @@ noinst_HEADERS = \
 	comb_bool.h \
 	fbserv.h \
 	htmlLibraryUi.h \
-	joints.h \
 	menu.h \
 	mgdev.h \
 	mged.h \

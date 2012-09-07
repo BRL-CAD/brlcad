@@ -41,6 +41,7 @@ libged_nil_la_SOURCES = \
 	clip.c \
 	clone.c \
 	color.c \
+	columns.c \
 	comb.c \
 	combmem.c \
 	comb_color.c \
@@ -108,6 +109,7 @@ libged_nil_la_SOURCES = \
 	instance.c \
 	isize.c \
 	item.c \
+	joint.c \
 	keep.c \
 	keypoint.c \
 	kill.c \
@@ -288,6 +290,7 @@ AM_CPPFLAGS = \
 
 noinst_HEADERS = \
 	ged_private.h \
+	joint.h \
 	qray.h \
 	simulate/simulate.h \
 	wdb_qray.h

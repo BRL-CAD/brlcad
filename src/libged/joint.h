@@ -1,4 +1,4 @@
-/*                        J O I N T S . H
+/*                        J O I N T . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2012 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/joints.h
+/** @file libged/joint.h
  *
  * Joint and constrant information.
  *
@@ -53,6 +53,29 @@
  * of freedom is not used.
  */
 
+#ifndef FALSE
+#  define FALSE 0
+#endif
+
+#ifndef TRUE
+#  define TRUE 1
+#endif
+
+/* Check if database pointer is NULL */
+#define CHECK_DBI_NULL \
+    if (dbip == DBI_NULL) { \
+	Tcl_AppendResult(INTERP, "A database is not open!\n", (char *)NULL); \
+	return TCL_ERROR; \
+    }
+
+/* Check if the database is read only, and if so return TCL_ERROR */
+#define CHECK_READ_ONLY	\
+    if (dbip->dbi_read_only) { \
+	Tcl_AppendResult(INTERP, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
+	return TCL_ERROR; \
+    }
+
+
 /* NB: The quaternions should (MUST?) have zero twist! */
 struct arc {
     struct bu_list l;
@@ -62,7 +85,6 @@ struct arc {
     char **original;
     int org_last;
 };
-
 
 #define ARC_UNSET	0x0
 #define ARC_PATH	0x1
@@ -157,6 +179,20 @@ struct hold {
  */
 #define MAGIC_HOLD_STRUCT 0x684f4c63	/* 1750027363 */
 
+#define FUNTAB_UNLIMITED -1
+
+struct funtab {
+    char *ft_name;
+    char *ft_parms;
+    char *ft_comment;
+    int (*ft_func)();
+    int ft_min;
+    int ft_max;
+    int tcl_converted;
+};
+
+void vls_col_item(struct bu_vls *str, const char *cp);
+void vls_col_eol(struct bu_vls *str);
 /*
  * Local Variables:
  * mode: C

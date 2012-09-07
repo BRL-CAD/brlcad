@@ -62,7 +62,6 @@ add_definitions(
 
 set(MGED_SOURCES
   adc.c
-  animedit.c
   arbs.c
   attach.c
   axes.c
@@ -171,7 +170,6 @@ set(mged_ignore_files
   dm-wgl.c
   fbserv.h
   htmlLibraryUi.h
-  joints.h
   menu.h
   mgdev.h
   mged.bat

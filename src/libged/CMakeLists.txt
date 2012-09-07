@@ -79,6 +79,7 @@ set(LIBGED_SOURCES
   clip.c
   clone.c
   color.c
+  columns.c
   comb.c
   comb_color.c
   comb_std.c
@@ -145,6 +146,7 @@ set(LIBGED_SOURCES
   instance.c
   isize.c
   item.c
+  joint.c
   keep.c
   keypoint.c
   kill.c
@@ -385,6 +387,7 @@ SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 set(ged_ignore_files
   ${ged_ignore_files}
   ged_private.h
+  joint.h
   qray.h
   simulate/simulate.h
   simulate/simcollisionalgo.h
