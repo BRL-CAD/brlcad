@@ -54,6 +54,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* fix ged 'joint' command, need to figure out how libged should handle
+  non-object additions to the wireframe (or maybe they should be
+  objects, but not mged's faked solids ala cvt_vlblock_to_solids()).
+
 * implement a "bu_locate" function to consolidate bu_brlcad_root,
   bu_brlcad_data, and bu_brlcad_dir.  Pass in a bu_locate_t enum,
   the relative path, and the log/no-log flag.  Intent is to support
@@ -87,8 +91,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * update mged to not call wdb_init_obj and wdb_create_cmd, trace down
   other vestiges of wdb_obj for removal
-
-* migrate the mged 'joint' command to libged
 
 * add support to rt tools and gtools for specifying az/el in radians
   or degrees, propagate throughout mged commands that take angles too.
