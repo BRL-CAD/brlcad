@@ -27,7 +27,8 @@ typedef std::set<size_t> FaceList;
 struct Manifold_Info {
     std::map< size_t, std::set<size_t> > patches;
     std::map< size_t, EdgeList > patch_edges;
-    std::map< size_t, std::set<EdgeList> > patch_edge_polycurves;
+    ON_CurveArray polycurves;
+    std::map< size_t, std::set<size_t> > patch_polycurves;
     VertToEdge vert_to_edge;
     VertToPatch vert_to_patch;
     EdgeToFace edge_to_face;
@@ -855,16 +856,57 @@ void find_outer_loop(struct rt_bot_internal *bot, const Patch *patch, LoopList *
     }
 }
 
-void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_SimpleArray<ON_NurbsCurve> *UNUSED(bedges), EdgeToPatch *edge_to_patch, VertToPatch *vert_to_patch)
+#if 0
+void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 {
-    VertToEdge vert_to_edge;
-    EdgeList patch_edges;
-    LoopList patch_loops;
-    LoopList patch_loops_1curve;
-    LoopList patch_loops_all;
+    std::map< size_t, std::set<size_t> >::iterator p_it;
+    for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
+        EdgeList *patch_edges = info->patch_edges[(*p_it).first];
+        while (!patch_edges->empty()) {
+	    // We know the current patch - find out what the other one is for
+	    // this edge.
+	    std::set<size_t> edge_patches = info->edge_to_patch[patch_edges->begin()];
+	    edge_patches.erase((*p_it).first);
+	    size_t other_patch_id = edge_patches.begin();
+            // Now we know our patches - we need to start with the first line
+            // segment, and build up a set of edges until one of the haulting
+            // criteria is met.
+            std::set<Edge> polycurve_edges;
+            std::queue<Edge> edge_queue;
+            edge_queue.push(patch_edges->begin());
+	    info->patch_edges[(*p_it).first]->erase(patch_edges->begin());
+	    info->patch_edges[other_patch_id]->erase(patch_edges->begin());
+	    while (!edge_queue.empty()) {
+		// Add the first edge in the queue
+		Edge curr_edge = edge_queue.front();
+		edge_queue.pop();
+		polycurve_edges.insert(curr_edge);
+       
+                // Using the current edge, identify candidate edges and evaluate them.
+                std::set<Edge> eset;
+                std::set<Edge>::iterator e_it;
+                if (info->vert_to_patch[curr_edge.first].size() <= 2) {
+                   eset.insert(info->vert_to_edge[curr_edge.first].begin(), info->vert_to_edge[curr_edge.first].end());
+                }
+                if (info->vert_to_patch[curr_edge.second].size() <= 2) {
+                   eset.insert(info->vert_to_edge[curr_edge.second].begin(), info->vert_to_edge[curr_edge.second].end());
+                }
+                eset.erase(curr_edge);
+		for (e_it = eset.begin(); e_it != eset.end(); e_it++) {
+                    std::set<size_t> *ep = info->edge_to_patch[(*e_it)];
+                    ep.erase((*p_it).first);
+                    if (ep.begin() == other_patch_id) {
+			edge_queue.push(*e_it);
+			info->patch_edges[(*p_it).first]->erase(*e_it);
+			info->patch_edges[other_patch_id]->erase(*e_it);
+		    }  
+		}
+	    }
+	}
+/////  START OLD CODE //////
 
-    // Find the edges of the patch
-    //find_edge_segments(bot, patch->faces, &patch_edges, &vert_to_edge);
+	EdgeList::iterator e_it;
+	for (e_it = info->patch_edges[(*p_it).first].begin(); e_it != info->patch_edges[(*p_it).first].end(); e_it++) {
 
     std::cout << "Patch " << patch->id << " edge total: " << patch_edges.size() << "\n";
 
@@ -965,6 +1007,7 @@ void find_edges(struct rt_bot_internal *bot, const Patch *patch, FILE *plot, ON_
     }
 
 }
+#endif
 
 /**********************************************************************************
  *
@@ -1112,6 +1155,11 @@ int main(int argc, char *argv[])
     // to get some larger patches to keep the patch count at a minimum.
     edge_overlaps_to_patches(bot_ip, &info, &overlapping_faces);
 
+    // Make sure all our edge sets are up to date
+    for (p_it = info.patches.begin(); p_it != info.patches.end(); p_it++) {
+	find_edge_segments(bot_ip, &((*p_it).second), &(info.patch_edges[(*p_it).first]), &info);
+    }
+
     remove_empty_patches(&info);
     std::cout << "Patch count, third pass: " << info.patches.size() << "\n";
     plot_faces(bot_ip, &info, "patches_pass_3.pl");
@@ -1120,6 +1168,7 @@ int main(int argc, char *argv[])
     // Now that the mesh is fully partitioned, build the maps needed for curve discovery
     sync_structure_maps(bot_ip, &info);
 
+    // Now, using the patch edge sets, construct polycurves
 
     // Actually fit the NURBS surfaces
     for (int p = 0; p < (int)info.patches.size(); p++) {
