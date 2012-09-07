@@ -13,6 +13,7 @@
 #include "plot3.h"
 #include "opennurbs.h"
 #include "opennurbs_fit.h"
+#include "nurbs.h"
 
 typedef std::pair<size_t, size_t> Edge;
 typedef std::map< size_t, std::set<Edge> > VertToEdge;
@@ -29,6 +30,8 @@ struct Manifold_Info {
     std::map< size_t, EdgeList > patch_edges;
     ON_CurveArray polycurves;
     std::map< size_t, std::set<size_t> > patch_polycurves;
+    ON_SimpleArray<ON_NurbsSurface*> surface_array;
+    std::map< size_t, size_t> patch_to_surface;
     VertToEdge vert_to_edge;
     VertToPatch vert_to_patch;
     EdgeToFace edge_to_face;
@@ -172,6 +175,41 @@ void plot_patch_borders(struct rt_bot_internal *bot_ip, struct Manifold_Info *in
     }
     fclose(edge_plot);
 }
+
+void plot_ncurve(ON_Curve &curve, FILE *c_plot)
+{
+    double pt1[3], pt2[3];
+    ON_2dPoint from, to;
+    int plotres = 1000;
+    if (curve.IsLinear()) {
+        int knotcnt = curve.SpanCount();
+        double *knots = new double[knotcnt + 1];
+
+        curve.GetSpanVector(knots);
+        for (int i = 1; i <= knotcnt; i++) {
+            ON_3dPoint p = curve.PointAt(knots[i - 1]);
+            VMOVE(pt1, p);
+            p = curve.PointAt(knots[i]);
+            VMOVE(pt2, p);
+	    pdv_3move(c_plot, pt1);
+	    pdv_3cont(c_plot, pt2);
+        }
+
+    } else {
+        ON_Interval dom = curve.Domain();
+        // XXX todo: dynamically sample the curve
+        for (int i = 1; i <= plotres; i++) {
+            ON_3dPoint p = curve.PointAt(dom.ParameterAt((double) (i - 1)
+                                                         / (double)plotres));
+            VMOVE(pt1, p);
+            p = curve.PointAt(dom.ParameterAt((double) i / (double)plotres));
+            VMOVE(pt2, p);
+	    pdv_3move(c_plot, pt1);
+	    pdv_3cont(c_plot, pt2);
+        }
+    }
+}
+
 
 
 /**********************************************************************************
@@ -1171,6 +1209,7 @@ int main(int argc, char *argv[])
     // Now, using the patch edge sets, construct polycurves
 
     // Actually fit the NURBS surfaces
+    size_t nurbs_surface_count = -1;
     for (int p = 0; p < (int)info.patches.size(); p++) {
 	if (info.patches[p].size() != 0) {
 	    std::cout << "Found patch " << p << " with " << info.patches[p].size() << " faces\n";
@@ -1196,8 +1235,42 @@ int main(int argc, char *argv[])
 		fit.solve();
 	    }
 	    brep->NewFace(fit.m_nurbs);
+            info.surface_array.Append(new ON_NurbsSurface(fit.m_nurbs));
+            nurbs_surface_count++;
+            info.patch_to_surface[p] = nurbs_surface_count;
 	}
     }
+
+    // Not the final form of this (it's doing all intersections twice, should only be intersecting once per patch pair)
+    // May need edge-based polycurves anyway to guide selection of "correct" intersection segment in the cases where
+    // fitted surfaces intersect multiple times - will want curves with at least the start and endpoints close to those
+    // of the polycurves, and the total absence of a candidate SSI curve for a given polycurve would give a local indication
+    // of a surface fitting problem.
+    FILE* curve_plot = fopen("curve_plot.pl", "w");
+    pl_color(curve_plot, 255, 255, 255);
+    for (p_it = info.patches.begin(); p_it != info.patches.end(); p_it++) {
+	std::set<size_t> overlapping_patches;
+	std::set<size_t>::iterator o_it;
+	EdgeList::iterator e_it;
+	for (e_it = info.patch_edges[(*p_it).first].begin(); e_it != info.patch_edges[(*p_it).first].end(); e_it++) {
+	    std::set<size_t> ep = info.edge_to_patch[(*e_it)];
+	    ep.erase((*p_it).first);
+	    overlapping_patches.insert(ep.begin(), ep.end());
+	}
+	for (o_it = overlapping_patches.begin(); o_it != overlapping_patches.end(); o_it++) {
+	    std::cout << "Intersecting " << (*p_it).first  << " with " << (*o_it) << "\n";
+	    ON_SimpleArray<ON_NurbsCurve*> intersect3d;
+	    ON_SimpleArray<ON_NurbsCurve*> intersect_uv2d;
+	    ON_SimpleArray<ON_NurbsCurve*> intersect_st2d;
+	    brlcad::surface_surface_intersection((*(info.surface_array.At(info.patch_to_surface[(*p_it).first]))), (*(info.surface_array.At(info.patch_to_surface[(*o_it)]))), intersect3d, intersect_uv2d, intersect_st2d);
+	    for (int k = 0; k < intersect3d.Count(); k++) {
+		plot_ncurve(*(intersect3d[k]),curve_plot);
+		delete intersect3d[k];
+	    }
+
+	}
+    }
+    fclose(curve_plot);
 
     wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
     bname = (char*)bu_malloc(strlen(argv[2])+6, "char");
