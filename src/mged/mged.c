@@ -113,7 +113,7 @@ extern struct bu_vls *history_prev(const char *);
 extern struct bu_vls *history_cur(const char *);
 extern struct bu_vls *history_next(const char *);
 
-/* defined in dodraw.c */
+/* defined in dozoom.c */
 extern unsigned char geometry_default_color[];
 
 /* defined in set.c */

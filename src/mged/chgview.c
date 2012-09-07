@@ -42,8 +42,6 @@
 #include "./cmd.h"
 
 
-extern struct db_tree_state mged_initial_tree_state;	/* dodraw.c */
-
 extern void color_soltab(void);
 extern void set_absolute_tran(void); /* defined in set.c */
 extern void set_absolute_view_tran(void); /* defined in set.c */

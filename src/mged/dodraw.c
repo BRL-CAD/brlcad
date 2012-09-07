@@ -38,18 +38,13 @@
 #include "./cmd.h"
 
 
-void cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy);
-long nvectors;	/* number of vectors drawn so far */
-
-unsigned char geometry_default_color[] = { 255, 0, 0 };
-
 /*
  * This is just like the rt_initial_tree_state in librt/tree.c,
  * except that the default color is red instead of white.
  * This avoids confusion with illuminate mode.
  * Red is a one-gun color, avoiding convergence problems too.
  */
-struct db_tree_state mged_initial_tree_state = {
+static struct db_tree_state mged_initial_tree_state = {
     RT_DBTS_MAGIC,		/* magic */
     0,			/* ts_dbip */
     0,			/* ts_sofar */
@@ -128,6 +123,39 @@ mged_plot_anim_upcall_handler(char *file, long int us)
 	us -= frametime * 1000000;
     } while (us > 0);
 
+}
+
+
+void
+cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
+{
+    size_t i;
+    char shortname[32];
+    char namebuf[64];
+    char *av[4];
+
+    bu_strlcpy(shortname, name, sizeof(shortname));
+
+    /* Remove any residue colors from a previous overlay w/same name */
+    if (dbip->dbi_read_only) {
+	av[0] = "erase";
+	av[1] = shortname;
+	av[2] = NULL;
+	(void)ged_erase(gedp, 2, (const char **)av);
+    } else {
+	av[0] = "kill";
+	av[1] = "-f";
+	av[2] = shortname;
+	av[3] = NULL;
+	(void)ged_kill(gedp, 3, (const char **)av);
+    }
+
+    for (i=0; i < vbp->nused; i++) {
+	if (BU_LIST_IS_EMPTY(&(vbp->head[i]))) continue;
+
+	snprintf(namebuf, 32, "%s%lx",	shortname, vbp->rgb[i]);
+	invent_solid(namebuf, &vbp->head[i], vbp->rgb[i], copy);
+    }
 }
 
 
@@ -259,7 +287,6 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
      */
     BU_LIST_APPEND_LIST(&(sp->s_vlist), vhead);
     mged_bound_solid(sp);
-    nvectors += sp->s_vlen;
 
     /*
      * If this solid is new, fill in its information.
@@ -997,39 +1024,6 @@ replot_modified_solid(
 }
 
 
-void
-cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
-{
-    size_t i;
-    char shortname[32];
-    char namebuf[64];
-    char *av[4];
-
-    bu_strlcpy(shortname, name, sizeof(shortname));
-
-    /* Remove any residue colors from a previous overlay w/same name */
-    if (dbip->dbi_read_only) {
-	av[0] = "erase";
-	av[1] = shortname;
-	av[2] = NULL;
-	(void)ged_erase(gedp, 2, (const char **)av);
-    } else {
-	av[0] = "kill";
-	av[1] = "-f";
-	av[2] = shortname;
-	av[3] = NULL;
-	(void)ged_kill(gedp, 3, (const char **)av);
-    }
-
-    for (i=0; i < vbp->nused; i++) {
-	if (BU_LIST_IS_EMPTY(&(vbp->head[i]))) continue;
-
-	snprintf(namebuf, 32, "%s%lx",	shortname, vbp->rgb[i]);
-	invent_solid(namebuf, &vbp->head[i], vbp->rgb[i], copy);
-    }
-}
-
-
 /*
  * Invent a solid by adding a fake entry in the database table,
  * adding an entry to the solid table, and populating it with
@@ -1077,7 +1071,6 @@ invent_solid(
 	BU_LIST_APPEND_LIST(&(sp->s_vlist), vhead);
     }
     mged_bound_solid(sp);
-    nvectors += sp->s_vlen;
 
     /* set path information -- this is a top level node */
     db_add_node_to_full_path(&sp->s_fullpath, dp);

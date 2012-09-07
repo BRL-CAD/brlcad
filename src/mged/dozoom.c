@@ -44,8 +44,9 @@ mat_t incr_change;
 mat_t modelchanges;
 mat_t identity;
 
+
 /* This is a holding place for the current display managers default wireframe color */
-extern unsigned char geometry_default_color[];		/* defined in dodraw.c */
+unsigned char geometry_default_color[] = { 255, 0, 0 };
 
 
 /*
