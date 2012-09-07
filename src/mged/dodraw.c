@@ -17,9 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file mged/dodraw.c
- *
- */
 
 #include "common.h"
 
@@ -93,31 +90,29 @@ struct db_tree_state mged_initial_tree_state = {
 };
 
 
-static int mged_draw_nmg_only;
-static int mged_nmg_triangulate;
-static int mged_draw_wireframes;
-static int mged_draw_normals;
-static int mged_draw_solid_lines_only=0;
+static int mged_draw_nmg_only = 0;
+static int mged_nmg_triangulate = 0;
+static int mged_draw_wireframes = 0;
+static int mged_draw_normals = 0;
+static int mged_draw_solid_lines_only = 0;
 static int mged_draw_no_surfaces = 0;
-static int mged_shade_per_vertex_normals=0;
-int mged_wireframe_color_override;
-int mged_wireframe_color[3];
-static struct model *mged_nmg_model;
+static int mged_shade_per_vertex_normals = 0;
+static int mged_wireframe_color_override = 0;
+static int mged_wireframe_color[3] = {0, 0, 0};
+static struct model *mged_nmg_model = NULL;
 
 
 /*
- * M G E D _ P L O T _ A N I M _ U P C A L L _ H A N D L E R
- *
  * Used via upcall by routines deep inside LIBRT, to have a UNIX-plot
  * file dyanmicly overlaid on the screen.
  * This can be used to provide a very easy to program diagnostic
  * animation capability.
  * Alas, no wextern keyword to make this a little less indirect.
+ *
+ * 'us' is microseconds of extra delay
  */
 void
 mged_plot_anim_upcall_handler(char *file, long int us)
-
-    /* microseconds of extra delay */
 {
     const char *av[3];
 
@@ -137,19 +132,16 @@ mged_plot_anim_upcall_handler(char *file, long int us)
 
 
 /*
- * M G E D _ V L B L O C K _ A N I M _ U P C A L L _ H A N D L E R
- *
  * Used via upcall by routines deep inside LIBRT, to have a UNIX-plot
  * file dyanmicly overlaid on the screen.
  * This can be used to provide a very easy to program diagnostic
  * animation capability.
  * Alas, no wextern keyword to make this a little less indirect.
+ *
+ * 'us' is microseconds of extra delay
  */
 void
 mged_vlblock_anim_upcall_handler(struct bn_vlblock *vbp, long int us, int copy)
-
-    /* microseconds of extra delay */
-
 {
 
     cvt_vlblock_to_solids(vbp, "_PLOT_OVERLAY_", copy);
@@ -240,8 +232,6 @@ mged_bound_solid(struct solid *sp)
 
 
 /*
- * D R A W h _ P A R T 2
- *
  * Once the vlist has been created, perform the common tasks
  * in handling the drawn solid.
  *
@@ -304,7 +294,7 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	sp->s_Eflag = 0;	/* This is a solid */
 	db_dup_full_path(&sp->s_fullpath, pathp);
 	if (tsp)
-	  sp->s_regionid = tsp->ts_regionid;
+	    sp->s_regionid = tsp->ts_regionid;
     }
 
     createDListAll(sp);
@@ -326,11 +316,6 @@ drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 }
 
 
-/*
- * M G E D _ W I R E F R A M E _ R E G I O N _ E N D
- *
- * This routine must be prepared to run in parallel.
- */
 HIDDEN union tree *
 mged_wireframe_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, genptr_t UNUSED(client_data))
 {
@@ -338,11 +323,6 @@ mged_wireframe_region_end(struct db_tree_state *UNUSED(tsp), const struct db_ful
 }
 
 
-/*
- * M G E D _ W I R E F R A M E _ L E A F
- *
- * This routine must be prepared to run in parallel.
- */
 HIDDEN union tree *
 mged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
 {
@@ -414,9 +394,8 @@ static int mged_enable_fastpath = 0;
 static int mged_fastpath_count=0;	/* statistics */
 static struct bn_vlblock *mged_draw_edge_uses_vbp;
 
+
 /*
- * M G E D _ N M G _ R E G I O N _ S T A R T
- *
  * When performing "ev" on a region, consider whether to process
  * the whole subtree recursively.
  * Normally, say "yes" to all regions by returning 0.
@@ -586,11 +565,6 @@ process_triangulate(const struct db_full_path *pathp, union tree *curtree, struc
 }
 
 
-/*
- * M G E D _ N M G _ R E G I O N _ E N D
- *
- * This routine must be prepared to run in parallel.
- */
 HIDDEN union tree *
 mged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
 {
@@ -678,8 +652,6 @@ mged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 
 
 /*
- * D R A W T R E E S
- *
  * This routine is MGED's analog of rt_gettrees().
  * Add a set of tree hierarchies to the active set.
  * Note that argv[0] should be ignored, it has the command name in it.
@@ -893,8 +865,6 @@ drawtrees(int argc, const char *argv[], int kind)
 
 
 /*
- * P A T H h M A T
- *
  * Find the transformation matrix obtained when traversing
  * the arc indicated in sp->s_path[] to the indicated depth.
  *
@@ -928,8 +898,6 @@ pathHmat(
 
 
 /*
- * R E P L O T _ O R I G I N A L _ S O L I D
- *
  * Given an existing solid structure that may have been subjected to
  * solid editing, recompute the vector list, etc, to make the solid
  * the same as it originally was.
@@ -972,8 +940,6 @@ replot_original_solid(struct solid *sp)
 
 
 /*
- * R E P L O T _ M O D I F I E D _ S O L I D
- *
  * Given the solid structure of a solid that has already been drawn,
  * and a new database record and transform matrix,
  * create a new vector list for that solid, and substitute.
@@ -1031,14 +997,8 @@ replot_modified_solid(
 }
 
 
-/*
- * C V T _ V L B L O C K _ T O _ S O L I D S
- */
 void
-cvt_vlblock_to_solids(
-    struct bn_vlblock *vbp,
-    const char *name,
-    int copy)
+cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
 {
     size_t i;
     char shortname[32];
@@ -1071,8 +1031,6 @@ cvt_vlblock_to_solids(
 
 
 /*
- * I N V E N T _ S O L I D
- *
  * Invent a solid by adding a fake entry in the database table,
  * adding an entry to the solid table, and populating it with
  * the given vector list.
@@ -1144,9 +1102,6 @@ invent_solid(
 }
 
 
-/*
- * A D D _ S O L I D _ P A T H _ T O _ R E S U L T
- */
 void
 add_solid_path_to_result(
     Tcl_Interp *interp,
@@ -1161,8 +1116,6 @@ add_solid_path_to_result(
 
 
 /*
- * R E D R A W _ V L I S T
- *
  * Given the name(s) of database objects, re-generate the vlist
  * associated with every solid in view which references the
  * named object(s), either solids or regions.
