@@ -375,9 +375,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"vnirt", f_vnirt, GED_FUNC_PTR_NULL},
     {"voxelize", cmd_ged_plain_wrapper, ged_voxelize},
     {"vquery_ray", f_vnirt, GED_FUNC_PTR_NULL},
-#if 0
-    {"vrmgr", f_vrmgr, GED_FUNC_PTR_NULL},
-#endif
     {"vrot", cmd_vrot, GED_FUNC_PTR_NULL},
 #if 0
     {"vrot_center", f_vrot_center, GED_FUNC_PTR_NULL},

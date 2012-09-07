@@ -118,8 +118,7 @@ mged_SOURCES = \
 	update.c \
 	usepen.c \
 	utility1.c \
-	vparse.c \
-	vrlink.c
+	vparse.c
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 mged_CFLAGS = \

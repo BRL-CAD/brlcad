@@ -115,9 +115,6 @@ set(MGED_SOURCES
   utility1.c
   vparse.c
   )
-if(NOT WIN32)
-  set(MGED_SOURCES ${MGED_SOURCES} vrlink.c)
-endif(NOT WIN32)
 
 if(NOT WIN32)
   BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad;libged;libwdb;libdm;libtermio;${MGED_EXTRA_LIBS};${ITCL_LIBRARY};${ITK_LIBRARY}")

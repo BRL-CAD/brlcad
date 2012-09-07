@@ -345,7 +345,6 @@ Options:
 	-t f		    - Specifies the threshold volume to decide if voxel is to be included in the voxelized output.
   }}
 set mged_help_data(vquery_ray)	{{x y}  	{trace a single ray from x y}}
-#set mged_help_data(vrmgr)	{{host {master|slave|overview}}	{link with Virtual Reality manager}}
 set mged_help_data(vrot)	$helplib_data(vo_vrot)
 set mged_help_data(wcodes)	{{filename object(s)}	{write region ident codes to filename}}
 set mged_help_data(whatid)	$helplib_data(wdb_whatid)

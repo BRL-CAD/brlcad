@@ -189,7 +189,6 @@ extern int f_view2model_lu(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_view2model_vec(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_view_ring(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_vnirt(ClientData, Tcl_Interp *, int, const char *[]);
-extern int f_vrmgr(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_vrot_center(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_wait(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_winset(ClientData, Tcl_Interp *, int, const char *[]);
