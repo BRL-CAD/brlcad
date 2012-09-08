@@ -647,17 +647,25 @@ utah_pushBack(const BBNode* sbv, ON_2dPoint &uv)
 int
 utah_newton_solver_test(const BBNode* sbv, const ON_Surface* surf, const ON_Ray& r, ON_2dPoint* ouv, double* t, ON_3dVector* N, bool& converged, ON_2dPoint* suv, const int count, const int iu, const int iv)
 {
-    int i;
+    int i = 0;
     int intersects = 0;
-    double j11, j12, j21, j22;
-    double f, g;
-    double rootdist, oldrootdist;
-    double J, invdetJ;
-    double du, dv;
-    double cdu, cdv;
+    double j11 = 0.0;
+    double j12 = 0.0;
+    double j21 = 0.0;
+    double j22 = 0.0;
+    double f = 0.0;
+    double g = 0.0;
+    double rootdist = 0.0;
+    double oldrootdist = 0.0;
+    double J = 0.0;
+    double invdetJ = 0.0;
+    double du = 0.0;
+    double dv = 0.0;
+    double cdu = 0.0;
+    double cdv = 0.0;
 
     ON_3dVector p1, p2;
-    double p1d = 0, p2d = 0;
+    double p1d = 0.0, p2d = 0.0;
     int errantcount = 0;
     utah_ray_planes(r, p1, p1d, p2, p2d);
 
