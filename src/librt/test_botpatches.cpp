@@ -600,12 +600,21 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
         std::set<size_t> *faces = &((*fg_it).second);
 	while (!faces->empty()) {
 	    info->patch_cnt++;
+	    // Find largest remaining face in group
+	    double face_size_criteria = 0.0;
+	    size_t smallest_face = 0;
+	    for(std::set<size_t>::iterator fg_it = faces->begin(); fg_it != faces->end(); fg_it++) {
+		double fa = face_area(bot, *fg_it);
+		if (fa > face_size_criteria) {
+		   smallest_face = (*fg_it);
+		   face_size_criteria = fa;
+		}
+	    }
 	    std::queue<size_t> face_queue;
 	    FaceList::iterator f_it;
-	    face_queue.push(*(faces->begin()));
+	    face_queue.push(smallest_face);
 	    face_groups[face_to_plane[face_queue.front()]].erase(face_queue.front());
 	    size_t current_plane = face_to_plane[face_queue.front()];
-	    double face_size_criteria = face_area(bot, face_queue.front());
 	    while (!face_queue.empty()) {
 		size_t face_num = face_queue.front();
 		face_queue.pop();
@@ -1210,7 +1219,9 @@ int main(int argc, char *argv[])
     std::cout << "Triangles overlapping in projection planes: " << overlapping_faces.size() << "\n";
     // Construct new patches using the overlapping faces - accept single faces if necessary, but try
     // to get some larger patches to keep the patch count at a minimum.
-    edge_overlaps_to_patches(bot_ip, &info, &overlapping_faces);
+
+    /* TODO - problem here, can get into infinite loop situations */
+    //edge_overlaps_to_patches(bot_ip, &info, &overlapping_faces);
 
     // Make sure all our edge sets are up to date
     for (p_it = info.patches.begin(); p_it != info.patches.end(); p_it++) {
@@ -1260,8 +1271,7 @@ int main(int argc, char *argv[])
 	}
     }
 
-    // Not the final form of this (it's doing all intersections twice, should only be intersecting once per patch pair)
-    // May need edge-based polycurves anyway to guide selection of "correct" intersection segment in the cases where
+    // SSI intersection.  May need edge-based polycurves anyway to guide selection of "correct" intersection segment in the cases where
     // fitted surfaces intersect multiple times - will want curves with at least the start and endpoints close to those
     // of the polycurves, and the total absence of a candidate SSI curve for a given polycurve would give a local indication
     // of a surface fitting problem.
