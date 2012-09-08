@@ -682,7 +682,7 @@ state4(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
     return ret_val;
 }
 
-static inline int
+HIDDEN int
 state5and6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol, int ret_val_7)
 {
     int ret_val = -1;
