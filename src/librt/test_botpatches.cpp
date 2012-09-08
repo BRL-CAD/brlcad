@@ -180,7 +180,7 @@ void plot_ncurve(ON_Curve &curve, FILE *c_plot)
 {
     double pt1[3], pt2[3];
     ON_2dPoint from, to;
-    int plotres = 1000;
+    int plotres = 100;
     if (curve.IsLinear()) {
         int knotcnt = curve.SpanCount();
         double *knots = new double[knotcnt + 1];
@@ -1248,27 +1248,32 @@ int main(int argc, char *argv[])
     // of a surface fitting problem.
     FILE* curve_plot = fopen("curve_plot.pl", "w");
     pl_color(curve_plot, 255, 255, 255);
+    std::set<std::pair<size_t, size_t> > patch_interactions;
+    std::set<std::pair<size_t, size_t> >::iterator o_it;
     for (p_it = info.patches.begin(); p_it != info.patches.end(); p_it++) {
-	std::set<size_t> overlapping_patches;
-	std::set<size_t>::iterator o_it;
 	EdgeList::iterator e_it;
 	for (e_it = info.patch_edges[(*p_it).first].begin(); e_it != info.patch_edges[(*p_it).first].end(); e_it++) {
 	    std::set<size_t> ep = info.edge_to_patch[(*e_it)];
 	    ep.erase((*p_it).first);
-	    overlapping_patches.insert(ep.begin(), ep.end());
-	}
-	for (o_it = overlapping_patches.begin(); o_it != overlapping_patches.end(); o_it++) {
-	    std::cout << "Intersecting " << (*p_it).first  << " with " << (*o_it) << "\n";
-	    ON_SimpleArray<ON_NurbsCurve*> intersect3d;
-	    ON_SimpleArray<ON_NurbsCurve*> intersect_uv2d;
-	    ON_SimpleArray<ON_NurbsCurve*> intersect_st2d;
-	    brlcad::surface_surface_intersection((*(info.surface_array.At(info.patch_to_surface[(*p_it).first]))), (*(info.surface_array.At(info.patch_to_surface[(*o_it)]))), intersect3d, intersect_uv2d, intersect_st2d);
-	    for (int k = 0; k < intersect3d.Count(); k++) {
-		plot_ncurve(*(intersect3d[k]),curve_plot);
-		delete intersect3d[k];
+	    if((*p_it).first < (*ep.begin())) {
+		patch_interactions.insert(std::make_pair((*p_it).first, (*ep.begin())));
+	    } else {
+		patch_interactions.insert(std::make_pair((*ep.begin()), (*p_it).first));
 	    }
-
 	}
+    }
+    std::cout << "Patch interaction count: " << patch_interactions.size() << "\n";
+    for (o_it = patch_interactions.begin(); o_it != patch_interactions.end(); o_it++) {
+	std::cout << "Intersecting " << (*o_it).first  << " with " << (*o_it).second << "\n";
+	ON_SimpleArray<ON_NurbsCurve*> intersect3d;
+	ON_SimpleArray<ON_NurbsCurve*> intersect_uv2d;
+	ON_SimpleArray<ON_NurbsCurve*> intersect_st2d;
+	brlcad::surface_surface_intersection((*(info.surface_array.At(info.patch_to_surface[(*o_it).first]))), (*(info.surface_array.At(info.patch_to_surface[(*o_it).second]))), intersect3d, intersect_uv2d, intersect_st2d);
+	for (int k = 0; k < intersect3d.Count(); k++) {
+	    plot_ncurve(*(intersect3d[k]),curve_plot);
+	    delete intersect3d[k];
+	}
+
     }
     fclose(curve_plot);
 
