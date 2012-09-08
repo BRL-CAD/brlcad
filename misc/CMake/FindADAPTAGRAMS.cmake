@@ -45,18 +45,16 @@
 #  ADAPTAGRAMS_LIBRARIES      - List of libraries when using Adaptagrams.
 #  ADAPTAGRAMS_FOUND          - True if libavoid is found.
 
-find_path(AVOID_INCLUDE_DIR libavoid.h /usr/local/include/libavoid /usr/include/libavoid)
-find_library(AVOID_LIBRARY NAMES avoid /usr/local/lib /usr/lib)
+find_path(AVOID_INCLUDE_DIR libavoid.h PATH_SUFFIXES libavoid)
+find_library(AVOID_LIBRARY NAMES avoid)
+
+set(ADAPTAGRAMS_INCLUDE_DIRS ${AVOID_INCLUDE_DIR} CACHE STRING "Adaptagrams headers")
+set(ADAPTAGRAMS_LIBRARIES    ${AVOID_LIBRARY} CACHE STRING "Adaptagrams libs")
 
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(ADAPTAGRAMS DEFAULT_MSG AVOID_LIBRARY AVOID_INCLUDE_DIR)
 
-if (ADAPTAGRAMS_FOUND)
-  set(ADAPTAGRAMS_INCLUDE_DIRS ${AVOID_INCLUDE_DIR})
-  set(ADAPTAGRAMS_LIBRARIES    ${AVOID_LIBRARY})
-endif()
-
-MARK_AS_ADVANCED(AVOID_LIBRARY AVOID_INCLUDE_DIR)
+MARK_AS_ADVANCED(ADAPTAGRAMS_LIBRARIES ADAPAGRAMS_INCLUDE_DIRS AVOID_LIBRARY AVOID_INCLUDE_DIR)
 # Local Variables:
 # tab-width: 8
 # mode: cmake

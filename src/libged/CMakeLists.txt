@@ -1,45 +1,20 @@
 
-# Macro for adding commands to libged.  Use in the command subdirectory as follows:
-#
-# GED_ADD_CMD(CMD_SRCS CMD_INCLUDES CMD_LIBS)
-#
-# with the last two arguments being optional.
-MACRO(GED_ADD_CMD sources)
-  get_filename_component(currentdir ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-  foreach(srcfile ${${sources}})
-    LIST(APPEND cmd_srcs "${currentdir}/${srcfile}")
-  endforeach(srcfile ${${sources}})
-  set(LIBGED_CMD_SRCS ${LIBGED_CMD_SRCS} ${cmd_srcs} CACHE INTERNAL "libged cmd srcs" FORCE)
-  if(${ARGV1})
-    set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${${ARGV1}})
-    LIST(REMOVE_DUPLICATES LIBGED_CMD_INCLUDE_DIRS)
-    set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} CACHE INTERNAL "libged cmd includes" FORCE)
-  endif(${ARGV1})
-  if(${ARGV2})
-    set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${${ARGV2}})
-    LIST(REMOVE_DUPLICATES LIBGED_CMD_LIBS_LIST)
-    set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} CACHE INTERNAL	"libged cmd libs" FORCE)
-  endif(${ARGV2})
-ENDMACRO(GED_ADD_CMD)
-
-# if this subdir stuff is pushed into the actual subdirs, the autoconf vs cmake
-# verification (sh/cmakecheck.sh) will fail on dist-hook.
+# if GED command stuff is pushed into the actual subdirs, the autoconf vs cmake
+# verification (sh/cmakecheck.sh) will fail on dist-hook.  For now, just
+# handle it as part of libged
 if(BULLET_FOUND)
-  GED_ADD_CMD(LIBGED_SIM_SOURCES BULLET_INCLUDE_DIR BULLET_LIBRARIES)
-  set(SIM_SRCS
-    simulate/simphysics.cpp
-    simulate/simulate.c
-    simulate/simcollisionalgo.cpp
-    simulate/simutils.c
-    simulate/simrt.c
-    )
-  CMAKEFILES(simulate/simrt.h simulate/simutils.h)
-else(BULLET_FOUND)
-  set(SIM_SRCS "")
-  set(ged_ignore_files simulate/simphysics.cpp simulate/simulate.c simulate/simcollisionalgo.cpp simulate/simcollisionalgo.h simulate/simutils.c simulate/simrt.c simulate/simrt.h simulate/simutils.h)
+  set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${BULLET_LIBRARIES})
+  set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
+  # The Bullet headers introduce a lot of shadow warnings - don't stop the
+  # build because of them
+  set(NOSTRICTCXX_SETTING "NOSTRICTCXX")
 endif(BULLET_FOUND)
 
-set(AVOID_SRCS dag.cpp)
+if(ADAPTAGRAMS_FOUND)
+  set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${ADAPAGRAMS_LIBRARIES})
+  set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${AVOID_INCLUDE_DIR})
+endif(ADAPTAGRAMS_FOUND)
+
 
 set(LIBGED_SOURCES
   3ptarb.c
@@ -89,6 +64,7 @@ set(LIBGED_SOURCES
   copyeval.c
   copymat.c
   cpi.c
+  dag.cpp
   dbip.c
   debugbu.c
   debugdir.c
@@ -262,6 +238,11 @@ set(LIBGED_SOURCES
   shader.c
   shells.c
   showmats.c
+  simulate/simphysics.cpp
+  simulate/simulate.c
+  simulate/simcollisionalgo.cpp
+  simulate/simutils.c
+  simulate/simrt.c
   size.c
   slew.c
   solids_on_ray.c
@@ -313,31 +294,8 @@ set(LIBGED_SOURCES
   ypr.c
   zap.c
   zoom/zoom.c
-  ${SIM_SRCS}
-  ${AVOID_SRCS}
+  ${LIBGED_CMD_SRCS}
   )
-
-# Core logic for adding commands to the libged source/lib/include lists.
-file(GLOB GED_DIR_CONTENTS ${CMAKE_CURRENT_SOURCE_DIR} *)
-foreach(item ${GED_DIR_CONTENTS})
-  get_filename_component(item_name ${item} NAME)
-  if(IS_DIRECTORY ${item} AND NOT ${item_name} STREQUAL "libged" AND NOT ${item_name} STREQUAL ".svn")
-    LIST(APPEND ged_subdirs ${item_name})
-  endif(IS_DIRECTORY ${item} AND NOT ${item_name} STREQUAL "libged" AND NOT ${item_name} STREQUAL ".svn")
-endforeach(item ${GED_DIR_CONTENTS})
-foreach(item ${ged_subdirs})
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${item}/CMakeLists.txt)
-    add_subdirectory(${item})
-  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${item}/CMakeLists.txt)
-endforeach(item ${ged_subdirs})
-set(LIBGED_SOURCES ${LIBGED_SOURCES} ${LIBGED_CMD_SRCS})
-if(LIBGED_CMD_LIBS_LIST)
-  LIST(REMOVE_DUPLICATES LIBGED_CMD_LIBS_LIST)
-endif(LIBGED_CMD_LIBS_LIST)
-if(LIBGED_CMD_INCLUDE_DIRS)
-  LIST(REMOVE_DUPLICATES LIBGED_CMD_INCLUDE_DIRS)
-endif(LIBGED_CMD_INCLUDE_DIRS)
-
 
 # Include directories needed by libged users
 set(GED_INCLUDE_DIRS
@@ -354,13 +312,9 @@ set(GED_INCLUDE_DIRS
 # includes from plugins
 set(GED_LOCAL_INCLUDE_DIRS
   ${PNG_INCLUDE_DIR}
-  ${LIBGED_CMD_INCLUDE_DIRS}
   ${REGEX_INCLUDE_DIR}
-  )
-# local includes
-set(GED_LOCAL_INCLUDE_DIRS
-  ${GED_LOCAL_INCLUDE_DIRS}
   ${CLIPPER_INCLUDE_DIR}
+  ${LIBGED_CMD_INCLUDE_DIRS}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(ged GED_INCLUDE_DIRS GED_LOCAL_INCLUDE_DIRS)
@@ -369,31 +323,17 @@ if(CPP_DLL_DEFINES)
   add_definitions(-DCLIPPER_DLL_IMPORTS)
 endif(CPP_DLL_DEFINES)
 
-if(BULLET_FOUND)
-  if(ADAPTAGRAMS_FOUND)
-    BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${AVOID_LIBRARY};${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}")
-  else(ADAPTAGRAMS_FOUND)
-    BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}")
-  endif(ADAPTAGRAMS_FOUND)
-else(BULLET_FOUND)
-  if(ADAPTAGRAMS_FOUND)
-    BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${AVOID_LIBRARY};${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}")
-  else(ADAPTAGRAMS_FOUND)
-    BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}")
-  endif(ADAPTAGRAMS_FOUND)
-endif(BULLET_FOUND)
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}" ${NOSTRICTCXX_SETTING})
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(ged_ignore_files
-  ${ged_ignore_files}
   ged_private.h
   joint.h
   qray.h
-  simulate/simulate.h
-  simulate/simcollisionalgo.h
-  simulate/simutils.h
-  simulate/simrt.h
   wdb_qray.h
+  simulate/simcollisionalgo.h 
+  simulate/simrt.h 
+  simulate/simutils.h
   )
 CMAKEFILES(${ged_ignore_files})
 CMAKEFILES(Makefile.am)

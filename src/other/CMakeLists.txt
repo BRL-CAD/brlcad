@@ -773,6 +773,40 @@ else(BRLCAD_LEVEL2)
   CMAKEFILES(clipper)
 endif(BRLCAD_LEVEL2)
 
+
+# Bullet is not yet integrated as a src/other subbuild, but there is code
+# that will make use of it if it is available.  If that code becomes 
+# sufficiently useful, Bullet will be integrated.  In the meantime, locate
+# the find logic for that package here.
+
+# Bullet physics library
+if(BRLCAD_LEVEL2)
+  find_package(Bullet)
+  if(BULLET_FOUND)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_BULLET 1\n")
+  endif(BULLET_FOUND)
+  # Let the rest of the package know the results
+  set(BULLET_LIBRARIES "${BULLET_LIBRARIES}" CACHE STRING "Bullet libs" FORCE) 
+  set(BULLET_FOUND "${BULLET_FOUND}" CACHE BOOL "Bullet status" FORCE) 
+  mark_as_advanced(BULLET_INCLUDE_DIR)
+endif(BRLCAD_LEVEL2)
+
+# Adaptagrams is not yet integrated as a src/other subbuild, but there is code
+# that will make use of it if it is available.  If that code becomes 
+# sufficiently useful, Adaptagrams will be integrated.  In the meantime, locate
+# the find logic for that package here.
+
+# Adaptagrams library
+if(BRLCAD_LEVEL2)
+  find_package(ADAPTAGRAMS)
+  if(ADAPTAGRAMS_FOUND)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_ADAPTAGRAMS 1\n")
+  endif(ADAPTAGRAMS_FOUND)
+  set(ADAPTAGRAMS_LIBRARIES "${ADAPTAGRAMS_LIBRARIES}" CACHE STRING "Adaptagrams libs" FORCE) 
+  set(ADAPTAGRAMS_FOUND "${ADAPTAGRAMS_FOUND}" CACHE BOOL "Adaptagrams status" FORCE) 
+endif(BRLCAD_LEVEL2)
+
+
 # The jama/tnt headers are installed by default - BRL-CAD requires the altered headers
 # to build (I think?)
 add_subdirectory(tnt)

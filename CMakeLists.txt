@@ -1498,19 +1498,6 @@ BRLCAD_CHECK_LIBRARY(DL dl dlopen)
 # Solaris lexer library
 BRLCAD_CHECK_LIBRARY(SOLARIS_LEXER l yyless)
 
-# Bullet physics library
-FIND_PACKAGE(Bullet)
-if(BULLET_FOUND)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_BULLET 1\n")
-endif(BULLET_FOUND)
-mark_as_advanced(BULLET_INCLUDE_DIR)
-
-# Adaptagrams library
-FIND_PACKAGE(ADAPTAGRAMS)
-if(ADAPTAGRAMS_FOUND)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_ADAPTAGRAMS 1\n")
-endif(ADAPTAGRAMS_FOUND)
-
 # *******************************************************************
 # ***             Check for Headers - Stage 5 of 9                ***
 # *******************************************************************
