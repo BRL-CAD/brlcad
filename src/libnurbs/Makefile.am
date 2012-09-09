@@ -5,10 +5,11 @@ noinst_LTLIBRARIES = \
 
 # cannot set per-target CPPFLAGS until automake 1.7+
 AM_CPPFLAGS = \
-	${SSE} \
-	-DOBJ_BREP=1 \
 	${OPENNURBS_CPPFLAGS} \
-	${TNT_CPPFLAGS}
+	${SSE} \
+	${TCL_CPPFLAGS} \
+	${TNT_CPPFLAGS} \
+	-DOBJ_BREP=1
 
 AM_CFLAGS = ${STRICT_FLAGS}
 
