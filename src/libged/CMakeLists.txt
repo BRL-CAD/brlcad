@@ -333,6 +333,7 @@ set(ged_ignore_files
   wdb_qray.h
   simulate/simcollisionalgo.h 
   simulate/simrt.h 
+  simulate/simulate.h
   simulate/simutils.h
   )
 CMAKEFILES(${ged_ignore_files})
