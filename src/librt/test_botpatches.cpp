@@ -915,26 +915,26 @@ void find_outer_loop(struct rt_bot_internal *bot, const Patch *patch, LoopList *
     }
 }
 
-#if 0
 void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 {
     std::map< size_t, std::set<size_t> >::iterator p_it;
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
-        EdgeList *patch_edges = info->patch_edges[(*p_it).first];
+        EdgeList *patch_edges = &(info->patch_edges[(*p_it).first]);
         while (!patch_edges->empty()) {
 	    // We know the current patch - find out what the other one is for
 	    // this edge.
-	    std::set<size_t> edge_patches = info->edge_to_patch[patch_edges->begin()];
+	    const Edge *first_edge = &(*(patch_edges->begin()));
+	    std::set<size_t> edge_patches = (*(info->edge_to_patch.find(*first_edge))).second;
 	    edge_patches.erase((*p_it).first);
-	    size_t other_patch_id = edge_patches.begin();
+	    size_t other_patch_id = *(edge_patches.begin());
             // Now we know our patches - we need to start with the first line
             // segment, and build up a set of edges until one of the haulting
             // criteria is met.
             std::set<Edge> polycurve_edges;
             std::queue<Edge> edge_queue;
-            edge_queue.push(patch_edges->begin());
-	    info->patch_edges[(*p_it).first]->erase(patch_edges->begin());
-	    info->patch_edges[other_patch_id]->erase(patch_edges->begin());
+            edge_queue.push(*(patch_edges->begin()));
+	    info->patch_edges[(*p_it).first].erase(patch_edges->begin());
+	    info->patch_edges[other_patch_id].erase(patch_edges->begin());
 	    while (!edge_queue.empty()) {
 		// Add the first edge in the queue
 		Edge curr_edge = edge_queue.front();
@@ -944,24 +944,47 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
                 // Using the current edge, identify candidate edges and evaluate them.
                 std::set<Edge> eset;
                 std::set<Edge>::iterator e_it;
+                // If a vertex is used by three patches, it is a stopping point for curve
+                // buildup.  Otherwise, consider its edges.
                 if (info->vert_to_patch[curr_edge.first].size() <= 2) {
                    eset.insert(info->vert_to_edge[curr_edge.first].begin(), info->vert_to_edge[curr_edge.first].end());
                 }
                 if (info->vert_to_patch[curr_edge.second].size() <= 2) {
                    eset.insert(info->vert_to_edge[curr_edge.second].begin(), info->vert_to_edge[curr_edge.second].end());
                 }
-                eset.erase(curr_edge);
+                // We don't need to re-consider any edge we've already considered.
 		for (e_it = eset.begin(); e_it != eset.end(); e_it++) {
-                    std::set<size_t> *ep = info->edge_to_patch[(*e_it)];
-                    ep.erase((*p_it).first);
-                    if (ep.begin() == other_patch_id) {
+                    if(polycurve_edges.find((*e_it)) != polycurve_edges.end()) {
+			eset.erase((*e_it));
+		    }
+		}
+		// For the new candidate edges, pull their patches and remove
+                // the current patch from the results.  If the remaining patch
+                // matches the current "other patch", this segment is part of
+                // the current polycurve.
+		for (e_it = eset.begin(); e_it != eset.end(); e_it++) {
+                    std::set<size_t> *ep = &(info->edge_to_patch[(*e_it)]);
+                    ep->erase((*p_it).first);
+                    if (*(ep->begin()) == other_patch_id) {
 			edge_queue.push(*e_it);
-			info->patch_edges[(*p_it).first]->erase(*e_it);
-			info->patch_edges[other_patch_id]->erase(*e_it);
+			info->patch_edges[(*p_it).first].erase(*e_it);
+			info->patch_edges[other_patch_id].erase(*e_it);
 		    }  
 		}
 	    }
+            // populate polycurve - maybe should be using std::vector here for polycurves, since there's an
+            // advantage to retaining the vect integer labels when doing loop assembly.
+            info->patch_polycurves[(*p_it).first].insert(info->polycurves.Count());
+            info->patch_polycurves[other_patch_id].insert(info->polycurves.Count());
+            // Count vertices on edges - if two verts appear with one edge each, those are the start and end.
+            // if all verts have two edges, it's a closed loop - use return to first vert as stopping criteria.
+
+            // algorithm is: insert start point.  search for edge with other point.  that edge becomes current edge.  insert prev. point
+            // searched for.  search for edge with other point.  repeat until last edge found.  insert end point.
 	}
+    }
+}
+#if 0
 /////  START OLD CODE //////
 
 	EdgeList::iterator e_it;
@@ -1273,7 +1296,7 @@ int main(int argc, char *argv[])
     }
     bu_free(bname, "char");
  
-
+#if 0
     // SSI intersection.  May need edge-based polycurves anyway to guide selection of "correct" intersection segment in the cases where
     // fitted surfaces intersect multiple times - will want curves with at least the start and endpoints close to those
     // of the polycurves, and the total absence of a candidate SSI curve for a given polycurve would give a local indication
@@ -1308,7 +1331,7 @@ int main(int argc, char *argv[])
 
     }
     fclose(curve_plot);
-   
+#endif 
     return 0;
 }
 
