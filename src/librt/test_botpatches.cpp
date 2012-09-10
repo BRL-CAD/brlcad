@@ -1101,7 +1101,6 @@ void PatchToVector3d(struct rt_bot_internal *bot, std::set<size_t> *faces, on_fi
     }
 }
 
-
 int main(int argc, char *argv[])
 {
     struct db_i *dbip;
@@ -1271,6 +1270,17 @@ int main(int argc, char *argv[])
 	}
     }
 
+    // Generate BRL-CAD brep object
+    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    bname = (char*)bu_malloc(strlen(argv[2])+6, "char");
+    bu_strlcpy(bname, argv[2], strlen(argv[2])+1);
+    bu_strlcat(bname, "_brep", strlen(bname)+6);
+    if (mk_brep(wdbp, bname, brep) == 0) {
+	bu_log("Generated brep object %s\n", bname);
+    }
+    bu_free(bname, "char");
+ 
+
     // SSI intersection.  May need edge-based polycurves anyway to guide selection of "correct" intersection segment in the cases where
     // fitted surfaces intersect multiple times - will want curves with at least the start and endpoints close to those
     // of the polycurves, and the total absence of a candidate SSI curve for a given polycurve would give a local indication
@@ -1305,16 +1315,7 @@ int main(int argc, char *argv[])
 
     }
     fclose(curve_plot);
-
-    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-    bname = (char*)bu_malloc(strlen(argv[2])+6, "char");
-    bu_strlcpy(bname, argv[2], strlen(argv[2])+1);
-    bu_strlcat(bname, "_brep", strlen(bname)+6);
-    if (mk_brep(wdbp, bname, brep) == 0) {
-	bu_log("Generated brep object %s\n", bname);
-    }
-    bu_free(bname, "char");
-    
+   
     return 0;
 }
 
