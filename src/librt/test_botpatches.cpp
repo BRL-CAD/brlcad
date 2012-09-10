@@ -629,37 +629,30 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
 		    double curr_face_area = face_area(bot, (*cf_it));
 		    if (curr_face_area < (face_size_criteria*10) && curr_face_area > (face_size_criteria*0.1)) {
 			if (face_groups[face_to_plane[(*cf_it)]].find((*cf_it)) != face_groups[face_to_plane[(*cf_it)]].end()) {
-			    if (info->face_plane_parallel_threshold > 0.0 && info->face_plane_parallel_threshold < 1.0) {
-				if (info->norm_results[std::make_pair((*cf_it), current_plane)] >= info->face_plane_parallel_threshold) {
-				    // Large patches pose a problem for feature preservation - make an attempt to ensure "large"
-				    // patches are flat.  
-				    if((*patches)[info->patch_cnt].size() > info->patch_size_threshold) {
-					vect_t origin;
-					size_t ok = 1;
-					VMOVE(origin, &bot->vertices[bot->faces[(face_num)*3]*3]);
-					ON_Plane plane(ON_3dPoint(origin[0], origin[1], origin[2]), *(*info).face_normals.At((face_num)));
-					for(int pt = 0; pt < 3; pt++) {
-					    point_t cpt;
-					    VMOVE(cpt, &bot->vertices[bot->faces[((*cf_it))*3+pt]*3]);
-					    double dist_to_plane = plane.DistanceTo(ON_3dPoint(cpt[0], cpt[1], cpt[2]));
-					    //std::cout << "Distance[" << face_num << "," << (*cf_it) << "](" <<  pt << "): " << dist_to_plane << "\n";
-					    if (dist_to_plane > 0) {
-						double dist = DIST_PT_PT(origin, cpt);
-						double angle = atan(dist_to_plane/dist);
-						if (angle > info->neighbor_angle_threshold) ok = 0;
-					    }
+			    if (face_to_plane[(*cf_it)] == current_plane) {
+				// Large patches pose a problem for feature preservation - make an attempt to ensure "large"
+				// patches are flat.  
+				if((*patches)[info->patch_cnt].size() > info->patch_size_threshold) {
+				    vect_t origin;
+				    size_t ok = 1;
+				    VMOVE(origin, &bot->vertices[bot->faces[(face_num)*3]*3]);
+				    ON_Plane plane(ON_3dPoint(origin[0], origin[1], origin[2]), *(*info).face_normals.At((face_num)));
+				    for(int pt = 0; pt < 3; pt++) {
+					point_t cpt;
+					VMOVE(cpt, &bot->vertices[bot->faces[((*cf_it))*3+pt]*3]);
+					double dist_to_plane = plane.DistanceTo(ON_3dPoint(cpt[0], cpt[1], cpt[2]));
+					//std::cout << "Distance[" << face_num << "," << (*cf_it) << "](" <<  pt << "): " << dist_to_plane << "\n";
+					if (dist_to_plane > 0) {
+					    double dist = DIST_PT_PT(origin, cpt);
+					    double angle = atan(dist_to_plane/dist);
+					    if (angle > info->neighbor_angle_threshold) ok = 0;
 					}
-					if (ok) {
-					    face_queue.push((*cf_it));
-					    face_groups[face_to_plane[(*cf_it)]].erase((*cf_it));
-					}
-				    } else {
+				    }
+				    if (ok) {
 					face_queue.push((*cf_it));
 					face_groups[face_to_plane[(*cf_it)]].erase((*cf_it));
 				    }
-				}
-			    } else {
-				if (face_to_plane[(*cf_it)] == current_plane) {
+				} else {
 				    face_queue.push((*cf_it));
 				    face_groups[face_to_plane[(*cf_it)]].erase((*cf_it));
 				}
