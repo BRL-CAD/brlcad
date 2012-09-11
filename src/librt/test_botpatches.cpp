@@ -28,7 +28,7 @@ typedef std::set<size_t> FaceList;
 struct Manifold_Info {
     std::map< size_t, std::set<size_t> > patches;
     std::map< size_t, EdgeList > patch_edges;
-    std::set<std::vector<size_t> > polycurves;
+    std::map< std::pair<size_t, size_t> , std::vector<size_t> > polycurves;
     std::vector<std::vector<size_t> *> patch_polycurves;
     ON_SimpleArray<ON_NurbsSurface*> surface_array;
     std::map< size_t, size_t> patch_to_surface;
@@ -943,7 +943,7 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 		Edge curr_edge = edge_queue.front();
 		edge_queue.pop();
 		polycurve_edges.insert(curr_edge);
-                std::cout << "Current edge: (" << curr_edge.first << "," << curr_edge.second << ")\n";
+                //std::cout << "Current edge: (" << curr_edge.first << "," << curr_edge.second << ")\n";
        
                 // Using the current edge, identify candidate edges and evaluate them.
                 std::set<Edge> eset;
@@ -962,14 +962,12 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 			eset.erase((*e_it));
 		    }
 		}
-		// For the new candidate edges, pull their patches and remove
-                // the current patch from the results.  If the remaining patch
-                // matches the current "other patch", this segment is part of
+		// For the new candidate edges, pull their patches and see if
+		// they match the current patches.  If they do, this segment is part of
                 // the current polycurve.
 		for (e_it = eset.begin(); e_it != eset.end(); e_it++) {
 		    std::set<size_t> *ep = &(info->edge_to_patch[(*e_it)]);
-                    ep->erase((*p_it).first);
-                    if (*(ep->begin()) == other_patch_id && ep->size() == 1 && polycurve_edges.find(*e_it) == polycurve_edges.end()) {
+                    if (ep->find(other_patch_id) != ep->end() && ep->find((*p_it).first) != ep->end() && polycurve_edges.find(*e_it) == polycurve_edges.end()) {
 			edge_queue.push(*e_it);
 			info->patch_edges[(*p_it).first].erase(*e_it);
 			info->patch_edges[other_patch_id].erase(*e_it);
@@ -983,8 +981,31 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
                 vert_to_verts[(*pc_it).first].insert((*pc_it).second);
                 vert_to_verts[(*pc_it).second].insert((*pc_it).first);
             }
-            for (vv_it = vert_to_verts.begin(); vv_it != vert_to_verts.end(); vv_it++) {
-                if ((*vv_it).second.size() == 1) std::cout << "Found polycurve start/end pt: " << (*vv_it).first << "\n";
+	    std::pair<size_t, size_t> start_end;
+            start_end.first = INT_MAX;
+            start_end.second = INT_MAX;
+	    for (vv_it = vert_to_verts.begin(); vv_it != vert_to_verts.end(); vv_it++) {
+		if ((*vv_it).second.size() == 1) {
+		    if (start_end.first == INT_MAX) {
+			std::cout << "Found polycurve start pt: " << (*vv_it).first << "\n";
+			start_end.first = (*vv_it).first;
+		    } else {
+			if (start_end.second == INT_MAX) {
+			    std::cout << "Found polycurve end pt: " << (*vv_it).first << "\n";
+			    start_end.second = (*vv_it).first;
+			} else {
+			    std::cout << "HUH?? Found extra polycurve 'termination' pt?? " << (*vv_it).first << "\n";
+			}
+		    }                    
+		} else {
+		    if ((*vv_it).second.size() > 2) std::cout << "HUH?? vert reporting more than two paired verts\n";
+		}
+	    }
+            if (start_end.first == INT_MAX && start_end.second == INT_MAX) {
+               std::cout << "polycurve is a closed loop\n";
+            }
+            if (start_end.first == INT_MAX && start_end.second != INT_MAX) {
+               std::cout << "HUH?? Found start point but not end point???\n";
             }
             
             // - maybe should be using std::vector here for polycurves, since there's an
