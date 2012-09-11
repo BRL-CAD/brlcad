@@ -28,7 +28,7 @@ typedef std::set<size_t> FaceList;
 struct Manifold_Info {
     std::map< size_t, std::set<size_t> > patches;
     std::map< size_t, EdgeList > patch_edges;
-    std::map< std::pair<size_t, size_t> , std::vector<size_t> > polycurves;
+    std::map< size_t , std::vector<size_t> > polycurves;
     ON_SimpleArray<ON_NurbsSurface*> surface_array;
     std::map< size_t, size_t> patch_to_surface;
     VertToEdge vert_to_edge;
@@ -996,6 +996,8 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 		    if ((*vv_it).second.size() > 2) std::cout << "HUH?? vert reporting more than two paired verts\n";
 		}
 	    }
+            size_t curve_id = info->polycurves.size() + 1;
+            std::cout << "Curve number " << curve_id << "\n";
 	    size_t threshold = 0;
 	    if (start_end.first == INT_MAX && start_end.second == INT_MAX) {
                std::cout << "polycurve is a closed loop\n";
@@ -1008,7 +1010,7 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 	    while (start_end_cnt <= threshold) {
 		if(next_pt == start_end.second) start_end_cnt++;
 		size_t old_pt = next_pt;
-		info->polycurves[start_end].push_back(old_pt);  
+		info->polycurves[curve_id].push_back(old_pt);  
                 std::cout << "Adding pt " << old_pt << " to curve\n";
                 next_pt = *(vert_to_verts[old_pt].begin());
                 vert_to_verts[next_pt].erase(old_pt);
@@ -1016,7 +1018,7 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 	    int r = int(256*drand48() + 1.0);
 	    int g = int(256*drand48() + 1.0);
 	    int b = int(256*drand48() + 1.0);
-            plot_curve(bot, &(info->polycurves[start_end]), r, g, b, pcurveplot);
+            plot_curve(bot, &(info->polycurves[curve_id]), r, g, b, pcurveplot);
 	    // - maybe should be using std::vector here for polycurves, since there's an
             // advantage to retaining the vect integer labels when doing loop assembly.
            // Count vertices on edges - if two verts appear with one edge each, those are the start and end.
