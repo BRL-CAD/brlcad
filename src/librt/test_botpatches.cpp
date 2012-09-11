@@ -1001,13 +1001,25 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 		    if ((*vv_it).second.size() > 2) std::cout << "HUH?? vert reporting more than two paired verts\n";
 		}
 	    }
-            if (start_end.first == INT_MAX && start_end.second == INT_MAX) {
+	    size_t threshold = 0;
+	    if (start_end.first == INT_MAX && start_end.second == INT_MAX) {
                std::cout << "polycurve is a closed loop\n";
+               threshold = 1;
+               start_end.first = *(*vert_to_verts.begin()).second.begin();
+               start_end.second = *(*vert_to_verts.begin()).second.begin();
             }
-            if (start_end.first == INT_MAX && start_end.second != INT_MAX) {
-               std::cout << "HUH?? Found start point but not end point???\n";
+            std::vector<size_t> ordered_points;
+	    size_t next_pt = start_end.first;
+            size_t start_end_cnt = 0;
+	    while (start_end_cnt <= threshold) {
+		if(next_pt == start_end.second) start_end_cnt++;
+		size_t old_pt = next_pt;
+		ordered_points.push_back(old_pt);
+                std::cout << "Adding pt " << old_pt << " to curve\n";
+                next_pt = *(vert_to_verts[old_pt].begin());
+                vert_to_verts[next_pt].erase(old_pt);
             }
-            
+              
             // - maybe should be using std::vector here for polycurves, since there's an
             // advantage to retaining the vect integer labels when doing loop assembly.
            // Count vertices on edges - if two verts appear with one edge each, those are the start and end.
