@@ -29,7 +29,6 @@ struct Manifold_Info {
     std::map< size_t, std::set<size_t> > patches;
     std::map< size_t, EdgeList > patch_edges;
     std::map< std::pair<size_t, size_t> , std::vector<size_t> > polycurves;
-    std::vector<std::vector<size_t> *> patch_polycurves;
     ON_SimpleArray<ON_NurbsSurface*> surface_array;
     std::map< size_t, size_t> patch_to_surface;
     VertToEdge vert_to_edge;
@@ -87,32 +86,27 @@ class Patch
 // set glob_compat_mode 0
 // set pl_list [glob 27_curve*.pl]
 // foreach plfile $pl_list {overlay $plfile}
-void plot_curve(struct rt_bot_internal *bot, size_t patch_id, const Curve *curve, int r, int g, int b, FILE *c_plot)
+void plot_curve(struct rt_bot_internal *bot, std::vector<size_t> *pts, int r, int g, int b, FILE *c_plot)
 {
     if (c_plot == NULL) {
-	struct bu_vls name;
-	static FILE* plot = NULL;
-	bu_vls_init(&name);
-	bu_vls_printf(&name, "%d_curve_%d.pl", (int) patch_id, (int) curve->id);
-	plot = fopen(bu_vls_addr(&name), "w");
+	static FILE* plot = fopen("plot_curve.pl", "w");
 	pl_color(plot, int(256*drand48() + 1.0), int(256*drand48() + 1.0), int(256*drand48() + 1.0));
-	EdgeList::iterator e_it;
-	for (e_it = curve->edges.begin(); e_it != curve->edges.end(); e_it++) {
-	    pdv_3move(plot, &bot->vertices[(*e_it).first]);
-	    pdv_3cont(plot, &bot->vertices[(*e_it).second]);
+	std::vector<size_t>::iterator v_it;
+	for (v_it = pts->begin(); v_it != pts->end()-1; v_it++) {
+	    pdv_3move(plot, &bot->vertices[(*v_it)]);
+	    pdv_3cont(plot, &bot->vertices[(*(v_it+1))]);
 	}
 	fclose(plot);
-	bu_vls_free(&name);
     } else {
 	pl_color(c_plot, r, g, b);
-	EdgeList::iterator e_it;
-	for (e_it = curve->edges.begin(); e_it != curve->edges.end(); e_it++) {
-	    pdv_3move(c_plot, &bot->vertices[(*e_it).first]);
-	    pdv_3cont(c_plot, &bot->vertices[(*e_it).second]);
+	std::vector<size_t>::iterator v_it;
+	for (v_it = pts->begin(); v_it != pts->end()-1; v_it++) {
+	    pdv_3move(c_plot, &bot->vertices[(*v_it)]);
+	    pdv_3cont(c_plot, &bot->vertices[(*(v_it+1))]);
 	}
     }
 }
-
+/*
 // plot loop
 void plot_loop(struct rt_bot_internal *bot, size_t patch_id, int loop_num, int r, int g, int b, const CurveList *curves, FILE *l_plot)
 {
@@ -133,7 +127,7 @@ void plot_loop(struct rt_bot_internal *bot, size_t patch_id, int loop_num, int r
 	}
     }
 }
-
+*/
 void plot_face(point_t p1, point_t p2, point_t p3, int r, int g, int b, FILE *c_plot)
 {
     pl_color(c_plot, r, g, b);
@@ -777,7 +771,7 @@ void find_curves(struct rt_bot_internal *bot, const Patch *patch, std::set<Curve
 	    }
 	}
 	std::cout << "      " << patch->id << " curve " << curve.id << " edge count: " << curve.edges.size() << "\n";
-	plot_curve(bot, patch->id, &curve, 0, 0, 0, NULL);
+	//plot_curve(bot, patch->id, &curve, 0, 0, 0, NULL);
 	loop_curves->insert(curve);
     }
 }
@@ -917,6 +911,7 @@ void find_outer_loop(struct rt_bot_internal *bot, const Patch *patch, LoopList *
 
 void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 {
+    static FILE* pcurveplot = fopen("polycurves.pl", "w");
     std::map< size_t, std::set<size_t> >::iterator p_it;
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
         EdgeList *patch_edges = &(info->patch_edges[(*p_it).first]);
@@ -1008,19 +1003,21 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
                start_end.first = *(*vert_to_verts.begin()).second.begin();
                start_end.second = *(*vert_to_verts.begin()).second.begin();
             }
-            std::vector<size_t> ordered_points;
 	    size_t next_pt = start_end.first;
             size_t start_end_cnt = 0;
 	    while (start_end_cnt <= threshold) {
 		if(next_pt == start_end.second) start_end_cnt++;
 		size_t old_pt = next_pt;
-		ordered_points.push_back(old_pt);
+		info->polycurves[start_end].push_back(old_pt);  
                 std::cout << "Adding pt " << old_pt << " to curve\n";
                 next_pt = *(vert_to_verts[old_pt].begin());
                 vert_to_verts[next_pt].erase(old_pt);
             }
-              
-            // - maybe should be using std::vector here for polycurves, since there's an
+	    int r = int(256*drand48() + 1.0);
+	    int g = int(256*drand48() + 1.0);
+	    int b = int(256*drand48() + 1.0);
+            plot_curve(bot, &(info->polycurves[start_end]), r, g, b, pcurveplot);
+	    // - maybe should be using std::vector here for polycurves, since there's an
             // advantage to retaining the vect integer labels when doing loop assembly.
            // Count vertices on edges - if two verts appear with one edge each, those are the start and end.
             // if all verts have two edges, it's a closed loop - use return to first vert as stopping criteria.
@@ -1034,6 +1031,7 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
  
 	}
     }
+    fclose(pcurveplot);
 }
 #if 0
 /////  START OLD CODE //////
