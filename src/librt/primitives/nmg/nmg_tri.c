@@ -461,7 +461,7 @@ nmg_flatten_face(struct faceuse *fu, fastf_t *TformMat, const struct bn_tol *tol
 					"2D coordinate list");
 
     /* we use the 0 index entry in the table as the head of the sorted
-     * list of verticies.  This is safe since the 0 index is always for
+     * list of vertices.  This is safe since the 0 index is always for
      * the model structure
      */
 
@@ -1216,7 +1216,7 @@ pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct v
 	NMG_CK_VERTEX_G(vu->v_p->vg_p);
 
 	if (vu->v_p != v)
-	    bu_bomb("vertexuse does not acknoledge parents\n");
+	    bu_bomb("vertexuse does not acknowledge parents\n");
 
 	if (nmg_find_fu_of_vu(vu) != fu ||
 	    *vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
@@ -2815,7 +2815,7 @@ nmg_isect_potcut_fu(struct edgeuse *eu1, struct edgeuse *eu2, struct faceuse *fu
 	    /* skip testing eu1 and eu2 */
 	    if (eu->vu_p == vu1 || eu->vu_p == vu1b || eu->vu_p == vu2 || eu->vu_p == vu2b) {
 		continue;
-	    } 
+	    }
 
 	    NMG_CK_EDGEUSE(eu);
 
@@ -4726,7 +4726,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd))
 	    if (++vert_count > 3) {
 		if (rt_g.NMG_debug & DEBUG_TRI)
-		    bu_log("loop has more than 3 verticies\n");
+		    bu_log("loop has more than 3 vertices\n");
 		goto triangulate;
 	    }
     }
