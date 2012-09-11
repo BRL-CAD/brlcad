@@ -1225,7 +1225,7 @@ GED_EXPORT extern int ged_isize(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_item(struct ged *gedp, int argc, const char *argv[]);
 
 /**
-  * Joint command ported to the libged library. 
+  * Joint command ported to the libged library.
   */
 GED_EXPORT extern int ged_joint(struct ged *gedp, int argc, const char *argv[]);
 
@@ -1538,7 +1538,7 @@ GED_EXPORT extern int ged_pscale(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_ptranslate(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Push objects' path transformations to  primitives
+ * Push objects' path transformations to primitives
  */
 GED_EXPORT extern int ged_push(struct ged *gedp, int argc, const char *argv[]);
 
