@@ -331,8 +331,8 @@ set(ged_ignore_files
   joint.h
   qray.h
   wdb_qray.h
-  simulate/simcollisionalgo.h 
-  simulate/simrt.h 
+  simulate/simcollisionalgo.h
+  simulate/simrt.h
   simulate/simulate.h
   simulate/simutils.h
   )
