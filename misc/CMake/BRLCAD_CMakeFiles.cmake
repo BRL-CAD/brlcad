@@ -75,11 +75,11 @@ macro(CMAKEFILES)
       endforeach(TARGET_FLAG ${TARGET_FLAGS})
       set(FUZZY_TARGET_FLAGS TARGET_OBJECTS)
       foreach(TARGET_FLAG ${FUZZY_TARGET_FLAGS})
-	if("${ITEM}" MATCHES "${TARGET_FLAG}") 
+	if("${ITEM}" MATCHES "${TARGET_FLAG}")
 	  if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${ITEM})
             set(CMAKEFILES_DO_TEST 0)
 	  endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${ITEM})
-	endif("${ITEM}" MATCHES "${TARGET_FLAG}") 
+	endif("${ITEM}" MATCHES "${TARGET_FLAG}")
       endforeach(TARGET_FLAG ${FUZZY_TARGET_FLAGS})
 
       # Handled target flags, proceeding with tests.
