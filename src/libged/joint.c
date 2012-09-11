@@ -85,7 +85,7 @@ static struct funtab joint_tab[] = {
      f_Jhelp2, 0, FUNTAB_UNLIMITED, FALSE},
     {"accept", "[joints]", "accept a series of moves",
      f_Jaccept, 1, FUNTAB_UNLIMITED, FALSE},
-    {"debug", "[hex code]", "Show/set debuging bit vector for joints",
+    {"debug", "[hex code]", "Show/set debugging bit vector for joints",
      f_Jdebug, 1, 2, FALSE},
     {"help", "[commands]", "give usage message for given joint commands",
      f_Jhelp, 0, FUNTAB_UNLIMITED, FALSE},
@@ -105,7 +105,7 @@ static struct funtab joint_tab[] = {
      f_Jsave, 2, 2, FALSE},
     {"solve", "constraint", "Solve a or all constraints",
      f_Jsolve, 1, FUNTAB_UNLIMITED, FALSE},
-    {"unload", "", "Unload any joint/constrants that have been loaded",
+    {"unload", "", "Unload any joint/constraints that have been loaded",
      f_Junload, 1, 1, FALSE},
     {NULL, NULL, NULL,
      NULL, 0, 0, FALSE}
@@ -127,7 +127,7 @@ joint_cmd(struct ged *gedp,
     struct funtab functions[])
 {
     struct funtab *ftp;
-    
+
     if (argc == 0)
 	return GED_OK;	/* No command entered, that's fine */
 
@@ -166,10 +166,10 @@ int
 f_Jdebug(struct ged *gedp,
 	int argc,
 	const char *argv[])
-{     
+{
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
-    
+
     if (argc >= 2) {
 	sscanf(argv[1], "%x", &joint_debug);
     } else {
@@ -199,16 +199,16 @@ ged_joint(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
-      
+
     /* Skip the already processed parameters */
     argc--;
     argv++;
-    
+
     status = joint_cmd(gedp, argc, argv, &joint_tab[0]);
-    
+
     if (status == GED_OK)
 	return GED_OK;
-    
+
     return GED_ERROR;
 }
 
@@ -234,7 +234,7 @@ helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *function
 	    if (!BU_STR_EQUAL(ftp->ft_name, argv[i]))
 		continue;
 
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s%s %s\n\t( %s )\n", functions->ft_name, ftp->ft_name, ftp->ft_parms, ftp->ft_comment);	    
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s%s %s\n\t( %s )\n", functions->ft_name, ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
 		break;
 	}
 	if (!ftp->ft_name) {
@@ -337,7 +337,7 @@ joint_lookup(const char *name)
     }
     return (struct joint *) 0;
 }
- 
+
 static void
 free_arc(struct arc *ap)
 {
@@ -408,9 +408,9 @@ f_Junload(struct ged *gedp, int argc, const char *argv[])
 
     if (dbip == DBI_NULL) {
 	/* initialize result */
-        bu_vls_trunc(gedp->ged_result_str, 0);  
-	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n");    
-	return GED_ERROR; 
+        bu_vls_trunc(gedp->ged_result_str, 0);
+	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n");
+	return GED_ERROR;
     }
 
     /* initialize result */
@@ -552,7 +552,7 @@ parse_error(struct ged *gedp, struct bu_vls *str, char *error)
 {
     char *text;
     size_t i;
-    
+
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -1180,7 +1180,7 @@ parse_rots(struct ged *gedp, struct joint *jp, int idx, FILE *fip, struct bu_vls
 {
     union bu_lex_token token;
     int dirfound, upfound, lowfound, curfound;
-    
+
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -1887,9 +1887,9 @@ f_Jload(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (dbip == DBI_NULL) { 
-	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n"); 
-	return GED_ERROR; 
+    if (dbip == DBI_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n");
+	return GED_ERROR;
     }
 
     bu_optind = 1;
@@ -2040,9 +2040,9 @@ f_Jsave(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (dbip == DBI_NULL) { 
-	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n"); 
-	return GED_ERROR; 
+    if (dbip == DBI_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "A database is not open!\n");
+	return GED_ERROR;
     }
 
     --argc;
@@ -2163,7 +2163,7 @@ f_Jreject(struct ged *gedp, int argc, const char *argv[])
     int c;
     int no_mesh = 0;
 
-    /* intialize result */
+    /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     bu_optind=1;
@@ -2275,7 +2275,7 @@ hold_eval(struct ged *gedp, struct hold *hp)
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
-    
+
     /*
      * get the current location of the effector.
      */
@@ -2624,7 +2624,7 @@ reject_move(struct ged *gedp)
     struct solve_stack *ssp;
     BU_LIST_POP(solve_stack, &solve_head, ssp);
     if (!ssp) return;
-    
+
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
@@ -2645,13 +2645,13 @@ reject_move(struct ged *gedp)
  *
  * The basic idea is that we are called with some priority level.
  * We will attempted to solve all constraints at that level with out
- * permenently damaging a joint of a higher priority.
+ * permanently damaging a joint of a higher priority.
  *
  * Returns:
  * -1 This system could not be made better without damage
  * to a higher priority system.
  * 0 All systems at a higher priority stayed stable or
- * got better and thise priority level got better.
+ * got better and this priority level got better.
  * 1 All systems at a higher priority stayed stable or
  * got better and this system is at at min.
  * Method:
@@ -2767,7 +2767,7 @@ system_solve(struct ged *gedp, int pri, double delta, double epsilon)
 		      pri_weights[pri], new_eval);
     }
     /*
-     * if the new evaluation is worse then the origianal, back off
+     * if the new evaluation is worse then the original, back off
      * this modification, set the constraint such that this freedom
      * of this joint won't be used next time through part_solve.
      */
@@ -2880,8 +2880,8 @@ f_Jsolve(struct ged *gedp, int argc, char *argv[])
 
     /*
      * because this routine calls "mesh" in the middle, the command
-     * arguements can be reused.  We cons up a new argv vector and
-     * copy all of the arguements before we do any processing.
+     * arguments can be reused.  We cons up a new argv vector and
+     * copy all of the arguments before we do any processing.
      */
     myargc = argc;
     myargv = (char **)bu_malloc(sizeof(char *)*argc, "param pointers");
@@ -2937,7 +2937,7 @@ f_Jsolve(struct ged *gedp, int argc, char *argv[])
 		    if (domesh) {
 			f_Jmesh(gedp, 0, 0);
 			/* refreshing the screen */
-			if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL) 
+			if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
 			    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
 		    }
 		    joint_clear();
@@ -2989,7 +2989,7 @@ f_Jsolve(struct ged *gedp, int argc, char *argv[])
 	} else if (result == -1) {
 	    delta /= 2.0;
 	    if (joint_debug & DEBUG_J_SYSTEM) {
-		bu_vls_printf(gedp->ged_result_str, "joint solve: spliting delta (%g)\n",
+		bu_vls_printf(gedp->ged_result_str, "joint solve: splitting delta (%g)\n",
 			      delta);
 	    }
 	    if (delta < epsilon) break;
@@ -2998,7 +2998,7 @@ f_Jsolve(struct ged *gedp, int argc, char *argv[])
 	if (domesh) {
 	    f_Jmesh(gedp, 0, 0);
 	    /* refreshing the screen */
-	    if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL) 
+	    if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
 		(*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
 	}
     }
@@ -3021,7 +3021,7 @@ f_Jsolve(struct ged *gedp, int argc, char *argv[])
 	    } else if (result == -1) {
 		delta /= 2.0;
 		if (joint_debug & DEBUG_J_SYSTEM) {
-		    bu_vls_printf(gedp->ged_result_str, "joint solve: spliting delta (%g)\n",
+		    bu_vls_printf(gedp->ged_result_str, "joint solve: splitting delta (%g)\n",
 				  delta);
 		}
 		if (delta < epsilon) break;
@@ -3030,13 +3030,13 @@ f_Jsolve(struct ged *gedp, int argc, char *argv[])
 	    if (domesh) {
 		f_Jmesh(gedp, 0, 0);
 		/* refreshing the screen */
-		if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL) 
+		if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
 		    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
 	    }
 	}
     }
     if (result == 1) {
-	bu_vls_printf(gedp->ged_result_str, "joint solve: system has convereged to a result.\n");
+	bu_vls_printf(gedp->ged_result_str, "joint solve: system has converged to a result.\n");
     } else if (result == 0) {
 	bu_vls_printf(gedp->ged_result_str, "joint solve: system has not converged in %d loops.\n",
 		      count);
@@ -3047,7 +3047,7 @@ f_Jsolve(struct ged *gedp, int argc, char *argv[])
     if (domesh) {
 	f_Jmesh(gedp, 0, 0);
 	/* refreshing the screen */
-	if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL) 
+	if (gedp->ged_refresh_handler != GED_REFRESH_CALLBACK_PTR_NULL)
 	    (*gedp->ged_refresh_handler)(gedp->ged_refresh_clientdata);
     }
     return GED_OK;
@@ -3086,7 +3086,7 @@ print_hold(struct ged *gedp, struct hold *hp)
 
     /*initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
-    
+
     bu_vls_printf(gedp->ged_result_str, "holds:\t%s with %s\n\tfrom:%s\n\tto:%s", (hp->name) ? hp->name : "UNNAMED", hp->joint, t1, t2);
     bu_free(t1, "hold_point_to_string");
     bu_free(t2, "hold_point_to_string");
@@ -3518,19 +3518,19 @@ static struct db_tree_state mesh_initial_tree_state = {
 /*
  * F _ J M E S H - function
  * The cvt_vlblock_to_solids() function is not converted it, a bu_bomb() function call
- * it is used temporarly to return from the function. The name variable is commented
+ * it is used temporarily to return from the function. The name variable is commented
  * for the moment, it is not used until the cvt_vlblock_to_solids() cand be fixed.
  * The UNUSED option must be removed from the int argc and const char *argv[] parameters
  * when the cvt_vlblock_to_solids() function it is fixed.
  * The joint accept option is not working properly, it needs f_Jmesh() function,
  * for the ANIM name parameter that currently it is commented. The same thing
- * applies for the mesh and solve options. 
+ * applies for the mesh and solve options.
  */
 
 int
 f_Jmesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 {
-    /* name used for the cvt_vlblock_to_solids call 
+    /* name used for the cvt_vlblock_to_solids call
     const char *name; */
     struct bn_vlblock*vbp;
     struct bu_list *vhead;
@@ -3595,7 +3595,7 @@ f_Jmesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 	}
 	if (joint_debug & DEBUG_J_MESH) {
 	    /* initialize result */
-	    bu_vls_trunc(gedp->ged_result_str, 0);	    
+	    bu_vls_trunc(gedp->ged_result_str, 0);
 	    bu_vls_printf(gedp->ged_result_str, "joint mesh: %s has %d grips.\n",
 			  (jp->joint) ? jp->joint->name: "UNGROUPED", i);
 	}
