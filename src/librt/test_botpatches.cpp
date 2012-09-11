@@ -29,6 +29,8 @@ struct Manifold_Info {
     std::map< size_t, std::set<size_t> > patches;
     std::map< size_t, EdgeList > patch_edges;
     std::map< size_t , std::vector<size_t> > polycurves;
+    std::map< size_t , std::set<size_t> > patch_polycurves;
+    std::map< size_t , std::set<size_t> > polycurves_patch;
     ON_SimpleArray<ON_NurbsSurface*> surface_array;
     std::map< size_t, size_t> patch_to_surface;
     VertToEdge vert_to_edge;
@@ -958,7 +960,8 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 		    }
 		}
 		// For the new candidate edges, pull their patches and see if
-		// they match the current patches.  If they do, this segment is part of
+		// they match the current patches.  If they do, and the edge has not
+		// already been removed from one of the patches, this edge is part of
                 // the current polycurve.
 		for (e_it = eset.begin(); e_it != eset.end(); e_it++) {
 		    std::set<size_t> *ep = &(info->edge_to_patch[(*e_it)]);
@@ -982,25 +985,18 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 	    for (vv_it = vert_to_verts.begin(); vv_it != vert_to_verts.end(); vv_it++) {
 		if ((*vv_it).second.size() == 1) {
 		    if (start_end.first == INT_MAX) {
-			std::cout << "Found polycurve start pt: " << (*vv_it).first << "\n";
 			start_end.first = (*vv_it).first;
 		    } else {
 			if (start_end.second == INT_MAX) {
-			    std::cout << "Found polycurve end pt: " << (*vv_it).first << "\n";
 			    start_end.second = (*vv_it).first;
-			} else {
-			    std::cout << "HUH?? Found extra polycurve 'termination' pt?? " << (*vv_it).first << "\n";
-			}
+			} 
 		    }                    
-		} else {
-		    if ((*vv_it).second.size() > 2) std::cout << "HUH?? vert reporting more than two paired verts\n";
-		}
+		} 
 	    }
             size_t curve_id = info->polycurves.size() + 1;
             std::cout << "Curve number " << curve_id << "\n";
 	    size_t threshold = 0;
 	    if (start_end.first == INT_MAX && start_end.second == INT_MAX) {
-               std::cout << "polycurve is a closed loop\n";
                threshold = 1;
                start_end.first = *(*vert_to_verts.begin()).second.begin();
                start_end.second = *(*vert_to_verts.begin()).second.begin();
@@ -1011,7 +1007,6 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 		if(next_pt == start_end.second) start_end_cnt++;
 		size_t old_pt = next_pt;
 		info->polycurves[curve_id].push_back(old_pt);  
-                std::cout << "Adding pt " << old_pt << " to curve\n";
                 next_pt = *(vert_to_verts[old_pt].begin());
                 vert_to_verts[next_pt].erase(old_pt);
             }
@@ -1019,18 +1014,12 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 	    int g = int(256*drand48() + 1.0);
 	    int b = int(256*drand48() + 1.0);
             plot_curve(bot, &(info->polycurves[curve_id]), r, g, b, pcurveplot);
-	    // - maybe should be using std::vector here for polycurves, since there's an
-            // advantage to retaining the vect integer labels when doing loop assembly.
-           // Count vertices on edges - if two verts appear with one edge each, those are the start and end.
-            // if all verts have two edges, it's a closed loop - use return to first vert as stopping criteria.
 
-            // algorithm is: insert start point.  search for edge with other point.  that edge becomes current edge.  insert prev. point
-            // searched for.  search for edge with other point.  repeat until last edge found.  insert end point.
-
-	    // Let patches know they've got a curve
-            //info->patch_polycurves[(*p_it).first].insert();
-            //info->patch_polycurves[other_patch_id].insert();
- 
+            // Let the patches know they have a curve associated with them.
+            info->patch_polycurves[(*p_it).first].insert(curve_id);
+            info->patch_polycurves[other_patch_id].insert(curve_id);
+            info->polycurves_patch[curve_id].insert((*p_it).first);
+            info->polycurves_patch[curve_id].insert(other_patch_id);
 	}
     }
     fclose(pcurveplot);
