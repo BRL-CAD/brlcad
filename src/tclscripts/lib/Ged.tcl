@@ -696,7 +696,7 @@ package provide cadwidgets::Ged 1.0
 
 	method set_data_point_callback {_callback}
 	method clear_bot_callbacks {}
- 
+
 	#XXX Still needs to be resolved
 	method set_outputHandler {args}
 	method fb_active {args}
@@ -4961,7 +4961,7 @@ package provide cadwidgets::Ged 1.0
     set help [cadwidgets::Help \#auto]
 
     $help add ?			{{} {list available commands}}
-    $help add apropos		{{key} {list relevent commands given a keyword}}
+    $help add apropos		{{key} {list relevant commands given a keyword}}
     $help add 3ptarb		{{name x1 y1 z1 x2 y2 z2 x3 y3 z3 coord c1 c2 th} {creates an arb}}
     $help add adc		{{args} {set/get adc attributes}}
     $help add adjust		{{} {adjust database object parameters}}
@@ -5013,7 +5013,7 @@ package provide cadwidgets::Ged 1.0
     $help add center		{{["x y z"]} {set/get the view center}}
     $help add clear		{{} {clear screen}}
     $help add clone		{{[options] object} {clone the specified object}}
-    $help add coord		{{[m|v]} {set/get the coodinate system}}
+    $help add coord		{{[m|v]} {set/get the coordinate system}}
     $help add color		{{low high r g b str} {make color entry}}
     $help add comb		{{comb_name <operation solid>} {create or extend combination w/booleans}}
     $help add comb_color 	{{comb R G B} {set combination's color}}
