@@ -157,13 +157,13 @@ while(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
   endforeach(subdir ${level_${current_level}_dirs})
 endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
 
-# This corresponds roughly to the libbrlcad definition in 
+# This corresponds roughly to the libbrlcad definition in
 # the autotools build.  It needs CMake 2.8.8 plus changes
 # to the BRLCAD_ADDLIB macro to define OBJECT add_library
 # targets, and is commented out for now, but this is the
 # starting point for a "proper" libbrlcad
 #if(${HIGHEST_TARGET_LEVEL} GREATER 1)
-#  add_library(libbrlcad STATIC 
+#  add_library(libbrlcad STATIC
 #    $<TARGET_OBJECTS:libbu_OBJECTS>
 #    $<TARGET_OBJECTS:libbn_OBJECTS>
 #    $<TARGET_OBJECTS:librt_OBJECTS>
