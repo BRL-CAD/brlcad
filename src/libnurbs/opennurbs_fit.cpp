@@ -328,7 +328,7 @@ solveSparseLinearSystemLQ (Eigen::SparseMatrix<double>* A, Eigen::MatrixXd* b, E
       if(solver.info()!=Eigen::Success) {
 	  // decomposition failed
           std::cout << "decomposition failed\n";
-      }      
+      }
 
       (*x) = solver.solve(Atb);
 
@@ -349,7 +349,7 @@ NurbsSolve::solve ()
 
   Eigen::MatrixXd e_m_xeig = Eigen::MatrixXd::Zero ((*m_xeig).RowCount(), (*m_xeig).ColCount());
   Eigen::MatrixXd e_m_feig = Eigen::MatrixXd::Zero ((*m_feig).RowCount(), (*m_feig).ColCount());
-  
+
   for(int i = 0; i < (*m_xeig).RowCount(); i++) {
       for(int j = 0; j < (*m_xeig).ColCount(); j++) {
 	 e_m_xeig (i,j) = (*m_xeig)[i][j];
