@@ -28,9 +28,12 @@ typedef std::set<size_t> FaceList;
 struct Manifold_Info {
     std::map< size_t, std::set<size_t> > patches;
     std::map< size_t, EdgeList > patch_edges;
-    std::map< size_t , std::vector<size_t> > polycurves;
-    std::map< size_t , std::set<size_t> > patch_polycurves;
-    std::map< size_t , std::set<size_t> > polycurves_patch;
+    std::map< size_t, std::vector<size_t> > polycurves;
+    std::map< size_t, std::vector<size_t> > loops;
+    std::map< size_t, std::set<size_t> > patch_polycurves;
+    std::map< size_t, std::set<size_t> > polycurves_patch;
+    std::map< size_t, size_t> outer_loops;
+    std::map< size_t , std::set<size_t> > inner_loops;
     ON_SimpleArray<ON_NurbsSurface*> surface_array;
     std::map< size_t, size_t> patch_to_surface;
     VertToEdge vert_to_edge;
@@ -669,207 +672,6 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
  **********************************************************************************/
 
 
-// Assemble edges into curves.  A curve is shared between two
-// and only two patches, and all vertex points except the endpoints
-// are used by only two edges (edges in this case referring to face
-// edges that are also part of some edge curve).
-void find_curves(struct rt_bot_internal *bot, const Patch *patch, std::set<Curve> *loop_curves, EdgeList *patch_edges, VertToEdge *vert_to_edge, VertToPatch *vert_to_patch, EdgeToPatch *edge_to_patch)
-{
-    size_t curve_cnt = 1;
-    while (!patch_edges->empty()) {
-	Curve curve;
-	curve.start_and_end.first = INT_MAX;
-	curve.start_and_end.second = INT_MAX;
-	curve.inner_patch = patch->id;
-	curve.id = curve_cnt;
-	curve_cnt++;
-	// Need to get the other patch for this curve
-	std::set<size_t> edge_patches = (*edge_to_patch)[(*patch_edges->begin())];
-	edge_patches.erase(patch->id);
-	curve.outer_patch = (*edge_patches.begin());
-
-	// Initialize queue
-	std::queue<Edge> edge_queue;
-	edge_queue.push(*patch_edges->begin());
-	patch_edges->erase(*patch_edges->begin());
-
-	while (!edge_queue.empty()) {
-	    VertToEdge::iterator v_it;
-	    std::set<Edge> eset1, eset2;
-
-	    // Add the first edge in the queue
-	    Edge curr_edge = edge_queue.front();
-	    edge_queue.pop();
-	    curve.edges.insert(curr_edge);
-
-	    // Check both vertices of the current edge to see how many patches use them.
-	    // If three patches use a vertex, that vertex terminates the current curve.
-	    // The current edge is the only edge associated with the current vertex that
-	    // can be a part of this curve.  Otherwise, pull the edge set for this vertex
-	    // for further processing.
-	    if ((*vert_to_patch)[curr_edge.first].size() > 2) {
-		if (curve.start_and_end.first == INT_MAX) {
-		    curve.start_and_end.first = curr_edge.first;
-		} else {
-		    curve.start_and_end.second= curr_edge.first;
-		}
-	    } else {
-		eset1 = (*vert_to_edge)[curr_edge.first];
-		eset1.erase(curr_edge);
-	    }
-	    // use edgetopatch - if the edge shares the current outer patch, add it to the queue
-	    if (!eset1.empty()) {
-		Edge es1 = *eset1.begin();
-		if ((*edge_to_patch)[es1].find(curve.outer_patch) != (*edge_to_patch)[es1].end() &&
-			curve.edges.find(es1) == curve.edges.end()) {
-		    edge_queue.push(es1);
-		    patch_edges->erase(es1);
-		}
-	    }
-
-	    // Also check the other vertex of the current edge.  The termination criteria
-	    // are the same as for the first vertex
-	    if ((*vert_to_patch)[curr_edge.second].size() > 2) {
-		if (curve.start_and_end.first == INT_MAX) {
-		    curve.start_and_end.first = curr_edge.second;
-		} else {
-		    curve.start_and_end.second= curr_edge.second;
-		}
-	    } else {
-		eset2 = (*vert_to_edge)[curr_edge.second];
-		eset2.erase(curr_edge);
-	    }
-
-	    if (!eset2.empty()) {
-		Edge es2 = *eset2.begin();
-		if ((*edge_to_patch)[es2].find(curve.outer_patch) != (*edge_to_patch)[es2].end() &&
-			curve.edges.find(es2) == curve.edges.end()) {
-		    edge_queue.push(es2);
-		    patch_edges->erase(es2);
-		}
-	    }
-	}
-	EdgeList::iterator e_it;
-	std::set<size_t> single_verts;
-	std::map<size_t, size_t> vertex_use;
-	std::map<size_t, size_t>::iterator vu_it;
-	for (e_it = curve.edges.begin(); e_it != curve.edges.end(); e_it++) {
-	    vertex_use[(*e_it).first]++;
-	    vertex_use[(*e_it).second]++;
-	}
-	for (vu_it = vertex_use.begin(); vu_it != vertex_use.end(); vu_it++) {
-	    if ((*vu_it).second == 1) single_verts.insert((*vu_it).first);
-	}
-	if (single_verts.size() != 2 && single_verts.size() != 0) {
-	    printf("Error - curve returned with edge count other than two or closed!\n");
-	} else {
-	    if (single_verts.size() == 2) {
-		curve.start_and_end.first = (*single_verts.begin());
-		single_verts.erase(single_verts.begin());
-		curve.start_and_end.second = (*single_verts.begin());
-	    } else {
-		curve.start_and_end.first = (*curve.edges.begin()).first;
-		curve.start_and_end.second = (*curve.edges.begin()).first;
-	    }
-	}
-	std::cout << "      " << patch->id << " curve " << curve.id << " edge count: " << curve.edges.size() << "\n";
-	//plot_curve(bot, patch->id, &curve, 0, 0, 0, NULL);
-	loop_curves->insert(curve);
-    }
-}
-
-int loop_is_closed(std::set<Curve> *curves)
-{
-    std::set<Curve>::iterator cv_it;
-    EdgeList::iterator ev_it;
-    std::map<size_t, size_t> vert_use_cnt;
-    std::map<size_t, size_t>::iterator vv_it;
-    int closed = 1;
-    for (cv_it = curves->begin(); cv_it != curves->end(); cv_it++) {
-	for (ev_it = (*cv_it).edges.begin(); ev_it != (*cv_it).edges.end(); ev_it++) {
-	    vert_use_cnt[(*ev_it).first]++;
-	    vert_use_cnt[(*ev_it).second]++;
-	}
-    }
-
-    for (vv_it = vert_use_cnt.begin(); vv_it!=vert_use_cnt.end(); vv_it++) {
-	if ((*vv_it).second == 1) {
-	    closed = 0;
-	}
-    }
-    return closed;
-}
-
-void find_single_curve_loops(std::set<Curve> *loop_curves, LoopList *loops)
-{
-    CurveList::iterator cl_it;
-    for (cl_it = loop_curves->begin(); cl_it != loop_curves->end(); cl_it++) {
-	if ((*cl_it).start_and_end.first == (*cl_it).start_and_end.second) {
-	    //std::cout << "Curve " << (*cl_it).id << " is a loop\n";
-	    CurveList curve_loop;
-	    curve_loop.insert((*cl_it));
-	    loops->insert(curve_loop);
-	    loop_curves->erase(cl_it);
-	}
-    }
-}
-
-void find_multicurve_loops(std::set<Curve> *loop_curves, LoopList *loops)
-{
-    // build a map of endpoints to curves
-    std::map<size_t, std::set<Curve> > endpts_to_curves;
-    CurveList::iterator cl_it;
-    for (cl_it = loop_curves->begin(); cl_it != loop_curves->end(); cl_it++) {
-	endpts_to_curves[(*cl_it).start_and_end.first].insert((*cl_it));
-	endpts_to_curves[(*cl_it).start_and_end.second].insert((*cl_it));
-    }
-
-    while (!loop_curves->empty()) {
-	std::queue<Curve> curve_queue;
-	CurveList curr_loop;
-	CurveList::iterator c_it;
-	curve_queue.push(*loop_curves->begin());
-	loop_curves->erase(*loop_curves->begin());
-	while (!curve_queue.empty()) {
-	    int is_matched = 0;
-	    // Add the first edge in the queue
-	    Curve curr_curve = curve_queue.front();
-	    curve_queue.pop();
-	    curr_loop.insert(curr_curve);
-	    std::set<Curve> curves1, curves2;
-	    std::set<Curve>::iterator curves_it;
-
-	    // Pull curve id list.
-	    curves1 = endpts_to_curves[curr_curve.start_and_end.first];
-	    curves2 = endpts_to_curves[curr_curve.start_and_end.second];
-	    curves1.erase(curr_curve);
-	    curves2.erase(curr_curve);
-	    // use the curve info - if the curve shares the current patches, add it to the queue
-	    for (curves_it = curves1.begin(); curves_it != curves1.end(); curves_it++) {
-		if ((*curves_it).inner_patch == curr_curve.inner_patch &&
-			curr_loop.find((*curves_it)) == curr_loop.end()) {
-		    curve_queue.push((*curves_it));
-		    loop_curves->erase((*curves_it));
-		    is_matched = 1;
-		}
-	    }
-	    for (curves_it = curves2.begin(); curves_it != curves2.end(); curves_it++) {
-		if ((*curves_it).inner_patch == curr_curve.inner_patch &&
-			curr_loop.find((*curves_it)) == curr_loop.end()) {
-		    curve_queue.push((*curves_it));
-		    loop_curves->erase((*curves_it));
-		    is_matched = 1;
-		}
-	    }
-	}
-	if (curr_loop.size() > 0) {
-	    std::cout << "Inserting loop:" << curr_loop.size() << "\n";
-	    loops->insert(curr_loop);
-	}
-	if (!loop_is_closed(&curr_loop)) std::cout << "Waaaittt!  Loop is not closed!!!\n";
-    }
-}
-
 void find_outer_loop(struct rt_bot_internal *bot, const Patch *patch, LoopList *loops, CurveList *outer_loop)
 {
     // If we have more than one loop, we need to identify the outer loop.  OpenNURBS handles outer
@@ -916,114 +718,138 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
     static FILE* pcurveplot = fopen("polycurves.pl", "w");
     std::map< size_t, std::set<size_t> >::iterator p_it;
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
-        EdgeList *patch_edges = &(info->patch_edges[(*p_it).first]);
-        while (!patch_edges->empty()) {
-	    // We know the current patch - find out what the other one is for
-	    // this edge.
-	    const Edge *first_edge = &(*(patch_edges->begin()));
-	    std::set<size_t> edge_patches = (*(info->edge_to_patch.find(*first_edge))).second;
-	    edge_patches.erase((*p_it).first);
-	    size_t other_patch_id = *(edge_patches.begin());
-            std::cout << "1st Patch: " << (*p_it).first << "\n";
-            std::cout << "2nd Patch: " << other_patch_id << "\n";
-            // Now we know our patches - we need to start with the first line
-            // segment, and build up a set of edges until one of the haulting
-            // criteria is met.
-            std::set<Edge> polycurve_edges;
-            std::set<Edge>::iterator pc_it;
-            std::queue<Edge> edge_queue;
-            edge_queue.push(*(patch_edges->begin()));
-	    info->patch_edges[(*p_it).first].erase(edge_queue.front());
-	    info->patch_edges[other_patch_id].erase(edge_queue.front());
-	    while (!edge_queue.empty()) {
-		// Add the first edge in the queue
-		Edge curr_edge = edge_queue.front();
-		edge_queue.pop();
-		polycurve_edges.insert(curr_edge);
-                //std::cout << "Current edge: (" << curr_edge.first << "," << curr_edge.second << ")\n";
-       
-                // Using the current edge, identify candidate edges and evaluate them.
-                std::set<Edge> eset;
-                std::set<Edge>::iterator e_it;
-                // If a vertex is used by three patches, it is a stopping point for curve
-                // buildup.  Otherwise, consider its edges.
-                if (info->vert_to_patch[curr_edge.first].size() <= 2) {
-                   eset.insert(info->vert_to_edge[curr_edge.first].begin(), info->vert_to_edge[curr_edge.first].end());
-                }
-                if (info->vert_to_patch[curr_edge.second].size() <= 2) {
-                   eset.insert(info->vert_to_edge[curr_edge.second].begin(), info->vert_to_edge[curr_edge.second].end());
-                }
-                // We don't need to re-consider any edge we've already considered.
-		for (e_it = eset.begin(); e_it != eset.end(); e_it++) {
-                    if(polycurve_edges.find((*e_it)) != polycurve_edges.end()) {
-			eset.erase((*e_it));
+	if (!info->patches[(*p_it).first].empty()) {
+	    EdgeList *patch_edges = &(info->patch_edges[(*p_it).first]);
+	    while (!patch_edges->empty()) {
+		// We know the current patch - find out what the other one is for
+		// this edge.
+		const Edge *first_edge = &(*(patch_edges->begin()));
+		std::set<size_t> edge_patches = (*(info->edge_to_patch.find(*first_edge))).second;
+		edge_patches.erase((*p_it).first);
+		size_t other_patch_id = *(edge_patches.begin());
+		// Now we know our patches - we need to start with the first line
+		// segment, and build up a set of edges until one of the haulting
+		// criteria is met.
+		std::set<Edge> polycurve_edges;
+		std::set<Edge>::iterator pc_it;
+		std::queue<Edge> edge_queue;
+		edge_queue.push(*(patch_edges->begin()));
+		info->patch_edges[(*p_it).first].erase(edge_queue.front());
+		info->patch_edges[other_patch_id].erase(edge_queue.front());
+		while (!edge_queue.empty()) {
+		    // Add the first edge in the queue
+		    Edge curr_edge = edge_queue.front();
+		    edge_queue.pop();
+		    polycurve_edges.insert(curr_edge);
+		    //std::cout << "Current edge: (" << curr_edge.first << "," << curr_edge.second << ")\n";
+
+		    // Using the current edge, identify candidate edges and evaluate them.
+		    std::set<Edge> eset;
+		    std::set<Edge>::iterator e_it;
+		    // If a vertex is used by three patches, it is a stopping point for curve
+		    // buildup.  Otherwise, consider its edges.
+		    if (info->vert_to_patch[curr_edge.first].size() <= 2) {
+			eset.insert(info->vert_to_edge[curr_edge.first].begin(), info->vert_to_edge[curr_edge.first].end());
+		    }
+		    if (info->vert_to_patch[curr_edge.second].size() <= 2) {
+			eset.insert(info->vert_to_edge[curr_edge.second].begin(), info->vert_to_edge[curr_edge.second].end());
+		    }
+		    // We don't need to re-consider any edge we've already considered.
+		    for (e_it = eset.begin(); e_it != eset.end(); e_it++) {
+			if(polycurve_edges.find((*e_it)) != polycurve_edges.end()) {
+			    eset.erase((*e_it));
+			}
+		    }
+		    // For the new candidate edges, pull their patches and see if
+		    // they match the current patches.  If they do, and the edge has not
+		    // already been removed from one of the patches, this edge is part of
+		    // the current polycurve.
+		    for (e_it = eset.begin(); e_it != eset.end(); e_it++) {
+			std::set<size_t> *ep = &(info->edge_to_patch[(*e_it)]);
+			if (ep->find(other_patch_id) != ep->end() && ep->find((*p_it).first) != ep->end() && polycurve_edges.find(*e_it) == polycurve_edges.end()) {
+			    edge_queue.push(*e_it);
+			    info->patch_edges[(*p_it).first].erase(*e_it);
+			    info->patch_edges[other_patch_id].erase(*e_it);
+			}  
 		    }
 		}
-		// For the new candidate edges, pull their patches and see if
-		// they match the current patches.  If they do, and the edge has not
-		// already been removed from one of the patches, this edge is part of
-                // the current polycurve.
-		for (e_it = eset.begin(); e_it != eset.end(); e_it++) {
-		    std::set<size_t> *ep = &(info->edge_to_patch[(*e_it)]);
-                    if (ep->find(other_patch_id) != ep->end() && ep->find((*p_it).first) != ep->end() && polycurve_edges.find(*e_it) == polycurve_edges.end()) {
-			edge_queue.push(*e_it);
-			info->patch_edges[(*p_it).first].erase(*e_it);
-			info->patch_edges[other_patch_id].erase(*e_it);
-		    }  
+		// populate polycurve
+		std::map<size_t, std::set<size_t> > vert_to_verts;
+		std::map<size_t, std::set<size_t> >::iterator vv_it;
+		for (pc_it = polycurve_edges.begin(); pc_it != polycurve_edges.end(); pc_it++) {
+		    vert_to_verts[(*pc_it).first].insert((*pc_it).second);
+		    vert_to_verts[(*pc_it).second].insert((*pc_it).first);
 		}
-	    }
-            // populate polycurve
-            std::map<size_t, std::set<size_t> > vert_to_verts;
-            std::map<size_t, std::set<size_t> >::iterator vv_it;
-            for (pc_it = polycurve_edges.begin(); pc_it != polycurve_edges.end(); pc_it++) {
-                vert_to_verts[(*pc_it).first].insert((*pc_it).second);
-                vert_to_verts[(*pc_it).second].insert((*pc_it).first);
-            }
-	    std::pair<size_t, size_t> start_end;
-            start_end.first = INT_MAX;
-            start_end.second = INT_MAX;
-	    for (vv_it = vert_to_verts.begin(); vv_it != vert_to_verts.end(); vv_it++) {
-		if ((*vv_it).second.size() == 1) {
-		    if (start_end.first == INT_MAX) {
-			start_end.first = (*vv_it).first;
-		    } else {
-			if (start_end.second == INT_MAX) {
-			    start_end.second = (*vv_it).first;
-			} 
-		    }                    
-		} 
-	    }
-            size_t curve_id = info->polycurves.size() + 1;
-            std::cout << "Curve number " << curve_id << "\n";
-	    size_t threshold = 0;
-	    if (start_end.first == INT_MAX && start_end.second == INT_MAX) {
-               threshold = 1;
-               start_end.first = *(*vert_to_verts.begin()).second.begin();
-               start_end.second = *(*vert_to_verts.begin()).second.begin();
-            }
-	    size_t next_pt = start_end.first;
-            size_t start_end_cnt = 0;
-	    while (start_end_cnt <= threshold) {
-		if(next_pt == start_end.second) start_end_cnt++;
-		size_t old_pt = next_pt;
-		info->polycurves[curve_id].push_back(old_pt);  
-                next_pt = *(vert_to_verts[old_pt].begin());
-                vert_to_verts[next_pt].erase(old_pt);
-            }
-	    int r = int(256*drand48() + 1.0);
-	    int g = int(256*drand48() + 1.0);
-	    int b = int(256*drand48() + 1.0);
-            plot_curve(bot, &(info->polycurves[curve_id]), r, g, b, pcurveplot);
+		// Find start and end points, if any
+		std::pair<size_t, size_t> start_end;
+		start_end.first = INT_MAX;
+		start_end.second = INT_MAX;
+		for (vv_it = vert_to_verts.begin(); vv_it != vert_to_verts.end(); vv_it++) {
+		    if ((*vv_it).second.size() == 1) {
+			if (start_end.first == INT_MAX) {
+			    start_end.first = (*vv_it).first;
+			} else {
+			    if (start_end.second == INT_MAX) {
+				start_end.second = (*vv_it).first;
+			    } 
+			}                    
+		    } 
+		}
+		// Get curve ID number
+		size_t curve_id = info->polycurves.size() + 1;
 
-            // Let the patches know they have a curve associated with them.
-            info->patch_polycurves[(*p_it).first].insert(curve_id);
-            info->patch_polycurves[other_patch_id].insert(curve_id);
-            info->polycurves_patch[curve_id].insert((*p_it).first);
-            info->polycurves_patch[curve_id].insert(other_patch_id);
+		// If we have a loop, need different haulting conditions for
+		// curve assembly. 
+		size_t threshold = 0;
+		if (start_end.first == INT_MAX && start_end.second == INT_MAX) {
+		    threshold = 1;
+		    start_end.first = *(*vert_to_verts.begin()).second.begin();
+		    start_end.second = *(*vert_to_verts.begin()).second.begin();
+		}
+
+		// Using the starting point, build a vector with the points
+		// in curve order.
+		size_t next_pt = start_end.first;
+		size_t start_end_cnt = 0;
+		while (start_end_cnt <= threshold) {
+		    if(next_pt == start_end.second) start_end_cnt++;
+		    size_t old_pt = next_pt;
+		    info->polycurves[curve_id].push_back(old_pt);  
+		    next_pt = *(vert_to_verts[old_pt].begin());
+		    vert_to_verts[next_pt].erase(old_pt);
+		}
+
+		// Plot curve
+		int r = int(256*drand48() + 1.0);
+		int g = int(256*drand48() + 1.0);
+		int b = int(256*drand48() + 1.0);
+		plot_curve(bot, &(info->polycurves[curve_id]), r, g, b, pcurveplot);
+
+		// Let the patches know they have a curve associated with them.
+		info->patch_polycurves[(*p_it).first].insert(curve_id);
+		info->patch_polycurves[other_patch_id].insert(curve_id);
+		info->polycurves_patch[curve_id].insert((*p_it).first);
+		info->polycurves_patch[curve_id].insert(other_patch_id);
+	    }
 	}
     }
     fclose(pcurveplot);
+    // restore edge sets
+    for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
+	find_edge_segments(bot, &((*p_it).second), &(info->patch_edges[(*p_it).first]), info);
+    }
 }
+
+void find_loops(struct rt_bot_internal *bot, struct Manifold_Info *info) {
+    std::map< size_t, std::set<size_t> >::iterator p_it; 
+    for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
+	if (!info->patches[(*p_it).first].empty()) {
+	    std::set<size_t> polycurves = info->patch_polycurves[(*p_it).first];
+	    std::cout << "Patch: " << (*p_it).first << "\nPolycurve count: " << polycurves.size() << "\n";
+	}
+    }
+}
+
 #if 0
 /////  START OLD CODE //////
 
@@ -1242,7 +1068,6 @@ int main(int argc, char *argv[])
     }
     plot_patch_borders(bot_ip, &info, "patch_borders_pass_1.pl");
 
-
     // "Shave" sharp triangles off of the edges by shifting them from one patch to
     // another - doesn't avoid all sharp corners, but does produce some cleanup.
     size_t shaved_cnt = 1;
@@ -1293,6 +1118,9 @@ int main(int argc, char *argv[])
 
     // Now, using the patch edge sets, construct polycurves
     find_polycurves(bot_ip, &info);
+  
+    // Build the loops
+    find_loops(bot_ip, &info); 
 
     // Actually fit the NURBS surfaces
     size_t nurbs_surface_count = -1;
