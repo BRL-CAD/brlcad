@@ -94,7 +94,7 @@ class Patch
 void plot_curve(struct rt_bot_internal *bot, std::vector<size_t> *pts, int r, int g, int b, FILE *c_plot)
 {
     if (c_plot == NULL) {
-	static FILE* plot = fopen("plot_curve.pl", "w");
+	FILE* plot = fopen("plot_curve.pl", "w");
 	pl_color(plot, int(256*drand48() + 1.0), int(256*drand48() + 1.0), int(256*drand48() + 1.0));
 	std::vector<size_t>::iterator v_it;
 	for (v_it = pts->begin(); v_it != pts->end()-1; v_it++) {
@@ -111,28 +111,19 @@ void plot_curve(struct rt_bot_internal *bot, std::vector<size_t> *pts, int r, in
 	}
     }
 }
-/*
+
 // plot loop
-void plot_loop(struct rt_bot_internal *bot, size_t patch_id, int loop_num, int r, int g, int b, const CurveList *curves, FILE *l_plot)
+void plot_loop(struct rt_bot_internal *bot, size_t loop_id, struct Manifold_Info *info, FILE *l_plot)
 {
-    CurveList::iterator c_it;
-    if (l_plot == NULL) {
-	struct bu_vls name;
-	static FILE* lplot = NULL;
-	bu_vls_init(&name);
-	bu_vls_printf(&name, "%d_loop_%d.pl", (int) patch_id, loop_num);
-	lplot = fopen(bu_vls_addr(&name), "w");
-	for (c_it = curves->begin(); c_it != curves->end(); c_it++) {
-	    plot_curve(bot, patch_id, &(*c_it), r, g, b, lplot);
-	}
-	fclose(lplot);
-    } else {
-	for (c_it = curves->begin(); c_it != curves->end(); c_it++) {
-	    plot_curve(bot, patch_id, &(*c_it), r, g, b, l_plot);
-	}
+    std::vector<size_t>::iterator v_it;
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    for (v_it = info->loops[loop_id].begin(); v_it != info->loops[loop_id].end(); v_it++) {
+        plot_curve(bot, &(info->polycurves[*v_it]), r, g, b, l_plot);
     }
 }
-*/
+
 void plot_face(point_t p1, point_t p2, point_t p3, int r, int g, int b, FILE *c_plot)
 {
     pl_color(c_plot, r, g, b);
@@ -266,6 +257,8 @@ void get_connected_faces(struct rt_bot_internal *bot, size_t face_num, EdgeToFac
 // function to populate them, after the initial partitioning is complete.
 void sync_structure_maps(struct rt_bot_internal *bot, struct Manifold_Info *info) {
     std::map< size_t, std::set<size_t> >::iterator p_it;
+    info->edge_to_patch.clear();
+    info->vert_to_patch.clear();
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
         std::set<size_t>::iterator f_it;
         std::set<size_t> *faces = &((*p_it).second);
@@ -715,10 +708,14 @@ void find_outer_loop(struct rt_bot_internal *bot, const Patch *patch, LoopList *
 
 void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 {
-    static FILE* pcurveplot = fopen("polycurves.pl", "w");
     std::map< size_t, std::set<size_t> >::iterator p_it;
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
 	if (!info->patches[(*p_it).first].empty()) {
+/*	    struct bu_vls name;
+	    bu_vls_init(&name);
+	    bu_vls_printf(&name, "polycurves_patch_%d.pl", (int)(*p_it).first);
+	    FILE* pcurveplot = fopen(bu_vls_addr(&name), "w");
+*/
 	    EdgeList *patch_edges = &(info->patch_edges[(*p_it).first]);
 	    while (!patch_edges->empty()) {
 		// We know the current patch - find out what the other one is for
@@ -796,7 +793,7 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 		    }
 		}
 		// Get curve ID number
-		size_t curve_id = info->polycurves.size() + 1;
+		size_t curve_id = info->polycurves.size();
 
 		// If we have a loop, need different halting conditions for
 		// curve assembly.
@@ -823,7 +820,7 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 		int r = int(256*drand48() + 1.0);
 		int g = int(256*drand48() + 1.0);
 		int b = int(256*drand48() + 1.0);
-		plot_curve(bot, &(info->polycurves[curve_id]), r, g, b, pcurveplot);
+		//plot_curve(bot, &(info->polycurves[curve_id]), r, g, b, pcurveplot);
 
 		// Let the patches know they have a curve associated with them.
 		info->patch_polycurves[(*p_it).first].insert(curve_id);
@@ -831,9 +828,9 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 		info->polycurves_patch[curve_id].insert((*p_it).first);
 		info->polycurves_patch[curve_id].insert(other_patch_id);
 	    }
+	//fclose(pcurveplot);
 	}
     }
-    fclose(pcurveplot);
     // restore edge sets
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
 	find_edge_segments(bot, &((*p_it).second), &(info->patch_edges[(*p_it).first]), info);
@@ -844,8 +841,68 @@ void find_loops(struct rt_bot_internal *bot, struct Manifold_Info *info) {
     std::map< size_t, std::set<size_t> >::iterator p_it;
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
 	if (!info->patches[(*p_it).first].empty()) {
-	    std::set<size_t> polycurves = info->patch_polycurves[(*p_it).first];
-	    std::cout << "Patch: " << (*p_it).first << "\nPolycurve count: " << polycurves.size() << "\n";
+	    struct bu_vls name;
+	    bu_vls_init(&name);
+	    bu_vls_printf(&name, "loops_patch_%d.pl", (int)(*p_it).first);
+	    FILE* ploopplot = fopen(bu_vls_addr(&name), "w");
+
+	    struct bu_vls name2;
+	    bu_vls_init(&name2);
+	    bu_vls_printf(&name2, "polycurves_patch_%d.pl", (int)(*p_it).first);
+	    FILE* pcurveplot = fopen(bu_vls_addr(&name2), "w");
+
+	    std::set<size_t> curr_polycurves = info->patch_polycurves[(*p_it).first];
+            std::map<size_t, std::set<size_t> > vert_to_curves;
+	    for(std::set<size_t>::iterator poly_it = curr_polycurves.begin(); poly_it != curr_polycurves.end(); poly_it++) {
+		int r = int(256*drand48() + 1.0);
+		int g = int(256*drand48() + 1.0);
+		int b = int(256*drand48() + 1.0);
+		plot_curve(bot, &(info->polycurves[*poly_it]), r, g, b, pcurveplot);
+
+
+                size_t curve_start = info->polycurves[*poly_it].front();
+                size_t curve_end = info->polycurves[*poly_it].back();
+                if (curve_start == curve_end) {
+		    size_t curr_loop = info->loops.size();
+		    info->loops[curr_loop].push_back((*poly_it));
+		    plot_loop(bot, curr_loop, info, ploopplot);
+		    curr_polycurves.erase(*poly_it);
+		    std::cout << "Patch " << (*p_it).first << " closed loop formed by curve " << (*poly_it) << " Start/End pts: (" << info->polycurves[*poly_it].front() << "," << info->polycurves[*poly_it].back() << ")\n";
+		} else {
+		    vert_to_curves[info->polycurves[*poly_it].front()].insert(*poly_it);	 
+		    vert_to_curves[info->polycurves[*poly_it].back()].insert(*poly_it);	 
+		    //std::cout << "Patch " << (*p_it).first << " Curve " << (*poly_it) << " Start/End pts: (" << info->polycurves[*poly_it].front() << "," << info->polycurves[*poly_it].back() << ")\n"; 
+		}
+	    }
+            fclose(pcurveplot);
+            
+            while (curr_polycurves.size() > 0) {
+                  size_t curr_loop = info->loops.size();
+                  std::queue<size_t> curve_queue;
+                  curve_queue.push(*(curr_polycurves.begin()));
+                  curr_polycurves.erase(curve_queue.front());
+                  while (!curve_queue.empty()) {
+                       size_t curr_curve = curve_queue.front();
+                       std::cout << "Patch " << (*p_it).first << " loop: " << curr_loop << " adding curve: " << curr_curve << "\n";
+                       curve_queue.pop();
+		       info->loops[curr_loop].push_back(curr_curve);
+                       size_t v1 = info->polycurves[curr_curve].front();
+                       size_t v2 = info->polycurves[curr_curve].back();
+                       // use vert_to_curves to assemble other curves
+                       std::set<size_t> candidate_curves;
+                       candidate_curves.insert(vert_to_curves[v1].begin(), vert_to_curves[v1].end());
+                       candidate_curves.insert(vert_to_curves[v2].begin(), vert_to_curves[v2].end());
+                       candidate_curves.erase(curr_curve);
+                       for (std::set<size_t>::iterator c_it = candidate_curves.begin(); c_it != candidate_curves.end(); c_it++) {
+                           if (curr_polycurves.find(*c_it) != curr_polycurves.end()) {
+                           curve_queue.push(*c_it); 
+			   curr_polycurves.erase(*c_it);
+                           }
+		       }
+		  }
+                  plot_loop(bot, curr_loop, info, ploopplot);
+            }
+           fclose(ploopplot); 
 	}
     }
 }
@@ -1092,23 +1149,23 @@ int main(int argc, char *argv[])
 
     // Identify triangles that overlap in the patches associated high-level planar projection, and
     // remove them - they pose a potential problem for surface fitting.
-    std::set<size_t> overlapping_faces;
-    for (pe_it = info.patch_edges.begin(); pe_it != info.patch_edges.end(); pe_it++) {
-	overlapping_edge_triangles(bot_ip, (*pe_it).first, &((*pe_it).second), info.vectors.At(info.patch_to_plane[(*pe_it).first]), &info, &overlapping_faces);
-    }
-    std::cout << "Triangles overlapping in projection planes: " << overlapping_faces.size() << "\n";
+    //std::set<size_t> overlapping_faces;
+    //for (pe_it = info.patch_edges.begin(); pe_it != info.patch_edges.end(); pe_it++) {
+//	overlapping_edge_triangles(bot_ip, (*pe_it).first, &((*pe_it).second), info.vectors.At(info.patch_to_plane[(*pe_it).first]), &info, &overlapping_faces);
+ //   }
+  //  std::cout << "Triangles overlapping in projection planes: " << overlapping_faces.size() << "\n";
     // Construct new patches using the overlapping faces - accept single faces if necessary, but try
     // to get some larger patches to keep the patch count at a minimum.
 
     /* TODO - problem here, can get into infinite loop situations */
     //edge_overlaps_to_patches(bot_ip, &info, &overlapping_faces);
 
+    remove_empty_patches(&info);
     // Make sure all our edge sets are up to date
     for (p_it = info.patches.begin(); p_it != info.patches.end(); p_it++) {
 	find_edge_segments(bot_ip, &((*p_it).second), &(info.patch_edges[(*p_it).first]), &info);
     }
 
-    remove_empty_patches(&info);
     std::cout << "Patch count, third pass: " << info.patches.size() << "\n";
     plot_faces(bot_ip, &info, "patches_pass_3.pl");
     plot_patch_borders(bot_ip, &info, "patch_borders_pass_3.pl");
