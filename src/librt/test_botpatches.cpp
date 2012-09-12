@@ -6,6 +6,7 @@
 #include <list>
 #include <vector>
 #include <iostream>
+#include <fstream>
 
 #include "vmath.h"
 #include "raytrace.h"
@@ -50,36 +51,6 @@ struct Manifold_Info {
     double face_plane_parallel_threshold;
     double neighbor_angle_threshold;
     int patch_cnt;
-};
-
-class Curve
-{
-    public:
-	size_t id;
-	std::pair<size_t, size_t> start_and_end;
-	size_t inner_patch;
-	size_t outer_patch;
-	EdgeList edges;
-	bool operator< (const Curve &other) const {
-	    return id < other.id;
-	}
-};
-
-typedef std::set<Curve> CurveList;
-typedef std::set<CurveList> LoopList;
-
-class Patch
-{
-    public:
-	size_t id;
-	ON_3dPoint *category_plane;
-	EdgeList edges;
-	LoopList loops;
-	FaceList faces;
-	CurveList outer_loop;
-	bool operator< (const Patch &other) const {
-	    return id < other.id;
-	}
 };
 
 /**********************************************************************************
@@ -627,7 +598,7 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
  *
  **********************************************************************************/
 
-
+/*
 void find_outer_loop(struct rt_bot_internal *bot, const Patch *patch, LoopList *loops, CurveList *outer_loop)
 {
     // If we have more than one loop, we need to identify the outer loop.  OpenNURBS handles outer
@@ -668,6 +639,7 @@ void find_outer_loop(struct rt_bot_internal *bot, const Patch *patch, LoopList *
 	}
     }
 }
+*/
 
 void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 {
@@ -982,7 +954,7 @@ void find_loops(struct rt_bot_internal *bot, struct Manifold_Info *info) {
  *
  **********************************************************************************/
 
-void PatchToVector3d(struct rt_bot_internal *bot, std::set<size_t> *faces, on_fit::vector_vec3d &data)
+void PatchToVector3d(struct rt_bot_internal *bot, std::set<size_t> *faces, EdgeList *edges, on_fit::vector_vec3d &data)
 {
     std::set<size_t>::iterator f_it;
     std::set<size_t> verts;
@@ -1000,6 +972,24 @@ void PatchToVector3d(struct rt_bot_internal *bot, std::set<size_t> *faces, on_fi
 	//printf("vert(%d): %f %f %f\n", (int)(*f_it), V3ARGS(&bot->vertices[(*f_it)*3]));
 	data.push_back(ON_3dVector(V3ARGS(&bot->vertices[(*f_it)*3])));
     }
+
+    // Edges are important for patch merging - tighten them by adding more edge
+    // points than just the vertex points.  Probably the right thing to do here is
+    // to use points from the 3D NURBS edge curves instead of the bot edges, but
+    // this is a first step and it does seem to improve the surface mapping at the
+    // edges, at least from what I can tell in the wireframe.
+    EdgeList::iterator e_it;
+    for (e_it = edges->begin(); e_it != edges->end(); e_it++) {
+        point_t p1, p2, p3, p4, p5;
+        VMOVE(p1, &bot->vertices[(*e_it).first])
+        VMOVE(p2, &bot->vertices[(*e_it).second])
+        p3[0] = (p1[0] + p2[0])/2; 
+        p3[1] = (p1[1] + p2[1])/2; 
+        p3[2] = (p1[2] + p2[2])/2;
+        // add edge midpoint 
+	data.push_back(ON_3dVector(V3ARGS(p3)));
+    }
+
 }
 
 int main(int argc, char *argv[])
@@ -1137,12 +1127,16 @@ int main(int argc, char *argv[])
 
     // Actually fit the NURBS surfaces
     size_t nurbs_surface_count = -1;
+    std::ofstream patch_to_surface;
+    std::ofstream surface_to_patch;
+    patch_to_surface.open("patch_to_surface.txt");
+    surface_to_patch.open("surface_to_patch.txt");
     for (int p = 0; p < (int)info.patches.size(); p++) {
 	if (info.patches[p].size() != 0) {
 	    std::cout << "Found patch " << p << " with " << info.patches[p].size() << " faces\n";
 	    unsigned order(3);
 	    on_fit::NurbsDataSurface data;
-	    PatchToVector3d(bot_ip, &(info.patches[p]), data.interior);
+	    PatchToVector3d(bot_ip, &(info.patches[p]), &(info.patch_edges[p]), data.interior);
 	    ON_NurbsSurface nurbs = on_fit::FittingSurface::initNurbsPCABoundingBox(order, &data);
 	    on_fit::FittingSurface fit(&data, nurbs);
 	    on_fit::FittingSurface::Parameter params;
@@ -1165,8 +1159,12 @@ int main(int argc, char *argv[])
             info.surface_array.Append(new ON_NurbsSurface(fit.m_nurbs));
             nurbs_surface_count++;
             info.patch_to_surface[p] = nurbs_surface_count;
+            patch_to_surface << p << " -> " << nurbs_surface_count << "\n";
+            surface_to_patch << nurbs_surface_count << " -> " << p << "\n";
 	}
     }
+    patch_to_surface.close();
+    surface_to_patch.close();
 
     // Generate BRL-CAD brep object
     wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
