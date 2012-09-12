@@ -841,112 +841,7 @@ void find_loops(struct rt_bot_internal *bot, struct Manifold_Info *info) {
     }
 }
 
-#if 0
-/////  START OLD CODE //////
 
-	EdgeList::iterator e_it;
-	for (e_it = info->patch_edges[(*p_it).first].begin(); e_it != info->patch_edges[(*p_it).first].end(); e_it++) {
-
-    std::cout << "Patch " << patch->id << " edge total: " << patch_edges.size() << "\n";
-
-    // Assemble the edge segments into curves
-    std::set<Curve> loop_curves;
-    find_curves(bot, patch, &loop_curves, &patch_edges, &vert_to_edge, vert_to_patch, edge_to_patch);
-
-    // We have the curves of the patch - build the loops
-    //
-    // First, pull any curves that are already loops
-    find_single_curve_loops(&loop_curves, &patch_loops_1curve);
-
-    // assemble multicurve loops - use end points to find candidate curves,
-    // then check patch ids to confirm
-    find_multicurve_loops(&loop_curves, &patch_loops);
-    LoopList::iterator l_it;
-    int lp_cnt = 1;
-    struct bu_vls name;
-    static FILE* laplot = NULL;
-    bu_vls_init(&name);
-    bu_vls_printf(&name, "%d_loop.pl", (int) patch->id);
-    laplot = fopen(bu_vls_addr(&name), "w");
-    for (l_it = patch_loops.begin(); l_it != patch_loops.end(); l_it++) {
-	int r = int(256*drand48() + 1.0);
-	int g = int(256*drand48() + 1.0);
-	int b = int(256*drand48() + 1.0);
-	plot_loop(bot, patch->id, lp_cnt, r, g, b, &(*l_it), laplot);
-	lp_cnt++;
-    }
-    fclose(laplot);
-
-
-    // Find the outer loop - this will be the outer trimming loop for the NURBS patch
-    CurveList outer_loop;
-    LoopList::iterator all_it;
-    for (all_it = patch_loops_1curve.begin(); all_it != patch_loops_1curve.end(); all_it++) {
-	patch_loops_all.insert((*all_it));
-    }
-    for (all_it = patch_loops.begin(); all_it != patch_loops.end(); all_it++) {
-	patch_loops_all.insert((*all_it));
-    }
-    find_outer_loop(bot, (const Patch *)patch, &patch_loops_all, &outer_loop);
-    plot_loop(bot, patch->id, 0, 255, 0, 0, &(outer_loop), NULL);
-
-    // Make some edge curves
-    for (l_it = patch_loops.begin(); l_it != patch_loops.end(); l_it++) {
-	CurveList::iterator c_it;
-	for (c_it = (*l_it).begin(); c_it != (*l_it).end(); c_it++) {
-	    pl_color(plot, int(256*drand48() + 1.0), int(256*drand48() + 1.0), int(256*drand48() + 1.0));
-	    if ((*c_it).edges.size() > 1) {
-		EdgeList::iterator e_it;
-		std::multimap<size_t, size_t> vert_map;
-		ON_3dPointArray curve_pnts;
-		for (e_it = (*c_it).edges.begin(); e_it != (*c_it).edges.end(); e_it++) {
-		    vert_map.insert(std::make_pair((*e_it).first, (*e_it).second));
-		    vert_map.insert(std::make_pair((*e_it).second, (*e_it).first));
-		}
-		size_t current_pt = (*c_it).start_and_end.first;
-		std::set<size_t> visited;
-
-		while (current_pt != (*c_it).start_and_end.second) {
-		    visited.insert(current_pt);
-		    curve_pnts.Append(ON_3dPoint(&bot->vertices[current_pt]));
-		    std::multimap<size_t, size_t>::iterator v_it;
-		    std::pair<std::multimap<size_t, size_t>::iterator, std::multimap<size_t, size_t>::iterator> v_range;
-		    v_range = vert_map.equal_range(current_pt);
-		    for (v_it = v_range.first; v_it != v_range.second; v_it++) {
-			if ((*v_it).second != current_pt && visited.find((*v_it).second) == visited.end()) {
-			    current_pt = (*v_it).second;
-			}
-		    }
-		}
-		curve_pnts.Append(ON_3dPoint(&bot->vertices[(*c_it).start_and_end.second]));
-
-		ON_BezierCurve curve_bez((const ON_3dPointArray)curve_pnts);
-		ON_NurbsCurve *curve_nurb = ON_NurbsCurve::New();
-		curve_bez.GetNurbForm(*curve_nurb);
-		curve_nurb->SetDomain(0.0, 1.0);
-		//bedges->Append(*curve_nurb);
-
-		double pt1[3], pt2[3];
-		int plotres = 50;
-		ON_Interval dom = curve_nurb->Domain();
-		for (int i = 1; i <= plotres; i++) {
-		    ON_3dPoint p = curve_nurb->PointAt(dom.ParameterAt((double)(i - 1)
-				/ (double)plotres));
-		    VMOVE(pt1, p);
-		    p = curve_nurb->PointAt(dom.ParameterAt((double) i / (double)plotres));
-		    VMOVE(pt2, p);
-		    pdv_3move(plot, pt1);
-		    pdv_3cont(plot, pt2);
-		}
-	    } else {
-		pdv_3move(plot, &bot->vertices[(*(*c_it).edges.begin()).first]);
-		pdv_3cont(plot, &bot->vertices[(*(*c_it).edges.begin()).second]);
-	    }
-	}
-    }
-
-}
-#endif
 
 /**********************************************************************************
  *
@@ -990,6 +885,40 @@ void PatchToVector3d(struct rt_bot_internal *bot, std::set<size_t> *faces, EdgeL
 	data.push_back(ON_3dVector(V3ARGS(p3)));
     }
 
+}
+
+void fit_nurbs_edge_curves(struct rt_bot_internal *bot, struct Manifold_Info *info) {
+   FILE *nurbs_curves = fopen("nurbs_curves.pl", "w");
+   std::map< size_t, std::vector<size_t> >::iterator pc_it;
+   for (pc_it = info->polycurves.begin(); pc_it != info->polycurves.end(); pc_it++) {
+       int r = int(256*drand48() + 1.0);
+       int g = int(256*drand48() + 1.0);
+       int b = int(256*drand48() + 1.0);
+       pl_color(nurbs_curves, r, g, b);
+
+       ON_3dPointArray curve_pnts;
+       std::vector<size_t>::iterator v_it;
+       for (v_it = (*pc_it).second.begin(); v_it != (*pc_it).second.end(); v_it++) {
+	   curve_pnts.Append(ON_3dPoint(&bot->vertices[(*v_it)]));
+       }
+       ON_BezierCurve curve_bez((const ON_3dPointArray)curve_pnts);
+       ON_NurbsCurve *curve_nurb = ON_NurbsCurve::New();
+       curve_bez.GetNurbForm(*curve_nurb);
+       curve_nurb->SetDomain(0.0, 1.0);
+       double pt1[3], pt2[3];
+       int plotres = 50;
+       ON_Interval dom = curve_nurb->Domain();
+       for (int i = 1; i <= plotres; i++) {
+	   ON_3dPoint p = curve_nurb->PointAt(dom.ParameterAt((double)(i - 1)
+		       / (double)plotres));
+	   VMOVE(pt1, p);
+	   p = curve_nurb->PointAt(dom.ParameterAt((double) i / (double)plotres));
+	   VMOVE(pt2, p);
+	   pdv_3move(nurbs_curves, pt1);
+	   pdv_3cont(nurbs_curves, pt2);
+       }
+   }
+   fclose(nurbs_curves);
 }
 
 int main(int argc, char *argv[])
@@ -1124,6 +1053,8 @@ int main(int argc, char *argv[])
 
     // Build the loops
     find_loops(bot_ip, &info);
+
+    fit_nurbs_edge_curves(bot_ip, &info);
 
     // Actually fit the NURBS surfaces
     size_t nurbs_surface_count = -1;
