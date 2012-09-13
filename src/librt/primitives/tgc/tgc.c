@@ -1803,6 +1803,119 @@ rt_tgc_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = GENPTR_NULL;
 }
 
+static fastf_t
+curve_samples(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    point_t bbox_min, bbox_max;
+    fastf_t primitive_diagonal_mm, samples_per_mm;
+    fastf_t diagonal_samples;
+
+    ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, info->tol);
+    primitive_diagonal_mm = DIST_PT_PT(bbox_min, bbox_max);
+
+    samples_per_mm = sqrt(info->view_samples) / info->view_size;
+    diagonal_samples = samples_per_mm * primitive_diagonal_mm;
+
+#if 0
+    bu_log("%.2f diagonal_samples = (%.2f view_samples / (%.2f * %.2f info->view_size)) * %.2f diagonal_mm\n", diagonal_samples, info->view_samples, info->view_size, info->view_size, primitive_diagonal_mm);
+#endif
+
+    return diagonal_samples;
+}
+
+struct ellipse {
+    point_t center;
+    vect_t axis_a;
+    vect_t axis_b;
+};
+
+static void
+ellipse_point_at_radian(point_t *result, struct ellipse ellipse, fastf_t radian)
+{
+    int i;
+    vect_t a, b, center;
+    double cos_rad, sin_rad;
+
+    VMOVE(a, ellipse.axis_a);
+    VMOVE(b, ellipse.axis_b);
+    VMOVE(center, ellipse.center);
+
+    cos_rad = cos(radian);
+    sin_rad = sin(radian);
+
+    for (i = 0; i < ELEMENTS_PER_POINT; ++i ) {
+	(*result)[i] = center[i] + a[i] * cos_rad + b[i] * sin_rad;
+    }
+}
+
+static void
+draw_ellipse(struct bu_list *vhead, struct ellipse ellipse, int num_points)
+{
+    int i;
+    point_t ellipse_point;
+    fastf_t radian_step = 2.0 * M_PI / num_points;
+
+    ellipse_point_at_radian(&ellipse_point, ellipse, (num_points - 1) * radian_step);
+    RT_ADD_VLIST(vhead, ellipse_point, BN_VLIST_LINE_MOVE);
+
+    for (i = 0; i < num_points; ++i) {
+	ellipse_point_at_radian(&ellipse_point, ellipse, i * radian_step);
+	RT_ADD_VLIST(vhead, ellipse_point, BN_VLIST_LINE_DRAW);
+    }
+}
+
+static void
+draw_lines_between_ellipses(struct bu_list *vhead, struct ellipse ellipse1, struct ellipse ellipse2, int num_lines)
+{
+    int i;
+    point_t ellipse1_point, ellipse2_point;
+    fastf_t radian_step = 2.0 * M_PI / num_lines;
+
+    for (i = 0; i < num_lines; ++i) {
+	ellipse_point_at_radian(&ellipse1_point, ellipse1, i * radian_step);
+	ellipse_point_at_radian(&ellipse2_point, ellipse2, i * radian_step);
+
+	RT_ADD_VLIST(vhead, ellipse1_point, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, ellipse2_point, BN_VLIST_LINE_DRAW);
+    }
+}
+
+int
+rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    fastf_t samples;
+    struct rt_tgc_internal *tip;
+    struct ellipse ellipse1, ellipse2;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+    tip = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tip);
+
+    samples = sqrt(curve_samples(ip, info));
+    if (samples < 6.0) {
+	samples = 6.0;
+    }
+
+    VMOVE(ellipse1.center, tip->v);
+    VMOVE(ellipse1.axis_a, tip->a);
+    VMOVE(ellipse1.axis_b, tip->b);
+    draw_ellipse(info->vhead, ellipse1, samples);
+
+    VADD2(ellipse2.center, tip->v, tip->h);
+    VMOVE(ellipse2.axis_a, tip->c);
+    VMOVE(ellipse2.axis_b, tip->d);
+    draw_ellipse(info->vhead, ellipse2, samples);
+
+    samples /= 4.0;
+    if (samples < 4.0) {
+	samples = 4.0;
+    }
+
+    draw_lines_between_ellipses(info->vhead, ellipse1, ellipse2, samples);
+
+    return 0;
+}
 
 /**
  * R T _ T G C _ P L O T
