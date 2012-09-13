@@ -1971,7 +1971,10 @@ struct rt_pt_node {
  * be relied upon.
  */
 struct rt_view_info {
-    fastf_t scale;		/**< *brief view scale */
+    struct bu_list *vhead;
+    const struct bn_tol *tol;
+    fastf_t view_size;
+    fastf_t view_samples;
 };
 
 /**
@@ -2030,6 +2033,8 @@ struct rt_functab {
 		   struct rt_db_internal * /*ip*/,
 		   const struct rt_tess_tol * /*ttol*/,
 		   const struct bn_tol * /*tol*/,
+		   const struct rt_view_info * /*view info*/);
+    int (*ft_adaptive_plot)(struct rt_db_internal * /*ip*/,
 		   const struct rt_view_info * /*view info*/);
     void (*ft_vshot)(struct soltab * /*stp*/[],
 		     struct xray *[] /*rp*/,

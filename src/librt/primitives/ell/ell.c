@@ -669,7 +669,6 @@ rt_ell_16pts(fastf_t *ov,
     VJOIN2(ELLOUT(16), V, e, A, -f, B);
 }
 
-#ifdef ALTERNATE_PLOTTING
 struct ell_draw_configuration {
     struct bu_list *vhead;
     vect_t ell_center;
@@ -787,7 +786,86 @@ draw_cross_sections_along_ell_vector(struct ell_draw_configuration config)
 	}
     }
 }
+
+static fastf_t
+curve_samples(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    point_t bbox_min, bbox_max;
+    fastf_t primitive_diagonal_mm, samples_per_mm;
+    fastf_t diagonal_samples;
+
+    ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, info->tol);
+    primitive_diagonal_mm = DIST_PT_PT(bbox_min, bbox_max);
+
+    samples_per_mm = sqrt(info->view_samples) / info->view_size;
+    diagonal_samples = samples_per_mm * primitive_diagonal_mm;
+
+#if 0
+    bu_log("%.2f diagonal_samples = (%.2f view_samples / (%.2f * %.2f info->view_size)) * %.2f diagonal_mm\n", diagonal_samples, info->view_samples, info->view_size, info->view_size, primitive_diagonal_mm);
 #endif
+
+    return diagonal_samples;
+}
+
+int
+rt_ell_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    struct ell_draw_configuration config;
+    struct rt_ell_internal *eip;
+    fastf_t samples;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
+
+    samples = curve_samples(ip, info);
+
+    config.vhead = info->vhead;
+    VMOVE(config.ell_center, eip->v);
+    config.points_per_section = sqrt(samples);
+
+    if (config.points_per_section < 6) {
+	config.points_per_section = 6;
+    }
+
+    if (config.points_per_section > 32) {
+	config.points_per_section = 32;
+    }
+
+    config.num_cross_sections = sqrt(samples) / 3.0;
+
+    if (config.num_cross_sections < 1) {
+	config.num_cross_sections = 1;
+    }
+
+    if (config.num_cross_sections > 5) {
+	config.num_cross_sections = 5;
+    }
+    
+#if 0
+    bu_log("%d points per cross section (%.2f samples)\n", config.points_per_section, samples);
+#endif
+
+    VMOVE(config.ell_travel_vector, eip->a);
+    VMOVE(config.ell_axis_vector_a, eip->b);
+    VMOVE(config.ell_axis_vector_b, eip->c);
+    draw_cross_sections_along_ell_vector(config);
+
+    config.num_cross_sections = 1;
+
+    VMOVE(config.ell_travel_vector, eip->b);
+    VMOVE(config.ell_axis_vector_a, eip->a);
+    VMOVE(config.ell_axis_vector_b, eip->c);
+    draw_cross_sections_along_ell_vector(config);
+
+    VMOVE(config.ell_travel_vector, eip->c);
+    VMOVE(config.ell_axis_vector_a, eip->a);
+    VMOVE(config.ell_axis_vector_b, eip->b);
+    draw_cross_sections_along_ell_vector(config);
+
+    return 0;
+}
 
 /**
  * R T _ E L L _ P L O T
@@ -795,37 +873,6 @@ draw_cross_sections_along_ell_vector(struct ell_draw_configuration config)
 int
 rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
-#ifdef ALTERNATE_PLOTTING
-    struct ell_draw_configuration config;
-    struct rt_ell_internal *eip;
-
-    BU_CK_LIST_HEAD(vhead);
-    RT_CK_DB_INTERNAL(ip);
-    eip = (struct rt_ell_internal *)ip->idb_ptr;
-    RT_ELL_CK_MAGIC(eip);
-
-    config.vhead = vhead;
-    config.num_cross_sections = 0;
-    config.points_per_section = 32;
-
-    VMOVE(config.ell_center, eip->v);
-
-    VMOVE(config.ell_travel_vector, eip->a);
-    VMOVE(config.ell_axis_vector_a, eip->b);
-    VMOVE(config.ell_axis_vector_b, eip->c);
-    draw_cross_sections_along_ell_vector(config);
-
-    VMOVE(config.ell_travel_vector, eip->b);
-    VMOVE(config.ell_axis_vector_a, eip->a);
-    VMOVE(config.ell_axis_vector_b, eip->c);
-    draw_cross_sections_along_ell_vector(config);
-
-    config.num_cross_sections = 16;
-    VMOVE(config.ell_travel_vector, eip->c);
-    VMOVE(config.ell_axis_vector_a, eip->a);
-    VMOVE(config.ell_axis_vector_b, eip->b);
-    draw_cross_sections_along_ell_vector(config);
-#else
     register int i;
     struct rt_ell_internal *eip;
     fastf_t top[16*3];
@@ -855,7 +902,7 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     for (i=0; i<16; i++) {
 	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
-#endif
+
     return 0;
 }
 
