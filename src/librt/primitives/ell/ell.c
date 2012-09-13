@@ -183,7 +183,7 @@ rt_ell_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     magsq_b = MAGSQ(eip->b);
     magsq_c = MAGSQ(eip->c);
 
-    /* Try a shortcut - if this is a sphere, the calculation simpifies */
+    /* Try a shortcut - if this is a sphere, the calculation simplifies */
     /* Check whether |A|, |B|, and |C| are nearly equal */
     if (EQUAL(magsq_a, magsq_b) && EQUAL(magsq_a, magsq_c)) {
 	fastf_t sph_rad = sqrt(magsq_a);
@@ -842,7 +842,7 @@ rt_ell_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     if (config.num_cross_sections > 5) {
 	config.num_cross_sections = 5;
     }
-    
+
 #if 0
     bu_log("%d points per cross section (%.2f samples)\n", config.points_per_section, samples);
 #endif
@@ -1000,7 +1000,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     int boff;		/* base offset */
     int toff;		/* top offset */
     int blim;		/* base subscript limit */
-    int tlim;		/* top subscrpit limit */
+    int tlim;		/* top subscript limit */
     fastf_t rel;	/* Absolutized relative tolerance */
 
     RT_CK_DB_INTERNAL(ip);
@@ -1104,7 +1104,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
     }
 
-    /* Converte distance tolerance into a maximum permissible angle
+    /* Convert distance tolerance into a maximum permissible angle
      * tolerance.  'radius' is largest radius.
      */
     state.theta_tol = 2 * acos(1.0 - rel / radius);
