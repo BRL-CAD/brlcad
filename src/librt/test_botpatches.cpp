@@ -33,9 +33,11 @@ struct Manifold_Info {
     std::map< size_t, std::vector<size_t> > loops;
     std::map< size_t, std::set<size_t> > patch_polycurves;
     std::map< size_t, std::set<size_t> > polycurves_patch;
+
     std::map< size_t, size_t> outer_loops;
-    std::map< size_t , std::set<size_t> > inner_loops;
+    std::map< size_t , std::set<size_t> > patch_to_loops;
     ON_SimpleArray<ON_NurbsSurface*> surface_array;
+    ON_SimpleArray<ON_NurbsCurve*> curve_array;
     std::map< size_t, size_t> patch_to_surface;
     VertToEdge vert_to_edge;
     VertToPatch vert_to_patch;
@@ -598,11 +600,59 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
  *
  **********************************************************************************/
 
-/*
-void find_outer_loop(struct rt_bot_internal *bot, const Patch *patch, LoopList *loops, CurveList *outer_loop)
+
+void find_outer_loops(struct rt_bot_internal *bot, struct Manifold_Info *info)
 {
     // If we have more than one loop, we need to identify the outer loop.  OpenNURBS handles outer
     // and inner loops separately, so we need to know which loop is our outer surface boundary.
+    std::map< size_t, std::set<size_t> >::iterator p_it;
+    for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
+	if (info->patches[(*p_it).first].size() > 0) {
+	    if (info->patch_to_loops[(*p_it).first].size() == 1) {
+		info->outer_loops[(*p_it).first] = *(info->patch_to_loops[(*p_it).first].begin());
+	    } else {
+		std::set<size_t>::iterator l_it;
+		fastf_t diag_max = 0.0;
+		size_t patch_outer_loop;
+		vect_t normal;
+		ON_3dVector *vect_n = info->vectors.At(info->patch_to_plane[(*p_it).first]);
+		VSET(normal, vect_n->x, vect_n->y, vect_n->z);
+		for (l_it = info->patch_to_loops[(*p_it).first].begin(); l_it != info->patch_to_loops[(*p_it).first].end(); l_it++) {
+		    vect_t min, max, diag;
+		    VSETALL(min, MAX_FASTF);
+		    VSETALL(max, -MAX_FASTF);
+		    std::vector<size_t> *curves = &(info->loops[(*l_it)]);
+		    std::vector<size_t>::iterator c_it;
+		    for(c_it = curves->begin(); c_it != curves->end(); c_it++) {
+			std::vector<size_t> *verts= &(info->polycurves[(*c_it)]);
+			std::vector<size_t>::iterator v_it;
+			for(v_it = verts->begin(); v_it != verts->end(); v_it++) {
+			    vect_t eproj;
+			    pnt_project(&bot->vertices[(*v_it)], &eproj, normal);
+			    VMINMAX(min, max, eproj);
+			}
+		    }
+		    VSUB2(diag, max, min);
+		    if (MAGNITUDE(diag) > diag_max) {
+			diag_max = MAGNITUDE(diag);
+			patch_outer_loop = (*l_it);
+		    }
+		}
+                info->outer_loops[(*p_it).first] = patch_outer_loop;
+	    }
+            info->patch_to_loops[(*p_it).first].erase(info->outer_loops[(*p_it).first]);
+	}
+    }
+    for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
+	if (info->patches[(*p_it).first].size() > 0) {
+	    if (info->patch_to_loops[(*p_it).first].size() > 0) {
+		std::cout << "Patch " << (*p_it).first << " has " << info->patch_to_loops[(*p_it).first].size() << " inner loops\n";
+            }
+        }
+    }
+}
+
+#if 0
     if (loops->size() > 0) {
 	if (loops->size() > 1) {
 	    std::cout << "Loop count: " << loops->size() << "\n";
@@ -639,7 +689,7 @@ void find_outer_loop(struct rt_bot_internal *bot, const Patch *patch, LoopList *
 	}
     }
 }
-*/
+#endif
 
 void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 {
@@ -800,6 +850,7 @@ void find_loops(struct rt_bot_internal *bot, struct Manifold_Info *info) {
                 if (curve_start == curve_end) {
 		    size_t curr_loop = info->loops.size();
 		    info->loops[curr_loop].push_back((*poly_it));
+                    info->patch_to_loops[(*p_it).first].insert(curr_loop);
 		    plot_loop(bot, curr_loop, info, ploopplot);
 		    curr_polycurves.erase(*poly_it);
 		    //std::cout << "Patch " << (*p_it).first << " closed loop formed by curve " << (*poly_it) << " Start/End pts: (" << info->polycurves[*poly_it].front() << "," << info->polycurves[*poly_it].back() << ")\n";
@@ -834,7 +885,8 @@ void find_loops(struct rt_bot_internal *bot, struct Manifold_Info *info) {
                            }
 		       }
 		  }
-                  plot_loop(bot, curr_loop, info, ploopplot);
+		  info->patch_to_loops[(*p_it).first].insert(curr_loop);
+		  plot_loop(bot, curr_loop, info, ploopplot);
             }
            fclose(ploopplot); 
 	}
@@ -875,7 +927,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, std::set<size_t> *faces, EdgeL
     // edges, at least from what I can tell in the wireframe.
     EdgeList::iterator e_it;
     for (e_it = edges->begin(); e_it != edges->end(); e_it++) {
-        point_t p1, p2, p3, p4, p5;
+        point_t p1, p2, p3;
         VMOVE(p1, &bot->vertices[(*e_it).first])
         VMOVE(p2, &bot->vertices[(*e_it).second])
         p3[0] = (p1[0] + p2[0])/2; 
@@ -905,6 +957,7 @@ void fit_nurbs_edge_curves(struct rt_bot_internal *bot, struct Manifold_Info *in
        ON_NurbsCurve *curve_nurb = ON_NurbsCurve::New();
        curve_bez.GetNurbForm(*curve_nurb);
        curve_nurb->SetDomain(0.0, 1.0);
+       info->curve_array.Append(curve_nurb);
        double pt1[3], pt2[3];
        int plotres = 50;
        ON_Interval dom = curve_nurb->Domain();
@@ -1054,9 +1107,13 @@ int main(int argc, char *argv[])
     // Build the loops
     find_loops(bot_ip, &info);
 
+    // ID the outer loops
+    find_outer_loops(bot_ip, &info);
+
     fit_nurbs_edge_curves(bot_ip, &info);
 
-    // Actually fit the NURBS surfaces
+    // Actually fit the NURBS surfaces and build faces - TODO - looks like a variation on NewPlanarFaceLoop will be
+    // necessary, just for non-planar faces...
     size_t nurbs_surface_count = -1;
     std::ofstream patch_to_surface;
     std::ofstream surface_to_patch;
