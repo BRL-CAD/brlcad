@@ -406,7 +406,7 @@ size_t overlapping_edge_triangles(struct rt_bot_internal *bot, size_t curr_patch
 		}
 	    }
 	}
-	// 2. Find an overlapping triangle, remove it to its own patch, fix the edges, continue 
+	// 2. Find an overlapping triangle, remove it to its own patch, fix the edges, continue
 	overlap_cnt = 0;
 	for (sizet_it = edge_triangles.begin(); sizet_it != edge_triangles.end() ; sizet_it++) {
 	    point_t normal;
@@ -428,7 +428,7 @@ size_t overlapping_edge_triangles(struct rt_bot_internal *bot, size_t curr_patch
 		    if(overlap) {
                         //std::cout << "Overlap: (" << *sizet_it << "," << *ef_it2 << ")\n";
                         info->patch_cnt++;
-                        size_t new_patch = info->patch_cnt; 
+                        size_t new_patch = info->patch_cnt;
 			info->patches[new_patch].insert(*sizet_it);
 			info->patches[curr_patch].erase(*sizet_it);
 			info->patch_to_plane[new_patch] = info->face_to_plane[*sizet_it];
@@ -806,7 +806,7 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 		int g = int(256*drand48() + 1.0);
 		int b = int(256*drand48() + 1.0);
 		plot_curve(bot, &(info->polycurves[curve_id]), r, g, b, pcurveplot);
-		
+
 		// Let the patches know they have a curve associated with them.
 		info->patch_polycurves[(*p_it).first].insert(curve_id);
 		info->patch_polycurves[other_patch_id].insert(curve_id);
@@ -855,12 +855,12 @@ void find_loops(struct rt_bot_internal *bot, struct Manifold_Info *info) {
 		    curr_polycurves.erase(*poly_it);
 		    //std::cout << "Patch " << (*p_it).first << " closed loop formed by curve " << (*poly_it) << " Start/End pts: (" << info->polycurves[*poly_it].front() << "," << info->polycurves[*poly_it].back() << ")\n";
 		} else {
-		    vert_to_curves[info->polycurves[*poly_it].front()].insert(*poly_it);	 
-		    vert_to_curves[info->polycurves[*poly_it].back()].insert(*poly_it);	 
+		    vert_to_curves[info->polycurves[*poly_it].front()].insert(*poly_it);
+		    vert_to_curves[info->polycurves[*poly_it].back()].insert(*poly_it);
 		}
 	    }
  //           fclose(pcurveplot);
-            
+
             while (curr_polycurves.size() > 0) {
                   size_t curr_loop = info->loops.size();
                   std::queue<size_t> curve_queue;
@@ -880,7 +880,7 @@ void find_loops(struct rt_bot_internal *bot, struct Manifold_Info *info) {
                        candidate_curves.erase(curr_curve);
                        for (std::set<size_t>::iterator c_it = candidate_curves.begin(); c_it != candidate_curves.end(); c_it++) {
                            if (curr_polycurves.find(*c_it) != curr_polycurves.end()) {
-                           curve_queue.push(*c_it); 
+                           curve_queue.push(*c_it);
 			   curr_polycurves.erase(*c_it);
                            }
 		       }
@@ -888,7 +888,7 @@ void find_loops(struct rt_bot_internal *bot, struct Manifold_Info *info) {
 		  info->patch_to_loops[(*p_it).first].insert(curr_loop);
 		  plot_loop(bot, curr_loop, info, ploopplot);
             }
-           fclose(ploopplot); 
+           fclose(ploopplot);
 	}
     }
 }
@@ -930,10 +930,10 @@ void PatchToVector3d(struct rt_bot_internal *bot, std::set<size_t> *faces, EdgeL
         point_t p1, p2, p3;
         VMOVE(p1, &bot->vertices[(*e_it).first])
         VMOVE(p2, &bot->vertices[(*e_it).second])
-        p3[0] = (p1[0] + p2[0])/2; 
-        p3[1] = (p1[1] + p2[1])/2; 
+        p3[0] = (p1[0] + p2[0])/2;
+        p3[1] = (p1[1] + p2[1])/2;
         p3[2] = (p1[2] + p2[2])/2;
-        // add edge midpoint 
+        // add edge midpoint
 	data.push_back(ON_3dVector(V3ARGS(p3)));
     }
 
