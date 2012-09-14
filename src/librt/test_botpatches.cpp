@@ -1001,13 +1001,6 @@ int main(int argc, char *argv[])
     info.patch_cnt = -1;
     bu_vls_init(&name);
 
-    static FILE* plot = NULL;
-    point_t min, max;
-    plot = fopen("edges.pl", "w");
-    VSET(min, -2048, -2048, -2048);
-    VSET(max, 2048, 2048, 2048);
-    pdv_3space(plot, min, max);
-
     if (argc != 3) {
 	bu_exit(1, "Usage: %s file.g object", argv[0]);
     }
