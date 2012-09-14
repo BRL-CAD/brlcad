@@ -27,6 +27,9 @@ typedef std::set<Edge> EdgeList;
 typedef std::set<size_t> FaceList;
 
 struct Manifold_Info {
+    ON_Brep *brep;
+    struct rt_bot_internal *bot;
+
     std::map< size_t, std::set<size_t> > patches;
     std::map< size_t, EdgeList > patch_edges;
     std::map< size_t, std::vector<size_t> > polycurves;
@@ -93,14 +96,14 @@ void plot_curve(struct rt_bot_internal *bot, std::vector<size_t> *pts, int r, in
 }
 
 // plot loop
-void plot_loop(struct rt_bot_internal *bot, size_t loop_id, struct Manifold_Info *info, FILE *l_plot)
+void plot_loop(size_t loop_id, struct Manifold_Info *info, FILE *l_plot)
 {
     std::vector<size_t>::iterator v_it;
     int r = int(256*drand48() + 1.0);
     int g = int(256*drand48() + 1.0);
     int b = int(256*drand48() + 1.0);
     for (v_it = info->loops[loop_id].begin(); v_it != info->loops[loop_id].end(); v_it++) {
-	plot_curve(bot, &(info->polycurves[*v_it]), r, g, b, l_plot);
+	plot_curve(info->bot, &(info->polycurves[*v_it]), r, g, b, l_plot);
     }
 }
 
@@ -115,7 +118,7 @@ void plot_face(point_t p1, point_t p2, point_t p3, int r, int g, int b, FILE *c_
     pdv_3cont(c_plot, p3);
 }
 
-void plot_faces(struct rt_bot_internal *bot_ip, struct Manifold_Info *info, const char *filename) {
+void plot_faces(struct Manifold_Info *info, const char *filename) {
     std::map< size_t, std::set<size_t> >::iterator p_it;
     FILE* plot_file = fopen(filename, "w");
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
@@ -125,21 +128,21 @@ void plot_faces(struct rt_bot_internal *bot_ip, struct Manifold_Info *info, cons
 	std::set<size_t> *faces = &((*p_it).second);
 	std::set<size_t>::iterator f_it;
 	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
-	    plot_face(&bot_ip->vertices[bot_ip->faces[(*f_it)*3+0]*3], &bot_ip->vertices[bot_ip->faces[(*f_it)*3+1]*3], &bot_ip->vertices[bot_ip->faces[(*f_it)*3+2]*3], r, g ,b, plot_file);
+	    plot_face(&info->bot->vertices[info->bot->faces[(*f_it)*3+0]*3], &info->bot->vertices[info->bot->faces[(*f_it)*3+1]*3], &info->bot->vertices[info->bot->faces[(*f_it)*3+2]*3], r, g ,b, plot_file);
 	}
     }
     fclose(plot_file);
 }
 
-void plot_patch_borders(struct rt_bot_internal *bot_ip, struct Manifold_Info *info, const char *filename) {
+void plot_patch_borders(struct Manifold_Info *info, const char *filename) {
     std::map< size_t, std::set<size_t> >::iterator p_it;
     FILE* edge_plot = fopen(filename, "w");
     pl_color(edge_plot, 255, 255, 255);
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
 	EdgeList::iterator e_it;
 	for (e_it = info->patch_edges[(*p_it).first].begin(); e_it != info->patch_edges[(*p_it).first].end(); e_it++) {
-	    pdv_3move(edge_plot, &bot_ip->vertices[(*e_it).first]);
-	    pdv_3cont(edge_plot, &bot_ip->vertices[(*e_it).second]);
+	    pdv_3move(edge_plot, &info->bot->vertices[(*e_it).first]);
+	    pdv_3cont(edge_plot, &info->bot->vertices[(*e_it).second]);
 	}
     }
     fclose(edge_plot);
@@ -233,7 +236,7 @@ void get_connected_faces(struct rt_bot_internal *bot, size_t face_num, EdgeToFac
 // face_to_patch is built and maintained during the initial partitioning, but the
 // edge and vertex mappings are not tracked during the intial process.  Call this
 // function to populate them, after the initial partitioning is complete.
-void sync_structure_maps(struct rt_bot_internal *bot, struct Manifold_Info *info) {
+void sync_structure_maps(struct Manifold_Info *info) {
     std::map< size_t, std::set<size_t> >::iterator p_it;
     info->edge_to_patch.clear();
     info->vert_to_patch.clear();
@@ -243,7 +246,7 @@ void sync_structure_maps(struct rt_bot_internal *bot, struct Manifold_Info *info
 	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
 	    std::set<Edge> face_edges;
 	    std::set<Edge>::iterator face_edges_it;
-	    get_face_edges(bot, (*f_it), &face_edges);
+	    get_face_edges(info->bot, (*f_it), &face_edges);
 	    for (face_edges_it = face_edges.begin(); face_edges_it != face_edges.end(); face_edges_it++) {
 		info->edge_to_patch[(*face_edges_it)].insert((*p_it).first);
 		info->vert_to_patch[(*face_edges_it).first].insert((*p_it).first);
@@ -255,14 +258,14 @@ void sync_structure_maps(struct rt_bot_internal *bot, struct Manifold_Info *info
 
 // For a given face, determine which patch shares the majority of its edges.  If no one patch
 // has a majority, return -1
-int find_major_patch(struct rt_bot_internal *bot, size_t face_num, struct Manifold_Info *info, size_t curr_patch, size_t patch_count) {
+int find_major_patch(size_t face_num, struct Manifold_Info *info, size_t curr_patch, size_t patch_count) {
     std::map<size_t, size_t> patch_cnt;
     std::map<size_t, size_t>::iterator patch_cnt_itr;
     std::set<size_t> connected_faces;
     std::set<size_t>::iterator cf_it;
     size_t max_patch = 0;
     size_t max_patch_edge_cnt = 0;
-    get_connected_faces(bot, face_num, &(info->edge_to_face), &connected_faces);
+    get_connected_faces(info->bot, face_num, &(info->edge_to_face), &connected_faces);
     for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
 	patch_cnt[info->face_to_patch[*cf_it]] += 1;
     }
@@ -301,7 +304,7 @@ int find_major_patch(struct rt_bot_internal *bot, size_t face_num, struct Manifo
 // the patch with which they share the most edges.  Return the number of triangles shifted.
 // This won't fully "smooth" an edge in a given pass, but an iterative approach should converge
 // to edges with triangles in their correct "major" patches
-size_t shift_edge_triangles(struct rt_bot_internal *bot, std::map< size_t, std::set<size_t> > *patches, size_t curr_patch, EdgeList *edges, struct Manifold_Info *info) {
+size_t shift_edge_triangles(std::map< size_t, std::set<size_t> > *patches, size_t curr_patch, EdgeList *edges, struct Manifold_Info *info) {
     std::set<size_t> patch_edgefaces;
     std::map<size_t, size_t> faces_to_shift;
     std::map<size_t, size_t>::iterator f_it;
@@ -320,7 +323,7 @@ size_t shift_edge_triangles(struct rt_bot_internal *bot, std::map< size_t, std::
     // 2. build triangle set of edge triangles with major patch other than current patch
     //    and a normal that permits movement to the major patch
     for (sizet_it = patch_edgefaces.begin(); sizet_it != patch_edgefaces.end() ; sizet_it++) {
-	int major_patch = find_major_patch(bot, (*sizet_it), info, curr_patch, (*patches)[curr_patch].size());
+	int major_patch = find_major_patch((*sizet_it), info, curr_patch, (*patches)[curr_patch].size());
 	if (major_patch != (int)curr_patch && major_patch != -1) {
 	    if (info->norm_results[std::make_pair((*sizet_it), info->patch_to_plane[major_patch])] >= 0) {
 		faces_to_shift[(*sizet_it)] = major_patch;
@@ -365,7 +368,7 @@ void pnt_project(point_t orig_pt, point_t *new_pt, point_t normal) {
 
 // Given a patch consisting of a set of faces find the
 // set of edges that forms the outer edge of the patch
-void find_edge_segments(struct rt_bot_internal *bot, std::set<size_t> *faces, EdgeList *patch_edges, struct Manifold_Info *info)
+void find_edge_segments(std::set<size_t> *faces, EdgeList *patch_edges, struct Manifold_Info *info)
 {
     size_t pt_A, pt_B, pt_C;
     std::set<size_t>::iterator it;
@@ -373,9 +376,9 @@ void find_edge_segments(struct rt_bot_internal *bot, std::set<size_t> *faces, Ed
     std::map<std::pair<size_t, size_t>, size_t>::iterator efc_it;
     patch_edges->clear();
     for (it = faces->begin(); it != faces->end(); it++) {
-	pt_A = bot->faces[(*it)*3+0]*3;
-	pt_B = bot->faces[(*it)*3+1]*3;
-	pt_C = bot->faces[(*it)*3+2]*3;
+	pt_A = info->bot->faces[(*it)*3+0]*3;
+	pt_B = info->bot->faces[(*it)*3+1]*3;
+	pt_C = info->bot->faces[(*it)*3+2]*3;
 	edge_face_cnt[mk_edge(pt_A, pt_B)] += 1;
 	edge_face_cnt[mk_edge(pt_B, pt_C)] += 1;
 	edge_face_cnt[mk_edge(pt_C, pt_A)] += 1;
@@ -393,87 +396,93 @@ void find_edge_segments(struct rt_bot_internal *bot, std::set<size_t> *faces, Ed
 // Given a patch, find triangles that overlap when projected into the patch domain, remove them
 // from the current patch and set them up in their own patch.  Returns the number of faces moved
 // from the current patch to their own patch.
-size_t overlapping_edge_triangles(struct rt_bot_internal *bot, size_t curr_patch, struct Manifold_Info *info) {
-    ON_3dVector *vect = info->vectors.At(info->patch_to_plane[curr_patch]);
-    size_t overlap_cnt = 1;
+size_t overlapping_edge_triangles(struct Manifold_Info *info) {
     size_t total_overlapping = 0;
-    while (overlap_cnt != 0) {
-	std::set<size_t> edge_triangles;
-	EdgeList *edges = &(info->patch_edges[curr_patch]);
-	EdgeList::iterator e_it;
-	std::set<size_t>::iterator sizet_it;
-	// 1. build triangle set of edge triangles in patch.
-	for (e_it = edges->begin(); e_it != edges->end(); e_it++) {
-	    std::set<size_t> faces_from_edge = info->edge_to_face[(*e_it)];
-	    for (sizet_it = faces_from_edge.begin(); sizet_it != faces_from_edge.end() ; sizet_it++) {
-		if (info->face_to_patch[(*sizet_it)] == curr_patch) {
-		    edge_triangles.insert((*sizet_it));
+    std::map< size_t, EdgeList >::iterator pe_it;
+    for (pe_it = info->patch_edges.begin(); pe_it != info->patch_edges.end(); pe_it++) {
+	ON_3dVector *vect = info->vectors.At(info->patch_to_plane[(*pe_it).first]);
+	size_t overlap_cnt = 1;
+	size_t patch_overlapping = 0;
+	while (overlap_cnt != 0) {
+	    std::set<size_t> edge_triangles;
+	    EdgeList *edges = &(info->patch_edges[(*pe_it).first]);
+	    EdgeList::iterator e_it;
+	    std::set<size_t>::iterator sizet_it;
+	    // 1. build triangle set of edge triangles in patch.
+	    for (e_it = edges->begin(); e_it != edges->end(); e_it++) {
+		std::set<size_t> faces_from_edge = info->edge_to_face[(*e_it)];
+		for (sizet_it = faces_from_edge.begin(); sizet_it != faces_from_edge.end() ; sizet_it++) {
+		    if (info->face_to_patch[(*sizet_it)] == (*pe_it).first) {
+			edge_triangles.insert((*sizet_it));
+		    }
 		}
 	    }
-	}
-	// 2. Find an overlapping triangle, remove it to its own patch, fix the edges, continue
-	overlap_cnt = 0;
-	for (sizet_it = edge_triangles.begin(); sizet_it != edge_triangles.end() ; sizet_it++) {
-	    point_t normal;
-	    point_t v0, v1, v2;
-	    VSET(normal, vect->x, vect->y, vect->z);
-	    pnt_project(&bot->vertices[bot->faces[(*sizet_it)*3+0]*3], &v0, normal);
-	    pnt_project(&bot->vertices[bot->faces[(*sizet_it)*3+1]*3], &v1, normal);
-	    pnt_project(&bot->vertices[bot->faces[(*sizet_it)*3+2]*3], &v2, normal);
-	    edge_triangles.erase(*sizet_it);
-	    std::set<size_t>::iterator ef_it2 = edge_triangles.begin();
-	    for (ef_it2 = edge_triangles.begin(); ef_it2!=edge_triangles.end(); ef_it2++) {
-		if ((*sizet_it) != (*ef_it2)) {
-		    point_t u0, u1, u2;
-		    pnt_project(&bot->vertices[bot->faces[(*ef_it2)*3+0]*3], &u0, normal);
-		    pnt_project(&bot->vertices[bot->faces[(*ef_it2)*3+1]*3], &u1, normal);
-		    pnt_project(&bot->vertices[bot->faces[(*ef_it2)*3+2]*3], &u2, normal);
+	    // 2. Find an overlapping triangle, remove it to its own patch, fix the edges, continue
+	    overlap_cnt = 0;
+	    for (sizet_it = edge_triangles.begin(); sizet_it != edge_triangles.end() ; sizet_it++) {
+		point_t normal;
+		point_t v0, v1, v2;
+		VSET(normal, vect->x, vect->y, vect->z);
+		pnt_project(&info->bot->vertices[info->bot->faces[(*sizet_it)*3+0]*3], &v0, normal);
+		pnt_project(&info->bot->vertices[info->bot->faces[(*sizet_it)*3+1]*3], &v1, normal);
+		pnt_project(&info->bot->vertices[info->bot->faces[(*sizet_it)*3+2]*3], &v2, normal);
+		edge_triangles.erase(*sizet_it);
+		std::set<size_t>::iterator ef_it2 = edge_triangles.begin();
+		for (ef_it2 = edge_triangles.begin(); ef_it2!=edge_triangles.end(); ef_it2++) {
+		    if ((*sizet_it) != (*ef_it2)) {
+			point_t u0, u1, u2;
+			pnt_project(&info->bot->vertices[info->bot->faces[(*ef_it2)*3+0]*3], &u0, normal);
+			pnt_project(&info->bot->vertices[info->bot->faces[(*ef_it2)*3+1]*3], &u1, normal);
+			pnt_project(&info->bot->vertices[info->bot->faces[(*ef_it2)*3+2]*3], &u2, normal);
 
-		    int overlap = bn_coplanar_tri_tri_isect(v0, v1, v2, u0, u1, u2, 1);
-		    if(overlap) {
-			//std::cout << "Overlap: (" << *sizet_it << "," << *ef_it2 << ")\n";
-			info->patch_cnt++;
-			size_t new_patch = info->patch_cnt;
-			info->patches[new_patch].insert(*sizet_it);
-			info->patches[curr_patch].erase(*sizet_it);
-			info->patch_to_plane[new_patch] = info->face_to_plane[*sizet_it];
-			info->face_to_patch[*sizet_it] = new_patch;
-			find_edge_segments(bot, &(info->patches[curr_patch]), &(info->patch_edges[curr_patch]), info);
-			find_edge_segments(bot, &(info->patches[new_patch]), &(info->patch_edges[new_patch]), info);
-			overlap_cnt++;
-			total_overlapping++;
+			int overlap = bn_coplanar_tri_tri_isect(v0, v1, v2, u0, u1, u2, 1);
+			if(overlap) {
+			    //std::cout << "Overlap: (" << *sizet_it << "," << *ef_it2 << ")\n";
+			    info->patch_cnt++;
+			    size_t new_patch = info->patch_cnt;
+			    info->patches[new_patch].insert(*sizet_it);
+			    info->patches[(*pe_it).first].erase(*sizet_it);
+			    info->patch_to_plane[new_patch] = info->face_to_plane[*sizet_it];
+			    info->face_to_patch[*sizet_it] = new_patch;
+			    find_edge_segments(&(info->patches[(*pe_it).first]), &(info->patch_edges[(*pe_it).first]), info);
+			    find_edge_segments(&(info->patches[new_patch]), &(info->patch_edges[new_patch]), info);
+			    overlap_cnt++;
+			    patch_overlapping++;
+			    total_overlapping++;
+			}
 		    }
+		    if (overlap_cnt > 0) break;
 		}
 		if (overlap_cnt > 0) break;
 	    }
-	    if (overlap_cnt > 0) break;
 	}
+	if (patch_overlapping > 0)
+	    std::cout << "Patch " << (*pe_it).first << " overlaps: " << patch_overlapping << "\n";
     }
-    if (total_overlapping > 0)
-	std::cout << "Patch " << curr_patch  << " overlaps: " << total_overlapping << "\n";
     return total_overlapping;
 }
 
-void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info)
+void bot_partition(struct Manifold_Info *info)
 {
     std::map< size_t, std::set<size_t> > face_groups;
+    std::map< size_t, std::set<size_t> > *patches = &(info->patches);
     // Calculate face normals dot product with bounding rpp planes
-    for (size_t i=0; i < bot->num_faces; ++i) {
+    for (size_t i=0; i < info->bot->num_faces; ++i) {
 	size_t pt_A, pt_B, pt_C;
 	size_t result_max;
 	double vdot = 0.0;
 	double result = 0.0;
 	vect_t a, b, norm_dir;
 	// Add vert -> edge and edge -> face mappings to global map.
-	pt_A = bot->faces[i*3+0]*3;
-	pt_B = bot->faces[i*3+1]*3;
-	pt_C = bot->faces[i*3+2]*3;
+	pt_A = info->bot->faces[i*3+0]*3;
+	pt_B = info->bot->faces[i*3+1]*3;
+	pt_C = info->bot->faces[i*3+2]*3;
 	info->edge_to_face[mk_edge(pt_A, pt_B)].insert(i);
 	info->edge_to_face[mk_edge(pt_B, pt_C)].insert(i);
 	info->edge_to_face[mk_edge(pt_C, pt_A)].insert(i);
 	// Categorize face
-	VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
-	VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);
+	VSUB2(a, &info->bot->vertices[info->bot->faces[i*3+1]*3], &info->bot->vertices[info->bot->faces[i*3]*3]);
+	VSUB2(b, &info->bot->vertices[info->bot->faces[i*3+2]*3], &info->bot->vertices[info->bot->faces[i*3]*3]);
 	VCROSS(norm_dir, a, b);
 	VUNITIZE(norm_dir);
 	info->face_normals.Append(ON_3dVector(norm_dir[0], norm_dir[1], norm_dir[2]));
@@ -522,7 +531,7 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
 	    double face_size_criteria = 0.0;
 	    size_t smallest_face = 0;
 	    for(std::set<size_t>::iterator fg_it = faces->begin(); fg_it != faces->end(); fg_it++) {
-		double fa = face_area(bot, *fg_it);
+		double fa = face_area(info->bot, *fg_it);
 		if (fa > face_size_criteria) {
 		    smallest_face = (*fg_it);
 		    face_size_criteria = fa;
@@ -542,9 +551,9 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
 
 		std::set<size_t> connected_faces;
 		std::set<size_t>::iterator cf_it;
-		get_connected_faces(bot, face_num, &(info->edge_to_face), &connected_faces);
+		get_connected_faces(info->bot, face_num, &(info->edge_to_face), &connected_faces);
 		for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
-		    double curr_face_area = face_area(bot, (*cf_it));
+		    double curr_face_area = face_area(info->bot, (*cf_it));
 		    if (curr_face_area < (face_size_criteria*10) && curr_face_area > (face_size_criteria*0.1)) {
 			if (face_groups[info->face_to_plane[(*cf_it)]].find((*cf_it)) != face_groups[info->face_to_plane[(*cf_it)]].end()) {
 			    if (info->face_to_plane[(*cf_it)] == current_plane) {
@@ -553,11 +562,11 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
 				if((*patches)[info->patch_cnt].size() > info->patch_size_threshold) {
 				    vect_t origin;
 				    size_t ok = 1;
-				    VMOVE(origin, &bot->vertices[bot->faces[(face_num)*3]*3]);
+				    VMOVE(origin, &info->bot->vertices[info->bot->faces[(face_num)*3]*3]);
 				    ON_Plane plane(ON_3dPoint(origin[0], origin[1], origin[2]), *(*info).face_normals.At((face_num)));
 				    for(int pt = 0; pt < 3; pt++) {
 					point_t cpt;
-					VMOVE(cpt, &bot->vertices[bot->faces[((*cf_it))*3+pt]*3]);
+					VMOVE(cpt, &info->bot->vertices[info->bot->faces[((*cf_it))*3+pt]*3]);
 					double dist_to_plane = plane.DistanceTo(ON_3dPoint(cpt[0], cpt[1], cpt[2]));
 					//std::cout << "Distance[" << face_num << "," << (*cf_it) << "](" <<  pt << "): " << dist_to_plane << "\n";
 					if (dist_to_plane > 0) {
@@ -581,6 +590,43 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
 	    }
 	}
     }
+
+    // "Shave" sharp triangles off of the edges by shifting them from one patch to
+    // another - doesn't avoid all sharp corners, but does produce some cleanup.
+    
+    std::map< size_t, std::set<size_t> >::iterator p_it;
+    size_t shaved_cnt = 1;
+    size_t edge_smoothing_count = 0;
+    while (shaved_cnt != 0 && edge_smoothing_count <= 20) {
+	shaved_cnt = 0;
+	edge_smoothing_count++;
+	for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
+	    find_edge_segments(&((*p_it).second), &(info->patch_edges[(*p_it).first]), info);
+	}
+
+	for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
+	    shaved_cnt += shift_edge_triangles(&(info->patches), (*p_it).first, &(info->patch_edges[(*p_it).first]), info);
+	}
+	std::cout << "Triangle shifts in smoothing pass " << edge_smoothing_count << ": " << shaved_cnt << "\n";
+    }
+
+    // Identify triangles that overlap in the patches associated high-level planar projection, and
+    // remove them - they pose a potential problem for surface fitting.
+    size_t overlapping_face_cnt = 0;
+    overlapping_face_cnt = overlapping_edge_triangles(info);
+    std::cout << "Found " << overlapping_face_cnt << " overlapping faces in projection\n";
+
+    // Make sure all our edge sets are up to date
+    for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
+	find_edge_segments(&((*p_it).second), &(info->patch_edges[(*p_it).first]), info);
+    }
+
+    std::cout << "Patch count: " << info->patches.size() << "\n";
+    plot_faces(info, "patches.pl");
+    plot_patch_borders(info, "patch_borders.pl");
+
+    // Now that the mesh is fully partitioned, build the maps needed for curve discovery
+    sync_structure_maps(info);
 }
 
 /**********************************************************************************
@@ -590,7 +636,7 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
  *
  **********************************************************************************/
 
-void find_outer_loops(struct rt_bot_internal *bot, struct Manifold_Info *info)
+void find_outer_loops(struct Manifold_Info *info)
 {
     // If we have more than one loop, we need to identify the outer loop.  OpenNURBS handles outer
     // and inner loops separately, so we need to know which loop is our outer surface boundary.
@@ -617,7 +663,7 @@ void find_outer_loops(struct rt_bot_internal *bot, struct Manifold_Info *info)
 			std::vector<size_t>::iterator v_it;
 			for(v_it = verts->begin(); v_it != verts->end(); v_it++) {
 			    vect_t eproj;
-			    pnt_project(&bot->vertices[(*v_it)], &eproj, normal);
+			    pnt_project(&info->bot->vertices[(*v_it)], &eproj, normal);
 			    VMINMAX(min, max, eproj);
 			}
 		    }
@@ -641,7 +687,7 @@ void find_outer_loops(struct rt_bot_internal *bot, struct Manifold_Info *info)
     }
 }
 
-void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
+void find_polycurves(struct Manifold_Info *info)
 {
     std::map< size_t, std::set<size_t> >::iterator p_it;
     FILE* pcurveplot = fopen("polycurves.pl", "w");
@@ -751,7 +797,7 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 		int r = int(256*drand48() + 1.0);
 		int g = int(256*drand48() + 1.0);
 		int b = int(256*drand48() + 1.0);
-		plot_curve(bot, &(info->polycurves[curve_id]), r, g, b, pcurveplot);
+		plot_curve(info->bot, &(info->polycurves[curve_id]), r, g, b, pcurveplot);
 
 		// Let the patches know they have a curve associated with them.
 		info->patch_polycurves[(*p_it).first].insert(curve_id);
@@ -764,11 +810,11 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
     fclose(pcurveplot);
     // restore edge sets
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
-	find_edge_segments(bot, &((*p_it).second), &(info->patch_edges[(*p_it).first]), info);
+	find_edge_segments(&((*p_it).second), &(info->patch_edges[(*p_it).first]), info);
     }
 }
 
-void find_loops(struct rt_bot_internal *bot, struct Manifold_Info *info) {
+void find_loops(struct Manifold_Info *info) {
     std::map< size_t, std::set<size_t> >::iterator p_it;
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
 	if (!info->patches[(*p_it).first].empty()) {
@@ -788,7 +834,7 @@ void find_loops(struct rt_bot_internal *bot, struct Manifold_Info *info) {
 		    info->loops[curr_loop].push_back((*poly_it));
 		    info->patch_to_loops[(*p_it).first].insert(curr_loop);
 #ifdef BOT_TO_NURBS_DEBUG
-		    plot_loop(bot, curr_loop, info, ploopplot);
+		    plot_loop(curr_loop, info, ploopplot);
 #endif
 		    curr_polycurves.erase(*poly_it);
 		} else {
@@ -822,7 +868,7 @@ void find_loops(struct rt_bot_internal *bot, struct Manifold_Info *info) {
 		}
 		info->patch_to_loops[(*p_it).first].insert(curr_loop);
 #ifdef BOT_TO_NURBS_DEBUG
-		plot_loop(bot, curr_loop, info, ploopplot);
+		plot_loop(curr_loop, info, ploopplot);
 #endif
 	    }
 #ifdef BOT_TO_NURBS_DEBUG
@@ -877,7 +923,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, std::set<size_t> *faces, EdgeL
 }
 
 // TODO - do the NewVertex and NewEdge setup here
-void fit_nurbs_edge_curves(ON_Brep *brep, struct rt_bot_internal *bot, struct Manifold_Info *info) {
+void fit_nurbs_edge_curves(struct Manifold_Info *info) {
     FILE *nurbs_curves = fopen("nurbs_curves.pl", "w");
     std::map< size_t, std::vector<size_t> >::iterator pc_it;
     for (pc_it = info->polycurves.begin(); pc_it != info->polycurves.end(); pc_it++) {
@@ -889,13 +935,13 @@ void fit_nurbs_edge_curves(ON_Brep *brep, struct rt_bot_internal *bot, struct Ma
 	ON_3dPointArray curve_pnts;
 	std::vector<size_t>::iterator v_it;
 	for (v_it = (*pc_it).second.begin(); v_it != (*pc_it).second.end(); v_it++) {
-	    curve_pnts.Append(ON_3dPoint(&bot->vertices[(*v_it)]));
+	    curve_pnts.Append(ON_3dPoint(&info->bot->vertices[(*v_it)]));
 	}
 	ON_BezierCurve curve_bez((const ON_3dPointArray)curve_pnts);
 	ON_NurbsCurve *curve_nurb = ON_NurbsCurve::New();
 	curve_bez.GetNurbForm(*curve_nurb);
 	curve_nurb->SetDomain(0.0, 1.0);
-	brep->m_C3.Append(curve_nurb);
+	info->brep->m_C3.Append(curve_nurb);
 	double pt1[3], pt2[3];
 	int plotres = 50;
 	ON_Interval dom = curve_nurb->Domain();
@@ -912,9 +958,9 @@ void fit_nurbs_edge_curves(ON_Brep *brep, struct rt_bot_internal *bot, struct Ma
     fclose(nurbs_curves);
 }
 /*
-   void Patch_to_Face(ON_Brep *brep, size_t curr_patch, struct Manifold_Info *info) {
+   void Patch_to_Face(size_t curr_patch, struct Manifold_Info *info) {
 
-   ON_BrepFace *curr_face = brep->NewFace(info->patch_to_surface[curr_patch]);
+   ON_BrepFace *curr_face = info->brep->NewFace(info->patch_to_surface[curr_patch]);
    NewLoop(outer, curr_face);
 // Need Trims - 2D projection of edges, try Keith's pullback
 //
@@ -935,9 +981,6 @@ int main(int argc, char *argv[])
     struct rt_wdb *wdbp;
     struct bu_vls name;
     char *bname;
-
-    std::map< size_t, std::set<size_t> >::iterator p_it;
-    std::map< size_t, EdgeList >::iterator pe_it;
 
     FaceList::iterator f_it;
 
@@ -994,76 +1037,26 @@ int main(int argc, char *argv[])
     }
     RT_BOT_CK_MAGIC(bot_ip);
 
+    info.bot = bot_ip;
+
     // Do the initial partitioning of the mesh into patches
     bu_log("Performing initial partitioning of %s\n", dp->d_namep);
-    bot_partition(bot_ip, &(info.patches), &info);
-
-    std::cout << "Patch count, first pass: " << info.patches.size() << "\n";
-    plot_faces(bot_ip, &info, "patches_pass_1.pl");
-
-    // For debugging, find edges in initial state - this is not necessary for
-    // the logic of the fit.
-    for (p_it = info.patches.begin(); p_it != info.patches.end(); p_it++) {
-	find_edge_segments(bot_ip, &((*p_it).second), &(info.patch_edges[(*p_it).first]), &info);
-    }
-    plot_patch_borders(bot_ip, &info, "patch_borders_pass_1.pl");
-
-    // "Shave" sharp triangles off of the edges by shifting them from one patch to
-    // another - doesn't avoid all sharp corners, but does produce some cleanup.
-    size_t shaved_cnt = 1;
-    size_t edge_smoothing_count = 0;
-    while (shaved_cnt != 0 && edge_smoothing_count <= 20) {
-	shaved_cnt = 0;
-	edge_smoothing_count++;
-	for (p_it = info.patches.begin(); p_it != info.patches.end(); p_it++) {
-	    find_edge_segments(bot_ip, &((*p_it).second), &(info.patch_edges[(*p_it).first]), &info);
-	}
-
-	for (p_it = info.patches.begin(); p_it != info.patches.end(); p_it++) {
-	    shaved_cnt += shift_edge_triangles(bot_ip, &(info.patches), (*p_it).first, &(info.patch_edges[(*p_it).first]), &info);
-	}
-	std::cout << "Triangle shifts in smoothing pass " << edge_smoothing_count << ": " << shaved_cnt << "\n";
-    }
-
-    plot_faces(bot_ip, &info, "patches_pass_2.pl");
-    plot_patch_borders(bot_ip, &info, "patch_borders_pass_2.pl");
-    remove_empty_patches(&info);
-    std::cout << "Patch count, second pass: " << info.patches.size() << "\n";
-
-    // Identify triangles that overlap in the patches associated high-level planar projection, and
-    // remove them - they pose a potential problem for surface fitting.
-    size_t overlapping_face_cnt = 0;
-    for (pe_it = info.patch_edges.begin(); pe_it != info.patch_edges.end(); pe_it++) {
-	overlapping_face_cnt += overlapping_edge_triangles(bot_ip, (*pe_it).first, &info);
-    }
-    std::cout << "Found " << overlapping_face_cnt << " overlapping faces in projection\n";
-
-    // Make sure all our edge sets are up to date
-    for (p_it = info.patches.begin(); p_it != info.patches.end(); p_it++) {
-	find_edge_segments(bot_ip, &((*p_it).second), &(info.patch_edges[(*p_it).first]), &info);
-    }
-
-    std::cout << "Patch count, third pass: " << info.patches.size() << "\n";
-    plot_faces(bot_ip, &info, "patches_pass_3.pl");
-    plot_patch_borders(bot_ip, &info, "patch_borders_pass_3.pl");
-
-    // Now that the mesh is fully partitioned, build the maps needed for curve discovery
-    sync_structure_maps(bot_ip, &info);
+    bot_partition(&info);
 
     // Now, using the patch edge sets, construct polycurves
-    find_polycurves(bot_ip, &info);
+    find_polycurves(&info);
 
     // Build the loops
-    find_loops(bot_ip, &info);
+    find_loops(&info);
 
     // ID the outer loops
-    find_outer_loops(bot_ip, &info);
+    find_outer_loops(&info);
 
 
     // TODO - probably want to directly populate the brep arrays with surfaces and curves
-    ON_Brep *brep = ON_Brep::New();
+    info.brep = ON_Brep::New();
 
-    fit_nurbs_edge_curves(brep, bot_ip, &info);
+    fit_nurbs_edge_curves(&info);
 
     // Actually fit the NURBS surfaces and build faces - TODO - looks like a variation on NewPlanarFaceLoop will be
     // necessary, just for non-planar faces...
@@ -1096,8 +1089,8 @@ int main(int argc, char *argv[])
 		fit.assemble(params);
 		fit.solve();
 	    }
-	    brep->NewFace(fit.m_nurbs);
-	    brep->m_S.Append(new ON_NurbsSurface(fit.m_nurbs));
+	    info.brep->NewFace(fit.m_nurbs);
+	    info.brep->m_S.Append(new ON_NurbsSurface(fit.m_nurbs));
 	    nurbs_surface_count++;
 	    info.patch_to_m_S[p] = nurbs_surface_count;
 	    patch_to_surface << p << " -> " << nurbs_surface_count << "\n";
@@ -1112,7 +1105,7 @@ int main(int argc, char *argv[])
     bname = (char*)bu_malloc(strlen(argv[2])+6, "char");
     bu_strlcpy(bname, argv[2], strlen(argv[2])+1);
     bu_strlcat(bname, "_brep", strlen(bname)+6);
-    if (mk_brep(wdbp, bname, brep) == 0) {
+    if (mk_brep(wdbp, bname, info.brep) == 0) {
 	bu_log("Generated brep object %s\n", bname);
     }
     bu_free(bname, "char");
