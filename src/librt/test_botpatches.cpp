@@ -36,9 +36,15 @@ struct Manifold_Info {
 
     std::map< size_t, size_t> outer_loops;
     std::map< size_t , std::set<size_t> > patch_to_loops;
-    ON_SimpleArray<ON_NurbsSurface*> surface_array;
     ON_SimpleArray<ON_NurbsCurve*> curve_array;
-    std::map< size_t, size_t> patch_to_surface;
+
+    std::map< size_t, size_t> vert_to_m_V;
+    std::map< size_t, size_t> curve_to_m_C3;
+    std::map< size_t, size_t> curve_to_m_E;
+    std::map< size_t, size_t> patch_to_m_S;
+    std::map< size_t, size_t> patch_to_m_F;
+
+
     VertToEdge vert_to_edge;
     VertToPatch vert_to_patch;
     EdgeToFace edge_to_face;
@@ -94,7 +100,7 @@ void plot_loop(struct rt_bot_internal *bot, size_t loop_id, struct Manifold_Info
     int g = int(256*drand48() + 1.0);
     int b = int(256*drand48() + 1.0);
     for (v_it = info->loops[loop_id].begin(); v_it != info->loops[loop_id].end(); v_it++) {
-        plot_curve(bot, &(info->polycurves[*v_it]), r, g, b, l_plot);
+	plot_curve(bot, &(info->polycurves[*v_it]), r, g, b, l_plot);
     }
 }
 
@@ -116,11 +122,11 @@ void plot_faces(struct rt_bot_internal *bot_ip, struct Manifold_Info *info, cons
 	int r = int(256*drand48() + 1.0);
 	int g = int(256*drand48() + 1.0);
 	int b = int(256*drand48() + 1.0);
-        std::set<size_t> *faces = &((*p_it).second);
-        std::set<size_t>::iterator f_it;
+	std::set<size_t> *faces = &((*p_it).second);
+	std::set<size_t>::iterator f_it;
 	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
 	    plot_face(&bot_ip->vertices[bot_ip->faces[(*f_it)*3+0]*3], &bot_ip->vertices[bot_ip->faces[(*f_it)*3+1]*3], &bot_ip->vertices[bot_ip->faces[(*f_it)*3+2]*3], r, g ,b, plot_file);
-        }
+	}
     }
     fclose(plot_file);
 }
@@ -145,34 +151,33 @@ void plot_ncurve(ON_Curve &curve, FILE *c_plot)
     ON_2dPoint from, to;
     int plotres = 100;
     if (curve.IsLinear()) {
-        int knotcnt = curve.SpanCount();
-        double *knots = new double[knotcnt + 1];
+	int knotcnt = curve.SpanCount();
+	double *knots = new double[knotcnt + 1];
 
-        curve.GetSpanVector(knots);
-        for (int i = 1; i <= knotcnt; i++) {
-            ON_3dPoint p = curve.PointAt(knots[i - 1]);
-            VMOVE(pt1, p);
-            p = curve.PointAt(knots[i]);
-            VMOVE(pt2, p);
+	curve.GetSpanVector(knots);
+	for (int i = 1; i <= knotcnt; i++) {
+	    ON_3dPoint p = curve.PointAt(knots[i - 1]);
+	    VMOVE(pt1, p);
+	    p = curve.PointAt(knots[i]);
+	    VMOVE(pt2, p);
 	    pdv_3move(c_plot, pt1);
 	    pdv_3cont(c_plot, pt2);
-        }
+	}
 
     } else {
-        ON_Interval dom = curve.Domain();
-        // XXX todo: dynamically sample the curve
-        for (int i = 1; i <= plotres; i++) {
-            ON_3dPoint p = curve.PointAt(dom.ParameterAt((double) (i - 1)
-                                                         / (double)plotres));
-            VMOVE(pt1, p);
-            p = curve.PointAt(dom.ParameterAt((double) i / (double)plotres));
-            VMOVE(pt2, p);
+	ON_Interval dom = curve.Domain();
+	// XXX todo: dynamically sample the curve
+	for (int i = 1; i <= plotres; i++) {
+	    ON_3dPoint p = curve.PointAt(dom.ParameterAt((double) (i - 1)
+			/ (double)plotres));
+	    VMOVE(pt1, p);
+	    p = curve.PointAt(dom.ParameterAt((double) i / (double)plotres));
+	    VMOVE(pt2, p);
 	    pdv_3move(c_plot, pt1);
 	    pdv_3cont(c_plot, pt2);
-        }
+	}
     }
 }
-
 
 
 /**********************************************************************************
@@ -219,10 +224,10 @@ void get_connected_faces(struct rt_bot_internal *bot, size_t face_num, EdgeToFac
 	std::set<size_t>::iterator ffe_it;
 	for (ffe_it = faces_from_edge.begin(); ffe_it != faces_from_edge.end() ; ffe_it++) {
 	    if ((*ffe_it) != face_num) {
-               faces->insert((*ffe_it));
-            }
-        }
-     }
+		faces->insert((*ffe_it));
+	    }
+	}
+    }
 }
 
 // face_to_patch is built and maintained during the initial partitioning, but the
@@ -233,8 +238,8 @@ void sync_structure_maps(struct rt_bot_internal *bot, struct Manifold_Info *info
     info->edge_to_patch.clear();
     info->vert_to_patch.clear();
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
-        std::set<size_t>::iterator f_it;
-        std::set<size_t> *faces = &((*p_it).second);
+	std::set<size_t>::iterator f_it;
+	std::set<size_t> *faces = &((*p_it).second);
 	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
 	    std::set<Edge> face_edges;
 	    std::set<Edge>::iterator face_edges_it;
@@ -259,33 +264,33 @@ int find_major_patch(struct rt_bot_internal *bot, size_t face_num, struct Manifo
     size_t max_patch_edge_cnt = 0;
     get_connected_faces(bot, face_num, &(info->edge_to_face), &connected_faces);
     for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
-        patch_cnt[info->face_to_patch[*cf_it]] += 1;
+	patch_cnt[info->face_to_patch[*cf_it]] += 1;
     }
     for (patch_cnt_itr = patch_cnt.begin(); patch_cnt_itr != patch_cnt.end() ; patch_cnt_itr++) {
-        if ((*patch_cnt_itr).second > max_patch_edge_cnt) {
-           max_patch_edge_cnt = (*patch_cnt_itr).second;
-           max_patch = (*patch_cnt_itr).first;
-        }
+	if ((*patch_cnt_itr).second > max_patch_edge_cnt) {
+	    max_patch_edge_cnt = (*patch_cnt_itr).second;
+	    max_patch = (*patch_cnt_itr).first;
+	}
     }
     if (max_patch_edge_cnt == 1) {
 	if (patch_count > 3) {
 	    return -1;
 	} else {
-            // A patch with three or fewer triangles is considered a small patch - if one of the shared
-            // faces is a viable candidate, return it.
-            int candidate_patch = -1;
-            double candidate_patch_norm = 0;
+	    // A patch with three or fewer triangles is considered a small patch - if one of the shared
+	    // faces is a viable candidate, return it.
+	    int candidate_patch = -1;
+	    double candidate_patch_norm = 0;
 	    for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
-                if (info->face_to_patch[*cf_it] != curr_patch) {
+		if (info->face_to_patch[*cf_it] != curr_patch) {
 		    double current_norm = info->norm_results[std::make_pair(face_num, info->patch_to_plane[info->face_to_patch[(*cf_it)]])];
-                    if(current_norm > candidate_patch_norm) {
-                      candidate_patch = info->face_to_patch[(*cf_it)];
-                      candidate_patch_norm = current_norm;
-                    }
-                }
+		    if(current_norm > candidate_patch_norm) {
+			candidate_patch = info->face_to_patch[(*cf_it)];
+			candidate_patch_norm = current_norm;
+		    }
+		}
 	    }
-            return candidate_patch;
-        }
+	    return candidate_patch;
+	}
     } else {
 	return (int)max_patch;
     }
@@ -315,18 +320,18 @@ size_t shift_edge_triangles(struct rt_bot_internal *bot, std::map< size_t, std::
     // 2. build triangle set of edge triangles with major patch other than current patch
     //    and a normal that permits movement to the major patch
     for (sizet_it = patch_edgefaces.begin(); sizet_it != patch_edgefaces.end() ; sizet_it++) {
-        int major_patch = find_major_patch(bot, (*sizet_it), info, curr_patch, (*patches)[curr_patch].size());
-        if (major_patch != (int)curr_patch && major_patch != -1) {
+	int major_patch = find_major_patch(bot, (*sizet_it), info, curr_patch, (*patches)[curr_patch].size());
+	if (major_patch != (int)curr_patch && major_patch != -1) {
 	    if (info->norm_results[std::make_pair((*sizet_it), info->patch_to_plane[major_patch])] >= 0) {
-               faces_to_shift[(*sizet_it)] = major_patch;
+		faces_to_shift[(*sizet_it)] = major_patch;
 	    }
 	}
     }
 
     // 3. move triangles to their major patch.
     for (f_it = faces_to_shift.begin(); f_it != faces_to_shift.end(); f_it++) {
-        (*patches)[info->face_to_patch[(*f_it).first]].erase((*f_it).first);
-        (*patches)[(*f_it).second].insert((*f_it).first);
+	(*patches)[info->face_to_patch[(*f_it).first]].erase((*f_it).first);
+	(*patches)[(*f_it).second].insert((*f_it).first);
 	info->face_to_patch[(*f_it).first] = (*f_it).second;
     }
 
@@ -385,9 +390,9 @@ void find_edge_segments(struct rt_bot_internal *bot, std::set<size_t> *faces, Ed
     }
 }
 
-// Given a list of edges and the "current" patch, find triangles that overlap when projected into
-// the patch domain.  Returns the number of the face with the largest number of overlapping triangles
-// (or the first such triangle, if there are multiple such) or 0 if no overlaps are found.
+// Given a patch, find triangles that overlap when projected into the patch domain, remove them
+// from the current patch and set them up in their own patch.  Returns the number of faces moved
+// from the current patch to their own patch.
 size_t overlapping_edge_triangles(struct rt_bot_internal *bot, size_t curr_patch, struct Manifold_Info *info) {
     ON_3dVector *vect = info->vectors.At(info->patch_to_plane[curr_patch]);
     size_t overlap_cnt = 1;
@@ -426,20 +431,20 @@ size_t overlapping_edge_triangles(struct rt_bot_internal *bot, size_t curr_patch
 
 		    int overlap = bn_coplanar_tri_tri_isect(v0, v1, v2, u0, u1, u2, 1);
 		    if(overlap) {
-                        //std::cout << "Overlap: (" << *sizet_it << "," << *ef_it2 << ")\n";
-                        info->patch_cnt++;
-                        size_t new_patch = info->patch_cnt;
+			//std::cout << "Overlap: (" << *sizet_it << "," << *ef_it2 << ")\n";
+			info->patch_cnt++;
+			size_t new_patch = info->patch_cnt;
 			info->patches[new_patch].insert(*sizet_it);
 			info->patches[curr_patch].erase(*sizet_it);
 			info->patch_to_plane[new_patch] = info->face_to_plane[*sizet_it];
 			info->face_to_patch[*sizet_it] = new_patch;
 			find_edge_segments(bot, &(info->patches[curr_patch]), &(info->patch_edges[curr_patch]), info);
 			find_edge_segments(bot, &(info->patches[new_patch]), &(info->patch_edges[new_patch]), info);
-                        overlap_cnt++;
-                        total_overlapping++;
+			overlap_cnt++;
+			total_overlapping++;
 		    }
 		}
-                if (overlap_cnt > 0) break;
+		if (overlap_cnt > 0) break;
 	    }
 	    if (overlap_cnt > 0) break;
 	}
@@ -471,10 +476,10 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
 	VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);
 	VCROSS(norm_dir, a, b);
 	VUNITIZE(norm_dir);
-        info->face_normals.Append(ON_3dVector(norm_dir[0], norm_dir[1], norm_dir[2]));
+	info->face_normals.Append(ON_3dVector(norm_dir[0], norm_dir[1], norm_dir[2]));
 	(*info).face_normals.At(i)->Unitize();
 	for (size_t j=0; j < (size_t)(*info).vectors.Count(); j++) {
-            vdot = ON_DotProduct(*(*info).vectors.At(j), *(*info).face_normals.At(i));
+	    vdot = ON_DotProduct(*(*info).vectors.At(j), *(*info).face_normals.At(i));
 	    info->norm_results[std::make_pair(i, j)] = vdot;
 	    if (vdot > result) {
 		result_max = j;
@@ -482,7 +487,7 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
 	    }
 	}
 	face_groups[result_max].insert(i);
-        info->face_to_plane[i]=result_max;
+	info->face_to_plane[i]=result_max;
     }
     // Sort the groups by their face count - we want to start with the group containing
     // either the least or the most faces - try most.
@@ -492,8 +497,8 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
     for (int i = 0; i < (*info).vectors.Count(); i++) {face_group_set.insert(i);}
     size_t array_pos = 0;
     while (!face_group_set.empty()) {
-        size_t curr_max = 0;
-        size_t curr_vect = 0;
+	size_t curr_max = 0;
+	size_t curr_vect = 0;
 	for (fg_it = face_groups.begin(); fg_it != face_groups.end(); fg_it++) {
 	    if((*fg_it).second.size() > curr_max) {
 		if (face_group_set.find((*fg_it).first) != face_group_set.end()) {
@@ -502,15 +507,15 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
 		}
 	    }
 	}
-        ordered_vects.at(array_pos) = curr_vect;
-        face_group_set.erase(curr_vect);
-        array_pos++;
+	ordered_vects.at(array_pos) = curr_vect;
+	face_group_set.erase(curr_vect);
+	array_pos++;
     }
 
     // All faces must belong to some patch - continue until all faces are processed
     for (int i = 0; i < 6; i++) {
-        fg_it = face_groups.find(ordered_vects.at(i));
-        std::set<size_t> *faces = &((*fg_it).second);
+	fg_it = face_groups.find(ordered_vects.at(i));
+	std::set<size_t> *faces = &((*fg_it).second);
 	while (!faces->empty()) {
 	    info->patch_cnt++;
 	    // Find largest remaining face in group
@@ -519,8 +524,8 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
 	    for(std::set<size_t>::iterator fg_it = faces->begin(); fg_it != faces->end(); fg_it++) {
 		double fa = face_area(bot, *fg_it);
 		if (fa > face_size_criteria) {
-		   smallest_face = (*fg_it);
-		   face_size_criteria = fa;
+		    smallest_face = (*fg_it);
+		    face_size_criteria = fa;
 		}
 	    }
 	    std::queue<size_t> face_queue;
@@ -532,12 +537,12 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
 		size_t face_num = face_queue.front();
 		face_queue.pop();
 		(*patches)[info->patch_cnt].insert(face_num);
-                info->patch_to_plane[info->patch_cnt] = current_plane;
-                info->face_to_patch[face_num] = info->patch_cnt;
+		info->patch_to_plane[info->patch_cnt] = current_plane;
+		info->face_to_patch[face_num] = info->patch_cnt;
 
-                std::set<size_t> connected_faces;
+		std::set<size_t> connected_faces;
 		std::set<size_t>::iterator cf_it;
-                get_connected_faces(bot, face_num, &(info->edge_to_face), &connected_faces);
+		get_connected_faces(bot, face_num, &(info->edge_to_face), &connected_faces);
 		for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
 		    double curr_face_area = face_area(bot, (*cf_it));
 		    if (curr_face_area < (face_size_criteria*10) && curr_face_area > (face_size_criteria*0.1)) {
@@ -576,30 +581,14 @@ void bot_partition(struct rt_bot_internal *bot, std::map< size_t, std::set<size_
 	    }
 	}
     }
-    for (std::map< size_t, std::set<size_t> >::iterator np_it = info->patches.begin(); np_it != info->patches.end(); np_it++) {
-	struct bu_vls name;
-	bu_vls_init(&name);
-	bu_vls_printf(&name, "patch_%d.pl", (int)(*np_it).first);
-	FILE* plot_file = fopen(bu_vls_addr(&name), "w");
-	int r = int(256*drand48() + 1.0);
-	int g = int(256*drand48() + 1.0);
-	int b = int(256*drand48() + 1.0);
-        std::set<size_t> *nfaces = &((*np_it).second);
-	std::set<size_t>::iterator nf_it;
-	for (nf_it = nfaces->begin(); nf_it != nfaces->end(); nf_it++) {
-	    plot_face(&bot->vertices[bot->faces[(*nf_it)*3+0]*3], &bot->vertices[bot->faces[(*nf_it)*3+1]*3], &bot->vertices[bot->faces[(*nf_it)*3+2]*3], r, g ,b, plot_file);
-	}
-	fclose(plot_file);
-    }
 }
 
 /**********************************************************************************
  *
- *   Code for moving from patches with edge segments to a structured group of
- *   fitted 3D NURBS curve segments and loops.
+ *   Code for moving from patches with edge segments to a structured topology
+ *   of curve segments and loops.
  *
  **********************************************************************************/
-
 
 void find_outer_loops(struct rt_bot_internal *bot, struct Manifold_Info *info)
 {
@@ -638,69 +627,26 @@ void find_outer_loops(struct rt_bot_internal *bot, struct Manifold_Info *info)
 			patch_outer_loop = (*l_it);
 		    }
 		}
-                info->outer_loops[(*p_it).first] = patch_outer_loop;
+		info->outer_loops[(*p_it).first] = patch_outer_loop;
 	    }
-            info->patch_to_loops[(*p_it).first].erase(info->outer_loops[(*p_it).first]);
+	    info->patch_to_loops[(*p_it).first].erase(info->outer_loops[(*p_it).first]);
 	}
     }
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
 	if (info->patches[(*p_it).first].size() > 0) {
 	    if (info->patch_to_loops[(*p_it).first].size() > 0) {
 		std::cout << "Patch " << (*p_it).first << " has " << info->patch_to_loops[(*p_it).first].size() << " inner loops\n";
-            }
-        }
-    }
-}
-
-#if 0
-    if (loops->size() > 0) {
-	if (loops->size() > 1) {
-	    std::cout << "Loop count: " << loops->size() << "\n";
-	    LoopList::iterator l_it;
-	    fastf_t diag_max = 0.0;
-	    CurveList oloop;
-	    for (l_it = loops->begin(); l_it != loops->end(); l_it++) {
-		vect_t min, max, diag;
-		VSETALL(min, MAX_FASTF);
-		VSETALL(max, -MAX_FASTF);
-		CurveList::iterator c_it;
-		for (c_it = (*l_it).begin(); c_it != (*l_it).end(); c_it++) {
-		    EdgeList::iterator e_it;
-		    for (e_it = (*c_it).edges.begin(); e_it != (*c_it).edges.end(); e_it++) {
-			vect_t eproj, normal;
-			VSET(normal, patch->category_plane->x, patch->category_plane->y, patch->category_plane->z);
-			pnt_project(&bot->vertices[(*e_it).first], &eproj, normal);
-			VMINMAX(min, max, eproj);
-			pnt_project(&bot->vertices[(*e_it).second], &eproj, normal);
-			VMINMAX(min, max, eproj);
-		    }
-		}
-		VSUB2(diag, max, min);
-
-		if (MAGNITUDE(diag) > diag_max) {
-		    diag_max = MAGNITUDE(diag);
-		    oloop = (*l_it);
-		}
 	    }
-	    *outer_loop = oloop;
-	    std::cout << "Outer loop diagonal: " << diag_max << "\n";
-	} else {
-	    *outer_loop = (*(loops->begin()));
 	}
     }
 }
-#endif
 
 void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 {
     std::map< size_t, std::set<size_t> >::iterator p_it;
+    FILE* pcurveplot = fopen("polycurves.pl", "w");
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
 	if (!info->patches[(*p_it).first].empty()) {
-	    struct bu_vls name;
-	    bu_vls_init(&name);
-	    bu_vls_printf(&name, "polycurves_patch_%d.pl", (int)(*p_it).first);
-	    FILE* pcurveplot = fopen(bu_vls_addr(&name), "w");
-
 	    EdgeList *patch_edges = &(info->patch_edges[(*p_it).first]);
 	    while (!patch_edges->empty()) {
 		// We know the current patch - find out what the other one is for
@@ -813,9 +759,9 @@ void find_polycurves(struct rt_bot_internal *bot, struct Manifold_Info *info)
 		info->polycurves_patch[curve_id].insert((*p_it).first);
 		info->polycurves_patch[curve_id].insert(other_patch_id);
 	    }
-	fclose(pcurveplot);
 	}
     }
+    fclose(pcurveplot);
     // restore edge sets
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
 	find_edge_segments(bot, &((*p_it).second), &(info->patch_edges[(*p_it).first]), info);
@@ -826,74 +772,65 @@ void find_loops(struct rt_bot_internal *bot, struct Manifold_Info *info) {
     std::map< size_t, std::set<size_t> >::iterator p_it;
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
 	if (!info->patches[(*p_it).first].empty()) {
+#ifdef BOT_TO_NURBS_DEBUG
 	    struct bu_vls name;
 	    bu_vls_init(&name);
 	    bu_vls_printf(&name, "loops_patch_%d.pl", (int)(*p_it).first);
 	    FILE* ploopplot = fopen(bu_vls_addr(&name), "w");
-/*
-	    struct bu_vls name2;
-	    bu_vls_init(&name2);
-	    bu_vls_printf(&name2, "polycurves_patch_%d.pl", (int)(*p_it).first);
-	    FILE* pcurveplot = fopen(bu_vls_addr(&name2), "w");
-*/
+#endif
 	    std::set<size_t> curr_polycurves = info->patch_polycurves[(*p_it).first];
-            std::map<size_t, std::set<size_t> > vert_to_curves;
+	    std::map<size_t, std::set<size_t> > vert_to_curves;
 	    for(std::set<size_t>::iterator poly_it = curr_polycurves.begin(); poly_it != curr_polycurves.end(); poly_it++) {
-	//	int r = int(256*drand48() + 1.0);
-	//	int g = int(256*drand48() + 1.0);
-	//	int b = int(256*drand48() + 1.0);
-//		plot_curve(bot, &(info->polycurves[*poly_it]), r, g, b, pcurveplot);
-
-
-                size_t curve_start = info->polycurves[*poly_it].front();
-                size_t curve_end = info->polycurves[*poly_it].back();
-                if (curve_start == curve_end) {
+		size_t curve_start = info->polycurves[*poly_it].front();
+		size_t curve_end = info->polycurves[*poly_it].back();
+		if (curve_start == curve_end) {
 		    size_t curr_loop = info->loops.size();
 		    info->loops[curr_loop].push_back((*poly_it));
-                    info->patch_to_loops[(*p_it).first].insert(curr_loop);
+		    info->patch_to_loops[(*p_it).first].insert(curr_loop);
+#ifdef BOT_TO_NURBS_DEBUG
 		    plot_loop(bot, curr_loop, info, ploopplot);
+#endif
 		    curr_polycurves.erase(*poly_it);
-		    //std::cout << "Patch " << (*p_it).first << " closed loop formed by curve " << (*poly_it) << " Start/End pts: (" << info->polycurves[*poly_it].front() << "," << info->polycurves[*poly_it].back() << ")\n";
 		} else {
 		    vert_to_curves[info->polycurves[*poly_it].front()].insert(*poly_it);
 		    vert_to_curves[info->polycurves[*poly_it].back()].insert(*poly_it);
 		}
 	    }
- //           fclose(pcurveplot);
 
-            while (curr_polycurves.size() > 0) {
-                  size_t curr_loop = info->loops.size();
-                  std::queue<size_t> curve_queue;
-                  curve_queue.push(*(curr_polycurves.begin()));
-                  curr_polycurves.erase(curve_queue.front());
-                  while (!curve_queue.empty()) {
-                       size_t curr_curve = curve_queue.front();
-                       //std::cout << "Patch " << (*p_it).first << " loop: " << curr_loop << " adding curve: " << curr_curve << "\n";
-                       curve_queue.pop();
-		       info->loops[curr_loop].push_back(curr_curve);
-                       size_t v1 = info->polycurves[curr_curve].front();
-                       size_t v2 = info->polycurves[curr_curve].back();
-                       // use vert_to_curves to assemble other curves
-                       std::set<size_t> candidate_curves;
-                       candidate_curves.insert(vert_to_curves[v1].begin(), vert_to_curves[v1].end());
-                       candidate_curves.insert(vert_to_curves[v2].begin(), vert_to_curves[v2].end());
-                       candidate_curves.erase(curr_curve);
-                       for (std::set<size_t>::iterator c_it = candidate_curves.begin(); c_it != candidate_curves.end(); c_it++) {
-                           if (curr_polycurves.find(*c_it) != curr_polycurves.end()) {
-                           curve_queue.push(*c_it);
-			   curr_polycurves.erase(*c_it);
-                           }
-		       }
-		  }
-		  info->patch_to_loops[(*p_it).first].insert(curr_loop);
-		  plot_loop(bot, curr_loop, info, ploopplot);
-            }
-           fclose(ploopplot);
+	    while (curr_polycurves.size() > 0) {
+		size_t curr_loop = info->loops.size();
+		std::queue<size_t> curve_queue;
+		curve_queue.push(*(curr_polycurves.begin()));
+		curr_polycurves.erase(curve_queue.front());
+		while (!curve_queue.empty()) {
+		    size_t curr_curve = curve_queue.front();
+		    curve_queue.pop();
+		    info->loops[curr_loop].push_back(curr_curve);
+		    size_t v1 = info->polycurves[curr_curve].front();
+		    size_t v2 = info->polycurves[curr_curve].back();
+		    // use vert_to_curves to assemble other curves
+		    std::set<size_t> candidate_curves;
+		    candidate_curves.insert(vert_to_curves[v1].begin(), vert_to_curves[v1].end());
+		    candidate_curves.insert(vert_to_curves[v2].begin(), vert_to_curves[v2].end());
+		    candidate_curves.erase(curr_curve);
+		    for (std::set<size_t>::iterator c_it = candidate_curves.begin(); c_it != candidate_curves.end(); c_it++) {
+			if (curr_polycurves.find(*c_it) != curr_polycurves.end()) {
+			    curve_queue.push(*c_it);
+			    curr_polycurves.erase(*c_it);
+			}
+		    }
+		}
+		info->patch_to_loops[(*p_it).first].insert(curr_loop);
+#ifdef BOT_TO_NURBS_DEBUG
+		plot_loop(bot, curr_loop, info, ploopplot);
+#endif
+	    }
+#ifdef BOT_TO_NURBS_DEBUG
+	    fclose(ploopplot);
+#endif
 	}
     }
 }
-
-
 
 /**********************************************************************************
  *
@@ -927,52 +864,67 @@ void PatchToVector3d(struct rt_bot_internal *bot, std::set<size_t> *faces, EdgeL
     // edges, at least from what I can tell in the wireframe.
     EdgeList::iterator e_it;
     for (e_it = edges->begin(); e_it != edges->end(); e_it++) {
-        point_t p1, p2, p3;
-        VMOVE(p1, &bot->vertices[(*e_it).first])
-        VMOVE(p2, &bot->vertices[(*e_it).second])
-        p3[0] = (p1[0] + p2[0])/2;
-        p3[1] = (p1[1] + p2[1])/2;
-        p3[2] = (p1[2] + p2[2])/2;
-        // add edge midpoint
+	point_t p1, p2, p3;
+	VMOVE(p1, &bot->vertices[(*e_it).first])
+	    VMOVE(p2, &bot->vertices[(*e_it).second])
+	    p3[0] = (p1[0] + p2[0])/2;
+	p3[1] = (p1[1] + p2[1])/2;
+	p3[2] = (p1[2] + p2[2])/2;
+	// add edge midpoint
 	data.push_back(ON_3dVector(V3ARGS(p3)));
     }
 
 }
 
-void fit_nurbs_edge_curves(struct rt_bot_internal *bot, struct Manifold_Info *info) {
-   FILE *nurbs_curves = fopen("nurbs_curves.pl", "w");
-   std::map< size_t, std::vector<size_t> >::iterator pc_it;
-   for (pc_it = info->polycurves.begin(); pc_it != info->polycurves.end(); pc_it++) {
-       int r = int(256*drand48() + 1.0);
-       int g = int(256*drand48() + 1.0);
-       int b = int(256*drand48() + 1.0);
-       pl_color(nurbs_curves, r, g, b);
+// TODO - do the NewVertex and NewEdge setup here
+void fit_nurbs_edge_curves(ON_Brep *brep, struct rt_bot_internal *bot, struct Manifold_Info *info) {
+    FILE *nurbs_curves = fopen("nurbs_curves.pl", "w");
+    std::map< size_t, std::vector<size_t> >::iterator pc_it;
+    for (pc_it = info->polycurves.begin(); pc_it != info->polycurves.end(); pc_it++) {
+	int r = int(256*drand48() + 1.0);
+	int g = int(256*drand48() + 1.0);
+	int b = int(256*drand48() + 1.0);
+	pl_color(nurbs_curves, r, g, b);
 
-       ON_3dPointArray curve_pnts;
-       std::vector<size_t>::iterator v_it;
-       for (v_it = (*pc_it).second.begin(); v_it != (*pc_it).second.end(); v_it++) {
-	   curve_pnts.Append(ON_3dPoint(&bot->vertices[(*v_it)]));
-       }
-       ON_BezierCurve curve_bez((const ON_3dPointArray)curve_pnts);
-       ON_NurbsCurve *curve_nurb = ON_NurbsCurve::New();
-       curve_bez.GetNurbForm(*curve_nurb);
-       curve_nurb->SetDomain(0.0, 1.0);
-       info->curve_array.Append(curve_nurb);
-       double pt1[3], pt2[3];
-       int plotres = 50;
-       ON_Interval dom = curve_nurb->Domain();
-       for (int i = 1; i <= plotres; i++) {
-	   ON_3dPoint p = curve_nurb->PointAt(dom.ParameterAt((double)(i - 1)
-		       / (double)plotres));
-	   VMOVE(pt1, p);
-	   p = curve_nurb->PointAt(dom.ParameterAt((double) i / (double)plotres));
-	   VMOVE(pt2, p);
-	   pdv_3move(nurbs_curves, pt1);
-	   pdv_3cont(nurbs_curves, pt2);
-       }
-   }
-   fclose(nurbs_curves);
+	ON_3dPointArray curve_pnts;
+	std::vector<size_t>::iterator v_it;
+	for (v_it = (*pc_it).second.begin(); v_it != (*pc_it).second.end(); v_it++) {
+	    curve_pnts.Append(ON_3dPoint(&bot->vertices[(*v_it)]));
+	}
+	ON_BezierCurve curve_bez((const ON_3dPointArray)curve_pnts);
+	ON_NurbsCurve *curve_nurb = ON_NurbsCurve::New();
+	curve_bez.GetNurbForm(*curve_nurb);
+	curve_nurb->SetDomain(0.0, 1.0);
+	brep->m_C3.Append(curve_nurb);
+	double pt1[3], pt2[3];
+	int plotres = 50;
+	ON_Interval dom = curve_nurb->Domain();
+	for (int i = 1; i <= plotres; i++) {
+	    ON_3dPoint p = curve_nurb->PointAt(dom.ParameterAt((double)(i - 1)
+			/ (double)plotres));
+	    VMOVE(pt1, p);
+	    p = curve_nurb->PointAt(dom.ParameterAt((double) i / (double)plotres));
+	    VMOVE(pt2, p);
+	    pdv_3move(nurbs_curves, pt1);
+	    pdv_3cont(nurbs_curves, pt2);
+	}
+    }
+    fclose(nurbs_curves);
 }
+/*
+   void Patch_to_Face(ON_Brep *brep, size_t curr_patch, struct Manifold_Info *info) {
+
+   ON_BrepFace *curr_face = brep->NewFace(info->patch_to_surface[curr_patch]);
+   NewLoop(outer, curr_face);
+// Need Trims - 2D projection of edges, try Keith's pullback
+//
+// assemble loop
+//
+// if any interior loops, add them too
+
+
+}
+*/
 
 int main(int argc, char *argv[])
 {
@@ -987,10 +939,7 @@ int main(int argc, char *argv[])
     std::map< size_t, std::set<size_t> >::iterator p_it;
     std::map< size_t, EdgeList >::iterator pe_it;
 
-    ON_Brep *brep = ON_Brep::New();
     FaceList::iterator f_it;
-
-    ON_SimpleArray<ON_NurbsCurve> edges;
 
     Manifold_Info info;
     info.vectors.Append(ON_3dVector(-1,0,0));
@@ -1110,7 +1059,11 @@ int main(int argc, char *argv[])
     // ID the outer loops
     find_outer_loops(bot_ip, &info);
 
-    fit_nurbs_edge_curves(bot_ip, &info);
+
+    // TODO - probably want to directly populate the brep arrays with surfaces and curves
+    ON_Brep *brep = ON_Brep::New();
+
+    fit_nurbs_edge_curves(brep, bot_ip, &info);
 
     // Actually fit the NURBS surfaces and build faces - TODO - looks like a variation on NewPlanarFaceLoop will be
     // necessary, just for non-planar faces...
@@ -1144,11 +1097,11 @@ int main(int argc, char *argv[])
 		fit.solve();
 	    }
 	    brep->NewFace(fit.m_nurbs);
-            info.surface_array.Append(new ON_NurbsSurface(fit.m_nurbs));
-            nurbs_surface_count++;
-            info.patch_to_surface[p] = nurbs_surface_count;
-            patch_to_surface << p << " -> " << nurbs_surface_count << "\n";
-            surface_to_patch << nurbs_surface_count << " -> " << p << "\n";
+	    brep->m_S.Append(new ON_NurbsSurface(fit.m_nurbs));
+	    nurbs_surface_count++;
+	    info.patch_to_m_S[p] = nurbs_surface_count;
+	    patch_to_surface << p << " -> " << nurbs_surface_count << "\n";
+	    surface_to_patch << nurbs_surface_count << " -> " << p << "\n";
 	}
     }
     patch_to_surface.close();
@@ -1163,6 +1116,24 @@ int main(int argc, char *argv[])
 	bu_log("Generated brep object %s\n", bname);
     }
     bu_free(bname, "char");
+
+#ifdef BOT_TO_NURBS_DEBUG
+    for (std::map< size_t, std::set<size_t> >::iterator np_it = info.patches.begin(); np_it != info.patches.end(); np_it++) {
+	struct bu_vls name;
+	bu_vls_init(&name);
+	bu_vls_printf(&name, "patch_%d.pl", (int)(*np_it).first);
+	FILE* plot_file = fopen(bu_vls_addr(&name), "w");
+	int r = int(256*drand48() + 1.0);
+	int g = int(256*drand48() + 1.0);
+	int b = int(256*drand48() + 1.0);
+	std::set<size_t> *nfaces = &((*np_it).second);
+	std::set<size_t>::iterator nf_it;
+	for (nf_it = nfaces->begin(); nf_it != nfaces->end(); nf_it++) {
+	    plot_face(&bot->vertices[bot->faces[(*nf_it)*3+0]*3], &bot->vertices[bot->faces[(*nf_it)*3+1]*3], &bot->vertices[bot->faces[(*nf_it)*3+2]*3], r, g ,b, plot_file);
+	}
+	fclose(plot_file);
+    }
+#endif
 
 #if 0
     // SSI intersection.  May need edge-based polycurves anyway to guide selection of "correct" intersection segment in the cases where
