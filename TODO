@@ -887,6 +887,12 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * extend analyze output formatting to user-specified formats ala nirt
 
+* prevent nirt from outputting a trailing space after values when
+  there are no attributes to be displayed.  the problem is in the nirt
+  format strings where they use " %s" for displaying any attributes.
+  need to left-pad a space conditionally, perhaps by supporting %*s
+  and sizeof(var).
+
 * implement make, ted, edsol, mirror, and analyze for revolve
   primitive.  implement tess() too.
 
