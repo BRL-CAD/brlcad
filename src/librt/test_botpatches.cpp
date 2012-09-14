@@ -66,7 +66,7 @@ struct Manifold_Info {
 /**********************************************************************************
  *
  *   Utility functions used throughout the process of fitting
- *   
+ *
  **********************************************************************************/
 
 // Make an edge using consistent vertex ordering
@@ -268,7 +268,7 @@ void get_connected_faces(struct rt_bot_internal *bot, size_t face_num, EdgeToFac
 }
 
 // face_to_patch is built and maintained during the initial partitioning, but the
-// edge and vertex mappings are not tracked during the intial process.  Call this
+// edge and vertex mappings are not tracked during the initial process.  Call this
 // function to populate them, after the initial partitioning is complete.
 void sync_structure_maps(struct Manifold_Info *info) {
     std::map< size_t, std::set<size_t> >::iterator p_it;
@@ -345,7 +345,7 @@ size_t shift_edge_triangles(std::map< size_t, std::set<size_t> > *patches, size_
     EdgeList edges;
     EdgeList::iterator e_it;
     std::set<size_t>::iterator sizet_it;
-   
+
     // 0. Build edge set;
     find_edge_segments(&(info->patches[curr_patch]), &edges, info);
 
@@ -605,7 +605,7 @@ void bot_partition(struct Manifold_Info *info)
 
     // "Shave" sharp triangles off of the edges by shifting them from one patch to
     // another - doesn't avoid all sharp corners, but does produce some cleanup.
-    
+
     std::map< size_t, std::set<size_t> >::iterator p_it;
     size_t shaved_cnt = 1;
     size_t edge_smoothing_count = 0;
@@ -914,7 +914,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
     // to use points from the 3D NURBS edge curves instead of the bot edges, but
     // this is a first step and it does seem to improve the surface mapping at the
     // edges, at least from what I can tell in the wireframe.
-    EdgeList edges; 
+    EdgeList edges;
     EdgeList::iterator e_it;
     find_edge_segments(faces, &edges, info);
     for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
