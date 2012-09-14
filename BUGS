@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* autoview [scale] isn't updating the wireframe when opening a
+  database, drawing geometry, then running autoview.  the status bar
+  shows the scale change, but the graphics window remains unaffected
+  unless you run "view size" to set it.
+
 * overlay command reports an error when trying to load a file
   names edges.pl, but succeeds when the file is called patches.pl
   Need to see why edges.pl is not accepted.
