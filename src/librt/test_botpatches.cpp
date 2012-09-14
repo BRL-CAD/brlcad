@@ -31,7 +31,6 @@ struct Manifold_Info {
     struct rt_bot_internal *bot;
 
     std::map< size_t, std::set<size_t> > patches;
-    std::map< size_t, EdgeList > patch_edges;
     std::map< size_t, std::vector<size_t> > polycurves;
     std::map< size_t, std::vector<size_t> > loops;
     std::map< size_t, std::set<size_t> > patch_polycurves;
@@ -63,6 +62,49 @@ struct Manifold_Info {
     double neighbor_angle_threshold;
     int patch_cnt;
 };
+
+/**********************************************************************************
+ *
+ *   Utility functions used throughout the process of fitting
+ *   
+ **********************************************************************************/
+
+// Make an edge using consistent vertex ordering
+Edge mk_edge(size_t pt_A, size_t pt_B) {
+    if (pt_A <= pt_B) {
+	return std::make_pair(pt_A, pt_B);
+    } else {
+	return std::make_pair(pt_B, pt_A);
+    }
+}
+
+// Given a patch consisting of a set of faces find the
+// set of edges that forms the outer edge of the patch
+void find_edge_segments(std::set<size_t> *faces, EdgeList *patch_edges, struct Manifold_Info *info)
+{
+    size_t pt_A, pt_B, pt_C;
+    std::set<size_t>::iterator it;
+    std::map<std::pair<size_t, size_t>, size_t> edge_face_cnt;
+    std::map<std::pair<size_t, size_t>, size_t>::iterator efc_it;
+    patch_edges->clear();
+    for (it = faces->begin(); it != faces->end(); it++) {
+	pt_A = info->bot->faces[(*it)*3+0]*3;
+	pt_B = info->bot->faces[(*it)*3+1]*3;
+	pt_C = info->bot->faces[(*it)*3+2]*3;
+	edge_face_cnt[mk_edge(pt_A, pt_B)] += 1;
+	edge_face_cnt[mk_edge(pt_B, pt_C)] += 1;
+	edge_face_cnt[mk_edge(pt_C, pt_A)] += 1;
+    }
+
+    for (efc_it = edge_face_cnt.begin(); efc_it!=edge_face_cnt.end(); efc_it++) {
+	if ((*efc_it).second == 1) {
+	    info->vert_to_edge[(*efc_it).first.first].insert((*efc_it).first);
+	    info->vert_to_edge[(*efc_it).first.second].insert((*efc_it).first);
+	    patch_edges->insert((*efc_it).first);
+	}
+    }
+}
+
 
 /**********************************************************************************
  *
@@ -139,8 +181,10 @@ void plot_patch_borders(struct Manifold_Info *info, const char *filename) {
     FILE* edge_plot = fopen(filename, "w");
     pl_color(edge_plot, 255, 255, 255);
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
+        EdgeList patch_edges;
 	EdgeList::iterator e_it;
-	for (e_it = info->patch_edges[(*p_it).first].begin(); e_it != info->patch_edges[(*p_it).first].end(); e_it++) {
+        find_edge_segments(&((*p_it).second), &patch_edges, info);
+	for (e_it = patch_edges.begin(); e_it != patch_edges.end(); e_it++) {
 	    pdv_3move(edge_plot, &info->bot->vertices[(*e_it).first]);
 	    pdv_3cont(edge_plot, &info->bot->vertices[(*e_it).second]);
 	}
@@ -194,17 +238,7 @@ void remove_empty_patches(struct Manifold_Info *info) {
     for (int i = 0; i < (int)info->patches.size(); i++) {
 	if (info->patches[i].size() == 0) {
 	    info->patches.erase(i);
-	    info->patch_edges.erase(i);
 	}
-    }
-}
-
-// Make an edge using consistent vertex ordering
-Edge mk_edge(size_t pt_A, size_t pt_B) {
-    if (pt_A <= pt_B) {
-	return std::make_pair(pt_A, pt_B);
-    } else {
-	return std::make_pair(pt_B, pt_A);
     }
 }
 
@@ -304,14 +338,19 @@ int find_major_patch(size_t face_num, struct Manifold_Info *info, size_t curr_pa
 // the patch with which they share the most edges.  Return the number of triangles shifted.
 // This won't fully "smooth" an edge in a given pass, but an iterative approach should converge
 // to edges with triangles in their correct "major" patches
-size_t shift_edge_triangles(std::map< size_t, std::set<size_t> > *patches, size_t curr_patch, EdgeList *edges, struct Manifold_Info *info) {
+size_t shift_edge_triangles(std::map< size_t, std::set<size_t> > *patches, size_t curr_patch, struct Manifold_Info *info) {
     std::set<size_t> patch_edgefaces;
     std::map<size_t, size_t> faces_to_shift;
     std::map<size_t, size_t>::iterator f_it;
+    EdgeList edges;
     EdgeList::iterator e_it;
     std::set<size_t>::iterator sizet_it;
+   
+    // 0. Build edge set;
+    find_edge_segments(&(info->patches[curr_patch]), &edges, info);
+
     // 1. build triangle set of edge triangles in patch.
-    for (e_it = edges->begin(); e_it != edges->end(); e_it++) {
+    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
 	std::set<size_t> faces_from_edge = info->edge_to_face[(*e_it)];
 	for (sizet_it = faces_from_edge.begin(); sizet_it != faces_from_edge.end() ; sizet_it++) {
 	    if (info->face_to_patch[(*sizet_it)] == curr_patch) {
@@ -366,53 +405,27 @@ void pnt_project(point_t orig_pt, point_t *new_pt, point_t normal) {
     VSUB2(*new_pt, p1, norm_scale);
 }
 
-// Given a patch consisting of a set of faces find the
-// set of edges that forms the outer edge of the patch
-void find_edge_segments(std::set<size_t> *faces, EdgeList *patch_edges, struct Manifold_Info *info)
-{
-    size_t pt_A, pt_B, pt_C;
-    std::set<size_t>::iterator it;
-    std::map<std::pair<size_t, size_t>, size_t> edge_face_cnt;
-    std::map<std::pair<size_t, size_t>, size_t>::iterator efc_it;
-    patch_edges->clear();
-    for (it = faces->begin(); it != faces->end(); it++) {
-	pt_A = info->bot->faces[(*it)*3+0]*3;
-	pt_B = info->bot->faces[(*it)*3+1]*3;
-	pt_C = info->bot->faces[(*it)*3+2]*3;
-	edge_face_cnt[mk_edge(pt_A, pt_B)] += 1;
-	edge_face_cnt[mk_edge(pt_B, pt_C)] += 1;
-	edge_face_cnt[mk_edge(pt_C, pt_A)] += 1;
-    }
-
-    for (efc_it = edge_face_cnt.begin(); efc_it!=edge_face_cnt.end(); efc_it++) {
-	if ((*efc_it).second == 1) {
-	    info->vert_to_edge[(*efc_it).first.first].insert((*efc_it).first);
-	    info->vert_to_edge[(*efc_it).first.second].insert((*efc_it).first);
-	    patch_edges->insert((*efc_it).first);
-	}
-    }
-}
-
 // Given a patch, find triangles that overlap when projected into the patch domain, remove them
 // from the current patch and set them up in their own patch.  Returns the number of faces moved
 // from the current patch to their own patch.
 size_t overlapping_edge_triangles(struct Manifold_Info *info) {
     size_t total_overlapping = 0;
-    std::map< size_t, EdgeList >::iterator pe_it;
-    for (pe_it = info->patch_edges.begin(); pe_it != info->patch_edges.end(); pe_it++) {
-	ON_3dVector *vect = info->vectors.At(info->patch_to_plane[(*pe_it).first]);
+    std::map< size_t, std::set<size_t> >::iterator p_it;
+    for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
+	ON_3dVector *vect = info->vectors.At(info->patch_to_plane[(*p_it).first]);
 	size_t overlap_cnt = 1;
 	size_t patch_overlapping = 0;
 	while (overlap_cnt != 0) {
 	    std::set<size_t> edge_triangles;
-	    EdgeList *edges = &(info->patch_edges[(*pe_it).first]);
+	    EdgeList edges;
+	    find_edge_segments(&((*p_it).second), &edges, info);
 	    EdgeList::iterator e_it;
 	    std::set<size_t>::iterator sizet_it;
 	    // 1. build triangle set of edge triangles in patch.
-	    for (e_it = edges->begin(); e_it != edges->end(); e_it++) {
+	    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
 		std::set<size_t> faces_from_edge = info->edge_to_face[(*e_it)];
 		for (sizet_it = faces_from_edge.begin(); sizet_it != faces_from_edge.end() ; sizet_it++) {
-		    if (info->face_to_patch[(*sizet_it)] == (*pe_it).first) {
+		    if (info->face_to_patch[(*sizet_it)] == (*p_it).first) {
 			edge_triangles.insert((*sizet_it));
 		    }
 		}
@@ -441,11 +454,10 @@ size_t overlapping_edge_triangles(struct Manifold_Info *info) {
 			    info->patch_cnt++;
 			    size_t new_patch = info->patch_cnt;
 			    info->patches[new_patch].insert(*sizet_it);
-			    info->patches[(*pe_it).first].erase(*sizet_it);
+			    info->patches[(*p_it).first].erase(*sizet_it);
 			    info->patch_to_plane[new_patch] = info->face_to_plane[*sizet_it];
 			    info->face_to_patch[*sizet_it] = new_patch;
-			    find_edge_segments(&(info->patches[(*pe_it).first]), &(info->patch_edges[(*pe_it).first]), info);
-			    find_edge_segments(&(info->patches[new_patch]), &(info->patch_edges[new_patch]), info);
+			    find_edge_segments(&((*p_it).second), &edges, info);
 			    overlap_cnt++;
 			    patch_overlapping++;
 			    total_overlapping++;
@@ -457,7 +469,7 @@ size_t overlapping_edge_triangles(struct Manifold_Info *info) {
 	    }
 	}
 	if (patch_overlapping > 0)
-	    std::cout << "Patch " << (*pe_it).first << " overlaps: " << patch_overlapping << "\n";
+	    std::cout << "Patch " << (*p_it).first << " overlaps: " << patch_overlapping << "\n";
     }
     return total_overlapping;
 }
@@ -601,11 +613,7 @@ void bot_partition(struct Manifold_Info *info)
 	shaved_cnt = 0;
 	edge_smoothing_count++;
 	for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
-	    find_edge_segments(&((*p_it).second), &(info->patch_edges[(*p_it).first]), info);
-	}
-
-	for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
-	    shaved_cnt += shift_edge_triangles(&(info->patches), (*p_it).first, &(info->patch_edges[(*p_it).first]), info);
+	    shaved_cnt += shift_edge_triangles(&(info->patches), (*p_it).first, info);
 	}
 	std::cout << "Triangle shifts in smoothing pass " << edge_smoothing_count << ": " << shaved_cnt << "\n";
     }
@@ -615,11 +623,6 @@ void bot_partition(struct Manifold_Info *info)
     size_t overlapping_face_cnt = 0;
     overlapping_face_cnt = overlapping_edge_triangles(info);
     std::cout << "Found " << overlapping_face_cnt << " overlapping faces in projection\n";
-
-    // Make sure all our edge sets are up to date
-    for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
-	find_edge_segments(&((*p_it).second), &(info->patch_edges[(*p_it).first]), info);
-    }
 
     std::cout << "Patch count: " << info->patches.size() << "\n";
     plot_faces(info, "patches.pl");
@@ -690,10 +693,16 @@ void find_outer_loops(struct Manifold_Info *info)
 void find_polycurves(struct Manifold_Info *info)
 {
     std::map< size_t, std::set<size_t> >::iterator p_it;
+    std::map< size_t, EdgeList > all_patch_edges;
+    for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
+	if (!info->patches[(*p_it).first].empty()) {
+	    find_edge_segments(&((*p_it).second), &(all_patch_edges[(*p_it).first]), info);
+	}
+    }
     FILE* pcurveplot = fopen("polycurves.pl", "w");
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
 	if (!info->patches[(*p_it).first].empty()) {
-	    EdgeList *patch_edges = &(info->patch_edges[(*p_it).first]);
+	    EdgeList *patch_edges = &(all_patch_edges[(*p_it).first]);
 	    while (!patch_edges->empty()) {
 		// We know the current patch - find out what the other one is for
 		// this edge.
@@ -708,8 +717,8 @@ void find_polycurves(struct Manifold_Info *info)
 		std::set<Edge>::iterator pc_it;
 		std::queue<Edge> edge_queue;
 		edge_queue.push(*(patch_edges->begin()));
-		info->patch_edges[(*p_it).first].erase(edge_queue.front());
-		info->patch_edges[other_patch_id].erase(edge_queue.front());
+		all_patch_edges[(*p_it).first].erase(edge_queue.front());
+		all_patch_edges[other_patch_id].erase(edge_queue.front());
 		while (!edge_queue.empty()) {
 		    // Add the first edge in the queue
 		    Edge curr_edge = edge_queue.front();
@@ -742,8 +751,8 @@ void find_polycurves(struct Manifold_Info *info)
 			std::set<size_t> *ep = &(info->edge_to_patch[(*e_it)]);
 			if (ep->find(other_patch_id) != ep->end() && ep->find((*p_it).first) != ep->end() && polycurve_edges.find(*e_it) == polycurve_edges.end()) {
 			    edge_queue.push(*e_it);
-			    info->patch_edges[(*p_it).first].erase(*e_it);
-			    info->patch_edges[other_patch_id].erase(*e_it);
+			    all_patch_edges[(*p_it).first].erase(*e_it);
+			    all_patch_edges[other_patch_id].erase(*e_it);
 			}
 		    }
 		}
@@ -808,10 +817,6 @@ void find_polycurves(struct Manifold_Info *info)
 	}
     }
     fclose(pcurveplot);
-    // restore edge sets
-    for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
-	find_edge_segments(&((*p_it).second), &(info->patch_edges[(*p_it).first]), info);
-    }
 }
 
 void find_loops(struct Manifold_Info *info) {
@@ -884,8 +889,9 @@ void find_loops(struct Manifold_Info *info) {
  *
  **********************************************************************************/
 
-void PatchToVector3d(struct rt_bot_internal *bot, std::set<size_t> *faces, EdgeList *edges, on_fit::vector_vec3d &data)
+void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Manifold_Info *info, on_fit::vector_vec3d &data)
 {
+    std::set<size_t> *faces = &(info->patches[curr_patch]);
     std::set<size_t>::iterator f_it;
     std::set<size_t> verts;
     unsigned int i = 0;
@@ -908,8 +914,10 @@ void PatchToVector3d(struct rt_bot_internal *bot, std::set<size_t> *faces, EdgeL
     // to use points from the 3D NURBS edge curves instead of the bot edges, but
     // this is a first step and it does seem to improve the surface mapping at the
     // edges, at least from what I can tell in the wireframe.
+    EdgeList edges; 
     EdgeList::iterator e_it;
-    for (e_it = edges->begin(); e_it != edges->end(); e_it++) {
+    find_edge_segments(faces, &edges, info);
+    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
 	point_t p1, p2, p3;
 	VMOVE(p1, &bot->vertices[(*e_it).first])
 	    VMOVE(p2, &bot->vertices[(*e_it).second])
@@ -1063,7 +1071,7 @@ int main(int argc, char *argv[])
 	    std::cout << "Found patch " << p << " with " << info.patches[p].size() << " faces\n";
 	    unsigned order(3);
 	    on_fit::NurbsDataSurface data;
-	    PatchToVector3d(bot_ip, &(info.patches[p]), &(info.patch_edges[p]), data.interior);
+	    PatchToVector3d(bot_ip, p, &info, data.interior);
 	    ON_NurbsSurface nurbs = on_fit::FittingSurface::initNurbsPCABoundingBox(order, &data);
 	    on_fit::FittingSurface fit(&data, nurbs);
 	    on_fit::FittingSurface::Parameter params;
