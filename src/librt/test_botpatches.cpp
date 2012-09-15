@@ -984,25 +984,55 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
     }
 
     // Edges are important for patch merging - tighten them by adding more edge
-    // points than just the vertex points.  Probably the right thing to do here is
-    // to use points from the 3D NURBS edge curves instead of the bot edges, but
-    // this is a first step and it does seem to improve the surface mapping at the
-    // edges, at least from what I can tell in the wireframe.
-    EdgeList edges;
-    EdgeList::iterator e_it;
-    find_edge_segments(faces, &edges, info);
-    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
-	point_t p1, p2, p3;
-	VMOVE(p1, &bot->vertices[(*e_it).first])
-	VMOVE(p2, &bot->vertices[(*e_it).second])
-	p3[0] = (p1[0] + p2[0])/2;
-	p3[1] = (p1[1] + p2[1])/2;
-	p3[2] = (p1[2] + p2[2])/2;
-	// add edge midpoint
-	data.push_back(ON_3dVector(V3ARGS(p3)));
+    // points than just the vertex points.  Use points from the 3D NURBS edge curves 
+    // instead of the bot edges to ensure the surface includes the volume needed
+    // for curve pullback.
+    std::set<size_t> *patch_edges =  &(info->patch_edges[curr_patch]);
+    std::set<size_t>::iterator pe_it;
+    for (pe_it = patch_edges->begin(); pe_it != patch_edges->end(); pe_it++) {
+        ON_BrepEdge& edge = info->brep->m_E[(*pe_it)];
+	const ON_Curve* edge_curve = edge.EdgeCurveOf();
+	ON_Interval dom = edge_curve->Domain();
+	// XXX todo: dynamically sample the curve
+	for (int i = 1; i <= 50; i++) {
+	    ON_3dPoint p = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
+	    data.push_back(ON_3dVector(p));
+        }
     }
-
 }
+
+
+    // Actually fit the NURBS surfaces and build faces 
+void find_surfaces(struct Manifold_Info *info) {
+    std::map< size_t, std::set<size_t> >::iterator p_it;
+    for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
+	std::cout << "Found patch " << (*p_it).first << " with " << (*p_it).second.size() << " faces\n";
+	unsigned order(3);
+	on_fit::NurbsDataSurface data;
+	PatchToVector3d(info->bot, (*p_it).first, info, data.interior);
+	ON_NurbsSurface nurbs = on_fit::FittingSurface::initNurbsPCABoundingBox(order, &data);
+	on_fit::FittingSurface fit(&data, nurbs);
+	on_fit::FittingSurface::Parameter params;
+	params.interior_smoothness = 0.15;
+	params.interior_weight = 1.0;
+	params.boundary_smoothness = 0.15;
+	params.boundary_weight = 0.0;
+	// NURBS refinement
+	for (unsigned i = 0; i < 5; i++) {
+	    fit.refine(0);
+	    fit.refine(1);
+	}
+
+	// fitting iterations
+	for (unsigned i = 0; i < 2; i++) {
+	    fit.assemble(params);
+	    fit.solve();
+	}
+        int si = info->brep->AddSurface(new ON_NurbsSurface(fit.m_nurbs));
+        info->brep->NewFace(si);
+    }
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -1074,44 +1104,14 @@ int main(int argc, char *argv[])
     // Now, using the patch sets, construct brep edges
     find_edges(&info);
 
+    // Now that we have edge curves, we know enough to construct faces and surfaces
+    find_surfaces(&info);
+
     // Build the loops
     find_loops(&info);
 
     // ID the outer loops
     //find_outer_loops(&info);
-
-    // Actually fit the NURBS surfaces and build faces - TODO - looks like a variation on NewPlanarFaceLoop will be
-    // necessary, just for non-planar faces...
-    size_t nurbs_surface_count = -1;
-    for (int p = 0; p < (int)info.patches.size(); p++) {
-	if (info.patches[p].size() != 0) {
-	    std::cout << "Found patch " << p << " with " << info.patches[p].size() << " faces\n";
-	    unsigned order(3);
-	    on_fit::NurbsDataSurface data;
-	    PatchToVector3d(bot_ip, p, &info, data.interior);
-	    ON_NurbsSurface nurbs = on_fit::FittingSurface::initNurbsPCABoundingBox(order, &data);
-	    on_fit::FittingSurface fit(&data, nurbs);
-	    on_fit::FittingSurface::Parameter params;
-	    params.interior_smoothness = 0.15;
-	    params.interior_weight = 1.0;
-	    params.boundary_smoothness = 0.15;
-	    params.boundary_weight = 0.0;
-	    // NURBS refinement
-	    for (unsigned i = 0; i < 5; i++) {
-		fit.refine(0);
-		fit.refine(1);
-	    }
-
-	    // fitting iterations
-	    for (unsigned i = 0; i < 2; i++) {
-		fit.assemble(params);
-		fit.solve();
-	    }
-	    info.brep->NewFace(fit.m_nurbs);
-	    info.brep->m_S.Append(new ON_NurbsSurface(fit.m_nurbs));
-	    nurbs_surface_count++;
-	}
-    }
 
     // Generate BRL-CAD brep object
     wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
