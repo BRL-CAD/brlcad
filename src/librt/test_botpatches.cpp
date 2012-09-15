@@ -31,19 +31,7 @@ struct Manifold_Info {
     struct rt_bot_internal *bot;
 
     std::map< size_t, std::set<size_t> > patches;
-    std::map< size_t, std::set<size_t> > patch_polycurves;
-    std::map< size_t, std::vector<size_t> > polycurves;
-    std::map< size_t, std::vector<size_t> > loops;
-    std::map< size_t, std::set<size_t> > polycurves_patch;
-
-    std::map< size_t, size_t> outer_loops;
-    std::map< size_t , std::set<size_t> > patch_to_loops;
-
-    std::map< size_t, size_t> vert_to_m_V;
-    std::map< size_t, size_t> curve_to_m_C3;
-    std::map< size_t, size_t> curve_to_m_E;
-    std::map< size_t, size_t> patch_to_m_S;
-    std::map< size_t, size_t> patch_to_m_F;
+    std::map< size_t, std::set<size_t> > patch_edges;
 
     VertToEdge vert_to_edge;
     VertToPatch vert_to_patch;
@@ -192,7 +180,7 @@ void plot_curve(struct rt_bot_internal *bot, std::vector<size_t> *pts, int r, in
 	}
     }
 }
-
+/*
 // plot loop
 void plot_loop(size_t loop_id, struct Manifold_Info *info, FILE *l_plot)
 {
@@ -204,7 +192,7 @@ void plot_loop(size_t loop_id, struct Manifold_Info *info, FILE *l_plot)
 	plot_curve(info->bot, &(info->polycurves[*v_it]), r, g, b, l_plot);
     }
 }
-
+*/
 void plot_face(point_t p1, point_t p2, point_t p3, int r, int g, int b, FILE *c_plot)
 {
     pl_color(c_plot, r, g, b);
@@ -662,7 +650,7 @@ void bot_partition(struct Manifold_Info *info)
  *   of curve segments and loops.
  *
  **********************************************************************************/
-
+/*
 void find_outer_loops(struct Manifold_Info *info)
 {
     // If we have more than one loop, we need to identify the outer loop.  OpenNURBS handles outer
@@ -713,9 +701,11 @@ void find_outer_loops(struct Manifold_Info *info)
 	}
     }
 }
-
-void find_polycurves(struct Manifold_Info *info)
+*/
+void find_edges(struct Manifold_Info *info)
 {
+    std::map< size_t, size_t> vert_to_m_V;  // Keep mapping between vertex index being used in Brep and BoT index
+    std::map< size_t, std::vector<size_t> > polycurves;
     std::map< size_t, std::set<size_t> >::iterator p_it;
     std::map< size_t, EdgeList > all_patch_edges;
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
@@ -724,6 +714,8 @@ void find_polycurves(struct Manifold_Info *info)
 	}
     }
     FILE* pcurveplot = fopen("polycurves.pl", "w");
+    FILE *nurbs_curves = fopen("nurbs_curves.pl", "w");
+    FILE *curves_plot = fopen("curves.pl", "w");
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
 	if (!info->patches[(*p_it).first].empty()) {
 	    EdgeList *patch_edges = &(all_patch_edges[(*p_it).first]);
@@ -803,7 +795,7 @@ void find_polycurves(struct Manifold_Info *info)
 		    }
 		}
 		// Get curve ID number
-		size_t curve_id = info->polycurves.size();
+		size_t curve_id = polycurves.size();
 
 		// If we have a loop, need different halting conditions for
 		// curve assembly.
@@ -821,28 +813,84 @@ void find_polycurves(struct Manifold_Info *info)
 		while (start_end_cnt <= threshold) {
 		    if (next_pt == start_end.second) start_end_cnt++;
 		    size_t old_pt = next_pt;
-		    info->polycurves[curve_id].push_back(old_pt);
+		    polycurves[curve_id].push_back(old_pt);
 		    next_pt = *(vert_to_verts[old_pt].begin());
 		    vert_to_verts[next_pt].erase(old_pt);
 		}
+
+                // Make m_V vertices out of start and end, m_C3 curve of fit, and BrepEdge using
+                // start/end pts and curve.  When new edge is added, brep->m_E.Count() is the index
+                // of the new edge. - get it with ON_BrepEdge* edge = brep.Edge(ei);  verts are m_vi[0] or m_vi[1],
+                // or (possibly) edge.Vertex(0)
+                int vs_id, ve_id;
+		if(vert_to_m_V.find(start_end.first) == vert_to_m_V.end()) {
+		    ON_BrepVertex& newV = info->brep->NewVertex(ON_3dPoint(&info->bot->vertices[start_end.first]), 0.0001);
+                    vs_id = newV.m_vertex_index;
+		    vert_to_m_V[start_end.first] = vs_id; 
+		} else {
+		    vs_id = vert_to_m_V[start_end.first];
+		}
+		if(vert_to_m_V.find(start_end.second) == vert_to_m_V.end()) {
+		    ON_BrepVertex& newV = info->brep->NewVertex(ON_3dPoint(&info->bot->vertices[start_end.second]), 0.0001);
+                    ve_id = newV.m_vertex_index;
+		    vert_to_m_V[start_end.second] = ve_id; 
+		} else {
+		    ve_id = vert_to_m_V[start_end.second];
+		}
+		ON_3dPointArray curve_pnts;
+		std::vector<size_t>::iterator v_it;
+		for (v_it = polycurves[curve_id].begin(); v_it != polycurves[curve_id].end(); v_it++) {
+		    curve_pnts.Append(ON_3dPoint(&info->bot->vertices[(*v_it)]));
+		}
+		ON_BezierCurve curve_bez((const ON_3dPointArray)curve_pnts);
+		ON_NurbsCurve *curve_nurb = ON_NurbsCurve::New();
+		curve_bez.GetNurbForm(*curve_nurb);
+		curve_nurb->SetDomain(0.0, 1.0);
+                int c3i = info->brep->AddEdgeCurve(curve_nurb);
+                ON_BrepVertex& StartV = info->brep->m_V[vs_id];
+                ON_BrepVertex& EndV= info->brep->m_V[ve_id];
+                ON_BrepEdge& edge = info->brep->NewEdge(StartV, EndV, c3i, NULL ,0); 
+
+		// 1.  Try to find start and end in vert_to_m_V;  If not present, make NewVertex and add to vert_to_m_V.
+                // 2.  Make new curve and add to m_C3.
+                // 3.  Make new edge - update patch_edges with index for both patches sharing the edge.
 
 		// Plot curve
 		int r = int(256*drand48() + 1.0);
 		int g = int(256*drand48() + 1.0);
 		int b = int(256*drand48() + 1.0);
-		plot_curve(info->bot, &(info->polycurves[curve_id]), r, g, b, pcurveplot);
+		plot_curve(info->bot, &(polycurves[curve_id]), r, g, b, pcurveplot);
+		plot_curve(info->bot, &(polycurves[curve_id]), r, g, b, curves_plot);
+
+		pl_color(nurbs_curves, r, g, b);
+		double pt1[3], pt2[3];
+		int plotres = 50;
+                const ON_Curve* edge_curve = edge.EdgeCurveOf();
+		ON_Interval dom = edge_curve->Domain();
+		for (int i = 1; i <= 50; i++) {
+		    ON_3dPoint p = edge_curve->PointAt(dom.ParameterAt((double)(i - 1)
+				/ (double)plotres));
+		    VMOVE(pt1, p);
+		    p = edge_curve->PointAt(dom.ParameterAt((double) i / (double)plotres));
+		    VMOVE(pt2, p);
+		    pdv_3move(nurbs_curves, pt1);
+		    pdv_3cont(nurbs_curves, pt2);
+		    pdv_3move(curves_plot, pt1);
+		    pdv_3cont(curves_plot, pt2);
+		}
+
 
 		// Let the patches know they have a curve associated with them.
-		info->patch_polycurves[(*p_it).first].insert(curve_id);
-		info->patch_polycurves[other_patch_id].insert(curve_id);
-		info->polycurves_patch[curve_id].insert((*p_it).first);
-		info->polycurves_patch[curve_id].insert(other_patch_id);
+		info->patch_edges[(*p_it).first].insert(edge.m_edge_index);
+		info->patch_edges[other_patch_id].insert(edge.m_edge_index);
 	    }
 	}
     }
+    fclose(curves_plot);
+    fclose(nurbs_curves);
     fclose(pcurveplot);
 }
-
+/*
 void find_loops(struct Manifold_Info *info)
 {
     std::map< size_t, std::set<size_t> >::iterator p_it;
@@ -907,7 +955,7 @@ void find_loops(struct Manifold_Info *info)
 	}
     }
 }
-
+*/
 /**********************************************************************************
  *
  *              Code for fitted 3D NURBS surfaces to patches.
@@ -954,57 +1002,6 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
     }
 
 }
-
-// TODO - do the NewVertex and NewEdge setup here
-void fit_nurbs_edge_curves(struct Manifold_Info *info)
-{
-    FILE *nurbs_curves = fopen("nurbs_curves.pl", "w");
-    std::map< size_t, std::vector<size_t> >::iterator pc_it;
-    for (pc_it = info->polycurves.begin(); pc_it != info->polycurves.end(); pc_it++) {
-	int r = int(256*drand48() + 1.0);
-	int g = int(256*drand48() + 1.0);
-	int b = int(256*drand48() + 1.0);
-	pl_color(nurbs_curves, r, g, b);
-
-	ON_3dPointArray curve_pnts;
-	std::vector<size_t>::iterator v_it;
-	for (v_it = (*pc_it).second.begin(); v_it != (*pc_it).second.end(); v_it++) {
-	    curve_pnts.Append(ON_3dPoint(&info->bot->vertices[(*v_it)]));
-	}
-	ON_BezierCurve curve_bez((const ON_3dPointArray)curve_pnts);
-	ON_NurbsCurve *curve_nurb = ON_NurbsCurve::New();
-	curve_bez.GetNurbForm(*curve_nurb);
-	curve_nurb->SetDomain(0.0, 1.0);
-	info->brep->m_C3.Append(curve_nurb);
-	double pt1[3], pt2[3];
-	int plotres = 50;
-	ON_Interval dom = curve_nurb->Domain();
-	for (int i = 1; i <= plotres; i++) {
-	    ON_3dPoint p = curve_nurb->PointAt(dom.ParameterAt((double)(i - 1)
-							       / (double)plotres));
-	    VMOVE(pt1, p);
-	    p = curve_nurb->PointAt(dom.ParameterAt((double) i / (double)plotres));
-	    VMOVE(pt2, p);
-	    pdv_3move(nurbs_curves, pt1);
-	    pdv_3cont(nurbs_curves, pt2);
-	}
-    }
-    fclose(nurbs_curves);
-}
-/*
-   void Patch_to_Face(size_t curr_patch, struct Manifold_Info *info) {
-
-   ON_BrepFace *curr_face = info->brep->NewFace(info->patch_to_surface[curr_patch]);
-   NewLoop(outer, curr_face);
-// Need Trims - 2D projection of edges, try Keith's pullback
-//
-// assemble loop
-//
-// if any interior loops, add them too
-
-
-}
-*/
 
 int main(int argc, char *argv[])
 {
@@ -1070,28 +1067,21 @@ int main(int argc, char *argv[])
     bu_log("Performing initial partitioning of %s\n", dp->d_namep);
     bot_partition(&info);
 
-    // Now, using the patch edge sets, construct polycurves
-    find_polycurves(&info);
+    // Create the Brep data structure to hold curves and topology information
+    info.brep = ON_Brep::New();
+    
+    // Now, using the patch sets, construct brep edges
+    find_edges(&info);
 
     // Build the loops
-    find_loops(&info);
+    //find_loops(&info);
 
     // ID the outer loops
-    find_outer_loops(&info);
-
-
-    // TODO - probably want to directly populate the brep arrays with surfaces and curves
-    info.brep = ON_Brep::New();
-
-    fit_nurbs_edge_curves(&info);
+    //find_outer_loops(&info);
 
     // Actually fit the NURBS surfaces and build faces - TODO - looks like a variation on NewPlanarFaceLoop will be
     // necessary, just for non-planar faces...
     size_t nurbs_surface_count = -1;
-    std::ofstream patch_to_surface;
-    std::ofstream surface_to_patch;
-    patch_to_surface.open("patch_to_surface.txt");
-    surface_to_patch.open("surface_to_patch.txt");
     for (int p = 0; p < (int)info.patches.size(); p++) {
 	if (info.patches[p].size() != 0) {
 	    std::cout << "Found patch " << p << " with " << info.patches[p].size() << " faces\n";
@@ -1119,13 +1109,8 @@ int main(int argc, char *argv[])
 	    info.brep->NewFace(fit.m_nurbs);
 	    info.brep->m_S.Append(new ON_NurbsSurface(fit.m_nurbs));
 	    nurbs_surface_count++;
-	    info.patch_to_m_S[p] = nurbs_surface_count;
-	    patch_to_surface << p << " -> " << nurbs_surface_count << "\n";
-	    surface_to_patch << nurbs_surface_count << " -> " << p << "\n";
 	}
     }
-    patch_to_surface.close();
-    surface_to_patch.close();
 
     // Generate BRL-CAD brep object
     wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
