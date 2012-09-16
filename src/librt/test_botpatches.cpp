@@ -428,6 +428,9 @@ size_t shift_edge_triangles(std::map< size_t, std::set<size_t> > *patches, size_
 // TODO - saw at least one case where triangle removal resulted one patch breaking into two
 // topological patches.  Need to handle this, otherwise Bad Things will happen when trying
 // to generate BREPs.
+// Also - need to check how the nurbs fitting code is calculating their initial plane, and use
+// that for this test rather than the original faces - it is projection into *THAT* plane that
+// must be clean, and a projection clean in the "standard" direction may not be clean there.
 size_t overlapping_edge_triangles(std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info)
 {
     size_t total_overlapping = 0;
@@ -814,6 +817,15 @@ void find_edges(struct Manifold_Info *info)
                 // overlapping triangles test.
 		for (v_it = polycurves[curve_id].begin(); v_it != polycurves[curve_id].end(); v_it++) {
 		    curve_pnts.Append(ON_3dPoint(&info->bot->vertices[(*v_it)]));
+/*                    if (v_it + 1 != polycurves[curve_id].end()) {
+                       point_t p1, p2, p3;
+                       VMOVE(p1, &info->bot->vertices[(*v_it)]);
+		       VMOVE(p2, &info->bot->vertices[(*(v_it+1))]);
+		       p3[0] = (p1[0] + p2[0])/2;
+		       p3[1] = (p1[1] + p2[1])/2;
+		       p3[2] = (p1[2] + p2[2])/2;
+                       curve_pnts.Append(ON_3dPoint(p3));
+                    }*/
 		}
 		ON_BezierCurve curve_bez((const ON_3dPointArray)curve_pnts);
 		ON_NurbsCurve *curve_nurb = ON_NurbsCurve::New();
