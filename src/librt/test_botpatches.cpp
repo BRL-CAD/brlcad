@@ -424,6 +424,10 @@ size_t shift_edge_triangles(std::map< size_t, std::set<size_t> > *patches, size_
 // Given a patch, find triangles that overlap when projected into the patch domain, remove them
 // from the current patch and set them up in their own patch.  Returns the number of faces moved
 // from the current patch to their own patch.
+//
+// TODO - saw at least one case where triangle removal resulted one patch breaking into two
+// topological patches.  Need to handle this, otherwise Bad Things will happen when trying
+// to generate BREPs.
 size_t overlapping_edge_triangles(std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info)
 {
     size_t total_overlapping = 0;
@@ -1107,7 +1111,7 @@ int main(int argc, char *argv[])
     find_edges(&info);
 
     // Now that we have edge curves, we know enough to construct faces and surfaces
-    find_surfaces(&info);
+    //find_surfaces(&info);
 
     // Build the loops
     find_loops(&info);
@@ -1122,7 +1126,7 @@ int main(int argc, char *argv[])
     }
     bu_free(bname, "char");
 
-#ifdef BOT_TO_NURBS_DEBUG
+//#ifdef BOT_TO_NURBS_DEBUG
     for (std::map< size_t, std::set<size_t> >::iterator np_it = info.patches.begin(); np_it != info.patches.end(); np_it++) {
 	struct bu_vls name;
 	bu_vls_init(&name);
@@ -1134,11 +1138,11 @@ int main(int argc, char *argv[])
 	std::set<size_t> *nfaces = &((*np_it).second);
 	std::set<size_t>::iterator nf_it;
 	for (nf_it = nfaces->begin(); nf_it != nfaces->end(); nf_it++) {
-	    plot_face(&bot->vertices[bot->faces[(*nf_it)*3+0]*3], &bot->vertices[bot->faces[(*nf_it)*3+1]*3], &bot->vertices[bot->faces[(*nf_it)*3+2]*3], r, g ,b, plot_file);
+	    plot_face(&bot_ip->vertices[bot_ip->faces[(*nf_it)*3+0]*3], &bot_ip->vertices[bot_ip->faces[(*nf_it)*3+1]*3], &bot_ip->vertices[bot_ip->faces[(*nf_it)*3+2]*3], r, g ,b, plot_file);
 	}
 	fclose(plot_file);
     }
-#endif
+//#endif
 
 #if 0
     // SSI intersection.  May need edge-based polycurves anyway to guide selection of "correct" intersection segment in the cases where
