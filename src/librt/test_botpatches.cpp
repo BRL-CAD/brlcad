@@ -180,19 +180,8 @@ void plot_curve(struct rt_bot_internal *bot, std::vector<size_t> *pts, int r, in
 	}
     }
 }
-/*
-// plot loop
-void plot_loop(size_t loop_id, struct Manifold_Info *info, FILE *l_plot)
-{
-    std::vector<size_t>::iterator v_it;
-    int r = int(256*drand48() + 1.0);
-    int g = int(256*drand48() + 1.0);
-    int b = int(256*drand48() + 1.0);
-    for (v_it = info->loops[loop_id].begin(); v_it != info->loops[loop_id].end(); v_it++) {
-	plot_curve(info->bot, &(info->polycurves[*v_it]), r, g, b, l_plot);
-    }
-}
-*/
+
+
 void plot_face(point_t p1, point_t p2, point_t p3, int r, int g, int b, FILE *c_plot)
 {
     pl_color(c_plot, r, g, b);
@@ -272,6 +261,32 @@ void plot_ncurve(ON_Curve &curve, FILE *c_plot)
     }
 }
 
+// plot loop
+void plot_loop(std::vector<size_t> *edges, struct Manifold_Info *info, FILE *l_plot)
+{
+    std::vector<size_t>::iterator v_it;
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    for (v_it = edges->begin(); v_it != edges->end(); v_it++) {
+	pl_color(l_plot, r, g, b);
+        ON_BrepEdge& edge = info->brep->m_E[(*v_it)];
+	const ON_Curve* edge_curve = edge.EdgeCurveOf();
+	ON_Interval dom = edge_curve->Domain();
+	// XXX todo: dynamically sample the curve
+	int plotres = 50;
+	for (int i = 1; i <= plotres; i++) {
+	    double pt1[3], pt2[3];
+	    ON_3dPoint p = edge_curve->PointAt(dom.ParameterAt((double)(i - 1)
+			/ (double)plotres));
+	    VMOVE(pt1, p);
+	    p = edge_curve->PointAt(dom.ParameterAt((double) i / (double)plotres));
+	    VMOVE(pt2, p);
+	    pdv_3move(l_plot, pt1);
+	    pdv_3cont(l_plot, pt2);
+	}
+    }
+}
 
 /**********************************************************************************
  *
@@ -310,6 +325,7 @@ void sync_structure_maps(struct Manifold_Info *info)
 		info->vert_to_patch[(*face_edges_it).second].insert((*p_it).first);
 	    }
 	}
+	info->patch_to_plane[(*p_it).first] = info->face_to_plane[*(faces->begin())];
     }
 }
 
@@ -650,58 +666,6 @@ void bot_partition(struct Manifold_Info *info)
  *   of curve segments and loops.
  *
  **********************************************************************************/
-/*
-void find_outer_loops(struct Manifold_Info *info)
-{
-    // If we have more than one loop, we need to identify the outer loop.  OpenNURBS handles outer
-    // and inner loops separately, so we need to know which loop is our outer surface boundary.
-    std::map< size_t, std::set<size_t> >::iterator p_it;
-    for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
-	if (info->patches[(*p_it).first].size() > 0) {
-	    if (info->patch_to_loops[(*p_it).first].size() == 1) {
-		info->outer_loops[(*p_it).first] = *(info->patch_to_loops[(*p_it).first].begin());
-	    } else {
-		std::set<size_t>::iterator l_it;
-		fastf_t diag_max = 0.0;
-		size_t patch_outer_loop;
-		vect_t normal;
-		ON_3dVector *vect_n = info->vectors.At(info->patch_to_plane[(*p_it).first]);
-		VSET(normal, vect_n->x, vect_n->y, vect_n->z);
-		for (l_it = info->patch_to_loops[(*p_it).first].begin(); l_it != info->patch_to_loops[(*p_it).first].end(); l_it++) {
-		    vect_t min, max, diag;
-		    VSETALL(min, MAX_FASTF);
-		    VSETALL(max, -MAX_FASTF);
-		    std::vector<size_t> *curves = &(info->loops[(*l_it)]);
-		    std::vector<size_t>::iterator c_it;
-		    for (c_it = curves->begin(); c_it != curves->end(); c_it++) {
-			std::vector<size_t> *verts= &(info->polycurves[(*c_it)]);
-			std::vector<size_t>::iterator v_it;
-			for (v_it = verts->begin(); v_it != verts->end(); v_it++) {
-			    vect_t eproj;
-			    pnt_project(&info->bot->vertices[(*v_it)], &eproj, normal);
-			    VMINMAX(min, max, eproj);
-			}
-		    }
-		    VSUB2(diag, max, min);
-		    if (MAGNITUDE(diag) > diag_max) {
-			diag_max = MAGNITUDE(diag);
-			patch_outer_loop = (*l_it);
-		    }
-		}
-		info->outer_loops[(*p_it).first] = patch_outer_loop;
-	    }
-	    info->patch_to_loops[(*p_it).first].erase(info->outer_loops[(*p_it).first]);
-	}
-    }
-    for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
-	if (info->patches[(*p_it).first].size() > 0) {
-	    if (info->patch_to_loops[(*p_it).first].size() > 0) {
-		std::cout << "Patch " << (*p_it).first << " has " << info->patch_to_loops[(*p_it).first].size() << " inner loops\n";
-	    }
-	}
-    }
-}
-*/
 void find_edges(struct Manifold_Info *info)
 {
     std::map< size_t, size_t> vert_to_m_V;  // Keep mapping between vertex index being used in Brep and BoT index
@@ -839,6 +803,11 @@ void find_edges(struct Manifold_Info *info)
 		}
 		ON_3dPointArray curve_pnts;
 		std::vector<size_t>::iterator v_it;
+                // TODO - for curves from patches that had to have triangles removed, need to add
+                // additional points - a loose fit runs the risk of overlapping NURBS curves in
+                // projections.  May even need a different fit for those situations - worst case,
+                // use linear edges instead of smooth approximations for all curves that initially failed the
+                // overlapping triangles test.
 		for (v_it = polycurves[curve_id].begin(); v_it != polycurves[curve_id].end(); v_it++) {
 		    curve_pnts.Append(ON_3dPoint(&info->bot->vertices[(*v_it)]));
 		}
@@ -887,28 +856,58 @@ void find_edges(struct Manifold_Info *info)
     fclose(pcurveplot);
 }
 
+
+void find_outer_loop(std::map<size_t, std::vector<size_t> > *loops, size_t *outer_loop, std::set<size_t> *inner_loops, struct Manifold_Info *info)
+{
+    // If we have more than one loop, we need to identify the outer loop.  OpenNURBS handles outer
+    // and inner loops separately, so we need to know which loop is our outer surface boundary.
+    if ((*loops).size() == 1) {
+	*outer_loop = 0;
+    } else {
+	std::map<size_t, std::vector<size_t> >::iterator l_it;
+	fastf_t diag_max = 0.0;
+	for(l_it = loops->begin(); l_it != loops->end(); l_it++) { 
+	    double boxmin[3] = {0.0, 0.0, 0.0};
+	    double boxmax[3] = {0.0, 0.0, 0.0};
+	    std::vector<size_t>::iterator v_it;
+	    for(v_it = (*l_it).second.begin(); v_it != (*l_it).second.end(); v_it++) { 
+		ON_BrepEdge& edge = info->brep->m_E[(*v_it)];
+		const ON_Curve* edge_curve = edge.EdgeCurveOf();
+		edge_curve->GetBBox((double *)&boxmin, (double *)&boxmax, 1); 
+	    }
+	    ON_3dPoint pmin(boxmin[0], boxmin[1], boxmin[2]); 
+	    ON_3dPoint pmax(boxmax[0], boxmax[1], boxmax[2]); 
+	    if (pmin.DistanceTo(pmax) > diag_max) {
+               *outer_loop = (*l_it).first;
+               diag_max = pmin.DistanceTo(pmax);
+            }
+	}
+	for(l_it = loops->begin(); l_it != loops->end(); l_it++) {
+	    if((*l_it).first != *outer_loop) {
+		(*inner_loops).insert((*l_it).first);
+	    }
+	}
+    }
+}
+
+
 void find_loops(struct Manifold_Info *info)
 {
     std::map< size_t, std::set<size_t> >::iterator p_it;
     for (p_it = info->patch_edges.begin(); p_it != info->patch_edges.end(); p_it++) {
 	std::map<size_t, std::vector<size_t> > loops;
 	std::map<size_t, std::set<size_t> > vert_to_edges;
-#ifdef BOT_TO_NURBS_DEBUG
 	struct bu_vls name;
 	bu_vls_init(&name);
 	bu_vls_printf(&name, "loops_patch_%d.pl", (int)(*p_it).first);
 	FILE* ploopplot = fopen(bu_vls_addr(&name), "w");
-#endif
 	std::set<size_t> curr_edges = (*p_it).second;
 	for (std::set<size_t>::iterator edge_it = curr_edges.begin(); edge_it != curr_edges.end(); edge_it++) {
 	    ON_BrepEdge& edge = info->brep->m_E[(*edge_it)];
 	    if (edge.m_vi[0] == edge.m_vi[1]) {
 		size_t curr_loop = loops.size();
-		std::cout << "Patch " << (*p_it).first << " closed loop " << curr_loop << ": " << *edge_it << "\n";
 		loops[curr_loop].push_back((*edge_it));
-#ifdef BOT_TO_NURBS_DEBUG
-		plot_loop(curr_loop, info, ploopplot);
-#endif
+		plot_loop(&loops[curr_loop], info, ploopplot);
 		curr_edges.erase(*edge_it);
 	    } else {
 		vert_to_edges[edge.m_vi[0]].insert(*edge_it);
@@ -938,20 +937,23 @@ void find_loops(struct Manifold_Info *info)
 		    }
 		}
 	    }
+#ifdef BOT_TO_NURBS_DEBUG
 	    std::cout << "Patch " << (*p_it).first << " loop " << curr_loop << ": ";
 	    for (size_t i = 0; i < loops[curr_loop].size(); i++) {
 		std::cout << loops[curr_loop][i] << ",";
 	    }
 	    std::cout << "\n";
-#ifdef BOT_TO_NURBS_DEBUG
-	    plot_loop(curr_loop, info, ploopplot);
 #endif
+	    plot_loop(&loops[curr_loop], info, ploopplot);
 	}
-#ifdef BOT_TO_NURBS_DEBUG
 	fclose(ploopplot);
-#endif
-	// Now that we have loops, determine which is the outer loops
-	//
+	// Now that we have loops, determine which is the outer loop
+	size_t outer_loop;	
+        std::set<size_t> inner_loops;	
+	find_outer_loop(&loops, &outer_loop, &inner_loops, info);
+	if(loops.size() > 1) {
+	    std::cout << "Patch " << (*p_it).first << " outer loop: " << outer_loop << "\n";
+	}
 	// Do pullbacks to generate trimming curves in 2D, use them to create BrepTrim and BrepLoop structures for
 	// outer and inner trimming loops
     }
@@ -1109,9 +1111,6 @@ int main(int argc, char *argv[])
 
     // Build the loops
     find_loops(&info);
-
-    // ID the outer loops
-    //find_outer_loops(&info);
 
     // Generate BRL-CAD brep object
     wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
