@@ -601,7 +601,7 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 
 	    c = argv[1];
 	    while ( *c != '\0' ) {
-		if ( !isdigit( *c ) ) {
+		if ( !isdigit( (int)*c ) ) {
 		    type_is_digit = 0;
 		    break;
 		}
