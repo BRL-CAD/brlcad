@@ -2538,7 +2538,7 @@ get_closest_point(ON_2dPoint& outpt,
     bool delete_tree = false;
     bool found = false;
     double d_last = DBL_MAX;
-    pt2d_t curr_grad;
+    pt2d_t curr_grad = {0.0, 0.0};
     pt2d_t new_uv = {0.0, 0.0};
     GCPData data;
     data.surf = face->SurfaceOf();
