@@ -744,7 +744,7 @@ draw_cross_sections_along_ell_vector(struct ell_draw_configuration config)
     double ell_a_mag, ell_b_mag, ell_t_mag;
     double num_cross_sections, points_per_section;
     double position_step, radian_step;
-    struct ellipse_cross_section cross_section;
+    struct ellipse_cross_section cross_section = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, 0.0, 0.0};
     point_t cross_section_point;
 
     VMOVE(ell_a, config.ell_axis_vector_a);
