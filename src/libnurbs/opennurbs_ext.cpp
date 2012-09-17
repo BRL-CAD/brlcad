@@ -2973,8 +2973,10 @@ sortY(BRNode* first, BRNode* second)
 
 struct Triangle {
     ON_3dPoint A, B, C;
-    inline void CreateFromPoints(ON_3dPoint &_A, ON_3dPoint &_B, ON_3dPoint &_C) {
-	A = _A, B = _B, C = _C;
+    inline void CreateFromPoints(ON_3dPoint &p_A, ON_3dPoint &p_B, ON_3dPoint &p_C) {
+	A = p_A;
+	B = p_B;
+	C = p_C;
     }
     ON_3dPoint BarycentricCoordinate(ON_3dPoint &pt)
     {
