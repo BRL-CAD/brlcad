@@ -2279,6 +2279,7 @@ rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
     int fail;
 
     /* requirements */
+    int screen;
     int use;
     int rgba;
     int dbfr;
@@ -2304,10 +2305,14 @@ rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 
     vibase = XGetVisualInfo(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			    0, &vitemp, &num);
+    screen = DefaultScreen(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy);
 
     while (1) {
 	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
 	    /* requirements */
+	    if (vip->screen != screen)
+		continue;
+
 	    fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				vip, GLX_USE_GL, &use);
 	    if (fail || !use)

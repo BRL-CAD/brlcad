@@ -275,16 +275,20 @@ X_choose_visual(struct dm *dmp)
     int desire_trueColor = 1;
     int min_depth = 8;
     int *good = NULL;
+    int screen;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     vibase = XGetVisualInfo(pubvars->dpy, 0, &vitemp, &num);
+    screen = DefaultScreen(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy);
 
     good = (int *)bu_malloc(sizeof(int)*num, "alloc good visuals");
 
     while (1) {
 	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
 	    /* requirements */
+	    if (vip->screen != screen)
+		continue;
 	    if (vip->depth < min_depth)
 		continue;
 	    if (desire_trueColor) {
