@@ -106,13 +106,6 @@ endif(COMMAND CMAKE_POLICY)
 # set CMake project name
 project(BRLCAD)
 
-# Set the minimum compilation linkage for Mac systems if not already
-# set, no harm if set elsewhere.
-set(MACOSX_DEPLOYMENT_TARGET $ENV(MACOSX_DEPLOYMENT_TARGET))
-if(NOT MACOSX_DEPLOYMENT_TARGET)
-  set(ENV(MACOSX_DEPLOYMENT_TARGET) 10.5)
-endif(NOT MACOSX_DEPLOYMENT_TARGET)
-
 #---------------------------------------------------------------------
 # Write out entries to populate a tm struct (will be used for time
 # delta calculations later)

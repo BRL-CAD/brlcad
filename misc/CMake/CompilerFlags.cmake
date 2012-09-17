@@ -335,6 +335,16 @@ if(BRLCAD_FLAGS_DEBUG)
   mark_as_advanced(DEBUG_FLAGS)
 endif(BRLCAD_FLAGS_DEBUG)
 
+
+# Set the minimum compilation linkage for Mac systems if not already
+# set, no harm if set elsewhere.
+if(APPLE)
+  set(MACOSX_DEPLOYMENT_TARGET $ENV(MACOSX_DEPLOYMENT_TARGET))
+  if(NOT MACOSX_DEPLOYMENT_TARGET)
+    set(ENV(MACOSX_DEPLOYMENT_TARGET) 10.5)
+  endif(NOT MACOSX_DEPLOYMENT_TARGET)
+endif(APPLE)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
