@@ -15,6 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
+* ogl display manager and framebuffer are creating windows with
+  transparent backgrounds (the glClear color is not being drawn) on
+  Linux.  Presumably a driver-related issue, alpha channel, or expose
+  event issue.
+
 * autoview [scale] isn't updating the wireframe when opening a
   database, drawing geometry, then running autoview.  the status bar
   shows the scale change, but the graphics window remains unaffected
@@ -159,6 +164,11 @@ Recent Bugs
 * Detailed BoT model ray trace image had incorrect background pixel
   values in framebuffer, off slightly by one.
 
+* ogl display manager still crashes on attach in mged on Mac OS X 10.5
+
+* rt is consuming 100% CPU in fb_close() on a lingering ogl
+  framebuffer waiting to close.  needs to sleep or select for a while.
+
 * /dev/oglb 'copy mode' fails to refresh the framebuffer
 
 * X display manager (and probably others) will lock up mged if you Z/B
@@ -195,8 +205,6 @@ Recent Bugs
 
 * CMD-b and CMD-f navigates the mged command window text widget on Mac
   and trivially causes problems with the cursor and text injection.
-
-* ogl display manager still crashes on attach in mged on Mac OS X 10.5
 
 * mged segfaults when drawing lots of solids at once (e.g. draw *.s)
 
@@ -331,9 +339,6 @@ Recent Bugs
 * the graphics window does not acquire keybinding focus in mged on
   ubuntu linux.  key events go to the command window even with the
   graphics window has focus.
-
-* rt is consuming 100% CPU in fb_close() on a lingering ogl
-  framebuffer waiting to close.  needs to sleep or select for a while.
 
 * MGED File->Preferences->Fonts results in error "named font "button
   _font" doesn't exist on Linux.
