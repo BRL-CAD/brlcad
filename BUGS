@@ -18,7 +18,10 @@ Recent Bugs
 * ogl display manager and framebuffer are creating windows with
   transparent backgrounds (the glClear color is not being drawn) on
   Linux.  Presumably a driver-related issue, alpha channel, or expose
-  event issue.
+  event issue.  Inspecting further, it may be related to environments
+  where shmget() fails (or is requested via /dev/oglp) and we get
+  private memory -- looks like private memory is not initialized
+  (observed on Mac 10.6).
 
 * autoview [scale] isn't updating the wireframe when opening a
   database, drawing geometry, then running autoview.  the status bar
