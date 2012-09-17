@@ -3202,10 +3202,10 @@ split_trimmed_face(ON_SimpleArray<TrimmedFace*> &out, const TrimmedFace *in, con
 		IntersectPoint tmp_pt;
 		tmp_pt.m_pt = intersect_pt[k];
 		tmp_pt.m_seg = CVCount_sum + CV[k].first;
-		tmp_pt.m_t = parameter[k].first;
+		tmp_pt.m_t = (int)parameter[k].first;
 		tmp_pt.m_type = j;
 		tmp_pt.m_seg_for_rank = CV[k].second;
-		tmp_pt.m_t_for_rank = parameter[k].second;
+		tmp_pt.m_t_for_rank = (int)parameter[k].second;
 		intersect.Append(tmp_pt);
 	    }
 	    if (intersect_pt.Count())
