@@ -69,6 +69,7 @@ main(int ac, char *av[])
     int i = 0;
     int passed = 0;
     int diagnosisOption = 0;
+    int numAssignments;
 
     if (ac > 1) {
 	printf("uh oh, unexpected args after %s\n", av[0]);
@@ -117,12 +118,13 @@ main(int ac, char *av[])
     printf("/RED-BLACK TREE WALKING TESTS :\n");
     printf("Input 1 to display the values walk or 0 for a more"
 	   " detailed diagnosis display\n.");
-    scanf("%d", &diagnosisOption);
 
-    if (diagnosisOption != 1 && diagnosisOption != 0) {
+    numAssignments = scanf("%d", &diagnosisOption);
+    if (numAssignments != 1 || (diagnosisOption != 1 && diagnosisOption != 0)) {
 	printf("ERROR AT CHOICE INPUT\n");
 	return 1;
     }
+
     if (diagnosisOption == 1) {
 	printf("\nPREORDER:\n");
 	bu_rb_walk(testTree, 0, displayNode, 0);
