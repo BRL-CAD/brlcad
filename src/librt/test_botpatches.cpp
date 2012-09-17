@@ -882,17 +882,17 @@ void find_outer_loop(std::map<size_t, std::vector<size_t> > *loops, size_t *oute
     } else {
 	std::map<size_t, std::vector<size_t> >::iterator l_it;
 	fastf_t diag_max = 0.0;
-	for(l_it = loops->begin(); l_it != loops->end(); l_it++) { 
+	for(l_it = loops->begin(); l_it != loops->end(); l_it++) {
 	    double boxmin[3] = {0.0, 0.0, 0.0};
 	    double boxmax[3] = {0.0, 0.0, 0.0};
 	    std::vector<size_t>::iterator v_it;
-	    for(v_it = (*l_it).second.begin(); v_it != (*l_it).second.end(); v_it++) { 
+	    for(v_it = (*l_it).second.begin(); v_it != (*l_it).second.end(); v_it++) {
 		ON_BrepEdge& edge = info->brep->m_E[(*v_it)];
 		const ON_Curve* edge_curve = edge.EdgeCurveOf();
-		edge_curve->GetBBox((double *)&boxmin, (double *)&boxmax, 1); 
+		edge_curve->GetBBox((double *)&boxmin, (double *)&boxmax, 1);
 	    }
-	    ON_3dPoint pmin(boxmin[0], boxmin[1], boxmin[2]); 
-	    ON_3dPoint pmax(boxmax[0], boxmax[1], boxmax[2]); 
+	    ON_3dPoint pmin(boxmin[0], boxmin[1], boxmin[2]);
+	    ON_3dPoint pmax(boxmax[0], boxmax[1], boxmax[2]);
 	    if (pmin.DistanceTo(pmax) > diag_max) {
                *outer_loop = (*l_it).first;
                diag_max = pmin.DistanceTo(pmax);
@@ -964,8 +964,8 @@ void find_loops(struct Manifold_Info *info)
 	}
 	fclose(ploopplot);
 	// Now that we have loops, determine which is the outer loop
-	size_t outer_loop;	
-        std::set<size_t> inner_loops;	
+	size_t outer_loop;
+        std::set<size_t> inner_loops;
 	find_outer_loop(&loops, &outer_loop, &inner_loops, info);
 	if(loops.size() > 1) {
 	    std::cout << "Patch " << (*p_it).first << " outer loop: " << outer_loop << "\n";
@@ -1002,7 +1002,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
     }
 
     // Edges are important for patch merging - tighten them by adding more edge
-    // points than just the vertex points.  Use points from the 3D NURBS edge curves 
+    // points than just the vertex points.  Use points from the 3D NURBS edge curves
     // instead of the bot edges to ensure the surface includes the volume needed
     // for curve pullback.
     std::set<size_t> *patch_edges =  &(info->patch_edges[curr_patch]);
@@ -1020,7 +1020,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
 }
 
 
-    // Actually fit the NURBS surfaces and build faces 
+    // Actually fit the NURBS surfaces and build faces
 void find_surfaces(struct Manifold_Info *info) {
     std::map< size_t, std::set<size_t> >::iterator p_it;
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
