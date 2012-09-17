@@ -110,35 +110,6 @@ fi
 
 
 ###
-# TEST: make sure there isn't a per-target CPPFLAGS in a Makefile.am
-# support for per-target CPPFLAGS wasn't added until automake 1.7
-echo "running CPPFLAGS check..."
-
-if test ! -f "${TOPSRC}/Makefile.am" ; then
-    echo "Unable to find the top-level Makefile.am, aborting"
-    exit 1
-fi
-
-AMFILES="`find ${TOPSRC} -type f -name Makefile.am -exec grep -n -I -e '_CPPFLAGS[[:space:]]*=' {} /dev/null \; | grep -v 'AM_CPPFLAGS' | grep -v 'BREP_CPPFLAGS' | awk '{print $1}'`"
-
-FOUND=
-for file in $AMFILES ; do
-    if test "x`echo \"$file\" | sed 's/.*#.*//g'`" = "x" ; then
-	# skip commented lines
-	continue
-    fi
-    echo "ERROR: Target-specific CPPFLAGS found in $file"
-    FOUND=1
-done
-if test "x$FOUND" = "x" ; then
-    echo "-> cppflags check succeeded"
-else
-    echo "-> cppflags check FAILED"
-    FAILED="`expr $FAILED + 1`"
-fi
-
-
-###
 # TEST: make sure consistent API standards are being used, using libbu
 # functions where they replace or wrap a standard C function
 echo "running API usage check"
