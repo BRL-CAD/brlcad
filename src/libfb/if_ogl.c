@@ -553,7 +553,7 @@ ogl_getmem(FBIO *ifp)
 	pixsize = ifp->if_height * ifp->if_width * sizeof(struct ogl_pixel);
 	size = pixsize + sizeof(struct ogl_cmap);
 
-	sp = calloc(1, size);
+	sp = bu_calloc(1, size, "alloc mem");
 	if (sp == 0) {
 	    fb_log("ogl_getmem: frame buffer memory malloc failed\n");
 	    goto fail;
@@ -579,8 +579,7 @@ ogl_getmem(FBIO *ifp)
     /* First try to attach to an existing one */
     if ((SGI(ifp)->mi_shmid = shmget(SHMEM_KEY, size, 0)) < 0) {
 	/* No existing one, create a new one */
-	if ((SGI(ifp)->mi_shmid = shmget(
-		 SHMEM_KEY, size, IPC_CREAT|0666)) < 0) {
+	if ((SGI(ifp)->mi_shmid = shmget(SHMEM_KEY, size, IPC_CREAT|0666)) < 0) {
 	    fb_log("ogl_getmem: shmget failed, errno=%d\n", errno);
 	    goto fail;
 	}
@@ -607,7 +606,7 @@ success:
     return 0;
 fail:
     fb_log("ogl_getmem:  Unable to attach to shared memory.\n");
-    if ((sp = calloc(1, size)) == NULL) {
+    if ((sp = bu_calloc(1, size, "alloc mem")) == NULL) {
 	fb_log("ogl_getmem:  malloc failure\n");
 	return -1;
     }
@@ -1165,11 +1164,11 @@ fb_ogl_open(FBIO *ifp, const char *file, int width, int height)
      * addressed by SGI(ifp)->mi_xxx and OGL(ifp)->xxx
      */
 
-    if ((SGIL(ifp) = (char *)calloc(1, sizeof(struct sgiinfo))) == NULL) {
+    if ((SGIL(ifp) = (char *)bu_calloc(1, sizeof(struct sgiinfo), "alloc SGIL")) == NULL) {
 	fb_log("fb_ogl_open:  sgiinfo malloc failed\n");
 	return -1;
     }
-    if ((OGLL(ifp) = (char *)calloc(1, sizeof(struct oglinfo))) == NULL) {
+    if ((OGLL(ifp) = (char *)bu_calloc(1, sizeof(struct oglinfo), "alloc OGLL")) == NULL) {
 	fb_log("fb_ogl_open:  oglinfo malloc failed\n");
 	return -1;
     }
@@ -1407,11 +1406,11 @@ _ogl_open_existing(FBIO *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
      * addressed by SGI(ifp)->mi_xxx and OGL(ifp)->xxx
      */
 
-    if ((SGIL(ifp) = (char *)calloc(1, sizeof(struct sgiinfo))) == NULL) {
+    if ((SGIL(ifp) = (char *)bu_calloc(1, sizeof(struct sgiinfo), "alloc SGIL")) == NULL) {
 	fb_log("fb_ogl_open:  sgiinfo malloc failed\n");
 	return -1;
     }
-    if ((OGLL(ifp) = (char *)calloc(1, sizeof(struct oglinfo))) == NULL) {
+    if ((OGLL(ifp) = (char *)bu_calloc(1, sizeof(struct oglinfo), "alloc OGLL")) == NULL) {
 	fb_log("fb_ogl_open:  oglinfo malloc failed\n");
 	return -1;
     }
@@ -1534,15 +1533,15 @@ ogl_final_close(FBIO *ifp)
 	    }
 	} else {
 	    /* free private memory */
-	    (void)free(ifp->if_mem);
+	    bu_free(ifp->if_mem, "free mem");
 	}
 	/* free state information */
-	(void)free((char *)SGIL(ifp));
+	bu_free((char *)SGIL(ifp), "free SGIL");
 	SGIL(ifp) = NULL;
     }
 
     if (OGLL(ifp) != NULL) {
-	(void)free((char *)OGLL(ifp));
+	bu_free((char *)OGLL(ifp), "free OGLL");
 	OGLL(ifp) = NULL;
     }
 
@@ -1640,15 +1639,15 @@ ogl_close_existing(FBIO *ifp)
 	    }
 	} else {
 	    /* free private memory */
-	    (void)free(ifp->if_mem);
+	    bu_free(ifp->if_mem, "free mem");
 	}
 	/* free state information */
-	(void)free((char *)SGIL(ifp));
+	bu_free((char *)SGIL(ifp), "free SGIL");
 	SGIL(ifp) = NULL;
     }
 
     if (OGLL(ifp) != NULL) {
-	(void)free((char *)OGLL(ifp));
+	bu_free((char *)OGLL(ifp), "free OGLL");
 	OGLL(ifp) = NULL;
     }
 
