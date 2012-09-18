@@ -671,6 +671,42 @@ rt_ehy_class(void)
     return 0;
 }
 
+static int
+ehy_is_valid(struct rt_ehy_internal *ehy)
+{
+    fastf_t mag_h, cos_angle_ah;
+    vect_t a, h;
+
+    RT_EHY_CK_MAGIC(ehy);
+
+    if (!(ehy->ehy_r1 > 0.0 && ehy->ehy_r2 > 0.0 && ehy->ehy_c > 0.0)) {
+	return 0;
+    }
+
+    VMOVE(h, ehy->ehy_H);
+    VMOVE(a, ehy->ehy_Au);
+
+    /* Check that A is a unit vector. If it is, then it should be true that
+     * |A| == |A|^2 == 1.0.
+     */
+    if (!NEAR_EQUAL(MAGSQ(a), 1.0, RT_LEN_TOL)) {
+	return 0;
+    }
+
+    /* check that |H| > 0.0 */
+    mag_h = MAGNITUDE(h);
+    if (NEAR_ZERO(mag_h, RT_LEN_TOL)) {
+	return 0;
+    }
+
+    /* check that A and H are orthogonal */
+    cos_angle_ah = VDOT(a, h) / mag_h;
+    if (!NEAR_ZERO(cos_angle_ah, RT_DOT_TOL)) {
+	return 0;
+    }
+
+    return 1;
+}
 
 /**
  * R T _ E H Y _ P L O T
@@ -678,7 +714,7 @@ rt_ehy_class(void)
 int
 rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
-    fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2;
+    fastf_t c, dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_prev, theta_new;
     int *pts_dbl, i, j, nseg;
     int jj, na, nb, nell, recalc_b;
@@ -692,30 +728,15 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
-    RT_EHY_CK_MAGIC(xip);
 
-    /*
-     * make sure ehy description is valid
-     */
+    if (!ehy_is_valid(xip)) {
+	return -2;
+    }
 
-    /* compute |A| |H| */
-    mag_a = MAGSQ(xip->ehy_Au);	/* should already be unit vector */
     mag_h = MAGNITUDE(xip->ehy_H);
-    c = xip->ehy_c;
     r1 = xip->ehy_r1;
     r2 = xip->ehy_r2;
-    /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0, c > 0 */
-    if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
-	|| r1 <= 0.0 || r2 <= 0.0 || c <= 0.) {
-	return -2;		/* BAD */
-    }
-
-    /* Check for A.H == 0 */
-    f = VDOT(xip->ehy_Au, xip->ehy_H) / mag_h;
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return -2;		/* BAD */
-    }
+    c = xip->ehy_c;
 
     /* make unit vectors in A, H, and BxH directions */
     VMOVE(Hu, xip->ehy_H);
