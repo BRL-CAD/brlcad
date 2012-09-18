@@ -39,7 +39,15 @@
  * information.
  */
 
+#include "common.h"
+
+#include <stdio.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
+
 #include "./tokens.h"
+
 
 /* quell flex stupidities */
 #ifndef YY_STACK_USED
