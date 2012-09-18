@@ -2524,8 +2524,8 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    /* true when both q0 and q1 is within p0->p1 */
 		    hit_count = 2;
 		    /* dist[0] and dist[1] are already the correct values */
-		} else if (((dist[0] > 0) && (dist[0] < 1) && (dist[1] < 0)) ||
-			   ((dist[0] > 0) && (dist[0] < 1) && (dist[1] > 1))) {
+		} else if (((dist[0] > SMALL_FASTF) && (dist[0] < omsff) && (dist[1] < -SMALL_FASTF)) ||
+			   ((dist[0] > SMALL_FASTF) && (dist[0] < omsff) && (dist[1] > opsff))) {
 		    /* true when q0 is within p0->p1 */
 		    hit_count = 1;
 		    dist[1] = MAX_FASTF; /* sanity */
@@ -2538,8 +2538,8 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    dist[0] = dist[1] = MAX_FASTF; /* sanity */
 		    continue;
 
-		} else if ((ZERO(dist[0]) && ZERO(dist[1] - 1.0)) ||
-			   (ZERO(dist[1]) && ZERO(dist[0] - 1.0))) {
+		} else if ((ZERO(dist[0]) && EQUAL(dist[1], 1.0)) ||
+			   (ZERO(dist[1]) && EQUAL(dist[0], 1.0))) {
 		    /* true when eu1 and eu2 shared the same vertices */
 		    /* eu1 is not cut */
 		    hit_count = 0; /* sanity */
@@ -2547,8 +2547,8 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    continue;
 		} else if (((dist[0] < -SMALL_FASTF) && ZERO(dist[1])) ||
 			   (ZERO(dist[0]) && (dist[1] < -SMALL_FASTF)) ||
-			   (ZERO(dist[0] - 1.0) && (dist[1] > opsff)) ||
-			   (ZERO(dist[1] - 1.0) && (dist[0] > opsff))) {
+			   (EQUAL(dist[0], 1.0) && (dist[1] > opsff)) ||
+			   (EQUAL(dist[1], 1.0) && (dist[0] > opsff))) {
 		    /* true when eu2 shares one of eu1 vertices and the
 		     * other eu2 vertex is outside p0->p1 (i.e. eu1)
 		     */
@@ -2560,7 +2560,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 			    (dist[1] < omsff)) ||
 			   ((dist[1] > SMALL_FASTF) &&
 			    (dist[1] < omsff) &&
-			    ZERO(dist[0] - 1.0))) {
+			    EQUAL(dist[0], 1.0))) {
 		    /* true when q1 is within p0->p1 and q0 = p0 or q0 = p1 */
 		    hit_count = 1;
 		    dist[0] = dist[1];
@@ -2569,15 +2569,15 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 			   (dist[0] < omsff)) ||
 			  ((dist[0] > SMALL_FASTF) &&
 			   (dist[0] < omsff) &&
-			   ZERO(dist[1] - 1.0))) {
+			   EQUAL(dist[1], 1.0))) {
 		    /* true when q0 is within p0->p1 and q1 = p0 or q1 = p1 */
 		    hit_count = 1;
 		    dist[1] = MAX_FASTF; /* sanity */
 		    /* dist[0] is already the correct value */
 		} else if ((ZERO(dist[0]) && (dist[1] > opsff)) ||
 			   (ZERO(dist[1]) && (dist[0] > opsff)) ||
-			   (ZERO(dist[0] - 1.0) && (dist[1] < -SMALL_FASTF)) ||
-			  ((dist[0] < -SMALL_FASTF) && ZERO(dist[1] - 1.0))) {
+			   (EQUAL(dist[0], 1.0) && (dist[1] < -SMALL_FASTF)) ||
+			  ((dist[0] < -SMALL_FASTF) && EQUAL(dist[1], 1.0))) {
 		    /* true when eu2 shares one of the vertices of eu1 and
 		     * the other vertex in eu2 is on the far side of eu1
 		     * outside eu1 (i.e. p0->p1).
@@ -2593,7 +2593,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    bu_bomb("nmg_isect_two_face2p_jra(): unexpected condition\n");
 		}
 	    } else {
-		if (ZERO(dist[0]) || ZERO(dist[0] - 1.0)) {
+		if (ZERO(dist[0]) || EQUAL(dist[0], 1.0)) {
 		    /* eu1 was hit on a vertex, nothing to cut */
 		    continue;
 		} else if ((dist[0] < -SMALL_FASTF) || (dist[0] > opsff)) {
@@ -2617,7 +2617,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    hit_vu = eu1->vu_p;
 		    hitv = hit_vu->v_p;
 		    VMOVE(hit_pt, hitv->vg_p->coord);
-		} else if (ZERO(dist[hit_no] - 1.0)) {
+		} else if (EQUAL(dist[hit_no], 1.0)) {
 		    hit_vu = eu1->eumate_p->vu_p;
 		    hitv = hit_vu->v_p;
 		    VMOVE(hit_pt, hitv->vg_p->coord);
