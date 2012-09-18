@@ -501,9 +501,37 @@ void verify_patch_integrity(std::set<size_t> *orig_faces, struct Manifold_Info *
 		face_queue.push((*cf_it));
 		faces.erase((*cf_it));
 	    }
-        }
+	}
     }
-    if (faces.size() > 0) std::cout << "Warning, warning - patch integrity failure!\n";
+    if (faces.size() > 0){  
+	while(faces.size() > 0) {
+	    info->patch_cnt++;
+	    size_t new_patch = info->patch_cnt;
+	    std::cout << "patch integrity failure - building new patch " << new_patch << "\n";
+	    std::queue<size_t> face_queue;
+	    face_queue.push((*faces.begin()));
+	    faces.erase(face_queue.front());
+	    orig_faces->erase(face_queue.front());
+	    info->patch_to_plane[new_patch] = info->face_to_plane[face_queue.front()];
+	    while (!face_queue.empty()) {
+		size_t face_num = face_queue.front();
+		face_queue.pop();
+		info->patches[new_patch].insert(face_num);
+		info->face_to_patch[face_num] = new_patch;
+		std::set<size_t> connected_faces;
+		std::set<size_t>::iterator cf_it;
+		get_connected_faces(info->bot, face_num, &(info->edge_to_face), &connected_faces);
+		for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
+		    if(faces.find((*cf_it)) != faces.end()) {
+			face_queue.push((*cf_it));
+			faces.erase((*cf_it));
+			orig_faces->erase(*cf_it);
+
+		    }
+		}
+	    }
+	}
+    }
 }
 
 // Given a patch, find triangles that overlap when projected into the patch domain, remove them
@@ -529,7 +557,6 @@ size_t overlapping_edge_triangles(std::map< size_t, std::set<size_t> > *patches,
 	    size_t overlap_cnt = 1;
 	    size_t patch_overlapping = 0;
 	    while (overlap_cnt != 0) {
-                verify_patch_integrity(&((*p_it).second), info);
 		std::set<size_t> edge_triangles;
 		EdgeList edges;
 		find_edge_segments(&((*p_it).second), &edges, info);
@@ -593,6 +620,9 @@ size_t overlapping_edge_triangles(std::map< size_t, std::set<size_t> > *patches,
 	    }
 	    if (patch_overlapping > 0)
 		std::cout << "Patch " << (*p_it).first << " overlaps: " << patch_overlapping << "\n";
+
+
+	    verify_patch_integrity(&((*p_it).second), info);
 	}
     }
     return total_overlapping;
@@ -728,6 +758,7 @@ void bot_partition(struct Manifold_Info *info)
 	    }
 	}
     }
+
 
     // "Shave" sharp triangles off of the edges by shifting them from one patch to
     // another - doesn't avoid all sharp corners, but does produce some cleanup.
