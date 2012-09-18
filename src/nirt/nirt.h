@@ -21,25 +21,10 @@
  *
  * Common defines and declarations used by nirt.
  *
- * Author:
- * Natalie L. Barker
- *
- * Date:
- * Jan 90
- *
  */
 
 #ifndef __NIRT_H__
 #define __NIRT_H__
-
-#ifdef __NetBSD__
-#define fmax(x, y) nbsd_fmax(x, y)
-static double nbsd_fmax(double x, double y)
-{
-    return x > y ? x : y;
-}
-#endif /* __NetBSD__ */
-
 
 #include "common.h"
 
