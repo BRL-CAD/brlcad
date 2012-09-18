@@ -1285,6 +1285,7 @@ package provide cadwidgets::Ged 1.0
     if {$scmd == "poly_color" ||
 	$scmd == "poly_line_width" ||
 	$scmd == "poly_line_style" ||
+	$scmd == "polygons_overlap" ||
 	$scmd == "area" ||
 	$scmd == "export" ||
 	$scmd == "import"} {

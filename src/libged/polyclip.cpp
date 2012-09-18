@@ -504,6 +504,300 @@ ged_find_polygon_area(ged_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t
 }
 
 
+typedef struct {
+    size_t	pc_num_points;
+    point2d_t	*pc_point;
+} poly_contour_2d;
+
+typedef struct {
+    size_t 		p_num_contours;
+    int			*p_hole;
+    poly_contour_2d	*p_contour;
+} polygon_2d;
+
+
+int
+ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
+{
+    register size_t i, j;
+    register size_t beginA, endA, beginB, endB;
+    fastf_t tol_dist;
+    fastf_t tol_dist_sq;
+    fastf_t scale;
+    polygon_2d polyA_2d;
+    polygon_2d polyB_2d;
+    point2d_t pt_2d;
+    point_t A;
+    size_t winding;
+    int ret;
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+
+    if (polyA->gp_num_contours < 1 || polyA->gp_contour[0].gpc_num_points < 1 ||
+	polyB->gp_num_contours < 1 || polyB->gp_contour[0].gpc_num_points < 1)
+	return 0;
+
+    if (gedp->ged_wdbp->wdb_tol.dist > 0.0)
+	tol_dist = gedp->ged_wdbp->wdb_tol.dist;
+    else
+	tol_dist = BN_TOL_DIST;
+
+    if (gedp->ged_wdbp->wdb_tol.dist_sq > 0.0)
+	tol_dist_sq = gedp->ged_wdbp->wdb_tol.dist_sq;
+    else
+	tol_dist_sq = tol_dist * tol_dist;
+
+    if (gedp->ged_gvp->gv_scale > (fastf_t)UINT16_MAX)
+	scale = gedp->ged_gvp->gv_scale;
+    else
+	scale = (fastf_t)UINT16_MAX;
+
+    /* Project polyA and polyB onto the view plane */
+    polyA_2d.p_num_contours = polyA->gp_num_contours;
+    polyA_2d.p_hole = (int *)bu_calloc(polyA->gp_num_contours, sizeof(int), "p_hole");
+    polyA_2d.p_contour = (poly_contour_2d *)bu_calloc(polyA->gp_num_contours, sizeof(poly_contour_2d), "p_contour");
+
+    for (i = 0; i < polyA->gp_num_contours; ++i) {
+	polyA_2d.p_hole[i] = polyA->gp_hole[i];
+	polyA_2d.p_contour[i].pc_num_points = polyA->gp_contour[i].gpc_num_points;
+	polyA_2d.p_contour[i].pc_point = (point2d_t *)bu_calloc(polyA->gp_contour[i].gpc_num_points, sizeof(point2d_t), "pc_point");
+
+	for (j = 0; j < polyA->gp_contour[i].gpc_num_points; ++j) {
+	    point_t vpoint;
+
+	    MAT4X3PNT(vpoint, gedp->ged_gvp->gv_model2view, polyA->gp_contour[i].gpc_point[j]);
+	    VSCALE(vpoint, vpoint, scale);
+	    V2MOVE(polyA_2d.p_contour[i].pc_point[j], vpoint);
+	}	
+    }
+
+    polyB_2d.p_num_contours = polyB->gp_num_contours;
+    polyB_2d.p_hole = (int *)bu_calloc(polyB->gp_num_contours, sizeof(int), "p_hole");
+    polyB_2d.p_contour = (poly_contour_2d *)bu_calloc(polyB->gp_num_contours, sizeof(poly_contour_2d), "p_contour");
+
+    for (i = 0; i < polyB->gp_num_contours; ++i) {
+	polyB_2d.p_hole[i] = polyB->gp_hole[i];
+	polyB_2d.p_contour[i].pc_num_points = polyB->gp_contour[i].gpc_num_points;
+	polyB_2d.p_contour[i].pc_point = (point2d_t *)bu_calloc(polyB->gp_contour[i].gpc_num_points, sizeof(point2d_t), "pc_point");
+
+	for (j = 0; j < polyB->gp_contour[i].gpc_num_points; ++j) {
+	    point_t vpoint;
+
+	    MAT4X3PNT(vpoint, gedp->ged_gvp->gv_model2view, polyB->gp_contour[i].gpc_point[j]);
+	    VSCALE(vpoint, vpoint, scale);
+	    V2MOVE(polyB_2d.p_contour[i].pc_point[j], vpoint);
+	}	
+    }
+
+    /* 
+     * Check every line segment of polyA against every line segment of polyB.
+     * If there are any intersecting line segments, there exists an overlap.
+     */
+    for (i = 0; i < polyA_2d.p_num_contours; ++i) {
+	for (beginA = 0; beginA < polyA_2d.p_contour[i].pc_num_points; ++beginA) {
+	    vect2d_t dirA;
+
+	    if (beginA == polyA_2d.p_contour[i].pc_num_points-1)
+		endA = 0;
+	    else
+		endA = beginA + 1;
+
+	    V2SUB2(dirA, polyA_2d.p_contour[i].pc_point[endA], polyA_2d.p_contour[i].pc_point[beginA]);
+	    dirA[2] = 0.0;
+	    VUNITIZE(dirA);
+
+	    for (j = 0; j < polyB_2d.p_num_contours; ++j) {
+		for (beginB = 0; beginB < polyB_2d.p_contour[j].pc_num_points; ++beginB) {
+		    vect2d_t distvec;
+		    vect2d_t dirB;
+
+		    if (beginB == polyB_2d.p_contour[j].pc_num_points-1)
+			endB = 0;
+		    else
+			endB = beginB + 1;
+
+		    V2SUB2(dirB, polyB_2d.p_contour[j].pc_point[endB], polyB_2d.p_contour[j].pc_point[beginB]);
+		    dirB[2] = 0.0;
+		    VUNITIZE(dirB);
+
+		    if (bn_isect_lseg2_lseg2(distvec,
+					     polyA_2d.p_contour[i].pc_point[beginA], dirA,
+					     polyB_2d.p_contour[j].pc_point[beginB], dirB,
+					     &gedp->ged_wdbp->wdb_tol) == 1) {
+			fastf_t dist;
+
+			/* Check to see if intersection is near an end point */
+			if (NEAR_EQUAL(distvec[0], 0.0, tol_dist_sq)) {
+			    dist = bn_dist_line2_point2(polyB_2d.p_contour[j].pc_point[beginB], dirB,
+							polyA_2d.p_contour[i].pc_point[beginA]);
+			} else if (NEAR_EQUAL(distvec[0], 1.0, tol_dist_sq)) {
+			    dist = bn_dist_line2_point2(polyB_2d.p_contour[j].pc_point[beginB], dirB,
+							polyA_2d.p_contour[i].pc_point[endA]);
+			} else if (NEAR_EQUAL(distvec[1], 0.0, tol_dist_sq)) {
+			    dist = bn_dist_line2_point2(polyA_2d.p_contour[i].pc_point[beginA], dirA,
+							polyB_2d.p_contour[j].pc_point[beginB]);
+			} else if (NEAR_EQUAL(distvec[1], 1.0, tol_dist_sq)) {
+			    dist = bn_dist_line2_point2(polyA_2d.p_contour[i].pc_point[beginA], dirA,
+							polyB_2d.p_contour[j].pc_point[endB]);
+			} else {
+			    dist = 1.0;
+			}
+
+			/* Make sure the overlap does not occurr at an end point */
+			if (!NEAR_EQUAL(dist, 0.0, tol_dist_sq)) {
+			    ret = 1;
+			    goto end;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    for (i = 0; i < polyB_2d.p_num_contours; ++i) {
+	/* Check if all points in polygon B are inside A */
+	for (beginB = 0; beginB < polyB_2d.p_contour[i].pc_num_points; ++beginB) {
+	    winding = 0;
+	    V2MOVE(pt_2d, polyB_2d.p_contour[i].pc_point[beginB]);
+	    V2MOVE(A, pt_2d);
+	    A[2] = 0.0;
+
+	    for (j = 0; j < polyA_2d.p_num_contours; ++j) {
+		point_t B, C;
+		vect_t BmA, CmA;
+		vect_t vcross;
+		size_t pflag = 0;
+
+		for (beginA = 0; beginA < polyA_2d.p_contour[j].pc_num_points; ++beginA) {
+		    if (beginA == polyA_2d.p_contour[j].pc_num_points-1)
+			endA = 0;
+		    else
+			endA = beginA + 1;
+
+		    if (V2NEAR_EQUAL(polyA_2d.p_contour[j].pc_point[beginA], pt_2d, tol_dist_sq) ||
+			V2NEAR_EQUAL(polyA_2d.p_contour[j].pc_point[endA], pt_2d, tol_dist_sq)) {
+			/* pt_2d is the same as one of the end points, so count it inside */
+			++pflag;
+			continue;
+		    }
+
+		    if ((polyA_2d.p_contour[j].pc_point[beginA][1] <= pt_2d[1] &&
+			 polyA_2d.p_contour[j].pc_point[endA][1] >= pt_2d[1])) {
+			V2MOVE(B, polyA_2d.p_contour[j].pc_point[endA]);
+			B[2] = 0.0;
+			V2MOVE(C, polyA_2d.p_contour[j].pc_point[beginA]);
+			C[2] = 0.0;
+		    } else if ((polyA_2d.p_contour[j].pc_point[endA][1] <= pt_2d[1] &&
+				polyA_2d.p_contour[j].pc_point[beginA][1] >= pt_2d[1])) {
+			V2MOVE(B, polyA_2d.p_contour[j].pc_point[beginA]);
+			B[2] = 0.0;
+			V2MOVE(C, polyA_2d.p_contour[j].pc_point[endA]);
+			C[2] = 0.0;
+		    } else
+			continue;
+
+		    VSUB2(BmA, B, A);
+		    VSUB2(CmA, C, A);
+		    VCROSS(vcross, BmA, CmA);
+
+		    if (vcross[2] > 0)
+			++winding;
+		}
+
+		if (pflag == polyA_2d.p_contour[j].pc_num_points)
+		    ++winding;
+	    }
+
+	    if (!winding%2)
+		break;
+	}
+    }
+
+    if (winding%2) {
+	ret = 1;
+	goto end;
+    }
+
+    for (i = 0; i < polyA_2d.p_num_contours; ++i) {
+	/* Check if all points in polygon B are inside A */
+	for (beginA = 0; beginA < polyA_2d.p_contour[i].pc_num_points; ++beginA) {
+	    winding = 0;
+	    V2MOVE(pt_2d, polyA_2d.p_contour[i].pc_point[beginA]);
+	    V2MOVE(A, pt_2d);
+	    A[2] = 0.0;
+
+	    for (j = 0; j < polyB_2d.p_num_contours; ++j) {
+		point_t B, C;
+		vect_t BmA, CmA;
+		vect_t vcross;
+		size_t pflag = 0;
+
+		for (beginB = 0; beginB < polyB_2d.p_contour[j].pc_num_points; ++beginB) {
+		    if (beginB == polyB_2d.p_contour[j].pc_num_points-1)
+			endB = 0;
+		    else
+			endB = beginB + 1;
+
+		    if (V2NEAR_EQUAL(polyB_2d.p_contour[j].pc_point[beginB], pt_2d, tol_dist_sq) ||
+			V2NEAR_EQUAL(polyB_2d.p_contour[j].pc_point[endB], pt_2d, tol_dist_sq)) {
+			/* pt_2d is the same as one of the end points, so count it inside */
+			++pflag;
+			continue;
+		    }
+
+		    if ((polyB_2d.p_contour[j].pc_point[beginB][1] <= pt_2d[1] &&
+			 polyB_2d.p_contour[j].pc_point[endB][1] >= pt_2d[1])) {
+			V2MOVE(B, polyB_2d.p_contour[j].pc_point[endB]);
+			B[2] = 0.0;
+			V2MOVE(C, polyB_2d.p_contour[j].pc_point[beginB]);
+			C[2] = 0.0;
+		    } else if ((polyB_2d.p_contour[j].pc_point[endB][1] <= pt_2d[1] &&
+				polyB_2d.p_contour[j].pc_point[beginB][1] >= pt_2d[1])) {
+			V2MOVE(B, polyB_2d.p_contour[j].pc_point[beginB]);
+			B[2] = 0.0;
+			V2MOVE(C, polyB_2d.p_contour[j].pc_point[endB]);
+			C[2] = 0.0;
+		    } else
+			continue;
+
+		    VSUB2(BmA, B, A);
+		    VSUB2(CmA, C, A);
+		    VCROSS(vcross, BmA, CmA);
+
+		    if (vcross[2] > 0)
+			++winding;
+		}
+
+		if (pflag == polyB_2d.p_contour[j].pc_num_points)
+		    ++winding;
+	    }
+
+	    if (!winding%2)
+		break;
+	}
+    }
+
+    ret = winding%2;
+
+end:
+
+    for (i = 0; i < polyA->gp_num_contours; ++i)
+	bu_free((genptr_t)polyA_2d.p_contour[i].pc_point, "pc_point");
+    for (i = 0; i < polyB->gp_num_contours; ++i)
+	bu_free((genptr_t)polyB_2d.p_contour[i].pc_point, "pc_point");
+
+    bu_free((genptr_t)polyA_2d.p_hole, "p_hole");
+    bu_free((genptr_t)polyA_2d.p_contour, "p_contour");
+    bu_free((genptr_t)polyB_2d.p_hole, "p_hole");
+    bu_free((genptr_t)polyB_2d.p_contour, "p_contour");
+	
+
+    /* PolyB and polyA do not overlap */
+    return ret;
+}
+
+
 /*
  * Local Variables:
  * tab-width: 8

@@ -3943,6 +3943,31 @@ to_data_polygons(struct ged *gedp,
 	return GED_OK;
     }
 
+    /* Usage: polygons_overlap i j
+     *
+     * Do polygons i and j overlap?
+     */
+    if (BU_STR_EQUAL(argv[2], "polygons_overlap")) {
+	size_t i, j;
+	int ret;
+
+	if (argc != 5)
+	    goto bad;
+
+	if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	    i >= gdpsp->gdps_polygons.gp_num_polygons)
+	    goto bad;
+
+	if (bu_sscanf(argv[4], "%zu", &j) != 1 ||
+	    j >= gdpsp->gdps_polygons.gp_num_polygons)
+	    goto bad;
+
+	ret = ged_polygons_overlap(gedp, &gdpsp->gdps_polygons.gp_polygon[i], &gdpsp->gdps_polygons.gp_polygon[j]);
+	bu_vls_printf(gedp->ged_result_str, "%d", ret);
+
+	return GED_OK;
+    }
+
     /* Usage: [v]polygons [poly_list]
      *
      * Set/get the polygon list. If vpolygons is specified then
