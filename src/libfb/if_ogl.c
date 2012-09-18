@@ -1121,9 +1121,9 @@ fb_ogl_open(FBIO *ifp, const char *file, int width, int height)
 	    alpha = 0;
 	    mp = &modebuf[0];
 	    cp = &file[8];
-	    while (*cp != '\0' && !isspace(*cp)) {
+	    while (*cp != '\0' && !isspace((int)(*cp))) {
 		*mp++ = *cp;	/* copy it to buffer */
-		if (isdigit(*cp)) {
+		if (isdigit((int)(*cp))) {
 		    cp++;
 		    continue;
 		}

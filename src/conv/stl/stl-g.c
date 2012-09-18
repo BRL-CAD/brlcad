@@ -113,7 +113,7 @@ mk_unique_brlcad_name(struct bu_vls *name)
     c = bu_vls_addr(name);
 
     while (*c != '\0') {
-	if (*c == '/' || !isprint(*c)) {
+	if (*c == '/' || !isprint((int)*c)) {
 	    *c = '_';
 	}
 	c++;
@@ -162,7 +162,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 
     start = (-1);
     /* skip leading blanks */
-    while (isspace(line[++start]) && line[start] != '\0');
+    while (isspace((int)line[++start]) && line[start] != '\0');
     if (bu_strncmp(&line[start], "solid", 5) && bu_strncmp(&line[start], "SOLID", 5)) {
 	bu_log("Convert_part_ascii: Called for non-part\n%s\n", line);
 	return;
@@ -170,7 +170,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 
     /* skip blanks before name */
     start += 4;
-    while (isspace(line[++start]) && line[start] != '\0');
+    while (isspace((int)line[++start]) && line[start] != '\0');
 
     if (forced_name) {
 	bu_vls_strcpy(&region_name, forced_name);
@@ -182,7 +182,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	bu_vls_trimspace(&region_name);
 	ptr = bu_vls_addr(&region_name);
 	while (*ptr != '\0') {
-	    if (isspace(*ptr)) {
+	    if (isspace((int)*ptr)) {
 		bu_vls_trunc(&region_name, ptr - bu_vls_addr(&region_name));
 		break;
 	    }
@@ -227,7 +227,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 
     while (bu_fgets(line1, MAX_LINE_SIZE, fd_in) != NULL) {
 	start = (-1);
-	while (isspace(line1[++start]));
+	while (isspace((int)line1[++start]));
 	if (!bu_strncmp(&line1[start], "endsolid", 8) || !bu_strncmp(&line1[start], "ENDSOLID", 8)) {
 	    break;
 	} else if (!bu_strncmp(&line1[start], "color", 5) || !bu_strncmp(&line1[start], "COLOR", 5)) {
@@ -244,7 +244,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 	    VSET(normal, 0.0, 0.0, 0.0);
 
 	    start += 4;
-	    while (line1[++start] && isspace(line1[start]));
+	    while (line1[++start] && isspace((int)line1[start]));
 
 	    if (line1[start]) {
 		if (!bu_strncmp(&line1[start], "normal", 6) || !bu_strncmp(&line1[start], "NORMAL", 6)) {
@@ -265,7 +265,7 @@ Convert_part_ascii(char line[MAX_LINE_SIZE])
 		    bu_exit(EXIT_FAILURE, "Unexpected EOF while reading a loop in a part!\n");
 
 		start = (-1);
-		while (isspace(line1[++start]));
+		while (isspace((int)line1[++start]));
 
 		if (!bu_strncmp(&line1[start], "endloop", 7) || !bu_strncmp(&line1[start], "ENDLOOP", 7))
 		    endloop = 1;
@@ -544,7 +544,7 @@ Convert_input()
     } else {
 	while (bu_fgets(line, MAX_LINE_SIZE, fd_in) != NULL) {
 	    int start = 0;
-	    while (line[start] != '\0' && isspace(line[start])) {
+	    while (line[start] != '\0' && isspace((int)line[start])) {
 		start++;
 	    }
 	    if (!bu_strncmp(&line[start], "solid", 5) || !bu_strncmp(&line[start], "SOLID", 5))

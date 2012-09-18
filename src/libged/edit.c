@@ -1957,9 +1957,9 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 	idx = 0;
 	len = strlen((*argv)[0]);
 	if ((**argv)[0] == '-') {
-	    if (len == 2 && !isdigit((**argv)[1]))
+	    if (len == 2 && !isdigit((int)(**argv)[1]))
 		break;
-	    if (len > 2 && !isdigit((**argv)[1]))
+	    if (len > 2 && !isdigit((int)(**argv)[1]))
 		/* option/arg pair with no space, i.e. "-ksph.s" */
 		idx = 2;
 	}
@@ -2254,7 +2254,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
      * then there is a bad arg. Let the conversion function cry about
      * what it choked on.
      */
-    if (strlen(argv[0]) > 1 && ((*argv)[0] != '-') && isdigit((*argv)[1])) {
+    if (strlen(argv[0]) > 1 && ((*argv)[0] != '-') && isdigit((int)(*argv)[1])) {
 	ret = edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_ERROR);
 	edit_cmd_free(&subcmd);
 	BU_ASSERT(ret == GED_ERROR);
@@ -2297,7 +2297,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 		if (!bu_optarg)
 		    goto err_missing_arg;
 		if ((strlen(bu_optarg) > 1) && (bu_optarg[0] == '-') &&
-		    (!isdigit(bu_optarg[1])))
+		    (!isdigit((int)bu_optarg[1])))
 		    goto err_missing_arg;
 		if (!allow_subopts) {
 		    bu_vls_printf(gedp->ged_result_str, "-%c must follow an"
@@ -2322,7 +2322,7 @@ ged_edit(struct ged *gedp, int argc, const char *argv[])
 			    conv_flags = GED_QUIET;
 			    break;
 			default:
-			    if (!isdigit(bu_optarg[1]))
+			    if (!isdigit((int)bu_optarg[1]))
 				goto err_missing_arg;
 		    }
 		}

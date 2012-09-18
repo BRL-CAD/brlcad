@@ -904,8 +904,8 @@ put_vector_char(char c, coords *pos)
 
     if (!isascii(c))
 	c = '?';
-    if (islower(c))
-	c = toupper(c);
+    if (islower((int)c))
+	c = toupper((int)c);
 
     for (vc = &charset[0]; vc->ascii; vc++)
 	if (vc->ascii == c)

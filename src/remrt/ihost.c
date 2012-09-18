@@ -210,7 +210,7 @@ host_lookup_by_name(const char* name, int enter)
     struct hostent		*addr;
 
     /* Determine name to be found */
-    if ( isdigit( *name ) )  {
+    if ( isdigit( (int)*name ) )  {
 	/* Numeric */
 	sockhim.sin_family = AF_INET;
 	sockhim.sin_addr.s_addr = inet_addr(name);

@@ -146,8 +146,10 @@ getregion(void)
 	    /* Remove all spaces from the number */
 	    np = nbuf;
 	    for (j = 2; j < 7; j++) {
-		if (!isascii(cp[j])) *np++ = '?';
-		else if (isspace(cp[j]))  continue;
+		if (!isascii((int)cp[j]))
+		    *np++ = '?';
+		else if (isspace((int)cp[j]))
+		    continue;
 		*np++ = cp[j];
 	    }
 	    *np = '\0';

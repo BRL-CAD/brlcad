@@ -1028,7 +1028,7 @@ mged_process_char(char ch)
 	    }
 	    /* Fall through if not escaped! */
 	default:
-	    if (!isprint(ch))
+	    if (!isprint((int)ch))
 		break;
 
 	    mged_insert_char(ch);

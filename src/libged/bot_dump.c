@@ -586,7 +586,7 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, co
 	while (*cp != '\0') {
 	    if (*cp == '/') {
 		bu_vls_putc(&file_name, '@');
-	    } else if (*cp == '.' || isspace(*cp)) {
+	    } else if (*cp == '.' || isspace((int)*cp)) {
 		bu_vls_putc(&file_name, '_');
 	    } else {
 		bu_vls_putc(&file_name, *cp);

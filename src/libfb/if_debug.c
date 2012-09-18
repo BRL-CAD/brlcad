@@ -53,7 +53,7 @@ deb_open(FBIO *ifp, const char *file, int width, int height)
     /* set debug bit vector */
     if (file != NULL) {
 	const char *cp;
-	for (cp = file; *cp != '\0' && !isdigit(*cp); cp++)
+	for (cp = file; *cp != '\0' && !isdigit((int)*cp); cp++)
 	    ;
 	sscanf(cp, "%d", &ifp->if_debug);
     } else {

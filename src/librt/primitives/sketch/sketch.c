@@ -2423,7 +2423,7 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
 
 	    if ((ret=get_tcl_curve(brlcad_interp, crv, tmp)) != TCL_OK)
 		return ret;
-	} else if (*argv[0] == 'V' && isdigit(*(argv[0]+1))) {
+	} else if (*argv[0] == 'V' && isdigit((int)*(argv[0]+1))) {
 	    /* changing a specific vertex */
 	    long vert_no;
 	    fastf_t *new_vert;

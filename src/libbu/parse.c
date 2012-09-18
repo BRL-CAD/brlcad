@@ -552,7 +552,7 @@ parse_double(const char *str, size_t count, double *loc)
 		dot_seen = 1;
 		continue;
 	    }
-	    if (!isdigit(*str))
+	    if (!isdigit((int)(*str)))
 		break;
 	}
 
@@ -567,7 +567,7 @@ parse_double(const char *str, size_t count, double *loc)
 	    /* skip exponent sign */
 	    if (*str == '+' || *str == '-') str++;
 
-	    while (isdigit(*str)) str++;
+	    while (isdigit((int)(*str))) str++;
 	}
 
 	len = str - numstart;
@@ -581,15 +581,15 @@ parse_double(const char *str, size_t count, double *loc)
 	*loc++ = tmp_double;
 
 	/* skip any whitespace before separator */
-	while (*str && isspace(*str))
+	while (*str && isspace((int)(*str)))
 	    str++;
 
 	/* skip the separator */
-	if (*str && !isdigit(*str) && *str != '-' && *str != '+' && *str != '.')
+	if (*str && !isdigit((int)(*str)) && *str != '-' && *str != '+' && *str != '.')
 	    str++;
 
 	/* skip any whitespace after separator */
-	while (*str && isspace(*str))
+	while (*str && isspace((int)(*str)))
 	    str++;
     }
 
@@ -703,7 +703,7 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 			if (*cp && (*cp == '+' || *cp == '-'))
 			    cp++;
 
-			while (*cp && isdigit(*cp))
+			while (*cp && isdigit((int)(*cp)))
 			    cp++;
 
 			/* make sure we actually had an
@@ -720,15 +720,15 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 			}
 
 			/* skip any whitespace before separator */
-			while (*pv && isspace(*pv))
+			while (*pv && isspace((int)(*pv)))
 			    pv++;
 
 			/* skip the separator */
-			if (*pv && !isdigit(*pv) && *pv != '+' && *pv != '-')
+			if (*pv && !isdigit((int)(*pv)) && *pv != '+' && *pv != '-')
 			    pv++;
 
 			/* skip any whitespace after separator */
-			while (*pv && isspace(*pv))
+			while (*pv && isspace((int)(*pv)))
 			    pv++;
 		    }
 		}
@@ -754,7 +754,7 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 			if (*cp && (*cp == '+' || *cp == '-'))
 			    cp++;
 
-			while (*cp && isdigit(*cp))
+			while (*cp && isdigit((int)(*cp)))
 			    cp++;
 
 			/* make sure we actually had an
@@ -771,15 +771,15 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 			}
 
 			/* skip any whitespace before separator */
-			while (*pv && isspace(*pv))
+			while (*pv && isspace((int)(*pv)))
 			    pv++;
 
 			/* skip the separator */
-			if (*pv && !isdigit(*pv) && *pv != '+' && *pv != '-')
+			if (*pv && !isdigit((int)(*pv)) && *pv != '+' && *pv != '-')
 			    pv++;
 
 			/* skip any whitespace after separator */
-			while (*pv && isspace(*pv))
+			while (*pv && isspace((int)(*pv)))
 			    pv++;
 		    }
 		}
@@ -838,7 +838,7 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 	/* NAME = VALUE white-space-separator */
 
 	/* skip any leading whitespace */
-	while (*cp != '\0' && isspace(*cp))
+	while (*cp != '\0' && isspace((int)(*cp)))
 	    cp++;
 
 	/* Find equal sign */
@@ -877,7 +877,7 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 	} else {
 	    /* non-strings are white-space delimited */
 	    value = cp;
-	    while (*cp != '\0' && !isspace(*cp))
+	    while (*cp != '\0' && !isspace((int)(*cp)))
 		cp++;
 	}
 
@@ -1585,7 +1585,7 @@ bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
 	switch (state) {
 	    case STATE_IN_KEYWORD:
 		/* skip leading white space */
-		while (isspace(*iptr))
+		while (isspace((int)(*iptr)))
 		    iptr++;
 
 		if (!(*iptr))
@@ -1619,7 +1619,7 @@ bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
 		break;
 	    case STATE_IN_VALUE:
 		/* skip excess white space */
-		while (isspace(*iptr))
+		while (isspace((int)(*iptr)))
 		    iptr++;
 
 		/* check for quoted value */
@@ -1635,7 +1635,7 @@ bu_key_eq_to_key_val(const char *in, const char **next, struct bu_vls *vls)
 
 		/* copy value up to next white space or end of string */
 		start = iptr;
-		while (*iptr && *iptr != ';' && !isspace(*iptr))
+		while (*iptr && *iptr != ';' && !isspace((int)(*iptr)))
 		    iptr++;
 
 		bu_vls_strncat(vls, start, iptr - start);
@@ -1693,13 +1693,13 @@ bu_shader_to_list(const char *in, struct bu_vls *vls)
 	iptr = next;
 
 	/* find start of shader name */
-	while (isspace(*iptr))
+	while (isspace((int)(*iptr)))
 	    iptr++;
 
 	shader = iptr;
 
 	/* find end of shader name */
-	while (*iptr && !isspace(*iptr) && *iptr != ';')
+	while (*iptr && !isspace((int)(*iptr)) && *iptr != ';')
 	    iptr++;
 
 	shader_name_len = iptr - shader;
@@ -1715,7 +1715,7 @@ bu_shader_to_list(const char *in, struct bu_vls *vls)
 		const char *shade1;
 
 		/* find start of shader */
-		while (isspace(*iptr))
+		while (isspace((int)(*iptr)))
 		    iptr++;
 
 		if (*iptr == '\0')
@@ -1763,7 +1763,7 @@ bu_shader_to_list(const char *in, struct bu_vls *vls)
 	bu_vls_strncat(vls, shader, shader_name_len);
 
 	/* skip more white space */
-	while (*iptr && isspace(*iptr))
+	while (*iptr && isspace((int)(*iptr)))
 	    iptr++;
 
 	/* iptr now points at start of parameters, if any */
@@ -1834,7 +1834,7 @@ parse_list_elem(const char *in, int idx)
 
     while (*ptr) {
 	/* skip leading white space */
-	while (*ptr && isspace(*ptr)) {
+	while (*ptr && isspace((int)(*ptr))) {
 	    prev = ptr;
 	    ptr++;
 	}
@@ -1861,7 +1861,7 @@ parse_list_elem(const char *in, int idx)
 	    ptr++;
 	} else {
 	    while (*ptr &&
-		   (!isspace(*ptr) || *prev == '\\') &&
+		   (!isspace((int)(*ptr)) || *prev == '\\') &&
 		   (*ptr != '}' || *prev == '\\') &&
 		   (*ptr != '{' || *prev == '\\'))
 	    {
@@ -1889,11 +1889,11 @@ parse_list_elem(const char *in, int idx)
 
 	/* remove enclosing braces */
 	start++;
-	while (start < end && isspace(*start))
+	while (start < end && isspace((int)(*start)))
 	    start++;
 
 	end--;
-	while (end > start && isspace(*end) && *(end-1) != '\\')
+	while (end > start && isspace((int)(*end)) && *(end-1) != '\\')
 	    end--;
 
 	if (start == end)
@@ -1923,7 +1923,7 @@ parse_list_length(const char *in)
 
     while (*ptr) {
 	/* skip leading white space */
-	while (*ptr && isspace(*ptr)) {
+	while (*ptr && isspace((int)(*ptr))) {
 	    prev = ptr;
 	    ptr++;
 	}
@@ -1946,7 +1946,7 @@ parse_list_length(const char *in)
 		count++;
 
 	    while (*ptr &&
-		   (!isspace(*ptr) || *prev == '\\') &&
+		   (!isspace((int)(*ptr)) || *prev == '\\') &&
 		   (*ptr != '}' || *prev == '\\') &&
 		   (*ptr != '{' || *prev == '\\'))
 	    {
@@ -2174,9 +2174,9 @@ bu_next_token(char *str)
     char *ret;
 
     ret = str;
-    while (!isspace(*ret) && *ret !='\0')
+    while (!isspace((int)(*ret)) && *ret !='\0')
 	ret++;
-    while (isspace(*ret))
+    while (isspace((int)(*ret)))
 	ret++;
 
     return ret;
@@ -2347,7 +2347,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 			tmpi = atoi(cp);
 			if (*cp && (*cp == '+' || *cp == '-'))
 			    cp++;
-			while (*cp && isdigit(*cp))
+			while (*cp && isdigit((int)(*cp)))
 			    cp++;
 			/* make sure we actually had an
 			 * integer out there
@@ -2410,7 +2410,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 			tmpi = atoi(cp);
 			if (*cp && (*cp == '+' || *cp == '-'))
 			    cp++;
-			while (*cp && isdigit(*cp))
+			while (*cp && isdigit((int)(*cp)))
 			    cp++;
 			/* make sure we actually had an
 			 * integer out there
@@ -2476,7 +2476,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 				dot_seen = 1;
 				continue;
 			    }
-			    if (!isdigit(*cp))
+			    if (!isdigit((int)(*cp)))
 				break;
 			}
 
@@ -2500,7 +2500,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 			    /* skip exponent sign */
 			    if (*cp == '+' || *cp == '-')
 				cp++;
-			    while (isdigit(*cp))
+			    while (isdigit((int)(*cp)))
 				cp++;
 			}
 

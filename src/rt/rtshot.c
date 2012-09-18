@@ -157,11 +157,11 @@ main(int argc, char **argv)
 		    return 1;
 
 		while (*ptr) {
-		    while (*ptr && *ptr > 0 && *ptr < CHAR_MAX && isspace(*ptr))
+		    while (*ptr && *ptr > 0 && *ptr < CHAR_MAX && isspace((int)*ptr))
 			ptr++;
 		    if (*ptr)
 			attr_count++;
-		    while (*ptr && *ptr > 0 && *ptr < CHAR_MAX && !isspace(*ptr))
+		    while (*ptr && *ptr > 0 && *ptr < CHAR_MAX && !isspace((int)*ptr))
 			ptr++;
 		}
 

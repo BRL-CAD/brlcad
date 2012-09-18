@@ -105,11 +105,11 @@ main (int argc, char **argv)
 	    *nlp = '\0';
 
 	/* Skip initial white space */
-	while (isspace(*bp))
+	while (isspace((int)*bp))
 	    ++bp;
 
 	/* Get region name */
-	for (i = 0; ! isspace(*bp) && (*bp != '\0'); ++i, ++bp)
+	for (i = 0; ! isspace((int)*bp) && (*bp != '\0'); ++i, ++bp)
 	    rname[i] = *bp;
 	rname[i] = '\0';
 

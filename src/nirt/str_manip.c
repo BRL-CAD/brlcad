@@ -56,7 +56,7 @@ str_dbl(char *buf, double *Result)
 	++buf;
     }
 
-    while (isdigit(*buf)) {
+    while (isdigit((int)*buf)) {
 	/* update Value while there is a digit */
 	status = 1;
 	Value *= 10.0;
@@ -68,7 +68,7 @@ str_dbl(char *buf, double *Result)
 	/* check for a decimal point */
 	++i;
 	++buf;
-	while (isdigit(*buf)) {
+	while (isdigit((int)*buf)) {
 	    /* update Value while there is a digit */
 	    ++i;
 	    status = 1;

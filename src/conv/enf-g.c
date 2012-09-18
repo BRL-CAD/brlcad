@@ -276,7 +276,7 @@ Make_brlcad_names( struct obj_info *part )
 	    tmp_name = bu_strdup( part->obj_name );
 	    ptr = tmp_name;
 	    while ( *ptr != '\0' ) {
-		if ( !(isalnum( *ptr ) || *ptr == '-')) {
+		if ( !(isalnum( (int)*ptr ) || *ptr == '-')) {
 		    *ptr = '_';
 		}
 		ptr++;
@@ -444,7 +444,7 @@ Part_import( int id_start )
 	    vect_t v = VINIT_ZERO;
 
 	    i = 7;
-	    while ( !isspace( line[i] ) && line[i] != '\0' )
+	    while ( !isspace( (int)line[i] ) && line[i] != '\0' )
 		i++;
 	    ptr = strtok( &line[i], " \t" );
 	    for ( i=0; i<3 && ptr; i++ ) {

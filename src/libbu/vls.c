@@ -638,12 +638,12 @@ bu_vls_trimspace(struct bu_vls *vp)
 
     /* Remove trailing white space */
     while ((vp->vls_len > 0) &&
-	   isspace(bu_vls_addr(vp)[bu_vls_strlen(vp)-1]))
+	   isspace((int)(bu_vls_addr(vp)[bu_vls_strlen(vp)-1])))
 	bu_vls_trunc(vp, -1);
 
     /* Remove leading white space */
     while ((vp->vls_len > 0) &&
-	   isspace(*bu_vls_addr(vp)))
+	   isspace((int)(*bu_vls_addr(vp))))
 	bu_vls_nibble(vp, 1);
 }
 

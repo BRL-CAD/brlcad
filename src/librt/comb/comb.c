@@ -857,7 +857,7 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	char itemlwr[128];
 
 	for (i = 0; i < 127 && item[i]; i++) {
-	    itemlwr[i] = (isupper(item[i]) ? tolower(item[i]) :
+	    itemlwr[i] = (isupper((int)item[i]) ? tolower((int)item[i]) :
 			  item[i]);
 	}
 	itemlwr[i] = '\0';
@@ -930,7 +930,7 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
     while (argc >= 2) {
 	/* Force to lower case */
 	for (i = 0; i < 1023 && argv[0][i] != '\0'; i++) {
-	    buf[i] = tolower(argv[0][i]);
+	    buf[i] = tolower((int)argv[0][i]);
 	}
 	buf[i] = '\0';
 

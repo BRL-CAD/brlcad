@@ -3890,7 +3890,7 @@ rt_pipe_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    BU_LIST_INIT(&pip->pipe_segs_head);
 	}
 
-	if (!isdigit(argv[0][1])) {
+	if (!isdigit((int)argv[0][1])) {
 	    bu_vls_printf(logstr, "no vertex number specified");
 	    return BRLCAD_ERROR;
 	}
@@ -3935,7 +3935,7 @@ rt_pipe_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		list = Tcl_NewListObj(0, NULL);
 		Tcl_ListObjAppendList(brlcad_interp, list, obj);
 		v_str = Tcl_GetStringFromObj(list, NULL);
-		while (isspace(*v_str)) v_str++;
+		while (isspace((int)*v_str)) v_str++;
 		if (*v_str == '\0') {
 		    bu_vls_printf(logstr, "incomplete vertex specification");
 		    Tcl_DecrRefCount(list);

@@ -209,13 +209,13 @@ view_2init(struct application *ap, char *framename)
 
 		/* found a BOT entry, addit to the hash table */
 		i = 4;
-		while (line[i] != '\0' && isspace(line[i])) i++;
+		while (line[i] != '\0' && isspace((int)line[i])) i++;
 		if (line[i] == '\0') {
 		    bu_log("Unexpected EOF found in partial results (%s)\n", outputfile);
 		    bu_exit(EXIT_FAILURE, "Unexpected EOF");
 		}
 		j = i;
-		while (line[j] != '\0' && !isspace(line[j])) j++;
+		while (line[j] != '\0' && !isspace((int)line[j])) j++;
 		line[j] = '\0';
 		if ((dp=db_lookup(ap->a_rt_i->rti_dbip, &line[i], LOOKUP_QUIET)) == RT_DIR_NULL) {
 		    bot_name = bu_strdup(&line[i]);

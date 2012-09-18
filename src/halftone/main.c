@@ -182,8 +182,8 @@ setup(int argc, char **argv)
  */
 	    case 'T':
 		--bu_optind;
-		for (i=bu_optind; i < argc && (isdigit(*argv[i]) ||
-					       (*argv[i] == '-' && isdigit(*(argv[i]+1)))); i++);
+		for (i=bu_optind; i < argc && (isdigit((int)*argv[i]) ||
+					       (*argv[i] == '-' && isdigit((int)(*(argv[i]+1))))); i++);
 		if ((c=i-bu_optind) % 2) {
 		    fprintf(stderr, "Missing Y coordent for tone map.\n");
 		    bu_exit(1, NULL);

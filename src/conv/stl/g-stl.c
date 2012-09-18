@@ -115,7 +115,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	while (*c != '\0') {
 	    if (*c == '/') {
 		bu_vls_putc(&file_name, '@');
-	    } else if (*c == '.' || isspace(*c)) {
+	    } else if (*c == '.' || isspace((int)*c)) {
 		bu_vls_putc(&file_name, '_');
 	    } else {
 		bu_vls_putc(&file_name, *c);

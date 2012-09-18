@@ -425,7 +425,7 @@ char *encode_name(char *str)
 
     while (op < &buf[NAMESIZE]) {
 	if (*ip == '\0')  break;
-	if (isascii(*ip) && isprint(*ip) && !isspace(*ip)) {
+	if (isascii((int)*ip) && isprint((int)*ip) && !isspace((int)*ip)) {
 	    *op++ = *ip++;
 	}  else  {
 	    *op++ = '@';
@@ -937,7 +937,7 @@ combdump(void)	/* Print out Combination record information */
 		  record.c.c_rgb[1],
 		  record.c.c_rgb[2]);
     m1 = m2 = 0;
-    if (isascii(record.c.c_matname[0]) && isprint(record.c.c_matname[0])) {
+    if (isascii((int)record.c.c_matname[0]) && isprint((int)record.c.c_matname[0])) {
 	m1 = 1;
 	if (record.c.c_matparm[0])
 	    m2 = 1;
@@ -1159,7 +1159,7 @@ char *strchop(char *str, size_t len)
     ep = &buf[len-1];		/* Leave room for null */
     while (op < ep) {
 	if (*ip == '\0')  break;
-	if (isascii(*ip) && (isprint(*ip) || isspace(*ip))) {
+	if ((int)isascii((int)*ip) && ((int)isprint((int)*ip) || isspace((int)*ip))) {
 	    *op++ = *ip++;
 	}  else  {
 	    *op++ = '@';

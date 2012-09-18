@@ -267,7 +267,7 @@ make_brlcad_name( const char *nameline )
 
     c = name;
     while ( *c != '\0' ) {
-	if ( *c == '/' || *c == '[' || *c == ']' || *c == '*' || isspace( *c ) ) {
+	if ( *c == '/' || *c == '[' || *c == ']' || *c == '*' || isspace( (int)*c ) ) {
 	    *c = '_';
 	}
 	c++;

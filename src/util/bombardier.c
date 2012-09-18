@@ -237,10 +237,10 @@ init(Tcl_Interp *interp)
     while (c[0] != '\0') {
 	if (bu_strncmp(c, "Command:", 8) == 0) {
 	    c+=8;
-	    while (c[0] != '\0' && isspace(c[0])) {
+	    while (c[0] != '\0' && isspace((int)c[0])) {
 		c++;
 	    }
-	    while (c[0] != '\0' && !isspace(c[0])) {
+	    while (c[0] != '\0' && !isspace((int)c[0])) {
 		bu_vls_putc(&appname, c[0]);
 		c++;
 	    }

@@ -1596,7 +1596,7 @@ main(int argc, char *argv[])
 	    if (str[charIndex] == '#') {
 		isComment = 1;
 		break;
-	    } else if (isspace(str[charIndex])) {
+	    } else if (isspace((int)str[charIndex])) {
 		continue;
 	    } else {
 		isComment = 0;

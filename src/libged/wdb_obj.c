@@ -2083,7 +2083,7 @@ wdb_put_cmd(struct rt_wdb *wdbp,
 
     /* place values in type at 0-14, place null terminator at 15 */
     for (i = 0; argv[2][i] != 0 && i < 15; i++) {
-	type[i] = isupper(argv[2][i]) ? tolower(argv[2][i]) : argv[2][i];
+	type[i] = isupper((int)argv[2][i]) ? tolower((int)argv[2][i]) : argv[2][i];
     }
     type[i] = '\0';
 

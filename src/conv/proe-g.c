@@ -299,7 +299,7 @@ Convert_assy(char *line)
 
     start = (-1);
     /* skip leading blanks */
-    while (isspace(line[++start]) && line[start] != '\0');
+    while (isspace((int)line[++start]) && line[start] != '\0');
     if (bu_strncmp(&line[start], "assembly", 8) && bu_strncmp(&line[start], "ASSEMBLY", 8)) {
 	bu_log("PROE-G: Convert_assy called for non-assembly:\n%s\n", line);
 	return;
@@ -307,12 +307,12 @@ Convert_assy(char *line)
 
     /* skip blanks before name */
     start += 7;
-    while (isspace(line[++start]) && line[start] != '\0');
+    while (isspace((int)line[++start]) && line[start] != '\0');
 
     /* get name */
     i = (-1);
     start--;
-    while (!isspace(line[++start]) && line[start] != '\0' && line[start] != '\n')
+    while (!isspace((int)line[++start]) && line[start] != '\0' && line[start] != '\n')
 	name[++i] = line[start];
     name[++i] = '\0';
 
@@ -327,7 +327,7 @@ Convert_assy(char *line)
     while (bu_fgets(line1, MAX_LINE_SIZE, fd_in)) {
 	/* skip leading blanks */
 	start = (-1);
-	while (isspace(line1[++start]) && line[start] != '\0');
+	while (isspace((int)line1[++start]) && line[start] != '\0');
 
 	if (!bu_strncmp(&line1[start], "endassembly", 11) || !bu_strncmp(&line1[start], "ENDASSEMBLY", 11)) {
 
@@ -347,10 +347,10 @@ Convert_assy(char *line)
 	    break;
 	} else if (!bu_strncmp(&line1[start], "member", 6) || !bu_strncmp(&line1[start], "MEMBER", 6)) {
 	    start += 5;
-	    while (isspace(line1[++start]) && line1[start] != '\0');
+	    while (isspace((int)line1[++start]) && line1[start] != '\0');
 	    i = (-1);
 	    start--;
-	    while (!isspace(line1[++start]) && line1[start] != '\0' && line1[start] != '\n')
+	    while (!isspace((int)line1[++start]) && line1[start] != '\0' && line1[start] != '\n')
 		memb_name[++i] = line1[start];
 	    memb_name[++i] = '\0';
 
@@ -553,7 +553,7 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 	}
 	bu_fgets(line1, MAX_LINE_SIZE, fd_in);
 	(*start) = (-1);
-	while (isspace(line1[++(*start)]));
+	while (isspace((int)line1[++(*start)]));
     }
 }
 
@@ -612,7 +612,7 @@ Convert_part(char *line)
 
     start = (-1);
     /* skip leading blanks */
-    while (isspace(line[++start]) && line[start] != '\0');
+    while (isspace((int)line[++start]) && line[start] != '\0');
     if (bu_strncmp(&line[start], "solid", 5) && bu_strncmp(&line[start], "SOLID", 5)) {
 	bu_log("Convert_part: Called for non-part\n%s\n", line);
 	return;
@@ -620,13 +620,13 @@ Convert_part(char *line)
 
     /* skip blanks before name */
     start += 4;
-    while (isspace(line[++start]) && line[start] != '\0');
+    while (isspace((int)line[++start]) && line[start] != '\0');
 
     if (line[start] != '\0') {
 	/* get name */
 	i = (-1);
 	start--;
-	while (!isspace(line[++start]) && line[start] != '\0' && line[start] != '\n')
+	while (!isspace((int)line[++start]) && line[start] != '\0' && line[start] != '\n')
 	    name[++i] = line[start];
 	name[++i] = '\0';
 
@@ -691,7 +691,7 @@ Convert_part(char *line)
 
     while (bu_fgets(line1, MAX_LINE_SIZE, fd_in) != NULL) {
 	start = (-1);
-	while (isspace(line1[++start]));
+	while (isspace((int)line1[++start]));
 	if (!bu_strncmp(&line1[start], "endsolid", 8) || !bu_strncmp(&line1[start], "ENDSOLID", 8)) {
 	    break;
 	} else if (!bu_strncmp(&line1[start], "color", 5) || !bu_strncmp(&line1[start], "COLOR", 5)) {
@@ -708,7 +708,7 @@ Convert_part(char *line)
 	    VSET(normal, 0.0, 0.0, 0.0);
 
 	    start += 4;
-	    while (line1[++start] && isspace(line1[start]));
+	    while (line1[++start] && isspace((int)line1[start]));
 
 	    if (line1[start]) {
 		if (!bu_strncmp(&line1[start], "normal", 6) || !bu_strncmp(&line1[start], "NORMAL", 6)) {
@@ -729,7 +729,7 @@ Convert_part(char *line)
 		    bu_exit(EXIT_FAILURE,  "Unexpected EOF while reading a loop in a part!!!\n");
 
 		start = (-1);
-		while (isspace(line1[++start]));
+		while (isspace((int)line1[++start]));
 
 		if (!bu_strncmp(&line1[start], "endloop", 7) || !bu_strncmp(&line1[start], "ENDLOOP", 7)) {
 		    endloop = 1;

@@ -195,9 +195,9 @@ do_lines(FILE *fp, char *buffer)
 		}
 		*tp++ = '\0';
 		cp++;		/* skip ')' */
-	    } else if ( isdigit( *cp ) )  {
+	    } else if ( isdigit( (int)*cp ) )  {
 		tp = token;
-		while ( isdigit( *cp ) && tp<&token[TOKLEN-1] )  {
+		while ( isdigit( (int)*cp ) && tp<&token[TOKLEN-1] )  {
 		    *tp++ = *cp++;
 		}
 		*tp++ = '\0';
@@ -208,7 +208,7 @@ do_lines(FILE *fp, char *buffer)
 	    }
 	    if (debug) fprintf(stderr, "token='%s'\n", token);
 
-	    if ( isdigit( token[0] ) )  {
+	    if ( isdigit( (int)token[0] ) )  {
 		fputs( chanwords[str2chan_index(token)],
 		       stdout );
 		continue;

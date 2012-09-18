@@ -515,7 +515,7 @@ processChar(char ch)
 	    }
 	    /* Fall through if not escaped! */
 	default:
-	    if (!isprint(ch))
+	    if (!isprint((int)ch))
 		break;
 
 	    insert_char(ch);

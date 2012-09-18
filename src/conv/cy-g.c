@@ -145,7 +145,7 @@ main(int argc, char **argv)
 	if (bu_fgets(line, LINE_LEN, infp) == NULL) {
 	    bu_exit(1, "Unexpected EOF encountered while looking for data\n");
 	}
-	while (isspace(line[strlen(line)-1])) {
+	while (isspace((int)line[strlen(line)-1])) {
 	    line[strlen(line)-1] = '\0';
 	}
 

@@ -441,7 +441,7 @@ ph_dirbuild(struct pkg_conn *UNUSED(pc), char *buf)
     if ( debug )  fprintf(stderr, "ph_dirbuild: %s\n", buf );
 
     for (n = 0; n < strlen(buf); n++) {
-	if (isspace(buf[n]))
+	if (isspace((int)buf[n]))
 	    max_argc++;
     }
     argv = bu_calloc(max_argc+1, sizeof(char *), "alloc argv");
@@ -513,7 +513,7 @@ ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
     }
 
     for (n = 0; n < strlen(buf); n++) {
-	if (isspace(buf[n]))
+	if (isspace((int)buf[n]))
 	    max_argc++;
     }
     argv = bu_calloc(max_argc+1, sizeof(char *), "alloc argv");

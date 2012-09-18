@@ -1147,7 +1147,7 @@ rt_arbn_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 			  V4ARGS(arbn->eqn[i]));
 	}
     } else if (attr[0] == 'P') {
-	if (isdigit(attr[1]) == 0) {
+	if (isdigit((int)attr[1]) == 0) {
 	    bu_vls_printf(logstr, "ERROR: Illegal plane number\n");
 	    return BRLCAD_ERROR;
 	}
@@ -1247,7 +1247,7 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		arbn->eqn = (plane_t *)bu_realloc(arbn->eqn,
 						  (arbn->neqn) * sizeof(plane_t),
 						  "arbn->eqn");
-	    } else if (isdigit(argv[0][1])) {
+	    } else if (isdigit((int)argv[0][1])) {
 		i = atoi(&argv[0][1]);
 	    } else {
 		bu_vls_printf(logstr,

@@ -37,7 +37,7 @@ Add_brl_name(name)
 	name[namelen] = '\0';
     }
     for (i = 0; i < namelen; i++) {
-	if (isspace(name[i]) || name[i] == '/')
+	if (isspace((int)name[i]) || name[i] == '/')
 	    name[i] = '_';
     }
 
@@ -89,7 +89,7 @@ Make_unique_brl_name(char *name) {
 
     /* replace white space */
     for (i = 0; i < namelen; i++) {
-	if (isspace(name[i]) || name[i] == '/') {
+	if (isspace((int)name[i]) || name[i] == '/') {
 	    name[i] = '_';
 	}
     }

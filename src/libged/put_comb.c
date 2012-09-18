@@ -369,7 +369,7 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
 
 	    /* Eliminate trailing white space from name */
 	    i = (int)strlen(ptr);
-	    while (isspace(name[--i]))
+	    while (isspace((int)name[--i]))
 		name[i] = '\0';
 
 	    /* Check for existence of member */

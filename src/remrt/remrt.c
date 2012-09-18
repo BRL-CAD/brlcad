@@ -1204,7 +1204,7 @@ get_server_by_name(char *str)
     struct servers *sp;
     struct ihost	*ihp;
 
-    if ( isdigit( *str ) )  {
+    if ( isdigit( (int)*str ) )  {
 	int	i;
 	i = atoi( str );
 	if ( i < 0 || i >= (int)MAXSERVERS )  return SERVERS_NULL;
@@ -3806,7 +3806,7 @@ cd_host(int argc, char **argv)
 	ihp->ht_rs_miss = 0;
 	ihp->ht_rs_wait = 0;
 	ihp->ht_rs = 500;
-	if ( isdigit(*argv[argpoint])) {
+	if ( isdigit((int)*argv[argpoint])) {
 	    ihp->ht_rs = atoi(argv[argpoint++]);
 	}
     }

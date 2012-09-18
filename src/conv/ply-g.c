@@ -635,7 +635,7 @@ read_ply_header()
 
 	len = strlen( line );
 	len--;
-	while ( len && isspace( line[len] ) ) {
+	while ( len && isspace( (int)line[len] ) ) {
 	    line[len] = '\0';
 	    len--;
 	}

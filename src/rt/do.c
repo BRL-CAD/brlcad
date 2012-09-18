@@ -193,10 +193,10 @@ int cm_start(int argc, char **argv)
 	register char *cp;
 
 	cp = buf;
-	while (*cp && isspace(*cp)) cp++;	/* skip spaces */
+	while (*cp && isspace((int)*cp)) cp++;	/* skip spaces */
 	if (bu_strncmp(cp, "start", 5) != 0) continue;
-	while (*cp && !isspace(*cp)) cp++;	/* skip keyword */
-	while (*cp && isspace(*cp)) cp++;	/* skip spaces */
+	while (*cp && !isspace((int)*cp)) cp++;	/* skip keyword */
+	while (*cp && isspace((int)*cp)) cp++;	/* skip spaces */
 	frame = atoi(cp);
 	bu_free(buf, "rt_read_cmd command buffer (skipping frames)");
 	buf = (char *)0;

@@ -87,7 +87,7 @@ get_ftn_float(char *str, unsigned int start_col, char *format)
      */
     for ( i=0; i<width; i++ )
     {
-	if ( isspace( str[start_col+i] ) )
+	if ( isspace( (int)str[start_col+i] ) )
 	{
 	    if ( leading_spaces )
 		tmp_str[i] = ' ';
@@ -171,7 +171,7 @@ get_ftn_int(char *str, unsigned int start_col, char *format)
      * imbedded blanks to zeros */
     for ( i=0; i<width; i++ )
     {
-	if ( isspace( str[start_col+i] ) )
+	if ( isspace( (int)str[start_col+i] ) )
 	{
 	    if ( leading_spaces )
 		tmp_str[i] = ' ';

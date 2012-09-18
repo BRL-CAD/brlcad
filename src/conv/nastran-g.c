@@ -176,13 +176,13 @@ write_fields(void)
     for (i=0; i<NO_OF_FIELDS; i++) {
 	/* eliminate trailing blanks */
 	j = strlen(curr_rec[i]) - 1;
-	while (j && (isspace(curr_rec[i][j]) || curr_rec[i][j] == '\012' || curr_rec[i][j] == '\015'))
+	while (j && (isspace((int)curr_rec[i][j]) || curr_rec[i][j] == '\012' || curr_rec[i][j] == '\015'))
 	    j--;
 	curr_rec[i][++j] = '\0';
 
 	/* skip leading blanks */
 	j = 0;
-	while (curr_rec[i][j] != '\0' && isspace(curr_rec[i][j]))
+	while (curr_rec[i][j] != '\0' && isspace((int)curr_rec[i][j]))
 	    j++;
 	fprintf(fptmp, "%s, ", &curr_rec[i][j]);
     }
@@ -257,7 +257,7 @@ get_large_field_input(FILE *fp, int write_flag)
 
     /* remove the newline from the end of the last field */
     i = strlen(curr_rec[last_field-1]) - 1;
-    while (isspace(curr_rec[last_field-1][i]) || curr_rec[last_field-1][i] == '\012' || curr_rec[last_field-1][i] == '\015')
+    while (isspace((int)curr_rec[last_field-1][i]) || curr_rec[last_field-1][i] == '\012' || curr_rec[last_field-1][i] == '\015')
 	i--;
     curr_rec[last_field-1][++i] = '\0';
 
@@ -343,15 +343,15 @@ get_free_form_input(FILE *fp, int write_flag)
     int i, j;
 
     i = (-1);
-    while (isspace(line[++i]));
-    if (line[i] == '=' && isdigit(line[i+1])) {
+    while (isspace((int)line[++i]));
+    if (line[i] == '=' && isdigit((int)line[i+1])) {
 	int count;
 
 	count = atoi(&line[i+1]);
 
 	i = (-1);
-	while (isspace(prev_line[++i]));
-	if (prev_line[i] == '=' && isdigit(prev_line[i+1])) {
+	while (isspace((int)prev_line[++i]));
+	if (prev_line[i] == '=' && isdigit((int)prev_line[i+1])) {
 	    bu_log("Cannot use consecutive replication cards:\n");
 	    bu_log("%s", prev_line);
 	    bu_log("%s", line);
@@ -374,10 +374,10 @@ get_free_form_input(FILE *fp, int write_flag)
 	field_no = (-1);
 	i = 0;
 	while (++field_no < NO_OF_FIELDS && line[i] != '\0') {
-	    while (line[i] != '\0' && isspace(line[i]))
+	    while (line[i] != '\0' && isspace((int)line[i]))
 		i++;
 	    j = (-1);
-	    while (line[i] != '\0' && line[i] != COMMA && !isspace(line[i]))
+	    while (line[i] != '\0' && line[i] != COMMA && !isspace((int)line[i]))
 		curr_rec[field_no][++j] = line[i++];
 	    curr_rec[field_no][++j] = '\0';
 	    if (line[i] == COMMA)
@@ -392,10 +392,10 @@ get_free_form_input(FILE *fp, int write_flag)
 
 	    i = 0;
 	    while (++field_no < NO_OF_FIELDS && line[i] != '\0') {
-		while (line[i] != '\0' && isspace(line[i]))
+		while (line[i] != '\0' && isspace((int)line[i]))
 		    i++;
 		j = (-1);
-		while (line[i] != '\0' && line[i] != COMMA && !isspace(line[i]))
+		while (line[i] != '\0' && line[i] != COMMA && !isspace((int)line[i]))
 		    curr_rec[field_no][++j] = line[i++];
 		curr_rec[field_no][++j] = '\0';
 		if (line[i] == COMMA)
@@ -432,8 +432,8 @@ get_next_record(FILE *fp, int call_input, int write_flag)
     /* Convert to all UPPER case */
     i = (-1);
     while (prev_line[++i] != '\0') {
-	if (isalpha(prev_line[i]))
-	    prev_line[i] = toupper(prev_line[i]);
+	if (isalpha((int)prev_line[i]))
+	    prev_line[i] = toupper((int)prev_line[i]);
     }
 
     if (tmp == (char *)NULL) {
@@ -480,7 +480,7 @@ get_next_record(FILE *fp, int call_input, int write_flag)
 
     /* not FREE_FIELD, check for LARGE_FIELD */
     i = (-1);
-    while (++i < 8 && (isalpha(line[i]) || isspace(line[i])));
+    while (++i < 8 && (isalpha((int)line[i]) || isspace((int)line[i])));
     if (i < 8 && line[i] == '*')
 	form = LARGE_FIELD;
 

@@ -213,7 +213,7 @@ int
 isNumber(char *s)
 {
     while (*s != '\0') {
-	if (isdigit(*s) || *s == '.' || *s == '-' || *s == '+' || *s == 'e' || *s == 'E') {
+	if (isdigit((int)*s) || *s == '.' || *s == '-' || *s == '+' || *s == 'e' || *s == 'E') {
 	    s++;
 	} else {
 	    return 0;

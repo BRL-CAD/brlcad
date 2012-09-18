@@ -448,7 +448,7 @@ if (flags & UNSIGNED) { \
 	     * conversion specification is preceded by at least one whitespace
 	     * character.
 	     */
-	    if (isspace(*bu_vls_addr(&partFmt)) || flags & ALTERNATE) {
+	    if (isspace((int)(*bu_vls_addr(&partFmt))) || flags & ALTERNATE) {
 		while (1) {
 		    c = src[numCharsConsumed];
 		    if (c == '\0' || !isspace(c)) {

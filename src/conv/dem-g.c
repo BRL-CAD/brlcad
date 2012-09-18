@@ -235,7 +235,7 @@ void remove_whitespace(char *input_string)
     found_start = 0;
     idx = firstp;
     while ((found_start == 0) && (idx < lastp)) {
-	if (isspace(idx[0]) == 0) {
+	if (isspace((int)idx[0]) == 0) {
 	    /* execute if non-space found */
 	    found_start = 1;
 	    firstp = idx;
@@ -259,7 +259,7 @@ void remove_whitespace(char *input_string)
     found_end = 0;
     idx = lastp - 1;
     while ((found_end == 0) && (idx >= firstp)) {
-	if (isspace(idx[0]) == 0) {
+	if (isspace((int)idx[0]) == 0) {
 	    /* execute if non-space found */
 	    found_end = 1;
 	    lastp = idx + 1;

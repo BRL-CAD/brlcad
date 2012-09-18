@@ -821,7 +821,7 @@ f_attr(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, st
      */
 
     for (i = 0; i < strlen(bu_vls_addr(&value)); i++) {
-	if (!(isdigit(bu_vls_addr(&value)[i]))) strcomparison = 1;
+	if (!(isdigit((int)(bu_vls_addr(&value)[i])))) strcomparison = 1;
     }
 
     /* Get attributes for object.
@@ -1355,7 +1355,7 @@ f_nnodes(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, 
      * positions.
      */
 
-    if (isdigit(plan->node_data[0])) {
+    if (isdigit((int)plan->node_data[0])) {
 	doequal = 1;
 	node_count_target = (size_t)atoi(plan->node_data);
     } else {
@@ -1367,13 +1367,13 @@ f_nnodes(struct db_plan_t *plan, struct db_full_path *entry, struct db_i *dbip, 
 	}
 	if (plan->node_data[1] == '=') {
 	    doequal = 1;
-	    if (isdigit(plan->node_data[2])) {
+	    if (isdigit((int)plan->node_data[2])) {
 		node_count_target = (size_t)atoi((plan->node_data)+2);
 	    } else {
 		return 0;
 	    }
 	} else {
-	    if (isdigit(plan->node_data[1])) {
+	    if (isdigit((int)plan->node_data[1])) {
 		node_count_target = (size_t)atoi((plan->node_data)+1);
 	    } else {
 		return 0;

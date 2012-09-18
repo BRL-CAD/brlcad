@@ -45,10 +45,10 @@ char *
 nextsym(char *b, char *cp)
 {
     /* skip white */
-    while (isspace(*cp))
+    while (isspace((int)*cp))
 	cp++;
 
-    while (*cp != '\0' && !isspace(*cp))
+    while (*cp != '\0' && !isspace((int)*cp))
 	*b++ = *cp++;
 
     *b = '\0';
@@ -129,7 +129,7 @@ main(int argc, char **argv)
     while (bu_fgets(line, 511, fp) != NULL) {
 	str = line;
 	str = nextsym(buf, str);
-	if (! isdigit(buf[0])) {
+	if (! isdigit((int)buf[0])) {
 	    /* spare the 0 entry the garbage */
 	    continue;
 	}

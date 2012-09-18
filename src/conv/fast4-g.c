@@ -954,7 +954,7 @@ f4_do_name(void)
 
     /* skip leading blanks */
     i = 56;
-    while ((size_t)i < sizeof(comp_name) && isspace(line[i]))
+    while ((size_t)i < sizeof(comp_name) && isspace((int)line[i]))
 	i++;
 
     if (i == sizeof(comp_name))
@@ -964,7 +964,7 @@ f4_do_name(void)
 
     /* eliminate trailing blanks */
     i = sizeof(comp_name) - i;
-    while ( --i >= 0 && isspace(comp_name[i]))
+    while ( --i >= 0 && isspace((int)comp_name[i]))
 	comp_name[i] = '\0';
 
     /* copy comp_name to tmp_name while replacing white space with "_" */
@@ -973,7 +973,7 @@ f4_do_name(void)
 
     /* copy */
     while (comp_name[++i] != '\0') {
-	if (isspace(comp_name[i]) || comp_name[i] == '/') {
+	if (isspace((int)comp_name[i]) || comp_name[i] == '/') {
 	    if (j == (-1) || tmp_name[j] != '_')
 		tmp_name[++j] = '_';
 	} else {
@@ -1837,7 +1837,7 @@ f4_do_hole_wall(int type)
 
     /* eliminate trailing blanks */
     s_len = strlen(line);
-    while (isspace(line[--s_len]))
+    while (isspace((int)line[--s_len]))
 	line[s_len] = '\0';
 
     s_len = strlen(line);

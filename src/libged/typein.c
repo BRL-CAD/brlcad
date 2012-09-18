@@ -600,7 +600,7 @@ booleanize(const char *answer)
     }
 
     ap = answer;
-    while (ap[0] != '\0' && isspace(ap[0])) {
+    while (ap[0] != '\0' && isspace((int)ap[0])) {
 	ap++;
     }
     if (ap[0] == '\0') {

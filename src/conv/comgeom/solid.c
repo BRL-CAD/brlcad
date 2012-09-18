@@ -264,8 +264,8 @@ getsolid(void)
 	while ((c = *cp) != '\0') {
 	    if (!isascii(c)) {
 		*cp++ = '?';
-	    } else if (isupper(c)) {
-		*cp++ = tolower(c);
+	    } else if (isupper((int)c)) {
+		*cp++ = tolower((int)c);
 	    } else {
 		cp++;
 	    }

@@ -236,7 +236,8 @@ main(int argc, char **argv)
     }
 
     /* Drop leading blanks in title */
-    while (isspace(*title))  title++;
+    while (isspace((int)*title))
+	title++;
     trim_trail_spaces(title);
     trim_trail_spaces(units);
 
@@ -244,8 +245,8 @@ main(int argc, char **argv)
     {
 	char	*cp = units;
 	while (*cp) {
-	    if (isupper(*cp))
-		*cp = tolower(*cp);
+	    if (isupper((int)*cp))
+		*cp = tolower((int)*cp);
 	    cp++;
 	}
     }

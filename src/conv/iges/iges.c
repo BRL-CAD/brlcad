@@ -476,7 +476,7 @@ write_freeform(FILE *fp,	/* output file */
 			    /* empty field */
 			    curr_loc++;
 			} else {
-			    while (isdigit(s[curr_loc]))
+			    while (isdigit((int)s[curr_loc]))
 				num[j++] = s[curr_loc++];
 			    num[j] = '\0';
 

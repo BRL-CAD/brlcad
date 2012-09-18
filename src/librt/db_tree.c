@@ -2723,7 +2723,7 @@ tree_list_needspace(struct bu_vls *vls)
     /* don't need a space if there is already whitespace separation,
      * unless it has been escaped.
      */
-    if (isspace(*end) && ((end == str) || (*(end-1) != '\\'))) {
+    if (isspace((int)*end) && ((end == str) || (*(end-1) != '\\'))) {
 	return 0;
     }
 
@@ -2919,7 +2919,7 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
     RT_CK_RESOURCE(resp);
 
     /* Skip over leading spaces in input */
-    while (*str && isspace(*str)) str++;
+    while (*str && isspace((int)*str)) str++;
 
     /*XXX Temporarily use brlcad_interp until a replacement for Tcl_SplitList is created */
     if (Tcl_SplitList(brlcad_interp, str, &argc, (const char ***)&argv) != TCL_OK)

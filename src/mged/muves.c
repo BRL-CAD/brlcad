@@ -269,7 +269,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 
 	    c = ptr;
 	    while (*c != '\0') {
-		if (isalpha(*c)) {
+		if (isalpha((int)*c)) {
 		    size_t length;
 
 		    /* found a new component name, save the old one */
@@ -366,7 +366,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	char *equal_sign=(char *)NULL;
 
 	i = 0;
-	while (isspace(line[i]) && line[i] != '\0')
+	while (isspace((int)line[i]) && line[i] != '\0')
 	    i++;
 	if (line[i] == '#')	/* comment */
 	    continue;
@@ -394,7 +394,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 
 	    /* mark end of system name */
 	    j = i;
-	    while (line[j] != '\0' && !isspace(line[j]))
+	    while (line[j] != '\0' && !isspace((int)line[j]))
 		j++;
 	    line[j] = '\0';
 
@@ -460,7 +460,7 @@ f_read_muves(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 	    c = ptr;
 	    is_constant = 1;
 	    while (*c != '\0') {
-		if (isalpha(*c)) {
+		if (isalpha((int)*c)) {
 		    is_constant = 0;
 		    break;
 		}

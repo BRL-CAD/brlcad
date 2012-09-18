@@ -2003,7 +2003,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    return BRLCAD_ERROR;
 		}
 
-		if (isdigit(*argv[1])) {
+		if (isdigit((int)*argv[1])) {
 		    if (atol(argv[1]) == 0)
 			BU_BITCLR(bot->face_mode, li);
 		    else
@@ -2065,7 +2065,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		bot->num_face_normals = len;
 		for (i = 0; i < (size_t)len; i++) {
 		    f_str = Tcl_GetStringFromObj(obj_array[i], NULL);
-		    while (isspace(*f_str)) f_str++;
+		    while (isspace((int)*f_str)) f_str++;
 
 		    if (*f_str == '\0') {
 			bu_vls_printf(logstr, "incomplete list of face_normals");
@@ -2124,7 +2124,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		}
 		i = (size_t)li;
 		f_str = Tcl_GetStringFromObj(obj, NULL);
-		while (isspace(*f_str)) f_str++;
+		while (isspace((int)*f_str)) f_str++;
 
 		li = atol(f_str);
 		if (li < 0) {
@@ -2181,7 +2181,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		bot->normals = (fastf_t *)bu_calloc(len*3, sizeof(fastf_t), "BOT normals");
 		for (i = 0; i < (size_t)len; i++) {
 		    v_str = Tcl_GetStringFromObj(obj_array[i], NULL);
-		    while (isspace(*v_str)) v_str++;
+		    while (isspace((int)*v_str)) v_str++;
 		    if (*v_str == '\0') {
 			bu_vls_printf(logstr, "incomplete list of normals");
 			Tcl_DecrRefCount(obj);
@@ -2213,7 +2213,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		}
 		i = (size_t)li;
 		v_str = Tcl_GetStringFromObj(obj, NULL);
-		while (isspace(*v_str)) v_str++;
+		while (isspace((int)*v_str)) v_str++;
 
 		bot->normals[i*3+0] = atof(v_str);
 		v_str = bu_next_token(v_str);
@@ -2247,7 +2247,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		bot->vertices = (fastf_t *)bu_calloc(len*3, sizeof(fastf_t), "BOT vertices");
 		for (i = 0; i < (size_t)len; i++) {
 		    v_str = Tcl_GetStringFromObj(obj_array[i], NULL);
-		    while (isspace(*v_str)) v_str++;
+		    while (isspace((int)*v_str)) v_str++;
 		    if (*v_str == '\0') {
 			bu_vls_printf(logstr, "incomplete list of vertices");
 			Tcl_DecrRefCount(obj);
@@ -2278,7 +2278,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		}
 		i = (size_t)li;
 		v_str = Tcl_GetStringFromObj(obj, NULL);
-		while (isspace(*v_str)) v_str++;
+		while (isspace((int)*v_str)) v_str++;
 
 		bot->vertices[i*3+0] = atof(v_str);
 		v_str = bu_next_token(v_str);
@@ -2327,7 +2327,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		}
 		for (i = 0; i < (size_t)len; i++) {
 		    f_str = Tcl_GetStringFromObj(obj_array[i], NULL);
-		    while (isspace(*f_str)) f_str++;
+		    while (isspace((int)*f_str)) f_str++;
 
 		    if (*f_str == '\0') {
 			bu_vls_printf(logstr, "incomplete list of faces");
@@ -2382,7 +2382,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		}
 		i = (size_t)li;
 		f_str = Tcl_GetStringFromObj(obj, NULL);
-		while (isspace(*f_str)) f_str++;
+		while (isspace((int)*f_str)) f_str++;
 
 		li = atol(f_str);
 		if (li < 0) {
@@ -2462,7 +2462,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    char *m_str;
 
 	    m_str = Tcl_GetStringFromObj(obj, NULL);
-	    if (isdigit(*m_str)) {
+	    if (isdigit((int)*m_str)) {
 		int mode;
 
 		mode = atoi(m_str);
@@ -2491,7 +2491,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    char *o_str;
 
 	    o_str = Tcl_GetStringFromObj(obj, NULL);
-	    if (isdigit(*o_str)) {
+	    if (isdigit((int)*o_str)) {
 		int orient;
 
 		orient = atoi(o_str);

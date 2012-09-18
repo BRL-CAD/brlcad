@@ -59,7 +59,7 @@ static int grab_number (char *buf, int *np)
     char *bp;
 
     for (bp = buf; *bp != '\0'; ++bp)
-	if (!isdigit(*bp))
+	if (!isdigit((int)*bp))
 	    return 0;
     if (sscanf(buf, "%d", np) != 1)
 	bu_exit (1, "imgdims: grab_number(%s) failed.  This shouldn't happen\n", buf);
