@@ -7813,7 +7813,7 @@ nmg_isect_2faceuse(point_t pt,
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	    NMG_CK_EDGEUSE(eu);
 	    cnt++;
-	    dist = DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, f2_pl);
+	    dist = fabs(DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, f2_pl));
 	    tot_dist += dist;
 	    /* the current distance is included in the average
 	     * that the current distance is compared against
@@ -7844,7 +7844,7 @@ nmg_isect_2faceuse(point_t pt,
 	    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 		NMG_CK_EDGEUSE(eu);
 		cnt++;
-		dist = DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, f1_pl);
+		dist = fabs(DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, f1_pl));
 		tot_dist += dist;
 		/* the current distance is included in the average
 		 * that the current distance is compared against
@@ -7926,15 +7926,8 @@ nmg_isect_2faceuse(point_t pt,
     abs_dir[Y] = fabs(dir[Y]);
     abs_dir[Z] = fabs(dir[Z]);
 
-    if (ZERO(abs_dir[X])) {
-	abs_dir[X] = 0.0;
-    }
-    if (ZERO(abs_dir[Y])) {
-	abs_dir[Y] = 0.0;
-    }
-    if (ZERO(abs_dir[Z])) {
-	abs_dir[Z] = 0.0;
-    }
+    /* Clamp abs_dir vector to zero if within tolerance of zero. */
+    VCLAMP(abs_dir);
 
     if (abs_dir[X] >= abs_dir[Y]) {
 	if (abs_dir[X] >= abs_dir[Z]) {
