@@ -67,19 +67,37 @@ endmacro(BRLCAD_FUNCTION_EXISTS)
 # semicolons.  Add HAVE_*_H define to config header.
 ###
 macro(BRLCAD_INCLUDE_FILE filelist var)
+  # check with no flags set
   set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
   set(CMAKE_C_FLAGS "")
+
+  # !!! why doesn't this work?
+  # if("${var}" STREQUAL "HAVE_X11_XLIB_H")
+  #  message("CMAKE_REQUIRED_INCLUDES for ${var} is ${CMAKE_REQUIRED_INCLUDES}")
+  # endif("${var}" STREQUAL "HAVE_X11_XLIB_H")
+
   if(NOT "${ARGV2}" STREQUAL "")
     set(CMAKE_REQUIRED_INCLUDES_BKUP ${CMAKE_REQUIRED_INCLUDES})
     set(CMAKE_REQUIRED_INCLUDES ${ARGV2} ${CMAKE_REQUIRED_INCLUDES})
   endif(NOT "${ARGV2}" STREQUAL "")
+
+  # search for the header
   CHECK_INCLUDE_FILES("${filelist}" ${var})
+
+  # !!! curiously strequal matches true above for all the NOT ${var} cases
+  # if (NOT ${var})
+  #   message("--- ${var}")
+  # endif (NOT ${var})
+
   if(CONFIG_H_FILE AND ${var})
     CONFIG_H_APPEND(BRLCAD "#cmakedefine ${var} 1\n")
   endif(CONFIG_H_FILE AND ${var})
+
   if(NOT "${ARGV2}" STREQUAL "")
     set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES_BKUP})
   endif(NOT "${ARGV2}" STREQUAL "")
+
+  # restore flags
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_INCLUDE_FILE)
 
