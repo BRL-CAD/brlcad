@@ -139,17 +139,6 @@ double face_area(struct rt_bot_internal *bot, size_t face_num)
     return area;
 }
 
-void plot_face(point_t p1, point_t p2, point_t p3, int r, int g, int b, FILE *c_plot)
-{
-    pl_color(c_plot, r, g, b);
-    pdv_3move(c_plot, p1);
-    pdv_3cont(c_plot, p2);
-    pdv_3move(c_plot, p1);
-    pdv_3cont(c_plot, p3);
-    pdv_3move(c_plot, p2);
-    pdv_3cont(c_plot, p3);
-}
-
 
 // Use SVD algorithm from Soderkvist to fit a plane to vertex points
 // http://www.math.ltu.se/~jove/courses/mam208/svd.pdf
@@ -205,7 +194,12 @@ void fit_plane(std::set<size_t> *faces, struct Manifold_Info *info, ON_Plane *pl
             VSUB2(p1, p1, pc);
             VSUB2(p2, p2, pc);
             VSUB2(p3, p3, pc);
-	    plot_face(p1, p2, p3, r, g ,b, plot_file);
+	    pdv_3move(plot_file, p1);
+	    pdv_3cont(plot_file, p2);
+	    pdv_3move(plot_file, p1);
+	    pdv_3cont(plot_file, p3);
+	    pdv_3move(plot_file, p2);
+	    pdv_3cont(plot_file, p3);
 	}
 	pl_color(plot_file, 255, 255, 255);
         point_t pn;
@@ -252,6 +246,16 @@ void plot_curve(struct rt_bot_internal *bot, std::vector<size_t> *pts, int r, in
     }
 }
 
+void plot_face(point_t p1, point_t p2, point_t p3, int r, int g, int b, FILE *c_plot)
+{
+    pl_color(c_plot, r, g, b);
+    pdv_3move(c_plot, p1);
+    pdv_3cont(c_plot, p2);
+    pdv_3move(c_plot, p1);
+    pdv_3cont(c_plot, p3);
+    pdv_3move(c_plot, p2);
+    pdv_3cont(c_plot, p3);
+}
 
 void plot_faces(std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info, const char *filename)
 {
