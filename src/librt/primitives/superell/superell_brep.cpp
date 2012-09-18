@@ -86,7 +86,7 @@ rt_superell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_t
     // When both e and n <= 2, this can generate an ideal b-rep for superell, otherwise cannot.
     if (sip->e <= 2 && sip->n <= 2) {
 	for (int i = 0; i < surf->CVCount(0); i++) {
-	    fastf_t tmp_weight;
+	    fastf_t tmp_weight = 0.0;
 	    switch (i) {
 	    case 0:
 	    case 4:
@@ -105,7 +105,7 @@ rt_superell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_t
 		bu_log("Should not reach here!\n");
 	    }
 	    for (int j = 0; j < surf->CVCount(1); j++) {
-		fastf_t new_weight;
+		fastf_t new_weight = 0.0;
 		switch (j) {
 		case 0:
 		case 2:

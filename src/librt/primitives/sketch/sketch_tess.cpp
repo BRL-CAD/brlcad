@@ -145,8 +145,8 @@ bezier_inflection(const ON_BezierCurve& bezier, fastf_t& inflection_pt)
 HIDDEN void
 approx_bezier(const ON_BezierCurve& bezier, const ON_Arc& biarc, const struct bn_tol *tol, std::vector<ON_Arc>& approx)
 {
-    fastf_t t, step;
-    fastf_t crv, err, max_t, max_err = 0.0;
+    fastf_t t = 0.0, step = 0.0;
+    fastf_t crv = 0.0, err = 0.0, max_t = 0.0, max_err = 0.0;
     ON_3dPoint test;
     ON_3dVector d1, d2;
 
