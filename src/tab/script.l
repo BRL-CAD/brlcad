@@ -39,7 +39,7 @@
  * information.
  */
 
-#include "../tab/tokens.h"
+#include "./tokens.h"
 
 /* quell flex stupidities */
 #ifndef YY_STACK_USED
