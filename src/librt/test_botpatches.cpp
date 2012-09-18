@@ -14,6 +14,7 @@
 #include "plot3.h"
 #include "opennurbs.h"
 #include "opennurbs_fit.h"
+#include <Eigen/SVD>
 #include "nurbs.h"
 
 typedef std::pair<size_t, size_t> Edge;
@@ -138,17 +139,86 @@ double face_area(struct rt_bot_internal *bot, size_t face_num)
     return area;
 }
 
-// Project a point onto a plane
-void pnt_project(point_t orig_pt, point_t *new_pt, point_t normal)
+void plot_face(point_t p1, point_t p2, point_t p3, int r, int g, int b, FILE *c_plot)
 {
-    point_t p1, norm_scale;
-    fastf_t dotP;
-    VMOVE(p1, orig_pt);
-    dotP = VDOT(p1, normal);
-    VSCALE(norm_scale, normal, dotP);
-    VSUB2(*new_pt, p1, norm_scale);
+    pl_color(c_plot, r, g, b);
+    pdv_3move(c_plot, p1);
+    pdv_3cont(c_plot, p2);
+    pdv_3move(c_plot, p1);
+    pdv_3cont(c_plot, p3);
+    pdv_3move(c_plot, p2);
+    pdv_3cont(c_plot, p3);
 }
 
+
+// Use PCA to fit a plane to vertex points
+void fit_plane(std::set<size_t> *faces, struct Manifold_Info *info, ON_Plane *plane) {
+    if (faces->size() > 0) {
+	ON_3dPoint center(0.0, 0.0, 0.0);
+	std::set<size_t> verts;   
+	std::set<size_t>::iterator f_it, v_it; 
+	for(f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	    verts.insert(info->bot->faces[(*f_it)*3+0]*3);
+	    verts.insert(info->bot->faces[(*f_it)*3+1]*3);
+	    verts.insert(info->bot->faces[(*f_it)*3+2]*3);
+	}
+	point_t pt;
+	for(v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	    VMOVE(pt, &info->bot->vertices[*v_it]);
+	    center.x += pt[0]/verts.size();
+	    center.y += pt[1]/verts.size();
+	    center.z += pt[2]/verts.size();
+	}
+        Eigen::MatrixXd A(3, verts.size());
+	int vert_cnt = 0;
+	for(v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	    VMOVE(pt, &info->bot->vertices[*v_it]);
+	    A(0,vert_cnt) = pt[0] - center.x; 
+	    A(1,vert_cnt) = pt[1] - center.y; 
+	    A(2,vert_cnt) = pt[2] - center.z; 
+	    vert_cnt++;
+	}
+
+	Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeThinU);
+
+	// 4.  Normal is in column 3 of U matrix
+	ON_3dVector normal(svd.matrixU()(0,2), svd.matrixU()(1,2), svd.matrixU()(2,2));    
+
+	// 5.  Construct plane
+	ON_Plane new_plane(center, normal);
+        (*plane) = new_plane;
+/*
+	struct bu_vls name;
+	bu_vls_init(&name);
+	bu_vls_printf(&name, "fit_plane_%d.pl", patch_id);
+	FILE* plot_file = fopen(bu_vls_addr(&name), "w");
+	int r = int(256*drand48() + 1.0);
+	int g = int(256*drand48() + 1.0);
+	int b = int(256*drand48() + 1.0);
+        point_t pc;
+	for(f_it = faces->begin(); f_it != faces->end(); f_it++) {
+            point_t p1, p2, p3;
+            VMOVE(p1, &info->bot->vertices[info->bot->faces[(*f_it)*3+0]*3]);
+            VMOVE(p2, &info->bot->vertices[info->bot->faces[(*f_it)*3+1]*3]);
+            VMOVE(p3, &info->bot->vertices[info->bot->faces[(*f_it)*3+2]*3]);
+            VSUB2(p1, p1, pc);
+            VSUB2(p2, p2, pc);
+            VSUB2(p3, p3, pc);
+	    plot_face(p1, p2, p3, r, g ,b, plot_file);
+	}
+	pl_color(plot_file, 255, 255, 255);
+        point_t pn;
+        VSET(pc, center.x,center.y,center.z);
+	pdv_3move(plot_file, pc);
+        VSET(pn, normal.x,normal.y,normal.z);
+        VSCALE(pn, pn, 200);
+        VADD2(pn,pn,pc);
+	pdv_3cont(plot_file, pn);
+
+	fclose(plot_file);
+*/
+    }
+}
 
 /**********************************************************************************
  *
@@ -181,17 +251,6 @@ void plot_curve(struct rt_bot_internal *bot, std::vector<size_t> *pts, int r, in
     }
 }
 
-
-void plot_face(point_t p1, point_t p2, point_t p3, int r, int g, int b, FILE *c_plot)
-{
-    pl_color(c_plot, r, g, b);
-    pdv_3move(c_plot, p1);
-    pdv_3cont(c_plot, p2);
-    pdv_3move(c_plot, p1);
-    pdv_3cont(c_plot, p3);
-    pdv_3move(c_plot, p2);
-    pdv_3cont(c_plot, p3);
-}
 
 void plot_faces(std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info, const char *filename)
 {
@@ -436,64 +495,78 @@ size_t overlapping_edge_triangles(std::map< size_t, std::set<size_t> > *patches,
     size_t total_overlapping = 0;
     std::map< size_t, std::set<size_t> >::iterator p_it;
     for (p_it = patches->begin(); p_it != patches->end(); p_it++) {
-	ON_3dVector *vect = info->vectors.At(info->patch_to_plane[(*p_it).first]);
-	size_t overlap_cnt = 1;
-	size_t patch_overlapping = 0;
-	while (overlap_cnt != 0) {
-	    std::set<size_t> edge_triangles;
-	    EdgeList edges;
-	    find_edge_segments(&((*p_it).second), &edges, info);
-	    EdgeList::iterator e_it;
-	    std::set<size_t>::iterator sizet_it;
-	    // 1. build triangle set of edge triangles in patch.
-	    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
-		std::set<size_t> faces_from_edge = info->edge_to_face[(*e_it)];
-		for (sizet_it = faces_from_edge.begin(); sizet_it != faces_from_edge.end() ; sizet_it++) {
-		    if (info->face_to_patch[(*sizet_it)] == (*p_it).first) {
-			edge_triangles.insert((*sizet_it));
+	if ((*p_it).second.size() > 0) {
+	    ON_Plane plane; 
+	    fit_plane(&((*p_it).second), info, &plane);
+	    ON_Xform xf;
+	    xf.PlanarProjection(plane);
+	    size_t overlap_cnt = 1;
+	    size_t patch_overlapping = 0;
+	    while (overlap_cnt != 0) {
+		std::set<size_t> edge_triangles;
+		EdgeList edges;
+		find_edge_segments(&((*p_it).second), &edges, info);
+		EdgeList::iterator e_it;
+		std::set<size_t>::iterator sizet_it;
+		// 1. build triangle set of edge triangles in patch.
+		for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
+		    std::set<size_t> faces_from_edge = info->edge_to_face[(*e_it)];
+		    for (sizet_it = faces_from_edge.begin(); sizet_it != faces_from_edge.end() ; sizet_it++) {
+			if (info->face_to_patch[(*sizet_it)] == (*p_it).first) {
+			    edge_triangles.insert((*sizet_it));
+			}
 		    }
 		}
-	    }
-	    // 2. Find an overlapping triangle, remove it to its own patch, fix the edges, continue
-	    overlap_cnt = 0;
-	    for (sizet_it = edge_triangles.begin(); sizet_it != edge_triangles.end() ; sizet_it++) {
-		point_t normal;
-		point_t v0, v1, v2;
-		VSET(normal, vect->x, vect->y, vect->z);
-		pnt_project(&info->bot->vertices[info->bot->faces[(*sizet_it)*3+0]*3], &v0, normal);
-		pnt_project(&info->bot->vertices[info->bot->faces[(*sizet_it)*3+1]*3], &v1, normal);
-		pnt_project(&info->bot->vertices[info->bot->faces[(*sizet_it)*3+2]*3], &v2, normal);
-		edge_triangles.erase(*sizet_it);
-		std::set<size_t>::iterator ef_it2 = edge_triangles.begin();
-		for (ef_it2 = edge_triangles.begin(); ef_it2!=edge_triangles.end(); ef_it2++) {
-		    if ((*sizet_it) != (*ef_it2)) {
-			point_t u0, u1, u2;
-			pnt_project(&info->bot->vertices[info->bot->faces[(*ef_it2)*3+0]*3], &u0, normal);
-			pnt_project(&info->bot->vertices[info->bot->faces[(*ef_it2)*3+1]*3], &u1, normal);
-			pnt_project(&info->bot->vertices[info->bot->faces[(*ef_it2)*3+2]*3], &u2, normal);
-
-			int overlap = bn_coplanar_tri_tri_isect(v0, v1, v2, u0, u1, u2, 1);
-			if (overlap) {
-			    //std::cout << "Overlap: (" << *sizet_it << "," << *ef_it2 << ")\n";
-			    info->patch_cnt++;
-			    size_t new_patch = info->patch_cnt;
-			    (*patches)[new_patch].insert(*sizet_it);
-			    (*patches)[(*p_it).first].erase(*sizet_it);
-			    info->patch_to_plane[new_patch] = info->face_to_plane[*sizet_it];
-			    info->face_to_patch[*sizet_it] = new_patch;
-			    find_edge_segments(&((*p_it).second), &edges, info);
-			    overlap_cnt++;
-			    patch_overlapping++;
-			    total_overlapping++;
+		// 2. Find an overlapping triangle, remove it to its own patch, fix the edges, continue
+		overlap_cnt = 0;
+		for (sizet_it = edge_triangles.begin(); sizet_it != edge_triangles.end() ; sizet_it++) {
+		    point_t v0, v1, v2;
+		    ON_3dPoint onpt_v0(&info->bot->vertices[info->bot->faces[(*sizet_it)*3+0]*3]);
+		    ON_3dPoint onpt_v1(&info->bot->vertices[info->bot->faces[(*sizet_it)*3+1]*3]);
+		    ON_3dPoint onpt_v2(&info->bot->vertices[info->bot->faces[(*sizet_it)*3+2]*3]);
+		    onpt_v0.Transform(xf);
+		    onpt_v1.Transform(xf);
+		    onpt_v2.Transform(xf);
+		    VSET(v0, onpt_v0.x, onpt_v0.y, onpt_v0.z);
+		    VSET(v1, onpt_v1.x, onpt_v1.y, onpt_v1.z);
+		    VSET(v2, onpt_v2.x, onpt_v2.y, onpt_v2.z);
+		    edge_triangles.erase(*sizet_it);
+		    std::set<size_t>::iterator ef_it2 = edge_triangles.begin();
+		    for (ef_it2 = edge_triangles.begin(); ef_it2!=edge_triangles.end(); ef_it2++) {
+			if ((*sizet_it) != (*ef_it2)) {
+			    point_t u0, u1, u2;
+			    ON_3dPoint onpt_u0(&info->bot->vertices[info->bot->faces[(*ef_it2)*3+0]*3]);
+			    ON_3dPoint onpt_u1(&info->bot->vertices[info->bot->faces[(*ef_it2)*3+1]*3]);
+			    ON_3dPoint onpt_u2(&info->bot->vertices[info->bot->faces[(*ef_it2)*3+2]*3]);
+			    onpt_u0.Transform(xf);
+			    onpt_u1.Transform(xf);
+			    onpt_u2.Transform(xf);
+			    VSET(u0, onpt_u0.x, onpt_u0.y, onpt_u0.z);
+			    VSET(u1, onpt_u1.x, onpt_u1.y, onpt_u1.z);
+			    VSET(u2, onpt_u2.x, onpt_u2.y, onpt_u2.z);
+			    int overlap = bn_coplanar_tri_tri_isect(v0, v1, v2, u0, u1, u2, 1);
+			    if (overlap) {
+				//std::cout << "Overlap: (" << *sizet_it << "," << *ef_it2 << ")\n";
+				info->patch_cnt++;
+				size_t new_patch = info->patch_cnt;
+				(*patches)[new_patch].insert(*sizet_it);
+				(*patches)[(*p_it).first].erase(*sizet_it);
+				info->patch_to_plane[new_patch] = info->face_to_plane[*sizet_it];
+				info->face_to_patch[*sizet_it] = new_patch;
+				find_edge_segments(&((*p_it).second), &edges, info);
+				overlap_cnt++;
+				patch_overlapping++;
+				total_overlapping++;
+			    }
 			}
+			if (overlap_cnt > 0) break;
 		    }
 		    if (overlap_cnt > 0) break;
 		}
-		if (overlap_cnt > 0) break;
 	    }
+	    if (patch_overlapping > 0)
+		std::cout << "Patch " << (*p_it).first << " overlaps: " << patch_overlapping << "\n";
 	}
-	if (patch_overlapping > 0)
-	    std::cout << "Patch " << (*p_it).first << " overlaps: " << patch_overlapping << "\n";
     }
     return total_overlapping;
 }
