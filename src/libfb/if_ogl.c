@@ -260,10 +260,8 @@ HIDDEN struct modeflags {
       "Suppress dithering - else dither if not 24-bit buffer" },
     { 'c',	MODE_7MASK, MODE_7SWCMAP,
       "Perform software colormap - else use hardware colormap if possible" },
-    { 's',	MODE_9MASK, MODE_9NORMAL,
-      "Single buffer -  the same option as the default one" },
-    { 'S',	MODE_9MASK, MODE_9SINGLEBUF,
-      "Double buffer if possible - else single buffer by default" },
+    { 's',	MODE_9MASK, MODE_9SINGLEBUF,
+      "Single buffer -  else double buffer if possible" },
     { 'b',	MODE_11MASK, MODE_11COPY,
       "Fast pan and zoom using backbuffer copy -  else normal " },
     { 'D',	MODE_12DELAY_WRITES_TILL_FLUSH, MODE_12DELAY_WRITES_TILL_FLUSH,
@@ -1040,7 +1038,7 @@ fb_ogl_choose_visual(FBIO *ifp)
 	    }
 	    /* set flags and return choice */
 	    OGL(ifp)->soft_cmap_flag = !m_hard_cmap;
-	    SGI(ifp)->mi_doublebuffer = m_sing_buf;
+	    SGI(ifp)->mi_doublebuffer = m_doub_buf;
 	    return maxvip;
 	}
 

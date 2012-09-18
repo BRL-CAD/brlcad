@@ -249,10 +249,8 @@ HIDDEN struct modeflags {
       "Suppress dithering - else dither if not 24-bit buffer" },
     { 'c',	MODE_7MASK, MODE_7SWCMAP,
       "Perform software colormap - else use hardware colormap if possible" },
-     { 's',	MODE_9MASK, MODE_9NORMAL,
-      "Single buffer -  the same option as the default one" },
-    { 'S',	MODE_9MASK, MODE_9SINGLEBUF,
-      "Double buffer if possible - else single buffer by default" },
+    { 's',	MODE_9MASK, MODE_9SINGLEBUF,
+      "Single buffer - else double buffer if possible" },
     { 'b',	MODE_11MASK, MODE_11COPY,
       "Fast pan and zoom using backbuffer copy - else normal " },
     { 'D',	MODE_12DELAY_WRITES_TILL_FLUSH, MODE_12DELAY_WRITES_TILL_FLUSH,
@@ -2091,7 +2089,7 @@ wgl_choose_visual(FBIO *ifp)
     good = SetPixelFormat(WGL(ifp)->hdc, iPixelFormat, ppfd);
 
 
-    SGI(ifp)->mi_doublebuffer = 0;
+    SGI(ifp)->mi_doublebuffer = 1;
     WGL(ifp)->soft_cmap_flag = 1;
 
     if (good) return ppfd;
