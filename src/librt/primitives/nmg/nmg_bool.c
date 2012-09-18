@@ -42,6 +42,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "plot3.h"
 
 
 extern int nmg_class_nothing_broken;
@@ -55,6 +56,99 @@ struct dangling_faceuse_state {
 
 
 int debug_file_count=0;
+
+
+/**
+ * N M G _ P L O T _ O P E N _ E D G E S
+ *
+ * Find open edges, if any, in NMG object pointed to by magic_p and
+ * create a UNIX plot file containing these edges. 
+ *
+ * The prefix string will be appended to the front of the file name
+ * of the plot file.
+ *
+ * Returns -
+ * 0  No open edges, no plot file created.
+ * !0 Has open edges, plot file created.
+ */
+size_t
+nmg_plot_open_edges(const uint32_t *magic_p, const char *prefix)
+{
+    struct loopuse *lu;
+    struct edgeuse *eu;
+    const struct edgeuse *eur;
+    struct faceuse *newfu;
+    struct bu_ptbl faces;
+    struct face *fp;
+    struct faceuse *fu, *fu1, *fu2;
+    int done;
+    const char *manifolds = NULL;
+    point_t pt1, pt2;
+    size_t i;
+    FILE *plotfp = NULL;
+    struct bu_vls plot_file_name = BU_VLS_INIT_ZERO;
+    size_t cnt;
+
+    bu_ptbl_init(&faces, 64, "faces buffer");
+    nmg_face_tabulate(&faces, magic_p);
+
+    cnt = 0;
+    for (i = 0; i < (size_t)BU_PTBL_END(&faces) ; i++) {
+	fp = (struct face *)BU_PTBL_GET(&faces, i);
+	NMG_CK_FACE(fp);
+	fu = fu1 = fp->fu_p;
+	NMG_CK_FACEUSE(fu1);
+	fu2 = fp->fu_p->fumate_p;
+	NMG_CK_FACEUSE(fu2);
+	done = 0;
+	while (!done) {
+	    NMG_CK_FACEUSE(fu);
+	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		NMG_CK_LOOPUSE(lu);
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+			NMG_CK_EDGEUSE(eu);
+			eur = nmg_radial_face_edge_in_shell(eu);
+			newfu = eur->up.lu_p->up.fu_p;
+			while (manifolds &&
+			       NMG_MANIFOLDS(manifolds, newfu) &
+			       NMG_2MANIFOLD &&
+			       eur != eu->eumate_p) {
+			    eur = nmg_radial_face_edge_in_shell(eur->eumate_p);
+			    newfu = eur->up.lu_p->up.fu_p;
+			}
+			if (eur == eu->eumate_p) {
+			    VMOVE(pt1, eu->vu_p->v_p->vg_p->coord);
+			    VMOVE(pt2, eu->eumate_p->vu_p->v_p->vg_p->coord);
+			    if (!plotfp) {
+				bu_vls_sprintf(&plot_file_name, "%s.%zu.pl", prefix, magic_p);
+				if ((plotfp = fopen(bu_vls_addr(&plot_file_name), "wb")) == (FILE *)NULL) {
+				    bu_log("nmg_plot_open_edges(): Unable to create plot file (%s)\n", bu_vls_addr(&plot_file_name));
+				    bu_bomb("nmg_plot_open_edges(): Unable to create plot file.");
+				}
+			    }
+			    pdv_3line(plotfp, pt1, pt2);
+			    cnt++;
+			}
+		    }
+		}
+	    }
+	    if (fu == fu1) fu = fu2;
+	    if (fu == fu2) done = 1;
+	};
+
+    }
+
+    if (plotfp) {
+	(void)fclose(plotfp);
+	bu_vls_free(&plot_file_name);
+    }
+
+    bu_ptbl_free(&faces);
+
+    return cnt;
+}
+
 
 static void
 nmg_dangling_handler(uint32_t *longp, genptr_t state, int UNUSED(unused))
@@ -966,6 +1060,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	    }
 	} else {
 	    if (nmg_has_dangling_faces((uint32_t *)rA, (char *)NULL)) {
+		(void)nmg_plot_open_edges((const uint32_t *)rA, "open_edges");
 		bu_bomb("nmg_bool(): Dangling faces detected in rA after boolean\n");
 	    }
 	}
@@ -1521,3 +1616,4 @@ nmg_boolean(union tree *tp, struct model *m, const struct bn_tol *tol, struct re
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
