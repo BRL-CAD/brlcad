@@ -1943,7 +1943,8 @@ nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu
     NMG_CK_FACEUSE(fu2);
     if (eg) NMG_CK_EDGE_G_LSEG(eg);
 
-    memset((char *)rs, 0, sizeof(*rs));
+    memset((char *)rs, 0, sizeof(rs));
+
     rs->magic = NMG_RAYSTATE_MAGIC;
     rs->tol = tol;
     rs->vu = (struct vertexuse **)b->buffer;
