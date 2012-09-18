@@ -185,6 +185,11 @@ const struct bu_structparse rt_ehy_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+
+static int ehy_is_valid(struct rt_ehy_internal *ehy);
+static fastf_t ehy_dtol(const struct rt_ehy_internal *ehy,
+	const struct rt_tess_tol *ttol);
+
 /**
  * R T _ E H Y _ B B O X
  *
@@ -262,7 +267,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     fastf_t magsq_h;
     fastf_t mag_a, mag_h;
-    fastf_t c, f, r1, r2;
+    fastf_t c, r1, r2;
     mat_t R;
     mat_t Rinv;
     mat_t S;
@@ -270,26 +275,17 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_CK_DB_INTERNAL(ip);
 
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
-    RT_EHY_CK_MAGIC(xip);
 
-    /* compute |A| |H| */
-    mag_a = sqrt(MAGSQ(xip->ehy_Au));
-    mag_h = sqrt(magsq_h = MAGSQ(xip->ehy_H));
+    if (!ehy_is_valid(xip)) {
+	return -2;
+    }
+
+    mag_a = MAGSQ(xip->ehy_Au); /* a is unit vector, so |A|^2 == |A| */
+    magsq_h = MAGSQ(xip->ehy_H);
+    mag_h = sqrt(magsq_h);
     r1 = xip->ehy_r1;
     r2 = xip->ehy_r2;
     c = xip->ehy_c;
-    /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0, c > 0 */
-    if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
-	|| r1 < 0.0 || r2 < 0.0 || c < 0.0) {
-	return -2;		/* BAD, too small */
-    }
-
-    /* Check for A.H == 0 */
-    f = VDOT(xip->ehy_Au, xip->ehy_H) / mag_h;
-    if (!NEAR_ZERO(f, RT_DOT_TOL)) {
-	return -2;		/* BAD */
-    }
 
     /*
      * EHY is ok
@@ -671,42 +667,6 @@ rt_ehy_class(void)
     return 0;
 }
 
-static int
-ehy_is_valid(struct rt_ehy_internal *ehy)
-{
-    fastf_t mag_h, cos_angle_ah;
-    vect_t a, h;
-
-    RT_EHY_CK_MAGIC(ehy);
-
-    if (!(ehy->ehy_r1 > 0.0 && ehy->ehy_r2 > 0.0 && ehy->ehy_c > 0.0)) {
-	return 0;
-    }
-
-    VMOVE(h, ehy->ehy_H);
-    VMOVE(a, ehy->ehy_Au);
-
-    /* Check that A is a unit vector. If it is, then it should be true that
-     * |A| == |A|^2 == 1.0.
-     */
-    if (!NEAR_EQUAL(MAGSQ(a), 1.0, RT_LEN_TOL)) {
-	return 0;
-    }
-
-    /* check that |H| > 0.0 */
-    mag_h = MAGNITUDE(h);
-    if (NEAR_ZERO(mag_h, RT_LEN_TOL)) {
-	return 0;
-    }
-
-    /* check that A and H are orthogonal */
-    cos_angle_ah = VDOT(a, h) / mag_h;
-    if (!NEAR_ZERO(cos_angle_ah, RT_DOT_TOL)) {
-	return 0;
-    }
-
-    return 1;
-}
 
 /**
  * R T _ E H Y _ P L O T
@@ -751,32 +711,13 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     VREVERSE(&R[8], Hu);
     bn_mat_trn(invR, R);			/* inv of rot mat is trn */
 
-    /*
-     * Establish tolerances
-     */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0)
-	dtol = 0.0;		/* none */
-    else
-	/* Convert rel to absolute by scaling by smallest side */
-	dtol = ttol->rel * 2 * r2;
-    if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0) {
-	    /* No tolerance given, use a default */
-	    dtol = 2 * 0.10 * r2;	/* 10% */
-	}
-	/* Use absolute-ized relative tolerance */
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || dtol > ttol->abs)
-	    dtol = ttol->abs;
-    }
+    dtol = ehy_dtol(xip, ttol);
 
-    /* To ensure normal tolerance, remain below this angle */
-    if (ttol->norm > 0.0)
+    /* stay below ntol to ensure normal tolerance */
+    ntol = M_PI;
+    if (ttol->norm > 0.0) {
 	ntol = ttol->norm;
-    else
-	/* tolerate everything */
-	ntol = bn_pi;
+    }
 
     /*
      * build ehy from 2 hyperbolas
@@ -980,7 +921,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 int
 rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2, cprime;
+    fastf_t c, dtol, mag_a, mag_h, ntol, r1, r2, cprime;
     fastf_t **ellipses, theta_prev, theta_new;
     int *pts_dbl, face, i, j, nseg;
     int jj, na, nb, nell, recalc_b;
@@ -1004,31 +945,17 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
-    RT_EHY_CK_MAGIC(xip);
 
-    /*
-     * make sure ehy description is valid
-     */
+    if (!ehy_is_valid(xip)) {
+	return 1;
+    }
 
-    /* compute |A| |H| */
-    mag_a = MAGSQ(xip->ehy_Au);	/* should already be unit vector */
+    mag_a = MAGSQ(xip->ehy_Au); /* a is unit vector, so |A|^2 == |A| */
     mag_h = MAGNITUDE(xip->ehy_H);
     c = xip->ehy_c;
     cprime = c / mag_h;
     r1 = xip->ehy_r1;
     r2 = xip->ehy_r2;
-    /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0, c > 0 */
-    if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
-	|| r1 <= 0.0 || r2 <= 0.0 || c <= 0.) {
-	return 1;		/* BAD */
-    }
-
-    /* Check for A.H == 0 */
-    f = VDOT(xip->ehy_Au, xip->ehy_H) / mag_h;
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return 1;		/* BAD */
-    }
 
     /* make unit vectors in A, H, and BxH directions */
     VMOVE(Hu, xip->ehy_H);
@@ -1053,32 +980,13 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bn_mat_mul(SoR, S, R);
     bn_mat_mul(invRoS, invR, S);
 
-    /*
-     * Establish tolerances
-     */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0)
-	dtol = 0.0;		/* none */
-    else
-	/* Convert rel to absolute by scaling by smallest side */
-	dtol = ttol->rel * 2 * r2;
-    if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0) {
-	    /* No tolerance given, use a default */
-	    dtol = 2 * 0.10 * r2;	/* 10% */
-	}
-	/* Use absolute-ized relative tolerance */
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || dtol > ttol->abs)
-	    dtol = ttol->abs;
-    }
+    dtol = ehy_dtol(xip, ttol);
 
-    /* To ensure normal tolerance, remain below this angle */
-    if (ttol->norm > 0.0)
+    /* stay below ntol to ensure normal tolerance */
+    ntol = M_PI;
+    if (ttol->norm > 0.0) {
 	ntol = ttol->norm;
-    else
-	/* tolerate everything */
-	ntol = bn_pi;
+    }
 
     /*
      * build ehy from 2 hyperbolas
@@ -1780,6 +1688,68 @@ rt_ehy_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
+static int
+ehy_is_valid(struct rt_ehy_internal *ehy)
+{
+    fastf_t mag_h, cos_angle_ah;
+    vect_t a, h;
+
+    RT_EHY_CK_MAGIC(ehy);
+
+    if (!(ehy->ehy_r1 > 0.0 && ehy->ehy_r2 > 0.0 && ehy->ehy_c > 0.0)) {
+	return 0;
+    }
+
+    VMOVE(h, ehy->ehy_H);
+    VMOVE(a, ehy->ehy_Au);
+
+    /* Check that A is a unit vector. If it is, then it should be true that
+     * |A| == |A|^2 == 1.0.
+     */
+    if (!NEAR_EQUAL(MAGSQ(a), 1.0, RT_LEN_TOL)) {
+	return 0;
+    }
+
+    /* check that |H| > 0.0 */
+    mag_h = MAGNITUDE(h);
+    if (NEAR_ZERO(mag_h, RT_LEN_TOL)) {
+	return 0;
+    }
+
+    /* check that A and H are orthogonal */
+    cos_angle_ah = VDOT(a, h) / mag_h;
+    if (!NEAR_ZERO(cos_angle_ah, RT_DOT_TOL)) {
+	return 0;
+    }
+
+    return 1;
+}
+
+static fastf_t
+ehy_dtol(const struct rt_ehy_internal *ehy, const struct rt_tess_tol *ttol)
+{
+    fastf_t dtol, rel_tol, abs_tol;
+    int rel_tol_is_valid;
+
+    rel_tol = ttol->rel;
+    abs_tol = ttol->abs;
+
+    rel_tol_is_valid = 0;
+    if (rel_tol > 0.0 && rel_tol < 1.0) {
+	rel_tol_is_valid = 1;
+    }
+
+    if (abs_tol > 0.0 && (!rel_tol_is_valid || rel_tol > abs_tol)) {
+	dtol = abs_tol;
+    } else {
+	if (!rel_tol_is_valid) {
+	    rel_tol = .1; /* default */
+	}
+	dtol = 2.0 * rel_tol * ehy->ehy_r2;
+    }
+
+    return dtol;
+}
 
 /** @} */
 /*
