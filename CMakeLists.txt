@@ -1470,10 +1470,12 @@ else(JNI_FOUND AND JAVA_FOUND)
 endif(JNI_FOUND AND JAVA_FOUND)
 mark_as_advanced(BRLCAD_ENABLE_RTSERVER)
 
-# Find X11 if it is enabled
+# Mark X11 as available if it is enabled and we find Xlib.h
 if(BRLCAD_ENABLE_X11)
   include(${BRLCAD_CMAKE_DIR}/FindX11.cmake)
-  BRLCAD_INCLUDE_FILE(X11/Xlib.h HAVE_X11_XLIB_H)
+  if(X11_Xlib_INCLUDE_PATH AND CONFIG_H_FILE)
+    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_X11_XLIB_H 1\n")
+  endif(X11_Xlib_INCLUDE_PATH AND CONFIG_H_FILE)
 endif(BRLCAD_ENABLE_X11)
 
 # math library
