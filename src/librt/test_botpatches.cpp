@@ -151,7 +151,8 @@ void plot_face(point_t p1, point_t p2, point_t p3, int r, int g, int b, FILE *c_
 }
 
 
-// Use PCA to fit a plane to vertex points
+// Use SVD algorithm from Soderkvist to fit a plane to vertex points
+// http://www.math.ltu.se/~jove/courses/mam208/svd.pdf
 void fit_plane(std::set<size_t> *faces, struct Manifold_Info *info, ON_Plane *plane) {
     if (faces->size() > 0) {
 	ON_3dPoint center(0.0, 0.0, 0.0);
