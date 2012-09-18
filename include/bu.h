@@ -250,7 +250,7 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
  *
  * Memory acquired with BU_GET() should be returned with BU_PUT().
  */
-#define BU_PUT(_ptr, _type) (uint8_t)(*(_ptr)) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " BU_FLSTR); _ptr = NULL
+#define BU_PUT(_ptr, _type) *(uint8_t *)(_ptr) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " BU_FLSTR); _ptr = NULL
 
 
 /**
