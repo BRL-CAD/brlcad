@@ -388,7 +388,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
     vflags_t f;
 
     char buf[BUFSIZ] = {0};
-    char c;
+    int c;
 
     struct bu_vls fbuf = BU_VLS_INIT_ZERO; /* % format buffer */
     const char *fbufp  = NULL;
