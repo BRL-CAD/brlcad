@@ -149,7 +149,7 @@ int parse_args(ac, av)
 	switch (c) {
 	    case 'a'	: autosize = !autosize; break;
 	    case 'c'	: clear = !clear; break;
-	    case 'd'	: if (isprint(*bu_optarg)) {
+	    case 'd'	: if (isprint((int)*bu_optarg)) {
 		memset(scsi_device, 0, sizeof(scsi_device));
 		bu_strlcpy(scsi_device, bu_optarg, sizeof(scsi_device));
 	    } else
