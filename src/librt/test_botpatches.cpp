@@ -485,7 +485,7 @@ size_t shift_edge_triangles(std::map< size_t, std::set<size_t> > *patches, size_
     return faces_to_shift.size();
 }
 
-void verify_patch_integrity(std::set<size_t> *orig_faces, struct Manifold_Info *info) {
+void verify_patch_integrity(size_t orig_patch, std::set<size_t> *orig_faces, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info) {
     std::set<size_t> faces = *orig_faces;
     std::queue<size_t> face_queue;
     face_queue.push((*faces.begin()));
@@ -511,12 +511,12 @@ void verify_patch_integrity(std::set<size_t> *orig_faces, struct Manifold_Info *
 	    std::queue<size_t> face_queue;
 	    face_queue.push((*faces.begin()));
 	    faces.erase(face_queue.front());
-	    orig_faces->erase(face_queue.front());
+	    (*patches)[orig_patch].erase(face_queue.front());
 	    info->patch_to_plane[new_patch] = info->face_to_plane[face_queue.front()];
 	    while (!face_queue.empty()) {
 		size_t face_num = face_queue.front();
 		face_queue.pop();
-		info->patches[new_patch].insert(face_num);
+		(*patches)[new_patch].insert(face_num);
 		info->face_to_patch[face_num] = new_patch;
 		std::set<size_t> connected_faces;
 		std::set<size_t>::iterator cf_it;
@@ -525,8 +525,7 @@ void verify_patch_integrity(std::set<size_t> *orig_faces, struct Manifold_Info *
 		    if(faces.find((*cf_it)) != faces.end()) {
 			face_queue.push((*cf_it));
 			faces.erase((*cf_it));
-			orig_faces->erase(*cf_it);
-
+			(*patches)[orig_patch].erase(*cf_it);
 		    }
 		}
 	    }
@@ -622,7 +621,7 @@ size_t overlapping_edge_triangles(std::map< size_t, std::set<size_t> > *patches,
 		std::cout << "Patch " << (*p_it).first << " overlaps: " << patch_overlapping << "\n";
 
 
-	    verify_patch_integrity(&((*p_it).second), info);
+	    verify_patch_integrity((*p_it).first, &((*p_it).second), patches, info);
 	}
     }
     return total_overlapping;
@@ -952,8 +951,11 @@ void find_edges(struct Manifold_Info *info)
 		ON_NurbsCurve *curve_nurb =  interpolateLocalCubicCurve(curve_pnts);
 		int c3i = info->brep->AddEdgeCurve(curve_nurb);
 		ON_BrepVertex& StartV = info->brep->m_V[vs_id];
+		StartV.m_tolerance = 1e-3;
 		ON_BrepVertex& EndV= info->brep->m_V[ve_id];
+		EndV.m_tolerance = 1e-3;
 		ON_BrepEdge& edge = info->brep->NewEdge(StartV, EndV, c3i, NULL ,0);
+		edge.m_tolerance = 1e-3;
 
 		// Let the patches know they have a curve associated with them.
 		info->patch_edges[(*p_it).first].insert(edge.m_edge_index);
@@ -1089,8 +1091,45 @@ void find_loops(struct Manifold_Info *info)
 	if(loops.size() > 1) {
 	    std::cout << "Patch " << (*p_it).first << " outer loop: " << outer_loop << "\n";
 	}
+
 	// Do pullbacks to generate trimming curves in 2D, use them to create BrepTrim and BrepLoop structures for
 	// outer and inner trimming loops
+	
+	ON_BrepFace& face = info->brep->m_F[(*p_it).first];
+        // Start with outer loop
+        ON_BrepLoop& loop = info->brep->NewLoop(ON_BrepLoop::outer, face);
+        // build surface tree
+        brlcad::SurfaceTree* st = new brlcad::SurfaceTree(&face, false);
+
+	std::vector<size_t>::iterator loop_it;
+        std::vector<size_t> *outer_loop_edges = &(loops[outer_loop]);
+        int vert_prev = -1;
+        for(loop_it = outer_loop_edges->begin(); loop_it != outer_loop_edges->end(); loop_it++) {
+           size_t curr_edge = (*loop_it);
+           // Will we need to flip the trim?
+           bool trim_rev = false;
+	   ON_BrepEdge& edge = info->brep->m_E[curr_edge];
+	   if(vert_prev == -1) {
+             vert_prev = edge.m_vi[1];
+           } else {
+             if (vert_prev == edge.m_vi[0]) {
+		 vert_prev = edge.m_vi[1];
+	     } else {
+		 vert_prev = edge.m_vi[0];
+                 trim_rev = true;
+             }
+           }
+           // get 3d curve for pullback
+	   const ON_Curve* edge_curve = edge.EdgeCurveOf();
+           
+           // do pullback, add 2d curve to brep array
+           ON_Curve *trim_curve = pullback_curve(&face, edge_curve, st);
+	   int c2i = info->brep->AddTrimCurve(trim_curve);
+           ON_BrepTrim& trim = info->brep->NewTrim(edge, trim_rev, loop, c2i);
+           trim.m_type = ON_BrepTrim::boundary;
+           trim.m_tolerance[0] = 1e-3;
+           trim.m_tolerance[1] = 1e-3;
+        }
     }
 }
 
@@ -1242,7 +1281,7 @@ int main(int argc, char *argv[])
     find_edges(&info);
 
     // Now that we have edge curves, we know enough to construct faces and surfaces
-    //find_surfaces(&info);
+    find_surfaces(&info);
 
     // Build the loops
     find_loops(&info);
