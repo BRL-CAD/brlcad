@@ -597,6 +597,7 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
     for (i = 0; i < polyA_2d.p_num_contours; ++i) {
 	for (beginA = 0; beginA < polyA_2d.p_contour[i].pc_num_points; ++beginA) {
 	    vect2d_t dirA;
+	    vect_t u_dirA;
 
 	    if (beginA == polyA_2d.p_contour[i].pc_num_points-1)
 		endA = 0;
@@ -604,8 +605,9 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 		endA = beginA + 1;
 
 	    V2SUB2(dirA, polyA_2d.p_contour[i].pc_point[endA], polyA_2d.p_contour[i].pc_point[beginA]);
-	    dirA[2] = 0.0;
-	    VUNITIZE(dirA);
+	    V2MOVE(u_dirA, dirA);
+	    u_dirA[2] = 0.0;
+	    VUNITIZE(u_dirA);
 
 	    for (j = 0; j < polyB_2d.p_num_contours; ++j) {
 		for (beginB = 0; beginB < polyB_2d.p_contour[j].pc_num_points; ++beginB) {
@@ -618,27 +620,30 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 			endB = beginB + 1;
 
 		    V2SUB2(dirB, polyB_2d.p_contour[j].pc_point[endB], polyB_2d.p_contour[j].pc_point[beginB]);
-		    dirB[2] = 0.0;
-		    VUNITIZE(dirB);
 
 		    if (bn_isect_lseg2_lseg2(distvec,
 					     polyA_2d.p_contour[i].pc_point[beginA], dirA,
 					     polyB_2d.p_contour[j].pc_point[beginB], dirB,
 					     &gedp->ged_wdbp->wdb_tol) == 1) {
 			fastf_t dist;
+			vect_t u_dirB;
+
+			V2MOVE(u_dirB, dirB);
+			u_dirB[2] = 0.0;
+			VUNITIZE(u_dirB);
 
 			/* Check to see if intersection is near an end point */
 			if (NEAR_EQUAL(distvec[0], 0.0, tol_dist_sq)) {
-			    dist = bn_dist_line2_point2(polyB_2d.p_contour[j].pc_point[beginB], dirB,
+			    dist = bn_dist_line2_point2(polyB_2d.p_contour[j].pc_point[beginB], u_dirB,
 							polyA_2d.p_contour[i].pc_point[beginA]);
 			} else if (NEAR_EQUAL(distvec[0], 1.0, tol_dist_sq)) {
-			    dist = bn_dist_line2_point2(polyB_2d.p_contour[j].pc_point[beginB], dirB,
+			    dist = bn_dist_line2_point2(polyB_2d.p_contour[j].pc_point[beginB], u_dirB,
 							polyA_2d.p_contour[i].pc_point[endA]);
 			} else if (NEAR_EQUAL(distvec[1], 0.0, tol_dist_sq)) {
-			    dist = bn_dist_line2_point2(polyA_2d.p_contour[i].pc_point[beginA], dirA,
+			    dist = bn_dist_line2_point2(polyA_2d.p_contour[i].pc_point[beginA], u_dirA,
 							polyB_2d.p_contour[j].pc_point[beginB]);
 			} else if (NEAR_EQUAL(distvec[1], 1.0, tol_dist_sq)) {
-			    dist = bn_dist_line2_point2(polyA_2d.p_contour[i].pc_point[beginA], dirA,
+			    dist = bn_dist_line2_point2(polyA_2d.p_contour[i].pc_point[beginA], u_dirA,
 							polyB_2d.p_contour[j].pc_point[endB]);
 			} else {
 			    dist = 1.0;
