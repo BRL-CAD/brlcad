@@ -1678,6 +1678,9 @@ interpolateCurve(ON_2dPointArray& samples);
 extern NURBS_EXPORT int
 check_pullback_singularity_bridge(const ON_Surface *surf, const ON_2dPoint &p1, const ON_2dPoint &p2);
 
+extern NURBS_EXPORT ON_NurbsCurve*
+interpolateLocalCubicCurve(const ON_3dPointArray &Q);
+
 #endif
 
 /*

@@ -443,12 +443,12 @@ interpolateLocalCubicCurve(ON_2dPointArray &Q) {
 }
 
 ON_NurbsCurve*
-interpolateLocalCubicCurve(ON_3dPointArray &Q)
+interpolateLocalCubicCurve(const ON_3dPointArray &Q)
 {
     int num_samples = Q.Count();
     int num_segments = Q.Count() - 1;
     int qsize = num_samples + 3;
-    std::vector<ON_3dVector> qarray(qsize);
+    std::vector<ON_3dVector> qarray(qsize + 1);
     ON_3dVector *q = &qarray[1];
 
     for (int i = 1; i < Q.Count(); i++) {
