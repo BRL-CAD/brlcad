@@ -35,11 +35,8 @@
 
 #include "./ged_private.h"
 
-/* bu_getopt() options */
-char *bot_fuse_options = "sp";
-char *bot_fuse_options_str = "[-s|-p]";
 
-size_t
+static size_t
 show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name, int out_type)
 {
     struct loopuse *lu;
@@ -108,10 +105,10 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
 				    bu_vls_sprintf(&plot_file_name, "%s.%zu.pl", name, magic_p);
 				    if ((plotfp = fopen(bu_vls_addr(&plot_file_name), "wb")) == (FILE *)NULL) {
 					bu_vls_free(&plot_file_name);
-					bu_log("Error, unable to create plot file (%s), open edge test failed.\n", 
-						bu_vls_addr(&plot_file_name));
+					bu_log("Error, unable to create plot file (%s), open edge test failed.\n",
+					       bu_vls_addr(&plot_file_name));
 					return 0;
-				    } 
+				    }
 				}
 				pdv_3line(plotfp, pt1, pt2);
 			    }
@@ -161,6 +158,10 @@ ged_bot_fuse(struct ged *gedp, int argc, const char **argv)
     int out_type = 0; /* open edge output type: 0 = none, 1 = show, 2 = plot */
     size_t open_cnt;
     struct bu_vls name_prefix = BU_VLS_INIT_ZERO;
+
+    /* bu_getopt() options */
+    static const char *bot_fuse_options = "sp";
+    static const char *bot_fuse_options_str = "[-s|-p]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -289,9 +290,9 @@ ged_bot_fuse(struct ged *gedp, int argc, const char **argv)
 	nmg_km(m);
     } else {
 	/* catch */
-	    BU_UNSETJUMP;
-	    bu_vls_printf(gedp->ged_result_str, "%s: %s fuse failed (2).\n", argv[0], argv[i+1]);
-	    return GED_ERROR;
+	BU_UNSETJUMP;
+	bu_vls_printf(gedp->ged_result_str, "%s: %s fuse failed (2).\n", argv[0], argv[i+1]);
+	return GED_ERROR;
     }
 
     RT_DB_INTERNAL_INIT(&intern2);
