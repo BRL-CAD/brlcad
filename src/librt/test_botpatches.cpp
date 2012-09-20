@@ -1057,15 +1057,20 @@ void find_loops(struct Manifold_Info *info)
 	    std::queue<size_t> edge_queue;
 	    edge_queue.push(*(curr_edges.begin()));
 	    curr_edges.erase(edge_queue.front());
+	    int vert_to_match = info->brep->m_E[edge_queue.front()].m_vi[0];
 	    while (!edge_queue.empty()) {
 		size_t curr_edge = edge_queue.front();
 		edge_queue.pop();
 		loops[curr_loop].push_back(curr_edge);
 		ON_BrepEdge& edge = info->brep->m_E[curr_edge];
+                if(vert_to_match == edge.m_vi[0]) {
+                  vert_to_match = edge.m_vi[1];
+                } else {
+                  vert_to_match = edge.m_vi[0];
+                }
 		// use vert_to_edges to assemble other curves
 		std::set<size_t> candidate_edges;
-		candidate_edges.insert(vert_to_edges[edge.m_vi[0]].begin(), vert_to_edges[edge.m_vi[0]].end());
-		candidate_edges.insert(vert_to_edges[edge.m_vi[1]].begin(), vert_to_edges[edge.m_vi[1]].end());
+		candidate_edges.insert(vert_to_edges[vert_to_match].begin(), vert_to_edges[vert_to_match].end());
 		candidate_edges.erase(curr_edge);
 		for (std::set<size_t>::iterator c_it = candidate_edges.begin(); c_it != candidate_edges.end(); c_it++) {
 		    if (curr_edges.find(*c_it) != curr_edges.end()) {
@@ -1104,21 +1109,25 @@ void find_loops(struct Manifold_Info *info)
 	std::vector<size_t>::iterator loop_it;
         std::vector<size_t> *outer_loop_edges = &(loops[outer_loop]);
         int vert_prev = -1;
-        for(loop_it = outer_loop_edges->begin(); loop_it != outer_loop_edges->end(); loop_it++) {
+	std::cout << "Patch " << (*p_it).first << " outer loop edges: \n";
+	bool trim_rev = false;
+	for(loop_it = outer_loop_edges->begin(); loop_it != outer_loop_edges->end(); loop_it++) {
            size_t curr_edge = (*loop_it);
            // Will we need to flip the trim?
-           bool trim_rev = false;
 	   ON_BrepEdge& edge = info->brep->m_E[curr_edge];
-	   if(vert_prev == -1) {
-             vert_prev = edge.m_vi[1];
-           } else {
-             if (vert_prev == edge.m_vi[0]) {
-		 vert_prev = edge.m_vi[1];
-	     } else {
-		 vert_prev = edge.m_vi[0];
-                 trim_rev = true;
-             }
-           }
+	   if(vert_prev != -1) {
+	       if (vert_prev == edge.m_vi[0]) {
+		   trim_rev = false;
+	       } else {
+		   trim_rev = true;
+	       }
+	   }
+	   if(trim_rev) {
+	       vert_prev = edge.m_vi[0];
+	   } else {
+	       vert_prev = edge.m_vi[1];
+	   }
+	   std::cout << "edge verts: " << edge.m_vi[0] << "," << edge.m_vi[1] << " flip=" << trim_rev << "\n";
            // get 3d curve for pullback
 	   const ON_Curve* edge_curve = edge.EdgeCurveOf();
            
