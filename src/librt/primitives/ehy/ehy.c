@@ -266,7 +266,11 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct ehy_specific *ehy;
 
     fastf_t magsq_h;
-    fastf_t mag_a, mag_h;
+#if 0
+    /* unused compile error */
+    fastf_t mag_a;
+#endif
+    fastf_t mag_h;
     fastf_t c, r1, r2;
     mat_t R;
     mat_t Rinv;
@@ -280,7 +284,10 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	return -2;
     }
 
+#if 0
+    /* unused compile error */
     mag_a = MAGSQ(xip->ehy_Au); /* a is unit vector, so |A|^2 == |A| */
+#endif
     magsq_h = MAGSQ(xip->ehy_H);
     mag_h = sqrt(magsq_h);
     r1 = xip->ehy_r1;
@@ -921,7 +928,11 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 int
 rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    fastf_t c, dtol, mag_a, mag_h, ntol, r1, r2, cprime;
+#if 0
+    /* unused compile error */
+    fastf_t mag_a;
+#endif
+    fastf_t c, dtol, mag_h, ntol, r1, r2, cprime;
     fastf_t **ellipses, theta_prev, theta_new;
     int *pts_dbl, face, i, j, nseg;
     int jj, na, nb, nell, recalc_b;
@@ -950,7 +961,10 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	return 1;
     }
 
+#if 0
+    /* unused compile error */
     mag_a = MAGSQ(xip->ehy_Au); /* a is unit vector, so |A|^2 == |A| */
+#endif
     mag_h = MAGNITUDE(xip->ehy_H);
     c = xip->ehy_c;
     cprime = c / mag_h;
