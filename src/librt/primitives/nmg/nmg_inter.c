@@ -6980,7 +6980,7 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 	status = (-1);
     }
 
-    if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt,
+    if (V3RPP_DISJOINT_TOL(f2->min_pt, f2->max_pt,
 			   f1->min_pt, f1->max_pt, bs.tol.dist)) {
 	return;
     }
@@ -7470,8 +7470,8 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	nmg_ck_vs_in_region(s2->r_p, tol);
     }
 
-    /* test if shell s1 and s2 overlap by at least distance tolerance */
-    if (!V3RPP_OVERLAP_TOL(sa1->min_pt, sa1->max_pt, sa2->min_pt, sa2->max_pt, tol->dist)) {
+    /* test if shell s1 and s2 disjoint by at least distance tolerance */
+    if (V3RPP_DISJOINT_TOL(sa1->min_pt, sa1->max_pt, sa2->min_pt, sa2->max_pt, tol->dist)) {
 	return;
     }
 
@@ -7526,9 +7526,9 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	NMG_CK_FACE_G_PLANE(f1->g.plane_p);
 
 	/* test if the face f1 bounding box and isect bounding box
-	 * by at least distance tolerance
+	 * are disjoint by at least distance tolerance
 	 */
-	if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
+	if (V3RPP_DISJOINT_TOL(f1->min_pt, f1->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
 	    NMG_INDEX_SET(flags, f1);
 	    continue;
 	}
@@ -7558,9 +7558,9 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	    if (NMG_INDEX_IS_SET(flags, f2)) continue;
 
 	    /* test if the face f2 bounding box and isect bounding box
-	     * overlap by at least distance tolerance
+	     * are disjoint by at least distance tolerance
 	     */
-	    if (!V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
+	    if (V3RPP_DISJOINT_TOL(f2->min_pt, f2->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
 		NMG_INDEX_SET(flags, f2);
 		continue;
 	    }
