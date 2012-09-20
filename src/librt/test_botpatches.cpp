@@ -33,6 +33,7 @@ struct Manifold_Info {
 
     std::map< size_t, std::set<size_t> > patches;
     std::map< size_t, std::set<size_t> > patch_edges;
+    std::map< size_t, std::vector<size_t> > polycurves;
 
     VertToEdge vert_to_edge;
     VertToPatch vert_to_patch;
@@ -806,7 +807,6 @@ void bot_partition(struct Manifold_Info *info)
 void find_edges(struct Manifold_Info *info)
 {
     std::map< size_t, size_t> vert_to_m_V;  // Keep mapping between vertex index being used in Brep and BoT index
-    std::map< size_t, std::vector<size_t> > polycurves;
     std::map< size_t, std::set<size_t> >::iterator p_it;
     std::map< size_t, EdgeList > all_patch_edges;
     for (p_it = info->patches.begin(); p_it != info->patches.end(); p_it++) {
@@ -896,7 +896,7 @@ void find_edges(struct Manifold_Info *info)
 		    }
 		}
 		// Get curve ID number
-		size_t curve_id = polycurves.size();
+		size_t curve_id = info->polycurves.size();
 
 		// If we have a loop, need different halting conditions for
 		// curve assembly.
@@ -914,7 +914,7 @@ void find_edges(struct Manifold_Info *info)
 		while (start_end_cnt <= threshold) {
 		    if (next_pt == start_end.second) start_end_cnt++;
 		    size_t old_pt = next_pt;
-		    polycurves[curve_id].push_back(old_pt);
+		    info->polycurves[curve_id].push_back(old_pt);
 		    next_pt = *(vert_to_verts[old_pt].begin());
 		    vert_to_verts[next_pt].erase(old_pt);
 		}
@@ -945,8 +945,9 @@ void find_edges(struct Manifold_Info *info)
                 // projections.  May even need a different fit for those situations - worst case,
                 // use linear edges instead of smooth approximations for all curves that initially failed the
                 // overlapping triangles test.
-		for (v_it = polycurves[curve_id].begin(); v_it != polycurves[curve_id].end(); v_it++) {
-		    curve_pnts.Append(ON_3dPoint(&info->bot->vertices[(*v_it)]));
+		for (v_it = info->polycurves[curve_id].begin(); v_it != info->polycurves[curve_id].end(); v_it++) {
+		    ON_3dPoint pt_3d(&info->bot->vertices[(*v_it)]);
+		    curve_pnts.Append(pt_3d);
 		}
 		ON_NurbsCurve *curve_nurb =  interpolateLocalCubicCurve(curve_pnts);
 		int c3i = info->brep->AddEdgeCurve(curve_nurb);
@@ -965,8 +966,8 @@ void find_edges(struct Manifold_Info *info)
 		int r = int(256*drand48() + 1.0);
 		int g = int(256*drand48() + 1.0);
 		int b = int(256*drand48() + 1.0);
-		plot_curve(info->bot, &(polycurves[curve_id]), r, g, b, pcurveplot);
-		plot_curve(info->bot, &(polycurves[curve_id]), r, g, b, curves_plot);
+		plot_curve(info->bot, &(info->polycurves[curve_id]), r, g, b, pcurveplot);
+		plot_curve(info->bot, &(info->polycurves[curve_id]), r, g, b, curves_plot);
 
 		pl_color(nurbs_curves, r, g, b);
 		double pt1[3], pt2[3];
@@ -1109,7 +1110,7 @@ void find_loops(struct Manifold_Info *info)
 	std::vector<size_t>::iterator loop_it;
         std::vector<size_t> *outer_loop_edges = &(loops[outer_loop]);
         int vert_prev = -1;
-	std::cout << "Patch " << (*p_it).first << " outer loop edges: \n";
+	//std::cout << "Patch " << (*p_it).first << " outer loop edges: \n";
 	bool trim_rev = false;
 	for(loop_it = outer_loop_edges->begin(); loop_it != outer_loop_edges->end(); loop_it++) {
            size_t curr_edge = (*loop_it);
@@ -1127,17 +1128,29 @@ void find_loops(struct Manifold_Info *info)
 	   } else {
 	       vert_prev = edge.m_vi[1];
 	   }
-	   std::cout << "edge verts: " << edge.m_vi[0] << "," << edge.m_vi[1] << " flip=" << trim_rev << "\n";
-           // get 3d curve for pullback
-	   const ON_Curve* edge_curve = edge.EdgeCurveOf();
-           
-           // do pullback, add 2d curve to brep array
-           ON_Curve *trim_curve = pullback_curve(&face, edge_curve, st);
+	   //std::cout << "edge verts: " << edge.m_vi[0] << "," << edge.m_vi[1] << " flip=" << trim_rev << "\n";
+
+	   ON_2dPointArray curve_pnts_2d;
+	   std::vector<size_t>::iterator v_it;
+	   for (v_it = info->polycurves[curr_edge].begin(); v_it != info->polycurves[curr_edge].end(); v_it++) {
+	       ON_3dPoint pt_3d(&info->bot->vertices[(*v_it)]);
+	       ON_2dPoint pt_2d;
+	       if(get_closest_point(pt_2d, &face, pt_3d, st)) {
+		   curve_pnts_2d.Append(pt_2d);
+	       } else {
+		   std::cout << "Pullback to face " << (*p_it).first << "failed\n";
+	       }
+	   }
+           if(trim_rev) curve_pnts_2d.Reverse();
+	   ON_Curve *trim_curve = interpolateCurve(curve_pnts_2d);
 	   int c2i = info->brep->AddTrimCurve(trim_curve);
            ON_BrepTrim& trim = info->brep->NewTrim(edge, trim_rev, loop, c2i);
-           trim.m_type = ON_BrepTrim::boundary;
+           trim.m_type = ON_BrepTrim::mated;
            trim.m_tolerance[0] = 1e-3;
            trim.m_tolerance[1] = 1e-3;
+        }
+        if (info->brep->LoopDirection(loop) != 1) {
+	   info->brep->FlipLoop(loop);
         }
     }
 }
@@ -1169,20 +1182,22 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
     }
 
     // Edges are important for patch merging - tighten them by adding more edge
-    // points than just the vertex points.  Use points from the 3D NURBS edge curves
-    // instead of the bot edges to ensure the surface includes the volume needed
-    // for curve pullback.
-    std::set<size_t> *patch_edges =  &(info->patch_edges[curr_patch]);
-    std::set<size_t>::iterator pe_it;
-    for (pe_it = patch_edges->begin(); pe_it != patch_edges->end(); pe_it++) {
-        ON_BrepEdge& edge = info->brep->m_E[(*pe_it)];
-	const ON_Curve* edge_curve = edge.EdgeCurveOf();
-	ON_Interval dom = edge_curve->Domain();
-	// XXX todo: dynamically sample the curve
-	for (int i = 1; i <= 50; i++) {
-	    ON_3dPoint p = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
-	    data.push_back(ON_3dVector(p));
-        }
+    // points than just the vertex points.  Probably the right thing to do here is
+    // to use points from the 3D NURBS edge curves instead of the bot edges, but
+    // this is a first step and it does seem to improve the surface mapping at the
+    // edges, at least from what I can tell in the wireframe.
+    EdgeList edges;
+    EdgeList::iterator e_it;
+    find_edge_segments(faces, &edges, info);
+    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
+	point_t p1, p2, p3;
+	VMOVE(p1, &bot->vertices[(*e_it).first])
+	VMOVE(p2, &bot->vertices[(*e_it).second])
+	p3[0] = (p1[0] + p2[0])/2;
+	p3[1] = (p1[1] + p2[1])/2;
+	p3[2] = (p1[2] + p2[2])/2;
+	// add edge midpoint
+	data.push_back(ON_3dVector(V3ARGS(p3)));
     }
 }
 
@@ -1214,7 +1229,15 @@ void find_surfaces(struct Manifold_Info *info) {
 	    fit.solve();
 	}
         int si = info->brep->AddSurface(new ON_NurbsSurface(fit.m_nurbs));
-        info->brep->NewFace(si);
+        ON_BrepFace &face = info->brep->NewFace(si);
+        // Check face normal against plane
+	ON_Interval udom = fit.m_nurbs.Domain(0);
+	ON_Interval vdom = fit.m_nurbs.Domain(1);
+        ON_3dVector surf_norm = fit.m_nurbs.NormalAt(udom.ParameterAt(0.5), vdom.ParameterAt(0.5));
+	double vdot = ON_DotProduct(surf_norm, *info->face_normals.At(*(info->patches[(*p_it).first].begin())));
+	if (vdot < 0) {
+            info->brep->FlipFace(face);
+	}
     }
 }
 
@@ -1285,12 +1308,12 @@ int main(int argc, char *argv[])
 
     // Create the Brep data structure to hold curves and topology information
     info.brep = ON_Brep::New();
+    
+    find_surfaces(&info);
 
     // Now, using the patch sets, construct brep edges
     find_edges(&info);
 
-    // Now that we have edge curves, we know enough to construct faces and surfaces
-    find_surfaces(&info);
 
     // Build the loops
     find_loops(&info);
