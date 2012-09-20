@@ -531,10 +531,36 @@ comp.r4 ID 5678 material code 5 LOS 75
 * improve compile-time version management -- port brlcad-version to
   windows, reconsider providing compile-time header constants.
 
+* have gqa calculate the volume of overlapping regions, not just
+  shotline overlap distances.  that will allow output to be sorted by
+  volumetrically significant regions and should eliminate a common
+  source of user misunderstanding.  It should eliminate the perception
+  that large overlaps are suddenly appearing when there are changes in
+  grid alignment/density.
+
 * fix gqa spewing of massive amounts of plot data with th -Av -v
   options:
   ../src/gtools/g_qa -u m,m^3,kg -g 0.25m-0.5mm -p -Av -v gqa.g closed_box.r
   -rw-rw-r--  1 morrison users 41572569618 Apr 23 15:14 volume.pl
+
+* make gqa overlap reporting suck less.  uselessly reports the same
+  objects multiple times instead of keeping track of uniquely
+  overlapping pairs of objects (rtcheck used to have this problem but
+  not now).  also reports overlaps even when not requested (e.g. -Aa)
+
+* gqa semaphore locking on results is very slow and gets worse as the
+  number of cores and speed of cpu increases.  resource contention on
+  semaphores slows everything down substantially.
+
+* g_qa (gqa in mged) needs to be more informative when it runs -
+  needs a header letting you know what it's doing, and if possible
+  a "progress report" for longer runs that provides some notion of
+  how much of the total job is done.
+
+* refactor .density file and density database reading code in files
+  src/rt/viewweight.c, src/libged/analyze.c and src/libged/gqa.c into
+  common code in src/libanalyze (there may be more candidates around
+  the tree)
 
 * all of the rt* tracers share common code and common options, but do
   not share common documentation.  refactor documentation to use
@@ -699,11 +725,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   selection in the GUI, area-based selections, and object highlighting
 	- can replace unpublished 'sphgroup' command with this
 
-* make gqa overlap reporting suck less.  uselessly reports the same
-  objects multiple times instead of keeping track of uniquely
-  overlapping pairs of objects (rtcheck used to have this problem but
-  not now).  also reports overlaps even when not requested (e.g. -Aa)
-
 * refactor the libtclcad go_*() functions and invocation wrappers
   (also in mged) into libged where appropriate. the 'png' command
   comes to mind.
@@ -745,15 +766,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 * add support to 'rtxray' for outputting inverted pixel values so that
   we have pixel values that are directly related to material thickness
-
-* gqa semaphore locking on results is very slow and gets worse as the
-  number of cores and speed of cpu increases.  resource contention on
-  semaphores slows everything down substantially.
-
-* g_qa (gqa in mged) needs to be more informative when it runs -
-  needs a header letting you know what it's doing, and if possible
-  a "progress report" for longer runs that provides some notion of
-  how much of the total job is done.
 
 * make color and vectors on pnts work
 
@@ -1257,11 +1269,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   the kinks ironed out there, CodeBlocks.  New experimental ninja
   build tool and its (also experimental) CMake support are promising -
   if/when CMake support goes mainstream, document that too.)
-
-* refactor .density file and density database reading code in files
-  src/rt/viewweight.c, src/libged/analyze.c and src/libged/gqa.c into
-  common code in src/libanalyze (there may be more candidates around
-  the tree)
 
 * look into embedding both rgb[3] and complex[n] data types in a union to
   allow unification of libmultispectral and liboptical APIs to a single
