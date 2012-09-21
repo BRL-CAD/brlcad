@@ -1028,6 +1028,71 @@ void find_outer_loop(std::map<size_t, std::vector<size_t> > *loops, size_t *oute
     }
 }
 
+// Do pullbacks to generate trimming curves in 2D, use them to create BrepTrim and BrepLoop structures for
+// outer and inner trimming loops
+
+void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std::map<size_t, std::vector<size_t> > *loops, struct Manifold_Info *info) {
+
+    ON_BrepFace& face = info->brep->m_F[patch_id];
+    // Start with outer loop
+    ON_BrepLoop& loop = info->brep->NewLoop(ON_BrepLoop::outer, face);
+    // build surface tree
+    brlcad::SurfaceTree* st = new brlcad::SurfaceTree(&face, false);
+
+    std::vector<size_t>::iterator loop_it;
+    std::vector<size_t> *loop_edges = &((*loops)[loop_index]);
+    int vert_prev = -1;
+    //std::cout << "Patch " << patch_id << " loop edges: \n";
+    bool trim_rev = false;
+    size_t pullback_failures = 0;
+    for(loop_it = loop_edges->begin(); loop_it != loop_edges->end(); loop_it++) {
+	size_t curr_edge = (*loop_it);
+	// Will we need to flip the trim?
+	ON_BrepEdge& edge = info->brep->m_E[curr_edge];
+	if(vert_prev != -1) {
+	    if (vert_prev == edge.m_vi[0]) {
+		trim_rev = false;
+	    } else {
+		trim_rev = true;
+	    }
+	}
+	if(trim_rev) {
+	    vert_prev = edge.m_vi[0];
+	} else {
+	    vert_prev = edge.m_vi[1];
+	}
+	//std::cout << "edge verts: " << edge.m_vi[0] << "," << edge.m_vi[1] << " flip=" << trim_rev << "\n";
+
+	ON_2dPointArray curve_pnts_2d;
+	std::vector<size_t>::iterator v_it;
+	for (v_it = info->polycurves[curr_edge].begin(); v_it != info->polycurves[curr_edge].end(); v_it++) {
+	    ON_3dPoint pt_3d(&info->bot->vertices[(*v_it)]);
+	    ON_2dPoint pt_2d;
+	    if(get_closest_point(pt_2d, &face, pt_3d, st)) {
+		curve_pnts_2d.Append(pt_2d);
+	    } else {
+		pullback_failures++;
+		std::cout << "Pullback to face " << patch_id << "failed\n";
+	    }
+	}
+	if (!pullback_failures) {
+	    if(trim_rev) curve_pnts_2d.Reverse();
+	    ON_Curve *trim_curve = interpolateCurve(curve_pnts_2d);
+	    int c2i = info->brep->AddTrimCurve(trim_curve);
+	    ON_BrepTrim& trim = info->brep->NewTrim(edge, trim_rev, loop, c2i);
+	    trim.m_type = ON_BrepTrim::mated;
+	    trim.m_tolerance[0] = 1e-3;
+	    trim.m_tolerance[1] = 1e-3;
+	}
+    }
+    if (info->brep->LoopDirection(loop) != 1 && loop_type == ON_BrepLoop::outer) {
+	info->brep->FlipLoop(loop);
+    }
+    if (info->brep->LoopDirection(loop) != -1 && loop_type == ON_BrepLoop::inner) {
+	info->brep->FlipLoop(loop);
+    }
+
+}
 
 void find_loops(struct Manifold_Info *info)
 {
@@ -1098,60 +1163,7 @@ void find_loops(struct Manifold_Info *info)
 	    std::cout << "Patch " << (*p_it).first << " outer loop: " << outer_loop << "\n";
 	}
 
-	// Do pullbacks to generate trimming curves in 2D, use them to create BrepTrim and BrepLoop structures for
-	// outer and inner trimming loops
-	
-	ON_BrepFace& face = info->brep->m_F[(*p_it).first];
-        // Start with outer loop
-        ON_BrepLoop& loop = info->brep->NewLoop(ON_BrepLoop::outer, face);
-        // build surface tree
-        brlcad::SurfaceTree* st = new brlcad::SurfaceTree(&face, false);
-
-	std::vector<size_t>::iterator loop_it;
-        std::vector<size_t> *outer_loop_edges = &(loops[outer_loop]);
-        int vert_prev = -1;
-	//std::cout << "Patch " << (*p_it).first << " outer loop edges: \n";
-	bool trim_rev = false;
-	for(loop_it = outer_loop_edges->begin(); loop_it != outer_loop_edges->end(); loop_it++) {
-           size_t curr_edge = (*loop_it);
-           // Will we need to flip the trim?
-	   ON_BrepEdge& edge = info->brep->m_E[curr_edge];
-	   if(vert_prev != -1) {
-	       if (vert_prev == edge.m_vi[0]) {
-		   trim_rev = false;
-	       } else {
-		   trim_rev = true;
-	       }
-	   }
-	   if(trim_rev) {
-	       vert_prev = edge.m_vi[0];
-	   } else {
-	       vert_prev = edge.m_vi[1];
-	   }
-	   //std::cout << "edge verts: " << edge.m_vi[0] << "," << edge.m_vi[1] << " flip=" << trim_rev << "\n";
-
-	   ON_2dPointArray curve_pnts_2d;
-	   std::vector<size_t>::iterator v_it;
-	   for (v_it = info->polycurves[curr_edge].begin(); v_it != info->polycurves[curr_edge].end(); v_it++) {
-	       ON_3dPoint pt_3d(&info->bot->vertices[(*v_it)]);
-	       ON_2dPoint pt_2d;
-	       if(get_closest_point(pt_2d, &face, pt_3d, st)) {
-		   curve_pnts_2d.Append(pt_2d);
-	       } else {
-		   std::cout << "Pullback to face " << (*p_it).first << "failed\n";
-	       }
-	   }
-           if(trim_rev) curve_pnts_2d.Reverse();
-	   ON_Curve *trim_curve = interpolateCurve(curve_pnts_2d);
-	   int c2i = info->brep->AddTrimCurve(trim_curve);
-           ON_BrepTrim& trim = info->brep->NewTrim(edge, trim_rev, loop, c2i);
-           trim.m_type = ON_BrepTrim::mated;
-           trim.m_tolerance[0] = 1e-3;
-           trim.m_tolerance[1] = 1e-3;
-        }
-        if (info->brep->LoopDirection(loop) != 1) {
-	   info->brep->FlipLoop(loop);
-        }
+	build_loop((*p_it).first, outer_loop, ON_BrepLoop::outer, &loops, info);
     }
 }
 
@@ -1184,20 +1196,24 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
     // Edges are important for patch merging - tighten them by adding more edge
     // points than just the vertex points.  Probably the right thing to do here is
     // to use points from the 3D NURBS edge curves instead of the bot edges, but
-    // this is a first step and it does seem to improve the surface mapping at the
-    // edges, at least from what I can tell in the wireframe.
+    // the points used for surface fitting must be the points used for 2D pullback
+    // curve fitting
     EdgeList edges;
     EdgeList::iterator e_it;
     find_edge_segments(faces, &edges, info);
     for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
-	point_t p1, p2, p3;
-	VMOVE(p1, &bot->vertices[(*e_it).first])
-	VMOVE(p2, &bot->vertices[(*e_it).second])
-	p3[0] = (p1[0] + p2[0])/2;
-	p3[1] = (p1[1] + p2[1])/2;
-	p3[2] = (p1[2] + p2[2])/2;
-	// add edge midpoint
-	data.push_back(ON_3dVector(V3ARGS(p3)));
+	std::set<size_t> faces_from_edge = info->edge_to_face[(*e_it)];
+	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	    double vdot = ON_DotProduct(*info->face_normals.At(*(f_it)), *info->face_normals.At(*(info->patches[curr_patch].begin())));
+	    if (vdot > 0) {
+		ON_3dPoint pt1(&info->bot->vertices[info->bot->faces[(*f_it)*3+0]*3]);
+		ON_3dPoint pt2(&info->bot->vertices[info->bot->faces[(*f_it)*3+1]*3]);
+		ON_3dPoint pt3(&info->bot->vertices[info->bot->faces[(*f_it)*3+2]*3]);
+		data.push_back(ON_3dVector(pt1));
+		data.push_back(ON_3dVector(pt2));
+		data.push_back(ON_3dVector(pt3));
+	    }
+	}
     }
 }
 
