@@ -597,7 +597,6 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
     for (i = 0; i < polyA_2d.p_num_contours; ++i) {
 	for (beginA = 0; beginA < polyA_2d.p_contour[i].pc_num_points; ++beginA) {
 	    vect2d_t dirA;
-	    vect_t u_dirA;
 
 	    if (beginA == polyA_2d.p_contour[i].pc_num_points-1)
 		endA = 0;
@@ -605,9 +604,6 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 		endA = beginA + 1;
 
 	    V2SUB2(dirA, polyA_2d.p_contour[i].pc_point[endA], polyA_2d.p_contour[i].pc_point[beginA]);
-	    V2MOVE(u_dirA, dirA);
-	    u_dirA[2] = 0.0;
-	    VUNITIZE(u_dirA);
 
 	    for (j = 0; j < polyB_2d.p_num_contours; ++j) {
 		for (beginB = 0; beginB < polyB_2d.p_contour[j].pc_num_points; ++beginB) {
@@ -625,32 +621,11 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 					     polyA_2d.p_contour[i].pc_point[beginA], dirA,
 					     polyB_2d.p_contour[j].pc_point[beginB], dirB,
 					     &gedp->ged_wdbp->wdb_tol) == 1) {
-			fastf_t dist;
-			vect_t u_dirB;
-
-			V2MOVE(u_dirB, dirB);
-			u_dirB[2] = 0.0;
-			VUNITIZE(u_dirB);
-
 			/* Check to see if intersection is near an end point */
-			if (NEAR_EQUAL(distvec[0], 0.0, tol_dist_sq)) {
-			    dist = bn_dist_line2_point2(polyB_2d.p_contour[j].pc_point[beginB], u_dirB,
-							polyA_2d.p_contour[i].pc_point[beginA]);
-			} else if (NEAR_EQUAL(distvec[0], 1.0, tol_dist_sq)) {
-			    dist = bn_dist_line2_point2(polyB_2d.p_contour[j].pc_point[beginB], u_dirB,
-							polyA_2d.p_contour[i].pc_point[endA]);
-			} else if (NEAR_EQUAL(distvec[1], 0.0, tol_dist_sq)) {
-			    dist = bn_dist_line2_point2(polyA_2d.p_contour[i].pc_point[beginA], u_dirA,
-							polyB_2d.p_contour[j].pc_point[beginB]);
-			} else if (NEAR_EQUAL(distvec[1], 1.0, tol_dist_sq)) {
-			    dist = bn_dist_line2_point2(polyA_2d.p_contour[i].pc_point[beginA], u_dirA,
-							polyB_2d.p_contour[j].pc_point[endB]);
-			} else {
-			    dist = 1.0;
-			}
-
-			/* Make sure the overlap does not occurr at an end point */
-			if (!NEAR_EQUAL(dist, 0.0, tol_dist_sq)) {
+			if (!NEAR_EQUAL(distvec[0], 0.0, tol_dist_sq) &&
+			    !NEAR_EQUAL(distvec[0], 1.0, tol_dist_sq) &&
+			    !NEAR_EQUAL(distvec[1], 0.0, tol_dist_sq) &&
+			    !NEAR_EQUAL(distvec[1], 1.0, tol_dist_sq)) {
 			    ret = 1;
 			    goto end;
 			}
@@ -661,7 +636,11 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
     }
 
     for (i = 0; i < polyB_2d.p_num_contours; ++i) {
-	/* Check if all points in polygon B are inside A */
+	/* Skip holes */
+	if (polyB_2d.p_hole[i])
+	    continue;
+
+	/* Check if all points in the current polygon B contour are inside A */
 	for (beginB = 0; beginB < polyB_2d.p_contour[i].pc_num_points; ++beginB) {
 	    winding = 0;
 	    V2MOVE(pt_2d, polyB_2d.p_contour[i].pc_point[beginB]);
@@ -672,7 +651,6 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 		point_t B, C;
 		vect_t BmA, CmA;
 		vect_t vcross;
-		size_t pflag = 0;
 
 		for (beginA = 0; beginA < polyA_2d.p_contour[j].pc_num_points; ++beginA) {
 		    if (beginA == polyA_2d.p_contour[j].pc_num_points-1)
@@ -682,9 +660,9 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 
 		    if (V2NEAR_EQUAL(polyA_2d.p_contour[j].pc_point[beginA], pt_2d, tol_dist_sq) ||
 			V2NEAR_EQUAL(polyA_2d.p_contour[j].pc_point[endA], pt_2d, tol_dist_sq)) {
-			/* pt_2d is the same as one of the end points, so count it inside */
-			++pflag;
-			continue;
+			/* pt_2d is the same as one of the end points, so count it */
+			++winding;
+			goto endA;
 		    }
 
 		    if ((polyA_2d.p_contour[j].pc_point[beginA][1] <= pt_2d[1] &&
@@ -709,11 +687,9 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 		    if (vcross[2] > 0)
 			++winding;
 		}
-
-		if (pflag == polyA_2d.p_contour[j].pc_num_points)
-		    ++winding;
 	    }
 
+	endA:
 	    if (!winding%2)
 		break;
 	}
@@ -725,7 +701,11 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
     }
 
     for (i = 0; i < polyA_2d.p_num_contours; ++i) {
-	/* Check if all points in polygon B are inside A */
+	/* Skip holes */
+	if (polyA_2d.p_hole[i])
+	    continue;
+
+	/* Check if all points in the current polygon A contour are inside B */
 	for (beginA = 0; beginA < polyA_2d.p_contour[i].pc_num_points; ++beginA) {
 	    winding = 0;
 	    V2MOVE(pt_2d, polyA_2d.p_contour[i].pc_point[beginA]);
@@ -736,7 +716,6 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 		point_t B, C;
 		vect_t BmA, CmA;
 		vect_t vcross;
-		size_t pflag = 0;
 
 		for (beginB = 0; beginB < polyB_2d.p_contour[j].pc_num_points; ++beginB) {
 		    if (beginB == polyB_2d.p_contour[j].pc_num_points-1)
@@ -746,9 +725,9 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 
 		    if (V2NEAR_EQUAL(polyB_2d.p_contour[j].pc_point[beginB], pt_2d, tol_dist_sq) ||
 			V2NEAR_EQUAL(polyB_2d.p_contour[j].pc_point[endB], pt_2d, tol_dist_sq)) {
-			/* pt_2d is the same as one of the end points, so count it inside */
-			++pflag;
-			continue;
+			/* pt_2d is the same as one of the end points, so count it */
+			++winding;
+			goto endB;
 		    }
 
 		    if ((polyB_2d.p_contour[j].pc_point[beginB][1] <= pt_2d[1] &&
@@ -773,11 +752,9 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 		    if (vcross[2] > 0)
 			++winding;
 		}
-
-		if (pflag == polyB_2d.p_contour[j].pc_num_points)
-		    ++winding;
 	    }
 
+	endB:
 	    if (!winding%2)
 		break;
 	}
@@ -797,8 +774,6 @@ end:
     bu_free((genptr_t)polyB_2d.p_hole, "p_hole");
     bu_free((genptr_t)polyB_2d.p_contour, "p_contour");
 	
-
-    /* PolyB and polyA do not overlap */
     return ret;
 }
 
