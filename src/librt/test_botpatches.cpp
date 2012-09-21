@@ -1030,12 +1030,11 @@ void find_outer_loop(std::map<size_t, std::vector<size_t> > *loops, size_t *oute
 
 // Do pullbacks to generate trimming curves in 2D, use them to create BrepTrim and BrepLoop structures for
 // outer and inner trimming loops
-
 void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std::map<size_t, std::vector<size_t> > *loops, struct Manifold_Info *info) {
 
     ON_BrepFace& face = info->brep->m_F[patch_id];
     // Start with outer loop
-    ON_BrepLoop& loop = info->brep->NewLoop(ON_BrepLoop::outer, face);
+    ON_BrepLoop& loop = info->brep->NewLoop(loop_type, face);
     // build surface tree
     brlcad::SurfaceTree* st = new brlcad::SurfaceTree(&face, false);
 
@@ -1164,6 +1163,10 @@ void find_loops(struct Manifold_Info *info)
 	}
 
 	build_loop((*p_it).first, outer_loop, ON_BrepLoop::outer, &loops, info);
+        // If there are any inner loops, build them too
+	for (std::set<size_t>::iterator il_it = inner_loops.begin(); il_it != inner_loops.end(); il_it++) {
+	    build_loop((*p_it).first, (*il_it), ON_BrepLoop::inner, &loops, info);
+	}
     }
 }
 
@@ -1193,6 +1196,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
 	data.push_back(ON_3dVector(V3ARGS(&bot->vertices[(*f_it)*3])));
     }
 
+#if 0
     // Edges are important for patch merging - tighten them by adding more edge
     // points than just the vertex points.  Probably the right thing to do here is
     // to use points from the 3D NURBS edge curves instead of the bot edges, but
@@ -1215,6 +1219,7 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
 	    }
 	}
     }
+#endif
 }
 
 
