@@ -3327,6 +3327,7 @@ to_extract_contours_av(struct ged *gedp, struct ged_dm_view *gdvp, ged_polygon *
 	int ac;
 	size_t point_ac;
 	const char **point_av;
+	int hole;
 
 	/* Split contour j into points */
 	if (Tcl_SplitList(current_top->to_interp, contour_av[j], &ac, &point_av) != TCL_OK) {
@@ -3335,16 +3336,25 @@ to_extract_contours_av(struct ged *gedp, struct ged_dm_view *gdvp, ged_polygon *
 	}
 	point_ac = ac;
 
-	if (mode != TCLCAD_POLY_CONTOUR_MODE && point_ac < 3) {
+	/* point_ac includes a hole flag */
+	if (mode != TCLCAD_POLY_CONTOUR_MODE && point_ac < 4) {
 	    bu_vls_printf(gedp->ged_result_str, "There must be atleast 3 points per contour");
 	    Tcl_Free((char *)point_av);
 	    return GED_ERROR;
 	}
 
-	gpp->gp_contour[j].gpc_num_points = point_ac;
+	gpp->gp_contour[j].gpc_num_points = point_ac - 1;
 	gpp->gp_contour[j].gpc_point = (point_t *)bu_calloc(point_ac, sizeof(point_t), "gpc_point");
 
-	for (k = 0; k < point_ac; ++k) {
+	if (bu_sscanf(point_av[0], "%d", &hole) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "contour %zu, point %zu: bad hole flag - %s\n",
+			  j, k, point_av[k]);
+	    Tcl_Free((char *)point_av);
+	    return GED_ERROR;
+	}
+	gpp->gp_hole[j] = hole;
+
+	for (k = 1; k < point_ac; ++k) {
 	    point_t pt;
 
 	    if (bu_sscanf(point_av[k], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
@@ -3355,9 +3365,9 @@ to_extract_contours_av(struct ged *gedp, struct ged_dm_view *gdvp, ged_polygon *
 	    }
 
 	    if (vflag) {
-		MAT4X3PNT(gpp->gp_contour[j].gpc_point[k], gdvp->gdv_view->gv_view2model, pt);
+		MAT4X3PNT(gpp->gp_contour[j].gpc_point[k-1], gdvp->gdv_view->gv_view2model, pt);
 	    } else {
-		VMOVE(gpp->gp_contour[j].gpc_point[k], pt);
+		VMOVE(gpp->gp_contour[j].gpc_point[k-1], pt);
 	    }
 
 	}
@@ -3988,7 +3998,7 @@ to_data_polygons(struct ged *gedp,
 		bu_vls_printf(gedp->ged_result_str, " {");
 
 		for (j = 0; j < gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours; ++j) {
-		    bu_vls_printf(gedp->ged_result_str, " {");
+		    bu_vls_printf(gedp->ged_result_str, " {%d ", gdpsp->gdps_polygons.gp_polygon[i].gp_hole[j]);
 
 		    for (k = 0; k < gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points; ++k) {
 			point_t pt;
@@ -4067,7 +4077,7 @@ to_data_polygons(struct ged *gedp,
 	}
 	contour_ac = ac;
 
-	if (to_extract_contours_av(gedp, gdvp, &gp, contour_ac, contour_av,gdvp->gdv_view->gv_mode, 0) != GED_OK) {
+	if (to_extract_contours_av(gedp, gdvp, &gp, contour_ac, contour_av, gdvp->gdv_view->gv_mode, 0) != GED_OK) {
 	    Tcl_Free((char *)contour_av);
 	    return GED_ERROR;
 	}
@@ -7635,7 +7645,7 @@ to_mouse_poly_circ(struct ged *gedp,
     fx = x * inv_width * 2.0 - 1.0;
     fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
 
-    bu_vls_printf(&plist, "{ ");
+    bu_vls_printf(&plist, "{0 ");
 
     {
 	vect_t vdiff;
@@ -7857,7 +7867,7 @@ to_mouse_poly_ell(struct ged *gedp,
     fx = x * inv_width * 2.0 - 1.0;
     fy = (y * inv_height * -2.0 + 1.0) * inv_aspect;
 
-    bu_vls_printf(&plist, "{ ");
+    bu_vls_printf(&plist, "{0 ");
 
     {
 	fastf_t a, b, arc;
@@ -8010,7 +8020,7 @@ to_mouse_poly_rect(struct ged *gedp,
     }
 
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, gdpsp->gdps_prev_point);
-    bu_vls_printf(&plist, "{ {%lf %lf %lf} ",  V3ARGS(m_pt));
+    bu_vls_printf(&plist, "{0 {%lf %lf %lf} ",  V3ARGS(m_pt));
 
     VSET(v_pt, gdpsp->gdps_prev_point[X], fy, 1.0);
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
