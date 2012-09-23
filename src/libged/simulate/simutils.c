@@ -669,15 +669,21 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
     sprintf(buffer, "%f", v[1]); cmd_args[25] = bu_strdup(buffer);
     sprintf(buffer, "%f", v[2]); cmd_args[26] = bu_strdup(buffer);
 
+    bu_log("reached here");
+
     /* Finally make the bb primitive, phew ! */
     cmd_args[27] = (char *)0;
     rv = ged_in(gedp, argc, (const char **)cmd_args);
     if (rv != GED_OK) {
-	bu_log("insertAABB: WARNING Could not draw bounding box for \"%s\"\n",
+	    bu_log("insertAABB: WARNING Could not draw bounding box for \"%s\"\n",
 	       current_node->rb_namep);
     }
 
+    bu_log("after command");
+
     bu_free_array(argc, cmd_args, "make_rpp: free cmd_args");
+
+    bu_log("after free");
 
     /* Make the region for the bb primitive */
     add_to_comb(gedp, prefixed_reg_name, prefixed_name);
@@ -690,6 +696,8 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
 
     bu_vls_free(&buffer1);
     bu_vls_free(&buffer2);
+
+    bu_log("reached out");
 
     return GED_OK;
 
