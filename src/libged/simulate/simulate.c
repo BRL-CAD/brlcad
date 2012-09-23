@@ -245,9 +245,9 @@ apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 
 		/* Translate to origin without any rotation, before applying rotation */
 		MAT_IDN(m);
-		m[12] = - (current_node->m_prev[12]);
-		m[13] = - (current_node->m_prev[13]);
-		m[14] = - (current_node->m_prev[14]);
+		m[12] = - (current_node->m_prev[12]) * 1000;
+		m[13] = - (current_node->m_prev[13]) * 1000;
+		m[14] = - (current_node->m_prev[14]) * 1000;
 		MAT_TRANSPOSE(t, m);
 		if (rt_matrix_transform(&intern, t, &intern, 0, gedp->ged_wdbp->dbip, &rt_uniresource) < 0) {
 			bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR rt_matrix_transform(%s) failed while \
@@ -292,9 +292,9 @@ apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 
 		/* Translate again without any rotation, to apply final position */
 		MAT_IDN(m);
-		m[12] = current_node->m[12];
-		m[13] = current_node->m[13];
-		m[14] = current_node->m[14];
+		m[12] = current_node->m[12] * 1000;
+		m[13] = current_node->m[13] * 1000;
+		m[14] = current_node->m[14] * 1000;
 		MAT_TRANSPOSE(t, m);
 
 		if (rt_matrix_transform(&intern, t, &intern, 0, gedp->ged_wdbp->dbip, &rt_uniresource) < 0) {
