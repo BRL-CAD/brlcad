@@ -186,35 +186,39 @@ get_bb(struct ged *gedp, struct simulation_params *sim_params)
     /* Free memory in rigid_body list */
     for (current_node = sim_params->head_node; current_node != NULL; current_node = current_node->next) {
 
-	/* Get its BB */
-	if (rt_bound_internal(gedp->ged_wdbp->dbip, current_node->dp, rpp_min, rpp_max) == 0) {
-	    bu_log("get_bb: Got the BB for \"%s\" as \
+	    /* Get its BB */
+	    if (rt_bound_internal(gedp->ged_wdbp->dbip, current_node->dp, rpp_min, rpp_max) == 0) {
+	        bu_log("get_bb: Got the BB for \"%s\" as \
 					min {%f %f %f} max {%f %f %f}\n", current_node->dp->d_namep,
-		   V3ARGS(rpp_min),
-		   V3ARGS(rpp_max));
-	} else {
-	    bu_log("get_bb: ERROR Could not get the BB\n");
-	    return GED_ERROR;
-	}
+		    V3ARGS(rpp_min),
+		    V3ARGS(rpp_max));
+	    } else {
+	        bu_log("get_bb: ERROR Could not get the BB\n");
+	        return GED_ERROR;
+	    }
 
-	VMOVE(current_node->bb_min, rpp_min);
-	VMOVE(current_node->bb_max, rpp_max);
+	    //VMOVE(current_node->bb_min, rpp_min);
+	    //VMOVE(current_node->bb_max, rpp_max);
 
-	/* Get BB length, width, height */
-	VSUB2(current_node->bb_dims, current_node->bb_max, current_node->bb_min);
+	    VSCALE(current_node->bb_min, rpp_min, 0.001);
+	    VSCALE(current_node->bb_max, rpp_max, 0.001);
 
-	bu_log("get_bb: Dimensions of this BB : %f %f %f\n", V3ARGS(current_node->bb_dims));
 
-	/* Get BB position in 3D space */
-	VSCALE(current_node->bb_center, current_node->bb_dims, 0.5);
-	VADD2(current_node->bb_center, current_node->bb_center, current_node->bb_min)
+	    /* Get BB length, width, height */
+	    VSUB2(current_node->bb_dims, current_node->bb_max, current_node->bb_min);
+
+	    bu_log("get_bb: Dimensions of this BB : %f %f %f\n", V3ARGS(current_node->bb_dims));
+
+	    /* Get BB position in 3D space */
+	    VSCALE(current_node->bb_center, current_node->bb_dims, 0.5);
+	    VADD2(current_node->bb_center, current_node->bb_center, current_node->bb_min)
 
 	    MAT_IDN(current_node->m);
-	current_node->m[12] = current_node->bb_center[0];
-	current_node->m[13] = current_node->bb_center[1];
-	current_node->m[14] = current_node->bb_center[2];
+	    current_node->m[12] = current_node->bb_center[0];
+	    current_node->m[13] = current_node->bb_center[1];
+	    current_node->m[14] = current_node->bb_center[2];
 
-	MAT_COPY(current_node->m_prev, current_node->m);
+	    MAT_COPY(current_node->m_prev, current_node->m);
     }
 
     return GED_OK;
