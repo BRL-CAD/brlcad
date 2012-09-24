@@ -256,14 +256,14 @@ void
 NurbsSolve::assign (unsigned rows, unsigned cols, unsigned dims)
 {
   m_Ksparse.resize(rows, cols);
-  std::cout << "m_Ksparse(rows=" << rows << ",cols=" << cols << "\n";
+  //std::cout << "m_Ksparse(rows=" << rows << ",cols=" << cols << "\n";
   m_Ksparse.setZero();
   m_xeig = new ON_Matrix(cols,dims);
   m_xeig->Zero();
-  std::cout << "m_xeig(rows=" << cols << ",cols=" << dims << "\n";
+  //std::cout << "m_xeig(rows=" << cols << ",cols=" << dims << "\n";
   m_feig = new ON_Matrix(rows, dims);
   m_feig->Zero();
-  std::cout << "m_feig(rows=" << rows << ",cols=" << dims << "\n";
+  //std::cout << "m_feig(rows=" << rows << ",cols=" << dims << "\n";
 }
 
 void
@@ -765,8 +765,6 @@ FittingSurface::initNurbsPCA (int order, NurbsDataSurface *m_data, ON_3dVector z
       cv[0] = -2.0 * sigma[0] + dcu * i;
       cv[1] = -2.0 * sigma[1] + dcv * j;
       cv[2] = 0.0;
-      // TODO - need to figure out the line below in OpenNURBS terms
-      //cv_t = eigenvectors * cv + mean;
       ecv (0) = -2.0 * sigma[0] + dcu * i;
       ecv (1) = -2.0 * sigma[1] + dcv * j;
       ecv (2) = 0.0;
