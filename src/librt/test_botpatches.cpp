@@ -67,6 +67,23 @@ Edge mk_edge(size_t pt_A, size_t pt_B)
     }
 }
 
+// Calculate area of a face
+double face_area(struct rt_bot_internal *bot, size_t face_num)
+{
+    point_t ptA, ptB, ptC;
+    double a, b, c, p;
+    double area;
+    VMOVE(ptA, &bot->vertices[bot->faces[face_num*3+0]*3]);
+    VMOVE(ptB, &bot->vertices[bot->faces[face_num*3+1]*3]);
+    VMOVE(ptC, &bot->vertices[bot->faces[face_num*3+2]*3]);
+    a = DIST_PT_PT(ptA, ptB);
+    b = DIST_PT_PT(ptB, ptC);
+    c = DIST_PT_PT(ptC, ptA);
+    p = (a + b + c)/2;
+    area = sqrt(p*(p-a)*(p-b)*(p-c));
+    return area;
+}
+
 // Given a patch consisting of a set of faces find the
 // set of edges that forms the outer edge of the patch
 void find_edge_segments(std::set<size_t> *faces, EdgeList *patch_edges, struct Manifold_Info *info)
@@ -123,22 +140,7 @@ void get_connected_faces(struct rt_bot_internal *bot, size_t face_num, EdgeToFac
     }
 }
 
-// Calculate area of a face
-double face_area(struct rt_bot_internal *bot, size_t face_num)
-{
-    point_t ptA, ptB, ptC;
-    double a, b, c, p;
-    double area;
-    VMOVE(ptA, &bot->vertices[bot->faces[face_num*3+0]*3]);
-    VMOVE(ptB, &bot->vertices[bot->faces[face_num*3+1]*3]);
-    VMOVE(ptC, &bot->vertices[bot->faces[face_num*3+2]*3]);
-    a = DIST_PT_PT(ptA, ptB);
-    b = DIST_PT_PT(ptB, ptC);
-    c = DIST_PT_PT(ptC, ptA);
-    p = (a + b + c)/2;
-    area = sqrt(p*(p-a)*(p-b)*(p-c));
-    return area;
-}
+
 
 
 // Use SVD algorithm from Soderkvist to fit a plane to vertex points
@@ -1044,6 +1046,7 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
     //std::cout << "Patch " << patch_id << " loop edges: \n";
     bool trim_rev = false;
     size_t pullback_failures = 0;
+    size_t pullback_successes = 0;
     for(loop_it = loop_edges->begin(); loop_it != loop_edges->end(); loop_it++) {
 	size_t curr_edge = (*loop_it);
 	// Will we need to flip the trim?
@@ -1063,18 +1066,28 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 	//std::cout << "edge verts: " << edge.m_vi[0] << "," << edge.m_vi[1] << " flip=" << trim_rev << "\n";
 
 	ON_2dPointArray curve_pnts_2d;
-	std::vector<size_t>::iterator v_it;
-	for (v_it = info->polycurves[curr_edge].begin(); v_it != info->polycurves[curr_edge].end(); v_it++) {
-	    ON_3dPoint pt_3d(&info->bot->vertices[(*v_it)]);
+	const ON_Curve* edge_curve = edge.EdgeCurveOf();
+	ON_Interval dom = edge_curve->Domain();
+	// XXX todo: dynamically sample the curve - must use consistent method for all sampling, else
+	// surface may not contain points sought by curve
+	for (int i = 1; i <= 50; i++) {
+	    ON_3dPoint pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
 	    ON_2dPoint pt_2d;
-	    if(get_closest_point(pt_2d, &face, pt_3d, st)) {
+	    ON_2dPoint pt_2d_prev;
+	    if(curve_pnts_2d.Count() > 0) {
+		pt_2d_prev = *curve_pnts_2d.Last();
+	    } else {
+		pt_2d_prev = ON_2dPoint(INT_MAX, INT_MAX);
+	    }
+	    if(get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
 		curve_pnts_2d.Append(pt_2d);
+		pullback_successes++;
 	    } else {
 		pullback_failures++;
-		std::cout << "Pullback to face " << patch_id << "failed\n";
 	    }
 	}
-	if (!pullback_failures) {
+	std::cout << "Pullback to face " << patch_id << ": Successes: " << pullback_successes << ", Failures: " << pullback_failures << "\n";
+	if (pullback_successes >= 2) {
 	    if(trim_rev) curve_pnts_2d.Reverse();
 	    ON_Curve *trim_curve = interpolateCurve(curve_pnts_2d);
 	    int c2i = info->brep->AddTrimCurve(trim_curve);
@@ -1196,30 +1209,22 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
 	data.push_back(ON_3dVector(V3ARGS(&bot->vertices[(*f_it)*3])));
     }
 
-#if 0
     // Edges are important for patch merging - tighten them by adding more edge
-    // points than just the vertex points.  Probably the right thing to do here is
-    // to use points from the 3D NURBS edge curves instead of the bot edges, but
-    // the points used for surface fitting must be the points used for 2D pullback
-    // curve fitting
-    EdgeList edges;
-    EdgeList::iterator e_it;
-    find_edge_segments(faces, &edges, info);
-    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
-	std::set<size_t> faces_from_edge = info->edge_to_face[(*e_it)];
-	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
-	    double vdot = ON_DotProduct(*info->face_normals.At(*(f_it)), *info->face_normals.At(*(info->patches[curr_patch].begin())));
-	    if (vdot > 0) {
-		ON_3dPoint pt1(&info->bot->vertices[info->bot->faces[(*f_it)*3+0]*3]);
-		ON_3dPoint pt2(&info->bot->vertices[info->bot->faces[(*f_it)*3+1]*3]);
-		ON_3dPoint pt3(&info->bot->vertices[info->bot->faces[(*f_it)*3+2]*3]);
-		data.push_back(ON_3dVector(pt1));
-		data.push_back(ON_3dVector(pt2));
-		data.push_back(ON_3dVector(pt3));
-	    }
+    // points than just the vertex points. Use points from the 3D NURBS edge curves
+    // instead of the bot edges to ensure the surface includes the volume needed
+    // for curve pullback.
+    std::set<size_t> *patch_edges = &(info->patch_edges[curr_patch]);
+    std::set<size_t>::iterator pe_it;
+    for (pe_it = patch_edges->begin(); pe_it != patch_edges->end(); pe_it++) {
+	ON_BrepEdge& edge = info->brep->m_E[(*pe_it)];
+	const ON_Curve* edge_curve = edge.EdgeCurveOf();
+	ON_Interval dom = edge_curve->Domain();
+	// XXX todo: dynamically sample the curve
+	for (int i = 1; i <= 50; i++) {
+	    ON_3dPoint p = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
+	    data.push_back(ON_3dVector(p));
 	}
     }
-#endif
 }
 
 
@@ -1330,11 +1335,11 @@ int main(int argc, char *argv[])
     // Create the Brep data structure to hold curves and topology information
     info.brep = ON_Brep::New();
     
-    find_surfaces(&info);
 
     // Now, using the patch sets, construct brep edges
     find_edges(&info);
 
+    find_surfaces(&info);
 
     // Build the loops
     find_loops(&info);
