@@ -92,19 +92,20 @@ add_regions(struct ged *gedp, struct simulation_params *sim_params)
 	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if ((dp->d_flags & RT_DIR_HIDDEN) ||  /* check for hidden comb/prim */
 		   !(dp->d_flags & RT_DIR_REGION)     /* check if region */
-		)
-		continue;
+		) {
+		    continue;
+	    }
 
 	    if (strstr(dp->d_namep, prefix)) {
-		   bu_vls_printf(gedp->ged_result_str, "add_regions: Skipping \"%s\" due to \"%s\" in name\n",
+		    bu_vls_printf(gedp->ged_result_str, "add_regions: Skipping \"%s\" due to \"%s\" in name\n",
 			      dp->d_namep, prefix);
-		continue;
+		    continue;
 	    }
 
 	    if (BU_STR_EMPTY(dp->d_namep)) {
 		    bu_vls_printf(gedp->ged_result_str, "add_regions: Skipping \"%s\" due to empty name\n",
 			      dp->d_namep);
-		continue;
+		    continue;
 	    }
 
 	    /* Duplicate the region */
@@ -252,8 +253,6 @@ apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 			return GED_ERROR;
 		}
 
-		bu_log("After 1");
-
 		/* Apply inverse rotation with no translation to undo previous iteration's rotation */
 		MAT_COPY(m, current_node->m_prev);
 		m[12] = 0;
@@ -266,8 +265,6 @@ apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 				  current_node->dp->d_namep);
 			return GED_ERROR;
 		}
-
-		bu_log("After 2");
 
 		/*---------------------- Now apply current transformation -------------------------*/
 
@@ -284,8 +281,6 @@ apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 			return GED_ERROR;
 		}
 
-		bu_log("After 3");
-
 		/* Translate again without any rotation, to apply final position */
 		MAT_IDN(m);
 		m[12] = current_node->m[12];
@@ -300,16 +295,12 @@ apply_transforms(struct ged *gedp, struct simulation_params *sim_params)
 			return GED_ERROR;
 		}
 
-		bu_log("After 4");
-
 		/* Write the modified solid to the db so it can be redrawn at the new position & orientation by Mged */
 		if (rt_db_put_internal(current_node->dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 			bu_vls_printf(gedp->ged_result_str, "apply_transforms: ERROR Database write error for '%s', aborting\n",
 				  current_node->dp->d_namep);
 			return GED_ERROR;
 		}
-
-		bu_log("After 5");
 
 		/* Store this world transformation to undo it before next world transformation */
 		MAT_COPY(current_node->m_prev, current_node->m);
@@ -336,8 +327,6 @@ int recreate_sim_comb(struct ged *gedp, struct simulation_params *sim_params)
 {
 	struct rigid_body *current_node;
 
-	printf("recreate_sim_comb: enter ");
-
     if (sim_kill(gedp, sim_params->sim_comb_name) != GED_OK) {
 	    bu_log("sim_kill_copy: ERROR Could not delete existing \"%s\"\n", sim_params->sim_comb_name);
 	    return GED_ERROR;
@@ -345,10 +334,8 @@ int recreate_sim_comb(struct ged *gedp, struct simulation_params *sim_params)
 
     for (current_node = sim_params->head_node; current_node != NULL;
 	 current_node = current_node->next) {
-	add_to_comb(gedp, sim_params->sim_comb_name, current_node->rb_namep);
+	    add_to_comb(gedp, sim_params->sim_comb_name, current_node->rb_namep);
     }
-
-    printf("recreate_sim_comb: exit ");
 
     return GED_OK;
 }
@@ -460,8 +447,6 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 		/* Recreate sim.c to clear AABBs and manifold regions from previous iteration */
 		recreate_sim_comb(gedp, &sim_params);
 
-		bu_log("After recreate_sim_comb()");
-
 		/* Run the physics simulation */
 		sim_params.iter = i;
 		rv = run_simulation(&sim_params);
@@ -470,16 +455,12 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 			return GED_ERROR;
 		}
 
-		bu_log("After run_simulation()");
-
 		/* Apply transforms on the participating objects, also shades objects */
 		rv = apply_transforms(gedp, &sim_params);
 		if (rv != GED_OK) {
 			bu_vls_printf(gedp->ged_result_str, "%s: ERROR while applying transforms\n", argv[0]);
 			return GED_ERROR;
 		}
-
-		bu_log("After apply_transforms()");
 
 		/* free the raytrace instance */
 		rt_free_rti(sim_params.rtip);

@@ -235,7 +235,7 @@ get_transforms(btDiscreteDynamicsWorld* dynamicsWorld)
 	        btDefaultMotionState* bb_MotionState = (btDefaultMotionState*)bb_RigidBody->getMotionState();
 	        bb_MotionState->m_graphicsWorldTrans.getOpenGLMatrix(m);
 
-	        bu_log("Position : %f, %f, %f\n", m[12], m[13], m[14]);
+	        //bu_log("Position : %f, %f, %f\n", m[12], m[13], m[14]);
 
 	        struct rigid_body *current_node = (struct rigid_body *)bb_RigidBody->getUserPointer();
 
@@ -272,9 +272,9 @@ get_transforms(btDiscreteDynamicsWorld* dynamicsWorld)
 		    v = bb_RigidBody->getLinearVelocity();
 	        VMOVE(current_node->linear_velocity, v);
 
-	        bu_log("Got linear velocity as : %f, %f, %f", current_node->linear_velocity[0],
+	        /*bu_log("Got linear velocity as : %f, %f, %f", current_node->linear_velocity[0],
 	    		                                         current_node->linear_velocity[1],
-	    		                                         current_node->linear_velocity[2]);
+	    		                                         current_node->linear_velocity[2]);*/
 
 	        v = bb_RigidBody->getAngularVelocity();
 	        VMOVE(current_node->angular_velocity, v);
@@ -536,8 +536,6 @@ run_simulation(struct simulation_params *sp)
     //Add the rigid bodies to the world, including the ground plane
     add_rigid_bodies(dynamicsWorld, collision_shapes);
 
-    bu_log("After add_rigid_bodies()\n");
-
     //Add a broadphase callback to hook to the AABB detection algos
 /*    btOverlapFilterCallback * filterCallback = new broadphase_callback();
     dynamicsWorld->getPairCache()->setOverlapFilterCallback(filterCallback);
@@ -553,17 +551,11 @@ run_simulation(struct simulation_params *sp)
     //Step the physics the required number of times
     step_physics(dynamicsWorld);
 
-    bu_log("After step_physics()\n");
-
     //Get the world transforms back into the simulation params struct
     get_transforms(dynamicsWorld);
 
-    bu_log("After get_transforms()\n");
-
     //Clean and free memory used by physics objects
     cleanup(dynamicsWorld, collision_shapes);
-
-    bu_log("After cleanup()\n");
 
     //Clean up stuff in here
     //delete filterCallback;
