@@ -155,7 +155,7 @@ ged_bot_fuse(struct ged *gedp, int argc, const char **argv)
     int ret, c, i;
     struct bn_tol *tol = &gedp->ged_wdbp->wdb_tol;
     int total = 0;
-    int out_type = 0; /* open edge output type: 0 = none, 1 = show, 2 = plot */
+    volatile int out_type = 0; /* open edge output type: 0 = none, 1 = show, 2 = plot */
     size_t open_cnt;
     struct bu_vls name_prefix = BU_VLS_INIT_ZERO;
 
@@ -293,7 +293,7 @@ ged_bot_fuse(struct ged *gedp, int argc, const char **argv)
 	BU_UNSETJUMP;
 	bu_vls_printf(gedp->ged_result_str, "%s: %s fuse failed (2).\n", argv[0], argv[i+1]);
 	return GED_ERROR;
-    }
+    } BU_UNSETJUMP;
 
     RT_DB_INTERNAL_INIT(&intern2);
     intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
