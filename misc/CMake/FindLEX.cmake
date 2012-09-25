@@ -32,7 +32,7 @@
 #   find_package(LEX)
 #
 #   YACC_TARGET(MyParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
-#   LEX_TARGET(MyScanner lexer.l  ${CMAKE_CURRENT_BIANRY_DIR}/lexer.cpp)
+#   LEX_TARGET(MyScanner lexer.l  ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
 #   ADD_LEX_YACC_DEPENDENCY(MyScanner MyParser)
 #
 #   include_directories(${CMAKE_CURRENT_BINARY_DIR})

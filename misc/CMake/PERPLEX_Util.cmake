@@ -11,7 +11,7 @@
 #   find_package(PERPLEX)
 #
 #   LEMON_TARGET(MyParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
-#   PERPLEX_TARGET(MyScanner scanner.re  ${CMAKE_CURRENT_BIANRY_DIR}/scanner.cpp ${CMAKE_CURRENT_BINARY_DIR}/scanner_header.hpp)
+#   PERPLEX_TARGET(MyScanner scanner.re  ${CMAKE_CURRENT_BINARY_DIR}/scanner.cpp ${CMAKE_CURRENT_BINARY_DIR}/scanner_header.hpp)
 #   ADD_PERPLEX_LEMON_DEPENDENCY(MyScanner MyParser)
 #
 #   include_directories(${CMAKE_CURRENT_BINARY_DIR})
