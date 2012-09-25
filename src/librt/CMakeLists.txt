@@ -300,12 +300,13 @@ endif(CPP_DLL_DEFINES)
 install(FILES librt.3 DESTINATION ${MAN_DIR}/man3)
 CMAKEFILES(Makefile.am)
 
-#include_directories(
-#  ${CMAKE_SOURCE_DIR}/src/other/Eigen
-#  ${CMAKE_CURRENT_SOURCE_DIR}/../libnurbs
-#  )
-#BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libnurbs;libbu" NOSTRICT NO_INSTALL)
-#BRLCAD_ADDEXEC(test_botpatches test_botpatches.cpp "librt;libwdb;libbu" NOSTRICT NO_INSTALL)
+include_directories(
+  ${CMAKE_SOURCE_DIR}/src/other/Eigen
+  ${CMAKE_CURRENT_SOURCE_DIR}/../libnurbs
+  )
+BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libnurbs;libbu" NOSTRICT NO_INSTALL)
+BRLCAD_ADDEXEC(test_botpatches test_botpatches.cpp "librt;libwdb;libnurbs;libbu" NOSTRICT NO_INSTALL)
+SET_PROPERTY(TARGET test_botpatches PROPERTY COMPILE_FLAGS "-Wno-shadow -Wno-float-equal -Wno-error")
 
 # Local Variables:
 # tab-width: 8

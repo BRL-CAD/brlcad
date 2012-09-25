@@ -143,7 +143,7 @@ void get_connected_faces(struct rt_bot_internal *bot, size_t face_num, EdgeToFac
 
 // Use SVD algorithm from Soderkvist to fit a plane to vertex points
 // http://www.math.ltu.se/~jove/courses/mam208/svd.pdf
-void fit_plane(std::set<size_t> *faces, struct Manifold_Info *info, ON_Plane *plane) {
+void fit_plane(size_t patch_id, std::set<size_t> *faces, struct Manifold_Info *info, ON_Plane *plane) {
     if (faces->size() > 0) {
 	ON_3dPoint center(0.0, 0.0, 0.0);
 	std::set<size_t> verts;   
@@ -178,7 +178,7 @@ void fit_plane(std::set<size_t> *faces, struct Manifold_Info *info, ON_Plane *pl
 	// 5.  Construct plane
 	ON_Plane new_plane(center, normal);
         (*plane) = new_plane;
-/*
+
 	struct bu_vls name;
 	bu_vls_init(&name);
 	bu_vls_printf(&name, "fit_plane_%d.pl", patch_id);
@@ -212,7 +212,7 @@ void fit_plane(std::set<size_t> *faces, struct Manifold_Info *info, ON_Plane *pl
 	pdv_3cont(plot_file, pn);
 
 	fclose(plot_file);
-*/
+
     }
 }
 
@@ -551,6 +551,7 @@ void build_new_patches(size_t face1, size_t face2, size_t orig_patch, std::map< 
 	    size_t face_num_1 = face_queue_1.front();
 	    face_queue_1.pop();
 	    (*patches)[new_patch_1].insert(face_num_1);
+	    info->face_to_patch[face_num_1] = new_patch_1;
 	    std::set<size_t> connected_faces;
 	    std::set<size_t>::iterator cf_it;
 	    get_connected_faces(info->bot, face_num_1, &(info->edge_to_face), &connected_faces);
@@ -565,6 +566,7 @@ void build_new_patches(size_t face1, size_t face2, size_t orig_patch, std::map< 
 	    size_t face_num_2 = face_queue_2.front();
 	    face_queue_2.pop();
 	    (*patches)[new_patch_2].insert(face_num_2);
+	    info->face_to_patch[face_num_2] = new_patch_2;
 	    std::set<size_t> connected_faces;
 	    std::set<size_t>::iterator cf_it;
 	    get_connected_faces(info->bot, face_num_2, &(info->edge_to_face), &connected_faces);
@@ -596,7 +598,7 @@ size_t overlapping_edge_triangles(std::map< size_t, std::set<size_t> > *patches,
     for (p_it = patches->begin(); p_it != patches->end(); p_it++) {
 	if ((*p_it).second.size() > 0) {
 	    ON_Plane plane; 
-	    fit_plane(&((*p_it).second), info, &plane);
+	    fit_plane((*p_it).first, &((*p_it).second), info, &plane);
 	    ON_Xform xf;
 	    xf.PlanarProjection(plane);
 	    size_t overlap_cnt = 1;
@@ -831,11 +833,15 @@ void bot_partition(struct Manifold_Info *info)
 
     // now, populate &(info->patches) with the non-empty patches and fix *_to_patch (maybe make that
     // part of sync_structure_maps.
+    std::ofstream patch_map;
+    patch_map.open("patch_map.txt");
     for (p_it = patches.begin(); p_it != patches.end(); p_it++) {
 	if (patches[(*p_it).first].size() > 0) {
+            patch_map << (*p_it).first << " -> " << info->patches.size() << "\n";
 	    info->patches[info->patches.size()].insert(patches[(*p_it).first].begin(), patches[(*p_it).first].end());
 	}
     }
+    patch_map.close();
 
     std::cout << "Patch count: " << info->patches.size() << "\n";
     plot_faces(&(info->patches), info, "patches.pl");
@@ -1280,10 +1286,14 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
 	const ON_Curve* edge_curve = edge.EdgeCurveOf();
 	ON_Interval dom = edge_curve->Domain();
 	// XXX todo: dynamically sample the curve
-	for (int i = 1; i <= 50; i++) {
-	    ON_3dPoint p = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
-	    data.push_back(ON_3dVector(p));
+	ON_3dPoint pt_3d = edge_curve->PointAt(dom.ParameterAt(0));
+	data.push_back(ON_3dVector(pt_3d));
+	for (int i = 1; i < 50; i++) {
+	    pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
+	    data.push_back(ON_3dVector(pt_3d));
 	}
+	pt_3d = edge_curve->PointAt(dom.ParameterAt(1.0));
+	data.push_back(ON_3dVector(pt_3d));
     }
 }
 
