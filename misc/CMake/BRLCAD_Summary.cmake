@@ -116,7 +116,7 @@ foreach(setting_label ${ALL_FLAG_LABELS})
   endif(${CURRENT_LENGTH} GREATER ${MAX_LABEL_LENGTH})
 endforeach(setting_label ${ALL_FLAG_LABELS})
 
-# Add spaces to all lables to make their length uniform
+# Add spaces to all labels to make their length uniform
 foreach(setting_label ${ALL_FLAG_LABELS})
   string(LENGTH "${${setting_label}}" CURRENT_LENGTH)
   while(${MAX_LABEL_LENGTH} GREATER ${CURRENT_LENGTH})
