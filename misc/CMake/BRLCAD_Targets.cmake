@@ -264,7 +264,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
       set_target_properties(${libname} PROPERTIES PREFIX "")
     endif(${libname} MATCHES "^lib*")
 
-    # Generate the upper case abbrevation of the library that is used for
+    # Generate the upper case abbreviation of the library that is used for
     # DLL definitions.  If We are using DLLs, we need to define export
     # for this library.
     if(CPP_DLL_DEFINES)
