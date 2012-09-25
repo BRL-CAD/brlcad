@@ -26,7 +26,7 @@ The University of California - San Diego is using the package for
 rendering  brains  in  their  Brain  Mapping   Project   at   the
 Quantitative Morphology Laboratory.  75 different businesses have
 requested and received the  software  including  23  Fortune  500
-companies   including:   General  Motors,  AT&T,  Crysler  Motors
+companies   including:   General  Motors,  AT&T,  Chrysler  Motors
 Corporation,  Boeing,  McDonnell   Douglas,   Lockheed,   General
 Dynamics,  LTV  Aerospace & Defense Co., and Hewlett Packard.  16
 government organizations representing all  three  services,  NSA,
