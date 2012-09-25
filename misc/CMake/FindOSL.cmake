@@ -34,7 +34,7 @@
 #
 ###
 # ================================================
-# Find OSL Dependences
+# Find OSL Dependencies
 # ================================================
 include(util_macros)
 include(FindOpenEXR)
