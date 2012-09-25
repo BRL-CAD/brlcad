@@ -49,8 +49,8 @@ if(NOT BRLCAD_IS_SUBBUILD)
   find_program(CPACK_EXEC cpack)
   mark_as_advanced(CPACK_EXEC)
 
-  # We'll always want the repo and source distcheck targets defined - they are contants
-  # for distcheck regardless of the bulid configurations used.
+  # We'll always want the repo and source distcheck targets defined - they are constants
+  # for distcheck regardless of the build configurations used.
 
   # Set up the script that will be used to verify the source archives
   configure_file(${BRLCAD_CMAKE_DIR}/distcheck_repo_verify.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake @ONLY)
