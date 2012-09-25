@@ -1118,7 +1118,7 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 	ON_3dPoint pt_3d = edge_curve->PointAt(dom.ParameterAt(0));
 	ON_2dPoint pt_2d;
 	ON_2dPoint pt_2d_prev;
-	if(get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
+	if(get_closest_point(pt_2d, &face, pt_3d, st)) {
 	    curve_pnts_2d.Append(pt_2d);
 	    pt_2d_prev = *curve_pnts_2d.Last();
 	    pullback_successes++; 
@@ -1126,14 +1126,24 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 	    pt_2d_prev = ON_2dPoint(INT_MAX, INT_MAX);
 	    pullback_failures++;
 	}
-	for (int i = 1; i <= 50; i++) {
+	for (int i = 1; i < 50; i++) {
 	    pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
 	    if(get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
 		curve_pnts_2d.Append(pt_2d);
+		pt_2d_prev = *curve_pnts_2d.Last();
 		pullback_successes++;
 	    } else {
-		pullback_failures++;
+		if(pt_2d != pt_2d_prev)
+		    pullback_failures++;
 	    }
+	}
+	pt_3d = edge_curve->PointAt(dom.ParameterAt(1.0));
+	if(get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
+	    curve_pnts_2d.Append(pt_2d);
+	    pullback_successes++;
+	} else {
+	    if(pt_2d != pt_2d_prev)
+		pullback_failures++;
 	}
 
 	std::cout << "Pullback to face " << patch_id << ": Successes: " << pullback_successes << ", Failures: " << pullback_failures << "\n";
