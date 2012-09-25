@@ -247,7 +247,7 @@ if(BUILD_FILES_NOT_IN_SVN)
   message("\nFiles present in the build logic but not accounted for in Subversion: \n${BUILD_FILES_NOT_IN_SVN}\n")
 endif(BUILD_FILES_NOT_IN_SVN)
 
-# Either of the previous two cases haults distcheck until fixed.
+# Either of the previous two cases halts distcheck until fixed.
 if(SVN_FILES_NOT_IN_BUILD OR BUILD_FILES_NOT_IN_SVN)
   message(FATAL_ERROR "Distcheck cannot proceed until the above errors are corrected.")
 endif(SVN_FILES_NOT_IN_BUILD OR BUILD_FILES_NOT_IN_SVN)
