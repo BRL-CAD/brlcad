@@ -39,21 +39,21 @@
 static size_t
 show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name, int out_type)
 {
-    struct loopuse *lu;
-    struct edgeuse *eu;
-    const struct edgeuse *eur;
-    struct faceuse *newfu;
-    struct bu_ptbl faces;
-    struct face *fp;
-    struct faceuse *fu, *fu1, *fu2;
-    int done;
+    FILE *plotfp = NULL;
     const char *manifolds = NULL;
-    struct bn_vlblock *vbp;
-    struct bu_list *vhead;
+    const struct edgeuse *eur;
+    int done;
     point_t pt1, pt2;
     size_t i, cnt;
-    FILE *plotfp = NULL;
+    struct bn_vlblock *vbp = NULL;
+    struct bu_list *vhead = NULL;
+    struct bu_ptbl faces;
     struct bu_vls plot_file_name = BU_VLS_INIT_ZERO;
+    struct edgeuse *eu = NULL;
+    struct face *fp = NULL;
+    struct faceuse *fu, *fu1, *fu2;
+    struct faceuse *newfu = NULL;
+    struct loopuse *lu = NULL;
 
     /* out_type: 0 = none, 1 = show, 2 = plot */
     if (out_type < 0 || out_type > 2) {
