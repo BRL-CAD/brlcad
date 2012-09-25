@@ -83,7 +83,7 @@ add_custom_target(distcheck-${TARGET_SUFFIX}
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Cleanup..."
   COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-${TARGET_SUFFIX}
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Cleanup... Done."
-  COMMENT "[distcheck-${TARGET_SUFFIX}] Peforming distcheck - ${TARGET_SUFFIX} configuration..."
+  COMMENT "[distcheck-${TARGET_SUFFIX}] Performing distcheck - ${TARGET_SUFFIX} configuration..."
   DEPENDS distcheck-source_archives
   )
 
