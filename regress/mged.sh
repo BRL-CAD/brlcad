@@ -107,6 +107,10 @@ EOF
 	echo "XXX: Unable to test edcolor"
 	echo "It probably shouldn't kick off an editor without an argument"
 	continue
+    elif test "x$cmd" = "xgraph" ; then
+	continue
+    elif test "x$cmd" = "xigraph" ; then
+	continue
     fi
 
     # make sure each command exists and will run without error
