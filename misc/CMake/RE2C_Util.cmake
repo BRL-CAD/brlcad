@@ -21,7 +21,7 @@
 #   find_package(RE2C)
 #
 #   LEMON_TARGET(MyParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
-#   RE2C_TARGET(MyScanner scanner.re  ${CMAKE_CURRENT_BIANRY_DIR}/scanner.cpp)
+#   RE2C_TARGET(MyScanner scanner.re  ${CMAKE_CURRENT_BINARY_DIR}/scanner.cpp)
 #   ADD_RE2C_LEMON_DEPENDENCY(MyScanner MyParser)
 #
 #   include_directories(${CMAKE_CURRENT_BINARY_DIR})
