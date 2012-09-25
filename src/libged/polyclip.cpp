@@ -528,7 +528,7 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
     polygon_2d polyB_2d;
     point2d_t pt_2d;
     point_t A;
-    size_t winding;
+    size_t winding = 0;
     int ret;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
