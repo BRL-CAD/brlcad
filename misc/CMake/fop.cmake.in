@@ -37,7 +37,7 @@
 set(APACHE_FOP_VERSION @APACHE_FOP_VERSION@)
 
 # fop hyphenation path (fop version >= 1.0)
-# need v2 hphenation
+# need v2 hyphenation
 if(APACHE_FOP_VERSION VERSION_LESS 1.0)
   #set(FOP_HYPH "@CMAKE_BINARY_DIR@/doc/docbook/resources/other/offo-old/binary/fop-hyph.jar")
 else(APACHE_FOP_VERSION VERSION_LESS 1.0)
@@ -59,7 +59,7 @@ execute_process(COMMAND "@CMAKE_COMMAND@" -E make_directory "${output_dir}")
 # Run FOP to actually generate the PDF
 execute_process(COMMAND "@APACHE_FOP@" -c "@CMAKE_BINARY_DIR@/doc/docbook/fop.xconf" "@fo_outfile@" -pdf "@outfile@" RESULT_VARIABLE CMDRESULT)
 
-# Fatal error if FOP didn't succeed, so the parent CMake build knows something went wrong and can hault.
+# Fatal error if FOP didn't succeed, so the parent CMake build knows something went wrong and can halt.
 if(CMDRESULT)
   message(FATAL_ERROR "Apache FOP build failure: ${CMDRESULT}")
 endif(CMDRESULT)
