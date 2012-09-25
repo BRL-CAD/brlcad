@@ -141,8 +141,6 @@ void get_connected_faces(struct rt_bot_internal *bot, size_t face_num, EdgeToFac
 }
 
 
-
-
 // Use SVD algorithm from Soderkvist to fit a plane to vertex points
 // http://www.math.ltu.se/~jove/courses/mam208/svd.pdf
 void fit_plane(std::set<size_t> *faces, struct Manifold_Info *info, ON_Plane *plane) {
@@ -536,6 +534,51 @@ void verify_patch_integrity(size_t orig_patch, std::set<size_t> *orig_faces, std
     }
 }
 
+void build_new_patches(size_t face1, size_t face2, size_t orig_patch, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info) {
+    std::set<size_t> *faces = &((*patches)[orig_patch]);
+    std::queue<size_t> face_queue_1;
+    std::queue<size_t> face_queue_2;
+    face_queue_1.push(*faces->find(face1));
+    faces->erase(face_queue_1.front());
+    info->patch_cnt++;
+    size_t new_patch_1 = info->patch_cnt;
+    face_queue_2.push(*faces->find(face2));
+    faces->erase(face_queue_2.front());
+    info->patch_cnt++;
+    size_t new_patch_2 = info->patch_cnt;
+    while (!face_queue_1.empty() || !face_queue_2.empty()) {
+        if (!face_queue_1.empty()) {
+	    size_t face_num_1 = face_queue_1.front();
+	    face_queue_1.pop();
+	    (*patches)[new_patch_1].insert(face_num_1);
+	    std::set<size_t> connected_faces;
+	    std::set<size_t>::iterator cf_it;
+	    get_connected_faces(info->bot, face_num_1, &(info->edge_to_face), &connected_faces);
+	    for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
+		if(faces->find((*cf_it)) != faces->end() && (*patches)[new_patch_2].find(*cf_it) == (*patches)[new_patch_2].end()) {
+		    face_queue_1.push((*cf_it));
+		    faces->erase((*cf_it));
+		}
+	    }
+	}
+        if (!face_queue_2.empty()) {
+	    size_t face_num_2 = face_queue_2.front();
+	    face_queue_2.pop();
+	    (*patches)[new_patch_2].insert(face_num_2);
+	    std::set<size_t> connected_faces;
+	    std::set<size_t>::iterator cf_it;
+	    get_connected_faces(info->bot, face_num_2, &(info->edge_to_face), &connected_faces);
+	    for (cf_it = connected_faces.begin(); cf_it != connected_faces.end(); cf_it++) {
+		if(faces->find((*cf_it)) != faces->end() && (*patches)[new_patch_1].find(*cf_it) == (*patches)[new_patch_1].end()) {
+		    face_queue_2.push((*cf_it));
+		    faces->erase((*cf_it));
+		}
+	    }
+	}
+   }
+   if (faces->size() > 0) std::cout << "Eh?? leftovers?\n";
+}
+
 // Given a patch, find triangles that overlap when projected into the patch domain, remove them
 // from the current patch and set them up in their own patch.  Returns the number of faces moved
 // from the current patch to their own patch.
@@ -602,7 +645,9 @@ size_t overlapping_edge_triangles(std::map< size_t, std::set<size_t> > *patches,
 			    VSET(u2, onpt_u2.x, onpt_u2.y, onpt_u2.z);
 			    int overlap = bn_coplanar_tri_tri_isect(v0, v1, v2, u0, u1, u2, 1);
 			    if (overlap) {
-				//std::cout << "Overlap: (" << *sizet_it << "," << *ef_it2 << ")\n";
+				std::cout << "Patch " << (*p_it).first << " overlap: (" << *sizet_it << "," << *ef_it2 << ")\n";
+				build_new_patches(*sizet_it, *ef_it2, (*p_it).first, patches, info);
+#if 0
 				info->patch_cnt++;
 				size_t new_patch = info->patch_cnt;
 				(*patches)[new_patch].insert(*sizet_it);
@@ -610,6 +655,7 @@ size_t overlapping_edge_triangles(std::map< size_t, std::set<size_t> > *patches,
 				info->patch_to_plane[new_patch] = info->face_to_plane[*sizet_it];
 				info->face_to_patch[*sizet_it] = new_patch;
 				find_edge_segments(&((*p_it).second), &edges, info);
+#endif
 				overlap_cnt++;
 				patch_overlapping++;
 				total_overlapping++;
@@ -620,11 +666,7 @@ size_t overlapping_edge_triangles(std::map< size_t, std::set<size_t> > *patches,
 		    if (overlap_cnt > 0) break;
 		}
 	    }
-	    if (patch_overlapping > 0)
-		std::cout << "Patch " << (*p_it).first << " overlaps: " << patch_overlapping << "\n";
-
-
-	    verify_patch_integrity((*p_it).first, &((*p_it).second), patches, info);
+//	    verify_patch_integrity((*p_it).first, &((*p_it).second), patches, info);
 	}
     }
     return total_overlapping;
@@ -712,6 +754,7 @@ void bot_partition(struct Manifold_Info *info)
 	    face_queue.push(smallest_face);
 	    face_groups[info->face_to_plane[face_queue.front()]].erase(face_queue.front());
 	    size_t current_plane = info->face_to_plane[face_queue.front()];
+	    size_t start_face_num = face_queue.front();
 	    while (!face_queue.empty()) {
 		size_t face_num = face_queue.front();
 		face_queue.pop();
@@ -727,7 +770,8 @@ void bot_partition(struct Manifold_Info *info)
 		    if (curr_face_area < (face_size_criteria*10) && curr_face_area > (face_size_criteria*0.1)) {
 			if (face_groups[info->face_to_plane[(*cf_it)]].find((*cf_it)) != face_groups[info->face_to_plane[(*cf_it)]].end()) {
 			    if (info->face_to_plane[(*cf_it)] == current_plane) {
-				// Large patches pose a problem for feature preservation - make an attempt to ensure "large"
+			//	if(ON_DotProduct( *(*info).face_normals.At((start_face_num)),*(*info).face_normals.At((*cf_it)) ) > 0.5) {
+					// Large patches pose a problem for feature preservation - make an attempt to ensure "large"
 				// patches are flat.
 				if (patches[info->patch_cnt].size() > info->patch_size_threshold) {
 				    vect_t origin;
@@ -753,6 +797,7 @@ void bot_partition(struct Manifold_Info *info)
 				    face_queue.push((*cf_it));
 				    face_groups[info->face_to_plane[(*cf_it)]].erase((*cf_it));
 				}
+			//	}
 			    }
 			}
 		    }
@@ -1070,15 +1115,19 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 	ON_Interval dom = edge_curve->Domain();
 	// XXX todo: dynamically sample the curve - must use consistent method for all sampling, else
 	// surface may not contain points sought by curve
+	ON_3dPoint pt_3d = edge_curve->PointAt(dom.ParameterAt(0));
+	ON_2dPoint pt_2d;
+	ON_2dPoint pt_2d_prev;
+	if(get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
+	    curve_pnts_2d.Append(pt_2d);
+	    pt_2d_prev = *curve_pnts_2d.Last();
+	    pullback_successes++; 
+	} else {
+	    pt_2d_prev = ON_2dPoint(INT_MAX, INT_MAX);
+	    pullback_failures++;
+	}
 	for (int i = 1; i <= 50; i++) {
-	    ON_3dPoint pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
-	    ON_2dPoint pt_2d;
-	    ON_2dPoint pt_2d_prev;
-	    if(curve_pnts_2d.Count() > 0) {
-		pt_2d_prev = *curve_pnts_2d.Last();
-	    } else {
-		pt_2d_prev = ON_2dPoint(INT_MAX, INT_MAX);
-	    }
+	    pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
 	    if(get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
 		curve_pnts_2d.Append(pt_2d);
 		pullback_successes++;
@@ -1086,6 +1135,7 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 		pullback_failures++;
 	    }
 	}
+
 	std::cout << "Pullback to face " << patch_id << ": Successes: " << pullback_successes << ", Failures: " << pullback_failures << "\n";
 	if (pullback_successes >= 2) {
 	    if(trim_rev) curve_pnts_2d.Reverse();
