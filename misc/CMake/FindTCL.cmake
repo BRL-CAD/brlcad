@@ -288,7 +288,7 @@ macro(TK_GRAPHICS_SYSTEM wishcmd resultvar)
 endmacro()
 
 
-# Set up the logic for determing the version of Tcl/Tk via running a script.
+# Set up the logic for determining the version of Tcl/Tk via running a script.
 set(tclversion_script "
 set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TCL_VERSION\"
 set fileId [open $filename \"w\"]
@@ -306,7 +306,7 @@ macro(TCL_GET_VERSION tclshcmd resultvar)
 endmacro()
 
 
-# Set up the logic for determing if a particular Tcl is compiled threaded.
+# Set up the logic for determining if a particular Tcl is compiled threaded.
 set(tclthreaded_script"
 set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TCL_THREADED\"
 set fileId [open $filename \"w\"]
