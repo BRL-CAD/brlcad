@@ -212,7 +212,7 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
   CMAKEFILES(${${xml_files}})
 endmacro(DOCBOOK_TO_HTML targetname_suffix srcfile outfile targetdir deps_list)
 
-# This macro produces Unix-syle manual or "man" pages
+# This macro produces Unix-style manual or "man" pages
 macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir deps_list)
   if(BRLCAD_EXTRADOCS_MAN)
     foreach(filename ${${xml_files}})
