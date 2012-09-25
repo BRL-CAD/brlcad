@@ -27,7 +27,7 @@ function yourself, and embed the re2c syntax inside it.
  Non-Trivial Stuff
 ===================
 
- re2c Doesn't Have an Equivlant to 'yytext'
+ re2c Doesn't Have an Equivalent to 'yytext'
 --------------------------------------------
 One way to simulate yytext is to define it as a macro that calls a function which returns the token text:
 
