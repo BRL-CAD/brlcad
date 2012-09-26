@@ -121,7 +121,7 @@ int		ClrStandout(void), ClrEOL(void), ClrText(void),
 
 
 /*	I n i t T e r m C a p ( )
-	Get terminal name from environent and leave in 'termName' for
+	Get terminal name from environment and leave in 'termName' for
 	external reference.
 	Read termcap entry into 'termCapBuf'.
 	Get individual parameters and control strings.
