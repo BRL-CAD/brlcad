@@ -98,7 +98,7 @@
    </para>
    <para>
       <emphasis remap="B">Presented</emphasis> area, unlike exposed area, does not take
-      occlusion into account. It is the equalivent of taking each object and considering
+      occlusion into account. It is the equivalent of taking each object and considering
       it in isolation. So for the previous case of two sheets of metal, the Front Cube
       would report the same area:
 
