@@ -86,7 +86,7 @@ fi
 # mode is the emacs major mode
 # mode_vars are the indentation variables that need to be set
 # wrap is whether or not in needs to be incased in /* */
-# commentchar is the comment character to prefex each line
+# commentchar is the comment character to prefix each line
 ##
 mode=""
 mode_vars=""
