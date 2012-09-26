@@ -147,8 +147,8 @@ void get_connected_faces(struct rt_bot_internal *bot, size_t face_num, EdgeToFac
 void fit_plane(size_t UNUSED(patch_id), std::set<size_t> *faces, struct Manifold_Info *info, ON_Plane *plane) {
     if (faces->size() > 0) {
 	ON_3dPoint center(0.0, 0.0, 0.0);
-	std::set<size_t> verts;   
-	std::set<size_t>::iterator f_it, v_it; 
+	std::set<size_t> verts;
+	std::set<size_t>::iterator f_it, v_it;
 	for(f_it = faces->begin(); f_it != faces->end(); f_it++) {
 	    verts.insert(info->bot->faces[(*f_it)*3+0]*3);
 	    verts.insert(info->bot->faces[(*f_it)*3+1]*3);
@@ -165,16 +165,16 @@ void fit_plane(size_t UNUSED(patch_id), std::set<size_t> *faces, struct Manifold
 	int vert_cnt = 0;
 	for(v_it = verts.begin(); v_it != verts.end(); v_it++) {
 	    VMOVE(pt, &info->bot->vertices[*v_it]);
-	    A(0,vert_cnt) = pt[0] - center.x; 
-	    A(1,vert_cnt) = pt[1] - center.y; 
-	    A(2,vert_cnt) = pt[2] - center.z; 
+	    A(0,vert_cnt) = pt[0] - center.x;
+	    A(1,vert_cnt) = pt[1] - center.y;
+	    A(2,vert_cnt) = pt[2] - center.z;
 	    vert_cnt++;
 	}
 
 	Eigen::JacobiSVD<Eigen::MatrixXd> svd(A, Eigen::ComputeThinU);
 
 	// 4.  Normal is in column 3 of U matrix
-	ON_3dVector normal(svd.matrixU()(0,2), svd.matrixU()(1,2), svd.matrixU()(2,2));    
+	ON_3dVector normal(svd.matrixU()(0,2), svd.matrixU()(1,2), svd.matrixU()(2,2));
 
 	// 5.  Construct plane
 	ON_Plane new_plane(center, normal);
@@ -488,7 +488,7 @@ size_t shift_edge_triangles(std::map< size_t, std::set<size_t> > *patches, size_
 }
 
 void construct_patches(std::set<size_t> *faces, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info) {
-    if (faces->size() > 0){  
+    if (faces->size() > 0){
 	while(faces->size() > 0) {
 	    info->patch_cnt++;
 	    size_t new_patch = info->patch_cnt;
@@ -589,7 +589,7 @@ size_t overlapping_edge_triangles(std::map< size_t, std::set<size_t> > *patches,
     std::map< size_t, std::set<size_t> >::iterator p_it;
     for (p_it = patches->begin(); p_it != patches->end(); p_it++) {
 	if ((*p_it).second.size() > 0) {
-	    ON_Plane plane; 
+	    ON_Plane plane;
 	    fit_plane((*p_it).first, &((*p_it).second), info, &plane);
 	    ON_Xform xf;
 	    xf.PlanarProjection(plane);
@@ -1121,7 +1121,7 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 	if(get_closest_point(pt_2d, &face, pt_3d, st)) {
 	    curve_pnts_2d.Append(pt_2d);
 	    pt_2d_prev = *curve_pnts_2d.Last();
-	    pullback_successes++; 
+	    pullback_successes++;
 	} else {
 	    pt_2d_prev = ON_2dPoint(INT_MAX, INT_MAX);
 	    pullback_failures++;
@@ -1402,7 +1402,7 @@ int main(int argc, char *argv[])
     // Create the Brep data structure to hold curves and topology information
     info.brep = ON_Brep::New();
     info.brep2 = ON_Brep::New();
-    
+
 
     // Now, using the patch sets, construct brep edges
     find_edges(&info);
