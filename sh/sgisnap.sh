@@ -39,7 +39,7 @@
 #  A general purpose script to photograph an arbitrary image    #
 #  file (.rle, .pix, .bw) on a Dunn camera connected to an      #
 #  SGI workstation.                                             #
-#  The main point of this script is to automagicly determine    #
+#  The main point of this script is to automagically determine  #
 #  the type and size of the image, and then expand it to        #
 #  occupy as much of the actual 1280x1024 screen as possible.   #
 #                                                               #
