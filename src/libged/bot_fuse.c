@@ -201,7 +201,7 @@ ged_bot_fuse(struct ged *gedp, int argc, const char **argv)
 	}
     }
 
-    i = argc - 2; 
+    i = argc - 2;
 
     bu_log("%s: start\n", argv[0]);
 
