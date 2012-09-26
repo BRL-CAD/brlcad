@@ -3071,7 +3071,7 @@ PRELIBS="$LIBS"
 if test "x$tcl_link_works" = "xyes" ; then
     LIBS="$LIBS $LIBTCL $LIBITCL"
 fi
-dnl this test is probably not sufficient if iwidgets is not locateable
+dnl this test is probably not sufficient if iwidgets is not locatable
 dnl in the tcl auto_path.
 AC_TRY_RUN([
 #ifdef HAVE_TCL_H
