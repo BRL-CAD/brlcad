@@ -62,7 +62,7 @@ int debug_file_count=0;
  * N M G _ P L O T _ O P E N _ E D G E S
  *
  * Find open edges, if any, in NMG object pointed to by magic_p and
- * create a UNIX plot file containing these edges. 
+ * create a UNIX plot file containing these edges.
  *
  * The prefix string will be appended to the front of the file name
  * of the plot file.
