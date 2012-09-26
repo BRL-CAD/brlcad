@@ -504,7 +504,7 @@
 	<emphasis remap="I">rt</emphasis> images, it is best to use
 	<emphasis remap="I">saveview</emphasis> scripts. In
 	<emphasis remap="I">mged</emphasis>, configure your view, save it,
-	and then open the file in an editor. Dupilcate the
+	and then open the file in an editor. Duplicate the
 	<emphasis remap="I">rt</emphasis> command block. After duplicating
 	the block, change the second to <emphasis remap="I">rtedge.</emphasis></para>
 
