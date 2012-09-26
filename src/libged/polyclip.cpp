@@ -569,7 +569,7 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 	    MAT4X3PNT(vpoint, gedp->ged_gvp->gv_model2view, polyA->gp_contour[i].gpc_point[j]);
 	    VSCALE(vpoint, vpoint, scale);
 	    V2MOVE(polyA_2d.p_contour[i].pc_point[j], vpoint);
-	}	
+	}
     }
 
     polyB_2d.p_num_contours = polyB->gp_num_contours;
@@ -587,10 +587,10 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 	    MAT4X3PNT(vpoint, gedp->ged_gvp->gv_model2view, polyB->gp_contour[i].gpc_point[j]);
 	    VSCALE(vpoint, vpoint, scale);
 	    V2MOVE(polyB_2d.p_contour[i].pc_point[j], vpoint);
-	}	
+	}
     }
 
-    /* 
+    /*
      * Check every line segment of polyA against every line segment of polyB.
      * If there are any intersecting line segments, there exists an overlap.
      */
@@ -773,7 +773,7 @@ end:
     bu_free((genptr_t)polyA_2d.p_contour, "p_contour");
     bu_free((genptr_t)polyB_2d.p_hole, "p_hole");
     bu_free((genptr_t)polyB_2d.p_contour, "p_contour");
-	
+
     return ret;
 }
 
