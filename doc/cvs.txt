@@ -546,14 +546,14 @@ MERGING A BRANCH
 
     Regardless if the branch is a maintenance branch or the STABLE
     branch, the fundamental "action" in performing a merge is called a
-    CVS join.  You can join code commited to one branch revision into
+    CVS join.  You can join code committed to one branch revision into
     another branch revision by passing the "-j" option to the cvs
     update command.  It's important to note that joins occur from code
     that is already committed.
 
     Once the code is joined, it may be committed to CVS.  If you have
-    changes on a branch that have not yet been commited, they should
-    first be commited before attempting the join.
+    changes on a branch that have not yet been committed, they should
+    first be committed before attempting the join.
 
 
     MERGING A BRANCH INTO HEAD:
@@ -583,7 +583,7 @@ MERGING A BRANCH
     If there are any conflicts, they would of course need to be
     manually resolved.  Once any conflicts are resolved and the
     sources are tested for functionality, the changes could then be
-    commited to HEAD.  Be careful to notice any file additions or
+    committed to HEAD.  Be careful to notice any file additions or
     deletions as CVS, generally speaking, will not manage those for
     you until they are committed.
 
