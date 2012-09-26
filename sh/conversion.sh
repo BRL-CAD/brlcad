@@ -465,7 +465,7 @@ EOF
 
 	# stop the limit timer.  when we get here, see if there is a
 	# sleep process still running.  if any found, the sleep
-	# proceses are killed and waited for so that we successfully
+	# processes are killed and waited for so that we successfully
 	# avoid the parent shell reporting a "Terminated" process kill
 	# message.
 
