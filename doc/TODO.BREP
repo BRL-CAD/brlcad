@@ -252,7 +252,7 @@ BRL-CAD to IGES
  *
  *       Point 1 and Point 2 overlap and may intersect.  When Point 3 evaluates its relationships with Point 1 and
  *       Point 2, it finds that it overlaps and may intersect Point 1, but it does NOT overlap Point 3.  This means
- *       tht Point 1 may intersect Point 2 OR Point 3, but NOT both at the same time.  Any assumption of equality
+ *       that Point 1 may intersect Point 2 OR Point 3, but NOT both at the same time.  Any assumption of equality
  *       involving any of these three points must decide how to handle this situation, and the decision must be both
  *       consistent and reproduceable.  The possible decisions are:
  *
