@@ -32,13 +32,13 @@ awk '{printf "%10.2f  %10.2f\n", $1, $2 }' > pos.dat
 
 The mass displacement file is presented to the TUBE program on standard
 input, where each time step has the following format:  First a line with
-the word "TIME" followed by a floating point number, in miliseconds.
+the word "TIME" followed by a floating point number, in milliseconds.
 Then, one input line for each of ``nmass'' (eg, 12) mass points, in
 ascending order of mass point number, starting with one, with one
 integer and three floating point numbers on each line:  the mass number,
 the X, Y, and Z deviations (currently expected in inches, where +X is
 towards the muzzle, +Y is in the vertical direction, and +Z is to the
-right of the muzzle).  There must be excatly one blank line after the
+right of the muzzle).  There must be exactly one blank line after the
 last mass point data line and before the next "TIME" line. Note that
 mass point 1 corresponds to "m1" on the diagram, and mass point 12 is
 "m12" on the diagram.  The position of a two additional points (0 and
@@ -88,7 +88,7 @@ saveview view1.sh
 
 This file is actually a Shell script that will render that one frame for
 you, using RT, and store it in a file.  However, in this case, a text
-editor is used to extract just the viewsize, eye point, and homogenous
+editor is used to extract just the viewsize, eye point, and homogeneous
 transform matrix (20 numbers in all) and store them in another file, say
 "view1.mat".
 
