@@ -29,6 +29,7 @@ typedef std::set<size_t> FaceList;
 
 struct Manifold_Info {
     ON_Brep *brep;
+    ON_Brep *brep2;
     struct rt_bot_internal *bot;
 
     std::map< size_t, std::set<size_t> > patches;
@@ -143,7 +144,7 @@ void get_connected_faces(struct rt_bot_internal *bot, size_t face_num, EdgeToFac
 
 // Use SVD algorithm from Soderkvist to fit a plane to vertex points
 // http://www.math.ltu.se/~jove/courses/mam208/svd.pdf
-void fit_plane(size_t patch_id, std::set<size_t> *faces, struct Manifold_Info *info, ON_Plane *plane) {
+void fit_plane(size_t UNUSED(patch_id), std::set<size_t> *faces, struct Manifold_Info *info, ON_Plane *plane) {
     if (faces->size() > 0) {
 	ON_3dPoint center(0.0, 0.0, 0.0);
 	std::set<size_t> verts;   
@@ -178,7 +179,7 @@ void fit_plane(size_t patch_id, std::set<size_t> *faces, struct Manifold_Info *i
 	// 5.  Construct plane
 	ON_Plane new_plane(center, normal);
         (*plane) = new_plane;
-
+#if 0
 	struct bu_vls name;
 	bu_vls_init(&name);
 	bu_vls_printf(&name, "fit_plane_%d.pl", patch_id);
@@ -212,7 +213,7 @@ void fit_plane(size_t patch_id, std::set<size_t> *faces, struct Manifold_Info *i
 	pdv_3cont(plot_file, pn);
 
 	fclose(plot_file);
-
+#endif
     }
 }
 
@@ -486,33 +487,15 @@ size_t shift_edge_triangles(std::map< size_t, std::set<size_t> > *patches, size_
     return faces_to_shift.size();
 }
 
-void verify_patch_integrity(size_t orig_patch, std::set<size_t> *orig_faces, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info) {
-    std::set<size_t> faces = *orig_faces;
-    std::queue<size_t> face_queue;
-    face_queue.push((*faces.begin()));
-    faces.erase(face_queue.front());
-    while (!face_queue.empty()) {
-	size_t face_num = face_queue.front();
-	face_queue.pop();
-	std::set<size_t> connected_faces;
-	std::set<size_t>::iterator cf_it;
-	get_connected_faces(info->bot, face_num, &(info->edge_to_face), &connected_faces);
-	for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
-	    if(faces.find((*cf_it)) != faces.end()) {
-		face_queue.push((*cf_it));
-		faces.erase((*cf_it));
-	    }
-	}
-    }
-    if (faces.size() > 0){  
-	while(faces.size() > 0) {
+void construct_patches(std::set<size_t> *faces, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info) {
+    if (faces->size() > 0){  
+	while(faces->size() > 0) {
 	    info->patch_cnt++;
 	    size_t new_patch = info->patch_cnt;
-	    std::cout << "patch integrity failure - building new patch " << new_patch << "\n";
 	    std::queue<size_t> face_queue;
-	    face_queue.push((*faces.begin()));
-	    faces.erase(face_queue.front());
-	    (*patches)[orig_patch].erase(face_queue.front());
+	    face_queue.push((*faces->begin()));
+	    faces->erase(face_queue.front());
+	    size_t start_face_num = face_queue.front();
 	    info->patch_to_plane[new_patch] = info->face_to_plane[face_queue.front()];
 	    while (!face_queue.empty()) {
 		size_t face_num = face_queue.front();
@@ -523,10 +506,11 @@ void verify_patch_integrity(size_t orig_patch, std::set<size_t> *orig_faces, std
 		std::set<size_t>::iterator cf_it;
 		get_connected_faces(info->bot, face_num, &(info->edge_to_face), &connected_faces);
 		for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
-		    if(faces.find((*cf_it)) != faces.end()) {
+		    if(faces->find((*cf_it)) != faces->end()) {
+		    if(ON_DotProduct( *(*info).face_normals.At((start_face_num)),*(*info).face_normals.At((*cf_it)) ) > 0.5) {
 			face_queue.push((*cf_it));
-			faces.erase((*cf_it));
-			(*patches)[orig_patch].erase(*cf_it);
+			faces->erase((*cf_it));
+}
 		    }
 		}
 	    }
@@ -534,7 +518,7 @@ void verify_patch_integrity(size_t orig_patch, std::set<size_t> *orig_faces, std
     }
 }
 
-void build_new_patches(size_t face1, size_t face2, size_t orig_patch, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info) {
+void split_overlapping_patch(size_t face1, size_t face2, size_t orig_patch, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info) {
     std::set<size_t> *faces = &((*patches)[orig_patch]);
     std::queue<size_t> face_queue_1;
     std::queue<size_t> face_queue_2;
@@ -542,10 +526,14 @@ void build_new_patches(size_t face1, size_t face2, size_t orig_patch, std::map< 
     faces->erase(face_queue_1.front());
     info->patch_cnt++;
     size_t new_patch_1 = info->patch_cnt;
+    size_t start_face_num_1 = face_queue_1.front();
+    info->patch_to_plane[new_patch_1] = info->face_to_plane[face_queue_1.front()];
     face_queue_2.push(*faces->find(face2));
     faces->erase(face_queue_2.front());
     info->patch_cnt++;
     size_t new_patch_2 = info->patch_cnt;
+    size_t start_face_num_2 = face_queue_2.front();
+    info->patch_to_plane[new_patch_2] = info->face_to_plane[face_queue_2.front()];
     while (!face_queue_1.empty() || !face_queue_2.empty()) {
         if (!face_queue_1.empty()) {
 	    size_t face_num_1 = face_queue_1.front();
@@ -557,8 +545,10 @@ void build_new_patches(size_t face1, size_t face2, size_t orig_patch, std::map< 
 	    get_connected_faces(info->bot, face_num_1, &(info->edge_to_face), &connected_faces);
 	    for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
 		if(faces->find((*cf_it)) != faces->end() && (*patches)[new_patch_2].find(*cf_it) == (*patches)[new_patch_2].end()) {
-		    face_queue_1.push((*cf_it));
-		    faces->erase((*cf_it));
+		    if(ON_DotProduct( *(*info).face_normals.At((start_face_num_1)),*(*info).face_normals.At((*cf_it)) ) > 0.5) {
+			face_queue_1.push((*cf_it));
+			faces->erase((*cf_it));
+		    }
 		}
 	    }
 	}
@@ -572,13 +562,15 @@ void build_new_patches(size_t face1, size_t face2, size_t orig_patch, std::map< 
 	    get_connected_faces(info->bot, face_num_2, &(info->edge_to_face), &connected_faces);
 	    for (cf_it = connected_faces.begin(); cf_it != connected_faces.end(); cf_it++) {
 		if(faces->find((*cf_it)) != faces->end() && (*patches)[new_patch_1].find(*cf_it) == (*patches)[new_patch_1].end()) {
+		    if(ON_DotProduct( *(*info).face_normals.At((start_face_num_2)),*(*info).face_normals.At((*cf_it)) ) > 0.5) {
 		    face_queue_2.push((*cf_it));
 		    faces->erase((*cf_it));
+}
 		}
 	    }
 	}
    }
-   if (faces->size() > 0) std::cout << "Eh?? leftovers?\n";
+   if (faces->size() > 0) construct_patches(faces, patches, info);
 }
 
 // Given a patch, find triangles that overlap when projected into the patch domain, remove them
@@ -648,7 +640,7 @@ size_t overlapping_edge_triangles(std::map< size_t, std::set<size_t> > *patches,
 			    int overlap = bn_coplanar_tri_tri_isect(v0, v1, v2, u0, u1, u2, 1);
 			    if (overlap) {
 				std::cout << "Patch " << (*p_it).first << " overlap: (" << *sizet_it << "," << *ef_it2 << ")\n";
-				build_new_patches(*sizet_it, *ef_it2, (*p_it).first, patches, info);
+				split_overlapping_patch(*sizet_it, *ef_it2, (*p_it).first, patches, info);
 #if 0
 				info->patch_cnt++;
 				size_t new_patch = info->patch_cnt;
@@ -807,6 +799,8 @@ void bot_partition(struct Manifold_Info *info)
 	    }
 	}
     }
+
+    // Find "interior" patches and see if they can be merged with the parent patch
 
 
     // "Shave" sharp triangles off of the edges by shifting them from one patch to
@@ -1151,8 +1145,8 @@ void build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type,
 	    if(pt_2d != pt_2d_prev)
 		pullback_failures++;
 	}
-
-	std::cout << "Pullback to face " << patch_id << ": Successes: " << pullback_successes << ", Failures: " << pullback_failures << "\n";
+        if(pullback_failures)
+	    std::cout << "Pullback to face " << patch_id << ": Successes: " << pullback_successes << ", Failures: " << pullback_failures << "\n";
 	if (pullback_successes >= 2) {
 	    if(trim_rev) curve_pnts_2d.Reverse();
 	    ON_Curve *trim_curve = interpolateCurve(curve_pnts_2d);
@@ -1324,6 +1318,8 @@ void find_surfaces(struct Manifold_Info *info) {
 	    fit.assemble(params);
 	    fit.solve();
 	}
+        ON_BrepFace *face2 = info->brep2->NewFace(fit.m_nurbs);
+        info->brep2->m_S.Append(new ON_NurbsSurface(fit.m_nurbs));
         int si = info->brep->AddSurface(new ON_NurbsSurface(fit.m_nurbs));
         ON_BrepFace &face = info->brep->NewFace(si);
         // Check face normal against plane
@@ -1333,6 +1329,7 @@ void find_surfaces(struct Manifold_Info *info) {
 	double vdot = ON_DotProduct(surf_norm, *info->face_normals.At(*(info->patches[(*p_it).first].begin())));
 	if (vdot < 0) {
             info->brep->FlipFace(face);
+            info->brep2->FlipFace(*face2);
 	}
     }
 }
@@ -1346,7 +1343,7 @@ int main(int argc, char *argv[])
     struct rt_bot_internal *bot_ip = NULL;
     struct rt_wdb *wdbp;
     struct bu_vls name;
-    char *bname;
+    struct bu_vls bname;
 
     FaceList::iterator f_it;
 
@@ -1404,6 +1401,7 @@ int main(int argc, char *argv[])
 
     // Create the Brep data structure to hold curves and topology information
     info.brep = ON_Brep::New();
+    info.brep2 = ON_Brep::New();
     
 
     // Now, using the patch sets, construct brep edges
@@ -1416,13 +1414,16 @@ int main(int argc, char *argv[])
 
     // Generate BRL-CAD brep object
     wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-    bname = (char*)bu_malloc(strlen(argv[2])+6, "char");
-    bu_strlcpy(bname, argv[2], strlen(argv[2])+1);
-    bu_strlcat(bname, "_brep", strlen(bname)+6);
-    if (mk_brep(wdbp, bname, info.brep) == 0) {
-	bu_log("Generated brep object %s\n", bname);
+    bu_vls_init(&bname);
+    bu_vls_sprintf(&bname, "%s_brep", argv[2]);
+    if (mk_brep(wdbp, bu_vls_addr(&bname), info.brep) == 0) {
+	bu_log("Generated brep object %s\n", bu_vls_addr(&bname));
     }
-    bu_free(bname, "char");
+    bu_vls_sprintf(&bname, "%s_brep2", argv[2]);
+    if (mk_brep(wdbp, bu_vls_addr(&bname), info.brep2) == 0) {
+	bu_log("Generated brep object %s\n", bu_vls_addr(&bname));
+    }
+
 
 //#ifdef BOT_TO_NURBS_DEBUG
     for (std::map< size_t, std::set<size_t> >::iterator np_it = info.patches.begin(); np_it != info.patches.end(); np_it++) {
