@@ -1015,7 +1015,7 @@ AC_FUNC_ALLOCA
 
 dnl if building jove wasn't specifically requested and wasn't
 dnl disabled, see if there is either emacs or jove available.
-dnl i.e. auto for jove is dependant on what is installed
+dnl i.e. auto for jove is dependent on what is installed
 BCEDITOR=""
 if test "x$bc_build_jove" = "xauto" ; then
     AC_PATH_PROG(BCEDITOR, emacs, , $PATH)
@@ -3361,7 +3361,7 @@ AC_MSG_RESULT([$nsl_link_works])
 AC_SUBST(LIBNSL)
 
 dnl *** libnetwork ***
-AC_MSG_CHECKING(for system network library availablity)
+AC_MSG_CHECKING(for system network library availability)
 AC_MSG_RESULT([$network_link_works])
 AC_SUBST(LIBNETWORK)
 
@@ -3795,7 +3795,7 @@ dnl **************************************
 
 BC_CONFIGURE_STAGE([output], [9 of 9])
 
-# remove surrounding whitspace
+# remove surrounding whitespace
 CFLAGS="`echo $CFLAGS`"
 CXXFLAGS="`echo $CXXFLAGS`"
 CPPFLAGS="`echo $CPPFLAGS`"
