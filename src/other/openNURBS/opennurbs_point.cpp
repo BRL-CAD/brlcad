@@ -139,14 +139,14 @@ ON_Interval::IsDecreasing() const
 bool
 ON_Interval::IsInterval() const
 {
-  return ( abs(m_t[0] - m_t[1]) > ON_ZERO_TOLERANCE && ON_IS_VALID(m_t[0]) && ON_IS_VALID(m_t[1]) ) ? true : false;
+  return ( m_t[0] != m_t[1] && ON_IS_VALID(m_t[0]) && ON_IS_VALID(m_t[1]) ) ? true : false;
 }
 
 
 bool
 ON_Interval::IsSingleton() const
 {
-  return ( abs(m_t[0] - m_t[1]) <= ON_ZERO_TOLERANCE && ON_IS_VALID(m_t[1]) ) ? true : false;
+  return ( m_t[0] == m_t[1] && ON_IS_VALID(m_t[1]) ) ? true : false;
 }
 
 bool
