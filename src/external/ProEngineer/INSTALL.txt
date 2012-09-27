@@ -48,7 +48,7 @@ Once installed, the Pro/ENGINEER to BRL-CAD conversion is a two step
 process.  First, in Pro/ENGINEER, you must select "Proe-brl" under the
 "File" menu.  You will be prompted for an output file name, a starting
 region ident number, a maximum allowed error for the facetization
-approximation, and an angle control. The recomended value for the
+approximation, and an angle control. The recommended value for the
 angle control is 0.5.  After all prompts have been satisfied, the
 currently displayed model will be output to a file in BRL-CAD ACSII
 format (actually a Tcl script). The output file can then be converted
