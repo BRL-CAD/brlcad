@@ -406,7 +406,7 @@ int parse_args( int ac, char **av )
  *      R E G I O N _ S T A R T
  *
  * @brief This routine is called when a region is first encountered in the
- * heirarchy when processing a tree
+ * hierarchy when processing a tree
  *
  *      @param tsp tree state (for parsing the tree)
  *      @param pathp A listing of all the nodes traversed to get to this node in the database
