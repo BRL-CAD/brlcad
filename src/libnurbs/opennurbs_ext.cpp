@@ -225,7 +225,7 @@ CurveTree::CurveTree(ON_BrepFace* face) :
 		for (int knot_index = 1; knot_index <= knotcnt; knot_index++) {
 		    ON_Interval range(knots[knot_index - 1], knots[knot_index]);
 
-		    if(!range.IsSingleton())
+		    if (range.Length() > TOL)
 			getHVTangents(trimCurve, range, splitlist);
 		}
 		for (std::list<double>::iterator l = splitlist.begin(); l != splitlist.end(); l++) {
@@ -477,9 +477,9 @@ CurveTree::getHVTangents(const ON_Curve* curve, ON_Interval& t, std::list<fastf_
 	    double midpoint = (t[1]+t[0])/2.0;
 	    ON_Interval left(t[0], midpoint);
 	    ON_Interval right(midpoint, t[1]);
-            if(!left.IsSingleton())
+            if (left.Length() > TOL)
 		getHVTangents(curve, left, list);
-            if(!right.IsSingleton())
+            if (right.Length() > TOL)
 		getHVTangents(curve, right, list);
 	    return true;
 	} else if (tanx_changed) {//find horz
@@ -517,9 +517,9 @@ CurveTree::getHVTangents(const ON_Curve* curve, ON_Interval& t, std::list<fastf_
 	    double midpoint = (t[1]+t[0])/2.0;
 	    ON_Interval left(t[0], midpoint);
 	    ON_Interval right(midpoint, t[1]);
-	    if(!left.IsSingleton())
+	    if (left.Length() > TOL)
 		getHVTangents(curve, left, list);
-	    if(!right.IsSingleton())
+	    if (right.Length() > TOL)
 		getHVTangents(curve, right, list);
 	    return true;
 	}
