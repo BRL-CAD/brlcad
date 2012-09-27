@@ -1358,7 +1358,7 @@ conv_extrusion( tag_t feat_tag, char *part_name, char *refset_name, char *inst_n
 
 	} else {
 
-	    bu_log( "Apparrently, a sketch(%d) is not a sketch\n", sketch_tag );
+	    bu_log( "Apparently, a sketch(%d) is not a sketch\n", sketch_tag );
 	    UF_free( curves );
 	    UF_MODL_delete_list( &sketch_list );
 
@@ -1986,7 +1986,7 @@ get_thru_faces_length( tag_t feat_tag,
 
     if ( face2 ) {
 	length = max_len - min_len;
-	/* occaisionally UG places the "base" at an unreasonable position along the dir direction
+	/* occasionally UG places the "base" at an unreasonable position along the dir direction
 	 * move it to the midpoint along the dir direction
 	 */
 
@@ -2143,7 +2143,7 @@ do_hole( int hole_type, tag_t feat_tag, int n_exps, tag_t *exps, char ** descs, 
 	    bu_log( "Failed to get hole depth\n" );
 	    return 1;
 	}
-	bu_log( "\t calulated depth = %g\n", Depth );
+	bu_log( "\t calculated depth = %g\n", Depth );
     }
 
     if ( hole_type == COUNTER_BORE_HOLE_TYPE ) {
@@ -2522,7 +2522,7 @@ do_rect_pocket(
 	add_to_obj_list( solid_name );
 	(void)mk_addmember( solid_name, &head->l, NULL, WMOP_SUBTRACT );
 
-	/* 4 RCC's and 4 combinations to get the flooe corners right */
+	/* 4 RCC's and 4 combinations to get the floor corners right */
 	VJOIN1( trc_base, &pts[0], -f_radius, diry );
 	VJOIN1( trc_top, &pts[3], f_radius, diry );
 	VSUB2( trc_height, trc_top, trc_base );
@@ -2832,7 +2832,7 @@ do_cyl_pocket(
 	    VSCALE( height, dir, ht - tmp_ht );
 	    solid_name = create_unique_brlcad_solid_name();
 	    if ( mk_rcc( wdb_fd, solid_name, base2, height, radius4 ) ) {
-		bu_log( "Failed to make RCC for cylinderical pocket feature!\n" );
+		bu_log( "Failed to make RCC for cylindrical pocket feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return 1;
 	    }
@@ -2842,7 +2842,7 @@ do_cyl_pocket(
 	    VJOIN1( base2, base, ht - round_rad, dir );
 	    solid_name = create_unique_brlcad_solid_name();
 	    if ( mk_tor( wdb_fd, solid_name, base2, dir, radius4, round_rad ) ) {
-		bu_log( "Failed to make TOR for cylinderical pocket feature!\n" );
+		bu_log( "Failed to make TOR for cylindrical pocket feature!\n" );
 		bu_free( solid_name, "solid_name" );
 		return 1;
 	    }
@@ -2891,7 +2891,7 @@ do_rect_slot(
     double tmp;
 
     UF_func( UF_MODL_ask_feat_location( feat_tag, loc_orig ) );
-    bu_log( "Rectangulat Slot:\n" );
+    bu_log( "Rectangular Slot:\n" );
     UF_func( UF_MODL_ask_feat_direction( feat_tag, dir1, dir2 ) );
     MAT4X3VEC( dirx, curr_xform, dir1 );
     MAT4X3VEC( diry, curr_xform, dir2 );
@@ -4725,12 +4725,12 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 		bu_log( "%s\n", err_message );
 	    }
 	    DO_INDENT;
-	    bu_log( "Continueing without this part\n" );
+	    bu_log( "Continuing without this part\n" );
 	    return (char *)NULL;
 	}
     }
 
-    /* find out what the maximum number of vertecies per facet is */
+    /* find out what the maximum number of vertices per facet is */
     UF_func(UF_FACET_ask_max_facet_verts( model, &max_verts ));
     DO_INDENT;
     bu_log( "max_verts = %d\n", max_verts );
@@ -4753,7 +4753,7 @@ facetize( tag_t solid_tag, char *part_name, char *refset_name, char *inst_name, 
 	UF_FACET_ask_solid_face_of_facet (model, facet_id, &face_tag);
 	UF_FACET_ask_face_id_of_facet (model, facet_id, &face_id );
 
-	/* retrieve the verticies & normals for this facet */
+	/* retrieve the vertices & normals for this facet */
 	UF_func(UF_FACET_ask_vertices_of_facet(model, facet_id,
 					       &vert_count, v));
 	UF_func(UF_FACET_ask_normals_of_facet( model, facet_id,
