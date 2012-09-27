@@ -292,7 +292,7 @@ drop_client(int sub)
 /*
  *			C O M M _ E R R O R
  *
- *  Communication error.  An error occured on the PKG link.
+ *  Communication error.  An error occurred on the PKG link.
  *  It may be local, or it may be between us and the client we are serving.
  *  We send a copy to syslog or stderr.
  *  Don't send one down the wire, this can cause loops.
