@@ -49,7 +49,7 @@
 
 
       <para>
-	Conceptualmetne hay dos objetos en <application>MGED</application>
+	Conceptualmente hay dos objetos en <application>MGED</application>
 	que soportan operaciones Boolenas. Uno se llama combinación, el otro,
 	región.
       </para>
