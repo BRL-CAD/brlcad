@@ -220,7 +220,7 @@
 	      it consists of two fields, Length and Data. In the case of the Object_Name
 	      element, these are referred to as Name_Length and Name_Data, respectively.
 	      Note: The Object_Name element is mandatory for all allocated storage in the
-	      database. Database free-space managment objects are the only objects for which
+	      database. Database free-space management objects are the only objects for which
 	      the Object_Name element is optional.
 	    </para>
 	  </listitem>
@@ -1181,7 +1181,7 @@
 	  In addition, the "comment=" attribute of the "_GLOBAL" object may be used to store
 	  human-readable remarks about the database that are not more properly associated with a
 	  specific database item. These might include remarks about data sources, model evolution,
-	  security classification, and release restrictions. In the absense of some outboard
+	  security classification, and release restrictions. In the absence of some outboard
 	  revision-control system, this might also be a place to record modification history,
 	  although such use is discouraged.
 	</para>
@@ -1453,7 +1453,7 @@
 	to that object and drawn from a name space that is global to
 	the database. The Object_Name element is mandatory for all
 	allocated storage in the database. Database free-space
-	managment objects are the only objects for which the
+	management objects are the only objects for which the
 	Object_Name element is optional.
       </para>
       <para>
