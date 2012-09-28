@@ -1208,7 +1208,7 @@ namespace eval ::hv3::clickcontrol {
       append report {<i>No associated form node.</i>}
     } else {
       append report [subst -nocommands {
-	<i>Controled by form node <a href="$n">$n</a></i>
+	<i>Controlled by form node <a href="$n">$n</a></i>
       }]
     }
     append report "</p>"
