@@ -3474,6 +3474,8 @@ package provide cadwidgets::Ged 1.0
 
 
 ::itcl::body cadwidgets::Ged::end_data_poly_move {_pane} {
+    refresh_off
+
     if {$itk_option(-gridSnap)} {
 	# First, get the data point being moved.
 	set point [eval $mGed data_polygons $itk_component($_pane) get_point $mLastDataIndex]
@@ -3491,11 +3493,57 @@ package provide cadwidgets::Ged 1.0
 	eval $mGed data_polygons $itk_component($_pane) replace_point $mLastDataIndex [list $point]
     }
 
+    set pindex [lindex $mLastDataIndex 0]
+    set cindex [lindex $mLastDataIndex 1]
+    set plist [$mGed data_polygons $itk_component($_pane) polygons]
+    set save_plist $plist
+
+    # clip_index will reference the clip polygon that gets appended below
+    set clip_pindex [llength $plist]
+
+    set poly [lindex $plist $pindex]
+    if {[llength $poly] < 2} {
+	foreach callback $mEndDataPolygonCallbacks {
+	    catch {$callback $mLastDataIndex}
+	}
+
+	set mLastDataIndex ""
+	refresh_on
+	refresh_all
+
+	# No clipping necessary
+	return
+    }
+
+    # Extract the contour that becomes the clip polygon
+    set clip_poly_contour [lindex $poly $cindex]
+    set poly [lreplace $poly $cindex $cindex]
+    set plist [lreplace $plist $pindex $pindex $poly]
+
+    # Append the clip polygon
+    lappend plist [list $clip_poly_contour]
+    $mGed data_polygons $itk_component($_pane) polygons $plist
+
+    if {[llength $plist] > $clip_pindex} {
+	if {[$mGed data_polygons $itk_component($_pane) polygons_overlap $pindex $clip_pindex]} {
+	    $mGed data_polygons $itk_component($_pane) clip $pindex $clip_pindex
+
+	    # Get rid of the clip polygon
+	    set plist [$mGed data_polygons $itk_component($_pane) polygons]
+	    set plist [lreplace $plist $clip_pindex $clip_pindex]
+	    $mGed data_polygons $itk_component($_pane) polygons $plist
+	} else {
+	    $mGed data_polygons $itk_component($_pane) polygons $save_plist
+	}
+    }
+
     foreach callback $mEndDataPolygonCallbacks {
 	catch {$callback $mLastDataIndex}
     }
 
     set mLastDataIndex ""
+    refresh_on
+    refresh_all
 }
 
 
