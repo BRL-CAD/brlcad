@@ -249,7 +249,7 @@
 	    determine whether to use the material color
 	    assigned to an object as the edge color. Valid
 	    values are 1 (on) and 0 (off). The default is
-	    off. Using region colors overides any
+	    off. Using region colors overrides any
 	    foreground color setting.
 	  </para>
 	</listitem>
