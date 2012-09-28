@@ -228,7 +228,7 @@ component:  --
       </para>
     </example>
 
-    <example><info><title>Running <application>MGED</application> without a dislay manager.</title></info>
+    <example><info><title>Running <application>MGED</application> without a display manager.</title></info>
 
       <para>
 	<prompt>user:~ </prompt><userinput>mged -c</userinput>
@@ -244,7 +244,7 @@ mged&gt;
     </example>
 
     <example><info><title>Running <application>MGED</application> and bypassing the attach prompt by specifying
-      the X11 dislay manager.</title></info>
+      the X11 display manager.</title></info>
 
       <para>
 	<prompt>user:~ </prompt><userinput>mged -a X -c</userinput>
