@@ -1104,7 +1104,7 @@ proc ::snit::Comp.statement.method {method arglist body} {
 	set compile(hashierarchic) yes
     }
 
-    # Remeber this method
+    # Remember this method
     lappend compile(localmethods) $method
 
     CheckArgs "method [list $method]" $arglist
