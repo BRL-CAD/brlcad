@@ -285,7 +285,7 @@
       <para>
 	Sets "rt_bot_minpieces" to the new value <emphasis remap="I">n.</emphasis>
 	If <emphasis remap="I">n</emphasis> is not provided, the current value of "rt_bot_minpieces"
-	is diplayed.  See the discussion of the <option>-B</option> option above for more details.
+	is displayed.  See the discussion of the <option>-B</option> option above for more details.
       </para>
     </listitem>
   </varlistentry>
