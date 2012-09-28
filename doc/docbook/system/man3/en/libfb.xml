@@ -144,7 +144,7 @@
   <para>
     The exact interpretation of color maps tends to be somewhat device
     specific. The three ColorMap arrays each have 256 entries of unsigned
-    16-bit values. In order to accomodate color maps with differing amounts
+    16-bit values. In order to accommodate color maps with differing amounts
     of output resolution, the color map entries are fixed-point fractions
     in the range (0.0..1.0).  In integer notation, the range is (0..65525).
     For devices with less than 16 bits of output from their color maps,
@@ -276,7 +276,7 @@
     and <emphasis remap="I">ybits</emphasis>
     specify the size of the cursor bitmap.  The number of bytes in the
     <varname role="parameter">bits</varname> array will be the width rounded
-    up to a mutiple of eight (so that the cursor "scanlines" are byte aligned)
+    up to a multiple of eight (so that the cursor "scanlines" are byte aligned)
     times the height.
     <varname role="parameter">bits</varname>[0]
     is the lower left corner,
@@ -347,7 +347,7 @@
   <para>
     <emphasis remap="I">Fb_rpixel</emphasis>
     reads the pixel at the current frame buffer location
-    and returns it into the location specifed
+    and returns it into the location specified
     by <emphasis remap="I">pixelp</emphasis>.
   </para>
 
@@ -441,7 +441,7 @@ $  <filename>/bin/cc  program.c  -lfb -l\&lt;system-library...\&gt;</filen
 
   <para>
     where <emphasis remap="I">&lt;system-library&gt;</emphasis>
-    denotes specific libraries necesary on a particular machine.  All machines
+    denotes specific libraries necessary on a particular machine.  All machines
     with networking will require the "-lpkg" option.  Machines which support the
     X Windows(tm) system will require the "-lX11" option.
   </para>
