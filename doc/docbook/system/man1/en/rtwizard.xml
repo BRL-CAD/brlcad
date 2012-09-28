@@ -256,7 +256,7 @@
 	<term><option>--ghosting-intensity</option> <replaceable>value</replaceable></term>
 	<listitem>
 	  <para>
-	    Control the degree of visibility to use when rendring ghost objects.
+	    Control the degree of visibility to use when rendering ghost objects.
 	  </para>
 	</listitem>
       </varlistentry>
