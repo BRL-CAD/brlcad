@@ -579,7 +579,7 @@
 	<title>"r" Bits</title>
 
 	<para>
-	  The bits labled as "r" in all three flags are reserved for future design
+	  The bits labeled as "r" in all three flags are reserved for future design
 	  work assigning additional optional fields in the object.
 	</para>
       </section>
@@ -972,7 +972,7 @@
 	    </row>
 	    <row>
 	      <entry>8</entry>
-	      <entry>Polygonal facted object (Polysolid)</entry>
+	      <entry>Polygonal faceted object (Polysolid)</entry>
 	    </row>
 	    <row>
 	      <entry>9</entry>
@@ -1543,12 +1543,12 @@ aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL
 	  </listitem>
 	  <listitem>
 	    <para>
-	      region_id = For regions, GIFT compatability. Integer.
+	      region_id = For regions, GIFT compatibility. Integer.
 	    </para>
 	  </listitem>
 	  <listitem>
 	    <para>
-	      giftmater = For regions, GIFT compatability. Integer. (Point of Discussion?????Should we use negative values for
+	      giftmater = For regions, GIFT compatibility. Integer. (Point of Discussion?????Should we use negative values for
 	      air codes, positive for nonair, so we can eliminate air codes?)
 	    </para>
 	  </listitem>
@@ -1560,7 +1560,7 @@ aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL
 	  </listitem>
 	  <listitem>
 	    <para>
-	      los = For regions, GIFT compatability. Integer.
+	      los = For regions, GIFT compatibility. Integer.
 	    </para>
 	  </listitem>
 	  <listitem>
