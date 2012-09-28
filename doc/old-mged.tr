@@ -91,7 +91,7 @@ Three commands for precise editing in this mode have been added (like the
 "p" command in solid editing).
 These commands are: rotobj, scale, translate and do what one would expect.
 These commands will be discussed in detail later.
-If no KEY solid exists at the bottom of the selected path (ie the object has
+If no KEY solid exists at the bottom of the selected path (i.e. the object has
 been "E'd"), then the center of the region at the bottom of the path becomes
 the KEY point.
 .bp
