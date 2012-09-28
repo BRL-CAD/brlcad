@@ -248,7 +248,7 @@ prior to parsing a new document. The widget is reset such
 that the document tree is empty (as if no calls to
 [pathName parse] had ever been made) and no stylesheets
 except the default stylesheet are loaded (as if no
-invocations of [pathName style] had occured).
+invocations of [pathName style] had occurred).
 .RE
 
 pathName select clear
@@ -300,7 +300,7 @@ takes priority, the widget uses the following approach: If
 the initial strings of the two style-id values are not
 identical, then "user" takes precedence over "author", and
 "author" takes precedence over "agent". Otherwise, the
-lexographically largest style-id value takes precedence.
+lexigraphically largest style-id value takes precedence.
 For more detail on why this seemingly odd approach is
 taken, please refer to the "STYLESHEET LOADING" below.
 
