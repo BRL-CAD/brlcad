@@ -494,7 +494,7 @@
       <varlistentry>
 	<term><option>-R</option></term>
 	<listitem>
-	  <para>requests that overlapping regions not be reported. (confilcts with -r)</para>
+	  <para>requests that overlapping regions not be reported. (conflicts with -r)</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
