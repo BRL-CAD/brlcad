@@ -9,7 +9,7 @@
 #
 #     To add new encoding aliases, entries should be added to the
 #     global ::Hv3EncodingMap array. This array maps from identifiers
-#     commonly used on the web to the cannonical name used by Tcl. For
+#     commonly used on the web to the canonical name used by Tcl. For
 #     example, some Japanese websites use "shift_jis", but Tcl calls
 #     this encoding "shiftjis". To work around this, we add the following
 #     entry to ::Hv3EncodingMap:
