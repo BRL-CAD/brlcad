@@ -339,7 +339,7 @@
 	  exactamente frente al camión. El valor irá acrecentándo mientras lo
 	  rodee hacia la derecha. De esta manera, si está enfrentado a la
 	  puerta del conductor (siendo que el asiento del conductor es de la
-	  izquierda) se encontrará a una posición de 90'0 acimuth, detrás del
+	  izquierda) se encontrará a una posición de 90'0 acimut, detrás del
 	  camión será de 180'0, y del lado de la puerta del acompañante será
 	  de 270'0.
 	</para>
