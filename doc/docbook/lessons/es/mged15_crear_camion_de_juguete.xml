@@ -328,7 +328,7 @@
 	que regrese los valores que han sido modificados, a aquellos valores
 	existentes previamente a la apertura de la ventana de diálogo. El botón
 	Reset no cerrará el cuadro de diálogo. Los botones Cancel (Cancelar) o
-	Dissmis (Salir) hace que no se tome en cuenta ningun cambio
+	Dismiss (Salir) hace que no se tome en cuenta ningun cambio
 	realizado en el cuadro de diálogo, dejando activos los últimos valores
 	aceptados. Estos dos botones cierran el cuadro de diálogo al ser
 	seleccionados.
