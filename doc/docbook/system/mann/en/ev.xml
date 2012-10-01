@@ -110,7 +110,7 @@
 
   <para>The first example shows the use of the <command>ev</command> command to display two evaluated objects as shaded  	polygons.  The second example shows the use of the <command>ev</command> command to display an evaluated object as 	wireframe without triangulating.
    </para>
-  <example><info><title>Display evaluted objects as polygons.</title></info>
+  <example><info><title>Display evaluated objects as polygons.</title></info>
 
     <variablelist>
       <varlistentry>
