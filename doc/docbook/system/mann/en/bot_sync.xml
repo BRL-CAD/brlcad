@@ -32,7 +32,7 @@
     this indicates the black facets have their normal in the wrong direction. To correct
     this, it is recommended to first run the commands 'bot_vertex_fuse' then
     'bot_face_fuse' followed by 'bot_sync'. If the result is all exterior facets are
-    black, then use the MGED 'bot_flip' command to reverse (ie flip) all the BOT facet
+    black, then use the MGED 'bot_flip' command to reverse (i.e. flip) all the BOT facet
     normals. The result should be all exterior facets become shaded.</para>
   </refsection>
 
