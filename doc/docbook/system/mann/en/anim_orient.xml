@@ -144,7 +144,7 @@
       </varlistentry>
     </variablelist>
 
-    <para>The input and ouput modification codes are:</para>
+    <para>The input and output modification codes are:</para>
     <variablelist remap="TP">
       <varlistentry>
 	<term><emphasis remap="B" role="bold">i</emphasis></term>
