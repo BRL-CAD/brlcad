@@ -150,7 +150,7 @@
     Coordinates in model space, offsets, and objects are all
     accepted interchangeably as reference points. A single
     reference point is equivalent to an absolute point in model
-    space. A pair of refence points specifies a distance or an
+    space. A pair of reference points specifies a distance or an
     angle, and is supplied as a set of
     <emphasis>from</emphasis> - <emphasis>to</emphasis> arguments (a
     <emphasis>from</emphasis> argument is similar to the concept
@@ -195,7 +195,7 @@
 
   <para>
     The quantity and arrangement of standard <command>edit</command>
-    arguments as well as their intepretation depends upon the
+    arguments as well as their interpretation depends upon the
     subcommand. See the manual page for a given subcommand for more
     information on its usage:<sbr/>
     <prompt>&gt; </prompt>
