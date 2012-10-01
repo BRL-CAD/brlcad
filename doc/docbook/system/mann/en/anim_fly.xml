@@ -112,7 +112,7 @@
 	    these are consecutive points from the input table. If the time
 	    difference between the points falls below a certain threshold,
 	    then non-consecutive points are used to avoid
-	    numerical instability. The default time threshhold is 0.1 seconds; this
+	    numerical instability. The default time threshold is 0.1 seconds; this
 	    can be raised or lowered using the <option>-s</option> option.
 	    Try raising the threshold if the output orientations experience random
 	    jitter.
