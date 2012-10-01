@@ -40,7 +40,7 @@
       to eliminate duplicate vertices from a BOT solid and store the result in a new
       BOT primitive.
     </para>
-    <example><info><title>Elimiating duplicate vertices form a primitive and storing the result in a new BOT primitive.</title></info>
+    <example><info><title>Eliminating duplicate vertices from a primitive and storing the result in a new BOT primitive.</title></info>
 
       <variablelist>
 	<varlistentry>
