@@ -12,7 +12,7 @@
 <refnamediv xml:id="name">
   <refname>make_pnts</refname>
   <refpurpose>
-   Creates a "pnts" (ie point cloud) primitive by importing coordinate data (in ascii format) from a file.
+   Creates a "pnts" (i.e. point cloud) primitive by importing coordinate data (in ascii format) from a file.
   </refpurpose>
 </refnamediv>
 
@@ -36,7 +36,7 @@
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
   <para>Creates a "pnts" primitive by importing, from a file, coordinate data
   and optionally color, normal or point-size data. Data must be in text
-  (ie ascii) format but the data file does not need to contain only text. Any
+  (i.e. ascii) format but the data file does not need to contain only text. Any
   byte value in the data file not representing one of the ascii characters
   "0123456789.+-eE" will be considered a delimiter. This includes
   carriage-returns, line-feeds, commas, spaces and non-printable characters.
