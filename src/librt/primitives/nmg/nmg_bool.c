@@ -659,10 +659,11 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	bu_bomb("nmg_bool(): internal error, both shells are not in the same nmg model\n");
     }
 
-    /* for the simple case where shells sA and sB do not overlap, we
-     * can skip most of the steps to perform the boolean operation
+    /* for the simple case where shells sA and sB are disjoint by at
+     * least distance tolerance, we can skip most of the steps to
+     * perform the boolean operation
      */
-    if (!V3RPP_OVERLAP_TOL(sA->sa_p->min_pt, sA->sa_p->max_pt,
+    if (V3RPP_DISJOINT_TOL(sA->sa_p->min_pt, sA->sa_p->max_pt,
 			   sB->sa_p->min_pt, sB->sa_p->max_pt, tol->dist)) {
 	switch (oper) {
 	    case NMG_BOOL_ADD: {

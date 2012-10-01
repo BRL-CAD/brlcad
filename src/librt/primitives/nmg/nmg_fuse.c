@@ -1601,10 +1601,10 @@ nmg_two_face_fuse(struct face *f1, struct face *f2, const struct bn_tol *tol)
 	return 0;
     }
 
-    /* verify the bounding box of each faceuse overlaps the other
-     * faceuse bounding box
+    /* if the bounding box of each faceuse is not within distance
+     * tolerance of each other, then skip fusing
      */
-    if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol->dist)) {
+    if (V3RPP_DISJOINT_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol->dist)) {
 	return 0;
     }
 

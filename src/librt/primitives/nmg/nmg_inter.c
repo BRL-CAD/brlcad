@@ -3706,7 +3706,7 @@ nmg_isect_eu_eu(struct edgeuse *eu1, struct vertex_g *vg1a, struct vertex_g *vg1
     VMOVE(e2_max_pt, vg2a->coord);
     VMAX(e2_max_pt, vg2b->coord);
 
-    if (!V3RPP_OVERLAP_TOL(e1_min_pt, e1_max_pt, e2_min_pt, e2_max_pt, tol->dist)) {
+    if (V3RPP_DISJOINT_TOL(e1_min_pt, e1_max_pt, e2_min_pt, e2_max_pt, tol->dist)) {
 	return;
     }
 

@@ -142,8 +142,10 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 		register fastf_t dist;
 		/* If plane equations are different, done */
 
-		/* test if the bounding boxes of the faceuse overlap */
-		if (!V3RPP_OVERLAP_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol->dist)) {
+		/* if the face bounding boxes are at least distance 
+		 * distance tolerance apart, skip them.
+		 */
+		if (V3RPP_DISJOINT_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol->dist)) {
 		    continue;
 		}
 

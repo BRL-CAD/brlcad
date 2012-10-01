@@ -967,11 +967,11 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, const struc
     VMOVE(e_max_pt, eu->vu_p->v_p->vg_p->coord);
     VMAX(e_max_pt, eu->eumate_p->vu_p->v_p->vg_p->coord);
 
-    /* if the edge and shell bounding boxes do not overlap
-     * then the edge is outside the shell. also both vertices
-     * of the edge are outside the shell.
+    /* if the edge and shell bounding boxes are disjoint by at least
+     * distance tolerance then the edge is outside the shell. also
+     * both vertices of the edge are outside the shell.
      */
-    if (!V3RPP_OVERLAP_TOL(e_min_pt, e_max_pt, s->sa_p->min_pt, s->sa_p->max_pt, tol->dist)) {
+    if (V3RPP_DISJOINT_TOL(e_min_pt, e_max_pt, s->sa_p->min_pt, s->sa_p->max_pt, tol->dist)) {
 	NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
 	NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->vu_p->v_p);
 	NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->eumate_p->vu_p->v_p);

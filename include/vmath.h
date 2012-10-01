@@ -1685,12 +1685,12 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * by at least distance tolerance.
  */
 #define V3RPP_DISJOINT_TOL(_l1, _h1, _l2, _h2, _t) \
-      (((_l1)[X] > (_h2)[X] + (_t) && \
-	(_l1)[Y] > (_h2)[Y] + (_t) && \
-	(_l1)[Z] > (_h2)[Z] + (_t)) || \
-       ((_l2)[X] > (_h1)[X] + (_t) && \
-	(_l2)[Y] > (_h1)[Y] + (_t) && \
-	(_l2)[Z] > (_h1)[Z] + (_t)))
+       ((_l1)[X] > (_h2)[X] + (_t) || \
+	(_l1)[Y] > (_h2)[Y] + (_t) || \
+	(_l1)[Z] > (_h2)[Z] + (_t) || \
+        (_l2)[X] > (_h1)[X] + (_t) || \
+	(_l2)[Y] > (_h1)[Y] + (_t) || \
+	(_l2)[Z] > (_h1)[Z] + (_t)) 
 
 /** Compare two bounding boxes and return true If they overlap. */
 #define V3RPP_OVERLAP(_l1, _h1, _l2, _h2) \
