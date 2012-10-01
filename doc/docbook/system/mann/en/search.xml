@@ -273,7 +273,7 @@
       <term><emphasis remap="B" role="bold">(</emphasis> <emphasis remap="I">expression</emphasis> <emphasis remap="B" role="bold">)</emphasis></term>
       <listitem>
 	<para>
-	  Evaluates to true if the expression inside the parenthesies evaluates to true.
+	  Evaluates to true if the expression inside the parentheses evaluates to true.
 	  Used to establish order of operations.
 	</para>
       </listitem>
@@ -480,7 +480,7 @@
 <refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
 
   <para>
-    Errors will be returned if parsing of the arguments fails, or one of the primaries's
+    Errors will be returned if parsing of the arguments fails, or one of the primaries'
     evaluation functions returns an error.
   </para>
 </refsection>
