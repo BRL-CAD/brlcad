@@ -1602,7 +1602,7 @@ Plane::LoadONBrep(ON_Brep *brep)
     ON_3dPoint origin = GetOrigin();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
-    ON_3dVector norm = GetNormal();
+    // ON_3dVector norm = GetNormal();
 
     origin = origin * LocalUnits::length;
 
@@ -1645,9 +1645,9 @@ CylindricalSurface::LoadONBrep(ON_Brep *brep)
 	std::cerr << "LoadONBrep for CylindricalSurface: " << 55 << std::endl;
     }
     ON_3dPoint origin = GetOrigin();
-    ON_3dVector norm = GetNormal();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
+    ON_3dVector norm = GetNormal();
 
     origin = origin * LocalUnits::length;
 
@@ -1690,9 +1690,9 @@ ConicalSurface::LoadONBrep(ON_Brep *brep)
 	return true; // already loaded
 
     ON_3dPoint origin = GetOrigin();
-    ON_3dVector norm = GetNormal();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
+    ON_3dVector norm = GetNormal();
 
     origin = origin * LocalUnits::length;
 
@@ -1807,9 +1807,10 @@ Circle::LoadONBrep(ON_Brep *brep) {
 
     ON_3dPoint origin = GetOrigin();
     ON_3dPoint center = origin * LocalUnits::length;
-    ON_3dVector norm = GetNormal();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
+    // ON_3dVector norm = GetNormal();
+
     double r = radius * LocalUnits::length;
     ON_Plane plane(origin, xaxis, yaxis);
     // Creates a circle parallel to the plane
@@ -2004,7 +2005,7 @@ Ellipse::SetParameterTrim(double start_param, double end_param) {
     ON_3dPoint origin = GetOrigin();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
-    ON_3dPoint center = origin * LocalUnits::length;
+    // ON_3dPoint center = origin * LocalUnits::length;
 
     double a = semi_axis_1 * LocalUnits::length;
     double b = semi_axis_2 * LocalUnits::length;
@@ -2053,8 +2054,8 @@ Ellipse::LoadONBrep(ON_Brep *brep) {
     ON_Ellipse ellipse(plane, a, b);
 
     double eccentricity = sqrt(1.0 - (b * b) / (a * a));
-    ON_3dPoint focus_1 = center + (eccentricity * a) * xaxis;
-    ON_3dPoint focus_2 = center - (eccentricity * a) * xaxis;
+    // ON_3dPoint focus_1 = center + (eccentricity * a) * xaxis;
+    // ON_3dPoint focus_2 = center - (eccentricity * a) * xaxis;
 
     ON_3dPoint pnt1;
     ON_3dPoint pnt2;
@@ -2252,9 +2253,9 @@ Hyperbola::SetParameterTrim(double start_param, double end_param)
     s = end_param;
 
     ON_3dPoint origin = GetOrigin();
-    ON_3dVector norm = GetNormal();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
+    // ON_3dVector norm = GetNormal();
 
     ON_3dPoint center = origin;
     double a = semi_axis;
@@ -2306,9 +2307,9 @@ Hyperbola::LoadONBrep(ON_Brep *brep)
     //	return true; // already loaded
 
     ON_3dPoint origin = GetOrigin();
-    ON_3dVector norm = GetNormal();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
+    ON_3dVector norm = GetNormal();
 
     norm.Unitize();
     xaxis.Unitize();
@@ -2319,10 +2320,10 @@ Hyperbola::LoadONBrep(ON_Brep *brep)
     double b = semi_imag_axis * LocalUnits::length;
 
     double eccentricity = sqrt(1.0 + (b * b) / (a * a));
-    ON_3dPoint vertex = center + a * xaxis;
-    ON_3dPoint directrix = center + (a / eccentricity) * xaxis;
     ON_3dPoint focus = center + (eccentricity * a) * xaxis;
     ON_3dPoint focusprime = center - (eccentricity * a) * xaxis;
+    // ON_3dPoint vertex = center + a * xaxis;
+    // ON_3dPoint directrix = center + (a / eccentricity) * xaxis;
 
     ON_3dPoint pnt1;
     ON_3dPoint pnt2;
@@ -2473,14 +2474,14 @@ Parabola::LoadONBrep(ON_Brep *brep)
     //	return true; // already loaded
 
     ON_3dPoint origin = GetOrigin();
-    ON_3dVector normal = GetNormal();
     ON_3dVector xaxis = GetXAxis();
-    ON_3dVector yaxis = GetYAxis();
+    // ON_3dVector yaxis = GetYAxis();
+    // ON_3dVector normal = GetNormal();
 
     ON_3dPoint center = origin * LocalUnits::length;
     double fd = focal_dist * LocalUnits::length;
     ON_3dPoint focus = center + fd * xaxis;
-    ON_3dPoint directrix = center - fd * xaxis;
+    // ON_3dPoint directrix = center - fd * xaxis;
 
     ON_3dPoint pnt1;
     ON_3dPoint pnt2;
@@ -2722,9 +2723,9 @@ ToroidalSurface::LoadONBrep(ON_Brep *brep)
     }
 
     ON_3dPoint origin = GetOrigin();
-    ON_3dVector norm = GetNormal();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
+    // ON_3dVector norm = GetNormal();
 
     origin = origin * LocalUnits::length;
 
