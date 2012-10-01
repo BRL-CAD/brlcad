@@ -285,7 +285,7 @@
 
 	  <para>
 	    <emphasis remap="B" role="bold">Visualize Overlaps (p):</emphasis>
-	    In MGED, if overlaps are detetcted, this option causes the overlaps found to be
+	    In MGED, if overlaps are detected, this option causes the overlaps found to be
 	    illustrated in the wireframe view via yellow lines.
 	  </para>
 
