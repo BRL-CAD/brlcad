@@ -3313,7 +3313,7 @@ to_polygons_free(ged_polygons *gpp)
 HIDDEN int
 to_extract_contours_av(struct ged *gedp, struct ged_dm_view *gdvp, ged_polygon *gpp, size_t contour_ac, const char **contour_av, int mode, int vflag)
 {
-    register size_t j, k;
+    register size_t j = 0, k = 0;
 
     gpp->gp_num_contours = contour_ac;
 
