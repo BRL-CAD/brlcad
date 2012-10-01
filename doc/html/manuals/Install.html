@@ -458,7 +458,7 @@ the BRL-CAD sources can be compiled.
 <P>
 A full production installation done with <b>cake install</b>
 will require five directories for installing the compiled software in.
-These directories are known symbolicly as BINDIR, LIBDIR, ETCDIR, MANDIR, and INCDIR.
+These directories are known symbolically as BINDIR, LIBDIR, ETCDIR, MANDIR, and INCDIR.
 BINDIR is where executable ("binary") programs and scripts are installed,
 LIBDIR is where all the libraries are installed, for you to use when
 writing additional software for this environment, and
@@ -883,7 +883,7 @@ Check how you did by running:
 </pre>
 and making any necessary corrections.
 <P>
-If <b>machinetype.sh</b> reports that HAS_TCP=0, ie,
+If <b>machinetype.sh</b> reports that HAS_TCP=0, i.e.,
 this is a machine without TCP network capability,
 the <b>gen.sh</b> script will automatically delete
 <b>fbserv</b> and <b>libpkg</b> from the PRODUCTS list,
@@ -1247,7 +1247,7 @@ shared libraries offer an additional detail to keep track of.
 In particular, when a new shared library is installed, all the
 programs will start using it the next time they are run, even
 without being explicitly recompiled.  If data structures in raytrace.h
-were changed, this could be disasterous.
+were changed, this could be disastrous.
 There are several different ways developers can cope with this:
 <ol>
 <li>
@@ -1272,7 +1272,7 @@ your development copy.  This is only a reasonable policy if
 the developer(s) are the only users of this particular machine.
 <li>
 On SunOS 4 machines <I>only</i>, the development tree executables
-are able to find the development tree libraries automaticly.
+are able to find the development tree libraries automatically.
 E.g. your_source_dir/rt/rt will automaticly attempt to use ../librt/librt.so
 before resorting to the installed version in /usr/irlcad/lib/librt.so.
 Sadly, this feature does not work on SunOS 5 and SGI platforms.
@@ -1697,7 +1697,7 @@ of the new LIBRT NMG ray-tracer is exploited.
 This release contains data structure, import/export, and MGED
 visualization support for trimmed NURBS NMGs ("t-NURBS NMGs"). However
 there is no support for ray-tracing such objects yet. We plan on
-releaseing BRL-CAD Release 5.0 as soon as (1) t-NURBS NMGs can be
+releasing BRL-CAD Release 5.0 as soon as (1) t-NURBS NMGs can be
 ray-traced by LIBRT, and (2) everything has been converted to the new
 ".g" database file format.
 <P>
