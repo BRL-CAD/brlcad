@@ -126,7 +126,7 @@ geometry is still visible).
 </DD>
 <P>
 <DT><I>dgName</I> <A NAME="illum"><B>illum</B></A> <I>object(s)</I></DT>
-<DD>Iluminate/highlight the specified <I>object(s)</I>.
+<DD>Illuminate/highlight the specified <I>object(s)</I>.
 </DD>
 <P>
 <DT><I>dgName</I> <A NAME="label"><B>label</B></A></DT>
@@ -174,7 +174,7 @@ red becomes "ff0000",  green is "00ff00", etc.
 currently drawn. The <I>level</I> determines how much detail should
 be included in the list. For <I>level</I> zero (the default),
 only a list of paths to solids in the display list is produced
-with and indication of whether they are being iluminated/highlighted.
+with an indication of whether they are being illuminated/highlighted.
 If <I>level</I> is greater than zero, the center, size,
 <a href="../mged/brlcad_glossary.html#IDENT">ident number</a>,
 <a href="../mged/brlcad_glossary.html#RGB">RGB</a> color assigned to the region,
@@ -199,7 +199,7 @@ or, if none is specified,
 the list of currently displayed objects.
 The <I>rt</I>
 program is written such that options may be repeated, and the last occurrence of an option
-will override any earlier occurences. This allows the user to specify other <I>size</I> (<I>-s</I>)
+will override any earlier occurrences. This allows the user to specify other <I>size</I> (<I>-s</I>)
 options.
 The <I>-M</I> option tells <I>rt</I> to read the viewing
 parameters from standard input so that rays are only fired from
@@ -216,7 +216,7 @@ the view specified by <A HREF="view_obj.html">view_obj</A>.
 The current database name and the list
 of currently displayed objects are added to the end of the <I>rtcheck</I> command line. The <I>rtcheck</I>
 program is written such that options may be repeated, and the last occurrence of an option
-will override any earlier occurences. This allows the user to specify other <I>size</I> (<I>-s</I>)
+will override any earlier occurrences. This allows the user to specify other <I>size</I> (<I>-s</I>)
 options.
 The <I>rtcheck</I> program uses raytracing to check for
 overlapping regions in the list of objects passed on the command line.
@@ -309,7 +309,7 @@ The <I>vdraw</I> <I>commands</I> are:
 		``ffffff'' is white, ``ff0000'' is red, ``00ff00'' is green, ...<br>
 		-- with a single string argument, the name of the current list is changed.</li>
 	<li>read -- with an integer argument of <I>i</I>, the <I>i<sup>th</sup></I> command is returned.<br>
-		-- with an argument of ``color'', the curent color is returned.<br>
+		-- with an argument of ``color'', the current color is returned.<br>
 		-- with an argument of ``length'', the number of commands in the current list is returned.<br>
 		-- with an argument of ``name'', the name of the current command list is returned.</li>
 	<li>show -- send the current command list to the display list.</li>
