@@ -12,10 +12,8 @@
 */
 
 #include <scl_export.h>
+#include <stdint.h>
 
-#ifndef SIZE_MAX
-# define SIZE_MAX SSIZE_MAX
-#endif
 
 class SCL_DAI_EXPORT SDAI_String {
     private:
