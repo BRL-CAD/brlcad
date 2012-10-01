@@ -7,7 +7,7 @@
 # The callback function passed in the -command option is called whenever
 # the supplied bot is modified. It should take no arguments.
 #
-# The callback function passed in the -output option will ocassionally be
+# The callback function passed in the -output option will occasionally be
 # passed notification strings. It should take a single string argument.
 #
 package require Tk
