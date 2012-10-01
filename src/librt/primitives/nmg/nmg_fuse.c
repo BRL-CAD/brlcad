@@ -313,30 +313,57 @@ nmg_region_both_vfuse(struct bu_ptbl *t1, struct bu_ptbl *t2, const struct bn_to
 /**
  * N M G _ V E R T E X _ F U S E
  *
- * Fuse together any vertices that are geometrically
- * identical, within the tolerance.
+ * Fuse together any vertices that are geometrically identical, within
+ * distance tolerance. This function may be passed a pointer to an NMG
+ * object or a pointer to a bu_ptbl structure containing a list of
+ * pointers to NMG vertex structures. If a bu_ptbl structure was passed
+ * into this function, the calling function must free this structure.
  */
 int
 nmg_vertex_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 {
-    struct bu_ptbl t1;
+    struct bu_ptbl *t1;
+    struct bu_ptbl tmp;
+    size_t t1_len;
     int total = 0;
+    const uint32_t *tmp_magic_p;
 
     BN_CK_TOL(tol);
 
-    nmg_vertex_tabulate(&t1, magic_p);
+    if (!magic_p) {
+	bu_bomb("nmg_vertex_fuse(): passed null pointer");
+    }
+
+    if (*magic_p == BU_PTBL_MAGIC) {
+	t1 = (struct bu_ptbl *)magic_p;
+	t1_len = BU_PTBL_LEN(t1);
+	if (t1_len) {
+	    tmp_magic_p = (const uint32_t *)BU_PTBL_GET((struct bu_ptbl *)magic_p, 0);
+	    if (*tmp_magic_p != NMG_VERTEX_MAGIC) {
+		bu_bomb("nmg_vertex_fuse(): passed bu_ptbl structure not containing vertex");
+	    }
+	}
+    } else {
+	t1 = &tmp;
+	nmg_vertex_tabulate(t1, magic_p);
+	t1_len = BU_PTBL_LEN(t1);
+    }
 
     /* if there are no vertex, do nothing */
-    if (!BU_PTBL_END(&t1)) {
+    if (!t1_len) {
 	return 0;
     }
 
-    total = nmg_ptbl_vfuse(&t1, tol);
+    total = nmg_ptbl_vfuse(t1, tol);
 
-    bu_ptbl_free(&t1);
+    /* if bu_ptbl was passed into this function don't free it here */
+    if (*magic_p != BU_PTBL_MAGIC) {
+	bu_ptbl_free(t1);
+    }
 
     if (rt_g.NMG_debug & DEBUG_BASIC && total > 0)
 	bu_log("nmg_vertex_fuse() %d\n", total);
+
     return total;
 }
 

@@ -2363,54 +2363,45 @@ nmg_enlist_one_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, fastf
 static void
 nmg_coplanar_face_vertex_fuse(struct faceuse *fu1, struct faceuse *fu2, struct bn_tol *tol)
 {
-    struct bu_ptbl fu1_verts;
-    struct bu_ptbl fu2_verts;
-    int i, j;
-    vect_t norm;
+    struct bu_ptbl verts;
+    struct faceuse *faces[4];
+    struct loopuse *lu;
+    struct edgeuse *eu;
+    struct vertexuse *vu;
+    int i;
 
-    NMG_CK_FACEUSE(fu1);
-    NMG_CK_FACEUSE(fu2);
-    BN_CK_TOL(tol);
+    bu_ptbl_init(&verts, 128, "&verts");
 
-    NMG_GET_FU_NORMAL(norm, fu1);
+    faces[0] = fu1;
+    faces[1] = fu1->fumate_p;
+    faces[2] = fu2;
+    faces[3] = fu2->fumate_p;
 
-    nmg_vertex_tabulate(&fu1_verts, &fu1->l.magic);
-    nmg_vertex_tabulate(&fu2_verts, &fu2->l.magic);
-
-    for (i=0; i<BU_PTBL_END(&fu1_verts); i++) {
-	struct vertex *v1;
-
-	v1 = (struct vertex *)BU_PTBL_GET(&fu1_verts, i);
-
-	for (j=0; j<BU_PTBL_END(&fu2_verts); j++) {
-	    struct vertex *v2;
-	    vect_t diff;
-	    vect_t diff_unit;
-	    fastf_t len_sq, inv_len;
-	    fastf_t dot;
-
-	    v2 = (struct vertex *)BU_PTBL_GET(&fu2_verts, j);
-
-	    if (v1 == v2)
-		continue;
-
-	    VSUB2(diff, v1->vg_p->coord, v2->vg_p->coord);
-	    len_sq = MAGSQ(diff);
-	    if (len_sq > 4.0*tol->dist_sq)
-		continue;
-
-	    inv_len = 1.0 / sqrt(len_sq);
-
-	    VSCALE(diff_unit, diff, inv_len);
-
-	    dot = VDOT(norm, diff_unit);
-	    if (BN_VECT_ARE_PARALLEL(dot, tol)) {
-		/* fuse these two vertices */
-		nmg_jv(v2, v1);
-		break;
+    for (i = 0 ; i < 4 ; i++) {
+	NMG_CK_FACEUSE(faces[i]);
+	for (BU_LIST_FOR(lu, loopuse, &faces[i]->lu_hd)) {
+	    NMG_CK_LOOPUSE(lu);
+	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+		    NMG_CK_EDGEUSE(eu);
+		    NMG_CK_VERTEXUSE(eu->vu_p);
+		    NMG_CK_VERTEX(eu->vu_p->v_p);
+		    (void)bu_ptbl_ins_unique(&verts, (long *)eu->vu_p->v_p);
+		}
+	    } else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
+		vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
+		NMG_CK_VERTEXUSE(vu);
+		NMG_CK_VERTEX(vu->v_p);
+		(void)bu_ptbl_ins_unique(&verts, (long *)vu->v_p);
+	    } else {
+		bu_bomb("nmg_coplanar_face_vertex_fuse(): invalid loopuse");
 	    }
 	}
     }
+
+    (void)nmg_vertex_fuse((const uint32_t *)&verts, tol);
+
+    bu_ptbl_free(&verts);
 }
 
 
