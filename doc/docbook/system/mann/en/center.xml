@@ -53,7 +53,7 @@
       The examples show the use of the <command>center</command> command to print
       coordinates of the center of the mged display, move the center of the
       <emphasis>mged</emphasis> display to a given point, set a Tcl variable to the
-      display center coodinates, move the center point a given distance
+      display center coordinates, move the center point a given distance
       in a given direction, and update a vertex in the database to be located at
       the current center of view.
     </para>
