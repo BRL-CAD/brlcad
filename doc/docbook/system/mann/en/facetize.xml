@@ -38,7 +38,7 @@
 
   <para>Creates <emphasis>new_object</emphasis> as a BOT shape by tessellating all the
 	primitive shapes in <emphasis>old_object</emphasis> and then performing any Boolean operations specified
-	in <emphasis>old_object</emphasis>. The <emphasis>-T</emphasis> option indicates that all faces in the    	<emphasis>new_object</emphasis> should be triangulated. The <emphasis>-n</emphasis> option specifies that  	the resulting shape should be saved as an NMG shape. The <emphasis>-t</emphasis> option is to create TNURB 	faces rather than planar approximations (this option is still under development. The <emphasis>-P 	</emphasis> option is intended to allow the user to specifiy the number of CPUs to use for this command, 	but it is currently ignored.
+	in <emphasis>old_object</emphasis>. The <emphasis>-T</emphasis> option indicates that all faces in the    	<emphasis>new_object</emphasis> should be triangulated. The <emphasis>-n</emphasis> option specifies that  	the resulting shape should be saved as an NMG shape. The <emphasis>-t</emphasis> option is to create TNURB 	faces rather than planar approximations (this option is still under development). The <emphasis>-P 	</emphasis> option is intended to allow the user to specify the number of CPUs to use for this command, 	but it is currently ignored.
   </para>
 </refsection>
 
