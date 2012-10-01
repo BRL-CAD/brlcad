@@ -232,7 +232,7 @@
       </para>
     </example>
 
-    <example><info><title>Transpose Matricies</title></info>
+    <example><info><title>Transpose Matrices</title></info>
 
       <para>
 	<userinput>anim_orient m mi &lt; in.table &gt; out.table</userinput>
