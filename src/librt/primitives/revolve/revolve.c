@@ -1273,10 +1273,9 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     VREVERSE(ucir[12], ucir[4]);
 
     /* find open endpoints, and determine which points are used */
-    endcount = (int *)bu_calloc(rip->skt->vert_count, sizeof(int), "endcount");
-    for (i=0; i<rip->skt->vert_count; i++) {
-	endcount[i] = 0;
-    }
+    if (nvert)
+	endcount = (int *)bu_calloc(nvert, sizeof(int), "endcount");
+
     nseg = rip->skt->curve.count;
 
     for (i=0; i<nseg; i++) {
@@ -1356,7 +1355,9 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	}
     }
     nadd = j;
-    while (j < rip->skt->vert_count) endcount[j++] = -1;
+    while (j < rip->skt->vert_count) {
+	endcount[j++] = -1;
+    }
 
     /* draw sketch outlines */
     for (i=0; i<narc; i++) {
@@ -1406,7 +1407,8 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 	}
     }
 
-    bu_free(endcount, "endcount");
+    if (nvert)
+	bu_free(endcount, "endcount");
     return 0;
 }
 
