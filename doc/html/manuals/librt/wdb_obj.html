@@ -204,7 +204,7 @@ database file. The <I>objects</I> in the list must exist in the current database
 This command affects only the <I>objects</I> actually listed on the command line. If a
 <a href="../mged/brlcad_glossary.html#COMBINATION">combination</a> is killed, its members are not affected.
 If the <I>-f</I> option is specified, then kill will not complain if some, or all, of
-the <I>objects</I> specified do not actaully exist in the database. Note that the <I>objects</I>
+the <I>objects</I> specified do not actually exist in the database. Note that the <I>objects</I>
 are killed immediately. There is no need for a ``write file'' command in <I>MGED</I>, and
 there is no ``undo'' command. Use this command with caution. Other commands that remove
 objects from the database are <a href="#killall">killall</a> and <a href="#killtree">killtree</a>.
@@ -371,7 +371,7 @@ matrices that appear in any
 from the specified <I>objects</I> down to the
 <a href="../mged/brlcad_glossary.html#SOLID">primitive solids</a>. This will change
 the parameters of the <I>primitive solids</I> if any of the
-transformation matrices are not identity matices. All the transformation
+transformation matrices are not identity matrices. All the transformation
 matrices visited will be set to identity matrices. This command will fail,
 and no changes will be made, if any <I>primitive solid</I> referenced by
 the list of <I>objects</I> is positioned differently in two or more
@@ -407,7 +407,7 @@ ident</a> number gets incremented. If <I>region_name</I> already exists, then th
 </DD>
 <P>
 <DT><I>dbName</I> <A NAME="rm"><B>rm</B></A> <I>combination</I> &lt;<I>members</I>&gt</DT>
-<DD>Delete all occurences of the listed <a href="../mged/brlcad_glossary.html#MEMBER">members</a> from
+<DD>Delete all occurrences of the listed <a href="../mged/brlcad_glossary.html#MEMBER">members</a> from
 the specified <a href="../mged/brlcad_glossary.html#COMBINATION">combination</a>.
 The <a href="#red">red</a>, <a href="#r">r</a>,
 <a href="#comb">comb</a>, <a href="#c">c</a>, and <a href="#g">g</a> commands provide
@@ -450,8 +450,8 @@ then that tolerance setting will be modified. The keywords are:
                 tesselated surface. An <I>relative</I> tolerance of 0 means that the
                 <I>relative</I> tolerance should be ignored.
 	<li>norm -- This <I>normal</I> tolerance is specified in degrees and represents the maximum angle
-		between the actual solid surface normal and the tesellated surface normal.
-		A <I>normal</I> tolerance of 0 means that the <I>normal</I> toerance
+		between the actual solid surface normal and the tesselated surface normal.
+		A <I>normal</I> tolerance of 0 means that the <I>normal</I> tolerance
 		should be ignored.</li>
 	</ul>
 <li>Calculational tolerances:<br>
