@@ -79,9 +79,8 @@ rt_revolve_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
      * if even, the point is ok
      * if odd, the point is at the end of a path
      */
-    endcount = (int *)bu_calloc(rip->skt->vert_count, sizeof(int), "endcount");
-    for (i=0; i<rip->skt->vert_count; i++)
-	endcount[i] = 0;
+    if (rip->skt->vert_count)
+	endcount = (int *)bu_calloc(rip->skt->vert_count, sizeof(int), "endcount");
     nseg = rip->skt->curve.count;
 
     for (i=0; i<nseg; i++) {
@@ -139,7 +138,8 @@ rt_revolve_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
 	    j++;
 	}
     }
-    while (j < rip->skt->vert_count) endcount[j++] = -1;
+    while (j < rip->skt->vert_count)
+	endcount[j++] = -1;
 
     VMOVE(zUnit, rip->axis3d);
     VUNITIZE(zUnit);
@@ -158,7 +158,8 @@ rt_revolve_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
     (*min)[Z] = center[Z] - radius;
     (*max)[Z] = center[Z] + radius;
 
-    bu_free(endcount, "endcount");
+    if (rip->skt->vert_count)
+	bu_free(endcount, "endcount");
 
     return 0;			/* OK */
 }
@@ -226,9 +227,9 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
      * if even, the point is ok
      * if odd, the point is at the end of a path
      */
-    endcount = (int *)bu_calloc(rev->skt->vert_count, sizeof(int), "endcount");
-    for (i=0; i<rev->skt->vert_count; i++)
-	endcount[i] = 0;
+    if (rev->skt->vert_count) {
+	endcount = (int *)bu_calloc(rev->skt->vert_count, sizeof(int), "endcount");
+    }
     nseg = rev->skt->curve.count;
 
     for (i=0; i<nseg; i++) {
@@ -286,7 +287,8 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 	    j++;
 	}
     }
-    while (j < rev->skt->vert_count) endcount[j++] = -1;
+    while (j < rev->skt->vert_count)
+	endcount[j++] = -1;
 
     rev->ends = endcount;
 
