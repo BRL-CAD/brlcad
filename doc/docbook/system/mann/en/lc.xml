@@ -11,7 +11,7 @@
 
 <refnamediv xml:id="name">
   <refname>lc</refname>
-  <refpurpose>Lists codes (ie region attributes) 'region_id', 'material_id' and 'los' within a group or combination.
+  <refpurpose>Lists codes (i.e. region attributes) 'region_id', 'material_id' and 'los' within a group or combination.
    </refpurpose>
 </refnamediv>
 
@@ -37,7 +37,7 @@
 </refsynopsisdiv>
 
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
- <para>The 'lc' command lists a set of codes (ie attributes) of regions
+ <para>The 'lc' command lists a set of codes (i.e. attributes) of regions
  within a group/combination. The attributes listed are 'region_id',
  'material_id' and 'los' followed by 'region name'. If an attribute
  is unset, it is reported as '--'. By default, the list is sorted in
