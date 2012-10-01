@@ -28,7 +28,7 @@
 <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
 
   <para>Allows the user to modify the attributes of a combination.
-The <emphasis>combname</emphasis> is the name of the combination to be modified. The <emphasis>regionflag</emphasis> controls whether the combination is identified as a region - supplying either <emphasis>R</emphasis> or <emphasis>1</emphasis> for the <emphasis>regionflag</emphasis> indicates that the combination is a region; to indicate the combination is NOT a region simply supply any other character (<emphasis>C</emphasis> or <emphasis>0</emphasis> are useful conventions here.) If the region flag is not being set, then the remainder of the attributes are ignored.  However, the <command>edcomb</command> command requires that something is suppled for those arguments in order to work - so if using <command>edcomb</command> to turn off the region flag on a combination simply supply 0 for each of the remaining arguments to <command>edcomb</command>. If the region flag is being set, then the <emphasis>region_id, aircode, los,</emphasis> and/or <emphasis>material_code</emphasis> are set according to the arguments supplied.
+The <emphasis>combname</emphasis> is the name of the combination to be modified. The <emphasis>regionflag</emphasis> controls whether the combination is identified as a region - supplying either <emphasis>R</emphasis> or <emphasis>1</emphasis> for the <emphasis>regionflag</emphasis> indicates that the combination is a region; to indicate the combination is NOT a region simply supply any other character (<emphasis>C</emphasis> or <emphasis>0</emphasis> are useful conventions here.) If the region flag is not being set, then the remainder of the attributes are ignored.  However, the <command>edcomb</command> command requires that something is supplied for those arguments in order to work - so if using <command>edcomb</command> to turn off the region flag on a combination simply supply 0 for each of the remaining arguments to <command>edcomb</command>. If the region flag is being set, then the <emphasis>region_id, aircode, los,</emphasis> and/or <emphasis>material_code</emphasis> are set according to the arguments supplied.
   </para>
 </refsection>
 
@@ -40,7 +40,7 @@ The <emphasis>combname</emphasis> is the name of the combination to be modified.
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>meged&gt;</prompt> <userinput>edcomb comb1 R 1001 0 50 8</userinput></term>
+	   <term><prompt>mged&gt;</prompt> <userinput>edcomb comb1 R 1001 0 50 8</userinput></term>
 	   <listitem>
 	     <para>Makes <emphasis>comb1</emphasis> a <emphasis>region</emphasis> and set its <emphasis>ident				   </emphasis> to 1001, its <emphasis>air code</emphasis> to 0, its <emphasis>los</emphasis> to 50, 			   and its <emphasis>material code</emphasis> to 8.
 	     </para>
