@@ -122,8 +122,8 @@
   <refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
 
     <para>
-      Problems arise when using Eulers angles, because
-      certain orientations do not have a uniqe representation, and the program
+      Problems arise when using Euler angles, because
+      certain orientations do not have a unique representation, and the program
       must arbitrarily select among an infinite number of possibilities. For
       example, when using yaw, pitch, and roll, the yaw and roll
       become indistinguishable when the pitch is 90 degrees.
