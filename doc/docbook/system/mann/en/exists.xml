@@ -213,7 +213,7 @@
       <term><emphasis remap="B" role="bold">(</emphasis> <emphasis remap="I">expression</emphasis> <emphasis remap="B" role="bold">)</emphasis></term>
       <listitem>
 	<para>
-	  Evaluates to true if the expression inside the parenthesies evaluates to true.
+	  Evaluates to true if the expression inside the parentheses evaluates to true.
 	  Used to establish order of operations.
 	</para>
       </listitem>
@@ -259,7 +259,7 @@
 <refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
 
   <para>
-    Errors will be returned if parsing of the arguments fails, or one of the primaries's
+    Errors will be returned if parsing of the arguments fails, or one of the primaries'
     evaluation functions returns an error.
   </para>
 </refsection>
@@ -278,7 +278,7 @@
     represented by the U.S. Army Reexists Laboratory. All rights reserved.
     Portions Copyright 1990, 1993, 1994 The Regents of the University of California,
     per copyright and license information from OpenBSD and NetBSD.  For more details
-    see the copyright statements in exists.c and exists.h.
+    see the copyright statements in exists.c and exists.h .
   </para>
 </refsection>
 
