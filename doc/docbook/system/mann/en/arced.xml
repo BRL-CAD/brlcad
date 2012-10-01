@@ -20,7 +20,7 @@
     <cmdsynopsis sepchar=" ">
       <command>arced</command>
       <arg choice="req" rep="norepeat"> <replaceable>comb/memb</replaceable></arg>
-      <arg choice="req" rep="norepeat"> <replaceable>anim_commmand</replaceable></arg>
+      <arg choice="req" rep="norepeat"> <replaceable>anim_command</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
