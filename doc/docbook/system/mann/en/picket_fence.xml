@@ -53,7 +53,7 @@
 &lt;prefix&gt;&lt;partname&gt;&lt;sec_name&gt;&lt;[&gt;part_num&lt;].&lt;obj_type&gt;
     </literallayout>
     The <emphasis>&lt;prefix&gt;</emphasis> above is the second argument to the
-    program.  The <emphasis>spacing</emphasis> parameter specifies the amound of
+    program.  The <emphasis>spacing</emphasis> parameter specifies the amount of
     space (in mm) between pickets.  The <emphasis>-r</emphasis> option specifies round
     fronts for the pickets.
  </para>
