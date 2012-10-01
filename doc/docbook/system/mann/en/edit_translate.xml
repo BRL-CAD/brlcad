@@ -459,7 +459,7 @@
 	  <para>
 	    By splitting the larger command, an interesting detail was
 	    revealed. In the larger command, every point was set
-	    explicityly, so none defaulted. In the first shortened
+	    explicitly, so none defaulted. In the first shortened
 	    command, the <emphasis>y</emphasis> and
 	    <emphasis>z</emphasis> <emphasis>from</emphasis> values
 	    default to the bounding box center of obj7.  Since the
