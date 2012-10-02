@@ -150,7 +150,7 @@ All the geometry for a particular model or application
 is generally stored in a single file
 called a <i>database</i>.&nbsp; Each database may contain many different objects.&nbsp;
 By convention, the files containing BRL-CAD
-geometry have an extention of ``.g''.&nbsp;
+geometry have an extension of ``.g''.&nbsp;
 <p>
 Before starting mged the user should assure that the X-Windows <B>DISPLAY</B>
 environment variable has been properly set.&nbsp; This indicates where applications
@@ -302,7 +302,7 @@ This feature allows objects within the cube to be seen, without cluttering
 the display with objects which are
 within view
 in X and Y, but quite far away in the Z direction.&nbsp;
-This is especially usefull when the display is zoomed
+This is especially useful when the display is zoomed
 in on a small portion of the geometry.&nbsp;
 On some displays Z axis clipping can be selectively enabled and disabled
 as a viewing aid.&nbsp;
@@ -609,7 +609,7 @@ solid.&nbsp;
 The raytracer will complain that they overlap.&nbsp;
 The best way to fix this is to clear the display, redisplay the new,
 complete object, and then raytrace.&nbsp;
-The ``<a href="mged_cmds.html#Z">Z</a>'' comand clears all
+The ``<a href="mged_cmds.html#Z">Z</a>'' command clears all
 objects from the display.  Then we can redisplay the objects we want to raytrace
 with the ``<a href="mged_cmds.html#e">draw</a>'' command.
 
@@ -626,7 +626,7 @@ there is a shortcut:
 </pre>
 
 The ``<a href="mged_cmds.html#B">B</a>'' is not very easy to remember, (one
-suggested nmemonic is "blast") but it is quite useful.
+suggested mnemonic is "blast") but it is quite useful.
 
 <p>
 Now we are ready to raytrace again.
@@ -748,7 +748,7 @@ like:
 	       rim.s
 </pre>
 The text output of the boolean tree lines up the indentation of the operands
-with the operator.&nbsp; So here, becaus outside.s and inside.s are indented
+with the operator.&nbsp; So here, because outside.s and inside.s are indented
 together, they are the operands to the subtraction operator.&nbsp;
 The subtraction operator and rim.s are indented the same amount, so the
 result of the subtraction, and rim.s are the operands of the union operator.
@@ -807,7 +807,7 @@ the plastic shader:
 
 <p> Sometimes it is useful to combine the effects of two shaders.&nbsp; The
 ``stack'' shader was created for this situation.&nbsp; For example, we might want
-to apply a blotchy camoflage-like color pattern to the mug.&nbsp; The ``camo''
+to apply a blotchy camouflage-like color pattern to the mug.&nbsp; The ``camo''
 shader provides the color pattern, while the ``plastic'' shader provides the
 lighting model.&nbsp;
 
@@ -853,7 +853,7 @@ black.&nbsp; We specify this with the -C option:
 <pre>
 <tt>   mged> </tt><B><FONT color="#20a020">rt -F:1 -s 128 -C100/100/100</FONT></B>
 </pre>
-<a href="mug_camo.jpg"><img src="mug_camo.gif" alt="camoflage mug"></a>
+<a href="mug_camo.jpg"><img src="mug_camo.gif" alt="camouflage mug"></a>
 
 <p>
 Mged can save a shell script to raytrace the current view.&nbsp; This is done with
