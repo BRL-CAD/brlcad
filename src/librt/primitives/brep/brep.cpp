@@ -1058,22 +1058,25 @@ utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Su
 
     if (converged) {
 	for (int i = 0; i < numhits; i++) {
-	    fastf_t closesttrim;
+	    double closesttrim;
 	    BRNode* trimBR = NULL;
-	    int trim_status = ((BBNode*) sbv)->isTrimmed(ouv[i], &trimBR, closesttrim);
+	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim);
 	    if (trim_status != 1) {
 		ON_3dPoint _pt;
 		ON_3dVector _norm(N[i]);
+		vect_t vpt;
+		vect_t vnorm;
 		_pt = ray.m_origin + (ray.m_dir * t[i]);
+		VMOVE(vpt, _pt);
 		if (face->m_bRev) {
 		    //bu_log("Reversing normal for Face:%d\n", face->m_face_index);
 		    _norm.Reverse();
 		}
+		VMOVE(vnorm, _norm);
 		hit_count += 1;
 		uv[0] = ouv[i].x;
 		uv[1] = ouv[i].y;
-		brep_hit bh(*face, t[i], ray, (const fastf_t*) _pt,
-			    (const fastf_t*) _norm, uv);
+		brep_hit bh(*face, t[i], ray, vpt, vnorm, uv);
 		bh.trimmed = false;
 		if (trimBR != NULL) {
 		    bh.m_adj_face_index = trimBR->m_adj_face_index;
@@ -1087,7 +1090,7 @@ utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Su
 		    bh.closeToEdge = false;
 		    bh.hit = brep_hit::CLEAN_HIT;
 		}
-		if (VDOT(ray.m_dir, _norm) < 0.0)
+		if (VDOT(ray.m_dir, vnorm) < 0.0)
 		    bh.direction = brep_hit::ENTERING;
 		else
 		    bh.direction = brep_hit::LEAVING;
@@ -1097,16 +1100,19 @@ utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Su
 	    } else if (fabs(closesttrim) < BREP_EDGE_MISS_TOLERANCE) {
 		ON_3dPoint _pt;
 		ON_3dVector _norm(N[i]);
+		vect_t vpt;
+		vect_t vnorm;
 		_pt = ray.m_origin + (ray.m_dir * t[i]);
+		VMOVE(vpt, _pt);
 		if (face->m_bRev) {
 		    //bu_log("Reversing normal for Face:%d\n", face->m_face_index);
 		    _norm.Reverse();
 		}
+		VMOVE(vnorm, _norm);
 		hit_count += 1;
 		uv[0] = ouv[i].x;
 		uv[1] = ouv[i].y;
-		brep_hit bh(*face, t[i], ray, (const fastf_t*) _pt,
-			    (const fastf_t*) _norm, uv);
+		brep_hit bh(*face, t[i], ray, vpt, vnorm, uv);
 		bh.trimmed = true;
 		bh.closeToEdge = true;
 		if (trimBR != NULL) {
@@ -1115,7 +1121,7 @@ utah_brep_intersect_test(const BBNode* sbv, const ON_BrepFace* face, const ON_Su
 		    bh.m_adj_face_index = -99;
 		}
 		bh.hit = brep_hit::NEAR_MISS;
-		if (VDOT(ray.m_dir, _norm) < 0.0)
+		if (VDOT(ray.m_dir, vnorm) < 0.0)
 		    bh.direction = brep_hit::ENTERING;
 		else
 		    bh.direction = brep_hit::LEAVING;
@@ -1139,7 +1145,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
     ON_2dPoint ouv(uv[0], uv[1]);
     int found = BREP_INTERSECT_ROOT_DIVERGED;
     bool converged = false;
-    fastf_t closesttrim;
+    double closesttrim;
 
     utah_newton_solver(surf, ray, ouv, t, N, converged);
     /*
@@ -1185,10 +1191,14 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
     if (hit) {
 	ON_3dPoint _pt;
 	ON_3dVector _norm(N);
+	vect_t vpt;
+	vect_t vnorm;
 	_pt = ray.m_origin + (ray.m_dir*t);
+	VMOVE(vpt, _pt);
 	if (face->m_bRev) _norm.Reverse();
+	VMOVE(vnorm, _norm);
 	hit_count += 1;
-	hits.push_back(brep_hit(*face, ray, (const fastf_t*)_pt, (const fastf_t*)_norm, uv));
+	hits.push_back(brep_hit(*face, ray, vpt, vnorm, uv));
 	hits.back().sbv = sbv;
 	found = BREP_INTERSECT_FOUND;
     }
@@ -1210,7 +1220,7 @@ brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* sur
     ON_3dVector su;
     ON_3dVector sv;
     plane_ray pr;
-    fastf_t closesttrim;
+    double closesttrim;
 
     brep_get_plane_ray(ray, pr);
 
@@ -1238,9 +1248,13 @@ brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* sur
     if ((found > 0) &&  (trim_status != 1)) {
 	ON_3dPoint _pt;
 	ON_3dVector _norm;
+	vect_t vpt;
+	vect_t vnorm;
 	surf->EvNormal(uv[0], uv[1], _pt, _norm);
+	VMOVE(vpt, _pt);
 	if (face->m_bRev) _norm.Reverse();
-	hits.push_back(brep_hit(*face, ray, (const fastf_t*)_pt, (const fastf_t*)_norm, uv));
+	VMOVE(vnorm, _norm);
+	hits.push_back(brep_hit(*face, ray, vpt, vnorm, uv));
 	hits.back().sbv = sbv;
 
 	if (!sbv->m_u.Includes(uv[0]) || !sbv->m_v.Includes(uv[1])) {

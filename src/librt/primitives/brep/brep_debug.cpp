@@ -45,7 +45,6 @@
 #include "rtgeom.h"
 #include "wdb.h"
 
-#define fastf_t double
 
 #ifdef __cplusplus
 extern "C" {
@@ -94,7 +93,7 @@ brep_plot_file(const char *pname)
     RT_ADD_VLIST(vhead, valp[d], BN_VLIST_LINE_DRAW);
 
 #define BB_PLOT_VLIST(min, max) {		\
-	double pt[8][3];			\
+	fastf_t pt[8][3];			\
 	VSET(pt[0], max[X], min[Y], min[Z]);	\
 	VSET(pt[1], max[X], max[Y], min[Z]);	\
 	VSET(pt[2], max[X], max[Y], max[Z]);	\
@@ -111,7 +110,8 @@ brep_plot_file(const char *pname)
 
 void
 plotsurfaceleafs(SurfaceTree* surf) {
-    double min[3], max[3];
+    vect_t min;
+    vect_t max;
     std::list<BBNode*> leaves;
     surf->getLeaves(leaves);
 
@@ -155,7 +155,7 @@ void
 plotsurfaceleafs(SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d)
 {
     register struct bu_list *vhead;
-    double min[3], max[3];
+    fastf_t min[3], max[3];
     std::list<BBNode*> leaves;
     surf->getLeaves(leaves);
 
@@ -196,7 +196,8 @@ void
 plottrimleafs(SurfaceTree* st, struct bn_vlblock *vbp, bool dim3d)
 {
     register struct bu_list *vhead;
-    double min[3], max[3];
+    vect_t min;
+    vect_t max;
     std::list<BRNode*> leaves;
     st->ctree->getLeaves(leaves);
 
@@ -237,13 +238,14 @@ plottrimleafs(SurfaceTree* st, struct bn_vlblock *vbp, bool dim3d)
 void
 plotleaf3d(BBNode* bb)
 {
-    double min[3], max[3];
-    double u, v;
+    vect_t min;
+    vect_t max;
+    fastf_t u, v;
     ON_2dPoint uv[2];
     int trim1_status;
     int trim2_status;
-    double closesttrim1;
-    double closesttrim2;
+    fastf_t closesttrim1;
+    fastf_t closesttrim2;
 
     if (bb->m_trimmed) {
 	COLOR_PLOT(255, 0, 0);
@@ -296,7 +298,8 @@ plotleaf3d(BBNode* bb)
 void
 plotleafuv(BBNode* bb)
 {
-    double min[3], max[3];
+    vect_t min;
+    vect_t max;
 
     if (bb->m_trimmed) {
 	COLOR_PLOT(255, 0, 0);
@@ -323,8 +326,8 @@ plottrim(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres, bool dim3d)
 {
     register struct bu_list *vhead;
     const ON_Surface* surf = face.SurfaceOf();
-    double umin, umax;
-    double pt1[3], pt2[3];
+    fastf_t umin, umax;
+    fastf_t pt1[3], pt2[3];
     ON_2dPoint from, to;
 
     ON_TextLog tl(stderr);
@@ -366,8 +369,8 @@ plottrim2d(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
 {
     register struct bu_list *vhead;
     const ON_Surface* surf = face.SurfaceOf();
-    double umin, umax;
-    double pt1[3], pt2[3];
+    fastf_t umin, umax;
+    fastf_t pt1[3], pt2[3];
     ON_2dPoint from, to;
 
     ON_TextLog tl(stderr);
@@ -407,9 +410,9 @@ plotUVDomain2d(ON_BrepFace &face, struct bn_vlblock *vbp)
 {
     register struct bu_list *vhead;
     const ON_Surface* surf = face.SurfaceOf();
-    double umin, umax, urange;
-    double vmin, vmax, vrange;
-    double pt1[3], pt2[3];
+    fastf_t umin, umax, urange;
+    fastf_t vmin, vmax, vrange;
+    fastf_t pt1[3], pt2[3];
     ON_2dPoint from, to;
 
     ON_TextLog tl(stderr);
@@ -457,8 +460,8 @@ plottrim(ON_BrepTrim& trim, struct bn_vlblock *vbp, int plotres, bool dim3d)
     register struct bu_list *vhead;
     ON_BrepFace *face= trim.Face();
     const ON_Surface* surf = face->SurfaceOf();
-    double umin, umax;
-    double pt1[3], pt2[3];
+    fastf_t umin, umax;
+    fastf_t pt1[3], pt2[3];
     ON_2dPoint from, to;
 
     ON_TextLog tl(stderr);
@@ -494,8 +497,8 @@ plottrimdirection(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
 {
     register struct bu_list *vhead;
     const ON_Surface* surf = face.SurfaceOf();
-    double umin, umax;
-    double pt1[3], pt2[3];
+    fastf_t umin, umax;
+    fastf_t pt1[3], pt2[3];
     ON_2dPoint from, to;
 
     ON_TextLog tl(stderr);
@@ -512,13 +515,13 @@ plottrimdirection(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
 	    //trimCurve->Dump(tl);
 
 	    int knotcnt = trimCurve->SpanCount();
-	    double *knots = new double[knotcnt + 1];
+	    fastf_t *knots = new fastf_t[knotcnt + 1];
 
 	    trimCurve->GetSpanVector(knots);
 	    for (int k = 1; k <= knotcnt; k++) {
-		double dist = knots[k] - knots[k-1];
-		double step = dist/plotres;
-		for (double t=knots[k-1]+step; t<=knots[k]; t=t+step) {
+		fastf_t dist = knots[k] - knots[k-1];
+		fastf_t step = dist/plotres;
+		for (fastf_t t=knots[k-1]+step; t<=knots[k]; t=t+step) {
 		    ON_3dPoint p = trimCurve->PointAt(t);
 		    p = surf->PointAt(p.x, p.y);
 		    ON_3dPoint prev = trimCurve->PointAt(t-step*0.1);
@@ -554,7 +557,7 @@ void
 plotsurface(ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridres, const int red = 255, const int green = 218, const int blue = 185)
 {
     register struct bu_list *vhead;
-    double pt1[3], pt2[3];
+    fastf_t pt1[3], pt2[3];
     ON_2dPoint from, to;
 
     vhead = rt_vlblock_find(vbp, red, green, blue);
@@ -591,7 +594,7 @@ void
 plotsurfacenormals(ON_Surface &surf, struct bn_vlblock *vbp, int gridres)
 {
     register struct bu_list *vhead;
-    double pt1[3], pt2[3];
+    fastf_t pt1[3], pt2[3];
     ON_2dPoint from, to;
 
     vhead = rt_vlblock_find(vbp, GREEN);
@@ -619,14 +622,14 @@ void
 plotsurfaceknots(ON_Surface &surf, struct bn_vlblock *vbp)
 {
     register struct bu_list *vhead;
-    double pt1[3], pt2[3];
+    fastf_t pt1[3], pt2[3];
     ON_2dPoint from, to;
     int spanu_cnt = surf.SpanCount(0);
     int spanv_cnt = surf.SpanCount(1);
-    double *spanu = NULL;
-    double *spanv = NULL;
-    spanu = new double[spanu_cnt+1];
-    spanv = new double[spanv_cnt+1];
+    fastf_t *spanu = NULL;
+    fastf_t *spanv = NULL;
+    spanu = new fastf_t[spanu_cnt+1];
+    spanv = new fastf_t[spanv_cnt+1];
     surf.GetSpanVector(0, spanu);
     surf.GetSpanVector(1, spanv);
 
@@ -655,7 +658,7 @@ void
 plotcurve(ON_Curve &curve, struct bn_vlblock *vbp, int plotres, const int red = 255, const int green = 255, const int blue = 0)
 {
     register struct bu_list *vhead;
-    double pt1[3], pt2[3];
+    fastf_t pt1[3], pt2[3];
     ON_2dPoint from, to;
 
     vhead = rt_vlblock_find(vbp, red, green, blue);
@@ -670,7 +673,7 @@ plotcurve(ON_Curve &curve, struct bn_vlblock *vbp, int plotres, const int red = 
 	*/
 
 	int knotcnt = curve.SpanCount();
-	double *knots = new double[knotcnt + 1];
+	fastf_t *knots = new fastf_t[knotcnt + 1];
 
 	curve.GetSpanVector(knots);
 	for (int i = 1; i <= knotcnt; i++) {
@@ -852,8 +855,8 @@ brep_surface_bezier_info(struct brep_specific* bs, struct bu_vls *vls, int si)
 	    int knotlength1 = nsrf->m_order[1] + nsrf->m_cv_count[1] - 2;
 	    int order0 = nsrf->m_order[0];
 	    int order1 = nsrf->m_order[1];
-	    double *knot0 = nsrf->m_knot[0];
-	    double *knot1 = nsrf->m_knot[1];
+	    fastf_t *knot0 = nsrf->m_knot[0];
+	    fastf_t *knot1 = nsrf->m_knot[1];
 	    int cnt = 0;
 	    bu_vls_printf(vls, "bezier patches:\n");
 	    for (int i = 0; i < knotlength0; ++i) {
@@ -1142,7 +1145,7 @@ brep_trim_bezier_info(struct brep_specific* bs, struct bu_vls *vls, int ti)
 	c2->GetNurbForm(*nc2, 0.0);
 	int knotlength = nc2->m_order + nc2->m_cv_count - 2;
 	int order = nc2->m_order;
-	double *knot = nc2->m_knot;
+	fastf_t *knot = nc2->m_knot;
 	dump.Print("trim[%2d]: domain(%g, %g)\n", ti, nc2->Domain()[0], nc2->Domain()[1]);
 	int cnt = 0;
 	dump.Print("NURBS converts to Bezier\n");
@@ -1438,7 +1441,7 @@ brep_surface_cv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 		ucount = ns->m_cv_count[0];
 		vcount = ns->m_cv_count[1];
 		ON_3dPoint cp;
-		double pt1[3], pt2[3];
+		fastf_t pt1[3], pt2[3];
 		register struct bu_list *vhead;
 		surf->Dump(tl);
 		vhead = rt_vlblock_find(vbp, PEACH);
@@ -1475,7 +1478,7 @@ brep_surface_cv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 	    ucount = ns->m_cv_count[0];
 	    vcount = ns->m_cv_count[1];
 	    ON_3dPoint cp;
-	    double pt1[3], pt2[3];
+	    fastf_t pt1[3], pt2[3];
 	    register struct bu_list *vhead;
 	    vhead = rt_vlblock_find(vbp, PEACH);
 	    for (int i = 0; i < ucount; ++i) {
@@ -1518,10 +1521,10 @@ void
 plotFace(SurfaceTree* st, struct bn_vlblock *vbp, int UNUSED(isocurveres), int gridres)
 {
     register struct bu_list *vhead;
-    double pt1[3], pt2[3];
+    fastf_t pt1[3], pt2[3];
     ON_2dPoint from, to;
     std::list<BRNode*> m_trims_above_or_right;
-    std::list<double> trim_hits;
+    std::list<fastf_t> trim_hits;
 
     vhead = rt_vlblock_find(vbp, PEACH);
 
@@ -1565,9 +1568,9 @@ plotFace(SurfaceTree* st, struct bn_vlblock *vbp, int UNUSED(isocurveres), int g
 	if ((hit_cnt > 1) && ((hit_cnt % 2) == 0)) {
 	    //bu_log("U - %f\n", pt.x);
 	    while (!trim_hits.empty()) {
-		double tfrom = trim_hits.front();
+		fastf_t tfrom = trim_hits.front();
 		trim_hits.pop_front();
-		double tto = trim_hits.front();
+		fastf_t tto = trim_hits.front();
 		trim_hits.pop_front();
 		//bu_log("\tfrom - %f, to - %f\n", tfrom, tto);
 		fastf_t deltay = (tto-tfrom)/50.0;
@@ -1620,9 +1623,9 @@ plotFace(SurfaceTree* st, struct bn_vlblock *vbp, int UNUSED(isocurveres), int g
 	if ((hit_cnt > 1) && ((hit_cnt % 2) == 0)) {
 	    //bu_log("V - %f\n", pt.y);
 	    while (!trim_hits.empty()) {
-		double tfrom = trim_hits.front();
+		fastf_t tfrom = trim_hits.front();
 		trim_hits.pop_front();
-		double tto = trim_hits.front();
+		fastf_t tto = trim_hits.front();
 		trim_hits.pop_front();
 		//bu_log("\tfrom - %f, to - %f\n", tfrom, tto);
 		fastf_t deltax = (tto-tfrom)/50.0;
@@ -1652,15 +1655,15 @@ void
 drawisoUCheckForTrim(SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fastf_t to, fastf_t v, int UNUSED(curveres))
 {
     register struct bu_list *vhead;
-    double pt1[3], pt2[3];
+    fastf_t pt1[3], pt2[3];
     std::list<BRNode*> m_trims_right;
-    std::list<double> trim_hits;
+    std::list<fastf_t> trim_hits;
 
     vhead = rt_vlblock_find(vbp, YELLOW);
 
     const ON_Surface *surf = st->getSurface();
     CurveTree *ctree = st->ctree;
-    double umin, umax;
+    fastf_t umin, umax;
     surf->GetDomain(0, &umin, &umax);
 
     m_trims_right.clear();
@@ -1703,7 +1706,7 @@ drawisoUCheckForTrim(SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fast
   if ((hit_cnt % 2) != 0) {
   //bu_log("V - %f\n", pt.y);
   if (!trim_hits.empty()) {
-  double end = trim_hits.front();
+  fastf_t end = trim_hits.front();
   trim_hits.pop_front();
   //bu_log("\tfrom - %f, to - %f\n", from, to);
   fastf_t deltax = (end - from) / 50.0;
@@ -1738,12 +1741,12 @@ drawisoUCheckForTrim(SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fast
   }
 */
 	while (!trim_hits.empty()) {
-	    double start = trim_hits.front();
+	    fastf_t start = trim_hits.front();
 	    if (start < from) {
 		start = from;
 	    }
 	    trim_hits.pop_front();
-	    double end = trim_hits.front();
+	    fastf_t end = trim_hits.front();
 	    if (end > to) {
 		end = to;
 	    }
@@ -1780,15 +1783,15 @@ void
 drawisoVCheckForTrim(SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fastf_t to, fastf_t u, int UNUSED(curveres))
 {
     register struct bu_list *vhead;
-    double pt1[3], pt2[3];
+    fastf_t pt1[3], pt2[3];
     std::list<BRNode*> m_trims_above;
-    std::list<double> trim_hits;
+    std::list<fastf_t> trim_hits;
 
     vhead = rt_vlblock_find(vbp, YELLOW);
 
     const ON_Surface *surf = st->getSurface();
     CurveTree *ctree = st->ctree;
-    double vmin, vmax;
+    fastf_t vmin, vmax;
     surf->GetDomain(1, &vmin, &vmax);
 
     m_trims_above.clear();
@@ -1832,7 +1835,7 @@ drawisoVCheckForTrim(SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fast
   if ((hit_cnt % 2) != 0) { //odd starting inside
   //bu_log("V - %f\n", pt.y);
   if (!trim_hits.empty()) {
-  double end = trim_hits.front();
+  fastf_t end = trim_hits.front();
   trim_hits.pop_front();
   //bu_log("\tfrom - %f, to - %f\n", from, to);
   fastf_t deltay = (end - from) / 50.0;
@@ -1868,12 +1871,12 @@ drawisoVCheckForTrim(SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fast
   }
 */
 	while (!trim_hits.empty()) {
-	    double start = trim_hits.front();
+	    fastf_t start = trim_hits.front();
 	    trim_hits.pop_front();
 	    if (start < from) {
 		start = from;
 	    }
-	    double end = trim_hits.front();
+	    fastf_t end = trim_hits.front();
 	    trim_hits.pop_front();
 	    if (end > to) {
 		end = to;
@@ -1908,7 +1911,7 @@ void
 drawisoU(SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fastf_t to, fastf_t v, int curveres)
 {
     register struct bu_list *vhead;
-    double pt1[3], pt2[3];
+    fastf_t pt1[3], pt2[3];
     fastf_t deltau = (to - from) / curveres;
     const ON_Surface *surf = st->getSurface();
 
@@ -1934,7 +1937,7 @@ void
 drawisoV(SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fastf_t to, fastf_t u, int curveres)
 {
     register struct bu_list *vhead;
-    double pt1[3], pt2[3];
+    fastf_t pt1[3], pt2[3];
     fastf_t deltav = (to - from) / curveres;
     const ON_Surface *surf = st->getSurface();
 
