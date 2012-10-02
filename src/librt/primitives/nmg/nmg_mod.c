@@ -1,3 +1,4 @@
+
 /*                       N M G _ M O D . C
  * BRL-CAD
  *
@@ -86,7 +87,7 @@ nmg_merge_regions(struct nmgregion *r1, struct nmgregion *r2, const struct bn_to
  * the same plane equation (to within the given tolerance), and
  * combine them into a single face.
  *
- * Note that this may result in some of the verticies being very
+ * Note that this may result in some of the vertices being very
  * slightly off the plane equation, but the geometry routines need to
  * be prepared for this in any case.  If the "simplify" flag is set,
  * pairs of loops in the face that touch will be combined into a
@@ -142,7 +143,7 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 		register fastf_t dist;
 		/* If plane equations are different, done */
 
-		/* if the face bounding boxes are at least distance 
+		/* if the face bounding boxes are at least distance
 		 * distance tolerance apart, skip them.
 		 */
 		if (V3RPP_DISJOINT_TOL(f1->min_pt, f1->max_pt, f2->min_pt, f2->max_pt, tol->dist)) {
@@ -551,7 +552,7 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 		class = nmg_classify_lu_lu(lu, lu1, tol);
 
 		if (class == NMG_CLASS_AonBshared) {
-		    nmg_klu(lu1); /* lu1 is redudndant */
+		    nmg_klu(lu1); /* lu1 is redundant */
 		}
 
 		lu1 = next_lu;
@@ -952,15 +953,15 @@ nmg_invert_shell(struct shell *s)
  *
  * The new face will consist of a single loop made from n edges
  * between the n vertices.  Before an edge is created between a pair
- * of verticies, we check to see if there is already an edge with
+ * of vertices, we check to see if there is already an edge with
  * exactly one edgeuse+mate (in this shell) that runs between the two
- * verticies.  If such an edge can be found, the newly created
+ * vertices.  If such an edge can be found, the newly created
  * edgeuses will just use the existing edge.  This means that no
  * special call to nmg_gluefaces() is needed later.
  *
  * If a pointer in verts is a pointer to a null vertex pointer, a new
- * vertex is created.  In this way, new verticies can be created
- * conveniently within a user's list of known verticies
+ * vertex is created.  In this way, new vertices can be created
+ * conveniently within a user's list of known vertices
  *
  * verts		pointers to struct vertex	    vertex structs
  *
@@ -1054,7 +1055,7 @@ nmg_cmface(struct shell *s, struct vertex ***verts, int n)
 	if (rt_g.NMG_debug & DEBUG_CMFACE)
 	    bu_log("nmg_cmface() euold: %8x\n", euold);
 
-	/* look for pre-existing edge between these verticies */
+	/* look for pre-existing edge between these vertices */
 	if (*verts[i]) {
 	    /* look for an existing edge to share */
 	    eur = nmg_findeu(*verts[(i+1)%n], *verts[i], s, euold, 1);
@@ -1602,7 +1603,7 @@ nmg_reverse_face(register struct faceuse *fu)
  *
  * Note that this routine can't be used incrementally, because after
  * an odd number (like one) of faceuses have been "fixed", there is an
- * inherrent parity error, which will cause wrong decisions to be
+ * inherent parity error, which will cause wrong decisions to be
  * made.  Therefore, *all* faces have to be moved from one shell to
  * another before the radial parity can be "fixed".  Even then, this
  * isn't going to work right unless we are given a list of all the
@@ -1852,7 +1853,7 @@ nmg_jf(register struct faceuse *dest_fu, register struct faceuse *src_fu)
  * Construct a duplicate of a face into the shell 's'.  The vertex
  * geometry is copied from the source face into topologically distinct
  * (new) vertex and vertex_g structs.  They will start out being
- * geometricly coincident, but it is anticipated that the caller will
+ * geometrically coincident, but it is anticipated that the caller will
  * modify the geometry, e.g. as in an extrude operation.
  *
  * It is the caller's responsibility to re-bound the new face after
@@ -1968,14 +1969,14 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
  * N M G _ J L
  *
  * Join two loops together which share a common edge, such that both
- * occurances of the common edge are deleted.  This routine always
+ * occurrences of the common edge are deleted.  This routine always
  * leaves "lu" intact, and kills the loop radial to "eu" (after
  * stealing all its edges).
  *
  * Either both loops must be of the same orientation, or then first
  * loop must be OT_SAME, and the second loop must be OT_OPPOSITE.
  * Joining OT_SAME & OT_OPPOSITE always gives an OT_SAME result.
- * Above statment is not true!!!! I have added nmg_lu_reorient() -JRA
+ * Above statement is not true!!!! I have added nmg_lu_reorient() -JRA
  * Since "lu" must survive, it must be the OT_SAME one.
  */
 void
@@ -2069,7 +2070,7 @@ nmg_jl(struct loopuse *lu, struct edgeuse *eu)
  *
  * This routine can be used to join two exterior loops which do not
  * overlap, and it can also be used to join an exterior loop with a
- * loop of oposite orientation that lies entirely within it.  This
+ * loop of opposite orientation that lies entirely within it.  This
  * restriction is important, but not checked for.
  *
  * If the two vertexuses reference distinct vertices, then two new
@@ -2290,7 +2291,7 @@ nmg_join_2singvu_loops(struct vertexuse *vu1, struct vertexuse *vu2)
  * Returns the new loopuse pointer.  The new loopuse will contain
  * "vu2" and the edgeuse associated with "vu2" as the FIRST edgeuse on
  * the list of edgeuses.  The edgeuse for the new edge (connecting the
- * verticies indicated by vu1 and vu2) will be the LAST edgeuse on the
+ * vertices indicated by vu1 and vu2) will be the LAST edgeuse on the
  * new loopuse's list of edgeuses.
  *
  * It is the caller's responsibility to re-bound the loops.
@@ -2345,7 +2346,7 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
     NMG_CK_LOOPUSE(oldlu);
 
     if (eu2->up.lu_p != oldlu) {
-	bu_bomb("nmg_cut_loop() vertices not decendants of same loop\n");
+	bu_bomb("nmg_cut_loop() vertices not descendants of same loop\n");
     }
 
     if (vu1->v_p == vu2->v_p) {
@@ -2470,7 +2471,7 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
  * N M G _ S P L I T _ L U _ A T _ V U
  *
  * In a loop which has at least two distinct uses of a vertex, split
- * off the edges from "split_vu" to the second occurance of the vertex
+ * off the edges from "split_vu" to the second occurrence of the vertex
  * into a new loop.  It is the caller's responsibility to re-bound the
  * loops.
  *
@@ -2574,7 +2575,7 @@ nmg_split_lu_at_vu(struct loopuse *lu, struct vertexuse *split_vu)
  *
  * Returns -
  * vu if this vertex appears elsewhere in the loopuse.
- * NULL if this is the only occurance of this vertex in the loopuse.
+ * NULL if this is the only occurrence of this vertex in the loopuse.
  *
  * XXX move to nmg_info.c
  */
@@ -2851,7 +2852,7 @@ nmg_join_touchingloops(struct loopuse *lu)
  * N M G _ G E T _ T O U C H I N G _ J A U N T S
  *
  * Create a table of EU's. Each EU will be the first EU in a touching
- * jaunt (edgeuses from vert A->B->A) where vertex B appears elswhere
+ * jaunt (edgeuses from vert A->B->A) where vertex B appears elsewhere
  * in the loopuse lu.
  *
  * returns:
@@ -2965,7 +2966,7 @@ nmg_check_proposed_loop(struct edgeuse *start_eu, struct edgeuse **next_start_eu
 	for (j=0; j<BU_PTBL_END(jaunt_tbl); j++) {
 	    struct edgeuse *jaunt_eu;
 
-	    /* Don't worru about this jaunt */
+	    /* Don't worry about this jaunt */
 	    if (j == jaunt_no)
 		continue;
 
@@ -3832,7 +3833,7 @@ nmg_lu_reorient(struct loopuse *lu)
  *
  * Make a new edge, and a vertex.  If v is non-null it is taken as a
  * pointer to an existing vertex to use as the start of the new edge.
- * If v is null, then a new vertex is created for the begining of the
+ * If v is null, then a new vertex is created for the beginning of the
  * new edge.
  *
  * In either case, the new edge will exist as the "next" edgeuse after
@@ -3988,7 +3989,7 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
 	eu1 = nmg_me((struct vertex *)NULL, (struct vertex *)NULL, s);
 	eu2 = eu1->eumate_p;
 	/* Make both ends of edge use same vertex.
-	 * The second vertex is freed automaticly.
+	 * The second vertex is freed automatically.
 	 */
 	nmg_movevu(eu2->vu_p, eu1->vu_p->v_p);
     }
@@ -4094,7 +4095,7 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
  *
  * Makes a new edge, and a vertex.  If v is non-null it is taken as a
  * pointer to an existing vertex to use as the start of the new edge.
- * If v is null, then a new vertex is created for the begining of the
+ * If v is null, then a new vertex is created for the beginning of the
  * new edge.
  *
  * In either case, the new edgeuse will exist as the "next" edgeuse
@@ -4199,7 +4200,7 @@ nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
 
 	/* Are the two edgeuses going in same or opposite directions?
 	 * Join the newly created temporary edge (teuX, teuY) with the
-	 * new permanant edge (neu1, neu2).  On first pass, just take
+	 * new permanent edge (neu1, neu2).  On first pass, just take
 	 * note of the new edge & edgeuses.
 	 */
 	NMG_CK_VERTEX(teuX->vu_p->v_p);
@@ -4253,7 +4254,7 @@ nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
  * sets of edgeuses share the original edgeuse geometry.  If the
  * original edge had no edge geometry, then none is created here.
  *
- * This is a simple compatability interface to nmg_esplit().  The
+ * This is a simple compatibility interface to nmg_esplit().  The
  * return is the return of nmg_esplit().
  */
 struct edgeuse *
@@ -4810,7 +4811,7 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
 /**
  * N M G _ E I N S
  *
- * Insert a new (zero length) edge at the begining of (ie, before) an
+ * Insert a new (zero length) edge at the beginning of (i.e., before) an
  * existing edgeuse.  Perhaps this is what nmg_esplit and nmg_eusplit
  * should have been like?
  *
