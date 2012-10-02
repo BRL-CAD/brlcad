@@ -36,7 +36,7 @@ If one of these view curves is selected, then it becomes the current
 view curve.
 <p>
 <dt><b>Rename V-Curve</b>
-<dd>An input-request widget pops up asking for a new name for the curent
+<dd>An input-request widget pops up asking for a new name for the current
 view curve. The name of the current view curve will be changed to the
 new name. If a view curve with the specified name already exits, the user is
 notified and asked whether to rename anyway or cancel. If the user opts
@@ -56,7 +56,7 @@ deleted.
 one of these view curves is selected, then it is deleted.
 </dl>
 The view curve name displayed next to the <b>Current v-curve</b> label
-also acts as a button which causes the correspoding view curve display
+also acts as a button which causes the corresponding view curve display
 widget to appear, if it had previously been hidden with the <b>Hide</b>
 button, and raises the display widget to the top of the stack.
 <h2>View Curve Parameters</h2>
@@ -77,7 +77,7 @@ In the MGED display editor, the viewing state is conceptually
 made up of a viewing cube centered at <var>center</var> with sides of
 length <var>size</var> and an orientation given by <var>quat</var> or
 <var>ypr</var>. The eye point is centered in a face of the viewing
-cube, so that the center point is always directy in front of the eye
+cube, so that the center point is always directly in front of the eye
 point; the distance between the points is one half the <var>size</var>.
 <p>
 Combinations of these parameters are needed in order to specify the
@@ -338,7 +338,7 @@ an animation
 table, this raises a question: which part of the object should be placed
 at the given position? The user must supply the answer to this question
 in the entry box labeled <b>Object Center</b>. Although this point is
-refered to hereafter as the object center, it does not need to be the
+referred to hereafter as the object center, it does not need to be the
 geometric center of the object. The object center is also the point
 about which all rotations occur. For example, when animating a vehicle
 such as an airplane, the most convenient object center is probably the
@@ -505,7 +505,7 @@ stacking order.
 </dl>
 <hr>
 <h1>Creating View Scripts</h1>
-The purpose of the view animation widget is to convert an animatin table
+The purpose of the view animation widget is to convert an animation table
 into an animation script controlling the view size, view position and
 view orientation. The functions of each part of the view animation
 widget are explained below.
@@ -741,7 +741,7 @@ in each frame. This information must be specified directly or indirectly
 in one of three different ways. If the <b>Distance</b> button is
 enabled, then the vehicle path table should contain two columns,
 representing time and the distance the track has rolled in each frame.
-If <b>Position</b> is enabled, the table should contain four columsn
+If <b>Position</b> is enabled, the table should contain four columns
 representing time and the position of the vehicle that the track is a
 part of. The track widget will calculate the distance the track needs to
 roll in order to steer the vehicle along the given path. If <b>Pos. and
@@ -777,8 +777,8 @@ The wheel curve and wheel radius are still needed to define the shape of
 the track.
 <h2>Pad base name and Number of pads</h2>
 The common base name of the pads should be specified in the <b>Pad base
-name</b> entry box. The base name includes the name of a gropu or region
-to which the wheels beong and the common base name of the pads, but
+name</b> entry box. The base name includes the name of a group or region
+to which the wheels belong and the common base name of the pads, but
 doesn't include the integer index.
 For example, if
 <var>pad0</var> through <var>pad79</var> are members of the group
@@ -799,7 +799,7 @@ value specified in the track length entry box is ignored in this case.
 If the <b>Elastic track length</b> option is selected, then the desired
 length of the track should be entered in the track length entry box. If
 this length is longer than what is needed to fit around the wheels, then
-any excess length is taken up in a caternary arc which hangs between
+any excess length is taken up in a catenary arc which hangs between
 wheel zero and wheel (<var>n</var>-1). If the track length isn't long
 enough, the track is stretched just far enough to meet the need. If the
 <b>Rigid track length</b> is selected and the track is longer than
@@ -847,7 +847,7 @@ the end of another script which is 300 frames long.
 Besides making an animation scripts for an articulated track, the track
 widget can also be used to help in creating the original model of the
 track. When the <b>Create geometry file</b> button is enabled, the
-MGED modeling commmands rather than animation commands will be
+MGED modeling commands rather than animation commands will be
 written to the output file. The modeling commands operate on the
 matrices between the pads and their common parent. The entry box
 corresponding to this button should contain a frame number of the
@@ -957,7 +957,7 @@ top of the stacking order.
 This widget allows the user to run an animation script in the
 MGED display window. The widget is basically a front-end to the
 MGED <code>preview</code> command, with the added feature that
-the widget re-displayes animation curves which are
+the widget re-displays animation curves which are
 "zapped" from the screen during the <code>preview</code> command.
 The <b>Show Script</b> widget has the following entry boxes and
 buttons:
@@ -976,7 +976,7 @@ encountered in the animation script.
 <p><dt><b>End frame</b>
 <dd>The frame number of the last frame of the script to be shown.
 If no end frame is specified, then the animation display will continue
-to the end of the animaiton script.
+to the end of the animation script.
 <p><dt><b>Polygon Rendering</b>
 <dd>If this checkbutton is enabled, animated objects will be rendered
 with polygons rather than in wireframe form. Note that the user should turn
