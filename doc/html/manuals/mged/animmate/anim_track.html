@@ -17,9 +17,9 @@ model.
 <p>
 A track consists of a number of identical pads which
 are wrapped in a chain around two or more ordered wheels. Normally, the
-track is linear between the wheels. The exeption is that between the
+track is linear between the wheels. The exception is that between the
 first and last wheels, any extra track length is taken up in a hanging
-caternary arc.
+catenary arc.
 <p>
 Anim_track requires two input files. The first, referred to above as
 <b>wheelfile</b>,<b></b>
@@ -48,7 +48,7 @@ which all of the other wheels are projected.
 The track pads are spread evenly along the entire length of the track.
 The track segments between wheels are always linear, except for the
 segment between the first and last wheels. If there is any extra track
-length, it is taken up in a caternary arc which hangs down between the
+length, it is taken up in a catenary arc which hangs down between the
 first and last wheels. Thus the first wheel in
 <b>wheelfile</b>
 should be the top front wheel of the vehicle, and the last wheel in
@@ -56,7 +56,7 @@ should be the top front wheel of the vehicle, and the last wheel in
 should be the top back wheel of the vehicle. Depending on the track
 length mode specified with the
 <b>-l</b>
-option, the caternary segment may or may not appear.
+option, the catenary segment may or may not appear.
 <p>
 The second input file required by
 <i>anim_track</i>,<i></i>
@@ -268,7 +268,7 @@ giving the track circumference in every frame of the animation.
 
 <dd>
 Minimize the track length. With this option the length of the track is
-set to the track circumference in every frame, ie the track shrinks to
+set to the track circumference in every frame, i.e. the track shrinks to
 fit the wheels.
 <p>
 <dt>
@@ -304,9 +304,9 @@ never gets shorter than its original length.
 
 <dd>
 Specify the initial offset of the track. By default, the first track pad
-is initially placed at the point where the caternary arc meets the first
+is initially placed at the point where the catenary arc meets the first
 wheel. If an offset is specified, it represents the distance clockwise
-around the track to from this point to the desired initiall point of
+around the track to from this point to the desired initial point of
 the first pad. This option is typically used to align the track pads
 with drive wheel teeth.
 <p>
@@ -364,7 +364,7 @@ A typical use of
 would be to make an animation of a tank rolling across
 bumpy ground. By some method (such as physical simulation)
 you obtain the position of the center of
-the tank and its orientation at each time. You also nead to obtain the
+the tank and its orientation at each time. You also need to obtain the
 position of the each wheel relative to the vehicle center at each time.
 All of this information is placed in
 <b>in.table</b>.
@@ -413,7 +413,7 @@ The following call checks the circumference of the track:
 
 </pre>
 The 96 100mm-long pads should be sufficient to wrap around the wheels,
-leaving a shallow caternary arc between the idler and driver wheels.
+leaving a shallow catenary arc between the idler and driver wheels.
 <p>
 The following call creates a file which can be used by
 MGED
@@ -469,7 +469,7 @@ by itself causes the wheels to move and rotate and the
 pads to roll around them. When the entire tank, including the track,
 is moved along across the ground by
 <b>track.script</b>,<b></b>
-the full effect is acheived. The two scripts
+the full effect is achieved. The two scripts
 can be combined
 with a script for the left track, using
 <i>script_sort</i>,
