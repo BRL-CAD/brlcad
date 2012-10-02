@@ -1471,15 +1471,15 @@ BN_EXPORT extern void bn_wlt_haar_2d_long_reconstruct2(long *tbuf,
 
 
 /*----------------------------------------------------------------------*/
-/* const.c */
-BN_EXPORT extern const double bn_pi;
-BN_EXPORT extern const double bn_twopi;
-BN_EXPORT extern const double bn_halfpi;
-BN_EXPORT extern const double bn_invpi;
-BN_EXPORT extern const double bn_inv2pi;
-BN_EXPORT extern const double bn_inv255;
-BN_EXPORT extern const double bn_degtorad;
-BN_EXPORT extern const double bn_radtodeg;
+
+BN_EXPORT extern const fastf_t bn_pi;
+BN_EXPORT extern const fastf_t bn_twopi;
+BN_EXPORT extern const fastf_t bn_halfpi;
+BN_EXPORT extern const fastf_t bn_invpi;
+BN_EXPORT extern const fastf_t bn_inv2pi;
+BN_EXPORT extern const fastf_t bn_inv255;
+BN_EXPORT extern const fastf_t bn_degtorad;
+BN_EXPORT extern const fastf_t bn_radtodeg;
 
 /*----------------------------------------------------------------------*/
 /* tabdata.c */
