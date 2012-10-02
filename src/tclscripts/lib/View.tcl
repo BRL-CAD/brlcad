@@ -450,7 +450,7 @@
     $help add ae2dir		{{[-i] az el} {return the view direction}}
     $help add arot		{{x y z angle} {rotate about axis x,y,z by angle (degrees)}}
     $help add center		{{["x y z"]} {set/get the view center}}
-    $help add coord		{{[m|v]} {set/get the coodinate system}}
+    $help add coord		{{[m|v]} {set/get the coordinate system}}
     $help add eye		{{mx my mz} {set eye point to given model coordinates}}
     $help add eye_pos		{{mx my mz} {set eye position to given model coordinates}}
     $help add invSize		{{} {returns the inverse of view size}}
