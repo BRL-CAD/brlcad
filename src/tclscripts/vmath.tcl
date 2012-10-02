@@ -40,7 +40,7 @@ set M_SQRT2	1.41421356237309504880
 set M_SQRT1_2	0.70710678118654752440
 
 proc init_vmath {} {
-    # this routine does nothing except ensure that the abpve global variables get set
+    # this routine does nothing except ensure that the above global variables get set
 }
 
 proc near_zero { val epsilon } {
