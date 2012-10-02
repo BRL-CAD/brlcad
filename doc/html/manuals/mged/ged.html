@@ -1124,7 +1124,7 @@ style as you become more familiar with MGED.
 <p>
 First of all, decide how you want to represent your model, including the
 amount of detail, types of solids and regions necessary.  Have an accurate
-sketch or engineering drawing available, so that you can easily tranfer its
+sketch or engineering drawing available, so that you can easily transfer its
 information into the types of primitive solids necessary to create your model.
 Where possible it is recommended to start with a large block solid and
 ``subtract'' pieces from it.  In this way you avoid errors with abutting
@@ -2025,7 +2025,7 @@ They are summarized in Figure <a href="#cmd-summary">cmd-summary</a>.
 <tr><td>r</td><td>region op1 sol1....opn soln</td><td>create/modify a region</td></tr>
 <tr><td>i</td><td>object instname</td><td>create instance of an object</td></tr>
 <tr><td>mv</td><td>oldname newname</td><td>rename object</td></tr>
-<tr><td>mvall</td><td>oldname newname</td><td>rename all occurences of an object</td></tr>
+<tr><td>mvall</td><td>oldname newname</td><td>rename all occurrences of an object</td></tr>
 <tr><td>l</td><td>object*</td><td>list object information</td></tr>
 <tr><td>kill</td><td>obj1* obj2* ... objn*</td><td>remove objects from the file</td></tr>
 <tr><td>killall</td><td>obj1* obj2* ... objn*</td><td>remove object[s] + references from file</td></tr>
@@ -2203,7 +2203,7 @@ otherwise the values "1000 0 100 1" will be used respectively.
 To change
 the item and air codes use the "item" command.
 The "edcodes" command is probably the easiest and fastest way to change these
-identifing codes.
+identifying codes.
 Note:  In the past, all members of a region had to be solids, but
 recently combinations have been allowed as members of regions.  Hence,
 the names "soli" can also be combinations (groups) now.
@@ -2602,9 +2602,9 @@ rt [-s\#]
 </I>
 <p>
 This command will run the <B>rt</B>(1) program
-to produce a color shaded iamge of objects on the currently
+to produce a color shaded image of objects on the currently
 selected framebuffer.
-The resolution of the iamge (number of rays) is equal to "\#" from the "-s"
+The resolution of the image (number of rays) is equal to "\#" from the "-s"
 (square view resolution) option.
 If the -s option is absent, 50x50 ray resolution will be used.
 <p>
@@ -2620,7 +2620,7 @@ knob peripherals (eg. tek).
 Any non-zero number entered for "value" is converted to 1 (if "value" is
 greater than zero) or is converted to -1 (if "value is less than zero).
 The user must enter the same command with "value" equal to zero to
-stop the action envoked by the knob twist.
+stop the action invoked by the knob twist.
 <p>
 The "id" defines which knob is to be "twisted":
 <p>
@@ -2745,7 +2745,7 @@ The following is a listing of the remaining acceptable strings for
        oill          &  begin object illumination (pick)
        sill          & begin solid illumination (pick)
        oscale        & object scale
-       ox            & object translat ion in x direction only
+       ox            & object translation in x direction only
        oy            & object translation in y direction only
        oxy           & object translation
        orot          & object rotation
@@ -2978,7 +2978,7 @@ a line (edge) with planes (faces).
 prefix string obj1 obj2 ... objn
 </I>
 <p>
-This command will prefix obj1, obj2, .... objn with "string".  All occurences
+This command will prefix obj1, obj2, .... objn with "string".  All occurrences
 of these names will be prefixed.  String matching is allowed for the objects
 to prefix.
 <p>
@@ -3080,7 +3080,7 @@ paths
 <p>
 This command will print ALL paths matching an "input" path.
 You will be asked to enter the path to match.
-The path members are entered on ONE line, seperated by spaces.
+The path members are entered on ONE line, separated by spaces.
 The input path need not be a complete path, but must contain at least one object.
 All paths with the same first members as the input path will be listed.
 This command is useful for finding complete paths which begin with certain objects.
@@ -3095,7 +3095,7 @@ This command will "evaluate" and list ALL paths matching an input path, includin
 parameters of the solids at the bottom of each path.
 These parameters will reflect any editing contained in the path listed.
 You will be asked to enter the path to match.
-The path members are entered on ONE line, seperated by spaces.
+The path members are entered on ONE line, separated by spaces.
 The input path need not be a complete path, but must contain at least
 one object.
 Note that since the solid parameters are printed, this could be a
@@ -3110,7 +3110,7 @@ copyeval
 This command allows one to copy an "evaluated solid", that is a complete path
 ending in a solid.
 You will be asked to enter a complete path.
-Again, this path is entered on ONE line with the members seperated by spaces.
+Again, this path is entered on ONE line with the members separated by spaces.
 If you do not know the complete path, use the "paths" command above to find it.
 Next, you will be asked to enter the name of this copied solid.
 The input path will be traversed and the accumulated path transformations will
@@ -3286,7 +3286,7 @@ mvall old new
 </I>
 <p>
 This command is used to rename all occurrences of an object in the data file.  In this
-case, the object "old" will be renamed "new" for every occurence.
+case, the object "old" will be renamed "new" for every occurrence.
 <p>
 <H2>Miscellaneous Commands</H2>
 <p>
@@ -3629,7 +3629,7 @@ MGED enters the <B>SOL EDIT</B> state.
 <I>Select the solid called ``arb8''.</I>
 <p>
 <CENTER><IMG SRC="t1-sol-ed.gif" ALT="t1-sol-ed"><B> Solid Edit State.</B></CENTER>
-The <B>d</B> commmand removes something from the display.  In this
+The <B>d</B> command removes something from the display.  In this
 case, the solid ``ellg'' was removed to reduce clutter.
 The display should now look like Figure <a href="#t1-sol-ed">t1-sol-ed</a>.
 When MGED enters the solid edit state, the following occurs:
@@ -4634,7 +4634,7 @@ mged> <I>p 2</I>
 mged>
 }
 <p>
-The magnitude of the vector through point A is increased to 2, ie,
+The magnitude of the vector through point A is increased to 2, i.e.,
 the length of the axis of the ellipse through point A is set equal to p.
 See Figure <a href="#esc-sa">esc-sa</a>.  The command
 <p>
@@ -4654,7 +4654,7 @@ mged> <I>p 2</I>
 mged>
 }
 <p>
-The magnitude of the vector through point B is increased to 2, ie,
+The magnitude of the vector through point B is increased to 2, i.e.,
 the length of the axis of the ellipse through point B is set equal to p.
 See Figure <a href="#esc-sb">esc-sb</a>.  The command
 <p>
@@ -4917,7 +4917,7 @@ See Figure <a href="#ese-scale">ese-scale</a>.
 <p>
 Move the mouse to a position outside the menu area and above the X axis,
 and click the mouse.
-Notice that the size of the ellipsoid has grown, ie,
+Notice that the size of the ellipsoid has grown, i.e.,
 the magnitude of the vectors have increased.
 Move the mouse to a position below the X axis, and click the mouse.
 Notice that the size of the ellipsoid has increased.
@@ -4936,7 +4936,7 @@ The use
 of the scale operation from the Solid Edit menu
 will result in the values of all the vectors being
 multiplied by the value of the scale.
-Use of the scale operaton from the Ellipsoid menu
+Use of the scale operation from the Ellipsoid menu
 with a particular vector A, B, or C changes the
 magnitude of that vector to the value of the scale.
 <p>
@@ -4951,7 +4951,7 @@ mged>
 }
 <p>
 The magnitude of the vector to point A is set equal to the value of p
-(eg 1.5).
+e.g. 1.5).
 The components of the vector are (1.5, 0, 0) since the vector was
 parallel to the X axis.  See Figure <a href="#ese-sa">ese-sa</a>.  The command
 <p>
@@ -4973,7 +4973,7 @@ mged>
 }
 <p>
 The magnitude of the vector to point B is set equal to the value of p
-(eg 1.5).
+(e.g. 1.5).
 The coordinates of the vector are the product of p and the
 direction cosines of B.  See Figure <a href="#ese-sb">ese-sb</a>.  The command
 <p>
@@ -4994,7 +4994,7 @@ mged>
 }
 <p>
 The magnitude of the vector to point C is set equal to the value of p
-(ie, 1.5).
+(i.e., 1.5).
 The coordinates of the vector are the product of p and the
 direction cosines of C.  See Figure <a href="#ese-sc">ese-sc</a>.  The command
 <p>
@@ -5391,7 +5391,7 @@ from the origin and saved for future editing.
 <p>
 <H3>Organize the Primitives and Groups</H3>
 <p>
-<CENTER><IMG SRC="eo-stacked.gif" ALT="eo-stacked"><B> Stacked Primatives.</B></CENTER>
+<CENTER><IMG SRC="eo-stacked.gif" ALT="eo-stacked"><B> Stacked Primitives.</B></CENTER>
 \noindent
 {\tt
 mged> <I>cp arb8 arb8.s</I>
@@ -5423,7 +5423,7 @@ the solid arb8.s was ``unstacked'' using a Solid Edit so it is more
 visible.  The same sequence of operations will be performed with the
 other objects to move them to other locations.
 <p>
-<CENTER><IMG SRC="eo-spread.gif" ALT="eo-spread"><B> Primatives After Translation.</B></CENTER>
+<CENTER><IMG SRC="eo-spread.gif" ALT="eo-spread"><B> Primitives After Translation.</B></CENTER>
 \noindent
 {\tt
 mged> <I>sed ellg.s</I>
@@ -5795,7 +5795,7 @@ The woodsman's hat is comprised of solids c.1 and c.2.
 The head of our Tin Woodsman is perfectly spherical, and will be located
 at coordinates (0, 2, 0).
 While it would be possible to duplicate the ellipsoid solid created above,
-and modifiy it to produce the desired sphere, since all the parameters
+and modify it to produce the desired sphere, since all the parameters
 of the head sphere are known, it is more economical simply to use
 the <I>in</I> command to construct it directly.
 Figure <a href="#wm-head">wm-head</a> shows the results of this operation.
@@ -6046,7 +6046,7 @@ The natural way to write this is
 but note that there are no grouping operations permitted in the <I>r</I>
 command.
 Furthermore, for historic reasons, union operations bind more loosely than
-intersection and subtraction, ie, there are implied groups
+intersection and subtraction, i.e., there are implied groups
 between union operations.  Thus, the expression above needs to be
 rewritten as the the formula:
 <CENTER>
@@ -6100,7 +6100,7 @@ GETTREE: 0.01 CPU secs in 1 elapsed secs (1\%)
 PREP: 0.01 CPU secs in 0.01 elapsed secs (100\%)
 shooting at 13 solids in 4 regions
 model X(-2,2), Y(-6,7), Z(-2,2)
-Beam radius=0.078125 mm, divergance=0 mm/1mm
+Beam radius=0.078125 mm, divergence=0 mm/1mm
 
 SHOT: 3.73 CPU secs in 6 elapsed secs (62.1667\%)
 Additional dynamic memory used=29728. bytes
@@ -6465,7 +6465,7 @@ material types are:  plastic
                                glass
                                texture
 <p>
-Shinyness (ie:  sh=16)
+Shinyness (i.e.:  sh=16)
 
 Refractive index for:  crown glass = 1.52
                               Flint glass = 1.65
@@ -6495,7 +6495,7 @@ The resolution of the image (number of rays) is equal to "\#" from the "-s"
 option.  If the "-s" option is absent, 50x50 ray solution will be used (very
 course raytrace).  The higher the "-s" option the better the raytracing, but
 it takes longer to display.
-Recommended optimun value of "-s" option for picture
+Recommended optimum value of "-s" option for picture
 quality and speed of display is 256!.  Some examples follow:
 <p>
 <pre>
@@ -6505,7 +6505,7 @@ quality and speed of display is 256!.  Some examples follow:
 </pre>
 <p>
 When the rt command is given the text and graphic window will appear,
-then the frame buffer starts to appear (the picture window).  The first scaned
+then the frame buffer starts to appear (the picture window).  The first scanned
 display will be what was previously stored in it, it will then over write it
 with your picture; sometimes two buffer scans are displayed before yours.
 <p>
