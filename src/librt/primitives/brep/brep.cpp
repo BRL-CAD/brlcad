@@ -349,12 +349,16 @@ brep_build_bvh(struct brep_specific* bs)
 int
 rt_brep_bbox(struct rt_db_internal *ip, point_t *min, point_t *max) {
     struct rt_brep_internal* bi;
+    ON_3dPoint dmin, dmax;
 
     RT_CK_DB_INTERNAL(ip);
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
-    bi->brep->GetBBox(*min, *max);
+    bi->brep->GetBBox(dmin, dmax);
+    VMOVE(*min, dmin);
+    VMOVE(*max, dmax);
+
     return 0;
 }
 
