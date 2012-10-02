@@ -27,17 +27,17 @@
  * and operates on vect_t, point_t, mat_t, and quat_t objects.
  *
  * Note that while many people in the computer graphics field use
- * post-multiplication with row vectors (ie, vector * matrix * matrix
+ * post-multiplication with row vectors (i.e., vector * matrix * matrix
  * ...) the BRL-CAD system uses the more traditional representation
- * of column vectors (ie, ... matrix * matrix * vector).  (The
+ * of column vectors (i.e., ... matrix * matrix * vector).  (The
  * matrices in these two representations are the transposes of each
  * other). Therefore, when transforming a vector by a matrix,
- * pre-multiplication is used, ie:
+ * pre-multiplication is used, i.e.:
  *
  * view_vec = model2view_mat * model_vec
  *
  * Furthermore, additional transformations are multiplied on the left,
- * ie:
+ * i.e.:
  *
  <tt> @code
  * vec'  =  T1 * vec
@@ -45,7 +45,7 @@
  @endcode </tt>
  *
  * The most notable implication of this is the location of the "delta"
- * (translation) values in the matrix, ie:
+ * (translation) values in the matrix, i.e.:
  *
  <tt> @code
  * x'   (R0  R1  R2 Dx) x
@@ -1690,7 +1690,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(_l1)[Z] > (_h2)[Z] + (_t) || \
         (_l2)[X] > (_h1)[X] + (_t) || \
 	(_l2)[Y] > (_h1)[Y] + (_t) || \
-	(_l2)[Z] > (_h1)[Z] + (_t)) 
+	(_l2)[Z] > (_h1)[Z] + (_t))
 
 /** Compare two bounding boxes and return true If they overlap. */
 #define V3RPP_OVERLAP(_l1, _h1, _l2, _h2) \
