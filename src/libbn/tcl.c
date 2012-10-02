@@ -47,42 +47,59 @@
  */
 
 int
-bn_decode_mat(fastf_t *m, const char *str)
+bn_decode_mat(fastf_t *mat, const char *str)
 {
+    double m[16];
+    int ret;
+
     if (BU_STR_EQUAL(str, "I")) {
 	MAT_IDN(m);
 	return 16;
     }
     if (*str == '{') str++;
 
-    return sscanf(str,
+    ret = sscanf(str,
 		  "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
 		  &m[0], &m[1], &m[2], &m[3], &m[4], &m[5], &m[6], &m[7],
 		  &m[8], &m[9], &m[10], &m[11], &m[12], &m[13], &m[14], &m[15]);
+    MAT_COPY(mat, m);
+
+    return ret;
 }
 
 
 int
-bn_decode_quat(fastf_t *q, const char *str)
+bn_decode_quat(fastf_t *quat, const char *str)
 {
+    double q[4];
+    int ret;
+
     if (*str == '{') str++;
-    return sscanf(str, "%lf %lf %lf %lf", &q[0], &q[1], &q[2], &q[3]);
+    ret = sscanf(str, "%lf %lf %lf %lf", &q[0], &q[1], &q[2], &q[3]);
+    HMOVE(quat, q);
+
+    return ret;
 }
 
 
 int
-bn_decode_vect(fastf_t *v, const char *str)
+bn_decode_vect(fastf_t *vec, const char *str)
 {
+    double v[3];
+    int ret;
+
     if (*str == '{') str++;
-    return sscanf(str, "%lf %lf %lf", &v[0], &v[1], &v[2]);
+    ret = sscanf(str, "%lf %lf %lf", &v[0], &v[1], &v[2]);
+    VMOVE(vec, v);
+
+    return ret;
 }
 
 
 int
 bn_decode_hvect(fastf_t *v, const char *str)
 {
-    if (*str == '{') str++;
-    return sscanf(str, "%lf %lf %lf %lf", &v[0], &v[1], &v[2], &v[3]);
+    return bn_decode_quat(v, str);
 }
 
 
@@ -185,12 +202,12 @@ static struct math_func_link {
     {"mat4x3pnt",          bn_mat4x3pnt},
     {"hdivide",            bn_hdivide},
     {"vjoin1",	           bn_vjoin1},
-    {"vblend",	           bn_vblend},
+    {"vblend",	           (void (*)())bn_vblend},
     {"mat_ae",             bn_mat_ae},
     {"mat_ae_vec",         bn_ae_vec},
-    {"mat_aet_vec",        bn_aet_vec},
+    {"mat_aet_vec",        (void (*)())bn_aet_vec},
     {"mat_angles",         bn_mat_angles},
-    {"mat_eigen2x2",       bn_eigen2x2},
+    {"mat_eigen2x2",       (void (*)())bn_eigen2x2},
     {"mat_fromto",         bn_mat_fromto},
     {"mat_xrot",           bn_mat_xrot},
     {"mat_yrot",           bn_mat_yrot},
@@ -200,7 +217,7 @@ static struct math_func_link {
     {"mat_vec_perp",       bn_vec_perp},
     {"mat_scale_about_pt", bn_mat_scale_about_pt_wrapper},
     {"mat_xform_about_pt", bn_mat_xform_about_pt},
-    {"mat_arb_rot",        bn_mat_arb_rot},
+    {"mat_arb_rot",        (void (*)())bn_mat_arb_rot},
     {"quat_mat2quat",      quat_mat2quat},
     {"quat_quat2mat",      quat_quat2mat},
     {"quat_distance",      bn_quat_distance_wrapper},
@@ -293,7 +310,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     } else if (math_func == bn_vjoin1) {
 	point_t o;
 	point_t b, d;
-	fastf_t c;
+	double c;
 
 	if (argc < 4) {
 	    bu_vls_printf(&result, "usage: %s pnt scale dir", argv[0]);
@@ -306,9 +323,9 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	VJOIN1(o, b, c, d);	/* bn_vjoin1(o, b, c, d) */
 	bn_encode_vect(&result, o);
 
-    } else if (math_func == bn_vblend) {
+    } else if (math_func == (void (*)())bn_vblend) {
 	point_t a, c, e;
-	fastf_t b, d;
+	double b, d;
 
 	if (argc < 5) {
 	    bu_vls_printf(&result, "usage: %s scale pnt scale pnt", argv[0]);
@@ -347,17 +364,19 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bn_ae_vec(&az, &el, v);
 	bu_vls_printf(&result, "%g %g", az, el);
-    } else if (math_func == bn_aet_vec) {
+    } else if (math_func == (void (*)())bn_aet_vec) {
+	double acc;
 	fastf_t az, el, twist, accuracy;
 	vect_t vec_ae, vec_twist;
 
 	if (argc < 4 || bn_decode_vect(vec_ae, argv[1]) < 3 ||
 	    bn_decode_vect(vec_twist, argv[2]) < 3 ||
-	    sscanf(argv[3], "%lf", &accuracy) < 1) {
+	    sscanf(argv[3], "%lf", &acc) < 1) {
 	    bu_vls_printf(&result, "usage: %s vec_ae vec_twist accuracy",
 			  argv[0]);
 	    goto error;
 	}
+	accuracy = acc;
 
 	bn_aet_vec(&az, &el, &twist, vec_ae, vec_twist, accuracy);
 	bu_vls_printf(&result, "%g %g %g", az, el, twist);
@@ -375,7 +394,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bn_mat_angles(o, alpha, beta, ggamma);
 	bn_encode_mat(&result, o);
-    } else if (math_func == bn_eigen2x2) {
+    } else if (math_func == (void (*)())bn_eigen2x2) {
 	fastf_t val1, val2;
 	vect_t vec1, vec2;
 	double a, b, c;
@@ -471,7 +490,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	bn_mat_xform_about_pt(o, xform, v);
 	bn_encode_mat(&result, o);
-    } else if (math_func == bn_mat_arb_rot) {
+    } else if (math_func == (void (*)())bn_mat_arb_rot) {
 	mat_t o;
 	point_t pt;
 	vect_t dir;
@@ -572,7 +591,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	(*math_func)(qout, qin);
 	bn_encode_quat(&result, qout);
     } else if (math_func == (void (*)())bn_isect_line3_line3) {
-	double t, u;
+	fastf_t t, u;
 	point_t pt, a;
 	vect_t dir, c;
 	int i;
@@ -612,7 +631,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bn_encode_vect(&result, a);
 
     } else if (math_func == (void (*)())bn_isect_line2_line2) {
-	double dist[2];
+	fastf_t dist[2];
 	point_t pt, a;
 	vect_t dir, c;
 	int i;
