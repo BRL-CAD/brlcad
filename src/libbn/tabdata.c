@@ -931,12 +931,13 @@ bn_table_read(const char *filename) {
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     for (j=0; j <= tabp->nx; j++)  {
-	/* XXX assumes fastf_t == double */
-	ret = fscanf(fp, "%lf", &tabp->x[j]);
+	double val;
+	ret = fscanf(fp, "%lf", &val);
 	if (ret != 1) {
 	    bu_log("bn_table_read(%s) READ FAILURE. Abort\n", filename);
 	    break;
 	}
+	tabp->x[j] = val;
     }
     fclose(fp);
     bu_semaphore_release(BU_SEM_SYSCALL);
@@ -1077,12 +1078,21 @@ bn_read_table_and_tabdata(const char *filename) {
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     fp = fopen(filename, "rb");
     for (i=0; i < count; i++) {
+	double xval, yval;
+	int ret;
+
 	buf[0] = '\0';
 	if (bu_fgets(buf, sizeof(buf), fp) == NULL)  {
 	    bu_log("bn_read_table_and_tabdata(%s) unexpected EOF on line %zu\n", filename, i);
 	    break;
 	}
-	sscanf(buf, "%lf %lf", &tabp->x[i], &data->y[i]);
+	ret = sscanf(buf, "%lf %lf", &xval, &yval);
+	if (ret != 2) {
+	    bu_log("Malformatted table data encountered in %s\n", filename);
+	    break;
+	}
+	xval = tabp->x[i];
+	yval = data->y[i];
     }
     fclose(fp);
     bu_semaphore_release(BU_SEM_SYSCALL);
