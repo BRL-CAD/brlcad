@@ -952,6 +952,7 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     unsigned long neqn;
     int double_count;
     size_t byte_count;
+    double *eqn;
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
@@ -972,9 +973,14 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     aip->magic = RT_ARBN_INTERNAL_MAGIC;
     aip->neqn = neqn;
     if (aip->neqn <= 0) return -1;
-    aip->eqn = (plane_t *)bu_malloc(byte_count, "arbn plane eqn[]");
 
-    ntohd((unsigned char *)aip->eqn, (unsigned char *)ep->ext_buf + 4, double_count);
+    eqn = (double *)bu_malloc(byte_count, "arbn plane eqn[] temp buf");
+    ntohd((unsigned char *)eqn, (unsigned char *)ep->ext_buf + 4, double_count);
+    aip->eqn = (plane_t *)bu_malloc(double_count * sizeof(fastf_t), "arbn plane eqn[]");
+    for (i=0; i < aip->neqn; i++) {
+	HMOVE(aip->eqn[i], &eqn[i*ELEMENTS_PER_PLANE]);
+    }
+    bu_free(eqn, "arbn plane eqn[] temp buf");
 
     /* Transform by the matrix, if we have one that is not the identity */
     if (mat && !bn_mat_is_identity(mat)) {
@@ -1015,8 +1021,8 @@ rt_arbn_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 {
     struct rt_arbn_internal *aip;
     size_t i;
-    fastf_t *vec;
-    fastf_t *sp;
+    double *vec;
+    double *sp;
     int double_count;
     int byte_count;
 
