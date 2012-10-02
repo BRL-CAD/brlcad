@@ -65,7 +65,7 @@ static const char * lgt_menu[] =
     "c flag               enable or disable tracking cursor",
     "D x y                translate image when raytracing (WRT viewport)",
     "E                    clear display",
-    "e bitmask            set debug flag (hexidecimal bitmask)",
+    "e bitmask            set debug flag (hexadecimal bitmask)",
     "F                    animate",
     "f distance           specify distance from origin of grid to model centroid",
     "G size cflag gflag view_size    grid configuration",
