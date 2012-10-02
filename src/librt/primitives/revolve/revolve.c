@@ -68,7 +68,7 @@ rt_revolve_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const str
     fastf_t radius;
     point_t center;
 
-    int *endcount;
+    int *endcount = NULL;
     size_t nseg, i, j, k;
 
     RT_CK_DB_INTERNAL(ip);
@@ -187,7 +187,7 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 
     vect_t xEnd, yEnd;
 
-    int *endcount;
+    int *endcount = NULL;
     size_t nseg, i, j, k;
 
     if (rtip) RT_CK_RTI(rtip);
@@ -1212,7 +1212,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     vect_t ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
     fastf_t cos22_5 = 0.9238795325112867385;
     fastf_t cos67_5 = 0.3826834323650898373;
-    int *endcount;
+    int *endcount = NULL;
     point_t add, add2, add3;
 
     BU_CK_LIST_HEAD(vhead);
