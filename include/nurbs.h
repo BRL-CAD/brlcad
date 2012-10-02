@@ -230,7 +230,7 @@ public:
      *      min----------------*
      *                 u
      */
-    void GetBBox(double* min, double* max) const;
+    void GetBBox(fastf_t* min, fastf_t* max) const;
 
     /** Surface Information */
     const ON_BrepFace* m_face;
@@ -425,7 +425,7 @@ BANode<BA>::isLeaf()
 template<class BA>
 inline void
 _BU_ATTR_ALWAYS_INLINE
-BANode<BA>::GetBBox(double* min, double* max) const
+BANode<BA>::GetBBox(fastf_t* min, fastf_t* max) const
 {
     VSETALL(min, MAX_FASTF);
     VSETALL(max, -MAX_FASTF);
@@ -865,6 +865,7 @@ public:
     //            -   _  |  _   -
     //                  min
     //
+    void GetBBox(float* min, float* max);
     void GetBBox(double* min, double* max);
 
     // Surface Information
@@ -1050,6 +1051,18 @@ BVNode<BV>::isLeaf()
     return false;
 }
 
+
+template<class BV>
+inline void
+BVNode<BV>::GetBBox(float* min, float* max)
+{
+    min[0] = m_node.m_min[0];
+    min[1] = m_node.m_min[1];
+    min[2] = m_node.m_min[2];
+    max[0] = m_node.m_max[0];
+    max[1] = m_node.m_max[1];
+    max[2] = m_node.m_max[2];
+}
 
 template<class BV>
 inline void

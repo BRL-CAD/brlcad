@@ -89,17 +89,25 @@ brep_get_plane_ray(ON_Ray& r, plane_ray& pr)
 void
 brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R)
 {
+    vect_t vp;
+
     assert(surf->Ev1Der(uv[0], uv[1], pt, su, sv));
-    R[0] = VDOT(pr.n1, ((fastf_t*)pt)) - pr.d1;
-    R[1] = VDOT(pr.n2, ((fastf_t*)pt)) - pr.d2;
+    VMOVE(vp, pt);
+
+    R[0] = VDOT(pr.n1, vp) - pr.d1;
+    R[1] = VDOT(pr.n2, vp) - pr.d2;
 }
 
 
 void
 brep_newton_iterate(plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
 {
-    mat2d_t jacob = { VDOT(pr.n1, ((fastf_t*)su)), VDOT(pr.n1, ((fastf_t*)sv)),
-		      VDOT(pr.n2, ((fastf_t*)su)), VDOT(pr.n2, ((fastf_t*)sv)) };
+    vect_t vsu, vsv;
+    VMOVE(vsu, su);
+    VMOVE(vsv, sv);
+
+    mat2d_t jacob = { VDOT(pr.n1, vsu), VDOT(pr.n1, vsv),
+		      VDOT(pr.n2, vsu), VDOT(pr.n2, vsv) };
     mat2d_t inv_jacob;
     if (mat2d_inverse(inv_jacob, jacob)) {
 	// check inverse validity
@@ -115,8 +123,12 @@ brep_newton_iterate(plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, p
 void
 brep_newton_iterate(const ON_Surface* UNUSED(surf), plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
 {
-    mat2d_t jacob = { VDOT(pr.n1, ((fastf_t*)su)), VDOT(pr.n1, ((fastf_t*)sv)),
-		      VDOT(pr.n2, ((fastf_t*)su)), VDOT(pr.n2, ((fastf_t*)sv)) };
+    vect_t vsu, vsv;
+    VMOVE(vsu, su);
+    VMOVE(vsv, sv);
+
+    mat2d_t jacob = { VDOT(pr.n1, vsu), VDOT(pr.n1, vsv),
+		      VDOT(pr.n2, vsu), VDOT(pr.n2, vsv) };
     mat2d_t inv_jacob;
     if (mat2d_inverse(inv_jacob, jacob)) {
 	// check inverse validity
@@ -221,14 +233,14 @@ CurveTree::CurveTree(ON_BrepFace* face) :
 		double *knots = new double[knotcnt + 1];
 
 		trimCurve->GetSpanVector(knots);
-		std::list<double> splitlist;
+		std::list<fastf_t> splitlist;
 		for (int knot_index = 1; knot_index <= knotcnt; knot_index++) {
 		    ON_Interval range(knots[knot_index - 1], knots[knot_index]);
 
 		    if (range.Length() > TOL)
 			getHVTangents(trimCurve, range, splitlist);
 		}
-		for (std::list<double>::iterator l = splitlist.begin(); l != splitlist.end(); l++) {
+		for (std::list<fastf_t>::iterator l = splitlist.begin(); l != splitlist.end(); l++) {
 		    double xmax = *l;
 		    if (!NEAR_EQUAL(xmax, min, TOL)) {
 			m_root->addChild(subdivideCurve(trimCurve, adj_face_index, min, xmax, innerLoop, 0));

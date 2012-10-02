@@ -155,8 +155,11 @@ toUV(brlcad::SurfaceTree *surftree, const ON_Curve *curve, ON_2dPoint& out_pt, d
     pr.d2 = p2d;
 
     try {
-	ON_2dPoint uv = surftree->getClosestPointEstimate(knudgedPointOnCurve);
-	ON_3dVector dir = surf->NormalAt(uv.x, uv.y);
+	pt2d_t uv;
+	ON_2dPoint uv2d = surftree->getClosestPointEstimate(knudgedPointOnCurve);
+	move(uv, uv2d);
+
+	ON_3dVector dir = surf->NormalAt(uv[0], uv[1]);
 	dir.Reverse();
 	ON_Ray ray(pointOnCurve, dir);
 	brep_get_plane_ray(ray, pr);
@@ -190,7 +193,7 @@ toUV(brlcad::SurfaceTree *surftree, const ON_Curve *curve, ON_2dPoint& out_pt, d
 	}
 
 ///////////////////////////////////////
-	out_pt.Set(uv.x, uv.y);
+	out_pt.Set(uv[0], uv[1]);
 	return true;
     } catch(...) {
 	return false;

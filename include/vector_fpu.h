@@ -33,8 +33,13 @@
 #endif
 
 template<int LEN>
-struct vec_internal {
+struct dvec_internal {
     double v[LEN] VEC_ALIGN;
+};
+
+template<int LEN>
+struct fvec_internal {
+    float v[LEN] VEC_ALIGN;
 };
 
 template<int LEN>
@@ -45,7 +50,14 @@ inline dvec<LEN>::dvec(double s)
 }
 
 template<int LEN>
-inline dvec<LEN>::dvec(const double* vals, bool UNUSED(aligned))
+inline dvec<LEN>::dvec(const float* vals)
+{
+    for (int i = 0; i < LEN; i++)
+	data.v[i] = vals[i];
+}
+
+template<int LEN>
+inline dvec<LEN>::dvec(const double* vals)
 {
     for (int i = 0; i < LEN; i++)
 	data.v[i] = vals[i];
@@ -59,10 +71,17 @@ inline dvec<LEN>::dvec(const dvec<LEN>& p)
 }
 
 template<int LEN>
-inline dvec<LEN>::dvec(const vec_internal<LEN>& d)
+inline dvec<LEN>::dvec(const dvec_internal<LEN>& d)
 {
     for (int i = 0; i < LEN; i++)
 	data.v[i] = d.v[i];
+}
+
+template<int LEN>
+inline dvec<LEN>::dvec(const fvec_internal<LEN>& f)
+{
+    for (int i = 0; i < LEN; i++)
+	data.v[i] = f.v[i];
 }
 
 template<int LEN>
@@ -83,9 +102,24 @@ dvec<LEN>::operator[](int index) const
 
 template<int LEN>
 inline void
+dvec<LEN>::u_store(float* arr) const
+{
+    a_store(arr);
+}
+
+template<int LEN>
+inline void
 dvec<LEN>::u_store(double* arr) const
 {
     a_store(arr);
+}
+
+template<int LEN>
+inline void
+dvec<LEN>::a_store(float* arr) const
+{
+    for (int i = 0; i < LEN; i++)
+	arr[i] = data.v[i];
 }
 
 template<int LEN>
@@ -109,7 +143,7 @@ template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::operator+(const dvec<LEN>& b)
 {
-    vec_internal<LEN> r;
+    dvec_internal<LEN> r;
     for (int i = 0; i < LEN; i++)
 	r.v[i] = data.v[i] + b.data.v[i];
     return dvec<LEN>(r);
@@ -119,7 +153,7 @@ template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::operator-(const dvec<LEN>& b)
 {
-    vec_internal<LEN> r;
+    dvec_internal<LEN> r;
     for (int i = 0; i < LEN; i++)
 	r.v[i] = data.v[i] - b.data.v[i];
     return dvec<LEN>(r);
@@ -129,7 +163,7 @@ template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::operator*(const dvec<LEN>& b)
 {
-    vec_internal<LEN> r;
+    dvec_internal<LEN> r;
     for (int i = 0; i < LEN; i++)
 	r.v[i] = data.v[i] * b.data.v[i];
     return dvec<LEN>(r);
@@ -139,7 +173,7 @@ template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::operator/(const dvec<LEN>& b)
 {
-    vec_internal<LEN> r;
+    dvec_internal<LEN> r;
     for (int i = 0; i < LEN; i++)
 	r.v[i] = data.v[i] / b.data.v[i];
     return dvec<LEN>(r);
@@ -149,7 +183,7 @@ template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::madd(const dvec<LEN>& s, const dvec<LEN>& b)
 {
-    vec_internal<LEN> r;
+    dvec_internal<LEN> r;
     for (int i = 0; i < LEN; i++)
 	r.v[i] = data.v[i] * s.data.v[i] + b.data.v[i];
     return dvec<LEN>(r);
@@ -159,7 +193,7 @@ template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::madd(const double s, const dvec<LEN>& b)
 {
-    vec_internal<LEN> r;
+    dvec_internal<LEN> r;
     for (int i = 0; i < LEN; i++)
 	r.v[i] = data.v[i] * s +  b.data.v[i];
     return dvec<LEN>(r);
@@ -190,7 +224,7 @@ template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::map(const dvec_unop& op, int limit)
 {
-    vec_internal<LEN> r;
+    dvec_internal<LEN> r;
     for (int i = 0; i < limit; i++) {
 	r.v[i] = op(data.v[i]);
     }
