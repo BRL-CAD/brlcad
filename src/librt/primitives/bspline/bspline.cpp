@@ -626,7 +626,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	int coords;
 	fastf_t bound;
 	point_t tmp_pt;
-	fastf_t rel;
+	fastf_t dtol;
 	struct knot_vector tkv1,
 	    tkv2;
 	fastf_t tess;
@@ -639,33 +639,14 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 	VSUB2(tmp_pt, n->min_pt, n->max_pt);
 	bound =         MAGNITUDE(tmp_pt)/ 2.0;
-	/*
-	 * Establish tolerances
-	 */
-	if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
-	    rel = 0.0;              /* none */
-	} else {
-	    /* Convert rel to absolute by scaling by diameter */
-	    rel = ttol->rel * 2 * bound;
-	}
-	if (ttol->abs <= 0.0) {
-	    if (rel <= 0.0) {
-		/* No tolerance given, use a default */
-		rel = 2 * 0.10 * bound;        /* 10% */
-	    } else {
-		/* Use absolute-ized relative tolerance */
-	    }
-	} else {
-	    /* Absolute tolerance was given, pick smaller */
-	    if (ttol->rel <= 0.0 || rel > ttol->abs)
-		rel = ttol->abs;
-	}
+
+	dtol = primitive_get_absolute_tolerance(ttol, 2.0 * bound);
 
 	if (n->order[0] < 3 || n->order[1] < 3) {
 	    /* cannot use rt_nurb_par_edge() in this case */
 	    tess = 0.25; /* hack for now */
 	} else
-	    tess = (fastf_t) rt_nurb_par_edge(n, rel);
+	    tess = (fastf_t) rt_nurb_par_edge(n, dtol);
 
 	num_knots = (int)floor(1.0/((M_SQRT1_2 / 2.0) * tess));
 

@@ -894,34 +894,12 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	return 1;
     }
 
-    /* Establish tolerances */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
-	dtol = 0.0;		/* none */
+    if (tip->eto_r < b) {
+	dtol = primitive_get_absolute_tolerance(ttol, 2.0 * tip->eto_r);
     } else {
-	/*
-	 * Convert relative to absolute by scaling smallest of radius
-	 * and semi-minor axis
-	 */
-	if (tip->eto_r < b)
-	    dtol = ttol->rel * 2 * tip->eto_r;
-	else
-	    dtol = ttol->rel * 2 * b;
+	dtol = primitive_get_absolute_tolerance(ttol, 2.0 * b);
     }
-    if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0) {
-	    /* No tolerance given, use a default */
-	    if (tip->eto_r < b)
-		dtol = 2 * 0.10 * tip->eto_r;	/* 10% */
-	    else
-		dtol = 2 * 0.10 * b;	/* 10% */
-	} else {
-	    /* Use absolute-ized relative tolerance */
-	}
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || dtol > ttol->abs)
-	    dtol = ttol->abs;
-    }
+
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0)
 	ntol = ttol->norm;
@@ -1037,34 +1015,12 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	goto failure;
     }
 
-    /* Establish tolerances */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
-	dtol = 0.0;		/* none */
+    if (tip->eto_r < b) {
+	dtol = primitive_get_absolute_tolerance(ttol, 2.0 * tip->eto_r);
     } else {
-	/*
-	 * Convert relative to absolute by scaling smallest of
-	 * radius and semi-minor axis
-	 */
-	if (tip->eto_r < b)
-	    dtol = ttol->rel * 2 * tip->eto_r;
-	else
-	    dtol = ttol->rel * 2 * b;
+	dtol = primitive_get_absolute_tolerance(ttol, 2.0 * b);
     }
-    if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0) {
-	    /* No tolerance given, use a default */
-	    if (tip->eto_r < b)
-		dtol = 2 * 0.10 * tip->eto_r;	/* 10% */
-	    else
-		dtol = 2 * 0.10 * b;	/* 10% */
-	} else {
-	    /* Use absolute-ized relative tolerance */
-	}
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || dtol > ttol->abs)
-	    dtol = ttol->abs;
-    }
+
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0)
 	ntol = ttol->norm;

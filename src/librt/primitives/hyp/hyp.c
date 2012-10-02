@@ -776,25 +776,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     VMOVE(Au, xip->hyp_Au);
     VCROSS(Bu, Hu, Au);
 
-    /*
-     * Establish tolerances
-     */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0)
-	dtol = 0.0;		/* none */
-    else
-	/* Convert rel to absolute by scaling by smallest side */
-	dtol = ttol->rel * 2 * r2;
-    if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0) {
-	    /* No tolerance given, use a default */
-	    dtol = 2 * 0.10 * r2;	/* 10% */
-	}
-	/* else, use absolute-ized relative tolerance */
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || dtol > ttol->abs)
-	    dtol = ttol->abs;
-    }
+    dtol = primitive_get_absolute_tolerance(ttol, 2.0 * r2);
 
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0)

@@ -1037,6 +1037,8 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
 
+    rel = primitive_get_absolute_tolerance(ttol, 2.0 * (tip->r_a + tip->r_h));
+
     if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
 	rel = 0.0;		/* none */
     } else {

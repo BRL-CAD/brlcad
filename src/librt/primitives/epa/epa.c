@@ -714,25 +714,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     VREVERSE(&R[8], Hu);
     bn_mat_trn(invR, R);			/* inv of rot mat is trn */
 
-    /*
-     * Establish tolerances
-     */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0)
-	dtol = 0.0;		/* none */
-    else
-	/* Convert rel to absolute by scaling by smallest side */
-	dtol = ttol->rel * 2 * r2;
-    if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0) {
-	    /* No tolerance given, use a default */
-	    dtol = 2 * 0.10 * r2;	/* 10% */
-	}
-	/* Use absolute-ized relative tolerance */
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || dtol > ttol->abs)
-	    dtol = ttol->abs;
-    }
+    dtol = primitive_get_absolute_tolerance(ttol, 2.0 * r2);
 
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0)
@@ -1046,25 +1028,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     VREVERSE(&R[8], Hu);
     bn_mat_trn(invR, R);			/* inv of rot mat is trn */
 
-    /*
-     * Establish tolerances
-     */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0)
-	dtol = 0.0;		/* none */
-    else
-	/* Convert rel to absolute by scaling by smallest side */
-	dtol = ttol->rel * 2 * r2;
-    if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0) {
-	    /* No tolerance given, use a default */
-	    dtol = 2 * 0.10 * r2;	/* 10% */
-	}
-	/* Use absolute-ized relative tolerance */
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || dtol > ttol->abs)
-	    dtol = ttol->abs;
-    }
+    dtol = primitive_get_absolute_tolerance(ttol, 2.0 * r2);
 
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0)

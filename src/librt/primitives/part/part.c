@@ -190,6 +190,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "nmg.h"
+#include "../../librt_private.h"
 
 
 struct part_specific {
@@ -1109,7 +1110,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     int toff;		/* top offset */
     int blim;		/* base subscript limit */
     int tlim;		/* top subscrpit limit */
-    fastf_t rel;	/* Absolutized relative tolerance */
+    fastf_t dtol;	/* Absolutized relative tolerance */
 
     RT_CK_DB_INTERNAL(ip);
     pip = (struct rt_part_internal *)ip->idb_ptr;
@@ -1162,36 +1163,17 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     if (pip->part_hrad > radius)
 	radius = pip->part_hrad;
 
-    /*
-     * Establish tolerances
-     */
-    if (ttol->rel <= 0.0 || ttol->rel >= 1.0) {
-	rel = 0.0;		/* none */
-    } else {
-	/* Convert rel to absolute by scaling by radius */
-	rel = ttol->rel * radius;
-    }
-    if (ttol->abs <= 0.0) {
-	if (rel <= 0.0) {
-	    /* No tolerance given, use a default */
-	    rel = 0.10 * radius;	/* 10% */
-	} else {
-	    /* Use absolute-ized relative tolerance */
-	}
-    } else {
-	/* Absolute tolerance was given, pick smaller */
-	if (ttol->rel <= 0.0 || rel > ttol->abs) {
-	    rel = ttol->abs;
-	    if (rel > radius)
-		rel = radius;
-	}
+    dtol = primitive_get_absolute_tolerance(ttol, radius);
+
+    if (dtol > radius) {
+	dtol = radius;
     }
 
     /*
      * Converte distance tolerance into a maximum permissible
      * angle tolerance.  'radius' is largest radius.
      */
-    state.theta_tol = 2 * acos(1.0 - rel / radius);
+    state.theta_tol = 2 * acos(1.0 - dtol / radius);
 
     /* To ensure normal tolerance, remain below this angle */
     if (ttol->norm > 0.0 && ttol->norm < state.theta_tol) {

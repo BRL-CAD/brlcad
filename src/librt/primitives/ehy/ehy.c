@@ -719,6 +719,7 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     bn_mat_trn(invR, R);			/* inv of rot mat is trn */
 
     dtol = ehy_dtol(xip, ttol);
+    dtol = primitive_get_absolute_tolerance(ttol, 2.0 * xip->ehy_r2);
 
     /* stay below ntol to ensure normal tolerance */
     ntol = M_PI;
@@ -994,7 +995,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bn_mat_mul(SoR, S, R);
     bn_mat_mul(invRoS, invR, S);
 
-    dtol = ehy_dtol(xip, ttol);
+    dtol = primitive_get_absolute_tolerance(ttol, 2.0 * xip->ehy_r2);
 
     /* stay below ntol to ensure normal tolerance */
     ntol = M_PI;
