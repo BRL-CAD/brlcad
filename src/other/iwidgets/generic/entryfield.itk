@@ -230,7 +230,7 @@ itcl::configbody iwidgets::Entryfield::pasting {
 # OPTION: -fixed
 #
 # Restrict entry to 0 (unlimited) chars.  The value is the maximum 
-# number of chars the user may type into the field, regardles of 
+# number of chars the user may type into the field, regardless of 
 # field width, i.e. the field width may be 20, but the user will 
 # only be able to type -fixed number of characters into it (or 
 # unlimited if -fixed = 0).
@@ -438,8 +438,8 @@ itcl::body iwidgets::Entryfield::alphanumeric {char} {
 # ------------------------------------------------------------------
 # PROCEDURE: hexadecimal string
 #
-# The hexidecimal procedure validates character input for a given 
-# Entryfield to be hexidecimal and returns the result.
+# The hexadecimal procedure validates character input for a given 
+# Entryfield to be hexadecimal and returns the result.
 # ------------------------------------------------------------------
 itcl::body iwidgets::Entryfield::hexidecimal {string} {
     return [regexp {^(0x)?[0-9a-fA-F]*$} $string]
