@@ -629,7 +629,7 @@
     $help add rt_gettrees      {{} {}}
     $help add rotate_arb_face	{{arb face pt} {rotate an arb's face through pt}}
     $help add shader	{{comb shader_material [shader_args]} {command line version of the mater command}}
-    $help add shells	{{nmg_model}	{breaks model into seperate shells}}
+    $help add shells	{{nmg_model}	{breaks model into separate shells}}
     $help add showmats	{{path}	{show xform matrices along path}}
     $help add summary	{{[s r g]}	{count/list solid/reg/groups}}
     $help add title	{{?string?} {print or change the title}}
