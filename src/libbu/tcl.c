@@ -29,6 +29,8 @@
 #include "tcl.h"
 #include "cmd.h"		/* this includes bu.h */
 #include "bu.h"
+#include "vmath.h"
+
 
 /*XXX Temporary global interp */
 Tcl_Interp *brlcad_interp = (Tcl_Interp *)0;
@@ -254,6 +256,7 @@ tcl_bu_hsv_to_rgb(void *clientData,
 {
     Tcl_Interp *interp = (Tcl_Interp *)clientData;
 
+    double vals[3];
     fastf_t hsv[3];
     unsigned char rgb[3];
     struct bu_vls result = BU_VLS_INIT_ZERO;
@@ -262,14 +265,17 @@ tcl_bu_hsv_to_rgb(void *clientData,
 	bu_log("Usage: bu_hsv_to_rgb H S V\n");
 	return BRLCAD_ERROR;
     }
-    if (sscanf(argv[1], "%lf", &hsv[0]) != 1
-	|| sscanf(argv[2], "%lf", &hsv[1]) != 1
-	|| sscanf(argv[3], "%lf", &hsv[2]) != 1
-	|| (bu_hsv_to_rgb(hsv, rgb) == 0)) {
-	bu_vls_printf(&result, "bu_hsv_to_rgb: Bad HSV (%s, %s, %s)\n",
-		      argv[1], argv[2], argv[3]);
-	bu_log("%s", bu_vls_addr(&result));
-	bu_vls_free(&result);
+    if (sscanf(argv[1], "%lf", &vals[0]) != 1
+	|| sscanf(argv[2], "%lf", &vals[1]) != 1
+	|| sscanf(argv[3], "%lf", &vals[2]) != 1)
+    {
+	bu_log("Bad HSV parsing (%s, %s, %s)\n", argv[1], argv[2], argv[3]);
+	return BRLCAD_ERROR;
+    }
+
+    VMOVE(hsv, vals);
+    if (bu_hsv_to_rgb(hsv, rgb) == 0) {
+	bu_log("HSV to RGB conversion failed (%s, %s, %s)\n", argv[1], argv[2], argv[3]);
 	return BRLCAD_ERROR;
     }
 
