@@ -656,6 +656,157 @@ rt_epa_class(void)
     return 0;
 }
 
+/* Assume the existence of a line and a parabola at the origin, both in the y-z
+ * plane (x = 0.0). The parabola and line are described by arguments p and m,
+ * from the respective equations (z = y^2 / 4p) and (z = my + b).
+ *
+ * The line is assumed to intersect the parabola at the origin and one other
+ * point (i.e. m > 0, m < infinity).
+ *
+ * The portion of the parabola between these two intersection points takes on a
+ * single maximum value with respect to the intersecting line when its slope is
+ * the same as the line's (i.e. when the tangent line and intersecting line are
+ * parallel).
+ *
+ * The first derivate slope equation z' = y / 2p implies that the parabola has
+ * slope m when y = 2pm. So we calculate y from p and m, and then z from y.
+ */
+static void
+parabola_point_farthest_from_line(point_t max_point, fastf_t p, fastf_t m)
+{
+    fastf_t y = 2.0 * p * m;
+
+    max_point[X] = 0.0;
+    max_point[Y] = y;
+    max_point[Z] = (y * y) / ( 4.0 * p);
+}
+
+/* Calculate the length of the shortest distance between a point and a line in
+ * the y-z plane.
+ */
+static fastf_t
+distance_point_to_line(point_t p, fastf_t slope, fastf_t intercept)
+{
+    /* input line:
+     *   z = slope * y + intercept
+     *
+     * implicit form is:
+     *   az + by + c = 0,  where a = -slope, b = 1, c = -intercept
+     *
+     * standard 2D point-line distance calculation:
+     *   d = |aPy + bPz + c| / sqrt(a^2 + b^2)
+     */
+    return fabs(-slope * p[Y] + p[Z] - intercept) / sqrt(slope * slope + 1);
+}
+
+/* Approximate part of the parabola (y - h)^2 = 4p(z - k) lying in the y-z
+ * plane.
+ *
+ * pts->p: the vertex (0, h, k)
+ * pts->next->p: another point on the parabola
+ * p: the constant from the above equation
+ *
+ * This routine inserts num_new_points points between the two input points to
+ * better approximate the parabolic curve passing between them.
+ */
+static int
+approximate_parabolic_curve(struct rt_pt_node *pts, fastf_t p, int num_new_points)
+{
+    fastf_t error, max_error, seg_slope, seg_intercept;
+    point_t v, point, new_point, p0, p1;
+    struct rt_pt_node *node, *worst_node, *new_node;
+    int i;
+
+    VMOVE(v, pts->p);
+
+    for (i = 0; i < num_new_points; ++i) {
+	worst_node = node = pts;
+	max_error = 0.0;
+
+	/* Find the least accurate line segment, and calculate a new parabola
+	 * point to insert between it's endpoints.
+	 */
+	while (node->next != NULL) {
+	    VMOVE(p0, node->p);
+	    VMOVE(p1, node->next->p);
+
+	    seg_slope = (p1[Z] - p0[Z]) / (p1[Y] - p0[Y]);
+	    seg_intercept = p0[Z] - seg_slope * p0[Y];
+
+	    /* get farthest point on the equivalent parabola at the origin */
+	    parabola_point_farthest_from_line(point, p, seg_slope);
+
+	    /* translate result to actual parabola position */
+	    point[Y] += v[Y];
+	    point[Z] += v[Z];
+
+	    /* see if the maximum distance between the parabola and the line
+	     * (the error) is larger than the largest recorded error
+	     * */
+	    error = distance_point_to_line(point, seg_slope, seg_intercept);
+
+	    if (error > max_error) {
+		max_error = error;
+		worst_node = node;
+		VMOVE(new_point, point);
+	    }
+
+	    node = node->next;
+	}
+
+	/* insert new point between endpoints of the least accurate segment */
+	new_node = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node),
+		    "rt_pt_node");
+	VMOVE(new_node->p, new_point);
+	new_node->next = worst_node->next;
+	worst_node->next = new_node;
+    }
+
+    return num_new_points;
+}
+
+int
+rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    struct rt_epa_internal *xip;
+    struct rt_pt_node *pts, *node;
+    fastf_t mag_h, r1;
+    point_t v;
+    int num_points = 4;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+    xip = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(xip);
+
+    mag_h = MAGNITUDE(xip->epa_H);
+    r1 = xip->epa_r1;
+    VMOVE(v, xip->epa_V);
+
+    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    pts->next->next = NULL;
+    VSET(pts->p,       0, 0, -mag_h);
+    VSET(pts->next->p, 0, r1, 0);
+
+    approximate_parabolic_curve(pts, (r1 * r1) / (4 * mag_h), num_points - 2);
+
+    node = pts;
+    node->p[Z] *= -1.0;
+    VADD2(node->p, node->p, xip->epa_V);
+    RT_ADD_VLIST(info->vhead, node->p, BN_VLIST_LINE_MOVE);
+
+    node = node->next;
+    while (node != NULL) {
+	node->p[Z] *= -1.0;
+	VADD2(node->p, node->p, xip->epa_V);
+
+	RT_ADD_VLIST(info->vhead, node->p, BN_VLIST_LINE_DRAW);
+	node = node->next;
+    }
+
+    return 0;
+}
 
 /**
  * R T _ E P A _ P L O T
@@ -735,6 +886,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     VSET(pts_b->next->p, 0, r2, 0);
     /* 2 endpoints in 1st approximation */
     nb = 2;
+
     /* recursively break segment 'til within error tolerances */
     nb += rt_mk_parabola(pts_b, r2, mag_h, dtol, ntol);
     nell = nb - 1;	/* # of ellipses needed */

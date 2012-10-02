@@ -946,7 +946,7 @@ const struct rt_functab rt_functab[] = {
 	rt_epa_class,
 	rt_epa_free,
 	rt_epa_plot,
-	NULL,
+	rt_epa_adaptive_plot,
 	NULL,
 	rt_epa_tess,
 	NULL,
