@@ -280,6 +280,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bn_encode_hvect(&result, o);
     } else if (math_func == bn_mat4x3pnt) {
 	mat_t m;
+	MAT_ZERO(m);
 	point_t i, o;
 	if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
 	    bn_decode_vect(i, argv[2]) < 3) {
@@ -290,6 +291,7 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	bn_encode_vect(&result, o);
     } else if (math_func == bn_mat4x3vec) {
 	mat_t m;
+	MAT_ZERO(m);
 	vect_t i, o;
 	if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
 	    bn_decode_vect(i, argv[2]) < 3) {
