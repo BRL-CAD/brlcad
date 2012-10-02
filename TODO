@@ -19,7 +19,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
 * test arbn v5 import/export (make sure plane equations are not
-  corrupted)
+  corrupted).  check SIZEOF_NETWORK_DOUBLE and ntohd/htond conversions
+  where reading/writing fastf_t.
 
 * make igraph/graph command exist even if adaptagrams does not
 
