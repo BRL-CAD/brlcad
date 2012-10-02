@@ -165,8 +165,8 @@ struct dsp_specific {
 
 
 struct bbox_isect {
-    double in_dist;
-    double out_dist;
+    fastf_t in_dist;
+    fastf_t out_dist;
     int in_surf;
     int out_surf;
 };
@@ -1177,8 +1177,8 @@ add_seg(struct isect_stuff *isect,
 
 {
     struct seg *seg;
-    double tt = isect->tol->dist;
-    double delta;
+    fastf_t tt = isect->tol->dist;
+    fastf_t delta;
 #ifndef ORDERED_ISECT
     struct bu_list *spot;
 #endif
@@ -1351,15 +1351,15 @@ isect_ray_triangle(struct isect_stuff *isect,
 		   point_t B,
 		   point_t C,
 		   struct hit *hitp,
-		   double alphabbeta[])
+		   fastf_t alphabbeta[])
 {
-    point_t P;		/* plane intercept point */
+    point_t P;			/* plane intercept point */
     vect_t AB, AC, AP;
-    plane_t N;		/* Normal for plane of triangle */
-    double NdotDir;
-    double alpha, beta;	/* barycentric distances */
-    double hitdist;	/* distance to ray/trianlge intercept */
-    double toldist;	/* distance tolerance from isect->tol */
+    plane_t N;			/* Normal for plane of triangle */
+    fastf_t NdotDir;
+    fastf_t alpha, beta;	/* barycentric distances */
+    fastf_t hitdist;		/* distance to ray/trianlge intercept */
+    fastf_t toldist;		/* distance tolerance from isect->tol */
 
 #ifdef FULL_DSP_DEBUGGING
     if (RT_G_DEBUG & DEBUG_HF) {
@@ -1571,8 +1571,8 @@ permute_cell(point_t A,
 	case DSP_CUT_DIR_ADAPT: {
 	    int lo[2], hi[2];
 	    point_t tmp;
-	    double h1, h2, h3, h4;
-	    double cAD, cBC;  /* curvature in direction AD, and BC */
+	    fastf_t h1, h2, h3, h4;
+	    fastf_t cAD, cBC;  /* curvature in direction AD, and BC */
 
 	    if (RT_G_DEBUG & DEBUG_HF)
 		bu_log("cell %d, %d adaptive triangulation... ",
@@ -1718,9 +1718,9 @@ check_bbpt_hit_elev(int i,	/* indicates face of cell */
 		    point_t D,
 		    point_t P)
 {
-    double slope = 0.0;
-    double delta = 0.0;
-    double origin = 0.0;
+    fastf_t slope = 0.0;
+    fastf_t delta = 0.0;
+    fastf_t origin = 0.0;
 
 #ifdef FULL_DSP_DEBUGGING
     dlog("check_bbpt_hit_elev(");
@@ -1818,7 +1818,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     int cond, i;
     int hitcount = 0;
     point_t bbmin, bbmax;
-    double dot, dot2;
+    fastf_t dot, dot2;
 
     for(x=0;x<4;x++)
 	memset(hits+x, 0, sizeof(struct hit));
@@ -1982,7 +1982,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	plot_cell_top(isect, dsp_bb, A, B, C, D, hits, hitf, 1);
 	for (i=0; i < 4; i++) {
 	    if (hitf & (1<<i)) {
-		double v = VDOT(isect->r.r_dir, hits[i].hit_normal);
+		fastf_t v = VDOT(isect->r.r_dir, hits[i].hit_normal);
 
 		bu_log("%d dist:%g N:%g %g %g ",
 		       i, hits[i].hit_dist, V3ARGS(hits[i].hit_normal));
@@ -2229,15 +2229,15 @@ recurse_dsp_bb(struct isect_stuff *isect,
 	       point_t bbmin, /* min point of bb (Z=0) */
 	       point_t UNUSED(bbmax)) /* max point of bb */
 {
-    double tDX;		/* dist along ray to span 1 cell in X dir */
-    double tDY;		/* dist along ray to span 1 cell in Y dir */
-    double tX, tY;	/* dist from hit pt. to next cell boundary */
-    double curr_dist;
+    fastf_t tDX;		/* dist along ray to span 1 cell in X dir */
+    fastf_t tDY;		/* dist along ray to span 1 cell in Y dir */
+    fastf_t tX, tY;	/* dist from hit pt. to next cell boundary */
+    fastf_t curr_dist;
     short cX, cY;	/* coordinates of current cell */
     short cs;		/* cell X, Y dimension */
     short stepX, stepY;	/* dist to step in child array for each dir */
     short stepPX, stepPY;
-    double out_dist;
+    fastf_t out_dist;
     struct dsp_bb **p;
     fastf_t *stom = &isect->dsp->dsp_i.dsp_stom[0];
     point_t pt, v;
@@ -2393,7 +2393,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 {
     point_t bbmin, bbmax;
     point_t minpt, maxpt;
-    double min_z;
+    fastf_t min_z;
     /* the rest of these support debugging output */
     FILE *fp;
     static int plotnum;
@@ -2604,7 +2604,7 @@ rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     vect_t dir;	/* temp storage */
     vect_t v;
     struct isect_stuff isect;
-    double delta;
+    fastf_t delta;
 
     RT_DSP_CK_MAGIC(dsp);
     BU_CK_VLS(&dsp->dsp_i.dsp_name);
@@ -2713,8 +2713,8 @@ rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     }
 
     if (RT_G_DEBUG & DEBUG_HF) {
-	double NdotD;
-	double d;
+	fastf_t NdotD;
+	fastf_t d;
 	static const plane_t plane = {0.0, 0.0, -1.0, 0.0};
 
 	NdotD = VDOT(plane, rp->r_dir);
@@ -2740,7 +2740,7 @@ compute_normal_at_gridpoint(vect_t N,
 			    unsigned int x,
 			    unsigned int y,
 			    FILE *fd,
-			    double len)
+			    fastf_t len)
 {
     /* Gridpoint specified is "B" we compute normal by taking the
      * cross product of the vectors  A->C, D->E
@@ -2851,11 +2851,11 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     vect_t N, t, tmp, A;
     struct dsp_specific *dsp = (struct dsp_specific *)stp->st_specific;
     vect_t Anorm, Bnorm, Dnorm, Cnorm, ABnorm, CDnorm;
-    double Xfrac, Yfrac;
+    fastf_t Xfrac, Yfrac;
     int x, y;
     point_t pt;
-    double dot;
-    double len;
+    fastf_t dot;
+    fastf_t len;
     FILE *fd = (FILE *)NULL;
 
 
@@ -3062,7 +3062,7 @@ rt_dsp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	(struct dsp_specific *)stp->st_specific;
     point_t pt;
     vect_t tmp;
-    double r;
+    fastf_t r;
     fastf_t min_r_U, min_r_V;
     vect_t norm;
     vect_t rev_dir;
@@ -3070,7 +3070,7 @@ rt_dsp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     vect_t UV_dir;
     vect_t U_dir, V_dir;
     fastf_t U_len, V_len;
-    double one_over_len;
+    fastf_t one_over_len;
 
     MAT4X3PNT(pt, dsp->dsp_i.dsp_mtos, hitp->hit_point);
 
@@ -3502,7 +3502,7 @@ get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
  */
     int height[8];
     int xx, yy;
-    double c02, c13;  /* curvature in direction 0<->2, and 1<->3 */
+    fastf_t c02, c13;  /* curvature in direction 0<->2, and 1<->3 */
 
     if (dsp_ip->dsp_cuttype != DSP_CUT_DIR_ADAPT) {
 	/* not using adpative cut type, so just return the cut type */
@@ -4893,8 +4893,8 @@ swap_cell_pts(int A[3],
 
 	case DSP_CUT_DIR_ADAPT: {
 	    int lo[2], hi[2];
-	    double h1, h2, h3, h4;
-	    double cAD, cBC;  /* curvature in direction AD, and BC */
+	    fastf_t h1, h2, h3, h4;
+	    fastf_t cAD, cBC;  /* curvature in direction AD, and BC */
 
 
 	    /*
@@ -4999,7 +4999,7 @@ project_pt(point_t out,
 	   point_t pt)
 {
     int dx, dy;
-    double alpha, beta, x, y;
+    fastf_t alpha, beta, x, y;
     vect_t AB, AC;
 
     if (RT_G_DEBUG & DEBUG_HF) {
