@@ -49,7 +49,6 @@
 
 #include "brep_debug.h"
 
-#include "nurbs.h"
 
 #define BN_VMATH_PREFIX_INDICES 1
 #define ROOT_TOL 1.E-7
