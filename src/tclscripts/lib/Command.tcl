@@ -156,7 +156,7 @@
     # Create new slave interp
     interp delete $slaveInterp
     if { [catch {set slaveInterp [interp create]} err] } {
-	error "Unable to reinitalize a slave interpreter"
+	error "Unable to reinitialize a slave interpreter"
     }
 
     # Create slave interp's aliases
@@ -196,7 +196,7 @@
 
     # thar be dragons here
     if { [catch {set slaveInterp [interp create]} err] } {
-	error "Unable to initalize a slave interpreter"
+	error "Unable to initialize a slave interpreter"
     }
 
     doBindings
