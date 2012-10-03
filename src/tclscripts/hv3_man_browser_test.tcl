@@ -591,7 +591,7 @@ proc gui_build {widget_array} {
   #
   #     "browser"      - Normal browser status bar.
   #     "browser-tree" - Similar to "browser", but displays the document tree
-  #                      hierachy for the node the cursor is currently
+  #                      hierarchy for the node the cursor is currently
   #                      hovering over. This used to be the default.
   #     "memory"       - Show information to do with Hv3's memory usage.
   #
