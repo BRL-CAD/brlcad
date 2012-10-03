@@ -472,7 +472,7 @@ proc HMlink_setup {win href} {
 
 # generic link-hit callback
 # This gets called upon button hits on hypertext links
-# Applications are expected to supply ther own HMlink_callback routine
+# Applications are expected to supply their own HMlink_callback routine
 #   win:   The name of the text widget to render into
 #   x,y:   The cursor position at the "click"
 
