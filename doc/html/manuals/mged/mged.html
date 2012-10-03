@@ -152,7 +152,7 @@ All the geometry for a particular model or application
 is generally stored in a single file
 called a <i>database</i>.&nbsp; Each database may contain many different objects.&nbsp;
 By convention, the files containing BRL-CAD
-geometry have an extention of ``.g''.&nbsp;
+geometry have an extension of ``.g''.&nbsp;
 <p>
 Before starting mged the user should assure that the X-Windows <B>DISPLAY</B>
 environment variable has been properly set.&nbsp; This indicates where applications
@@ -291,7 +291,7 @@ One important implementation detail is that all numeric values are stored
 in the database in millimeters. When MGED interacts with the user, it converts
 values from the database into the units selected by the user before displaying
 them.&nbsp; Likewise, values that the user enters are converted to millimeters
-before being written to the databas.&nbsp;
+before being written to the database.&nbsp;
 <p><a name="coord"><H2>The Screen Coordinate System</H2></a>
 <p>
 
@@ -304,7 +304,7 @@ This feature allows objects within the cube to be seen, without cluttering
 the display with objects which are
 within view
 in X and Y, but quite far away in the Z direction.&nbsp;
-This is especially usefull when the display is zoomed
+This is especially useful when the display is zoomed
 in on a small portion of the geometry.&nbsp;
 On some displays Z axis clipping can be selectively enabled and disabled
 as a viewing aid.&nbsp;
@@ -499,7 +499,7 @@ a set of standard views.&nbsp;
 
 <p> It is possible to raytrace the current view from within mged.&nbsp;
 But to do so we need a place to display the image.&nbsp; We start up a
-framebuffer server (number 1) to accomodate this:
+framebuffer server (number 1) to accommodate this:
 
 <pre> <tt>
    mged> </tt><B><FONT color="#20a020">exec fbserv 1 /dev/sgip &</FONT></B>
@@ -605,7 +605,7 @@ solid.&nbsp;
 The raytracer will complain that they overlap.&nbsp;
 The best way to fix this is to clear the display, redisplay the new,
 complete object, and then raytrace.&nbsp;
-The ``<a href="mged_cmds.html#Z">Z</a>'' comand clears all
+The ``<a href="mged_cmds.html#Z">Z</a>'' command clears all
 objects from the display.  Then we can redisplay the objects we want to raytrace
 with the ``<a href="mged_cmds.html#e">draw</a>'' command.
 
