@@ -505,7 +505,7 @@ proc HMextract_param {param key {val ""}} {
 	upvar $val result
     }
 
-    # look for name=value combinations.  Either (') or (") are valid delimeters
+    # look for name=value combinations.  Either (') or (") are valid delimiters
     if {
 	[regsub -nocase [format {.*%s *= *"([^"]*).*} $key] $param {\1} value] ||
 [regsub -nocase [format {.*%s *= *'([^']*).*} $key] $param {\1} value] ||
