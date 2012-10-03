@@ -33,7 +33,7 @@
 #   1) mged has no publish/subscribe model in place so we poll.  that sucks.
 #   2) nice fancy icons.  need a good way to describe the difference
 #      between a combination and a region, and to distinguish different prims
-#   3) better context menu bindings.  tcl or the widget has akward key
+#   3) better context menu bindings.  tcl or the widget has awkward key
 #      bindings that require holding a mouse while clicking a second to select.
 #   4) implement the right info panel.  the code for the panel is in place,
 #      just absolutely no logic is implemented to describe them.  I'm thinking
@@ -97,7 +97,7 @@ class GeometryBrowser {
 	variable _showAllGeometry
 	variable _autoRender
 
-	# hooks to the heirarchy pop-up menus
+	# hooks to the hierarchy pop-up menus
 	variable _itemMenu
 	variable _bgMenu
 
@@ -221,7 +221,7 @@ body GeometryBrowser::constructor {} {
 
 
     # itemMenu and bgMenu are the two pop-up menus available from hierarchy class
-    # XXX for some reason, the current call is not returing a value properly
+    # XXX for some reason, the current call is not returning a value properly
     $_itemMenu add command \
 	-label "Display" \
 	-command [ code $this displayNode [ $itk_interior.cadtree current ] "appended" ]
@@ -799,7 +799,7 @@ body GeometryBrowser::undisplayNode { { node "" } } {
 
 # setNodeColor -- used by pop-up menu
 #
-# sets the color of a particular node in the heirarchy, regardless of the node
+# sets the color of a particular node in the hierarchy, regardless of the node
 # type.  node is the path to a piece of geometry like /all.g/compartment/reg.r
 # color is expected to be 3 rgb values like "255 0 0".
 #
@@ -1488,8 +1488,8 @@ body GeometryBrowser::checkAutoRender {} {
 #
 # handles the oddball node name that gets passed in from the hierarchy widget
 # during callback.  The nodes are expected to be named in a directory-style
-# slashed format and are optionally preceeded or followed by a "branch" or
-# "leaf" identifier. (XXX roots are preceeded, children are followed.. ! )
+# slashed format and are optionally preceded or followed by a "branch" or
+# "leaf" identifier. (XXX roots are preceded, children are followed.. ! )
 #
 body GeometryBrowser::extractNodeName { { node "" } } {
     if { $_debug } {
