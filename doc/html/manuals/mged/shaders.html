@@ -8,12 +8,12 @@ Volumes of modeled air can be given a realistic appearance by using this shader.
 The shader performs basic Beer's Law extinction and contrast reduction.
 It should be applied only on regions where the air code has been set to
 a non-zero value.
-See <a href="mged_cmds.html#edcodes">edcodes</a> for imformation
+See <a href="mged_cmds.html#edcodes">edcodes</a> for information
 about setting the air flag on the region).
 <p>
-The ``air'' shader assumes that the volume is a homogenous volume of
-non-turbulent air.  The shader provides crude modeling of absorbtion
-and scattering effects in the atmosphere.  Absorbtion and/or extinction
+The ``air'' shader assumes that the volume is a homogeneous volume of
+non-turbulent air.  The shader provides crude modeling of absorption
+and scattering effects in the atmosphere.  Absorption and/or extinction
 effects are modeled by reducing the transmission of the air volume by
 an amount proportional to the distance traveled through the air.
 <pre>
@@ -70,7 +70,7 @@ Below this level, density increases exponentially.
 	<DD>This is the height (above the Z=0 plane) at which the fog starts
 	to get exponentially denser.  From this altitude downward density
 	increases.  By default this value is specified in millimeters,
-	(regardless of the currend MGED editing units).  It is possible
+	(regardless of the current MGED editing units).  It is possible
 	to specify values in other units by appending the units as a suffix
 	to the value.  For example: ``2ft''.
 	</DL>
@@ -140,7 +140,7 @@ that portion of noise space overlap with region space.
 </DD>
 <HR>
 <DT><a name="camo"><b>camo</b></a></DT>
-<DD>The "camo" shader creates a pseudo-random tri-color camoflage pattern on
+<DD>The "camo" shader creates a pseudo-random tri-color camouflage pattern on
 the object using a fractal noise pattern.  This is a procedural shader based
 upon a fractal noise function known as fractional brownian motion or fBm.
 <p>
@@ -274,7 +274,7 @@ The color of the region defines the color of the light.
 	<DT>intensity</DT>
 	<DD>Intensity of the light source (nominally in lumens)</DD>
 	<DT>angle&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</DT>
-	<DD>Beam displersion angle (degrees 0..180)</DD>
+	<DD>Beam dispersion angle (degrees 0..180)</DD>
 	<DT>fraction</DT>
 	<DD>Fraction of total light</DD>
 	<DT>shadows</DT>
@@ -368,7 +368,7 @@ noise to the intensity of the surface color.
 <p>
 	<DL COMPACT>
 	<DT>shine</DT>
-	<DD>Deescribes the shininess of the object [4..20] where 4 is a very higly polished surface, and 20 defines a very rough
+	<DD>Describes the shininess of the object [4..20] where 4 is a very higly polished surface, and 20 defines a very rough
 	surface</DD>
 	<DT>specular</DT>
 	<DD>Defines the amount of energy due to directional reflection
