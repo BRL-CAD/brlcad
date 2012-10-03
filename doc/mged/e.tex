@@ -19,7 +19,7 @@ Key	& Argument[s]	& Description \\
   r	& region op1 sol1....opn soln	& create/modify a region \\
   i	& object instname	& create instance of an object \\
   mv	& oldname newname	& rename object \\
-  mvall	& oldname newname	& rename all occurences of an object \\
+  mvall	& oldname newname	& rename all occurrences of an object \\
   l	& object*	& list object information \\
   kill	& obj1* obj2* ... objn*	& remove objects from the file \\
   killall	& obj1* obj2* ... objn*	& remove object[s] + references from file \\
@@ -212,7 +212,7 @@ otherwise the values "1000 0 100 1" will be used respectively.
 To change
 the item and air codes use the "item" command.
 The "edcodes" command is probably the easiest and fastest way to change these
-identifing codes.
+identifying codes.
 Note:  In the past, all members of a region had to be solids, but
 recently combinations have been allowed as members of regions.  Hence,
 the names "soli" can also be combinations (groups) now.
@@ -611,9 +611,9 @@ rt [-s\#]
 }
 
 This command will run the {\bf rt}(1) program
-to produce a color shaded iamge of objects on the currently
+to produce a color shaded image of objects on the currently
 selected framebuffer.
-The resolution of the iamge (number of rays) is equal to "\#" from the "-s"
+The resolution of the image (number of rays) is equal to "\#" from the "-s"
 (square view resolution) option.
 If the -s option is absent, 50x50 ray resolution will be used.
 
@@ -629,7 +629,7 @@ knob peripherals (eg. tek).
 Any non-zero number entered for "value" is converted to 1 (if "value" is
 greater than zero) or is converted to -1 (if "value is less than zero).
 The user must enter the same command with "value" equal to zero to
-stop the action envoked by the knob twist.
+stop the action invoked by the knob twist.
 
 The "id" defines which knob is to be "twisted":
 
@@ -754,7 +754,7 @@ The following is a listing of the remaining acceptable strings for
        oill          &  begin object illumination (pick) \\
        sill          & begin solid illumination (pick) \\
        oscale        & object scale \\
-       ox            & object translat ion in x direction only \\
+       ox            & object translation in x direction only \\
        oy            & object translation in y direction only \\
        oxy           & object translation \\
        orot          & object rotation \\
@@ -987,7 +987,7 @@ a line (edge) with planes (faces).
 prefix string obj1 obj2 ... objn
 }
 
-This command will prefix obj1, obj2, .... objn with "string".  All occurences
+This command will prefix obj1, obj2, .... objn with "string".  All occurrences
 of these names will be prefixed.  String matching is allowed for the objects
 to prefix.
 
@@ -1089,7 +1089,7 @@ paths
 
 This command will print ALL paths matching an "input" path.
 You will be asked to enter the path to match.
-The path members are entered on ONE line, seperated by spaces.
+The path members are entered on ONE line, separated by spaces.
 The input path need not be a complete path, but must contain at least one object.
 All paths with the same first members as the input path will be listed.
 This command is useful for finding complete paths which begin with certain objects.
@@ -1104,7 +1104,7 @@ This command will "evaluate" and list ALL paths matching an input path, includin
 parameters of the solids at the bottom of each path.
 These parameters will reflect any editing contained in the path listed.
 You will be asked to enter the path to match.
-The path members are entered on ONE line, seperated by spaces.
+The path members are entered on ONE line, separated by spaces.
 The input path need not be a complete path, but must contain at least
 one object.
 Note that since the solid parameters are printed, this could be a
@@ -1119,7 +1119,7 @@ copyeval
 This command allows one to copy an "evaluated solid", that is a complete path
 ending in a solid.
 You will be asked to enter a complete path.
-Again, this path is entered on ONE line with the members seperated by spaces.
+Again, this path is entered on ONE line with the members separated by spaces.
 If you do not know the complete path, use the "paths" command above to find it.
 Next, you will be asked to enter the name of this copied solid.
 The input path will be traversed and the accumulated path transformations will
@@ -1295,7 +1295,7 @@ mvall old new
 }
 
 This command is used to rename all occurrences of an object in the data file.  In this
-case, the object "old" will be renamed "new" for every occurence.
+case, the object "old" will be renamed "new" for every occurrence.
 
 \section{Miscellaneous Commands}
 
