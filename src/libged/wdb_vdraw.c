@@ -516,7 +516,6 @@ vdraw_send_tcl(void *clientData, int UNUSED(argc), const char *UNUSED(argv[]))
 
     /* 0 means OK, -1 means conflict with real solid name */
     idx = dgo_invent_solid(dgop,
-			   dgop->interp,
 			   solid_name,
 			   &(dgop->dgo_currVHead->vdc_vhd),
 			   dgop->dgo_currVHead->vdc_rgb,
