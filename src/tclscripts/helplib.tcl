@@ -97,14 +97,14 @@ set helplib_data(wdb_listeval)		{{}	{lists 'evaluated' path solids}}
 set helplib_data(wdb_ls)		{{[-A name/value pairs] OR [-acrslop] object(s)} {list objects in this database}}
 set helplib_data(wdb_lt)		{{object} {list object's tree as a tcl list of {operator object} pairs}}
 set helplib_data(wdb_make_bb)		{{bbname object(s)} {make a bounding box (rpp) around the specified objects}}
-set helplib_data(wdb_make_name)		{{template | -s [num]}	{make an object name not occuring in the database}}
+set helplib_data(wdb_make_name)		{{template | -s [num]}	{make an object name not occurring in the database}}
 set helplib_data(wdb_match)		{{expression}	{globs expression against database objects, does not return tokens that match nothing}}
 set helplib_data(wdb_mirror)		{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror primitive or combination along the specified axis}}
 set helplib_data(wdb_move_arb_edge)	{{arb edge pt} {move an arb's edge through pt}}
 set helplib_data(wdb_move_arb_face)	{{arb face pt} {move an arb's face through pt}}
 set helplib_data(wdb_rotate_arb_face)	{{arb face pt} {rotate an arb's face through pt}}
 set helplib_data(wdb_move)		{{from to} {rename a database object}}
-set helplib_data(wdb_moveall)		{{[-n] from to} {rename all occurences of object.  only reports matches without renaming with the -n option.}}
+set helplib_data(wdb_moveall)		{{[-n] from to} {rename all occurrences of object.  only reports matches without renaming with the -n option.}}
 set helplib_data(wdb_nmg_collapse)	{{nmg_solid new_solid maximum_error_distance [minimum_allowed_angle]}	{decimate NMG solid via edge collapse}}
 set helplib_data(wdb_nmg_simplify)	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
 set helplib_data(wdb_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
@@ -118,7 +118,7 @@ set helplib_data(wdb_remove)		{{comb object(s)} {remove members from a combinati
 set helplib_data(wdb_reopen)		{{[filename]} {open a database}}
 set helplib_data(wdb_rt_gettrees)	{{procname [-i] [-u] treetops...} {create an rt instance object}}
 set helplib_data(wdb_search)		{{[path] [options]} {search database for objects matching parameters defined by options within the specified path}}
-set helplib_data(wdb_shells)		{{nmg_model}	{breaks model into seperate shells}}
+set helplib_data(wdb_shells)		{{nmg_model}	{breaks model into separate shells}}
 set helplib_data(wdb_showmats)		{{path}	{show xform matrices along path}}
 set helplib_data(wdb_bot_smooth)        {{[-t norm_tolerance_degrees] new_bot_name old_bot_name} {calculate vertex normals for BOT primitive}}
 set helplib_data(wdb_summary)		{{[p r g]}	{count/list primitives/regions/groups}}
@@ -140,7 +140,7 @@ set helplib_data(vo_ae2dir)		{{[-i] az el} {return the view direction}}
 set helplib_data(vo_arot)		{{x y z angle} {rotate angle degrees about the axis specified by xyz}}
 set helplib_data(vo_base2local)		{{} {get base2local conversion factor}}
 set helplib_data(vo_center)		{{["x y z"]} {set/get the view center}}
-set helplib_data(vo_coord)		{{[m|v]} {set/get the coodinate system}}
+set helplib_data(vo_coord)		{{[m|v]} {set/get the coordinate system}}
 set helplib_data(vo_eye)		{{"x y z"} {set the eyepoint}}
 set helplib_data(vo_eye_pos)		{{"x y z"} {set the eye position}}
 set helplib_data(vo_invSize)		{{} {get the inverse view size}}
@@ -198,7 +198,7 @@ set helplib_data(dgo_set_outputHandler)	{{[script]}	{get/set output handler scri
 set helplib_data(dgo_set_plOutputMode)	{{[binary|text]}	{get/set the plot output mode}}
 set helplib_data(dgo_set_transparency)	{{obj transparency}	{set transparency of the specified object}}
 set helplib_data(dgo_shaded_mode)	{{[0|1|2]}	{get/set shaded mode}}
-set helplib_data(dgo_vdraw)		{{write|insert|delete|read|send|params|open|vlist [args]}	{Expermental drawing (cnuzman)}}
+set helplib_data(dgo_vdraw)		{{write|insert|delete|read|send|params|open|vlist [args]}	{Experimental drawing (cnuzman)}}
 set helplib_data(dgo_vnirt)		{{[vnirt(1) options] viewX viewY}	{trace a single ray from current view}}
 set helplib_data(dgo_who)		{{[r(eal)|p(hony)|b(oth)]}	{list the top-level objects currently being displayed}}
 set helplib_data(dgo_zap)		{{} {erase all objects from the display}}
@@ -243,7 +243,7 @@ set helplib_data(quat_distance)		{{quatA quatB}	{finds the euclidean distance be
 set helplib_data(quat_double)		{{quatA quatB}	{finds the quaternion point representing twice the rotation from
     quatA to quatB}}
 set helplib_data(quat_bisect)		{{quatA quatB}	{finds the bisector of quaternions quatA and quatB}}
-set helplib_data(quat_sberp)		{{quat1 quat2 quat3 quat4 factor}	{do sperical bezier interpolation between four quaternions
+set helplib_data(quat_sberp)		{{quat1 quat2 quat3 quat4 factor}	{do spherical bezier interpolation between four quaternions
     by the given factor}}
 set helplib_data(quat_slerp)		{{quat1 quat2 factor}	{do spherical linear interpolation between two unit quaternions
     by the given factor}}
