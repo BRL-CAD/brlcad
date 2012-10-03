@@ -209,7 +209,7 @@ triangulateFace(
     struct edgeuse *eu;
     size_t numFaceVertices;
     int i, ref;
-    double *point;
+    double point[3];
 
     /* get nmg faceuse that represents the face specified by points */
     fu = make_faceuse_from_face(points, numPoints);
@@ -240,7 +240,7 @@ triangulateFace(
     i = 0;
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	    point = eu->vu_p->v_p->vg_p->coord;
+	    VMOVE(point, eu->vu_p->v_p->vg_p->coord);
 	    ref = getPointReference(point, points, numPoints, tol.dist);
 	    (*faces)[i++] = ref;
 	}
