@@ -714,12 +714,12 @@ be edited. And finally, if in either <I>SOL EDIT</I> or
 <A NAME="Tcl Evaluation"><LI><B>Tcl Evaluation</B> - set the
 	command interpretation mode to Tcl mode. In this mode,
 	globbing is <B>not</B> performed against MGED database
-	objects. Rather, the command string is passed, umodified,
+	objects. Rather, the command string is passed, unmodified,
 	to the Tcl interpreter.
 
 <A NAME="Object Name Matching"><LI><B>Object Name Matching</B> - set the
 	command interpretation mode to MGED object name matching. In
-	this mode, globbin is performed against MGED database objects.
+	this mode, globbing is performed against MGED database objects.
 </UL>
 <A NAME="Color Schemes"><LI><B>Color Schemes</B> - pops up a tool
 	for setting colors used by drawing panes (display managers).
@@ -795,7 +795,7 @@ A view ring is simply a dynamic list of views owned by a
 pane (display manager).
 This mechanism supports multiple views within a single pane.
 A view consists of a position in model space, a view size and
-an orientaion.
+an orientation.
 <BR>
 <UL>
 <A NAME="Add View"><LI><B>Add View</B> - Adds a view to the view ring.
@@ -860,7 +860,7 @@ If no solids were hit, a dialog is popped up saying that nothing was hit.
 The user must then fire another ray to continue selecting a matrix to edit.
 When a solid is finally selected, the user is presented with a listbox
 consisting
-of the path components of the selected solid. From this lisbox, the
+of the path components of the selected solid. From this listbox, the
 user selects a path component. This component determines which
 matrix will be edited. After selecting the path component, object/matrix
 edit mode is entered. When this happens, the mouse behavior mode
@@ -1281,7 +1281,7 @@ the left mouse button.
      toggle the use of display lists. This currently affects
      only Ogl display managers. When using display lists the
      screen update time is significantly faster. This is especially
-     noticable when running MGED remotely. Use of display lists
+     noticeable when running MGED remotely. Use of display lists
      is encouraged unless the geometry being viewed is bigger
      than the Ogl server can handle (i.e. the server runs out
      of available memory for storing display lists). When this
@@ -1289,7 +1289,7 @@ the left mouse button.
      If huge pieces of geometry need to be viewed, consider
      toggling off display lists. Note that using display lists
      while viewing geometry of any significant size will incur
-     noticable compute time up front to create the display lists.
+     noticeable compute time up front to create the display lists.
 </UL>
 <A NAME="Misc"><LI><B>Misc</B>
 <UL>
