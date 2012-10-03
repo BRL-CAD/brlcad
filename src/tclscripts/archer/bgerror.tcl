@@ -86,7 +86,7 @@ proc bgerrorExit { base } {
 
 #--------------------------------------------------------------------
 #   Procedure: bgerrorSave
-# Description: Procedure used to save error log to fiile
+# Description: Procedure used to save error log to file
 #       Input: base    - the parent window
 #     Returns: nothing
 #--------------------------------------------------------------------
