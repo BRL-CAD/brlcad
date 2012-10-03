@@ -713,7 +713,7 @@ static int
 approximate_parabolic_curve(struct rt_pt_node *pts, fastf_t p, int num_new_points)
 {
     fastf_t error, max_error, seg_slope, seg_intercept;
-    point_t v, point, new_point, p0, p1;
+    point_t v, point, new_point = VINIT_ZERO, p0, p1;
     struct rt_pt_node *node, *worst_node, *new_node;
     int i;
 
