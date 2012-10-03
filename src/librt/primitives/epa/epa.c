@@ -704,18 +704,25 @@ distance_point_to_line(point_t p, fastf_t slope, fastf_t intercept)
  *
  * pts->p: the vertex (0, h, k)
  * pts->next->p: another point on the parabola
+ * pts->next->next: NULL
  * p: the constant from the above equation
  *
  * This routine inserts num_new_points points between the two input points to
  * better approximate the parabolic curve passing between them.
+ *
+ * Returns number of points successfully added.
  */
 static int
 approximate_parabolic_curve(struct rt_pt_node *pts, fastf_t p, int num_new_points)
 {
     fastf_t error, max_error, seg_slope, seg_intercept;
-    point_t v, point, new_point = VINIT_ZERO, p0, p1;
+    point_t v, point, p0, p1, new_point = VINIT_ZERO;
     struct rt_pt_node *node, *worst_node, *new_node;
     int i;
+
+    if (pts == NULL || pts->next == NULL || num_new_points < 1) {
+	return 0;
+    }
 
     VMOVE(v, pts->p);
 
@@ -771,7 +778,7 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     struct rt_epa_internal *xip;
     struct rt_pt_node *pts, *node;
     fastf_t mag_h, r1;
-    int num_points = 4;
+    int count, num_points = 4;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -787,7 +794,11 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VSET(pts->p, 0, 0, -mag_h);
     VSET(pts->next->p, 0, r1, 0);
 
-    approximate_parabolic_curve(pts, (r1 * r1) / (4 * mag_h), num_points - 2);
+    count = approximate_parabolic_curve(pts, (r1 * r1) / (4 * mag_h), num_points - 2);
+
+    if (count != (num_points - 2)) {
+	return -1;
+    }
 
     node = pts;
     node->p[Z] *= -1.0;
