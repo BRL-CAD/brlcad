@@ -405,7 +405,7 @@ proc vi_edit_mode { w } {
 
     #
     # In edit mode, <Escape> means abort the current multi-key command.
-    # If no multi-key command is pending or we are expecting a serach
+    # If no multi-key command is pending or we are expecting a search
     # char, beep.
     #
     bind $w <Escape> {
@@ -1210,7 +1210,7 @@ proc vi_process_edit_cmd { w c k state } {
 	    vi_word_search $w "E"
 	}
 	F {
-	    # Find the previous ocurrence of a char.
+	    # Find the previous occurrence of a char.
 	    set vi_state($w,search_flag) "F"
 	}
 	I {
