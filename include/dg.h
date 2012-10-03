@@ -215,7 +215,7 @@ GED_EXPORT extern void dgo_eraseobjall_callback(struct db_i *dbip,
 						int notify);
 GED_EXPORT extern void dgo_eraseobjpath();
 GED_EXPORT extern void dgo_impending_wdb_close();
-GED_EXPORT extern int dgo_invent_solid();
+GED_EXPORT extern int dgo_invent_solid(struct dg_obj *dgop, char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode);
 GED_EXPORT extern void dgo_notify(struct dg_obj *dgop);
 GED_EXPORT extern void dgo_notifyWdb(struct rt_wdb *wdbp);
 GED_EXPORT extern void dgo_zapall();
