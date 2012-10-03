@@ -54,7 +54,7 @@ class GraphEditor {
 	# menu toggle options
 	variable _autoRender
 
-	# hooks to the heirarchy pop-up menus
+	# hooks to the hierarchy pop-up menus
 	variable _itemMenu
 	variable _bgMenu
     }
