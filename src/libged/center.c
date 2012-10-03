@@ -67,20 +67,24 @@ ged_center(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
     } else {
-	if (sscanf(argv[1], "%lf", &center[X]) != 1) {
+	double scan[3];
+
+	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_center: bad X value - %s\n", argv[1]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &center[Y]) != 1) {
+	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_center: bad Y value - %s\n", argv[2]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[3], "%lf", &center[Z]) != 1) {
+	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_center: bad Z value - %s\n", argv[3]);
 	    return GED_ERROR;
 	}
+
+	VMOVE(center, scan);
     }
 
     VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_local2base);

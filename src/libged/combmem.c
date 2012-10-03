@@ -558,10 +558,10 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
     tree_index = 0;
     for (i = 2; i < (size_t)argc; i += 15) {
 	mat_t mat;
-	fastf_t az, el, tw;
-	fastf_t tx, ty, tz;
-	fastf_t sa, sx, sy, sz;
-	fastf_t kx, ky, kz;
+	double az, el, tw;
+	double tx, ty, tz;
+	double sa, sx, sy, sz;
+	double kx, ky, kz;
 	hvect_t svec = HINIT_ZERO;
 	point_t key_pt = VINIT_ZERO;
 	vect_t aetvec = VINIT_ZERO;
@@ -605,10 +605,16 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
-	if (etype == ETYPES_REL && tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
-	    BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
+	if (etype == ETYPES_REL
+	    && tree_index < old_node_count
+	    && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat
+	    && BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name))
+	{
+	    fastf_t azf = az, elf = el, twf = tw;
+	    fastf_t txf = tx, tyf = ty, tzf = tz;
+	    fastf_t saf = sa, sxf = sx, syf = sy, szf = sz;
 
-	    COMBMEM_CHECK_MAT(tp, tree_index, old_rt_tree_array, mat, aetvec, tvec, svec, key_pt, az, el, tw, tx, ty, tz, sa, sx, sy, sz);
+	    COMBMEM_CHECK_MAT(tp, tree_index, old_rt_tree_array, mat, aetvec, tvec, svec, key_pt, azf, elf, twf, txf, tyf, tzf, saf, sxf, syf, szf);
 	} else {
 	    MAT_COPY(tp->tr_l.tl_mat, mat);
 	}
@@ -655,8 +661,8 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
     tree_index = 0;
     for (i = 2; i < (size_t)argc; i += 8) {
 	mat_t mat;
-	fastf_t az, el, tw;
-	fastf_t kx, ky, kz;
+	double az, el, tw;
+	double kx, ky, kz;
 	point_t key_pt = VINIT_ZERO;
 
 	COMBMEM_SET_PART_II(gedp, argv, op, i, rt_tree_array, tree_index, mat);
@@ -688,15 +694,18 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
-	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
-	    BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
+	if (tree_index < old_node_count
+	    && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat
+	    && BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name))
+	{
+	    fastf_t azf = az, elf = el, twf = tw;
 	    fastf_t tx, ty, tz;
 	    fastf_t sa, sx, sy, sz;
 	    hvect_t svec = HINIT_ZERO;
 	    vect_t aetvec = VINIT_ZERO;
 	    vect_t tvec = VINIT_ZERO;
 
-	    COMBMEM_CHECK_MAT(tp, tree_index, old_rt_tree_array, mat, aetvec, tvec, svec, key_pt, az, el, tw, tx, ty, tz, sa, sx, sy, sz);
+	    COMBMEM_CHECK_MAT(tp, tree_index, old_rt_tree_array, mat, aetvec, tvec, svec, key_pt, azf, elf, twf, tx, ty, tz, sa, sx, sy, sz);
 	} else {
 	    MAT_COPY(tp->tr_l.tl_mat, mat);
 	}
@@ -738,9 +747,9 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
     tree_index = 0;
     for (i = 2; i < (size_t)argc; i += 9) {
 	mat_t mat;
-	fastf_t px, py, pz;
-	fastf_t dx, dy, dz;
-	fastf_t ang;
+	double px, py, pz;
+	double dx, dy, dz;
+	double ang;
 	vect_t dir;
 	point_t pt;
 
@@ -818,7 +827,7 @@ combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
     tree_index = 0;
     for (i = 2; i < (size_t)argc; i += 5) {
 	mat_t mat;
-	fastf_t tx, ty, tz;
+	double tx, ty, tz;
 	vect_t tvec = VINIT_ZERO;
 
 	COMBMEM_SET_PART_II(gedp, argv, op, i, rt_tree_array, tree_index, mat);
@@ -881,8 +890,8 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
     tree_index = 0;
     for (i = 2; i < (size_t)argc; i += 9) {
 	mat_t mat;
-	fastf_t sa, sx, sy, sz;
-	fastf_t kx, ky, kz;
+	double sa, sx, sy, sz;
+	double kx, ky, kz;
 	hvect_t svec = HINIT_ZERO;
 	point_t key_pt = VINIT_ZERO;
 	vect_t aetvec = VINIT_ZERO;
@@ -913,12 +922,15 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	RT_TREE_INIT(tp);
 	COMBMEM_SET_PART_III(tp, tree, rt_tree_array, tree_index, argv[i+1]);
 
-	if (tree_index < old_node_count && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat &&
-	    BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name)) {
+	if (tree_index < old_node_count
+	    && old_rt_tree_array[tree_index].tl_tree->tr_l.tl_mat
+	    && BU_STR_EQUAL(old_rt_tree_array[tree_index].tl_tree->tr_l.tl_name, tp->tr_l.tl_name))
+	{
 	    fastf_t az, el, tw;
 	    fastf_t tx, ty, tz;
+	    fastf_t saf = sa, sxf = sx, syf = sy, szf = sz;
 
-	    COMBMEM_CHECK_MAT(tp, tree_index, old_rt_tree_array, mat, aetvec, tvec, svec, key_pt, az, el, tw, tx, ty, tz, sa, sx, sy, sz);
+	    COMBMEM_CHECK_MAT(tp, tree_index, old_rt_tree_array, mat, aetvec, tvec, svec, key_pt, az, el, tw, tx, ty, tz, saf, sxf, syf, szf);
 	} else {
 	    MAT_COPY(tp->tr_l.tl_mat, mat);
 	}
