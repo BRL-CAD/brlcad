@@ -651,6 +651,7 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 		point_t B, C;
 		vect_t BmA, CmA;
 		vect_t vcross;
+		int on_contour = 0;
 
 		for (beginA = 0; beginA < polyA_2d.p_contour[j].pc_num_points; ++beginA) {
 		    if (beginA == polyA_2d.p_contour[j].pc_num_points-1)
@@ -658,21 +659,23 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 		    else
 			endA = beginA + 1;
 
-		    if (V2NEAR_EQUAL(polyA_2d.p_contour[j].pc_point[beginA], pt_2d, tol_dist_sq) ||
-			V2NEAR_EQUAL(polyA_2d.p_contour[j].pc_point[endA], pt_2d, tol_dist_sq)) {
+		    if (!on_contour &&
+			(V2NEAR_EQUAL(polyA_2d.p_contour[j].pc_point[beginA], pt_2d, tol_dist_sq) ||
+			 V2NEAR_EQUAL(polyA_2d.p_contour[j].pc_point[endA], pt_2d, tol_dist_sq))) {
 			/* pt_2d is the same as one of the end points, so count it */
 			++winding;
-			goto endA;
+			on_contour = 1;
+			continue;
 		    }
 
 		    if ((polyA_2d.p_contour[j].pc_point[beginA][1] <= pt_2d[1] &&
-			 polyA_2d.p_contour[j].pc_point[endA][1] >= pt_2d[1])) {
+			 polyA_2d.p_contour[j].pc_point[endA][1] > pt_2d[1])) {
 			V2MOVE(B, polyA_2d.p_contour[j].pc_point[endA]);
 			B[2] = 0.0;
 			V2MOVE(C, polyA_2d.p_contour[j].pc_point[beginA]);
 			C[2] = 0.0;
 		    } else if ((polyA_2d.p_contour[j].pc_point[endA][1] <= pt_2d[1] &&
-				polyA_2d.p_contour[j].pc_point[beginA][1] >= pt_2d[1])) {
+				polyA_2d.p_contour[j].pc_point[beginA][1] > pt_2d[1])) {
 			V2MOVE(B, polyA_2d.p_contour[j].pc_point[beginA]);
 			B[2] = 0.0;
 			V2MOVE(C, polyA_2d.p_contour[j].pc_point[endA]);
@@ -689,8 +692,7 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 		}
 	    }
 
-	endA:
-	    if (!winding%2)
+	    if (!(winding%2))
 		break;
 	}
     }
@@ -716,6 +718,7 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 		point_t B, C;
 		vect_t BmA, CmA;
 		vect_t vcross;
+		int on_contour = 0;
 
 		for (beginB = 0; beginB < polyB_2d.p_contour[j].pc_num_points; ++beginB) {
 		    if (beginB == polyB_2d.p_contour[j].pc_num_points-1)
@@ -723,21 +726,23 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 		    else
 			endB = beginB + 1;
 
-		    if (V2NEAR_EQUAL(polyB_2d.p_contour[j].pc_point[beginB], pt_2d, tol_dist_sq) ||
-			V2NEAR_EQUAL(polyB_2d.p_contour[j].pc_point[endB], pt_2d, tol_dist_sq)) {
+		    if (!on_contour &&
+			(V2NEAR_EQUAL(polyB_2d.p_contour[j].pc_point[beginB], pt_2d, tol_dist_sq) ||
+			 V2NEAR_EQUAL(polyB_2d.p_contour[j].pc_point[endB], pt_2d, tol_dist_sq))) {
 			/* pt_2d is the same as one of the end points, so count it */
 			++winding;
-			goto endB;
+			on_contour = 1;
+			continue;
 		    }
 
 		    if ((polyB_2d.p_contour[j].pc_point[beginB][1] <= pt_2d[1] &&
-			 polyB_2d.p_contour[j].pc_point[endB][1] >= pt_2d[1])) {
+			 polyB_2d.p_contour[j].pc_point[endB][1] > pt_2d[1])) {
 			V2MOVE(B, polyB_2d.p_contour[j].pc_point[endB]);
 			B[2] = 0.0;
 			V2MOVE(C, polyB_2d.p_contour[j].pc_point[beginB]);
 			C[2] = 0.0;
 		    } else if ((polyB_2d.p_contour[j].pc_point[endB][1] <= pt_2d[1] &&
-				polyB_2d.p_contour[j].pc_point[beginB][1] >= pt_2d[1])) {
+				polyB_2d.p_contour[j].pc_point[beginB][1] > pt_2d[1])) {
 			V2MOVE(B, polyB_2d.p_contour[j].pc_point[beginB]);
 			B[2] = 0.0;
 			V2MOVE(C, polyB_2d.p_contour[j].pc_point[endB]);
@@ -754,8 +759,7 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 		}
 	    }
 
-	endB:
-	    if (!winding%2)
+	    if (!(winding%2))
 		break;
 	}
     }
