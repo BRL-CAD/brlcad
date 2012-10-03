@@ -1022,7 +1022,7 @@ BN_EXPORT extern int bn_isect_planes(point_t pt,
 typedef struct bn_poly {
     uint32_t magic;
     size_t dgr;
-    double cf[BN_MAX_POLY_DEGREE+1];
+    fastf_t cf[BN_MAX_POLY_DEGREE+1];
 }  bn_poly_t;
 #define BN_CK_POLY(_p) BU_CKMAG(_p, BN_POLY_MAGIC, "struct bn_poly")
 #define BN_POLY_NULL   ((struct bn_poly *)NULL)
