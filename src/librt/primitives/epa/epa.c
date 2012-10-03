@@ -771,7 +771,6 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     struct rt_epa_internal *xip;
     struct rt_pt_node *pts, *node;
     fastf_t mag_h, r1;
-    point_t v;
     int num_points = 4;
 
     BU_CK_LIST_HEAD(info->vhead);
@@ -781,12 +780,11 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 
     mag_h = MAGNITUDE(xip->epa_H);
     r1 = xip->epa_r1;
-    VMOVE(v, xip->epa_V);
 
     pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     pts->next->next = NULL;
-    VSET(pts->p,       0, 0, -mag_h);
+    VSET(pts->p, 0, 0, -mag_h);
     VSET(pts->next->p, 0, r1, 0);
 
     approximate_parabolic_curve(pts, (r1 * r1) / (4 * mag_h), num_points - 2);
