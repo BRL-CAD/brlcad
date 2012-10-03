@@ -673,18 +673,23 @@ rt_uplot_get_text_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *ar
     int ret;
     int i = 0;
     unsigned int tchar = 0;
+    double val;
 
     for (i = 0; i < up->narg; i++) {
 	switch (up->targ) {
 	    case TSHORT:
-		ret = fscanf(fp, "%lf", &arg[i]);
+		ret = fscanf(fp, "%lf", &val);
 		if (ret != 1)
 		    bu_log("WARNING: uplot short input failure\n");
+		else
+		    arg[i] = val;
 		break;
 	    case TIEEE:
-		ret = fscanf(fp, "%lf", &arg[i]);
+		ret = fscanf(fp, "%lf", &val);
 		if (ret != 1)
 		    bu_log("WARNING: uplot floating point input failure\n");
+		else
+		    arg[i] = val;
 		break;
 	    case TSTRING:
 		ret = fscanf(fp, "%256s\n", &carg[0]);
