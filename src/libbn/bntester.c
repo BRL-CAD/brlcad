@@ -33,7 +33,7 @@
 
 
 int
-parse_case(char *buf_p, int *i, long *l, double *d, unsigned long *u, char *fmt_str, unsigned long line_num, FILE *stream)
+parse_case(char *buf_p, int *i, long *l, fastf_t *d, unsigned long *u, char *fmt_str, unsigned long line_num, FILE *stream)
 {
     int i_idx = 0;
     int l_idx = 0;
@@ -165,7 +165,7 @@ main(int argc, char **argv)
     /* function parameter arrays */
     int i[50] = {0};
     long l[50] = {0};
-    double d[50] = {0.0};
+    fastf_t d[50] = {0.0};
     unsigned long u[50] = {0};
 
     /* boolean variables */
@@ -445,8 +445,8 @@ main(int argc, char **argv)
 				ret = 1;
 			    } else {
 				int result;
-				double t_out = 0.0;
-				double u_out = 0.0;
+				fastf_t t_out = 0.0;
+				fastf_t u_out = 0.0;
 				int t_fail = 0;
 				int u_fail = 0;
 
@@ -511,7 +511,7 @@ main(int argc, char **argv)
 				ret = 1;
 			    } else {
 				int result;
-				double dist[2] = {0.0, 0.0};
+				fastf_t dist[2] = {0.0, 0.0};
 				int d0_fail = 0;
 				int d1_fail = 0;
 
