@@ -772,47 +772,122 @@ approximate_parabolic_curve(struct rt_pt_node *pts, fastf_t p, int num_new_point
     return num_new_points;
 }
 
+static struct rt_pt_node *
+epa_parabolic_curve(fastf_t mag_h, fastf_t r, int num_points)
+{
+    int count;
+    struct rt_pt_node *curve;
+
+    curve = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    curve->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+
+    curve->next->next = NULL;
+    VSET(curve->p,       0, 0, -mag_h);
+    VSET(curve->next->p, 0, r, 0);
+
+    count = approximate_parabolic_curve(curve, (r * r) / (4 * mag_h), num_points - 2);
+
+    if (count != (num_points - 2)) {
+	return NULL;
+    }
+
+    return curve;
+}
+
+/* Plot the elliptical cross section of the given epa at distance h along the
+ * epa height vector (h >= 0, h <= |H|) consisting of num_points points.
+ */
+static void
+epa_plot_ellipse(struct bu_list *vhead, struct rt_epa_internal *epa, fastf_t h, fastf_t num_points)
+{
+    int i;
+    point_t p;
+    vect_t V, Hu, Au, Bu, A, B, cross_section_plane;
+    fastf_t mag_H, rad, radian_step;
+
+    VMOVE(V, epa->epa_V);
+
+    mag_H = MAGNITUDE(epa->epa_H);
+    VMOVE(Hu, epa->epa_H);
+    VUNITIZE(Hu);
+    /*VSCALE(Hu, epa->epa_H, 1.0 / mag_H);*/
+
+    VMOVE(Au, epa->epa_Au);
+    VCROSS(Bu, Au, Hu);
+
+    /* calculate semi-major and semi-minor axis for the elliptical
+     * cross-section at distance h along H
+     */
+    VSCALE(A, Au, epa->epa_r1 * sqrt(1 - h / mag_H));
+    VSCALE(B, Bu, epa->epa_r2 * sqrt(1 - h / mag_H));
+
+    VJOIN1(cross_section_plane, V, h, Hu);
+    radian_step = bn_twopi / num_points;
+
+    rad = radian_step * (num_points - 1);
+    VJOIN2(p, cross_section_plane, cos(rad), A, sin(rad), B);
+    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+
+    rad = 0;
+    for (i = 0; i < num_points; ++i) {
+	VJOIN2(p, cross_section_plane, cos(rad), A, sin(rad), B);
+	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+	rad += radian_step;
+    }
+}
+
 int
 rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
-    struct rt_epa_internal *xip;
-    struct rt_pt_node *pts, *node;
-    fastf_t mag_h, r1;
-    int count, num_points = 4;
+    fastf_t mag_H, h;
+    int i, num_curve_points, num_ellipse_points;
+    struct rt_epa_internal *epa;
+    struct rt_pt_node *pts_r1, *pts_r2, *node1, *node2;
+
+    num_curve_points = 4;
+    num_ellipse_points = 16;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
-    xip = (struct rt_epa_internal *)ip->idb_ptr;
-    RT_EPA_CK_MAGIC(xip);
+    epa = (struct rt_epa_internal *)ip->idb_ptr;
+    RT_EPA_CK_MAGIC(epa);
 
-    mag_h = MAGNITUDE(xip->epa_H);
-    r1 = xip->epa_r1;
+    mag_H = MAGNITUDE(epa->epa_H);
 
-    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts->next->next = NULL;
-    VSET(pts->p, 0, 0, -mag_h);
-    VSET(pts->next->p, 0, r1, 0);
+    pts_r1 = epa_parabolic_curve(mag_H, epa->epa_r1, num_curve_points);
+    pts_r2 = epa_parabolic_curve(mag_H, epa->epa_r2, num_curve_points);
 
-    count = approximate_parabolic_curve(pts, (r1 * r1) / (4 * mag_h), num_points - 2);
-
-    if (count != (num_points - 2)) {
+    if (pts_r1 == NULL || pts_r2 == NULL) {
 	return -1;
     }
 
+    /* average the z values to determine where to draw ellipses */
+    node1 = pts_r1;
+    node2 = pts_r2;
+    for (i = 0; i < num_curve_points; ++i) {
+	h = (node1->p[Z] + node2->p[Z]) / -2.0;
+
+	epa_plot_ellipse(info->vhead, epa, h, num_ellipse_points);
+
+	node1 = node1->next;
+	node2 = node2->next;
+    }
+
+#if 0
     node = pts;
     node->p[Z] *= -1.0;
-    VADD2(node->p, node->p, xip->epa_V);
+    VADD2(node->p, node->p, epa->epa_V);
     RT_ADD_VLIST(info->vhead, node->p, BN_VLIST_LINE_MOVE);
 
     node = node->next;
     while (node != NULL) {
 	node->p[Z] *= -1.0;
-	VADD2(node->p, node->p, xip->epa_V);
+	VADD2(node->p, node->p, epa->epa_V);
 
 	RT_ADD_VLIST(info->vhead, node->p, BN_VLIST_LINE_DRAW);
 	node = node->next;
     }
+#endif
 
     return 0;
 }
