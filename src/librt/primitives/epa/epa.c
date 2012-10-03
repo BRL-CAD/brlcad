@@ -808,9 +808,7 @@ epa_plot_ellipse(struct bu_list *vhead, struct rt_epa_internal *epa, fastf_t h, 
     VMOVE(V, epa->epa_V);
 
     mag_H = MAGNITUDE(epa->epa_H);
-    VMOVE(Hu, epa->epa_H);
-    VUNITIZE(Hu);
-    /*VSCALE(Hu, epa->epa_H, 1.0 / mag_H);*/
+    VSCALE(Hu, epa->epa_H, 1.0 / mag_H);
 
     VMOVE(Au, epa->epa_Au);
     VCROSS(Bu, Au, Hu);
@@ -836,10 +834,37 @@ epa_plot_ellipse(struct bu_list *vhead, struct rt_epa_internal *epa, fastf_t h, 
     }
 }
 
+static void
+epa_plot_parabola(
+	struct bu_list *vhead,
+	struct rt_epa_internal *epa,
+	struct rt_pt_node *pts)
+{
+    point_t p;
+    vect_t epa_V;
+    fastf_t mag_H;
+    struct rt_pt_node *node;
+
+    VMOVE(epa_V, epa->epa_V);
+    mag_H = MAGNITUDE(epa->epa_H);
+
+    VADD2(p, pts->p, epa_V);
+    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+
+    node = pts->next;
+    while (node != NULL) {
+	VADD2(p, node->p, epa_V);
+	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+
+	node = node->next;
+    }
+}
+
 int
 rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
-    fastf_t mag_H, h;
+    vect_t epa_V, epa_H, translate;
+    fastf_t mag_H, z, r1, r2;
     int i, num_curve_points, num_ellipse_points;
     struct rt_epa_internal *epa;
     struct rt_pt_node *pts_r1, *pts_r2, *node1, *node2;
@@ -852,42 +877,60 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     epa = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(epa);
 
-    mag_H = MAGNITUDE(epa->epa_H);
+    VMOVE(epa_V, epa->epa_V);
+    VMOVE(epa_H, epa->epa_H);
+    mag_H = MAGNITUDE(epa_H);
+    VADD2(translate, epa_V, epa_H);
 
-    pts_r1 = epa_parabolic_curve(mag_H, epa->epa_r1, num_curve_points);
-    pts_r2 = epa_parabolic_curve(mag_H, epa->epa_r2, num_curve_points);
+    r1 = epa->epa_r1;
+    r2 = epa->epa_r2;
+
+    pts_r1 = epa_parabolic_curve(mag_H, r1, num_curve_points);
+    pts_r2 = epa_parabolic_curve(mag_H, r2, num_curve_points);
 
     if (pts_r1 == NULL || pts_r2 == NULL) {
 	return -1;
     }
 
-    /* average the z values to determine where to draw ellipses */
     node1 = pts_r1;
     node2 = pts_r2;
     for (i = 0; i < num_curve_points; ++i) {
-	h = (node1->p[Z] + node2->p[Z]) / -2.0;
+	/* Select cross-section to draw by averaging the z values and flip over y-axis
+	 * to get a distance along H.
+	 */
+	z = (node1->p[Z] + node2->p[Z]) / 2.0;
+	epa_plot_ellipse(info->vhead, epa, -z, num_ellipse_points);
 
-	epa_plot_ellipse(info->vhead, epa, h, num_ellipse_points);
+	/* recalculate parabola points for plotting */
+	node1->p[X] = 0.0;
+	node2->p[X] = r2 * sqrt(z / mag_H + 1);
+
+	node1->p[Y] = r1 * sqrt(z / mag_H + 1);
+	node2->p[Y] = 0.0;
+
+	node1->p[Z] = node2->p[Z] = -z;
 
 	node1 = node1->next;
 	node2 = node2->next;
     }
 
-#if 0
-    node = pts;
-    node->p[Z] *= -1.0;
-    VADD2(node->p, node->p, epa->epa_V);
-    RT_ADD_VLIST(info->vhead, node->p, BN_VLIST_LINE_MOVE);
+    /* plot one half of each curve */
+    epa_plot_parabola(info->vhead, epa, pts_r1);
+    epa_plot_parabola(info->vhead, epa, pts_r2);
 
-    node = node->next;
-    while (node != NULL) {
-	node->p[Z] *= -1.0;
-	VADD2(node->p, node->p, epa->epa_V);
+    /* plot the other half of each curve */
+    node1 = pts_r1;
+    node2 = pts_r2;
+    for (i = 0; i < num_curve_points; ++i) {
+	node2->p[X] *= -1.0;
+	node1->p[Y] *= -1.0;
 
-	RT_ADD_VLIST(info->vhead, node->p, BN_VLIST_LINE_DRAW);
-	node = node->next;
+	node1 = node1->next;
+	node2 = node2->next;
     }
-#endif
+
+    epa_plot_parabola(info->vhead, epa, pts_r1);
+    epa_plot_parabola(info->vhead, epa, pts_r2);
 
     return 0;
 }
