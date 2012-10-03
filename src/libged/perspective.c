@@ -36,7 +36,8 @@
 int
 ged_perspective(struct ged *gedp, int argc, const char *argv[])
 {
-    fastf_t perspective;
+    /* intentionally double for scan */
+    double perspective;
     static const char *usage = "[angle]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

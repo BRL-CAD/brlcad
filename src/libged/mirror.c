@@ -33,9 +33,15 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[-h] [-p \"point\"] [-d \"dir\"] [-x|-y|-z] [-o offset] old new";
 
     int k;
+
     point_t mirror_pt = {0.0, 0.0, 0.0};
     vect_t mirror_dir = {1.0, 0.0, 0.0};
-    fastf_t mirror_offset = 0.0;
+
+    /* intentionally double for scanning */
+    double scanpt[3];
+    double scandir[3];
+    double mirror_offset = 0.0;
+
     int ret;
     struct rt_db_internal *ip;
     struct rt_db_internal internal;
@@ -60,22 +66,30 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 	    case 'p':
 	    case 'P':
 		if (sscanf(bu_optarg, "%lf %lf %lf",
-			   &mirror_pt[X],
-			   &mirror_pt[Y],
-			   &mirror_pt[Z]) != 3) {
+			   &scanpt[X],
+			   &scanpt[Y],
+			   &scanpt[Z]) != 3) {
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		    return GED_ERROR;
 		}
+
+		/* convert from double to fastf_t */
+		VMOVE(mirror_pt, scanpt);
+
 		break;
 	    case 'd':
 	    case 'D':
 		if (sscanf(bu_optarg, "%lf %lf %lf",
-			   &mirror_dir[X],
-			   &mirror_dir[Y],
-			   &mirror_dir[Z]) != 3) {
+			   &scandir[X],
+			   &scandir[Y],
+			   &scandir[Z]) != 3) {
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		    return GED_ERROR;
 		}
+
+		/* convert from double to fastf_t */
+		VMOVE(mirror_dir, scandir);
+
 		break;
 	    case 'o':
 	    case 'O':

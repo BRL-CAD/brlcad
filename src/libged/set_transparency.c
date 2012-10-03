@@ -48,7 +48,10 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
     size_t i;
     struct directory **dpp;
     struct directory **tmp_dpp;
-    fastf_t transparency;
+
+    /* intentionally double for scan */
+    double transparency;
+
     static const char *usage = "node tval";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

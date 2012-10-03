@@ -36,8 +36,10 @@
 int
 ged_view2grid_lu(struct ged *gedp, int argc, const char *argv[])
 {
+    /* intentionally double for scan */
+    double view_pt[3];
+
     fastf_t f;
-    point_t view_pt;
     point_t model_pt;
     point_t mo_view_pt;           /* model origin in view space */
     point_t diff;

@@ -45,6 +45,7 @@ ged_ocenter(struct ged *gedp, int argc, const char *argv[])
     point_t oldCenter;
     point_t center;
     point_t delta;
+    double scan[3];
     static const char *usage = "object [x y z]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -90,22 +91,22 @@ ged_ocenter(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     /* Read in the new center */
-    if (sscanf(argv[2], "%lf", &center[X]) != 1) {
+    if (sscanf(argv[2], "%lf", &scan[X]) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad x value - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf", &center[Y]) != 1) {
+    if (sscanf(argv[3], "%lf", &scan[Y]) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad y value - %s", argv[0], argv[3]);
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[4], "%lf", &center[Z]) != 1) {
+    if (sscanf(argv[4], "%lf", &scan[Z]) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad z value - %s", argv[0], argv[4]);
 	return GED_ERROR;
     }
 
-    VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(center, scan, gedp->ged_wdbp->dbip->dbi_local2base);
     VSUB2(delta, center, oldCenter);
     MAT_IDN(dmat);
     MAT_DELTAS_VEC(dmat, delta);

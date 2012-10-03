@@ -39,8 +39,11 @@ ged_pov(struct ged *gedp, int argc, const char *argv[])
     vect_t center;
     quat_t quat;
     vect_t eye_pos;
-    fastf_t scale;
-    fastf_t perspective;
+
+    /* intentionally double for scan */
+    double scale;
+    double perspective;
+
     static const char *usage = "center quat scale eye_pos perspective";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

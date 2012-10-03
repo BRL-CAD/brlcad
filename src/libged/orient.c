@@ -66,11 +66,15 @@ ged_orient(struct ged *gedp, int argc, const char *argv[])
     } else {
 	int i;
 
-	for (i = 1; i < 5; ++i)
-	    if (sscanf(argv[i], "%lf", &quat[i-1]) != 1) {
+	for (i = 1; i < 5; ++i) {
+	    double scan;
+	    if (sscanf(argv[i], "%lf", &scan) != 1) {
 		bu_vls_printf(gedp->ged_result_str, "ged_orient: bad value - %s\n", argv[i-1]);
 		return GED_ERROR;
 	    }
+	    /* convert from double to fastf_t */
+	    quat[i-1] = scan;
+	}
     }
 
     quat_quat2mat(gedp->ged_gvp->gv_rotation, quat);

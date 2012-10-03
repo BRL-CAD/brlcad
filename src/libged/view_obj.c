@@ -191,7 +191,9 @@ vo_size_cmd(struct view_obj *vop,
 	    const char *argv[])
 {
     struct bu_vls vls;
-    fastf_t size;
+
+    /* intentionally double for scan */
+    double size;
 
     /* get view size */
     if (argc == 1) {
@@ -331,23 +333,28 @@ vo_aet_cmd(struct view_obj *vop,
     }
 
     if (argc == 3 || argc == 4) {
-	if (sscanf(argv[1], "%lf", &aet[X]) != 1) {
+	double scan[3];
+
+	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_aet: bad azimuth - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &aet[Y]) != 1) {
+	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_aet: bad elevation - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (argc == 4) {
-	    if (sscanf(argv[3], "%lf", &aet[Z]) != 1) {
+	    if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 		Tcl_AppendResult(vop->interp, "vo_aet: bad twist - ", argv[3], "\n", (char *)0);
 		return TCL_ERROR;
 	    }
 	} else
-	    aet[Z] = 0.0;
+	    scan[Z] = 0.0;
+
+	/* convert double to fastf_t */
+	VMOVE(aet, scan);
 
 	if (iflag) {
 	    VADD2(vop->vo_aet, vop->vo_aet, aet);
@@ -479,20 +486,25 @@ vo_center_cmd(struct view_obj *vop,
 	    if (bn_decode_vect(center, argv[1]) != 3)
 		goto bad;
 	} else {
-	    if (sscanf(argv[1], "%lf", &center[X]) != 1) {
+	    double scan[3];
+
+	    if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 		Tcl_AppendResult(vop->interp, "vo_center: bad X value - ", argv[1], "\n", (char *)0);
 		return TCL_ERROR;
 	    }
 
-	    if (sscanf(argv[2], "%lf", &center[Y]) != 1) {
+	    if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 		Tcl_AppendResult(vop->interp, "vo_center: bad Y value - ", argv[2], "\n", (char *)0);
 		return TCL_ERROR;
 	    }
 
-	    if (sscanf(argv[3], "%lf", &center[Z]) != 1) {
+	    if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 		Tcl_AppendResult(vop->interp, "vo_center: bad Z value - ", argv[3], "\n", (char *)0);
 		return TCL_ERROR;
 	    }
+
+	    /* convert double to fastf_t */
+	    VMOVE(center, scan);
 	}
 
 	vo_center(vop, center);
@@ -759,7 +771,9 @@ vo_perspective_cmd(struct view_obj *vop,
 		   const char *argv[])
 {
     struct bu_vls vls;
-    fastf_t perspective;
+
+    /* intentionally double for scan */
+    double perspective;
 
     /* get the perspective angle */
     if (argc == 1) {
@@ -897,20 +911,25 @@ vo_eye_cmd(struct view_obj *vop,
 	if (bn_decode_vect(eye_model, argv[1]) != 3)
 	    goto bad;
     } else {
-	if (sscanf(argv[1], "%lf", &eye_model[X]) != 1) {
+	double scan[3];
+
+	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_eye: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &eye_model[Y]) != 1) {
+	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_eye: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[3], "%lf", &eye_model[Z]) != 1) {
+	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_eye: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
+
+	/* convert double to fastf_t */
+	VMOVE(eye_model, scan);
     }
 
     VSCALE(eye_model, eye_model, vop->vo_local2base);
@@ -970,20 +989,25 @@ vo_eye_pos_cmd(struct view_obj *vop,
 	if (bn_decode_vect(eye_pos, argv[1]) != 3)
 	    goto bad;
     } else {
-	if (sscanf(argv[1], "%lf", &eye_pos[X]) != 1) {
+	double scan[3];
+
+	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_eye_pos: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &eye_pos[Y]) != 1) {
+	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_eye_pos: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[3], "%lf", &eye_pos[Z]) != 1) {
+	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_eye_pos: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
+
+	/* convert double to fastf_t */
+	VMOVE(eye_pos, scan);
     }
 
     VSCALE(eye_pos, eye_pos, vop->vo_local2base);
@@ -1043,20 +1067,25 @@ vo_lookat_cmd(struct view_obj *vop,
 	if (bn_decode_vect(look, argv[1]) != 3)
 	    goto bad;
     } else {
-	if (sscanf(argv[1], "%lf", &look[X]) != 1) {
+	double scan[3];
+
+	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_lookat: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &look[Y]) != 1) {
+	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_lookat: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[3], "%lf", &look[Z]) != 1) {
+	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_lookat: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
+
+	/* convert double to fastf_t */
+	VMOVE(look, scan);
     }
 
     VSCALE(look, look, vop->vo_local2base);
@@ -1121,9 +1150,12 @@ vo_orientation_cmd(struct view_obj *vop,
     } else {
 	int i;
 
-	for (i = 1; i < 5; ++i)
-	    if (sscanf(argv[i], "%lf", &quat[i-1]) != 1)
+	for (i = 1; i < 5; ++i) {
+	    double scan;
+	    if (sscanf(argv[i], "%lf", &scan) != 1)
 		goto bad;
+	    quat[i-1] = scan;
+	}
     }
 
     quat_quat2mat(vop->vo_rotation, quat);
@@ -1163,8 +1195,10 @@ vo_pov_cmd(struct view_obj *vop,
     vect_t center;
     quat_t quat;
     vect_t eye_pos;
-    fastf_t scale;
-    fastf_t perspective;
+
+    /* intentionally double for scan */
+    double scale;
+    double  perspective;
 
     if (argc != 6) {
 	struct bu_vls vls;
@@ -1259,7 +1293,7 @@ vo_zoom_cmd(struct view_obj *vop,
 	    int argc,
 	    const char *argv[])
 {
-    fastf_t sf;
+    double sf;
 
     if (argc != 2) {
 	struct bu_vls vls;
@@ -1544,20 +1578,25 @@ vo_rot_cmd(struct view_obj *vop,
 	if (bn_decode_vect(rvec, argv[1]) != 3)
 	    goto bad;
     } else {
-	if (sscanf(argv[1], "%lf", &rvec[X]) != 1) {
+	double scan[3];
+
+	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_rot: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &rvec[Y]) != 1) {
+	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_rot: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[3], "%lf", &rvec[Z]) != 1) {
+	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_rot: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
+
+	/* convert double to fastf_t */
+	VMOVE(rvec, scan);
     }
 
     VSCALE(rvec, rvec, -1.0);
@@ -1654,20 +1693,25 @@ vo_tra_cmd(struct view_obj *vop,
 	if (bn_decode_vect(tvec, argv[1]) != 3)
 	    goto bad;
     } else {
-	if (sscanf(argv[1], "%lf", &tvec[X]) != 1) {
+	double scan[3];
+
+	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_tra: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &tvec[Y]) != 1) {
+	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_tra: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[3], "%lf", &tvec[Z]) != 1) {
+	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_tra: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
+
+	/* convert double to fastf_t */
+	VMOVE(tvec, scan);
     }
 
     return vo_tra(vop, coord, tvec, func);
@@ -1735,23 +1779,28 @@ vo_slew_cmd(struct view_obj *vop,
     }
 
     if (argc == 3 || argc == 4) {
-	if (sscanf(argv[1], "%lf", &svec[X]) != 1) {
+	double scan[3];
+
+	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_slew: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &svec[Y]) != 1) {
+	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_slew: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (argc == 4) {
-	    if (sscanf(argv[3], "%lf", &svec[Z]) != 1) {
+	    if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 		Tcl_AppendResult(vop->interp, "vo_slew: bad Z value - ", argv[3], "\n", (char *)0);
 		return TCL_ERROR;
 	    }
 	} else
-	    svec[Z] = 0.0;
+	    scan[Z] = 0.0;
+
+	/* convert double to scan */
+	VMOVE(svec, scan);
 
 	return vo_slew(vop, svec);
     }
@@ -1943,20 +1992,25 @@ vo_keypoint_cmd(struct view_obj *vop,
 	if (bn_decode_vect(tvec, argv[1]) != 3)
 	    goto bad;
     } else if (argc == 4) {
-	if (sscanf(argv[1], "%lf", &tvec[X]) != 1) {
+	double scan[3];
+
+	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_keypoint: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &tvec[Y]) != 1) {
+	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_keypoint: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[3], "%lf", &tvec[Z]) != 1) {
+	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_keypoint: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
+
+	/* convert double to fastf_t */
+	VMOVE(tvec, scan);
     }
 
     VSCALE(vop->vo_keypoint, tvec, vop->vo_local2base);
@@ -2021,20 +2075,25 @@ vo_setview_cmd(struct view_obj *vop,
 	if (bn_decode_vect(rvec, argv[1]) != 3)
 	    goto bad;
     } else {
-	if (sscanf(argv[1], "%lf", &rvec[X]) != 1) {
+	double scan[3];
+
+	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_setview_cmd: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &rvec[Y]) != 1) {
+	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_setview_cmd: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[3], "%lf", &rvec[Z]) != 1) {
+	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 	    Tcl_AppendResult(vop->interp, "vo_setview_cmd: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
+
+	/* convert double to fastf_t */
+	VMOVE(rvec, scan);
     }
 
     vo_setview(vop, rvec);
@@ -2073,7 +2132,10 @@ vo_arot_cmd(struct view_obj *vop,
     mat_t newrot;
     point_t pt;
     vect_t axis;
-    fastf_t angle;
+
+    /* intentionally double for scan */
+    double angle;
+    double scan[3];
 
     if (argc != 5) {
 	struct bu_vls vls;
@@ -2085,20 +2147,23 @@ vo_arot_cmd(struct view_obj *vop,
 	return TCL_ERROR;
     }
 
-    if (sscanf(argv[1], "%lf", &axis[X]) != 1) {
+    if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 	Tcl_AppendResult(vop->interp, "vo_arot: bad X value - ", argv[1], "\n", (char *)0);
 	return TCL_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf", &axis[Y]) != 1) {
+    if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 	Tcl_AppendResult(vop->interp, "vo_arot: bad Y value - ", argv[2], "\n", (char *)0);
 	return TCL_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf", &axis[Z]) != 1) {
+    if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 	Tcl_AppendResult(vop->interp, "vo_arot: bad Z value - ", argv[3], "\n", (char *)0);
 	return TCL_ERROR;
     }
+
+    /* convert double to fastf_t */
+    VMOVE(axis, scan);
 
     if (sscanf(argv[4], "%lf", &angle) != 1) {
 	Tcl_AppendResult(vop->interp, "vo_arot: bad angle - ", argv[4], "\n", (char *)0);
@@ -2145,20 +2210,25 @@ vo_vrot_cmd(struct view_obj *vop,
 	if (bn_decode_vect(rvec, argv[1]) != 3)
 	    goto bad;
     } else {
-	if (sscanf(argv[1], "%lf", &rvec[X]) < 1) {
+	double scan[3];
+
+	if (sscanf(argv[1], "%lf", &scan[X]) < 1) {
 	    Tcl_AppendResult(vop->interp, "vo_vrot: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &rvec[Y]) < 1) {
+	if (sscanf(argv[2], "%lf", &scan[Y]) < 1) {
 	    Tcl_AppendResult(vop->interp, "vo_vrot: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[3], "%lf", &rvec[Z]) < 1) {
+	if (sscanf(argv[3], "%lf", &scan[Z]) < 1) {
 	    Tcl_AppendResult(vop->interp, "vo_vrot: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
+
+	/* convert double to fastf_t */
+	VMOVE(rvec, scan);
     }
 
     VSCALE(rvec, rvec, -1.0);
@@ -2207,20 +2277,25 @@ vo_mrot_cmd(struct view_obj *vop,
 	if (bn_decode_vect(rvec, argv[1]) != 3)
 	    goto bad;
     } else {
-	if (sscanf(argv[1], "%lf", &rvec[X]) < 1) {
+	double scan[3];
+
+	if (sscanf(argv[1], "%lf", &scan[X]) < 1) {
 	    Tcl_AppendResult(vop->interp, "vo_mrot: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &rvec[Y]) < 1) {
+	if (sscanf(argv[2], "%lf", &scan[Y]) < 1) {
 	    Tcl_AppendResult(vop->interp, "vo_mrot: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
-	if (sscanf(argv[3], "%lf", &rvec[Z]) < 1) {
+	if (sscanf(argv[3], "%lf", &scan[Z]) < 1) {
 	    Tcl_AppendResult(vop->interp, "vo_mrot: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
+
+	/* convert double to fastf_t */
+	VMOVE(rvec, scan);
     }
 
     VSCALE(rvec, rvec, -1.0);
@@ -2269,7 +2344,9 @@ vo_mrotPoint_cmd(struct view_obj *vop,
 	    if (bn_decode_vect(viewPt, argv[1]) != 3)
 		goto bad;
 	} else {
-	    if (sscanf(argv[1], "%lf", &viewPt[X]) != 1) {
+	    double scan[3];
+
+	    if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 		Tcl_AppendResult(vop->interp,
 				 "vo_mrotPoint: bad X value - ",
 				 argv[1],
@@ -2278,7 +2355,7 @@ vo_mrotPoint_cmd(struct view_obj *vop,
 		return TCL_ERROR;
 	    }
 
-	    if (sscanf(argv[2], "%lf", &viewPt[Y]) != 1) {
+	    if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 		Tcl_AppendResult(vop->interp,
 				 "vo_mrotPoint: bad Y value - ",
 				 argv[2],
@@ -2287,7 +2364,7 @@ vo_mrotPoint_cmd(struct view_obj *vop,
 		return TCL_ERROR;
 	    }
 
-	    if (sscanf(argv[3], "%lf", &viewPt[Z]) != 1) {
+	    if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 		Tcl_AppendResult(vop->interp,
 				 "vo_mrotPoint: bad Z value - ",
 				 argv[3],
@@ -2295,6 +2372,9 @@ vo_mrotPoint_cmd(struct view_obj *vop,
 				 (char *)0);
 		return TCL_ERROR;
 	    }
+
+	    /* convert double to fastf_t */
+	    VMOVE(viewPt, scan);
 	}
 
 	bu_vls_init(&vls);
@@ -2345,7 +2425,8 @@ vo_m2vPoint_cmd(struct view_obj *vop,
     /* Parse the incoming point */
     if (argc == 2 || argc == 4) {
 	point_t viewPt = VINIT_ZERO;
-	point_t modelPt = VINIT_ZERO;
+	/* intentionally using double for scan */
+	double modelPt[3] = VINIT_ZERO;
 
 	if (argc == 2) {
 	    if (bn_decode_vect(viewPt, argv[1]) != 3)
@@ -2432,7 +2513,9 @@ vo_v2mPoint_cmd(struct view_obj *vop,
 	    if (bn_decode_vect(viewPt, argv[1]) != 3)
 		goto bad;
 	} else {
-	    if (sscanf(argv[1], "%lf", &viewPt[X]) != 1) {
+	    double scan[3];
+
+	    if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 		Tcl_AppendResult(vop->interp,
 				 "vo_v2mPoint: bad X value - ",
 				 argv[1],
@@ -2441,7 +2524,7 @@ vo_v2mPoint_cmd(struct view_obj *vop,
 		return TCL_ERROR;
 	    }
 
-	    if (sscanf(argv[2], "%lf", &viewPt[Y]) != 1) {
+	    if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 		Tcl_AppendResult(vop->interp,
 				 "vo_v2mPoint: bad Y value - ",
 				 argv[2],
@@ -2450,7 +2533,7 @@ vo_v2mPoint_cmd(struct view_obj *vop,
 		return TCL_ERROR;
 	    }
 
-	    if (sscanf(argv[3], "%lf", &viewPt[Z]) != 1) {
+	    if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 		Tcl_AppendResult(vop->interp,
 				 "vo_v2mPoint: bad Z value - ",
 				 argv[3],
@@ -2458,6 +2541,9 @@ vo_v2mPoint_cmd(struct view_obj *vop,
 				 (char *)0);
 		return TCL_ERROR;
 	    }
+
+	    /* convert double to fastf_t */
+	    VMOVE(viewPt, scan);
 	}
 
 	bu_vls_init(&vls);
@@ -2524,7 +2610,8 @@ vo_sca_cmd(struct view_obj *vop,
 	   const char *argv[],
 	   int (*func)())
 {
-    fastf_t sf;
+    /* intentionally using double for scan */
+    double sf;
 
     if (argc != 2) {
 	struct bu_vls vls;
@@ -2623,11 +2710,12 @@ vo_viewDir_tcl(void *clientData,
 int
 vo_ae2dir_cmd(struct view_obj *vop, int argc, const char *argv[])
 {
-    fastf_t az, el;
     vect_t dir;
     int iflag;
     struct bu_vls vls;
 
+    /* intentionally using double for scan */
+    double az, el;
 
     if (argc < 3 || 4 < argc) {
 	bu_vls_init(&vls);
@@ -2713,6 +2801,7 @@ vo_dir2ae_cmd(struct view_obj *vop, int argc, const char *argv[])
     vect_t dir;
     int iflag = 0;
     struct bu_vls vls;
+    double scan[3];
 
     if (argc < 4 || 5 < argc) {
 	bu_vls_init(&vls);
@@ -2737,15 +2826,18 @@ vo_dir2ae_cmd(struct view_obj *vop, int argc, const char *argv[])
 	argc--; argv++;
     }
 
-    if (sscanf(argv[1], "%lf", &dir[X]) != 1 ||
-	sscanf(argv[2], "%lf", &dir[Y]) != 1 ||
-	sscanf(argv[3], "%lf", &dir[Z]) != 1) {
+    if (sscanf(argv[1], "%lf", &scan[X]) != 1 ||
+	sscanf(argv[2], "%lf", &scan[Y]) != 1 ||
+	sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias vo_dir2ae %s", argv[0]);
 	Tcl_Eval(vop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
+
+    /* convert from double to fastf_t */
+    VMOVE(dir, scan);
 
     AZEL_FROM_V3DIR(az, el, dir);
 

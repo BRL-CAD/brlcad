@@ -39,6 +39,7 @@ ged_view2model_vec(struct ged *gedp, int argc, const char *argv[])
     point_t model_vec;
     point_t view_vec;
     mat_t inv_Viewrot;
+    double scan[3];
     static const char *usage = "x y z";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -51,10 +52,12 @@ ged_view2model_vec(struct ged *gedp, int argc, const char *argv[])
     if (argc != 4)
 	goto bad;
 
-    if (sscanf(argv[1], "%lf", &view_vec[X]) != 1 ||
-	sscanf(argv[2], "%lf", &view_vec[Y]) != 1 ||
-	sscanf(argv[3], "%lf", &view_vec[Z]) != 1)
+    if (sscanf(argv[1], "%lf", &scan[X]) != 1 ||
+	sscanf(argv[2], "%lf", &scan[Y]) != 1 ||
+	sscanf(argv[3], "%lf", &scan[Z]) != 1)
 	goto bad;
+    /* convert from double to fastf_t */
+    VMOVE(view_vec, scan);
 
     bn_mat_inv(inv_Viewrot, gedp->ged_gvp->gv_rotation);
     MAT4X3PNT(model_vec, inv_Viewrot, view_vec);

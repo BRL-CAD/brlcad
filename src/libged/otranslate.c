@@ -37,6 +37,7 @@ ged_otranslate(struct ged *gedp, int argc, const char *argv[])
     struct _ged_trace_data gtd;
     struct rt_db_internal intern;
     vect_t delta;
+    double scan[3];
     mat_t dmat;
     mat_t emat;
     mat_t tmpMat;
@@ -72,23 +73,23 @@ ged_otranslate(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf", &delta[X]) != 1) {
+    if (sscanf(argv[2], "%lf", &scan[X]) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad x value - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf", &delta[Y]) != 1) {
+    if (sscanf(argv[3], "%lf", &scan[Y]) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad y value - %s", argv[0], argv[3]);
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[4], "%lf", &delta[Z]) != 1) {
+    if (sscanf(argv[4], "%lf", &scan[Z]) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad z value - %s", argv[0], argv[4]);
 	return GED_ERROR;
     }
 
     MAT_IDN(dmat);
-    VSCALE(delta, delta, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(delta, scan, gedp->ged_wdbp->dbip->dbi_local2base);
     MAT_DELTAS_VEC(dmat, delta);
 
     bn_mat_inv(invXform, gtd.gtd_xform);

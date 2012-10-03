@@ -309,11 +309,16 @@ ged_rect(struct ged *gedp,
     argc -= 2;
     argp += 2;
 
-    for (i = 0; i < argc; ++i)
-	if (sscanf(argp[i], "%lf", &user_pt[i]) != 1) {
+    for (i = 0; i < argc; ++i) {
+	double scan;
+
+	if (sscanf(argp[i], "%lf", &scan) != 1) {
 	    usage(gedp, argv[0]);
 	    return GED_ERROR;
 	}
+
+	user_pt[i] = scan;
+    }
 
     if (BU_STR_EQUAL(parameter, "draw")) {
 	if (argc == 0) {

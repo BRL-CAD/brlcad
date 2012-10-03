@@ -32,7 +32,7 @@
 #include "./ged_private.h"
 
 int
-_ged_select(struct ged *gedp, fastf_t vx, fastf_t vy, fastf_t vwidth, fastf_t vheight, int rflag)
+_ged_select(struct ged *gedp, double vx, double vy, double vwidth, double vheight, int rflag)
 {
     struct ged_display_list *gdlp = NULL;
     struct ged_display_list *next_gdlp = NULL;
@@ -150,7 +150,7 @@ _ged_select(struct ged *gedp, fastf_t vx, fastf_t vy, fastf_t vwidth, fastf_t vh
 
 
 int
-_ged_select_partial(struct ged *gedp, fastf_t vx, fastf_t vy, fastf_t vwidth, fastf_t vheight, int rflag)
+_ged_select_partial(struct ged *gedp, double vx, double vy, double vwidth, double vheight, int rflag)
 {
     struct ged_display_list *gdlp = NULL;
     struct ged_display_list *next_gdlp = NULL;
@@ -269,7 +269,7 @@ int
 ged_select(struct ged *gedp, int argc, const char *argv[])
 {
     int pflag;
-    fastf_t vx, vy, vw, vh, vr;
+    double vx, vy, vw, vh, vr;
     static const char *usage = "[-p] vx vy {vr | vw vh}";
     const char *cmd = argv[0];
 

@@ -37,8 +37,8 @@ int
 ged_dir2ae(struct ged *gedp, int argc, const char *argv[])
 {
     fastf_t az, el;
-    double dirscan[3];
     vect_t dir;
+    double scan[3];
     int iflag;
     static const char *usage = "[-i] x y z";
 
@@ -66,13 +66,14 @@ ged_dir2ae(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[1], "%lf", &dirscan[X]) != 1 ||
-	sscanf(argv[2], "%lf", &dirscan[Y]) != 1 ||
-	sscanf(argv[3], "%lf", &dirscan[Z]) != 1) {
+    if (sscanf(argv[1], "%lf", &scan[X]) != 1 ||
+	sscanf(argv[2], "%lf", &scan[Y]) != 1 ||
+	sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
-    VMOVE(dir, dirscan);
+    /* convert from double to fastf_t */
+    VMOVE(dir, scan);
     AZEL_FROM_V3DIR(az, el, dir);
 
     if (iflag)

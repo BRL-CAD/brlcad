@@ -37,6 +37,7 @@ int
 ged_eye_pos(struct ged *gedp, int argc, const char *argv[])
 {
     point_t eye_pos;
+    double scan[3];
     static const char *usage = "x y z";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -64,20 +65,23 @@ ged_eye_pos(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
     } else {
-	if (sscanf(argv[1], "%lf", &eye_pos[X]) < 1) {
+	if (sscanf(argv[1], "%lf", &scan[X]) < 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_eye: bad X value %s\n", argv[1]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &eye_pos[Y]) < 1) {
+	if (sscanf(argv[2], "%lf", &scan[Y]) < 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_eye: bad Y value %s\n", argv[2]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[3], "%lf", &eye_pos[Z]) < 1) {
+	if (sscanf(argv[3], "%lf", &scan[Z]) < 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_eye: bad Z value %s\n", argv[3]);
 	    return GED_ERROR;
 	}
+
+	/* convert from double to fastf_t */
+	VMOVE(eye_pos, scan);
     }
 
     VSCALE(gedp->ged_gvp->gv_eye_pos, eye_pos, gedp->ged_wdbp->dbip->dbi_local2base);

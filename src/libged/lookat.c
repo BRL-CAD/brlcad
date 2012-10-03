@@ -42,6 +42,7 @@ ged_lookat(struct ged *gedp, int argc, const char *argv[])
     point_t new_center;
     vect_t dir;
     fastf_t new_az, new_el;
+    double scan[3];
     static const char *usage = "x y z";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -68,20 +69,23 @@ ged_lookat(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
     } else {
-	if (sscanf(argv[1], "%lf", &look[X]) != 1) {
+	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_lookat: bad X value - %s\n", argv[1]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &look[Y]) != 1) {
+	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_lookat: bad Y value - %s\n", argv[2]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[3], "%lf", &look[Z]) != 1) {
+	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_lookat: bad Z value - %s\n", argv[3]);
 	    return GED_ERROR;
 	}
+
+	/* convert from double to fastf_t */
+	VMOVE(look, scan);
     }
 
     VSCALE(look, look, gedp->ged_wdbp->dbip->dbi_local2base);

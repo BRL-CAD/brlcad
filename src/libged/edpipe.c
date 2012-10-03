@@ -607,6 +607,7 @@ _ged_append_pipept_common(struct ged *gedp, int argc, const char *argv[], struct
     struct rt_pipe_internal *pipeip;
     mat_t mat;
     point_t ps_pt;
+    double scan[3];
     char *last;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -642,10 +643,12 @@ _ged_append_pipept_common(struct ged *gedp, int argc, const char *argv[], struct
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf %lf %lf", &ps_pt[X], &ps_pt[Y], &ps_pt[Z]) != 3) {
+    if (sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
+    /* convert from double to fastf_t */
+    VMOVE(ps_pt, scan);
 
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR)
 	return GED_ERROR;
@@ -780,6 +783,7 @@ ged_find_pipept_nearest_pt(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct wdb_pipept *nearest;
     point_t model_pt;
+    double scan[3];
     mat_t mat;
     int seg_i;
     char *last;
@@ -819,16 +823,18 @@ ged_find_pipept_nearest_pt(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argc == 3) {
-	if (sscanf(argv[2], "%lf %lf %lf", &model_pt[X], &model_pt[Y], &model_pt[Z]) != 3) {
+	if (sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[2]);
 	    return GED_ERROR;
 	}
-    } else if (sscanf(argv[2], "%lf", &model_pt[X]) != 1 ||
-	       sscanf(argv[3], "%lf", &model_pt[Y]) != 1 ||
-	       sscanf(argv[4], "%lf", &model_pt[Z]) != 1) {
+    } else if (sscanf(argv[2], "%lf", &scan[X]) != 1 ||
+	       sscanf(argv[3], "%lf", &scan[Y]) != 1 ||
+	       sscanf(argv[4], "%lf", &scan[Z]) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad X, Y or Z", argv[0]);
 	return GED_ERROR;
     }
+    /* convert from double to fastf_t */
+    VMOVE(model_pt, scan);
 
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR)
 	return GED_ERROR;
@@ -858,6 +864,7 @@ ged_move_pipept(struct ged *gedp, int argc, const char *argv[])
     struct rt_pipe_internal *pipeip;
     mat_t mat;
     point_t ps_pt;
+    double scan[3];
     int seg_i;
     int rflag = 0;
     char *last;
@@ -911,12 +918,11 @@ ged_move_pipept(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[3], "%lf %lf %lf", &ps_pt[X], &ps_pt[Y], &ps_pt[Z]) != 3) {
+    if (sscanf(argv[3], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[3]);
 	return GED_ERROR;
     }
-
-    VSCALE(ps_pt, ps_pt, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(ps_pt, scan, gedp->ged_wdbp->dbip->dbi_local2base);
 
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR)
 	return GED_ERROR;

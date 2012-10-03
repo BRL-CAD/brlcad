@@ -151,7 +151,7 @@ ged_grid(struct ged *gedp, int argc, const char *argv[])
     char *command;
     char *parameter;
     char **argp = (char **)argv;
-    point_t user_pt;		/* Value(s) provided by user */
+    double user_pt[3];		/* Value(s) provided by user */
     int i;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

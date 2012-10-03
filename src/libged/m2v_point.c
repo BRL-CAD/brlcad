@@ -37,6 +37,7 @@ ged_m2v_point(struct ged *gedp, int argc, const char *argv[])
 {
     point_t model;
     point_t view;
+    double scan[3];
     static const char *usage = "x y z";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -63,20 +64,23 @@ ged_m2v_point(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
     } else {
-	if (sscanf(argv[1], "%lf", &model[X]) != 1) {
+	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point: bad X value - %s\n", argv[1]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &model[Y]) != 1) {
+	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point: bad Y value - %s\n", argv[2]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[3], "%lf", &model[Z]) != 1) {
+	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_m2v_point: bad Z value - %s\n", argv[3]);
 	    return GED_ERROR;
 	}
+
+	/* convert from double to fastf_t */
+	VMOVE(model, scan);
     }
 
     /* Convert the incoming model point to a view point */

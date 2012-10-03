@@ -39,6 +39,7 @@ ged_view2model_lu(struct ged *gedp, int argc, const char *argv[])
     fastf_t sf;
     point_t view_pt;
     point_t model_pt;
+    double scan[3];
     static const char *usage = "x y z";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -51,10 +52,12 @@ ged_view2model_lu(struct ged *gedp, int argc, const char *argv[])
     if (argc != 4)
 	goto bad;
 
-    if (sscanf(argv[1], "%lf", &view_pt[X]) != 1 ||
-	sscanf(argv[2], "%lf", &view_pt[Y]) != 1 ||
-	sscanf(argv[3], "%lf", &view_pt[Z]) != 1)
+    if (sscanf(argv[1], "%lf", &scan[X]) != 1 ||
+	sscanf(argv[2], "%lf", &scan[Y]) != 1 ||
+	sscanf(argv[3], "%lf", &scan[Z]) != 1)
 	goto bad;
+    /* convert from double to fastf_t */
+    VMOVE(view_pt, scan);
 
     sf = 1.0 / (gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local);
     VSCALE(view_pt, view_pt, sf);

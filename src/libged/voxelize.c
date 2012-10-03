@@ -90,11 +90,14 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_i *rtip;
     static const char *usage = "[-s \"dx dy dz\"] [-d n] [-t f] new_obj old_obj [old_obj2 old_obj3 ...]";
-    fastf_t sizeVoxel[3], threshold;
+    fastf_t sizeVoxel[3];
     int levelOfDetail;
     genptr_t callBackData;
     struct voxelizeData voxDat;
     int c;
+
+    /* intentionally double for scan */
+    double threshold;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -116,16 +119,20 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
 
     bu_optind = 1;
     while ((c = bu_getopt(argc, (char * const *)argv, (const char *)"s:d:t:")) != -1) {
+	double scan[3];
+
 	switch (c) {
 	    case 's':
 		if (sscanf(bu_optarg, "%lf %lf %lf",
-			   &sizeVoxel[0],
-			   &sizeVoxel[1],
-			   &sizeVoxel[2]) != 3) {
+			   &scan[0],
+			   &scan[1],
+			   &scan[2]) != 3) {
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		    return GED_ERROR;
-		}
-		else {
+		} else {
+		    /* convert from double to fastf_t */
+		    VMOVE(sizeVoxel, scan);
+
 		    sizeVoxel[0] = sizeVoxel[0] * gedp->ged_wdbp->dbip->dbi_local2base;
 		    sizeVoxel[1] = sizeVoxel[1] * gedp->ged_wdbp->dbip->dbi_local2base;
 		    sizeVoxel[2] = sizeVoxel[2] * gedp->ged_wdbp->dbip->dbi_local2base;

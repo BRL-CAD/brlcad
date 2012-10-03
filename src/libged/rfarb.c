@@ -38,15 +38,21 @@ int
 ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
-    int i;
-    int solve[3];
-    fastf_t pt[3][2];
-    fastf_t thick, rota, fba;
-    vect_t norm;
-    fastf_t ndotv;
-    point_t known_pt;
     struct rt_db_internal internal;
     struct rt_arb_internal *aip;
+
+    int i;
+    int solve[3];
+    vect_t norm;
+    fastf_t ndotv;
+
+    /* intentinoally double for scan */
+    double known_pt[3];
+    double pt[3][2];
+    double thick;
+    double rota;
+    double fba;
+
     static const char *usage = "name pX pY pZ rA fbA c X Y c X Y c X Y th";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

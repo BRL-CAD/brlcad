@@ -963,21 +963,28 @@ HIDDEN void
 grabCoordinates(fastf_t *positions)
 {
     int ret;
+    double scan[3];
+
     printf("X: ");
-    ret = scanf("%lf", &positions[X]);
+    ret = scanf("%lf", &scan[X]);
     if (ret != 1)
 	bu_log("Failed to get position value\n");
     fflush(stdin);
+
     printf("Y: ");
-    ret = scanf("%lf", &positions[Y]);
+    ret = scanf("%lf", &scan[Y]);
     if (ret != 1)
 	bu_log("Failed to get position value\n");
     fflush(stdin);
+
     printf("Z: ");
-    ret = scanf("%lf", &positions[Z]);
+    ret = scanf("%lf", &scan[Z]);
     if (ret != 1)
 	bu_log("Failed to get position value\n");
     fflush(stdin);
+
+    /* convert from double to fastf_t */
+    VMOVE(positions, scan);
 }
 
 
@@ -1282,152 +1289,178 @@ HIDDEN void
 Manual(struct human_data_t *dude)
 {
     int ret;
-    fastf_t x=0; /*Variable to be used for all input */
+    double x=0; /* for stashing user input */
+
     bu_log("Manual Size Mode. All data to be entered is in inches\n");
+
     bu_log("HeadSize, radius\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->head.headSize=x;
+
     bu_log("NeckLength\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->head.neckLength=x;
+
     bu_log("NeckWidth, radius\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->head.neckWidth=x;
+
     bu_log("Top Torso Length\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->torso.topTorsoLength=x;
+
     bu_log("Shoulder Width\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->torso.shoulderWidth=x;
+
     bu_log("Shoulder Depth\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->torso.shoulderDepth=x;
+
     bu_log("Low Torso Length\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->torso.lowTorsoLength=x;
+
     bu_log("Ab Width\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->torso.abWidth=x;
+
     bu_log("Ab Depth\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->torso.abDepth=x;
+
     bu_log("Pelvis Width\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->torso.pelvisWidth=x;
+
     bu_log("Pelvis Depth\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->torso.pelvisDepth=x;
+
     bu_log("Upper Arm Length\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->arms.upperArmLength=x;
+
     bu_log("Upper Arm Width\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->arms.upperArmWidth=x;
+
     bu_log("Lower Arm Length\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->arms.lowerArmLength=x;
+
     bu_log("Elbow Width, radius\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->arms.elbowWidth=x;
+
     bu_log("Wrist Width, radius\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->arms.wristWidth=x;
+
     bu_log("Hand Length\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->arms.handLength=x;
+
     bu_log("Hand Width\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->arms.handWidth=x;
+
     bu_log("Thigh Length\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->legs.thighLength=x;
+
     bu_log("Thigh Width, radius\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->legs.thighWidth=x;
+
     bu_log("Knee Width, radius\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->legs.kneeWidth=x;
+
     bu_log("Calf Length\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->legs.calfLength=x;
+
     bu_log("Ankle Width, radius\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->legs.ankleWidth=x;
+
     bu_log("Foot Length\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
 	bu_log("Failed to get value\n");
     x=x*IN2MM;
     dude->legs.footLength=x;
+
     bu_log("Toe Width, radius\n");
     ret = scanf("%lf", &x);
     if (ret != 1)
@@ -1582,7 +1615,8 @@ HIDDEN void
 getLocation(fastf_t *location)
 {
     int ret;
-    fastf_t x, y, z;
+    double x, y, z;
+
     bu_log("Enter center point\n");
     bu_log("X: ");
     ret = scanf("%lf", &x);
@@ -1614,7 +1648,7 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
     int soldiers=0;
     int pose=0;
     int percent=50;
-    fastf_t x = 0;
+    double x = 0; /* for stashing user input */
     int have_name = 0;
 
     /* don't report errors */
@@ -2115,7 +2149,7 @@ verbIn(struct human_data_t *dude)
 {
     char buffer[80];
     char s[80];
-    fastf_t holder;
+    double holder;
     FILE *input;
 
     bu_log("Reading textfile for all measurements\n");

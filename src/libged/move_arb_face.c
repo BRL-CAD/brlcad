@@ -76,6 +76,7 @@ ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
     int face;
     int rflag = 0;
     point_t pt;
+    double scan[3];
     mat_t mat;
     char *last;
     struct directory *dp;
@@ -145,12 +146,14 @@ ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
 
     face -= 1;
 
-    if (sscanf(argv[3], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
+    if (sscanf(argv[3], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "bad point - %s", argv[3]);
 	rt_db_free_internal(&intern);
 
 	return GED_ERROR;
     }
+    /* convert from double to fastf_t */
+    VMOVE(pt, scan);
 
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);

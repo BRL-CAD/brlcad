@@ -45,8 +45,11 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
     mat_t invXform;
     point_t rpp_min;
     point_t rpp_max;
-    fastf_t sf;
     point_t keypoint;
+
+    /* intentionally double for scan */
+    double sf;
+
     static const char *usage = "obj sf [kX kY kZ]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -85,25 +88,27 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
 	VADD2(keypoint, rpp_min, rpp_max);
 	VSCALE(keypoint, keypoint, 0.5);
     } else {
+	double scan[3];
+
 	/* The user has provided the keypoint. */
 	MAT_IDN(gtd.gtd_xform);
 
-	if (sscanf(argv[3], "%lf", &keypoint[X]) != 1) {
+	if (sscanf(argv[3], "%lf", &scan[X]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad kx value - %s", argv[0], argv[3]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[4], "%lf", &keypoint[Y]) != 1) {
+	if (sscanf(argv[4], "%lf", &scan[Y]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad ky value - %s", argv[0], argv[4]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[5], "%lf", &keypoint[Z]) != 1) {
+	if (sscanf(argv[5], "%lf", &scan[Z]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad kz value - %s", argv[0], argv[5]);
 	    return GED_ERROR;
 	}
 
-	VSCALE(keypoint, keypoint, gedp->ged_wdbp->dbip->dbi_local2base);
+	VSCALE(keypoint, scan, gedp->ged_wdbp->dbip->dbi_local2base);
 
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: %s not found", argv[0], argv[1]);

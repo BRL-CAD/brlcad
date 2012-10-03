@@ -38,6 +38,7 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fas
 {
     static const char *usage = "sf (or) sfx sfy sfz";
     int ret = GED_OK;
+    double scan;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -58,23 +59,29 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fas
     }
 
     if (argc == 2) {
-	if (sscanf(argv[1], "%lf", sf1) != 1) {
+	if (!sf1 || sscanf(argv[1], "%lf", &scan) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "\nbad scale factor '%s'", argv[1]);
 	    return GED_ERROR;
 	}
+	*sf1 = scan;
     } else {
-	if (sscanf(argv[1], "%lf", sf1) != 1) {
+	if (!sf1 || sscanf(argv[1], "%lf", &scan) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "\nbad x scale factor '%s'", argv[1]);
 	    ret = GED_ERROR;
 	}
-	if (sscanf(argv[2], "%lf", sf2) != 1) {
+	*sf1 = scan;
+
+	if (!sf2 || sscanf(argv[2], "%lf", &scan) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "\nbad y scale factor '%s'", argv[2]);
 	    ret = GED_ERROR;
 	}
-	if (sscanf(argv[3], "%lf", sf3) != 1) {
+	*sf2 = scan;
+
+	if (!sf3 || sscanf(argv[3], "%lf", &scan) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "\nbad z scale factor '%s'", argv[3]);
 	    ret = GED_ERROR;
 	}
+	*sf3 = scan;
     }
     return ret;
 }

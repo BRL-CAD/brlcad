@@ -71,20 +71,25 @@ ged_rot_args(struct ged *gedp, int argc, const char *argv[], char *coord, mat_t 
 	    return GED_ERROR;
 	}
     } else {
-	if (sscanf(argv[1], "%lf", &rvec[X]) < 1) {
+	double scan[3];
+
+	if (sscanf(argv[1], "%lf", &scan[X]) < 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_eye: bad X value %s\n", argv[1]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &rvec[Y]) < 1) {
+	if (sscanf(argv[2], "%lf", &scan[Y]) < 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_eye: bad Y value %s\n", argv[2]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[3], "%lf", &rvec[Z]) < 1) {
+	if (sscanf(argv[3], "%lf", &scan[Z]) < 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_eye: bad Z value %s\n", argv[3]);
 	    return GED_ERROR;
 	}
+
+	/* convert from double to fastf_t */
+	VMOVE(rvec, scan);
     }
 
     VSCALE(rvec, rvec, -1.0);

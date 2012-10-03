@@ -36,7 +36,10 @@ ged_orotate(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     struct _ged_trace_data gtd;
     struct rt_db_internal intern;
-    fastf_t xrot, yrot, zrot;
+
+    /* intentionally double for scan */
+    double xrot, yrot, zrot;
+
     mat_t rmat;
     mat_t pmat;
     mat_t emat;
@@ -95,25 +98,27 @@ ged_orotate(struct ged *gedp, int argc, const char *argv[])
 	VADD2(keypoint, rpp_min, rpp_max);
 	VSCALE(keypoint, keypoint, 0.5);
     } else {
+	double scan[3];
+
 	/* The user has provided the keypoint. */
 	MAT_IDN(gtd.gtd_xform);
 
-	if (sscanf(argv[5], "%lf", &keypoint[X]) != 1) {
+	if (sscanf(argv[5], "%lf", &scan[X]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad kX value - %s", argv[0], argv[5]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[6], "%lf", &keypoint[Y]) != 1) {
+	if (sscanf(argv[6], "%lf", &scan[Y]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad kY value - %s", argv[0], argv[6]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[7], "%lf", &keypoint[Z]) != 1) {
+	if (sscanf(argv[7], "%lf", &scan[Z]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad kZ value - %s", argv[0], argv[7]);
 	    return GED_ERROR;
 	}
 
-	VSCALE(keypoint, keypoint, gedp->ged_wdbp->dbip->dbi_local2base);
+	VSCALE(keypoint, scan, gedp->ged_wdbp->dbip->dbi_local2base);
 
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1],  LOOKUP_QUIET)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: %s not found", argv[0], argv[1]);

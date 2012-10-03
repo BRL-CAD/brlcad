@@ -38,11 +38,14 @@ int
 ged_protate(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
-    struct rt_db_internal intern;
-    fastf_t rx, ry, rz;
     mat_t rmat;
     char *last;
+    struct rt_db_internal intern;
     struct directory *dp;
+
+    /* intentionally double for scan */
+    double rx, ry, rz;
+
     static const char *usage = "obj attribute rvec";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

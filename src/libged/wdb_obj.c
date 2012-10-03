@@ -1125,6 +1125,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
     int edge;
     int bad_edge_id = 0;
     point_t pt;
+    double scan[3];
     struct bu_vls error_msg;
 
     if (argc != 4) {
@@ -1169,7 +1170,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
     }
     edge -= 1;
 
-    if (sscanf(argv[3], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
+    if (sscanf(argv[3], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -1180,6 +1181,8 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
 
 	return TCL_ERROR;
     }
+    /* convert double to fastf_t */
+    VMOVE(pt, scan);
 
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
@@ -1297,8 +1300,10 @@ wdb_move_arb_face_cmd(struct rt_wdb *wdbp,
     fastf_t planes[7][4];		/* ARBs defining plane equations */
     int arb_type;
     int face;
-    point_t pt;
     struct bu_vls error_msg;
+
+    /* intentionally double for scan */
+    double pt[3];
 
     if (argc != 4) {
 	struct bu_vls vls;
@@ -1449,10 +1454,12 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
     int arb_type;
     int face;
     int vi;
-    point_t pt;
     int i;
     int pnt5;		/* special arb7 case */
     struct bu_vls error_msg;
+
+    /* intentionally double for scan */
+    double pt[3];
 
     if (argc != 5) {
 	struct bu_vls vls;

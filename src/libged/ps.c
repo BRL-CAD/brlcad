@@ -332,7 +332,7 @@ ged_ps(struct ged *gedp, int argc, const char *argv[])
     /* Process options */
     bu_optind = 1;
     while ((k = bu_getopt(argc, (char * const *)argv, "a:bc:f:s:t:x:y:")) != -1) {
-	fastf_t tmp_f;
+	double tmp_f;
 
 	switch (k) {
 	    case 'a':

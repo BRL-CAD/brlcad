@@ -37,6 +37,7 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
 {
     vect_t ypr;
     mat_t mat;
+    double scan[3];
     static const char *usage = "yaw pitch roll";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -70,15 +71,17 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* attempt to set Viewrot given yaw, pitch and roll */
-    if (sscanf(argv[1], "%lf", ypr) != 1
-	|| sscanf(argv[2], "%lf", ypr+1) != 1
-	|| sscanf(argv[3], "%lf", ypr+2) != 1)
+    if (sscanf(argv[1], "%lf", &scan[0]) != 1
+	|| sscanf(argv[2], "%lf", &scan[1]) != 1
+	|| sscanf(argv[3], "%lf", &scan[2]) != 1)
     {
 
 	bu_vls_printf(gedp->ged_result_str, "view %s: bad value detected - %s %s %s",
 		      argv[0], argv[1], argv[2], argv[3]);
 	return GED_ERROR;
     }
+    /* convert double to fastf_t */
+    VMOVE(ypr, scan);
 
     anim_dy_p_r2mat(mat, V3ARGS(ypr));
     anim_v_permute(mat);

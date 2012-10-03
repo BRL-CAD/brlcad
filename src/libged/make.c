@@ -44,8 +44,11 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     int k;
     int save_bu_optind;
     struct directory *dp;
-    fastf_t scale = 1;
-    point_t origin = {0.0, 0.0, 0.0};
+
+    /* intentionally double for sscanf */
+    double scale = 1.0;
+    double origin[3] = {0.0, 0.0, 0.0};
+
     struct rt_db_internal internal;
     struct rt_arb_internal *arb_ip;
     struct rt_ars_internal *ars_ip;
@@ -68,6 +71,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     struct rt_superell_internal *superell_ip;
     struct rt_metaball_internal *metaball_ip;
     struct rt_pnts_internal *pnts_ip;
+
     static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|hyp|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

@@ -42,6 +42,7 @@ ged_ptranslate(struct ged *gedp, int argc, const char *argv[])
     int rflag;
     struct rt_db_internal intern;
     vect_t tvec;
+    double scan[3];
     char *last;
     struct directory *dp;
     static const char *usage = "[-r] obj attribute tvec";
@@ -76,10 +77,12 @@ ged_ptranslate(struct ged *gedp, int argc, const char *argv[])
     } else
 	rflag = 0;
 
-    if (sscanf(argv[3], "%lf %lf %lf", &tvec[0], &tvec[1], &tvec[2]) != 3) {
+    if (sscanf(argv[3], "%lf %lf %lf", &scan[0], &scan[1], &scan[2]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad translation vector - %s", cmd_name, argv[3]);
 	return GED_ERROR;
     }
+    /* convert from double to fastf_t */
+    VMOVE(tvec, scan);
 
     if ((last = strrchr(argv[1], '/')) == NULL)
 	last = (char *)argv[1];

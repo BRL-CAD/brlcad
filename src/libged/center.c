@@ -84,6 +84,7 @@ ged_center(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
+	/* convert from double to fastf_t */
 	VMOVE(center, scan);
     }
 

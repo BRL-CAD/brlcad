@@ -68,23 +68,28 @@ ged_slew(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argc == 3 || argc == 4) {
-	if (sscanf(argv[1], "%lf", &svec[X]) != 1) {
+	double scan[3];
+
+	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "slew: bad X value %s\n", argv[1]);
 	    return GED_ERROR;
 	}
 
-	if (sscanf(argv[2], "%lf", &svec[Y]) != 1) {
+	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "slew: bad Y value %s\n", argv[2]);
 	    return GED_ERROR;
 	}
 
 	if (argc == 4) {
-	    if (sscanf(argv[3], "%lf", &svec[Z]) != 1) {
+	    if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 		bu_vls_printf(gedp->ged_result_str, "slew: bad Z value %s\n", argv[3]);
 		return GED_ERROR;
 	    }
 	} else
-	    svec[Z] = 0.0;
+	    scan[Z] = 0.0;
+
+	/* convert from double to fastf_t */
+	VMOVE(svec, scan);
 
 	return _ged_do_slew(gedp, svec);
     }

@@ -36,7 +36,8 @@
 int
 ged_size(struct ged *gedp, int argc, const char *argv[])
 {
-    fastf_t size;
+    /* intentionally double for scan */
+    double size;
     static const char *usage = "[s]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -55,9 +56,10 @@ ged_size(struct ged *gedp, int argc, const char *argv[])
 
     /* set view size */
     if (argc == 2) {
-	if (sscanf(argv[1], "%lf", &size) != 1 ||
-	    size <= 0 ||
-	    ZERO(size)) {
+	if (sscanf(argv[1], "%lf", &size) != 1
+	    || size <= 0
+	    || ZERO(size))
+	{
 	    bu_vls_printf(gedp->ged_result_str, "bad size - %s", argv[1]);
 	    return GED_ERROR;
 	}

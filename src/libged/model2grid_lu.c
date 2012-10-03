@@ -41,6 +41,7 @@ ged_model2grid_lu(struct ged *gedp, int argc, const char *argv[])
     point_t model_pt;
     point_t mo_view_pt;           /* model origin in view space */
     point_t diff;
+    double scan[3];
     static const char *usage = "x y z";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -56,12 +57,12 @@ ged_model2grid_lu(struct ged *gedp, int argc, const char *argv[])
     VSETALL(model_pt, 0.0);
     MAT4X3PNT(mo_view_pt, gedp->ged_gvp->gv_model2view, model_pt);
 
-    if (sscanf(argv[1], "%lf", &model_pt[X]) != 1 ||
-	sscanf(argv[2], "%lf", &model_pt[Y]) != 1 ||
-	sscanf(argv[3], "%lf", &model_pt[Z]) != 1)
+    if (sscanf(argv[1], "%lf", &scan[X]) != 1 ||
+	sscanf(argv[2], "%lf", &scan[Y]) != 1 ||
+	sscanf(argv[3], "%lf", &scan[Z]) != 1)
 	goto bad;
 
-    VSCALE(model_pt, model_pt, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(model_pt, scan, gedp->ged_wdbp->dbip->dbi_local2base);
     MAT4X3PNT(view_pt, gedp->ged_gvp->gv_model2view, model_pt);
     VSUB2(diff, view_pt, mo_view_pt);
     f = gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local;

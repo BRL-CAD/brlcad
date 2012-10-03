@@ -40,7 +40,10 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
     int ret;
     int rflag;
     struct rt_db_internal intern;
-    fastf_t sf;
+
+    /* intentionally double for scan */
+    double sf;
+
     char *last;
     struct directory *dp;
     static const char *usage = "[-r] obj attribute sf";

@@ -992,6 +992,7 @@ static int
 parse_vect(struct ged *gedp, fastf_t *vect, FILE *fip, struct bu_vls *str)
 {
     int i;
+    double scan[3];
 
     if (joint_debug & DEBUG_J_PARSE) {
 	/* initialize result */
@@ -999,9 +1000,12 @@ parse_vect(struct ged *gedp, fastf_t *vect, FILE *fip, struct bu_vls *str)
 	bu_vls_printf(gedp->ged_result_str, "parse_vect: open.\n");
     }
 
+    /* convert to double for parsing */
+    VMOVE(scan, vect);
+
     if (!gobble_token(gedp, BU_LEX_SYMBOL, SYM_OP_PT, fip, str)) return 0;
     for (i=0; i < 3; i++) {
-	if (!parse_double(gedp, &vect[i], fip, str)) return 0;
+	if (!parse_double(gedp, &scan[i], fip, str)) return 0;
 	if (i < 2) {
 	    if (!gobble_token(gedp, BU_LEX_SYMBOL, SYM_COMMA, fip, str)) return 0;
 	} else {

@@ -37,6 +37,7 @@ int
 ged_quat(struct ged *gedp, int argc, const char *argv[])
 {
     quat_t quat;
+    double scan[4];
     static const char *usage = "a b c d";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -59,15 +60,16 @@ ged_quat(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Set the view orientation given a quaternion */
-    if (sscanf(argv[1], "%lf", quat) != 1
-	|| sscanf(argv[2], "%lf", quat+1) != 1
-	|| sscanf(argv[3], "%lf", quat+2) != 1
-	|| sscanf(argv[4], "%lf", quat+3) != 1)
+    if (sscanf(argv[1], "%lf", &scan[0]) != 1
+	|| sscanf(argv[2], "%lf", &scan[1]) != 1
+	|| sscanf(argv[3], "%lf", &scan[2]) != 1
+	|| sscanf(argv[4], "%lf", &scan[3]) != 1)
     {
 	bu_vls_printf(gedp->ged_result_str, "view %s: bad value detected - %s %s %s %s",
 		      argv[0], argv[1], argv[2], argv[3], argv[4]);
 	return GED_ERROR;
     }
+    HMOVE(quat, scan);
 
     quat_quat2mat(gedp->ged_gvp->gv_rotation, quat);
     ged_view_update(gedp->ged_gvp);

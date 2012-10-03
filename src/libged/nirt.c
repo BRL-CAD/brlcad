@@ -99,6 +99,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     vect_t center_model;
     vect_t dir;
     vect_t cml;
+    double scan[4]; /* holds sscanf values */
     int i = 9;
     struct solid *sp = NULL;
     char line[RT_MAXLINE] = {0};
@@ -145,12 +146,12 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     /* swipe x, y, z off the end if present */
     if (argc > 3) {
-	if (sscanf(argv[argc-3], "%lf", &center_model[X]) == 1 &&
-	    sscanf(argv[argc-2], "%lf", &center_model[Y]) == 1 &&
-	    sscanf(argv[argc-1], "%lf", &center_model[Z]) == 1) {
+	if (sscanf(argv[argc-3], "%lf", &scan[X]) == 1 &&
+	    sscanf(argv[argc-2], "%lf", &scan[Y]) == 1 &&
+	    sscanf(argv[argc-1], "%lf", &scan[Z]) == 1) {
 	    use_input_orig = 1;
 	    argc -= 3;
-	    VSCALE(center_model, center_model, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(center_model, scan, gedp->ged_wdbp->dbip->dbi_local2base);
 	}
     }
 
@@ -471,7 +472,11 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    BU_GET(ndlp, struct qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
-	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le", &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los);
+	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
+	    ndlp->x_in = scan[0];
+	    ndlp->y_in = scan[1];
+	    ndlp->z_in = scan[2];
+	    ndlp->los = scan[3];
 	    if (ret != 4) {
 		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four numbers.\n", bu_vls_addr(&v));
 		break;
@@ -497,8 +502,11 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    BU_GET(ndlp, struct qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
-	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le",
-			 &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los);
+	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le", &scan[0], &scan[1], &scan[2], &scan[3]);
+	    ndlp->x_in = scan[0];
+	    ndlp->y_in = scan[1];
+	    ndlp->z_in = scan[2];
+	    ndlp->los = scan[3];
 	    if (ret != 4) {
 		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four numbers.\n", bu_vls_addr(&v));
 		break;
@@ -572,6 +580,7 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
     fastf_t sf = 1.0 * DG_INV_GED;
     vect_t view_ray_orig;
     vect_t center_model;
+    double scan[3];
     struct bu_vls x_vls = BU_VLS_INIT_ZERO;
     struct bu_vls y_vls = BU_VLS_INIT_ZERO;
     struct bu_vls z_vls = BU_VLS_INIT_ZERO;
@@ -605,17 +614,17 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
      * being handed to nirt. All other arguments are passed straight
      * through to nirt.
      */
-    if (sscanf(argv[argc-2], "%lf", &view_ray_orig[X]) != 1 ||
-	sscanf(argv[argc-1], "%lf", &view_ray_orig[Y]) != 1) {
+    if (sscanf(argv[argc-2], "%lf", &scan[X]) != 1 ||
+	sscanf(argv[argc-1], "%lf", &scan[Y]) != 1) {
 	return GED_ERROR;
     }
-    view_ray_orig[Z] = DG_GED_MAX;
+    scan[Z] = DG_GED_MAX;
     argc -= 2;
 
     av = (char **)bu_calloc(1, sizeof(char *) * (argc + 4), "gd_vnirt_cmd: av");
 
     /* Calculate point from which to fire ray */
-    VSCALE(view_ray_orig, view_ray_orig, sf);
+    VSCALE(view_ray_orig, scan, sf);
     MAT4X3PNT(center_model, gedp->ged_gvp->gv_view2model, view_ray_orig);
     VSCALE(center_model, center_model, gedp->ged_wdbp->dbip->dbi_base2local);
 

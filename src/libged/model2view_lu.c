@@ -38,7 +38,7 @@ ged_model2view_lu(struct ged *gedp, int argc, const char *argv[])
 {
     fastf_t f;
     point_t view_pt;
-    point_t model_pt;
+    double model_pt[3]; /* intentionally double for scan */
     static const char *usage = "x y z";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
