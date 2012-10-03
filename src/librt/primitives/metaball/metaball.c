@@ -940,7 +940,9 @@ int
 rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_metaball_internal *mb;
-    const char *pts, *pend;;
+    const char *pts;
+    const char *pend;
+    double thresh;
 
     if(argc != 3)  {
 	bu_vls_printf(logstr, "Invalid number of arguments: %d\n", argc);
@@ -956,7 +958,8 @@ rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
 	return BRLCAD_ERROR;
     }
     mb->method = *argv[0] - '0';
-    sscanf(argv[1], "%lG", &mb->threshold);
+    sscanf(argv[1], "%lG", &thresh);
+    mb->threshold = thresh;
     BU_LIST_INIT(&mb->metaball_ctrl_head);
 
     pts = argv[2];
@@ -964,13 +967,16 @@ rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
 
     while(1) {
 	int len;
-	fastf_t fldstr, goo;
+	double xyz[3];
+	double fldstr, goo;
 	point_t loc;
 	const point_t *locp = (const point_t *)&loc;
 
 	while( pts < pend && *pts != '{' ) ++pts;
 	if(pts >= pend) break;
-	len = sscanf(pts, "{%lG %lG %lG %lG %lG}", loc+X, loc+Y, loc+Z, &fldstr, &goo);
+	len = sscanf(pts, "{%lG %lG %lG %lG %lG}", &xyz[0], &xyz[1], &xyz[2], &fldstr, &goo);
+	VMOVE(loc, xyz);
+
 	if(len == EOF) break;
 	if(len != 5) {
 	    bu_vls_printf(logstr, "Failed to parse point information: \"%s\"", pts);
