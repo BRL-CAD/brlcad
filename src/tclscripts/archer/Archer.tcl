@@ -8527,7 +8527,7 @@ proc title_node_handler {node} {
     set rflag 0
     $itk_component(ged) refresh_off
 
-    # Handling special case for zclip prefences (i.e. put zclip planes back where they were)
+    # Handling special case for zclip preferences (i.e. put zclip planes back where they were)
     if {$mZClipBackMaxPref != $mZClipBackMax ||
 	$mZClipFrontMaxPref != $mZClipFrontMax ||
 	$mZClipBackPref != $mZClipBack ||
