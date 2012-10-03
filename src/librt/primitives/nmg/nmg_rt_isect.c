@@ -355,7 +355,7 @@ get_pole_dist_to_face(struct ray_data *rd, struct vertexuse *vu, fastf_t *Pole, 
     vect_t pca_to_pole_vect;
     vect_t VtoPole_prj;
     point_t pcaA, pcaB;
-    double distA, distB;
+    fastf_t distA, distB;
     int code, status;
 
     VSETALL(pca_to_pole_vect, 0);
@@ -1426,7 +1426,7 @@ isect_ray_lseg(struct ray_data *rd, struct edgeuse *eu_p)
     int status;
     struct hitmiss *myhit;
     int vhit1, vhit2;
-    double dist_along_ray;
+    fastf_t dist_along_ray;
     vect_t r_dir_unit;
 
     VMOVE(r_dir_unit, rd->rp->r_dir);
@@ -2089,7 +2089,7 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p)
     }
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
-	double new_dist;
+	fastf_t new_dist;
 	bu_log("\tray (%16.10e %16.10e %16.10e) (-> %16.10e %16.10e %16.10e)\n",
 	       rd->rp->r_pt[0],
 	       rd->rp->r_pt[1],
