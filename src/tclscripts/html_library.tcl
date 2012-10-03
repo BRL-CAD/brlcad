@@ -438,7 +438,7 @@ proc HMtag_img {win param text} {
 # if we have a clickable image, arrange for a callback
 
 proc HMgot_image {win image_error} {
-    # if we're in a frame turn on geometry propogation
+    # if we're in a frame turn on geometry propagation
     if {[winfo name $win] == "label"} {
 	pack propagate [winfo parent $win] 1
     }
