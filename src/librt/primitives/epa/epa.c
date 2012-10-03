@@ -838,22 +838,28 @@ static void
 epa_plot_parabola(
 	struct bu_list *vhead,
 	struct rt_epa_internal *epa,
-	struct rt_pt_node *pts)
+	struct rt_pt_node *pts, 
+	vect_t Ru,
+	fastf_t r)
 {
     point_t p;
-    vect_t epa_V;
-    fastf_t mag_H;
+    vect_t epa_V, Hu;
+    fastf_t mag_H, z;
     struct rt_pt_node *node;
 
     VMOVE(epa_V, epa->epa_V);
     mag_H = MAGNITUDE(epa->epa_H);
+    VSCALE(Hu, epa->epa_H, 1.0 / mag_H);
 
-    VADD2(p, pts->p, epa_V);
+    z = pts->p[Z];
+    VJOIN2(p, epa_V, r * sqrt(z / mag_H + 1), Ru, -z, Hu);
     RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
 
     node = pts->next;
     while (node != NULL) {
-	VADD2(p, node->p, epa_V);
+	z = node->p[Z];
+	VJOIN2(p, epa_V, r * sqrt(z / mag_H + 1), Ru, -z, Hu);
+
 	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
 
 	node = node->next;
@@ -863,7 +869,7 @@ epa_plot_parabola(
 int
 rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
-    vect_t epa_V, epa_H, translate;
+    vect_t epa_V, epa_H, Hu, Au, Bu;
     fastf_t mag_H, z, r1, r2;
     int i, num_curve_points, num_ellipse_points;
     struct rt_epa_internal *epa;
@@ -879,8 +885,12 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 
     VMOVE(epa_V, epa->epa_V);
     VMOVE(epa_H, epa->epa_H);
+
     mag_H = MAGNITUDE(epa_H);
-    VADD2(translate, epa_V, epa_H);
+    VSCALE(Hu, epa->epa_H, 1.0 / mag_H);
+
+    VMOVE(Au, epa->epa_Au);
+    VCROSS(Bu, Au, Hu);
 
     r1 = epa->epa_r1;
     r2 = epa->epa_r2;
@@ -901,36 +911,14 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	z = (node1->p[Z] + node2->p[Z]) / 2.0;
 	epa_plot_ellipse(info->vhead, epa, -z, num_ellipse_points);
 
-	/* recalculate parabola points for plotting */
-	node1->p[X] = 0.0;
-	node2->p[X] = r2 * sqrt(z / mag_H + 1);
-
-	node1->p[Y] = r1 * sqrt(z / mag_H + 1);
-	node2->p[Y] = 0.0;
-
-	node1->p[Z] = node2->p[Z] = -z;
-
 	node1 = node1->next;
 	node2 = node2->next;
     }
 
-    /* plot one half of each curve */
-    epa_plot_parabola(info->vhead, epa, pts_r1);
-    epa_plot_parabola(info->vhead, epa, pts_r2);
-
-    /* plot the other half of each curve */
-    node1 = pts_r1;
-    node2 = pts_r2;
-    for (i = 0; i < num_curve_points; ++i) {
-	node2->p[X] *= -1.0;
-	node1->p[Y] *= -1.0;
-
-	node1 = node1->next;
-	node2 = node2->next;
-    }
-
-    epa_plot_parabola(info->vhead, epa, pts_r1);
-    epa_plot_parabola(info->vhead, epa, pts_r2);
+    epa_plot_parabola(info->vhead, epa, pts_r1, Au, r1);
+    epa_plot_parabola(info->vhead, epa, pts_r1, Au, -r1);
+    epa_plot_parabola(info->vhead, epa, pts_r1, Bu, r2);
+    epa_plot_parabola(info->vhead, epa, pts_r1, Bu, -r2);
 
     return 0;
 }
