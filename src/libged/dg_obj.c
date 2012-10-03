@@ -3218,7 +3218,7 @@ dgo_set_transparency_cmd(struct dg_obj *dgop,
     size_t i;
     struct directory **dpp;
     struct directory **tmp_dpp;
-    fastf_t transparency;
+    double transparency;
 
 
     if (argc != 3) {
