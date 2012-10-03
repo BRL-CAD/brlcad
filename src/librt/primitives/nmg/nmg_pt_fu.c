@@ -46,8 +46,8 @@
  */
 struct ve_dist {
     struct bu_list l;
-    uint32_t *magic_p;/* pointer to edge/vertex structure */
-    double dist;	/* distance squared from point to edge */
+    uint32_t *magic_p;	/* pointer to edge/vertex structure */
+    fastf_t dist;	/* distance squared from point to edge */
     struct vertex *v1;
     struct vertex *v2;
     int status;	/* return code from bn_dist_pt3_lseg3 */
