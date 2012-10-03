@@ -36,8 +36,9 @@ int
 ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat)
 {
     point_t pt;
-    vect_t axis;
-    fastf_t angle;
+    vect_t axisv;
+    double axis[3]; /* not fastf_t due to sscanf */
+    double angle; /* not fastf_t due to sscanf */
     static const char *usage = "x y z angle";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -80,7 +81,8 @@ ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat)
 
     VSETALL(pt, 0.0);
     VUNITIZE(axis);
-    bn_mat_arb_rot(rmat, pt, axis, angle*bn_degtorad);
+    VMOVE(axisv, axis);
+    bn_mat_arb_rot(rmat, pt, axisv, angle*bn_degtorad);
 
     return GED_OK;
 }

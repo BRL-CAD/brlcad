@@ -36,7 +36,7 @@
 int
 ged_ae2dir(struct ged *gedp, int argc, const char *argv[])
 {
-    fastf_t az, el;
+    double az, el;
     vect_t dir;
     int iflag;
     static const char *usage = "[-i] az el";

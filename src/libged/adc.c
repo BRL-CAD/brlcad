@@ -174,6 +174,7 @@ ged_adc(struct ged *gedp,
     char *command;
     char *parameter;
     char **argp = (char **)argv;
+    double scanval;
     point_t user_pt;		/* Value(s) provided by user */
     point_t scaled_pos;
     int incr_flag;
@@ -210,11 +211,13 @@ ged_adc(struct ged *gedp,
 	argp += 2;
     }
 
-    for (i = 0; i < argc; ++i)
-	if (sscanf(argp[i], "%lf", &user_pt[i]) != 1) {
+    for (i = 0; i < argc; ++i) {
+	if (sscanf(argp[i], "%lf", &scanval) != 1) {
 	    adc_usage(gedp->ged_result_str, command);
 	    return GED_ERROR;
 	}
+	user_pt[i] = scanval;
+    }
 
     if (BU_STR_EQUAL(parameter, "draw")) {
 	if (argc == 0) {

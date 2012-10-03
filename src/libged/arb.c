@@ -42,7 +42,7 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal internal;
     struct rt_arb_internal *arb;
     int i, j;
-    fastf_t rota, fb;
+    double rota, fb;
     vect_t norm1, norm2, norm3;
     static const char *usage = "name rot fb";
 
