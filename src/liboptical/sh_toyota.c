@@ -142,7 +142,7 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
 /* New since 4.4 release */
 {
     char mfile[200];
-    fastf_t l, a, b;
+    double l, a, b;
     FILE *fp;
     int i, lines;
     register struct toyota_specific *tp;
@@ -1824,7 +1824,8 @@ absorp_coeff(fastf_t lambda, char *material)
 
 {
     char mfile[80];
-    fastf_t a, l, absorp, absorp_h, absorp_l, lambda_h, lambda_l;
+    double a, l;
+    fastf_t absorp, absorp_h, absorp_l, lambda_h, lambda_l;
     fastf_t abso1, lamb1, lamb2, lambrat;
     FILE *fp;
     int n;

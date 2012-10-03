@@ -331,7 +331,7 @@ fire_render(struct application *ap, const struct partition *pp, struct shadework
     point_t sh_i_pt, sh_o_pt;	/* shader space in/out points */
     point_t noise_i_pt, noise_o_pt;	/* shader space in/out points */
     point_t noise_pt;
-    point_t color;
+    double color[3];
     vect_t noise_r_dir;
     double noise_r_thick;
     int i;

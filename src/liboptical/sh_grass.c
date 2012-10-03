@@ -674,7 +674,7 @@ make_bush(struct plant *pl, double seed, const fastf_t *cell_pos, const struct g
  *
  */
 static void
-hit_blade(const struct blade *UNUSED(bl), struct grass_ray *r, struct shadework *UNUSED(swp), const struct grass_specific *grass_sp, int UNUSED(seg), double *UNUSED(ldist), int UNUSED(blade_num), double UNUSED(fract))
+hit_blade(const struct blade *UNUSED(bl), struct grass_ray *r, struct shadework *UNUSED(swp), const struct grass_specific *grass_sp, int UNUSED(seg), fastf_t *UNUSED(ldist), int UNUSED(blade_num), double UNUSED(fract))
 
 
 /* defined in material.h */
@@ -705,7 +705,7 @@ isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, st
 
 
 {
-    double ldist[2];
+    fastf_t ldist[2];
     point_t pt;
     int cond;
     int seg;

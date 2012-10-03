@@ -493,7 +493,7 @@ do_ray_image(struct application *ap,
 
 struct imgdist {
     int status;
-    double dist;
+    fastf_t dist;
     struct bbd_img *bi;
     int index;
 };
