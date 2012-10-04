@@ -772,6 +772,27 @@ approximate_parabolic_curve(struct rt_pt_node *pts, fastf_t p, int num_new_point
     return num_new_points;
 }
 
+/* A canonical parabola in the Y-Z plane has equation z = y^2 / 4p, and opens
+ * toward positive z with vertex at the origin.
+ *
+ * The countour of an epa in the plane H-R (where R is one of the epa axes A or
+ * B) is a parabola with vertex at H, opening toward -H. We can transform this
+ * parabola to get an equivalent canonical parabola in the Y-Z plane, opening
+ * toward positive Z (-H) with vertex at the origin (H).
+ *
+ * This parabola passes through the point (r, |H|) (where r = |A| or |B|).  If
+ * we plug the point (r, |H|) into our canonical equation, we see how p relates
+ * to r and |H|:
+ *
+ *   |H| = r^2 / 4p
+ *     p = (r^2) / (4|H|)
+ */
+static fastf_t
+epa_parabola_p(fastf_t r, fastf_t mag_h)
+{
+    return (r * r) / (4 * mag_h);
+}
+
 static struct rt_pt_node *
 epa_parabolic_curve(fastf_t mag_h, fastf_t r, int num_points)
 {
@@ -785,13 +806,36 @@ epa_parabolic_curve(fastf_t mag_h, fastf_t r, int num_points)
     VSET(curve->p,       0, 0, -mag_h);
     VSET(curve->next->p, 0, r, 0);
 
-    count = approximate_parabolic_curve(curve, (r * r) / (4 * mag_h), num_points - 2);
+    count = approximate_parabolic_curve(curve, epa_parabola_p(r, mag_h), num_points - 2);
 
     if (count != (num_points - 2)) {
 	return NULL;
     }
 
     return curve;
+}
+
+/* The countour of an epa in the plane H-R (where R is one of the epa axes A or
+ * B) is a parabola with vertex at H, opening toward -H. We can transform this
+ * parabola into an equivalent one in the Y-Z plane which has vertext at (0, |H|)
+ * and opens toward -Z.
+ *
+ * The equation for this parabola is a variant of the equation for a canonical
+ * parabola in the Y-Z plane (z = y^2 / 4p):
+ *   z = |H| - y^2 / 4p
+ *
+ * Solving this equation for y yields:
+ *   y = sqrt(4p * (|H| - z))
+ *
+ * Substituting p = r^2 / 4|H| (see above comment):
+ *   y = sqrt(r^2 * (|H| - z) / |H|)
+ *     = r * sqrt((|H| - z) / |H|)
+ *     = r * sqrt(1 - z / |H|)
+ */
+static fastf_t
+epa_parabola_y(fastf_t r, fastf_t mag_H, fastf_t z)
+{
+    return r * sqrt(1 - z / mag_H);
 }
 
 /* Plot the elliptical cross section of the given epa at distance h along the
@@ -816,8 +860,8 @@ epa_plot_ellipse(struct bu_list *vhead, struct rt_epa_internal *epa, fastf_t h, 
     /* calculate semi-major and semi-minor axis for the elliptical
      * cross-section at distance h along H
      */
-    VSCALE(A, Au, epa->epa_r1 * sqrt(1 - h / mag_H));
-    VSCALE(B, Bu, epa->epa_r2 * sqrt(1 - h / mag_H));
+    VSCALE(A, Au, epa_parabola_y(epa->epa_r1, mag_H, h));
+    VSCALE(B, Bu, epa_parabola_y(epa->epa_r2, mag_H, h));
 
     VJOIN1(cross_section_plane, V, h, Hu);
     radian_step = bn_twopi / num_points;
@@ -852,13 +896,13 @@ epa_plot_parabola(
     VSCALE(Hu, epa->epa_H, 1.0 / mag_H);
 
     z = pts->p[Z];
-    VJOIN2(p, epa_V, r * sqrt(z / mag_H + 1), Ru, -z, Hu);
+    VJOIN2(p, epa_V, epa_parabola_y(r, mag_H, -z), Ru, -z, Hu);
     RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
 
     node = pts->next;
     while (node != NULL) {
 	z = node->p[Z];
-	VJOIN2(p, epa_V, r * sqrt(z / mag_H + 1), Ru, -z, Hu);
+	VJOIN2(p, epa_V, epa_parabola_y(r, mag_H, -z), Ru, -z, Hu);
 
 	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
 
