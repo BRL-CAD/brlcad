@@ -1056,7 +1056,7 @@ static struct cmdtab cmdtab[] = {
 static int
 X_dmInit()
 {
-    fastf_t windowbounds[6] = { 2047, -2048, 2047, -2048, 2047, -2048 };
+    fastf_t windowbounds[6] = { 2047.0, -2048.0, 2047.0, -2048.0, 2047.0, -2048.0 };
     const char *av[4];
 
     av[0] = "X_open";
@@ -1082,7 +1082,7 @@ X_dmInit()
 static int
 Ogl_dmInit()
 {
-    fastf_t windowbounds[6] = { 2047, -2048, 2047, -2048, 2047, -2048 };
+    fastf_t windowbounds[6] = { 2047.0, -2048.0, 2047.0, -2048.0, 2047.0, -2048.0 };
     char *av[4];
 
     av[0] = "Ogl_open";
