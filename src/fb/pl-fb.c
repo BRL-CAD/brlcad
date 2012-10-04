@@ -683,7 +683,7 @@ prep_dda(stroke *vp, coords *pt1, coords *pt2)
 /*
  * BuildStr - set up DDA parameters and queue stroke
  *
- * Given two end points of a line, allocate and intialize a stroke
+ * Given two end points of a line, allocate and initialize a stroke
  * descriptor for it.  If we are drawing "thick" lines we generate
  * several extra stroke descriptors as well.  In immediate or memory
  * buffered mode we rasterize it and free it right away.  In "regular"
