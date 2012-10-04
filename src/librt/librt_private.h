@@ -91,7 +91,13 @@ extern const union cutter *rt_advance_to_next_cell(struct rt_shootray_status *ss
 extern void rt_plot_cell(const union cutter *cutp, struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);
 
 
-extern fastf_t primitive_get_absolute_tolerance(const struct rt_tess_tol *ttol, fastf_t rel_to_abs);
+extern fastf_t primitive_get_absolute_tolerance(
+	const struct rt_tess_tol *ttol,
+	fastf_t rel_to_abs);
+
+extern fastf_t primitive_diagonal_samples(
+	struct rt_db_internal *ip,
+	const struct rt_view_info *info);
 
 __END_DECLS
 

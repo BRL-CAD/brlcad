@@ -787,26 +787,6 @@ draw_cross_sections_along_ell_vector(struct ell_draw_configuration config)
     }
 }
 
-static fastf_t
-curve_samples(struct rt_db_internal *ip, const struct rt_view_info *info)
-{
-    point_t bbox_min, bbox_max;
-    fastf_t primitive_diagonal_mm, samples_per_mm;
-    fastf_t diagonal_samples;
-
-    ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, info->tol);
-    primitive_diagonal_mm = DIST_PT_PT(bbox_min, bbox_max);
-
-    samples_per_mm = sqrt(info->view_samples) / info->view_size;
-    diagonal_samples = samples_per_mm * primitive_diagonal_mm;
-
-#if 0
-    bu_log("%.2f diagonal_samples = (%.2f view_samples / (%.2f * %.2f info->view_size)) * %.2f diagonal_mm\n", diagonal_samples, info->view_samples, info->view_size, info->view_size, primitive_diagonal_mm);
-#endif
-
-    return diagonal_samples;
-}
-
 int
 rt_ell_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
@@ -819,7 +799,7 @@ rt_ell_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
-    samples = curve_samples(ip, info);
+    samples = primitive_diagonal_samples(ip, info);
 
     config.vhead = info->vhead;
     VMOVE(config.ell_center, eip->v);
@@ -842,10 +822,6 @@ rt_ell_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     if (config.num_cross_sections > 5) {
 	config.num_cross_sections = 5;
     }
-
-#if 0
-    bu_log("%d points per cross section (%.2f samples)\n", config.points_per_section, samples);
-#endif
 
     VMOVE(config.ell_travel_vector, eip->a);
     VMOVE(config.ell_axis_vector_a, eip->b);

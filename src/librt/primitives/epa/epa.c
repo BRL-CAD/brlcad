@@ -875,8 +875,13 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     struct rt_epa_internal *epa;
     struct rt_pt_node *pts_r1, *pts_r2, *node1, *node2;
 
-    num_curve_points = 4;
-    num_ellipse_points = 16;
+    num_curve_points = sqrt(primitive_diagonal_samples(ip, info)) / 4.0;
+
+    if (num_curve_points < 3) {
+	num_curve_points = 3;
+    }
+
+    num_ellipse_points = 4 * num_curve_points;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);

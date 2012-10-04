@@ -1803,26 +1803,6 @@ rt_tgc_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = GENPTR_NULL;
 }
 
-static fastf_t
-curve_samples(struct rt_db_internal *ip, const struct rt_view_info *info)
-{
-    point_t bbox_min, bbox_max;
-    fastf_t primitive_diagonal_mm, samples_per_mm;
-    fastf_t diagonal_samples;
-
-    ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, info->tol);
-    primitive_diagonal_mm = DIST_PT_PT(bbox_min, bbox_max);
-
-    samples_per_mm = sqrt(info->view_samples) / info->view_size;
-    diagonal_samples = samples_per_mm * primitive_diagonal_mm;
-
-#if 0
-    bu_log("%.2f diagonal_samples = (%.2f view_samples / (%.2f * %.2f info->view_size)) * %.2f diagonal_mm\n", diagonal_samples, info->view_samples, info->view_size, info->view_size, primitive_diagonal_mm);
-#endif
-
-    return diagonal_samples;
-}
-
 struct ellipse {
     point_t center;
     vect_t axis_a;
@@ -1892,7 +1872,7 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
-    samples = sqrt(curve_samples(ip, info));
+    samples = sqrt(primitive_diagonal_samples(ip, info));
     if (samples < 6.0) {
 	samples = 6.0;
     }
@@ -1907,9 +1887,9 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VMOVE(ellipse2.axis_b, tip->d);
     draw_ellipse(info->vhead, ellipse2, samples);
 
-    samples /= 4.0;
-    if (samples < 4.0) {
-	samples = 4.0;
+    samples /= 2.0;
+    if (samples < 3.0) {
+	samples = 3.0;
     }
 
     draw_lines_between_ellipses(info->vhead, ellipse1, ellipse2, samples);

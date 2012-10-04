@@ -37,7 +37,9 @@
  */
 #define DEFAULT_REL_TOL .1
 fastf_t
-primitive_get_absolute_tolerance(const struct rt_tess_tol *ttol, fastf_t rel_to_abs)
+primitive_get_absolute_tolerance(
+	const struct rt_tess_tol *ttol,
+	fastf_t rel_to_abs)
 {
     fastf_t tol, rel_tol, abs_tol;
     int rel_tol_is_valid;
@@ -61,3 +63,32 @@ primitive_get_absolute_tolerance(const struct rt_tess_tol *ttol, fastf_t rel_to_
 
     return tol;
 }
+
+/**
+ * Gives a rough estimate of the maximum number of times a primitive's bounding
+ * box diagonal will be sampled based on the sample density of the view.
+ *
+ * Practically, it is an estimate of the maximum number of pixels that would be
+ * used if the diagonal line were drawn in the current view window.
+ *
+ * It is currently used in adaptive plot routines to help choose how many
+ * sample points should be used for plotted curves.
+ */
+fastf_t
+primitive_diagonal_samples(
+	struct rt_db_internal *ip,
+	const struct rt_view_info *info)
+{
+    point_t bbox_min, bbox_max;
+    fastf_t primitive_diagonal_mm, samples_per_mm;
+    fastf_t diagonal_samples;
+
+    ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, info->tol);
+    primitive_diagonal_mm = DIST_PT_PT(bbox_min, bbox_max);
+
+    samples_per_mm = sqrt(info->view_samples) / info->view_size;
+    diagonal_samples = samples_per_mm * primitive_diagonal_mm;
+
+    return diagonal_samples;
+}
+
