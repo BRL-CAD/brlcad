@@ -24,7 +24,6 @@
 #include "common.h"
 #include "bio.h"
 
-#define PLOTBOUND 1000.0  /* Max magnification in Rot matrix */
 #include <stdio.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
@@ -38,105 +37,264 @@
 
 
 int
-Nu_int0(void)
-{
-    return TCL_OK;
-}
-
-
-void
-Nu_void(void)
-{
-    return;
-}
-
-
-unsigned int
-Nu_unsign(void)
-{
-    return TCL_OK;
-}
-
-
-HIDDEN int
-Nu_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *UNUSED(data))
-{
-    if (!dmp || !callback_function) {
-	bu_log("WARNING: dmp or callback_function is NULL\n");
-	return TCL_ERROR;
-    }
-
-    return TCL_OK;
-}
-
-
-HIDDEN int
-Nu_fg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
-{
-    if (!dmp) {
-	bu_log("WARNING: NULL display (r/g/b => %d/%d/%d; strict => %d; transparency => %f)\n", r, g, b, strict, transparency);
-	return TCL_ERROR;
-    }
-
-    return TCL_OK;
-}
-
-
-HIDDEN int
-Nu_bg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
-{
-    if (!dmp) {
-	bu_log("WARNING: NULL display (r/g/b==%d/%d/%d)\n", r, g, b);
-	return TCL_ERROR;
-    }
-
-    return TCL_OK;
-}
-
-
-HIDDEN int
-Nu_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image))
+null_close(struct dm *UNUSED(dmp))
 {
     return 0;
 }
 
-struct dm dm_Null = {
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_draw,
-    Nu_fg,
-    Nu_bg,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_void,
-    Nu_int0,
-    Nu_int0,
-    Nu_getDisplayImage, /* display to image function */
-    Nu_void,
+
+int
+null_drawBegin(struct dm *UNUSED(dmp))
+{
+    return 0;
+}
+
+
+int
+null_drawEnd(struct dm *UNUSED(dmp))
+{
+    return 0;
+}
+
+
+int
+null_normal(struct dm *UNUSED(dmp))
+{
+    return 0;
+}
+
+
+int
+null_loadMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat), int UNUSED(which_eye))
+{
+    return 0;
+}
+
+
+int
+null_drawString2D(struct dm *UNUSED(dmp), const char *UNUSED(str), fastf_t UNUSED(x), fastf_t UNUSED(y), int UNUSED(size), int UNUSED(use_aspect))
+{
+    return 0;
+}
+
+
+int
+null_drawLine2D(struct dm *UNUSED(dmp), fastf_t UNUSED(x_1), fastf_t UNUSED(y_1), fastf_t UNUSED(x_2), fastf_t UNUSED(y_2))
+{
+    return 0;
+}
+
+
+int
+null_drawLine3D(struct dm *UNUSED(dmp), point_t UNUSED(pt1), point_t UNUSED(pt2))
+{
+    return 0;
+}
+
+
+int
+null_drawLines3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(points), int UNUSED(sflag))
+{
+    return 0;
+}
+
+
+int
+null_drawPoint2D(struct dm *UNUSED(dmp), fastf_t UNUSED(x), fastf_t UNUSED(y))
+{
+    return 0;
+}
+
+
+int
+null_drawPoint3D(struct dm *UNUSED(dmp), point_t UNUSED(point))
+{
+    return 0;
+}
+
+
+int
+null_drawPoints3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(points))
+{
+    return 0;
+}
+
+
+int
+null_drawVList(struct dm *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
+{
+    return 0;
+}
+
+
+int
+null_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
+{
+    return 0;
+}
+
+
+int
+null_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
+{
+    return dmp == NULL && callback_function == NULL && data == NULL;
+}
+
+
+int
+null_setFGColor(struct dm *UNUSED(dmp), unsigned char UNUSED(r), unsigned char UNUSED(g), unsigned char UNUSED(b), int UNUSED(strict), fastf_t UNUSED(transparency))
+{
+    return 0;
+}
+
+
+int
+null_setBGColor(struct dm *UNUSED(dmp), unsigned char UNUSED(r), unsigned char UNUSED(g), unsigned char UNUSED(b))
+{
+    return 0;
+}
+
+
+int
+null_setLineAttr(struct dm *UNUSED(dmp), int UNUSED(width), int UNUSED(style))
+{
+    return 0;
+}
+
+
+int
+null_configureWin(struct dm *UNUSED(dmp), int UNUSED(force))
+{
+    return 0;
+}
+
+
+int
+null_setWinBounds(struct dm *UNUSED(dmp), fastf_t *UNUSED(w))
+{
+    return 0;
+}
+
+
+int
+null_setLight(struct dm *UNUSED(dmp), int UNUSED(light_on))
+{
+    return 0;
+}
+
+
+int
+null_setTransparency(struct dm *UNUSED(dmp), int UNUSED(transparency))
+{
+    return 0;
+}
+
+
+int
+null_setDepthMask(struct dm *UNUSED(dmp), int UNUSED(mask))
+{
+    return 0;
+}
+
+
+int
+null_setZBuffer(struct dm *UNUSED(dmp), int UNUSED(zbuffer_on))
+{
+    return 0;
+}
+
+
+int
+null_debug(struct dm *UNUSED(dmp), int UNUSED(lvl))
+{
+    return 0;
+}
+
+
+int
+null_beginDList(struct dm *UNUSED(dmp), unsigned int UNUSED(list))
+{
+    return 0;
+}
+
+
+int
+null_endDList(struct dm *UNUSED(dmp))
+{
+    return 0;
+}
+
+
+void
+null_drawDList(unsigned int UNUSED(list))
+{
+}
+
+
+int
+null_freeDLists(struct dm *UNUSED(dmp), unsigned int UNUSED(list), int UNUSED(range))
+{
+    return 0;
+}
+
+
+int
+null_genDLists(struct dm *UNUSED(dmp), size_t UNUSED(range))
+{
+    return 0;
+}
+
+
+int
+null_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image))
+{
+    return 0;
+}
+
+
+void
+null_reshape(struct dm *UNUSED(dmp), int UNUSED(width), int UNUSED(height))
+{
+}
+
+
+struct dm dm_null = {
+    null_close,
+    null_drawBegin,
+    null_drawEnd,
+    null_normal,
+    null_loadMatrix,
+    null_drawString2D,
+    null_drawLine2D,
+    null_drawLine3D,
+    null_drawLines3D,
+    null_drawPoint2D,
+    null_drawPoint3D,
+    null_drawPoints3D,
+    null_drawVList,
+    null_drawVListHiddenLine,
+    null_draw,
+    null_setFGColor,
+    null_setBGColor,
+    null_setLineAttr,
+    null_configureWin,
+    null_setWinBounds,
+    null_setLight,
+    null_setTransparency,
+    null_setDepthMask,
+    null_setZBuffer,
+    null_debug,
+    null_beginDList,
+    null_endDList,
+    null_drawDList,
+    null_freeDLists,
+    null_genDLists,
+    null_getDisplayImage,
+    null_reshape,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
-    PLOTBOUND,			/* zoom-in limit */
+    0.0,			/* zoom-in limit */
     1,				/* bound flag */
     "nu",
     "Null Display",
