@@ -718,7 +718,7 @@ HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1, c
     struct edge_info *ei;
     struct edge_info *ei_p;
     struct edge_info *tmp;
-    double dist;
+    fastf_t dist;
 
     BU_CK_LIST_HEAD(&edge_list->l);
     BU_CK_LIST_HEAD(near1);
@@ -738,7 +738,7 @@ HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1, c
 	    if (ei_p->ved_p->magic_p == ei->ved_p->magic_p &&
 		ei_p->eu_p->eumate_p->vu_p->v_p == ei->eu_p->vu_p->v_p &&
 		ei_p->eu_p->vu_p->v_p == ei->eu_p->eumate_p->vu_p->v_p) {
-		if (rt_g.NMG_debug & DEBUG_PT_FU) {
+		if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU)) {
 		    bu_log("tossing edgeuse pair:\n");
 		    bu_log("(%g %g %g) -> (%g %g %g)\n",
 			   V3ARGS(ei->eu_p->vu_p->v_p->vg_p->coord),
@@ -783,7 +783,7 @@ HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1, c
 	}
     }
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU)) {
 	bu_log("dist %g near list\n", dist);
 	for (BU_LIST_FOR(ei, edge_info, near1)) {
 	    bu_log("\t(%g %g %g) -> (%g %g %g)\n",
