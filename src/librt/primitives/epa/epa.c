@@ -873,7 +873,7 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     fastf_t mag_H, z, r1, r2;
     int i, num_curve_points, num_ellipse_points;
     struct rt_epa_internal *epa;
-    struct rt_pt_node *pts_r1, *pts_r2, *node1, *node2;
+    struct rt_pt_node *pts_r1, *pts_r2, *node, *node1, *node2;
 
     num_curve_points = sqrt(primitive_diagonal_samples(ip, info)) / 4.0;
 
@@ -924,6 +924,19 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     epa_plot_parabola(info->vhead, epa, pts_r1, Au, -r1);
     epa_plot_parabola(info->vhead, epa, pts_r1, Bu, r2);
     epa_plot_parabola(info->vhead, epa, pts_r1, Bu, -r2);
+
+    node1 = pts_r1;
+    node2 = pts_r2;
+    for (i = 0; i < num_curve_points; ++i) {
+	node = node1;
+	bu_free(node, "rt_pt_node");
+
+	node = node2;
+	bu_free(node, "rt_pt_node");
+
+	node1 = node1->next;
+	node2 = node2->next;
+    }
 
     return 0;
 }
