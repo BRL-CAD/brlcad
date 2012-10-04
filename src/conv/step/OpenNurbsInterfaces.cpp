@@ -2053,7 +2053,7 @@ Ellipse::LoadONBrep(ON_Brep *brep) {
     double b = semi_axis_2 * LocalUnits::length;
     ON_Ellipse ellipse(plane, a, b);
 
-    double eccentricity = sqrt(1.0 - (b * b) / (a * a));
+    // double eccentricity = sqrt(1.0 - (b * b) / (a * a));
     // ON_3dPoint focus_1 = center + (eccentricity * a) * xaxis;
     // ON_3dPoint focus_2 = center - (eccentricity * a) * xaxis;
 
