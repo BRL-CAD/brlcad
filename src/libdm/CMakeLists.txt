@@ -52,7 +52,7 @@ endif(BRLCAD_ENABLE_TK AND NOT WIN32)
 set_property(GLOBAL PROPERTY libdm_DEFINES "${libdm_DEFINES}")
 
 # Unfortunately, on Mac OS X the OpenGL headers are not C90
-# compilant - anything pulling them in needs the C99 flag
+# compliant - anything pulling them in needs the C99 flag
 get_property(libdm_C_FLAGS GLOBAL PROPERTY libdm_C_FLAGS)
 list(APPEND libdm_C_DEFINES "${C99_FLAG}")
 set_property(GLOBAL PROPERTY libdm_C_FLAGS "${libdm_C_FLAGS}")
