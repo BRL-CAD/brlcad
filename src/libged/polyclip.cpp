@@ -692,14 +692,16 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 		}
 	    }
 
+	    /* found a point on a polygon B contour that's outside of polygon A */
 	    if (!(winding%2))
 		break;
 	}
-    }
 
-    if (winding%2) {
-	ret = 1;
-	goto end;
+	/* found a B polygon contour that's completely inside polygon A */
+	if (winding%2) {
+	    ret = 1;
+	    goto end;
+	}
     }
 
     for (i = 0; i < polyA_2d.p_num_contours; ++i) {
@@ -759,9 +761,14 @@ ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
 		}
 	    }
 
+	    /* found a point on a polygon A contour that's outside of polygon B */
 	    if (!(winding%2))
 		break;
 	}
+
+	/* found an A polygon contour that's completely inside polygon B */
+	if (winding%2)
+	    break;
     }
 
     ret = winding%2;
