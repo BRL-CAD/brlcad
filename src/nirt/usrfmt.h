@@ -170,7 +170,7 @@ extern FILE *fopenrc(void);
 #define elevation()	(ValTab[VTI_E].value.fval)
 #define g_entry(i)	(ValTab[VTI_XPREV_OUT + i].value.fval)
 
-/* Define D, H, and V for use with the preceeding macros.
+/* Define D, H, and V for use with the preceding macros.
  *
  * NOTE! --- H was defined in vmath.h as the index of the fourth
  * homogeneous coordinate.  In NIRT, we are not using H that way!
