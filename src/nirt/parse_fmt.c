@@ -194,7 +194,7 @@ format_output (const char* buffer, com_table* ctp, struct rt_i *UNUSED(rtip))
 		use_defaults = 1;
 		break;
 	    }
-	    fprintf(stderr, "Error: Illegal format specifiation: '%s'\n", buffer);
+	    fprintf(stderr, "Error: Illegal format specification: '%s'\n", buffer);
 	    /* fall through here */
 	case '?':
 	    com_usage(ctp);
@@ -216,7 +216,7 @@ format_output (const char* buffer, com_table* ctp, struct rt_i *UNUSED(rtip))
 
 
 /**
- * uoutspect is the user's output specification (format & args).
+ * uoutspec is the user's output specification (format & args).
  * outcom_type is the type of output command
  */
 void
