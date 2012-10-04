@@ -22,7 +22,7 @@ CODING PLAN
 
 ** Add Variables to PCSet
 ** Add Constraints to PCSet
-** Add BinaryNetowrk(PCSet &) constructor
+** Add BinaryNetwork(PCSet &) constructor
 ** Test BinaryNetwork generation from PCSet
 ** Rename "funct" functor in Constraint to more meaningful eval()
 **  Using PCSet methods make the above functor argumentless
