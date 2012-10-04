@@ -639,7 +639,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
 
     /*
      * Check to see if a broadcast message is sitting in the queue.
-     * The mutex prevents a read and write from occuring at the same time.
+     * The mutex prevents a read and write from occurring at the same time.
      */
     pthread_mutex_lock(&tienet_master_broadcast_mut);
     if (sock->mesg.size) {
@@ -784,7 +784,7 @@ void tienet_master_shutdown()
 	}
     }
 
-    printf("Total data transfered: %.1f MiB\n", (tfloat)tienet_master_transfer/(tfloat)(1024*1024));
+    printf("Total data transferred: %.1f MiB\n", (tfloat)tienet_master_transfer/(tfloat)(1024*1024));
 }
 
 
@@ -793,7 +793,7 @@ void tienet_master_broadcast(const void *mesg, size_t mesg_len)
 {
     tienet_master_socket_t *socket;
 
-    /* Prevent a Read and Write of the broadcast from occuring at the same time */
+    /* Prevent a Read and Write of the broadcast from occurring at the same time */
     pthread_mutex_lock(&tienet_master_broadcast_mut);
 
     /* Send a message to each available socket */
