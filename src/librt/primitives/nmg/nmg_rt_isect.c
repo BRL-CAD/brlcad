@@ -2082,13 +2082,13 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p)
     VMOVE(plane_pt, rd->plane_pt);
     dist = rd->ray_dist_to_plane;
 
-    if (DIST_PT_PLANE(plane_pt, norm) > rd->tol->dist) {
+    if (UNLIKELY(fabs(DIST_PT_PLANE(plane_pt, norm)) > rd->tol->dist)) {
 	bu_log("%s:%d plane_pt (%g %g %g) @ dist (%g)out of tolerance\n",
 	       __FILE__, __LINE__, V3ARGS(plane_pt), dist);
 	bu_bomb("isect_ray_planar_face() dist out of tol\n");
     }
 
-    if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_RT_ISECT)) {
 	fastf_t new_dist;
 	bu_log("\tray (%16.10e %16.10e %16.10e) (-> %16.10e %16.10e %16.10e)\n",
 	       rd->rp->r_pt[0],
