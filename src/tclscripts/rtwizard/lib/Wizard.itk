@@ -21,7 +21,7 @@
 #
 # This is the 'revised' Wizard class. It uses a notebook like the
 # original version, but it ditches the Prev/Next/Cancel buttons.
-# Rather it incoporates a menubar and help frame. Switching between
+# Rather it incorporates a menubar and help frame. Switching between
 # steps is accomplished using a menu with checkboxes. The check-
 # boxes indicate whether a particular step has been accomplished.
 #
@@ -327,7 +327,7 @@ namespace eval RtWizard {
     #
     # Adds a content page to the Wizard. The page should be implemented
     # as an iwidget that inherits from labeledframe. This is primarily
-    # for consistancy.
+    # for consistency.
     #
     # The content page must support these puplic methods.
     #
