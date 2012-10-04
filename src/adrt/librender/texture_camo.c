@@ -20,7 +20,7 @@
 /** @file librender/texture.h
  *
  *  Comments -
- *      Texture Library - Applies a 3 color camoflauge
+ *      Texture Library - Applies a 3 color camouflage
  *
  */
 
