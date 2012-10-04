@@ -31,6 +31,7 @@ int
 drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, char *log_bu, float *wireColor)
 {
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
+    GLdouble pt[3];
 
     if (dmp->dm_debugLevel)
 	bu_log(log_bu);
@@ -63,8 +64,10 @@ drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, char *log_bu, float *wireCo
     }
 
     glBegin(GL_LINES);
-    glVertex3dv(pt1);
-    glVertex3dv(pt2);
+    VMOVE(pt, pt1); /* fastf_t to GLdouble */
+    glVertex3dv(pt);
+    VMOVE(pt, pt2); /* fastf_t to GLdouble */
+    glVertex3dv(pt);
     glEnd();
 
     return TCL_OK;
@@ -114,8 +117,11 @@ drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag, char *log_b
     else
 	glBegin(GL_LINES);
 
-    for (i = 0; i < npoints; ++i)
-	glVertex3dv(points[i]);
+    for (i = 0; i < npoints; ++i) {
+	GLdouble pt[3];
+	VMOVE(pt, points[i]); /* fastf_t to GLdouble */
+	glVertex3dv(pt);
+    }
 
     glEnd();
 
