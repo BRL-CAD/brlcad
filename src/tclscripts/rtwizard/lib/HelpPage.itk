@@ -260,7 +260,7 @@ namespace eval RtWizard {
 	    NormalTag
 
 	$t insert insert \
-	    "The RtWizard uses imbedded MGED objects to allow the user to interact with the BRL-CAD database. These objects are placed are placed on a series of pages. These pages are the Full Color, Line Drawing, Highlighted Image and Ghost Image pages. The purpose of these pages is to select the objects that a rendered in the various modes. For example, the objects selected on the line-drawing page will be rendered as line drawings.\n\n" \
+	    "The RtWizard uses embedded MGED objects to allow the user to interact with the BRL-CAD database. These objects are placed are placed on a series of pages. These pages are the Full Color, Line Drawing, Highlighted Image and Ghost Image pages. The purpose of these pages is to select the objects that a rendered in the various modes. For example, the objects selected on the line-drawing page will be rendered as line drawings.\n\n" \
 	    NormalTag
 
 	$t insert insert \
