@@ -281,7 +281,7 @@ namespace eval RtWizard {
 
 	#
 	# Create a frame for the center of the panel. On the left
-	# will be the hierachy window, on the right will be the
+	# will be the hierarchy window, on the right will be the
 	# mged window over its controls
 	#
 	itk_component add midFrame {
@@ -688,7 +688,7 @@ namespace eval RtWizard {
 	    set objs [lsort $objs]
 	} else {
 	    #
-	    # For the given parent, get its consituents using the 'lt'
+	    # For the given parent, get its constituents using the 'lt'
 	    # command. This produces a tcl list of the items.
 	    #
 	    set t [file tail $parent]
