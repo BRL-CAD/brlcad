@@ -21,7 +21,7 @@
 #
 #				L U N I Q
 #
-#	Accepts a list and replaces multiple consecutive occurences
+#	Accepts a list and replaces multiple consecutive occurrences
 #	of a value with a single copy
 #
 proc luniq {list_in} {
