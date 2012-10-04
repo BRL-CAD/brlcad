@@ -46,7 +46,7 @@ private:
 };
 
 
-/* Structures for defining varios derived objects from
+/* Structures for defining various derived objects from
  * constrained_value template in Boost
  */
 
