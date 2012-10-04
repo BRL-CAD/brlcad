@@ -707,7 +707,7 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
   Fill normal and hit point into hit struct and if the flipped
   flag is set, reverse the normal.  Return a private copy of the
   flipped normal in normvec.  NOTE: the normal placed in the hit
-  struct should not be modified (ie reversed) by the application
+  struct should not be modified (i.e. reversed) by the application
   because it can be instanced by other solids.
 */
 void
