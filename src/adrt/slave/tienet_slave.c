@@ -66,7 +66,7 @@ void tienet_slave_init(int port, char *host,
     tienet_slave_fcb_free = fcb_free;
 
 
-    /* Store version key for comparisson with version key on master */
+    /* Store version key for comparison with version key on master */
     tienet_slave_ver_key = ver_key;
 
     /*
