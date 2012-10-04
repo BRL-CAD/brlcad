@@ -331,10 +331,10 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 
     eu = eu_in;
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	bu_log("nmg_class_pt_euvu((%g %g %g), eu=x%x)\n", V3ARGS(pt), eu);
 
-    if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC) {
+    if (UNLIKELY(*eu->up.magic_p != NMG_LOOPUSE_MAGIC)) {
 	bu_log("nmg_class_pt_euvu() called with eu (x%x) that isn't part of a loop\n", eu);
 	bu_bomb("nmg_class_pt_euvu() called with eu that isn't part of a loop");
     }
@@ -355,7 +355,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	struct edgeuse *eu_test;
 	int done=0;
 
-	if (rt_g.NMG_debug & DEBUG_PT_FU)
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	    bu_log("nmg_class_pt_euvu: eu x%x is a crack\n", eu);
 
 	/* find next eu from this vertex that is not a crack */
@@ -379,7 +379,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	else
 	    eu = eu_test;
 
-	if (rt_g.NMG_debug & DEBUG_PT_FU)
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	    bu_log("\tUsing eu x%x instead\n", eu);
     }
 
@@ -387,7 +387,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	struct edgeuse *eu_test;
 	int done=0;
 
-	if (rt_g.NMG_debug & DEBUG_PT_FU)
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	    bu_log("nmg_class_pt_euvu: prev_eu (x%x) is a crack\n", prev_eu);
 
 	/* find previous eu ending at this vertex that is not a crack */
@@ -411,17 +411,17 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	else
 	    prev_eu = eu_test;
 
-	if (rt_g.NMG_debug & DEBUG_PT_FU)
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	    bu_log("\tUsing prev_eu x%x instead\n", prev_eu);
     }
 
     /* left is the Y-axis of our XY-coordinate system */
-    if (nmg_find_eu_leftvec(left,  eu)) {
+    if (UNLIKELY(nmg_find_eu_leftvec(left, eu))) {
 	bu_log("nmg_class_pt_euvu: nmg_find_eu_leftvec() for eu=x%x failed!\n", eu);
 	bu_bomb("nmg_class_pt_euvu: nmg_find_eu_leftvec() failed!");
     }
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	bu_log("\tprev_eu = x%x, left = (%g %g %g)\n", prev_eu, V3ARGS(left));
 
     /* v0 is the origin of the XY-coordinat system */
@@ -436,7 +436,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
     v2 = prev_eu->vu_p->v_p;
     NMG_CK_VERTEX(v2);
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	bu_log("\tv0=x%x, v1=x%x, v2=x%x\n", v0, v1, v2);
 
     /* eu_dir is our X-direction */
@@ -445,7 +445,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
     /* other_eudir is direction along the previous EU (from origin) */
     VSUB2(other_eudir, v2->vg_p->coord, v0->vg_p->coord);
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	bu_log("\teu_dir=(%g %g %g), other_eudir=(%x %x %x)\n", V3ARGS(eu_dir), V3ARGS(other_eudir));
 
     /* get X and Y components for other_eu */
@@ -455,13 +455,13 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
     /* which quadrant does this XY point lie in */
     quado = Quadrant(xo, yo);
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	bu_log("\txo=%g, yo=%g, qudarant=%d\n", xo, yo, quado);
 
     /* get direction to PT from origin */
     VSUB2(pt_dir, pt, v0->vg_p->coord);
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	bu_log("\tpt_dir=(%g %g %g)\n", V3ARGS(pt_dir));
 
     /* get X and Y components for PT */
@@ -471,7 +471,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
     /* which quadrant does this XY point lie in */
     quadpt = Quadrant(xpt, ypt);
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	bu_log("\txpt=%g, ypt=%g, qudarant=%d\n", xpt, ypt, quadpt);
 
     /* do a quadrant comparison first (cheap!!!) */
@@ -490,7 +490,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
     xpt = xpt/len;
     ypt = ypt/len;
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	bu_log("\tNormalized xo, yo=(%g %g), xpt, ypt=(%g %g)\n", xo, yo, xpt, ypt);
 
     switch (quadpt) {
@@ -523,7 +523,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
 	    bu_bomb("This can't happen (illegal quadrant)\n");
 	    break;
     }
-    if (rt_g.NMG_debug & DEBUG_PT_FU)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	bu_log("returning %s\n", nmg_class_name(class));
 
     return class;
