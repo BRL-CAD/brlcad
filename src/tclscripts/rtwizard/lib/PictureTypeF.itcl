@@ -45,7 +45,7 @@ namespace eval RtWizard {
     # None!
 
     #
-    # The PictureTypeF class supports makeing a Ghost view image overlayed
+    # The PictureTypeF class supports making a Ghost view image overlaid
     # with a full-color insert and lines.
     #
     ::itcl::class PictureTypeF {
@@ -57,7 +57,7 @@ namespace eval RtWizard {
 	    } {}
 
 	    #
-	    # Methods that impliment abstract base class methods.
+	    # Methods that implement abstract base class methods.
 	    # Unfortunately, I have to redeclare them here.
 	    #
 	    method activate {}
