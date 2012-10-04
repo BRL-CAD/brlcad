@@ -349,10 +349,14 @@ dmo_parseAxesArgs(int argc,
 		  int *tripleColor,
 		  struct bu_vls *vlsp)
 {
-    if (argc < 3 || sscanf(argv[2], "%lf", viewSize) != 1) {
+    double scan;
+
+    if (argc < 3 || sscanf(argv[2], "%lf", &scan) != 1) {
 	bu_vls_printf(vlsp, "parseAxesArgs: bad view size - %s\n", argv[2]);
 	return TCL_ERROR;
     }
+    /* convert double to fastf_t */
+    *viewSize = scan;
 
     if (argc < 4 || bn_decode_mat(rmat, argv[3]) != 16) {
 	bu_vls_printf(vlsp, "parseAxesArgs: bad rmat - %s\n", argv[3]);
@@ -364,10 +368,12 @@ dmo_parseAxesArgs(int argc,
 	return TCL_ERROR;
     }
 
-    if (argc < 6 || sscanf(argv[5], "%lf", axesSize) != 1) {
+    if (argc < 6 || sscanf(argv[5], "%lf", &scan) != 1) {
 	bu_vls_printf(vlsp, "parseAxesArgs: bad axes size - %s\n", argv[5]);
 	return TCL_ERROR;
     }
+    /* convert double to fastf_t */
+    *axesSize = scan;
 
     if (argc < 7 || sscanf(argv[6], "%d %d %d",
 			   &axesColor[0],
@@ -597,10 +603,14 @@ dmo_parseDataAxesArgs(int argc,
 		      int *lineWidth,
 		      struct bu_vls *vlsp)
 {
-    if (argc < 3 || sscanf(argv[2], "%lf", viewSize) != 1) {
+    double scan;
+
+    if (argc < 3 || sscanf(argv[2], "%lf", &scan) != 1) {
 	bu_vls_printf(vlsp, "parseDataAxesArgs: bad view size - %s\n", argv[2]);
 	return TCL_ERROR;
     }
+    /* convert double to fastf_t */
+    *viewSize = scan;
 
     if (argc < 4 || bn_decode_mat(rmat, argv[3]) != 16) {
 	bu_vls_printf(vlsp, "parseDataAxesArgs: bad rmat - %s\n", argv[3]);
@@ -618,10 +628,12 @@ dmo_parseDataAxesArgs(int argc,
 	return TCL_ERROR;
     }
 
-    if (argc < 7 || sscanf(argv[6], "%lf", axesSize) != 1) {
+    if (argc < 7 || sscanf(argv[6], "%lf", &scan) != 1) {
 	bu_vls_printf(vlsp, "parseDataAxesArgs: bad axes size - %s\n", argv[6]);
 	return TCL_ERROR;
     }
+    /* convert double to fastf_t */
+    *axesSize = scan;
 
     if (argc < 8 || sscanf(argv[7], "%d %d %d",
 			   &axesColor[0],
@@ -743,6 +755,8 @@ dmo_parseModelAxesArgs(int argc,
 		       int *tickThreshold,
 		       struct bu_vls *vlsp)
 {
+    double scan;
+
     if (dmo_parseAxesArgs(argc, argv, viewSize, rmat, axesPos, axesSize,
 			  axesColor, labelColor, lineWidth,
 			  posOnly, tripleColor, vlsp) == TCL_ERROR)
@@ -791,10 +805,12 @@ dmo_parseModelAxesArgs(int argc,
     }
 
 /* parse tick interval */
-    if (sscanf(argv[15], "%lf", tickInterval) != 1) {
+    if (sscanf(argv[15], "%lf", &scan) != 1) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: tick interval must be > 0");
 	return TCL_ERROR;
     }
+    /* convert double to fastf_t */
+    *tickInterval = scan;
 
 /* validate tick interval */
     if (*tickInterval <= 0) {
@@ -1242,6 +1258,7 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
 		  const char **argv)
 {
     int color[3];
+    double scan;
     fastf_t viewSize;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -1252,13 +1269,15 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
 	return TCL_ERROR;
     }
 
-    if (sscanf(argv[1], "%lf", &viewSize) != 1) {
+    if (sscanf(argv[1], "%lf", &scan) != 1) {
 	bu_vls_printf(&vls, "drawScale: bad view size - %s\n", argv[1]);
 	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
     }
+    /* convert double to fastf_t */
+    viewSize = scan;
 
     if (sscanf(argv[2], "%d %d %d",
 	       &color[0],
@@ -2077,8 +2096,11 @@ dmo_bounds_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-    vect_t clipmin, clipmax;
     Tcl_Obj *obj;
+
+    /* intentionally double for scan */
+    double clipmin[3];
+    double clipmax[3];
 
     if (!dmop || !dmop->interp)
 	return TCL_ERROR;
