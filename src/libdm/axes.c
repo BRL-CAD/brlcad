@@ -21,7 +21,7 @@
  *
  * Functions -
  *	draw_axes	Common axes drawing routine that draws axes at the
- *			specifed point and orientation.
+ *			specified point and orientation.
  *
  */
 
