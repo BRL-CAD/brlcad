@@ -27,11 +27,11 @@
  *
  * default - quaternions in the order x, y, z, w.
  *
- * -z option - Eulers angles, in the order xyz. The model axes are
+ * -z option - Euler angles, in the order xyz. The model axes are
  * considered to be rotated about the camera's z, y, and x axes (in
  * that order).
  *
- * -y option - Eulers angles in the form yaw, pitch, roll.
+ * -y option - Euler angles in the form yaw, pitch, roll.
  *
  * This is more or less a special case of anim_orient.c
  *
