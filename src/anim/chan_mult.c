@@ -39,7 +39,7 @@ main(int argc, char **argv)
     int i, j, doit, of, count, val, *col_list;
 
     if (argc < 4) {
-	fprintf(stderr, "Usage: chan_mult factor num_columnss column [col ... ] < in.file > out.file\n");
+	fprintf(stderr, "Usage: chan_mult factor num_columns column [col ... ] < in.file > out.file\n");
 	return -1;
     }
 
