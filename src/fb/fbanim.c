@@ -20,8 +20,8 @@
  */
 /** @file fbanim.c
  *
- * Dynamicly modify framebuffer Zoom and Window parameters, to flip
- * betwen sub-images, giving an inexpensive animation effect.
+ * Dynamically modify framebuffer Zoom and Window parameters, to flip
+ * between sub-images, giving an inexpensive animation effect.
  *
  */
 
