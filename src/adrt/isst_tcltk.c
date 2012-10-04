@@ -154,7 +154,7 @@ isst_load_g(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
     VMOVE(isst->camera_pos_init, isst->camera.pos);
     VMOVE(isst->camera_focus_init, isst->camera.focus);
 
-    /* Set the inital az and el values in Tcl/Tk */
+    /* Set the initial az and el values in Tcl/Tk */
     VSUB2(vec, isst->camera.pos, isst->camera.focus);
     VUNITIZE(vec);
     AZEL_FROM_V3DIR(az, el, vec);
