@@ -20,7 +20,7 @@
  */
 /** @file fbzoom.c
  *
- * Dynamicly modify Ikonas Zoom and Window parameters, using VI and/or
+ * Dynamically modify Ikonas Zoom and Window parameters, using VI and/or
  * EMACS-like keystrokes on a regular terminal.
  *
  */
