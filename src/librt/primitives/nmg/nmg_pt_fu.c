@@ -249,13 +249,13 @@ nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu)
 static int
 Quadrant(fastf_t x, fastf_t y)
 {
-    if (x >= 0.0) {
-	if (y >= 0.0)
+    if (x > -SMALL_FASTF) {
+	if (y > -SMALL_FASTF)
 	    return 1;
 	else
 	    return 4;
     } else {
-	if (y >= 0.0)
+	if (y > -SMALL_FASTF)
 	    return 2;
 	else
 	    return 3;
