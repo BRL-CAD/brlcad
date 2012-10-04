@@ -3796,7 +3796,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
     fastf_t *inter_dist;
     int i;
 
-    if (rt_g.NMG_debug & DEBUG_POLYSECT)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT))
 	bu_log("nmg_isect_eu_fu: eu=x%x, fu=x%x START\n", eu, fu);
 
     NMG_CK_INTER_STRUCT(is);
@@ -3804,14 +3804,14 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
     NMG_CK_EDGEUSE(eu);
     BU_CK_PTBL(verts);
 
-    if (nmg_find_fu_of_eu(eu) == fu) {
+    if (UNLIKELY(nmg_find_fu_of_eu(eu) == fu)) {
 	bu_log("nmg_isect_eu_fu() called with eu (x%x) from its own fu (x%x)\n", eu, fu);
 	bu_bomb("nmg_isect_eu_fu() called with eu from its own fu");
     }
 
     m = nmg_find_model(&fu->l.magic);
     NMG_CK_MODEL(m);
-    if (nmg_find_model(&eu->l.magic) != m) {
+    if (UNLIKELY(nmg_find_model(&eu->l.magic) != m)) {
 	bu_log("nmg_isect_eu_fu() called with EU (x%x) from model (x%x)\n", eu, nmg_find_model(&eu->l.magic));
 	bu_log("\tand FU (x%x) from model (x%x)\n", fu, m);
 	bu_bomb("nmg_isect_eu_fu() called with EU and FU from different models");
@@ -3825,8 +3825,8 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
     VSUB2(dir, vg2->coord, vg1->coord);
     VMOVE(edir, dir);
     eu_len = MAGNITUDE(dir);
-    if (eu_len < is->tol.dist || eu_len <= SMALL_FASTF) {
-	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+    if (eu_len < is->tol.dist) {
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT))
 	    bu_log("\tnmg_isec_eu_fu: 0 length edge\n");
 	return;
     }
@@ -3837,14 +3837,14 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
     NMG_GET_FU_PLANE(pl, fu);
     /* check if edge line intersects plane of fu */
     if (bn_isect_line3_plane(&dist, vg1->coord, dir, pl, &is->tol) < 1) {
-	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT))
 	    bu_log("\tnmg_isec_eu_fu: no intersection\n");
 	return;
     }
 
     VJOIN1(hit_pt, vg1->coord, dist, dir);
 
-    if (rt_g.NMG_debug & DEBUG_POLYSECT)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT))
 	bu_log("\tintersection point at (%g %g %g)\n", V3ARGS(hit_pt));
 
     /* create a list of intersection vertices */
@@ -3878,16 +3878,14 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	int class;
 	fastf_t dist_to_plane;
 
-	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT))
 	    bu_log("\tNo intersection points found\n");
 
 	/* check if EU endpoints are within tolerance of FU
 	 * If so, the endpoint is the intersection and nothing to do
 	 */
-	dist_to_plane = DIST_PT_PLANE(vg1->coord, pl);
-	if (dist_to_plane < 0.0)
-	    dist_to_plane = (-dist_to_plane);
-	if (dist_to_plane <= is->tol.dist) {
+	dist_to_plane = fabs(DIST_PT_PLANE(vg1->coord, pl));
+	if (dist_to_plane < is->tol.dist) {
 	    /* check if hit point is within fu */
 	    class = nmg_class_pt_fu_except(vg1->coord, fu, (struct loopuse *)NULL,
 					   0, 0, (char *)NULL, 0, 0, &is->tol);
@@ -3904,10 +3902,8 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	    goto out;
 	}
 
-	dist_to_plane = DIST_PT_PLANE(vg2->coord, pl);
-	if (dist_to_plane < 0.0)
-	    dist_to_plane = (-dist_to_plane);
-	if (dist_to_plane <= is->tol.dist) {
+	dist_to_plane = fabs(DIST_PT_PLANE(vg2->coord, pl));
+	if (dist_to_plane < is->tol.dist) {
 	    /* check if hit point is within fu */
 	    class = nmg_class_pt_fu_except(vg2->coord, fu, (struct loopuse *)NULL,
 					   0, 0, (char *)NULL, 0, 0, &is->tol);
@@ -3928,21 +3924,21 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 
 	/* make sure intersection is within limits of eu */
 	if (dist < (-is->tol.dist) || dist > eu_len+is->tol.dist) {
-	    if (rt_g.NMG_debug & DEBUG_POLYSECT)
+	    if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT))
 		bu_log("\tnmg_isec_eu_fu: intersection beyond ends of EU\n");
 	    goto out;
 	}
 
 	/* check if hit_point is within tolerance of an end of eu */
-	if (VDIST_SQ(hit_pt, vg1->coord) <= is->tol.dist_sq) {
+	if (bn_pt3_pt3_equal(hit_pt, vg1->coord, &is->tol)) {
 	    v = eu->vu_p->v_p;
 	    VMOVE(hit_pt, vg1->coord);
-	} else if (VDIST_SQ(hit_pt, vg2->coord) <= is->tol.dist_sq) {
+	} else if (bn_pt3_pt3_equal(hit_pt, vg2->coord, &is->tol)) {
 	    v = eu->eumate_p->vu_p->v_p;
 	    VMOVE(hit_pt, vg2->coord);
 	}
 
-	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT)) {
 	    bu_log("\tHit point is not within tolerance of eu endpoints\n");
 	    bu_log("\t\thit_pt=(%g %g %g), eu=(%g %g %g)<->(%g %g %g)\n",
 		   V3ARGS(hit_pt), V3ARGS(vg1->coord), V3ARGS(vg2->coord));
@@ -3959,13 +3955,13 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	    if (!v)
 		v = nmg_find_pt_in_model(m, hit_pt, &is->tol);
 	    if (v != eu->vu_p->v_p && v != eu->eumate_p->vu_p->v_p) {
-		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT))
 		    bu_log("\tsplitting eu (x%x) at hit_pt (v=x%x)\n", eu, v);
 
 		new_eu = nmg_esplit(v, eu, 1);
 		if (!v) {
 		    v = new_eu->vu_p->v_p;
-		    if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		    if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT))
 			bu_log("\tnew vertex at hit point is x%x\n", v);
 		    nmg_vertex_gv(v, hit_pt);
 		}
@@ -3989,7 +3985,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	v = (struct vertex *)BU_PTBL_GET(&inters, 0);
 	NMG_CK_VERTEX(v);
 
-	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT))
 	    bu_log("Only one intersect vertex (x%x), just split all EU's at (x%x)\n", v, eu);
 
 	if (v == eu->vu_p->v_p || v == eu->eumate_p->vu_p->v_p)
@@ -4005,7 +4001,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
     inter_dist = (fastf_t *)bu_calloc(BU_PTBL_END(&inters), sizeof(fastf_t),
 				      "nmg_isect_eu_fu: inter_dist");
 
-    if (rt_g.NMG_debug & DEBUG_POLYSECT)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT))
 	bu_log("%d intersect vertices along eu (x%x)\n", BU_PTBL_END(&inters), eu);
 
     for (i=0; i<BU_PTBL_END(&inters); i++) {
@@ -4019,13 +4015,13 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	NMG_CK_VERTEX_G(vg);
 
 	VSUB2(diff, vg->coord, vg1->coord);
-	if (VDOT(diff, dir) < -SMALL_FASTF) {
+	if (UNLIKELY(VDOT(diff, dir) < -SMALL_FASTF)) {
 	    bu_bomb("nmg_isect_eu_fu: intersection point not on eu\n");
 	}
 	inter_dist[i] = MAGSQ(diff);
     }
 
-    if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT)) {
 	bu_log("Intersect vertices along eu x%x:\n", eu);
 	for (i=0; i<BU_PTBL_END(&inters); i++)
 	    bu_log("%d x%x %g\n", i+1, BU_PTBL_GET(&inters, i), inter_dist[i]);
@@ -4053,7 +4049,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 	NMG_CK_VERTEX(v);
 
 	if (v != eu->vu_p->v_p && v != eu->eumate_p->vu_p->v_p) {
-	    if (rt_g.NMG_debug & DEBUG_POLYSECT)
+	    if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT))
 		bu_log("Breaking edges at vertex #%d, dist=%g, v=x%x\n", i+1, inter_dist[i], v);
 	    (void)nmg_break_all_es_on_v(&fu->l.magic, v, &is->tol);
 	    (void)nmg_break_all_es_on_v(&eu->l.magic, v, &is->tol);
@@ -4067,7 +4063,7 @@ nmg_isect_eu_fu(struct nmg_inter_struct *is, struct bu_ptbl *verts, struct edgeu
 out:
     bu_ptbl_free(&inters);
 
-    if (rt_g.NMG_debug & DEBUG_POLYSECT)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT))
 	bu_log("nmg_isect_eu_fu: eu=x%x, fu=x%x END\n", eu, fu);
 
 }
