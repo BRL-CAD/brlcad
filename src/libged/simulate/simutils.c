@@ -24,6 +24,10 @@
  *
  */
 
+#include "common.h"
+
+#ifdef HAVE_BULLET
+
 /* Private Header */
 #include "simutils.h"
 
@@ -885,6 +889,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 
 }
 
+#endif
 
 /*
  * Local Variables:

@@ -24,7 +24,10 @@
  *
  */
 
+
 #include "common.h"
+
+#ifdef HAVE_BULLET
 
 /* Private Header */
 #include "simrt.h"
@@ -1359,6 +1362,7 @@ generate_manifolds(struct simulation_params *sim_params,
     return GED_OK;
 }
 
+#endif
 
 /*
  * Local Variables:
