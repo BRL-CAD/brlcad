@@ -1295,7 +1295,7 @@ main(int argc, char *argv[])
     predictor_init();
 
     BU_GET(dmp, struct dm);
-    *dmp = dm_Null;
+    *dmp = dm_null;
     bu_vls_init(&pathName);
     bu_vls_init(&tkName);
     bu_vls_init(&dName);

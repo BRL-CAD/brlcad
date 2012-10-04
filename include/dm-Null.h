@@ -24,6 +24,7 @@
  */
 #ifndef __DM_NULL__
 #define __DM_NULL__
+#include "dm.h"
 
 DM_EXPORT extern struct dm dm_null;
 
