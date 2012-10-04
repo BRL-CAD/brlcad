@@ -34,6 +34,8 @@
 #include "vmath.h"
 #include "dm.h"
 
+#include "dm-Null.h"
+
 
 extern struct dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
 extern struct dm *ps_open(Tcl_Interp *interp, int argc, const char *argv[]);
@@ -70,7 +72,7 @@ extern int wgl_share_dlist();
 
 
 HIDDEN struct dm *
-Nu_open(Tcl_Interp *interp, int argc, const char *argv[])
+null_open(Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct dm *dmp;
 
@@ -81,7 +83,7 @@ Nu_open(Tcl_Interp *interp, int argc, const char *argv[])
     if (dmp == DM_NULL)
 	return DM_NULL;
 
-    *dmp = dm_Null;
+    *dmp = dm_null;
     dmp->dm_interp = interp;
 
     return dmp;
@@ -93,7 +95,7 @@ dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
 {
     switch (type) {
 	case DM_TYPE_NULL:
-	    return Nu_open(interp, argc, argv);
+	    return null_open(interp, argc, argv);
 	case DM_TYPE_PLOT:
 	    return plot_open(interp, argc, argv);
 	case DM_TYPE_PS:

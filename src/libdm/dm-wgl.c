@@ -1287,7 +1287,7 @@ wgl_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-wgl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+wgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     if (dmp->dm_debugLevel)
 	bu_log("wgl_drawString2D()\n");
@@ -2136,12 +2136,12 @@ struct dm dm_wgl = {
     wgl_drawDList,
     wgl_freeDLists,
     wgl_genDLists,
-    Nu_int0, /* display to image function */
+    null_getDisplayImage,	/* display to image function */
     wgl_reshape,
     0,
     1,				/* has displaylist */
-    0,                            /* no stereo by default */
-    1.0,				/* zoom-in limit */
+    0,                          /* no stereo by default */
+    1.0,			/* zoom-in limit */
     1,				/* bound flag */
     "wgl",
     "Windows with OpenGL graphics",

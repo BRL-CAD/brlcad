@@ -44,8 +44,11 @@
 #include "bn.h"
 #include "mater.h"
 #include "raytrace.h"
+
 #include "dm.h"
 #include "dm-ps.h"
+#include "dm-Null.h"
+
 #include "solid.h"
 
 #include "./dm_util.h"
@@ -350,7 +353,7 @@ ps_normal(struct dm *dmp)
  */
 /* ARGSUSED */
 HIDDEN int
-ps_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
+ps_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
 {
     int sx, sy;
 
@@ -513,28 +516,28 @@ struct dm dm_ps = {
     ps_drawLine3D,
     ps_drawLines3D,
     ps_drawPoint2D,
-    Nu_int0,
-    Nu_int0,
+    null_drawPoint3D,
+    null_drawPoints3D,
     ps_drawVList,
     ps_drawVList,
     ps_draw,
     ps_setFGColor,
     ps_setBGColor,
     ps_setLineAttr,
-    Nu_int0,
+    null_configureWin,
     ps_setWinBounds,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0,
+    null_setLight,
+    null_setTransparency,
+    null_setDepthMask,
+    null_setZBuffer,
     ps_debug,
-    Nu_int0,
-    Nu_int0,
-    Nu_void,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0, /* display to image function */
-    Nu_void,
+    null_beginDList,
+    null_endDList,
+    null_drawDList,
+    null_freeDLists,
+    null_genDLists,
+    null_getDisplayImage,	/* display to image function */
+    null_reshape,
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */
@@ -674,7 +677,7 @@ ps_open(Tcl_Interp *interp, int argc, const char *argv[])
 		break;
 	    case 's':               /* size in inches */
 		{
-		    fastf_t size;
+		    double size;
 
 		    if (argv[0][2] != '\0')
 			sscanf(&argv[0][2], "%lf", &size);

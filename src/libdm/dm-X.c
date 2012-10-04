@@ -59,6 +59,7 @@
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-X.h"
+#include "dm-Null.h"
 #include "dm_xvars.h"
 #include "solid.h"
 
@@ -1148,7 +1149,7 @@ X_normal(struct dm *dmp)
  * beam is as specified.
  */
 HIDDEN int
-X_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+X_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int sx, sy;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
@@ -1639,8 +1640,8 @@ struct dm dm_X = {
     X_drawLine3D,
     X_drawLines3D,
     X_drawPoint2D,
-    Nu_int0,
-    Nu_int0,
+    null_drawPoint3D,
+    null_drawPoints3D,
     X_drawVList,
     X_drawVList,
     X_draw,
@@ -1650,15 +1651,15 @@ struct dm dm_X = {
     X_configureWin,
     X_setWinBounds,
     X_setLight,
-    Nu_int0,
-    Nu_int0,
+    null_setTransparency,
+    null_setDepthMask,
     X_setZBuffer,
     X_debug,
-    Nu_int0,
-    Nu_int0,
-    Nu_void,
-    Nu_int0,
-    Nu_int0,
+    null_beginDList,
+    null_endDList,
+    null_drawDList,
+    null_freeDLists,
+    null_genDLists,
     X_getDisplayImage, /* display to image function */
     X_reshape,
     0,

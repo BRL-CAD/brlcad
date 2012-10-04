@@ -218,38 +218,38 @@ struct dm_vars {
  * Interface to a specific Display Manager
  */
 struct dm {
-    int (*dm_close)();
-    int (*dm_drawBegin)();	/**< @brief formerly dmr_prolog */
-    int (*dm_drawEnd)();		/**< @brief formerly dmr_epilog */
-    int (*dm_normal)();
-    int (*dm_loadMatrix)();
-    int (*dm_drawString2D)();	/**< @brief formerly dmr_puts */
-    int (*dm_drawLine2D)();	/**< @brief formerly dmr_2d_line */
-    int (*dm_drawLine3D)();
-    int (*dm_drawLines3D)();
-    int (*dm_drawPoint2D)();
-    int (*dm_drawPoint3D)();
-    int (*dm_drawPoints3D)();
-    int (*dm_drawVList)();
-    int (*dm_drawVListHiddenLine)();
+    int (*dm_close)(struct dm *dmp);
+    int (*dm_drawBegin)(struct dm *dmp);	/**< @brief formerly dmr_prolog */
+    int (*dm_drawEnd)(struct dm *dmp);		/**< @brief formerly dmr_epilog */
+    int (*dm_normal)(struct dm *dmp);
+    int (*dm_loadMatrix)(struct dm *dmp, fastf_t *mat, int which_eye);
+    int (*dm_drawString2D)(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);	/**< @brief formerly dmr_puts */
+    int (*dm_drawLine2D)(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2);	/**< @brief formerly dmr_2d_line */
+    int (*dm_drawLine3D)(struct dm *dmp, point_t pt1, point_t pt2);
+    int (*dm_drawLines3D)(struct dm *dmp, int npoints, point_t *points, int sflag);
+    int (*dm_drawPoint2D)(struct dm *dmp, fastf_t x, fastf_t y);
+    int (*dm_drawPoint3D)(struct dm *dmp, point_t point);
+    int (*dm_drawPoints3D)(struct dm *dmp, int npoints, point_t *points);
+    int (*dm_drawVList)(struct dm *dmp, struct bn_vlist *vp);
+    int (*dm_drawVListHiddenLine)(struct dm *dmp, register struct bn_vlist *vp);
     int (*dm_draw)(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data);	/**< @brief formerly dmr_object */
     int (*dm_setFGColor)(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
     int (*dm_setBGColor)(struct dm *, unsigned char, unsigned char, unsigned char);
-    int (*dm_setLineAttr)();	/**< @brief currently - linewidth, (not-)dashed */
-    int (*dm_configureWin)();
-    int (*dm_setWinBounds)();
-    int (*dm_setLight)();
-    int (*dm_setTransparency)();
-    int (*dm_setDepthMask)();
-    int (*dm_setZBuffer)();
-    int (*dm_debug)();		/**< @brief Set DM debug level */
-    int (*dm_beginDList)();
-    int (*dm_endDList)();
-    void (*dm_drawDList)();
-    int (*dm_freeDLists)();
-    int (*dm_genDLists)();
+    int (*dm_setLineAttr)(struct dm *dmp, int width, int style);	/**< @brief currently - linewidth, (not-)dashed */
+    int (*dm_configureWin)(struct dm *dmp, int force);
+    int (*dm_setWinBounds)(struct dm *dmp, fastf_t *w);
+    int (*dm_setLight)(struct dm *dmp, int light_on);
+    int (*dm_setTransparency)(struct dm *dmp, int transparency_on);
+    int (*dm_setDepthMask)(struct dm *dmp, int depthMask_on);
+    int (*dm_setZBuffer)(struct dm *dmp, int zbuffer_on);
+    int (*dm_debug)(struct dm *dmp, int lvl);		/**< @brief Set DM debug level */
+    int (*dm_beginDList)(struct dm *dmp, unsigned int list);
+    int (*dm_endDList)(struct dm *dmp);
+    void (*dm_drawDList)(unsigned int list);
+    int (*dm_freeDLists)(struct dm *dmp, unsigned int list, int range);
+    int (*dm_genDLists)(struct dm *dmp, size_t range);
     int (*dm_getDisplayImage)(struct dm *dmp, unsigned char **image);
-    void (*dm_reshape)();
+    void (*dm_reshape)(struct dm *dmp, int width, int height);
     unsigned long dm_id;          /**< @brief window id */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */
@@ -321,7 +321,6 @@ struct dm {
 #define DM_GEN_DLISTS(_dmp, _range) _dmp->dm_genDLists(_dmp, _range)
 #define DM_GET_DISPLAY_IMAGE(_dmp, _image) _dmp->dm_getDisplayImage(_dmp, _image)
 
-DM_EXPORT extern struct dm dm_Null;
 DM_EXPORT extern struct dm dm_ogl;
 DM_EXPORT extern struct dm dm_plot;
 DM_EXPORT extern struct dm dm_ps;
@@ -353,9 +352,6 @@ DM_EXPORT extern int dm_processOptions();
 DM_EXPORT extern int dm_limit(int i);
 DM_EXPORT extern int dm_unlimit(int i);
 DM_EXPORT extern fastf_t dm_wrap(fastf_t f);
-DM_EXPORT extern void Nu_void();
-DM_EXPORT extern int Nu_int0();
-DM_EXPORT extern unsigned Nu_unsign();
 
 /* adc.c */
 DM_EXPORT extern void dm_draw_adc(struct dm *dmp,

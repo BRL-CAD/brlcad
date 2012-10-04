@@ -118,8 +118,8 @@ struct dm dm_rtgl = {
     rtgl_drawDList,
     rtgl_freeDLists,
     rtgl_genDLists,
-    Nu_int0, /* display to image function */
-    Nu_void,
+    null_getDisplayImage,	/* display to image function */
+    null_reshape,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */
@@ -2012,7 +2012,7 @@ rtgl_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-rtgl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
+rtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
     if (!dmp)
 	return TCL_ERROR;

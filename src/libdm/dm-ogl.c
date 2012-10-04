@@ -103,7 +103,7 @@ HIDDEN int ogl_drawBegin(struct dm *dmp);
 HIDDEN int ogl_drawEnd(struct dm *dmp);
 HIDDEN int ogl_normal(struct dm *dmp);
 HIDDEN int ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
-HIDDEN int ogl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+HIDDEN int ogl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 HIDDEN int ogl_drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2);
 HIDDEN int ogl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
 HIDDEN int ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag);
@@ -132,7 +132,6 @@ HIDDEN int ogl_genDLists(struct dm *dmp, size_t range);
 HIDDEN int ogl_getDisplayImage(struct dm *dmp, unsigned char **image);
 HIDDEN void ogl_reshape(struct dm *dmp, int width, int height);
 
-HIDDEN int ogl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 HIDDEN int ogl_setLight(struct dm *dmp, int lighting_on);
 HIDDEN int ogl_setZBuffer(struct dm *dmp, int zbuffer_on);
 
@@ -1765,7 +1764,7 @@ ogl_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-ogl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
+ogl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_drawString2D()\n");

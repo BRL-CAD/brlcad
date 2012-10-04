@@ -60,6 +60,7 @@
 #include "dm.h"
 #include "dm-tk.h"
 #include "dm-X.h"
+#include "dm-Null.h"
 #include "dm_xvars.h"
 #include "solid.h"
 
@@ -493,7 +494,7 @@ tk_normal(struct dm *dmp)
  */
 /* ARGSUSED */
 HIDDEN int
-tk_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+tk_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int sx, sy;
 
@@ -818,8 +819,8 @@ struct dm dm_tk = {
     tk_drawLine3D,
     tk_drawLines3D,
     tk_drawPoint2D,
-    Nu_int0,
-    Nu_int0,
+    null_drawPoint3D,
+    null_drawPoints3D,
     tk_drawVList,
     tk_drawVList,
     tk_draw,
@@ -829,20 +830,20 @@ struct dm dm_tk = {
     tk_configureWin,
     tk_setWinBounds,
     tk_setLight,
-    Nu_int0,
-    Nu_int0,
+    null_setTransparency,
+    null_setDepthMask,
     tk_setZBuffer,
     tk_debug,
-    Nu_int0,
-    Nu_int0,
-    Nu_void,
-    Nu_int0,
-    Nu_int0,
-    Nu_int0, /* display to image function */
-    Nu_void,
+    null_beginDList,
+    null_endDList,
+    null_drawDList,
+    null_freeDLists,
+    null_genDLists,
+    null_getDisplayImage,	/* display to image function */
+    null_reshape,
     0,
     0,				/* no displaylist */
-    0,                            /* no stereo */
+    0,				/* no stereo */
     PLOTBOUND,			/* zoom-in limit */
     1,				/* bound flag */
     "Tk",
