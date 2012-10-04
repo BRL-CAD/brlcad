@@ -191,7 +191,7 @@ private:
 };
 
 
-/** UserFunction Defintion */
+/** UserFunction Definition */
 struct UserFuncExpression;
 struct UserFunction : public MathFunction
 {
