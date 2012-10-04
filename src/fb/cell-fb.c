@@ -225,7 +225,7 @@ read_Cell_Data(void)
 
     /*
      * First time through...
-     * 1) initailize line-buffer pointer and try to fill the line buffer
+     * 1) initialize line-buffer pointer and try to fill the line buffer
      * 2) build the format for sscanf()
      */
     if (lbp == NULL) {
