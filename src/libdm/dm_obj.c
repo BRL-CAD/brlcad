@@ -113,7 +113,7 @@ dmo_openFb(struct dm_obj *dmop)
     if (dmop->dmo_fbs.fbs_fbp != FBIO_NULL)
 	return TCL_OK;
 
-    /* don't use bu_calloc so we can fail slightly more gradefully */
+    /* don't use bu_calloc so we can fail slightly more gracefully */
     if ((dmop->dmo_fbs.fbs_fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
 	Tcl_Obj *obj;
 
