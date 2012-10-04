@@ -314,7 +314,7 @@ BU_FORTRAN(frnreg, FRNREG)(int *nreg, struct rt_i **rtip)
  * Given a region number (range 1..nregions), return the right-hand
  * portion of the name in the provided buffer.
  *
- * XXX buflen is provided "automaticly" on the Apollo.
+ * XXX buflen is provided "automatically" on the Apollo.
  */
 void
 BU_FORTRAN(frname, FRNAME)(char *fbuf,
