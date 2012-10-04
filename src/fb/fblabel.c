@@ -337,7 +337,7 @@ get_args(int argc, char **argv)
 		}
 	    }
 		break;
-		/* backword compatability */
+		/* backward compatibility */
 	    case 'r':
 		pixcolor[RED] = atoi(bu_optarg);
 		break;
