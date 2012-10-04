@@ -151,7 +151,7 @@ namespace eval RtWizard {
 
 	#
 	# Create a frame for the center of the panel. On the left
-	# will be the hierachy window, on the right will be the
+	# will be the hierarchy window, on the right will be the
 	# mged window over its controls
 	#
 	itk_component add midFrame {
