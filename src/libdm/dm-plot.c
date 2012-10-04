@@ -24,7 +24,7 @@
  * contain the faceplate display as well.  Mostly, a useful hack for
  * making viewgraphs and photographs of an editing session.  We assume
  * that the UNIX-plot filter used can at least discard the
- * non-standard extention to specify color (a Doug Gwyn addition).
+ * non-standard extension to specify color (a Doug Gwyn addition).
  *
  */
 
