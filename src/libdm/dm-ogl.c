@@ -1432,10 +1432,14 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 	register int i;
 	register int nused = tvp->nused;
 	register int *cmd = tvp->cmd;
-	register point_t *pt = tvp->pt;
+	point_t *pt = tvp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    GLdouble dpt[3];
+	    VMOVE(dpt, *pt); /* fastf_t-to-double */
+
 	    if (dmp->dm_debugLevel > 2)
-		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
+		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(dpt));
+
 	    switch (*cmd) {
 		case BN_VLIST_LINE_MOVE:
 		case BN_VLIST_LINE_DRAW:
@@ -1448,13 +1452,13 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 
 		    glBegin(GL_POLYGON);
 		    /* Set surface normal (vl_pnt points outward) */
-		    glNormal3dv(*pt);
+		    glNormal3dv(dpt);
 		    break;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_TRI_MOVE:
 		case BN_VLIST_TRI_DRAW:
-		    glVertex3dv(*pt);
+		    glVertex3dv(dpt);
 		    break;
 		case BN_VLIST_POLY_END:
 		    /* Draw, End Polygon */
@@ -1464,7 +1468,7 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 		case BN_VLIST_POLY_VERTNORM:
 		case BN_VLIST_TRI_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
-		    glNormal3dv(*pt);
+		    glNormal3dv(dpt);
 		    break;
 		case BN_VLIST_TRI_START:
 		    if (first)
@@ -1473,7 +1477,7 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 		    first = 0;
 
 		    /* Set surface normal (vl_pnt points outward) */
-		    glNormal3dv(*pt);
+		    glNormal3dv(dpt);
 
 		    break;
 		case BN_VLIST_TRI_END:
@@ -1496,10 +1500,15 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 	register int i;
 	register int nused = tvp->nused;
 	register int *cmd = tvp->cmd;
-	register point_t *pt = tvp->pt;
+	point_t *pt = tvp->pt;
+
 	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    GLdouble dpt[3];
+	    VMOVE(dpt, *pt); /* fastf_t-to-double */
+
 	    if (dmp->dm_debugLevel > 2)
-		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
+		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(dpt));
+
 	    switch (*cmd) {
 		case BN_VLIST_LINE_MOVE:
 		    /* Move, start line */
@@ -1508,7 +1517,7 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 		    first = 0;
 
 		    glBegin(GL_LINE_STRIP);
-		    glVertex3dv(*pt);
+		    glVertex3dv(dpt);
 		    break;
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_TRI_START:
@@ -1524,19 +1533,19 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_TRI_MOVE:
 		case BN_VLIST_TRI_DRAW:
-		    glVertex3dv(*pt);
+		    glVertex3dv(dpt);
 		    break;
 		case BN_VLIST_POLY_END:
 		case BN_VLIST_TRI_END:
 		    /* Draw, End Polygon */
-		    glVertex3dv(*pt);
+		    glVertex3dv(dpt);
 		    glEnd();
 		    first = 1;
 		    break;
 		case BN_VLIST_POLY_VERTNORM:
 		case BN_VLIST_TRI_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
-		    glNormal3dv(*pt);
+		    glNormal3dv(dpt);
 		    break;
 	    }
 	}
@@ -1584,8 +1593,12 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	int *cmd = tvp->cmd;
 	point_t *pt = tvp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    GLdouble dpt[3];
+	    VMOVE(dpt, *pt);
+
 	    if (dmp->dm_debugLevel > 2)
-		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
+		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(dpt));
+
 	    switch (*cmd) {
 		case BN_VLIST_LINE_MOVE:
 		    /* Move, start line */
@@ -1605,7 +1618,7 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    }
 
 		    glBegin(GL_LINE_STRIP);
-		    glVertex3dv(*pt);
+		    glVertex3dv(dpt);
 		    break;
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_TRI_START:
@@ -1645,7 +1658,7 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			glBegin(GL_TRIANGLES);
 
 		    /* Set surface normal (vl_pnt points outward) */
-		    glNormal3dv(*pt);
+		    glNormal3dv(dpt);
 
 		    first = 0;
 
@@ -1655,7 +1668,7 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_TRI_MOVE:
 		case BN_VLIST_TRI_DRAW:
-		    glVertex3dv(*pt);
+		    glVertex3dv(dpt);
 		    break;
 		case BN_VLIST_POLY_END:
 		    /* Draw, End Polygon */
@@ -1667,7 +1680,7 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_POLY_VERTNORM:
 		case BN_VLIST_TRI_VERTNORM:
 		    /* Set per-vertex normal.  Given before vert. */
-		    glNormal3dv(*pt);
+		    glNormal3dv(dpt);
 		    break;
 		case BN_VLIST_POINT_DRAW:
 		    if (first == 0)
@@ -1675,7 +1688,7 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    first = 0;
 		    glPointSize(5.0);
 		    glBegin(GL_POINTS);
-		    glVertex3dv(*pt);
+		    glVertex3dv(dpt);
 		    break;
 	    }
 	}
@@ -1821,6 +1834,8 @@ ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 HIDDEN int
 ogl_drawPoint3D(struct dm *dmp, point_t point)
 {
+    GLdouble dpt[3];
+
     if (!dmp || !point)
 	return TCL_ERROR;
 
@@ -1829,8 +1844,11 @@ ogl_drawPoint3D(struct dm *dmp, point_t point)
 	bu_log("\tdmp: %p\tpt - %lf %lf %lf\n", (void*)dmp, V3ARGS(point));
     }
 
+    /* fastf_t to double */
+    VMOVE(dpt, point);
+
     glBegin(GL_POINTS);
-    glVertex3dv(point);
+    glVertex3dv(dpt);
     glEnd();
 
     return TCL_OK;
@@ -1840,6 +1858,7 @@ ogl_drawPoint3D(struct dm *dmp, point_t point)
 HIDDEN int
 ogl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
 {
+    GLdouble dpt[3];
     register int i;
 
     if (!dmp || npoints < 0 || !points)
@@ -1849,9 +1868,13 @@ ogl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
 	bu_log("ogl_drawPoint3D():\n");
     }
 
+
     glBegin(GL_POINTS);
-    for (i = 0; i < npoints; ++i)
-	glVertex3dv(points[i]);
+    for (i = 0; i < npoints; ++i) {
+	/* fastf_t to double */
+	VMOVE(dpt, points[i]);
+	glVertex3dv(dpt);
+    }
     glEnd();
 
     return TCL_OK;
