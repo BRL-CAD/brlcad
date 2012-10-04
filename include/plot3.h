@@ -62,7 +62,7 @@ BN_EXPORT extern void pl_line(FILE *plotfp,
 		     int tx,
 		     int ty);
 BN_EXPORT extern void pl_linmod(FILE *plotfp,
-		     char *s);
+		     const char *s);
 BN_EXPORT extern void pl_move(FILE *plotfp,
 		     int x,
 		     int y);
@@ -70,7 +70,7 @@ BN_EXPORT extern void pl_cont(FILE *plotfp,
 		     int x,
 		     int y);
 BN_EXPORT extern void pl_label(FILE *plotfp,
-		     char *s);
+		     const char *s);
 BN_EXPORT extern void pl_space(FILE *plotfp,
 		     int x_1,
 		     int y_1,
