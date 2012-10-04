@@ -42,7 +42,7 @@ namespace eval RtWizard {
     # None!
 
     #
-    # The PictureTypeE class supports making a ghost view image overlayed
+    # The PictureTypeE class supports making a ghost view image overlaid
     # with a full-color insert.
     #
     ::itcl::class PictureTypeE {
