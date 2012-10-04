@@ -223,7 +223,7 @@ main(int argc, char **argv)
 		 curX, curY, curPix[RED], curPix[GRN], curPix[BLU] );
 	fflush( stderr );
 
-	SimpleInput();			/* read and do keybord	*/
+	SimpleInput();			/* read and do keyboard	*/
     }
 
     fb_cursor( fbp, 0, curX, curY );	/* turn off */
