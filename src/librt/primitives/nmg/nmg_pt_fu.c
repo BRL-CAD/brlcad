@@ -886,7 +886,7 @@ compute_loop_class(struct fpi *fpi,
     struct bu_list near1;
     int lu_class = NMG_CLASS_Unknown;
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU)) {
 	bu_log("compute_loop_class()\n");
 	for (BU_LIST_FOR(ei, edge_info, &edge_list->l)) {
 	    bu_log("dist:%g class:%s status:%d\n\tv1(%g %g %g) v2(%g %g %g)\n",
@@ -917,7 +917,7 @@ compute_loop_class(struct fpi *fpi,
 	} else
 	    bu_bomb("bad lu orientation\n");
 
-	if (rt_g.NMG_debug & DEBUG_PT_FU) {
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU)) {
 	    bu_log("list was empty, so class is %s\n",
 		   nmg_class_name(lu_class));
 	}
@@ -934,7 +934,7 @@ compute_loop_class(struct fpi *fpi,
 	    case 1: /* pt is on ei->ved_p->v1 */
 	    case 2: /* pt is on ei->ved_p->v2 */
 		lu_class = NMG_CLASS_AonBshared;
-		if (rt_g.NMG_debug & DEBUG_PT_FU)
+		if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 		    pl_pt_lu(fpi, lu, ei);
 		done = 1;
 		break;
@@ -942,11 +942,11 @@ compute_loop_class(struct fpi *fpi,
 	    case 4: /* pt pca is v2 */
 	    case 5: /* pt pca between v1 and v2 */
 		lu_class = ei->class;
-		if (rt_g.NMG_debug & DEBUG_PT_FU) {
+		if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU)) {
 		    bu_log("found status 5 edge, loop class is %s\n",
 			   nmg_class_name(lu_class));
 		}
-		if (rt_g.NMG_debug & DEBUG_PT_FU)
+		if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 		    pl_pt_lu(fpi, lu, ei);
 		done = 1;
 		break;
@@ -969,7 +969,7 @@ compute_loop_class(struct fpi *fpi,
 	bu_free((char *)ei, "edge_info struct");
     }
 
-    if (rt_g.NMG_debug & DEBUG_PT_FU) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU)) {
 	bu_log("compute_loop_class() returns %s\n",
 	       nmg_class_name(lu_class));
     }
