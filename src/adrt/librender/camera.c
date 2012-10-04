@@ -135,7 +135,7 @@ render_camera_prep_ortho(render_camera_t *camera)
     /* look direction */
     VMOVE(camera->view_list[0].top_l, look);
 
-    /* gridsize is milimeters along the horizontal axis to display */
+    /* gridsize is millimeters along the horizontal axis to display */
     /* left (side) */
     VSCALE(temp,  side,  (camera->aspect * camera->gridsize * 0.5));
     VADD2(camera->view_list[0].pos,  camera->pos,  temp);
@@ -263,7 +263,7 @@ render_camera_prep_persp_dof(render_camera_t *camera)
     VCROSS(dof_side,  dof_up,  dof_look);
 
     /*
-     * Generage a camera position, top left vector, and step vectors for each DOF sample
+     * Generate a camera position, top left vector, and step vectors for each DOF sample
      */
 
     /* Obtain magnitude of reverse lookector */
