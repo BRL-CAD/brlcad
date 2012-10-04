@@ -1180,7 +1180,7 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
     VMOVE(r_dir_unit, rd->rp->r_dir);
     VUNITIZE(r_dir_unit);
 
-    if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_RT_ISECT)) {
 	eu_p = BU_LIST_PNEXT_CIRC(edgeuse, eu);
 	bu_log("edge_hit_ray_state(%g %g %g -> %g %g %g _vs_ %g %g %g)\n",
 	       eu->vu_p->v_p->vg_p->coord[0],
@@ -1208,7 +1208,7 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
 		fu = fu->fumate_p;
 		fu_eu = eu_p->eumate_p;
 	    }
-	    if (fu->orientation != OT_SAME) {
+	    if (UNLIKELY(fu->orientation != OT_SAME)) {
 		bu_log("%s[%d]: I can't seem to find an OT_SAME faceuse\nThis must be a `dangling' face.  I'll skip it\n", __FILE__, __LINE__);
 		continue;
 	    }
@@ -1216,20 +1216,20 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
 	    if (fu->s_p != s)
 		continue;
 
-	    if (nmg_find_eu_leftvec(edge_left, eu_p)) {
+	    if (UNLIKELY(nmg_find_eu_leftvec(edge_left, eu_p))) {
 		bu_log("edgeuse not part of faceuse");
 		continue;
 	    }
 
-	    if (! (NMG_3MANIFOLD &
-		   NMG_MANIFOLDS(rd->manifolds, fu->f_p))) {
+	    if (UNLIKELY(!(NMG_3MANIFOLD &
+		   NMG_MANIFOLDS(rd->manifolds, fu->f_p)))) {
 		bu_log("This is not a 3-Manifold face.  I'll skip it\n");
 		continue;
 	    }
 
 	    cos_angle = VDOT(edge_left, r_dir_unit);
 
-	    if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+	    if (UNLIKELY(rt_g.NMG_debug & DEBUG_RT_ISECT)) {
 		bu_log("left_vect:(%g %g %g) cos_angle:%g\n",
 		       edge_left[0], edge_left[1],
 		       edge_left[2], cos_angle);
@@ -1239,14 +1239,14 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
 		inb_cos_angle = cos_angle;
 		inb_fu = fu;
 		inb_eu = fu_eu;
-		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+		if (UNLIKELY(rt_g.NMG_debug & DEBUG_RT_ISECT))
 		    bu_log("New inb cos_angle %g\n", inb_cos_angle);
 	    }
 	    if (cos_angle > outb_cos_angle) {
 		outb_cos_angle = cos_angle;
 		outb_fu = fu;
 		outb_eu = fu_eu;
-		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+		if (UNLIKELY(rt_g.NMG_debug & DEBUG_RT_ISECT))
 		    bu_log("New outb cos_angle %g\n", outb_cos_angle);
 	    }
 	}
@@ -1267,12 +1267,12 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
     /* Compute the ray state on the inbound side */
     NMG_GET_FU_NORMAL(norm, inb_fu);
     VMOVE(myhit->inbound_norm, norm);
-    if (MAGSQ(norm) < VDIVIDE_TOL)
+    if (UNLIKELY(MAGSQ(norm) < VDIVIDE_TOL))
 	bu_bomb("edge_hit_ray_state() null normal!\n");
 
     cos_angle = VDOT(norm, r_dir_unit);
 
-    if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_RT_ISECT)) {
 	VPRINT("\ninb face normal", norm);
 	bu_log("cos_angle wrt ray direction: %g\n", cos_angle);
     }
@@ -1290,7 +1290,7 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
     VMOVE(myhit->outbound_norm, norm);
     cos_angle = VDOT(norm, r_dir_unit);
 
-    if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_RT_ISECT)) {
 	VPRINT("\noutb face normal", norm);
 	bu_log("cos_angle wrt ray direction: %g\n", cos_angle);
     }
@@ -1303,7 +1303,7 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
 	myhit->in_out |= NMG_RAY_STATE_INSIDE;
 
 
-    if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_RT_ISECT)) {
 	bu_log("myhit->in_out: 0x%02x/", myhit->in_out);
 	switch (myhit->in_out) {
 	    case HMG_HIT_IN_IN:
