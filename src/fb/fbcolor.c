@@ -20,7 +20,7 @@
  */
 /** @file fbcolor.c
  *
- * Dynamicly show the desired color as the background, and in bargraph
+ * Dynamically show the desired color as the background, and in bargraph
  * form, using the color map.
  *
  */
