@@ -145,7 +145,10 @@ get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 int
 get_args(int argc, char **argv)
 {
-    fastf_t yaw, pch, rll;
+    /* intentionally double for scan */
+    double yaw, pch, rll;
+    double scan[3];
+
     int c, i;
     axes = cent = links_placed = print_wheel = print_link = 0;
     get_circumf = 0;
@@ -167,9 +170,10 @@ get_args(int argc, char **argv)
 		break;
 	    case 'd':
 		bu_optind -= 1;
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid);
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid+1);
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid+2);
+		sscanf(argv[bu_optind+(i++)], "%lf", &scan[0]);
+		sscanf(argv[bu_optind+(i++)], "%lf", &scan[1]);
+		sscanf(argv[bu_optind+(i++)], "%lf", &scan[2]);
+		VMOVE(centroid, scan);
 		bu_optind += 3;
 		VREVERSE(rcentroid, centroid);
 		cent = 1;
@@ -178,13 +182,15 @@ get_args(int argc, char **argv)
 		sscanf(bu_optarg, "%d", &first_frame);
 		break;
 	    case 'i':
-		sscanf(bu_optarg, "%lf", &init_dist);
+		sscanf(bu_optarg, "%lf", &scan[0]);
+		init_dist = scan[0];
 		break;
 	    case 'p':
 		links_placed = 1;
 		break;
 	    case 'r':
-		sscanf(bu_optarg, "%lf", &radius);
+		sscanf(bu_optarg, "%lf", &scan[0]);
+		radius = scan[0];
 		break;
 	    case 'w':
 		wheel_nindex = bu_optind - 1;
@@ -377,17 +383,20 @@ main(int argc, char *argv[])
     x = (struct all *) bu_calloc(num_wheels, sizeof(struct all), "struct all");
     /*read rest of track info */
     for (i=0;i<NW;i++) {
-	count = fscanf(stream, "%lf %lf %lf", temp, temp+1, temp+2);
+	double scan[3];
+
+	count = fscanf(stream, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
 	if (count != 3)
 	    break;
 	if (!ZERO(radius))
 	    x[i].w.rad = radius;
 	else {
-	    count = fscanf(stream, "%lf", & x[i].w.rad);
+	    count = fscanf(stream, "%lf", &scan[0]);
+	    x[i].w.rad = scan[0]; /* double to fastf_t */
 	    if (count != 1)
 		break;
 	}
-	MAT4X3PNT(x[i].w.pos, m_rev_axes, temp);
+	MAT4X3PNT(x[i].w.pos, m_rev_axes, scan);
 	if (i==0)
 	    track_y = x[0].w.pos[1];
 	else
@@ -417,17 +426,26 @@ main(int argc, char *argv[])
     else
 	frame = first_frame-1;
     for (val = 3; val > 2; frame++) {
+	double scan[3];
+
 	go = 1;
 	/*p2 is current position. p3 is next;p1 is previous*/
 	VMOVE(p1, p2);
 	VMOVE(p2, p3);
 	count = scanf("%*f");/*time stamp*/
-	val = scanf("%lf %lf %lf", p3, p3+1, p3 + 2);
+	val = scanf("%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
+	VMOVE(p3, scan); /* double to fastf_t */
 	if (!steer) {
-	    count = scanf("%lf %lf %lf", &yaw, &pitch, &roll);
+	    count = scanf("%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
 	    if (count != 3) {
 		bu_exit(2, "Unexpected/Missing raw, pitch, roll value(s)!  Read %d values.\n", count);
 	    }
+
+	    /* double to fastf_t */
+	    yaw = scan[0];
+	    pitch = scan[1];
+	    roll = scan[2];
+
 	    anim_dy_p_r2mat(mat_v, yaw, pitch, roll);
 	    anim_add_trans(mat_v, p3, rcentroid);
 	} else {

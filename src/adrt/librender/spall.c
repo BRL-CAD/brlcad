@@ -178,9 +178,13 @@ int
 render_spall_init(render_t *render, const char *buf)
 {
     struct render_spall_s *d;
-    vect_t *tri_list, *vec_list, normal, up, ray_pos, ray_dir;
+    vect_t *tri_list, *vec_list, normal, up;
     fastf_t plane[4], angle;
     int i;
+
+    /* intentionally double for scan */
+    double ray_pos[3], ray_dir[3];
+    double scan;
 
     if(buf == NULL)
 	return -1;
@@ -191,7 +195,8 @@ render_spall_init(render_t *render, const char *buf)
     sscanf(buf, "(%lg %lg %lg) (%lg %lg %lg) %lg",
 		    &ray_pos[0], &ray_pos[1], &ray_pos[2],
 		    &ray_dir[0], &ray_dir[1], &ray_dir[2],
-		    &angle);
+		    &scan);
+    angle = scan; /* double to fastf_t */
 
     render->data = (struct render_spall_s *)bu_malloc(sizeof(struct render_spall_s), "render_spall_init");
     if (!render->data) {
@@ -226,7 +231,7 @@ render_spall_init(render_t *render, const char *buf)
     vec_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELATION, "vec_list");
     tri_list = (vect_t *)bu_malloc(sizeof(vect_t) * TESSELATION * 3, "tri_list");
 
-    render_util_spall_vec(ray_dir, angle, TESSELATION, vec_list);
+    render_util_spall_vec(d->ray_dir, angle, TESSELATION, vec_list);
 
     /* triangles to approximate */
     for (i = 0; i < TESSELATION; i++) {

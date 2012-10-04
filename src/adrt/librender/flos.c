@@ -77,6 +77,7 @@ int
 render_flos_init(render_t *render, const char *frag_pos)
 {
     struct render_flos_s *d;
+    double scan[3];
 
     if(frag_pos == NULL)
 	return -1;
@@ -85,7 +86,9 @@ render_flos_init(render_t *render, const char *frag_pos)
     render->free = render_flos_free;
     render->data = (struct render_flos_s *)bu_malloc(sizeof(struct render_flos_s), "render_flos_init");
     d = (struct render_flos_s *)render->data;
-    sscanf(frag_pos, "#(%lf %lf %lf)", &d->frag_pos[0], &d->frag_pos[1],  &d->frag_pos[2]);
+    sscanf(frag_pos, "#(%lf %lf %lf)", &scan[0], &scan[1], &scan[2]);
+    /* convert from double to fastf_t */
+    VMOVE(d->frag_pos, scan);
     return 0;
 }
 

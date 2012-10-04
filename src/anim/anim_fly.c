@@ -117,7 +117,7 @@ f_double_prm(fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h)
 
 
 void
-get_orientation(fastf_t *p0, fastf_t *p1, fastf_t *p2, fastf_t (*function) (/* ??? */), fastf_t *p_yaw, fastf_t *p_pch, fastf_t *p_rll)
+get_orientation(fastf_t *p0, fastf_t *p1, fastf_t *p2, fastf_t (*function) (fastf_t x0, fastf_t x1, fastf_t x2, fastf_t h), fastf_t *p_yaw, fastf_t *p_pch, fastf_t *p_rll)
 {
     int i;
     fastf_t step, vel[3], accel[3];
@@ -179,16 +179,19 @@ int
 get_args(int argc, char **argv)
 {
     int c;
+    double scan;
 
     estimate_f = 0;
     while ((c=bu_getopt(argc, argv, OPT_STR)) != -1) {
 	switch (c) {
 	    case 'b':
-		sscanf(bu_optarg, "%lf", &max_bank);
+		sscanf(bu_optarg, "%lf", &scan);
+		max_bank = scan; /* double to fastf_t */
 		estimate_f = 1;
 		break;
 	    case 'f':
-		sscanf(bu_optarg, "%lf", &magic_factor);
+		sscanf(bu_optarg, "%lf", &scan);
+		magic_factor = scan; /* double to fastf_t */
 		magic_factor *= 0.001; /* to put factors in a more reasonable range */
 		break;
 	    case 'p':
@@ -198,7 +201,8 @@ get_args(int argc, char **argv)
 		loop = 0;
 		break;
 	    case 's':
-		sscanf(bu_optarg, "%lf", &desired_step);
+		sscanf(bu_optarg, "%lf", &scan);
+		desired_step = scan; /* double to fastf_t */
 		break;
 	    default:
 		fprintf(stderr, "Unknown option: -%c\n", c);
@@ -214,7 +218,12 @@ main(int argc, char *argv[])
 {
     int count, status, num_read, enn, i, pp;
     fastf_t *points, *cur;
-    fastf_t yaw, pch, rll, stepsize, first[4], second[4];
+    fastf_t yaw, pch, rll, stepsize;
+
+    /* intentionally double for scan */
+    double first[4];
+    double second[4];
+    double scan[4];
 
     yaw = pch = rll = 0.0;
 
@@ -246,7 +255,9 @@ main(int argc, char *argv[])
     VMOVEN(points+8, second, 4);
     num_read=4; /* in order to pass test if n=1 */
     for (cur=points+12; cur<points+(4*(3*enn+1)); cur+=4) {
-	num_read=scanf("%lf %lf %lf %lf", cur, cur+1, cur+2, cur+3);
+	num_read=scanf("%lf %lf %lf %lf", &scan[0], &scan[1], &scan[2], &scan[3]);
+	/* convert double to fastf_t */
+	HMOVE(cur, scan);
     }
     if (num_read<4) {
 	fprintf(stderr, "Anim_fly: Not enough lines in input table.\n");
@@ -274,7 +285,11 @@ main(int argc, char *argv[])
 		for (i=0; i<3*enn*4; i++) {
 		    VMOVEN(points+(4*i), points+(4*(i+1)), 4);
 		}
-		num_read=scanf("%lf %lf %lf %lf", points+(4*(3*enn)), points+(4*(3*enn)+1), points+(4*(3*enn)+2), points+(4*(3*enn)+3));
+		num_read=scanf("%lf %lf %lf %lf", &scan[0], &scan[1], &scan[2], &scan[3]);
+
+		/* convert double to fastf_t */
+		HMOVE(points+(4*(3*enn)), scan);
+
 		if (num_read < 4) {
 		    pp = 0;
 		    status = WANE;

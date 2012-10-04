@@ -60,7 +60,8 @@
 #define CASCADE_F 2
 
 
-vect_t fcenter, fypr, rcenter, rypr, acenter, aypr;
+/* intentionally double for scan */
+double fcenter[3], fypr[3], rcenter[3], rypr[3], acenter[3], aypr[3];
 int cmd_fcen, cmd_fypr, cmd_rcen, cmd_rypr, cmd_acen, cmd_aypr;
 int output_mode, read_time, print_time;
 
@@ -163,8 +164,11 @@ int
 main (int argc, char *argv[])
 {
     int val;
-    fastf_t elapsed, yaw1, pitch1, roll1, yaw2, pitch2, roll2;
-    vect_t cen1, cen2, cen_ans, ang_ans, rad_ang_ans, rotated = VINIT_ZERO;
+    /* intentionally double for scan */
+    double elapsed, yaw1, pitch1, roll1, yaw2, pitch2, roll2;
+    double cen1[3], cen2[3];
+
+    vect_t rad_ang_ans, cen_ans, ang_ans, rotated = VINIT_ZERO;
     mat_t m_rot1, m_rot2, m_ans;
     int one_time, read_cen1, read_cen2, read_rot1, read_rot2;
 

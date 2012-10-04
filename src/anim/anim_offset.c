@@ -43,7 +43,9 @@
 
 
 int full_print = 0;
-vect_t offset;
+
+/* intentionally double for scan */
+double offset[3];
 
 
 int
@@ -74,9 +76,13 @@ int
 main(int argc, char *argv[])
 {
     int val;
-    fastf_t yaw, pitch, roll, time;
+    fastf_t yaw, pitch, roll;
     vect_t temp, point, zero;
     mat_t mat;
+
+    /* intentionally double for scan */
+    double time;
+    double scan[3];
 
     VSETALL(temp, 0.0);
     VSETALL(point, 0.0);
@@ -88,11 +94,25 @@ main(int argc, char *argv[])
     while (1) {
 	/*read line from table */
 	val = scanf("%lf%*[^-0123456789]", &time); /*read time, ignore garbage*/
-	val = scanf("%lf %lf %lf", point, point+1, point +2);
-	val = scanf("%lf %lf %lf", &yaw, &pitch, &roll);
+	if (val < 1) {
+	    break;
+	}
+
+	val = scanf("%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
 	if (val < 3) {
 	    break;
 	}
+	/* double to fastf_t */
+	VMOVE(point, scan);
+
+	val = scanf("%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
+	if (val < 3) {
+	    break;
+	}
+	/* double to fastf_t */
+	yaw = scan[0];
+	pitch = scan[1];
+	roll = scan[2];
 
 	anim_dy_p_r2mat(mat, yaw, pitch, roll);
 	anim_add_trans(mat, point, zero);

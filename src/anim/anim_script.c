@@ -47,10 +47,13 @@
 int relative_a, relative_c, axes, translate, quaternion, rotate;/*flags*/
 int steer, view, readview, permute; /* flags*/
 int first_frame;
-fastf_t viewsize;
-vect_t centroid, rcentroid, front;
+vect_t rcentroid, front;
 mat_t m_axes, m_rev_axes; /* rotational analogue of centroid */
 char mat_cmd[10];   /* default is lmul */
+
+/* intentionally double for scan */
+double centroid[3];
+double viewsize;
 
 
 int
@@ -157,6 +160,9 @@ main(int argc, char *argv[])
     mat_t a, m_x;
     int val, go, frame, last_steer,needed;
 
+    /* intentionally double for scan */
+    double scan[4];
+
     frame=last_steer=go=view=relative_a=relative_c=axes=0;
     VSETALL(centroid, 0);
     VSETALL(rcentroid, 0);
@@ -190,12 +196,18 @@ main(int argc, char *argv[])
 	val = scanf("%*f"); /*ignore time */
 	if (readview)
 	    val = scanf("%lf", &viewsize);
-	if (translate)
-	    val = scanf("%lf %lf %lf", point, point+1, point+2);
+	if (translate) {
+	    val = scanf("%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
+	    VMOVE(point, scan);
+	}
 	if (rotate&&quaternion) {
-	    val = scanf("%lf %lf %lf %lf", quat, quat+1, quat+2, quat+3);
+	    val = scanf("%lf %lf %lf %lf", &scan[0], &scan[1], &scan[2], &scan[3]);
+	    HMOVE(quat, scan);
 	} else if (rotate) {
-	    val = scanf("%lf %lf %lf", &yaw, &pitch, &roll);
+	    val = scanf("%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
+	    yaw = scan[0];
+	    pitch = scan[1];
+	    roll = scan[2];
 	}
 
 	if (val < needed) {
@@ -235,8 +247,11 @@ main(int argc, char *argv[])
 	    bn_mat_mul(m_x, m_axes, a);
 	    MAT_MOVE(a, m_x);
 	}
-	if (relative_c)
-	    anim_add_trans(a, centroid, zero); /* final translation */
+	if (relative_c) {
+	    vect_t center;
+	    VMOVE(center, centroid); /* double to fast_f */
+	    anim_add_trans(a, center, zero); /* final translation */
+	}
 
 
 	/* print one frame of script */

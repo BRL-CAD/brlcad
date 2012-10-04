@@ -102,10 +102,13 @@ int
 main(int argc, char *argv[])
 {
     int c;
-    fastf_t time, viewsize;
     int count;
+    fastf_t viewrot[16] = {0.0}, angle[3] = {0.0}, quat[4] = {0.0};
 
-    fastf_t eyept[3] = {0.0}, viewrot[16] = {0.0}, angle[3] = {0.0}, quat[4] = {0.0};
+    /* intentionally double for scan */
+    double time, viewsize;
+    double eyept[3] = {0.0};
+    double scan[4];
 
     if (!get_args(argc, argv))
 	fprintf(stderr, "anim_keyread: get_args error\n");
@@ -118,10 +121,30 @@ main(int argc, char *argv[])
 	count += scanf("%lf", &viewsize);
 	count += scanf("%lf %lf %lf", eyept, eyept+1, eyept+2);
 	/* read in transposed matrix */
-	count += scanf("%lf %lf %lf %lf", viewrot+0, viewrot+4, viewrot+8, viewrot+12);
-	count += scanf("%lf %lf %lf %lf", viewrot+1, viewrot+5, viewrot+9, viewrot+13);
-	count += scanf("%lf %lf %lf %lf", viewrot+2, viewrot+6, viewrot+10, viewrot+14);
-	count += scanf("%lf %lf %lf %lf", viewrot+3, viewrot+7, viewrot+11, viewrot+15);
+	count += scanf("%lf %lf %lf %lf", &scan[0], &scan[1], &scan[2], &scan[3]);
+	/* double to fastf_t */
+	viewrot[0] = scan[0];
+	viewrot[4] = scan[1];
+	viewrot[8] = scan[2];
+	viewrot[12] = scan[3];
+	count += scanf("%lf %lf %lf %lf", &scan[0], &scan[1], &scan[2], &scan[3]);
+	/* double to fastf_t */
+	viewrot[1] = scan[0];
+	viewrot[5] = scan[1];
+	viewrot[9] = scan[2];
+	viewrot[13] = scan[3];
+	count += scanf("%lf %lf %lf %lf", &scan[0], &scan[1], &scan[2], &scan[3]);
+	/* double to fastf_t */
+	viewrot[2] = scan[0];
+	viewrot[6] = scan[1];
+	viewrot[10] = scan[2];
+	viewrot[14] = scan[3];
+	count += scanf("%lf %lf %lf %lf", &scan[0], &scan[1], &scan[2], &scan[3]);
+	/* double to fastf_t */
+	viewrot[3] = scan[0];
+	viewrot[7] = scan[1];
+	viewrot[11] = scan[2];
+	viewrot[15] = scan[3];
 
 	if (feof(stdin) || count != 21)
 	    break;
