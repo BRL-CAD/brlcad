@@ -20,7 +20,7 @@
  */
 /** @file fbcmrot.c
  *
- * Dynamicly rotate the color map
+ * Dynamically rotate the color map
  *
  */
 
