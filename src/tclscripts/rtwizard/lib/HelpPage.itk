@@ -276,7 +276,7 @@ namespace eval RtWizard {
 	    Level2Tag
 
 	$t insert insert \
-	    "Use the hierachy widget on the left to navigate the .g file. Click on an item to select it. Selected items will be shown in the small MGED window to the right. Click on an item again to deselect it. Pressing the \"Clear\" button will clear (zap) the screen. Pressing the \"Refresh\" but will redraw everything currently selected and perform autosizing.\n\n" \
+	    "Use the hierarchy widget on the left to navigate the .g file. Click on an item to select it. Selected items will be shown in the small MGED window to the right. Click on an item again to deselect it. Pressing the \"Clear\" button will clear (zap) the screen. Pressing the \"Refresh\" but will redraw everything currently selected and perform autosizing.\n\n" \
 	    NormalTag
 
 	$t insert insert \
