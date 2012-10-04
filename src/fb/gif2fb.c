@@ -47,8 +47,8 @@
 #include "fb.h"
 
 
-#define	LSB	0	/* Least Signifigent Byte */
-#define MSB	1	/* Most Signifigent Byte */
+#define	LSB	0	/* Least Significant Byte */
+#define MSB	1	/* Most Significant Byte */
 
 struct GIF_head {
     char		GH_Magic[6];
@@ -154,7 +154,7 @@ main(int argc, char **argv)
 	}
     }
 /*
- * read in the Header and then check for consitence.
+ * read in the Header and then check for consistency.
  */
     n= fread(&Header, 1, 13, fp);
 
@@ -400,7 +400,7 @@ getcode(FILE *inp)
  *	get a new code
  *	if the new code is greater than the current max code then
  *		add last(?) code to the tree.
- *		follow the tree from the leaf to the root outputing
+ *		follow the tree from the leaf to the root outputting
  *		    a "byte" for each node of the tree.
  *	endif
  */
