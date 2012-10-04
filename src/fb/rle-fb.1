@@ -77,7 +77,7 @@ screen, or where a portion of that rectangle has been positioned
 outside the bounds of the screen, then this program will only modify those
 screen pixels underneath the RLE image rectangle.
 While this is behavior can be a great boon when creating a montage of
-smaller images, it behoves the user to arrange for a suitable background.
+smaller images, it behooves the user to arrange for a suitable background.
 .PP
 If the screen size is explicitly specified by a command line option,
 the framebuffer is opened with exactly that size, and the RLE image
@@ -108,7 +108,7 @@ specifies the desired height of the screen, in scanlines.
 sets the screen width and height to the indicated value.
 .TP
 .BI \-F\  framebuffer
-This option specifies which framebuffer the image is to be diplayed on.
+This option specifies which framebuffer the image is to be displayed on.
 If not given, the environment variable
 .SM \fBFB_FILE\fR
 is used to select the display device (see
@@ -157,7 +157,7 @@ The color intensity in each channel ranges from 0 (dark) to 255 (bright).
 .TP
 .BI \-X\  scr_xoff
 Specify a screen X offset, which will offset the file onto the screen
-by the given amount.  (ie,
+by the given amount.  (i.e.,
 .BI \-X\  10
 would place (0,0) in the RLE image rectangle at screen coordinate (10,0).
 The offset may be negative or positive.
@@ -249,7 +249,7 @@ colormap entries is assumed to be an Edition-2 colormap, and is adjusted
 for suitable display.
 While this heuristic may be ``tricked'' with an Edition-3 colormap
 with degenerate values, the picture would have been very dark,
-and the benefits of full upwards compatability from Edition-2 format files
+and the benefits of full upwards compatibility from Edition-2 format files
 were deemed worth this risk.
 .SH SEE ALSO
 brlcad(1), fb-rle(1), rle-pix(1), pix-rle(1),
