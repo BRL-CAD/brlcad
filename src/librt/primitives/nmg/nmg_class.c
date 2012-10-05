@@ -145,7 +145,7 @@ joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, int code)
     if (eu_rinf == eu) {
 	bu_bomb("joint_hitmiss2: radial eu is me?\n");
     }
-    /* If eu_rinf == eu->eumate_p, thats OK, this is a dangling face,
+    /* If eu_rinf == eu->eumate_p, that's OK, this is a dangling face,
      * or a face that has not been fully hooked up yet.
      * It's OK as long as the orientations both match.
      */
@@ -620,7 +620,7 @@ static const point_t nmg_good_dirs[MAX_DIR_TRYS] = {
  * the number of times it crosses a face.
  *
  * The flag "in_or_out_only" specifies that the point is known to not
- * be on the shell, therfore only returns of NMG_CLASS_AinB or
+ * be on the shell, therefore only returns of NMG_CLASS_AinB or
  * NMG_CLASS_AoutB are acceptable.
  *
  * The point is "A", and the face is "B".
