@@ -1471,7 +1471,7 @@ rt_shootray(register struct application *ap)
 		    }
 		}
 
-		/* Evaluate regions upto end of good segs */
+		/* Evaluate regions up to end of good segs */
 		if (ss.box_end < pending_hit) pending_hit = ss.box_end;
 		done = rt_boolfinal(&InitialPart, &FinalPart,
 				    last_bool_start, pending_hit, regionbits, ap, solidbits);
