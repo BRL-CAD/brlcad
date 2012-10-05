@@ -37,7 +37,7 @@
  * be transformed into a set of points on a unit cylinder (or cone)
  * with the transformed base (V') located at the origin with a
  * transformed radius of 1 (vrad').  The height of the cylinder (or
- * cone) along the +Z axis is +1 (ie, H' = (0, 0, 1)), with a
+ * cone) along the +Z axis is +1 (i.e., H' = (0, 0, 1)), with a
  * transformed radius of hrad/vrad.
  *
  *
@@ -148,10 +148,10 @@
  * NORMALS.  Given the point W on the surface of the cylinder, what is
  * the vector normal to the tangent plane at that point?
  *
- * Map W onto the unit cylinder, ie:  W' = S(R(W - V)).
+ * Map W onto the unit cylinder, i.e.:  W' = S(R(W - V)).
  *
  * Plane on unit cylinder at W' has a normal vector N' of the same
- * value as W' in x and y, with z set to zero, ie, (Wx', Wy', 0)
+ * value as W' in x and y, with z set to zero, i.e., (Wx', Wy', 0)
  *
  * The plane transforms back to the tangent plane at W, and this new
  * plane (on the original cylinder) has a normal vector of N, viz:
@@ -470,7 +470,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
     int check_v, check_h;
 
     if (part->part_int.part_type == RT_PARTICLE_TYPE_SPHERE) {
-	vect_t ov;		/* ray orgin to center (V - P) */
+	vect_t ov;		/* ray origin to center (V - P) */
 	fastf_t vrad_sq;
 	fastf_t magsq_ov;	/* length squared of ov */
 	fastf_t b;		/* second term of quadratic eqn */
@@ -522,7 +522,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
     }
     check_v = check_h = 0;
 
-    /* Find roots of the equation, using forumla for quadratic */
+    /* Find roots of the equation, using formula for quadratic */
     /* Note that vrad' = 1 and hrad' = hrad/vrad */
     if (part->part_int.part_type == RT_PARTICLE_TYPE_CYLINDER) {
 	/* Cylinder case, hrad == vrad, m = 0 */
@@ -607,7 +607,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
      */
  check_hemispheres:
     if (check_v) {
-	vect_t ov;		/* ray orgin to center (V - P) */
+	vect_t ov;		/* ray origin to center (V - P) */
 	fastf_t rad_sq;
 	fastf_t magsq_ov;	/* length squared of ov */
 	fastf_t b;
@@ -654,7 +654,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
  do_check_h:
     if (check_h) {
-	vect_t ov;		/* ray orgin to center (V - P) */
+	vect_t ov;		/* ray origin to center (V - P) */
 	fastf_t rad_sq;
 	fastf_t magsq_ov;	/* length squared of ov */
 	fastf_t b;		/* second term of quadratic eqn */
@@ -804,7 +804,7 @@ rt_part_curve(register struct curvature *cvp, register struct hit *hitp, struct 
     register struct part_specific *part =
 	(struct part_specific *)stp->st_specific;
     point_t hit_local;	/* hit_point, with V as origin */
-    point_t hit_unit;	/* hit_poit in unit coords, +Z along H */
+    point_t hit_unit;	/* hit_point in unit coords, +Z along H */
 
     switch (hitp->hit_surfno) {
 	case RT_PARTICLE_SURF_VSPHERE:
@@ -1109,7 +1109,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     int boff;		/* base offset */
     int toff;		/* top offset */
     int blim;		/* base subscript limit */
-    int tlim;		/* top subscrpit limit */
+    int tlim;		/* top subscript limit */
     fastf_t dtol;	/* Absolutized relative tolerance */
 
     RT_CK_DB_INTERNAL(ip);
@@ -1190,7 +1190,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     /* Find total number of strips of vertices that will be needed.
      * nsegs for each hemisphere, plus one equator each.
      * The two equators will be stitched together to make the cylinder.
-     * Note that faces are listed in the the stripe ABOVE, ie, toward
+     * Note that faces are listed in the stripe ABOVE, i.e., toward
      * the poles.  Thus, strips[0] will have 4 faces.
      */
     nstrips = 2 * nsegs + 2;
@@ -1201,7 +1201,7 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     strips[0].nverts = 1;
     strips[0].nverts_per_strip = 0;
     strips[0].nfaces = 4;
-    /* South pole (Lower hemispehre, V end) */
+    /* South pole (Lower hemisphere, V end) */
     strips[nstrips-1].nverts = 1;
     strips[nstrips-1].nverts_per_strip = 0;
     strips[nstrips-1].nfaces = 4;
