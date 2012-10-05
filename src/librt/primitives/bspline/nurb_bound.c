@@ -50,7 +50,7 @@
 int
 rt_nurb_s_bound(struct face_g_snurb *srf, fastf_t *bmin, fastf_t *bmax)
 {
-    register fastf_t *p_ptr;	/* Mesh pointr */
+    register fastf_t *p_ptr;	/* Mesh pointer */
     register int coords;		/* Elements per vector */
     int i;
     int rat;
@@ -91,7 +91,7 @@ rt_nurb_s_bound(struct face_g_snurb *srf, fastf_t *bmin, fastf_t *bmax)
 int
 rt_nurb_c_bound(struct edge_g_cnurb *crv, fastf_t *bmin, fastf_t *bmax)
 {
-    register fastf_t *p_ptr;	/* Mesh pointr */
+    register fastf_t *p_ptr;	/* Mesh pointer */
     register int coords;		/* Elements per vector */
     int i;
     int rat;
@@ -132,13 +132,13 @@ rt_nurb_c_bound(struct edge_g_cnurb *crv, fastf_t *bmin, fastf_t *bmax)
  * rt_nurb_s_check(srf)
  *
  * Checks the NURB surface control points to make sure no one point is
- * near INIFITY, which probably means that the surface mesh is bad.
+ * near INFINITY, which probably means that the surface mesh is bad.
  */
 
 int
 rt_nurb_s_check(register struct face_g_snurb *srf)
 {
-    register fastf_t *mp;	/* Mesh pointr */
+    register fastf_t *mp;	/* Mesh pointer */
     register int i;
 
     mp = srf->ctl_points;
@@ -160,13 +160,13 @@ rt_nurb_s_check(register struct face_g_snurb *srf)
  * rt_nurb_c_check(srf)
  *
  * Checks the NURB curve control points to make sure no one point is
- * near INIFITY, which probably means that the surface mesh is bad.
+ * near INFINITY, which probably means that the surface mesh is bad.
  */
 
 int
 rt_nurb_c_check(register struct edge_g_cnurb *crv)
 {
-    register fastf_t *mp;	/* Mesh pointr */
+    register fastf_t *mp;	/* Mesh pointer */
     register int i;
 
     mp = crv->ctl_points;
