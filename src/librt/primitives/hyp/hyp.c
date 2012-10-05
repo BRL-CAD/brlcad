@@ -234,7 +234,7 @@ rt_hyp_print(const struct soltab *stp)
 /* hit_surfno is set to one of these */
 #define HYP_NORM_BODY	(1)		/* compute normal */
 #define HYP_NORM_TOP	(2)		/* copy hyp_Hunit */
-#define HYP_NORM_BOTTOM	(3)		/* copy -hyp_Huint */
+#define HYP_NORM_BOTTOM	(3)		/* copy -hyp_Hunit */
 
 
 /**
