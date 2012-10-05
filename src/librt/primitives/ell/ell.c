@@ -1080,7 +1080,7 @@ rt_ell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Find total number of strips of vertices that will be needed.
      * nsegs for each hemisphere, plus the equator.  Note that faces
-     * are listed in the the stripe ABOVE, ie, toward the poles.
+     * are listed in the stripe ABOVE, i.e., toward the poles.
      * Thus, strips[0] will have 4 faces.
      */
     nstrips = 2 * nsegs + 1;
