@@ -43,7 +43,7 @@
  * Algorithm -
  *
  * The algorithm uses the traditional COX-deBoor approach found in the
- * book "Pratical Guide to Splines" Carl de Boor, pg 147 to evaluate a
+ * book "Practical Guide to Splines" Carl de Boor, pg 147 to evaluate a
  * parametric value on a curve. This is expanded to the surface.
  */
 void
