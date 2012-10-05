@@ -48,7 +48,6 @@
 
 
 /* command line variables */
-fastf_t inv0, inv1;
 int v0_set =	 TIME_NONE;
 int v1_set =	 TIME_NONE;
 int query =	 0;
@@ -56,6 +55,9 @@ int verbose = 	 0;
 int maxlines = 	 0;
 int domem = 	 0;
 int debug = 	 0;
+
+/* intentionally double for scan */
+double inv0, inv1;
 
 
 fastf_t
@@ -96,6 +98,7 @@ int get_args(int argc, char **argv)
     int c;
 
     while ((c=bu_getopt(argc, argv, OPT_STR)) != -1) {
+
 	switch (c) {
 	    case 's':
 		sscanf(bu_optarg, "%lf", &inv0);
@@ -146,13 +149,14 @@ int get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    fastf_t *l, *x, *y, *z;
-    fastf_t temp0, temp1, temp2, start=0.0, end, v0, v1;
+    fastf_t *l;
+    fastf_t temp0, temp1, temp2, start=0.0, v0, v1;
     int i, j, num, plen;
-
 
     fastf_t time, dist, slope, a, b, c;
 
+    /* intentionally double for scan */
+    double end, *x, *y, *z;
 
     plen = 0;
 
@@ -167,13 +171,13 @@ main(int argc, char **argv)
 
     l = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t), "l[]");
     if (verbose) {
-	x = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t), "x[]");
-	y = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t), "y[]");
-	z = (fastf_t *) bu_malloc(maxlines*sizeof(fastf_t), "z[]");
+	x = (double *) bu_malloc(maxlines*sizeof(double), "x[]");
+	y = (double *) bu_malloc(maxlines*sizeof(double), "y[]");
+	z = (double *) bu_malloc(maxlines*sizeof(double), "z[]");
     } else {
-	x = (fastf_t *) bu_malloc(2*sizeof(fastf_t), "x[]");
-	y = (fastf_t *) bu_malloc(2*sizeof(fastf_t), "y[]");
-	z = (fastf_t *) bu_malloc(2*sizeof(fastf_t), "z[]");
+	x = (double *) bu_malloc(2*sizeof(double), "x[]");
+	y = (double *) bu_malloc(2*sizeof(double), "y[]");
+	z = (double *) bu_malloc(2*sizeof(double), "z[]");
     }
     l[0] = 0.0;
 

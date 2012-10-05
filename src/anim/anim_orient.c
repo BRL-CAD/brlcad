@@ -184,26 +184,34 @@ main(int argc, char *argv[])
     /* read data */
     num_read = length;
     while (1) {
+	double scan[4];
 
 	switch (input_mode) {
 	    case YPR:
 	    case XYZ:
 	    case AET:
-		num_read = scanf("%lf %lf %lf", angle, angle+1, angle+2);
+		num_read = scanf("%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
 		/* convert to radians if in degrees */
 		if (input_units==DEGREES) {
-		    VSCALE(angle, angle, DEG2RAD);
+		    VSCALE(angle, scan, DEG2RAD); /* double to fastf_t */
+		} else {
+		    VMOVE(angle, scan); /* double to fastf_t */
 		}
 		break;
 	    case QUAT:
-		num_read = scanf("%lf %lf %lf %lf", quat, quat+1, quat+2, quat+3);
+		num_read = scanf("%lf %lf %lf %lf", &scan[0], &scan[1], &scan[2], &scan[3]);
+		HMOVE(quat, scan); /* double to fastf_t */
 		break;
 	    case MAT:
 		num_read = 0;
-		num_read += scanf("%lf %lf %lf %lf", matrix, matrix+1, matrix+2, matrix+3);
-		num_read += scanf("%lf %lf %lf %lf", matrix+4, matrix+5, matrix+6, matrix+7);
-		num_read += scanf("%lf %lf %lf %lf", matrix+8, matrix+9, matrix+10, matrix+11);
-		num_read += scanf("%lf %lf %lf %lf", matrix+12, matrix+13, matrix+14, matrix+15);
+		num_read += scanf("%lf %lf %lf %lf", &scan[0], &scan[1], &scan[2], &scan[3]);
+		HMOVE(matrix, scan); /* double to fastf_t */
+		num_read += scanf("%lf %lf %lf %lf", &scan[0], &scan[1], &scan[2], &scan[3]);
+		HMOVE(matrix+4, scan); /* double to fastf_t */
+		num_read += scanf("%lf %lf %lf %lf", &scan[0], &scan[1], &scan[2], &scan[3]);
+		HMOVE(matrix+8, scan); /* double to fastf_t */
+		num_read += scanf("%lf %lf %lf %lf", &scan[0], &scan[1], &scan[2], &scan[3]);
+		HMOVE(matrix+12, scan); /* double to fastf_t */
 		break;
 	}
 

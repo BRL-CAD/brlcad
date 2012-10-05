@@ -95,7 +95,7 @@ struct all *x;
 
 fastf_t curve_a, curve_b, curve_c, s_start;
 int num_links, num_wheels;
-fastf_t track_y, tracklen, first_tracklen;
+fastf_t track_y, tracklen;
 
 /* variables set by get_args */
 int wheel_nindex;	/* argv[wheel_nindex] = wheelname*/
@@ -119,6 +119,9 @@ int anti_strobe;	/* flag: take measures against strobing effect */
 vect_t centroid, rcentroid;	/* alternate centroid and its reverse */
 mat_t m_axes, m_rev_axes;	/* matrices to and from alternate axes */
 
+/* intentionally double for scan */
+double first_tracklen;
+
 
 int
 get_args(int argc, char **argv)
@@ -140,6 +143,8 @@ get_args(int argc, char **argv)
     anti_strobe = 0;
 
     while ((c=bu_getopt(argc, argv, OPT_STR)) != -1) {
+	double scan[3];
+
 	i=0;
 	switch (c) {
 	    case 's':
@@ -159,9 +164,14 @@ get_args(int argc, char **argv)
 		break;
 	    case 'b':
 		bu_optind -= 1;
-		sscanf(argv[bu_optind+(i++)], "%lf", &yaw);
-		sscanf(argv[bu_optind+(i++)], "%lf", &pch);
-		sscanf(argv[bu_optind+(i++)], "%lf", &rll);
+
+		sscanf(argv[bu_optind+(i++)], "%lf", &scan[0]);
+		yaw = scan[0];
+		sscanf(argv[bu_optind+(i++)], "%lf", &scan[0]);
+		pch = scan[0];
+		sscanf(argv[bu_optind+(i++)], "%lf", &scan[0]);
+		rll = scan[0];
+
 		bu_optind += 3;
 		anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
 		anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
@@ -169,9 +179,12 @@ get_args(int argc, char **argv)
 		break;
 	    case 'd':
 		bu_optind -= 1;
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid);
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid+1);
-		sscanf(argv[bu_optind+(i++)], "%lf", centroid+2);
+
+		sscanf(argv[bu_optind+(i++)], "%lf", &scan[0]);
+		sscanf(argv[bu_optind+(i++)], "%lf", &scan[1]);
+		sscanf(argv[bu_optind+(i++)], "%lf", &scan[2]);
+		VMOVE(centroid, scan); /* double to fastf_t */
+
 		bu_optind += 3;
 		VREVERSE(rcentroid, centroid);
 		cent = 1;
@@ -180,10 +193,12 @@ get_args(int argc, char **argv)
 		sscanf(bu_optarg, "%d", &first_frame);
 		break;
 	    case 'i':
-		sscanf(bu_optarg, "%lf", &init_dist);
+		sscanf(bu_optarg, "%lf", &scan[0]);
+		init_dist = scan[0]; /* double to fastf_t */
 		break;
 	    case 'r':
-		sscanf(bu_optarg, "%lf", &radius);
+		sscanf(bu_optarg, "%lf", &scan[0]);
+		radius = scan[0]; /* double to fastf_t */
 		one_radius = 1;
 		break;
 	    case 'p':
@@ -429,13 +444,16 @@ main(int argc, char *argv[])
     int go;
     fastf_t y_rot, distance, yaw, pch, roll;
     vect_t cent_pos, wheel_now, wheel_prev;
-    vect_t zero, position, vdelta, temp, to_track, to_front;
+    vect_t zero, position, vdelta, to_track, to_front;
     mat_t wmat, mat_x;
     FILE *stream;
     struct wheel *wh;
     int last_steer, last_frame;
     int rndtabi=0;
     fastf_t halfpadlen, delta, prev_dist;
+
+    /* intentionally double for scan */
+    double temp[3];
 
     VSETALL(zero, 0.0);
     VSETALL(to_track, 0.0);
@@ -493,14 +511,18 @@ main(int argc, char *argv[])
 
     /*read original wheel positions*/
     for (i=0;i<NW;i++) {
+	double scan;
+
 	count = fscanf(stream, "%lf %lf %lf", temp, temp+1, temp+2);
 	if (count != 3)
 	    break;
 
-	if (one_radius)
+	if (one_radius) {
 	    x[i].w.rad = radius;
-	else
-	    count = fscanf(stream, "%lf", & x[i].w.rad);
+	} else {
+	    count = fscanf(stream, "%lf", &scan);
+	    x[i].w.rad = scan;
+	}
 	MAT4X3PNT(x[i].w.pos, m_rev_axes, temp);
 	if (i==0)
 	    track_y = x[0].w.pos[1];
@@ -529,7 +551,8 @@ main(int argc, char *argv[])
     if (dist_mode==STEERED) {
 	/* prime the pumps */
 	val = scanf("%*f");/*time*/
-	val = scanf("%lf %lf %lf", cent_pos, cent_pos+1, cent_pos + 2);
+	val = scanf("%lf %lf %lf", temp, temp+1, temp+2);
+	VMOVE(cent_pos, temp);
 	if (val < 3)
 	    return 0;
 	go = anim_steer_mat(mat_x, cent_pos, 0);
@@ -548,14 +571,21 @@ main(int argc, char *argv[])
     for (; ; frame++) {
 	if (dist_mode==GIVEN) {
 	    val = scanf("%*f");/*time*/
-	    val = scanf("%lf", &distance);
+	    val = scanf("%lf", &temp[0]);
+	    distance = temp[0];
 	    if (val < 1) {
 		break;
 	    }
 	} else if (dist_mode==CALCULATED) {
 	    val = scanf("%*f");/*time*/
-	    val = scanf("%lf %lf %lf", cent_pos, cent_pos+1, cent_pos+2);
-	    val = scanf("%lf %lf %lf", &yaw, &pch, &roll);
+	    val = scanf("%lf %lf %lf", &temp[0], &temp[1], &temp[2]);
+	    /* converting double to fastf_t */
+	    VMOVE(cent_pos, temp);
+	    val = scanf("%lf %lf %lf", &temp[0], &temp[1], &temp[2]);
+	    /* converting double to fastf_t */
+	    yaw = temp[0];
+	    pch = temp[1];
+	    roll = temp[2];
 	    if (val < 3)
 		break;
 	    anim_dy_p_r2mat(mat_x, yaw, pch, roll);
@@ -566,7 +596,9 @@ main(int argc, char *argv[])
 	if (read_wheels) {
 	    /* read in all wheel positions */
 	    for (i=0;i<NW;i++) {
-		val = scanf("%lf %lf", x[i].w.pos, x[i].w.pos + 2);
+		val = scanf("%lf %lf", &temp[0], &temp[1]);
+		x[i].w.pos[0] = temp[0];
+		x[i].w.pos[2] = temp[1]; /* ??? is [2] right? */
 		if (val < 2) {
 		    break;
 		}
@@ -575,13 +607,16 @@ main(int argc, char *argv[])
 
 	if (dist_mode==STEERED) {
 	    val = scanf("%*f");/*time*/
-	    val = scanf("%lf %lf %lf", cent_pos, cent_pos+1, cent_pos + 2);
+	    val = scanf("%lf %lf %lf", &temp[0], &temp[1], &temp[2]);
 	    if (val < 3) {
 		if (last_steer)
 		    break;
 		else
 		    last_steer = 1;
 	    }
+	    /* converting double to fastf_t */
+	    VMOVE(cent_pos, temp);
+
 	    go = anim_steer_mat(mat_x, cent_pos, last_steer);
 	    anim_add_trans(mat_x, cent_pos, rcentroid);
 	}
@@ -647,9 +682,11 @@ main(int argc, char *argv[])
 	    }
 	    if (print_wheel) {
 		for (count = 0;count<num_wheels;count++) {
+		    vect_t xpos;
+
 		    anim_y_p_r2mat(wmat, 0.0, -distance/wh[count].rad, 0.0);
-		    VREVERSE(temp, wh[count].pos);
-		    anim_add_trans(wmat, x[count].w.pos, temp);
+		    VREVERSE(xpos, wh[count].pos);
+		    anim_add_trans(wmat, x[count].w.pos, xpos);
 		    if (axes || cent) {
 			bn_mat_mul(mat_x, wmat, m_rev_axes);
 			bn_mat_mul(wmat, m_axes, mat_x);

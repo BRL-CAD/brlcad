@@ -46,8 +46,10 @@
 int print_int = 1;
 int angle_set = 0;
 int turn_wheels = 0;
-fastf_t length, angle, radius;
-fastf_t factor = 1.0;
+
+/* intentionally double for scan */
+double length, angle, radius;
+double factor = 1.0;
 
 
 int
@@ -88,9 +90,13 @@ int
 main(int argc, char *argv[])
 {
     int count;
-    fastf_t val, t /* time */, roll_ang, yaw, sign;
+    fastf_t val, roll_ang, yaw, sign;
     vect_t v, point, front, back, zero, temp1, temp2;
     mat_t m_from_world, m_to_world;
+
+    /* intentionally double for scan */
+    double scan[3];
+    double t /* time */;
 
     /* initialize variables */
     VSETALL(zero, 0.0);
@@ -110,14 +116,16 @@ main(int argc, char *argv[])
     if (!angle_set) {
 	/* set angle if not yet done */
 	count = scanf("%*f%*[^-0123456789]");
-	count = VSCAN(temp1);
+	count = VSCAN(scan);
 	if (count != 3)
 	    return 1;
+	VMOVE(temp1, scan); /* double to fastf_t */
 
 	count = scanf("%*f%*[^-0123456789]");
-	count = VSCAN(temp2);
+	count = VSCAN(scan);
 	if (count != 3)
 	    return 1;
+	VMOVE(temp2, scan); /* double to fastf_t */
 
 	angle = bn_atan2((temp2[1]-temp1[1]), (temp2[0]-temp1[0]));
 	rewind(stdin);
@@ -126,10 +134,11 @@ main(int argc, char *argv[])
     while (1) {
 	/* read one line of table */
 	val = scanf("%lf%*[^-0123456789]", &t); /*read time, ignore garbage*/
-	val = scanf("%lf %lf %lf", point, point+1, point +2);
+	val = scanf("%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
 	if (val < 3) {
 	    break;
 	}
+	VMOVE(point, scan); /* double to fastf_t */
 
 	/*update to and from matrices */
 
