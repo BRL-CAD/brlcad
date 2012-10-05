@@ -2007,8 +2007,8 @@ const struct rt_functab rt_functab[] = {
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
     ID_NULL,	/* undefined, 0 */
-    ID_NULL,	/* RPP	1 axis-aligned rectangular parallelopiped */
-    ID_NULL,	/* BOX	2 arbitrary rectangular parallelopiped */
+    ID_NULL,	/* RPP	1 axis-aligned rectangular parallelepiped */
+    ID_NULL,	/* BOX	2 arbitrary rectangular parallelepiped */
     ID_NULL,	/* RAW	3 right-angle wedge */
     ID_NULL,	/* ARB4	4 tetrahedron */
     ID_NULL,	/* ARB5	5 pyramid */
