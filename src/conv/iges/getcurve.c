@@ -265,7 +265,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 	    struct spline *splroot;
 	    struct segment *seg, *seg1;
 	    vect_t tmp;
-	    fastf_t a;
+	    double a;
 
 	    Readrec(dir[curve]->param);
 	    Readint(&type, "");
