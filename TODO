@@ -645,7 +645,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   The search and batch commands probably can't nor shouldn't use the
   same replacement markers, with batch using $*, $1, $2, etc, to
   represent file columns (in a poor man's awk fashion) and search
-  simply using "{}" as the the object name replacement marker.
+  simply using "{}" as the object name replacement marker.
 
 * fix !!! in src/libged/tables.c where a temporary file is getting
   used.  needs to call bu_temp_file().
