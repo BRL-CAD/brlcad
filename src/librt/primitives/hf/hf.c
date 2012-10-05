@@ -653,7 +653,7 @@ hf_cell_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     }
     /*
      * This is the two hit situation which can cause interesting
-     * problems.  Three are basicly five different cases that must be
+     * problems.  There are basically five different cases that must be
      * dealt with and each one requires that the ray be classified
      *
      * 1) The ray has hit two different planes at two different
@@ -834,8 +834,8 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
      */
     for (j=-1; j>-7; j--) {
 	fastf_t dn;	/* Direction dot Normal */
-	fastf_t dxbdn;	/* distence beteen d and b * dn */
-	fastf_t s;	/* actual distence in mm */
+	fastf_t dxbdn;	/* distance between d and b * dn */
+	fastf_t s;	/* actual distance in mm */
 	int allIndex;
 
 	switch (j) {
@@ -957,7 +957,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
     axis_plane_isect(oplane, out, rp, hf, xWidth, yWidth, &hp, &nhits);
 
     /*
-     * Gee, we've gotten much closer, we know that we hit the the
+     * Gee, we've gotten much closer, we know that we hit the
      * solid. Now it's time to see which cell we hit.  The Key here is
      * to use a fast DDA to check ONLY the cells we are interested in.
      * The basic idea and some of the pseudo code comes from:
