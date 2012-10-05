@@ -62,7 +62,7 @@ extern "C" {
 #endif
 
 struct nurb_specific {
-    struct nurb_specific *next;	/* next surface in the the solid */
+    struct nurb_specific *next;	/* next surface in the solid */
     struct face_g_snurb *srf;	/* Original surface description */
     struct bu_list bez_hd;	/* List of Bezier face_g_snurbs */
 };
@@ -934,7 +934,7 @@ rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     /* Figure out how many recs to buffer by
      * walking through the surfaces and
-     * calculating the number of granuels
+     * calculating the number of granules
      * needed for storage and add it to the total
      */
     total_grans = 1;	/* First gran for BSOLID record */
