@@ -177,7 +177,7 @@ rt_bend_pipe_prep(struct bu_list *head, fastf_t *bend_center,
 
     /* bounding box for entire torus */
     /* include od of previous and next segment
-     * to allow for dinscontinuous radii
+     * to allow for discontinuous radii
      */
     max_od = od;
     if (prev_od > max_od) {
@@ -634,7 +634,7 @@ discont_radius_shot(struct xray *rp, point_t center, vect_t norm, fastf_t or1_sq
     point_t hit_pt;
     fastf_t radius_sq;
 
-    /* calculate interstection with plane at center (with normal "norm") */
+    /* calculate intersection with plane at center (with normal "norm") */
     dist_to_plane = VDOT(norm, center);
     norm_dist = dist_to_plane - VDOT(norm, rp->r_pt);
     slant_factor = VDOT(norm, rp->r_dir);
@@ -1627,7 +1627,7 @@ rt_pipe_class(void)
  * v1 and v2 must be unit vectors normal to each other in plane of
  * circle.  v1 must be in direction from center to start point (unless
  * a full circle is requested). "End" is the endpoint of
- * arc. "Seg_count" is how many straight line segements to use to draw
+ * arc. "Seg_count" is how many straight line segments to use to draw
  * the arc. "Full_circle" is a flag to indicate that a complete circle
  * is desired.
  */
