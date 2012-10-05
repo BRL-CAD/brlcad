@@ -21,7 +21,7 @@
 /** @{ */
 /** @file primitives/bspline/nurb_plot.c
  *
- * Utilities for spline debuging.
+ * Utilities for spline debugging.
  *
  */
 /** @} */
