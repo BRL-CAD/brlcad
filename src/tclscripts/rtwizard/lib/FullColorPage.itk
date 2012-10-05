@@ -100,7 +100,7 @@ namespace eval RtWizard {
     #
     itcl::body FullColorPage::onSelect2 {optionsMenu} {
 	#
-	# Add to the the options menu
+	# Add to the options menu
 	#
 	$::wizardInstance menubar add command .$optionsMenu.bg \
 	    -label "Background Color..." \
