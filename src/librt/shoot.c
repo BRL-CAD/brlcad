@@ -913,7 +913,7 @@ rt_shootray(register struct application *ap)
     fastf_t last_bool_start;
     struct bu_bitv *solidbits;	/* bits for all solids shot so far */
     struct bu_bitv *backbits=NULL;	/* bits for all solids using pieces that need to be intersected behind
-					   the the ray start point */
+					   the ray start point */
     struct bu_ptbl *regionbits;	/* table of all involved regions */
     char *status;
     auto struct partition InitialPart;	/* Head of Initial Partitions */
