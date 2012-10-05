@@ -628,7 +628,7 @@ file:
  * ex: shiftwidth=4 tabstop=8
  */
 
-In emacs, the the 'indent-region' command (bound to C-M-\ by default)
+In emacs, the 'indent-region' command (bound to C-M-\ by default)
 does a good job of making the needed changes to conform to this
 convention.  Vi can be configured to respect the ex: modeline by
 adding 'set modeline=1' to your .vimrc configuration file.  Microsoft
