@@ -47,7 +47,7 @@
 
 #define	TIE_KDTREE_NODE_MAX	4	/* Maximum number of triangles that can reside in a given node until it should be split */
 #define	TIE_KDTREE_DEPTH_K1	1.4	/* K1 Depth Constant Coefficient */
-#define	TIE_KDTREE_DEPTH_K2	1	/* K2 Contant */
+#define	TIE_KDTREE_DEPTH_K2	1	/* K2 Constant */
 
 #define _MIN(a, b) (a)<(b)?(a):(b)
 #define _MAX(a, b) (a)>(b)?(a):(b)
@@ -173,7 +173,7 @@ tie_kdtree_tri_box_overlap(TIE_3 *center, TIE_3 *half_size, TIE_3 *triverts)
      * 1) the {x, y, z}-directions (actually, since we use the AABB of the triangle
      *    we do not even need to test these)
      * 2) normal of the triangle
-     * 3) crossproduct(edge from tri, {x, y, z}-directin)
+     * 3) crossproduct(edge from tri, {x, y, z}-direction)
      *    this gives 3x3=9 more tests
      */
     TIE_3 v0, v1, v2, normal, e0, e1, e2, fe, p;
@@ -423,8 +423,8 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 
     /*
      * To eliminate "empty" areas, build a list of spans where geometric complexity is
-     * less than MIN_SPAN of the overal nodes size and then selecting the splitting plane
-     * the corresponds to the span slice domain nearest the center to bias towards a balanced tree
+     * less than MIN_SPAN of the overall nodes size and then selecting the splitting plane
+     * that corresponds to the span slice domain nearest the center to bias towards a balanced tree
      */
 
     for (d = 0; d < 3; d++) {
@@ -462,7 +462,7 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
     /*
      * If there is a gap atleast MIN_SPAN in side wrt the nodes dimension size
      * then use the nearest edge of the gap to 0.5 as the splitting plane,
-     * Use the the gap with the largest span.
+     * Use the gap with the largest span.
      * If no gaps are found meeting the criteria then weight the span values to
      * bias towards a balanced kd-tree and choose the minima of that weighted curve.
      */
