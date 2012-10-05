@@ -147,7 +147,7 @@ joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, int code)
     }
     /* If eu_rinf == eu->eumate_p, thats OK, this is a dangling face,
      * or a face that has not been fully hooked up yet.
-     * It's OK as long the the orientations both match.
+     * It's OK as long as the orientations both match.
      */
     if (eu->up.lu_p->orientation == eu_rinf->up.lu_p->orientation) {
 	if (eu->up.lu_p->orientation == OT_SAME) {
@@ -200,7 +200,7 @@ joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, int code)
  * is closer to this edgeuse than the previous neighbor(s) as given
  * in the "closest" structure.
  * If it is, record how close the point is, and whether it is IN, ON, or OUT.
- * The neighor's "p" element will indicate the edgeuse or vertexuse closest.
+ * The neighbor's "p" element will indicate the edgeuse or vertexuse closest.
  *
  * This routine should print everything indented two tab stops.
  *
@@ -826,7 +826,7 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, char **classlist, const st
 	goto out;
     }
 
-    /* we use topology to determing if the vertex is "ON" the
+    /* we use topology to determine if the vertex is "ON" the
      * other shell.
      */
     for (BU_LIST_FOR(vup, vertexuse, &vu->v_p->vu_hd)) {
@@ -1191,7 +1191,7 @@ nmg_2lu_identical(const struct edgeuse *eu1, const struct edgeuse *eu2)
     if (eu2->vu_p->v_p != eu1->vu_p->v_p) {
 	eu2 = eu2->eumate_p;
 	if (eu2->vu_p->v_p != eu1->vu_p->v_p)
-	    bu_bomb("nmg_2lu_identical() radial edgeuse doesn't share verticies\n");
+	    bu_bomb("nmg_2lu_identical() radial edgeuse doesn't share vertices\n");
     }
 
     lu1 = eu1->up.lu_p;
