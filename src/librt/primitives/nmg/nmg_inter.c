@@ -161,7 +161,7 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
     /* need a self loop */
     lu = nmg_mlv(&fu->l.magic, v, OT_BOOLPLACE);
     if (rt_g.NMG_debug & DEBUG_POLYSECT)
-	bu_log("nmg_make_dualvu is makeing a self_loop (lu=x%x, vu=x%x) for v=x%x\n", lu, BU_LIST_FIRST(vertexuse, &lu->down_hd), v);
+	bu_log("nmg_make_dualvu is making a self_loop (lu=x%x, vu=x%x) for v=x%x\n", lu, BU_LIST_FIRST(vertexuse, &lu->down_hd), v);
     nmg_loop_g(lu->l_p, tol);
     return BU_LIST_FIRST(vertexuse, &lu->down_hd);
 }
@@ -184,7 +184,7 @@ nmg_make_dualvu(struct vertex *v, struct faceuse *fu, const struct bn_tol *tol)
  *
  * While it is true that in most cases the calling routine will know
  * which shell the vu came from, it's cheap to re-determine it here.
- * This "all in one" packaging, which handles both lists automaticly
+ * This "all in one" packaging, which handles both lists automatically
  * is *vastly* superior to the previous version, which pushed 10-20
  * lines of bookkeeping up into *every* place an intersection vu was
  * created.
@@ -515,7 +515,7 @@ nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, c
  * (3d) point_t for each "index" item, and subscripts the resulting
  * array by the vertices index number.
  * Since additional vertices can be created as the intersection process
- * operates, 2*maxindex items are originall allocated, as a (generous)
+ * operates, 2*maxindex items are originally allocated, as a (generous)
  * upper bound on the amount of intersecting that might happen.
  *
  * In the array, the third double of each projected vertex is set to -1 when
@@ -578,7 +578,7 @@ nmg_isect2d_prep(struct nmg_inter_struct *is, const uint32_t *assoc_use)
 
 	/*
 	 * Rotate so that f1's N vector points up +Z.
-	 * This places all 2D calcuations in the XY plane.
+	 * This places all 2D calculations in the XY plane.
 	 * Translate so that f1's centroid becomes the 2D origin.
 	 * Reasoning:  no vertex should be favored by putting it at
 	 * the origin.  The "desirable" floating point space in the
@@ -1607,7 +1607,7 @@ nmg_isect_edge2p_edge2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	/* Intersection is in middle of eu1, which lies on the
 	 * line of intersection being computed, but is outside
 	 * the endpoints of eu2.  There is no point in breaking
-	 * eu1 here -- it does not connnect up with anything.
+	 * eu1 here -- it does not connect up with anything.
 	 */
 	ret = ISECT_NONE;
 	goto topo;
@@ -1796,7 +1796,7 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
     }
 
     /*
-     * We now know that the the edge does not lie +in+ the other face,
+     * We now know that the edge does not lie +in+ the other face,
      * so it will intersect the face in at most one point.
      * Before looking at the results of the geometric calculation,
      * check the topology.  If the topology says that starting vertex
@@ -2919,7 +2919,7 @@ nmg_isect_two_face2p(is, fu1, fu2)
  * XXX and then intersect them with the other face.
  * XXX loopuses can come and go as loops get cutjoin'ed, but at this
  * XXX stage edgeuses are created, but never deleted.
- * XXX This way, the process should converge in 2 interations, rather than N.
+ * XXX This way, the process should converge in 2 iterations, rather than N.
  */
 
     /* For every edge in f1, intersect with f2, incl. cutjoin */
@@ -3206,7 +3206,7 @@ nmg_isect_line2_vertex2(struct nmg_inter_struct *is, struct vertexuse *vu1, stru
 
 /**
  *
- * Given two pointer tables filled with edgeuses representing two differentt
+ * Given two pointer tables filled with edgeuses representing two different
  * edge geometry lines, see if there is a common vertex of intersection.
  * If so, enlist the intersection.
  *
@@ -4609,7 +4609,7 @@ re_tabulate:
 		 * attempt to get the correct ordering of vertices
 		 * on the intersection list, since using the
 		 * actual distance can get them reversed when
-		 * a VU is chosen over the actual interection
+		 * a VU is chosen over the actual intersection
 		 * point.
 		 */
 		nmg_enlist_vu(is, vu1a, 0, dist[0]);
@@ -6686,7 +6686,7 @@ nmg_isect_nearly_coplanar_faces(struct nmg_inter_struct *is, struct faceuse *fu1
  * Check if two faceuses can be intersected normally, by looking at the line
  * of intersection and determining if the vertices from each face are all
  * above the other face on one side of the intersection line and below it
- * on the other side of the interection line.
+ * on the other side of the intersection line.
  *
  * return:
  * 1 - faceuses meet criteria and can be intersected normally
@@ -6773,7 +6773,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
 	    else
 		on_left++;
 	} else {
-	    /* right of intersction line */
+	    /* right of intersection line */
 	    if (dist > tol->dist)
 		above_right++;
 	    else if (dist < (-tol->dist))
@@ -6829,7 +6829,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
 	    else
 		on_left++;
 	} else {
-	    /* right of intersction line */
+	    /* right of intersection line */
 	    if (dist > tol->dist)
 		above_right++;
 	    else if (dist < (-tol->dist))
@@ -7850,7 +7850,7 @@ nmg_isect_2faceuse(point_t pt,
     if (!nmg_ck_fu_verts(fu2, f1, tol) && !nmg_ck_fu_verts(fu1, f2, tol) &&
 	NEAR_ZERO(fabs(f1_pl[W] - f2_pl[W]), tol->dist)) {
 	/* true when fu1 and fu2 are coplanar, i.e. all vertices
-	 * of faceuse (fu1) are within distance tolarance of
+	 * of faceuse (fu1) are within distance tolerance of
 	 * face (f2) and vice-versa.
 	 */
 	coplanar = 1;
