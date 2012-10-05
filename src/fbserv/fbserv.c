@@ -557,7 +557,7 @@ main(int argc, char **argv)
  *
  *  Log an FB library event, when _doprnt() is not available.
  *  This version should work on practically any machine, but
- *  it serves to highlight the the grossness of the varargs package
+ *  it serves to highlight the grossness of the varargs package
  *  requiring the size of a parameter to be known at compile time.
  */
 void
