@@ -1163,8 +1163,8 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		nbytes += 8 + (bseg->degree + 1) * 4;
 		break;
 	    default:
-		bu_log("rt_sketch_export4: unsupported segement type (x%x)\n", *lng);
-		bu_bomb("rt_sketch_export4: unsupported segement type\n");
+		bu_log("rt_sketch_export4: unsupported segment type (x%x)\n", *lng);
+		bu_bomb("rt_sketch_export4: unsupported segment type\n");
 	}
     }
 
@@ -1209,7 +1209,7 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 	uint32_t *lng;
 	fastf_t tmp_fastf;
 
-	/* write segment type ID, and segement parameters */
+	/* write segment type ID, and segment parameters */
 	lng = (uint32_t *)sketch_ip->curve.segment[seg_no];
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
@@ -1516,8 +1516,8 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		ep->ext_nbytes += (bseg->degree + 1) * SIZEOF_NETWORK_LONG;
 		break;
 	    default:
-		bu_log("rt_sketch_export5: unsupported segement type (x%x)\n", *lng);
-		bu_bomb("rt_sketch_export5: unsupported segement type\n");
+		bu_log("rt_sketch_export5: unsupported segment type (x%x)\n", *lng);
+		bu_bomb("rt_sketch_export5: unsupported segment type\n");
 	}
     }
     ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "sketch external");
@@ -1557,7 +1557,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 	uint32_t *lng;
 	fastf_t tmp_fastf;
 
-	/* write segment type ID, and segement parameters */
+	/* write segment type ID, and segment parameters */
 	lng = (uint32_t *)sketch_ip->curve.segment[seg_no];
 	switch (*lng) {
 	    case CURVE_LSEG_MAGIC:
