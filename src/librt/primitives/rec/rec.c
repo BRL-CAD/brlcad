@@ -21,7 +21,7 @@
 /** @{ */
 /** @file primitives/rec/rec.c
  *
- * Intersect a ray with a Right Eliptical Cylinder.  This is a special
+ * Intersect a ray with a Right Elliptical Cylinder.  This is a special
  * (but common) case of the TGC, which is handled separately.
  *
  * Algorithm -
@@ -77,7 +77,7 @@
  * c = ((Px'**2 + Py'**2) - r**2) / (Dx'**2 + Dy'**2)
  * r = 1.0
  *
- * The qudratic formula yields k (which is constant):
+ * The quadratic formula yields k (which is constant):
  *
  * k = [ -b +/- sqrt(b**2 - 4 * c ] / 2.0
  *
@@ -100,10 +100,10 @@
  * NORMALS.  Given the point W on the surface of the cylinder, what is
  * the vector normal to the tangent plane at that point?
  *
- * Map W onto the unit cylinder, ie:  W' = S(R(W - V)).
+ * Map W onto the unit cylinder, i.e.:  W' = S(R(W - V)).
  *
  * Plane on unit cylinder at W' has a normal vector N' of the same
- * value as W' in x and y, with z set to zero, ie, (Wx', Wy', 0)
+ * value as W' in x and y, with z set to zero, i.e., (Wx', Wy', 0)
  *
  * The plane transforms back to the tangent plane at W, and this new
  * plane (on the original cylinder) has a normal vector of N, viz:
@@ -459,7 +459,7 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     if (ZERO(dprime[X]) && ZERO(dprime[Y]))
 	goto check_plates;
 
-    /* Find roots of the equation, using forumla for quadratic w/ a=1 */
+    /* Find roots of the equation, using formula for quadratic w/ a=1 */
     {
 	fastf_t b;		/* coeff of polynomial */
 	fastf_t root;		/* root of radical */
@@ -627,7 +627,7 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
     if (ap) RT_CK_APPLICATION(ap);
 
-    /* for each ray/right_eliptical_cylinder pair */
+    /* for each ray/right_elliptical_cylinder pair */
     for (i = 0; i < n; i++) {
 	if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
 
@@ -642,7 +642,7 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	if (ZERO(dprime[X]) && ZERO(dprime[Y]))
 	    goto check_plates;
 
-	/* Find roots of eqn, using forumla for quadratic w/ a=1 */
+	/* Find roots of eqn, using formula for quadratic w/ a=1 */
 	b = 2 * (dprime[X]*pprime[X] + dprime[Y]*pprime[Y]) *
 	    (dx2dy2 = 1 / (dprime[X]*dprime[X] + dprime[Y]*dprime[Y]));
 	if ((root = b*b - 4 * dx2dy2 *
