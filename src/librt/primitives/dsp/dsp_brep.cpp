@@ -123,7 +123,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
      * trimmed by a curve describing the cross section of the DSP
      * surface with the plane of the face.
      *
-     * 3.  The top surface - a genaralized Bezier surface with
+     * 3.  The top surface - a generalized Bezier surface with
      * boundaries equal to those of the four side surface intersection
      * curves. Surface topology is deduced as a function of the height
      * values.
