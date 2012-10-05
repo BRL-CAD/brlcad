@@ -21,7 +21,7 @@
 /** @{ */
 /** @file primitives/bspline/nurb_norm.c
  *
- * Calulate and return the normal of a surface given the U, V
+ * Calculate and return the normal of a surface given the U, V
  * parametric values.
  *
  */
