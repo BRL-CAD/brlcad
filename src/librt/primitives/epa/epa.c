@@ -103,7 +103,7 @@
  * NORMALS.  Given the point W on the surface of the epa, what is the
  * vector normal to the tangent plane at that point?
  *
- * Map W onto the unit epa, ie:  W' = S(R(W - V)).
+ * Map W onto the unit epa, i.e.:  W' = S(R(W - V)).
  *
  * Plane on unit epa at W' has a normal vector N' where
  *
@@ -334,7 +334,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     /* approximate bounding radius */
     stp->st_aradius = stp->st_bradius;
 
-    /* Calcuate bounding box (RPP) */
+    /* Calculate bounding box (RPP) */
     if (rt_epa_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
 
     return 0;			/* OK */
@@ -775,7 +775,7 @@ approximate_parabolic_curve(struct rt_pt_node *pts, fastf_t p, int num_new_point
 /* A canonical parabola in the Y-Z plane has equation z = y^2 / 4p, and opens
  * toward positive z with vertex at the origin.
  *
- * The countour of an epa in the plane H-R (where R is one of the epa axes A or
+ * The contour of an epa in the plane H-R (where R is one of the epa axes A or
  * B) is a parabola with vertex at H, opening toward -H. We can transform this
  * parabola to get an equivalent canonical parabola in the Y-Z plane, opening
  * toward positive Z (-H) with vertex at the origin (H).
@@ -815,7 +815,7 @@ epa_parabolic_curve(fastf_t mag_h, fastf_t r, int num_points)
     return curve;
 }
 
-/* The countour of an epa in the plane H-R (where R is one of the epa axes A or
+/* The contour of an epa in the plane H-R (where R is one of the epa axes A or
  * B) is a parabola with vertex at H, opening toward -H. We can transform this
  * parabola into an equivalent one in the Y-Z plane which has vertext at (0, |H|)
  * and opens toward -Z.
@@ -882,7 +882,7 @@ static void
 epa_plot_parabola(
 	struct bu_list *vhead,
 	struct rt_epa_internal *epa,
-	struct rt_pt_node *pts, 
+	struct rt_pt_node *pts,
 	vect_t Ru,
 	fastf_t r)
 {
