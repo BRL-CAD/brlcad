@@ -21,7 +21,7 @@
 /** @{ */
 /** @file primitives/bspline/nurb_interp.c
  *
- * Interpolatopn routines for fitting NURB curves and and surfaces to
+ * Interpolation routines for fitting NURB curves and and surfaces to
  * existing data.
  *
  */
@@ -102,7 +102,7 @@ rt_nurb_cinterp(struct edge_g_cnurb *crv, int order, const fastf_t *data, int n)
     crv->pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, 0);
 
     /* First set up Curve data structs */
-    /* For now we will assume that all paramerizations are uniform */
+    /* For now we will assume that all parameterizations are uniform */
 
     rt_nurb_kvknot(&crv->k, order, 0.0, 1.0, (n - order), (struct resource *)NULL);
 
@@ -175,7 +175,7 @@ rt_nurb_sinterp(struct face_g_snurb *srf, int order, const fastf_t *data, int ym
     srf->pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT);
 
     /* the U knot vector replates to the points in a row therefore you
-     * want to determin how many cols there are similar for the V knot
+     * want to determine how many cols there are similar for the V knot
      * vector
      */
 
