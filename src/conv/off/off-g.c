@@ -46,7 +46,7 @@ static struct bn_tol tol;
 /*
  *         R E A D _ F A C E S
  *
- * Reads the geometry from the the geometry file and creates the appropriate
+ * Reads the geometry from the geometry file and creates the appropriate
  *  vertices and faces.
  */
 
@@ -94,7 +94,7 @@ int read_faces(struct model *m, FILE *fgeom)
 	}
 	/* Grab memory for list for this face. */
 	vlist = (struct vertex **) bu_malloc(sizeof(struct vertex *) * nedges, "vertex list");
-	pinds = (int *) bu_malloc(sizeof(int) * nedges, "point indicies");
+	pinds = (int *) bu_malloc(sizeof(int) * nedges, "point indices");
 
 	for (j = 0; j < nedges; j++) {
 	    /* Read list of point indicies. */
