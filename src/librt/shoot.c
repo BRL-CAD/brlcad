@@ -896,7 +896,7 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
  *
  * Formal Return: whatever the application function returns (an int).
  *
- * NOTE:  The appliction functions may call rt_shootray() recursively.
+ * NOTE:  The application functions may call rt_shootray() recursively.
  * Thus, none of the local variables may be static.
  *
  * To prevent having to lock the statistics variables in a PARALLEL
@@ -1132,7 +1132,7 @@ rt_shootray(register struct application *ap)
 
     /*
      * The interesting part of the ray starts at distance 0.  If the
-     * ray enters the model at a negative distance, (ie, the ray
+     * ray enters the model at a negative distance, (i.e., the ray
      * starts within the model RPP), we only look at little bit behind
      * (BACKING_DIST) to see if we are just coming out of something,
      * but never further back than the intersection with the model
@@ -1240,7 +1240,7 @@ rt_shootray(register struct application *ap)
      * While the ray remains inside model space, push from box to box
      * until ray emerges from model space again (or first hit is
      * found, if user is impatient).  It is vitally important to
-     * always stay within the model RPP, or the space partitoning tree
+     * always stay within the model RPP, or the space partitioning tree
      * will pick wrong boxes & miss them.
      */
     while ((cutp = rt_advance_to_next_cell(&ss)) != CUTTER_NULL) {
@@ -1429,7 +1429,7 @@ rt_shootray(register struct application *ap)
 	 *
 	 * If a_onehit != 0, then it indicates how many hit points
 	 * (which are greater than the ray start point of 0.0) the
-	 * application requires, ie, partitions with inhit >= 0.  (If
+	 * application requires, i.e., partitions with inhit >= 0.  (If
 	 * negative, indicates number of non-air hits needed).  If
 	 * this box yielded additional segments, immediately weave
 	 * them into the partition list, and perform final boolean
@@ -1775,7 +1775,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 
     /*
      * The interesting part of the ray starts at distance 0.  If the
-     * ray enters the model at a negative distance, (ie, the ray
+     * ray enters the model at a negative distance, (i.e., the ray
      * starts within the model RPP), we only look at little bit behind
      * (BACKING_DIST) to see if we are just coming out of something,
      * but never further back than the intersection with the model
@@ -1825,7 +1825,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
      * While the ray remains inside model space, push from box to box
      * until ray emerges from model space again (or first hit is
      * found, if user is impatient).  It is vitally important to
-     * always stay within the model RPP, or the space partitoning tree
+     * always stay within the model RPP, or the space partitioning tree
      * will pick wrong boxes & miss them.
      */
     while ((cutp = rt_advance_to_next_cell(&ss)) != CUTTER_NULL) {
