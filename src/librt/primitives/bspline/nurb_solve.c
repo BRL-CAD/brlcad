@@ -24,7 +24,7 @@
  * Decompose a matrix into its LU decomposition using pivoting.
  *
  * These Procedures take a set of matrices of the form Ax = b and
- * alows one to solve the system by various means. The
+ * allows one to solve the system by various means. The
  * rt_nurb_doolittle routine takes the system and creates a lu
  * decomposition using pivoting to get the system in a desired
  * form. Forward and backward substitution are then used to solve the
@@ -61,7 +61,7 @@ rt_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int co
 
 
     /* dimension of the matrix */
-    /* Number of coordsinates for mat_2 and solution */
+    /* Number of coordinates for mat_2 and solution */
 {
     register int i, k;
     fastf_t *y;
@@ -77,7 +77,7 @@ rt_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int co
     s = (fastf_t *) bu_malloc(sizeof (fastf_t) * dim,
 			      "rt_nurb_solve: s");/* Create temp array */
 
-    rt_nurb_doolittle (mat_1, mat_2, dim, coords);/* Create LU decomosition */
+    rt_nurb_doolittle (mat_1, mat_2, dim, coords);/* Create LU decomposition */
 
     for (k =0; k < coords; k++) {
 	fastf_t * ptr;
@@ -110,7 +110,7 @@ rt_nurb_solve(fastf_t *mat_1, fastf_t *mat_2, fastf_t *solution, int dim, int co
 
 
 /**
- * Create LU decomosition.
+ * Create LU decomposition.
  * Modifies both mat_1 and mat_2 values.
  */
 void
@@ -134,7 +134,7 @@ rt_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
     s = (fastf_t *) bu_malloc(sizeof (fastf_t) * row * row,
 			      "rt_nurb_doolittle:s");	/* vector to check */
     ds = (fastf_t *) bu_malloc(sizeof (fastf_t) * row,
-			       "rt_nurb_doolittle:ds");	/* if rows need to be swaped */
+			       "rt_nurb_doolittle:ds");	/* if rows need to be swapped */
 
     for (i = 0; i < row; i++) {
 	/* calculate the scaling factors */
@@ -158,7 +158,7 @@ rt_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
 
 	for (i = k; i < row; i ++) {
 	    /* check to see if rows need */
-	    /* to be swaped */
+	    /* to be swapped */
 	    ds[i] = d[i] * s[ i * row + k];
 	    if (ds[max_pivot] < ds[i])
 		max_pivot = i;
@@ -205,7 +205,7 @@ rt_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
 
 
 void
-rt_nurb_forw_solve(const fastf_t *lu, const fastf_t *b, fastf_t *y, int n)		/* spl_solve lower trianglular matrix */
+rt_nurb_forw_solve(const fastf_t *lu, const fastf_t *b, fastf_t *y, int n)		/* spl_solve lower triangular matrix */
 
 
 {
