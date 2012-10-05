@@ -22,7 +22,7 @@
 /** @file primitives/bspline/nurb_poly.c
  *
  * Returns two polygons from a NURB surface.
- * Asumes that the surface is flat.
+ * Assumes that the surface is flat.
  *
  */
 /** @} */
