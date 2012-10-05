@@ -27,7 +27,7 @@
 
 /***** Variables declared in opt.c *****/
 extern char *framebuffer;		/* desired framebuffer */
-extern double azimuth, elevation;
+extern fastf_t azimuth, elevation;
 extern double nu_gfactor;		/* constant factor in NUgrid algorithm */
 extern int Query_one_pixel;
 extern int benchmark;

@@ -141,8 +141,10 @@ main(int argc, char *argv[])
     size_t shp_num_invalid = 0;
     int shp_num_entities = 0;
     int shp_type = 0;
-    hvect_t shp_min = HINIT_ZERO;
-    hvect_t shp_max = HINIT_ZERO;
+
+    /* intentionally double for scan */
+    double shp_min[4] = HINIT_ZERO;
+    double shp_max[4] = HINIT_ZERO;
 
     /* geometry */
     point2d_t *verts = NULL;

@@ -142,11 +142,13 @@ main (int argc, char **argv)
     int nm_sites;
     int normalize = 0;	/* Make all weights sum to one? */
     fastf_t *coeff;
-    fastf_t x, y, z;
     FILE *infp = NULL;
     struct bu_list site_list;
     struct bu_vls *tail_buf = 0;
     struct site *sp;
+
+    /* intentionally double for scan */
+    double x, y, z;
 
     BU_LIST_INIT(&site_list);
     while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1)

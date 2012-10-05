@@ -373,9 +373,9 @@ val_To_RGB(cell_val cv, unsigned char *rgb)
 	double res;
 
 	if (interp_flag) {
-	    double prev_hsv[3];
-	    double hsv[3];
-	    double next_hsv[3];
+	    vect_t prev_hsv;
+	    vect_t hsv;
+	    vect_t next_hsv;
 
 	    idx = val + 0.01; /* convert to range [0 to 10] */
 	    if ((rem = val - (double) idx) < 0.0) /* remainder */
@@ -595,7 +595,8 @@ fill_colortbl(unsigned char *lo_rgb, unsigned char *hi_rgb)
 
 #if BLEND_USING_HSV
 
-    double lo_hsv[3], hi_hsv[3], hsv[3];
+    fastf_t lo_hsv[3], hi_hsv[3];
+    fastf_t hsv[3];
 
     bu_rgb_to_hsv(lo_rgb, lo_hsv);
     bu_rgb_to_hsv(hi_rgb, hi_hsv);
@@ -691,12 +692,16 @@ pars_Argv(int argc, char **argv)
 	    case 'a': {
 		fastf_t h;
 		fastf_t v;
+		double scan[2];
 		struct locrec *lrp;
 
-		if (sscanf(bu_optarg, "%lf %lf", &h, &v) != 2) {
+		if (sscanf(bu_optarg, "%lf %lf", &scan[0], &scan[1]) != 2) {
 		    bu_log("Invalid grid-plane location: '%s'\n", bu_optarg);
 		    return 0;
 		}
+		/* double to fastf_t */
+		h = scan[0];
+		v = scan[1];
 		lrp = mk_locrec(h, v);
 		BU_LIST_INSERT(&(gp_locs.l), &(lrp->l));
 	    }

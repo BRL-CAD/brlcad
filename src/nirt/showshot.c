@@ -49,14 +49,16 @@ main (int argc, char **argv)
     char *nlp;			/* Location of newline in buf */
     char rname[BUF_LEN];	/* Name of current region */
     char rayname[BUF_LEN];	/* Name of ray */
-    fastf_t ray_radius = 1.0;	/* Thickness of the RCC */
     int i;			/* Index into rname */
     int line_nm = 0;		/* Number of current line of input */
     int opt;			/* Command-line option returned by bu_getopt */
     int pid;			/* Process ID for unique group name */
-    point_t entryp = VINIT_ZERO;	/* Ray's entry into current region */
-    point_t exitp = VINIT_ZERO;		/* Ray's exit from current region */
     point_t first_entryp = VINIT_ZERO;	/* Ray's entry into the entire geometry */
+
+    /* intentionally double for scan */
+    double ray_radius = 1.0;	/* Thickness of the RCC */
+    double entryp[3] = VINIT_ZERO;	/* Ray's entry into current region */
+    double exitp[3] = VINIT_ZERO;		/* Ray's exit from current region */
 
     pid = bu_process_id();
 

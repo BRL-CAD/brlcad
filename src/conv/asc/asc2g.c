@@ -1385,6 +1385,8 @@ particlebld(void)
     vect_t		height;
     double		vrad;
     double		hrad;
+    double scanvertex[3];
+    double scanheight[3];
 
 
     /* Read all the information out of the existing buffer.  Note that
@@ -1393,13 +1395,16 @@ particlebld(void)
 
     (void)sscanf(buf, "%c %200s %le %le %le %le %le %le %le %le", /* NAME_LEN */
 		 &ident, name,
-		 &vertex[0],
-		 &vertex[1],
-		 &vertex[2],
-		 &height[0],
-		 &height[1],
-		 &height[2],
+		 &scanvertex[0],
+		 &scanvertex[1],
+		 &scanvertex[2],
+		 &scanheight[0],
+		 &scanheight[1],
+		 &scanheight[2],
 		 &vrad, &hrad);
+    /* convert double to fastf_t */
+    VMOVE(vertex, scanvertex);
+    VMOVE(height, scanheight);
 
     mk_particle(ofp, name, vertex, height, vrad, hrad);
 }
@@ -1455,9 +1460,13 @@ arbnbld(void)
     /*bu_log("starting to dump eqns\n");
      */
     for (i = 0; i < neqn; i++) {
+	double scan[4];
+
 	bu_fgets(buf, BUFSIZE, ifp);
 	(void)sscanf(buf, "%200s %le %le %le %le", type, /* TYPE_LEN */
-		     &eqn[i][X], &eqn[i][Y], &eqn[i][Z], &eqn[i][W]);
+		     &scan[0], &scan[1], &scan[2], &scan[3]);
+	/* convert double to fastf_t */
+	HMOVE(eqn[i], scan);
     }
 
     /*bu_log("sending info to mk_arbn\n");

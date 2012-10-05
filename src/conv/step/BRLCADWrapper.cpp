@@ -76,10 +76,12 @@ BRLCADWrapper::WriteHeader() {
 
 bool
 BRLCADWrapper::WriteSphere(double *center, double radius) {
+    point_t pnt;
     center[X] = 0.0;
     center[Y] = 0.0;
     center[Z] = 0.0;
-    mk_sph(outfp, "s1", center, radius);
+    VMOVE(pnt, center);
+    mk_sph(outfp, "s1", pnt, radius);
     return true;
 }
 

@@ -53,7 +53,7 @@ size_t		height = 0;		/* # of lines in Y */
 
 /***** Variables shared with viewing model *** */
 int		doubles_out = 0;	/* u_char or double .pix output file */
-double		azimuth = 0.0, elevation = 0.0;
+fastf_t		azimuth = 0.0, elevation = 0.0;
 int		lightmodel = 0;		/* Select lighting model */
 int		rpt_overlap = 1;	/* report overlapping region names */
 int		default_background = 1; /* Default is black */
@@ -239,13 +239,14 @@ get_args(int argc, const char *argv[])
 	    case 'k':      /* define cutting plane */
 	    {
 		fastf_t f;
+		double scan[4];
 
 		do_kut_plane = 1;
-		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg",
-			   &kut_plane[X], &kut_plane[Y], &kut_plane[Z], &kut_plane[H]);
+		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg", &scan[0], &scan[1], &scan[2], &scan[3]);
 		if( i != 4 ) {
 		    bu_exit( EXIT_FAILURE, "ERROR: bad cutting plane\n" );
 		}
+		HMOVE(kut_plane, scan); /* double to fastf_t */
 
 		/* verify that normal has unit length */
 		f = MAGNITUDE( kut_plane );

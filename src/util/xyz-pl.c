@@ -49,6 +49,8 @@ main(int argc, char *argv[])
 	bu_exit(1, "%s: unexpected argument(s)\n", argv[0]);
 
     for (;;) {
+	point_t pnt;
+
 	xyz[0] = xyz[1] = xyz[2] = 0.0;
 
 	buf[0] = '\0';
@@ -63,11 +65,13 @@ main(int argc, char *argv[])
 	}
 	if (i <= 0)
 	    break;
+
+	VMOVE(pnt, xyz); /* double to fastf_t */
 	if (first) {
 	    first = 0;
-	    pdv_3move(stdout, xyz);
+	    pdv_3move(stdout, pnt);
 	} else {
-	    pdv_3cont(stdout, xyz);
+	    pdv_3cont(stdout, pnt);
 	}
     }
 

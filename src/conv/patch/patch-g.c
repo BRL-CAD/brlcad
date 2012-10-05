@@ -3638,14 +3638,18 @@ main(int argc, char **argv)
 	nread = read(fd, buf, sizeof(buf));     /* read one line of file into a buffer */
 
 	if (nread > 0) {
+	    double scan[3];
 	    /* For valid reads, assign values to the input array */
 
 	    sscanf(buf, "%lf %lf %lf %c %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-		   &in[i].x, &in[i].y, &in[i].z, &in[i].surf_mode, &in[i].surf_type,
+		   &scan[0], &scan[1], &scan[2], &in[i].surf_mode, &in[i].surf_type,
 		   &in[i].surf_thick, &in[i].spacecode, &in[i].cc,
 		   &in[i].ept[0], &in[i].ept[1], &in[i].ept[2],
 		   &in[i].ept[3], &in[i].ept[4], &in[i].ept[5],
 		   &in[i].ept[6], &in[i].ept[7], &in[i].mirror, &in[i].vc);
+	    in[i].x = scan[0];
+	    in[i].y = scan[1];
+	    in[i].z = scan[2];
 
 	    /* Perform english to metric conversions.  */
 	    in[i].x = mmtin*in[i].x;

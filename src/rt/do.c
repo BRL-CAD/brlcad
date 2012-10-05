@@ -52,7 +52,6 @@
 
 /***** Variables shared with viewing model *** */
 extern FILE *outfp;			/* optional pixel output file */
-extern double azimuth, elevation;
 extern mat_t view2model;
 extern mat_t model2view;
 /***** end of sharing with viewing model *****/
