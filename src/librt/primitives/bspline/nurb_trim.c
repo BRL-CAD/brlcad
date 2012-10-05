@@ -74,7 +74,7 @@ static int quad_table[16]  = {
  * It then uses a table look up to determine the whether its CASE{A,
  * B, C}, One difference from the paper is the fact that if any of the
  * points lie on the axis of the u, v quadrant system then the axis is
- * only in either Quadrant 1 or Quadrant 2 and not q3 or q4. THis
+ * only in either Quadrant 1 or Quadrant 2 and not q3 or q4. This
  * handles the case of endpoint problems correctly.
  */
 int
@@ -228,15 +228,15 @@ rt_nurb_uv_dist(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 /**
  * Process Case C curves;
  *
- * A check is placed here to determin if the u, v is on the curve.
+ * A check is placed here to determine if the u, v is on the curve.
  * Determine how many times the curve will cross the u, v axis. If the
  * curve crosses an odd number of times than the point is IN, else the
- * point is OUT. Since a case C curve need processin a call to clip
- * hte curve so that it becomes either Case B, or Case A is required
- * to determine the number of crossing acurately. Thus we need to keep
+ * point is OUT. Since a Case C curve need processing a call to clip
+ * the curve so that it becomes either Case B or Case A is required
+ * to determine the number of crossings accurately. Thus we need to keep
  * the original curve and expect the calling routine to free the
  * storage. Additional curves are generated in this routine, each of
- * these new curves are proccesed, and then are deleted before exiting
+ * these new curves are processed, and then are deleted before exiting
  * this procedure.
  */
 int
@@ -249,7 +249,7 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
     int trim_flag = 0;
     int caset;
 
-    /* determine if the the u, v values are on the curve */
+    /* determine if the u, v values are on the curve */
 
     if (rt_nurb_uv_dist(trim, u, v)  == TRIM_ON) return TRIM_IN;
 
@@ -297,10 +297,10 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 
 /**
  * This routine will be called several times, once for each portion of
- * the trimming curve. It returns wheter a line extended from the the
+ * the trimming curve. It returns whether a line extended from the
  * <u, v> point will cross the trimming curve an even or odd number of
  * times. Or the <u, v> point could be on the curve in which case
- * TRIM_ON will be returned. THe algorithm uses the approach taken Tom
+ * TRIM_ON will be returned. The algorithm uses the approach taken Tom
  * Sederburge and uses bezier clipping to produce caseA and caseB
  * curves. If the original trimming curve is a CASE C curve then
  * further processing is required.
@@ -369,15 +369,15 @@ _SIGN(fastf_t f)
 
 
 /**
- * We try and clip a curve so that it can be either Case A, or Case C.
- * Sometimes one of the curves is still case C though, but it is much
- * small than the original, and further clipping will either show that
+ * We try to clip a curve so that it can be either Case A or Case C.
+ * Sometimes one of the curves is still Case C though, but it is much
+ * smaller than the original, and further clipping will either show that
  * it is on the curve or provide all Case B or Case A curves.  We try
- * and pick the best axis to clip against, but this may not always
+ * to pick the best axis to clip against, but this may not always
  * work. One extra step that was included, that is not in the paper
  * for curves but is for surfaces, is the fact that sometimes the
  * curve is not clipped enough, if the maximum clip is less than .2
- * than we sub divide the curve in three equal parts, at .3 and .6,
+ * than we subdivide the curve in three equal parts, at .3 and .6 .
  * Subdivision is done using the Oslo Algorithm, rather than the other
  * methods which were prossed.
  */
@@ -466,7 +466,7 @@ rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_
     if (!zero_changed)
 	return;
 
-    /* Clip is not large enough, split in thiords and try again */
+    /* Clip is not large enough, split in thirds and try again */
 
     if (umax - umin < .2) {
 	umin = .3; umax = .6;
