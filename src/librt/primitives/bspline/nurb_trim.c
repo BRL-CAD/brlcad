@@ -377,7 +377,7 @@ _SIGN(fastf_t f)
  * work. One extra step that was included, that is not in the paper
  * for curves but is for surfaces, is the fact that sometimes the
  * curve is not clipped enough, if the maximum clip is less than .2
- * than we subdivide the curve in three equal parts, at .3 and .6 .
+ * then we subdivide the curve in three equal parts, at .3 and .6 .
  * Subdivision is done using the Oslo Algorithm, rather than the other
  * methods which were prossed.
  */
