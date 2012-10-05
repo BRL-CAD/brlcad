@@ -42,7 +42,7 @@
 #
 # BC_CONFIGURE_STAGE
 #
-# outputs status on the the specified configure stage being started.
+# outputs status on the specified configure stage being started.
 #
 ###
 
