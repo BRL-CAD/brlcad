@@ -913,7 +913,7 @@ epa_plot_parabola(
 int
 rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
-    vect_t epa_V, epa_H, Hu, Au, Bu;
+    vect_t epa_H, Hu, Au, Bu;
     fastf_t mag_H, z, r1, r2;
     int i, num_curve_points, num_ellipse_points;
     struct rt_epa_internal *epa;
@@ -932,7 +932,6 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     epa = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(epa);
 
-    VMOVE(epa_V, epa->epa_V);
     VMOVE(epa_H, epa->epa_H);
 
     mag_H = MAGNITUDE(epa_H);
