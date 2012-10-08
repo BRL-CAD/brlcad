@@ -1166,6 +1166,13 @@ BN_EXPORT extern const float bn_rand_table[BN_RAND_TABSIZE];
 
 #define BN_RANDHALFTABSIZE 16535	/* Powers of two give streaking */
 BN_EXPORT extern int bn_randhalftabsize;
+
+/**
+ *  The actual table of random floating point numbers with values in
+ *  the closed interval (i.e. inclusive) -0.5 to +0.5 range.
+ *
+ *  For benchmarking purposes, this table is zeroed.
+ */
 BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 
 /**
@@ -1199,6 +1206,12 @@ BN_EXPORT extern double bn_sin_scale;
 			 (-bn_sin_table[(int)((0.5- (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)]))
 BN_EXPORT extern const float bn_sin_table[BN_SINTABSIZE];
 
+/**
+ *			M A T H T A B _ C O N S T A N T
+ *@brief
+ *  For benchmarking purposes, make the random number table predictable.
+ *  Setting to all zeros keeps dithered values at their original values.
+ */
 BN_EXPORT extern void bn_mathtab_constant();
 
 /** @} */

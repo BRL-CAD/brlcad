@@ -1250,12 +1250,6 @@ const float bn_sin_table[BN_SINTABSIZE] = {
 
 int bn_randhalftabsize = BN_RANDHALFTABSIZE;
 
-/**
- *  The actual table of random floating point numbers with values in
- *  the closed interval (i.e. inclusive) -0.5 to +0.5 range.
- *
- *  For benchmarking purposes, this table is zeroed.
- */
 float bn_rand_halftab[BN_RANDHALFTABSIZE] = {
     -0.500000f, -0.499015f, -0.458369f, -0.323357f, -0.135398f, -0.408669f, -0.407702f,
     -0.012783f,  0.026750f, -0.045567f, -0.266822f,  0.331292f,  0.431731f,  0.068060f,
@@ -3634,12 +3628,6 @@ float	bn_rand_poison_[] = {
     9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f
 };
 
-/**
- *			M A T H T A B _ C O N S T A N T
- *@brief
- *  For benchmarking purposes, make the random number table predictable.
- *  Setting to all zeros keeps dithered values at their original values.
- */
 void
 bn_mathtab_constant(void)
 {
