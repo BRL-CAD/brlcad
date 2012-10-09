@@ -117,7 +117,7 @@ WDB_EXPORT int mk_id_editunits(
  *  Solid conversion routines
  */
 /* libwdb/wdb.c */
-WDB_EXPORT WDB_EXTERN(int mk_half, (struct rt_wdb *fp, const char *name, const vect_t norm, double d) );
+WDB_EXPORT WDB_EXTERN(int mk_half, (struct rt_wdb *fp, const char *name, const vect_t norm, fastf_t d) );
 WDB_EXPORT int mk_grip(
     struct rt_wdb *wdbp,
     const char *name,

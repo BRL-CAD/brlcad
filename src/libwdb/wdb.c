@@ -57,7 +57,7 @@
  * pointing normal vector.
  */
 int
-mk_half(struct rt_wdb *wdbp, const char *name, const fastf_t *norm, double d)
+mk_half(struct rt_wdb *wdbp, const char *name, const fastf_t *norm, fastf_t d)
 {
     struct rt_half_internal *half;
 
