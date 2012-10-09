@@ -100,7 +100,7 @@ rt_rhc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     bcurve->GetNurbForm(*hypnurbscurve);
     delete bcurve;
 
-    // Also need a staight line from the beginning to the end to
+    // Also need a straight line from the beginning to the end to
     // complete the loop.
 
     ON_LineCurve* straightedge = new ON_LineCurve(onp3, onp1);
