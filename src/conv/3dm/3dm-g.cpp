@@ -244,8 +244,8 @@ int main(int argc, char** argv) {
     }
 
     dump->Print("\n");
-    dump->Print("Input file %s.\n", inputFileName);
-    dump->Print("Output file %s.\n", outFileName);
+    dump->Print(" Input file: %s\n", inputFileName);
+    dump->Print("Output file: %s\n", outFileName);
 
     // read the contents of the file into "model"
     bool rc = model.Read(inputFileName, dump); //archive, dump);
