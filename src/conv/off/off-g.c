@@ -71,8 +71,13 @@ int read_faces(struct model *m, FILE *fgeom)
 
     /* Read in vertex geometry, store in geometry list */
     for (i = 0; i < nverts; i++) {
-	if (fscanf(fgeom, "%lf %lf %lf", &pts[3*i], &pts[3*i+1], &pts[3*i+2]) != 3)
+	double scan[3];
+	if (fscanf(fgeom, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]) != 3) {
 	    bu_exit(1, "Not enough data points in geometry file.\n");
+	}
+	pts[3*i] = scan[0];
+	pts[3*i+1] = scan[1];
+	pts[3*i+2] = scan[2];
 
 	verts[i] = (struct vertex *) 0;
 	ret = fscanf(fgeom, "%*[^\n]");

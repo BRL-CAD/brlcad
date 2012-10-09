@@ -203,7 +203,7 @@ getsolid(void)
     vect_t	work;
     double	m1, m2;		/* Magnitude temporaries */
     char	*name = NULL;
-    double	dd[4*6];	/* 4 cards of 6 nums each */
+    fastf_t	dd[4*6];	/* 4 cards of 6 nums each */
     point_t	tmp[8];		/* 8 vectors of 3 nums each */
     int	ret;
 #define D(_i)	(&(dd[_i*3]))
@@ -284,7 +284,7 @@ getsolid(void)
     if (BU_STR_EQUAL(solid_type, "ars")) {
 	int		ncurves;
 	int		pts_per_curve;
-	double		**curve;
+	fastf_t		**curve;
 
 	ncurves = getint(scard, 10, 10);
 	pts_per_curve = getint(scard, 20, 10);
@@ -317,7 +317,7 @@ getsolid(void)
     }
 
     if (BU_STR_EQUAL(solid_type, "rpp")) {
-	double	min[3], max[3];
+	fastf_t min[3], max[3];
 
 	if (getsoldata(dd, 2*3, sol_work) < 0) {
 	    bu_free(name, "name");

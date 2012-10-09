@@ -184,8 +184,8 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 {
 #define MAXV	10000
 
-    char	token[80] = {0};	/* Token read from ascii nmg file. */
-    fastf_t	x, y, z;	/* Coordinates of a vertex. */
+    char token[80] = {0};	/* Token read from ascii nmg file. */
+    double x, y, z;	/* Coordinates of a vertex. */
     int	dir = OT_NONE;	/* Direction of face. */
     int	i,
 	lu_verts[MAXV] = {0},	/* Vertex names making up loop. */

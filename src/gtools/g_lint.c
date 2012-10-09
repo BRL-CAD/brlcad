@@ -56,7 +56,7 @@ struct g_lint_ctrl
 {
     uint32_t glc_magic;			/* Magic no. for integrity check */
     long glc_debug;			/* Bits to tailor diagnostics */
-    fastf_t glc_tol;			/* Overlap/void tolerance */
+    double glc_tol;			/* Overlap/void tolerance */
     unsigned long glc_what_to_report;	/* Bits to tailor the output */
     unsigned long glc_how_to_report;	/* Nature of the output */
     FILE *glc_fp;			/* The output stream */
@@ -803,9 +803,6 @@ main(int argc, char **argv)
     struct application ap;
     char db_title[TITLE_LEN+1];	/* Title of database */
     char *sp;			/* String from strtoul(3) */
-    fastf_t azimuth = 0.0;
-    fastf_t celsiz = 100.0;	/* Spatial sampling rate */
-    fastf_t elevation = 0.0;
     struct g_lint_ctrl control;	/* Info handed to librt(3) */
     int cell_center = 0;	/* Fire from center of cell? */
     int ch;			/* Character from getopt */
@@ -827,6 +824,11 @@ main(int argc, char **argv)
     vect_t unit_D;		/* View basis vectors */
     vect_t unit_H;
     vect_t unit_V;
+
+    /* intentionally double for scan */
+    double azimuth = 0.0;
+    double celsiz = 100.0;	/* Spatial sampling rate */
+    double elevation = 0.0;
 
     bu_log("%s\n", rt_version());
 

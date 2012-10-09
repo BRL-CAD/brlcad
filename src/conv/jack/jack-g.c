@@ -165,7 +165,7 @@ read_psurf_vertices(FILE *fp, struct vlist *vert)
 /* Psurf file pointer. */
 /* Array of read in vertices. */
 {
-    fastf_t	x, y, z;
+    double x, y, z;
     int	i;
     int	bomb=0;
     size_t ret;
