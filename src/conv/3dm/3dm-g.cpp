@@ -136,7 +136,6 @@ void BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump) {
 	groupname = "g" + groupcnt;
     }
 
-
     MEMBER_MAP::iterator iter = member_map.find(uuid);
     if (iter != member_map.end()) {
 	MEMBER_VEC *vec = (MEMBER_VEC *)iter->second;
@@ -172,7 +171,7 @@ void ProcessLayers(ONX_Model &model, ON_TextLog* dump) {
     std::string layer_name,uuid,parent_uuid;
     ON_UuidIndex uuidIndex;
     int i, count = model.m_layer_table.Count();
-    dump->Print("Number of LAYERS - %d\n.", count);
+    dump->Print("Number of layers: %d\n", count);
     for ( i=0; i < count; i++) {
 	const ON_Layer& layer = model.m_layer_table[i];
 	ON_wString lname = layer.LayerName();
@@ -240,6 +239,7 @@ int main(int argc, char** argv) {
     dump->Print("Input file %s.\n", inputFileName);
     dump->Print("Output file %s.\n", outFileName);
 
+#if 0
     FILE* archive_fp = ON::OpenFile(inputFileName, "rb");
     if ( !archive_fp ) {
 	dump->Print("  Unable to open input file.\n" );
@@ -247,26 +247,49 @@ int main(int argc, char** argv) {
 
     // create achive object from file pointer
     ON_BinaryFile archive( ON::read3dm, archive_fp );
+#endif
 
     // read the contents of the file into "model"
-    bool rc = model.Read( archive, dump );
+    bool rc = model.Read( inputFileName, dump); //archive, dump );
 
+#if 0
     ON::CloseFile( archive_fp );
+#endif
 
     outfp = wdb_fopen(outFileName);
+    mk_id(outfp, id_name);
+
     // print diagnostic
     if ( rc )
 	dump->Print("Input 3dm file successfully read.\n");
     else
 	dump->Print("Errors during reading 3dm file.\n");
 
-    // see if everything is in good shape
-    if ( model.IsValid(dump) )
-	dump->Print("Model is valid.\n");
-    else
-	dump->Print("Model is not valid.\n");
+    // see if everything is in good shape, be quiet first time around
+    if ( model.IsValid(dump) ) {
+	dump->Print("Model is VALID\n");
+    } else {
+	int warn_i;
+	int repair_count = 0;
+	ON_SimpleArray<int> warnings;
 
-    dump->Print("Number of NURBS objects read was %d\n.", model.m_object_table.Count());
+	dump->Print("Model is NOT valid.  Attempting repairs.\n");
+
+	model.Polish(); // fill in defaults
+	model.Audit(true, &repair_count, dump, &warnings); // repair
+
+	dump->Print("%d objects were repaired.\n", repair_count);
+	for (warn_i=0; warn_i < warnings.Count(); warn_i++) {
+	    dump->Print("%s\n", warnings[warn_i]);
+	}
+
+	if (model.IsValid(dump))
+	    dump->Print("Repair successful, model is now valid.\n");
+	else
+	    dump->Print("Repair unsuccessful, model is still NOT valid.\n");
+    }
+
+    dump->Print("Number of NURBS objects read: %d\n", model.m_object_table.Count());
 
     /* process layer table before building regions */
     ProcessLayers(model,dump);
@@ -274,10 +297,12 @@ int main(int argc, char** argv) {
     struct wmember all_regions;
     BU_LIST_INIT(&all_regions.l);
 
+    dump->Print("\n");
     for (int i = 0; i < model.m_object_table.Count(); i++ ) {
-	dump->PushIndent();
 
-	dump->Print("\n\nObject %d of %d:\n\n", i + 1, model.m_object_table.Count());
+	dump->Print("Object %d of %d:\n\n", i + 1, model.m_object_table.Count());
+
+	dump->PushIndent();
 
 	// object's attributes
 	ON_3dmObjectAttributes myAttributes = model.m_object_table[i].m_attributes;
@@ -334,9 +359,6 @@ int main(int argc, char** argv) {
 	/* add region to hierarchical containers */
 	MapRegion(model,region_name,myAttributes.m_layer_index);
 
-	dump->Print("primitive is %s.\n", geom_name.c_str());
-	dump->Print("region created is %s.\n", region_name.c_str());
-
 	/* object definition
 	Ah - rather than pulling JUST the geometry from the opennurbs object here, need to
 	also get properties from ON_3dmObjectAttributes:
@@ -363,6 +385,7 @@ int main(int argc, char** argv) {
 	    ON_Group *group;
 	    ON_Geometry *geom;
 	    int r,g,b;
+
 	    if (random_colors) {
 		r = int(256*drand48() + 1.0);
 		g = int(256*drand48() + 1.0);
@@ -372,9 +395,14 @@ int main(int argc, char** argv) {
 		g = ((model.WireframeColor(myAttributes)>>8) & 0xFF);
 		b = ((model.WireframeColor(myAttributes)>>16) & 0xFF);
 	    }
-	    bu_log("Color: %d,%d,%d\n", r,g,b);
+
+	    dump->Print("Color: %d,%d,%d\n", r,g,b);
+
 	    if ((brep = const_cast<ON_Brep * >(ON_Brep::Cast(pGeometry)))) {
-		mk_id(outfp, id_name);
+
+		dump->Print("primitive is %s.\n", geom_name.c_str());
+		dump->Print("region created is %s.\n", region_name.c_str());
+
 		mk_brep(outfp, geom_name.c_str(), brep);
 
 		unsigned char rgb[3];
@@ -384,67 +412,57 @@ int main(int argc, char** argv) {
 		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
 
 		(void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
-		if (verbose_mode > 0) brep->Dump(*dump);
-		dump->PopIndent();
+		if (verbose_mode > 0)
+		    brep->Dump(*dump);
 	    } else if (pGeometry->HasBrepForm()) {
-		dump->Print("\n\n ***** HasBrepForm. ***** \n\n");
-		dump->PopIndent();
+		dump->Print("Type: HasBrepForm\n");
 	    } else if ((curve = const_cast<ON_Curve * >(ON_Curve::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_Curve. ***** \n\n");
+		dump->Print("Type: ON_Curve\n");
 		if (verbose_mode > 1) curve->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((surface = const_cast<ON_Surface * >(ON_Surface::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_Surface. ***** \n\n");
+		dump->Print("Type: ON_Surface\n");
 		if (verbose_mode > 2) surface->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((mesh = const_cast<ON_Mesh * >(ON_Mesh::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_Mesh. ***** \n\n");
+		dump->Print("Type: ON_Mesh\n");
 		if (verbose_mode > 4) mesh->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((revsurf = const_cast<ON_RevSurface * >(ON_RevSurface::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_RevSurface. ***** \n\n");
+		dump->Print("Type: ON_RevSurface\n");
 		if (verbose_mode > 2) revsurf->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((planesurf = const_cast<ON_PlaneSurface * >(ON_PlaneSurface::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_PlaneSurface. ***** \n\n");
+		dump->Print("Type: ON_PlaneSurface\n");
 		if (verbose_mode > 2) planesurf->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((instdef = const_cast<ON_InstanceDefinition * >(ON_InstanceDefinition::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_InstanceDefinition. ***** \n\n");
+		dump->Print("Type: ON_InstanceDefinition\n");
 		if (verbose_mode > 3) instdef->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((instref = const_cast<ON_InstanceRef * >(ON_InstanceRef::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_InstanceRef. ***** \n\n");
+		dump->Print("Type: ON_InstanceRef\n");
 		if (verbose_mode > 3) instref->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((layer = const_cast<ON_Layer * >(ON_Layer::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_Layer. ***** \n\n");
+		dump->Print("Type: ON_Layer\n");
 		if (verbose_mode > 3) layer->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((light = const_cast<ON_Light * >(ON_Light::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_Light. ***** \n\n");
+		dump->Print("Type: ON_Light\n");
 		if (verbose_mode > 3) light->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((nurbscage = const_cast<ON_NurbsCage * >(ON_NurbsCage::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_NurbsCage. ***** \n\n");
+		dump->Print("Type: ON_NurbsCage\n");
 		if (verbose_mode > 3) nurbscage->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((morphctrl = const_cast<ON_MorphControl * >(ON_MorphControl::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_MorphControl. ***** \n\n");
+		dump->Print("Type: ON_MorphControl\n");
 		if (verbose_mode > 3) morphctrl->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((group = const_cast<ON_Group * >(ON_Group::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_Group. ***** \n\n");
+		dump->Print("Type: ON_Group\n");
 		if (verbose_mode > 3) group->Dump(*dump);
-		dump->PopIndent();
 	    } else if ((geom = const_cast<ON_Geometry * >(ON_Geometry::Cast(pGeometry)))) {
-		dump->Print("\n\n ***** ON_Geometry. ***** \n\n");
+		dump->Print("Type: ON_Geometry\n");
 		if (verbose_mode > 3) geom->Dump(*dump);
-		dump->PopIndent();
 	    } else {
-		dump->Print("\n\n ***** Got a different kind of object than geometry - investigate. ***** \n\n");
+		dump->Print("WARNING: Encountered an unexpected kind of object.  Please report to devs@brlcad.org\n");
 	    }
+	} else {
+	    dump->Print("WARNING: Skipping non-Geometry entity: %s\n", geom_base.c_str());
 	}
+	dump->PopIndent();
+	dump->Print("\n\n");
     }
 
     /* use accumulated layer information to build mged hierarchy */
@@ -453,6 +471,9 @@ int main(int argc, char** argv) {
     mk_lcomb(outfp, toplevel, &all_regions, 0, NULL, NULL, NULL, 0);
     bu_free(toplevel, "bu_basename toplevel");
     wdb_close(outfp);
+
+    /* let them know */
+    dump->Print("Done.\n");
 
     model.Destroy();
     ON::End();
