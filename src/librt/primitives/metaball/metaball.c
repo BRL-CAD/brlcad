@@ -229,7 +229,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     nmb->finalstep = /*stp->st_aradius * */minfstr / 1e5;
 
     /* generate a bounding box around the sphere...
-     * XXX this can be optimized greatly to reduce the BSP presense... */
+     * XXX this can be optimized greatly to reduce the BSP presence... */
     if (rt_metaball_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
     stp->st_specific = (void *)nmb;
     return 0;
@@ -445,7 +445,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 			STEPIN(in)
 			fhin = 1;
 			BU_LIST_INSERT(&(seghead->l), &(segp->l));
-			/* reset the ray-walk shtuff */
+			/* reset the ray-walk stuff */
 			mb_stat = 1;
 			VADD2(p, p, inc);	/* set p to a point inside */
 			step = mb->initstep;
