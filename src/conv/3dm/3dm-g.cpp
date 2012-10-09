@@ -47,7 +47,9 @@ STR_STR_MAP layer_name_uuid_map;
 REGION_CNT_MAP region_cnt_map;
 MEMBER_MAP member_map;
 
-char * itoa(int num) {
+char *
+itoa(int num)
+{
     static char line[10];
 
     sprintf(line, "%d", num);
@@ -55,7 +57,9 @@ char * itoa(int num) {
 }
 
 
-void printPoints(struct rt_brep_internal* bi, ON_TextLog* dump) {
+void
+printPoints(struct rt_brep_internal* bi, ON_TextLog* dump)
+{
     ON_Brep* brep = bi->brep;
     if (brep) {
 	const int count = brep->m_V.Count();
@@ -69,7 +73,9 @@ void printPoints(struct rt_brep_internal* bi, ON_TextLog* dump) {
 }
 
 
-int RegionCnt(std::string &name) {
+int
+RegionCnt(std::string &name)
+{
     REGION_CNT_MAP::iterator iter = region_cnt_map.find(name);
 
     if (iter == region_cnt_map.end()) {
@@ -84,7 +90,9 @@ int RegionCnt(std::string &name) {
 }
 
 
-void MapRegion(ONX_Model &model, std::string &region_name, int layer_index) {
+void
+MapRegion(ONX_Model &model, std::string &region_name, int layer_index)
+{
     char uuidstr[50];
     std::string parent_uuid;
 
@@ -100,7 +108,9 @@ void MapRegion(ONX_Model &model, std::string &region_name, int layer_index) {
 }
 
 
-void MapLayer(std::string &layer_name, std::string &uuid, std::string &parent_uuid) {
+void
+MapLayer(std::string &layer_name, std::string &uuid, std::string &parent_uuid)
+{
     layer_uuid_name_map.insert(std::pair<std::string, std::string>(uuid, layer_name));
     layer_name_uuid_map.insert(std::pair<std::string, std::string>(layer_name, uuid));
     MEMBER_MAP::iterator iter = member_map.find(uuid);
@@ -121,7 +131,9 @@ void MapLayer(std::string &layer_name, std::string &uuid, std::string &parent_uu
 }
 
 
-void BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump) {
+void
+BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump)
+{
     static int groupcnt = 1;
     struct wmember members;
     BU_LIST_INIT(&members.l);
@@ -162,7 +174,9 @@ void BuildHierarchy(struct rt_wdb* outfp, std::string &uuid, ON_TextLog* dump) {
 }
 
 
-void BuildHierarchy(struct rt_wdb* outfp, ON_TextLog* dump) {
+void
+BuildHierarchy(struct rt_wdb* outfp, ON_TextLog* dump)
+{
     std::string root_uuid = "00000000-0000-0000-0000-000000000000";
     MEMBER_MAP::iterator iter = member_map.find(root_uuid);
     if (iter != member_map.end()) {
@@ -172,7 +186,9 @@ void BuildHierarchy(struct rt_wdb* outfp, ON_TextLog* dump) {
 }
 
 
-void ProcessLayers(ONX_Model &model, ON_TextLog* dump) {
+void
+ProcessLayers(ONX_Model &model, ON_TextLog* dump)
+{
     char name[256];
     char uuidstr[50];
     std::string layer_name, uuid, parent_uuid;
@@ -191,7 +207,9 @@ void ProcessLayers(ONX_Model &model, ON_TextLog* dump) {
 }
 
 
-int main(int argc, char** argv) {
+int
+main(int argc, char** argv)
+{
     int mcount = 0;
     int verbose_mode = 0;
     int random_colors = 0;
