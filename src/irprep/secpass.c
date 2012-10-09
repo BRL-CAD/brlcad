@@ -139,11 +139,11 @@ int main(int argc, char **argv)
     int nadjreg;		/* Number of adjacent regions.  */
     int prmrel;		/* PRISM release number, 2=>2.0, 3=>3.0.  */
     int ifire;		/* Number of sets of rays to be fired, 0=> */
-			/* fire from 3 orthogonal postions, 1=>fire */
+			/* fire from 3 orthogonal positions, 1=>fire */
 			/* from 1 position.  */
     int ret;
 
-    /* Check to see if arguments implimented correctly.  */
+    /* Check to see if arguments implemented correctly.  */
     if (argc < 2 || argv[1] == NULL || argv[2] == NULL) {
 	(void)fprintf(stderr, "\nusage:  secpass file.g objects\n\n");
     }
@@ -261,7 +261,7 @@ int main(int argc, char **argv)
 
 	/* Choose whether 3 orthogonal sets of rays are to be fired */
 	/* or 1 set of rays is to be fired.  */
-	(void)printf("Should there be 3 sets of orhogonal rays fired ");
+	(void)printf("Should there be 3 sets of orthogonal rays fired ");
 	(void)printf("(0) or 1 set (1)?\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%d", &ifire);
@@ -1092,7 +1092,7 @@ hit(struct application *UNUSED(ap_p), struct partition *PartHeadp, struct seg *U
 
     double d[3];		/* used for checking tolerance of */
     /* adjacent regions */
-    double dist;		/* used for finding lenght between */
+    double dist;		/* used for finding length between */
     /* centroid & adjacent surface area */
 
     pp = PartHeadp->pt_forw;
@@ -1147,7 +1147,7 @@ hit(struct application *UNUSED(ap_p), struct partition *PartHeadp, struct seg *U
 		    cond[iprev].maxlen[icur] = dist;
 		}
 
-		/* Find lenght for current region.  */
+		/* Find length for current region.  */
 		dist = ((cond[icur].centroid[X] - enterpt[X])
 			* (cond[icur].centroid[X] - enterpt[X])) +
 		    ((cond[icur].centroid[Y] - enterpt[Y])
