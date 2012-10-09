@@ -3382,7 +3382,7 @@ main(int argc, char **argv)
     char name[NAMESIZE+1];
 
     /* intentionally double for scan */
-    double scan[3];
+    double p[3];
 
     BU_LIST_INIT(&head.l);
     BU_LIST_INIT(&heada.l);
@@ -3504,8 +3504,8 @@ main(int argc, char **argv)
 			* triangle surface normal calculations
 			*/
 		sscanf(bu_optarg, "%lf %lf %lf",
-		       &scan[0], &scan[1], &scan[2]);
-		VSET(Centroid, scan); /* double to fastf_t */
+		       &p[0], &p[1], &p[2]);
+		VMOVE(Centroid, p); /* double to fastf_t */
 
 		bu_log("Centroid = (%f %f %f)\n", V3ARGS(Centroid));
 		VSCALE(Centroid, Centroid, mmtin);
