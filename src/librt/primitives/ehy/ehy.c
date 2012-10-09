@@ -674,6 +674,332 @@ rt_ehy_class(void)
     return 0;
 }
 
+/* Assume the existence of a line and a hyperbola with asymptote at the the
+ * origin, both in the y-z plane (x = 0.0). The hyperbola and line are
+ * described by arguments a, b, and m, from the respective equations
+ * (z = +-(a/b) * sqrt(y^2 + b^2)) and (z = my + b).
+ *
+ * The line is assumed to intersect the positive half of the hyperbola at two
+ * points.
+ *
+ * The portion of the hyperbola between these two intersection points takes on
+ * a single maximum value with respect to the intersecting line when its slope
+ * is the same as the line's (i.e. when the tangent line and intersecting line
+ * are parallel).
+ *
+ * The first derivate slope equation z' = ay / (b * sqrt(y^2 + b^2)) implies
+ * that the hyperbola has slope m when y = mb^2 / sqrt(a^2 - b^2m^2).
+ *
+ * We calculate y from a, b, and m, and then z from y.
+ */
+static void
+parabola_point_farthest_from_line(point_t max_point, fastf_t a, fastf_t b, fastf_t m)
+{
+    fastf_t y = (m * b * b) / sqrt(a * a - b * b * m * m);
+
+    max_point[X] = 0.0;
+    max_point[Y] = y;
+    max_point[Z] = (a / b) * sqrt(y * y + b * b);
+}
+
+/* Calculate the length of the shortest distance between a point and a line in
+ * the y-z plane.
+ */
+static fastf_t
+distance_point_to_line(point_t p, fastf_t slope, fastf_t intercept)
+{
+    /* input line:
+     *   z = slope * y + intercept
+     *
+     * implicit form is:
+     *   az + by + c = 0,  where a = -slope, b = 1, c = -intercept
+     *
+     * standard 2D point-line distance calculation:
+     *   d = |aPy + bPz + c| / sqrt(a^2 + b^2)
+     */
+    return fabs(-slope * p[Y] + p[Z] - intercept) / sqrt(slope * slope + 1);
+}
+
+/* Approximate part of the hyperbola lying in the Y-Z plane described by:
+ *  ((z - k)^2 / a^2) - ((y - h)^2 / b^2) = 1
+ *
+ * pts->p: the asymptote origin (0, h, k)
+ * pts->next->p: another point on the hyperbola
+ * pts->next->next: NULL
+ * p: the constant from the above equation
+ *
+ * This routine inserts num_new_points points between the two input points to
+ * better approximate the hyperbolic curve passing between them.
+ *
+ * Returns number of points successfully added.
+ */
+static int
+approximate_hyperbolic_curve(struct rt_pt_node *pts, fastf_t a, fastf_t b, int num_new_points)
+{
+    fastf_t error, max_error, seg_slope, seg_intercept;
+    point_t v, point, p0, p1, new_point = VINIT_ZERO;
+    struct rt_pt_node *node, *worst_node, *new_node;
+    int i;
+
+    if (pts == NULL || pts->next == NULL || num_new_points < 1) {
+	return 0;
+    }
+
+    VMOVE(v, pts->p);
+
+    for (i = 0; i < num_new_points; ++i) {
+	worst_node = node = pts;
+	max_error = 0.0;
+
+	/* Find the least accurate line segment, and calculate a new parabola
+	 * point to insert between it's endpoints.
+	 */
+	while (node->next != NULL) {
+	    VMOVE(p0, node->p);
+	    VMOVE(p1, node->next->p);
+
+	    seg_slope = (p1[Z] - p0[Z]) / (p1[Y] - p0[Y]);
+	    seg_intercept = p0[Z] - seg_slope * p0[Y];
+
+	    /* get farthest point on the equivalent parabola at the origin */
+	    parabola_point_farthest_from_line(point, a, b, seg_slope);
+
+	    /* translate result to actual parabola position */
+	    point[Y] += v[Y];
+	    point[Z] += v[Z];
+
+	    /* see if the maximum distance between the parabola and the line
+	     * (the error) is larger than the largest recorded error
+	     * */
+	    error = distance_point_to_line(point, seg_slope, seg_intercept);
+
+	    if (error > max_error) {
+		max_error = error;
+		worst_node = node;
+		VMOVE(new_point, point);
+	    }
+
+	    node = node->next;
+	}
+
+	/* insert new point between endpoints of the least accurate segment */
+	new_node = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node),
+		    "rt_pt_node");
+	VMOVE(new_node->p, new_point);
+	new_node->next = worst_node->next;
+	worst_node->next = new_node;
+    }
+
+    return num_new_points;
+}
+
+/* Our canonical hyperbola in the Y-Z plane has equation
+ * z = +- (a/b) * sqrt(b^2 + y^2), and opens toward +Z and -Z with asymptote
+ * origin at the origin.
+ *
+ * The contour of an ehy in the plane H-R (where R is one of the ehy axes A or
+ * B) is the positive half of a hyperbola with asymptote origin at
+ * ((|H| + c)Hu), opening toward -H. We can transform this hyperbola to get an
+ * equivalent canonical hyperbola in the Y-Z plane, opening toward +Z (-H) with
+ * asymptote origin at the origin.
+ *
+ * This hyperbola passes through the point (r, |H| + a) (where r = |A| or |B|,
+ * and a = c). If we plug the point (r, |H| + a) into our canonical equation,
+ * we can derive b from |H|, a, and r.
+ *
+ *                             |H| + a = (a/b) * sqrt(b^2 + r^2)
+ *                       (|H| + a) / a = b * sqrt(b^2 + r^2)
+ *                   (|H| + a)^2 / a^2 = 1 + (r^2 / b^2)
+ *           ((|H| + a)^2 - a^2) / a^2 = r^2 / b^2
+ *   (a^2 * r^2) / ((|H| + a)^2 - a^2) = b^2
+ *      (ar) / sqrt((|H| + a)^2 - a^2) = b
+ *         (ar) / sqrt(|H| (|H| + 2a)) = b
+ */
+static fastf_t
+ehy_hyperbola_b(fastf_t mag_h, fastf_t c, fastf_t r)
+{
+    return (c * r) / sqrt(mag_h * (mag_h + 2.0 * c));
+}
+
+/* The contour of an ehy in the plane H-R (where R is one of the ehy axes A or
+ * B) is the positive half of a hyperbola with asymptote origin at
+ * ((|H| + c)Hu), opening toward -H. We can transform this hyperbola to get an
+ * equivalent hyperbola in the Y-Z plane, opening toward +Z (-H) with asymptote
+ * origin at (0, -(|H| + c)).
+ *
+ * The part of this parabola that passes between (0, -(|H| + c)) and (r, 0)
+ * (r = |A| or |B|) is approximated by num_points points (including (0, -|H|)
+ * and (r, 0)).
+ *
+ * The constructed point list is returned (NULL returned on error). Because the
+ * above transformation puts the ehy vertex at the origin and the hyperbola
+ * asymptote origin at (0, -|H|), multiplying the z values by -1 gives
+ * corresponding distances along the ehy height vector H.
+ */
+static struct rt_pt_node *
+ehy_hyperbolic_curve(fastf_t mag_h, fastf_t c, fastf_t r, int num_points)
+{
+    int count;
+    struct rt_pt_node *curve;
+
+    curve = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    curve->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+
+    curve->next->next = NULL;
+    VSET(curve->p,       0, 0, -1.0 * (mag_h + c));
+    VSET(curve->next->p, 0, r, 0);
+
+    count = approximate_hyperbolic_curve(curve, c, ehy_hyperbola_b(mag_h, c, r), num_points - 2);
+
+    if (count != (num_points - 2)) {
+	return NULL;
+    }
+
+    return curve;
+}
+
+/* The contour of an ehy in the plane H-R (where R is one of the ehy axes A or
+ * B) is the positive half of a hyperbola with asymptote origin at
+ * ((|H| + c)Hu), opening toward -H. We can transform this hyperbola to get an
+ * equivalent hyperbola in the Y-Z plane, with asymptote origin at
+ * (0, |H| + a) (a = c) opening toward +Z.
+ *
+ * The equation for this hyperbola is a variant of the equation for our
+ * canonical hyperbola in the Y-Z plane (z = (a/b) * sqrt(y^2 + b^2)):
+ *   z = (|H| + a) - (a/b) * sqrt(y^2 + b^2)
+ *
+ * Solving this equation for y yields:
+ *   y = (b/a) * sqrt((|H| + a - z)^2 - a^2)
+ *
+ * Substituting b = (ar) / sqrt(|H| (|H| + 2a)) (see above comment):
+ *
+ *   y = (r / sqrt(|H| (|H| + 2a))) * sqrt((|H| + a - z)^2 - a^2)
+ *     = r * sqrt( ((|H| + a - z)^2 - a^2) / (|H| (|H| + 2a))) )
+ */
+static fastf_t
+ehy_hyperbola_y(fastf_t mag_H, fastf_t c, fastf_t r, fastf_t z)
+{
+    fastf_t n, d;
+
+    n = pow(mag_H + c - z, 2) - c * c;
+    d = mag_H * (mag_H + 2.0 * c);
+
+    return r * sqrt(n / d);
+}
+
+/* Plot the elliptical cross section of the given ehy at distance h along the
+ * ehy height vector (h >= 0, h <= |H|) consisting of num_points points.
+ */
+static void
+ehy_plot_ellipse(
+	struct bu_list *vhead,
+	struct rt_ehy_internal *ehy,
+	fastf_t h,
+	fastf_t num_points)
+{
+    int i;
+    point_t p;
+    vect_t V, Hu, Au, Bu, A, B, cross_section_plane;
+    fastf_t mag_H, rad, radian_step;
+
+    VMOVE(V, ehy->ehy_V);
+
+    mag_H = MAGNITUDE(ehy->ehy_H);
+    VSCALE(Hu, ehy->ehy_H, 1.0 / mag_H);
+
+    VMOVE(Au, ehy->ehy_Au);
+    VCROSS(Bu, Au, Hu);
+
+    /* calculate semi-major and semi-minor axis for the elliptical
+     * cross-section at distance h along H
+     */
+    VSCALE(A, Au, ehy_hyperbola_y(mag_H, ehy->ehy_c, ehy->ehy_r1, h));
+    VSCALE(B, Bu, ehy_hyperbola_y(mag_H, ehy->ehy_c, ehy->ehy_r2, h));
+
+    VJOIN1(cross_section_plane, V, h, Hu);
+    radian_step = bn_twopi / num_points;
+
+    rad = radian_step * (num_points - 1);
+    VJOIN2(p, cross_section_plane, cos(rad), A, sin(rad), B);
+    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+
+    rad = 0;
+    for (i = 0; i < num_points; ++i) {
+	VJOIN2(p, cross_section_plane, cos(rad), A, sin(rad), B);
+	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+	rad += radian_step;
+    }
+}
+
+int
+rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    vect_t ehy_H, Hu, Au, Bu;
+    fastf_t mag_H, z, c, r1, r2;
+    int i, num_curve_points, num_ellipse_points;
+    struct rt_ehy_internal *ehy;
+    struct rt_pt_node *pts_r1, *pts_r2, *node, *node1, *node2;
+
+    num_curve_points = sqrt(primitive_diagonal_samples(ip, info)) / 4.0;
+
+    if (num_curve_points < 3) {
+	num_curve_points = 3;
+    }
+
+    num_ellipse_points = 4 * num_curve_points;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+    ehy = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(ehy);
+
+    VMOVE(ehy_H, ehy->ehy_H);
+
+    mag_H = MAGNITUDE(ehy_H);
+    VSCALE(Hu, ehy->ehy_H, 1.0 / mag_H);
+
+    VMOVE(Au, ehy->ehy_Au);
+    VCROSS(Bu, Au, Hu);
+
+    r1 = ehy->ehy_r1;
+    r2 = ehy->ehy_r2;
+    c = ehy->ehy_c;
+
+    pts_r1 = ehy_hyperbolic_curve(mag_H, c, r1, num_curve_points);
+    pts_r2 = ehy_hyperbolic_curve(mag_H, c, r2, num_curve_points);
+
+    if (pts_r1 == NULL || pts_r2 == NULL) {
+	return -1;
+    }
+
+    node1 = pts_r1;
+    node2 = pts_r2;
+    for (i = 0; i < num_curve_points; ++i) {
+	/* Select cross-section to draw by averaging the z values and flip over y-axis
+	 * to get a distance along H.
+	 */
+	z = (node1->p[Z] + node2->p[Z]) / 2.0;
+	ehy_plot_ellipse(info->vhead, ehy, -z, num_ellipse_points);
+
+	node1 = node1->next;
+	node2 = node2->next;
+    }
+
+    node1 = pts_r1;
+    node2 = pts_r2;
+    for (i = 0; i < num_curve_points; ++i) {
+	node = node1;
+	bu_free(node, "rt_pt_node");
+
+	node = node2;
+	bu_free(node, "rt_pt_node");
+
+	node1 = node1->next;
+	node2 = node2->next;
+    }
+
+    return 0;
+}
 
 /**
  * R T _ E H Y _ P L O T

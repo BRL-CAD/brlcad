@@ -987,7 +987,7 @@ const struct rt_functab rt_functab[] = {
 	rt_ehy_class,
 	rt_ehy_free,
 	rt_ehy_plot,
-	NULL,
+	rt_ehy_adaptive_plot,
 	NULL,
 	rt_ehy_tess,
 	NULL,
