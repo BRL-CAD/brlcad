@@ -59,7 +59,7 @@ proc icreate { id args } {
     toplevel $w -screen $mged_gui($id,screen)
     wm title $w "Instance Creation"
 
-    # Make two frames: top one for entry fields and labels, buttom one for
+    # Make two frames: top one for entry fields and labels, bottom one for
     # create and quit buttons
 
     frame $w.t
