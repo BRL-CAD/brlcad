@@ -76,7 +76,7 @@ fb_totally_numeric(const char *s)
 
 
 /**
- * Disk interface enable flag.  Used so the the remote daemon
+ * Disk interface enable flag.  Used so the remote daemon
  * can turn off the disk interface.
  */
 int _fb_disk_enable = 1;
