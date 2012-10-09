@@ -352,7 +352,7 @@ BN_EXPORT extern void anim_quat2mat(mat_t m,
  * make a matrix which turns a vehicle from the x-axis to point in the
  * desired direction, staying "right-side up" (ie the y-axis never has
  * a z-component). A second direction vector is consulted when the
- * given direction is vertical. This is intended to represent the the
+ * given direction is vertical. This is intended to represent the
  * direction from a previous frame.
  */
 BN_EXPORT extern void anim_dir2mat(mat_t m,
@@ -363,7 +363,7 @@ BN_EXPORT extern void anim_dir2mat(mat_t m,
  * @brief make a matrix which turns a vehicle from the x-axis to point
  * in the desired direction, staying "right-side up". In cases where
  * the direction is vertical, the second vector is consulted. The
- * second vector defines a normal to the the vertical plane into which
+ * second vector defines a normal to the vertical plane into which
  * the vehicle's x and z axes should be put. A good choice to put here
  * is the direction of the vehicle's y-axis in the previous frame.
  */
@@ -1522,7 +1522,7 @@ BN_EXPORT extern const fastf_t bn_radtodeg;
  * For example, if the val[] array contains power values, then val[j]
  * contains the integral of the power from wavel[j] to wavel[j+1]
  *
- * As an exmple, assume nwave=2, wavel[0]=500, wavel[1]=600, wavel[2]=700.
+ * As an example, assume nwave=2, wavel[0]=500, wavel[1]=600, wavel[2]=700.
  * Then val[0] would contain data for the 500 to 600nm interval,
  * and val[1] would contain data for the 600 to 700nm interval.
  * There would be no storage allocated for val[2] -- don't use it!
