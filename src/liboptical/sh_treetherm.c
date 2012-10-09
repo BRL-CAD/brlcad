@@ -599,9 +599,9 @@ tthrm_render(struct application *ap, const struct partition *pp, struct shadewor
     if (MAGSQ(v) > 100.0) {
 	double dist;
 	dist = MAGNITUDE(v);
-	/* Distance between particle origin and centroid of themal
+	/* Distance between particle origin and centroid of thermal
 	 * segment nodes is > 10.0mm (1cm).  This suggests that
-	 * they aren't related
+	 * they aren't related.
 	 */
 	bu_log(
 	    "----------------------------- W A R N I N G -----------------------------\n\
