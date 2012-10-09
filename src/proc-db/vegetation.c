@@ -355,7 +355,7 @@ branchWithProbability(plant_t *plant, structure_t* structure, unsigned int minAg
 		      VPRINT("New Growth Direction: ", direction);
 		    */
 
-		    /* create and fill in the the growth point */
+		    /* create and fill in the growth point */
 		    newGrowthPoint = (growthPoint_t *)bu_calloc(1, sizeof(growthPoint_t), "newGrowthPoint");
 		    INIT_GROWTHPOINT_T(newGrowthPoint);
 		    newGrowthPoint->growthEnergy = plant->characteristic->growthEnergy;
@@ -973,7 +973,7 @@ main(int argc, char *argv[])
     VSET(c.branchMinVariation, -0.8, -0.8, 0.0); /* branches just cannot go "inward" */
     VSET(c.branchMaxVariation, 0.8, 0.8, 1.0);  /* branches cannot go "inwards" */
 
-    c.dyingRate = 0.0;  /* unimplemnted */
+    c.dyingRate = 0.0;  /* unimplemented */
     c.dyingAge = INT_MAX;  /* unimplemented */
     c.lengthDecayRate = 0.01; /* almost same length every year */
     c.radiusDecayRate = 0.15;  /* radius gets smaller by about 20% every year */
