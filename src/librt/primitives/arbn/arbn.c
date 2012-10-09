@@ -120,7 +120,7 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /*
      * ARBN must be convex.  Test for concavity.
-     * Byproduct is an enumeration of all the verticies,
+     * Byproduct is an enumeration of all the vertices,
      * which are used to make the bounding RPP.  No need
      * to call the bbox routine, as the work must be duplicated
      * here to count faces.
@@ -472,7 +472,7 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 		point_count++;
 	    }
 	    /* Point counts of 1 are (generally) not harmful,
-	     * occuring on pyramid peaks and the like.
+	     * occurring on pyramid peaks and the like.
 	     */
 	}
     }
@@ -590,7 +590,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     struct arbn_pts *pts;
     struct arbn_edges *edges;		/* A list of edges for each plane eqn (each face) */
     size_t *edge_count;	/* number of edges for each face */
-    size_t max_edge_count; /* maximium number of edges for any face */
+    size_t max_edge_count; /* maximum number of edges for any face */
     struct vertex **verts;	/* Array of pointers to vertex structs */
     struct vertex ***loop_verts;	/* Array of pointers to vertex structs to pass to nmg_cmface */
 
