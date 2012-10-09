@@ -679,7 +679,7 @@ skip_group(struct ged *gedp, FILE *fip, struct bu_vls *str)
 
     while (count) {
 	if (get_token(gedp, &tok, fip, str, animkeys, animsyms) == EOF) {
-	    parse_error(gedp, str, "skip_group: Unexpect EOF while searching for group end.");
+	    parse_error(gedp, str, "skip_group: Unexpected EOF while searching for group end.");
 	    return;
 	}
 	if (tok.type == BU_LEX_IDENT) bu_free(tok.t_id.value, "unit token");
@@ -702,7 +702,7 @@ parse_units(struct ged *gedp, FILE *fip, struct bu_vls *str)
     union bu_lex_token token;
 
     if (get_token(gedp, &token, fip, str, units, animsyms) == EOF) {
-	parse_error(gedp, str, "parse_units: Unexpect EOF reading units.");
+	parse_error(gedp, str, "parse_units: Unexpected EOF reading units.");
 	return 0;
     }
     if (token.type == BU_LEX_IDENT) bu_free(token.t_id.value, "unit token");
@@ -751,7 +751,7 @@ parse_path(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
     ap->type = ARC_PATH;
     for (;;) {
 	if (get_token(gedp, &token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
-	    parse_error(gedp, str, "parse_path: Unexpect EOF.");
+	    parse_error(gedp, str, "parse_path: Unexpected EOF.");
 	    free_arc(ap);
 	    return 0;
 	}
@@ -767,7 +767,7 @@ parse_path(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
 	}
 	ap->arc[ap->arc_last] = token.t_id.value;
 	if (get_token(gedp, &token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
-	    parse_error(gedp, str, "parse_path: Unexpect EOF while getting '/' or '-'");
+	    parse_error(gedp, str, "parse_path: Unexpected EOF while getting '/' or '-'");
 	    free_arc(ap);
 	    return 0;
 	}
@@ -829,7 +829,7 @@ parse_list(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
     ap->type = ARC_LIST;
     for (;;) {
 	if (get_token(gedp, &token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
-	    parse_error(gedp, str, "parse_path: Unexpect EOF.");
+	    parse_error(gedp, str, "parse_path: Unexpected EOF.");
 	    free_arc(ap);
 	    return 0;
 	}
@@ -845,7 +845,7 @@ parse_list(struct ged *gedp, struct arc *ap, FILE *fip, struct bu_vls *str)
 	}
 	ap->arc[ap->arc_last] = token.t_id.value;
 	if (get_token(gedp, &token, fip, str, (struct bu_lex_key *)NULL, animsyms) == EOF) {
-	    parse_error(gedp, str, "parse_path: Unexpect EOF while getting ',' or ';'");
+	    parse_error(gedp, str, "parse_path: Unexpected EOF while getting ',' or ';'");
 	    free_arc(ap);
 	    return 0;
 	}
@@ -944,13 +944,13 @@ parse_double(struct ged *gedp, double *dbl, FILE *fip, struct bu_vls *str)
     }
 
     if (get_token(gedp, &token, fip, str, animkeys, animsyms) == EOF) {
-	parse_error(gedp, str, "parse_double: Unexpect EOF while getting number.");
+	parse_error(gedp, str, "parse_double: Unexpected EOF while getting number.");
 	return 0;
     }
     if (token.type == BU_LEX_SYMBOL && token.t_key.value == SYM_MINUS) {
 	sign = -1;
 	if (get_token(gedp, &token, fip, str, animkeys, animsyms) == EOF) {
-	    parse_error(gedp, str, "parse_double: Unexpect EOF while getting number.");
+	    parse_error(gedp, str, "parse_double: Unexpected EOF while getting number.");
 	    return 0;
 	}
     }
@@ -1521,7 +1521,7 @@ parse_jset(struct ged *gedp, struct hold *hp, FILE *fip, struct bu_vls *str)
     jointfound = listfound = arcfound = pathfound = 0;
     for (;;) {
 	if (get_token(gedp, &token, fip, str, animkeys, animsyms) == EOF) {
-	    parse_error(gedp, str, "parse_jset: Unexpect EOF getting contents of joint set");
+	    parse_error(gedp, str, "parse_jset: Unexpected EOF getting contents of joint set");
 	    return 0;
 	}
 	if (token.type == BU_LEX_IDENT) bu_free(token.t_id.value, "unit token");
@@ -1547,7 +1547,7 @@ parse_jset(struct ged *gedp, struct hold *hp, FILE *fip, struct bu_vls *str)
 		    return 0;
 		}
 		if (get_token(gedp, &token, fip, str, animkeys, animsyms) == EOF) {
-		    parse_error(gedp, str, "parse_jset: Unexpect EOF getting '='");
+		    parse_error(gedp, str, "parse_jset: Unexpected EOF getting '='");
 		    return 0;
 		}
 		if (token.type != BU_LEX_IDENT) {
@@ -1615,7 +1615,7 @@ parse_solid(struct ged *gedp, struct hold_point *pp, FILE *fip, struct bu_vls *s
 
     for (;;) {
 	if (get_token(gedp, &token, fip, str, animkeys, animsyms) == EOF) {
-	    parse_error(gedp, str, "parse_solid: Unexpect EOF.");
+	    parse_error(gedp, str, "parse_solid: Unexpected EOF.");
 	    return 0;
 	}
 	if (token.type == BU_LEX_IDENT) bu_free(token.t_id.value, "unit token");
@@ -1674,7 +1674,7 @@ parse_point(struct ged *gedp, struct hold_point *pp, FILE *fip, struct bu_vls *s
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (get_token(gedp, &token, fip, str, lex_solids, animsyms) == EOF) {
-	parse_error(gedp, str, "parse_point: Unexpect EOF getting solid type.");
+	parse_error(gedp, str, "parse_point: Unexpected EOF getting solid type.");
 	return 0;
     }
     if (token.type == BU_LEX_IDENT) bu_free(token.t_id.value, "unit token");
@@ -3580,7 +3580,7 @@ f_Jmesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 		     (genptr_t)NULL);
 
     /*
-     * Now we draw the the overlays.  We do this by building a
+     * Now we draw the overlays.  We do this by building a
      * mesh from each grip to every other grip in that list.
      */
     vbp = rt_vlblock_init();
