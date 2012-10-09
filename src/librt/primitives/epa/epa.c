@@ -660,8 +660,7 @@ rt_epa_class(void)
  * plane (x = 0.0). The parabola and line are described by arguments p and m,
  * from the respective equations (z = y^2 / 4p) and (z = my + b).
  *
- * The line is assumed to intersect the parabola at the origin and one other
- * point (i.e. m > 0, m < infinity).
+ * The line is assumed to intersect the parabola at two points.
  *
  * The portion of the parabola between these two intersection points takes on a
  * single maximum value with respect to the intersecting line when its slope is
@@ -793,6 +792,19 @@ epa_parabola_p(fastf_t r, fastf_t mag_h)
     return (r * r) / (4 * mag_h);
 }
 
+/* The contour of an epa in the plane H-R (where R is one of the epa axes A or
+ * B) is a parabola with vertex at H, opening toward -H. We can transform this
+ * parabola to get an equivalent parabola in the Y-Z plane, opening toward
+ * positive Z (-H) with vertex at (0, -|H|).
+ *
+ * The part of this parabola that passes between (0, -|H|) and (r, 0) is
+ * approximated by num_points points (including (0, -|H|) and (r, 0)).
+ *
+ * The constructed point list is returned (NULL returned on error). Because the
+ * above transformation puts the epa vertex at the origin and the parabola
+ * vertex at (0, -|H|), multiplying the z values by -1 gives corresponding
+ * distances along the epa height vector H.
+ */
 static struct rt_pt_node *
 epa_parabolic_curve(fastf_t mag_h, fastf_t r, int num_points)
 {
