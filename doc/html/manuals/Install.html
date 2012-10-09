@@ -476,7 +476,7 @@ INSTALLATION DIRECTORIES \(em BENCHMARKING or EXPLORATION USE</H2>
 <P>
 For benchmark use, and for exploratory use, the binary directory should
 probably be set to some directory beneath your home directory.
-Note that the the traditional UNIX
+Note that the traditional UNIX
 style is to name a personal directory for binary programs "bin",
 but you can substitute any name here, if you prefer.
 If you don't have some kind of "bin" directory yet, run:
@@ -1273,7 +1273,7 @@ the developer(s) are the only users of this particular machine.
 <li>
 On SunOS 4 machines <I>only</i>, the development tree executables
 are able to find the development tree libraries automatically.
-E.g. your_source_dir/rt/rt will automaticly attempt to use ../librt/librt.so
+E.g. your_source_dir/rt/rt will automatically attempt to use ../librt/librt.so
 before resorting to the installed version in /usr/irlcad/lib/librt.so.
 Sadly, this feature does not work on SunOS 5 and SGI platforms.
 <li>
@@ -1358,7 +1358,7 @@ This has two undesirable side effects.  First, it puts MGED into
 a hard loop polling the workstation keyboard.  Second, it seems to
 have an interaction with control-S/control-Q flow control -- if you
 suspend output, most of it will be discarded.  However, MGED is
-still somewhat usable in this configuraition.
+still somewhat usable in this configuration.
 <P>
 On an SGI 3-D, warning messages from the compiler of the form:
 <pre>
@@ -1468,7 +1468,7 @@ is fixed in Irix 6.0.1;  you will need to modify librt/machine.c
 to eliminate the software workaround currently employed.
 <P>
 When building 64-bit executables under Irix 6.0, the SGI graphics
-libarary "GL" is not supported.  SGI tells us that they only intend
+library "GL" is not supported.  SGI tells us that they only intend
 to support Open-GL on 64-bit platforms.  We have OpenGL modules for
 LIBFB and MGED underway, but they are not ready yet.  In the meantime,
 Irix 6.0 platforms are limited to using the remote framebuffer and
@@ -1494,7 +1494,7 @@ CRAY WARNINGS</H2>
 When performing multi-tasking on either the XMP or the Cray-2,
 the librt/timerunix.c routine has great difficulty in collecting
 correct timing.  On the average, one run in four will have correct
-timing data.  This is due to a wierd interaction between the
+timing data.  This is due to a weird interaction between the
 Cray multi-tasking library and the UNIX times() system call.
 In particular, the multi-tasking library provides an arbitrary
 mapping between ``virtual cpu'' and tfork()-ed UNIX process, so
@@ -1531,7 +1531,7 @@ It is safe to ignore the self-laudatory messages of the form:
 </pre>
 <P>
 Various remarks from CFT77 regarding the Whetstone tests
-can also be ingored.
+can also be ignored.
 <H2>
 CONVEX Warnings</H2>
 When compiling on the Convex it is safe to ignore messages of the forms:
@@ -1627,7 +1627,7 @@ In general there should be no difficulty upgrading from Release 2.3
 to Release 3.0, with one exception.
 <P>
 All earlier editions of the BRL-CAD package used Version 2 of the Utah
-``RLE'' (Run-Lenght Encoded) image format.
+``RLE'' (Run-Length Encoded) image format.
 The Utah Raster Toolkit uses Version 3, which is incompatible.
 In BRL-CAD Release 3.0, this latest Utah RLE format is adopted,
 to permit complete interoperability with all the Utah Toolkit software.
@@ -1690,7 +1690,7 @@ This code is very young, so if you encounter difficulty please submit a bug
 report.
 The NMG boolean code used by MGED's <b>ev</b> command still fails on
 a non-trivial number of cases.  Only about 2/3 of the M-2 Bradley can
-be automaticly converted.  It is anticipated that there will be
+be automatically converted.  It is anticipated that there will be
 substantial improvements in the robustness of this code as the support
 of the new LIBRT NMG ray-tracer is exploited.
 <P>
@@ -1724,7 +1724,7 @@ distribution.
 While ARL makes no
 offer of support, we are most interested in hearing about your
 experiences.
-All bugs and issues reported using the "cadbug.sh" script will automaticly
+All bugs and issues reported using the "cadbug.sh" script will automatically
 be entered into our bug-tracking database, which is available for
 public inspection on the World-Wide-Web.  The URL to access this
 (and other online BRL-CAD) release information is:
@@ -1734,5 +1734,5 @@ public inspection on the World-Wide-Web.  The URL to access this
 General information and published reports on BRL-CAD is also available on the main website.
 <P>
 It is our intention to make substantial additional use of the
-World-Wide-Web in the comming months.
+World-Wide-Web in the coming months.
 </BODY></HTML>
