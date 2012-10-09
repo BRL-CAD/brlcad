@@ -751,7 +751,7 @@ edit_arg_free_all(struct edit_arg *arg)
  * Gets the apparent coordinates of an object.
  *
  * Combines the effects of all the transformation matrices in the
- * combinations in the given path that affect the the position of the
+ * combinations in the given path that affect the position of the
  * combination or shape at the end of the path. The result is the
  * apparent coordinates of the object at the end of the path, if the
  * first combination in the path were drawn. The only flags respected
