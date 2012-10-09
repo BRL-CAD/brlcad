@@ -47,7 +47,7 @@ extern void display_Temps();
 extern void do_line();
 extern void exit_Neatly();
 extern void fb_Zoom_Window();
-extern void grid_Rotate();
+extern void grid_Rotate(fastf_t azim, fastf_t elev, fastf_t roll, fastf_t *des_H, fastf_t *des_V);
 extern void init_Status();
 extern void loc_Perror();
 extern void note_IRmapping();
