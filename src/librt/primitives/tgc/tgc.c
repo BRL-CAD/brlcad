@@ -1282,7 +1282,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    }
 	} else {
 
-	    /* If all conic interections lie outside the plane, then
+	    /* If all conic intersections lie outside the plane, then
 	     * check to see whether there are two planar intersections
 	     * inside the governing ellipses.
 	     *
@@ -2205,7 +2205,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* and for complete ellipse */
     nsegs *= 4;
 
-    /* get nunber and placement of intermediate ellipses */
+    /* get number and placement of intermediate ellipses */
     {
 	fastf_t ratios[4], max_ratio;
 	fastf_t new_ratio = 0;
@@ -3037,7 +3037,7 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 
 
 /* Create a cylinder with a top surface and a bottom surfce
- * defined by the ellipsods at the top and bottom of the
+ * defined by the ellipsoids at the top and bottom of the
  * cylinder, the top_mat, and bot_mat are applied to a unit circle
  * for the top row of the surface and the bot row of the surface
  * respectively.
