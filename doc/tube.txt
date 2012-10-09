@@ -49,13 +49,13 @@ these two points are not specified in the input file.  E.g.,
 TIME 0.02
 1 0.01 0.00035 0.00000075
 2 0.01 0.00040 0.00000900
-   (etc)
+   (etc.)
 12 1.01 0.0784 3.129
 
 TIME 0.04
-    (etc)
+    (etc.)
 
-Therefore, assuming the the mass displacement file is in "mass.dat",
+Therefore, assuming the mass displacement file is in "mass.dat",
 and that the "pos.dat" file exists in the same directory,
 and that the model for the projectile is in the file "projectile.g"
 with main (top) combination named "ke",
