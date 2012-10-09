@@ -1863,7 +1863,7 @@ draw_lines_between_ellipses(struct bu_list *vhead, struct ellipse ellipse1, stru
 int
 rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
-    fastf_t samples;
+    int samples;
     struct rt_tgc_internal *tip;
     struct ellipse ellipse1, ellipse2;
 
@@ -1873,8 +1873,11 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     RT_TGC_CK_MAGIC(tip);
 
     samples = sqrt(primitive_diagonal_samples(ip, info));
-    if (samples < 6.0) {
-	samples = 6.0;
+    if (samples % 2 != 0) {
+	++samples;
+    }
+    if (samples < 6) {
+	samples = 6;
     }
 
     VMOVE(ellipse1.center, tip->v);
@@ -1887,10 +1890,7 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VMOVE(ellipse2.axis_b, tip->d);
     draw_ellipse(info->vhead, ellipse2, samples);
 
-    samples /= 2.0;
-    if (samples < 3.0) {
-	samples = 3.0;
-    }
+    samples /= 2;
 
     draw_lines_between_ellipses(info->vhead, ellipse1, ellipse2, samples);
 
