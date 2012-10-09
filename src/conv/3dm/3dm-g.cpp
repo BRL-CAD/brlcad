@@ -36,6 +36,11 @@
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
 
+
+/* generic entity name */
+#define GENERIC_NAME "rhino"
+
+
 /* typedefs and global containers for building layer hierarchy */
 typedef std::map< std::string, std::string> STR_STR_MAP;
 typedef std::map< std::string, int> REGION_CNT_MAP;
@@ -341,16 +346,16 @@ main(int argc, char** argv)
 		    bu_strlcpy(name, ON_String(layer_name), sizeof(name));
 		    genName = name;
 		    if (genName.length() <= 0) {
-			genName = "rhino";
+			genName = GENERIC_NAME;
 		    }
 		    dump->Print("\n\nlayername:\"%s\"\n\n", name);
 		} else {
-		    genName = "rhino";
+		    genName = GENERIC_NAME;
 		}
 		/* For layer named regions use layer region count
 		 * instead of global region count
 		 */
-		if (genName.compare("rhino") == 0) {
+		if (genName.compare(GENERIC_NAME) == 0) {
 		    genName+=itoa(mcount++);
 		    geom_base = genName.c_str();
 		} else {
