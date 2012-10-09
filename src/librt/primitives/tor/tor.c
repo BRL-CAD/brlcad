@@ -31,7 +31,7 @@
  *
  * Through a series of Transformations, this set will be transformed
  * into a set of points on a unit torus (R1==1) centered at the origin
- * which lies on the X-Y plane (ie, H is on the Z axis).
+ * which lies on the X-Y plane (i.e., H is on the Z axis).
  *
  * { (x', y', z') | (x', y', z') is on unit torus at origin }
  *
@@ -77,13 +77,13 @@
  * Wx**2 = Dx**2 * t**2 +  2 * Dx * Px +  Px**2
  *
  * The real roots of the equation in 't' are the intersect points
- * along the parameteric line.
+ * along the parametric line.
  *
  * NORMALS.  Given the point W on the torus, what is the vector normal
  * to the tangent plane at that point?
  *
- * Map W onto the unit torus, ie: W' = S(R(W - V)).  In this case,
- * we find W' by solving the parameteric line given k.
+ * Map W onto the unit torus, i.e.: W' = S(R(W - V)).  In this case,
+ * we find W' by solving the parametric line given k.
  *
  * The gradient of the torus at W' is in fact the normal vector.
  *
@@ -129,9 +129,9 @@
  * The TORUS has the following input fields:
  *	V	V from origin to center
  *	H	Radius Vector, Normal to plane of torus.  |H| = R2
- *	A, B	perpindicular, to CENTER of torus.  |A|==|B|==R1
- *	F5, F6	perpindicular, for inner edge (unused)
- *	F7, F8	perpindicular, for outer edge (unused)
+ *	A, B	perpendicular, to CENTER of torus.  |A|==|B|==R1
+ *	F5, F6	perpendicular, for inner edge (unused)
+ *	F7, F8	perpendicular, for outer edge (unused)
  *
  */
 
@@ -1011,7 +1011,7 @@ rt_num_circular_segments(double maxerr, double radius)
  * The TORUS has the following input fields:
  * ti.v V from origin to center
  * ti.h Radius Vector, Normal to plane of torus
- * ti.a, ti.b perpindicular, to CENTER of torus (for top, bottom)
+ * ti.a, ti.b perpendicular, to CENTER of torus (for top, bottom)
  */
 int
 rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
@@ -1478,7 +1478,7 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     /*
      * The rest of these provide no real extra information,
-     * and exist for compatability with old versions of MGED.
+     * and exist for compatibility with old versions of MGED.
      */
     r3=r1-r2;	/* Radius to inner circular edge */
     r4=r1+r2;	/* Radius to outer circular edge */
