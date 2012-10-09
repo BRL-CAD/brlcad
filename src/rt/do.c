@@ -517,8 +517,9 @@ def_tree(register struct rt_i *rtip)
     RT_CK_RTI(rtip);
 
     rt_prep_timer();
-    if (rt_gettrees(rtip, nobjs, (const char **)objtab, npsw) < 0)
-	bu_log("rt_gettrees(%s) FAILED\n", objtab[0]);
+    if (rt_gettrees(rtip, nobjs, (const char **)objtab, npsw) < 0) {
+	bu_log("rt_gettrees(%s) FAILED\n", (objtab && objtab[0]) ? objtab[0] : "ERROR");
+    }
     (void)rt_get_timer(&times, NULL);
 
     if (rt_verbosity & VERBOSE_STATS)
