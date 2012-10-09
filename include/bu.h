@@ -57,7 +57,7 @@
  * library provides several layers of low-level utility routines,
  * providing features that make cross-platform coding easier.
  *
- * Parallel processing support:  threads, sempahores, parallel-malloc.
+ * Parallel processing support:  threads, semaphores, parallel-malloc.
  * Consolidated logging support:  bu_log(), bu_exit(), and bu_bomb().
  *
  * The intention is that these routines are general extensions to the
@@ -2582,7 +2582,7 @@ BU_EXPORT extern struct bu_attribute_value_set *bu_avs_new(int len,
  * pair.
  *
  * Returns -
- * 0 some error occured
+ * 0 some error occurred
  * 1 existing attribute updated with new value
  * 2 set extended with new attribute/value pair
  */
@@ -4865,7 +4865,7 @@ BU_EXPORT extern void bu_vls_init(struct bu_vls *vp);
 /**
  * DEPRECATED: use if (!vls) bu_vls_init(vls)
  *
- * If a VLS is unitialized, initialize it.  If it is already
+ * If a VLS is uninitialized, initialize it.  If it is already
  * initialized, leave it alone, caller wants to append to it.
  */
 DEPRECATED BU_EXPORT extern void bu_vls_init_if_uninit(struct bu_vls *vp);
@@ -5082,7 +5082,7 @@ BU_EXPORT extern void bu_vls_trimspace(struct bu_vls *vp);
 
 /**
  * Format a string into a vls.  This version should work on
- * practically any machine, but it serves to highlight the the
+ * practically any machine, but it serves to highlight the
  * grossness of the varargs package requiring the size of a parameter
  * to be known at compile time.
  *
@@ -5190,7 +5190,7 @@ BU_EXPORT extern const char *bu_vls_decode(struct bu_vls *vp, const char *str);
  * Initialize the specified bu_vlb structure and mallocs the initial
  * block of memory.
  *
- * @param vlb Pointer to an unitialized bu_vlb structure
+ * @param vlb Pointer to an uninitialized bu_vlb structure
  */
 BU_EXPORT extern void bu_vlb_init(struct bu_vlb *vlb);
 
@@ -5198,7 +5198,7 @@ BU_EXPORT extern void bu_vlb_init(struct bu_vlb *vlb);
  * Initialize the specified bu_vlb structure and mallocs the initial
  * block of memory with the specified size
  *
- * @param vlb Pointer to an unitialized bu_vlb structure
+ * @param vlb Pointer to an uninitialized bu_vlb structure
  * @param initialSize The desired initial size of the buffer
  */
 BU_EXPORT extern void bu_vlb_initialize(struct bu_vlb *vlb,
@@ -5243,7 +5243,7 @@ BU_EXPORT extern size_t bu_vlb_buflen(struct bu_vlb *vlb);
 
 /**
  * Free the memory allocated for the byte array in the bu_vlb
- * structure.  Also unitializes the structure.
+ * structure.  Also uninitializes the structure.
  *
  * @param vlb Pointer to the bu_vlb structure
  */
@@ -5926,7 +5926,7 @@ BU_EXPORT extern unsigned char *bu_get_hash_key(struct bu_hash_entry *hsh_entry)
 /**
  * Add an new entry to a hash table
  *
- * @param[in] hsh_tbl - the hash table to accept thye new entry
+ * @param[in] hsh_tbl - the hash table to accept the new entry
  * @param[in] key - the key (any byte string)
  * @param[in] key_len - the number of bytes in the key
  *
@@ -5968,7 +5968,7 @@ BU_EXPORT extern void bu_hash_tbl_free(struct bu_hash_tbl *hsh_tbl);
  *
  * @return
  * the first non-null entry in the hash table, or NULL if there are no
- * entries (Note that the order of enties is not likely to have any
+ * entries (Note that the order of entries is not likely to have any
  * significance)
  */
 BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_first(struct bu_hash_tbl *hsh_tbl,
