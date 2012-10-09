@@ -49,20 +49,20 @@
 #include "./cursors.h"
 
 
-#define MAX_ARGS	81
-#define MAX_COLS	128
+#define MAX_ARGS 81
+#define MAX_COLS 128
 
 fastf_t epsilon = 0.000001;
 
-static char	*prog_id;
-static char	**objects;
-static char	svkey_file[MAX_LN] = { 0 };
-static char	scratchbuf[TEMPLATE_COLS+1];
+static char *prog_id;
+static char **objects;
+static char svkey_file[MAX_LN] = { 0 };
+static char scratchbuf[TEMPLATE_COLS+1];
 
 /* The strings in this array will be modified as the program runs,
  * so don't point to const strings, initialize as character arrays here.
  */
-char	template[][TEMPLATE_COLS+1] = {
+char template[][TEMPLATE_COLS+1] = {
 /*         1         2         3         4         5         6         7         8
 	   012345678901234567890123456789012345678901234567890123456789012345678901234567890*/
     "TITLE [                                                                       ]",
@@ -79,69 +79,69 @@ char	template[][TEMPLATE_COLS+1] = {
 };
 
 
-static int	noframes = 1;
+static int noframes = 1;
 
-static int	make_Script(char *file);
-static int	f_Nop(char **ar);		/* default */
-static int	f_Exec_Shell(char **args);	/* ! */
-static int	f_Comment(char **ar);		/* # */
-static int	f_Menu();			/* ? */
-static int	f_Buffer(char **args);		/* . */
-static int	f_Anti_Aliasing();		/* A */
-static int	f_Batch();			/* B */
-static int	f_Cursor_Module();		/* C */
-static int	f_Display_Origin(char **args);	/* D */
-static int	f_Fbclear();			/* E */
-static int	f_Animate();			/* F */
-static int	f_GridConfig(char **args);	/* G */
-static int	f_Wrt_Fb(char **args);		/* H */
-static int	f_Rd_Raw_IR(char **args);	/* I */
-static int	f_Movie();			/* J */
-static int	f_Max_Bounce(char **args);	/* K */
-static int	f_Entr_Lgt_Db(char **args);	/* L */
-static int	f_Entr_Mat_Db(char **args);	/* M */
-static int	f_Set_IR_Paint(char **args);	/* N */
-static int	f_Err_File(char **args);	/* O */
-static int	f_Prnt_Regions();		/* P */
-static int	f_Set_Region_IR();		/* Q */
-static int	f_Raytrace();			/* R */
-static int	f_Script(char **args);		/* S */
-static int	f_SetFbSize(char **args);	/* T */
-static int	f_Wrt_IR_Db(char **args);	/* U */
-static int	f_Wrt_Lgt_Db(char **args);	/* V */
-static int	f_Wrt_Mat_Db(char **args);	/* W */
-static int	f_Overlaps(char **args);	/* X */
-static int	f_Show_IR(char **args);		/* Z */
-static int	f_Grid_Roll(char **args);	/* a */
-static int	f_Background(char **args);	/* b */
-static int	f_Tracking_Cursor(char **args);	/* c */
-static int	f_IR_Offset(char **args);	/* d */
-static int	f_Debug(char **args);		/* e */
-static int	f_Dist_Grid(char **args);	/* f */
-static int	f_Scale_Grid();			/* g */
-static int	f_Rd_Fb(char **args);		/* h */
-static int	f_IR_Noise(char **args);	/* i */
-static int	f_Key_Frame(char **args);	/* j */
-static int	f_Hidden_Ln_Draw(char **args);	/* k */
-static int	f_Prnt_Lgt_Db(char **args);	/* l */
-static int	f_Prnt_Mat_Db(char **args);	/* m */
-static int	f_Parallel(char **args);	/* n */
-static int	f_Raster_File(char **args);	/* o */
-static int	f_Perspective(char **args);	/* p */
-static int	f_Quit();			/* q */
-static int	f_Redraw();			/* r */
-static int	f_IRmodule(char **args);	/* s */
-static int	f_Grid_Translate(char **args);	/* t */
-static int	f_Rd_IR_Db(char **args);	/* u */
-static int	f_Rd_Lgt_Db(char **args);	/* v */
-static int	f_Rd_Mat_Db(char **args);	/* w */
-int		f_Grid_X_Pos(char **args);	/* x */
-int		f_Grid_Y_Pos(char **args);	/* y */
-static int	f_Shadows(char **args);		/* z */
+static int make_Script(char *file);
+static int f_Nop(char **ar);		/* default */
+static int f_Exec_Shell(char **args);	/* ! */
+static int f_Comment(char **ar);		/* # */
+static int f_Menu();			/* ? */
+static int f_Buffer(char **args);		/* . */
+static int f_Anti_Aliasing();		/* A */
+static int f_Batch();			/* B */
+static int f_Cursor_Module();		/* C */
+static int f_Display_Origin(char **args);	/* D */
+static int f_Fbclear();			/* E */
+static int f_Animate();			/* F */
+static int f_GridConfig(char **args);	/* G */
+static int f_Wrt_Fb(char **args);		/* H */
+static int f_Rd_Raw_IR(char **args);	/* I */
+static int f_Movie();			/* J */
+static int f_Max_Bounce(char **args);	/* K */
+static int f_Entr_Lgt_Db(char **args);	/* L */
+static int f_Entr_Mat_Db(char **args);	/* M */
+static int f_Set_IR_Paint(char **args);	/* N */
+static int f_Err_File(char **args);	/* O */
+static int f_Prnt_Regions();		/* P */
+static int f_Set_Region_IR();		/* Q */
+static int f_Raytrace();			/* R */
+static int f_Script(char **args);		/* S */
+static int f_SetFbSize(char **args);	/* T */
+static int f_Wrt_IR_Db(char **args);	/* U */
+static int f_Wrt_Lgt_Db(char **args);	/* V */
+static int f_Wrt_Mat_Db(char **args);	/* W */
+static int f_Overlaps(char **args);	/* X */
+static int f_Show_IR(char **args);		/* Z */
+static int f_Grid_Roll(char **args);	/* a */
+static int f_Background(char **args);	/* b */
+static int f_Tracking_Cursor(char **args);	/* c */
+static int f_IR_Offset(char **args);	/* d */
+static int f_Debug(char **args);		/* e */
+static int f_Dist_Grid(char **args);	/* f */
+static int f_Scale_Grid();			/* g */
+static int f_Rd_Fb(char **args);		/* h */
+static int f_IR_Noise(char **args);	/* i */
+static int f_Key_Frame(char **args);	/* j */
+static int f_Hidden_Ln_Draw(char **args);	/* k */
+static int f_Prnt_Lgt_Db(char **args);	/* l */
+static int f_Prnt_Mat_Db(char **args);	/* m */
+static int f_Parallel(char **args);	/* n */
+static int f_Raster_File(char **args);	/* o */
+static int f_Perspective(char **args);	/* p */
+static int f_Quit();			/* q */
+static int f_Redraw();			/* r */
+static int f_IRmodule(char **args);	/* s */
+static int f_Grid_Translate(char **args);	/* t */
+static int f_Rd_IR_Db(char **args);	/* u */
+static int f_Rd_Lgt_Db(char **args);	/* v */
+static int f_Rd_Mat_Db(char **args);	/* w */
+int f_Grid_X_Pos(char **args);	/* x */
+int f_Grid_Y_Pos(char **args);	/* y */
+static int f_Shadows(char **args);		/* z */
 
 typedef struct
 {
-    int	(*func)();
+    int (*func)();
 } Key_Bindings;
 
 static Key_Bindings func_tab[] =
@@ -277,23 +277,23 @@ static Key_Bindings func_tab[] =
 };
 
 
-HMitem	ray_items[] =
+HMitem ray_items[] =
 {
     { "run now", "generate image while you wait", 0, 0, 0, f_Raytrace, 0 },
     { "submit batch run", "generate image using job queueing facility", 0, 0, 0, f_Batch, 0 },
     { 0, 0, 0, 0, 0, 0, 0 }
 };
-HMenu	ray_trace_hmenu = { ray_items, 0, 0, 0, 0, 0 };
+HMenu ray_trace_hmenu = { ray_items, 0, 0, 0, 0, 0 };
 
-HMitem	rect_items[] =
+HMitem rect_items[] =
 {
     { "horizontal", "left and right indices", 0, 0, 0, f_Grid_X_Pos, 0 },
     { "vertical", "bottom and top indices", 0, 0, 0, f_Grid_Y_Pos, 0 },
     { 0, 0, 0, 0, 0, 0, 0 }
 };
-HMenu	rect_hmenu = { rect_items, 0, 0, 0, 1, prnt_Status };
+HMenu rect_hmenu = { rect_items, 0, 0, 0, 1, prnt_Status };
 
-HMitem	grid_items[] =
+HMitem grid_items[] =
 {
     { "resolution and centering",
       "select grid resolution and image centering options",
@@ -308,9 +308,9 @@ HMitem	grid_items[] =
     { "key-frame input", "read MGED(1B) key frames", 0, 0, 0, f_Key_Frame, 0 },
     { 0, 0, 0, 0, 0, 0, 0 }
 };
-HMenu	grid_hmenu = { grid_items, 0, 0, 0, 1, prnt_Status };
+HMenu grid_hmenu = { grid_items, 0, 0, 0, 1, prnt_Status };
 
-HMitem	light_items[] =
+HMitem light_items[] =
 {
     { "print light source", "no help", 0, 0, 0, f_Prnt_Lgt_Db, 0 },
     { "modify light source", "no help", 0, 0, 0, f_Entr_Lgt_Db, 0 },
@@ -318,9 +318,9 @@ HMitem	light_items[] =
     { "save light source data base", "no help", 0, 0, 0, f_Wrt_Lgt_Db, 0 },
     { 0, 0, 0, 0, 0, 0, 0 }
 };
-HMenu	light_src_hmenu = { light_items, 0, 0, 0, 1, prnt_Status };
+HMenu light_src_hmenu = { light_items, 0, 0, 0, 1, prnt_Status };
 
-HMitem	mater_items[] =
+HMitem mater_items[] =
 {
     { "print material", "no help", 0, 0, 0, f_Prnt_Mat_Db, 0 },
     { "modify material", "no help", 0, 0, 0, f_Entr_Mat_Db, 0 },
@@ -328,9 +328,9 @@ HMitem	mater_items[] =
     { "save material data base", "no help", 0, 0, 0, f_Wrt_Mat_Db, 0 },
     { 0, 0, 0, 0, 0, 0, 0 }
 };
-HMenu	materials_hmenu = { mater_items, 0, 0, 0, 1, prnt_Status };
+HMenu materials_hmenu = { mater_items, 0, 0, 0, 1, prnt_Status };
 
-HMitem	file_items[] =
+HMitem file_items[] =
 {
     { "frame buffer", "Graphics display or file for image.", 0, 0, 0, f_Raster_File, 0 },
     { "error messages", "Redirect errors and diagnostics to a log file.", 0, 0, 0, f_Err_File, 0 },
@@ -339,9 +339,9 @@ HMitem	file_items[] =
     { "read image", "Restore saved frame buffer image.", 0, 0, 0, f_Rd_Fb, 0 },
     { 0, 0, 0, 0, 0, 0, 0 }
 };
-HMenu	file_hmenu = { file_items, 0, 0, 0, 0, prnt_Status };
+HMenu file_hmenu = { file_items, 0, 0, 0, 0, prnt_Status };
 
-HMitem	ir_items[] =
+HMitem ir_items[] =
 {
     { "set flags", "no help", 0, 0, 0, f_IRmodule, 0 },
     { "read real IR data", "no help", 0, 0, 0, f_Rd_Raw_IR, 0 },
@@ -356,37 +356,37 @@ HMitem	ir_items[] =
       , 0 },
     { 0, 0, 0, 0, 0, 0, 0 }
 };
-HMenu	ir_hmenu = { ir_items, 0, 0, 0, 1, 0 };
+HMenu ir_hmenu = { ir_items, 0, 0, 0, 1, 0 };
 
-HMitem	special_items[] =
+HMitem special_items[] =
 {
     { "infrared modeling", "3-d mapping of infrared data", &ir_hmenu, 0, 0, 0, 0 },
     { "hidden-line drawing", "Image produced will be a line drawing.", 0, 0, 0, f_Hidden_Ln_Draw, 0 },
     { 0, 0, 0, 0, 0, 0, 0 }
 };
-HMenu	special_hmenu = { special_items, 0, 0, 0, 0, 0 };
+HMenu special_hmenu = { special_items, 0, 0, 0, 0, 0 };
 
-HMitem	quit_items[] =
+HMitem quit_items[] =
 {
     { "Really quit", "confirmed exit", 0, 0, 0, f_Quit, 0 },
     { "Not yet", "no exit", 0, 0, 0, 0, 0 },
     { 0, 0, 0, 0, 0, 0, 0 }
 };
-HMenu	quit_hmenu = { quit_items, 0, 0, 0, 0, 0 };
+HMenu quit_hmenu = { quit_items, 0, 0, 0, 0, 0 };
 
 int
 user_Cmd(char **ar)
 {
     int ret = (*func_tab[(int)*ar[0]].func)((HMitem *) 0, ar);
-    return	ret;
+    return ret;
 }
 
 
 static int
 user_Opt(int opt, char *arg)
 {
-    char	buf[2], *local_argv[MAX_ARGS];
-    int	i;
+    char buf[2], *local_argv[MAX_ARGS];
+    int i;
     buf[0] = (char)opt;
     buf[1] = '\0';
     /* Set up argument vector for function. */
@@ -406,15 +406,15 @@ user_Opt(int opt, char *arg)
 int
 user_Pop(int i)
 {
-    char	buf[2], *local_argv[MAX_ARGS];
+    char buf[2], *local_argv[MAX_ARGS];
     if (i < 0)
-	return	1;
+	return 1;
     buf[0] = i;
     buf[1] = '\0';
     /* Set up argument vector for function. */
     local_argv[0] = buf;
     local_argv[1] = NULL;
-    return	(*func_tab[i].func)((HMitem *) 0, local_argv);
+    return (*func_tab[i].func)((HMitem *) 0, local_argv);
 }
 
 
@@ -426,7 +426,7 @@ f_Nop(char **ar)
     else
 	bu_log("Unbound (0%o)\n", *ar[0]);
     ring_Bell();
-    return	-2;
+    return -2;
 }
 
 
@@ -435,7 +435,7 @@ static int
 f_Comment(char **ar)
 {
     bu_log("%s\n", ar[0]);
-    return	1;
+    return 1;
 }
 
 
@@ -452,7 +452,7 @@ f_Menu()
 static int
 f_Script(char **args)
 {
-    return	make_Script(args != (char **) NULL ? args[1] : (char *) NULL);
+    return make_Script(args != (char **) NULL ? args[1] : (char *) NULL);
 }
 
 
@@ -460,36 +460,30 @@ f_Script(char **args)
 static int
 f_SetFbSize(char **args)
 {
-    if (args != NULL && args[1] != NULL)
-    {
-	if (sscanf(args[1], "%d", &fb_size) != 1)
-	{
+    if (args != NULL && args[1] != NULL) {
+	if (sscanf(args[1], "%d", &fb_size) != 1) {
 	    force_fbsz = FALSE;
-	    return	-1;
+	    return -1;
 	}
 	force_fbsz = fb_size > 0 ? TRUE : FALSE;
-    }
-    else
-    {
+    } else {
 	(void) sprintf(prompt, "Set frame buffer size ? [y|n](%c) ",
 		       force_fbsz ? 'y' : 'n'
 	    );
 	if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 	    force_fbsz = input_ln[0] != 'n';
-	if (force_fbsz)
-	{
+	if (force_fbsz) {
 	    (void) sprintf(prompt,
 			   "Frame buffer size ? (%d) ", fb_size);
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL
 		&&	sscanf(input_ln, "%d", &fb_size) != 1
-		)
-	    {
+		) {
 		force_fbsz = FALSE;
-		return	-1;
+		return -1;
 	    }
 	}
     }
-    return	1;
+    return 1;
 }
 
 
@@ -517,18 +511,18 @@ f_Raytrace()
     movie.m_noframes = 1;
     if (movie.m_keys && movie.m_keys_fp)
 	(void) fclose(movie.m_keys_fp);
-    return	1;
+    return 1;
 }
 
 
-HMitem	buffer_items[] =
+HMitem buffer_items[] =
 {
     { "unbuffered", "single-pixel I/O", 0, 0, 0, 0, B_PIO },
     { "page buffered", "demand-paged I/O", 0, 0, 0, 0, B_PAGE },
     { "line buffered", "scan-line I/O", 0, 0, 0, 0, B_LINE },
     { 0, 0, 0, 0, 0, 0, 0 }
 };
-HMenu	buffer_hmenu = { buffer_items, 0, 0, 0, 0, prnt_Status };
+HMenu buffer_hmenu = { buffer_items, 0, 0, 0, 0, prnt_Status };
 
 /*
   int f_Buffer(HMItem *itemp, char **args)
@@ -541,16 +535,15 @@ f_Buffer(char **args)
 	||	sscanf(args[1], "%d", &pix_buffered) != 1
 	)
     {
-	HMitem	*itemptr;
-	if (! tty)
-	{
-	  if (args == NULL) {
-	    bu_log("f_Buffer - no args!\n");
-	    return	-1;
-	  }
-	  if (args[0])
-	    bu_log("pixel buffering command (%c): missing arg.\n", *args[0]);
-	  return	-1;
+	HMitem *itemptr;
+	if (! tty) {
+	    if (args == NULL) {
+		bu_log("f_Buffer - no args!\n");
+		return -1;
+	    }
+	    if (args[0])
+		bu_log("pixel buffering command (%c): missing arg.\n", *args[0]);
+	    return -1;
 	}
 	if ((itemptr = hmenuhit(&buffer_hmenu, 1, TOP_SCROLL_WIN))
 	    != (HMitem *) 0
@@ -559,11 +552,11 @@ f_Buffer(char **args)
 	else
 	    Rotate(pix_buffered);
     }
-    return	1;
+    return 1;
 }
 
 
-HMitem	debug_items[] =
+HMitem debug_items[] =
 {
     { "reset all flags", "debugging off", 0, 0, 0, 0, DEBUG_OFF },
     { "all rays", "calls to shootray()", 0, 0, 0, 0, DEBUG_ALLRAYS },
@@ -588,7 +581,7 @@ HMitem	debug_items[] =
     { "octree", "dumps octree data structure", 0, 0, 0, 0, DEBUG_OCTREE },
     { 0, 0, 0, 0, 0, 0, 0 }
 };
-HMenu	debug_hmenu = { debug_items, 0, 0, 0, 0, prnt_Status };
+HMenu debug_hmenu = { debug_items, 0, 0, 0, 0, prnt_Status };
 
 /*
   int f_Debug(HMItem *itemp, char **args)
@@ -601,16 +594,15 @@ f_Debug(char **args)
 	||	args[1] == NULL || sscanf(args[1], "%x", (unsigned int *)&rt_g.debug) != 1
 	)
     {
-	HMitem	*itemptr;
-	if (! tty)
-	{
-	  if (args == NULL) {
-	    bu_log("f_Debug - no args!\n");
-	    return	-1;
-	  }
-	  if (args[0])
-	    bu_log("debug command (%c): missing argument.\n", *args[0]);
-	  return	-1;
+	HMitem *itemptr;
+	if (! tty) {
+	    if (args == NULL) {
+		bu_log("f_Debug - no args!\n");
+		return -1;
+	    }
+	    if (args[0])
+		bu_log("debug command (%c): missing argument.\n", *args[0]);
+	    return -1;
 	}
 	if ((itemptr = hmenuhit(&debug_hmenu, 1, TOP_SCROLL_WIN))
 	    != (HMitem *) 0
@@ -624,7 +616,7 @@ f_Debug(char **args)
     }
     if (RT_G_DEBUG & DEBUG_OCTREE)
 	prnt_Octree(&ir_octree, 0);
-    return	1;
+    return 1;
 }
 
 
@@ -634,29 +626,24 @@ f_Debug(char **args)
 static int
 f_Grid_Roll(char **args)
 {
-    if (args == NULL || args[1] == NULL || sscanf(args[1], "%lf", &grid_roll) != 1)
-    {
-	if (tty)
-	{
+    if (args == NULL || args[1] == NULL || sscanf(args[1], "%lf", &grid_roll) != 1) {
+	if (tty) {
 	    (void) sprintf(prompt, "Grid roll ? (%g) ", grid_roll*RAD2DEG);
-	    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
-	    {
+	    if (get_Input(input_ln, MAX_LN, prompt) != NULL) {
 		if (sscanf(input_ln, "%lf", &grid_roll) != 1)
-		    return	-1;
+		    return -1;
 		else
 		    grid_roll /= RAD2DEG;
 	    }
-	}
-	else
-	    return	-1;
-    }
-    else
+	} else
+	    return -1;
+    } else
 	grid_roll /= RAD2DEG;
-    return	1;
+    return 1;
 }
 
 
-/*	f _ A n t i _ A l i a s i n g () */
+/* f _ A n t i _ A l i a s i n g () */
 static int
 f_Anti_Aliasing(char **args)
 {
@@ -664,8 +651,7 @@ f_Anti_Aliasing(char **args)
 	||	sscanf(args[1], "%d", &aperture_sz) != 1
 	)
     {
-	if (tty)
-	{
+	if (tty) {
 	    (void) sprintf(prompt,
 			   "Anti-aliasing factor ? (%d) ",
 			   aperture_sz
@@ -673,29 +659,26 @@ f_Anti_Aliasing(char **args)
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL
 		&&	sscanf(input_ln, "%d", &aperture_sz) != 1
 		)
-		return	-1;
-	}
-	else
-	    return	-1;
+		return -1;
+	} else
+	    return -1;
     }
-    if (aperture_sz > 1)
-    {
+    if (aperture_sz > 1) {
 	anti_aliasing = TRUE;
 	sample_sz = aperture_sz * aperture_sz;
-    }
-    else
+    } else
 	anti_aliasing = FALSE;
-    return	1;
+    return 1;
 }
 
 
-/*	f _ B a t c h () */
+/* f _ B a t c h () */
 /*ARGSUSED*/
 static int
 f_Batch()
 {
-    static char	*batch_com[8];
-    char		script[MAXPATHLEN];
+    static char *batch_com[8];
+    char script[MAXPATHLEN];
     FILE *fp = NULL;
 
     fp = bu_temp_file(script, MAXPATHLEN);
@@ -714,7 +697,7 @@ f_Batch()
 
     if (make_Script(script) == -1) {
 	fclose(fp);
-	return	-1;
+	return -1;
     }
 
     (void) exec_Shell(batch_com);
@@ -759,13 +742,12 @@ f_Batch()
 void
 pt_Select(int x, int y, int *xp, int *yp, int *originp)
 {
-    char		*args[5] = {NULL, NULL, NULL, NULL, NULL};
-    char		buf1[5], buf2[5];
+    char *args[5] = {NULL, NULL, NULL, NULL, NULL};
+    char buf1[5], buf2[5];
 
     args[1] = buf1;
     args[2] = buf2;
-    if (*originp)
-    {
+    if (*originp) {
 	*xp = x;
 	*yp = y;
 	(void) sprintf(args[1], "%d", x - x_fb_origin);
@@ -774,18 +756,14 @@ pt_Select(int x, int y, int *xp, int *yp, int *originp)
 	(void) sprintf(args[1], "%d", y - y_fb_origin);
 	(void) sprintf(args[2], "%d", grid_y_fin);
 	(void) f_Grid_Y_Pos(args);
-    }
-    else
-    {
-	int	x_fin, y_fin;
+    } else {
+	int x_fin, y_fin;
 	x_fin = x - x_fb_origin;
 	y_fin = y - y_fb_origin;
-	if (x_fin < grid_x_org)
-	{
+	if (x_fin < grid_x_org) {
 	    Swap_Integers(x_fin, grid_x_org);
 	}
-	if (y_fin < grid_y_org)
-	{
+	if (y_fin < grid_y_org) {
 	    Swap_Integers(y_fin, grid_y_org);
 	}
 	(void) sprintf(args[1], "%d", grid_x_org);
@@ -811,16 +789,16 @@ setCellSize(void)
     if (get_Input(input_ln, MAX_LN, prompt) != NULL
 	&&	sscanf(input_ln, "%lf", &cell_sz) != 1
 	)
-	return	FALSE;
-    return	TRUE;
+	return FALSE;
+    return TRUE;
 }
 
 
 void
 setGridSize()
 {
-    char	buf[10];
-    char	*ar[3];
+    char buf[10];
+    char *ar[3];
     ar[1] = "0";
     ar[2] = buf;
     (void) sprintf(ar[2], "%d", grid_sz-1);
@@ -841,12 +819,12 @@ setViewSize(void)
     if (get_Input(input_ln, MAX_LN, prompt) != NULL
 	&&	sscanf(input_ln, "%lf", &view_size) != 1
 	)
-	return	FALSE;
-    return	TRUE;
+	return FALSE;
+    return TRUE;
 }
 
 
-HMitem	cursor_items[] =
+HMitem cursor_items[] =
 {
     { "tag pixel", "no help", 0, 0, 0, 0, C_TAGPIXEL },
     { "sweep rectangle", "no help", 0, 0, 0, 0, C_SWEEPREC },
@@ -855,29 +833,28 @@ HMitem	cursor_items[] =
     { "query region", "no help", 0, 0, 0, 0, C_QUERYREG },
     { 0, 0, 0, 0, 0, 0, 0 }
 };
-HMenu	cursor_hmenu = { cursor_items, 0, 0, 0, 0, 0 };
+HMenu cursor_hmenu = { cursor_items, 0, 0, 0, 0, 0 };
 
-static int	popups = FALSE;	/* Are pop-up menus being used? */
+static int popups = FALSE;	/* Are pop-up menus being used? */
 
-/*	f_Cursor_Module() */
+/* f_Cursor_Module() */
 /*ARGSUSED*/
 static int
 f_Cursor_Module()
 {
-    static int	x = -1, y = -1;
-    int	c;
-    int		origin = TRUE;
-    int		xx0, yy0;
+    static int x = -1, y = -1;
+    int c;
+    int origin = TRUE;
+    int xx0, yy0;
 
     if (! tty)
-	return	-1;
+	return -1;
 
     if (! ready_Output_Device(0))
-	return	-1;
+	return -1;
 
     /* Initialize x and y only once so we can continue where we were.*/
-    if (x < 0 || y < 0)
-    {
+    if (x < 0 || y < 0) {
 	x = grid_sz / 2;
 	y = grid_sz / 2;
     }
@@ -885,18 +862,17 @@ f_Cursor_Module()
     yy0 = y;
     (void) fb_cursor(fbiop, 1, x, y);
 
-    for (;;)
-    {
-	int		fx=0, fy=0, tx=0, ty=0;
-	int		cx = x, cy = y;
-	int		mx, my;
-	int		mapfromflag = FALSE;
-	int		maptoflag = FALSE;
-	int		tagging_pixel = FALSE;
-	int		sweeping_rect = FALSE;
-	int		in_windowing = FALSE;
-	int		out_windowing = FALSE;
-	HMitem		*itemptr;
+    for (;;) {
+	int fx=0, fy=0, tx=0, ty=0;
+	int cx = x, cy = y;
+	int mx, my;
+	int mapfromflag = FALSE;
+	int maptoflag = FALSE;
+	int tagging_pixel = FALSE;
+	int sweeping_rect = FALSE;
+	int in_windowing = FALSE;
+	int out_windowing = FALSE;
+	HMitem *itemptr;
 
 	if ((itemptr = hmenuhit(&cursor_hmenu, 1, TOP_SCROLL_WIN))
 	    == (HMitem *) 0
@@ -905,10 +881,9 @@ f_Cursor_Module()
 	    prnt_Prompt("");
 	    (void) fb_setcursor(fbiop, arrowcursor, 16, 16, 0, 0);
 	    (void) fb_cursor(fbiop, tracking_cursor, x, y);
-	    goto	exit_cm;
+	    goto exit_cm;
 	}
-	switch ((int) itemptr->data)
-	{
+	switch ((int) itemptr->data) {
 	    case C_TAGPIXEL : /* Tag pixel. */
 		tagging_pixel = TRUE;
 		break;
@@ -916,20 +891,18 @@ f_Cursor_Module()
 		sweeping_rect = TRUE;
 		break;
 	    case C_I_WINDOW : /* Window in. */
-		if (rel_perspective > 0.0)
-		{
+		if (rel_perspective > 0.0) {
 		    prnt_Scroll("Windowing does not yet work WITH perspective.\n");
 		    prnt_Scroll("Set perspective to zero or negative.\n");
-		    goto	exit_cm;
+		    goto exit_cm;
 		}
 		in_windowing = TRUE;
 		break;
 	    case C_O_WINDOW : /* Window out. */
-		if (rel_perspective > 0.0)
-		{
+		if (rel_perspective > 0.0) {
 		    prnt_Scroll("Windowing does not yet work WITH perspective.\n");
 		    prnt_Scroll("Set perspective to zero or negative.\n");
-		    goto	exit_cm;
+		    goto exit_cm;
 		}
 		out_windowing = TRUE;
 		break;
@@ -944,10 +917,8 @@ f_Cursor_Module()
 	clr_Echo(0);
 	(void) fb_setcursor(fbiop, target1, 16, 16, 8, 8);
 	(void) fb_cursor(fbiop, 1, x, y);
-	while ((c = hm_getchar()) != QUIT)
-	{
-	    switch (c)
-	    {
+	while ((c = hm_getchar()) != QUIT) {
+	    switch (c) {
 		case DOWN :
 		    if (y > 0)
 			y--;
@@ -997,54 +968,48 @@ f_Cursor_Module()
 		    (void) fb_window(fbiop, cx, cy);
 		    break;
 		case IN :
-		    if (zoom <= fbiop->if_width/2)
-		    {
+		    if (zoom <= fbiop->if_width/2) {
 			zoom *= 2;
 			cx = x;
 			cy = y;
 			(void) fb_zoom(fbiop, zoom, zoom);
 			(void) fb_window(fbiop, cx, cy);
-		    }
-		    else
+		    } else
 			ring_Bell();
 		    break;
 		case OUT :
-		    if (zoom > 1)
-		    {
+		    if (zoom > 1) {
 			zoom /= 2;
 			cx = x;
 			cy = y;
 			(void) fb_zoom(fbiop, zoom, zoom);
 			(void) fb_window(fbiop, cx, cy);
-		    }
-		    else
+		    } else
 			ring_Bell();
 		    break;
-		case READ :
-		    {
-			RGBpixel	pixel;
-			mx = XSCR2MEM(x);
-			my = YSCR2MEM(y);
-			if (fb_seek(fbiop, mx, my) == -1
-			    ||	fb_rpixel(fbiop, (unsigned char *) pixel)
-			    == -1
-			    )
-			    bu_log("Read from <%d, %d> failed.", mx, my);
-			else
-			    prnt_Scroll("Temperature is %d degrees fahrenheit.\n",
-					pixel_To_Temp((RGBpixel *)pixel)
-				);
-			prnt_Prompt("Cursor input module (type '?' for help) : ");
-			break;
-		    }
+		case READ : {
+		    RGBpixel pixel;
+		    mx = XSCR2MEM(x);
+		    my = YSCR2MEM(y);
+		    if (fb_seek(fbiop, mx, my) == -1
+			||	fb_rpixel(fbiop, (unsigned char *) pixel)
+			== -1
+			)
+			bu_log("Read from <%d, %d> failed.", mx, my);
+		    else
+			prnt_Scroll("Temperature is %d degrees fahrenheit.\n",
+				    pixel_To_Temp((RGBpixel *)pixel)
+			    );
+		    prnt_Prompt("Cursor input module (type '?' for help) : ");
+		    break;
+		}
 		case MAPFROM :
 		    mx = XSCR2MEM(x);
 		    my = YSCR2MEM(y);
 		    mapfromflag = TRUE;
 		    fx = mx - x_fb_origin;
 		    fy = my - y_fb_origin;
-		    if (maptoflag)
-		    {
+		    if (maptoflag) {
 			ir_mapx = tx - fx;
 			ir_mapy = ty - fy;
 			bu_log("to<%d, %d> from<%d, %d> delta<%d, %d>\n",
@@ -1061,8 +1026,7 @@ f_Cursor_Module()
 		    maptoflag = TRUE;
 		    tx = mx - x_fb_origin;
 		    ty = my - y_fb_origin;
-		    if (mapfromflag)
-		    {
+		    if (mapfromflag) {
 			ir_mapx = tx - fx;
 			ir_mapy = ty - fy;
 			bu_log("to<%d, %d> from<%d, %d> delta<%d, %d>\n",
@@ -1077,31 +1041,26 @@ f_Cursor_Module()
 		    mx = XSCR2MEM(x);
 		    my = YSCR2MEM(y);
 		    pt_Select(mx, my, &xx0, &yy0, &origin);
-		    if (tagging_pixel)
-		    {
+		    if (tagging_pixel) {
 			pt_Select(mx, my, &xx0, &yy0, &origin);
 			ir_doing_paint = TRUE;
 			(void) sprintf(IR_PAINT_PTR, "%4d", ir_paint);
 			update_Screen();
-		    }
-		    else
+		    } else
 			if (! origin)
 			    break;
 			else
-			    if (sweeping_rect)
-			    {
+			    if (sweeping_rect) {
 				ir_doing_paint = TRUE;
 				(void) sprintf(IR_PAINT_PTR, "%4d", ir_paint);
 				update_Screen();
-			    }
-			    else
-				if (in_windowing || out_windowing)
-				{
-				    int	dx, dy, dw;
-				    fastf_t		scale;
-				    fastf_t		x_translate, y_translate;
-				    static char	buf[5];
-				    static char	*ar[5] = {NULL, NULL, NULL, NULL, NULL};
+			    } else
+				if (in_windowing || out_windowing) {
+				    int dx, dy, dw;
+				    fastf_t scale;
+				    fastf_t x_translate, y_translate;
+				    static char buf[5];
+				    static char *ar[5] = {NULL, NULL, NULL, NULL, NULL};
 				    dx = mx - xx0;
 				    dx = abs(dx);
 				    dy = my - yy0;
@@ -1110,8 +1069,7 @@ f_Cursor_Module()
 #define Pixel2Grid(x_) ((x_)/((fastf_t)fbiop->if_width/grid_sz))
 #define Grid2Model(x_) ((x_)*cell_sz)
 				    scale = dw / (fastf_t)(grid_sz);
-				    if (out_windowing)
-				    {
+				    if (out_windowing) {
 					scale = 1.0 / scale;
 					x_translate = (xx0+mx)/2.0 - grid_sz/2.0;
 					x_translate = Grid2Model(x_translate);
@@ -1119,9 +1077,7 @@ f_Cursor_Module()
 					y_translate = Grid2Model(y_translate);
 					x_grid_offset -= x_translate * scale;
 					y_grid_offset -= y_translate * scale;
-				    }
-				    else
-				    {
+				    } else {
 					x_translate = (xx0+mx)/2.0 - grid_sz/2.0;
 					x_translate = Grid2Model(x_translate);
 					y_translate = (yy0+my)/2.0 - grid_sz/2.0;
@@ -1180,11 +1136,11 @@ f_Cursor_Module()
 exit_cm :	;
     query_region = FALSE;
     close_Output_Device(0);
-    return	1;
+    return 1;
 }
 
 
-/*	f _ D i s p l a y _ O r i g i n () */
+/* f _ D i s p l a y _ O r i g i n () */
 /*ARGSUSED*/
 static int
 f_Display_Origin(char **args)
@@ -1194,8 +1150,7 @@ f_Display_Origin(char **args)
 	||	args[2] == NULL || sscanf(args[2], "%d", &y_fb_origin) != 1
 	)
     {
-	if (tty)
-	{
+	if (tty) {
 	    (void) sprintf(prompt,
 			   "Image offset ? [x y](%d %d) ",
 			   x_fb_origin, y_fb_origin
@@ -1203,16 +1158,15 @@ f_Display_Origin(char **args)
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL
 		&&	sscanf(input_ln, "%d %d", &x_fb_origin, &y_fb_origin) != 2
 		)
-		return	-1;
-	}
-	else
-	    return	-1;
+		return -1;
+	} else
+	    return -1;
     }
-    return	1;
+    return 1;
 }
 
 
-/*	f _ A n i m a t e () */
+/* f _ A n i m a t e () */
 /*ARGSUSED*/
 static int
 f_Animate()
@@ -1220,10 +1174,9 @@ f_Animate()
     (void) sprintf(prompt, "Full-screen animation ? [y|n](%c) ", movie.m_fullscreen ? 'y' : 'n');
     if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 	movie.m_fullscreen = input_ln[0] != 'n';
-    if (movie.m_fullscreen)
-    {
-	char		movie_file[MAX_LN];
-	char		*suffixptr;
+    if (movie.m_fullscreen) {
+	char movie_file[MAX_LN];
+	char *suffixptr;
 	snprintf(prompt, MAX_LN, "Movie file prefix ? (%s) ", prefix);
 	if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 	    bu_strlcpy(prefix, input_ln, MAX_LN);
@@ -1235,67 +1188,60 @@ f_Animate()
 	    )
 	{
 	    bu_log("Illegal input (%s).\n", input_ln);
-	    return	-1;
+	    return -1;
 	}
 	if (! ready_Output_Device(0))
-	  return -1;
+	    return -1;
 	(void) signal(SIGINT, abort_RT);
-	for (frame_no = 0; ! user_interrupt; frame_no++)
-	{
-	    FBIO	*movie_fbiop;
-	    int	y;
+	for (frame_no = 0; ! user_interrupt; frame_no++) {
+	    FBIO *movie_fbiop;
+	    int y;
 	    if (frame_no == noframes)
 		frame_no = 0;
 	    (void) sprintf(suffixptr, ".%04d", frame_no);
 	    if (!bu_file_exists(movie_file, NULL))
 		continue;
-	    if ((movie_fbiop = fb_open(movie_file, grid_sz, grid_sz)) == FBIO_NULL)
-	    {
+	    if ((movie_fbiop = fb_open(movie_file, grid_sz, grid_sz)) == FBIO_NULL) {
 		(void) signal(SIGINT, norml_sig);
 		close_Output_Device(0);
-		return	-1;
+		return -1;
 	    }
-	    if (fb_ioinit(movie_fbiop) == -1)
-	    {
+	    if (fb_ioinit(movie_fbiop) == -1) {
 		(void) signal(SIGINT, norml_sig);
 		close_Output_Device(0);
 		(void) fb_close(movie_fbiop);
-		return	-1;
+		return -1;
 	    }
 	    prnt_Status();
-	    for (y = 0; y < grid_sz; y++)
-	    {
-		RGBpixel	pixels[1024];
-		if (fb_read(movie_fbiop, 0, y, (unsigned char *)pixels, grid_sz) == -1)
-		{
+	    for (y = 0; y < grid_sz; y++) {
+		RGBpixel pixels[1024];
+		if (fb_read(movie_fbiop, 0, y, (unsigned char *)pixels, grid_sz) == -1) {
 		    fb_log("Read from <%d, %d> failed on file \"%s\".\n", 0, y, movie_file);
 		    (void) signal(SIGINT, norml_sig);
 		    close_Output_Device(0);
 		    (void) fb_close(movie_fbiop);
-		    return	-1;
+		    return -1;
 		}
-		if (fb_write(fbiop, 0, y, (unsigned char *)pixels, grid_sz) == -1)
-		{
+		if (fb_write(fbiop, 0, y, (unsigned char *)pixels, grid_sz) == -1) {
 		    fb_log("Write to <%d, %d> failed on \"%s\".\n", 0, y, fb_file);
 		    (void) signal(SIGINT, norml_sig);
 		    close_Output_Device(0);
 		    (void) fb_close(movie_fbiop);
-		    return	-1;
+		    return -1;
 		}
 	    }
-	    if (fb_close(movie_fbiop) == -1)
-	    {
+	    if (fb_close(movie_fbiop) == -1) {
 		fb_log("Can't close \"%s\".\n", movie_file);
 		(void) signal(SIGINT, norml_sig);
-		return	-1;
+		return -1;
 	    }
 	}
 	user_interrupt = FALSE;
 	(void) signal(SIGINT, norml_sig);
 	close_Output_Device(0);
-	return	1;
+	return 1;
     }
-    return	1;
+    return 1;
 }
 
 
@@ -1306,82 +1252,64 @@ f_Animate()
 static int
 f_GridConfig(char **args)
 {
-    if (args != NULL && args[1] != NULL && args[2] == NULL)
-    {
+    if (args != NULL && args[1] != NULL && args[2] == NULL) {
 	/* Old style 'G' command for upward compatibility of
 	   'lgt' scripts. */
 	if (sscanf(args[1], "%d", &grid_sz) != 1)
-	    return	-1;
+	    return -1;
 	force_cellsz = FALSE;
 	type_grid = GT_RPP_CENTERED;
-    }
-    else
+    } else
 	if (args != NULL && args[1] != NULL
-	    && args[2] != NULL && args[3] != NULL && args[4] != NULL)
-	{
-	    fastf_t	vsize;
-	    if (sscanf(args[2], "%d", &force_cellsz) != 1)
-	    {
+	    && args[2] != NULL && args[3] != NULL && args[4] != NULL) {
+	    fastf_t vsize;
+	    if (sscanf(args[2], "%d", &force_cellsz) != 1) {
 		bu_log("Can't read size flag!\n");
-		return	-1;
+		return -1;
 	    }
-	    if (force_cellsz)
-	    {
-		if (sscanf(args[1], "%lf", &cell_sz) != 1)
-		{
+	    if (force_cellsz) {
+		if (sscanf(args[1], "%lf", &cell_sz) != 1) {
 		    bu_log("Can't read cell size!\n");
-		    return	-1;
+		    return -1;
 		}
-	    }
-	    else
-		if (sscanf(args[1], "%d", &grid_sz) != 1)
-		{
+	    } else
+		if (sscanf(args[1], "%d", &grid_sz) != 1) {
 		    bu_log("Can't read grid size!\n");
-		    return	-1;
+		    return -1;
 		}
-	    if (sscanf(args[3], "%d", &type_grid) != 1)
-	    {
+	    if (sscanf(args[3], "%d", &type_grid) != 1) {
 		bu_log("Can't read grid type!\n");
-		return	-1;
+		return -1;
 	    }
 
-	    if (sscanf(args[4], "%lf", &vsize) != 1)
-	    {
+	    if (sscanf(args[4], "%lf", &vsize) != 1) {
 		bu_log("Can't read view size!\n");
-		return	-1;
+		return -1;
 	    }
-	    if (vsize > epsilon)
-	    {
+	    if (vsize > epsilon) {
 		view_size = vsize;
 		force_viewsz = TRUE;
-	    }
-	    else
+	    } else
 		force_viewsz = FALSE;
-	}
-	else
-	    if (args == NULL)
-	    {
+	} else
+	    if (args == NULL) {
 		(void) sprintf(prompt,
 			       "Specify cell size ? [y|n](%c) ",
 			       force_cellsz ? 'y' : 'n'
 		    );
 		if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 		    force_cellsz = input_ln[0] != 'n';
-		if (force_cellsz)
-		{
-		    if (! setCellSize())
-		    {
+		if (force_cellsz) {
+		    if (! setCellSize()) {
 			force_cellsz = FALSE;
-			return	-1;
+			return -1;
 		    }
-		}
-		else
-		{
+		} else {
 		    (void) sprintf(prompt, "Grid size ? (%d) ", grid_sz);
 		    if (get_Input(input_ln, MAX_LN, prompt) != NULL
 			&&	sscanf(input_ln, "%d", &grid_sz) != 1
 			)
-			return	-1;
+			return -1;
 		}
 		(void) sprintf(prompt,
 			       "Center image WRT model centroid ? [y|n](%c) ",
@@ -1396,20 +1324,19 @@ f_GridConfig(char **args)
 		    );
 		if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 		    force_viewsz = input_ln[0] != 'n';
-		if (force_viewsz && ! setViewSize())
-		{
+		if (force_viewsz && ! setViewSize()) {
 		    force_viewsz = FALSE;
-		    return	-1;
+		    return -1;
 		}
 	    }
     setGridSize();
     if (! force_viewsz)
 	view_size = modl_radius * 2.0;
-    return	1;
+    return 1;
 }
 
 
-/*	f _ W r t _ F b () */
+/* f _ W r t _ F b () */
 /*ARGSUSED*/
 static int
 f_Wrt_Fb(char **args)
@@ -1427,60 +1354,52 @@ f_Wrt_Fb(char **args)
 	} else {
 	    return -1;
 	}
-    if (save_fb_file[0] == '\0')
-    {
+    if (save_fb_file[0] == '\0') {
 	bu_log("No default, must specify file name!\n");
-	return	-1;
+	return -1;
     }
-    if (BU_STR_EQUAL(save_fb_file, fb_file))
-    {
+    if (BU_STR_EQUAL(save_fb_file, fb_file)) {
 	bu_log("Frame buffer is same as saved image!\n");
-	return	-1;
+	return -1;
     }
     if (! ready_Output_Device(0))
-	return	-1;
+	return -1;
     prnt_Event("Saving image...");
     if ((save_fbiop =
-	 fb_open(save_fb_file, grid_sz, grid_sz))== FBIO_NULL)
-    {
+	 fb_open(save_fb_file, grid_sz, grid_sz))== FBIO_NULL) {
 	close_Output_Device(0);
-	return	-1;
+	return -1;
     }
-    if (fb_ioinit(save_fbiop) == -1)
-    {
+    if (fb_ioinit(save_fbiop) == -1) {
 	close_Output_Device(0);
 	(void) fb_close(save_fbiop);
-	return	-1;
+	return -1;
     }
-    for (y = 0; y < grid_sz; y++)
-    {
-	RGBpixel	pixels[1024];
-	if (fb_read(fbiop, 0, y, (unsigned char *)pixels, grid_sz) == -1)
-	{
+    for (y = 0; y < grid_sz; y++) {
+	RGBpixel pixels[1024];
+	if (fb_read(fbiop, 0, y, (unsigned char *)pixels, grid_sz) == -1) {
 	    fb_log("Read from <%d, %d> failed.\n", 0, y);
 	    close_Output_Device(0);
 	    (void) fb_close(save_fbiop);
-	    return	-1;
+	    return -1;
 	}
-	if (fb_write(save_fbiop, 0, y, (unsigned char *)pixels, grid_sz) == -1)
-	{
+	if (fb_write(save_fbiop, 0, y, (unsigned char *)pixels, grid_sz) == -1) {
 	    fb_log("Write to <%d, %d> failed.\n", 0, y);
 	    close_Output_Device(0);
 	    (void) fb_close(save_fbiop);
-	    return	-1;
+	    return -1;
 	}
     }
     close_Output_Device(0);
-    if (fb_close(save_fbiop) == -1)
-    {
+    if (fb_close(save_fbiop) == -1) {
 	fb_log("Can't close \"%s\".\n", save_fb_file);
-	return	-1;
+	return -1;
     }
-    return	1;
+    return 1;
 }
 
 
-/*	f _ R d _ F b () */
+/* f _ R d _ F b () */
 /*ARGSUSED*/
 static int
 f_Rd_Fb(char **args)
@@ -1491,64 +1410,54 @@ f_Rd_Fb(char **args)
     if (args != NULL && args[1] != NULL)
 	bu_strlcpy(save_fb_file, args[1], MAX_LN);
     else
-	if (tty)
-	{
+	if (tty) {
 	    snprintf(prompt, MAX_LN, "File name of image ? (%s) ", save_fb_file);
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 		bu_strlcpy(save_fb_file, input_ln, MAX_LN);
-	}
-	else
-	    return	-1;
-    if (save_fb_file[0] == '\0')
-    {
+	} else
+	    return -1;
+    if (save_fb_file[0] == '\0') {
 	bu_log("No default, must specify file name!\n");
-	return	-1;
+	return -1;
     }
-    if (BU_STR_EQUAL(save_fb_file, fb_file))
-    {
+    if (BU_STR_EQUAL(save_fb_file, fb_file)) {
 	bu_log("Frame buffer is same as saved image!\n");
-	return	-1;
+	return -1;
     }
     if (! ready_Output_Device(0))
-	return	-1;
+	return -1;
     prnt_Event("Reading saved image...");
     if ((save_fbiop =
-	 fb_open(save_fb_file, grid_sz, grid_sz)) == FBIO_NULL)
-    {
+	 fb_open(save_fb_file, grid_sz, grid_sz)) == FBIO_NULL) {
 	close_Output_Device(0);
-	return	-1;
+	return -1;
     }
-    if (fb_ioinit(save_fbiop) == -1)
-    {
+    if (fb_ioinit(save_fbiop) == -1) {
 	close_Output_Device(0);
 	(void) fb_close(save_fbiop);
-	return	-1;
+	return -1;
     }
-    for (y = 0; y < grid_sz; y++)
-    {
-	RGBpixel	pixels[1024];
-	if (fb_read(save_fbiop, 0, y, (unsigned char *)pixels, grid_sz) == -1)
-	{
+    for (y = 0; y < grid_sz; y++) {
+	RGBpixel pixels[1024];
+	if (fb_read(save_fbiop, 0, y, (unsigned char *)pixels, grid_sz) == -1) {
 	    fb_log("Read from <%d, %d> failed.\n", 0, y);
 	    close_Output_Device(0);
 	    (void) fb_close(save_fbiop);
-	    return	-1;
+	    return -1;
 	}
-	if (fb_write(fbiop, 0, y, (unsigned char *)pixels, grid_sz) == -1)
-	{
+	if (fb_write(fbiop, 0, y, (unsigned char *)pixels, grid_sz) == -1) {
 	    fb_log("Write to <%d, %d> failed.\n", 0, y);
 	    close_Output_Device(0);
 	    (void) fb_close(save_fbiop);
-	    return	-1;
+	    return -1;
 	}
     }
     close_Output_Device(0);
-    if (fb_close(save_fbiop) == -1)
-    {
+    if (fb_close(save_fbiop) == -1) {
 	fb_log("Can't close \"%s\".\n", save_fb_file);
-	return	-1;
+	return -1;
     }
-    return	1;
+    return 1;
 }
 
 
@@ -1561,14 +1470,13 @@ wait_For_User(void)
 }
 
 
-/*	f _ P r n t _ L g t _ D b () */
+/* f _ P r n t _ L g t _ D b () */
 /*ARGSUSED*/
 static int
 f_Prnt_Lgt_Db(char **args)
 {
-    static int	light_id = -1;
-    if ((args == NULL || args[1] == NULL) && tty)
-    {
+    static int light_id = -1;
+    if ((args == NULL || args[1] == NULL) && tty) {
 	(void) sprintf(input_ln, "%d", light_id);
 	(void) snprintf(prompt, MAX_LN,
 			"Light source id ? [0-%d or * for all](%s) ",
@@ -1577,34 +1485,30 @@ f_Prnt_Lgt_Db(char **args)
 	    );
 	if (get_Input(input_ln, MAX_LN, prompt) != NULL
 	    &&	sscanf(input_ln, "%d", &light_id) != 1
-	    )
-	{
+	    ) {
 	    if (input_ln[0] == '*')
 		light_id = -1;
 	}
-    }
-    else
+    } else
 	if (args != NULL && args[1] != NULL
 	    &&	sscanf(args[1], "%d", &light_id) != 1
-	    )
-	{
+	    ) {
 	    bu_log("Illegal input (%s)\n", args[1]);
-	    return	-1;
+	    return -1;
 	}
     if (lgt_Print_Db(light_id) && popups)
 	wait_For_User();
-    return	1;
+    return 1;
 }
 
 
-/*	f _ P r n t _ M a t _ D b () */
+/* f _ P r n t _ M a t _ D b () */
 /*ARGSUSED*/
 static int
 f_Prnt_Mat_Db(char **args)
 {
-    static int	material_id = -1;
-    if ((args == NULL || args[1] == NULL) && tty)
-    {
+    static int material_id = -1;
+    if ((args == NULL || args[1] == NULL) && tty) {
 	(void) sprintf(input_ln, "%d", material_id);
 	(void) snprintf(prompt, MAX_LN,
 			"Material id ? [0-99 or * for all](%s) ",
@@ -1618,26 +1522,25 @@ f_Prnt_Mat_Db(char **args)
 		material_id = -1;
 	}
 
-    }
-    else
+    } else
 	if (args != NULL && args[1] != NULL
 	    &&	sscanf(args[1], "%d", &material_id) != 1)
 	{
 	    bu_log("Illegal input (%s)\n", args[1]);
-	    return	-1;
+	    return -1;
 	}
     if (mat_Print_Db(material_id) && popups)
 	wait_For_User();
-    return	1;
+    return 1;
 }
 
 
-/*	f _ R d _ R a w _ I R () */
+/* f _ R d _ R a w _ I R () */
 /*ARGSUSED*/
 static int
 f_Rd_Raw_IR(char **args)
 {
-    FILE	*ir_fp;
+    FILE *ir_fp;
     if (args != NULL && args[1] != NULL)
 	bu_strlcpy(ir_file, args[1], MAX_LN);
     else
@@ -1649,49 +1552,45 @@ f_Rd_Raw_IR(char **args)
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 		bu_strlcpy(ir_file, input_ln, MAX_LN);
 	} else {
-	    return	-1;
+	    return -1;
 	}
-    if (ir_file[0] == '\0')
-    {
+    if (ir_file[0] == '\0') {
 	bu_log("No default, must specify file name!\n");
-	return	-1;
+	return -1;
     }
-    if ((ir_fp = fopen(ir_file, "rb")) == NULL)
-    {
+    if ((ir_fp = fopen(ir_file, "rb")) == NULL) {
 	bu_log("Can not open \"%s\" for reading.\n", ir_file);
-	return	-1;
+	return -1;
     }
     if (! ready_Output_Device(0)) {
 	fclose(ir_fp);
-	return	0;
+	return 0;
     }
     prnt_Event("Reading IR data...");
-    if (! read_IR(ir_fp))
-    {
+    if (! read_IR(ir_fp)) {
 	bu_log("Read of IR data from file \"%s\" failed.\n",
 	       ir_file
 	    );
 	(void) fclose(ir_fp);
 	close_Output_Device(0);
-	return	-1;
+	return -1;
     }
     prnt_Timer("IRREAD");
     (void) fclose(ir_fp);
     close_Output_Device(0);
-    return	1;
+    return 1;
 }
 
 
 static int
 read_Frame(FILE *fp)
 {
-    int	i;
-    if (fscanf(fp, "%le", &view_size) != 1)
-    {
+    int i;
+    if (fscanf(fp, "%le", &view_size) != 1) {
 	bu_log("Failed to read view size.\n");
 	if (! movie.m_keys && fp != stdin)
 	    (void) fclose(fp);
-	return	FALSE;
+	return FALSE;
     }
     if (fscanf(fp, "%le %le %le", &lgts[0].loc[X], &lgts[0].loc[Y], &lgts[0].loc[Z])
 	!= 3
@@ -1700,29 +1599,28 @@ read_Frame(FILE *fp)
 	bu_log("Failed to read eye position.\n");
 	if (! movie.m_keys && fp != stdin)
 	    (void) fclose(fp);
-	return	FALSE;
+	return FALSE;
     }
     for (i = 0; i < 16; i++)
-	if (fscanf(fp, "%le", &view_rots[i]) != 1)
-	{
+	if (fscanf(fp, "%le", &view_rots[i]) != 1) {
 	    bu_log("Failed to read view matrix.\n");
 	    save_view_flag = FALSE;
 	    if (! movie.m_keys && fp != stdin)
 		(void) fclose(fp);
-	    return	FALSE;
+	    return FALSE;
 	}
-    return	TRUE;
+    return TRUE;
 }
 
 
-/*	f _ M o v i e () */
+/* f _ M o v i e () */
 /*ARGSUSED*/
 static int
 f_Movie()
 {
-    int		ret = TRUE;
-    char		buf[10];
-    char		*locargs[5] = {NULL, NULL, NULL, NULL, NULL};
+    int ret = TRUE;
+    char buf[10];
+    char *locargs[5] = {NULL, NULL, NULL, NULL, NULL};
     /* Will use 'grid_sz' to control resolution. */
     force_cellsz = FALSE;
     (void) sprintf(prompt,
@@ -1748,7 +1646,7 @@ f_Movie()
 	)
     {
 	ret = -1;
-	goto	error_exit;
+	goto error_exit;
     }
     grid_sz = movie.m_frame_sz; /* Grid size must match. */
     setGridSize();
@@ -1758,21 +1656,18 @@ f_Movie()
     locargs[2] = NULL; /* XXX old-style grid configuration. */
     (void) f_GridConfig(locargs);
     (void) sprintf(prompt, "Number of frames ? (%d) ", noframes);
-    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
-    {
-	if (sscanf(input_ln, "%d", &noframes) != 1)
-	{
+    if (get_Input(input_ln, MAX_LN, prompt) != NULL) {
+	if (sscanf(input_ln, "%d", &noframes) != 1) {
 	    ret = -1;
-	    goto	error_exit;
+	    goto error_exit;
 	}
     }
     movie.m_endframe = noframes-1; /* set default */
     movie.m_noframes = noframes;
-    if (movie.m_noframes < 1)
-    {
+    if (movie.m_noframes < 1) {
 	bu_log("It doesn't make sense not to have atleast 2 frames.\n");
 	ret = -1;
-	goto	error_exit;
+	goto error_exit;
     }
     (void) sprintf(prompt, "Starting frame ? (%d) ", movie.m_curframe);
     if (get_Input(input_ln, MAX_LN, prompt) != NULL
@@ -1780,7 +1675,7 @@ f_Movie()
 	)
     {
 	ret = -1;
-	goto	error_exit;
+	goto error_exit;
     }
     (void) sprintf(prompt, "Ending frame ? (%d) ", movie.m_endframe);
     if (get_Input(input_ln, MAX_LN, prompt) != NULL
@@ -1788,7 +1683,7 @@ f_Movie()
 	)
     {
 	ret = -1;
-	goto	error_exit;
+	goto error_exit;
     }
     (void) sprintf(prompt,
 		   "Key frame animation ? [y|n](%c) ",
@@ -1796,9 +1691,8 @@ f_Movie()
 	);
     if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 	movie.m_keys = input_ln[0] != 'n';
-    if (movie.m_keys)
-    {
-	int	i;
+    if (movie.m_keys) {
+	int i;
 	(void) snprintf(prompt, MAX_LN,
 			"Name of key frame file ? (%s) ",
 			svkey_file[0] == '\0' ? "STDIN" : svkey_file
@@ -1808,11 +1702,10 @@ f_Movie()
 	if (svkey_file[0] == '\0')
 	    movie.m_keys_fp = NULL; /* Will use STDIN. */
 	else
-	    if ((movie.m_keys_fp = fopen(svkey_file, "rb")) == NULL)
-	    {
+	    if ((movie.m_keys_fp = fopen(svkey_file, "rb")) == NULL) {
 		bu_log("Can't open \"%s\" for reading.", svkey_file);
 		ret = -1;
-		goto	error_exit;
+		goto error_exit;
 	    }
 	for (i = 0; i < movie.m_curframe; i++)
 	    read_Frame(movie.m_keys_fp);
@@ -1824,20 +1717,16 @@ f_Movie()
     if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 	movie.m_lgts = input_ln[0] != 'n';
     if (movie.m_keys)
-	return	TRUE;
+	return TRUE;
     (void) sprintf(prompt,
 		   "Starting and ending view azimuth ? (%g %g) ",
 		   movie.m_azim_beg*RAD2DEG, movie.m_azim_end*RAD2DEG
 	);
-    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
-    {
-	if (sscanf(input_ln, "%lf %lf", &movie.m_azim_beg, &movie.m_azim_end) != 2)
-	{
+    if (get_Input(input_ln, MAX_LN, prompt) != NULL) {
+	if (sscanf(input_ln, "%lf %lf", &movie.m_azim_beg, &movie.m_azim_end) != 2) {
 	    ret = -1;
-	    goto	error_exit;
-	}
-	else
-	{
+	    goto error_exit;
+	} else {
 	    movie.m_azim_beg /= RAD2DEG;
 	    movie.m_azim_end /= RAD2DEG;
 	}
@@ -1846,15 +1735,11 @@ f_Movie()
 		   "Starting and ending view elevation ? (%g %g) ",
 		   movie.m_elev_beg*RAD2DEG, movie.m_elev_end*RAD2DEG
 	);
-    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
-    {
-	if (sscanf(input_ln, "%lf %lf", &movie.m_elev_beg, &movie.m_elev_end) != 2)
-	{
+    if (get_Input(input_ln, MAX_LN, prompt) != NULL) {
+	if (sscanf(input_ln, "%lf %lf", &movie.m_elev_beg, &movie.m_elev_end) != 2) {
 	    ret = -1;
-	    goto	error_exit;
-	}
-	else
-	{
+	    goto error_exit;
+	} else {
 	    movie.m_elev_beg /= RAD2DEG;
 	    movie.m_elev_end /= RAD2DEG;
 	}
@@ -1863,15 +1748,11 @@ f_Movie()
 		   "Starting and ending view roll ? (%g %g) ",
 		   movie.m_roll_beg*RAD2DEG, movie.m_roll_end*RAD2DEG
 	);
-    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
-    {
-	if (sscanf(input_ln, "%lf %lf", &movie.m_roll_beg, &movie.m_roll_end) != 2)
-	{
+    if (get_Input(input_ln, MAX_LN, prompt) != NULL) {
+	if (sscanf(input_ln, "%lf %lf", &movie.m_roll_beg, &movie.m_roll_end) != 2) {
 	    ret = -1;
-	    goto	error_exit;
-	}
-	else
-	{
+	    goto error_exit;
+	} else {
 	    movie.m_roll_beg /= RAD2DEG;
 	    movie.m_roll_end /= RAD2DEG;
 	}
@@ -1879,18 +1760,15 @@ f_Movie()
     (void) sprintf(prompt, "Manual viewer positioning ? [y|n](%c) ", movie.m_over ? 'y' : 'n');
     if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 	movie.m_over = input_ln[0] != 'n';
-    if (movie.m_over)
-    {
+    if (movie.m_over) {
 	(void) sprintf(prompt,
 		       "Starting and ending observer distance ? (%g %g) ",
 		       movie.m_dist_beg, movie.m_dist_end
 	    );
-	if (get_Input(input_ln, MAX_LN, prompt) != NULL)
-	{
-	    if (sscanf(input_ln, "%lf %lf", &movie.m_dist_beg, &movie.m_dist_end) != 2)
-	    {
+	if (get_Input(input_ln, MAX_LN, prompt) != NULL) {
+	    if (sscanf(input_ln, "%lf %lf", &movie.m_dist_beg, &movie.m_dist_end) != 2) {
 		ret = -1;
-		goto	error_exit;
+		goto error_exit;
 	    }
 	}
 	(void) sprintf(prompt,
@@ -1901,22 +1779,18 @@ f_Movie()
 	    &&	sscanf(input_ln, "%lf %lf", &movie.m_grid_beg, &movie.m_grid_end) != 2)
 	{
 	    ret = -1;
-	    goto	error_exit;
+	    goto error_exit;
 	}
-    }
-    else
-    {
+    } else {
 	(void) sprintf(prompt,
 		       "Starting and ending perspective ? (%g %g) ",
 		       movie.m_pers_beg, movie.m_pers_end
 	    );
-	if (get_Input(input_ln, MAX_LN, prompt) != NULL)
-	{
+	if (get_Input(input_ln, MAX_LN, prompt) != NULL) {
 	    ret = -1;
-	    goto	error_exit;
+	    goto error_exit;
 	}
-	if (ZERO(movie.m_pers_beg) && ZERO(movie.m_pers_end))
-	{
+	if (ZERO(movie.m_pers_beg) && ZERO(movie.m_pers_end)) {
 	    (void) sprintf(prompt,
 			   "Starting and ending grid distance ? (%g %g) ",
 			   movie.m_grid_beg, movie.m_grid_end
@@ -1927,32 +1801,29 @@ f_Movie()
 		)
 	    {
 		ret = -1;
-		goto	error_exit;
+		goto error_exit;
 	    }
 	}
     }
 error_exit :
-    if (ret == -1)
-    {
+    if (ret == -1) {
 	bu_log("Illegal input (%s).\n", input_ln);
 	movie.m_noframes = 1;
     }
-    return	ret;
+    return ret;
 }
 
 
-/*	f _ M a x _ B o u n c e () */
+/* f _ M a x _ B o u n c e () */
 /*ARGSUSED*/
 static int
 f_Max_Bounce(char **args)
 {
-    if (ir_mapping)
-    {
+    if (ir_mapping) {
 	bu_log("Multiple bounces disallowed during IR mapping.\n");
-	return	-1;
+	return -1;
     }
-    if (args == NULL)
-    {
+    if (args == NULL) {
 	(void) sprintf(prompt,
 		       "Maximum ray bounces ? (%d) ",
 		       max_bounce
@@ -1964,17 +1835,16 @@ f_Max_Bounce(char **args)
 	    bu_log("f_Max_Bounce: Illegal input (%s)\n",
 		   input_ln
 		);
-	    return	-1;
+	    return -1;
 	}
-    }
-    else
+    } else
 	if (args[1] == NULL || sscanf(args[1], "%d", &max_bounce) != 1)
-	    return	-1;
-    return	1;
+	    return -1;
+    return 1;
 }
 
 
-/*	f _ P r n t _ R e g i o n s ()  */
+/* f _ P r n t _ R e g i o n s ()  */
 /*ARGSUSED*/
 static int
 f_Prnt_Regions()
@@ -1982,19 +1852,19 @@ f_Prnt_Regions()
     prnt_Trie(reg_triep, 0);
     if (popups)
 	wait_For_User();
-    return	1;
+    return 1;
 }
 
 
-/*	f _ S e t _ R e g i o n _ I R () */
+/* f _ S e t _ R e g i o n _ I R () */
 /*ARGSUSED*/
 static int
 f_Set_Region_IR()
 {
-    OcList	*ocp;
-    OcList		*oclist;
-    static char	reg_name[MAX_LN];
-    static int	temperature = 0;
+    OcList *ocp;
+    OcList *oclist;
+    static char reg_name[MAX_LN];
+    static int temperature = 0;
     oclist = get_Region_Name(reg_name, MAX_LN, "Region name ? ");
     (void) sprintf(prompt,
 		   "Temperature for region(s) ? (%d) ",
@@ -2003,36 +1873,33 @@ f_Set_Region_IR()
     if (get_Input(input_ln, 12, prompt) != NULL
 	&&	sscanf(input_ln, "%d", &temperature) != 1
 	)
-	return	-1;
+	return -1;
     for (ocp = oclist; ocp != OCLIST_NULL; ocp = ocp->p_next)
 	ocp->p_octp->o_temp = temperature;
     delete_OcList(&oclist);
-    return	1;
+    return 1;
 }
 
 
-/*	f _ E r r _ F i l e () */
+/* f _ E r r _ F i l e () */
 /*ARGSUSED*/
 static int
 f_Err_File(char **args)
 {
-    static int	err_fd = -1;
+    static int err_fd = -1;
     if (args != NULL && args[1] != NULL)
 	bu_strlcpy(err_file, args[1], MAX_LN);
     else
-	if (tty)
-	{
+	if (tty) {
 	    (void) snprintf(prompt, MAX_LN, "Name of log file ? (%s) ", err_file);
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 		bu_strlcpy(err_file, input_ln, MAX_LN);
-	}
-	else
+	} else
 	    bu_strlcpy(err_file, "/dev/tty", MAX_LN);
 
-    if (err_file[0] == '\0')
-    {
+    if (err_file[0] == '\0') {
 	bu_log("No default, must specify file name!\n");
-	return	-1;
+	return -1;
     }
     /* Insure that error log is truncated. */
     if ((err_fd =
@@ -2040,62 +1907,55 @@ f_Err_File(char **args)
 	)
     {
 	loc_Perror(err_file);
-	return	-1;
+	return -1;
     }
     (void) close(2);
-    if (fcntl(err_fd, F_DUPFD, 2) == -1)
-    {
+    if (fcntl(err_fd, F_DUPFD, 2) == -1) {
 	loc_Perror("fcntl");
-	return	-1;
+	return -1;
     }
-    return	1;
+    return 1;
 }
 
 
-/*	f _ S h a d o w s ()
+/* f _ S h a d o w s ()
  */
 /*ARGSUSED*/
 static int
 f_Shadows(char **args)
 {
-    if (args == NULL)
-    {
+    if (args == NULL) {
 	(void) sprintf(prompt,
 		       "Shadows on ? [y|n](%c) ",
 		       shadowing ? 'y' : 'n'
 	    );
 	if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 	    shadowing = input_ln[0] != 'n';
-    }
-    else
-	if (args[1] == NULL || sscanf(args[1], "%d", &shadowing) != 1)
-	{
+    } else
+	if (args[1] == NULL || sscanf(args[1], "%d", &shadowing) != 1) {
 	    Toggle(shadowing);
 	}
-    return	1;
+    return 1;
 }
 
 
-/*	f _ T r a c k i n g _ C u r s o r () */
+/* f _ T r a c k i n g _ C u r s o r () */
 /*ARGSUSED*/
 static int
 f_Tracking_Cursor(char **args)
 {
-    if (args == NULL)
-    {
+    if (args == NULL) {
 	(void) sprintf(prompt,
 		       "Tracking cursor on ? [y|n](%c) ",
 		       tracking_cursor ? 'y' : 'n'
 	    );
 	if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 	    tracking_cursor = input_ln[0] != 'n';
-    }
-    else
-	if (args[1] == NULL || sscanf(args[1], "%d", &tracking_cursor) != 1)
-	{
+    } else
+	if (args[1] == NULL || sscanf(args[1], "%d", &tracking_cursor) != 1) {
 	    Toggle(tracking_cursor);
 	}
-    return	1;
+    return 1;
 }
 
 
@@ -2140,12 +2000,12 @@ f_Parallel(char **args)
 }
 
 
-/*	f _ W r t _ I R _ D b () */
+/* f _ W r t _ I R _ D b () */
 /*ARGSUSED*/
 static int
 f_Wrt_IR_Db(char **args)
 {
-    FILE		*ir_fp;
+    FILE *ir_fp;
     if (args != NULL && args[1] != NULL)
 	bu_strlcpy(ir_db_file, args[1], MAX_LN);
     else
@@ -2157,33 +2017,30 @@ f_Wrt_IR_Db(char **args)
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 		bu_strlcpy(ir_db_file, input_ln, MAX_LN);
 	} else {
-	    return	-1;
+	    return -1;
 	}
-    if (ir_db_file[0] == '\0')
-    {
+    if (ir_db_file[0] == '\0') {
 	bu_log("No default, must specify file name!\n");
-	return	-1;
+	return -1;
     }
-    if ((ir_fp = fopen(ir_db_file, "wb")) == NULL)
-    {
+    if ((ir_fp = fopen(ir_db_file, "wb")) == NULL) {
 	bu_log("Can not open \"%s\" for writing.\n", ir_db_file);
-	return	-1;
+	return -1;
     }
     prnt_Event("Writing IR data base...");
-    if (! write_Trie(reg_triep, 0, ir_fp))
-    {
+    if (! write_Trie(reg_triep, 0, ir_fp)) {
 	bu_log("Write of IR data base (%s) failed.\n",
 	       ir_db_file
 	    );
 	(void) fclose(ir_fp);
-	return	-1;
+	return -1;
     }
     (void) fclose(ir_fp);
-    return	1;
+    return 1;
 }
 
 
-/*	f _ W r t _ L g t _ D b () */
+/* f _ W r t _ L g t _ D b () */
 /*ARGSUSED*/
 static int
 f_Wrt_Lgt_Db(char **args)
@@ -2199,23 +2056,21 @@ f_Wrt_Lgt_Db(char **args)
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 		bu_strlcpy(lgt_db_file, input_ln, MAX_LN);
 	} else {
-	    return	-1;
+	    return -1;
 	}
-    if (lgt_db_file[0] == '\0')
-    {
+    if (lgt_db_file[0] == '\0') {
 	bu_log("No default, must specify file name!\n");
-	return	-1;
+	return -1;
     }
-    if (! lgt_Save_Db(lgt_db_file))
-    {
+    if (! lgt_Save_Db(lgt_db_file)) {
 	bu_log("Write of light source data base (%s) failed.\n", lgt_db_file);
-	return	-1;
+	return -1;
     }
-    return	1;
+    return 1;
 }
 
 
-/*	f _ W r t _ M a t _ D b () */
+/* f _ W r t _ M a t _ D b () */
 /*ARGSUSED*/
 static int
 f_Wrt_Mat_Db(char **args)
@@ -2231,18 +2086,17 @@ f_Wrt_Mat_Db(char **args)
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 		bu_strlcpy(mat_db_file, input_ln, MAX_LN);
 	} else {
-	    return	-1;
+	    return -1;
 	}
-    if (mat_db_file[0] == '\0')
-    {
+    if (mat_db_file[0] == '\0') {
 	bu_log("No default, must specify file name!\n");
-	return	-1;
+	return -1;
     }
-    return	mat_Save_Db(mat_db_file) ? 1 : -1;
+    return mat_Save_Db(mat_db_file) ? 1 : -1;
 }
 
 
-/*	f _ G r i d _ T r a n s l a t e () */
+/* f _ G r i d _ T r a n s l a t e () */
 /*ARGSUSED*/
 static int
 f_Grid_Translate(char **args)
@@ -2252,8 +2106,7 @@ f_Grid_Translate(char **args)
 	||	sscanf(args[2], "%lf", &y_grid_offset) != 1
 	)
     {
-	if (tty)
-	{
+	if (tty) {
 	    (void) sprintf(prompt,
 			   "Grid translation ? [x y](%g %g)",
 			   x_grid_offset, y_grid_offset
@@ -2261,12 +2114,11 @@ f_Grid_Translate(char **args)
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL
 		&&	sscanf(input_ln, "%lf %lf", &x_grid_offset, &y_grid_offset) != 2
 		)
-		return	-1;
-	}
-	else
-	    return	-1;
+		return -1;
+	} else
+	    return -1;
     }
-    return	1;
+    return 1;
 }
 
 
@@ -2274,58 +2126,53 @@ f_Grid_Translate(char **args)
 static int
 f_Overlaps(char **args)
 {
-    if (args == NULL)
-    {
+    if (args == NULL) {
 	(void) sprintf(prompt,
 		       "Overlap reporting on ? [y|n](%c) ",
 		       report_overlaps ? 'y' : 'n'
 	    );
 	if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 	    report_overlaps = input_ln[0] != 'n';
-    }
-    else
-	if (args[1] == NULL || sscanf(args[1], "%d", &report_overlaps) != 1)
-	{
+    } else
+	if (args[1] == NULL || sscanf(args[1], "%d", &report_overlaps) != 1) {
 	    Toggle(report_overlaps);
 	}
     if (! tty)
 	bu_log("Overlaps will%sbe reported.\n",
 	       report_overlaps ? " " : " NOT "
 	    );
-    return	1;
+    return 1;
 }
 
 
-/*	f _ S h o w _ I R () */
+/* f _ S h o w _ I R () */
 /*ARGSUSED*/
 static int
 f_Show_IR(char **args)
 {
-    int	x, y;
-    if (args == NULL || args[1] == NULL)
-    {
+    int x, y;
+    if (args == NULL || args[1] == NULL) {
 	x = grid_sz / 8;
 	y = 0;
-    }
-    else
+    } else
 	if (sscanf(args[1], "%d", &x) != 1)
-	    return	-1;
+	    return -1;
 	else
 	    if (args[2] == NULL)
 		y = 0;
 	    else
 		if (sscanf(args[2], "%d", &y) != 1)
-		    return	-1;
+		    return -1;
     /* Display IR temperature scale for pseudo coloring. */
     if (! ready_Output_Device(0))
-	return	-1;
+	return -1;
     display_Temps(x, y);
     close_Output_Device(0);
-    return	1;
+    return 1;
 }
 
 
-/*	f _ B a c k g r o u n d () */
+/* f _ B a c k g r o u n d () */
 /*ARGSUSED*/
 static int
 f_Background(char **args)
@@ -2338,8 +2185,7 @@ f_Background(char **args)
 	|| sscanf(args[3], "%d", &background[2]) != 1
 	)
     {
-	if (tty)
-	{
+	if (tty) {
 	    (void) sprintf(prompt,
 			   "Background color ? [R G B](%d %d %d) ? ",
 			   background[RED],
@@ -2353,20 +2199,19 @@ f_Background(char **args)
 			       &background[1],
 			       &background[2]
 		    ) != 3)
-		return	-1;
-	}
-	else
-	    return	-1;
+		return -1;
+	} else
+	    return -1;
     }
     bg_coefs[0] = (fastf_t) background[0] / 255.0;
     bg_coefs[1] = (fastf_t) background[1] / 255.0;
     bg_coefs[2] = (fastf_t) background[2] / 255.0;
     COPYRGB(bgpixel, background);
-    return	1;
+    return 1;
 }
 
 
-HMitem	irflags_items[] =
+HMitem irflags_items[] =
 {
     { "read only", "data base will NOT be modified by raytracing", 0, 0, 0, 0, IR_READONLY },
     { "edit", "data base will be modified by raytracing", 0, 0, 0, 0, IR_EDIT },
@@ -2374,13 +2219,12 @@ HMitem	irflags_items[] =
     { "reset all flags", "leave infrared module", 0, 0, 0, 0, IR_OFF },
     { 0, 0, 0, 0, 0, 0, 0 }
 };
-HMenu	irflags_hmenu = { irflags_items, 0, 0, 0, 0, 0 };
+HMenu irflags_hmenu = { irflags_items, 0, 0, 0, 0, 0 };
 
 void
 set_IRmapping(int bitflag)
 {
-    switch (bitflag)
-    {
+    switch (bitflag) {
 	case IR_OFF :
 	    ir_mapping = 0;
 	    break;
@@ -2403,8 +2247,7 @@ set_IRmapping(int bitflag)
 void
 note_IRmapping(void)
 {
-    if (ir_mapping == IR_OFF)
-    {
+    if (ir_mapping == IR_OFF) {
 	prnt_Scroll("Leaving IR module.\n");
 	return;
     }
@@ -2419,47 +2262,44 @@ note_IRmapping(void)
 }
 
 
-/*	f _ I R m o d u l e () */
+/* f _ I R m o d u l e () */
 /*ARGSUSED*/
 static int
 f_IRmodule(char **args)
 {
-    int	menuval = -1;
-    if (args == NULL || args[1] == NULL)
-    {
-	HMitem	*itemptr;
-	if (! tty)
-	{
-	  if (args == NULL) {
-	    bu_log("f_IRmodule - no args!\n");
-	    return      -1;
-	  }
-	  if (args[0])
-	    bu_log("IR module command (%c): missing argument.\n", *args[0]);
-	  return        -1;
+    int menuval = -1;
+    if (args == NULL || args[1] == NULL) {
+	HMitem *itemptr;
+	if (! tty) {
+	    if (args == NULL) {
+		bu_log("f_IRmodule - no args!\n");
+		return      -1;
+	    }
+	    if (args[0])
+		bu_log("IR module command (%c): missing argument.\n", *args[0]);
+	    return -1;
 	}
 	if ((itemptr = hmenuhit(&irflags_hmenu, 1, TOP_SCROLL_WIN))
 	    != (HMitem *) 0
 	    )
 	    menuval = itemptr->data;
 	if (menuval < 0)
-	    return	-1;
+	    return -1;
 	set_IRmapping(menuval);
-    }
-    else
+    } else
 	if (sscanf(args[1], "%d", &ir_mapping) != 1)
-	    return	-1;
+	    return -1;
     note_IRmapping();
-    return	1;
+    return 1;
 }
 
 
-/*	f _ R d _ I R _ D b () */
+/* f _ R d _ I R _ D b () */
 /*ARGSUSED*/
 static int
 f_Rd_IR_Db(char **args)
 {
-    FILE	*ir_fp;
+    FILE *ir_fp;
     if (args != NULL && args[1] != NULL)
 	bu_strlcpy(ir_db_file, args[1], MAX_LN);
     else
@@ -2471,37 +2311,34 @@ f_Rd_IR_Db(char **args)
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 		bu_strlcpy(ir_db_file, input_ln, MAX_LN);
 	}
-    if (ir_db_file[0] == '\0')
-    {
+    if (ir_db_file[0] == '\0') {
 	bu_log("No default, must specify file name!\n");
-	return	-1;
+	return -1;
     }
-    if ((ir_fp = fopen(ir_db_file, "rb")) == NULL)
-    {
+    if ((ir_fp = fopen(ir_db_file, "rb")) == NULL) {
 	bu_log("Can not open \"%s\" for reading.\n", ir_db_file);
-	return	-1;
+	return -1;
     }
     if (! ready_Output_Device(0)) {
 	fclose(ir_fp);
-	return	-1;
+	return -1;
     }
     prnt_Event("Reading IR data base...");
-    if (! read_Trie(ir_fp))
-    {
+    if (! read_Trie(ir_fp)) {
 	bu_log("Read of IR data base (%s) failed.\n",
 	       ir_db_file
 	    );
 	(void) fclose(ir_fp);
 	close_Output_Device(0);
-	return	-1;
+	return -1;
     }
     (void) fclose(ir_fp);
     close_Output_Device(0);
-    return	1;
+    return 1;
 }
 
 
-/*	f _ R d _ L g t _ D b () */
+/* f _ R d _ L g t _ D b () */
 /*ARGSUSED*/
 static int
 f_Rd_Lgt_Db(char **args)
@@ -2517,21 +2354,19 @@ f_Rd_Lgt_Db(char **args)
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 		bu_strlcpy(lgt_db_file, input_ln, MAX_LN);
 	}
-    if (lgt_db_file[0] == '\0')
-    {
+    if (lgt_db_file[0] == '\0') {
 	bu_log("No default, must specify file name!\n");
-	return	-1;
+	return -1;
     }
-    if (! lgt_Rd_Db(lgt_db_file))
-    {
+    if (! lgt_Rd_Db(lgt_db_file)) {
 	bu_log("Read of light data base (%s) failed.\n", lgt_db_file);
-	return	-1;
+	return -1;
     }
-    return	1;
+    return 1;
 }
 
 
-/*	f _ R d _ M a t _ D b () */
+/* f _ R d _ M a t _ D b () */
 /*ARGSUSED*/
 static int
 f_Rd_Mat_Db(char **args)
@@ -2547,21 +2382,19 @@ f_Rd_Mat_Db(char **args)
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 		bu_strlcpy(mat_db_file, input_ln, MAX_LN);
 	}
-    if (mat_db_file[0] == '\0')
-    {
+    if (mat_db_file[0] == '\0') {
 	bu_log("No default, must specify file name!\n");
-	return	-1;
+	return -1;
     }
-    if (! mat_Rd_Db(mat_db_file))
-    {
+    if (! mat_Rd_Db(mat_db_file)) {
 	bu_log("Read of material data base (%s) failed.\n", mat_db_file);
-	return	-1;
+	return -1;
     }
-    return	1;
+    return 1;
 }
 
 
-/*	f _ I R _ O f f s e t () */
+/* f _ I R _ O f f s e t () */
 /*ARGSUSED*/
 static int
 f_IR_Offset(char **args)
@@ -2572,11 +2405,11 @@ f_IR_Offset(char **args)
 	ir_offset = FALSE;
     else
 	ir_offset = TRUE;
-    return	1;
+    return 1;
 }
 
 
-/*	f _ D i s t _ G r i d () */
+/* f _ D i s t _ G r i d () */
 /*ARGSUSED*/
 static int
 f_Dist_Grid(char **args)
@@ -2586,13 +2419,10 @@ f_Dist_Grid(char **args)
 	)
     {
 	bu_log("f_Dist_Grid : Illegal input.\n");
-	return	-1;
-    }
-    else
-	if (args == NULL)
-	{
-	    if (tty)
-	    {
+	return -1;
+    } else
+	if (args == NULL) {
+	    if (tty) {
 		(void) sprintf(prompt,
 			       "Distance of grid from model centroid ? (%g) ",
 			       grid_dist
@@ -2603,28 +2433,27 @@ f_Dist_Grid(char **args)
 		{
 		    bu_log("f_Dist_Grid : Illegal input (%s).\n",
 			   input_ln);
-		    return	-1;
+		    return -1;
 		}
-	    }
-	    else
-		return	-1;
+	    } else
+		return -1;
 	}
     grid_position = TRUE;
-    return	1;
+    return 1;
 }
 
 
-/*	f _ S c a l e _ G r i d () */
+/* f _ S c a l e _ G r i d () */
 /*ARGSUSED*/
 static int
 f_Scale_Grid()
 {
     bu_log("The -g option is obsolete, use -G to set view size.\n");
-    return	1;
+    return 1;
 }
 
 
-/*	f _ I R _ N o i s e () */
+/* f _ I R _ N o i s e () */
 /*ARGSUSED*/
 static int
 f_IR_Noise(char **args)
@@ -2633,8 +2462,7 @@ f_IR_Noise(char **args)
 	||	sscanf(args[1], "%d", &ir_noise) != 1
 	)
     {
-	if (tty)
-	{
+	if (tty) {
 	    (void) sprintf(prompt,
 			   "Temperature threshold for region sub-division ? (%d) ",
 			   ir_noise
@@ -2642,38 +2470,33 @@ f_IR_Noise(char **args)
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL
 		&&	sscanf(input_ln, "%d", &ir_noise) != 1
 		)
-		return	-1;
-	}
-	else
-	    return	-1;
+		return -1;
+	} else
+	    return -1;
     }
-    return	1;
+    return 1;
 }
 
 
-/*	f _ K e y _ F r a m e ()
-	Apply saved view output by MGED(1B) "saveview" and "svkey" commands.
-	Some of this code was originally written by Mike J. Muuss for
-	his RT(1B) ray-tracing front-end.
+/* f _ K e y _ F r a m e ()
+   Apply saved view output by MGED(1B) "saveview" and "svkey" commands.
+   Some of this code was originally written by Mike J. Muuss for
+   his RT(1B) ray-tracing front-end.
 */
 /*ARGSUSED*/
 static int
 f_Key_Frame(char **args)
 {
-    fastf_t		model2view[16], to_eye[16];
-    FILE		*svkey_fp=NULL;
-    if (args != NULL && args[1] != NULL)
-    {
+    fastf_t model2view[16], to_eye[16];
+    FILE *svkey_fp=NULL;
+    if (args != NULL && args[1] != NULL) {
 	bu_strlcpy(svkey_file, args[1], MAX_LN);
-	if ((svkey_fp = fopen(svkey_file, "rb")) == NULL)
-	{
+	if ((svkey_fp = fopen(svkey_file, "rb")) == NULL) {
 	    bu_log("Can't open \"%s\" for reading.", svkey_file);
-	    return	-1;
+	    return -1;
 	}
-    }
-    else
-	if (tty && ! movie.m_keys)
-	{
+    } else
+	if (tty && ! movie.m_keys) {
 	    int abortsvkey;
 	    (void) sprintf(prompt, "Use key frame file ? [y|n](%c) ",
 			   svkey_file[0] == '\0' ? 'n' : 'y');
@@ -2681,11 +2504,10 @@ f_Key_Frame(char **args)
 		abortsvkey = input_ln[0] == 'n';
 	    else
 		abortsvkey = svkey_file[0] == '\0';
-	    if (abortsvkey)
-	    {
+	    if (abortsvkey) {
 		svkey_file[0] = '\0'; /* disable reading of key frame */
 		save_view_flag = FALSE;
-		return	1;
+		return 1;
 	    }
 	    (void) snprintf(prompt, MAX_LN,
 			    "Name of key frame file ? (%s) ",
@@ -2693,31 +2515,25 @@ f_Key_Frame(char **args)
 		);
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 		bu_strlcpy(svkey_file, input_ln, MAX_LN);
-	    if (svkey_file[0] == '\0')
-	    {
+	    if (svkey_file[0] == '\0') {
 		bu_log("No default, must specify file name!\n");
-		return	-1;
+		return -1;
 	    }
-	    if ((svkey_fp = fopen(svkey_file, "rb")) == NULL)
-	    {
+	    if ((svkey_fp = fopen(svkey_file, "rb")) == NULL) {
 		bu_log("Can't open \"%s\" for reading.", svkey_file);
-		return	-1;
+		return -1;
 	    }
-	}
-	else
-	    if (movie.m_keys)
-	    {
+	} else
+	    if (movie.m_keys) {
 		if (movie.m_keys_fp == NULL)
 		    svkey_fp = stdin;
 		else
 		    svkey_fp = movie.m_keys_fp;
-	    }
-	    else
-		if (args != NULL && args[1] == NULL && ! tty)
-		{
+	    } else
+		if (args != NULL && args[1] == NULL && ! tty) {
 		    svkey_file[0] = '\0'; /* disable reading of key frame */
 		    save_view_flag = FALSE;
-		    return	1;
+		    return 1;
 		}
     if (svkey_fp == NULL)
 	return -1;
@@ -2735,7 +2551,7 @@ f_Key_Frame(char **args)
     force_viewsz = TRUE;
     if (! movie.m_keys && svkey_fp != stdin)
 	(void) fclose(svkey_fp);
-    return	1;
+    return 1;
 }
 
 
@@ -2743,16 +2559,14 @@ f_Key_Frame(char **args)
 static int
 f_Hidden_Ln_Draw(char **args)
 {
-    if (args == NULL)
-    {
+    if (args == NULL) {
 	(void) sprintf(prompt,
 		       "Hidden line drawing ? [y|n](%c) ",
 		       hiddenln_draw ? 'y' : 'n'
 	    );
 	if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 	    hiddenln_draw = input_ln[0] != 'n';
-	if (hiddenln_draw == HL_ENABLED)
-	{
+	if (hiddenln_draw == HL_ENABLED) {
 	    (void) sprintf(prompt,
 			   "Reverse video ? [y|n](%c) ",
 			   reverse_video ? 'y' : 'n'
@@ -2760,12 +2574,9 @@ f_Hidden_Ln_Draw(char **args)
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 		reverse_video = input_ln[0] != 'n';
 	}
-    }
-    else
-	if (args[1] == NULL || sscanf(args[1], "%d", &hiddenln_draw) != 1)
-	{
-	    switch (hiddenln_draw)
-	    {
+    } else
+	if (args[1] == NULL || sscanf(args[1], "%d", &hiddenln_draw) != 1) {
+	    switch (hiddenln_draw) {
 		case HL_ENABLED :
 		case HL_REVERSE_VIDEO :
 		    hiddenln_draw = HL_DISABLED;
@@ -2777,23 +2588,22 @@ f_Hidden_Ln_Draw(char **args)
 		default :
 		    bu_log("Illegal value (%d) for hidden line flag.\n",
 			   hiddenln_draw);
-		    return	-1;
+		    return -1;
 	    }
 	}
     if (hiddenln_draw == HL_REVERSE_VIDEO)
 	reverse_video = TRUE;
-    return	1;
+    return 1;
 }
 
 
-/*	f _ E n t r _ L g t _ D b () */
+/* f _ E n t r _ L g t _ D b () */
 /*ARGSUSED*/
 static int
 f_Entr_Lgt_Db(char **args)
 {
-    static int	light_id = 0;
-    if ((args == NULL || args[1] == NULL) && tty)
-    {
+    static int light_id = 0;
+    if ((args == NULL || args[1] == NULL) && tty) {
 	(void) sprintf(input_ln, "%d", light_id);
 	(void) snprintf(prompt, MAX_LN,
 			"Light source id ? [0 to %d](%s) ",
@@ -2806,29 +2616,27 @@ f_Entr_Lgt_Db(char **args)
 	    )
 	{
 	    bu_log("Illegal input (%s)\n", input_ln);
-	    return	-1;
+	    return -1;
 	}
-    }
-    else
+    } else
 	if (args != NULL && args[1] != NULL
 	    &&	sscanf(args[1], "%d", &light_id) != 1
 	    )
 	{
 	    bu_log("Illegal input (%s)\n", args[1]);
-	    return	-1;
+	    return -1;
 	}
-    return	lgt_Edit_Db_Entry(light_id);
+    return lgt_Edit_Db_Entry(light_id);
 }
 
 
-/*	f _ E n t r _ M a t _ D b () */
+/* f _ E n t r _ M a t _ D b () */
 /*ARGSUSED*/
 static int
 f_Entr_Mat_Db(char **args)
 {
-    static int	material_id = 0;
-    if ((args == NULL || args[1] == NULL) && tty)
-    {
+    static int material_id = 0;
+    if ((args == NULL || args[1] == NULL) && tty) {
 	(void) sprintf(input_ln, "%d", material_id);
 	(void) snprintf(prompt, MAX_LN,
 			"Material id ? [0 to 99](%s) ",
@@ -2839,23 +2647,22 @@ f_Entr_Mat_Db(char **args)
 	    )
 	{
 	    bu_log("Illegal input (%s)\n", input_ln);
-	    return	-1;
+	    return -1;
 	}
 
-    }
-    else
+    } else
 	if (args != NULL && args[1] != NULL
 	    &&	sscanf(args[1], "%d", &material_id) != 1
 	    )
 	{
 	    bu_log("Illegal input (%s)\n", args[1]);
-	    return	-1;
+	    return -1;
 	}
-    return	mat_Edit_Db_Entry(material_id) ? 1 : -1;
+    return mat_Edit_Db_Entry(material_id) ? 1 : -1;
 }
 
 
-/*	f _ S e t _ I R _ P a i n t () */
+/* f _ S e t _ I R _ P a i n t () */
 /*ARGSUSED*/
 static int
 f_Set_IR_Paint(char **args)
@@ -2864,11 +2671,11 @@ f_Set_IR_Paint(char **args)
 	ir_doing_paint = FALSE;
     else
 	ir_doing_paint = TRUE;
-    return	1;
+    return 1;
 }
 
 
-/*	f _ R a s t e r _ F i l e () */
+/* f _ R a s t e r _ F i l e () */
 /*ARGSUSED*/
 static int
 f_Raster_File(char **args)
@@ -2886,19 +2693,17 @@ f_Raster_File(char **args)
 	} else {
 	    fb_file[0] = '\0';
 	}
-    return	1;
+    return 1;
 }
 
 
-/*	f _ P e r s p e c t i v e () */
+/* f _ P e r s p e c t i v e () */
 /*ARGSUSED*/
 static int
 f_Perspective(char **args)
 {
-    if (args == NULL || args[1] == NULL || sscanf(args[1], "%lf", &rel_perspective) != 1)
-    {
-	if (tty)
-	{
+    if (args == NULL || args[1] == NULL || sscanf(args[1], "%lf", &rel_perspective) != 1) {
+	if (tty) {
 	    (void) sprintf(prompt,
 			   "Perspective factor ? [-1.0 to disable](%g) ",
 			   rel_perspective
@@ -2906,16 +2711,15 @@ f_Perspective(char **args)
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL
 		&&	sscanf(input_ln, "%lf", &rel_perspective) != 1
 		)
-		return	-1;
-	}
-	else
-	    return	-1;
+		return -1;
+	} else
+	    return -1;
     }
-    return	1;
+    return 1;
 }
 
 
-/*	f _ Q u i t () */
+/* f _ Q u i t () */
 /*ARGSUSED*/
 static int
 f_Quit()
@@ -2926,23 +2730,22 @@ f_Quit()
 }
 
 
-/*	f _ R e d r a w () */
+/* f _ R e d r a w () */
 /*ARGSUSED*/
 static int
 f_Redraw()
 {
-    if (tty)
-    {
+    if (tty) {
 	(void) ClrText();
 	init_Status();
 	prnt_Status();
 	hmredraw();
     }
-    return	1;
+    return 1;
 }
 
 
-/*	f _ G r i d _ X _ P o s  () */
+/* f _ G r i d _ X _ P o s () */
 /*ARGSUSED*/
 int
 f_Grid_X_Pos(char **args)
@@ -2954,11 +2757,9 @@ f_Grid_X_Pos(char **args)
 	)
     {
 	bu_log("f_Grid_X_Pos : Illegal input.\n");
-	return	-1;
-    }
-    else
-	if (args == NULL)
-	{
+	return -1;
+    } else
+	if (args == NULL) {
 	    (void) sprintf(prompt,
 			   "Horizontal grid indices ? [begin end](%d %d) ",
 			   grid_x_org, grid_x_fin
@@ -2969,22 +2770,21 @@ f_Grid_X_Pos(char **args)
 		)
 	    {
 		bu_log("Illegal input (%s).\n", input_ln);
-		return	-1;
+		return -1;
 	    }
 	}
-    if (tty)
-    {
+    if (tty) {
 	(void) sprintf(scratchbuf, " [%04d-", grid_x_org);
 	bu_strlcpy(GRID_PIX_PTR, scratchbuf, strlen(scratchbuf));
 	(void) sprintf(scratchbuf, "%04d, ", grid_x_fin);
 	bu_strlcpy(GRID_SIZ_PTR, scratchbuf, strlen(scratchbuf));
     }
     grid_x_cur = grid_x_org;
-    return	1;
+    return 1;
 }
 
 
-/*	f _ G r i d _ Y _ P o s  () */
+/* f _ G r i d _ Y _ P o s () */
 /*ARGSUSED*/
 int
 f_Grid_Y_Pos(char **args)
@@ -2996,11 +2796,9 @@ f_Grid_Y_Pos(char **args)
 	)
     {
 	bu_log("f_Grid_Y_Pos : Illegal input.\n");
-	return	-1;
-    }
-    else
-	if (args == NULL)
-	{
+	return -1;
+    } else
+	if (args == NULL) {
 	    (void) sprintf(prompt,
 			   "Vertical grid indices ? [begin end](%d %d) ",
 			   grid_y_org, grid_y_fin
@@ -3011,49 +2809,46 @@ f_Grid_Y_Pos(char **args)
 		)
 	    {
 		bu_log("Illegal input (%s).\n", input_ln);
-		return	-1;
+		return -1;
 	    }
 	}
-    if (tty)
-    {
+    if (tty) {
 	(void) sprintf(scratchbuf, "%04d-", grid_y_org);
 	bu_strlcpy(GRID_SCN_PTR, scratchbuf, strlen(scratchbuf));
 	(void) sprintf(scratchbuf, "%04d:", grid_y_fin);
 	bu_strlcpy(GRID_FIN_PTR, scratchbuf, strlen(scratchbuf));
     }
     grid_y_cur = grid_y_org;
-    return	1;
+    return 1;
 }
 
 
-/*	f _ F b c l e a r () */
+/* f _ F b c l e a r () */
 /*ARGSUSED*/
 static int
 f_Fbclear()
 {
-    static RGBpixel	black = { 0, 0, 0 };
+    static RGBpixel black = { 0, 0, 0 };
     if (! ready_Output_Device(0))
-	return	-1;
+	return -1;
     (void) fb_clear(fbiop, black);
     close_Output_Device(0);
-    return	1;
+    return 1;
 }
 
 
-/*	f _ E x e c _ S h e l l () */
+/* f _ E x e c _ S h e l l () */
 /*ARGSUSED*/
 static int
 f_Exec_Shell(char **args)
 {
-    int	i;
-    int	exit_status;
+    int i;
+    int exit_status;
     char **stashed_args = NULL;
-    if (args == NULL)
-    {
-	if ((args = (char **) malloc(sizeof(char *)*3)) == (char **) 0)
-	{
+    if (args == NULL) {
+	if ((args = (char **) malloc(sizeof(char *)*3)) == (char **) 0) {
 	    Malloc_Bomb(sizeof(char *)*3);
-	    return	-1;
+	    return -1;
 	}
 	stashed_args = args;
 	args[0] = "!";
@@ -3063,40 +2858,34 @@ f_Exec_Shell(char **args)
     while (*args[0] == ' ')
 	++(args[0]);
 exec_start :
-    if ((args[0])[1] == '\0' && args[1] == NULL)
-    {
-	if (tty)
-	{
+    if ((args[0])[1] == '\0' && args[1] == NULL) {
+	if (tty) {
 	    if (get_Input(input_ln, BUFSIZ, "Command line : ") == NULL
 		||	(args[0] = strtok(input_ln, " \t")) == NULL
 		) {
 		if(stashed_args)
 		    free(stashed_args);
-		return	-1;
+		return -1;
 	    }
 	    for (i = 1; args[i-1] != NULL; ++i)
 		args[i] = strtok((char *) NULL, " \t");
-	}
-	else {
+	} else {
 	    if(stashed_args)
 		free(stashed_args);
-	    return	-1;
+	    return -1;
 	}
-    }
-    else
+    } else
 	if ((args[0])[1] != '\0')
 	    /* Command immediately follows the '!'. */
 	    ++(args[0]);
 	else
 	    ++args;
-    if (tty)
-    {
+    if (tty) {
 	EVENT_MOVE();
 	(void) fflush(stdout);
     }
     exit_status = exec_Shell(args);
-    if (tty)
-    {
+    if (tty) {
 	prnt_Scroll("\n");
 	prnt_Scroll("\n");
 	EVENT_MOVE();
@@ -3109,21 +2898,20 @@ exec_start :
 	else
 	    (void) fputs("completed successfully.", stdout);
 	(void) get_Input(input_ln, BUFSIZ, "Continue ? [y|n](y) ");
-	if (input_ln[0] == 'n')
-	{
+	if (input_ln[0] == 'n') {
 	    args[0] = "!";
 	    args[1] = NULL;
-	    goto	exec_start;
+	    goto exec_start;
 	}
 	(void) f_Redraw();
     }
     if(stashed_args)
 	free(stashed_args);
-    return	1;
+    return 1;
 }
 
 
-HMitem	pref_items[] =
+HMitem pref_items[] =
 {
     { "frame buffer size",
       "Set size of display window, should be multiple of grid size.",
@@ -3144,17 +2932,17 @@ HMitem	pref_items[] =
     { "shadows", "Disable or enable shadows.", 0, 0, 0, f_Shadows, 0 },
     { 0, 0, 0, 0, 0, 0, 0 }
 };
-HMenu	pref_hmenu = { pref_items, 0, 0, 0, 1, 0 };
+HMenu pref_hmenu = { pref_items, 0, 0, 0, 1, 0 };
 
-HMitem	anim_items[] =
+HMitem anim_items[] =
 {
     { "generate movie", "specify animation sequence", 0, 0, 0, f_Movie, 0 },
     { "display movie", "watch pre-computed movie", 0, 0, 0, f_Animate, 0 },
     { 0, 0, 0, 0, 0, 0, 0 }
 };
-HMenu	anim_hmenu = { anim_items, 0, 0, 0, 0, 0 };
+HMenu anim_hmenu = { anim_items, 0, 0, 0, 0, 0 };
 
-HMitem	main_items[] =
+HMitem main_items[] =
 {
     { "quit", "Exit program", &quit_hmenu, 0, 0, 0, 0 },
     { "ray trace", "no help", &ray_trace_hmenu, 0, 0, 0, 0 },
@@ -3171,24 +2959,22 @@ HMitem	main_items[] =
     { "shell escape", "Execute a UNIX shell-level command.", 0, 0, 0, f_Exec_Shell, 0 },
     { 0, 0, 0, 0, 0, 0, 0 }
 };
-HMenu	main_hmenu = { main_items, 0, 0, 0, 1, prnt_Status };
+HMenu main_hmenu = { main_items, 0, 0, 0, 1, prnt_Status };
 void
 user_Interaction(void)
 {
-    static char	*local_argv[MAX_ARGS];
-    int	ret;
+    static char *local_argv[MAX_ARGS];
+    int ret;
     local_argv[1] = NULL; /* Truncate argument list initially. */
     /* Set up user options. */
 menuinput :
-    if (tty)
-    {
+    if (tty) {
 	prnt_Status();
 	popups = TRUE;
 	prnt_Event("Type 'q' to leave popup menu.");
 	(void) hmenuhit(&main_hmenu, 1, TOP_SCROLL_WIN);
     }
-    do
-    {
+    do {
 	if (tty)
 	    prnt_Status();
 	popups = FALSE;
@@ -3196,16 +2982,16 @@ menuinput :
     }
     while ((ret = user_Cmd(local_argv)) && ret != -2);
     if (ret == -2)
-	goto	menuinput;
+	goto menuinput;
     return;
 }
 
 
-static fastf_t	x_axis[3] = { 1.0, 0.0, 0.0 };
-static fastf_t	neg_x_axis[3] = { -1.0, 0.0, 0.0 };
-static fastf_t	y_axis[3] = { 0.0, 1.0, 0.0 };
-static fastf_t	z_axis[3] = { 0.0, 0.0, 1.0 };
-static fastf_t	neg_z_axis[3] = { 0.0, 0.0, -1.0 };
+static fastf_t x_axis[3] = { 1.0, 0.0, 0.0 };
+static fastf_t neg_x_axis[3] = { -1.0, 0.0, 0.0 };
+static fastf_t y_axis[3] = { 0.0, 1.0, 0.0 };
+static fastf_t z_axis[3] = { 0.0, 0.0, 1.0 };
+static fastf_t neg_z_axis[3] = { 0.0, 0.0, -1.0 };
 
 /*
   int setup_Lgts(int frame)
@@ -3222,8 +3008,7 @@ setup_Lgts(int frame)
     lgts[0].stp = NULL; /* flags use of eye solid */
 
     /* Compute observer (ambient light) position in model space. */
-    if (save_view_flag)
-    {
+    if (save_view_flag) {
 	/* Use view matrix to specify gridding. */
 	/* Unit vector from center of model to eye. */
 	MAT4X3VEC(lgts[0].dir, view2model, z_axis);
@@ -3231,16 +3016,13 @@ setup_Lgts(int frame)
 	/* Eye location specified by saved view, grid location
 	   depends on whether we want perspective or not.
 	*/
-	if (!ZERO(rel_perspective))
-	{
+	if (!ZERO(rel_perspective)) {
 	    /* Perspective used in animation. */
-	    fastf_t	grid_delta[3], f;
+	    fastf_t grid_delta[3], f;
 	    f = EYE_SIZE * rel_perspective;
 	    VSCALE(grid_delta, lgts[0].dir, -f);
 	    VADD2(grid_loc, lgts[0].loc, grid_delta);
-	}
-	else
-	{
+	} else {
 	    /* No perspective, eye at center of grid. */
 	    VMOVE(grid_loc, lgts[0].loc);
 	}
@@ -3257,24 +3039,22 @@ setup_Lgts(int frame)
 	bu_log("\tgrid location\t<%12.6f, %12.6f, %12.6f>\n", V3ARGS(grid_loc));
 	bu_log("\tgrid horizontal\t<%12.6f, %12.6f, %12.6f>\n", V3ARGS(grid_hor));
 	bu_log("\tgrid vertical\t<%12.6f, %12.6f, %12.6f>\n", V3ARGS(grid_ver));
-    }
-    else
-	if (!	lgts[0].over
+    } else
+	if (! lgts[0].over
 	    &&	(eye_stp = rt_find_solid(rt_ip, lgts[0].name)) != SOLTAB_NULL
 	    &&	(grid_stp = rt_find_solid(rt_ip, "GRID")) != SOLTAB_NULL
 	    ) /* Eye and grid are modeled explicitly. */
 	{
-	    fastf_t	mag;
+	    fastf_t mag;
 	    lgts[0].stp = eye_stp;
 	    VMOVE(lgts[0].loc, eye_stp->st_center);
 	    VMOVE(grid_loc, grid_stp->st_center);
 	    /* Observer positioned by actual solid in data base. */
 	    VSUB2(lgts[0].dir, lgts[0].loc, grid_loc);
-	    if (MAGNITUDE(lgts[0].dir) < epsilon)
-	    {
+	    if (MAGNITUDE(lgts[0].dir) < epsilon) {
 		bu_log("The GRID is on top of your EYE!\n");
 		prnt_Timer("LGTS");
-		return	0;
+		return 0;
 	    }
 	    VUNITIZE(lgts[0].dir);
 	    bu_log("Using eye solid (%s) and grid solid \"GRID\".\n",
@@ -3292,24 +3072,18 @@ setup_Lgts(int frame)
 		   lgts[0].dir[Y],
 		   lgts[0].dir[Z]);
 	    VCROSS(grid_hor, lgts[0].dir, neg_z_axis);
-	    if ((mag = MAGNITUDE(grid_hor)) < epsilon)
-	    {
+	    if ((mag = MAGNITUDE(grid_hor)) < epsilon) {
 		/* Must be top view. */
 		VMOVE(grid_hor, y_axis);
 		VMOVE(grid_ver, neg_x_axis);
-	    }
-	    else
-	    {
+	    } else {
 		/* Unitize first. */
 		VSCALE(grid_hor, grid_hor, 1.0/mag);
 		VCROSS(grid_ver, lgts[0].dir, grid_hor);
-		if ((mag = MAGNITUDE(grid_ver)) < epsilon)
-		{
+		if ((mag = MAGNITUDE(grid_ver)) < epsilon) {
 		    /* Must be top ([+/-]90, 90) view. */
 		    VMOVE(grid_ver, y_axis);
-		}
-		else
-		{
+		} else {
 		    /* Unitize first. */
 		    VSCALE(grid_ver, grid_ver, 1.0/mag);
 		    /* Check for inverted image. */
@@ -3326,23 +3100,18 @@ setup_Lgts(int frame)
 		   grid_hor[X], grid_hor[Y], grid_hor[Z],
 		   grid_ver[X], grid_ver[Y], grid_ver[Z]);
 #endif
-	}
-	else	/* Automatic positioning of grid based on perspective. */
-	    if (rel_perspective >= 0.0)
-	    {
-		fastf_t	hor_adjust[3], ver_adjust[3];
+	} else	/* Automatic positioning of grid based on perspective. */
+	    if (rel_perspective >= 0.0) {
+		fastf_t hor_adjust[3], ver_adjust[3];
 		/* Compute horizontal and vertical grid unit vectors. */
 		grid_Rotate(lgts[0].azim, lgts[0].elev, grid_roll,
 			    grid_hor, grid_ver);
 		/* Unit vector from center of model toward eye. */
 		cons_Vector(lgts[0].dir, lgts[0].azim, lgts[0].elev);
-		if (ZERO(rel_perspective))
-		{
+		if (ZERO(rel_perspective)) {
 		    VJOIN1(grid_loc, modl_cntr, grid_dist, lgts[0].dir);
 		    VMOVE(lgts[0].loc, grid_loc);
-		}
-		else
-		{
+		} else {
 		    /* Compute grid position in model space. */
 		    grid_dist = modl_radius * (1.0/rel_perspective);
 		    VJOIN1(grid_loc, modl_cntr, grid_dist, lgts[0].dir);
@@ -3358,10 +3127,9 @@ setup_Lgts(int frame)
 		VADD2(grid_loc, grid_loc, ver_adjust);
 		VSUB2(lgts[0].loc, lgts[0].loc, hor_adjust);
 		VSUB2(lgts[0].loc, lgts[0].loc, ver_adjust);
-	    }
-	    else	/* Position grid using user options. */
-	    {
-		fastf_t	hor_adjust[3], ver_adjust[3];
+	    } else {
+		/* Position grid using user options. */
+		fastf_t hor_adjust[3], ver_adjust[3];
 		/* Compute horizontal and vertical grid unit vectors. */
 		grid_Rotate(lgts[0].azim, lgts[0].elev, grid_roll, grid_hor, grid_ver);
 		/* Unit vector from center of model to eye. */
@@ -3379,14 +3147,12 @@ setup_Lgts(int frame)
 		VSUB2(lgts[0].loc, lgts[0].loc, ver_adjust);
 	    }
     /* Get light source positions in model space. */
-    if (movie.m_noframes > 1  && movie.m_lgts)
-    {
-	fastf_t	rel_frame = (fastf_t) frame / movie.m_noframes;
+    if (movie.m_noframes > 1  && movie.m_lgts) {
+	fastf_t rel_frame = (fastf_t) frame / movie.m_noframes;
 	/* Lights must track view, explicit light source positions
 	   not supported. */
-	for (i = 1; i < lgt_db_size; i++)
-	{
-	    fastf_t	azim, elev;
+	for (i = 1; i < lgt_db_size; i++) {
+	    fastf_t azim, elev;
 	    if (! lgts[i].over
 		/* Fill in ptr to solid table for quick checking. */
 		&&	(lgts[i].stp = rt_find_solid(rt_ip, lgts[i].name)) != SOLTAB_NULL
@@ -3405,10 +3171,8 @@ setup_Lgts(int frame)
 	    /* Compute location of light source. */
 	    VJOIN1(lgts[i].loc, modl_cntr, lgts[i].dist, lgts[i].dir);
 	}
-    }
-    else
-	for (i = 1; i < lgt_db_size; i++)
-	{
+    } else
+	for (i = 1; i < lgt_db_size; i++) {
 	    if (! lgts[i].over
 		/* Fill in ptr to solid table for quick checking.*/
 		&&	(lgts[i].stp = rt_find_solid(rt_ip, lgts[i].name)) != SOLTAB_NULL
@@ -3416,9 +3180,7 @@ setup_Lgts(int frame)
 	    {
 		VMOVE(lgts[i].loc, lgts[i].stp->st_center);
 		lgts[i].dist = DIST_PT_PT(lgts[i].loc, modl_cntr);
-	    }
-	    else
-	    {
+	    } else {
 		/* Unit vector - center of model to light src. */
 		cons_Vector(lgts[i].dir, lgts[i].azim, lgts[i].elev);
 		/* Compute location of light source. */
@@ -3426,8 +3188,7 @@ setup_Lgts(int frame)
 	    }
 	}
     /* Compute intensity coefficients based on RGB values. */
-    for (i = 0; i < lgt_db_size; i++)
-    {
+    for (i = 0; i < lgt_db_size; i++) {
 	if (lgts[i].rgb[0] == 0
 	    &&	lgts[i].rgb[1] == 0
 	    &&	lgts[i].rgb[2] == 0
@@ -3436,29 +3197,25 @@ setup_Lgts(int frame)
 	VSCALE(lgts[i].coef, lgts[i].rgb, RGB_INVERSE);
     }
     prnt_Timer("LGTS");
-    return	1;
+    return 1;
 }
 
 
-/*	u s e r _ I n p u t () */
+/* u s e r _ I n p u t () */
 void
 user_Input(char **args)
 {
     static int first_time_through = TRUE;
     int i;
-    if (get_Input(input_ln, BUFSIZ, ": ") == NULL)
-    {
+    if (get_Input(input_ln, BUFSIZ, ": ") == NULL) {
 	/* If detached, and at EOF, do atleast 1 picture. */
-	if (! tty && first_time_through)
-	{
+	if (! tty && first_time_through) {
 	    first_time_through = FALSE;
 	    args[0] = "R";
 	    args[1] = NULL;
 	    return;
-	}
-	else
-	    if (feof(stdin))
-	    {
+	} else
+	    if (feof(stdin)) {
 		/* User types interrupt, EOT, or EOF encountered
 		   from detached process.
 		*/
@@ -3470,14 +3227,12 @@ user_Input(char **args)
     }
     first_time_through = FALSE;
     /* special code to process comments */
-    if (func_tab[(int)input_ln[0]].func == f_Comment)
-    {
+    if (func_tab[(int)input_ln[0]].func == f_Comment) {
 	args[0] = input_ln;
 	args[1] = NULL;
 	return;
     }
-    if ((args[0] = strtok(input_ln, " \t")) == NULL)
-    {
+    if ((args[0] = strtok(input_ln, " \t")) == NULL) {
 	if (! tty)
 	    bu_log("Blank line input.\n");
 	args[0] = "#";
@@ -3490,12 +3245,12 @@ user_Input(char **args)
 }
 
 
-/*	m a k e _ S c r i p t () */
+/* m a k e _ S c r i p t () */
 static int
 make_Script(char *file)
 {
-    FILE	*run_fp;
-    char	**obj_p = objects;
+    FILE *run_fp;
+    char **obj_p = objects;
     if (file != NULL)
 	bu_strlcpy(script_file, file, MAX_LN);
     else
@@ -3507,24 +3262,21 @@ make_Script(char *file)
 	    if (get_Input(input_ln, MAX_LN, prompt) != NULL)
 		bu_strlcpy(script_file, input_ln, MAX_LN);
 	}
-    if (script_file[0] == '\0')
-    {
+    if (script_file[0] == '\0') {
 	bu_log("No default, must specify file name!\n");
-	return	-1;
+	return -1;
     }
     {
-	int	tmp_fd;
-	if ((tmp_fd = open(script_file, O_CREAT, 0755)) == -1)
-	{
+	int tmp_fd;
+	if ((tmp_fd = open(script_file, O_CREAT, 0755)) == -1) {
 	    loc_Perror(script_file);
-	    return	-1;
+	    return -1;
 	}
 	(void) close(tmp_fd);
     }
-    if ((run_fp = fopen(script_file, "wb")) == NULL)
-    {
+    if ((run_fp = fopen(script_file, "wb")) == NULL) {
 	bu_log("Can't open '%s' for writing.\n", script_file);
-	return	-1;
+	return -1;
     }
     (void) fprintf(run_fp, "#!/bin/sh\n");
     (void) fprintf(run_fp,
@@ -3605,20 +3357,19 @@ make_Script(char *file)
 	(void) fprintf(run_fp, " %s", *obj_p++);
     (void) fprintf(run_fp, "\n");
     (void) fclose(run_fp);
-    return	1;
+    return 1;
 }
 
 
-/*	p a r s _ A r g v () */
+/* p a r s _ A r g v () */
 int
 pars_Argv(int argc, char **argv)
 {
-    int	c;
+    int c;
     prog_id = argv[0];
 
     /* Initialize terminal I/O. */
-    if ((tty = isatty(0)))
-    {
+    if ((tty = isatty(0))) {
 	setlinebuf(stdout);
 	InitTermCap(stdout);
 	li = LI;	/* Default window size from termcap. */
@@ -3636,39 +3387,34 @@ pars_Argv(int argc, char **argv)
 	   != EOF
 	)
     {
-	switch (c)
-	{
+	switch (c) {
 	    default :
-		if (! user_Opt(c, bu_optarg))
-		{
+		if (! user_Opt(c, bu_optarg)) {
 		    (void) printf("Failure of user_Opt(%c)", c);
-		    return	0;
+		    return 0;
 		}
 		break;
 	    case '?' :
-		return	0;
+		return 0;
 	}
     }
     prnt_Timer("OPT");
     prnt_Event("Reading data base...");
 
     /* Check for data base name. */
-    if ((ged_file = argv[bu_optind++]) == NULL)
-    {
+    if ((ged_file = argv[bu_optind++]) == NULL) {
 	bu_log("No GED file or objects!\n");
-	return	0;
+	return 0;
     }
 
     /* Check for objects to raytrace. */
-    if (argv[bu_optind] == NULL)
-    {
+    if (argv[bu_optind] == NULL) {
 	bu_log("Must specify GED objects!\n");
-	return	0;
+	return 0;
     }
 
     /* Build the directory. */
-    if ((rt_ip = rt_dirbuild(ged_file, title, TITLE_LEN)) == RTI_NULL)
-    {
+    if ((rt_ip = rt_dirbuild(ged_file, title, TITLE_LEN)) == RTI_NULL) {
 	prnt_Event("Exiting...\n");
 	bu_exit(1, NULL);
     }
@@ -3678,12 +3424,10 @@ pars_Argv(int argc, char **argv)
     /* Load the desired portion of the model. */
     objects = &argv[bu_optind];
     {
-	int	ok = 0;
-	while (argv[bu_optind] != NULL)
-	{
-	    if (tty)
-	    {
-		char	prnt_buf[MAX_LN];
+	int ok = 0;
+	while (argv[bu_optind] != NULL) {
+	    if (tty) {
+		char prnt_buf[MAX_LN];
 		(void) snprintf(prnt_buf, MAX_LN,
 				"Loading \"%s\"...",
 				argv[bu_optind]
@@ -3718,7 +3462,7 @@ pars_Argv(int argc, char **argv)
 
     if (! grid_position)
 	grid_dist = view_size;
-    return	1;
+    return 1;
 }
 
 
@@ -3726,7 +3470,7 @@ pars_Argv(int argc, char **argv)
 void
 stop_sig(int sig)
 {
-    int	pid = bu_process_id();
+    int pid = bu_process_id();
 
     EVENT_MOVE();
     (void) signal(sig, SIG_DFL);
@@ -3751,45 +3495,45 @@ stop_sig(int sig)
 int
 key_Frame(void)
 {
-    static char	*local_argv[2];
+    static char *local_argv[2];
     local_argv[0] = local_argv[1] = NULL;
-    return	f_Key_Frame(local_argv);
+    return f_Key_Frame(local_argv);
 }
 
 
-/*	g e t _ I n p u t ()
-	Get a line of input.
+/* g e t _ I n p u t ()
+   Get a line of input.
 */
-char	*
+char *
 get_Input(char *inbuf, int bufsz, char *msg)
 {
     prnt_Prompt(msg);
     if (bu_fgets(inbuf, bufsz, stdin) == NULL)
-	return	NULL;
+	return NULL;
     else	/* Clobber new-line. */
 	inbuf[strlen(inbuf)-1] = NUL;
     prnt_Prompt("");
     if (inbuf[0] == '\0')
-	return	NULL;
+	return NULL;
     else
-	return	inbuf;
+	return inbuf;
 }
 
 
 int
 hm_getchar(void)
 {
-    int	c;
+    int c;
     while ((c = getchar()) == EOF)
 	;
-    return	c;
+    return c;
 }
 
 
 int
 hm_ungetchar(int c)
 {
-    return	ungetc(c, stdin);
+    return ungetc(c, stdin);
 }
 
 
