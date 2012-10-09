@@ -61,6 +61,15 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* implement 3dm-g support for ON_InstanceRef entities.  These are
+  instances of existing geometry that have prescribed referencing edit
+  behavior and can have their own matrices.  Basically, they're combs
+  that should sometimes reference copies of geometry and sometimes not
+  (there's a flag).  unveiled via sf bug report 3575774 where the
+  geometry export from solidworks was predominantly references
+  resulting in a load of geometry missing after import and objects in
+  the wrong position.
+
 * fix ged 'joint' command, need to figure out how libged should handle
   non-object additions to the wireframe (or maybe they should be
   objects, but not mged's faked solids ala cvt_vlblock_to_solids()).
