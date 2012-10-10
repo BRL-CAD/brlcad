@@ -559,7 +559,7 @@ rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, f
 	    for(i=0;i<4;i++)
 		if(primp[i]->in>0 && primp[i]->hit[Z] < b) b = primp[i]->hit[Z];
 	    b = bin(b, step);
-	} else { /* iff we know we're intersecting the surface, walk slow. */
+	} else { /* if we know we're intersecting the surface, walk slow. */
 	    if(NEAR_ZERO(last_b+VOODOO, tol->dist))
 		bu_log("teh fux? lastb = %g\n", last_b);
 	    b = last_b + step;
