@@ -1087,7 +1087,7 @@ isect_ray_vertexuse(struct ray_data *rd, struct vertexuse *vu_p)
 
 /**
  * As the name implies, this routine is called when the ray and an
- * edge are colinear.  It handles marking the verticies as hit,
+ * edge are colinear.  It handles marking the vertices as hit,
  * remembering that this is a seg_in/seg_out pair, and builds the hit
  * on the edge.
  */
@@ -1462,7 +1462,7 @@ isect_ray_lseg(struct ray_data *rd, struct edgeuse *eu_p)
 		/* we hit the vertex */
 		BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC);
 	    } else {
-		/* both vertecies were missed, so edge is missed */
+		/* both verticies were missed, so edge is missed */
 		BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 	    }
 	    BU_LIST_INSERT(&rd->rd_miss, &myhit->l);
@@ -2178,12 +2178,12 @@ isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p)
 
 	    break;
 	default	:
-	    bu_log("%s[line:%d] BIZZARE ray/plane intercept point classification\n",
+	    bu_log("%s[line:%d] BIZARRE ray/plane intercept point classification\n",
 		   __FILE__, __LINE__);
 	    bu_bomb("isect_ray_planar_face() Bizz\n");
     }
 
-    /* intersect the ray with the edges/verticies of the face */
+    /* intersect the ray with the edges/vertices of the face */
     for (BU_LIST_FOR(lu_p, loopuse, &fu_p->lu_hd))
 	isect_ray_loopuse(rd, lu_p);
 }
@@ -2378,7 +2378,7 @@ nmg_isect_ray_model(struct ray_data *rd)
     NMG_CK_HITMISS_LISTS(rd);
 
     /* Caller has assured us that the ray intersects the nmg model,
-     * check ray for intersecion with rpp's of nmgregion's
+     * check ray for intersection with rpp's of nmgregion's
      */
     for (BU_LIST_FOR(r_p, nmgregion, &rd->rd_m->r_hd)) {
 	NMG_CK_REGION(r_p);
@@ -2799,7 +2799,7 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
     bu_free((char *)rd.hitmiss, "free nmg geom hit list");
 
     if (!rd.rd_m->manifolds) {
-	/* If there is no manfolds list attached to the model
+	/* If there is no manifolds list attached to the model
 	 * structure then the list was created here (within
 	 * nmg_class_ray_vs_shell) and should be freed here.
 	 * If there is a manifold list attached to the model
