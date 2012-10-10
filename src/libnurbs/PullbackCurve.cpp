@@ -132,7 +132,13 @@ toUV(PBCData& data, ON_2dPoint& out_pt, double t, double knudge=0.0)
 bool
 toUV(brlcad::SurfaceTree *surftree, const ON_Curve *curve, ON_2dPoint& out_pt, double t, double knudge=0.0)
 {
+    if (!surftree)
+	return false;
+
     const ON_Surface *surf = surftree->getSurface();
+    if (!surf)
+	return false;
+
     ON_3dPoint pointOnCurve = curve->PointAt(t);
     ON_3dPoint knudgedPointOnCurve = curve->PointAt(t+knudge);
     ON_3dVector dt;
@@ -802,7 +808,11 @@ test2_pullback_curve(const brlcad::SurfaceTree* surfacetree,
     }
 
     /*
+      if (!data.surftree)
+      return NULL;
       ON_Surface *surf = (ON_Surface *)data.surftree->getSurface();
+      if (!surf)
+      return NULL;
       ON_3dPoint p;
       for (int i = 0; i < data.samples.Count(); i++) {
       p=surf->PointAt(data.samples[i].x, data.samples[i].y);
@@ -888,8 +898,17 @@ pullback_samples_from_closed_surface(PBCData* data,
 		 double t,
 		 double s)
 {
+    if (!data || !data->surftree)
+	return;
+
     const ON_Curve* curve= data->curve;
+    if (!curve)
+	return;
+
     const ON_Surface *surf = data->surftree->getSurface();
+    if (!surf)
+	return;
+
     ON_Interval dom[2];
     ON_2dPointArray *samples= new ON_2dPointArray();
     size_t numKnots = curve->SpanCount();
@@ -1220,7 +1239,12 @@ pullback_samples(const brlcad::SurfaceTree* surfacetree,
     data->flatness = flatness;
     data->curve = curve;
     data->surftree = (brlcad::SurfaceTree*)surfacetree;
+    if (!data->surftree)
+	return NULL;
+
     const ON_Surface *surf = data->surftree->getSurface();
+    if (!surf)
+	return NULL;
 
     double tmin, tmax;
     data->curve->GetDomain(&tmin, &tmax);
@@ -1528,7 +1552,13 @@ bool
 check_pullback_closed(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData*>::iterator d = pbcs.begin();
+    if ((*d) == NULL || (*d)->surftree == NULL)
+	return false;
+
     const ON_Surface *surf = (*d)->surftree->getSurface();
+    if (!surf)
+	return false;
+
     //TODO:
     // 0 = U, 1 = V
     if (surf->IsClosed(0) && surf->IsClosed(1)) {
@@ -1549,7 +1579,13 @@ bool
 check_pullback_singular_east(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData *>::iterator cs = pbcs.begin();
+    if ((*cs) == NULL || (*cs)->surftree == NULL)
+	return false;
+
     const ON_Surface *surf = (*cs)->surftree->getSurface();
+    if (!surf)
+	return false;
+
     double umin, umax;
     ON_2dPoint *prev = NULL;
 
@@ -1589,7 +1625,13 @@ bool
 check_pullback_singular(std::list<PBCData*> &pbcs)
 {
     std::list<PBCData*>::iterator d = pbcs.begin();
+    if ((*d) == NULL || (*d)->surftree == NULL)
+	return false;
+
     const ON_Surface *surf = (*d)->surftree->getSurface();
+    if (!surf)
+	return false;
+
     int cnt = 0;
 
     for (int i=0;i<4;i++) {
@@ -1639,7 +1681,13 @@ print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoin
 	std::cerr << "EndPoints " << str << ":"<< std::endl;
 	while (cs!=pbcs.end()) {
 	    PBCData *data = (*cs);
+	    if (!data || !data->surftree)
+		continue;
+
 	    const ON_Surface *surf = data->surftree->getSurface();
+	    if (!surf)
+		continue;
+
 	    std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
 	    int segcnt = 0;
 	    while (si != data->segments.end()) {
@@ -1689,7 +1737,13 @@ print_pullback_data(std::string str, std::list<PBCData*> &pbcs, bool justendpoin
 	std::cerr << str << ":" << std::endl;
 	while (cs!=pbcs.end()) {
 	    PBCData *data = (*cs);
+	    if (!data || !data->surftree)
+		continue;
+
 	    const ON_Surface *surf = data->surftree->getSurface();
+	    if (!surf)
+		continue;
+
 	    std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
 	    int segcnt = 0;
 	    while (si != data->segments.end()) {
@@ -1985,7 +2039,12 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
     cs = pbcs.begin();
     while (cs!=pbcs.end()) {
 	PBCData *data = (*cs);
+	if (!data || !data->surftree)
+	    continue;
+
 	const ON_Surface *surf = data->surftree->getSurface();
+	if (!surf)
+	    continue;
 
 	double umin, umax;
 	double vmin, vmax;
@@ -2104,7 +2163,13 @@ resolve_pullback_singularities(std::list<PBCData*> &pbcs)
 	    int singularity;
 	    prev=NULL;
 	    PBCData *data = (*cs);
+	    if (!data || !data->surftree)
+		continue;
+
 	    const ON_Surface *surf = data->surftree->getSurface();
+	    if (!surf)
+		continue;
+
 	    std::list<ON_2dPointArray *>::iterator si = data->segments.begin();
 	    while (si != data->segments.end()) {
 		ON_2dPointArray *samples = (*si);
@@ -2239,7 +2304,12 @@ check_pullback_data(std::list<PBCData*> &pbcs)
     if (false)
 	print_pullback_data("Before cleanup", pbcs, false);
 
+    if ((*d) == NULL || (*d)->surftree == NULL)
+	return false;
+
     const ON_Surface *surf = (*d)->surftree->getSurface();
+    if (!surf)
+	return false;
 
     bool singular = has_singularity(surf);
     bool closed = is_closed(surf);
@@ -2336,8 +2406,14 @@ pullback_curve(const brlcad::SurfaceTree* surfacetree,
     }
 
     ON_2dPoint p1, p2;
+
 #ifdef SHOW_UNUSED
+    if (!data.surftree)
+	return NULL;
+
     const ON_Surface *surf = (data.surftree)->getSurface();
+    if (!surf)
+	return NULL;
 #endif
 
     if (toUV(data, p1, tmin, PBC_TOL) && toUV(data, p2, tmax, -PBC_TOL)) {
