@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-07-XX  Release 7.22.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed crash in step-g tool importing AP214 entities - Sean Morrison
 * improved 3dm-g output and invalid geometry support - Sean Morrison
 * fixed crash revolving empty sketch objects - Sean Morrison
 * fixed TIE raytracing bugs shotlining plate-mode BoTs - Sean Morrison
