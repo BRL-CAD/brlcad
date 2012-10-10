@@ -56,11 +56,11 @@
  * The first line consists of two integer numbers: the number of
  * points (vertices) in the file, followed by the number of polygons
  * in the file.  This line is followed by lines for each of the
- * verticies.  Each vertex is listed on its own line, as the 3tuple "X
- * Y Z".  After the list of verticies comes the list of polygons.
+ * vertices.  Each vertex is listed on its own line, as the 3tuple "X
+ * Y Z".  After the list of vertices comes the list of polygons.
  * each polygon is represented by a line containing 1) the number of
- * verticies in the polygon, followed by 2) the indicies of the
- * verticies that make up the polygon.
+ * vertices in the polygon, followed by 2) the indices of the
+ * vertices that make up the polygon.
  *
  * Implicitly returns r->s_p which is a new shell containing all the
  * faces from the polygon file.
