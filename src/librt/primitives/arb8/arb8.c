@@ -316,7 +316,7 @@ rt_arb_std_type(const struct rt_db_internal *ip, const struct bn_tol *tol)
  * R T _ A R B _ C E N T R O I D
  *
  * Find the center point for the arb whose values are in the s array,
- * with the given number of verticies.  Return the point in center_pt.
+ * with the given number of vertices.  Return the point in center_pt.
  */
 void
 rt_arb_centroid(point_t center_pt, const struct rt_arb_internal *arb, int npoints)
@@ -428,7 +428,7 @@ rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, 
 	     * points inwards, so we need to fix it here.
 	     * Build a vector from the centroid to vertex A.
 	     * If the surface normal points in the same direction,
-	     * then the vertcies were given in CCW order;
+	     * then the vertices were given in CCW order;
 	     * otherwise, vertices were given in CW order, and
 	     * the normal needs to be flipped.
 	     */
@@ -889,7 +889,7 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
     if (ap) RT_CK_APPLICATION(ap);
 
-    /* Intialize return values */
+    /* Initialize return values */
     for (i = 0; i < n; i++) {
 	segp[i].seg_stp = stp[i];	/* Assume hit, if 0 then miss */
 	segp[i].seg_in.hit_dist = -INFINITY;    /* used as in */
@@ -1042,7 +1042,7 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	rt_db_free_internal(&intern);
 
 	if (ret != 0 || arbp->arb_opt == (struct oface *)0) {
-	    bu_log("rt_arb_uv(%s) dyanmic setup failure st_specific=x%x, optp=x%x\n",
+	    bu_log("rt_arb_uv(%s) dynamic setup failure st_specific=x%x, optp=x%x\n",
 		   stp->st_name,
 		   stp->st_specific, arbp->arb_opt);
 	    return;
@@ -1330,7 +1330,7 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     char buf[256] = {0};
     int i = 0;
     int arb_type = -1;
-    struct bn_tol tmp_tol;	/* temporay tolerance */
+    struct bn_tol tmp_tol;	/* temporary tolerance */
 
     if (!str || !ip) return 0;
     RT_CK_DB_INTERNAL(ip);
