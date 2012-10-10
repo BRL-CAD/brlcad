@@ -23,8 +23,8 @@
  *
  * Intersect a ray with a Superquadratic Ellipsoid.
  *
- * NOTICE: this primitive is incomplete and should beconsidered
- * experimental.  this primitive will exhibit several
+ * NOTICE: this primitive is incomplete and should be considered
+ * experimental.  This primitive will exhibit several
  * instabilities in the existing root solver method.
  *
  */
@@ -164,7 +164,7 @@ struct superell_specific {
     double superell_invmsBu; /* 1.0 / |Bu|^2 */
     double superell_invmsCu; /* 1.0 / |Cu|^2 */
     vect_t superell_invsq;
-    mat_t superell_SoR; /* matrix for local cordinate system, Scale(Rotate(V))*/
+    mat_t superell_SoR; /* matrix for local coordinate system, Scale(Rotate(V))*/
     mat_t superell_invRSSR; /* invR(Scale(Scale(Rot(V)))) */
     mat_t superell_invR; /* transposed rotation matrix */
 };
@@ -434,7 +434,7 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     MAT4X3VEC(newShotDir, superell->superell_SoR, rp->r_dir);
     VUNITIZE(newShotDir);
 
-    /* normalize distance from the superell.  substitues a corrected ray
+    /* normalize distance from the superell.  substitutes a corrected ray
      * point, which contains a translation along the ray direction to the
      * closest approach to vertex of the superell.  Translating the ray
      * along the direction of the ray to the closest point near the
