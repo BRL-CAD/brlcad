@@ -266,7 +266,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	dn = VDOT(trip->tri_wn, rp->r_dir);
 
 	/*
-	 * If ray lies directly along the face, (ie, dot product
+	 * If ray lies directly along the face, (i.e., dot product
 	 * is zero), drop this face.
 	 */
 	abs_dn = dn >= 0.0 ? dn : (-dn);
@@ -389,7 +389,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 		dot1 = dot2;
 		dot2 = VDOT(rp->r_dir, hits[i].hit_normal);
 		if (dot1 > 0.0 && dot2 > 0.0) {
-		    /* two consectutive exits,
+		    /* two consecutive exits,
 		     * manufacture an entrance at same distance
 		     * as second exit.
 		     */
@@ -401,7 +401,7 @@ rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 		    nhits++;
 		    bu_log("\t\tadding fictitious entry at %f (%s)\n", hits[i].hit_dist, stp->st_name);
 		} else if (dot1 < 0.0 && dot2 < 0.0) {
-		    /* two consectutive entrances,
+		    /* two consecutive entrances,
 		     * manufacture an exit between them.
 		     */
 
