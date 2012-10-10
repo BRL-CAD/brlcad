@@ -771,7 +771,7 @@ extern bool sortY(BRNode* first, BRNode* second);
 // CurveTree declaration
 class NURBS_EXPORT CurveTree {
 public:
-    CurveTree(ON_BrepFace* face);
+    CurveTree(const ON_BrepFace* face);
     ~CurveTree();
 
     BRNode* getRootNode() const;
@@ -803,7 +803,7 @@ private:
     BRNode* curveBBox(const ON_Curve* curve, int adj_face_index, ON_Interval& t, bool leaf, bool innerTrim, const ON_BoundingBox& bb);
     BRNode* initialLoopBBox();
 
-    ON_BrepFace* m_face;
+    const ON_BrepFace* m_face;
     int m_adj_face_index;
     BRNode* m_root;
     std::list<BRNode*> m_sortedX;
@@ -1526,7 +1526,7 @@ private:
     bool m_removeTrimmed;
 
 public:
-    SurfaceTree(ON_BrepFace* face, bool removeTrimmed=true, int depthLimit = BREP_MAX_FT_DEPTH);
+    SurfaceTree(const ON_BrepFace* face, bool removeTrimmed=true, int depthLimit = BREP_MAX_FT_DEPTH);
     ~SurfaceTree();
 
     CurveTree* ctree;
@@ -1562,7 +1562,7 @@ private:
     BBNode* subdivideSurface(const ON_Surface *localsurf, const ON_Interval& u, const ON_Interval& v, ON_Plane frames[], ON_3dPoint corners[], ON_3dVector normals[], int depth, int depthLimit);
     BBNode* surfaceBBox(const ON_Surface *localsurf, bool leaf, ON_3dPoint corners[], ON_3dVector normals[], const ON_Interval& u, const ON_Interval& v);
 
-    ON_BrepFace* m_face;
+    const ON_BrepFace* m_face;
     BBNode* m_root;
 };
 

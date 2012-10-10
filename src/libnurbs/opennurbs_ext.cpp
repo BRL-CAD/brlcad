@@ -157,7 +157,7 @@ distribute(const int count, const ON_3dVector* v, double x[], double y[], double
 
 //--------------------------------------------------------------------------------
 // CurveTree
-CurveTree::CurveTree(ON_BrepFace* face) :
+CurveTree::CurveTree(const ON_BrepFace* face) :
     m_face(face), m_adj_face_index(-99)
 {
     m_root = initialLoopBBox();
@@ -681,7 +681,7 @@ CurveTree::isLinear(const ON_Curve* curve, double min, double max)
 
 //--------------------------------------------------------------------------------
 // SurfaceTree
-SurfaceTree::SurfaceTree(ON_BrepFace* face, bool removeTrimmed, int depthLimit)
+SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthLimit)
     : m_removeTrimmed(removeTrimmed),
       m_face(face)
 {
@@ -693,6 +693,11 @@ SurfaceTree::SurfaceTree(ON_BrepFace* face, bool removeTrimmed, int depthLimit)
 
     // build the surface bounding volume hierarchy
     const ON_Surface* surf = face->SurfaceOf();
+    if (!surf) {
+	TRACE("ERROR: NULL surface encountered in SurfaceTree()");
+	return;
+    }
+
     TRACE("Creating surface tree for: " << face->m_face_index);
     ON_Interval u = surf->Domain(0);
     ON_Interval v = surf->Domain(1);
