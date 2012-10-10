@@ -345,7 +345,7 @@ nmg_veu(const struct bu_list *hp, const uint32_t *up_magic_p)
 	    case OT_SAME	: break;
 	    case OT_OPPOSITE: break;
 	    case OT_UNSPEC	: break;
-	    default		: bu_bomb("nmg_veu() unknown loopuse orintation\n");
+	    default		: bu_bomb("nmg_veu() unknown loopuse orientation\n");
 		break;
 	}
 
@@ -431,7 +431,7 @@ nmg_vlu(const struct bu_list *hp, const uint32_t *up)
 	    case OT_BOOLPLACE:	break;
 	    default:
 		bu_log("lu=x%x, orientation=%d\n", lu, lu->orientation);
-		bu_bomb("nmg_vlu() unknown loopuse orintation\n");
+		bu_bomb("nmg_vlu() unknown loopuse orientation\n");
 		break;
 	}
 	if (lu->lumate_p->orientation != lu->orientation)
@@ -546,7 +546,7 @@ nmg_vfu(const struct bu_list *hp, const struct shell *s)
 		bu_bomb("nmg_vfu() faceuse of \"OPPOSITE\" orientation has mate that is not \"SAME\" orientation\n");
 		break;
 	    case OT_UNSPEC	: break;
-	    default		: bu_bomb("nmg_vfu() unknown faceuse orintation\n"); break;
+	    default		: bu_bomb("nmg_vfu() unknown faceuse orientation\n"); break;
 	}
 
 	NMG_CK_FACE(fu->f_p);
@@ -753,7 +753,7 @@ nmg_ck_eu(const uint32_t *parent, const struct edgeuse *eu, const char *str)
     }
 
     if (*eu->eumate_p->up.magic_p != *eu->up.magic_p) {
-	bu_strlcat(errstr, "nmg_ck_eu() eumate has differnt kind of parent\n", len);
+	bu_strlcat(errstr, "nmg_ck_eu() eumate has different kind of parent\n", len);
 	bu_bomb(errstr);
     }
     if (*eu->up.magic_p == NMG_SHELL_MAGIC) {
@@ -1039,7 +1039,7 @@ nmg_ck_fu(const struct shell *s, const struct faceuse *fu, const char *str)
 /** N M G _ C K _ E G _ V E R T S
  *
  * Check if vertices from edgeuses using this edge geometry
- * actually lie on the edge geomatry.
+ * actually lie on the edge geometry.
  *
  * "eg" must be LSEG
  * returns number of vertices not on edge line
@@ -1196,7 +1196,7 @@ nmg_ck_face_worthless_edges(const struct faceuse *fu)
  * N M G _ C K _ L U E U
  *
  * check all the edgeuses of a loopuse to make sure these children
- * know who thier parent really is.
+ * know who their parent really is.
  */
 void
 nmg_ck_lueu(const struct loopuse *cklu, const char *s)
