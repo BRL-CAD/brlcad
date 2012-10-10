@@ -227,7 +227,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     bn_mat_inv(submodel->m2subm, sip->root2leaf);
     submodel->rtip = sub_rtip;
 
-    /* Propagage submodel bounding box back upwards, rotated&scaled. */
+    /* Propagate submodel bounding box back upwards, rotated&scaled. */
     bn_rotate_bbox(stp->st_min, stp->st_max,
 		   submodel->subm2m,
 		   sub_rtip->mdl_min, sub_rtip->mdl_max);
@@ -611,7 +611,7 @@ rt_submodel_free(struct soltab *stp)
     rtip = submodel->rtip;
     RT_CK_RTI(rtip);
 
-    /* Specificially free resource structures here */
+    /* Specifically free resource structures here */
     BU_CK_PTBL(&rtip->rti_resources);
     for (BU_PTBL_FOR(rpp, (struct resource **), &rtip->rti_resources)) {
 	if (*rpp == NULL) continue;
