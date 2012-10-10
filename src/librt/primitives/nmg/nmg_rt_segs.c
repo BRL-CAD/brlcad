@@ -69,7 +69,7 @@ print_seg_list(struct seg *seghead, int seg_count, char *s)
 {
     struct seg *seg_p;
 
-    bu_log("Segment List (%d segnemts) (%s):\n", seg_count, s);
+    bu_log("Segment List (%d segments) (%s):\n", seg_count, s);
     /* print debugging data before returning */
     bu_log("Seghead:\n0x%08x magic: 0x%08x forw:0x%08x back:0x%08x\n\n",
 	   seghead,
