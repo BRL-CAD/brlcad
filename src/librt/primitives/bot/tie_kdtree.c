@@ -662,7 +662,7 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
     }
 
     /*
-     * Now that the triangles have been propogated to the appropriate child nodes,
+     * Now that the triangles have been propagated to the appropriate child nodes,
      * free the triangle list on this node.
      */
     node_gd->tri_num = 0;
