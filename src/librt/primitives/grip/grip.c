@@ -23,13 +23,13 @@
  *
  * Intersect a ray with a "grip" and return nothing.
  *
- * A GRIP is defiend by a direction normal, a center and a
- * height/magnitued vector.  The center is the control point used for
+ * A GRIP is defined by a direction normal, a center and a
+ * height/magnitude vector.  The center is the control point used for
  * all grip movements.
  *
  * All Ray intersections return "missed"
  *
- * The bounding box for a grip is emtpy.
+ * The bounding box for a grip is empty.
  *
  */
 
@@ -221,7 +221,7 @@ rt_grp_class(void)
  *
  * We represent a GRIP as a pyramid.  The center describes where the
  * center of the base is.  The normal describes which direction the
- * tip of the pyramid is.  Mag describes the distence from the center
+ * tip of the pyramid is.  Mag describes the distance from the center
  * to the tip. 1/4 of the width is the length of a base side.
  *
  */
