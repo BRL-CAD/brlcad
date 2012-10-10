@@ -84,7 +84,7 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     parabnurbscurve->SetCV(1, ON_3dPoint(ep2));
     parabnurbscurve->SetCV(2, ON_3dPoint(ep3));
 
-    // Also need a staight line from the beginning to the end to
+    // Also need a straight line from the beginning to the end to
     // complete the loop.
 
     ON_LineCurve* straightedge = new ON_LineCurve(onp3, onp1);
