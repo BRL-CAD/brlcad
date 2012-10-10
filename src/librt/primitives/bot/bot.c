@@ -1554,7 +1554,7 @@ rt_bot_find_e_nearest_pt2(
 	}
     }
 
-    /* build a tyolerance structure for the bn_dist routine */
+    /* build a tolerance structure for the bn_dist routine */
     tol.magic   = BN_TOL_MAGIC;
     tol.dist    = 0.0;
     tol.dist_sq = 0.0;
@@ -3217,7 +3217,7 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 
 
 /**
- * Get rid of unused verticies
+ * Get rid of unused vertices
  */
 int
 rt_bot_condense(struct rt_bot_internal *bot)
@@ -3232,7 +3232,7 @@ rt_bot_condense(struct rt_bot_internal *bot)
     num_verts = bot->num_vertices;
     verts = (int *)bu_calloc(num_verts, sizeof(int), "rt_bot_condense: verts");
 
-    /* walk the list of verticies, and mark each one if it is used */
+    /* walk the list of vertices, and mark each one if it is used */
 
     for (i = 0; i < bot->num_faces*3; i++) {
 	j = bot->faces[i];
@@ -3243,7 +3243,7 @@ rt_bot_condense(struct rt_bot_internal *bot)
 	verts[j] = 1;
     }
 
-    /* Walk the list of verticies, eliminate each unused vertex by
+    /* Walk the list of vertices, eliminate each unused vertex by
      * copying the rest of the array downwards
      */
     for (i = 0; i < num_verts-dead_verts; i++) {
@@ -3363,7 +3363,7 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, size_t tris_per_piece)
 {
     fastf_t *centers = (fastf_t *)NULL;	/* triangle centers, used when all else fails */
     int *new_faces = (int *)NULL;	/* the sorted list of faces to be attached to the BOT at the end of this routine */
-    int *new_norms = (int *)NULL;	/* the sorted list of vertex normals corrsponding to the "new_faces" list */
+    int *new_norms = (int *)NULL;	/* the sorted list of vertex normals corresponding to the "new_faces" list */
     int *old_faces = (int *)NULL;	/* a copy of the original face list from the BOT */
     int *piece = (int *)NULL;		/* a small face list, for just the faces in the current piece */
     int *piece_norms = (int *)NULL;	/* vertex normals for faces in the current piece */
@@ -3814,7 +3814,7 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, size_t num_edges, int *fa
 		    ptr = edges[v2];
 		    while (ptr) {
 			if ((size_t)ptr->v == i) {
-			    /* found another occurence of this edge
+			    /* found another occurrence of this edge
 			     * increment use count
 			     */
 			    ptr->use_count++;
@@ -3828,19 +3828,19 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, size_t num_edges, int *fa
 			ptr = ptr->next;
 		    }
 		    if (!ptr) {
-			/* did not find another occurence, add to list */
+			/* did not find another occurrence, add to list */
 			edg->next = edges[v2];
 			edges[v2] = edg;
 		    }
 		    edg = next;
 		} else if ((size_t)v2 > i) {
-		    /* look for other occurences of this edge in this
+		    /* look for other occurrences of this edge in this
 		     * list if found, just increment use count
 		     */
 		    ptr = edges[i];
 		    while (ptr) {
 			if (ptr->v == v2 && ptr != edg) {
-			    /* found another occurence */
+			    /* found another occurrence */
 			    /* increment use count */
 			    ptr->use_count++;
 
@@ -3915,7 +3915,7 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, size_t num_edges, int *fa
  *
  * any constraint value of -1.0 means ignore this constraint
  *
- * returns 1 if edge can be eliminated without breaking conatraints, 0
+ * returns 1 if edge can be eliminated without breaking constraints, 0
  * otherwise.
  */
 HIDDEN int
@@ -4096,7 +4096,7 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
  * removed from the list.  The list is used to direct the edge
  * decimation process and to avoid deforming the shape of a non-volume
  * enclosing BOT by keeping track of use counts (and thereby free
- * edges) If a free edge would be moved, that deciamtion is not
+ * edges) If a free edge would be moved, that decimation is not
  * performed.
  */
 int
@@ -4217,7 +4217,7 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
     }
 
     if (actual_count % 3) {
-	bu_log("rt_bot_decimate: face vertices count is not a multilple of 3!!\n");
+	bu_log("rt_bot_decimate: face vertices count is not a multiple of 3!!\n");
 	bu_free(faces, "faces");
 	return -1;
     }
