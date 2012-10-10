@@ -104,7 +104,7 @@
  * NORMALS.  Given the point W on the surface of the rpc, what is the
  * vector normal to the tangent plane at that point?
  *
- * Map W onto the unit rpc, ie:  W' = S(R(W - V)).
+ * Map W onto the unit rpc, i.e.:  W' = S(R(W - V)).
  *
  * Plane on unit rpc at W' has a normal vector N' where
  *
@@ -840,7 +840,7 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  *
  * Approximate a parabola with line segments.  The initial single
  * segment is broken at the point farthest from the parabola if
- * that point is not aleady within the distance and normal error
+ * that point is not already within the distance and normal error
  * tolerances.  The two resulting segments are passed recursively
  * to this routine until each segment is within tolerance.
  */
