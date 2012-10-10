@@ -328,7 +328,7 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      */
 
     /*
-     * Start finding the location of the oposite vertex to V
+     * Start finding the location of the opposite vertex to V
      */
     VJOIN2(hf->hf_VO, hip->v, hip->xlen, hip->x, hip->ylen, hip->y);
 
