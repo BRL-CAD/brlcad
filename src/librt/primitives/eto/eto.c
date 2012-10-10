@@ -108,13 +108,13 @@
  * Wx**2 = Dx**2 * t**2 +  2 * Dx * Px +  Px**2
  *
  * The real roots of the equation in 't' are the intersect points
- * along the parameteric line.
+ * along the parametric line.
  *
  * NORMALS.  Given the point W on the eto, what is the vector normal
  * to the tangent plane at that point?
  *
  * Map W onto the eto, ie: W' = R(W - V).  In this case, we find W'
- * by solving the parameteric line given k.
+ * by solving the parametric line given k.
  *
  * The gradient of the eto at W' is in fact the
  * normal vector.
@@ -750,7 +750,7 @@ rt_eto_class(void)
  *
  * Approximate one fourth (1st quadrant) of an ellipse with line
  * segments.  The initial single segment is broken at the point
- * farthest from the ellipse if that point is not aleady within the
+ * farthest from the ellipse if that point is not already within the
  * distance and normal error tolerances.  The two resulting segments
  * are passed recursively to this routine until each segment is within
  * tolerance.
