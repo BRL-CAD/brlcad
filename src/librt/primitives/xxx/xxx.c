@@ -28,7 +28,7 @@
  * Design disk record
  *
  * define rt_xxx_internal --- parameters for solid
- * define xxx_specific --- raytracing form, possibly w/precomuted terms
+ * define xxx_specific --- raytracing form, possibly w/precomputed terms
  * define rt_xxx_parse --- struct bu_structparse for "db get", "db adjust", ...
  *
  * code import/export4/describe/print/ifree/plot/prep/shot/curve/uv/tess
