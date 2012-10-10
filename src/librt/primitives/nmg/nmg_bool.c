@@ -726,7 +726,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
     debug_file_count++;
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-	/* Sometimes the tessllations of non-participating regions
+	/* Sometimes the tessellations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
@@ -786,7 +786,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-	/* Sometimes the tessllations of non-participating regions
+	/* Sometimes the tessellations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
@@ -847,7 +847,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     (void)nmg_kill_cracks(sA);
     (void)nmg_kill_cracks(sB);
 
-    /* eliminate unecessary breaks in edges */
+    /* eliminate unnecessary breaks in edges */
     (void)nmg_simplify_shell_edges(sA, tol);
     (void)nmg_simplify_shell_edges(sB, tol);
 
@@ -856,7 +856,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     (void)nmg_edge_fuse(&m->magic, tol);
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-	/* Sometimes the tessllations of non-participating regions
+	/* Sometimes the tessellations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
@@ -887,7 +887,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-	/* Sometimes the tessllations of non-participating regions
+	/* Sometimes the tessellations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
@@ -951,7 +951,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	bu_log("nmg_bool() WARNING: sB unclosed before classification.  Boldly pressing on.\n");
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-	/* Sometimes the tessllations of non-participating regions
+	/* Sometimes the tessellations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
@@ -1114,7 +1114,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	bu_log("Returning from NMG_BOOL\n");
     }
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-	/* Sometimes the tessllations of non-participating regions
+	/* Sometimes the tessellations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
