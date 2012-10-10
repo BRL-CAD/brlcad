@@ -209,7 +209,7 @@ ON_BezierCage& ON_BezierCage::operator=(const ON_BezierCage& src)
 {
   if ( this != &src ) {
     if ( Create( src.m_dim, src.m_is_rat, 
-         src.m_order[0], src.m_order[1], src.m_order[3] ) )
+         src.m_order[0], src.m_order[1], src.m_order[2] ) )
     {
       const int sizeof_cv = src.CVSize()*sizeof(m_cv[0]);
       int i, j, k;
