@@ -4802,7 +4802,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 	sprintf(db_name, "uni%d.g", iter);
 	nmg_stash_model_to_file(db_name,
 				nmg_find_model(&fu->s_p->l.magic),
-				"trangles and unimonotones");
+				"triangles and unimonotones");
     }
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
@@ -4822,7 +4822,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 	sprintf(db_name, "uni_split%d.g", iter++);
 	nmg_stash_model_to_file(db_name,
 				nmg_find_model(&fu->s_p->l.magic),
-				"split trangles and unimonotones");
+				"split triangles and unimonotones");
     }
 
     /* now we're left with a face that has some triangle loops and some
