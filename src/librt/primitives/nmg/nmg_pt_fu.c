@@ -424,7 +424,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
     if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
 	bu_log("\tprev_eu = x%x, left = (%g %g %g)\n", prev_eu, V3ARGS(left));
 
-    /* v0 is the origin of the XY-coordinat system */
+    /* v0 is the origin of the XY-coordinate system */
     v0 = eu->vu_p->v_p;
     NMG_CK_VERTEX(v0);
 
@@ -456,7 +456,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
     quado = Quadrant(xo, yo);
 
     if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
-	bu_log("\txo=%g, yo=%g, qudarant=%d\n", xo, yo, quado);
+	bu_log("\txo=%g, yo=%g, quadrant=%d\n", xo, yo, quado);
 
     /* get direction to PT from origin */
     VSUB2(pt_dir, pt, v0->vg_p->coord);
@@ -472,7 +472,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
     quadpt = Quadrant(xpt, ypt);
 
     if (UNLIKELY(rt_g.NMG_debug & DEBUG_PT_FU))
-	bu_log("\txpt=%g, ypt=%g, qudarant=%d\n", xpt, ypt, quadpt);
+	bu_log("\txpt=%g, ypt=%g, quadrant=%d\n", xpt, ypt, quadpt);
 
     /* do a quadrant comparison first (cheap!!!) */
     if (quadpt < quado)
@@ -481,7 +481,7 @@ nmg_class_pt_euvu(const fastf_t *pt, struct edgeuse *eu_in, const struct bn_tol 
     if (quadpt > quado)
 	return NMG_CLASS_AoutB;
 
-    /* both are in the same quadrant, need to normalize the corrdinates */
+    /* both are in the same quadrant, need to normalize the coordinates */
     len = sqrt(xo*xo + yo*yo);
     xo = xo/len;
     yo = yo/len;
@@ -1255,7 +1255,7 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 	 * is anything but OUTSIDE
 	 */
 	if (rt_g.NMG_debug & DEBUG_PT_FU)
-	    bu_log("nmg_class_pt_fu_except((%g %g %g) ouside face RPP\n",
+	    bu_log("nmg_class_pt_fu_except((%g %g %g) outside face RPP\n",
 		   V3ARGS(pt));
 
 	return NMG_CLASS_AoutB;
