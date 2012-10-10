@@ -248,6 +248,27 @@ int main(int argc, char *argv[])
 	fclose(plot_file);
     }
 
+    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+
+    fastf_t *vertices = (fastf_t *)bu_malloc(sizeof(fastf_t) * mesh->points_p0.Count() * 3, "new verts");
+    int *faces = (int *)bu_malloc(sizeof(int) * mesh->face_pts.size() * 3, "new faces");
+    for(size_t v = 0; v < (size_t)mesh->points_p0.Count(); v++) {
+       vertices[v*3] = mesh->points_p0[v].x;
+       vertices[v*3+1] = mesh->points_p0[v].y;
+       vertices[v*3+2] = mesh->points_p0[v].z;
+    } 
+    std::map<size_t, std::vector<size_t> >::iterator f_it;
+    std::vector<size_t>::iterator l_it;
+    for(f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
+        l_it = (*f_it).second.begin();
+        faces[(*f_it).first*3] = (*l_it);
+        faces[(*f_it).first*3+1] = (*(l_it + 1));
+        faces[(*f_it).first*3+2] = (*(l_it + 2));
+    }
+
+    mk_bot(wdbp, "sph_refined.bot", RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, mesh->points_p0.Count(), mesh->face_pts.size(), vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
+    wdb_close(wdbp);
+
     return 0;
 }
 
