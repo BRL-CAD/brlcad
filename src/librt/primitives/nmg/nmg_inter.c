@@ -1845,7 +1845,7 @@ nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, st
      * of the other face.  Check to see if the distance to
      * intersection is between limits of the endpoints of
      * this edge(use).
-     * The edge exists over values of 0 <= dist <= 1, ie,
+     * The edge exists over values of 0 <= dist <= 1, i.e.,
      * over values of 0 <= dist_to_plane <= edge_len.
      * The tolerance, an absolute distance, can only be compared
      * to other absolute distances like dist_to_plane & edge_len.
