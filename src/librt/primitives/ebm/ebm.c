@@ -1665,7 +1665,7 @@ rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    ar_ptr = array;
 
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &ar_ptr, &len) != len) {
-		bu_vls_printf(logstr, "ERROR: incorrect number of coefficents for matrix\n");
+		bu_vls_printf(logstr, "ERROR: incorrect number of coefficients for matrix\n");
 		return BRLCAD_ERROR;
 	    }
 	    MAT_COPY(ebm->mat, array);
