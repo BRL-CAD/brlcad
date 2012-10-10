@@ -112,7 +112,7 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     (*b)->SetTrimIsoFlags(bface);
     delete ellcurve1;
 
-    //  Now, the hard part.  Need an elliptical hyperboloic NURBS surface
+    //  Now, the hard part.  Need an elliptical hyperbolic NURBS surface
     //  First step is to create a nurbs curve.
 
     double intercept_calc = (eip->ehy_c)*(eip->ehy_c)/(MAGNITUDE(eip->ehy_H) + eip->ehy_c);
