@@ -72,7 +72,7 @@ TIE_VAL(tie_tri_prep)(struct tie_s *tie)
 	mag_sq = MAGSQ(tri->data[1].v);
 	if (UNLIKELY(mag_sq < SMALL_FASTF)) {
 	    /* Can not unitize normal, most likely we have a zero area
-	     * triangle (ie degenerate) so skip it.
+	     * triangle (i.e. degenerate) so skip it.
 	     */
 	    continue;
 	}
@@ -199,7 +199,7 @@ void TIE_VAL(tie_prep)(struct tie_s *tie)
  * @return the return value from the user hitfunc() is used.
  * In the event that the ray does not hit anything, or the ray exits the geometry space, a null value will be returned.
  * @retval 0 ray did not hit anything, or ray was propagated through the geometry completely.
- * @retval !0 the value returned from the last invokation of hitfunc()
+ * @retval !0 the value returned from the last invocation of hitfunc()
  */
 void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_s *id, void *(*hitfunc)(struct tie_ray_s*, struct tie_id_s*, struct tie_tri_s*, void *ptr), void *ptr)
 {
@@ -270,7 +270,7 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	while (TIE_HAS_CHILDREN(node_aligned->data)) {
 	    ray->kdtree_depth++;
 
-	    /* Retreive the splitting plane */
+	    /* Retrieve the splitting plane */
 	    split = ((intptr_t)(node_aligned->data)) & 0x3;
 
 	    /* Calculate the projected 1d distance to splitting axis */
@@ -318,7 +318,7 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
 	    /*
 	     * Intersection point on triangle must lie within the kdtree node or it is rejected
 	     * Apply TIE_PREC to near and far such that triangles that lie on orthogonal planes
-	     * aren't in a precision fuzz boundary, thus missing something they should actualy
+	     * aren't in a precision fuzz boundary, thus missing something they should actually
 	     * have hit.
 	     */
 	    if (t.dist < near-TIE_PREC || t.dist > far+TIE_PREC)
@@ -401,7 +401,7 @@ void* TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_
  * Add a new triangle to the universe to be raytraced.
  *
  * @param tie the universe
- * @param tlist is an array of TIE_3 vertice triplets (v0, v1, v2) that form each triangle.
+ * @param tlist is an array of TIE_3 vertex triplets (v0, v1, v2) that form each triangle.
  * @param tnum is the number of triangles (tlist = 3 * tnum of TIE_3's).
  * @param plist is a list of pointer data that gets assigned to the ptr of each triangle.
  * This will typically be 4-byte (32-bit architecture) spaced array of pointers that
