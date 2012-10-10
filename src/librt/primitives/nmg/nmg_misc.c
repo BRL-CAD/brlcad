@@ -1152,7 +1152,7 @@ nmg_radial_face_count(const struct edgeuse *eu, const struct shell *s)
  * N M G _ C H E C K _ C L O S E D _ S H E L L
  *
  * Looks at every eu in OT_SAME fu's. If any eu has no radials, then
- * it must be the edge of a dangling face and therfore the edge of an
+ * it must be the edge of a dangling face and therefore the edge of an
  * opening.
  *
  * returns:
@@ -3550,7 +3550,7 @@ nmg_mk_model_from_region(struct nmgregion *r, int reindex)
 /**
  * N M G _ F I X _ N O R M A L S
  *
- * Routine to set faceuse normlas to correct direction.
+ * Routine to set faceuse normals to correct direction.
  *
  * Method:
  *   1. Make a copy of the shell in another model.
@@ -3949,7 +3949,7 @@ nmg_split_loops_handler(uint32_t *fu_p, genptr_t sl_state, int UNUSED(unused))
 	else if (lu->orientation == OT_OPPOSITE)
 	    otopp_loops++;
 	else {
-	    bu_log("nmg_split_loops_into_faces: facuse (x%x) with %s loopuse (x%x)\n",
+	    bu_log("nmg_split_loops_into_faces: faceuse (x%x) with %s loopuse (x%x)\n",
 		   fu, nmg_orientation(lu->orientation), lu);
 	    return;
 	}
@@ -9158,7 +9158,7 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
 /**
  * n m g _ b r e a k _ e d g e _ a t _ v e r t s
  *
- * split an edge into multiple edges at specified vertices iff they
+ * split an edge into multiple edges at specified vertices if they
  * are within tolerance distance.
  *
  * Returns the number of additional edges that were created.
