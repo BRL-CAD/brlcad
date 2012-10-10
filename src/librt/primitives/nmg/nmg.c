@@ -669,7 +669,7 @@ struct disk_double_array {
 #define NMG_KIND_DOUBLE_ARRAY      25
 
 /* number of kinds.  This number must have some extra space, for
- * upwards compatability.
+ * upwards compatibility.
  */
 #define NMG_N_KINDS                26
 
@@ -986,7 +986,7 @@ reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 		bu_log("reindex(p=x%x), p->index=%d, ret=%d, kind=%d\n", p, idx, ret, ecnt[idx].kind);
 		bu_bomb("reindex() This index not found in ecnt[]\n");
 	    }
-	    /* ret == 0 on supressed loop_g ptrs, etc */
+	    /* ret == 0 on suppressed loop_g ptrs, etc */
 	    if (ret < 0 || ret > ecnt[0].byte_offset) {
 		bu_log("reindex(p=x%x) %s, p->index=%d, ret=%d, maxindex=%d\n",
 		       p,
@@ -1712,7 +1712,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 	    d = &((struct disk_vertexuse_a_cnurb *)ip)[iindex];
 	    NMG_CK_VERTEXUSE_A_CNURB(vua);
 	    NMG_CK_DISKMAGIC(d->magic, DISK_VERTEXUSE_A_CNURB_MAGIC);
-	    /* These parameters are invarient w.r.t. 'mat' */
+	    /* These parameters are invariant w.r.t. 'mat' */
 	    ntohd((unsigned char *)vua->param, d->param, 3);
 	}
 	    return 0;
@@ -2024,7 +2024,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
 
     /*
      * Check for proper version.
-     * In the future, this will be the backwards-compatability hook.
+     * In the future, this will be the backwards-compatibility hook.
      */
     if (rp->nmg.N_version != DISK_MODEL_VERSION) {
 	bu_log("rt_nmg_import4:  expected NMG '.g' format version %d, got version %d, aborting.\n",
