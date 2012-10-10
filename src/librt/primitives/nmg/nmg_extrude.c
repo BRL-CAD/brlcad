@@ -346,7 +346,7 @@ nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse
 
 	/* skip this checking until we get by the first edgeuse */
 	if (edges) {
-	    /* Are we back to the begining? */
+	    /* Are we back to the beginning? */
 	    if (eu->vu_p->v_p == start_eu->vu_p->v_p) {
 		/* done with this loop */
 		done = 1;
@@ -422,7 +422,7 @@ nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse
  * the other loopuse.  this is continued until the original edgeuse is
  * encountered.
  *
- * If overlapping loops are found, new loopsuses are created and the
+ * If overlapping loops are found, new loopuses are created and the
  * original loopuses are killed
  */
 void
@@ -814,7 +814,7 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
  *
  * Clean up after nmg_extrude_shell.  intersects each face with every
  * other face in the shell and makes new face boundaries at the
- * intersections.  decomposes the result into seperate shells.  where
+ * intersections.  decomposes the result into separate shells.  where
  * faces have intersected, new shells will be created.  These shells
  * are detected and killed
  */
@@ -1234,7 +1234,7 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
     old_r = s->r_p;
     NMG_CK_REGION(old_r);
 
-    /* decompose this shell and extrude each piece seperately */
+    /* decompose this shell and extrude each piece separately */
     new_r = nmg_mrsv(m);
     s_tmp = BU_LIST_FIRST(shell, &new_r->s_hd);
     (void)nmg_mv_shell_to_region(s, new_r);
