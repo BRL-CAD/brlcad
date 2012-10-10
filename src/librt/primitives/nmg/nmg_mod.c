@@ -1739,14 +1739,14 @@ nmg_mv_fu_between_shells(struct shell *dest, register struct shell *src, registe
     NMG_CK_FACEUSE(fumate);
 
     if (fu->s_p != src) {
-	bu_log("nmg_mv_fu_between_shells(dest=x%x, src=x%x, fu=x%x), fu->s_p=x%x isnt src shell\n",
+	bu_log("nmg_mv_fu_between_shells(dest=x%x, src=x%x, fu=x%x), fu->s_p=x%x isn't src shell\n",
 	       dest, src, fu, fu->s_p);
-	bu_bomb("fu->s_p isnt source shell\n");
+	bu_bomb("fu->s_p isn't source shell\n");
     }
     if (fumate->s_p != src) {
 	bu_log("nmg_mv_fu_between_shells(dest=x%x, src=x%x, fu=x%x), fumate->s_p=x%x isn't src shell\n",
 	       dest, src, fu, fumate->s_p);
-	bu_bomb("fumate->s_p isnt source shell\n");
+	bu_bomb("fumate->s_p isn't source shell\n");
     }
 
     /* Remove fu from src shell */
@@ -4137,7 +4137,7 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
  *			     /             /
  *		    <-------.   <---------.
  *
- * Note: to replicate the behavior of this routine in BRL-CAD Relase
+ * Note: to replicate the behavior of this routine in BRL-CAD Release
  * 4.0, call with share_geom=0.
  */
 struct edgeuse *
@@ -4901,14 +4901,14 @@ nmg_mv_eu_between_shells(struct shell *dest, register struct shell *src, registe
     NMG_CK_EDGEUSE(eumate);
 
     if (eu->up.s_p != src) {
-	bu_log("nmg_mv_eu_between_shells(dest=x%x, src=x%x, eu=x%x), eu->up.s_p=x%x isnt src shell\n",
+	bu_log("nmg_mv_eu_between_shells(dest=x%x, src=x%x, eu=x%x), eu->up.s_p=x%x isn't src shell\n",
 	       dest, src, eu, eu->up.s_p);
-	bu_bomb("eu->up.s_p isnt source shell\n");
+	bu_bomb("eu->up.s_p isn't source shell\n");
     }
     if (eumate->up.s_p != src) {
 	bu_log("nmg_mv_eu_between_shells(dest=x%x, src=x%x, eu=x%x), eumate->up.s_p=x%x isn't src shell\n",
 	       dest, src, eu, eumate->up.s_p);
-	bu_bomb("eumate->up.s_p isnt source shell\n");
+	bu_bomb("eumate->up.s_p isn't source shell\n");
     }
 
     /* Remove eu from src shell */
