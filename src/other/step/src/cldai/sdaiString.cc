@@ -13,16 +13,25 @@
 #include <sstream>
 #include "scl_memmgr.h"
 
-SDAI_String::SDAI_String( const char * str, size_t max ) {
-    content = std::string( str, max );
+SDAI_String::SDAI_String( const char * str, size_t max )
+{
+  if (!str)
+    str = "";
+
+  if (max == std::string::npos)
+    content = std::string(str);
+  else
+    content = std::string(str, max);
 }
 
-SDAI_String::SDAI_String( const std::string & s ) {
-    content = std::string( s );
+SDAI_String::SDAI_String( const std::string & s )
+  : content(std::string( s ))
+{
 }
 
-SDAI_String::SDAI_String( const SDAI_String & s ) {
-    content = std::string( s.c_str() );
+SDAI_String::SDAI_String( const SDAI_String & s )
+  : content(std::string(s.c_str()))
+{
 }
 
 SDAI_String::~SDAI_String( void ) {

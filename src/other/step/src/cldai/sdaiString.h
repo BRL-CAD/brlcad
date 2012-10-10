@@ -21,7 +21,7 @@ class SCL_DAI_EXPORT SDAI_String {
     public:
 
         //constructor(s) & destructor
-        SDAI_String( const char * str = 0, size_t max = std::numeric_limits<std::size_t>::max() );
+        SDAI_String( const char * str = "", size_t max = std::string::npos);
         SDAI_String( const std::string & s );
         SDAI_String( const SDAI_String & s );
         ~SDAI_String( void );
