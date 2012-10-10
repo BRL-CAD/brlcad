@@ -127,7 +127,7 @@ nmg_is_angle_in_wedge(double a, double b, double t)
  * best represents the direction of the little stub edge AD (shared with AE).
  * In this case, eg2 is the correct choice, as AD (and AE) lie on line AB.
  *
- * It would be disasterous to force *all* of eg1 to use the edge geometry
+ * It would be disastrous to force *all* of eg1 to use the edge geometry
  * of eg2, as the two lines are very different.
  */
 struct edge_g_lseg *
@@ -439,7 +439,7 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 	/*
 	 * Make eu2 radial to eu1.
 	 * This should insert eu2 between eu1 and eu1->radial_p
-	 * (which may be less far around than eur, but thats OK).
+	 * (which may be less far around than eur, but that's OK).
 	 * This does NOT change the edge geometry pointer.
 	 */
 	nmg_je(eu1, eu2);
