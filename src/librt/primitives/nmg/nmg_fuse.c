@@ -130,7 +130,7 @@ nmg_is_common_bigloop(const struct face *f1, const struct face *f2)
 /**
  * N M G _ R E G I O N _ V _ U N I Q U E
  *
- * Ensure that all the vertices in r1 are still geometricaly unique.
+ * Ensure that all the vertices in r1 are still geometrically unique.
  * This will be true after nmg_region_both_vfuse() has been called,
  * and should remain true throughout the intersection process.
  */
@@ -514,7 +514,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 	/* get average vertex coordinates */
 	VSCALE(vsum, vsum, one_over_vertex_count);
 
-	/* get distance from plane to orgin */
+	/* get distance from plane to origin */
 	pl[H] = VDOT(pl, vsum);
 
     } else {
@@ -549,7 +549,7 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 	    /* get average vertex coordinates */
 	    VSCALE(vsum, vsum, one_over_vertex_count);
 
-	    /* get distance from plane to orgin */
+	    /* get distance from plane to origin */
 	    pl[H] = VDOT(pl, vsum);
 
 	} else {
@@ -665,7 +665,7 @@ nmg_split_trim(const struct edge_g_cnurb *cnrb, const struct face_g_snurb *snrb,
     if (pt_new->t < pt0->t || pt_new->t > pt1->t) {
 	bu_log("nmg_split_trim: split parameter (%g) is not between ends (%g and %g)\n",
 	       t, pt0->t, pt1->t);
-	bu_bomb("nmg_split_trim: split parameteris not between ends\n");
+	bu_bomb("nmg_split_trim: split parameters not between ends\n");
     }
 
     nmg_eval_trim_curve(cnrb, snrb, pt_new->t, pt_new->xyz);
@@ -1242,7 +1242,7 @@ nmg_edge_g_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
     size_t *sort_idx_xyp;
 
     /* arrays containing special case flags for each edge in the xy, xz and yz planes */
-    /* 0 = no special case, 1 = infinit ratio, 2 = zero ratio, 3 = point in plane (no ratio) */
+    /* 0 = no special case, 1 = infinite ratio, 2 = zero ratio, 3 = point in plane (no ratio) */
     char *edge_sc, *edge_sc_xyp, *edge_sc_xzp, *edge_sc_yzp;
 
     /* Make a list of all the edge geometry structs in the model */
@@ -2355,7 +2355,7 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	    break;
     }
 
-    /* Move list head so that it is inbetween min and max entries. */
+    /* Move list head so that it is in between min and max entries. */
     if (BU_LIST_PNEXT_CIRC(nmg_radial, rmax) == rmin) {
 	/* Maximum entry is followed by minimum.  Ascending --> CCW */
 	BU_LIST_DEQUEUE(hd);
@@ -2596,7 +2596,7 @@ nmg_find_next_use_of_2e_in_lu(const struct edgeuse *eu, const struct edge *e1, c
  * all but one edgeuse are marked as "outies",
  * and the remaining one is marked as a non-crack.
  * The "outie" edgeuses are marked off in pairs,
- * in the loopuses's edgeuse order.
+ * in the loopuse's edgeuse order.
  */
 void
 nmg_radial_mark_cracks(struct bu_list *hd, const struct edge *e1, const struct edge *e2, const struct bn_tol *tol)
