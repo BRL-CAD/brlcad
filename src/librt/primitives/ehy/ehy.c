@@ -106,7 +106,7 @@
  * NORMALS.  Given the point W on the surface of the ehy, what is the
  * vector normal to the tangent plane at that point?
  *
- * Map W onto the unit ehy, ie:  W' = S(R(W - V)).
+ * Map W onto the unit ehy, i.e.:  W' = S(R(W - V)).
  *
  * Plane on unit ehy at W' has a normal vector N' where
  *
