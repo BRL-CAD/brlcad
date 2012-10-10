@@ -767,7 +767,7 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
     if (v1) {
 	eu1->vu_p = nmg_mvu(v1, &eu1->l.magic, m);
     } else if (s->vu_p) {
-	/* This clause of the if statment dies when no vertex stealing */
+	/* This clause of the if statement dies when no vertex stealing */
 	/* steal the vertex from the shell */
 	vu = s->vu_p;
 	s->vu_p = (struct vertexuse *)NULL;
@@ -780,7 +780,7 @@ nmg_me(struct vertex *v1, struct vertex *v2, struct shell *s)
     if (v2) {
 	eu2->vu_p = nmg_mvu(v2, &eu2->l.magic, m);
     } else if (s->vu_p) {
-	/* This clause of the if statment dies when no vertex stealing */
+	/* This clause of the if statement dies when no vertex stealing */
 	/* steal the vertex from the shell */
 	vu = s->vu_p;
 	s->vu_p = (struct vertexuse *)NULL;
@@ -1029,7 +1029,7 @@ nmg_ml(struct shell *s)
 	BU_LIST_DEQUEUE(&p2->l);
 
 	/* Insert the next new edgeuse(s) at tail of the loop's list
-	 * (ie, insert just before the head).
+	 * (i.e., insert just before the head).
 	 * head, ....., p2, p1, (tail)
 	 */
 	BU_LIST_INSERT(&lu1->down_hd, &p1->l);
