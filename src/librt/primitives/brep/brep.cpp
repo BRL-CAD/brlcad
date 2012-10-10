@@ -1151,7 +1151,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
     /*
      * DDR.  The utah people are using this t_min which represents the
      * last point hit along the ray to ensure we are looking at points
-     * futher down the ray.  I haven't implemented this I'm not sure
+     * further down the ray.  I haven't implemented this I'm not sure
      * we need it
      *
      * if (converged && (t > 1.e-2) && (t < t_min) && (!utah_isTrimmed(ouv, face))) hit = true;
@@ -3464,7 +3464,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, ON_SimpleArray<ON_NurbsCurve*> &l
 	    delete curve_pt;
 	} else if (loop[k]->CVCount() == 2) {
 	    // A closed curve with two control points
-	    // TODO: Sometimes we need a sigular trim.
+	    // TODO: Sometimes we need a singular trim.
 	    ON_3dPointArray ptarray(101);
 	    for (int l = 0; l <= 100; l++) {
 		ON_3dPoint pt2d;
