@@ -502,7 +502,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 		bu_log("bip->type switch... 64bitint");
 	    break;
 	default:
-	    /* XXX	This shouln't happen!!    */
+	    /* XXX	This shouldn't happen!!    */
 	    bu_log("bip->type switch... default");
 	    break;
     }
