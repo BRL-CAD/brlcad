@@ -46,7 +46,7 @@ extern int seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, p
 			vect_t u_vec, vect_t v_vec, struct rt_sketch_internal *sketch_ip, genptr_t seg);
 
 struct extrude_specific {
-    mat_t rot, irot;	/* rotation and translation to get extrsuion vector in +z direction with V at origin */
+    mat_t rot, irot;	/* rotation and translation to get extrusion vector in +z direction with V at origin */
     vect_t unit_h;	/* unit vector in direction of extrusion vector */
     vect_t u_vec;	/* u vector rotated and projected */
     vect_t v_vec;	/* v vector rotated and projected */
