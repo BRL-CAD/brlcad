@@ -74,7 +74,7 @@ void Factory::Print()
 STEPEntity *
 Factory::CreateObject(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
-    string methodname = sse->EntityName();
+    std::string methodname = std::string(sse->EntityName());
     FACTORYMAP &methodmap = GetMap();
     FactoryMethod f = NULL;
     FACTORYMAP::iterator i;
