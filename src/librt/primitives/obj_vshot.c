@@ -40,7 +40,7 @@ rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, s
     if (segp) RT_CK_SEG(segp);
     if (ap) RT_CK_APPLICATION(ap);
 
-    /* should be improved, verify homogenous collection */
+    /* should be improved, verify homogeneous collection */
     id = stp[0]->st_id;
     if (id < 0)
 	return -2;
