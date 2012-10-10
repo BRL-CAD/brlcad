@@ -63,7 +63,7 @@ nmg_find_model(const uint32_t *magic_p_arg)
 
  top:
     if (magic_p == NULL) {
-	bu_log("nmg_find_model(x%x) enountered null pointer\n",
+	bu_log("nmg_find_model(x%x) encountered null pointer\n",
 	       magic_p_arg);
 	bu_bomb("nmg_find_model() null pointer\n");
 	/* NOTREACHED */
@@ -125,7 +125,7 @@ nmg_find_shell(const uint32_t *magic_p)
 {
  top:
     if (magic_p == NULL) {
-	bu_log("nmg_find_shell(x%x) enountered null pointer\n", magic_p);
+	bu_log("nmg_find_shell(x%x) encountered null pointer\n", magic_p);
 	bu_bomb("nmg_find_shell() null pointer\n");
     }
 
@@ -601,7 +601,7 @@ nmg_loop_is_ccw(const struct loopuse *lu, const fastf_t *UNUSED(norm), const str
  * return true.
  * This is useful for detecting "accordian pleats"
  * unexpectedly showing up in a loop.
- * Derrived from nmg_split_touchingloops().
+ * Derived from nmg_split_touchingloops().
  *
  * Returns -
  * vu Yes, the loop touches itself at least once, at this vu.
@@ -1230,7 +1230,7 @@ nmg_find_e_pt2_handler(uint32_t *lp, genptr_t state, int UNUSED(unused))
 /**
  * N M G _ F I N D _ E _ N E A R E S T _ P T 2
  *
- * A geometric search routine to find the edge that is neaest to
+ * A geometric search routine to find the edge that is nearest to
  * the given point, when all edges are projected into 2D using
  * the matrix 'mat'.
  * Useful for finding the edge nearest a mouse click, for example.
