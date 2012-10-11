@@ -1616,7 +1616,6 @@ nmg_find_v_in_shell(const struct vertex *v, const struct shell *s, int edges_onl
 struct vertexuse *
 nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_tol *tol)
 {
-    vect_t delta;
     register struct edgeuse *eu;
     register struct vertex_g *vg;
     uint32_t magic1;
@@ -1626,11 +1625,12 @@ nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_t
 	struct vertexuse *vu;
 	vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
 	vg = vu->v_p->vg_p;
-	if (!vg)
+	if (!vg) {
 	    return (struct vertexuse *)NULL;
-	VSUB2(delta, vg->coord, pt);
-	if (MAGSQ(delta) < tol->dist_sq)
+	}
+	if (bn_pt3_pt3_equal(vg->coord, pt, tol)) {
 	    return vu;
+	}
 	return (struct vertexuse *)NULL;
     }
     if (magic1 != NMG_EDGEUSE_MAGIC) {
@@ -1639,11 +1639,12 @@ nmg_find_pt_in_lu(const struct loopuse *lu, const fastf_t *pt, const struct bn_t
 
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	vg = eu->vu_p->v_p->vg_p;
-	if (!vg)
+	if (!vg) {
 	    continue;
-	VSUB2(delta, vg->coord, pt);
-	if (MAGSQ(delta) < tol->dist_sq)
+	}
+	if (bn_pt3_pt3_equal(vg->coord, pt, tol)) {
 	    return eu->vu_p;
+	}
     }
 
     return (struct vertexuse *)NULL;
@@ -1704,7 +1705,6 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
     const struct vertexuse *vu;
     struct vertex *v;
     const struct vertex_g *vg;
-    vect_t delta;
 
     NMG_CK_SHELL(s);
     BN_CK_TOL(tol);
@@ -1742,9 +1742,9 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
 	vg = v->vg_p;
 
 	if (vg) {
-	    VSUB2(delta, vg->coord, pt);
-	    if (MAGSQ(delta) <= tol->dist_sq)
+	    if (bn_pt3_pt3_equal(vg->coord, pt, tol)) {
 		return v;
+	    }
 	}
     }
 
@@ -1755,9 +1755,9 @@ nmg_find_pt_in_shell(const struct shell *s, const fastf_t *pt, const struct bn_t
 	vg = v->vg_p;
 
 	if (vg) {
-	    VSUB2(delta, vg->coord, pt);
-	    if (MAGSQ(delta) <= tol->dist_sq)
+	    if (bn_pt3_pt3_equal(vg->coord, pt, tol)) {
 		return v;
+	    }
 	}
     }
     return (struct vertex *)0;
