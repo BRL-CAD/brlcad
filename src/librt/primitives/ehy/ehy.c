@@ -674,7 +674,7 @@ rt_ehy_class(void)
     return 0;
 }
 
-/* Assume the existence of a line and a hyperbola with asymptote at the the
+/* Assume the existence of a line and a hyperbola with asymptote origin at the
  * origin, both in the y-z plane (x = 0.0). The hyperbola and line are
  * described by arguments a, b, and m, from the respective equations
  * (z = +-(a/b) * sqrt(y^2 + b^2)) and (z = my + b).
@@ -693,9 +693,9 @@ rt_ehy_class(void)
  * We calculate y from a, b, and m, and then z from y.
  */
 static void
-parabola_point_farthest_from_line(point_t max_point, fastf_t a, fastf_t b, fastf_t m)
+hyperbola_point_farthest_from_line(point_t max_point, fastf_t a, fastf_t b, fastf_t m)
 {
-    fastf_t y = (m * b * b) / sqrt(a * a - b * b * m * m);
+    fastf_t y = (m * b * b) / sqrt((a * a) - (b * b * m * m));
 
     max_point[X] = 0.0;
     max_point[Y] = y;
@@ -726,7 +726,7 @@ distance_point_to_line(point_t p, fastf_t slope, fastf_t intercept)
  * pts->p: the asymptote origin (0, h, k)
  * pts->next->p: another point on the hyperbola
  * pts->next->next: NULL
- * p: the constant from the above equation
+ * a, b: the constants from the above equation
  *
  * This routine inserts num_new_points points between the two input points to
  * better approximate the hyperbolic curve passing between them.
@@ -751,7 +751,7 @@ approximate_hyperbolic_curve(struct rt_pt_node *pts, fastf_t a, fastf_t b, int n
 	worst_node = node = pts;
 	max_error = 0.0;
 
-	/* Find the least accurate line segment, and calculate a new parabola
+	/* Find the least accurate line segment, and calculate a new hyperbola
 	 * point to insert between it's endpoints.
 	 */
 	while (node->next != NULL) {
@@ -761,14 +761,16 @@ approximate_hyperbolic_curve(struct rt_pt_node *pts, fastf_t a, fastf_t b, int n
 	    seg_slope = (p1[Z] - p0[Z]) / (p1[Y] - p0[Y]);
 	    seg_intercept = p0[Z] - seg_slope * p0[Y];
 
-	    /* get farthest point on the equivalent parabola at the origin */
-	    parabola_point_farthest_from_line(point, a, b, seg_slope);
+	    /* get farthest point on the equivalent hyperbola with asymptote origin at
+	     * the origin
+	     */
+	    hyperbola_point_farthest_from_line(point, a, b, seg_slope);
 
-	    /* translate result to actual parabola position */
+	    /* translate result to actual hyperbola position */
 	    point[Y] += v[Y];
-	    point[Z] += v[Z];
+	    point[Z] += v[Z] - a;
 
-	    /* see if the maximum distance between the parabola and the line
+	    /* see if the maximum distance between the hyperbola and the line
 	     * (the error) is larger than the largest recorded error
 	     * */
 	    error = distance_point_to_line(point, seg_slope, seg_intercept);
@@ -788,6 +790,8 @@ approximate_hyperbolic_curve(struct rt_pt_node *pts, fastf_t a, fastf_t b, int n
 	VMOVE(new_node->p, new_point);
 	new_node->next = worst_node->next;
 	worst_node->next = new_node;
+
+	/* bu_log("%d: inserting %.2f between %.2f and %.2f\n", new_node->p[Z], worst_node->p[Z], new_node->p[Z]); */
     }
 
     return num_new_points;
@@ -827,13 +831,13 @@ ehy_hyperbola_b(fastf_t mag_h, fastf_t c, fastf_t r)
  * equivalent hyperbola in the Y-Z plane, opening toward +Z (-H) with asymptote
  * origin at (0, -(|H| + c)).
  *
- * The part of this parabola that passes between (0, -(|H| + c)) and (r, 0)
+ * The part of this hyperbola that passes between (0, -(|H| + c)) and (r, 0)
  * (r = |A| or |B|) is approximated by num_points points (including (0, -|H|)
  * and (r, 0)).
  *
  * The constructed point list is returned (NULL returned on error). Because the
  * above transformation puts the ehy vertex at the origin and the hyperbola
- * asymptote origin at (0, -|H|), multiplying the z values by -1 gives
+ * asymptote origin at (0, -|H| + c), multiplying the z values by -1 gives
  * corresponding distances along the ehy height vector H.
  */
 static struct rt_pt_node *
@@ -846,7 +850,7 @@ ehy_hyperbolic_curve(fastf_t mag_h, fastf_t c, fastf_t r, int num_points)
     curve->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 
     curve->next->next = NULL;
-    VSET(curve->p,       0, 0, -1.0 * (mag_h + c));
+    VSET(curve->p,       0, 0, -mag_h);
     VSET(curve->next->p, 0, r, 0);
 
     count = approximate_hyperbolic_curve(curve, c, ehy_hyperbola_b(mag_h, c, r), num_points - 2);
@@ -931,6 +935,39 @@ ehy_plot_ellipse(
     }
 }
 
+static void
+ehy_plot_hyperbola(
+	struct bu_list *vhead,
+	struct rt_ehy_internal *ehy,
+	struct rt_pt_node *pts,
+	vect_t Ru,
+	fastf_t r)
+{
+    point_t p;
+    vect_t ehy_V, Hu;
+    fastf_t mag_H, c, z;
+    struct rt_pt_node *node;
+
+    VMOVE(ehy_V, ehy->ehy_V);
+    mag_H = MAGNITUDE(ehy->ehy_H);
+    VSCALE(Hu, ehy->ehy_H, 1.0 / mag_H);
+    c = ehy->ehy_c;
+
+    z = pts->p[Z];
+    VJOIN2(p, ehy_V, ehy_hyperbola_y(mag_H, c, r, -z), Ru, -z, Hu);
+    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+
+    node = pts->next;
+    while (node != NULL) {
+	z = node->p[Z];
+	VJOIN2(p, ehy_V, ehy_hyperbola_y(mag_H, c, r, -z), Ru, -z, Hu);
+
+	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+
+	node = node->next;
+    }
+}
+
 int
 rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
@@ -984,6 +1021,11 @@ rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	node1 = node1->next;
 	node2 = node2->next;
     }
+
+    ehy_plot_hyperbola(info->vhead, ehy, pts_r1, Au, r1);
+    ehy_plot_hyperbola(info->vhead, ehy, pts_r1, Au, -r1);
+    ehy_plot_hyperbola(info->vhead, ehy, pts_r1, Bu, r2);
+    ehy_plot_hyperbola(info->vhead, ehy, pts_r1, Bu, -r2);
 
     node1 = pts_r1;
     node2 = pts_r2;
