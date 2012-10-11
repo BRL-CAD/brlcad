@@ -2423,8 +2423,9 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
     NMG_CK_FACEUSE(fu2);
     NMG_CK_INTER_STRUCT(is);
 
-    if (rt_g.NMG_debug & DEBUG_POLYSECT)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT)) {
 	bu_log("nmg_isect_two)face2p_jra: fu1=x%x, fu2=x%x\n", fu1, fu2);
+    }
 
     nmg_coplanar_face_vertex_fuse(fu1, fu2, &is->tol);
 
@@ -2442,7 +2443,6 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 	mag1[i] = MAX_FASTF;
 	mag2[i] = MAX_FASTF;
     }
-
 
     is->s1 = fu1->s_p;
     is->s2 = fu2->s_p;
@@ -2587,7 +2587,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		if (ZERO(dist[0]) || EQUAL(dist[0], 1.0)) {
 		    /* eu1 was hit on a vertex, nothing to cut */
 		    continue;
-		} else if ((dist[0] < -SMALL_FASTF) || (dist[0] > opsff)) {
+		} else if (UNLIKELY((dist[0] < -SMALL_FASTF) || (dist[0] > opsff))) {
 		    bu_bomb("nmg_isect_two_face2p_jra(): dist[0] not within 0-1\n");
 		} else {
 		    hit_count = 1;
@@ -2597,41 +2597,39 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 	    for (hit_no=0; hit_no < hit_count; hit_no++) {
 		struct edgeuse *new_eu;
 		struct vertex *hitv;
-		struct vertexuse *hit_vu = NULL;
+		struct vertexuse *hit_vu;
 
 		if (dist[hit_no] < -SMALL_FASTF || dist[hit_no] > opsff)
 		    continue;
 
 		hitv = (struct vertex *)NULL;
-
 		if (ZERO(dist[hit_no])) {
-		    hit_vu = eu1->vu_p;
-		    hitv = hit_vu->v_p;
+		    hitv = eu1->vu_p->v_p;
 		    VMOVE(hit_pt, hitv->vg_p->coord);
 		} else if (EQUAL(dist[hit_no], 1.0)) {
-		    hit_vu = eu1->eumate_p->vu_p;
-		    hitv = hit_vu->v_p;
+		    hitv = eu1->eumate_p->vu_p->v_p;
 		    VMOVE(hit_pt, hitv->vg_p->coord);
-		} else
+		} else {
 		    VJOIN1(hit_pt, vg1a->coord, dist[hit_no], vt1_3d)
-
-			if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			    bu_log("eus x%x and x%x intersect #%d at (%f %f %f)\n",
-				   eu1, eu2, hit_no, V3ARGS(hit_pt));
-
-		if (!hit_vu)
-		    hit_vu = nmg_find_pt_in_face(fu2, hit_pt, &is->tol);
-
-		if (!hit_vu)
-		    hitv = nmg_find_pt_in_model(nmg_find_model(&fu1->l.magic), hit_pt, &is->tol);
-#if 1
-		if (!hit_vu && (code == 0)) {
-		    bu_log("dist[0] = %f dist[1] = %f hit_no = %d\n", dist[0], dist[1], hit_no);
-		    bu_bomb("nmg_isect_two_face2p_jra(): why can we not find a vertexuse\n");
+		    if ((hit_vu = nmg_find_pt_in_face(fu2, hit_pt, &is->tol))) {
+			hitv = hit_vu->v_p;
+		    } else if ((hit_vu = nmg_find_pt_in_face(fu1, hit_pt, &is->tol))) {
+			hitv = hit_vu->v_p;
+		    } else {
+			hitv = nmg_find_pt_in_model(nmg_find_model(&fu1->l.magic), hit_pt, &is->tol);
+		    }
+		    if (UNLIKELY(!hitv && (code == 0))) {
+			bu_log("dist[0] = %f dist[1] = %f hit_no = %d\n", dist[0], dist[1], hit_no);
+			bu_bomb("nmg_isect_two_face2p_jra(): Can not find vertexuse");
+		    }
 		}
-#endif
-		if (rt_g.NMG_debug & DEBUG_POLYSECT && hitv)
+		if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT)) {
+		    bu_log("eus x%x and x%x intersect #%d at (%f %f %f)\n",
+			   eu1, eu2, hit_no, V3ARGS(hit_pt));
+		}
+		if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT && hitv)) {
 		    bu_log("Found vertex (x%x) at hit_pt\n", hitv);
+		}
 
 		if (hitv != eu1->vu_p->v_p && hitv != eu1->eumate_p->vu_p->v_p) {
 		    struct edgeuse *next_eu, *prev_eu;
@@ -2640,8 +2638,9 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    prev_eu = BU_LIST_PPREV_CIRC(edgeuse, &eu1->l);
 
 		    if (hitv != prev_eu->vu_p->v_p && hitv != next_eu->eumate_p->vu_p->v_p) {
-			if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT)) {
 			    bu_log("Splitting eu1 x%x\n", eu1);
+			}
 			new_eu = nmg_esplit(hitv, eu1, 1);
 			hitv = new_eu->vu_p->v_p;
 			if (!hitv->vg_p)
@@ -2657,7 +2656,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    prev_eu = BU_LIST_PPREV_CIRC(edgeuse, &eu2->l);
 
 		    if (hitv != prev_eu->vu_p->v_p && hitv != next_eu->eumate_p->vu_p->v_p) {
-			if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+			if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT)) {
 			    vect_t tmp1, tmp2;
 			    VSUB2(tmp1, hit_pt, eu2->vu_p->v_p->vg_p->coord)
 				VSUB2(tmp2, hit_pt, eu2->eumate_p->vu_p->v_p->vg_p->coord)
@@ -2704,8 +2703,9 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 				       (char *)NULL, 0, 0, &is->tol);
 
 	if (class == NMG_CLASS_AinB) {
-	    if (rt_g.NMG_debug & DEBUG_POLYSECT)
+	    if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT)) {
 		bu_log("Making dualvu of vertex x%x in fu2 x%x\n", v, fu2);
+	    }
 	    (void)nmg_make_dualvu(v, fu2, &is->tol);
 	}
     }
@@ -2729,8 +2729,9 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 				       (char *)NULL, 0, 0, &is->tol);
 
 	if (class == NMG_CLASS_AinB) {
-	    if (rt_g.NMG_debug & DEBUG_POLYSECT)
+	    if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT)) {
 		bu_log("Making dualvu of vertex x%x in fu1 x%x\n", v, fu1);
+	    }
 	    (void)nmg_make_dualvu(v, fu1, &is->tol);
 	}
     }
@@ -2765,8 +2766,9 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		!nmg_find_v_in_face(v2, fu2))
 		continue;
 
-	    if (rt_g.NMG_debug & DEBUG_POLYSECT)
+	    if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT)) {
 		bu_log("Making EU x%x an intersect line for face cutting\n", eu);
+	    }
 
 	    for (BU_LIST_FOR(vu, vertexuse, &v1->vu_hd)) {
 		struct faceuse *fu;
@@ -2787,8 +2789,9 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 	    }
 
 	    /* Now do face cutting */
-	    if (rt_g.NMG_debug & DEBUG_POLYSECT)
+	    if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT)) {
 		bu_log("Calling face cutter for fu2 x%x\n", fu2);
+	    }
 	    nmg_fcut_face_2d(is->l2, is->mag2, fu2, fu1, &is->tol);
 
 	    bu_ptbl_reset(is->l1);
@@ -2819,8 +2822,9 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		!nmg_find_v_in_face(v2, fu1))
 		continue;
 
-	    if (rt_g.NMG_debug & DEBUG_POLYSECT)
+	    if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT)) {
 		bu_log("Making EU x%x an intersect line for face cutting\n", eu);
+	    }
 
 	    for (BU_LIST_FOR(vu, vertexuse, &v1->vu_hd)) {
 		struct faceuse *fu;
@@ -2841,8 +2845,9 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 	    }
 
 	    /* Now do face cutting */
-	    if (rt_g.NMG_debug & DEBUG_POLYSECT)
+	    if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT)) {
 		bu_log("Calling face cutter for fu1 x%x\n", fu1);
+	    }
 	    nmg_fcut_face_2d(is->l1, is->mag1, fu1, fu2, &is->tol);
 
 	    bu_ptbl_reset(is->l1);
