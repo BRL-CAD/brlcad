@@ -35,6 +35,7 @@ void plot_face(ON_3dPoint *pt1, ON_3dPoint *pt2, ON_3dPoint *pt3, int r, int g, 
 struct Mesh_Info {
     ON_3dPointArray points_p0;
     ON_3dPointArray points_q;
+    ON_3dPointArray points_inf;
     std::map<size_t, size_t> iteration_of_insert;
     std::map<size_t, std::vector<size_t> > face_pts;
     std::map<size_t, size_t> index_in_next;
@@ -44,15 +45,28 @@ struct Mesh_Info {
     size_t iteration_cnt;
 };
 
+// Kobbelt sqrt(3)-Subdivision, eqn. 1
+void find_q_pts(struct Mesh_Info *mesh) {
+    std::map<size_t, std::vector<size_t> >::iterator f_it;
+    std::vector<size_t>::iterator l_it;
+    for(f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
+	ON_3dPoint p1, p2, p3;
+        l_it = (*f_it).second.begin();
+	p1 = *mesh->points_p0.At((*l_it));
+	p2 = *mesh->points_p0.At((*(l_it+1)));
+	p3 = *mesh->points_p0.At((*(l_it+2)));
+	ON_3dPoint q((p1.x + p2.x + p3.x)/3, (p1.y + p2.y + p3.y)/3, (p1.z + p2.z + p3.z)/3);
+	mesh->points_q.Append(q);
+    }
+}
+
+// Kobbelt sqrt(3)-Subdivision, eqn. 6
 fastf_t alpha_n(size_t n) {
     return (4 - 2 * cos(2*M_PI/n))/9;
 }
 
-fastf_t beta_n_m(size_t n, size_t m) {
-    return (3 * alpha_n(n) - 3 * alpha_n(n) * pow((2/3 - alpha_n(n)), m))/(1+3*alpha_n(n));
-}
-
-void point_subdiv(size_t m, size_t p, struct Mesh_Info *mesh, ON_3dPointArray *p_a) {
+// From Kobbelt sqrt(3)-Subdivision, eqns 7 and 8, solving for pinf
+void point_inf(size_t p, struct Mesh_Info *mesh, ON_3dPointArray *p_a) {
      size_t n = mesh->point_valence[p];
      std::multimap<size_t, size_t>::iterator p_it;
      std::pair<std::multimap<size_t, size_t>::iterator, std::multimap<size_t, size_t>::iterator> range;
@@ -61,8 +75,22 @@ void point_subdiv(size_t m, size_t p, struct Mesh_Info *mesh, ON_3dPointArray *p
      for(p_it = range.first; p_it != range.second; p_it++) {
         psum = psum + *mesh->points_p0.At((*p_it).second);
      } 
-     fastf_t beta = beta_n_m(n, m);
-     ON_3dPoint subdiv_pt = (1 - beta) * *mesh->points_p0.At(p) + beta * 1/n * psum;
+     fastf_t alpha = alpha_n(n);
+     //
+     //                            3 an                 1
+     //                 [pinf = ---------- * psum + -------- * p0]
+     //                         3 an n + n          3 an + 1
+     //
+     ON_3dPoint pinf = (3*alpha/((3*alpha+1)*n))*psum + 1/(3*alpha+1) * *mesh->points_p0.At(p);
+     p_a->Append(pinf);
+}
+
+// Kobbelt sqrt(3)-Subdivision, eqn. 8
+void point_subdiv(size_t m, size_t p, struct Mesh_Info *mesh, ON_3dPointArray *p_a) {
+     size_t n = mesh->point_valence[p];
+     point_inf(p, mesh, &mesh->points_inf);
+     fastf_t gamma = pow((2/3 - alpha_n(n)),m);
+     ON_3dPoint subdiv_pt = gamma * *mesh->points_p0.At(p) + (1-gamma) * *mesh->points_inf.At(p);
      p_a->Append(subdiv_pt);
 }
 
@@ -112,20 +140,6 @@ void get_all_edges(struct Mesh_Info *mesh, std::set<std::pair<size_t, size_t> > 
         edges->insert(mk_edge((*l_it), (*(l_it+1))));
         edges->insert(mk_edge((*(l_it+1)), (*(l_it+2))));
         edges->insert(mk_edge((*(l_it+2)), (*l_it)));
-    }
-}
-
-void find_q_pts(struct Mesh_Info *mesh) {
-    std::map<size_t, std::vector<size_t> >::iterator f_it;
-    std::vector<size_t>::iterator l_it;
-    for(f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
-	ON_3dPoint p1, p2, p3;
-        l_it = (*f_it).second.begin();
-	p1 = *mesh->points_p0.At((*l_it));
-	p2 = *mesh->points_p0.At((*(l_it+1)));
-	p3 = *mesh->points_p0.At((*(l_it+2)));
-	ON_3dPoint q((p1.x + p2.x + p3.x)/3, (p1.y + p2.y + p3.y)/3, (p1.z + p2.z + p3.z)/3);
-	mesh->points_q.Append(q);
     }
 }
 
@@ -237,7 +251,7 @@ int main(int argc, char *argv[])
     }
     RT_BOT_CK_MAGIC(bot_ip);
 
-    for (size_t i_cnt = 1; i_cnt < 4; i_cnt++) {
+    for (size_t i_cnt = 1; i_cnt < 7; i_cnt++) {
 	struct bu_vls fname;
 	bu_vls_init(&fname);
 	bu_vls_printf(&fname, "root3_%d.pl", i_cnt);
@@ -282,8 +296,11 @@ int main(int argc, char *argv[])
         faces[(*f_it).first*3+2] = (*(l_it + 2));
     }
 
-    mk_bot(wdbp, "sph_refined.bot", RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, mesh->points_p0.Count(), mesh->face_pts.size(), vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
+    bu_vls_init(&bname);
+    bu_vls_sprintf(&bname, "%s_subd", argv[2]);
+    mk_bot(wdbp, bu_vls_addr(&bname), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, mesh->points_p0.Count(), mesh->face_pts.size(), vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
     wdb_close(wdbp);
+    bu_vls_free(&bname);
 
     return 0;
 }
