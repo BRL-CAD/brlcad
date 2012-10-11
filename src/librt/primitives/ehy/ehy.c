@@ -187,8 +187,6 @@ const struct bu_structparse rt_ehy_parse[] = {
 
 
 static int ehy_is_valid(struct rt_ehy_internal *ehy);
-static fastf_t ehy_dtol(const struct rt_ehy_internal *ehy,
-	const struct rt_tess_tol *ttol);
 
 /**
  * R T _ E H Y _ B B O X
@@ -963,7 +961,6 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     VREVERSE(&R[8], Hu);
     bn_mat_trn(invR, R);			/* inv of rot mat is trn */
 
-    dtol = ehy_dtol(xip, ttol);
     dtol = primitive_get_absolute_tolerance(ttol, 2.0 * xip->ehy_r2);
 
     /* stay below ntol to ensure normal tolerance */
@@ -1983,32 +1980,6 @@ ehy_is_valid(struct rt_ehy_internal *ehy)
     }
 
     return 1;
-}
-
-static fastf_t
-ehy_dtol(const struct rt_ehy_internal *ehy, const struct rt_tess_tol *ttol)
-{
-    fastf_t dtol, rel_tol, abs_tol;
-    int rel_tol_is_valid;
-
-    rel_tol = ttol->rel;
-    abs_tol = ttol->abs;
-
-    rel_tol_is_valid = 0;
-    if (rel_tol > 0.0 && rel_tol < 1.0) {
-	rel_tol_is_valid = 1;
-    }
-
-    if (abs_tol > 0.0 && (!rel_tol_is_valid || rel_tol > abs_tol)) {
-	dtol = abs_tol;
-    } else {
-	if (!rel_tol_is_valid) {
-	    rel_tol = .1; /* default */
-	}
-	dtol = 2.0 * rel_tol * ehy->ehy_r2;
-    }
-
-    return dtol;
 }
 
 /** @} */
