@@ -7417,22 +7417,23 @@ out:
 void
 nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 {
+    struct bu_ptbl faces1, faces2;
     struct bu_ptbl vert_list1, vert_list2;
     struct nmg_inter_struct is;
-    struct shell_a *sa1, *sa2;
-    struct face *f1, *f2;
+    struct edgeuse *eu1, *eu2;
+    struct loopuse *lu1, *lu2;
     struct faceuse *fu1, *fu2;
-    struct loopuse *lu1;
-    struct loopuse *lu2;
-    struct edgeuse *eu1;
-    struct edgeuse *eu2;
-    struct model *m;
-    char *flags, *tmp;
-    size_t flag_len, old_flag_len;
+    struct face *fp1, *fp2;
+    struct shell_a *sa1, *sa2;
+    size_t i, j;
     point_t isect_min_pt, isect_max_pt;
 
-    if (rt_g.NMG_debug & DEBUG_POLYSECT)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_POLYSECT)) {
 	bu_log("nmg_crackshells(s1=x%x, s2=x%x)\n", s1, s2);
+    }
+
+    /* initialize 'is' structure */
+    memset((void *)&is, 0, sizeof(struct nmg_inter_struct));
 
     BN_CK_TOL(tol);
     NMG_CK_SHELL(s1);
@@ -7443,16 +7444,11 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
     sa2 = s2->sa_p;
     NMG_CK_SHELL_A(sa2);
 
-    if (s1->r_p->m_p != s2->r_p->m_p) {
-	bu_bomb("nmg_crackshells(): shells are not in the same model\n");
+    if (UNLIKELY(s1->r_p->m_p != s2->r_p->m_p)) {
+	bu_bomb("nmg_crackshells(): shells are not in the same model");
     }
 
-    NMG_CK_REGION(s1->r_p);
-    NMG_CK_REGION(s2->r_p);
-    m = s1->r_p->m_p;
-    NMG_CK_MODEL(m);
-
-    if (rt_g.NMG_debug & DEBUG_VERIFY) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_VERIFY)) {
 	nmg_ck_vs_in_region(s1->r_p, tol);
 	nmg_ck_vs_in_region(s2->r_p, tol);
     }
@@ -7461,6 +7457,11 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
     if (V3RPP_DISJOINT_TOL(sa1->min_pt, sa1->max_pt, sa2->min_pt, sa2->max_pt, tol->dist)) {
 	return;
     }
+
+    bu_ptbl_init(&faces1, 64, "faces1 buffer");
+    bu_ptbl_init(&faces2, 64, "faces2 buffer");
+    nmg_face_tabulate(&faces1, &s1->l.magic);
+    nmg_face_tabulate(&faces2, &s2->l.magic);
 
     /* create a new bounding box which is the intersection
      * of the shell s1 and s2 bounding boxes
@@ -7473,85 +7474,47 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
     /* All the non-face/face isect subroutines need are tol, l1, and l2 */
     is.magic = NMG_INTER_STRUCT_MAGIC;
     is.vert2d = (fastf_t *)NULL;
-    is.tol = *tol;		/* struct copy */
+    is.tol = *tol; /* struct copy */
     is.l1 = &vert_list1;
     is.l2 = &vert_list2;
     is.s1 = s1;
     is.s2 = s2;
     is.fu1 = (struct faceuse *)NULL;
     is.fu2 = (struct faceuse *)NULL;
+
     (void)bu_ptbl_init(&vert_list1, 64, "&vert_list1");
     (void)bu_ptbl_init(&vert_list2, 64, "&vert_list2");
 
-    if (rt_g.NMG_debug & DEBUG_VERIFY) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_VERIFY)) {
 	nmg_vshell(&s1->r_p->s_hd, s1->r_p);
 	nmg_vshell(&s2->r_p->s_hd, s2->r_p);
     }
 
-    flag_len = m->maxindex * 2;
-    flags = (char *)bu_calloc(flag_len, sizeof(char), "nmg_crackshells flags[]");
-
-    /*
-     * Check each of the faces in shell 1 to see
-     * if they overlap the extent of shell 2
-     */
-    for (BU_LIST_FOR(fu1, faceuse, &s1->fu_hd)) {
-	if ((size_t)(m->maxindex) >= flag_len) {
-	    old_flag_len = flag_len;
-	    flag_len *= 2;
-	    tmp = (char *)bu_realloc(flags, flag_len * sizeof(char), "realloc nmg_crackshells flags[]");
-	    flags = tmp;
-	    /* initialize new space */
-	    memset((char *)(flags + (old_flag_len * sizeof(char))), 0, (flag_len - old_flag_len) * sizeof(char));
-	}
+    for (i = 0; i < (size_t)BU_PTBL_END(&faces1); i++) {
+	fp1 = (struct face *)BU_PTBL_GET(&faces1, i);
+	NMG_CK_FACE(fp1);
+	fu1 = fp1->fu_p;
 	NMG_CK_FACEUSE(fu1);
-	f1 = fu1->f_p;
-	NMG_CK_FACE(f1);
 
-	if (fu1->orientation != OT_SAME) continue;
-	if (NMG_INDEX_IS_SET(flags, f1)) continue;
-	NMG_CK_FACE_G_PLANE(f1->g.plane_p);
-
-	/* test if the face f1 bounding box and isect bounding box
-	 * are disjoint by at least distance tolerance
-	 */
-	if (V3RPP_DISJOINT_TOL(f1->min_pt, f1->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
-	    NMG_INDEX_SET(flags, f1);
+	if (fu1->orientation == OT_OPPOSITE) {
+	    fu1 = fu1->fumate_p;
+	}
+	if (V3RPP_DISJOINT_TOL(fp1->min_pt, fp1->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
 	    continue;
 	}
 
-	is.fu1 = fu1;
-
-	/*
-	 * Now, check the face f1 from shell 1
-	 * against each of the faces of shell 2
-	 */
-	for (BU_LIST_FOR(fu2, faceuse, &s2->fu_hd)) {
-	    if ((size_t)(m->maxindex) >= flag_len) {
-		old_flag_len = flag_len;
-		flag_len *= 2;
-		tmp = (char *)bu_realloc(flags, flag_len * sizeof(char), "realloc nmg_crackshells flags[]");
-		flags = tmp;
-		/* initialize new space */
-		memset((char *)(flags + (old_flag_len * sizeof(char))), 0, (flag_len - old_flag_len) * sizeof(char));
-	    }
+	for (j = 0; j < (size_t)BU_PTBL_END(&faces2); j++) {
+	    fp2 = (struct face *)BU_PTBL_GET(&faces2, j);
+	    NMG_CK_FACE(fp2);
+	    fu2 = fp2->fu_p;
 	    NMG_CK_FACEUSE(fu2);
-	    NMG_CK_FACE(fu2->f_p);
 
-	    f2 = fu2->f_p;
-	    NMG_CK_FACE(f2);
-
-	    if (fu2->orientation != OT_SAME) continue;
-	    if (NMG_INDEX_IS_SET(flags, f2)) continue;
-
-	    /* test if the face f2 bounding box and isect bounding box
-	     * are disjoint by at least distance tolerance
-	     */
-	    if (V3RPP_DISJOINT_TOL(f2->min_pt, f2->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
-		NMG_INDEX_SET(flags, f2);
+	    if (fu2->orientation == OT_OPPOSITE) {
+		fu2 = fu2->fumate_p;
+	    }
+	    if (V3RPP_DISJOINT_TOL(fp2->min_pt, fp2->max_pt, isect_min_pt, isect_max_pt, tol->dist)) {
 		continue;
 	    }
-
 	    nmg_isect_two_generic_faces(fu1, fu2, tol);
 	}
 
@@ -7566,6 +7529,8 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	 * If coplanar, need to cut face.
 	 * If non-coplanar, can only hit at one point.
 	 */
+ 
+	is.fu1 = fu1;
 	is.fu2 = (struct faceuse *)NULL;
 
 	/* Check f1 from s1 against wire loops of s2 */
@@ -7574,30 +7539,29 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	    /* Not interested in vert_list here */
 	    (void)nmg_isect_wireloop3p_face3p(&is, lu2, fu1);
 	}
-
 	/* Check f1 from s1 against wire edges of s2 */
 	for (BU_LIST_FOR(eu2, edgeuse, &s2->eu_hd)) {
 	    NMG_CK_EDGEUSE(eu2);
-
 	    nmg_isect_wireedge3p_face3p(&is, eu2, fu1);
 	}
-
 	/* Check f1 from s1 against lone vert of s2 */
 	if (s2->vu_p) {
 	    nmg_isect_3vertex_3face(&is, s2->vu_p, fu1);
 	}
 
-	NMG_INDEX_SET(flags, f1);
-
-	if (rt_g.NMG_debug & DEBUG_VERIFY) {
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_VERIFY)) {
 	    nmg_vshell(&s1->r_p->s_hd, s1->r_p);
 	    nmg_vshell(&s2->r_p->s_hd, s2->r_p);
 	}
     }
 
-    /* Check each wire loop of shell 1 against non-faces of shell 2. */
+    bu_ptbl_free(&faces1);
+    bu_ptbl_free(&faces2);
+
     is.fu1 = (struct faceuse *)NULL;
     is.fu2 = (struct faceuse *)NULL;
+
+    /* Check each wire loop of shell 1 against non-faces of shell 2. */
     for (BU_LIST_FOR(lu1, loopuse, &s1->lu_hd)) {
 	NMG_CK_LOOPUSE(lu1);
 	/* XXX Can there be lone-vertex loops here? (yes, need an intersector) */
@@ -7644,20 +7608,10 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	/* Check vert of s1 against vert of s2 */
 	/* Unnecessary: already done by vertex fuser */
     }
-    if ((size_t)(m->maxindex) >= flag_len) {
-	old_flag_len = flag_len;
-	flag_len *= 2;
-	tmp = (char *)bu_realloc(flags, flag_len * sizeof(char), "realloc nmg_crackshells flags[]");
-	flags = tmp;
-	/* initialize new space */
-	memset((char *)(flags + (old_flag_len * sizeof(char))), 0, (flag_len - old_flag_len) * sizeof(char));
-    }
 
     /* Release storage from bogus isect line */
     (void)bu_ptbl_free(&vert_list1);
     (void)bu_ptbl_free(&vert_list2);
-
-    bu_free((char *)flags, "nmg_crackshells flags[]");
 
     /* Eliminate stray vertices that were added along edges in this step */
     (void)nmg_unbreak_region_edges(&s1->l.magic);
@@ -7665,7 +7619,7 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 
     nmg_isect2d_cleanup(&is);
 
-    if (rt_g.NMG_debug & DEBUG_VERIFY) {
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_VERIFY)) {
 	nmg_vshell(&s1->r_p->s_hd, s1->r_p);
 	nmg_vshell(&s2->r_p->s_hd, s2->r_p);
 	nmg_ck_vs_in_region(s1->r_p, tol);
