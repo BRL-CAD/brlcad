@@ -160,6 +160,7 @@
 
 #include "../../librt_private.h"
 
+static int epa_is_valid(struct rt_epa_internal *epa);
 
 struct epa_specific {
     point_t epa_V;		/* vector to epa origin */
@@ -260,7 +261,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     fastf_t magsq_h;
     fastf_t mag_a, mag_h;
-    fastf_t f, r1, r2;
+    fastf_t r1, r2;
     mat_t R;
     mat_t Rinv;
     mat_t S;
@@ -268,25 +269,16 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_CK_DB_INTERNAL(ip);
 
     xip = (struct rt_epa_internal *)ip->idb_ptr;
-    RT_EPA_CK_MAGIC(xip);
+    if (!epa_is_valid(xip)) {
+	return 1;
+    }
 
     /* compute |A| |H| */
     mag_a = sqrt(MAGSQ(xip->epa_Au));
     mag_h = sqrt(magsq_h = MAGSQ(xip->epa_H));
     r1 = xip->epa_r1;
     r2 = xip->epa_r2;
-    /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0 */
-    if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
-	|| r1 < 0.0 || r2 < 0.0) {
-	return 1;		/* BAD, too small */
-    }
 
-    /* Check for A.H == 0 */
-    f = VDOT(xip->epa_Au, xip->epa_H) / mag_h;
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return 1;		/* BAD */
-    }
 
     /*
      * EPA is ok
@@ -827,8 +819,11 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
+
     epa = (struct rt_epa_internal *)ip->idb_ptr;
-    RT_EPA_CK_MAGIC(epa);
+    if (!epa_is_valid(epa)) {
+	return -2;
+    }
 
     VMOVE(epa_H, epa->epa_H);
 
@@ -888,7 +883,7 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 int
 rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
-    fastf_t dtol, f, mag_a, mag_h, ntol, r1, r2;
+    fastf_t dtol, mag_a, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_new, theta_prev;
     int *pts_dbl, i, j, nseg;
     int jj, na, nb, nell, recalc_b;
@@ -901,30 +896,17 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    xip = (struct rt_epa_internal *)ip->idb_ptr;
-    RT_EPA_CK_MAGIC(xip);
 
-    /*
-     * make sure epa description is valid
-     */
+    xip = (struct rt_epa_internal *)ip->idb_ptr;
+    if (!epa_is_valid(xip)) {
+	return -2;
+    }
 
     /* compute |A| |H| */
     mag_a = MAGSQ(xip->epa_Au);	/* should already be unit vector */
     mag_h = MAGNITUDE(xip->epa_H);
     r1 = xip->epa_r1;
     r2 = xip->epa_r2;
-    /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0 */
-    if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
-	|| r1 <= 0.0 || r2 <= 0.0) {
-	return -2;		/* BAD */
-    }
-
-    /* Check for A.H == 0 */
-    f = VDOT(xip->epa_Au, xip->epa_H) / mag_h;
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return -2;		/* BAD */
-    }
 
     /* make unit vectors in A, H, and BxH directions */
     VMOVE(Hu, xip->epa_H);
@@ -1191,7 +1173,7 @@ rt_ell(fastf_t *ov, const fastf_t *V, const fastf_t *A, const fastf_t *B, int si
 int
 rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    fastf_t dtol, f, mag_a, mag_h, ntol, r1, r2;
+    fastf_t dtol, mag_a, mag_h, ntol, r1, r2;
     fastf_t **ellipses, **normals, theta_new, theta_prev;
     int *pts_dbl, face, i, j, nseg;
     int *segs_per_ell;
@@ -1213,30 +1195,18 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct faceuse *fu;
 
     RT_CK_DB_INTERNAL(ip);
-    xip = (struct rt_epa_internal *)ip->idb_ptr;
-    RT_EPA_CK_MAGIC(xip);
 
-    /*
-     * make sure epa description is valid
-     */
+    xip = (struct rt_epa_internal *)ip->idb_ptr;
+    if (!epa_is_valid(xip)) {
+	return -2;
+    }
 
     /* compute |A| |H| */
     mag_a = MAGSQ(xip->epa_Au);	/* should already be unit vector */
     mag_h = MAGNITUDE(xip->epa_H);
     r1 = xip->epa_r1;
     r2 = xip->epa_r2;
-    /* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0 */
-    if (NEAR_ZERO(mag_h, RT_LEN_TOL)
-	|| !NEAR_EQUAL(mag_a, 1.0, RT_LEN_TOL)
-	|| r1 <= 0.0 || r2 <= 0.0) {
-	return -2;		/* BAD */
-    }
 
-    /* Check for A.H == 0 */
-    f = VDOT(xip->epa_Au, xip->epa_H) / mag_h;
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return -2;		/* BAD */
-    }
 
     /* make unit vectors in A, H, and BxH directions */
     VMOVE(Hu, xip->epa_H);
@@ -1982,6 +1952,42 @@ rt_epa_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     *area = 2.0/3.0 * M_PI * xip->epa_r1 * xip->epa_r2 * (m + (1.0 / (m + 1.0)));
 }
 
+static int
+epa_is_valid(struct rt_epa_internal *epa)
+{
+    fastf_t mag_h, cos_angle_ah;
+    vect_t epa_H, epa_Au;
+
+    RT_EPA_CK_MAGIC(epa);
+
+    if (!(epa->epa_r1 > 0.0 && epa->epa_r2 > 0.0)) {
+	return 0;
+    }
+
+    VMOVE(epa_H, epa->epa_H);
+    VMOVE(epa_Au, epa->epa_Au);
+
+    /* Check that Au is a unit vector. If it is, then it should be true that
+     * |Au| == |Au|^2 == 1.0.
+     */
+    if (!NEAR_EQUAL(MAGSQ(epa_Au), 1.0, RT_LEN_TOL)) {
+	return 0;
+    }
+
+    /* check that |H| > 0.0 */
+    mag_h = MAGNITUDE(epa_H);
+    if (NEAR_ZERO(mag_h, RT_LEN_TOL)) {
+	return 0;
+    }
+
+    /* check that A and H are orthogonal */
+    cos_angle_ah = VDOT(epa_Au, epa_H) / mag_h;
+    if (!NEAR_ZERO(cos_angle_ah, RT_DOT_TOL)) {
+	return 0;
+    }
+
+    return 1;
+}
 
 /** @} */
 /*
