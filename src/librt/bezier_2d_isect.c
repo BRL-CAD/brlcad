@@ -53,7 +53,7 @@
  */
 int CrossingCount(
     point2d_t *V,		/* 2D Control pts of Bezier curve */
-    int degree,                 /* Degreee of Bezier curve */
+    int degree,                 /* Degree of Bezier curve */
     point2d_t ray_start,	/* starting point for ray */
     point2d_t ray_perp)		/* unit vector perpendicular to ray direction */
 {
