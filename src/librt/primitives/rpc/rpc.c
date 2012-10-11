@@ -173,6 +173,7 @@
 
 #include "../../librt_private.h"
 
+static int rpc_is_valid(struct rt_rpc_internal *rpc);
 
 struct rpc_specific {
     point_t rpc_V;		/* vector to rpc origin */
@@ -270,7 +271,6 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     fastf_t magsq_b, magsq_h, magsq_r;
     fastf_t mag_b, mag_h, mag_r;
-    fastf_t f;
     mat_t R;
     mat_t Rinv;
     mat_t S;
@@ -279,7 +279,9 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_CK_DB_INTERNAL(ip);
 
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
-    RT_RPC_CK_MAGIC(xip);
+    if (!rpc_is_valid(xip)) {
+	return 1;
+    }
 
     /* compute |B| |H| */
     mag_b = sqrt(magsq_b = MAGSQ(xip->rpc_B));
@@ -287,21 +289,6 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     mag_r = xip->rpc_r;
     magsq_r = mag_r * mag_r;
 
-    /* Check for |H| > 0, |B| > 0, |R| > 0 */
-    if (NEAR_ZERO(mag_h, RT_LEN_TOL) || NEAR_ZERO(mag_b, RT_LEN_TOL)
-	|| NEAR_ZERO(mag_r, RT_LEN_TOL)) {
-	return 1;		/* BAD, too small */
-    }
-
-    /* Check for B.H == 0 */
-    f = VDOT(xip->rpc_B, xip->rpc_H) / (mag_b * mag_h);
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return 1;		/* BAD */
-    }
-
-    /*
-     * RPC is ok
-     */
     stp->st_id = ID_RPC;		/* set soltab ID */
     stp->st_meth = &rt_functab[ID_RPC];
 
@@ -680,34 +667,23 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     struct rt_rpc_internal *xip;
     fastf_t *front;
     fastf_t *back;
-    fastf_t b, dtol, f, h, ntol, rh;
+    fastf_t b, dtol, h, ntol, rh;
     int i, n;
     struct rt_pt_node *old, *pos, *pts;
     vect_t Bu, Hu, Ru, B, R;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
-    RT_RPC_CK_MAGIC(xip);
+    if (!rpc_is_valid(xip)) {
+	return -2;
+    }
 
     /* compute |B| |H| */
     b = MAGNITUDE(xip->rpc_B);	/* breadth */
     rh = xip->rpc_r;		/* rectangular halfwidth */
     h = MAGNITUDE(xip->rpc_H);	/* height */
-
-    /* Check for |H| > 0, |B| > 0, |R| > 0 */
-    if (NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
-	|| NEAR_ZERO(rh, RT_LEN_TOL)) {
-	bu_log("rt_rpc_plot():  zero length H, B, or rh\n");
-	return -2;		/* BAD */
-    }
-
-    /* Check for B.H == 0 */
-    f = VDOT(xip->rpc_B, xip->rpc_H) / (b * h);
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	bu_log("rt_rpc_plot(): B not perpendicular to H, f=%f\n", f);
-	return -3;		/* BAD */
-    }
 
     /* make unit vectors in B, H, and BxH directions */
     VMOVE(Hu, xip->rpc_H);
@@ -867,7 +843,7 @@ int
 rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     int i, j, n;
-    fastf_t b, *back, f, *front, h, rh;
+    fastf_t b, *back, *front, h, rh;
     fastf_t dtol, ntol;
     vect_t Bu, Hu, Ru;
     mat_t R;
@@ -885,27 +861,16 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     RT_CK_TESS_TOL(ttol);
 
     RT_CK_DB_INTERNAL(ip);
+
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
-    RT_RPC_CK_MAGIC(xip);
+    if (!rpc_is_valid(xip)) {
+	return -2;
+    }
 
     /* compute |B| |H| */
     b = MAGNITUDE(xip->rpc_B);	/* breadth */
     rh = xip->rpc_r;		/* rectangular halfwidth */
     h = MAGNITUDE(xip->rpc_H);	/* height */
-
-    /* Check for |H| > 0, |B| > 0, |R| > 0 */
-    if (NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
-	|| NEAR_ZERO(rh, RT_LEN_TOL)) {
-	bu_log("rt_rpc_tess():  zero length H, B, or rh\n");
-	return -2;		/* BAD */
-    }
-
-    /* Check for B.H == 0 */
-    f = VDOT(xip->rpc_B, xip->rpc_H) / (b * h);
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	bu_log("rt_rpc_tess(): B not perpendicular to H, f=%f\n", f);
-	return -3;		/* BAD */
-    }
 
     /* make unit vectors in B, H, and BxH directions */
     VMOVE(Hu, xip->rpc_H);
@@ -1466,6 +1431,36 @@ rt_rpc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     *area = 2.0 * area_base + area_rect + area_shell;
 }
 
+static int
+rpc_is_valid(struct rt_rpc_internal *rpc)
+{
+    fastf_t mag_h, mag_b, cos_angle_bh;
+    vect_t rpc_H, rpc_B;
+
+    RT_RPC_CK_MAGIC(rpc);
+
+    VMOVE(rpc_H, rpc->rpc_H);
+    mag_h = MAGNITUDE(rpc_H);
+
+    VMOVE(rpc_B, rpc->rpc_B);
+    mag_b = MAGNITUDE(rpc_B);
+
+    /* Check for |H| > 0, |B| > 0, |R| > 0 */
+    if (NEAR_ZERO(mag_h, RT_LEN_TOL)
+	|| NEAR_ZERO(mag_b, RT_LEN_TOL)
+	|| NEAR_ZERO(rpc->rpc_r, RT_LEN_TOL))
+    {
+	return 0;
+    }
+
+    /* check B and H are orthogonal */
+    cos_angle_bh = VDOT(rpc_B, rpc_H) / (mag_b * mag_h);
+    if (!NEAR_ZERO(cos_angle_bh, RT_DOT_TOL)) {
+	return 0;
+    }
+
+    return 1;
+}
 
 /*
  * Local Variables:
