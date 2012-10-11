@@ -864,7 +864,7 @@ const struct rt_functab rt_functab[] = {
 	rt_rpc_class,
 	rt_rpc_free,
 	rt_rpc_plot,
-	NULL,
+	rt_rpc_adaptive_plot,
 	NULL,
 	rt_rpc_tess,
 	NULL,

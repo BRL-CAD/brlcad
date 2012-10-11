@@ -657,6 +657,136 @@ rt_rpc_class(void)
     return 0;
 }
 
+/* A canonical parabola in the Y-Z plane has equation z = y^2 / 4p, and opens
+ * toward positive z with vertex at the origin.
+ *
+ * The contour of an rpc in the plane B-R is a parabola with vertex at B,
+ * opening toward -B. We can transform this parabola to get an equivalent
+ * canonical parabola in the Y-Z plane, opening toward positive Z (-B) with
+ * vertex at the origin (B).
+ *
+ * This parabola passes through the point (r, |B|). If we plug the point (r, |B|)
+ * into our canonical equation, we see how p relates to r and |B|:
+ *
+ *   |B| = r^2 / 4p
+ *     p = (r^2) / (4|B|)
+ */
+static fastf_t
+rpc_parabola_p(fastf_t r, fastf_t mag_b)
+{
+    return (r * r) / (4 * mag_b);
+}
+
+/* The contour of an rpc in the plane B-R is a parabola with vertex at B,
+ * opening toward -B. We can transform this parabola to get an equivalent
+ * parabola in the Y-Z plane, opening toward positive Z (-B) with vertex at
+ * (0, -|B|).
+ *
+ * The part of this parabola that passes between (0, -|B|) and (r, 0) is
+ * approximated by num_points points (including (0, -|B|) and (r, 0)).
+ *
+ * The constructed point list is returned (NULL returned on error). Because the
+ * above transformation puts the rpc vertex at the origin and the parabola
+ * vertex at (0, -|B|), multiplying the z values by -1 gives corresponding
+ * distances along the rpc breadth vector B.
+ */
+static struct rt_pt_node *
+rpc_parabolic_curve(fastf_t mag_b, fastf_t r, int num_points)
+{
+    int count;
+    struct rt_pt_node *curve;
+
+    curve = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    curve->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+
+    curve->next->next = NULL;
+    VSET(curve->p,       0, 0, -mag_b);
+    VSET(curve->next->p, 0, r, 0);
+
+    count = approximate_parabolic_curve(curve, rpc_parabola_p(r, mag_b), num_points - 2);
+
+    if (count != (num_points - 2)) {
+	return NULL;
+    }
+
+    return curve;
+}
+
+static void
+rpc_plot_parabola(
+	struct bu_list *vhead,
+	struct rt_rpc_internal *rpc,
+	struct rt_pt_node *pts)
+{
+    point_t p;
+    vect_t rpc_V, Ru, Bu;
+    struct rt_pt_node *node;
+
+    VMOVE(rpc_V, rpc->rpc_V);
+
+    VMOVE(Bu, rpc->rpc_B);
+    VUNITIZE(Bu);
+
+    VCROSS(Ru, Bu, rpc->rpc_H);
+    VUNITIZE(Ru);
+
+    VJOIN2(p, rpc_V, pts->p[Y], Ru, -pts->p[Z], Bu);
+    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+
+    node = pts->next;
+    while (node != NULL) {
+	VJOIN2(p, rpc_V, node->p[Y], Ru, -node->p[Z], Bu);
+	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+
+	node = node->next;
+    }
+
+    VJOIN2(p, rpc_V, -pts->p[Y], Ru, -pts->p[Z], Bu);
+    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+
+    node = pts->next;
+    while (node != NULL) {
+	VJOIN2(p, rpc_V, -node->p[Y], Ru, -node->p[Z], Bu);
+	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+
+	node = node->next;
+    }
+}
+
+int
+rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    int num_curve_points;
+    struct rt_rpc_internal *rpc;
+    struct rt_pt_node *pts, *node, *tmp;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+
+    rpc = (struct rt_rpc_internal *)ip->idb_ptr;
+    if (!rpc_is_valid(rpc)) {
+	return -2;
+    }
+
+    num_curve_points = sqrt(primitive_diagonal_samples(ip, info)) / 4.0;
+
+    if (num_curve_points < 3) {
+	num_curve_points = 3;
+    }
+
+    pts = rpc_parabolic_curve(MAGNITUDE(rpc->rpc_B), rpc->rpc_r, num_curve_points);
+    rpc_plot_parabola(info->vhead, rpc, pts);
+
+    node = pts;
+    while (node != NULL) {
+	tmp = node;
+	node = node->next;
+
+	bu_free(tmp, "rt_pt_node");
+    }
+
+    return 0;
+}
 
 /**
  * R T _ R P C _ P L O T
