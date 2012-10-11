@@ -1760,19 +1760,20 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *
     int count=0;
     const char *magic_type;
 
-    if (rt_g.NMG_debug & DEBUG_BOOL)
+    if (UNLIKELY(rt_g.NMG_debug & DEBUG_BOOL)) {
 	bu_log("nmg_break_all_es_on_v(magic=x%x, v=x%x)\n", magic_p, v);
+    }
 
     magic_type = bu_identify_magic(*magic_p);
-    if (BU_STR_EQUAL(magic_type, "NULL") ||
-	BU_STR_EQUAL(magic_type, "Unknown_Magic")) {
+    if (UNLIKELY(BU_STR_EQUAL(magic_type, "NULL") ||
+	BU_STR_EQUAL(magic_type, "Unknown_Magic"))) {
 	bu_log("Bad magic pointer passed to nmg_break_all_es_on_v (%s)\n", magic_type);
 	bu_bomb("Bad magic pointer passed to nmg_break_all_es_on_v()\n");
     }
 
     nmg_edgeuse_tabulate(&eus, magic_p);
 
-    for (i=0; i<BU_PTBL_END(&eus); i++) {
+    for (i = 0; i < BU_PTBL_END(&eus); i++) {
 	struct edgeuse *eu;
 	struct vertex *va;
 	struct vertex *vb;
@@ -1781,29 +1782,35 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *
 
 	eu = (struct edgeuse *)BU_PTBL_GET(&eus, i);
 
-	if (eu->g.magic_p && *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC)
+	if (eu->g.magic_p && *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC) {
 	    continue;
+	}
 	va = eu->vu_p->v_p;
 	vb = eu->eumate_p->vu_p->v_p;
 
-	if (va == v) continue;
-	if (vb == v) continue;
+	if (va == v || bn_pt3_pt3_equal(va->vg_p->coord, v->vg_p->coord, tol)) {
+	    continue;
+	}
+	if (vb == v || bn_pt3_pt3_equal(vb->vg_p->coord, v->vg_p->coord, tol)) {
+	    continue;
+	}
+	if (UNLIKELY(va == vb || bn_pt3_pt3_equal(va->vg_p->coord, vb->vg_p->coord, tol))) {
+	    bu_bomb("nmg_break_all_es_on_v(): found zero length edgeuse");
+	}
 
 	code = bn_isect_pt_lseg(&dist, va->vg_p->coord, vb->vg_p->coord,
 				v->vg_p->coord, tol);
 
 	if (code < 1) continue;	/* missed */
 
-	if (code == 1 || code == 2) {
-	    bu_log("nmg_break_all_es_on_v() code=%d, why wasn't this vertex fused?\n", code);
-	    bu_log("\teu=x%x, v=x%x\n", eu, v);
-	    continue;
+	if (UNLIKELY(code == 1 || code == 2)) {
+	    bu_bomb("nmg_break_all_es_on_v(): internal error");
 	}
 	/* Break edge on vertex, but don't fuse yet. */
 
-	if (rt_g.NMG_debug & DEBUG_BOOL)
+	if (UNLIKELY(rt_g.NMG_debug & DEBUG_BOOL)) {
 	    bu_log("\tnmg_break_all_es_on_v: breaking eu x%x on v x%x\n", eu, v);
-
+	}
 	(void)nmg_ebreak(v, eu);
 	count++;
     }
