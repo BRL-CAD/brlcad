@@ -682,10 +682,8 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     fastf_t *back;
     fastf_t b, dtol, f, h, ntol, rh;
     int i, n;
-    mat_t R;
-    mat_t invR;
     struct rt_pt_node *old, *pos, *pts;
-    vect_t Bu, Hu, Ru;
+    vect_t Bu, Hu, Ru, B, R;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -717,13 +715,6 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     VMOVE(Bu, xip->rpc_B);
     VUNITIZE(Bu);
     VCROSS(Ru, Bu, Hu);
-
-    /* Compute R and Rinv matrices */
-    MAT_IDN(R);
-    VREVERSE(&R[0], Hu);
-    VMOVE(&R[4], Ru);
-    VREVERSE(&R[8], Bu);
-    bn_mat_trn(invR, R);			/* inv of rot mat is trn */
 
     if (rh < b) {
 	dtol = primitive_get_absolute_tolerance(ttol, 2.0 * rh);
@@ -757,12 +748,19 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     pos = pts;
     i = 0;
     while (pos) {
-	/* rotate back to original position */
-	MAT4X3VEC(&front[i], invR, pos->p);
+	/* get corresponding rpc contour point in B-R plane from the parabola
+	 * point in the Y-Z plane
+	 */
+	VSCALE(R, Ru, pos->p[Y]);
+	VSCALE(B, Bu, -pos->p[Z]);
+	VADD2(&front[i], R, B);
+
 	/* move to origin vertex origin */
 	VADD2(&front[i], &front[i], xip->rpc_V);
+
 	/* extrude front to create back plate */
 	VADD2(&back[i], &front[i], xip->rpc_H);
+
 	i += 3;
 	old = pos;
 	pos = pos->next;
