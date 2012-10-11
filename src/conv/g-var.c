@@ -157,7 +157,7 @@ void write_header(struct db_i *dbip)
 	perror("fwrite");
     /* model name string */
     ret = fwrite(dbip->dbi_title, sizeof(char), len, fp_out);
-    if (ret != 1)
+    if (ret != len)
 	perror("fwrite");
     /* mesh count */
     ret = fwrite(&mesh_count, sizeof(uint32_t), 1, fp_out);
@@ -286,7 +286,7 @@ void write_mesh_data()
 	    perror("fwrite");
 	/* mesh name string */
 	ret = fwrite(curr->name, 1, len, fp_out);
-	if (ret != 1)
+	if (ret != len)
 	    perror("fwrite");
 	nvert = curr->bot->num_vertices;
 	nface = curr->bot->num_faces;
@@ -303,7 +303,7 @@ void write_mesh_data()
 	for (i = 0; i < curr->bot->num_vertices; i++) {
 	    get_vertex(curr->bot, i, vec);
 	    ret = fwrite(vec, sizeof(float), 3, fp_out);
-	    if (ret != 1)
+	    if (ret != 3)
 		perror("fwrite");
 	}
 	/* normal triples */
@@ -312,7 +312,7 @@ void write_mesh_data()
 		fprintf(stderr, ">> .. normals found!\n");
 	    /* normals are provided */
 	    ret = fwrite(curr->bot->normals, sizeof(float), curr->bot->num_normals * 3, fp_out);
-	    if (ret != 1)
+	    if (ret != curr->bot->num_normals * 3)
 		perror("fwrite");
 	} else {
 	    float *normals;
@@ -323,7 +323,7 @@ void write_mesh_data()
 	    normals = bu_calloc(sizeof(float), curr->bot->num_vertices * 3, "normals");
 	    get_normals(curr->bot, normals);
 	    ret = fwrite(normals, sizeof(float), curr->bot->num_vertices * 3, fp_out);
-	    if (ret != 1)
+	    if (ret != curr->bot->num_vertices * 3)
 		perror("fwrite");
 	    bu_free(normals, "normals");
 	}
@@ -352,7 +352,7 @@ void write_mesh_data()
 			ind8[2] = curr->bot->faces[3*i+2];
 		    }
 		    ret = fwrite(&ind8, 1, 3, fp_out);
-		    if (ret != 1)
+		    if (ret != 3)
 			perror("fwrite");
 		}
 		break;
@@ -367,7 +367,7 @@ void write_mesh_data()
 			ind16[2] = curr->bot->faces[3*i+2];
 		    }
 		    ret = fwrite(&ind16, 2, 3, fp_out);
-		    if (ret != 1)
+		    if (ret != 3)
 			perror("fwrite");
 		}
 		break;
@@ -382,7 +382,7 @@ void write_mesh_data()
 			ind32[2] = curr->bot->faces[3*i+2];
 		    }
 		    ret = fwrite(&ind32, 4, 3, fp_out);
-		    if (ret != 1)
+		    if (ret != 3)
 			perror("fwrite");
 		}
 		break;
