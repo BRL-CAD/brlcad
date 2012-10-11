@@ -2542,6 +2542,10 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
 
     for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 
+	/* skip loops which do not contain edges */
+	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+	    continue;
+	}
 	non_consec_edgeuse_vert_count = 0;
 	edgeuse_vert_count = 0;
 	prev_v_p = (struct vertex *)NULL;
