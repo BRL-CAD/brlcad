@@ -154,7 +154,6 @@ struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_m
        point_subdiv(mesh->iteration_cnt, pcnt, starting_mesh, &(mesh->points_p0));
        mesh->iteration_of_insert[pcnt] = starting_mesh->iteration_of_insert[pcnt];
     }
-
     for(f_it = starting_mesh->face_pts.begin(); f_it != starting_mesh->face_pts.end(); f_it++) {
 	mesh->points_p0.Append(starting_mesh->points_q[(*f_it).first]);
         ON_3dPoint added = *mesh->points_p0.At(mesh->points_p0.Count() - 1);
@@ -238,7 +237,7 @@ int main(int argc, char *argv[])
     }
     RT_BOT_CK_MAGIC(bot_ip);
 
-    for (size_t i_cnt = 1; i_cnt < 5; i_cnt++) {
+    for (size_t i_cnt = 1; i_cnt < 4; i_cnt++) {
 	struct bu_vls fname;
 	bu_vls_init(&fname);
 	bu_vls_printf(&fname, "root3_%d.pl", i_cnt);
@@ -246,6 +245,23 @@ int main(int argc, char *argv[])
         mesh = iterate(bot_ip, prev_mesh, plot_file);
         prev_mesh = mesh;
 	fclose(plot_file);
+    }
+
+    // The subdivision process shrinks the bot relative to its original
+    // vertex positions - to better approximate the original surface,
+    // average the change in position of the original vertices to get a
+    // scaling factor and apply it to all points in the final mesh.
+    fastf_t scale = 0.0;
+    for(size_t pcnt = 0; pcnt < bot_ip->num_vertices; pcnt++) {
+	ON_3dVector v1(ON_3dPoint(&bot_ip->vertices[pcnt*3]));
+	ON_3dVector v2(*mesh->points_p0.At(pcnt));
+	scale += 1 + (v1.Length() - v2.Length())/v1.Length();
+    }
+    scale = scale / bot_ip->num_vertices;
+    for(size_t pcnt = 0; pcnt < (size_t)mesh->points_p0.Count(); pcnt++) {
+       ON_3dPoint p0(*mesh->points_p0.At(pcnt));
+       ON_3dPoint p1 = p0 * scale;
+       *mesh->points_p0.At(pcnt) = p1;
     }
 
     wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
