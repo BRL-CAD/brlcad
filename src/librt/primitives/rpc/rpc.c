@@ -738,7 +738,6 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/* tolerate everything */
 	ntol = bn_pi;
 
-#if 1
     /* initial parabola approximation is a single segment */
     pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
@@ -769,45 +768,6 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	pos = pos->next;
 	bu_free((char *)old, "rt_pt_node");
     }
-#else
-    /* initial parabola approximation is a single segment */
-    pts = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
-    pts->next->next = NULL;
-    VSET(pts->p,       0,   0, -b);
-    VSET(pts->next->p, 0,  rh,  0);
-    /* 2 endpoints in 1st approximation */
-    n = 2;
-    /* recursively break segment 'til within error tolerances */
-    n += rt_mk_parabola(pts, rh, b, dtol, ntol);
-
-    /* get mem for arrays */
-    front = (fastf_t *)bu_malloc((2*3*n-1) * sizeof(fastf_t), "fastf_t");
-    back  = (fastf_t *)bu_malloc((2*3*n-1) * sizeof(fastf_t), "fastf_t");
-
-    /* generate front & back plates in world coordinates */
-    pos = pts;
-    i = 0;
-    while (pos) {
-	/* rotate back to original position */
-	MAT4X3VEC(&front[i], invR, pos->p);
-	/* move to origin vertex origin */
-	VADD2(&front[i], &front[i], xip->rpc_V);
-	/* extrude front to create back plate */
-	VADD2(&back[i], &front[i], xip->rpc_H);
-	i += 3;
-	old = pos;
-	pos = pos->next;
-	bu_free((char *)old, "rt_pt_node");
-    }
-    for (i = 3*n; i < 6*n-3; i+=3) {
-	VMOVE(&front[i], &front[6*n-i-6]);
-	front[i+1] = -front[i+1];
-	VMOVE(&back[i], &back[6*n-i-6]);
-	back[i+1] = -back[i+1];
-    }
-    n = 2*n - 1;
-#endif
 
     /* Draw the front */
     RT_ADD_VLIST(vhead, &front[(n-1)*ELEMENTS_PER_VECT],
