@@ -712,45 +712,63 @@ rpc_parabolic_curve(fastf_t mag_b, fastf_t r, int num_points)
     return curve;
 }
 
+/* plot half of a parabolic contour curve using the given (r, b) points (pts),
+ * translation along H (rpc_H), and multiplier for r (rscale)
+ */
 static void
-rpc_plot_parabola(
+rpc_plot_parabolic_curve(
+	struct bu_list *vhead,
+	struct rpc_specific *rpc,
+	struct rt_pt_node *pts,
+	vect_t rpc_H,
+	fastf_t rscale)
+{
+    vect_t t, Ru, Bu;
+    point_t p;
+    struct rt_pt_node *node;
+
+    VADD2(t, rpc->rpc_V, rpc_H);
+    VMOVE(Ru, rpc->rpc_Runit);
+    VMOVE(Bu, rpc->rpc_Bunit);
+
+    VJOIN2(p, t, rscale * pts->p[Y], Ru, -pts->p[Z], Bu);
+    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+
+    node = pts->next;
+    while (node != NULL) {
+	VJOIN2(p, t, rscale * node->p[Y], Ru, -node->p[Z], Bu);
+	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+
+	node = node->next;
+    }
+}
+
+static void
+rpc_plot_parabolas(
 	struct bu_list *vhead,
 	struct rt_rpc_internal *rpc,
 	struct rt_pt_node *pts)
 {
-    point_t p;
-    vect_t rpc_V, Ru, Bu;
-    struct rt_pt_node *node;
+    vect_t rpc_H;
+    struct rpc_specific rpc_s;
 
-    VMOVE(rpc_V, rpc->rpc_V);
+    VMOVE(rpc_s.rpc_V, rpc->rpc_V);
 
-    VMOVE(Bu, rpc->rpc_B);
-    VUNITIZE(Bu);
+    VMOVE(rpc_s.rpc_Bunit, rpc->rpc_B);
+    VUNITIZE(rpc_s.rpc_Bunit);
 
-    VCROSS(Ru, Bu, rpc->rpc_H);
-    VUNITIZE(Ru);
+    VCROSS(rpc_s.rpc_Runit, rpc_s.rpc_Bunit, rpc->rpc_H);
+    VUNITIZE(rpc_s.rpc_Runit);
 
-    VJOIN2(p, rpc_V, pts->p[Y], Ru, -pts->p[Z], Bu);
-    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+    /* plot parabolic contour curve of face containing V */
+    VSETALL(rpc_H, 0.0);
+    rpc_plot_parabolic_curve(vhead, &rpc_s, pts, rpc_H, 1.0);
+    rpc_plot_parabolic_curve(vhead, &rpc_s, pts, rpc_H, -1.0);
 
-    node = pts->next;
-    while (node != NULL) {
-	VJOIN2(p, rpc_V, node->p[Y], Ru, -node->p[Z], Bu);
-	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
-
-	node = node->next;
-    }
-
-    VJOIN2(p, rpc_V, -pts->p[Y], Ru, -pts->p[Z], Bu);
-    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
-
-    node = pts->next;
-    while (node != NULL) {
-	VJOIN2(p, rpc_V, -node->p[Y], Ru, -node->p[Z], Bu);
-	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
-
-	node = node->next;
-    }
+    /* plot parabolic contour curve of opposing face */
+    VMOVE(rpc_H, rpc->rpc_H);
+    rpc_plot_parabolic_curve(vhead, &rpc_s, pts, rpc_H, 1.0);
+    rpc_plot_parabolic_curve(vhead, &rpc_s, pts, rpc_H, -1.0);
 }
 
 int
@@ -775,7 +793,7 @@ rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     }
 
     pts = rpc_parabolic_curve(MAGNITUDE(rpc->rpc_B), rpc->rpc_r, num_curve_points);
-    rpc_plot_parabola(info->vhead, rpc, pts);
+    rpc_plot_parabolas(info->vhead, rpc, pts);
 
     node = pts;
     while (node != NULL) {
