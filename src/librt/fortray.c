@@ -120,7 +120,7 @@ fr_string_f2c(char *str, int maxlen)
  * argument, by value.  Other systems probably are different.
  *
  * XXX On some systems, the C standard I/O library may need to be
- * initialized here (eg, Cray).
+ * initialized here (e.g., Cray).
  */
 void
 BU_FORTRAN(frdir, FRDIR)(struct rt_i **rtip, char *filename, int *filelen)
