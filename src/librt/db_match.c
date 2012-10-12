@@ -21,7 +21,7 @@
 /** @{ */
 /** @file librt/db_match.c
  *
- * Routines to dtermine if a string matches a given pattern.
+ * Routines to determine if a string matches a given pattern.
  *
  */
 
