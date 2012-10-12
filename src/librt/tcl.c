@@ -332,7 +332,7 @@ rt_tcl_a_miss(struct application *ap)
 /**
  * Usage -
  * procname shootray [-R] {P} dir|at {V}
- * -R option specifries no overlap reporting
+ * -R option specifies no overlap reporting
  *
  * Example -
  * set glob_compat_mode 0
@@ -826,7 +826,7 @@ rt_tcl_setup(Tcl_Interp *interp)
 
 
 /**
- * Allows LIBRT to be dynamically loade to a vanilla tclsh/wish with
+ * Allows LIBRT to be dynamically loaded to a vanilla tclsh/wish with
  * "load /usr/brlcad/lib/libbu.so"
  * "load /usr/brlcad/lib/libbn.so"
  * "load /usr/brlcad/lib/librt.so"
@@ -880,7 +880,7 @@ db_full_path_appendresult(Tcl_Interp *interp, const struct db_full_path *pp)
  * Expects the Tcl_obj argument (list) to be a Tcl list and extracts
  * list elements, converts them to int, and stores them in the passed
  * in array. If the array_len argument is zero, a new array of
- * approriate length is allocated. The return value is the number of
+ * appropriate length is allocated. The return value is the number of
  * elements converted.
  */
 int
@@ -933,7 +933,7 @@ tcl_list_to_int_array(Tcl_Interp *interp, char *char_list, int **array, int *arr
  * Expects the Tcl_obj argument (list) to be a Tcl list and extracts
  * list elements, converts them to fastf_t, and stores them in the
  * passed in array. If the array_len argument is zero, a new array of
- * approriate length is allocated. The return value is the number of
+ * appropriate length is allocated. The return value is the number of
  * elements converted.
  */
 int
