@@ -34,7 +34,7 @@
 #include "db.h"
 #include "raytrace.h"
 
-/* approximation formula for the circumerence of an ellipse */
+/* approximation formula for the circumference of an ellipse */
 #define ELL_CIRCUMFERENCE(a, b) M_PI * ((a) + (b)) * \
     (1.0 + (3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b))))) \
     / (10.0 + sqrt(4.0 - 3.0 * ((((a) - b))/((a) + (b))) * ((((a) - b))/((a) + (b)))))
