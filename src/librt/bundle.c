@@ -61,7 +61,7 @@
  *
  * Formal Return: whatever the application function returns (an int).
  *
- * NOTE: The appliction functions may call rt_shootray() recursively.
+ * NOTE: The application functions may call rt_shootray() recursively.
  * Thus, none of the local variables may be static.
  *
  * To prevent having to lock the statistics variables in a PARALLEL
@@ -246,7 +246,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 
     /*
      * The interesting part of the ray starts at distance 0.  If the
-     * ray enters the model at a negative distance, (ie, the ray
+     * ray enters the model at a negative distance, (i.e., the ray
      * starts within the model RPP), we only look at little bit behind
      * (BACKING_DIST) to see if we are just coming out of something,
      * but never further back than the intersection with the model
@@ -297,7 +297,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
      * While the ray remains inside model space, push from box to box
      * until ray emerges from model space again (or first hit is
      * found, if user is impatient).  It is vitally important to
-     * always stay within the model RPP, or the space partitoning tree
+     * always stay within the model RPP, or the space partitioning tree
      * will pick wrong boxes & miss them.
      */
     while ((cutp = rt_advance_to_next_cell(&ss)) != CUTTER_NULL) {
@@ -389,7 +389,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	 *
 	 * If a_onehit != 0, then it indicates how many hit points
 	 * (which are greater than the ray start point of 0.0) the
-	 * application requires, ie, partitions with inhit >= 0.  (If
+	 * application requires, i.e., partitions with inhit >= 0.  (If
 	 * negative, indicates number of non-air hits needed).
 	 *
 	 * If this box yielded additional segments, immediately weave
@@ -492,7 +492,7 @@ hitit:
      * finished_segs is only used by special hit routines which don't
      * follow the traditional solid modeling paradigm.
      */
-    if (RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip, &FinalPart, "Parition list passed to a_hit() routine");
+    if (RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip, &FinalPart, "Partition list passed to a_hit() routine");
     if (ap->a_hit)
 	ap->a_return = ap->a_hit(ap, &FinalPart, &finished_segs);
     else
@@ -601,7 +601,7 @@ bundle_miss(register struct application *ap)
  *
  * b_ap - Members in this single ray application structure should be
  * set in a similar fashion as when used with rt_shootray() with the
- * exception of a_hit() and a_miss(). Default implementaions of these
+ * exception of a_hit() and a_miss(). Default implementations of these
  * routines are provided that simple update hit/miss counters and
  * attach the hit partitions and segments to the partition_bundle
  * structure. Users can still override this default functionality but
@@ -640,10 +640,10 @@ rt_shootrays(struct application_bundle *bundle)
     /*
      * Along with updating some bundle hit/miss counters the default
      * callback functions differ from their general user defined
-     * counterparts by dettaching the ray hit partition list and
+     * counterparts by detaching the ray hit partition list and
      * segment list and attaching it to a partition bundle. Users can
      * define there own functions but should remember to hi-jack the
-     * partition and segment list or the single ray handling funtion
+     * partition and segment list or the single ray handling function
      * will return memory allocated to these list prior to the bundle
      * b_hit() routine.
      */
