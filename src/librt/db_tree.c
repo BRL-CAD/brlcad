@@ -631,7 +631,7 @@ db_tree_del_rhs(union tree *tp, struct resource *resp)
 /**
  * Given a name presumably referenced in a OP_DB_LEAF node, delete
  * that node, and the operation node that references it.  Not that
- * this may not produce an equivalant tree, for example when rewriting
+ * this may not produce an equivalent tree, for example when rewriting
  * (A - subtree) as (subtree), but that will be up to the caller/user
  * to adjust.  This routine gets rid of exactly two nodes in the tree:
  * leaf, and op.  Use some other routine if you wish to kill the
@@ -1499,7 +1499,7 @@ db_free_tree(union tree *tp, struct resource *resp)
 		if (r == (struct nmgregion *)NULL) {
 		    break;
 		}
-		/* Disposing of the nmg model structue is
+		/* Disposing of the nmg model structure is
 		 * left to someone else.
 		 * It would be rude to zap all the other regions here.
 		 */
@@ -2374,7 +2374,7 @@ db_walk_tree(struct db_i *dbip,
 	bu_log("Same tree in another form:\n");
 	str = (char *)rt_pr_tree_str(whole_tree);
 	bu_log("%s\n", str);
-	bu_free(str, "rturn from rt_pr_tree_str");
+	bu_free(str, "return from rt_pr_tree_str");
     }
 
     /* Build array of sub-tree pointers, one per region, for parallel
@@ -2826,7 +2826,7 @@ tree_list_append(struct bu_vls *vls, const char *str)
  *	   | {}
  *
  * where 'dbobjname' is a string containing the name of a database object,
- *       'mat'       is the matrix preceeding a leaf,
+ *       'mat'       is the matrix preceding a leaf,
  *       't1', 't2'  are trees (recursively defined).
  *
  * Notice that in most cases, this tree will be grossly unbalanced.
