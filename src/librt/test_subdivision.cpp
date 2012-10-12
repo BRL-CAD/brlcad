@@ -302,6 +302,9 @@ int main(int argc, char *argv[])
     wdb_close(wdbp);
     bu_vls_free(&bname);
 
+    bu_free(vertices, "free subdivision BoT vertices");
+    bu_free(faces, "free subdivision BoT faces");
+
     return 0;
 }
 
