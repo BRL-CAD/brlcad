@@ -261,6 +261,12 @@ int main(int argc, char *argv[])
 	fclose(plot_file);
     }
 
+    // When constructing the final BoT, use the limit points for all
+    // vertices
+    ON_3dPointArray points_inf;
+    for(size_t v = 0; v < (size_t)mesh->points_p0.Count(); v++) {
+	point_inf(v, mesh, &points_inf);
+    }
     // The subdivision process shrinks the bot relative to its original
     // vertex positions - to better approximate the original surface,
     // average the change in position of the original vertices to get a
@@ -268,24 +274,24 @@ int main(int argc, char *argv[])
     fastf_t scale = 0.0;
     for(size_t pcnt = 0; pcnt < bot_ip->num_vertices; pcnt++) {
 	ON_3dVector v1(ON_3dPoint(&bot_ip->vertices[pcnt*3]));
-	ON_3dVector v2(*mesh->points_p0.At(pcnt));
+	ON_3dVector v2(*points_inf.At(pcnt));
 	scale += 1 + (v1.Length() - v2.Length())/v1.Length();
     }
     scale = scale / bot_ip->num_vertices;
-    for(size_t pcnt = 0; pcnt < (size_t)mesh->points_p0.Count(); pcnt++) {
-       ON_3dPoint p0(*mesh->points_p0.At(pcnt));
+    for(size_t pcnt = 0; pcnt < (size_t)points_inf.Count(); pcnt++) {
+       ON_3dPoint p0(*points_inf.At(pcnt));
        ON_3dPoint p1 = p0 * scale;
-       *mesh->points_p0.At(pcnt) = p1;
+       *points_inf.At(pcnt) = p1;
     }
 
     wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
 
-    fastf_t *vertices = (fastf_t *)bu_malloc(sizeof(fastf_t) * mesh->points_p0.Count() * 3, "new verts");
+    fastf_t *vertices = (fastf_t *)bu_malloc(sizeof(fastf_t) * points_inf.Count() * 3, "new verts");
     int *faces = (int *)bu_malloc(sizeof(int) * mesh->face_pts.size() * 3, "new faces");
-    for(size_t v = 0; v < (size_t)mesh->points_p0.Count(); v++) {
-       vertices[v*3] = mesh->points_p0[v].x;
-       vertices[v*3+1] = mesh->points_p0[v].y;
-       vertices[v*3+2] = mesh->points_p0[v].z;
+    for(size_t v = 0; v < (size_t)points_inf.Count(); v++) {
+       vertices[v*3] = points_inf[v].x;
+       vertices[v*3+1] = points_inf[v].y;
+       vertices[v*3+2] = points_inf[v].z;
     } 
     std::map<size_t, std::vector<size_t> >::iterator f_it;
     std::vector<size_t>::iterator l_it;
@@ -298,7 +304,7 @@ int main(int argc, char *argv[])
 
     bu_vls_init(&bname);
     bu_vls_sprintf(&bname, "%s_subd", argv[2]);
-    mk_bot(wdbp, bu_vls_addr(&bname), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, mesh->points_p0.Count(), mesh->face_pts.size(), vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
+    mk_bot(wdbp, bu_vls_addr(&bname), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, points_inf.Count(), mesh->face_pts.size(), vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
     wdb_close(wdbp);
     bu_vls_free(&bname);
 
