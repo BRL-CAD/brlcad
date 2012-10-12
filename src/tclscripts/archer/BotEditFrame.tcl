@@ -556,6 +556,7 @@
     incr _face
     set mCurrentBotFace $_face
     $itk_component(faceTab) selectSingleRow $_face
+    $itk_component(faceTab) see "$_face,0"
 }
 
 
@@ -563,6 +564,7 @@
     incr _face
     set mCurrentBotFace $_face
     $itk_component(faceTab) selectSingleRow $_face
+    $itk_component(faceTab) see "$_face,0"
 }
 
 
@@ -570,6 +572,7 @@
     incr _face
     set mCurrentBotFace $_face
     $itk_component(faceTab) selectSingleRow $_face
+    $itk_component(faceTab) see "$_face,0"
     $itk_option(-mged) bot_face_split $itk_option(-geometryObjectPath) [expr {$mCurrentBotFace - 1}]
     $::ArcherCore::application setSave
 }
@@ -579,6 +582,7 @@
     incr _pindex
     set mCurrentBotPoint $_pindex
     $itk_component(vertTab) selectSingleRow $_pindex
+    $itk_component(vertTab) see "$_pindex,0"
 }
 
 
