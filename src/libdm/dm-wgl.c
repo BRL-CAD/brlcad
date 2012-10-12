@@ -43,6 +43,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
+#include "dm-Null.h"
 #include "dm-wgl.h"
 #include "dm_xvars.h"
 #include "solid.h"
