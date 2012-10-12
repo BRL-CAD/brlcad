@@ -129,7 +129,7 @@ public:
 /**
  * QuadNode - Holds information about the UV coordinates associated with
  * a node in a subdivision quad tree.  Assumes the following relationship
- * between point indicies and positioning:
+ * between point indices and positioning:
  *
  *
  *                   3-------------------2
