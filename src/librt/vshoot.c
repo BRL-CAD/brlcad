@@ -35,7 +35,7 @@
 
 
 /**
- * Stub function which will "similate" a call to a vector shot routine
+ * Stub function which will "simulate" a call to a vector shot routine
  */
 HIDDEN void
 vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
@@ -106,7 +106,7 @@ vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struc
  *
  * Returns: whatever the application function returns (an int).
  *
- * NOTE: The appliction functions may call rt_shootray() recursively.
+ * NOTE: The application functions may call rt_shootray() recursively.
  * Thus, none of the local variables may be static.
  *
  * An open issue for execution in a PARALLEL environment is locking of
