@@ -40,7 +40,7 @@
  * exists a queue of free buffers which are enqueued on to either of
  * the previous queues.  Initially all of the buffers are placed on
  * the `freemap' queue.  Whenever a buffer is freed because of
- * coallescing ends in rt_memfree() or zero size in rt_memalloc() the
+ * coalescing ends in rt_memfree() or zero size in rt_memalloc() the
  * mapping buffer is taken off from the respective queue and returned
  * to the `freemap' queue.
  *
@@ -71,7 +71,7 @@ static struct mem_map *rt_mem_freemap = MAP_NULL;	/* Freelist of buffers */
  * size.
  *
  * Returns:	NULL Error
- * <addr> Othewise
+ * <addr> Otherwise
  *
  * Comments:
  * Algorithm is first fit.
@@ -117,7 +117,7 @@ rt_memalloc(struct mem_map **pp, register size_t size)
  * size.
  *
  * Returns:	NULL Error
- * <addr> Othewise
+ * <addr> Otherwise
  *
  * Comments:
  * Algorithm is BEST fit.
@@ -162,7 +162,7 @@ rt_memalloc_nosplit(struct mem_map **pp, register size_t size)
 
 /**
  * Returns:	NULL Error
- * <addr> Othewise
+ * <addr> Otherwise
  *
  * Comments:
  * Algorithm is first fit.
