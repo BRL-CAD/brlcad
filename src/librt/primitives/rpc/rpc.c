@@ -771,6 +771,49 @@ rpc_plot_parabolas(
     rpc_plot_parabolic_curve(vhead, &rpc_s, pts, rpc_H, -1.0);
 }
 
+static void
+rpc_plot_curve_connections(
+	struct bu_list *vhead,
+	struct rt_rpc_internal *rpc,
+	struct rt_pt_node *pts,
+	fastf_t rscale)
+{
+    struct rt_pt_node *node;
+    vect_t rpc_V, VH, Ru, Bu, R, B, RB;
+    point_t p;
+
+    VMOVE(rpc_V, rpc->rpc_V);
+    VADD2(VH, rpc_V, rpc->rpc_H);
+
+    VMOVE(Bu, rpc->rpc_B);
+    VUNITIZE(Bu);
+
+    VCROSS(Ru, Bu, rpc->rpc_H);
+    VUNITIZE(Ru);
+
+    VSCALE(R, Ru, rscale * pts->p[Y]);
+    VSCALE(B, Bu, -pts->p[Z]);
+    VADD2(RB, R, B);
+
+    node = pts;
+    while (node != NULL) {
+	/* calculate face contour point */
+	VSCALE(R, Ru, rscale * node->p[Y]);
+	VSCALE(B, Bu, -node->p[Z]);
+	VADD2(RB, R, B);
+
+	/* start at point on face containing V */
+	VADD2(p, rpc_V, RB);
+	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+
+	/* draw to corresponding point on opposing face */
+	VADD2(p, VH, RB);
+	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+
+	node = node->next;
+    }
+}
+
 int
 rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
@@ -793,7 +836,12 @@ rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     }
 
     pts = rpc_parabolic_curve(MAGNITUDE(rpc->rpc_B), rpc->rpc_r, num_curve_points);
+
     rpc_plot_parabolas(info->vhead, rpc, pts);
+
+    /* connect both halves of the parabolic contours of the opposing faces */
+    rpc_plot_curve_connections(info->vhead, rpc, pts, 1.0);
+    rpc_plot_curve_connections(info->vhead, rpc, pts, -1.0);
 
     node = pts;
     while (node != NULL) {
