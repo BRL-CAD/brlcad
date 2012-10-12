@@ -42,7 +42,7 @@
 
 /*
  * It is expected that entries on this mater list will be sorted in
- * strictly ascending order, with no overlaps (ie, monotonicly
+ * strictly ascending order, with no overlaps (i.e., monotonically
  * increasing).
  */
 static struct mater *material_head = MATER_NULL;
@@ -64,7 +64,7 @@ _rt_check_overlap(struct mater *newp)
 {
     struct mater *zot;
 
-    /* Check for overlap, ie, redefinition of following colors */
+    /* Check for overlap, i.e., redefinition of following colors */
     while (newp->mt_forw != MATER_NULL &&
 	   newp->mt_high >= newp->mt_forw->mt_low)
     {
@@ -72,7 +72,7 @@ _rt_check_overlap(struct mater *newp)
 	    /* Drop this mater struct */
 	    zot = newp->mt_forw;
 	    newp->mt_forw = zot->mt_forw;
-	    bu_log("dropping overlaping region-id based material property entry:\n");
+	    bu_log("dropping overlapping region-id based material property entry:\n");
 	    rt_pr_mater(zot);
 	    bu_free((char *)zot, "getstruct mater");
 	    continue;
@@ -144,7 +144,7 @@ rt_insert_color(struct mater *newp)
 	    return;
 	}
 	if (mp->mt_high > newp->mt_low) {
-	    /* Overlap to the left: Shorten preceeding entry */
+	    /* Overlap to the left: Shorten preceding entry */
 	    bu_log("Shortening region-id based material property entry lhs range, from:\n");
 	    rt_pr_mater(mp);
 	    bu_log("to:\n");
