@@ -322,7 +322,7 @@ int
 db5_standardize_attribute(const char *attr)
 {
     /* FIXME: these should all be converted to case-insensitive
-     * comparisions for the standard attribute names.
+     * comparisons for the standard attribute names.
      */
 
     if (!attr)
@@ -449,7 +449,7 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
      * with different values.
      */
     for (BU_AVS_FOR(avpp, avs)) {
-	/* see if this is a standarizable attribute name */
+	/* see if this is a standardizable attribute name */
 	attr_type = db5_standardize_attribute(avpp->name);
 
 	/* get the standard name for this type */
@@ -464,7 +464,7 @@ db5_standardize_avs(struct bu_attribute_value_set *avs)
      * attributes.
      */
     for (BU_AVS_FOR(avpp, avs)) {
-	/* see if this is a standarizable attribute name */
+	/* see if this is a standardizable attribute name */
 	attr_type = db5_standardize_attribute(avpp->name);
 
 	/* get the standard name for this type */
