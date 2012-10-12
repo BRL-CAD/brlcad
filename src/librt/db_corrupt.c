@@ -135,7 +135,7 @@ rt_db_flip_endian(struct db_i *dbip)
 	return bu_str_true(v4flip);
 
     /* iterate over all database objects looking for signs of
-     * corruption keeping a tally of whether fliping the record fixed
+     * corruption keeping a tally of whether flipping the record fixed
      * the problem.
      */
     db_scan(dbip, db_corrupt_handler, 0, &cnt);
