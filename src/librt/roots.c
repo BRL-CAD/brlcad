@@ -154,7 +154,7 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	 * diff is |p0|**2.  nxZ = Z - p0.
 	 *
 	 * SGI XNS IRIS 3.5 compiler fails if following 2 assignments
-	 * are imbedded in the IF statement, as before.
+	 * are embedded in the IF statement, as before.
 	 */
 	b = bn_cx_amplsq(nxZ);
 	diff = bn_cx_amplsq(&p0);
