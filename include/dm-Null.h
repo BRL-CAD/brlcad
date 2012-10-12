@@ -165,10 +165,6 @@ DM_EXPORT extern int
 null_bg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 
 
-DM_EXPORT extern int
-null_getDisplayImage(struct dm *dmp, unsigned char **image);
-
-
 DM_EXPORT extern void
 null_reshape(struct dm *dmp, int width, int height);
 
