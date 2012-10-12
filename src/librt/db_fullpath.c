@@ -224,7 +224,7 @@ db_path_to_string(const struct db_full_path *pp)
  * D B _ P A T H _ T O _ V L S
  *
  * Append a string representation of the path onto the vls.  Must have
- * exactly the same formattting conventions as db_path_to_string().
+ * exactly the same formatting conventions as db_path_to_string().
  */
 void
 db_path_to_vls(struct bu_vls *str, const struct db_full_path *pp)
