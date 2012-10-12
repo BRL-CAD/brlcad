@@ -261,7 +261,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 /**
  * See if solid "dp" as transformed by "mat" already exists in the
  * soltab list.  If it does, return the matching stp, otherwise,
- * create a new soltab structure, enrole it in the list, and return a
+ * create a new soltab structure, enroll it in the list, and return a
  * pointer to that.
  *
  * "mat" will be a null pointer when an identity matrix is signified.
@@ -1079,7 +1079,7 @@ top:
 
 
 /**
- * Given the (leaf) name of a solid, find the first occurance of it in
+ * Given the (leaf) name of a solid, find the first occurrence of it in
  * the solid list.  Used mostly to find the light source.  Returns
  * soltab pointer, or RT_SOLTAB_NULL.
  */
