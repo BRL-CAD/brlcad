@@ -21,7 +21,7 @@
 /** @{ */
 /** @file librt/oslo_map.c
  *
- * Map the olso matrix with the old curve resulting in a new one.
+ * Map the oslo matrix with the old curve resulting in a new one.
  *
  */
 
@@ -39,7 +39,7 @@
  * old control points resulting in new control points.  (this
  * procedure should probably never called by a user program but should
  * remain internal to the library. Bounds are given to facilitate
- * easier spliting of the surface.
+ * easier splitting of the surface.
  */
 
 void
