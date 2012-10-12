@@ -41,7 +41,7 @@ fastf_t grid[10][10][3];
 fastf_t ngrid[10][10][3];
 
 
-/* Interpoate the data using b-splines */
+/* Interpolate the data using b-splines */
 void
 interpolate_data()
 {
