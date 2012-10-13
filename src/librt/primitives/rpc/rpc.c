@@ -817,6 +817,8 @@ rpc_plot_curve_connections(
 int
 rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
+    point_t p;
+    vect_t rpc_R;
     int num_curve_points;
     struct rt_rpc_internal *rpc;
     struct rt_pt_node *pts, *node, *tmp;
@@ -835,6 +837,10 @@ rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	num_curve_points = 3;
     }
 
+    VCROSS(rpc_R, rpc->rpc_B, rpc->rpc_H);
+    VUNITIZE(rpc_R);
+    VSCALE(rpc_R, rpc_R, rpc->rpc_r);
+
     pts = rpc_parabolic_curve(MAGNITUDE(rpc->rpc_B), rpc->rpc_r, num_curve_points);
 
     rpc_plot_parabolas(info->vhead, rpc, pts);
@@ -842,6 +848,22 @@ rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     /* connect both halves of the parabolic contours of the opposing faces */
     rpc_plot_curve_connections(info->vhead, rpc, pts, 1.0);
     rpc_plot_curve_connections(info->vhead, rpc, pts, -1.0);
+
+    /* plot rectangular face */
+    VADD2(p, rpc->rpc_V, rpc_R);
+    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_MOVE);
+
+    VADD2(p, p, rpc->rpc_H);
+    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+
+    VJOIN1(p, p, -2.0, rpc_R);
+    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+
+    VJOIN1(p, p, -1.0, rpc->rpc_H);
+    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+
+    VJOIN1(p, p, 2.0, rpc_R);
+    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
 
     node = pts;
     while (node != NULL) {
