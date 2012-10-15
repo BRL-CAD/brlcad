@@ -179,7 +179,7 @@ rt_rpp_region(struct rt_i *rtip, const char *reg_name, fastf_t *min_rpp, fastf_t
 /**
  * R T _ I N _ R P P
  *
- * Compute the intersections of a ray with a rectangular parallelpiped
+ * Compute the intersections of a ray with a rectangular parallelepiped
  * (RPP) that has faces parallel to the coordinate planes
  *
  * The algorithm here was developed by Gary Kuehl for GIFT.  A good
