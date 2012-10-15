@@ -245,7 +245,7 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 	    dist[1] = dist[2];
 	}
 
-	/* vloume mode */
+	/* volume mode */
 
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
