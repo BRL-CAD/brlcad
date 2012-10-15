@@ -1583,7 +1583,7 @@ fail:
  * "H" - height of each cell (mm)
  * "M" - matrix to transform EBM solid into model coordinates
  *
- * no paramaters requested returns all
+ * no parameters requested returns all
  */
 int
 rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
