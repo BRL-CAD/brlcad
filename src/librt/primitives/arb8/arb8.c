@@ -389,7 +389,7 @@ rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, 
 	    /* Pts are given clockwise, so reverse terms of cross prod. */
 	    /* peqn = (C-A)x(B-A), which points inwards */
 	    VCROSS(afp->peqn, P_A, ofp->arb_U);
-	    /* Check for co-linear, ie, |(B-A)x(C-A)| ~= 0 */
+	    /* Check for co-linear, i.e., |(B-A)x(C-A)| ~= 0 */
 	    f = MAGNITUDE(afp->peqn);
 	    if (NEAR_ZERO(f, RT_SLOPPY_DOT_TOL)) {
 		return -1;			/* BAD */
