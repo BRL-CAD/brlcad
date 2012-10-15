@@ -2380,8 +2380,8 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 
 	loop_count++;
 	if (loop_count > vert_count_sq) {
-	    bu_log("Cut_unimontone is in an infinite loop!!!\n");
-	    bu_bomb("Cut_unimontone is in an infinite loop");
+	    bu_log("Cut_unimonotone is in an infinite loop!!!\n");
+	    bu_bomb("Cut_unimonotone is in an infinite loop");
 	}
 
 	prev = PT2D_PREV(tbl2d, current);
