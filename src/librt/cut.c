@@ -357,7 +357,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
     }
 #endif
 
-    /* Allocate memory for nugrid axis parition. */
+    /* Allocate memory for nugrid axis partition. */
 
     for (i=0; i<3; i++)
 	nugnp->nu_axis[i] = (struct nu_axis *)bu_calloc(nu_max_ncells, sizeof(struct nu_axis), "NUgrid axis");
@@ -539,7 +539,7 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	}
 
     /* If we were just asked to collect info, we are done.  The binary
-     * space partioning algorithm (sometimes) needs just this.
+     * space partitioning algorithm (sometimes) needs just this.
      */
 
     if (just_collect_info) return;
@@ -828,7 +828,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
 	/* Ignore "dead" solids in the list.  (They failed prep) */
 	if (stp->st_aradius <= 0) continue;
 
-	/* Infinite and finite solids all get lumpped together */
+	/* Infinite and finite solids all get lumped together */
 	rt_cut_extend(finp, stp, rtip);
 
 	if (stp->st_aradius >= INFINITY) {
@@ -847,7 +847,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
     if (rtip->rti_cutdepth < 12) rtip->rti_cutdepth = 12;
     if (rtip->rti_cutdepth > 24) rtip->rti_cutdepth = 24;     /* !! */
     if (RT_G_DEBUG&DEBUG_CUT)
-	bu_log("Before Space Partitioning: Max Tree Depth=%zu, Cuttoff primitive count=%zu\n",
+	bu_log("Before Space Partitioning: Max Tree Depth=%zu, Cutoff primitive count=%zu\n",
 	       rtip->rti_cutdepth, rtip->rti_cutlen);
 
     bu_ptbl_init(&rtip->rti_cuts_waiting, rtip->nsolids,
@@ -889,7 +889,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
 #ifdef NEW_WAY
 	    } else {
 
-		XXX This hasnt been tested since massive
+		XXX This hasn't been tested since massive
 		    NUgrid changes were made
 
 		    /* New way, mostly parallel */
@@ -1133,7 +1133,7 @@ rt_ct_assess(register union cutter *cutp, register int axis, double *where_p, do
      * XXX Consider making a list of candidate cut points (max and min
      * of each bn_list[] element) with the subscript stored.
      *
-     * Eliminaate candidates outside the current range.  Sort the
+     * Eliminate candidates outside the current range.  Sort the
      * list.  Eliminate duplicate candidates.  The the element in the
      * middle of the candidate list.  Compute offcenter from middle of
      * range as now.
@@ -1251,7 +1251,7 @@ rt_ct_populate_box(union cutter *outp, const union cutter *inp, struct rt_i *rti
 	    if (piece_count < PIECE_BLOCK) {
 		piece_list[piece_count++] = indx;
 	    } else if (more_piece_count >= more_piece_len) {
-		/* this should be an extemely rare occurrence */
+		/* this should be an extremely rare occurrence */
 		more_piece_len += PIECE_BLOCK;
 		more_pieces = (long *)bu_realloc(more_pieces, more_piece_len * sizeof(long),
 						 "more_pieces");
