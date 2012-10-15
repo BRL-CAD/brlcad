@@ -168,7 +168,7 @@ rt_dspline4(fastf_t *m, double a, double b, double c, double d, double alpha)
 
 
 /**
- * pt		vector to recieve the interpolation result
+ * pt		vector to receive the interpolation result
  * m		spline matrix (see rt_dspline4_matrix)
  * a, b, c, d	knot values
  * alpha:	0..1 interpolation point
