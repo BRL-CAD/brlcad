@@ -175,6 +175,8 @@
 
 #include "../../librt_private.h"
 
+static int
+rhc_is_valid(struct rt_rhc_internal *rhc);
 
 struct rhc_specific {
     point_t rhc_V;		/* vector to rhc origin */
@@ -277,7 +279,6 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct rhc_specific *rhc;
     fastf_t magsq_b, magsq_h, magsq_r;
     fastf_t mag_b, mag_h, mag_r;
-    fastf_t f;
     mat_t R;
     mat_t Rinv;
     mat_t S;
@@ -285,8 +286,11 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     RT_CK_DB_INTERNAL(ip);
     RT_CK_RTI(rtip);
+
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
-    RT_RHC_CK_MAGIC(xip);
+    if (!rhc_is_valid(xip)) {
+	return 1;
+    }
 
     /* compute |B| |H| */
     mag_b = sqrt(magsq_b = MAGSQ(xip->rhc_B));
@@ -294,22 +298,6 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     mag_r = xip->rhc_r;
     magsq_r = mag_r * mag_r;
 
-    /* Check for |H| > 0, |B| > 0, |R| > 0 */
-    if (NEAR_ZERO(mag_h, RT_LEN_TOL) || NEAR_ZERO(mag_b, RT_LEN_TOL)
-	|| NEAR_ZERO(mag_r, RT_LEN_TOL)) {
-	return 1;		/* BAD, too small */
-    }
-
-    /* Check for B.H == 0 */
-    f = VDOT(xip->rhc_B, xip->rhc_H) / (mag_b * mag_h);
-
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	return 1;		/* BAD */
-    }
-
-    /*
-     * RHC is ok
-     */
     stp->st_id = ID_RHC;		/* set soltab ID */
     stp->st_meth = &rt_functab[ID_RHC];
 
@@ -748,7 +736,7 @@ int
 rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     int i, n;
-    fastf_t b, c, *back, f, *front, h, rh;
+    fastf_t b, c, *back, *front, h, rh;
     fastf_t dtol, ntol;
     vect_t Bu, Hu, Ru;
     mat_t R;
@@ -758,29 +746,17 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
-    RT_RHC_CK_MAGIC(xip);
+    if (!rhc_is_valid(xip)) {
+	return -2;
+    }
 
     /* compute |B| |H| */
     b = MAGNITUDE(xip->rhc_B);	/* breadth */
     rh = xip->rhc_r;		/* rectangular halfwidth */
     h = MAGNITUDE(xip->rhc_H);	/* height */
     c = xip->rhc_c;			/* dist to asympt origin */
-
-    /* Check for |H| > 0, |B| > 0, rh > 0, c > 0 */
-    if (NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
-	|| NEAR_ZERO(rh, RT_LEN_TOL) || NEAR_ZERO(c, RT_LEN_TOL)) {
-	bu_log("rt_rhc_plot:  zero length H, B, c, or rh\n");
-	return -2;		/* BAD */
-    }
-
-    /* Check for B.H == 0 */
-    f = VDOT(xip->rhc_B, xip->rhc_H) / (b * h);
-
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	bu_log("rt_rhc_plot: B not perpendicular to H, f=%f\n", f);
-	return -3;		/* BAD */
-    }
 
     /* make unit vectors in B, H, and BxH directions */
     VMOVE(Hu, xip->rhc_H);
@@ -972,7 +948,7 @@ int
 rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     int i, j, n;
-    fastf_t b, c, *back, f, *front, h, rh;
+    fastf_t b, c, *back, *front, h, rh;
     fastf_t dtol, ntol;
     vect_t Bu, Hu, Ru;
     mat_t R;
@@ -991,29 +967,17 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     RT_CK_TESS_TOL(ttol);
 
     RT_CK_DB_INTERNAL(ip);
+
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
-    RT_RHC_CK_MAGIC(xip);
+    if (!rhc_is_valid(xip)) {
+	return -2;
+    }
 
     /* compute |B| |H| */
     b = MAGNITUDE(xip->rhc_B);	/* breadth */
     rh = xip->rhc_r;		/* rectangular halfwidth */
     h = MAGNITUDE(xip->rhc_H);	/* height */
     c = xip->rhc_c;			/* dist to asympt origin */
-
-    /* Check for |H| > 0, |B| > 0, rh > 0, c > 0 */
-    if (NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
-	|| NEAR_ZERO(rh, RT_LEN_TOL) || NEAR_ZERO(c, RT_LEN_TOL)) {
-	bu_log("rt_rhc_tess:  zero length H, B, c, or rh\n");
-	return -2;		/* BAD */
-    }
-
-    /* Check for B.H == 0 */
-    f = VDOT(xip->rhc_B, xip->rhc_H) / (b * h);
-
-    if (! NEAR_ZERO(f, RT_DOT_TOL)) {
-	bu_log("rt_rhc_tess: B not perpendicular to H, f=%f\n", f);
-	return -3;		/* BAD */
-    }
 
     /* make unit vectors in B, H, and BxH directions */
     VMOVE(Hu, xip->rhc_H);
@@ -1326,7 +1290,9 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     }
 
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
-    RT_RHC_CK_MAGIC(xip);
+    if (!rhc_is_valid(xip)) {
+	return -1;
+    }
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
@@ -1335,28 +1301,6 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     rhc->s.s_id = ID_SOLID;
     rhc->s.s_type = RHC;
-
-    if (MAGNITUDE(xip->rhc_B) < RT_LEN_TOL
-	|| MAGNITUDE(xip->rhc_H) < RT_LEN_TOL
-	|| xip->rhc_r < RT_LEN_TOL
-	|| xip->rhc_c < RT_LEN_TOL) {
-	bu_log("rt_rhc_export4: not all dimensions positive!\n");
-	return -1;
-    }
-
-    {
-	vect_t ub, uh;
-
-	VMOVE(ub, xip->rhc_B);
-	VUNITIZE(ub);
-	VMOVE(uh, xip->rhc_H);
-	VUNITIZE(uh);
-
-	if (!NEAR_ZERO(VDOT(ub, uh), RT_DOT_TOL)) {
-	    bu_log("rt_rhc_export4: B and H are not perpendicular!\n");
-	    return -1;
-	}
-    }
 
     /* Warning:  type conversion */
     VSCALE(&rhc->s.s_values[0 * 3], xip->rhc_V, local2mm);
@@ -1443,33 +1387,13 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     }
 
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
-    RT_RHC_CK_MAGIC(xip);
+    if (!rhc_is_valid(xip)) {
+	return -1;
+    }
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 11;
     ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "rhc external");
-
-    if (MAGNITUDE(xip->rhc_B) < RT_LEN_TOL
-	|| MAGNITUDE(xip->rhc_H) < RT_LEN_TOL
-	|| xip->rhc_r < RT_LEN_TOL
-	|| xip->rhc_c < RT_LEN_TOL) {
-	bu_log("rt_rhc_export4: not all dimensions positive!\n");
-	return -1;
-    }
-
-    {
-	vect_t ub, uh;
-
-	VMOVE(ub, xip->rhc_B);
-	VUNITIZE(ub);
-	VMOVE(uh, xip->rhc_H);
-	VUNITIZE(uh);
-
-	if (!NEAR_ZERO(VDOT(ub, uh), RT_DOT_TOL)) {
-	    bu_log("rt_rhc_export4: B and H are not perpendicular!\n");
-	    return -1;
-	}
-    }
 
     /* scale 'em into local buffer */
     VSCALE(&vec[0 * 3], xip->rhc_V, local2mm);
@@ -1571,6 +1495,33 @@ rt_rhc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
+static int
+rhc_is_valid(struct rt_rhc_internal *rhc)
+{
+    fastf_t mag_b, mag_h, cos_angle_bh;
+
+    RT_RHC_CK_MAGIC(rhc);
+
+    mag_b = MAGNITUDE(rhc->rhc_B);
+    mag_h = MAGNITUDE(rhc->rhc_H);
+
+    /* check for |H| > 0, |B| > 0, |R| > 0, c > 0 */
+    if (NEAR_ZERO(mag_h, RT_LEN_TOL)
+	|| NEAR_ZERO(mag_b, RT_LEN_TOL)
+	|| NEAR_ZERO(rhc->rhc_r, RT_LEN_TOL)
+	|| NEAR_ZERO(rhc->rhc_c, RT_LEN_TOL))
+    {
+	return 0;
+    }
+
+    /* check B orthogonal to H */
+    cos_angle_bh = VDOT(rhc->rhc_B, rhc->rhc_H) / (mag_b * mag_h);
+    if (!NEAR_ZERO(cos_angle_bh, RT_DOT_TOL)) {
+	return 0;
+    }
+
+    return 1;
+}
 
 /*
  * Local Variables:
