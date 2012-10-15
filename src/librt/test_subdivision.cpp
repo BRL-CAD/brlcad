@@ -143,12 +143,9 @@ void get_all_edges(struct Mesh_Info *mesh, std::set<std::pair<size_t, size_t> > 
     }
 }
 
-struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_mesh, FILE* plot_file) {
+struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_mesh) {
     std::map<size_t, std::vector<size_t> >::iterator f_it;
     std::vector<size_t>::iterator l_it;
-    int r = int(256*drand48() + 1.0);
-    int g = int(256*drand48() + 1.0);
-    int b = int(256*drand48() + 1.0);
 
     struct Mesh_Info *starting_mesh;
     if (!prev_mesh) {
@@ -200,10 +197,6 @@ struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_m
 	     }
 	 }
      }
-     for(f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
-	 l_it = (*f_it).second.begin();
-	 plot_face(&mesh->points_p0[(*l_it)], &mesh->points_p0[(*(l_it+1))], &mesh->points_p0[(*(l_it+2))], r, g ,b, plot_file);
-     }
      delete starting_mesh;
      return mesh;
 }
@@ -252,12 +245,23 @@ int main(int argc, char *argv[])
     RT_BOT_CK_MAGIC(bot_ip);
 
     for (size_t i_cnt = 1; i_cnt < 7; i_cnt++) {
+        mesh = iterate(bot_ip, prev_mesh);
+        prev_mesh = mesh;
+
+        // Plot results
 	struct bu_vls fname;
 	bu_vls_init(&fname);
 	bu_vls_printf(&fname, "root3_%d.pl", i_cnt);
 	FILE* plot_file = fopen(bu_vls_addr(&fname), "w");
-        mesh = iterate(bot_ip, prev_mesh, plot_file);
-        prev_mesh = mesh;
+	std::map<size_t, std::vector<size_t> >::iterator f_it;
+	std::vector<size_t>::iterator l_it;
+	int r = int(256*drand48() + 1.0);
+	int g = int(256*drand48() + 1.0);
+	int b = int(256*drand48() + 1.0);
+	for(f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
+	    l_it = (*f_it).second.begin();
+	    plot_face(&mesh->points_p0[(*l_it)], &mesh->points_p0[(*(l_it+1))], &mesh->points_p0[(*(l_it+2))], r, g ,b, plot_file);
+	}
 	fclose(plot_file);
     }
 
