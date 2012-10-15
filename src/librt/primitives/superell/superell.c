@@ -120,7 +120,7 @@ const struct bu_structparse rt_superell_parse[] = {
  * NORMALS.  Given the point W on the superellipsoid, what is the
  * vector normal to the tangent plane at that point?
  *
- * Map W onto the unit sphere, ie:  W' = S(R(W - V)).
+ * Map W onto the unit sphere, i.e.:  W' = S(R(W - V)).
  *
  * Plane on unit sphere at W' has a normal vector of the same value(!).
  * N' = W'
