@@ -45,17 +45,20 @@
 	common moveEdge 2
 	common moveFace 3
 	common selectPoint 4
-	common selectFace 5
-	common splitEdge 6
-	common splitFace 7
+	common selectEdge 5
+	common selectFace 6
+	common splitEdge 7
+	common splitFace 8
 
 	common mVertDetailHeadings {{} X Y Z}
+	common mEdgeDetailHeadings {{} A B}
 	common mFaceDetailHeadings {{} A B C}
 	common mEditLabels {
 	    {Move Point}
 	    {Move Edge}
 	    {Move Face}
 	    {Select Point}
+	    {Select Edge}
 	    {Select Face}
 	    {Split Edge}
 	    {Split Face}
@@ -75,8 +78,10 @@
 
     protected {
 	variable mVertDetail
+	variable mEdgeDetail
 	variable mFaceDetail
-	variable mCurrentBotEdge ""
+	variable mEdgeList
+	variable mCurrentBotEdge 1
 	variable mCurrentBotPoint 1
 	variable mCurrentBotFace 1
 
@@ -90,6 +95,7 @@
 	method initEditState {}
 
 	method applyData {}
+	method botEdgeSelectCallback {_edge}
 	method botEdgeSplitCallback {_elist}
 	method botFaceMoveCallback {_face}
 	method botFaceSelectCallback {_face}
@@ -98,6 +104,7 @@
 	method detailBrowseCommand {_row _col}
 	method handleDetailPopup {_index _X _Y}
 	method handleEnter {_row _col}
+	method singleEdgeSelectCallback {_pindex}
 	method singleFaceSelectCallback {_pindex}
 	method singlePointSelectCallback {_pindex}
 	method validateDetailEntry {_row _col _newval _clientdata}
@@ -124,11 +131,18 @@
 #                      PUBLIC METHODS
 # ------------------------------------------------------------
 
+
+
 ## - initGeometry
 #
 # Initialize the variables containing the object's specification.
 #
 ::itcl::body BotEditFrame::initGeometry {gdata} {
+    if {$itk_option(-mged) == "" ||
+	$itk_option(-geometryObject) == ""} {
+	return
+    }
+
     unset mVertDetail
     unset mFaceDetail
 
@@ -138,6 +152,12 @@
     set col 0
     foreach heading $mVertDetailHeadings {
 	set mVertDetail(0,$col) $heading
+	incr col
+    }
+
+    set col 0
+    foreach heading $mEdgeDetailHeadings {
+	set mEdgeDetail(0,$col) $heading
 	incr col
     }
 
@@ -182,6 +202,26 @@
 	}
     }
 
+    set tmpEdgeList [$itk_option(-mged) get_bot_edges $itk_option(-geometryObject)]
+    set mEdgeList {}
+    set index 1
+    foreach item $tmpEdgeList {
+	set mEdgeDetail($index,$SELECT_COL) ""
+	set e0 [lindex $item 0]
+	set e1 [lindex $item 1]
+
+	if {$e0 > $e1} {
+	    set mEdgeDetail($index,$A_COL) $e1
+	    set mEdgeDetail($index,$B_COL) $e0
+	    lappend mEdgeList [list $e1 $e0]
+	} else {
+	    set mEdgeDetail($index,$A_COL) $e0
+	    set mEdgeDetail($index,$B_COL) $e1
+	    lappend mEdgeList [list $e0 $e1]
+	}
+	incr index
+    }
+
     GeometryEditFrame::initGeometry $gdata
 
     if {$itk_option(-geometryObject) != $mPrevGeometryObject} {
@@ -189,7 +229,7 @@
 	set mPrevGeometryObject $itk_option(-geometryObject)
     }
 
-    botPointSelectCallback [expr {$mCurrentBotPoint - 1}]
+#    botPointSelectCallback [expr {$mCurrentBotPoint - 1}]
     botFaceSelectCallback [expr {$mCurrentBotFace - 1}]
 }
 
@@ -383,6 +423,28 @@
 #	    -dataCallback [::itcl::code $this applyData]
 
 
+    itk_component add edgeTabLF {
+	::ttk::labelframe $parent.edgeTabLF \
+	    -text "Bot Edges" \
+	    -labelanchor n
+    } {}
+
+    itk_component add edgeTab {
+	::cadwidgets::TkTable $itk_component(edgeTabLF).edgeTab \
+	    [::itcl::scope mEdgeDetail] \
+	    $mEdgeDetailHeadings \
+	    -cursor arrow \
+	    -height 0 \
+	    -maxheight 2000 \
+	    -width 0 \
+	    -rows 100000 \
+	    -colstretchmode unset \
+	    -validate 1 \
+	    -validatecommand [::itcl::code $this validateDetailEntry] \
+	    -tablePopupHandler [::itcl::code $this handleDetailPopup] \
+	    -singleSelectCallback [::itcl::code $this singleEdgeSelectCallback]
+    } {}
+
     itk_component add faceTabLF {
 	::ttk::labelframe $parent.faceTabLF \
 	    -text "Bot Faces" \
@@ -407,13 +469,18 @@
 
     # Set width of column 0
     $itk_component(vertTab) width 0 3
+    $itk_component(edgeTab) width 0 3
     $itk_component(faceTab) width 0 3
 
     pack $itk_component(vertTab) -expand yes -fill both
+    pack $itk_component(edgeTab) -expand yes -fill both
     pack $itk_component(faceTab) -expand yes -fill both
 
     set row 0
     grid $itk_component(vertTabLF) -row $row -sticky nsew
+    grid rowconfigure $parent $row -weight 1
+    incr row
+    grid $itk_component(edgeTabLF) -row $row -sticky nsew
     grid rowconfigure $parent $row -weight 1
     incr row
     grid $itk_component(faceTabLF) -row $row -sticky nsew
@@ -522,6 +589,11 @@
 	    set mEditClass ""
 	    $::ArcherCore::application initFindBotPoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this botPointSelectCallback]
 	} \
+	$selectEdge {
+	    set mEditCommand ""
+	    set mEditClass ""
+	    $::ArcherCore::application initFindBotEdge $itk_option(-geometryObjectPath) 1 [::itcl::code $this botEdgeSelectCallback]
+	} \
 	$selectFace {
 	    set mEditCommand ""
 	    set mEditClass ""
@@ -541,7 +613,31 @@
     GeometryEditFrame::initEditState
 }
 
+
 ::itcl::body BotEditFrame::applyData {} {
+}
+
+
+::itcl::body BotEditFrame::botEdgeSelectCallback {_edge} {
+    set e0 [lindex $_edge 0]
+    set e1 [lindex $_edge 1]
+
+    if {$e0 > $e1} {
+	set _edge [list $e1 $e0]
+    }
+
+    set edge_index [lsearch $mEdgeList $_edge]
+    if {$edge_index < 0} {
+	return
+    }
+
+    incr edge_index
+    set mCurrentBotEdge $edge_index
+    $itk_component(edgeTab) selectSingleRow $edge_index
+    $itk_component(edgeTab) see "$edge_index,0"
+
+    set pointIndex $mEdgeDetail($edge_index,$A_COL)
+    botPointSelectCallback $pointIndex
 }
 
 
@@ -565,6 +661,8 @@
     set mCurrentBotFace $_face
     $itk_component(faceTab) selectSingleRow $_face
     $itk_component(faceTab) see "$_face,0"
+
+    botEdgeSelectCallback [list $mFaceDetail($_face,$A_COL) $mFaceDetail($_face,$B_COL)]
 }
 
 
@@ -609,6 +707,11 @@
     }
 
     updateGeometryIfMod
+}
+
+::itcl::body BotEditFrame::singleEdgeSelectCallback {_pindex} {
+    set mCurrentBotEdge $_pindex
+    initEditState
 }
 
 ::itcl::body BotEditFrame::singleFaceSelectCallback {_pindex} {

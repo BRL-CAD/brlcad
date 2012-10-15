@@ -198,6 +198,7 @@ package provide cadwidgets::Ged 1.0
 	method g {args}
 	method get {args}
 	method get_autoview {args}
+	method get_bot_edges {args}
 	method get_comb {args}
 	method get_eyemodel {args}
 	method get_prev_mouse {args}
@@ -1470,6 +1471,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::get_autoview {args} {
     eval $mGed get_autoview $args
+}
+
+::itcl::body cadwidgets::Ged::get_bot_edges {args} {
+    eval $mGed get_bot_edges $args
 }
 
 ::itcl::body cadwidgets::Ged::get_comb {args} {
