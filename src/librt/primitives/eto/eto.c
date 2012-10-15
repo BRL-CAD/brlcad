@@ -61,7 +61,7 @@
  *
  * Through a series of Transformations, this set will be transformed
  * into a set of points on an eto centered at the origin which lies on
- * the X-Y plane (ie, N is on the Z axis).
+ * the X-Y plane (i.e., N is on the Z axis).
  *
  * { (x', y', z') | (x', y', z') is an eto at origin }
  *
@@ -113,7 +113,7 @@
  * NORMALS.  Given the point W on the eto, what is the vector normal
  * to the tangent plane at that point?
  *
- * Map W onto the eto, ie: W' = R(W - V).  In this case, we find W'
+ * Map W onto the eto, i.e.: W' = R(W - V).  In this case, we find W'
  * by solving the parametric line given k.
  *
  * The gradient of the eto at W' is in fact the
