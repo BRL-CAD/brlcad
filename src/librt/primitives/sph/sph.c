@@ -218,7 +218,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	(struct sph_specific *)stp->st_specific;
     register struct seg *segp;
 
-    vect_t ov;		/* ray orgin to center (V - P) */
+    vect_t ov;		/* ray origin to center (V - P) */
     fastf_t magsq_ov;	/* length squared of ov */
     fastf_t b;		/* second term of quadratic eqn */
     fastf_t root;		/* root of radical */
@@ -273,7 +273,7 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     register struct sph_specific *sph;
     register int i;
 
-    vect_t ov;		/* ray orgin to center (V - P) */
+    vect_t ov;		/* ray origin to center (V - P) */
     fastf_t magsq_ov;	/* length squared of ov */
     fastf_t b;		/* second term of quadratic eqn */
     fastf_t root;		/* root of radical */
