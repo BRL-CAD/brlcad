@@ -978,6 +978,7 @@ static struct to_cmdtab to_cmds[] = {
     {"g",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_group},
     {"get",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_get},
     {"get_autoview",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_get_autoview},
+    {"get_bot_edges",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_get_bot_edges},
     {"get_comb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_get_comb},
     {"get_eyemodel",	"vname", 2, to_view_func, ged_get_eyemodel},
     {"get_prev_mouse",	"vname", TO_UNLIMITED, to_get_prev_mouse, GED_FUNC_PTR_NULL},

@@ -4362,9 +4362,11 @@ RT_EXPORT extern int nmg_edge_collapse(struct model *m,
 RT_EXPORT extern struct model *nmg_clone_model(const struct model *original);
 
 /* bot.c */
-RT_EXPORT extern int rt_bot_edge_in_list(const int v1,
-					 const int v2,
-					 const int edge_list[],
+RT_EXPORT extern size_t rt_bot_get_edge_list(const struct rt_bot_internal *bot,
+					     size_t **edge_list);
+RT_EXPORT extern int rt_bot_edge_in_list(const size_t v1,
+					 const size_t v2,
+					 const size_t edge_list[],
 					 const size_t edge_count0);
 RT_EXPORT extern int rt_bot_plot(struct bu_list		*vhead,
 				 struct rt_db_internal	*ip,

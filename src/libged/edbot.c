@@ -425,6 +425,61 @@ ged_find_botpt_nearest_pt(struct ged *gedp, int argc, const char *argv[])
 
 
 int
+ged_get_bot_edges(struct ged *gedp, int argc, const char *argv[])
+{
+    static const char *usage = "bot";
+    struct rt_db_internal intern;
+    struct rt_bot_internal *botip;
+    mat_t mat;
+    size_t edge_count;
+    size_t *edge_list;
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR) {
+	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
+	return GED_ERROR;
+    }
+
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
+	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+	bu_vls_printf(gedp->ged_result_str, "Object is not a BOT");
+	rt_db_free_internal(&intern);
+
+	return GED_ERROR;
+    }
+
+    botip = (struct rt_bot_internal *)intern.idb_ptr;
+    if ((edge_count = rt_bot_get_edge_list(botip, &edge_list)) > 0) {
+	size_t i;
+
+	for (i = 0; i < edge_count; i++)
+	    bu_vls_printf(gedp->ged_result_str, "{%zu %zu} ", edge_list[i*2], edge_list[i*2+1]);
+
+	bu_free(edge_list, "bot edge list");
+    }
+
+    rt_db_free_internal(&intern);
+    return GED_OK;
+}
+
+
+int
 ged_move_botpt(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[-r] bot vertex_i pt";

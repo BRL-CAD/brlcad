@@ -1124,6 +1124,11 @@ GED_EXPORT extern int ged_get(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_get_autoview(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Get a bot's edges
+ */
+GED_EXPORT extern int ged_get_bot_edges(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Get combination information
  */
 GED_EXPORT extern int ged_get_comb(struct ged *gedp, int argc, const char *argv[]);
