@@ -44,7 +44,7 @@
  * R T _ R E A D _ C M D
  *
  * Read one semi-colon terminated string of arbitrary length from the
- * given file into a dynamicly allocated buffer.  Various commenting
+ * given file into a dynamically allocated buffer.  Various commenting
  * and escaping conventions are implemented here.
  *
  * Returns:
