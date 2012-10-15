@@ -361,7 +361,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     (*b)->SetTrimIsoFlags(s4f);
     (*b)->FlipFace(s4f);
 
-    // Next, define the top face with full resultion.
+    // Next, define the top face with full resolution.
 
     ON_BezierSurface *bezsurf = new ON_BezierSurface(3, false, dsp_ip->dsp_xcnt, dsp_ip->dsp_ycnt);
 
