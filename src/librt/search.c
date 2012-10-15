@@ -478,7 +478,7 @@ db_fullpath_stateful_traverse_subtree(union tree *tp,
  * Unlike db_preorder_traverse, this routine and its subroutines
  * use db_full_path structures instead of directory structures.
  *
- * This walker will hault if either comb_func or leaf_func return
+ * This walker will halt if either comb_func or leaf_func return
  * a value > 0 and return that value.
  */
 HIDDEN int
@@ -1463,7 +1463,7 @@ c_path(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
 /*
  * -print functions --
  *
- * Always true, causes the current pathame to be added to the results
+ * Always true, causes the current pathname to be added to the results
  * list.
  */
 HIDDEN int
@@ -1636,7 +1636,7 @@ yankexpr(struct db_plan_t **planp, struct db_plan_t **resultplan)          /* po
 
 
 /*
- * replaces "parentheisized" plans in our search plan with "expr"
+ * replaces "parenthesized" plans in our search plan with "expr"
  * nodes.
  */
 HIDDEN int
