@@ -45,7 +45,7 @@
 #include "bu.h"
 
 
-/* Boolean values.  Not easy to change, but defined symbolicly */
+/* Boolean values.  Not easy to change, but defined symbolically */
 #define BOOL_FALSE 0
 #define BOOL_TRUE 1
 
@@ -53,7 +53,7 @@
 /**
  * R T _ W E A V E 0 S E G
  *
- * If a zero thickness segment abutts another partition, it will be
+ * If a zero thickness segment abuts another partition, it will be
  * fused in, later.
  *
  * If it is free standing, then it will remain as a zero thickness
@@ -458,7 +458,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 		if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("equal_start\n");
 		/*
 		 * Segment and partition start at (roughly) the same
-		 * point.  When fuseing 2 points together i.e., when
+		 * point.  When fusing 2 points together i.e., when
 		 * NEAR_ZERO(diff, tol) is true, the two points MUST
 		 * be forced to become exactly equal!
 		 */
@@ -810,7 +810,7 @@ rt_fastgen_vol_vol_overlap(struct region **fr1, struct region **fr2, const struc
 	    /* keep fr1, delete fr2 */
 	    *fr2 = REGION_NULL;
 	} else {
-	    /* keep fr2, depete fr1 */
+	    /* keep fr2, delete fr1 */
 	    *fr1 = REGION_NULL;
 	}
     } else {
@@ -839,7 +839,7 @@ rt_fastgen_vol_vol_overlap(struct region **fr1, struct region **fr2, const struc
  * NOTE: This is a "fuzzy" difference.  It is important NOT to use the
  * results of this function in compound comparisons, because a return
  * of 0 makes no statement about the PRECISE relationships between the
- * two numbers.  Eg, * if (rt_fdiff(a, b) <= 0) is poison!
+ * two numbers.  E.g., * if (rt_fdiff(a, b) <= 0) is poison!
  *
  * Returns -
  * -1 if a < b
@@ -903,10 +903,10 @@ out:
  *
  * Handle FASTGEN plate/volume overlap.
  *
- * Measure width of _preceeding_ partition, which must have been
+ * Measure width of _preceding_ partition, which must have been
  * claimed by the volume mode region fr2.
  *
- * If less than 1/4", delete preceeding partition, and plate wins this
+ * If less than 1/4", delete preceding partition, and plate wins this
  * part.  If less than 1/4", plate wins this part, previous partition
  * untouched.  If previous partition is claimed by plate mode region
  * fr1, then overlap is left in output???
@@ -964,7 +964,7 @@ rt_fastgen_plate_vol_overlap(struct region **fr1, struct region **fr2, struct pa
 	/* For now, volume mode region just loses. */
 	*fr2 = REGION_NULL;
     } else {
-	/* Some other region preceeds this partition */
+	/* Some other region precedes this partition */
 	/* So both plate and vol start at same place, d=0, plate wins */
 	*fr2 = REGION_NULL;
     }
@@ -1617,7 +1617,7 @@ pop:
  *
  * If 0 regions result, continue with next partition.
  *
- * If 1 region results, a valid hit has occured, so transfer the
+ * If 1 region results, a valid hit has occurred, so transfer the
  * partition from the Input list to the Final list.
  *
  * If 2 or more regions claim the partition, then an overlap exists.
@@ -1818,7 +1818,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	 * Partition may start before current box starts, because it's
 	 * still waiting for all its solids to be shot.
 	 */
-	if (pp->pt_outhit->hit_dist <= 0.001 /* milimeters */) {
+	if (pp->pt_outhit->hit_dist <= 0.001 /* millimeters */) {
 	    register struct partition *zap_pp;
 	    if (RT_G_DEBUG&DEBUG_PARTITION)
 		bu_log("discarding partition %p behind ray start, out dist=%g\n",
@@ -1916,7 +1916,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 		goto out;
 	    }
 	    if (RT_G_DEBUG&DEBUG_PARTITION)
-		bu_log("Partition is eligibile for evaluation.\n");
+		bu_log("Partition is eligible for evaluation.\n");
 	}
 
 	/* Evaluate the boolean trees of any regions involved */
