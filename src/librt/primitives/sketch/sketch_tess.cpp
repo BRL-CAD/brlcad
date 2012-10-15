@@ -90,7 +90,7 @@ make_biarc(const ON_BezierCurve& bezier)
 
 
 /* NOTE: MINSTEP and MAXSTEP were determined by experimentation. If MINSTEP is
- * much smaller (ie. 0.00001), approx_bezier() slows significantly on curves with
+ * much smaller (i.e. 0.00001), approx_bezier() slows significantly on curves with
  * high curvature over a large part of its domain. MAXSTEP represents a step
  * size of 1/10th the domain of a Bezier curve, and MINSTEP represents 1/10000th.
  */
