@@ -728,6 +728,231 @@ rt_rhc_class(void)
     return 0;
 }
 
+/* Our canonical hyperbola in the Y-Z plane has equation
+ * z = +- (a/b) * sqrt(b^2 + y^2), and opens toward +Z and -Z with asymptote
+ * origin at the origin.
+ *
+ * The contour of an rhc in the plane B-R is the positive half of a hyperbola
+ * with asymptote origin at ((|B| + c)Bu), opening toward -B. We can transform
+ * this hyperbola to get an equivalent canonical hyperbola in the Y-Z plane,
+ * opening toward +Z (-B) with asymptote origin at the origin.
+ *
+ * This hyperbola passes through the point (r, |B| + a) (a = c). If we plug the
+ * point (r, |H| + a) into our canonical equation, we can derive b from |B|, a,
+ * and r.
+ *
+ *                             |B| + a = (a/b) * sqrt(b^2 + r^2)
+ *                       (|B| + a) / a = b * sqrt(b^2 + r^2)
+ *                   (|B| + a)^2 / a^2 = 1 + (r^2 / b^2)
+ *           ((|B| + a)^2 - a^2) / a^2 = r^2 / b^2
+ *   (a^2 * r^2) / ((|B| + a)^2 - a^2) = b^2
+ *      (ar) / sqrt((|B| + a)^2 - a^2) = b
+ *         (ar) / sqrt(|B| (|B| + 2a)) = b
+ */
+static fastf_t
+rhc_hyperbola_b(fastf_t mag_b, fastf_t c, fastf_t r)
+{
+    return (c * r) / sqrt(mag_b * (mag_b + 2.0 * c));
+}
+
+/* The contour of an rhc in the plane B-R is the positive half of a hyperbola
+ * with asymptote origin at ((|B| + c)Bu), opening toward -B. We can transform
+ * this hyperbola to get an equivalent hyperbola in the Y-Z plane, opening
+ * toward +Z (-B) with asymptote origin at (0, -(|B| + c)).
+ *
+ * The part of this hyperbola that passes between (0, -(|B| + c)) and (r, 0) is
+ * approximated by num_points points (including (0, -|B|) and (r, 0)).
+ *
+ * The constructed point list is returned (NULL returned on error). Because the
+ * above transformation puts the rhc vertex at the origin and the hyperbola
+ * asymptote origin at (0, -|B| + c), multiplying the z values by -1 gives
+ * corresponding distances along the rhc breadth vector B.
+ */
+static struct rt_pt_node *
+rhc_hyperbolic_curve(fastf_t mag_b, fastf_t c, fastf_t r, int num_points)
+{
+    int count;
+    struct rt_pt_node *curve;
+
+    curve = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+    curve->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
+
+    curve->next->next = NULL;
+    VSET(curve->p,       0, 0, -mag_b);
+    VSET(curve->next->p, 0, r, 0);
+
+    count = approximate_hyperbolic_curve(curve, c, rhc_hyperbola_b(mag_b, c, r), num_points - 2);
+
+    if (count != (num_points - 2)) {
+	return NULL;
+    }
+
+    return curve;
+}
+
+/* plot half of a hyperbolic contour curve using the given (r, b) points (pts),
+ * translation along H (rhc_H), and multiplier for r (rscale)
+ */
+static void
+rhc_plot_hyperbolic_curve(
+	struct bu_list *vhead,
+	struct rhc_specific *rhc,
+	struct rt_pt_node *pts,
+	vect_t rhc_H,
+	fastf_t rscale)
+{
+    vect_t t, Ru, Bu;
+    point_t p;
+    struct rt_pt_node *node;
+
+    VADD2(t, rhc->rhc_V, rhc_H);
+    VMOVE(Ru, rhc->rhc_Runit);
+    VMOVE(Bu, rhc->rhc_Bunit);
+
+    VJOIN2(p, t, rscale * pts->p[Y], Ru, -pts->p[Z], Bu);
+    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+
+    node = pts->next;
+    while (node != NULL) {
+	VJOIN2(p, t, rscale * node->p[Y], Ru, -node->p[Z], Bu);
+	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+
+	node = node->next;
+    }
+}
+
+static void
+rhc_plot_hyperbolas(
+	struct bu_list *vhead,
+	struct rt_rhc_internal *rhc,
+	struct rt_pt_node *pts)
+{
+    vect_t rhc_H;
+    struct rhc_specific rhc_s;
+
+    VMOVE(rhc_s.rhc_V, rhc->rhc_V);
+
+    VMOVE(rhc_s.rhc_Bunit, rhc->rhc_B);
+    VUNITIZE(rhc_s.rhc_Bunit);
+
+    VCROSS(rhc_s.rhc_Runit, rhc_s.rhc_Bunit, rhc->rhc_H);
+    VUNITIZE(rhc_s.rhc_Runit);
+
+    /* plot hyperbolic contour curve of face containing V */
+    VSETALL(rhc_H, 0.0);
+    rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, 1.0);
+    rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, -1.0);
+
+    /* plot hyperbolic contour curve of opposing face */
+    VMOVE(rhc_H, rhc->rhc_H);
+    rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, 1.0);
+    rhc_plot_hyperbolic_curve(vhead, &rhc_s, pts, rhc_H, -1.0);
+}
+
+static void
+rhc_plot_curve_connections(
+	struct bu_list *vhead,
+	struct rt_rhc_internal *rhc,
+	struct rt_pt_node *pts,
+	fastf_t rscale)
+{
+    struct rt_pt_node *node;
+    vect_t rhc_V, VH, Ru, Bu, R, B, RB;
+    point_t p;
+
+    VMOVE(rhc_V, rhc->rhc_V);
+    VADD2(VH, rhc_V, rhc->rhc_H);
+
+    VMOVE(Bu, rhc->rhc_B);
+    VUNITIZE(Bu);
+
+    VCROSS(Ru, Bu, rhc->rhc_H);
+    VUNITIZE(Ru);
+
+    VSCALE(R, Ru, rscale * pts->p[Y]);
+    VSCALE(B, Bu, -pts->p[Z]);
+    VADD2(RB, R, B);
+
+    node = pts;
+    while (node != NULL) {
+	/* calculate face contour point */
+	VSCALE(R, Ru, rscale * node->p[Y]);
+	VSCALE(B, Bu, -node->p[Z]);
+	VADD2(RB, R, B);
+
+	/* start at point on face containing V */
+	VADD2(p, rhc_V, RB);
+	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+
+	/* draw to corresponding point on opposing face */
+	VADD2(p, VH, RB);
+	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+
+	node = node->next;
+    }
+}
+
+int
+rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    point_t p;
+    vect_t rhc_R;
+    int num_curve_points;
+    struct rt_rhc_internal *rhc;
+    struct rt_pt_node *pts, *node, *tmp;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+
+    rhc = (struct rt_rhc_internal *)ip->idb_ptr;
+    if (!rhc_is_valid(rhc)) {
+	return -2;
+    }
+
+    num_curve_points = sqrt(primitive_diagonal_samples(ip, info)) / 4.0;
+
+    if (num_curve_points < 3) {
+	num_curve_points = 3;
+    }
+
+    VCROSS(rhc_R, rhc->rhc_B, rhc->rhc_H);
+    VUNITIZE(rhc_R);
+    VSCALE(rhc_R, rhc_R, rhc->rhc_r);
+
+    pts = rhc_hyperbolic_curve(MAGNITUDE(rhc->rhc_B), rhc->rhc_c, rhc->rhc_r, num_curve_points);
+
+    rhc_plot_hyperbolas(info->vhead, rhc, pts);
+
+    /* connect both halves of the hyperbolic contours of the opposing faces */
+    rhc_plot_curve_connections(info->vhead, rhc, pts, 1.0);
+    rhc_plot_curve_connections(info->vhead, rhc, pts, -1.0);
+
+    /* plot rectangular face */
+    VADD2(p, rhc->rhc_V, rhc_R);
+    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_MOVE);
+
+    VADD2(p, p, rhc->rhc_H);
+    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+
+    VJOIN1(p, p, -2.0, rhc_R);
+    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+
+    VJOIN1(p, p, -1.0, rhc->rhc_H);
+    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+
+    VJOIN1(p, p, 2.0, rhc_R);
+    RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+
+    node = pts;
+    while (node != NULL) {
+	tmp = node;
+	node = node->next;
+
+	bu_free(tmp, "rt_pt_node");
+    }
+
+    return 0;
+}
 
 /**
  * R T _ R H C _ P L O T
