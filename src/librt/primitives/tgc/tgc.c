@@ -3036,7 +3036,7 @@ nmg_tgc_disk(struct faceuse *fu, fastf_t *rmat, fastf_t height, int flip)
 }
 
 
-/* Create a cylinder with a top surface and a bottom surfce
+/* Create a cylinder with a top surface and a bottom surface
  * defined by the ellipsoids at the top and bottom of the
  * cylinder, the top_mat, and bot_mat are applied to a unit circle
  * for the top row of the surface and the bot row of the surface
