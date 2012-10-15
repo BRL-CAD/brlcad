@@ -19,7 +19,7 @@
  */
 /** @file sketch_brep.cpp
  *
- * Convert a sketch to b-rep form (does not creat a solid brep)
+ * Convert a sketch to b-rep form (does not create a solid brep)
  *
  */
 
