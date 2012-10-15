@@ -25,11 +25,11 @@
  *
  * The on-disk record looks like this:
  *	width byte
- *	n matricies (only non-identity matricies stored).
+ *	n matrices (only non-identity matrices stored).
  *	n leaves
  *	len of RPN expression.  (len=0 signals all-union expression)
  *	depth of stack
- *	Section 1:  matricies
+ *	Section 1:  matrices
  *	Section 2:  leaves
  *	Section 3:  (Optional) RPN expression.
  *
@@ -56,7 +56,7 @@
 
 struct db_tree_counter_state {
     uint32_t magic;
-    size_t n_mat;		/* # leaves with non-identity matricies */
+    size_t n_mat;		/* # leaves with non-identity matrices */
     size_t n_leaf;		/* # leaf nodes */
     size_t n_oper;		/* # operator nodes */
     size_t leafbytes;		/* # bytes for name section */
@@ -69,7 +69,7 @@ struct db_tree_counter_state {
 /**
  * D B _ T R E E _ C O U N T E R
  *
- * Count number of non-identity matricies, number of leaf nodes,
+ * Count number of non-identity matrices, number of leaf nodes,
  * number of operator nodes, etc.
  *
  * Returns - maximum depth of stack needed to unpack this tree, if
@@ -142,7 +142,7 @@ db_tree_counter(const union tree *tp, struct db_tree_counter_state *tcsp)
 struct rt_comb_v5_serialize_state {
     uint32_t magic;
     size_t mat_num;	/* current matrix number */
-    size_t nmat;	/* # matricies, total */
+    size_t nmat;	/* # matrices, total */
     unsigned char *matp;
     unsigned char *leafp;
     unsigned char *exprp;
@@ -282,7 +282,7 @@ rt_comb_export5(
     comb = (struct rt_comb_internal *)ip->idb_ptr;
     RT_CK_COMB(comb);
 
-    /* First pass -- count number of non-identity matricies, number of
+    /* First pass -- count number of non-identity matrices, number of
      * leaf nodes, number of operator nodes.
      */
     memset((char *)&tcs, 0, sizeof(tcs));
@@ -311,7 +311,7 @@ rt_comb_export5(
 
     /* Second pass -- determine amount of on-disk storage needed */
     need =  1 +			/* width code */
-	db5_enc_len[wid] + 	/* size for nmatricies */
+	db5_enc_len[wid] + 	/* size for nmatrices */
 	db5_enc_len[wid] +	/* size for nleaves */
 	db5_enc_len[wid] +	/* size for leafbytes */
 	db5_enc_len[wid] +	/* size for len of RPN */
@@ -335,12 +335,12 @@ rt_comb_export5(
 
     /*
      * The output format has three sections:
-     * Section 1:  matricies
+     * Section 1:  matrices
      * Section 2:  leaf nodes
      * Section 3:  Optional RPN expression
      *
      * We have pre-computed the exact size of all three sections, so
-     * they can all be searialized together in one pass.  Establish
+     * they can all be serialized together in one pass.  Establish
      * pointers to the start of each section.
      */
     ss.magic = RT_COMB_V5_SERIALIZE_STATE_MAGIC;
@@ -417,7 +417,7 @@ rt_comb_export5(
 	bu_avs_remove(avsp, "shader");
     }
 
-    /* GIFT compatability */
+    /* GIFT compatibility */
     if (comb->region_id != 0) {
 	bu_vls_trunc(&value, 0);
 	bu_vls_printf(&value, "%ld", comb->region_id);
@@ -627,7 +627,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 
     /*
      * Bring the RPN expression back from the disk, populating leaves
-     * and matricies in the order they are encountered.
+     * and matrices in the order they are encountered.
      */
     if (max_stack_depth > MAX_V5_STACK) {
 	bu_log("Combination needs stack depth %zu, only have %d, aborted\n",
