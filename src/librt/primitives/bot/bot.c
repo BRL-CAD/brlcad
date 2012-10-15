@@ -1483,11 +1483,49 @@ rt_bot_find_v_nearest_pt2(
 }
 
 
-int
-rt_bot_edge_in_list(const int v1, const int v2, const int edge_list[], const size_t edge_count)
+size_t
+rt_bot_get_edge_list(const struct rt_bot_internal *bot, size_t **edge_list)
 {
     size_t i;
-    int ev1, ev2;
+    size_t edge_count=0;
+    size_t v1, v2, v3;
+
+    if (bot->num_faces < 1)
+	return edge_count;
+
+    *edge_list = (size_t *)bu_calloc(bot->num_faces * 3 * 2, sizeof(size_t), "bot edge list");
+
+    for (i = 0; i < bot->num_faces; i++) {
+	v1 = bot->faces[i*3 + 0];
+	v2 = bot->faces[i*3 + 1];
+	v3 = bot->faces[i*3 + 2];
+
+	if (!rt_bot_edge_in_list(v1, v2, *edge_list, edge_count)) {
+	    (*edge_list)[edge_count*2 + 0] = v1;
+	    (*edge_list)[edge_count*2 + 1] = v2;
+	    edge_count++;
+	}
+	if (!rt_bot_edge_in_list(v3, v2, *edge_list, edge_count)) {
+	    (*edge_list)[edge_count*2 + 0] = v3;
+	    (*edge_list)[edge_count*2 + 1] = v2;
+	    edge_count++;
+	}
+	if (!rt_bot_edge_in_list(v1, v3, *edge_list, edge_count)) {
+	    (*edge_list)[edge_count*2 + 0] = v1;
+	    (*edge_list)[edge_count*2 + 1] = v3;
+	    edge_count++;
+	}
+    }
+
+    return edge_count;
+}
+
+
+int
+rt_bot_edge_in_list(const size_t v1, const size_t v2, const size_t edge_list[], const size_t edge_count)
+{
+    size_t i;
+    size_t ev1, ev2;
 
     for (i = 0; i < edge_count; i++) {
 	ev1 = edge_list[i*2 + 0];
@@ -1518,9 +1556,8 @@ rt_bot_find_e_nearest_pt2(
     const mat_t mat)
 {
     size_t i;
-    size_t v1, v2, v3;
     fastf_t dist=MAX_FASTF, tmp_dist;
-    int *edge_list;
+    size_t *edge_list;
     size_t edge_count=0;
     struct bn_tol tol;
 
@@ -1530,29 +1567,8 @@ rt_bot_find_e_nearest_pt2(
 	return -1;
 
     /* first build a list of edges */
-    edge_list = (int *)bu_calloc(bot->num_faces * 3 * 2, sizeof(int), "bot edge list");
-
-    for (i = 0; i < bot->num_faces; i++) {
-	v1 = bot->faces[i*3 + 0];
-	v2 = bot->faces[i*3 + 1];
-	v3 = bot->faces[i*3 + 2];
-
-	if (!rt_bot_edge_in_list(v1, v2, edge_list, edge_count)) {
-	    edge_list[edge_count*2 + 0] = v1;
-	    edge_list[edge_count*2 + 1] = v2;
-	    edge_count++;
-	}
-	if (!rt_bot_edge_in_list(v3, v2, edge_list, edge_count)) {
-	    edge_list[edge_count*2 + 0] = v3;
-	    edge_list[edge_count*2 + 1] = v2;
-	    edge_count++;
-	}
-	if (!rt_bot_edge_in_list(v1, v3, edge_list, edge_count)) {
-	    edge_list[edge_count*2 + 0] = v1;
-	    edge_list[edge_count*2 + 1] = v3;
-	    edge_count++;
-	}
-    }
+    if ((edge_count = rt_bot_get_edge_list(bot, &edge_list)) == 0)
+	return -1;
 
     /* build a tolerance structure for the bn_dist routine */
     tol.magic   = BN_TOL_MAGIC;
