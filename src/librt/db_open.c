@@ -63,7 +63,7 @@
  * As a convenience, dbi_filepath is a C-style argv array of dirs to
  * search when attempting to open related files (such as data files
  * for EBM solids or texture-maps).  The default values are "." and
- * the directory containing the ".g" file.  They may be overriden by
+ * the directory containing the ".g" file.  They may be overridden by
  * setting the environment variable BRLCAD_FILE_PATH.
  *
  * Returns:
@@ -342,7 +342,7 @@ db_close(register struct db_i *dbip)
 	/*
 	 * We're using an instance of a memory mapped file.
 	 * We have two choices:
-	 * Either deassociate from the memory mapped file
+	 * Either dissociate from the memory mapped file
 	 * by clearing dbi_mf->apbuf, or
 	 * keeping our already-scanned dbip ready for
 	 * further use, with our dbi_uses counter at 0.
