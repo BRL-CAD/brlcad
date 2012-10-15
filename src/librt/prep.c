@@ -113,9 +113,9 @@ rt_new_rti(struct db_i *dbip)
     rtip->rti_ttol.norm = 0;
 
     /* This sets the space partitioning algorithm to Mike's original
-     * non-uniform binary space paritioning tree.  If you change this
+     * non-uniform binary space partitioning tree.  If you change this
      * to anything else, you must also modify "rt_find_backing_dist()"
-     * (in shoot.c), to handle the different alogorithm -JRA
+     * (in shoot.c), to handle the different algorithm -JRA
      */
     rtip->rti_space_partition = RT_PART_NUBSPT;
 
@@ -1030,7 +1030,7 @@ rt_clean(register struct rt_i *rtip)
 /**
  * Remove a region from the linked list.  Used to remove a particular
  * region from the active database, presumably after some useful
- * information has been extracted (eg, a light being converted to
+ * information has been extracted (e.g., a light being converted to
  * implicit type), or for special effects.
  *
  * Returns -
