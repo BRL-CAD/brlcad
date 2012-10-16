@@ -27,7 +27,7 @@
 /* interface header */
 #include "./Representation.h"
 
-/* implemenation headers */
+/* implementation headers */
 #include "STEPWrapper.h"
 #include "Factory.h"
 
