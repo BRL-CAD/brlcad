@@ -74,7 +74,7 @@ void point_inf(size_t p, struct Mesh_Info *mesh, ON_3dPointArray *p_a) {
      ON_3dPoint psum = ON_3dPoint(0,0,0);
      for(p_it = range.first; p_it != range.second; p_it++) {
         psum = psum + *mesh->points_p0.At((*p_it).second);
-     } 
+     }
      fastf_t alpha = alpha_n(n);
      //
      //                            3 an                 1
@@ -125,7 +125,7 @@ void mesh_info_init(struct rt_bot_internal *bot, struct Mesh_Info *mesh)
 	mesh->points_p0.Append(ON_3dPoint(&bot->vertices[i*3]));
 	mesh->iteration_of_insert[i] = 0;
     }
-    for (size_t i = 0; i < bot->num_faces; ++i) { 
+    for (size_t i = 0; i < bot->num_faces; ++i) {
         mesh_add_face(bot->faces[i*3+0], bot->faces[i*3+1], bot->faces[i*3+2], i, mesh);
     }
     mesh->iteration_cnt = 0;
@@ -150,7 +150,7 @@ struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_m
     struct Mesh_Info *starting_mesh;
     if (!prev_mesh) {
 	starting_mesh = new Mesh_Info;
-	mesh_info_init(bot, starting_mesh); 
+	mesh_info_init(bot, starting_mesh);
     } else {
 	starting_mesh = prev_mesh;
     }
@@ -169,7 +169,7 @@ struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_m
 	mesh->points_p0.Append(starting_mesh->points_q[(*f_it).first]);
         ON_3dPoint added = *mesh->points_p0.At(mesh->points_p0.Count() - 1);
 	mesh->iteration_of_insert[mesh->points_p0.Count()-1] = mesh->iteration_cnt;
-        starting_mesh->index_in_next[(*f_it).first] = mesh->points_p0.Count()-1; 
+        starting_mesh->index_in_next[(*f_it).first] = mesh->points_p0.Count()-1;
     }
      // Use the old faces to guide the insertion of the new.
      std::set<std::pair<size_t, size_t> > old_edges;
@@ -178,7 +178,7 @@ struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_m
      size_t face_cnt = 0;
      for(f_it = starting_mesh->face_pts.begin(); f_it != starting_mesh->face_pts.end(); f_it++) {
 	 std::set<std::pair<size_t, size_t> > face_old_edges;
-	 size_t q0 = starting_mesh->index_in_next[(*f_it).first]; 
+	 size_t q0 = starting_mesh->index_in_next[(*f_it).first];
 	 l_it = (*f_it).second.begin();
 	 face_old_edges.insert(std::make_pair((*l_it), (*(l_it+1))));
 	 face_old_edges.insert(std::make_pair((*(l_it+1)), (*(l_it+2))));
@@ -296,7 +296,7 @@ int main(int argc, char *argv[])
        vertices[v*3] = points_inf[v].x;
        vertices[v*3+1] = points_inf[v].y;
        vertices[v*3+2] = points_inf[v].z;
-    } 
+    }
     std::map<size_t, std::vector<size_t> >::iterator f_it;
     std::vector<size_t>::iterator l_it;
     for(f_it = mesh->face_pts.begin(); f_it != mesh->face_pts.end(); f_it++) {
