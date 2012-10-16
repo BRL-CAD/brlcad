@@ -232,7 +232,7 @@ static void
 usage() {
     bu_log("Usage:\n\tfast4-g [-dwq] [-c component_list] [-m muves_file] [-o plot_file] [-b BU_DEBUG_FLAG] [-x RT_DEBUG_FLAG] fastgen4_bulk_data_file output.g\n");
     bu_log("	d - print debugging info\n");
-    bu_log("	q - quiet mode (don't say anyhing except error messages\n");
+    bu_log("	q - quiet mode (don't say anything except error messages\n");
     bu_log("	w - print warnings about creating default names\n");
     bu_log("	c - process only the listed region ids, may be a list (3001, 4082, 5347) or a range (2314-3527)\n");
     bu_log("	m - create a MUVES input file containing CHGCOMP and CBACKING elements\n");
@@ -1164,7 +1164,7 @@ f4_do_cline(void)
     }
 
     if (pt1 == pt2) {
-	bu_log("Ilegal grid points in CLINE (%d and %d), skipping\n", pt1, pt2);
+	bu_log("Illegal grid points in CLINE (%d and %d), skipping\n", pt1, pt2);
 	bu_log("\telement %d, component %d, group %d\n", element_id, comp_id, group_id);
 	return;
     }
@@ -1904,7 +1904,7 @@ f4_Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 
     if (mode == PLATE_MODE) {
 	if (pos != POS_CENTER && pos != POS_FRONT) {
-	    bu_log("f4_Add_bot_face: illegal postion parameter (%d), must be one or two (ignoring face for group %d component %d)\n", pos, group_id, comp_id);
+	    bu_log("f4_Add_bot_face: illegal position parameter (%d), must be one or two (ignoring face for group %d component %d)\n", pos, group_id, comp_id);
 	    return;
 	}
     }
@@ -2061,7 +2061,7 @@ f4_do_quad(void)
 	    pos = POS_FRONT;
 
 	if (pos != POS_CENTER && pos != POS_FRONT) {
-	    bu_log("f4_do_quad: illegal postion parameter (%d), must be one or two\n", pos);
+	    bu_log("f4_do_quad: illegal position parameter (%d), must be one or two\n", pos);
 	    bu_log("\telement %d, component %d, group %d\n", element_id, comp_id, group_id);
 	    return;
 	}
@@ -2332,7 +2332,7 @@ f4_do_hex1(void)
 	    pos = POS_FRONT;
 
 	if (pos != POS_CENTER && pos != POS_FRONT) {
-	    bu_log("f4_do_hex1: illegal postion parameter (%d), must be 1 or 2, skipping CHEX1 element\n", pos);
+	    bu_log("f4_do_hex1: illegal position parameter (%d), must be 1 or 2, skipping CHEX1 element\n", pos);
 	    bu_log("\telement %d, component %d, group %d\n", element_id, comp_id, group_id);
 	    return;
 	}
@@ -2941,7 +2941,7 @@ main(int argc, char **argv)
     BU_LIST_INIT(&hole_head.l);
 
     if (!quiet)
-	bu_log("Scanning for HOLE, WALL, and COMPLSPLT cards...\n");
+	bu_log("Scanning for HOLE, WALL, and COMPSPLT cards...\n");
 
     Process_hole_wall();
 
