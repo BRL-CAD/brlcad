@@ -528,7 +528,7 @@ region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tr
 
     /*
      *  Returned tree will be freed by caller.
-     *  To keep solid table available for seraching,
+     *  To keep solid table available for searching,
      *  add this tree to a list of trees to be released once
      *  everything is finished.
      */
@@ -1324,7 +1324,7 @@ deck(char *prefix)
 /**
  * t o c
  *
- * Build a sorted list of names of all the objects accessable in the
+ * Build a sorted list of names of all the objects accessible in the
  * object file.
  */
 void
