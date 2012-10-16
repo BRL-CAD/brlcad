@@ -29,7 +29,7 @@
 /* inteface header */
 #include "./STEPWrapper.h"
 
-/* implemenation headers */
+/* implementation headers */
 #include "AdvancedBrepShapeRepresentation.h"
 #include "CartesianPoint.h"
 #include "VertexPoint.h"
@@ -1207,7 +1207,7 @@ STEPWrapper::printLoadStatistics()
 	ent = registry->NextEntity();
 
 	int entCount = instance_list->EntityKeywordCount(ent->Name());
-	// fix below with boost string formater when available
+	// fix below with boost string formatter when available
 	if (entCount > 0) {
 	    std::cout << "\t" << ent->Name() << filler.substr(0, filler.length() - ((std::string)ent->Name()).length()) << entCount << std::endl;
 	    numEntitiesUsed++;
