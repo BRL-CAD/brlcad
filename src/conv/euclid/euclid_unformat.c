@@ -55,7 +55,7 @@ main(int argc, char *argv[])
 
     if (argc != 1) {
 	if (argc > 1)
-	    bu_log("Unexpected paramter [%s]\n", argv[1]);
+	    bu_log("Unexpected parameter [%s]\n", argv[1]);
 
 	bu_log("Usage: %s < inputfile]\n  Primary input lines are as follows:\n    face# #npts face_type e ident a\n", argv[0]);
     }
