@@ -50,7 +50,7 @@ static char *input_file;	/* name of the input file */
 static char *brlcad_file;	/* name of output file */
 static struct bu_vls ret_name = BU_VLS_INIT_ZERO;	/* unique name built by Build_unique_name() */
 static char *forced_name=NULL;	/* name specified on command line */
-static int stl_format=0;	/* Flag, non-zero indocates raw Stereolithography format input */
+static int stl_format=0;	/* Flag, non-zero indicates raw Stereolithography format input */
 static int solid_count=0;	/* count of solids converted */
 static struct bn_tol tol;	/* Tolerance structure */
 static int id_no=1000;		/* Ident numbers */
@@ -421,7 +421,7 @@ Convert_assy(char *line)
     }
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL) {
-	bu_log("Barrier check at end of Convet_assy:\n");
+	bu_log("Barrier check at end of Convert_assy:\n");
 	if (bu_mem_barriercheck())
 	    bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n");
     }
@@ -597,7 +597,7 @@ Convert_part(char *line)
 	bu_prmem("At start of Conv_prt():\n");
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL) {
-	bu_log("Barrier check at start of Convet_part:\n");
+	bu_log("Barrier check at start of Convert_part:\n");
 	if (bu_mem_barriercheck())
 	    bu_exit(EXIT_FAILURE,  "Barrier check failed!!!\n");
     }
@@ -1019,7 +1019,7 @@ proe_usage(const char *argv0)
     bu_log("		This is to allow conversion of parts to be included in\n");
     bu_log("		previously converted Pro/E assemblies.\n");
     bu_log("	The -S option indicates that the input file is raw STL (STereoLithography) format.\n");
-    bu_log("	The -t option specifies the minumim distance between two distinct vertices (mm).\n");
+    bu_log("	The -t option specifies the minimum distance between two distinct vertices (mm).\n");
     bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
 }
 
