@@ -7534,7 +7534,7 @@ nmg_crackshells(struct shell *s1, struct shell *s2, const struct bn_tol *tol)
 	 * If coplanar, need to cut face.
 	 * If non-coplanar, can only hit at one point.
 	 */
- 
+
 	is.fu1 = fu1;
 	is.fu2 = (struct faceuse *)NULL;
 
