@@ -20,7 +20,7 @@
  */
 /** @file conv/walk_example.c
  *
- * @brief Example of how to traverse a BRL-CAD database heirarchy
+ * @brief Example of how to traverse a BRL-CAD database hierarchy
  *
  * This program uses the BRL-CAD librt function db_walk_tree() to
  * traverse a user-specified portion of the Directed Acyclic Graph
@@ -118,7 +118,7 @@ int parse_args(int ac, char *av[])
  *	R E G I O N _ S T A R T
  *
  * @brief This routine is called when a region is first encountered in the
- * heirarchy when processing a tree
+ * hierarchy when processing a tree
  *
  *	@param pathp A listing of all the nodes traversed to get to this node in the database
  */
@@ -246,7 +246,7 @@ int main(int ac, char *av[])
      */
     struct rt_i *rtip;
 
-    struct db_tree_state init_state; /* state table for the heirarchy walker */
+    struct db_tree_state init_state; /* state table for the hierarchy walker */
     char idbuf[1024] = {0};		/* Database title */
     int arg_count;
     char *tmp_basename;
