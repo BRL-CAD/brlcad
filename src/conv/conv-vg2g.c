@@ -114,9 +114,9 @@ main(int argc, char **argv)
 	lseek(ifd, (off_t)0L, 0);
 	/* have an old vged file to convert */
 
-	/* units are inportant now because:
+	/* units are important now because:
 	 *	The ged data records will be stored in a constant BASE unit
-	 *	of MiliMeters (MM).
+	 *	of MilliMeters (MM).
 	 *	At any time the ged user can change his local units.
 	 *    	Hence cv must know the original units of the ".vg" file so
 	 *	that they can be converted to BASE units.
@@ -195,7 +195,7 @@ main(int argc, char **argv)
 	    case ID_COMB:
 		if ( rec.c.c_name[0] == '\0' )  {
 		    /* This is an old-style flag for a deleted combination */
-		    /* Skip any folowing member records */
+		    /* Skip any following member records */
 		    do  {
 			if (read( ifd, &rec, sizeof(rec) ) == -1) {
 			    perror("READ ERROR");
