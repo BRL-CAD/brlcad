@@ -188,7 +188,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
  * J, J, Laplacian_filter[n] are all in the range 0.0 to 1.0
  *     sharp
  *
- * The folowing is done in mostly interger mode, there is only one
+ * The following is done in mostly integer mode, there is only one
  * floating point multiply done.
  */
 
