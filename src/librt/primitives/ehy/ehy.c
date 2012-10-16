@@ -776,10 +776,8 @@ ehy_plot_ellipse(
 	fastf_t h,
 	fastf_t num_points)
 {
-    int i;
-    point_t p;
+    fastf_t mag_H;
     vect_t V, Hu, Au, Bu, A, B, cross_section_plane;
-    fastf_t mag_H, rad, radian_step;
 
     VMOVE(V, ehy->ehy_V);
 
@@ -794,20 +792,9 @@ ehy_plot_ellipse(
      */
     VSCALE(A, Au, ehy_hyperbola_y(mag_H, ehy->ehy_c, ehy->ehy_r1, h));
     VSCALE(B, Bu, ehy_hyperbola_y(mag_H, ehy->ehy_c, ehy->ehy_r2, h));
-
     VJOIN1(cross_section_plane, V, h, Hu);
-    radian_step = bn_twopi / num_points;
 
-    rad = radian_step * (num_points - 1);
-    VJOIN2(p, cross_section_plane, cos(rad), A, sin(rad), B);
-    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
-
-    rad = 0;
-    for (i = 0; i < num_points; ++i) {
-	VJOIN2(p, cross_section_plane, cos(rad), A, sin(rad), B);
-	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
-	rad += radian_step;
-    }
+    plot_ellipse(vhead, cross_section_plane, A, B, num_points);
 }
 
 static void
