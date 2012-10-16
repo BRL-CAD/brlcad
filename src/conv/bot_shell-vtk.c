@@ -437,7 +437,7 @@ main(int argc, char *argv[])
     database_index = bu_optind;
     if ((rtip=rt_dirbuild(argv[bu_optind], idbuf, sizeof(idbuf))) == RTI_NULL)
     {
-	bu_exit(1, "rt_durbuild FAILED on %s\n", argv[bu_optind]);
+	bu_exit(1, "rt_dirbuild FAILED on %s\n", argv[bu_optind]);
     }
 
     rtip->rti_space_partition = RT_PART_NUBSPT;
