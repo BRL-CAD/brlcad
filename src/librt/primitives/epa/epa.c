@@ -732,12 +732,14 @@ epa_parabola_y(fastf_t r, fastf_t mag_H, fastf_t z)
  * epa height vector (h >= 0, h <= |H|) consisting of num_points points.
  */
 static void
-epa_plot_ellipse(struct bu_list *vhead, struct rt_epa_internal *epa, fastf_t h, fastf_t num_points)
+epa_plot_ellipse(
+	struct bu_list *vhead,
+	struct rt_epa_internal *epa,
+	fastf_t h,
+	fastf_t num_points)
 {
-    int i;
-    point_t p;
+    fastf_t mag_H;
     vect_t V, Hu, Au, Bu, A, B, cross_section_plane;
-    fastf_t mag_H, rad, radian_step;
 
     VMOVE(V, epa->epa_V);
 
@@ -752,20 +754,9 @@ epa_plot_ellipse(struct bu_list *vhead, struct rt_epa_internal *epa, fastf_t h, 
      */
     VSCALE(A, Au, epa_parabola_y(epa->epa_r1, mag_H, h));
     VSCALE(B, Bu, epa_parabola_y(epa->epa_r2, mag_H, h));
-
     VJOIN1(cross_section_plane, V, h, Hu);
-    radian_step = bn_twopi / num_points;
 
-    rad = radian_step * (num_points - 1);
-    VJOIN2(p, cross_section_plane, cos(rad), A, sin(rad), B);
-    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
-
-    rad = 0;
-    for (i = 0; i < num_points; ++i) {
-	VJOIN2(p, cross_section_plane, cos(rad), A, sin(rad), B);
-	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
-	rad += radian_step;
-    }
+    plot_ellipse(vhead, cross_section_plane, A, B, num_points);
 }
 
 static void
