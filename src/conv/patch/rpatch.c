@@ -83,7 +83,7 @@ get_ftn_float(char *str, unsigned int start_col, char *format)
     }
 
     /* copy the input string to tmp_str, converting
-     * imbedded blanks to zeros and 'D' or 'd' to 'e'
+     * embedded blanks to zeros and 'D' or 'd' to 'e'
      */
     for ( i=0; i<width; i++ )
     {
@@ -168,7 +168,7 @@ get_ftn_int(char *str, unsigned int start_col, char *format)
     }
 
     /* copy the input string to tmp_str, converting
-     * imbedded blanks to zeros */
+     * embedded blanks to zeros */
     for ( i=0; i<width; i++ )
     {
 	if ( isspace( (int)str[start_col+i] ) )
