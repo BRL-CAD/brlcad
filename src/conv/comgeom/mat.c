@@ -29,7 +29,7 @@
  *	vecXmat(&ov, &iv, &m)		Multiply vector iv by m and store in ov
  *	matXvec(&ov, &m, &iv)		Multiply m by vector iv and store in ov
  *	mat_print(&m)			Print out the 4x4 matrix - calls printf
- *	mat_hscale(&m, hscale)	        Homogenious scale of input matrix
+ *	mat_hscale(&m, hscale)	        Homogeneous scale of input matrix
  *	mat_inv(&om, &im)		Invert matrix im and store result in om
  *
  *
@@ -202,7 +202,7 @@ mat_print(matp_t m)
 /*
  *			M A T _ H S C A L E
  *
- * The matrix pointed at by "m" is homogeniously scaled by the
+ * The matrix pointed at by "m" is homogeneously scaled by the
  * variable "hscale".  NOTE that the input matrix is ALSO the output
  * matrix.
  */
@@ -225,7 +225,7 @@ mat_hscale(matp_t m, float hscale)
 
 /*
  * Invert a 4-by-4 matrix using Algorithm 120 from ACM.
- * This is a modified Gauss-Jordan alogorithm
+ * This is a modified Gauss-Jordan algorithm
  * Note:  Inversion is done in place, with 3 work vectors
  */
 void
