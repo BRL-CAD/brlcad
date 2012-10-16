@@ -60,7 +60,7 @@ struct vrml_mat {
     int shininess;
     double transparency;
 
-    /* light paramaters */
+    /* light parameters */
     fastf_t lt_fraction;
     vect_t  lt_dir;
     fastf_t lt_angle;
@@ -200,7 +200,7 @@ dup_bot(struct rt_bot_internal *bot_in)
     return bot;
 }
 
-/* return 0 when object is NOT a light or an error occured. regions
+/* return 0 when object is NOT a light or an error occurred. regions
  * are skipped when this function returns 0.
  */
 static int
@@ -221,7 +221,7 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
 
     id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
     if (id < 0) {
-	/* error occured retrieving object */
+	/* error occurred retrieving object */
 	bu_log("Warning: Can not load internal form of %s\n", dp->d_namep);
 	return 0;
     }
@@ -244,7 +244,7 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
 }
 
 
-/* return 0 when IS a light or an error occured. regions are skipped
+/* return 0 when IS a light or an error occurred. regions are skipped
  * when this function returns 0.
  */
 static int
@@ -260,7 +260,7 @@ select_non_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *
 
     id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
     if (id < 0) {
-	/* error occured retrieving object */
+	/* error occurred retrieving object */
 	bu_log("Warning: Can not load internal form of %s\n", dp->d_namep);
 	return 0;
     }
