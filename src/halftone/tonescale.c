@@ -22,7 +22,7 @@
  * Given a raw pixel value, return a scaled value.
  *
  * This is normally used to map the output devices characteristics to
- * the input intinsites.  There can be a diffrent map for each color.
+ * the input intensities.  There can be a different map for each color.
  *
  * Entry:
  *	map	pointer to a 256 byte map
@@ -72,7 +72,7 @@ tonescale(unsigned char *map, float Slope, float B, int (*eqptr) (/* ??? */))
 
 /*
  * 	Is there a function we should be using?
- * N.B.	This code has not been tested with a funtion being passed in.
+ * N.B.	This code has not been tested with a function being passed in.
  */
     if (!eqptr ) eqptr=eq_cubic;
 
@@ -113,9 +113,9 @@ tonescale(unsigned char *map, float Slope, float B, int (*eqptr) (/* ??? */))
     }
 }
 
-/* eq_cubic	default tone scale alorithm
+/* eq_cubic	default tone scale algorithm
  *
- * impliment
+ * implement
  *	y = A+B*(X-x)+C*(X-x)^2+D*(X-x)^3
  * as a default tonescale algorithm;
  *
@@ -123,7 +123,7 @@ tonescale(unsigned char *map, float Slope, float B, int (*eqptr) (/* ??? */))
  *	x	x value for equation.
  *
  * Exit:
- *	returns	y in the range 0-255  reqires clipping.
+ *	returns	y in the range 0-255  requires clipping.
  *
  * Calls:
  *	none.
