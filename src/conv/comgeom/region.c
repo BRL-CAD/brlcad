@@ -378,7 +378,7 @@ group_write(void)
 
 	if (verbose) col_pr(wp->wm_name);
     }
-    /* Make all-encompasing "all.g" group here */
+    /* Make all-encompassing "all.g" group here */
     mk_lfcomb(outfp, "all.g", &allhead, 0);
 }
 
