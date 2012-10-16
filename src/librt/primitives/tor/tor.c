@@ -1008,9 +1008,10 @@ int
 rt_tor_adaptive_plot(struct rt_db_internal *ip, struct rt_view_info *info)
 {
     vect_t a, b, tor_a, tor_b, tor_h, center;
-    fastf_t mag_a, mag_b, mag_h;
+    fastf_t mag_a, mag_b, mag_h, mag_center;
     struct rt_tor_internal *tor;
-    int samples;
+    fastf_t radian, radian_step;
+    int i, samples, num_cross_sections, points_per_cross_section;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -1018,6 +1019,10 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, struct rt_view_info *info)
     RT_TOR_CK_MAGIC(tor);
 
     samples = sqrt(primitive_diagonal_samples(ip, info));
+
+    if (samples < 8) {
+	samples = 8;
+    }
 
     while (samples % 4 != 0) {
 	++samples;
@@ -1051,6 +1056,24 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, struct rt_view_info *info)
     
     VJOIN1(center, tor->v, -1.0, tor_h);
     plot_ellipse(info->vhead, center, tor_a, tor_b, samples);
+
+    /* draw circular radial cross sections */
+    VMOVE(b, tor_h);
+    num_cross_sections = samples;
+    points_per_cross_section = samples / 2.0;
+
+    radian_step = bn_twopi / num_cross_sections;
+    radian = 0;
+    for (i = 0; i < num_cross_sections; ++i) {
+	ellipse_point_at_radian(center, tor->v, tor_a, tor_b, radian);
+
+	mag_center = MAGNITUDE(center);
+	VSCALE(a, center, mag_h / mag_center);
+
+	plot_ellipse(info->vhead, center, a, b, points_per_cross_section);
+
+	radian += radian_step;
+    }
 
     return 0;
 }
