@@ -57,7 +57,7 @@ revolve(int entityno)
     int sol_num;		/* IGES solid type number */
     point_t pt;			/* Point on axis of revolution */
     vect_t adir;			/* Direction of axis of revolution */
-    int curve;			/* Pointer to driectory entry for curve */
+    int curve;			/* Pointer to directory entry for curve */
     fastf_t fract;			/* Fraction of circle for rotation (0 < fract <= 1.0) */
     vect_t v1;			/* Vector from "pt" to any point along curve */
     fastf_t h;			/* height of "TRC" */
