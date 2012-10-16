@@ -1007,9 +1007,10 @@ rt_num_circular_segments(double maxerr, double radius)
 int
 rt_tor_adaptive_plot(struct rt_db_internal *ip, struct rt_view_info *info)
 {
-    vect_t a, b, center;
-    fastf_t samples;
+    vect_t a, b, tor_a, tor_b, tor_h, center;
+    fastf_t mag_a, mag_b, mag_h;
     struct rt_tor_internal *tor;
+    int samples;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -1018,28 +1019,38 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, struct rt_view_info *info)
 
     samples = sqrt(primitive_diagonal_samples(ip, info));
 
-    /* plot inner circular contour */
-    VJOIN1(a, tor->a, -1.0 *  tor->r_h / MAGNITUDE(tor->a), tor->a);
-    VCROSS(b, a, tor->h);
-    VSCALE(b, b, sqrt(MAGSQ(a) / MAGSQ(b)));
-    plot_ellipse(info->vhead, tor->v, a, b, samples);
+    while (samples % 4 != 0) {
+	++samples;
+    }
+
+    VMOVE(tor_a, tor->a);
+    mag_a = tor->r_a;
+
+    VSCALE(tor_h, tor->h, tor->r_h);
+    mag_h = tor->r_h;
+
+    VCROSS(tor_b, tor_a, tor_h);
+    VSCALE(tor_b, tor_b, mag_a / MAGNITUDE(tor_b));
+    mag_b = mag_a;
 
     /* plot outer circular contour */
-    VJOIN1(a, tor->a, tor->r_h / MAGNITUDE(tor->a), tor->a);
-    VSCALE(b, b, sqrt(MAGSQ(a) / MAGSQ(b)));
+    VJOIN1(a, tor_a, mag_h / mag_a, tor_a);
+    VJOIN1(b, tor_b, mag_h / mag_b, tor_b);
+    plot_ellipse(info->vhead, tor->v, a, b, samples);
+
+    /* plot inner circular contour */
+    VJOIN1(a, tor_a, -1.0 * mag_h / mag_a, tor_a);
+    VJOIN1(b, tor_b, -1.0 * mag_h / mag_b, tor_b);
     plot_ellipse(info->vhead, tor->v, a, b, samples);
 
     /* Draw parallel circles to show the primitive's most extreme points along
      * +h/-h.
      */
-    VMOVE(a, tor->a);
-    VSCALE(b, b, sqrt(MAGSQ(a) / MAGSQ(b)));
-    VJOIN1(center, tor->v, tor->r_h, tor->h);
-
-    plot_ellipse(info->vhead, center, a, b, samples);
+    VADD2(center, tor->v, tor_h);
+    plot_ellipse(info->vhead, center, tor_a, tor_b, samples);
     
-    VJOIN1(center, tor->v, -1.0 * tor->r_h, tor->h);
-    plot_ellipse(info->vhead, center, a, b, samples);
+    VJOIN1(center, tor->v, -1.0, tor_h);
+    plot_ellipse(info->vhead, center, tor_a, tor_b, samples);
 
     return 0;
 }
