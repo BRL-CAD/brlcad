@@ -1768,7 +1768,7 @@ process_circle_entities_code( int code )
 
 /* secret codes for MTEXT entries
  * \P - new paragraph (line)
- * \X - new line (everthing before is above the dimension line, everything after is below)
+ * \X - new line (everything before is above the dimension line, everything after is below)
  * \~ - blank space
  * \f - TrueType font
  * \F - .SHX font
