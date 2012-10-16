@@ -208,7 +208,7 @@ proc_sname(char shflg, char mrflg, int cnt, char ctflg)
 
     /* shflg == identifies shape process which called this function
      * mrflg == indicates called by "as-modeled" pass or mirrored pass
-     * cnt   == suffix indentifier for the name
+     * cnt   == suffix identifier for the name
      * ctflg == isolates internal cutting solids from regular solids
      * new_name == solid name
      * side  == left or right sidedness
@@ -248,7 +248,7 @@ proc_sname(char shflg, char mrflg, int cnt, char ctflg)
  * the same plane equation (to within the given tolerance), and
  * combine them into a single face.
  *
- * Note that this may result in some of the verticies being very
+ * Note that this may result in some of the vertices being very
  * slightly off the plane equation, but the geometry routines need to
  * be prepared for this in any case.
  *
@@ -453,7 +453,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	for (k=1; k<l-3; k++) {
 	    if (!bn_3pts_distinct (verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
 		;	/* do nothing */
-		/* bu_log("Repeated Vertice, no face made\n"); */
+		/* bu_log("Repeated Vertex, no face made\n"); */
 	    } else if (bn_3pts_collinear(verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
 		;	/* do nothing */
 		/* bu_log("%s: collinear points, face not made.\n", name); */
@@ -518,7 +518,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 
 	if (!bn_3pts_distinct (verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
 	    ;	/* do nothing */
-	    /* bu_log("Repeated Vertice, no face made\n"); */
+	    /* bu_log("Repeated Vertex, no face made\n"); */
 	} else if (bn_3pts_collinear(verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
 	    ;	/* do nothing */
 	    /* bu_log("%s: collinear points, face not made.\n", name); */
@@ -1274,7 +1274,7 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
 	/* get average vertex coordinates */
 	VSCALE(vsum, vsum, one_over_vertex_count);
 
-	/* get distance from plane to orgin */
+	/* get distance from plane to origin */
 	pl[H] = VDOT(pl, vsum);
 
 	if (ABS(pl[0]) > ABS(pl[1])) {
@@ -1330,7 +1330,7 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
 	    /* get average vertex coordinates */
 	    VSCALE(vsum, vsum, one_over_vertex_count);
 
-	    /* get distance from plane to orgin */
+	    /* get distance from plane to origin */
 	    pl[H] = VDOT(pl, vsum);
 
 	} else {
@@ -3227,7 +3227,7 @@ pt_inside(point_t a, point_t base, point_t top, double rad1, double rad2)
 			 * the point.
 			 */
 	radius,		/* radius of cylinder at above distance */
-	pt_radsq;	/* sqare of radial distance from the axis to
+	pt_radsq;	/* square of radial distance from the axis to
 			 * point.
 			 */
 
@@ -3658,7 +3658,7 @@ main(int argc, char **argv)
 	    in[i].x = mmtin*in[i].x;
 	    in[i].y = mmtin*in[i].y;
 	    in[i].z = mmtin*in[i].z;
-	    /* Normal thickness is in hundreths of an inch */
+	    /* Normal thickness is in hundredths of an inch */
 	    if (in[i].surf_type <= 3) {
 		in[i].rsurf_thick = (mmtin/100) *
 		    (abs(in[i].surf_thick)) +
