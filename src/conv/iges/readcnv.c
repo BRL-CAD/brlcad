@@ -21,7 +21,7 @@
  *
  * This routine reads the next field in "card" buffer. It expects the
  * field to contain a string representing a "float". The string is
- * read and converted to type "fastf_t", mutilpied by "conv_factor",
+ * read and converted to type "fastf_t", multiplied by "conv_factor",
  * and returned in "inum".  If "id" is not the null string, then "id"
  * is printed followed by the number.  "conv_factor" is a factor to
  * convert to mm and multiply by a scale factor.
