@@ -106,7 +106,7 @@
  * NORMALS.  Given the point W on the surface of the rhc, what is the
  * vector normal to the tangent plane at that point?
  *
- * Map W onto the unit rhc, ie:  W' = S(R(W - V)).
+ * Map W onto the unit rhc, i.e.:  W' = S(R(W - V)).
  *
  * Plane on unit rhc at W' has a normal vector N' where
  *
