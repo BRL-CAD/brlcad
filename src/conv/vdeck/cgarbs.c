@@ -113,7 +113,7 @@ cgarbs(int *cgtype,
 	    uniq[numuniq++] = j;
     }
 
-    /* put comgeom solid typpe into s_cgtype */
+    /* put comgeom solid type into s_cgtype */
     switch (numuniq) {
 	case 8:
 	    *cgtype = 8;  /* ARB8 */
