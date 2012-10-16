@@ -946,7 +946,7 @@ arsbbld(void)
 	    }
 	    return;
 	} else if (incr_ret == 1) {
-	    /* end of curve, ignore remainder of reocrd */
+	    /* end of curve, ignore remainder of record */
 	    return;
 	}
     }
@@ -1413,7 +1413,7 @@ particlebld(void)
 /**
  * A R B N B L D
  *
- * This routine reads arbn data from standard in and sendss it to
+ * This routine reads arbn data from standard in and sends it to
  * mk_arbn().
  */
 void
