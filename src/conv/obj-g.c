@@ -1783,13 +1783,13 @@ create_bot_float_arrays(struct ga_t *ga,
     }
 
     if ((ti->bot_mode == RT_BOT_PLATE) || (ti->bot_mode == RT_BOT_PLATE_NOCOS)) {
-	/* allocate and polulate bot_thickness array */
+	/* allocate and populate bot_thickness array */
 	ti->bot_thickness = (fastf_t *)bu_calloc(ti->bot_num_faces, sizeof(fastf_t), "ti->bot_thickness");
 	for (i = 0 ; i < ti->bot_num_faces ; i++) {
 	    ti->bot_thickness[i] = bot_thickness;
 	}
 
-	/* allocate and polulate bot_face_mode array */
+	/* allocate and populate bot_face_mode array */
 	ti->bot_face_mode = bu_bitv_new(ti->bot_num_faces);
 	BU_BITSET(ti->bot_face_mode, 1); /* 1 indicates thickness is appended to hit
 					  * point in ray direction, 0 indicates thickness
@@ -2771,10 +2771,10 @@ output_to_bot(struct ga_t *ga,
  * Only face groupings with closed surfaces will be output. Closure is
  * determined by the function nmg_check_closed_shell. A primitive will
  * not be output if the face grouping fails the closure test or an
- * error occured during processing. A return value of 1 indicates no
+ * error occurred during processing. A return value of 1 indicates no
  * primitive was output because the geometry was not closed. A return
  * value of 2 indicates no primitive was output because an nmg bomb
- * occured. The output_mode option determines if an nmg or
+ * occurred. The output_mode option determines if an nmg or
  * volume-mode-bot will be output. The normal_mode will determine if
  * normals provided in the obj file will be inserted into the nmg
  * structure. Normal_mode should be set to IGNR_NORM since, inserted
@@ -2873,7 +2873,7 @@ output_to_nmg(struct ga_t *ga,
 	bu_log("ERROR: caught nmg bomb for obj file face grouping name (%s), obj file face grouping index (%zu)\n",
 	       bu_vls_addr(gfi->raw_grouping_name), gfi->grouping_index + 1);
 
-	return 2; /* return code 2 indicates nmg bomb occured */
+	return 2; /* return code 2 indicates nmg bomb occurred */
     }
 
     shell_vert_idx = 0;
@@ -3195,7 +3195,7 @@ process_b_mode_option(struct ga_t *ga,
  * occurs then no primitive will be output unless cont_on_nmg_bomb is
  * set to true which will then cause output of the grouping to be
  * attempted to 'native bot'. A return value of 0 indicates no
- * nmg-bomb occured, a return of 1 indicates an nmg-bomb occured
+ * nmg-bomb occurred, a return of 1 indicates an nmg-bomb occurred
  * and cont_on_nmg_bomb_flag was set to false.
  */
 int
