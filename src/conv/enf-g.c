@@ -436,7 +436,7 @@ Part_import( int id_start )
 	    }
 	} else if ( !bu_strncmp( line, "TriangleCount", 13 ) ) {
 	    /* get number of triangles for this surface */
-	} else if ( !bu_strncmp( line, "Verticies", 9 ) ) {
+	} else if ( !bu_strncmp( line, "Vertices", 9 ) ) {
 	    /* get vertex list for this triangle */
 	} else if ( !bu_strncmp( line, "Vertex", 6 ) ) {
 	    /* get a vertex */
