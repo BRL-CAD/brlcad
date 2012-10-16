@@ -602,7 +602,7 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     nmg_rebound( m, &tol );
 
     if ( RT_G_DEBUG&DEBUG_MEM_FULL )
-	bu_prmem( "Before glueing faces:\n" );
+	bu_prmem( "Before gluing faces:\n" );
 
     /* Glue faceuses together. */
     if ( debug )
