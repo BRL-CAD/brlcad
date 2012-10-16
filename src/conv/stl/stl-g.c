@@ -82,7 +82,7 @@ usage(const char *argv0)
     bu_log("	The -i option sets the initial region ident number (default is 1000).\n");
     bu_log("	The -I option sets the ident number that will be assigned to all regions (conflicts with -i).\n");
     bu_log("	The -m option sets the integer material code for all the parts (default is 1).\n");
-    bu_log("	The -t option specifies the minumim distance between two distinct vertices (mm).\n");
+    bu_log("	The -t option specifies the minimum distance between two distinct vertices (mm).\n");
     bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
 }
 
@@ -566,7 +566,7 @@ main(int argc, char *argv[])
 
     tol.magic = BN_TOL_MAGIC;
 
-    /* this value selected as a resaonable compromise between eliminating
+    /* this value selected as a reasonable compromise between eliminating
      * needed faces and keeping degenerate faces
      */
     tol.dist = 0.0005;	/* default, same as MGED, RT, ... */
@@ -662,7 +662,7 @@ main(int argc, char *argv[])
 
     BU_LIST_INIT(&all_head.l);
 
-    /* create a tree sructure to hold the input vertices */
+    /* create a tree structure to hold the input vertices */
     tree_root = create_vert_tree();
 
     Convert_input();
