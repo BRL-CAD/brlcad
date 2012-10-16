@@ -38,10 +38,10 @@ Extrudcon(int entityno, int curve, vect_t evect)
     point_t start, stop;	/* starting and stopping points on arc */
     int sol_num;	/* Solid number */
     fastf_t q1, q2, q3;	/* terms for determining type of conic */
-    int ellipse;	/* flag to indicate eillipse */
+    int ellipse;	/* flag to indicate ellipse */
     fastf_t tmp;		/* scratch */
     point_t center;		/* center of ellipse */
-    fastf_t theta;		/* angle that elipse is rotated */
+    fastf_t theta;		/* angle that ellipse is rotated */
     fastf_t a1, c1, f1;	/* coefficients of translated and rotated ellipse */
     vect_t r1, r2;		/* radii vectors for ellipse and TGC */
 
@@ -122,7 +122,7 @@ Extrudcon(int entityno, int curve, vect_t evect)
     }
 
     if (!ellipse) {
-	bu_log("Conic arc for extrusion is not an elipse:\n");
+	bu_log("Conic arc for extrusion is not an ellipse:\n");
 	bu_log("\textrusion entity D%07d (%s)\n", dir[entityno]->direct ,
 	       dir[entityno]->name);
 	bu_log("\tarc entity D%07d (%s)\n", dir[curve]->direct, dir[curve]->name);
