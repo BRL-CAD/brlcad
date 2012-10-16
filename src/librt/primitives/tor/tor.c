@@ -1008,7 +1008,7 @@ int
 rt_tor_adaptive_plot(struct rt_db_internal *ip, struct rt_view_info *info)
 {
     vect_t a, b, tor_a, tor_b, tor_h, center;
-    fastf_t mag_a, mag_b, mag_h, mag_center;
+    fastf_t mag_a, mag_b, mag_h;
     struct rt_tor_internal *tor;
     fastf_t radian, radian_step;
     int i, samples, num_cross_sections, points_per_cross_section;
@@ -1035,7 +1035,8 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, struct rt_view_info *info)
     mag_h = tor->r_h;
 
     VCROSS(tor_b, tor_a, tor_h);
-    VSCALE(tor_b, tor_b, mag_a / MAGNITUDE(tor_b));
+    VUNITIZE(tor_b);
+    VSCALE(tor_b, tor_b, mag_a);
     mag_b = mag_a;
 
     /* plot outer circular contour */
@@ -1067,8 +1068,9 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, struct rt_view_info *info)
     for (i = 0; i < num_cross_sections; ++i) {
 	ellipse_point_at_radian(center, tor->v, tor_a, tor_b, radian);
 
-	mag_center = MAGNITUDE(center);
-	VSCALE(a, center, mag_h / mag_center);
+	VJOIN1(a, center, -1.0, tor->v);
+	VUNITIZE(a);
+	VSCALE(a, a, mag_h);
 
 	plot_ellipse(info->vhead, center, a, b, points_per_cross_section);
 
