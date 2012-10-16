@@ -309,3 +309,45 @@ approximate_hyperbolic_curve(struct rt_pt_node *pts, fastf_t a, fastf_t b, int n
 
     return num_new_points;
 }
+
+static void
+ellipse_point_at_radian(
+	point_t result,
+	vect_t t,
+	vect_t a,
+	vect_t b,
+	fastf_t radian)
+{
+    fastf_t cos_rad, sin_rad;
+
+    cos_rad = cos(radian);
+    sin_rad = sin(radian);
+
+    VJOIN2(result, t, cos_rad, a, sin_rad, b);
+}
+
+void
+plot_ellipse(
+	struct bu_list *vhead,
+	vect_t t,
+	vect_t a,
+	vect_t b,
+	int num_points)
+{
+    int i;
+    point_t p;
+    fastf_t radian, radian_step;
+
+    radian_step = bn_twopi / num_points;
+
+    ellipse_point_at_radian(p, t, a, b, radian_step * (num_points - 1));
+    RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_MOVE);
+
+    radian = 0;
+    for (i = 0; i < num_points; ++i) {
+	ellipse_point_at_radian(p, t, a, b, radian);
+	RT_ADD_VLIST(vhead, p, BN_VLIST_LINE_DRAW);
+
+	radian += radian_step;
+    }
+}

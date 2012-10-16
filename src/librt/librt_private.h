@@ -110,6 +110,13 @@ extern int approximate_hyperbolic_curve(
 	fastf_t b,
 	int num_new_points);
 
+extern void plot_ellipse(
+	struct bu_list *vhead,
+	vect_t t,
+	vect_t a,
+	vect_t b,
+	int num_points);
+
 __END_DECLS
 
 /*
