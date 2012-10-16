@@ -57,7 +57,7 @@
  *	cubic_init()	- Generates "cubics" for tonescale for a set of points.
  *
  * Method:
- *	Fairly simple.  Most of the algorthems are inspired by
+ *	Fairly simple.  Most of the algorithms are inspired by
  *		Digital Halftoning by Robert Ulichney
  *
  */
@@ -74,8 +74,8 @@
 #include "fb.h"
 
 
-long int width=512;	/* width of pixture */
-long int height=512;	/* height of pixture */
+long int width=512;	/* width of picture */
+long int height=512;	/* height of picture */
 double Beta=0.0;	/* Beta for sharpening */
 
 #define	M_FLOYD	0
@@ -102,10 +102,10 @@ Usage: halftone [ -h -R -S -a] [-D Debug Level]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-B contrast] [-I intensity_levels] [-T x y ... tone_curve]\n\
 	[-M Method] [file.bw]\n\
-	Floyd-Steinberg=0	45 Degree Classic Screen=1\n\
+	Floyd-Steinburg=0	45 Degree Classic Screen=1\n\
 	Thresholding=2		0 Degree Dispersed Screen=3\n";
 
-/*	setup	process parameters and setup working enviroment
+/*	setup	process parameters and setup working environment
  *
  * Entry:
  *	argc	- number of arguments.
@@ -116,8 +116,8 @@ Usage: halftone [ -h -R -S -a] [-D Debug Level]\n\
  *	if there is a fatal error, exit non-zero
  *
  * Uses:
- *	width	- width of pixture
- *	height	- height of pixture
+ *	width	- width of picture
+ *	height	- height of picture
  *	Beta	- sharpening value.
  *	surpent	- to surpenten rasters?
  *	Levels	- number of intensity levels.
@@ -177,7 +177,7 @@ setup(int argc, char **argv)
  * at 1024, 1024 to let tonescale be stupid.  Cubic_init takes the list
  * of points and generates "cubics" for tonescale to use in generating
  * curve to use for the tone map.  If tonescale is called with no cubics
- * defined tonescale will generate a straight-line (generaly from 0, 0 to
+ * defined tonescale will generate a straight-line (generally from 0, 0 to
  * 255, 255).
  */
 	    case 'T':
@@ -185,7 +185,7 @@ setup(int argc, char **argv)
 		for (i=bu_optind; i < argc && (isdigit((int)*argv[i]) ||
 					       (*argv[i] == '-' && isdigit((int)(*(argv[i]+1))))); i++);
 		if ((c=i-bu_optind) % 2) {
-		    fprintf(stderr, "Missing Y coordent for tone map.\n");
+		    fprintf(stderr, "Missing Y coordinate for tone map.\n");
 		    bu_exit(1, NULL);
 		}
 		Xlist = (int *) bu_malloc((c+2)*sizeof(int), "Xlist");
@@ -292,7 +292,7 @@ main(int argc, char **argv)
 
 /*
  *	Currently only the Floyd-Steinburg method uses the surpent flag
- *	so we make things easy with in the 'y' loop by reseting surpent
+ *	so we make things easy with in the 'y' loop by resetting surpent
  *	for all other methods to "No Surpent".
  */
     if (Method != M_FLOYD) Surpent = 0;
