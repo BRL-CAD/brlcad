@@ -43,7 +43,7 @@ Add_face_to_shell(s , entityno , face_orient)
     int surf_de;		/* Directory sequence number for underlying surface */
     int no_of_loops;		/* Number of loops in face */
     int outer_loop_flag;	/* Indicates if first loop is an the outer loop */
-    int *loop_de;		/* Directory seqence numbers for loops */
+    int *loop_de;		/* Directory sequence numbers for loops */
     int loop;
     int planar = 0;
     struct faceuse *fu;			/* NMG face use */
