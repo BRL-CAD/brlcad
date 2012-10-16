@@ -472,7 +472,7 @@ get_next_record(FILE *fp, int call_input, int write_flag)
 	    form = FREE_FIELD;
     }
 
-    /* if this is FREE_FIELD, call approporiate processor */
+    /* if this is FREE_FIELD, call appropriate processor */
     if (form == FREE_FIELD) {
 	get_free_form_input(fp, write_flag);
 	return 1;
