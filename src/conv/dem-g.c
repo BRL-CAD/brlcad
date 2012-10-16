@@ -272,7 +272,7 @@ void remove_whitespace(char *input_string)
      */
     if (firstp > input_string) {
 	/* Execute if need to shift left, this would happen only */
-	/* if input_string contained pre whitspace. */
+	/* if input_string contained pre whitespace. */
 	cleaned_string_length = lastp - firstp;
 	for (idx2 = 0; idx2 < cleaned_string_length; idx2++) {
 	    input_string[idx2] = firstp[idx2];
@@ -384,7 +384,7 @@ int read_element(ResultStruct *io_struct)
 	    status = BRLCAD_OK;
 	} else {
 	    /* convert to integer failed */
-	    /* copy string which failed to convert to inetger to output structure */
+	    /* copy string which failed to convert to integer to output structure */
 	    bu_strlcpy((*io_struct).out_alpha, tmp_str, MAX_STRING_LENGTH);
 	    status = BRLCAD_ERROR;
 	}
@@ -800,7 +800,7 @@ int process_manual_scale_factor(
 	    bu_log("Scale factor '%g' was entered. Scale factors above '%g' cause clipping.\n",
 		   *in_raw_dem_2_raw_dsp_manual_scale_factor_ptr, *in_raw_dem_2_raw_dsp_auto_scale_factor_ptr);
 	    bu_log("Raw DEM elevations above '%ld' are clipped.\n", dem_max_raw_clipped_elevation);
-	    /* real elevations are in milimeters, convert to meters before reporting value to user */
+	    /* real elevations are in millimeters, convert to meters before reporting value to user */
 	    bu_log("Real DEM elevations above '%g' meters are clipped.\n",
 		   (dem_max_real_clipped_elevation / conversion_factor_to_milimeters[2]));
 	} else {
@@ -819,7 +819,7 @@ int process_manual_scale_factor(
 	    } else {
 		/* derived_dem_max_raw_elevation <= 65535.  dem file
 		 * elevations can fit into a 2 byte integer, therefore
-		 * no minimun loss of resolution is required to
+		 * no minimum loss of resolution is required to
 		 * represent the dem elevations within the dsp format.
 		 */
 		if (*in_raw_dem_2_raw_dsp_manual_scale_factor_ptr < 1) {
@@ -897,7 +897,7 @@ int process_manual_dem_max_raw_elevation(
 	    bu_log("DEM max raw elevation '%ld' was entered. Elevations below '%g' cause clipping.\n",
 		   *in_manual_dem_max_raw_elevation_ptr, *in_derived_dem_max_raw_elevation_ptr);
 	    bu_log("Raw DEM elevations above '%ld' are clipped.\n", *in_manual_dem_max_raw_elevation_ptr);
-	    /* real elevations are in milimeters, convert to meters before reporting value to user */
+	    /* real elevations are in millimeters, convert to meters before reporting value to user */
 	    bu_log("Real DEM elevations above '%g' meters are clipped.\n",
 		   (dem_max_real_clipped_elevation / conversion_factor_to_milimeters[2]));
 	} else {
@@ -915,7 +915,7 @@ int process_manual_dem_max_raw_elevation(
 		       *in_manual_dem_max_raw_elevation_ptr, *in_derived_dem_max_raw_elevation_ptr);
 	    } else {
 		/* derived_dem_max_raw_elevation <= 65535 */
-		/* dem file elevations can fit into a 2 byte integer, therefore no minimun loss of resolution */
+		/* dem file elevations can fit into a 2 byte integer, therefore no minimum loss of resolution */
 		/* is required to represent the dem elevations within the dsp format. */
 		if (*in_manual_dem_max_raw_elevation_ptr > 65535) {
 		    /* forced loss of resolution */
@@ -964,7 +964,7 @@ int process_manual_dem_max_real_elevation(
     /* test user input 'dem max real elevation' if out of valid range */
     if (!((*in_manual_dem_max_real_elevation_ptr >= manual_dem_max_real_elevation_lowerlimit) &&
 	  (*in_manual_dem_max_real_elevation_ptr <= manual_dem_max_real_elevation_upperlimit))) {
-	/* real elevations are processed in the unit milimeters, convert to meters before reporting to user */
+	/* real elevations are processed in the unit millimeters, convert to meters before reporting to user */
 	bu_log("DEM max real elevation '%g' meters was entered.\n",
 	       (*in_manual_dem_max_real_elevation_ptr / conversion_factor_to_milimeters[2]));
 	bu_log("DEM max real elevation must be between '%g' meters and '%g' meters inclusive.\n",
@@ -983,7 +983,7 @@ int process_manual_dem_max_real_elevation(
 
     /* report to user the actual max real elevation used if not the value the user entered */
     if (!EQUAL(adjusted_manual_dem_max_real_elevation, *in_manual_dem_max_real_elevation_ptr)) {
-	/* real elevations are processed in the unit milimeters, convert to meters before reporting to user */
+	/* real elevations are processed in the unit millimeters, convert to meters before reporting to user */
 	bu_log("Using max real elevation '%g' meters instead of '%g' meters to allow correct scaling.\n",
 	       (adjusted_manual_dem_max_real_elevation / conversion_factor_to_milimeters[2]),
 	       (*in_manual_dem_max_real_elevation_ptr / conversion_factor_to_milimeters[2]));
@@ -1009,10 +1009,10 @@ read_dem(
     char *in_temp_filename,                            /* temp file path and file name */
     long int *out_xdim,                                /* x dimension of dem (w cells) */
     long int *out_ydim,                                /* y dimension of dem (n cells) */
-    double *out_dsp_elevation,                         /* datum elevation in milimeters (dsp V z coordinate) */
-    double *out_x_cell_size,                           /* x scaling factor in milimeters */
-    double *out_y_cell_size,                           /* y scaling factor in milimeters */
-    double *out_unit_elevation)                        /* z scaling factor in milimeters */
+    double *out_dsp_elevation,                         /* datum elevation in millimeters (dsp V z coordinate) */
+    double *out_x_cell_size,                           /* x scaling factor in millimeters */
+    double *out_y_cell_size,                           /* y scaling factor in millimeters */
+    double *out_unit_elevation)                        /* z scaling factor in millimeters */
 {
     size_t ret;
     int status = BRLCAD_ERROR;
@@ -1128,7 +1128,7 @@ read_dem(
     }
 
     /* Read x spatial resolution from 'a' record. The x spatial
-     * resolution is the x cell size of the dsp primative.
+     * resolution is the x cell size of the dsp primitive.
      */
     (*my_out_ptr).in_buffer = buf;
     (*my_out_ptr).in_record_type = type_a;
@@ -1139,7 +1139,7 @@ read_dem(
     bu_log("dsp x cell size (mm): %g\n", *out_x_cell_size);
 
     /* Read y spatial resolution from 'a' record.  The y spatial
-     * resolution is the y cell size of the dsp primative.
+     * resolution is the y cell size of the dsp primitive.
      */
     (*my_out_ptr).in_buffer = buf;
     (*my_out_ptr).in_record_type = type_a;
@@ -1150,7 +1150,7 @@ read_dem(
     bu_log("dsp y cell size (mm): %g\n", *out_y_cell_size);
 
     /* Read z spatial resolution from 'a' record.  The z spatial
-     * resolution is the unit elevation of the dsp primative.
+     * resolution is the unit elevation of the dsp primitive.
      */
     (*my_out_ptr).in_buffer = buf;
     (*my_out_ptr).in_record_type = type_a;
@@ -1264,9 +1264,9 @@ read_dem(
 	     * *out_unit_elevation is always > 0.
 	     */
 	    if (derived_dem_max_raw_elevation < 0) {
-		bu_log("A fatal inconsistency occured in DEM data.\n");
+		bu_log("A fatal inconsistency occurred in DEM data.\n");
 		bu_log("'B' record datum elevation can not be greater than 'A' record max elevation.\n");
-		bu_log("Error occured in 'B' record number '1'.\n");
+		bu_log("Error occurred in 'B' record number '1'.\n");
 		bu_log("'A' record max elevation is: %g\n", elevation_max_in_a_record);
 		bu_log("'B' record datum elevation is: %g\n", datum_elevation_in_curr_b_record);
 		bu_log("Import can not continue.\n");
@@ -1291,31 +1291,31 @@ read_dem(
 	    /* More than one value defined will cause this function to abort. */
 	    if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0) {
 		if (*in_manual_dem_max_raw_elevation > 0) {
-		    bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
+		    bu_log("Error occurred in function 'read_dem', too many user values passed to this function.\n");
 		    return BRLCAD_ERROR;
 		}
 		if (*in_manual_dem_max_real_elevation > 0) {
-		    bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
+		    bu_log("Error occurred in function 'read_dem', too many user values passed to this function.\n");
 		    return BRLCAD_ERROR;
 		}
 	    } else {
 		if (*in_manual_dem_max_raw_elevation > 0) {
 		    if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0) {
-			bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
+			bu_log("Error occurred in function 'read_dem', too many user values passed to this function.\n");
 			return BRLCAD_ERROR;
 		    }
 		    if (*in_manual_dem_max_real_elevation > 0) {
-			bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
+			bu_log("Error occurred in function 'read_dem', too many user values passed to this function.\n");
 			return BRLCAD_ERROR;
 		    }
 		} else {
 		    if (*in_manual_dem_max_real_elevation > 0) {
 			if (*in_raw_dem_2_raw_dsp_manual_scale_factor > 0) {
-			    bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
+			    bu_log("Error occurred in function 'read_dem', too many user values passed to this function.\n");
 			    return BRLCAD_ERROR;
 			}
 			if (*in_manual_dem_max_raw_elevation > 0) {
-			    bu_log("Error occured in function 'read_dem', too many user values passed to this function.\n");
+			    bu_log("Error occurred in function 'read_dem', too many user values passed to this function.\n");
 			    return BRLCAD_ERROR;
 			}
 		    }
@@ -1364,7 +1364,7 @@ read_dem(
 	    /* Test if value is within a valid range. */
 	    /* The value 'raw_dem_2_raw_dsp_scale_factor' is output from this function */
 	    if (*in_manual_dem_max_real_elevation > 0) {
-		/* assumes user input max real elevation in meters, so convert to milimeters */
+		/* assumes user input max real elevation in meters, so convert to millimeters */
 		*in_manual_dem_max_real_elevation = *in_manual_dem_max_real_elevation * conversion_factor_to_milimeters[2];
 		status = process_manual_dem_max_real_elevation(
 		    &raw_dem_2_raw_dsp_scale_factor,
@@ -1383,7 +1383,7 @@ read_dem(
 	    }
 
 
-	    /* compute dsp primative 'unit elevation' value */
+	    /* compute dsp primitive 'unit elevation' value */
 	    *out_unit_elevation = *out_unit_elevation / raw_dem_2_raw_dsp_scale_factor;
 	    bu_log("Computed dsp unit elevation, input this into brl-cad (mm): %g\n", *out_unit_elevation);
 
@@ -1603,10 +1603,10 @@ create_model(
     char *in_model_output_filename,  /* model output file path and file name */
     long int *in_xdim,               /* x dimension of dem (w cells) */
     long int *in_ydim,               /* y dimension of dem (n cells) */
-    double *in_dsp_elevation,        /* datum elevation in milimeters (dsp V z coordinate) */
-    double *in_x_cell_size,          /* x scaling factor in milimeters */
-    double *in_y_cell_size,          /* y scaling factor in milimeters */
-    double *in_unit_elevation)       /* z scaling factor in milimeters */
+    double *in_dsp_elevation,        /* datum elevation in millimeters (dsp V z coordinate) */
+    double *in_x_cell_size,          /* x scaling factor in millimeters */
+    double *in_y_cell_size,          /* y scaling factor in millimeters */
+    double *in_unit_elevation)       /* z scaling factor in millimeters */
 {
     struct rt_wdb *db_fp;
     fastf_t dsp_mat[ELEMENTS_PER_MAT];
@@ -1663,10 +1663,10 @@ main(int ac, char *av[])
     double manual_dem_max_real_elevation = 0;          /* user specified max real elevation in meters */
     long int xdim = 0;                                 /* x dimension of dem (w cells) */
     long int ydim = 0;                                 /* y dimension of dem (n cells) */
-    double dsp_elevation = 0;                          /* datum elevation in milimeters (dsp V z coordinate) */
-    double x_cell_size = 0;                            /* x scaling factor in milimeters */
-    double y_cell_size = 0;                            /* y scaling factor in milimeters */
-    double unit_elevation = 0;                         /* z scaling factor in milimeters */
+    double dsp_elevation = 0;                          /* datum elevation in millimeters (dsp V z coordinate) */
+    double x_cell_size = 0;                            /* x scaling factor in millimeters */
+    double y_cell_size = 0;                            /* y scaling factor in millimeters */
+    double unit_elevation = 0;                         /* z scaling factor in millimeters */
 
     char *input_filename = NULL;                            /* dem input file */
     struct bu_vls temp_filename = BU_VLS_INIT_ZERO;         /* temp file */
@@ -2122,13 +2122,13 @@ main(int ac, char *av[])
 	    &y_cell_size,
 	    &unit_elevation) == BRLCAD_ERROR) {
 	encountered_error = 1;
-	bu_log("Error occured within function 'read_dem'. Import can not continue.\n");
+	bu_log("Error occurred within function 'read_dem'. Import can not continue.\n");
     }
 
     if (!encountered_error
 	&& convert_load_order(bu_vls_addr(&temp_filename), bu_vls_addr(&dsp_output_filename), &xdim, &ydim) == BRLCAD_ERROR) {
 	encountered_error = 1;
-	bu_log("Error occured within function 'convert_load_order'. Import can not continue.\n");
+	bu_log("Error occurred within function 'convert_load_order'. Import can not continue.\n");
     }
 
     if (!encountered_error
@@ -2142,7 +2142,7 @@ main(int ac, char *av[])
 	    &y_cell_size,
 	    &unit_elevation) == BRLCAD_ERROR) {
 	encountered_error = 1;
-	bu_log("Error occured within function 'create_model'. Model creation can not continue.\n");
+	bu_log("Error occurred within function 'create_model'. Model creation can not continue.\n");
     }
 
     /* cleanup */
