@@ -76,19 +76,19 @@ cone(int entityno)
 	    return 0;
 	}
 	if (rad1 < 0.0) {
-	    bu_log("\tUsing absloute value of a negative face radius (%f)\n", rad1);
+	    bu_log("\tUsing absolute value of a negative face radius (%f)\n", rad1);
 	    rad1 = (-rad1);
 	} else if (ZERO(rad1))
 	    rad1 = SMALL_FASTF;
 
 	if (rad2 < 0.0) {
-	    bu_log("\tUsing absloute value of a negative face radius (%f)\n", rad2);
+	    bu_log("\tUsing absolute value of a negative face radius (%f)\n", rad2);
 	    rad2 = (-rad2);
 	} else if (ZERO(rad2))
 	    rad2 = SMALL_FASTF;
 
 	if (scale_height < 0.0) {
-	    bu_log("\tUsing absloute value of a negative height (%f)\n", scale_height);
+	    bu_log("\tUsing absolute value of a negative height (%f)\n", scale_height);
 	    bu_log("\t\tand reversing height direction\n");
 	    x_2 = (-x_2);
 	    y_2 = (-y_2);
