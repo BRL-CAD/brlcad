@@ -1005,7 +1005,7 @@ rt_num_circular_segments(double maxerr, double radius)
 }
 
 int
-rt_tor_adaptive_plot(struct rt_db_internal *ip, struct rt_view_info *info)
+rt_tor_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
     vect_t a, b, tor_a, tor_b, tor_h, center;
     fastf_t mag_a, mag_b, mag_h;
