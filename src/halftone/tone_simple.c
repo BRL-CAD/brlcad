@@ -53,7 +53,7 @@ extern struct bn_unif *RandomFlag;
  *
  * Uses:
  *	Debug	- Debug level (currently not used.)
- *	Levels	- Number of intenisty levels.
+ *	Levels	- Number of intensity levels.
  *	RandomFlag - Use random threshold flag.
  *
  * Calls:
