@@ -256,7 +256,7 @@ nmg_to_winged_edge(struct nmgregion *r)
 		    /* Make a new edge */
 		    eu_new = nmg_me(v1, v2, s);
 
-		    /* Give the endpoints the same coordinates as the originbal edge */
+		    /* Give the endpoints the same coordinates as the original edge */
 		    nmg_vertex_gv(eu_new->vu_p->v_p, eu1->vu_p->v_p->vg_p->coord);
 		    nmg_vertex_gv(eu_new->eumate_p->vu_p->v_p, eu1->eumate_p->vu_p->v_p->vg_p->coord);
 
