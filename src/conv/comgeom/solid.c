@@ -982,7 +982,7 @@ read_arbn(char *name)
 
     /*
      *  ARBN must be convex.  Test for concavity.
-     *  Byproduct is an enumeration of all the verticies.
+     *  Byproduct is an enumeration of all the vertices.
      */
     last_vertex = max_vertex = 0;
 
