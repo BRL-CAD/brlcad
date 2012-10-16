@@ -28,7 +28,7 @@
  *		-w	width
  *		-h	same as -s 1024
  *		-a	Automatic bw file sizing.
- *		-B	Beta for sharpining
+ *		-B	Beta for sharpening
  *		-I	number of intensity levels
  *		-M	method
  *			0 Floyd-Steinburg
