@@ -1118,7 +1118,7 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	 * In order to avoid fairly expensive re-calculation of 3d points at
 	 * uv coordinates, all values that are shared between children at
 	 * the same depth of a surface subdivision are pre-computed and
-	 * passed as paramters.
+	 * passed as parameters.
 	 *
 	 * The majority of these points are already evaluated in the process
 	 * of testing whether a subdivision has produced a leaf node.  These
@@ -1327,7 +1327,7 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	 * In order to avoid fairly expensive re-calculation of 3d points at
 	 * uv coordinates, all values that are shared between children at
 	 * the same depth of a surface subdivision are pre-computed and
-	 * passed as paramters.
+	 * passed as parameters.
 	 *
 	 * The majority of these points are already evaluated in the process
 	 * of testing whether a subdivision has produced a leaf node.  These
@@ -1524,7 +1524,7 @@ SurfaceTree::subdivideSurfaceByKnots(const ON_Surface *localsurf,
 	 * In order to avoid fairly expensive re-calculation of 3d points at
 	 * uv coordinates, all values that are shared between children at
 	 * the same depth of a surface subdivision are pre-computed and
-	 * passed as paramters.
+	 * passed as parameters.
 	 *
 	 * The majority of these points are already evaluated in the process
 	 * of testing whether a subdivision has produced a leaf node.  These
@@ -1787,7 +1787,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	     * In order to avoid fairly expensive re-calculation of 3d points at
 	     * uv coordinates, all values that are shared between children at
 	     * the same depth of a surface subdivision are pre-computed and
-	     * passed as paramters.
+	     * passed as parameters.
 	     *
 	     * The majority of these points are already evaluated in the process
 	     * of testing whether a subdivision has produced a leaf node.  These
@@ -1990,7 +1990,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	     * In order to avoid fairly expensive re-calculation of 3d points at
 	     * uv coordinates, all values that are shared between children at
 	     * the same depth of a surface subdivision are pre-computed and
-	     * passed as paramters.
+	     * passed as parameters.
 	     *
 	     * The majority of these points are already evaluated in the process
 	     * of testing whether a subdivision has produced a leaf node.  These
@@ -2181,7 +2181,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	     * In order to avoid fairly expensive re-calculation of 3d points at
 	     * uv coordinates, all values that are shared between children at
 	     * the same depth of a surface subdivision are pre-computed and
-	     * passed as paramters.
+	     * passed as parameters.
 	     *
 	     * The majority of these points are already evaluated in the process
 	     * of testing whether a subdivision has produced a leaf node.  These
