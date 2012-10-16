@@ -47,7 +47,7 @@ static unsigned char	ordered[6][6] = {
     {13, 18, 17, 6, 1, 2},
     {10, 12, 11, 9, 7, 8}};
 
-/*	tone_classic	classic diaginal clustered halftones.
+/*	tone_classic	classic diagonal clustered halftones.
  *
  * Entry:
  *	Pix	Pixel value	0-255
