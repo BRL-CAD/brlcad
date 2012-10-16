@@ -1810,41 +1810,6 @@ struct ellipse {
 };
 
 static void
-ellipse_point_at_radian(point_t *result, struct ellipse ellipse, fastf_t radian)
-{
-    int i;
-    vect_t a, b, center;
-    double cos_rad, sin_rad;
-
-    VMOVE(a, ellipse.axis_a);
-    VMOVE(b, ellipse.axis_b);
-    VMOVE(center, ellipse.center);
-
-    cos_rad = cos(radian);
-    sin_rad = sin(radian);
-
-    for (i = 0; i < ELEMENTS_PER_POINT; ++i ) {
-	(*result)[i] = center[i] + a[i] * cos_rad + b[i] * sin_rad;
-    }
-}
-
-static void
-draw_ellipse(struct bu_list *vhead, struct ellipse ellipse, int num_points)
-{
-    int i;
-    point_t ellipse_point;
-    fastf_t radian_step = 2.0 * M_PI / num_points;
-
-    ellipse_point_at_radian(&ellipse_point, ellipse, (num_points - 1) * radian_step);
-    RT_ADD_VLIST(vhead, ellipse_point, BN_VLIST_LINE_MOVE);
-
-    for (i = 0; i < num_points; ++i) {
-	ellipse_point_at_radian(&ellipse_point, ellipse, i * radian_step);
-	RT_ADD_VLIST(vhead, ellipse_point, BN_VLIST_LINE_DRAW);
-    }
-}
-
-static void
 draw_lines_between_ellipses(struct bu_list *vhead, struct ellipse ellipse1, struct ellipse ellipse2, int num_lines)
 {
     int i;
@@ -1852,8 +1817,10 @@ draw_lines_between_ellipses(struct bu_list *vhead, struct ellipse ellipse1, stru
     fastf_t radian_step = 2.0 * M_PI / num_lines;
 
     for (i = 0; i < num_lines; ++i) {
-	ellipse_point_at_radian(&ellipse1_point, ellipse1, i * radian_step);
-	ellipse_point_at_radian(&ellipse2_point, ellipse2, i * radian_step);
+	ellipse_point_at_radian(ellipse1_point, ellipse1.center,
+		ellipse1.axis_a, ellipse1.axis_b, i * radian_step);
+	ellipse_point_at_radian(ellipse2_point, ellipse2.center,
+		ellipse2.axis_a, ellipse2.axis_b, i * radian_step);
 
 	RT_ADD_VLIST(vhead, ellipse1_point, BN_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead, ellipse2_point, BN_VLIST_LINE_DRAW);
@@ -1883,12 +1850,14 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VMOVE(ellipse1.center, tip->v);
     VMOVE(ellipse1.axis_a, tip->a);
     VMOVE(ellipse1.axis_b, tip->b);
-    draw_ellipse(info->vhead, ellipse1, samples);
+    plot_ellipse(info->vhead, ellipse1.center, ellipse1.axis_a, ellipse1.axis_b,
+		 samples);
 
     VADD2(ellipse2.center, tip->v, tip->h);
     VMOVE(ellipse2.axis_a, tip->c);
     VMOVE(ellipse2.axis_b, tip->d);
-    draw_ellipse(info->vhead, ellipse2, samples);
+    plot_ellipse(info->vhead, ellipse2.center, ellipse2.axis_a, ellipse2.axis_b,
+		 samples);
 
     samples /= 2;
 
