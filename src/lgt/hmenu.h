@@ -56,7 +56,7 @@ typedef struct HMenu
 {
     HMitem	*item;
     HMitem	*(*generator)();
-    short	prevtop;	/* Top entry currently visable		*/
+    short	prevtop;	/* Top entry currently visible		*/
     short	prevhit;	/* Offset from top of last select	*/
     short	sticky;		/* If set, menu stays around after SELECT,
 				   and until QUIT. */
