@@ -1698,7 +1698,7 @@ f_Movie()
     movie.m_endframe = noframes-1; /* set default */
     movie.m_noframes = noframes;
     if (movie.m_noframes < 1) {
-	bu_log("It doesn't make sense not to have atleast 2 frames.\n");
+	bu_log("It doesn't make sense not to have at least 2 frames.\n");
 	ret = -1;
 	goto error_exit;
     }
@@ -3264,7 +3264,7 @@ user_Input(char **args)
     static int first_time_through = TRUE;
     int i;
     if (get_Input(input_ln, BUFSIZ, ": ") == NULL) {
-	/* If detached, and at EOF, do atleast 1 picture. */
+	/* If detached, and at EOF, do at least 1 picture. */
 	if (! tty && first_time_through) {
 	    first_time_through = FALSE;
 	    args[0] = "R";
