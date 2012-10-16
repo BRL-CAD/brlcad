@@ -889,8 +889,9 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
 #ifdef NEW_WAY
 	    } else {
 
-		XXX This hasn't been tested since massive
-		    NUgrid changes were made
+		/* XXX This hasn't been tested since massive
+		 * NUgrid changes were made
+		 */
 
 		    /* New way, mostly parallel */
 		    union cutter *head;
