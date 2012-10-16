@@ -132,7 +132,7 @@
  * move pabyRec into SHPInfo for thread safety
  *
  * Revision 1.33  2001/07/03 12:18:15  warmerda
- * Improved cleanup if SHX not found, provied by Riccardo Cohen.
+ * Improved cleanup if SHX not found, provided by Riccardo Cohen.
  *
  * Revision 1.32  2001/06/22 01:58:07  warmerda
  * be more careful about establishing initial bounds in face of NULL shapes
@@ -1558,7 +1558,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	{
 	    char szError[200];
 
-	    /* Reallocate previous successfull size for following features */
+	    /* Reallocate previous successful size for following features */
 	    psSHP->pabyRec = malloc(psSHP->nBufSize);
 
 	    sprintf( szError,
@@ -1568,7 +1568,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	    return NULL;
 	}
 
-	/* Only set new buffer size after successfull alloc */
+	/* Only set new buffer size after successful alloc */
 	psSHP->nBufSize = nEntitySize;
     }
 
