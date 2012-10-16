@@ -102,7 +102,7 @@ int read_faces(struct model *m, FILE *fgeom)
 	pinds = (int *) bu_malloc(sizeof(int) * nedges, "point indices");
 
 	for (j = 0; j < nedges; j++) {
-	    /* Read list of point indicies. */
+	    /* Read list of point indices. */
 	    if (fscanf(fgeom, "%d", &pinds[j]) != 1) {
 		bu_exit(1, "Not enough points on face.\n");
 	    }
@@ -120,7 +120,7 @@ int read_faces(struct model *m, FILE *fgeom)
 	    bu_log("unknown parsing error\n");
 
 	bu_free((char *)vlist, "vertext list");
-	bu_free((char *)pinds, "point indicies");
+	bu_free((char *)pinds, "point indices");
     }
 
     for (i = 0; i < nverts; i++)
