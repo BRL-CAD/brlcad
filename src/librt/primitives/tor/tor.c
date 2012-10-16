@@ -1007,12 +1007,27 @@ rt_num_circular_segments(double maxerr, double radius)
 int
 rt_tor_adaptive_plot(struct rt_db_internal *ip, struct rt_view_info *info)
 {
+    vect_t a, b;
+    fastf_t samples;
     struct rt_tor_internal *tor;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
     tor = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tor);
+
+    samples = sqrt(primitive_diagonal_samples(ip, info));
+
+    /* plot inner circular contour */
+    VJOIN1(a, tor->a, -1.0 *  tor->r_h / MAGNITUDE(tor->a), tor->a);
+    VCROSS(b, a, tor->h);
+    VSCALE(b, b, sqrt(MAGSQ(a) / MAGSQ(b)));
+    plot_ellipse(info->vhead, tor->v, a, b, samples);
+
+    /* plot outer circular contour */
+    VJOIN1(a, tor->a, tor->r_h / MAGNITUDE(tor->a), tor->a);
+    VSCALE(b, b, sqrt(MAGSQ(a) / MAGSQ(b)));
+    plot_ellipse(info->vhead, tor->v, a, b, samples);
 
     return 0;
 }
