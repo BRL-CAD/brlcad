@@ -74,7 +74,7 @@ struct vrml_mat {
     int shininess;
     double transparency;
 
-    /* light paramaters */
+    /* light parameters */
     fastf_t lt_fraction;
     vect_t  lt_dir;
     fastf_t lt_angle;
@@ -129,7 +129,7 @@ static int	regions_converted = 0;
 
 
 /*
- * Replace all occurences of "old" with "new" in str.
+ * Replace all occurrences of "old" with "new" in str.
  */
 static void
 char_replace(char *str,
@@ -492,7 +492,7 @@ main(int argc, char **argv)
 	    continue;
 	}
 
-	/* light source must be a combibation */
+	/* light source must be a combination */
 	if ( !(dp->d_flags & RT_DIR_COMB) )
 	    continue;
 
@@ -650,7 +650,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 
     full_path = db_path_to_string( pathp );
 
-    /* replace all occurences of '.' with '_' */
+    /* replace all occurrences of '.' with '_' */
     char_replace(full_path, '.', '_');
 
     RT_CK_FULL_PATH( pathp );
@@ -882,7 +882,7 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
     BARRIER_CHECK;
 
     path_str = db_path_to_string( pathp );
-    /* replace all occurences of '.' with '_' */
+    /* replace all occurrences of '.' with '_' */
     char_replace(path_str, '.', '_');
 
     fprintf( outfp, "\t<Shape DEF=\"%s\">\n", path_str);
