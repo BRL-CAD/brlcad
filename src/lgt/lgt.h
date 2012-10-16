@@ -88,7 +88,7 @@ typedef struct
 {
     char	name[MAX_LGT_NM];/* Name of entry (i.e. ambient).	*/
     int	beam;	/* Flag denotes gaussian beam intensity.	*/
-    int	over;	/* Flag denotes manual overide of position.	*/
+    int	over;	/* Flag denotes manual override of position.	*/
     int	rgb[3];	/* Pixel color of LS (0 to 255) for RGB.	*/
     fastf_t	loc[3];	/* Location of LS in model space.		*/
     fastf_t	azim;	/* Azimuthal direction of LS in radians.	*/
