@@ -121,7 +121,7 @@ main(int argc, char **argv)
 
     /* read first line, should identify */
     if (bu_fgets(line, LINE_LEN, infp) == NULL) {
-	bu_exit(1, "Unexpected EOF encounterd while looking for file identifier\n");
+	bu_exit(1, "Unexpected EOF encountered while looking for file identifier\n");
     }
     if (line[strlen(line)-1] == '\n') {
 	line[strlen(line)-1] = '\0';
