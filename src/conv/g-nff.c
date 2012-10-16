@@ -447,7 +447,7 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
 	bu_exit(1, "Cannot open output file (%s) for writing\n", output_file);
     }
 
-    /* Open temporary ouitput file */
+    /* Open temporary output file */
     fp = bu_temp_file(NULL, 0);
 
     /* Open error log file */
