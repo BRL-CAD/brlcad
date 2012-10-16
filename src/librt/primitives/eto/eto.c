@@ -41,6 +41,7 @@
 
 #include "../../librt_private.h"
 
+static int eto_is_valid(struct rt_eto_internal *eto);
 
 /*
  * The ETO has the following input fields:
@@ -231,7 +232,9 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (rtip) RT_CK_RTI(rtip);
 
     tip = (struct rt_eto_internal *)ip->idb_ptr;
-    RT_ETO_CK_MAGIC(tip);
+    if (!eto_is_valid(tip)) {
+	return 1;
+    }
 
     /* Solid is OK, compute constant terms now */
     BU_GET(eto, struct eto_specific);
@@ -240,11 +243,6 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     eto->eto_r = tip->eto_r;
     eto->eto_rd = tip->eto_rd;
     eto->eto_rc = MAGNITUDE(tip->eto_C);
-    if (NEAR_ZERO(eto->eto_r, 0.0001) || NEAR_ZERO(eto->eto_rd, 0.0001)
-	|| NEAR_ZERO(eto->eto_rc, 0.0001)) {
-	bu_log("eto(%s): r, rd, or rc zero length\n", stp->st_name);
-	return 1;
-    }
 
     VMOVE(eto->eto_V, tip->eto_V);
     VMOVE(eto->eto_N, tip->eto_N);
@@ -882,17 +880,14 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+
     tip = (struct rt_eto_internal *)ip->idb_ptr;
-    RT_ETO_CK_MAGIC(tip);
+    if (!eto_is_valid(tip)) {
+	return 1;
+    }
 
     a = MAGNITUDE(tip->eto_C);
     b = tip->eto_rd;
-
-    if (NEAR_ZERO(tip->eto_r, 0.0001) || NEAR_ZERO(b, 0.0001)
-	|| NEAR_ZERO(a, 0.0001)) {
-	bu_log("eto_plot: r, rd, or rc zero length\n");
-	return 1;
-    }
 
     if (tip->eto_r < b) {
 	dtol = primitive_get_absolute_tolerance(ttol, 2.0 * tip->eto_r);
@@ -1243,8 +1238,11 @@ rt_eto_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_ETO) return -1;
+
     tip = (struct rt_eto_internal *)ip->idb_ptr;
-    RT_ETO_CK_MAGIC(tip);
+    if (!eto_is_valid(tip)) {
+	return -1;
+    }
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
@@ -1253,19 +1251,6 @@ rt_eto_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     eto->s.s_id = ID_SOLID;
     eto->s.s_type = ETO;
-
-    if (MAGNITUDE(tip->eto_C) < RT_LEN_TOL
-	|| MAGNITUDE(tip->eto_N) < RT_LEN_TOL
-	|| tip->eto_r < RT_LEN_TOL
-	|| tip->eto_rd < RT_LEN_TOL) {
-	bu_log("rt_eto_export4: not all dimensions positive!\n");
-	return -1;
-    }
-
-    if (tip->eto_rd > MAGNITUDE(tip->eto_C)) {
-	bu_log("rt_eto_export4: semi-minor axis cannot be longer than semi-major axis!\n");
-	return -1;
-    }
 
     /* Warning:  type conversion */
     VSCALE(&eto->s.s_values[0*3], tip->eto_V, local2mm);
@@ -1315,8 +1300,7 @@ rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     tip->eto_r  = vec[3*3] / mat[15];
     tip->eto_rd = vec[3*3+1] / mat[15];
 
-    if (tip->eto_r <= SMALL || tip->eto_rd <= SMALL) {
-	bu_log("rt_eto_import4:  zero length R or Rd vector\n");
+    if (!eto_is_valid(tip)) {
 	return -1;
     }
 
@@ -1339,25 +1323,15 @@ rt_eto_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_ETO) return -1;
+
     tip = (struct rt_eto_internal *)ip->idb_ptr;
-    RT_ETO_CK_MAGIC(tip);
+    if (!eto_is_valid(tip)) {
+	return -1;
+    }
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 11;
     ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "eto external");
-
-    if (MAGNITUDE(tip->eto_C) < RT_LEN_TOL
-	|| MAGNITUDE(tip->eto_N) < RT_LEN_TOL
-	|| tip->eto_r < RT_LEN_TOL
-	|| tip->eto_rd < RT_LEN_TOL) {
-	bu_log("rt_eto_export4: not all dimensions positive!\n");
-	return -1;
-    }
-
-    if (tip->eto_rd > MAGNITUDE(tip->eto_C)) {
-	bu_log("rt_eto_export4: semi-minor axis cannot be longer than semi-major axis!\n");
-	return -1;
-    }
 
     /* scale 'em into local buffer */
     VSCALE(&vec[0*3], tip->eto_V, local2mm);
@@ -1499,6 +1473,27 @@ rt_eto_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     *area = 2.0 * M_PI * tip->eto_r * circum;
 }
 
+static int
+eto_is_valid(struct rt_eto_internal *eto)
+{
+    RT_ETO_CK_MAGIC(eto);
+
+    /* check all vector magnitudes are positive */
+    if (MAGNITUDE(eto->eto_N) < RT_LEN_TOL
+	|| MAGNITUDE(eto->eto_C) < RT_LEN_TOL
+	|| eto->eto_r < RT_LEN_TOL
+	|| eto->eto_rd < RT_LEN_TOL)
+    {
+	return 0;
+    }
+
+    /* require major axis to be longer than minor axis */
+    if (eto->eto_rd > MAGNITUDE(eto->eto_C)) {
+	return 0;
+    }
+
+    return 1;
+}
 
 /** @} */
 /*
