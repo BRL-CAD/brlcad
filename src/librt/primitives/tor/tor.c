@@ -1007,7 +1007,7 @@ rt_num_circular_segments(double maxerr, double radius)
 int
 rt_tor_adaptive_plot(struct rt_db_internal *ip, struct rt_view_info *info)
 {
-    vect_t a, b;
+    vect_t a, b, center;
     fastf_t samples;
     struct rt_tor_internal *tor;
 
@@ -1028,6 +1028,18 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, struct rt_view_info *info)
     VJOIN1(a, tor->a, tor->r_h / MAGNITUDE(tor->a), tor->a);
     VSCALE(b, b, sqrt(MAGSQ(a) / MAGSQ(b)));
     plot_ellipse(info->vhead, tor->v, a, b, samples);
+
+    /* Draw parallel circles to show the primitive's most extreme points along
+     * +h/-h.
+     */
+    VMOVE(a, tor->a);
+    VSCALE(b, b, sqrt(MAGSQ(a) / MAGSQ(b)));
+    VJOIN1(center, tor->v, tor->r_h, tor->h);
+
+    plot_ellipse(info->vhead, center, a, b, samples);
+    
+    VJOIN1(center, tor->v, -1.0 * tor->r_h, tor->h);
+    plot_ellipse(info->vhead, center, a, b, samples);
 
     return 0;
 }
