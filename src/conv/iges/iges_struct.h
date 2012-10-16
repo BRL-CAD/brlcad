@@ -93,7 +93,7 @@ struct iges_directory
 };
 
 
-/* Structure used in builing boolean trees in memory */
+/* Structure used in building boolean trees in memory */
 struct node
 {
     int op; /* if positive, this is an operator (Union, Intersect, or Subtract)
@@ -102,7 +102,7 @@ struct node
 };
 
 
-/* structure for storing atributes */
+/* structure for storing attributes */
 struct brlcad_att
 {
     char *material_name;
