@@ -208,7 +208,7 @@ const struct rt_functab rt_functab[] = {
 	rt_tor_class,
 	rt_tor_free,
 	rt_tor_plot,
-	NULL,
+	rt_tor_adaptive_plot,
 	rt_tor_vshot,
 	rt_tor_tess,
 	NULL,

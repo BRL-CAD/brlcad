@@ -1004,6 +1004,18 @@ rt_num_circular_segments(double maxerr, double radius)
     return n;
 }
 
+int
+rt_tor_adaptive_plot(struct rt_db_internal *ip, struct rt_view_info *info)
+{
+    struct rt_tor_internal *tor;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+    tor = (struct rt_tor_internal *)ip->idb_ptr;
+    RT_TOR_CK_MAGIC(tor);
+
+    return 0;
+}
 
 /**
  * R T _ T O R _ P L O T
