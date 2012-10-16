@@ -124,7 +124,7 @@ Makedir()
 	Readcols(str, 8);	/* read form number */
 	dir[entcount]->form = atoi(str);
 
-	/* Look for entity type in list and incrememt that count */
+	/* Look for entity type in list and increment that count */
 
 	found = 0;
 	for (i = 0; i < ntypes; i++) {
@@ -160,7 +160,7 @@ Makedir()
 out:
     bu_log("\t%d\n\n", entcount+1);
     if (paramguess)
-	bu_log("Some entities did not have proper parameter pointers, so a resonable guess was made\n");
+	bu_log("Some entities did not have proper parameter pointers, so a reasonable guess was made\n");
 }
 
 
