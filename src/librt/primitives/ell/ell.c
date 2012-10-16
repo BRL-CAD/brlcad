@@ -703,28 +703,6 @@ cross_section_axis_magnitude(
     return sqrt(target_axis_mag * target_axis_mag * (1.0 - fixed_term));
 }
 
-static void
-ellipse_cross_section_point_at_radian(
-	point_t *result,
-	struct ellipse_cross_section ellipse,
-	double radian)
-{
-    int i;
-    vect_t a, b, t;
-    double cos_rad, sin_rad;
-
-    VMOVE(a, ellipse.a);
-    VMOVE(b, ellipse.b);
-    VMOVE(t, ellipse.translation);
-
-    cos_rad = cos(radian);
-    sin_rad = sin(radian);
-
-    for (i = 0; i < ELEMENTS_PER_POINT; ++i ) {
-	(*result)[i] = t[i] + a[i] * cos_rad + b[i] * sin_rad;
-    }
-}
-
 /* Draws elliptical cross-sections along an ell vector (the "travel vector").
  *
  * algorithm overview:
@@ -738,14 +716,13 @@ ellipse_cross_section_point_at_radian(
 static void
 draw_cross_sections_along_ell_vector(struct ell_draw_configuration config)
 {
-    int i, j;
+    int i;
     vect_t ell_a, ell_b, ell_t;
     double ellipse_a_mag, ellipse_b_mag;
     double ell_a_mag, ell_b_mag, ell_t_mag;
     double num_cross_sections, points_per_section;
     double position_step, radian_step;
     struct ellipse_cross_section cross_section = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, 0.0, 0.0};
-    point_t cross_section_point;
 
     VMOVE(ell_a, config.ell_axis_vector_a);
     VMOVE(ell_b, config.ell_axis_vector_b);
@@ -775,15 +752,8 @@ draw_cross_sections_along_ell_vector(struct ell_draw_configuration config)
 		cross_section.ellipsoid_travel_axis_position / ell_t_mag);
 	VADD2(cross_section.translation, cross_section.translation, config.ell_center);
 
-	ellipse_cross_section_point_at_radian(&cross_section_point,
-		cross_section, (points_per_section - 1) * radian_step);
-	RT_ADD_VLIST(config.vhead, cross_section_point, BN_VLIST_LINE_MOVE);
-
-	for (j = 0; j < points_per_section; ++j) {
-	    ellipse_cross_section_point_at_radian(&cross_section_point,
-		    cross_section, j * radian_step);
-	    RT_ADD_VLIST(config.vhead, cross_section_point, BN_VLIST_LINE_DRAW);
-	}
+	plot_ellipse(config.vhead, cross_section.translation, cross_section.a,
+		     cross_section.b, points_per_section);
     }
 }
 
