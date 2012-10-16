@@ -687,7 +687,7 @@ Make_trim_loop(entity_no, orientation, srf, fu)
 
 	    /* if old edge doesn't have vertex geometry, assign some */
 	    if (!vp->vg_p) {
-		/* Don't divied out rational coord */
+		/* Don't divide out rational coord */
 		if (RT_NURB_IS_PT_RATIONAL(crv1->pt_type)) {
 		    u = crv1->ctl_points[0]/crv1->ctl_points[ncoords-1];
 		    v = crv1->ctl_points[1]/crv1->ctl_points[ncoords-1];
@@ -974,7 +974,7 @@ trim_surf(entityno, s)
 	return (struct faceuse *)NULL;
     }
 
-    /* Make a face (with a loop to be destroted later)
+    /* Make a face (with a loop to be destroyed later)
      * because loop routines insist that face and face geometry
      * must already be assigned
      */
@@ -1429,7 +1429,7 @@ Convtrimsurfs()
 
     nmg_rebound(m, &tol);
 
-    bu_log("\n\t%d surfaces converted, adusting surface normals....\n", convsurf);
+    bu_log("\n\t%d surfaces converted, adjusting surface normals....\n", convsurf);
 
     /* do some raytracing to get face orientations correct */
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
