@@ -85,7 +85,7 @@ usage(const char *argv0)
     bu_log("	options:\n");
     bu_log("		f - convert each region to faceted BREP before output\n");
     bu_log("		t - produce a file of trimmed surfaces (experimental)\n");
-    bu_log("		m - produces a seperate IGES file for each region, \n");
+    bu_log("		m - produces a separate IGES file for each region, \n");
     bu_log("			implies -t, -o gives directory for output IGES file\n");
     bu_log("		s - produce NURBS for faces of any BREP objects\n");
     bu_log("		v - verbose\n");
@@ -106,7 +106,7 @@ usage(const char *argv0)
 int verbose = 0;
 static char *db_name;	/* name of the BRL-CAD database */
 static char *prog_name;	/* name of this program as it was invoked */
-static int multi_file = 0;	/* Flag to indicate output of seperate IGES file for each region */
+static int multi_file = 0;	/* Flag to indicate output of separate IGES file for each region */
 static int NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int scale_error = 0;	/* Count indicating how many scaled objects were encountered */
 static int solid_error = 0;	/* Count indicating how many solids were not converted */
