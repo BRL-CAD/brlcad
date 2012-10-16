@@ -513,7 +513,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 
 		    npts = 0;
 		    num_points = ARCSEGS+1;
-		    dpi = (t2-t1)/(double)num_points; /* parameter incremenmt */
+		    dpi = (t2-t1)/(double)num_points; /* parameter increment */
 
 		    /* start point */
 		    VSET(tmp, xc, yc, v1[2]);
