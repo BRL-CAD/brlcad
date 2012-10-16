@@ -168,7 +168,7 @@ Do_subfigs()
 		if (dir[idx]->form != 1) {
 		    bu_log("External Reference Entity of form #%d found\n",
 			   dir[idx]->form);
-		    bu_log("\tOnly form #1 is currnetly handled\n");
+		    bu_log("\tOnly form #1 is currently handled\n");
 		    continue;
 		}
 
