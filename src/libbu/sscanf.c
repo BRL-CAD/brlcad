@@ -223,7 +223,7 @@ again:
 	    } else {
 		/* Since LONG is set, the previous conversion character must
 		 * have been 'l'. With this second 'l', we know we have an "ll"
-		 * modifer, not an 'l' modifer. We need to replace the
+		 * modifier, not an 'l' modifier. We need to replace the
 		 * incorrect flag with the correct one.
 		 */
 		flags &= ~LONG;
@@ -267,7 +267,7 @@ again:
 #endif
 		/* Since SHORT is set, the previous conversion character must
 		 * have been 'h'. With this second 'h', we know we have an "hh"
-		 * modifer, not an 'h' modifer. We need to replace the
+		 * modifier, not an 'h' modifier. We need to replace the
 		 * incorrect flag with the correct one.
 		 */
 		flags &= ~SHORT;
