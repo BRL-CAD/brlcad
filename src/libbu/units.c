@@ -177,6 +177,16 @@ units_name_matches(const char *input, const char *name)
     if (!name)
 	name = "";
 
+    /* skip spaces */
+    while (isspace(*input))
+	input++;
+    while (isspace(*name))
+	name++;
+
+    /* quick exit */
+    if (tolower(input[0]) != tolower(name[0]))
+	return 0;
+
     cp = input;
     /* skip spaces, convert to lowercase */
     while (*cp != '\0') {
@@ -224,7 +234,6 @@ bu_units_conversion(const char *str)
     /* Search for this string in the table */
     for (cvtab=unit_lists; cvtab->cvttab; cvtab++) {
 	for (tp=cvtab->cvttab; tp->name[0]; tp++) {
-	    if (ubuf[0] != tp->name[0])  continue;
 	    if (!units_name_matches(ubuf, tp->name))
 		continue;
 	    return tp->val;
@@ -353,7 +362,6 @@ bu_mm_value(const char *s)
     }
 
     for (tp=bu_units_length_tab; tp->name[0]; tp++) {
-	if (*ptr != tp->name[0])  continue;
 	if (units_name_matches(ptr, tp->name)) {
 	    v *= tp->val;
 	    return v;
