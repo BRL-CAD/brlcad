@@ -19,7 +19,7 @@
  */
 /** @file mged/menu.h
  *
- * Each active menu is installed by haveing a non-null entry in
+ * Each active menu is installed by having a non-null entry in
  * menu_array[] which is a pointer
  * to an array of menu items.  The first ([0]) menu item is the title
  * for the menu, and the remaining items are individual menu entries.
