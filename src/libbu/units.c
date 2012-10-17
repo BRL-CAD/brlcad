@@ -43,7 +43,7 @@ struct conv_table {
     struct cvt_tab *cvttab;
 };
 
-struct cvt_tab bu_units_length_tab[] = {
+static struct cvt_tab bu_units_length_tab[] = {
     {0.0,		"none"},
     {1.0e-21,		"ym"},
     {1.0e-21,		"yoctometer"},
@@ -122,7 +122,7 @@ struct cvt_tab bu_units_length_tab[] = {
 };
 #define BU_UNITS_TABLE_SIZE (sizeof(bu_units_length_tab) / sizeof(struct cvt_tab) - 1)
 
-struct cvt_tab bu_units_volume_tab[] = {
+static struct cvt_tab bu_units_volume_tab[] = {
     {0.0,		"none"},
     {1.0,		"mm^3"},		/* default */
     {1.0, 		"cu mm"},
@@ -144,7 +144,7 @@ struct cvt_tab bu_units_volume_tab[] = {
     {0.0,               ""}                     /* LAST ENTRY */
 };
 
-struct cvt_tab bu_units_mass_tab[] = {
+static struct cvt_tab bu_units_mass_tab[] = {
     {0.0,		"none"},
     {1.0,		"grams"},		/* default */
     {1.0, 		"g"},
@@ -163,6 +163,11 @@ static const struct conv_table unit_lists[4] = {
 };
 
 
+/**
+ * compares an input units string to a reference units name and
+ * returns truthfully if they match.  the comparison ignores any
+ * embedded whitespace and is case insensitive.
+ */
 static int
 units_name_matches(const char *input, const char *name)
 {
