@@ -99,7 +99,7 @@ static struct model *mged_nmg_model = NULL;
 
 /*
  * Used via upcall by routines deep inside LIBRT, to have a UNIX-plot
- * file dyanmicly overlaid on the screen.
+ * file dynamically overlaid on the screen.
  * This can be used to provide a very easy to program diagnostic
  * animation capability.
  * Alas, no wextern keyword to make this a little less indirect.
@@ -161,7 +161,7 @@ cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
 
 /*
  * Used via upcall by routines deep inside LIBRT, to have a UNIX-plot
- * file dyanmicly overlaid on the screen.
+ * file dynamically overlaid on the screen.
  * This can be used to provide a very easy to program diagnostic
  * animation capability.
  * Alas, no wextern keyword to make this a little less indirect.
