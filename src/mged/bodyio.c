@@ -329,7 +329,7 @@ cmd_export_body(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, con
 	    nbytes = (size_t) (bip->count * 8);
 	    break;
 	default:
-	    /* XXX This shouln't happen!! */
+	    /* XXX This shouldn't happen!! */
 	    bu_log("bip->type switch... default");
 	    break;
 	}
