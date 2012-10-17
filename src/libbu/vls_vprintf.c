@@ -350,12 +350,12 @@ specifications:
       "http://www.unix.com/man-page/POSIX/3/printf/" regarding the
       definition of a format specifier.
 
-  2.  Then modify [1] to accomodate a compatible subset of parts
+  2.  Then modify [1] to accommodate a compatible subset of parts
       applicable to a wide range of standard C libraries including
       GNU/Linux, Windows, FreeBSD, and others as differences are
       brought to our attention.
 
-  3.  The subset [2] shall be the "valid" flags, length modifers, and
+  3.  The subset [2] shall be the "valid" flags, length modifiers, and
       conversion specifiers ("parts") accepted by this function.
       Those are defined in the following local function:
 
@@ -505,7 +505,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    /* found the next format specifier */
 		    while (*fp) {
 			fp++;
-			/* possible characters that can preceed the
+			/* possible characters that can precede the
 			 * field length character (before the type).
 			 */
 			if (isdigit(*fp)
