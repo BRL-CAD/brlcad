@@ -113,7 +113,7 @@
 int
 bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_structparse *imp)
 {
-    register char *cp;			/* current possition in buffer */
+    register char *cp;			/* current position in buffer */
     char *ep;				/* &ext->ext_buf[ext->ext_nbytes] */
     const struct bu_structparse *ip;	/* current imexport structure */
     char *loc;				/* where host-format data is */
@@ -271,7 +271,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 int
 bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct bu_external *ext)
 {
-    register const unsigned char *cp;	/* current possition in buffer */
+    register const unsigned char *cp;	/* current position in buffer */
     const struct bu_structparse *ip;	/* current imexport structure */
     char *loc;		/* where host-format data is */
     size_t len;
