@@ -90,7 +90,7 @@ main(int ac, char *av[])
 	passed++;
     }
 
-    printf("\tSEARCHING AN INEXISTENT VALUE:\n");
+    printf("\tSEARCHING A NONEXISTENT VALUE:\n");
     searchedValue = bu_rb_search(testTree, 0, "not");
 
     if (searchedValue == 0) {
