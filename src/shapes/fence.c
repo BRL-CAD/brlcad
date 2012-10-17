@@ -20,8 +20,8 @@
  */
 /** @file shapes/fence.c
  *
- * This program generages a chain-link fence.  Every parameter of the
- * fence may be adjusted.  Default values are held in fence.h Be wary
+ * This program generates a chain-link fence.  Every parameter of the
+ * fence may be adjusted.  Default values are held in fence.h . Be wary
  * of long fences...
  *
  * Note: It would be much more optimal for there to be a fence object
