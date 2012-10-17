@@ -174,7 +174,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
     topp = (struct cell *)bu_malloc(sizeof(struct cell) * (width + 2),
 				    "top cell buffer" );
 
-    /* Clear both in-buffers to ensure abscence of garbage.  Note
+    /* Clear both in-buffers to ensure absence of garbage.  Note
      * that the zero-filled "bottom" buffer now provides the first
      * in-memory buffer for comparisons.
      */
@@ -200,7 +200,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	maxangle = cos( AmbientIntensity * bn_degtorad);
     }
 
-    /* Obtain the bounding boxes for the model from the rt_i(stance)
+    /* Obtain the bounding boxes for the model from the rt_i(nstance)
      * structure and feed the maximum and minimum coordinates to
      * pdv_3space.  This will allow the image to appear in the plot
      * starting with the same size as the model.
@@ -208,7 +208,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 
     pdv_3space(outfp, ap->a_rt_i->rti_pmin, ap->a_rt_i->rti_pmax);
 
-    /* Now calculated and store the minimun depth change that will
+    /* Now calculate and store the minimum depth change that will
      * trigger the drawing of "pits" and "pendula" (mountains).  In
      * this case, a change in distance of 2 pixels was picked.  Note
      * that the distance of one pixel in model space is MAGNITUDE(dx_model).
@@ -692,7 +692,7 @@ swapbuff(struct cell **onepp, struct cell **twopp)
 
 /*		C L E A N L I N E
  *
- *  This routine takes as paramenters the address of a buffer and an integer
+ *  This routine takes as parameters the address of a buffer and an integer
  *  reflecting the width of the file.  It proceeds to ZERO fill the buffer.
  *  This routine returns nothing.
  */
