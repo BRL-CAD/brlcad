@@ -193,6 +193,14 @@ units_name_matches(const char *input, const char *name)
 	cp++;
     }
 
+    /* trim any trailing 's' for plurality */
+    if (bu_vls_addr(&normalized_input)[bu_vls_strlen(&normalized_input)-1] == 's') {
+	bu_vls_trunc(&normalized_input, -1);
+    }
+    if (bu_vls_addr(&normalized_name)[bu_vls_strlen(&normalized_name)-1] == 's') {
+	bu_vls_trunc(&normalized_name, -1);
+    }
+
     /* compare */
     match = BU_STR_EQUAL(bu_vls_addr(&normalized_input), bu_vls_addr(&normalized_name));
 
