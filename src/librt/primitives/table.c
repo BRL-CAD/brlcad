@@ -1028,7 +1028,7 @@ const struct rt_functab rt_functab[] = {
 	rt_eto_class,
 	rt_eto_free,
 	rt_eto_plot,
-	NULL,
+	rt_eto_adaptive_plot,
 	NULL,
 	rt_eto_tess,
 	NULL,

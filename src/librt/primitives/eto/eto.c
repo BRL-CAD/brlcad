@@ -854,6 +854,21 @@ make_ellipse(int *n, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
     return ell;
 }
 
+int
+rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    struct rt_eto_internal *eto;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+
+    eto = (struct rt_eto_internal *)ip->idb_ptr;
+    if (!eto_is_valid(eto)) {
+	return 1;
+    }
+
+    return 0;
+}
 
 /**
  * R T _ E T O _ P L O T
