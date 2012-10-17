@@ -281,7 +281,7 @@ bu_hash_tbl_free(struct bu_hash_tbl *hsh_tbl)
 	    free(hsh_entry->key);
 	    free(hsh_entry);
 
-	    /* step to next entry in libnked list */
+	    /* step to next entry in linked list */
 	    hsh_entry = tmp;
 	}
     }
