@@ -858,6 +858,9 @@ int
 rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
     struct rt_eto_internal *eto;
+    vect_t center, cross_AN, eto_N, eto_A, eto_B, ellipse_A, ellipse_B, I, J;
+    fastf_t radian, radian_step, mag_ai, mag_aj, mag_bi, mag_bj;
+    int i, samples, num_cross_sections, points_per_cross_section;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -865,6 +868,79 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     eto = (struct rt_eto_internal *)ip->idb_ptr;
     if (!eto_is_valid(eto)) {
 	return 1;
+    }
+
+    samples = sqrt(primitive_diagonal_samples(ip, info));
+
+    if (samples < 8) {
+	samples = 8;
+    }
+
+    while (samples % 4 != 0) {
+	++samples;
+    }
+
+    VMOVE(eto_N, eto->eto_N);
+    VMOVE(ellipse_A, eto->eto_C);
+
+    VCROSS(cross_AN, ellipse_A, eto_N);
+
+    VCROSS(ellipse_B, ellipse_A, cross_AN);
+    VUNITIZE(ellipse_B);
+    VSCALE(ellipse_B, ellipse_B, eto->eto_rd);
+
+    VCROSS(eto_A, eto_N, cross_AN);
+    VUNITIZE(eto_A);
+    VSCALE(eto_A, eto_A, eto->eto_r);
+
+    VCROSS(eto_B, eto_N, eto_A);
+    VUNITIZE(eto_B);
+    VSCALE(eto_B, eto_B, eto->eto_r);
+
+    /* We want to be able to plot any of the ellipses that result from
+     * intersecting the eto with a plane containing N. The center point of any
+     * such ellipse lies on a vector (R) orthogonal to N, so we can think of
+     * the ellipse as lying in a vector space formed by the unit component
+     * vectors I and J which correspond to to R and N respectively.
+     *
+     * The A and B axis vectors of the ellipse can then be expressed as a
+     * combination of I and J:
+     *
+     *     A = (ai)I + (aj)J
+     *     B = (bi)I + (bj)J
+     *
+     * The scalars ai, aj, bi, and bj are the scalar projections of A onto I,
+     * A onto J,and B onto I, and B onto J respectively.
+     */
+    VMOVE(I, eto_A);
+    VMOVE(J, eto_N);
+    VUNITIZE(I);
+    VUNITIZE(J);
+
+    mag_ai = VDOT(ellipse_A, I);
+    mag_aj = VDOT(ellipse_A, J);
+    mag_bi = VDOT(ellipse_B, I);
+    mag_bj = VDOT(ellipse_B, J);
+
+    /* draw elliptical radial cross sections */
+    num_cross_sections = samples;
+    points_per_cross_section = samples / 2.0;
+
+    radian_step = bn_twopi / num_cross_sections;
+    radian = 0;
+    for (i = 0; i < num_cross_sections; ++i) {
+	ellipse_point_at_radian(center, eto->eto_V, eto_A, eto_B, radian);
+
+	VMOVE(I, center);
+	VJOIN1(I, I, -1.0, eto->eto_V);
+	VUNITIZE(I);
+
+	VCOMB2(ellipse_A, mag_ai, I, mag_aj, J);
+	VCOMB2(ellipse_B, mag_bi, I, mag_bj, J);
+
+	plot_ellipse(info->vhead, center, ellipse_A, ellipse_B, points_per_cross_section);
+
+	radian += radian_step;
     }
 
     return 0;
