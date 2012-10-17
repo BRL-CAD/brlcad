@@ -267,7 +267,7 @@ bu_semaphore_init(unsigned int nsemaphores)
     /*
      * Encore MultiMax.
      * While the manual suggests that one should use spin_create()
-     * to aquire a new control structure for spin locking, it turns
+     * to acquire a new control structure for spin locking, it turns
      * out that the library support for that simply malloc()s a 1-byte
      * area to contain the lock, and sets it to PAR_UNLOCKED.
      */
