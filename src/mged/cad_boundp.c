@@ -246,7 +246,7 @@ Chop(void)					/* chop vectors into segments */
 	    for (pp = piecehead.links; pp != &piecehead;
 		 pp = pp->links
 		) {
-		coords *i;	/* intersectn */
+		coords *i;	/* intersection */
 
 		/* Be careful; `i' -> static storage
 		   internal to Intersect().	      */
