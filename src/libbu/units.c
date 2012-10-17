@@ -173,8 +173,39 @@ static const struct conv_table unit_lists[4] = {
 static int
 units_name_matches(const char *input, const char *name)
 {
+    const char *cp;
     int match;
-    match = BU_STR_EQUAL(input, name);
+    struct bu_vls normalized_input = BU_VLS_INIT_ZERO;
+    struct bu_vls normalized_name = BU_VLS_INIT_ZERO;
+
+    /* convert NULL */
+    if (!input)
+	input = "";
+    if (!name)
+	name = "";
+
+    cp = input;
+    /* skip spaces, convert to lowercase */
+    while (*cp != '\0') {
+	if (!isspace(*cp))
+	    bu_vls_putc(&normalized_input, tolower(*cp));
+	cp++;
+    }
+
+    cp = name;
+    /* skip spaces, convert to lowercase */
+    while (*cp != '\0') {
+	if (!isspace(*cp))
+	    bu_vls_putc(&normalized_name, tolower(*cp));
+	cp++;
+    }
+
+    /* compare */
+    match = BU_STR_EQUAL(bu_vls_addr(&normalized_input), bu_vls_addr(&normalized_name));
+
+    bu_vls_free(&normalized_input);
+    bu_vls_free(&normalized_name);
+
     return match;
 }
 
@@ -347,7 +378,7 @@ bu_mm_value(const char *s)
     }
 
     /* A string was seen, but not found in the table.  Signal error */
-    return -1;
+    return -1.0;
 }
 
 
