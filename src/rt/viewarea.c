@@ -87,7 +87,7 @@ usage(const char *argv0)
     bu_log(" -U #		Set use_air boolean to # (default=1)\n");
     bu_log(" -u units	Set the display units (default=mm)\n");
     bu_log(" -x #		Set librt debug flags\n");
-    bu_log(" -c             Auxillary commands (see man page)\n");
+    bu_log(" -c             Auxiliary commands (see man page)\n");
     bu_log("\n");
     bu_log("WARNING: rtarea may not correctly report area or center when instancing is\n");
     bu_log("done at the group level. Using 'xpush' can be a workaround for this problem.\n");
