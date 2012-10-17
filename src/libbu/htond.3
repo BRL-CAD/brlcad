@@ -57,7 +57,7 @@ These routines are used for
 conversion between the local host
 64-bit ("double precision") representation, and
 64-bit IEEE double precision representation, in "network order",
-ie, big-endian, the MSB in byte [0], on the left.
+i.e., big-endian, the MSB in byte [0], on the left.
 .PP
 As a quick review, the IEEE double precision format is as follows:
 sign bit, 11 bits of exponent (bias 1023), and 52 bits of mantissa,
@@ -71,7 +71,7 @@ msb of mantissa=0:  signaling NAN
 msb of mantissa=1:  quiet NAN
 .PP
 Note that neither the input or output buffers need be word aligned,
-for greatest flexability in converting data, even though this
+for greatest flexibility in converting data, even though this
 may impose a speed penalty on some architectures.
 .PP
 These subroutines operate on a sequential block of numbers,
