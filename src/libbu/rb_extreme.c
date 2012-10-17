@@ -80,7 +80,7 @@ bu_rb_extreme(struct bu_rb_tree *tree, int order, int sense)
 	return NULL;
     }
 
-    /* Wade throught the tree */
+    /* Wade through the tree */
     node = _rb_extreme(RB_ROOT(tree, order), order, sense, RB_NULL(tree));
 
     if (node == RB_NULL(tree))
