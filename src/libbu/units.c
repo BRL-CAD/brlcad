@@ -92,7 +92,7 @@ struct cvt_tab bu_units_length_tab[] = {
     {1.0e+27,		"yottameter"},
     {25.4,		"in"},
     {25.4,		"inch"},
-    {25.4,		"inche"}, /* plural */
+    {25.4,		"inches"}, /* plural */
     {101.6,		"hand"},
     {304.8,		"ft"},
     {304.8,		"foot"},
@@ -320,11 +320,11 @@ bu_mm_value(const char *s)
 
     if (ptr == s) {
 	/* No number could be found, unity is implied */
-	/* e.g. interprept "ft" as "1ft" */
+	/* e.g. interpret "ft" as "1ft" */
 	v = 1.0;
     }
     if (! *ptr) {
-	/* There are no characters following the scaned number */
+	/* There are no characters following the scanned number */
 	return v;
     }
 
@@ -345,7 +345,7 @@ void
 bu_mm_cvt(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     register double *p = (double *)(base+sdp->sp_offset);
