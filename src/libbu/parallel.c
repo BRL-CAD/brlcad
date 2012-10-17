@@ -252,7 +252,7 @@ bu_avail_cpus(void)
     /* XXX LAB 04 June 2002
      *
      * The call prctl(PR_MAXPPROCS) is supposed to indicate the number
-     * of processors this process can use.  Unfortuantely, this
+     * of processors this process can use.  Unfortunately, this
      * returns 0 when running under a CPU set.  A bug report has been
      * filed with SGI.
      *
@@ -779,7 +779,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	/*
 	 * Start a share-group process, sharing ALL resources.  This
 	 * direct sys-call can be used because none of the
-	 * task-management services of, eg, taskcreate() are needed.
+	 * task-management services of, e.g., taskcreate() are needed.
 	 */
 #    if defined(IRIX) && IRIX <= 4
 	/* Stack size per proc comes from RLIMIT_STACK (typ 64MBytes). */
