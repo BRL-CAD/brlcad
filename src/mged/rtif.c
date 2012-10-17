@@ -171,7 +171,7 @@ rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
 /**
  * F _ R M A T S
  *
- * Load view matrixes from a file.  rmats filename [mode]
+ * Load view matrices from a file.  rmats filename [mode]
  *
  * Modes:
  * -1 put eye in viewcenter (default)
@@ -251,7 +251,7 @@ f_rmats(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	    Tcl_AppendResult(interp, "default mode:  eyepoint at (0, 0, 1) viewspace\n", (char *)NULL);
 	    break;
 	case 0:
-	    Tcl_AppendResult(interp, "rotation supressed, center is eyepoint\n", (char *)NULL);
+	    Tcl_AppendResult(interp, "rotation suppressed, center is eyepoint\n", (char *)NULL);
 	    break;
     }
 work:
