@@ -461,7 +461,7 @@ doStringTests()
     }
 
     /* For %s sscanf should not include leading whitespace in the string, so
-     * the following should all be quivalent.
+     * the following should all be equivalent.
      */
     test_sscanf_s(TEST_STR_NOSPACE, "%" TS_STR_WIDTH "s");
     test_sscanf_s(TEST_STR_NOSPACE, " %" TS_STR_WIDTH "s");
@@ -469,7 +469,7 @@ doStringTests()
     test_sscanf_s(TEST_STR_SPACE, " %" TS_STR_WIDTH "s");
 
     /* For %c, leading whitespace should be included unless the conversion
-     * specifier is preceeded by whitespace.
+     * specifier is preceded by whitespace.
      */
     test_sscanf_s(TEST_STR_SPACE, "%c");  /* should assign ' ' */
     test_sscanf_s(TEST_STR_SPACE, " %c"); /* should assign 'a' */
