@@ -59,7 +59,7 @@
  Dir=4, 5, 6
  region=/all.g/platform.r in=platform.s indist=10016.8 out=platform.s outdist=10023.8
  @endverbatim
- * where the line begining with "region" may be repeated any number of times, representing each
+ * where the line beginning with "region" may be repeated any number of times, representing each
  * region encountered along the ray.
  * now run this program as follows: @verbatim
  reshoot geom.g obj [obj...] < inputfile
@@ -240,7 +240,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
  * Function called when ray misses all geometry
  * A pointer to this function is stored in the application structure
  * field a_miss.  rt_shootray() will call this when the ray misses all geometry.
- * it passees the application structure.
+ * it passes the application structure.
  * @return
  *	Typically 0, and becomes the return value from rt_shootray()
  */
@@ -335,7 +335,7 @@ main(int argc, char **argv)
 	bu_exit(2, "rtexample: rt_dirbuild failure\n");
     }
 
-    /* intialize the application structure to all zeros */
+    /* initialize the application structure to all zeros */
     RT_APPLICATION_INIT(&ap);
 
     ap.a_rt_i = rtip;	/* your application uses this instance */
