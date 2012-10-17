@@ -854,12 +854,32 @@ make_ellipse(int *n, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
     return ell;
 }
 
+/* Calculate axis vectors for the circular contour which shows the extent of
+ * the vector with the given projection onto A.
+ */
+static void
+eto_contour_axes(
+	vect_t contour_A,
+	vect_t contour_B,
+	vect_t eto_A,
+	vect_t eto_B,
+	fastf_t proj_A)
+{
+    fastf_t c;
+
+    c = 1.0 + proj_A / MAGNITUDE(eto_A);
+    VSCALE(contour_A, eto_A, c);
+    VSCALE(contour_B, eto_B, c);
+}
+
 int
 rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
     struct rt_eto_internal *eto;
-    vect_t center, cross_AN, eto_N, eto_A, eto_B, ellipse_A, ellipse_B, I, J;
-    fastf_t radian, radian_step, mag_ai, mag_aj, mag_bi, mag_bj;
+    fastf_t radian, radian_step;
+    vect_t ellipse_A, ellipse_B, contour_A, contour_B, I, J;
+    vect_t center, cross_AN, eto_V, eto_N, eto_A, eto_B;
+    fastf_t mag_A, mag_B, mag_N, mag_ai, mag_aj, mag_bi, mag_bj;
     int i, samples, num_cross_sections, points_per_cross_section;
 
     BU_CK_LIST_HEAD(info->vhead);
@@ -880,7 +900,11 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	++samples;
     }
 
+    VMOVE(eto_V, eto->eto_V);
+
     VMOVE(eto_N, eto->eto_N);
+    mag_N = MAGNITUDE(eto_N);
+
     VMOVE(ellipse_A, eto->eto_C);
 
     VCROSS(cross_AN, ellipse_A, eto_N);
@@ -892,10 +916,12 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VCROSS(eto_A, eto_N, cross_AN);
     VUNITIZE(eto_A);
     VSCALE(eto_A, eto_A, eto->eto_r);
+    mag_A = MAGNITUDE(eto_A);
 
     VCROSS(eto_B, eto_N, eto_A);
     VUNITIZE(eto_B);
     VSCALE(eto_B, eto_B, eto->eto_r);
+    mag_B = MAGNITUDE(eto_B);
 
     /* We want to be able to plot any of the ellipses that result from
      * intersecting the eto with a plane containing N. The center point of any
@@ -921,6 +947,24 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     mag_aj = VDOT(ellipse_A, J);
     mag_bi = VDOT(ellipse_B, I);
     mag_bj = VDOT(ellipse_B, J);
+
+    /* plot elliptical contour showing extent of ellipse +A/-A */
+    eto_contour_axes(contour_A, contour_B, eto_A, eto_B, mag_ai);
+    VJOIN1(center, eto_V, mag_aj / mag_N, eto_N);
+    plot_ellipse(info->vhead, center, contour_A, contour_B, samples);
+
+    eto_contour_axes(contour_A, contour_B, eto_A, eto_B, -mag_ai);
+    VJOIN1(center, eto_V, -mag_aj / mag_N, eto_N);
+    plot_ellipse(info->vhead, center, contour_A, contour_B, samples);
+
+    /* plot elliptical contour showing extent of ellipse +B/-B */
+    eto_contour_axes(contour_A, contour_B, eto_A, eto_B, mag_bi);
+    VJOIN1(center, eto_V, mag_bj / mag_N, eto_N);
+    plot_ellipse(info->vhead, center, contour_A, contour_B, samples);
+
+    eto_contour_axes(contour_A, contour_B, eto_A, eto_B, -mag_bi);
+    VJOIN1(center, eto_V, -mag_bj / mag_N, eto_N);
+    plot_ellipse(info->vhead, center, contour_A, contour_B, samples);
 
     /* draw elliptical radial cross sections */
     num_cross_sections = samples;
