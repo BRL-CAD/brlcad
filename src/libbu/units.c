@@ -170,6 +170,15 @@ static const struct conv_table unit_lists[4] = {
 };
 
 
+static int
+units_name_matches(const char *input, const char *name)
+{
+    int match;
+    match = BU_STR_EQUAL(input, name);
+    return match;
+}
+
+
 double
 bu_units_conversion(const char *str)
 {
@@ -202,7 +211,8 @@ bu_units_conversion(const char *str)
     for (cvtab=unit_lists; cvtab->cvttab; cvtab++) {
 	for (tp=cvtab->cvttab; tp->name[0]; tp++) {
 	    if (ubuf[0] != tp->name[0])  continue;
-	    if (!BU_STR_EQUAL(ubuf, tp->name))  continue;
+	    if (!units_name_matches(ubuf, tp->name))
+		continue;
 	    return tp->val;
 	}
     }
@@ -216,7 +226,7 @@ bu_units_string(register const double mm)
     register const struct cvt_tab *tp;
 
     if (UNLIKELY(mm <= 0))
-	return (char *)NULL;
+	return (const char *)NULL;
 
     /* Search for this string in the table */
     for (tp=bu_units_length_tab; tp->name[0]; tp++) {
@@ -242,7 +252,7 @@ bu_units_string(register const double mm)
 	if (diff < 0.000000001 * bigger)
 	    return tp->name;
     }
-    return (char *)NULL;
+    return (const char *)NULL;
 }
 
 struct bu_vls *
@@ -278,7 +288,7 @@ bu_nearest_units_string(register const double mm)
     double nearer = DBL_MAX;
 
     if (UNLIKELY(mm <= 0))
-	return (char *)NULL;
+	return (const char *)NULL;
 
     /* Search for this unit in the table */
     for (tp=bu_units_length_tab; tp->name[0]; tp++) {
@@ -330,7 +340,7 @@ bu_mm_value(const char *s)
 
     for (tp=bu_units_length_tab; tp->name[0]; tp++) {
 	if (*ptr != tp->name[0])  continue;
-	if (BU_STR_EQUAL(ptr, tp->name)) {
+	if (units_name_matches(ptr, tp->name)) {
 	    v *= tp->val;
 	    return v;
 	}
