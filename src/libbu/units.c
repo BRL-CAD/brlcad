@@ -217,14 +217,9 @@ bu_units_conversion(const char *str)
     register const struct cvt_tab *tp;
     register const struct conv_table *cvtab;
     char ubuf[256];
-    size_t len;
 
     /* Copy the given string */
     bu_strlcpy(ubuf, str, sizeof(ubuf));
-
-    /* Remove any trailing "s" (plural) */
-    len = strlen(ubuf);
-    if (ubuf[len-1] == 's')  ubuf[len-1] = '\0';
 
     /* Search for this string in the table */
     for (cvtab=unit_lists; cvtab->cvttab; cvtab++) {
