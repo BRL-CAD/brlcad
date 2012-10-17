@@ -35,7 +35,7 @@
  * cell at an awkward gridding.
  *
  * TODO: horribly inefficient at the moment with the current
- * book-keeping with 2x as much work occuring as necessary on default
+ * book-keeping with 2x as much work occurring as necessary on default
  * renders due to double-firing of the "below" row.  antialiasing
  * makes it even worse with entire subgrids being refired (although
  * they should all at least be unique).
