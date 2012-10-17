@@ -144,7 +144,7 @@ bu_open_mapped_file(const char *name, const char *appl)
     /* necessary in case we take a 'fail' path before BU_GET() */
     mp = NULL;
 
-    /* File is not yet mapped or has chnaged, open file read only if
+    /* File is not yet mapped or has changed, open file read only if
      * we didn't find it earlier.
      */
 #ifdef HAVE_SYS_STAT_H
@@ -175,7 +175,7 @@ bu_open_mapped_file(const char *name, const char *appl)
     }
 #endif /* HAVE_SYS_STAT_H */
 
-    /* Optimisticly assume that things will proceed OK */
+    /* Optimistically assume that things will proceed OK */
     BU_GET(mp, struct bu_mapped_file);
     mp->name = bu_strdup(real_path);
     if (appl) mp->appl = bu_strdup(appl);
