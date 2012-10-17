@@ -138,7 +138,7 @@ hist_pr_suppress(register const struct bu_hist *histp, const char *title, int ze
     /* Print each bin. */
     i = 0;
     if (zero_suppress) {
-	/* Leading bins with zero counts are supressed. */
+	/* Leading bins with zero counts are suppressed. */
 	for (; i <= nbins; i++) {
 	    if (histp->hg_bins[i] > 0)  break;
 	}
