@@ -82,14 +82,14 @@ int bv_zoomout();
  * This flag indicates that Primitive editing is in effect.
  * edobj may not be set at the same time.
  * It is set to the 0 if off, or the value of the button function
- * that is currently in effect (eg, BE_S_SCALE).
+ * that is currently in effect (e.g., BE_S_SCALE).
  */
 static int edsol;
 
 /* This flag indicates that Matrix editing is in effect.
  * edsol may not be set at the same time.
  * Value is 0 if off, or the value of the button function currently
- * in effect (eg, BE_O_XY).
+ * in effect (e.g., BE_O_XY).
  */
 int edobj;		/* object editing */
 int movedir;	/* RARROW | UARROW | SARROW | ROTARROW */
