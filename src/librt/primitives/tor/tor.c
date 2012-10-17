@@ -335,7 +335,7 @@ rt_tor_print(register const struct soltab *stp)
  * Y = b*t + y0,
  * Z = c*t + z0.
  *
- * First, convert the line to the coordinate system of a "stan- dard"
+ * First, convert the line to the coordinate system of a "standard"
  * torus.  This is a torus which lies in the X-Y plane, circles the
  * origin, and whose primary radius is one.  The secondary radius is
  * alpha = (R2/R1) of the original torus where (0 < alpha <= 1).
@@ -1054,7 +1054,7 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
      */
     VADD2(center, tor->v, tor_h);
     plot_ellipse(info->vhead, center, tor_a, tor_b, samples);
-    
+
     VJOIN1(center, tor->v, -1.0, tor_h);
     plot_ellipse(info->vhead, center, tor_a, tor_b, samples);
 
