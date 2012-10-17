@@ -20,7 +20,7 @@
  */
 /** @file shapes/fence.h
  *
- * This is the header file to the program that generages a chain-link
+ * This is the header file to the program that generates a chain-link
  * fence.  Every parameter of the fence may be adjusted by changing
  * the DEFAULT_* macros defined below.
  *
@@ -112,7 +112,7 @@
  *     default fence generation, however, generates the poles based on
  *     the default fence height and width.
  *
- *   mateial and material params are the two defaults that set the
+ *   material and material params are the two defaults that set the
  *     material properties of the fence poles and wires (not separate
  *     at this time)
  *
