@@ -31,10 +31,10 @@
  * second log file.  Also for the moment it is expected that the first
  * log will correspond to a Unix-Plot file, whereas the second will
  * correspond to a pixel file.  If both images where Unix-Plot files,
- * they can be overlaid by simply concatentating them: "cat file.pl
+ * they can be overlaid by simply concatenating them: "cat file.pl
  * file.pl >> out.pl"
  *
- * The program conisists of three parts:
+ * The program consists of three parts:
 
  * 1) take view, orientation, eye_position, and size from two rt log
  *    files, and use this information to build up the registration
@@ -91,7 +91,7 @@ print_info(fastf_t *mat)
 /**
  * M A T _ B U I L D
  *
- * This routine takes pointers to two matices corresponding to the two
+ * This routine takes pointers to two matrices corresponding to the two
  * files to be registered and a registration matrix.  It builds the
  * registration matrix.  It returns success or failure.
  */
@@ -104,7 +104,7 @@ mat_build(fastf_t *mat1, fastf_t *mat2, fastf_t *regismat)
     fastf_t scale;
 
     /* At this point it is important to check that the rotation part
-     * of the matices is within a certain tolerance: ie. that the two
+     * of the matrices is within a certain tolerance: i.e. that the two
      * images were raytraced from the same angle.  No overlays will be
      * possible if they are not at the same rotation.
      */
