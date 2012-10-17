@@ -27,10 +27,10 @@
 #include "bu.h"
 #include "raytrace.h"
 
-#define INITIAL_POOL_CNT 512                  /* intial number of pools to create */
+#define INITIAL_POOL_CNT 512                  /* initial number of pools to create */
 #define MAX_POOL_CNT 2048                     /* maximum number of pools to create */
-#define INITIAL_BANK_CNT 1                    /* intial number of banks to create per pool */
-#define INITIAL_BANK_ELEM_CNT 100             /* intial number elements per bank */
+#define INITIAL_BANK_CNT 1                    /* initial number of banks to create per pool */
+#define INITIAL_BANK_ELEM_CNT 100             /* initial number elements per bank */
 #define BANK_ELEM_CNT_INCREMENT_MULTIPLIER 2  /* multiple this number by the previous bank element count
 					       * to determine how many elements to create in the next bank
 					       */
@@ -231,7 +231,7 @@ pool_free(void)
 
 
 /* initialize the structures for an individual pool and allocate
- * an intial amount of memory in the pool
+ * an initial amount of memory in the pool
  */
 HIDDEN void
 pool_init(size_t pn)
