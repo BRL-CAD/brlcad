@@ -213,26 +213,13 @@ units_name_matches(const char *input, const char *name)
 double
 bu_units_conversion(const char *str)
 {
-    register char *ip;
-    register int c;
     register const struct cvt_tab *tp;
     register const struct conv_table *cvtab;
     char ubuf[256];
     size_t len;
 
+    /* Copy the given string */
     bu_strlcpy(ubuf, str, sizeof(ubuf));
-
-    /* Copy the given string, making it lower case */
-    ip = ubuf;
-    c = *ip;
-    while (c) {
-	if (isupper(c))
-	    *ip++ = tolower(c);
-	else
-	    ip++;
-
-	c = *ip;
-    }
 
     /* Remove any trailing "s" (plural) */
     len = strlen(ubuf);
