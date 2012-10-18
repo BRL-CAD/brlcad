@@ -263,8 +263,8 @@ extern "C" {
     extern char *getName(const char *base, int id, const char *suffix);
     extern char *getPrePostName(char *prefix, char *base, char *suffix);
 
-    extern int generateFence_s(struct rt_wdb *fp, char *fencename, point_t startpostion, point_t endposition);
-    extern int generateFence(struct rt_wdb *fp, char *fencename, point_t startpostion, vect_t heightvector, vect_t widthvector);
+    extern int generateFence_s(struct rt_wdb *fp, char *fencename, point_t startposition, point_t endposition);
+    extern int generateFence(struct rt_wdb *fp, char *fencename, point_t startposition, vect_t heightvector, vect_t widthvector);
 
     extern int generatePoles_s(struct rt_wdb *fp, char *polename);
     extern int generatePoles(struct rt_wdb *fp, char *polename, point_t startposition, vect_t heightvector, vect_t widthvector, double radius);
