@@ -682,7 +682,7 @@ read_spec(REMAPID_FILE *sfp, char *sf_name)
 
 /************************************************************************
  *									*
- * Routines for procesing the geometry databases			*
+ * Routines for processing the geometry databases			*
  *									*
  ************************************************************************/
 
