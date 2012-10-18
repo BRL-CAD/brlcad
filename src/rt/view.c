@@ -1283,8 +1283,6 @@ int viewit(struct application *ap,
 	return 0;
     }
 
-    bu_log("----------------------------------------------------------------------viewit\n");
-
     if (do_kut_plane) {
 	fastf_t slant_factor;
 	fastf_t dist;
