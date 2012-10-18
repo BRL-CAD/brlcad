@@ -61,7 +61,7 @@ fit_store (char *obj, char *dbname, struct fitness_state *fstate)
     if ( (db=db_open(dbname, "r")) == DBI_NULL)
 	bu_exit(EXIT_FAILURE, "Failed to open model database");
     if (db_dirbuild(db) < 0)
-	bu_exit(EXIT_FAILURE, "Failed to build directory sturcutre");
+	bu_exit(EXIT_FAILURE, "Failed to build directory structure");
 
     fstate->capture = 1;
     fit_rt(obj, db, fstate);
@@ -409,7 +409,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 	fstate->gridSpacing[X] = (fstate->rtip->mdl_max[X] - fstate->rtip->mdl_min[X]) / (fstate->res[X] + 1);
 	fstate->gridSpacing[Y] = (fstate->rtip->mdl_max[Y] - fstate->rtip->mdl_min[Y]) / (fstate->res[Y] + 1);
 	fstate->a_len = fstate->max[Z]-fstate->rtip->mdl_min[Z]; /* maximum ray length (z-dist of bounding box) */
-	fstate->volume = fstate->a_len * fstate->res[X] * fstate->res[Y]; /* volume of vounding box */
+	fstate->volume = fstate->a_len * fstate->res[X] * fstate->res[Y]; /* volume of bounding box */
 
 	/* allocate storage for saved rays */
 	fstate->ray = bu_malloc(sizeof(struct part *) * fstate->res[X] * fstate->res[Y], "ray");
@@ -462,7 +462,7 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
 }
 
 /**
- *	F I T _ D I F F --- returns the difference between input geometry and indivdual  (compares rays)
+ *	F I T _ D I F F --- returns the difference between input geometry and individual  (compares rays)
  */
 void
 fit_diff(char *obj, struct db_i *db, struct fitness_state *fstate)
