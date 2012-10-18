@@ -1056,7 +1056,7 @@ JNIEXPORT jint JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_r
 	return (jint) 1;
     }
 
-    /* get the aruments from the JAVA args object array */
+    /* get the arguments from the JAVA args object array */
     jfile_name = (jstring)(*env)->GetObjectArrayElement( env, args, 0 );
     file_name = (char *)(*env)->GetStringUTFChars(env, jfile_name, 0);
 
@@ -1851,7 +1851,7 @@ Java_mil_army_muves_brlcadservice_impl_BrlcadJNIWrapper_getItemTree(JNIEnv *env,
 	return (jobject)NULL;
     }
 
-    /* get the JAVA method id for the ItemTree addSubcomponent method */
+    /* get the JAVA method id for the ItemTree addSubComponent method */
     if ( (itemTree_addcomponent_id=(*env)->GetMethodID( env, itemTree_class, "addSubComponent",
 							"(Lmil/army/muves/geometryservice/datatypes/ItemTree;)V" )) == NULL ) {
 	fprintf( stderr, "Failed to get method id for ItemTree addSubComponent method\n" );
