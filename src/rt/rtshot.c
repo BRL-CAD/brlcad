@@ -697,7 +697,7 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 		MAT4X3PNT(out_trans, inv_mat, outpt);
 		MAT4X3VEC(dir_trans, inv_mat, pl->ap->a_ray.r_dir);
 		VUNITIZE(dir_trans);
-		bu_log("\ttranformed ORCA outhit = (%g %g %g)\n", V3ARGS(
+		bu_log("\ttransformed ORCA outhit = (%g %g %g)\n", V3ARGS(
 			   out_trans));
 		bu_log("\ttransformed ORCA ray direction = (%g %g %g)\n",
 		       V3ARGS(dir_trans));
