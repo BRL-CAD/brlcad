@@ -606,7 +606,7 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
     for ( BU_LIST_FOR( pp, partition, (struct bu_list *)partHeadp ) ) {
 	numPartitions++;
     };
-    /* write the number of partitiions to the byte array */
+    /* write the number of partitions to the byte array */
     *(uint32_t *)buffer = htonl(numPartitions);
     bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
