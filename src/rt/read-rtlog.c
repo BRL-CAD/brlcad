@@ -46,7 +46,7 @@ extern int verbose;
  * R E A D _ R T _ F I L E
  *
  * Read an RT program's log file line by line until it either finds
- * view, orientation, eye_postion, and size of the model, or it hits
+ * view, orientation, eye_position, and size of the model, or it hits
  * the end of file.  When a colon is found, sscanf() retrieves the
  * necessary information.  It takes a file pointer, file name, and a
  * matrix pointer as parameters.  It returns 0 okay or < 0 failure.
@@ -107,7 +107,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	if (ret == NULL) {
 	    /* There are two times when NULL might be seen:
 	     * at the end of the file (handled above) and
-	     * when the process dies horriblely and unexpectedly.
+	     * when the process dies horribly and unexpectedly.
 	     */
 
 	    if (feof(infp))
@@ -180,7 +180,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	 * Also, if loading a whole array of characters
 	 * with %s, then the name of the array can be used for the
 	 * destination.  However, if the characters are loaded
-	 * individually into the subsripted spots with %c (or equiv),
+	 * individually into the subscripted spots with %c (or equiv),
 	 * the address of the location must be provided: &eye_pos[0].
 	 */
 
