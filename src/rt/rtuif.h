@@ -24,7 +24,7 @@
  *
  * While not (yet) public API, it's a useable interface for rapidly
  * developing applications involving grids of rays.  It provides the
- * same command-line inteface as 'rt' and is the foundation for
+ * same command-line interface as 'rt' and is the foundation for
  * numerous BRL-CAD ray tracing based applications such as rtweight,
  * rtarea, and others.  See viewdummy.c for an example template.
  *
