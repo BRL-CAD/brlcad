@@ -79,7 +79,7 @@ Options:\n\
  -a Az		Azimuth in degrees\n\
  -e Elev	Elevation in degrees\n\
  -g #		ray horizontal tube size (cell_width)\n\
- -G #		ray vertical tube size (cell_heigth)\n\
+ -G #		ray vertical tube size (cell_height)\n\
  -M		Read matrix, cmds on stdin\n\
  -o file.rad	Output file name, else stdout\n\
  -x #		Set librt debug flags\n\
@@ -93,7 +93,7 @@ static int radmiss();
 
 vect_t uhoriz;	/* horizontal emanation plane unit vector. */
 vect_t unorml;	/* normal unit vector to emanation plane. */
-vect_t cemant;	/* center vector of emanation plane. */
+/* vect_t cemant; */	/* center vector of emanation plane. */
 vect_t uvertp;	/* vertical emanation plane unit vector. */
 fastf_t wavelength = 1.0;	/* Radar wavelength */
 fastf_t xhpol = 0.0;	/* Transmitter vertical polarization */
