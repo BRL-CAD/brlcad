@@ -147,7 +147,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 				     "cell buffer" );
 
 
-    /* Obtain the maximun distance within the model to use as the
+    /* Obtain the maximum distance within the model to use as the
      * background distance.  Also get the coordinates of the model's
      * bounding box and feed them to
      * pdv_3space.  This will allow the image to appear in the plot
@@ -156,7 +156,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 
     pdv_3space(outfp, ap->a_rt_i->rti_pmin, ap->a_rt_i->rti_pmax);
 
-    /* Find the max dist fron emantion plane to end of model
+    /* Find the max dist fron emanation plane to end of model
      * space.  This can be twice the radius of the bounding
      * sphere.
      */
