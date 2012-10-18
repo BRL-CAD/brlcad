@@ -151,7 +151,7 @@ int a_onehit = -1;
 /**
  * Overlay
  *
- * If in overlay mode, and writeing to a framebuffer, only write
+ * If in overlay mode, and writing to a framebuffer, only write
  * non-background pixels.
  */
 static int overlay = 0;
@@ -218,7 +218,7 @@ view_pixel(struct application *ap)
 	 * To prevent bad color aliasing, add some color dither.  Be
 	 * certain to NOT output the background color here.  Random
 	 * numbers in the range 0 to 1 are used, so that integer
-	 * valued colors (eg, from texture maps) retain their original
+	 * valued colors (e.g., from texture maps) retain their original
 	 * values.
 	 */
 	if (!ZERO(gamma_corr)) {
@@ -663,7 +663,7 @@ view_setup(struct rt_i *rtip)
 
     /*
      * Initialize the material library for all regions.  As this may
-     * result in some regions being dropped, (eg, light solids that
+     * result in some regions being dropped, (e.g., light solids that
      * become "implicit" -- non drawn), this must be done before
      * allowing the library to prep itself.  This is a slight layering
      * violation; later it may be clear how to repackage this
@@ -1790,7 +1790,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	    bu_exit(EXIT_FAILURE, "bad buf_mode: %d", buf_mode);
     }
 
-    /* This is where we do Preperations for each Lighting Model if it
+    /* This is where we do Preparations for each Lighting Model if it
        needs it.  Set Photon Mapping Off by default */
     PM_Activated= 0;
     switch (lightmodel) {
@@ -1846,7 +1846,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	     * all times to compute the ray trace, normalize times,
 	     * and then create the trace according to how long each
 	     * individual pixel took to render.  ALSO, should call a
-	     * static funtion that creates a 2D array of sizes width
+	     * static function that creates a 2D array of sizes width
 	     * and height
 	     */
 	case 8:
