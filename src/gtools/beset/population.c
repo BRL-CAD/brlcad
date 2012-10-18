@@ -143,7 +143,7 @@ pop_spawn (struct population *p)
 /*
  * reload the db so we dont
  * have to do any extra checks
- * in the main looop
+ * in the main loop
  */
     wdb_close(p->db_p->dbi_wdbp);
     if ((p->db_p = db_open("gen000", "r")) == DBI_NULL)
@@ -339,7 +339,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 
 	    /* if we aren't crossing over, we copy the individual into the
 	     * new database. If we're mutating, mutate the object after loading
-	     * the internetal object */
+	     * the internal object */
 
 	    if ( !rt_db_lookup_internal(dbi_p, tp->tr_l.tl_name, &dp, &in, LOOKUP_NOISY, resp))
 		bu_exit(EXIT_FAILURE, "Failed to read parent");
@@ -359,7 +359,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 	    if ((dp=db_diradd(dbi_c, shape, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == RT_DIR_NULL)
 		bu_exit(EXIT_FAILURE, "Failed to add new object to the database");
 	    if (rt_db_put_internal(dp, dbi_c, &in, resp) < 0)
-		bu_exit(EXIT_FAILURE, "Failed to write new individual to databse");
+		bu_exit(EXIT_FAILURE, "Failed to write new individual to database");
 	    rt_db_free_internal(&in);
 
 	    break;
