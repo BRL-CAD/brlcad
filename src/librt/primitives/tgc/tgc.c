@@ -1827,10 +1827,40 @@ draw_lines_between_ellipses(struct bu_list *vhead, struct ellipse ellipse1, stru
     }
 }
 
+static int
+tgc_points_per_ellipse(const struct rt_db_internal *ip, const struct rt_view_info *info)
+{
+    int num_points;
+    struct rt_tgc_internal *tgc;
+    fastf_t samples_per_mm, avg_axis_len, avg_axis_samples;
+
+    RT_CK_DB_INTERNAL(ip);
+    tgc = (struct rt_tgc_internal *)ip->idb_ptr;
+    RT_TGC_CK_MAGIC(tgc);
+
+    avg_axis_len = 2.0 * sqrt((MAGSQ(tgc->a) + MAGSQ(tgc->b) + MAGSQ(tgc->c) +
+		MAGSQ(tgc->d)) / 4.0);
+
+    samples_per_mm = sqrt(info->view_samples) / info->view_size;
+    avg_axis_samples = samples_per_mm * avg_axis_len;
+
+    num_points = sqrt(avg_axis_samples);
+
+    if (num_points % 2 != 0) {
+	++num_points;
+    }
+
+    if (num_points < 8) {
+	num_points = 8;
+    }
+
+    return num_points;
+}
+
 int
 rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
-    int samples;
+    int points_per_ellipse;
     struct rt_tgc_internal *tip;
     struct ellipse ellipse1, ellipse2;
 
@@ -1839,29 +1869,21 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
 
-    samples = sqrt(primitive_diagonal_samples(ip, info));
-    if (samples % 2 != 0) {
-	++samples;
-    }
-    if (samples < 6) {
-	samples = 6;
-    }
+    points_per_ellipse = tgc_points_per_ellipse(ip, info);
 
     VMOVE(ellipse1.center, tip->v);
     VMOVE(ellipse1.axis_a, tip->a);
     VMOVE(ellipse1.axis_b, tip->b);
     plot_ellipse(info->vhead, ellipse1.center, ellipse1.axis_a, ellipse1.axis_b,
-		 samples);
+		 points_per_ellipse);
 
     VADD2(ellipse2.center, tip->v, tip->h);
     VMOVE(ellipse2.axis_a, tip->c);
     VMOVE(ellipse2.axis_b, tip->d);
     plot_ellipse(info->vhead, ellipse2.center, ellipse2.axis_a, ellipse2.axis_b,
-		 samples);
+		 points_per_ellipse);
 
-    samples /= 2;
-
-    draw_lines_between_ellipses(info->vhead, ellipse1, ellipse2, samples);
+    draw_lines_between_ellipses(info->vhead, ellipse1, ellipse2, points_per_ellipse / 2);
 
     return 0;
 }
