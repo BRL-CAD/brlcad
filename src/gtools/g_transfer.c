@@ -298,7 +298,7 @@ run_server(int port) {
 	/* process packets potentially received in a processing callback */
 	pkg_result = pkg_process(client);
 	if (pkg_result < 0) {
-	    bu_log("Unable to process packets? Wierd.\n");
+	    bu_log("Unable to process packets? Weird.\n");
 	} else {
 	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
 	}
@@ -316,7 +316,7 @@ run_server(int port) {
 	/* process packets received */
 	pkg_result = pkg_process(client);
 	if (pkg_result < 0) {
-	    bu_log("Unable to process packets? Wierd.\n");
+	    bu_log("Unable to process packets? Weird.\n");
 	} else {
 	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
 	}
