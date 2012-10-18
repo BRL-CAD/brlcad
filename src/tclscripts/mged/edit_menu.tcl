@@ -911,10 +911,10 @@ proc init_solid_edit_menu_hoc { stype } {
 	}
 	metaball {
 	    # METABALL
-	    hoc_register_menu_data "Edit" "set threshhold" \
-		"Primitive Edit - set threshhold" \
-		{{summary "set threshhold"}}
-	    hoc_register_menu_data "Edit" "set threshhold" \
+	    hoc_register_menu_data "Edit" "set threshold" \
+		"Primitive Edit - set threshold" \
+		{{summary "set threshold"}}
+	    hoc_register_menu_data "Edit" "set threshold" \
 		"Primitive Edit - select point" \
 		{{summary "select point"}}
 	    hoc_register_menu_data "Edit" "next point" \
