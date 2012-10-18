@@ -23,7 +23,7 @@
  *  This is a program will compute and plot an appropriate scale in the lower
  *  left corner of a given image.  The scale is layed out in view
  *  space coordinates and then translated into model coordinates, where it is
- *  plotted.  This plot can be overlayed onto any other UNIX-Plot file of onto
+ *  plotted.  This plot can be overlaid onto any other UNIX-Plot file of onto
  *  a pix file.
  *
  *  The scale will be a simple line with a certain number of tick marks along
@@ -211,7 +211,7 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
     int		nchar;		/* number of characters in the label */
     double		v_char_width;	/* char. width in view space */
     double		m_char_width;	/* char. width in model space */
-    mat_t		v2symbol;	/* view to symbol sapce matrix */
+    mat_t		v2symbol;	/* view to symbol space matrix */
     float		v_len;		/* scale length in view space */
     float		v_tick_hgt;	/* total height of tick marks, view space */
     float		m_tick_hgt;	/* total height of tick marks, model space */
@@ -313,8 +313,8 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
     /* Convert v_label_st to model space */
     MAT4X3PNT(m_label_st, v2mod, v_label_st);
 
-    /* Now make the offset for the optional descriptive lable.
-     * The lable should appear beneath the begining of the scale and
+    /* Now make the offset for the optional descriptive label.
+     * The label should appear beneath the beginning of the scale and
      * run the length of the paper if that is what it takes.
      */
 
@@ -368,12 +368,12 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
     }
 
     if (verbose)  {
-	fprintf(stderr, "Now calling tp_3symbol( outfp, %s, m_lable_st= %.6f, %.6f, %.6f, m_char_width=%.6f\n",
+	fprintf(stderr, "Now calling tp_3symbol( outfp, %s, m_label_st= %.6f, %.6f, %.6f, m_char_width=%.6f\n",
 		label, V3ARGS(m_label_st), m_char_width);
 	bn_mat_print("v2symbol", v2symbol);
     }
 
-    /* Now put the label on the plot.  The first is the lable for
+    /* Now put the label on the plot.  The first is the label for
      * numbers under the scale; the second is for an optional string.
      */
 
@@ -498,8 +498,8 @@ make_border(FILE *outfp, fastf_t *v2mod)
 /*
  *		M A K E _ B O U N D I N G _ R P P
  *
- * This routine takes a view2model matrix and a file pointer.  It calculates the  minimun and
- * the maximun points of the viewing cube in view space, and then translates
+ * This routine takes a view2model matrix and a file pointer.  It calculates the minimum and
+ * the maximum points of the viewing cube in view space, and then translates
  * it to model space and rotates it so that it will not shrink when rotated and
  * cut off the geometry/image.  This routine returns nothing.
  */
