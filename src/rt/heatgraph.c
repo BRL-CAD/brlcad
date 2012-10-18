@@ -244,7 +244,7 @@ timeTable_singleProcess(struct application *app, fastf_t **timeTable, fastf_t *t
 	    Rcolor = Gcolor = Bcolor = 2;
     } else if (timeval > 0.01) {
 	Rcolor = Gcolor = Bcolor = 255;
-    } else {     /* Error occured with time, color pixel Green */
+    } else {     /* Error occurred with time, color pixel Green */
 	Rcolor = Bcolor = 0;
 	Gcolor = 255;
     }
