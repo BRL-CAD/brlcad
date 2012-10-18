@@ -326,7 +326,7 @@ int main(int argc, const char **argv)
 	return 1;
     }
 
-    /* Echo back the command line arugments as given, in 3 Tcl commands */
+    /* Echo back the command line arguments as given, in 3 Tcl commands */
     if (rt_verbosity & VERBOSE_MODELTITLE) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 
