@@ -957,7 +957,7 @@ do_frame(int framenumber)
  *
  * Compute the rotation specified by the azimuth and elevation
  * parameters.  First, note that these are specified relative to the
- * GIFT "front view", ie, model (X, Y, Z) is view (Z, X, Y): looking
+ * GIFT "front view", i.e., model (X, Y, Z) is view (Z, X, Y): looking
  * down X axis, Y right, Z up.
  *
  * A positive azimuth represents rotating the *eye* around the
