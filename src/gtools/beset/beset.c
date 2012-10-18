@@ -212,7 +212,7 @@ int main(int argc, char *argv[]) {
 #ifdef VERBOSE
 		printf("x(%s, %s) --> (%s, %s)\n", NL(pop.parent[parent1].id), NL(pop.parent[parent2].id), pop.child[i-1].id, pop.child[i].id);
 #endif
-		/* perform the genetic operation and output the children to the cihld database */
+		/* perform the genetic operation and output the children to the child database */
 		pop_gop(gop, NL(pop.parent[parent1].id), NL(pop.parent[parent2].id), NL(pop.child[i-1].id), NL(pop.child[i].id),
 			pop.db_p, pop.db_c, &rt_uniresource);
 	    }
