@@ -112,7 +112,7 @@ compare_colors(void)
 	}
     }
 
-    /* find a match for all color tabl eentries of file2 in file1 */
+    /* find a match for all color table entries of file2 in file1 */
     for (mp2 = mater_hd2; is_diff == 0 && mp2 != MATER_NULL; mp2 = mp2->mt_forw) {
 	found2 = 0;
 	mp1 = mater_hd1;
