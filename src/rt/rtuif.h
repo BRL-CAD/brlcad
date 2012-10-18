@@ -22,7 +22,7 @@
  * Private API header for developing applications that utilize rt's
  * common Ray Trace User Interface Framework (RTUIF).
  *
- * While not (yet) public API, it's a useable inteface for rapidly
+ * While not (yet) public API, it's a useable interface for rapidly
  * developing applications involving grids of rays.  It provides the
  * same command-line inteface as 'rt' and is the foundation for
  * numerous BRL-CAD ray tracing based applications such as rtweight,
@@ -66,7 +66,7 @@ extern void view_setup(struct rt_i *rtip);
 extern void view_2init(struct application *ap, char *framename);
 
 /**
- * Called by worker() after the end of proccessing for each pixel.
+ * Called by worker() after the end of processing for each pixel.
  */
 extern void view_pixel(struct application *ap);
 
