@@ -159,7 +159,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 
 	/* If we report overlaps, don't print if already noted once.
 	 * Build up a linked list of known overlapping regions and compare
-	 * againt it.
+	 * against it.
 	 */
     } else {
 	struct overlap_list *prev_ol = (struct overlap_list *)0;
