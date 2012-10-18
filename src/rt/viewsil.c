@@ -109,7 +109,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 /*
  *			V I E W _ P I X E L
  *
- *  Called by worker() after the end of proccessing for each pixel.
+ *  Called by worker() after the end of processing for each pixel.
  */
 void
 view_pixel(struct application *UNUSED(ap))
@@ -119,7 +119,7 @@ view_pixel(struct application *UNUSED(ap))
 /*
  *			V I E W _ E O L
  *
- *  Called by worker() at the end of each line.  Depricated.
+ *  Called by worker() at the end of each line.  Deprecated.
  *  Any end-of-line processing should be done in view_pixel().
  */
 void
