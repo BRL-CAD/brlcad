@@ -70,8 +70,8 @@
 #define YSTEREO 491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT 532	/* YSTEREO + YBLANK ? */
 
-#define USE_VECTOR_THRESHHOLD 0
-#if USE_VECTOR_THRESHHOLD
+#define USE_VECTOR_THRESHOLD 0
+#if USE_VECTOR_THRESHOLD
 extern int vectorThreshold;	/* defined in libdm/tcl.c */
 #endif
 
