@@ -591,7 +591,7 @@ grid_setup(void)
     }
 
     /*
-     * Optional GIFT compatibilty, mostly for RTG3.  Round coordinates
+     * Optional GIFT compatibility, mostly for RTG3.  Round coordinates
      * of lower left corner to fall on integer- valued coordinates, in
      * "gift_grid_rounding" units.
      */
