@@ -335,7 +335,7 @@ view_setup(struct rt_i *rtip)
     RT_CHECK_RTI(rtip);
     /*
      * Initialize the material library for all regions.  As this may
-     * result in some regions being dropped, (eg, light solids that
+     * result in some regions being dropped, (e.g., light solids that
      * become "implicit" -- non drawn), this must be done before
      * allowing the library to prep itself.  This is a slight layering
      * violation; later it may be clear how to repackage this
@@ -786,7 +786,7 @@ void application_init (void)
  * hitp->hit_point and normal must be computed by caller.
  *
  * Return -
- * area of ray footprint, in mm**2 (square milimeters).
+ * area of ray footprint, in mm**2 (square millimeters).
  */
 double
 rt_pixel_footprint(const struct application *app, const struct hit *hitp, const struct seg *segp, const fastf_t *normal)
