@@ -832,7 +832,7 @@ void set_working_polygattributes(basic_parser_extra<PrecisionT, charT, traits,
 
 
 /**
- *  Set the inital values of the lookup tables to the first element in the
+ *  Set the initial values of the lookup tables to the first element in the
  *  contents
  */
 template<typename PrecisionT,
