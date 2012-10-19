@@ -21,7 +21,7 @@
  *  Do the interpolation necessary to change a set of points from
  *  linear to log scale.
  *
- *  Input, a set of linearly seperated samples.
+ *  Input, a set of linearly separated samples.
  *  Output, the same number of samples on a log baseline.
  *
  *  This uses fourth order Lagrange Interpolation and may
