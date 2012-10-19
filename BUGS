@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* report of g-iges crashing (on Windows) when exporting a 1.2MB BoT
+  mesh (presumably imported via stl-g).  worked for smaller models.
+
 * ogl display manager and framebuffer are creating windows with
   transparent backgrounds (the glClear color is not being drawn) on
   Linux.  Presumably a driver-related issue, alpha channel, or expose
