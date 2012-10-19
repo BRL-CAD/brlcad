@@ -96,14 +96,14 @@
  * changes that only exist in memory and will not be permanently
  * stored in the original database.
  *
- * This routine should be preceeded by a call to "rt_unprep" and
+ * This routine should be preceded by a call to "rt_unprep" and
  * followed by a call to "rt_reprep".
  */
 
 int
 make_hole(struct rt_wdb *wdbp,		/* datbase to be modified */
 	  point_t hole_start,		/* center of start of hole */
-	  vect_t hole_depth,		/* depth and directio of hole */
+	  vect_t hole_depth,		/* depth and direction of hole */
 	  fastf_t hole_radius,		/* radius of hole */
 	  int num_objs,			/* number of objects that this hole affects */
 	  struct directory **dp)	/* array of directory pointers
@@ -196,7 +196,7 @@ make_hole(struct rt_wdb *wdbp,		/* datbase to be modified */
  *
  * This routine provides a quick approach to simply adding a hole to
  * existing prepped geometry.  The geometry must already be prepped
- * prior to caling this routine. After calling this routine, the
+ * prior to calling this routine. After calling this routine, the
  * geometry is ready for raytracing (no other routine need to be
  * called).
  *
