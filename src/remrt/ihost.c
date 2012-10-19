@@ -63,7 +63,7 @@ struct bu_list	HostHead;
  * with domain name.
  *
  * gethostbyname() will return a host table (nameserver) entry
- * where h_name is the "offical name", i.e. fully qualified.
+ * where h_name is the "official name", i.e. fully qualified.
  * Therefore the following piece of code.
  */
 char *
