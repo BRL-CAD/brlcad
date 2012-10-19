@@ -101,7 +101,7 @@
  */
 
 int
-make_hole(struct rt_wdb *wdbp,		/* datbase to be modified */
+make_hole(struct rt_wdb *wdbp,		/* database to be modified */
 	  point_t hole_start,		/* center of start of hole */
 	  vect_t hole_depth,		/* depth and direction of hole */
 	  fastf_t hole_radius,		/* radius of hole */
