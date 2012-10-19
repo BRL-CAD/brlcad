@@ -34,15 +34,19 @@
     itk_option define -validatecommand validatecommand ValidateCommand ""
     itk_option define -vclientdata vclientdata VClientData ""
     itk_option define -entercommand entercommand EnterCommand ""
+    itk_option define -multiSelectCallback multiSelectCallback MultiDataCallback ""
     itk_option define -singleSelectCallback singleSelectCallback SingleDataCallback ""
 
     public {
+	method getSelectedRows {}
 	method handlePaste {}
 	method see {_index}
 	method setDataEntry {_index _val}
 	method setTableCol {_col _val}
 	method setTableVal {_index _val}
+	method selectRow {_row}
 	method selectSingleRow {_row}
+	method unselectAllRows {}
 	method unselectRow {_row}
 	method updateTitleCol {}
 	method width {args}
@@ -58,7 +62,6 @@
 	variable mToggleSelectMode 0
 	variable mInsertMode 0
 	variable mDoBreak 0
-	variable mSingleSelectRow 0
 
 	method doBreak {}
 	method handleCopy {_win}
@@ -205,9 +208,23 @@
     set mLastRow [expr {$mNumRows - 1}]
 }
 
+
+
 # ------------------------------------------------------------
 #                      PUBLIC METHODS
 # ------------------------------------------------------------
+
+
+::itcl::body cadwidgets::TkTable::getSelectedRows {} {
+    set rlist {}
+    foreach item [lsort [$itk_component(table) tag cell select_col]] {
+	set ilist [split $item ,]
+	lappend rlist [lindex $ilist 0]
+    }
+
+    return $rlist
+}
+
 
 ::itcl::body cadwidgets::TkTable::handlePaste {} {
     #
@@ -298,24 +315,43 @@
     }
 }
 
+
 ::itcl::body cadwidgets::TkTable::setTableVal {_index _val} {
     set $mTableDataVar\($_index\) $_val
 }
+
+
+::itcl::body cadwidgets::TkTable::selectRow {_row} {
+    if {$_row == 0} {
+	return
+    }
+
+    setTableVal $_row,0 "*"
+    $itk_component(table) tag cell select_col $_row,0
+}
+
 
 ::itcl::body cadwidgets::TkTable::selectSingleRow {_row} {
     if {$_row == 0} {
 	return
     }
 
-    # Turn off previously selected row
-    if {$mSingleSelectRow} {
-	unselectRow $mSingleSelectRow
-    }
+    # Turn off previously selected rows
+    unselectAllRows
 
     setTableVal $_row,0 "*"
     $itk_component(table) tag cell select_col $_row,0
-    set mSingleSelectRow $_row
 }
+
+
+::itcl::body cadwidgets::TkTable::unselectAllRows {} {
+    foreach item [lsort [$itk_component(table) tag cell select_col]] {
+	set ilist [split $item ,]
+	set r [lindex $ilist 0]
+	unselectRow $r
+    }
+}
+
 
 ::itcl::body cadwidgets::TkTable::unselectRow {_row} {
     setTableVal $_row,0 ""
@@ -451,8 +487,13 @@
 		$itk_component(table) tag cell select_col $index
 	    }
 
+	    #XXX Remove this after updating the applications that use TkTable
 	    if {$itk_option(-dataCallback) != ""} {
 		catch {$itk_option(-dataCallback)}
+	    }
+
+	    if {$itk_option(-multiSelectCallback) != ""} {
+		catch {$itk_option(-multiSelectCallback)}
 	    }
 	} else {
 	    set mDoBreak 0
@@ -634,8 +675,13 @@
 	    }
 	}
 
+	#XXX Remove this after updating the applications that use TkTable
 	if {$itk_option(-dataCallback) != ""} {
 	    catch {$itk_option(-dataCallback)}
+	}
+
+	if {$itk_option(-multiSelectCallback) != ""} {
+	    catch {$itk_option(-multiSelectCallback)}
 	}
     }
 }
