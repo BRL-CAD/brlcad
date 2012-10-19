@@ -205,7 +205,7 @@ struct b_spline *bp;
 .SH DESCRIPTION
 This library exists to permit writing MGED databases from
 arbitrary procedures.
-Some of the high-level structure of MGED databases (eg, that
+Some of the high-level structure of MGED databases (e.g., that
 they start with an ID record, and that COMB records must be
 followed immediately by MEMBER records) is currently implicit
 in the calling routines.
@@ -216,7 +216,7 @@ experience is gained, it is not clear what direction that evolution
 will take.  Be prepared for changes in the interface to some of these
 routines in future releases.
 All routines take as their first argument the stdio FILE pointer
-(eg, stdout) on which the generated MGED database record(s) will
+(e.g., stdout) on which the generated MGED database record(s) will
 be written with fwrite().
 .PP
 .I mk_id\^
@@ -248,14 +248,14 @@ the z direction.
 .PP
 .I mk_arb4\^
 makes an ARB8 called ``name''
-described as an ARB4, ie, by 4 points, the first 3 of which
+described as an ARB4, i.e., by 4 points, the first 3 of which
 lie on a plane, and the fourth is the ``peak''.
 .PP
 .I mk_arb8\^
 makes an ARB8 called ``name''
 described by an array of 8 points in ``pts''.
 All plates with 4 points must be co-planar.
-If there are degeneracies (ie, all 8 vertices are not distinct),
+If there are degeneracies (i.e., all 8 vertices are not distinct),
 then certain requirements must be met.
 If we think of the ARB8 as having a top and a bottom plate,
 the first four points listed must lie on one plate, and
@@ -310,7 +310,7 @@ creates a ``pipe'' solid with the specified ``name'' and writes it to the
 file ``fp''.  The user must provide a linked list of ``pipe''
 segments headed by ``headp''.  Each pipe segment includes fields indicating a
 ``control'' point for the pipe, an inner diameter, an outer diameter and a bend radius.
-The inner diameter must be less than the outer diameter, and a zero innner diameter
+The inner diameter must be less than the outer diameter, and a zero inner diameter
 creates a solid wire rather than a hollow pipe.  The pipe is constructed along straight
 lines through successive points, with circular bends (of the indicated radius) connecting
 the straight sections. The bend radius must be greater than the outer radius. The user
