@@ -24,7 +24,7 @@
  *
  * Note that routines which are passed point_t or vect_t or mat_t
  * parameters (which are call-by-address) must be VERY careful to
- * leave those parameters unmodified (eg, by scaling), so that the
+ * leave those parameters unmodified (e.g., by scaling), so that the
  * calling routine is not surprised.
  *
  * Return codes of 0 are OK, -1 signal an error.
@@ -103,7 +103,7 @@ mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
  * M K _ P I P E _ F R E E
  *
  * Release the storage from a list of pipe segments.  The head is left
- * in initialized state (ie, forward & back point to head).
+ * in initialized state (i.e., forward & back point to head).
  */
 void
 mk_pipe_free(struct bu_list *headp)
@@ -120,7 +120,7 @@ mk_pipe_free(struct bu_list *headp)
 /**
  * M K _ A D D _ P I P E _ P T
  *
- * Add another pipe segment to the linked list of pipe segents
+ * Add another pipe segment to the linked list of pipe segments.
  *
  */
 void
