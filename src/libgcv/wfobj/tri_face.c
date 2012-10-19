@@ -189,7 +189,7 @@ getPointReference(
 }
 
 /* points is the specification of face points. It should contain consecutive
- * three-cordinate vertices that specify a planar N-gon in CCW/CW order.
+ * three-coordinate vertices that specify a planar N-gon in CCW/CW order.
  *
  * faces will specify numFaces triangle faces with three consecutive vertex
  * references per face. Vertex reference v refers to the three consecutive
