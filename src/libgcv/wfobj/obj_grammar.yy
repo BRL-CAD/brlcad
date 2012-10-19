@@ -157,7 +157,7 @@ static bool index_check(int raw, std::size_t index,
 }
 
 } /* namespace obj */
-} /* namespcae gcv */
+} /* namespace gcv */
 } /* namespace cad */
 
 using namespace cad::gcv;
