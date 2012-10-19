@@ -1,6 +1,6 @@
 
 AM_CPPFLAGS = \
-	${STRICT_FLASGS} \
+	${STRICT_FLAGS} \
 	${TCL_CPPFLAGS}
 
 noinst_PROGRAMS = beset
