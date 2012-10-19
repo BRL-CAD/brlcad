@@ -387,7 +387,7 @@ size_t obj_materiallibs(obj_contents_t contents,
 size_t obj_num_materiallibsets(obj_contents_t contents);
 
 /**
- *  Obtain the 'n'th material libary set contained in 'contents'
+ *  Obtain the 'n'th material library set contained in 'contents'
  *
  *  Copy a pointer to an index set of material library indices for the 'n'th
  *  set contained in 'contents' to the location pointed to by val_arr and
@@ -463,7 +463,7 @@ size_t obj_texmaplibs(obj_contents_t contents,
 size_t obj_num_texmaplibsets(obj_contents_t contents);
 
 /**
- *  Obtain the 'n'th texture map libary set contained in 'contents'
+ *  Obtain the 'n'th texture map library set contained in 'contents'
  *
  *  Copy a pointer to an index set of texture map library indices for the 'n'th
  *  set contained in 'contents' to the location pointed to by val_arr and
@@ -533,7 +533,7 @@ size_t obj_trace_objs(obj_contents_t contents,
  *  Obtain a list of polygonal attributes in 'contents'
  *
  *  Copy a pointer to a const obj_polygonal_attributes_t array of polygonal
- *  attrbutes contained in 'contents' to the location pointed to by attr_arr
+ *  attributes contained in 'contents' to the location pointed to by attr_arr
  *  and return its length.
  *
  *  Polygonal attributes are guaranteed to be a unique set.
@@ -567,7 +567,7 @@ size_t obj_polygonal_v_points(obj_contents_t contents,
 			      const size_t (*attindex_arr[]));
 
 /**
- *  Obtain the vertex indices for the 'n'th polygonal point only identifed by
+ *  Obtain the vertex indices for the 'n'th polygonal point only identified by
  *  vertices in 'contents'
  *
  *  Copy a pointer to the 'n'th vertex index array to the location pointed to
@@ -582,7 +582,7 @@ size_t obj_polygonal_v_point_vertices(obj_contents_t contents, size_t n,
 
 /**
  *  Obtain the list of polygonal attributes for all polygonal lines only
- *  identifed by vertices in 'contents'
+ *  identified by vertices in 'contents'
  *
  *  Copy a pointer to an index array to the location pointed to by attindex_arr
  *  and return the list length.
@@ -598,7 +598,7 @@ size_t obj_polygonal_v_lines(obj_contents_t contents,
 			     const size_t (*attindex_arr[]));
 
 /**
- *  Obtain the vertex indices for the 'n'th polygonal line only identifed by
+ *  Obtain the vertex indices for the 'n'th polygonal line only identified by
  *  vertices in 'contents'
  *
  *  Copy a pointer to the 'n'th vertex index array to the location pointed to
@@ -619,7 +619,7 @@ size_t obj_polygonal_v_line_vertices(obj_contents_t contents, size_t n,
  *  and return the list length.
  *
  *  The value of the ith element in 'attindex_arr' is the index into the
- *  'attr_list' obtained from obj_polygonal_attributes desribing the
+ *  'attr_list' obtained from obj_polygonal_attributes describing the
  *  polygonal attributes for the ith line.
  *
  *  Return value
@@ -647,7 +647,7 @@ size_t obj_polygonal_tv_line_vertices(obj_contents_t contents, size_t face,
 
 /**
  *  Obtain the list of polygonal attributes for all polygonal faces only
- *  identifed by vertices in 'contents'
+ *  identified by vertices in 'contents'
  *
  *  Copy a pointer to an index array to the location pointed to by attindex_arr
  *  and return the list length.
@@ -663,7 +663,7 @@ size_t obj_polygonal_v_faces(obj_contents_t contents,
 			     const size_t (*attindex_arr[]));
 
 /**
- *  Obtain the vertex indices for the 'n'th polygonal face only identifed by
+ *  Obtain the vertex indices for the 'n'th polygonal face only identified by
  *  vertices in 'contents'
  *
  *  Copy a pointer to the 'n'th vertex index array to the location pointed to
@@ -684,7 +684,7 @@ size_t obj_polygonal_v_face_vertices(obj_contents_t contents, size_t n,
  *  and return the list length.
  *
  *  The value of the ith element in 'attindex_arr' is the index into the
- *  'attr_list' obtained from obj_polygonal_attributes desribing the
+ *  'attr_list' obtained from obj_polygonal_attributes describing the
  *  polygonal attributes for the ith face.
  *
  *  Return value
@@ -718,7 +718,7 @@ size_t obj_polygonal_tv_face_vertices(obj_contents_t contents, size_t face,
  *  and return the list length.
  *
  *  The value of the ith element in 'attindex_arr' is the index into the
- *  'attr_list' obtained from obj_polygonal_attributes desribing the
+ *  'attr_list' obtained from obj_polygonal_attributes describing the
  *  polygonal attributes for the ith face.
  *
  *  Return value
@@ -752,7 +752,7 @@ size_t obj_polygonal_nv_face_vertices(obj_contents_t contents, size_t face,
  *  and return the list length.
  *
  *  The value of the ith element in 'attindex_arr' is the index into the
- *  'attr_list' obtained from obj_polygonal_attributes desribing the
+ *  'attr_list' obtained from obj_polygonal_attributes describing the
  *  polygonal attributes for the ith face.
  *
  *  Return value
@@ -762,7 +762,7 @@ size_t obj_polygonal_tnv_faces(obj_contents_t contents,
 			       const size_t (*attindex_arr[]));
 
 /**
- *  Obtain the texture cordinate, normal and vertex indices for the 'n'th
+ *  Obtain the texture coordinate, normal and vertex indices for the 'n'th
  *  textured and oriented polygonal face in 'contents'
  *
  *  Copy a pointer to the 'n'th multidimensional index array to the location
