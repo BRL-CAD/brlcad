@@ -511,7 +511,7 @@ conduct_tests(void)
 	bu_vls_free(&str);
     }
 
-/* "A flat spectral curve is represente by equal XYZ values".  Hall pg 52 */
+/* "A flat spectral curve is represented by equal XYZ values".  Hall pg 52 */
     flat = bn_tabdata_get_constval(42.0, spectrum);
     bu_log("flat:\n");bn_print_table_and_tabdata("/dev/tty", flat);
     spect_curve_to_xyz(xyz, flat, cie_x, cie_y, cie_z);
