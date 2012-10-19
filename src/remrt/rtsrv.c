@@ -118,7 +118,7 @@ struct icv_image_file *bif = NULL;
  * Package Handlers.
  */
 void	ph_unexp(struct pkg_conn *pc, char *buf);	/* foobar message handler */
-void	ph_enqueue(struct pkg_conn *pc, char *buf);	/* Addes message to linked list */
+void	ph_enqueue(struct pkg_conn *pc, char *buf);	/* Adds message to linked list */
 void	ph_dirbuild(struct pkg_conn *pc, char *buf);
 void	ph_gettrees(struct pkg_conn *pc, char *buf);
 void	ph_matrix(struct pkg_conn *pc, char *buf);
@@ -248,8 +248,8 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 *  Unless controller process has specificially said
-	 *  that this is an interactive session, eg, for a demo,
+	 *  Unless controller process has specifically said
+	 *  that this is an interactive session, e.g., for a demo,
 	 *  drop to the lowest sensible priority.
 	 */
 	if ( !interactive )  {
