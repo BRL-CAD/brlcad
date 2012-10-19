@@ -861,7 +861,7 @@
 
 ::itcl::body TankWizard::buildFrontSlopeView {parent} {
     itk_component add convHeightL {
-	::ttk::label $parent.convHeightL -text "Convergance Height:" \
+	::ttk::label $parent.convHeightL -text "Convergence Height:" \
 	    -anchor e
     } {}
     itk_component add convHeightE {
