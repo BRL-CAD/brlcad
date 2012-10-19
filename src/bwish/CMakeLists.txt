@@ -9,7 +9,7 @@ list(REMOVE_DUPLICATES BWISH_INCLUDE_DIRS)
 include_directories(${BWISH_INCLUDE_DIRS})
 
 # Until we figure out how to package require instead
-# of using the interal C api, we need the internal
+# of using the internal C api, we need the internal
 # Tcl headers
 include_directories(
   ${CMAKE_SOURCE_DIR}/src/other/tcl/generic
