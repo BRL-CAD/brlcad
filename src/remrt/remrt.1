@@ -71,7 +71,7 @@ provides two levels of fault-tolerance in its distributed computation.
 First, any
 .I rtsrv
 processor which fails (or whose network link fails) will have its work
-reassigned automaticly by
+reassigned automatically by
 .I remrt
 to other processors, so that the failure of that processor does not
 hold up the progress of the computation.
@@ -120,7 +120,7 @@ where ``###'' is the image resolution desired.
 depends on the Berkeley
 .I rsh (1)
 remote shell command and the user's corresponding ``.rhosts'' file
-to automaticly initiate remote computation.
+to automatically initiate remote computation.
 .P
 .I remrt
 requires a control file called ``.remrtrc'' which specifies
@@ -201,7 +201,7 @@ and a ``where'' value of
 .BR convert .
 When an
 .I rtsrv
-passes from night into day, it is automaticly terminated by
+passes from night into day, it is automatically terminated by
 .I remrt
 at the appointed time.
 .P
@@ -253,7 +253,7 @@ after the crash/restart.
 Third,
 .I remrt
 has no way to tell what auxiliary files might be needed for this ``.g''
-file, and thus can not send them automaticly.
+file, and thus can not send them automatically.
 If the ``.g'' file references height field, extruded bit-map, or volumetric
 solids, the associated data files will not be present on a
 .B convert
