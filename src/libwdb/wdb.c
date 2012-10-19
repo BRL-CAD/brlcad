@@ -28,7 +28,7 @@
  *
  * Note that routines which are passed point_t or vect_t or mat_t
  * parameters (which are call-by-address) must be VERY careful to
- * leave those parameters unmodified (eg, by scaling), so that the
+ * leave those parameters unmodified (e.g., by scaling), so that the
  * calling routine is not surprised.
  *
  * Return codes of 0 are OK, -1 signal an error.
@@ -73,7 +73,7 @@ mk_half(struct rt_wdb *wdbp, const char *name, const fastf_t *norm, fastf_t d)
 /**
  * M K _ G R I P
  *
- * Make a grip psuedo solid.  Specified by a center, normal vector,
+ * Make a grip pseudo solid.  Specified by a center, normal vector,
  * and magnitude.
  */
 int
@@ -99,7 +99,7 @@ mk_grip(
 /**
  * M K _ R P P
  *
- * Make a right parallelpiped.  Specified by minXYZ, maxXYZ.
+ * Make a right parallelepiped.  Specified by minXYZ, maxXYZ.
  */
 int
 mk_rpp(struct rt_wdb *wdbp, const char *name, const fastf_t *min, const fastf_t *max)
@@ -125,7 +125,7 @@ mk_rpp(struct rt_wdb *wdbp, const char *name, const fastf_t *min, const fastf_t 
  *
  * Makes a right angular wedge given a starting vertex located in the,
  * lower left corner, an x and a z direction vector, x, y, and z
- * lengths, and an x length for the top.  The y direcion vector is x
+ * lengths, and an x length for the top.  The y direction vector is x
  * cross z.
  */
 int
@@ -159,7 +159,7 @@ mk_wedge(struct rt_wdb *wdbp, const char *name, const fastf_t *vert, const fastf
     VMOVE(pts[0], vert);		/* Move given vertex into pts[0] */
     VADD2(pts[1], pts[0], xvec);	/* second vertex. */
     VADD2(pts[2], pts[1], yvec);	/* third vertex */
-    VADD2(pts[3], pts[0], yvec);	/* foruth vertex */
+    VADD2(pts[3], pts[0], yvec);	/* fourth vertex */
 
     /* Make top face by extruding bottom face vertices */
 
