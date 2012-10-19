@@ -41,7 +41,7 @@
 int
 mk_vol(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_t ydim, size_t zdim, size_t lo, size_t hi, const fastf_t *cellsize, const matp_t mat)
     /* name of file containing bitmap */
-    /* X dimansion of file (w cells) */
+    /* X dimension of file (w cells) */
     /* Y dimension of file (n cells) */
     /* Z dimension of file (d cells) */
     /* Low threshold */
