@@ -151,7 +151,7 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
 	mp = (struct rt_metaball_internal *)dir.idb_ptr;
 	RT_METABALL_CK_MAGIC(mp);
 
-	/* iterate over each point in that database objct and add it
+	/* iterate over each point in that database object and add it
 	 * to our new metaball.
 	 */
 	for (BU_LIST_FOR(mpt, wdb_metaballpt, &mp->metaball_ctrl_head)) {
