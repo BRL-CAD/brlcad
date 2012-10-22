@@ -247,7 +247,7 @@ Curve_Compare_end(const ON_Curve **a, const ON_Curve **b)
 /**
  * Face_X_Event::Face_X_Event
  *
- * @brief create a new unintialized Face_X_Event
+ * @brief create a new uninitialized Face_X_Event
  */
 Face_X_Event::Face_X_Event() : face1(NULL), face2(NULL), curve1(NULL), curve2(NULL)
 {}
@@ -293,7 +293,7 @@ Face_X_Event::Render_Curves()
     for (i = 0; i < x.Count(); i++) {
 	ON_X_EVENT event = x[i];
 	if (active1 && active2) {
-	    /* to be deactived the curve must pass from below a curve to above it */
+	    /* to be deactivated the curve must pass from below a curve to above it */
 	    if (event.m_dirA[0] == event.from_below_dir && event.m_dirA[1] == event.to_above_dir) {
 		ON_Curve *new_curve1 = curve1->Duplicate();
 		ON_Curve *new_curve2 = curve2->Duplicate();
@@ -911,7 +911,7 @@ BrepBrepIntersect(
     }
 
     /* first we intersect all of the Faces and record the
-     * intersectiosn in Face_X_Events.
+     * intersections in Face_X_Events.
      */
     ON_ClassArray<Face_X_Event> x;
     for (i = 0; i < brep1->m_F.Count(); i++) {
