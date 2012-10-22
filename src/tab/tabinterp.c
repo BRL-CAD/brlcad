@@ -390,7 +390,7 @@ cm_times(int argc, char **argv)
     o_time = (fastf_t *)bu_malloc(o_len * sizeof(fastf_t), "o_time[]");
 
     /*
-     * Don't use an incremental algorithm, to avoid acrueing error
+     * Don't use an incremental algorithm, to avoid accruing error
      */
     for (i=0; i<o_len; i++)
 	o_time[i] = a + ((double)i)/fps;
@@ -489,7 +489,7 @@ next_interpolate(struct chan *chp)
 /*
  * S T E P _ I N T E R P O L A T E
  *
- * Simply select the value at the beinning of the interval.  This
+ * Simply select the value at the beginning of the interval.  This
  * allows parameters to take instantaneous jumps in value at specified
  * times.
  *
@@ -1039,7 +1039,7 @@ go()
 /*
  * C M _ R A T E
  *
- * Just to communiate with the "interpolator", use two input values.
+ * Just to communicate with the "interpolator", use two input values.
  * First is initial value, second is change PER SECOND. Input time
  * values are meaningless.
  */
@@ -1065,7 +1065,7 @@ cm_rate(int argc, char **argv)
 /*
  * C M _ A C C E L
  *
- * Just to communiate with the "interpolator", use two input values.
+ * Just to communicate with the "interpolator", use two input values.
  * First is initial value, second is change PER SECOND. Input time
  * values are meaningless.
  */
@@ -1110,7 +1110,7 @@ cm_next(int argc, char **argv)
     }
     sprintf(buf, "next: value of chan %d [%d]", ichan, offset);
     if (create_chan(argv[1], chan[ichan].c_ilen, buf) < 0) {
-	bu_log("ERROR next: uanble to create output channel\n");
+	bu_log("ERROR next: unable to create output channel\n");
 	return 0;
     }
     /* c_ilen, c_itag, c_ival are now initialized */
