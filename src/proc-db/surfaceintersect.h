@@ -33,7 +33,7 @@
 /**
  * Canonical_start, Canonical_end
  *
- * @brief conanical domain for ON_Curves
+ * @brief canonical domain for ON_Curves
  */
 #define Canonical_start (0.0)
 #define Canonical_end (1.0)
