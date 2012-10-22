@@ -64,7 +64,7 @@ struct wdb_pipept pipeA[] = {
 };
 int pipeA_npts = sizeof(pipeA)/sizeof(struct wdb_pipept);
 
-#define Q 0.05	/* inset from borders of enclsing cube */
+#define Q 0.05	/* inset from borders of enclosing cube */
 #define R 0.05	/* pushout factor */
 
 #define A 0+Q
