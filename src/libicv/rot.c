@@ -122,7 +122,7 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 	}
     }
 
-    /* XXX - backward compatability hack */
+    /* XXX - backward compatibility hack */
     if (bu_optind+2 == argc) {
 	nxin = atoi(argv[bu_optind++]);
 	nyin = atoi(argv[bu_optind++]);
@@ -351,7 +351,7 @@ icv_rot(int argc, char **argv)
 		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", argv[0], (void *)ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%ld)\n", argv[0], (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
@@ -381,7 +381,7 @@ icv_rot(int argc, char **argv)
 		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", argv[0], (void *)ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%ld)\n", argv[0], (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
@@ -403,7 +403,7 @@ icv_rot(int argc, char **argv)
 		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", argv[0], (void *)ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%ld)\n", argv[0], (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
