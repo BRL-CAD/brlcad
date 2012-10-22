@@ -19,7 +19,7 @@
  */
 /** @file proc-db/vegetation.h
  *
- * This is the header file to the program that generages geometry
+ * This is the header file to the program that generates geometry
  * that resembles or approximates a plant.  More specifically,
  * the generator is geared towards generating trees and shrubbery.
  * The plants are generated based on specification of growth
@@ -129,7 +129,7 @@ typedef struct characteristic {
     unsigned int maxBranchingAge; /* segments older than this cannot branch */
 
     unsigned int regrowthAttempts; /* how many times to keep trying to grow when blocked */
-    unsigned int growthEnergy; /* how much it groes per timestep (and potentially branches) */
+    unsigned int growthEnergy; /* how much it grows per timestep (and potentially branches) */
 
     vect_t branchMinVariation;
     vect_t branchMaxVariation;
@@ -148,7 +148,7 @@ typedef struct characteristic {
 typedef struct plant {
     /* static plant properties */
     point_t position;
-    double radius; /* inital base trunk radius */
+    double radius; /* initial base trunk radius */
     vect_t direction; /* general initial growth direction */
 
     /* variable plant properties */
