@@ -250,7 +250,7 @@ sub help {
 
 # these keywords must precede metaball definitions:
 units: X # mandatory BRL-CAD dimension unit, only one instance allowed
-group: X # optional, only one instance allowed, all reqions will be
+group: X # optional, only one instance allowed, all regions will be
 # grouped here; WARNING: any existing group X will be killed
 
 # metaball definition(s):
