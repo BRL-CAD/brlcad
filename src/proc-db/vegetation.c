@@ -19,7 +19,7 @@
  */
 /** @file proc-db/vegetation.c
  *
- * This is for a program that generages geometry that resembles or
+ * This is for a program that generates geometry that resembles or
  * approximates a plant.  More specifically, the generator is geared
  * towards generating trees and shrubbery.  The plants are generated
  * based on specification of growth parameters such as growth and
@@ -593,7 +593,7 @@ growPlant(plant_t *plant)
 			    included=(segmentList_t *)NULL;
 			} else {
 			    /*
-			      printf("successfull regrowth attempt\n");
+			      printf("successful regrowth attempt\n");
 			    */
 			    printf(".");
 			    break;
@@ -869,7 +869,7 @@ invalidCharacteristics(const characteristic_t * const c)
 	return 4;
     }
     if (c->branchingRate < 0.0) {
-	fprintf(stderr, "Negative branching rate is meaninglss (same as 0.0 rate)\n");
+	fprintf(stderr, "Negative branching rate is meaningless (same as 0.0 rate)\n");
     }
     if (c->branchAtEndpointRate < 0.0) {
 	fprintf(stderr, "Negative branch at endpoint rate is meaningless (same as 0.0)\n");
