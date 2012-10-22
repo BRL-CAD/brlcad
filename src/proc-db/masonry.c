@@ -384,7 +384,7 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 		if (op->sx <= seg->s) {
 		    if (op->ex >= seg->e) {
 			/* opening covers entire segment.
-			 * segement gets deleted
+			 * segment gets deleted
 			 */
 			sp = BU_LIST_PLAST(boardseg, &(seg->l));
 			BU_LIST_DEQUEUE(&(seg->l));
@@ -392,7 +392,7 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 			seg = sp;
 
 		    } else if (op->ex > seg->s) {
-			/* opening covers begining of segment */
+			/* opening covers beginning of segment */
 			seg->s = op->ex;
 		    }
 		    /* else opening is entirely prior to seg->s */
@@ -405,7 +405,7 @@ h_segs(double sz, double ez, struct boardseg *seglist, double sx, double ex)
 		} else {
 		    /* there is an opening in the middle of the
 		     * segment.  We must divide the segment into
-		     * 2 segements
+		     * 2 segments
 		     */
 		    sp = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "alloc boardseg");
 		    sp->s = seg->s;
