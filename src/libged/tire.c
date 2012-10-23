@@ -238,16 +238,16 @@ Create_Ell1_Mat(fastf_t **mat, fastf_t dytred, fastf_t dztred, fastf_t d1, fastf
  * first define the magnitude of the z component of the distance from
  * the intersection point to the max point as:
  *
- *       ztire - dztread - zside1
+ *       ztire - dztred - zside1
  *
  * That will place the symmetric point at twice this distance down the
  * z axis from the intersection point:
  *
- *       (ztire - dztread) - 2 * (ztire - dztread - zside1)
+ *       (ztire - dztred) - 2 * (ztire - dztred - zside1)
  *
  * Simplifying, that gives the expression:
  *
- *       2 * zside1 - ztire + dztread
+ *       2 * zside1 - ztire + dztred
  *
  * Knowing this point must be on the ellipse, and the partial derivative
  * is constrained to be the negative of the partial derivative at the
@@ -431,7 +431,7 @@ SolveEchelon(fastf_t **mat, fastf_t *result1)
  *   start by looking into methods of graphing the General Conic.     *
  *   In particular, either here or even earlier in the process a      *
  *   type check should be done to ensure an elliptical geometry has   *
- *   been found, rather than parabolic or hyperboloic.                *
+ *   been found, rather than parabolic or hyperbolic.                 *
  *                                                                    *
  **********************************************************************/
 static void
@@ -1323,7 +1323,7 @@ MakeTireSurface(struct rt_wdb (*file), char *suffix,
 /**********************************************************************
  *                                                                    *
  *           Routines to handle creation of tread solids              *
- *           and invocation of the tread pattern creater               *
+ *           and invocation of the tread pattern creator               *
  *                                                                    *
  **********************************************************************/
 static void
@@ -1588,7 +1588,7 @@ typedef void (*MakeTreadProfile)
  *                                                                    *
  *           MakeTire is the "top level" tire generation              *
  *           function - it is responsible for managing the            *
- *           matricies, calling the solvers with the correct          *
+ *           matrices, calling the solvers with the correct           *
  *           input parameters, and using the other tire               *
  *           routines to define a hollow tire with tread.             *
  *                                                                    *
