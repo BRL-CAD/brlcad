@@ -239,7 +239,7 @@ arbin(struct ged *gedp,
 	 * Two edges of intersection have been calculated
 	 * pt[0]<->pt[2]
 	 * pt[1]<->pt[3]
-	 * the one closest to the non-invloved plane (planes[0]) is the
+	 * the one closest to the non-involved plane (planes[0]) is the
 	 * one we want
 	 */
 
@@ -459,7 +459,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
 
     /* calculate new height vector */
     if (!ZERO(thick[1])) {
-	/* calculate new height vector using simialr triangles */
+	/* calculate new height vector using similar triangles */
 	ratio = thick[1]/normal_height;
 	VJOIN1(top, tgc->v, 1.0 - ratio, tgc->h);
 
