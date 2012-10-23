@@ -2490,8 +2490,8 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 	 * point-cloud type.
 	 */
 
-	/* call function(s) to validate the units string and return the converion factor to
-	 * milimeters.
+	/* call function(s) to validate the units string and return the conversion factor to
+	 * millimeters.
 	 */
 
 	/* call function(s) to read point cloud data and save into database.
