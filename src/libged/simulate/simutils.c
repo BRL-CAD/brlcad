@@ -44,7 +44,7 @@ print_usage(struct bu_vls *str)
     bu_vls_printf(str, "Currently this command adds all regions in the model database to a \n\
     simulation having only gravity as a force. The objects should fall towards the ground plane XY.\n");
     bu_vls_printf(str, "The positions of the regions are set after <steps> number of simulation steps.\n");
-    bu_vls_printf(str, "-f <n> <x> <y> <z>\t- Specifies frequency of update(eg 1/60 Hz)(WIP)\n");
+    bu_vls_printf(str, "-f <n> <x> <y> <z>\t- Specifies frequency of update(e.g. 1/60 Hz)(WIP)\n");
     bu_vls_printf(str, "-t <x> <y> <z>\t\t  - Specifies time for which to run(alternative to -n)(WIP)\n");
     return;
 }
