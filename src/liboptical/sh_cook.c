@@ -21,7 +21,7 @@
  *
  * Notes -
  * The normals on all surfaces point OUT of the solid.
- * The incomming light rays point IN.  Thus the sign change.
+ * The incoming light rays point IN.  Thus the sign change.
  *
  */
 
@@ -264,7 +264,7 @@ cook_free(genptr_t cp)
  *
  * rs = F/Pi * [DG/((N.L)(N.S))]
  * rd = normal reflectance = F(0)/Pi if rough (Lambertian)
- * This is "a good approx for theta < ~70 degress."
+ * This is "a good approx for theta < ~70 degrees."
  */
 HIDDEN int
 cook_render(register struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
