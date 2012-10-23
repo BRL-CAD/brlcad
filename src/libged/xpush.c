@@ -193,7 +193,7 @@ Make_new_name(struct db_i *dbip,
 	    /* Add new name to directory */
 	    use->dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&dp->d_minor_type);
 	    if (use->dp == RT_DIR_NULL) {
-		bu_vls_printf(gedp->ged_result_str, "\nAn error has occured while adding a new object to the database.\n"); \
+		bu_vls_printf(gedp->ged_result_str, "\nAn error has occurred while adding a new object to the database.\n"); \
 		return;
 	    }
 	}
@@ -238,7 +238,7 @@ Do_copy_membs(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tr
 	MAT_COPY(new_xform, xform);
     }
 
-    /* Copy member with current tranform matrix */
+    /* Copy member with current transform matrix */
     if ((dp_new=Copy_object(gedp, dp, new_xform)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to copy object %s", dp->d_namep);
 	return;
