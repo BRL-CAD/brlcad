@@ -1185,7 +1185,7 @@ wdb_track_cmd(void *data,
 		      0, NULL, NULL, NULL,
 		      0, 0, 0, 0,
 		      0, 1, 1) < 0) {
-	bu_log("An error has occured while adding '%s' to the database.\n", grpname);
+	bu_log("An error has occurred while adding '%s' to the database.\n", grpname);
     }
 
     Trackpos += 10;
