@@ -328,7 +328,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 
     /* find out which ascii table is desired */
     if (BU_STR_EQUAL(argv[0], "solids")) {
-	/* complete summary - down to solids/paremeters */
+	/* complete summary - down to solids/parameters */
 	flag = SOL_TABLE;
     } else if (BU_STR_EQUAL(argv[0], "regions")) {
 	/* summary down to solids as members of regions */
