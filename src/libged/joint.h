@@ -19,7 +19,7 @@
  */
 /** @file libged/joint.h
  *
- * Joint and constrant information.
+ * Joint and constraint information.
  *
  * A joint has to contain all the information to describe how two
  * segments move in relationship to each other.
