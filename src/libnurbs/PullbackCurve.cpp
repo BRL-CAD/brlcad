@@ -1503,6 +1503,7 @@ bool
 has_singularity(const ON_Surface *surf)
 {
     bool ret = false;
+    if (UNLIKELY(!surf)) return ret;
     // 0 = south, 1 = east, 2 = north, 3 = west
     for (int i=0;i<4;i++) {
 	if (surf->IsSingular(i)) {
@@ -1531,6 +1532,7 @@ has_singularity(const ON_Surface *surf)
 bool is_closed(const ON_Surface *surf)
 {
     bool ret = false;
+    if (UNLIKELY(!surf)) return ret;
     // dir 0 = "s", 1 = "t"
     for (int i=0;i<2;i++) {
 	if (surf->IsClosed(i)) {
