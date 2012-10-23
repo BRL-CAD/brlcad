@@ -166,6 +166,7 @@ EXTRA_DIST = \
 	clipper \
 	togl \
 	hv3 \
+        Eigen \
 	CMakeLists.txt \
 	itcl.dist \
 	itk.dist \

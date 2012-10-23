@@ -814,6 +814,14 @@ set(TNT_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/tnt" CACHE STRING "Directory
 CMAKEFILES(tnt)
 mark_as_advanced(TNT_INCLUDE_DIR)
 
+# Eigen is used for advanced linear algebra functionality
+# It consists entirely of headers and does not need to be
+# installed.
+#
+# TODO - replace jama/tnt with Eigen
+#
+CMAKEFILES(Eigen)
+
 # jove editor - technically this isn't a library,
 # but traditionally it's grouped into the "enable-all"
 # logic. Almost certainly won't build on Windows, and
