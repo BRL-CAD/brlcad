@@ -109,7 +109,7 @@ struct nametbl {
 static struct nametbl obj_list;
 
 /**
- * a polynamial value for representing knots
+ * a polynomial value for representing knots
  */
 struct knot {
     vect_t pt;
@@ -118,7 +118,7 @@ struct knot {
 
 
 /**
- * a spline path with various segments, break points, and polynamial
+ * a spline path with various segments, break points, and polynomial
  * values.
  */
 struct spline {
@@ -635,7 +635,7 @@ copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 	    }
 
 	    if ((dp=db_diradd(dbip, bu_vls_addr(name), RT_DIR_PHONY_ADDR, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == RT_DIR_NULL) {
-		bu_vls_printf(state->gedp->ged_result_str, "An error has occured while adding a new object to the database.");
+		bu_vls_printf(state->gedp->ged_result_str, "An error has occurred while adding a new object to the database.");
 		return NULL;
 	    }
 
@@ -781,7 +781,7 @@ done_copy_tree:
 
 
 /**
- * copy an object, recursivley copying all of the object's contents
+ * copy an object, recursively copying all of the object's contents
  * if it's a combination/region.
  */
 static struct directory *
@@ -880,7 +880,7 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 		/* I'd like to have an optional argument to -c, but for now,
 		 * just let multiple -c's add it up as a hack. I believe the
 		 * variant of this that was lost used this as a binary
-		 * operation, so it SHOULD be functionally equivelant for a user
+		 * operation, so it SHOULD be functionally equivalent for a user
 		 * who's dealt with this before. */
 		state->updpos++;
 		break;
