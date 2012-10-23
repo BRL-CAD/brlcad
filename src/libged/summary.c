@@ -36,7 +36,7 @@
 /*
  * Summarize the contents of the directory by categories
  * (solid, comb, region).  If flag is != 0, it is interpreted
- * as a request to print all the names in that category (eg, RT_DIR_SOLID).
+ * as a request to print all the names in that category (e.g., RT_DIR_SOLID).
  */
 static void
 summary_dir(struct ged *gedp,
