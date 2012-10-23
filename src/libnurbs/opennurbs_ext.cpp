@@ -678,9 +678,16 @@ CurveTree::isLinear(const ON_Curve* curve, double min, double max)
     return vdot >= BREP_CURVE_FLATNESS;
 }
 
-
 //--------------------------------------------------------------------------------
 // SurfaceTree
+SurfaceTree::SurfaceTree()
+    : m_removeTrimmed(false),
+      ctree(NULL),
+      m_face(NULL),
+      m_root(NULL)
+{
+}
+
 SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthLimit)
     : m_removeTrimmed(removeTrimmed),
       m_face(face)

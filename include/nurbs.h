@@ -1526,6 +1526,7 @@ private:
     bool m_removeTrimmed;
 
 public:
+    SurfaceTree();
     SurfaceTree(const ON_BrepFace* face, bool removeTrimmed=true, int depthLimit = BREP_MAX_FT_DEPTH);
     ~SurfaceTree();
 
