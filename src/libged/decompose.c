@@ -166,7 +166,7 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 		    return GED_ERROR;
 		}
 
-		/* write this model as a seperate nmg solid */
+		/* write this model as a separate nmg solid */
 		RT_DB_INTERNAL_INIT(&new_intern);
 		new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		new_intern.idb_type = ID_NMG;
