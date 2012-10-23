@@ -560,7 +560,7 @@ ged_track(struct ged *gedp, int argc, const char *argv[])
 		      0, NULL, NULL, NULL,
 		      0, 0, 0, 0,
 		      0, 1, 1) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "An error has occured while adding '%s' to the database.\n", grpname);
+	bu_vls_printf(gedp->ged_result_str, "An error has occurred while adding '%s' to the database.\n", grpname);
     }
 
     Trackpos += 10;
