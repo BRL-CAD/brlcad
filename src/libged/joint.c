@@ -154,7 +154,7 @@ joint_cmd(struct ged *gedp,
 	    }
 	}
 
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s%s %s\n\t(%s)\n", functions[0].ft_name, ftp->ft_name, ftp->ft_params, ftp->ft_comment);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s%s %s\n\t(%s)\n", functions[0].ft_name, ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
 	return GED_ERROR;
     }
 
@@ -234,7 +234,7 @@ helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *function
 	    if (!BU_STR_EQUAL(ftp->ft_name, argv[i]))
 		continue;
 
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s%s %s\n\t( %s )\n", functions->ft_name, ftp->ft_name, ftp->ft_params, ftp->ft_comment);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s%s %s\n\t( %s )\n", functions->ft_name, ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
 		break;
 	}
 	if (!ftp->ft_name) {
@@ -263,7 +263,7 @@ f_help(struct ged *gedp, int argc, const char *argv[], struct funtab *functions)
     if (argc <= 1) {
 	bu_vls_printf(gedp->ged_result_str, "The following commands are available:\n");
 	for (ftp = functions+1; ftp->ft_name; ftp++) {
-		bu_vls_printf(gedp->ged_result_str, "%s%s %s\n\t (%s)\n", functions->ft_name, ftp->ft_name, ftp->ft_params, ftp->ft_comment);
+		bu_vls_printf(gedp->ged_result_str, "%s%s %s\n\t (%s)\n", functions->ft_name, ftp->ft_name, ftp->ft_parms, ftp->ft_comment);
 	}
 	return GED_OK;
     }
