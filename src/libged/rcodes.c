@@ -71,7 +71,7 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
     while (bu_fgets(line, RT_MAXLINE, fp) != NULL) {
 	int changed;
 
-	/* character and/or whitespace deliminted numbers */
+	/* character and/or whitespace delimited numbers */
 	if (sscanf(line, "%d%*c%d%*c%d%*c%d%s", &item, &air, &mat, &los, name) != 5)
 	    continue; /* not useful */
 
