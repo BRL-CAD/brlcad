@@ -140,7 +140,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	rt_db_free_internal(&internal);
 	if (ip == &new_int)
 	    rt_db_free_internal(&new_int);
-	bu_vls_printf(gedp->ged_result_str, "An error has occured while adding a new object to the database.");
+	bu_vls_printf(gedp->ged_result_str, "An error has occurred while adding a new object to the database.");
 	return GED_ERROR;
     }
 
