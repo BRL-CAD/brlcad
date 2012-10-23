@@ -175,7 +175,7 @@ ged_qray(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(gedp->ged_result_str, "The 'qray fmt' command accepts 0, 1 or 2 argumentS\n");
+	bu_vls_printf(gedp->ged_result_str, "The 'qray fmt' command accepts 0, 1 or 2 arguments\n");
 	return GED_ERROR;
     }
 
@@ -366,7 +366,7 @@ ged_qray(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(gedp->ged_result_str, "The 'qray voidpcolor' command accepts 0 or 3 arguments\n");
+	bu_vls_printf(gedp->ged_result_str, "The 'qray voidcolor' command accepts 0 or 3 arguments\n");
 	return GED_ERROR;
     }
 
