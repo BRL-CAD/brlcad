@@ -125,7 +125,7 @@ ged_summary(struct ged *gedp, int argc, const char *argv[])
 		flags |= RT_DIR_COMB;
 		break;
 	    default:
-		bu_vls_printf(gedp->ged_result_str, "%s:  p, r or g are the only valid parmaters\n", argv[0]);
+		bu_vls_printf(gedp->ged_result_str, "%s:  p, r or g are the only valid parameters\n", argv[0]);
 		return GED_ERROR;
 	}
     }
