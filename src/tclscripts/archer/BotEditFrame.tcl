@@ -78,7 +78,7 @@
 	}
 
 	# Override what's in GeometryEditFrame
-	method initGeometry {gdata}
+	method initGeometry {_gdata}
 	method updateGeometry {}
 	method createGeometry {_name}
 	method p {obj args}
@@ -95,6 +95,7 @@
 	variable mVertDetail
 	variable mEdgeDetail
 	variable mFaceDetail
+	variable mPointList {}
 	variable mEdgeList {}
 	variable mFaceList {}
 	variable mCurrentBotPoints ""
@@ -112,7 +113,7 @@
 
 	method applyData {}
 	method botEdgesSelectCallback {_edge {_sync 1}}
-	method botEdgeSplitCallback {_elist}
+	method botEdgeSplitCallback {_edge}
 	method botFacesSelectCallback {_face}
 	method botFaceSplitCallback {_face}
 	method botPointSelectCallback {_pindex}
@@ -120,6 +121,7 @@
 	method detailBrowseCommand {_row _col}
 	method handleDetailPopup {_index _X _Y}
 	method handleEnter {_row _col}
+	method loadTables {_gdata}
 	method multiEdgeSelectCallback {}
 	method multiFaceSelectCallback {}
 	method multiPointSelectCallback {}
@@ -157,103 +159,15 @@
 #
 # Initialize the variables containing the object's specification.
 #
-::itcl::body BotEditFrame::initGeometry {gdata} {
+::itcl::body BotEditFrame::initGeometry {_gdata} {
     if {$itk_option(-mged) == "" ||
 	$itk_option(-geometryObject) == ""} {
 	return
     }
 
-    unset mVertDetail
-    unset mEdgeDetail
-    unset mFaceDetail
+    loadTables $_gdata
 
-    set mVertDetail(active) ""
-    set mEdgeDetail(active) ""
-    set mFaceDetail(active) ""
-
-    set col 0
-    foreach heading $mVertDetailHeadings {
-	set mVertDetail(0,$col) $heading
-	incr col
-    }
-
-    set col 0
-    foreach heading $mEdgeDetailHeadings {
-	set mEdgeDetail(0,$col) $heading
-	incr col
-    }
-
-    set col 0
-    foreach heading $mFaceDetailHeadings {
-	set mFaceDetail(0,$col) $heading
-	incr col
-    }
-
-    set tmpFaceList {}
-    foreach {attr val} $gdata {
-	switch -- $attr {
-	    "mode" {
-	    }
-	    "orient" {
-	    }
-	    "flags" {
-	    }
-	    "V" {
-		set index 1
-		foreach item $val {
-		    set mVertDetail($index,$SELECT_COL) ""
-		    set mVertDetail($index,$X_COL) [lindex $item 0]
-		    set mVertDetail($index,$Y_COL) [lindex $item 1]
-		    set mVertDetail($index,$Z_COL) [lindex $item 2]
-		    incr index
-		}
-	    }
-	    "F" {
-		set tmpFaceList $val
-		set index 1
-		foreach item $val {
-		    set mFaceDetail($index,$SELECT_COL) ""
-		    set mFaceDetail($index,$A_COL) [lindex $item 0]
-		    set mFaceDetail($index,$B_COL) [lindex $item 1]
-		    set mFaceDetail($index,$C_COL) [lindex $item 2]
-		    incr index
-		}
-	    }
-	    default {
-		# Shouldn't get here
-		puts "Encountered bad one - $attr"
-	    }
-	}
-    }
-
-    set tmpEdgeList [$itk_option(-mged) get_bot_edges $itk_option(-geometryObject)]
-    set mEdgeList {}
-    set index 1
-    foreach item $tmpEdgeList {
-	set mEdgeDetail($index,$SELECT_COL) ""
-	set p0 [lindex $item 0]
-	set p1 [lindex $item 1]
-
-	if {$p0 > $p1} {
-	    set mEdgeDetail($index,$A_COL) $p1
-	    set mEdgeDetail($index,$B_COL) $p0
-	    lappend mEdgeList [list $p1 $p0]
-	} else {
-	    set mEdgeDetail($index,$A_COL) $p0
-	    set mEdgeDetail($index,$B_COL) $p1
-	    lappend mEdgeList [list $p0 $p1]
-	}
-	incr index
-    }
-
-    set mFaceList {}
-    foreach item $tmpFaceList {
-	set tmpList [lindex $item 0]
-	lappend tmpList [lindex $item 1] [lindex $item 2]
-	lappend mFaceList [lsort $tmpList]
-    }
-
-    GeometryEditFrame::initGeometry $gdata
+    GeometryEditFrame::initGeometry $_gdata
 
     if {$itk_option(-geometryObject) != $mPrevGeometryObject} {
 	set mCurrentBotPoints ""
@@ -731,10 +645,25 @@
 }
 
 
-::itcl::body BotEditFrame::botEdgeSplitCallback {_elist} {
-    set mCurrentBotEdges $_elist
-    $itk_option(-mged) bot_edge_split $itk_option(-geometryObjectPath) $_elist
+::itcl::body BotEditFrame::botEdgeSplitCallback {_edge} {
+    $itk_option(-mged) bot_edge_split $itk_option(-geometryObjectPath) $_edge
     $::ArcherCore::application setSave
+
+    set gdata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
+    loadTables $gdata
+
+    # Select one of the newly created edges (i.e. one with the largest vertex index)
+    set selist [lsort -index 1 $mEdgeList]
+    set edge [lindex $selist end]
+    set ei [lsearch $mEdgeList $edge]
+
+    incr ei
+    set mCurrentBotEdges $ei
+    $itk_component(edgeTab) unselectAllRows
+    $itk_component(edgeTab) selectRow $ei
+    $itk_component(edgeTab) see "$ei,0"
+
+    syncTablesWrtEdges
 }
 
 
@@ -759,12 +688,21 @@
 
 
 ::itcl::body BotEditFrame::botFaceSplitCallback {_face} {
-    incr _face
-    set mCurrentBotFaces $_face
-    $itk_component(faceTab) selectSingleRow $_face
-    $itk_component(faceTab) see "$_face,0"
-    $itk_option(-mged) bot_face_split $itk_option(-geometryObjectPath) [expr {$_face - 1}]
+    $itk_option(-mged) bot_face_split $itk_option(-geometryObjectPath) $_face
     $::ArcherCore::application setSave
+
+    set gdata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
+    loadTables $gdata
+
+    incr _face
+    set findex [lsearch $mCurrentBotFaces $_face]
+    if {$findex < 0} {
+	lappend mCurrentBotFaces $_face
+    }
+
+    $itk_component(faceTab) selectRow $_face
+    $itk_component(faceTab) see "$_face,0"
+    syncTablesWrtFaces
 }
 
 
@@ -817,6 +755,98 @@
     }
 
     updateGeometryIfMod
+}
+
+
+::itcl::body BotEditFrame::loadTables {_gdata} {
+    unset mVertDetail
+    unset mEdgeDetail
+    unset mFaceDetail
+
+    set mVertDetail(active) ""
+    set mEdgeDetail(active) ""
+    set mFaceDetail(active) ""
+
+    set col 0
+    foreach heading $mVertDetailHeadings {
+	set mVertDetail(0,$col) $heading
+	incr col
+    }
+
+    set col 0
+    foreach heading $mEdgeDetailHeadings {
+	set mEdgeDetail(0,$col) $heading
+	incr col
+    }
+
+    set col 0
+    foreach heading $mFaceDetailHeadings {
+	set mFaceDetail(0,$col) $heading
+	incr col
+    }
+
+    set mPointList {}
+    set mEdgeList {}
+    set mFaceList {}
+    set tmpFaceList {}
+    foreach {attr val} $_gdata {
+	switch -- $attr {
+	    "mode" {
+	    }
+	    "orient" {
+	    }
+	    "flags" {
+	    }
+	    "V" {
+		set index 1
+		foreach item $val {
+		    set mVertDetail($index,$SELECT_COL) ""
+		    set mVertDetail($index,$X_COL) [lindex $item 0]
+		    set mVertDetail($index,$Y_COL) [lindex $item 1]
+		    set mVertDetail($index,$Z_COL) [lindex $item 2]
+		    incr index
+
+		    lappend mPointList $item
+		}
+	    }
+	    "F" {
+		set tmpFaceList $val
+		set index 1
+		foreach item $val {
+		    set mFaceDetail($index,$SELECT_COL) ""
+		    set mFaceDetail($index,$A_COL) [lindex $item 0]
+		    set mFaceDetail($index,$B_COL) [lindex $item 1]
+		    set mFaceDetail($index,$C_COL) [lindex $item 2]
+		    incr index
+
+		    lappend mFaceList [lsort $item]
+		}
+	    }
+	    default {
+		# Shouldn't get here
+		puts "Encountered bad one - $attr"
+	    }
+	}
+    }
+
+    set tmpEdgeList [$itk_option(-mged) get_bot_edges $itk_option(-geometryObject)]
+    set index 1
+    foreach item $tmpEdgeList {
+	set mEdgeDetail($index,$SELECT_COL) ""
+	set p0 [lindex $item 0]
+	set p1 [lindex $item 1]
+
+	if {$p0 > $p1} {
+	    set mEdgeDetail($index,$A_COL) $p1
+	    set mEdgeDetail($index,$B_COL) $p0
+	    lappend mEdgeList [list $p1 $p0]
+	} else {
+	    set mEdgeDetail($index,$A_COL) $p0
+	    set mEdgeDetail($index,$B_COL) $p1
+	    lappend mEdgeList [list $p0 $p1]
+	}
+	incr index
+    }
 }
 
 
@@ -904,14 +934,13 @@
     }
 
     set i 1
-    set sortedEdges [lsort $mCurrentBotEdges]
-    foreach edgeA [lrange $sortedEdges 0 end-2] {
+    foreach edgeA [lrange $mCurrentBotEdges 0 end-2] {
 	set j [expr {$i + 1}]
-	foreach edgeB [lrange $sortedEdges $i end-1] {
-	    foreach edgeC [lrange $sortedEdges $j end] {
+	foreach edgeB [lrange $mCurrentBotEdges $i end-1] {
+	    foreach edgeC [lrange $mCurrentBotEdges $j end] {
 		set flist [list $mEdgeDetail($edgeA,$A_COL) $mEdgeDetail($edgeA,$B_COL)]
 		lappend flist $mEdgeDetail($edgeB,$A_COL) $mEdgeDetail($edgeB,$B_COL) 
-		lappend flist $mEdgeDetail($edgeC,$A_COL) $mEdgeDetail($edgeC,$B_COL) 
+		lappend flist $mEdgeDetail($edgeC,$A_COL) $mEdgeDetail($edgeC,$B_COL)
 
 		set flist [lsort -unique $flist]
 		if {[llength $flist] != 3} {
@@ -934,8 +963,6 @@
 
 	incr i
     }
-
-#    set mCurrentBotFaces [lsort -unique $mCurrentBotFaces]
 }
 
 
@@ -955,19 +982,65 @@
 
 
 ::itcl::body BotEditFrame::syncTablesWrtFaces {} {
+    # Clear the list of points and edges
+    $itk_component(vertTab) unselectAllRows
+    $itk_component(edgeTab) unselectAllRows
     set mCurrentBotPoints {}
+    set mCurrentBotEdges {}
+
+    # Compute the list of points and edges
     foreach face $mCurrentBotFaces {
 	set indexA $mFaceDetail($face,$A_COL)
 	set indexB $mFaceDetail($face,$B_COL)
 	set indexC $mFaceDetail($face,$C_COL)
+
+	# Process edge AB
+	if {$indexA < $indexB} {
+	    set edgeAB [list $indexA $indexB]
+	} else {
+	    set edgeAB [list $indexB $indexA]
+	}
+	set ei [lsearch $mEdgeList $edgeAB]
+	incr ei
+	lappend mCurrentBotEdges $ei
+	$itk_component(edgeTab) selectRow $ei
+	$itk_component(edgeTab) see "$ei,0"
+
+	# Process edge BC
+	if {$indexB < $indexC} {
+	    set edgeBC [list $indexB $indexC]
+	} else {
+	    set edgeBC [list $indexC $indexB]
+	}
+	set ei [lsearch $mEdgeList $edgeBC]
+	incr ei
+	lappend mCurrentBotEdges $ei
+	$itk_component(edgeTab) selectRow $ei
+	$itk_component(edgeTab) see "$ei,0"
+
+ 	# Process edge AC
+	if {$indexA < $indexC} {
+	    set edgeAC [list $indexA $indexC]
+	} else {
+	    set edgeAC [list $indexC $indexA]
+	}
+	set ei [lsearch $mEdgeList $edgeAC]
+	incr ei
+	lappend mCurrentBotEdges $ei
+	$itk_component(edgeTab) selectRow $ei
+	$itk_component(edgeTab) see "$ei,0"
+
 	incr indexA
 	incr indexB
 	incr indexC
 	lappend mCurrentBotPoints $indexA $indexB $indexC
+	$itk_component(vertTab) selectRow $indexC
+	$itk_component(vertTab) selectRow $indexB
+	$itk_component(vertTab) selectRow $indexA
+	$itk_component(vertTab) see "$indexA,0"
     }
+    set mCurrentBotEdges [lsort -unique $mCurrentBotEdges]
     set mCurrentBotPoints [lsort -unique $mCurrentBotPoints]
-
-    selectCurrentBotPoints
 }
 
 
