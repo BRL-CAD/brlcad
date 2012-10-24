@@ -23,7 +23,7 @@
  *
  * Notes -
  * The normals on all surfaces point OUT of the solid.
- * The incomming light rays point IN.
+ * The incoming light rays point IN.
  *
  */
 
@@ -126,7 +126,7 @@ shade_inputs(struct application *ap, const struct partition *pp, struct shadewor
 
     RT_CK_RAY(swp->sw_hit.hit_rayp);
 
-    /* These calcuations all have MFI_HIT as a pre-requisite */
+    /* These calculations all have MFI_HIT as a pre-requisite */
     if (want & (MFI_NORMAL|MFI_LIGHT|MFI_UV))
 	want |= MFI_HIT;
 
