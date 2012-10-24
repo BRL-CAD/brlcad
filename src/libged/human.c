@@ -260,7 +260,7 @@ setDirection(fastf_t *inVect, fastf_t *resultVect, fastf_t *outMatrix, fastf_t x
 /**
  * Create a bounding box around the individual part, this one has only
  * 1 value for depth and width.  Currently is a big mess, as the boxes
- * dont want to rotate in the correct mannor, and insit upon rotating
+ * don't want to rotate in the correct manner, and insist upon rotating
  * around an incorrect vertex.
  */
 HIDDEN void
@@ -893,7 +893,7 @@ makeBody(struct rt_wdb (*file), char *suffix, struct human_data_t *dude, fastf_t
     bu_log("Making Body\n");
     /*
      * Make sure that vectors, points, and widths are sent to each function
-     * for direction, location, and correct sizing, respectivly.
+     * for direction, location, and correct sizing, respectively.
      */
     bu_log("Setting Direction\n");
     VSET(dude->joints.headJoint, location[X], location[Y], (location[Z]+((dude->height*IN2MM)-(dude->head.headSize/2))));
@@ -1062,7 +1062,7 @@ setStance(fastf_t stance, struct human_data_t *dude)
      * 4: The Letterman
      * 5: The Captain
      * #: and more as needed
-     * 999: Custom (done interactivly)
+     * 999: Custom (done interactively)
      */
 
     VSET(downVect, 0, 180, 0); /*straight down*/
@@ -1937,9 +1937,9 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 
 
 /**
- * The text function takes the dimentions of each region on the body,
+ * The text function takes the dimensions of each region on the body,
  * and finds the measurements for each bounding box to be ouput to a
- * text file. All dimentions are in mm, because it seems everyone just
+ * text file. All dimensions are in mm, because it seems everyone just
  * /loves/ millimeters for analytical purposes.  Hard Coded to dump
  * out everything related to boundingboxes.
  */
@@ -1949,7 +1949,7 @@ text(struct human_data_t *dude)
     fastf_t x=0, y=0, z=0;
     FILE *dump;
 
-    bu_log("Ouputting text file\n");
+    bu_log("Outputting text file\n");
 
     dump = fopen("Stats.txt", "w+");
 
@@ -2066,7 +2066,7 @@ text(struct human_data_t *dude)
 
 /**
  * Spit out every measurement of the model in a textfile called
- * Verbose.txt Includes all measurments: sans angles, joint
+ * Verbose.txt Includes all measurements: sans angles, joint
  * information
  */
 HIDDEN void
@@ -2127,7 +2127,7 @@ getText(struct human_data_t *UNUSED(dude))
     input = fopen("Stats.txt", "r");
 
     if (input == NULL) {
-	bu_log("Non existant input file.\n");
+	bu_log("Non-existent input file.\n");
     } else {
 	bu_log("File opened, reading data:\n");
 
@@ -2156,7 +2156,7 @@ verbIn(struct human_data_t *dude)
 
     input = fopen("Verbose.txt", "r");
     if (input == NULL) {
-	bu_log("Non-existant input file\n");
+	bu_log("Non-existent input file\n");
     } else {
 	bu_log("File opened, setting measurements\n");
 
@@ -2244,7 +2244,7 @@ verbIn(struct human_data_t *dude)
 
 /**
  * ged_human is the function which is called from an outside function
- * in the /shapes directory. It's essentially a main function witout
+ * in the /shapes directory. It's essentially a main function without
  * main.
  */
 int
@@ -2299,7 +2299,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	makeBody(gedp->ged_wdbp, suffix, &human_data, location, showBoxes);
 	mk_id_units(gedp->ged_wdbp, "A single Human", "in");
 
-	/*This function dumps out a text file of all dimentions of bounding boxes/antrho-data/whatever on human model.*/
+	/*This function dumps out a text file of all dimensions of bounding boxes/antrho-data/whatever on human model.*/
 	if (human_data.textwrite == 1)
 	    text(&human_data);
 	if (human_data.verbwrite == 1)
@@ -2359,7 +2359,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 /* make the .r for the bounding boxes */
 	if (showBoxes) {
 	    /*
-	     * Create opaque bounding boxes for representaions of where the person model
+	     * Create opaque bounding boxes for representations of where the person model
 	     * may lay up next to another model
 	     */
 	    BU_LIST_INIT(&boxes.l)
