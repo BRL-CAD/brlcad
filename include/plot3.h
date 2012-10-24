@@ -264,6 +264,13 @@ BN_EXPORT extern void BU_FORTRAN(f2list, F2LIST)(FILE **fpp,
 		     float *x,
 		     float *y,
 		     int *n);
+
+/**
+ * NOTE: tp_2list() and tp_3list() are good candidates to become
+ * intrinsic parts of plot3.c, for efficiency reasons.
+ *
+ * Originally written in August 04, 1978
+ */
 BN_EXPORT extern void tp_3list(FILE *fp,
 		     double *x,
 		     double *y,
