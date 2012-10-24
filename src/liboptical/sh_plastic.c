@@ -21,7 +21,7 @@
  *
  * Notes -
  * The normals on all surfaces point OUT of the solid.
- * The incomming light rays point IN.  Thus the sign change.
+ * The incoming light rays point IN.  Thus the sign change.
  *
  */
 
@@ -245,7 +245,7 @@ phong_free(genptr_t cp)
  Rd = Rp * cos(I)	(4)
 
  The specular reflectance is calculated by the product of the
- specular reflectance coeffient and (the cosine of the angle (S)
+ specular reflectance coefficient and (the cosine of the angle (S)
  raised to the nth power) :
 
  Rs = W(I) * cos(S)**n (5)
@@ -311,7 +311,7 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 	bu_bomb("phong_render: bad magic\n");
 
     if (pp == NULL)
-	bu_bomb("phong_render: bad partiton\n");
+	bu_bomb("phong_render: bad partition\n");
 
     if (rdebug&RDEBUG_SHADE)
 	bu_struct_print("phong_render", phong_parse, (char *)ps);
