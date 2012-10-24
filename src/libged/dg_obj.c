@@ -1672,10 +1672,10 @@ dgo_rt_output_handler(void *clientData, int UNUSED(mask))
 
 	/* wait for the forked process
 	 * either EOF has been sent or there was a read error.
-	 * there is no need to block indefinately
+	 * there is no need to block indefinitely
 	 */
 	WaitForSingleObject(run_rtp->hProcess, 120);
-	/* !!! need to observe implications of being non-infinate
+	/* !!! need to observe implications of being non-infinite
 	 * WaitForSingleObject(run_rtp->hProcess, INFINITE);
 	 */
 
