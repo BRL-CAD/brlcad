@@ -554,7 +554,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
 		    previous_character_double = current_character_double;
 		}
 
-	    } /* loop exits when eof encounted (and/or) double found */
+	    } /* loop exits when eof encountered (and/or) double found */
 
 	    if (found_double) {
 
