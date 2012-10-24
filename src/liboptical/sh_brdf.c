@@ -50,7 +50,7 @@ extern double AmbientIntensity;
 struct brdf_specific {
     uint32_t magic;
     double specular_refl;	/* specular reflectance */
-    double diffuse_refl;	/* diffuse reflectnace */
+    double diffuse_refl;	/* diffuse reflectance */
     double rms_slope;	/* Standard deviation (RMS) of surface slope (roughness) */
     double rms_sq;		/* square of above */
     double denom;		/* denominator for specular term */
@@ -178,7 +178,7 @@ brdf_free(genptr_t cp)
  Rd = Rp * cos(I) / PI (4)
 
  The specular reflectance is calculated by the product of the
- specular reflectance coeffient and a term dependent on the
+ specular reflectance coefficient and a term dependent on the
  surface roughness :
 
  Rs = W(I, O) * R(I, O, r)	(5)
