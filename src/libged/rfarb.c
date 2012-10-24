@@ -46,7 +46,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
     vect_t norm;
     fastf_t ndotv;
 
-    /* intentinoally double for scan */
+    /* intentionally double for scan */
     double known_pt[3];
     double pt[3][2];
     double thick;
@@ -164,7 +164,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (sscanf(argv[7+3*3], "%lf", &thick) != 1 || ZERO(thick)) {
-	bu_vls_printf(gedp->ged_result_str, "%s: bad thicknes - %s", argv[0], argv[7+3*3]);
+	bu_vls_printf(gedp->ged_result_str, "%s: bad thickness - %s", argv[0], argv[7+3*3]);
 	return GED_ERROR;
     }
     thick *= gedp->ged_wdbp->dbip->dbi_local2base;
