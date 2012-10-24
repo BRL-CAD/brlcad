@@ -110,7 +110,7 @@ ged_shells(struct ged *gedp, int argc, const char *argv[])
 
 	    new_dp=db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&shell_name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
 	    if (new_dp == RT_DIR_NULL) {
-		bu_vls_printf(gedp->ged_result_str, "An error has occured while adding a new object to the database.\n");
+		bu_vls_printf(gedp->ged_result_str, "An error has occurred while adding a new object to the database.\n");
 		return GED_ERROR;
 	    }
 
