@@ -19,7 +19,7 @@
  */
 /** @file libged/gqa.c
  *
- * performs a set of quantitative analysese on geometry.
+ * performs a set of quantitative analyses on geometry.
  *
  * XXX need to look at gap computation
  *
@@ -195,7 +195,7 @@ static struct per_obj_data {
 static struct per_region_data {
     unsigned long hits;
     double *r_lenDensity; /* for per-region per-view weight computation */
-    double *r_len;        /* for per-region, per-veiew computation */
+    double *r_len;        /* for per-region, per-view computation */
     double *r_weight;
     double *r_volume;
     struct per_obj_data *optr;
@@ -721,7 +721,7 @@ parse_args(int ac, char *av[])
 			}
 
 			if (!found_unit) {
-			    bu_vls_printf(_ged_current_gedp->ged_result_str, "Units \"%s\" not found in coversion table\n", units_name[i]);
+			    bu_vls_printf(_ged_current_gedp->ged_result_str, "Units \"%s\" not found in conversion table\n", units_name[i]);
 			    return -1;
 			}
 
@@ -827,7 +827,7 @@ get_densities_from_database(struct rt_i *rtip)
     densities = bu_calloc(128, sizeof(struct density_entry), "density entries");
     num_densities = 128;
 
-    /* Acquire one extra byte to accomodate parse_densities_buffer()
+    /* Acquire one extra byte to accommodate parse_densities_buffer()
      * (i.e. it wants to write an EOS in buf[bu->count]).
      */
     buf = bu_malloc(bu->count+1, "density buffer");
@@ -1600,7 +1600,7 @@ options_prep(struct rt_i *rtip, vect_t span)
     double newGridSpacing = gridSpacing;
     int axis;
 
-    /* figure out where the density values are comming from and get
+    /* figure out where the density values are coming from and get
      * them.
      */
     if (analysis_flags & ANALYSIS_WEIGHT) {
