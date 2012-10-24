@@ -22,13 +22,13 @@
  *  Graphical display of output from PRISM or another infrared model.
  *  This program will read as input two different types of output
  *  files, a PRISM output file or a generic output file.  A PRISM file
- *  has a time stamp then the next line contains the ellasped time,
+ *  has a time stamp then the next line contains the elapsed time,
  *  background temperature, and six region temperatures.  Each line
  *  afterwards contains eight temperatures.  Then this sequence
  *  repeats (except for the time stamp) for each time step.  The
  *  number of regions must be known.  The first line of the generic
  *  file will contain the number of regions, the second line will
- *  contain the ellasped time, and on each of the succeeding lines
+ *  contain the elapsed time, and on each of the succeeding lines
  *  will be the temperature of a region (with the background being
  *  first and the rest of the regions in order).  This pattern will
  *  repeat (except for the number of regions).  This program will
@@ -68,7 +68,7 @@
 struct table		/*  Table for region name & temperature.  */
 {
     char regname[150];	/*  Region name.  */
-    double temp;		/*  Temperature in degress C.  */
+    double temp;		/*  Temperature in degrees C.  */
 };
 struct table *info;	/*  Dimension later with malloc.  */
 
@@ -107,8 +107,8 @@ int main(int argc, char **argv)
 			/*  file (includes background).  */
     int numreg_g;		/*  Number of regions read from .g file plus one  */
     /*  for the background.  */
-    double eltim;		/*  Elasped time.  */
-    double eltim_read;	/*  Elasped time read from temperature file.  */
+    double eltim;		/*  Elapsed time.  */
+    double eltim_read;	/*  Elapsed time read from temperature file.  */
     int frst_line;		/*  Number of regions to be read in first line  */
     /*  of PRISM file.  */
     int last_line;		/*  Number of regions to be read in last line  */
@@ -191,7 +191,7 @@ int main(int argc, char **argv)
 	if (ret == 0)
 	    perror("scanf");
 
-	/*  Find elasped time to create graphical representation of.  */
+	/*  Find elapsed time to create graphical representation of.  */
 	(void)fprintf(stderr, "Enter the elapsed time to create graphical ");
 	(void)fprintf(stderr, "representation of.\n\t");
 	ret = scanf("%lf", &eltim);
@@ -251,7 +251,7 @@ int main(int argc, char **argv)
 	     *	(void)fflush(stdout);
 	     */
 
-	    /*  Read first line & check if correct ellasped time.  */
+	    /*  Read first line & check if correct elapsed time.  */
 	    (void)bu_fgets(line, 150, fpr);
 	    (void)sscanf(line, "%lf %lf %lf %lf %lf %lf %lf %lf", &eltim_read,
 			 &r[0], &r[1], &r[2], &r[3], &r[4], &r[5], &r[6]);
@@ -272,7 +272,7 @@ int main(int argc, char **argv)
 			     &r[0], &r[1], &r[2], &r[3], &r[4], &r[5], &r[6]);
 	    }
 
-	    /*  When correct ellasped time is found, read data.  */
+	    /*  When correct elapsed time is found, read data.  */
 	    /*  Read first line of data.  */
 	    for (i=0; i<frst_line; i++)
 	    {
@@ -322,7 +322,7 @@ int main(int argc, char **argv)
 	else		/*  Read generic file.  */
 	{
 	    /*  START # 3  */
-	    /*  File is alread open.  */
+	    /*  File is already open.  */
 	    /*  Read elapsed time.  */
 	    (void)bu_fgets(line, 150, fpr);
 	    (void)sscanf(line, "%lf", &eltim_read);
@@ -337,7 +337,7 @@ int main(int argc, char **argv)
 		(void)sscanf(line, "%lf", &eltim_read);
 	    }
 
-	    /*  When correct ellasped time is found, read data.  */
+	    /*  When correct elapsed time is found, read data.  */
 	    for (i=0; i<numreg; i++)
 	    {
 		(void)bu_fgets(line, 150, fpr);
