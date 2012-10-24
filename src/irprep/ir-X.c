@@ -25,7 +25,7 @@
 /*  S.Coates - 30 September 1994  */
 /*  Compile:  cc ir-X.c -L/usr/X11/lib -lX11 -o ir-X  */
 
-/*  An x-windows program to create a pictureby sending groups  */
+/*  An x-windows program to create a picture by sending groups  */
 /*  of pixels to the display.  */
 /*  This program reads a file that has as its first line the  */
 /*  width and height (integers) of the picture.  MAXPIX indicates  */
@@ -67,8 +67,8 @@
 /*  Define the structure for each color.  */
 struct colstr
 {
-    short x1[MAXARR];	/*  X vertice of square.  */
-    short y1[MAXARR];	/*  Y vertice of square.  */
+    short x1[MAXARR];	/*  X vertex of square.  */
+    short y1[MAXARR];	/*  Y vertex of square.  */
     int cnt;		/*  Counter.  */
     int more;		/*  0=>no more, else this is array extra  */
     /*  pixels are in.  */
@@ -88,7 +88,7 @@ main(void)
     XSizeHints window_hints;	/*  Hints for 1st window.  */
     XEvent event_received;	/*  Events.  */
     long input_event_mask;	/*  Input event mask that are to  */
-				/*  be responed to.  */
+				/*  be responded to.  */
     unsigned long black;		/*  Black pixel value.  */
     unsigned long white;		/*  White pixel value.  */
     int screen=0;		/*  Used for getting colors.  */
@@ -364,7 +364,7 @@ main(void)
     /*  Open file for reading.  */
     fpr = fopen(file, "rb");
 
-    /*  Check for non-existant file.  */
+    /*  Check for non-existent file.  */
     while (fpr == NULL)
     {
 	(void)printf("\nThis file does not exist, please try again.\n");
@@ -618,7 +618,7 @@ main(void)
     wind_scale = XCreateSimpleWindow(my_display, my_window, 10, (high + 50),
 				     (2 * MAXCOL), 60, 5, white, black);
 
-    /*  Select input event masks that are to be responed to (exposure).  */
+    /*  Select input event masks that are to be responded to (exposure).  */
     input_event_mask = ExposureMask | ButtonPressMask;
 
     /*  Notify server about input event masks.  */
