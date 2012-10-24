@@ -350,8 +350,8 @@ overcast_sky_lum(fastf_t lz, fastf_t *Zenith, fastf_t *Sky_elmt)
 
 /* H O M O G E N O U S _ S K Y _ L U M
  *
- * Intermediate homogenous sky light luminance function.  Sky in
- * which weather homogenously changes between clear and overcast skies
+ * Intermediate homogeneous sky light luminance function.  Sky in
+ * which weather homogeneously changes between clear and overcast skies
  * without clouds scattered in the sky.
  * Luminance units: cd/m^2
  *
@@ -1548,7 +1548,7 @@ spectral_dist_table(fastf_t lambda, fastf_t *e_mean, fastf_t *v1, fastf_t *v2)
     fastf_t ratio;
     int j;
     /* Mean and 1st two characteristic vectors of the composite data */
-    /* of the spectral absorptance of the earth's atmoshere due to */
+    /* of the spectral absorptance of the earth's atmosphere due to */
     /* ozone and water vapor. */
     /* table row: wavelength (nm), e_mean, v1, v2 */
     /* THESE ARE DIVIDED BY 10 IN "COLOR SCIENCE..." BY WYSZECKI??? */
@@ -1704,8 +1704,8 @@ skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf
     }
     y = 2.870*x - 3.000*x*x - 0.275;
 
-    /* Scalar multiples os 1st two characteristic vectors needed to */
-    /* reconstitue spectral distribution curves of typical daylight. */
+    /* Scalar multiples of 1st two characteristic vectors needed to */
+    /* reconstitute spectral distribution curves of typical daylight. */
     m1 = -1.3515 - 1.7703*x + 5.9114*y;
     m2 = 1./(0.0241 + 0.2562*x - 0.7341*y);
     m1 *= m2;
