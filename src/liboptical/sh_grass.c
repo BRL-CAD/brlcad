@@ -621,7 +621,7 @@ make_bush(struct plant *pl, double seed, const fastf_t *cell_pos, const struct g
 /* derived from cell_num */
 
 
-/* cell specific weght for count, height */
+/* cell specific weight for count, height */
 
 {
     point_t pt;
@@ -742,7 +742,7 @@ isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, st
 	if (rdebug&RDEBUG_SHADE) {
 	    bu_log("\t    ");
 	    switch (cond) {
-		case -2: bu_log("lines paralell  "); break;
+		case -2: bu_log("lines parallel  "); break;
 		case -1: bu_log("lines colinear  "); break;
 		case  0: bu_log("lines intersect "); break;
 		case  1: bu_log("lines miss      "); break;
@@ -1292,7 +1292,7 @@ grass_render(struct application *ap, const struct partition *pp, struct shadewor
      *
      * A set bit indicates that the cell has NOT been processed.
      */
-    flags = 0777;	/* no ajacent cells processed */
+    flags = 0777;	/* no adjacent cells processed */
     VMOVE(curr_pt, in_pt);
     cell_num[X] = (long)(in_pt[X] / grass_sp->cell[X]);
     cell_num[Y] = (long)(in_pt[Y] / grass_sp->cell[Y]);
