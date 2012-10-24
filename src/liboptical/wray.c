@@ -69,7 +69,7 @@ struct vldray
  *
  * _ray.ne = asin(_norm[Z]);
  *
- * but the asin() function can't deal with floating point noize that
+ * but the asin() function can't deal with floating point noise that
  * might make _norm[Z] slightly outside of the range -1.0 to +1.0.
  * A completely stable formulation is:
  *
@@ -151,7 +151,7 @@ wray(struct partition *pp, struct application *ap, FILE *fp, const vect_t inorma
  *
  * Write a VLD-standard ray for a section of a ray specified
  * by the "in" and "out" distances along the ray.  This is usually
- * used for logging passage through "air" (ie, no solid).
+ * used for logging passage through "air" (i.e., no solid).
  * The "inorm" flag holds an inward pointing normal (typ. a r_dir value)
  * that will be flipped on output, so that the "air solid"
  * has a proper outward pointing normal.
