@@ -125,7 +125,7 @@ push_leaf(struct db_tree_state *tsp,
 /*
  * XXX - This will work but is not the best method.  dp->d_uses tells us
  * if this solid (leaf) has been seen before.  If it hasn't just add
- * it to the list.  If it has, search the list to see if the matricies
+ * it to the list.  If it has, search the list to see if the matrices
  * match and do the "right" thing.
  *
  * (There is a question as to whether dp->d_uses is reset to zero
@@ -287,10 +287,10 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 
     /*
      * Now use the wdb_identitize() tree walker to turn all the
-     * matricies in a combination to the identity matrix.
+     * matrices in a combination to the identity matrix.
      * It would be nice to use db_tree_walker() but the tree
      * walker does not give us all combinations, just regions.
-     * This would work if we just processed all matricies backwards
+     * This would work if we just processed all matrices backwards
      * from the leaf (solid) towards the root, but all in all it
      * seems that this is a better method.
      */
