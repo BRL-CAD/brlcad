@@ -473,7 +473,7 @@ rr_render(register struct application *ap,
      * (i.e., there is no intervening air-gap), and
      * the two refractive indices match, then do not fire a
      * reflected ray -- just take the transmission contribution.
-     * This is important, eg, for glass gun tubes projecting
+     * This is important, e.g., for glass gun tubes projecting
      * through a glass armor plate. :-)
      */
     if (NEAR_ZERO(pp->pt_inhit->hit_dist, AIR_GAP_TOL)
