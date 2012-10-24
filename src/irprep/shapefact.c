@@ -48,13 +48,13 @@
 /*		indicating miss.  */
 /*	 3 December 1991  - Add some comments.  */
 /*	27 February 1992  - Remove backward firing ray & replace with  */
-/*		simpilar solution.  If the ray goes from region i to  */
+/*		simpler solution.  If the ray goes from region i to  */
 /*		region j through engine air N(i) & N(i, j) are incremented.  */
 /*		Simply increment N(j) & N(j, i) also.  EASY.  Add loop  */
 /*		to check reciprocity.  Fix problem with number of rays  */
 /*		leaving a region.  To compute engine area the total number  */
 /*		of rays leaving a region and entering engine air must be  */
-/*		used.  Not the total that leave throught engine air and  */
+/*		used.  Not the total that leave through engine air and  */
 /*		hit another region.  */
 
 #include "common.h"
@@ -161,13 +161,13 @@ int main(int argc, char **argv)
 
     struct bn_unif *msr = NULL;
 
-    /*  Check to see if arguments are implimented correctly.  */
+    /*  Check to see if arguments are implemented correctly.  */
     if ( (argc < 3 || argv[1] == NULL) || (argv[2] == NULL) ) {
 	(void)fprintf(stderr, "\nusage:  %s file.g objects\n\n", *argv);
     } else {
 	/*  START # 1  */
 
-	/*  Ask what type of file is to be created - regualar  */
+	/*  Ask what type of file is to be created - regular  */
 	/*  or generic.  */
 	(void)printf("Enter type of file to be written (0=>regular or ");
 	(void)printf("1=>generic).  ");
