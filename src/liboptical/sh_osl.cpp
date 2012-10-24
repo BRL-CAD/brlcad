@@ -112,7 +112,7 @@ struct mfuncs osl_mfuncs[] = {
 int
 osl_parse_edge(char *edge, ShaderEdge &sh_edge)
 {
-    /* Split string arount # */
+    /* Split string around # */
     const char *item;
 
     ShaderParam sh_param1, sh_param2;
@@ -152,7 +152,7 @@ int
 osl_parse_shader(char *shadername, ShaderInfo &sh_info)
 {
 
-    /* Split string arount # */
+    /* Split string around # */
     const char *item;
     item = strtok(shadername, "#");
     /* We are going to look for shader in ../shaders/ */
