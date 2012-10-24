@@ -200,13 +200,13 @@ HIDDEN void
 persp_hook(register const struct bu_structparse *UNUSED(sdp), register const char *UNUSED(name), char *base, const char *value)
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     struct img_specific *img_sp = (struct img_specific *)base;
 
     if (img_sp->i_perspective < 0.0) {
-	bu_log("perspecitve %s < 0.0\n", value);
+	bu_log("perspective %s < 0.0\n", value);
 	bu_bomb("");
     }
 
@@ -227,7 +227,7 @@ HIDDEN void
 dimen_hook(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *value)
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     if (BU_STR_EQUAL("%f", sdp->sp_fmt)) {
@@ -262,7 +262,7 @@ static void
 orient_hook(register const struct bu_structparse *UNUSED(sdp), register const char *UNUSED(name), char *base, const char *UNUSED(value))
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     struct prj_specific *prj_sp;
