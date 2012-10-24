@@ -340,7 +340,7 @@ struct broadphase_callback : public btOverlapFilterCallback
 
 		btVector3 aabbMin, aabbMax;
 
-		//This would prevent collision between proxy0 and proxy1 inspite of
+		//This would prevent collision between proxy0 and proxy1 ins pite of
 		//AABB overlap being detected
 		//collides = false;
 		btRigidBody* boxA = (btRigidBody*)proxy0->m_clientObject;
