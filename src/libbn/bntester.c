@@ -605,7 +605,6 @@ main(int argc, char **argv)
 }
 
 
-/** @} */
 /*
  * Local Variables:
  * mode: C
