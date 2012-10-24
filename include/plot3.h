@@ -21,11 +21,12 @@
 /** @{ */
 /** @file plot3.h
  *
- * This is a ANSI C header for LIBPLOT3 giving function prototypes.
- * This header file will also work if called by a "traditional" C
- * compiler.
+ *  The basic UNIX-plot routines.  The calling sequence is the same as
+ *  the original Bell Labs routines, with the exception of the pl_
+ *  prefix on the name.
  *
  */
+
 #ifndef	PLOT3_H
 #define	PLOT3_H
 
@@ -39,6 +40,7 @@ extern "C" {
 #include "vmath.h"
 #include "bn.h"
 
+
 #define	pl_mat_idn( _mat )		MAT_IDN( _mat )
 #define pl_mat_zero( _mat )		MAT_ZERO( _mat )
 #define pl_mat_copy( _mat1, _mat2 )	MAT_COPY( _mat1, _mat2 )
@@ -46,11 +48,7 @@ extern "C" {
 #define PL_OUTPUT_MODE_BINARY 0
 #define PL_OUTPUT_MODE_TEXT 1
 
-/*
- *  The basic UNIX-plot routines.
- *  The calling sequence is the same as the original Bell Labs routines,
- *  with the exception of the pl_ prefix on the name.
- */
+
 BN_EXPORT extern int pl_getOutputMode();
 BN_EXPORT extern void pl_setOutputMode(int mode);
 BN_EXPORT extern void pl_point(FILE *plotfp,
@@ -374,7 +372,22 @@ BN_EXPORT extern void tp_sep(float x,
 		     int *ex);
 BN_EXPORT extern double tp_ipow(double x,
 		     int n);
-#ifdef __VMATH_H__
+
+
+/**
+ * This routine is used to generate an axis for a graph.  It draws an
+ * axis with a linear scale, places tic marks every inch, labels the
+ * tics, and uses the supplied title for the axis.
+ *
+ * The strategy behind this routine is to split the axis into
+ * SEGMENTS, which run from one tick to the next.  The origin of the
+ * first segment (x, y), the origin of the bottom of the first tick
+ * (xbott, ybott), and the origin of the first tick label (xnum, ynum)
+ * are computed along with the delta x and delta y (xincr, yincr)
+ * which describes the interval to the start of the next tick.
+ *
+ * Originally written on August 01, 1978
+ */
 BN_EXPORT extern void tp_3axis(FILE *fp,
 		     char *string,
 		     point_t origin,
@@ -418,7 +431,6 @@ BN_EXPORT extern void BU_FORTRAN(f3vect, F3VECT)(FILE **fp,
 		     float *tz,
 		     float *fl,
 		     float *tl);
-#endif /* __VMATH_H__ */
 
 #ifdef __cplusplus
 }
