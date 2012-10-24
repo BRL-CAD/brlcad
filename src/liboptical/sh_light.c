@@ -165,7 +165,7 @@ HIDDEN void
 light_cvt_visible(register const struct bu_structparse *sdp, register const char *name, char *base, const char *UNUSED(value))
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     struct light_specific *lsp = (struct light_specific *)base;
@@ -219,7 +219,7 @@ HIDDEN void
 light_pt_set(register const struct bu_structparse *sdp, register const char *name, char *base, const char *UNUSED(value))
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     struct light_specific *lsp = (struct light_specific *)base;
@@ -1117,7 +1117,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	}
     }
 #endif
-    /* or something futher away than a finite invisible light */
+    /* or something further away than a finite invisible light */
     if (lsp->lt_invisible && !(lsp->lt_infinite)) {
 	vect_t tolight;
 	VSUB2(tolight, lsp->lt_pos, ap->a_ray.r_pt);
@@ -1793,7 +1793,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 	bu_free(flags, "free flags array");
     }
 
-    if (rdebug & RDEBUG_LIGHT) bu_log("computing Light obscruration: end\n");
+    if (rdebug & RDEBUG_LIGHT) bu_log("computing Light obscuration: end\n");
 }
 
 
