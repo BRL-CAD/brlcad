@@ -55,7 +55,7 @@
  *	    de{pth} = f		Amount of dither to add to sine
  *	    r{otation} = a/b/c	3-D rotation of rings' vertex
  *	    V = X/Y/Z		Vertex of rings' center
- *	    D = X/Y/Z		XYZ of where rings's center is aimed at
+ *	    D = X/Y/Z		XYZ of where rings' center is aimed at
  *
  * Source -
  * Gull Island Consultants, Inc.
@@ -318,12 +318,12 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
     }
 
     if (wd->flags == EXPLICIT_VERTEX) {
-	bu_log("wood_setup(%s):  Explicit vertex specfied without direction\n", rp->reg_name);
+	bu_log("wood_setup(%s):  Explicit vertex specified without direction\n", rp->reg_name);
 	return -1;
     }
 
     if (wd->flags == EXPLICIT_DIRECTION) {
-	bu_log("wood_setup(%s):  Explicit direction specfied without vertex\n", rp->reg_name);
+	bu_log("wood_setup(%s):  Explicit direction specified without vertex\n", rp->reg_name);
 	return -1;
     }
 
@@ -575,9 +575,9 @@ wood_turb(double x, double y, double z, struct wood_specific *wd)
  * W O O D _ R E N D E R
  *
  * Given an XYZ hit point, compute the concentric ring structure.  We do
- * this by computing the dot-product of the hit point vs the ring vertex,
+ * this by computing the dot-product of the hit point vs. the ring vertex,
  * which is then used to compute the distance from the ring center.  This
- * distance is then multiplied by a velocity coefficient that is sined.
+ * distance is then multiplied by a velocity coefficient that is signed.
  */
 HIDDEN int
 wood_render(struct application *UNUSED(ap), const struct partition *UNUSED(partp), struct shadework *swp, genptr_t dp)
