@@ -52,7 +52,7 @@ void
 noise_cvt_parse(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value)
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     double *p = (double *)(base+sdp->sp_offset);
@@ -72,7 +72,7 @@ void
 noise_deg_to_rad(register const struct bu_structparse *sdp, const char *UNUSED(name), char *base, const char *UNUSED(value))
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     double *p = (double *)(base+sdp->sp_offset);
