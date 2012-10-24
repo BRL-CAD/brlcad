@@ -69,16 +69,14 @@
 
 
 /**
- * P L _ S T R N C P Y
- *
  * Make null-terminated copy of a string in output buffer, being
  * careful not to exceed indicated buffer size Accept "$" as alternate
  * string-terminator for FORTRAN Holerith constants, because getting
  * FORTRAN to null-terminate strings is to painful (and non-portable)
  * to contemplate.
  */
-void
-pl_strncpy(register char *out, register char *in, register int sz)
+static void
+fortran_strncpy(register char *out, register char *in, register int sz)
 {
     register int c = '\0';
 
@@ -104,9 +102,7 @@ pl_strncpy(register char *out, register char *in, register int sz)
  */
 
 
-/**
- * I F O P E N
- *
+/*
  * Open a file (by name) for plotting.
  */
 void
@@ -114,7 +110,7 @@ F(ifopen, IFOPEN)(FILE **plotfp, char *name)
 {
     char buf[128];
 
-    pl_strncpy(buf, name, (int)sizeof(buf));
+    fortran_strncpy(buf, name, (int)sizeof(buf));
     if ((*plotfp = fopen(buf, "wb")) == NULL)
 	perror(buf);
 }
@@ -139,7 +135,7 @@ void
 F(ilinmd, ILINMD)(FILE **plotfp, char *s)
 {
     char buf[32];
-    pl_strncpy(buf, s, (int)sizeof(buf));
+    fortran_strncpy(buf, s, (int)sizeof(buf));
     pl_linmod(*plotfp, buf);
 }
 
@@ -159,7 +155,7 @@ void
 F(i2labl, I2LABL)(FILE **plotfp, char *s)
 {
     char buf[256];
-    pl_strncpy(buf, s, (int)sizeof(buf));
+    fortran_strncpy(buf, s, (int)sizeof(buf));
     pl_label(*plotfp, buf);
 }
 
