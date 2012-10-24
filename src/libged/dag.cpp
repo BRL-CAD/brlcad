@@ -269,7 +269,7 @@ decorate_object(struct _ged_dag_data *dag, char *object_name, int object_type)
 /**
  * Function which processes a combination node. I.e., it adds a new entry into the hash tables, if necessary.
  * In this case, it also adds a Avoid::ShapeRef object to the graph. It also traverses its subtree, adds
- * entries into the hash table for solid objects, if neccessary. In this case as well, it also adds a
+ * entries into the hash table for solid objects, if necessary. In this case as well, it also adds a
  * Avoid::ShapeRef object to the graph.
  */
 static void
