@@ -72,7 +72,7 @@
 
 #define WDB_TCL_ALLOC_ERR { \
 	Tcl_AppendResult(wdbp->wdb_interp, "\
-An error has occured while adding a new object to the database.\n", (char *)NULL); \
+An error has occurred while adding a new object to the database.\n", (char *)NULL); \
 	WDB_TCL_ERROR_RECOVERY_SUGGESTION; }
 
 #define WDB_TCL_ALLOC_ERR_return { \
@@ -112,7 +112,7 @@ you should exit now, and resolve the I/O problem, before continuing.\n", (char *
 
 /* For errors from db_diradd() or db_alloc() */
 #define WDB_ALLOC_ERR { \
-	bu_log("\nAn error has occured while adding a new object to the database.\n"); \
+	bu_log("\nAn error has occurred while adding a new object to the database.\n"); \
 	WDB_ERROR_RECOVERY_SUGGESTION; }
 
 #define WDB_ALLOC_ERR_return { \
@@ -659,7 +659,7 @@ wdb_combadd(struct db_i *dbip,
 	/* Update the in-core directory */
 	dp = db_diradd(dbip, combname, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&intern.idb_type);
 	if (dp == RT_DIR_NULL) {
-	    bu_log("An error has occured while adding '%s' to the database.\n", combname);
+	    bu_log("An error has occurred while adding '%s' to the database.\n", combname);
 	    return RT_DIR_NULL;
 	}
 
@@ -3759,9 +3759,9 @@ wdb_copy_cmd(struct rt_wdb *wdbp,
     dp = db_diradd(wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, proto->d_flags, (genptr_t)&proto->d_minor_type);
     if (dp == RT_DIR_NULL) {
 	if (wdbp->wdb_interp) {
-	    Tcl_AppendResult(wdbp->wdb_interp, "An error has occured while adding a new object to the database.", (char *)NULL);
+	    Tcl_AppendResult(wdbp->wdb_interp, "An error has occurred while adding a new object to the database.", (char *)NULL);
 	} else {
-	    bu_log("An error has occured while adding a new object to the database.");
+	    bu_log("An error has occurred while adding a new object to the database.");
 	}
 	return TCL_ERROR;
     }
@@ -4034,7 +4034,7 @@ wdb_move_all_cmd(struct rt_wdb *wdbp,
 
 /**
  * @brief
- * Rename all occurences of an object
+ * Rename all occurrences of an object
  *
  * @par Usage:
  * procname mvall from to
@@ -5288,7 +5288,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
     init_state.ts_ttol = &wdbp->wdb_ttol;
     init_state.ts_tol = &wdbp->wdb_tol;
 
-    /* Initial vaues for options, must be reset each time */
+    /* Initial values for options, must be reset each time */
     triangulate = 0;
     make_bot = 1;
 
@@ -6610,7 +6610,7 @@ wdb_push_leaf(struct db_tree_state *tsp,
 /*
  * XXX - This will work but is not the best method.  dp->d_uses tells us
  * if this solid (leaf) has been seen before.  If it hasn't just add
- * it to the list.  If it has, search the list to see if the matricies
+ * it to the list.  If it has, search the list to see if the matrices
  * match and do the "right" thing.
  *
  * (There is a question as to whether dp->d_uses is reset to zero
@@ -6780,10 +6780,10 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 
     /*
      * Now use the wdb_identitize() tree walker to turn all the
-     * matricies in a combination to the identity matrix.
+     * matrices in a combination to the identity matrix.
      * It would be nice to use db_tree_walker() but the tree
      * walker does not give us all combinations, just regions.
-     * This would work if we just processed all matricies backwards
+     * This would work if we just processed all matrices backwards
      * from the leaf (solid) towards the root, but all in all it
      * seems that this is a better method.
      */
@@ -7108,7 +7108,7 @@ Do_copy_membs(struct db_i *dbip,
 	MAT_COPY(new_xform, xform);
     }
 
-    /* Copy member with current tranform matrix */
+    /* Copy member with current transform matrix */
     dp_new=Copy_object(dbip, dp, new_xform, wdbp);
     if (dp_new == RT_DIR_NULL) {
 	Tcl_AppendResult(wdbp->wdb_interp, "Failed to copy object ",
@@ -8898,7 +8898,7 @@ wdb_summary_cmd(struct rt_wdb *wdbp,
 		flags |= RT_DIR_COMB;
 		break;
 	    default:
-		Tcl_AppendResult(wdbp->wdb_interp, "summary:  P R or G are only valid parmaters\n",
+		Tcl_AppendResult(wdbp->wdb_interp, "summary:  P R or G are only valid parameters\n",
 				 (char *)NULL);
 		bad = 1;
 		break;
