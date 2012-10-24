@@ -133,7 +133,7 @@ struct mfuncs flat_mfuncs[] = {
  *
  * sdp == structure description
  * name == struct member name
- * base == begining of structure
+ * base == beginning of structure
  * value == string containing value
  */
 void
