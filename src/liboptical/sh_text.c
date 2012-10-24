@@ -786,7 +786,7 @@ ckr_free(genptr_t cp)
 /*
  * T S T M _ R E N D E R
  *
- * Render a map which varries red with U and blue with V values.
+ * Render a map which varies red with U and blue with V values.
  * Mostly useful for debugging ft_uv() routines.
  */
 HIDDEN int
@@ -864,7 +864,7 @@ bmp_render(struct application *ap, const struct partition *pp, struct shadework 
     fastf_t pertU, pertV;
     vect_t y;		/* world coordinate axis vectors */
     vect_t u, v;		/* surface coord system vectors */
-    int i, j;		/* bump map pixel indicies */
+    int i, j;		/* bump map pixel indices */
 
     /*
      * If no texture file present, or if
