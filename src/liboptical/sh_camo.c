@@ -19,7 +19,7 @@
  */
 /** @file liboptical/sh_camo.c
  *
- * A shader to apply a crude camoflage color pattern to an object
+ * A shader to apply a crude camouflage color pattern to an object
  * using a fractional Brownian motion of 3 colors
  *
  * At each hit point, the shader evaluate the fbm to obtain a "Noise"
@@ -75,7 +75,7 @@ void
 camo_cvt_parse(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *value)
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     double *p = (double *)(base+sdp->sp_offset);
@@ -190,7 +190,7 @@ void
 color_fix(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *UNUSED(value))
 /* structure description */
 /* struct member name */
-/* begining of structure */
+/* beginning of structure */
 /* string containing value */
 {
     register double *p = (double *)(base+sdp->sp_offset);
