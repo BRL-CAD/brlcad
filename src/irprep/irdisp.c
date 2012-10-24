@@ -20,7 +20,7 @@
 /** @file irdisp.c
  *
  *  This is an X-windows program that will raytrace a BRL-CAD mged
- *  model and/or diplay it using the PRISM temperature output file.
+ *  model and/or display it using the PRISM temperature output file.
  *
  *  File:  pictx.c
  *  S.Coates - 30 September 1994
