@@ -236,10 +236,26 @@ BN_EXPORT extern void pdv_3ray(FILE *fp,
 
 #define PL_FORTRAN(lc, uc)	BU_FORTRAN(lc, uc)
 
+/**
+ * Take a set of x, y coordinates, and plot them as a polyline, ie,
+ * connect them with line segments.  For markers, use tp_mlist(),
+ * below.  This "C" interface expects arrays of INTs.
+ */
 BN_EXPORT extern void tp_i2list(FILE *fp,
 		     int *x,
 		     int *y,
 		     int npoints);
+
+/**
+ * Take a set of x, y coordinates, and plot them as a polyline, ie,
+ * connect them with line segments.  For markers, use tp_mlist(),
+ * below.  This "C" interface expects arrays of DOUBLES.
+ *
+ * NOTE: tp_2list() and tp_3list() are good candidates to become
+ * intrinsic parts of plot3.c, for efficiency reasons.
+ *
+ * Originally written in August 04, 1978
+ */
 BN_EXPORT extern void tp_2list(FILE *fp,
 		     double *x,
 		     double *y,
@@ -258,6 +274,27 @@ BN_EXPORT extern void BU_FORTRAN(f3list, F3LIST)(FILE **fpp,
 		     float *y,
 		     float *z,
 		     int *n);
+
+/**
+ * Take a set of x, y co-ordinates and plots them, with a combination
+ * of connecting lines and/or place markers.  It is important to note
+ * that the arrays are arrays of doubles, and express UNIX-plot
+ * coordinates in the current pl_space().
+ *
+ * tp_scale(TIG) may be called first to optionally re-scale the data.
+ *
+ * The 'mark' character to be used for marking points off can be any
+ * printing ASCII character, or 001 to 005 for the special marker
+ * characters.
+ *
+ * In addition, the value of the 'flag' variable determines the type
+ * of line to be drawn, as follows:
+ *
+ *@li	0	Draw nothing (rather silly)
+ *@li	1	Marks only, no connecting lines.  Suggested interval=1.
+ *@li	2	Draw connecting lines only.
+ *@li	3	Draw line and marks
+ */
 BN_EXPORT extern void tp_2mlist(FILE *fp,
 		     double *x,
 		     double *y,
@@ -266,6 +303,10 @@ BN_EXPORT extern void tp_2mlist(FILE *fp,
 		     int mark,
 		     int interval,
 		     double size);
+
+/**
+ * This FORTRAN interface expects arrays of REALs (single precision).
+ */
 BN_EXPORT extern void BU_FORTRAN(f2mlst, F2MLST)(FILE **fp,
 		     float *x,
 		     float *y,

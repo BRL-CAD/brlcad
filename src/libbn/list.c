@@ -17,15 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup plot */
-/** @{ */
-/** @file libbn/list.c
- *
- * NOTE that tp_2list() and tp_3list() are good candidates to become
- * intrinsic parts of plot3.c, for efficiency reasons.
- *
- * Originally written in August 04, 1978
- */
 
 #include "common.h"
 
@@ -34,17 +25,10 @@
 #include "plot3.h"
 
 /* Modes for internal flag */
-#define	TP_MARK		1		/* Draw marks */
-#define	TP_LINE		2		/* Draw lines */
+#define TP_MARK 1 /* Draw marks */
+#define TP_LINE 2 /* Draw lines */
 
-/**
- *			T P _ I 2 L I S T
- *
- *  Take a set of x, y coordinates, and plot them as a
- *  polyline, ie, connect them with line segments.
- *  For markers, use tp_mlist(), below.
- *  This "C" interface expects arrays of INTs.
- */
+
 void
 tp_i2list(register FILE *fp, register int *x, register int *y, register int npoints)
 
@@ -61,14 +45,6 @@ tp_i2list(register FILE *fp, register int *x, register int *y, register int npoi
 }
 
 
-/**
- *			T P _ 2 L I S T
- *
- *  Take a set of x, y coordinates, and plot them as a
- *  polyline, ie, connect them with line segments.
- *  For markers, use tp_mlist(), below.
- *  This "C" interface expects arrays of DOUBLES.
- */
 void
 tp_2list(register FILE *fp, register double *x, register double *y, register int npoints)
 
@@ -89,7 +65,7 @@ void
 PL_FORTRAN(f2list, F2LIST)(FILE **fpp, float *x, float *y, int *n)
 {
     register int npoints = *n-1;	/* FORTRAN uses 1-based subscripts */
-    register FILE	*fp = *fpp;
+    register FILE *fp = *fpp;
 
     if (npoints <= 0)
 	return;
@@ -100,9 +76,6 @@ PL_FORTRAN(f2list, F2LIST)(FILE **fpp, float *x, float *y, int *n)
 }
 
 
-/*
- *			T P _ 3 L I S T
- */
 void
 tp_3list(FILE *fp, register double *x, register double *y, register double *z, register int npoints)
 {
@@ -119,7 +92,7 @@ void
 PL_FORTRAN(f3list, F3LIST)(FILE **fpp, float *x, float *y, float *z, int *n)
 {
     register int npoints = *n-1;	/* FORTRAN uses 1-based subscripts */
-    register FILE	*fp = *fpp;
+    register FILE *fp = *fpp;
 
     if (npoints <= 0)
 	return;
@@ -130,28 +103,6 @@ PL_FORTRAN(f3list, F3LIST)(FILE **fpp, float *x, float *y, float *z, int *n)
 }
 
 
-/**
- *			T P _ 2 M L I S T
- *
- *  Take a set of x, y co-ordinates and plots them,
- *  with a combination of connecting lines and/or place markers.
- *  It is important to note that the arrays
- *  are arrays of doubles, and express UNIX-plot coordinates in the
- *  current pl_space().
- *
- *  tp_scale(TIG) may be called first to optionally re-scale the data.
- *
- *  The 'mark' character to be used for marking points off can be any
- *  printing ASCII character, or 001 to 005 for the special marker characters.
- *
- *  In addition, the value of the 'flag' variable determines the type
- *  of line to be drawn, as follows:
- *
- *@li	0	Draw nothing (rather silly)
- *@li	1	Marks only, no connecting lines.  Suggested interval=1.
- *@li	2	Draw connecting lines only.
- *@li	3	Draw line and marks
- */
 void
 tp_2mlist(FILE *fp, register double *x, register double *y, int npoints, int flag, int mark, int interval, double size)
 
@@ -186,9 +137,6 @@ tp_2mlist(FILE *fp, register double *x, register double *y, int npoints, int fla
 }
 
 
-/**
- *  This FORTRAN interface expects arrays of REALs (single precision).
- */
 void
 PL_FORTRAN(f2mlst, F2MLST)(FILE **fp, float *x, float *y, int *np, int *flag /* indicates user's mode request */, int *mark, int *interval, float *size)
 {
@@ -216,7 +164,6 @@ PL_FORTRAN(f2mlst, F2MLST)(FILE **fp, float *x, float *y, int *np, int *flag /* 
 }
 
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -17,15 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libbn/globals.c
- *
- * Global variables in LIBBN.
- *
- * New global variables are discouraged and refactoring in ways that
- * eliminates existing global variables without reducing functionality
- * is always encouraged.
- *
- */
 
 #include "common.h"
 
@@ -33,6 +24,13 @@
 
 #include "vmath.h"
 #include "bn.h"
+
+
+/*
+ * New global variables are discouraged and refactoring in ways that
+ * eliminates existing global variables without reducing functionality
+ * is always encouraged.
+ */
 
 
 /* see rand.c for random constant globals */
@@ -47,52 +45,17 @@ extern float bn_rand_poison_[];
 extern int *tp_cindex[];
 extern int tp_ctable[];
 
-
-/**
- * pi
- */
+/* math constants */
 const fastf_t bn_pi = M_PI;
-/**
- * pi*2
- */
 const fastf_t bn_twopi = 2.0 * M_PI;
-
-/**
- * pi/2
- */
 const fastf_t bn_halfpi = M_PI_2;
-/**
- * pi/4
- */
 const fastf_t bn_quarterpi = M_PI_4;
-
-/**
- * 1/pi
- */
 const fastf_t bn_invpi = M_1_PI;
-/**
- * 1/(pi*2)
- */
 const fastf_t bn_inv2pi = 1.0 / (2.0 * M_PI);
-/**
- * 1/(pi*4)
- */
 const fastf_t bn_inv4pi = 1.0 / (4.0 * M_PI);
-
-/**
- * 1.0/255.0
- */
 const fastf_t bn_inv255 = 1.0 / 255.0;
-
-/**
- * (pi*2)/360
- */
 const fastf_t bn_degtorad = DEG2RAD;
-/**
- * 360/(pi*2)
- */
 const fastf_t bn_radtodeg = RAD2DEG;
-
 
 /*
  * Local Variables:
