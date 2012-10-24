@@ -11,7 +11,6 @@ set(LIBBN_SOURCES
   axis.c
   complex.c
   font.c
-  fortran.c
   globals.c
   list.c
   marker.c
