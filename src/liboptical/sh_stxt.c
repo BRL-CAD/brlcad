@@ -19,7 +19,7 @@
  */
 /** @file liboptical/sh_stxt.c
  *
- * Routines to implement solid (ie, 3-D) texture maps.
+ * Routines to implement solid (i.e., 3-D) texture maps.
  *
  * XXX Solid texturing is still preliminary.
  *
