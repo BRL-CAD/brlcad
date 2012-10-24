@@ -30,12 +30,12 @@
 
 /*	CHANGES		*/
 /*	10 December 1990 - 'Dimension' arrays using malloc.  */
-/*	17 December 1990 - Incorperate subroutine rotate & radians.  */
+/*	17 December 1990 - Incorporate subroutine rotate & radians.  */
 /*	19 February 1991 - No defaults for material properties.  */
 /*	 5 March 1991    - Creates PRISM, generic, or geometric file.  */
 /*	13 March 1991    - Corrects problem writing out material.  */
 /*	23 October 1991  - Writes out region # & name file.  */
-/*	30 October 1991  - Make region numbering sceme the same for all  */
+/*	30 October 1991  - Make region numbering scheme the same for all  */
 /*			   files, i.e. region numbers start at 1.  */
 /*	 5 November 1991 - Print engine air area in radius field.  Give  */
 /*			   user a choice of a PRISM 2.0 or 3.0 file.  */
@@ -75,7 +75,7 @@
 #define VOLVAR 0.1	/*  Variation in volume & surface area  */
 			/*  that is allowed, before flag is set.  */
 #define ZEROTOL 1.e-20	/*  Tolerance for dividing by zero.  */
-#define NORMTOL 1.e-2	/*  Tolerance for finding cummulative normals.  */
+#define NORMTOL 1.e-2	/*  Tolerance for finding cumulative normals.  */
 #define ALPHA 25.	/*  Rotation about z-axis.  */
 #define BETA 50.	/*  Rotation about y-axis.  */
 #define GAMMA 35.	/*  Rotation about x-axis.  */
@@ -92,12 +92,12 @@ struct table
 {
     const char *regname;		/*  region name  */
     short mat;		/*  material code  */
-    double cumnorm[3];	/*  cummulative normal vector sum  */
+    double cumnorm[3];	/*  cumulative normal vector sum  */
     /*  for the exterior free surfaces  */
-    double cumvol[3];	/*  cummulative volume sums for each  */
+    double cumvol[3];	/*  cumulative volume sums for each  */
     /*  direction fired  */
     double centroid[3];	/*  centroid calculation  */
-    double cumfs[7][3];	/*  cummulative surface area for */
+    double cumfs[7][3];	/*  cumulative surface area for */
     /*  each air type, 0-exterior air,  */
     /*  1-crew compartment air, 2-engine  */
     /*  compartment air, 3-closed compartment  */
@@ -113,7 +113,7 @@ struct table
     /*  9 => generic air 2  */
     int *adjreg;		/*  adjacent region, 0=>no touch,  */
     /*  1=>touch  */
-    double *ssurarea[3];	/*  cummulative sum of shared surface  */
+    double *ssurarea[3];	/*  cumulative sum of shared surface  */
     /*  area of adjacent regions  */
     double surarea[3];	/*  surface area of that region, one  */
     /*  for each direction rays fired  */
@@ -166,8 +166,8 @@ int main(int argc, char **argv)
     char fileden[16];	/*  used for reading material id file  */
     FILE *fp5;		/*  used for creating generic file  */
     char filegen[16];	/*  used for creating generic file  */
-    FILE *fp6;		/*  used for creating gemetric file  */
-    char filegeo[16];	/*  used for creating gemetric file  */
+    FILE *fp6;		/*  used for creating geometric file  */
+    char filegeo[16];	/*  used for creating geometric file  */
     FILE *fp7;		/*  Used for creating region # & name file.  */
     char filernn[16];	/*  Used for creating region # & name file.  */
     int numadjreg;		/*  used for finding the number of  */
@@ -241,12 +241,12 @@ int main(int argc, char **argv)
     int numsol;		/*  Number of solar loaded surfaces.  */
     int prmrel;		/*  PRISM release number 2=>2.0 & 3=>3.0.  */
     int ifire;		/*  Number of sets of rays to be fired,  */
-    /*  0=>fire from 3 orthogonal postions,  */
-    /*  1=>fire from 1 postion.  */
+    /*  0=>fire from 3 orthogonal positions,  */
+    /*  1=>fire from 1 position.  */
     double diff;		/*  Difference, used in finding variance.  */
     int ret;
 
-    /*  Check to see if arguments implimented correctly.  */
+    /*  Check to see if arguments implemented correctly.  */
     if (argc < 3 || argv[1]==NULL || argv[2]==NULL) {
 	(void)fprintf(stderr, "\nusage:  firpass file.g objects\n\n");
     } else {
@@ -392,7 +392,7 @@ int main(int argc, char **argv)
 	/*  Open & read material id file.  */
 	fp4=fopen(fileden, "rb");
 	/*
-	 *	(void)printf("Materail id file open for reading.\n");
+	 *	(void)printf("Material id file open for reading.\n");
 	 *	(void)fflush(stdout);
 	 */
 	/*  Assumption is made that material ids run from 0 to 40  */
@@ -918,7 +918,7 @@ int main(int argc, char **argv)
 		region[i].cumvol[2];
 
 	    /*
-	     *		(void)printf("\tcummulative volume:  %f", total);
+	     *		(void)printf("\tcumulative volume:  %f", total);
 	     *		(void)fflush(stdout);
 	     */
 	    if ((total < -ZEROTOL) || (ZEROTOL < total))
@@ -1208,7 +1208,7 @@ int main(int argc, char **argv)
 		region[i].cumfs[k][1] = (double)flag;
 	    }					/*  END # 1070  */
 
-	    /*  Finish finding cummulative normal of exterior  */
+	    /*  Finish finding cumulative normal of exterior  */
 	    /*  free surface.  */
 
 	    /*  Print out normal before normalizing.  */
@@ -1295,7 +1295,7 @@ int main(int argc, char **argv)
 	    (void)printf("\tcentroid:  %f, %f, %f\n", region[i].centroid[0],
 			 region[i].centroid[1], region[i].centroid[2]);
 	    (void)fflush(stdout);
-	    (void)printf("\tcummulative normal of the exterior ");
+	    (void)printf("\tcumulative normal of the exterior ");
 	    (void)printf("free surface:\n\t\t%f, %f, %f\n",
 			 region[i].cumnorm[X], region[i].cumnorm[Y],
 			 region[i].cumnorm[Z]);
@@ -1402,7 +1402,7 @@ int main(int argc, char **argv)
 			      region[i].centroid[0],
 			      region[i].centroid[1], region[i].centroid[2]);
 		(void)fflush(fp);
-		(void)fprintf(fp, "\tcummulative normal of the exterior ");
+		(void)fprintf(fp, "\tcumulative normal of the exterior ");
 		(void)fprintf(fp, "free surface:\n\t\t%f, %f, %f\n",
 			      region[i].cumnorm[X], region[i].cumnorm[Y],
 			      region[i].cumnorm[Z]);
@@ -2433,7 +2433,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *UNUSED(se
 	{
 	    /*  Find adjacent regions.  Occasionally a  */
 	    /*  a region will seem to be adjacent to self,  */
-	    /*  disreguard this.  */
+	    /*  disregard this.  */
 	    if (icur != iprev)
 	    {
 		region[icur].adjreg[iprev]=1;
@@ -2473,7 +2473,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *UNUSED(se
 	 *		(void)fflush(stdout);
 	 */
 
-	/*  Compute cummulative free surface normal,  */
+	/*  Compute cumulative free surface normal,  */
 	/*  free surface area, crew compartment area,  */
 	/*  engine compartment area, & other air areas  */
 	/*   when ray enters from another region.  */
@@ -2691,7 +2691,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *UNUSED(se
 	 *		(void)fflush(stdout);
 	 */
 
-	/*  Continue finding cummulative volume.  */
+	/*  Continue finding cumulative volume.  */
 	disx=(enterpt[X] - hitp->hit_point[X]) *
 	    (enterpt[X] - hitp->hit_point[X]);
 	disy=(enterpt[Y] - hitp->hit_point[Y]) *
@@ -2710,7 +2710,7 @@ hit(struct application *ap_p, struct partition *PartHeadp, struct seg *UNUSED(se
 	region[icur].centroid[Z] += (distance * area * (enterpt[Z] +
 							 hitp->hit_point[Z]) / 2.0);
 
-	/*  Find the cummulative normal & free surface area  */
+	/*  Find the cumulative normal & free surface area  */
 	/*  (exterior air)  when a ray is leaving the bounding  */
 	/*  rpp.  */
 	if ((pp->pt_forw == PartHeadp) &&
