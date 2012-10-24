@@ -68,7 +68,7 @@ extract_mater_from_line(char *line,
 	++j;
     }
 
-    /* character and/or whitespace deliminted numbers */
+    /* character and/or whitespace delimited numbers */
     if ((sscanf(line + j, "%d%*c%d%*c%d%*c%d%*c%d", r, g, b, override, inherit)) != 5)
 	return TCL_ERROR;
 
