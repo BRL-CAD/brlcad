@@ -769,7 +769,7 @@ BN_EXPORT extern double bn_gauss_fill(struct bn_gauss *p);
 /** @} */
 /*----------------------------------------------------------------------*/
 /* noise.c */
-/* @addtogroup noise */
+/** @addtogroup noise */
 /** @{ */
 /*
  * fractal noise support
@@ -1241,6 +1241,7 @@ BN_EXPORT extern void bn_mathtab_constant();
 BN_EXPORT extern double bn_randmt();
 BN_EXPORT extern void bn_randmt_seed(unsigned long seed);
 
+/** @} */
 
 /*----------------------------------------------------------------------*/
 /* wavelet.c */
@@ -1831,12 +1832,48 @@ struct bn_vlblock {
 };
 #define BN_CK_VLBLOCK(_p)	BU_CKMAG((_p), BN_VLBLOCK_MAGIC, "bn_vlblock")
 
+
+/** @addtogroup vlist */
+/** @{ */
+/** @file libbn/font.c
+ *
+ */
+
+/**
+ * Convert a string to a vlist.
+ *
+ * 'scale' is the width, in mm, of one character.
+ *
+ * @param vhead
+ * @param free_hd source of free vlists
+ * @param string  string of chars to be plotted
+ * @param origin	 lower left corner of 1st char
+ * @param rot	 Transform matrix (WARNING: may xlate)
+ * @param scale    scale factor to change 1x1 char sz
+ *
+ */
 BN_EXPORT extern void bn_vlist_3string(struct bu_list *vhead,
 				       struct bu_list *free_hd,
 				       const char *string,
 				       const point_t origin,
 				       const mat_t rot,
 				       double scale);
+
+/**
+ * Convert string to vlist in 2D
+ *
+ * A simpler interface, for those cases where the text lies in the X-Y
+ * plane.
+ *
+ * @param vhead
+ * @param free_hd	source of free vlists
+ * @param string	string of chars to be plotted
+ * @param x		lower left corner of 1st char
+ * @param y		lower left corner of 1st char
+ * @param scale		scale factor to change 1x1 char sz
+ * @param theta 	degrees ccw from X-axis
+ *
+ */
 BN_EXPORT extern void bn_vlist_2string(struct bu_list *vhead,
 				       struct bu_list *free_hd,
 				       const char *string,
@@ -1845,6 +1882,7 @@ BN_EXPORT extern void bn_vlist_2string(struct bu_list *vhead,
 				       double scale,
 				       double theta);
 
+/** @} */
 
 /*----------------------------------------------------------------------*/
 /* vert_tree.c */

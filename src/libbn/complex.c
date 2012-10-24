@@ -17,20 +17,16 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup complex */
-/** @{ */
-/** @file libbn/complex.c
- *
- */
-/** @} */
 
 #include "common.h"
 
 #include <stdio.h>
 #include <math.h>
+
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
+
 
 void
 bn_cx_div(register bn_complex_t *ap, register const bn_complex_t *bp)
@@ -64,6 +60,7 @@ err:
 	   ap->re, ap->im, bp->re, bp->im);
     ap->re = ap->im = 1.0e20;		/* "INFINITY" */
 }
+
 
 void
 bn_cx_sqrt(bn_complex_t *op, const bn_complex_t *ip)
@@ -119,7 +116,6 @@ bn_cx_sqrt(bn_complex_t *op, const bn_complex_t *ip)
     }
 }
 
-/** @} */
 
 /*
  * Local Variables:
