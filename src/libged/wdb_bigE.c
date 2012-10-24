@@ -919,7 +919,7 @@ wdb_eval_op(struct bu_list *A,
 		sega = next;
 	    }
 
-	    /* put the resuling ONS list on the result list */
+	    /* put the resulting ONS list on the result list */
 	    BU_LIST_INSERT_LIST(&ret, &ons);
 
 	    /* add INS to the return list (maintain order) */
@@ -1310,7 +1310,7 @@ wdb_shoot_and_plot(point_t start_pt,
     if (final_segs) {
 	struct seg *seg;
 
-	/* add the segemnts to the VLIST */
+	/* add the segments to the VLIST */
 	for (BU_LIST_FOR(seg, seg, final_segs)) {
 	    point_t pt;
 
