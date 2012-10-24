@@ -41,7 +41,7 @@
 
 /*
  * The thermal data file starts with a long indicating the number of
- * "cylinder" structures that follow.  The cyliner structure consists
+ * "cylinder" structures that follow.  The cylinder structure consists
  * of 18 bytes in 5 entries.  First is a 2 byte short integer indicating the
  * number of "segments" that follow.  Max Lorenzo promises this value is
  * always "1".  A segment consists of n tuples.  Max Lorenzo promises that
