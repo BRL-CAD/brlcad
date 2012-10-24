@@ -290,11 +290,11 @@ getsolid(void)
 	pts_per_curve = getint(scard, 20, 10);
 
 	/* Allocate curves pointer array */
-	curve = (double **)bu_malloc((ncurves+1)*sizeof(double *), "curve");
+	curve = (fastf_t **)bu_malloc((ncurves+1)*sizeof(fastf_t *), "curve");
 
 	/* Allocate space for a curve, and read it in */
 	for (i = 0; i < ncurves; i++) {
-	    curve[i] = (double *)bu_malloc((pts_per_curve+1)*3*sizeof(double), "curve[i]");
+	    curve[i] = (fastf_t *)bu_malloc((pts_per_curve+1)*3*sizeof(fastf_t), "curve[i]");
 
 	    /* Get data for this curve */
 	    if (getxsoldata(curve[i], pts_per_curve*3, sol_work) < 0) {
