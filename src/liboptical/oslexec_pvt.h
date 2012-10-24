@@ -264,7 +264,7 @@ private:
 
 
 /// Describe one end of a parameter connection: the parameter number, and
-/// optinally an array index and/or channel number within that parameter.
+/// optionally an array index and/or channel number within that parameter.
 struct ConnectedParam {
     int param;            ///< Parameter number (in the symbol table)
     int arrayindex;       ///< Array index (-1 for not an index)
