@@ -34,7 +34,7 @@ static char *usage[] =
 {
     "Usage: rle-pix [-dv] [-b (rgbBG)] [file.rle]",
     "",
-    "If no rle file is specifed, rle-pix will read its standard input.",
+    "If no rle file is specified, rle-pix will read its standard input.",
     "Pix(5B) format is written to the standard output.",
     0
 };
