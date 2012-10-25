@@ -879,7 +879,7 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     fastf_t radian, radian_step;
     vect_t ellipse_A, ellipse_B, contour_A, contour_B, I, J;
     vect_t center, cross_AN, eto_V, eto_N, eto_A, eto_B;
-    fastf_t mag_A, mag_B, mag_N, mag_ai, mag_aj, mag_bi, mag_bj;
+    fastf_t mag_N, mag_ai, mag_aj, mag_bi, mag_bj;
     int i, samples, num_cross_sections, points_per_cross_section;
 
     BU_CK_LIST_HEAD(info->vhead);
@@ -916,12 +916,10 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VCROSS(eto_A, eto_N, cross_AN);
     VUNITIZE(eto_A);
     VSCALE(eto_A, eto_A, eto->eto_r);
-    mag_A = MAGNITUDE(eto_A);
 
     VCROSS(eto_B, eto_N, eto_A);
     VUNITIZE(eto_B);
     VSCALE(eto_B, eto_B, eto->eto_r);
-    mag_B = MAGNITUDE(eto_B);
 
     /* We want to be able to plot any of the ellipses that result from
      * intersecting the eto with a plane containing N. The center point of any

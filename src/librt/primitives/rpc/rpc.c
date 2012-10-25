@@ -885,7 +885,7 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     struct rt_rpc_internal *xip;
     fastf_t *front;
     fastf_t *back;
-    fastf_t b, dtol, h, ntol, rh;
+    fastf_t b, dtol, ntol, rh;
     int i, n;
     struct rt_pt_node *old, *pos, *pts;
     vect_t Bu, Hu, Ru, B, R;
@@ -901,7 +901,6 @@ rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /* compute |B| |H| */
     b = MAGNITUDE(xip->rpc_B);	/* breadth */
     rh = xip->rpc_r;		/* rectangular halfwidth */
-    h = MAGNITUDE(xip->rpc_H);	/* height */
 
     /* make unit vectors in B, H, and BxH directions */
     VMOVE(Hu, xip->rpc_H);
@@ -1061,7 +1060,7 @@ int
 rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     int i, j, n;
-    fastf_t b, *back, *front, h, rh;
+    fastf_t b, *back, *front, rh;
     fastf_t dtol, ntol;
     vect_t Bu, Hu, Ru;
     mat_t R;
@@ -1088,7 +1087,6 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* compute |B| |H| */
     b = MAGNITUDE(xip->rpc_B);	/* breadth */
     rh = xip->rpc_r;		/* rectangular halfwidth */
-    h = MAGNITUDE(xip->rpc_H);	/* height */
 
     /* make unit vectors in B, H, and BxH directions */
     VMOVE(Hu, xip->rpc_H);

@@ -260,7 +260,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct epa_specific *epa;
 
     fastf_t magsq_h;
-    fastf_t mag_a, mag_h;
+    fastf_t /* mag_a, */ mag_h;
     fastf_t r1, r2;
     mat_t R;
     mat_t Rinv;
@@ -274,7 +274,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
     /* compute |A| |H| */
-    mag_a = sqrt(MAGSQ(xip->epa_Au));
+    /* mag_a = sqrt(MAGSQ(xip->epa_Au)); */
     mag_h = sqrt(magsq_h = MAGSQ(xip->epa_H));
     r1 = xip->epa_r1;
     r2 = xip->epa_r2;
@@ -874,7 +874,7 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 int
 rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
-    fastf_t dtol, mag_a, mag_h, ntol, r1, r2;
+    fastf_t dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_new, theta_prev;
     int *pts_dbl, i, j, nseg;
     int jj, na, nb, nell, recalc_b;
@@ -893,8 +893,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	return -2;
     }
 
-    /* compute |A| |H| */
-    mag_a = MAGSQ(xip->epa_Au);	/* should already be unit vector */
+    /* compute |H| */
     mag_h = MAGNITUDE(xip->epa_H);
     r1 = xip->epa_r1;
     r2 = xip->epa_r2;
@@ -1164,7 +1163,7 @@ rt_ell(fastf_t *ov, const fastf_t *V, const fastf_t *A, const fastf_t *B, int si
 int
 rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    fastf_t dtol, mag_a, mag_h, ntol, r1, r2;
+    fastf_t dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, **normals, theta_new, theta_prev;
     int *pts_dbl, face, i, j, nseg;
     int *segs_per_ell;
@@ -1192,8 +1191,7 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	return -2;
     }
 
-    /* compute |A| |H| */
-    mag_a = MAGSQ(xip->epa_Au);	/* should already be unit vector */
+    /* compute |H| */
     mag_h = MAGNITUDE(xip->epa_H);
     r1 = xip->epa_r1;
     r2 = xip->epa_r2;

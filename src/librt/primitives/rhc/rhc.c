@@ -961,7 +961,7 @@ int
 rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     int i, n;
-    fastf_t b, c, *back, *front, h, rh;
+    fastf_t b, c, *back, *front, rh;
     fastf_t dtol, ntol;
     vect_t Bu, Hu, Ru;
     mat_t R;
@@ -980,7 +980,6 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /* compute |B| |H| */
     b = MAGNITUDE(xip->rhc_B);	/* breadth */
     rh = xip->rhc_r;		/* rectangular halfwidth */
-    h = MAGNITUDE(xip->rhc_H);	/* height */
     c = xip->rhc_c;			/* dist to asympt origin */
 
     /* make unit vectors in B, H, and BxH directions */
@@ -1173,7 +1172,7 @@ int
 rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     int i, j, n;
-    fastf_t b, c, *back, *front, h, rh;
+    fastf_t b, c, *back, *front, rh;
     fastf_t dtol, ntol;
     vect_t Bu, Hu, Ru;
     mat_t R;
@@ -1201,7 +1200,6 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* compute |B| |H| */
     b = MAGNITUDE(xip->rhc_B);	/* breadth */
     rh = xip->rhc_r;		/* rectangular halfwidth */
-    h = MAGNITUDE(xip->rhc_H);	/* height */
     c = xip->rhc_c;			/* dist to asympt origin */
 
     /* make unit vectors in B, H, and BxH directions */
