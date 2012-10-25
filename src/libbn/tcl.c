@@ -192,6 +192,7 @@ static struct math_func_link {
     char *name;
     void (*func)();
 } math_funcs[] = {
+    {"bn_dist_pt2_lseg2",	(void (*)())bn_dist_pt2_lseg2},
     {"bn_isect_line2_line2",	(void (*)())bn_isect_line2_line2},
     {"bn_isect_line3_line3",	(void (*)())bn_isect_line3_line3},
     {"mat_mul",            bn_mat_mul},
@@ -680,6 +681,48 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	VJOIN1(a, pt, dist[0], dir);
 	bu_vls_printf(&result, "%g %g", V2INTCLAMPARGS(a));
 
+    } else if (math_func == (void (*)())bn_dist_pt2_lseg2) {
+	point_t ptA, ptB, pca;
+	point_t pt;
+	fastf_t dist;
+	int ret;
+	static const struct bn_tol tol = {
+	    BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
+	};
+
+	if (argc != 4) {
+	    bu_vls_printf(&result,
+			  "Usage: bn_dist_pt2_lseg2 ptA ptB pt (%d args specified)", argc-1);
+	    goto error;
+	}
+
+	if (bn_decode_vect(ptA, argv[1]) < 2) {
+	    bu_vls_printf(&result, "bn_dist_pt2_lseg2 no ptA: %s\n", argv[0]);
+	    goto error;
+	}
+
+	if (bn_decode_vect(ptB, argv[2]) < 2) {
+	    bu_vls_printf(&result, "bn_dist_pt2_lseg2 no ptB: %s\n", argv[0]);
+	    goto error;
+	}
+
+	if (bn_decode_vect(pt, argv[3]) < 2) {
+	    bu_vls_printf(&result, "bn_dist_pt2_lseg2 no pt: %s\n", argv[0]);
+	    goto error;
+	}
+
+	ret = bn_dist_pt2_lseg2(&dist, pca, ptA, ptB, pt, &tol);
+	switch (ret) {
+	case 0:
+	case 1:
+	case 2:
+	    dist = 0.0;
+	    break;
+	default:
+	    break;
+	}
+
+	bu_vls_printf(&result, "%g", dist);
     } else {
 	bu_vls_printf(&result, "libbn/bn_tcl.c: math function %s not supported yet\n", argv[0]);
 	goto error;
