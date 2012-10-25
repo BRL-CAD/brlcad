@@ -86,7 +86,7 @@
 	method moveBotElement {_dname _obj _x _y}
 	method moveBotFaceMode {_dname _obj _x _y}
 	method moveBotPt {_dname _obj _x _y}
-	method moveBotPtMode {_dname _obj _x _y}
+	method moveBotPtMode {_dname _obj _viewz _x _y}
 	method moveBotPts {_dname _obj _x _y _plist}
 	method moveBotPtsMode {_dname _obj _x _y}
     }
@@ -101,6 +101,7 @@
 	variable mCurrentBotPoints ""
 	variable mCurrentBotEdges ""
 	variable mCurrentBotFaces ""
+	variable mFrontPointsOnly 1
 
 	# Methods used by the constructor
 	# override methods in GeometryEditFrame
@@ -292,10 +293,20 @@
 
 ::itcl::body BotEditFrame::moveBotEdgeMode {_dname _obj _x _y} {
     $itk_option(-mged) clear_bot_callbacks
-    set edge [$itk_option(-mged) pane_mouse_find_bot_edge $_dname $_obj $_x $_y]
+
+    if {$mFrontPointsOnly} {
+	set zlist [ $::ArcherCore::application getZClipState]
+	set viewz [lindex $zlist 0]
+    } else {
+	set viewz -1.0
+    }
+
+    set edge [$itk_option(-mged) pane_mouse_find_bot_edge $_dname $_obj $viewz $_x $_y]
 
     set mCurrentBotPoints {}
+    set mCurrentBotEdges {}
     $itk_component(vertTab) unselectAllRows
+    $itk_component(edgeTab) unselectAllRows
     botEdgesSelectCallback $edge
 
     set plist [$itk_component(vertTab) getSelectedRows]
@@ -352,9 +363,10 @@
 }
 
 
-::itcl::body BotEditFrame::moveBotPtMode {_dname _obj _x _y} {
+::itcl::body BotEditFrame::moveBotPtMode {_dname _obj _viewz _x _y} {
     $itk_option(-mged) clear_bot_callbacks
-    set pindex [$itk_option(-mged) pane_mouse_find_botpt $_dname $_obj $_x $_y]
+
+    set pindex [$itk_option(-mged) pane_mouse_find_botpt $_dname $_obj $_viewz $_x $_y]
     $itk_option(-mged) pane_move_botpt_mode $_dname $_obj $pindex $_x $_y
 
     botPointSelectCallback $pindex
@@ -376,7 +388,14 @@
 
     set plist [$itk_component(vertTab) getSelectedRows]
     if {[llength $plist] < 2} {
-	moveBotPtMode $_dname $_obj $_x $_y
+	if {$mFrontPointsOnly} {
+	    set zlist [ $::ArcherCore::application getZClipState]
+	    set viewz [lindex $zlist 0]
+	} else {
+	    set viewz -1.0
+	}
+
+	moveBotPtMode $_dname $_obj $viewz $_x $_y
     } else {
 	moveBotPts $_dname $_obj $_x $_y $plist
     }
@@ -483,6 +502,7 @@
 ::itcl::body BotEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
     set i 1
+    set row -1
     foreach label $mEditLabels {
 	itk_component add editRB$i {
 	    ::ttk::radiobutton $parent.editRB$i \
@@ -492,12 +512,23 @@
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component(editRB$i) \
-	    -anchor w \
-	    -expand yes
+	incr row
+	grid $itk_component(editRB$i) -row $row -column 0 -sticky w
 
 	incr i
     }
+
+    itk_component add frontPointOnlyCB {
+	::ttk::checkbutton $parent.dlistModeCB \
+	    -text "Front Points Only" \
+	    -command [::itcl::code $this initEditState] \
+	    -variable [::itcl::scope mFrontPointsOnly]
+    } {}
+    incr row
+    grid rowconfigure $parent $row -weight 1
+    incr row
+    grid $itk_component(frontPointOnlyCB) -row $row -column 0 -sticky w
+    grid columnconfigure $parent 1 -weight 1
 }
 
 
@@ -583,12 +614,24 @@
 	$selectPoints {
 	    set mEditCommand ""
 	    set mEditClass ""
-	    $::ArcherCore::application initFindBotPoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this botPointsSelectCallback]
+	    if {$mFrontPointsOnly} {
+		set zlist [ $::ArcherCore::application getZClipState]
+		set viewz [lindex $zlist 0]
+	    } else {
+		set viewz -1.0
+	    }
+	    $::ArcherCore::application initFindBotPoint $itk_option(-geometryObjectPath) 1 $viewz [::itcl::code $this botPointsSelectCallback]
 	} \
 	$selectEdges {
 	    set mEditCommand ""
 	    set mEditClass ""
-	    $::ArcherCore::application initFindBotEdge $itk_option(-geometryObjectPath) 1 [::itcl::code $this botEdgesSelectCallback]
+	    if {$mFrontPointsOnly} {
+		set zlist [ $::ArcherCore::application getZClipState]
+		set viewz [lindex $zlist 0]
+	    } else {
+		set viewz -1.0
+	    }
+	    $::ArcherCore::application initFindBotEdge $itk_option(-geometryObjectPath) 1 $viewz [::itcl::code $this botEdgesSelectCallback]
 	} \
 	$selectFaces {
 	    set mEditCommand ""

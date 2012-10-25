@@ -153,9 +153,9 @@ package provide Archer 1.0
 
 	method importFg4Sections   {_slist _wlist _delta}
 	method initAppendPipePoint {_obj _button _callback}
-	method initFindBotEdge {_obj _button _callback}
+	method initFindBotEdge {_obj _button _viewz _callback}
 	method initFindBotFace {_obj _button _callback}
-	method initFindBotPoint {_obj _button _callback}
+	method initFindBotPoint {_obj _button _viewz _callback}
 	method initFindPipePoint {_obj _button _callback}
 	method initPrependPipePoint {_obj _button _callback}
 
@@ -752,7 +752,7 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::initFindBotEdge {_obj _button _callback} {
+::itcl::body Archer::initFindBotEdge {_obj _button _viewz _callback} {
     if {![info exists itk_component(ged)]} {
 	return
     }
@@ -760,7 +760,7 @@ package provide Archer 1.0
     # This deselects the selected mouse mode in the primary toolbar
     set mDefaultBindingMode FIRST_FREE_BINDING_MODE
 
-    $itk_component(ged) init_find_bot_edge $_obj $_button $_callback
+    $itk_component(ged) init_find_bot_edge $_obj $_button $_viewz $_callback
 }
 
 
@@ -776,7 +776,7 @@ package provide Archer 1.0
 }
 
 
-::itcl::body Archer::initFindBotPoint {_obj _button _callback} {
+::itcl::body Archer::initFindBotPoint {_obj _button _viewz _callback} {
     if {![info exists itk_component(ged)]} {
 	return
     }
@@ -784,7 +784,7 @@ package provide Archer 1.0
     # This deselects the selected mouse mode in the primary toolbar
     set mDefaultBindingMode FIRST_FREE_BINDING_MODE
 
-    $itk_component(ged) init_find_botpt $_obj $_button $_callback
+    $itk_component(ged) init_find_botpt $_obj $_button $_viewz $_callback
 }
 
 

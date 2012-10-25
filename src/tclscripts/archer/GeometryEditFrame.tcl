@@ -130,7 +130,7 @@
     # Repack parent so it's anchor to the north
     pack $parent \
 	-expand yes \
-	-fill x \
+	-fill both \
 	-anchor n
 
     set parent [$itk_component(pane) childsite lower]
@@ -141,7 +141,7 @@
     # Repack parent so it's anchor to the north
     pack $parent \
 	-expand yes \
-	-fill x \
+	-fill both \
 	-anchor n
 
     # These are no-ops unless overridden in a subclass
