@@ -756,40 +756,60 @@ draw_cross_sections_along_ell_vector(struct ell_draw_configuration config)
     }
 }
 
+/* choose number of samples to use per ellipse based on view and ell info */
+static int
+ell_ellipse_samples(
+	const struct rt_ell_internal *ell,
+	const struct rt_view_info *info)
+{
+    fastf_t samples_per_mm, mm_per_sample;
+    fastf_t radius, radius_samples;
+
+    samples_per_mm = sqrt(info->view_samples) / info->view_size;
+    mm_per_sample = 1.0 / samples_per_mm;
+
+    radius = fabs((MAGNITUDE(ell->a) + MAGNITUDE(ell->b) + MAGNITUDE(ell->c))
+	    / 3.0);
+    radius_samples = radius * samples_per_mm;
+
+    /* (2 * PI * radius_samples) would give us the number of times we expect
+     * our ellipse curves to be sampled by the view. This is sufficient to
+     * produce a very good rasterized image, but it is actually overkill.
+     *
+     * If we reduce the number of lines segments, those segment may
+     * nevertheless pass through almost all of the same pixels in the view,
+     * producing an equivalent rasterized image. Rather than expending the
+     * effort to directly calculate how few segments we can get away with
+     * without reducing the apparant quality of the rasterized curve, we just
+     * use this empirical calculation.
+     */
+    return pow(bn_twopi * radius_samples, .55);
+}
+
 int
 rt_ell_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
     struct ell_draw_configuration config;
     struct rt_ell_internal *eip;
-    fastf_t samples;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(eip);
 
-    samples = primitive_diagonal_samples(ip, info);
-
     config.vhead = info->vhead;
     VMOVE(config.ell_center, eip->v);
-    config.points_per_section = sqrt(samples);
+
+    config.points_per_section = ell_ellipse_samples(eip, info);
 
     if (config.points_per_section < 6) {
-	config.points_per_section = 6;
+	return 0;
     }
 
-    if (config.points_per_section > 32) {
-	config.points_per_section = 32;
-    }
-
-    config.num_cross_sections = sqrt(samples) / 3.0;
-
-    if (config.num_cross_sections < 1) {
+    if (config.points_per_section < 16) {
 	config.num_cross_sections = 1;
-    }
-
-    if (config.num_cross_sections > 5) {
-	config.num_cross_sections = 5;
+    } else {
+	config.num_cross_sections = sqrt(config.points_per_section);
     }
 
     VMOVE(config.ell_travel_vector, eip->a);
