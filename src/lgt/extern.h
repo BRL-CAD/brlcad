@@ -39,9 +39,12 @@ extern int lgt_Edit_Db_Entry();
 extern int lgt_Print_Db();
 extern int pars_Argv();
 
+void cons_Vector(double *vec, double azim, double elev);
+void render_Model(int frame);
+void render_Scan(int cpu, void *data);
+
 extern void append_Octp();
 extern void close_Output_Device();
-extern void cons_Vector();
 extern void delete_OcList();
 extern void display_Temps();
 extern void do_line();
@@ -65,7 +68,6 @@ extern void prnt_Title();
 extern void prnt_Trie();
 extern void prnt_Usage();
 extern void prnt3vec();
-extern void render_Model();
 extern void ring_Bell();
 extern void set_IRmapping();
 extern void setGridSize();

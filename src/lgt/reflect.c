@@ -216,9 +216,6 @@ static void model_Reflectance(struct application *ap, struct partition *pp, Mat_
 static void glass_Refract(struct application *ap, struct partition *pp, Mat_Db_Entry *entry, fastf_t *normal);
 static void view_pix(struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf)), view_bol(struct application *ap), view_eol(struct application *ap, RGBpixel (*scanbuf)), view_end(void);
 
-void cons_Vector(fastf_t *vec, fastf_t azim, fastf_t elev);
-void render_Model(int frame);
-void render_Scan(int cpu, void *data);
 
 /*
   void getCellSize(int gsize)
@@ -981,7 +978,7 @@ correct_Lgt(struct application *ap, struct partition *pp, Lgt_Source *lgt_entry)
        object(s). */
     if (lgt_entry->beam) {
 	/* Apply gaussian intensity distribution. */
-	fastf_t lgt_cntr[3];
+	double lgt_cntr[3];
 	fastf_t ang_dist, rel_radius;
 	fastf_t cos_angl;
 	fastf_t gauss_Wgt_Func(fastf_t R);
@@ -1607,16 +1604,14 @@ model_Reflectance(struct application *ap, struct partition *pp, Mat_Db_Entry *md
 
 
 /*
-  void cons_Vector(fastf_t *vec, fastf_t azim, fastf_t elev)
-
   Construct a direction vector out of azimuth and elevation angles
   in radians, allocating storage for it and returning its address.
 */
 void
-cons_Vector(fastf_t *vec, fastf_t azim, fastf_t elev)
+cons_Vector(double *vec, double azim, double elev)
 {
     /* Store cosine of the elevation to save calculating twice. */
-    fastf_t cosE;
+    double cosE;
     cosE = cos(elev);
     vec[0] = cos(azim) * cosE;
     vec[1] = sin(azim) * cosE;

@@ -299,7 +299,9 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 	    len = strlen(input);
 	    if ((len > 0) && (input[len-1] == '\n')) input[len-1] = 0;
 	    if (bu_strncmp(input, "", MAX_INPUT_LENGTH) == 0) {
-		sscanf(input, "%lg %lg %lg", &(p->pos[X]), &(p->pos[Y]), &(p->pos[Z]));
+		double scan[3];
+		sscanf(input, "%lg %lg %lg", &scan[X], &scan[Y], &scan[Z]);
+		VMOVE(p->pos, scan); /* double to fastf_t */
 	    }
 	}
 	fflush(stdin);

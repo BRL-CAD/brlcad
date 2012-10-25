@@ -341,7 +341,7 @@ struct frame *FreeFrame;
 
 /* variables shared with viewing model */
 extern double	AmbientIntensity;
-extern double	azimuth, elevation;
+extern fastf_t	azimuth, elevation;
 extern int	lightmodel;
 extern int	use_air;
 

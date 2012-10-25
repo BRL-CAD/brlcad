@@ -3208,7 +3208,7 @@ setup_Lgts(int frame)
 	/* Lights must track view, explicit light source positions
 	   not supported. */
 	for (i = 1; i < lgt_db_size; i++) {
-	    fastf_t azim, elev;
+	    double azim, elev;
 	    if (! lgts[i].over
 		/* Fill in ptr to solid table for quick checking. */
 		&& (lgts[i].stp = rt_find_solid(rt_ip, lgts[i].name)) != SOLTAB_NULL

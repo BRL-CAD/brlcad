@@ -70,6 +70,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
     int seen_orientation;
     int seen_eye_pos;
     int seen_size;
+    double scan[4] = HINIT_ZERO;
 
     mat_t rotate, xlate;
 
@@ -185,7 +186,10 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	 */
 
 	if (BU_STR_EQUAL(string, "View")) {
-	    num = sscanf(arg_ptr, "%lf %9s %lf", &azimuth, forget_it, &elevation);
+	    num = sscanf(arg_ptr, "%lf %9s %lf", &scan[X], forget_it, &scan[Y]);
+	    /* double to fastf_t */
+	    azimuth = scan[X];
+	    elevation = scan[Y];
 	    if (num != 3) {
 		fprintf(stderr, "View= %.6f %s %.6f elevation\n", azimuth, forget_it, elevation);
 		fclose(fp);
@@ -193,9 +197,8 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	    }
 	    seen_view = 1;
 	} else if (BU_STR_EQUAL(string, "Orientation")) {
-	    num = sscanf(arg_ptr, "%lf, %lf, %lf, %lf",
-			 &orientation[0], &orientation[1], &orientation[2],
-			 &orientation[3]);
+	    num = sscanf(arg_ptr, "%lf, %lf, %lf, %lf", &scan[X], &scan[Y], &scan[Z], &scan[W]);
+	    HMOVE(orientation, scan); /* double to fastf_t */
 
 	    if (num != 4) {
 		fprintf(stderr, "Orientation= %.6f, %.6f, %.6f, %.6f\n",
@@ -205,8 +208,8 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	    }
 	    seen_orientation = 1;
 	} else if (BU_STR_EQUAL(string, "Eye_pos")) {
-	    num = sscanf(arg_ptr, "%lf, %lf, %lf", &eye_pos[0],
-			 &eye_pos[1], &eye_pos[2]);
+	    num = sscanf(arg_ptr, "%lf, %lf, %lf", &scan[X], &scan[Y], &scan[Z]);
+	    VMOVE(eye_pos, scan); /* double to fastf_t */
 	    if (num != 3) {
 		fprintf(stderr, "Eye_pos= %.6f, %.6f, %.6f\n",
 			V3ARGS(eye_pos));
@@ -215,7 +218,8 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 	    }
 	    seen_eye_pos = 1;
 	} else if (BU_STR_EQUAL(string, "Size")) {
-	    num = sscanf(arg_ptr, "%lf", &m_size);
+	    num = sscanf(arg_ptr, "%lf", &scan[X]);
+	    m_size = scan[X];
 	    if (num != 1) {
 		fprintf(stderr, "Size=%.6f\n", m_size);
 		fclose(fp);

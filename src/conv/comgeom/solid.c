@@ -81,10 +81,10 @@ void eat(int count);
  *	-1	failure
  */
 int
-getsoldata(double *dp, int num, int solid_num)
+getsoldata(fastf_t *dp, int num, int solid_num)
 {
     int	cd;
-    double *fp;
+    fastf_t *fp;
     int	i;
     int	j;
 
@@ -131,10 +131,10 @@ getsoldata(double *dp, int num, int solid_num)
  *	-1	failure
  */
 int
-getxsoldata(double *dp, int num, int solid_num)
+getxsoldata(fastf_t *dp, int num, int solid_num)
 {
     int	cd;
-    double *fp;
+    fastf_t *fp;
     int	i;
     int	j;
 
@@ -567,7 +567,7 @@ getsolid(void)
 	int			numpts;		/* points per wire */
 	int			num;
 	double			dia;
-	double			*pts;		/* 3 entries per pt */
+	fastf_t			*pts;		/* 3 entries per pt */
 	struct	wdb_pipept	*ps;
 	struct	bu_list		head;		/* allow a whole struct for head */
 
@@ -576,7 +576,7 @@ getsolid(void)
 	num = numpts * 3 + 1;			/* 3 entries per pt */
 
 	/* allocate space for the points array */
-	pts = (double *)bu_malloc(num * sizeof(double), "pts");
+	pts = (fastf_t *)bu_malloc(num * sizeof(fastf_t), "pts");
 
 	if (getsoldata(pts, num, sol_work) < 0) {
 	    bu_free(name, "name");
@@ -779,8 +779,8 @@ read_arbn(char *name)
     int	neq;			/* # planes from equation */
     int	nae;			/* # planes from az, el & vertex index */
     int	nface;			/* total number of faces */
-    double	*input_points = (double *)0;
-    double	*vertex = (double *)0;	/* vertex list of final solid */
+    fastf_t *input_points = NULL;
+    double	*vertex = NULL;	/* vertex list of final solid */
     int	last_vertex;		/* index of first unused vertex */
     int	max_vertex;		/* size of vertex array */
     int	*used = (int *)0;	/* plane eqn use count */
@@ -826,11 +826,11 @@ read_arbn(char *name)
 
     if (npt >= 1) {
 	/* Obtain vertex input_points */
-	input_points = (double *)bu_malloc(npt*3*sizeof(double), "input_points");
+	input_points = (fastf_t *)bu_malloc(npt*3*sizeof(fastf_t), "input_points");
 
 	if (getxsoldata(input_points, npt*3, sol_work) < 0) {
 	    bu_free((char *)input_points, "input_points");
-	    input_points = (double *)0;
+	    input_points = NULL;
 	    goto bad;
 	}
     }
@@ -978,7 +978,7 @@ read_arbn(char *name)
 
     /* Release storage for input points */
     bu_free((char *)input_points, "input_points");
-    input_points = (double *)0;
+    input_points = NULL;
 
     /*
      *  ARBN must be convex.  Test for concavity.

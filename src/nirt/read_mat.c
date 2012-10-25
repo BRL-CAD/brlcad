@@ -56,27 +56,28 @@ extern int			nirt_debug;
  */
 void read_mat (struct rt_i *rtip)
 {
+    double scan[16] = MAT_INIT_ZERO;
     char	*buf;
     int		status = 0x0;
     mat_t	m;
-    point_t	p;
-    quat_t	q;
+    mat_t       q;
 
     while ((buf = rt_read_cmd(stdin)) != (char *) 0) {
 	if (bu_strncmp(buf, "eye_pt", 6) == 0) {
-	    if (sscanf(buf + 6, "%lf%lf%lf", &p[X], &p[Y], &p[Z]) != 3) {
+	    if (sscanf(buf + 6, "%lf%lf%lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 		bu_exit(1, "nirt: read_mat(): Failed to read eye_pt\n");
 	    }
-	    target(X) = p[X];
-	    target(Y) = p[Y];
-	    target(Z) = p[Z];
+	    target(X) = scan[X];
+	    target(Y) = scan[Y];
+	    target(Z) = scan[Z];
 	    status |= RMAT_SAW_EYE;
 	} else if (bu_strncmp(buf, "orientation", 11) == 0) {
 	    if (sscanf(buf + 11,
 		       "%lf%lf%lf%lf",
-		       &q[0], &q[1], &q[2], &q[3]) != 4) {
+		       &scan[X], &scan[Y], &scan[Z], &scan[W]) != 4) {
 		bu_exit(1, "nirt: read_mat(): Failed to read orientation\n");
 	    }
+	    MAT_COPY(q, scan);
 	    quat_quat2mat(m, q);
 	    if (nirt_debug & DEBUG_MAT)
 		bn_mat_print("view matrix", m);
@@ -86,12 +87,13 @@ void read_mat (struct rt_i *rtip)
 	} else if (bu_strncmp(buf, "viewrot", 7) == 0) {
 	    if (sscanf(buf + 7,
 		       "%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf",
-		       &m[0], &m[1], &m[2], &m[3],
-		       &m[4], &m[5], &m[6], &m[7],
-		       &m[8], &m[9], &m[10], &m[11],
-		       &m[12], &m[13], &m[14], &m[15]) != 16) {
+		       &scan[0], &scan[1], &scan[2], &scan[3],
+		       &scan[4], &scan[5], &scan[6], &scan[7],
+		       &scan[8], &scan[9], &scan[10], &scan[11],
+		       &scan[12], &scan[13], &scan[14], &scan[15]) != 16) {
 		bu_exit(1, "nirt: read_mat(): Failed to read viewrot\n");
 	    }
+	    MAT_COPY(m, scan);
 	    if (nirt_debug & DEBUG_MAT)
 		bn_mat_print("view matrix", m);
 	    azimuth() = atan2(-m[0], m[1]) / DEG2RAD;

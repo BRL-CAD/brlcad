@@ -115,7 +115,7 @@ void
 Readpoints(void)
 {
     struct points *ptr, *prev;
-    fastf_t x, y, z;
+    double x, y, z;
 
     ptr = root;
     prev = NULL;

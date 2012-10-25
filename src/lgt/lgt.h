@@ -42,24 +42,24 @@
 #define true		1
 #define false		0
 #endif
-#define Swap_Integers( i_, j_ ) \
-		{	int	k_ = i_; \
-		i_ = j_; \
-		j_ = k_; \
-		}
+#define Swap_Integers(i_, j_) \
+    { int k_ = i_; \
+	i_ = j_; \
+	j_ = k_; \
+    }
 #define Toggle(f)	(f) = !(f)
-#define Malloc_Bomb( _bytes_ ) \
-		fb_log( "\"%s\"(%d) : allocation of %lu bytes failed.\n", \
-				__FILE__, __LINE__, (unsigned long)(_bytes_) )
+#define Malloc_Bomb(_bytes_) \
+    fb_log("\"%s\"(%d) : allocation of %lu bytes failed.\n", \
+	   __FILE__, __LINE__, (unsigned long)(_bytes_))
 
 /* Guess whether or not a frame buffer name is a disk file. (XXX) */
 #define DiskFile(fil)	(*fil != '\0'\
-			&& bu_strncmp(fil, "/dev", 4 ) != 0 \
-			&& strchr( fil, ':' ) == (char *)NULL)
+			 && bu_strncmp(fil, "/dev", 4) != 0 \
+			 && strchr(fil, ':') == (char *)NULL)
 
 /* Values for grid type. */
-#define GT_RPP_CENTERED	0 /* Grid origin aligned with centroid of model RPP. */
-#define GT_ORG_CENTERED	1 /* Grid aligned with model origin. */
+#define GT_RPP_CENTERED 0 /* Grid origin aligned with centroid of model RPP. */
+#define GT_ORG_CENTERED 1 /* Grid aligned with model origin. */
 
 /* Flag (hiddenln_draw) values for hidden line drawing. */
 #define HL_DISABLED		0
@@ -70,7 +70,7 @@
 #define B_PIO		0	/* Programmed I/O.			*/
 #define B_PAGE		1	/* Buffered I/O (DMA paging scheme).	*/
 #define B_LINE		2	/* Line-buffered I/O (DMA).		*/
-#define Rotate( f )	(f) = (f) + 1 > 2 ? 0 : (f) + 1
+#define Rotate(f)	(f) = (f) + 1 > 2 ? 0 : (f) + 1
 
 /* Application debugging flags.						*/
 #define DEBUG_RGB	0x80000
@@ -86,94 +86,94 @@
 */
 typedef struct
 {
-    char	name[MAX_LGT_NM];/* Name of entry (i.e. ambient).	*/
-    int	beam;	/* Flag denotes gaussian beam intensity.	*/
-    int	over;	/* Flag denotes manual override of position.	*/
-    int	rgb[3];	/* Pixel color of LS (0 to 255) for RGB.	*/
-    fastf_t	loc[3];	/* Location of LS in model space.		*/
-    fastf_t	azim;	/* Azimuthal direction of LS in radians.	*/
-    fastf_t	elev;	/* Elevational direction of LS in radians.	*/
-    fastf_t	dir[3];	/* Direction vector to LS.			*/
-    fastf_t	dist;	/* Distance to LS in from centroid of model.	*/
-    fastf_t	energy;	/* Intensity of LS.				*/
-    fastf_t	coef[3];/* Color of LS as coefficient (0.0 to 1.0).	*/
-    fastf_t	radius;	/* Radius of beam.				*/
-    struct soltab	*stp;	/* Solid table pointer to LIGHT solid.	*/
+    char name[MAX_LGT_NM];/* Name of entry (i.e. ambient).	*/
+    int beam;		/* Flag denotes gaussian beam intensity.	*/
+    int over;		/* Flag denotes manual override of position.	*/
+    int rgb[3];		/* Pixel color of LS (0 to 255) for RGB.	*/
+    double loc[3];	/* Location of LS in model space.		*/
+    double azim;	/* Azimuthal direction of LS in radians.	*/
+    double elev;	/* Elevational direction of LS in radians.	*/
+    double dir[3];	/* Direction vector to LS.			*/
+    double dist;	/* Distance to LS in from centroid of model.	*/
+    double energy;	/* Intensity of LS.				*/
+    double coef[3];	/* Color of LS as coefficient (0.0 to 1.0).	*/
+    double radius;	/* Radius of beam.				*/
+    struct soltab *stp;	/* Solid table pointer to LIGHT solid.	*/
 }
-Lgt_Source;
-#define LGT_NULL	(Lgt_Source *) NULL
+    Lgt_Source;
+#define LGT_NULL (Lgt_Source *) NULL
 
 typedef struct
 {
-    int	m_fullscreen;
-    int	m_lgts;
-    int	m_over;
-    int	m_keys;
-    int	m_noframes;
-    int	m_curframe;
-    int	m_endframe;
-    int	m_frame_sz;
-    FILE	*m_keys_fp;
-    fastf_t	m_azim_beg;
-    fastf_t m_azim_end;
-    fastf_t	m_elev_beg;
-    fastf_t m_elev_end;
-    fastf_t	m_roll_beg;
-    fastf_t m_roll_end;
-    fastf_t	m_dist_beg;
-    fastf_t m_dist_end;
-    fastf_t	m_grid_beg;
-    fastf_t m_grid_end;
-    fastf_t	m_pers_beg;
-    fastf_t m_pers_end;
+    int m_fullscreen;
+    int m_lgts;
+    int m_over;
+    int m_keys;
+    int m_noframes;
+    int m_curframe;
+    int m_endframe;
+    int m_frame_sz;
+    FILE *m_keys_fp;
+    double m_azim_beg;
+    double m_azim_end;
+    double m_elev_beg;
+    double m_elev_end;
+    double m_roll_beg;
+    double m_roll_end;
+    double m_dist_beg;
+    double m_dist_end;
+    double m_grid_beg;
+    double m_grid_end;
+    double m_pers_beg;
+    double m_pers_end;
 }
-Movie;
-#define MovieSize( sz, nf )	(int)sqrt((double)(nf)+0.5)*(sz)
+    Movie;
+#define MovieSize(sz, nf)	(int)sqrt((double)(nf)+0.5)*(sz)
 #define IK_INTENSITY	255.0
 #define RGB_INVERSE	(1.0 / IK_INTENSITY)
 #define EYE_SIZE	12.7
 #define TITLE_LEN	72
 #define TIMER_LEN	72
 
-extern Lgt_Source	lgts[];
-extern Movie		movie;
+extern Lgt_Source lgts[];
+extern Movie movie;
 
 #endif /* INCL_LGT */
-char		*get_Input();
-int		setup_Lgts();
-void		user_Input();
-int		interpolate_Frame();
-int		ready_Output_Device();
-int		exec_Shell();
-void		set_Cbreak();
-void		clr_Echo();
-int		pixel_To_Temp();
-void		reset_Tty();
-int		read_IR();
-int		write_Trie();
-int		lgt_Save_Db();
-int		read_Trie();
-int		lgt_Rd_Db();
-int		ClrText();
-int		MvCursor();
-int		InitTermCap();
-int		SetScrlReg();
-int		ClrEOL();
-int		ResetScrlReg();
-int		DeleteLn();
-int		init_Temp_To_RGB();
-int		do_More();
-int		append_PtList();
-int		delete_Node_OcList();
-int		SetStandout();
-int		ClrStandout();
-int		save_Tty();
-int		set_Raw();
-int		ir_shootray_octree();
-int		ir_Chk_Table();
-int		tex_Entry();
-int		icon_Entry();
-int		write_Octree();
+char *get_Input();
+int setup_Lgts();
+void user_Input();
+int interpolate_Frame();
+int ready_Output_Device();
+int exec_Shell();
+void set_Cbreak();
+void clr_Echo();
+int pixel_To_Temp();
+void reset_Tty();
+int read_IR();
+int write_Trie();
+int lgt_Save_Db();
+int read_Trie();
+int lgt_Rd_Db();
+int ClrText();
+int MvCursor();
+int InitTermCap();
+int SetScrlReg();
+int ClrEOL();
+int ResetScrlReg();
+int DeleteLn();
+int init_Temp_To_RGB();
+int do_More();
+int append_PtList();
+int delete_Node_OcList();
+int SetStandout();
+int ClrStandout();
+int save_Tty();
+int set_Raw();
+int ir_shootray_octree();
+int ir_Chk_Table();
+int tex_Entry();
+int icon_Entry();
+int write_Octree();
 
 
 /*

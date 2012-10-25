@@ -278,6 +278,8 @@ int parseArguments(int argc, char **argv)
     bu_opterr = 0;
 
     while ((c=bu_getopt(argc, argv, options)) != -1) {
+	double scan[3] = VINIT_ZERO;
+
 	switch (c) {
 	    case 'I' :
 		interactive=(DEFAULT_INTERACTIVE) ? 0 : 1;
@@ -331,10 +333,11 @@ int parseArguments(int argc, char **argv)
 		break;
 
 	    case 'h' :
-		if ((sscanf(bu_optarg, "%lf %lf %lf", &fenceHeight[0], &fenceHeight[1], &fenceHeight[2]))!=3) {
+		if ((sscanf(bu_optarg, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]))!=3) {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters to height: need x, y, z values");
 		    bu_exit(1, NULL);
 		}
+		VMOVE(fenceHeight, scan); /* double to fastf_t */
 		if (ZERO((double)MAGNITUDE(fenceHeight))) {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence height may not be set to zero");
 		    bu_exit(1, NULL);
@@ -356,10 +359,11 @@ int parseArguments(int argc, char **argv)
 		break;
 
 	    case 'l' :
-		if ((sscanf(bu_optarg, "%lf %lf %lf", &fenceWidth[0], &fenceWidth[1], &fenceWidth[2]))!=3) {
+		if ((sscanf(bu_optarg, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]))!=3) {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid number of parameters to width: need x, y, z values");
 		    bu_exit(1, NULL);
 		}
+		VMOVE(fenceWidth, scan); /* double to fastf_t */
 		if (ZERO((double)MAGNITUDE(fenceWidth))) {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence width may not be set to zero");
 		    bu_exit(1, NULL);
@@ -1820,6 +1824,7 @@ int main(int argc, char **argv)
     size_t len = 0;
     char *verboseinput;
     int colorinput[3];
+    double scan[3] = VINIT_ZERO;
 
     verboseinput = (char *) bu_calloc(DEFAULT_MAXNAMELENGTH * 3, sizeof(char), "verboseinput");
 
@@ -1881,7 +1886,8 @@ int main(int argc, char **argv)
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for start position\n", verboseinput);
 		}
 		if (!BU_STR_EQUAL(verboseinput, "")) {
-		    sscanf(verboseinput, "%lf%lf%lf", &fenceStartPosition[0], &fenceStartPosition[1], &fenceStartPosition[2]);
+		    sscanf(verboseinput, "%lf%lf%lf", &scan[0], &scan[1], &scan[2]);
+		    VMOVE(fenceStartPosition, scan); /* double to fastf_t */
 		}
 	    }
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
@@ -1897,7 +1903,8 @@ int main(int argc, char **argv)
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for end position\n", verboseinput);
 		}
 		if (!BU_STR_EQUAL(verboseinput, "")) {
-		    sscanf(verboseinput, "%lf%lf%lf", &fenceEndPosition[0], &fenceEndPosition[1], &fenceEndPosition[2]);
+		    sscanf(verboseinput, "%lf%lf%lf", &scan[0], &scan[1], &scan[2]);
+		    VMOVE(fenceEndPosition, scan); /* double to fastf_t */
 		}
 	    }
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
@@ -1913,7 +1920,8 @@ int main(int argc, char **argv)
 		    fprintf(DEFAULT_DEBUG_OUTPUT, "main:entered [%s] for fence height\n", verboseinput);
 		}
 		if (!BU_STR_EQUAL(verboseinput, "")) {
-		    sscanf(verboseinput, "%lf%lf%lf", &fenceHeight[0], &fenceHeight[1], &fenceHeight[2]);
+		    sscanf(verboseinput, "%lf%lf%lf", &scan[0], &scan[1], &scan[2]);
+		    VMOVE(fenceHeight, scan);
 		}
 	    }
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);

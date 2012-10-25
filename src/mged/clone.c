@@ -942,11 +942,16 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
     /* Read in links names and link lengths **********/
     links = (struct link *)malloc(sizeof(struct link)*n_links);
     for (i = arg; i < (size_t)argc; i+=2) {
+	double scan;
+
 	bu_vls_strcpy(&links[(i-arg)/2].name, argv[i]);
-	if (argc > arg+1)
-	    sscanf(argv[i+1], "%lf", &links[(i-arg)/2].pct);
-	else
+	if (argc > arg+1) {
+	    sscanf(argv[i+1], "%lf", &scan);
+	    /* double to fastf_t */
+	    links[(i-arg)/2].pct = scan;
+	} else {
 	    links[(i-arg)/2].pct = 1.0;
+	}
 	totlen += links[(i-arg)/2].pct;
     }
     if (!ZERO(totlen - 1.0))
