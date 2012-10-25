@@ -20,7 +20,7 @@
 /** @file util/pix-bw3.c
  *
  * Converts a RGB pix file into 3 8-bit BW files.
- * (i.e. seperates the colors)
+ * (i.e. separates the colors)
  *
  */
 
