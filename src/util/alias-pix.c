@@ -19,7 +19,7 @@
  */
 /** @file util/alias-pix.c
  *
- * Convert ALIAS(tm) PIX format image files to BRL PIX fomat files.
+ * Convert ALIAS(tm) PIX format image files to BRL PIX format files.
  *
  */
 
