@@ -67,6 +67,8 @@ new names should be listed for reference.
 
 7.22
 ----
+librtserver
+        becoming stand-alone project, removes optional java dependency [deprecated 7.22]
 mged
 	em, e_muves, l_muves, lm, read_muves, and t_muves MUVES-specific commands [deprecated 7.22]
 
