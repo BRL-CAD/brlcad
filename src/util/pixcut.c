@@ -270,7 +270,7 @@ main(int argc, char **argv)
     }
 /*
  * If the new image does not intersect the original, then set the base_x
- * so that it does not overlap the original but at the same time minmizes
+ * so that it does not overlap the original but at the same time minimizes
  * the memory hit.
  */
     if (base_x + new_width < 0 || base_x > org_width) {
@@ -342,7 +342,7 @@ main(int argc, char **argv)
 	row++;
     }
 /*
- * Refill the output buffer if we are going to be outputing background
+ * Refill the output buffer if we are going to be outputting background
  * lines.
  */
     if (row >= org_height) {
