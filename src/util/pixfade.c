@@ -19,22 +19,22 @@
  */
 /** @file util/pixfade.c
  *
- * Fade a pixture
+ * Fade a picture
  *
- * pixfade will darken a pix by a certen percentage or do an integer
+ * pixfade will darken a pix by a certain percentage or do an integer
  * max pixel value.  It runs in two modes, truncate which will cut any
  * channel greater than param to param, and scale which will change
- * a channel to param percent of its orignal value (limited by 0-255)
+ * a channel to param percent of its original value (limited by 0-255)
  *
  * Inputs:
  *	-m	integer max value
  *	-f	fraction to fade
  *	-p	percentage of fade (fraction = percentage/100)
- *	file	a pixture file.
- *	STDIN	a pixture file if 'file' is not given.
+ *	file	a picture file.
+ *	STDIN	a picture file if 'file' is not given.
  *
  * Output:
- *	STDOUT	the faded pixture.
+ *	STDOUT	the faded picture.
  *
  * Calls:
  *	get_args
@@ -72,14 +72,14 @@ get_args(int argc, char **argv, FILE **inpp, int *max, double *multiplier)
 	    case 'p':
 		*multiplier = atof(bu_optarg) / 100.0;
 		if (*multiplier < 0.0) {
-		    fprintf(stderr, "pixfade: percent is negitive");
+		    fprintf(stderr, "pixfade: percent is negative");
 		    bu_exit (1, NULL);
 		}
 		break;
 	    case 'f':
 		*multiplier = atof(bu_optarg);
 		if (*multiplier < 0.0) {
-		    fprintf(stderr, "pixfade: fraction is negitive");
+		    fprintf(stderr, "pixfade: fraction is negative");
 		    bu_exit (1, NULL);
 		}
 		break;
