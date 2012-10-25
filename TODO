@@ -1335,6 +1335,39 @@ comp.r4 ID 5678 material code 5 LOS 75
   project as a possible means of procedurally generating plant models
   in BRL-CAD (libraries are BSD licensed: http://ngplant.sourceforge.net)
 
+
+WINDOWS
+-------
+
+The following binaries are not yet available on Windows.  The reason
+is identified in parentheses.
+
+bombardier (possibly just a problem with the build logic)
+burst      (TERMLIB)
+enigma     (not ported)
+fbcolor    (TERMLIB)
+fbed       (TERMLIB)
+fbpoint    (TERMLIB) 
+fbzoom     (TERMLIB)
+ir-X       (X11 specific)
+irdisp     (X11 specific)
+isst       (Togl widget on Windows, possibly other issues)
+lgt        (TERMLIB)
+pl-X       (X11 specific)
+pl-dm      (possibly X11 specific)
+pp-fb      (TERMLIB)
+remrt      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
+rtsrv      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
+rttherm    (rttherm dir commented out for WIN32 in src/CMakeLists.txt)
+scriptsort (lex)
+ssamp-bw   (rttherm dir commented out for WIN32 in src/CMakeLists.txt)
+ssampview  (rttherm dir commented out for WIN32 in src/CMakeLists.txt)
+ttcp       (not ported)
+
+The MGED points support doesn't appear as an executable, but it is
+missing on Windows due to needing lex.
+
+
 CONVERTERS
 ----------
 
