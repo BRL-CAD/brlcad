@@ -142,7 +142,7 @@ get_args(int argc, char **argv)
 	    perror("scanf");
     }
 
-    /* Make sure nessecary variables set */
+    /* Make sure necessary variables set */
     if (linelen <= 0 || xnum <= 0 || ynum <= 0) {
 	fprintf(stderr, "%s", usage);
 	bu_exit(1, "pixrect: args for -w -W -N [-S] must be > 0\n");
@@ -154,7 +154,7 @@ get_args(int argc, char **argv)
 	if (bu_optind >= argc) {
 	    if (isatty(fileno(stdin))) {
 		fprintf(stderr,
-			"pixrect: input from sdtin\n");
+			"pixrect: input from stdin\n");
 		return 0;
 	    }
 	    ifp = stdin;
