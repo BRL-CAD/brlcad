@@ -1665,7 +1665,7 @@ extern NURBS_EXPORT int surface_surface_intersection(const ON_Surface* surfA,
 					double max_dis = 0.0,
 					double tolerance = 1.0e-3);
 
-}
+} /* end namespace brlcad */
 
 typedef struct pbc_data {
     double tolerance;
