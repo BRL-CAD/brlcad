@@ -1830,7 +1830,6 @@ draw_lines_between_ellipses(struct bu_list *vhead, struct ellipse ellipse1, stru
 static int
 tgc_points_per_ellipse(const struct rt_db_internal *ip, const struct rt_view_info *info)
 {
-    int num_points;
     struct rt_tgc_internal *tgc;
     fastf_t samples_per_mm, avg_axis_len, avg_axis_samples;
 
@@ -1838,23 +1837,13 @@ tgc_points_per_ellipse(const struct rt_db_internal *ip, const struct rt_view_inf
     tgc = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
-    avg_axis_len = 2.0 * sqrt((MAGSQ(tgc->a) + MAGSQ(tgc->b) + MAGSQ(tgc->c) +
-		MAGSQ(tgc->d)) / 4.0);
+    avg_axis_len = (2.0 * (MAGNITUDE(tgc->a) + MAGNITUDE(tgc->b) +
+		MAGNITUDE(tgc->c) + MAGNITUDE(tgc->d))) / 4.0;
 
     samples_per_mm = sqrt(info->view_samples) / info->view_size;
     avg_axis_samples = samples_per_mm * avg_axis_len;
 
-    num_points = sqrt(avg_axis_samples);
-
-    if (num_points % 2 != 0) {
-	++num_points;
-    }
-
-    if (num_points < 8) {
-	num_points = 8;
-    }
-
-    return num_points;
+    return pow(avg_axis_samples * M_PI, .55);
 }
 
 int
@@ -1870,6 +1859,16 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     RT_TGC_CK_MAGIC(tip);
 
     points_per_ellipse = tgc_points_per_ellipse(ip, info);
+
+    if (points_per_ellipse < 4) {
+	point_t p;
+
+	VADD2(p, tip->v, tip->h);
+	RT_ADD_VLIST(info->vhead, tip->v, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
+
+	return 0;
+    }
 
     VMOVE(ellipse1.center, tip->v);
     VMOVE(ellipse1.axis_a, tip->a);
