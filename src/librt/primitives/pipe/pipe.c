@@ -3333,6 +3333,7 @@ rt_pipe_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     bu_free((char *)inner_loop, "rt_pipe_tess: inner_loop");
 
     nmg_rebound(m, tol);
+    nmg_edge_fuse(&s->l.magic, tol);
 
     return 0;
 }
