@@ -124,7 +124,7 @@ unsigned char blumap[MAPSIZE] =
   119, 136, 170, 187, 221, 238, 17, 34, 68, 85, 119, 136, 170, 187, 221, 238 };
 
 
-/* indicies of the primary colors and grey values in the color map */
+/* indices of the primary colors and grey values in the color map */
 static unsigned char rvec[16] = { 0, 216, 217, 1, 218, 219, 2, 220, 221,
 				  3, 222, 223, 4, 224, 225, 5};
 static unsigned char gvec[16] = { 0, 226, 227,  6, 228, 229, 12, 230,
@@ -267,7 +267,7 @@ doit(void)
      */
     free(pix);
 
-    /* fill in miscelaneous rasterfile header fields */
+    /* fill in miscellaneous rasterfile header fields */
     ras.ras_length = ras.ras_width * ras.ras_height;
 
     /* write the rasterfile header */
@@ -310,7 +310,7 @@ usage(void)
 /*
  * M A I N
  *
- * Perform miscelaneous tasks such as argument parsing and
+ * Perform miscellaneous tasks such as argument parsing and
  * I/O setup and then call "doit" to perform the task at hand
  */
 int
