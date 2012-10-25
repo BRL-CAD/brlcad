@@ -20,7 +20,7 @@
 /** @file util/dpix-pix.c
  *
  * Convert double precision images in .dpix form to a .pix file.  By
- * default, will determin min/max values to drive exposure
+ * default, will determine min/max values to drive exposure
  * calculations, and perform linear interpolation on the way to 1-byte
  * values.
  *
@@ -72,7 +72,7 @@ main(int argc, char **argv)
 
     /* Note that the minimum is set to 1.0e20, the computer's working
      * equivalent of positive infinity.  Thus any subsequent value
-     * must be larger. Likewise, the maximun is set to -1.0e20, the
+     * must be larger. Likewise, the maximum is set to -1.0e20, the
      * equivalent of negative infinity, and any values must thus be
      * bigger than it.
      */
