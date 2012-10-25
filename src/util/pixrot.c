@@ -28,7 +28,7 @@
  *
  * This is a generalization of bwrot and can in fact handle "pixels"
  * of any size.  Thus this routine could be used to say, rotate a
- * matix of floating point values, etc.
+ * matrix of floating point values, etc.
  *
  */
 
@@ -113,7 +113,7 @@ get_args(int argc, char **argv)
 	}
     }
 
-    /* XXX - backward compatability hack */
+    /* XXX - backward compatibility hack */
     if (bu_optind+2 == argc) {
 	nxin = atoi(argv[bu_optind++]);
 	nyin = atoi(argv[bu_optind++]);
