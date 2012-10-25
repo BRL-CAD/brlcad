@@ -26,7 +26,7 @@
  * amount of data may need to be buffered, so a combination of a 1
  * Mbyte memory buffer and a temporary file is used.
  *
- * The use of read() and write() is prefered over fread() and fwrite()
+ * The use of read() and write() is preferred over fread() and fwrite()
  * for reasons of efficiency, given the large buffer size in use.
  *
  */
