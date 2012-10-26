@@ -107,7 +107,7 @@ hit_voxelize(struct application *ap, struct partition *PartHeadp, struct seg*UNU
 	int         voxelNumOut = (int)(hitDistOut / sizeVoxel);
 
 	if (EQUAL((hitDistOut / sizeVoxel), floor(hitDistOut / sizeVoxel)))
-	    FMAX(voxelNumIn, voxelNumOut - 1);
+	    voxelNumOut = FMAX(voxelNumIn, voxelNumOut - 1);
 
 	/**
 	 * If voxel entered and voxel exited are same then nothing can
