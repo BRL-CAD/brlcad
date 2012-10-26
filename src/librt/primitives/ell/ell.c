@@ -762,11 +762,10 @@ ell_ellipse_samples(
 	const struct rt_ell_internal *ell,
 	const struct rt_view_info *info)
 {
-    fastf_t samples_per_mm, mm_per_sample;
+    fastf_t samples_per_mm;
     fastf_t radius, radius_samples;
 
     samples_per_mm = sqrt(info->view_samples) / info->view_size;
-    mm_per_sample = 1.0 / samples_per_mm;
 
     radius = fabs((MAGNITUDE(ell->a) + MAGNITUDE(ell->b) + MAGNITUDE(ell->c))
 	    / 3.0);
