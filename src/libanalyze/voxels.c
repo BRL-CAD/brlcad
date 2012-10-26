@@ -31,15 +31,42 @@
 #include "analyze.h"
 #include "bu.h"
 
-/**
- * Function to assign a new region to a voxel.
- */
-HIDDEN void
-setRegionName(struct bu_vls **vp, const char **nameSource, const char **nameDestination) {
 
-    *vp = bu_vls_vlsinit();
-    bu_vls_strcpy(*vp, *nameSource);
-    *nameDestination = bu_vls_strgrab(*vp);
+/**
+ * Function to get the corresponding region entry to a region name.
+ */
+HIDDEN struct voxelRegion *
+getRegionByName(struct voxelRegion *head, const char *regionName) {
+    struct voxelRegion *ret = NULL;
+
+    BU_ASSERT(regionName != NULL);
+
+    if(head->regionName == NULL) { /* the first region on this voxel */
+	head->regionName = bu_strdup(regionName);
+	ret = head;
+    }
+    else {
+	while(head->nextRegion != NULL) {
+	    if(bu_strcmp(head->regionName, regionName) == 0){
+		ret = head;
+		break;
+	    }
+
+	    head = head->nextRegion;
+	}
+
+	if (ret == NULL) { /* not found until here */
+	    if(bu_strcmp(head->regionName ,regionName) == 0) /* is it the last one on the list? */
+		ret = head;
+	    else {
+		ret              = bu_calloc(1, sizeof(struct voxelRegion), "newRegion");
+		head->nextRegion = ret;
+	        ret->regionName  = bu_strdup(regionName);
+	    }
+	}
+    }
+
+    return ret;
 }
 
 
@@ -58,32 +85,12 @@ setRegionName(struct bu_vls **vp, const char **nameSource, const char **nameDest
 int
 hit_voxelize(struct application *ap, struct partition *PartHeadp, struct seg*UNUSED(segs))
 {
-    struct partition *pp;
-    struct rayInfo *voxelHits;
-    struct hit *hitOutp, *hitInp;
-    struct voxelRegion *tmp, *newRegion;
-    struct bu_vls *vp;
-
-    int voxelNumIn, voxelNumOut, j = 0, regionSaved;
-    fastf_t hitDistIn, hitDistOut, sizeVoxel[3], *fillDistances;
-
-
-    voxelHits = (struct rayInfo*) ap->a_uptr;
-
-    /**
-     * length of voxels in the 3 directions is stored in sizeVoxel[],
-     */
-    sizeVoxel[0] = voxelHits->sizeVoxel[0];
-    sizeVoxel[1] = voxelHits->sizeVoxel[1];
-    sizeVoxel[2] = voxelHits->sizeVoxel[2];
-
-    pp = PartHeadp->pt_forw;
-    fillDistances = voxelHits->fillDistances;
+    struct partition *pp            = PartHeadp->pt_forw;
+    struct rayInfo   *voxelHits     = (struct rayInfo*) ap->a_uptr;
+    fastf_t           sizeVoxel     = voxelHits->sizeVoxel;
+    fastf_t          *fillDistances = voxelHits->fillDistances;
 
     while (pp != PartHeadp) {
-
-	regionSaved = 0;
-
 	/**
 	 * hitInp, hitOutp are hit structures to save distances where
 	 * ray entered and exited the present partition.  hitDistIn,
@@ -92,18 +99,15 @@ hit_voxelize(struct application *ap, struct partition *PartHeadp, struct seg*UNU
 	 * ray entered and exited the present partition.
 	 */
 
-	hitInp = pp->pt_inhit;
-	hitOutp = pp->pt_outhit;
+	struct hit *hitInp      = pp->pt_inhit;
+	struct hit *hitOutp     = pp->pt_outhit;
+	fastf_t     hitDistIn   = hitInp->hit_dist - 1.0;
+	fastf_t     hitDistOut  = hitOutp->hit_dist - 1.0;
+	int         voxelNumIn  = (int)(hitDistIn / sizeVoxel);
+	int         voxelNumOut = (int)(hitDistOut / sizeVoxel);
 
-	hitDistIn = hitInp->hit_dist - 1.0;
-	hitDistOut = hitOutp->hit_dist - 1.0;
-
-	voxelNumIn =  (int)(hitDistIn / sizeVoxel[0]);
-	voxelNumOut = (int)(hitDistOut / sizeVoxel[0]);
-
-	if (EQUAL((hitDistOut / sizeVoxel[0]), floor(hitDistOut / sizeVoxel[0]))) {
-	    voxelNumOut -= 1;
-	}
+	if (EQUAL((hitDistOut / sizeVoxel), floor(hitDistOut / sizeVoxel)))
+	    FMAX(voxelNumIn, voxelNumOut - 1);
 
 	/**
 	 * If voxel entered and voxel exited are same then nothing can
@@ -112,90 +116,21 @@ hit_voxelize(struct application *ap, struct partition *PartHeadp, struct seg*UNU
 	 * in.
 	 */
 	if (voxelNumIn == voxelNumOut) {
-
-	    fillDistances[voxelNumIn] +=  hitDistOut - hitDistIn;
-
-	    if(voxelHits->regionList[voxelNumIn].regionName == NULL) {
-
-		setRegionName(&vp, &(pp->pt_regionp->reg_name), &(voxelHits->regionList[voxelNumIn].regionName));
-		voxelHits->regionList[voxelNumIn].regionDistance += hitDistOut - hitDistIn;
-
-	    } else {
-
-		tmp = voxelHits->regionList + voxelNumIn;
-
-		while(tmp->nextRegion != NULL) {
-
-		    if(!bu_strcmp(pp->pt_regionp->reg_name, tmp->regionName)){
-
-			regionSaved = 1;
-			tmp->regionDistance += hitDistOut - hitDistIn;
-
-		    }
-		    tmp = tmp->nextRegion;
-		}
-
-		if(!bu_strcmp(tmp->regionName,pp->pt_regionp->reg_name)){
-		    regionSaved = 1;
-		    tmp->regionDistance += hitDistOut - hitDistIn;
-		}
-		if(regionSaved!=1) {
-		    newRegion = bu_calloc(1, sizeof(struct voxelRegion), "newRegion");
-
-		    tmp->nextRegion = newRegion;
-
-		    setRegionName(&vp, &(pp->pt_regionp->reg_name), &(newRegion->regionName));
-
-		    newRegion->nextRegion = NULL;
-		    newRegion->regionDistance += hitDistOut - hitDistIn;
-		}
-	    }
-
-
+	    fillDistances[voxelNumIn]                                                                     += hitDistOut - hitDistIn;
+	    getRegionByName(voxelHits->regionList + voxelNumIn, pp->pt_regionp->reg_name)->regionDistance += hitDistOut - hitDistIn;
 	} else {
+	    int j;
 
-	    fillDistances[voxelNumIn] += (voxelNumIn + 1) * sizeVoxel[0] - hitDistIn;
-	    if(voxelHits->regionList[voxelNumIn].regionName == NULL) {
+	    fillDistances[voxelNumIn]                                                                     += (voxelNumIn + 1) * sizeVoxel - hitDistIn;
+	    getRegionByName(voxelHits->regionList + voxelNumIn, pp->pt_regionp->reg_name)->regionDistance += (voxelNumIn + 1) * sizeVoxel - hitDistIn;
 
-		setRegionName(&vp, &(pp->pt_regionp->reg_name), &(voxelHits->regionList[voxelNumIn].regionName));
-		voxelHits->regionList[voxelNumIn].regionDistance += (voxelNumIn + 1) * sizeVoxel[0] - hitDistIn;
-
-	    }  else {
-		tmp = voxelHits->regionList + voxelNumIn;
-		while(tmp->nextRegion != NULL) {
-
-		    if(!bu_strcmp(pp->pt_regionp->reg_name,tmp->regionName)) {
-			regionSaved = 1;
-			tmp->regionDistance += (voxelNumIn + 1) * sizeVoxel[0] - hitDistIn;
-		    }
-		    tmp = tmp->nextRegion;
-		}
-		if(!bu_strcmp(tmp->regionName, pp->pt_regionp->reg_name)) {
-		    regionSaved = 1;
-		    tmp->regionDistance += (voxelNumIn + 1) * sizeVoxel[0] - hitDistIn;
-		}
-		if(regionSaved!=1){
-		    newRegion = bu_calloc(1, sizeof(struct voxelRegion), "newRegion");
-		    tmp->nextRegion = newRegion;
-
-		    setRegionName(&vp, &(pp->pt_regionp->reg_name), &(newRegion->regionName));
-
-		    newRegion->nextRegion = NULL;
-		    newRegion->regionDistance += (voxelNumIn + 1) * sizeVoxel[0] - hitDistIn;
-		}
+	    for (j = voxelNumIn + 1; j < voxelNumOut; ++j) {
+		fillDistances[j]                                                                     += sizeVoxel;
+		getRegionByName(voxelHits->regionList + j, pp->pt_regionp->reg_name)->regionDistance += sizeVoxel;
 	    }
 
-	    for (j = voxelNumIn + 1; j<voxelNumOut; j++) {
-
-		fillDistances[j] += sizeVoxel[0];
-		setRegionName(&vp, &(pp->pt_regionp->reg_name), &(voxelHits->regionList[j].regionName));
-		voxelHits->regionList[j].regionDistance += sizeVoxel[0];
-	    }
-
-	    fillDistances[voxelNumOut] += hitDistOut - (voxelNumOut * sizeVoxel[0]);
-	    setRegionName(&vp, &(pp->pt_regionp->reg_name), &(voxelHits->regionList[voxelNumOut].regionName));
-	    voxelHits->regionList[voxelNumOut].regionDistance += hitDistOut - (voxelNumOut * sizeVoxel[0]);
-
+	    fillDistances[voxelNumOut]                                                                     += hitDistOut - (voxelNumOut * sizeVoxel);
+	    getRegionByName(voxelHits->regionList + voxelNumOut, pp->pt_regionp->reg_name)->regionDistance += hitDistOut - (voxelNumOut * sizeVoxel);
 	}
 
 	pp = pp->pt_forw;
@@ -238,9 +173,7 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
 	numVoxel[2] -=1;
     }
 
-    voxelHits.sizeVoxel[0] = sizeVoxel[0];
-    voxelHits.sizeVoxel[1] = sizeVoxel[1];
-    voxelHits.sizeVoxel[2] = sizeVoxel[2];
+    voxelHits.sizeVoxel = sizeVoxel[0];
 
     /* voxelArray stores the distance in path of ray inside a voxel which is filled*/
     voxelArray = bu_calloc(numVoxel[0], sizeof(fastf_t), "voxelArray");

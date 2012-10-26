@@ -94,7 +94,7 @@ struct voxelRegion {
  */
 
 struct rayInfo {
-    fastf_t sizeVoxel[3];
+    fastf_t sizeVoxel;
     fastf_t *fillDistances;
     struct voxelRegion *regionList;
 };
