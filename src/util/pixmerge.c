@@ -97,7 +97,7 @@ get_args(int argc, char **argv)
 		    width = c;
 		break;
 	    case 'C':
-	    case 'c':	/* backword compatability */
+	    case 'c':	/* backward compatibility */
 		{
 		    char *cp = bu_optarg;
 		    unsigned char *conp = pconst;
