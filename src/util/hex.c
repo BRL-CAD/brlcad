@@ -23,7 +23,7 @@
  *
  * Options
  * h    help
- * o    offset from begining of data from which to start dump
+ * o    offset from beginning of data from which to start dump
  */
 
 #include "common.h"
@@ -40,7 +40,7 @@
 static char *options = "o:";
 static char *progname = "(noname)";
 
-static long offset=0;	 /* offset from begining of file from which to start */
+static long offset=0;	 /* offset from beginning of file from which to start */
 
 #define DUMPLEN 16    /* number of bytes to dump on one line */
 
@@ -121,7 +121,7 @@ void usage(void)
 
 /* M A I N
  *
- * Parse arguemnts and call 'dump' to perform primary task.
+ * Parse arguments and call 'dump' to perform primary task.
  */
 int
 main(int ac, char **av)
