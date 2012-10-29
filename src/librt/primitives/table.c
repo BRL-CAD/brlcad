@@ -188,9 +188,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -229,9 +229,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_tor_params,
 	rt_tor_bbox,
-    rt_tor_volume,
-    rt_tor_surf_area,
-    rt_tor_centroid,
+	rt_tor_volume,
+	rt_tor_surf_area,
+	rt_tor_centroid,
     },
 
     {
@@ -270,9 +270,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_tgc_params,
 	rt_tgc_bbox,
-    rt_tgc_volume,
-    rt_tgc_surf_area,
-    rt_tgc_centroid,
+	rt_tgc_volume,
+	rt_tgc_surf_area,
+	rt_tgc_centroid,
     },
 
     {
@@ -311,9 +311,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_ell_params,
 	rt_ell_bbox,
-    rt_ell_volume,
-    rt_ell_surf_area,
-    rt_ell_centroid,
+	rt_ell_volume,
+	rt_ell_surf_area,
+	rt_ell_centroid,
     },
 
     {
@@ -352,9 +352,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_arb_params,
 	rt_arb_bbox,
-    rt_arb_volume,
-    NULL,
-    NULL,
+	rt_arb_volume,
+	NULL,
+	NULL,
     },
 
     {
@@ -393,9 +393,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_ars_params,
 	rt_ars_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -434,9 +434,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_hlf_params,
 	NULL,
-    NULL,
-    NULL,
-    NULL
+	NULL,
+	NULL,
+	NULL
     },
 
     {
@@ -475,9 +475,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_rec_params,
 	rt_rec_bbox,
-    rt_tgc_volume,
-    rt_tgc_surf_area,
-    rt_tgc_centroid,
+	rt_tgc_volume,
+	rt_tgc_surf_area,
+	rt_tgc_centroid,
     },
 
     {
@@ -516,9 +516,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_pg_params,
 	rt_pg_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -557,9 +557,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_nurb_params,
 	rt_nurb_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -598,9 +598,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_sph_params,
 	rt_ell_bbox,
-    rt_ell_volume,
-    rt_ell_surf_area,
-    rt_ell_centroid,
+	rt_ell_volume,
+	rt_ell_surf_area,
+	rt_ell_centroid,
     },
 
     {
@@ -639,9 +639,9 @@ const struct rt_functab rt_functab[] = {
 	rt_nmg_make,
 	rt_nmg_params,
 	rt_nmg_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -680,9 +680,9 @@ const struct rt_functab rt_functab[] = {
 	rt_ebm_make,
 	rt_ebm_params,
 	rt_ebm_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -721,9 +721,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_vol_params,
 	rt_vol_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -762,9 +762,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_arbn_params,
 	rt_arbn_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -803,9 +803,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_pipe_params,
 	rt_pipe_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -844,9 +844,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_part_params,
 	rt_part_bbox,
-    rt_part_volume,
-    rt_part_surf_area,
-    NULL,
+	rt_part_volume,
+	rt_part_surf_area,
+	NULL,
     },
 
     {
@@ -885,9 +885,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_rpc_params,
 	rt_rpc_bbox,
-    rt_rpc_volume,
-    rt_rpc_surf_area,
-    rt_rpc_centroid,
+	rt_rpc_volume,
+	rt_rpc_surf_area,
+	rt_rpc_centroid,
     },
 
     {
@@ -926,9 +926,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_rhc_params,
 	rt_rhc_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -967,9 +967,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_epa_params,
 	rt_epa_bbox,
-    rt_epa_volume,
-    rt_epa_surf_area,
-    rt_epa_centroid,
+	rt_epa_volume,
+	rt_epa_surf_area,
+	rt_epa_centroid,
     },
 
     {
@@ -1008,9 +1008,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_ehy_params,
 	rt_ehy_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1049,9 +1049,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_eto_params,
 	rt_eto_bbox,
-    rt_eto_volume,
-    rt_eto_surf_area,
-    rt_eto_centroid,
+	rt_eto_volume,
+	rt_eto_surf_area,
+	rt_eto_centroid,
     },
 
     {
@@ -1090,9 +1090,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_grp_params,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1131,9 +1131,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1172,9 +1172,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_hf_params,
 	rt_hf_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1213,9 +1213,9 @@ const struct rt_functab rt_functab[] = {
 	rt_dsp_make,
 	rt_dsp_params,
 	rt_dsp_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1254,9 +1254,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_sketch_params,
 	NULL,
-    NULL,
-    rt_sketch_surf_area,
-    NULL,
+	NULL,
+	rt_sketch_surf_area,
+	NULL,
     },
 
     {
@@ -1295,9 +1295,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_extrude_params,
 	rt_extrude_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1336,9 +1336,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_submodel_params,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1377,9 +1377,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_cline_params,
 	rt_cline_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1418,9 +1418,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_bot_params,
 	rt_bot_bbox,
-    NULL,
-    NULL,
-    rt_bot_centroid,
+	NULL,
+	NULL,
+	rt_bot_centroid,
     },
 
     {
@@ -1459,9 +1459,9 @@ const struct rt_functab rt_functab[] = {
 	rt_comb_make,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1500,9 +1500,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
     },
@@ -1543,9 +1543,9 @@ const struct rt_functab rt_functab[] = {
 	rt_binunif_make,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1584,9 +1584,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
     },
@@ -1627,9 +1627,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_superell_params,
 	rt_superell_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1668,9 +1668,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_metaball_params,
 	rt_metaball_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
 #if OBJ_BREP
@@ -1710,9 +1710,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_brep_params,
 	rt_brep_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 #else
     {
@@ -1750,9 +1750,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 #endif
 
@@ -1792,9 +1792,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_hyp_params,
 	rt_hyp_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1833,9 +1833,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1874,9 +1874,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	rt_revolve_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1915,9 +1915,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	rt_pnts_bbox,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1956,9 +1956,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     },
 
     {
@@ -1997,9 +1997,9 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
     }
 };
 
