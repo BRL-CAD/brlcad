@@ -40,6 +40,7 @@ target_link_libraries(BrlcadCore
   libged-static
   regex-static
   librt-static
+  libnurbs-static
   libsysv-static
   libwdb-static
   zlib-static
@@ -103,6 +104,7 @@ target_link_libraries(brlcad
   libged-static
   regex-static
   librt-static
+  libnurbs-static
   libsysv-static
   libwdb-static
   zlib-static
