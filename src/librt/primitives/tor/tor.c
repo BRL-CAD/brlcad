@@ -1455,8 +1455,10 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 int
 rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-    double vec[2*3+2];
     struct rt_tor_internal *tip;
+
+    /* must be double for export */
+    double vec[2*3+2];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1588,6 +1590,8 @@ int
 rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_tor_internal *tip;
+
+    /* must be double for import and export */
     struct rec {
 	double v[3];
 	double h[3];
@@ -1629,7 +1633,7 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     tip->r_b = tip->r_a;
 
     /* Calculate two mutually perpendicular vectors, perpendicular to N */
-    bn_vec_ortho(tip->a, tip->h);		/* a has unit length */
+    bn_vec_ortho(tip->a, tip->h);	/* a has unit length */
     VCROSS(tip->b, tip->h, tip->a);	/* |A| = |H| = 1, so |B|=1 */
 
     VSCALE(tip->a, tip->a, tip->r_a);

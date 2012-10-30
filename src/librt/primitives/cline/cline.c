@@ -830,7 +830,10 @@ rt_cline_import4(struct rt_db_internal *ip, const struct bu_external *ep, const 
 {
     struct rt_cline_internal *cline_ip;
     union record *rp;
-    point_t work;
+
+    /* must be double for import and export */
+    double work[ELEMENTS_PER_POINT];
+    double scan;
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -852,13 +855,13 @@ rt_cline_import4(struct rt_db_internal *ip, const struct bu_external *ep, const 
     cline_ip->magic = RT_CLINE_INTERNAL_MAGIC;
     if (mat == NULL) mat = bn_mat_identity;
 
-    ntohd((unsigned char *)(&cline_ip->thickness), rp->cli.cli_thick, 1);
-    cline_ip->thickness /= mat[15];
-    ntohd((unsigned char *)(&cline_ip->radius), rp->cli.cli_radius, 1);
-    cline_ip->radius /= mat[15];
-    ntohd((unsigned char *)(&work), rp->cli.cli_V, 3);
+    ntohd((unsigned char *)&scan, rp->cli.cli_thick, 1);
+    cline_ip->thickness = scan / mat[15];
+    ntohd((unsigned char *)&scan, rp->cli.cli_radius, 1);
+    cline_ip->radius = scan / mat[15];
+    ntohd((unsigned char *)&work, rp->cli.cli_V, ELEMENTS_PER_POINT);
     MAT4X3PNT(cline_ip->v, mat, work);
-    ntohd((unsigned char *)(&work), rp->cli.cli_h, 3);
+    ntohd((unsigned char *)&work, rp->cli.cli_h, ELEMENTS_PER_POINT);
     MAT4X3VEC(cline_ip->h, mat, work);
 
     return 0;			/* OK */
@@ -875,8 +878,10 @@ rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
 {
     struct rt_cline_internal *cline_ip;
     union record *rec;
-    fastf_t tmp;
-    point_t work;
+
+    /* must be double for import and export */
+    double tmp;
+    double work[ELEMENTS_PER_VECT];
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_CLINE) return -1;
@@ -898,9 +903,9 @@ rt_cline_export4(struct bu_external *ep, const struct rt_db_internal *ip, double
     tmp = cline_ip->radius * local2mm;
     htond(rec->cli.cli_radius, (unsigned char *)(&tmp), 1);
     VSCALE(work, cline_ip->v, local2mm);
-    htond(rec->cli.cli_V, (unsigned char *)work, 3);
+    htond(rec->cli.cli_V, (unsigned char *)work, ELEMENTS_PER_VECT);
     VSCALE(work, cline_ip->h, local2mm);
-    htond(rec->cli.cli_h, (unsigned char *)work, 3);
+    htond(rec->cli.cli_h, (unsigned char *)work, ELEMENTS_PER_VECT);
 
     return 0;
 }
@@ -916,7 +921,9 @@ int
 rt_cline_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_cline_internal *cline_ip;
-    fastf_t vec[8];
+
+    /* must be double for import and export */
+    double vec[8];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -954,7 +961,9 @@ int
 rt_cline_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_cline_internal *cline_ip;
-    fastf_t vec[8];
+
+    /* must be double for import and export */
+    double vec[8];
 
     if (dbip) RT_CK_DBI(dbip);
 

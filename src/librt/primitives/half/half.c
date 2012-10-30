@@ -657,16 +657,18 @@ rt_hlf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
+    register double f, t;
     struct rt_half_internal *hip;
     point_t tmp_pt, new_pt;
-    plane_t tmp_plane;
-    register double f, t;
+
+    /* must be double for import and export */
+    double tmp_plane[ELEMENTS_PER_PLANE];
 
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 4);
+    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_PLANE);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -678,7 +680,7 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     hip->magic = RT_HALF_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)tmp_plane, ep->ext_buf, 4);
+    ntohd((unsigned char *)tmp_plane, ep->ext_buf, ELEMENTS_PER_PLANE);
 
     /* to apply modeling transformations, create a temporary normal
      * vector and point on the plane
@@ -718,7 +720,10 @@ int
 rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_half_internal *hip;
-    fastf_t scaled_dist;
+
+    /* must be double for import and export */
+    double scaled_dist;
+    double eqn[ELEMENTS_PER_VECT];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -735,10 +740,13 @@ rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     scaled_dist = hip->eqn[W] * local2mm;
 
     /* Convert from internal (host) to database (network) format */
+
     /* the normal */
-    htond((unsigned char *)ep->ext_buf, (unsigned char *)hip->eqn, 3);
+    VMOVE(eqn, hip->eqn); /* convert fastf_t to double */
+    htond((unsigned char *)ep->ext_buf, (unsigned char *)eqn, ELEMENTS_PER_VECT);
+
     /* the distance */
-    htond(((unsigned char *)(ep->ext_buf)) + SIZEOF_NETWORK_DOUBLE*3,
+    htond(((unsigned char *)(ep->ext_buf)) + SIZEOF_NETWORK_DOUBLE*ELEMENTS_PER_VECT,
 	  (unsigned char *)&scaled_dist, 1);
 
     return 0;

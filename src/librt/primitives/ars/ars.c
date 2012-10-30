@@ -314,8 +314,10 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     struct rt_ars_internal *ari;
     register size_t i, j;
     register unsigned char *cp;
-    vect_t tmp_vec;
     register fastf_t *fp;
+
+    /* must be double for import and export */
+    double tmp_pnt[ELEMENTS_PER_POINT];
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
@@ -342,14 +344,14 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	(ari->ncurves+1), sizeof(fastf_t *), "ars curve ptrs");
     if (mat == NULL) mat = bn_mat_identity;
     for (i=0; i < ari->ncurves; i++) {
-	ari->curves[i] = (fastf_t *)bu_calloc((ari->pts_per_curve + 1) * 3,
+	ari->curves[i] = (fastf_t *)bu_calloc((ari->pts_per_curve + 1) * ELEMENTS_PER_POINT,
 					      sizeof(fastf_t), "ARS points");
 	fp = ari->curves[i];
 	for (j=0; j<ari->pts_per_curve; j++) {
-	    ntohd((unsigned char *)tmp_vec, cp, 3);
-	    MAT4X3PNT(fp, mat, tmp_vec);
-	    cp += 3 * SIZEOF_NETWORK_DOUBLE;
-	    fp += ELEMENTS_PER_VECT;
+	    ntohd((unsigned char *)tmp_pnt, cp, ELEMENTS_PER_POINT);
+	    MAT4X3PNT(fp, mat, tmp_pnt);
+	    cp += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+	    fp += ELEMENTS_PER_POINT;
 	}
 	VMOVE(fp, ari->curves[i]);	/* duplicate first point */
     }
@@ -368,8 +370,10 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 {
     struct rt_ars_internal *arip;
     unsigned char *cp;
-    vect_t tmp_vec;
     size_t cur;		/* current curve number */
+
+    /* must be double for import and export */
+    double tmp_pnt[ELEMENTS_PER_POINT];
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_ARS) return -1;
@@ -379,8 +383,7 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = 2 * SIZEOF_NETWORK_LONG +
-	3 * arip->ncurves * arip->pts_per_curve * SIZEOF_NETWORK_DOUBLE;
+    ep->ext_nbytes = 2 * SIZEOF_NETWORK_LONG + ELEMENTS_PER_POINT * arip->ncurves * arip->pts_per_curve * SIZEOF_NETWORK_DOUBLE;
     ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "ars external");
     cp = (unsigned char *)ep->ext_buf;
 
@@ -395,10 +398,10 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 	fp = arip->curves[cur];
 	for (npts=0; npts < arip->pts_per_curve; npts++) {
-	    VSCALE(tmp_vec, fp, local2mm);
-	    ntohd(cp, (unsigned char *)tmp_vec, 3);
-	    cp += 3 * SIZEOF_NETWORK_DOUBLE;
-	    fp += ELEMENTS_PER_VECT;
+	    VSCALE(tmp_pnt, fp, local2mm);
+	    htond(cp, (unsigned char *)tmp_pnt, ELEMENTS_PER_POINT);
+	    cp += ELEMENTS_PER_POINT * SIZEOF_NETWORK_DOUBLE;
+	    fp += ELEMENTS_PER_POINT;
 	}
     }
     return 0;

@@ -295,7 +295,9 @@ int
 rt_xxx_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip)
 {
     struct rt_xxx_internal *xxx_ip;
-    fastf_t vv[ELEMENTS_PER_VECT*1];
+
+    /* must be double for import and export */
+    double vv[ELEMENTS_PER_VECT*1];
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
@@ -338,7 +340,9 @@ int
 rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_xxx_internal *xxx_ip;
-    fastf_t vec[ELEMENTS_PER_VECT];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT];
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_XXX) return -1;
@@ -358,7 +362,7 @@ rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     VSCALE(vec, xxx_ip->v, local2mm);
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*1);
+    htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT);
 
     return 0;
 }

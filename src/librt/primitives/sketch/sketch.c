@@ -961,11 +961,14 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 {
     struct rt_sketch_internal *sketch_ip;
     union record *rp;
-    vect_t v;
     size_t seg_no;
     unsigned char *ptr;
     struct rt_curve *crv;
     size_t i;
+
+    /* must be double for import and export */
+    double v[ELEMENTS_PER_VECT];
+    double *vp;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -991,21 +994,31 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
     sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
 
     if (mat == NULL) mat = bn_mat_identity;
-    ntohd((unsigned char *)v, rp->skt.skt_V, 3);
+    ntohd((unsigned char *)v, rp->skt.skt_V, ELEMENTS_PER_VECT);
     MAT4X3PNT(sketch_ip->V, mat, v);
-    ntohd((unsigned char *)v, rp->skt.skt_uvec, 3);
+    ntohd((unsigned char *)v, rp->skt.skt_uvec, ELEMENTS_PER_VECT);
     MAT4X3VEC(sketch_ip->u_vec, mat, v);
-    ntohd((unsigned char *)v, rp->skt.skt_vvec, 3);
+    ntohd((unsigned char *)v, rp->skt.skt_vvec, ELEMENTS_PER_VECT);
     MAT4X3VEC(sketch_ip->v_vec, mat, v);
     sketch_ip->vert_count = ntohl(*(uint32_t *)rp->skt.skt_vert_count);
     sketch_ip->curve.count = ntohl(*(uint32_t *)rp->skt.skt_count);
 
     ptr = (unsigned char *)rp;
     ptr += sizeof(struct sketch_rec);
-    if (sketch_ip->vert_count)
+    if (sketch_ip->vert_count) {
 	sketch_ip->verts = (point2d_t *)bu_calloc(sketch_ip->vert_count, sizeof(point2d_t), "sketch_ip->vert");
-    ntohd((unsigned char *)sketch_ip->verts, ptr, sketch_ip->vert_count*2);
-    ptr += 16 * sketch_ip->vert_count;
+	vp = (double *)bu_calloc(sketch_ip->vert_count, sizeof(double)*ELEMENTS_PER_VECT2D, "vp");
+	ntohd((unsigned char *)vp, ptr, sketch_ip->vert_count*ELEMENTS_PER_VECT2D);
+
+	/* convert double to fastf_t */
+	for (i=0; i<sketch_ip->vert_count; i++) {
+	    sketch_ip->verts[i][X] = vp[(i*ELEMENTS_PER_VECT2D)+0];
+	    sketch_ip->verts[i][Y] = vp[(i*ELEMENTS_PER_VECT2D)+1];
+	}
+
+	bu_free(vp, "vp");
+	ptr += 16 * sketch_ip->vert_count;
+    }
 
     if (sketch_ip->curve.count)
 	sketch_ip->curve.segment = (genptr_t *)bu_calloc(sketch_ip->curve.count, sizeof(genptr_t), "segs");
@@ -1017,6 +1030,10 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 	struct carc_seg *csg;
 	struct nurb_seg *nsg;
 	struct bezier_seg *bsg;
+
+	/* must be double for import and export */
+	double scan;
+	double *scanp;
 
 	magic = ntohl(*(uint32_t *)ptr);
 	ptr += SIZEOF_NETWORK_LONG;
@@ -1041,7 +1058,8 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 		ptr += SIZEOF_NETWORK_LONG;
 		csg->center_is_left = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
-		ntohd((unsigned char *)&csg->radius, ptr, 1);
+		ntohd((unsigned char *)&scan, ptr, 1);
+		csg->radius = scan; /* convert double to fastf_t */
 		ptr += SIZEOF_NETWORK_DOUBLE;
 		sketch_ip->curve.segment[seg_no] = (genptr_t)csg;
 		break;
@@ -1054,8 +1072,17 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 		ptr += SIZEOF_NETWORK_LONG;
 		nsg->k.k_size = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
+
 		nsg->k.knots = (fastf_t *)bu_malloc(nsg->k.k_size * sizeof(fastf_t), "nsg->k.knots");
-		ntohd((unsigned char *)nsg->k.knots, ptr, nsg->k.k_size);
+		scanp = (double *)bu_malloc(nsg->k.k_size * sizeof(double), "scanp");
+		ntohd((unsigned char *)scanp, ptr, nsg->k.k_size);
+
+		/* convert double to fastf_t */
+		for (i=0; i<(size_t)nsg->k.k_size; i++) {
+		    nsg->k.knots[i] = scanp[i];
+		}
+		bu_free(scanp, "scanp");
+
 		ptr += SIZEOF_NETWORK_DOUBLE * nsg->k.k_size;
 		nsg->c_size = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
@@ -1066,10 +1093,19 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 		}
 		if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 		    nsg->weights = (fastf_t *)bu_malloc(nsg->c_size * sizeof(fastf_t), "nsg->weights");
-		    ntohd((unsigned char *)nsg->weights, ptr, nsg->c_size);
+		    scanp = (double *)bu_malloc(nsg->c_size * sizeof(double), "scanp");
+		    ntohd((unsigned char *)scanp, ptr, nsg->c_size);
+
+		    /* convert double to fastf_t */
+		    for (i=0; i<(size_t)nsg->k.k_size; i++) {
+			nsg->weights[i] = scanp[i];
+		    }
+		    bu_free(scanp, "scanp");
+
 		    ptr += SIZEOF_NETWORK_DOUBLE * nsg->c_size;
-		} else
+		} else {
 		    nsg->weights = (fastf_t *)NULL;
+		}
 		sketch_ip->curve.segment[seg_no] = (genptr_t)nsg;
 		break;
 	    case CURVE_BEZIER_MAGIC:
@@ -1119,8 +1155,10 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
     struct rt_sketch_internal *sketch_ip;
     union record *rec;
     size_t i, seg_no, nbytes=0, ngran;
-    vect_t tmp_vec;
     unsigned char *ptr;
+
+    /* must be double for import and export */
+    double tmp_vec[ELEMENTS_PER_VECT];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1180,11 +1218,13 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
      * to database record format
      */
     VSCALE(tmp_vec, sketch_ip->V, local2mm);
-    htond(rec->skt.skt_V, (unsigned char *)tmp_vec, 3);
+    htond(rec->skt.skt_V, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
 
     /* uvec and uvec are unit vectors, do not convert to/from mm */
-    htond(rec->skt.skt_uvec, (unsigned char *)sketch_ip->u_vec, 3);
-    htond(rec->skt.skt_vvec, (unsigned char *)sketch_ip->v_vec, 3);
+    VMOVE(tmp_vec, sketch_ip->u_vec); /* convert fastf_t to double */
+    htond(rec->skt.skt_uvec, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
+    VMOVE(tmp_vec, sketch_ip->v_vec); /* convert fastf_t to double */
+    htond(rec->skt.skt_vvec, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
 
     *(uint32_t *)rec->skt.skt_vert_count = htonl(sketch_ip->vert_count);
     *(uint32_t *)rec->skt.skt_count = htonl(sketch_ip->curve.count);
@@ -1194,10 +1234,11 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
     ptr += sizeof(struct sketch_rec);
     /* convert 2D points to mm */
     for (i=0; i<sketch_ip->vert_count; i++) {
-	point2d_t pt2d;
+	/* must be double for import and export */
+	double pt2d[ELEMENTS_PER_VECT2D];
 
-	V2SCALE(pt2d, sketch_ip->verts[i], local2mm)
-	    htond(ptr, (const unsigned char *)pt2d, 2);
+	V2SCALE(pt2d, sketch_ip->verts[i], local2mm);
+	htond(ptr, (const unsigned char *)pt2d, ELEMENTS_PER_VECT2D);
 	ptr += 16;
     }
 
@@ -1207,7 +1248,10 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 	struct nurb_seg *nseg;
 	struct bezier_seg *bseg;
 	uint32_t *lng;
-	fastf_t tmp_fastf;
+
+	/* must be double for import and export */
+	double tmp_fastf;
+	double *scanp;
 
 	/* write segment type ID, and segment parameters */
 	lng = (uint32_t *)sketch_ip->curve.segment[seg_no];
@@ -1247,7 +1291,13 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		ptr += SIZEOF_NETWORK_LONG;
 		*(uint32_t *)ptr = htonl(nseg->k.k_size);
 		ptr += SIZEOF_NETWORK_LONG;
-		htond(ptr, (const unsigned char *)nseg->k.knots, nseg->k.k_size);
+		scanp = (double *)bu_malloc(nseg->k.k_size * sizeof(double), "scanp");
+		/* convert fastf_t to double */
+		for (i=0; i<(size_t)nseg->k.k_size; i++) {
+		    scanp[i] = nseg->k.knots[i];
+		}
+		htond(ptr, (const unsigned char *)scanp, nseg->k.k_size);
+		bu_free(scanp, "scanp");
 		ptr += nseg->k.k_size * 8;
 		*(uint32_t *)ptr = htonl(nseg->c_size);
 		ptr += SIZEOF_NETWORK_LONG;
@@ -1256,7 +1306,13 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		    ptr += SIZEOF_NETWORK_LONG;
 		}
 		if (RT_NURB_IS_PT_RATIONAL(nseg->pt_type)) {
-		    htond(ptr, (const unsigned char *)nseg->weights, nseg->c_size);
+		    scanp = (double *)bu_malloc(nseg->c_size * sizeof(double), "scanp");
+		    /* convert fastf_t to double */
+		    for (i=0; i<(size_t)nseg->c_size; i++) {
+			scanp[i] = nseg->weights[i];
+		    }
+		    htond(ptr, (const unsigned char *)scanp, nseg->c_size);
+		    bu_free(scanp, "scanp");
 		    ptr += SIZEOF_NETWORK_DOUBLE * nseg->c_size;
 		}
 		break;
@@ -1301,11 +1357,14 @@ int
 rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_sketch_internal *sketch_ip;
-    vect_t v;
     size_t seg_no;
     unsigned char *ptr;
     struct rt_curve *crv;
     size_t i;
+
+    /* must be double for import and export */
+    double v[ELEMENTS_PER_VECT];
+    double *vp;
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
 	bu_log("Barrier check at start of sketch_import5():\n");
@@ -1325,24 +1384,34 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 
     ptr = ep->ext_buf;
     if (mat == NULL) mat = bn_mat_identity;
-    ntohd((unsigned char *)v, ptr, 3);
+    ntohd((unsigned char *)v, ptr, ELEMENTS_PER_VECT);
     MAT4X3PNT(sketch_ip->V, mat, v);
-    ptr += SIZEOF_NETWORK_DOUBLE * 3;
-    ntohd((unsigned char *)v, ptr, 3);
+    ptr += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
+    ntohd((unsigned char *)v, ptr, ELEMENTS_PER_VECT);
     MAT4X3VEC(sketch_ip->u_vec, mat, v);
-    ptr += SIZEOF_NETWORK_DOUBLE * 3;
-    ntohd((unsigned char *)v, ptr, 3);
+    ptr += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
+    ntohd((unsigned char *)v, ptr, ELEMENTS_PER_VECT);
     MAT4X3VEC(sketch_ip->v_vec, mat, v);
-    ptr += SIZEOF_NETWORK_DOUBLE * 3;
+    ptr += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
     sketch_ip->vert_count = ntohl(*(uint32_t *)ptr);
     ptr += SIZEOF_NETWORK_LONG;
     sketch_ip->curve.count = ntohl(*(uint32_t *)ptr);
     ptr += SIZEOF_NETWORK_LONG;
 
-    if (sketch_ip->vert_count)
+    if (sketch_ip->vert_count) {
 	sketch_ip->verts = (point2d_t *)bu_calloc(sketch_ip->vert_count, sizeof(point2d_t), "sketch_ip->vert");
-    ntohd((unsigned char *)sketch_ip->verts, ptr, sketch_ip->vert_count*2);
-    ptr += SIZEOF_NETWORK_DOUBLE * 2 * sketch_ip->vert_count;
+	vp = (double *)bu_calloc(sketch_ip->vert_count, sizeof(double)*ELEMENTS_PER_VECT2D, "vp");
+	ntohd((unsigned char *)vp, ptr, sketch_ip->vert_count*2);
+
+	/* convert double to fastf_t */
+	for (i=0; i<sketch_ip->vert_count; i++) {
+	    sketch_ip->verts[i][X] = vp[(i*ELEMENTS_PER_VECT2D)+0];
+	    sketch_ip->verts[i][Y] = vp[(i*ELEMENTS_PER_VECT2D)+1];
+	}
+
+	bu_free(vp, "vp");
+	ptr += SIZEOF_NETWORK_DOUBLE * 2 * sketch_ip->vert_count;
+    }
 
     if (sketch_ip->curve.count)
 	sketch_ip->curve.segment = (genptr_t *)bu_calloc(sketch_ip->curve.count, sizeof(genptr_t), "segs");
@@ -1354,6 +1423,10 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 	struct carc_seg *csg;
 	struct nurb_seg *nsg;
 	struct bezier_seg *bsg;
+
+	/* must be double for import and export */
+	double scan;
+	double *scanp;
 
 	magic = ntohl(*(uint32_t *)ptr);
 	ptr += SIZEOF_NETWORK_LONG;
@@ -1378,7 +1451,8 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 		ptr += SIZEOF_NETWORK_LONG;
 		csg->center_is_left = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
-		ntohd((unsigned char *)&csg->radius, ptr, 1);
+		ntohd((unsigned char *)&scan, ptr, 1);
+		csg->radius = scan; /* double to fastf_t */
 		ptr += SIZEOF_NETWORK_DOUBLE;
 		sketch_ip->curve.segment[seg_no] = (genptr_t)csg;
 		break;
@@ -1391,8 +1465,17 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 		ptr += SIZEOF_NETWORK_LONG;
 		nsg->k.k_size = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
+
 		nsg->k.knots = (fastf_t *)bu_malloc(nsg->k.k_size * sizeof(fastf_t), "nsg->k.knots");
-		ntohd((unsigned char *)nsg->k.knots, ptr, nsg->k.k_size);
+		scanp = (double *)bu_malloc(nsg->k.k_size * sizeof(double), "scanp");
+		ntohd((unsigned char *)scanp, ptr, nsg->k.k_size);
+
+		/* convert double to fastf_t */
+		for (i=0; i<(size_t)nsg->k.k_size; i++) {
+		    nsg->k.knots[i] = scanp[i];
+		}
+		bu_free(scanp, "scanp");
+
 		ptr += SIZEOF_NETWORK_DOUBLE * nsg->k.k_size;
 		nsg->c_size = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
@@ -1403,7 +1486,15 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 		}
 		if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
 		    nsg->weights = (fastf_t *)bu_malloc(nsg->c_size * sizeof(fastf_t), "nsg->weights");
-		    ntohd((unsigned char *)nsg->weights, ptr, nsg->c_size);
+		    scanp = (double *)bu_malloc(nsg->c_size * sizeof(double), "scanp");
+		    ntohd((unsigned char *)scanp, ptr, nsg->c_size);
+
+		    /* convert double to fastf_t */
+		    for (i=0; i<(size_t)nsg->k.k_size; i++) {
+			nsg->weights[i] = scanp[i];
+		    }
+		    bu_free(scanp, "scanp");
+
 		    ptr += SIZEOF_NETWORK_DOUBLE * nsg->c_size;
 		} else
 		    nsg->weights = (fastf_t *)NULL;
@@ -1459,7 +1550,9 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
     unsigned char *cp;
     size_t seg_no;
     size_t i;
-    vect_t tmp_vec;
+
+    /* must be double for import and export */
+    double tmp_vec[ELEMENTS_PER_VECT];
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
 	bu_log("Barrier check at start of sketch_export5():\n");
@@ -1476,7 +1569,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
     BU_CK_EXTERNAL(ep);
 
     /* tally up size of buffer needed */
-    ep->ext_nbytes = 3 * (3 * SIZEOF_NETWORK_DOUBLE)	/* V, u_vec, v_vec */
+    ep->ext_nbytes = 3 * (ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE)	/* V, u_vec, v_vec */
 	+ 2 * SIZEOF_NETWORK_LONG		/* vert_count and count */
 	+ 2 * sketch_ip->vert_count * SIZEOF_NETWORK_DOUBLE	/* 2D-vertices */
 	+ sketch_ip->curve.count * SIZEOF_NETWORK_LONG;	/* reverse flags */
@@ -1526,14 +1619,16 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 
     /* scale and export */
     VSCALE(tmp_vec, sketch_ip->V, local2mm);
-    htond(cp, (unsigned char *)tmp_vec, 3);
-    cp += 3 * SIZEOF_NETWORK_DOUBLE;
+    htond(cp, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
+    cp += ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE;
 
     /* uvec and uvec are unit vectors, do not convert to/from mm */
-    htond(cp, (unsigned char *)sketch_ip->u_vec, 3);
-    cp += 3 * SIZEOF_NETWORK_DOUBLE;
-    htond(cp, (unsigned char *)sketch_ip->v_vec, 3);
-    cp += 3 * SIZEOF_NETWORK_DOUBLE;
+    VMOVE(tmp_vec, sketch_ip->u_vec); /* convert fastf_t to double */
+    htond(cp, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
+    cp += ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE;
+    VMOVE(tmp_vec, sketch_ip->v_vec); /* convert fastf_t to double */
+    htond(cp, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
+    cp += ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE;
 
     *(uint32_t *)cp = htonl(sketch_ip->vert_count);
     cp += SIZEOF_NETWORK_LONG;
@@ -1542,10 +1637,11 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 
     /* convert 2D points to mm */
     for (i=0; i<sketch_ip->vert_count; i++) {
-	point2d_t pt2d;
+	/* must be double for import and export */
+	double pt2d[ELEMENTS_PER_VECT2D];
 
-	V2SCALE(pt2d, sketch_ip->verts[i], local2mm)
-	    htond(cp, (const unsigned char *)pt2d, 2);
+	V2SCALE(pt2d, sketch_ip->verts[i], local2mm);
+	htond(cp, (const unsigned char *)pt2d, ELEMENTS_PER_VECT2D);
 	cp += 2 * SIZEOF_NETWORK_DOUBLE;
     }
 
@@ -1555,7 +1651,10 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 	struct nurb_seg *nseg;
 	struct bezier_seg *bseg;
 	uint32_t *lng;
-	fastf_t tmp_fastf;
+
+	/* must be double for import and export */
+	double scan;
+	double *scanp;
 
 	/* write segment type ID, and segment parameters */
 	lng = (uint32_t *)sketch_ip->curve.segment[seg_no];
@@ -1581,8 +1680,8 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		cp += SIZEOF_NETWORK_LONG;
 		*(uint32_t *)cp = htonl(cseg->center_is_left);
 		cp += SIZEOF_NETWORK_LONG;
-		tmp_fastf = cseg->radius * local2mm;
-		htond(cp, (unsigned char *)&tmp_fastf, 1);
+		scan = cseg->radius * local2mm;
+		htond(cp, (unsigned char *)&scan, 1);
 		cp += SIZEOF_NETWORK_DOUBLE;
 		break;
 	    case CURVE_NURB_MAGIC:
@@ -1595,7 +1694,13 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		cp += SIZEOF_NETWORK_LONG;
 		*(uint32_t *)cp = htonl(nseg->k.k_size);
 		cp += SIZEOF_NETWORK_LONG;
+		scanp = (double *)bu_malloc(nseg->k.k_size * sizeof(double), "scanp");
+		/* convert fastf_t to double */
+		for (i=0; i<(size_t)nseg->k.k_size; i++) {
+		    scanp[i] = nseg->k.knots[i];
+		}
 		htond(cp, (const unsigned char *)nseg->k.knots, nseg->k.k_size);
+		bu_free(scanp, "scanp");
 		cp += nseg->k.k_size * SIZEOF_NETWORK_DOUBLE;
 		*(uint32_t *)cp = htonl(nseg->c_size);
 		cp += SIZEOF_NETWORK_LONG;
@@ -1604,7 +1709,13 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 		    cp += SIZEOF_NETWORK_LONG;
 		}
 		if (RT_NURB_IS_PT_RATIONAL(nseg->pt_type)) {
-		    htond(cp, (const unsigned char *)nseg->weights, nseg->c_size);
+		    scanp = (double *)bu_malloc(nseg->c_size * sizeof(double), "scanp");
+		    /* convert fastf_t to double */
+		    for (i=0; i<(size_t)nseg->c_size; i++) {
+			scanp[i] = nseg->weights[i];
+		    }
+		    htond(cp, (const unsigned char *)scanp, nseg->c_size);
+		    bu_free(scanp, "scanp");
 		    cp += SIZEOF_NETWORK_DOUBLE * nseg->c_size;
 		}
 		break;

@@ -2313,7 +2313,9 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
     char *sketch_name;
     union record *rp;
     char *ptr;
-    point_t tmp_vec;
+
+    /* must be double for import and export */
+    double tmp_vec[ELEMENTS_PER_VECT];
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -2378,7 +2380,10 @@ int
 rt_extrude_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_extrude_internal *extrude_ip;
-    vect_t tmp_vec;
+
+    /* must be double for import and export */
+    double tmp_vec[ELEMENTS_PER_VECT];
+
     union record *rec;
     unsigned char *ptr;
 
@@ -2425,9 +2430,11 @@ int
 rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_extrude_internal *extrude_ip;
-    vect_t tmp_vec[4];
     unsigned char *ptr;
     size_t rem;
+
+    /* must be double for import and export */
+    double tmp_vec[4][ELEMENTS_PER_VECT];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -2478,7 +2485,9 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     struct directory *dp;
     char *sketch_name;
     unsigned char *ptr;
-    point_t tmp_vec[4];
+
+    /* must be double for import and export */
+    double tmp_vec[4][ELEMENTS_PER_VECT];
 
     BU_CK_EXTERNAL(ep);
 

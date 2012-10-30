@@ -113,6 +113,9 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     unsigned long pointDataSize;
     unsigned char *buf = NULL;
 
+    /* must be double for import and export */
+    double scan;
+
     if (dbip) RT_CK_DBI(dbip);
 
     /* acquire internal pnts structure */
@@ -128,7 +131,8 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     external->ext_buf = (genptr_t) bu_calloc(sizeof(unsigned char), external->ext_nbytes, "pnts external");
     buf = (unsigned char *)external->ext_buf;
 
-    htond(buf, (unsigned char *)&pnts->scale, 1);
+    scan = pnts->scale; /* convert fastf_t to double */
+    htond(buf, (unsigned char *)&scan, 1);
     buf += SIZEOF_NETWORK_DOUBLE;
     *(uint16_t *)buf = htons((unsigned short)pnts->type);
     buf += SIZEOF_NETWORK_SHORT;
@@ -356,6 +360,9 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     unsigned char *buf = NULL;
     unsigned long i;
 
+    /* must be double for import and export */
+    double scan;
+
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(internal);
@@ -374,7 +381,8 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
     pnts->point = NULL;
 
     /* unpack the header */
-    ntohd((unsigned char *)&pnts->scale, buf, 1);
+    ntohd((unsigned char *)&scan, buf, 1);
+    pnts->scale = scan; /* convert double to fastf_t */
     buf += SIZEOF_NETWORK_DOUBLE;
     pnts->type = (rt_pnt_type)ntohs(*(uint16_t *)buf);
     buf += SIZEOF_NETWORK_SHORT;

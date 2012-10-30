@@ -195,9 +195,11 @@ rt_comb_v5_serialize(
 
 	    /* Encoding of the matrix */
 	    if (mi != (ssize_t)-1) {
-		htond(ssp->matp,
-		      (const unsigned char *)tp->tr_l.tl_mat,
-		      ELEMENTS_PER_MAT);
+		/* must be double for import and export */
+		double scanmat[ELEMENTS_PER_MAT];
+
+		MAT_COPY(scanmat, tp->tr_l.tl_mat); /* convert fastf_t to double */
+		htond(ssp->matp, (const unsigned char *)scanmat, ELEMENTS_PER_MAT);
 		ssp->matp += ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE;
 	    }
 
@@ -543,11 +545,16 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 	    } else {
 		mat_t diskmat;
 
+		/* must be double for import and export */
+		double scanmat[16];
+
 		/* Unpack indicated matrix mi */
 		BU_ASSERT_SIZE_T(mi, <, nmat);
-		ntohd((unsigned char *)diskmat,
-		      &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE],
-		      ELEMENTS_PER_MAT);
+
+		/* read matrix */
+		ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
+		MAT_COPY(diskmat, scanmat); /* convert double to fastf_t */
+
 		if (!mat || bn_mat_is_identity(mat)) {
 		    tp->tr_l.tl_mat = bn_mat_dup(diskmat);
 		} else {
@@ -661,11 +668,16 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		} else {
 		    mat_t diskmat;
 
+		    /* must be double for import and export */
+		    double scanmat[16];
+
 		    /* Unpack indicated matrix mi */
 		    BU_ASSERT_SIZE_T(mi, <, nmat);
-		    ntohd((unsigned char *)diskmat,
-			  &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE],
-			  ELEMENTS_PER_MAT);
+
+		    /* read matrix */
+		    ntohd((unsigned char *)scanmat, &matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE], ELEMENTS_PER_MAT);
+		    MAT_COPY(diskmat, scanmat); /* convert double to fastf_t */
+
 		    if (!mat || bn_mat_is_identity(mat)) {
 			tp->tr_l.tl_mat = bn_mat_dup(diskmat);
 		    } else {

@@ -1195,7 +1195,9 @@ int
 rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip)
 {
     struct rt_hyp_internal *hyp_ip;
-    fastf_t vec[ELEMENTS_PER_VECT*4];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*4];
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
@@ -1224,7 +1226,7 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     MAT4X3VEC(hyp_ip->hyp_A, mat, &vec[2*3]);
 
     if (!ZERO(mat[15]))
-	hyp_ip->hyp_b = vec[ 9] / mat[15];
+	hyp_ip->hyp_b = vec[9] / mat[15];
     else
 	hyp_ip->hyp_b = INFINITY;
     hyp_ip->hyp_bnr = vec[10] ;
@@ -1246,7 +1248,9 @@ int
 rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_hyp_internal *hyp_ip;
-    fastf_t vec[ELEMENTS_PER_VECT * 4];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT * 4];
 
     if (dbip) RT_CK_DBI(dbip);
 

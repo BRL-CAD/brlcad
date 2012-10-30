@@ -708,14 +708,16 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
 {
     struct wdb_metaballpt *mbpt;
     struct rt_metaball_internal *mb;
-    fastf_t *buf;
     int metaball_count = 0, i;
+
+    /* must be double for import and export */
+    double *buf;
 
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     metaball_count = ntohl(*(uint32_t *)ep->ext_buf);
-    buf = (fastf_t *)bu_malloc((metaball_count*5+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_import5: buf");
+    buf = (double *)bu_malloc((metaball_count*5+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_import5: buf");
     ntohd((unsigned char *)buf, (unsigned char *)ep->ext_buf+2*SIZEOF_NETWORK_LONG, metaball_count*5+1);
 
     RT_CK_DB_INTERNAL(ip);
@@ -765,7 +767,8 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     struct rt_metaball_internal *mb;
     struct wdb_metaballpt *mbpt;
     int metaball_count = 0, i = 1;
-    fastf_t *buf = NULL;
+    /* must be double for import and export */
+    double *buf = NULL;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -788,7 +791,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     *(uint32_t *)(ep->ext_buf + SIZEOF_NETWORK_LONG) = htonl(mb->method);
 
     /* pack the point data */
-    buf = (fastf_t *)bu_malloc((metaball_count*5+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_export5: buf");
+    buf = (double *)bu_malloc((metaball_count*5+1)*SIZEOF_NETWORK_DOUBLE, "rt_metaball_export5: buf");
     buf[0] = mb->threshold;
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head), i+=5) {
 	VSCALE(&buf[i], mbpt->coord, local2mm);
@@ -796,7 +799,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 	buf[i+4] = mbpt->sweat;
     }
     htond((unsigned char *)ep->ext_buf + 2*SIZEOF_NETWORK_LONG, (unsigned char *)buf, 1 + 5 * metaball_count);
-    bu_free((genptr_t)buf, "rt_metaball_export5: buf");
+    bu_free(buf, "rt_metaball_export5: buf");
     return 0;
 }
 

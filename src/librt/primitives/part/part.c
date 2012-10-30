@@ -1450,13 +1450,15 @@ rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 int
 rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-    point_t v;
-    vect_t h;
-    double vrad;
-    double hrad;
     fastf_t maxrad, minrad;
     union record *rp;
     struct rt_part_internal *part;
+
+    /* must be double for import and export */
+    double v[ELEMENTS_PER_POINT];
+    double h[ELEMENTS_PER_VECT];
+    double vrad;
+    double hrad;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1469,8 +1471,8 @@ rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
     }
 
     /* Convert from database to internal format */
-    ntohd((unsigned char *)v, rp->part.p_v, 3);
-    ntohd((unsigned char *)h, rp->part.p_h, 3);
+    ntohd((unsigned char *)v, rp->part.p_v, ELEMENTS_PER_POINT);
+    ntohd((unsigned char *)h, rp->part.p_h, ELEMENTS_PER_VECT);
     ntohd((unsigned char *)&vrad, rp->part.p_vrad, 1);
     ntohd((unsigned char *)&hrad, rp->part.p_hrad, 1);
 
@@ -1541,10 +1543,12 @@ rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 {
     struct rt_part_internal *pip;
     union record *rec;
-    point_t vert;
-    vect_t hi;
-    fastf_t vrad;
-    fastf_t hrad;
+
+    /* must be double for import and export */
+    double vert[ELEMENTS_PER_POINT];
+    double hi[ELEMENTS_PER_VECT];
+    double vrad;
+    double hrad;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1566,8 +1570,8 @@ rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     /* pip->part_type is not converted -- internal only */
 
     rec->part.p_id = DBID_PARTICLE;
-    htond(rec->part.p_v, (unsigned char *)vert, 3);
-    htond(rec->part.p_h, (unsigned char *)hi, 3);
+    htond(rec->part.p_v, (unsigned char *)vert, ELEMENTS_PER_POINT);
+    htond(rec->part.p_h, (unsigned char *)hi, ELEMENTS_PER_VECT);
     htond(rec->part.p_vrad, (unsigned char *)&vrad, 1);
     htond(rec->part.p_hrad, (unsigned char *)&hrad, 1);
 
@@ -1583,7 +1587,9 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 {
     fastf_t maxrad, minrad;
     struct rt_part_internal *part;
-    fastf_t vec[8];
+
+    /* must be double for import and export */
+    double vec[8];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1661,7 +1667,9 @@ int
 rt_part_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_part_internal *pip;
-    fastf_t vec[8];
+
+    /* must be double for import and export */
+    double vec[8];
 
     if (dbip) RT_CK_DBI(dbip);
 

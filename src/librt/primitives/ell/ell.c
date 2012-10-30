@@ -1369,7 +1369,9 @@ int
 rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ell_internal *eip;
-    fastf_t vec[ELEMENTS_PER_VECT*4];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*4];
 
     if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
@@ -1412,7 +1414,9 @@ int
 rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_ell_internal *eip;
-    fastf_t vec[ELEMENTS_PER_VECT*4];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*4];
 
     if (dbip) RT_CK_DBI(dbip);
 

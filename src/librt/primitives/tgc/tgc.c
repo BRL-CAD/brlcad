@@ -1635,12 +1635,14 @@ int
 rt_tgc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_tgc_internal *tip;
-    fastf_t vec[3*6];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*6];
 
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*6);
+    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*6);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1652,16 +1654,16 @@ rt_tgc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     tip->magic = RT_TGC_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd((unsigned char *)vec, ep->ext_buf, 3*6);
+    ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*6);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT(tip->v, mat, &vec[0*3]);
-    MAT4X3VEC(tip->h, mat, &vec[1*3]);
-    MAT4X3VEC(tip->a, mat, &vec[2*3]);
-    MAT4X3VEC(tip->b, mat, &vec[3*3]);
-    MAT4X3VEC(tip->c, mat, &vec[4*3]);
-    MAT4X3VEC(tip->d, mat, &vec[5*3]);
+    MAT4X3PNT(tip->v, mat, &vec[0*ELEMENTS_PER_VECT]);
+    MAT4X3VEC(tip->h, mat, &vec[1*ELEMENTS_PER_VECT]);
+    MAT4X3VEC(tip->a, mat, &vec[2*ELEMENTS_PER_VECT]);
+    MAT4X3VEC(tip->b, mat, &vec[3*ELEMENTS_PER_VECT]);
+    MAT4X3VEC(tip->c, mat, &vec[4*ELEMENTS_PER_VECT]);
+    MAT4X3VEC(tip->d, mat, &vec[5*ELEMENTS_PER_VECT]);
 
     return 0;		/* OK */
 }
@@ -1674,7 +1676,9 @@ int
 rt_tgc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_tgc_internal *tip;
-    fastf_t vec[3*6];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*6];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1684,19 +1688,19 @@ rt_tgc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     RT_TGC_CK_MAGIC(tip);
 
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 3*6;
+    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*6;
     ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "tgc external");
 
     /* scale 'em into local buffer */
-    VSCALE(&vec[0*3], tip->v, local2mm);
-    VSCALE(&vec[1*3], tip->h, local2mm);
-    VSCALE(&vec[2*3], tip->a, local2mm);
-    VSCALE(&vec[3*3], tip->b, local2mm);
-    VSCALE(&vec[4*3], tip->c, local2mm);
-    VSCALE(&vec[5*3], tip->d, local2mm);
+    VSCALE(&vec[0*ELEMENTS_PER_VECT], tip->v, local2mm);
+    VSCALE(&vec[1*ELEMENTS_PER_VECT], tip->h, local2mm);
+    VSCALE(&vec[2*ELEMENTS_PER_VECT], tip->a, local2mm);
+    VSCALE(&vec[3*ELEMENTS_PER_VECT], tip->b, local2mm);
+    VSCALE(&vec[4*ELEMENTS_PER_VECT], tip->c, local2mm);
+    VSCALE(&vec[5*ELEMENTS_PER_VECT], tip->d, local2mm);
 
     /* Convert from internal (host) to database (network) format */
-    htond(ep->ext_buf, (unsigned char *)vec, 3*6);
+    htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*6);
 
     return 0;
 }
@@ -1895,8 +1899,8 @@ rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 {
     struct rt_tgc_internal *tip;
     register int i;
-    fastf_t top[16*3];
-    fastf_t bottom[16*3];
+    fastf_t top[16*ELEMENTS_PER_VECT];
+    fastf_t bottom[16*ELEMENTS_PER_VECT];
     vect_t work;		/* Vec addition work area */
 
     BU_CK_LIST_HEAD(vhead);

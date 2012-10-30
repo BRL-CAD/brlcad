@@ -781,29 +781,33 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     if (mat == NULL) mat = bn_mat_identity;
     for (i = 0; i < bot_ip->num_vertices; i++) {
-	point_t tmp;
+	double tmp[ELEMENTS_PER_POINT];
 
-	ntohd((unsigned char *)tmp, (const unsigned char *)(&rp->bot.bot_data[i*24]), 3);
-	MAT4X3PNT(&(bot_ip->vertices[i*3]), mat, tmp);
+	ntohd((unsigned char *)tmp, (const unsigned char *)(&rp->bot.bot_data[i*24]), ELEMENTS_PER_POINT);
+	MAT4X3PNT(&(bot_ip->vertices[i*ELEMENTS_PER_POINT]), mat, tmp);
     }
 
-    chars_used = bot_ip->num_vertices * 3 * 8;
+    chars_used = bot_ip->num_vertices * ELEMENTS_PER_POINT * 8;
 
     for (i = 0; i < bot_ip->num_faces; i++) {
 	size_t idx=chars_used + i * 12;
 
-	bot_ip->faces[i*3 + 0] = ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 0]);
-	bot_ip->faces[i*3 + 1] = ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 4]);
-	bot_ip->faces[i*3 + 2] = ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 8]);
+	bot_ip->faces[i*ELEMENTS_PER_POINT + 0] = ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 0]);
+	bot_ip->faces[i*ELEMENTS_PER_POINT + 1] = ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 4]);
+	bot_ip->faces[i*ELEMENTS_PER_POINT + 2] = ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 8]);
     }
 
     if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
-	chars_used = bot_ip->num_vertices * 3 * 8 + bot_ip->num_faces * 12;
+	chars_used = bot_ip->num_vertices * ELEMENTS_PER_POINT * 8 + bot_ip->num_faces * 12;
 
 	bot_ip->thickness = (fastf_t *)bu_calloc(bot_ip->num_faces, sizeof(fastf_t), "BOT thickness");
-	for (i = 0; i < bot_ip->num_faces; i++)
-	    ntohd((unsigned char *)&(bot_ip->thickness[i]),
-		  (const unsigned char *)(&rp->bot.bot_data[chars_used + i*8]), 1);
+	for (i = 0; i < bot_ip->num_faces; i++) {
+	    double scan;
+
+	    ntohd((unsigned char *)&scan, (const unsigned char *)(&rp->bot.bot_data[chars_used + i*8]), 1);
+	    bot_ip->thickness[i] = scan; /* convert double to fastf_t */
+	}
+
 	bot_ip->face_mode = bu_hex_to_bitv((const char *)(&rp->bot.bot_data[chars_used + bot_ip->num_faces * 8]));
     } else {
 	bot_ip->thickness = (fastf_t *)NULL;
@@ -842,7 +846,7 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(struct bot_rec) - 1 +
-	bot_ip->num_vertices * 3 * 8 + bot_ip->num_faces * 3 * 4;
+	bot_ip->num_vertices * ELEMENTS_PER_POINT * 8 + bot_ip->num_faces * ELEMENTS_PER_POINT * 4;
     if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
 	if (!bot_ip->face_mode) {
 	    bot_ip->face_mode = bu_bitv_new(bot_ip->num_faces);
@@ -881,10 +885,11 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
      * record format
      */
     for (i = 0; i < bot_ip->num_vertices; i++) {
-	point_t tmp;
+	/* must be double for import and export */
+	double tmp[ELEMENTS_PER_POINT];
 
-	VSCALE(tmp, &bot_ip->vertices[i*3], local2mm);
-	htond((unsigned char *)&rec->bot.bot_data[i*24], (const unsigned char *)tmp, 3);
+	VSCALE(tmp, &bot_ip->vertices[i*ELEMENTS_PER_POINT], local2mm);
+	htond((unsigned char *)&rec->bot.bot_data[i*24], (const unsigned char *)tmp, ELEMENTS_PER_POINT);
     }
 
     chars_used = bot_ip->num_vertices * 24;
@@ -892,16 +897,18 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     for (i = 0; i < bot_ip->num_faces; i++) {
 	size_t idx=chars_used + i * 12;
 
-	*(uint32_t *)&rec->bot.bot_data[idx + 0] = htonl(bot_ip->faces[i*3+0]);
-	*(uint32_t *)&rec->bot.bot_data[idx + 4] = htonl(bot_ip->faces[i*3+1]);
-	*(uint32_t *)&rec->bot.bot_data[idx + 8] = htonl(bot_ip->faces[i*3+2]);
+	*(uint32_t *)&rec->bot.bot_data[idx + 0] = htonl(bot_ip->faces[i*ELEMENTS_PER_POINT+0]);
+	*(uint32_t *)&rec->bot.bot_data[idx + 4] = htonl(bot_ip->faces[i*ELEMENTS_PER_POINT+1]);
+	*(uint32_t *)&rec->bot.bot_data[idx + 8] = htonl(bot_ip->faces[i*ELEMENTS_PER_POINT+2]);
     }
 
     chars_used += bot_ip->num_faces * 12;
 
     if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
 	for (i = 0; i < bot_ip->num_faces; i++) {
-	    fastf_t tmp;
+	    /* must be double for import and export */
+	    double tmp;
+
 	    tmp = bot_ip->thickness[i] * local2mm;
 	    htond((unsigned char *)&rec->bot.bot_data[chars_used], (const unsigned char *)&tmp, 1);
 	    chars_used += 8;
@@ -946,7 +953,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bip->bot_flags = *cp++;
 
     if (bip->num_vertices > 0) {
-	bip->vertices = (fastf_t *)bu_calloc(bip->num_vertices * 3, sizeof(fastf_t), "BOT vertices");
+	bip->vertices = (fastf_t *)bu_calloc(bip->num_vertices * ELEMENTS_PER_POINT, sizeof(fastf_t), "BOT vertices");
     } else {
 	bip->vertices = (fastf_t *)NULL;
     }
@@ -966,11 +973,12 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	mat = bn_mat_identity;
 
     for (i = 0; i < bip->num_vertices; i++) {
-	point_t tmp;
+	/* must be double for import and export */
+	double tmp[ELEMENTS_PER_POINT];
 
-	ntohd((unsigned char *)tmp, (const unsigned char *)cp, 3);
-	cp += SIZEOF_NETWORK_DOUBLE * 3;
-	MAT4X3PNT(&(bip->vertices[i*3]), mat, tmp);
+	ntohd((unsigned char *)tmp, (const unsigned char *)cp, ELEMENTS_PER_POINT);
+	cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_POINT;
+	MAT4X3PNT(&(bip->vertices[i*ELEMENTS_PER_POINT]), mat, tmp);
     }
 
     for (i = 0; i < bip->num_faces; i++) {
@@ -985,7 +993,9 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     if (bip->mode == RT_BOT_PLATE || bip->mode == RT_BOT_PLATE_NOCOS) {
 	bip->thickness = (fastf_t *)bu_calloc(bip->num_faces, sizeof(fastf_t), "BOT thickness");
 	for (i = 0; i < bip->num_faces; i++) {
-	    ntohd((unsigned char *)&(bip->thickness[i]), cp, 1);
+	    double scan;
+	    ntohd((unsigned char *)&scan, cp, 1);
+	    bip->thickness[i] = scan; /* convert double to fastf_t */
 	    cp += SIZEOF_NETWORK_DOUBLE;
 	}
 	bip->face_mode = bu_hex_to_bitv((const char *)cp);
@@ -996,7 +1006,8 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     }
 
     if (bip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
-	vect_t tmp;
+	/* must be double for import and export */
+	double tmp[ELEMENTS_PER_VECT];
 
 	bip->num_normals = ntohl(*(uint32_t *)&cp[0]);
 	cp += SIZEOF_NETWORK_LONG;
@@ -1013,9 +1024,9 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    bip->normals = (fastf_t *)bu_calloc(bip->num_normals * 3, sizeof(fastf_t), "BOT normals");
 
 	    for (i = 0; i < bip->num_normals; i++) {
-		ntohd((unsigned char *)tmp, (const unsigned char *)cp, 3);
-		cp += SIZEOF_NETWORK_DOUBLE * 3;
-		MAT4X3VEC(&(bip->normals[i*3]), mat, tmp);
+		ntohd((unsigned char *)tmp, (const unsigned char *)cp, ELEMENTS_PER_VECT);
+		cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
+		MAT4X3VEC(&(bip->normals[i*ELEMENTS_PER_VECT]), mat, tmp);
 	    }
 	}
 	if (bip->num_face_normals > 0) {
@@ -1103,12 +1114,13 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     rem -= 3;
 
     for (i = 0; i < bip->num_vertices; i++) {
-	point_t tmp;
+	/* must be double for import and export */
+	double tmp[ELEMENTS_PER_POINT];
 
-	VSCALE(tmp, &bip->vertices[i*3], local2mm);
-	htond(cp, (unsigned char *)tmp, 3);
-	cp += SIZEOF_NETWORK_DOUBLE * 3;
-	rem -= SIZEOF_NETWORK_DOUBLE * 3;
+	VSCALE(tmp, &bip->vertices[i*ELEMENTS_PER_POINT], local2mm);
+	htond(cp, (unsigned char *)tmp, ELEMENTS_PER_POINT);
+	cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_POINT;
+	rem -= SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_POINT;
     }
 
     for (i = 0; i < bip->num_faces; i++) {
@@ -1127,7 +1139,8 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     if (bip->mode == RT_BOT_PLATE || bip->mode == RT_BOT_PLATE_NOCOS) {
 	for (i = 0; i < bip->num_faces; i++) {
-	    fastf_t tmp;
+	    /* must be double for import and export */
+	    double tmp;
 
 	    tmp = bip->thickness[i] * local2mm;
 	    htond(cp, (const unsigned char *)&tmp, 1);
@@ -1153,21 +1166,33 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	rem -= SIZEOF_NETWORK_LONG;
 
 	if (bip->num_normals > 0) {
-	    htond(cp, (unsigned char*)bip->normals, bip->num_normals*3);
-	    cp += SIZEOF_NETWORK_DOUBLE * 3 * bip->num_normals;
-	    rem -= SIZEOF_NETWORK_DOUBLE * 3 * bip->num_normals;
+	    /* must be double for import and export */
+	    double *normals;
+	    normals = (double *)bu_malloc(bip->num_normals*ELEMENTS_PER_VECT*sizeof(double), "normals");
+
+	    /* convert fastf_t to double */
+	    for (i=0; i < bip->num_normals * ELEMENTS_PER_VECT; i++) {
+		normals[i] = bip->normals[i];
+	    }
+
+	    htond(cp, (unsigned char*)normals, bip->num_normals*ELEMENTS_PER_VECT);
+
+	    bu_free(normals, "normals");
+
+	    cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT * bip->num_normals;
+	    rem -= SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT * bip->num_normals;
 	}
 	if (bip->num_face_normals > 0) {
 	    for (i = 0; i < bip->num_face_normals; i++) {
-		*(uint32_t *)&cp[0] = htonl(bip->face_normals[i*3 + 0]);
+		*(uint32_t *)&cp[0] = htonl(bip->face_normals[i*ELEMENTS_PER_VECT + 0]);
 		cp += SIZEOF_NETWORK_LONG;
 		rem -= SIZEOF_NETWORK_LONG;
 
-		*(uint32_t *)&cp[0] = htonl(bip->face_normals[i*3 + 1]);
+		*(uint32_t *)&cp[0] = htonl(bip->face_normals[i*ELEMENTS_PER_VECT + 1]);
 		cp += SIZEOF_NETWORK_LONG;
 		rem -= SIZEOF_NETWORK_LONG;
 
-		*(uint32_t *)&cp[0] = htonl(bip->face_normals[i*3 + 2]);
+		*(uint32_t *)&cp[0] = htonl(bip->face_normals[i*ELEMENTS_PER_VECT + 2]);
 		cp += SIZEOF_NETWORK_LONG;
 		rem -= SIZEOF_NETWORK_LONG;
 	    }
@@ -1399,7 +1424,7 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
 	botop->num_vertices = botip->num_vertices;
 	botop->num_faces = botip->num_faces;
 	if (botop->num_vertices > 0) {
-	    botop->vertices = (fastf_t *)bu_malloc(botip->num_vertices * 3 * sizeof(fastf_t), "botop->vertices");
+	    botop->vertices = (fastf_t *)bu_malloc(botip->num_vertices * ELEMENTS_PER_POINT * sizeof(fastf_t), "botop->vertices");
 	}
 	if (botop->num_faces > 0) {
 	    botop->faces = (int *)bu_malloc(botip->num_faces * 3 * sizeof(int), "botop->faces");
@@ -1435,8 +1460,8 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
     }
 
     for (i = 0; i < botip->num_vertices; i++) {
-	MAT4X3PNT(pt, mat, &botip->vertices[i*3]);
-	VMOVE(&botop->vertices[i*3], pt);
+	MAT4X3PNT(pt, mat, &botip->vertices[i*ELEMENTS_PER_POINT]);
+	VMOVE(&botop->vertices[i*ELEMENTS_PER_POINT], pt);
     }
 
     for (i = 0; i < botip->num_normals; i++) {
@@ -1469,7 +1494,7 @@ rt_bot_find_v_nearest_pt2(
 	fastf_t tmp_dist;
 	fastf_t tmpx, tmpy;
 
-	MAT4X3PNT(v, mat, &bot->vertices[idx*3])
+	MAT4X3PNT(v, mat, &bot->vertices[idx*ELEMENTS_PER_POINT])
 	    tmpx = v[X] - pt2[X];
 	tmpy = v[Y] - pt2[Y];
 	tmp_dist = tmpx * tmpx + tmpy * tmpy;

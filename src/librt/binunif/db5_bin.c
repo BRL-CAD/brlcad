@@ -161,8 +161,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 	    bip->count = ep->ext_nbytes/SIZEOF_NETWORK_DOUBLE;
 	    bip->u.uint8 = (unsigned char *) bu_malloc( bip->count * sizeof(double),
 							"rt_binunif_internal" );
-	    ntohd( (unsigned char *) bip->u.uint8,
-		   ep->ext_buf, bip->count );
+	    ntohd( (unsigned char *) bip->u.uint8, ep->ext_buf, bip->count );
 	    break;
 	case DB5_MINORTYPE_BINU_8BITINT:
 	case DB5_MINORTYPE_BINU_8BITINT_U:

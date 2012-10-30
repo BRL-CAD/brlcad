@@ -1412,7 +1412,9 @@ int
 rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_rpc_internal *xip;
-    fastf_t vec[10];
+
+    /* must be double for import and export */
+    double vec[10];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1457,8 +1459,10 @@ int
 rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_rpc_internal *xip;
-    fastf_t vec[10];
     fastf_t f, mag_b, mag_h;
+
+    /* must be double for import and export */
+    double vec[10];
 
     if (dbip) RT_CK_DBI(dbip);
 

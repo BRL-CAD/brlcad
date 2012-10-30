@@ -385,7 +385,7 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
      * nelem[4], String[n+1], cmds[nelem*1], pts[3*nelem*8]
      */
     namelen = strlen(name)+1;
-    nbytes = namelen + 4 + nelem * (1+3*8) + 2;
+    nbytes = namelen + 4 + nelem * (1+ELEMENTS_PER_VECT*SIZEOF_NETWORK_DOUBLE) + 2;
 
     /* FIXME: this is pretty much an abuse of vls.  should be using
      * vlb for variable-length byte buffers.
@@ -412,9 +412,14 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 	register int i;
 	register int nused = vp->nused;
 	register point_t *pt = vp->pt;
-	for (i = 0; i < nused; i++, pt++) {
-	    htond(bp, (unsigned char *)pt, 3);
-	    bp += 3*8;
+
+	/* must be double for import and export */
+	double point[ELEMENTS_PER_POINT];
+
+	for (i = 0; i < nused; i++) {
+	    VMOVE(point, pt[i]); /* convert fastf_t to double */
+	    htond(bp, (unsigned char *)point, ELEMENTS_PER_VECT);
+	    bp += ELEMENTS_PER_VECT*SIZEOF_NETWORK_DOUBLE;
 	}
     }
 }
@@ -432,7 +437,9 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
     size_t nelem;
     size_t namelen;
     size_t i;
-    point_t point;
+
+    /* must be double for import and export */
+    double point[ELEMENTS_PER_POINT];
 
     BU_CK_VLS(namevls);
 
@@ -449,8 +456,8 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
 	int cmd;
 
 	cmd = *bp++;
-	ntohd((unsigned char *)point, pp, 3);
-	pp += 3*8;
+	ntohd((unsigned char *)point, pp, ELEMENTS_PER_POINT);
+	pp += ELEMENTS_PER_POINT*SIZEOF_NETWORK_DOUBLE;
 	BN_ADD_VLIST(&rt_g.rtg_vlfree, hp, point, cmd);
     }
 }
@@ -629,7 +636,7 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
     size_t ret;
     int i, j;
     int cc = 0;
-    char inbuf[8] = {'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
+    char inbuf[SIZEOF_NETWORK_DOUBLE] = {'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
 
     for (i = 0; i < up->narg; i++) {
 	switch (up->targ) {
@@ -637,12 +644,15 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
 		arg[i] = getshort(fp);
 		break;
 	    case TIEEE:
-		ret = fread(inbuf, 8, 1, fp);
+	    {
+		double scan;
+		ret = fread(inbuf, SIZEOF_NETWORK_DOUBLE, 1, fp);
 		if (ret != 1)
 		    bu_log("WARNING: uplot read failure\n");
-		ntohd((unsigned char *)&arg[i],
-		      (unsigned char *)inbuf, 1);
+		ntohd((unsigned char *)&scan, (unsigned char *)inbuf, 1);
+		arg[i] = scan; /* convert double to fastf_t */
 		break;
+	    }
 	    case TSTRING:
 		j = 0;
 		while (!feof(fp) &&

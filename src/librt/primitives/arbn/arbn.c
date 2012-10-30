@@ -829,6 +829,9 @@ rt_arbn_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
     struct rt_arbn_internal *aip;
     size_t i;
 
+    /* must be double for import and export */
+    double *scan;
+
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
@@ -847,9 +850,18 @@ rt_arbn_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
     aip->magic = RT_ARBN_INTERNAL_MAGIC;
     aip->neqn = ntohl(*(uint32_t *)rp->n.n_neqn);
     if (aip->neqn <= 0) return -1;
-    aip->eqn = (plane_t *)bu_malloc(aip->neqn*sizeof(plane_t), "arbn plane eqn[]");
 
-    ntohd((unsigned char *)aip->eqn, (unsigned char *)(&rp[1]), aip->neqn*4);
+    aip->eqn = (plane_t *)bu_malloc(aip->neqn*sizeof(plane_t), "arbn plane eqn[]");
+    scan = (double *)bu_malloc(aip->neqn*sizeof(double)*ELEMENTS_PER_PLANE, "scan array");
+
+    ntohd((unsigned char *)scan, (unsigned char *)(&rp[1]), aip->neqn*ELEMENTS_PER_PLANE);
+    for (i=0; i<aip->neqn; i++) {
+	aip->eqn[i][X] = scan[(i*ELEMENTS_PER_PLANE)+0]; /* convert double to fastf_t */
+	aip->eqn[i][Y] = scan[(i*ELEMENTS_PER_PLANE)+1]; /* convert double to fastf_t */
+	aip->eqn[i][Z] = scan[(i*ELEMENTS_PER_PLANE)+2]; /* convert double to fastf_t */
+	aip->eqn[i][W] = scan[(i*ELEMENTS_PER_PLANE)+3]; /* convert double to fastf_t */
+    }
+    bu_free(scan, "scan array");
 
     /* Transform by the matrix */
     if (mat == NULL) mat = bn_mat_identity;
@@ -891,9 +903,11 @@ rt_arbn_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     struct rt_arbn_internal *aip;
     union record *rec;
     size_t ngrans;
-    double *sbuf;		/* scalling buffer */
-    double *sp;
     size_t i;
+
+    /* scaling buffer must be double, not fastf_t */
+    double *sbuf;
+    double *sp;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -908,7 +922,7 @@ rt_arbn_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
      * The network format for a double is 8 bytes and there are 4
      * doubles per plane equation.
      */
-    ngrans = (aip->neqn * 8 * 4 + sizeof(union record)-1) /
+    ngrans = (aip->neqn * 8 * ELEMENTS_PER_PLANE + sizeof(union record)-1) /
 	sizeof(union record);
 
     BU_CK_EXTERNAL(ep);
@@ -922,7 +936,7 @@ rt_arbn_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     /* Take the data from the caller, and scale it, into sbuf */
     sp = sbuf = (double *)bu_malloc(
-	aip->neqn * sizeof(double) * 4, "arbn temp");
+	aip->neqn * sizeof(double) * ELEMENTS_PER_PLANE, "arbn temp");
     for (i=0; i<aip->neqn; i++) {
 	/* Normal is unscaled, should have unit length; d is scaled */
 	*sp++ = aip->eqn[i][X];
@@ -931,7 +945,7 @@ rt_arbn_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	*sp++ = aip->eqn[i][W] * local2mm;
     }
 
-    htond((unsigned char *)&rec[1], (unsigned char *)sbuf, aip->neqn * 4);
+    htond((unsigned char *)&rec[1], (unsigned char *)sbuf, aip->neqn * ELEMENTS_PER_PLANE);
 
     bu_free((char *)sbuf, "arbn temp");
     return 0;			/* OK */
@@ -952,6 +966,8 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     unsigned long neqn;
     int double_count;
     size_t byte_count;
+
+    /* must be double for import and export */
     double *eqn;
 
     RT_CK_DB_INTERNAL(ip);
@@ -975,7 +991,7 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     if (aip->neqn <= 0) return -1;
 
     eqn = (double *)bu_malloc(byte_count, "arbn plane eqn[] temp buf");
-    ntohd((unsigned char *)eqn, (unsigned char *)ep->ext_buf + 4, double_count);
+    ntohd((unsigned char *)eqn, (unsigned char *)ep->ext_buf + ELEMENTS_PER_PLANE, double_count);
     aip->eqn = (plane_t *)bu_malloc(double_count * sizeof(fastf_t), "arbn plane eqn[]");
     for (i=0; i < aip->neqn; i++) {
 	HMOVE(aip->eqn[i], &eqn[i*ELEMENTS_PER_PLANE]);
@@ -1021,10 +1037,12 @@ rt_arbn_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 {
     struct rt_arbn_internal *aip;
     size_t i;
-    double *vec;
-    double *sp;
     int double_count;
     int byte_count;
+
+    /* must be double for export */
+    double *vec;
+    double *sp;
 
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);
@@ -1039,7 +1057,7 @@ rt_arbn_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     byte_count = double_count * SIZEOF_NETWORK_DOUBLE;
 
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = 4 + byte_count;
+    ep->ext_nbytes = SIZEOF_NETWORK_LONG + byte_count;
     ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "arbn external");
 
     *(uint32_t *)ep->ext_buf = htonl(aip->neqn);
@@ -1055,7 +1073,7 @@ rt_arbn_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     }
 
     /* Convert from internal (host) to database (network) format */
-    htond((unsigned char *)ep->ext_buf + 4, (unsigned char *)vec, double_count);
+    htond((unsigned char *)ep->ext_buf + SIZEOF_NETWORK_LONG, (unsigned char *)vec, double_count);
 
     bu_free((char *)vec, "arbn temp");
     return 0;			/* OK */
@@ -1218,7 +1236,7 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 						  i * sizeof(plane_t),
 						  "arbn->eqn");
 	    for (j=arbn->neqn; j<i; j++) {
-		VSETALLN(arbn->eqn[j], 0.0, 4);
+		HSETALL(arbn->eqn[j], 0.0);
 	    }
 	    arbn->neqn = i;
 
@@ -1233,7 +1251,7 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    len = 0;
 	    (void)tcl_list_to_fastf_array(brlcad_interp, argv[1], &new_planes, &len);
 
-	    if (len%4) {
+	    if (len%ELEMENTS_PER_PLANE) {
 		bu_vls_printf(logstr,
 			      "ERROR: Incorrect number of plane coefficients\n");
 		if (len)
@@ -1243,7 +1261,7 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    if (arbn->eqn)
 		bu_free((char *)arbn->eqn, "arbn->eqn");
 	    arbn->eqn = (plane_t *)new_planes;
-	    arbn->neqn = (size_t)len / 4;
+	    arbn->neqn = (size_t)len / ELEMENTS_PER_PLANE;
 	    for (i=0; i<arbn->neqn; i++)
 		VUNITIZE(arbn->eqn[i]);
 	} else if (argv[0][0] == 'P') {
@@ -1264,10 +1282,10 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		bu_vls_printf(logstr, "ERROR: plane number out of range\n");
 		return BRLCAD_ERROR;
 	    }
-	    len = 4;
+	    len = ELEMENTS_PER_PLANE;
 	    array = (fastf_t *)&arbn->eqn[i];
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1],
-					&array, &len) != 4) {
+					&array, &len) != ELEMENTS_PER_PLANE) {
 		bu_vls_printf(logstr,
 			      "ERROR: incorrect number of coefficients for a plane\n");
 		return BRLCAD_ERROR;

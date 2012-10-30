@@ -4391,6 +4391,9 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     struct rt_dsp_internal *dsp_ip;
     unsigned char *cp;
 
+    /* must be double for import and export */
+    double scanmat[16];
+
     if (resp) RT_CK_RESOURCE(resp);
 
     if (RT_G_DEBUG & DEBUG_HF)
@@ -4437,8 +4440,10 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     }
 
     /* convert matrix */
-    ntohd((unsigned char *)dsp_ip->dsp_stom, cp, 16);
-    cp += SIZEOF_NETWORK_DOUBLE * 16;
+    ntohd((unsigned char *)scanmat, cp, ELEMENTS_PER_MAT);
+    MAT_COPY(dsp_ip->dsp_stom, scanmat); /* double to fastf_t */
+
+    cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT;
     bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
 
     /* convert smooth flag */
@@ -4500,6 +4505,9 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     unsigned char *cp;
     size_t rem;
 
+    /* must be double for import and export */
+    double scanmat[16];
+
     if (resp) RT_CK_RESOURCE(resp);
     if (dbip) RT_CK_DBI(dbip);
 
@@ -4545,9 +4553,11 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
      */
     dsp_ip->dsp_stom[15] *= local2mm;
 
-    htond(cp, (unsigned char *)dsp_ip->dsp_stom, 16);
-    cp += SIZEOF_NETWORK_DOUBLE * 16;
-    rem -= SIZEOF_NETWORK_DOUBLE * 16;
+    MAT_COPY(scanmat, dsp_ip->dsp_stom); /* convert fastf_t to double */
+    htond(cp, (unsigned char *)scanmat, ELEMENTS_PER_MAT);
+
+    cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT;
+    rem -= SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_MAT;
 
     *(uint16_t *)cp = htons((uint16_t)dsp_ip->dsp_smooth);
     cp += SIZEOF_NETWORK_SHORT;

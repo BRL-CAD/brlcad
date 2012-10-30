@@ -368,8 +368,10 @@ int
 rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_grip_internal *gip;
-    fastf_t vec[7];
     double f, t;
+
+    /* must be double for import and export */
+    double vec[7];
 
     if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
@@ -420,7 +422,9 @@ int
 rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_grip_internal *gip;
-    fastf_t vec[7];
+
+    /* must be double for import and export */
+    double vec[7];
 
     if (dbip) RT_CK_DBI(dbip);
 

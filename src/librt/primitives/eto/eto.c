@@ -1406,7 +1406,9 @@ int
 rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_eto_internal *tip;
-    fastf_t vec[11];
+
+    /* must be double for import and export */
+    double vec[11];
 
     if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
@@ -1450,7 +1452,9 @@ int
 rt_eto_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_eto_internal *tip;
-    fastf_t vec[11];
+
+    /* must be double for import and export */
+    double vec[11];
 
     if (dbip) RT_CK_DBI(dbip);
 

@@ -1262,7 +1262,9 @@ rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 {
     struct rt_arb_internal *aip;
     register int i;
-    fastf_t vec[3*8];
+
+    /* must be double for import and export */
+    double vec[3*8];
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
@@ -1295,8 +1297,10 @@ int
 rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_arb_internal *aip;
-    fastf_t vec[3*8];
     register int i;
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*8];
 
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);
@@ -1306,12 +1310,12 @@ rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     RT_ARB_CK_MAGIC(aip);
 
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 8 * 3;
+    ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 8 * ELEMENTS_PER_VECT;
     ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "arb external");
     for (i=0; i<8; i++) {
-	VSCALE(&vec[i*3], aip->pt[i], local2mm);
+	VSCALE(&vec[i*ELEMENTS_PER_VECT], aip->pt[i], local2mm);
     }
-    htond(ep->ext_buf, (unsigned char *)vec, 8*3);
+    htond(ep->ext_buf, (unsigned char *)vec, 8*ELEMENTS_PER_VECT);
     return 0;
 }
 

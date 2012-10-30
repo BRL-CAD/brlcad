@@ -1467,7 +1467,9 @@ int
 rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)
 {
     struct rt_revolve_internal *rip;
-    fastf_t vv[ELEMENTS_PER_VECT*3 + 1];
+
+    /* must be double for import and export */
+    double vv[ELEMENTS_PER_VECT*3 + 1];
 
     char *sketch_name;
     unsigned char *ptr;
@@ -1613,7 +1615,10 @@ int
 rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_revolve_internal *rip;
-    fastf_t vec[ELEMENTS_PER_VECT*3 + 1];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*3 + 1];
+
     unsigned char *ptr;
 
     if (dbip) RT_CK_DBI(dbip);

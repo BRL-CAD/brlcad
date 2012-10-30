@@ -1054,7 +1054,13 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     cp += SIZEOF_NETWORK_LONG;
 
     for (s = 0; s < sip->nsrf; s++) {
-	register struct face_g_snurb *srf = sip->srfs[s];
+	int i;
+	struct face_g_snurb *srf = sip->srfs[s];
+
+	/* must be double for import and export */
+	double *uknots;
+	double *vknots;
+	double *points;
 
 	NMG_CK_SNURB(srf);
 
@@ -1073,14 +1079,36 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	cp += SIZEOF_NETWORK_LONG;
 	*(uint32_t *)cp = htonl(srf->s_size[1]);
 	cp += SIZEOF_NETWORK_LONG;
-	htond(cp, (unsigned char *)srf->u.knots, srf->u.k_size);
-	cp += srf->u.k_size * SIZEOF_NETWORK_DOUBLE;
-	htond(cp, (unsigned char *)srf->v.knots, srf->v.k_size);
-	cp += srf->v.k_size * SIZEOF_NETWORK_DOUBLE;
 
+	/* alloate for export */
+	uknots = (double *)bu_malloc(srf->u.k_size * sizeof(double), "uknots");
+	vknots = (double *)bu_malloc(srf->v.k_size * sizeof(double), "vknots");
+	points = (double *)bu_malloc(coords * srf->s_size[0] * srf->s_size[1] * sizeof(double), "points");
+
+	/* convert fastf_t to double */
+	for (i=0; i<srf->u.k_size; i++) {
+	    uknots[i] = srf->u.knots[i];
+	}
+	for (i=0; i<srf->v.k_size; i++) {
+	    vknots[i] = srf->v.knots[i];
+	}
+	for (i=0; i<coords * srf->s_size[0] * srf->s_size[1]; i++) {
+	    points[i] = srf->ctl_points[i];
+	}
+
+	/* serialize */
+	htond(cp, (unsigned char *)uknots, srf->u.k_size);
+	cp += srf->u.k_size * SIZEOF_NETWORK_DOUBLE;
+	htond(cp, (unsigned char *)vknots, srf->v.k_size);
+	cp += srf->v.k_size * SIZEOF_NETWORK_DOUBLE;
 	htond(cp, (unsigned char *)srf->ctl_points,
 	      coords * srf->s_size[0] * srf->s_size[1]);
 	cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
+
+	/* release our arrays */
+	bu_free(uknots, "uknots");
+	bu_free(vknots, "vknots");
+	bu_free(points, "points");
     }
 
     bu_log("DEPRECATED:  The 'bspline' primitive is no longer supported.  Use 'brep' NURBS instead.\n");
@@ -1126,6 +1154,11 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	int order[2], u_size, v_size;
 	int s_size[2];
 
+	/* must be double for import and export */
+	double *uknots;
+	double *vknots;
+	double *points;
+
 	pt_type = ntohl(*(uint32_t *)cp);
 	cp += SIZEOF_NETWORK_LONG;
 	order[0] = ntohl(*(uint32_t *)cp);
@@ -1154,16 +1187,38 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	srf = sip->srfs[s];
 	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
 
-	ntohd((unsigned char *)srf->u.knots, cp, srf->u.k_size);
+	uknots = (double *)bu_malloc(srf->u.k_size * sizeof(double), "uknots");
+	vknots = (double *)bu_malloc(srf->v.k_size * sizeof(double), "vknots");
+
+	ntohd((unsigned char *)uknots, cp, srf->u.k_size);
 	cp += srf->u.k_size * SIZEOF_NETWORK_DOUBLE;
-	ntohd((unsigned char *)srf->v.knots, cp, srf->v.k_size);
+	ntohd((unsigned char *)vknots, cp, srf->v.k_size);
 	cp += srf->v.k_size * SIZEOF_NETWORK_DOUBLE;
+
+	/* convert double to fastf_t */
+	for (i=0; i<srf->u.k_size; i++) {
+	    srf->u.knots[i] = uknots[i];
+	}
+	for (i=0; i<srf->v.k_size; i++) {
+	    srf->v.knots[i] = vknots[i];
+	}
+
+	bu_free(uknots, "uknots");
+	bu_free(vknots, "vknots");
 
 	rt_nurb_kvnorm(&srf->u);
 	rt_nurb_kvnorm(&srf->v);
 
-	ntohd((unsigned char *)srf->ctl_points, cp,
-	      coords * srf->s_size[0] * srf->s_size[1]);
+	points = (double *)bu_malloc(coords * srf->s_size[0] * srf->s_size[1] * sizeof(double), "points");
+
+	ntohd((unsigned char *)points, cp, coords * srf->s_size[0] * srf->s_size[1]);
+
+	/* convert double to fastf_t */
+	for (i=0; i < coords * srf->s_size[0] * srf->s_size[1]; i++) {
+	    srf->ctl_points[i] = points[i];
+	}
+
+	bu_free(points, "points");
 
 	cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
 

@@ -3351,6 +3351,9 @@ rt_pipe_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
     struct rt_pipe_internal *pip;
     union record *rp;
 
+    /* must be double for import and export */
+    double scan[ELEMENTS_PER_VECT];
+
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
@@ -3378,10 +3381,17 @@ rt_pipe_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
     BU_LIST_INIT(&pip->pipe_segs_head);
     if (mat == NULL) mat = bn_mat_identity;
     for (exp_pipept = &rp->pwr.pwr_data[pip->pipe_count-1]; exp_pipept >= &rp->pwr.pwr_data[0]; exp_pipept--) {
-	ntohd((unsigned char *)&tmp.pp_id, exp_pipept->epp_id, 1);
-	ntohd((unsigned char *)&tmp.pp_od, exp_pipept->epp_od, 1);
-	ntohd((unsigned char *)&tmp.pp_bendradius, exp_pipept->epp_bendradius, 1);
-	ntohd((unsigned char *)tmp.pp_coord, exp_pipept->epp_coord, 3);
+	ntohd((unsigned char *)&scan[0], exp_pipept->epp_id, 1);
+	tmp.pp_id = scan[0]; /* convert double to fastf_t */
+
+	ntohd((unsigned char *)&scan[1], exp_pipept->epp_od, 1);
+	tmp.pp_od = scan[1]; /* convert double to fastf_t */
+
+	ntohd((unsigned char *)&scan[2], exp_pipept->epp_bendradius, 1);
+	tmp.pp_bendradius = scan[2]; /* convert double to fastf_t */
+
+	ntohd((unsigned char *)scan, exp_pipept->epp_coord, ELEMENTS_PER_VECT);
+	VMOVE(tmp.pp_coord, scan); /* convert double to fastf_t */
 
 	/* Apply modeling transformations */
 	BU_GET(ptp, struct wdb_pipept);
@@ -3449,15 +3459,26 @@ rt_pipe_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     /* Convert the pipe segments to external form */
     epp = &rec->pwr.pwr_data[0];
     for (BU_LIST_FOR(ppt, wdb_pipept, headp), epp++) {
+	double scan[ELEMENTS_PER_POINT];
+
 	/* Convert from user units to mm */
 	VSCALE(tmp.pp_coord, ppt->pp_coord, local2mm);
 	tmp.pp_id = ppt->pp_id * local2mm;
 	tmp.pp_od = ppt->pp_od * local2mm;
 	tmp.pp_bendradius = ppt->pp_bendradius * local2mm;
-	htond(epp->epp_coord, (unsigned char *)tmp.pp_coord, 3);
-	htond(epp->epp_id, (unsigned char *)&tmp.pp_id, 1);
-	htond(epp->epp_od, (unsigned char *)&tmp.pp_od, 1);
-	htond(epp->epp_bendradius, (unsigned char *)&tmp.pp_bendradius, 1);
+
+
+	VMOVE(scan, tmp.pp_coord); /* convert fastf_t to double */
+	htond(epp->epp_coord, (unsigned char *)scan, ELEMENTS_PER_POINT);
+
+	scan[0] = tmp.pp_id; /* convert fastf_t to double */
+	htond(epp->epp_id, (unsigned char *)&scan[0], 1);
+
+	scan[1] = tmp.pp_od; /* convert fastf_t to double */
+	htond(epp->epp_od, (unsigned char *)&scan[1], 1);
+
+	scan[2] = tmp.pp_bendradius; /* convert fastf_t to double */
+	htond(epp->epp_bendradius, (unsigned char *)&scan[2], 1);
     }
 
     return 0;
@@ -3472,7 +3493,10 @@ rt_pipe_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 {
     struct wdb_pipept *ptp;
     struct rt_pipe_internal *pip;
-    fastf_t *vec;
+
+    /* must be double for import and export */
+    double *vec;
+
     size_t total_count;
     int double_count;
     int byte_count;
@@ -3498,7 +3522,8 @@ rt_pipe_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     pip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
     pip->pipe_count = pipe_count;
 
-    vec = (fastf_t *)bu_malloc(byte_count, "rt_pipe_import5: vec");
+    vec = (double *)bu_malloc(byte_count, "rt_pipe_import5: vec");
+
     /* Convert from database (network) to internal (host) format */
     ntohd((unsigned char *)vec, (unsigned char *)ep->ext_buf + 4, double_count);
 
@@ -3534,12 +3559,14 @@ rt_pipe_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     struct rt_pipe_internal *pip;
     struct bu_list *headp;
     struct wdb_pipept *ppt;
-    fastf_t *vec;
     int total_count;
     int double_count;
     int byte_count;
     unsigned long pipe_count;
     int i = 0;
+
+    /* must be double for import and export */
+    double *vec;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -3563,7 +3590,7 @@ rt_pipe_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     double_count = pipe_count * 6;
     byte_count = double_count * SIZEOF_NETWORK_DOUBLE;
     total_count = 4 + byte_count;
-    vec = (fastf_t *)bu_malloc(byte_count, "rt_pipe_export5: vec");
+    vec = (double *)bu_malloc(byte_count, "rt_pipe_export5: vec");
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = total_count;
