@@ -893,13 +893,12 @@ rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     node2 = pts_r2;
     for (i = 0; i < num_curve_points; ++i) {
 	node = node1;
+	node1 = node1->next;
 	bu_free(node, "rt_pt_node");
 
 	node = node2;
-	bu_free(node, "rt_pt_node");
-
-	node1 = node1->next;
 	node2 = node2->next;
+	bu_free(node, "rt_pt_node");
     }
 
     return 0;
