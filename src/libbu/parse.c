@@ -155,19 +155,34 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 	/* [0] == '%', use printf-like format char */
 	switch (ip->sp_fmt[1]) {
 	    case 'f':
+		/* Variable-precision "fastf_t" floating point */
+		len = ip->sp_count * sizeof(fastf_t);
+		CKMEM(len);
+		switch(sizeof(fastf_t)) {
+		    case sizeof(float):
+			htonf((unsigned char *)cp, (unsigned char *)loc, ip->sp_count);
+			break;
+		    case sizeof(double):
+		    default:
+			htond((unsigned char *)cp, (unsigned char *)loc, ip->sp_count);
+			break;
+		}
+		cp += len;
+		continue;
+	    case 'g':
 		/* Double-precision floating point */
-		len = ip->sp_count * 8;
+		len = ip->sp_count * sizeof(double);
 		CKMEM(len);
 		htond((unsigned char *)cp, (unsigned char *)loc, ip->sp_count);
 		cp += len;
 		continue;
 	    case 'd':
 		/* 32-bit network integer, from "int" */
-		CKMEM(ip->sp_count * 4);
+		CKMEM(ip->sp_count * sizeof(int));
 		{
 		    register unsigned long l;
 		    for (i = ip->sp_count; i > 0; i--) {
-			l = *((int *)loc);
+			l = *((long int *)loc);
 			cp[3] = l;
 			cp[2] = l >> 8;
 			cp[1] = l >> 16;
@@ -178,15 +193,15 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		}
 		continue;
 	    case 'i':
-		/* 16-bit integer, from "int" */
+		/* 16-bit integer, from "short int" */
 		CKMEM(ip->sp_count * 2);
 		{
 		    register unsigned short s;
 		    for (i = ip->sp_count; i > 0; i--) {
-			s = *((int *)loc);
+			s = *((short int *)loc);
 			cp[1] = s;
 			cp[0] = s >> 8;
-			loc += sizeof(int); /* XXX */
+			loc += sizeof(short int);
 			cp += 2;
 		    }
 		}
@@ -307,8 +322,23 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 	/* [0] == '%', use printf-like format char */
 	switch (ip->sp_fmt[1]) {
 	    case 'f':
+		/* Variable-precision fastf_t floating point */
+		len = ip->sp_count * sizeof(fastf_t);
+		switch(sizeof(fastf_t)) {
+		    case sizeof(float):
+			ntohf((unsigned char *)loc, cp, ip->sp_count);
+			break;
+		    case sizeof(double):
+		    default:
+			ntohd((unsigned char *)loc, cp, ip->sp_count);
+			break;
+		}
+		cp += len;
+		bytes_used += len;
+		break;
+	    case 'g':
 		/* Double-precision floating point */
-		len = ip->sp_count * 8;
+		len = ip->sp_count * sizeof(double);
 		ntohd((unsigned char *)loc, cp, ip->sp_count);
 		cp += len;
 		bytes_used += len;
@@ -324,18 +354,18 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 			    ((long)cp[2] << 8) |
 			    (long)cp[3];
 			*(int *)loc = l;
-			loc += sizeof(int); /* XXX */
+			loc += sizeof(int);
 			cp += 4;
 		    }
 		    bytes_used += ip->sp_count * 4;
 		}
 		break;
 	    case 'i':
-		/* 16-bit integer, from "int" */
+		/* 16-bit integer, from "short int" */
 		for (i = ip->sp_count; i > 0; i--) {
-		    *(int *)loc =	(cp[0] << 8) |
+		    *(short int *)loc =	(cp[0] << 8) |
 			cp[1];
-		    loc += sizeof(int); /* XXX */
+		    loc += sizeof(short int);
 		    cp += 2;
 		}
 		bytes_used += ip->sp_count * 2;
@@ -524,13 +554,13 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
 
 
 /**
- * Parse an array of one or more doubles.
+ * Parse an array of one or more floating point values.
  *
  * Returns: 0 when successful
  *         <0 upon failure
  */
 HIDDEN int
-parse_double(const char *str, size_t count, double *loc)
+parse_floating(const char *str, size_t count, fastf_t *floc, double *dloc)
 {
     size_t i;
     int dot_seen;
@@ -578,7 +608,10 @@ parse_double(const char *str, size_t count, double *loc)
 	    return -1;
 	}
 
-	*loc++ = tmp_double;
+	if (floc)
+	    *floc++ = (fastf_t)tmp_double;
+	if (dloc)
+	    *dloc++ = tmp_double;
 
 	/* skip any whitespace before separator */
 	while (*str && isspace((int)(*str)))
@@ -785,7 +818,10 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 		}
 		break;
 	    case 'f':
-		retval = parse_double(value, sdp->sp_count, (double *)loc);
+		retval = parse_floating(value, sdp->sp_count, (fastf_t *)loc, NULL);
+		break;
+	    case 'g':
+		retval = parse_floating(value, sdp->sp_count, NULL, (double *)loc);
 		break;
 	    case 'p': {
 		struct bu_structparse *tbl = (struct bu_structparse *)sdp->sp_offset;
@@ -901,13 +937,35 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 }
 
 
-/**
- *
- * XXX Should this be here, or could it be with the matrix support?
+/* XXX Should this be here, or could it be with the matrix support?
  * pretty-print a matrix
  */
 HIDDEN void
-parse_matprint(const char *name, register const double *mat)
+parse_matprint(const char *name, register const fastf_t *mat)
+{
+    int delta = (int)strlen(name)+2;
+
+    /* indent the body of the matrix */
+    bu_log_indent_delta(delta);
+
+    bu_log(" %s=%12E %12E %12E %12E\n",
+	   name, mat[0], mat[1], mat[2], mat[3]);
+
+    bu_log("%12E %12E %12E %12E\n",
+	   mat[4], mat[5], mat[6], mat[7]);
+
+    bu_log("%12E %12E %12E %12E\n",
+	   mat[8], mat[9], mat[10], mat[11]);
+
+    bu_log_indent_delta(-delta);
+
+    bu_log("%12E %12E %12E %12E\n",
+	   mat[12], mat[13], mat[14], mat[15]);
+}
+
+
+HIDDEN void
+parse_dmatprint(const char *name, register const double *mat)
 {
     int delta = (int)strlen(name)+2;
 
@@ -932,6 +990,35 @@ parse_matprint(const char *name, register const double *mat)
 
 HIDDEN void
 parse_vls_matprint(struct bu_vls *vls,
+		 const char *name,
+		 register const fastf_t *mat)
+{
+    int delta = (int)strlen(name)+2;
+
+    /* indent the body of the matrix */
+    bu_log_indent_delta(delta);
+
+    bu_vls_printf(vls, " %s=%12E %12E %12E %12E\n",
+		  name, mat[0], mat[1], mat[2], mat[3]);
+    bu_log_indent_vls(vls);
+
+    bu_vls_printf(vls, "%12E %12E %12E %12E\n",
+		  mat[4], mat[5], mat[6], mat[7]);
+    bu_log_indent_vls(vls);
+
+    bu_vls_printf(vls, "%12E %12E %12E %12E\n",
+		  mat[8], mat[9], mat[10], mat[11]);
+    bu_log_indent_vls(vls);
+
+    bu_log_indent_delta(-delta);
+
+    bu_vls_printf(vls, "%12E %12E %12E %12E\n",
+		  mat[12], mat[13], mat[14], mat[15]);
+}
+
+
+HIDDEN void
+parse_vls_dmatprint(struct bu_vls *vls,
 		 const char *name,
 		 register const double *mat)
 {
@@ -1021,6 +1108,15 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 	    }
 	    break;
 	case 'f':
+	    {
+		register size_t i = sdp->sp_count;
+		register fastf_t *fp = (fastf_t *)loc;
+
+		bu_vls_printf(vp, "%.25G", *fp++);
+		while (--i > 0) bu_vls_printf(vp, "%c%.25G", sep_char, *fp++);
+	    }
+	    break;
+	case 'g':
 	    {
 		register size_t i = sdp->sp_count;
 		register double *dp = (double *)loc;
@@ -1162,10 +1258,43 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		break;
 	    case 'f':
 		{
-		    register double *dp = (double *)loc;
+		    register fastf_t *dp = (fastf_t *)loc;
 
 		    if (sdp->sp_count == 16) {
 			parse_matprint(sdp->sp_name, dp);
+		    } else if (sdp->sp_count <= 3) {
+			bu_log("\t%s=%.25G", sdp->sp_name, *dp++);
+
+			for (i=1; i < sdp->sp_count; i++) {
+			    bu_log("%c%.25G", COMMA, *dp++);
+			}
+
+			bu_log("\n");
+		    } else {
+			int delta = (int)strlen(sdp->sp_name)+2;
+
+			bu_log_indent_delta(delta);
+
+			bu_log("\t%s=%.25G\n", sdp->sp_name, *dp++);
+
+			/* print first and last value individually, so
+			 * don't iterate over them.
+			 */
+			for (i=1; i < sdp->sp_count-1; i++) {
+			    bu_log("%.25G\n", *dp++);
+			}
+
+			bu_log_indent_delta(-delta);
+			bu_log("%.25G\n", *dp);
+		    }
+		}
+		break;
+	    case 'g':
+		{
+		    register double *dp = (double *)loc;
+
+		    if (sdp->sp_count == 16) {
+			parse_dmatprint(sdp->sp_name, dp);
 		    } else if (sdp->sp_count <= 3) {
 			bu_log("\t%s=%.25G", sdp->sp_name, *dp++);
 
@@ -1224,7 +1353,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 
 HIDDEN void
-parse_vls_print_double(struct bu_vls *vls, const char *name, register size_t count, register const double *dp)
+parse_vls_print_floating(struct bu_vls *vls, const char *name, size_t count, const fastf_t *fp, const double *dp)
 {
     register int tmpi;
     register char *cp;
@@ -1232,14 +1361,26 @@ parse_vls_print_double(struct bu_vls *vls, const char *name, register size_t cou
     size_t increase = strlen(name) + 3 + 32 * count;
     bu_vls_extend(vls, (unsigned int)increase);
 
+
+    /* FIXME: should not directly access the bu_vls members */
     cp = vls->vls_str + vls->vls_offset + vls->vls_len;
-    snprintf(cp, increase, "%s%s=%.27G", (vls->vls_len?" ":""), name, *dp++);
+    if (fp) {
+	snprintf(cp, increase, "%s%s=%.27G", (vls->vls_len?" ":""), name, *fp++);
+    }
+    if (dp) {
+	snprintf(cp, increase, "%s%s=%.27G", (vls->vls_len?" ":""), name, *dp++);
+    }
     tmpi = (int)strlen(cp);
     vls->vls_len += tmpi;
 
     while (--count > 0) {
 	cp += tmpi;
-	sprintf(cp, "%c%.27G", COMMA, *dp++);
+	if (fp) {
+	    sprintf(cp, "%c%.27G", COMMA, *fp++);
+	}
+	if (dp) {
+	    sprintf(cp, "%c%.27G", COMMA, *dp++);
+	}
 	tmpi = (int)strlen(cp);
 	vls->vls_len += tmpi;
     }
@@ -1373,8 +1514,10 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		}
 		break;
 	    case 'f':
-		parse_vls_print_double(vls, sdp->sp_name, sdp->sp_count,
-				     (double *)loc);
+		parse_vls_print_floating(vls, sdp->sp_name, sdp->sp_count, (fastf_t *)loc, NULL);
+		break;
+	    case 'g':
+		parse_vls_print_floating(vls, sdp->sp_name, sdp->sp_count, NULL, (double *)loc);
 		break;
 	    case 'p':
 		{
@@ -1488,10 +1631,44 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 	    case 'f':
 		{
 		    register size_t i = sdp->sp_count;
-		    register double *dp = (double *)loc;
+		    register fastf_t *dp = (fastf_t *)loc;
 
 		    if (sdp->sp_count == 16) {
 			parse_vls_matprint(vls_out, sdp->sp_name, dp);
+		    } else if (sdp->sp_count <= 3) {
+			bu_vls_printf(vls_out, "\t%s=%.25G", sdp->sp_name, *dp++);
+
+			while (--i > 0)
+			    bu_vls_printf(vls_out, "%c%.25G", COMMA, *dp++);
+
+			bu_vls_printf(vls_out, "\n");
+		    } else {
+			int delta = (int)strlen(sdp->sp_name)+2;
+
+			bu_log_indent_delta(delta);
+			bu_vls_printf(vls_out, "\t%s=%.25G\n", sdp->sp_name, *dp++);
+			bu_log_indent_vls(vls_out);
+
+			/* print first and last value individually, so
+			 * don't iterate over them.
+			 */
+			while (--i > 1) {
+			    bu_vls_printf(vls_out, "%.25G\n", *dp++);
+			    bu_log_indent_vls(vls_out);
+			}
+
+			bu_log_indent_delta(-delta);
+			bu_vls_printf(vls_out, "%.25G\n", *dp);
+		    }
+		}
+		break;
+	    case 'g':
+		{
+		    register size_t i = sdp->sp_count;
+		    register double *dp = (double *)loc;
+
+		    if (sdp->sp_count == 16) {
+			parse_vls_dmatprint(vls_out, sdp->sp_name, dp);
 		    } else if (sdp->sp_count <= 3) {
 			bu_vls_printf(vls_out, "\t%s=%.25G", sdp->sp_name, *dp++);
 
@@ -2436,13 +2613,15 @@ bu_structparse_argv(struct bu_vls *logstr,
 			bu_vls_printf(logstr, "%s ", argv[0]);
 		    break;
 		}
+		case 'g':
 		case 'f': {
+		    int ret;
 		    int dot_seen;
-		    double tmp_double;
-		    register double *dp;
 		    const char *numstart;
+		    double tmp_double;
 
-		    dp = (double *)loc;
+		    double *dp = (double *)loc;
+		    fastf_t *fp = (fastf_t *)loc;
 
 		    if (argc < 1) {
 			bu_vls_printf(&str,
@@ -2507,7 +2686,9 @@ bu_structparse_argv(struct bu_vls *logstr,
 			bu_vls_trunc(&str, 0);
 			bu_vls_strcpy(&str, numstart);
 			bu_vls_trunc(&str, cp-numstart);
-			if (sscanf(bu_vls_addr(&str), "%lf", &tmp_double) != 1) {
+
+			ret = sscanf(bu_vls_addr(&str), "%lf", &tmp_double);
+			if (ret != 1) {
 			    bu_vls_printf(logstr,
 					  "value \"%s\" to argument %s isn't a float",
 					  numstart,
@@ -2517,7 +2698,11 @@ bu_structparse_argv(struct bu_vls *logstr,
 			}
 			bu_vls_free(&str);
 
-			*dp++ = tmp_double;
+			if (sdp->sp_fmt[1] == 'f') {
+			    *fp++ = (fastf_t)tmp_double;
+			} else {
+			    *dp++ = tmp_double;
+			}
 
 			BU_SP_SKIP_SEP(cp);
 		    }
