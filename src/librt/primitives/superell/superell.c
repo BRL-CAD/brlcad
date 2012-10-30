@@ -52,8 +52,8 @@ const struct bu_structparse rt_superell_parse[] = {
     { "%f", 3, "A", bu_offsetof(struct rt_superell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "B", bu_offsetof(struct rt_superell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 3, "C", bu_offsetof(struct rt_superell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 1, "n", bu_offsetof(struct rt_superell_internal, n), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 1, "e", bu_offsetof(struct rt_superell_internal, e), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%g", 1, "n", bu_offsetof(struct rt_superell_internal, n), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%g", 1, "e", bu_offsetof(struct rt_superell_internal, e), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -900,7 +900,9 @@ int
 rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_superell_internal *eip;
-    fastf_t vec[ELEMENTS_PER_VECT*4 + 2];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*4 + 2];
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -946,7 +948,9 @@ int
 rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_superell_internal *eip;
-    fastf_t vec[ELEMENTS_PER_VECT*4 + 2];
+
+    /* must be double for import and export */
+    double vec[ELEMENTS_PER_VECT*4 + 2];
 
     if (dbip) RT_CK_DBI(dbip);
 
