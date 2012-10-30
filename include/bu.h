@@ -2121,10 +2121,11 @@ BU_EXPORT extern int bu_debug;
    char str[32];
    short a_short;
    int a_int;
+   fastf_t a_fastf_t;
    double a_double;
  }
 
- struct data_structure default = { 'c', "the default string", 32767, 1, 1.0 };
+ struct data_structure default = { 'c', "the default string", 32767, 1, 1.0, 1.0 };
 
  struct data_structure my_values;
 
@@ -2133,7 +2134,8 @@ BU_EXPORT extern int bu_debug;
    {"%s", 32,       "str", bu_offsetofarray(data_structure, str), BU_STRUCTPARSE_FUNC_NULL,         "This is a full character string", (void*)default.str},
    {"%i", 1,    "a_short",  bu_offsetof(data_structure, a_short), BU_STRUCTPARSE_FUNC_NULL,                         "A 16bit integer", (void*)&default.a_short},
    {"%d", 1,      "a_int",    bu_offsetof(data_structure, a_int), BU_STRUCTPARSE_FUNC_NULL,                          "A full integer", (void*)&default.a_int},
-   {"%f", 1,   "a_double", bu_offsetof(data_structure, a_double), BU_STRUCTPARSE_FUNC_NULL, "A double-precision floating point value", (void*)&default.a_double},
+   {"%f", 1,   "a_fastf_t", bu_offsetof(data_structure, a_fastf_t), BU_STRUCTPARSE_FUNC_NULL, "A variable-precision fasf_t floating point value", (void*)&default.a_fastf_t},
+   {"%g", 1,   "a_double", bu_offsetof(data_structure, a_double), BU_STRUCTPARSE_FUNC_NULL, "A double-precision fasf_t floating point value", (void*)&default.a_double},
    {  "", 0, (char *)NULL,                                     0, BU_STRUCTPARSE_FUNC_NULL,                              (char *)NULL, (void *)NULL}
  };
 
