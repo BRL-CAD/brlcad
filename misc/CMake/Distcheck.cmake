@@ -134,7 +134,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
       # Determine how to trigger the build in the distcheck target
       if("${CMAKE_GENERATOR}" MATCHES "Make")
 	if(NOT CMAKE_VERBOSE_DISTCHECK)
-	  set(TARGET_REDIRECT " >> distcheck-${TARGET_SUFFIX}.log ")
+	  set(TARGET_REDIRECT " >> distcheck-${TARGET_SUFFIX}.log 2>&1")
 	  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}.log)
 	endif(NOT CMAKE_VERBOSE_DISTCHECK)
 	set(DISTCHECK_BUILD_CMD "$(MAKE)")
