@@ -55,11 +55,11 @@ int
 read_rt_file(FILE *infp, char *name, fastf_t *model2view)
 {
     FILE *fp;
-    fastf_t azimuth;		/* part of the view */
-    fastf_t elevation;		/* part of the view */
+    fastf_t azimuth = 0.0;	/* part of the view */
+    fastf_t elevation = 0.0;	/* part of the view */
     quat_t orientation;		/* orientation */
-    point_t eye_pos;
-    fastf_t m_size;		/* size of model in mm */
+    point_t eye_pos = VINIT_ZERO;
+    fastf_t m_size = 0.0;	/* size of model in mm */
     char *ret;			/* return code for fgets */
     char string[BUFF_LEN];	/* temporary buffer */
     char *arg_ptr;		/* place holder */
