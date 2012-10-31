@@ -64,7 +64,7 @@ main(int argc, char **argv)
 
     if (argc != 2) {
 	bu_log(usage, argv[0]);
-	bu_exit(EXIT_FAILURE, "Incorrect numer of arguments!!\n");
+	bu_exit(EXIT_FAILURE, "Incorrect number of arguments!!\n");
     } else {
 	if ((fp_in = fopen(argv[1], "rb")) == NULL) {
 	    perror(argv[1]);
@@ -145,7 +145,7 @@ main(int argc, char **argv)
 	if (unit_type == PNG_RESOLUTION_UNKNOWN)
 	    bu_log("Aspect ratio: %g (width/height)\n", (double)xres/(double)yres);
 	else if (unit_type == PNG_RESOLUTION_METER)
-	    bu_log("pixel density:\n\t%d pixels/m hroizontal\n\t%d pixels/m vertical\n",
+	    bu_log("pixel density:\n\t%d pixels/m horizontal\n\t%d pixels/m vertical\n",
 		   (int)xres, (int)yres);
     }
 
