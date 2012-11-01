@@ -19,7 +19,7 @@
  */
 /** @file util/pix-alias.c
  *
- * Convert BRL PIX format image files to ALIAS(tm) PIX fomat files.
+ * Convert BRL PIX format image files to ALIAS(tm) PIX format files.
  *
  * Format of a BRL PIX file:
  * RGB RGB RGB RGB .... RGB
