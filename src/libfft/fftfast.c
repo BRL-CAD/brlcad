@@ -138,7 +138,7 @@ init_sintab(int size)
     /* Get some buffer space */
     if (sintab != NULL) free(sintab);
     if (costab != NULL) free(costab);
-    /* should not use bu_calloc() as libfft is not dependant upon libbu */
+    /* should not use bu_calloc() as libfft is not dependent upon libbu */
     sintab = (double *)calloc(sizeof(*sintab), size);
     costab = (double *)calloc(sizeof(*costab), size);
 
@@ -252,7 +252,7 @@ butterflies(int numpoints, int inverse, COMPLEX *dat)
     /* Scale Data (on forward transform only) */
     /*
      * Technically speaking this gives us the periodogram. XXX
-     * The canonical definition does the scaleing only
+     * The canonical definition does the scaling only
      * after the inverse xform.  Our method may hurt certain
      * other forms of analysis, e.g. cepstrum.
      * **** We Now Do It The Canonical Way! ****
