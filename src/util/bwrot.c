@@ -122,7 +122,7 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 	}
     }
 
-    /* XXX - backward compatability hack */
+    /* XXX - backward compatibility hack */
     if (bu_optind+2 == argc) {
 	nxin = atoi(argv[bu_optind++]);
 	nyin = atoi(argv[bu_optind++]);
@@ -270,7 +270,7 @@ arbrot(double a, FILE *ifp, unsigned char *buf)
 	    {
 		putchar(buf[(int)y2*nyin + (int)x2]);
 	    } else {
-		putchar(0);	/* XXX - setable color? */
+		putchar(0);	/* XXX - settable color? */
 	    }
 	    /* "forward difference" our coordinates */
 	    x2 += cosa;
@@ -353,7 +353,7 @@ main(int argc, char **argv)
 		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
@@ -379,7 +379,7 @@ main(int argc, char **argv)
 		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
@@ -397,7 +397,7 @@ main(int argc, char **argv)
 		    if (fseek(ofp, outbyte, SEEK_SET) < 0) {
 			ret = 3;
 			perror("fseek");
-			bu_log("ERROR: %s can't seek on output (ofp=%p, outbute=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);
+			bu_log("ERROR: %s can't seek on output (ofp=%p, outbyte=%ld)\n", bu_getprogname(), (void *)ofp, outbyte);
 			goto done;
 		    }
 		    outplace = outbyte;
