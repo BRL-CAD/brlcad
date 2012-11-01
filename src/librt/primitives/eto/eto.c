@@ -887,7 +887,7 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 
     eto = (struct rt_eto_internal *)ip->idb_ptr;
     if (!eto_is_valid(eto)) {
-	return 1;
+	return -1;
     }
 
     samples = sqrt(primitive_diagonal_samples(ip, info));
@@ -1016,7 +1016,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     tip = (struct rt_eto_internal *)ip->idb_ptr;
     if (!eto_is_valid(tip)) {
-	return 1;
+	return -1;
     }
 
     a = MAGNITUDE(tip->eto_C);
@@ -1058,7 +1058,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /* make sure ellipse doesn't overlap itself when revolved */
     if (ch > tip->eto_r || dh > tip->eto_r) {
 	bu_log("eto_plot: revolved ellipse overlaps itself\n");
-	return 1;
+	return -1;
     }
 
     /* get memory for nells ellipses */
