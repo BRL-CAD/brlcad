@@ -112,7 +112,7 @@ void usage(void)
 /*
  * M A I N
  *
- * Perform miscelaneous tasks such as argument parsing and
+ * Perform miscellaneous tasks such as argument parsing and
  * I/O setup and then call "doit" to perform the task at hand
  */
 int main(int ac, char **av)
