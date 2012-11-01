@@ -85,7 +85,7 @@ static void print_debug_usage (void)
 static void add_to_table (unsigned char *rgb)
 {
     /*
-     * Ensure that the color table can accomodate the new entry
+     * Ensure that the color table can accommodate the new entry
      */
     if (next_color == color_tbl_size) {
 	color_tbl_size *= 2;
