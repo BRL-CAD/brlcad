@@ -33,7 +33,7 @@
  * Each of these streams comes from a file, or is given as a constant.
  * A particular file may be used to feed more than one stream,
  * and the name '-' specifies stdin.
- * For example, the forground file may also be the true-output file.
+ * For example, the foreground file may also be the true-output file.
  *
  * This routine operates on an element-by-element basis, and thus
  * is independent of the resolution of the image.
