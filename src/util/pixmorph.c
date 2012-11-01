@@ -73,7 +73,7 @@
 #define MAXLEN 65536
 
 /* gprof tells me that 73% of the time to execute was spent in those two
-   pow() function calls.  So, we "memoize" a little bit, and don't call those
+   pow() function calls.  So, we "memorize" a little bit, and don't call those
    pow()s for weights already calculated (they only depend on length and dist,
    which range from 0 to MAXLEN.) Truncating them to integers changes things
    *very* little...trust me. */
@@ -157,7 +157,7 @@ warp_image(unsigned char *dest, unsigned char *src,
 		/* This is a fairly straightforward implementation of the
 		   algorithm in Beier and Neely's paper.
 		   We work only with vector components here... note that
-		   Perpindicular((a, b)) = (b, -a). */
+		   Perpendicular((a, b)) = (b, -a). */
 
 		x_minus_p_x = x_x - tlines->s[MIDDLE].x_1;
 		x_minus_p_y = x_y - tlines->s[MIDDLE].y_1;
@@ -485,7 +485,7 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    /* The following is our memoizing table for weight calculation. */
+    /* The following is our memorizing table for weight calculation. */
 
     for (i = 0; i < MAXLEN; i++)
 	weightlookup[i] = -1.0;
