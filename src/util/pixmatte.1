@@ -67,7 +67,7 @@ otherwise, the element from the false-output stream is written.
 Each of these streams comes from a file, or is given as a constant.
 A particular file may be used to feed more than one stream,
 and the name '-' specifies stdin.
-For example, the forground file may also be the true-output file.
+For example, the foreground file may also be the true-output file.
 This routine operates on an element-by-element basis, and thus
 is independent of the resolution of the image.
 .PP
@@ -97,7 +97,7 @@ match to within plus or minus one.
 .PP
 For example,
 .B \-le
-is true when in1 is lexicaly less than or equal to in2,
+is true when in1 is lexically less than or equal to in2,
 that is, when all bytes of the in1 element are less than
 or equal to the bytes of the in2 element.
 The
@@ -118,7 +118,7 @@ decimal numbers, with no separating white space.
 .PP
 To compare all foreground
 pixels to black (all bytes zero),
-selecting the forground pixels when true and a background elsewhere, specify:
+selecting the foreground pixels when true and a background elsewhere, specify:
 .sp .5
 .ft I
    pixmatte -g fg.pix =0/0/0 fg.pix bg.pix
@@ -146,7 +146,7 @@ generated image on top of a nicer background.
       pix-fb
 .ft R
 .sp .5
-To produce a black-and-white stencil matte file for futher processing,
+To produce a black-and-white stencil matte file for further processing,
 use:
 .sp .5
 .ft I
