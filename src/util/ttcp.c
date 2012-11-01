@@ -178,7 +178,7 @@ extern time_t time(time_t *);
 static time_t time0;
 static struct tms tms0;
 #else
-static struct timeval time0;	/* Time at which timeing started */
+static struct timeval time0;	/* Time at which timing started */
 static struct rusage ru0;	/* Resource utilization at the start */
 
 static void prusage(struct rusage *r0, struct rusage *r1, struct timeval *e, struct timeval *b, char *outp);
