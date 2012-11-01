@@ -25,8 +25,8 @@
 
 #include "common.h"
 
+#include <string.h>
 #include "bio.h"
-
 #include "solid.h"
 
 #include "./ged_private.h"
@@ -260,18 +260,23 @@ _ged_select_partial(struct ged *gedp, double vx, double vy, double vwidth, doubl
 
 /*
  * Returns a list of items within the specified rectangle or circle.
+ * If bot is specified, the bot points within the specified area are returned.
  *
  * Usage:
- * select vx vy {vr | vw vh}
+ * select [-b bot] [-p] [-z vminz] vx vy {vr | vw vh}
  *
  */
 int
 ged_select(struct ged *gedp, int argc, const char *argv[])
 {
-    int pflag;
+    int c;
     double vx, vy, vw, vh, vr;
-    static const char *usage = "[-p] vx vy {vr | vw vh}";
+    static const char *usage = "[-b bot] [-p] [-z vminz] vx vy {vr | vw vh}";
     const char *cmd = argv[0];
+    struct rt_db_internal intern;
+    struct rt_bot_internal *botip;
+    int pflag = 0;
+    double vminz = -1000.0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -281,15 +286,56 @@ ged_select(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* Process the -p option */
-    if (argc > 1 && argv[1][0] == '-' && argv[1][1] == 'p' && argv[1][2] == '\0') {
-	pflag = 1;
+    /* Get command line options. */
+    bu_optind = 1;
+    while ((c = bu_getopt(argc, (char * const *)argv, "b:pz:")) != -1) {
+	switch (c) {
+	case 'b':
+	{
+	    mat_t mat;
 
-	/* Skip past the -p option */
-	--argc;
-	++argv;
-    } else
-	pflag = 0;
+	    /* skip subsequent bot specifications */
+	    if (botip != (struct rt_bot_internal *)NULL)
+		break;
+
+	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, gedp->ged_wdbp, mat) == GED_ERROR) {
+		bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, bu_optarg);
+		return GED_ERROR;
+	    }
+
+	    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
+		intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+		bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT", cmd, bu_optarg);
+		rt_db_free_internal(&intern);
+
+		return GED_ERROR;
+	    }
+
+	    botip = (struct rt_bot_internal *)intern.idb_ptr;
+	}
+
+	break;
+	case 'p':
+	    pflag = 1;
+	    break;
+	case 'z':
+	    if (sscanf(bu_optarg, "%lf", &vminz) != 1) {
+		if (botip != (struct rt_bot_internal *)NULL)
+		    rt_db_free_internal(&intern);
+
+		bu_vls_printf(gedp->ged_result_str, "%s: bad vminz - %s", cmd, bu_optarg);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	    }
+
+	    break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	    return GED_ERROR;
+	}
+    }
+
+    argc -= (bu_optind - 1);
+    argv += (bu_optind - 1);
 
     if (argc < 4 || 5 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
@@ -304,10 +350,19 @@ ged_select(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	if (pflag)
-	    return _ged_select_partial(gedp, vx, vy, vr, vr, 1);
-	else
-	    return _ged_select(gedp, vx, vy, vr, vr, 1);
+	if (botip != (struct rt_bot_internal *)NULL) {
+	    int ret;
+
+	    ret = _ged_select_botpts(gedp, botip, vx, vy, vr, vr, vminz, 1);
+	    rt_db_free_internal(&intern);
+
+	    return ret;
+	} else {
+	    if (pflag)
+		return _ged_select_partial(gedp, vx, vy, vr, vr, 1);
+	    else
+		return _ged_select(gedp, vx, vy, vr, vr, 1);
+	}
     } else {
 	if (sscanf(argv[1], "%lf", &vx) != 1 ||
 	    sscanf(argv[2], "%lf", &vy) != 1 ||
@@ -317,10 +372,19 @@ ged_select(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-	if (pflag)
-	    return _ged_select_partial(gedp, vx, vy, vw, vh, 0);
-	else
-	    return _ged_select(gedp, vx, vy, vw, vh, 0);
+	if (botip != (struct rt_bot_internal *)NULL) {
+	    int ret;
+
+	    ret = _ged_select_botpts(gedp, botip, vx, vy, vw, vh, vminz, 0);
+	    rt_db_free_internal(&intern);
+
+	    return ret;
+	} else {
+	    if (pflag)
+		return _ged_select_partial(gedp, vx, vy, vw, vh, 0);
+	    else
+		return _ged_select(gedp, vx, vy, vw, vh, 0);
+	}
     }
 }
 
@@ -329,15 +393,19 @@ ged_select(struct ged *gedp, int argc, const char *argv[])
  * Returns a list of items within the previously defined rectangle.
  *
  * Usage:
- * rselect
+ * rselect [-b bot] [-p] [-z vminz]
  *
  */
 int
 ged_rselect(struct ged *gedp, int argc, const char *argv[])
 {
-    int pflag;
-    static const char *usage = "[-p]";
+    int c;
+    static const char *usage = "[-b bot] [-p] [-z vminz]";
     const char *cmd = argv[0];
+    struct rt_db_internal intern;
+    struct rt_bot_internal *botip = (struct rt_bot_internal *)NULL;
+    int pflag = 0;
+    double vminz = -1000.0;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -347,35 +415,91 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    /* Process the -p option */
-    if (argc > 1 && argv[1][0] == '-' && argv[1][1] == 'p' && argv[1][2] == '\0') {
-	pflag = 1;
+    /* Get command line options. */
+    bu_optind = 1;
+    while ((c = bu_getopt(argc, (char * const *)argv, "b:pz:")) != -1) {
+	switch (c) {
+	case 'b':
+	{
+	    mat_t mat;
 
-	/* Skip past the -p option */
-	--argc;
-	++argv;
-    } else
-	pflag = 0;
+	    /* skip subsequent bot specifications */
+	    if (botip != (struct rt_bot_internal *)NULL)
+		break;
+
+	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, gedp->ged_wdbp, mat) == GED_ERROR) {
+		bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, bu_optarg);
+		return GED_ERROR;
+	    }
+
+	    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
+		intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+		bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT", cmd, bu_optarg);
+		rt_db_free_internal(&intern);
+
+		return GED_ERROR;
+	    }
+
+	    botip = (struct rt_bot_internal *)intern.idb_ptr;
+	}
+
+	break;
+	case 'p':
+	    pflag = 1;
+	    break;
+	case 'z':
+	    if (sscanf(bu_optarg, "%lf", &vminz) != 1) {
+		if (botip != (struct rt_bot_internal *)NULL)
+		    rt_db_free_internal(&intern);
+
+		bu_vls_printf(gedp->ged_result_str, "%s: bad vminz - %s", cmd, bu_optarg);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	    }
+
+	    break;
+	default:
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
+	    return GED_ERROR;
+	}
+    }
+
+    argc -= (bu_optind - 1);
+    argv += (bu_optind - 1);
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
 	return GED_ERROR;
     }
 
-    if (pflag)
-	return _ged_select_partial(gedp,
-				   gedp->ged_gvp->gv_rect.grs_x,
-				   gedp->ged_gvp->gv_rect.grs_y,
-				   gedp->ged_gvp->gv_rect.grs_width,
-				   gedp->ged_gvp->gv_rect.grs_height,
-				   0);
-    else
-	return _ged_select(gedp,
-			   gedp->ged_gvp->gv_rect.grs_x,
-			   gedp->ged_gvp->gv_rect.grs_y,
-			   gedp->ged_gvp->gv_rect.grs_width,
-			   gedp->ged_gvp->gv_rect.grs_height,
-			   0);
+    if (botip != (struct rt_bot_internal *)NULL) {
+	int ret;
+
+	ret = _ged_select_botpts(gedp, botip,
+				  gedp->ged_gvp->gv_rect.grs_x,
+				  gedp->ged_gvp->gv_rect.grs_y,
+				  gedp->ged_gvp->gv_rect.grs_width,
+				  gedp->ged_gvp->gv_rect.grs_height,
+				  vminz,
+				  0);
+
+	rt_db_free_internal(&intern);
+	return ret;
+    } else {
+	if (pflag)
+	    return _ged_select_partial(gedp,
+				       gedp->ged_gvp->gv_rect.grs_x,
+				       gedp->ged_gvp->gv_rect.grs_y,
+				       gedp->ged_gvp->gv_rect.grs_width,
+				       gedp->ged_gvp->gv_rect.grs_height,
+				       0);
+	else
+	    return _ged_select(gedp,
+			       gedp->ged_gvp->gv_rect.grs_x,
+			       gedp->ged_gvp->gv_rect.grs_y,
+			       gedp->ged_gvp->gv_rect.grs_width,
+			       gedp->ged_gvp->gv_rect.grs_height,
+			       0);
+    }
 }
 
 
