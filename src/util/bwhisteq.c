@@ -19,7 +19,7 @@
  */
 /** @file util/bwhisteq.c
  *
- * Build up the histgram of a picture and output the "equalized"
+ * Build up the histogram of a picture and output the "equalized"
  * version of it on stdout.
  *
  */
