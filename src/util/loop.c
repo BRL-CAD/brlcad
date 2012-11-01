@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 	return 9;
     }
 
-    /* Check if -c is present in comandline argument*/
+    /* Check if -c is present in commandline argument*/
 
     if (argv[1][0] == '-') {
 	oneone = argv[1][1];
