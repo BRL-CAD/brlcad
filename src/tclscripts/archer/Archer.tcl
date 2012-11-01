@@ -212,8 +212,10 @@ package provide Archer 1.0
 
 	# ArcherCore Override Section
 	method buildCommandView {}
+	method compSelectCallback {_mstring}
 	method dblClick {_tags}
 	method handleTreeSelect {}
+	method initCompSelect {}
 	method initDefaultBindings {{_comp ""}}
 	method initGed {}
 	method setActivePane {_pane}
@@ -1997,6 +1999,28 @@ package provide Archer 1.0
 }
 
 
+::itcl::body Archer::compSelectCallback {_mstring} {
+    switch -- $mCompSelectMode \
+	$COMP_SELECT_LIST_MODE - \
+	$COMP_SELECT_LIST_PARTIAL_MODE {
+	    putString $_mstring
+	} \
+	$COMP_SELECT_GROUP_ADD_MODE - \
+	$COMP_SELECT_GROUP_ADD_PARTIAL_MODE {
+	    compSelectGroupAdd $_mstring
+	} \
+	$COMP_SELECT_GROUP_REMOVE_MODE - \
+	$COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE {
+	    compSelectGroupRemove $_mstring
+	} \
+	$COMP_SELECT_BOT_POINTS_MODE {
+	    if {[info exists itk_component(botView)]} {
+		catch {$itk_component(botView) selectBotPts $_mstring} msg
+	    }
+	}
+}
+
+
 ::itcl::body Archer::dblClick {tags} {
     return
 
@@ -2061,6 +2085,38 @@ package provide Archer 1.0
 	    }
 	}
     }
+}
+
+
+::itcl::body Archer::initCompSelect {} {
+    if {$mCompSelectMode != $COMP_SELECT_LIST_MODE &&
+	$mCompSelectMode != $COMP_SELECT_LIST_PARTIAL_MODE &&
+	$mCompSelectMode != $COMP_SELECT_BOT_POINTS_MODE} {
+	doSelectGroup
+    }
+
+    $itk_component(ged) clear_view_rect_callback_list
+    $itk_component(ged) add_view_rect_callback [::itcl::code $this compSelectCallback]
+    if {$mCompSelectMode == $COMP_SELECT_LIST_PARTIAL_MODE ||
+	$mCompSelectMode == $COMP_SELECT_GROUP_ADD_PARTIAL_MODE ||
+	$mCompSelectMode == $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE} {
+	$itk_component(ged) init_view_rect 1 1
+    } elseif {$mCompSelectMode == $COMP_SELECT_BOT_POINTS_MODE && $mSelectedObj != "" && $mSelectedObjType == "bot"} {
+	if {[info exists itk_component(botView)]} {
+	    $itk_component(botView) clearEditState
+	}
+
+	$itk_component(ged) init_view_rect 1 0 $mSelectedObj
+    } else {
+	$itk_component(ged) init_view_rect 1 0
+    }
+    $itk_component(ged) init_button_no_op 2
+
+    # The rect lwidth should be a preference
+    $itk_component(ged) rect lwidth 1
+
+    # Update the toolbar buttons
+    set mDefaultBindingMode $COMP_SELECT_MODE
 }
 
 
@@ -4352,6 +4408,9 @@ proc title_node_handler {node} {
 	    [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE] {
 		set mStatusStr "Remove the partially selected components from the specified group"
 	    } \
+	    [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_BOT_POINTS_MODE] {
+		set mStatusStr "Select BOT points from $mSelectedObj"
+	    } \
 	    default {
 		set mStatusStr ""
 	    }
@@ -5253,6 +5312,8 @@ proc title_node_handler {node} {
 		    -helpstr "Remove the selected components from group."
 		radiobutton selectgroupadd -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE] \
 		    -helpstr "Remove the selected components from group."
+		radiobutton selectbotpts -label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_BOT_POINTS_MODE] \
+		    -helpstr "Select BOT points from $mSelectedObj."
 	    }
 	    checkbutton quad -label "Quad View" \
 		-helpstr "Toggle between single and quad display."
@@ -5607,6 +5668,11 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this initCompSelect] \
 	-label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE] \
 	-value $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE \
+	-variable [::itcl::scope mCompSelectMode]
+    $itk_component(${_prefix}compselectmenu) add radiobutton \
+	-command [::itcl::code $this initCompSelect] \
+	-label [lindex $COMP_SELECT_MODE_NAMES $COMP_SELECT_BOT_POINTS_MODE] \
+	-value $COMP_SELECT_BOT_POINTS_MODE \
 	-variable [::itcl::scope mCompSelectMode]
 
     $itk_component(${_prefix}modesmenu) add cascade \

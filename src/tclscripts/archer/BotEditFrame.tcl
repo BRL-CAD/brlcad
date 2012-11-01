@@ -31,8 +31,6 @@
 # TODO
 #
 # -) Highlight selected points
-# -) Mass selection of points via rubberband
-# -) Select/deselect individual points, edges and faces via mouse
 # -) Delete points, faces and edges
 # -) Operations to create/extend surface mode bots
 #    - Three pts are specified to create a face.
@@ -76,6 +74,9 @@
 	    {Split Edge}
 	    {Split Face}
 	}
+
+	method clearEditState {}
+	method selectBotPts {_plist}
 
 	# Override what's in GeometryEditFrame
 	method initGeometry {_gdata}
@@ -154,6 +155,24 @@
 #                      PUBLIC METHODS
 # ------------------------------------------------------------
 
+
+
+::itcl::body BotEditFrame::clearEditState {} {
+    set mEditMode 0
+}
+
+
+::itcl::body BotEditFrame::selectBotPts {_plist} {
+    foreach item $_plist {
+	incr item
+
+	if {[lsearch $mCurrentBotPoints $item] == -1} {
+	    lappend mCurrentBotPoints $item
+	}
+    }
+
+    selectCurrentBotPoints
+}
 
 
 ## - initGeometry
@@ -592,8 +611,13 @@
 #    set mEditClass $EDIT_CLASS_SCALE
 #    configure -valueUnits "mm"
 
+    if {$itk_option(-mged) == ""} {
+	return
+    }
+
     set mEditPCommand [::itcl::code $this p]
     set mEditParam1 ""
+    $itk_option(-mged) rect lwidth 0
 
     switch -- $mEditMode \
 	$movePoints {
@@ -641,7 +665,13 @@
 	$splitEdge {
 	    set mEditCommand ""
 	    set mEditClass ""
-	    $::ArcherCore::application initFindBotEdge $itk_option(-geometryObjectPath) 1 [::itcl::code $this botEdgeSplitCallback]
+	    if {$mFrontPointsOnly} {
+		set zlist [ $::ArcherCore::application getZClipState]
+		set viewz [lindex $zlist 0]
+	    } else {
+		set viewz -1.0
+	    }
+	    $::ArcherCore::application initFindBotEdge $itk_option(-geometryObjectPath) 1 $viewz [::itcl::code $this botEdgeSplitCallback]
 	} \
 	$splitFace {
 	    set mEditCommand ""

@@ -96,7 +96,8 @@ namespace eval ArcherCore {
 	common COMP_SELECT_GROUP_ADD_PARTIAL_MODE 3
 	common COMP_SELECT_GROUP_REMOVE_MODE 4
 	common COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE 5
-	common COMP_SELECT_MODE_NAMES {"List" "List (Partial)" "Add to Group" "Add to Group (Partial)" "Remove from Group" "Remove from Group (Partial)"}
+	common COMP_SELECT_BOT_POINTS_MODE 6
+	common COMP_SELECT_MODE_NAMES {"List" "List (Partial)" "Add to Group" "Add to Group (Partial)" "Remove from Group" "Remove from Group (Partial)" "Select BOT Points"}
 
 	common LIGHT_MODE_FRONT 1
 	common LIGHT_MODE_FRONT_AND_BACK 2
