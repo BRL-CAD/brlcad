@@ -299,7 +299,6 @@ ged_find_bot_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_bot_internal *botip;
     mat_t mat;
-    char *last;
     vect_t view;
     int vi1, vi2;
 
@@ -318,16 +317,6 @@ ged_find_bot_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    if ((last = strrchr(argv[1], '/')) == NULL)
-	last = (char *)argv[1];
-    else
-	++last;
-
-    if (last[0] == '\0') {
-	bu_vls_printf(gedp->ged_result_str, "%s: illegal input - %s", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
@@ -365,7 +354,6 @@ ged_find_botpt_nearest_pt(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_bot_internal *botip;
     mat_t mat;
-    char *last;
     vect_t view;
     int nearest_pt;
 
@@ -384,16 +372,6 @@ ged_find_botpt_nearest_pt(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
-    }
-
-    if ((last = strrchr(argv[1], '/')) == NULL)
-	last = (char *)argv[1];
-    else
-	++last;
-
-    if (last[0] == '\0') {
-	bu_vls_printf(gedp->ged_result_str, "%s: illegal input - %s", argv[0], argv[1]);
 	return GED_ERROR;
     }
 
@@ -690,6 +668,81 @@ ged_move_botpts(struct ged *gedp, int argc, const char *argv[])
 
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
     rt_db_free_internal(&intern);
+
+    return GED_OK;
+}
+
+
+int
+_ged_select_botpts(struct ged *gedp, struct rt_bot_internal *botip, double vx, double vy, double vwidth, double vheight, double vminz, int rflag)
+{
+    size_t i;
+    fastf_t vr = 0.0;
+    fastf_t vmin_x = 0.0;
+    fastf_t vmin_y = 0.0;
+    fastf_t vmax_x = 0.0;
+    fastf_t vmax_y = 0.0;
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_VIEW(gedp, GED_ERROR);
+
+    if (rflag) {
+	vr = vwidth;
+    } else {
+	vmin_x = vx;
+	vmin_y = vy;
+
+	if (vwidth > 0)
+	    vmax_x = vx + vwidth;
+	else {
+	    vmin_x = vx + vwidth;
+	    vmax_x = vx;
+	}
+
+	if (vheight > 0)
+	    vmax_y = vy + vheight;
+	else {
+	    vmin_y = vy + vheight;
+	    vmax_y = vy;
+	}
+    }
+
+    if (rflag) {
+	for (i = 0; i < botip->num_vertices; i++) {
+	    point_t vloc;
+	    point_t vpt;
+	    vect_t diff;
+	    fastf_t mag;
+
+	    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, &botip->vertices[i*3]);
+
+	    if (vpt[Z] < vminz)
+		continue;
+
+	    VSET(vloc, vx, vy, vpt[Z]);
+	    VSUB2(diff, vpt, vloc);
+	    mag = MAGNITUDE(diff);
+
+	    if (mag > vr)
+		continue;
+
+	    bu_vls_printf(gedp->ged_result_str, "%zu ", i);
+	}
+    } else {
+	for (i = 0; i < botip->num_vertices; i++) {
+	    point_t vpt;
+
+	    MAT4X3PNT(vpt, gedp->ged_gvp->gv_model2view, &botip->vertices[i*3]);
+
+	    if (vpt[Z] < vminz)
+		continue;
+
+	    if (vmin_x <= vpt[X] && vpt[X] <= vmax_x &&
+		vmin_y <= vpt[Y] && vpt[Y] <= vmax_y) {
+		bu_vls_printf(gedp->ged_result_str, "%zu ", i);
+	    }
+	}
+    }
 
     return GED_OK;
 }

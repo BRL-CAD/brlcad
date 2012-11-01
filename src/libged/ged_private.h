@@ -163,6 +163,17 @@ extern void _ged_drawH_part2(int dashflag,
 			     struct solid *existing_sp,
 			     struct _ged_client_data *dgcdp);
 
+/* defined in edbot.c */
+extern int _ged_select_botpts(struct ged *gedp,
+			      struct rt_bot_internal *botip,
+			      double vx,
+			      double vy,
+			      double vwidth,
+			      double vheight,
+			      double vminz,
+			      int rflag);
+
+
 /* defined in editit.c */
 extern int _ged_editit(const char *editstring,
 		       const char *file);
