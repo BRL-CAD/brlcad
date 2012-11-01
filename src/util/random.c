@@ -21,7 +21,7 @@
  *
  * Generate a random number between the two values given. The number
  * can be uniform across the entire range or it can be a gaussian
- * distrubution around the center of the range (or a named center.)
+ * distribution around the center of the range (or a named center).
  *
  */
 
