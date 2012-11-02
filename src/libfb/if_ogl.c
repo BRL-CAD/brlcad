@@ -1073,7 +1073,7 @@ fb_ogl_choose_visual(FBIO *ifp)
  * I S _ L I N E A R _ C M A P
  *
  * Check for a color map being linear in R, G, and B.  Returns 1 for
- * linear map, 0 for non-linear map (ie, non-identity map).
+ * linear map, 0 for non-linear map (i.e., non-identity map).
  */
 HIDDEN int
 is_linear_cmap(register FBIO *ifp)
@@ -2277,12 +2277,12 @@ ogl_help(FBIO *ifp)
 
     switch (visual->class) {
 	case DirectColor:
-	    fb_log("\tDirectColor: Alterable RGB maps, pixel RGB subfield indicies\n");
+	    fb_log("\tDirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
 	    fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", visual->red_mask,
 		   visual->green_mask, visual->blue_mask);
 	    break;
 	case TrueColor:
-	    fb_log("\tTrueColor: Fixed RGB maps, pixel RGB subfield indicies\n");
+	    fb_log("\tTrueColor: Fixed RGB maps, pixel RGB subfield indices\n");
 	    fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", visual->red_mask,
 		   visual->green_mask, visual->blue_mask);
 	    break;
