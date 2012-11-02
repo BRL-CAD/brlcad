@@ -1565,7 +1565,7 @@ wgl_rmap(FBIO *ifp, ColorMap *cmp)
  * I S _ L I N E A R _ C M A P
  *
  * Check for a color map being linear in R, G, and B.  Returns 1 for
- * linear map, 0 for non-linear map (ie, non-identity map).
+ * linear map, 0 for non-linear map (i.e., non-identity map).
  */
 HIDDEN int
 is_linear_cmap(FBIO *ifp)
