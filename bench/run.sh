@@ -1110,8 +1110,11 @@ EOF
     # the last run should be a relatively stable representative of the performance
 
     if test -f gmon.out; then mv -f gmon.out gmon.${bench_testname}.out; fi
-    ${CMP} ${PIX}/${bench_testname}.pix ${bench_testname}.pix
+    cmp_result="`${CMP} ${PIX}/${bench_testname}.pix ${bench_testname}.pix 2>&1`"
     ret=$?
+
+    $ECHO "$cmp_result"
+
     if test $ret = 0 ; then
 	# perfect match
 	$ECHO ${bench_testname}.pix:  answers are RIGHT
