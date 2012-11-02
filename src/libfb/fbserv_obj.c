@@ -62,7 +62,7 @@ static FBIO *curr_fbp;		/* current framebuffer pointer */
 /*
  * C O M M _ E R R O R
  *
- * Communication error.  An error occured on the PKG link.
+ * Communication error.  An error occurred on the PKG link.
  */
 HIDDEN void
 comm_error(char *str)
