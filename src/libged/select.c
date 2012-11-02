@@ -274,7 +274,7 @@ ged_select(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[-b bot] [-p] [-z vminz] vx vy {vr | vw vh}";
     const char *cmd = argv[0];
     struct rt_db_internal intern;
-    struct rt_bot_internal *botip;
+    struct rt_bot_internal *botip = NULL;
     int pflag = 0;
     double vminz = -1000.0;
 
