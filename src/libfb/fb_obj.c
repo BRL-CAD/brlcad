@@ -299,7 +299,7 @@ fbo_refresh_tcl(void *clientData, int argc, const char **argv)
 	w = fbop->fbo_fbs.fbs_fbp->if_width;
 	h = fbop->fbo_fbs.fbs_fbp->if_height;
     } else if (sscanf(argv[2], "%d %d %d %d", &x, &y, &w, &h) != 4) {
-	/* refresh rectanglar area */
+	/* refresh rectangular area */
 	bu_log("fb_refresh: bad rectangle - %s", argv[2]);
 	return BRLCAD_ERROR;
     }
