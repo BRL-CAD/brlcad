@@ -154,7 +154,7 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
 
 #ifdef IF_TK
 #if 0
-/* XXX TJM implment tk_open_existing */
+/* XXX TJM implement tk_open_existing */
     if (BU_STR_EQUIV(argv[1], tk_device_name)) {
 	found=1;
 	*ifp = tk_interface; /* struct copy */
@@ -218,7 +218,7 @@ fb_cmd_open_existing(void *clientData, int argc, const char **argv)
     }
 #endif  /* IF_OGL */
 
-    /* FIXME: a printed pointer address string is a blatent security
+    /* FIXME: a printed pointer address string is a blatant security
      * and integrity violation worst practice.  do not use, do not
      * pass go, find a better data-based approach.
      */
