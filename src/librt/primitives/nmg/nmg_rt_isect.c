@@ -234,13 +234,13 @@ nmg_rt_print_hitmiss(struct hitmiss *a_hit)
     VPRINT("\tout_normal", a_hit->outbound_norm);
 }
 void
-nmg_rt_print_hitlist(struct hitmiss *hl)
+nmg_rt_print_hitlist(struct bu_list *hd)
 {
     struct hitmiss *a_hit;
 
     bu_log("nmg/ray hit list:\n");
 
-    for (BU_LIST_FOR(a_hit, hitmiss, &(hl->l))) {
+    for (BU_LIST_FOR(a_hit, hitmiss, hd)) {
 	nmg_rt_print_hitmiss(a_hit);
     }
 }
@@ -286,7 +286,7 @@ hit_ins(struct ray_data *rd, struct hitmiss *newhit)
     BU_LIST_INSERT(&a_hit->l, &newhit->l);
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-	nmg_rt_print_hitlist((struct hitmiss *)&rd->rd_hit);
+	nmg_rt_print_hitlist(&rd->rd_hit);
 
 }
 
@@ -1078,7 +1078,7 @@ isect_ray_vertexuse(struct ray_data *rd, struct vertexuse *vu_p)
     ray_hit_vertex(rd, vu_p, NMG_VERT_UNKNOWN);
 
     if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
-	nmg_rt_print_hitlist(rd->hitmiss[NMG_HIT_LIST]);
+	nmg_rt_print_hitlist((struct bu_list *)rd->hitmiss[NMG_HIT_LIST]);
     }
 
     return 1;
@@ -2401,7 +2401,7 @@ nmg_isect_ray_model(struct ray_data *rd)
 		bu_log("ray missed NMG\n");
 	} else {
 	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-		nmg_rt_print_hitlist((struct hitmiss*)&rd->rd_hit);
+		nmg_rt_print_hitlist(&rd->rd_hit);
 	}
     }
 

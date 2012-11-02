@@ -989,7 +989,7 @@ build_topo_list(uint32_t *l_p, struct bu_ptbl *tbl)
 
 
 HIDDEN void
-unresolved(struct hitmiss *next_hit, struct bu_ptbl *a_tbl, struct bu_ptbl *next_tbl, struct hitmiss *hd, struct ray_data *rd)
+unresolved(struct hitmiss *next_hit, struct bu_ptbl *a_tbl, struct bu_ptbl *next_tbl, struct bu_list *hd, struct ray_data *rd)
 {
 
     struct hitmiss *hm;
@@ -999,7 +999,7 @@ unresolved(struct hitmiss *next_hit, struct bu_ptbl *a_tbl, struct bu_ptbl *next
     bu_log("Unable to fix state transition--->\n");
     bu_log("\tray start = (%f %f %f) dir = (%f %f %f)\n",
 	   V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir));
-    for (BU_LIST_FOR(hm, hitmiss, &hd->l)) {
+    for (BU_LIST_FOR(hm, hitmiss, hd)) {
 	if (hm == next_hit) {
 	    bu_log("======= ======\n");
 	    nmg_rt_print_hitmiss(hm);
@@ -1030,7 +1030,7 @@ unresolved(struct hitmiss *next_hit, struct bu_ptbl *a_tbl, struct bu_ptbl *next
 
 
 HIDDEN int
-check_hitstate(struct hitmiss *hd, struct ray_data *rd)
+check_hitstate(struct bu_list *hd, struct ray_data *rd)
 {
     struct hitmiss *a_hit;
     struct hitmiss *next_hit;
@@ -1041,10 +1041,10 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
     struct bu_ptbl *tbl_p = (struct bu_ptbl *)NULL;
     long *long_ptr;
 
-    BU_CK_LIST_HEAD(&hd->l);
+    BU_CK_LIST_HEAD(hd);
 
     /* find that first "OUTSIDE" point */
-    a_hit = BU_LIST_FIRST(hitmiss, &hd->l);
+    a_hit = BU_LIST_FIRST(hitmiss, hd);
     NMG_CK_HITMISS(a_hit);
 
     if (((a_hit->in_out & 0x0f0) >> 4) != NMG_RAY_STATE_OUTSIDE ||
@@ -1056,7 +1056,7 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
 	       V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir));
     }
 
-    while (a_hit != hd &&
+    while (BU_LIST_NOT_HEAD(a_hit, hd) &&
 	   ((a_hit->in_out & 0x0f0) >> 4) != NMG_RAY_STATE_OUTSIDE) {
 
 	NMG_CK_HITMISS(a_hit);
@@ -1070,7 +1070,7 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
 	       rd->ap->a_purpose);
 	a_hit = BU_LIST_PNEXT(hitmiss, a_hit);
     }
-    if (a_hit == hd) return 1;
+    if (BU_LIST_IS_HEAD(a_hit, hd)) return 1;
 
     a_tbl = (struct bu_ptbl *)
 	bu_calloc(1, sizeof(struct bu_ptbl), "a_tbl");
@@ -1082,7 +1082,7 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
     bu_ptbl_init(next_tbl, 64, "next_tbl");
 
     /* check the state transition on the rest of the hit points */
-    while ((next_hit = BU_LIST_PNEXT(hitmiss, &a_hit->l)) != hd) {
+    while (BU_LIST_NOT_HEAD((next_hit = BU_LIST_PNEXT(hitmiss, &a_hit->l)), hd)) {
 	NMG_CK_HITMISS(next_hit);
 
 	ibs = HMG_INBOUND_STATE(next_hit);
@@ -1189,7 +1189,7 @@ nmg_ray_segs(struct ray_data *rd)
 
     last_miss = 0;
 
-    if (check_hitstate((struct hitmiss *)&rd->rd_hit, rd)) {
+    if (check_hitstate(&rd->rd_hit, rd)) {
 	NMG_FREE_HITLIST(&rd->rd_hit, rd->ap);
 	NMG_FREE_HITLIST(&rd->rd_miss, rd->ap);
 	return 0;

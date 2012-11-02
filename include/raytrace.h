@@ -4820,7 +4820,7 @@ RT_EXPORT extern void nmg_evaluate_boolean(struct shell	*sA,
 
 
 /* From nmg_rt_isect.c */
-RT_EXPORT extern void nmg_rt_print_hitlist(struct hitmiss *hl);
+RT_EXPORT extern void nmg_rt_print_hitlist(struct bu_list *hd);
 
 RT_EXPORT extern void nmg_rt_print_hitmiss(struct hitmiss *a_hit);
 
