@@ -61,6 +61,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make libbn/plot3.c functions parallel-safe so callers do not have to
+  manually wrap with bu_semaphore_acquire().
+
 * implement 3dm-g support for ON_InstanceRef entities.  These are
   instances of existing geometry that have prescribed referencing edit
   behavior and can have their own matrices.  Basically, they're combs
@@ -438,8 +441,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   interface with data-driven keys to tell it with function(s) to call,
   or simply have an rt_*() for each function (e.g., rt_mirror(),
   rt_shot(), rt_describe(), etc).
-
-* explore the g_qa/plot issue
 
 * release dm X get_color() memory
 
