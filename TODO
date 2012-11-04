@@ -61,6 +61,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make libfb parallel-safe.  use bu memory management.  remove
+  semaphore locks in src/rt/main.c and elsewhere.
+
 * eliminate the need for bu_semaphore_init().  allocate up to the
   index requested on demand (so we can retain O(1) lookups) and
   reserve the first N semaphores for BRL-CAD library use.  change
