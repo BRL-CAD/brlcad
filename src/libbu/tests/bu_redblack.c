@@ -66,8 +66,6 @@ main(int ac, char *av[])
     char *sources[] = {"h", "e", "a", "l", "l", "o"};
     int i = 0;
     int passed = 0;
-    int diagnosisOption = 0;
-    int numAssignments;
 
     if (ac > 1) {
 	printf("uh oh, unexpected args after %s\n", av[0]);
@@ -113,42 +111,24 @@ main(int ac, char *av[])
     }
 
     /* user tests */
-    printf("/RED-BLACK TREE WALKING TESTS :\n");
-    /*
-    printf("Input 1 to display the values walk or 0 for a more"
-	   " detailed diagnosis display\n.");
+    printf("RED-BLACK TREE WALKING TESTS :\n");
 
-    numAssignments = scanf("%d", &diagnosisOption);
-    */
-    numAssignments = 1;
-    if (numAssignments != 1 || (diagnosisOption != 1 && diagnosisOption != 0)) {
-	printf("ERROR AT CHOICE INPUT\n");
-	return 1;
-    }
+    printf("\nPREORDER:\n");
+    bu_rb_walk(testTree, 0, displayNode, 0);
+    bu_rb_diagnose_tree(testTree, 0, 0);
+    searchedValue = bu_rb_search(testTree, 0, "h");
 
-    if (diagnosisOption == 1) {
-	printf("\nPREORDER:\n");
-	bu_rb_walk(testTree, 0, displayNode, 0);
-	searchedValue = bu_rb_search(testTree, 0, "h");
-	printf("\nPREORDER AFTER SEARCH:\n");
-	bu_rb_walk(testTree, 0, displayNode, 0);
-	printf("\nINORDER:\n");
-	bu_rb_walk(testTree, 0, displayNode, 1);
-	printf("\n");
-	printf("\nPOSTORDER\n");
-	bu_rb_walk(testTree, 0, displayNode, 2);
-	printf("\n");
-    } else {
-	printf("\nPREORDER:\n");
-	bu_rb_diagnose_tree(testTree, 0, 0);
-	searchedValue = bu_rb_search(testTree, 0, "h");
-	printf("\nPREORDER AFTER SEARCH:\n");
-	bu_rb_diagnose_tree(testTree, 0, 0);
-	printf("\nINORDER:\n");
-	bu_rb_diagnose_tree(testTree, 0, 1);
-	printf("\nPOSTORDER\n");
-	bu_rb_diagnose_tree(testTree, 0, 2);
-    }
+    printf("\nPREORDER AFTER SEARCH:\n");
+    bu_rb_walk(testTree, 0, displayNode, 0);
+    bu_rb_diagnose_tree(testTree, 0, 0);
+
+    printf("\nINORDER:\n");
+    bu_rb_walk(testTree, 0, displayNode, 1);
+    bu_rb_diagnose_tree(testTree, 0, 1);
+
+    printf("\nPOSTORDER\n");
+    bu_rb_walk(testTree, 0, displayNode, 2);
+    bu_rb_diagnose_tree(testTree, 0, 2);
 
     if (passed != 3)
 	return 1;
