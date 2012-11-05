@@ -1012,7 +1012,7 @@
 	foreach edgeB [lrange $mCurrentBotEdges $i end-1] {
 	    foreach edgeC [lrange $mCurrentBotEdges $j end] {
 		set flist [list $mEdgeDetail($edgeA,$A_COL) $mEdgeDetail($edgeA,$B_COL)]
-		lappend flist $mEdgeDetail($edgeB,$A_COL) $mEdgeDetail($edgeB,$B_COL) 
+		lappend flist $mEdgeDetail($edgeB,$A_COL) $mEdgeDetail($edgeB,$B_COL)
 		lappend flist $mEdgeDetail($edgeC,$A_COL) $mEdgeDetail($edgeC,$B_COL)
 
 		set flist [lsort -unique $flist]
