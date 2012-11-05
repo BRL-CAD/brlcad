@@ -443,7 +443,7 @@ mk_region1(
 #define WMOP_SUBTRACT	'-'
 #define WMOP_UNION	'u'
 
-/* Convienient definitions */
+/* Convenient definitions */
 #define mk_lfcomb(fp, name, headp, region)		mk_lcomb( fp, name, headp, \
 	region, (char *)0, (char *)0, (unsigned char *)0, 0 );
 
