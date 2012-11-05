@@ -1,3 +1,10 @@
+#
+# FIXME: massively parallel builds consistently fail building step
+#        sources.  presumably, something is wrong with the dependency
+#        declarations or file protections with multiple processes
+#        trying to run perplex or fedex simultaneously.
+#
+
 set(STEP_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
