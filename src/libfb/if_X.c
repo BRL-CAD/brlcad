@@ -162,7 +162,7 @@ static unsigned char primary[10] = {
 };
 
 
-/* Arrays containing the indicies of the primary colors and grey values
+/* Arrays containing the indices of the primary colors and grey values
  * in the color map
  */
 static unsigned short redvec[16] = {
@@ -245,12 +245,12 @@ x_print_display_info(Display *dpy)
 
     switch (visual->class) {
 	case DirectColor:
-	    printf("DirectColor: Alterable RGB maps, pixel RGB subfield indicies\n");
+	    printf("DirectColor: Alterable RGB maps, pixel RGB subfield indices\n");
 	    printf("RGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask,
 		   visual->green_mask, visual->blue_mask);
 	    break;
 	case TrueColor:
-	    printf("TrueColor: Fixed RGB maps, pixel RGB subfield indicies\n");
+	    printf("TrueColor: Fixed RGB maps, pixel RGB subfield indices\n");
 	    printf("RGB Masks: 0x%lx 0x%lx 0x%lx\n", visual->red_mask,
 		   visual->green_mask, visual->blue_mask);
 	    break;
@@ -912,7 +912,7 @@ slowrect(FBIO *ifp, int xmin, int xmax, int ymin, int ymax)
     int sxlen, sylen;	/* screen pixels in x, y */
     int ix, iy;		/* image x, y */
     int sy;		/* screen x, y */
-    int x, y;		/* dummys */
+    int x, y;		/* dummies */
     /* window height, width, and center */
     struct {
 	int width;
@@ -1658,7 +1658,7 @@ HIDDEN unsigned char convRGB(register const unsigned char *v)
 /*
  * G E N M A P
  *
- * initialize the Sun harware colormap
+ * initialize the Sun hardware colormap
  */
 HIDDEN void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap)
 {
