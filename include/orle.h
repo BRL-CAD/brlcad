@@ -79,7 +79,7 @@ typedef struct	/* Extended format RLE header.				*/
 
 typedef struct	/* Old format RLE header minus magic number field.	*/
 {
-/***	short	magic;  Read seperately ***/
+/***	short	magic;  Read separately ***/
     short	xpos, ypos;	/* Lower-left corner of image.		*/
     short	xsize, ysize;	/* Size of saved box.			*/
     unsigned char 	bg_r;	/* Background colors.			*/
