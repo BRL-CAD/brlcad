@@ -60,7 +60,7 @@
  */
 
 /* point types */
-#define RT_NURB_PT_XY 	1			/**< @brief x, y coordintes */
+#define RT_NURB_PT_XY 	1			/**< @brief x, y coordinates */
 #define RT_NURB_PT_XYZ	2			/**< @brief x, y, z coordinates */
 #define RT_NURB_PT_UV	3			/**< @brief trim u, v parameter space */
 #define RT_NURB_PT_DATA 4			/**< @brief random data */
