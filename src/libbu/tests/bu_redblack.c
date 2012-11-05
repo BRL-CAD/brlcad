@@ -33,7 +33,6 @@
 
 
 /**
- * C O M P A R E F U N C ()
  * Generic Comparison function that internally casts
  * parameters to integers.
  *
@@ -49,8 +48,7 @@ compareFunc(const void* a, const void* b)
 
 
 /**
- * D I S P L A Y N O D E ( )
- * Function  to be applied to every node of the
+ * Function to be applied to every node of the
  * red-black tree.
  */
 static void
@@ -65,7 +63,7 @@ main(int ac, char *av[])
 {
     struct bu_rb_tree *testTree;
     void *searchedValue;
-    char *sources[] = {"h","e","a","l","l","o"};
+    char *sources[] = {"h", "e", "a", "l", "l", "o"};
     int i = 0;
     int passed = 0;
     int diagnosisOption = 0;
@@ -153,6 +151,7 @@ main(int ac, char *av[])
 	return 1;
     return 0;
 }
+
 
 /*
  * Local Variables:
