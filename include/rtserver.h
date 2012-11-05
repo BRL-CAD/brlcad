@@ -26,7 +26,7 @@
  *
  */
 
-/* Attempt to handle different sizes of the TCL ClientData on differing acjitectures */
+/* Attempt to handle different sizes of the TCL ClientData on differing architectures */
 #if SIZEOF_VOID_P == SIZEOF_INT
 typedef int CLIENTDATA_INT;
 #elif SIZEOF_VOID_P == SIZEOF_LONG
