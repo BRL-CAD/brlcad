@@ -196,7 +196,7 @@ __BEGIN_DECLS
 #define ELEMENTS_PER_MAT	(ELEMENTS_PER_PLANE*ELEMENTS_PER_PLANE)
 
 /*
- * Types for matrixes and vectors.
+ * Types for matrices and vectors.
  */
 
 /** @brief 2-tuple vector */
