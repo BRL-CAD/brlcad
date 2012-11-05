@@ -237,7 +237,7 @@ BN_EXPORT extern void pdv_3ray(FILE *fp,
 #define PL_FORTRAN(lc, uc)	BU_FORTRAN(lc, uc)
 
 /**
- * Take a set of x, y coordinates, and plot them as a polyline, ie,
+ * Take a set of x, y coordinates, and plot them as a polyline, i.e.,
  * connect them with line segments.  For markers, use tp_mlist(),
  * below.  This "C" interface expects arrays of INTs.
  */
@@ -247,7 +247,7 @@ BN_EXPORT extern void tp_i2list(FILE *fp,
 		     int npoints);
 
 /**
- * Take a set of x, y coordinates, and plot them as a polyline, ie,
+ * Take a set of x, y coordinates, and plot them as a polyline, i.e.,
  * connect them with line segments.  For markers, use tp_mlist(),
  * below.  This "C" interface expects arrays of DOUBLES.
  *
