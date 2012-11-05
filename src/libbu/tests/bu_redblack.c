@@ -114,10 +114,13 @@ main(int ac, char *av[])
 
     /* user tests */
     printf("/RED-BLACK TREE WALKING TESTS :\n");
+    /*
     printf("Input 1 to display the values walk or 0 for a more"
 	   " detailed diagnosis display\n.");
 
     numAssignments = scanf("%d", &diagnosisOption);
+    */
+    numAssignments = 1;
     if (numAssignments != 1 || (diagnosisOption != 1 && diagnosisOption != 0)) {
 	printf("ERROR AT CHOICE INPUT\n");
 	return 1;
