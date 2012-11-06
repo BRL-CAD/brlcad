@@ -1248,7 +1248,7 @@ wgl_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	if (y >= ifp->if_height)
 	    break;
 
-	if (count >= ifp->if_width-x)
+	if (count >= (size_t)(ifp->if_width-x))
 	    scan_count = ifp->if_width-x;
 	else
 	    scan_count = count;
