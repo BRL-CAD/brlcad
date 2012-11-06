@@ -159,10 +159,46 @@ draw_check_leaf(struct db_tree_state *tsp,
     return curtree;
 }
 
+/* returns the sum total number of commands in all nodes of the vlist */
+static int
+vlist_total_commands(struct bn_vlist *vlist)
+{
+    int num_commands;
+    struct bn_vlist *vp;
+
+    if (UNLIKELY(vlist == NULL)) {
+	return 0;
+    }
+
+    num_commands = 0;
+    for (BU_LIST_FOR(vp, bn_vlist, &(vlist->l))) {
+	num_commands += vp->nused;
+    }
+
+    return num_commands;
+}
+
+static void
+solid_append_vlist(struct solid *sp, struct bn_vlist *vlist)
+{
+    if (BU_LIST_IS_EMPTY(&(sp->s_vlist))) {
+	sp->s_vlen = 0;
+    }
+
+    BU_LIST_APPEND_LIST(&(sp->s_vlist), &(vlist->l));
+    sp->s_vlen += vlist_total_commands(vlist);
+}
+
+static void
+solid_copy_vlist(struct solid *sp, struct bn_vlist *vlist)
+{
+    BU_LIST_INIT(&(sp->s_vlist));
+    rt_vlist_copy(&(sp->s_vlist), (struct bu_list *)vlist);
+    sp->s_vlen = vlist_total_commands((struct bn_vlist *)(&(sp->s_vlist)));
+}
 
 /**
- * Compute the min, max, and center points of the solid.  Also finds
- * s_vlen.
+ * Compute the min, max, and center points of the solid.
  *
  * XXX Should split out a separate bn_vlist_rpp() routine, for
  * librt/vlist.c
@@ -176,13 +212,14 @@ bound_solid(struct ged *gedp, struct solid *sp)
 
     xmax = ymax = zmax = -INFINITY;
     xmin = ymin = zmin =  INFINITY;
-    sp->s_vlen = 0;
+
     for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-	int j;
+	int i;
 	int nused = vp->nused;
 	int *cmd = vp->cmd;
 	point_t *pt = vp->pt;
-	for (j = 0; j < nused; j++, cmd++, pt++) {
+
+	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_POLY_VERTNORM:
@@ -207,12 +244,9 @@ bound_solid(struct ged *gedp, struct solid *sp)
 		    V_MAX(zmax, (*pt)[Z]);
 		    break;
 		default:
-		    {
-			bu_vls_printf(gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
-		    }
+		    bu_vls_printf(gedp->ged_result_str, "unknown vlist op %d\n", *cmd);
 	    }
 	}
-	sp->s_vlen += nused;
     }
 
     sp->s_center[X] = (xmin + xmax) * 0.5;
@@ -295,11 +329,11 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
 	sp = existing_sp;
     }
 
+    solid_append_vlist(sp, (struct bn_vlist *)vhead);
 
     /*
      * Compute the min, max, and center points.
      */
-    BU_LIST_APPEND_LIST(&(sp->s_vlist), vhead);
     bound_solid(dgcdp->gedp, sp);
 
     /*
@@ -1082,11 +1116,9 @@ _ged_invent_solid(struct ged *gedp,
     GET_SOLID(sp, &_FreeSolid.l);
 
     if (copy) {
-	BU_LIST_INIT(&(sp->s_vlist));
-	rt_vlist_copy(&(sp->s_vlist), vhead);
+	solid_copy_vlist(sp, (struct bn_vlist *)vhead);
     } else {
-	/* For efficiency, just swipe the vlist */
-	BU_LIST_APPEND_LIST(&(sp->s_vlist), vhead);
+	solid_append_vlist(sp, (struct bn_vlist *)vhead);
 	BU_LIST_INIT(vhead);
     }
     bound_solid(gedp, sp);
