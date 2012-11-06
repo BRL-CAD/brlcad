@@ -128,7 +128,7 @@ RT_EXPORT extern void TIE_VAL(tie_kdtree_free)(struct tie_s *tie);
 RT_EXPORT extern void TIE_VAL(tie_kdtree_prep)(struct tie_s *tie);
 RT_EXPORT extern fastf_t TIE_PREC;
 
-/* compatability macros */
+/* compatibility macros */
 #define tie_kdtree_free TIE_VAL(tie_kdtree_free)
 #define tie_kdtree_prep TIE_VAL(tie_kdtree_prep)
 
