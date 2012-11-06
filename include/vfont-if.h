@@ -87,7 +87,7 @@ struct vfont {
 
 /** @file vfont.c
  *
- * @brief Berkely Vector Fonts
+ * @brief Berkeley Vector Fonts
  *
  * Provide a machine-independent interface to files containing
  * Berkeley VFONT format fonts, stored with VAX byte ordering and word
