@@ -138,7 +138,6 @@ extern void quit();
 extern void read_mat(struct rt_i *rtip);
 extern void report(int outcom_type);
 extern void set_diameter(struct rt_i *);
-extern void sh_esc(char *buffer);
 extern void shoot(char *buffer, com_table *ctp, struct rt_i *rtip);
 extern void show_menu();
 extern void state_file(const char* buffer, com_table* ctp, struct rt_i *rtip);

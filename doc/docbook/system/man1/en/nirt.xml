@@ -463,16 +463,6 @@
     </listitem>
   </varlistentry>
   <varlistentry>
-    <term><emphasis remap="B" role="B">! [</emphasis><emphasis remap="I">command</emphasis><emphasis remap="B" role="B">]</emphasis></term>
-    <listitem>
-      <para>
-	Executes the shell pipeline <emphasis remap="I">command.</emphasis>  If this command is
-	invoked with no arguments, <command>nirt</command> spins off a subshell, executing the
-	program named in the environment variable SHELL.
-      </para>
-    </listitem>
-  </varlistentry>
-  <varlistentry>
     <term><emphasis remap="B" role="B">?</emphasis></term>
     <listitem>
       <para>

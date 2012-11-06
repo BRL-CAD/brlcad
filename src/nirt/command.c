@@ -162,47 +162,6 @@ az_el(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 }
 
 void
-sh_esc(char *buffer)
-{
-    int ret;
-    static char *shell = "";
-    static char *last_cmd = "";
-    char *rshell = NULL;
-
-    while (isspace((int)*buffer)) {
-	++buffer;
-    }
-
-    if (*buffer == '!') {
-	ret = system(last_cmd);
-	if (ret == -1)
-	    perror("system");
-    } else if (*buffer) {
-	ret = system(buffer);
-	if (ret == -1)
-	    perror("system");
-	last_cmd = buffer;
-    } else {
-	if ((*shell == '\0') && (shell = getenv("SHELL")) == 0) {
-#ifndef _WIN32
-	    shell = DFLT_SHELL;
-#else
-	    shell = "cmd.exe";
-#endif
-	}
-
-	/* sanitize path to shell */
-	rshell = bu_realpath(shell, NULL);
-
-	ret = system(rshell);
-	if (ret == -1)
-	    perror("system");
-
-	bu_free(rshell, "free realpath");
-    }
-}
-
-void
 grid_coor(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
     extern int str_dbl();  /* function to convert string to double */
