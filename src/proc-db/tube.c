@@ -121,7 +121,6 @@ main(int argc, char **argv)
     mat_t rot1, rot2, rot3;
     vect_t from, to;
     vect_t offset;
-    int ret;
 
     if (argc > 0)
 	bu_log("Usage: %s\n", argv[0]);
