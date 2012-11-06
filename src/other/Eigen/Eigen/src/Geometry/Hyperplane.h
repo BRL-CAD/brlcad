@@ -75,7 +75,7 @@ public:
     * such that the algebraic equation of the plane is \f$ n \cdot x + d = 0 \f$.
     * \warning the vector normal is assumed to be normalized.
     */
-  inline Hyperplane(const VectorType& n, const Scalar& d)
+  inline Hyperplane(const VectorType& n, Scalar d)
     : m_coeffs(n.size()+1)
   {
     normal() = n;
@@ -256,7 +256,7 @@ public:
     *
     * \sa MatrixBase::isApprox() */
   template<int OtherOptions>
-  bool isApprox(const Hyperplane<Scalar,AmbientDimAtCompileTime,OtherOptions>& other, const typename NumTraits<Scalar>::Real& prec = NumTraits<Scalar>::dummy_precision()) const
+  bool isApprox(const Hyperplane<Scalar,AmbientDimAtCompileTime,OtherOptions>& other, typename NumTraits<Scalar>::Real prec = NumTraits<Scalar>::dummy_precision()) const
   { return m_coeffs.isApprox(other.m_coeffs, prec); }
 
 protected:

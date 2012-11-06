@@ -204,21 +204,21 @@ template<typename Derived> class DenseBase
       * Matrix::resize() and Array::resize(). The present method only asserts that the new size equals the old size, and does
       * nothing else.
       */
-    void resize(Index newSize)
+    void resize(Index size)
     {
-      EIGEN_ONLY_USED_FOR_DEBUG(newSize);
-      eigen_assert(newSize == this->size()
+      EIGEN_ONLY_USED_FOR_DEBUG(size);
+      eigen_assert(size == this->size()
                 && "DenseBase::resize() does not actually allow to resize.");
     }
     /** Only plain matrices/arrays, not expressions, may be resized; therefore the only useful resize methods are
       * Matrix::resize() and Array::resize(). The present method only asserts that the new size equals the old size, and does
       * nothing else.
       */
-    void resize(Index nbRows, Index nbCols)
+    void resize(Index rows, Index cols)
     {
-      EIGEN_ONLY_USED_FOR_DEBUG(nbRows);
-      EIGEN_ONLY_USED_FOR_DEBUG(nbCols);
-      eigen_assert(nbRows == this->rows() && nbCols == this->cols()
+      EIGEN_ONLY_USED_FOR_DEBUG(rows);
+      EIGEN_ONLY_USED_FOR_DEBUG(cols);
+      eigen_assert(rows == this->rows() && cols == this->cols()
                 && "DenseBase::resize() does not actually allow to resize.");
     }
 
@@ -348,17 +348,17 @@ template<typename Derived> class DenseBase
 
     template<typename OtherDerived>
     bool isApprox(const DenseBase<OtherDerived>& other,
-                  const RealScalar& prec = NumTraits<Scalar>::dummy_precision()) const;
+                  RealScalar prec = NumTraits<Scalar>::dummy_precision()) const;
     bool isMuchSmallerThan(const RealScalar& other,
-                           const RealScalar& prec = NumTraits<Scalar>::dummy_precision()) const;
+                           RealScalar prec = NumTraits<Scalar>::dummy_precision()) const;
     template<typename OtherDerived>
     bool isMuchSmallerThan(const DenseBase<OtherDerived>& other,
-                           const RealScalar& prec = NumTraits<Scalar>::dummy_precision()) const;
+                           RealScalar prec = NumTraits<Scalar>::dummy_precision()) const;
 
-    bool isApproxToConstant(const Scalar& value, const RealScalar& prec = NumTraits<Scalar>::dummy_precision()) const;
-    bool isConstant(const Scalar& value, const RealScalar& prec = NumTraits<Scalar>::dummy_precision()) const;
-    bool isZero(const RealScalar& prec = NumTraits<Scalar>::dummy_precision()) const;
-    bool isOnes(const RealScalar& prec = NumTraits<Scalar>::dummy_precision()) const;
+    bool isApproxToConstant(const Scalar& value, RealScalar prec = NumTraits<Scalar>::dummy_precision()) const;
+    bool isConstant(const Scalar& value, RealScalar prec = NumTraits<Scalar>::dummy_precision()) const;
+    bool isZero(RealScalar prec = NumTraits<Scalar>::dummy_precision()) const;
+    bool isOnes(RealScalar prec = NumTraits<Scalar>::dummy_precision()) const;
 
     inline Derived& operator*=(const Scalar& other);
     inline Derived& operator/=(const Scalar& other);

@@ -18,7 +18,7 @@ template<typename MatrixType> class TransposeImpl<MatrixType,Sparse>
     typedef typename internal::remove_all<typename MatrixType::Nested>::type _MatrixTypeNested;
   public:
 
-    EIGEN_SPARSE_PUBLIC_INTERFACE(Transpose<MatrixType> )
+    EIGEN_SPARSE_PUBLIC_INTERFACE(Transpose<MatrixType>)
 
     class InnerIterator;
     class ReverseInnerIterator;

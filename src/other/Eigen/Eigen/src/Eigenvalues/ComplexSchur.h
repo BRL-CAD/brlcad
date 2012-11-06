@@ -3,7 +3,7 @@
 //
 // Copyright (C) 2009 Claire Maurice
 // Copyright (C) 2009 Gael Guennebaud <gael.guennebaud@inria.fr>
-// Copyright (C) 2010,2012 Jitse Niesen <jitse@maths.leeds.ac.uk>
+// Copyright (C) 2010 Jitse Niesen <jitse@maths.leeds.ac.uk>
 //
 // This Source Code Form is subject to the terms of the Mozilla
 // Public License v. 2.0. If a copy of the MPL was not distributed
@@ -96,8 +96,7 @@ template<typename _MatrixType> class ComplexSchur
         m_matU(size,size),
         m_hess(size),
         m_isInitialized(false),
-        m_matUisUptodate(false),
-        m_maxIters(-1)
+        m_matUisUptodate(false)
     {}
 
     /** \brief Constructor; computes Schur decomposition of given matrix. 
@@ -110,12 +109,11 @@ template<typename _MatrixType> class ComplexSchur
       * \sa matrixT() and matrixU() for examples.
       */
     ComplexSchur(const MatrixType& matrix, bool computeU = true)
-      : m_matT(matrix.rows(),matrix.cols()),
-        m_matU(matrix.rows(),matrix.cols()),
-        m_hess(matrix.rows()),
-        m_isInitialized(false),
-        m_matUisUptodate(false),
-        m_maxIters(-1)
+            : m_matT(matrix.rows(),matrix.cols()),
+              m_matU(matrix.rows(),matrix.cols()),
+              m_hess(matrix.rows()),
+              m_isInitialized(false),
+              m_matUisUptodate(false)
     {
       compute(matrix, computeU);
     }
@@ -168,7 +166,6 @@ template<typename _MatrixType> class ComplexSchur
       * 
       * \param[in]  matrix  Square matrix whose Schur decomposition is to be computed.
       * \param[in]  computeU  If true, both T and U are computed; if false, only T is computed.
-
       * \returns    Reference to \c *this
       *
       * The Schur decomposition is computed by first reducing the
@@ -183,8 +180,6 @@ template<typename _MatrixType> class ComplexSchur
       *
       * Example: \include ComplexSchur_compute.cpp
       * Output: \verbinclude ComplexSchur_compute.out
-      *
-      * \sa compute(const MatrixType&, bool, Index)
       */
     ComplexSchur& compute(const MatrixType& matrix, bool computeU = true);
 
@@ -194,33 +189,15 @@ template<typename _MatrixType> class ComplexSchur
       */
     ComputationInfo info() const
     {
-      eigen_assert(m_isInitialized && "ComplexSchur is not initialized.");
+      eigen_assert(m_isInitialized && "RealSchur is not initialized.");
       return m_info;
     }
 
-    /** \brief Sets the maximum number of iterations allowed. 
+    /** \brief Maximum number of iterations.
       *
-      * If not specified by the user, the maximum number of iterations is m_maxIterationsPerRow times the size
-      * of the matrix.
+      * Maximum number of iterations allowed for an eigenvalue to converge. 
       */
-    ComplexSchur& setMaxIterations(Index maxIters)
-    {
-      m_maxIters = maxIters;
-      return *this;
-    }
-
-    /** \brief Returns the maximum number of iterations. */
-    Index getMaxIterations()
-    {
-      return m_maxIters;
-    }
-
-    /** \brief Maximum number of iterations per row.
-      *
-      * If not otherwise specified, the maximum number of iterations is this number times the size of the
-      * matrix. It is currently set to 30.
-      */
-    static const int m_maxIterationsPerRow = 30;
+    static const int m_maxIterations = 30;
 
   protected:
     ComplexMatrixType m_matT, m_matU;
@@ -228,7 +205,6 @@ template<typename _MatrixType> class ComplexSchur
     ComputationInfo m_info;
     bool m_isInitialized;
     bool m_matUisUptodate;
-    Index m_maxIters;
 
   private:  
     bool subdiagonalEntryIsNeglegible(Index i);
@@ -353,10 +329,6 @@ struct complex_schur_reduce_to_hessenberg<MatrixType, false>
 template<typename MatrixType>
 void ComplexSchur<MatrixType>::reduceToTriangularForm(bool computeU)
 {  
-  Index maxIters = m_maxIters;
-  if (maxIters == -1)
-    maxIters = m_maxIterationsPerRow * m_matT.rows();
-
   // The matrix m_matT is divided in three parts. 
   // Rows 0,...,il-1 are decoupled from the rest because m_matT(il,il-1) is zero. 
   // Rows il,...,iu is the part we are working on (the active submatrix).
@@ -382,7 +354,7 @@ void ComplexSchur<MatrixType>::reduceToTriangularForm(bool computeU)
     // if we spent too many iterations, we give up
     iter++;
     totalIter++;
-    if(totalIter > maxIters) break;
+    if(totalIter > m_maxIterations * m_matT.cols()) break;
 
     // find il, the top row of the active submatrix
     il = iu-1;
@@ -412,7 +384,7 @@ void ComplexSchur<MatrixType>::reduceToTriangularForm(bool computeU)
     }
   }
 
-  if(totalIter <= maxIters)
+  if(totalIter <= m_maxIterations * m_matT.cols())
     m_info = Success;
   else
     m_info = NoConvergence;

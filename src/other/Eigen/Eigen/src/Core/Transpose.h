@@ -62,7 +62,7 @@ template<typename MatrixType> class Transpose
     typedef typename TransposeImpl<MatrixType,typename internal::traits<MatrixType>::StorageKind>::Base Base;
     EIGEN_GENERIC_PUBLIC_INTERFACE(Transpose)
 
-    inline Transpose(MatrixType& a_matrix) : m_matrix(a_matrix) {}
+    inline Transpose(MatrixType& matrix) : m_matrix(matrix) {}
 
     EIGEN_INHERIT_ASSIGNMENT_OPERATORS(Transpose)
 
@@ -117,10 +117,10 @@ template<typename MatrixType> class TransposeImpl<MatrixType,Dense>
     inline ScalarWithConstIfNotLvalue* data() { return derived().nestedExpression().data(); }
     inline const Scalar* data() const { return derived().nestedExpression().data(); }
 
-    inline ScalarWithConstIfNotLvalue& coeffRef(Index rowId, Index colId)
+    inline ScalarWithConstIfNotLvalue& coeffRef(Index row, Index col)
     {
       EIGEN_STATIC_ASSERT_LVALUE(MatrixType)
-      return derived().nestedExpression().const_cast_derived().coeffRef(colId, rowId);
+      return derived().nestedExpression().const_cast_derived().coeffRef(col, row);
     }
 
     inline ScalarWithConstIfNotLvalue& coeffRef(Index index)
@@ -129,9 +129,9 @@ template<typename MatrixType> class TransposeImpl<MatrixType,Dense>
       return derived().nestedExpression().const_cast_derived().coeffRef(index);
     }
 
-    inline const Scalar& coeffRef(Index rowId, Index colId) const
+    inline const Scalar& coeffRef(Index row, Index col) const
     {
-      return derived().nestedExpression().coeffRef(colId, rowId);
+      return derived().nestedExpression().coeffRef(col, row);
     }
 
     inline const Scalar& coeffRef(Index index) const
@@ -139,9 +139,9 @@ template<typename MatrixType> class TransposeImpl<MatrixType,Dense>
       return derived().nestedExpression().coeffRef(index);
     }
 
-    inline CoeffReturnType coeff(Index rowId, Index colId) const
+    inline CoeffReturnType coeff(Index row, Index col) const
     {
-      return derived().nestedExpression().coeff(colId, rowId);
+      return derived().nestedExpression().coeff(col, row);
     }
 
     inline CoeffReturnType coeff(Index index) const
@@ -150,15 +150,15 @@ template<typename MatrixType> class TransposeImpl<MatrixType,Dense>
     }
 
     template<int LoadMode>
-    inline const PacketScalar packet(Index rowId, Index colId) const
+    inline const PacketScalar packet(Index row, Index col) const
     {
-      return derived().nestedExpression().template packet<LoadMode>(colId, rowId);
+      return derived().nestedExpression().template packet<LoadMode>(col, row);
     }
 
     template<int LoadMode>
-    inline void writePacket(Index rowId, Index colId, const PacketScalar& x)
+    inline void writePacket(Index row, Index col, const PacketScalar& x)
     {
-      derived().nestedExpression().const_cast_derived().template writePacket<LoadMode>(colId, rowId, x);
+      derived().nestedExpression().const_cast_derived().template writePacket<LoadMode>(col, row, x);
     }
 
     template<int LoadMode>
@@ -353,7 +353,7 @@ struct check_transpose_aliasing_run_time_selector
 {
   static bool run(const Scalar* dest, const OtherDerived& src)
   {
-    return (bool(blas_traits<OtherDerived>::IsTransposed) != DestIsTransposed) && (dest!=0 && dest==(const Scalar*)extract_data(src));
+    return (bool(blas_traits<OtherDerived>::IsTransposed) != DestIsTransposed) && (dest!=0 && dest==(Scalar*)extract_data(src));
   }
 };
 
@@ -362,8 +362,8 @@ struct check_transpose_aliasing_run_time_selector<Scalar,DestIsTransposed,CwiseB
 {
   static bool run(const Scalar* dest, const CwiseBinaryOp<BinOp,DerivedA,DerivedB>& src)
   {
-    return ((blas_traits<DerivedA>::IsTransposed != DestIsTransposed) && (dest!=0 && dest==(const Scalar*)extract_data(src.lhs())))
-        || ((blas_traits<DerivedB>::IsTransposed != DestIsTransposed) && (dest!=0 && dest==(const Scalar*)extract_data(src.rhs())));
+    return ((blas_traits<DerivedA>::IsTransposed != DestIsTransposed) && (dest!=0 && dest==(Scalar*)extract_data(src.lhs())))
+        || ((blas_traits<DerivedB>::IsTransposed != DestIsTransposed) && (dest!=0 && dest==(Scalar*)extract_data(src.rhs())));
   }
 };
 

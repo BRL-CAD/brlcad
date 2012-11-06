@@ -154,6 +154,7 @@ template<typename LhsScalar, typename RhsScalar, bool ConjLhs=false, bool ConjRh
 template<typename Scalar> struct scalar_sum_op;
 template<typename Scalar> struct scalar_difference_op;
 template<typename LhsScalar,typename RhsScalar> struct scalar_conj_product_op;
+template<typename Scalar> struct scalar_quotient_op;
 template<typename Scalar> struct scalar_opposite_op;
 template<typename Scalar> struct scalar_conjugate_op;
 template<typename Scalar> struct scalar_real_op;
@@ -184,7 +185,6 @@ template<typename Scalar> struct scalar_identity_op;
 
 template<typename LhsScalar,typename RhsScalar=LhsScalar> struct scalar_product_op;
 template<typename LhsScalar,typename RhsScalar> struct scalar_multiple2_op;
-template<typename LhsScalar,typename RhsScalar=LhsScalar> struct scalar_quotient_op;
 
 } // end namespace internal
 
@@ -271,8 +271,6 @@ template<typename Derived> struct MatrixExponentialReturnValue;
 template<typename Derived> class MatrixFunctionReturnValue;
 template<typename Derived> class MatrixSquareRootReturnValue;
 template<typename Derived> class MatrixLogarithmReturnValue;
-template<typename Derived> class MatrixPowerReturnValue;
-template<typename Derived, typename Lhs, typename Rhs> class MatrixPowerProductBase;
 
 namespace internal {
 template <typename Scalar>

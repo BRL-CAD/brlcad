@@ -172,12 +172,12 @@ struct functor_traits<max_coeff_visitor<Scalar> > {
 template<typename Derived>
 template<typename IndexType>
 typename internal::traits<Derived>::Scalar
-DenseBase<Derived>::minCoeff(IndexType* rowId, IndexType* colId) const
+DenseBase<Derived>::minCoeff(IndexType* row, IndexType* col) const
 {
   internal::min_coeff_visitor<Derived> minVisitor;
   this->visit(minVisitor);
-  *rowId = minVisitor.row;
-  if (colId) *colId = minVisitor.col;
+  *row = minVisitor.row;
+  if (col) *col = minVisitor.col;
   return minVisitor.res;
 }
 
@@ -206,12 +206,12 @@ DenseBase<Derived>::minCoeff(IndexType* index) const
 template<typename Derived>
 template<typename IndexType>
 typename internal::traits<Derived>::Scalar
-DenseBase<Derived>::maxCoeff(IndexType* rowPtr, IndexType* colPtr) const
+DenseBase<Derived>::maxCoeff(IndexType* row, IndexType* col) const
 {
   internal::max_coeff_visitor<Derived> maxVisitor;
   this->visit(maxVisitor);
-  *rowPtr = maxVisitor.row;
-  if (colPtr) *colPtr = maxVisitor.col;
+  *row = maxVisitor.row;
+  if (col) *col = maxVisitor.col;
   return maxVisitor.res;
 }
 

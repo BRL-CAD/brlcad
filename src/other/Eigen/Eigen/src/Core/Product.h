@@ -3,14 +3,12 @@
 //
 // Copyright (C) 2008-2011 Gael Guennebaud <gael.guennebaud@inria.fr>
 //
-// This Source Code Form is subject to the terms of the Mozilla
-// Public License v. 2.0. If a copy of the MPL was not distributed
-// with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifndef EIGEN_PRODUCT_H
 #define EIGEN_PRODUCT_H
-
-namespace Eigen {
 
 template<typename Lhs, typename Rhs> class Product;
 template<typename Lhs, typename Rhs, typename StorageKind> class ProductImpl;
@@ -27,16 +25,25 @@ template<typename Lhs, typename Rhs, typename StorageKind> class ProductImpl;
   *
   */
 
-// Use ProductReturnType to get correct traits, in particular vectorization flags
 namespace internal {
 template<typename Lhs, typename Rhs>
 struct traits<Product<Lhs, Rhs> >
-  : traits<typename ProductReturnType<Lhs, Rhs>::Type>
-{ 
-  // We want A+B*C to be of type Product<Matrix, Sum> and not Product<Matrix, Matrix>
-  // TODO: This flag should eventually go in a separate evaluator traits class
+{
+  typedef MatrixXpr XprKind;
+  typedef typename remove_all<Lhs>::type LhsCleaned;
+  typedef typename remove_all<Rhs>::type RhsCleaned;
+  typedef typename scalar_product_traits<typename traits<LhsCleaned>::Scalar, typename traits<RhsCleaned>::Scalar>::ReturnType Scalar;
+  typedef typename promote_storage_type<typename traits<LhsCleaned>::StorageKind,
+                                        typename traits<RhsCleaned>::StorageKind>::ret StorageKind;
+  typedef typename promote_index_type<typename traits<LhsCleaned>::Index,
+                                      typename traits<RhsCleaned>::Index>::type Index;
   enum {
-    Flags = traits<typename ProductReturnType<Lhs, Rhs>::Type>::Flags & ~EvalBeforeNestingBit
+    RowsAtCompileTime = LhsCleaned::RowsAtCompileTime,
+    ColsAtCompileTime = RhsCleaned::ColsAtCompileTime,
+    MaxRowsAtCompileTime = LhsCleaned::MaxRowsAtCompileTime,
+    MaxColsAtCompileTime = RhsCleaned::MaxColsAtCompileTime,
+    Flags = (MaxRowsAtCompileTime==1 ? RowMajorBit : 0), // TODO should be no storage order
+    CoeffReadCost = 0 // TODO CoeffReadCost should not be part of the expression traits
   };
 };
 } // end namespace internal
@@ -87,21 +94,5 @@ class ProductImpl<Lhs,Rhs,Dense> : public internal::dense_xpr_base<Product<Lhs,R
     typedef typename internal::dense_xpr_base<Product<Lhs, Rhs> >::type Base;
     EIGEN_DENSE_PUBLIC_INTERFACE(Derived)
 };
-
-/***************************************************************************
-* Implementation of matrix base methods
-***************************************************************************/
-
-
-/** \internal used to test the evaluator only
-  */
-template<typename Lhs,typename Rhs>
-const Product<Lhs,Rhs>
-prod(const Lhs& lhs, const Rhs& rhs)
-{
-  return Product<Lhs,Rhs>(lhs,rhs);
-}
-
-} // end namespace Eigen
 
 #endif // EIGEN_PRODUCT_H

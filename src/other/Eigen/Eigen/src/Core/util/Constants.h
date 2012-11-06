@@ -13,17 +13,12 @@
 
 namespace Eigen {
 
-/** This value means that a positive quantity (e.g., a size) is not known at compile-time, and that instead the value is
+/** This value means that a quantity is not known at compile-time, and that instead the value is
   * stored in some runtime variable.
   *
   * Changing the value of Dynamic breaks the ABI, as Dynamic is often used as a template parameter for Matrix.
   */
 const int Dynamic = -1;
-
-/** This value means that a signed quantity (e.g., a signed index) is not known at compile-time, and that instead its value
-  * has to be specified at runtime.
-  */
-const int DynamicIndex = 0xffffff;
 
 /** This value means +Infinity; it is currently used only as the p parameter to MatrixBase::lpNorm<int>().
   * The value Infinity there means the L-infinity norm.
@@ -232,9 +227,7 @@ enum {
     * scalar loops to handle the unaligned boundaries */
   SliceVectorizedTraversal,
   /** \internal Special case to properly handle incompatible scalar types or other defecting cases*/
-  InvalidTraversal,
-  /** \internal Evaluate all entries at once */
-  AllAtOnceTraversal
+  InvalidTraversal
 };
 
 /** \internal \ingroup enums

@@ -1,5 +1,5 @@
 // This file is part of Eigen, a lightweight C++ template library
-// for linear algebra.
+// for linear algebra. Eigen itself is part of the KDE project.
 //
 // Copyright (C) 2008 Gael Guennebaud <g.gael@free.fr>
 //

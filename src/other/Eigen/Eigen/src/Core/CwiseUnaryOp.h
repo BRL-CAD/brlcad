@@ -98,15 +98,15 @@ class CwiseUnaryOpImpl<UnaryOp,XprType,Dense>
     typedef typename internal::dense_xpr_base<CwiseUnaryOp<UnaryOp, XprType> >::type Base;
     EIGEN_DENSE_PUBLIC_INTERFACE(Derived)
 
-    EIGEN_STRONG_INLINE const Scalar coeff(Index rowId, Index colId) const
+    EIGEN_STRONG_INLINE const Scalar coeff(Index row, Index col) const
     {
-      return derived().functor()(derived().nestedExpression().coeff(rowId, colId));
+      return derived().functor()(derived().nestedExpression().coeff(row, col));
     }
 
     template<int LoadMode>
-    EIGEN_STRONG_INLINE PacketScalar packet(Index rowId, Index colId) const
+    EIGEN_STRONG_INLINE PacketScalar packet(Index row, Index col) const
     {
-      return derived().functor().packetOp(derived().nestedExpression().template packet<LoadMode>(rowId, colId));
+      return derived().functor().packetOp(derived().nestedExpression().template packet<LoadMode>(row, col));
     }
 
     EIGEN_STRONG_INLINE const Scalar coeff(Index index) const

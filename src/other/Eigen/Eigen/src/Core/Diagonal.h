@@ -41,12 +41,12 @@ struct traits<Diagonal<MatrixType,DiagIndex> >
   typedef typename remove_reference<MatrixTypeNested>::type _MatrixTypeNested;
   typedef typename MatrixType::StorageKind StorageKind;
   enum {
-    RowsAtCompileTime = (int(DiagIndex) == DynamicIndex || int(MatrixType::SizeAtCompileTime) == Dynamic) ? Dynamic
-                      : (EIGEN_PLAIN_ENUM_MIN(MatrixType::RowsAtCompileTime - EIGEN_PLAIN_ENUM_MAX(-DiagIndex, 0),
-                                              MatrixType::ColsAtCompileTime - EIGEN_PLAIN_ENUM_MAX( DiagIndex, 0))),
+    RowsAtCompileTime = (int(DiagIndex) == Dynamic || int(MatrixType::SizeAtCompileTime) == Dynamic) ? Dynamic
+    : (EIGEN_PLAIN_ENUM_MIN(MatrixType::RowsAtCompileTime - EIGEN_PLAIN_ENUM_MAX(-DiagIndex, 0),
+                            MatrixType::ColsAtCompileTime - EIGEN_PLAIN_ENUM_MAX( DiagIndex, 0))),
     ColsAtCompileTime = 1,
     MaxRowsAtCompileTime = int(MatrixType::MaxSizeAtCompileTime) == Dynamic ? Dynamic
-                         : DiagIndex == DynamicIndex ? EIGEN_SIZE_MIN_PREFER_FIXED(MatrixType::MaxRowsAtCompileTime,
+                         : DiagIndex == Dynamic ? EIGEN_SIZE_MIN_PREFER_FIXED(MatrixType::MaxRowsAtCompileTime,
                                                                               MatrixType::MaxColsAtCompileTime)
                          : (EIGEN_PLAIN_ENUM_MIN(MatrixType::MaxRowsAtCompileTime - EIGEN_PLAIN_ENUM_MAX(-DiagIndex, 0),
                                                  MatrixType::MaxColsAtCompileTime - EIGEN_PLAIN_ENUM_MAX( DiagIndex, 0))),
@@ -61,16 +61,15 @@ struct traits<Diagonal<MatrixType,DiagIndex> >
 };
 }
 
-template<typename MatrixType, int _DiagIndex> class Diagonal
-   : public internal::dense_xpr_base< Diagonal<MatrixType,_DiagIndex> >::type
+template<typename MatrixType, int DiagIndex> class Diagonal
+   : public internal::dense_xpr_base< Diagonal<MatrixType,DiagIndex> >::type
 {
   public:
 
-    enum { DiagIndex = _DiagIndex };
     typedef typename internal::dense_xpr_base<Diagonal>::type Base;
     EIGEN_DENSE_PUBLIC_INTERFACE(Diagonal)
 
-    inline Diagonal(MatrixType& matrix, Index a_index = DiagIndex) : m_matrix(matrix), m_index(a_index) {}
+    inline Diagonal(MatrixType& matrix, Index index = DiagIndex) : m_matrix(matrix), m_index(index) {}
 
     EIGEN_INHERIT_ASSIGNMENT_OPERATORS(Diagonal)
 
@@ -114,20 +113,20 @@ template<typename MatrixType, int _DiagIndex> class Diagonal
       return m_matrix.coeff(row+rowOffset(), row+colOffset());
     }
 
-    inline Scalar& coeffRef(Index idx)
+    inline Scalar& coeffRef(Index index)
     {
       EIGEN_STATIC_ASSERT_LVALUE(MatrixType)
-      return m_matrix.const_cast_derived().coeffRef(idx+rowOffset(), idx+colOffset());
+      return m_matrix.const_cast_derived().coeffRef(index+rowOffset(), index+colOffset());
     }
 
-    inline const Scalar& coeffRef(Index idx) const
+    inline const Scalar& coeffRef(Index index) const
     {
-      return m_matrix.const_cast_derived().coeffRef(idx+rowOffset(), idx+colOffset());
+      return m_matrix.const_cast_derived().coeffRef(index+rowOffset(), index+colOffset());
     }
 
-    inline CoeffReturnType coeff(Index idx) const
+    inline CoeffReturnType coeff(Index index) const
     {
-      return m_matrix.coeff(idx+rowOffset(), idx+colOffset());
+      return m_matrix.coeff(index+rowOffset(), index+colOffset());
     }
 
     const typename internal::remove_all<typename MatrixType::Nested>::type& 
@@ -143,7 +142,7 @@ template<typename MatrixType, int _DiagIndex> class Diagonal
 
   protected:
     typename MatrixType::Nested m_matrix;
-    const internal::variable_if_dynamicindex<Index, DiagIndex> m_index;
+    const internal::variable_if_dynamic<Index, DiagIndex> m_index;
 
   private:
     // some compilers may fail to optimize std::max etc in case of compile-time constants...
@@ -190,18 +189,18 @@ MatrixBase<Derived>::diagonal() const
   *
   * \sa MatrixBase::diagonal(), class Diagonal */
 template<typename Derived>
-inline typename MatrixBase<Derived>::template DiagonalIndexReturnType<DynamicIndex>::Type
+inline typename MatrixBase<Derived>::template DiagonalIndexReturnType<Dynamic>::Type
 MatrixBase<Derived>::diagonal(Index index)
 {
-  return typename DiagonalIndexReturnType<DynamicIndex>::Type(derived(), index);
+  return typename DiagonalIndexReturnType<Dynamic>::Type(derived(), index);
 }
 
 /** This is the const version of diagonal(Index). */
 template<typename Derived>
-inline typename MatrixBase<Derived>::template ConstDiagonalIndexReturnType<DynamicIndex>::Type
+inline typename MatrixBase<Derived>::template ConstDiagonalIndexReturnType<Dynamic>::Type
 MatrixBase<Derived>::diagonal(Index index) const
 {
-  return typename ConstDiagonalIndexReturnType<DynamicIndex>::Type(derived(), index);
+  return typename ConstDiagonalIndexReturnType<Dynamic>::Type(derived(), index);
 }
 
 /** \returns an expression of the \a DiagIndex-th sub or super diagonal of the matrix \c *this

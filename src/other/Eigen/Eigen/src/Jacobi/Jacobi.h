@@ -207,6 +207,7 @@ void JacobiRotation<Scalar>::makeGivens(const Scalar& p, const Scalar& q, Scalar
 template<typename Scalar>
 void JacobiRotation<Scalar>::makeGivens(const Scalar& p, const Scalar& q, Scalar* r, internal::false_type)
 {
+
   if(q==Scalar(0))
   {
     m_c = p<Scalar(0) ? Scalar(-1) : Scalar(1);
@@ -302,11 +303,6 @@ void /*EIGEN_DONT_INLINE*/ apply_rotation_in_the_plane(VectorX& _x, VectorY& _y,
 
   Scalar* EIGEN_RESTRICT x = &_x.coeffRef(0);
   Scalar* EIGEN_RESTRICT y = &_y.coeffRef(0);
-  
-  OtherScalar c = j.c();
-  OtherScalar s = j.s();
-  if (c==OtherScalar(1) && s==OtherScalar(0))
-    return;
 
   /*** dynamic-size vectorized paths ***/
 
@@ -320,16 +316,16 @@ void /*EIGEN_DONT_INLINE*/ apply_rotation_in_the_plane(VectorX& _x, VectorY& _y,
     Index alignedStart = internal::first_aligned(y, size);
     Index alignedEnd = alignedStart + ((size-alignedStart)/PacketSize)*PacketSize;
 
-    const Packet pc = pset1<Packet>(c);
-    const Packet ps = pset1<Packet>(s);
+    const Packet pc = pset1<Packet>(j.c());
+    const Packet ps = pset1<Packet>(j.s());
     conj_helper<Packet,Packet,NumTraits<Scalar>::IsComplex,false> pcj;
 
     for(Index i=0; i<alignedStart; ++i)
     {
       Scalar xi = x[i];
       Scalar yi = y[i];
-      x[i] =  c * xi + conj(s) * yi;
-      y[i] = -s * xi + conj(c) * yi;
+      x[i] =  j.c() * xi + conj(j.s()) * yi;
+      y[i] = -j.s() * xi + conj(j.c()) * yi;
     }
 
     Scalar* EIGEN_RESTRICT px = x + alignedStart;
@@ -376,8 +372,8 @@ void /*EIGEN_DONT_INLINE*/ apply_rotation_in_the_plane(VectorX& _x, VectorY& _y,
     {
       Scalar xi = x[i];
       Scalar yi = y[i];
-      x[i] =  c * xi + conj(s) * yi;
-      y[i] = -s * xi + conj(c) * yi;
+      x[i] =  j.c() * xi + conj(j.s()) * yi;
+      y[i] = -j.s() * xi + conj(j.c()) * yi;
     }
   }
 
@@ -386,8 +382,8 @@ void /*EIGEN_DONT_INLINE*/ apply_rotation_in_the_plane(VectorX& _x, VectorY& _y,
           (VectorX::Flags & VectorY::Flags & PacketAccessBit) &&
           (VectorX::Flags & VectorY::Flags & AlignedBit))
   {
-    const Packet pc = pset1<Packet>(c);
-    const Packet ps = pset1<Packet>(s);
+    const Packet pc = pset1<Packet>(j.c());
+    const Packet ps = pset1<Packet>(j.s());
     conj_helper<Packet,Packet,NumTraits<Scalar>::IsComplex,false> pcj;
     Scalar* EIGEN_RESTRICT px = x;
     Scalar* EIGEN_RESTRICT py = y;
@@ -409,8 +405,8 @@ void /*EIGEN_DONT_INLINE*/ apply_rotation_in_the_plane(VectorX& _x, VectorY& _y,
     {
       Scalar xi = *x;
       Scalar yi = *y;
-      *x =  c * xi + conj(s) * yi;
-      *y = -s * xi + conj(c) * yi;
+      *x =  j.c() * xi + conj(j.s()) * yi;
+      *y = -j.s() * xi + conj(j.c()) * yi;
       x += incrx;
       y += incry;
     }

@@ -13,7 +13,7 @@
 
 #define EIGEN_WORLD_VERSION 3
 #define EIGEN_MAJOR_VERSION 1
-#define EIGEN_MINOR_VERSION 90
+#define EIGEN_MINOR_VERSION 2
 
 #define EIGEN_VERSION_AT_LEAST(x,y,z) (EIGEN_WORLD_VERSION>x || (EIGEN_WORLD_VERSION>=x && \
                                       (EIGEN_MAJOR_VERSION>y || (EIGEN_MAJOR_VERSION>=y && \
@@ -114,6 +114,12 @@
 // convert a token to a string
 #define EIGEN_MAKESTRING2(a) #a
 #define EIGEN_MAKESTRING(a) EIGEN_MAKESTRING2(a)
+
+#if EIGEN_GNUC_AT_LEAST(4,1) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#define EIGEN_FLATTEN_ATTRIB __attribute__((flatten))
+#else
+#define EIGEN_FLATTEN_ATTRIB
+#endif
 
 // EIGEN_STRONG_INLINE is a stronger version of the inline, using __forceinline on MSVC,
 // but it still doesn't use GCC's always_inline. This is useful in (common) situations where MSVC needs forceinline
@@ -295,12 +301,6 @@
 #if defined(_MSC_VER) && (!defined(__INTEL_COMPILER))
 #define EIGEN_INHERIT_ASSIGNMENT_EQUAL_OPERATOR(Derived) \
   using Base::operator =;
-#elif defined(__clang__) // workaround clang bug (see http://forum.kde.org/viewtopic.php?f=74&t=102653)
-#define EIGEN_INHERIT_ASSIGNMENT_EQUAL_OPERATOR(Derived) \
-  using Base::operator =; \
-  EIGEN_STRONG_INLINE Derived& operator=(const Derived& other) { Base::operator=(other); return *this; } \
-  template <typename OtherDerived> \
-  EIGEN_STRONG_INLINE Derived& operator=(const DenseBase<OtherDerived>& other) { Base::operator=(other.derived()); return *this; }
 #else
 #define EIGEN_INHERIT_ASSIGNMENT_EQUAL_OPERATOR(Derived) \
   using Base::operator =; \

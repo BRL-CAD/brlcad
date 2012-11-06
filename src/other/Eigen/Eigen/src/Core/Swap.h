@@ -49,9 +49,9 @@ template<typename ExpressionType> class SwapWrapper
     inline ScalarWithConstIfNotLvalue* data() { return m_expression.data(); }
     inline const Scalar* data() const { return m_expression.data(); }
 
-    inline Scalar& coeffRef(Index rowId, Index colId)
+    inline Scalar& coeffRef(Index row, Index col)
     {
-      return m_expression.const_cast_derived().coeffRef(rowId, colId);
+      return m_expression.const_cast_derived().coeffRef(row, col);
     }
 
     inline Scalar& coeffRef(Index index)
@@ -59,9 +59,9 @@ template<typename ExpressionType> class SwapWrapper
       return m_expression.const_cast_derived().coeffRef(index);
     }
 
-    inline Scalar& coeffRef(Index rowId, Index colId) const
+    inline Scalar& coeffRef(Index row, Index col) const
     {
-      return m_expression.coeffRef(rowId, colId);
+      return m_expression.coeffRef(row, col);
     }
 
     inline Scalar& coeffRef(Index index) const
@@ -70,14 +70,14 @@ template<typename ExpressionType> class SwapWrapper
     }
 
     template<typename OtherDerived>
-    void copyCoeff(Index rowId, Index colId, const DenseBase<OtherDerived>& other)
+    void copyCoeff(Index row, Index col, const DenseBase<OtherDerived>& other)
     {
       OtherDerived& _other = other.const_cast_derived();
-      eigen_internal_assert(rowId >= 0 && rowId < rows()
-                         && colId >= 0 && colId < cols());
-      Scalar tmp = m_expression.coeff(rowId, colId);
-      m_expression.coeffRef(rowId, colId) = _other.coeff(rowId, colId);
-      _other.coeffRef(rowId, colId) = tmp;
+      eigen_internal_assert(row >= 0 && row < rows()
+                         && col >= 0 && col < cols());
+      Scalar tmp = m_expression.coeff(row, col);
+      m_expression.coeffRef(row, col) = _other.coeff(row, col);
+      _other.coeffRef(row, col) = tmp;
     }
 
     template<typename OtherDerived>
@@ -91,16 +91,16 @@ template<typename ExpressionType> class SwapWrapper
     }
 
     template<typename OtherDerived, int StoreMode, int LoadMode>
-    void copyPacket(Index rowId, Index colId, const DenseBase<OtherDerived>& other)
+    void copyPacket(Index row, Index col, const DenseBase<OtherDerived>& other)
     {
       OtherDerived& _other = other.const_cast_derived();
-      eigen_internal_assert(rowId >= 0 && rowId < rows()
-                        && colId >= 0 && colId < cols());
-      Packet tmp = m_expression.template packet<StoreMode>(rowId, colId);
-      m_expression.template writePacket<StoreMode>(rowId, colId,
-        _other.template packet<LoadMode>(rowId, colId)
+      eigen_internal_assert(row >= 0 && row < rows()
+                        && col >= 0 && col < cols());
+      Packet tmp = m_expression.template packet<StoreMode>(row, col);
+      m_expression.template writePacket<StoreMode>(row, col,
+        _other.template packet<LoadMode>(row, col)
       );
-      _other.template writePacket<LoadMode>(rowId, colId, tmp);
+      _other.template writePacket<LoadMode>(row, col, tmp);
     }
 
     template<typename OtherDerived, int StoreMode, int LoadMode>

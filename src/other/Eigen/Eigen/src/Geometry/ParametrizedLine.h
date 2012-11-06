@@ -93,7 +93,7 @@ public:
   VectorType projection(const VectorType& p) const
   { return origin() + direction().dot(p-origin()) * direction(); }
 
-  VectorType pointAt(const Scalar& t) const;
+  VectorType pointAt( Scalar t ) const;
   
   template <int OtherOptions>
   Scalar intersectionParameter(const Hyperplane<_Scalar, _AmbientDim, OtherOptions>& hyperplane) const;
@@ -154,7 +154,7 @@ inline ParametrizedLine<_Scalar, _AmbientDim,_Options>::ParametrizedLine(const H
   */
 template <typename _Scalar, int _AmbientDim, int _Options>
 inline typename ParametrizedLine<_Scalar, _AmbientDim,_Options>::VectorType
-ParametrizedLine<_Scalar, _AmbientDim,_Options>::pointAt(const _Scalar& t) const
+ParametrizedLine<_Scalar, _AmbientDim,_Options>::pointAt( _Scalar t ) const
 {
   return origin() + (direction()*t); 
 }

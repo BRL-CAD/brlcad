@@ -124,27 +124,27 @@ template<typename XprType, int BlockRows, int BlockCols, bool InnerPanel, bool H
 
     /** Fixed-size constructor
       */
-    inline Block(XprType& xpr, Index a_startRow, Index a_startCol)
-      : m_xpr(xpr), m_startRow(a_startRow), m_startCol(a_startCol),
+    inline Block(XprType& xpr, Index startRow, Index startCol)
+      : m_xpr(xpr), m_startRow(startRow), m_startCol(startCol),
         m_blockRows(BlockRows), m_blockCols(BlockCols)
     {
       EIGEN_STATIC_ASSERT(RowsAtCompileTime!=Dynamic && ColsAtCompileTime!=Dynamic,THIS_METHOD_IS_ONLY_FOR_FIXED_SIZE)
-      eigen_assert(a_startRow >= 0 && BlockRows >= 1 && a_startRow + BlockRows <= xpr.rows()
-             && a_startCol >= 0 && BlockCols >= 1 && a_startCol + BlockCols <= xpr.cols());
+      eigen_assert(startRow >= 0 && BlockRows >= 1 && startRow + BlockRows <= xpr.rows()
+             && startCol >= 0 && BlockCols >= 1 && startCol + BlockCols <= xpr.cols());
     }
 
     /** Dynamic-size constructor
       */
     inline Block(XprType& xpr,
-          Index a_startRow, Index a_startCol,
+          Index startRow, Index startCol,
           Index blockRows, Index blockCols)
-      : m_xpr(xpr), m_startRow(a_startRow), m_startCol(a_startCol),
+      : m_xpr(xpr), m_startRow(startRow), m_startCol(startCol),
                           m_blockRows(blockRows), m_blockCols(blockCols)
     {
       eigen_assert((RowsAtCompileTime==Dynamic || RowsAtCompileTime==blockRows)
           && (ColsAtCompileTime==Dynamic || ColsAtCompileTime==blockCols));
-      eigen_assert(a_startRow >= 0 && blockRows >= 0 && a_startRow + blockRows <= xpr.rows()
-          && a_startCol >= 0 && blockCols >= 0 && a_startCol + blockCols <= xpr.cols());
+      eigen_assert(startRow >= 0 && blockRows >= 0 && startRow + blockRows <= xpr.rows()
+          && startCol >= 0 && blockCols >= 0 && startCol + blockCols <= xpr.cols());
     }
 
     EIGEN_INHERIT_ASSIGNMENT_OPERATORS(Block)
@@ -152,22 +152,22 @@ template<typename XprType, int BlockRows, int BlockCols, bool InnerPanel, bool H
     inline Index rows() const { return m_blockRows.value(); }
     inline Index cols() const { return m_blockCols.value(); }
 
-    inline Scalar& coeffRef(Index rowId, Index colId)
+    inline Scalar& coeffRef(Index row, Index col)
     {
       EIGEN_STATIC_ASSERT_LVALUE(XprType)
       return m_xpr.const_cast_derived()
-               .coeffRef(rowId + m_startRow.value(), colId + m_startCol.value());
+               .coeffRef(row + m_startRow.value(), col + m_startCol.value());
     }
 
-    inline const Scalar& coeffRef(Index rowId, Index colId) const
+    inline const Scalar& coeffRef(Index row, Index col) const
     {
       return m_xpr.derived()
-               .coeffRef(rowId + m_startRow.value(), colId + m_startCol.value());
+               .coeffRef(row + m_startRow.value(), col + m_startCol.value());
     }
 
-    EIGEN_STRONG_INLINE const CoeffReturnType coeff(Index rowId, Index colId) const
+    EIGEN_STRONG_INLINE const CoeffReturnType coeff(Index row, Index col) const
     {
-      return m_xpr.coeff(rowId + m_startRow.value(), colId + m_startCol.value());
+      return m_xpr.coeff(row + m_startRow.value(), col + m_startCol.value());
     }
 
     inline Scalar& coeffRef(Index index)
@@ -193,17 +193,17 @@ template<typename XprType, int BlockRows, int BlockCols, bool InnerPanel, bool H
     }
 
     template<int LoadMode>
-    inline PacketScalar packet(Index rowId, Index colId) const
+    inline PacketScalar packet(Index row, Index col) const
     {
       return m_xpr.template packet<Unaligned>
-              (rowId + m_startRow.value(), colId + m_startCol.value());
+              (row + m_startRow.value(), col + m_startCol.value());
     }
 
     template<int LoadMode>
-    inline void writePacket(Index rowId, Index colId, const PacketScalar& val)
+    inline void writePacket(Index row, Index col, const PacketScalar& x)
     {
       m_xpr.const_cast_derived().template writePacket<Unaligned>
-              (rowId + m_startRow.value(), colId + m_startCol.value(), val);
+              (row + m_startRow.value(), col + m_startCol.value(), x);
     }
 
     template<int LoadMode>
@@ -215,11 +215,11 @@ template<typename XprType, int BlockRows, int BlockCols, bool InnerPanel, bool H
     }
 
     template<int LoadMode>
-    inline void writePacket(Index index, const PacketScalar& val)
+    inline void writePacket(Index index, const PacketScalar& x)
     {
       m_xpr.const_cast_derived().template writePacket<Unaligned>
          (m_startRow.value() + (RowsAtCompileTime == 1 ? 0 : index),
-          m_startCol.value() + (RowsAtCompileTime == 1 ? index : 0), val);
+          m_startCol.value() + (RowsAtCompileTime == 1 ? index : 0), x);
     }
 
     #ifdef EIGEN_PARSED_BY_DOXYGEN

@@ -2,7 +2,7 @@
 // for linear algebra.
 //
 // Copyright (C) 2008 Gael Guennebaud <gael.guennebaud@inria.fr>
-// Copyright (C) 2010,2012 Jitse Niesen <jitse@maths.leeds.ac.uk>
+// Copyright (C) 2010 Jitse Niesen <jitse@maths.leeds.ac.uk>
 //
 // This Source Code Form is subject to the terms of the Mozilla
 // Public License v. 2.0. If a copy of the MPL was not distributed
@@ -86,8 +86,7 @@ template<typename _MatrixType> class RealSchur
               m_workspaceVector(size),
               m_hess(size),
               m_isInitialized(false),
-              m_matUisUptodate(false),
-              m_maxIters(-1)
+              m_matUisUptodate(false)
     { }
 
     /** \brief Constructor; computes real Schur decomposition of given matrix. 
@@ -106,8 +105,7 @@ template<typename _MatrixType> class RealSchur
               m_workspaceVector(matrix.rows()),
               m_hess(matrix.rows()),
               m_isInitialized(false),
-              m_matUisUptodate(false),
-              m_maxIters(-1)
+              m_matUisUptodate(false)
     {
       compute(matrix, computeU);
     }
@@ -162,30 +160,9 @@ template<typename _MatrixType> class RealSchur
       *
       * Example: \include RealSchur_compute.cpp
       * Output: \verbinclude RealSchur_compute.out
-      *
-      * \sa compute(const MatrixType&, bool, Index)
       */
     RealSchur& compute(const MatrixType& matrix, bool computeU = true);
 
-    /** \brief Computes Schur decomposition of a Hessenberg matrix H = Z T Z^T
-     *  \param[in] matrixH Matrix in Hessenberg form H
-     *  \param[in] matrixQ orthogonal matrix Q that transform a matrix A to H : A = Q H Q^T
-     *  \param computeU Computes the matriX U of the Schur vectors
-     * \return Reference to \c *this
-     * 
-     *  This routine assumes that the matrix is already reduced in Hessenberg form matrixH
-     *  using either the class HessenbergDecomposition or another mean. 
-     *  It computes the upper quasi-triangular matrix T of the Schur decomposition of H
-     *  When computeU is true, this routine computes the matrix U such that 
-     *  A = U T U^T =  (QZ) T (QZ)^T = Q H Q^T where A is the initial matrix
-     * 
-     * NOTE Q is referenced if computeU is true; so, if the initial orthogonal matrix
-     * is not available, the user should give an identity matrix (Q.setIdentity())
-     * 
-     * \sa compute(const MatrixType&, bool)
-     */
-    template<typename HessMatrixType, typename OrthMatrixType>
-    RealSchur& computeHessenberg(const HessMatrixType& matrixH, const OrthMatrixType& matrixQ,  bool computeU);
     /** \brief Reports whether previous computation was successful.
       *
       * \returns \c Success if computation was succesful, \c NoConvergence otherwise.
@@ -196,29 +173,11 @@ template<typename _MatrixType> class RealSchur
       return m_info;
     }
 
-    /** \brief Sets the maximum number of iterations allowed. 
+    /** \brief Maximum number of iterations.
       *
-      * If not specified by the user, the maximum number of iterations is m_maxIterationsPerRow times the size
-      * of the matrix.
+      * Maximum number of iterations allowed for an eigenvalue to converge. 
       */
-    RealSchur& setMaxIterations(Index maxIters)
-    {
-      m_maxIters = maxIters;
-      return *this;
-    }
-
-    /** \brief Returns the maximum number of iterations. */
-    Index getMaxIterations()
-    {
-      return m_maxIters;
-    }
-
-    /** \brief Maximum number of iterations per row.
-      *
-      * If not otherwise specified, the maximum number of iterations is this number times the size of the
-      * matrix. It is currently set to 40.
-      */
-    static const int m_maxIterationsPerRow = 40;
+    static const int m_maxIterations = 40;
 
   private:
     
@@ -229,7 +188,6 @@ template<typename _MatrixType> class RealSchur
     ComputationInfo m_info;
     bool m_isInitialized;
     bool m_matUisUptodate;
-    Index m_maxIters;
 
     typedef Matrix<Scalar,3,1> Vector3s;
 
@@ -246,29 +204,14 @@ template<typename MatrixType>
 RealSchur<MatrixType>& RealSchur<MatrixType>::compute(const MatrixType& matrix, bool computeU)
 {
   assert(matrix.cols() == matrix.rows());
-  Index maxIters = m_maxIters;
-  if (maxIters == -1)
-    maxIters = m_maxIterationsPerRow * matrix.rows();
 
   // Step 1. Reduce to Hessenberg form
   m_hess.compute(matrix);
+  m_matT = m_hess.matrixH();
+  if (computeU)
+    m_matU = m_hess.matrixQ();
 
   // Step 2. Reduce to real Schur form  
-  computeHessenberg(m_hess.matrixH(), m_hess.matrixQ(), computeU);
-  
-  return *this;
-}
-template<typename MatrixType>
-template<typename HessMatrixType, typename OrthMatrixType>
-RealSchur<MatrixType>& RealSchur<MatrixType>::computeHessenberg(const HessMatrixType& matrixH, const OrthMatrixType& matrixQ,  bool computeU)
-{  
-  m_matT = matrixH; 
-  if(computeU)
-    m_matU = matrixQ;
-  
-  Index maxIters = m_maxIters;
-  if (maxIters == -1)
-    maxIters = m_maxIterationsPerRow * matrixH.rows();
   m_workspaceVector.resize(m_matT.cols());
   Scalar* workspace = &m_workspaceVector.coeffRef(0);
 
@@ -310,14 +253,14 @@ RealSchur<MatrixType>& RealSchur<MatrixType>::computeHessenberg(const HessMatrix
         computeShift(iu, iter, exshift, shiftInfo);
         iter = iter + 1;
         totalIter = totalIter + 1;
-        if (totalIter > maxIters) break;
+        if (totalIter > m_maxIterations * matrix.cols()) break;
         Index im;
         initFrancisQRStep(il, iu, shiftInfo, im, firstHouseholderVector);
         performFrancisQRStep(il, im, iu, computeU, firstHouseholderVector, workspace);
       }
     }
   }
-  if(totalIter <= maxIters)
+  if(totalIter <= m_maxIterations * matrix.cols()) 
     m_info = Success;
   else
     m_info = NoConvergence;
@@ -337,7 +280,7 @@ inline typename MatrixType::Scalar RealSchur<MatrixType>::computeNormOfT()
   //               + m_matT.bottomLeftCorner(size-1,size-1).diagonal().cwiseAbs().sum();
   Scalar norm(0);
   for (Index j = 0; j < size; ++j)
-    norm += m_matT.col(j).segment(0, (std::min)(size,j+2)).cwiseAbs().sum();
+    norm += m_matT.row(j).segment((std::max)(j-1,Index(0)), size-(std::max)(j-1,Index(0))).cwiseAbs().sum();
   return norm;
 }
 

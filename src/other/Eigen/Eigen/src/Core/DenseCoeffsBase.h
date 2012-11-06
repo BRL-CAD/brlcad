@@ -427,22 +427,22 @@ class DenseCoeffsBase<Derived, WriteAccessors> : public DenseCoeffsBase<Derived,
 
     template<int StoreMode>
     EIGEN_STRONG_INLINE void writePacket
-    (Index row, Index col, const typename internal::packet_traits<Scalar>::type& val)
+    (Index row, Index col, const typename internal::packet_traits<Scalar>::type& x)
     {
       eigen_internal_assert(row >= 0 && row < rows()
                         && col >= 0 && col < cols());
-      derived().template writePacket<StoreMode>(row,col,val);
+      derived().template writePacket<StoreMode>(row,col,x);
     }
 
 
     /** \internal */
     template<int StoreMode>
     EIGEN_STRONG_INLINE void writePacketByOuterInner
-    (Index outer, Index inner, const typename internal::packet_traits<Scalar>::type& val)
+    (Index outer, Index inner, const typename internal::packet_traits<Scalar>::type& x)
     {
       writePacket<StoreMode>(rowIndexByOuterInner(outer, inner),
                             colIndexByOuterInner(outer, inner),
-                            val);
+                            x);
     }
 
     /** \internal
@@ -456,10 +456,10 @@ class DenseCoeffsBase<Derived, WriteAccessors> : public DenseCoeffsBase<Derived,
       */
     template<int StoreMode>
     EIGEN_STRONG_INLINE void writePacket
-    (Index index, const typename internal::packet_traits<Scalar>::type& val)
+    (Index index, const typename internal::packet_traits<Scalar>::type& x)
     {
       eigen_internal_assert(index >= 0 && index < size());
-      derived().template writePacket<StoreMode>(index,val);
+      derived().template writePacket<StoreMode>(index,x);
     }
 
 #ifndef EIGEN_PARSED_BY_DOXYGEN

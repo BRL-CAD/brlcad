@@ -3,7 +3,7 @@
 //
 // Copyright (C) 2009 Claire Maurice
 // Copyright (C) 2009 Gael Guennebaud <gael.guennebaud@inria.fr>
-// Copyright (C) 2010,2012 Jitse Niesen <jitse@maths.leeds.ac.uk>
+// Copyright (C) 2010 Jitse Niesen <jitse@maths.leeds.ac.uk>
 //
 // This Source Code Form is subject to the terms of the Mozilla
 // Public License v. 2.0. If a copy of the MPL was not distributed
@@ -220,19 +220,6 @@ template<typename _MatrixType> class ComplexEigenSolver
       return m_schur.info();
     }
 
-    /** \brief Sets the maximum number of iterations allowed. */
-    ComplexEigenSolver& setMaxIterations(Index maxIters)
-    {
-      m_schur.setMaxIterations(maxIters);
-      return *this;
-    }
-
-    /** \brief Returns the maximum number of iterations. */
-    Index getMaxIterations()
-    {
-      return m_schur.getMaxIterations();
-    }
-
   protected:
     EigenvectorType m_eivec;
     EigenvalueType m_eivalues;
@@ -248,8 +235,7 @@ template<typename _MatrixType> class ComplexEigenSolver
 
 
 template<typename MatrixType>
-ComplexEigenSolver<MatrixType>& 
-ComplexEigenSolver<MatrixType>::compute(const MatrixType& matrix, bool computeEigenvectors)
+ComplexEigenSolver<MatrixType>& ComplexEigenSolver<MatrixType>::compute(const MatrixType& matrix, bool computeEigenvectors)
 {
   // this code is inspired from Jampack
   assert(matrix.cols() == matrix.rows());
