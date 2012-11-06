@@ -1370,7 +1370,7 @@ wgl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	    fb_log("Warning, wgl_write: wglMakeCurrent unsuccessful.\n");
 	}
 
-	if (xstart + count <= ifp->if_width) {
+	if (xstart + count <= (size_t)ifp->if_width) {
 	    wgl_xmit_scanlines(ifp, ybase, 1, xstart, count);
 	    if (SGI(ifp)->mi_doublebuffer) {
 		SwapBuffers(WGL(ifp)->hdc);
