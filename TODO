@@ -36,8 +36,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * fix bottie crash on 32b builds
 
-* investigate bottie '1 unit closer' issue indianlarry saw in frv
-
 * check libbu implementation of red-black trees (see note in bu.h
   referencing an error in the Cormen book used as a basis)
 
