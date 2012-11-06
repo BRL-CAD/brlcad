@@ -22,42 +22,40 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   corrupted).  check SIZEOF_NETWORK_DOUBLE and ntohd/htond conversions
   where reading/writing fastf_t.
 
-* make igraph/graph command exist even if adaptagrams does not
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
 * bu_bomb not printing stack trace as it is supposed to
 
-* investigate bu_vls_encode/decode failures on g-dot.c (see that
-  file for FIXME note); add tests for both functions (note only
-  g-dot.c wants to use the functions at the moment)
-
 * fix bottie crash on 32b builds
-
-* check libbu implementation of red-black trees (see note in bu.h
-  referencing an error in the Cormen book used as a basis)
-
-* verify/fix/improve rtarea.  There are reports that the rtarea
-  command may have a bug in its calculations.  This needs to be
-  investigated along with a review of the taxonomy used by rtarea for
-  describing presented/projected areas.
 
 * fix 64b detection across platforms. Fix rhel 32/64 confusion
 
 * test new edit command
-
-* hook marching cubes into libged facetize
-
-* eliminate dbi_filepath (perhaps replace with dbi_filedir) as we
-  shouldn't need to search.  we were told where the database was.
 
 * resolve bot bin sort optimization crash, disabled during release
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* investigate bu_vls_encode/decode failures on g-dot.c (see that
+  file for FIXME note); add tests for both functions (note only
+  g-dot.c wants to use the functions at the moment)
+
+* verify/fix/improve rtarea.  There are reports that the rtarea
+  command may have a bug in its calculations.  This needs to be
+  investigated along with a review of the taxonomy used by rtarea for
+  describing presented/projected areas.
+
+* eliminate dbi_filepath (perhaps replace with dbi_filedir) as we
+  shouldn't need to search.  we were told where the database was.
+
+* hook marching cubes into libged facetize
+
+* check libbu implementation of red-black trees (see note in bu.h
+  referencing an error in the Cormen book used as a basis)
 
 * make libfb parallel-safe.  use bu memory management.  remove
   semaphore locks in src/rt/main.c and elsewhere.
