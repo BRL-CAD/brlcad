@@ -1314,7 +1314,7 @@ wgl_write(FBIO *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t
 	if (y >= ifp->if_height)
 	    break;
 
-	if (pix_count >= ifp->if_width-x)
+	if (pix_count >= (size_t)(ifp->if_width-x))
 	    scan_count = ifp->if_width-x;
 	else
 	    scan_count = pix_count;
