@@ -230,9 +230,6 @@ main(int argc, char **argv)
     }
     wdb_close(outfp);
     fflush(stderr);
-    ret = system("cat ke.g");	/* XXX need library routine */
-    if (ret < 0)
-	perror("system");
 
     return 0;
 }
