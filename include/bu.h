@@ -1201,7 +1201,7 @@ typedef double fastf_t;
  * zero; dividing by such a number can be expected to produce a
  * divide-by-zero error.  All divisors should be checked against
  * this value before actual division is performed.  TODO: macro
- * function sytax instead of constant (DEPRECATED)
+ * function syntax instead of constant (DEPRECATED)
  *
  * SQRT_SMALL_FASTF - sqrt(SMALL_FASTF), or slightly larger.  The
  * value of this is quite a lot larger than that of SMALL_FASTF.  Any
@@ -4350,7 +4350,7 @@ BU_EXPORT extern int bu_str_false(const char *str);
  * as \\010 or \\020, followed by
  * words preceded with embedded low-value bytes indicating
  * bit number plus one,
- * in little-endian order, eg:
+ * in little-endian order, e.g.:
  * "\010\2Bit_one\1BIT_zero"
  */
 BU_EXPORT extern void bu_vls_printb(struct bu_vls *vls,
@@ -4371,7 +4371,7 @@ BU_EXPORT extern void bu_printb(const char *s,
 /** @{ */
 /**
  * This collection of routines implements a "pointer table" data
- * structure providing a convenient mechanism for managin a collection
+ * structure providing a convenient mechanism for managing a collection
  * of pointers to objects.  This is useful where the size of the array
  * is not known in advance and may change with time.  It's convenient
  * to be able to write code that can say "remember this object", and
@@ -5486,7 +5486,7 @@ BU_EXPORT extern char *bu_str_unescape(const char *input, char *output, size_t s
  */
 
 /**
- * Given a string representation of a unit of distance (eg, "feet"),
+ * Given a string representation of a unit of distance (e.g., "feet"),
  * return the multiplier which will convert that unit into the default
  * unit for the dimension (millimeters for length, mm^3 for volume,
  * and grams for mass.)
