@@ -253,7 +253,6 @@ struct pkg_switch pkgswitch[] = {
 
 fd_set clients;
 int print_on = 1;
-char *frame_script = NULL;
 
 int save_overlaps=0;
 
@@ -1517,20 +1516,6 @@ frame_is_done(struct frame *fr)
 	       bu_vls_addr(&fr->fr_after_cmd) );
 	(void)rt_do_cmd( (struct rt_i *)0,
 			 bu_vls_addr(&fr->fr_after_cmd), cmd_tab );
-    }
-
-    /* Run global end-of-frame script from 'EOFrame' in .remrtrc file */
-    if (frame_script) {
-	char *cmd;
-	int len = strlen(frame_script) + strlen(fr->fr_filename) + 20;
-	cmd = malloc(len); /* spaces and frame number */
-	snprintf(cmd, len, "%s %s %ld", frame_script, fr->fr_filename,
-		 fr->fr_number);
-	if (rem_debug) bu_log("%s %s\n", stamp(), cmd);
-	len = system(cmd);
-	if (len < 0)
-	    perror("system");
-	(void) free(cmd);
     }
 
     /* Final processing of output file */
@@ -3838,33 +3823,6 @@ cd_exit(int UNUSED(argc), char **UNUSED(argv))
     return 0;
 }
 
-/* 		C D _ F R A M E
- *
- * Entry:
- *	argc	argument count
- *	argv	argument list
- *
- * Exit:
- *	frame_script is set to the shell script to execute.
- *
- */
-int
-cd_EOFrame(int argc, char **argv)
-{
-    if (argc < 2)
-	return 1;
-
-    if (frame_script) {
-	(void) free(frame_script);
-	frame_script = (char *)0;
-    }
-
-    if (!BU_STR_EQUAL(argv[1], "off") ) {
-	frame_script = bu_strdup(argv[1]);
-    }
-    return 0;
-}
-
 struct command_tab cmd_tab[] = {
     {"load",	"file obj(s)",	"specify database and treetops",
      cd_load,	3, 99},
@@ -3908,8 +3866,6 @@ struct command_tab cmd_tab[] = {
      cd_wait,	1, 1},
     {"exit", "",		"terminate remrt",
      cd_exit,	1, 1},
-    {"EOFrame", "EOFrame command|'off'", "Run command/script on dispatcher at End Of Frame",
-     cd_EOFrame,	2, 2},
     /* FRAME BUFFER */
     {"attach", "[fb]",	"attach to frame buffer",
      cd_attach,	1, 2},
