@@ -86,7 +86,7 @@
 #endif
 
 /* the S_IS* macros should replace the S_IF*'s
-   already defined in C99 complient compilers
+   already defined in C99 compliant compilers
    this is the work-around for older compilers */
 #ifndef S_ISDIR
 #   define S_ISDIR(_st_mode) (((_st_mode) & S_IFMT) == S_IFDIR)
