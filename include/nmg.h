@@ -88,7 +88,7 @@
 /* Boolean operations */
 #define NMG_BOOL_SUB   1	/**< @brief subtraction */
 #define NMG_BOOL_ADD   2	/**< @brief addition/union */
-#define NMG_BOOL_ISECT 4	/**< @brief intsersection */
+#define NMG_BOOL_ISECT 4	/**< @brief intersection */
 
 /* Boolean classifications */
 #define NMG_CLASS_Unknown   -1
@@ -232,7 +232,7 @@ struct nmgregion_a {
  * enclose either volume or surface area.
  *
  * The wire edgeuses are disconnected line segments.  There is a
- * special interpetation to the eu_hd list of wire edgeuses.  Unlike
+ * special interpretation to the eu_hd list of wire edgeuses.  Unlike
  * edgeuses seen in loops, the eu_hd list contains eu1, eu1mate, eu2,
  * eu2mate, ..., where each edgeuse and its mate comprise a
  * *non-connected* "wire" edge which starts at eu1->vu_p->v_p and ends
@@ -801,7 +801,7 @@ struct nmg_struct_counts {
 /**
  * Function table, for use with nmg_visit().
  *
- * Indended to have same generally the organization as
+ * Intended to have same generally the organization as
  * nmg_struct_counts.  The handler's args are long* to allow generic
  * handlers to be written, in which case the magic number at long*
  * specifies the object type.
