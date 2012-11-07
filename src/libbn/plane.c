@@ -848,7 +848,7 @@ bn_isect_2planes(fastf_t *pt,
 
  @endverbatim
  *
- * While the parametric form is usually used to denote a ray (ie,
+ * While the parametric form is usually used to denote a ray (i.e.,
  * positive values of the parameter only), in this case the full line
  * is considered.
  *
@@ -1090,7 +1090,7 @@ bn_isect_line2_lseg2(fastf_t *dist,
 
     /* To keep the values of u between 0 and 1.  C should NOT be
      * scaled to have unit length.  However, it is a good idea to make
-     * sure that C is a non-zero vector, (ie, that A and B are
+     * sure that C is a non-zero vector, (i.e., that A and B are
      * distinct).
      */
     if ((ctol = MAGSQ_2D(c)) <= tol->dist_sq) {
@@ -3041,7 +3041,7 @@ min = (%g, %g, %g), max = (%g, %g, %g), half_eqn = (%g, %g, %g, %g)\n",
  *
  * This algorithm is based on expressing the distance squared, taking
  * partials with respect to the two unknown parameters (dist[0] and
- * dist[1]), setting the two partails equal to 0, and solving the two
+ * dist[1]), setting the two partials equal to 0, and solving the two
  * simultaneous equations
  */
 int
@@ -3226,7 +3226,7 @@ bn_isect_lseg_rpp(fastf_t *a,
 	    if (mindist < ((sv = (*min - *pt) / *dir)))
 		mindist = sv;
 	} else {
-	    /* If direction component along this axis is NEAR 0, (ie,
+	    /* If direction component along this axis is NEAR 0, (i.e.,
 	     * this ray is aligned with this axis), merely check
 	     * against the boundaries.
 	     */
