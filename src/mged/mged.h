@@ -24,23 +24,23 @@
  * V E R Y   I M P O R T A N T   N O T I C E ! ! !
  *
  * Many people in the computer graphics field use post-multiplication,
- * (thanks to Newman and Sproull) with row vectors, ie:
+ * (thanks to Newman and Sproull) with row vectors, i.e.:
  *
  *	view_vec = model_vec * T
  *
  * However, in the GED system, the more traditional representation of
  * column vectors is used (ref: Gwyn).  Therefore, when transforming a
- * vector by a matrix, pre-multiplication is used, ie:
+ * vector by a matrix, pre-multiplication is used, i.e.:
  *
  *	view_vec = model2view_mat * model_vec
  *
- * Furthermore, additional transformations are multiplied on the left, ie:
+ * Furthermore, additional transformations are multiplied on the left, i.e.:
  *
  *	vec'  =  T1 * vec
  *	vec'' =  T2 * T1 * vec  =  T2 * vec'
  *
  * The most notable implication of this is the location of the
- * "delta" (translation) values in the matrix, ie:
+ * "delta" (translation) values in the matrix, i.e.:
  *
  *       x'     (R0   R1   R2   Dx) x
  *       y' =  (R4   R5   R6   Dy)  *  y
@@ -291,7 +291,7 @@ extern char *state_str[]; /* identifying strings */
 
 #define TCL_ALLOC_ERR { \
 	Tcl_AppendResult(INTERP, "\
-An error has occured while adding a new object to the database.\n", (char *)NULL); \
+An error has occurred while adding a new object to the database.\n", (char *)NULL); \
 	TCL_ERROR_RECOVERY_SUGGESTION; }
 
 #define TCL_ALLOC_ERR_return { \
@@ -345,7 +345,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
 /* For errors from db_diradd() or db_alloc() */
 #define ALLOC_ERR { \
 	(void)printf("\
-An error has occured while adding a new object to the database.\n"); \
+An error has occurred while adding a new object to the database.\n"); \
 	ERROR_RECOVERY_SUGGESTION; }
 
 #define ALLOC_ERR_return { \
