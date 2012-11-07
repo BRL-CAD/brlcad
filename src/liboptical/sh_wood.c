@@ -31,7 +31,7 @@
  * table which Tom DiGiacinto used in "sh_marble." In my case, the
  * access is still limited to 10x10x10, but the table itself is
  * expanded to 20x20x20.  There is a MATPARM "dither" field which is
- * used to "dither the dither." IE, the "dither" parameter is a
+ * used to "dither the dither." I.e., the "dither" parameter is a
  * coefficient which is summed into Tom's interpolation routine,
  * thereby allowing each wood-shaded combination to have a different
  * noise pattern, and prevents all similar combinations from looking
