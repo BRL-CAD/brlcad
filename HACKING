@@ -402,7 +402,7 @@ details on subdirectories and authorship not covered here.
   src/mged/
 	Multi-device geometry editor
   src/other/
-	External frameworks (Tcl/Tk, libpng, zlib, etc)
+	External frameworks (Tcl/Tk, libpng, zlib, etc.)
   src/proc-db/
 	Procedural geometry tools, create models programmatically
   src/remrt/
@@ -638,7 +638,7 @@ The exTabSettings project will also make MSVC conform by reading our
 file footers.
 
 A similar block can be used on source and script files in other
-languages (such as Tcl, Shell, Perl, etc).  See the local variable
+languages (such as Tcl, Shell, Perl, etc.).  See the local variable
 footer script in sh/footer.sh to automatically set/update files.
 
 2) Stylistic whitespace
@@ -1020,7 +1020,7 @@ VERSION is the usual version triplet described above under the section
 entitled VERSION NUMBERS & COMPATIBILITY.  Example: 7.12.4
 
 EXTENSION is the filename extension.  Compressed tar files should use
-the expanded form (i.e. not tgz, etc) unless otherwise dictated as
+the expanded form (i.e. not tgz, etc.) unless otherwise dictated as
 necessary convention by a source package management system.  Examples:
 
   tar.gz
@@ -1052,7 +1052,7 @@ entitled VERSION NUMBERS & COMPATIBILITY.  Example: 7.12.4 or 7.10.2-1
 OS is an optional identifier for the target operating system for
 binary distributions.  It should only be used if the file extension is
 not already platform specific (e.g., .dmg already indicates Mac OS X,
-.exe indicates Windows, etc).  The OS name can be the same as the GNU
+.exe indicates Windows, etc.).  The OS name can be the same as the GNU
 autotools OS identifier without the version number.  If there are
 other platform considerations like the version of libc or the version
 of the OS that need to be called out, they can be included.  Examples:
@@ -1089,7 +1089,7 @@ that a binary distribution is a partial or custom release.  Examples:
   benchmark
 
 EXTENSION is the filename extension.  Compressed tar files should use
-the expanded form (i.e. not tgz, etc) unless otherwise dictated as
+the expanded form (i.e. not tgz, etc.) unless otherwise dictated as
 necessary convention by a binary package management system.  Examples:
 
   tar.gz
