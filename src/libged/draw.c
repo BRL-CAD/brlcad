@@ -27,8 +27,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
+#include "bu.h"
+#include "bio.h"
 #include "mater.h"
 #include "solid.h"
 
@@ -304,6 +305,44 @@ _ged_color_soltab(struct solid *sp)
     sp->s_color[2] = sp->s_basecolor[2];
 }
 
+/* Set solid's basecolor, color, and color flags based on client data and tree
+ * state. If user color isn't set in client data, the solid's region id must be
+ * set for proper material lookup.
+ */
+static void
+solid_set_color_info(
+	struct solid *sp,
+	struct _ged_client_data *dgcdp,
+	struct db_tree_state *tsp)
+{
+    unsigned char bcolor[3] = {255, 0, 0}; /* default */
+
+    sp->s_uflag = 0;
+    sp->s_dflag = 0;
+
+    if (dgcdp->wireframe_color_override) {
+	sp->s_uflag = 1;
+
+	bcolor[RED] = dgcdp->wireframe_color[RED];
+	bcolor[GRN] = dgcdp->wireframe_color[GRN];
+	bcolor[BLU] = dgcdp->wireframe_color[BLU];
+    } else if (tsp) {
+	if (tsp->ts_mater.ma_color_valid) {
+	    bcolor[RED] = tsp->ts_mater.ma_color[RED] * 255.0;
+	    bcolor[GRN] = tsp->ts_mater.ma_color[GRN] * 255.0;
+	    bcolor[BLU] = tsp->ts_mater.ma_color[BLU] * 255.0;
+	} else {
+	    sp->s_dflag = 1;
+	}
+    }
+
+    sp->s_basecolor[RED] = bcolor[RED];
+    sp->s_basecolor[GRN] = bcolor[GRN];
+    sp->s_basecolor[BLU] = bcolor[BLU];
+
+    _ged_color_soltab(sp);
+}
+
 
 /**
  * G E D _ D R A W H _ P A R T 2
@@ -319,61 +358,30 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
     struct solid *sp;
 
     if (!existing_sp) {
-	/* Handling a new solid */
 	GET_SOLID(sp, &_FreeSolid.l);
-	sp->s_dlist = 0;
     } else {
-	/* Just updating an existing solid.
-	 * 'tsp' and 'pathpos' will not be used
-	 */
 	sp = existing_sp;
     }
 
     solid_append_vlist(sp, (struct bn_vlist *)vhead);
 
-    /*
-     * Compute the min, max, and center points.
-     */
     bound_solid(dgcdp->gedp, sp);
 
-    /*
-     * If this solid is new, fill in its information.
-     * Otherwise, don't touch what is already there.
-     */
     if (!existing_sp) {
-	/* Take note of the base color */
-	if (dgcdp->wireframe_color_override) {
-	    /* a user specified the color, so arrange to use it */
-	    sp->s_uflag = 1;
-	    sp->s_dflag = 0;
-	    sp->s_basecolor[0] = dgcdp->wireframe_color[0];
-	    sp->s_basecolor[1] = dgcdp->wireframe_color[1];
-	    sp->s_basecolor[2] = dgcdp->wireframe_color[2];
-	} else {
-	    sp->s_uflag = 0;
-	    if (tsp) {
-		if (tsp->ts_mater.ma_color_valid) {
-		    sp->s_dflag = 0;	/* color specified in db */
-		    sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.;
-		    sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.;
-		    sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.;
-		} else {
-		    sp->s_dflag = 1;	/* default color */
-		    sp->s_basecolor[0] = 255;
-		    sp->s_basecolor[1] = 0;
-		    sp->s_basecolor[2] = 0;
-		}
-	    }
-	}
-	sp->s_cflag = 0;
+	db_dup_full_path(&sp->s_fullpath, pathp);
+
 	sp->s_flag = DOWN;
 	sp->s_iflag = DOWN;
 	sp->s_soldash = dashflag;
-	sp->s_Eflag = 0;	/* This is a solid */
-	db_dup_full_path(&sp->s_fullpath, pathp);
+	sp->s_Eflag = 0;
+
 	if (tsp) {
-	  sp->s_regionid = tsp->ts_regionid;
+	    sp->s_regionid = tsp->ts_regionid;
 	}
+
+	solid_set_color_info(sp, dgcdp, tsp);
+
+	sp->s_dlist = 0;
 	sp->s_transparency = dgcdp->transparency;
 	sp->s_dmode = dgcdp->dmode;
 	sp->s_hiddenLine = dgcdp->hiddenLine;
@@ -382,12 +390,11 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
 	bu_semaphore_acquire(RT_SEM_MODEL);
 	BU_LIST_APPEND(dgcdp->gdlp->gdl_headSolid.back, &sp->l);
 	bu_semaphore_release(RT_SEM_MODEL);
-
-	_ged_color_soltab(sp);
     }
 
-    if (dgcdp->gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
+    if (dgcdp->gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL) {
 	(*dgcdp->gedp->ged_create_vlist_callback)(sp);
+    }
 }
 
 
