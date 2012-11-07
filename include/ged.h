@@ -1744,7 +1744,7 @@ GED_EXPORT extern int ged_shaded_mode(struct ged *gedp, int argc, const char *ar
 GED_EXPORT extern int ged_shader(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Breaks the NMG model into seperate shells
+ * Breaks the NMG model into separate shells
  */
 GED_EXPORT extern int ged_shells(struct ged *gedp, int argc, const char *argv[]);
 
