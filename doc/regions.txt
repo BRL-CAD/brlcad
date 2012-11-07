@@ -120,7 +120,7 @@ region flagged node is actually defining a single, solid, self-consistent
 chunk of 3-d space.  Therefore, regions are chunks of 3-space, and
 regions are grouped together to form the model.  It is permitted in RT,
 but not in some earlier software, to perform non-union operations on
-regions (ie, subtract one region from another).
+regions (i.e., subtract one region from another).
 
 The "big-E" command in MGED is slated for overhaul.  The task of
 "facetizing" a CSG model is a difficult one;  the current code in MGED,
@@ -183,7 +183,7 @@ must be aware of possible interference between the two regions.
 
 Note,  r region1 u solid1 - solid2   and   r region1 + solid1 - solid2
 produce the exact same results; however, for good practice one should use the
-union only when the region is really intended for unions (ie more than
+union only when the region is really intended for unions (i.e. more than
 one union operation).
 
 Members of regions are generally solids, however other regions are
@@ -208,7 +208,7 @@ command, with precedence following a couple of rules;
 	1] operations are applied "left to right" (the current operation
 	is done to the current solid with respect to the existing region).
 
-	2] there are implied parenthesis that lie in-between union operators.
+	2] there are implied parentheses that lie in-between union operators.
 
 so
 
@@ -219,7 +219,7 @@ is equivalent to:
 	((s1 - s2) + s3) u (s4 - s5) u s6
 
 that is, if parenthesis were allowed.  Therefore, you can think of the
-solids between unions (surrounded by implied parenthesis) as sub-regions.
+solids between unions (surrounded by implied parentheses) as sub-regions.
 The order of the region members (which can be printed out with the "l"
 command) is critical, and must be scrutinized when members are added or
 deleted from a region.
