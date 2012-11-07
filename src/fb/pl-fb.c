@@ -66,7 +66,7 @@
  * Note:
  *
  * UNIX-Plot files are defined to be machine-independent, with
- * "little-endian" (eg, VAX) byte-ordering.
+ * "little-endian" (e.g., VAX) byte-ordering.
  *
  */
 
@@ -170,7 +170,7 @@ typedef struct descr {
     coords pixel;		/* starting scan, nib */
     tiny xsign;			/* 0 or +1 */
     tiny ysign;			/* -1, 0, or +1 */
-    int ymajor; 		/* true iff Y is major dir. */
+    int ymajor; 		/* true if Y is major dir. */
 #undef major
 #undef minor
     short major;		/* major dir delta (nonneg) */
