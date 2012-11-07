@@ -24,7 +24,7 @@
  * Place (ULP).
  *
  * In this context, ULP is the distance to the next normalized
- * floating point value larger that a given input value.
+ * floating point value larger than a given input value.
  *
  * TODO: handle NaN, +-Inf, underflow, overflow, non-IEEE, float.h
  *
@@ -109,6 +109,34 @@ bn_flt_max()
     static const float val = INFINITY;
     register long next = *(long*)&val - 1;
     return *(float *)&next;
+}
+
+
+double
+bn_flt_min_sqrt()
+{
+    return sqrt(flt_min());
+}
+
+
+double
+bn_flt_max_sqrt()
+{
+    return sqrt(flt_max());
+}
+
+
+double
+bn_dbl_min_sqrt()
+{
+    return sqrt(dbl_min());
+}
+
+
+double
+bn_dbl_max_sqrt()
+{
+    return sqrt(dbl_max());
 }
 
 
