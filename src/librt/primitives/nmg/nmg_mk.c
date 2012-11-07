@@ -869,7 +869,7 @@ nmg_meonvu(struct vertexuse *vu)
 	vu->up.eu_p = eu1;	/* vu is good again */
 
 	if (s->vu_p != vu)
-	    bu_bomb("nmg_meonvu() vetexuse parent shell disowns vertexuse!\n");
+	    bu_bomb("nmg_meonvu() vertexuse parent shell disowns vertexuse!\n");
 	s->vu_p = (struct vertexuse *)NULL;	/* remove from shell */
 
 	eu2->vu_p = nmg_mvu(vu->v_p, &eu2->l.magic, m);
