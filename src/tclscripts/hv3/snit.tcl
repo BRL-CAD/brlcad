@@ -3001,7 +3001,7 @@ proc ::snit::RT.mytypemethod {type args} {
 # string to pass to another object (e.g., as a -command).
 # Inserts the code at the beginning to call the right object, even if
 # the object's name has changed.  Requires that selfns be defined
-# in the calling context, eg. can only be called in instance
+# in the calling context, e.g. can only be called in instance
 # code.
 #
 # This is used to implement the "mymethod" command.
@@ -3013,7 +3013,7 @@ proc ::snit::RT.mymethod {args} {
 
 # Calls an instance method for an object given its
 # instance namespace and remaining arguments (the first of which
-# will be the method name.
+# will be the method name).
 #
 # selfns		The instance namespace
 # args			The arguments
