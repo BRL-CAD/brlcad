@@ -116,7 +116,7 @@ get_args(int argc, char **argv)
 /*
  * S E P A R A T E
  *
- * Unpack RGB byte tripples into three separate arrays of integers.
+ * Unpack RGB byte triples into three separate arrays of integers.
  * The first and last pixels are replicated twice, to handle border effects.
  *
  * Updated version:  the outputs are Y U V values, not R G B.
@@ -172,7 +172,7 @@ separate(int *rop, int *gop, int *bop, unsigned char *cp, long int num)
  * C O M B I N E
  *
  * Combine three separate arrays of integers into a buffer of
- * RGB byte tripples
+ * RGB byte triples
  */
 static void
 combine(unsigned char *cp, int *rip, int *gip, int *bip, long int num)
