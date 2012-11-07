@@ -1254,7 +1254,7 @@ wgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t
  *			W G L _ N O R M A L
  *
  * Restore the display processor to a normal mode of operation
- * (ie, not scaled, rotated, displaced, etc).
+ * (i.e., not scaled, rotated, displaced, etc.).
  */
 HIDDEN int
 wgl_normal(struct dm *dmp)
