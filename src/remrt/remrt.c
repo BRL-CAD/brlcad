@@ -1353,8 +1353,8 @@ do_a_frame(void)
  *  The .pix file for this frame already has some pixels stored in it
  *  from some earlier, aborted run.
  *  view_pixel() is always careful to write (0, 0, 1) or some other
- *  non-zero tripple in all rendered pixels.
- *  Therefore, if a (0, 0, 0) tripple is found in the file, it is
+ *  non-zero triple in all rendered pixels.
+ *  Therefore, if a (0, 0, 0) triple is found in the file, it is
  *  part of some span which was not yet rendered.
  *
  *  At the outset, the frame is assumed to be entirely un-rendered.
