@@ -126,8 +126,8 @@ fi
 ########################
 # figure out file type #
 ########################
-# wrap is whether or not in needs to be incased in /* */
-# commentprefix is the comment character to prefex each line
+# wrap is whether or not it needs to be encased in /* */
+# commentprefix is the comment character to prefix each line
 ###
 case $FILE in
     *.sh )
@@ -452,7 +452,7 @@ $c SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     xBDL)
 	block="${block}
 $c Redistribution and use in source (Docbook format) and 'compiled'
-$c forms (PDF, PostScript, HTML, RTF, etc), with or without
+$c forms (PDF, PostScript, HTML, RTF, etc.), with or without
 $c modification, are permitted provided that the following conditions
 $c are met:
 $c
