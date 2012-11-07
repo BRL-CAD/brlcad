@@ -331,7 +331,7 @@ rt_tor_print(register const struct soltab *stp)
  * a point, P(x0, y0, z0) and a direction normal, D = ax + by + cz.
  * Any point on a line can be expressed by one variable 't', where
  *
- * X = a*t + x0,	eg, X = Dx*t + Px
+ * X = a*t + x0,	e.g., X = Dx*t + Px
  * Y = b*t + y0,
  * Z = c*t + z0.
  *
