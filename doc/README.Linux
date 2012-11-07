@@ -40,7 +40,7 @@ Arch Linux
 
 An example PKGBUILD and needed scripts are provided in misc/archlinux.
 Review and edit the PKGBUILD to suit your preferred configuration and
-build situation (eg. building from a tarball vs building from SVN).
+build situation (e.g. building from a tarball vs building from SVN).
 Run `makepkg` in that directory to build the package.
 
 
