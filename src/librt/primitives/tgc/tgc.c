@@ -611,7 +611,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
      * substitute them into the equation above.
      *
      * Express each variable (X, Y, and Z) as a linear equation in
-     * 'k', eg, (dprime[X] * k) + cor_pprime[X], and substitute into
+     * 'k', e.g., (dprime[X] * k) + cor_pprime[X], and substitute into
      * the cone equation.
      */
     Xsqr.dgr = 2;
@@ -1006,7 +1006,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	 * substitute them into the equation above.
 	 *
 	 * Express each variable (X, Y, and Z) as a linear equation in
-	 * 'k', eg, (dprime[X] * k) + cor_pprime[X], and substitute
+	 * 'k', e.g., (dprime[X] * k) + cor_pprime[X], and substitute
 	 * into the cone equation.
 	 */
 	Xsqr.dgr = 2;
