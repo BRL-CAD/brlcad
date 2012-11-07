@@ -465,8 +465,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   one hit point is being returned.  to reproduce:
   e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
 
-* deprecate rtg3 and burst
-
 * make sure 'preview' works, particularly the 'tree' subcommand.
 
 * make nreed's new bot cleanup interface update interactively without
@@ -506,8 +504,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 * add support for a custom unit conversion factor to the units command
   (e.g. 'units 9.3120223' or 'units metertons 9.3120223')
 
-* write up a brief DSP overview on the wiki
-
 * merge conv-vg2g into dbupgrade
 
 * usage statistics.  similar to the eclipse Usage Data Collector, keep
@@ -540,8 +536,6 @@ comp.r4 ID 5678 material code 5 LOS 75
 * automatic anti-aliasing as a second render pass on the edges
   encountered (possibly using bilinear filtering scheme, improve upon
   rtedge's current simple filter)
-
-* kdtree spatial partitioning option in librt
 
 * implement rt_volume() API for computing geometry volume (g_qa style
   for complex, direct for primitives)
@@ -949,10 +943,6 @@ comp.r4 ID 5678 material code 5 LOS 75
   statefulness can go away.  a db_glob expression that doesn't match
   anything should not return the expression.
 
-* Explore possibility of "level of detail" wireframe renderings,
-  possibly using the previous "smooth" wireframe work as a start,
-  to provide better visualization of models.
-
 * come up with a new tool that automatically generates "inside"
   regions for a given model as a way to automatically model air.
   particularly useful for bot models where the inside air compartment
@@ -978,8 +968,11 @@ comp.r4 ID 5678 material code 5 LOS 75
 * fix parallel crash report generation (multiple BU_MAPPED_FILE's
   getting acquired)
 
-* make closing both the command window and graphics window shut down
-  mged (i.e., fix unintentional behavior)
+* make only closing BOTH the command window and graphics window shut
+  down mged (i.e., fix unintentional behavior), not either alone.
+
+* add keybinding to restore a command window if only the graphics
+  window remains.
 
 * remove hit_normal and hit_point from struct hit.  add RT_HIT_POINT
   macro.  refactor all callers as needed.
@@ -1448,9 +1441,6 @@ BREP/NURBS
   resulting in boxes (hopefully) larger than they need to be.
 
 * update to openNURBS 5.0 (2011-02-02)
-
-* implement conversion of implicit CSG to NURBS CSG.  partially
-  complete, but primitives are still fixed at origin.
 
 * identify useful concepts implemented in the old NURBS code that are not
   present in openNURBS, and port that code to openNURBS data structures
