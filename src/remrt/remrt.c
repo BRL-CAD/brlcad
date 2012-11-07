@@ -3858,7 +3858,7 @@ struct command_tab cmd_tab[] = {
      cd_stat,	1, 1},
     {"status", "",		"full worker status",
      cd_status,	1, 1},
-    {"detach", "",		"detatch from interactive keyboard",
+    {"detach", "",		"detach from interactive keyboard",
      cd_detach,	1, 1},
     {"host", "name always|night|passive|rs[ rays/sec]|passrs[ rays/sec] cd|convert path", "server host",
      cd_host,	1, 6},
