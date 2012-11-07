@@ -665,7 +665,7 @@ knob id value
 .sp 2
 This command is used to emulate a "knob twist".
 Generally this command is used for display devices which have no actual
-knob peripherals (eg. tek).
+knob peripherals (e.g. tek).
 Any non-zero number entered for "value" is converted to 1 (if "value" is
 greater than zero) or is converted to -1 (if "value is less than zero).
 The user must enter the same command with "value" equal to zero to
