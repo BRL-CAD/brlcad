@@ -189,7 +189,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 * struct rt_bot_internal should be using "size_t *" instead of "int *"
   for the faces and face_normals members
 
-* fix the "(type)(size_t)val" hacks (using ints like ptrs, etc)
+* fix the "(type)(size_t)val" hacks (using ints like ptrs, etc.)
 
 * Mac OS X mouse input binding problem seems to be back with rotations
   stalling during interactive use.
@@ -235,7 +235,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   options specific to testing geometry (like whether two objects
   overlap, whether an object's volume is greater than some value or
   equal to zero, whether two objects are actually the same object
-  (geometrically), etc).
+  (geometrically), etc.).
 
 * rewrite nmg->brep conversion routine
   (src/librt/primitives/brep/brep_brep.cpp) to use a simple 2d
@@ -315,7 +315,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 	named reference(s):        hull.r
 	above/below/left/right:    below
 	offset:                    33.4
-		(e.g., "at 1.0,3.5,2.1" or "below hull.r offset 33.4" or "at hull.r", etc)
+		(e.g., "at 1.0,3.5,2.1" or "below hull.r offset 33.4" or "at hull.r", etc.)
 
   Text:
 	user-defined string:     my awesome component -----> .
@@ -416,7 +416,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   desired.
 
 * provide libdm mechanism for drawing spline curves (to help visualize
-  flight paths, show object trajectories, etc).
+  flight paths, show object trajectories, etc.).
 
 * provide option for displaying object bounding boxes while rotating.
   visualization feature to help with rotation operations, showing
@@ -444,7 +444,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   that the array is not accessed directly.  either an rt_eval() style
   interface with data-driven keys to tell it with function(s) to call,
   or simply have an rt_*() for each function (e.g., rt_mirror(),
-  rt_shot(), rt_describe(), etc).
+  rt_shot(), rt_describe(), etc.).
 
 * release dm X get_color() memory
 
@@ -455,7 +455,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   instead of strcmp()).
 
 * add support for user-specified sorting for the attr command (case,
-  case-insensitive, creation, value, etc)
+  case-insensitive, creation, value, etc.)
 
 * investigate why solids.sh fails on three pixels on some 64-bit
   platforms. it grazingly hits/misses a tgc causing a regression
@@ -711,7 +711,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   http://www.catb.org/~esr/doclifter/)
 
 * add an option to bot_dump for outputting surface normals.  Make sure
-  all supported dump formats (obj, dxf, etc) optionally write out
+  all supported dump formats (obj, dxf, etc.) optionally write out
   normals.  Consider adding an option to smoothly interpolate normals
   (per face or vertex).
 
@@ -804,7 +804,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 
 	point := x, y, z
 	line := start point, end point
-	polyline := various (closed, open, paired, modified, etc)
+	polyline := various (closed, open, paired, modified, etc.)
 	circle := center point, radius
 	ellipse := center point, major radius, minor radius
 	hyperbola := center point, major radius, minor radius
@@ -835,7 +835,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   surface, distance from medial axis, distance from centroid, distance
   from plane, etc.  this supports parametric descriptions of materials
   that have highly variable densities (e.g., bone, certain alloys and
-  plastics, etc).
+  plastics, etc.).
 
 * shader objects (non-geometric attribute-only objects) for v5
   geometry files.  allow shader string to refer to said objects for
@@ -1114,7 +1114,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 * investigate performance impact of using sched_setaffinity and/or
   pthread_attr_setaffinity_np for linux threading affinity in librt.
 
-* rtedge-style tracer that outputs tool paths (splines/segments, etc)
+* rtedge-style tracer that outputs tool paths (splines/segments, etc.)
   for CNC/CAM style toolpath cutting descriptions (g-code files).
 
 * rtedge shoots twice as many rays as it needs to (shoots the 'below'
