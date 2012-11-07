@@ -19,7 +19,7 @@
 #
 ###
 #
-# The 'lc' command lists a set of codes (ie attributes) of regions
+# The 'lc' command lists a set of codes (i.e. attributes) of regions
 # within a group/combination. The attributes listed are 'region_id',
 # 'material_id' and 'los' followed by 'region name'. If an attribute
 # is unset, it is reported as '--'. By default, the list is sorted in
@@ -216,7 +216,7 @@ proc lc {args} {
 	unset lines2
     }
 
-    # minimum column width to accomidate column headers
+    # minimum column width to accommodate column headers
     set region_id_len_max 2
     set material_id_len_max 3
     set los_len_max 3
