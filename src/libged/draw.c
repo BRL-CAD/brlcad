@@ -386,7 +386,7 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
 	sp->s_dmode = dgcdp->dmode;
 	sp->s_hiddenLine = dgcdp->hiddenLine;
 
-	/* Add to linked list of solid structs */
+	/* append solid to display list */
 	bu_semaphore_acquire(RT_SEM_MODEL);
 	BU_LIST_APPEND(dgcdp->gdlp->gdl_headSolid.back, &sp->l);
 	bu_semaphore_release(RT_SEM_MODEL);
@@ -408,6 +408,118 @@ wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp
     return curtree;
 }
 
+static union tree *
+append_solid_to_display_list(
+	struct db_tree_state *tsp,
+	const struct db_full_path *pathp,
+	struct rt_db_internal *ip,
+	genptr_t client_data)
+{
+    point_t min, max;
+    struct solid *sp;
+    union tree *curtree;
+    struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
+
+    RT_CK_DB_INTERNAL(ip);
+    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BN_CK_TOL(tsp->ts_tol);
+    RT_CK_RESOURCE(tsp->ts_resp);
+
+    if (!dgcdp) {
+	return TREE_NULL;
+    }
+
+    if (RT_G_DEBUG & DEBUG_TREEWALK) {
+	char *sofar = db_path_to_string(pathp);
+
+	bu_vls_printf(dgcdp->gedp->ged_result_str,
+		"wireframe_leaf(%s) path='%s'\n",
+		ip->idb_meth->ft_name, sofar);
+
+	bu_free((genptr_t)sofar, "path string");
+    }
+
+    /* create solid */
+    GET_SOLID(sp, &_FreeSolid.l);
+
+    sp->s_size = 0;
+    VSETALL(sp->s_center, 0.0);
+
+    if (ip->idb_meth->ft_bbox) {
+	if (ip->idb_meth->ft_bbox(ip, &min, &max, tsp->ts_tol) < 0) {
+	    bu_vls_printf(dgcdp->gedp->ged_result_str, "%s: plot failure\n",
+		    DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+
+	    return TREE_NULL;
+	}
+
+	sp->s_center[X] = (min[X] + max[X]) * 0.5;
+	sp->s_center[Y] = (min[Y] + max[Y]) * 0.5;
+	sp->s_center[Z] = (min[Z] + max[Z]) * 0.5;
+
+	sp->s_size = max[X] - min[X];
+	V_MAX(sp->s_size, max[Y] - min[Y]);
+	V_MAX(sp->s_size, max[Z] - min[Z]);
+    }
+
+    /* TODO: As a fallback for primitives that don't have a bbox function, use
+     * the old bounding method of calculating a plot for the primitive and
+     * using the extent of the plotted segments as the bounds.
+     */
+
+    db_dup_full_path(&sp->s_fullpath, pathp);
+    sp->s_flag = DOWN;
+    sp->s_iflag = DOWN;
+
+    if (dgcdp->draw_solid_lines_only) {
+	sp->s_soldash = 0;
+    } else {
+	sp->s_soldash = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER));
+    }
+
+    sp->s_Eflag = 0;
+
+    if (ip->idb_type == ID_GRIP) {
+	float mater_color[3];
+
+	/* Temporarily change mater color for pseudo solid to get the desired
+	 * default color.
+	 */
+	mater_color[RED] = tsp->ts_mater.ma_color[RED];
+	mater_color[GRN] = tsp->ts_mater.ma_color[GRN];
+	mater_color[BLU] = tsp->ts_mater.ma_color[BLU];
+
+	tsp->ts_mater.ma_color[RED] = 0;
+	tsp->ts_mater.ma_color[GRN] = 128;
+	tsp->ts_mater.ma_color[BLU] = 128;
+
+	solid_set_color_info(sp, dgcdp, tsp);
+
+	tsp->ts_mater.ma_color[RED] = mater_color[RED];
+	tsp->ts_mater.ma_color[GRN] = mater_color[GRN];
+	tsp->ts_mater.ma_color[BLU] = mater_color[BLU];
+
+    } else {
+	solid_set_color_info(sp, dgcdp, tsp);
+    }
+
+    sp->s_regionid = tsp->ts_regionid;
+    sp->s_dlist = 0;
+    sp->s_transparency = dgcdp->transparency;
+    sp->s_dmode = dgcdp->dmode;
+    sp->s_hiddenLine = dgcdp->hiddenLine;
+
+    /* append solid to display list */
+    bu_semaphore_acquire(RT_SEM_MODEL);
+    BU_LIST_APPEND(dgcdp->gdlp->gdl_headSolid.back, &sp->l);
+    bu_semaphore_release(RT_SEM_MODEL);
+
+    /* indicate success by returning something other than TREE_NULL */
+    RT_GET_TREE(curtree, tsp->ts_resp);
+    curtree->tr_op = OP_NOP;
+
+    return curtree;
+}
 
 /**
  * G E D _ W I R E F R A M E _ L E A F
@@ -417,7 +529,7 @@ wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp
 static union tree *
 wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
-    int dashflag; /* draw with dashed lines */
+    struct solid *sp;
     union tree *curtree;
     struct bu_list vhead;
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
@@ -426,50 +538,27 @@ wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, stru
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     RT_CK_RESOURCE(tsp->ts_resp);
-    if (!dgcdp) return TREE_NULL;
+
+    if (append_solid_to_display_list(tsp, pathp, ip, client_data) == TREE_NULL) {
+	return TREE_NULL;
+    }
+    sp = BU_LIST_LAST(solid, &dgcdp->gdlp->gdl_headSolid);
 
     BU_LIST_INIT(&vhead);
-
-    if (RT_G_DEBUG&DEBUG_TREEWALK) {
-	char *sofar = db_path_to_string(pathp);
-
-	bu_vls_printf(dgcdp->gedp->ged_result_str, "wireframe_leaf(%s) path='%s'\n",
-		      ip->idb_meth->ft_name, sofar);
-	bu_free((genptr_t)sofar, "path string");
-    }
-
-    if (dgcdp->draw_solid_lines_only)
-	dashflag = 0;
-    else
-	dashflag = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER));
 
     if (!ip->idb_meth->ft_plot
 	|| ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol, tsp->ts_tol, NULL) < 0)
     {
-	bu_vls_printf(dgcdp->gedp->ged_result_str, "%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "%s: plot failure\n",
+		DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+
 	return TREE_NULL;		/* ERROR */
     }
 
-    /*
-     * XXX HACK CTJ - _ged_drawH_part2 sets the default color of a
-     * solid by looking in tps->ts_mater.ma_color, for pseudo
-     * solids, this needs to be something different and drawH
-     * has no idea or need to know what type of solid this is.
-     */
-    if (ip->idb_type == ID_GRIP) {
-	int r, g, b;
-	r= tsp->ts_mater.ma_color[0];
-	g= tsp->ts_mater.ma_color[1];
-	b= tsp->ts_mater.ma_color[2];
-	tsp->ts_mater.ma_color[0] = 0;
-	tsp->ts_mater.ma_color[1] = 128;
-	tsp->ts_mater.ma_color[2] = 128;
-	_ged_drawH_part2(dashflag, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
-	tsp->ts_mater.ma_color[0] = r;
-	tsp->ts_mater.ma_color[1] = g;
-	tsp->ts_mater.ma_color[2] = b;
-    } else {
-	_ged_drawH_part2(dashflag, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+    solid_append_vlist(sp, (struct bn_vlist *)&vhead);
+
+    if (dgcdp->gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL) {
+	(*dgcdp->gedp->ged_create_vlist_callback)(sp);
     }
 
     /* Indicate success by returning something other than TREE_NULL */
