@@ -133,7 +133,7 @@ getntsccurves(ClientData UNUSED(cd), Tcl_Interp *interp, int UNUSED(argc), char 
     assign_tabdata_to_tcl_var(interp, "ntsc_g_samp", ntsc_g);
     assign_tabdata_to_tcl_var(interp, "ntsc_b_samp", ntsc_b);
 
-    /* Sum togther the sampled curves */
+    /* Sum together the sampled curves */
     {
 	struct bn_tabdata *sum;
 	BN_GET_TABDATA(sum, ntsc_r->table);
@@ -350,7 +350,7 @@ tcl_fb_cursor(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
 
 
 /*
- * Return value of one pixel as RGB tripple, in decimal
+ * Return value of one pixel as RGB triple, in decimal
  */
 int
 tcl_fb_readpixel(ClientData UNUSED(cd), Tcl_Interp *interp, int argc, char **argv)
