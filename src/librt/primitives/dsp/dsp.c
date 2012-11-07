@@ -1688,7 +1688,7 @@ permute_cell(point_t A,
  * C H E C K _ B B _ E L E V A T I O N
  *
  * determine if a point P is above/below the slope line on the
- * bounding box.  eg:
+ * bounding box.  e.g.:
  *
  * Bounding box side view:
  *
