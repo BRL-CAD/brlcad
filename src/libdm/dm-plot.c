@@ -343,8 +343,8 @@ plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_
 /**
  * P L O T _ N O R M A L
  *
- * Restore the display processor to a normal mode of operation (ie,
- * not scaled, rotated, displaced, etc).  Turns off windowing.
+ * Restore the display processor to a normal mode of operation (i.e.,
+ * not scaled, rotated, displaced, etc.).  Turns off windowing.
  */
 HIDDEN int
 plot_normal(struct dm *dmp)
