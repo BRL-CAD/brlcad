@@ -44,7 +44,7 @@ if ![info exists tk_version] {
 #  Currently the choices for *foo* are from the following list:
 #  {draw view table objanim track sort preview}
 # 2.> a "p" argument indicates a parent widget.
-#  eg. when calling sketch_popup_draw the calling function provides a widget
+#  e.g. when calling sketch_popup_draw the calling function provides a widget
 #  to be the new widget's parent. Whenever tk is running, there is a toplevel
 #  widget called "." which can be used.
 #-----------------------------------------------------------------
@@ -3812,8 +3812,8 @@ proc sketch_pos_int {str} {
 }
 
 #str is a list of columns, something like "0-2,5,7,9-"
-#num is the number of columns that exist, eg "11"
-#output is an array holding the columns, eg 0,1,2,5,7,9,10
+#num is the number of columns that exist, e.g. "11"
+#output is an array holding the columns, e.g. 0,1,2,5,7,9,10
 #returns the number of columns requested, or -1 on error
 proc sketch_parse_col {str num output} {
     upvar $output out
