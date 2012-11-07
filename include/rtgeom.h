@@ -290,7 +290,7 @@ struct rt_vol_internal  {
  */
 struct rt_hf_internal {
     uint32_t magic;
-    /* BEGIN USER SETABLE VARIABLES */
+    /* BEGIN USER SETTABLE VARIABLES */
     char		cfile[128];	/**< @brief  name of control file (optional) */
     char		dfile[128];	/**< @brief  name of data file */
     char		fmt[8];		/**< @brief  CV style file format descriptor */
@@ -307,7 +307,7 @@ struct rt_hf_internal {
     fastf_t		xlen;		/**< @brief  model len of HT rpp in "w" dir */
     fastf_t		ylen;		/**< @brief  model len of HT rpp in "n" dir */
     fastf_t		zscale;		/**< @brief  scale of data in ''up'' dir (after file2mm is applied) */
-    /* END USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
+    /* END USER SETTABLE VARIABLES, BEGIN INTERNAL STUFF */
     struct bu_mapped_file	*mp;	/**< @brief  actual data */
 };
 #define RT_HF_CK_MAGIC(_p)	BU_CKMAG(_p, RT_HF_INTERNAL_MAGIC, "rt_hf_internal")
@@ -451,7 +451,7 @@ struct rt_dsp_internal{
     unsigned char dsp_cuttype;	/**< @brief  type of cut to make */
 
     mat_t dsp_mtos;	/**< @brief  model to solid space */
-    /* END OF USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
+    /* END OF USER SETTABLE VARIABLES, BEGIN INTERNAL STUFF */
     mat_t dsp_stom;	/**< @brief  solid to model space
 					 * computed from dsp_mtos */
     unsigned short *dsp_buf;	/**< @brief  actual data */
