@@ -172,7 +172,7 @@ typedef ptrdiff_t ssize_t;
 #endif
 
 /* This is so we can use gcc's "format string vs arguments"-check for
- * various printf-like functions, and still maintain compatability.
+ * various printf-like functions, and still maintain compatibility.
  */
 #ifndef __attribute__
 /* This feature is only available in gcc versions 2.5 and later. */
@@ -283,7 +283,7 @@ typedef ptrdiff_t ssize_t;
 /**
  * UNLIKELY provides a common mechanism for providing branch
  * prediction hints to the compiler so that it can better optimize.
- * It should be used when it's exceptionaly unlikely that a given code
+ * It should be used when it's exceptionally unlikely that a given code
  * path will ever be executed.  Use it like this:
  *
  *  if (UNLIKELY(x == 0)) {
