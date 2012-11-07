@@ -1770,7 +1770,7 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 		break;
 
 		/* These following arguments are for the wizard program, allowing easy access to each variable.
-		 * as they will only be callable by using a number (eg 1 = head, 2=neck width, 3=neck height etc)
+		 * as they will only be callable by using a number (e.g. 1 = head, 2=neck width, 3=neck height etc.)
 		 * and should not be called otherwise
 		 */
 	    case '1':
