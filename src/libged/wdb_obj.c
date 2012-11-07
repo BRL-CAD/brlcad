@@ -873,7 +873,7 @@ wdb_dir_getspace(struct db_i *dbip,
  *
  * Summarize the contents of the directory by categories
  * (solid, comb, region).  If flag is != 0, it is interpreted
- * as a request to print all the names in that category (eg, RT_DIR_SOLID).
+ * as a request to print all the names in that category (e.g., RT_DIR_SOLID).
  */
 static void
 wdb_dir_summary(struct db_i *dbip,
@@ -6169,8 +6169,8 @@ wdb_print_node(struct rt_wdb *wdbp,
 	return;
 
     /*
-     * This node is a combination (eg, a directory).
-     * Process all the arcs (eg, directory members).
+     * This node is a combination (e.g., a directory).
+     * Process all the arcs (e.g., directory members).
      */
 
     if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
