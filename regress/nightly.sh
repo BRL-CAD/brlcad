@@ -180,7 +180,7 @@ echo ../brlcad-$VERSION/configure \
     --prefix=/usr/brlcad/rel-$VERSION \
     >> $LOG_FILE 2>&1
 
-echo "runnig: $MAKE_CMD $MAKE_OPTS" >> $LOG_FILE 2>&1
+echo "running: $MAKE_CMD $MAKE_OPTS" >> $LOG_FILE 2>&1
 
 $MAKE_CMD $MAKE_OPTS > build.log 2>&1
 STATUS=$?
