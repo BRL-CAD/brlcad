@@ -19,6 +19,9 @@
  */
 /** @file libbn/ulp.c
  *
+ * NOTE: This is a work-in-progress and not yet published API to be
+ * used anywhere.  DO NOT USE.
+ *
  * Routines useful for performing comparisons and dynamically
  * calculating floating point limits including the Unit in the Last
  * Place (ULP).
@@ -37,7 +40,13 @@
 
 #include "common.h"
 
-#include <float.h>
+#include <math.h>
+#include <limits.h>
+#ifdef HAVE_FLOAT_H
+#  include <float.h>
+#endif
+
+/* #define HAVE_IEEE754 1 */
 
 
 double
@@ -47,14 +56,15 @@ bn_epsilon()
     return DBL_EPSILON;
 #elif defined(HAVE_IEEE754)
     static const double val = 1.0;
-    register long long next = *(long long*)&val + 1;
+    long long next = *(long long*)&val + 1;
     return val - *(double *)&next;
 #else
     /* must be volatile to avoid long registers */
     volatile double tol = 1.0;
-    while (1.0 + (tol * 0.5) != 1.0) {
+    while (1.0 + (tol * 0.5) > 1.0) {
 	tol *= 0.5;
     }
+    return tol;
 #endif
 }
 
@@ -66,14 +76,15 @@ bn_epsilonf()
     return FLT_EPSILON;
 #elif defined(HAVE_IEEE754)
     static const float val = 1.0;
-    register long next = *(long*)&val + 1;
+    long next = *(long*)&val + 1;
     return val - *(float *)&next;
 #else
     /* must be volatile to avoid long registers */
     volatile float tol = 1.0f;
-    while (1.0f + (tol * 0.5f) != 1.0f) {
+    while (1.0f + (tol * 0.5f) > 1.0f) {
 	tol *= 0.5f;
     }
+    return tol;
 #endif
 }
 
@@ -81,7 +92,7 @@ bn_epsilonf()
 double
 bn_dbl_min()
 {
-    register long long val = (1LL<<52);
+    long long val = (1LL<<52);
     return *(double *)&val;
 }
 
@@ -90,7 +101,7 @@ double
 bn_dbl_max()
 {
     static const double val = INFINITY;
-    register long long next = *(long long*)&val - 1;
+    long long next = *(long long*)&val - 1;
     return *(double *)&next;
 }
 
@@ -98,7 +109,7 @@ bn_dbl_max()
 double
 bn_flt_min()
 {
-    register long val = (1LL<<23);
+    long val = (1LL<<23);
     return *(float *)&val;
 }
 
@@ -107,7 +118,7 @@ double
 bn_flt_max()
 {
     static const float val = INFINITY;
-    register long next = *(long*)&val - 1;
+    long next = *(long*)&val - 1;
     return *(float *)&next;
 }
 
@@ -115,36 +126,35 @@ bn_flt_max()
 double
 bn_flt_min_sqrt()
 {
-    return sqrt(flt_min());
+    return sqrt(bn_flt_min());
 }
 
 
 double
 bn_flt_max_sqrt()
 {
-    return sqrt(flt_max());
+    return sqrt(bn_flt_max());
 }
 
 
 double
 bn_dbl_min_sqrt()
 {
-    return sqrt(dbl_min());
+    return sqrt(bn_dbl_min());
 }
 
 
 double
 bn_dbl_max_sqrt()
 {
-    return sqrt(dbl_max());
+    return sqrt(bn_dbl_max());
 }
 
 
 double
 bn_ulp(double val)
 {
-    double next;
-    register long long up, dn, idx;
+    long long up, dn;
 
     if (isnan(val) || !isfinite(val))
 	return val;
