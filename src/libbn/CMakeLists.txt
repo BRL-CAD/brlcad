@@ -31,6 +31,7 @@ set(LIBBN_SOURCES
   tcl.c
   tplot.c
   tri_tri.c
+  ulp.c
   vectfont.c
   vector.c
   vers.c
@@ -52,7 +53,6 @@ CMAKEFILES(
   Makefile.am
   README
   bntester.dat
-  ulp.c
   )
 
 # Local Variables:
