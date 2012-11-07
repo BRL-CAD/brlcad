@@ -172,7 +172,7 @@ ged_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
 	} else {
 	    /*
 	     * If direction component along this axis is NEAR 0,
-	     * (ie, this ray is aligned with this axis),
+	     * (i.e., this ray is aligned with this axis),
 	     * merely check against the boundaries.
 	     */
 	    if ((*min > *pt) || (*max < *pt))
