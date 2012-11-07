@@ -94,7 +94,7 @@ RT_EXPORT extern int rt_obj_free(struct soltab *stp);
 RT_EXPORT extern int rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
 
 /**
- * shoot an array of rays at a set of homogenous objects.
+ * shoot an array of rays at a set of homogeneous objects.
  */
 RT_EXPORT extern int rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap);
 
