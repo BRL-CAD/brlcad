@@ -24,7 +24,7 @@
  * outboard database "handles").
  *
  * It is expected that entries on this mater list will be sorted in
- * strictly ascending order, with no overlaps (ie, monotonicly
+ * strictly ascending order, with no overlaps (i.e., monotonically
  * increasing).
  *
  */
