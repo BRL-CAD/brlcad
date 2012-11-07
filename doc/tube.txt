@@ -33,7 +33,7 @@ awk '{printf "%10.2f  %10.2f\n", $1, $2 }' > pos.dat
 The mass displacement file is presented to the TUBE program on standard
 input, where each time step has the following format:  First a line with
 the word "TIME" followed by a floating point number, in milliseconds.
-Then, one input line for each of ``nmass'' (eg, 12) mass points, in
+Then, one input line for each of ``nmass'' (e.g., 12) mass points, in
 ascending order of mass point number, starting with one, with one
 integer and three floating point numbers on each line:  the mass number,
 the X, Y, and Z deviations (currently expected in inches, where +X is
