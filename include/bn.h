@@ -350,7 +350,7 @@ BN_EXPORT extern void anim_quat2mat(mat_t m,
 /**
  * @brief
  * make a matrix which turns a vehicle from the x-axis to point in the
- * desired direction, staying "right-side up" (ie the y-axis never has
+ * desired direction, staying "right-side up" (i.e. the y-axis never has
  * a z-component). A second direction vector is consulted when the
  * given direction is vertical. This is intended to represent the
  * direction from a previous frame.
@@ -1828,7 +1828,7 @@ struct bn_vlist  {
 #define BN_VLIST_TRI_MOVE	8	/**< @brief move to first triangle vertex */
 #define BN_VLIST_TRI_DRAW	9	/**< @brief subsequent triangle vertex */
 #define BN_VLIST_TRI_END	10	/**< @brief last vert (repeats 1st), draw poly */
-#define BN_VLIST_TRI_VERTNORM	11	/**< @brief per-vertex normal, for interpoloation */
+#define BN_VLIST_TRI_VERTNORM	11	/**< @brief per-vertex normal, for interpolation */
 #define BN_VLIST_POINT_DRAW	12	/**< @brief  Draw a single point */
 #define BN_VLIST_CMD_MAX	12	/**< @brief  Max command number */
 
