@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* report of LIBBU not working when accessed by a multithreaded
+  application on Windows.  reportedly due to some problem with the
+  debug memory queue.
+
 * report of g-iges crashing (on Windows) when exporting a 1.2MB BoT
   mesh (presumably imported via stl-g).  worked for smaller models.
 
