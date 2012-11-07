@@ -480,8 +480,8 @@ _ged_print_node(struct ged *gedp,
 	return;
 
     /*
-     * This node is a combination (eg, a directory).
-     * Process all the arcs (eg, directory members).
+     * This node is a combination (e.g., a directory).
+     * Process all the arcs (e.g., directory members).
      */
 
     if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
