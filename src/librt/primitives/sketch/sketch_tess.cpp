@@ -31,7 +31,7 @@
  *
  * TODO:
  * rt_sketch_surf_area: add logic to determine if part of a sketch
- * "removes" area from the total area, eg. a sketch of a circumscribed square
+ * "removes" area from the total area, e.g. a sketch of a circumscribed square
  * has area less than the sum of the areas of the square and circle.
  *
  * rt_sketch_tess: implement this.
