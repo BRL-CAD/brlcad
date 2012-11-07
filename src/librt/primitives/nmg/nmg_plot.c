@@ -27,7 +27,7 @@
  *
  * There are several distinct families:
  *
- * nmg_ENTITY_to_vlist - Wireframes & polgyons.  For MGED "ev".
+ * nmg_ENTITY_to_vlist - Wireframes & polygons.  For MGED "ev".
  * nmg_pl_ENTITY       - Fancy edgeuse drawing, to plot file.
  * nmg_vlblock_ENTITY  - Fancy edgeuse drawing, into vlblocks.
  * show_broken_ENTITY  - Graphical display of classifier results.
@@ -1054,7 +1054,7 @@ nmg_vlblock_euleft(struct bu_list *vh, const struct edgeuse *eu, const fastf_t *
 
     if (nmg_find_eu_leftvec(left, eu) < 0) return;
 
-    /* fan_len is baed on length of eu */
+    /* fan_len is based on length of eu */
     fan_len = len * 0.2;
     VJOIN1(tip, center, fan_len, left);
 
