@@ -400,7 +400,7 @@ struct uvcoord {
  *
  * Includes information about both endpoints of intersection.
  * Contains forward link to additional intersection segments if the
- * intersection spans multiple segments (eg, shooting a ray through a
+ * intersection spans multiple segments (e.g., shooting a ray through a
  * torus).
  */
 struct seg {
