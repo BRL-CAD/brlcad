@@ -574,7 +574,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 #endif
     }
 
-    /* make sure there really is a screen before proceesing. */
+    /* make sure there really is a screen before processing. */
     if (!screen) {
 	bu_log("ERROR: Unable to attach to screen (%s)\n", bu_vls_addr(&dmp->dm_pathName));
 	(void)X_close(dmp);
