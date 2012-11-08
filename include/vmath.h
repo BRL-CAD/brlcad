@@ -75,7 +75,7 @@
 
 #include "common.h"
 
-/* for sqrt(), sin(), cos(), rint(), etc */
+/* for sqrt(), sin(), cos(), rint(), etc. */
 #ifdef WIN32
 # define _USE_MATH_DEFINES
 #endif
