@@ -3368,7 +3368,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	return;
     }
 
-    /* can only do parts and assemblies, no drawings, etc */
+    /* can only do parts and assemblies, no drawings, etc. */
     if ( type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART ) {
 	(void)ProMessageDisplay(MSGFIL, "USER_TYPE_NOT_SOLID" );
 	ProMessageClear();
@@ -3738,7 +3738,7 @@ proe_brl( uiCmdCmdId command, uiCmdValue *p_value, void *p_push_cmd_data )
 	return PRO_TK_NO_ERROR;
     }
 
-    /* can only do parts and assemblies, no drawings, etc */
+    /* can only do parts and assemblies, no drawings, etc. */
     if ( type != PRO_MDL_ASSEMBLY && type != PRO_MDL_PART ) {
 	(void)ProMessageDisplay(MSGFIL, "USER_TYPE_NOT_SOLID" );
 	ProMessageClear();
