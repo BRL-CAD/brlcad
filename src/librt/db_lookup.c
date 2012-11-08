@@ -260,7 +260,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
  * len is the length of the object, number of db granules used
  *
  * flags are defined in raytrace.h (RT_DIR_SOLID, RT_DIR_COMB, RT_DIR_REGION,
- * RT_DIR_INMEM, etc) for db version 5, ptr is the minor_type
+ * RT_DIR_INMEM, etc.) for db version 5, ptr is the minor_type
  * (non-null pointer to valid unsigned char code)
  *
  * an laddr of RT_DIR_PHONY_ADDR means that database storage has not

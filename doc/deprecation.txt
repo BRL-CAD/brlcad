@@ -841,7 +841,7 @@ s/bu_tcl_([^(]*)\([^,]*?[[:space:]]*,[^,]*?[[:space:]]*,(.*)/bu_\1(\2/g
 s/bu_badmagic_tcl\([^,]*?[[:space:]]*,(.*)/bu_badmagic(\1/g
 	removed bu_badmagic_tcl() in favor of bu_badmagic() [7.21]
 s/(.*)_CK(.*)_TCL\([^,]*?[[:space:]]*,(.*)/\1_CK\2(\3/g
-	removed all *_CK*_TCL() macros (e.g., BU_CKMAG_TCL, RT_CK_DBI_TCL, etc) in favor of non-TCL macros [7.21]
+	removed all *_CK*_TCL() macros (e.g., BU_CKMAG_TCL, RT_CK_DBI_TCL, etc.) in favor of non-TCL macros [7.21]
 s/bu_image/icv_image/g
 	moved bu_image* functions to libicv as icv_image* [7.21]
 s/BU_IMAGE/ICV_IMAGE/g

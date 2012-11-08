@@ -385,7 +385,7 @@ int cm_anim(int argc, const char **argv)
  */
 int cm_clean(int UNUSED(argc), char **UNUSED(argv))
 {
-    /* Allow lighting model clean up (e.g. lights, materials, etc) */
+    /* Allow lighting model clean up (e.g. lights, materials, etc.) */
     view_cleanup(APP.a_rt_i);
 
     rt_clean(APP.a_rt_i);
@@ -541,7 +541,7 @@ do_prep(struct rt_i *rtip)
 
     RT_CHECK_RTI(rtip);
     if (rtip->needprep) {
-	/* Allow lighting model to set up (e.g. lights, materials, etc) */
+	/* Allow lighting model to set up (e.g. lights, materials, etc.) */
 	view_setup(rtip);
 
 	/* Allow RT library to prepare itself */

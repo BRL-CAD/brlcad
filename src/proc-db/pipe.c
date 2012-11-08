@@ -19,7 +19,7 @@
  */
 /** @file proc-db/pipe.c
  *
- * Generate piping (fuel, hydraulic lines, etc) in MGED format from
+ * Generate piping (fuel, hydraulic lines, etc.) in MGED format from
  * input (points in space defining the routing).  Makes both tubing
  * regions and fluid regions or solid cable.  Automatically generates
  * elbow regions (and fluid in the elbows) when the piping changes

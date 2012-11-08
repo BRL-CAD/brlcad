@@ -542,7 +542,7 @@ get_args(int argc, const char *argv[])
 		break;
 	    case 'B':
 		/*  Remove all intentional random effects
-		 *  (dither, etc) for benchmarking purposes.
+		 *  (dither, etc.) for benchmarking purposes.
 		 */
 		benchmark = 1;
 		bn_mathtab_constant();

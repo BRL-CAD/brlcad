@@ -57,7 +57,7 @@ proc-db - tools for procedurally creating geometry models
 remrt - remote distributed ray-trace tools, a client and server
 rt - the BRL-CAD ray-tracers, various analytic and visual ray-trace-based tools
 rttherm - a thermal energy (heat) ray-tracer
-shapes - tools for creating various common geometry objects (bolts, handles, windows, etc)
+shapes - tools for creating various common geometry objects (bolts, handles, windows, etc.)
 sig - signal processing tools, data conversion and manipulation of raw data
 tab - table processing tools, used primarily in conjunction with animation tools
 tclscripts - a library of Tcl routines used by mged, rtwizard, and archer

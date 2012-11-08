@@ -2464,7 +2464,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
     }
     if (troops) {
 	/*Build body regions for each troop*/
-	/*append number to end of part name, (Head.s0, LeftElbowJoint.s99, etc) */
+	/*append number to end of part name, (Head.s0, LeftElbowJoint.s99, etc.) */
 	int num=0;
 	int w=0;
 	int x=0;

@@ -864,7 +864,7 @@ rt_get_solidbitv(size_t nbits, struct resource *resp)
 
 /**
  * Release all the dynamic storage associated with a particular rt_i
- * structure, except for the database instance information (dir, etc)
+ * structure, except for the database instance information (dir, etc.)
  * and the rti_resources ptbl.
  *
  * Note that an animation script can invoke a "clean" operation before

@@ -238,7 +238,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 	    /* end iteration over rt commands */
 
 	}
-	/* end check for non-view values (dbname, etc) */
+	/* end check for non-view values (dbname, etc.) */
 
     }
     /* end iteration over file until eof */

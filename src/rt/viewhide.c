@@ -138,7 +138,7 @@ view_init(register struct application *ap, char *UNUSED(file), char *UNUSED(obj)
  *  boxes, for example, need to be computed once per frame.
  *  Never preclude a new and nifty animation: rule: if it's a variable, it can
  *  change from frame to frame ( frame/picture width; angle between surface
- *  normals triggering shading.... etc).
+ *  normals triggering shading.... etc.).
  */
 
 void
