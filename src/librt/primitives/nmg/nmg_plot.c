@@ -672,7 +672,7 @@ nmg_pl_e(FILE *fp, const struct edge *e, long *b, int red, int green, int blue)
     p1 = e->eu_p->eumate_p->vu_p->v_p->vg_p->coord;
 
     /* leave a little room between the edge endpoints and the vertex
-     * compute endpoints by forming a vector between verets, scale
+     * compute endpoints by forming a vector between verts, scale
      * vector and modify points
      */
     VSUB2SCALE(v, p1, p0, 0.95);
@@ -897,7 +897,7 @@ nmg_vlblock_e(struct bn_vlblock *vbp, const struct edge *e, long *tab, int red, 
     p1 = e->eu_p->eumate_p->vu_p->v_p->vg_p->coord;
 
     /* leave a little room between the edge endpoints and the vertex
-     * compute endpoints by forming a vector between verets, scale vector
+     * compute endpoints by forming a vector between verts, scale vector
      * and modify points
      */
     VSUB2SCALE(v, p1, p0, 0.90);
@@ -2349,7 +2349,7 @@ nmg_cnurb_to_vlist(struct bu_list *vhead, const struct edgeuse *eu, int n_interi
 
 
     /* typ. 10 */
-    /* BN_VLIST_LINE_DRAW, etc */
+    /* BN_VLIST_LINE_DRAW, etc. */
 {
     const struct edge_g_cnurb *eg;
     const struct faceuse *fu;
