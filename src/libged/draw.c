@@ -1504,6 +1504,7 @@ ged_addToDisplay(struct ged *gedp,
     }
 
     BU_GET(gdlp, struct ged_display_list);
+    BU_LIST_INIT(&gdlp->l);
     BU_LIST_INSERT(&gedp->ged_gdp->gd_headDisplay, &gdlp->l);
     BU_LIST_INIT(&gdlp->gdl_headSolid);
     gdlp->gdl_dp = dp;
