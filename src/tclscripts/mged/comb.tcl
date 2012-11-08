@@ -98,7 +98,7 @@
 # .id_0.comb.shader_frame.fr
 # slaves:
 # 	For the typical shader, the slaves of this frame are the individual
-# 	labels, buttons, checkbuttons, entry widgets, menubuttons, etc, for
+# 	labels, buttons, checkbuttons, entry widgets, menubuttons, etc., for
 # 	that particular shader. This is the end of the hierarchy for simple
 # 	shaders. From here down, the discussion only relates to the "stack"
 # 	shader
@@ -157,7 +157,7 @@
 # 	.id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper.canvas.sfchildsite.stk_1.lab
 # 		The label identifying which type of shader this one is
 # 	.id_0.comb.shader_frame.fr.leesf.lwchildsite.clipper.canvas.sfchildsite.stk_1.fr
-# 		The frame where the actual buttons, label, entries, etc for this
+# 		The frame where the actual buttons, label, entries, etc. for this
 # 		particular shader located.
 #
 
@@ -599,7 +599,7 @@ the form of the selected shader type." } }
     hoc_register_menu_data "Shader" "extern" "Shader - extern" \
 	{ { summary "Use the extern shader (shader parameters in an external file)." } }
 
-    # allow for the possiblity that a shader exists that is not in the above list
+    # allow for the possibility that a shader exists that is not in the above list
     $top.shaderMB.m add command -label "unlisted" \
 	-command "comb_shader_gui $id unlisted"
     hoc_register_menu_data "Shader" "unlisted" "Shader - unlisted" \
@@ -637,7 +637,7 @@ or group." } }
     hoc_register_data $top.isRegionCB "Is Region" \
 	{ { summary "Toggle the region flag on/off. If the
 region flag is toggled on \(i.e. checkbutton
-is highligted\) the GUI reconfigures itself to
+is highlighted\) the GUI reconfigures itself to
 handle regions. If the region flag is toggled
 off the GUI reconfigures itself to handle
 groups. Note - both regions and groups are
@@ -845,7 +845,7 @@ from the combination." } }
     grid rowconfigure $top 2 -weight 1
     grid columnconfigure $top 0 -weight 1
 
-    # start with "Boolean" frame dsplayed
+    # start with "Boolean" frame displayed
     toggle_bool_shade_frame $id "Bool"
 
     # handle event when someone presses "Enter"
@@ -936,7 +936,7 @@ proc comb_apply { id } {
 	    set color [getRGBorReset $top.colorMB comb_control($id,color) $comb_control($id,color)]
 	}
 
-	# actually apply the edist to the combination on disk
+	# actually apply the edits to the combination on disk
 	set ret [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion) \
 			    $comb_control($id,id) $comb_control($id,air) $comb_control($id,material) \
 			    $comb_control($id,los) $color $comb_control($id,shader) \
