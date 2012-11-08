@@ -154,11 +154,11 @@ voxelize(struct rt_i *rtip, fastf_t sizeVoxel[3], int levelOfDetail, void (*crea
     int i, j, k, numVoxel[3], yMin, zMin, rayNum;
     fastf_t *voxelArray, rayTraceDistance, effectiveDistance;
 
-    /* get bounding box values etc */
+    /* get bounding box values etc. */
     rt_prep_parallel(rtip, 1);
 
 
-    /* calculate number oof voxels in each dimension */
+    /* calculate number of voxels in each dimension */
     numVoxel[0] = (int)(((rtip->mdl_max)[0] - (rtip->mdl_min)[0])/sizeVoxel[0]) + 1;
     numVoxel[1] = (int)(((rtip->mdl_max)[1] - (rtip->mdl_min)[1])/sizeVoxel[1]) + 1;
     numVoxel[2] = (int)(((rtip->mdl_max)[2] - (rtip->mdl_min)[2])/sizeVoxel[2]) + 1;
