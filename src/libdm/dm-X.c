@@ -1077,6 +1077,36 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			segp = segbuf;
 		    }
 		    break;
+		case BN_VLIST_POINT_DRAW:
+		    if (dmp->dm_debugLevel > 2) {
+			bu_log("before transformation:\n");
+			bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
+		    }
+
+		    if (dmp->dm_perspective > 0) {
+			dist = VDOT(*pt, &privars->xmat[12]) + privars->xmat[15];
+
+			if (dist <= 0.0) {
+			    /* nothing to plot - point is behind eye plane */
+			    continue;
+			}
+		    }
+
+		    MAT4X3PNT(pnt, privars->xmat, *pt);
+
+		    pnt[0] *= 2047;
+		    pnt[1] *= 2047 * dmp->dm_aspect;
+		    pnt[2] *= 2047;
+
+		    if (dmp->dm_debugLevel > 2) {
+			bu_log("after clipping:\n");
+			bu_log("pt - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
+		    }
+
+		    XDrawPoint(pubvars->dpy, privars->pix, privars->gc,
+			    GED_TO_Xx(dmp, pnt[0]), GED_TO_Xy(dmp, pnt[1]));
+
+		    break;
 	    }
 	}
 
