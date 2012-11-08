@@ -1645,7 +1645,7 @@ typedef struct bu_ptbl bu_ptbl_t;
  * Each instance of the file has the raw data available as element
  * "buf".  If a particular application needs to transform the raw data
  * in a manner that is identical across all uses of that application
- * (e.g. height fields, EBMs, etc), then the application should
+ * (e.g. height fields, EBMs, etc.), then the application should
  * provide a non-null "appl" string, to tag the format of the "apbuf".
  * This will keep different applications from sharing that instance of
  * the file.
@@ -2155,7 +2155,7 @@ BU_EXPORT extern int bu_debug;
  * probably shouldn't use this technique.
  */
 struct bu_structparse {
-    char sp_fmt[4];		/**< "%i" or "%f", etc */
+    char sp_fmt[4];		/**< "%i" or "%f", etc. */
     size_t sp_count;		/**< number of elements */
     char *sp_name;		/**< Element's symbolic name */
     size_t sp_offset;		/**< Byte offset in struct */
@@ -2753,7 +2753,7 @@ BU_EXPORT extern void bu_bomb_add_hook(bu_hook_t func, genptr_t clientdata);
  *
  * The bu_bomb routine is called on a fatal error, generally where no
  * recovery is possible.  Error handlers may, however, be registered
- * with BU_SETJMP.  This routine intentionally limits calls to other
+ * with BU_SETJUMP.  This routine intentionally limits calls to other
  * functions and intentionally uses no stack variables.  Just in case
  * the application is out of memory, bu_bomb deallocates a small
  * buffer of memory.
@@ -4825,7 +4825,7 @@ BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visi
 #define BU_UNSETJUMP (bu_setjmp_valid=0)
 /* These are global because BU_SETJUMP must be macro.  Please don't touch. */
 BU_EXPORT extern int bu_setjmp_valid;		/* !0 = bu_jmpbuf is valid */
-BU_EXPORT extern jmp_buf bu_jmpbuf;			/* for BU_SETJMP() */
+BU_EXPORT extern jmp_buf bu_jmpbuf;			/* for BU_SETJUMP() */
 
 
 /**
