@@ -2261,7 +2261,10 @@ package provide cadwidgets::Ged 1.0
     if {$_viewz < 0.0} {
 	set elist [eval $mGed mouse_find_bot_edge $itk_component($_pane) $_bot $_mx $_my]
     } else {
+	set save_botFaceCallback $mBotFaceCallback
+	set mBotFaceCallback ""
 	set face [pane_mouse_find_bot_face $_pane $_bot $_viewz $_mx $_my]
+	set mBotFaceCallback $save_botFaceCallback
 
 	if {$face == ""} {
 	    set elist [$mGed mouse_find_bot_edge $itk_component($_pane) $_bot $_mx $_my]
