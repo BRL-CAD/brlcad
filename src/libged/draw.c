@@ -529,9 +529,9 @@ append_solid_to_display_list(
 static union tree *
 wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
-    struct solid *sp;
     union tree *curtree;
     struct bu_list vhead;
+    struct solid *sp, *curr_sp;
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
 
     RT_CK_DB_INTERNAL(ip);
@@ -539,11 +539,32 @@ wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, stru
     BN_CK_TOL(tsp->ts_tol);
     RT_CK_RESOURCE(tsp->ts_resp);
 
-    if (append_solid_to_display_list(tsp, pathp, ip, client_data) == TREE_NULL) {
+    if (!dgcdp) {
 	return TREE_NULL;
     }
-    sp = BU_LIST_LAST(solid, &dgcdp->gdlp->gdl_headSolid);
 
+    /* find this path's solid struct */
+    /* TODO: should replace this with a table lookup */
+    sp = NULL;
+    for (BU_LIST_FOR(curr_sp, solid, &(dgcdp->gdlp->gdl_headSolid))) {
+	if (db_identical_full_paths(pathp, &(curr_sp->s_fullpath))) {
+	    sp = curr_sp;
+	    break;
+	}
+    }
+
+    if (sp == NULL) {
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "%s: plot failure\n",
+		DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+
+	return TREE_NULL;
+    }
+
+    /* move sp to back of the list to speed up future searches */
+    BU_LIST_DEQUEUE(&sp->l);
+    BU_LIST_INSERT(&(dgcdp->gdlp->gdl_headSolid), &sp->l);
+
+    /* calculate plot */
     BU_LIST_INIT(&vhead);
 
     if (!ip->idb_meth->ft_plot
@@ -555,6 +576,7 @@ wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, stru
 	return TREE_NULL;		/* ERROR */
     }
 
+    /* add plot to solid */
     solid_append_vlist(sp, (struct bn_vlist *)&vhead);
 
     if (dgcdp->gedp->ged_create_vlist_callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL) {
@@ -1061,29 +1083,18 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	    --drawtrees_depth;
 	    return -1;
 	case 1:		/* Wireframes */
-	    {
-		union tree *(*reg_end_func) (struct db_tree_state *, const struct db_full_path *, union tree *, genptr_t);
-		union tree *(*leaf_func) (struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, genptr_t);
-
-		/*
-		 * If asking for wireframe and in shaded_mode and no shaded mode override,
-		 * or asking for wireframe and shaded mode is being overridden with a value
-		 * greater than 0, then draw shaded polygons for each object's primitives if possible.
-		 *
-		 * Note -
-		 * If shaded_mode is _GED_SHADED_MODE_BOTS, only BOTS and polysolids
-		 * will be shaded. The rest is drawn as wireframe.
-		 * If shaded_mode is _GED_SHADED_MODE_ALL, everything except pipe solids
-		 * are drawn as shaded polygons.
-		 */
-		if (_GED_SHADED_MODE_BOTS <= dgcdp->dmode && dgcdp->dmode <= _GED_SHADED_MODE_ALL) {
-		    reg_end_func = draw_check_region_end;
-		    leaf_func = draw_check_leaf;
-		} else {
-		    reg_end_func = wireframe_region_end;
-		    leaf_func = wireframe_leaf;
-		}
-
+	    /*
+	     * If asking for wireframe and in shaded_mode and no shaded mode override,
+	     * or asking for wireframe and shaded mode is being overridden with a value
+	     * greater than 0, then draw shaded polygons for each object's primitives if possible.
+	     *
+	     * Note -
+	     * If shaded_mode is _GED_SHADED_MODE_BOTS, only BOTS and polysolids
+	     * will be shaded. The rest is drawn as wireframe.
+	     * If shaded_mode is _GED_SHADED_MODE_ALL, everything except pipe solids
+	     * are drawn as shaded polygons.
+	     */
+	    if (_GED_SHADED_MODE_BOTS <= dgcdp->dmode && dgcdp->dmode <= _GED_SHADED_MODE_ALL) {
 		for (i = 0; i < argc; ++i) {
 		    if (drawtrees_depth == 1)
 			dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
@@ -1097,9 +1108,43 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       (const char **)av,
 				       ncpu,
 				       &gedp->ged_wdbp->wdb_initial_tree_state,
-				       0,
-				       reg_end_func,
-				       leaf_func,
+				       NULL,
+				       draw_check_region_end,
+				       draw_check_leaf,
+				       (genptr_t)dgcdp);
+		}
+	    } else {
+		/* create solids */
+		for (i = 0; i < argc; ++i) {
+		    dgcdp->gdlp = ged_addToDisplay(gedp, argv[i]);
+
+		    if (dgcdp->gdlp == GED_DISPLAY_LIST_NULL) {
+			continue;
+		    }
+
+		    av[0] = (char *)argv[i];
+		    ret = db_walk_tree(gedp->ged_wdbp->dbip,
+				       ac,
+				       (const char **)av,
+				       ncpu,
+				       &gedp->ged_wdbp->wdb_initial_tree_state,
+				       NULL,
+				       wireframe_region_end,
+				       append_solid_to_display_list,
+				       (genptr_t)dgcdp);
+		}
+
+		/* calculate plot vlists for solids */
+		for (BU_LIST_FOR(dgcdp->gdlp, ged_display_list, &(gedp->ged_gdp->gd_headDisplay))) {
+		    av[0] = bu_vls_addr(&(dgcdp->gdlp->gdl_path));
+		    ret = db_walk_tree(gedp->ged_wdbp->dbip,
+				       ac,
+				       (const char **)av,
+				       ncpu,
+				       &gedp->ged_wdbp->wdb_initial_tree_state,
+				       NULL,
+				       wireframe_region_end,
+				       wireframe_leaf,
 				       (genptr_t)dgcdp);
 		}
 	    }
