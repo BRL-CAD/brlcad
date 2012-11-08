@@ -801,7 +801,8 @@ rt_ell_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 
     config.points_per_section = ell_ellipse_samples(eip, info);
 
-    if (config.points_per_section < 6) {
+    if (config.points_per_section < 4) {
+	RT_ADD_VLIST(info->vhead, eip->v, BN_VLIST_POINT_DRAW);
 	return 0;
     }
 
