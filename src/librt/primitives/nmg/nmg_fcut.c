@@ -796,7 +796,7 @@ struct nmg_vu_stuff {
     fastf_t lo_ang;		/* small if RIGHT, large if LEFT */
     fastf_t hi_ang;
     int seq;		/* seq # after lsp->min_vu */
-    int wedge_class;	/* WEDGE_LEFT, etc */
+    int wedge_class;	/* WEDGE_LEFT, etc. */
 };
 struct nmg_loop_stuff {
     struct loopuse *lu;
