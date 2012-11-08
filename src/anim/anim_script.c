@@ -235,7 +235,7 @@ main(int argc, char *argv[])
 	if (permute)
 	    anim_v_unpermute(a);
 
-	/* make final matrix, including translation etc */
+	/* make final matrix, including translation etc. */
 	if (axes) {
 	    /* add pre-rotation from original axes */
 	    bn_mat_mul(m_x, a, m_rev_axes);
