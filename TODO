@@ -40,6 +40,18 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* add an option to the bb command for calculating a bounding box that
+  encompasses subtracted objects and trimmed surfaces and default to
+  calculating a tight-fitting fbounding box once we have a robust path
+  from geom->NURBS+CSG->NURBS.
+
+* create a FASTGEN sample geometry with all entities defined and a
+  corresponding regression test to make sure outputs don't change.
+
+* create a BRL-CAD .g with all possible object types embedded.  The
+  csgbrep command is a good starting point, but only about half of
+  them.
+
 * investigate bu_vls_encode/decode failures on g-dot.c (see that
   file for FIXME note); add tests for both functions (note only
   g-dot.c wants to use the functions at the moment)
