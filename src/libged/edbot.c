@@ -299,8 +299,11 @@ ged_find_bot_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_bot_internal *botip;
     mat_t mat;
-    vect_t view;
     int vi1, vi2;
+    vect_t view;
+
+    /* must be double for scanf */
+    double scan[ELEMENTS_PER_VECT];
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -320,10 +323,11 @@ ged_find_bot_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (bu_sscanf(argv[2], "%lf %lf %lf", &view[X], &view[Y], &view[Z]) != 3) {
+    if (bu_sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad view location - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
+    VMOVE(view, scan); /* convert double to fastf_t */
 
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
@@ -354,8 +358,11 @@ ged_find_botpt_nearest_pt(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_bot_internal *botip;
     mat_t mat;
-    vect_t view;
     int nearest_pt;
+    vect_t view;
+
+    /* must be double for scanf */
+    double scan[ELEMENTS_PER_VECT];
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -375,7 +382,7 @@ ged_find_botpt_nearest_pt(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (bu_sscanf(argv[2], "%lf %lf %lf", &view[X], &view[Y], &view[Z]) != 3) {
+    if (bu_sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad view location - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
@@ -465,10 +472,12 @@ ged_move_botpt(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_bot_internal *botip;
     mat_t mat;
-    point_t pt;
     size_t vertex_i;
     int rflag = 0;
     char *last;
+
+    /* must be double for scanf */
+    double pt[ELEMENTS_PER_POINT];
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -580,10 +589,12 @@ ged_move_botpts(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_bot_internal *botip;
     mat_t mat;
-    vect_t vec;
     register int i;
     size_t vertex_i;
     char *last;
+
+    /* must be double for scanf */
+    double vec[ELEMENTS_PER_VECT];
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);

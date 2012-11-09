@@ -1572,7 +1572,7 @@ to_axes(struct ged *gedp,
 	}
 
 	if (argc == 4) {
-	    fastf_t size;
+	    double size; /* must be double for scanf */
 
 	    if (bu_sscanf(argv[3], "%lf", &size) != 1)
 		goto bad;
@@ -1594,7 +1594,7 @@ to_axes(struct ged *gedp,
 	}
 
 	if (argc == 6) {
-	    fastf_t x, y, z;
+	    double x, y, z; /* must be double for scanf */
 
 	    if (bu_sscanf(argv[3], "%lf", &x) != 1 ||
 		bu_sscanf(argv[4], "%lf", &y) != 1 ||
@@ -2054,8 +2054,11 @@ to_bounds(struct ged *gedp,
 	  const char *usage,
 	  int UNUSED(maxargs))
 {
-    fastf_t bounds[6];
     struct ged_dm_view *gdvp;
+    fastf_t bounds[6];
+
+    /* must be double for scanf */
+    double scan[6];
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -2095,12 +2098,15 @@ to_bounds(struct ged *gedp,
 
     /* set window bounds */
     if (bu_sscanf(argv[2], "%lf %lf %lf %lf %lf %lf",
-	       &bounds[0], &bounds[1],
-	       &bounds[2], &bounds[3],
-	       &bounds[4], &bounds[5]) != 6) {
+	       &scan[0], &scan[1],
+	       &scan[2], &scan[3],
+	       &scan[4], &scan[5]) != 6) {
 	bu_vls_printf(gedp->ged_result_str, "%s: invalid bounds - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
+    /* convert double to fastf_t */
+    VMOVE(bounds, scan);         /* first point */
+    VMOVE(&bounds[3], &scan[3]); /* second point */
 
     /*
      * Since dm_bound doesn't appear to be used anywhere, I'm going to
@@ -2189,9 +2195,11 @@ to_constrain_rmode(struct ged *gedp,
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
-    fastf_t x, y;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -2253,9 +2261,11 @@ to_constrain_tmode(struct ged *gedp,
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
-    fastf_t x, y;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -2591,10 +2601,9 @@ to_data_arrows(struct ged *gedp,
 	    gdasp->gdas_num_points = ac;
 	    gdasp->gdas_points = (point_t *)bu_calloc(ac, sizeof(point_t), "data points");
 	    for (i = 0; i < ac; ++i) {
-		if (bu_sscanf(av[i], "%lf %lf %lf",
-			   &gdasp->gdas_points[i][X],
-			   &gdasp->gdas_points[i][Y],
-			   &gdasp->gdas_points[i][Z]) != 3) {
+		double scan[ELEMENTS_PER_VECT];
+
+		if (bu_sscanf(av[i], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 
 		    bu_vls_printf(gedp->ged_result_str, "bad data point - %s\n", av[i]);
 
@@ -2606,6 +2615,8 @@ to_data_arrows(struct ged *gedp,
 		    Tcl_Free((char *)av);
 		    return GED_ERROR;
 		}
+		/* convert double to fastf_t */
+		VMOVE(gdasp->gdas_points[i], scan);
 	    }
 
 	    to_refresh_view(gdvp);
@@ -2784,7 +2795,7 @@ to_data_axes(struct ged *gedp,
 	}
 
 	if (argc == 4) {
-	    fastf_t size;
+	    double size; /* must be double for scanf */
 
 	    if (bu_sscanf(argv[3], "%lf", &size) != 1)
 		goto bad;
@@ -2834,11 +2845,9 @@ to_data_axes(struct ged *gedp,
 	    gdasp->gdas_num_points = ac;
 	    gdasp->gdas_points = (point_t *)bu_calloc(ac, sizeof(point_t), "data points");
 	    for (i = 0; i < ac; ++i) {
-		if (bu_sscanf(av[i], "%lf %lf %lf",
-			   &gdasp->gdas_points[i][X],
-			   &gdasp->gdas_points[i][Y],
-			   &gdasp->gdas_points[i][Z]) != 3) {
+		double scan[3];
 
+		if (bu_sscanf(av[i], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 		    bu_vls_printf(gedp->ged_result_str, "bad data point - %s\n", av[i]);
 
 		    bu_free((genptr_t)gdasp->gdas_points, "data points");
@@ -2849,6 +2858,8 @@ to_data_axes(struct ged *gedp,
 		    Tcl_Free((char *)av);
 		    return GED_ERROR;
 		}
+		/* convert double to fastf_t */
+		VMOVE(gdasp->gdas_points[i], scan);
 	    }
 
 	    to_refresh_view(gdvp);
@@ -3004,6 +3015,7 @@ to_data_labels(struct ged *gedp,
 	    for (i = 0; i < ac; ++i) {
 		int sub_ac;
 		const char **sub_av;
+		double scan[ELEMENTS_PER_VECT];
 
 		if (Tcl_SplitList(current_top->to_interp, av[i], &sub_ac, &sub_av) != TCL_OK) {
 		    /*XXX Need a macro for the following lines. Do something similar for the rest. */
@@ -3034,10 +3046,7 @@ to_data_labels(struct ged *gedp,
 		    return GED_ERROR;
 		}
 
-		if (bu_sscanf(sub_av[1], "%lf %lf %lf",
-			   &gdlsp->gdls_points[i][X],
-			   &gdlsp->gdls_points[i][Y],
-			   &gdlsp->gdls_points[i][Z]) != 3) {
+		if (bu_sscanf(sub_av[1], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 		    bu_vls_printf(gedp->ged_result_str, "bad data point - %s\n", sub_av[1]);
 
 		    /*XXX Need a macro for the following lines. Do something similar for the rest. */
@@ -3052,6 +3061,8 @@ to_data_labels(struct ged *gedp,
 		    to_refresh_view(gdvp);
 		    return GED_ERROR;
 		}
+		/* convert double to fastf_t */
+		VMOVE(gdlsp->gdls_points[i], scan);
 
 		gdlsp->gdls_labels[i] = bu_strdup(sub_av[0]);
 		Tcl_Free((char *)sub_av);
@@ -3247,11 +3258,9 @@ to_data_lines(struct ged *gedp,
 	    gdlsp->gdls_num_points = ac;
 	    gdlsp->gdls_points = (point_t *)bu_calloc(ac, sizeof(point_t), "data points");
 	    for (i = 0; i < ac; ++i) {
-		if (bu_sscanf(av[i], "%lf %lf %lf",
-			   &gdlsp->gdls_points[i][X],
-			   &gdlsp->gdls_points[i][Y],
-			   &gdlsp->gdls_points[i][Z]) != 3) {
+		double scan[3];
 
+		if (bu_sscanf(av[i], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 		    bu_vls_printf(gedp->ged_result_str, "bad data point - %s\n", av[i]);
 
 		    bu_free((genptr_t)gdlsp->gdls_points, "data points");
@@ -3262,6 +3271,8 @@ to_data_lines(struct ged *gedp,
 		    Tcl_Free((char *)av);
 		    return GED_ERROR;
 		}
+		/* convert double to fastf_t */
+		VMOVE(gdlsp->gdls_points[i], scan);
 	    }
 
 	    to_refresh_view(gdvp);
@@ -3356,7 +3367,7 @@ to_extract_contours_av(struct ged *gedp, struct ged_dm_view *gdvp, ged_polygon *
 	gpp->gp_hole[j] = hole;
 
 	for (k = 1; k < point_ac; ++k) {
-	    point_t pt;
+	    double pt[ELEMENTS_PER_POINT]; /* must be double for scanf */
 
 	    if (bu_sscanf(point_av[k], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
 		bu_vls_printf(gedp->ged_result_str, "contour %zu, point %zu: bad data point - %s\n",
@@ -4100,7 +4111,7 @@ to_data_polygons(struct ged *gedp,
      */
     if (BU_STR_EQUAL(argv[2], "append_point")) {
 	size_t i, j, k;
-	point_t pt;
+	double pt[ELEMENTS_PER_POINT]; /* must be double for scan */
 
 	if (argc != 6)
 	    goto bad;
@@ -4158,7 +4169,7 @@ to_data_polygons(struct ged *gedp,
      */
     if (BU_STR_EQUAL(argv[2], "replace_point")) {
 	size_t i, j, k;
-	point_t pt;
+	double pt[ELEMENTS_PER_POINT];
 
 	if (argc != 7)
 	    goto bad;
@@ -6168,7 +6179,6 @@ to_mouse_append_pipept_common(struct ged *gedp,
 {
     int ret;
     char *av[4];
-    fastf_t x, y;
     fastf_t inv_width;
     fastf_t inv_height;
     fastf_t inv_aspect;
@@ -6176,6 +6186,9 @@ to_mouse_append_pipept_common(struct ged *gedp,
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -6252,11 +6265,13 @@ to_mouse_constrain_rot(struct ged *gedp,
     int ret;
     int ac;
     char *av[4];
-    fastf_t x, y;
     fastf_t dx, dy;
     fastf_t sf;
     struct bu_vls rot_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -6360,12 +6375,14 @@ to_mouse_constrain_trans(struct ged *gedp,
     int ret;
     int ac;
     char *av[4];
-    fastf_t x, y;
     fastf_t dx, dy;
     fastf_t sf;
     fastf_t inv_width;
     struct bu_vls tran_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -6469,13 +6486,15 @@ to_mouse_find_bot_edge(struct ged *gedp,
 		       int UNUSED(maxargs))
 {
     char *av[6];
-    fastf_t x, y;
     fastf_t inv_width;
     fastf_t inv_height;
     fastf_t inv_aspect;
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -6538,13 +6557,15 @@ to_mouse_find_botpt(struct ged *gedp,
 		    int UNUSED(maxargs))
 {
     char *av[6];
-    fastf_t x, y;
     fastf_t inv_width;
     fastf_t inv_height;
     fastf_t inv_aspect;
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -6607,7 +6628,6 @@ to_mouse_find_pipept(struct ged *gedp,
 		     int UNUSED(maxargs))
 {
     char *av[6];
-    fastf_t x, y;
     fastf_t inv_width;
     fastf_t inv_height;
     fastf_t inv_aspect;
@@ -6615,6 +6635,9 @@ to_mouse_find_pipept(struct ged *gedp,
     point_t view;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -6678,7 +6701,6 @@ to_mouse_move_arb_edge(struct ged *gedp,
 {
     int ret;
     char *av[6];
-    fastf_t x, y;
     fastf_t dx, dy;
     fastf_t inv_width;
     point_t model;
@@ -6686,6 +6708,9 @@ to_mouse_move_arb_edge(struct ged *gedp,
     mat_t inv_rot;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -6774,7 +6799,6 @@ to_mouse_move_arb_face(struct ged *gedp,
 {
     int ret;
     char *av[6];
-    fastf_t x, y;
     fastf_t dx, dy;
     fastf_t inv_width;
     point_t model;
@@ -6782,6 +6806,9 @@ to_mouse_move_arb_face(struct ged *gedp,
     mat_t inv_rot;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -6873,7 +6900,6 @@ to_mouse_move_botpt(struct ged *gedp,
     int rflag;
     char *av[6];
     const char *cmd;
-    fastf_t x, y;
     fastf_t dx, dy, dz;
     fastf_t inv_width;
     point_t model;
@@ -6881,6 +6907,9 @@ to_mouse_move_botpt(struct ged *gedp,
     mat_t v2m_mat;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -7058,7 +7087,6 @@ to_mouse_move_botpts(struct ged *gedp,
 {
     int ret;
     const char *cmd;
-    fastf_t x, y;
     fastf_t dx, dy, dz;
     fastf_t inv_width;
     point_t model;
@@ -7066,6 +7094,9 @@ to_mouse_move_botpts(struct ged *gedp,
     mat_t v2m_mat;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -7172,7 +7203,6 @@ to_mouse_move_pipept(struct ged *gedp,
 {
     int ret;
     char *av[6];
-    fastf_t x, y;
     fastf_t dx, dy;
     fastf_t inv_width;
     point_t model;
@@ -7180,6 +7210,9 @@ to_mouse_move_pipept(struct ged *gedp,
     mat_t inv_rot;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -7266,7 +7299,6 @@ to_mouse_orotate(struct ged *gedp,
 		 const char *usage,
 		 int UNUSED(maxargs))
 {
-    fastf_t x, y;
     fastf_t dx, dy;
     point_t model;
     point_t view;
@@ -7275,6 +7307,9 @@ to_mouse_orotate(struct ged *gedp,
     struct bu_vls rot_y_vls = BU_VLS_INIT_ZERO;
     struct bu_vls rot_z_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -7375,12 +7410,14 @@ to_mouse_oscale(struct ged *gedp,
 		const char *usage,
 		int UNUSED(maxargs))
 {
-    fastf_t x, y;
     fastf_t dx, dy;
     fastf_t sf;
     fastf_t inv_width;
     struct bu_vls sf_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -7477,7 +7514,6 @@ to_mouse_otranslate(struct ged *gedp,
 		    const char *usage,
 		    int UNUSED(maxargs))
 {
-    fastf_t x, y;
     fastf_t dx, dy;
     fastf_t inv_width;
     point_t model;
@@ -7487,6 +7523,9 @@ to_mouse_otranslate(struct ged *gedp,
     struct bu_vls tran_y_vls = BU_VLS_INIT_ZERO;
     struct bu_vls tran_z_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -8147,10 +8186,12 @@ to_mouse_rot(struct ged *gedp,
     int ret;
     int ac;
     char *av[4];
-    fastf_t x, y;
     fastf_t dx, dy;
     struct bu_vls rot_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -8234,13 +8275,15 @@ to_mouse_rotate_arb_face(struct ged *gedp,
 {
     int ret;
     char *av[6];
-    fastf_t x, y;
     fastf_t dx, dy;
     point_t model;
     point_t view;
     mat_t inv_rot;
     struct bu_vls pt_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -8328,12 +8371,14 @@ to_mouse_scale(struct ged *gedp,
 {
     int ret;
     char *av[3];
-    fastf_t x, y;
     fastf_t dx, dy;
     fastf_t sf;
     fastf_t inv_width;
     struct bu_vls zoom_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -8421,13 +8466,15 @@ to_mouse_protate(struct ged *gedp,
 {
     int ret;
     char *av[6];
-    fastf_t x, y;
     fastf_t dx, dy;
     point_t model;
     point_t view;
     mat_t inv_rot;
     struct bu_vls mrot_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -8514,12 +8561,14 @@ to_mouse_pscale(struct ged *gedp,
 {
     int ret;
     char *av[6];
-    fastf_t x, y;
     fastf_t dx, dy;
     fastf_t sf;
     fastf_t inv_width;
     struct bu_vls sf_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -8609,7 +8658,6 @@ to_mouse_ptranslate(struct ged *gedp,
 {
     int ret;
     char *av[6];
-    fastf_t x, y;
     fastf_t dx, dy;
     point_t model;
     point_t view;
@@ -8617,6 +8665,9 @@ to_mouse_ptranslate(struct ged *gedp,
     mat_t inv_rot;
     struct bu_vls tvec_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -8706,11 +8757,13 @@ to_mouse_trans(struct ged *gedp,
     int ret;
     int ac;
     char *av[4];
-    fastf_t x, y;
     fastf_t dx, dy;
     fastf_t inv_width;
     struct bu_vls trans_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -8803,9 +8856,11 @@ to_move_arb_edge_mode(struct ged *gedp,
 		      const char *usage,
 		      int UNUSED(maxargs))
 {
-    fastf_t x, y;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -8862,9 +8917,11 @@ to_move_arb_face_mode(struct ged *gedp,
 		      const char *usage,
 		      int UNUSED(maxargs))
 {
-    fastf_t x, y;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -8977,9 +9034,11 @@ to_move_botpt_mode(struct ged *gedp,
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
-    fastf_t x, y;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -9037,9 +9096,11 @@ to_move_botpts_mode(struct ged *gedp,
 		    int UNUSED(maxargs))
 {
     register int i;
-    fastf_t x, y;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -9131,9 +9192,11 @@ to_move_pipept_mode(struct ged *gedp,
 		    const char *usage,
 		    int UNUSED(maxargs))
 {
-    fastf_t x, y;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -9325,9 +9388,11 @@ to_orotate_mode(struct ged *gedp,
 		const char *usage,
 		int UNUSED(maxargs))
 {
-    fastf_t x, y;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -9382,9 +9447,11 @@ to_oscale_mode(struct ged *gedp,
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
-    fastf_t x, y;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -9441,9 +9508,11 @@ to_otranslate_mode(struct ged *gedp,
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
-    fastf_t x, y;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -10516,9 +10585,11 @@ to_rotate_arb_face_mode(struct ged *gedp,
 			const char *usage,
 			int UNUSED(maxargs))
 {
-    fastf_t x, y;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -10575,9 +10646,11 @@ to_rotate_mode(struct ged *gedp,
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
-    fastf_t x, y;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -10738,9 +10811,11 @@ to_protate_mode(struct ged *gedp,
 		const char *usage,
 		int UNUSED(maxargs))
 {
-    fastf_t x, y;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -10796,9 +10871,11 @@ to_pscale_mode(struct ged *gedp,
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
-    fastf_t x, y;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -10854,9 +10931,11 @@ to_ptranslate_mode(struct ged *gedp,
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
-    fastf_t x, y;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -10912,9 +10991,11 @@ to_scale_mode(struct ged *gedp,
 	      const char *usage,
 	      int UNUSED(maxargs))
 {
-    fastf_t x, y;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -10968,13 +11049,15 @@ to_screen2model(struct ged *gedp,
 		const char *usage,
 		int UNUSED(maxargs))
 {
-    fastf_t x, y;
     fastf_t inv_width;
     fastf_t inv_height;
     fastf_t inv_aspect;
     point_t view;
     point_t model;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -11027,12 +11110,14 @@ to_screen2view(struct ged *gedp,
 	       const char *usage,
 	       int UNUSED(maxargs))
 {
-    fastf_t x, y;
     fastf_t inv_width;
     fastf_t inv_height;
     fastf_t inv_aspect;
     point_t view;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -11193,8 +11278,11 @@ to_snap_view(struct ged *gedp,
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
-    fastf_t vx, vy;
     struct ged_dm_view *gdvp;
+    fastf_t fvx, fvy;
+
+    /* must be double for scanf */
+    double vx, vy;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -11225,15 +11313,18 @@ to_snap_view(struct ged *gedp,
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
+    /* convert double to fastf_t */
+    fvx = vx;
+    fvy = vy;
 
     gedp->ged_gvp = gdvp->gdv_view;
     if (!gedp->ged_gvp->gv_grid.ggs_snap) {
-	bu_vls_printf(gedp->ged_result_str, "%lf %lf", vx, vy);
+	bu_vls_printf(gedp->ged_result_str, "%lf %lf", fvx, fvy);
 	return GED_OK;
     }
 
-    ged_snap_to_grid(gedp, &vx, &vy);
-    bu_vls_printf(gedp->ged_result_str, "%lf %lf", vx, vy);
+    ged_snap_to_grid(gedp, &fvx, &fvy);
+    bu_vls_printf(gedp->ged_result_str, "%lf %lf", fvx, fvy);
 
     return GED_OK;
 }
@@ -11311,9 +11402,11 @@ to_translate_mode(struct ged *gedp,
 		  const char *usage,
 		  int UNUSED(maxargs))
 {
-    fastf_t x, y;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double x, y;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -11578,8 +11671,10 @@ to_view2screen(struct ged *gedp,
 {
     fastf_t x, y;
     fastf_t aspect;
-    point_t view;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double view[ELEMENTS_PER_POINT];
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -11699,11 +11794,13 @@ to_vslew(struct ged *gedp,
     int ret;
     int ac;
     char *av[3];
-    fastf_t xpos1, ypos1;
     fastf_t xpos2, ypos2;
     fastf_t sf;
     struct bu_vls slew_vec = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
+
+    /* must be double for scanf */
+    double xpos1, ypos1;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
