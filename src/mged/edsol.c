@@ -4693,7 +4693,7 @@ sedit(void)
 	    pr_prompt(interactive);
 	    fixv--;
 	    es_edflag = ECMD_ARB_ROTATE_FACE;
-	    view_state->vs_flag = 1;	/* draw arrow, etc */
+	    view_state->vs_flag = 1;	/* draw arrow, etc. */
 	    set_e_axes_pos(1);
 	    break;
 
