@@ -704,7 +704,7 @@ main(int argc, char **argv)
     fprintf(fp_out, "#Units are %s\n", units);
     /* NOTE: We may want to inquire about bounding boxes for the
      * various groups and add Viewpoints nodes that point the camera
-     * to the center and orient for Top, Side, etc Views. We will add
+     * to the center and orient for Top, Side, etc. Views. We will add
      * some default Material Color definitions (for thousands groups)
      * before we start defining the geometry.
      */
