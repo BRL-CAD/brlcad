@@ -21,7 +21,7 @@
  *
  * Notes -
  * This is a basic flat shader.  It will display an object with a set color
- * without taking any effects such as curvature, emission, reflection, etc
+ * without taking any effects such as curvature, emission, reflection, etc.
  * into consideration.  It simply shades an object constantly with either
  * (in order of reverse priority) 1) the default flat color (white),
  * 2) its set region color, 2) the specified flat shader color (given via
