@@ -211,7 +211,7 @@ screen_vls(
 /*
  * D O T I T L E S
  *
- * Produce titles, etc, on the screen.
+ * Produce titles, etc., on the screen.
  * NOTE that this routine depends on being called AFTER dozoom();
  */
 void
