@@ -779,7 +779,7 @@ ell_ellipse_samples(
      * nevertheless pass through almost all of the same pixels in the view,
      * producing an equivalent rasterized image. Rather than expending the
      * effort to directly calculate how few segments we can get away with
-     * without reducing the apparant quality of the rasterized curve, we just
+     * without reducing the apparent quality of the rasterized curve, we just
      * use this empirical calculation.
      */
     return pow(bn_twopi * radius_samples, .55);
