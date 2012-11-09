@@ -700,7 +700,7 @@ ray tracer will handle light." } }
     hoc_register_menu_data "Light Model" "Full"\
 	"Lighting Model - Full"\
 	{ { summary "This is the default. The full lighting model has the
-ability to implement Phong shading, transparant and
+ability to implement Phong shading, transparent and
 reflective objects, shadow penumbras, texture
 maps, etc.  In addition to ambient light, a
 small amount of light is supplied from the eye
@@ -1473,7 +1473,7 @@ proc rt_handle_configure { id } {
 ##
 
 
-## Update for each inividual Entry/Scale pair
+## Update for each individual Entry/Scale pair
 proc PMNonLinearEvent {EntryWidget ScaleValue} {
     ## Purge old characters
     $EntryWidget delete 0 [string length [$EntryWidget get]]
@@ -1482,7 +1482,7 @@ proc PMNonLinearEvent {EntryWidget ScaleValue} {
 }
 
 
-## Update for each inividual Entry/Scale pair
+## Update for each individual Entry/Scale pair
 proc PMLinearEvent {EntryWidget ScaleValue} {
     ## Purge old characters
     $EntryWidget delete 0 [string length [$EntryWidget get]]
@@ -1491,7 +1491,7 @@ proc PMLinearEvent {EntryWidget ScaleValue} {
 }
 
 
-## Update for each inividual Entry/Scale pair
+## Update for each individual Entry/Scale pair
 proc PMRaysEvent {EntryWidget ScaleValue} {
     ## Purge old characters
     $EntryWidget delete 0 [string length [$EntryWidget get]]
@@ -1544,7 +1544,7 @@ proc PMMenu {id top enable} {
 	hoc_register_data $top.gridF4.pmCausticsPercentScale "Caustics Percent" $hoc_data
 
 
-	## Number of Sample Rays for Irradidance Hemisphere Sample
+	## Number of Sample Rays for Irradiance Hemisphere Sample
 	set hoc_data { { summary "The number of irradiance rays used to approximate irradiance at each irradiance cache point.\nIrradiance is the incoming light at a given point.  Increasing the number of rays will decrease\nthe amount of noise in the scene." } }
 
 	label $top.gridF4.pmIrradianceRaysLabel -text "Irradiance Rays"
@@ -1577,7 +1577,7 @@ proc PMMenu {id top enable} {
 
 
 	## Random Seed for Emitting Photons
-	set hoc_data { { summary "Sets the random seed used for every part of photon mapping.\nFor large numbers of photons this setting will have no affect\non the scene.  This setting is useful for reproducing the same\nmap for a given scene." } }
+	set hoc_data { { summary "Sets the random seed used for every part of photon mapping.\nFor large numbers of photons this setting will have no effect\non the scene.  This setting is useful for reproducing the same\nmap for a given scene." } }
 
 	label $top.gridF4.pmRandomSeedLabel -text "Random Seed"
 	grid $top.gridF4.pmRandomSeedLabel -row 5 -column 0 -sticky e
