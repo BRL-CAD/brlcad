@@ -583,7 +583,7 @@ main(int argc, char *argv[])
 	       stamp(), pkg_permport);
 	FD_ZERO(&clients);
 
-	/* parse command line args for sizes, etc */
+	/* parse command line args for sizes, etc. */
 	finalframe = -1;
 	if ( !get_args( argc, (const char **)argv ) )  {
 	    fprintf(stderr, "remrt:  bad arg list\n");
@@ -1054,7 +1054,7 @@ is_hackers_night( struct timeval *tv )
  *
  *	a trailer that follows the end command, before the next
  *	start command.  While this *might* include more changes
- *	of viewsize, etc, in actual practice, if it exists at all,
+ *	of viewsize, etc., in actual practice, if it exists at all,
  *	it contains shell escapes, e.g., to compress the frame just
  *	finished.  As such, it should be performed locally, after
  *	the frame is done.
@@ -1957,7 +1957,7 @@ task_server( struct servers *sp, struct frame *fr, struct timeval *nowp )
 
     /* If each frame has a dedicated server, make lumps big */
     if ( work_allocate_method == OPT_MOVIE )  {
-	lump = fr->fr_width * 2;	/* 2 scanlines at a wack */
+	lump = fr->fr_width * 2;	/* 2 scanlines at a whack */
     } else {
 	/* Limit growth in assignment size to 2X each assignment */
 	if ( lump > 2*sp->sr_lump )  lump = 2*sp->sr_lump;
@@ -2095,7 +2095,7 @@ ph_default(struct pkg_conn *pc, char *buf)
 /*
  *			P H _ D I R B U I L D _ R E P L Y
  *
- *  The server answers our MSG_DIRBUILD with various prints, etc,
+ *  The server answers our MSG_DIRBUILD with various prints, etc.,
  *  and then responds with a MSG_DIRBUILD_REPLY in return, which indicates
  *  that he is ready to accept work now.
  */
@@ -2125,7 +2125,7 @@ ph_dirbuild_reply(struct pkg_conn *pc, char *buf)
 /*
  *			P H _ G E T T R E E S _ R E P L Y
  *
- *  The server answers our MSG_GETTREES with various prints, etc,
+ *  The server answers our MSG_GETTREES with various prints, etc.,
  *  and then responds with a MSG_GETTREES_REPLY in return, which indicates
  *  that he is ready to accept work now.
  */
