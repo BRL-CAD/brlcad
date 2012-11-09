@@ -287,7 +287,7 @@ get_transforms(btDiscreteDynamicsWorld* dynamicsWorld)
 
 
 /**
- * Cleanup the physics collision shapes, rigid bodies etc
+ * Cleanup the physics collision shapes, rigid bodies etc.
  *
  */
 int
