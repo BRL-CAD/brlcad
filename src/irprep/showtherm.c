@@ -83,7 +83,7 @@ int main(int argc, char **argv)
     struct application ap;	/*  Application struct, passed between functions.  */
 
     int idx;		/*  Index for rt_dirbuild & rt_gettree.  */
-    static struct rt_i *rtip;/*  Used for building directory, ect.  */
+    static struct rt_i *rtip;/*  Used for building directory, etc.  */
     char idbuf[132];	/*  First id record in .g file.  */
 
     int i, j, k;		/*  Loop variables.  */
