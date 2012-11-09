@@ -327,7 +327,7 @@ writeX3dHeader(FILE *fp_out, char *x3dFileName)
     fprintf(fp_out, "  <Scene>\n");
 
     /* Note we may want to inquire about bounding boxes for the various groups and add Viewpoints nodes that
-     * point the camera to the center and orient for Top, Side, etc Views
+     * point the camera to the center and orient for Top, Side, etc. Views
      *
      * We will add some default Material Color definitions (for thousands groups) before we start defining the geometry
      */
