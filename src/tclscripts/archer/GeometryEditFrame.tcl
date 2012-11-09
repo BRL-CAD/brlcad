@@ -34,6 +34,7 @@
     itk_option define -geometryObject geometryObject GeometryObject ""
     itk_option define -geometryObjectPath geometryObjectPath GeometryObjectPath ""
     itk_option define -geometryChangedCallback geometryChangedCallback GeometryChangedCallback ""
+    itk_option define -prevGeometryObject prevGeometryObject PrevGeometryObject ""
 
     itk_option define -labelFont labelFont Font [list $::ArcherCore::SystemWindowFont 12]
     itk_option define -boldLabelFont boldLabelFont Font [list $::ArcherCore::SystemWindowFont 12 bold]
@@ -83,7 +84,6 @@
 	variable mYmax 0
 	variable mZmin 0
 	variable mZmax 0
-	variable mPrevGeometryObject ""
 
 	method buildUpperPanel {}
 	method buildLowerPanel {}

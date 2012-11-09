@@ -203,6 +203,7 @@ package provide Archer 1.0
 	variable mActiveEditDialogs {}
 	variable wizardXmlCallbacks ""
 	variable mBotFixAllFlag 0
+	variable mNumSelectedBotPts 0
 
 	# plugin list
 	variable mWizardClass ""
@@ -211,13 +212,18 @@ package provide Archer 1.0
 	variable mNoWizardActive 0
 
 	# ArcherCore Override Section
+	method beginViewRotate {}
+	method beginViewScale {}
+	method beginViewTranslate {}
 	method buildCommandView {}
 	method compSelectCallback {_mstring}
 	method dblClick {_tags}
 	method handleTreeSelect {}
+	method initCompPick {}
 	method initCompSelect {}
 	method initDefaultBindings {{_comp ""}}
 	method initGed {}
+	method initViewCenterMode {}
 	method setActivePane {_pane}
 	method updateSaveMode {}
 
@@ -1648,6 +1654,11 @@ package provide Archer 1.0
     set mDbTitle [$itk_component(ged) title]
     set mDbUnits [$itk_component(ged) units -s]
 
+    # Reset the bot edit panel
+    if {[info exists itk_component(botView)]} {
+	$itk_component(botView) clearEditState
+    }
+
     if {!$mViewOnly} {
 	initDbAttrView $mTarget
 	applyPreferences
@@ -1955,6 +1966,34 @@ package provide Archer 1.0
 
 ################################### ArcherCore Override Section ###################################
 
+
+::itcl::body Archer::beginViewRotate {} {
+    if {[info exists itk_component(botView)]} {
+	$itk_component(botView) clearEditState
+    }
+
+    ArcherCore::beginViewRotate
+}
+
+
+::itcl::body Archer::beginViewScale {} {
+    if {[info exists itk_component(botView)]} {
+	$itk_component(botView) clearEditState
+    }
+
+    ArcherCore::beginViewScale
+}
+
+
+::itcl::body Archer::beginViewTranslate {} {
+    if {[info exists itk_component(botView)]} {
+	$itk_component(botView) clearEditState
+    }
+
+    ArcherCore::beginViewTranslate
+}
+
+
 ::itcl::body Archer::buildCommandView {} {
     set mDelayCommandViewBuild 1
 }
@@ -2018,6 +2057,8 @@ package provide Archer 1.0
 		catch {$itk_component(botView) selectBotPts $_mstring} msg
 	    }
 	}
+
+    $itk_component(ged) rect dim 0 0
 }
 
 
@@ -2088,7 +2129,20 @@ package provide Archer 1.0
 }
 
 
+::itcl::body Archer::initCompPick {} {
+    if {[info exists itk_component(botView)]} {
+	$itk_component(botView) clearEditState
+    }
+
+    ArcherCore::initCompPick
+}
+
+
 ::itcl::body Archer::initCompSelect {} {
+    if {[info exists itk_component(botView)]} {
+	$itk_component(botView) clearEditState 1
+    }
+
     if {$mCompSelectMode != $COMP_SELECT_LIST_MODE &&
 	$mCompSelectMode != $COMP_SELECT_LIST_PARTIAL_MODE &&
 	$mCompSelectMode != $COMP_SELECT_BOT_POINTS_MODE} {
@@ -2102,10 +2156,6 @@ package provide Archer 1.0
 	$mCompSelectMode == $COMP_SELECT_GROUP_REMOVE_PARTIAL_MODE} {
 	$itk_component(ged) init_view_rect 1 1
     } elseif {$mCompSelectMode == $COMP_SELECT_BOT_POINTS_MODE && $mSelectedObj != "" && $mSelectedObjType == "bot"} {
-	if {[info exists itk_component(botView)]} {
-	    $itk_component(botView) clearEditState
-	}
-
 	$itk_component(ged) init_view_rect 1 0 $mSelectedObj
     } else {
 	$itk_component(ged) init_view_rect 1 0
@@ -2162,6 +2212,15 @@ package provide Archer 1.0
     ArcherCore::initGed
     activateMenusEtc
     setActivePane ur
+}
+
+
+::itcl::body Archer::initViewCenterMode {} {
+    if {[info exists itk_component(botView)]} {
+	$itk_component(botView) clearEditState
+    }
+
+    ArcherCore::initViewCenterMode
 }
 
 
@@ -6058,6 +6117,10 @@ proc title_node_handler {node} {
 	return
     }
 
+    if {[info exists itk_component(botView)]} {
+	$itk_component(botView) clearEditState
+    }
+
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_ROT} {
 	initEdit
     }
@@ -6091,6 +6154,10 @@ proc title_node_handler {node} {
 	set mDefaultBindingMode $VIEW_ROTATE_MODE
 	beginViewRotate
 	return
+    }
+
+    if {[info exists itk_component(botView)]} {
+	$itk_component(botView) clearEditState
     }
 
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_SCALE} {
@@ -6128,6 +6195,10 @@ proc title_node_handler {node} {
 	initEdit
     }
 
+    if {$mSelectedObjType == "bot"} {
+	set mNumSelectedBotPts [$itk_component(botView) setMoveMode 1]
+    }
+
     $itk_component(ged) init_button_no_op 2
     set ::GeometryEditFrame::mEditLastTransMode $OBJECT_TRANSLATE_MODE
 
@@ -6136,7 +6207,11 @@ proc title_node_handler {node} {
 
 	if {$GeometryEditFrame::mEditCommand != ""} {
 	    if {$mSelectedObjType == "bot"} {
-		bind $win <1> "$itk_component(botView) $GeometryEditFrame::mEditCommand $dname $obj %x %y; break"
+		if {$mNumSelectedBotPts} {
+		    bind $win <1> "$itk_component(botView) $GeometryEditFrame::mEditCommand $dname $obj %x %y; break"
+		} else {
+		    bind $win <1> "$itk_component(ged) pane_otranslate_mode $dname $obj %x %y; break"
+		}
 	    } else {
 		bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 %x %y; break"
 	    }
@@ -6158,6 +6233,14 @@ proc title_node_handler {node} {
 	set mDefaultBindingMode $VIEW_ROTATE_MODE
 	beginViewRotate
 	return
+    }
+
+    if {$mSelectedObjType == "bot"} {
+	set mNumSelectedBotPts [$itk_component(botView) setMoveMode]
+
+	if {$mNumSelectedBotPts != 1} {
+	    $itk_component(botView) clearEditState
+	}
     }
 
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_TRANS} {
@@ -6255,8 +6338,12 @@ proc title_node_handler {node} {
 	} else {
 	    if {$GeometryEditFrame::mEditCommand != ""} {
 		if {$mSelectedObjType == "bot"} {
-		    set sl [gedCmd pane_view2screen $_dm [list $vx $vy]]
-		    $itk_component(botView) moveBotElement $_dm $_obj [lindex $sl 0] [lindex $sl 1]
+		    if {$mNumSelectedBotPts == 1} {
+			set sl [gedCmd pane_view2screen $_dm [list $vx $vy]]
+			$itk_component(botView) moveBotElement $_dm $_obj [lindex $sl 0] [lindex $sl 1]
+		    } else {
+			eval gedCmd ocenter $_obj $new_ocenter
+		    }
 		} else {
 		    $itk_component(ged) $GeometryEditFrame::mEditCommand $_obj $GeometryEditFrame::mEditParam1 $new_ocenter
 		}
@@ -8108,6 +8195,11 @@ proc title_node_handler {node} {
 
     if {$mPrimitiveLabelColor != $mPrimitiveLabelColorPref} {
 	set mPrimitiveLabelColor $mPrimitiveLabelColorPref
+
+	if {$mSelectedObjType == "bot"} {
+	    eval gedCmd data_axes color [getRgbColor $mPrimitiveLabelColor]
+	    eval gedCmd data_lines color [getRgbColor $mPrimitiveLabelColor]
+	}
     }
 
     if {$mViewingParamsColor != $mViewingParamsColorPref} {

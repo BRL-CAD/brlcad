@@ -9,7 +9,7 @@
 # version 2.1 as published by the Free Software Foundation.
 #
 # This library is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of	common mEditLastTransMode $::ArcherCore::OBJECT_CENTER_MODE
+# WITHOUT ANY WARRANTY; without even the implied warranty of
 
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
@@ -30,7 +30,7 @@
 ##
 # TODO
 #
-# -) Highlight selected points
+# -) Add constrained translation of bot elements (i.e. points, edges, faces). Generalize for use with other primitives.
 # -) Delete points, faces and edges
 # -) Operations to create/extend surface mode bots
 #    - Three pts are specified to create a face.
@@ -75,8 +75,10 @@
 	    {Split Face}
 	}
 
-	method clearEditState {}
+	method clearEditState {{_clearModeOnly 0}}
+	method clearAllTables {}
 	method selectBotPts {_plist}
+	method setMoveMode {{_tflag 0}}
 
 	# Override what's in GeometryEditFrame
 	method initGeometry {_gdata}
@@ -103,6 +105,9 @@
 	variable mCurrentBotEdges ""
 	variable mCurrentBotFaces ""
 	variable mFrontPointsOnly 1
+	variable mHighlightPoints 1
+	variable mHighlightPointSize 1.0
+	variable mHighlightPointColor {255 255 255}
 
 	# Methods used by the constructor
 	# override methods in GeometryEditFrame
@@ -123,6 +128,8 @@
 	method detailBrowseCommand {_row _col}
 	method handleDetailPopup {_index _X _Y}
 	method handleEnter {_row _col}
+	method highlightCurrentBotElements {}
+	method initPointHighlight {}
 	method loadTables {_gdata}
 	method multiEdgeSelectCallback {}
 	method multiFaceSelectCallback {}
@@ -132,6 +139,7 @@
 	method syncTablesWrtEdges {}
 	method syncTablesWrtFaces {}
 	method validateDetailEntry {_row _col _newval _clientdata}
+	method validatePointSize {_size}
     }
 
     private {}
@@ -157,8 +165,28 @@
 
 
 
-::itcl::body BotEditFrame::clearEditState {} {
+::itcl::body BotEditFrame::clearEditState {{_clearModeOnly 0}} {
     set mEditMode 0
+
+    if {$_clearModeOnly} {
+	return
+    }
+
+    clearAllTables
+    set itk_option(-prevGeometryObject) ""
+}
+
+
+::itcl::body BotEditFrame::clearAllTables {} {
+    $itk_option(-mged) data_axes points {}
+    $itk_option(-mged) data_lines points {}
+
+    set mCurrentBotPoints ""
+    set mCurrentBotEdges ""
+    set mCurrentBotFaces ""
+    $itk_component(vertTab) unselectAllRows
+    $itk_component(edgeTab) unselectAllRows
+    $itk_component(faceTab) unselectAllRows
 }
 
 
@@ -172,6 +200,30 @@
     }
 
     selectCurrentBotPoints
+}
+
+
+## - setMoveMode
+#
+#
+::itcl::body BotEditFrame::setMoveMode {{_tflag 0}} {
+    set len [llength $mCurrentBotPoints]
+
+    if {$len} {
+	set mEditPCommand [::itcl::code $this p]
+	set mEditParam1 ""
+	set mEditClass $EDIT_CLASS_TRANS
+	set mEditLastTransMode $::ArcherCore::OBJECT_TRANSLATE_MODE
+
+	if {$mEditMode != $movePoints && $mEditMode != $moveEdge && $mEditMode != $moveFace} {
+	    set mEditMode $movePoints
+	    set mEditCommand moveBotPtsMode
+	}
+    } elseif {$_tflag && ($mEditMode == $movePoints || $mEditMode == $moveEdge || $mEditMode == $moveFace)} {
+	set len 1
+    }
+
+    return $len
 }
 
 
@@ -189,11 +241,11 @@
 
     GeometryEditFrame::initGeometry $_gdata
 
-    if {$itk_option(-geometryObject) != $mPrevGeometryObject} {
+    if {$itk_option(-geometryObject) != $itk_option(-prevGeometryObject)} {
 	set mCurrentBotPoints ""
 	set mCurrentBotEdges ""
 	set mCurrentBotFaces ""
-	set mPrevGeometryObject $itk_option(-geometryObject)
+	set itk_option(-prevGeometryObject) $itk_option(-geometryObject)
 
 	$itk_component(edgeTab) unselectAllRows
 	$itk_component(faceTab) unselectAllRows
@@ -357,8 +409,9 @@
 	return
     }
 
-    set mCurrentBotPoints {}
-    $itk_component(vertTab) unselectAllRows
+#    set mCurrentBotPoints {}
+#    $itk_component(vertTab) unselectAllRows
+    set mCurrentBotFaces {}
     botFacesSelectCallback $face
 
     set plist [$itk_component(vertTab) getSelectedRows]
@@ -538,15 +591,40 @@
     }
 
     itk_component add frontPointOnlyCB {
-	::ttk::checkbutton $parent.dlistModeCB \
+	::ttk::checkbutton $parent.frontPointOnlyCB \
 	    -text "Front Points Only" \
 	    -command [::itcl::code $this initEditState] \
 	    -variable [::itcl::scope mFrontPointsOnly]
     } {}
+    itk_component add hlPointsCB {
+	::ttk::checkbutton $parent.hlPointsCB \
+	    -text "Highlight Points" \
+	    -command [::itcl::code $this highlightCurrentBotElements] \
+	    -variable [::itcl::scope mHighlightPoints]
+    } {}
+
+    itk_component add pointSizeL {
+	::ttk::label $parent.pointSizeL \
+	    -anchor e \
+	    -text "Highlight Point Size"
+    } {}
+    itk_component add pointSizeE {
+	::ttk::entry $parent.pointSizeE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mHighlightPointSize] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validatePointSize %P]
+    } {}
+
     incr row
     grid rowconfigure $parent $row -weight 1
     incr row
     grid $itk_component(frontPointOnlyCB) -row $row -column 0 -sticky w
+    incr row
+    grid $itk_component(hlPointsCB) -row $row -column 0 -sticky w
+    incr row
+    grid $itk_component(pointSizeL) -column 0 -row $row -sticky e
+    grid $itk_component(pointSizeE) -column 1 -row $row -sticky ew
     grid columnconfigure $parent 1 -weight 1
 }
 
@@ -617,7 +695,7 @@
 
     set mEditPCommand [::itcl::code $this p]
     set mEditParam1 ""
-    $itk_option(-mged) rect lwidth 0
+    highlightCurrentBotElements
 
     switch -- $mEditMode \
 	$movePoints {
@@ -726,17 +804,21 @@
     loadTables $gdata
 
     # Select one of the newly created edges (i.e. one with the largest vertex index)
-    set selist [lsort -index 1 $mEdgeList]
+    set selist [lsort -integer -index 1 $mEdgeList]
     set edge [lindex $selist end]
     set ei [lsearch $mEdgeList $edge]
 
-    incr ei
-    set mCurrentBotEdges $ei
-    $itk_component(edgeTab) unselectAllRows
-    $itk_component(edgeTab) selectRow $ei
-    $itk_component(edgeTab) see "$ei,0"
+    if {1} {
+	clearAllTables
+    } else {
+	incr ei
+	set mCurrentBotEdges $ei
+	$itk_component(edgeTab) unselectAllRows
+	$itk_component(edgeTab) selectRow $ei
+	$itk_component(edgeTab) see "$ei,0"
 
-    syncTablesWrtEdges
+	syncTablesWrtEdges
+    }
 }
 
 
@@ -767,15 +849,17 @@
     set gdata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
     loadTables $gdata
 
-    incr _face
-    set findex [lsearch $mCurrentBotFaces $_face]
-    if {$findex < 0} {
-	lappend mCurrentBotFaces $_face
-    }
+    if {1} {
+	clearAllTables
+    } else {
+	incr _face
+	set mCurrentBotFaces $_face
+	$itk_component(faceTab) unselectAllRows
+	$itk_component(faceTab) selectRow $_face
+	$itk_component(faceTab) see "$_face,0"
 
-    $itk_component(faceTab) selectRow $_face
-    $itk_component(faceTab) see "$_face,0"
-    syncTablesWrtFaces
+	syncTablesWrtFaces
+    }
 }
 
 
@@ -828,6 +912,52 @@
     }
 
     updateGeometryIfMod
+}
+
+
+::itcl::body BotEditFrame::highlightCurrentBotElements {} {
+    if {$itk_option(-mged) == ""} {
+	return
+    }
+    
+
+    set hpoints {}
+    foreach index $mCurrentBotPoints {
+	incr index -1
+	lappend hpoints [lindex $mPointList $index]
+    }
+
+    set lsegPoints {}
+    foreach edge $mCurrentBotEdges {
+	set indexA $mEdgeDetail($edge,$A_COL)
+	set indexB $mEdgeDetail($edge,$B_COL)
+	lappend lsegPoints [lindex $mPointList $indexA]
+	lappend lsegPoints [lindex $mPointList $indexB]
+    }
+
+    $itk_option(-mged) refresh_off
+    set hlcolor [$::ArcherCore::application getRgbColor [$itk_option(-mged) cget -primitiveLabelColor]]
+
+    $itk_option(-mged) data_axes draw $mHighlightPoints
+    $itk_option(-mged) data_axes size $mHighlightPointSize
+    eval $itk_option(-mged) data_axes color $hlcolor
+
+    $itk_option(-mged) data_lines draw $mHighlightPoints
+    eval $itk_option(-mged) data_lines color $hlcolor
+    $itk_option(-mged) data_lines points $lsegPoints
+
+    $itk_option(-mged) refresh_on
+
+    $itk_option(-mged) data_axes points $hpoints
+}
+
+
+::itcl::body BotEditFrame::initPointHighlight {} {
+    if {$itk_option(-mged) == ""} {
+	return
+    }
+
+    $itk_option(-mged) data_axes draw $mHighlightPoints
 }
 
 
@@ -892,7 +1022,7 @@
 		    set mFaceDetail($index,$C_COL) [lindex $item 2]
 		    incr index
 
-		    lappend mFaceList [lsort $item]
+		    lappend mFaceList [lsort -integer $item]
 		}
 	    }
 	    default {
@@ -969,13 +1099,14 @@
     set plist {}
     set len [llength $mCurrentBotPoints]
     if {$len < 2} {
+	highlightCurrentBotElements
 	return
     }
 
     # Sorting the points insures the correct point order
     # within an edge for searching the edge list below.
     set sortedPoints {}
-    foreach item [lsort $mCurrentBotPoints] {
+    foreach item [lsort -integer $mCurrentBotPoints] {
 	incr item -1
 	lappend sortedPoints $item
     }
@@ -1003,6 +1134,7 @@
 
     set len [llength $mCurrentBotEdges]
     if {$len < 2} {
+	highlightCurrentBotElements
 	return
     }
 
@@ -1015,7 +1147,7 @@
 		lappend flist $mEdgeDetail($edgeB,$A_COL) $mEdgeDetail($edgeB,$B_COL)
 		lappend flist $mEdgeDetail($edgeC,$A_COL) $mEdgeDetail($edgeC,$B_COL)
 
-		set flist [lsort -unique $flist]
+		set flist [lsort -integer -unique $flist]
 		if {[llength $flist] != 3} {
 		    continue
 		}
@@ -1036,6 +1168,8 @@
 
 	incr i
     }
+
+    highlightCurrentBotElements
 }
 
 
@@ -1048,7 +1182,7 @@
 	incr indexB
 	lappend mCurrentBotPoints $indexA $indexB
     }
-    set mCurrentBotPoints [lsort -unique $mCurrentBotPoints]
+    set mCurrentBotPoints [lsort -integer -unique $mCurrentBotPoints]
 
     selectCurrentBotPoints 0
 }
@@ -1112,8 +1246,10 @@
 	$itk_component(vertTab) selectRow $indexA
 	$itk_component(vertTab) see "$indexA,0"
     }
-    set mCurrentBotEdges [lsort -unique $mCurrentBotEdges]
-    set mCurrentBotPoints [lsort -unique $mCurrentBotPoints]
+    set mCurrentBotEdges [lsort -integer -unique $mCurrentBotEdges]
+    set mCurrentBotPoints [lsort -integer -unique $mCurrentBotPoints]
+
+    highlightCurrentBotElements
 }
 
 
@@ -1126,6 +1262,30 @@
 
     return [::cadwidgets::Ged::validateDouble $_newval]
 }
+
+
+::itcl::body BotEditFrame::validatePointSize {_size} {
+    if {$_size == "."} {
+	$itk_option(-mged) data_axes size 0
+
+	return 1
+    }
+
+    if {[string is double $_size]} {
+	if {$_size == "" || $_size < 0} {
+	    set sz 0
+	} else {
+	    set sz $_size
+	}
+
+	$itk_option(-mged) data_axes size $sz
+
+	return 1
+    }
+
+    return 0
+}
+
 
 
 # Local Variables:
