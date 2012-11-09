@@ -1617,7 +1617,7 @@ class Sketch_editor {
 	draw_segs
 	$itk_component(status_line) configure -text "Click and hold mouse button 1 to adjust end point\n\
 			or click mouse button 3 to select an existing vertex to set the endpoint\n\
-			or enter end point cordinates in the entry windows"
+			or enter end point coordinates in the entry windows"
 	bind $itk_component(canvas) <B1-Motion> [code $this continue_line $new_seg 0 1 %x %y]
 	bind $itk_component(canvas) <ButtonPress-1> [code $this continue_line $new_seg 2 1 %x %y]
 	bind $itk_component(canvas) <ButtonRelease-1> [code $this continue_line $new_seg 1 1 %x %y]
