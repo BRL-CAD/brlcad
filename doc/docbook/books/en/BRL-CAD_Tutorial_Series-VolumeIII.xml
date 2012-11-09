@@ -3184,14 +3184,14 @@ comb comb_name u a - b + c
      </para>
 
      <para>
-       Finally, it is a good idea to imbed the documentation (e.g., as a text
+       Finally, it is a good idea to embed the documentation (e.g., as a text
        file) directly into the database so that it always remains connected to
        the geometry it addresses. For example, the command
        <literallayout class="normal">
 dbbinary -i u c documentation /home/fred/doc.txt
        </literallayout>
        will create a BRL-CAD binary object named documentation, and the object
-       will contain the text from the file named /home/fred/doc.txt.
+       will contain the text from the file named /home/fred/doc.txt .
      </para>
 
   </chapter>
