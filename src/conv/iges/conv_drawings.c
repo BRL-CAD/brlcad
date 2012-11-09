@@ -430,7 +430,7 @@ Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t 
 	    continue;
 
 	if (dir[entno]->view) {
-	    /* this entitiy doesn't always get drawn */
+	    /* this entity doesn't always get drawn */
 	    int do_entity = 0;
 
 	    /* look for its view entity on the list */
@@ -469,7 +469,7 @@ Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t 
 		break;
 	}
 
-	/* rotate, scale, clip, etc, ect, etc... */
+	/* rotate, scale, clip, etc., etc., etc... */
 	for (BU_LIST_FOR(vp, bn_vlist, &vhead)) {
 	    int nused = vp->nused;
 
