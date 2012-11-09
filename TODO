@@ -662,7 +662,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 	  http://code.google.com/p/qse/
 
   The search and batch commands probably can't nor shouldn't use the
-  same replacement markers, with batch using $*, $1, $2, etc, to
+  same replacement markers, with batch using $*, $1, $2, etc., to
   represent file columns (in a poor man's awk fashion) and search
   simply using "{}" as the object name replacement marker.
 
@@ -1483,7 +1483,7 @@ NMG/BoT
   that external users can manage mesh geometry without needing to pull
   in everything else in librt.  consider moving other polygonal
   specific logic to libnmg, eventually moving all polygonal logic out
-  of librt/libtie/etc and into libnmg.
+  of librt, libtie, etc., and into libnmg.
 
 * enhance the bot data structure to contain a generic pointer that
   could be used to point back to the NMG it was generated from.  This

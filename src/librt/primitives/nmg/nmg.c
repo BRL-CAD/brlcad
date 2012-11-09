@@ -1857,7 +1857,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
  *
  * Allocate storage for all the in-memory NMG structures, in
  * preparation for the importation operation, using the GET_xxx()
- * macros, so that m->maxindex, etc, are all appropriately handled.
+ * macros, so that m->maxindex, etc., are all appropriately handled.
  */
 HIDDEN struct model *
 rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)

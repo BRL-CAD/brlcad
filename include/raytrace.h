@@ -1354,7 +1354,7 @@ struct anim_mat {
 
 struct rt_anim_property {
     uint32_t magic;
-    int			anp_op;		/**< @brief  RT_ANP_REPLACE, etc */
+    int			anp_op;		/**< @brief  RT_ANP_REPLACE, etc. */
     struct bu_vls	anp_shader;	/**< @brief  Update string */
 };
 #define RT_ANP_REPLACE	1		/**< @brief  Replace shader string */

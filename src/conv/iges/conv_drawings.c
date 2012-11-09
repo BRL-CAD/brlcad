@@ -827,7 +827,7 @@ Conv_drawings()
     }
     bu_log("No view entities\n");
 
-    /* no drawings or views, just convert all independent lines, arcs, etc */
+    /* no drawings or views, just convert all independent lines, arcs, etc. */
     m = nmg_mm();
 
     Draw_entities(m, (int *)NULL, 0, 0.0, 0.0, 0.0, 1.0, (mat_t *)NULL);
