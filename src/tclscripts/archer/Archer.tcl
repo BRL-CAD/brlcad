@@ -585,7 +585,7 @@ package provide Archer 1.0
 
     set i 0
     foreach plugin $::Archer::plugins {
-	# seperator
+	# separator
 	if {$i > 0} {
 	    frame [$sf childsite].sep$i -borderwidth 2 -height 2 -relief sunken
 	    pack [$sf childsite].sep$i -padx 2 -pady 4 -fill x
