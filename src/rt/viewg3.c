@@ -795,7 +795,7 @@ part_compact(register struct application *ap, register struct partition *PartHea
 
 	/*
 	 * Dequeue and free the unwanted partition structure.
-	 * Referenced segments, etc, will be freed by rt_shootray().
+	 * Referenced segments, etc., will be freed by rt_shootray().
 	 */
 	DEQUEUE_PT(nextpp);
 	FREE_PT(nextpp, ap->a_resource);
