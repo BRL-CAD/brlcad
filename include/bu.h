@@ -1549,7 +1549,7 @@ typedef struct bu_hist bu_hist_t;
  * Support for generalized "pointer tables", kept compactly in a
  * dynamic array.
  *
- * The table is currently un-ordered, and is merely a array of
+ * The table is currently un-ordered, and is merely an array of
  * pointers.  The support routine nmg_tbl manipulates the array for
  * you.  Pointers to be operated on (inserted, deleted, searched for)
  * are passed as a "pointer to long".
