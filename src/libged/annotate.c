@@ -87,7 +87,7 @@
  * Visibility: auto, wireframe, render, both
  *
  * linearformat: "%.2f"
- * linearunits: mm, m, in, ft, etc
+ * linearunits: mm, m, in, ft, etc.
  *
  * angularformat: "%.2f"
  * angularunits: degrees, radians
