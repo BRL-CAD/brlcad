@@ -91,7 +91,7 @@ template<typename charT=char,
 	 typename Allocator=std::allocator<char> >
 struct basic_obj_parser {
     typedef std::basic_string<charT, traits, Allocator> string_type;
-    // include paths etc
+    // include paths etc.
 
     string_type last_error;
 };
