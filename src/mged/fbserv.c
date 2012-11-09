@@ -35,7 +35,7 @@
 #  include <winsock.h>
 #else
 #  include <sys/socket.h>
-#  include <netinet/in.h>		/* For htonl(), etc */
+#  include <netinet/in.h>		/* For htonl(), etc. */
 #endif
 #include "bio.h"
 
