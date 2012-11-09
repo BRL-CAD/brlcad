@@ -153,7 +153,7 @@ dgo_build_tops(struct solid *hsp,
 	if (sp->s_flag == UP)
 	    continue;
 	if (dp->d_addr == RT_DIR_PHONY_ADDR)
-	    continue;	/* Ignore overlays, predictor, etc */
+	    continue;	/* Ignore overlays, predictor, etc. */
 	if (vp < end)
 	    *vp++ = dp->d_namep;
 	else {
