@@ -520,7 +520,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 		0, 1, 1) < 0)
     {
 	Tcl_AppendResult(interp,
-			 "An error has occured while adding '",
+			 "An error has occurred while adding '",
 			 grpname, "' to the database.\n", (char *)NULL);
     }
 
