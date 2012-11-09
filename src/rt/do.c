@@ -591,7 +591,7 @@ do_frame(int framenumber)
 	bu_log("\n...................Frame %5d...................\n",
 	       framenumber);
 
-    /* Compute model RPP, etc */
+    /* Compute model RPP, etc. */
     do_prep(rtip);
 
     if (rt_verbosity & VERBOSE_VIEWDETAIL)
