@@ -51,7 +51,7 @@
 #else
 #  include <sys/socket.h>
 #  include <sys/ioctl.h>	/* for FIONBIO */
-#  include <netinet/in.h>	/* for htons(), etc */
+#  include <netinet/in.h>	/* for htons(), etc. */
 #  include <netdb.h>
 #  include <netinet/tcp.h>	/* for TCP_NODELAY sockopt */
 #  include <arpa/inet.h>	/* for inet_addr() */
