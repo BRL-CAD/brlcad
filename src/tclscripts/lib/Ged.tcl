@@ -5367,7 +5367,7 @@ package provide cadwidgets::Ged 1.0
     $help add setview		{{x y z} {set the view given angles x, y, and z in degrees}}
     $help add shaded_mode	{{[0|1|2]}	{get/set shaded mode}}
     $help add shader		{{comb shader_material [shader_args]} {command line version of the mater command}}
-    $help add shells		{{nmg_model}	{breaks model into seperate shells}}
+    $help add shells		{{nmg_model}	{breaks model into separate shells}}
     $help add showmats		{{path}	{show xform matrices along path}}
     $help add size		{{vsize} {set/get the view size}}
     $help add slew		{{"x y"} {slew the view}}
