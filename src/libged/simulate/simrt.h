@@ -146,7 +146,7 @@ struct rayshot_results{
 /**
  * Creates the contact pairs from the raytracing results.
  * This is the core logic of the simulation and the manifold points
- * have to satisfy certain constraints(max area within overlap region etc.)
+ * have to satisfy certain constraints (max area within overlap region etc.)
  * to have a successful simulation. The normals and penetration depth is also
  * generated here for each point in the contact pairs. There can be upto 4
  * contact pairs.
