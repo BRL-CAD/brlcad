@@ -1914,7 +1914,7 @@ proc ::combobox::CallCommand {w newValue} {
 # ::combobox::GetBoolean --
 #
 #     returns the value of a (presumably) boolean string (i.e.: it should
-#     do the right thing if the string is "yes", "no", "true", 1, etc
+#     do the right thing if the string is "yes", "no", "true", 1, etc.
 #
 # Arguments:
 #
