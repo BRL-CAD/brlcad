@@ -437,7 +437,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	/*
 	 * Here, faceuse will have 0 or more loopuses still in it.
 	 * Decide the fate of the face;  if the face dies,
-	 * then any remaining loops, edges, etc, will die too.
+	 * then any remaining loops, edges, etc., will die too.
 	 */
 	if (BU_LIST_IS_EMPTY(&fu->lu_hd)) {
 	    if (loops_retained) bu_bomb("nmg_eval_shell() empty faceuse with retained loops?\n");
