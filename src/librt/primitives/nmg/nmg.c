@@ -1007,7 +1007,7 @@ reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 		bu_log("reindex(p=x%x), p->index=%d, ret=%d, kind=%d\n", p, idx, ret, ecnt[idx].kind);
 		bu_bomb("reindex() This index not found in ecnt[]\n");
 	    }
-	    /* ret == 0 on suppressed loop_g ptrs, etc */
+	    /* ret == 0 on suppressed loop_g ptrs, etc. */
 	    if (ret < 0 || ret > ecnt[0].byte_offset) {
 		bu_log("reindex(p=x%x) %s, p->index=%d, ret=%d, maxindex=%d\n",
 		       p,
