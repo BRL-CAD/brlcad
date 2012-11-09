@@ -46,7 +46,7 @@
 #  include <sys/uio.h>		/* for struct iovec */
 #endif
 #ifdef HAVE_NETINET_IN_H
-#  include <netinet/in.h>		/* for htons(), etc */
+#  include <netinet/in.h>		/* for htons(), etc. */
 #endif
 #ifdef HAVE_SYS_SOCKET_H
 #  include <sys/socket.h>
