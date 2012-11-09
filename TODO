@@ -19,8 +19,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
 * test arbn v5 import/export (make sure plane equations are not
-  corrupted).  check SIZEOF_NETWORK_DOUBLE and ntohd/htond conversions
-  where reading/writing fastf_t.
+  corrupted).
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -1073,7 +1072,7 @@ comp.r4 ID 5678 material code 5 LOS 75
   computing surface area and weight/mass.
 
 * add verification and validation tests confirming behavior of the
-  ray-tracer and computations of area, mass, volume, etc
+  ray-tracer and computations of area, mass, volume, etc.
 
 * testing suite for all binaries:
 
@@ -1683,7 +1682,7 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 * remove the hf primitive
 
 * support for features either as primitives or operations or both
-  e.g. chamfer, fillet, round, cut, etc
+  e.g. chamfer, fillet, round, cut, etc.
 
 * a cut feature edit.  implementation could be represented as the cube
   that bounds a geometry object.  eight points somewhere on the edges
