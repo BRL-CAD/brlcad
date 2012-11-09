@@ -10,7 +10,7 @@
 
 <DT><a NAME="open"><I>struct dm *</I> <B>DM_OPEN</B> ( <I>int dtype, int argc, char *argv[]</I> )</a></DT><BR><BR>
 <DD><I>DM_OPEN</I> creates a display manager of type <I>dtype</I> and
-     returns a pointer to it's <I>dm</I> structure.
+     returns a pointer to its <I>dm</I> structure.
      <I>argc</I> and <I>argv</I> are passed to
      <a href="#processOptions">dm_processOptions</a>
      for interpretation. <I>DM_NULL</I> is returned if unable to
@@ -366,7 +366,7 @@
 <DT><a NAME="dm_share_dlist"><I>int</I> <B>dm_share_list</B>
      ( <I>struct dm *dmp1, struct dm *dmp2</I> )</a></DT><BR><BR>
 <DD><I>dm_share_dlist</I> provides a way to (un)share display lists.
-     If dmp1 and dmp2 are not NULL, dmp1 will share it's display
+     If dmp1 and dmp2 are not NULL, dmp1 will share its display
      lists with dmp2.
      If dmp2 is NULL, dmp1 will no longer share its display lists.
 </DD>
@@ -521,7 +521,7 @@
      <td ALIGN=left>-t 0|1</td>
      <td ALIGN=left>This option specifies whether the display manager window will be
      a top level window or an embedded window. A non-zero value indicates a
-     top level window, while zero indicates an imbedded window.
+     top level window, while zero indicates an embedded window.
      </tr>
      <tr>
      <td ALIGN=left>-W width</td>
@@ -537,7 +537,7 @@
 <BR>
 <DT><a NAME="dm_configureWindowShape"><I>void</I> <B>dm_configureWindowShape</B> ( <I>dmp</I> )</a></DT><BR><BR>
 <DD><I>dm_configureWindowShape</I> is used to update the internal state of a
-     display manager after it's window has been newly created or
+     display manager after its window has been newly created or
      resized. This routine is typically called by an event handler.
 </DD>
 <BR>
