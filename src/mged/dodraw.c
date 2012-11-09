@@ -926,7 +926,7 @@ pathHmat(
 
 /*
  * Given an existing solid structure that may have been subjected to
- * solid editing, recompute the vector list, etc, to make the solid
+ * solid editing, recompute the vector list, etc., to make the solid
  * the same as it originally was.
  *
  * Returns -
