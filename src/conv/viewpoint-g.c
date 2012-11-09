@@ -60,7 +60,7 @@ struct viewpoint_verts
 
 #define MAX_LINE_SIZE 256 /* max input line length from elements file */
 
-static char *tok_sep=" "; /* seperator used in input files */
+static char *tok_sep=" "; /* separator used in input files */
 static char *usage="viewpoint-g [-t tol] -c coord_file_name -e elements_file_name -o output_file_name";
 
 int
