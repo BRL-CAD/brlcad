@@ -70,7 +70,7 @@ stk_open(FBIO *ifp, const char *file, int width, int height)
     /* special check for a possibly user confusing case */
     if (*cp == '\0') {
 	fb_log("stack_dopen: No devices specified\n");
-	fb_log("Usage: /dev/stack device_one; device_two; [etc]\n");
+	fb_log("Usage: /dev/stack device_one; device_two; [etc.]\n");
 	return -1;
     }
 
@@ -385,7 +385,7 @@ stk_help(FBIO *ifp)
     int i;
 
     fb_log("Device: /dev/stack\n");
-    fb_log("Usage: /dev/stack device_one; device_two; [etc]\n");
+    fb_log("Usage: /dev/stack device_one; device_two; [etc.]\n");
 
     i = 0;
     while (*ip != (FBIO *)NULL) {
