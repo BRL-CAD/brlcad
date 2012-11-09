@@ -24,7 +24,7 @@
  *
  * Invoked by MGED for quick pictures.
  * Is linked with each of several "back ends":
- *	view.c, viewpp.c, viewray.c, viewcheck.c, etc
+ *	view.c, viewpp.c, viewray.c, viewcheck.c, etc.
  * to produce different executable programs:
  *	rt, rtpp, rtray, rtcheck, etc.
  *
