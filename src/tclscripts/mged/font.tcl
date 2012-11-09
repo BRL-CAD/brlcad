@@ -628,7 +628,7 @@ proc font_name_post { id menu cmd } {
 ## - font_get_names
 #
 # Returns a list of named fonts with all
-# occurences of font_gui_font* removed.
+# occurrences of font_gui_font* removed.
 #
 proc font_get_names {} {
     set named_fonts [lsort [font names]]
