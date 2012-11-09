@@ -1816,7 +1816,7 @@ rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 		   const struct bn_tol *tol)
 {
     register int i, p1, p2, p3;
-    int type = cgtype - ARB4; /* ARB4 at location 0, ARB5 at 1, etc */
+    int type = cgtype - ARB4; /* ARB4 at location 0, ARB5 at 1, etc. */
 
     RT_ARB_CK_MAGIC(arb);
     BN_CK_TOL(tol);
