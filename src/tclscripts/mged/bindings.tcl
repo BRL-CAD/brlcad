@@ -33,7 +33,7 @@ proc mged_bind_dm { w } {
     if { $::tcl_platform(platform) != "windows" && $::tcl_platform(os) != "Darwin" } {
 	bind $w <Enter> "winset $w; focus $w;"
     } else {
-	# some platforms should not be forced window activiation (winset)
+	# some platforms should not be forced window activation (winset)
 	bind $w <Enter> "winset $w;"
     }
 
@@ -58,8 +58,8 @@ if ![info exists mged_default(dm_key_bindings)] {
 \te\t\t\ttoggle edit axes
 \tm\t\t\ttoggle model axes
 \tv\t\t\ttoggle view axes
-\ti\t\t\tadvance illumation pointer forward
-\tI\t\t\tadvance illumation pointer backward
+\ti\t\t\tadvance illumination pointer forward
+\tI\t\t\tadvance illumination pointer backward
 \tp\t\t\tsimulate mouse press (i.e. to pick a solid)
 \t0\t\t\tzero knobs
 \tx\t\t\trate rotate about x axis
