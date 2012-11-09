@@ -1279,7 +1279,7 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 	if (ignore_lu && (ignore_lu==lu || ignore_lu==lu->lumate_p))
 	    continue;
 
-	/* Ignore OT_BOOLPLACE, etc */
+	/* Ignore OT_BOOLPLACE, etc. */
 	if (lu->orientation != OT_SAME && lu->orientation != OT_OPPOSITE) {
 	    if (lu->orientation != OT_BOOLPLACE) {
 		bu_bomb("nmg_class_pt_fu_except() lu orientation is not OT_SAME, OT_OPPOSITE or OT_BOOLPLACE\n");
