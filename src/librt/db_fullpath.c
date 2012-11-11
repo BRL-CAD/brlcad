@@ -318,7 +318,6 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 	pp->fp_maxlen * sizeof(struct directory *),
 	"db_string_to_path path array");
 
-
     /* Build up path array */
     cp = copy;
     nslash = 0;
