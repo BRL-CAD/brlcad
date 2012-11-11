@@ -972,12 +972,21 @@ db_follow_path_for_state(struct db_tree_state *tsp, struct db_full_path *total_p
 
     RT_CK_DBTS(tsp);
 
-    if (*orig_str == '\0') return 0;		/* Null string */
+    if (*orig_str == '\0') {
+	return 0; /* Null string */
+    }
 
-    if (db_string_to_path(&new_path, tsp->ts_dbip, orig_str) < 0)
+    db_full_path_init(&new_path);
+
+    if (db_string_to_path(&new_path, tsp->ts_dbip, orig_str) < 0) {
+	db_free_full_path(&new_path);
 	return -1;
+    }
 
-    if (new_path.fp_len <= 0) return 0;		/* Null string */
+    if (new_path.fp_len <= 0) {
+	db_free_full_path(&new_path);
+	return 0; /* Null string */
+    }
 
     ret = db_follow_path(tsp, total_path, &new_path, noisy, 0);
     db_free_full_path(&new_path);

@@ -181,12 +181,14 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	return TREE_NULL;
 
     bu_avs_init_empty(&avs);
-    if (!db5_get_attributes(tsp->ts_dbip, &avs, dp)) {
+    if (db5_get_attributes(tsp->ts_dbip, &avs, dp) == 0) {
+	/* copy avs */
 	bu_avs_init_empty(&(rp->attr_values));
-	for(BU_AVS_FOR(avpp, &(tsp->ts_attrs))) {
+	for (BU_AVS_FOR(avpp, &(tsp->ts_attrs))) {
 	    bu_avs_add(&(rp->attr_values), avpp->name, bu_avs_get(&avs, avpp->name));
 	}
     }
+    bu_avs_free(&avs);
 
     rp->reg_mater = tsp->ts_mater; /* struct copy */
     if (tsp->ts_mater.ma_shader)
