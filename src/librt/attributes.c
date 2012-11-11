@@ -78,16 +78,13 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
      */
     bu_avs_init(avs, count, "db5_import_attributes");
 
-    /* Second pass -- populate attributes.  Peek inside struct for non AVS_ADD. */
+    /* Second pass -- populate attributes. */
 
-/* Use AVS_ADD to copy the values from the external buffer instead of
- * using them directly without copying.  This presumes ap will not get
- * free'd before we're done with the avs.  Preference should be to
- * leave AVS_ADD undefined for performance reasons.
- */
-#define AVS_ADD 1
+    /* Copy the values from the external buffer instead of using them
+     * directly without copying.  This presumes ap will not get free'd
+     * before we're done with the avs.
+     */
 
-#if AVS_ADD
     cp = (const char *)ap->ext_buf;
     while (*cp != '\0') {
 	const char *name = cp;  /* name */
@@ -95,28 +92,6 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	bu_avs_add(avs, name, cp);
 	cp += strlen(cp)+1; /* next name */
     }
-#else
-    /* Conserve malloc/free activity -- use strings in input buffer */
-    /* Signal region of memory that input comes from */
-    cp = (const char *)ap->ext_buf;
-    app = avs->avp;
-    while (*cp != '\0') {
-	app->name = cp;  /* name */
-	cp += strlen(cp)+1;
-	app->value = cp;  /* value */
-	cp += strlen(cp)+1;
-	app++;
-	avs->count++;
-    }
-
-    /* expand the readonly section if necessary */
-    if ((!avs->readonly_min) || ((genptr_t)avs->readonly_min > (genptr_t)ap->ext_buf)) {
-	avs->readonly_min = (genptr_t)ap->ext_buf;
-    }
-    if ((!avs->readonly_max) || ((genptr_t)avs->readonly_max < (genptr_t)(avs->readonly_min + ap->ext_nbytes))) {
-	avs->readonly_max = (genptr_t)avs->readonly_min + ap->ext_nbytes;
-    }
-#endif
 
     BU_ASSERT_PTR(cp+1, ==, ep);
     BU_ASSERT_LONG(avs->count, <=, avs->max);
