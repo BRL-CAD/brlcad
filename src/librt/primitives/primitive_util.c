@@ -92,6 +92,33 @@ primitive_diagonal_samples(
     return diagonal_samples;
 }
 
+/**
+ * Estimate the number of evenly spaced cross-section curves needed to meet a
+ * target curve spacing.
+ */
+fastf_t
+primitive_curve_count(
+	struct rt_db_internal *ip,
+	const struct rt_view_info *info)
+{
+    point_t bbox_min, bbox_max;
+    fastf_t x_len, y_len, z_len, avg_len;
+
+    if (!ip->idb_meth->ft_bbox) {
+	return 0.0;
+    }
+
+    ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, info->tol);
+
+    x_len = fabs(bbox_max[X] - bbox_min[X]);
+    y_len = fabs(bbox_max[Y] - bbox_min[Y]);
+    z_len = fabs(bbox_max[Z] - bbox_min[Z]);
+
+    avg_len = (x_len + y_len + z_len) / 3.0;
+
+    return avg_len / info->curve_spacing;
+}
+
 /* Calculate the length of the shortest distance between a point and a line in
  * the y-z plane.
  */

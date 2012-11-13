@@ -104,6 +104,10 @@ extern int approximate_parabolic_curve(
 	fastf_t p,
 	int num_new_points);
 
+extern fastf_t primitive_curve_count(
+	struct rt_db_internal *ip,
+	const struct rt_view_info *info);
+
 extern int approximate_hyperbolic_curve(
 	struct rt_pt_node *pts,
 	fastf_t a,
