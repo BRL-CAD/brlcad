@@ -1974,7 +1974,7 @@ struct rt_view_info {
     struct bu_list *vhead;
     const struct bn_tol *tol;
     fastf_t view_size;
-    fastf_t view_samples;
+    fastf_t sample_spacing;
 };
 
 /**

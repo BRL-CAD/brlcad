@@ -86,7 +86,7 @@ primitive_diagonal_samples(
     ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, info->tol);
     primitive_diagonal_mm = DIST_PT_PT(bbox_min, bbox_max);
 
-    samples_per_mm = sqrt(info->view_samples) / info->view_size;
+    samples_per_mm = 1.0 / info->sample_spacing;
     diagonal_samples = samples_per_mm * primitive_diagonal_mm;
 
     return diagonal_samples;

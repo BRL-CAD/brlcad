@@ -762,16 +762,17 @@ ell_ellipse_samples(
 	const struct rt_ell_internal *ell,
 	const struct rt_view_info *info)
 {
-    fastf_t samples_per_mm;
-    fastf_t radius, radius_samples;
+    fastf_t avg_radius, avg_radius_samples;
+    fastf_t ell_mag_a, ell_mag_b, ell_mag_c;
 
-    samples_per_mm = sqrt(info->view_samples) / info->view_size;
+    ell_mag_a = MAGNITUDE(ell->a);
+    ell_mag_b = MAGNITUDE(ell->b);
+    ell_mag_c = MAGNITUDE(ell->c);
 
-    radius = fabs((MAGNITUDE(ell->a) + MAGNITUDE(ell->b) + MAGNITUDE(ell->c))
-	    / 3.0);
-    radius_samples = radius * samples_per_mm;
+    avg_radius = (ell_mag_a + ell_mag_b + ell_mag_c) / 3.0;
+    avg_radius_samples = avg_radius / info->sample_spacing;
 
-    /* (2 * PI * radius_samples) would give us the number of times we expect
+    /* (2 * PI * avg_radius_samples) would give us the number of times we expect
      * our ellipse curves to be sampled by the view. This is sufficient to
      * produce a very good rasterized image, but it is actually overkill.
      *
@@ -782,7 +783,7 @@ ell_ellipse_samples(
      * without reducing the apparent quality of the rasterized curve, we just
      * use this empirical calculation.
      */
-    return pow(bn_twopi * radius_samples, .55);
+    return pow(bn_twopi * avg_radius_samples, .55);
 }
 
 int

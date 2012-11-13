@@ -1835,17 +1835,22 @@ static int
 tgc_points_per_ellipse(const struct rt_db_internal *ip, const struct rt_view_info *info)
 {
     struct rt_tgc_internal *tgc;
-    fastf_t samples_per_mm, avg_axis_len, avg_axis_samples;
+    fastf_t avg_axis_len, avg_axis_samples;
+    fastf_t tgc_mag_a, tgc_mag_b, tgc_mag_c, tgc_mag_d;
 
     RT_CK_DB_INTERNAL(ip);
     tgc = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tgc);
 
-    avg_axis_len = (2.0 * (MAGNITUDE(tgc->a) + MAGNITUDE(tgc->b) +
-		MAGNITUDE(tgc->c) + MAGNITUDE(tgc->d))) / 4.0;
+    tgc_mag_a = MAGNITUDE(tgc->a);
+    tgc_mag_b = MAGNITUDE(tgc->b);
+    tgc_mag_c = MAGNITUDE(tgc->c);
+    tgc_mag_d = MAGNITUDE(tgc->d);
 
-    samples_per_mm = sqrt(info->view_samples) / info->view_size;
-    avg_axis_samples = samples_per_mm * avg_axis_len;
+    avg_axis_len = (2.0 * (tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d))
+	/ 4.0;
+
+    avg_axis_samples = avg_axis_len / info->sample_spacing;
 
     return pow(avg_axis_samples * M_PI, .55);
 }
