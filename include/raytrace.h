@@ -1973,10 +1973,8 @@ struct rt_pt_node {
 struct rt_view_info {
     struct bu_list *vhead;
     const struct bn_tol *tol;
-    fastf_t view_size;
-    fastf_t sample_spacing;
-    fastf_t curve_quality;
-    fastf_t curve_quantity;
+    fastf_t point_spacing;
+    fastf_t curve_spacing;
 };
 
 /**

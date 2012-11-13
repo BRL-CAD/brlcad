@@ -1850,7 +1850,7 @@ tgc_points_per_ellipse(const struct rt_db_internal *ip, const struct rt_view_inf
     avg_axis_len = (2.0 * (tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d))
 	/ 4.0;
 
-    avg_axis_samples = avg_axis_len / info->sample_spacing;
+    avg_axis_samples = avg_axis_len / info->point_spacing;
 
     return pow(avg_axis_samples * M_PI, .55);
 }

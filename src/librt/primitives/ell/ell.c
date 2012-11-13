@@ -770,7 +770,7 @@ ell_ellipse_samples(
     ell_mag_c = MAGNITUDE(ell->c);
 
     avg_radius = (ell_mag_a + ell_mag_b + ell_mag_c) / 3.0;
-    avg_radius_samples = avg_radius / info->sample_spacing;
+    avg_radius_samples = avg_radius / info->point_spacing;
 
     /* (2 * PI * avg_radius_samples) would give us the number of times we expect
      * our ellipse curves to be sampled by the view. This is sufficient to
