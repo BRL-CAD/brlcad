@@ -108,7 +108,7 @@
 	<listitem>
 	  <para>
 	    The number of the framebuffer port to use when running <command>fbserv</command> to establish a framebuffer.  An
-	    existing framebuffer may also be specified and used.  In the case of a pre-existing non-grapical framebuffer,
+	    existing framebuffer may also be specified and used.  In the case of a pre-existing non-graphical framebuffer,
 	    <command>rtwizard</command> will not close the framebuffer automatically after the raytracing process is complete.
 	  </para>
 	</listitem>
@@ -342,7 +342,7 @@
 		</row>
 		<row>
 		  <entry>E</entry>
-		  <entry>Ghose Image with Inserts</entry>
+		  <entry>Ghost Image with Inserts</entry>
 		  <entry>A combination of Full Color elements and faded greyscale raytracings for context.</entry>
 		</row>
 		<row>
