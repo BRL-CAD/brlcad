@@ -13107,12 +13107,17 @@ go_draw_other(struct ged_obj *gop, struct ged_dm_view *gdvp)
 	register int i;
 
 	for (i = 0; i < gop->go_prim_label_list_size; ++i) {
-	    dm_draw_labels(gdvp->gdv_dmp,
-			   gop->go_gedp->ged_wdbp,
-			   bu_vls_addr(&gop->go_prim_label_list[i]),
-			   gdvp->gdv_view->gv_model2view,
-			   gdvp->gdv_view->gv_prim_labels.gos_text_color,
-			   NULL, NULL);
+	    struct directory *dp = dp = db_lookup(gop->go_gedp->ged_wdbp->dbip,
+						  bu_vls_addr(&gop->go_prim_label_list[i]),
+						  LOOKUP_QUIET);
+
+	    if (dp)
+		dm_draw_labels(gdvp->gdv_dmp,
+			       gop->go_gedp->ged_wdbp,
+			       bu_vls_addr(&gop->go_prim_label_list[i]),
+			       gdvp->gdv_view->gv_model2view,
+			       gdvp->gdv_view->gv_prim_labels.gos_text_color,
+			       NULL, NULL);
 	}
     }
 }
