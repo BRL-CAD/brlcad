@@ -2298,7 +2298,7 @@ As BRL-CAD continues to be developed and evolves, various application
 programming interfaces (APIs), headers, and data types necessarily
 change to fulfill development requirements and to not allow the APIs
 to become overly complicated with unnecessary or undesired complexity.
-As these changes are forseen, features will be sometimes marked as
+As these changes are foreseen, features will be sometimes marked as
 deprecated and will usually be made obsolete at some point in the
 future.  For those situations, developers using the BRL-CAD libraries
 may need to update to new API features in order to link with newer
