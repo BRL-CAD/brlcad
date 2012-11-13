@@ -674,7 +674,7 @@ Engineering Company, 2002):</para>
  <para>IGES was developed in 1979 by a consortium of government, industry, and academia representatives. Originally intended to provide a means of exchanging graphics and engineering drawings, IGES was extended to include solid models as well. This specification includes so many different implementations within itself that conversion between IGES flavors has become a small industry. Thus, conversion to/from IGES is a ``hit-or-miss'' proposition (NIST, 2003).</para>
       <para>The Product Data Exchange using STEP specification is intended to replace IGES and correct the aforementioned deficiency by explicitly identifying different types of conversion and requiring converters to conform to those types. BRL-CAD supports conversion of two implementations of IGES, entirely facetted BREP and CSG with facetted BREP primitives.</para>
       <para>The syntax for the <command>iges-g</command> converter is as follows:</para>
-      <para><command>iges-g</command> [<option>options</option>] -o  <filename>output.g</filename> <filename>input.igs</filename></para>
+      <para><command>iges-g</command> [<option>options</option>] -o  <filename>output.g</filename> <filename>input.iges</filename></para>
       <para>The options available for this command are as follows:</para>
       <itemizedlist>
 	<listitem>
