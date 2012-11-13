@@ -756,13 +756,13 @@ draw_cross_sections_along_ell_vector(struct ell_draw_configuration config)
     }
 }
 
-/* choose number of samples to use per ellipse based on view and ell info */
+/* decide how many ellipse points are needed to satisfy point spacing */
 static int
-ell_ellipse_samples(
+ell_ellipse_points(
 	const struct rt_ell_internal *ell,
 	const struct rt_view_info *info)
 {
-    fastf_t avg_radius, avg_radius_samples;
+    fastf_t avg_radius, avg_circumference;
     fastf_t ell_mag_a, ell_mag_b, ell_mag_c;
 
     ell_mag_a = MAGNITUDE(ell->a);
@@ -770,20 +770,9 @@ ell_ellipse_samples(
     ell_mag_c = MAGNITUDE(ell->c);
 
     avg_radius = (ell_mag_a + ell_mag_b + ell_mag_c) / 3.0;
-    avg_radius_samples = avg_radius / info->point_spacing;
+    avg_circumference = bn_twopi * avg_radius;
 
-    /* (2 * PI * avg_radius_samples) would give us the number of times we expect
-     * our ellipse curves to be sampled by the view. This is sufficient to
-     * produce a very good rasterized image, but it is actually overkill.
-     *
-     * If we reduce the number of lines segments, those segment may
-     * nevertheless pass through almost all of the same pixels in the view,
-     * producing an equivalent rasterized image. Rather than expending the
-     * effort to directly calculate how few segments we can get away with
-     * without reducing the apparent quality of the rasterized curve, we just
-     * use this empirical calculation.
-     */
-    return pow(bn_twopi * avg_radius_samples, .55);
+    return avg_circumference / info->point_spacing;
 }
 
 int
@@ -800,18 +789,14 @@ rt_ell_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     config.vhead = info->vhead;
     VMOVE(config.ell_center, eip->v);
 
-    config.points_per_section = ell_ellipse_samples(eip, info);
+    config.points_per_section = ell_ellipse_points(eip, info);
 
     if (config.points_per_section < 4) {
 	RT_ADD_VLIST(info->vhead, eip->v, BN_VLIST_POINT_DRAW);
 	return 0;
     }
 
-    if (config.points_per_section < 16) {
-	config.num_cross_sections = 1;
-    } else {
-	config.num_cross_sections = sqrt(config.points_per_section);
-    }
+    config.num_cross_sections = primitive_curve_count(ip, info);
 
     VMOVE(config.ell_travel_vector, eip->a);
     VMOVE(config.ell_axis_vector_a, eip->b);
