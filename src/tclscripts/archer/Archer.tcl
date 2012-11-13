@@ -2041,6 +2041,7 @@ package provide Archer 1.0
 
 ::itcl::body Archer::checkIfSelectedObjExists {} {
     if {![$itk_component(ged) exists $mSelectedObj]} {
+	$itk_component(ged) configure -primitiveLabels {}
 	initDbAttrView $mDbName
     }
 }
