@@ -1975,6 +1975,8 @@ struct rt_view_info {
     const struct bn_tol *tol;
     fastf_t view_size;
     fastf_t sample_spacing;
+    fastf_t curve_quality;
+    fastf_t curve_quantity;
 };
 
 /**
