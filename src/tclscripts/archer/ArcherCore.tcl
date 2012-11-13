@@ -569,6 +569,7 @@ namespace eval ArcherCore {
 
 	method handleMoreArgs {args}
 
+	method checkIfSelectedObjExists {}
 	method gedWrapper {_cmd _eflag _hflag _sflag _tflag args}
 
 	method buildCommandView {}
@@ -1221,6 +1222,12 @@ namespace eval ArcherCore {
     return [$itk_component(cmd) get_more_args]
 }
 
+
+::itcl::body ArcherCore::checkIfSelectedObjExists {} {
+    # This is a placeholder that gets overridden.
+}
+
+
 ::itcl::body ArcherCore::gedWrapper {cmd eflag hflag sflag tflag args} {
     SetWaitCursor $this
 
@@ -1255,6 +1262,7 @@ namespace eval ArcherCore {
 	    catch {syncTree}
 	}
     }
+    checkIfSelectedObjExists
     SetNormalCursor $this
 
     return $ret
@@ -1514,6 +1522,7 @@ namespace eval ArcherCore {
 	gedCmd draw -m$rmode -x$rtrans $obj
     }
 }
+
 
 ::itcl::body ArcherCore::initImages {} {
     set dir $mImgDir

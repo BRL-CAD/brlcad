@@ -216,6 +216,7 @@ package provide Archer 1.0
 	method beginViewScale {}
 	method beginViewTranslate {}
 	method buildCommandView {}
+	method checkIfSelectedObjExists {}
 	method compSelectCallback {_mstring}
 	method dblClick {_tags}
 	method handleTreeSelect {}
@@ -2034,6 +2035,13 @@ package provide Archer 1.0
     if {!$mViewOnly} {
 	$itk_component(cmd) configure -prompt "Archer> "
 	$itk_component(cmd) reinitialize
+    }
+}
+
+
+::itcl::body Archer::checkIfSelectedObjExists {} {
+    if {![$itk_component(ged) exists $mSelectedObj]} {
+	initDbAttrView $mDbName
     }
 }
 
