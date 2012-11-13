@@ -1241,26 +1241,26 @@ _expected_ release number (e.g. 7.12.0 or 7.4.2).
 
 12) Notify binary platform maintainers:
 
-      T2 package maintainer
-      http://t2-project.org/packages/brlcad.html
+    T2 package maintainer
+	http://t2-project.org/packages/brlcad.html
 
-      OpenSUSE package maintainer
-      https://build.opensuse.org/package/users?package=brlcad&project=Education
+    OpenSUSE package maintainer
+	https://build.opensuse.org/package/users?package=brlcad&project=Education
 
-      FreeBSD ports maintainer
-      http://www.freebsd.org/cgi/cvsweb.cgi/ports/cad/brlcad/
+    FreeBSD ports maintainer
+	http://www.freebsd.org/cgi/cvsweb.cgi/ports/cad/brlcad/
 
-      Gentoo portage maintainer
-      http://packages.gentoo.org/package/media-gfx/brlcad
+    Gentoo portage maintainer
+	http://packages.gentoo.org/package/media-gfx/brlcad
 
-      Ubuntu/Debian .deb maintainer
-      Jordi Sayol <g.sayol@yahoo.es>
+    Ubuntu/Debian .deb maintainer
+	Jordi Sayol <g.sayol@yahoo.es>
 
-      Debian apt package maintainer
-      http://git.debian.org/?p=debian-science/packages/brlcad.git
+    Debian apt package maintainer
+	http://git.debian.org/?p=debian-science/packages/brlcad.git
 
-      Slackware maintainer
-      http://slackbuilds.org/result/?search=brlcad
+    Slackware maintainer
+	http://slackbuilds.org/result/?search=brlcad
 
 13) Announce the new release.
 
@@ -1269,81 +1269,84 @@ announcements though the announcements almost always require
 modification and customization tailored to the particular forum and
 audience.  Always notify the following when a release is made:
 
-      14.1) BRL-CAD Website  (authorized can submit)
-	 http://brlcad.org/d/node/add/story
+    BRL-CAD Website  (authorized can submit)
+	http://brlcad.org/d/node/add/story
 
-      14.2) BRL-CAD NEWS Mailing List  (anyone can submit, posting moderated)
-	 brlcad-news@lists.sourceforge.net
+    BRL-CAD NEWS Mailing List  (anyone can submit, posting moderated)
+	brlcad-news@lists.sourceforge.net
 
-      14.3) BRL-CAD Sourceforge NEWS  (authorized can submit)
-	 https://sourceforge.net/news/submit.php?group_id=105292
+    BRL-CAD Sourceforge NEWS  (authorized can submit)
+	https://sourceforge.net/news/submit.php?group_id=105292
 
-      14.4) Freshmeat  (anyone can submit update)
-	 http://freecode.com/projects/BRL-CAD/
-	 short summary without news details (sentence format)
+    Freshmeat  (anyone can submit update)
+	http://freecode.com/projects/BRL-CAD/
+	short summary without news details (sentence format)
 
-      14.5) BRL-CAD on Facebook  (authorized can submit)
-	 http://www.facebook.com/pages/BRL-CAD/387112738872
-	 short summary without news details (sentence format)
+    BRL-CAD on Facebook  (authorized can submit)
+	http://www.facebook.com/pages/BRL-CAD/387112738872
+	short summary without news details (sentence format)
 
-      14.6) BRL-CAD on Twitter  (authorized can submit)
-	 http://twitter.com/#!/BRL_CAD
-	 short summary without news details (whatever fits)
+    BRL-CAD on Twitter  (authorized can submit)
+	http://twitter.com/#!/BRL_CAD
+	short summary without news details (whatever fits)
 
 If appropriate, notify and/or update the following information outlets
 with the details of the new release:
 
 Linux release:
 
-      CAD on Linux mailing list
-      cad-linux@freelists.org
-	with news details
+    CAD on Linux mailing list (plain text)
+	cad-linux@freelists.org
+	with linux-specific details
 
-      Linux Softpedia
-      http://linux.softpedia.com/get/Multimedia/Graphics/BRL-CAD-105.shtml
+    CAD on Linux Dev mailing list
+	cad-linux-dev@freelists.org
+	with developer-centric details
+
+    Linux Softpedia
+	http://linux.softpedia.com/get/Multimedia/Graphics/BRL-CAD-105.shtml
 
 Mac OS X release:
 
-      Versiontracker  (only 'brlcad' can update)
-      http://www.versiontracker.com/dyn/moreinfo/macosx/26289
-      http://www.versiontracker.com/dyn/moreinfo/win/64903
+    Versiontracker  (only 'brlcad' can update)
+	http://www.versiontracker.com/dyn/moreinfo/macosx/26289
+	http://www.versiontracker.com/dyn/moreinfo/win/64903
 	short without news details (list format)
 
-      Mac Softpedia (anyone can update)
-      http://mac.softpedia.com/user/pad.shtml
-      maceditor@softpedia.com
+    Mac Softpedia (anyone can update)
+	http://mac.softpedia.com/user/pad.shtml
+	maceditor@softpedia.com
 	(either provide doc/pad_file.xml or e-mail)
-      http://mac.softpedia.com/get/Multimedia/BRLCAD.shtml
+	http://mac.softpedia.com/get/Multimedia/BRLCAD.shtml
 
-      Fink package maintainer
-      jack@krass.com
+    Fink package maintainer
+	jack@krass.com
 
-Multiple platform major release:
+Multiple platform major release and announcements:
 
-      upFront.ezine
-      Ralph Grabowski
-      ralphg@upfrontezine.com
+    upFront.ezine, Ralph Grabowski
+	ralphg@upfrontezine.com
 	with news details
 
-      CADinfo.NET
-      copyboy@cadinfo.net
+    CADinfo.NET
+	copyboy@cadinfo.net
 	with news details
 
-      TenLinks Daily
-      http://www.tenlinks.com/NEWS/tl_daily/submit_news.htm
-      news@tenlinks.com
+    TenLinks Daily
+	http://www.tenlinks.com/NEWS/tl_daily/submit_news.htm
+	news@tenlinks.com
 	with news details
 
-      Slashdot
-      http://slashdot.org
+    Slashdot
+	http://slashdot.org
 	short without news details
 
-      DevMaster.net (if engine-related)
-      http://www.devmaster.net/news/submit.php
+    DevMaster.net (if engine-related)
+	http://www.devmaster.net/news/submit.php
 
-      CADCAM Insider (plain text)
-      http://cadcam-insider.com/index.php/News-submission-guidelines.html
-      copyboy@cadcam-insider.com
+    CADCAM Insider (plain text)
+	http://cadcam-insider.com/index.php/News-submission-guidelines.html
+	copyboy@cadcam-insider.com
 
 14) Sit back and enjoy a beverage for a job well done.
 
