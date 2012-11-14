@@ -1973,7 +1973,17 @@ struct rt_pt_node {
 struct rt_view_info {
     struct bu_list *vhead;
     const struct bn_tol *tol;
+
+    /** The average distance between the segment points of plotted curves.
+     * Smaller spacing means more points per curve, and thus smoother (more
+     * accurate) plot curves.
+     */
     fastf_t point_spacing;
+
+    /** The average distance between plotted surface curves.
+     * Smaller spacing means more curves are drawn, increasing the overall
+     * density of the plot.
+     */
     fastf_t curve_spacing;
 };
 
