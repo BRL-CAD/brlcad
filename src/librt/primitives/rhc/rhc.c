@@ -774,12 +774,20 @@ rhc_hyperbolic_curve(fastf_t mag_b, fastf_t c, fastf_t r, int num_points)
     int count;
     struct rt_pt_node *curve;
 
+    if (num_points < 2) {
+	return NULL;
+    }
+
     curve = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     curve->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 
     curve->next->next = NULL;
     VSET(curve->p,       0, 0, -mag_b);
     VSET(curve->next->p, 0, r, 0);
+
+    if (num_points < 3) {
+	return curve;
+    }
 
     count = approximate_hyperbolic_curve(curve, c, rhc_hyperbola_b(mag_b, c, r), num_points - 2);
 
@@ -892,12 +900,31 @@ rhc_plot_curve_connections(
     }
 }
 
+static int
+rhc_curve_points(
+	struct rt_rhc_internal *rhc,
+	const struct rt_view_info *info)
+{
+    fastf_t height, halfwidth, est_curve_length;
+    point_t p0, p1;
+
+    height = -MAGNITUDE(rhc->rhc_B);
+    halfwidth = rhc->rhc_r;
+
+    VSET(p0, 0, 0, height);
+    VSET(p1, 0, halfwidth, 0);
+
+    est_curve_length = 2.0 * DIST_PT_PT(p0, p1);
+
+    return est_curve_length / info->point_spacing;
+}
+
 int
 rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
     point_t p;
     vect_t rhc_R;
-    int num_curve_points;
+    int num_curve_points, num_connections;
     struct rt_rhc_internal *rhc;
     struct rt_pt_node *pts, *node, *tmp;
 
@@ -909,7 +936,7 @@ rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	return -2;
     }
 
-    num_curve_points = sqrt(primitive_diagonal_samples(ip, info)) / 4.0;
+    num_curve_points = rhc_curve_points(rhc, info);
 
     if (num_curve_points < 3) {
 	num_curve_points = 3;
@@ -920,12 +947,33 @@ rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VSCALE(rhc_R, rhc_R, rhc->rhc_r);
 
     pts = rhc_hyperbolic_curve(MAGNITUDE(rhc->rhc_B), rhc->rhc_c, rhc->rhc_r, num_curve_points);
-
     rhc_plot_hyperbolas(info->vhead, rhc, pts);
 
+    node = pts;
+    while (node != NULL) {
+	tmp = node;
+	node = node->next;
+
+	bu_free(tmp, "rt_pt_node");
+    }
+
     /* connect both halves of the hyperbolic contours of the opposing faces */
+    num_connections = primitive_curve_count(ip, info);
+    if (num_connections < 2) {
+	num_connections = 2;
+    }
+
+    pts = rhc_hyperbolic_curve(MAGNITUDE(rhc->rhc_B), rhc->rhc_c, rhc->rhc_r, num_connections);
     rhc_plot_curve_connections(info->vhead, rhc, pts, 1.0);
     rhc_plot_curve_connections(info->vhead, rhc, pts, -1.0);
+
+    node = pts;
+    while (node != NULL) {
+	tmp = node;
+	node = node->next;
+
+	bu_free(tmp, "rt_pt_node");
+    }
 
     /* plot rectangular face */
     VADD2(p, rhc->rhc_V, rhc_R);
@@ -942,14 +990,6 @@ rt_rhc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 
     VJOIN1(p, p, 2.0, rhc_R);
     RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
-
-    node = pts;
-    while (node != NULL) {
-	tmp = node;
-	node = node->next;
-
-	bu_free(tmp, "rt_pt_node");
-    }
 
     return 0;
 }
