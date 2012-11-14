@@ -1004,6 +1004,20 @@ rt_num_circular_segments(double maxerr, double radius)
     return n;
 }
 
+static int
+tor_ellipse_points(
+	vect_t ellipse_A,
+	vect_t ellipse_B,
+	const struct rt_view_info *info)
+{
+    fastf_t avg_radius, circumference;
+
+    avg_radius = (MAGNITUDE(ellipse_A) + MAGNITUDE(ellipse_B)) / 2.0;
+    circumference = bn_twopi * avg_radius;
+
+    return circumference / info->point_spacing;
+}
+
 int
 rt_tor_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
@@ -1011,22 +1025,12 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     fastf_t mag_a, mag_b, mag_h;
     struct rt_tor_internal *tor;
     fastf_t radian, radian_step;
-    int i, samples, num_cross_sections, points_per_cross_section;
+    int i, num_ellipses, points_per_ellipse;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
     tor = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tor);
-
-    samples = sqrt(primitive_diagonal_samples(ip, info));
-
-    if (samples < 8) {
-	samples = 8;
-    }
-
-    while (samples % 4 != 0) {
-	++samples;
-    }
 
     VMOVE(tor_a, tor->a);
     mag_a = tor->r_a;
@@ -1042,37 +1046,57 @@ rt_tor_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     /* plot outer circular contour */
     VJOIN1(a, tor_a, mag_h / mag_a, tor_a);
     VJOIN1(b, tor_b, mag_h / mag_b, tor_b);
-    plot_ellipse(info->vhead, tor->v, a, b, samples);
+
+    points_per_ellipse = tor_ellipse_points(a, b, info);
+    if (points_per_ellipse < 6) {
+	points_per_ellipse = 6;
+    }
+
+    plot_ellipse(info->vhead, tor->v, a, b, points_per_ellipse);
 
     /* plot inner circular contour */
     VJOIN1(a, tor_a, -1.0 * mag_h / mag_a, tor_a);
     VJOIN1(b, tor_b, -1.0 * mag_h / mag_b, tor_b);
-    plot_ellipse(info->vhead, tor->v, a, b, samples);
+
+    points_per_ellipse = tor_ellipse_points(a, b, info);
+    if (points_per_ellipse < 6) {
+	points_per_ellipse = 6;
+    }
+
+    plot_ellipse(info->vhead, tor->v, a, b, points_per_ellipse);
 
     /* Draw parallel circles to show the primitive's most extreme points along
      * +h/-h.
      */
+    points_per_ellipse = tor_ellipse_points(tor_a, tor_b, info);
+    if (points_per_ellipse < 6) {
+	points_per_ellipse = 6;
+    }
+
     VADD2(center, tor->v, tor_h);
-    plot_ellipse(info->vhead, center, tor_a, tor_b, samples);
+    plot_ellipse(info->vhead, center, tor_a, tor_b, points_per_ellipse);
 
     VJOIN1(center, tor->v, -1.0, tor_h);
-    plot_ellipse(info->vhead, center, tor_a, tor_b, samples);
+    plot_ellipse(info->vhead, center, tor_a, tor_b, points_per_ellipse);
 
     /* draw circular radial cross sections */
     VMOVE(b, tor_h);
-    num_cross_sections = samples;
-    points_per_cross_section = samples / 2.0;
 
-    radian_step = bn_twopi / num_cross_sections;
+    num_ellipses = primitive_curve_count(ip, info);
+    if (num_ellipses < 3) {
+	num_ellipses = 3;
+    }
+
+    radian_step = bn_twopi / num_ellipses;
     radian = 0;
-    for (i = 0; i < num_cross_sections; ++i) {
+    for (i = 0; i < num_ellipses; ++i) {
 	ellipse_point_at_radian(center, tor->v, tor_a, tor_b, radian);
 
 	VJOIN1(a, center, -1.0, tor->v);
 	VUNITIZE(a);
 	VSCALE(a, a, mag_h);
 
-	plot_ellipse(info->vhead, center, a, b, points_per_cross_section);
+	plot_ellipse(info->vhead, center, a, b, points_per_ellipse);
 
 	radian += radian_step;
     }
