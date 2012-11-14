@@ -460,12 +460,36 @@ append_solid_to_display_list(
 	sp->s_size = max[X] - min[X];
 	V_MAX(sp->s_size, max[Y] - min[Y]);
 	V_MAX(sp->s_size, max[Z] - min[Z]);
-    }
+    } else if (ip->idb_meth->ft_plot) {
+	/* As a fallback for primitives that don't have a bbox function, use
+	 * the old bounding method of calculating a plot for the primitive and
+	 * using the extent of the plotted segments as the bounds.
+	 */
+	int plot_status;
+	struct bu_list vhead;
+	struct bn_vlist *vp;
 
-    /* TODO: As a fallback for primitives that don't have a bbox function, use
-     * the old bounding method of calculating a plot for the primitive and
-     * using the extent of the plotted segments as the bounds.
-     */
+	BU_LIST_INIT(&vhead);
+
+	plot_status = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
+		tsp->ts_tol, NULL);
+
+	if (plot_status < 0) {
+	    bu_vls_printf(dgcdp->gedp->ged_result_str, "%s: plot failure\n",
+		    DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+
+	    return TREE_NULL;
+	}
+
+	solid_append_vlist(sp, (struct bn_vlist *)&vhead);
+
+	bound_solid(dgcdp->gedp, sp);
+
+	while (BU_LIST_WHILE(vp, bn_vlist, &(sp->s_vlist))) {
+	    BU_LIST_DEQUEUE(&vp->l);
+	    bu_free(vp, "solid vp");
+	}
+    }
 
     db_dup_full_path(&sp->s_fullpath, pathp);
     sp->s_flag = DOWN;
