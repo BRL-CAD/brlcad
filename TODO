@@ -451,6 +451,8 @@ comp.r4 ID 5678 material code 5 LOS 75
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
 
+* refactor rt_mirror (src/librt/primitives/mirror.c) into the functab
+
 * refactor rt_functab accessors to go through an api call or calls so
   that the array is not accessed directly.  either an rt_eval() style
   interface with data-driven keys to tell it with function(s) to call,
