@@ -401,6 +401,7 @@ ged_find_botpt_nearest_pt(struct ged *gedp, int argc, const char *argv[])
     }
 
     botip = (struct rt_bot_internal *)intern.idb_ptr;
+    VMOVE(view, scan);
     nearest_pt = rt_bot_find_v_nearest_pt2(botip, view, gedp->ged_gvp->gv_model2view);
     bu_vls_printf(gedp->ged_result_str, "%d", nearest_pt);
 
