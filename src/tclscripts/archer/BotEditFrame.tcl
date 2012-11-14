@@ -924,7 +924,7 @@
     if {$itk_option(-mged) == ""} {
 	return
     }
-    
+
 
     set hpoints {}
     foreach index $mCurrentBotPoints {
