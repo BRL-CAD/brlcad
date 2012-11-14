@@ -135,7 +135,7 @@ BC_LINKER_RECOGNIZES([$1], [$2], [$3])
 
 AC_DEFUN([BC_PREPROCESSOR_RECOGNIZES], [
 __flag="$1"
-AC_MSG_CHECKING([if preprocesser recognizes $__flag])
+AC_MSG_CHECKING([if preprocessor recognizes $__flag])
 bc_[$2]_works=yes
 __keep="$3"
 PRECPPFLAGS="$CPPFLAGS"
