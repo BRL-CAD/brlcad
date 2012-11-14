@@ -791,6 +791,19 @@ epa_plot_parabola(
     }
 }
 
+static int
+epa_ellipse_points(
+	struct rt_epa_internal *epa,
+	const struct rt_view_info *info)
+{
+    fastf_t avg_radius, avg_circumference;
+
+    avg_radius = (epa->epa_r1 + epa->epa_r2) / 2.0;
+    avg_circumference = bn_twopi * avg_radius;
+
+    return avg_circumference / info->point_spacing;
+}
+
 int
 rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
@@ -800,14 +813,6 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     struct rt_epa_internal *epa;
     struct rt_pt_node *pts_r1, *pts_r2, *node, *node1, *node2;
 
-    num_curve_points = sqrt(primitive_diagonal_samples(ip, info)) / 4.0;
-
-    if (num_curve_points < 3) {
-	num_curve_points = 3;
-    }
-
-    num_ellipse_points = 4 * num_curve_points;
-
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
 
@@ -815,6 +820,19 @@ rt_epa_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     if (!epa_is_valid(epa)) {
 	return -2;
     }
+
+    num_curve_points = primitive_curve_count(ip, info);
+
+    if (num_curve_points < 3) {
+	num_curve_points = 3;
+    }
+
+    num_ellipse_points = epa_ellipse_points(epa, info);
+
+    if (num_ellipse_points < 6) {
+	num_ellipse_points = 6;
+    }
+
 
     VMOVE(epa_H, epa->epa_H);
 
