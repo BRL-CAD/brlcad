@@ -1003,8 +1003,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	pthread_attr_init(&attrs);
 	pthread_attr_setstacksize(&attrs, 10*1024*1024);
 
-	if (pthread_create(&thread, &attrs,
-			   (void *(*)(void *))parallel_interface, NULL)) {
+	if (pthread_create(&thread, &attrs, (void *(*)(void *))parallel_interface, NULL)) {
 	    fprintf(stderr, "ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%lx, 0x0, 0, 0x%lx) failed on processor %d\n",
 		    (unsigned long int)parallel_interface, (unsigned long int)&thread, x);
 	    bu_log("ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%lx, 0x0, 0, %p) failed on processor %d\n",
@@ -1019,6 +1018,8 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	    thread_tbl[nthreadc] = thread;
 	    nthreadc++;
 	}
+	/* done with the attributes after create */
+	pthread_attr_destroy(&attrs);
     }
 
 
@@ -1050,6 +1051,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 	    /* badness happened */
 	    fprintf(stderr, "pthread_join(thread_tbl[%d]=%p) ret=%d\n", x, (void *)thread_tbl[x], ret);
 	}
+
 	nthreade++;
 	thread_tbl[x] = (rt_thread_t)-1;
 
