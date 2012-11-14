@@ -381,7 +381,7 @@ struct bu_structparse img_parse_tab[] = {
     {"%c",	1, "through",		IMG_O(i_through),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c",	1, "antialias",		IMG_O(i_antialias),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c",	1, "behind",		IMG_O(i_behind),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%c",	1, "perspective",	IMG_O(i_perspective),	persp_hook, NULL, NULL },
+    {"%f",	1, "perspective",	IMG_O(i_perspective),	persp_hook, NULL, NULL },
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 struct bu_structparse img_print_tab[] = {
@@ -622,10 +622,33 @@ project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific
     if (rdebug&RDEBUG_SHADE) {
 	VPRINT("sh_pt", sh_pt);
     }
+
+    /* make sure we have an image to project into */
+    if (img_sp->i_width <= 0 || img_sp->i_height <= 0) {
+	return 1;
+    }
+
     x = sh_pt[X] * (img_sp->i_width-1);
     y = sh_pt[Y] * (img_sp->i_height-1);
-    pixel = &img_sp->i_img[x*3 + y*img_sp->i_width*3];
 
+    if (x<0 || y<0
+	|| (x*3 + y*img_sp->i_width*3) < 0
+	|| (x*3 + y*img_sp->i_width*3) > (img_sp->i_width * img_sp->i_height * 3))
+    {
+	static int count=0;
+	static int suppressed=0;
+	if (count++ < 10) {
+	    bu_log("INTERNAL ERROR: projection point is invalid\n");
+	} else {
+	    if (!suppressed) {
+		suppressed++;
+		bu_log("INTERNAL ERROR: supressing further project point error messages\n");
+	    }
+	}
+	return 1;
+    }
+
+    pixel = &img_sp->i_img[x*3 + y*img_sp->i_width*3];
 
     if (x >= img_sp->i_width || x < 0 ||
 	y >= img_sp->i_height || y < 0 ||
