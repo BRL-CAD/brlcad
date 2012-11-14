@@ -39,6 +39,14 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* add an export menu to MGED that connects to auto-detected available
+  exporters (g-* tools).
+
+* add an export menu to Archer that connects to auto-detected
+  available exporters (g-* tools).
+
+* convert teapot to use nurbs surfaces instead of bspline
+
 * add an option to the bb command for calculating a bounding box that
   encompasses subtracted objects and trimmed surfaces and default to
   calculating a tight-fitting fbounding box once we have a robust path
