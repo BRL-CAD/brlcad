@@ -669,7 +669,7 @@ knob peripherals (e.g. tek).
 Any non-zero number entered for "value" is converted to 1 (if "value" is
 greater than zero) or is converted to -1 (if "value is less than zero).
 The user must enter the same command with "value" equal to zero to
-stop the action envoked by the knob twist.
+stop the action invoked by the knob twist.
 
 The "id" defines which knob is to be "twisted" :
 .nf
