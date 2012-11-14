@@ -330,7 +330,7 @@
 	<listitem>
 	  <para>
 	    Specifies a limit on how far the grid can be refined and optionally the initial spacing
-	    between rays in the grids. The first value (if present) indicates the inital spacing
+	    between rays in the grids. The first value (if present) indicates the initial spacing
 	    between grid rays.  The mandatory argument, "<emphasis remap="I">grid_spacing_limit</emphasis>,"
 	    indicates a lower bound on how fine the grid spacing may get before computation is
 	    terminated.  In general, the <emphasis remap="I">initial_grid_spacing</emphasis> value
