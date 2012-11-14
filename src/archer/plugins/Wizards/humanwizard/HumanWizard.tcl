@@ -250,7 +250,7 @@
     # Create numberSoldiers entry field
     itk_component add paramnumberSoldiersL {
 	::ttk::label $itk_component(paramNonArrowF).numberSoldiersL \
-	    -text "Number of soldiers (to be squard):" \
+	    -text "Number of soldiers (to be squared):" \
 	    -anchor e
     } {}
     itk_component add paramnumberSoldiersE {
