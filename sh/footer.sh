@@ -461,7 +461,7 @@ if [ $matching_found -eq 0 ] ; then
     do_not="Local"
     match="Variables"
     local=`cat "$FILE" | grep -i "${do_not} ${match}:" | awk '{print $1}'`
-    # w00t, no local vars so just dump a shiney new block at the end of the file
+    # w00t, no local vars so just dump a shiny new block at the end of the file
     if [ "x$local" = "x" ] ; then
 	cat >> $FILE <<EOF
 $comment_block
