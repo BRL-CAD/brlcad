@@ -6348,8 +6348,7 @@ proc title_node_handler {node} {
 	    if {$GeometryEditFrame::mEditCommand != ""} {
 		if {$mSelectedObjType == "bot"} {
 		    if {$mNumSelectedBotPts == 1} {
-			set sl [gedCmd pane_view2screen $_dm [list $vx $vy]]
-			$itk_component(botView) moveBotElement $_dm $_obj [lindex $sl 0] [lindex $sl 1]
+			$itk_component(botView) moveBotElement $_dm $_obj $vx $vy
 		    } else {
 			eval gedCmd ocenter $_obj $new_ocenter
 		    }

@@ -86,9 +86,9 @@
 	method createGeometry {_name}
 	method p {obj args}
 	method moveBotEdgeMode {_dname _obj _x _y}
-	method moveBotElement {_dname _obj _x _y}
+	method moveBotElement {_dname _obj _vx _vy}
 	method moveBotFaceMode {_dname _obj _x _y}
-	method moveBotPt {_dname _obj _x _y}
+	method moveBotPt {_dname _obj _vx _vy}
 	method moveBotPtMode {_dname _obj _viewz _x _y}
 	method moveBotPts {_dname _obj _x _y _plist}
 	method moveBotPtsMode {_dname _obj _x _y}
@@ -385,10 +385,10 @@
 }
 
 
-::itcl::body BotEditFrame::moveBotElement {_dname _obj _x _y} {
+::itcl::body BotEditFrame::moveBotElement {_dname _obj _vx _vy} {
     switch -- $mEditMode \
 	$movePoints {
-	    moveBotPt $_dname $_obj $_x $_y
+	    moveBotPt $_dname $_obj $_vx $_vy
 	} \
 	$moveEdge {
 	    $::ArcherCore::application putString "This mode is not ready for edges."
@@ -419,14 +419,19 @@
 }
 
 
-::itcl::body BotEditFrame::moveBotPt {_dname _obj _x _y} {
+::itcl::body BotEditFrame::moveBotPt {_dname _obj _vx _vy} {
     set len [llength $mCurrentBotPoints]
     switch -- $len {
 	0 {
 	    $::ArcherCore::application putString "No points have been selected."
 	}
 	1 {
-	    $itk_option(-mged) pane_mouse_move_botpt $_dname $_obj [expr {$mCurrentBotPoints - 1}] $_x $_y
+	    set i [expr {$mCurrentBotPoints - 1}]
+	    set botpt [lindex $mPointList $i]
+	    set vpt [$itk_option(-mged) pane_m2v_point $_dname $botpt]
+	    set vz [lindex $vpt 2]
+	    set mpt [$itk_option(-mged) pane_v2m_point $_dname [list $_vx $_vy $vz]]
+	    $itk_option(-mged) move_botpt $_obj $i $mpt
 	}
 	default {
 	    $::ArcherCore::application putString "More than one point has been selected."
