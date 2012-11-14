@@ -1835,7 +1835,7 @@ static int
 tgc_points_per_ellipse(const struct rt_db_internal *ip, const struct rt_view_info *info)
 {
     struct rt_tgc_internal *tgc;
-    fastf_t avg_axis_len, avg_axis_samples;
+    fastf_t avg_radius, avg_circumference;
     fastf_t tgc_mag_a, tgc_mag_b, tgc_mag_c, tgc_mag_d;
 
     RT_CK_DB_INTERNAL(ip);
@@ -1847,18 +1847,16 @@ tgc_points_per_ellipse(const struct rt_db_internal *ip, const struct rt_view_inf
     tgc_mag_c = MAGNITUDE(tgc->c);
     tgc_mag_d = MAGNITUDE(tgc->d);
 
-    avg_axis_len = (2.0 * (tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d))
-	/ 4.0;
+    avg_radius = (tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d) / 4.0;
+    avg_circumference = bn_twopi * avg_radius;
 
-    avg_axis_samples = avg_axis_len / info->point_spacing;
-
-    return pow(avg_axis_samples * M_PI, .55);
+    return avg_circumference / info->point_spacing;
 }
 
 int
 rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
-    int points_per_ellipse;
+    int points_per_ellipse, connecting_lines;
     struct rt_tgc_internal *tip;
     struct ellipse ellipse1, ellipse2;
 
@@ -1869,7 +1867,7 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 
     points_per_ellipse = tgc_points_per_ellipse(ip, info);
 
-    if (points_per_ellipse < 4) {
+    if (points_per_ellipse < 6) {
 	point_t p;
 
 	VADD2(p, tip->v, tip->h);
@@ -1891,7 +1889,13 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     plot_ellipse(info->vhead, ellipse2.center, ellipse2.axis_a, ellipse2.axis_b,
 		 points_per_ellipse);
 
-    draw_lines_between_ellipses(info->vhead, ellipse1, ellipse2, points_per_ellipse / 2);
+    connecting_lines = primitive_curve_count(ip, info);
+
+    if (connecting_lines < 2) {
+	connecting_lines = 2;
+    }
+
+    draw_lines_between_ellipses(info->vhead, ellipse1, ellipse2, connecting_lines);
 
     return 0;
 }
