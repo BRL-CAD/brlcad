@@ -35,7 +35,7 @@
     information appended is in the form required by the projection shader (<emphasis>prj</emphasis>) and
     includes the <emphasis>image_file</emphasis> (typically a pix file), the <emphasis>image_width	</emphasis> and <emphasis>image_height</emphasis>, and current view parameters from the MGED 	display.  The resulting <emphasis>shaderfile</emphasis> may
     then be used as the parameter to the <emphasis>prj</emphasis> shader.  Before executing this command, 	the region wireframe display in MGED should be aligned with the <emphasis>image_file</emphasis>
-    (underlayed in MGEDs framebuffer) and the <emphasis>image_file</emphasis> should have the same height
+    (underlaid in MGEDs framebuffer) and the <emphasis>image_file</emphasis> should have the same height
     and width as the MGED display.  The <emphasis>-t</emphasis> option indicates that the image should be
     projected through the object.  The <emphasis>-n</emphasis> option requests that antialiasing not be 	done.
     </para>
