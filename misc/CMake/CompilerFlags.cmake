@@ -313,10 +313,10 @@ if(BRLCAD_FLAGS_DEBUG)
       BRLCAD_CHECK_C_FLAG(ggdb3 "" "DEBUG_C_FLAGS")
       BRLCAD_CHECK_CXX_FLAG(ggdb3 "" "DEBUG_CXX_FLAGS")
     else(${MACOSX_VERSION} VERSION_LESS "10.5")
-		# CHECK_C_COMPILER_FLAG silently eats gstabs+ - also, compiler
-		# apparently doesn't like mixing stabs with another debug flag.
-      set(DEBUG_C_FLAGS "-gstabs+")
-      set(DEBUG_CXX_FLAGS "-gstabs+")
+      # CHECK_C_COMPILER_FLAG silently eats gstabs+ - also, compiler
+      # apparently doesn't like mixing stabs with another debug flag.
+      set(DEBUG_C_FLAGS "-ggdb")
+      set(DEBUG_CXX_FLAGS "-ggdb")
     endif(${MACOSX_VERSION} VERSION_LESS "10.5")
   else(APPLE)
     BRLCAD_CHECK_C_FLAG(ggdb3 "" "DEBUG_C_FLAGS")
