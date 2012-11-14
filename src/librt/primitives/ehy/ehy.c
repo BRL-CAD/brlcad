@@ -830,6 +830,19 @@ ehy_plot_hyperbola(
     }
 }
 
+static int
+ehy_ellipse_points(
+	struct rt_ehy_internal *ehy,
+	const struct rt_view_info *info)
+{
+    fastf_t avg_radius, avg_circumference;
+
+    avg_radius = (ehy->ehy_r1 + ehy->ehy_r2) / 2.0;
+    avg_circumference = bn_twopi * avg_radius;
+
+    return avg_circumference / info->point_spacing;
+}
+
 int
 rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
@@ -839,18 +852,22 @@ rt_ehy_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     struct rt_ehy_internal *ehy;
     struct rt_pt_node *pts_r1, *pts_r2, *node, *node1, *node2;
 
-    num_curve_points = sqrt(primitive_diagonal_samples(ip, info)) / 4.0;
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+    ehy = (struct rt_ehy_internal *)ip->idb_ptr;
+    RT_EHY_CK_MAGIC(ehy);
+
+    num_curve_points = primitive_curve_count(ip, info);
 
     if (num_curve_points < 3) {
 	num_curve_points = 3;
     }
 
-    num_ellipse_points = 4 * num_curve_points;
+    num_ellipse_points = ehy_ellipse_points(ehy, info);
 
-    BU_CK_LIST_HEAD(info->vhead);
-    RT_CK_DB_INTERNAL(ip);
-    ehy = (struct rt_ehy_internal *)ip->idb_ptr;
-    RT_EHY_CK_MAGIC(ehy);
+    if (num_ellipse_points < 6) {
+	num_ellipse_points = 6;
+    }
 
     VMOVE(ehy_H, ehy->ehy_H);
 
