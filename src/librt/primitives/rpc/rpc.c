@@ -696,12 +696,20 @@ rpc_parabolic_curve(fastf_t mag_b, fastf_t r, int num_points)
     int count;
     struct rt_pt_node *curve;
 
+    if (num_points < 2) {
+	return NULL;
+    }
+
     curve = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
     curve->next = (struct rt_pt_node *)bu_malloc(sizeof(struct rt_pt_node), "rt_pt_node");
 
     curve->next->next = NULL;
     VSET(curve->p,       0, 0, -mag_b);
     VSET(curve->next->p, 0, r, 0);
+
+    if (num_points < 3) {
+	return curve;
+    }
 
     count = approximate_parabolic_curve(curve, rpc_parabola_p(r, mag_b), num_points - 2);
 
@@ -814,12 +822,31 @@ rpc_plot_curve_connections(
     }
 }
 
+static int
+rpc_curve_points(
+	struct rt_rpc_internal *rpc,
+	const struct rt_view_info *info)
+{
+    fastf_t height, halfwidth, est_curve_length;
+    point_t p0, p1;
+
+    height = -MAGNITUDE(rpc->rpc_B);
+    halfwidth = rpc->rpc_r;
+
+    VSET(p0, 0, 0, height);
+    VSET(p1, 0, halfwidth, 0);
+
+    est_curve_length = 2.0 * DIST_PT_PT(p0, p1);
+
+    return est_curve_length / info->point_spacing;
+}
+
 int
 rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 {
     point_t p;
     vect_t rpc_R;
-    int num_curve_points;
+    int num_curve_points, num_connections;
     struct rt_rpc_internal *rpc;
     struct rt_pt_node *pts, *node, *tmp;
 
@@ -831,7 +858,7 @@ rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	return -2;
     }
 
-    num_curve_points = sqrt(primitive_diagonal_samples(ip, info)) / 4.0;
+    num_curve_points = rpc_curve_points(rpc, info);
 
     if (num_curve_points < 3) {
 	num_curve_points = 3;
@@ -842,12 +869,33 @@ rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     VSCALE(rpc_R, rpc_R, rpc->rpc_r);
 
     pts = rpc_parabolic_curve(MAGNITUDE(rpc->rpc_B), rpc->rpc_r, num_curve_points);
-
     rpc_plot_parabolas(info->vhead, rpc, pts);
 
+    node = pts;
+    while (node != NULL) {
+	tmp = node;
+	node = node->next;
+
+	bu_free(tmp, "rt_pt_node");
+    }
+
     /* connect both halves of the parabolic contours of the opposing faces */
+    num_connections = primitive_curve_count(ip, info);
+    if (num_connections < 2) {
+	num_connections = 2;
+    }
+
+    pts = rpc_parabolic_curve(MAGNITUDE(rpc->rpc_B), rpc->rpc_r, num_connections);
     rpc_plot_curve_connections(info->vhead, rpc, pts, 1.0);
     rpc_plot_curve_connections(info->vhead, rpc, pts, -1.0);
+
+    node = pts;
+    while (node != NULL) {
+	tmp = node;
+	node = node->next;
+
+	bu_free(tmp, "rt_pt_node");
+    }
 
     /* plot rectangular face */
     VADD2(p, rpc->rpc_V, rpc_R);
@@ -864,14 +912,6 @@ rt_rpc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 
     VJOIN1(p, p, 2.0, rpc_R);
     RT_ADD_VLIST(info->vhead, p, BN_VLIST_LINE_DRAW);
-
-    node = pts;
-    while (node != NULL) {
-	tmp = node;
-	node = node->next;
-
-	bu_free(tmp, "rt_pt_node");
-    }
 
     return 0;
 }
