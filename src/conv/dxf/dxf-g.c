@@ -2971,7 +2971,7 @@ process_thumbnail_code( int code )
 }
 
 /*
- * Create a sketch object based on the wire eddges in an NMG
+ * Create a sketch object based on the wire edges in an NMG
  */
 static struct rt_sketch_internal *
 nmg_wire_edges_to_sketch( struct model *m )
