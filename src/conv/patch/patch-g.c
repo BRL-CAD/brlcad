@@ -1811,7 +1811,7 @@ proc_sphere(int cnt)
 	    (void) mk_addmember(name, &head.l, NULL, WMOP_UNION);
 
 
-	    /* Check if hollow (i.e. plate mode) subract sphere with
+	    /* Check if hollow (i.e. plate mode) subtract sphere with
 	     * radius R1 - thickness.
 	     */
 
@@ -1863,7 +1863,7 @@ proc_sphere(int cnt)
 	    (void) mk_addmember(name, &head.l, NULL, WMOP_UNION);
 
 	    /* Check if mirrored surface is hollow (i.e. plate mode)
-	     * subract sphere with radius R1 - thickness.
+	     * subtract sphere with radius R1 - thickness.
 	     */
 
 	    if (in[i].surf_mode== '-') {
@@ -3654,7 +3654,7 @@ main(int argc, char **argv)
 	    in[i].y = scan[1];
 	    in[i].z = scan[2];
 
-	    /* Perform english to metric conversions.  */
+	    /* Perform English to metric conversions.  */
 	    in[i].x = mmtin*in[i].x;
 	    in[i].y = mmtin*in[i].y;
 	    in[i].z = mmtin*in[i].z;
