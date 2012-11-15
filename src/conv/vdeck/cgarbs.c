@@ -173,7 +173,7 @@ arb_mv(point_t pts[8],
  *
  *  Rearranges arbs to be GIFT compatible
  *  The input in "gp" is not modified.
- *  The first "numvec" entires of "pts" are the GIFT format of arb "cgtype".
+ *  The first "numvec" entries of "pts" are the GIFT format of arb "cgtype".
  *
  *  Returns -
  *	1	OK
