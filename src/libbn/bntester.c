@@ -345,7 +345,7 @@ main(int argc, char **argv)
 		buf_p1 = strtok(buf, "\n");
 		buf_p = strtok(buf_p1, ", ");
 
-		/* The 1st parameter of the test case is alway an unsigned
+		/* The 1st parameter of the test case is always an unsigned
 		 * long int which represents the function number. This logic
 		 * validates the test case function number to ensure it is
 		 * an unsigned long int.

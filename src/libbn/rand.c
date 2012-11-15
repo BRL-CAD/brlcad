@@ -3619,7 +3619,7 @@ float bn_rand_halftab[BN_RANDHALFTABSIZE] = {
 /**
  * Immediately after the random number table,
  * some "poison" floating point numbers,
- * intended to cause noticable difficulties if these are used.
+ * intended to cause noticeable difficulties if these are used.
  */
 float	bn_rand_poison_[] = {
     9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f, 9e20f,
