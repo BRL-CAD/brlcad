@@ -103,7 +103,7 @@ bn_dbl_max()
 #if defined(DBL_MAX)
 	return DBL_MAX;
 #elif defined(INFINITY)
-    static const double val = INFINITY
+    static const double val = INFINITY;
     long long next = *(long long*)&val - 1;
     return *(double *)&next;
 #else
