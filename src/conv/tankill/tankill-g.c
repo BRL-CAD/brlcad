@@ -558,7 +558,7 @@ main(int argc, char **argv)
 	    sprintf( name, "%dXXX_codes", i );
 
 	    if ( mk_addmember( name, &reg_head.l, NULL, WMOP_UNION ) == WMEMBER_NULL )
-		bu_log( "mk_admember failed for %s\n", name );
+		bu_log( "mk_addmember failed for %s\n", name );
 	    all_len++;
 	}
     }
