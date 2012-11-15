@@ -207,7 +207,7 @@ struct g_lint_seg *create_segment(void)
 /**
  * P R I N T _ S E G M E N T
  *
- * This routine writes one overlap segent to stdout.
+ * This routine writes one overlap segment to stdout.
  * It's the workhorse of the reporting process for overlaps.
  */
 void print_segment(const char *r1name, const char *r2name, double seg_length, point_t origin, point_t entrypt, point_t exitpt)
