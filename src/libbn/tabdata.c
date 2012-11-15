@@ -323,7 +323,7 @@ bn_tabdata_scale(struct bn_tabdata *out, const struct bn_tabdata *in1, register 
 /*
  *			B N _ T A B L E _ S C A L E
  *@brief
- *  Scale the indepentent axis of a table by 'scale'.
+ *  Scale the independent axis of a table by 'scale'.
  */
 void
 bn_table_scale(struct bn_table *tabp, register double scale)
@@ -512,7 +512,7 @@ bn_tabdata_area1(const struct bn_tabdata *in)
  *@brief
  *  Following interpretation #2, where y[j] stores the average
  *  value for the interval, return the area under
- *  the whole curve.  Since the iterval spacing need not be uniform,
+ *  the whole curve.  Since the interval spacing need not be uniform,
  *  sum the areas of the rectangles.
  */
 double
@@ -1519,7 +1519,7 @@ bn_tabdata_mk_linear_filter(const struct bn_table *spectrum, double lower_wavele
 
     if (lower_wavelen < spectrum->x[0])
 	if (upper_wavelen > spectrum->x[spectrum->nx])
-	    bu_log("bn_tabdata_mk_linear_filter() warning, upper_wavelen %g > hightest sampled wavelen %g\n",
+	    bu_log("bn_tabdata_mk_linear_filter() warning, upper_wavelen %g > highest sampled wavelen %g\n",
 		   upper_wavelen, spectrum->x[spectrum->nx]);
 
     /* First, find first (possibly partial) sample */
