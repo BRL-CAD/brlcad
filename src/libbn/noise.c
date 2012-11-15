@@ -121,7 +121,7 @@ static double RTable[MAXSIZE];
  * A heavily magic-number protected version of the hashtable.
  *
  * This table is used to convert integers into repeatable random
- * results for indicies into RTable.
+ * results for indices into RTable.
  */
 struct str_ht {
     uint32_t magic;
