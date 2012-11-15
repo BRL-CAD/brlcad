@@ -1026,7 +1026,7 @@ Add_to_feature_delete_list( int id )
 	feat_id_len += FEAT_ID_BLOCK;
 	feat_ids_to_delete = (int *)bu_realloc( (char *)feat_ids_to_delete,
 						feat_id_len * sizeof( int ),
-						"fetaure ids to delete");
+						"feature ids to delete");
 
     }
     feat_ids_to_delete[feat_id_count++] = id;
