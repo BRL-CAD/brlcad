@@ -522,7 +522,7 @@ main(int argc, char **argv)
 	    /* 1st level child process */
 	    (void)close(netfd);	/* Child is not listener */
 
-	    /* Create 2nd level child process, "double detatch" */
+	    /* Create 2nd level child process, "double detach" */
 	    if ( fork() == 0 )  {
 		/* 2nd level child -- start work! */
 		new_client( pcp );
