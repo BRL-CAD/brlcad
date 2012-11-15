@@ -533,7 +533,7 @@ fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
 /*
  * F B _ S E R V E R _ F B _ S C U R S O R
  *
- * An OLD iterface.  Retained so old clients can still be served.
+ * An OLD interface.  Retained so old clients can still be served.
  */
 static void
 fb_server_fb_scursor(struct pkg_conn *pcp, char *buf)
@@ -557,7 +557,7 @@ fb_server_fb_scursor(struct pkg_conn *pcp, char *buf)
 /*
  * F B _ S E R V E R _ F B _ W I N D O W
  *
- * An OLD iterface.  Retained so old clients can still be served.
+ * An OLD interface.  Retained so old clients can still be served.
  */
 static void
 fb_server_fb_window(struct pkg_conn *pcp, char *buf)
@@ -580,7 +580,7 @@ fb_server_fb_window(struct pkg_conn *pcp, char *buf)
 /*
  * F B _ S E R V E R _ F B _ Z O O M
  *
- * An OLD iterface.  Retained so old clients can still be served.
+ * An OLD interface.  Retained so old clients can still be served.
  */
 static void
 fb_server_fb_zoom(struct pkg_conn *pcp, char *buf)
