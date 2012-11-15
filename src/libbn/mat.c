@@ -279,8 +279,8 @@ bn_mat_inv(register mat_t output, const mat_t input)
  * pointed at by "output".
  *
  * Invert a 4-by-4 matrix using Algorithm 120 from ACM.  This is a
- * modified Gauss-Jordan alogorithm Note: Inversion is done in place,
- * with 3 work vectors
+ * modified Gauss-Jordan algorithm. Note: Inversion is done in place,
+ * with 3 work vectors.
  *
  * @return 1 if OK.
  * @return 0 if matrix is singular.
@@ -504,7 +504,7 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
     /* Get az and el as usual */
     bn_ae_vec(az, el, vec_ae);
 
-    /* stabilize fluctuation bewteen 0 and 360
+    /* stabilize fluctuation between 0 and 360
      * change azimuth near 360 to 0 */
     if (NEAR_EQUAL(*az, 360.0, accuracy))
 	*az = 0.0;
@@ -774,7 +774,7 @@ bn_vec_perp(vect_t new, const vect_t old)
  *
  * Given two vectors, compute a rotation matrix that will transform
  * space by the angle between the two.  There are many candidate
- * matricies.
+ * matrices.
  *
  * The input 'from' and 'to' vectors need not be unit length.
  * MAT4X3VEC(to, m, from) is the identity that is created.
@@ -1108,7 +1108,7 @@ bn_mat_scale_about_pt(mat_t mat, const point_t pt, const double scale)
 /**
  * B N _ M A T _ X F O R M _ A B O U T _ P T
  *
- * Build a matrix to apply arbitary 4x4 transformation around a given
+ * Build a matrix to apply arbitrary 4x4 transformation around a given
  * point.
  */
 void
@@ -1131,7 +1131,7 @@ bn_mat_xform_about_pt(mat_t mat, const mat_t xform, const point_t pt)
  * B N _ M A T _ I S _ E Q U A L
  *
  * @return 0 When matrices are not equal
- * @return 1 When matricies are equal
+ * @return 1 When matrices are equal
  */
 int
 bn_mat_is_equal(const mat_t a, const mat_t b, const struct bn_tol *tol)
@@ -1181,7 +1181,7 @@ bn_mat_is_equal(const mat_t a, const mat_t b, const struct bn_tol *tol)
 /**
  * B N _ M A T _ I S _ I D E N T I T Y
  *
- * This routine is intended for detecting identity matricies read in
+ * This routine is intended for detecting identity matrices read in
  * from ascii or binary files, where the numbers are pure ones or
  * zeros.  This routine is *not* intended for tolerance-based
  * "near-zero" comparisons; as such, it shouldn't be used on matrices
@@ -1283,8 +1283,8 @@ bn_mat_dup(const mat_t in)
  * B N _ M A T _ C K
  *
  * Check to ensure that a rotation matrix preserves axis
- * perpendicularily.  Note that not all matricies are rotation
- * matricies.
+ * perpendicularity.  Note that not all matrices are rotation
+ * matrices.
  *
  *
  * @return -1 FAIL
@@ -1311,7 +1311,7 @@ bn_mat_ck(const char *title, const mat_t m)
     fz = VDOT(A, C);
 
     /* NOTE: this tolerance cannot be any more tight than 0.00001 due
-     * to default calculation tolernacing used by models.  Matrices
+     * to default calculation tolerancing used by models.  Matrices
      * exported to disk outside of tolerance and will fail import if
      * set too restrictive.
      */
