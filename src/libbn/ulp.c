@@ -100,9 +100,15 @@ bn_dbl_min()
 double
 bn_dbl_max()
 {
-    static const double val = INFINITY;
+#if defined(DBL_MAX)
+	return DBL_MAX;
+#elif defined(INFINITY)
+    static const double val = INFINITY
     long long next = *(long long*)&val - 1;
     return *(double *)&next;
+#else
+	return 1.0/bu_dbl_min();
+#endif
 }
 
 
@@ -117,9 +123,15 @@ bn_flt_min()
 double
 bn_flt_max()
 {
+#if defined(FLT_MAX)
+	return FLT_MAX;
+#elif defined(INFINITY)
     static const float val = INFINITY;
     long next = *(long*)&val - 1;
     return *(float *)&next;
+#else
+	return 1.0/bu_flt_min();
+#endif
 }
 
 
