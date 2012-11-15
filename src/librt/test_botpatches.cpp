@@ -1,3 +1,14 @@
+/*  TODO - Can't keep shifting the fitting plane for a triangle patch
+ *  every time a triangle is added - too computationally expensive.
+ *  Instead, need to make sure that the starting plane used for the
+ *  NURBS fit is the same plane being used for the triangle overlap
+ *  testing.  Hopefully, that will preclude any "vertical or worse"
+ *  surface fit issues while still allowing for a good surface fit,
+ *  and avoid this business of triangles that overlap in one fit
+ *  plane but not in another. Will probably need a change or two
+ *  in the PCL surface fitting code.*/
+
+
 #include "common.h"
 
 #include <map>
