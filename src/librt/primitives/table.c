@@ -331,7 +331,7 @@ const struct rt_functab rt_functab[] = {
 	rt_arb_class,
 	rt_arb_free,
 	rt_arb_plot,
-	NULL,
+	rt_arb_adaptive_plot,
 	rt_arb_vshot,
 	rt_arb_tess,
 	rt_arb_tnurb,

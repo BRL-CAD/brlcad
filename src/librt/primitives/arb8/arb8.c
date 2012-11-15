@@ -1097,6 +1097,21 @@ rt_arb_free(register struct soltab *stp)
     bu_free((char *)arbp, "arb_specific");
 }
 
+int
+rt_arb_adaptive_plot(
+	struct rt_db_internal *ip,
+	const struct rt_view_info *info)
+{
+    struct rt_arb_internal *arb;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+    arb = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(arb);
+
+    return 0;
+}
+
 
 #define ARB_FACE(valp, a, b, c, d) \
 	RT_ADD_VLIST(vhead, valp[a], BN_VLIST_LINE_MOVE); \
