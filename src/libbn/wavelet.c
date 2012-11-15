@@ -483,7 +483,7 @@ make_wlt_haar_1d_reconstruct(long)
 		/* reconstruct row y */					\
 									\
 		/* copy "average" row to tbuf and set pointer to	\
-		 * begining of "detail"					\
+		 * beginning of "detail"				\
 		 */							\
 		d = img_size * channels;				\
 		row_start = y*row_len;					\
