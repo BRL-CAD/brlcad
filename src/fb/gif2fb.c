@@ -372,7 +372,7 @@ getcode(FILE *inp)
 
 /* getByte	get a byte from the input stream decompressing as we go.
  *
- * getByte uses the somewhat standard LWZ decompress algorthem.  Most
+ * getByte uses the somewhat standard LWZ decompress algorithm.  Most
  * of this subroutine is based on "compress.c".  I've added some and
  * deleted others but I do NOT claim that this is original code.
  *
@@ -392,7 +392,7 @@ getcode(FILE *inp)
  * Method:
  *	Being unable to read the papers that everybody else points to,
  *	I had to decipher the compress code.  This is how I thing this
- *	compression algorithem works.
+ *	compression algorithm works.
  *	if this is the first time the routine has been called then
  *		initialize the code sizes
  *		set the "tree" so that all "characters" are at the root.
