@@ -86,7 +86,7 @@
     else smallest=0;
 
 
-/* this edge to edge test is based on Franlin Antonio's gem:
+/* this edge to edge test is based on Franklin Antonio's gem:
    "Faster Line Segment Intersection", in Graphics Gems III,
    pp. 199-202 */
 #define EDGE_EDGE_TEST(V0, U0, U1)                      \
@@ -153,7 +153,7 @@
 #define POINT_IN_TRI(V0, U0, U1, U2)           \
     {                                           \
 	fastf_t a, b, c, d0, d1, d2;                     \
-	/* is T1 completly inside T2? */          \
+	/* is T1 completely inside T2? */          \
 	/* check if V0 is inside tri(U0, U1, U2) */ \
 	a=U1[i1]-U0[i1];                          \
 	b=-(U1[i0]-U0[i0]);                       \
