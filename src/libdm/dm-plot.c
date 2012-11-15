@@ -169,7 +169,7 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  *
  * Set up for an object, transformed as indicated, and with an
  * object center as specified.  The ratio of object to screen size
- * is passed in as a convienience.
+ * is passed in as a convenience.
  *
  * Returns 0 if object could be drawn, !0 if object was omitted.
  */

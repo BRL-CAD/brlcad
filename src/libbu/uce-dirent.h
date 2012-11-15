@@ -167,7 +167,7 @@
 
 #elif defined(MSDOS) || defined(WIN32)
 
-  /* figure out type of underlaying directory interface to be used */
+  /* figure out type of underlying directory interface to be used */
 # if defined(WIN32)
 #   define DIRENT_WIN32_INTERFACE
 # elif defined(MSDOS)
