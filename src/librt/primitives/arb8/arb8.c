@@ -1097,28 +1097,111 @@ rt_arb_free(register struct soltab *stp)
     bu_free((char *)arbp, "arb_specific");
 }
 
+#define ARB_FACE(vlist_head, arb_pts, a, b, c, d) \
+    RT_ADD_VLIST(vlist_head, arb_pts[a], BN_VLIST_LINE_MOVE); \
+    RT_ADD_VLIST(vlist_head, arb_pts[b], BN_VLIST_LINE_DRAW); \
+    RT_ADD_VLIST(vlist_head, arb_pts[c], BN_VLIST_LINE_DRAW); \
+    RT_ADD_VLIST(vlist_head, arb_pts[d], BN_VLIST_LINE_DRAW);
+
+#define ARB_RECTANGLE(vlist_head, arb_pts, a, b, c, d) \
+    ARB_FACE(vlist_head, arb_pts, a, b, c, d); \
+    RT_ADD_VLIST(vlist_head, arb_pts[a], BN_VLIST_LINE_DRAW);
+
+/* Plot some number of cross sections (determined by info) between a start and
+ * end face.
+ */
+static void
+arb_plot_cross_sections(
+	point_t start[4],
+	point_t end[4],
+	const struct rt_view_info *info)
+{
+    int i, num_steps;
+    vect_t t[4];
+    point_t rec[4];
+    fastf_t width, step;
+
+    VMOVE(rec[0], start[0]);
+    VMOVE(rec[1], start[1]);
+    VMOVE(rec[2], start[2]);
+    VMOVE(rec[3], start[3]);
+
+    /* choose number of steps based on average distance between faces */
+    width = DIST_PT_PT(start[0], end[0]);
+    width += DIST_PT_PT(start[1], end[1]);
+    width += DIST_PT_PT(start[2], end[2]);
+    width += DIST_PT_PT(start[3], end[3]);
+    width /= 4.0;
+    num_steps = (width / info->curve_spacing) - 1.0;
+
+    if (num_steps < 1) {
+	return;
+    }
+
+    /* calculate actual step vectors for each pair of points between faces */
+#define CALCULATE_TRAVEL_VECTOR(i) \
+    width = DIST_PT_PT(start[i], end[i]); \
+    step = width / num_steps; \
+    VSUB2(t[i], end[i], start[i]); \
+    VUNITIZE(t[i]); \
+    VSCALE(t[i], t[i], step); \
+
+    CALCULATE_TRAVEL_VECTOR(0);
+    CALCULATE_TRAVEL_VECTOR(1);
+    CALCULATE_TRAVEL_VECTOR(2);
+    CALCULATE_TRAVEL_VECTOR(3);
+
+    /* step and plot rectangles */
+    for (i = 1; i < num_steps; ++i) {
+	VADD2(rec[0], rec[0], t[0]);
+	VADD2(rec[1], rec[1], t[1]);
+	VADD2(rec[2], rec[2], t[2]);
+	VADD2(rec[3], rec[3], t[3]);
+	ARB_RECTANGLE(info->vhead, rec, 0, 1, 2, 3);
+    }
+}
+
 int
 rt_arb_adaptive_plot(
 	struct rt_db_internal *ip,
 	const struct rt_view_info *info)
 {
     struct rt_arb_internal *arb;
+    point_t *pts;
+    point_t start[4], end[4];
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
     arb = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
+    pts = arb->pt;
+
+    ARB_FACE(info->vhead, pts, 0, 1, 2, 3);
+    ARB_FACE(info->vhead, pts, 4, 0, 3, 7);
+    ARB_FACE(info->vhead, pts, 5, 4, 7, 6);
+    ARB_FACE(info->vhead, pts, 1, 5, 6, 2);
+
+#define ARB_REC_SET(rec, pts, a, b, c, d) \
+    VMOVE(rec[0], pts[a]); \
+    VMOVE(rec[1], pts[b]); \
+    VMOVE(rec[2], pts[c]); \
+    VMOVE(rec[3], pts[d]);
+
+    ARB_REC_SET(start, pts, 1, 5, 6, 2);
+    ARB_REC_SET(end, pts, 0, 4, 7, 3);
+    arb_plot_cross_sections(start, end, info);
+
+    ARB_REC_SET(start, pts, 0, 1, 2, 3);
+    ARB_REC_SET(end, pts, 4, 5, 6, 7);
+    arb_plot_cross_sections(start, end, info);
+
+    ARB_REC_SET(start, pts, 0, 4, 5, 1);
+    ARB_REC_SET(end, pts, 3, 7, 6, 2);
+    arb_plot_cross_sections(start, end, info);
+
     return 0;
 }
-
-
-#define ARB_FACE(valp, a, b, c, d) \
-	RT_ADD_VLIST(vhead, valp[a], BN_VLIST_LINE_MOVE); \
-	RT_ADD_VLIST(vhead, valp[b], BN_VLIST_LINE_DRAW); \
-	RT_ADD_VLIST(vhead, valp[c], BN_VLIST_LINE_DRAW); \
-	RT_ADD_VLIST(vhead, valp[d], BN_VLIST_LINE_DRAW);
-
 
 /**
  * R T _ A R B _ P L O T
@@ -1132,6 +1215,7 @@ rt_arb_adaptive_plot(
 int
 rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
+    point_t *pts;
     struct rt_arb_internal *aip;
 
     BU_CK_LIST_HEAD(vhead);
@@ -1139,10 +1223,12 @@ rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
-    ARB_FACE(aip->pt, 0, 1, 2, 3);
-    ARB_FACE(aip->pt, 4, 0, 3, 7);
-    ARB_FACE(aip->pt, 5, 4, 7, 6);
-    ARB_FACE(aip->pt, 1, 5, 6, 2);
+    pts = aip->pt;
+    ARB_FACE(vhead, pts, 0, 1, 2, 3);
+    ARB_FACE(vhead, pts, 4, 0, 3, 7);
+    ARB_FACE(vhead, pts, 5, 4, 7, 6);
+    ARB_FACE(vhead, pts, 1, 5, 6, 2);
+
     return 0;
 }
 
