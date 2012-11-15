@@ -21,7 +21,7 @@
 /** @{ */
 /** @file libbn/symbol.c
  *
- *	Terminal Independant Graphics Display Package.
+ *	Terminal Independent Graphics Display Package.
  *		Mike Muuss  July 31, 1978
  *
  *	This routine is used to plot a string of ASCII symbols
