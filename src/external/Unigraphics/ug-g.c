@@ -3186,7 +3186,7 @@ do_ball_end_slot(
     VSCALE( location, loc_orig, units_conv );
     MAT4X3PNT( base, curr_xform, location );
 
-    /* use one arb8, one particles and two RCC's */
+    /* use one arb8, one particle and two RCC's */
     if ( length > radius*2.0 ) {
 	fastf_t pts[24];
 	point_t rcc_base;
