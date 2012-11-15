@@ -99,7 +99,7 @@ bn_unif_init(long int setseed, int method)
  * Use the msrad algorithm to fill a random number table
  * with values from 1 to 2^31-1.  These numbers can (and are) extracted from
  * the random number table via high speed macros and bn_unif_long_fill called
- * when the table is exauseted.
+ * when the table is exhausted.
  *
  * @par Entry
  *	p	pointer to a bn_unif structure.
@@ -133,11 +133,11 @@ bn_unif_long_fill(struct bn_unif *p)
 
     /*
      * Gauss and uniform structures have the same format for the
-     * first part (gauss is an extention of uniform) so that a gauss
+     * first part (gauss is an extension of uniform) so that a gauss
      * structure can be passed to a uniform routine.  This means
      * that we only maintain one structure for gaussian distributions
      * rather than two.  It also means that the user can pull
-     * uniform numbers from a guass structure when the user wants.
+     * uniform numbers from a gauss structure when the user wants.
      */
     if (p->magic != BN_UNIF_MAGIC && p->magic != BN_GAUSS_MAGIC) {
 	BN_CK_UNIF(p);
@@ -163,7 +163,7 @@ bn_unif_long_fill(struct bn_unif *p)
  * Use the msrad algorithm to fill a random number table
  * with values from -0.5 to 0.5.  These numbers can (and are) extracted from
  * the random number table via high speed macros and bn_unif_double_fill
- * called when the table is exauseted.
+ * called when the table is exhausted.
  *
  * @par Entry
  *	p	pointer to a bn_unif structure.
@@ -197,11 +197,11 @@ bn_unif_double_fill(struct bn_unif *p)
 
     /*
      * Gauss and uniform structures have the same format for the
-     * first part (gauss is an extention of uniform) so that a gauss
+     * first part (gauss is an extension of uniform) so that a gauss
      * structure can be passed to a uniform routine.  This means
      * that we only maintain one structure for gaussian distributions
      * rather than two.  It also means that the user can pull
-     * uniform numbers from a guass structure when the user wants.
+     * uniform numbers from a gauss structure when the user wants.
      */
     if (p->magic != BN_UNIF_MAGIC && p->magic != BN_GAUSS_MAGIC) {
 	BN_CK_UNIF(p);
@@ -247,7 +247,7 @@ bn_unif_free(struct bn_unif *p)
  *	method		method to use to generate numbers (not used)
  *
  * @par Exit
- *	Returns a pointer toa bn_msr_guass structure.
+ *	Returns a pointer toa bn_msr_gauss structure.
  *	returns 0 on error.
  *
  * @par Calls
@@ -271,9 +271,9 @@ bn_gauss_init(long int setseed, int method)
     if (method != 0)
 	bu_bomb("Method not yet supported in bn_unif_init()");
 
-    p = (struct bn_gauss *) bu_malloc(sizeof(struct bn_gauss), "bn_msr_guass");
-    p->msr_gausses=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr guass table");
-    p->msr_gauss_doubles=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr guass doubles");
+    p = (struct bn_gauss *) bu_malloc(sizeof(struct bn_gauss), "bn_msr_gauss");
+    p->msr_gausses=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr gauss table");
+    p->msr_gauss_doubles=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr gauss doubles");
     p->msr_gauss_seed = 1;
     p->msr_gauss_ptr = 0;
     p->msr_gauss_dbl_ptr = 0;
@@ -287,11 +287,11 @@ bn_gauss_init(long int setseed, int method)
  *
  * Use the msrad algorithm to fill a random number table.
  * hese numbers can (and are) extracted from
- * the random number table via high speed macros and bn_msr_guass_fill
- * called when the table is exauseted.
+ * the random number table via high speed macros and bn_msr_gauss_fill
+ * called when the table is exhausted.
  *
  * @par Entry
- *	p	pointer to a bn_msr_guass structure.
+ *	p	pointer to a bn_msr_gauss structure.
  *
  * @par Exit
  *	if (!p) returns 0.0 else returns a value with a mean of 0 and
@@ -348,9 +348,9 @@ bn_gauss_fill(struct bn_gauss *p)
 void
 bn_gauss_free(struct bn_gauss *p)
 {
-    bu_free(p->msr_gauss_doubles, "msr guass doubles");
-    bu_free(p->msr_gausses, "msr guass table");
-    bu_free(p, "bn_msr_guass");
+    bu_free(p->msr_gauss_doubles, "msr gauss doubles");
+    bu_free(p->msr_gausses, "msr gauss table");
+    bu_free(p, "bn_msr_gauss");
 }
 
 
