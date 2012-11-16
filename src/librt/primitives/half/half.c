@@ -534,7 +534,7 @@ rt_hlf_xform(
 
     /*
      * The transformed normal is all that is required.
-     * The new distance is found from the transforemd point on the plane.
+     * The new distance is found from the transformed point on the plane.
      */
     hop->eqn[W] = VDOT(pt, hop->eqn);
 

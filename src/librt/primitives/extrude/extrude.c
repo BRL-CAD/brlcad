@@ -1052,7 +1052,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    }
 	}
 
-	/* if we are just doing the Jordan curve thereom */
+	/* if we are just doing the Jordan curve theorem */
 	if (check_inout) {
 	    for (j=0; j<dist_count; j++) {
 		if (dists[j] < 0.0)

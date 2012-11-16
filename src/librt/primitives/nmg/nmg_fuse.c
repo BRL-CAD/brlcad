@@ -1826,7 +1826,7 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *
  * before starting to do face/face intersections, compare every
  * edge in the model with every vertex in the model.
  * If the vertex is within tolerance of the edge, break the edge,
- * and enrole the new edge on a list of edges still to be processed.
+ * and enroll the new edge on a list of edges still to be processed.
  *
  * A list of edges and a list of vertices are built, and then processed.
  *
