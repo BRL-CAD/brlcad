@@ -516,7 +516,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 		   img_sp->i_datasrc==IMG_SRC_OBJECT?"object":img_sp->i_datasrc==IMG_SRC_FILE?"file":"auto");
 
 	    /* skip this one */
-	    img_sp->i_through=0;
+	    img_sp->i_through='0';
 	    HREVERSE(img_sp->i_plane, img_sp->i_plane);
 
 	    return -1;
