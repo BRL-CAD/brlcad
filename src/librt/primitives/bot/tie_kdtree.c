@@ -460,8 +460,8 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
     }
 
     /*
-     * If there is a gap atleast MIN_SPAN in side wrt the nodes dimension size
-     * then use the nearest edge of the gap to 0.5 as the splitting plane,
+     * If there is a gap at least MIN_SPAN in side w/r/t the nodes dimension size
+     * then use the nearest edge of the gap to 0.5 as the splitting plane.
      * Use the gap with the largest span.
      * If no gaps are found meeting the criteria then weight the span values to
      * bias towards a balanced kd-tree and choose the minima of that weighted curve.
@@ -476,7 +476,7 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 
     /*
      * Largest gap found must meet MIN_SPAN requirements
-     * There must be atleast 500 triangles or we don't bother.
+     * There must be at least 500 triangles or we don't bother.
      * Lower triangle numbers means there is a higher probability that
      * triangles lack any sort of coherent structure.
      */
