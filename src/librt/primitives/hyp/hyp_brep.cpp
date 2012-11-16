@@ -118,7 +118,7 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     (*b)->SetTrimIsoFlags(tface);
     delete tcurve;
 
-    //  Now, the hard part.  Need an elliptical hyperboloic NURBS surface
+    //  Now, the hard part.  Need an elliptical hyperbolic NURBS surface.
     //  First step is to create a nurbs curve.
 
     double MX = eip->hyp_b * eip->hyp_bnr;
