@@ -1494,8 +1494,8 @@ rt_bot_find_v_nearest_pt2(
 	fastf_t tmp_dist;
 	fastf_t tmpx, tmpy;
 
-	MAT4X3PNT(v, mat, &bot->vertices[idx*ELEMENTS_PER_POINT])
-	    tmpx = v[X] - pt2[X];
+	MAT4X3PNT(v, mat, &bot->vertices[idx*ELEMENTS_PER_POINT]);
+	tmpx = v[X] - pt2[X];
 	tmpy = v[Y] - pt2[Y];
 	tmp_dist = tmpx * tmpx + tmpy * tmpy;
 	if (tmp_dist < dist) {
