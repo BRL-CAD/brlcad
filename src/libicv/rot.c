@@ -270,7 +270,7 @@ arbrot(double a, FILE *ifp, unsigned char *buf)
 	    {
 		putchar(buf[(int)y2*nyin + (int)x2]);
 	    } else {
-		putchar(0);	/* XXX - setable color? */
+		putchar(0);	/* XXX - settable color? */
 	    }
 	    /* "forward difference" our coordinates */
 	    x2 += cosa;

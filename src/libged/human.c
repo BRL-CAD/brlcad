@@ -2299,7 +2299,7 @@ ged_human(struct ged *gedp, int ac, const char *av[])
 	makeBody(gedp->ged_wdbp, suffix, &human_data, location, showBoxes);
 	mk_id_units(gedp->ged_wdbp, "A single Human", "in");
 
-	/*This function dumps out a text file of all dimensions of bounding boxes/antrho-data/whatever on human model.*/
+	/*This function dumps out a text file of all dimensions of bounding boxes/anthro-data/whatever on human model.*/
 	if (human_data.textwrite == 1)
 	    text(&human_data);
 	if (human_data.verbwrite == 1)
