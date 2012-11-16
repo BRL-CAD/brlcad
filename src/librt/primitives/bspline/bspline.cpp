@@ -1080,7 +1080,7 @@ rt_nurb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	*(uint32_t *)cp = htonl(srf->s_size[1]);
 	cp += SIZEOF_NETWORK_LONG;
 
-	/* alloate for export */
+	/* allocate for export */
 	uknots = (double *)bu_malloc(srf->u.k_size * sizeof(double), "uknots");
 	vknots = (double *)bu_malloc(srf->v.k_size * sizeof(double), "vknots");
 	points = (double *)bu_malloc(coords * srf->s_size[0] * srf->s_size[1] * sizeof(double), "points");
