@@ -27,8 +27,11 @@
  * This code is written and maintained by Joe Doliner: jdoliner@gmail.com
  */
 
-#include "assert.h"
+/* interface header */
 #include "brepintersect.h"
+
+/* implementation system header */
+#include <assert.h>
 
 
 int PolylineBBox(
