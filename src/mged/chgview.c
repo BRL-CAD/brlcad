@@ -3782,6 +3782,9 @@ mged_etran(char coords,
     }
 
     if (STATE == ST_S_EDIT) {
+	es_keyfixed = 0;
+	get_solid_keypoint(es_keypoint, &es_keytag,
+			   &es_int, es_mat);
 	save_edflag = es_edflag;
 
 	if (!SEDIT_TRAN) {

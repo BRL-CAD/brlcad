@@ -254,6 +254,8 @@ extern int es_menu;		/* item/edit_mode selected from menu */
 extern int es_edflag;		/* type of editing for this solid */
 extern int es_edclass;		/* type of editing class for this solid */
 extern int es_type;		/* COMGEOM solid type */
+extern int es_keyfixed;		/* keypoint specified by user */
+extern struct rt_db_internal es_int;
 
 extern mat_t es_mat;		/* accumulated matrix of path */
 extern mat_t es_invmat;		/* inverse of es_mat KAA */
@@ -265,6 +267,10 @@ extern point_t curr_e_axes_pos;	/* center of editing xforms */
 extern int arb_faces[5][24];	/* from edarb.c */
 extern int arb_planes[5][24];	/* from edarb.c */
 
+extern void get_solid_keypoint(fastf_t *pt,
+			       char **strp,
+			       struct rt_db_internal *ip,
+			       fastf_t *mat);
 /*
  * Local Variables:
  * mode: C
