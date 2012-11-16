@@ -276,7 +276,7 @@ static struct region_pair overlapList = {
 
 /**
  * This structure holds the name of a unit value, and the conversion
- * factor necessary to convert from/to BRL-CAD statndard units.
+ * factor necessary to convert from/to BRL-CAD standard units.
  *
  * The standard units are millimeters, cubic millimeters, and grams.
  *

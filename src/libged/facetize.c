@@ -119,7 +119,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     init_state.ts_ttol = &gedp->ged_wdbp->wdb_ttol;
     init_state.ts_tol = &gedp->ged_wdbp->wdb_tol;
 
-    /* Initial vaues for options, must be reset each time */
+    /* Initial values for options, must be reset each time */
     marching_cube = 0;
     triangulate = 0;
     make_bot = 1;

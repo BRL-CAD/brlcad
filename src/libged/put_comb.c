@@ -149,7 +149,7 @@ mktemp_comb(struct ged *gedp, const char *str)
 static const char *
 save_comb(struct ged *gedp, struct directory *dpold)
 {
-    /* Save a combination under a temporory name */
+    /* Save a combination under a temporary name */
 
     struct directory *dp;
     struct rt_db_internal intern;
