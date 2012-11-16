@@ -1564,7 +1564,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, uin
 	    g_index = ntohl(*(uint32_t*)(d->g));
 	    f->g.magic_p = (uint32_t *)ptrs[g_index];
 	    f->flip = ntohl(*(uint32_t*)(d->flip));
-	    /* Enrole this face on fg's list of users */
+	    /* Enroll this face on fg's list of users */
 	    NMG_CK_FACE_G_EITHER(f->g.magic_p);
 	    INDEXL_HD(d, f, l, f->g.plane_p->f_hd); /* after fu->fg_p set */
 	    NMG_CK_FACEUSE(f->fu_p);

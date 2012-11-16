@@ -8869,7 +8869,7 @@ rt_join_cnurbs(struct bu_list *crv_head)
 	bu_bomb("rt_join_cnurbs: Need to raise order of curve\n");
     }
 
-    /* Check that endponts match */
+    /* Check that endpoints match */
     crv = BU_LIST_FIRST(edge_g_cnurb, crv_head);
     ncoords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
     next_crv = BU_LIST_NEXT(edge_g_cnurb, &crv->l);
