@@ -1697,34 +1697,31 @@ draw_pipe_arc(
     fastf_t *end,
     int seg_count)
 {
-    fastf_t arc_angle;
-    fastf_t delta_ang;
-    fastf_t cos_del, sin_del;
-    fastf_t x, y, xnew, ynew;
-    vect_t to_end;
-    point_t pt;
     int i;
+    point_t pt;
+    vect_t center_to_start, center_to_end, axis_a, axis_b;
+    fastf_t radians_from_start_to_end, radian, radian_step;
 
     BU_CK_LIST_HEAD(vhead);
 
-    VSUB2(to_end, end, center);
-    arc_angle = atan2(VDOT(to_end, v2), VDOT(to_end, v1));
-    delta_ang = arc_angle / seg_count;
+    VSCALE(axis_a, v1, radius);
+    VSCALE(axis_b, v2, radius);
+    VMOVE(center_to_start, v1);
+    VSUB2(center_to_end, end, center);
+    VUNITIZE(center_to_end);
 
-    cos_del = cos(delta_ang);
-    sin_del = sin(delta_ang);
+    radians_from_start_to_end = acos(VDOT(center_to_start, center_to_end));
+    radian_step = radians_from_start_to_end / seg_count;
 
-    x = radius;
-    y = 0.0;
-    VJOIN2(pt, center, x, v1, y, v2);
+    ellipse_point_at_radian(pt, center, axis_a, axis_b, 0.0);
     RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
-    for (i = 0; i < seg_count; i++) {
-	xnew = x * cos_del - y * sin_del;
-	ynew = x * sin_del + y * cos_del;
-	VJOIN2(pt, center, xnew, v1, ynew, v2);
+
+    radian = radian_step;
+    for (i = 0; i < seg_count; ++i) {
+	ellipse_point_at_radian(pt, center, axis_a, axis_b, radian);
 	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
-	x = xnew;
-	y = ynew;
+
+	radian += radian_step;
     }
 }
 
