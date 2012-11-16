@@ -1500,7 +1500,7 @@ retry:
     if (rdebug& RDEBUG_RAYPLOT) {
 	point_t ray_endpt;
 
-	/* Yelow -- light visibility ray */
+	/* Yellow -- light visibility ray */
 	VADD2(ray_endpt, los->swp->sw_hit.hit_point, shoot_dir);
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	pl_color(stdout, 200, 200, 0);

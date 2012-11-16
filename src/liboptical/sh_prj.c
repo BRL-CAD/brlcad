@@ -642,7 +642,7 @@ project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific
 	} else {
 	    if (!suppressed) {
 		suppressed++;
-		bu_log("INTERNAL ERROR: supressing further project point error messages\n");
+		bu_log("INTERNAL ERROR: suppressing further project point error messages\n");
 	    }
 	}
 	return 1;
