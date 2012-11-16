@@ -111,7 +111,7 @@ pc_pushparam_struct(struct pc_pc_set *pcsp, const char *name, int type, void *pt
 	    bu_log("!!! Unknown data structure for Variable : %s \n", name);
     }
 
-    /** the acual push operation into the pc_pc_set */
+    /** the actual push operation into the pc_pc_set */
     PC_PCSET_PUSHP(pcsp, par);
 }
 
@@ -186,7 +186,7 @@ pc_pushconstraint_struct(struct pc_pc_set *pcsp, const char *name, int nargs, in
     con->data.cf.dimension = dimension;
     con->data.cf.fp = fp;
 
-    /** the acual push operation into the pc_pc_set */
+    /** the actual push operation into the pc_pc_set */
     PC_PCSET_PUSHC(pcsp, con);
 }
 
