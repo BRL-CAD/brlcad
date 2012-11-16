@@ -47,6 +47,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "../../librt_private.h"
 
 
 struct id_pipe {
@@ -1656,20 +1657,45 @@ rt_pipe_class(void)
     return 0;
 }
 
+/**
+ * Draw a circle that has the given center and radius using the specified
+ * number of line segments. au and bu are expected to be orthogonal unit
+ * vectors in the plane of the circle.
+ */
+static void
+draw_pipe_circle(
+    struct bu_list *vhead,
+    fastf_t radius,
+    vect_t center,
+    vect_t au,
+    vect_t bu,
+    int seg_count)
+{
+    vect_t axis_a, axis_b;
+
+    VSCALE(axis_a, au, radius);
+    VSCALE(axis_b, bu, radius);
+
+    plot_ellipse(vhead, center, axis_a, axis_b, seg_count);
+}
 
 /**
  * D R A W _ P I P E _ A R C
  *
- * v1 and v2 must be unit vectors normal to each other in plane of
- * circle.  v1 must be in direction from center to start point (unless
- * a full circle is requested). "End" is the endpoint of
- * arc. "Seg_count" is how many straight line segments to use to draw
- * the arc. "Full_circle" is a flag to indicate that a complete circle
- * is desired.
+ * Using the specified number of segments, draw the shortest arc on the circle
+ * with the given center and radius that ends at (end) and starts at
+ * (center + radius * v1). v1 and v2 are expected to be orthogonal unit vectors
+ * in the plane of the circle.
  */
-
 HIDDEN void
-draw_pipe_arc(struct bu_list *vhead, fastf_t radius, fastf_t *center, const fastf_t *v1, const fastf_t *v2, fastf_t *end, int seg_count, int full_circle)
+draw_pipe_arc(
+    struct bu_list *vhead,
+    fastf_t radius,
+    fastf_t *center,
+    const fastf_t *v1,
+    const fastf_t *v2,
+    fastf_t *end,
+    int seg_count)
 {
     fastf_t arc_angle;
     fastf_t delta_ang;
@@ -1681,13 +1707,9 @@ draw_pipe_arc(struct bu_list *vhead, fastf_t radius, fastf_t *center, const fast
 
     BU_CK_LIST_HEAD(vhead);
 
-    if (!full_circle) {
-	VSUB2(to_end, end, center);
-	arc_angle = atan2(VDOT(to_end, v2), VDOT(to_end, v1));
-	delta_ang = arc_angle / seg_count;
-    } else {
-	delta_ang = 2.0 * bn_pi / seg_count;
-    }
+    VSUB2(to_end, end, center);
+    arc_angle = atan2(VDOT(to_end, v2), VDOT(to_end, v1));
+    delta_ang = arc_angle / seg_count;
 
     cos_del = cos(delta_ang);
     sin_del = sin(delta_ang);
@@ -1788,26 +1810,26 @@ draw_pipe_bend(
     VJOIN1(tmp_end, end, or , end_f1);
     VSUB2(tmp_vec, tmp_start, tmp_center);
     tmp_radius = MAGNITUDE(tmp_vec);
-    draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count, 0);
+    draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count);
     VJOIN2(tmp_start, center, radius, v1, - or , f1);
     VJOIN1(tmp_center, center, -move_dist, norm);
     VJOIN1(tmp_end, end, - or , end_f1);
     VSUB2(tmp_vec, tmp_start, tmp_center);
     tmp_radius = MAGNITUDE(tmp_vec);
-    draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count, 0);
+    draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count);
     move_dist = or * VDOT(f2, norm);
     VJOIN2(tmp_start, center, radius, v1, or , f2);
     VJOIN1(tmp_center, center, move_dist, norm);
     VJOIN1(tmp_end, end, or , end_f2);
     VSUB2(tmp_vec, tmp_start, tmp_center);
     tmp_radius = MAGNITUDE(tmp_vec);
-    draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count, 0);
+    draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count);
     VJOIN2(tmp_start, center, radius, v1, - or , f2);
     VJOIN1(tmp_center, center, -move_dist, norm);
     VJOIN1(tmp_end, end, - or , end_f2);
     VSUB2(tmp_vec, tmp_start, tmp_center);
     tmp_radius = MAGNITUDE(tmp_vec);
-    draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count, 0);
+    draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count);
 
     if (ir <= 0.0) {
 	VMOVE(f1, end_f1);
@@ -1821,26 +1843,26 @@ draw_pipe_bend(
     VJOIN1(tmp_end, end, ir, end_f1);
     VSUB2(tmp_vec, tmp_start, tmp_center);
     tmp_radius = MAGNITUDE(tmp_vec);
-    draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count, 0);
+    draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count);
     VJOIN2(tmp_start, center, radius, v1, -ir, f1);
     VJOIN1(tmp_center, center, -move_dist, norm);
     VJOIN1(tmp_end, end, -ir, end_f1);
     VSUB2(tmp_vec, tmp_start, tmp_center);
     tmp_radius = MAGNITUDE(tmp_vec);
-    draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count, 0);
+    draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count);
     move_dist = ir * VDOT(f2, norm);
     VJOIN2(tmp_start, center, radius, v1, ir, f2);
     VJOIN1(tmp_center, center, move_dist, norm);
     VJOIN1(tmp_end, end, ir, end_f2);
     VSUB2(tmp_vec, tmp_start, tmp_center);
     tmp_radius = MAGNITUDE(tmp_vec);
-    draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count, 0);
+    draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count);
     VJOIN2(tmp_start, center, radius, v1, -ir, f2);
     VJOIN1(tmp_center, center, -move_dist, norm);
     VJOIN1(tmp_end, end, -ir, end_f2);
     VSUB2(tmp_vec, tmp_start, tmp_center);
     tmp_radius = MAGNITUDE(tmp_vec);
-    draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count, 0);
+    draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count);
 
     VMOVE(f1, end_f1);
     VMOVE(f2, end_f2);
@@ -1885,9 +1907,10 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     VCROSS(f2, f3, f1);
     VUNITIZE(f2);
 
-    draw_pipe_arc(vhead, prevp->pp_od / 2.0, prevp->pp_coord, f1, f2, f2, ARC_SEGS, 1);
+    draw_pipe_circle(vhead, prevp->pp_od / 2.0, prevp->pp_coord, f1, f2, ARC_SEGS);
+
     if (prevp->pp_id > 0.0) {
-	draw_pipe_arc(vhead, prevp->pp_id / 2.0, prevp->pp_coord, f1, f2, f2, ARC_SEGS, 1);
+	draw_pipe_circle(vhead, prevp->pp_id / 2.0, prevp->pp_coord, f1, f2, ARC_SEGS);
     }
 
     while (1) {
@@ -1948,9 +1971,10 @@ next_pt:
 	nextp = BU_LIST_NEXT(wdb_pipept, &curp->l);
     }
 
-    draw_pipe_arc(vhead, curp->pp_od / 2.0, curp->pp_coord, f1, f2, f2, ARC_SEGS, 1);
+    draw_pipe_circle(vhead, curp->pp_od / 2.0, curp->pp_coord, f1, f2, ARC_SEGS);
+
     if (curp->pp_id > 0.0) {
-	draw_pipe_arc(vhead, curp->pp_id / 2.0, curp->pp_coord, f1, f2, f2, ARC_SEGS, 1);
+	draw_pipe_circle(vhead, curp->pp_id / 2.0, curp->pp_coord, f1, f2, ARC_SEGS);
     }
 
     return 0;
