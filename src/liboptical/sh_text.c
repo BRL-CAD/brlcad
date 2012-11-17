@@ -70,10 +70,10 @@ struct bu_structparse txt_parse[] = {
     {"%V",	1, "texture", TX_O(tx_name),	 BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w",		TX_O(tx_w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",	1, "l",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }, {
-    /*compat*/"%d",	1, "trans_valid", TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "l",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "trans_valid", TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },/*compat*/
     {"%d",	1, "t",		TX_O(tx_trans_valid),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  2, "uv",	TX_AO(tx_scale), 	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	2, "uv",	TX_AO(tx_scale), 	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "m",		TX_O(tx_mirror),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
@@ -695,7 +695,7 @@ struct ckr_specific {
 struct bu_structparse ckr_parse[] = {
     {"%d",	3, "a",	bu_offsetofarray(struct ckr_specific, ckr_a), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	3, "b",	bu_offsetofarray(struct ckr_specific, ckr_b), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "s", bu_offsetof(struct ckr_specific, ckr_scale), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",	1, "s", bu_offsetof(struct ckr_specific, ckr_scale), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

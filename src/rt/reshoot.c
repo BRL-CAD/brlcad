@@ -128,8 +128,8 @@ static const struct bu_structparse reg_sp[] = {
     {"%V", 1, "region", bu_offsetof(struct reg_hit, regname), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%V", 1, "in", bu_offsetof(struct reg_hit, in_primitive), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%V", 1, "out", bu_offsetof(struct reg_hit, out_primitive), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 1, "indist", bu_offsetof(struct reg_hit, indist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 1, "outdist", bu_offsetof(struct reg_hit, outdist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%g", 1, "indist", bu_offsetof(struct reg_hit, indist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%g", 1, "outdist", bu_offsetof(struct reg_hit, outdist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -169,7 +169,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	double val;
     } vs;
     static struct bu_structparse val_sp[] = {
-	{"%f", 1, "val", bu_offsetof(struct valstruct, val), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+	{"%g", 1, "val", bu_offsetof(struct valstruct, val), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     };
 
     /* examine each partition until we get back to the head */

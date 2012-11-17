@@ -173,8 +173,8 @@ struct bu_structparse view_parse[] = {
     {"%d", 1, "overlay", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ov", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ambSamples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 1, "ambRadius", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 1, "ambOffset", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%g", 1, "ambRadius", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%g", 1, "ambOffset", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ambSlow", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };

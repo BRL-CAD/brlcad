@@ -114,7 +114,7 @@ struct bu_structparse bbd_print_tab[] = {
     {"%ld",  1, "w",	SHDR_O(img_width),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%ld",  1, "n",	SHDR_O(img_height),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "t",	SHDR_O(img_threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "h",	SHDR_O(img_scale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",  1, "h",	SHDR_O(img_scale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%V",  1, "f",	SHDR_O(img_filename),	new_image, NULL, NULL },
     {"",    0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };

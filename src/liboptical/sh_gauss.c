@@ -117,13 +117,13 @@ struct gauss_specific gauss_defaults = {
  * structure above
  */
 struct bu_structparse gauss_print_tab[] = {
-    {"%f", 1, "sigma",		SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "sigma",		SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 
 };
 struct bu_structparse gauss_parse_tab[] = {
     {"%p", 1, "gauss_print_tab", bu_byteoffset(gauss_print_tab[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "s",			SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "s",			SHDR_O(gauss_sigma),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

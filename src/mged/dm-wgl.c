@@ -80,13 +80,13 @@ struct bu_structparse Wgl_vparse[] = {
     {"%d",  1, "lighting",		Wgl_MV_O(lighting_on),	establish_lighting },
     {"%d",  1, "transparency",	Wgl_MV_O(transparency_on), establish_transparency },
     {"%d",  1, "fastfog",		Wgl_MV_O(fastfog),	do_fogHint },
-    {"%f",  1, "density",		Wgl_MV_O(fogdensity),	dirty_hook },
+    {"%g",  1, "density",		Wgl_MV_O(fogdensity),	dirty_hook },
     {"%d",  1, "has_zbuf",		Wgl_MV_O(zbuf),		BU_STRUCTPARSE_FUNC_NULL },
     {"%d",  1, "has_rgb",		Wgl_MV_O(rgb),		BU_STRUCTPARSE_FUNC_NULL },
     {"%d",  1, "has_doublebuffer",	Wgl_MV_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL },
     {"%d",  1, "depth",		Wgl_MV_O(depth),	BU_STRUCTPARSE_FUNC_NULL },
     {"%d",  1, "debug",		Wgl_MV_O(debug),	debug_hook },
-    {"%f",  1, "bound",		Wgl_MV_O(bound),	bound_hook },
+    {"%g",  1, "bound",		Wgl_MV_O(bound),	bound_hook },
     {"%d",  1, "useBound",		Wgl_MV_O(boundFlag),	boundFlag_hook },
     {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };

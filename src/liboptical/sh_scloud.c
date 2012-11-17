@@ -72,32 +72,32 @@ static struct scloud_specific scloud_defaults = {
 #define SHDR_AO(m) bu_offsetofarray(struct scloud_specific, m)
 
 struct bu_structparse scloud_pr[] = {
-    {"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  3, "vscale",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "Max", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "min", 		SHDR_O(min_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+    {"%g", 1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "octaves",	SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "vscale",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "Max", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "min", 		SHDR_O(min_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 struct bu_structparse scloud_parse[] = {
-    {"%f",	1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "octaves", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "l",			SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "M", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "Max", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "m", 		SHDR_O(min_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "min", 		SHDR_O(min_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",	1, "o", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "s",			SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  3, "vs",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  3, "d",			SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+    {"%g", 1, "lacunarity",	SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "H", 		SHDR_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "octaves",	SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "scale",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "delta",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "l",		SHDR_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "M", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "Max", 		SHDR_O(max_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "m", 		SHDR_O(min_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "min", 		SHDR_O(min_d_p_mm),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "o", 		SHDR_O(octaves),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "s",		SHDR_O(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "vs",		SHDR_AO(vscale),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 3, "d",		SHDR_AO(delta),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 

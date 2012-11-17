@@ -57,8 +57,8 @@ static struct rtrans_specific rtrans_defaults = {
 #define SHDR_AO(m) bu_offsetofarray(struct rtrans_specific, m)
 
 struct bu_structparse rtrans_parse[] = {
-    {"%f",  1, "threshold",		SHDR_O(threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",  1, "t",			SHDR_O(threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",  1, "threshold",		SHDR_O(threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g",  1, "t",			SHDR_O(threshold),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

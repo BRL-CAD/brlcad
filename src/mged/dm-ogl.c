@@ -95,13 +95,13 @@ struct bu_structparse Ogl_vparse[] = {
     {"%d",  1, "lighting",		Ogl_MV_O(lighting_on),	establish_lighting, NULL, NULL },
     {"%d",  1, "transparency",	Ogl_MV_O(transparency_on), establish_transparency, NULL, NULL },
     {"%d",  1, "fastfog",		Ogl_MV_O(fastfog),	do_fogHint, NULL, NULL },
-    {"%f",  1, "density",		Ogl_MV_O(fogdensity),	dirty_hook, NULL, NULL },
+    {"%g",  1, "density",		Ogl_MV_O(fogdensity),	dirty_hook, NULL, NULL },
     {"%d",  1, "has_zbuf",		Ogl_MV_O(zbuf),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "has_rgb",		Ogl_MV_O(rgb),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "has_doublebuffer",	Ogl_MV_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "depth",		Ogl_MV_O(depth),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "debug",		Ogl_MV_O(debug),	debug_hook, NULL, NULL },
-    {"%f",  1, "bound",		Ogl_MV_O(bound),	bound_hook, NULL, NULL },
+    {"%g",  1, "bound",		Ogl_MV_O(bound),	bound_hook, NULL, NULL },
     {"%d",  1, "useBound",		Ogl_MV_O(boundFlag),	boundFlag_hook, NULL, NULL },
     {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };

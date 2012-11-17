@@ -55,7 +55,7 @@ static void zclip_hook(void);
 static Tk_GenericProc tk_doevent;
 
 struct bu_structparse tk_vparse[] = {
-    {"%f",  1, "bound",		 DM_O(dm_bound),	dirty_hook, NULL, NULL},
+    {"%g",  1, "bound",		 DM_O(dm_bound),	dirty_hook, NULL, NULL},
     {"%d",  1, "useBound",	 DM_O(dm_boundFlag),	dirty_hook, NULL, NULL},
     {"%d",  1, "zclip",		 DM_O(dm_zclip),	zclip_hook, NULL, NULL},
     {"%d",  1, "debug",		 DM_O(dm_debugLevel),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},

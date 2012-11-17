@@ -61,15 +61,15 @@ static struct fbm_specific fbm_defaults = {
 #define FBM_AO(m) bu_offsetofarray(struct fbm_specific, m)
 
 struct bu_structparse fbm_parse[] = {
-    {"%f", 1, "lacunarity",	FBM_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "H", 		FBM_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "octaves", 	FBM_O(octaves),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "gain",		FBM_O(gain),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "distortion",	FBM_O(distortion),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "l",		FBM_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "lacunarity",	FBM_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "H", 		FBM_O(h_val),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "octaves", 	FBM_O(octaves),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "gain",		FBM_O(gain),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "distortion",	FBM_O(distortion),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "l",		FBM_O(lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d", 1, "o", 		FBM_O(octaves),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "g",		FBM_O(gain),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 1, "d",		FBM_O(distortion),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "g",		FBM_O(gain),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%g", 1, "d",		FBM_O(distortion),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f", 3, "scale",		FBM_AO(scale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",   0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
