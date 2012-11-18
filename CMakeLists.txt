@@ -1865,6 +1865,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     list(REMOVE_DUPLICATES CMAKE_EXTERNAL_TARGET_LIST)
   endif(CMAKE_EXTERNAL_TARGET_LIST)
   foreach(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
+    #TODO - can this locate test be replaced with if(TARGET ${libtarget}) ?
     if(NOT CMAKE_BUILD_TYPE)
       get_target_property(target_location ${libtarget} LOCATION)
     else(NOT CMAKE_BUILD_TYPE)
