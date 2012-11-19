@@ -933,7 +933,10 @@ rt_fastgen_plate_vol_overlap(struct region **fr1, struct region **fr2, struct pa
 	return;
     }
 
-    /* arbitrary tolerance is the dominant absolute tolerance from f_diff() */
+    /* arbitrary tolerance is the dominant absolute tolerance from the
+     * now-deprecated rt_fdiff().  need to test sensitivity before
+     * changing to the distance tolerance.
+     */
     if (!NEAR_EQUAL(prev->pt_outhit->hit_dist, pp->pt_inhit->hit_dist, 0.001)) {
 	/* There is a gap between previous partition and this one.  So
 	 * both plate and vol start at same place, d=0, plate wins.
