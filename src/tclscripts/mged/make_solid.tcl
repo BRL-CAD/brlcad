@@ -47,7 +47,7 @@ proc make_dsp { id top } {
 
     set ret [catch $command result]
     if { $ret != 0 } {
-	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "ERROR creaing DSP" $result "" 0 OK
+	cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "ERROR creating DSP" $result "" 0 OK
     }
 
     catch {_mged_sed $mged_gui($id,solid_name)}
@@ -239,7 +239,7 @@ proc dsp_create { id } {
     set mged_gui($id,dsp_smooth) 0
     label $top.smoothL -text "Use smoothing"
     checkbutton $top.smoothC -bd 2 -variable mged_gui($id,dsp_smooth)
-    set tmp_hoc [list [list summary $dsp_dscr] [list description "If this is checked, the displacememt surface will be smoothed" ]]
+    set tmp_hoc [list [list summary $dsp_dscr] [list description "If this is checked, the displacement surface will be smoothed" ]]
     hoc_register_data $top.smoothL "Smoothing" $tmp_hoc
     hoc_register_data $top.smoothC "Smoothing" $tmp_hoc
 
