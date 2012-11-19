@@ -401,7 +401,7 @@ class Attr_editor {
 	set attr_entry_label "New Attribute Name:"
     }
 
-    # attribute names may not contain embedded white space nor non-priontable chars
+    # attribute names may not contain embedded white space or non-printable chars
     method attr_name_is_valid { name } {
 	set len [string length $name]
 	if { $len < 1 } {
