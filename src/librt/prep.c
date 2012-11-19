@@ -832,19 +832,25 @@ rt_clean_resource(struct rt_i *rtip, struct resource *resp)
 }
 
 
+/**
+ * returns a bitv zero-initialized with space for least nbits back to
+ * the caller.  if a resource pointer is provided, a previously
+ * allocated bitv may be reused or a new one will be allocated.
+ */
 struct bu_bitv *
 rt_get_solidbitv(size_t nbits, struct resource *resp)
 {
     struct bu_bitv *solidbits;
     int counter=0;
 
-    if (resp->re_solid_bitv.magic != BU_LIST_HEAD_MAGIC) {
+    if (resp && resp->re_solid_bitv.magic != BU_LIST_HEAD_MAGIC) {
 	bu_bomb("Bad magic number in re_solid_btiv list\n");
     }
 
-    if (BU_LIST_IS_EMPTY(&resp->re_solid_bitv)) {
+    if (!resp || BU_LIST_IS_EMPTY(&resp->re_solid_bitv)) {
 	solidbits = bu_bitv_new((unsigned int)nbits);
     } else {
+	/* scan list for a reusable bitv */
 	for (BU_LIST_FOR(solidbits, bu_bitv, &resp->re_solid_bitv)) {
 	    if (solidbits->nbits >= nbits) {
 		BU_LIST_DEQUEUE(&solidbits->l);
@@ -853,6 +859,7 @@ rt_get_solidbitv(size_t nbits, struct resource *resp)
 	    }
 	    counter++;
 	}
+	/* no match, allocate a new one */
 	if (solidbits == (struct bu_bitv *)&resp->re_solid_bitv) {
 	    solidbits = bu_bitv_new((unsigned int)nbits);
 	}
