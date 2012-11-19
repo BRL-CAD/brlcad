@@ -222,7 +222,7 @@ proc copy_obj { args } {
     set obj ""
     set argc [llength $args]
     if { $argc < 1 || $argc > 7 } {
-	puts "Error in command: copy_obj $args\nwrongh number of arguments ($argc)"
+	puts "Error in command: copy_obj $args\nwrong number of arguments ($argc)"
 	error $usage
     }
     incr argc -1
@@ -630,7 +630,7 @@ proc pattern_sph { args } {
     set usage "pattern_sph \[-top | -regions | -primitives\] \[-g group_name\] \[-s source_string replacement_string\] \
 		\[-i tag_number_increment\] \[-center_pat {x y z}\] \[-center_obj {x y z}\] \[-rotaz\] \[-rotel\] \
 		\[-naz num_az -daz delta_az | -laz list_of_azimuths\] \
-		\[-nel num_el -del delta_el | -lel list_of_elivations\] \
+		\[-nel num_el -del delta_el | -lel list_of_elevations\] \
 		\[-nr num_r -dr delta_r | -lr list_of_radii\] \
 		\[-start_az starting_azimuth \] \[-start_el starting_elevation\] \[-start_r starting_radius\] \
 		\[-raz\] \[-rel\] \
@@ -957,7 +957,7 @@ proc pattern_cyl { args } {
 
     init_vmath
 
-    set usage "pattern_cyl \[-top | -region | -primitives\] \[-g group_name]\ \[-s source_string replacemrnt_string\] \
+    set usage "pattern_cyl \[-top | -region | -primitives\] \[-g group_name]\ \[-s source_string replacement_string\] \
 		\[-i tag_number_increment\] \[-rot\] \[-center_obj {x y z}\] \[-center_base {x y z}\] \[-height_dir {x y z}\] \
 		\[-start_az_dir {x y z}\] \
 		\[-naz num_az -daz delta_az | -laz list_of_azimuths\] \
