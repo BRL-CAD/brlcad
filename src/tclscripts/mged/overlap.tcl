@@ -35,7 +35,7 @@
 #	are kept together, and the "worst" overlap pairs come first.
 
 #	return the index into the 'g_lint' output that is the start point
-#	of the last consectutive line that refers to the next region overlap pair
+#	of the last consecutive line that refers to the next region overlap pair
 #	The input is:
 #		glout - the entire output from g_lint
 #		counter - index into $glout that is he start of the current region pair
@@ -81,7 +81,7 @@ proc count_overlaps { id } {
 	set tmp1 [lindex $over_cont($id,glint_ret) [incr index]]
 	set tmp2 [lindex $over_cont($id,glint_ret) [incr index]]
 
-	if { [string compar $tmp1 $obj1] || [string compare $tmp2 $obj2] } {
+	if { [string compare $tmp1 $obj1] || [string compare $tmp2 $obj2] } {
 	    incr over_cont($id,overlap_count)
 	    set obj1 $tmp1
 	    set obj2 $tmp2
@@ -347,7 +347,7 @@ proc get_comb_leaf { path } {
 #	chosen by the user. The argument "which" must be "12" or "21",
 #	indicating the subtraction should be "obj1 - obj2" or
 #	"obj2 - obj1" respectively.
-#	Note that transformations in the path must be taken into acount
+#	Note that transformations in the path must be taken into account
 proc do_subtract { id which } {
     global over_cont
 
@@ -614,7 +614,7 @@ proc overlap_tool { id } {
 			'ready' - ready for the user to press 'go' and start the check\n\
 			'done' - all the discovered overlaps have been processed\n\
 			'Shooting rays at ...' - Rays are being traced to discover overlapping regions\n\
-			'Reading overlap file ...' - Specified overlap file is beinmg scanned\n\
+			'Reading overlap file ...' - Specified overlap file is being scanned\n\
 			'Processing output...' - Individual overlaps are being presented to the user" }
     }
     grid $over_cont($id,top).raytrace -row 0 -column 1 -sticky e
@@ -685,7 +685,7 @@ proc overlap_tool { id } {
     }
     button $over_cont($id,work_frame).b5 -text "next overlap" -command "next_overlap $id"
     hoc_register_data $over_cont($id,work_frame).b5 "next overlap" {
-	{summary "Press this button to contimue to the next pair of\n\
+	{summary "Press this button to continue to the next pair of\n\
 			overlapping regions without further processing of the current pair."}
     }
     button $over_cont($id,work_frame).b6 -text "plot overlaps" -command "plot_overlaps $id"
