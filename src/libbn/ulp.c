@@ -107,7 +107,7 @@ bn_dbl_max()
     long long next = *(long long*)&val - 1;
     return *(double *)&next;
 #else
-	return 1.0/bu_dbl_min();
+	return 1.0/bn_dbl_min();
 #endif
 }
 
@@ -130,7 +130,7 @@ bn_flt_max()
     long next = *(long*)&val - 1;
     return *(float *)&next;
 #else
-	return 1.0/bu_flt_min();
+	return 1.0/bn_flt_min();
 #endif
 }
 
