@@ -1928,6 +1928,13 @@ nmg_break_e_on_v(const uint32_t *magic_p, const struct bn_tol *tol)
 }
 
 
+/* DEPRECATED: use nmg_break_e_on_v() */
+int
+nmg_model_break_e_on_v(const uint32_t *magic_p, const struct bn_tol *tol)
+{
+    return nmg_break_e_on_v(magic_p, tol);
+}
+
 /**
  * N M G _ M O D E L _ F U S E
  *

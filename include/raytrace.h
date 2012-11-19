@@ -5169,6 +5169,9 @@ RT_EXPORT extern int nmg_break_all_es_on_v(uint32_t *magic_p,
 					   const struct bn_tol *tol);
 RT_EXPORT extern int nmg_break_e_on_v(const uint32_t *magic_p,
 				      const struct bn_tol *tol);
+/* DEPRECATED: use nmg_break_e_on_v */
+RT_EXPORT extern int nmg_model_break_e_on_v(const uint32_t *magic_p,
+				            const struct bn_tol *tol);
 RT_EXPORT extern int nmg_model_fuse(struct model *m,
 				    const struct bn_tol *tol);
 
