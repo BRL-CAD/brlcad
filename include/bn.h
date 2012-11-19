@@ -841,6 +841,11 @@ BN_EXPORT extern int bn_dist_pt3_lseg3(fastf_t *dist,
 				       const point_t b,
 				       const point_t p,
 				       const struct bn_tol *tol);
+BN_EXPORT extern int bn_distsq_pt3_lseg3_v2(fastf_t *distsq,
+					    const fastf_t *a,
+					    const fastf_t *b,
+					    const fastf_t *p,
+					    const struct bn_tol *tol);
 BN_EXPORT extern int bn_3pts_collinear(point_t a,
 				       point_t b,
 				       point_t c,
