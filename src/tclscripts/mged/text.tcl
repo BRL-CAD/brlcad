@@ -870,7 +870,7 @@ proc vi_process_edit_cmd { w c k state } {
     if {$vi_state($w,yank_flag)} {
 	switch -glob -- $c {
 	    [0] {
-		# if we are counting, ignore; begining-of-line ignores counts.
+		# if we are counting, ignore; beginning-of-line ignores counts.
 		if {!$vi_state($w,count_flag)} {
 		    set vi_state($w,cmd_count) 1
 		}
@@ -1029,7 +1029,7 @@ proc vi_process_edit_cmd { w c k state } {
 	    if {   (";" == $c && [string is lower $vi_state($w,search_type)])
 		   || ("," == $c && [string is upper $vi_state($w,search_type)])} {
 
-		# do while pos_count is gte one and seach_char is found
+		# do while pos_count is gte one and search_char is found
 		for { set newindex [$w index {insert}] } {1} {
 		    if {1 == $vi_state($w,pos_count) || $newindex == ""} {
 			break
@@ -1066,7 +1066,7 @@ proc vi_process_edit_cmd { w c k state } {
 		}
 		# Backward searches...
 	    } else {
-		# do while pos_count is gte one and seach_char is found
+		# do while pos_count is gte one and search_char is found
 		for { set newindex [$w index {insert}] } {1} {
 		    if {1 == $vi_state($w,pos_count) || $newindex == ""} {
 			break
@@ -1138,7 +1138,7 @@ proc vi_process_edit_cmd { w c k state } {
 	    vi_hsrch_mode $w
 	}
 	0 {
-	    # Motion to begining of line (or zero in a command or position count.)
+	    # Motion to beginning of line (or zero in a command or position count).
 	    if {$vi_state($w,count_flag)} {
 		set vi_state($w,tmp_count) [expr $vi_state($w,tmp_count) * 10]
 	    } else {
@@ -1338,7 +1338,7 @@ proc vi_process_edit_cmd { w c k state } {
 	    vi_word_search $w "e"
 	}
 	f {
-	    # Find the next ocurrence of a char.
+	    # Find the next occurrence of a char.
 	    set vi_state($w,search_flag) "f"
 	}
 	h {
