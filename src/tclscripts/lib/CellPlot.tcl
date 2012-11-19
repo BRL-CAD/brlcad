@@ -87,7 +87,7 @@
 
 ## - createCell
 #
-# Transform the data coodinates into canvas coordinates,
+# Transform the data coordinates into canvas coordinates,
 # then draw the cell in the specified color.
 #
 ::itcl::body cadwidgets::CellPlot::createCell {x1 y1 x2 y2 args} {

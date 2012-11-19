@@ -5390,7 +5390,7 @@ package provide cadwidgets::Ged 1.0
     $help add view		{{quat|ypr|aet|center|eye|size [args]} {get/set view parameters}}
     $help add view2model	{{} {returns the view to model matrix}}
     $help add viewDir		{{[-i]} {return the view direction}}
-    $help add vmake		{{pname ptype} {make a primtive of ptype and size it according to the view}}
+    $help add vmake		{{pname ptype} {make a primitive of ptype and size it according to the view}}
     $help add vnirt		{{options vX vY} {trace a single ray aimed at (vX, vY) in view coordinates}}
     $help add wcodes		{{file object(s)} {write codes to file for the specified object(s)}}
     $help add whatid		{{region_name} {display ident number for region}}
