@@ -851,7 +851,7 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     (void)nmg_simplify_shell_edges(sA, tol);
     (void)nmg_simplify_shell_edges(sB, tol);
 
-    (void)nmg_model_break_e_on_v(m, tol);
+    (void)nmg_break_e_on_v(&m->magic, tol);
 
     (void)nmg_edge_fuse(&m->magic, tol);
 

@@ -1820,7 +1820,7 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *
 
 
 /**
- * N M G _ M O D E L _ B R E A K _ E _ O N _ V
+ * N M G _ B R E A K _ E _ O N _ V
  *
  * As the first step in evaluating a boolean formula,
  * before starting to do face/face intersections, compare every
@@ -1837,7 +1837,7 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *
  * Number of edges broken.
  */
 int
-nmg_model_break_e_on_v(struct model *m, const struct bn_tol *tol)
+nmg_break_e_on_v(const uint32_t *magic_p, const struct bn_tol *tol)
 {
     int count = 0;
     struct bu_ptbl verts;
@@ -1846,10 +1846,9 @@ nmg_model_break_e_on_v(struct model *m, const struct bn_tol *tol)
     register struct edgeuse **eup;
     vect_t e_min_pt, e_max_pt;
 
-    NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
 
-    nmg_e_and_v_tabulate(&edgeuses, &verts, &m->magic);
+    nmg_e_and_v_tabulate(&edgeuses, &verts, magic_p);
 
     /* Repeat the process until no new edgeuses are created */
     while (BU_PTBL_LEN(&edgeuses) > 0) {
@@ -1901,12 +1900,12 @@ nmg_model_break_e_on_v(struct model *m, const struct bn_tol *tol)
 
 		if (code < 1) continue;	/* missed */
 		if (code == 1 || code == 2) {
-		    bu_log("nmg_model_break_e_on_v() code=%d, why wasn't this vertex fused?\n", code);
+		    bu_log("nmg_break_e_on_v() code=%d, why wasn't this vertex fused?\n", code);
 		    continue;
 		}
 
 		if (rt_g.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC))
-		    bu_log("nmg_model_break_e_on_v(): breaking eu x%x (e=x%x) at vertex x%x\n", eu, eu->e_p, v);
+		    bu_log("nmg_break_e_on_v(): breaking eu x%x (e=x%x) at vertex x%x\n", eu, eu->e_p, v);
 
 		/* Break edge on vertex, but don't fuse yet. */
 		new_eu = nmg_ebreak(v, eu);
@@ -1924,7 +1923,7 @@ nmg_model_break_e_on_v(struct model *m, const struct bn_tol *tol)
     bu_ptbl_free(&edgeuses);
     bu_ptbl_free(&verts);
     if (rt_g.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC))
-	bu_log("nmg_model_break_e_on_v() broke %d edges\n", count);
+	bu_log("nmg_break_e_on_v() broke %d edges\n", count);
     return count;
 }
 
@@ -1973,7 +1972,7 @@ nmg_model_fuse(struct model *m, const struct bn_tol *tol)
     /* Step 1.5 -- break edges on vertices, before fusing edges */
     if (rt_g.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_model_fuse: break edges\n");
-    total += nmg_model_break_e_on_v(m, tol);
+    total += nmg_break_e_on_v(&m->magic, tol);
 
     if (total) {
 	struct nmgregion *r;

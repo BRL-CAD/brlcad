@@ -560,8 +560,8 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 
     /* Break edges on vertices */
     if ( debug )
-	bu_log( "Calling nmg_model_break_e_on_v()\n" );
-    (void)nmg_model_break_e_on_v( m, &tol );
+	bu_log( "Calling nmg_break_e_on_v()\n" );
+    (void)nmg_break_e_on_v( &m->magic, &tol );
 
     /* kill zero length edgeuses */
     if ( nmg_kill_zero_length_edgeuses( m ) )

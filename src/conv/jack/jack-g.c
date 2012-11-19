@@ -301,7 +301,7 @@ psurf_to_nmg(struct model *m, FILE *fp, char *jfile)
 	  /* Compute "geometry" for region and shell */
 	  nmg_region_a(r, &tol);
 
-	  nmg_model_break_e_on_v(m, &tol);
+	  nmg_break_e_on_v(&m->magic, &tol);
 	  empty_model = nmg_kill_zero_length_edgeuses(m);
 
 	  /* Glue edges of outward pointing face uses together. */

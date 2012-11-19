@@ -238,8 +238,8 @@ ged_bot_fuse(struct ged *gedp, int argc, const char **argv)
     bu_log("%s: %s, %d vertex fused\n", argv[0], argv[i+1], count);
 
     /* Step 1.5 -- break edges on vertices, before fusing edges */
-    bu_log("%s: running nmg_model_break_e_on_v\n", argv[0]);
-    count = nmg_model_break_e_on_v(m, tol);
+    bu_log("%s: running nmg_break_e_on_v\n", argv[0]);
+    count = nmg_break_e_on_v(&m->magic, tol);
     total += count;
     bu_log("%s: %s, %d broke 'e' on 'v'\n", argv[0], argv[i+1], count);
 
