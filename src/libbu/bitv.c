@@ -81,16 +81,19 @@ struct bu_bitv *
 bu_bitv_new(unsigned int nbits)
 {
     struct bu_bitv *bv;
-    int bv_bytes;
-    int total_bytes;
+    size_t bv_bytes;
+    size_t total_bytes;
 
     bv_bytes = BU_BITS2BYTES(nbits);
     total_bytes = sizeof(struct bu_bitv) - 2*sizeof(bitv_t) + bv_bytes;
 
-    /* get zero'd memory, otherwise need to call BU_BITV_ZEROALL */
-    bv = (struct bu_bitv *)bu_calloc(1, (size_t)total_bytes, "struct bu_bitv");
-    BU_BITV_INIT(bv);
+    /* allocate bigger than struct, bits array extends past the end */
+    bv = (struct bu_bitv *)bu_malloc(total_bytes, "struct bu_bitv");
+
+    /* manually initialize */
+    BU_LIST_INIT_MAGIC(&(bv->l), BU_BITV_MAGIC);
     bv->nbits = bv_bytes * 8;
+    BU_BITV_ZEROALL(bv);
 
     return bv;
 }
