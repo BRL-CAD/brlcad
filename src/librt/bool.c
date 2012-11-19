@@ -1818,7 +1818,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	 * Partition may start before current box starts, because it's
 	 * still waiting for all its solids to be shot.
 	 */
-	if (pp->pt_outhit->hit_dist <= 0.001 /* millimeters */) {
+	if (pp->pt_outhit->hit_dist < ap->a_rt_i->rti_tol.dist) {
 	    register struct partition *zap_pp;
 	    if (RT_G_DEBUG&DEBUG_PARTITION)
 		bu_log("discarding partition %p behind ray start, out dist=%g\n",
