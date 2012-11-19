@@ -1045,7 +1045,7 @@ proc do_phong { shade_var id } {
 
     hoc_register_data $shader_params($id,window).fr.emiss Emissivity {
 	{summary "In addition to reflecting and transmitting light,\n\
-			an object may also emit or absorb light. This paramter\n\
+			an object may also emit or absorb light. This parameter\n\
 			describes that property."}
 	{description "Emissivity/absorption"}
 	{range "-1.0 through 1.0"}
@@ -1053,7 +1053,7 @@ proc do_phong { shade_var id } {
 
     hoc_register_data $shader_params($id,window).fr.emiss_e Emissivity {
 	{summary "In addition to reflecting and transmitting light,\n\
-			an object may also emit or absorb light. This paramter\n\
+			an object may also emit or absorb light. This parameter\n\
 			describes that property."}
 	{description "Emissivity/absorption"}
 	{range "-1.0 through 1.0"}
@@ -1204,7 +1204,7 @@ proc do_phong { shade_var id } {
 
     hoc_register_data $shader_params($id,window).fr.shine_e "Shininess" {
 	{summary "An indication of the 'shininess' of this material. A higher number\n\
-			will make the object look more shiney"}
+			will make the object look more shiny"}
 	{range "integer values from 1 to 10"}
     }
 
@@ -1561,7 +1561,7 @@ set light_data {
     e	target		d	{0 0 0}	"Point to which light is directed\n   (angle must be less than 180)"   "any X,Y,Z"	2 0 \
     e	lumens		b	1.0	"Lumens for Photon mapping" 		        "And Real #"	3 0 \
     c	infinite 	i	0	"Boolean: light is infinite distance away"	"0,1" 		3 2 \
-    c	visible 	v	1	"Boolean: light souce object can be seen"	"0,1" 		3 3 \
+    c	visible 	v	1	"Boolean: light source object can be seen"	"0,1" 		3 3 \
     i	icon		icon	""	"Shows effect of values for:\n  Shadow Rays\n  infinite\n  visible" "" 0 4 \
 }
 
@@ -1601,7 +1601,7 @@ proc do_light { shade_var id } {
 
 
     # For each variable, create a label and an entry widgets
-    # and bind <KeyRelease> so that the shader string wil be updated
+    # and bind <KeyRelease> so that the shader string will be updated
 
     set w $shader_params($id,window).fr
 
@@ -2556,7 +2556,7 @@ proc do_envmap_apply { shade_var id } {
 
     if {$params == "" } {
 	tk_messageBox -type ok -icon error -title "ERROR: Empty envmap"\
-	    -message "The envmap shader is meaningless without selecting another shader as the environmant"
+	    -message "The envmap shader is meaningless without selecting another shader as the environment"
 	set shade_str envmap
     } else {
 	set shade_str "envmap {$params}"
