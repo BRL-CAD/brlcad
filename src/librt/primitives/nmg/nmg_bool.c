@@ -816,20 +816,6 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     (void)nmg_kill_anti_loops(sA);
     (void)nmg_kill_anti_loops(sB);
 
-    nmg_m_reindex(m, 0);
-
-    /* Allocate storage for classlist[]. Allocate each of the 8 class
-     * lists one at a time. This will assist with debugging to
-     * determine if each array read/write is within its allocated space.
-     */
-
-    nelem = m->maxindex;
-    for (i = 0; i < 8; i++) {
-	classlist[i] = (char *)bu_calloc(nelem, sizeof(char), "nmg_bool classlist");
-    }
-
-    nmg_classify_shared_edges_verts(sA, sB, classlist);
-
     /* clean things up now that the intersections have been built */
     nmg_sanitize_s_lv(sA, OT_BOOLPLACE);
     nmg_sanitize_s_lv(sB, OT_BOOLPLACE);
@@ -956,6 +942,19 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	 */
 	nmg_vmodel(m);
     }
+
+    nmg_m_reindex(m, 0);
+
+    /* Allocate storage for classlist[]. Allocate each of the 8 class
+     * lists one at a time. This will assist with debugging to
+     * determine if each array read/write is within its allocated space.
+     */
+    nelem = m->maxindex;
+    for (i = 0; i < 8; i++) {
+	classlist[i] = (char *)bu_calloc(nelem, sizeof(char), "nmg_bool classlist");
+    }
+
+    nmg_classify_shared_edges_verts(sA, sB, classlist);
 
     nmg_class_nothing_broken = 1;
     if (rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
