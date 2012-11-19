@@ -410,7 +410,7 @@
 	    $itk_component(text) delete 1.0 [expr $nlines - $itk_option(-maxlines)].end
 	}
     } else {
-	print_promt2
+	print_prompt2
     }
     $itk_component(text) see insert
 }
