@@ -848,7 +848,7 @@ rt_get_solidbitv(size_t nbits, struct resource *resp)
 	for (BU_LIST_FOR(solidbits, bu_bitv, &resp->re_solid_bitv)) {
 	    if (solidbits->nbits >= nbits) {
 		BU_LIST_DEQUEUE(&solidbits->l);
-		BU_CK_BITV(solidbits);
+		bu_bitv_clear(solidbits);
 		break;
 	    }
 	    counter++;
