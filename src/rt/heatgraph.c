@@ -53,7 +53,7 @@ static struct rusage ruAc;
 
 static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0);
 
-/* Time functions are copied almost verbatium from timer42.c */
+/* Time functions are copied almost verbatim from timer42.c */
 
 /**
  * P R E P _ P I X E L _ T I M E R

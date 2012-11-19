@@ -718,7 +718,7 @@ body GeometryBrowser::updateGeometryLists { { node "" } } {
 
 # displayNode is the -dblclickcommand
 #
-# displayes the geometry of a given node to the mged window.  later it will be
+# displays the geometry of a given node to the mged window.  later it will be
 # able to display the selected geometry detailed information to a side panel.
 #
 # there are two special keywords for how to display the node.  it may either be

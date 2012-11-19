@@ -36,7 +36,7 @@
 #include "wdb.h"
 
 
-/* Interpoate the data using b-splines */
+/* Interpolate the data using b-splines */
 struct face_g_snurb **
 interpolate_data(fastf_t *grid)
 {

@@ -219,7 +219,7 @@
 #define DEFAULT_WIRESEGMENTLENGTH 50.0
 #define DEFAULT_WIRESEGMENTSEPARATION DEFAULT_WIRERADIUS
 /**
- * the max wire segments should not be changed as it is mearly a max
+ * the max wire segments should not be changed as it is merely a max
  * upper bound on the maximum number of segments that may be generated
  * for any wire pair.  it is provided as a saveguard against having an
  * "out-of-control" program if invalid wire values are entered.

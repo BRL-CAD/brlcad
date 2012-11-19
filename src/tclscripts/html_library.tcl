@@ -492,7 +492,7 @@ proc HMlink_hit {win x y} {
 
 # extract a value from parameter list (this needs a re-do)
 # returns "1" if the keyword is found, "0" otherwise
-#   param:  A parameter list.  It should alredy have been processed to
+#   param:  A parameter list.  It should already have been processed to
 #           remove any entity references
 #   key:    The parameter name
 #   val:    The variable to put the value into (use key as default)
