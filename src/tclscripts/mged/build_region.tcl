@@ -40,7 +40,7 @@
 #	results in the new construction being unioned with an existing region named "tag.r#" where #
 #	is the specified "region_number". No checking is done to determine if the existing region already
 #	contains the unioned objects.
-#	When a new region is created, its properties are determined by the current "regdef" setings, and
+#	When a new region is created, its properties are determined by the current "regdef" settings, and
 #	the regdef ident number is incremented.
 #
 #	Author:
@@ -75,7 +75,7 @@ proc build_region { args } {
     set los [lindex $defs 5]
     set mater [lindex $defs 7]
 
-    # get list of solids mathing tag form
+    # get list of solids matching tag form
     set taglen [expr [string length $tag] + 2]
     set alist [expand ${tag}.s*]
     if { $alist == "${tag}.s*" } {
