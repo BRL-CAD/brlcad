@@ -25,10 +25,10 @@
 #       This clones an object and xpushes the clone.
 #
 # Note -
-#       At the moment, clone does not work properly for some of it operations
-#       when there are matrices hanging above a combinations members. To get
+#       At the moment, clone does not work properly for some of its operations
+#       when there are matrices hanging above a combination's members. To get
 #       around this the object is cloned without transforms and xpushed. The
-#       result of this is clone again, if necessary, applying any specfied
+#       result of this is clone again, if necessary, applying any specified
 #       transformations.
 #
 
