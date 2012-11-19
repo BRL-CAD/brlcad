@@ -282,7 +282,7 @@ proc gui { args } {
     # list of commands for use in tab expansion
     set mged_cmds [?]
 
-    # configure the stdout chanel for this platform
+    # configure the stdout channel for this platform
     # this is supposedly done automatically by Tcl, but not
     switch $::tcl_platform(platform) {
 	"macintosh" -
@@ -1724,7 +1724,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	{ { summary "Toggle the use of display lists. This currently affects
 	only Ogl display managers. When using display lists the
 	screen update time is significantly faster. This is especially
-	noticable when running MGED remotely. Use of display lists
+	noticeable when running MGED remotely. Use of display lists
 	is encouraged unless the geometry being viewed is bigger
 	than the Ogl server can handle (i.e. the server runs out
 	of available memory for storing display lists). When this
@@ -1732,7 +1732,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	If huge pieces of geometry need to be viewed, consider
 	toggling off display lists. Note that using display lists
 	while viewing geometry of any significant size will incur
-	noticable compute time up front to create the display lists."} }
+	noticeable compute time up front to create the display lists."} }
 
     menu .$id.menubar.modes.axes -title "Axes" -tearoff $mged_default(tearoff_menus)
     .$id.menubar.modes.axes add checkbutton -offvalue 0 -onvalue 1\
@@ -2138,7 +2138,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     if { $::tcl_platform(platform) != "windows" && $::tcl_platform(os) != "Darwin" } {
 	bind .$id.t <Enter> "focus .$id.t; break"
     } else {
-	# some platforms should not be forced window activiation
+	# some platforms should not be forced window activation
 	focus .$id.t
     }
 
@@ -2263,7 +2263,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     }
 
     #==============================================================================
-    # PHASE 5: Creation of other auxilary windows
+    # PHASE 5: Creation of other auxiliary windows
     #==============================================================================
     mview_build_menubar $id
 
