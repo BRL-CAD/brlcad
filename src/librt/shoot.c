@@ -700,7 +700,6 @@ rt_find_backing_dist(struct rt_shootray_status *ss, struct bu_bitv *backbits) {
      * intersection calculations
      */
     solidbits = rt_get_solidbitv(rtip->nsolids, resp);
-    bu_bitv_clear(solidbits);
 
     ray = ss->ap->a_ray;	/* struct copy, don't mess with the original */
 
@@ -1017,7 +1016,6 @@ rt_shootray(register struct application *ap)
 	BU_ASSERT_PTR(BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu), !=, NULL);
 
     solidbits = rt_get_solidbitv(rtip->nsolids, resp);
-    bu_bitv_clear(solidbits);
 
     if (BU_LIST_IS_EMPTY(&resp->re_region_ptbl)) {
 	BU_GET(regionbits, struct bu_ptbl);
@@ -1198,7 +1196,6 @@ rt_shootray(register struct application *ap)
 	     * point and using pieces)
 	     */
 	    backbits = rt_get_solidbitv(rtip->nsolids, resp);
-	    bu_bitv_clear(backbits);
 
 	    /* call "rt_find_backing_dist()" to calculate the required
 	     * start point for calculation, and to fill in the

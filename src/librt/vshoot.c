@@ -172,7 +172,6 @@ rt_vshootray(struct application *ap)
     HeadSeg = RT_SEG_NULL;
 
     solidbits = rt_get_solidbitv(rtip->nsolids, ap->a_resource);
-    bu_bitv_clear(solidbits);
 
     if (BU_LIST_IS_EMPTY(&ap->a_resource->re_region_ptbl)) {
 	BU_GET(regionbits, struct bu_ptbl);

@@ -167,7 +167,6 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     }
 
     solidbits = rt_get_solidbitv(rtip->nsolids, resp);
-    bu_bitv_clear(solidbits);
 
     if (BU_LIST_IS_EMPTY(&resp->re_region_ptbl)) {
 	BU_GET(regionbits, struct bu_ptbl);
