@@ -143,7 +143,7 @@ proc apply_mat_comb { tree mat } {
 # encountered as the tree is descended (matrices along the way are incorporated).
 #
 # If "-top" is specified (or no options are specified), then the matrix is applied to each
-# leaf arc of the spcified objects.
+# leaf arc of the specified objects.
 #
 # Returns TCL_ERROR or TCL_OK
 
