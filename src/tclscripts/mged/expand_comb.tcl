@@ -20,7 +20,7 @@
 ###
 #
 #  Expand the tree from a combination record into
-#  indivudually named combinations
+#  individually named combinations
 #
 #  Typically called from expand_comb
 #
