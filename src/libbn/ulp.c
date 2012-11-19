@@ -168,7 +168,7 @@ bn_ulp(double val)
 {
     long long up, dn;
 
-    if (isnan(val) || !isfinite(val))
+    if (isnan(val) || isinf(val))
 	return val;
 
     if (val >=0) {
