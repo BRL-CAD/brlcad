@@ -2707,7 +2707,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  *
  * The process is to create the nmg topology of the TGC fill it
  * in with a unit cylinder geometry (i.e. unitcircle at the top (0, 0, 1)
- * unit cylinder of radius 1, and unitcirlce at the bottom), and then
+ * unit cylinder of radius 1, and unitcircle at the bottom), and then
  * scale it with a perspective matrix derived from the parameters of the
  * tgc. The result is three trimmed nurb surfaces which interpolate the
  * parameters of the original TGC.

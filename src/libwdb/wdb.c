@@ -746,7 +746,7 @@ mk_metaball(
  *
  * Files can use a non-positive 'count' to mean "read the whole file",
  * pre-loaded data, however, must provide a positive 'count' otherwise
- * an embty binunif will be created.
+ * an empty binunif will be created.
  */
 int
 mk_binunif (

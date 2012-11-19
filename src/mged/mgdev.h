@@ -107,7 +107,7 @@
 #define MGP_FSCD 0x18		/* Function Switch & Control Dials */
 #define MGP_IPCU 0x34		/* Intel. Peripheral Control Unit */
 #define MGP_PICK 0x10		/* Pick Module */
-#define MGP_PRINT 0x08		/* Rasterizor Print Function */
+#define MGP_PRINT 0x08		/* Rasterizer Print Function */
 #define MGP_PLOT 0x09		/*   "  Plot */
 #define MGP_SPEC 0x0A		/*   "  Special Function */
 #define MGP_COPY 0x0B		/*   "  Screen Copy Function */

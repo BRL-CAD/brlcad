@@ -208,7 +208,7 @@ write_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, i
 			  (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
     bu_vls_printf(&str, "%s=\"%s\"", name1, newvalue);
     if (bu_struct_parse(&str, mged_vparse, (char *)mged_variables) < 0) {
-	Tcl_AppendResult(interp, "ERROR OCCURED WHEN SETTING ", name1,
+	Tcl_AppendResult(interp, "ERROR OCCURRED WHEN SETTING ", name1,
 			 " TO ", newvalue, "\n", (char *)NULL);
     }
 
