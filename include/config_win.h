@@ -140,6 +140,7 @@
  */
 
 #define	isnan _isnan
+#define isinf(x) (!_finite(x))
 #define asinh(x) (log(x + sqrt(x * x + 1)))
 #define execvp _execvp
 #define fdopen _fdopen
