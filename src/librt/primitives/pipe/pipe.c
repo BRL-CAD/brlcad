@@ -1886,14 +1886,18 @@ draw_pipe_bend(
  * R T _ P I P E _ P L O T
  */
 int
-rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_pipe_plot(
+    struct bu_list *vhead,
+    struct rt_db_internal *ip,
+    const struct rt_tess_tol *UNUSED(ttol),
+    const struct bn_tol *UNUSED(tol),
+    const struct rt_view_info *UNUSED(info))
 {
-    struct wdb_pipept *prevp;
-    struct wdb_pipept *curp;
-    struct wdb_pipept *nextp;
+    fastf_t angle, dist_to_bend;
     struct rt_pipe_internal *pip;
-    point_t current_point;
-    vect_t f1, f2, f3;
+    struct wdb_pipept *prevp, *curp, *nextp;
+    vect_t f1, f2, f3, n1, n2, v1, v2, norm;
+    point_t current_point, bend_center, bend_start, bend_end;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -1926,33 +1930,29 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	draw_pipe_circle(vhead, prevp->pp_id / 2.0, prevp->pp_coord, f1, f2, ARC_SEGS);
     }
 
-    while (1) {
-	vect_t n1, n2;
-	vect_t norm;
-	fastf_t angle;
-	fastf_t dist_to_bend;
+#define ALL_BUT_LAST_SEGMENT ; \
+    !BU_LIST_IS_HEAD(&nextp->l, &pip->pipe_segs_head); \
+    prevp = curp, curp = nextp, nextp = BU_LIST_NEXT(wdb_pipept, &curp->l)
 
-	if (BU_LIST_IS_HEAD(&nextp->l, &pip->pipe_segs_head)) {
-	    /* last segment */
-	    draw_linear_seg(vhead,
-		    current_point, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
-		    curp->pp_coord, curp->pp_od / 2.0, curp->pp_id / 2.0,
-		    f1, f2);
-	    break;
-	}
-
+    for (ALL_BUT_LAST_SEGMENT) {
 	VSUB2(n1, prevp->pp_coord, curp->pp_coord);
-	if (VNEAR_ZERO(n1, RT_LEN_TOL)) {
-	    /* duplicate point, nothing to plot */
-	    goto next_pt;
-	}
 	VSUB2(n2, nextp->pp_coord, curp->pp_coord);
 	VCROSS(norm, n1, n2);
 	VUNITIZE(n1);
 	VUNITIZE(n2);
+
+	if (VNEAR_ZERO(n1, RT_LEN_TOL)) {
+	    /* duplicate point, nothing to plot */
+	    continue;
+	}
+
 	angle = bn_pi - acos(VDOT(n1, n2));
 	dist_to_bend = curp->pp_bendradius * tan(angle / 2.0);
-	if (isnan(dist_to_bend) || VNEAR_ZERO(norm, SQRT_SMALL_FASTF) || NEAR_ZERO(dist_to_bend, SQRT_SMALL_FASTF)) {
+
+	if (isnan(dist_to_bend)
+	    || VNEAR_ZERO(norm, SQRT_SMALL_FASTF)
+	    || NEAR_ZERO(dist_to_bend, SQRT_SMALL_FASTF))
+	{
 	    /* points are colinear, draw linear segment */
 	    draw_linear_seg(vhead,
 		    current_point, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
@@ -1960,11 +1960,6 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 		    f1, f2);
 	    VMOVE(current_point, curp->pp_coord);
 	} else {
-	    point_t bend_center;
-	    point_t bend_start;
-	    point_t bend_end;
-	    vect_t v1, v2;
-
 	    VUNITIZE(norm);
 
 	    /* draw linear segment to start of bend */
@@ -1984,11 +1979,13 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 	    VMOVE(current_point, bend_end);
 	}
-next_pt:
-	prevp = curp;
-	curp = nextp;
-	nextp = BU_LIST_NEXT(wdb_pipept, &curp->l);
     }
+
+    /* draw last segment */
+    draw_linear_seg(vhead,
+	    current_point, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
+	    curp->pp_coord, curp->pp_od / 2.0, curp->pp_id / 2.0,
+	    f1, f2);
 
     /* draw pipe end */
     draw_pipe_circle(vhead, curp->pp_od / 2.0, curp->pp_coord, f1, f2, ARC_SEGS);
