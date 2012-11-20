@@ -39,6 +39,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make rt_dirbuild()+rt_dirbuild() work without vomiting error
+  messages about duplicate geometry.  should be able to open the same
+  database multiple times without running into rt_uniresource
+  directory duplication
+
 * add an export menu to MGED that connects to auto-detected available
   exporters (g-* tools).
 
