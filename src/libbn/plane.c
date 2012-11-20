@@ -524,7 +524,7 @@ bn_dist_pt3_line3(fastf_t *dist, fastf_t *pca, const fastf_t *a, const fastf_t *
  *	 1 -> lines do not intersect
  *
  * For return values less than zero, dist is not set.  For return
- * valuse of 0 or 1, dist[0] is the distance from p1 in the d1
+ * values of 0 or 1, dist[0] is the distance from p1 in the d1
  * direction to the point of closest approach for that line.  Similar
  * for the second line.  d1 and d2 must be unit direction vectors.
  *
@@ -2440,7 +2440,7 @@ bn_distsq_pt3_lseg3_v2(fastf_t *distsq, const fastf_t *a, const fastf_t *b, cons
 			/* AtoP_mag < AtoB_mag */
 			/* P is on lseg AtoB */
 			dist = 0.0;
-			ret = 0;	
+			ret = 0;
 		    }
 		} else {
 		    /* AtoB and AtoP are collinear */
