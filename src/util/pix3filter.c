@@ -281,7 +281,7 @@ main(int argc, char **argv)
     if (ret == 0)
 	perror("fread");
     /*
-     * Write out the bottome row.
+     * Write out the bottom row.
      */
     ret = fwrite(bottomcur, sizeof(char), 3*width, stdout);
     if (ret == 0)

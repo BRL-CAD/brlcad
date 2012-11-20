@@ -319,7 +319,7 @@ namespace eval RtWizard {
 	}
 
 	#
-	# Create a frame to manage the contols
+	# Create a frame to manage the controls
 	#
 	itk_component add conFrame {
 	    iwidgets::labeledframe $itk_component(hierFrame).conFrame \

@@ -25,7 +25,7 @@
 # steps is accomplished using a menu with checkboxes. The check-
 # boxes indicate whether a particular step has been accomplished.
 #
-# Individual pages can take addvantage of the fact that the menubar
+# Individual pages can take advantage of the fact that the menubar
 # is dynamic.
 #
 
@@ -329,7 +329,7 @@ namespace eval RtWizard {
     # as an iwidget that inherits from labeledframe. This is primarily
     # for consistency.
     #
-    # The content page must support these puplic methods.
+    # The content page must support these public methods.
     #
     # 1. onSelect - called when the page is exposed.
     # 2. onDeselect - callback for hide events
