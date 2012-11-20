@@ -2322,21 +2322,38 @@ bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fast
 
 
 /**
- * B N _ A R E _ E Q U A L
+ * A R E _ E Q U A L
  *
  * This is a support function for the test function "bn_distsq_pt3_lseg3_v2".
  *
  */
 int
-bn_are_equal(fastf_t a, fastf_t b, fastf_t t)
+are_equal(fastf_t a_in, fastf_t b_in, fastf_t t)
 {
-    fastf_t ai, af, bi, bf;
+    fastf_t ai, af, bi, bf, a, b;
     int ret = 0;
 
-    af = modf(a, &ai);
-    bf = modf(b, &bi);
+    /* hack to deal with possible underlying types for fastf_t */
+    if (sizeof(fastf_t) == sizeof(float)) {
+	a = nextafterf((float)a_in, (float)b_in);
+	b = nextafterf((float)b_in, (float)a_in);
+	af = modff((float)a, (float *)&ai);
+	bf = modff((float)b, (float *)&bi);
+    } else if (sizeof(fastf_t) == sizeof(double)) {
+	a = nextafter((double)a_in, (double)b_in);
+	b = nextafter((double)b_in, (double)a_in);
+	af = modf((double)a, (double *)&ai);
+	bf = modf((double)b, (double *)&bi);
+    } else if (sizeof(fastf_t) == sizeof(long double)) {
+	a = nextafterl((long double)a_in, (long double)b_in);
+	b = nextafterl((long double)b_in, (long double)a_in);
+	af = modfl((long double)a, (long double *)&ai);
+	bf = modfl((long double)b, (long double *)&bi);
+    } else {
+	bu_bomb("are_equal(): unexpect size for type fastf_t");
+    }
 
-    if ((long)ai == (long)bi && t < 1.0) {
+    if (EQUAL(ai, bi)) {
 	if (NEAR_EQUAL(af, bf, t)) {
 	    ret = 1;
 	}
@@ -2345,11 +2362,14 @@ bn_are_equal(fastf_t a, fastf_t b, fastf_t t)
 	    ret = 1;
 	}
     }
+
     return ret;
 }
 
 
 /**
+ * PRIVATE: This is a new API and should be considered unpublished.
+ *
  * B N _ D I S T S Q _ P T 3 _ L S E G 3 _ v 2
  *
  * Find the square of the distance from a point P to a line segment described
@@ -2386,13 +2406,15 @@ bn_distsq_pt3_lseg3_v2(fastf_t *distsq, const fastf_t *a, const fastf_t *b, cons
     int ret;
 
     dt = tol->dist;
+
     VSUB2(AtoB, b, a);
-    AtoB_mag = MAGNITUDE(AtoB);
     VSUB2(AtoP, p, a);
+    AtoB_mag = MAGNITUDE(AtoB);
     AtoP_mag = MAGNITUDE(AtoP);
-    if (AtoB_mag < dt) {
+
+    if (bn_pt3_pt3_equal(a, b, tol)) {
 	/* (A=B) */
-	if (AtoP_mag < dt) {
+	if (bn_pt3_pt3_equal(a, p, tol)) {
 	    /* ambiguous case: (A=B) (A=P) (B=P) */
 	    /* return could be 0 thru 4 */
 	    /* P is within tolerance of point A */
@@ -2407,7 +2429,7 @@ bn_distsq_pt3_lseg3_v2(fastf_t *distsq, const fastf_t *a, const fastf_t *b, cons
 	}
     } else {
 	/* (A!=B) */
-	if (AtoP_mag < dt) {
+	if (bn_pt3_pt3_equal(a, p, tol)) {
 	    /* ambiguous case: (A!=B) (A=P) */
 	    /* return could be 0,1,3 */
 	    dist = 0.0;
@@ -2419,7 +2441,7 @@ bn_distsq_pt3_lseg3_v2(fastf_t *distsq, const fastf_t *a, const fastf_t *b, cons
 		dot = VDOT(AtoB, AtoP);
 		if (dot > SMALL_FASTF) {
 		    /* AtoB and AtoP pointing in the same direction */
-		    if (bn_are_equal(AtoB_mag, AtoP_mag, dt) || bn_pt3_pt3_equal(b, p, tol)) {
+		    if (are_equal(AtoB_mag, AtoP_mag, dt) || bn_pt3_pt3_equal(b, p, tol)) {
 			/* AtoB and AtoP pointing in the same direction */
 			/* (B=P) */
 			/* ambiguous case: (A!=B) (A!=P) (B=P) */
@@ -2464,7 +2486,7 @@ bn_distsq_pt3_lseg3_v2(fastf_t *distsq, const fastf_t *a, const fastf_t *b, cons
 			/* (A=PCA), lsegs AtoB and AtoP are perpendicular */
 			dist = AtoP_mag;
 			ret = 3;
-		    } else if (bn_are_equal(AtoPCA_mag, AtoB_mag, dt) || EQUAL(AtoPCA_mag, AtoB_mag)) {
+		    } else if (are_equal(AtoPCA_mag, AtoB_mag, dt) || EQUAL(AtoPCA_mag, AtoB_mag)) {
 			/* (B=PCA) */
 			VSUB2(BtoP, p, b);
 			BtoP_mag = MAGNITUDE(BtoP);
@@ -2480,7 +2502,7 @@ bn_distsq_pt3_lseg3_v2(fastf_t *distsq, const fastf_t *a, const fastf_t *b, cons
 			}
 		    } else if (AtoPCA_mag < AtoB_mag) {
 			/* PCA is on lseg AtoB */
-		        PtoPCA_mag = sqrt((AtoP_mag * AtoP_mag) + (AtoPCA_mag * AtoPCA_mag));
+		        PtoPCA_mag = sqrt(fabs((AtoP_mag * AtoP_mag) - (AtoPCA_mag * AtoPCA_mag)));
 			if (PtoPCA_mag < dt) {
 			    /* P is within tolerance of lseg AtoB */
 			    dist = 0.0;
