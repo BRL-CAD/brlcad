@@ -1725,51 +1725,67 @@ draw_pipe_arc(
     }
 }
 
-
+/**
+ * Draws straight lines between circles which lie in the plane of the
+ * orthogonal unit vectors v1 and v2.
+ *
+ * A first set of lines is drawn from the circle centered at p1 with radius
+ * or1, to the circle centered at p2 with radius or2.
+ *
+ * If ir1 and ir2 are positive, a second set of lines is drawn from the circle
+ * centered at p1 with radius ir1, to the circle centered at p2 with radius
+ * ir2.
+ */
 HIDDEN void
-draw_linear_seg(struct bu_list *vhead, const fastf_t *p1, const fastf_t or1, const fastf_t ir1, const fastf_t *p2, const fastf_t or2, const fastf_t ir2, const fastf_t *v1, const fastf_t *v2)
+draw_linear_seg(
+    struct bu_list *vhead,
+    point_t p1, fastf_t or1, fastf_t ir1,
+    point_t p2, fastf_t or2, fastf_t ir2,
+    vect_t v1,
+    vect_t v2)
 {
     point_t pt;
+    int i, num_lines = 4;
+    fastf_t radian, radian_step;
+    vect_t p1_axis_a, p1_axis_b, p2_axis_a, p2_axis_b;
 
     BU_CK_LIST_HEAD(vhead);
 
-    VJOIN1(pt, p1, or1, v1);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
-    VJOIN1(pt, p2, or2, v1);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
-    VJOIN1(pt, p1, or1, v2);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
-    VJOIN1(pt, p2, or2, v2);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
-    VJOIN1(pt, p1, -or1, v1);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
-    VJOIN1(pt, p2, -or2, v1);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
-    VJOIN1(pt, p1, -or1, v2);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
-    VJOIN1(pt, p2, -or2, v2);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+    radian_step = bn_twopi / num_lines;
+
+    VSCALE(p1_axis_a, v1, or1);
+    VSCALE(p1_axis_b, v2, or1);
+    VSCALE(p2_axis_a, v1, or2);
+    VSCALE(p2_axis_b, v2, or2);
+
+    radian = 0;
+    for (i = 0; i < num_lines; ++i) {
+	ellipse_point_at_radian(pt, p1, p1_axis_a, p1_axis_b, radian);
+	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+	ellipse_point_at_radian(pt, p2, p2_axis_a, p2_axis_b, radian);
+	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+
+	radian += radian_step;
+    }
 
     if (ir1 <= 0.0 && ir2 <= 0.0) {
 	return;
     }
 
-    VJOIN1(pt, p1, ir1, v1);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
-    VJOIN1(pt, p2, ir2, v1);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
-    VJOIN1(pt, p1, ir1, v2);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
-    VJOIN1(pt, p2, ir2, v2);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
-    VJOIN1(pt, p1, -ir1, v1);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
-    VJOIN1(pt, p2, -ir2, v1);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
-    VJOIN1(pt, p1, -ir1, v2);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
-    VJOIN1(pt, p2, -ir2, v2);
-    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+    VSCALE(p1_axis_a, v1, ir1);
+    VSCALE(p1_axis_b, v2, ir1);
+    VSCALE(p2_axis_a, v1, ir2);
+    VSCALE(p2_axis_b, v2, ir2);
+
+    radian = 0;
+    for (i = 0; i < num_lines; ++i) {
+	ellipse_point_at_radian(pt, p1, p1_axis_a, p1_axis_b, radian);
+	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+	ellipse_point_at_radian(pt, p2, p2_axis_a, p2_axis_b, radian);
+	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+
+	radian += radian_step;
+    }
 }
 
 
@@ -1898,7 +1914,7 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
     VMOVE(current_point, prevp->pp_coord);
 
-    /* draw end at pipe start */
+    /* draw pipe start */
     VSUB2(f3, prevp->pp_coord, curp->pp_coord);
     bn_vec_ortho(f1, f3);
     VCROSS(f2, f3, f1);
@@ -1918,8 +1934,10 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 	if (BU_LIST_IS_HEAD(&nextp->l, &pip->pipe_segs_head)) {
 	    /* last segment */
-	    draw_linear_seg(vhead, current_point, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
-			    curp->pp_coord, curp->pp_od / 2.0, curp->pp_id / 2.0, f1, f2);
+	    draw_linear_seg(vhead,
+		    current_point, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
+		    curp->pp_coord, curp->pp_od / 2.0, curp->pp_id / 2.0,
+		    f1, f2);
 	    break;
 	}
 
@@ -1936,8 +1954,10 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	dist_to_bend = curp->pp_bendradius * tan(angle / 2.0);
 	if (isnan(dist_to_bend) || VNEAR_ZERO(norm, SQRT_SMALL_FASTF) || NEAR_ZERO(dist_to_bend, SQRT_SMALL_FASTF)) {
 	    /* points are colinear, draw linear segment */
-	    draw_linear_seg(vhead, current_point, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
-			    curp->pp_coord, curp->pp_od / 2.0, curp->pp_id / 2.0, f1, f2);
+	    draw_linear_seg(vhead,
+		    current_point, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
+		    curp->pp_coord, curp->pp_od / 2.0, curp->pp_id / 2.0,
+		    f1, f2);
 	    VMOVE(current_point, curp->pp_coord);
 	} else {
 	    point_t bend_center;
@@ -1949,8 +1969,10 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 	    /* draw linear segment to start of bend */
 	    VJOIN1(bend_start, curp->pp_coord, dist_to_bend, n1);
-	    draw_linear_seg(vhead, current_point, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
-			    bend_start, curp->pp_od / 2.0, curp->pp_id / 2.0, f1, f2);
+	    draw_linear_seg(vhead,
+		    current_point, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
+		    bend_start, curp->pp_od / 2.0, curp->pp_id / 2.0,
+		    f1, f2);
 
 	    /* draw bend */
 	    VJOIN1(bend_end, curp->pp_coord, dist_to_bend, n2);
@@ -1968,6 +1990,7 @@ next_pt:
 	nextp = BU_LIST_NEXT(wdb_pipept, &curp->l);
     }
 
+    /* draw pipe end */
     draw_pipe_circle(vhead, curp->pp_od / 2.0, curp->pp_coord, f1, f2, ARC_SEGS);
 
     if (curp->pp_id > 0.0) {
