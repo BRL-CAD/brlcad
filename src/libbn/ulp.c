@@ -48,6 +48,10 @@
 
 /* #define HAVE_IEEE754 1 */
 
+#ifdef _MSC_VER
+# define isnan(x) _isnan(x)
+# define isinf(x) (!_finite(x))
+#endif
 
 double
 bn_epsilon()
