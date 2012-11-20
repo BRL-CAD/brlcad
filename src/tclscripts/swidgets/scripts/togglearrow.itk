@@ -51,8 +51,8 @@ itcl::class swidgets::Togglearrow {
 
     itk_option define -color color Color "blue"
     itk_option define -outline outline Outline "grey"
-    itk_option define -disabledcolor disabledColor DisalbledColor "grey"
-    itk_option define -disabledoutline disabledOutline DisalbledOutline "black"
+    itk_option define -disabledcolor disabledColor DisabledColor "grey"
+    itk_option define -disabledoutline disabledOutline DisabledOutline "black"
 
     itk_option define -command command Command {}
     itk_option define -state state State normal
