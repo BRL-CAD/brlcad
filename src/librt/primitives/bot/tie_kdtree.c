@@ -384,7 +384,7 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
 		for (n = 0; n < 2; n++) {
 		    /*
 		     * Check to see if any triangle points are inside of the node before
-		     * spending alot of cycles on the full blown triangle box overlap
+		     * spending a lot of cycles on the full blown triangle box overlap
 		     */
 		    for (j = 0; j < 3; j++)
 			if (node_gd->tri_list[i]->data[j].v[0] > cmin[n].v[0] &&
@@ -627,7 +627,7 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	for (i = 0; i < node_gd->tri_num; i++) {
 	    /*
 	     * Check to see if any triangle points are inside of the node before
-	     * spending alot of cycles on the full blown triangle box overlap
+	     * spending a lot of cycles on the full blown triangle box overlap
 	     */
 	    for (j = 0; j < 3; j++)
 		if (node_gd->tri_list[i]->data[j].v[0] > cmin[n].v[0] &&
