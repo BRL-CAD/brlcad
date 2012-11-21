@@ -2327,7 +2327,7 @@ bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fast
  * This is a support function for the test function "bn_distsq_pt3_lseg3_v2".
  *
  */
-int
+static int
 are_equal(fastf_t a_in, fastf_t b_in, fastf_t t)
 {
     fastf_t ai, af, bi, bf, a, b;
