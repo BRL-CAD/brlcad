@@ -1231,6 +1231,22 @@ typedef double fastf_t;
 /** DEPRECATED, do not use */
 #define SMALL SQRT_SMALL_FASTF
 
+/**
+ * It is necessary to have a representation of 1.0/0.0, or "infinity"
+ * that fits within the dynamic range of the machine being used.  This
+ * constant places an upper bound on the size object which can be
+ * represented in the model.
+ */
+#ifdef INFINITY
+#    undef INFINITY
+#endif
+
+#if defined(vax)
+#    define INFINITY	(1.0e20)	/* VAX limit is 10**37 */
+#else
+#    define INFINITY	(1.0e40)	/* IBM limit is 10**75 */
+#endif
+
 
 /*----------------------------------------------------------------------*/
 /** @addtogroup bitv */

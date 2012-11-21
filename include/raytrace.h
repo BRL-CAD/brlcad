@@ -127,23 +127,11 @@ __BEGIN_DECLS
 \4INSTANCE\3SHOOT\2ALLHITS\1ALLRAYS"
 
 /**
- * It is necessary to have a representation of 1.0/0.0, or "infinity"
- * that fits within the dynamic range of the machine being used.  This
- * constant places an upper bound on the size object which can be
- * represented in the model.
+ * FIXME: These should probably be vmath macros
  */
-#ifdef INFINITY
-#	undef INFINITY
-#endif
-
-#if defined(vax)
-#	define INFINITY	(1.0e20)	/* VAX limit is 10**37 */
-#else
-#	define INFINITY	(1.0e40)	/* IBM limit is 10**75 */
-#endif
-
 #define	RT_BADNUM(n)	(!((n) >= -INFINITY && (n) <= INFINITY))
 #define RT_BADVEC(v)	(RT_BADNUM((v)[X]) || RT_BADNUM((v)[Y]) || RT_BADNUM((v)[Z]))
+
 
 /*
  * Unfortunately, to prevent divide-by-zero, some tolerancing needs to
