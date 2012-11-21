@@ -139,6 +139,9 @@
  * other functions declared elsewhere (many in stdio.h)
  */
 
+#define nextafter _nextafter
+#define nextafterf(x,y) ((y)>0?(x)+FLT_EPSILON:(x)-FLT_EPSILON)
+#define nextafterl(x,y) ((y)>0?(x)+DBL_EPSILON:(x)-DBL_EPSILON)
 #define	isnan _isnan
 #define isinf(x) (!_finite(x))
 #define asinh(x) (log(x + sqrt(x * x + 1)))
