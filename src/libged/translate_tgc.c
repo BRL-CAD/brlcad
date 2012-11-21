@@ -71,8 +71,9 @@ _ged_translate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *at
 		    ld = MAGNITUDE(tgc->d);
 
 		    /* find 2 perpendicular vectors normal to H for new A, B */
-		    bn_vec_perp(tgc->b, tgc->h);
+		    VCROSS(tgc->b, tgc->h, tgc->a);
 		    VCROSS(tgc->a, tgc->b, tgc->h);
+
 		    VUNITIZE(tgc->a);
 		    VUNITIZE(tgc->b);
 
