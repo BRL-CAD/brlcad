@@ -1251,6 +1251,9 @@ typedef double fastf_t;
 #  elif defined(MAXFLOAT)
 #    define INFINITY ((fastf_t)MAXFLOAT)
 #  else
+     /* all else fails, just pick something big slightly over 32-bit
+      * single-precision floating point that has worked well before.
+      */
 #    define INFINITY ((fastf_t)1.0e40)
 #  endif
 #endif
