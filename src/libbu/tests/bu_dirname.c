@@ -81,7 +81,7 @@ main(int argc, char *argv[])
     }
 
     if (argc > 2) {
-       printf("Usage %s test_string\n", argv[0]);
+       printf("Usage: %s test_string\n", argv[0]);
     }
 
     return !automatic_test(argv[1]);
