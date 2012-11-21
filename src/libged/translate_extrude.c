@@ -85,13 +85,14 @@ _ged_translate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, co
 
 		VMOVE(extrude->h, hvec);
 
-		VUNITIZE(hvec);
-		VUNITIZE(extrude->u_vec);
-		VCROSS(extrude->v_vec, hvec, extrude->u_vec);
-		VUNITIZE(extrude->v_vec);
+		/* Cross h with the existing u_vec to insure that the new v_vec is perpendicular to h */
+		VCROSS(extrude->v_vec, extrude->h, extrude->u_vec);
 
-		/* Lastly, cross v_vec with h to insure u_vec is perpendicular to h */
-		VCROSS(extrude->u_vec, extrude->v_vec, hvec);
+		/* Cross v_vec with h to insure that the new u_vec is perpendicular to h as well as v_vec */
+		VCROSS(extrude->u_vec, extrude->v_vec, extrude->h);
+
+		VUNITIZE(extrude->v_vec);
+		VUNITIZE(extrude->u_vec);
 
 		break;
 	    default:
