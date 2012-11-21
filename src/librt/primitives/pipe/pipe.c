@@ -1788,12 +1788,13 @@ draw_linear_seg(
     }
 }
 
-
 HIDDEN void
 draw_pipe_bend(
     struct bu_list *vhead,
-    const fastf_t *center, const fastf_t *end,
-    const fastf_t radius, const fastf_t angle,
+    const fastf_t *center,
+    const fastf_t *end,
+    const fastf_t radius,
+    const fastf_t angle,
     const fastf_t *v1, const fastf_t *v2,
     const fastf_t *norm,
     const fastf_t or , const fastf_t ir,
@@ -1812,34 +1813,39 @@ draw_pipe_bend(
 
     VREVERSE(tmp_norm, norm);
     bn_mat_arb_rot(mat, center, tmp_norm, angle);
+
     MAT4X3VEC(tmp_vec, mat, f1);
     VMOVE(end_f1, tmp_vec);
+
     MAT4X3VEC(tmp_vec, mat, f2);
     VMOVE(end_f2, tmp_vec);
 
     move_dist = or * VDOT(f1, norm);
-    VJOIN2(tmp_start, center, radius, v1, or , f1);
+    VJOIN2(tmp_start, center, radius, v1, or, f1);
     VJOIN1(tmp_center, center, move_dist, norm);
-    VJOIN1(tmp_end, end, or , end_f1);
+    VJOIN1(tmp_end, end, or, end_f1);
     VSUB2(tmp_vec, tmp_start, tmp_center);
     tmp_radius = MAGNITUDE(tmp_vec);
     draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count);
-    VJOIN2(tmp_start, center, radius, v1, - or , f1);
+
+    VJOIN2(tmp_start, center, radius, v1, -or, f1);
     VJOIN1(tmp_center, center, -move_dist, norm);
-    VJOIN1(tmp_end, end, - or , end_f1);
+    VJOIN1(tmp_end, end, -or, end_f1);
     VSUB2(tmp_vec, tmp_start, tmp_center);
     tmp_radius = MAGNITUDE(tmp_vec);
     draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count);
+
     move_dist = or * VDOT(f2, norm);
-    VJOIN2(tmp_start, center, radius, v1, or , f2);
+    VJOIN2(tmp_start, center, radius, v1, or, f2);
     VJOIN1(tmp_center, center, move_dist, norm);
-    VJOIN1(tmp_end, end, or , end_f2);
+    VJOIN1(tmp_end, end, or, end_f2);
     VSUB2(tmp_vec, tmp_start, tmp_center);
     tmp_radius = MAGNITUDE(tmp_vec);
     draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count);
-    VJOIN2(tmp_start, center, radius, v1, - or , f2);
+
+    VJOIN2(tmp_start, center, radius, v1, -or, f2);
     VJOIN1(tmp_center, center, -move_dist, norm);
-    VJOIN1(tmp_end, end, - or , end_f2);
+    VJOIN1(tmp_end, end, -or, end_f2);
     VSUB2(tmp_vec, tmp_start, tmp_center);
     tmp_radius = MAGNITUDE(tmp_vec);
     draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count);
@@ -1857,12 +1863,14 @@ draw_pipe_bend(
     VSUB2(tmp_vec, tmp_start, tmp_center);
     tmp_radius = MAGNITUDE(tmp_vec);
     draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count);
+
     VJOIN2(tmp_start, center, radius, v1, -ir, f1);
     VJOIN1(tmp_center, center, -move_dist, norm);
     VJOIN1(tmp_end, end, -ir, end_f1);
     VSUB2(tmp_vec, tmp_start, tmp_center);
     tmp_radius = MAGNITUDE(tmp_vec);
     draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count);
+
     move_dist = ir * VDOT(f2, norm);
     VJOIN2(tmp_start, center, radius, v1, ir, f2);
     VJOIN1(tmp_center, center, move_dist, norm);
@@ -1870,6 +1878,7 @@ draw_pipe_bend(
     VSUB2(tmp_vec, tmp_start, tmp_center);
     tmp_radius = MAGNITUDE(tmp_vec);
     draw_pipe_arc(vhead, tmp_radius, tmp_center, v1, v2, tmp_end, seg_count);
+
     VJOIN2(tmp_start, center, radius, v1, -ir, f2);
     VJOIN1(tmp_center, center, -move_dist, norm);
     VJOIN1(tmp_end, end, -ir, end_f2);
@@ -1893,11 +1902,12 @@ rt_pipe_plot(
     const struct bn_tol *UNUSED(tol),
     const struct rt_view_info *UNUSED(info))
 {
-    fastf_t angle, dist_to_bend;
+    fastf_t rad_between_segments, supplementary_angle, dist_cur_to_bend_end;
     struct rt_pipe_internal *pip;
     struct wdb_pipept *prevp, *curp, *nextp;
-    vect_t f1, f2, f3, n1, n2, v1, v2, norm;
-    point_t current_point, bend_center, bend_start, bend_end;
+    vect_t f1, f2, f3, v1, v2, norm;
+    vect_t cur_to_prev, cur_to_next;
+    point_t last_drawn, bend_center, bend_start, bend_end;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -1916,8 +1926,6 @@ rt_pipe_plot(
 	return 0;    /* nothing to plot */
     }
 
-    VMOVE(current_point, prevp->pp_coord);
-
     /* draw pipe start */
     VSUB2(f3, prevp->pp_coord, curp->pp_coord);
     bn_vec_ortho(f1, f3);
@@ -1930,60 +1938,76 @@ rt_pipe_plot(
 	draw_pipe_circle(vhead, prevp->pp_id / 2.0, prevp->pp_coord, f1, f2, ARC_SEGS);
     }
 
+    VMOVE(last_drawn, prevp->pp_coord);
+
 #define ALL_BUT_LAST_SEGMENT ; \
     !BU_LIST_IS_HEAD(&nextp->l, &pip->pipe_segs_head); \
     prevp = curp, curp = nextp, nextp = BU_LIST_NEXT(wdb_pipept, &curp->l)
 
     for (ALL_BUT_LAST_SEGMENT) {
-	VSUB2(n1, prevp->pp_coord, curp->pp_coord);
-	VSUB2(n2, nextp->pp_coord, curp->pp_coord);
-	VCROSS(norm, n1, n2);
-	VUNITIZE(n1);
-	VUNITIZE(n2);
+	VSUB2(cur_to_prev, prevp->pp_coord, curp->pp_coord);
+	VSUB2(cur_to_next, nextp->pp_coord, curp->pp_coord);
+	VCROSS(norm, cur_to_prev, cur_to_next);
+	VUNITIZE(cur_to_prev);
+	VUNITIZE(cur_to_next);
 
-	if (VNEAR_ZERO(n1, RT_LEN_TOL)) {
+	if (VNEAR_ZERO(cur_to_prev, RT_LEN_TOL)) {
 	    /* duplicate point, nothing to plot */
 	    continue;
 	}
 
-	angle = bn_pi - acos(VDOT(n1, n2));
-	dist_to_bend = curp->pp_bendradius * tan(angle / 2.0);
+	rad_between_segments = acos(VDOT(cur_to_prev, cur_to_next));
+	supplementary_angle = bn_pi - rad_between_segments;
 
-	if (isnan(dist_to_bend)
+	/* The fewer the radians between the segments, the more the bend is
+	 * pushed away from cur and toward prev and next.
+	 *
+	 *   (rad < pi/2) => (dist > bendradius)
+	 *   (rad = pi/2) => (dist = bendradius)
+	 *   (rad > pi/2) => (dist < bendradius)
+	 */
+	dist_cur_to_bend_end = curp->pp_bendradius;
+	dist_cur_to_bend_end *= tan(supplementary_angle / 2.0);
+
+	/* in the extreme cases where the interior angle between the adjacent
+	 * segments is nearly 0 or pi radians, the points are considered
+	 * colinear and we just draw a linear segment to cur
+	 */
+	if (isnan(dist_cur_to_bend_end)
 	    || VNEAR_ZERO(norm, SQRT_SMALL_FASTF)
-	    || NEAR_ZERO(dist_to_bend, SQRT_SMALL_FASTF))
+	    || NEAR_ZERO(dist_cur_to_bend_end, SQRT_SMALL_FASTF))
 	{
-	    /* points are colinear, draw linear segment */
 	    draw_linear_seg(vhead,
-		    current_point, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
+		    last_drawn, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
 		    curp->pp_coord, curp->pp_od / 2.0, curp->pp_id / 2.0,
 		    f1, f2);
-	    VMOVE(current_point, curp->pp_coord);
+	    VMOVE(last_drawn, curp->pp_coord);
 	} else {
+	    VJOIN1(bend_start, curp->pp_coord, dist_cur_to_bend_end, cur_to_prev);
+	    VJOIN1(bend_end, curp->pp_coord, dist_cur_to_bend_end, cur_to_next);
 	    VUNITIZE(norm);
+	    VCROSS(v1, cur_to_prev, norm);
+	    VCROSS(v2, v1, norm);
+	    VJOIN1(bend_center, bend_start, -curp->pp_bendradius, v1);
 
 	    /* draw linear segment to start of bend */
-	    VJOIN1(bend_start, curp->pp_coord, dist_to_bend, n1);
 	    draw_linear_seg(vhead,
-		    current_point, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
+		    last_drawn, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
 		    bend_start, curp->pp_od / 2.0, curp->pp_id / 2.0,
 		    f1, f2);
 
-	    /* draw bend */
-	    VJOIN1(bend_end, curp->pp_coord, dist_to_bend, n2);
-	    VCROSS(v1, n1, norm);
-	    VCROSS(v2, v1, norm);
-	    VJOIN1(bend_center, bend_start, -curp->pp_bendradius, v1);
-	    draw_pipe_bend(vhead, bend_center, bend_end, curp->pp_bendradius, angle, v1, v2, norm,
-			   curp->pp_od / 2.0, curp->pp_id / 2.0, f1, f2, ARC_SEGS);
+	    /* draw circular segment to end of bend */
+	    draw_pipe_bend(vhead, bend_center, bend_end, curp->pp_bendradius,
+		    supplementary_angle, v1, v2, norm, curp->pp_od / 2.0,
+		    curp->pp_id / 2.0, f1, f2, ARC_SEGS);
 
-	    VMOVE(current_point, bend_end);
+	    VMOVE(last_drawn, bend_end);
 	}
     }
 
     /* draw last segment */
     draw_linear_seg(vhead,
-	    current_point, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
+	    last_drawn, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
 	    curp->pp_coord, curp->pp_od / 2.0, curp->pp_id / 2.0,
 	    f1, f2);
 
