@@ -1322,7 +1322,7 @@ of BRL-CAD over the past 20 years.
 * updated g_qa manual page documentation - Lee Butler
 * early termination grid spacing limit bug in g_qa fixed - Lee Butler
 * fixed Jove sandbox installation issue - Sean Morrison
-* fixed adrt/isst client crash bug - Mike Caruso, Razak Arunaugun
+* fixed adrt/isst client crash bug - Mike Caruso, Razak Arunaogun
 * fixed modified env(PATH) startup issue in mged - Sean Morrison
 * fixed benchmark tool default resource location bug - Sean Morrison
 * added another text alignment handler to dxf-g - John Anderson
