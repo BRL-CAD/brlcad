@@ -42,9 +42,9 @@
     }
 
     protected {
-	common setH    1
-	common rotH    2
-	common moveH   3
+	common setH   1
+	common moveHR 2
+	common moveH  3
 
 	variable mVx ""
 	variable mVy ""
@@ -175,11 +175,11 @@
 	$setH {
 	    $::ArcherCore::application p_pscale $obj h $args
 	} \
+	$moveHR {
+	    $::ArcherCore::application p_ptranslate $obj hr $args
+	} \
 	$moveH {
 	    $::ArcherCore::application p_ptranslate $obj h $args
-	} \
-	$rotH {
-	    $::ArcherCore::application p_protate $obj h $args
 	}
 
     return ""
@@ -341,9 +341,7 @@
     } {}
     itk_component add extrudeSE {
 	::ttk::entry $parent.extrudeSE \
-	    -textvariable [::itcl::scope mS] \
-	    -validate key \
-	    -validatecommand {::cadwidgets::Ged::validateDouble %P}
+	    -textvariable [::itcl::scope mS]
     } {}
     itk_component add extrudeSUnitsL {
 	::ttk::label $parent.extrudeSUnitsL \
@@ -428,8 +426,9 @@
 ::itcl::body ExtrudeEditFrame::buildLowerPanel {} {
     set parent [$this childsite lower]
 
-    set alist [list H set Set H move Move H rot Rotate]
+    set alist [list H set Set HR move {Move End} H move {Move End}]
 
+    set row 0
     foreach {attribute op opLabel} $alist {
 	itk_component add $op$attribute {
 	    ::ttk::radiobutton $parent.$op\_$attribute \
@@ -439,10 +438,11 @@
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component($op$attribute) \
-	    -anchor w \
-	    -expand yes
+	grid $itk_component($op$attribute) -row $row -column 0 -sticky nsew
+	incr row
     }
+
+    grid rowconfigure $parent $row -weight 1
 }
 
 ::itcl::body ExtrudeEditFrame::updateGeometryIfMod {} {
@@ -527,14 +527,16 @@
 	    set mEditClass $EDIT_CLASS_SCALE
 	    set mEditParam1 h
 	} \
+	$moveHR {
+	    set mEditCommand ptranslate
+	    set mEditClass $EDIT_CLASS_TRANS
+	    set mEditLastTransMode $::ArcherCore::OBJECT_TRANSLATE_MODE
+	    set mEditParam1 hr
+	} \
 	$moveH {
 	    set mEditCommand ptranslate
 	    set mEditClass $EDIT_CLASS_TRANS
-	    set mEditParam1 h
-	} \
-	$rotH {
-	    set mEditCommand protate
-	    set mEditClass $EDIT_CLASS_ROT
+	    set mEditLastTransMode $::ArcherCore::OBJECT_TRANSLATE_MODE
 	    set mEditParam1 h
 	}
 
