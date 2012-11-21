@@ -105,7 +105,7 @@ if {[info exists argv]} {
 if {![info exists ::man_language]} {set ::man_language "en"}
 
 if {[llength $argv2] > 2} {
-   puts stderr "Usage - brlman \[section \#\] name"
+   puts stderr "Usage: brlman \[section \#\] name"
    if {[info exists argv]} {exit}
 }
 
@@ -117,7 +117,7 @@ if {[llength $argv2] == 2} {
      if {[string is integer -strict "$manarg"] || $manarg == "n"} {incr numcount}
    }
    if {$numcount == 0} {
-      puts stderr "Usage - brlman \[section \#\] name"
+      puts stderr "Usage: brlman \[section \#\] name"
       if {[info exists argv]} {exit}
    }
    if {$numcount == 1} {
