@@ -1231,20 +1231,28 @@ typedef double fastf_t;
 /** DEPRECATED, do not use */
 #define SMALL SQRT_SMALL_FASTF
 
-/**
- * It is necessary to have a representation of 1.0/0.0, or "infinity"
- * that fits within the dynamic range of the machine being used.  This
- * constant places an upper bound on the size object which can be
- * represented in the model.
- */
-#ifdef INFINITY
-#    undef INFINITY
-#endif
 
-#if defined(vax)
-#    define INFINITY	(1.0e20)	/* VAX limit is 10**37 */
-#else
-#    define INFINITY	(1.0e40)	/* IBM limit is 10**75 */
+/**
+ * It is necessary to have a representation of 1.0/0.0 or log(0),
+ * i.e., "infinity" that fits within the dynamic range of the machine
+ * being used.  This constant places an upper bound on the size object
+ * which can be represented in the model.  With IEEE 754 floating
+ * point, this may print as 'inf' and is represented with all 1 bits
+ * in the biased-exponent field and all 0 bits in the fraction with
+ * the sign indicating positive (0) or negative (1) infinity.
+ */
+#ifndef INFINITY
+#  if defined(HUGE_VALF)
+#    define INFINITY ((fastf_t)HUGE_VALF)
+#  elif defined(HUGE_VAL)
+#    define INFINITY ((fastf_t)HUGE_VAL)
+#  elif defined(HUGE)
+#    define INFINITY ((fastf_t)HUGE)
+#  elif defined(MAXFLOAT)
+#    define INFINITY ((fastf_t)MAXFLOAT)
+#  else
+#    define INFINITY ((fastf_t)1.0e40)
+#  endif
 #endif
 
 
