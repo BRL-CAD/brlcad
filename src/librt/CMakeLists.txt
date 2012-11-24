@@ -245,7 +245,7 @@ set(LIBRT_SOURCES
   )
 
 set(librt_ignored_files
-  brep_test.cpp
+  test_dvec.cpp
   columnparse.c
   librt.3
   librt_private.h

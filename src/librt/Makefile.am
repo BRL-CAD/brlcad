@@ -4,14 +4,14 @@ noinst_LTLIBRARIES = \
 	librt_nil.la \
 	librt_xxx.la
 
-BREP_TEST = brep_test
 BREP_CPPFLAGS = ${SSE} -DOBJ_BREP=1 ${TNT_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
 BREP_LIBADD = ${OPENNURBS} ${NURBS} ${NURBS_LIBS}
 
-brep_test_SOURCES = brep_test.cpp
+TEST_DVEC = test_dvec
+test_dvec_SOURCES = test_dvec.cpp
 # cannot set per-target CPPFLAGS until automake 1.7+
-brep_test_CXXFLAGS = ${SSE}
-brep_test_LDADD = \
+test_dvec_CXXFLAGS = ${SSE}
+test_dvec_LDADD = \
 	librt.la \
 	${RT_LIBS}
 
@@ -24,7 +24,7 @@ AM_CPPFLAGS = \
 AM_CFLAGS = ${STRICT_FLAGS}
 
 noinst_PROGRAMS = \
-	${BREP_TEST} \
+	${TEST_DVEC} \
 	namegen \
 	nurb_example \
 	parsetest \
