@@ -218,6 +218,7 @@ librt_nil_la_SOURCES = \
 	primitives/poly/poly.c \
 	primitives/poly/poly_brep.cpp \
 	primitives/poly/poly_mirror.c \
+	primitives/primitive_util.c \
 	primitives/rec/rec.c \
 	primitives/revolve/revolve.c \
 	primitives/revolve/revolve_brep.cpp \
