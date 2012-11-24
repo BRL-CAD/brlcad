@@ -7,7 +7,6 @@ noinst_LTLIBRARIES = \
 BREP_CPPFLAGS = ${SSE} -DOBJ_BREP=1 ${TNT_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
 BREP_LIBADD = ${OPENNURBS} ${NURBS} ${NURBS_LIBS}
 
-TEST_DVEC = test_dvec
 test_dvec_SOURCES = test_dvec.cpp
 # cannot set per-target CPPFLAGS until automake 1.7+
 test_dvec_CXXFLAGS = ${SSE}
@@ -24,11 +23,11 @@ AM_CPPFLAGS = \
 AM_CFLAGS = ${STRICT_FLAGS}
 
 noinst_PROGRAMS = \
-	${TEST_DVEC} \
 	namegen \
 	nurb_example \
 	parsetest \
-	prcomb
+	prcomb \
+	test_dvec
 
 # make sure example and temporary code compiles, but don't include it in librt
 librt_xxx_la_SOURCES = \
@@ -314,7 +313,6 @@ sample_applications_DATA = \
 EXTRA_DIST = \
 	$(sample_applications_DATA) \
 	CMakeLists.txt \
-	brep_test.cpp \
 	columnparse.c \
 	namegen.c \
 	primitives/bot/g_bot_include.c \
