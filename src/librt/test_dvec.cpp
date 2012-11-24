@@ -27,7 +27,7 @@
 #include "dvec.h"
 
 
-const int COUNT = 100000000;
+const int COUNT = 1000000;
 
 int
 main(int argc, char** argv)
