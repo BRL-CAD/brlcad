@@ -173,7 +173,8 @@ main(int argc, char** argv)
     }
     printf("vec2d time: %3.4g\n", (double)(clock()-start)/(double)CLOCKS_PER_SEC);
 
-    return total > 0;
+    /* return 'fail' if no time elapsed */
+    return (total > 0) ? 0 : 1;
 }
 
 
