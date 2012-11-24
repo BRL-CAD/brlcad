@@ -312,7 +312,8 @@ CMAKEFILES(Makefile.am)
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libnurbs;libbu" NOSTRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_subdivision test_subdivision.cpp "librt;libwdb;libnurbs;libbu" NOSTRICT NO_INSTALL)
 
-BRLCAD_ADDEXEC(test_dvec test_dvec.cpp "librt" NOSTRICT NO_INSTALL)
+BRLCAD_ADDEXEC(test_dvec test_dvec.cpp "librt" NOSTRICT NO_INSTALL LOCAL)
+ADD_TEST(test_dvec test_dvec)
 
 # Local Variables:
 # tab-width: 8
