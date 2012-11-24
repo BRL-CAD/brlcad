@@ -1,4 +1,4 @@
-/*                   B R E P _ T E S T . C P P
+/*                   T E S T _ D V E C . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2012 United States Government as represented by
