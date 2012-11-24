@@ -45,32 +45,32 @@ main(int argc, char** argv)
 	// test correctness
 	double _a[8] VEC_ALIGN = {0, 1, 2, 3, 4, 5, 6, 7};
 	double _b[8] VEC_ALIGN = {2, 4, 6, 8, 10, 12, 14, 16};
-	dvec<8> a(_a, true);
-	dvec<8> b(_b, true);
+	dvec<8> a(_a);
+	dvec<8> b(_b);
 
 	dvec<8> c = a + b;
 	double _c[8] VEC_ALIGN = {2, 5, 8, 11, 14, 17, 20, 23};
-	assert(c == dvec<8>(_c, true));
+	assert(c == dvec<8>(_c));
 
 	dvec<8> d = a - b;
 	double _d[8] VEC_ALIGN = {-2, -3, -4, -5, -6, -7, -8, -9};
-	assert(d == dvec<8>(_d, true));
+	assert(d == dvec<8>(_d));
 
 	dvec<8> e = a * b;
 	double _e[8] VEC_ALIGN = {0, 4, 12, 24, 40, 60, 84, 112};
-	assert(e == dvec<8>(_e, true));
+	assert(e == dvec<8>(_e));
 
 	dvec<8> f = a / b;
 	double _f[8] VEC_ALIGN = {0, 0.25, 0.333333333333, 0.375, 0.40, 0.4166666666, 0.42857142, 0.4375};
-	assert(f == dvec<8>(_f, true));
+	assert(f == dvec<8>(_f));
 
 	dvec<8> g = a.madd(c, b);
 	double _g[8] VEC_ALIGN = {2, 9, 22, 41, 66, 97, 134, 177};
-	assert(g == dvec<8>(_g, true));
+	assert(g == dvec<8>(_g));
 
 	dvec<8> h = a.madd(2.0, b);
 	double _h[8] VEC_ALIGN = {2, 6, 10, 14, 18, 22, 26, 30};
-	assert(h == dvec<8>(_h, true));
+	assert(h == dvec<8>(_h));
 
 	srand(time(NULL));
 	double total = 0.0;
@@ -100,8 +100,8 @@ main(int argc, char** argv)
 	    double l_b[8] VEC_ALIGN = {rval[i%8+1], rval[i%8+2], rval[i%8+3], rval[i%8+4],
 				       rval[i%8+5], rval[i%8+6], rval[i%8+7], rval[i%8+8]};
 
-	    dvec<8> la(l_a, true);
-	    dvec<8> lb(l_b, true);
+	    dvec<8> la(l_a);
+	    dvec<8> lb(l_b);
 
 	    dvec<8> lc = la + lb;
 	    dvec<8> ld = lc - la;
