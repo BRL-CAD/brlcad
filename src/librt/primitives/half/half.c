@@ -160,11 +160,15 @@ rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	if ((slant_factor = -VDOT(halfp->half_eqn, rp->r_dir)) < -1.0e-10) {
 	    /* exit point, when dir.N < 0.  out = min(out, s) */
 	    out = norm_dist/slant_factor;
+
+	    /* ensure a legal distance between +inf/-inf */
 	    if (!NEAR_ZERO(out, INFINITY))
 		return 0;	/* MISS */
 	} else if (slant_factor > 1.0e-10) {
 	    /* entry point, when dir.N > 0.  in = max(in, s) */
 	    in = norm_dist/slant_factor;
+
+	    /* ensure a legal distance between +inf/-inf */
 	    if (!NEAR_ZERO(in, INFINITY))
 		return 0;	/* MISS */
 	} else {
