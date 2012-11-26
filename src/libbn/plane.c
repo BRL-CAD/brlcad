@@ -2387,12 +2387,20 @@ are_equal(fastf_t a_in, fastf_t b_in, fastf_t t)
  *		A      PCA	B
  *
  * There are six distinct cases, with these return codes -
+ * Return code presidence: 1, 2, 0, 3, 4, 5
+ *
  *	0	P is within tolerance of lseg AB.  *dist =  0.
  *	1	P is within tolerance of point A.  *dist = 0.
  *	2	P is within tolerance of point B.  *dist = 0.
  *	3	PCA is within tolerance of A. *dist = |P-A|**2.
  *	4	PCA is within tolerance of B. *dist = |P-B|**2.
- *	5	P is "above/below" lseg AB.  *dist=|PCA-P|**2.
+ *	5	P is "above/below" lseg AB.   *dist=|PCA-P|**2.
+ *
+ * If both P and PCA and not within tolerance of lseg AB use
+ * these return codes -
+ *
+ *	3	PCA is to the left of A.  *dist = |P-A|**2.
+ *	4	PCA is to the right of B. *dist = |P-B|**2.
  *
  * This function is a test version of "bn_distsq_pt3_lseg3".
  *
@@ -2415,124 +2423,77 @@ bn_distsq_pt3_lseg3_v2(fastf_t *distsq, const fastf_t *a, const fastf_t *b, cons
     if (bn_pt3_pt3_equal(a, b, tol)) {
 	/* (A=B) */
 	if (bn_pt3_pt3_equal(a, p, tol)) {
-	    /* ambiguous case: (A=B) (A=P) (B=P) */
-	    /* return could be 0 thru 4 */
-	    /* P is within tolerance of point A */
+	    /* (A=B) (A=P) (B=P) */
 	    dist = 0.0;
 	    ret = 1;
 	} else {
-	    /* ambiguous case: (A=B) (A!=P) */
-	    /* return could be 3 thru 5 */
-	    /* P is "above/below" lseg AB */
+	    /* (A=B) (A!=P) */
 	    dist = AtoP_mag;
-	    ret = 5;
+	    ret = 3;
 	}
     } else {
 	/* (A!=B) */
 	if (bn_pt3_pt3_equal(a, p, tol)) {
-	    /* ambiguous case: (A!=B) (A=P) */
-	    /* return could be 0,1,3 */
+	    /* (A!=B) (A=P) */
 	    dist = 0.0;
-	    ret = 1; /* P is within tolerance of point A */
+	    ret = 1;
+	} else if (bn_pt3_pt3_equal(b, p, tol)) {
+	    /* (A!=B) (B=P) */
+	    dist = 0.0;
+	    ret = 2;
 	} else {
-	    /* (A!=B) (A!=P) */
-	    if (bn_lseg3_lseg3_parallel(a, b, a, p, tol)) {
-		/* AtoB and AtoP are collinear */
-		dot = VDOT(AtoB, AtoP);
-		if (dot > SMALL_FASTF) {
-		    /* AtoB and AtoP pointing in the same direction */
-		    if (are_equal(AtoB_mag, AtoP_mag, dt) || bn_pt3_pt3_equal(b, p, tol)) {
-			/* AtoB and AtoP pointing in the same direction */
-			/* (B=P) */
-			/* ambiguous case: (A!=B) (A!=P) (B=P) */
-			/* return could be 0, 2, 4 */
-			dist = 0.0;
-			ret = 2;
-		    } else if (AtoP_mag > AtoB_mag) {
-			/* AtoB and AtoP pointing in the same direction */
-			/* (A!=B) (A!=P) (B!=P), lsegs AtoB and AtoP are collinear.
-			 * P is to the right of B, not above/below lseg AtoB.
-			 */
-			/* both P and PCA and not within tolerance of lseg AtoB */
-			dist = AtoP_mag - AtoB_mag;
-			ret = 4;
-		    } else {
-			/* AtoB and AtoP pointing in the same direction */
-			/* (A!=B) (A!=P) (B!=P), lsegs AtoB and AtoP are collinear */
-			/* AtoP_mag < AtoB_mag */
+	    /* (A!=B) (A!=P) (B!=P) */
+	    dot = VDOT(AtoP, AtoB);
+	    if ZERO(dot) {
+		/* (A=PCA), lsegs AtoB and AtoP are perpendicular */
+		dist = AtoP_mag;
+		ret = 3;
+	    } else if (dot > SMALL_FASTF) {
+		AtoPCA_mag = dot / AtoB_mag;
+		if (NEAR_ZERO(AtoPCA_mag, dt)) {
+		    /* (PCA=A) (B!=P) */
+		    /* lsegs AtoB and AtoP are perpendicular */
+		    dist = AtoP_mag;
+		    ret = 3;
+		} else if (are_equal(AtoPCA_mag, AtoB_mag, dt) || EQUAL(AtoPCA_mag, AtoB_mag)) {
+		    /* (PCA=B) (B!=P) */
+		    VSUB2(BtoP, p, b);
+		    BtoP_mag = MAGNITUDE(BtoP);
+		    dist = BtoP_mag;
+		    ret = 4;
+		} else if (AtoPCA_mag < AtoB_mag) {
+		    /* (PCA!=A) (PCA!=B) (B!=P) */
+		    /* PCA is on lseg AtoB */
+		    PtoPCA_mag = sqrt(fabs((AtoP_mag * AtoP_mag) - (AtoPCA_mag * AtoPCA_mag)));
+		    if (PtoPCA_mag < dt) {
 			/* P is on lseg AtoB */
 			dist = 0.0;
 			ret = 0;
+		    } else {
+			dist = PtoPCA_mag;
+			ret = 5;
 		    }
 		} else {
-		    /* AtoB and AtoP are collinear */
-		    /* AtoB and AtoP pointing in opposite directions */
-		    /* P is to the left of A, not above/below lseg AtoB. */
+		    /* AtoPCA_mag > AtoB_mag */
+		    /* P is to the right of B, above/below lseg AtoB. */
+		    /* both P and PCA and not within tolerance of lseg AtoB */
+		    VSUB2(BtoP, p, b);
+		    BtoP_mag = MAGNITUDE(BtoP);
+		    dist = BtoP_mag;
+		    ret = 4;
+		}
+	    } else {
+		/* dot is neg */
+		AtoPCA_mag = -dot / AtoB_mag;
+		if (AtoPCA_mag < dt) {
+		    /* (PCA=A), lsegs AtoB and AtoP are perpendicular */
+		    dist = AtoP_mag;
+		    ret = 3;
+		} else {
+		    /* (PCA!=A), PCA is not on lseg AtoB */
 		    /* both P and PCA and not within tolerance of lseg AtoB */
 		    dist = AtoP_mag;
 		    ret = 3;
-		}
-	    } else {
-		/* (A!=B) (A!=P) */
-		/* AtoB and AtoP are not collinear */
-    		dot = VDOT(AtoP, AtoB);
-		if ZERO(dot) {
-		    /* (A=PCA), lsegs AtoB and AtoP are perpendicular */
-		    dist = AtoP_mag;
-		    ret = 3;
-		} else if (dot > SMALL_FASTF) {
-    		    AtoPCA_mag = dot / AtoB_mag;
-		    if (NEAR_ZERO(AtoPCA_mag, dt)) {
-			/* (A=PCA), lsegs AtoB and AtoP are perpendicular */
-			dist = AtoP_mag;
-			ret = 3;
-		    } else if (are_equal(AtoPCA_mag, AtoB_mag, dt) || EQUAL(AtoPCA_mag, AtoB_mag)) {
-			/* (B=PCA) */
-			VSUB2(BtoP, p, b);
-			BtoP_mag = MAGNITUDE(BtoP);
-			if (BtoP_mag < dt) {
-			    /* ambiguous case: (B=PCA) (B=P) */
-			    /* return could be 2 or 4 */
-			    dist = 0.0;
-			    ret = 2;
-			} else {
-			    /* (B=PCA) (B!=P) */
-			    dist = BtoP_mag;
-			    ret = 4;
-			}
-		    } else if (AtoPCA_mag < AtoB_mag) {
-			/* PCA is on lseg AtoB */
-		        PtoPCA_mag = sqrt(fabs((AtoP_mag * AtoP_mag) - (AtoPCA_mag * AtoPCA_mag)));
-			if (PtoPCA_mag < dt) {
-			    /* P is within tolerance of lseg AtoB */
-			    dist = 0.0;
-			    ret = 0;
-			} else {
-			    dist = PtoPCA_mag;
-			    ret = 5;
-			}
-		    } else {
-			/* AtoPCA_mag > AtoB_mag */
-			/* P is to the right of B, above/below lseg AtoB. */
-			/* both P and PCA and not within tolerance of lseg AtoB */
-			VSUB2(BtoP, p, b);
-			BtoP_mag = MAGNITUDE(BtoP);
-			dist = BtoP_mag;
-		        ret = 4;
-		    }
-		} else {
-		    /* dot is neg */
-    		    AtoPCA_mag = dot / AtoB_mag;
-		    if (NEAR_ZERO(AtoPCA_mag, dt)) {
-			/* (PCA=A), lsegs AtoB and AtoP are perpendicular */
-			dist = AtoP_mag;
-			ret = 3;
-		    } else {
-			/* (PCA!=A), PCA is not on lseg AtoB */
-			/* both P and PCA and not within tolerance of lseg AtoB */
-			dist = AtoP_mag;
-			ret = 3;
-		    }
 		}
 	    }
 	}
