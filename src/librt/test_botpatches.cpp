@@ -747,10 +747,10 @@ void bot_partition(struct Manifold_Info *info)
 	    // Find largest remaining face in group
 	    double face_size_criteria = 0.0;
 	    size_t smallest_face = 0;
-	    for (std::set<size_t>::iterator fg_it = faces->begin(); fg_it != faces->end(); fg_it++) {
-		double fa = face_area(info->bot, *fg_it);
+	    for (std::set<size_t>::iterator fgl_it = faces->begin(); fgl_it != faces->end(); fgl_it++) {
+		double fa = face_area(info->bot, *fgl_it);
 		if (fa > face_size_criteria) {
-		    smallest_face = (*fg_it);
+		    smallest_face = (*fgl_it);
 		    face_size_criteria = fa;
 		}
 	    }
@@ -1293,8 +1293,8 @@ void PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Mani
 	// XXX todo: dynamically sample the curve
 	ON_3dPoint pt_3d = edge_curve->PointAt(dom.ParameterAt(0));
 	data.push_back(ON_3dVector(pt_3d));
-	for (int i = 1; i < 50; i++) {
-	    pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
+	for (int ipts = 1; ipts < 50; ipts++) {
+	    pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(ipts)/(double)50));
 	    data.push_back(ON_3dVector(pt_3d));
 	}
 	pt_3d = edge_curve->PointAt(dom.ParameterAt(1.0));
@@ -1438,10 +1438,10 @@ int main(int argc, char *argv[])
 
 //#ifdef BOT_TO_NURBS_DEBUG
     for (std::map< size_t, std::set<size_t> >::iterator np_it = info.patches.begin(); np_it != info.patches.end(); np_it++) {
-	struct bu_vls name;
-	bu_vls_init(&name);
-	bu_vls_printf(&name, "patch_%d.pl", (int)(*np_it).first);
-	FILE* plot_file = fopen(bu_vls_addr(&name), "w");
+	struct bu_vls pname;
+	bu_vls_init(&pname);
+	bu_vls_printf(&pname, "patch_%d.pl", (int)(*np_it).first);
+	FILE* plot_file = fopen(bu_vls_addr(&pname), "w");
 	int r = int(256*drand48() + 1.0);
 	int g = int(256*drand48() + 1.0);
 	int b = int(256*drand48() + 1.0);
