@@ -442,7 +442,7 @@ ged_simulate(struct ged *gedp, int argc, const char *argv[])
 		sim_params.rtip->useair = 1;
 
 		/* Initialize the raytrace world */
-		//init_raytrace(&sim_params);
+		/*init_raytrace(&sim_params);*/
 
 		/* Recreate sim.c to clear AABBs and manifold regions from previous iteration */
 		recreate_sim_comb(gedp, &sim_params);
