@@ -38,10 +38,7 @@ extern "C++" {
     const double VEQUALITY = 0.0000001;
 
     template<int LEN>
-    struct dvec_internal;
-
-    template<int LEN>
-    struct fvec_internal;
+    struct vec_internal;
 
     template<int LEN>
     class dvec;
@@ -65,15 +62,12 @@ extern "C++" {
     class dvec {
     public:
 	dvec(double s);
-	dvec(const float* vals);
-	dvec(const double* vals);
+	dvec(const double* vals, bool aligned=true);
 	dvec(const dvec<LEN>& p);
 
 	dvec<LEN>& operator=(const dvec<LEN>& p);
 	double operator[](int index) const;
-	void u_store(float* arr) const;
 	void u_store(double* arr) const;
-	void a_store(float* arr) const;
 	void a_store(double* arr) const;
 
 	bool operator==(const dvec<LEN>& b) const;
@@ -110,10 +104,9 @@ extern "C++" {
 	    double operator()(double a) const { return ::sqrt(a); }
 	};
     private:
-	dvec_internal<LEN> data;
+	vec_internal<LEN> data;
 
-	dvec(const dvec_internal<LEN>& d);
-	dvec(const fvec_internal<LEN>& f);
+	dvec(const vec_internal<LEN>& d);
     };
 
 //#define DVEC4(V, t, a, b, c, d) double v#t[4] VEC_ALIGN = {(a), (b), (c), (d)}; V(v#t)
@@ -187,12 +180,7 @@ extern "C++" {
 	return sqrt(sq.foldr(0, dvec<2>::add()));
     }
     inline
-    void move(pt2d_t a, const float *b) {
-	a[0] = b[0];
-	a[1] = b[1];
-    }
-    inline
-    void move(pt2d_t a, const double *b) {
+    void move(pt2d_t a, const pt2d_t b) {
 	a[0] = b[0];
 	a[1] = b[1];
     }
