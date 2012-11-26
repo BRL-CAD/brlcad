@@ -45,6 +45,12 @@
 #include <map>
 #include <stdio.h>
 
+#if defined(__GNUC__)
+#  pragma message "Disabling GCC shadow warnings via pragma due to Eigen headers..."
+#  pragma message "Disabling GCC float equality comparison warnings via pragma due to Eigen headers..."
+#endif
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 #undef Success
 #include <Eigen/StdVector>
 #undef Success
