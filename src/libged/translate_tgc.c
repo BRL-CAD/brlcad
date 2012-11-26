@@ -64,6 +64,28 @@ _ged_translate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *at
 
 		    VMOVE(tgc->h, hvec);
 
+		    break;
+		case 'r':
+		case 'R':
+		    if (attribute[2] != '\0') {
+			bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
+			return GED_ERROR;
+		    }
+
+		    if (rflag) {
+			VADD2(hvec, tgc->h, tvec);
+		    } else {
+			VSUB2(hvec, tvec, tgc->v);
+		    }
+
+		    /* check for zero H vector */
+		    if (MAGNITUDE(hvec) <= SQRT_SMALL_FASTF) {
+			bu_vls_printf(gedp->ged_result_str, "Zero H vector not allowed.");
+			return GED_ERROR;
+		    }
+
+		    VMOVE(tgc->h, hvec);
+
 		    /* have new height vector -- redefine rest of tgc */
 		    la = MAGNITUDE(tgc->a);
 		    lb = MAGNITUDE(tgc->b);
@@ -84,28 +106,6 @@ _ged_translate_tgc(struct ged *gedp, struct rt_tgc_internal *tgc, const char *at
 		    /* Restore original vector lengths to A, B */
 		    VSCALE(tgc->a, tgc->a, la);
 		    VSCALE(tgc->b, tgc->b, lb);
-
-		    break;
-		case 'h':
-		case 'H':
-		    if (attribute[2] != '\0') {
-			bu_vls_printf(gedp->ged_result_str, "bad tgc attribute - %s", attribute);
-			return GED_ERROR;
-		    }
-
-		    if (rflag) {
-			VADD2(hvec, tgc->h, tvec);
-		    } else {
-			VSUB2(hvec, tvec, tgc->v);
-		    }
-
-		    /* check for zero H vector */
-		    if (MAGNITUDE(hvec) <= SQRT_SMALL_FASTF) {
-			bu_vls_printf(gedp->ged_result_str, "Zero H vector not allowed.");
-			return GED_ERROR;
-		    }
-
-		    VMOVE(tgc->h, hvec);
 
 		    break;
 		default:
