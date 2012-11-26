@@ -54,9 +54,9 @@
 	common setHV   10
 	common setHVAB 11
 	common rotH    12
-	common rotHAB  13
-	common moveH   14
-	common moveHH  15
+	common rotAB  13
+	common moveHR  14
+	common moveH  15
 
 	variable mVx ""
 	variable mVy ""
@@ -233,14 +233,14 @@
 	$rotH {
 	    $::ArcherCore::application p_protate $obj h $args
 	} \
-	$rotHAB {
+	$rotAB {
 	    $::ArcherCore::application p_protate $obj hab $args
+	} \
+	$moveHR {
+	    $::ArcherCore::application p_ptranslate $obj hr $args
 	} \
 	$moveH {
 	    $::ArcherCore::application p_ptranslate $obj h $args
-	} \
-	$moveHH {
-	    $::ArcherCore::application p_ptranslate $obj hh $args
 	}
 
     return ""
@@ -554,9 +554,11 @@
 		   A set Set B set Set C set Set D set Set \
 		   AB set Set CD set Set ABCD set Set \
 		   H set Set HV set Set HVAB set Set HCD set Set \
-		   H rot Rotate HAB rot Rotate H move Move HH move Move \
+		   H rot Rotate AB rot Rotate HR move {Move End} \
+		   H move {Move End} \
 		  ]
 
+    set row 0
     foreach {attribute op opLabel} $alist {
 	itk_component add $op$attribute {
 	    ::ttk::radiobutton $parent.$op\_$attribute \
@@ -566,10 +568,11 @@
 		-command [::itcl::code $this initEditState]
 	} {}
 
-	pack $itk_component($op$attribute) \
-	    -anchor w \
-	    -expand yes
+	grid $itk_component($op$attribute) -row $row -column 0 -sticky nsew
+	incr row
     }
+
+    grid rowconfigure $parent $row -weight 1
 }
 
 ::itcl::body TgcEditFrame::updateGeometryIfMod {} {
@@ -744,22 +747,22 @@
 	    set mEditParam1 h
 	    configure -valueUnits "mm"
 	} \
-	$rotHAB {
+	$rotAB {
 	    set mEditCommand protate
 	    set mEditClass $EDIT_CLASS_ROT
 	    set mEditParam1 hab
+	    configure -valueUnits "mm"
+	} \
+	$moveHR {
+	    set mEditCommand ptranslate
+	    set mEditClass $EDIT_CLASS_TRANS
+	    set mEditParam1 hr
 	    configure -valueUnits "mm"
 	} \
 	$moveH {
 	    set mEditCommand ptranslate
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditParam1 h
-	    configure -valueUnits "mm"
-	} \
-	$moveHH {
-	    set mEditCommand ptranslate
-	    set mEditClass $EDIT_CLASS_TRANS
-	    set mEditParam1 hh
 	    configure -valueUnits "mm"
 	}
 
