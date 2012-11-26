@@ -45,12 +45,17 @@
 #include <map>
 #include <stdio.h>
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ < 6)
 #  pragma message "Disabling GCC shadow warnings via pragma due to Eigen headers..."
 #  pragma message "Disabling GCC float equality comparison warnings via pragma due to Eigen headers..."
 #endif
-#pragma GCC diagnostic ignored "-Wshadow"
-#pragma GCC diagnostic ignored "-Wfloat-equal"
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#  pragma GCC diagnostic push
+#endif
+#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)
+#  pragma GCC diagnostic ignored "-Wshadow"
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
 #undef Success
 #include <Eigen/StdVector>
 #undef Success
@@ -59,6 +64,9 @@
 #include <Eigen/Sparse>
 #undef Success
 #include <Eigen/SparseCholesky>
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6))
+#  pragma GCC diagnostic pop
+#endif
 
 namespace on_fit
 {
