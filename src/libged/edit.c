@@ -446,7 +446,7 @@
 struct edit_arg {
     struct edit_arg *next; /* nodes rel to arg in cmd args grouping */
     char cl_options[EDIT_MAX_ARG_OPTIONS]; /* unique cmd line opts */
-    unsigned int coords_used : 6; /* flag which coords will be used */
+    unsigned int coords_used : 7; /* flag which coords will be used */
     unsigned int type : 7; /* flag the arg type and type modifiers */
     struct db_full_path *object; /* path and obj */
     vect_t *vector; /* abs pos, or offset dist from an obj */
