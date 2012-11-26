@@ -98,6 +98,21 @@ struct bend_pipe {
     fastf_t bend_bound_radius_sq;	/* square of bounding sphere radius */
 };
 
+/* two orthogonal unit vectors that define an orientation */
+struct pipe_orientation {
+    vect_t v1;
+    vect_t v2;
+};
+
+/* A plotted circle defined by a center point, an orientation at that point,
+ * and a radius.
+ */
+struct pipe_circle {
+    point_t center;
+    fastf_t radius;
+    struct pipe_orientation orient;
+};
+
 
 #define PIPE_MM(_v) VMINMAX((*min), (*max), _v)
 
@@ -1658,25 +1673,20 @@ rt_pipe_class(void)
 }
 
 /**
- * Draw a circle that has the given center and radius using the specified
- * number of line segments. au and bu are expected to be orthogonal unit
- * vectors in the plane of the circle.
+ * Draw a pipe circle using a given number of segments.
  */
 static void
 draw_pipe_circle(
     struct bu_list *vhead,
-    fastf_t radius,
-    vect_t center,
-    vect_t au,
-    vect_t bu,
-    int seg_count)
+    struct pipe_circle circle,
+    int num_segments)
 {
     vect_t axis_a, axis_b;
 
-    VSCALE(axis_a, au, radius);
-    VSCALE(axis_b, bu, radius);
+    VSCALE(axis_a, circle.orient.v1, circle.radius);
+    VSCALE(axis_b, circle.orient.v2, circle.radius);
 
-    plot_ellipse(vhead, center, axis_a, axis_b, seg_count);
+    plot_ellipse(vhead, circle.center, axis_a, axis_b, num_segments);
 }
 
 /**
@@ -1726,62 +1736,35 @@ draw_pipe_arc(
 }
 
 /**
- * Draws straight lines between circles which lie in the plane of the
- * orthogonal unit vectors v1 and v2.
- *
- * A first set of lines is drawn from the circle centered at p1 with radius
- * or1, to the circle centered at p2 with radius or2.
- *
- * If ir1 and ir2 are positive, a second set of lines is drawn from the circle
- * centered at p1 with radius ir1, to the circle centered at p2 with radius
- * ir2.
+ * Draws the specified number of connecting lines between the start and end circles.
  */
 HIDDEN void
 draw_linear_seg(
     struct bu_list *vhead,
-    point_t p1, fastf_t or1, fastf_t ir1,
-    point_t p2, fastf_t or2, fastf_t ir2,
-    vect_t v1,
-    vect_t v2)
+    struct pipe_circle start,
+    struct pipe_circle end,
+    int num_lines)
 {
+    int i;
     point_t pt;
-    int i, num_lines = 4;
     fastf_t radian, radian_step;
-    vect_t p1_axis_a, p1_axis_b, p2_axis_a, p2_axis_b;
+    vect_t start_a, start_b, end_a, end_b;
 
     BU_CK_LIST_HEAD(vhead);
 
     radian_step = bn_twopi / num_lines;
 
-    VSCALE(p1_axis_a, v1, or1);
-    VSCALE(p1_axis_b, v2, or1);
-    VSCALE(p2_axis_a, v1, or2);
-    VSCALE(p2_axis_b, v2, or2);
+    VSCALE(start_a, start.orient.v1, start.radius);
+    VSCALE(start_b, start.orient.v2, start.radius);
+    VSCALE(end_a, end.orient.v1, end.radius);
+    VSCALE(end_b, end.orient.v2, end.radius);
 
-    radian = 0;
+    radian = 0.0;
     for (i = 0; i < num_lines; ++i) {
-	ellipse_point_at_radian(pt, p1, p1_axis_a, p1_axis_b, radian);
+	ellipse_point_at_radian(pt, start.center, start_a, start_b, radian);
 	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
-	ellipse_point_at_radian(pt, p2, p2_axis_a, p2_axis_b, radian);
-	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
 
-	radian += radian_step;
-    }
-
-    if (ir1 <= 0.0 && ir2 <= 0.0) {
-	return;
-    }
-
-    VSCALE(p1_axis_a, v1, ir1);
-    VSCALE(p1_axis_b, v2, ir1);
-    VSCALE(p2_axis_a, v1, ir2);
-    VSCALE(p2_axis_b, v2, ir2);
-
-    radian = 0;
-    for (i = 0; i < num_lines; ++i) {
-	ellipse_point_at_radian(pt, p1, p1_axis_a, p1_axis_b, radian);
-	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
-	ellipse_point_at_radian(pt, p2, p2_axis_a, p2_axis_b, radian);
+	ellipse_point_at_radian(pt, end.center, end_a, end_b, radian);
 	RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
 
 	radian += radian_step;
@@ -1794,11 +1777,11 @@ draw_pipe_bend(
     const fastf_t *center,
     const fastf_t *end,
     const fastf_t radius,
-    const fastf_t angle,
-    const fastf_t *v1, const fastf_t *v2,
-    const fastf_t *norm,
-    const fastf_t or , const fastf_t ir,
-    fastf_t *f1, fastf_t *f2,
+    const fastf_t angle,                  /* supplementary_angle */
+    const fastf_t *v1, const fastf_t *v2, /* bend circle plane */
+    const fastf_t *norm,                  /* circle normal, perpendicular to v1 and v2 */
+    const fastf_t or, const fastf_t ir,   /* pipe inner and outer radius */
+    fastf_t *f1, fastf_t *f2,             /* pipe circle plane */
     const int seg_count)
 {
     point_t tmp_center, tmp_start, tmp_end;
@@ -1811,12 +1794,11 @@ draw_pipe_bend(
 
     BU_CK_LIST_HEAD(vhead);
 
+    /* determine the final plane of the pipe circle */
     VREVERSE(tmp_norm, norm);
     bn_mat_arb_rot(mat, center, tmp_norm, angle);
-
     MAT4X3VEC(tmp_vec, mat, f1);
     VMOVE(end_f1, tmp_vec);
-
     MAT4X3VEC(tmp_vec, mat, f2);
     VMOVE(end_f2, tmp_vec);
 
@@ -1902,12 +1884,13 @@ rt_pipe_plot(
     const struct bn_tol *UNUSED(tol),
     const struct rt_view_info *UNUSED(info))
 {
-    fastf_t rad_between_segments, supplementary_angle, dist_cur_to_bend_end;
     struct rt_pipe_internal *pip;
     struct wdb_pipept *prevp, *curp, *nextp;
+    struct pipe_circle start_circle, end_circle;
     vect_t f1, f2, f3, v1, v2, norm;
     vect_t cur_to_prev, cur_to_next;
     point_t last_drawn, bend_center, bend_start, bend_end;
+    fastf_t rad_between_segments, supplementary_angle, dist_cur_to_bend_end;
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
@@ -1926,16 +1909,27 @@ rt_pipe_plot(
 	return 0;    /* nothing to plot */
     }
 
+#define ORIENT_CIRCLES(_v1, _v2) \
+    VMOVE(start_circle.orient.v1, _v1); \
+    VMOVE(start_circle.orient.v2, _v2); \
+    VMOVE(end_circle.orient.v1, _v1); \
+    VMOVE(end_circle.orient.v2, _v2);
+
     /* draw pipe start */
     VSUB2(f3, prevp->pp_coord, curp->pp_coord);
     bn_vec_ortho(f1, f3);
     VCROSS(f2, f3, f1);
     VUNITIZE(f2);
 
-    draw_pipe_circle(vhead, prevp->pp_od / 2.0, prevp->pp_coord, f1, f2, ARC_SEGS);
+    ORIENT_CIRCLES(f1, f2);
+    VMOVE(start_circle.center, prevp->pp_coord);
+
+    start_circle.radius = prevp->pp_od / 2.0;
+    draw_pipe_circle(vhead, start_circle, ARC_SEGS);
 
     if (prevp->pp_id > 0.0) {
-	draw_pipe_circle(vhead, prevp->pp_id / 2.0, prevp->pp_coord, f1, f2, ARC_SEGS);
+	start_circle.radius = prevp->pp_id / 2.0;
+	draw_pipe_circle(vhead, start_circle, ARC_SEGS);
     }
 
     VMOVE(last_drawn, prevp->pp_coord);
@@ -1977,10 +1971,20 @@ rt_pipe_plot(
 	    || VNEAR_ZERO(norm, SQRT_SMALL_FASTF)
 	    || NEAR_ZERO(dist_cur_to_bend_end, SQRT_SMALL_FASTF))
 	{
-	    draw_linear_seg(vhead,
-		    last_drawn, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
-		    curp->pp_coord, curp->pp_od / 2.0, curp->pp_id / 2.0,
-		    f1, f2);
+	    ORIENT_CIRCLES(f1, f2);
+	    VMOVE(start_circle.center, last_drawn);
+	    VMOVE(end_circle.center, curp->pp_coord);
+
+	    start_circle.radius = prevp->pp_od / 2.0;
+	    end_circle.radius = curp->pp_od / 2.0;
+	    draw_linear_seg(vhead, start_circle, end_circle, 4);
+
+	    if (prevp->pp_id > 0.0 && curp->pp_id > 0.0) {
+		start_circle.radius = prevp->pp_id / 2.0;
+		end_circle.radius = curp->pp_id / 2.0;
+		draw_linear_seg(vhead, start_circle, end_circle, 4);
+	    }
+
 	    VMOVE(last_drawn, curp->pp_coord);
 	} else {
 	    VJOIN1(bend_start, curp->pp_coord, dist_cur_to_bend_end, cur_to_prev);
@@ -1991,10 +1995,19 @@ rt_pipe_plot(
 	    VJOIN1(bend_center, bend_start, -curp->pp_bendradius, v1);
 
 	    /* draw linear segment to start of bend */
-	    draw_linear_seg(vhead,
-		    last_drawn, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
-		    bend_start, curp->pp_od / 2.0, curp->pp_id / 2.0,
-		    f1, f2);
+	    ORIENT_CIRCLES(f1, f2);
+	    VMOVE(start_circle.center, last_drawn);
+	    VMOVE(end_circle.center, bend_start);
+
+	    start_circle.radius = prevp->pp_od / 2.0;
+	    end_circle.radius = curp->pp_od / 2.0;
+	    draw_linear_seg(vhead, start_circle, end_circle, 4);
+
+	    if (prevp->pp_id > 0.0 && curp->pp_id > 0.0) {
+		start_circle.radius = prevp->pp_id / 2.0;
+		end_circle.radius = curp->pp_id / 2.0;
+		draw_linear_seg(vhead, start_circle, end_circle, 4);
+	    }
 
 	    /* draw circular segment to end of bend */
 	    draw_pipe_bend(vhead, bend_center, bend_end, curp->pp_bendradius,
@@ -2006,16 +2019,29 @@ rt_pipe_plot(
     }
 
     /* draw last segment */
-    draw_linear_seg(vhead,
-	    last_drawn, prevp->pp_od / 2.0, prevp->pp_id / 2.0,
-	    curp->pp_coord, curp->pp_od / 2.0, curp->pp_id / 2.0,
-	    f1, f2);
+    ORIENT_CIRCLES(f1, f2);
+    VMOVE(start_circle.center, last_drawn);
+    VMOVE(end_circle.center, curp->pp_coord);
+
+    start_circle.radius = prevp->pp_od / 2.0;
+    end_circle.radius = curp->pp_od / 2.0;
+    draw_linear_seg(vhead, start_circle, end_circle, 4);
+
+    if (prevp->pp_id > 0.0 && curp->pp_id > 0.0) {
+	start_circle.radius = prevp->pp_id / 2.0;
+	end_circle.radius = curp->pp_id / 2.0;
+	draw_linear_seg(vhead, start_circle, end_circle, 4);
+    }
 
     /* draw pipe end */
-    draw_pipe_circle(vhead, curp->pp_od / 2.0, curp->pp_coord, f1, f2, ARC_SEGS);
+    VMOVE(end_circle.center, curp->pp_coord);
+
+    end_circle.radius = curp->pp_od / 2.0;
+    draw_pipe_circle(vhead, end_circle, ARC_SEGS);
 
     if (curp->pp_id > 0.0) {
-	draw_pipe_circle(vhead, curp->pp_id / 2.0, curp->pp_coord, f1, f2, ARC_SEGS);
+	end_circle.radius = curp->pp_id / 2.0;
+	draw_pipe_circle(vhead, end_circle, ARC_SEGS);
     }
 
     return 0;
