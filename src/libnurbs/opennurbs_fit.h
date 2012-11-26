@@ -48,6 +48,7 @@
 #if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ < 6) && !defined(__clang__)
 #  pragma message "Disabling GCC shadow warnings via pragma due to Eigen headers..."
 #  pragma message "Disabling GCC float equality comparison warnings via pragma due to Eigen headers..."
+#  pragma message "Disabling GCC inline failure warnings via pragma due to Eigen headers..."
 #endif
 #if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__)
 #  pragma GCC diagnostic push
@@ -58,10 +59,12 @@
 #if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
 #  pragma GCC diagnostic ignored "-Wshadow"
 #  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Winline"
 #endif
 #if defined(__clang__)
 #  pragma clang diagnostic ignored "-Wshadow"
 #  pragma clang diagnostic ignored "-Wfloat-equal"
+#  pragma clang diagnostic ignored "-Winline"
 #endif
 #undef Success
 #include <Eigen/StdVector>
