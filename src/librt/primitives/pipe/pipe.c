@@ -1776,12 +1776,14 @@ draw_pipe_bend(
     struct pipe_circle pipe_circle,
     int seg_count)
 {
+    mat_t rot_mat;
+    int i, num_lines = 4;
     struct pipe_circle arc_circle;
     struct pipe_orientation end_orient;
-    point_t bend_center, arc_start, arc_end;
-    vect_t bend_v1, bend_v2, pipe_v1, pipe_v2;
-    vect_t end_pipe_v1, end_pipe_v2, center_to_start;
-    fastf_t bend_radius, pipe_radius, bend_circle_offset;
+    point_t bend_center, bend_start, pipe_pt, arc_start, arc_end;
+    vect_t bend_v1, bend_v2, pipe_axis_a, pipe_axis_b;
+    vect_t center_to_start, pipe_r, end_pipe_r;
+    fastf_t bend_radius, pipe_radius, bend_circle_offset, radian_step, radian;
 
     BU_CK_LIST_HEAD(vhead);
 
@@ -1790,70 +1792,57 @@ draw_pipe_bend(
     VMOVE(bend_v1, bend_circle.orient.v1);
     VMOVE(bend_v2, bend_circle.orient.v2);
     bend_radius = bend_circle.radius;
+    VJOIN1(bend_start, bend_center, bend_radius, bend_v1);
 
-    VMOVE(pipe_v1, pipe_circle.orient.v1);
-    VMOVE(pipe_v2, pipe_circle.orient.v2);
     pipe_radius = pipe_circle.radius;
+    VSCALE(pipe_axis_a, pipe_circle.orient.v1, pipe_radius);
+    VSCALE(pipe_axis_b, pipe_circle.orient.v2, pipe_radius);
 
-    /* rotate the initial orientation around the bend to get the final
-     * orientation of the pipe circle
-     */
+    /* calculate matrix to rotate vectors around the bend */
     {
-	mat_t rot_mat;
 	vect_t reverse_norm;
-
 	VREVERSE(reverse_norm, norm);
 	bn_mat_arb_rot(rot_mat, bend_center, reverse_norm, bend_angle);
-	MAT4X3VEC(end_pipe_v1, rot_mat, pipe_v1);
-	MAT4X3VEC(end_pipe_v2, rot_mat, pipe_v2);
     }
 
     arc_circle.orient = bend_circle.orient;
 
-    /* project pipe v1 onto the bend circle normal to get an offset from the
-     * bend circle plane
-     */
-    bend_circle_offset = pipe_radius * VDOT(pipe_v1, norm);
+    radian_step = bn_twopi / num_lines;
+    radian = 0.0;
+    for (i = 0; i < num_lines; ++i) {
+	/* get a vector from the pipe center (bend start) to a point on the
+	 * pipe circle
+	 */
+	ellipse_point_at_radian(pipe_pt, bend_start, pipe_axis_a, pipe_axis_b,
+		radian);
+	VSUB2(pipe_r, pipe_pt, bend_start);
 
-    /* draw an arc that touches pipe v1 */
-    VJOIN1(arc_circle.center, bend_center, bend_circle_offset, norm);
-    VJOIN2(arc_start, bend_center, bend_radius, bend_v1, pipe_radius, pipe_v1);
-    VJOIN1(arc_end, bend_end, pipe_radius, end_pipe_v1);
-    VSUB2(center_to_start, arc_start, arc_circle.center);
-    arc_circle.radius = MAGNITUDE(center_to_start);
-    draw_pipe_arc(vhead, arc_circle, arc_end, seg_count);
+	/* Project the pipe vector onto the bend circle normal to get an
+	 * offset from the bend circle plane. Move that distance along the
+	 * bend circle normal to find the center of the arc circle.
+	 */
+	bend_circle_offset = VDOT(pipe_r, norm);
+	VJOIN1(arc_circle.center, bend_center, bend_circle_offset, norm);
 
-    /* draw an arc that touches pipe -v1 */
-    VJOIN1(arc_circle.center, bend_center, -bend_circle_offset, norm);
-    VJOIN2(arc_start, bend_center, bend_radius, bend_v1, -pipe_radius, pipe_v1);
-    VJOIN1(arc_end, bend_end, -pipe_radius, end_pipe_v1);
-    VSUB2(center_to_start, arc_start, arc_circle.center);
-    arc_circle.radius = MAGNITUDE(center_to_start);
-    draw_pipe_arc(vhead, arc_circle, arc_end, seg_count);
+	/* rotate the vector around the bend to its final position */
+	MAT4X3VEC(end_pipe_r, rot_mat, pipe_r);
 
-    /* project pipe v2 onto the bend circle normal to get an offset from the
-     * bend circle plane
-     */
-    bend_circle_offset = pipe_radius * VDOT(pipe_v2, norm);
+	/* draw an arc between the start and end positions of the pipe vector */
+	VADD2(arc_start, bend_start, pipe_r);
+	VADD2(arc_end, bend_end, end_pipe_r);
+	VSUB2(center_to_start, arc_start, arc_circle.center);
+	arc_circle.radius = MAGNITUDE(center_to_start);
+	draw_pipe_arc(vhead, arc_circle, arc_end, seg_count);
 
-    /* draw an arc that touches pipe v2 */
-    VJOIN1(arc_circle.center, bend_center, bend_circle_offset, norm);
-    VJOIN2(arc_start, bend_center, bend_radius, bend_v1, pipe_radius, pipe_v2);
-    VJOIN1(arc_end, bend_end, pipe_radius, end_pipe_v2);
-    VSUB2(center_to_start, arc_start, arc_circle.center);
-    arc_circle.radius = MAGNITUDE(center_to_start);
-    draw_pipe_arc(vhead, arc_circle, arc_end, seg_count);
+	radian += radian_step;
+    }
 
-    /* draw an arc that touches pipe -v2 */
-    VJOIN1(arc_circle.center, bend_center, -bend_circle_offset, norm);
-    VJOIN2(arc_start, bend_center, bend_radius, bend_v1, -pipe_radius, pipe_v2);
-    VJOIN1(arc_end, bend_end, -pipe_radius, end_pipe_v2);
-    VSUB2(center_to_start, arc_start, arc_circle.center);
-    arc_circle.radius = MAGNITUDE(center_to_start);
-    draw_pipe_arc(vhead, arc_circle, arc_end, seg_count);
+    /* return the final orientation of the pipe circle */
+    MAT4X3VEC(end_pipe_r, rot_mat, pipe_circle.orient.v1);
+    VMOVE(end_orient.v1, end_pipe_r);
 
-    VMOVE(end_orient.v1, end_pipe_v1);
-    VMOVE(end_orient.v2, end_pipe_v2);
+    MAT4X3VEC(end_pipe_r, rot_mat, pipe_circle.orient.v2);
+    VMOVE(end_orient.v2, end_pipe_r);
 
     return end_orient;
 }
