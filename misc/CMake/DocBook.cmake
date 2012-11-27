@@ -174,17 +174,22 @@ macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
 	set(EXTRAS ${EXTRAS} ${bin_root}/${DOC_DIR}/${targetdir}/${extra_out})
       endforeach(extra_out ${EXTRA_OUTPUTS})
 
-      # Generate the script that will be used to run the XSLT executable
-      DB_SCRIPT("${targetname}" "${DOC_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
-
       if(BRLCAD_EXTRADOCS_VALIDATE)
 	DB_VALIDATE_TARGET(${targetname} ${targetdir} ${filename_root})
+
+	# Generate the script that will be used to run the XSLT executable
+	DB_SCRIPT("${targetname}" "${DOC_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
+
 	add_custom_command(
 	  OUTPUT ${outfile} ${EXTRAS}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
 	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_XHTML_STYLESHEET} ${deps_list}
 	  )
       else(BRLCAD_EXTRADOCS_VALIDATE)
+
+	# Generate the script that will be used to run the XSLT executable
+	DB_SCRIPT("${targetname}" "${DOC_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
+
 	add_custom_command(
 	  OUTPUT ${outfile} ${EXTRAS}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
@@ -228,17 +233,22 @@ macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir deps_li
 	set(EXTRAS ${EXTRAS} ${bin_root}/${MAN_DIR}/${targetdir}/${extra_out})
       endforeach(extra_out ${EXTRA_OUTPUTS})
 
-      # Generate the script that will be used to run the XSLT executable
-      DB_SCRIPT("${targetname}" "${MAN_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
-
       if(BRLCAD_EXTRADOCS_VALIDATE)
 	DB_VALIDATE_TARGET(${targetname} ${targetdir} ${filename_root})
+
+	# Generate the script that will be used to run the XSLT executable
+	DB_SCRIPT("${targetname}" "${MAN_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
+
 	add_custom_command(
 	  OUTPUT ${outfile} ${EXTRAS}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
 	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_MAN_STYLESHEET} ${deps_list}
 	  )
       else(BRLCAD_EXTRADOCS_VALIDATE)
+
+	# Generate the script that will be used to run the XSLT executable
+	DB_SCRIPT("${targetname}" "${MAN_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
+
 	add_custom_command(
 	  OUTPUT ${outfile} ${EXTRAS}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
@@ -283,15 +293,16 @@ macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir deps_list)
       endif(CMAKE_CONFIGURATION_TYPES)
       set(fo_outfile ${outfile})
       set(CURRENT_XSL_STYLESHEET ${XSL_FO_STYLESHEET})
-      DB_SCRIPT("${targetname}" "${DOC_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
       if(BRLCAD_EXTRADOCS_VALIDATE)
 	DB_VALIDATE_TARGET(${targetname} ${targetdir} ${filename_root})
+	DB_SCRIPT("${targetname}" "${DOC_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
 	add_custom_command(
 	  OUTPUT ${outfile}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
 	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${db_outfile} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${XSL_FO_STYLESHEET} ${deps_list}
 	  )
       else(BRLCAD_EXTRADOCS_VALIDATE)
+	DB_SCRIPT("${targetname}" "${DOC_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
 	add_custom_command(
 	  OUTPUT ${outfile}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
