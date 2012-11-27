@@ -4254,7 +4254,7 @@ proc title_node_handler {node} {
 	    -helpstr "Toggle matrix mode. Currently set to \"Below\""
     } else {
 	set mObjMatrixMode $MATRIX_ABOVE_MODE
-	set mStatusStr "Toggle matrix mode. Currently set to \"Aove\""
+	set mStatusStr "Toggle matrix mode. Currently set to \"Above\""
 	$itk_component(primaryToolbar) itemconfigure matrixmode \
 	    -image $mImage_matrixModeAbove \
 	    -balloonstr "Toggle matrix mode. Currently set to \"Above\"" \

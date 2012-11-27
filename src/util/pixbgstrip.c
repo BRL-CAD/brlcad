@@ -19,7 +19,7 @@
  */
 /** @file util/pixbgstrip.c
  *
- * Backgound Un-Maker
+ * Background Un-Maker
  *
  */
 

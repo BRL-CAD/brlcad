@@ -2404,7 +2404,7 @@ namespace eval ArcherCore {
 
     # Get rid of toplevel tree nodes that are no
     # longer valid (i.e. either they don't exist or they
-    # belong to atleast one combination).
+    # belong to at least one combination).
     if {![catch {set clists $mPNode2CList()}]} {
 	foreach clist $clists {
 	    set ctext [lindex $clist 0]
@@ -3749,7 +3749,7 @@ namespace eval ArcherCore {
 
     set cnodes [getCNodesFromCText $_pnode $_ctext]
 
-    # Atleast one node for _pnode/_ctext already exists
+    # At least one node for _pnode/_ctext already exists
     if {!$_allow_multiple && $cnodes != {}} {
 	return
     }

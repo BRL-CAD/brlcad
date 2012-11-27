@@ -115,7 +115,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 
 		if (sscanf(argv[7+3*i+1], "%lf", &pt[i][X]) != 1 ||
 		    sscanf(argv[7+3*i+2], "%lf", &pt[i][Y]) != 1) {
-		    bu_vls_printf(gedp->ged_result_str, "%s: atleast one bad value - %s %s",
+		    bu_vls_printf(gedp->ged_result_str, "%s: at least one bad value - %s %s",
 				  argv[0], argv[7+3*i+1], argv[7+3*i+2]);
 		}
 
@@ -132,7 +132,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 
 		if (sscanf(argv[7+3*i+1], "%lf", &pt[i][X]) != 1 ||
 		    sscanf(argv[7+3*i+2], "%lf", &pt[i][Y]) != 1) {
-		    bu_vls_printf(gedp->ged_result_str, "%s: atleast one bad value - %s %s",
+		    bu_vls_printf(gedp->ged_result_str, "%s: at least one bad value - %s %s",
 				  argv[0], argv[7+3*i+1], argv[7+3*i+2]);
 		}
 
@@ -149,7 +149,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 
 		if (sscanf(argv[7+3*i+1], "%lf", &pt[i][X]) != 1 ||
 		    sscanf(argv[7+3*i+2], "%lf", &pt[i][Y]) != 1) {
-		    bu_vls_printf(gedp->ged_result_str, "%s: atleast one bad value - %s %s",
+		    bu_vls_printf(gedp->ged_result_str, "%s: at least one bad value - %s %s",
 				  argv[0], argv[7+3*i+1], argv[7+3*i+2]);
 		}
 

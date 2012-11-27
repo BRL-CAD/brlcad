@@ -3350,7 +3350,7 @@ to_extract_contours_av(struct ged *gedp, struct ged_dm_view *gdvp, ged_polygon *
 
 	/* point_ac includes a hole flag */
 	if (mode != TCLCAD_POLY_CONTOUR_MODE && point_ac < 4) {
-	    bu_vls_printf(gedp->ged_result_str, "There must be atleast 3 points per contour");
+	    bu_vls_printf(gedp->ged_result_str, "There must be at least 3 points per contour");
 	    Tcl_Free((char *)point_av);
 	    return GED_ERROR;
 	}
