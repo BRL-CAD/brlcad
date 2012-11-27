@@ -1689,6 +1689,28 @@ draw_pipe_circle(
     plot_ellipse(vhead, circle.center, axis_a, axis_b, num_segments);
 }
 
+static void
+draw_pipe_end(
+	struct bu_list *vhead,
+	struct wdb_pipept *endpoint,
+	struct pipe_orientation orient)
+{
+    struct pipe_circle pipe_circle;
+
+    VMOVE(pipe_circle.center, endpoint->pp_coord);
+    pipe_circle.orient = orient;
+
+    /* draw outer circle */
+    pipe_circle.radius = endpoint->pp_od / 2.0;
+    draw_pipe_circle(vhead, pipe_circle, ARC_SEGS);
+
+    /* draw inner circle */
+    if (endpoint->pp_id > 0.0) {
+	pipe_circle.radius = endpoint->pp_id / 2.0;
+	draw_pipe_circle(vhead, pipe_circle, ARC_SEGS);
+    }
+}
+
 /**
  * D R A W _ P I P E _ A R C
  *
@@ -1731,10 +1753,11 @@ draw_pipe_arc(
 }
 
 /**
- * Draws the specified number of connecting lines between the start and end circles.
+ * Draws the specified number of connecting lines between the start and end
+ * circles, which are expected to be parallel (i.e. have the same orientation).
  */
-HIDDEN void
-draw_linear_seg(
+static void
+draw_pipe_parallel_circle_connections(
     struct bu_list *vhead,
     struct pipe_circle start,
     struct pipe_circle end,
@@ -1766,8 +1789,38 @@ draw_linear_seg(
     }
 }
 
-HIDDEN struct pipe_orientation
-draw_pipe_bend(
+HIDDEN void
+draw_pipe_linear_seg(
+	struct bu_list *vhead,
+	struct wdb_pipept start,
+	struct wdb_pipept end,
+	struct pipe_orientation orient)
+{
+    int num_connections = 4;
+    struct pipe_circle start_circle, end_circle;
+
+    start_circle.orient = end_circle.orient = orient;
+
+    VMOVE(start_circle.center, start.pp_coord);
+    VMOVE(end_circle.center, end.pp_coord);
+
+    /* connect outer circles */
+    start_circle.radius = start.pp_od / 2.0;
+    end_circle.radius = end.pp_od / 2.0;
+    draw_pipe_parallel_circle_connections(vhead, start_circle, end_circle,
+	    num_connections);
+
+    /* connect inner circles */
+    if (start.pp_id > 0.0 && end.pp_id > 0.0) {
+	start_circle.radius = start.pp_id / 2.0;
+	end_circle.radius = end.pp_id / 2.0;
+	draw_pipe_parallel_circle_connections(vhead, start_circle, end_circle,
+		num_connections);
+    }
+}
+
+static struct pipe_orientation
+draw_pipe_circular_seg(
     struct bu_list *vhead,
     struct pipe_circle bend_circle,
     point_t bend_end,
@@ -1848,7 +1901,6 @@ draw_pipe_bend(
     return end_orient;
 }
 
-
 /**
  * R T _ P I P E _ P L O T
  */
@@ -1860,12 +1912,11 @@ rt_pipe_plot(
     const struct bn_tol *UNUSED(tol),
     const struct rt_view_info *UNUSED(info))
 {
-    struct rt_pipe_internal *pip;
-    struct wdb_pipept *prevp, *curp, *nextp;
-    struct pipe_circle start_circle, end_circle;
-    struct pipe_orientation pipe_orient;
     point_t last_drawn;
+    struct rt_pipe_internal *pip;
+    struct pipe_orientation pipe_orient;
     vect_t cur_to_prev, cur_to_next, norm;
+    struct wdb_pipept *prevp, *curp, *nextp, start, end;
     fastf_t rad_between_segments, supplementary_angle, dist_cur_to_bend_end;
 
     BU_CK_LIST_HEAD(vhead);
@@ -1891,17 +1942,7 @@ rt_pipe_plot(
     VCROSS(pipe_orient.v2, cur_to_prev, pipe_orient.v1);
     VUNITIZE(pipe_orient.v2);
 
-    start_circle.orient = pipe_orient;
-    VMOVE(start_circle.center, prevp->pp_coord);
-
-    start_circle.radius = prevp->pp_od / 2.0;
-    draw_pipe_circle(vhead, start_circle, ARC_SEGS);
-
-    if (prevp->pp_id > 0.0) {
-	start_circle.radius = prevp->pp_id / 2.0;
-	draw_pipe_circle(vhead, start_circle, ARC_SEGS);
-    }
-
+    draw_pipe_end(vhead, prevp, pipe_orient);
     VMOVE(last_drawn, prevp->pp_coord);
 
 #define ALL_BUT_LAST_SEGMENT ; \
@@ -1941,20 +1982,11 @@ rt_pipe_plot(
 	    || VNEAR_ZERO(norm, SQRT_SMALL_FASTF)
 	    || NEAR_ZERO(dist_cur_to_bend_end, SQRT_SMALL_FASTF))
 	{
-	    start_circle.orient = end_circle.orient = pipe_orient;
-	    VMOVE(start_circle.center, last_drawn);
-	    VMOVE(end_circle.center, curp->pp_coord);
-
-	    start_circle.radius = prevp->pp_od / 2.0;
-	    end_circle.radius = curp->pp_od / 2.0;
-	    draw_linear_seg(vhead, start_circle, end_circle, 4);
-
-	    if (prevp->pp_id > 0.0 && curp->pp_id > 0.0) {
-		start_circle.radius = prevp->pp_id / 2.0;
-		end_circle.radius = curp->pp_id / 2.0;
-		draw_linear_seg(vhead, start_circle, end_circle, 4);
-	    }
-
+	    start = *prevp;
+	    end = *curp;
+	    VMOVE(start.pp_coord, last_drawn);
+	    
+	    draw_pipe_linear_seg(vhead, start, end, pipe_orient);
 	    VMOVE(last_drawn, curp->pp_coord);
 	} else {
 	    point_t bend_start, bend_end;
@@ -1968,19 +2000,12 @@ rt_pipe_plot(
 	    VJOIN1(bend_circle.center, bend_start, -curp->pp_bendradius, bend_circle.orient.v1);
 
 	    /* draw linear segment to start of bend */
-	    start_circle.orient = end_circle.orient = pipe_orient;
-	    VMOVE(start_circle.center, last_drawn);
-	    VMOVE(end_circle.center, bend_start);
+	    start = *prevp;
+	    end = *curp;
+	    VMOVE(start.pp_coord, last_drawn);
+	    VMOVE(end.pp_coord, bend_start);
 
-	    start_circle.radius = prevp->pp_od / 2.0;
-	    end_circle.radius = curp->pp_od / 2.0;
-	    draw_linear_seg(vhead, start_circle, end_circle, 4);
-
-	    if (prevp->pp_id > 0.0 && curp->pp_id > 0.0) {
-		start_circle.radius = prevp->pp_id / 2.0;
-		end_circle.radius = curp->pp_id / 2.0;
-		draw_linear_seg(vhead, start_circle, end_circle, 4);
-	    }
+	    draw_pipe_linear_seg(vhead, start, end, pipe_orient);
 
 	    /* draw circular segment to end of bend */
 	    VSETALL(pipe_circle.center, 0.0);
@@ -1988,12 +2013,12 @@ rt_pipe_plot(
 
 	    bend_circle.radius = curp->pp_bendradius;
 	    pipe_circle.radius = curp->pp_od / 2.0;
-	    pipe_orient = draw_pipe_bend(vhead, bend_circle, bend_end,
+	    pipe_orient = draw_pipe_circular_seg(vhead, bend_circle, bend_end,
 		    supplementary_angle, pipe_circle, ARC_SEGS);
 
-	    if (curp->pp_id > 0.0) {
+	    if (prevp->pp_id > 0.0 && curp->pp_id > 0.0) {
 		pipe_circle.radius = curp->pp_id / 2.0;
-		pipe_orient = draw_pipe_bend(vhead, bend_circle, bend_end,
+		pipe_orient = draw_pipe_circular_seg(vhead, bend_circle, bend_end,
 			supplementary_angle, pipe_circle, ARC_SEGS);
 	    }
 
@@ -2002,30 +2027,14 @@ rt_pipe_plot(
     }
 
     /* draw last segment */
-    start_circle.orient = end_circle.orient = pipe_orient;
-    VMOVE(start_circle.center, last_drawn);
-    VMOVE(end_circle.center, curp->pp_coord);
+    start = *prevp;
+    end = *curp;
+    VMOVE(start.pp_coord, last_drawn);
 
-    start_circle.radius = prevp->pp_od / 2.0;
-    end_circle.radius = curp->pp_od / 2.0;
-    draw_linear_seg(vhead, start_circle, end_circle, 4);
-
-    if (prevp->pp_id > 0.0 && curp->pp_id > 0.0) {
-	start_circle.radius = prevp->pp_id / 2.0;
-	end_circle.radius = curp->pp_id / 2.0;
-	draw_linear_seg(vhead, start_circle, end_circle, 4);
-    }
+    draw_pipe_linear_seg(vhead, start, end, pipe_orient);
 
     /* draw pipe end */
-    VMOVE(end_circle.center, curp->pp_coord);
-
-    end_circle.radius = curp->pp_od / 2.0;
-    draw_pipe_circle(vhead, end_circle, ARC_SEGS);
-
-    if (curp->pp_id > 0.0) {
-	end_circle.radius = curp->pp_id / 2.0;
-	draw_pipe_circle(vhead, end_circle, ARC_SEGS);
-    }
+    draw_pipe_end(vhead, curp, pipe_orient);
 
     return 0;
 }
