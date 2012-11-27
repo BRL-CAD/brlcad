@@ -143,6 +143,18 @@ void get_all_edges(struct Mesh_Info *mesh, std::set<std::pair<size_t, size_t> > 
     }
 }
 
+// Find faces with outer edge segments
+void get_outer_faces(struct Mesh_Info *mesh, std::set<size_t> *outer_faces) {
+    std::map<std::pair<size_t, size_t>, std::set<size_t> >::iterator e_it;
+    for (e_it = mesh->edges_to_faces.begin(); e_it!=mesh->edges_to_faces.end(); e_it++) {
+        if ((*e_it).second.size() == 1) {
+           size_t face = *(*e_it).second.begin();
+           outer_faces->insert(face);
+        }
+    }
+}
+
+// Core subdivision iteration loop
 struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_mesh) {
     std::map<size_t, std::vector<size_t> >::iterator f_it;
     std::vector<size_t>::iterator l_it;
@@ -174,25 +186,30 @@ struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_m
      std::set<std::pair<size_t, size_t> > old_edges;
      std::set<std::pair<size_t, size_t> >::iterator e_it;
      get_all_edges(starting_mesh, &old_edges);
+     std::set<size_t > outer_faces;
+     get_outer_faces(starting_mesh, &outer_faces);
+     std::cout << "outer face count: " << outer_faces.size() << "\n";
      size_t face_cnt = 0;
      for(f_it = starting_mesh->face_pts.begin(); f_it != starting_mesh->face_pts.end(); f_it++) {
-	 std::set<std::pair<size_t, size_t> > face_old_edges;
-	 size_t q0 = starting_mesh->index_in_next[(*f_it).first];
-	 l_it = (*f_it).second.begin();
-	 face_old_edges.insert(std::make_pair((*l_it), (*(l_it+1))));
-	 face_old_edges.insert(std::make_pair((*(l_it+1)), (*(l_it+2))));
-	 face_old_edges.insert(std::make_pair((*(l_it+2)), (*l_it)));
-	 for(e_it = face_old_edges.begin(); e_it != face_old_edges.end(); e_it++) {
-	     std::pair<size_t, size_t> edge = mk_edge((*e_it).first, (*e_it).second);
-	     if (old_edges.find((edge)) != old_edges.end()) {
-		 std::set<size_t> curr_faces = starting_mesh->edges_to_faces[edge];
-		 curr_faces.erase((*f_it).first);
-		 size_t q1 = starting_mesh->index_in_next[*curr_faces.begin()];
-		 mesh_add_face((*e_it).first, q1, q0, face_cnt, mesh);
-		 face_cnt++;
-		 mesh_add_face((*e_it).second, q0, q1, face_cnt, mesh);
-		 face_cnt++;
-		 old_edges.erase(edge);
+	 if (outer_faces.find((*f_it).first) == outer_faces.end()) {
+	     std::set<std::pair<size_t, size_t> > face_old_edges;
+	     size_t q0 = starting_mesh->index_in_next[(*f_it).first];
+	     l_it = (*f_it).second.begin();
+	     face_old_edges.insert(std::make_pair((*l_it), (*(l_it+1))));
+	     face_old_edges.insert(std::make_pair((*(l_it+1)), (*(l_it+2))));
+	     face_old_edges.insert(std::make_pair((*(l_it+2)), (*l_it)));
+	     for(e_it = face_old_edges.begin(); e_it != face_old_edges.end(); e_it++) {
+		 std::pair<size_t, size_t> edge = mk_edge((*e_it).first, (*e_it).second);
+		 if (old_edges.find((edge)) != old_edges.end()) {
+		     std::set<size_t> curr_faces = starting_mesh->edges_to_faces[edge];
+		     curr_faces.erase((*f_it).first);
+		     size_t q1 = starting_mesh->index_in_next[*curr_faces.begin()];
+		     mesh_add_face((*e_it).first, q1, q0, face_cnt, mesh);
+		     face_cnt++;
+		     mesh_add_face((*e_it).second, q0, q1, face_cnt, mesh);
+		     face_cnt++;
+		     old_edges.erase(edge);
+		 }
 	     }
 	 }
      }
@@ -243,7 +260,7 @@ int main(int argc, char *argv[])
     }
     RT_BOT_CK_MAGIC(bot_ip);
 
-    for (size_t i_cnt = 1; i_cnt < 7; i_cnt++) {
+    for (size_t i_cnt = 1; i_cnt < 5; i_cnt++) {
         mesh = iterate(bot_ip, prev_mesh);
         prev_mesh = mesh;
 
