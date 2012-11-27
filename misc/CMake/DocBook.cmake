@@ -232,7 +232,7 @@ macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir deps_li
       DB_SCRIPT("${targetname}" "${MAN_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
 
       if(BRLCAD_EXTRADOCS_VALIDATE)
-	DB_VALIDATE_TARGET(${targetname} ${filename_root})
+	DB_VALIDATE_TARGET(${targetname} ${targetdir} ${filename_root})
 	add_custom_command(
 	  OUTPUT ${outfile} ${EXTRAS}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
@@ -285,7 +285,7 @@ macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir deps_list)
       set(CURRENT_XSL_STYLESHEET ${XSL_FO_STYLESHEET})
       DB_SCRIPT("${targetname}" "${DOC_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
       if(BRLCAD_EXTRADOCS_VALIDATE)
-	DB_VALIDATE_TARGET(${targetname} ${filename_root})
+	DB_VALIDATE_TARGET(${targetname} ${targetdir} ${filename_root})
 	add_custom_command(
 	  OUTPUT ${outfile}
 	  COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
