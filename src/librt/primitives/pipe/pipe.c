@@ -1901,6 +1901,21 @@ draw_pipe_circular_seg(
     return end_orient;
 }
 
+int
+rt_pipe_adaptive_plot(
+    struct rt_db_internal *ip,
+    const struct rt_view_info *info)
+{
+    struct rt_pipe_internal *pipe;
+
+    BU_CK_LIST_HEAD(info->vhead);
+    RT_CK_DB_INTERNAL(ip);
+    pipe = (struct rt_pipe_internal *)ip->idb_ptr;
+    RT_PIPE_CK_MAGIC(pipe);
+
+    return 0;
+}
+
 /**
  * R T _ P I P E _ P L O T
  */

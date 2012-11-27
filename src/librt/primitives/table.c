@@ -782,7 +782,7 @@ const struct rt_functab rt_functab[] = {
 	rt_pipe_class,
 	rt_pipe_free,
 	rt_pipe_plot,
-	NULL,
+	rt_pipe_adaptive_plot,
 	NULL,
 	rt_pipe_tess,
 	NULL,
