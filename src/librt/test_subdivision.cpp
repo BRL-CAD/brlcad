@@ -167,7 +167,6 @@ struct Mesh_Info * iterate(struct rt_bot_internal *bot, struct Mesh_Info *prev_m
     }
     for(f_it = starting_mesh->face_pts.begin(); f_it != starting_mesh->face_pts.end(); f_it++) {
 	mesh->points_p0.Append(starting_mesh->points_q[(*f_it).first]);
-        ON_3dPoint added = *mesh->points_p0.At(mesh->points_p0.Count() - 1);
 	mesh->iteration_of_insert[mesh->points_p0.Count()-1] = mesh->iteration_cnt;
         starting_mesh->index_in_next[(*f_it).first] = mesh->points_p0.Count()-1;
     }
