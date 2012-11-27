@@ -32,23 +32,21 @@
 #  include <emmintrin.h>
 #endif
 
-//#define ALIGN16(_m) (double*)((((long)(_m)) + 0x10L) & ~0xFL);
 #undef VEC_ALIGN
 #define VEC_ALIGN __attribute__((aligned(16)))
 
 typedef double v2df __attribute__((vector_size(16)));
+typedef double v2f __attribute__((vector_size(8)));
 
 template<int LEN>
-struct vec_internal {
+struct dvec_internal {
     v2df v[LEN/2];
 };
 
-// inline dvec4::dvec4(double a, double b, double c, double d)
-//     : dvec<4>(
-// {
-//     double t[4] VEC_ALIGN = {a, b, c, d};
-
-// }
+template<int LEN>
+struct fvec_internal {
+    v2f v[LEN/2];
+};
 
 template<int LEN>
 inline dvec<LEN>::dvec(double s)
@@ -62,16 +60,20 @@ inline dvec<LEN>::dvec(double s)
 }
 
 template<int LEN>
-inline dvec<LEN>::dvec(const double* vals, bool aligned)
+inline dvec<LEN>::dvec(const float* vals)
 {
-    if (aligned) {
-	for (int i = 0; i < LEN/2; i++) {
-	    data.v[i] = _mm_load_pd(&vals[i*2]);
-	}
-    } else {
-	for (int i = 0; i < LEN/2; i++) {
-	    data.v[i] = _mm_loadu_pd(&vals[i*2]);
-	}
+    /* NOTE: assumes that vals are 16-byte aligned */
+    for (int i = 0; i < LEN/2; i++) {
+	data.v[i] = _mm_load_ps(&vals[i*2]);
+    }
+}
+
+template<int LEN>
+inline dvec<LEN>::dvec(const double* vals)
+{
+    /* NOTE: assumes that vals are 16-byte aligned */
+    for (int i = 0; i < LEN/2; i++) {
+	data.v[i] = _mm_load_pd(&vals[i*2]);
     }
 }
 
@@ -84,9 +86,15 @@ inline dvec<LEN>::dvec(const dvec<LEN>& p)
 }
 
 template<int LEN>
-inline dvec<LEN>::dvec(const vec_internal<LEN>& d)
+inline dvec<LEN>::dvec(const dvec_internal<LEN>& d)
 {
     for (int i = 0; i < LEN/2; i++) data.v[i] = d.v[i];
+}
+
+template<int LEN>
+inline dvec<LEN>::dvec(const fvec_internal<LEN>& f)
+{
+    for (int i = 0; i < LEN/2; i++) data.v[i] = f.v[i];
 }
 
 template<int LEN>
@@ -139,8 +147,8 @@ dvec<LEN>::operator==(const dvec<LEN>& b) const
     return true;
 }
 
-#define OP_IMPL(__op__) {                             \
-    vec_internal<LEN> result;                         \
+#define DOP_IMPL(__op__) {                             \
+    dvec_internal<LEN> result;                         \
     for (int i = 0; i < LEN/2; i++) {                 \
 	result.v[i] = __op__(data.v[i], b.data.v[i]); \
     }                                                 \
@@ -151,35 +159,35 @@ template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::operator+(const dvec<LEN>& b)
 {
-    OP_IMPL(_mm_add_pd);
+    DOP_IMPL(_mm_add_pd);
 }
 
 template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::operator-(const dvec<LEN>& b)
 {
-    OP_IMPL(_mm_sub_pd);
+    DOP_IMPL(_mm_sub_pd);
 }
 
 template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::operator*(const dvec<LEN>& b)
 {
-    OP_IMPL(_mm_mul_pd);
+    DOP_IMPL(_mm_mul_pd);
 }
 
 template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::operator/(const dvec<LEN>& b)
 {
-    OP_IMPL(_mm_div_pd);
+    DOP_IMPL(_mm_div_pd);
 }
 
 template<int LEN>
 inline dvec<LEN>
 dvec<LEN>::madd(const dvec<LEN>& s, const dvec<LEN>& b)
 {
-    vec_internal<LEN> r;
+    dvec_internal<LEN> r;
     for (int i = 0; i < LEN/2; i++) {
 	r.v[i] = _mm_mul_pd(data.v[i], s.data.v[i]);
     }
@@ -195,7 +203,7 @@ dvec<LEN>::madd(const double s, const dvec<LEN>& b)
 {
     double _t[LEN] VEC_ALIGN;
     for (int i = 0; i < LEN; i++) _t[i] = s;
-    dvec<LEN> t(_t, true);
+    dvec<LEN> t(_t);
     return madd(t, b);
 }
 
