@@ -1,5 +1,6 @@
-<article xmlns="http://docbook.org/ns/docbook" version="5.0">
-
+<article xmlns="http://docbook.org/ns/docbook" version="5.0"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+>
   <info>
     <title>Article Title</title>
 
@@ -12,8 +13,8 @@
 
       <!-- optional e-mail address -->
       <affiliation>
+	<orgname>BRL-CAD Open Source</orgname>
 	<address>
-	  <orgname>BRL-CAD Open Source</orgname>
 	  <email>devs@brlcad.org</email>
 	</address>
       </affiliation>
@@ -103,8 +104,11 @@ Available commands:
 
     <para>
       Another image, but rendered inline
-      <inlinegraphic fileref="http://brlcad.org/images/logo/BRL-CAD_64x64.png"
-		     format="PNG" width="64"/> with the paragraph text.
+      <inlinemediaobject>
+        <imageobject condition="web">
+          <imagedata fileref="http://brlcad.org/images/logo/BRL-CAD_64x64.png" format="PNG" width="64"/> 
+        </imageobject>
+      </inlinemediaobject> with the paragraph text.
     </para>
 
     <para>
@@ -132,7 +136,6 @@ Available commands:
       </tgroup>
     </informaltable>
 
-  </section>
 
   <caution>
     <para>
@@ -140,16 +143,17 @@ Available commands:
     </para>
     <itemizedlist>
       <listitem>
-	<ulink url="http://www.docbook.org/tdg5/en/html/article.html">
-	  http://www.docbook.org/tdg5/en/html/article.html
-	</ulink>
+        <simpara>
+        <link xlink:href="http://www.docbook.org/tdg5/en/html/article.html">http://www.docbook.org/tdg5/en/html/article.html</link>
+        </simpara>
       </listitem>
       <listitem>
-	<ulink url="http://www.openoffice.org/xml/xmerge/docbook/UserGuide.html">
-	  http://www.openoffice.org/xml/xmerge/docbook/UserGuide.html
-	</ulink>
+        <simpara>
+        <link xlink:href="http://www.openoffice.org/xml/xmerge/docbook/UserGuide.html">http://www.openoffice.org/xml/xmerge/docbook/UserGuide.html</link>
+        </simpara>
       </listitem>
     </itemizedlist>
   </caution>
+  </section>
 
 </article>
