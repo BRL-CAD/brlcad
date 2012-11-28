@@ -2,7 +2,7 @@
 <!-- lifted from troff+man by doclifter -->
 <refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pix2asc1'>
 <refmeta>
-<refentrytitle>PIX2ASC</refentrytitle>
+<refentrytitle>PIX2ASC/ASC2PIX</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
 </refmeta>
@@ -23,7 +23,7 @@
 <cmdsynopsis>
   <command>asc2pix</command>    
     <arg choice='plain'><replaceable>&lt;</replaceable></arg>
-    <arg choice='plain'><replaceable>file.acs</replaceable></arg>
+    <arg choice='plain'><replaceable>file.asc</replaceable></arg>
     <arg choice='plain'><replaceable>&gt;</replaceable></arg>
     <arg choice='plain'><replaceable>file.pix</replaceable></arg>
 </cmdsynopsis>

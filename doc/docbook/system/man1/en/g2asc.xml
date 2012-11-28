@@ -2,7 +2,7 @@
 <!-- lifted from troff+man by doclifter -->
 <refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='g2asc1'>
 <refmeta>
-<refentrytitle>G2ASC</refentrytitle>
+<refentrytitle>G2ASC/ASC2G</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
 </refmeta>

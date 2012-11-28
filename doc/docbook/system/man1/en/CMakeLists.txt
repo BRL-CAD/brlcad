@@ -1,8 +1,6 @@
 set(docbook_man1_EN
   g2asc.xml
-  asc2g.xml
   pix2asc.xml
-  asc2pix.xml
   asc2dsp.xml
   bot_dump.xml
   bot_shell-vtk.xml
@@ -57,6 +55,13 @@ set(docbook_man1_EN
   vdeck.xml
   viewpoint-g.xml
   )
+
+# Some DocBook man pages generate multiple output files, if they
+# describe more than one command.  Those files need special
+# handling, since the CMake logic has no way to know about the
+# extra outputs without being told.
+set_source_files_properties(g2asc.xml PROPERTIES EXTRA_MAN_OUTPUTS "asc2g.1")
+set_source_files_properties(pix2asc.xml PROPERTIES EXTRA_MAN_OUTPUTS "asc2pix.1")
 
 DOCBOOK_TO_HTML(man1 docbook_man1_EN html/man1/en "")
 DOCBOOK_TO_MAN(man1 docbook_man1_EN 1 1 man1 "")
