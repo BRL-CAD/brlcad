@@ -2011,8 +2011,7 @@ namespace eval ArcherCore {
 
     switch -- [file extension $target] {
 	".g"   {
-	    set db [Db \#auto $target]
-	    ::itcl::delete object $db
+	    $itk_component(ged) open $target
 	}
 	default {
 	    return

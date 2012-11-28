@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2012-07-XX  Release 7.22.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed File->New deprecation error in archer - Sean Morrison
 * improved Linux platform application and file icons - Jordi Sayol
 * fixed mged interactive object translation keypoint bug - Bob Parker
 * fixed corrupted tessellation pipe export bug - Richard Weiss
