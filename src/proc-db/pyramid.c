@@ -20,7 +20,7 @@
 /** @file proc-db/pyramid.c
  *
  * Program to generate recursive 3-d pyramids (arb4).
- * Inspired by the SigGraph paper of Glasser.
+ * Inspired by the SigGraph paper of Glassner.
  *
  */
 
