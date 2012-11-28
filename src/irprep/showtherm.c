@@ -44,7 +44,7 @@
  *  and secpass.  The air objects had to be removed in order for
  *  PRISM to run.  Then when running showtherm use only the object
  *  'all.'  Make sure the air was at the end so that the numbering
- *  sceme is not altered.
+ *  scheme is not altered.
  *
  *	CHANGES
  *	25 November 1991 - Start of original program.

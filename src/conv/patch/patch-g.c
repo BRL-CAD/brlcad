@@ -352,7 +352,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 		   && face2_no < *face_count);
 	    if (p_faces[face2_no].fu != fu2 &&
 		p_faces[face2_no].fu != fu2) {
-		bu_log("nmg_patch_coplanar_face_merge: Couldn`t find entry for faceuse %p in p_faces\n", (void *)fu2);
+		bu_log("nmg_patch_coplanar_face_merge: Couldn't find entry for faceuse %p in p_faces\n", (void *)fu2);
 		continue;
 	    }
 

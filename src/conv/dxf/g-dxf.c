@@ -524,7 +524,7 @@ main(int argc, char *argv[])
 		       NULL,
 		       (genptr_t)NULL);	/* in librt/nmg_bool.c */
 
-    /* end of layers section, start of ENTOTIES SECTION */
+    /* end of layers section, start of ENTITIES SECTION */
     fprintf(fp, "0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n");
 
     /* Walk indicated tree(s).  Each region will be output separately */
