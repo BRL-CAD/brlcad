@@ -412,7 +412,7 @@ class Sketch_editor {
 	}
 
 	if { [$curr_seg is_full_circle] } {
-	    tk_messageBox -icon error -type ok -title "Full CIrcle Selected" \
+	    tk_messageBox -icon error -type ok -title "Full Circle Selected" \
 		-message "Please select an arc (Not a full circle)"
 	    return
 	}
