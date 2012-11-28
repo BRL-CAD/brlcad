@@ -364,7 +364,7 @@ int
 main (int argc, char **argv)
 {
     int clr_fb = 0;	/* Clear the frame buffer first? */
-    int draw_grid = 1;	/* Plot the plolar axes? */
+    int draw_grid = 1;	/* Plot the polar axes? */
     int merge = 0;	/* Overlay data on current contents FB? */
     int NoWarnings = 0;	/* Abort if any irregular input? */
     int perimeter = 0;	/* Plot perimeter of function? */

@@ -511,7 +511,7 @@ int SegmentTriangleIntersect(
  * When the triangles intersect in 2 points the order of the points is
  * meaningful as they indicate the ternality of the faces the
  * condition we want to meet is that the edge (result[1] - result[0])
- * is parallal to (Norm2 X Norm1)
+ * is parallel to (Norm2 X Norm1)
  */
 
 enum EdgeIndex {ab = 0, bc = 1, ca = 2, de = 3, ef = 4, fd = 5};

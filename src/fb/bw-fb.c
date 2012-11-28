@@ -184,7 +184,7 @@ int
 main(int argc, char **argv)
 {
     int x, y, n;
-    long xout, yout;		/* number of sceen output lines */
+    long xout, yout;		/* number of screen output lines */
     long xstart, xskip;
 
     if (!get_args(argc, argv)) {
