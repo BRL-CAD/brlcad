@@ -32,31 +32,88 @@ EXTRA_DIST = \
 	brlcad.spec \
 	brlcad.spec.in \
 	debian/brlcad-archer.desktop \
-	debian/brlcad-archer.png \
 	debian/brlcad-db.desktop \
-	debian/brlcad-db.png \
+	debian/brlcad.directory \
 	debian/brlcad-doc-animation.desktop \
-	debian/brlcad-doc-mged.desktop \
 	debian/brlcad-doc.desktop \
 	debian/brlcad-doc.directory \
-	debian/brlcad-doc.png \
-	debian/brlcad-mged.desktop \
-	debian/brlcad-mged.png \
-	debian/brlcad-rtwizard.desktop \
-	debian/brlcad-v4.png \
-	debian/brlcad-v5.png \
-	debian/brlcad.directory \
+	debian/brlcad-doc-mged.desktop \
 	debian/brlcad.docs \
 	debian/brlcad.install \
 	debian/brlcad.menu \
+	debian/brlcad-mged.desktop \
 	debian/brlcad.postinst \
 	debian/brlcad.postrm \
+	debian/brlcad-rtwizard.desktop \
 	debian/brlcad.sh \
 	debian/brlcad.xml \
 	debian/changelog \
 	debian/compat \
 	debian/control \
 	debian/copyright \
+	debian/icons/128x128/brlcad-archer.png \
+	debian/icons/128x128/brlcad-db.png \
+	debian/icons/128x128/brlcad-doc.png \
+	debian/icons/128x128/brlcad-mged.png \
+	debian/icons/128x128/brlcad-v4.png \
+	debian/icons/128x128/brlcad-v5.png \
+	debian/icons/128x128/brlcad-v6.png \
+	debian/icons/16x16/brlcad-archer.png \
+	debian/icons/16x16/brlcad-db.png \
+	debian/icons/16x16/brlcad-doc.png \
+	debian/icons/16x16/brlcad-mged.png \
+	debian/icons/16x16/brlcad-v4.png \
+	debian/icons/16x16/brlcad-v5.png \
+	debian/icons/16x16/brlcad-v6.png \
+	debian/icons/24x24/brlcad-archer.png \
+	debian/icons/24x24/brlcad-db.png \
+	debian/icons/24x24/brlcad-doc.png \
+	debian/icons/24x24/brlcad-mged.png \
+	debian/icons/24x24/brlcad-v4.png \
+	debian/icons/24x24/brlcad-v5.png \
+	debian/icons/24x24/brlcad-v6.png \
+	debian/icons/256x256/brlcad-archer.png \
+	debian/icons/256x256/brlcad-db.png \
+	debian/icons/256x256/brlcad-doc.png \
+	debian/icons/256x256/brlcad-mged.png \
+	debian/icons/256x256/brlcad-v4.png \
+	debian/icons/256x256/brlcad-v5.png \
+	debian/icons/256x256/brlcad-v6.png \
+	debian/icons/36x36/brlcad-archer.png \
+	debian/icons/36x36/brlcad-db.png \
+	debian/icons/36x36/brlcad-doc.png \
+	debian/icons/36x36/brlcad-mged.png \
+	debian/icons/36x36/brlcad-v4.png \
+	debian/icons/36x36/brlcad-v5.png \
+	debian/icons/36x36/brlcad-v6.png \
+	debian/icons/48x48/brlcad-archer.png \
+	debian/icons/48x48/brlcad-db.png \
+	debian/icons/48x48/brlcad-doc.png \
+	debian/icons/48x48/brlcad-mged.png \
+	debian/icons/48x48/brlcad-v4.png \
+	debian/icons/48x48/brlcad-v5.png \
+	debian/icons/48x48/brlcad-v6.png \
+	debian/icons/64x64/brlcad-archer.png \
+	debian/icons/64x64/brlcad-db.png \
+	debian/icons/64x64/brlcad-doc.png \
+	debian/icons/64x64/brlcad-mged.png \
+	debian/icons/64x64/brlcad-v4.png \
+	debian/icons/64x64/brlcad-v5.png \
+	debian/icons/64x64/brlcad-v6.png \
+	debian/icons/96x96/brlcad-archer.png \
+	debian/icons/96x96/brlcad-db.png \
+	debian/icons/96x96/brlcad-doc.png \
+	debian/icons/96x96/brlcad-mged.png \
+	debian/icons/96x96/brlcad-v4.png \
+	debian/icons/96x96/brlcad-v5.png \
+	debian/icons/96x96/brlcad-v6.png \
+	debian/icons/scalable/brlcad-archer.svg \
+	debian/icons/scalable/brlcad-db.svg \
+	debian/icons/scalable/brlcad-doc.svg \
+	debian/icons/scalable/brlcad-mged.svg \
+	debian/icons/scalable/brlcad-v4.svg \
+	debian/icons/scalable/brlcad-v5.svg \
+	debian/icons/scalable/brlcad-v6.svg \
 	debian/rules \
 	debian/source/format \
 	debian/source/include-binaries \
