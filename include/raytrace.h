@@ -2920,7 +2920,7 @@ RT_EXPORT extern int rt_rpp_region(struct rt_i *rtip,
 /**
  * R T _ I N _ R P P
  *
- * Compute the intersections of a ray with a rectangular parallelpiped
+ * Compute the intersections of a ray with a rectangular parallelepiped
  * (RPP) that has faces parallel to the coordinate planes
  *
  * The algorithm here was developed by Gary Kuehl for GIFT.  A good
@@ -2989,7 +2989,7 @@ RT_EXPORT extern int rt_bound_internal(struct db_i *dbip,
  * R T _ R E A D _ C M D
  *
  * Read one semi-colon terminated string of arbitrary length from the
- * given file into a dynamicly allocated buffer.  Various commenting
+ * given file into a dynamically allocated buffer.  Various commenting
  * and escaping conventions are implemented here.
  *
  * Returns:
@@ -4136,7 +4136,7 @@ RT_EXPORT extern int rt_mk_parabola(struct rt_pt_node *pts,
  * size.
  *
  * Returns:	NULL Error
- * <addr> Othewise
+ * <addr> Otherwise
  *
  * Comments:
  * Algorithm is first fit.
@@ -4149,7 +4149,7 @@ RT_EXPORT extern size_t rt_memalloc(struct mem_map **pp,
  * size.
  *
  * Returns:	NULL Error
- * <addr> Othewise
+ * <addr> Otherwise
  *
  * Comments:
  * Algorithm is BEST fit.
@@ -4159,7 +4159,7 @@ RT_EXPORT extern struct mem_map * rt_memalloc_nosplit(struct mem_map **pp,
 
 /**
  * Returns:	NULL Error
- * <addr> Othewise
+ * <addr> Otherwise
  *
  * Comments:
  * Algorithm is first fit.

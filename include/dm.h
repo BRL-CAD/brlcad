@@ -267,7 +267,7 @@ struct dm {
     int dm_lineStyle;
     fastf_t dm_aspect;
     fastf_t *dm_vp;		/**< @brief (FIXME: ogl still depends on this) Viewscale pointer */
-    struct dm_vars dm_vars;	/**< @brief display manager dependant variables */
+    struct dm_vars dm_vars;	/**< @brief display manager dependent variables */
     struct bu_vls dm_pathName;	/**< @brief full Tcl/Tk name of drawing window */
     struct bu_vls dm_tkName;	/**< @brief short Tcl/Tk name of drawing window */
     struct bu_vls dm_dName;	/**< @brief Display name */
