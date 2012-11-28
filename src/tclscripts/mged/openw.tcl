@@ -2157,7 +2157,7 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	in previous releases. The other command interpretation
 	mode (Tcl Evaluation) passes the command line directly to
 	the Tcl interpreter. Look under File/Preferences/
-	Special_Characters to change the interpetation mode.
+	Special_Characters to change the interpretation mode.
 
 	The command window also supports cut and paste as well
 	as text scrolling. The default bindings for these operations

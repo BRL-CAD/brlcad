@@ -269,7 +269,7 @@ proc init_comb { id } {
     grid columnconfigure $top.my_tabbed.shader_labeled 0 -weight 0
     grid columnconfigure $top.my_tabbed.shader_labeled 1 -weight 1
 
-    # frame to hold the combination name, entry widget, and menunutton
+    # frame to hold the combination name, entry widget, and menubutton
     frame $top.name_stuff
 
     # frame to hold the region id, los, air code, and GIFT material code
