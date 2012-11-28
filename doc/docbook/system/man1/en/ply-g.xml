@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='plyg1'>
+<refmeta>
+<refentrytitle>PLY-G</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>ply-g</refname>
+<refpurpose>Stanford PLY format Translator (PLY to BRL-CAD)</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>ply-g</command>    
+    <arg choice='opt'>-s <replaceable>scale_factor</replaceable></arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'>-d </arg>
+    <arg choice='plain'><replaceable>file.ply</replaceable></arg>
+    <arg choice='plain'><replaceable>file.g</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>ply-g</command>
+converts the specified
+<emphasis remap='I'>file.ply</emphasis>
+to a BRL-CAD
+<emphasis remap='I'>file.g</emphasis>
+file. The
+<option>-v</option>
+option (verbose) prints much information about what the process is doing.
+The
+<option>-d</option>
+option sets a debug flag which will cause a core dump on error.
+The
+<option>-s</option>
+option specifies a scale factor to be applied to the PLY data. By convention, PLY data is typically in meters,
+so the default scale factor is 1000. The scale factor supplied on the command line will replace the default
+scale factor. So, for example, specifying a scale factor of 500 will halve the size of the resulting BRL-CAD
+model as compared to converting it without specifying a scale factor.
+The
+<emphasis remap='I'>file.ply</emphasis>
+file is expected to be in the Stanford PLY format (ASCII or binary).</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<literallayout remap='RS'>
+<synopsis>
+$ <emphasis remap='I'>ply-g sample.ply sample.g</emphasis>
+</synopsis>
+</literallayout> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 2003-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='bot_shellvtk1'>
+<refmeta>
+<refentrytitle>BOT_SHELL-VTK</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>bot_shell-vtk</refname>
+<refpurpose>VTK polydata converter (BRL-CAD to VTK)</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>bot_shell-vtk</command>    <arg choice='opt'>-m </arg>
+    <arg choice='opt'>-n </arg>
+    <arg choice='opt'>-d <replaceable>debug_level</replaceable></arg>
+    <arg choice='opt'>-g <replaceable>cell_size</replaceable></arg>
+    <arg choice='plain'>-o <replaceable>vtk_polydata_output</replaceable></arg>
+    <arg choice='plain'><replaceable>brlcad_database.g</replaceable></arg>
+    <arg choice='plain'><replaceable>object1</replaceable></arg>
+    <arg choice='opt'><arg choice='plain'><replaceable>object2</replaceable></arg><arg choice='plain' rep='repeat'><replaceable>object3</replaceable></arg></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>bot_shell-vtk</command>
+uses raytracing to extract the exterior triangles from a model made up
+of BOT primitives. The default operation is to fire a single ray at each
+triangle of each BOT primitive in the specified objects. The rays are fired
+anti-normalward towards the center of each triangle from outside the model
+bounding box. If the triangle currently under consideration appears as the
+first object hit along the ray, then that triangle is included in the
+VTK polydata output (thus retaining only exterior triangles). Non-BOT
+primitives encountered along the rays may hide BOT triangles, but non-BOT
+primitives do not contribute to the output.
+The
+<option>-m</option>
+option may be specified to enable both the first and last triangles along
+each ray to be added to the output. This can improve performance, by reducing
+the number of rays fired, but may reduce performance for complex models
+because it requires processing each ray completely through the model.
+If the
+<option>-n</option>
+option is specified, the output will include vertex normals in the
+VTK output. If the BOT primitives of the input BRL-CAD model do not
+have vertex normal information, this option will not add any information
+to the output, but will greatly increase the size of the output file.
+If the
+<option>-g</option>
+option is specified, then the rays are fired from a uniform grid for
+three orthogonal directions rather than at each individual triangle. This
+can give a fairly rapid result for larger cell sizes, but is likely to miss
+some triangles. The
+<emphasis remap='I'>cell_size</emphasis>
+must be specified in millimeters.
+The
+<option>-d</option>
+option may be used to get debug output during processing. This is likely to
+only be useful for developers.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<literallayout remap='RS'>
+<synopsis>
+$ <emphasis remap='I'>bot_shell-vtk  -o output.vtk  sample.g  the_exterior</emphasis>
+</synopsis>
+</literallayout> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 2003-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

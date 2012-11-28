@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='asc2pix1'>
+<refmeta>
+<refentrytitle>ASC2PIX</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>pix2asc</refname>
+<refname>asc2pix</refname>
+<refpurpose>encode and decode color pixel files</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pix2asc</command>    
+    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'><replaceable>file.pix</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>file.asc</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+  <command>asc2pix</command>    
+    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'><replaceable>file.asc</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>file.pix</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Pix2asc</emphasis>
+and
+<command>asc2pix</command>
+are simple filters which convert color
+<emphasis remap='I'>pix(5)</emphasis>
+files from their binary form to a portable ASCII form, and back.
+<emphasis remap='I'>Pix2asc</emphasis>
+reads the binary file on standard in and writes ASCII on standard out.
+<emphasis remap='I'>Asc2pix</emphasis>
+does the reverse.</para>
+
+<para>The binary file consists of a sequence
+of three-tuples of
+<emphasis remap='B'>unsigned chars</emphasis>
+representing the
+red, green, and blue intensities for each pixel.
+The ASCII version of the file has
+one RGB pixel per newline-terminated line, with each
+pixel represented as six hexadecimal digits.</para>
+
+<para>When moving
+<emphasis remap='I'>pix(5)</emphasis>
+files between UNIX systems
+via tape (see
+<emphasis remap='I'>tar(1)</emphasis>
+and
+<emphasis remap='I'>cpio(1))</emphasis>
+or via network (see
+<emphasis remap='I'>rcp(1)</emphasis>
+and
+<emphasis remap='I'>ftp(1)),</emphasis>
+this conversion to ASCII is unnecessary,
+as all UNIX files are byte streams, regardless of the underlying hardware.
+However, when transporting images to non-UNIX machines,
+these tools are invaluable.
+Note that
+<emphasis remap='I'>rt(1)</emphasis>
+can directly generate the ASCII form of an image file using the
+<option>-O</option>
+flag, allowing it to be easily used on non-UNIX systems.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 2012-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

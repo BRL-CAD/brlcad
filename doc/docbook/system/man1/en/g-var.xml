@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='gvar1'>
+<refmeta>
+<refentrytitle>G-VAR</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>g-var</refname>
+<refpurpose>Produce (OpenGL) Vertex Arrays from BOT BRL-CAD geometry</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>g-var</command>    
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'>-y </arg>
+    <arg choice='opt'>-s <replaceable>scale</replaceable></arg>
+    <arg choice='opt'>-f </arg>
+    <arg choice='opt'>-o <replaceable>outfile</replaceable></arg>
+    <arg choice='plain'><replaceable>infile.g</replaceable></arg>
+    <arg choice='plain'><replaceable>object</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>g-var</command>
+writes the bag of triangle (BOT) primitives of the specified
+<emphasis remap='I'>object</emphasis>
+in a binary array format to
+<emphasis remap='I'>outfile</emphasis>
+or to
+<emphasis remap='I'>stdout.</emphasis></para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>Request verbose output.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-y</option></term>
+  <listitem>
+<para>Transform the coordinate system from xyz to xzy.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s scale</option></term>
+  <listitem>
+<para>Scale the output geometry by factor
+<emphasis remap='B'>scale</emphasis>
+. By default the scale factor is 0.001 (standard transformation
+from meters to millimeters.)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-f</option></term>
+  <listitem>
+<para>Flip face normals. This changes both the vertex order and the output normals.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o outfile</option></term>
+  <listitem>
+<para>The output will be written to
+<emphasis remap='B'>outfile</emphasis>
+. By default the output is written to stdout.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='file_format'><title>FILE FORMAT</title>
+<para><emphasis remap='I'>TODO</emphasis></para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<literallayout remap='RS'>
+<synopsis>
+$ <emphasis remap='I'>g-var -o sample.mesh sample.g sample_object</emphasis>
+</synopsis>
+</literallayout> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Prasad Silva</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 2006-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

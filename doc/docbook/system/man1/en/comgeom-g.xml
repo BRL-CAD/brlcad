@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='comgeomg1'>
+<refmeta>
+<refentrytitle>COMGEOM-G</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>comgeom-g</refname>
+<refpurpose>convert GIFT COMGEOM model into MGED database</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>comgeom-g</command>    
+    <arg choice='opt'>-d <replaceable>debug_lvl</replaceable></arg>
+    <arg choice='opt'>-v <replaceable>version_num</replaceable></arg>
+    <arg choice='opt'>-s <replaceable>name_suffix</replaceable></arg>
+    <arg choice='plain'><replaceable>file.cg</replaceable></arg>
+    <arg choice='plain'><replaceable>file.g</replaceable></arg>
+    <sbr/>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>Read a COMGEOM version 4 or version 5 format model from
+a GIFT-style input file, convert the geometry into
+the internal form used by the BRL-CAD package,
+and write an MGED-style binary database.</para>
+
+<para>Each solid is given the name “s###”, retaining the COMGEOM solid number.
+Each region is given the name “r###”, retaining the COMGEOM region number.
+Regions are grouped together into various groups “g###” based
+on the region-id numbers.  Group “g00” gets all regions with region-id
+of zero, “g0” gets ids one through 99, “g1” gets ids 100 through 199, etc.</para>
+
+<para>The default input is COMGEOM version 5.
+Version 4 can be converted by specifying the
+<option>-v4</option>
+flag.
+For the time being, the DoE MORSE/RAFFLE format (believed to be the
+original MAGIC format) can be converted by specifying the
+<option>-v1</option>
+flag.</para>
+
+<para>By default, the program
+<command>comgeom-g</command>
+operates silently.
+Because the program may require a minute or two to convert a large
+database, some users prefer to have various status reports that
+indicate the progress of the conversion.
+This can be selected by specifying the
+<option>-d1</option>
+flag (debug level 1).</para>
+
+<para>The units used in a COMGEOM file are specified on a header record.
+The units of an MGED database are always millimeters.
+<command>comgeom-g</command>
+performs automatic units conversion using the built-in units conversion
+feature of
+<citerefentry><refentrytitle>libwdb</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<para><emphasis remap='I'>comgeom-g -d1 -v4 file.cg file.g</emphasis></para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>The diagnostics are intended to be self-explanatory.
+Familiarity with GIFT COMGEOM terminology will be helpful.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>It is expected that the input file should be a valid COMGEOM model.
+While quite a bit of input checking is performed, wildly incorrect
+input may produce amusing results.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libwdb</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Michael John Muuss</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

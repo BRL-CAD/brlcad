@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='gnmg1'>
+<refmeta>
+<refentrytitle>G-NMG</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>g-nmg</refname>
+<refpurpose>Perform Boolean evaluations to produce NMG objects</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>g-nmg</command>    
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'>-b </arg>
+    <arg choice='opt'>-t <replaceable>calc_dist_tol</replaceable></arg>
+    <arg choice='opt'>-a <replaceable>abs_tess_tol</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>norm_tess_tol</replaceable></arg>
+    <arg choice='opt'>-r <replaceable>rel_tess_tol</replaceable></arg>
+    <arg choice='opt'>-o <replaceable>outfile.g</replaceable></arg>
+    <arg choice='plain'><replaceable>infile.g</replaceable></arg>
+    <arg choice='plain'><replaceable>object(s)</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>g-nmg</command>
+performs the Boolean operations in the specified
+<emphasis remap='I'>object(s)</emphasis>
+and writes the resulting NMG primitives (or BOT primitives, if the
+<option>-b</option>
+option is specified) to
+<emphasis remap='I'>outfile.g</emphasis>
+or to
+<emphasis remap='I'>stdout</emphasis>
+if the
+<option>-o</option>
+option is not used.</para>
+
+<para>The following options are available:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-a abs_tess_tol</option></term>
+  <listitem>
+<para>Specify an absolute tessellation tolerance (in millimeters).
+This requires that the maximum absolute error from the tessellated surface to the actual
+surface must not be greater than
+<emphasis remap='I'>abs_tess_tol.</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-b</option></term>
+  <listitem>
+<para>Convert the results to a BOT primitive (triangle representation) instead of leaving it as an NMG.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-n norm_tess_tol</option></term>
+  <listitem>
+<para>Specify a surface normal error tolerance (in degrees) for the tessellation.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o outfile.g</option></term>
+  <listitem>
+<para>Specify the name of the file to be created.  This should not be the same as the input file.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-r rel_tess_tol</option></term>
+  <listitem>
+<para>Specify a relative error tolerance. This effectively
+sets an absolute tolerance for each primitive solid by multiplying the
+overall size of the solid by
+<emphasis remap='I'>rel_tess_tol.</emphasis>
+This allows small objects to be tessellated with small tolerances, while large objects are tessellated with large tolerances.
+For example, specifying
+<option>-r 0.1</option>
+when tesselating an object 2m in size, will result in a tolerance of .2m (2.0 * 0.1).
+The same option will cause a 5cm object to be tesselated with a tolerance of 0.5cm.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-t calc_dist_tol</option></term>
+  <listitem>
+<para>Specify a calculational distance tolerance (in millimeters).
+This tolerance is used to distinguish neighboring vertices.
+Any two vertices less than this tolerance distance apart will be considered the same vertex.
+The default value is 0.005mm.
+Prior to performing the Boolean operations for each region, the involved primitive solids
+are converted to a planar facetted approximation and stored as NMG solids. This tessellation
+can be controlled using the tessellation tolerances.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>Produce copious progress information.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-x</option></term>
+  <listitem>
+<para>Set librt debug flags.
+The definitions of these flags may be found in
+<emphasis remap='I'>raytrace.h</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-X</option></term>
+  <listitem>
+<para>Set NMG routines debug flags.
+The definitions of these flags may be found in
+<emphasis remap='I'>h/nmg.h.</emphasis></para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<literallayout remap='RS'>
+<synopsis>
+$ <emphasis remap='I'>g-nmg -o shell.g sample.g sample_object</emphasis>
+</synopsis>
+</literallayout> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>Boolean operations under finite precision arithmetic are not guaranteed to be solvable.  As a result this command can fail.  Scaling geometry adjusting tolerance values, and restructuring the boolean tree will often result in a successful tesselation.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1998-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

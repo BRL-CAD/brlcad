@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='proeg1'>
+<refmeta>
+<refentrytitle>PROE-G</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>proe-g</refname>
+<refpurpose>Pro/Engineer Translator (Pro/Engineer to BRL-CAD)</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>proe-g</command>    
+    <arg choice='opt'>-darS </arg>
+    <arg choice='opt'>-i <replaceable>initial_ident</replaceable></arg>
+    <arg choice='opt'>-I <replaceable>constant_ident</replaceable></arg>
+    <arg choice='opt'>-m <replaceable>material_code</replaceable></arg>
+    <arg choice='opt'>-u <replaceable>reg_exp</replaceable></arg>
+    <arg choice='opt'>-x <replaceable>RT_DEBUG_FLAG</replaceable></arg>
+    <arg choice='plain'><replaceable>file.brl</replaceable></arg>
+    <arg choice='plain'><replaceable>file.g</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>proe-g</emphasis>
+converts the specified
+<emphasis remap='I'>file.brl</emphasis>
+to a BRL-CAD
+<emphasis remap='I'>file.g</emphasis>
+file.
+The
+<option>-d</option>
+option prints debugging information.
+The
+<option>-a</option>
+option implies that all the parts in the Pro/E model should be converted to
+BRL-CAD
+<emphasis remap='I'>air</emphasis>
+regions.
+The
+<option>-i</option>
+option sets the starting ident number for the regions created. As each
+new region is created, this number will be incremented before assigning
+the next ident number (conflicts with
+<option>-I</option>
+). The
+<option>-I</option>
+option sets a constant ident number that will be assigned to all the regions created (conflicts with
+<option>-i</option>
+).
+The
+<option>-m</option>
+option sets a material code that will be assigned to all the regions created (default is 1).
+The
+<option>-r</option>
+flag indicates that the model should not be rotated, translated, or scaled, but left in
+the same orientation and size as it was created in
+<emphasis remap='I'>Pro/E.</emphasis>
+This allows the user to convert parts that are referenced by previously converted
+assemblies, so that the transformation matrix in the referencing assembly will
+size and position the part.
+The
+<option>-x</option>
+option sets an RT debug flags (see raytrace.h).
+The
+<emphasis remap='I'>file.brl</emphasis>
+file is expected to be output from the
+<emphasis remap='I'>BRL-CAD</emphasis>
+menu option of the Pro/Engineer
+<emphasis remap='I'>EXPORT</emphasis>
+menu. This menu option is a Pro/Develop application produced by the USARL.</para>
+
+<para>Note that the routine documented here is obsolete, and only maintained for compatibility with
+older versions of Pro/Engineer. The current method of converting from Pro/Engineer to BRL-CAD
+is still a two step process, but a newer Pro/Toolkit application must be installed (see “install.doc”
+in the “pro-engineer” directory of the BRL-CAD distribution). From within Pro/Engineer, the “proe-brl”
+option must be selected from the “File” menu, and the user will be prompted for an output file name,
+a starting ident number, a maximum tessellation error, and an additional curvature correction.
+The output from this new routine, is a Tcl script that may be converted to a BRL-CAD model using “asc2g”
+or by sourcing the file during an MGED session.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<literallayout remap='RS'>
+<synopsis>
+$ <emphasis remap='I'>proe-g sample.brl sample.g</emphasis>
+</synopsis>
+</literallayout> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><emphasis remap='I'>Pro/Engineer Modeling User's Guide,</emphasis>
+Version 13.0,
+Parametric Technology Corporation</para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1994-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

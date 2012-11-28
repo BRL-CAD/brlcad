@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='dxfg1'>
+<refmeta>
+<refentrytitle>DXF-G</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>dxf-g</refname>
+<refpurpose>DXF Translator (DXF to BRL-CAD)</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>dxf-g</command>    
+    <arg choice='opt'>-c </arg>
+    <arg choice='opt'>-d </arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'>-s <replaceable>scale_factor</replaceable></arg>
+    <arg choice='opt'>-t <replaceable>tolerance</replaceable></arg>
+    <arg choice='plain'><replaceable>file.dxf</replaceable></arg>
+    <arg choice='plain'><replaceable>database.g</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>dxf-g</emphasis>
+converts the specified
+<emphasis remap='I'>file.dxf</emphasis>
+to a BRL-CAD
+<emphasis remap='I'>database.g</emphasis>
+file.</para>
+
+<para>The following options are available:</para>
+
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-c</option></term>
+  <listitem>
+<para>Only the first color seen for a layer should be used. Without this option,
+layers may be broken into separate BOT primitives according to color assigned.</para>
+
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-d</option></term>
+  <listitem>
+<para>Sets a debug flag. The only effect is to cause a core dump on failure.
+This is probably not useful except for developers.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>Produces very verbose output on stderr.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s </option><emphasis remap='I'>scale_factor</emphasis></term>
+  <listitem>
+<para>Provides a scale factor to be applied to the DXF input. This can be used for DXF files
+that do not provide units information.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-t </option><emphasis remap='I'>tolerance</emphasis></term>
+  <listitem>
+<para>Specifies the maximum distance (in mm) between two vertices at which the two vertices
+will be considered to be the same vertex.</para>
+
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>The
+<emphasis remap='B'>file.dxf</emphasis>
+file is expected to be in the ASCII Autodesk DXF format as defined in the
+Autocad 2006 manuals. This converter handles entities of types:</para>
+
+<para>POLYLINE
+<!-- .br -->
+LWPOLYLINE
+<!-- .br -->
+LEADER
+<!-- .br -->
+DIMENSION
+<!-- .br -->
+VERTEX
+<!-- .br -->
+LINE
+<!-- .br -->
+CIRCLE
+<!-- .br -->
+ARC
+<!-- .br -->
+ELLIPSE
+<!-- .br -->
+3DFACE
+<!-- .br -->
+TEXT
+<!-- .br -->
+MTEXT
+<!-- .br -->
+ATTRIB
+<!-- .br -->
+SOLID
+<!-- .br -->
+SPLINE</para>
+
+<para>The POLYLINE entities in AUTOCAD are actually a container for numerous different entity types. The types
+of POLYLINE entities converted include:</para>
+
+<para>3D polylines
+<!-- .br -->
+3D polygon meshes
+<!-- .br -->
+polyface meshes.</para>
+
+<para>SOLID entities are 2D shapes with a solid fill, but this converter does not do
+any filling.
+Each layer is converted to a separate object. Colors are also converted.</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<literallayout remap='RS'>
+<synopsis>
+$ <emphasis remap='I'>dxf-g sample.dxf sample.g</emphasis>
+</synopsis>
+</literallayout> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><emphasis remap='I'>http://images.autodesk.com/adsk/files/dxf_format.pdf</emphasis></para>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1993-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -100,12 +100,6 @@ BRLCAD_ADDEXEC(iges-g "${iges-g_SRCS}" "libwdb;librt;libbn;libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(g-iges "g-iges.c;iges.c" "librt;libbu;${M_LIBRARY}")
 
-set(iges_MANS
-  g-iges.1
-  iges-g.1
-  )
-ADD_MAN_PAGES(1 iges_MANS)
-
 set(iges_ignore_files
   BrepHandler.cpp
   PullbackCurve.cpp
