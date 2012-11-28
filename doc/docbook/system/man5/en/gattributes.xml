@@ -68,7 +68,7 @@
   </para>
 
   <para>
-	<table><info><title>Core Attributes</title></info>
+	<table><title>Core Attributes</title>
 
 	   <tgroup cols="7">
 	     <colspec colname="c1"/>
@@ -243,19 +243,21 @@
 
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>
   </para>
 </refsection>
 
-<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+<refsection xml:id="see_also"><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>attr</refentrytitle><manvolnum>n</manvolnum></citerefentry>.</para>
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+</refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

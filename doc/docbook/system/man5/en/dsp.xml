@@ -5,6 +5,8 @@
 <refentrytitle>DSP</refentrytitle>
 <manvolnum>5</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='software'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>User Commands</refmiscinfo>
 </refmeta>
 <refnamediv>
 <refname>dsp</refname>
@@ -46,18 +48,19 @@ their dimensions can be automatically determined by using programs.</para>
 <para><citerefentry><refentrytitle>asc2dsp</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>, and above named programs.</para>
 </refsect1>
 
+  <refsect1 xml:id="author"><title>AUTHOR</title>
+      <para>BRL-CAD Team</para>
+  </refsect1>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
-
-  <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+  <refsect1 xml:id="copyright"><title>COPYRIGHT</title>
   <para>This software is Copyright (c) 2012-2012 United States Government as
   represented by the U.S. Army Research Laboratory. All rights reserved.</para>
-  </refsection>
+  </refsect1>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsect1 xml:id="bug_reports"><title>BUG REPORTS</title>
   <para>Reports of bugs or problems should be submitted via electronic
   mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.</para>
-  </refsection>
+  </refsect1>
 
 
 </refentry>
