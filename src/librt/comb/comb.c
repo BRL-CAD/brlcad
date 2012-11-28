@@ -453,21 +453,6 @@ rt_comb_export5(
 }
 
 
-/**
- * R T _ C O M B _ I M P O R T 5
- *
- * Read a combination object in v5 external (on-disk) format, and
- * convert it into the internal format described in rtgeom.h
- *
- * This is an unusual conversion, because some of the data is taken
- * from attributes, not just from the object body.  By the time this
- * is called, the attributes will already have been cracked into
- * ip->idb_avs, we get the attributes from there.
- *
- * Returns -
- * 0 OK
- * -1 FAIL
- */
 int
 rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		const mat_t mat, const struct db_i *dbip, struct resource *resp)

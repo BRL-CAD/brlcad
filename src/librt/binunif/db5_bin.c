@@ -213,11 +213,6 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 }
 
 
-/**
- * R T _ B I N U N I F _ D U M P
- *
- * Diagnostic routine
- */
 void
 rt_binunif_dump( struct rt_binunif_internal *bip) {
     RT_CK_BINUNIF(bip);
@@ -385,11 +380,6 @@ rt_binunif_describe( struct bu_vls *str,
     return 0;
 }
 
-/**
- * R T _ B I N U N I F _ F R E E
- *
- * Free the storage associated with a binunif_internal object
- */
 void
 rt_binunif_free( struct rt_binunif_internal *bip) {
     RT_CK_BINUNIF(bip);

@@ -66,16 +66,6 @@ static struct mem_map *rt_mem_freemap = MAP_NULL;	/* Freelist of buffers */
 #define M_TOVFL 00004	/* Top overflow */
 #define M_BOVFL 00010	/* Bottom overflow */
 
-/**
- * Takes:		& pointer of map,
- * size.
- *
- * Returns:	NULL Error
- * <addr> Otherwise
- *
- * Comments:
- * Algorithm is first fit.
- */
 size_t
 rt_memalloc(struct mem_map **pp, register size_t size)
 {
@@ -111,17 +101,6 @@ rt_memalloc(struct mem_map **pp, register size_t size)
     return addr;
 }
 
-
-/**
- * Takes:		& pointer of map,
- * size.
- *
- * Returns:	NULL Error
- * <addr> Otherwise
- *
- * Comments:
- * Algorithm is BEST fit.
- */
 struct mem_map *
 rt_memalloc_nosplit(struct mem_map **pp, register size_t size)
 {
@@ -159,15 +138,6 @@ rt_memalloc_nosplit(struct mem_map **pp, register size_t size)
     return best;
 }
 
-
-/**
- * Returns:	NULL Error
- * <addr> Otherwise
- *
- * Comments:
- * Algorithm is first fit.
- * Free space can be split
- */
 size_t
 rt_memget(struct mem_map **pp, register size_t size, off_t place)
 {
@@ -255,15 +225,6 @@ rt_memget_nosplit(struct mem_map **pp, register size_t size, size_t place)
 }
 
 
-/**
- * Takes:
- * size,
- * address.
- *
- * Comments:
- * The routine does not check for wrap around when increasing sizes
- * or changing addresses.  Other wrap-around conditions are flagged.
- */
 void
 rt_memfree(struct mem_map **pp, size_t size, off_t addr)
 {
@@ -356,10 +317,6 @@ rt_memfree(struct mem_map **pp, size_t size, off_t addr)
 }
 
 
-/**
- * Take everything on the current memory chain, and place it on the
- * freelist.
- */
 void
 rt_mempurge(struct mem_map **pp)
 {
@@ -381,9 +338,6 @@ rt_mempurge(struct mem_map **pp)
 }
 
 
-/**
- * Print a memory chain.
- */
 void
 rt_memprint(struct mem_map **pp)
 {
@@ -395,9 +349,6 @@ rt_memprint(struct mem_map **pp)
 }
 
 
-/**
- * Return all the storage used by the rt_mem_freemap.
- */
 void
 rt_memclose(void)
 {

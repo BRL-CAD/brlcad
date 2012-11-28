@@ -36,34 +36,16 @@
 #include "db.h"
 
 
-/**
- * global ray-trace geometry state
- */
 struct rt_g rt_g;
 
-/**
- * Resources for uniprocessor
- */
 struct resource rt_uniresource;
 
-/**
- * global nmg animation plot callback
- */
 void (*nmg_plot_anim_upcall)();
 
-/**
- * global nmg animation vblock callback
- */
 void (*nmg_vlblock_anim_upcall)();
 
-/**
- * global nmg mged display debug callback
- */
 void (*nmg_mged_debug_display_hack)();
 
-/**
- * edge use distance tolerance
- */
 double nmg_eue_dist = 0.05;
 
 /**
@@ -271,11 +253,6 @@ short arb4_edge_vertex_mapping[5][2] = {
 };
 
 
-/**
- * radius of a FASTGEN cline element.
- *
- * shared with rt/do.c
- */
 fastf_t rt_cline_radius = (fastf_t)-1.0;
 
 /**
@@ -313,12 +290,6 @@ const char *rt_vlist_cmd_descriptions[] = {
     "**unknown*"
 };
 
-/**
- * initial tree start for db tree walkers.
- *
- * Also used by converters in conv/ directory.  Don't forget to
- * initialize ts_dbip before use.
- */
 const struct db_tree_state rt_initial_tree_state = {
     RT_DBTS_MAGIC,		/* magic */
     0,				/* ts_dbip */

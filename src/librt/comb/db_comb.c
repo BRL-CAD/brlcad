@@ -97,11 +97,6 @@ db_comb_mat_categorize(const fastf_t *matp)
 }
 
 
-/**
- * D B _ T R E E _ N L E A V E S
- *
- * Return count of number of leaf nodes in this tree.
- */
 size_t
 db_tree_nleaves(const union tree *tp)
 {
@@ -141,21 +136,6 @@ db_tree_nleaves(const union tree *tp)
 }
 
 
-/**
- * D B _ F L A T T E N _ T R E E
- *
- * Take a binary tree in "V4-ready" layout (non-unions pushed below unions,
- * left-heavy), and flatten it into an array layout, ready for conversion
- * back to the GIFT-inspired V4 database format.
- *
- * This is done using the db_non_union_push() routine.
- *
- * If argument 'free' is non-zero, then
- * the non-leaf nodes are freed along the way, to prevent memory leaks.
- * In this case, the caller's copy of 'tp' will be invalid upon return.
- *
- * When invoked at the very top of the tree, the op argument must be OP_UNION.
- */
 struct rt_tree_array *
 db_flatten_tree(
     struct rt_tree_array *rt_tree_array,
@@ -197,11 +177,6 @@ db_flatten_tree(
 }
 
 
-/**
- * R T _ C O M B _ I M P O R T 4
- *
- * Import a combination record from a V4 database into internal form.
- */
 int
 rt_comb_import4(
     struct rt_db_internal *ip,
@@ -421,9 +396,6 @@ rt_comb_import4(
 }
 
 
-/**
- * R T _ C O M B _ E X P O R T 4
- */
 int
 rt_comb_export4(
     struct bu_external *ep,
@@ -594,12 +566,6 @@ rt_comb_export4(
 }
 
 
-/**
- * D B _ T R E E _ F L A T T E N _ D E S C R I B E
- *
- * Produce a GIFT-compatible listing, one "member" per line,
- * regardless of the structure of the tree we've been given.
- */
 void
 db_tree_flatten_describe(
     struct bu_vls *vls,
@@ -711,9 +677,6 @@ db_tree_flatten_describe(
 }
 
 
-/**
- * D B _ T R E E _ D E S C R I B E
- */
 void
 db_tree_describe(
     struct bu_vls *vls,
@@ -817,9 +780,6 @@ db_tree_describe(
 }
 
 
-/**
- * D B _ C O M B _ D E S C R I B E
- */
 void
 db_comb_describe(
     struct bu_vls *str,
@@ -902,11 +862,6 @@ rt_comb_ifree(struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ C O M B _ D E S C R I B E
- *
- * rt_functab[ID_COMBINATION].ft_describe() method
- */
 int
 rt_comb_describe(
     struct bu_vls *str,
@@ -930,15 +885,6 @@ rt_comb_describe(
 }
 
 
-/*==================== END g_comb.c / table.c interface ========== */
-
-/**
- * D B _ W R A P _ V 4 _ E X T E R N A L
- *
- * As the v4 database does not really have the notion of "wrapping",
- * this function writes the object name into the
- * proper place (a standard location in all granules).
- */
 void
 db_wrap_v4_external(struct bu_external *op, const char *name)
 {
@@ -952,19 +898,6 @@ db_wrap_v4_external(struct bu_external *op, const char *name)
 }
 
 
-/* Some export support routines */
-
-/**
- * D B _ C K _ L E F T _ H E A V Y _ T R E E
- *
- * Support routine for db_ck_v4gift_tree().
- * Ensure that the tree below 'tp' is left-heavy, i.e. that there are
- * nothing but solids on the right side of any binary operations.
- *
- * Returns -
- * -1 ERROR
- * 0 OK
- */
 int
 db_ck_left_heavy_tree(
     const union tree *tp,
@@ -994,21 +927,6 @@ db_ck_left_heavy_tree(
 }
 
 
-/**
- * D B _ C K _ V 4 G I F T _ T R E E
- *
- * Look a gift-tree in the mouth.
- * Ensure that this boolean tree conforms to the GIFT convention that
- * union operations must bind the loosest.
- * There are two stages to this check:
- * 1) Ensure that if unions are present they are all at the root of tree,
- * 2) Ensure non-union children of union nodes are all left-heavy
- * (nothing but solid nodes permitted on rhs of binary operators).
- *
- * Returns -
- * -1 ERROR
- * 0 OK
- */
 int
 db_ck_v4gift_tree(const union tree *tp)
 {
@@ -1036,15 +954,6 @@ db_ck_v4gift_tree(const union tree *tp)
 }
 
 
-/**
- * D B _ M K B O O L _ T R E E
- *
- * Given a rt_tree_array array, build a tree of "union tree" nodes
- * appropriately connected together.  Every element of the
- * rt_tree_array array used is replaced with a TREE_NULL.
- * Elements which are already TREE_NULL are ignored.
- * Returns a pointer to the top of the tree.
- */
 union tree *
 db_mkbool_tree(
     struct rt_tree_array *rt_tree_array,
@@ -1107,9 +1016,6 @@ db_mkbool_tree(
 }
 
 
-/**
- * D B _ M K G I F T _ T R E E
- */
 union tree *
 db_mkgift_tree(struct rt_tree_array *trees, size_t subtreecount, struct resource *resp)
 {
@@ -1171,13 +1077,6 @@ db_mkgift_tree(struct rt_tree_array *trees, size_t subtreecount, struct resource
 }
 
 
-/**
- * r t _ c o m b _ g e t _ c o l o r
- *
- * fills in rgb with the color for a given comb combination
- *
- * returns truthfully if a color could be got
- */
 int
 rt_comb_get_color(unsigned char rgb[3], const struct rt_comb_internal *comb)
 {

@@ -589,29 +589,6 @@ bundle_miss(register struct application *ap)
 }
 
 
-/**
- * Function for shooting a bundle of rays. Iteratively walks list of
- * rays contained in the application bundles xrays field 'b_rays'
- * passing each single ray to r_shootray().
- *
- * Input:
- *
- * bundle -  Pointer to an application_bundle structure.
- *
- * b_ap - Members in this single ray application structure should be
- * set in a similar fashion as when used with rt_shootray() with the
- * exception of a_hit() and a_miss(). Default implementations of these
- * routines are provided that simple update hit/miss counters and
- * attach the hit partitions and segments to the partition_bundle
- * structure. Users can still override this default functionality but
- * have to make sure to move the partition and segment list to the new
- * partition_bundle structure.
- *
- * b_hit() Routine to call when something is hit by the ray bundle.
- *
- * b_miss() Routine to call when ray bundle misses everything.
- *
- */
 int
 rt_shootrays(struct application_bundle *bundle)
 {

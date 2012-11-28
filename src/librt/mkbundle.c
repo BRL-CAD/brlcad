@@ -90,13 +90,6 @@ rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fa
 }
 
 
-/**
- * Make a bundle of rays around a main ray using a uniform rectangular
- * grid pattern with a circular extent.  The radius, gridsize is given
- * in mm.
- *
- * rp[0].r_dir must have unit length.
- */
 int
 rt_gen_circular_grid(struct xrays *rays, const struct xray *center_ray, fastf_t radius, const fastf_t *up_vector, fastf_t gridsize)
 {
@@ -118,15 +111,6 @@ rt_gen_circular_grid(struct xrays *rays, const struct xray *center_ray, fastf_t 
 }
 
 
-/**
- * Make a bundle of rays around a main ray using a uniform rectangular
- * grid pattern with an elliptical extent.
- *
- * avec and bvec a.  The gridsize is
- * given in mm.
- *
- * rp[0].r_dir must have unit length.
- */
 int
 rt_gen_elliptical_grid(struct xrays *rays, const struct xray *center_ray, const fastf_t *avec, const fastf_t *bvec, fastf_t gridsize)
 {

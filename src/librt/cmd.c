@@ -40,17 +40,6 @@
 #include "vmath.h"
 #include "raytrace.h"
 
-/*
- * R T _ R E A D _ C M D
- *
- * Read one semi-colon terminated string of arbitrary length from the
- * given file into a dynamically allocated buffer.  Various commenting
- * and escaping conventions are implemented here.
- *
- * Returns:
- * NULL on EOF
- * char * on good read
- */
 char *
 rt_read_cmd(register FILE *fp)
 {
@@ -106,11 +95,6 @@ rt_read_cmd(register FILE *fp)
 #define MAXWORDS 4096	/* Max # of args per command */
 
 
-/**
- * R T _ S P L I T _ C M D
- *
- * DEPRECATED: use bu_argv_from_string() instead
- */
 int
 rt_split_cmd(char **argv, int lim, char *lp)
 {
@@ -119,20 +103,6 @@ rt_split_cmd(char **argv, int lim, char *lp)
 }
 
 
-/*
- * R T _ D O _ C M D
- *
- * Slice up input buffer into whitespace separated "words", look up
- * the first word as a command, and if it has the correct number of
- * args, call that function.  Negative min/max values in the tp
- * command table effectively mean that they're not bounded.
- *
- * Expected to return -1 to halt command processing loop.
- *
- * Based heavily on mged/cmd.c by Chuck Kennedy.
- *
- * DEPRECATED: needs to migrate to libbu
- */
 int
 rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab *tp)
 /* FUTURE:  for globbing */

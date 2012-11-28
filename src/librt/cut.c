@@ -790,17 +790,6 @@ rt_split_mostly_empty_cells(struct rt_i *rtip, union cutter *cutp)
 }
 
 
-/**
- * R T _ C U T _ I T
- *
- * Go through all the solids in the model, given the model mins and
- * maxes, and generate a cutting tree.  A strategy better than
- * incrementally cutting each solid is to build a box node which
- * contains everything in the model, and optimize it.
- *
- * This is the main entry point into space partitioning from
- * rt_prep().
- */
 void
 rt_cut_it(register struct rt_i *rtip, int ncpu)
 {
@@ -960,15 +949,6 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
 }
 
 
-/**
- * R T _ C U T _ E X T E N D
- *
- * Add a solid into a given boxnode, extending the lists there.  This
- * is used only for building the root node, which will then be
- * subdivided.
- *
- * Solids with pieces go onto a special list.
- */
 void
 rt_cut_extend(register union cutter *cutp, struct soltab *stp, const struct rt_i *rtip)
 {
@@ -1794,13 +1774,6 @@ rt_ct_free(struct rt_i *rtip, register union cutter *cutp)
 }
 
 
-/**
- * R T _ P R _ C U T
- *
- * Print out a cut tree.
- *
- * lvl is recursion level.
- */
 void
 rt_pr_cut(const union cutter *cutp, int lvl)
 {
@@ -1888,13 +1861,6 @@ rt_pr_cut(const union cutter *cutp, int lvl)
 }
 
 
-/**
- * R T _ F R _ C U T
- *
- * Free a whole cut tree below the indicated node.  The strategy we
- * use here is to free everything BELOW the given node, so as not to
- * clobber rti_CutHead !
- */
 void
 rt_fr_cut(struct rt_i *rtip, register union cutter *cutp)
 {
@@ -2146,14 +2112,6 @@ rt_ct_measure(register struct rt_i *rtip, register union cutter *cutp, int depth
 }
 
 
-/*
- * R T _ C U T _ C L E A N
- *
- * The rtip->rti_CutFree list can not be freed directly because is
- * bulk allocated.  Fortunately, we have a list of all the
- * bu_malloc()'ed blocks.  This routine may be called before the first
- * frame is done, so it must be prepared for uninitialized items.
- */
 void
 rt_cut_clean(struct rt_i *rtip)
 {
@@ -2178,9 +2136,6 @@ rt_cut_clean(struct rt_i *rtip)
 }
 
 
-/*
- * R T _ P R _ C U T _ I N F O
- */
 void
 rt_pr_cut_info(const struct rt_i *rtip, const char *str)
 {
