@@ -98,7 +98,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
     /* translate to end of "original" cylinder */
     VADD2(tgc_ip->v, tgc_ip->v, tgc_ip->h);
 
-    /* no interuprts */
+    /* no interrupts */
     (void)signal(SIGINT, SIG_IGN);
 
     if ((dp = db_diradd(dbip, argv[2], -1L, 0, proto->d_flags, &proto->d_minor_type)) == RT_DIR_NULL) {

@@ -19,7 +19,7 @@
  */
 /** @file comb_bool_parse.y
  *
- *	YACC(1) specifiation to parse Boolean expressions for
+ *	YACC(1) specification to parse Boolean expressions for
  *			the 'c' command
  *
  *	This grammar recognizes the classical infix notation that allows

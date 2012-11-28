@@ -258,7 +258,7 @@ mktemp_comb(char *str)
 
 int save_comb(struct directory *dpold)
 {
-    /* Save a combination under a temporory name */
+    /* Save a combination under a temporary name */
 
     struct directory *dp;
     struct rt_db_internal intern;

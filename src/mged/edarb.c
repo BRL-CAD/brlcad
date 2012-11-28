@@ -991,7 +991,7 @@ f_permute(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
     /*
      * Reinstall the permuted vertices back into the temporary buffer,
-     * copying redundant vertices as necessay
+     * copying redundant vertices as necessary
      *
      *		-------+-------------------------
      *		 Solid |    Redundant storage

@@ -411,7 +411,7 @@ clear_sky_lum(fastf_t lz, fastf_t *Sky_elmt, fastf_t *Sun, fastf_t *Zenith)
  *
  * Table of solar irradiance values taken from WMO - No. 590,
  * "Commission for Instruments and Methods of Observation", Abridged
- * Final Report of the Eigth Session, Mexico City, 19-30 October 1981,
+ * Final Report of the Eighth Session, Mexico City, 19-30 October 1981,
  * pp. 71-5.
  *
  * Return the solar spectral irradiance through the atmosphere

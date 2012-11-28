@@ -19,7 +19,7 @@
  */
 /** @file comb_bool_scan.l
  *
- *	LEX(1) specifiation to scan Boolean expressions for
+ *	LEX(1) specification to scan Boolean expressions for
  *			the 'c' command
  *
  */
