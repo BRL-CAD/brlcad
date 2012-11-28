@@ -12,17 +12,14 @@
       </personname>
 
       <affiliation>
-	<address>
 	  <orgname>BRL-CAD Open Source</orgname>
+	<address>
 	  <email>devs@brlcad.org</email>
 	</address>
       </affiliation>
     </author>
 
     <author>
-      <contrib>
-	Armenian Translation
-      </contrib>
       <personname>
 	<firstname>Karen</firstname>
 	<surname>Mgebrova</surname>

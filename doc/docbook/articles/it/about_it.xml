@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<chapter id="wb_BRL-CAD_Overview-it">
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
 
   <title>Sommario</title>
 
@@ -434,4 +433,4 @@ possibile. La BRL-CAD Tutorial Series &#xFFFD; dedicata alla sua memoria.</para>
   </mediaobject>
 -->
 
-</chapter>
+</article>
