@@ -1547,7 +1547,7 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, size_t depth)
  * *massive* change in cut tree size.
  *
  * This version results in nbins=22, maxlen=3, avg=1.09, while new
- * vewsion results in nbins=42, maxlen=3, avg=1.667 (on moss.g).
+ * version results in nbins=42, maxlen=3, avg=1.667 (on moss.g).
  */
 HIDDEN int
 rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p, double *offcenter_p)

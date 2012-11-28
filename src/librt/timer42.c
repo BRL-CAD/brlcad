@@ -41,7 +41,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 
-static struct timeval time0;	/* Time at which timeing started */
+static struct timeval time0;	/* Time at which timing started */
 static struct rusage ru0;	/* Resource utilization at the start */
 static struct rusage ru0c;	/* Resource utilization at the start */
 

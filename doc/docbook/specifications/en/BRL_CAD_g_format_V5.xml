@@ -1589,7 +1589,7 @@ aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL
       <title>Object Body</title>
 
       <para>
-	The contents of the Object Body are opaque?? to the databaase layer. The contents of this element are interpreted
+	The contents of the Object Body are opaque?? to the database layer. The contents of this element are interpreted
 	based upon the Object_Type. The Object_Body is not constrained to start on a chunk boundary.
       </para>
     </section>

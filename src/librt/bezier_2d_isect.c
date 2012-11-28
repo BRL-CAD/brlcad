@@ -24,7 +24,7 @@
  * The following routines are for 2D Bezier curves
  *
  * The following routines are borrowed from Graphics Gems I, Academic
- * Press, Inc, 1990, Andrew S. Glassner (editor), "A Bezier
+ * Press, Inc., 1990, Andrew S. Glassner (editor), "A Bezier
  * Curve-based Root-finder", Philip J. Schneider.
  *
  * Modifications have been made for inclusion in BRL-CAD and to
