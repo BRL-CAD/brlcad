@@ -108,7 +108,7 @@ double
 SiUnit::GetLengthConversionFactor() {
     if (name == Si_unit_name__metre) {
 	double pf = GetPrefixFactor();
-	return 1000.0*pf; // local units millmeters
+	return 1000.0*pf; // local units millimeters
     }
     return 1.e3; //SiUnit for length better be Si_unit_name__metre
 }

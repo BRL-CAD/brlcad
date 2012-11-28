@@ -522,7 +522,7 @@ Get_views_visible(entno)
     struct views_visible *vv;
 
     if (dir[entno]->form != 3 && dir[entno]->form != 4) {
-	bu_log("Get_views_visible called for wrong form of Associatitivity entity\n");
+	bu_log("Get_views_visible called for wrong form of Associativity entity\n");
 	return (struct views_visible *)NULL;
     }
 

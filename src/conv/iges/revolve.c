@@ -122,7 +122,7 @@ revolve(int entityno)
 
     npts = Getcurve(curve, &curv_pts);
     if (npts == 0) {
-	bu_log("Could not get points along curve for revovling\n");
+	bu_log("Could not get points along curve for revolving\n");
 	bu_log("Illegal parameters for entity D%07d (%s)\n" ,
 	       dir[entityno]->direct, dir[entityno]->name);
 	return 0;

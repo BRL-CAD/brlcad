@@ -141,7 +141,7 @@ int	ndir;		/* Entries in directory.			*/
 /* Miscellaneous globals leftover from Keith's KARDS code.		*/
 int		delsol = 0, delreg = 0;
 char		buff[30];
-long		savsol;		/* File postion of # of solids & regions */
+long		savsol;		/* File position of # of solids & regions */
 
 /* Structures.								*/
 mat_t		identity;

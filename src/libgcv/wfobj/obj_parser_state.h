@@ -81,7 +81,7 @@ inline bool operator==(const tuple<T, N> &lhs, const tuple<T, N> &rhs)
 }
 
 /**
- *  Basic parser object, persistant across multiple file parsings
+ *  Basic parser object, persistent across multiple file parsings
  *
  *  Lifetime is controlled by the user via obj_parser_create
  *  and obj_parser_destroy.
