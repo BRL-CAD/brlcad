@@ -228,7 +228,7 @@ psecs(long int l, struct bu_vls *vp)
 
 
 /**
- * Compatability routine
+ * Compatibility routine
  */
 double
 rt_read_timer(char *str, int len)

@@ -433,7 +433,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 
 
 /**
- * Compatability stub.  Only uses 1 CPU.
+ * Compatibility stub.  Only uses 1 CPU.
  */
 void
 rt_prep(register struct rt_i *rtip)

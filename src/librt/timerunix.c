@@ -116,7 +116,7 @@ rt_get_timer(struct bu_vls *vp, double *elapsed)
 
 
 /**
- * Compatability routine
+ * Compatibility routine
  */
 double
 rt_read_timer(char *str, int len)
