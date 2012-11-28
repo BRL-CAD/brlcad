@@ -7,8 +7,6 @@ EXTRA_PROGRAMS = iges
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS} ${IGES_FLAGS}
 
-man_MANS = g-iges.1 iges-g.1
-
 noinst_HEADERS = \
 	PullbackCurve.h \
 	brlcad_brep.hpp \

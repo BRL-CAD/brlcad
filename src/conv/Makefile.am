@@ -388,48 +388,6 @@ noinst_HEADERS = \
 	patch/patch-g.h \
 	shp/shapelib/shapefil.h
 
-dist_man_MANS = \
-	asc/asc2g.1 \
-	asc/asc2pix.1 \
-	asc/g2asc.1 \
-	asc/pix2asc.1 \
-	bot_dump.1 \
-	bot_shell-vtk.1 \
-	comgeom/comgeom-g.1 \
-	conv-vg2g.1 \
-	cy-g.1 \
-	dbclean.1 \
-	dbupgrade.1 \
-	dxf/dxf-g.1 \
-	dxf/g-dxf.1 \
-	enf-g.1 \
-	euclid/euclid-g.1 \
-	euclid/g-euclid.1 \
-	fast4-g.1 \
-	g-acad.1 \
-	g-egg.1 \
-	g-nff.1 \
-	g-obj.1 \
-	g-shell-rect.1 \
-	g-var.1 \
-	g-vrml.1 \
-	g-x3d.1 \
-	nastran-g.1 \
-	nmg/asc-nmg.1 \
-	nmg/g-nmg.1 \
-	nmg/nmg-bot.1 \
-	nmg/nmg-rib.1 \
-	patch/patch-g.1 \
-	patch/rpatch.1 \
-	ply-g.1 \
-	poly-bot.1 \
-	proe-g.1 \
-	stl/g-stl.1 \
-	stl/stl-g.1 \
-	tankill/g-tankill.1 \
-	tankill/tankill-g.1 \
-	viewpoint-g.1
-
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 
 sample_applications_DATA = \

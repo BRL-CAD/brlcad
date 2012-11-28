@@ -12,8 +12,6 @@ vdeck_SOURCES = \
 
 noinst_HEADERS = std.h vextern.h
 
-man_MANS = vdeck.1
-
 DEPENDS = src/librt
 
 EXTRA_DIST = $(man_MANS) CMakeLists.txt
