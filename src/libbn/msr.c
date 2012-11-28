@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup msr */
 /** @{ */
 /** @file libbn/msr.c
@@ -45,36 +46,12 @@
 #define	BN_MSR_MAXTBL	4096	/* Size of random number tables. */
 
 
-/*	bn_unif_init	Initialize a random number structure.
- *
- * @par Entry
- *	setseed	seed to use
- *	method  method to use to generate numbers;
- *
- * @par Exit
- *	returns	a pointer to a bn_unif structure.
- *	returns 0 on error.
- *
- * @par Uses
- *	None.
- *
- * @par Calls
- *	bu_malloc
- *
- * @par Method @code
- *	malloc up a structure with pointers to the numbers
- *	get space for the integer table.
- *	get space for the floating table.
- *	set pointer counters
- *	set seed if one was given and setseed != 1
- @endcode
- *
- */
 #define	A	16807
 #define M	2147483647
 #define DM	2147483647.0
 #define Q	127773		/* Q = M / A */
 #define R	2836		/* R = M % A */
+
 struct bn_unif *
 bn_unif_init(long int setseed, int method)
 {
@@ -94,34 +71,7 @@ bn_unif_init(long int setseed, int method)
     return p;
 }
 
-/*	bn_unif_long_fill	fill a random number table.
- *
- * Use the msrad algorithm to fill a random number table
- * with values from 1 to 2^31-1.  These numbers can (and are) extracted from
- * the random number table via high speed macros and bn_unif_long_fill called
- * when the table is exhausted.
- *
- * @par Entry
- *	p	pointer to a bn_unif structure.
- *
- * @par Exit
- *	if (!p) returns 1 else returns a value between 1 and 2^31-1
- *
- * @par Calls
- *	None.  msran is inlined for speed reasons.
- *
- * @par Uses
- *	None.
- *
- * @par Method @code
- *	if (!p) return 1;
- *	if p->msr_longs != NULL
- *		msr_longs is reloaded with random numbers;
- *		msr_long_ptr is set to BN_MSR_MAXTBL
- *	endif
- *	msr_seed is updated.
- @endcode
-*/
+
 long
 bn_unif_long_fill(struct bn_unif *p)
 {
@@ -158,34 +108,7 @@ bn_unif_long_fill(struct bn_unif *p)
     return p->msr_seed;
 }
 
-/*	bn_unif_double_fill	fill a random number table.
- *
- * Use the msrad algorithm to fill a random number table
- * with values from -0.5 to 0.5.  These numbers can (and are) extracted from
- * the random number table via high speed macros and bn_unif_double_fill
- * called when the table is exhausted.
- *
- * @par Entry
- *	p	pointer to a bn_unif structure.
- *
- * @par Exit
- *	if (!p) returns 0.0 else returns a value between -0.5 and 0.5
- *
- * @par Calls
- *	None.  msran is inlined for speed reasons.
- *
- * @par Uses
- *	None.
- *
- * @par Method @code
- *	if (!p) return (0.0)
- *	if p->msr_longs != NULL
- *		msr_longs is reloaded with random numbers;
- *		msr_long_ptr is set to BN_MSR_MAXTBL
- *	endif
- *	msr_seed is updated.
- @endcode
-*/
+
 double
 bn_unif_double_fill(struct bn_unif *p)
 {
@@ -239,30 +162,7 @@ bn_unif_free(struct bn_unif *p)
 }
 
 
-/*	bn_gauss_init	Initialize a random number struct for gaussian
- *	numbers.
- *
- * @par Entry
- *	setseed		Seed to use.
- *	method		method to use to generate numbers (not used)
- *
- * @par Exit
- *	Returns a pointer toa bn_msr_gauss structure.
- *	returns 0 on error.
- *
- * @par Calls
- *	bu_malloc
- *
- * @par Uses
- *	None.
- *
- * @par Method @code
- *	malloc up a structure
- *	get table space
- *	set seed and pointer.
- *	if setseed != 0 then seed = setseed
- @endcode
-*/
+
 struct bn_gauss *
 bn_gauss_init(long int setseed, int method)
 {
@@ -283,37 +183,7 @@ bn_gauss_init(long int setseed, int method)
     return p;
 }
 
-/*	bn_gauss_fill	fill a random number table.
- *
- * Use the msrad algorithm to fill a random number table.
- * hese numbers can (and are) extracted from
- * the random number table via high speed macros and bn_msr_gauss_fill
- * called when the table is exhausted.
- *
- * @par Entry
- *	p	pointer to a bn_msr_gauss structure.
- *
- * @par Exit
- *	if (!p) returns 0.0 else returns a value with a mean of 0 and
- *	    a variance of 1.0.
- *
- * @par Calls
- *	BN_UNIF_CIRCLE to get to uniform random number whos radius is
- *	<= 1.0. I.e. sqrt(v1*v1 + v2*v2) <= 1.0
- *	BN_UNIF_CIRCLE is a macro which can call bn_unif_double_fill.
- *
- * @par Uses
- *	None.
- *
- * @par Method @code
- *	if (!p) return (0.0)
- *	if p->msr_longs != NULL
- *		msr_longs is reloaded with random numbers;
- *		msr_long_ptr is set to BN_MSR_MAXTBL
- *	endif
- *	msr_seed is updated.
- @endcode
-*/
+
 double
 bn_gauss_fill(struct bn_gauss *p)
 {
@@ -342,9 +212,8 @@ bn_gauss_fill(struct bn_gauss *p)
     fac = sqrt(-2.0*log(r)/r);
     return v1*fac;
 }
-/*	bn_gauss_free	free random number table
- *
- */
+
+
 void
 bn_gauss_free(struct bn_gauss *p)
 {

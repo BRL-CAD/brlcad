@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup noise */
 /** @{ */
 /** @file libbn/noise.c
@@ -219,18 +220,6 @@ bn_noise_init(void)
 }
 
 
-/**
- *@brief
- * Robert Skinner's Perlin-style "Noise" function
- *
- * Results are in the range [-0.5 .. 0.5].  Unlike many
- * implementations, this function provides random noise at the integer
- * lattice values.  However this produces much poorer quality and
- * should be avoided if possible.
- *
- * The power distribution of the result has no particular shape,
- * though it isn't as flat as the literature would have one believe.
- */
 double
 bn_noise_perlin(fastf_t *point)
 {
@@ -308,9 +297,6 @@ bn_noise_perlin(fastf_t *point)
 }
 
 
-/**
- * Vector-valued "Noise"
- */
 void
 bn_noise_vec(fastf_t *point, fastf_t *result)
 {
@@ -542,32 +528,6 @@ find_spec_wgt(double h, double l, double o)
 }
 
 
-/**
- * @brief
- * Procedural fBm evaluated at "point"; returns value stored in
- * "value".
- *
- * @param point          location to sample noise
- * @param ``h_val''      fractal increment parameter
- * @param ``lacunarity'' gap between successive frequencies
- * @param ``octaves''  	 number of frequencies in the fBm
- *
- * The spectral properties of the result are in the APPROXIMATE range
- * [-1..1] Depending upon the number of octaves computed, this range
- * may be exceeded.  Applications should clamp or scale the result to
- * their needs.  The results have a more-or-less gaussian
- * distribution.  Typical results for 1M samples include:
- *
- * @li Min -1.15246
- * @li Max  1.23146
- * @li Mean -0.0138744
- * @li s.d.  0.306642
- * @li Var 0.0940295
- *
- * The function call pow() is relatively expensive.  Therfore, this
- * function pre-computes and saves the spectral weights in a table for
- * re-use in successive invocations.
- */
 double
 bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
 {
@@ -612,32 +572,6 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
 } /* bn_noise_fbm() */
 
 
-/**
- * @brief
- * Procedural turbulence evaluated at "point";
- *
- * @return turbulence value for point
- *
- * @param point          location to sample noise at
- * @param ``h_val''      fractal increment parameter
- * @param ``lacunarity'' gap between successive frequencies
- * @param ``octaves''    number of frequencies in the fBm
- *
- * The result is characterized by sharp, narrow trenches in low values
- * and a more fbm-like quality in the mid-high values.  Values are in
- * the APPROXIMATE range [0 .. 1] depending upon the number of octaves
- * evaluated.  Typical results:
- @code
- * Min  0.00857137
- * Max  1.26712
- * Mean 0.395122
- * s.d. 0.174796
- * Var  0.0305536
- @endcode
- * The function call pow() is relatively expensive.  Therfore, this
- * function pre-computes and saves the spectral weights in a table for
- * re-use in successive invocations.
- */
 double
 bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 {
@@ -708,12 +642,6 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 } /* bn_noise_turb() */
 
 
-/**
- *@brief
- * A ridged noise pattern
- *
- * From "Texturing and Modeling, A Procedural Approach" 2nd ed p338
- */
 double
 bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves, double offset)
 {
@@ -769,10 +697,6 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
 }
 
 
-/**
- *
- * From "Texturing and Modeling, A Procedural Approach" 2nd ed
- */
 double
 bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, double offset)
 {

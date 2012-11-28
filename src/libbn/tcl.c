@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup bntcl */
 /** @{ */
 /** @file libbn/tcl.c
@@ -39,12 +40,6 @@
 #include "vmath.h"
 #include "bn.h"
 
-/* Support routines for the math functions */
-
-/* XXX Really need a decode_array function that uses atof(),
- * XXX so that junk like leading { and commas between inputs
- * XXX don't spoil the conversion.
- */
 
 int
 bn_decode_mat(fastf_t *mat, const char *str)
@@ -966,9 +961,6 @@ bn_cmd_random(ClientData UNUSED(clientData),
 }
 
 
-/**
- * B N _ M A T _ P R I N T
- */
 void
 bn_tcl_mat_print(Tcl_Interp *interp,
 		 const char *title,
@@ -981,12 +973,6 @@ bn_tcl_mat_print(Tcl_Interp *interp,
 }
 
 
-/**
- * B N _ T C L _ S E T U P
- *@brief
- * Add all the supported Tcl interfaces to LIBBN routines to
- * the list of commands known by the given interpreter.
- */
 void
 bn_tcl_setup(Tcl_Interp *interp)
 {
@@ -1021,14 +1007,6 @@ bn_tcl_setup(Tcl_Interp *interp)
 }
 
 
-/**
- * B N _ I N I T
- *@brief
- * Allows LIBBN to be dynamically loade to a vanilla tclsh/wish with
- * "load /usr/brlcad/lib/libbn.so"
- *
- * The name of this function is specified by TCL.
- */
 int
 Bn_Init(Tcl_Interp *interp)
 {

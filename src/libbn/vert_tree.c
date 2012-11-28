@@ -73,12 +73,6 @@ union vert_tree {
 #define VERT_NODE	'n'
 
 
-/**		C R E A T E _ V E R T _ T R E E
- *@brief
- *	routine to create a vertex tree.
- *
- *	Possible refinements include specifying an initial size
- */
 struct vert_root *
 create_vert_tree()
 {
@@ -95,12 +89,6 @@ create_vert_tree()
     return tree;
 }
 
-/**		C R E A T E _ V E R T _ T R E E _ W _ N O R M S
- *@brief
- *	routine to create a vertex tree.
- *
- *	Possible refinements include specifying an initial size
- */
 struct vert_root *
 create_vert_tree_w_norms()
 {
@@ -133,11 +121,6 @@ clean_vert_tree_recurse( union vert_tree *ptr )
 
 }
 
-/**		C L E A N _ V E R T _ T R E E
- *@brief
- *	Routine to free the binary search tree and reset the current number of vertices.
- *	The vertex array is left untouched, for re-use later.
- */
 void
 clean_vert_tree( struct vert_root *tree_root )
 {
@@ -149,7 +132,6 @@ clean_vert_tree( struct vert_root *tree_root )
     tree_root->the_tree = (union vert_tree *)NULL;
     tree_root->curr_vert = 0;
 }
-
 
 /**		F R E E _ V E R T_ T R E E_ R E C U R S E
  *@brief
@@ -167,10 +149,6 @@ free_vert_tree_recurse( union vert_tree *ptr )
 
 }
 
-/**		F R E E _ V E R T_ T R E E
- *@brief
- *	Routine to free a vertex tree and all associated dynamic memory
- */
 void
 free_vert_tree( struct vert_root *vert_root )
 {
@@ -197,12 +175,6 @@ free_vert_tree( struct vert_root *vert_root )
     vert_root->max_vert = 0;
 }
 
-/**		A D D _ V E R T
- *@brief
- *	Routine to add a vertex to the current list of part vertices.
- *	The array is re-alloc'd if needed.
- *	Returns index into the array of vertices where this vertex is stored
- */
 int
 Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t local_tol_sq )
 {
@@ -322,12 +294,6 @@ Add_vert( double x, double y, double z, struct vert_root *vert_root, fastf_t loc
     return new_leaf->vleaf.index;
 }
 
-/**		A D D _ V E R T _ A N D _ N O R M
- *@brief
- *	Routine to add a vertex and a normal to the current list of part vertices.
- *	The array is re-alloc'd if needed.
- *	Returns index into the array of vertices where this vertex and normal is stored
- */
 int
 Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz, struct vert_root *vert_root, fastf_t local_tol_sq )
 {

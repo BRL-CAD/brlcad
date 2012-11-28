@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup plot */
 /** @{ */
 /** @file libbn/vectfont.c
@@ -56,11 +57,7 @@
 
 int *tp_cindex[256];	/* index to stroke tokens */
 
-/**
- * @brief
- *  Once-only setup routine
- *  Used by libplot3/symbol.c, so it can't be static.
- */
+
 void
 tp_setup(void)
 {

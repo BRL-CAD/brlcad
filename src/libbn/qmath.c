@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup mat */
 /** @{ */
 /** @file libbn/qmath.c
@@ -61,11 +62,6 @@
 #include "bn.h"
 
 
-/**
- *			Q U A T _ M A T 2 Q U A T
- *@brief
- *  Convert Matrix to Quaternion.
- */
 void
 quat_mat2quat(register fastf_t *quat, register const fastf_t *mat)
 {
@@ -125,14 +121,7 @@ quat_mat2quat(register fastf_t *quat, register const fastf_t *mat)
 #undef MMM
 }
 
-/**
- *			Q U A T _ Q U A T 2 M A T
- *@brief
- *  Convert Quaternion to Matrix.
- *
- * NB: This only works for UNIT quaternions.  We may get imaginary results
- *   otherwise.  We should normalize first (still yields same rotation).
- */
+
 void
 quat_quat2mat(register fastf_t *mat, register const fastf_t *quat)
 {
@@ -159,11 +148,7 @@ quat_quat2mat(register fastf_t *mat, register const fastf_t *quat)
     mat[15] = 1.0;
 }
 
-/**
- *			Q U A T _ D I S T A N C E
- *@brief
- * Gives the euclidean distance between two quaternions.
- */
+
 double
 quat_distance(const fastf_t *q1, const fastf_t *q2)
 {
@@ -173,14 +158,7 @@ quat_distance(const fastf_t *q1, const fastf_t *q2)
     return QMAGNITUDE( qtemp );
 }
 
-/**
- *			Q U A T _ D O U B L E
- *@brief
- * Gives the quaternion point representing twice the rotation
- *   from q1 to q2.
- *   Needed for patching Bezier curves together.
- *   A rather poor name admittedly.
- */
+
 void
 quat_double(fastf_t *qout, const fastf_t *q1, const fastf_t *q2)
 {
@@ -193,13 +171,7 @@ quat_double(fastf_t *qout, const fastf_t *q1, const fastf_t *q2)
     QUNITIZE( qout );
 }
 
-/**
- *			Q U A T _ B I S E C T
- *@brief
- * Gives the bisector of quaternions q1 and q2.
- * (Could be done with quat_slerp and factor 0.5)
- * [I believe they must be unit quaternions this to work]
- */
+
 void
 quat_bisect(fastf_t *qout, const fastf_t *q1, const fastf_t *q2)
 {
@@ -207,15 +179,7 @@ quat_bisect(fastf_t *qout, const fastf_t *q1, const fastf_t *q2)
     QUNITIZE( qout );
 }
 
-/**
- *			Q U A T _ S L E R P
- *@brief
- * Do Spherical Linear Interpolation between two unit quaternions
- *  by the given factor.
- *
- * As f goes from 0 to 1, qout goes from q1 to q2.
- * Code based on code by Ken Shoemake
- */
+
 void
 quat_slerp(fastf_t *qout, const fastf_t *q1, const fastf_t *q2, double f)
 {
@@ -260,16 +224,7 @@ quat_slerp(fastf_t *qout, const fastf_t *q1, const fastf_t *q2, double f)
     }
 }
 
-/**
- *			Q U A T _ S B E R P
- *@brief
- * Spherical Bezier Interpolate between four quaternions by amount f.
- * These are intended to be used as start and stop quaternions along
- *   with two control quaternions chosen to match spline segments with
- *   first order continuity.
- *
- *  Uses the method of successive bisection.
- */
+
 void
 quat_sberp(fastf_t *qout, const fastf_t *q1, const fastf_t *qa, const fastf_t *qb, const fastf_t *q2, double f)
 {
@@ -288,16 +243,7 @@ quat_sberp(fastf_t *qout, const fastf_t *q1, const fastf_t *qa, const fastf_t *q
     quat_slerp( qout, p4, p5, f );
 }
 
-/**
- *			Q U A T _ M A K E _ N E A R E S T
- *@brief
- *  Set the quaternion q1 to the quaternion which yields the
- *   smallest rotation from q2 (of the two versions of q1 which
- *   produce the same orientation).
- *
- * Note that smallest euclidian distance implies smallest great
- *   circle distance as well (since surface is convex).
- */
+
 void
 quat_make_nearest(fastf_t *q1, const fastf_t *q2)
 {
@@ -314,9 +260,7 @@ quat_make_nearest(fastf_t *q1, const fastf_t *q2)
     }
 }
 
-/**
- *			Q U A T _ P R I N T
- */
+
 /* DEBUG ROUTINE */
 void
 quat_print(const char *title, const fastf_t *quat)
@@ -336,12 +280,7 @@ quat_print(const char *title, const fastf_t *quat)
 	     axis[X], axis[Y], axis[Z] );
 }
 
-/**
- *			Q U A T _ E X P
- *@brief
- *  Exponentiate a quaternion, assuming that the scalar part is 0.
- *  Code by Ken Shoemake.
- */
+
 void
 quat_exp(fastf_t *out, const fastf_t *in)
 {
@@ -357,12 +296,7 @@ quat_exp(fastf_t *out, const fastf_t *in)
     out[W] = cos(theta);
 }
 
-/**
- *			Q U A T _ L O G
- *@brief
- *  Take the natural logarithm of a unit quaternion.
- *  Code by Ken Shoemake.
- */
+
 void
 quat_log(fastf_t *out, const fastf_t *in)
 {

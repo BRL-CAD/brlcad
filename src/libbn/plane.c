@@ -38,11 +38,7 @@
 
 #define UNIT_SQ_TOL 1.0e-13
 
-/**
- * B N _ D I S T _ P T 3 _ P T 3
- * @brief
- * Returns distance between two points.
- */
+
 double
 bn_dist_pt3_pt3(const fastf_t *a, const fastf_t *b)
 {
@@ -53,12 +49,6 @@ bn_dist_pt3_pt3(const fastf_t *a, const fastf_t *b)
 }
 
 
-/**
- * B N _ P T 3 _ P T 3 _ E Q U A L
- *
- * @return 1	if the two points are equal, within the tolerance
- * @return 0	if the two points are not "the same"
- */
 int
 bn_pt3_pt3_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
@@ -103,17 +93,6 @@ bn_pt2_pt2_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 }
 
 
-/**
- * B N _ 3 P T S _ C O L L I N E A R
- * @brief
- * Check to see if three points are collinear.
- *
- * The algorithm is designed to work properly regardless of the order
- * in which the points are provided.
- *
- * @return 1	If 3 points are collinear
- * @return 0	If they are not
- */
 int
 bn_3pts_collinear(fastf_t *a, fastf_t *b, fastf_t *c, const struct bn_tol *tol)
 {
@@ -166,16 +145,6 @@ bn_3pts_collinear(fastf_t *a, fastf_t *b, fastf_t *c, const struct bn_tol *tol)
 }
 
 
-/**
- * B N _ 3 P T S _ D I S T I N C T
- *
- * Check to see if three points are all distinct, i.e., ensure that
- * there is at least sqrt(dist_tol_sq) distance between every pair of
- * points.
- *
- * @return 1 If all three points are distinct
- * @return 0 If two or more points are closer together than dist_tol_sq
- */
 int
 bn_3pts_distinct(const fastf_t *a, const fastf_t *b, const fastf_t *c, const struct bn_tol *tol)
 {
@@ -194,16 +163,6 @@ bn_3pts_distinct(const fastf_t *a, const fastf_t *b, const fastf_t *c, const str
 }
 
 
-/**
- * B N _ N P T S _ D I S T I N C T
- *
- * Check to see if the points are all distinct, i.e., ensure that
- * there is at least sqrt(dist_tol_sq) distance between every pair of
- * points.
- *
- * @return 1 If all the points are distinct
- * @return 0 If two or more points are closer together than dist_tol_sq
- */
 int
 bn_npts_distinct(const int npt, const point_t *pts, const struct bn_tol *tol)
 {
@@ -222,50 +181,6 @@ bn_npts_distinct(const int npt, const point_t *pts, const struct bn_tol *tol)
 }
 
 
-/**
- * B N _ M K _ P L A N E _ 3 P T S
- *
- * Find the equation of a plane that contains three points.  Note that
- * normal vector created is expected to point out (see vmath.h), so
- * the vector from A to C had better be counter-clockwise (about the
- * point A) from the vector from A to B.  This follows the BRL-CAD
- * outward-pointing normal convention, and the right-hand rule for
- * cross products.
- *
- @verbatim
- *
- *			C
- *	                *
- *	                |\
- *	                | \
- *	   ^     N      |  \
- *	   |      \     |   \
- *	   |       \    |    \
- *	   |C-A     \   |     \
- *	   |         \  |      \
- *	   |          \ |       \
- *	               \|        \
- *	                *---------*
- *	                A         B
- *			   ----->
- *		            B-A
- @endverbatim
- *
- * If the points are given in the order A B C (e.g.,
- * *counter*-clockwise), then the outward pointing surface normal:
- *
- * N = (B-A) x (C-A).
- *
- *  @return 0	OK
- *  @return -1	Failure.  At least two of the points were not distinct,
- *		or all three were colinear.
- *
- * @param[out]	plane	The plane equation is stored here.
- * @param[in]	a	point 1
- * @param[in]	b	point 2
- * @param[in]	c	point 3
- * @param[in]	tol	Tolerance values for doing calculation
- */
 int
 bn_mk_plane_3pts(fastf_t *plane,
 		 const fastf_t *a,
@@ -303,34 +218,6 @@ bn_mk_plane_3pts(fastf_t *plane,
 }
 
 
-/**
- * B N _ M K P O I N T _ 3 P L A N E S
- *@brief
- * Given the description of three planes, compute the point of intersection, if
- * any. The direction vectors of the planes need not be of unit length.
- *
- * Find the solution to a system of three equations in three unknowns:
- @verbatim
- * Px * Ax + Py * Ay + Pz * Az = -A3;
- * Px * Bx + Py * By + Pz * Bz = -B3;
- * Px * Cx + Py * Cy + Pz * Cz = -C3;
- *
- * OR
- *
- * [ Ax  Ay  Az ]   [ Px ]   [ -A3 ]
- * [ Bx  By  Bz ] * [ Py ] = [ -B3 ]
- * [ Cx  Cy  Cz ]   [ Pz ]   [ -C3 ]
- *
- @endverbatim
- *
- * @return 0	OK
- * @return -1	Failure.  Intersection is a line or plane.
- *
- * @param[out] pt	The point of intersection is stored here.
- * @param	a	plane 1
- * @param	b	plane 2
- * @param	c	plane 3
- */
 int
 bn_mkpoint_3planes(fastf_t *pt, const fastf_t *a, const fastf_t *b, const fastf_t *c)
 {
@@ -384,17 +271,6 @@ bn_mkpoint_3planes(fastf_t *pt, const fastf_t *a, const fastf_t *b, const fastf_
 }
 
 
-/**
- * B N _ 2 L I N E 3 _ C O L I N E A R
- * @brief
- * Returns non-zero if the 3 lines are colinear to within tol->dist
- * over the given distance range.
- *
- * Range should be at least one model diameter for most applications.
- * 1e5 might be OK for a default for "vehicle sized" models.
- *
- * The direction vectors do not need to be unit length.
- */
 int
 bn_2line3_colinear(const fastf_t *p1,
 		   const fastf_t *d1,
@@ -442,31 +318,6 @@ fail:
 }
 
 
-/**
- * Find the distance from a point P to a line described by the
- * endpoint A and direction dir, and the point of closest approach
- * (PCA).
- *
- @code
-			P
-		       *
-		      /.
-		     / .
-		    /  .
-		   /   . (dist)
-		  /    .
-		 /     .
-		*------*-------->
-		A      PCA    dir
- @endcode
- * There are three distinct cases, with these return codes -
- *   0 => P is within tolerance of point A.  *dist = 0, pca=A.
- *   1 => P is within tolerance of line.  *dist = 0, pca=computed.
- *   2 => P is "above/below" line.  *dist=|PCA-P|, pca=computed.
- *
- * TODO: For efficiency, a version of this routine that provides the
- * distance squared would be faster.
- */
 int
 bn_dist_pt3_line3(fastf_t *dist, fastf_t *pca, const fastf_t *a, const fastf_t *dir, const fastf_t *p, const struct bn_tol *tol)
 {
@@ -514,25 +365,6 @@ bn_dist_pt3_line3(fastf_t *dist, fastf_t *pca, const fastf_t *a, const fastf_t *
 }
 
 
-/**
- * Calculate closest approach of two lines
- *
- * returns:
- *	-2 -> lines are parallel and do not intersect
- *	-1 -> lines are parallel and collinear
- *	 0 -> lines intersect
- *	 1 -> lines do not intersect
- *
- * For return values less than zero, dist is not set.  For return
- * values of 0 or 1, dist[0] is the distance from p1 in the d1
- * direction to the point of closest approach for that line.  Similar
- * for the second line.  d1 and d2 must be unit direction vectors.
- *
- * XXX How is this different from bn_isect_line3_line3() ?
- * XXX Why are the calling sequences just slightly different?
- * XXX Can we pick the better one, and get rid of the other one?
- * XXX If not, can we document how they differ?
- */
 int
 bn_dist_line3_line3(fastf_t *dist, const fastf_t *p1, const fastf_t *d1, const fastf_t *p2, const fastf_t *d2, const struct bn_tol *tol)
 {
@@ -591,27 +423,6 @@ bn_dist_line3_line3(fastf_t *dist, const fastf_t *p1, const fastf_t *d1, const f
 }
 
 
-/**
- * calculate intersection or closest approach of a line and a line
- * segment.
- *
- * returns:
- *	-2 -> line and line segment are parallel and collinear.
- *	-1 -> line and line segment are parallel, not collinear.
- *	 0 -> intersection between points a and b.
- *	 1 -> intersection outside a and b.
- *	 2 -> closest approach is between a and b.
- *	 3 -> closest approach is outside a and b.
- *
- * dist[0] is actual distance from p in d direction to
- * closest portion of segment.
- * dist[1] is ratio of distance from a to b (0.0 at a, and 1.0 at b),
- * dist[1] may be less than 0 or greater than 1.
- * For return values less than 0, closest approach is defined as
- * closest to point p.
- * Direction vector, d, must be unit length.
- *
- */
 int
 bn_dist_line3_lseg3(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
@@ -665,26 +476,6 @@ bn_dist_line3_lseg3(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fas
 }
 
 
-/**
- * B N _ I S E C T _ L I N E 3 _ P L A N E
- *
- * Intersect an infinite line (specified in point and direction vector
- * form) with a plane that has an outward pointing normal.  The
- * direction vector need not have unit length.  The first three
- * elements of the plane equation must form a unit length vector.
- *
- * @return -2	missed (ray is outside halfspace)
- * @return -1	missed (ray is inside)
- * @return 0	line lies on plane
- * @return 1	hit (ray is entering halfspace)
- * @return 2	hit (ray is leaving)
- *
- * @param[out]	dist	set to the parametric distance of the intercept
- * @param[in]	pt	origin of ray
- * @param[in]	dir	direction of ray
- * @param[in]	plane	equation of plane
- * @param[in]	tol	tolerance values
- */
 int
 bn_isect_line3_plane(fastf_t *dist,
 		     const fastf_t *pt,
@@ -725,30 +516,6 @@ bn_isect_line3_plane(fastf_t *dist,
 }
 
 
-/**
- * B N _ I S E C T _ 2 P L A N E S
- *@brief
- * Given two planes, find the line of intersection between them, if
- * one exists.  The line of intersection is returned in parametric
- * line (point & direction vector) form.
- *
- * In order that all the geometry under consideration be in "front" of
- * the ray, it is necessary to pass the minimum point of the model
- * RPP.  If this convention is unnecessary, just pass (0, 0, 0) as
- * rpp_min.
- *
- * @return 0	success, line of intersection stored in 'pt' and 'dir'
- * @return -1	planes are coplanar
- * @return -2	planes are parallel but not coplanar
- * @return -3	error, should be intersection but unable to find
- *
- * @param[out]	pt	Starting point of line of intersection
- * @param[out]	dir	Direction vector of line of intersection (unit length)
- * @param[in]	a	plane 1 (normal must be unit length)
- * @param[in]	b	plane 2 (normal must be unit length)
- * @param[in]	rpp_min	minimum poit of model RPP
- * @param[in]	tol	tolerance values
- */
 int
 bn_isect_2planes(fastf_t *pt,
 		 fastf_t *dir,
@@ -836,48 +603,6 @@ bn_isect_2planes(fastf_t *pt,
 }
 
 
-/**
- * B N _ I S E C T _ L I N E 2 _ L I N E 2
- *
- * Intersect two lines, each in given in parametric form:
- @verbatim
-
- X = P + t * D
- and
- X = A + u * C
-
- @endverbatim
- *
- * While the parametric form is usually used to denote a ray (i.e.,
- * positive values of the parameter only), in this case the full line
- * is considered.
- *
- * The direction vectors C and D need not have unit length.
- *
- * @return -1	no intersection, lines are parallel.
- * @return 0	lines are co-linear
- *@n			dist[0] gives distance from P to A,
- *@n			dist[1] gives distance from P to (A+C) [not same as below]
- * @return 1	intersection found (t and u returned)
- *@n			dist[0] gives distance from P to isect,
- *@n			dist[1] gives distance from A to isect.
- *
- * @param dist When explicit return > 0, dist[0] and dist[1] are the
- * line parameters of the intersection point on the 2 rays.  The
- * actual intersection coordinates can be found by substituting either
- * of these into the original ray equations.
- *
- * @param p	point of first line
- * @param d	direction of first line
- * @param a	point of second line
- * @param c	direction of second line
- * @param tol	tolerance values
- *
- * Note that for lines which are very nearly parallel, but not quite
- * parallel enough to have the determinant go to "zero", the
- * intersection can turn up in surprising places.  (e.g. when
- * det=1e-15 and det1=5.5e-17, t=0.5)
- */
 int
 bn_isect_line2_line2(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fastf_t *a, const fastf_t *c, const struct bn_tol *tol)
 /* dist[2] */
@@ -1032,43 +757,6 @@ bn_isect_line2_line2(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fa
 }
 
 
-/**
- * B N _ I S E C T _ L I N E 2 _ L S E G 2
- *@brief
- * Intersect a line in parametric form:
- *
- * X = P + t * D
- *
- * with a line segment defined by two distinct points A and B=(A+C).
- *
- * XXX probably should take point B, not vector C.  Sigh.
- *
- * @return -4	A and B are not distinct points
- * @return -3	Lines do not intersect
- * @return -2	Intersection exists, but outside segment, < A
- * @return -1	Intersection exists, but outside segment, > B
- * @return 0	Lines are co-linear (special meaning of dist[1])
- * @return 1	Intersection at vertex A
- * @return 2	Intersection at vertex B (A+C)
- * @return 3	Intersection between A and B
- *
- * Implicit Returns -
- * @param dist	When explicit return >= 0, t is the parameter that describes
- *		the intersection of the line and the line segment.
- *		The actual intersection coordinates can be found by
- *		solving P + t * D.  However, note that for return codes
- *		1 and 2 (intersection exactly at a vertex), it is
- *		strongly recommended that the original values passed in
- *		A or B are used instead of solving P + t * D, to prevent
- *		numeric error from creeping into the position of
- *		the endpoints.
- *
- * @param p	point of first line
- * @param d	direction of first line
- * @param a	point of second line
- * @param c	direction of second line
- * @param tol	tolerance values
- */
 int
 bn_isect_line2_lseg2(fastf_t *dist,
 		     const fastf_t *p,
@@ -1242,37 +930,6 @@ out:
 }
 
 
-/**
- * B N _ I S E C T _ L S E G 2 _ L S E G 2
- *@brief
- * Intersect two 2D line segments, defined by two points and two
- * vectors.  The vectors are unlikely to be unit length.
- *
- * @return -2	missed (line segments are parallel)
- * @return -1	missed (colinear and non-overlapping)
- * @return 0	hit (line segments colinear and overlapping)
- * @return 1	hit (normal intersection)
- *
- * @param dist  The value at dist[] is set to the parametric distance of the
- *		intercept.
- *@n	dist[0] is parameter along p, range 0 to 1, to intercept.
- *@n	dist[1] is parameter along q, range 0 to 1, to intercept.
- *@n	If within distance tolerance of the endpoints, these will be
- *	exactly 0.0 or 1.0, to ease the job of caller.
- *
- * Special note: when return code is "0" for co-linearity, dist[1] has
- * an alternate interpretation: it's the parameter along p (not q)
- * which takes you from point p to the point (q + qdir), i.e., its
- * the endpoint of the q linesegment, since in this case there may be
- * *two* intersections, if q is contained within span p to (p + pdir).
- * And either may be -10 if the point is outside the span.
- *
- * @param p	point 1
- * @param pdir	direction1
- * @param q	point 2
- * @param qdir	direction2
- * @param tol	tolerance values
- */
 int
 bn_isect_lseg2_lseg2(fastf_t *dist,
 		     const fastf_t *p,
@@ -1344,46 +1001,6 @@ bn_isect_lseg2_lseg2(fastf_t *dist,
 }
 
 
-/**
- * B N _ I S E C T _ L S E G 3 _ L S E G 3
- *@brief
- * Intersect two 3D line segments, defined by two points and two
- * vectors.  The vectors are unlikely to be unit length.
- *
- *
- * @return -3	missed
- * @return -2	missed (line segments are parallel)
- * @return -1	missed (colinear and non-overlapping)
- * @return 0	hit (line segments colinear and overlapping)
- * @return 1	hit (normal intersection)
- *
- * @param[out] dist
- *	The value at dist[] is set to the parametric distance of the
- *	intercept dist[0] is parameter along p, range 0 to 1, to
- *	intercept.  dist[1] is parameter along q, range 0 to 1, to
- *	intercept.  If within distance tolerance of the endpoints,
- *	these will be exactly 0.0 or 1.0, to ease the job of caller.
- *
- *      CLARIFICATION: This function 'bn_isect_lseg3_lseg3'
- *      returns distance values scaled where an intersect at the start
- *      point of the line segment (within tol->dist) results in 0.0
- *      and when the intersect is at the end point of the line
- *      segment (within tol->dist), the result is 1.0.  Intersects
- *      before the start point return a negative distance.  Intersects
- *      after the end point result in a return value > 1.0.
- *
- * Special note: when return code is "0" for co-linearity, dist[1] has
- * an alternate interpretation: it's the parameter along p (not q)
- * which takes you from point p to the point (q + qdir), i.e., it's
- * the endpoint of the q linesegment, since in this case there may be
- * *two* intersections, if q is contained within span p to (p + pdir).
- *
- * @param p	point 1
- * @param pdir	direction-1
- * @param q	point 2
- * @param qdir	direction-2
- * @param tol	tolerance values
- */
 int
 bn_isect_lseg3_lseg3(fastf_t *dist,
 		     const fastf_t *p,
@@ -1538,48 +1155,6 @@ out:
 }
 
 
-/**
- * B N _ I S E C T _ L I N E 3 _ L I N E 3
- *
- * Intersect two line segments, each in given in parametric form:
- *
- * X = p0 + pdist * pdir_i   (i.e. line p0->p1)
- * and
- * X = q0 + qdist * qdir_i   (i.e. line q0->q1)
- *
- * The input vectors 'pdir_i' and 'qdir_i' must NOT be unit vectors
- * for this function to work correctly. The magnitude of the direction
- * vectors indicates line segment length.
- *
- * The 'pdist' and 'qdist' values returned from this function are the
- * actual distance to the intersect (i.e. not scaled). Distances may
- * be negative, see below.
- *
- * @return -2	no intersection, lines are parallel.
- * @return -1	no intersection
- * @return 0	lines are co-linear (pdist and qdist returned) (see below)
- * @return 1	intersection found  (pdist and qdist returned) (see below)
- *
- * @param	p0	point 1
- * @param	pdir_i 	direction 1
- * @param	q0	point 2
- * @param	qdir_i 	direction 2
- * @param tol	tolerance values
- * @param[out]	pdist, qdist (distances to intersection) (see below)
- *
- *		When return = 1, pdist is the distance along line p0->p1 to the
- *		intersect with line q0->q1. If the intersect is along p0->p1 but
- *		in the opposite direction of vector pdir_i (i.e. occurring before
- *		p0 on line p0->p1) then the distance will be negative. The value
- *		if qdist is the same as pdist except it is the distance along line
- *		q0->q1 to the intersect with line p0->p1.
- *
- *		When return code = 0 for co-linearity, pdist and qdist have a
- *		different meaning. pdist is the distance from point p0 to point q0
- *		and qdist is the distance from point p0 to point q1. If point q0
- *		occurs before point p0 on line segment p0->p1 then pdist will be
- *		negative. The same occurs for the distance to point q1.
- */
 int
 bn_isect_line3_line3(fastf_t *pdist,        /* see above */
 		     fastf_t *qdist,        /* see above */
@@ -1732,38 +1307,6 @@ bn_isect_line3_line3(fastf_t *pdist,        /* see above */
 }
 
 
-/**
- * B N _ I S E C T _ L I N E _ L S E G
- *@brief
- * Intersect a line in parametric form:
- *
- * X = P + t * D
- *
- * with a line segment defined by two distinct points A and B.
- *
- *
- * @return -4	A and B are not distinct points
- * @return -3	Intersection exists, < A (t is returned)
- * @return -2	Intersection exists, > B (t is returned)
- * @return -1	Lines do not intersect
- * @return 0	Lines are co-linear (t for A is returned)
- * @return 1	Intersection at vertex A
- * @return 2	Intersection at vertex B
- * @return 3	Intersection between A and B
- *
- * @par Implicit Returns -
- *
- * t When explicit return >= 0, t is the parameter that describes the
- * intersection of the line and the line segment.  The actual
- * intersection coordinates can be found by solving P + t * D.
- * However, note that for return codes 1 and 2 (intersection exactly
- * at a vertex), it is strongly recommended that the original values
- * passed in A or B are used instead of solving P + t * D, to prevent
- * numeric error from creeping into the position of the endpoints.
- *
- * XXX should probably be called bn_isect_line3_lseg3()
- * XXX should probably be changed to return dist[2]
- */
 int
 bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
@@ -1956,22 +1499,6 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
 }
 
 
-/**
- * B N _ D I S T _ L I N E 3_ P T 3
- *@brief
- * Given a parametric line defined by PT + t * DIR and a point A,
- * return the closest distance between the line and the point.
- *
- *  'dir' need not have unit length.
- *
- * Find parameter for PCA along line with unitized DIR:
- * d = VDOT(f, dir) / MAGNITUDE(dir);
- * Find distance g from PCA to A using Pythagoras:
- * g = sqrt(MAGSQ(f) - d**2)
- *
- * Return -
- * Distance
- */
 double
 bn_dist_line3_pt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
@@ -1998,18 +1525,6 @@ out:
 }
 
 
-/**
- * B N _ D I S T S Q _ L I N E 3 _ P T 3
- *
- * Given a parametric line defined by PT + t * DIR and a point A,
- * return the square of the closest distance between the line and the
- * point.
- *
- * 'dir' need not have unit length.
- *
- * Return -
- * Distance squared
- */
 double
 bn_distsq_line3_pt3(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
@@ -2035,16 +1550,6 @@ out:
 }
 
 
-/**
- * B N _ D I S T _ L I N E _ O R I G I N
- *@brief
- * Given a parametric line defined by PT + t * DIR, return the closest
- * distance between the line and the origin.
- *
- * 'dir' need not have unit length.
- *
- * @return Distance
- */
 double
 bn_dist_line_origin(const fastf_t *pt, const fastf_t *dir)
 {
@@ -2059,16 +1564,6 @@ bn_dist_line_origin(const fastf_t *pt, const fastf_t *dir)
 }
 
 
-/**
- * B N _ D I S T _ L I N E 2 _ P O I N T 2
- *@brief
- * Given a parametric line defined by PT + t * DIR and a point A,
- * return the closest distance between the line and the point.
- *
- * 'dir' need not have unit length.
- *
- * @return Distance
- */
 double
 bn_dist_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
@@ -2085,18 +1580,6 @@ bn_dist_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 }
 
 
-/**
- * B N _ D I S T S Q _ L I N E 2 _ P O I N T 2
- *@brief
- * Given a parametric line defined by PT + t * DIR and a point A,
- * return the closest distance between the line and the point,
- * squared.
- *
- * 'dir' need not have unit length.
- *
- * @return
- * Distance squared
- */
 double
 bn_distsq_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 {
@@ -2113,11 +1596,6 @@ bn_distsq_line2_point2(const fastf_t *pt, const fastf_t *dir, const fastf_t *a)
 }
 
 
-/**
- * B N _ A R E A _ O F _ T R I A N G L E
- *@brief
- * Returns the area of a triangle. Algorithm by Jon Leech 3/24/89.
- */
 double
 bn_area_of_triangle(register const fastf_t *a, register const fastf_t *b, register const fastf_t *c)
 {
@@ -2141,44 +1619,12 @@ bn_area_of_triangle(register const fastf_t *a, register const fastf_t *b, regist
 }
 
 
-/**
- * B N _ I S E C T _ P T _ L S E G
- *@brief
- * Intersect a point P with the line segment defined by two distinct
- * points A and B.
- *
- * @return -2	P on line AB but outside range of AB,
- * 			dist = distance from A to P on line.
- * @return -1	P not on line of AB within tolerance
- * @return 1	P is at A
- * @return 2	P is at B
- * @return 3	P is on AB, dist = distance from A to P on line.
- @verbatim
- B *
- |
- P'*-tol-*P
- |    /   _
- dist  /   /|
- |  /   /
- | /   / AtoP
- |/   /
- A *   /
-
- tol = distance limit from line to pt P;
- dist = parametric distance from A to P' (in terms of A to B)
- @endverbatim
- *
- * @param p	point
- * @param a	start of lseg
- * @param b	end of lseg
- * @param tol	tolerance values
- * @param[out] dist	parametric distance from A to P' (in terms of A to B)
- */
 int bn_isect_pt_lseg(fastf_t *dist,
 		     const fastf_t *a,
 		     const fastf_t *b,
 		     const fastf_t *p,
 		     const struct bn_tol *tol)
+		     
 /* distance along line from A to P */
 /* points for line and intersect */
 
@@ -2230,33 +1676,6 @@ int bn_isect_pt_lseg(fastf_t *dist,
 }
 
 
-/**
- * B N _ I S E C T _ P T 2 _ L S E G 2
- * @brief
- * Intersect a point P with the line segment defined by two distinct
- * points A and B.
- *
- * @return -2	P on line AB but outside range of AB,
- *			dist = distance from A to P on line.
- * @return -1	P not on line of AB within tolerance
- * @return 1	P is at A
- * @return 2	P is at B
- * @return 3	P is on AB, dist = distance from A to P on line.
- @verbatim
- B *
- |
- P'*-tol-*P
- |    /  _
- dist  /   /|
- |  /   /
- | /   / AtoP
- |/   /
- A *   /
-
- tol = distance limit from line to pt P;
- dist = distance from A to P'
- @endverbatim
-*/
 int
 bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
 /* distance along line from A to P */
@@ -2367,44 +1786,6 @@ are_equal(fastf_t a_in, fastf_t b_in, fastf_t t)
 }
 
 
-/**
- * PRIVATE: This is a new API and should be considered unpublished.
- *
- * B N _ D I S T S Q _ P T 3 _ L S E G 3 _ v 2
- *
- * Find the square of the distance from a point P to a line segment described
- * by the two endpoints A and B.
- *
- *			P
- *		       *
- *		      /.
- *		     / .
- *		    /  .
- *		   /   . (dist)
- *		  /    .
- *		 /     .
- *		*------*--------*
- *		A      PCA	B
- *
- * There are six distinct cases, with these return codes -
- * Return code presidence: 1, 2, 0, 3, 4, 5
- *
- *	0	P is within tolerance of lseg AB.  *dist =  0.
- *	1	P is within tolerance of point A.  *dist = 0.
- *	2	P is within tolerance of point B.  *dist = 0.
- *	3	PCA is within tolerance of A. *dist = |P-A|**2.
- *	4	PCA is within tolerance of B. *dist = |P-B|**2.
- *	5	P is "above/below" lseg AB.   *dist=|PCA-P|**2.
- *
- * If both P and PCA and not within tolerance of lseg AB use
- * these return codes -
- *
- *	3	PCA is to the left of A.  *dist = |P-A|**2.
- *	4	PCA is to the right of B. *dist = |P-B|**2.
- *
- * This function is a test version of "bn_distsq_pt3_lseg3".
- *
- */
 int
 bn_distsq_pt3_lseg3_v2(fastf_t *distsq, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
 {
@@ -2522,38 +1903,6 @@ bn_distsq_pt3_lseg3_v2(fastf_t *distsq, const fastf_t *a, const fastf_t *b, cons
 }
 
 
-/**
- * B N _ D I S T _ P T 3 _ L S E G 3
- *@brief
- * Find the distance from a point P to a line segment described by the
- * two endpoints A and B, and the point of closest approach (PCA).
- @verbatim
- *
- *			P
- *		       *
- *		      /.
- *		     / .
- *		    /  .
- *		   /   . (dist)
- *		  /    .
- *		 /     .
- *		*------*--------*
- *		A      PCA	B
- @endverbatim
- *
- * @return 0	P is within tolerance of lseg AB.  *dist isn't 0: (SPECIAL!!!)
- *		  *dist = parametric dist = |PCA-A| / |B-A|.  pca=computed.
- * @return 1	P is within tolerance of point A.  *dist = 0, pca=A.
- * @return 2	P is within tolerance of point B.  *dist = 0, pca=B.
- * @return 3	P is to the "left" of point A.  *dist=|P-A|, pca=A.
- * @return 4	P is to the "right" of point B.  *dist=|P-B|, pca=B.
- * @return 5	P is "above/below" lseg AB.  *dist=|PCA-P|, pca=computed.
- *
- * This routine was formerly called bn_dist_pt_lseg().
- *
- * XXX For efficiency, a version of this routine that provides the
- * XXX distance squared would be faster.
- */
 int
 bn_dist_pt3_lseg3(fastf_t *dist,
 		  fastf_t *pca,
@@ -2647,35 +1996,6 @@ bn_dist_pt3_lseg3(fastf_t *dist,
 }
 
 
-/**
- * B N _ D I S T _ P T 2 _ L S E G 2
- *@brief
- * Find the distance from a point P to a line segment described by the
- * two endpoints A and B, and the point of closest approach (PCA).
- @verbatim
- *			P
- *		       *
- *		      /.
- *		     / .
- *		    /  .
- *		   /   . (dist)
- *		  /    .
- *		 /     .
- *		*------*--------*
- *		A      PCA	B
- @endverbatim
- * There are six distinct cases, with these return codes -
- * @return 0	P is within tolerance of lseg AB.  *dist isn't 0: (SPECIAL!!!)
- *		  *dist = parametric dist = |PCA-A| / |B-A|.  pca=computed.
- * @return 1	P is within tolerance of point A.  *dist = 0, pca=A.
- * @return 2	P is within tolerance of point B.  *dist = 0, pca=B.
- * @return 3	P is to the "left" of point A.  *dist=|P-A|**2, pca=A.
- * @return 4	P is to the "right" of point B.  *dist=|P-B|**2, pca=B.
- * @return 5	P is "above/below" lseg AB.  *dist=|PCA-P|**2, pca=computed.
- *
- *
- * Patterned after bn_dist_pt3_lseg3().
- */
 int
 bn_dist_pt2_lseg2(fastf_t *dist_sq, fastf_t *pca, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
 {
@@ -2765,14 +2085,6 @@ bn_dist_pt2_lseg2(fastf_t *dist_sq, fastf_t *pca, const fastf_t *a, const fastf_
 }
 
 
-/**
- * B N _ R O T A T E _ B B O X
- *@brief
- * Transform a bounding box (RPP) by the given 4x4 matrix.  There are
- * 8 corners to the bounding RPP.  Each one needs to be transformed
- * and min/max'ed.  This is not minimal, but does fully contain any
- * internal object, using an axis-aligned RPP.
- */
 void
 bn_rotate_bbox(fastf_t *omin, fastf_t *omax, const fastf_t *mat, const fastf_t *imin, const fastf_t *imax)
 {
@@ -2797,11 +2109,6 @@ bn_rotate_bbox(fastf_t *omin, fastf_t *omax, const fastf_t *mat, const fastf_t *
 }
 
 
-/**
- * B N _ R O T A T E _ P L A N E
- *@brief
- * Transform a plane equation by the given 4x4 matrix.
- */
 void
 bn_rotate_plane(fastf_t *oplane, const fastf_t *mat, const fastf_t *iplane)
 {
@@ -2825,18 +2132,6 @@ bn_rotate_plane(fastf_t *oplane, const fastf_t *mat, const fastf_t *iplane)
 }
 
 
-/**
- * B N _ C O P L A N A R
- *@brief
- * Test if two planes are identical.  If so, their dot products will
- * be either +1 or -1, with the distance from the origin equal in
- * magnitude.
- *
- * @return -1	not coplanar, parallel but distinct
- * @return 0	not coplanar, not parallel.  Planes intersect.
- * @return 1	coplanar, same normal direction
- * @return 2	coplanar, opposite normal direction
- */
 int
 bn_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 {
@@ -2875,36 +2170,6 @@ bn_coplanar(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 }
 
 
-/**
- * B N _ A N G L E _ M E A S U R E
- *
- * Using two perpendicular vectors (x_dir and y_dir) which lie in the
- * same plane as 'vec', return the angle (in radians) of 'vec' from
- * x_dir, going CCW around the perpendicular x_dir CROSS y_dir.
- *
- * Trig note -
- *
- * theta = atan2(x, y) returns an angle in the range -pi to +pi.
- * Here, we need an angle in the range of 0 to 2pi.  This could be
- * implemented by adding 2pi to theta when theta is negative, but this
- * could have nasty numeric ambiguity right in the vicinity of theta =
- * +pi, which is a very critical angle for the applications using this
- * routine.
- *
- * So, an alternative formulation is to compute gamma = atan2(-x, -y),
- * and then theta = gamma + pi.  Now, any error will occur in the
- * vicinity of theta = 0, which can be handled much more readily.
- *
- * If theta is negative, or greater than two pi, wrap it around.
- * These conditions only occur if there are problems in atan2().
- *
- * @return vec == x_dir returns 0,
- * @return vec == y_dir returns pi/2,
- * @return vec == -x_dir returns pi,
- * @return vec == -y_dir returns 3*pi/2.
- *
- * In all cases, the returned value is between 0 and bn_twopi.
- */
 double
 bn_angle_measure(fastf_t *vec, const fastf_t *x_dir, const fastf_t *y_dir)
 {
@@ -2932,14 +2197,6 @@ bn_angle_measure(fastf_t *vec, const fastf_t *x_dir, const fastf_t *y_dir)
 }
 
 
-/**
- * B N _ D I S T _ P T 3 _ A L O N G _ L I N E 3
- *@brief
- * Return the parametric distance t of a point X along a line defined
- * as a ray, i.e. solve X = P + t * D.  If the point X does not lie on
- * the line, then t is the distance of the perpendicular projection of
- * point X onto the line.
- */
 double
 bn_dist_pt3_along_line3(const fastf_t *p, const fastf_t *d, const fastf_t *x)
 {
@@ -2950,14 +2207,6 @@ bn_dist_pt3_along_line3(const fastf_t *p, const fastf_t *d, const fastf_t *x)
 }
 
 
-/**
- * B N _ D I S T _ P T 2 _ A L O N G _ L I N E 2
- *@brief
- * Return the parametric distance t of a point X along a line defined
- * as a ray, i.e. solve X = P + t * D.  If the point X does not lie on
- * the line, then t is the distance of the perpendicular projection of
- * point X onto the line.
- */
 double
 bn_dist_pt2_along_line2(const fastf_t *p, const fastf_t *d, const fastf_t *x)
 {
@@ -2977,11 +2226,6 @@ bn_dist_pt2_along_line2(const fastf_t *p, const fastf_t *d, const fastf_t *x)
 }
 
 
-/**
- *
- * @return 1	if left <= mid <= right
- * @return 0	if mid is not in the range.
- */
 int
 bn_between(double left, double mid, double right, const struct bn_tol *tol)
 {
@@ -3011,12 +2255,6 @@ fail:
 }
 
 
-/**
- * B N _ D O E S _ R A Y _ I S E C T _ T R I
- *
- * @return 0	No intersection
- * @return 1	Intersection, 'inter' has intersect point.
- */
 int
 bn_does_ray_isect_tri(
     const point_t pt,
@@ -3175,16 +2413,7 @@ bn_isect_ray_tri(dist_p, N_p, Alpha_p, Beta_p, pt, dir, V, A, B)
 }
 #endif
 
-/**
- * B N _ H L F _ C L A S S
- *@brief
- * Classify a halfspace, specified by its plane equation, against a
- * bounding RPP.
- *
- * @return BN_CLASSIFY_INSIDE
- * @return BN_CLASSIFY_OVERLAPPING
- * @return BN_CLASSIFY_OUTSIDE
- */
+
 int
 bn_hlf_class(const fastf_t *half_eqn, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
@@ -3221,30 +2450,6 @@ min = (%g, %g, %g), max = (%g, %g, %g), half_eqn = (%g, %g, %g, %g)\n",
 }
 
 
-/** B N _ D I S T S Q _ L I N E 3 _ L I N E 3
- *@brief
- * Calculate the square of the distance of closest approach for two
- * lines.
- *
- * The lines are specified as a point and a vector each.  The vectors
- * need not be unit length.  P and d define one line; Q and e define
- * the other.
- *
- * @return 0 - normal return
- * @return 1 - lines are parallel, dist[0] is set to 0.0
- *
- * Output values:
- * dist[0] is the parametric distance along the first line P + dist[0] * d of the PCA
- * dist[1] is the parametric distance along the second line Q + dist[1] * e of the PCA
- * dist[3] is the square of the distance between the points of closest approach
- * pt1 is the point of closest approach on the first line
- * pt2 is the point of closest approach on the second line
- *
- * This algorithm is based on expressing the distance squared, taking
- * partials with respect to the two unknown parameters (dist[0] and
- * dist[1]), setting the two partials equal to 0, and solving the two
- * simultaneous equations
- */
 int
 bn_distsq_line3_line3(fastf_t *dist, fastf_t *P, fastf_t *d_in, fastf_t *Q, fastf_t *e_in, fastf_t *pt1, fastf_t *pt2)
 {
@@ -3296,35 +2501,6 @@ bn_distsq_line3_line3(fastf_t *dist, fastf_t *P, fastf_t *d_in, fastf_t *Q, fast
 }
 
 
-/**
- * B N _ I S E C T _ P L A N E S
- *@brief
- * Calculates the point that is the minimum distance from all the
- * planes in the "planes" array.  If the planes intersect at a single
- * point, that point is the solution.
- *
- * The method used here is based on:
-
- * An expression for the distance from a point to a plane is:
- * VDOT(pt, plane)-plane[H].
- * Square that distance and sum for all planes to get the "total"
- * distance.
- * For minimum total distance, the partial derivatives of this
- * expression (with respect to x, y, and z) must all be zero.
- * This produces a set of three equations in three unknowns (x, y, z).
-
- * This routine sets up the three equations as [matrix][pt] = [hpq]
- * and solves by inverting "matrix" into "inverse" and
- * [pt] = [inverse][hpq].
- *
- * There is likely a more economical solution rather than matrix
- * inversion, but bn_mat_inv was handy at the time.
- *
- * Checks if these planes form a singular matrix and returns.
- *
- * @return 0 - all is well
- * @return 1 - planes form a singular matrix (no solution)
- */
 int
 bn_isect_planes(fastf_t *pt, const fastf_t (*planes)[4], const size_t pl_count)
 {

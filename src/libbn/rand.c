@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @addtogroup rnd */
 /** @{ */
 /** @file libbn/rand.c
@@ -32,14 +33,7 @@
 #include "vmath.h"
 #include "bn.h"
 
-/**
- * This is our table of random numbers.  Rather than calling drand48()
- * or random() or rand() we just pick numbers out of this table.  This
- * table has 4096 unique entries with floating point values ranging
- * from the open interval (i.e. exclusive) 0.0 to 1.0 range.
- *
- * There are convenience macros for access in the bn.h header.
- */
+
 const float bn_rand_table[BN_RAND_TABSIZE] = {
     0.39646477f, 0.84048537f, 0.35333610f, 0.44658343f, 0.31869277f, 0.88642843f,
     0.01558285f, 0.58409022f, 0.15936863f, 0.38371587f, 0.69100437f, 0.05885891f,
@@ -729,10 +723,7 @@ const float bn_rand_table[BN_RAND_TABSIZE] = {
 
 double bn_sin_scale = BN_SINTABSIZE / (2.0 * M_PI);
 
-/**
- * table of floating point sine values in the closed (i.e. inclusive)
- * interval -1.0 to 1.0 range.
- */
+
 const float bn_sin_table[BN_SINTABSIZE] = {
     0.0f,		0.00306796f,	0.00613588f,	0.00920375f,
     0.0122715f,	0.0153392f,	0.0184067f,	0.0214741f,
