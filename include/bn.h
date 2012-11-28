@@ -437,10 +437,10 @@ BN_EXPORT extern void anim_view_rev(mat_t m);
 /**
  * @brief
  * Tcl interfaces to all the LIBBN math routines.
- * 
+ *
  */
- 
- 
+
+
 /* Support routines for the math functions */
 
 /* XXX Really need a decode_array function that uses atof(),
@@ -577,7 +577,7 @@ BN_EXPORT extern const mat_t bn_mat_identity;
  */
 BN_EXPORT extern void bn_mat_print(const char *title,
 				   const mat_t m);
-				   
+
 /**
  *
  */
@@ -585,14 +585,14 @@ BN_EXPORT extern void bn_mat_print_guts(const char *title,
 					const mat_t m,
 					char *buf,
 					int buflen);
-					
+
 /**
  * B N _ M A T _ P R I N T _ V L S
  */
 BN_EXPORT extern void bn_mat_print_vls(const char *title,
 				       const mat_t m,
 				       struct bu_vls *vls);
-				       
+
 /**
  * B N _ A T A N 2
  *
@@ -657,7 +657,7 @@ BN_EXPORT extern double bn_atan2(double x, double y);
 BN_EXPORT extern void bn_mat_mul(mat_t o,
 				 const mat_t a,
 				 const mat_t b);
-				 
+
 /**
  * B N _ M A T _ M U L 2
  *
@@ -668,7 +668,7 @@ BN_EXPORT extern void bn_mat_mul(mat_t o,
  */
 BN_EXPORT extern void bn_mat_mul2(const mat_t i,
 				  mat_t o);
-				  
+
 /**
  * B N _ M A T _ M U L 3
  *
@@ -681,7 +681,7 @@ BN_EXPORT extern void bn_mat_mul3(mat_t o,
 				  const mat_t a,
 				  const mat_t b,
 				  const mat_t c);
-				  
+
 /**
  * B N _ M A T _ M U L 4
  *
@@ -694,7 +694,7 @@ BN_EXPORT extern void bn_mat_mul4(mat_t o,
 				  const mat_t b,
 				  const mat_t c,
 				  const mat_t d);
-				  
+
 /**
  * B N _ M A T X V E C
  *
@@ -705,7 +705,7 @@ BN_EXPORT extern void bn_mat_mul4(mat_t o,
 BN_EXPORT extern void bn_matXvec(hvect_t ov,
 				 const mat_t im,
 				 const hvect_t iv);
-				 
+
 /**
  * B N _ M A T _ I N V
  *
@@ -732,7 +732,7 @@ BN_EXPORT extern void bn_mat_inv(mat_t output,
  */
 BN_EXPORT extern int bn_mat_inverse(mat_t output,
 				    const mat_t input);
-				    
+
 /**
  * B N _ V T O H _ M O V E
  *
@@ -741,7 +741,7 @@ BN_EXPORT extern int bn_mat_inverse(mat_t output,
  */
 BN_EXPORT extern void bn_vtoh_move(vect_t h,
 				   const vect_t v);
-				   
+
 /**
  * B N _ H T O V _ M O V E
  *
@@ -753,13 +753,13 @@ BN_EXPORT extern void bn_vtoh_move(vect_t h,
  */
 BN_EXPORT extern void bn_htov_move(vect_t v,
 				   const vect_t h);
-				   
+
 /**
  * B N _ M A T _ T R N
  */
 BN_EXPORT extern void bn_mat_trn(mat_t om,
 				 const mat_t im);
-				 
+
 /**
  * B N _ M A T _ A E
  *
@@ -772,7 +772,7 @@ BN_EXPORT extern void bn_mat_trn(mat_t om,
 BN_EXPORT extern void bn_mat_ae(mat_t m,
 				double azimuth,
 				double elev);
-				
+
 /**
  * B N _ A E _ V E C
  *
@@ -782,7 +782,7 @@ BN_EXPORT extern void bn_mat_ae(mat_t m,
 BN_EXPORT extern void bn_ae_vec(fastf_t *azp,
 				fastf_t *elp,
 				const vect_t v);
-				
+
 /**
  * B N _ A E T _ V E C
  *
@@ -798,7 +798,7 @@ BN_EXPORT extern void bn_aet_vec(fastf_t *az,
 				 vect_t vec_ae,
 				 vect_t vec_twist,
 				 fastf_t accuracy);
-				 
+
 /**
  * B N _ V E C _ A E
  *
@@ -807,7 +807,7 @@ BN_EXPORT extern void bn_aet_vec(fastf_t *az,
 BN_EXPORT extern void bn_vec_ae(vect_t vec,
 				fastf_t az,
 				fastf_t el);
-				
+
 /**
  * B N _ V E C _ A E D
  *
@@ -833,7 +833,7 @@ BN_EXPORT extern void bn_vec_aed(vect_t vec,
 BN_EXPORT extern void bn_mat_angles(mat_t mat,
 				    double alpha,
 				    double beta, double ggamma);
-				    
+
 /**
  * B N _ M A T _ A N G L E S _ R A D
  *
@@ -868,7 +868,7 @@ BN_EXPORT extern void bn_eigen2x2(fastf_t *val1,
 				  fastf_t a,
 				  fastf_t b,
 				  fastf_t c);
-				  
+
 /**
  * B N _ V E C _ P E R P
  *
@@ -880,7 +880,7 @@ BN_EXPORT extern void bn_eigen2x2(fastf_t *val1,
  */
 BN_EXPORT extern void bn_vec_perp(vect_t new_vec,
 				  const vect_t old_vec);
-				 				    
+
 /**
  * B N _ M A T _ F R O M T O
  *
@@ -906,7 +906,7 @@ BN_EXPORT extern void bn_mat_fromto(mat_t m,
 BN_EXPORT extern void bn_mat_xrot(mat_t m,
 				  double sinx,
 				  double cosx);
-				  
+
 /**
  * B N _ M A T _ Y R O T
  *
@@ -916,7 +916,7 @@ BN_EXPORT extern void bn_mat_xrot(mat_t m,
 BN_EXPORT extern void bn_mat_yrot(mat_t m,
 				  double siny,
 				  double cosy);
-				  
+
 /**
  * B N _ M A T _ Z R O T
  *
@@ -926,7 +926,7 @@ BN_EXPORT extern void bn_mat_yrot(mat_t m,
 BN_EXPORT extern void bn_mat_zrot(mat_t m,
 				  double sinz,
 				  double cosz);
-				  
+
 /**
  * B N _ M A T _ L O O K A T
  *
@@ -952,7 +952,7 @@ BN_EXPORT extern void bn_mat_zrot(mat_t m,
 BN_EXPORT extern void bn_mat_lookat(mat_t rot,
 				    const vect_t dir,
 				    int yflip);
-				    
+
 /**
  * B N _ V E C _ O R T H O
  *
@@ -964,7 +964,7 @@ BN_EXPORT extern void bn_mat_lookat(mat_t rot,
  */
 BN_EXPORT extern void bn_vec_ortho(vect_t out,
 				   const vect_t in);
-				   
+
 /**
  * B N _ M A T _ S C A L E _ A B O U T _ P T
  *
@@ -978,7 +978,7 @@ BN_EXPORT extern void bn_vec_ortho(vect_t out,
 BN_EXPORT extern int bn_mat_scale_about_pt(mat_t mat,
 					   const point_t pt,
 					   const double scale);
-					   
+
 /**
  * B N _ M A T _ X F O R M _ A B O U T _ P T
  *
@@ -988,7 +988,7 @@ BN_EXPORT extern int bn_mat_scale_about_pt(mat_t mat,
 BN_EXPORT extern void bn_mat_xform_about_pt(mat_t mat,
 					    const mat_t xform,
 					    const point_t pt);
-					    
+
 /**
  * B N _ M A T _ I S _ E Q U A L
  *
@@ -998,7 +998,7 @@ BN_EXPORT extern void bn_mat_xform_about_pt(mat_t mat,
 BN_EXPORT extern int bn_mat_is_equal(const mat_t a,
 				     const mat_t b,
 				     const struct bn_tol *tol);
-				     
+
 /**
  * B N _ M A T _ I S _ I D E N T I T Y
  *
@@ -1027,7 +1027,7 @@ BN_EXPORT extern void bn_mat_arb_rot(mat_t m,
 				     const point_t pt,
 				     const vect_t dir,
 				     const fastf_t ang);
-				     
+
 /**
  * B N _ M A T _ D U P
  *
@@ -1049,7 +1049,7 @@ BN_EXPORT extern matp_t bn_mat_dup(const mat_t in);
  */
 BN_EXPORT extern int bn_mat_ck(const char *title,
 			       const mat_t m);
-			       
+
 /**
  * B N _ M A T _ D E T 3
  *
@@ -1098,7 +1098,7 @@ BN_EXPORT extern void bn_wrt_point_direc(mat_t out,
 /** @{ */
 
 /** @brief
- * 
+ *
  * Minimal Standard RANdom number generator
  *
  * @par From:
@@ -1107,7 +1107,7 @@ BN_EXPORT extern void bn_wrt_point_direc(mat_t out,
  * @n	CACM vol 31 no 10, Oct 88
  *
  */
- 
+
 /*
  * Define data structures and constants for the "MSR" random number
  * package.
@@ -1171,8 +1171,8 @@ struct bn_gauss {
  */
 BN_EXPORT extern struct bn_unif *bn_unif_init(long setseed,
 					      int method);
-					      
-/*	
+
+/*
  * bn_unif_free	  free random number table
  *
  */
@@ -1265,7 +1265,7 @@ BN_EXPORT extern double bn_unif_double_fill(struct bn_unif *p);
 BN_EXPORT extern struct bn_gauss *bn_gauss_init(long setseed,
 						int method);
 
-/*	
+/*
  * bn_gauss_free	free random number table
  *
  */
@@ -1345,7 +1345,7 @@ BN_EXPORT extern double bn_gauss_fill(struct bn_gauss *p);
 /** @{ */
 
 /** @brief
- *  
+ *
  * These noise functions provide mostly random noise at the integer
  * lattice points.  The functions should be evaluated at non-integer
  * locations for their nature to be realized.
@@ -1355,7 +1355,7 @@ BN_EXPORT extern double bn_gauss_fill(struct bn_gauss *p);
  * Robert Skinner
  *
  */
- 
+
 /*
  * fractal noise support
  */
@@ -1383,7 +1383,7 @@ BN_EXPORT extern double bn_noise_perlin(point_t pt);
  */
 BN_EXPORT extern void bn_noise_vec(point_t point,
 				   point_t result);
-				   
+
 /**
  * @brief
  * Procedural fBm evaluated at "point"; returns value stored in
@@ -1414,7 +1414,7 @@ BN_EXPORT extern double bn_noise_fbm(point_t point,
 				     double h_val,
 				     double lacunarity,
 				     double octaves);
-				     
+
 /**
  * @brief
  * Procedural turbulence evaluated at "point";
@@ -1445,7 +1445,7 @@ BN_EXPORT extern double bn_noise_turb(point_t point,
 				      double h_val,
 				      double lacunarity,
 				      double octaves);
-				      
+
 /**
  *
  * From "Texturing and Modeling, A Procedural Approach" 2nd ed
@@ -1455,7 +1455,7 @@ BN_EXPORT extern double bn_noise_mf(point_t point,
 				    double lacunarity,
 				    double octaves,
 				    double offset);
-				    
+
 /**
  *@brief
  * A ridged noise pattern
@@ -1478,7 +1478,7 @@ BN_EXPORT extern double bn_noise_ridged(point_t point,
  */
 
 /** @brief
- * 
+ *
  * Some useful routines for dealing with planes and lines.
  *
  */
@@ -1640,7 +1640,7 @@ BN_EXPORT extern int bn_dist_pt3_lseg3(fastf_t *dist,
 				       const point_t b,
 				       const point_t p,
 				       const struct bn_tol *tol);
-				       
+
 /**
  * PRIVATE: This is a new API and should be considered unpublished.
  *
@@ -1684,7 +1684,7 @@ BN_EXPORT extern int bn_distsq_pt3_lseg3_v2(fastf_t *distsq,
 					    const fastf_t *b,
 					    const fastf_t *p,
 					    const struct bn_tol *tol);
-					    
+
 /**
  * B N _ 3 P T S _ C O L L I N E A R
  * @brief
@@ -1700,7 +1700,7 @@ BN_EXPORT extern int bn_3pts_collinear(point_t a,
 				       point_t b,
 				       point_t c,
 				       const struct bn_tol *tol);
-				       
+
 /**
  * B N _ P T 3 _ P T 3 _ E Q U A L
  *
@@ -1710,7 +1710,7 @@ BN_EXPORT extern int bn_3pts_collinear(point_t a,
 BN_EXPORT extern int bn_pt3_pt3_equal(const point_t a,
 				      const point_t b,
 				      const struct bn_tol *tol);
-				      
+
 /**
  * B N _ D I S T _ P T 2 _ L S E G 2
  *@brief
@@ -1746,7 +1746,7 @@ BN_EXPORT extern int bn_dist_pt2_lseg2(fastf_t *dist_sq,
 				       const point_t b,
 				       const point_t p,
 				       const struct bn_tol *tol);
-				       
+
 /**
  * B N _ I S E C T _ L S E G 3 _ L S E G 3
  *@brief
@@ -1791,11 +1791,11 @@ BN_EXPORT extern int bn_isect_lseg3_lseg3(fastf_t *dist,
 					      const point_t p, const vect_t pdir,
 					      const point_t q, const vect_t qdir,
 					      const struct bn_tol *tol);
-					      
+
 BN_EXPORT extern int bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t sg1pt2,
 					     const point_t sg2pt1, const point_t sg2pt2,
 					     const struct bn_tol *tol);
-					     
+
 /**
  * B N _ I S E C T _ L I N E 3 _ L I N E 3
  *
@@ -1844,7 +1844,7 @@ BN_EXPORT extern int bn_isect_line3_line3(fastf_t *s, fastf_t *t,
 					      const point_t q0,
 					      const vect_t v,
 					      const struct bn_tol *tol);
-					      
+
 /**
  * B N _ 2 L I N E 3 _ C O L I N E A R
  * @brief
@@ -1862,7 +1862,7 @@ BN_EXPORT extern int bn_2line3_colinear(const point_t p1,
 					const vect_t d2,
 					double range,
 					const struct bn_tol *tol);
-					
+
 /**
  * B N _ I S E C T _ P T 2 _ L S E G 2
  * @brief
@@ -1895,7 +1895,7 @@ BN_EXPORT extern int bn_isect_pt2_lseg2(fastf_t *dist,
 					const point_t b,
 					const point_t p,
 					const struct bn_tol *tol);
-					
+
 /**
  * B N _ I S E C T _ L I N E 2 _ L S E G 2
  *@brief
@@ -1939,7 +1939,7 @@ BN_EXPORT extern int bn_isect_line2_lseg2(fastf_t *dist,
 					  const point_t a,
 					  const vect_t c,
 					  const struct bn_tol *tol);
-					  
+
 /**
  * B N _ I S E C T _ L S E G 2 _ L S E G 2
  *@brief
@@ -1977,7 +1977,7 @@ BN_EXPORT extern int bn_isect_lseg2_lseg2(fastf_t *dist,
 					  const point_t q,
 					  const vect_t qdir,
 					  const struct bn_tol *tol);
-					  
+
 /**
  * B N _ I S E C T _ L I N E 2 _ L I N E 2
  *
@@ -2026,7 +2026,7 @@ BN_EXPORT extern int bn_isect_line2_line2(fastf_t *dist,
 					  const point_t a,
 					  const vect_t c,
 					  const struct bn_tol *tol);
-					  
+
 /**
  * B N _ D I S T _ P T 3 _ P T 3
  * @brief
@@ -2034,7 +2034,7 @@ BN_EXPORT extern int bn_isect_line2_line2(fastf_t *dist,
  */
 BN_EXPORT extern double bn_dist_pt3_pt3(const point_t a,
 					const point_t b);
-					
+
 /**
  * B N _ 3 P T S _ D I S T I N C T
  *
@@ -2049,7 +2049,7 @@ BN_EXPORT extern int bn_3pts_distinct(const point_t a,
 				      const point_t b,
 				      const point_t c,
 				      const struct bn_tol *tol);
-				      
+
 /**
  * B N _ N P T S _ D I S T I N C T
  *
@@ -2063,7 +2063,7 @@ BN_EXPORT extern int bn_3pts_distinct(const point_t a,
 BN_EXPORT extern int bn_npts_distinct(const int npts,
 				      const point_t *pts,
 				      const struct bn_tol *tol);
-				      
+
 /**
  * B N _ M K _ P L A N E _ 3 P T S
  *
@@ -2113,7 +2113,7 @@ BN_EXPORT extern int bn_mk_plane_3pts(plane_t plane,
 				      const point_t b,
 				      const point_t c,
 				      const struct bn_tol *tol);
-				      
+
 /**
  * B N _ M K P O I N T _ 3 P L A N E S
  *@brief
@@ -2147,7 +2147,7 @@ BN_EXPORT extern int bn_mkpoint_3planes(point_t pt,
 					const plane_t a,
 					const plane_t b,
 					const plane_t c);
-					
+
 /**
  * B N _ I S E C T _ L I N E 3 _ P L A N E
  *
@@ -2173,7 +2173,7 @@ BN_EXPORT extern int bn_isect_line3_plane(fastf_t *dist,
 					  const vect_t dir,
 					  const plane_t plane,
 					  const struct bn_tol *tol);
-					  
+
 /**
  * B N _ I S E C T _ 2 P L A N E S
  *@brief
@@ -2211,7 +2211,7 @@ BN_EXPORT extern int bn_isect_2lines(fastf_t *t,
 				     const point_t a,
 				     const vect_t c,
 				     const struct bn_tol *tol);
-				     
+
 /**
  * B N _ I S E C T _ L I N E _ L S E G
  *@brief
@@ -2249,7 +2249,7 @@ BN_EXPORT extern int bn_isect_line_lseg(fastf_t *t, const point_t p,
 					const point_t a,
 					const point_t b,
 					const struct bn_tol *tol);
-					
+
 /**
  * B N _ D I S T _ L I N E 3_ P T 3
  *@brief
@@ -2269,7 +2269,7 @@ BN_EXPORT extern int bn_isect_line_lseg(fastf_t *t, const point_t p,
 BN_EXPORT extern double bn_dist_line3_pt3(const point_t pt,
 					  const vect_t dir,
 					  const point_t a);
-					  
+
 /**
  * B N _ D I S T S Q _ L I N E 3 _ P T 3
  *
@@ -2285,7 +2285,7 @@ BN_EXPORT extern double bn_dist_line3_pt3(const point_t pt,
 BN_EXPORT extern double bn_distsq_line3_pt3(const point_t pt,
 					    const vect_t dir,
 					    const point_t a);
-					    
+
 /**
  * B N _ D I S T _ L I N E _ O R I G I N
  *@brief
@@ -2298,7 +2298,7 @@ BN_EXPORT extern double bn_distsq_line3_pt3(const point_t pt,
  */
 BN_EXPORT extern double bn_dist_line_origin(const point_t pt,
 					    const vect_t dir);
-					    
+
 /**
  * B N _ D I S T _ L I N E 2 _ P O I N T 2
  *@brief
@@ -2312,7 +2312,7 @@ BN_EXPORT extern double bn_dist_line_origin(const point_t pt,
 BN_EXPORT extern double bn_dist_line2_point2(const point_t pt,
 					     const vect_t dir,
 					     const point_t a);
-					     
+
 /**
  * B N _ D I S T S Q _ L I N E 2 _ P O I N T 2
  *@brief
@@ -2328,7 +2328,7 @@ BN_EXPORT extern double bn_dist_line2_point2(const point_t pt,
 BN_EXPORT extern double bn_distsq_line2_point2(const point_t pt,
 					       const vect_t dir,
 					       const point_t a);
-					       
+
 /**
  * B N _ A R E A _ O F _ T R I A N G L E
  *@brief
@@ -2337,7 +2337,7 @@ BN_EXPORT extern double bn_distsq_line2_point2(const point_t pt,
 BN_EXPORT extern double bn_area_of_triangle(const point_t a,
 					    const point_t b,
 					    const point_t c);
-				      
+
 /**
  * B N _ I S E C T _ P T _ L S E G
  *@brief
@@ -2370,7 +2370,7 @@ BN_EXPORT extern double bn_area_of_triangle(const point_t a,
  * @param b	end of lseg
  * @param tol	tolerance values
  * @param[out] dist	parametric distance from A to P' (in terms of A to B)
- */	    
+ */
 BN_EXPORT extern int bn_isect_pt_lseg(fastf_t *dist,
 				      const point_t a,
 				      const point_t b,
@@ -2382,7 +2382,7 @@ BN_EXPORT extern double bn_dist_pt_lseg(point_t pca,
 					const point_t b,
 					const point_t p,
 					const struct bn_tol *tol);
-					
+
 /**
  * B N _ R O T A T E _ B B O X
  *@brief
@@ -2396,7 +2396,7 @@ BN_EXPORT extern void bn_rotate_bbox(point_t omin,
 				     const mat_t mat,
 				     const point_t imin,
 				     const point_t imax);
-				     
+
 /**
  * B N _ R O T A T E _ P L A N E
  *@brief
@@ -2405,7 +2405,7 @@ BN_EXPORT extern void bn_rotate_bbox(point_t omin,
 BN_EXPORT extern void bn_rotate_plane(plane_t oplane,
 				      const mat_t mat,
 				      const plane_t iplane);
-				      
+
 /**
  * B N _ C O P L A N A R
  *@brief
@@ -2421,7 +2421,7 @@ BN_EXPORT extern void bn_rotate_plane(plane_t oplane,
 BN_EXPORT extern int bn_coplanar(const plane_t a,
 				 const plane_t b,
 				 const struct bn_tol *tol);
-				 
+
 /**
  * B N _ A N G L E _ M E A S U R E
  *
@@ -2455,7 +2455,7 @@ BN_EXPORT extern int bn_coplanar(const plane_t a,
 BN_EXPORT extern double bn_angle_measure(vect_t vec,
 					 const vect_t x_dir,
 					 const vect_t y_dir);
-					 
+
 /**
  * B N _ D I S T _ P T 3 _ A L O N G _ L I N E 3
  *@brief
@@ -2467,7 +2467,7 @@ BN_EXPORT extern double bn_angle_measure(vect_t vec,
 BN_EXPORT extern double bn_dist_pt3_along_line3(const point_t p,
 						const vect_t d,
 						const point_t x);
-						
+
 /**
  * B N _ D I S T _ P T 2 _ A L O N G _ L I N E 2
  *@brief
@@ -2479,7 +2479,7 @@ BN_EXPORT extern double bn_dist_pt3_along_line3(const point_t p,
 BN_EXPORT extern double bn_dist_pt2_along_line2(const point_t p,
 						const vect_t d,
 						const point_t x);
-						
+
 /**
  *
  * @return 1	if left <= mid <= right
@@ -2489,7 +2489,7 @@ BN_EXPORT extern int bn_between(double left,
 				double mid,
 				double right,
 				const struct bn_tol *tol);
-				
+
 /**
  * B N _ D O E S _ R A Y _ I S E C T _ T R I
  *
@@ -2502,7 +2502,7 @@ BN_EXPORT extern int bn_does_ray_isect_tri(const point_t pt,
 					   const point_t A,
 					   const point_t B,
 					   point_t inter);
-					   
+
 /**
  * B N _ H L F _ C L A S S
  *@brief
@@ -2594,22 +2594,22 @@ typedef struct bn_poly {
 /**
  * bn_poly_mul
  *
- * @brief 
+ * @brief
  * multiply two polynomials
  */
 BN_EXPORT extern struct bn_poly *bn_poly_mul(struct bn_poly *product,
 					     const struct bn_poly *m1,
 					     const struct bn_poly *m2);
-					     
+
 /**
  * bn_poly_scale
- * 
+ *
  * @brief
  * scale a polynomial
  */
 BN_EXPORT extern struct bn_poly *bn_poly_scale(struct bn_poly *eqn,
 					       double factor);
-					       
+
 /**
  * bn_poly_add
  * @brief
@@ -2618,7 +2618,7 @@ BN_EXPORT extern struct bn_poly *bn_poly_scale(struct bn_poly *eqn,
 BN_EXPORT extern struct bn_poly *bn_poly_add(struct bn_poly *sum,
 					     const struct bn_poly *poly1,
 					     const struct bn_poly *poly2);
-					     
+
 /**
  * bn_poly_sub
  * @brief
@@ -2627,7 +2627,7 @@ BN_EXPORT extern struct bn_poly *bn_poly_add(struct bn_poly *sum,
 BN_EXPORT extern struct bn_poly *bn_poly_sub(struct bn_poly *diff,
 					     const struct bn_poly *poly1,
 					     const struct bn_poly *poly2);
-					     
+
 /**
  * s y n D i v
  * @brief
@@ -2638,7 +2638,7 @@ BN_EXPORT extern void bn_poly_synthetic_division(struct bn_poly *quo,
 						 struct bn_poly *rem,
 						 const struct bn_poly *dvdend,
 						 const struct bn_poly *dvsor);
-						 
+
 /**
  * b n _ p o l y _ q u a d r a t i c _ r o o t s
  *@brief
@@ -2650,7 +2650,7 @@ BN_EXPORT extern void bn_poly_synthetic_division(struct bn_poly *quo,
  */
 BN_EXPORT extern int bn_poly_quadratic_roots(struct bn_complex roots[],
 					     const struct bn_poly *quadrat);
-					     
+
 /**
  * b n _ p o l y _ c u b i c _ r o o t s
  *@brief
@@ -2683,7 +2683,7 @@ BN_EXPORT extern int bn_poly_quadratic_roots(struct bn_complex roots[],
  */
 BN_EXPORT extern int bn_poly_cubic_roots(struct bn_complex roots[],
 					 const struct bn_poly *eqn);
-					 
+
 /**
  * b n _ p o l y _ q u a r t i c _ r o o t s
  *@brief
@@ -2695,28 +2695,28 @@ BN_EXPORT extern int bn_poly_cubic_roots(struct bn_complex roots[],
  */
 BN_EXPORT extern int bn_poly_quartic_roots(struct bn_complex roots[],
 					   const struct bn_poly *eqn);
-					   
+
 BN_EXPORT extern int bn_poly_findroot(bn_poly_t *eqn,
 				      bn_complex_t *nxZ,
 				      const char *str);
-				      
+
 BN_EXPORT extern void bn_poly_eval_w_2derivatives(bn_complex_t *cZ,
 						  bn_poly_t *eqn,
 						  bn_complex_t *b,
 						  bn_complex_t *c,
 						  bn_complex_t *d);
-						  
+
 BN_EXPORT extern int bn_poly_checkroots(bn_poly_t *eqn,
 					bn_complex_t *roots,
 					int nroots);
-					
+
 BN_EXPORT extern void bn_poly_deflate(bn_poly_t *oldP,
 				      bn_complex_t *root);
-				      
+
 BN_EXPORT extern int bn_poly_roots(bn_poly_t *eqn,
 				   bn_complex_t roots[],
 				   const char *name);
-				   
+
 /**
  * b n _ p r _ p o l y
  *
@@ -2724,7 +2724,7 @@ BN_EXPORT extern int bn_poly_roots(bn_poly_t *eqn,
  */
 BN_EXPORT extern void bn_pr_poly(const char *title,
 				 const struct bn_poly *eqn);
-				 
+
 /**
  * b n _ p r _ r o o t s
  *
@@ -2767,7 +2767,7 @@ typedef struct bn_multipoly {
 /** @{ */
 
 /** @brief
- * 
+ *
  *  Quaternion math routines.
  *
  *  Unit Quaternions:
@@ -2797,7 +2797,7 @@ typedef struct bn_multipoly {
  *  SIGGRAPH '89 course notes for "Math for SIGGRAPH", May 1989.
  *
  */
- 
+
 /*
  * Quaternion support
  */
@@ -2806,16 +2806,16 @@ typedef struct bn_multipoly {
 /**
  *			Q U A T _ M A T 2 Q U A T
  *@brief
- * 
+ *
  *  Convert Matrix to Quaternion.
  */
 BN_EXPORT extern void quat_mat2quat(quat_t quat,
 				    const mat_t mat);
-				    
+
 /**
  *			Q U A T _ Q U A T 2 M A T
  *@brief
- * 
+ *
  *  Convert Quaternion to Matrix.
  *
  * NB: This only works for UNIT quaternions.  We may get imaginary results
@@ -2823,17 +2823,17 @@ BN_EXPORT extern void quat_mat2quat(quat_t quat,
  */
 BN_EXPORT extern void quat_quat2mat(mat_t mat,
 				    const quat_t quat);
-				    
+
 /**
  *			Q U A T _ D I S T A N C E
  *@brief
- * 
+ *
  * Gives the euclidean distance between two quaternions.
- * 
+ *
  */
 BN_EXPORT extern double quat_distance(const quat_t q1,
 				      const quat_t q2);
-				      
+
 /**
  *			Q U A T _ D O U B L E
  *@brief
@@ -2845,7 +2845,7 @@ BN_EXPORT extern double quat_distance(const quat_t q1,
 BN_EXPORT extern void quat_double(quat_t qout,
 				  const quat_t q1,
 				  const quat_t q2);
-				  
+
 /**
  *			Q U A T _ B I S E C T
  *@brief
@@ -2856,7 +2856,7 @@ BN_EXPORT extern void quat_double(quat_t qout,
 BN_EXPORT extern void quat_bisect(quat_t qout,
 				  const quat_t q1,
 				  const quat_t q2);
-				  
+
 /**
  *			Q U A T _ S L E R P
  *@brief
@@ -2870,7 +2870,7 @@ BN_EXPORT extern void quat_slerp(quat_t qout,
 				 const quat_t q1,
 				 const quat_t q2,
 				 double f);
-				 
+
 /**
  *			Q U A T _ S B E R P
  *@brief
@@ -2887,7 +2887,7 @@ BN_EXPORT extern void quat_sberp(quat_t qout,
 				 const quat_t qb,
 				 const quat_t q2,
 				 double f);
-				 
+
 /**
  *			Q U A T _ M A K E _ N E A R E S T
  *@brief
@@ -2900,13 +2900,13 @@ BN_EXPORT extern void quat_sberp(quat_t qout,
  */
 BN_EXPORT extern void quat_make_nearest(quat_t q1,
 					const quat_t q2);
-					
+
 /**
  *			Q U A T _ P R I N T
  */
 BN_EXPORT extern void quat_print(const char *title,
 				 const quat_t quat);
-				 
+
 /**
  *			Q U A T _ E X P
  *@brief
@@ -2915,7 +2915,7 @@ BN_EXPORT extern void quat_print(const char *title,
  */
 BN_EXPORT extern void quat_exp(quat_t out,
 			       const quat_t in);
-			       
+
 /**
  *			Q U A T _ L O G
  *@brief
@@ -3021,7 +3021,7 @@ BN_EXPORT extern double bn_sin_scale;
 #define bn_tab_sin(_a)	(((_a) > 0) ? \
 			 (bn_sin_table[(int)((0.5+ (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)]) :\
 			 (-bn_sin_table[(int)((0.5- (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)]))
-			 
+
 /**
  * table of floating point sine values in the closed (i.e. inclusive)
  * interval -1.0 to 1.0 range.
@@ -3623,7 +3623,7 @@ BN_EXPORT extern void bn_ck_table(const struct bn_table *tabp);
 BN_EXPORT extern struct bn_table *bn_table_make_uniform(size_t num,
 							double first,
 							double last);
-							
+
 /*
  *			B N _ T A B D A T A _ A D D
  *@brief
@@ -3632,7 +3632,7 @@ BN_EXPORT extern struct bn_table *bn_table_make_uniform(size_t num,
 BN_EXPORT extern void bn_tabdata_add(struct bn_tabdata *out,
 				     const struct bn_tabdata *in1,
 				     const struct bn_tabdata *in2);
-				     
+
 /*
  *			B N _ T A B D A T A _ M U L
  *@brief
@@ -3641,7 +3641,7 @@ BN_EXPORT extern void bn_tabdata_add(struct bn_tabdata *out,
 BN_EXPORT extern void bn_tabdata_mul(struct bn_tabdata *out,
 				     const struct bn_tabdata *in1,
 				     const struct bn_tabdata *in2);
-				     
+
 /*
  *			B N _ T A B D A T A _ M U L 3
  *@brief
@@ -3651,7 +3651,7 @@ BN_EXPORT extern void bn_tabdata_mul3(struct bn_tabdata *out,
 				      const struct bn_tabdata *in1,
 				      const struct bn_tabdata *in2,
 				      const struct bn_tabdata *in3);
-				      
+
 /*
  *			B N _ T A B D A T A _ I N C R _ M U L 3 _ S C A L E
  *@brief
@@ -3664,7 +3664,7 @@ BN_EXPORT extern void bn_tabdata_incr_mul3_scale(struct bn_tabdata *out,
 						 const struct bn_tabdata *in2,
 						 const struct bn_tabdata *in3,
 						 double scale);
-						 
+
 /*
  *			B N _ T A B D A T A _ I N C R _ M U L 2 _ S C A L E
  *@brief
@@ -3676,7 +3676,7 @@ BN_EXPORT extern void bn_tabdata_incr_mul2_scale(struct bn_tabdata *out,
 						 const struct bn_tabdata *in1,
 						 const struct bn_tabdata *in2,
 						 double scale);
-						 
+
 /*
  *			B N _ T A B D A T A _ S C A L E
  *@brief
@@ -3685,7 +3685,7 @@ BN_EXPORT extern void bn_tabdata_incr_mul2_scale(struct bn_tabdata *out,
 BN_EXPORT extern void bn_tabdata_scale(struct bn_tabdata *out,
 				       const struct bn_tabdata *in1,
 				       double scale);
-				       
+
 /*
  *			B N _ T A B L E _ S C A L E
  *@brief
@@ -3693,7 +3693,7 @@ BN_EXPORT extern void bn_tabdata_scale(struct bn_tabdata *out,
  */
 BN_EXPORT extern void bn_table_scale(struct bn_table *tabp,
 				     double scale);
-				     
+
 /*
  *			B N _ T A B D A T A _ J O I N 1
  *@brief
@@ -3705,7 +3705,7 @@ BN_EXPORT extern void bn_tabdata_join1(struct bn_tabdata *out,
 				       const struct bn_tabdata *in1,
 				       double scale,
 				       const struct bn_tabdata *in2);
-				       
+
 /*
  *			B N _ T A B D A T A _ J O I N 2
  *@brief
@@ -3720,7 +3720,7 @@ BN_EXPORT extern void bn_tabdata_join2(struct bn_tabdata *out,
 				       const struct bn_tabdata *in2,
 				       double scale3,
 				       const struct bn_tabdata *in3);
-				       
+
 /*
  *			B N _ T A B D A T A _ B L E N D 2
  */
@@ -3729,7 +3729,7 @@ BN_EXPORT extern void bn_tabdata_blend2(struct bn_tabdata *out,
 					const struct bn_tabdata *in1,
 					double scale2,
 					const struct bn_tabdata *in2);
-					
+
 /*
  *			B N _ T A B D A T A _ B L E N D 3
  */
@@ -3740,7 +3740,7 @@ BN_EXPORT extern void bn_tabdata_blend3(struct bn_tabdata *out,
 					const struct bn_tabdata *in2,
 					double scale3,
 					const struct bn_tabdata *in3);
-					
+
 /*
  *			B N _ T A B D A T A _ A R E A 1
  *@brief
@@ -3771,7 +3771,7 @@ BN_EXPORT extern double bn_tabdata_area2(const struct bn_tabdata *in);
  */
 BN_EXPORT extern double bn_tabdata_mul_area1(const struct bn_tabdata *in1,
 					     const struct bn_tabdata *in2);
-					     
+
 /*
  *			B N _ T A B D A T A _ M U L _ A R E A 2
  *@brief
@@ -3782,7 +3782,7 @@ BN_EXPORT extern double bn_tabdata_mul_area1(const struct bn_tabdata *in1,
  */
 BN_EXPORT extern double bn_tabdata_mul_area2(const struct bn_tabdata *in1,
 					     const struct bn_tabdata *in2);
-					     
+
 /*
  *			B N _ T A B L E _ L I N _ I N T E R P
  *@brief
@@ -3792,7 +3792,7 @@ BN_EXPORT extern double bn_tabdata_mul_area2(const struct bn_tabdata *in1,
  */
 BN_EXPORT extern fastf_t bn_table_lin_interp(const struct bn_tabdata *samp,
 					     double wl);
-					     
+
 /*
  *			B N _ T A B D A T A _ R E S A M P L E _ M A X
  *@brief
@@ -3806,7 +3806,7 @@ BN_EXPORT extern fastf_t bn_table_lin_interp(const struct bn_tabdata *samp,
  */
 BN_EXPORT extern struct bn_tabdata *bn_tabdata_resample_max(const struct bn_table *newtable,
 							    const struct bn_tabdata *olddata);
-							    
+
 /*
  *			B N _ T A B D A T A _ R E S A M P L E _ A V G
  *@brief
@@ -3820,7 +3820,7 @@ BN_EXPORT extern struct bn_tabdata *bn_tabdata_resample_max(const struct bn_tabl
  */
 BN_EXPORT extern struct bn_tabdata *bn_tabdata_resample_avg(const struct bn_table *newtable,
 							    const struct bn_tabdata *olddata);
-							    
+
 /*
  *			B N _ T A B L E _ W R I T E
  *@brief
@@ -3830,7 +3830,7 @@ BN_EXPORT extern struct bn_tabdata *bn_tabdata_resample_avg(const struct bn_tabl
  */
 BN_EXPORT extern int bn_table_write(const char *filename,
 				    const struct bn_table *tabp);
-				    
+
 /*
  *			B N _ T A B L E _ R E A D
  *@brief
@@ -3845,13 +3845,13 @@ BN_EXPORT extern struct bn_table *bn_table_read(const char *filename);
  */
 BN_EXPORT extern void bn_pr_table(const char *title,
 				  const struct bn_table *tabp);
-				  
+
 /*
  *			B N _ P R _ T A B D A T A
  */
 BN_EXPORT extern void bn_pr_tabdata(const char *title,
 				    const struct bn_tabdata *data);
-				    
+
 /*
  *			B N _ P R I N T _ T A B L E _ A N D _ T A B D A T A
  *@brief
@@ -3864,7 +3864,7 @@ BN_EXPORT extern void bn_pr_tabdata(const char *title,
  */
 BN_EXPORT extern int bn_print_table_and_tabdata(const char *filename,
 						const struct bn_tabdata *data);
-						
+
 /*
  *			B N _ R E A D _ T A B L E _ A N D _ T A B D A T A
  *@brief
@@ -3884,7 +3884,7 @@ BN_EXPORT extern struct bn_tabdata *bn_read_table_and_tabdata(const char *filena
 BN_EXPORT extern struct bn_tabdata *bn_tabdata_binary_read(const char *filename,
 							   size_t num,
 							   const struct bn_table *tabp);
-							   
+
 /*
  *			B N _ T A B D A T A _ M A L L O C _ A R R A Y
  *@brief
@@ -3895,13 +3895,13 @@ BN_EXPORT extern struct bn_tabdata *bn_tabdata_binary_read(const char *filename,
  */
 BN_EXPORT extern struct bn_tabdata *bn_tabdata_malloc_array(const struct bn_table *tabp,
 							    size_t num);
-							    
+
 /*
  *			B N _ T A B D A T A _ C O P Y
  */
 BN_EXPORT extern void bn_tabdata_copy(struct bn_tabdata *out,
 				      const struct bn_tabdata *in);
-				      
+
 /*
  *			B N _ T A B D A T A _ D U P
  */
@@ -3915,7 +3915,7 @@ BN_EXPORT extern struct bn_tabdata *bn_tabdata_dup(const struct bn_tabdata *in);
  */
 BN_EXPORT extern struct bn_tabdata *bn_tabdata_get_constval(double val,
 							    const struct bn_table *tabp);
-							    
+
 /*
  *			B N _ T A B D A T A _ C O N S T V A L
  *@brief
@@ -3923,7 +3923,7 @@ BN_EXPORT extern struct bn_tabdata *bn_tabdata_get_constval(double val,
  */
 BN_EXPORT extern void bn_tabdata_constval(struct bn_tabdata *data,
 					  double val);
-					  
+
 /*
  *			B N _ T A B D A T A _ T O _ T C L
  *@brief
@@ -3933,7 +3933,7 @@ BN_EXPORT extern void bn_tabdata_constval(struct bn_tabdata *data,
  */
 BN_EXPORT extern void bn_tabdata_to_tcl(struct bu_vls *vp,
 					const struct bn_tabdata *data);
-					
+
 /*
  *			B N _ T A B D A T A _ F R O M _ A R R A Y
  *@brief
@@ -3955,7 +3955,7 @@ BN_EXPORT extern struct bn_tabdata *bn_tabdata_from_array(const double *array);
 BN_EXPORT extern void bn_tabdata_freq_shift(struct bn_tabdata *out,
 					    const struct bn_tabdata *in,
 					    double offset);
-					    
+
 /*
  *			B N _ T A B L E _ I N T E R V A L _ N U M _ S A M P L E S
  *@brief
@@ -3964,7 +3964,7 @@ BN_EXPORT extern void bn_tabdata_freq_shift(struct bn_tabdata *out,
 BN_EXPORT extern int bn_table_interval_num_samples(const struct bn_table *tabp,
 						   double low,
 						   double hi);
-						   
+
 /*
  *			B N _ T A B L E _ D E L E T E _ S A M P L E _ P T S
  *@brief
@@ -3975,7 +3975,7 @@ BN_EXPORT extern int bn_table_interval_num_samples(const struct bn_table *tabp,
 BN_EXPORT extern int bn_table_delete_sample_pts(struct bn_table *tabp,
 						unsigned int i,
 						unsigned int j);
-						
+
 /*
  *			B N _ T A B L E _ M E R G E 2
  *@brief
@@ -3984,7 +3984,7 @@ BN_EXPORT extern int bn_table_delete_sample_pts(struct bn_table *tabp,
  */
 BN_EXPORT extern struct bn_table *bn_table_merge2(const struct bn_table *a,
 						  const struct bn_table *b);
-						  
+
 /*
  *		B N _ T A B D A T A _ M K _ L I N E A R _ F I L T E R
  *@brief
@@ -4000,8 +4000,8 @@ BN_EXPORT extern struct bn_table *bn_table_merge2(const struct bn_table *a,
 BN_EXPORT extern struct bn_tabdata *bn_tabdata_mk_linear_filter(const struct bn_table *spectrum,
 								double lower_wavelen,
 								double upper_wavelen);
-								
-								
+
+
 /*----------------------------------------------------------------------*/
 
 
@@ -4215,7 +4215,7 @@ BN_EXPORT extern void bn_vlist_2string(struct bu_list *vhead,
 /** @{ */
 /**
  * @brief
- * 
+ *
  * Routines to manage a binary search tree of vertices.
  *
  * The actual vertices are stored in an array
@@ -4279,7 +4279,7 @@ BN_EXPORT extern int Add_vert(double x,
 			      double z,
 			      struct vert_root *tree_root,
 			      fastf_t local_tol_sq);
-			      
+
 /**		A D D _ V E R T _ A N D _ N O R M
  *@brief
  *	Routine to add a vertex and a normal to the current list of part vertices.
@@ -4294,7 +4294,7 @@ BN_EXPORT extern int Add_vert_and_norm(double x,
 				       double nz,
 				       struct vert_root *tree_root,
 				       fastf_t local_tol_sq);
-				       
+
 /**		C L E A N _ V E R T _ T R E E
  *@brief
  *	Routine to free the binary search tree and reset the current number of vertices.
