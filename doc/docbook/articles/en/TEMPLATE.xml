@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
-<article xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0">
+<article xmlns="http://docbook.org/ns/docbook" version="5.0"
+         xmlns:xlink="http://www.w3.org/1999/xlink">
+
   <info>
     <title>Article Title</title>
     <author>
@@ -17,21 +19,26 @@
       </affiliation>
     </author>
   </info>
+  
   <section xml:id="some-descriptive-tag">
     <!-- the xml:id tag is just something descriptive that you can
          reference if you wanted to use CSS to modify the layout. -->
+  
     <para>
       First paragraph goes here.
     </para>
+
     <literallayout>
       <command>benchmark TIMEFRAME=1 run</command>
     </literallayout>
+
     <note>
       <para>
         The preceding <application>benchmark</application> command
         example can get a lot more complex.
       </para>
     </note>
+
     <para>
       When you run the <command>benchmark</command> with
       the <option>help</option> option, you might see this output:
@@ -44,6 +51,7 @@
           ...
         </computeroutput></literallayout>
     </para>
+
     <para>
       Another paragraph with embedded list is shown here.  Each
       paragraph gets its own para and should be wrapped for
@@ -57,13 +65,17 @@
             Bullet item 2.
           </para></listitem></itemizedlist>
     </para>
+
   </section>
+
   <section xml:id="another-tag-for-main-body">
     <title>Breaking up the flow into sections</title>
+ 
     <para>
       You can use sections to group sections of your document
       together, but they are not necessary.
     </para>
+
     <figure>
       <info>
         <title>Example embedded image text.</title>
@@ -83,14 +95,17 @@
         </caption>
       </mediaobject>
     </figure>
+
     <para>
       Another image, but rendered inline
       <inlinemediaobject><imageobject><imagedata fileref="http://brlcad.org/images/logo/BRL-CAD_64x64.png" format="PNG" width="64"/></imageobject></inlinemediaobject>
       with the paragraph text.
     </para>
+
     <para>
       More paragraphs...
     </para>
+
     <informaltable>
       <tgroup cols="2">
         <thead>
@@ -111,6 +126,7 @@
         </tbody>
       </tgroup>
     </informaltable>
+
     <section>
       <caution>
         <para>
@@ -134,5 +150,6 @@
         </itemizedlist>
       </caution>
     </section>
+
   </section>
 </article>
