@@ -559,7 +559,7 @@ proc vi_reset_cmd { w } {
 }
 
 # vi_finish_cmd is meant to be called whenever an edit-mode command is
-# complete.  Insert mode is entered if applicable, the cursor is highlit,
+# complete.  Insert mode is entered if applicable, the cursor is highlighted,
 # and vi_process_edit_cmd state is reset.  If the command results in a
 # buffer change, it is stored in dot_list.
 proc vi_finish_cmd { w } {

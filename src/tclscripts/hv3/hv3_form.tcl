@@ -1137,7 +1137,7 @@ namespace eval ::hv3::clickcontrol {
   proc success {me} {
     upvar #0 $me O
 
-    # Controls that are disabled cannot be succesful:
+    # Controls that are disabled cannot be successful:
     if {[$O(myNode) attr -default 0 disabled]} {return 0}
 
     if {[catch {$O(myNode) attr name ; $O(myNode) attr value}]} {

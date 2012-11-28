@@ -961,7 +961,7 @@ proc ::swidgets::tree {args} {
 	    $itk_component(canvas) itemconfigure $selnode \
 		-fill $fill
 
-	    # remove hilight box
+	    # remove highlight box
 	    $itk_component(canvas) delete selectBox_$node
 	    $itk_component(canvas) itemconfigure $node \
 		-fill $fill
