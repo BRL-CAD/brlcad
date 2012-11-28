@@ -40,7 +40,7 @@
   <refsection xml:id="options"><info><title>Options</title></info>
   <variablelist remap="TP">
     <varlistentry>
-      <term><option rep="repeat">-A <replaceable>attribute_name...</replaceable></option></term>
+      <term><option>-A <replaceable>attribute_name...</replaceable></option></term>
       <listitem>
 	<para>
 	  Adds the names to the list of attributes that will be reported
@@ -1069,16 +1069,9 @@
   </para>
 </refsection>
 
-<info>
-  <author>
-      <personname>Natalie Eberius</personname>
-      <contrib></contrib>
-  </author>
-  <author>
-      <personname>Paul Tanenbaum</personname>
-      <contrib></contrib>
-  </author>
-</info>
-
+<refsection xml:id="author"><title>AUTHORS</title>
+    <para>Natalie Eberius</para>
+    <para>Paul Tanenbaum</para>
+</refsection>
 
 </refentry>

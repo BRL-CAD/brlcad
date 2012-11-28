@@ -5,6 +5,8 @@
 <refentrytitle>NASTRAN-G</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='software'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>User Commands</refmiscinfo>
 </refmeta>
 <refnamediv>
 <refname>nastran-g</refname>
@@ -50,11 +52,9 @@ elements.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<literallayout remap='RS'>
 <synopsis>
 $ <emphasis remap='I'>nastran-g -i nastran.file -o sample.g</emphasis>
 </synopsis>
-</literallayout> <!-- remap='RE' -->
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>

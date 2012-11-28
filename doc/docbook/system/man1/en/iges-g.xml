@@ -5,6 +5,8 @@
 <refentrytitle>IGES-G</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='software'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>User Commands</refmiscinfo>
 </refmeta>
 <refnamediv>
 <refname>iges-g</refname>
@@ -89,11 +91,9 @@ Planar faced IGES BREP objects are converted to BRL-CAD NMG structures.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<literallayout remap='RS'>
 <synopsis>
 $ <emphasis remap='I'>iges-g -o sample.g sample.iges</emphasis>
 </synopsis>
-</literallayout> <!-- remap='RE' -->
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>

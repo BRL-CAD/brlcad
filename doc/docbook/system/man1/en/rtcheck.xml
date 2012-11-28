@@ -18,7 +18,9 @@
       <command>rtcheck</command>
       <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
       <arg choice="plain" rep="norepeat"><replaceable>model.g</replaceable></arg>
-      <arg choice="plain" rep="repeat"><replaceable>objects</replaceable></arg> &gt; <arg choice="plain" rep="norepeat"><replaceable>overlaps.pl</replaceable></arg>
+      <arg choice="plain" rep="repeat"><replaceable>objects</replaceable></arg>
+      <arg choice="plain" rep="norepeat">&gt;</arg>
+      <arg choice="plain" rep="norepeat"><replaceable>overlaps.pl</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -172,16 +174,10 @@
     </para>
   </refsection>
 
-  <info>
-    <author>
-       <personname>Michael John Muuss</personname>
-       <contrib></contrib>
-    </author>
-    <author>
-       <personname>Gary S. Moss</personname>
-       <contrib></contrib>
-    </author>
-  </info>
+  <refsection xml:id="author"><title>AUTHORS</title>
+    <para>Michael John Muuss</para>
+    <para>Gary S. Moss</para>
+  </refsection>
 
   <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
 

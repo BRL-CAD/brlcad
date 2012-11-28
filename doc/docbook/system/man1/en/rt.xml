@@ -653,7 +653,9 @@
   Descriptive messages are printed on stderr.</para>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+  <para>BRL-CAD Team</para>
+  </refsection>
 
   <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
   <para>This software is Copyright (c) 1984-2012 United States Government as

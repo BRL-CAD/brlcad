@@ -5,6 +5,8 @@
 <refentrytitle>G-VRML</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='software'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>User Commands</refmiscinfo>
 </refmeta>
 <refnamediv>
 <refname>g-vrml</refname>
@@ -83,11 +85,9 @@ Any units name that MGED accepts will work here.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<literallayout remap='RS'>
 <synopsis>
 $ <emphasis remap='I'>g-vrml -o shell.wrl sample.g sample_object</emphasis>
 </synopsis>
-</literallayout> <!-- remap='RE' -->
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>

@@ -63,11 +63,9 @@ only be useful for developers.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<literallayout remap='RS'>
 <synopsis>
 $ <emphasis remap='I'>bot_shell-vtk  -o output.vtk  sample.g  the_exterior</emphasis>
 </synopsis>
-</literallayout> <!-- remap='RE' -->
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>

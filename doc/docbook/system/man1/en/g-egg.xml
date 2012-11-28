@@ -66,11 +66,9 @@ option tells the facetizer to use the marching cubes algorithm.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<literallayout remap='RS'>
 <synopsis>
 $ <emphasis remap='I'>g-egg -o sample.egg sample.g sample_object</emphasis>
 </synopsis>
-</literallayout> <!-- remap='RE' -->
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>

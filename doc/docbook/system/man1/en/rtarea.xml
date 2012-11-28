@@ -294,5 +294,7 @@
     </para>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 </refentry>

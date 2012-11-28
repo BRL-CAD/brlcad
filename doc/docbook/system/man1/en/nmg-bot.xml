@@ -5,6 +5,8 @@
 <refentrytitle>NMG-BOT</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='software'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>User Commands</refmiscinfo>
 </refmeta>
 <refnamediv>
 <refname>nmg-bot</refname>
@@ -39,11 +41,9 @@ option is specified, then a message is displayed for each NMG converted to BoT f
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<literallayout remap='RS'>
 <synopsis>
 $ <emphasis remap='I'>nmg-bot  file_with_nmgs.g  file_with_BoTs.g</emphasis>
 </synopsis>
-</literallayout> <!-- remap='RE' -->
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>

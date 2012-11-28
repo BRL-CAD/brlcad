@@ -309,7 +309,7 @@
 	    If a type is specified and insufficient information is supplied to generate that particular
 	    image type, rtwizard will exit with an error.
 
-	  <table><info><title>RtWizard Image Types</title></info>
+	  <table><title>RtWizard Image Types</title>
 
 	    <tgroup cols="3">
 	      <thead>

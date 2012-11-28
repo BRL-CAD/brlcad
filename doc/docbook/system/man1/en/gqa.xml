@@ -145,7 +145,7 @@
     </para>
 
     <para>
-      <prompt>mged&gt; </prompt><userinput>bo -i u c _DENSITIES <emphasis remap="I">filename</emphasis></userinput>
+      <prompt>mged&gt; </prompt><userinput>bo -i u c _DENSITIES <replaceable>filename</replaceable></userinput>
     </para>
   </refsection>
 
@@ -555,34 +555,28 @@
     <example><info><title>Default Behavior</title></info>
 
       <para>
-	The following command computes the weight of an object called <emphasis remap="I">wheel.r</emphasis>
-	from the geometry database <emphasis remap="I">model.g</emphasis> and reports the weight and volume,
-	and checks for overlaps.
+	The following command computes the weight of an object called <emphasis remap="I">wheel.r</emphasis> from the geometry database <emphasis remap="I">model.g</emphasis> and reports the weight and volume, and checks for overlaps.
+    <literallayout><userinput>gqa model.g wheel.r</userinput></literallayout>
       </para>
 
-      <userinput>gqa model.g wheel.r</userinput>
     </example>
 
     <example><info><title>Specifying Grid and Target Objects</title></info>
 
       <para>
-	The following will check objects hull, turret, and suspension for overlaps
-	and report exposed air. The grid starts at 1 cm and is refined to 1 mm unless overlaps or
-	exposed air are detected before the grid is refined to 1 mm.
+	The following will check objects hull, turret, and suspension for overlaps and report exposed air. The grid starts at 1 cm and is refined to 1 mm unless overlaps or exposed air are detected before the grid is refined to 1 mm.
+    <literallayout><userinput>gqa -g 1cm-1mm -A oe model.g hull turret suspension</userinput></literallayout>
       </para>
 
-      <userinput>gqa -g 1cm-1mm -A oe model.g hull turret suspension</userinput>
     </example>
 
     <example><info><title>Specifying Using Non-Default Units</title></info>
 
       <para>
-	The following computes volume and weight of hull, turret, and suspension.  Results are
-	reported in cubic centimeters (cc) and ounces (oz).  The grid spacing starts at 5 in. and
-	will not be refined below 0.3 mm spacing.
+	The following computes volume and weight of hull, turret, and suspension.  Results are reported in cubic centimeters (cc) and ounces (oz).  The grid spacing starts at 5 in. and will not be refined below 0.3 mm spacing.
+    <literallayout><userinput>gqa -g5in-0.3mm -Avw -u ft,cc,oz test.g hull turret suspension</userinput></literallayout>
       </para>
 
-      <userinput>gqa -g5in-0.3mm -Avw -u ft,cc,oz test.g hull turret suspension</userinput>
     </example>
 
     <para>For an example of each independent analysis type, consider the following:</para>
@@ -661,7 +655,9 @@ Weight:
     </variablelist>
   </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+      <para>BRL-CAD Team</para>
+  </refsection>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
 <para>Reports of bugs or problems should be submitted via electronic

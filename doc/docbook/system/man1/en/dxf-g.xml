@@ -124,11 +124,9 @@ Each layer is converted to a separate object. Colors are also converted.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<literallayout remap='RS'>
 <synopsis>
 $ <emphasis remap='I'>dxf-g sample.dxf sample.g</emphasis>
 </synopsis>
-</literallayout> <!-- remap='RE' -->
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>

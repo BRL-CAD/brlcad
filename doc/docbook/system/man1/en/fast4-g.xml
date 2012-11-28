@@ -115,11 +115,9 @@ elements using an algorithm to create unique BRL-CAD names.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<literallayout remap='RS'>
 <synopsis>
 $ <emphasis remap='I'>fast4-g sample.fastgen4 sample.g</emphasis>
 </synopsis>
-</literallayout> <!-- remap='RE' -->
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>

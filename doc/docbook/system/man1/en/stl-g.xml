@@ -5,6 +5,8 @@
 <refentrytitle>STL-G</refentrytitle>
 <manvolnum>1</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='software'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>User Commands</refmiscinfo>
 </refmeta>
 <refnamediv>
 <refname>stl-g</refname>
@@ -76,11 +78,9 @@ file is expected to be a stereolithography file.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<literallayout remap='RS'>
 <synopsis>
 $ <emphasis remap='I'>stl-g sample.stl sample.g</emphasis>
 </synopsis>
-</literallayout> <!-- remap='RE' -->
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>

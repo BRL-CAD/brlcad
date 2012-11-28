@@ -108,7 +108,9 @@ ripple.</para>
 Optional cubic interpolation would be nice.</para>
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+</refsection>
 
 <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
 <para>Reports of bugs or problems should be submitted via electronic

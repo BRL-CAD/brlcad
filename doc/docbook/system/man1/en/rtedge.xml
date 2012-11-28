@@ -612,16 +612,10 @@ EOF
     </para>
   </refsection>
 
-  <info>
-    <author>
-      <personname>Ronald Anthony Bowers</personname>
-      <contrib></contrib>
-    </author>
-    <author>
-      <personname>Michael John Muuss</personname>
-      <contrib></contrib>
-    </author>
-  </info>
+  <refsection xml:id="author"><title>AUTHORS</title>
+    <para>Ronald Anthony Bowers</para>
+    <para>Michael John Muuss</para>
+  </refsection>
 
   <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
 

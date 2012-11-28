@@ -88,11 +88,9 @@ l
 
 <para>Then, the command:</para>
 
-<literallayout remap='RS'>
 <synopsis>
 $ <emphasis remap='I'>asc-nmg ascii_file sample.g</emphasis>
 </synopsis>
-</literallayout> <!-- remap='RE' -->
 
 <para>will produce an 'L'-shaped NMG solid to the sample.g database file.</para>
 </refsect1>

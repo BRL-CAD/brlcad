@@ -203,12 +203,9 @@
   </para>
 </refsection>
 
-<info>
-  <author>
-  <personname>Clifford Yapp</personname>
-  <contrib></contrib>
-  </author>
-</info>
+<refsection xml:id="author"><title>AUTHOR</title>
+  <para>Clifford Yapp</para>
+</refsection>
 
 <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
 
