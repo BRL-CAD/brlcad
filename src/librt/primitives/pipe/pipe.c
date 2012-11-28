@@ -1993,9 +1993,9 @@ rt_pipe_plot(
 	 * segments is nearly 0 or pi radians, the points are considered
 	 * colinear and we just draw a linear segment to cur
 	 */
-	if (isnan(dist_cur_to_bend_end)
-	    || VNEAR_ZERO(norm, SQRT_SMALL_FASTF)
-	    || NEAR_ZERO(dist_cur_to_bend_end, SQRT_SMALL_FASTF))
+	if (isinf(dist_cur_to_bend_end)
+	    || NEAR_ZERO(dist_cur_to_bend_end, SQRT_SMALL_FASTF)
+	    || VNEAR_ZERO(norm, SQRT_SMALL_FASTF))
 	{
 	    start = *prevp;
 	    end = *curp;
