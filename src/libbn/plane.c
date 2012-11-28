@@ -2408,7 +2408,8 @@ are_equal(fastf_t a_in, fastf_t b_in, fastf_t t)
 int
 bn_distsq_pt3_lseg3_v2(fastf_t *distsq, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
 {
-    vect_t AtoB, AtoP, BtoP;
+    vect_t AtoB, BtoP;
+    vect_t AtoP = VINIT_ZERO;
     fastf_t AtoB_mag, AtoP_mag, AtoPCA_mag, PtoPCA_mag, BtoP_mag;
     fastf_t dot, dt, dist;
     int ret;
