@@ -127,7 +127,7 @@ tp_sep(float x, float *coef, int *ex)
 
 /**			T P _ I P O W
  *@brief
- *  tp_ipow() raises a floating point number to a positve integer
+ *  tp_ipow() raises a floating point number to a positive integer
  *  power.
  *  XXX Horribly inefficient!
  */

@@ -1462,7 +1462,7 @@ isect_ray_lseg(struct ray_data *rd, struct edgeuse *eu_p)
 		/* we hit the vertex */
 		BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC);
 	    } else {
-		/* both verticies were missed, so edge is missed */
+		/* both vertices were missed, so edge is missed */
 		BU_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 	    }
 	    BU_LIST_INSERT(&rd->rd_miss, &myhit->l);

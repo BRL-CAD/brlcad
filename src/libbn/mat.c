@@ -789,7 +789,7 @@ bn_mat_fromto(mat_t m, const fastf_t *from, const fastf_t *to, const struct bn_t
     point_t origin = VINIT_ZERO;
 
     /**
-     * The method used here is from Graphics Gems, A. Glasner, ed.
+     * The method used here is from Graphics Gems, A. Glassner, ed.
      * page 531, "The Use of Coordinate Frames in Computer Graphics",
      * by Ken Turkowski, Example 6.
      */

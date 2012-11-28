@@ -152,7 +152,7 @@ rfft(double *X, int N)
     }
 
     /*
-     * For some reason the Imag part is comming out with the wrong
+     * For some reason the Imag part is coming out with the wrong
      * sign, so we reverse it here!  We need to figure this out!
      */
     for ( i = N/2+1; i < N; i++ )

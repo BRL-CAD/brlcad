@@ -86,7 +86,7 @@ if(BRLCAD_ENABLE_OSL)
     COMPONENTS ${Boost_COMPONENTS})
   # If it was not found, check if BOOST_ROOT was set
   if(NOT Boost_FILESYSTEM_LIBRARY)
-    message("Cheking if BOOST ROOT was FOUND")
+    message("Checking if BOOST ROOT was FOUND")
   endif()
 
   message("Boost filesystem: ${Boost_FILESYSTEM_LIBRARY}")
