@@ -25,7 +25,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Displays the <emphasis>BRL-CAD</emphasis> regions that are part of the indicated
 	MUVES components.  The internal list of MUVES components must have been
@@ -35,11 +35,11 @@
    </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>e_muves</command> command to display the <emphasis>BRL-CAD</emphasis> regions that make up the specified MUVES components.
   </para>
-  <example><info><title>Display the <emphasis>BRL-CAD</emphasis> regions that make up the specified MUVES components.</title></info>
+  <example><title>Display the <emphasis>BRL-CAD</emphasis> regions that make up the specified MUVES components.</title>
 
     <variablelist>
       <varlistentry>
@@ -55,9 +55,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

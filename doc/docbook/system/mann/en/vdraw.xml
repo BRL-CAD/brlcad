@@ -27,7 +27,7 @@ delete all or part of the list.   </refpurpose>
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Allows drawing of lines and polygons (optionally with per
 vertex normals) in the MGED graphics display. It is used to build a named list of
@@ -36,7 +36,7 @@ delete all or part of the list. All vertices in the <emphasis>vdraw</emphasis> c
 The MGED drawing commands are represented by integers in the <emphasis>vdraw</emphasis> command.
 The MGED drawing commands and the integers that <emphasis>vdraw</emphasis> uses for them are:
    </para>
-<table frame="all">
+   <table frame="all"><title>Drawing Commands</title>
 <tgroup cols="3" align="center" colsep="1" rowsep="1">
 <colspec colname="c1"/>
 <colspec colname="c2"/>
@@ -147,13 +147,13 @@ command lists.</para>
 
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The eight examples show the use of the <command>vdraw</command> command with four different commands and various arguments to build a list of commands to draw a square.
    </para>
 
 
-  <example><info><title>Open a specified list.</title></info>
+  <example><title>Open a specified list.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>vdraw open square</userinput>
@@ -161,7 +161,7 @@ command lists.</para>
     <para>Opens a list named <emphasis>square</emphasis>.
     </para>
   </example>
- <example><info><title>Set the color.</title></info>
+ <example><title>Set the color.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>vdraw params color ff00</userinput>
@@ -170,7 +170,7 @@ command lists.</para>
 
     </para>
   </example>
-<example><info><title>Start a line at the origin.</title></info>
+<example><title>Start a line at the origin.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>vdraw write next 0 0 0 0</userinput>
@@ -179,7 +179,7 @@ command lists.</para>
 
     </para>
   </example>
-<example><info><title>Draw a line from the previous point to a specified point.</title></info>
+<example><title>Draw a line from the previous point to a specified point.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>vdraw write next 1 100 0 0</userinput>
@@ -188,7 +188,7 @@ command lists.</para>
 
     </para>
   </example>
-<example><info><title>Draw a line from the previous point to a specified point.</title></info>
+<example><title>Draw a line from the previous point to a specified point.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>vdraw write next 1 100 100 0</userinput>
@@ -197,7 +197,7 @@ command lists.</para>
 
     </para>
   </example>
-<example><info><title>Draw a line from the previous point to a specified point.</title></info>
+<example><title>Draw a line from the previous point to a specified point.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>vdraw write next 1 0 100 0</userinput>
@@ -206,7 +206,7 @@ command lists.</para>
 
     </para>
   </example>
-<example><info><title>Draw a line from the previous point to the origin.</title></info>
+<example><title>Draw a line from the previous point to the origin.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>vdraw write next 1 0 0 0</userinput>
@@ -215,7 +215,7 @@ command lists.</para>
        Draws a line from the previous point to the origin.
     </para>
   </example>
-<example><info><title>Send the command list to the display manager.</title></info>
+<example><title>Send the command list to the display manager.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>vdraw send</userinput>
@@ -228,9 +228,9 @@ command lists.</para>
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

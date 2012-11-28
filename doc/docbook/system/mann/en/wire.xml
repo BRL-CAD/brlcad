@@ -24,7 +24,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>
     <command>wire</command> is a program to create a BRL-CAD database of solid
@@ -37,9 +37,9 @@
  </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <example><info><title>Interactive <command>wire</command> Session</title></info>
+  <example><title>Interactive <command>wire</command> Session</title>
 
     <para>
     <literallayout class="normal">
@@ -84,14 +84,11 @@ Segment # 3:  (0.000000, 10.000000, -3.000000) 0.250000
 
 </refsection>
 
-<info>
-  <author>
-    <personname>Susan A. Coates</personname>
-    <contrib></contrib>
-  </author>
-</info>
+<refsection xml:id="author"><title>AUTHOR</title>
+  <para>Susan A. Coates</para>
+</refsection>
 
-<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
 
   <para>
     This software is Copyright (c) 2005-2012 United States Government as
@@ -99,14 +96,14 @@ Segment # 3:  (0.000000, 10.000000, -3.000000) 0.250000
   </para>
 </refsection>
 
-<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+<refsection xml:id="see_also"><title>SEE ALSO</title>
 
   <para>
   bolt(1), handle(1), window(1), window_frame(1), gastank(1)
   </para>
 </refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

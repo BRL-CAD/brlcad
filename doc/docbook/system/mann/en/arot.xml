@@ -28,7 +28,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       Performs a rotation about the specified axis (<emphasis>x y z</emphasis>)
@@ -41,13 +41,13 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The example demonstrates the use of the <command>arot</command> command to rotate
       a view or shape about the z axis.
     </para>
-    <example><info><title>Rotating a view or shape 10 degrees about the z axis.</title></info>
+    <example><title>Rotating a view or shape 10 degrees about the z axis.</title>
 
       <para>
 	<prompt>mged&gt;</prompt> <userinput>arot 0 0 1 10</userinput>
@@ -58,9 +58,11 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

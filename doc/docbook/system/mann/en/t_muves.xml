@@ -23,20 +23,20 @@ of a prior <command>read_muves</command> command.
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Lists all the MUVES components that are known as a result
 	of a prior <command>read_muves</command> command.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>t_muves</command> command to list all the known MUVES components.
 
   </para>
 
-  <example><info><title>List all known MUVES commands.</title></info>
+  <example><title>List all known MUVES commands.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>t_muves</userinput>
@@ -47,9 +47,9 @@ of a prior <command>read_muves</command> command.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

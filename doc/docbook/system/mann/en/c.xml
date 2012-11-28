@@ -27,7 +27,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>The <command>c</command> command creates a <emphasis>BRL-CAD</emphasis> combination
     with the name <emphasis>combination_name</emphasis>. The <emphasis>-r</emphasis> option
@@ -48,13 +48,13 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The example shows how to use the <command>c</command> command to create a combination
       according to a given formula.
     </para>
-    <example><info><title>Creating a combination according to a formula.</title></info>
+    <example><title>Creating a combination according to a formula.</title>
 
       <variablelist>
 	<varlistentry>
@@ -69,9 +69,9 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

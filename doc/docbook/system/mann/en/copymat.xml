@@ -24,30 +24,30 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>Copies the transformation matrix from a member of one
     combination to the member of another.
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>The example shows the use of the <command>copymat</command> command to set the
     matrix for a member in one combination equal to the matrix for another member in
     another combination.
     </para>
-    <example><info><title>Set the matrix for a member in one combination equal to the matrix for another member in another combination.
-      </title></info>
+    <example><title>Set the matrix for a member in one combination equal to the matrix for another member in another combination.
+      </title>
 
       <para><prompt>mged&gt;</prompt> <userinput>copymat comb1/memb1 comb2/memb2</userinput></para>
       <para>Sets the matrix for member <emphasis>memb2</emphasis> in combination <emphasis>comb2</emphasis> equal to the matrix for member <emphasis>memb1</emphasis> in combination <emphasis>comb1</emphasis>.</para>
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

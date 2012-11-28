@@ -27,7 +27,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       Set the view orientation for the <emphasis>mged</emphasis> display by rotating
@@ -46,20 +46,20 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The examples show how to change views by entering azimuth and elevation angles,
       adding a twist angle, and having the angles supplied being treated as increments.
     </para>
-    <example><info><title>Top view</title></info>
+    <example><title>Top view</title>
 
       <para>
 	<prompt>mged&gt;</prompt> <userinput>ae -90 90</userinput>
       </para>
     </example>
 
-    <example><info><title>Right-hand side view </title></info>
+    <example><title>Right-hand side view </title>
 
       <para>
 	<prompt>mged&gt;</prompt><userinput>ae 270 0</userinput>
@@ -69,7 +69,7 @@
       </para>
     </example>
 
-    <example><info><title>View from a specific azimuth and elevation with a twist angle.</title></info>
+    <example><title>View from a specific azimuth and elevation with a twist angle.</title>
 
       <para>
 	<prompt>mged&gt;</prompt><userinput>ae 35 25 10</userinput>
@@ -79,7 +79,7 @@
       </para>
     </example>
 
-    <example><info><title>The azimuth and elevation angles supplied are treated as increments.</title></info>
+    <example><title>The azimuth and elevation angles supplied are treated as increments.</title>
 
       <para>
 	<prompt>mged&gt;</prompt><userinput>ae -i 0 0 5</userinput>
@@ -90,9 +90,11 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

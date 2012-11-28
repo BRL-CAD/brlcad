@@ -24,7 +24,7 @@ intersect a single ray with the displayed objects.
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Runs the NIRT program that is distributed with BRL-CAD to
 intersect a single ray with the displayed objects.  By default, NIRT is run using the
@@ -37,11 +37,11 @@ of <command>nirt</command> for more details.
    </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>nirt</command> command to fire a single ray through the center of the MGED display.
    </para>
-  <example><info><title>Run the NIRT program to fire a ray through the MGED display.</title></info>
+  <example><title>Run the NIRT program to fire a ray through the MGED display.</title>
 
      <para>
       <prompt>mged&gt;</prompt><userinput>nirt</userinput>
@@ -52,9 +52,9 @@ of <command>nirt</command> for more details.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

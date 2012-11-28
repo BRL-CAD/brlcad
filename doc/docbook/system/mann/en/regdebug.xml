@@ -23,18 +23,18 @@
     </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>With no options, the <command>regdebug</command> command toggles the display manager 	debug flag. If a <emphasis>debug_level</emphasis> is supplied, then the display manager 	debug flag is set to that value.
    </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>regdebug</command> command to toggle the 	display manager debug flag.
   </para>
 
-  <example><info><title>Toggle display manager debug flag.</title></info>
+  <example><title>Toggle display manager debug flag.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>regdebug</userinput>
@@ -45,9 +45,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

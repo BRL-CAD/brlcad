@@ -29,7 +29,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para> Reduces the number of triangles in the <emphasis>old_bot_primitive</emphasis>
     and saves the results to the <emphasis>new_bot_primitive</emphasis>.
@@ -45,13 +45,13 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       These examples demonstrate the use of the <command>bot_decimate</command> command to
       create new primitives by reducing the number of triangles within certain constraints.
     </para>
-    <example><info><title>Decimate Specifying Chord Error and Max Normal Error</title></info>
+    <example><title>Decimate Specifying Chord Error and Max Normal Error</title>
 
       <para>
 	Creating a new BOT primitive by reducing the number of triangles in the old BOT primitive
@@ -78,6 +78,9 @@
 	</varlistentry>
 	<varlistentry>
 	  <term><prompt>mged&gt;</prompt> <userinput>bot_decimate -c 10.0 bot_b bot_a</userinput></term>
+      <listitem>
+          <para/>
+      </listitem>
 	</varlistentry>
 	<varlistentry>
 	  <term><prompt>mged&gt;</prompt> <userinput>bot_decimate -c 10.0 bot_c bot_b</userinput></term>
@@ -92,6 +95,9 @@
 	</varlistentry>
 	<varlistentry>
 	  <term><prompt>mged&gt;</prompt> <userinput>bot_decimate -c 10.0 bot_b bot_a</userinput></term>
+      <listitem>
+          <para/>
+      </listitem>
 	</varlistentry>
 	<varlistentry>
 	  <term><prompt>mged&gt;</prompt> <userinput>bot_decimate -n 5.0 bot_c bot_b</userinput></term>
@@ -105,9 +111,11 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

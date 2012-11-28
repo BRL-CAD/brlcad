@@ -25,18 +25,18 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Allows the user to modify the attributes of a combination.
 The <emphasis>combname</emphasis> is the name of the combination to be modified. The <emphasis>regionflag</emphasis> controls whether the combination is identified as a region - supplying either <emphasis>R</emphasis> or <emphasis>1</emphasis> for the <emphasis>regionflag</emphasis> indicates that the combination is a region; to indicate the combination is NOT a region simply supply any other character (<emphasis>C</emphasis> or <emphasis>0</emphasis> are useful conventions here.) If the region flag is not being set, then the remainder of the attributes are ignored.  However, the <command>edcomb</command> command requires that something is supplied for those arguments in order to work - so if using <command>edcomb</command> to turn off the region flag on a combination simply supply 0 for each of the remaining arguments to <command>edcomb</command>. If the region flag is being set, then the <emphasis>region_id, aircode, los,</emphasis> and/or <emphasis>material_code</emphasis> are set according to the arguments supplied.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The first example shows the use of the <command>edcomb</command> command with the <emphasis>R</emphasis> flag (region) added along with the <emphasis>region_id, air_code, los</emphasis> and <emphasis>material_code</emphasis>. The second example shows how to unset the region flag for a particular combination.
   </para>
-  <example><info><title>Make a combination a region having specific attributes.</title></info>
+  <example><title>Make a combination a region having specific attributes.</title>
 
     <variablelist>
       <varlistentry>
@@ -49,7 +49,7 @@ The <emphasis>combname</emphasis> is the name of the combination to be modified.
      </variablelist>
   </example>
 
-  <example><info><title>Unset a <emphasis>region</emphasis> flag for a particular combination.</title></info>
+  <example><title>Unset a <emphasis>region</emphasis> flag for a particular combination.</title>
 
     <para>
       <prompt>mged&gt;</prompt> <userinput>edcomb comb1 C 0 0 0 0</userinput>
@@ -60,9 +60,9 @@ The <emphasis>combname</emphasis> is the name of the combination to be modified.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

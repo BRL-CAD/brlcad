@@ -10,11 +10,10 @@
 </refmeta>
 
 <refnamediv xml:id="name">
-  <refname>gr</refname>
-  <refpurpose>Add or remove primitives from a group using a GUI selection box.
-   </refpurpose>
-  <refname>dg</refname>
-  <refpurpose>Exit grouper mode.
+    <refname>gr / dg</refname>
+    <refpurpose>
+        Add or remove primitives from a group using a GUI selection box. / 
+        Exit grouper mode.
    </refpurpose>
 </refnamediv>
 
@@ -31,7 +30,7 @@
      </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
  <para>Allows primitives to be added or removed from a group by selecting
  them on the MGED display using a selection box. Primitives are identified
  by the location of their vertices on the display. For example, a portion of
@@ -59,7 +58,7 @@
  the translation matrices down to the primitives before using grouper.</para>
 </refsection>
 
- <refsection xml:id="options"><info><title>OPTIONS</title></info>
+ <refsection xml:id="options"><title>OPTIONS</title>
   <variablelist remap="TP">
     <varlistentry>
       <term><option>GroupName</option></term>
@@ -96,9 +95,9 @@
   </variablelist>
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

@@ -25,7 +25,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       Sends an <emphasis>mged</emphasis> mouse (i.e., defaults to a middle
@@ -43,14 +43,14 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       Translate the point at specified screen coordinates to the center of the
       display.
     </para>
-    <example><info><title>Translate the point at screen coordinates (100,100) to the center of the <emphasis>mged</emphasis>
-      display.</title></info>
+    <example><title>Translate the point at screen coordinates (100,100) to the center of the <emphasis>mged</emphasis>
+      display.</title>
 
       <variablelist>
 	<varlistentry>
@@ -66,9 +66,11 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD</para>
+  </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

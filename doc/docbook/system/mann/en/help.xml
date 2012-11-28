@@ -24,7 +24,7 @@
     </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Returns a list of available MGED commands along with a one-line usage message for each.
 	If a command is supplied as an argument, the one-line usage message for that command is returned.
@@ -32,11 +32,11 @@
    </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>help</command> command to display a one-line usage message for 	a specific command.
    </para>
-  <example><info><title>Display a one-line usage message for a command.</title></info>
+  <example><title>Display a one-line usage message for a command.</title>
 
     <variablelist>
       <varlistentry>
@@ -50,9 +50,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

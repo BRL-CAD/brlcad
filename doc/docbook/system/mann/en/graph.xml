@@ -22,7 +22,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>
     Used to query and manipulate properties of the graph that corresponds to the currently opened .g database.
@@ -33,13 +33,13 @@
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>
     The examples demonstrate the use of the <command>graph</command> command and subcommands to
     access information about the representation of the objects of a database.
   </para>
-  <example><info><title>Displays a list with the name and type of the objects along with the nodes' and edges' positions.</title></info>
+  <example><title>Displays a list with the name and type of the objects along with the nodes' and edges' positions.</title>
 
     <variablelist>
       <varlistentry>
@@ -53,24 +53,26 @@
     </variablelist>
   </example>
 
-  <example><info><title>Lists the names, types, positions of the corresponding nodes within the graph for the objects in the .g database.</title></info>
+  <example><title>Lists the names, types, positions of the corresponding nodes within the graph for the objects in the .g database.</title>
 
     <variablelist>
       <varlistentry>
 	<term><prompt>mged&gt;</prompt><userinput>graph positions</userinput></term>
+    <listitem>
 	<para>
 	  Lists the names, types, positions of the corresponding nodes
 	  within the graph for the objects in the currently opened .g database.
 	</para>
+</listitem>
       </varlistentry>
     </variablelist>
   </example>
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

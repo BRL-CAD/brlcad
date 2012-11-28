@@ -26,7 +26,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>
     <command>exists</command> works in a fashion similar to Unix-style
@@ -40,7 +40,7 @@
   </para>
 </refsection>
 
-<refsection xml:id="primaries"><info><title>PRIMARIES:</title></info>
+<refsection xml:id="primaries"><title>PRIMARIES:</title>
 
   <variablelist remap="TP">
     <varlistentry>
@@ -179,7 +179,7 @@
 
 </refsection>
 
-<refsection xml:id="operators"><info><title>OPERATORS:</title></info>
+<refsection xml:id="operators"><title>OPERATORS:</title>
 
 	<para>primaries can be combined with the following operators:</para>
 
@@ -223,7 +223,7 @@
   <para>The <emphasis remap="B" role="bold">-a</emphasis> operator has higher precedence than the <emphasis remap="B" role="bold">-o</emphasis> operator.</para>
 </refsection>
 
-<refsection xml:id="a_note_on_expressions"><info><title>A Note on Expressions</title></info>
+<refsection xml:id="a_note_on_expressions"><title>A Note on Expressions</title>
 
   <para>
     All primaries and operands must be expressed as separate arguments to exists.
@@ -240,12 +240,12 @@
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>
     The following are run from the MGED command prompt:
   </para>
-  <example><info><title>Example1</title></info>
+  <example><title>Example1</title>
 
     <para>
       <userinput>exists object1.s</userinput>
@@ -256,7 +256,7 @@
 
 </refsection>
 
-<refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
+<refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
 
   <para>
     Errors will be returned if parsing of the arguments fails, or one of the primaries'
@@ -264,14 +264,11 @@
   </para>
 </refsection>
 
-<info>
-  <author>
-    <personname>BRL-CAD Development Team</personname>
-    <contrib></contrib>
-  </author>
-</info>
+<refsection xml:id="author"><title>AUTHOR</title>
+  <para>BRL-CAD Team</para>
+</refsection>
 
-<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
 
   <para>
     This software is Copyright (c) 2008-2012 United States Government as
@@ -282,14 +279,14 @@
   </para>
 </refsection>
 
-<refsection xml:id="bugs"><info><title>BUGS</title></info>
+<refsection xml:id="bugs"><title>BUGS</title>
 
   <para>
     TODO.
   </para>
 </refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

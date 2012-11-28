@@ -31,7 +31,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Adds <emphasis>objects</emphasis>&gt; to the display list so that they will appear on the MGED display. The <command>e</command> command is a synonym for draw.
   </para>
@@ -67,13 +67,13 @@
 </itemizedlist>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The following examples show the use of the <command>draw</command> command to draw particular objects,
 	to specify color, to draw with shape lines rather than dot-dash lines, and to limit the objects to be drawn
  to those having specific attribute names and value pairs.
   </para>
-  <example><info><title>Draw specific objects in the <emphasis>MGED</emphasis> display.</title></info>
+  <example><title>Draw specific objects in the <emphasis>MGED</emphasis> display.</title>
 
     <variablelist>
       <varlistentry>
@@ -86,7 +86,7 @@
     </variablelist>
   </example>
 
-  <example><info><title>Specify the color used to draw the object.</title></info>
+  <example><title>Specify the color used to draw the object.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>draw -C 255/255/255 object2</userinput>
@@ -95,8 +95,8 @@
     </para>
   </example>
 
- <example><info><title>Limit the objects to be drawn to those having specific attribute names and value pairs.
- </title></info>
+ <example><title>Limit the objects to be drawn to those having specific attribute names and value pairs.
+ </title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>draw -A -o Comment {First comment} Comment {Second comment}</userinput>
@@ -107,9 +107,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

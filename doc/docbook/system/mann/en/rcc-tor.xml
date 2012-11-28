@@ -25,7 +25,7 @@ torus based on the parameters of that RCC.  </refpurpose>
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Used to round the edges of the specified RCC by creating a
 torus based on the parameters of that RCC. The radius values of the RCC must be
@@ -33,12 +33,12 @@ greater than half its height.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>rcc-tor</command> command to round the edges of an RCC 	by creating a torus shape based on the parameters of that RCC.
    </para>
 
-  <example><info><title>Round the edges of an RCC.</title></info>
+  <example><title>Round the edges of an RCC.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>rcc-tor rcc.s tor.s</userinput>
@@ -49,9 +49,9 @@ greater than half its height.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

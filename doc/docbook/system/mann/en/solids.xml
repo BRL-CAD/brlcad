@@ -25,7 +25,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Lists a summary of all the primitive shapes used in regions
 	referenced by the list of <emphasis>objects</emphasis>. The summary is written to the specified <emphasis>	file</emphasis>. The summary is similar to that produced by the <command>regions</command> command, but with 	the addition of primitive shape parameters. The shape parameters listed will have the accumulated 	transformation matrices along the path from the listed <emphasis>objects</emphasis> to the primitive shape
@@ -33,12 +33,12 @@
    </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>solids</command> command to list a summary of all the primitive 	shapes used in regions referenced by a list of objects.
    </para>
 
-  <example><info><title>List a summary of all the regions in a group.</title></info>
+  <example><title>List a summary of all the regions in a group.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>solids shapes_summary group1 regiona</userinput>
@@ -51,9 +51,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

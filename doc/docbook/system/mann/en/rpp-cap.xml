@@ -26,7 +26,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Creates an ARB6 with the specified height at a particular
 	face of the given RPP. The optional 0 and 1 refer to the orientation of the ARB6.
@@ -38,12 +38,12 @@
     </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The two examples show the use of the <command>rpp-cap</command> command to create an ARB6 	with the specified height at a particular face of a given RPP.  The second example shows 	the use of the "1" option.
   </para>
 
-  <example><info><title>Create an ARB6 shape with a specified height from a given RPP face.</title></info>
+  <example><title>Create an ARB6 shape with a specified height from a given RPP face.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>rpp-cap rpp.s cap.s 1234 20</userinput>
@@ -52,7 +52,7 @@
     </para>
   </example>
 
-  <example><info><title>Create an ARB6 shape with a specified height from a given RPP face and having peaks 	between points 1 and 4 and between 2 and 3. </title></info>
+  <example><title>Create an ARB6 shape with a specified height from a given RPP face and having peaks 	between points 1 and 4 and between 2 and 3. </title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>rcc-cap rcc.s cap.s 1234 20 1</userinput>
@@ -63,9 +63,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

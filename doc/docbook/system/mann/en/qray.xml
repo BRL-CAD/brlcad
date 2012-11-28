@@ -23,7 +23,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Gets/sets <emphasis>query ray</emphasis> characteristics. Without a subcommand, the usage message is
 printed. The <emphasis>qray</emphasis> command accepts the following subcommands:</para>
@@ -108,13 +108,13 @@ printed. The <emphasis>qray</emphasis> command accepts the following subcommands
 
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The four examples show the use of the <command>qray</command> command without a subcommand and with three of the listed subcommands.
     </para>
 
 
-  <example><info><title>Print the usage message.</title></info>
+  <example><title>Print the usage message.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>qray</userinput>
@@ -123,7 +123,7 @@ printed. The <emphasis>qray</emphasis> command accepts the following subcommands
     </para>
   </example>
 
- <example><info><title>Return the overlap format string.</title></info>
+ <example><title>Return the overlap format string.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>qray fmt o</userinput>
@@ -132,7 +132,7 @@ printed. The <emphasis>qray</emphasis> command accepts the following subcommands
     </para>
   </example>
 
-<example><info><title>Return the rgb color used to color odd partitions.</title></info>
+<example><title>Return the rgb color used to color odd partitions.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>qray oddcolor</userinput>
@@ -141,7 +141,7 @@ printed. The <emphasis>qray</emphasis> command accepts the following subcommands
     </para>
   </example>
 
-<example><info><title>Set the odd partition color to red.</title></info>
+<example><title>Set the odd partition color to red.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>qray oddcolor 255 0 0</userinput>
@@ -153,9 +153,9 @@ printed. The <emphasis>qray</emphasis> command accepts the following subcommands
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

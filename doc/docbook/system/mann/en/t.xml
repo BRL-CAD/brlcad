@@ -28,7 +28,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>The <command>t</command> command with no <emphasis>object</emphasis> argument lists the name of every object in the database (in alphabetical order) except those marked as hidden with the hide
 command. If the <emphasis>object</emphasis> argument is supplied, only those <emphasis>objects</emphasis> are listed. The <emphasis>object</emphasis> argument may include regular expressions for matching. The following options are also allowed:
@@ -61,11 +61,11 @@ s - list all nonhidden shapes in the database.
 </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The five examples show the use of the <command>t</command> command with different arguments to list names of objects, combinations, regions, or shapes.
     </para>
-   <example><info><title>List all objects with names beginning with "shape."</title></info>
+   <example><title>List all objects with names beginning with "shape."</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>t shape*</userinput>
@@ -75,7 +75,7 @@ s - list all nonhidden shapes in the database.
 
     </para>
   </example>
- <example><info><title>List all objects with names beginning with "shape."</title></info>
+ <example><title>List all objects with names beginning with "shape."</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>t -a shape*</userinput>
@@ -84,7 +84,7 @@ s - list all nonhidden shapes in the database.
        Lists all objects with names beginning with shape.
     </para>
   </example>
-<example><info><title>List all shapes with names beginning with wheel.</title></info>
+<example><title>List all shapes with names beginning with wheel.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>t -s wheel*</userinput>
@@ -93,7 +93,7 @@ s - list all nonhidden shapes in the database.
 
     </para>
   </example>
-<example><info><title>List all regions with names beginning with wheel.</title></info>
+<example><title>List all regions with names beginning with wheel.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>t -r wheel*</userinput>
@@ -102,7 +102,7 @@ s - list all nonhidden shapes in the database.
        Lists all regions with names beginning with wheel.
     </para>
   </example>
-<example><info><title>List all combinations with names beginning with suspension.</title></info>
+<example><title>List all combinations with names beginning with suspension.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>t -c suspension*</userinput>
@@ -114,9 +114,9 @@ s - list all nonhidden shapes in the database.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

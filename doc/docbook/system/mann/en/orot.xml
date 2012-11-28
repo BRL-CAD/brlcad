@@ -24,18 +24,18 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Performs a rotation of an object during matrix edit. The rotation is performed, in order:  <emphasis>xdeg	</emphasis> about the <emphasis>x</emphasis> axis, then <emphasis>ydeg</emphasis> about the <emphasis>y	</emphasis>axis, and finally <emphasis>zdeg</emphasis> about the <emphasis>z</emphasis> axis. If the 	<emphasis>-i</emphasis> flag is given, then the angles are interpreted as increments to the last object 	rotation. The <command>rotobj</command> command is a synonym for <emphasis>orot.</emphasis>
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>orot</command> command to rotate a currently edited object.
 
   </para>
-  <example><info><title>Rotate a currently edited object.</title></info>
+  <example><title>Rotate a currently edited object.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>orot 0 0 35</userinput>
@@ -46,9 +46,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

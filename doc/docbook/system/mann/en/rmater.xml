@@ -22,20 +22,20 @@
     </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Reads the specified <emphasis>file</emphasis> and sets the combination shader, color,
 	and inheritance values according to those listed in the <emphasis>file</emphasis>. The 	format of the <emphasis>file</emphasis> is expected to be as produced by the <command>	wmater</command> command.
    </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>rmater</command> command to read a specified
     file and set the combination attributes according to those in the file.
   </para>
 
-  <example><info><title>Set combination attributes according to those listed in a specified file.</title></info>
+  <example><title>Set combination attributes according to those listed in a specified file.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>rmater mater_file</userinput>
@@ -46,9 +46,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

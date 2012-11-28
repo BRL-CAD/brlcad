@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="anim_cascade1">
   <refmeta>
     <refentrytitle>ANIM_CASCADE</refentrytitle>
@@ -24,7 +23,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       <emphasis remap="I">Anim_cascade</emphasis> is designed to enable the user
@@ -50,7 +49,7 @@
     </para>
   </refsection>
 
-  <refsection xml:id="options"><info><title>OPTIONS</title></info>
+  <refsection xml:id="options"><title>OPTIONS</title>
 
     <variablelist remap="TP">
       <varlistentry>
@@ -175,9 +174,9 @@
     </variablelist>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
-    <example><info><title>Circular pan around a moving vehicle</title></info>
+    <example><title>Circular pan around a moving vehicle</title>
 
       <para>
 	Suppose that you want the virtual camera to pan in a circle around a
@@ -197,7 +196,7 @@
       <userinput>anim_cascade &lt; input.table | anim_script -v500 &gt; view.script</userinput>
       </para>
     </example>
-    <example><info><title>Determine time of place crossing</title></info>
+    <example><title>Determine time of place crossing</title>
 
       <para>
 	Suppose that you have an animation path for an object and you want to
@@ -223,7 +222,7 @@
 	lies above the plane.
       </para>
     </example>
-    <example><info><title>Camera positioning relative to objects</title></info>
+    <example><title>Camera positioning relative to objects</title>
 
       <para>
 	Suppose that one object is situated at the point (1,2,3) with a yaw,
@@ -238,14 +237,11 @@
     </example>
   </refsection>
 
-  <info>
-    <author>
-      <personname>Carl J. Nuzman</personname>
-      <contrib></contrib>
-    </author>
-  </info>
+<refsection xml:id="author"><title>AUTHOR</title>
+    <para>Carl J. Nuzman</para>
+</refsection>
 
-  <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+  <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
     <para>
       This software is Copyright (c) 1993-2012 by the United States Government
@@ -253,7 +249,7 @@
     </para>
   </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

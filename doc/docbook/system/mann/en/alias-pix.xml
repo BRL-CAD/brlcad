@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="aliaspix1">
 
 <refmeta>
@@ -26,7 +25,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>
     <command>alias-pix</command> converts the
@@ -36,7 +35,7 @@
   </para>
 </refsection>
 
-<refsection xml:id="options"><info><title>OPTIONS</title></info>
+<refsection xml:id="options"><title>OPTIONS</title>
 
   <variablelist remap="TP">
     <varlistentry>
@@ -51,6 +50,7 @@
   </variablelist>
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
-
+<refsection xml:id="author"><title>AUTHOR</title>
+  <para>BRL-CAD Team</para>
+</refsection>
 </refentry>

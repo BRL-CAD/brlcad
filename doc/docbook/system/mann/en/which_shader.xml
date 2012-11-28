@@ -26,20 +26,20 @@ specified.
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Lists all the regions that use one of the <emphasis>shaders</emphasis>
 specified.
     </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>which_shader</command> command to list all the regions that use the specified shaders.
 
   </para>
 
-  <example><info><title>List the regions that use the specified shaders.</title></info>
+  <example><title>List the regions that use the specified shaders.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>which_shader plastic light</userinput>
@@ -50,9 +50,9 @@ specified.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

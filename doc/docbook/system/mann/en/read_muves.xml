@@ -25,7 +25,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Reads the indicated MUVES_regionmap_file and
 	creates an internal list of all the MUVES components defined in the file along with
@@ -35,12 +35,12 @@
    </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>read_muves</command> command to create an internal list of MUVES components and corresponding BRL-CAD regions defined in a specified file.
    </para>
 
-  <example><info><title>Read a specified file to list MUVES components and their BRL-CAD regions.</title></info>
+  <example><title>Read a specified file to list MUVES components and their BRL-CAD regions.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>read_muves region_map</userinput>
@@ -52,9 +52,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

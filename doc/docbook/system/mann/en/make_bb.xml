@@ -29,19 +29,19 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>The <command>make_bb</command> (make bounding box) command builds a single, axis-aligned,
 	rectangular parallelepiped (RPP) that will contain the <emphasis>objects</emphasis> and <emphasis>	paths</emphasis> specified.  The <emphasis>paths</emphasis> will include any transformation matrices 	that accumulate from combinations along the path. The <command>listeval</command> command may be 	used to see the effect of transformation matrices along a path.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>make_bb</command> command to create a parallelepiped 	with a specified name that contains a particular object and path.
   </para>
-  <example><info><title>Create a parallelepiped with a specified name that contains a particular object and path.
-	</title></info>
+  <example><title>Create a parallelepiped with a specified name that contains a particular object and path.
+	</title>
 
     <variablelist>
       <varlistentry>
@@ -56,9 +56,9 @@
 
  </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

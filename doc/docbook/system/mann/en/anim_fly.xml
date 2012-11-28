@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="anim_fly1">
   <refmeta>
     <refentrytitle>ANIM_FLY</refentrytitle>
@@ -25,7 +24,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       This filter is designed to simulate the motion of an airplane.
@@ -38,7 +37,7 @@
     </para>
   </refsection>
 
-  <refsection xml:id="options"><info><title>OPTIONS</title></info>
+  <refsection xml:id="options"><title>OPTIONS</title>
 
     <variablelist remap="TP">
       <varlistentry>
@@ -122,14 +121,11 @@
     </variablelist>
   </refsection>
 
-  <info>
-    <author>
-      <personname>Carl J. Nuzman</personname>
-      <contrib></contrib>
-    </author>
-  </info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>Carl J. Nuzman</para>
+</refsection>
 
-  <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+  <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
     <para>
       This software is Copyright (c) 1993-2012 by the United States
@@ -137,7 +133,7 @@
     </para>
   </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

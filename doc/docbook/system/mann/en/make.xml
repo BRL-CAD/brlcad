@@ -23,7 +23,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Creates a <emphasis>new_shape</emphasis> of the indicated type.
 	The <emphasis>new_shape</emphasis> is sized according to the current view size and is dependent on the 	<emphasis>type</emphasis>. The possible values for <emphasis>type</emphasis> are:
@@ -168,11 +168,11 @@
 
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The first example shows the use of the <command>make</command> command to create a sphere with a specified 	name.  The second example shows the use of the <command>make</command> command with the <emphasis>-t	</emphasis> argument to generate a list of shape types handled by <command>make</command>.
   </para>
-  <example><info><title>Create a sphere having a specified name.</title></info>
+  <example><title>Create a sphere having a specified name.</title>
 
     <variablelist>
       <varlistentry>
@@ -184,7 +184,7 @@
       </varlistentry>
     </variablelist>
   </example>
-  <example><info><title>Generate a list of shape types handled by <command>make</command>.</title></info>
+  <example><title>Generate a list of shape types handled by <command>make</command>.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>make -t</userinput>
@@ -196,9 +196,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

@@ -27,7 +27,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Lists the top-level objects that are currently displayed. The
 <emphasis>phony</emphasis> flag asks for just <emphasis>phony</emphasis> objects. <emphasis>Phony</emphasis> objects are typically objects that are drawn in the MGED display, but are not actual database objects. Some <emphasis>phony</emphasis> objects
@@ -37,13 +37,13 @@ command. The <emphasis>real</emphasis> flag asks for just <emphasis>real</emphas
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>who</command> command to list the top-level phony objects that are currently displayed.
 
   </para>
 
-  <example><info><title>List the top-level phony objects that are currently displayed.</title></info>
+  <example><title>List the top-level phony objects that are currently displayed.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>who p</userinput>
@@ -55,9 +55,9 @@ command. The <emphasis>real</emphasis> flag asks for just <emphasis>real</emphas
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

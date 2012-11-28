@@ -24,7 +24,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       Creates an entry in the database that functions as part of a color
@@ -41,14 +41,14 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The example shows the use of the <command>color</command> command to make an entry in the
       color lookup table for regions within a specified range of idents.
     </para>
-    <example><info><title>Making an entry in the color lookup table for regions within a specified
-      range of idents using the color red.</title></info>
+    <example><title>Making an entry in the color lookup table for regions within a specified
+      range of idents using the color red.</title>
 
       <para>
 	<prompt>mged&gt;</prompt> <userinput>color 1100 1200 255 0 0 fake_string</userinput>
@@ -59,9 +59,9 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

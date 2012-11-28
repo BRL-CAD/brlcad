@@ -26,20 +26,20 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Lists the shader name and parameters, RGB color,
 <emphasis>RGB_valid</emphasis> flag, and the inheritance flag to the specified <emphasis>file</emphasis> for the listed<emphasis>objects</emphasis>. The format used is compatible with the <command>rmater</command> command. If <emphasis>file</emphasis> already exists, the new data is appended to it.
    </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>wmater</command> command to list the shader parameters of two objects to a specified file.
 
   </para>
 
-  <example><info><title>List the shader parameters of two objects to a specified file.</title></info>
+  <example><title>List the shader parameters of two objects to a specified file.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>wmater mater_file group1 regiona</userinput>
@@ -51,9 +51,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

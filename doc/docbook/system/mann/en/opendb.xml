@@ -24,7 +24,7 @@
     </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Closes the current database file and
     opens <emphasis>database.g</emphasis>.
@@ -44,7 +44,7 @@
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The first example shows the use of
     the <command>opendb</command> command to close the current
@@ -52,7 +52,7 @@
     shows the use of the command with no database name, which returns
     the name of the current database file.
   </para>
-  <example><info><title>Close the current database and open another one.</title></info>
+  <example><title>Close the current database and open another one.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>opendb model.g</userinput>
@@ -61,7 +61,7 @@
     </para>
   </example>
 
-  <example><info><title>Return the name of the current database file.</title></info>
+  <example><title>Return the name of the current database file.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>opendb</userinput>
@@ -70,7 +70,7 @@
     </para>
   </example>
 
-  <example><info><title>Open and upgrade a binary-incompatible v4 file.</title></info>
+  <example><title>Open and upgrade a binary-incompatible v4 file.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>opendb -f model.g</userinput>
@@ -84,9 +84,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

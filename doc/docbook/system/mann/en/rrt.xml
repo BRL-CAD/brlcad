@@ -24,7 +24,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Executes the specified <emphasis>program</emphasis> with the provided <emphasis>options	</emphasis> and includes the current database name and the list of currently displayed 	objects on the command line. This command effectively executes:
   </para>
@@ -43,13 +43,13 @@
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>rrt</command> command to execute the specified 	program and list the current database name and currently displayed objects.
   </para>
 
-  <example><info><title>Execute a specified program and list the current database name and currently displayed 	objects.
-    </title></info>
+  <example><title>Execute a specified program and list the current database name and currently displayed 	objects.
+    </title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>rrt echo</userinput>
@@ -60,9 +60,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

@@ -33,7 +33,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       Clears the mged display of any currently displayed objects, then displays the list of
@@ -48,12 +48,12 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The following are run from the MGED command prompt.
     </para>
-    <example><info><title>Display a named object</title></info>
+    <example><title>Display a named object</title>
 
       <variablelist>
 	<varlistentry>
@@ -67,7 +67,7 @@
       </variablelist>
     </example>
 
-    <example><info><title>Draw objects having an attribute with a value </title></info>
+    <example><title>Draw objects having an attribute with a value </title>
 
       <para>
 	<prompt>mged&gt;</prompt><userinput>B -A -o Comment {First comment} Comment {Second comment}</userinput>
@@ -79,9 +79,11 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+    </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

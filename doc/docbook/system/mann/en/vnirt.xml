@@ -25,7 +25,7 @@ them to nirt.</refpurpose>
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Interprets <emphasis>x</emphasis> and <emphasis>y</emphasis> as view coordinates (i.e., +-2047) and converts them to model coordinates (local units) using a value of 2047 for view <emphasis>z</emphasis> before passing
 them to nirt. All other arguments are passed to nirt without modification.
@@ -33,12 +33,12 @@ them to nirt. All other arguments are passed to nirt without modification.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>
 
   </para>
-  <example><info><title/></info>
+  <example><title/>
 
     <variablelist>
       <varlistentry>
@@ -59,7 +59,7 @@ them to nirt. All other arguments are passed to nirt without modification.
     </variablelist>
   </example>
 
-  <example><info><title/></info>
+  <example><title/>
 
     <para>
       <prompt/><userinput/>
@@ -71,9 +71,9 @@ them to nirt. All other arguments are passed to nirt without modification.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

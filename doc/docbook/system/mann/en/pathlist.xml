@@ -24,19 +24,19 @@ combinations and end at a primitive shape.
     </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Lists all existing paths that start from the specified
 	combinations and end at a primitive shape.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>pathlist</command> command to list all paths that start from the 	given combinations and end at a primitive shape.
   </para>
 
-  <example><info><title>List all paths that start from given combinations and end at a primitive shape.</title></info>
+  <example><title>List all paths that start from given combinations and end at a primitive shape.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>pathlist group1 region2</userinput>
@@ -47,9 +47,9 @@ combinations and end at a primitive shape.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

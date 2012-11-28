@@ -36,7 +36,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para><emphasis remap="B" role="bold">The <command>knob</command> command is used internally by MGED in the processing of knob input devices and is not recommended for users.</emphasis> The <command>knob </command> command provides a method for simulating knob input. With no options, it will display the current values for the knobs. With the <command> zap or zero </command> command provided, all the knob values will be reset to zero. If an <emphasis>id</emphasis> and <emphasis>value</emphasis>are provided, the specified knob setting will be simulated. If the <emphasis>-i</emphasis> option is specified, then the value provided will be used as an
 increment to be applied to the indicated knob. The knobs have different functions
@@ -144,11 +144,11 @@ respectively. The units for <emphasis>value</emphasis> are degrees for rotation 
 </itemizedlist>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>knob</command> command with the <emphasis>y	</emphasis> option to rotate a view about the vertical axis.
   </para>
-  <example><info><title>Rotate a view about the vertical axis.</title></info>
+  <example><title>Rotate a view about the vertical axis.</title>
 
     <variablelist>
       <varlistentry>
@@ -163,9 +163,9 @@ respectively. The units for <emphasis>value</emphasis> are degrees for rotation 
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

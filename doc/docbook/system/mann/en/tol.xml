@@ -29,7 +29,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>The <command>tol</command> command, with no arguments, lists the current tolerance settings. If the command line includes any of the 	keywords followed by a number, then that tolerance setting will be modified. The keywords are as follows:
    </para>
@@ -88,12 +88,12 @@
 
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>tol</command> command to set the relative and perpendicularity tolerances.
 
   </para>
-  <example><info><title>Set the relative and perpendicularity tolerances.</title></info>
+  <example><title>Set the relative and perpendicularity tolerances.</title>
 
     <para>
 	<prompt>mged&gt;</prompt> <userinput>tol rel .05 perp 1e-6</userinput></para>
@@ -103,9 +103,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

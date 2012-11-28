@@ -29,7 +29,7 @@ objects.
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>
     Used to create, change, retrieve, or view attributes of database
@@ -46,13 +46,13 @@ objects.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>
     The examples demonstrate the use of the <command>attr</command> command and subcommands to
     assign and list attributes of database objects.
   </para>
-  <example><info><title>Assigns an attribute to an object.</title></info>
+  <example><title>Assigns an attribute to an object.</title>
 
     <variablelist>
       <varlistentry>
@@ -67,22 +67,26 @@ objects.
     </variablelist>
   </example>
 
-  <example><info><title>List all the attributes for an object</title></info>
+  <example><title>List all the attributes for an object</title>
 
     <variablelist>
       <varlistentry>
 	<term><prompt>mged</prompt><userinput>attr show region_1 comment</userinput></term>
+    <listitem>
 	<para>Lists all the attributes for <emphasis>region_1</emphasis>.
 	</para>
+</listitem>
       </varlistentry>
     </variablelist>
   </example>
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title>
+  <para>BRL-CAD Team</para>
+</refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

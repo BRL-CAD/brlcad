@@ -29,20 +29,20 @@ combination specified that corresponds to the member specified.
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Replaces the existing transformation matrix in the combination specified that corresponds to the member 	specified. The transformation matrix may be specified with an I to indicate the identity matrix, or it 	may be specified as 16 elements listed row-by-row. The <command>copymat</command> command allows the user
 	to copy an existing transformation matrix.
    </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>putmat</command> command to set the transformation matrix for 	a specified region in a specified group to the identity matrix.
   </para>
 
-  <example><info><title>Set the transformation matrix for a specified region in a specified group to the identity matrix.
-</title></info>
+  <example><title>Set the transformation matrix for a specified region in a specified group to the identity matrix.
+</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>putmat group1/regiona I</userinput>
@@ -53,9 +53,9 @@ combination specified that corresponds to the member specified.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

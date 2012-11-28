@@ -25,7 +25,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Moves the view center to (<emphasis>x, y, z</emphasis>). If <emphasis>z</emphasis> is not provided, then <emphasis>z</emphasis>=0 is used. The parameters <emphasis>x, y, z</emphasis> are integer values relative to the screen. For example, the center of the screen is (0, 0, 0) and the upper left corner is (-2048, 2047, 0).
 
@@ -33,12 +33,12 @@
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The two examples show the use of the <command>sv</command> command to move the view center to a particular location on the screen.
    </para>
 
-  <example><info><title>Keep the view center at the center of the screen.</title></info>
+  <example><title>Keep the view center at the center of the screen.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>sv 0 0 0</userinput>
@@ -48,7 +48,7 @@
     </para>
   </example>
 
-<example><info><title>Move the view center half way between the current view center and the right side of the view screen.</title></info>
+<example><title>Move the view center half way between the current view center and the right side of the view screen.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>sv 1024 0 0</userinput>
@@ -59,9 +59,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

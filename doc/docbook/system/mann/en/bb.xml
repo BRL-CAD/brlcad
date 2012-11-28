@@ -21,7 +21,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       <emphasis remap="I">bb</emphasis> calculates an axis-aligned
@@ -99,10 +99,10 @@
 
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
 
-    <example><info><title>Determine the size of the bounding box for a Havoc helicopter</title></info>
+    <example><title>Determine the size of the bounding box for a Havoc helicopter</title>
 
 
       <para>
@@ -117,7 +117,7 @@ Bounding Box Volume: 2092246392.4 cm^3
       </para>
 
     </example>
-    <example><info><title>Report only the min and max points of a bounding box</title></info>
+    <example><title>Report only the min and max points of a bounding box</title>
 
 
       <para>
@@ -128,7 +128,7 @@ min {-759.447479 -8437.866455 -890.000000} max {19124.621094 8397.693207 5360.00
       </para>
 
     </example>
-    <example><info><title>Bounding Box for multiple components</title></info>
+    <example><title>Bounding Box for multiple components</title>
 
 
       <para>
@@ -143,7 +143,7 @@ Bounding Box Volume: 340782488.9 cm^3
       </para>
 
     </example>
-    <example><info><title>Create Bounding Box ARB8 in database</title></info>
+    <example><title>Create Bounding Box ARB8 in database</title>
 
 
       <para>
@@ -175,14 +175,14 @@ havoc_parts_bbox.s:  ARB8
     </example>
   </refsection>
 
-  <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+  <refsection xml:id="see_also"><title>SEE ALSO</title>
 
     <para>
     <citerefentry><refentrytitle>make_bb</refentrytitle><manvolnum>nged</manvolnum></citerefentry>.
    </para>
   </refsection>
 
-  <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+  <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
     <para>
       This software is Copyright (c) 2009-2012 United States Government as represented by the
@@ -190,7 +190,7 @@ havoc_parts_bbox.s:  ARB8
     </para>
   </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic
@@ -198,5 +198,8 @@ havoc_parts_bbox.s:  ARB8
     </para>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
+
 </refentry>

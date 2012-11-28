@@ -26,20 +26,20 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Adjusts the current MGED viewing direction such that the eye
 	is positioned along the direction vector (<emphasis>dx dy dz</emphasis>) from the view center and is 	looking towards the view center. The <emphasis>angle</emphasis> (in degrees) allows for a twist about the 	viewing direction. The <command>ae</command> command provides a similar capability.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>
     The example shows the use of the <command>qvrot</command> command to change the current view.
   </para>
 
-  <example><info><title>Change the current view.</title></info>
+  <example><title>Change the current view.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>qvrot 0 0 1 90</userinput>
@@ -50,9 +50,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

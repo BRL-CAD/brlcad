@@ -25,7 +25,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Saves the current viewing parameters in the specified <emphasis>file</emphasis>
 	in the form of a shell script that will run the BRL-CAD <emphasis>rt</emphasis> program as if it had been
@@ -63,12 +63,12 @@ EOF
 </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>saveview</command> command to create a file that will contain a 	script to run the <emphasis>rt</emphasis> program and create a color-shaded image of the current MGED 	display.
    </para>
 
-  <example><info><title>Save current viewing parameters in a specified file in the form of a shell script to run the BRL-CAD 	<emphasis>rt</emphasis> program.</title></info>
+  <example><title>Save current viewing parameters in a specified file in the form of a shell script to run the BRL-CAD 	<emphasis>rt</emphasis> program.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>rt_script -s1024</userinput>
@@ -80,9 +80,9 @@ EOF
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

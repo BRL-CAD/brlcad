@@ -24,19 +24,19 @@ specified on the command line.
     </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Sets the view direction for MGED from the quaternion
 specified on the command line.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>orientation</command> command to set the view direction for MGED 	from the specified quaternion.
   </para>
 
- <example><info><title>Set the view direction for MGED.</title></info>
+ <example><title>Set the view direction for MGED.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>orientation 1 0 0 0</userinput>
@@ -48,9 +48,9 @@ specified on the command line.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

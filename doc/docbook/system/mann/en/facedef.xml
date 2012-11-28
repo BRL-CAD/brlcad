@@ -31,7 +31,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Allows the user to redefine any face of an ARB8 shape.  The
 	user must be in Primitive Edit Mode with an <emphasis>ARB</emphasis> selected for editing. The optional 	parameters may be omitted, and MGED will prompt for the missing values. The
@@ -42,7 +42,7 @@
 	      <para>
 		  Specify the new location of this face by providing coefficients for its plane
 		  equation:
-		  <informalequation>Ax + By + Cz = D.</informalequation>
+          <informalequation><mathphrase>Ax + By + Cz = D</mathphrase></informalequation>
 	      </para>
 	    </listitem>
 	 </varlistentry>
@@ -76,11 +76,11 @@
 
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
      <para>The first example shows the use of the <command>facedef</command> command with the <emphasis>a 	 </emphasis> option to redefine a specified face so that it is in another plane.  The second example shows 	the use of the <command>facedef</command> command with the <emphasis>b</emphasis> option to redefine a 	face so that it is in another plane formed by three points.
      </para>
-  <example><info><title>Moving a specified face so that it is in another plane.</title></info>
+  <example><title>Moving a specified face so that it is in another plane.</title>
 
     <variablelist>
       <varlistentry>
@@ -92,7 +92,7 @@
       </varlistentry>
     </variablelist>
    </example>
-  <example><info><title> Moving a specified face so that it is in another plane formed by three points.</title></info>
+  <example><title> Moving a specified face so that it is in another plane formed by three points.</title>
 
     <variablelist>
       <varlistentry>
@@ -110,9 +110,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

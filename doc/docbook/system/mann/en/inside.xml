@@ -24,7 +24,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Creates a new shape that is <emphasis>inside</emphasis> an existing shape. This
 	command is typically used to create an <emphasis>inside</emphasis> shape that can be subtracted from the
@@ -38,11 +38,11 @@
    </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The first example shows the use of the <command>inside</command> command to create a shape inside 	another shape such that all its faces are 1 unit from the corresponding faces of the outside shape. The 	second example shows the use of the <command>inside</command> command to create a shape inside the current 	key shape or the shape currently being edited. The faces of the new shape will be 1 unit from the 	corresponding faces of the current outside shape.
   </para>
-  <example><info><title>Create a shape inside of an existing shape.</title></info>
+  <example><title>Create a shape inside of an existing shape.</title>
 
     <variablelist>
       <varlistentry>
@@ -55,7 +55,7 @@
     </variablelist>
   </example>
 
-  <example><info><title>Creates a shape inside of the current key shape or the shape being edited.</title></info>
+  <example><title>Creates a shape inside of the current key shape or the shape being edited.</title>
 
     <para>
       <prompt>mged&gt;</prompt> <userinput>inside in_arb 1 1 1 1 1 1</userinput>
@@ -66,9 +66,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

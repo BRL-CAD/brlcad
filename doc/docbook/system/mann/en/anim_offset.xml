@@ -24,7 +24,7 @@
   </refsynopsisdiv>
 
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       This filter operates on animation tables of the type used by <emphasis remap="I">tabsub</emphasis>
@@ -50,7 +50,7 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       This filter could be used, for example, to do an animation where
@@ -113,7 +113,7 @@ anim_offset -o -600 900 1200 &lt; truck.table &gt; camera.table
     </para>
   </refsection>
 
-  <refsection xml:id="bugs"><info><title>BUGS</title></info>
+  <refsection xml:id="bugs"><title>BUGS</title>
 
     <para>
       The program will only use orientations specified as yaw, pitch, and roll. You can get around this using
@@ -121,19 +121,16 @@ anim_offset -o -600 900 1200 &lt; truck.table &gt; camera.table
     </para>
   </refsection>
 
-  <info>
-    <author>
-      <personname>Carl J. Nuzman</personname>
-      <contrib></contrib>
-    </author>
-  </info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+  <para>Carl J. Nuzman</para>
+  </refsection>
 
-  <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+  <refsection xml:id="copyright"><title>COPYRIGHT</title>
   <para> This software is Copyright (c) 1993-2012 by the United States
   Government as represented by U.S. Army Research Laboratory.</para>
   </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
   <para>Reports of bugs or problems should be submitted via electronic
   mail to &lt;devs@brlcad.org&gt;.</para>
   </refsection>

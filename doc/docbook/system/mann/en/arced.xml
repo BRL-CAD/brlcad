@@ -24,7 +24,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       The objects in a BRL-CAD model are stored as Boolean combinations of primitive
@@ -68,9 +68,9 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
-    <example><info><title>Rotate body/head 45 degrees about Z axis</title></info>
+    <example><title>Rotate body/head 45 degrees about Z axis</title>
 
       <para>
 	<prompt>mged&gt;</prompt> <userinput>arced body/head matrix rot 0 0 45</userinput>
@@ -89,9 +89,11 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

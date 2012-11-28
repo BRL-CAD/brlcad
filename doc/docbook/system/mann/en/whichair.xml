@@ -24,7 +24,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Lists all the regions that use one of the air codes specified.
 The <command>eac</command> command will perform a similar search, but will draw the qualifying regions
@@ -34,12 +34,12 @@ numbers will not be listed by this command.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>whichair</command> command to list all the regions that use one of the air codes specified.
   </para>
 
-  <example><info><title>List all regions that use the specified air codes.</title></info>
+  <example><title>List all regions that use the specified air codes.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>whichair 2 3</userinput>
@@ -50,9 +50,9 @@ numbers will not be listed by this command.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

@@ -23,7 +23,7 @@ options of "-s50  M."</refpurpose>
     </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Executes the BRL-CAD <emphasis>rtcheck</emphasis> program with the default
 options of "-s50  M." The -M option tells <emphasis>rtcheck</emphasis> to read the viewing parameters from standard input so that rays are only fired from the current view. The current
@@ -33,13 +33,13 @@ database name and the list of currently displayed objects are added to the end o
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>rtcheck</command> command to run the <emphasis>	rtcheck</emphasis> program with rays fired from a uniform grid with the rays spaced
 	every 10 mm.
   </para>
 
-  <example><info><title>Run the <emphasis>rtcheck</emphasis> program to fire rays from a uniform grid with the 	rays spaced a specified distance apart.</title></info>
+  <example><title>Run the <emphasis>rtcheck</emphasis> program to fire rays from a uniform grid with the 	rays spaced a specified distance apart.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>rtcheck -g10 -G10</userinput>
@@ -50,9 +50,9 @@ database name and the list of currently displayed objects are added to the end o
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

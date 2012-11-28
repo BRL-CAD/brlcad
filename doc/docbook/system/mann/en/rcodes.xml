@@ -24,7 +24,7 @@ regions listed.
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Reads the specified file and assigns the region attributes to the
 regions listed. The file is expected to be in the format produced by the <command>wcodes</command>
@@ -33,13 +33,13 @@ command.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>rcodes</command> command to set the region-specific attributes according to the values found in the specified file.
 
   </para>
 
-  <example><info><title>Assign region-specific attributes to listed regions.</title></info>
+  <example><title>Assign region-specific attributes to listed regions.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>rcodes region_codes</userinput>
@@ -51,9 +51,9 @@ command.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

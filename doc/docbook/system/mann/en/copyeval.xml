@@ -26,7 +26,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>Objects in a <emphasis>BRL-CAD</emphasis> model are stored as Boolean trees
     (combinations), with the members being primitive shapes or other Boolean trees. Each
@@ -44,24 +44,24 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The example shows the use of the <command>copyeval</command> command to create
       a new primitive by applying the transformation matrices along the path to the old
       primitive.
     </para>
-    <example><info><title>Create a new primitive object by applying the transformation matrices along the path
-      to the old primitive.</title></info>
+    <example><title>Create a new primitive object by applying the transformation matrices along the path
+      to the old primitive.</title>
 
       <para><prompt>mged&gt;</prompt> <userinput>copyeval shapeb comb1/comb2/comb3/shapea</userinput></para>
       <para>Creates <emphasis>shapeb</emphasis> from <emphasis>shapea</emphasis> by applying the accumulated transformation matrices from the path comb1/comb2/comb3.</para>
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

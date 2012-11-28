@@ -25,17 +25,17 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Adds all the regions in the current model that have one of the aircodes in the argument list to the 	display list so that they will appear on the <emphasis>MGED</emphasis> display. Regions that have nonzero 	ident numbers will not be listed by this command. The <command>whichair</command> command will perform the 	same search, but just lists the results.
    </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>eac</command> command to draw all regions having particular air codes.
   </para>
-  <example><info><title>Draw all regions having particular air codes.</title></info>
+  <example><title>Draw all regions having particular air codes.</title>
 
     <variablelist>
       <varlistentry>
@@ -48,9 +48,9 @@
   </example>
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

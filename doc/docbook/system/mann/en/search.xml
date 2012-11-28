@@ -26,7 +26,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>
     <command>search</command> works in a fashion similar to Unix-style
@@ -54,7 +54,7 @@
   </para>
 </refsection>
 
-<refsection xml:id="primitives"><info><title>PRIMITIVES:</title></info>
+<refsection xml:id="primitives"><title>PRIMITIVES:</title>
 
   <variablelist remap="TP">
     <varlistentry>
@@ -163,7 +163,7 @@
 	<para>
 	  Returns TRUE if an object has ONLY standard attributes associated with it.
 	  Standard attributes in BRL-CAD are:
-	  <table><info><title>Standard Attributes</title></info>
+	  <table><title>Standard Attributes</title>
 
 	    <tgroup cols="2">
 	      <tbody>
@@ -182,7 +182,7 @@
 	<para>
 	  Returns TRUE if the type of the object matches <emphasis remap="I">pattern.</emphasis>
 	  Pattern evaluation is done using shell pattern matching.  Types recognized include:
-	  <table><info><title>Primitives</title></info>
+	  <table><title>Primitives</title>
 
 	    <tgroup cols="6">
 	      <tbody>
@@ -238,7 +238,7 @@
 	    </tgroup>
 	  </table>
 
-	  <table><info><title>Combinations</title></info>
+	  <table><title>Combinations</title>
 
 	    <tgroup cols="2">
 	      <thead>
@@ -266,7 +266,7 @@
 
 </refsection>
 
-<refsection xml:id="operators"><info><title>OPERATORS</title></info>
+<refsection xml:id="operators"><title>OPERATORS</title>
 
   <variablelist remap="TP">
     <varlistentry>
@@ -332,7 +332,7 @@
   </variablelist>
 </refsection>
 
-<refsection xml:id="a_note_on_expressions"><info><title>A Note on Expressions</title></info>
+<refsection xml:id="a_note_on_expressions"><title>A Note on Expressions</title>
 
   <para>
     All primaries and operands must be expressed as separate arguments to search.
@@ -350,12 +350,12 @@
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>
     The following are run from the MGED command prompt:
   </para>
-  <example><info><title>Shell Globbing Based Pattern Match of Object Name</title></info>
+  <example><title>Shell Globbing Based Pattern Match of Object Name</title>
 
     <para>
       <userinput>search -name *.s</userinput>
@@ -365,7 +365,7 @@
     </para>
   </example>
 
-  <example><info><title>Full Path Instance Reporting of Search Results</title></info>
+  <example><title>Full Path Instance Reporting of Search Results</title>
 
     <para>
       <userinput>search / -name *.s</userinput>
@@ -376,7 +376,7 @@
   </example>
 
 
-  <example><info><title>Name Pattern Matching at Depth &gt;= 3</title></info>
+  <example><title>Name Pattern Matching at Depth &gt;= 3</title>
 
     <para>
       <userinput>search / -name *.s -mindepth 3</userinput>
@@ -387,7 +387,7 @@
     </para>
   </example>
 
-  <example><info><title>Finding all Objects in a Subtree</title></info>
+  <example><title>Finding all Objects in a Subtree</title>
 
     <para>
       <userinput>search group1 -name *.r</userinput>
@@ -399,7 +399,7 @@
     </para>
   </example>
 
-  <example><info><title>Finding all Instances of Objects in a Subtree</title></info>
+  <example><title>Finding all Instances of Objects in a Subtree</title>
 
     <para>
       <userinput>search /group1 -name *.r</userinput>
@@ -411,7 +411,7 @@
     </para>
   </example>
 
-  <example><info><title>Searching by Type</title></info>
+  <example><title>Searching by Type</title>
 
     <para>
       <userinput>search . -type eto</userinput>
@@ -422,7 +422,7 @@
     </para>
   </example>
 
- <example><info><title>Finding all Instances of Nested Regions</title></info>
+ <example><title>Finding all Instances of Nested Regions</title>
 
     <para>
       <userinput>search / -type region -above -type region</userinput>
@@ -433,7 +433,7 @@
     </para>
   </example>
 
-  <example><info><title>Finding all Assemblies</title></info>
+  <example><title>Finding all Assemblies</title>
 
     <para>
       <userinput>search / -below -type region ! -type region</userinput>
@@ -444,7 +444,7 @@
     </para>
   </example>
 
-  <example><info><title>Finding all Combinations below Regions</title></info>
+  <example><title>Finding all Combinations below Regions</title>
 
     <para>
       <userinput>search / ! ( -below -type region ) ! -type region -type comb</userinput>
@@ -454,7 +454,7 @@
     </para>
   </example>
 
-  <example><info><title>Finding all Empty Combinations</title></info>
+  <example><title>Finding all Empty Combinations</title>
 
     <para>
       <userinput>search -nnodes 0</userinput>
@@ -464,7 +464,7 @@
     </para>
   </example>
 
-  <example><info><title>Finding all Combinations With 10 or More Nodes</title></info>
+  <example><title>Finding all Combinations With 10 or More Nodes</title>
 
     <para>
       <userinput>search -nnodes &gt;=10</userinput>
@@ -477,7 +477,7 @@
 
 </refsection>
 
-<refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
+<refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
 
   <para>
     Errors will be returned if parsing of the arguments fails, or one of the primaries'
@@ -485,14 +485,11 @@
   </para>
 </refsection>
 
-<info>
-  <author>
-    <personname>Clifford Yapp</personname>
-    <contrib></contrib>
-  </author>
-</info>
+<refsection xml:id="author"><title>AUTHOR</title>
+  <para>Clifford Yapp</para>
+</refsection>
 
-<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
 
   <para>
     This software is Copyright (c) 2008-2012 United States Government as
@@ -503,7 +500,7 @@
   </para>
 </refsection>
 
-<refsection xml:id="bugs"><info><title>BUGS</title></info>
+<refsection xml:id="bugs"><title>BUGS</title>
 
   <para>
     Bugs resulting from incorrect parsing of shell pattern expressions are the
@@ -511,7 +508,7 @@
   </para>
 </refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

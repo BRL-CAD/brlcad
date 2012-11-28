@@ -27,7 +27,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       Performs the operations indicated in the <emphasis>Boolean_formula </emphasis> and
@@ -45,13 +45,13 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The example demonstrates the use of the <command>bev</command> command with the
       <emphasis>-t</emphasis> option to create a triangulated object.
     </para>
-    <example><info><title>Creating a triangulated object by intersecting two objects</title></info>
+    <example><title>Creating a triangulated object by intersecting two objects</title>
 
       <variablelist>
 	<varlistentry>
@@ -65,9 +65,11 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

@@ -23,7 +23,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       Eliminates duplicate faces from a BOT solid.
@@ -31,15 +31,15 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The example demonstrates the use of the <command>bot_face_fuse</command> command to eliminate
       duplicate faces from a BOT primitive.
     </para>
-    <example><info><title>
+    <example><title>
 	Removing duplicate faces from one BOT and storing the results in a new BOT primitive.
-      </title></info>
+      </title>
 
       <variablelist>
 	<varlistentry>
@@ -56,9 +56,11 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

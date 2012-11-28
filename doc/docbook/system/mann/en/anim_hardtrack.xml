@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="anim_hardtrack1">
   <refmeta>
     <refentrytitle>ANIM_HARDTRACK</refentrytitle>
@@ -25,7 +24,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       <emphasis remap="I">Anim_hardtrack</emphasis> is designed to produce an animation script for the
@@ -81,7 +80,7 @@
 
   </refsection>
 
-  <refsection xml:id="options"><info><title>OPTIONS:</title></info>
+  <refsection xml:id="options"><title>OPTIONS:</title>
 
     <para>
       One or both of the first two options should always be specified.
@@ -233,7 +232,7 @@
       </varlistentry>
     </variablelist>
 
-    <refsection xml:id="output"><info><title>Output:</title></info>
+    <refsection xml:id="output"><title>Output:</title>
 
       <para>
 	The output is a script containing as many frames as there are positions in
@@ -255,7 +254,7 @@ for 0&lt;=i&lt;n and 0&lt;=j&lt;k.
     </refsection>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       Suppose you want to make an animation of a tank rolling across
@@ -357,31 +356,28 @@ for 0&lt;=i&lt;n and 0&lt;=j&lt;k.
 
   </refsection>
 
-  <refsection xml:id="bugs"><info><title>BUGS</title></info>
+  <refsection xml:id="bugs"><title>BUGS</title>
 
     <para>Tracks must have at least two wheels, and they must be listed in clockwise
     order, or the results are unpredictable.</para>
   </refsection>
 
-  <refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+  <refsection xml:id="see_also"><title>SEE ALSO</title>
 
     <para><citerefentry><refentrytitle>anim_script</refentrytitle><manvolnum>nged</manvolnum></citerefentry>, <citerefentry><refentrytitle>anim_track</refentrytitle><manvolnum>nged</manvolnum></citerefentry></para>
   </refsection>
 
-  <info>
-    <author>
-      <personname>Carl J. Nuzman</personname>
-      <contrib></contrib>
-    </author>
-  </info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>Carl J. Nuzman</para>
+  </refsection>
 
-  <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
 
     <para>This software is Copyright (c) 1993-2012 by the United States
     Government as represented by U.S. Army Research Laboratory.</para>
   </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>Reports of bugs or problems should be submitted via electronic
     mail to &lt;devs@brlcad.org&gt;.</para>

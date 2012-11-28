@@ -25,17 +25,17 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Deletes the specified list of objects from the MGED display. It is a synonym for the <command>dall</command> 	command. It allows the user to delete objects that have not been explicitly displayed (unlike the <command>d	</command> or <command>erase</command> commands). Note that this has no effect on the BRL-CAD database itself. To 	actually remove objects from the database, use the <command>kill</command> command.
    </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>erase_all</command> command to delete two objects from the MGED 	display.
    </para>
-  <example><info><title>Delete objects from the MGED display.</title></info>
+  <example><title>Delete objects from the MGED display.</title>
 
     <variablelist>
       <varlistentry>
@@ -50,9 +50,9 @@
 
  </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

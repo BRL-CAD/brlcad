@@ -26,7 +26,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       The <command>aproposlib</command> command searches through the one-line
@@ -35,18 +35,18 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The example demonstrates the use of the <command>aproposlib</command> command
       to search the one-line usage messages for a particular BRL-CAD library
       interface command.
     </para>
-    <example><info><title>
+    <example><title>
 	Using the <command>aproposlib</command> command to search the
 	one-line usage messages for a particular BRL-CAD library interface
 	command containing "mat."
-      </title></info>
+      </title>
 
       <para>
 	<prompt>mged&gt; </prompt><userinput>aproposlib mat</userinput>
@@ -65,9 +65,11 @@ wdb_xpush
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

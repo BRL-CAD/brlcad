@@ -26,7 +26,7 @@ a file, then starts a text editor for the user to modify the parameters.
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>The <command>ted</command> command places the parameters of the currently edited primitive shape into a file, then starts a text editor for the user to modify the parameters. The editor used
 is whatever the user has set in the environment variable EDITOR. If EDITOR is not set, then <emphasis> /bin/ed</emphasis>  is used. MGED must be in the primitive edit mode prior to using this
@@ -34,13 +34,13 @@ command. The <command>red</command> command performs a similar function for comb
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>ted</command> command to place the parameters of a currently edited primitive shape into a file and start a text editor to modify the parameters.
 
   </para>
 
-  <example><info><title>Use a text editor to modify a currently edited shape.</title></info>
+  <example><title>Use a text editor to modify a currently edited shape.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>ted</userinput>
@@ -51,9 +51,9 @@ command. The <command>red</command> command performs a similar function for comb
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

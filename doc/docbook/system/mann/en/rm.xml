@@ -26,7 +26,7 @@ combination.
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Deletes all occurrences of the listed members from the specified
 	<emphasis>combination</emphasis>. The <command>red, r, comb, c,</command> and <command>g	</command> commands provide other <emphasis>combination</emphasis> editing
@@ -34,12 +34,12 @@ combination.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>rm</command> command to delete all occurrences 	of specified members of a given combination.
   </para>
 
-  <example><info><title>Delete members of a given combination.</title></info>
+  <example><title>Delete members of a given combination.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>rm group1 regiona</userinput>
@@ -51,9 +51,9 @@ combination.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

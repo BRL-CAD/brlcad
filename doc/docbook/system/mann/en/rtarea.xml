@@ -20,7 +20,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       For displayed objects, the <emphasis remap="I">rtarea</emphasis> command calculates
@@ -168,7 +168,7 @@
 
 </refsection>
 
-<refsection xml:id="options"><info><title>OPTIONS</title></info>
+<refsection xml:id="options"><title>OPTIONS</title>
 
     <variablelist remap="TP">
       <varlistentry>
@@ -271,8 +271,8 @@
     </variablelist>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
-    <example><info><title>Calculate exposed and presented surface areas</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
+    <example><title>Calculate exposed and presented surface areas</title>
       <para>
       <prompt>mged&gt; </prompt><userinput>rtarea</userinput>
       </para>
@@ -281,7 +281,7 @@
        in current editing units.
       </para>
     </example>
-    <example><info><title>Calculate exposed, presented and centers of surface areas</title></info>
+    <example><title>Calculate exposed, presented and centers of surface areas</title>
       <para>
       <prompt>mged&gt; </prompt><userinput>rtarea -c "set cc=1"</userinput>
       </para>
@@ -290,7 +290,7 @@
        reported in current editing units.
       </para>
     </example>
-    <example><info><title>Calculate exposed and presented surface areas (results in inches)</title></info>
+    <example><title>Calculate exposed and presented surface areas (results in inches)</title>
       <para>
       <prompt>mged&gt; </prompt><userinput>units in</userinput>
       </para>
@@ -304,7 +304,7 @@
        in inches.
       </para>
     </example>
-    <example><info><title>Calculate exposed and presented surface areas (az=35, el=25, auto-size)</title></info>
+    <example><title>Calculate exposed and presented surface areas (az=35, el=25, auto-size)</title>
       <para>
       <prompt>mged&gt; </prompt><userinput>rtarea -a35 -e25</userinput>
       </para>
@@ -313,7 +313,7 @@
        Results reported in current editing units.
       </para>
     </example>
-    <example><info><title>Calculate exposed and presented surface areas (1x1 inch grid cells)</title></info>
+    <example><title>Calculate exposed and presented surface areas (1x1 inch grid cells)</title>
       <para>
       <prompt>mged&gt; </prompt><userinput>rtarea -g25.4</userinput>
       </para>
@@ -325,19 +325,19 @@
     </example>
   </refsection>
 
-  <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+  <refsection xml:id="copyright"><title>COPYRIGHT</title>
     <para>
       This software is Copyright (c) 1987-2012 United States Government as represented by the
       U.S. Army Research Laboratory. All rights reserved.
     </para>
   </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
     <para>
       Reports of bugs or problems should be submitted via electronic
       mail to &lt;bugs@brlcad.org&gt;.
     </para>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 </refentry>

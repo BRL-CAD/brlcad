@@ -19,25 +19,31 @@
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>regdef</command>
-
     <arg choice="req" rep="norepeat"><replaceable>item</replaceable></arg>
-    <arg choice="opt" rep="norepeat"><replaceable>air <arg choice="opt" rep="norepeat"><replaceable>los <arg choice="opt" rep="norepeat"><replaceable>material_code</replaceable>	</arg></replaceable></arg></replaceable></arg>
-
+    <arg choice="opt" rep="norepeat">
+        <replaceable>air </replaceable>
+        <arg choice="opt" rep="norepeat">
+            <replaceable>los</replaceable>
+            <arg choice="opt" rep="norepeat">
+                <replaceable>material_code</replaceable>
+            </arg>
+        </arg>
+    </arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Sets the default region attributes used by the <command>r</command> and <command>c	</command> commands when building a BRL-CAD region. The default <emphasis>ident</emphasis> 	number is incremented each time a new region is created with the <command>r</command> or 	<command>c</command> commands.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>regdef</command> command to set the default 	region attributes used by the <command>r</command> and <command>c</command> commands when 	building a BRL-CAD region.
     </para>
 
-  <example><info><title>Set region default attributes.</title></info>
+  <example><title>Set region default attributes.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>regdef 1003 0 100 8</userinput>
@@ -49,9 +55,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

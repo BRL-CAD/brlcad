@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="analyze">
 
   <refmeta>
@@ -26,7 +25,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       The <command>analyze</command> command displays the rotation and fallback
@@ -37,14 +36,14 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The example shows how to display information about an ARB's rotation and
       fallback angles, surface area, and plane equation for its face.
       Edge information is also displayed.
     </para>
-    <example><info><title>Analyze a particular <emphasis>ARB</emphasis></title></info>
+    <example><title>Analyze a particular <emphasis>ARB</emphasis></title>
 
       <para>
 	<prompt>mged&gt;</prompt> <userinput>analyze arb_name</userinput>
@@ -57,9 +56,11 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

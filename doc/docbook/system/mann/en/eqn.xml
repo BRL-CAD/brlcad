@@ -26,7 +26,7 @@ the coefficients of an equation of the desired plane for the face.
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Allows the user to rotate the face of an ARB shape by providing
     the coefficients of an equation of the desired plane for the face. The coefficients <emphasis>A, B,</emphasis>          	and <emphasis>C</emphasis> are from the plane equation:
@@ -42,11 +42,11 @@ The user must be editing an <emphasis>ARB</emphasis> shape and be rotating a fac
 
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>eqn</command> command to rotate the face of the ARB being edited to be parallel to the <emphasis>xy</emphasis> plane.
   </para>
-  <example><info><title>Rotate the face of an <emphasis>ARB</emphasis> to be parallel to the <emphasis>xy</emphasis> plane.</title></info>
+  <example><title>Rotate the face of an <emphasis>ARB</emphasis> to be parallel to the <emphasis>xy</emphasis> plane.</title>
 
     <variablelist>
       <varlistentry>
@@ -59,7 +59,7 @@ The user must be editing an <emphasis>ARB</emphasis> shape and be rotating a fac
     </variablelist>
   </example>
 
-  <example><info><title/></info>
+  <example><title/>
 
     <para>
       <prompt/><userinput/>
@@ -71,9 +71,9 @@ The user must be editing an <emphasis>ARB</emphasis> shape and be rotating a fac
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

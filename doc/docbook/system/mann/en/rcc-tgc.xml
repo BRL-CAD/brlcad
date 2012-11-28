@@ -26,7 +26,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Creates a TGC shape with the specified apex (<emphasis>x y z</emphasis>) at one
 	end (base [<emphasis>b</emphasis>] or top [<emphasis>t</emphasis>]) of the specified RCC.
@@ -34,13 +34,13 @@
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>rcc-tgc</command> command to create a TGC shape with 	the specified apex at the base of the specified RCC.
     </para>
 
-  <example><info><title>Create a TGC shape with a specified apex at the base of a specified RCC.
-	</title></info>
+  <example><title>Create a TGC shape with a specified apex at the base of a specified RCC.
+	</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>rcc-tgc rcc.s tgc.s 0 2 4</userinput>
@@ -52,9 +52,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

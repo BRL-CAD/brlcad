@@ -26,7 +26,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       The <command>aproposdevel</command> command searches through the
@@ -35,7 +35,7 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The example demonstrates the use of the <command>aproposdevel</command>
@@ -43,7 +43,7 @@
       command in one-line usage messages.
     </para>
 
-    <example><info><title>Using aproposdevel to search for specified developer commands containing "region."</title></info>
+    <example><title>Using aproposdevel to search for specified developer commands containing "region."</title>
 
       <para>
 	<prompt>mged&gt; </prompt><userinput>aproposdevel region</userinput>
@@ -56,9 +56,11 @@ get_regions
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

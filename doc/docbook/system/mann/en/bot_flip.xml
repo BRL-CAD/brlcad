@@ -24,7 +24,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
     <para>Reverse (i.e. flip) all the facet normals within a BOT primitive. When
     viewing a BOT with the MGED 'e -m1' or 'draw -m1' command, if all the exterior
     facets are black and all interior facets are shaded (red by default), then this
@@ -33,9 +33,11 @@
     'bot_vertex_fuse' then 'bot_face_fuse' before running 'bot_flip'.</para>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

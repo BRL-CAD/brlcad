@@ -24,7 +24,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       Allows the user to set or check the debug flags used by <emphasis>librt</emphasis>.
@@ -38,7 +38,7 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The first example shows the use of the <command>debuglib</command> command (without
@@ -46,13 +46,13 @@
       the current value.  The second example shows the use of the <command>debuglib</command>
       command with a hex code, which sets the <emphasis>librt</emphasis> debug flag to that value.
     </para>
-    <example><info><title>List available debug values for <emphasis>librt</emphasis> and the current value.</title></info>
+    <example><title>List available debug values for <emphasis>librt</emphasis> and the current value.</title>
 
       <para><prompt>mged&gt;</prompt> <userinput>debuglib</userinput></para>
       <para>Lists available debug values for <emphasis>librt</emphasis> and the current value.</para>
     </example>
 
-    <example><info><title>Set the <emphasis>librt</emphasis> debug flag to a specific value.</title></info>
+    <example><title>Set the <emphasis>librt</emphasis> debug flag to a specific value.</title>
 
       <para>
 	<prompt>mged&gt;</prompt><userinput>debuglib 1</userinput>
@@ -63,9 +63,9 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

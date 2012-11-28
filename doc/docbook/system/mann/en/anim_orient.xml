@@ -38,7 +38,7 @@
   </refsynopsisdiv>
 
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       <emphasis remap="I">Anim_orient</emphasis> is a filter which translates a table of orientation
@@ -197,10 +197,10 @@
     </variablelist>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
 
-    <example><info><title>Normalize Quaternions to Unit Magnitude</title></info>
+    <example><title>Normalize Quaternions to Unit Magnitude</title>
 
       <para>
 	<userinput>anim_orient &lt; in.table &gt; out.table</userinput>
@@ -211,7 +211,7 @@
       </para>
     </example>
 
-    <example><info><title>XYZ Angles -&gt; Rotation Matrix</title></info>
+    <example><title>XYZ Angles -&gt; Rotation Matrix</title>
 
       <para>
 	<userinput>anim_orient z m &lt; in.table &gt; out.table</userinput>
@@ -221,7 +221,7 @@
       </para>
     </example>
 
-    <example><info><title>az/el/tw -&gt; viewrot</title></info>
+    <example><title>az/el/tw -&gt; viewrot</title>
 
       <para>
 	<userinput>anim_orient a miv &lt; in.table &gt; out.table</userinput>
@@ -232,7 +232,7 @@
       </para>
     </example>
 
-    <example><info><title>Transpose Matrices</title></info>
+    <example><title>Transpose Matrices</title>
 
       <para>
 	<userinput>anim_orient m mi &lt; in.table &gt; out.table</userinput>
@@ -240,7 +240,7 @@
     </example>
 
 
-    <example><info><title>xyz angles -&gt; yaw-pitch-roll</title></info>
+    <example><title>xyz angles -&gt; yaw-pitch-roll</title>
 
       <para>
 	<userinput>anim_orient zr y &lt; in.table &gt; out.table</userinput>
@@ -250,7 +250,7 @@
       </para>
     </example>
 
-    <example><info><title>Camera Turning Quaternion</title></info>
+    <example><title>Camera Turning Quaternion</title>
 
       <para>
 	<userinput>anim_orient q qv &lt; in.table &gt; out.table</userinput>
@@ -262,7 +262,7 @@
       </para>
     </example>
 
-    <example><info><title>Default Restoring yaw-pitch-roll</title></info>
+    <example><title>Default Restoring yaw-pitch-roll</title>
 
       <para>
 	<userinput>anim_orient y yi &lt; in.table &gt; out.table</userinput>
@@ -273,7 +273,7 @@
       </para>
     </example>
 
-    <example><info><title>Orient "right-side "</title></info>
+    <example><title>Orient "right-side "</title>
 
       <para>
 	<userinput>anim_orient qv qvu &lt; in.table &gt; out.table</userinput>
@@ -285,7 +285,7 @@
     </example>
   </refsection>
 
-  <refsection xml:id="bugs"><info><title>BUGS</title></info>
+  <refsection xml:id="bugs"><title>BUGS</title>
 
     <para>
       There are built-in trouble spots which occur, in ypr, xyz, or aet
@@ -297,20 +297,17 @@
     </para>
   </refsection>
 
-  <info>
-    <author>
-      <personname>Carl J. Nuzman</personname>
-      <contrib></contrib>
-    </author>
-  </info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+  <para>Carl J. Nuzman</para>
+  </refsection>
 
-  <refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+  <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
     <para>This software is Copyright (c) 1993-2012 by the United States
     Government as represented by U.S. Army Research Laboratory.</para>
   </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
   <para>Reports of bugs or problems should be submitted via electronic
   mail to &lt;devs@brlcad.org&gt;.</para>
   </refsection>

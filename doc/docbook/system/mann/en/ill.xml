@@ -24,7 +24,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Performs the function of selecting an object after entering <emphasis>solid</emphasis>
 	(i.e., primitive) <emphasis>illuminate</emphasis> or <emphasis>object illuminate</emphasis> mode.
@@ -32,11 +32,11 @@
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>The example shows the use of the <command>ill</command> command to select a specified object for 	editing.
     </para>
-  <example><info><title>Select an object for editing.</title></info>
+  <example><title>Select an object for editing.</title>
 
     <variablelist>
       <varlistentry>
@@ -51,9 +51,9 @@
 
  </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

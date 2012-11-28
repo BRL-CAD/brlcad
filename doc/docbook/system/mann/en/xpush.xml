@@ -27,7 +27,7 @@ transformation matrices with identity matrices.
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Pushes the effects of transformation matrices in the paths,
 from the specified <emphasis>object</emphasis> to the primitive shapes, into the shapes and replaces all the
@@ -41,13 +41,13 @@ accomplish the push without creating any new shapes.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>xpush</command> command to move all the effects of the transformation matrices in a tree rooted at an object down to the shape level(creating new shapes if needed).
   </para>
 
 
-  <example><info><title>Move effects of transformation matrices in a tree rooted at an object to the shape level.</title></info>
+  <example><title>Move effects of transformation matrices in a tree rooted at an object to the shape level.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>xpush group1</userinput>
@@ -60,9 +60,9 @@ down to the shape level (creating new shapes if needed).
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

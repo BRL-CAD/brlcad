@@ -28,7 +28,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       Copies <emphasis>old_tgc</emphasis>(an existing TGC shape) to a new TGC shape
@@ -41,14 +41,14 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The example shows the use of the <command>cpi</command> command to copy an existing TGC
       shape to a new TGC shape and position the new shape with its base vertex coincident with
       the center of the top of the existing shape.
     </para>
-    <example><info><title>Copy an existing TGC shape to a new TGC shape.</title></info>
+    <example><title>Copy an existing TGC shape to a new TGC shape.</title>
 
       <para><prompt>mged&gt;</prompt> <userinput>cpi tgc_a tgc_b</userinput></para>
       <para>
@@ -58,9 +58,9 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

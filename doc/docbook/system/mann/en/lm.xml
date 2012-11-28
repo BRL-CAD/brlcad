@@ -28,7 +28,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>The command with no values argument lists the name of every region in the
 	database (in alphabetical order), except for those marked as hidden with the <command>hide</command>
@@ -39,11 +39,11 @@
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The first example shows the use of the <command>lm</command> command to list all regions having a 	MUVES_Component attribute with a specified value. The second example shows the use of the <command>lm	</command> command to list all regions having a "MUVES_Component" attribute and one of two specified values. 	The -l option is also used to show the long format.
   </para>
-  <example><info><title>List all regions having a "MUVES_Component" attribute and a specific value.</title></info>
+  <example><title>List all regions having a "MUVES_Component" attribute and a specific value.</title>
 
     <variablelist>
       <varlistentry>
@@ -56,7 +56,7 @@
     </variablelist>
   </example>
 
-  <example><info><title>List (using the long format) all regions having a "MUVES_Component" attribute and one of two specified 	values.</title></info>
+  <example><title>List (using the long format) all regions having a "MUVES_Component" attribute and one of two specified 	values.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>lm 1 engine pilot</userinput>
@@ -68,9 +68,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

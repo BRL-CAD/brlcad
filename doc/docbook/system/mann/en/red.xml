@@ -24,7 +24,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Creates a file describing the specified combination and starts an
 	editor for the user to modify the combination. The environment <emphasis>EDITOR</emphasis> 	variable will be used to select the editor. If <emphasis>EDITOR</emphasis> is not set, then 	<emphasis>/bin/ed</emphasis> will be used. All the attributes of BRL-CAD regions and 	<emphasis>combinations</emphasis> may be edited in this way. The region-specific attributes 	will be ignored if the <emphasis>combination</emphasis> is not a region and is not
@@ -32,12 +32,12 @@
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>red</command> command to edit a specified combination with the user's editor.
     </para>
 
-  <example><info><title>Create a file describing a specified combination and edit the combination.</title></info>
+  <example><title>Create a file describing a specified combination and edit the combination.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>red group2</userinput>
@@ -49,9 +49,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

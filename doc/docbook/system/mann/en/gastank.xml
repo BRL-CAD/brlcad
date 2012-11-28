@@ -24,7 +24,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>
     <command>gastank</command> is a program to create a BRL-CAD data base of
@@ -41,7 +41,7 @@
 </refsection>
 
 
-<refsection xml:id="options"><info><title>OPTIONS</title></info>
+<refsection xml:id="options"><title>OPTIONS</title>
 
   <variablelist remap="TP">
     <varlistentry>
@@ -95,9 +95,9 @@
  </variablelist>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <example><info><title>Interactive <command>gastank</command> Session</title></info>
+  <example><title>Interactive <command>gastank</command> Session</title>
 
     <para>
     <literallayout class="normal">
@@ -125,7 +125,7 @@ number of gas tanks:  3
     </para>
   </example>
 
-  <example><info><title>Single-Line <command>gastank</command> Command</title></info>
+  <example><title>Single-Line <command>gastank</command> Command</title>
 
     <para>
       <userinput>gastank -fgastank.g -n3 -h300 -w200 -d400 -r30</userinput>
@@ -141,14 +141,11 @@ number of gas tanks:  3
 
 </refsection>
 
-<info>
-  <author>
-    <personname>Susan A. Coates</personname>
-    <contrib></contrib>
-  </author>
-</info>
+<refsection xml:id="author"><title>AUTHOR</title>
+    <para>Susan A. Coates</para>
+</refsection>
 
-<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
 
   <para>
     This software is Copyright (c) 2005-2012 United States Government as
@@ -156,14 +153,14 @@ number of gas tanks:  3
   </para>
 </refsection>
 
-<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+<refsection xml:id="see_also"><title>SEE ALSO</title>
 
   <para>
    bolt(1), handle(1), window(1), window_frame(1)
   </para>
 </refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

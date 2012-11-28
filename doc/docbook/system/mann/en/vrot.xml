@@ -24,7 +24,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Rotates the view on the current geometry display window.  The
 parameters <emphasis>xrot, yrot,</emphasis> and <emphasis>zrot</emphasis> are rotations (specified in degrees) about the viewing coordinate axes.</para>
@@ -35,13 +35,13 @@ toggle between the two modes.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The two examples show the use of the <command>vrot</command> command to rotate the view on the current geometry display window about the <emphasis>x</emphasis> axis and <emphasis>y</emphasis> axis, respectively.
   </para>
 
 
-  <example><info><title>Rotate the view on the geometry display window about the <emphasis>x</emphasis> axis.</title></info>
+  <example><title>Rotate the view on the geometry display window about the <emphasis>x</emphasis> axis.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>vrot 90 0 0</userinput>
@@ -49,7 +49,7 @@ toggle between the two modes.
     <para>Rotates the view 90° about the <emphasis>x</emphasis> axis.
     </para>
   </example>
- <example><info><title>Rotate the view on the geometry display window about the <emphasis>y</emphasis> axis.</title></info>
+ <example><title>Rotate the view on the geometry display window about the <emphasis>y</emphasis> axis.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>vrot 0 180 0</userinput>
@@ -61,9 +61,9 @@ toggle between the two modes.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

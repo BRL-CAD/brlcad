@@ -26,7 +26,7 @@ command.  If the object argument is supplied, only those objects are listed.
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>The command with no <emphasis>object</emphasis> argument lists the name of every object in the
 	database (in alphabetical order) except for those marked as hidden with the <command>hide</command>
@@ -72,11 +72,11 @@ command.  If the object argument is supplied, only those objects are listed.
 </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The examples show the use of the <command>ls</command> command and its options to list objects, primitives, regions, or combinations having a specific object.
   </para>
-  <example><info><title>List all objects beginning with a particular name.</title></info>
+  <example><title>List all objects beginning with a particular name.</title>
 
     <variablelist>
       <varlistentry>
@@ -89,7 +89,7 @@ command.  If the object argument is supplied, only those objects are listed.
     </variablelist>
   </example>
 
-  <example><info><title>List all objects beginning with a particular name.</title></info>
+  <example><title>List all objects beginning with a particular name.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>ls -a shape*</userinput>
@@ -97,7 +97,7 @@ command.  If the object argument is supplied, only those objects are listed.
     <para>Lists all objects with names beginning with "shape."
     </para>
   </example>
-  <example><info><title>List all primitives beginning with a particular name.</title></info>
+  <example><title>List all primitives beginning with a particular name.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>ls -p wheel*</userinput>
@@ -105,7 +105,7 @@ command.  If the object argument is supplied, only those objects are listed.
     <para>Lists all primitives with names beginning with "wheel."
     </para>
   </example>
- <example><info><title>List all regions beginning with a particular name.</title></info>
+ <example><title>List all regions beginning with a particular name.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>ls -r wheel*</userinput>
@@ -113,7 +113,7 @@ command.  If the object argument is supplied, only those objects are listed.
     <para>Lists all regions with names beginning with "wheel."
     </para>
   </example>
- <example><info><title>List all combinations beginning with a particular name.</title></info>
+ <example><title>List all combinations beginning with a particular name.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>ls -c suspension*</userinput>
@@ -121,7 +121,7 @@ command.  If the object argument is supplied, only those objects are listed.
     <para>Lists all combinations with names beginning with "suspension."
     </para>
   </example>
-  <example><info><title>List all regions having particular attributes.</title></info>
+  <example><title>List all regions having particular attributes.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>ls -A -o -r Comment{First comment} Comment{Second comment}</userinput>
@@ -132,9 +132,9 @@ command.  If the object argument is supplied, only those objects are listed.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

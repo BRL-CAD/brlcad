@@ -25,18 +25,18 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Changes the name of <emphasis>old_name</emphasis> to <emphasis>new_name</emphasis>.
 Note that this does not change any references to <emphasis>old_name</emphasis> that may appear in other combinations in the database. The <command>mvall</command> command will change an objects name everywhere.
    </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>mv</command> command to change an object's <emphasis>	old_name</emphasis> to a <emphasis>new_name</emphasis>.
    </para>
-  <example><info><title>Change an object's name.</title></info>
+  <example><title>Change an object's name.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>mv shapea shapeb</userinput>
@@ -48,9 +48,9 @@ Note that this does not change any references to <emphasis>old_name</emphasis> t
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

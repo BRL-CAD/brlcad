@@ -26,18 +26,18 @@ of all the objects in the database. It returns all those that successfully match
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Performs matching of the <emphasis>regular_expression</emphasis> with the names
 of all the objects in the database. It returns all those that successfully match.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>expand</command> command to display a list of all database object names having a particular ending.
    </para>
-  <example><info><title>Display a list of database object names having a particular ending.</title></info>
+  <example><title>Display a list of database object names having a particular ending.</title>
 
     <variablelist>
       <varlistentry>
@@ -52,9 +52,9 @@ of all the objects in the database. It returns all those that successfully match
 
  </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

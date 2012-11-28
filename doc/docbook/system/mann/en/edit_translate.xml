@@ -19,8 +19,6 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis>
-    <!-- hv3 hack to prevent line insertion -->
-    <link linkend="dummy_id">&#09;</link>
     <command xml:id="dummy_id">edit translate</command>
     <group><synopfragmentref linkend="from">from</synopfragmentref></group>
     <arg choice="plain">
@@ -42,12 +40,11 @@
       </group>
     </synopfragment>
 
-    <sbr/>
     <synopfragment xml:id="to">
       <arg><option>-n</option></arg>
       <group>
-	<arg choice="plain"><option choice="plain">-a</option></arg>
-	<arg choice="plain"><option choice="plain">-r</option></arg>
+	<arg choice="plain"><option>-a</option></arg>
+	<arg choice="plain"><option>-r</option></arg>
       </group>
       <group choice="req">
 	<arg choice="plain">
@@ -59,7 +56,6 @@
       </group>
     </synopfragment>
 
-    <sbr/>
     <synopfragment xml:id="pos">
       <group choice="plain">
 	<arg choice="req">
@@ -97,7 +93,6 @@
       </group>
     </synopfragment>
 
-    <sbr/>
     <synopfragment xml:id="obj">
       <arg choice="plain">
 	<arg><replaceable>path/</replaceable></arg>
@@ -108,7 +103,6 @@
       </arg>
     </synopfragment>
 
-    <sbr/>
     <synopfragment xml:id="coord">
       <arg choice="plain"><replaceable>x</replaceable></arg>
       <arg>
@@ -119,7 +113,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>
     Used to move one or more instances of primitive or combination
@@ -134,14 +128,14 @@
 
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
   <example>
-    <info>
+    
       <title>
 	A not particularly useful demonstration of the command's
 	capabilities.
       </title>
-    </info>
+    
     <variablelist>
       <varlistentry>
 	<term>
@@ -163,9 +157,9 @@
 
 
   <example>
-    <info>
+    
       <title>Move several objects together.</title>
-    </info>
+    
     <variablelist>
       <varlistentry>
 	<term>
@@ -191,9 +185,9 @@
   </example>
 
   <example>
-    <info>
+    
       <title>Align several objects to the same point on an axis.</title>
-    </info>
+    
     <variablelist>
       <varlistentry>
 	<term>
@@ -215,9 +209,9 @@
   </example>
 
   <example>
-    <info>
+    
       <title>Move several objects to the same point.</title>
-    </info>
+    
     <variablelist>
       <varlistentry>
 	<term>
@@ -239,7 +233,7 @@
     </variablelist>
   </example>
 
-  <example><info><title>Explicitly set the z-axis of an obj.</title></info>
+  <example><title>Explicitly set the z-axis of an obj.</title>
     <variablelist>
       <varlistentry>
 	<term>
@@ -258,11 +252,11 @@
   </example>
 
   <example>
-    <info>
+    
       <title>Move several objects from their own natural origins to
 	their own bounding box centers.
       </title>
-    </info>
+    
     <variablelist>
       <varlistentry>
 	<term>
@@ -280,12 +274,12 @@
   </example>
 
   <example>
-    <info>
+    
       <title>
 	Set the z-axis of the center of one object to the z-axis of
 	the natural origin of another object.
       </title>
-    </info>
+    
     <variablelist>
       <varlistentry>
 	<term>
@@ -305,13 +299,13 @@
   </example>
 
   <example>
-    <info>
+    
       <title>
 	    Same result as above, but moving <emphasis>from</emphasis> the
 	    natural origin of obj1 rather than its bounding box
 	    center.
       </title>
-    </info>
+    
     <variablelist>
       <varlistentry>
 	<term>
@@ -320,23 +314,25 @@
 	    edit translate -n -k obj1 -n -a -z obj2/obj3 obj1
 	  </userinput>
 	</term>
+      <listitem><para/></listitem>
       </varlistentry>
       <varlistentry>
 	<term>
 	  <prompt>&gt; </prompt>
 	  <userinput>edit translate -n -k . -n -a -z obj2/obj3 obj1</userinput>
 	</term>
+      <listitem><para/></listitem>
       </varlistentry>
     </variablelist>
   </example>
 
   <example>
-    <info>
+    
       <title>
 	The use of <emphasis>object</emphasis> paths and
 	individual coordinate specifiers.
       </title>
-    </info>
+    
     <variablelist>
       <varlistentry>
 	<term>
@@ -363,21 +359,24 @@
     </variablelist>
   </example>
 
-  <example><info><title>Translations using relative positions.</title></info>
+  <example><title>Translations using relative positions.</title>
     <variablelist>
       <varlistentry>
 	<term>
 	  <prompt>&gt; </prompt>
 	  <userinput>edit translate -k obj1 -r -z 5 obj2</userinput>
 	</term>
+      <listitem><para/></listitem>
       </varlistentry>
       <varlistentry>
 	<term>
 	  <prompt>&gt; </prompt>
 	  <userinput>edit translate -a -z obj1 0 0 5 obj2</userinput>
 	</term>
+      <listitem><para/></listitem>
       </varlistentry>
       <varlistentry>
+          <term></term>
 	<listitem>
 	  <para>
 	    These commands perform the same function. The z-coordinate
@@ -391,11 +390,11 @@
   </example>
 
   <example>
-    <info>
+    
       <title>
 	This example breaks down a particularly complex translation.
     </title>
-  </info>
+  
     <variablelist>
       <varlistentry>
 	<term>
@@ -425,6 +424,7 @@
 	    edit translate -k -x c/obj1 1.5 -a -x b/c/obj4 2 obj7 obj8
 	  </userinput>
 	</term>
+      <listitem><para/></listitem>
       </varlistentry>
       <varlistentry>
 	<term>
@@ -433,6 +433,7 @@
 	    edit translate -k -y c/obj2 0 3 -a -y b/c/obj5 0 4 obj7 obj8
 	  </userinput>
 	</term>
+      <listitem><para/></listitem>
       </varlistentry>
       <varlistentry>
 	<term>
@@ -475,9 +476,9 @@
   </example>
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

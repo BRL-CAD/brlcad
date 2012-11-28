@@ -26,7 +26,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>
     Applies a scaling factor to an object or view. When passed one parameter,
@@ -44,13 +44,13 @@
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>
     The example shows the use of the <command>sca</command> command to apply a
     scaling factor to an object or view.
   </para>
-  <example><info><title>Apply a scaling factor to an object or view.</title></info>
+  <example><title>Apply a scaling factor to an object or view.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>sca 2</userinput>
@@ -63,7 +63,7 @@
     </para>
   </example>
 
-  <example><info><title>Apply a scaling factor to an object.</title></info>
+  <example><title>Apply a scaling factor to an object.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>sca 2 1 1</userinput>
@@ -75,9 +75,9 @@
   </example>
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

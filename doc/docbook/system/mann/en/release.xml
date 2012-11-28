@@ -23,19 +23,19 @@
    </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Closes a display manager. If invoked with no arguments, the current display manager is 	closed. Otherwise, <emphasis>name</emphasis> (i.e., the Tcl/Tk path name of the display 	manager window)is closed.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The two examples show the use of the <command>release</command> command to close either 	the current display manager (first example) or the one specified with the command (second 	example).
   </para>
 
 
-  <example><info><title>Close the current display manager.</title></info>
+  <example><title>Close the current display manager.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>release</userinput>
@@ -45,7 +45,7 @@
     </para>
   </example>
 
- <example><info><title>Close a specified display manager.</title></info>
+ <example><title>Close a specified display manager.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>release .dm_X0</userinput>
@@ -57,9 +57,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

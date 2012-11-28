@@ -23,7 +23,7 @@
     </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Rotates the view or an object by <emphasis>xyz</emphasis> degrees. Exactly what and how
 	it is rotated are dependent on MGEDs state as well as the state of
@@ -31,12 +31,12 @@
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The two examples show the use of the <command>rot</command> command to rotate the view 	or object by a specified number of degrees about the <emphasis>x, y,</emphasis> or 	<emphasis>z</emphasis> axis.
   </para>
 
-  <example><info><title>Rotate the view or object a specified number of degrees about the <emphasis>z	</emphasis> axis.</title></info>
+  <example><title>Rotate the view or object a specified number of degrees about the <emphasis>z	</emphasis> axis.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>rot 0 0 45</userinput>
@@ -45,7 +45,7 @@
      </para>
   </example>
 
-  <example><info><title>Rotate the view or object a specified number of degrees about the <emphasis>y	</emphasis> and <emphasis>x</emphasis> axes.</title></info>
+  <example><title>Rotate the view or object a specified number of degrees about the <emphasis>y	</emphasis> and <emphasis>x</emphasis> axes.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>rot 45 45 0</userinput>
@@ -56,9 +56,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

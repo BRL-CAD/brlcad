@@ -24,17 +24,17 @@
     </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Modifies an ARB shape by extruding the specified face through the specified <emphasis>distance</emphasis> to determine the position of the opposing face. The face to be extruded is identified by listing its vertex numbers as they are labeled in the MGED display when the ARB is edited. Note that the face identified is not moved, but the opposite face is adjusted so that it is the specified distance from the specified face. The order that the vertex numbers are listed determines the direction of the extrusion using the right-hand rule.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>extrude</command> command to move a face a specific distance from   	its opposing face.
     </para>
-  <example><info><title>Moving a face a specific distance from its opposing face.</title></info>
+  <example><title>Moving a face a specific distance from its opposing face.</title>
 
     <variablelist>
       <varlistentry>
@@ -49,9 +49,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

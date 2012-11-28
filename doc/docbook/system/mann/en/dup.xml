@@ -26,19 +26,19 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Checks the specified <emphasis>file</emphasis> (which is expected to contain a
 	<emphasis>BRL-CAD</emphasis> model) for names that are the same as those in the current model. If a 	<emphasis>prefix</emphasis> is included on the command line, all names in the specified <emphasis>file	</emphasis> will have that <emphasis>prefix</emphasis> added to their names before comparison with the 	current model. This command is often used prior to invoking the <command>dbconcat</command> command to 	ensure that there are no name clashes.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The first example shows the use of the <command>dup</command> command to check for files having the same name as those in the current model. The second example shows how to prefix the file names in the other model before comparing them with the names of the current model files.
 
   </para>
-  <example><info><title>Check for files having the same name as those in the current model. </title></info>
+  <example><title>Check for files having the same name as those in the current model. </title>
 
     <variablelist>
       <varlistentry>
@@ -51,7 +51,7 @@
     </variablelist>
   </example>
 
-  <example><info><title/></info>
+  <example><title/>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>dup other_model.g abc</userinput>
@@ -62,9 +62,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

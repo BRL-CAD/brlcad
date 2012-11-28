@@ -26,7 +26,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Executes the BRL-CAD <emphasis>rt</emphasis> program with the default options of
 	"-s50 M." If perspective is turned on, then the <emphasis>-p</emphasis> option will be 	included with the value of the perspective angle. The current database name is added to the 	end of the <command>rt</command> command line along with either the specified <emphasis>	objects</emphasis> or, if none is specified, the list of currently displayed objects. The 	<emphasis>rt</emphasis> program is written such that options may be repeated, and the 	last occurrence of an option will override any earlier occurrences.  This allows the user 	to specify other <emphasis>size (-s)</emphasis> options. The <command>rrt</command> command 	performs a similar function, but may be used to execute other programs as well. The 	<emphasis>-M</emphasis> option tells <emphasis>rt</emphasis> to read the viewing parameters 	from standard input.  See the <emphasis>man</emphasis> page on <emphasis>rt</emphasis>  	for details.  A related command is <command>saveview</command>, which can be used to 	create a shell script (batch job) to raytrace this view in the background.
@@ -34,12 +34,12 @@
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The first example shows the use of the <command>rt</command> command to run the rt 	program to produce a color-shaded image of the current view. The second example shows the 	use of the <command>rt</command> command to produce a color-shaded image of an object using 	MGED's current viewing parameters.
      </para>
 
-  <example><info><title>Run the <emphasis>rt</emphasis> program to produce a color-shaded image of the current 	view in MGED.</title></info>
+  <example><title>Run the <emphasis>rt</emphasis> program to produce a color-shaded image of the current 	view in MGED.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>rt -s1024 -F/dev/Xl</userinput>
@@ -49,7 +49,7 @@
     </para>
   </example>
 
-  <example><info><title>Run the <emphasis>rt</emphasis> program to produce a color-shaded image of an object  	using MGED's current viewing parameters.</title></info>
+  <example><title>Run the <emphasis>rt</emphasis> program to produce a color-shaded image of an object  	using MGED's current viewing parameters.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>rt -C 200/200/255 -- roof</userinput>
@@ -60,9 +60,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

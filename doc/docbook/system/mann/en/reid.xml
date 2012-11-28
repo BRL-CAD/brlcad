@@ -30,14 +30,14 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
  <para>The 'reid' command sequentially renumbers the 'region_id' attribute
  of all regions within a group. Optionally the increment between consecutive
  'region_id' can be specified. Once the command is complete, the highest
  'region_id' set is reported.</para>
 </refsection>
 
-  <refsection xml:id="options"><info><title>OPTIONS</title></info>
+  <refsection xml:id="options"><title>OPTIONS</title>
   <variablelist remap="TP">
     <varlistentry>
       <term><option>-n num</option></term>
@@ -66,9 +66,9 @@
   </variablelist>
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

@@ -29,7 +29,7 @@ simpler primitive shape type.
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Attempts to convert an existing nmg_shape to a
 	simpler primitive shape type. The user may specify which type to attempt by
@@ -37,12 +37,12 @@ simpler primitive shape type.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>nmg_simplify</command> command to convert an existing nmg shape to a polysolid.
    </para>
 
-  <example><info><title>Convert an existing shape to a polysolid.</title></info>
+  <example><title>Convert an existing shape to a polysolid.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>nmg_simplify poly shapea.poly shapea.nmg</userinput>
@@ -53,9 +53,9 @@ simpler primitive shape type.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

@@ -24,7 +24,7 @@ view_size (in local units).</refpurpose>
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Sets the size of the current viewing cube to the specified
 view_size (in local units). This size is the length of any side of the square mged
@@ -32,13 +32,13 @@ display. This command is a synonym for the <command>size</command> command.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>viewsize</command> command to set the mged display to a specified number of units.
 
   </para>
 
-  <example><info><title>Set the size of the mged display.</title></info>
+  <example><title>Set the size of the mged display.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>viewsize 250</userinput>
@@ -50,9 +50,9 @@ display. This command is a synonym for the <command>size</command> command.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

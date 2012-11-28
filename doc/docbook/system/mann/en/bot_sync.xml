@@ -25,7 +25,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
     <para>Synchronizes the normals of all facets within a BOT primitive so they are
     all in the same direction. When viewing a BOT with the MGED 'e -m1' or 'draw -m1'
     command, if some of the exterior facets are black and some shaded (red by default),
@@ -36,9 +36,11 @@
     normals. The result should be all exterior facets become shaded.</para>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

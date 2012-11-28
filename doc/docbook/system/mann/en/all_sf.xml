@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="all_sf1">
 
 <refmeta>
@@ -25,7 +24,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="descriptions"><info><title>DESCRIPTIONS</title></info>
+<refsection xml:id="descriptions"><title>DESCRIPTIONS</title>
 
   <para>
     <command>all_sf</command> is an interactive program used to create
@@ -53,7 +52,7 @@
   </para>
 </refsection>
 
-<refsection xml:id="example"><info><title>EXAMPLE</title></info>
+<refsection xml:id="example"><title>EXAMPLE</title>
 
   <para>
     The following is an example from an interactive session.
@@ -88,7 +87,7 @@
    </programlisting> <!-- .fi -->
 </refsection>
 
-<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+<refsection xml:id="see_also"><title>SEE ALSO</title>
 
   <para>
     <citerefentry>
@@ -129,11 +128,7 @@
   </para>
 </refsection>
 
-<info>
-  <author>
-    <personname>Susan A. Coates</personname>
-    <contrib></contrib>
-  </author>
-</info>
-
+<refsection xml:id="author"><title>AUTHOR</title>
+    <para>Susan A. Coates</para>
+</refsection>
 </refentry>

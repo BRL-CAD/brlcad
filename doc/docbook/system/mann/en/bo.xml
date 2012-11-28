@@ -27,7 +27,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       Used to create or retrieve binary opaque objects. Currently, only uniform binary
@@ -58,14 +58,14 @@
     <para>Note:  this command was previously named "dbbinary".</para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The examples show the use of the <command>bo</command> command to both create
       (<emphasis>-i</emphasis> option) and to retrieve a binary object (<emphasis>-o</emphasis> option).
     </para>
-    <example><info><title>Create an opaque uniform binary object of characters with a specified name
-      containing the contents of a particular file.</title></info>
+    <example><title>Create an opaque uniform binary object of characters with a specified name
+      containing the contents of a particular file.</title>
 
       <para><prompt>mged&gt;</prompt> <userinput>bo -i u c cmds /usr/brlcad/html/manuals/mged/mged_cmds.html</userinput></para>
       <para>
@@ -74,7 +74,7 @@
       </para>
     </example>
 
-    <example><info><title>Copy the contents of a particular binary object into a specified file.</title></info>
+    <example><title>Copy the contents of a particular binary object into a specified file.</title>
 
       <para><prompt>mged&gt;</prompt><userinput>bo -o /home/jim/cmds.html cmds</userinput></para>
       <para>
@@ -84,9 +84,11 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

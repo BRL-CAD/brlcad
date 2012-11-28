@@ -29,7 +29,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Evaluates the <emphasis>objects</emphasis> specified by tessellating all primitive shapes
 	in the objects and then performing any Boolean operations specified in them.
@@ -106,11 +106,11 @@
 </itemizedlist>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The first example shows the use of the <command>ev</command> command to display two evaluated objects as shaded  	polygons.  The second example shows the use of the <command>ev</command> command to display an evaluated object as 	wireframe without triangulating.
    </para>
-  <example><info><title>Display evaluated objects as polygons.</title></info>
+  <example><title>Display evaluated objects as polygons.</title>
 
     <variablelist>
       <varlistentry>
@@ -123,7 +123,7 @@
      </variablelist>
   </example>
 
-  <example><info><title>Display an evaluated object as wireframe without triangulation.</title></info>
+  <example><title>Display an evaluated object as wireframe without triangulation.</title>
 
     <para>
       <prompt>mged&gt;</prompt> <userinput>ev -wT region1</userinput>
@@ -135,9 +135,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

@@ -31,7 +31,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Establishes a link between the current MGED display and a
 <emphasis>vrmgr</emphasis> process running on the specified <emphasis>host</emphasis>. The <emphasis>vrmgr</emphasis> program is a manager for virtual reality displays using MGED.  The <emphasis>vrmgr</emphasis> process must be started on <emphasis>host</emphasis> prior to executing the <command>vrmgr</command> command in MGED. The second command line argument to the <command>vrmgr</command> command is the role of the current MGED display. The <emphasis>master</emphasis> display controls the viewing parameters of itself and all the <emphasis>slave</emphasis> displays. The <emphasis>overview</emphasis> display acts as an observer of the entire virtual reality process.
@@ -39,14 +39,14 @@
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>vrmgr</command> command to set the current MGED display as the master for the <emphasis>vrmgr</emphasis> process running on the host.
 
    </para>
 
-  <example><info><title>Set the current MGED display as the master for the <emphasis>vrmgr</emphasis> process running on the host.
-</title></info>
+  <example><title>Set the current MGED display as the master for the <emphasis>vrmgr</emphasis> process running on the host.
+</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>vrmgr host1.arl.army.mil master</userinput>
@@ -57,9 +57,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

@@ -20,7 +20,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>
     Used to interact with a graph based visualization of the structure of .g databases.
@@ -28,13 +28,13 @@
 
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>
     The examples demonstrate the use of the <command>igraph</command> command to
     view the corresponding graph of a .g database and access information about it.
   </para>
-  <example><info><title>Launches a new window that displays the graph that corresponds to a .g database.</title></info>
+  <example><title>Launches a new window that displays the graph that corresponds to a .g database.</title>
 
     <variablelist>
       <varlistentry>
@@ -50,9 +50,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

@@ -31,7 +31,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Lists the contents of the specified <emphasis>objects</emphasis> in a tree-like format
 	that displays the hierarchical structure of the objects, and all objects referenced by
@@ -44,13 +44,13 @@
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The first example shows the use of the <command>tree</command> command to list the contents of specified objects  	hierarchically.  The second and third examples show the use of the <command>tree</command> command with arguments.
   </para>
 
 
-  <example><info><title>Show the structure of an object down to the primitive shape level.</title></info>
+  <example><title>Show the structure of an object down to the primitive shape level.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>tree group1</userinput>
@@ -59,7 +59,7 @@
 
     </para>
   </example>
- <example><info><title>Specify the amount of indentation in the tree.</title></info>
+ <example><title>Specify the amount of indentation in the tree.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>tree -i2 group1</userinput>
@@ -67,7 +67,7 @@
     <para> Uses two spaces for each level of indentation.
     </para>
   </example>
-  <example><info><title>Specify that no shapes are to be printed.</title></info>
+  <example><title>Specify that no shapes are to be printed.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>tree -c group1</userinput>
@@ -76,7 +76,7 @@
     </para>
   </example>
 
-  <example><info><title>Specify that attributes are listed for each object printed.</title></info>
+  <example><title>Specify that attributes are listed for each object printed.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>tree -a -c group1</userinput>
@@ -87,9 +87,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

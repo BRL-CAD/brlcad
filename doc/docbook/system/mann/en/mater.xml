@@ -26,7 +26,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Assigns shader parameters, RGB color, and inheritance to an
 existing combination. The information may be included on the command line;
@@ -137,12 +137,12 @@ otherwise the user will be prompted for it. Some available shaders are:
 
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>mater</command> command to assign shader parameters, color, and inheritance to a region.
 
   </para>
-  <example><info><title>Assigning shader parameters, color, and inheritance to a region.</title></info>
+  <example><title>Assigning shader parameters, color, and inheritance to a region.</title>
 
     <variablelist>
       <varlistentry>
@@ -157,9 +157,9 @@ otherwise the user will be prompted for it. Some available shaders are:
 
   </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

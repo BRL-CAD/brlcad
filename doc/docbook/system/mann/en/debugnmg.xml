@@ -24,7 +24,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       The <command>debugnmg</command> command with no options displays a list
@@ -38,13 +38,13 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The example shows the use of the <command>debugnmg</command> with a hex
       code argument to set the NMG debug flag value.
     </para>
-    <example><info><title>Using the hex code argument to set the NMG debug flag value.</title></info>
+    <example><title>Using the hex code argument to set the NMG debug flag value.</title>
 
       <para><prompt>mged&gt;</prompt> <userinput>debugnmg 100</userinput></para>
       <para>
@@ -54,9 +54,9 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

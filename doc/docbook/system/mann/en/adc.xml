@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="adc">
 
   <refmeta>
@@ -24,7 +23,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       This command controls the angle/distance cursor. The <command>adc</command> command with no
@@ -45,7 +44,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><command>draw [<emphasis>0|1</emphasis>]</command></term>
+	<term><command>draw [0|1]</command></term>
 	<listitem>
 	  <para>
 	    Set or get the draw parameter.
@@ -54,7 +53,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><command>a1 [<emphasis>angle</emphasis>]</command></term>
+	<term><command>a1 [angle]</command></term>
 	<listitem>
 	  <para>
 	    Set or get angle1 in degrees.
@@ -63,7 +62,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>a2 [<emphasis>angle</emphasis>]</command></term>
+       <term><command>a2 [angle]</command></term>
        <listitem>
 	 <para>
 	   Set or get angle2 in degrees.
@@ -72,7 +71,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>dist [<emphasis>distance</emphasis>]</command></term>
+       <term><command>dist [distance]</command></term>
        <listitem>
 	 <para>
 	   Set or get radius (distance) of tick in local units.
@@ -81,7 +80,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>odist [<emphasis>distance</emphasis>]</command></term>
+       <term><command>odist [distance]</command></term>
        <listitem>
 	 <para>
 	   Set or get radius (distance) of tick (+-2047).
@@ -90,7 +89,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>hv [<emphasis>position</emphasis>]</command></term>
+       <term><command>hv [position]</command></term>
        <listitem>
 	 <para>
 	   Set or get position (grid coordinates and local units).
@@ -99,7 +98,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>xyz [<emphasis>position</emphasis>]</command></term>
+       <term><command>xyz [position]</command></term>
        <listitem>
 	 <para>
 	   Set or get position (model coordinates and local units).
@@ -108,7 +107,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>x [<emphasis>xpos</emphasis>]</command></term>
+       <term><command>x [xpos]</command></term>
        <listitem>
 	 <para>
 	   Set or get horizontal position (+-2047).
@@ -117,7 +116,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>y [<emphasis>ypos</emphasis>]</command></term>
+       <term><command>y [ypos]</command></term>
        <listitem>
 	 <para>
 	   Set or get vertical position (+-2047).
@@ -126,7 +125,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>dh <emphasis>distance</emphasis></command></term>
+       <term><command>dh <replaceable>distance</replaceable></command></term>
        <listitem>
 	 <para>
 	   Add to horizontal position (grid coordinates and local units).
@@ -135,7 +134,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>dv <emphasis>distance</emphasis></command></term>
+       <term><command>dv <replaceable>distance</replaceable></command></term>
        <listitem>
 	 <para>
 	   Add to vertical position (grid coordinates and local units).
@@ -144,7 +143,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>dx <emphasis>distance</emphasis></command></term>
+       <term><command>dx <replaceable>distance</replaceable></command></term>
        <listitem>
 	 <para>
 	   Add to <emphasis>x</emphasis> position (model coordinates and local units).
@@ -153,7 +152,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>dy <emphasis>distance</emphasis></command></term>
+       <term><command>dy <replaceable>distance</replaceable></command></term>
        <listitem>
 	 <para>
 	   Add to <emphasis>y</emphasis> position (model coordinates and local units).
@@ -162,7 +161,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>dz <emphasis>distance</emphasis></command></term>
+       <term><command>dz <replaceable>distance</replaceable></command></term>
        <listitem>
 	 <para>
 	   Add to <emphasis>z</emphasis> position (model coordinates and local units).
@@ -171,7 +170,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>anchor_pos [<emphasis>0|1</emphasis>]</command></term>
+       <term><command>anchor_pos [0|1]</command></term>
        <listitem>
 	 <para>
 	   Anchor ADC to current position in model coordinates.
@@ -180,7 +179,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>anchor_a1 [<emphasis>0|1</emphasis>]</command></term>
+       <term><command>anchor_a1 [0|1]</command></term>
        <listitem>
 	 <para>
 	   Anchor angle1 to go through anchorpoint_a1.
@@ -189,7 +188,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>anchor_a2 [<emphasis>0|1</emphasis>]</command></term>
+       <term><command>anchor_a2 [0|1]</command></term>
        <listitem>
 	 <para>
 	   Anchor angle2 to go through anchorpoint_a2.
@@ -198,7 +197,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>anchor_dst [<emphasis>0|1</emphasis>]</command></term>
+       <term><command>anchor_dst [0|1]</command></term>
        <listitem>
 	 <para>
 	   Anchor tick distance to go through anchorpoint_dst.
@@ -207,7 +206,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>anchorpoint_a1[<emphasis>x y z</emphasis>]</command></term>
+       <term><command>anchorpoint_a1[x y z]</command></term>
        <listitem>
 	 <para>
 	   Set or get anchor point for angle1 (model coordinates and local units).
@@ -216,7 +215,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>anchorpoint_a2 [<emphasis>x y z</emphasis>]</command></term>
+       <term><command>anchorpoint_a2 [x y z]</command></term>
        <listitem>
 	 <para>
 	   Set or get anchor point for angle2 (model coordinates and local units).
@@ -225,7 +224,7 @@
      </varlistentry>
 
      <varlistentry>
-       <term><command>anchorpoint_dst [<emphasis>x y z</emphasis>]</command></term>
+       <term><command>anchorpoint_dst [x y z]</command></term>
        <listitem>
 	 <para>
 	   Set or get anchor point for tick distance (model coordinates and local units).
@@ -253,7 +252,7 @@
    </variablelist>
  </refsection>
 
- <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+ <refsection xml:id="examples"><title>EXAMPLES</title>
 
    <para>
      The examples show the use of the <command>adc</command> command with no arguments,
@@ -309,9 +308,11 @@
    </example>
  </refsection>
 
- <info><corpauthor>BRL-CAD Team</corpauthor></info>
+ <refsection xml:id="author"><title>AUTHOR</title>
+   <para>BRL-CAD Team</para>
+ </refsection>
 
- <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+ <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
    <para>
      Reports of bugs or problems should be submitted via electronic

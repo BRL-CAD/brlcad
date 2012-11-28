@@ -1,5 +1,4 @@
 <!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="Z">
 
   <refmeta>
@@ -22,20 +21,20 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       Zap (i.e., clear) the <emphasis>mged</emphasis> display.
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       Clear the <emphasis>mged</emphasis> display.
     </para>
-    <example><info><title>Enter <command>Z</command> to clear the <emphasis>mged</emphasis> display.
-      </title></info>
+    <example><title>Enter <command>Z</command> to clear the <emphasis>mged</emphasis> display.
+      </title>
 
       <variablelist>
 	<varlistentry>
@@ -49,9 +48,11 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

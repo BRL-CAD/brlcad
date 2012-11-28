@@ -24,19 +24,19 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Forces the effects of all transformation matrices that appear in
 	any combinations in the trees from the specified <emphasis>objects</emphasis> down to the primitive 	shapes. This will change the parameters of the <emphasis>primitive shapes</emphasis> if any of the 	transformation matrices are not identity matrices. All the transformation matrices visited will be set to 	identity matrices. This command will fail, and no changes will be made, if any primitive shape referenced 	by the list of <emphasis>objects</emphasis> is positioned differently in two or more <emphasis>	combinations</emphasis>. The <command>xpush</command> command will perform a similar function, even if 	some shapes are multiply referenced.
    </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>push</command> command to push the effects of any 	transformation matrices in the trees headed by two specified objects down to the primitive shapes.
   </para>
 
-  <example><info><title>Push the effects of any transformation matrices in trees headed by two specified objects down to the 	primitive shapes.</title></info>
+  <example><title>Push the effects of any transformation matrices in trees headed by two specified objects down to the 	primitive shapes.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>push group1 regiona</userinput>
@@ -47,9 +47,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

@@ -24,18 +24,18 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Labels the vertices of the indicated <emphasis>objects</emphasis> with their
 	coordinate values in the MGED display window. The <emphasis>objects</emphasis> must have 	already been displayed using <command>e, E, ev, B</command>, or any other command that 	results in the display of an object.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>labelvert</command> command to label the 	vertices of a designated shape with their coordinate values.
   </para>
-  <example><info><title>Label the vertices of a particular shape with their coordinate values.</title></info>
+  <example><title>Label the vertices of a particular shape with their coordinate values.</title>
 
     <variablelist>
       <varlistentry>
@@ -51,9 +51,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

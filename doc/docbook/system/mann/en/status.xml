@@ -28,7 +28,7 @@ of the current display manager.
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Without a subcommand, the <command>status</command> command returns the following information:
 	current state, view size of the current display manager, the conversion factor from
@@ -120,13 +120,13 @@ during editing.
 
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The three examples show the use of the <command>status</command> command with and without subcommands.
     </para>
 
- <example><info><title>Get default information such as current state, view size of the current display manager, the conversion 	factor from local model units to the base units (mm) stored in the database, and the view matrices
-	of the current display manager. </title></info>
+ <example><title>Get default information such as current state, view size of the current display manager, the conversion 	factor from local model units to the base units (mm) stored in the database, and the view matrices
+	of the current display manager. </title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>status</userinput>
@@ -136,7 +136,7 @@ during editing.
     </para>
   </example>
 
-  <example><info><title>Get the view rotation matrix.</title></info>
+  <example><title>Get the view rotation matrix.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>status Viewrot</userinput>
@@ -145,7 +145,7 @@ during editing.
     </para>
   </example>
 
-  <example><info><title>Get the edit state.</title></info>
+  <example><title>Get the edit state.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>status state</userinput>
@@ -156,9 +156,9 @@ during editing.
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

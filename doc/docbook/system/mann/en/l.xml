@@ -25,7 +25,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 <para>Displays a verbose description about the specified list of objects.
  If a specified <emphasis>object</emphasis> is a path, then any
  transformation matrices along that <emphasis>path</emphasis> are applied.
@@ -41,7 +41,7 @@
 </para>
 </refsection>
 
-  <refsection xml:id="options"><info><title>OPTIONS</title></info>
+  <refsection xml:id="options"><title>OPTIONS</title>
     <variablelist remap="TP">
       <varlistentry>
 	<term><option>-t</option></term>
@@ -73,14 +73,14 @@
     </variablelist>
   </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The three examples show the use of the <command>l</command> command
   to display details about a region, shape parameters, and all possible
   paths starting with a particular designation.
   </para>
 
-  <example><info><title>Display details about a particular region.</title></info>
+  <example><title>Display details about a particular region.</title>
     <variablelist>
       <varlistentry>
 	   <term><prompt>mged&gt;</prompt> <userinput>l region1</userinput></term>
@@ -92,7 +92,7 @@
      </variablelist>
   </example>
 
-  <example><info><title>Display shape parameters for a particular shape.</title></info>
+  <example><title>Display shape parameters for a particular shape.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>l group1/group2/region1/shape3</userinput>
@@ -102,7 +102,7 @@
     </para>
   </example>
 
- <example><info><title>Display all paths that start with a particular designation and end in a primitive shape.</title></info>
+ <example><title>Display all paths that start with a particular designation and end in a primitive shape.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>l -r a/b</userinput>
@@ -113,9 +113,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

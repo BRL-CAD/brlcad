@@ -26,7 +26,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       The <command>apropos</command> command searches through the one-line usage
@@ -35,9 +35,9 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
-    <example><info><title>List all commands having "region" in their one-line usage messages.</title></info>
+    <example><title>List all commands having "region" in their one-line usage messages.</title>
 
       <para>
 	<prompt>mged&gt; </prompt><userinput>apropos region</userinput>
@@ -51,9 +51,11 @@ regdef regions reid remat summary wcodes whatid whichair whichid
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

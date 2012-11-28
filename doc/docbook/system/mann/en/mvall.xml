@@ -24,7 +24,7 @@
    </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Changes the name of <emphasis>old_name</emphasis> to <emphasis>new_name</emphasis>. This will also
 change any references to <emphasis>old_name</emphasis> that may occur in other combinations in the
@@ -34,9 +34,9 @@ database. If the <emphasis>-f</emphasis> variation of the command is used, all <
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <example><info><title>Change the name of an object everywhere it occurs in the database.</title></info>
+  <example><title>Change the name of an object everywhere it occurs in the database.</title>
 
      <para>
       <prompt>mged&gt;</prompt><userinput>mvall shapea shapeb</userinput>
@@ -44,7 +44,7 @@ database. If the <emphasis>-f</emphasis> variation of the command is used, all <
      <para>Changes the name of <emphasis>shapea</emphasis> to <emphasis>shapeb</emphasis> everywhere it occurs in the database.
      </para>
   </example>
-    <example><info><title>This example shows a simple mapping file.</title></info>
+    <example><title>This example shows a simple mapping file.</title>
 
       <literallayout class="normal">
 # this line is a comment
@@ -55,14 +55,14 @@ bad_name good_name
     </example>
 </refsection>
 
-<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
+<refsection xml:id="see_also"><title>SEE ALSO</title>
 
     <para>mv prefix</para>
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

@@ -25,19 +25,19 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Generates a blend at an end (base [<emphasis>b</emphasis>] or top
 	[<emphasis>t</emphasis>]) of the specified RCC shape. The thickness is the radius of the TOR 	curvature. The blend is saved as a region made up of an RCC and a TOR. The default end is the 	base.
    </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The two examples show the use of the <command>rcc-blend</command> command to generate a blend 	at the base and at the top of specified RCC shapes.
   </para>
 
-  <example><info><title>Generate a blend at the base of a specified RCC shape.</title></info>
+  <example><title>Generate a blend at the base of a specified RCC shape.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>rcc-blend rcc.s blend.s 10</userinput>
@@ -46,7 +46,7 @@
     </para>
   </example>
 
-<example><info><title>Generate a blend at the top of a specified RCC shape.</title></info>
+<example><title>Generate a blend at the top of a specified RCC shape.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>rcc-blend rcc.s blend.s 10 t</userinput>
@@ -57,9 +57,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

@@ -35,7 +35,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>
     <command>picket_fence</command> creates a geometry file in
@@ -59,14 +59,14 @@
  </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>
   Creates an example fence two meters high and six meters long with
   fifteen millimeter spaces between the pickets.  It will start the
   fence at the origin and extend it to (100,6000,0).
   </para>
-  <example><info><title><command>picket_fence</command> Example</title></info>
+  <example><title><command>picket_fence</command> Example</title>
 
     <para>
       <userinput>picket_fence fence.g Imy2000 15 0 0 0 100 6000 0</userinput>
@@ -75,9 +75,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
 
   <para>
     This software is Copyright (c) 2005-2012 United States Government as
@@ -85,7 +85,7 @@
   </para>
 </refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

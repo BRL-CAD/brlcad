@@ -28,19 +28,19 @@
     </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Creates a UNIX plot of the current MGED display. If an
 	<emphasis>output_file</emphasis> is specified, the plot is stored in that file. If a <emphasis>filter	</emphasis> is specified, the output is sent to that <emphasis>filter</emphasis>. The <emphasis>-float 	</emphasis>option requests a plot file with real numbers rather than integers. The <emphasis>-zclip	</emphasis>option requests that the plot be clipped to the viewing cube in the Z-direction. The <emphasis>-	2d</emphasis> option requests a two-dimensional plot (the default is 3D). The <emphasis>-grid</emphasis> 	option is intended to include a grid in the plot, but is currently not implemented. This command does not 	use the <emphasis>dm-plot</emphasis> display manager. The <command>pl</command> command performs the same 	function, but does use the <emphasis>dm-plot</emphasis> display manager.
     </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>plot</command> command to create a UNIX plot of the current MGED 	display and pipe the results to the specified command.
 
   </para>
-  <example><info><title>Create a UNIX plot of the current MGED display and send the results to a specified command.</title></info>
+  <example><title>Create a UNIX plot of the current MGED display and send the results to a specified command.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>plot -float | pldebug</userinput>
@@ -52,9 +52,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

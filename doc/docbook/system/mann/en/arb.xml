@@ -25,7 +25,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       The <command>arb</command> command creates a new ARB shape with the
@@ -37,14 +37,14 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The first example shows the use of the <command>arb</command> command to create a
       new ARB shape with a specified name.  The second example shows the use of the
       <command>ae</command> command to determine the view orientation of the arb.
     </para>
-    <example><info><title>Create <emphasis>new_arb</emphasis> with a specific rotation angle and fallback angle.</title></info>
+    <example><title>Create <emphasis>new_arb</emphasis> with a specific rotation angle and fallback angle.</title>
 
 	 <para>
 	   <prompt>mged&gt; </prompt> <userinput>arb new_arb 35 25</userinput>
@@ -53,7 +53,7 @@
 	   Create new_arb with a rotation angle of 35° and a fallback angle of 25°.
 	 </para>
     </example>
-    <example><info><title>Using the <command>ae</command> command to determine the view orientation of the arb</title></info>
+    <example><title>Using the <command>ae</command> command to determine the view orientation of the arb</title>
 
       <para>
 	<prompt>mged&gt; </prompt><userinput>ae 35 25</userinput>
@@ -64,9 +64,11 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

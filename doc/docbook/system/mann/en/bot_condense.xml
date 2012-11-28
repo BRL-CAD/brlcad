@@ -25,7 +25,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       Used to eliminate unused vertices from a BOT primitive. It returns
@@ -33,16 +33,16 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The examples shows the use of the <command>bot_condense</command>
       command to eliminate unused vertices from a BOT primitive and store
       the result in a new BOT primitive.
     </para>
-    <example><info><title>
+    <example><title>
 	Basic Condensing
-      </title></info>
+      </title>
 
       <para>
 	Eliminating unused vertices from a primitive named
@@ -61,9 +61,15 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+    </para>
+  </refsection>
+
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

@@ -25,18 +25,18 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Creates a special type of combination often referred to as a group.
 	This builds a combination by unioning together all the listed <emphasis>objects</emphasis>. If <emphasis>	groupname</emphasis> already exists, then the list of objects will be unioned to the end of it. (Note that 	an existing groupname is not restricted to being a group; any combination is legal.)  Other commands to 	build combinations are <command>c</command>, <command>r</command>, or <command>comb</command>.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>g</command> command to create or extend a specified group by 	unioning it with specified objects.
     </para>
-  <example><info><title>Create a group with a <emphasis>groupname</emphasis> and specified objects.</title></info>
+  <example><title>Create a group with a <emphasis>groupname</emphasis> and specified objects.</title>
 
     <variablelist>
       <varlistentry>
@@ -52,9 +52,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

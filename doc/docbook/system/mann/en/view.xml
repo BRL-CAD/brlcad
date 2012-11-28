@@ -23,7 +23,7 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Gets/sets view parameters (local units). The <command>view</command> command accepts the following
 subcommands:
@@ -45,13 +45,13 @@ subcommands:
 
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The two examples show the use of the <command>view</command> command with the subcommand <emphasis>center</emphasis>.
 
   </para>
 
-  <example><info><title>Get the view center.</title></info>
+  <example><title>Get the view center.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>view center</userinput>
@@ -59,7 +59,7 @@ subcommands:
     <para>Gets the view center.
     </para>
   </example>
-  <example><info><title>Set the view center at the origin of model space.</title></info>
+  <example><title>Set the view center at the origin of model space.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>view center 0 0 0</userinput>
@@ -70,9 +70,9 @@ subcommands:
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

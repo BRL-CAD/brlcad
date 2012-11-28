@@ -23,7 +23,7 @@
     </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Places MGED directly into the primitive edit mode. The path
 	must uniquely identify a primitive shape. If the shape is only referenced once in the
@@ -32,12 +32,12 @@
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>sed</command> command to place MGED into the primitive edit 	mode for a specified shape.
    </para>
 
-  <example><info><title>Enter the primitive edit mode for a particular shape.</title></info>
+  <example><title>Enter the primitive edit mode for a particular shape.</title>
 
     <para>
       <prompt>mged&gt;</prompt><userinput>sed shape1</userinput>
@@ -48,9 +48,9 @@
 
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

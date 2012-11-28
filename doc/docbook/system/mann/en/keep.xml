@@ -24,17 +24,17 @@
   </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Copies the <emphasis>objects</emphasis> specified to the <emphasis>keep_file</emphasis>. If <emphasis>	keep_file</emphasis> does not exist, it is created. If <emphasis>keep_file</emphasis> does exist, the 	<emphasis>objects</emphasis> are appended to it. The <emphasis>keep_file</emphasis> is a <emphasis>BRL-CAD	</emphasis> database file. The <emphasis>objects</emphasis> in the list must exist in the current database.
   </para>
 </refsection>
 
-<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
   <para>The example shows the use of the <command>keep</command> command to copy specified objects to a 	designated file.
    </para>
-  <example><info><title>Copy specified objects to a designated file.</title></info>
+  <example><title>Copy specified objects to a designated file.</title>
 
     <variablelist>
       <varlistentry>
@@ -49,9 +49,9 @@
 
  </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic

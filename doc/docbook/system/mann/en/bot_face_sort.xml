@@ -27,7 +27,7 @@
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+  <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
       Used to sort the list of triangles that constitutes the BOT primitive
@@ -38,13 +38,13 @@
     </para>
   </refsection>
 
-  <refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
       The example shows the use of the <command>bot_face_sort</command> command to sort
       the list of triangles that constitutes the BOT primitive to optimize it for raytracing.
     </para>
-    <example><info><title>Sorting the faces of two primitives (each having four triangles per piece) to optimize them for raytracing </title></info>
+    <example><title>Sorting the faces of two primitives (each having four triangles per piece) to optimize them for raytracing </title>
 
       <variablelist>
 	<varlistentry>
@@ -60,9 +60,11 @@
     </example>
   </refsection>
 
-  <info><corpauthor>BRL-CAD Team</corpauthor></info>
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
 
-  <refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
     <para>
       Reports of bugs or problems should be submitted via electronic

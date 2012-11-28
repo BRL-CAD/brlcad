@@ -36,7 +36,7 @@
      </cmdsynopsis>
 </refsynopsisdiv>
 
-<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<refsection xml:id="description"><title>DESCRIPTION</title>
  <para>The 'lc' command lists a set of codes (i.e. attributes) of regions
  within a group/combination. The attributes listed are 'region_id',
  'material_id' and 'los' followed by 'region name'. If an attribute
@@ -47,7 +47,7 @@
  be saved to a file.</para>
 </refsection>
 
-  <refsection xml:id="options"><info><title>OPTIONS</title></info>
+  <refsection xml:id="options"><title>OPTIONS</title>
   <variablelist remap="TP">
     <varlistentry>
       <term><option>-d</option></term>
@@ -88,9 +88,9 @@
   </variablelist>
 </refsection>
 
-<info><corpauthor>BRL-CAD Team</corpauthor></info>
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
 
-<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
 
   <para>
     Reports of bugs or problems should be submitted via electronic
