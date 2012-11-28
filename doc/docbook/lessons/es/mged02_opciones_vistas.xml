@@ -140,8 +140,8 @@
 	Como se detalla en la siguiente tabla, esta información contiene cuatro
 	grupos de datos sobre la vista de la ventana gráfica.
 
-	<table frame="all"><info><title>Vista de información en la parte inferior de
-				  la ventana de comandos</title></info>
+	<table frame="all"><title>Vista de información en la parte inferior de
+				  la ventana de comandos</title>
 	<tgroup cols="5" align="center" colsep="1" rowsep="1">
 	  <colspec colname="c1"/>
 	  <colspec colname="c2"/>
@@ -604,7 +604,7 @@
 	tabla muestra las distintas opciones y sus funciones.
       </para>
 
-      <table frame="all"><info><title>Los atajos de teclado y sus efectos</title></info>
+      <table frame="all"><title>Los atajos de teclado y sus efectos</title>
 
 	<tgroup cols="5" align="center" colsep="1" rowsep="1">
 	  <colspec colname="c1"/>

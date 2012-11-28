@@ -49,7 +49,7 @@
 	plástico y establezca el color en un tono medio de sombreado verde. El
 	diálogo en la ventana de comandos debería similar al siguiente:
 
-	<command><prompt>mged&gt;</prompt> mater mug.r[Enter]</command>
+	<userinput><prompt>mged&gt;</prompt> mater mug.r[Enter]</userinput>
       </para>
 
       <literallayout class="normal">

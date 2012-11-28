@@ -51,6 +51,7 @@
       aprendidos.
       Del menú Edit (Edición), seleccione la opción Combination Editor (Editor
       de combinación). Seleccione basin1.r.
+    </para>
 
     <para xml:id="goblet_material_properties2_intro2">
       En el último tutorial, hemos asignado los valores para los atributos de
@@ -65,7 +66,6 @@
       visto entre llaves en el cuadro Shader (Sombreado) que muestra los
       ingresos en una cadena de texto además de en los cuadros de entrada de
       los atributos apropiados, como se puede apreciar en la siguiente imagen:
-    </para>
       <informalfigure>
 	<mediaobject>
 	  <imageobject>

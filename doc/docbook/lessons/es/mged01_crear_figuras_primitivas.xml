@@ -18,7 +18,7 @@
 
       <itemizedlist mark="bullet">
 	<listitem>
-	  <para>Arrancar con el programa <application>MGED</application></para>.
+	  <para>Arrancar con el programa <application>MGED</application>.</para>
 	</listitem>
 	<listitem>
 	  <para>Ingresar los comandos en una terminal de <application>MGED</application>.</para>
@@ -204,7 +204,7 @@
 	Cuando haya terminado, pulse la tecla [ENTER].
 	Por ejemplo:
 
-	<command><prompt>mged&gt;</prompt> title MySphere [ENTER]</command>.
+	<userinput><prompt>mged&gt;</prompt> title MySphere [ENTER]</userinput>.
 
 	Note que en las versiones de <application>BRL-CAD</application> anteriores a la 	6.0, el título está limitado a 72 caracteres.
       </para>
@@ -219,7 +219,7 @@
 	Si prefiere la línea de comandos, tipee en una la palabra "units" y luego presione 		 [ENTER].
 	En la terminal de <application>MGED</application> aparecerá una línea que dirá:
 
-	<command><prompt>mged&gt;</prompt> units in [ENTER]</command>.
+	<userinput><prompt>mged&gt;</prompt> units in [ENTER]</userinput>.
       </para>
     </section>
 
