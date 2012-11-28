@@ -62,8 +62,8 @@ inline dvec<LEN>::dvec(double s)
 template<int LEN>
 inline dvec<LEN>::dvec(const float* vals)
 {
-    /* NOTE: assumes that vals are 16-byte aligned */
     for (int i = 0; i < LEN/2; i++) {
+	/* NOTE: assumes that vals are 16-byte aligned */
 	data.v[i] = _mm_load_ps(&vals[i*2]);
     }
 }
@@ -71,8 +71,8 @@ inline dvec<LEN>::dvec(const float* vals)
 template<int LEN>
 inline dvec<LEN>::dvec(const double* vals)
 {
-    /* NOTE: assumes that vals are 16-byte aligned */
     for (int i = 0; i < LEN/2; i++) {
+	/* NOTE: assumes that vals are 16-byte aligned */
 	data.v[i] = _mm_load_pd(&vals[i*2]);
     }
 }
