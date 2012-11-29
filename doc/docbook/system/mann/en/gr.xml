@@ -3,17 +3,17 @@
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="gr">
 
 <refmeta>
-  <refentrytitle>GR</refentrytitle>
+  <refentrytitle>GR/DG</refentrytitle>
   <manvolnum>nged</manvolnum>
   <refmiscinfo class="source">BRL-CAD</refmiscinfo>
   <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
 </refmeta>
 
 <refnamediv xml:id="name">
-    <refname>gr / dg</refname>
-    <refpurpose>
-        Add or remove primitives from a group using a GUI selection box. / 
-        Exit grouper mode.
+   <refname>gr</refname>
+   <refname>dg</refname>
+   <refpurpose>
+        Add or remove primitives from a group using a GUI selection box.  dg exits grouper mode.
    </refpurpose>
 </refnamediv>
 
