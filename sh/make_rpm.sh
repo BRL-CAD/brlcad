@@ -173,18 +173,22 @@ mkdir -p $TMPDIR/tmp/usr/share/desktop-directories
 cp -f $TMPDIR/brlcad.directory $TMPDIR/tmp/usr/share/desktop-directories
 cp -f $TMPDIR/brlcad-doc.directory $TMPDIR/tmp/usr/share/desktop-directories
 
-mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
-cp -f $TMPDIR/brlcad-mged.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
-cp -f $TMPDIR/brlcad-archer.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
-cp -f $TMPDIR/brlcad-db.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
-cp -f $TMPDIR/brlcad-doc.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/apps
-
-mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
-cp -f $TMPDIR/brlcad-v4.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
-cp -f $TMPDIR/brlcad-v5.png $TMPDIR/tmp/usr/share/icons/hicolor/48x48/mimetypes
-
 mkdir -p $TMPDIR/tmp/usr/share/mime/packages
 cp -f $TMPDIR/brlcad.xml $TMPDIR/tmp/usr/share/mime/packages
+
+# copy icons
+for I in 16x16 24x24 36x36 48x48 64x64 96x96 128x128 256x256
+do
+    mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
+    cp -f $TMPDIR/icons/$I/brlcad-mged.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
+    cp -f $TMPDIR/icons/$I/brlcad-archer.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
+    cp -f $TMPDIR/icons/$I/brlcad-db.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
+    cp -f $TMPDIR/icons/$I/brlcad-doc.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/apps
+
+    mkdir -p $TMPDIR/tmp/usr/share/icons/hicolor/$I/mimetypes
+    cp -f $TMPDIR/icons/$I/brlcad-v4.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/mimetypes
+    cp -f $TMPDIR/icons/$I/brlcad-v5.png $TMPDIR/tmp/usr/share/icons/hicolor/$I/mimetypes
+done
 
 #Create brlcad.spec file
 echo -e 'Name: brlcad
