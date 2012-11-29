@@ -17,12 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup timer */
-/** @{ */
-/** @file librt/timer-nt.c
- *
- * To provide timing information on Microsoft Windows NT.
- */
 
 #include "common.h"
 
@@ -39,9 +33,7 @@ static clock_t start;
 time_t time0;
 
 
-/**
- *
- */
+
 void
 rt_prep_timer(void)
 {
@@ -50,12 +42,7 @@ rt_prep_timer(void)
 }
 
 
-/**
- * Reports on the passage of time, since rt_prep_timer() was called.
- * Explicit return is number of CPU seconds.  String return is
- * descriptive.  If "elapsed" pointer is non-null, number of elapsed
- * seconds are returned.  Times returned will never be zero.
- */
+
 double
 rt_get_timer(struct bu_vls *vp, double *elapsed)
 {
@@ -112,7 +99,7 @@ rt_read_timer(char *str, int len)
 }
 
 
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

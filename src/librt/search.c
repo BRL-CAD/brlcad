@@ -124,9 +124,7 @@ static OPTION options[] = {
 };
 
 
-/**
- * Free all entries and the list of a db_full_path_list
- */
+
 void
 db_free_full_path_list(struct db_full_path_list *path_list)
 {

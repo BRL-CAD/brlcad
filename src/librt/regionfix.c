@@ -17,15 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file librt/regionfix.c
- *
- * Subroutines for adjusting old GIFT-style region-IDs, to take into
- * account the presence of instancing.
- *
- */
-/** @} */
+
+
 
 #include "common.h"
 
@@ -40,13 +33,7 @@
 #include "raytrace.h"
 
 
-/**
- * Apply any deltas to reg_regionid values to allow old applications
- * that use the reg_regionid number to distinguish between different
- * instances of the same prototype region.
- *
- * Called once, from rt_prep(), before raytracing begins.
- */
+
 void
 rt_regionfix(struct rt_i *rtip)
 {

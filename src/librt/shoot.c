@@ -17,29 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup ray */
-/** @{ */
-/** @file librt/shoot.c
- *
- * Ray Tracing program shot coordinator.
- *
- * This is the heart of LIBRT's ray-tracing capability.
- *
- * Given a ray, shoot it at all the relevant parts of the model,
- * (building the finished_segs chain), and then call rt_boolregions()
- * to build and evaluate the partition chain.  If the ray actually hit
- * anything, call the application's a_hit() routine with a pointer to
- * the partition chain, otherwise, call the application's a_miss()
- * routine.
- *
- * It is important to note that rays extend infinitely only in the
- * positive direction.  The ray is composed of all points P, where
- *
- * P = r_pt + K * r_dir
- *
- * for K ranging from 0 to +infinity.  There is no looking backwards.
- *
- */
+
 
 #include "common.h"
 
@@ -64,12 +42,7 @@
      ((_step)[Z] <= 0 && (_pz) < (_lo)[Z]) ||			\
      ((_step)[Z] >= 0 && (_pz) > (_hi)[Z]))
 
-/**
- * R T _ R E S _ P I E C E S _ I N I T
- *
- * Allocate the per-processor state variables needed to support
- * rt_shootray()'s use of 'solid pieces'.
- */
+
 void
 rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
 {
@@ -96,9 +69,7 @@ rt_res_pieces_init(struct resource *resp, struct rt_i *rtip)
     } RT_VISIT_ALL_SOLTABS_END
 	  }
 
-/**
- *
- */
+
 void
 rt_res_pieces_clean(struct resource *resp, struct rt_i *rtip)
 {
@@ -877,31 +848,7 @@ rt_plot_cell(const union cutter *cutp, const struct rt_shootray_status *ssp, str
 }
 
 
-/**
- * Note that the direction vector r_dir must have unit length; this is
- * mandatory, and is not ordinarily checked, in the name of
- * efficiency.
- *
- * Input:  Pointer to an application structure, with these mandatory fields:
- * a_ray.r_pt ==> Starting point of ray to be fired
- * a_ray.r_dir => UNIT VECTOR with direction to fire in (dir cosines)
- * a_hit =======> Routine to call when something is hit
- * a_miss ======> Routine to call when ray misses everything
- *
- * Calls user's a_miss() or a_hit() routine as appropriate.  Passes
- * a_hit() routine list of partitions, with only hit_dist fields
- * valid.  Normal computation deferred to user code, to avoid needless
- * computation here.
- *
- * Formal Return: whatever the application function returns (an int).
- *
- * NOTE:  The application functions may call rt_shootray() recursively.
- * Thus, none of the local variables may be static.
- *
- * To prevent having to lock the statistics variables in a PARALLEL
- * environment, all the statistics variables have been moved into the
- * 'resource' structure, which is allocated per-CPU.
- */
+
 int
 rt_shootray(register struct application *ap)
 {
@@ -1620,11 +1567,7 @@ out:
 }
 
 
-/**
- * Return pointer to cell 'n' along a given ray.  Used for debugging
- * of how space partitioning interacts with shootray.  Intended to
- * mirror the operation of rt_shootray().  The first cell is 0.
- */
+
 const union cutter *
 rt_cell_n_on_ray(register struct application *ap, int n)
 
@@ -1862,14 +1805,7 @@ rt_zero_res_stats(struct resource *resp)
 }
 
 
-/**
- * To be called only in non-parallel mode, to tally up the statistics
- * from the resource structure(s) into the rt instance structure.
- *
- * Non-parallel programs should call
- * rt_add_res_stats(rtip, RESOURCE_NULL);
- * to have the default resource results tallied in.
- */
+
 void
 rt_add_res_stats(register struct rt_i *rtip, register struct resource *resp)
 {
@@ -1939,12 +1875,7 @@ rt_shootray_simple_miss(struct application *a)
     return 0;
 }
 
-/**
- * Shoot a single ray and return the partition list. Handles callback issues.
- *
- * Note that it calls malloc(), therefore should NOT be used if performance
- * matters.
- */
+
 struct partition *
 rt_shootray_simple(struct application *a, point_t origin, vect_t direction)
 {
@@ -1971,7 +1902,7 @@ rt_shootray_simple(struct application *a, point_t origin, vect_t direction)
 }
 
 
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

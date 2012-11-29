@@ -17,11 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file librt/vers.c
- *
- * version information about LIBRT
- *
- */
+
 
 #include "common.h"
 
@@ -31,9 +27,7 @@
 #include "brlcad_version.h"
 
 
-/**
- * returns the compile-time version of librt
- */
+
 const char *
 rt_version(void)
 {

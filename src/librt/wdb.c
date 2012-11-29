@@ -17,15 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup wdb */
-/** @{ */
-/** @file librt/wdb.c
- *
- * Routines to allow libwdb to use librt's import/export interface,
- * rather than having to know about the database formats directly.
- *
- */
-/** @} */
+
+
 
 #include "common.h"
 
@@ -43,15 +36,7 @@
 #include "wdb.h"
 
 
-/**
- * Create a libwdb output stream destined for a disk file.  This will
- * destroy any existing file by this name, and start fresh.  The file
- * is then opened in the normal "update" mode and an in-memory
- * directory is built along the way, allowing retrievals and object
- * replacements as needed.
- *
- * Users can change the database title by calling: ???
- */
+
 struct rt_wdb *
 wdb_fopen_v(const char *filename, int version)
 {
@@ -78,15 +63,7 @@ wdb_fopen(const char *filename)
 }
 
 
-/**
- * Create a libwdb output stream destined for an existing BRL-CAD
- * database, already opened via a db_open() call.
- *
- * RT_WDB_TYPE_DB_DISK Add to on-disk database
- * RT_WDB_TYPE_DB_DISK_APPEND_ONLY Add to on-disk database, don't clobber existing names, use prefix
- * RT_WDB_TYPE_DB_INMEM Add to in-memory database only
- * RT_WDB_TYPE_DB_INMEM_APPEND_ONLY Ditto, but give errors if name in use.
- */
+
 struct rt_wdb *
 wdb_dbopen(struct db_i *dbip, int mode)
 {
@@ -115,16 +92,7 @@ wdb_dbopen(struct db_i *dbip, int mode)
 }
 
 
-/**
- * Returns -
- *  0 and modified *internp;
- * -1 ft_import failure (from rt_db_get_internal)
- * -2 db_get_external failure (from rt_db_get_internal)
- * -3 Attempt to import from write-only (stream) file.
- * -4 Name not found in database TOC.
- *
- * NON-PARALLEL because of rt_uniresource
- */
+
 int
 wdb_import(struct rt_wdb *wdbp,	struct rt_db_internal *internp,	const char *name, const mat_t mat)
 {
@@ -138,13 +106,7 @@ wdb_import(struct rt_wdb *wdbp,	struct rt_db_internal *internp,	const char *name
 }
 
 
-/**
- * The caller must free "ep".
- *
- * Returns -
- *  0 OK
- * <0 error
- */
+
 int
 wdb_export_external(
     struct rt_wdb *wdbp,
@@ -258,22 +220,7 @@ wdb_export_external(
 }
 
 
-/**
- * Convert the internal representation of a solid to the external one,
- * and write it into the database.
- *
- * The internal representation is always freed.  This is the analog of
- * rt_db_put_internal() for rt_wdb objects.
- *
- * Use this routine in preference to wdb_export() whenever the caller
- * already has an rt_db_internal structure handy.
- *
- * NON-PARALLEL because of rt_uniresource
- *
- * Returns -
- *  0 OK
- * <0 error
- */
+
 int
 wdb_put_internal(
     struct rt_wdb *wdbp,
@@ -321,24 +268,7 @@ out:
 }
 
 
-/**
- * Export an in-memory representation of an object, as described in
- * the file h/rtgeom.h, into the indicated database.
- *
- * The internal representation (gp) is always freed.
- *
- * WARNING: The caller must be careful not to double-free gp,
- * particularly if it's been extracted from an rt_db_internal, e.g. by
- * passing intern.idb_ptr for gp.
- *
- * If the caller has an rt_db_internal structure handy already, they
- * should call wdb_put_internal() directly -- this is a convenience
- * routine intended primarily for internal use in LIBWDB.
- *
- * Returns -
- *  0 OK
- * <0 error
- */
+
 int
 wdb_export(
     struct rt_wdb *wdbp,
@@ -407,10 +337,7 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 }
 
 
-/**
- * Release from associated database "file", destroy dynamic data
- * structure.
- */
+
 void
 wdb_close(struct rt_wdb *wdbp)
 {
@@ -442,16 +369,7 @@ wdb_close(struct rt_wdb *wdbp)
 }
 
 
-/**
- * Given the name of a database object or a full path to a leaf
- * object, obtain the internal form of that leaf.  Packaged separately
- * mainly to make available nice Tcl error handling. Additionally,
- * copies ts.ts_mat to matp.
- *
- * Returns -
- * BRLCAD_OK
- * BRLCAD_ERROR
- */
+
 int
 wdb_import_from_path2(struct bu_vls *logstr, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb, matp_t matp)
 {
@@ -519,15 +437,7 @@ wdb_import_from_path2(struct bu_vls *logstr, struct rt_db_internal *ip, const ch
 }
 
 
-/**
- * Given the name of a database object or a full path to a leaf
- * object, obtain the internal form of that leaf.  Packaged separately
- * mainly to make available nice Tcl error handling.
- *
- * Returns -
- * BRLCAD_OK
- * BRLCAD_ERROR
- */
+
 int
 wdb_import_from_path(struct bu_vls *logstr, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb)
 {

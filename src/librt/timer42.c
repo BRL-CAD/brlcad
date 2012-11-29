@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup timer */
-/** @{ */
-/** @file librt/timer42.c
- *
- * To provide timing information for RT when running on 4.2 BSD UNIX.
- *
- */
 
 #include "common.h"
 
@@ -50,9 +43,7 @@ static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 static void psecs(long int l, struct bu_vls *vp);
 
 
-/**
- *
- */
+
 void
 rt_prep_timer(void)
 {
@@ -62,12 +53,7 @@ rt_prep_timer(void)
 }
 
 
-/**
- * Reports on the passage of time, since rt_prep_timer() was called.
- * Explicit return is number of CPU seconds.  String return is
- * descriptive.  If "elapsed" pointer is non-null, number of elapsed
- * seconds are returned.  Times returned will never be zero.
- */
+
 double
 rt_get_timer(struct bu_vls *vp, double *elapsed)
 {
@@ -227,9 +213,7 @@ psecs(long int l, struct bu_vls *vp)
 }
 
 
-/**
- * Compatibility routine
- */
+
 double
 rt_read_timer(char *str, int len)
 {
@@ -251,7 +235,7 @@ rt_read_timer(char *str, int len)
 }
 
 
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

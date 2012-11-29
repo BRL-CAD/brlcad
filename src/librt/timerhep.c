@@ -17,13 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup timer */
-/** @{ */
-/** @file librt/timerhep.c
- *
- * To provide timing information for RT.
- * THIS VERSION FOR Denelcor HEP/UPX (System III-like)
- */
+
 
 
 #include <stdio.h>
@@ -67,7 +61,7 @@ rt_read_timer(char *str, int len)
 }
 
 
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

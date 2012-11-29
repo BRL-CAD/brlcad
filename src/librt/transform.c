@@ -17,11 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file librt/transform.c
- *
- * apply a matrix transform to a given object
- *
- */
+
 
 #include "common.h"
 
@@ -29,13 +25,7 @@
 #include "raytrace.h"
 
 
-/**
- * apply a matrix transformation to a given input object, setting the
- * resultant transformed object as the output solid.  if freeflag is
- * set, the input object will be released.
- *
- * returns zero if matrix transform was applied, non-zero on failure.
- */
+
 int
 rt_matrix_transform(struct rt_db_internal *output, const mat_t matrix, struct rt_db_internal *input, int freeflag, struct db_i *dbip, struct resource *resource)
 {

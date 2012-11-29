@@ -17,14 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file librt/roots.c
- *
- * Find the roots of a polynomial
- *
- */
-/** @} */
+
+
 
 #include "common.h"
 
@@ -273,15 +267,7 @@ rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
 }
 
 
-/**
- * WARNING: The polynomial given as input is destroyed by this
- * routine.  The caller must save it if it is important!
- *
- * NOTE : This routine is written for polynomials with real
- * coefficients ONLY.  To use with complex coefficients, the Complex
- * Math library should be used throughout.  Some changes in the
- * algorithm will also be required.
- */
+
 int
 rt_poly_roots(register bn_poly_t *eqn,	/* equation to be solved */
 	      register bn_complex_t roots[], /* space to put roots found */
