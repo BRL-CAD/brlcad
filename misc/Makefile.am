@@ -107,13 +107,6 @@ EXTRA_DIST = \
 	debian/icons/96x96/brlcad-v4.png \
 	debian/icons/96x96/brlcad-v5.png \
 	debian/icons/96x96/brlcad-v6.png \
-	debian/icons/scalable/brlcad-archer.svg \
-	debian/icons/scalable/brlcad-db.svg \
-	debian/icons/scalable/brlcad-doc.svg \
-	debian/icons/scalable/brlcad-mged.svg \
-	debian/icons/scalable/brlcad-v4.svg \
-	debian/icons/scalable/brlcad-v5.svg \
-	debian/icons/scalable/brlcad-v6.svg \
 	debian/rules \
 	debian/source/format \
 	debian/source/include-binaries \
