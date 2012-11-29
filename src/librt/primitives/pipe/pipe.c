@@ -119,6 +119,15 @@ struct pipe_segment {
     point_t last_drawn;
 };
 
+struct pipe_bend {
+    struct pipe_circle pipe_circle;
+    struct pipe_circle bend_circle;
+    vect_t bend_normal;
+    point_t bend_start;
+    point_t bend_end;
+    fastf_t bend_angle;
+};
+
 #define PIPE_MM(_v) VMINMAX((*min), (*max), _v)
 
 #define ARC_SEGS 16	/* number of segments used to plot a circle */
@@ -186,6 +195,22 @@ pipe_seg_dist_to_bend_endpoint(const struct pipe_segment *seg)
     dist_to_bend_end = seg->cur->pp_bendradius * tan(bend_angle / 2.0);
 
     return dist_to_bend_end;
+}
+
+static void
+pipe_seg_bend_normal(vect_t norm, const struct pipe_segment *seg)
+{
+    vect_t cur_to_prev, cur_to_next;
+    struct wdb_pipept *prevpt, *curpt, *nextpt;
+
+    curpt = seg->cur;
+    prevpt = BU_LIST_PREV(wdb_pipept, &curpt->l);
+    nextpt = BU_LIST_NEXT(wdb_pipept, &curpt->l);
+
+    VSUB2(cur_to_prev, prevpt->pp_coord, curpt->pp_coord);
+    VSUB2(cur_to_next, nextpt->pp_coord, curpt->pp_coord);
+    VCROSS(norm, cur_to_prev, cur_to_next);
+    VUNITIZE(norm);
 }
 
 static struct pipe_orientation
@@ -2039,47 +2064,78 @@ draw_pipe_arc(
     }
 }
 
+static struct pipe_bend
+pipe_seg_bend(const struct pipe_segment *seg)
+{
+    struct pipe_bend bend;
+    fastf_t dist_to_bend_end;
+    vect_t cur_to_prev, cur_to_next;
+    struct wdb_pipept *prevpt, *curpt, *nextpt;
+
+    bend.pipe_circle.orient = seg->orient;
+    bend.bend_angle = pipe_seg_bend_angle(seg);
+    pipe_seg_bend_normal(bend.bend_normal, seg);
+
+    curpt = seg->cur;
+    prevpt = BU_LIST_PREV(wdb_pipept, &curpt->l);
+    nextpt = BU_LIST_NEXT(wdb_pipept, &curpt->l);
+
+    VSUB2(cur_to_prev, prevpt->pp_coord, curpt->pp_coord);
+    VSUB2(cur_to_next, nextpt->pp_coord, curpt->pp_coord);
+    VUNITIZE(cur_to_prev);
+    VUNITIZE(cur_to_next);
+
+    dist_to_bend_end = pipe_seg_dist_to_bend_endpoint(seg);
+    VJOIN1(bend.bend_start, curpt->pp_coord, dist_to_bend_end, cur_to_prev);
+    VJOIN1(bend.bend_end, curpt->pp_coord, dist_to_bend_end, cur_to_next);
+
+    bend.bend_circle.radius = curpt->pp_bendradius;
+    VCROSS(bend.bend_circle.orient.v1, cur_to_prev, bend.bend_normal);
+    VCROSS(bend.bend_circle.orient.v2, bend.bend_circle.orient.v1,
+	    bend.bend_normal);
+    VJOIN1(bend.bend_circle.center, bend.bend_start, -bend.bend_circle.radius,
+	    bend.bend_circle.orient.v1);
+
+
+    return bend;
+}
+
 static struct pipe_orientation
 draw_pipe_connect_circular_segs(
     struct bu_list *vhead,
-    struct pipe_circle bend_circle,
-    const point_t bend_end,
-    fastf_t bend_angle,
-    struct pipe_circle pipe_circle,
+    struct pipe_bend bend,
     int seg_count)
 {
     mat_t rot_mat;
     int i, num_lines = 4;
     struct pipe_circle arc_circle;
     struct pipe_orientation end_orient;
-    point_t bend_center, bend_start, pipe_pt, arc_start, arc_end;
-    vect_t bend_v1, bend_v2, bend_norm, center_to_start;
+    point_t bend_center, bend_start, bend_end, pipe_pt, arc_start, arc_end;
+    vect_t bend_v1, bend_norm, center_to_start;
     vect_t pipe_axis_a, pipe_axis_b, pipe_r, end_pipe_r;
-    fastf_t bend_radius, pipe_radius, bend_circle_offset, radian_step, radian;
+    fastf_t pipe_radius, bend_circle_offset, radian_step, radian;
 
     BU_CK_LIST_HEAD(vhead);
 
     /* short names */
-    VMOVE(bend_center, bend_circle.center);
-    VMOVE(bend_v1, bend_circle.orient.v1);
-    VMOVE(bend_v2, bend_circle.orient.v2);
-    VCROSS(bend_norm, bend_v2, bend_v1);
-    VUNITIZE(bend_norm);
-    bend_radius = bend_circle.radius;
-    VJOIN1(bend_start, bend_center, bend_radius, bend_v1);
+    VMOVE(bend_center, bend.bend_circle.center);
+    VMOVE(bend_v1, bend.bend_circle.orient.v1);
+    VMOVE(bend_norm, bend.bend_normal);
+    VMOVE(bend_start, bend.bend_start);
+    VMOVE(bend_end, bend.bend_end);
 
-    pipe_radius = pipe_circle.radius;
-    VSCALE(pipe_axis_a, pipe_circle.orient.v1, pipe_radius);
-    VSCALE(pipe_axis_b, pipe_circle.orient.v2, pipe_radius);
+    pipe_radius = bend.pipe_circle.radius;
+    VSCALE(pipe_axis_a, bend.pipe_circle.orient.v1, pipe_radius);
+    VSCALE(pipe_axis_b, bend.pipe_circle.orient.v2, pipe_radius);
 
     /* calculate matrix to rotate vectors around the bend */
     {
 	vect_t reverse_norm;
 	VREVERSE(reverse_norm, bend_norm);
-	bn_mat_arb_rot(rot_mat, bend_center, reverse_norm, bend_angle);
+	bn_mat_arb_rot(rot_mat, bend_center, reverse_norm, bend.bend_angle);
     }
 
-    arc_circle.orient = bend_circle.orient;
+    arc_circle.orient = bend.bend_circle.orient;
 
     radian_step = bn_twopi / num_lines;
     radian = 0.0;
@@ -2112,10 +2168,10 @@ draw_pipe_connect_circular_segs(
     }
 
     /* return the final orientation of the pipe circle */
-    MAT4X3VEC(end_pipe_r, rot_mat, pipe_circle.orient.v1);
+    MAT4X3VEC(end_pipe_r, rot_mat, bend.pipe_circle.orient.v1);
     VMOVE(end_orient.v1, end_pipe_r);
 
-    MAT4X3VEC(end_pipe_r, rot_mat, pipe_circle.orient.v2);
+    MAT4X3VEC(end_pipe_r, rot_mat, bend.pipe_circle.orient.v2);
     VMOVE(end_orient.v2, end_pipe_r);
 
     return end_orient;
@@ -2124,58 +2180,35 @@ draw_pipe_connect_circular_segs(
 static void
 draw_pipe_circular_seg(struct bu_list *vhead, struct pipe_segment *seg)
 {
-    point_t bend_start, bend_end;
-    fastf_t bend_angle, dist_to_bend_end;
-    vect_t cur_to_prev, cur_to_next, norm;
-    struct pipe_circle bend_circle, pipe_circle;
+    struct pipe_bend bend;
     struct wdb_pipept *prevpt, *curpt, *nextpt, startpt, endpt;
+
+    bend = pipe_seg_bend(seg);
 
     curpt = seg->cur;
     prevpt = BU_LIST_PREV(wdb_pipept, &curpt->l);
     nextpt = BU_LIST_NEXT(wdb_pipept, &curpt->l);
 
-    /* calculate bend characteristics */
-    bend_angle = pipe_seg_bend_angle(seg);
-    dist_to_bend_end = pipe_seg_dist_to_bend_endpoint(seg);
-
-    VSUB2(cur_to_prev, prevpt->pp_coord, curpt->pp_coord);
-    VSUB2(cur_to_next, nextpt->pp_coord, curpt->pp_coord);
-    VCROSS(norm, cur_to_prev, cur_to_next);
-    VUNITIZE(cur_to_prev);
-    VUNITIZE(cur_to_next);
-    VUNITIZE(norm);
-
-    VJOIN1(bend_start, curpt->pp_coord, dist_to_bend_end, cur_to_prev);
-    VJOIN1(bend_end, curpt->pp_coord, dist_to_bend_end, cur_to_next);
-    VCROSS(bend_circle.orient.v1, cur_to_prev, norm);
-    VCROSS(bend_circle.orient.v2, bend_circle.orient.v1, norm);
-    VJOIN1(bend_circle.center, bend_start, -curpt->pp_bendradius, bend_circle.orient.v1);
-
     /* draw linear segment to start of bend */
     startpt = *prevpt;
     endpt = *curpt;
     VMOVE(startpt.pp_coord, seg->last_drawn);
-    VMOVE(endpt.pp_coord, bend_start);
+    VMOVE(endpt.pp_coord, bend.bend_start);
 
     draw_pipe_connect_points_linearly(vhead, startpt, endpt, seg->orient);
 
-    VMOVE(seg->last_drawn, bend_start);
+    VMOVE(seg->last_drawn, bend.bend_start);
 
     /* draw circular bend */
-    bend_circle.radius = curpt->pp_bendradius;
-    pipe_circle.orient = seg->orient;
-
-    pipe_circle.radius = curpt->pp_od / 2.0;
-    seg->orient = draw_pipe_connect_circular_segs(vhead, bend_circle, bend_end,
-	    bend_angle, pipe_circle, ARC_SEGS);
+    bend.pipe_circle.radius = curpt->pp_od / 2.0;
+    seg->orient = draw_pipe_connect_circular_segs(vhead, bend, ARC_SEGS);
 
     if (prevpt->pp_id > 0.0 && curpt->pp_id > 0.0) {
-	pipe_circle.radius = curpt->pp_id / 2.0;
-	seg->orient = draw_pipe_connect_circular_segs(vhead, bend_circle,
-		bend_end, bend_angle, pipe_circle, ARC_SEGS);
+	bend.pipe_circle.radius = curpt->pp_id / 2.0;
+	seg->orient = draw_pipe_connect_circular_segs(vhead, bend, ARC_SEGS);
     }
 
-    VMOVE(seg->last_drawn, bend_end);
+    VMOVE(seg->last_drawn, bend.bend_end);
 }
 
 
