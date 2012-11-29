@@ -56,13 +56,6 @@ debian/icons/256x256/brlcad-mged.png usr/share/icons/hicolor/256x256/apps
 debian/icons/256x256/brlcad-v4.png usr/share/icons/hicolor/256x256/mimetypes
 debian/icons/256x256/brlcad-v5.png usr/share/icons/hicolor/256x256/mimetypes
 
-debian/icons/scalable/brlcad-archer.svg usr/share/icons/hicolor/scalable/apps
-debian/icons/scalable/brlcad-db.svg usr/share/icons/hicolor/scalable/apps
-debian/icons/scalable/brlcad-doc.svg usr/share/icons/hicolor/scalable/apps
-debian/icons/scalable/brlcad-mged.svg usr/share/icons/hicolor/scalable/apps
-debian/icons/scalable/brlcad-v4.svg usr/share/icons/hicolor/scalable/mimetypes
-debian/icons/scalable/brlcad-v5.svg usr/share/icons/hicolor/scalable/mimetypes
-
 debian/brlcad.xml usr/share/mime/packages
 
 debian/brlcad.sh etc/profile.d

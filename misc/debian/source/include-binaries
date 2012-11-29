@@ -62,11 +62,3 @@ debian/icons/256x256/brlcad-v4.png
 debian/icons/256x256/brlcad-v5.png
 debian/icons/256x256/brlcad-v6.png
 
-debian/icons/scalable/brlcad-archer.svg
-debian/icons/scalable/brlcad-db.svg
-debian/icons/scalable/brlcad-doc.svg
-debian/icons/scalable/brlcad-mged.svg
-debian/icons/scalable/brlcad-v4.svg
-debian/icons/scalable/brlcad-v5.svg
-debian/icons/scalable/brlcad-v6.svg
-
