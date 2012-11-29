@@ -1923,6 +1923,24 @@ pipe_circle_segments(const struct rt_view_info *info, fastf_t radius)
     return num_segments;
 }
 
+static int
+pipe_bend_segments(
+    const struct rt_view_info *info,
+    struct pipe_bend bend)
+{
+    int num_segments;
+    fastf_t arc_length;
+
+    arc_length = (bend.bend_angle / bn_twopi) * bend.bend_circle.radius;
+    num_segments = arc_length / info->point_spacing;
+
+    if (num_segments < 3) {
+	num_segments = 3;
+    }
+
+    return num_segments;
+}
+
 /**
  * Draw a pipe circle using a given number of segments.
  */
@@ -2211,6 +2229,46 @@ draw_pipe_circular_seg(struct bu_list *vhead, struct pipe_segment *seg)
     VMOVE(seg->last_drawn, bend.bend_end);
 }
 
+static void
+draw_pipe_circular_seg_adaptive(
+    struct bu_list *vhead,
+    struct pipe_segment *seg,
+    const struct rt_view_info *info)
+{
+    int num_segments;
+    struct pipe_bend bend;
+    struct wdb_pipept *prevpt, *curpt, *nextpt, startpt, endpt;
+
+    bend = pipe_seg_bend(seg);
+
+    curpt = seg->cur;
+    prevpt = BU_LIST_PREV(wdb_pipept, &curpt->l);
+    nextpt = BU_LIST_NEXT(wdb_pipept, &curpt->l);
+
+    /* draw linear segment to start of bend */
+    startpt = *prevpt;
+    endpt = *curpt;
+    VMOVE(startpt.pp_coord, seg->last_drawn);
+    VMOVE(endpt.pp_coord, bend.bend_start);
+
+    draw_pipe_connect_points_linearly(vhead, startpt, endpt, seg->orient);
+
+    VMOVE(seg->last_drawn, bend.bend_start);
+
+    /* draw circular bend */
+    bend.pipe_circle.radius = curpt->pp_od / 2.0;
+    num_segments = pipe_bend_segments(info, bend);
+    seg->orient = draw_pipe_connect_circular_segs(vhead, bend, num_segments);
+
+    if (prevpt->pp_id > 0.0 && curpt->pp_id > 0.0) {
+	bend.pipe_circle.radius = curpt->pp_id / 2.0;
+	num_segments = pipe_bend_segments(info, bend);
+	seg->orient = draw_pipe_connect_circular_segs(vhead, bend, num_segments);
+    }
+
+    VMOVE(seg->last_drawn, bend.bend_end);
+}
+
 
 static void
 draw_pipe_end(struct bu_list *vhead, struct pipe_segment *seg)
@@ -2289,7 +2347,7 @@ rt_pipe_adaptive_plot(
 
     while (!pipe_seg_is_last(cur_seg)) {
 	if (pipe_seg_is_bend(cur_seg)) {
-	    draw_pipe_circular_seg(info->vhead, cur_seg);
+	    draw_pipe_circular_seg_adaptive(info->vhead, cur_seg, info);
 	} else {
 	    draw_pipe_linear_seg(info->vhead, cur_seg);
 	}
