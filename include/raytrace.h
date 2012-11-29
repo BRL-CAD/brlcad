@@ -2553,7 +2553,7 @@ RT_EXPORT extern int rt_shootray(struct application *ap);
  *
  * b_ap - Members in this single ray application structure should be
  * set in a similar fashion as when used with rt_shootray() with the
- * exception of a_hit() and a_miss(). Default implementaions of these
+ * exception of a_hit() and a_miss(). Default implementations of these
  * routines are provided that simple update hit/miss counters and
  * attach the hit partitions and segments to the partition_bundle
  * structure. Users can still override this default functionality but
@@ -2624,7 +2624,7 @@ RT_EXPORT extern int rt_gettree(struct rt_i *rtip,
 RT_EXPORT extern int rt_gettrees(struct rt_i *rtip,
 				 int argc,
 				 const char **argv, int ncpus);
-				 
+
 /**
  * User-called function to add a set of tree hierarchies to the active
  * set.
@@ -2647,8 +2647,8 @@ RT_EXPORT extern int rt_gettrees_and_attrs(struct rt_i *rtip,
 					   const char **attrs,
 					   int argc,
 					   const char **argv, int ncpus);
-					   
-					   
+
+
 /**
  * User-called function to add a set of tree hierarchies to the active
  * set. Includes getting the indicated list of attributes and a
@@ -2715,7 +2715,7 @@ RT_EXPORT extern struct soltab *rt_find_solid(const struct rt_i *rtip,
 * To provide timing information for RT when running on 4.2 BSD UNIX.
 *
 */
- 
+
  /** @file librt/timer-nt.c
  *
  * To provide timing information on Microsoft Windows NT.
@@ -2728,9 +2728,9 @@ RT_EXPORT extern struct soltab *rt_find_solid(const struct rt_i *rtip,
  * sys-calls are used for all timing.
  *
  */
- 
- 
- 
+
+
+
 /**
  *
  */
@@ -2756,7 +2756,7 @@ int rt_plot_solid(
     const struct soltab	*stp,
     struct resource		*resp);
 
-/** @} */	
+/** @} */
 /* Release storage assoc with rt_i */
 RT_EXPORT extern void rt_clean(struct rt_i *rtip);
 RT_EXPORT extern int rt_del_regtree(struct rt_i *rtip,
@@ -2831,7 +2831,7 @@ RT_EXPORT extern void rt_boolweave(struct seg *out_hd,
  *
  * If 0 regions result, continue with next partition.
  *
- * If 1 region results, a valid hit has occured, so transfer the
+ * If 1 region results, a valid hit has occurred, so transfer the
  * partition from the Input list to the Final list.
  *
  * If 2 or more regions claim the partition, then an overlap exists.
@@ -2921,7 +2921,7 @@ RT_EXPORT extern void rt_grow_boolstack(struct resource *res);
  * NOTE: This is a "fuzzy" difference.  It is important NOT to use the
  * results of this function in compound comparisons, because a return
  * of 0 makes no statement about the PRECISE relationships between the
- * two numbers.  Eg, * if (rt_fdiff(a, b) <= 0) is poison!
+ * two numbers.  E.g., * if (rt_fdiff(a, b) <= 0) is poison!
  *
  * Returns -
  * -1 if a < b
@@ -3111,12 +3111,12 @@ RT_EXPORT extern int rt_in_rpp(struct xray *rp,
 			       const fastf_t *min,
 			       const fastf_t *max);
 
-				   
+
 /**
  * Return pointer to cell 'n' along a given ray.  Used for debugging
  * of how space partitioning interacts with shootray.  Intended to
  * mirror the operation of rt_shootray().  The first cell is 0.
- */				   
+ */
 RT_EXPORT extern const union cutter *rt_cell_n_on_ray(struct application *ap,
 						      int n);
 
@@ -3135,7 +3135,7 @@ RT_EXPORT extern void rt_cut_clean(struct rt_i *rtip);
 /**
  * R T _ B O U N D _ I N T E R N A L
  *
- * Calculate the bounding RPP of the internal format passed in 'ip'. 
+ * Calculate the bounding RPP of the internal format passed in 'ip'.
  * The bounding RPP is returned in rpp_min and rpp_max in mm
  * FIXME: This function needs to be modified to eliminate the rt_gettree() call and the related
  * parameters. In that case calling code needs to call another function before calling this function
@@ -3224,7 +3224,7 @@ RT_EXPORT extern struct rt_wdb *wdb_fopen(const char *filename);
 RT_EXPORT extern struct rt_wdb *wdb_fopen_v(const char *filename,
 					    int version);
 
-						
+
 /**
  * Create a libwdb output stream destined for an existing BRL-CAD
  * database, already opened via a db_open() call.
@@ -3233,12 +3233,12 @@ RT_EXPORT extern struct rt_wdb *wdb_fopen_v(const char *filename,
  * RT_WDB_TYPE_DB_DISK_APPEND_ONLY Add to on-disk database, don't clobber existing names, use prefix
  * RT_WDB_TYPE_DB_INMEM Add to in-memory database only
  * RT_WDB_TYPE_DB_INMEM_APPEND_ONLY Ditto, but give errors if name in use.
- */						
+ */
 RT_EXPORT extern struct rt_wdb *wdb_dbopen(struct db_i *dbip,
 					   int mode);
 
-					   
-					   
+
+
 /**
  * Returns -
  *  0 and modified *internp;
@@ -3254,23 +3254,23 @@ RT_EXPORT extern int wdb_import(struct rt_wdb *wdbp,
 				const char *name,
 				const mat_t mat);
 
-				
+
 /**
  * The caller must free "ep".
  *
  * Returns -
  *  0 OK
  * <0 error
- */				
+ */
 RT_EXPORT extern int wdb_export_external(struct rt_wdb *wdbp,
 					 struct bu_external *ep,
 					 const char *name,
 					 int flags,
 					 unsigned char minor_type);
 
-					 
-					 
-					 
+
+
+
 /**
  * Convert the internal representation of a solid to the external one,
  * and write it into the database.
@@ -3286,15 +3286,15 @@ RT_EXPORT extern int wdb_export_external(struct rt_wdb *wdbp,
  * Returns -
  *  0 OK
  * <0 error
- */					 
+ */
 RT_EXPORT extern int wdb_put_internal(struct rt_wdb *wdbp,
 				      const char *name,
 				      struct rt_db_internal *ip,
 				      double local2mm);
 
-					  
-					  
-					  
+
+
+
 /**
  * Export an in-memory representation of an object, as described in
  * the file h/rtgeom.h, into the indicated database.
@@ -3312,7 +3312,7 @@ RT_EXPORT extern int wdb_put_internal(struct rt_wdb *wdbp,
  * Returns -
  *  0 OK
  * <0 error
- */					  
+ */
 RT_EXPORT extern int wdb_export(struct rt_wdb *wdbp,
 				const char *name,
 				genptr_t gp,
@@ -3322,11 +3322,11 @@ RT_EXPORT extern void wdb_init(struct rt_wdb *wdbp,
 			       struct db_i   *dbip,
 			       int           mode);
 
-				   
+
 /**
  * Release from associated database "file", destroy dynamic data
  * structure.
- */				   
+ */
 RT_EXPORT extern void wdb_close(struct rt_wdb *wdbp);
 
 
@@ -3343,9 +3343,9 @@ RT_EXPORT extern int wdb_import_from_path(struct bu_vls *logstr,
 					  struct rt_db_internal *ip,
 					  const char *path,
 					  struct rt_wdb *wdb);
-					  
-					  
-					  
+
+
+
 /**
  * Given the name of a database object or a full path to a leaf
  * object, obtain the internal form of that leaf.  Packaged separately
@@ -4712,8 +4712,8 @@ RT_EXPORT extern void rt_zero_res_stats(struct resource *resp);
  */
 RT_EXPORT extern void rt_res_pieces_clean(struct resource *resp,
 					  struct rt_i *rtip);
-					  
-					  
+
+
 /**
  * R T _ R E S _ P I E C E S _ I N I T
  *
@@ -4757,7 +4757,7 @@ RT_EXPORT extern void rt_vstub(struct soltab *stp[],
 RT_EXPORT extern int rt_bound_tree(const union tree	*tp,
 				   vect_t		tree_min,
 				   vect_t		tree_max);
-				   
+
 /**
  * Eliminate any references to NOP nodes from the tree.  It is safe to
  * use db_free_tree() here, because there will not be any dead solids.
@@ -4818,8 +4818,8 @@ RT_EXPORT extern struct bu_list *rt_vlblock_find(struct bn_vlblock *vbp,
 						 int r,
 						 int g,
 						 int b);
-						 
-						 
+
+
 /************************************************************************
  *									*
  *			Generic BN_VLIST routines			*
@@ -4842,8 +4842,8 @@ RT_EXPORT extern int rt_ck_vlist(const struct bu_list *vhead);
  */
 RT_EXPORT extern void rt_vlist_copy(struct bu_list *dest,
 				    const struct bu_list *src);
-					
-					
+
+
 /**
  * The macro RT_FREE_VLIST() simply appends to the list
  * &rt_g.rtg_vlfree.  Now, give those structures back to bu_free().
@@ -4863,8 +4863,8 @@ RT_EXPORT extern void rt_vlist_cleanup();
 RT_EXPORT extern void bn_vlist_rpp(struct bu_list *hd,
 				   const point_t minn,
 				   const point_t maxx);
-				   
-				   
+
+
 /************************************************************************
  *									*
  *			Binary VLIST import/export routines		*
@@ -4881,8 +4881,8 @@ RT_EXPORT extern void bn_vlist_rpp(struct bu_list *hd,
 RT_EXPORT extern void rt_vlist_export(struct bu_vls *vls,
 				      struct bu_list *hp,
 				      const char *name);
-					  
-					  
+
+
 /**
  * Convert a blob of network-independent binary prepared by
  * vls_vlist() and received from another machine, into a vlist chain.
@@ -4890,8 +4890,8 @@ RT_EXPORT extern void rt_vlist_export(struct bu_vls *vls,
 RT_EXPORT extern void rt_vlist_import(struct bu_list *hp,
 				      struct bu_vls *namevls,
 				      const unsigned char *buf);
-					  
-					  
+
+
 /************************************************************************
  *									*
  *			UNIX-Plot VLIST import/export routines		*
@@ -4904,8 +4904,8 @@ RT_EXPORT extern void rt_vlist_import(struct bu_list *hp,
  */
 RT_EXPORT extern void rt_plot_vlblock(FILE *fp,
 				      const struct bn_vlblock *vbp);
-					  
-					  
+
+
 /**
  * Output a vlist as an extended 3-D floating point UNIX-Plot file.
  * You provide the file.  Uses libplot3 routines to create the
@@ -4919,8 +4919,8 @@ RT_EXPORT extern int rt_process_uplot_value(struct bu_list **vhead,
 					    int c,
 					    double char_size,
 					    int mode);
-						
-						
+
+
 /**
  * Read a BRL-style 3-D UNIX-plot file into a vector list.  For now,
  * discard color information, only extract vectors.  This might be
@@ -4930,9 +4930,9 @@ RT_EXPORT extern int rt_uplot_to_vlist(struct bn_vlblock *vbp,
 				       FILE *fp,
 				       double char_size,
 				       int mode);
-					   
-					   
-					   
+
+
+
 /**
  * Used by MGED's "labelvert" command.
  */
@@ -5726,8 +5726,8 @@ RT_EXPORT extern int rt_num_circular_segments(double maxerr,
 RT_EXPORT extern int rt_tcl_parse_ray(Tcl_Interp *interp,
 				      struct xray *rp,
 				      const char *const*argv);
-					  
-	
+
+
 /**
  * Format a "union cutter" structure in a TCL-friendly format.  Useful
  * for debugging space partitioning
@@ -5744,8 +5744,8 @@ RT_EXPORT extern int rt_tcl_cutter(ClientData clientData,
 				   int argc,
 				   const char *const*argv);
 
-				   
-				   
+
+
 /**
  * Format a hit in a TCL-friendly format.
  *
@@ -5777,8 +5777,8 @@ RT_EXPORT extern int rt_tcl_rt(ClientData clientData,
 			       Tcl_Interp *interp,
 			       int argc,
 			       const char **argv);
-			
-			
+
+
 /************************************************************************************************
  *												*
  *			Tcl interface to the Database						*
@@ -5834,8 +5834,8 @@ RT_EXPORT extern int Rt_Init(Tcl_Interp *interp);
  */
 RT_EXPORT extern void db_full_path_appendresult(Tcl_Interp *interp,
 						const struct db_full_path *pp);
-						
-						
+
+
 /**
  * Expects the Tcl_obj argument (list) to be a Tcl list and extracts
  * list elements, converts them to int, and stores them in the passed
@@ -5861,20 +5861,20 @@ RT_EXPORT extern int tcl_obj_to_fastf_array(Tcl_Interp *interp,
 					    fastf_t **array,
 					    int *array_len);
 
-						
-						
+
+
 /**
  * interface to above tcl_obj_to_int_array() routine. This routine
  * expects a character string instead of a Tcl_Obj.
  *
  * Returns the number of elements converted.
- */						
+ */
 RT_EXPORT extern int tcl_list_to_int_array(Tcl_Interp *interp,
 					   char *char_list,
 					   int **array,
 					   int *array_len);
 
-					   
+
 /**
  * interface to above tcl_obj_to_fastf_array() routine. This routine
  * expects a character string instead of a Tcl_Obj.
