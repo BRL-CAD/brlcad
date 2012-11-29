@@ -391,7 +391,12 @@ rt_bend_pipe_prep(
 
 
 HIDDEN void
-rt_linear_pipe_prep(struct bu_list *head, fastf_t *pt1, fastf_t id1, fastf_t od1, fastf_t *pt2, fastf_t id2, fastf_t od2, point_t *min, point_t *max)
+rt_linear_pipe_prep(
+    struct bu_list *head,
+    fastf_t *pt1, fastf_t id1, fastf_t od1,
+    fastf_t *pt2, fastf_t id2, fastf_t od2,
+    point_t *min,
+    point_t *max)
 {
     struct lin_pipe *lp;
     mat_t R;
@@ -486,7 +491,11 @@ rt_linear_pipe_prep(struct bu_list *head, fastf_t *pt1, fastf_t id1, fastf_t od1
  * Calculate a bounding RPP for a pipe
  */
 int
-rt_pipe_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol))
+rt_pipe_bbox(
+    struct rt_db_internal *ip,
+    point_t *min,
+    point_t *max,
+    const struct bn_tol *UNUSED(tol))
 {
     struct rt_pipe_internal *pip;
     struct wdb_pipept *pp1, *pp2, *pp3;
@@ -775,7 +784,11 @@ rt_pipept_print(const struct wdb_pipept *pipept, double mm2local)
  * R T _ V L S _ P I P E P T
  */
 void
-rt_vls_pipept(struct bu_vls *vp, int seg_no, const struct rt_db_internal *ip, double mm2local)
+rt_vls_pipept(
+    struct bu_vls *vp,
+    int seg_no,
+    const struct rt_db_internal *ip,
+    double mm2local)
 {
     struct rt_pipe_internal *pint;
     struct wdb_pipept *pipept;
@@ -818,8 +831,16 @@ rt_vls_pipept(struct bu_vls *vp, int seg_no, const struct rt_db_internal *ip, do
  * normal to the flow of the pipe.
  */
 HIDDEN void
-discont_radius_shot(struct xray *rp, point_t center, vect_t norm, fastf_t or1_sq, fastf_t ir1_sq, fastf_t or2_sq, fastf_t ir2_sq,
-		    struct hit *hits, int *hit_count, int seg_no, struct soltab *stp)
+discont_radius_shot(
+    struct xray *rp,
+    point_t center,
+    vect_t norm,
+    fastf_t or1_sq, fastf_t ir1_sq,
+    fastf_t or2_sq, fastf_t ir2_sq,
+    struct hit *hits,
+    int *hit_count,
+    int seg_no,
+    struct soltab *stp)
 {
     fastf_t dist_to_plane;
     fastf_t norm_dist;
@@ -893,7 +914,13 @@ rt_in_sph(struct xray *rp, point_t center, fastf_t radius_sq)
 
 
 HIDDEN void
-bend_pipe_shot(struct soltab *stp, struct xray *rp, struct bend_pipe *bp, struct hit *hits, int *hit_count, int seg_no)
+bend_pipe_shot(
+    struct soltab *stp,
+    struct xray *rp,
+    struct bend_pipe *bp,
+    struct hit *hits,
+    int *hit_count,
+    int seg_no)
 {
     vect_t dprime;		/* D' */
     vect_t pprime;		/* P' */
@@ -1207,7 +1234,13 @@ check_discont_radii:
 
 
 HIDDEN void
-linear_pipe_shot(struct soltab *stp, struct xray *rp, struct lin_pipe *lp, struct hit *hits, int *hit_count, int seg_no)
+linear_pipe_shot(
+    struct soltab *stp,
+    struct xray *rp,
+    struct lin_pipe *lp,
+    struct hit *hits,
+    int *hit_count,
+    int seg_no)
 {
     struct hit *hitp;
     point_t work_pt;
@@ -1350,7 +1383,13 @@ linear_pipe_shot(struct soltab *stp, struct xray *rp, struct lin_pipe *lp, struc
 
 
 HIDDEN void
-pipe_start_shot(struct soltab *stp, struct xray *rp, struct id_pipe *id_p, struct hit *hits, int *hit_count, int seg_no)
+pipe_start_shot(
+    struct soltab *stp,
+    struct xray *rp,
+    struct id_pipe *id_p,
+    struct hit *hits,
+    int *hit_count,
+    int seg_no)
 {
     point_t hit_pt;
     fastf_t t_tmp;
@@ -1419,7 +1458,13 @@ pipe_start_shot(struct soltab *stp, struct xray *rp, struct id_pipe *id_p, struc
 
 
 HIDDEN void
-pipe_end_shot(struct soltab *stp, struct xray *rp, struct id_pipe *id_p, struct hit *hits, int *hit_count, int seg_no)
+pipe_end_shot(
+    struct soltab *stp,
+    struct xray *rp,
+    struct id_pipe *id_p,
+    struct hit *hits,
+    int *hit_count,
+    int seg_no)
 {
     point_t hit_pt;
     fastf_t t_tmp;
@@ -1496,7 +1541,11 @@ pipe_end_shot(struct soltab *stp, struct xray *rp, struct id_pipe *id_p, struct 
 
 
 HIDDEN void
-rt_pipe_elim_dups(struct hit *hit, int *nh, struct xray *rp, struct soltab *stp)
+rt_pipe_elim_dups(
+    struct hit *hit,
+    int *nh,
+    struct xray *rp,
+    struct soltab *stp)
 {
     struct hit *hitp;
     struct hit *next_hit;
@@ -1680,7 +1729,11 @@ rt_pipe_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
  * >0 HIT
  */
 int
-rt_pipe_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
+rt_pipe_shot(
+    struct soltab *stp,
+    struct xray *rp,
+    struct application *ap,
+    struct seg *seghead)
 {
     struct bu_list *head = (struct bu_list *)stp->st_specific;
     struct id_pipe *pipe_id;
@@ -1796,7 +1849,11 @@ rt_pipe_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
  * v = elevation
  */
 void
-rt_pipe_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
+rt_pipe_uv(
+    struct application *ap,
+    struct soltab *stp,
+    struct hit *hitp,
+    struct uvcoord *uvp)
 {
     if (!ap || !stp || !hitp || !uvp) {
 	return;
@@ -2194,7 +2251,17 @@ rt_pipe_plot(
 
 
 HIDDEN void
-tesselate_pipe_start(struct wdb_pipept *pipept, int arc_segs, double sin_del, double cos_del, struct vertex ***outer_loop, struct vertex ***inner_loop, fastf_t *r1, fastf_t *r2, struct shell *s, const struct bn_tol *tol)
+tesselate_pipe_start(
+    struct wdb_pipept *pipept,
+    int arc_segs,
+    double sin_del,
+    double cos_del,
+    struct vertex ***outer_loop,
+    struct vertex ***inner_loop,
+    fastf_t *r1,
+    fastf_t *r2,
+    struct shell *s,
+    const struct bn_tol *tol)
 {
     struct faceuse *fu;
     struct loopuse *lu;
@@ -2306,21 +2373,18 @@ tesselate_pipe_start(struct wdb_pipept *pipept, int arc_segs, double sin_del, do
 
 
 HIDDEN void
-tesselate_pipe_linear(fastf_t *start_pt,
-		      fastf_t or ,
-		      fastf_t ir,
-		      fastf_t *end_pt,
-		      fastf_t end_or,
-		      fastf_t end_ir,
-		      int arc_segs,
-		      double sin_del,
-		      double cos_del,
-		      struct vertex ***outer_loop,
-		      struct vertex ***inner_loop,
-		      fastf_t *r1,
-		      fastf_t *r2,
-		      struct shell *s,
-		      const struct bn_tol *tol)
+tesselate_pipe_linear(
+    fastf_t *start_pt, fastf_t or, fastf_t ir,
+    fastf_t *end_pt, fastf_t end_or, fastf_t end_ir,
+    int arc_segs,
+    double sin_del,
+    double cos_del,
+    struct vertex ***outer_loop,
+    struct vertex ***inner_loop,
+    fastf_t *r1,
+    fastf_t *r2,
+    struct shell *s,
+    const struct bn_tol *tol)
 {
     struct vertex **new_outer_loop;
     struct vertex **new_inner_loop;
@@ -2990,8 +3054,22 @@ tesselate_pipe_linear(fastf_t *start_pt,
 
 
 HIDDEN void
-tesselate_pipe_bend(fastf_t *bend_start, fastf_t *bend_end, fastf_t *bend_center, fastf_t or , fastf_t ir, int arc_segs, double sin_del, double cos_del, struct vertex ***outer_loop, struct vertex ***inner_loop, fastf_t *start_r1, fastf_t *start_r2, struct
-		    shell *s, const struct bn_tol *tol, const struct rt_tess_tol *ttol)
+tesselate_pipe_bend(
+    fastf_t *bend_start,
+    fastf_t *bend_end,
+    fastf_t *bend_center,
+    fastf_t or ,
+    fastf_t ir,
+    int arc_segs,
+    double sin_del,
+    double cos_del,
+    struct vertex ***outer_loop,
+    struct vertex ***inner_loop,
+    fastf_t *start_r1,
+    fastf_t *start_r2,
+    struct shell *s,
+    const struct bn_tol *tol,
+    const struct rt_tess_tol *ttol)
 {
     struct vertex **new_outer_loop = NULL;
     struct vertex **new_inner_loop = NULL;
@@ -3415,7 +3493,13 @@ tesselate_pipe_bend(fastf_t *bend_start, fastf_t *bend_end, fastf_t *bend_center
 
 
 HIDDEN void
-tesselate_pipe_end(struct wdb_pipept *pipept, int arc_segs, struct vertex ***outer_loop, struct vertex ***inner_loop, struct shell *s, const struct bn_tol *tol)
+tesselate_pipe_end(
+    struct wdb_pipept *pipept,
+    int arc_segs,
+    struct vertex ***outer_loop,
+    struct vertex ***inner_loop,
+    struct shell *s,
+    const struct bn_tol *tol)
 {
     struct wdb_pipept *prev;
     struct faceuse *fu;
@@ -3491,7 +3575,12 @@ tesselate_pipe_end(struct wdb_pipept *pipept, int arc_segs, struct vertex ***out
  * XXXX Still needs vertexuse normals!
  */
 int
-rt_pipe_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_pipe_tess(
+    struct nmgregion **r,
+    struct model *m,
+    struct rt_db_internal *ip,
+    const struct rt_tess_tol *ttol,
+    const struct bn_tol *tol)
 {
     struct wdb_pipept *pp1;
     struct wdb_pipept *pp2;
@@ -3681,7 +3770,11 @@ next_pt:
  * R T _ P I P E _ I M P O R T
  */
 int
-rt_pipe_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
+rt_pipe_import4(
+    struct rt_db_internal *ip,
+    const struct bu_external *ep,
+    const fastf_t *mat,
+    const struct db_i *dbip)
 {
     struct exported_pipept *exp_pipept;
     struct wdb_pipept *ptp;
@@ -3753,7 +3846,11 @@ rt_pipe_import4(struct rt_db_internal *ip, const struct bu_external *ep, const f
  * R T _ P I P E _ E X P O R T
  */
 int
-rt_pipe_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_pipe_export4(
+    struct bu_external *ep,
+    const struct rt_db_internal *ip,
+    double local2mm,
+    const struct db_i *dbip)
 {
     struct rt_pipe_internal *pip;
     struct bu_list *headp;
@@ -3835,7 +3932,11 @@ rt_pipe_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
  * R T _ P I P E _ I M P O R T 5
  */
 int
-rt_pipe_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
+rt_pipe_import5(
+    struct rt_db_internal *ip,
+    const struct bu_external *ep,
+    const fastf_t *mat,
+    const struct db_i *dbip)
 {
     struct wdb_pipept *ptp;
     struct rt_pipe_internal *pip;
@@ -3977,7 +4078,11 @@ rt_pipe_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
  * tab, and give parameter values.
  */
 int
-rt_pipe_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
+rt_pipe_describe(
+    struct bu_vls *str,
+    const struct rt_db_internal *ip,
+    int verbose,
+    double mm2local)
 {
     struct rt_pipe_internal *pip;
     struct wdb_pipept *ptp;
@@ -4173,7 +4278,10 @@ next_pt:
  * db get name N ==> get number of vertices
  */
 int
-rt_pipe_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
+rt_pipe_get(
+    struct bu_vls *logstr,
+    const struct rt_db_internal *intern,
+    const char *attr)
 {
     struct rt_pipe_internal *pip = (struct rt_pipe_internal *)intern->idb_ptr;
     struct wdb_pipept *ptp;
@@ -4249,7 +4357,11 @@ rt_pipe_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 
 
 int
-rt_pipe_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
+rt_pipe_adjust(
+    struct bu_vls *logstr,
+    struct rt_db_internal *intern,
+    int argc,
+    const char **argv)
 {
     struct rt_pipe_internal *pip;
     struct wdb_pipept *ptp;
