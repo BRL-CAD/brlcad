@@ -1787,38 +1787,38 @@ are_equal(fastf_t a_in, fastf_t b_in, fastf_t t)
 
 
 int
-bn_distsq_pt3_lseg3_v2(fastf_t *distsq, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
+bn_distsq_pt3_lseg3_v2(fastf_t *dist_sq_out, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
 {
     vect_t AtoB, BtoP;
     vect_t AtoP = VINIT_ZERO;
-    fastf_t AtoB_mag, AtoP_mag, AtoPCA_mag, PtoPCA_mag, BtoP_mag;
-    fastf_t dot, dt, dist;
+    fastf_t AtoB_mag_sq, AtoP_mag_sq, AtoPCA_mag_sq, PtoPCA_mag_sq, BtoP_mag_sq;
+    fastf_t dot, dt, dist_sq;
     int ret;
     int flip;
 
-    dt = tol->dist;
+    dt = tol->dist_sq;
 
     flip = 0;
     if (bn_pt3_pt3_equal(a, b, tol)) {
 	/* (A=B) */
 	if (bn_pt3_pt3_equal(a, p, tol)) {
 	    /* (A=B) (A=P) (B=P) */
-	    dist = 0.0;
+	    dist_sq = 0.0;
 	    ret = 1;
 	} else {
 	    /* (A=B) (A!=P) */
-	    dist = MAGNITUDE(AtoP);
+	    dist_sq = MAGSQ(AtoP);
 	    ret = 3;
 	}
     } else {
 	/* (A!=B) */
 	if (bn_pt3_pt3_equal(a, p, tol)) {
 	    /* (A!=B) (A=P) */
-	    dist = 0.0;
+	    dist_sq = 0.0;
 	    ret = 1;
 	} else if (bn_pt3_pt3_equal(b, p, tol)) {
 	    /* (A!=B) (B=P) */
-	    dist = 0.0;
+	    dist_sq = 0.0;
 	    ret = 2;
 	} else {
 	    /* (A!=B) (A!=P) (B!=P) */
@@ -1828,7 +1828,7 @@ bn_distsq_pt3_lseg3_v2(fastf_t *distsq, const fastf_t *a, const fastf_t *b, cons
 
 	    dot = VDOT(AtoP, AtoB);
 
-	    if ZERO(dot) {
+	    if (ZERO(dot)) {
 		/* dot product undefined with (AtoP dot AtoB) */
 		/* try flipping A and B */
 		VSUB2(AtoB, a, b);
@@ -1841,51 +1841,52 @@ bn_distsq_pt3_lseg3_v2(fastf_t *distsq, const fastf_t *a, const fastf_t *b, cons
 		bu_bomb("bn_distsq_pt3_lseg3_v2(): failed");
 	    }
 
-	    AtoB_mag = MAGNITUDE(AtoB);
-	    AtoP_mag = MAGNITUDE(AtoP);
-	    BtoP_mag = MAGNITUDE(BtoP);
+	    AtoB_mag_sq = MAGSQ(AtoB);
+	    AtoP_mag_sq = MAGSQ(AtoP);
+	    BtoP_mag_sq = MAGSQ(BtoP);
 
 	    if (dot > SMALL_FASTF) {
-		AtoPCA_mag = dot / AtoB_mag;
-		if (are_equal(AtoPCA_mag, 0.0, dt)) {
+		AtoPCA_mag_sq = (dot * dot) / AtoB_mag_sq;
+		if (are_equal(AtoPCA_mag_sq, 0.0, dt)) {
 		    /* (PCA=A) (B!=P) */
 		    /* lsegs AtoB and AtoP are perpendicular */
-		    dist = AtoP_mag;
+		    dist_sq = AtoP_mag_sq;
 		    ret = 3;
-		} else if (are_equal(AtoPCA_mag, AtoB_mag, dt)) {
+		} else if (are_equal(AtoPCA_mag_sq, AtoB_mag_sq, dt)) {
 		    /* (PCA=B) (B!=P) */
-		    dist = BtoP_mag;
+		    dist_sq = BtoP_mag_sq;
 		    ret = 4;
-		} else if (AtoPCA_mag < AtoB_mag) {
+		} else if (AtoPCA_mag_sq < AtoB_mag_sq) {
 		    /* (PCA!=A) (PCA!=B) (B!=P) */
 		    /* PCA is on lseg AtoB */
-		    PtoPCA_mag = sqrt(fabs((AtoP_mag * AtoP_mag) - (AtoPCA_mag * AtoPCA_mag)));
-		    if (PtoPCA_mag < dt) {
+		    PtoPCA_mag_sq = fabs(AtoP_mag_sq - AtoPCA_mag_sq);
+
+		    if (PtoPCA_mag_sq < dt) {
 			/* P is on lseg AtoB */
-			dist = 0.0;
+			dist_sq = 0.0;
 			ret = 0;
 		    } else {
-			dist = PtoPCA_mag;
+			dist_sq = PtoPCA_mag_sq;
 			ret = 5;
 		    }
 		} else {
 		    /* AtoPCA_mag > AtoB_mag */
 		    /* P is to the right of B, above/below lseg AtoB. */
 		    /* both P and PCA and not within tolerance of lseg AtoB */
-		    dist = BtoP_mag;
+		    dist_sq = BtoP_mag_sq;
 		    ret = 4;
 		}
 	    } else {
 		/* dot is neg */
-		AtoPCA_mag = -dot / AtoB_mag;
-		if (AtoPCA_mag < dt) {
+		AtoPCA_mag_sq = (dot * dot) / AtoB_mag_sq;
+		if (AtoPCA_mag_sq < dt) {
 		    /* (PCA=A), lsegs AtoB and AtoP are perpendicular */
-		    dist = AtoP_mag;
+		    dist_sq = AtoP_mag_sq;
 		    ret = 3;
 		} else {
 		    /* (PCA!=A), PCA is not on lseg AtoB */
 		    /* both P and PCA and not within tolerance of lseg AtoB */
-		    dist = AtoP_mag;
+		    dist_sq = AtoP_mag_sq;
 		    ret = 3;
 		}
 	    }
@@ -1898,7 +1899,7 @@ bn_distsq_pt3_lseg3_v2(fastf_t *distsq, const fastf_t *a, const fastf_t *b, cons
 	ret = 3;
     }
 
-    *distsq = dist * dist;
+    *dist_sq_out = dist_sq;
     return ret;
 }
 
