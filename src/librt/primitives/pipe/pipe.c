@@ -156,7 +156,7 @@ pipe_seg_bend_angle(const struct pipe_segment *seg)
 
     /* handle the cases where acos returned NaN becaues floating point fuzz
      * caused dot to be slightly outside the valid [-1.0, 1.0] range
-     */ 
+     */
     if (isnan(rad_between_segments)) {
 	if (dot >= 1.0) {
 	    rad_between_segments = acos(1.0);
@@ -214,7 +214,7 @@ pipe_seg_first(struct rt_pipe_internal *pipe)
     if (BU_LIST_IS_EMPTY(&pipe->pipe_segs_head)) {
 	return NULL;
     }
-    
+
     seghead = &pipe->pipe_segs_head;
     pt_1 = BU_LIST_FIRST(wdb_pipept, seghead);
     pt_2 = BU_LIST_NEXT(wdb_pipept, &pt_1->l);
