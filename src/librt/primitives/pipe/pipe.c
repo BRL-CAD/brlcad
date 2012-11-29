@@ -1884,6 +1884,20 @@ rt_pipe_class(void)
     return 0;
 }
 
+static int
+pipe_circle_segments(const struct rt_view_info *info, fastf_t radius)
+{
+    int num_segments;
+
+    num_segments = bn_twopi * radius / info->point_spacing;
+
+    if (num_segments < 5) {
+	num_segments = 5;
+    }
+
+    return num_segments;
+}
+
 /**
  * Draw a pipe circle using a given number of segments.
  */
@@ -2189,17 +2203,71 @@ draw_pipe_end(struct bu_list *vhead, struct pipe_segment *seg)
     VMOVE(seg->last_drawn, endpt->pp_coord);
 }
 
+static void
+draw_pipe_end_adaptive(
+    struct bu_list *vhead,
+    struct pipe_segment *seg,
+    const struct rt_view_info *info)
+{
+    int num_segments;
+    struct wdb_pipept *endpt;
+    struct pipe_circle pipe_circle;
+
+    endpt = seg->cur;
+
+    VMOVE(pipe_circle.center, endpt->pp_coord);
+    pipe_circle.orient = seg->orient;
+
+    /* draw outer circle */
+    pipe_circle.radius = endpt->pp_od / 2.0;
+    num_segments = pipe_circle_segments(info, pipe_circle.radius);
+    draw_pipe_circle(vhead, pipe_circle, num_segments);
+
+    /* draw inner circle */
+    if (endpt->pp_id > 0.0) {
+	pipe_circle.radius = endpt->pp_id / 2.0;
+	num_segments = pipe_circle_segments(info, pipe_circle.radius);
+	draw_pipe_circle(vhead, pipe_circle, num_segments);
+    }
+
+    VMOVE(seg->last_drawn, endpt->pp_coord);
+}
+
 int
 rt_pipe_adaptive_plot(
     struct rt_db_internal *ip,
     const struct rt_view_info *info)
 {
     struct rt_pipe_internal *pipe;
+    struct pipe_segment *cur_seg;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
     pipe = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pipe);
+
+    cur_seg = pipe_seg_first(pipe);
+    if (cur_seg == NULL) {
+	return 0;
+    }
+
+    draw_pipe_end_adaptive(info->vhead, cur_seg, info);
+    pipe_seg_advance(cur_seg);
+
+    while (!pipe_seg_is_last(cur_seg)) {
+	if (pipe_seg_is_bend(cur_seg)) {
+	    draw_pipe_circular_seg(info->vhead, cur_seg);
+	} else {
+	    draw_pipe_linear_seg(info->vhead, cur_seg);
+	}
+
+	pipe_seg_advance(cur_seg);
+    }
+
+    draw_pipe_linear_seg(info->vhead, cur_seg);
+    draw_pipe_end_adaptive(info->vhead, cur_seg, info);
+
+    BU_PUT(cur_seg, struct pipe_segment);
 
     return 0;
 }
