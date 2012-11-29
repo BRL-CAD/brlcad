@@ -167,6 +167,12 @@ bn_distsq_pt3_lseg3(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fas
     dot = VDOT(PtoA, AtoB);
     t = dot * dot / B_A_sq;
 
+    if (t < tol->dist_sq) {
+	/* PCA is at A */
+	*dist = P_A_sq;
+	return 3;
+    }
+
     if (dot < -SMALL_FASTF && t > tol->dist_sq) {
 	/* P is "left" of A */
 	*dist = P_A_sq;
