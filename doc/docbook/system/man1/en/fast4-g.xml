@@ -13,7 +13,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>fast4-g</command>    
+  <command>fast4-g</command>
     <arg choice='opt'>-dwq </arg>
     <arg choice='opt'>-o <replaceable>plot_file</replaceable></arg>
     <arg choice='opt'>-m <replaceable>muves_warnings</replaceable></arg>

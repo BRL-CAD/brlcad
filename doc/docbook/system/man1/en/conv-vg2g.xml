@@ -13,7 +13,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>conv-vg2g</command>    
+  <command>conv-vg2g</command>
     <arg choice='plain'><replaceable>file.vg</replaceable></arg>
     <arg choice='plain'><replaceable>file.g</replaceable></arg>
 </cmdsynopsis>

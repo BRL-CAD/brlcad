@@ -13,7 +13,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>dbclean</command>    
+  <command>dbclean</command>
     <arg choice='plain'><replaceable>in_model.g</replaceable></arg>
     <arg choice='plain'><replaceable>out_model.g</replaceable></arg>
 </cmdsynopsis>

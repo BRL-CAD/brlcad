@@ -15,7 +15,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>stl-g</command>    
+  <command>stl-g</command>
     <arg choice='opt'>-db </arg>
     <arg choice='opt'>-i <replaceable>initial_ident</replaceable></arg>
     <arg choice='opt'>-I <replaceable>constant_ident</replaceable></arg>

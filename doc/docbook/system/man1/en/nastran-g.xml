@@ -15,7 +15,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>nastran-g</command>    
+  <command>nastran-g</command>
     <arg choice='opt'>-t <replaceable>tolerance</replaceable></arg>
     <arg choice='opt'>-t <replaceable>tolerance_distance</replaceable></arg>
     <arg choice='opt'>-n </arg>

@@ -13,7 +13,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>g-nmg</command>    
+  <command>g-nmg</command>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'>-b </arg>
     <arg choice='opt'>-t <replaceable>calc_dist_tol</replaceable></arg>

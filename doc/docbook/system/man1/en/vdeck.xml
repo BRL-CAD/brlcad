@@ -13,7 +13,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>vdeck</command>    
+  <command>vdeck</command>
     <arg choice='plain'><replaceable>file.vg</replaceable></arg>
     <sbr/>
 </cmdsynopsis>

@@ -13,7 +13,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>g-iges</command>    
+  <command>g-iges</command>
     <group choice='opt'><arg choice='plain'>-f </arg><arg choice='plain'><replaceable>t</replaceable></arg><arg choice='plain'><replaceable>m</replaceable></arg></group>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'>-s </arg>

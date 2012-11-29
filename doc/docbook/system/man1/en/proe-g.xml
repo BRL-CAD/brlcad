@@ -15,7 +15,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>proe-g</command>    
+  <command>proe-g</command>
     <arg choice='opt'>-darS </arg>
     <arg choice='opt'>-i <replaceable>initial_ident</replaceable></arg>
     <arg choice='opt'>-I <replaceable>constant_ident</replaceable></arg>

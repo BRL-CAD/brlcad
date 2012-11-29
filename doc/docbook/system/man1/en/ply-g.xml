@@ -15,7 +15,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>ply-g</command>    
+  <command>ply-g</command>
     <arg choice='opt'>-s <replaceable>scale_factor</replaceable></arg>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'>-d </arg>

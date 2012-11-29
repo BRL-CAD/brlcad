@@ -15,7 +15,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>g-var</command>    
+  <command>g-var</command>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'>-y </arg>
     <arg choice='opt'>-s <replaceable>scale</replaceable></arg>

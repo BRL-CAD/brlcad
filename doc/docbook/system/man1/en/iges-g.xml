@@ -15,7 +15,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>iges-g</command>    
+  <command>iges-g</command>
     <arg choice='opt'>-X <replaceable>NMG_debug_flag</replaceable></arg>
     <arg choice='opt'>-x <replaceable>rt_debug_flag</replaceable></arg>
     <arg choice='opt'>-N <replaceable>solid_name</replaceable></arg>

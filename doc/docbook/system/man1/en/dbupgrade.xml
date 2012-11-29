@@ -13,7 +13,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>dbupgrade</command>    
+  <command>dbupgrade</command>
     <arg choice='plain'><replaceable>input.g</replaceable></arg>
     <arg choice='plain'><replaceable>output.g</replaceable></arg>
 </cmdsynopsis>

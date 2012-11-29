@@ -15,7 +15,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>g-shell-rect</command>    
+  <command>g-shell-rect</command>
     <arg choice='opt'>-d <replaceable>debug_level</replaceable></arg>
     <arg choice='opt'>-n </arg>
     <arg choice='opt'>-g <replaceable>cell_size</replaceable></arg>

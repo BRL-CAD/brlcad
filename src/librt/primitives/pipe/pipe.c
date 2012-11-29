@@ -164,7 +164,7 @@ pipe_seg_bend_angle(const struct pipe_segment *seg)
     dot = VDOT(cur_to_prev, cur_to_next);
     rad_between_segments = acos(VDOT(cur_to_prev, cur_to_next));
 
-    /* handle the cases where acos returned NaN becaues floating point fuzz
+    /* handle the cases where acos returned NaN because floating point fuzz
      * caused dot to be slightly outside the valid [-1.0, 1.0] range
      */
     if (isnan(rad_between_segments)) {

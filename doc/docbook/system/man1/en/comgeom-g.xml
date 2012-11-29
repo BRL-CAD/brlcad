@@ -13,7 +13,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>comgeom-g</command>    
+  <command>comgeom-g</command>
     <arg choice='opt'>-d <replaceable>debug_lvl</replaceable></arg>
     <arg choice='opt'>-v <replaceable>version_num</replaceable></arg>
     <arg choice='opt'>-s <replaceable>name_suffix</replaceable></arg>

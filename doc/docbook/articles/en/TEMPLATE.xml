@@ -19,11 +19,11 @@
       </affiliation>
     </author>
   </info>
-  
+
   <section xml:id="some-descriptive-tag">
     <!-- the xml:id tag is just something descriptive that you can
          reference if you wanted to use CSS to modify the layout. -->
-  
+
     <para>
       First paragraph goes here.
     </para>
@@ -42,10 +42,10 @@
     <para>
       When you run the <command>benchmark</command> with
       the <option>help</option> option, you might see this output:
-      
+
       <literallayout><computeroutput><prompt>sean@gcc1-power7 bin]$</prompt><command>benchmark</command> help
           Usage: ./benchmark [command(s)] [OPTION=value] [RT_OPTIONS]
-          
+
           Available commands:
           clean
           ...
@@ -56,9 +56,9 @@
       Another paragraph with embedded list is shown here.  Each
       paragraph gets its own para and should be wrapped for
       readability and localized context diff comparisons.
-      
+
       <info><title>A list of items:</title></info>
-      
+
       <itemizedlist mark="bullet"><listitem><para>
             Bullet item 1.
           </para></listitem><listitem><para>
@@ -70,7 +70,7 @@
 
   <section xml:id="another-tag-for-main-body">
     <title>Breaking up the flow into sections</title>
- 
+
     <para>
       You can use sections to group sections of your document
       together, but they are not necessary.

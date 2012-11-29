@@ -15,7 +15,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>g-x3d</command>    
+  <command>g-x3d</command>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'>-d <replaceable>calc_dist_tol</replaceable></arg>
     <arg choice='opt'>-a <replaceable>abs_tess_tol</replaceable></arg>

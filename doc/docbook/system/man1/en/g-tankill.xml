@@ -15,7 +15,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>g-tankill</command>    
+  <command>g-tankill</command>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'>-xX <replaceable>lvl</replaceable></arg>
     <arg choice='opt'>-i <replaceable>idents_file</replaceable></arg>

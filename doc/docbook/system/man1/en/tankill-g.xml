@@ -15,7 +15,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>tankill-g</command>    
+  <command>tankill-g</command>
     <arg choice='opt'>-n </arg>
     <arg choice='opt'>-t <replaceable>tolerance</replaceable></arg>
     <arg choice='opt'>-i <replaceable>input_tankill_file</replaceable></arg>

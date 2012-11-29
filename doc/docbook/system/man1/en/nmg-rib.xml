@@ -13,10 +13,10 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>nmg-rib</command>    
+  <command>nmg-rib</command>
     <arg choice='opt'>-t </arg>
     <arg choice='plain' rep='repeat'><replaceable>database.nmgnmg_solid</replaceable></arg>
-    
+
 </cmdsynopsis>
 </refsynopsisdiv>
 

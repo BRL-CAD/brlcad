@@ -13,7 +13,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>dxf-g</command>    
+  <command>dxf-g</command>
     <arg choice='opt'>-c </arg>
     <arg choice='opt'>-d </arg>
     <arg choice='opt'>-v </arg>

@@ -13,7 +13,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>enf-g</command>    
+  <command>enf-g</command>
     <arg choice='opt'>-t <replaceable>tolerance</replaceable></arg>
     <arg choice='opt'>-i <replaceable>starting_ident_number</replaceable></arg>
     <arg choice='opt'>-l <replaceable>name_length_limit</replaceable></arg>

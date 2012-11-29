@@ -13,7 +13,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>cy-g</command>    
+  <command>cy-g</command>
     <arg choice='plain'><replaceable>input_cy_file</replaceable></arg>
     <arg choice='plain'><replaceable>database.g</replaceable></arg>
 </cmdsynopsis>

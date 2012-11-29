@@ -13,7 +13,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>asc-nmg</command>    
+  <command>asc-nmg</command>
     <arg choice='plain'><replaceable>ascii_file</replaceable></arg>
     <arg choice='plain'><replaceable>nmg.g</replaceable></arg>
 </cmdsynopsis>

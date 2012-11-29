@@ -15,7 +15,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>poly-bot</command>    
+  <command>poly-bot</command>
     <arg choice='opt'><arg choice='plain'><replaceable>input_file.g</replaceable></arg><arg choice='plain'><replaceable>output_file.g</replaceable></arg></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

@@ -13,7 +13,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>rpatch</command>    
+  <command>rpatch</command>
     <arg choice='opt'>-D </arg>
     <arg choice='opt'>-3 </arg>
     <arg choice='plain'><replaceable>&lt;</replaceable></arg>

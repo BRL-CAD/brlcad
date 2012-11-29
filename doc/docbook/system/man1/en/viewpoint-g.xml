@@ -15,7 +15,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>viewpoint-g</command>    
+  <command>viewpoint-g</command>
     <arg choice='opt'>-t <replaceable>tolerance</replaceable></arg>
     <arg choice='plain'>-c <replaceable>input_coordinates_file</replaceable></arg>
     <arg choice='plain'>-e <replaceable>input_elements_file</replaceable></arg>

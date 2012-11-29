@@ -15,7 +15,7 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>nmg-bot</command>    
+  <command>nmg-bot</command>
     <arg choice='opt'>-v </arg>
     <arg choice='plain'><replaceable>in_file.g</replaceable></arg>
     <arg choice='plain'><replaceable>out_file.g</replaceable></arg>
