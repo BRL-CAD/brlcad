@@ -1624,7 +1624,7 @@ int bn_isect_pt_lseg(fastf_t *dist,
 		     const fastf_t *b,
 		     const fastf_t *p,
 		     const struct bn_tol *tol)
-		     
+
 /* distance along line from A to P */
 /* points for line and intersect */
 
