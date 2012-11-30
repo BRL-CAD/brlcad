@@ -1449,6 +1449,7 @@ retry:
 
 	if (rdebug & RDEBUG_LIGHT)
 	    bu_log("shooting at approximating sphere\n");
+
 	/* We're going to shoot at a point on the approximating
 	 * sphere for the light source.  We pick a point on the
 	 * circle (presented area) for the light source from this
@@ -1473,7 +1474,9 @@ retry:
 	 * x = radius * cos(angle);
 	 */
 	cos_angle = M_PI_2 + angle;
-	if (cos_angle > (2.0*M_PI)) cos_angle -= (2.0*M_PI);
+	if (cos_angle > (2.0*M_PI))
+	    cos_angle -= (2.0*M_PI);
+
 	x = radius * bn_tab_sin(cos_angle);
 
 	VJOIN2(shoot_pt, los->lsp->lt_pos,
@@ -1577,15 +1580,14 @@ retry:
     RT_CK_AP(&sub_ap);
 
     if (rdebug & RDEBUG_LIGHT)
-	bu_log("shooting level %d from %d\n",
-	       sub_ap.a_level, __LINE__);
+	bu_log("shooting level %d from %d\n", sub_ap.a_level, __LINE__);
+
     shot_status = rt_shootray(&sub_ap);
     if (rdebug & RDEBUG_LIGHT)
 	bu_log("shot_status: %d\n", shot_status);
 
-    if (shot_status < 0) {
-	if (los->lsp->lt_infinite) {
-	}  else if (los->lsp->lt_pt_count > 0) {
+    if (shot_status < 0 && !(los->lsp->lt_infinite)) {
+	if (los->lsp->lt_pt_count > 0) {
 	    if (rdebug & RDEBUG_LIGHT) {
 		bu_log("was pt %d\n (%g %g %g) normal %g %g %g\n", k,
 		       V3ARGS(los->lsp->lt_sample_pts[k].lp_pt),
