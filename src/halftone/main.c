@@ -31,7 +31,7 @@
  *		-B	Beta for sharpening
  *		-I	number of intensity levels
  *		-M	method
- *			0 Floyd-Steinburg
+ *			0 Floyd-Steinberg
  *			1 45 degree classical halftone screen
  *			2 Threshold
  *			3 0 degree dispersed halftone screen.
@@ -50,7 +50,7 @@
  * Calls:
  *	sharpen()	- get a line from the file that has been sharpened
  *	tone_simple()	- Threshold halftone.
- *	tone_floyd()	- Floyd-Steinburg halftone.
+ *	tone_floyd()	- Floyd-Steinberg halftone.
  *	tone_folly()	- 0 degree halftone screen (from Folly and Van Dam)
  *	tone_classic()	- 45 degree classical halftone screen.
  *	tonescale()	- Generates a tone scale map default is 0, 0 to 255, 255
@@ -102,7 +102,7 @@ Usage: halftone [ -h -R -S -a] [-D Debug Level]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-B contrast] [-I intensity_levels] [-T x y ... tone_curve]\n\
 	[-M Method] [file.bw]\n\
-	Floyd-Steinburg=0	45 Degree Classic Screen=1\n\
+	Floyd-Steinberg=0	45 Degree Classic Screen=1\n\
 	Thresholding=2		0 Degree Dispersed Screen=3\n";
 
 /*	setup	process parameters and setup working environment
@@ -291,7 +291,7 @@ main(int argc, char **argv)
  */
 
 /*
- *	Currently only the Floyd-Steinburg method uses the surpent flag
+ *	Currently only the Floyd-Steinberg method uses the surpent flag
  *	so we make things easy with in the 'y' loop by resetting surpent
  *	for all other methods to "No Surpent".
  */

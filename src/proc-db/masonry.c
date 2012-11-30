@@ -166,7 +166,7 @@ buildHrot(matp_t mat, double alpha, double beta, double ggamma)
      * Gamma is angle of rotation about Z axis, and is done first.
      */
 #ifdef m_RZ_RY_RX
-    /* view = model * RZ * RY * RX (Neuman+Sproul, premultiply) */
+    /* view = model * RZ * RY * RX (Neuman+Sproull, premultiply) */
     mat[0] = cbeta * cgamma;
     mat[1] = -cbeta * sgamma;
     mat[2] = -sbeta;

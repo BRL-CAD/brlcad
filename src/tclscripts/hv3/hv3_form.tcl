@@ -502,7 +502,7 @@ namespace eval ::hv3::forms::entrycontrol {
 
     # Set the default width of the widget to 20 characters. Unless there
     # is no size attribute and the CSS 'width' property is set to "auto",
-    # this will be overidden.
+    # this will be overridden.
     $O(myWidget) configure -width 20
 
     # Pressing enter in an entry widget submits the form.
