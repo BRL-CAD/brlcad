@@ -130,12 +130,12 @@
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
   <example>
-    
+
       <title>
 	A not particularly useful demonstration of the command's
 	capabilities.
       </title>
-    
+
     <variablelist>
       <varlistentry>
 	<term>
@@ -157,9 +157,9 @@
 
 
   <example>
-    
+
       <title>Move several objects together.</title>
-    
+
     <variablelist>
       <varlistentry>
 	<term>
@@ -185,9 +185,9 @@
   </example>
 
   <example>
-    
+
       <title>Align several objects to the same point on an axis.</title>
-    
+
     <variablelist>
       <varlistentry>
 	<term>
@@ -209,9 +209,9 @@
   </example>
 
   <example>
-    
+
       <title>Move several objects to the same point.</title>
-    
+
     <variablelist>
       <varlistentry>
 	<term>
@@ -252,11 +252,11 @@
   </example>
 
   <example>
-    
+
       <title>Move several objects from their own natural origins to
 	their own bounding box centers.
       </title>
-    
+
     <variablelist>
       <varlistentry>
 	<term>
@@ -274,12 +274,12 @@
   </example>
 
   <example>
-    
+
       <title>
 	Set the z-axis of the center of one object to the z-axis of
 	the natural origin of another object.
       </title>
-    
+
     <variablelist>
       <varlistentry>
 	<term>
@@ -299,13 +299,13 @@
   </example>
 
   <example>
-    
+
       <title>
 	    Same result as above, but moving <emphasis>from</emphasis> the
 	    natural origin of obj1 rather than its bounding box
 	    center.
       </title>
-    
+
     <variablelist>
       <varlistentry>
 	<term>
@@ -327,12 +327,12 @@
   </example>
 
   <example>
-    
+
       <title>
 	The use of <emphasis>object</emphasis> paths and
 	individual coordinate specifiers.
       </title>
-    
+
     <variablelist>
       <varlistentry>
 	<term>
@@ -390,11 +390,11 @@
   </example>
 
   <example>
-    
+
       <title>
 	This example breaks down a particularly complex translation.
     </title>
-  
+
     <variablelist>
       <varlistentry>
 	<term>
