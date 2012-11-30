@@ -1,24 +1,17 @@
-#!/bin/bash
+#!/bin/sh
 
-set -e
+F="/usr/share/applications/defaults.list"
 
-F='/usr/share/applications/defaults.list'
-
-if [ ! -f $F ]; then
-	echo '[Default Applications]' > $F
+if [ ! -f $F ]
+then
+	echo "[Default Applications]" > $F
 else
-	sed -i '/application\/brlcad-/d' $F
+	sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $F
 fi
 
-echo 'application/brlcad-v4=brlcad-mged.desktop' >> $F
-echo 'application/brlcad-v5=brlcad-mged.desktop' >> $F
+echo "application/brlcad-v4=brlcad-mged.desktop" >> $F
+echo "application/brlcad-v5=brlcad-mged.desktop" >> $F
 
 source /etc/profile.d/brlcad.sh
 
-update-desktop-database &> /dev/null || :
-
-update-mime-database /usr/share/mime &>/dev/null || :
-
-touch -c /usr/share/icons/hicolor &>/dev/null || :
-
-gtk-update-icon-cache /usr/share/icons/hicolor &>/dev/null || :
+update-mime-database /usr/share/mime || :

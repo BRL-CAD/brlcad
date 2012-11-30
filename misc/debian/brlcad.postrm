@@ -1,17 +1,10 @@
-#!/bin/bash
+#!/bin/sh
 
-set -e
+F="/usr/share/applications/defaults.list"
 
-F='/usr/share/applications/defaults.list'
-
-if [ -f $F ]; then
-	sed -i '/application\/brlcad-/d' $F
+if [ -f $F ]
+then
+	sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $F
 fi
 
-update-desktop-database &> /dev/null || :
-
-update-mime-database /usr/share/mime &> /dev/null || :
-
-touch -c /usr/share/icons/hicolor &>/dev/null || :
-
-gtk-update-icon-cache /usr/share/icons/hicolor &>/dev/null || :
+update-mime-database /usr/share/mime || :
