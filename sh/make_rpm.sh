@@ -223,14 +223,14 @@ geometric representation and analysis.
 Homepage: http://brlcad.org
 
 %post
-set -e
 
 F="/usr/share/applications/defaults.list"
 
-if [ ! -f $F ]; then
+if [ ! -f $F ]
+then
 	echo "[Default Applications]" > $F
 else
-	sed -i "/application\/brlcad-/d" $F
+	sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $F
 fi
 
 echo "application/brlcad-v4=brlcad-mged.desktop" >> $F
@@ -238,29 +238,33 @@ echo "application/brlcad-v5=brlcad-mged.desktop" >> $F
 
 source /etc/profile.d/brlcad.sh
 
-update-desktop-database &> /dev/null || :
+update-mime-database /usr/share/mime || :
+update-desktop-database -q || :
+gtk-update-icon-cache -qf /usr/share/icons/hicolor || :' >> $TMPDIR/brlcad.spec
 
-update-mime-database /usr/share/mime &>/dev/null || :
+if test "$DNAME" = "openSUSE" ;then
+    echo -e 'SuSEconfig || :' >> $TMPDIR/brlcad.spec
+fi
 
-touch -c /usr/share/icons/hicolor &>/dev/null || :
-
-gtk-update-icon-cache /usr/share/icons/hicolor &>/dev/null || :
-
-SuSEconfig &>/dev/null || :
-
+echo -e '
 %postun
-set -e
 
-update-desktop-database &> /dev/null || :
+F="/usr/share/applications/defaults.list"
 
-update-mime-database /usr/share/mime &>/dev/null || :
+if [ $1 -eq 0 ] && [ -f $F ]
+then
+	sed --follow-symlinks -i "/application\/brlcad-v[45]/d" $F
+fi
 
-touch -c /usr/share/icons/hicolor &>/dev/null || :
+update-mime-database /usr/share/mime || :
+update-desktop-database -q || :
+gtk-update-icon-cache -qf /usr/share/icons/hicolor || :' >> $TMPDIR/brlcad.spec
 
-gtk-update-icon-cache /usr/share/icons/hicolor &>/dev/null || :
+if test "$DNAME" = "openSUSE" ;then
+    echo -e 'SuSEconfig || :' >> $TMPDIR/brlcad.spec
+fi
 
-SuSEconfig &>/dev/null || :
-
+echo -e '
 %files' >> $TMPDIR/brlcad.spec
 
 find $TMPDIR/tmp/ -type d | sed 's:'$TMPDIR'/tmp:%dir ":' | sed 's:$:":' >> $TMPDIR/brlcad.spec
