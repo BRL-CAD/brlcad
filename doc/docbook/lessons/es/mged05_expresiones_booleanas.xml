@@ -95,7 +95,7 @@
 
       <para>
 	Los tres operadores Booleanos empleados por el programa
-	<application>MGED</application> son: unión, subtracción e
+	<application>MGED</application> son: unión, substracción e
 	intersección. Puede usar estas operaciones para combinar formas y
 	producir otras más complejas.
 
@@ -136,13 +136,13 @@
       </informalfigure>
       </section>
 
-      <section><info><title>Subtracción</title></info>
+      <section><info><title>Substracción</title></info>
 
 	<para>
 	  Cuando una forma primitiva tiene una segunda forma solapada
 	  substraída de él, el resultado es que la segunda forma desaparece,
 	  junto a cualquier volumen que tenga en común con la primera. El
-	  operador - (signo menos) significa subtracción o diferencia. Esta
+	  operador - (signo menos) significa substracción o diferencia. Esta
 	  operación es útil especialmente para ahuecar un cuerpo, remover una
 	  pieza formada previamente desde una primitiva, o cuando se tienen
 	  intersecciones entre paredes, placas, tuberías, u otras formas
@@ -163,7 +163,7 @@
 	  </imageobject>
 	  <caption>
 	    <para>
-	      Subtracción de una esfera a otra esfera
+	      Substracción de una esfera a otra esfera
 	    </para>
 	  </caption>
 	</mediaobject>
@@ -214,7 +214,7 @@
 
 	<para>
 	  No hay restricciones importantes cuando se usan los operadores
-	  Booleanos de subtracción e intersección. Debe haber una primera
+	  Booleanos de substracción e intersección. Debe haber una primera
 	  forma desde la cual una segunda forma puede ser subtraída o
 	  intersectada. Si ud tiene solamente una forma dentro de una región o
 	  combinación, el operador será ignorado, siendo reemplazado siempre
