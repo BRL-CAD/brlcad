@@ -529,7 +529,7 @@ db_conversions(struct db_i *dbip, int local)
     dbip->dbi_base2local = 1.0 / dbip->dbi_local2base;
 }
 
-
+int
 db_v4_get_units_code(const char *str)
 {
     if (!str) return ID_NO_UNIT;	/* no units specified */

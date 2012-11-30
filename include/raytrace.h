@@ -4537,7 +4537,6 @@ RT_EXPORT extern void db_conversions(struct db_i *,
  * -1 Not a legal V4 database code
  * # The V4 database code number
  */
-int
 RT_EXPORT extern int db_v4_get_units_code(const char *str);
 
 /* db5_scan.c */
@@ -5395,7 +5394,6 @@ RT_EXPORT extern int rt_db_put_internal(struct directory	*dp,
  * 0 OK
  * <0 error
  */
-int
 RT_EXPORT extern int rt_fwrite_internal(FILE *fp,
 					const char *name,
 					const struct rt_db_internal *ip,

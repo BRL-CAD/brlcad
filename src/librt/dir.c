@@ -177,6 +177,7 @@ rt_db_put_internal(
     return 0;			/* OK */
 }
 
+int
 rt_fwrite_internal(
     FILE *fp,
     const char *name,
