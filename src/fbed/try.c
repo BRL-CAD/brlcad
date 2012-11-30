@@ -102,7 +102,7 @@ get_Try(char *name, Try *tryp)
 		)
 		;
 	    if ( tryp == TRY_NULL )
-		/* Non-existant name, truncate bad part.*/
+		/* Non-existent name, truncate bad part.*/
 	    {
 		*name = NUL;
 		return FT_NULL;

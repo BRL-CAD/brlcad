@@ -380,7 +380,7 @@ rle_whdr(FILE *fp, int ncolors, int bgflag, int cmflag, unsigned char *bgpixel)
     static short x_magic = XtndRMAGIC; /* Extended magic number.	*/
     static RLEpixel black = { 0, 0, 0 };
 
-    /* safty check */
+    /* safety check */
     if (bgpixel == NULL)
 	bgpixel = black;
 

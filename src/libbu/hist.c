@@ -123,7 +123,7 @@ hist_pr_suppress(register const struct bu_hist *histp, const char *title, int ze
 
     nbins = histp->hg_nbins;
     if (zero_suppress) {
-	/* Supress trailing bins with zero counts.  nbins s/b >= 1 */
+	/* Suppress trailing bins with zero counts.  nbins s/b >= 1 */
 	for (; nbins >= 1; nbins--)
 	    if (histp->hg_bins[nbins] > 0)  break;
     }

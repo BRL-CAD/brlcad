@@ -168,7 +168,7 @@ fb_server_fb_close(struct pkg_conn *pcp, char *buf)
  * F B _ S E R V E R _ F B _ F R E E
  *
  * The fb_free() call is more potent than fb_close(), which it
- * must preceed; it causes shared memory to be returned & stuff like that.
+ * must precede; it causes shared memory to be returned & stuff like that.
  * The current FBSERV program exits after getting one.
  *
  * We set fb_server_got_fb_free as an indicator to calling application.

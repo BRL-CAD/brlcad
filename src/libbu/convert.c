@@ -758,7 +758,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	    }
 
 	    /*
-	     * The ouput format is something other than DOUBLE (tested
+	     * The output format is something other than DOUBLE (tested
 	     * for earlier), do a cast from double to requested
 	     * format.
 	     */

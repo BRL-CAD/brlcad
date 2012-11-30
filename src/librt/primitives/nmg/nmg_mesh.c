@@ -478,7 +478,7 @@ nmg_radial_join_eu(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn_tol
 /**
  * N M G _ M E S H _ T W O _ F A C E S
  *
- * Actuall do the work of meshing two faces.
+ * Actually do the work of meshing two faces.
  * The two fu arguments may be the same, which causes the face to be
  * meshed against itself.
  *
