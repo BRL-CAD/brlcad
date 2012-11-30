@@ -1050,7 +1050,7 @@ wdb_classify_seg(struct seg *seg, struct soltab *shoot, struct xray *rp, struct 
     mid_dist = (seg->seg_in.hit_dist + seg->seg_out.hit_dist) / 2.0;
     VJOIN1(new_rp.r_pt, rp->r_pt, mid_dist, rp->r_dir);
 #ifdef debug
-    bu_log("Classifying segment with mid_pt (%g %g %g) with respct to %s\n", V3ARGS(new_rp.r_pt), shoot->st_dp->d_namep);
+    bu_log("Classifying segment with mid_pt (%g %g %g) with respect to %s\n", V3ARGS(new_rp.r_pt), shoot->st_dp->d_namep);
 #endif
 
     bn_vec_ortho(new_rp.r_dir, rp->r_dir);

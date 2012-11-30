@@ -47,7 +47,7 @@ _ged_get_obj_bounds(struct ged *gedp,
     struct db_full_path path;
     struct region *regp;
 
-    /* Make a new rt_i instance from the existing db_i sructure */
+    /* Make a new rt_i instance from the existing db_i structure */
     if ((rtip=rt_new_rti(gedp->ged_wdbp->dbip)) == RTI_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "rt_new_rti failure for %s\n", gedp->ged_wdbp->dbip->dbi_filename);
 	return GED_ERROR;

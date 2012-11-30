@@ -1938,7 +1938,7 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 
 /**
  * The text function takes the dimensions of each region on the body,
- * and finds the measurements for each bounding box to be ouput to a
+ * and finds the measurements for each bounding box to be output to a
  * text file. All dimensions are in mm, because it seems everyone just
  * /loves/ millimeters for analytical purposes.  Hard Coded to dump
  * out everything related to boundingboxes.

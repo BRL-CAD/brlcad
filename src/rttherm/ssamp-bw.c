@@ -20,7 +20,7 @@
 /** @file rttherm/ssamp-bw.c
  *
  * Program to convert spectral sample data into a single-channel
- * monocrome image.
+ * monochrome image.
  *
  */
 

@@ -89,7 +89,7 @@ ged_bot_decimate(struct ged *gedp, int argc, const char *argv[])
 		min_edge_length = atof(bu_optarg);
 		if (min_edge_length < 0.0) {
 		    bu_vls_printf(gedp->ged_result_str,
-				  "minumum edge length cannot be less than zero");
+				  "minimum edge length cannot be less than zero");
 		    return GED_ERROR;
 		}
 		break;

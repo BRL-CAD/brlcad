@@ -295,7 +295,7 @@ int SegmentSegmentIntersect(
 	     * So here's the plan we. We're going to use dot products,
 	     * The aspect of dot products that's important:
 	     * A dot B is positive if A and B point the same way
-	     * and negitive when they point in opposite directions
+	     * and negative when they point in opposite directions
 	     * so --> dot --> is positive, but <-- dot --> is negative
 	     * so if (x3-x1) dot (x4-x1) is negative, then x1 lies on the segment (x3, x4)
 	     * which means that x1 should be one of the points we return so we just go

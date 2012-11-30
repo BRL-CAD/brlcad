@@ -438,7 +438,7 @@ vdraw_read_tcl(void *clientData, int argc, const char *argv[])
 	return TCL_OK;
     }
     if (argv[1][0] == 'l') {
-	/* return lenght of list */
+	/* return length of list */
 	length = 0;
 	vp = BU_LIST_FIRST(bn_vlist, &(dgop->dgo_currVHead->vdc_vhd));
 	while (!BU_LIST_IS_HEAD(vp, &(dgop->dgo_currVHead->vdc_vhd))) {
