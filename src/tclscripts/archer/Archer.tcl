@@ -5956,6 +5956,7 @@ proc title_node_handler {node} {
     }
 
     set odata [lrange [gedCmd get $mSelectedObj] 1 end]
+    restoreCanvas
 
     if {$_initEditMode && [info exists GeometryEditFrame::mEditCommand]} {
 	set GeometryEditFrame::mEditMode 0
@@ -6891,14 +6892,11 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::buildSketchEditView {} {
-    #XXX Not ready yet
-    return
-
-    #     set parent $itk_component(objEditView)
-    #     itk_component add sketchView {
-    # 	SketchEditFrame $parent.sketchview \
-	# 	    -units "mm"
-    #     } {}
+    set parent $itk_component(objEditView)
+    itk_component add sketchView {
+     	SketchEditFrame $parent.sketchview \
+	    -units "mm"
+    } {}
 }
 
 
@@ -7579,9 +7577,6 @@ proc title_node_handler {node} {
 
 
 ::itcl::body Archer::initSketchEditView {odata} {
-    #XXX Not ready yet
-    return
-
     $itk_component(sketchView) configure \
 	-geometryObject $mSelectedObj \
 	-geometryObjectPath $mSelectedObjPath \

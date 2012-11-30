@@ -85,6 +85,7 @@
 	method updateGeometry {}
 	method createGeometry {_name}
 	method p {obj args}
+
 	method moveBotEdgeMode {_dname _obj _x _y}
 	method moveBotElement {_dname _obj _vx _vy}
 	method moveBotFaceMode {_dname _obj _x _y}

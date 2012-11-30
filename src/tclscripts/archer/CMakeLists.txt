@@ -29,6 +29,7 @@ set(archer_TCLSCRIPTS
   RhcEditFrame.tcl
   RpcEditFrame.tcl
   ShaderEdit.tcl
+  SketchEditFrame.tcl
   SphereEditFrame.tcl
   SuperellEditFrame.tcl
   TgcEditFrame.tcl

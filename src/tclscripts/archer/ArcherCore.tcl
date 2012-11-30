@@ -124,6 +124,9 @@ namespace eval ArcherCore {
 	proc unpackTree            {_tree}
 
 	# public window commands
+	method getCanvasArea {}
+	method restoreCanvas {}
+	method setCanvas {_canvas}
 	method dockArea            {{_position "south"}}
 	method primaryToolbarAddBtn     {_name {args ""}}
 	method primaryToolbarAddSep     {_name {args ""}}
@@ -2118,6 +2121,40 @@ namespace eval ArcherCore {
 # ------------------------------------------------------------
 #                    WINDOW COMMANDS
 # ------------------------------------------------------------
+
+::itcl::body ArcherCore::getCanvasArea {} {
+    return $itk_component(canvasF)
+}
+
+::itcl::body ArcherCore::restoreCanvas {} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    set slave [grid slaves $itk_component(canvasF)]
+    if {[llength $slave] == 1 && $slave != $itk_component(ged)} {
+	grid forget $slave
+    }
+
+    if {!$mViewOnly} {
+	grid $itk_component(ged) -row 0 -column 0 -columnspan 3 -sticky news
+    } else {
+	grid $itk_component(ged) -row 1 -column 0 -sticky news
+    }
+}
+
+::itcl::body ArcherCore::setCanvas {_canvas} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    grid forget $itk_component(ged)
+    if {!$mViewOnly} {
+	grid $_canvas -row 0 -column 0 -columnspan 3 -sticky news
+    } else {
+	grid $_canvas -row 1 -column 0 -sticky news
+    }
+}
 
 ::itcl::body ArcherCore::dockArea {{position "south"}} {
     switch -- $position {
