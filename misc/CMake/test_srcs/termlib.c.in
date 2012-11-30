@@ -32,7 +32,7 @@
 #endif
 int main () {
 	char buffer[2048] = {0};
-	int result = tgetent(buffer, "vt100");
+	(void)tgetent(buffer, "vt100");
 	return 0;
 }
 
