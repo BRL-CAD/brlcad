@@ -116,7 +116,7 @@ Misc -> Keystroke Forwarding        |                           REMOVE
 Tools -> ADC Control Panel          |             INCOMPLETE - Include, but only using the controls in the Tool panel
 				    |                          don't integrate in-display-manager mouse bindings
 				    |                          new measurement tool more usable in most cases
-Tools -> AniMate                    |     Low priority - better approach might be to export to Blender for animation
+Tools -> AnimMate                   |     Low priority - better approach might be to export to Blender for animation
 Tools -> Grid Control Panel         |                            DONE
 Tools -> Query Ray                  |             INCOMPLETE - convert to preferences tab or tool
 Tools -> Raytrace Control Panel     |                            DONE
