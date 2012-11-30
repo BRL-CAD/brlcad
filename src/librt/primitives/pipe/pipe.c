@@ -2072,7 +2072,7 @@ draw_pipe_connect_points_linearly(
 	    num_connections);
 
     /* connect inner circles */
-    if (!(NEAR_ZERO(startpt.pp_id, RT_LEN_TOL) || NEAR_ZERO(endpt.pp_id, RT_LEN_TOL))) {
+    if (startpt.pp_id > 0.0 && endpt.pp_id > 0.0) {
 	start_circle.radius = startpt.pp_id / 2.0;
 	end_circle.radius = endpt.pp_id / 2.0;
 	draw_pipe_parallel_circle_connections(vhead, start_circle, end_circle,
