@@ -76,14 +76,6 @@ rt_dirbuild(const char *filename, char *buf, int len)
 }
 
 
-/**
- * Get an object from the database, and convert it into its internal
- * representation.
- *
- * Returns -
- * <0 On error
- * id On success.
- */
 int
 rt_db_get_internal(
     struct rt_db_internal *ip,
@@ -144,16 +136,6 @@ rt_db_get_internal(
     return id;			/* OK */
 }
 
-
-/**
- * Convert the internal representation of a solid to the external one,
- * and write it into the database.  On success only, the internal
- * representation is freed.
- *
- * Returns -
- * <0 error
- * 0 success
- */
 int
 rt_db_put_internal(
     struct directory *dp,
@@ -195,20 +177,6 @@ rt_db_put_internal(
     return 0;			/* OK */
 }
 
-
-/**
- * Put an object in internal format out onto a file in external
- * format.  Used by LIBWDB.
- *
- * Can't really require a dbip parameter, as many callers won't have one.
- *
- * THIS ROUTINE ONLY SUPPORTS WRITING V4 GEOMETRY.
- *
- * Returns -
- * 0 OK
- * <0 error
- */
-int
 rt_fwrite_internal(
     FILE *fp,
     const char *name,
@@ -274,15 +242,6 @@ rt_db_free_internal(struct rt_db_internal *ip)
     RT_DB_INTERNAL_INIT(ip);
 }
 
-
-/**
- * Convert an object name to a rt_db_internal pointer
- *
- * Looks up the named object in the directory of the specified model,
- * obtaining a directory pointer.  Then gets that object from the
- * database and constructs its internal representation.  Returns
- * ID_NULL on error, otherwise returns the type of the object.
- */
 int
 rt_db_lookup_internal (
     struct db_i *dbip,

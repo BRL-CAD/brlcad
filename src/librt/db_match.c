@@ -35,22 +35,6 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-
-/**
- * DEPRECATED: Use bu_fnmatch() instead of this function.
- *
- * D B _ R E G E X P _ M A T C H
- *
- * If string matches pattern, return 1, else return 0
- *
- * special characters:
- *	*	Matches any string including the null string.
- *	?	Matches any single character.
- *	[...]	Matches any one of the characters enclosed.
- *	-	May be used inside brackets to specify range
- *		(i.e. str[1-58] matches str1, str2, ... str5, str8)
- *	\	Escapes special characters.
- */
 int
 db_regexp_match(register const char *pattern, register const char *string)
 {
@@ -60,14 +44,6 @@ db_regexp_match(register const char *pattern, register const char *string)
     return 0;
 }
 
-
-/**
- * D B _ R E G E X P _ M A T C H _ A L L
- *
- * Appends a list of all database matches to the given vls, or the pattern
- * itself if no matches are found.
- * Returns the number of matches.
- */
 
 int
 db_regexp_match_all(struct bu_vls *dest, struct db_i *dbip, const char *pattern)
@@ -105,14 +81,6 @@ db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb
 	++dp->d_nref;
 }
 
-
-/**
- * D B _ U P D A T E _ N R E F
- *
- * Updates the d_nref fields (which count the number of times a given entry
- * is referenced by a COMBination in the database).
- *
- */
 void
 db_update_nref(struct db_i *dbip, struct resource *resp)
 {

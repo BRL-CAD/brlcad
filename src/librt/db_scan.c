@@ -462,10 +462,6 @@ db_fwrite_ident(FILE *fp, const char *title, double local2mm)
     return 0;
 }
 
-
-/**
- * Initialize conversion factors given the v4 database unit
- */
 void
 db_conversions(struct db_i *dbip, int local)
 
@@ -534,16 +530,6 @@ db_conversions(struct db_i *dbip, int local)
 }
 
 
-/**
- * Given a string, return the V4 database code representing the user's
- * preferred editing units.  The v4 database format does not have many
- * choices.
- *
- * Returns -
- * -1 Not a legal V4 database code
- * # The V4 database code number
- */
-int
 db_v4_get_units_code(const char *str)
 {
     if (!str) return ID_NO_UNIT;	/* no units specified */

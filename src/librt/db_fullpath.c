@@ -36,9 +36,6 @@
 #include "raytrace.h"
 
 
-/**
- * D B _ F U L L _ P A T H _ I N I T
- */
 void
 db_full_path_init(struct db_full_path *pathp)
 {
@@ -49,9 +46,6 @@ db_full_path_init(struct db_full_path *pathp)
 }
 
 
-/**
- * D B _ A D D _ N O D E _ T O _ F U L L _ P A T H
- */
 void
 db_add_node_to_full_path(struct db_full_path *pp, struct directory *dp)
 {
@@ -72,10 +66,6 @@ db_add_node_to_full_path(struct db_full_path *pp, struct directory *dp)
     pp->fp_names[pp->fp_len++] = dp;
 }
 
-
-/**
- * D B _ D U P _ F U L L _ P A T H
- */
 void
 db_dup_full_path(struct db_full_path *newp, const struct db_full_path *oldp)
 {
@@ -94,14 +84,6 @@ db_dup_full_path(struct db_full_path *newp, const struct db_full_path *oldp)
     memcpy((char *)newp->fp_names, (char *)oldp->fp_names, newp->fp_len * sizeof(struct directory *));
 }
 
-
-/**
- * D B _ E X T E N D _ F U L L _ P A T H
- *
- * Extend "pathp" so that it can grow from current fp_len by incr more names.
- *
- * This is intended primarily as an internal method.
- */
 void
 db_extend_full_path(struct db_full_path *pathp, size_t incr)
 {
@@ -128,10 +110,6 @@ db_extend_full_path(struct db_full_path *pathp, size_t incr)
     }
 }
 
-
-/**
- * D B _ A P P E N D _ F U L L _ P A T H
- */
 void
 db_append_full_path(struct db_full_path *dest, const struct db_full_path *src)
 {
@@ -145,12 +123,6 @@ db_append_full_path(struct db_full_path *dest, const struct db_full_path *src)
     dest->fp_len += src->fp_len;
 }
 
-
-/**
- * D B _ D U P _ P A T H _ T A I L
- *
- * Dup old path from starting index to end.
- */
 void
 db_dup_path_tail(struct db_full_path *newp, const struct db_full_path *oldp, off_t start)
 {
@@ -171,13 +143,6 @@ db_dup_path_tail(struct db_full_path *newp, const struct db_full_path *oldp, off
     memcpy((char *)newp->fp_names, (char *)&oldp->fp_names[start], newp->fp_len * sizeof(struct directory *));
 }
 
-
-/**
- * D B _ P A T H _ T O _ S T R I N G
- *
- * Unlike rt_path_str(), this version can be used in parallel.
- * Caller is responsible for freeing the returned buffer.
- */
 char *
 db_path_to_string(const struct db_full_path *pp)
 {
@@ -219,13 +184,6 @@ db_path_to_string(const struct db_full_path *pp)
     return buf;
 }
 
-
-/**
- * D B _ P A T H _ T O _ V L S
- *
- * Append a string representation of the path onto the vls.  Must have
- * exactly the same formatting conventions as db_path_to_string().
- */
 void
 db_path_to_vls(struct bu_vls *str, const struct db_full_path *pp)
 {
@@ -243,10 +201,6 @@ db_path_to_vls(struct bu_vls *str, const struct db_full_path *pp)
     }
 }
 
-
-/**
- * D B _ P R _ F U L L _ P A T H
- */
 void
 db_pr_full_path(const char *msg, const struct db_full_path *pathp)
 {
@@ -256,19 +210,6 @@ db_pr_full_path(const char *msg, const struct db_full_path *pathp)
     bu_free(sofar, "path string");
 }
 
-
-/**
- * D B _ S T R I N G _ T O _ P A T H
- *
- * Reverse the effects of db_path_to_string().
- *
- * The db_full_path structure will be initialized.  If it was already
- * in use, user should call db_free_full_path() first.
- *
- * Returns -
- * -1 One or more components of path did not exist in the directory.
- * 0 OK
- */
 int
 db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *str)
 {
@@ -342,19 +283,6 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
     return ret;
 }
 
-
-/**
- * D B _ A R G V _ T O _ P A T H
- *
- * Treat elements from argv[0] to argv[argc-1] as a path specification.
- *
- * The path structure will be fully initialized.  If it was already in
- * use, user should call db_free_full_path() first.
- *
- * Returns -
- * -1 One or more components of path did not exist in the directory.
- * 0 OK
- */
 int
 db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char *const *argv)
 {
@@ -383,13 +311,6 @@ db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char
     return ret;
 }
 
-
-/**
- * D B _ F R E E _ F U L L _ P A T H
- *
- * Free the contents of the db_full_path structure, but not the
- * structure itself, which might be automatic.
- */
 void
 db_free_full_path(struct db_full_path *pp)
 {
@@ -402,14 +323,6 @@ db_free_full_path(struct db_full_path *pp)
     }
 }
 
-
-/**
- * D B _ I D E N T I C A L _ F U L L _ P A T H S
- *
- * Returns -
- * 1 match
- * 0 different
- */
 int
 db_identical_full_paths(const struct db_full_path *a, const struct db_full_path *b)
 {
@@ -427,14 +340,6 @@ db_identical_full_paths(const struct db_full_path *a, const struct db_full_path 
     return 1;
 }
 
-
-/**
- * D B _ F U L L _ P A T H _ S U B S E T
- *
- * Returns -
- * 1 if 'b' is a proper subset of 'a'
- * 0 if not.
- */
 int
 db_full_path_subset(
     const struct db_full_path *a,
@@ -475,16 +380,6 @@ db_full_path_subset(
     return 0;
 }
 
-
-/**
- * D B _ F U L L _ P A T H _ M A T C H _ T O P
- *
- * Returns -
- * 1 if 'a' matches the top part of 'b'
- * 0 if not.
- *
- * For example, /a/b matches both the top part of /a/b/c and /a/b.
- */
 int
 db_full_path_match_top(
     const struct db_full_path *a,
@@ -504,14 +399,6 @@ db_full_path_match_top(
     return 1;
 }
 
-
-/**
- * D B _ F U L L _ P A T H _ S E A R C H
- *
- * Returns -
- * 1 'dp' is found on this path
- * 0 not found
- */
 int
 db_full_path_search(const struct db_full_path *a, const struct directory *dp)
 {

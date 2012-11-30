@@ -236,20 +236,6 @@ db_open(const char *name, const char *mode)
 }
 
 
-/**
- * D B _ C R E A T E
- *
- * Create a new database containing just a header record, regardless
- * of whether the database previously existed or not, and open it for
- * reading and writing.
- *
- * This routine also calls db_dirbuild(), so the caller doesn't need
- * to.
- *
- * Returns:
- * DBI_NULL on error
- * db_i * on success
- */
 struct db_i *
 db_create(const char *name, int version)
 {
@@ -293,13 +279,6 @@ db_create(const char *name, int version)
     return dbip;
 }
 
-
-/**
- * D B _ C L O S E _ C L I E N T
- *
- * De-register a client of this database instance, if provided, and
- * close out the instance.
- */
 void
 db_close_client(struct db_i *dbip, long int *client)
 {
@@ -310,13 +289,6 @@ db_close_client(struct db_i *dbip, long int *client)
     db_close(dbip);
 }
 
-
-/**
- * D B _ C L O S E
- *
- * Close a database, releasing dynamic memory Wait until last user is
- * done, though.
- */
 void
 db_close(register struct db_i *dbip)
 {
@@ -413,19 +385,6 @@ db_close(register struct db_i *dbip)
     bu_free((char *)dbip, "struct db_i");
 }
 
-
-/**
- * D B _ D U M P
- *
- * Dump a full copy of one database into another.  This is a good way
- * of committing a ".inmem" database to a ".g" file.  The input is a
- * database instance, the output is a LIBWDB object, which could be a
- * disk file or another database instance.
- *
- * Returns -
- * -1 error
- * 0 success
- */
 int
 db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
 /* output */
@@ -464,13 +423,6 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
     return 0;
 }
 
-
-/**
- * D B _ C L O N E _ D B I
- *
- * Obtain an additional instance of this same database.  A new client
- * is registered at the same time if one is specified.
- */
 struct db_i *
 db_clone_dbi(struct db_i *dbip, long int *client)
 {
@@ -483,13 +435,6 @@ db_clone_dbi(struct db_i *dbip, long int *client)
     return dbip;
 }
 
-
-/**
- * D B _ S Y N C
- *
- * Ensure that the on-disk database has been completely written out of
- * the operating system's cache.
- */
 void
 db_sync(struct db_i *dbip)
 {

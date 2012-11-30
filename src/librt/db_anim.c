@@ -37,17 +37,6 @@
 #include "bu.h"
 #include "raytrace.h"
 
-
-/**
- * Add a user-supplied animate structure to the end of the chain of
- * such structures hanging from the directory structure of the last
- * node of the path specifier.  When 'root' is non-zero, this matrix
- * is located at the root of the tree itself, rather than an arc, and
- * is stored differently.
- *
- * In the future, might want to check to make sure that callers
- * directory references are in the right database (dbip).
- */
 int
 db_add_anim(struct db_i *dbip, register struct animate *anp, int root)
 {
@@ -93,13 +82,6 @@ static char *db_anim_matrix_strings[] = {
 };
 
 
-/**
- * Perform the one animation operation.  Leave results in form that
- * additional operations can be cascaded.
- *
- * Note that 'materp' may be a null pointer, signifying that the
- * region has already been finalized above this point in the tree.
- */
 int
 db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_info *materp)
 {
@@ -219,10 +201,6 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
     return 0;				/* OK */
 }
 
-
-/**
- * Free one animation structure
- */
 void
 db_free_1anim(struct animate *anp)
 {
@@ -238,12 +216,6 @@ db_free_1anim(struct animate *anp)
     bu_free((char *)anp, "animate");
 }
 
-
-/**
- * Release chain of animation structures
- *
- * An unfortunate choice of name.
- */
 void
 db_free_anim(register struct db_i *dbip)
 {
@@ -280,12 +252,6 @@ db_free_anim(register struct db_i *dbip)
 }
 
 
-/**
- * Parse one "anim" type command into an "animate" structure.
- *
- * argv[1] must be the "a/b" path spec,
- * argv[2] indicates what is to be animated on that arc.
- */
 struct animate *
 db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 {
@@ -446,11 +412,6 @@ bad:
     return (struct animate *)NULL;
 }
 
-
-/**
- * A common parser for mged and rt.  Experimental.  Not the best name
- * for this.
- */
 int db_parse_anim(struct db_i *dbip,
 		  int argc,
 		  const char **argv)

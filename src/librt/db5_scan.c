@@ -299,7 +299,6 @@ db5_diradd_handler(
     return;
 }
 
-
 int
 db_dirbuild(struct db_i *dbip)
 {

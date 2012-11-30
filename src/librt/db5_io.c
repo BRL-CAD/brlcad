@@ -40,15 +40,6 @@
 #include "mater.h"
 
 
-/**
- * D B 5 _ H E A D E R _ I S _ V A L I D
- *
- * Verify that this is a valid header for a BRL-CAD v5 database.
- *
- * Returns -
- * 0 Not valid v5 header
- * 1 Valid v5 header
- */
 int
 db5_header_is_valid(const unsigned char *hp)
 {
@@ -86,13 +77,6 @@ db5_header_is_valid(const unsigned char *hp)
     return 1;		/* valid */
 }
 
-
-/**
- * D B 5 _ S E L E C T _ L E N G T H _ E N C O D I N G
- *
- * Given a number to encode, decide which is the smallest encoding
- * format which will contain it.
- */
 int
 db5_select_length_encoding(size_t len)
 {
@@ -103,17 +87,6 @@ db5_select_length_encoding(size_t len)
 }
 
 
-/**
- * D B 5 _ D E C O D E _ L E N G T H
- *
- * Given a variable-width length field in network order (XDR), store
- * it in *lenp.
- *
- * This routine processes unsigned values.
- *
- * Returns -
- * The number of bytes of input that were decoded.
- */
 size_t
 db5_decode_length(size_t *lenp, const unsigned char *cp, int format)
 {
@@ -139,18 +112,6 @@ db5_decode_length(size_t *lenp, const unsigned char *cp, int format)
     return 0;
 }
 
-
-/**
- * D B 5 _ D E C O D E _ S I G N E D
- *
- * Given a variable-width length field in network order (XDR), store
- * it in *lenp.
- *
- * This routine processes signed values.
- *
- * Returns -
- * The number of bytes of input that were decoded.
- */
 int
 db5_decode_signed(size_t *lenp, const unsigned char *cp, int format)
 {
@@ -340,15 +301,6 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
     return ip + rip->object_length;
 }
 
-
-/**
- * D B 5 _ G E T _ R A W _ I N T E R N A L _ F P
- *
- * Returns -
- * 0 on success
- * -1 on EOF
- * -2 on error
- */
 int
 db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 {
@@ -465,15 +417,6 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     return 0;		/* success */
 }
 
-
-/**
- * D B 5 _ E X P O R T _ O B J E C T 3
- *
- * A routine for merging together the three optional parts of an
- * object into the final on-disk format.  Results in extra data
- * copies, but serves as a starting point for testing.  Any of name,
- * attrib, and body may be null.
- */
 void
 db5_export_object3(
     struct bu_external *out,
@@ -626,14 +569,6 @@ db5_export_object3(
     BU_ASSERT_LONG(out->ext_nbytes, >=, 8);
 }
 
-
-/**
- * D B 5 _ M A K E _ F R E E _ O B J E C T _ H D R
- *
- * Make only the front (header) portion of a free object.  This is
- * used when operating on very large contiguous free objects in the
- * database (e.g. 50 MBytes).
- */
 void
 db5_make_free_object_hdr(struct bu_external *ep, size_t length)
 {
@@ -663,13 +598,6 @@ db5_make_free_object_hdr(struct bu_external *ep, size_t length)
     db5_encode_length(cp, length>>3, h_width);
 }
 
-
-/**
- * D B 5 _ M A K E _ F R E E _ O B J E C T
- *
- * Make a complete, zero-filled, free object.  Note that free objects
- * can sometimes get quite large.
- */
 void
 db5_make_free_object(struct bu_external *ep, size_t length)
 {
@@ -701,27 +629,6 @@ db5_make_free_object(struct bu_external *ep, size_t length)
     *cp = DB5HDR_MAGIC2;
 }
 
-
-/**
- * R T _ D B _ C V T _ T O _ E X T E R N A L 5
- *
- * The attributes are taken from ip->idb_avs
- *
- * If present, convert attributes to on-disk format.  This must happen
- * after exporting the body, in case the ft_export5() method happened
- * to extend the attribute set.  Combinations are one "solid" which
- * does this.
- *
- * The internal representation is NOT freed, that's the caller's job.
- *
- * The 'ext' pointer is accepted in uninitialized form, and an
- * initialized structure is always returned, so that the caller may
- * free it even when an error return is given.
- *
- * Returns -
- * 0 OK
- * -1 FAIL
- */
 int
 rt_db_cvt_to_external5(
     struct bu_external *ext,
@@ -792,12 +699,6 @@ rt_db_cvt_to_external5(
     return 0;		/* OK */
 }
 
-
-/*
- * D B _ W R A P _ V 5 _ E X T E R N A L
- *
- * Modify name of external object, if necessary.
- */
 int
 db_wrap_v5_external(struct bu_external *ep, const char *name)
 {
@@ -840,31 +741,6 @@ db_wrap_v5_external(struct bu_external *ep, const char *name)
     return 0;
 }
 
-
-/**
- *
- * D B _ P U T _ E X T E R N A L 5
- *
- * Given that caller already has an external representation of the
- * database object, update it to have a new name (taken from
- * dp->d_namep) in that external representation, and write the new
- * object into the database, obtaining different storage if the size
- * has changed.
- *
- * Changing the name on a v5 object is a relatively expensive
- * operation.
- *
- * Caller is responsible for freeing memory of external
- * representation, using bu_free_external().
- *
- * This routine is used to efficiently support MGED's "cp" and "keep"
- * commands, which don't need to import and decompress objects just to
- * rename and copy them.
- *
- * Returns -
- * -1 error
- * 0 success
- */
 int
 db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 {
@@ -910,23 +786,6 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     return 0;
 }
 
-
-/**
- * R T _ D B _ P U T _ I N T E R N A L 5
- *
- * Convert the internal representation of a solid to the external one,
- * and write it into the database.
- *
- * Applications and middleware shouldn't call this directly, they
- * should use the version-generic interface "rt_db_put_internal()".
- *
- * The internal representation is always freed.  (Not the pointer,
- * just the contents).
- *
- * Returns -
- * <0 error
- * 0 success
- */
 int
 rt_db_put_internal5(
     struct directory *dp,
@@ -1101,20 +960,6 @@ rt_db_external5_to_internal5(
     return id;			/* OK */
 }
 
-
-/**
- * R T _ D B _ G E T _ I N T E R N A L 5
- *
- * Get an object from the database, and convert it into its internal
- * representation.
- *
- * Applications and middleware shouldn't call this directly, they
- * should use the generic interface "rt_db_get_internal()".
- *
- * Returns -
- * <0 On error
- * id On success.
- */
 int
 rt_db_get_internal5(
     struct rt_db_internal *ip,
@@ -1153,10 +998,6 @@ db5_export_color_table(struct bu_vls *ostr, struct db_i *dbip)
     rt_vls_color_map(ostr);
 }
 
-
-/**
- * D B 5 _ I M P O R T _ C O L O R _ T A B L E
- */
 void
 db5_import_color_table(char *cp)
 {
@@ -1170,17 +1011,6 @@ db5_import_color_table(char *cp)
     }
 }
 
-
-/**
- * D B 5 _ P U T _ C O L O R _ T A B L E
- *
- * Put the old region-id-color-table into the global object.  A null
- * attribute is set if the material table is empty.
- *
- * Returns -
- * <0 error
- * 0 OK
- */
 int
 db5_put_color_table(struct db_i *dbip)
 {
@@ -1199,15 +1029,6 @@ db5_put_color_table(struct db_i *dbip)
     return ret;
 }
 
-
-/** D B _ G E T _ A T T R I B U T E S
- *
- * Get attributes for an object pointed to by *dp
- *
- * returns:
- * 0 - all is well
- * <0 - error
- */
 int
 db5_get_attributes(const struct db_i *dbip, struct bu_attribute_value_set *avs, const struct directory *dp)
 {

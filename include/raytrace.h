@@ -3369,24 +3369,76 @@ RT_EXPORT extern struct animate *db_parse_1anim(struct db_i     *dbip,
 						int             argc,
 						const char      **argv);
 
+
+/**
+ * A common parser for mged and rt.  Experimental.  Not the best name
+ * for this.
+ */
 RT_EXPORT extern int db_parse_anim(struct db_i     *dbip,
 				   int             argc,
 				   const char      **argv);
 
-
+/**
+ * Add a user-supplied animate structure to the end of the chain of
+ * such structures hanging from the directory structure of the last
+ * node of the path specifier.  When 'root' is non-zero, this matrix
+ * is located at the root of the tree itself, rather than an arc, and
+ * is stored differently.
+ *
+ * In the future, might want to check to make sure that callers
+ * directory references are in the right database (dbip).
+ */
 RT_EXPORT extern int db_add_anim(struct db_i *dbip,
 				 struct animate *anp,
 				 int root);
+
+/**
+ * Perform the one animation operation.  Leave results in form that
+ * additional operations can be cascaded.
+ *
+ * Note that 'materp' may be a null pointer, signifying that the
+ * region has already been finalized above this point in the tree.
+ */
 RT_EXPORT extern int db_do_anim(struct animate *anp,
 				mat_t stack,
 				mat_t arc,
 				struct mater_info *materp);
+
+/**
+ * Release chain of animation structures
+ *
+ * An unfortunate choice of name.
+ */
 RT_EXPORT extern void db_free_anim(struct db_i *dbip);
+
+/**
+ * Writes 'count' bytes into at file offset 'offset' from buffer at
+ * 'addr'.  A wrapper for the UNIX write() sys-call that takes into
+ * account syscall semaphores, stdio-only machines, and in-memory
+ * buffering.
+ *
+ * Returns -
+ * 0 OK
+ * -1 FAILURE
+ */
+/* should be HIDDEN */
 RT_EXPORT extern void db_write_anim(FILE *fop,
 				    struct animate *anp);
+
+/**
+ * Parse one "anim" type command into an "animate" structure.
+ *
+ * argv[1] must be the "a/b" path spec,
+ * argv[2] indicates what is to be animated on that arc.
+ */
 RT_EXPORT extern struct animate *db_parse_1anim(struct db_i *dbip,
 						int argc,
 						const char **argv);
+
+
+/**
+ * Free one animation structure
+ */
 RT_EXPORT extern void db_free_1anim(struct animate *anp);
 
 /* db_path.c */
@@ -3406,38 +3458,160 @@ RT_EXPORT extern const char *db_normalize(const char *path);
 
 
 /* db_fullpath.c */
+/**
+ * D B _ F U L L _ P A T H _ I N I T
+ */
 RT_EXPORT extern void db_full_path_init(struct db_full_path *pathp);
+
+/**
+ * D B _ A D D _ N O D E _ T O _ F U L L _ P A T H
+ */
 RT_EXPORT extern void db_add_node_to_full_path(struct db_full_path *pp,
 					       struct directory *dp);
+
+/**
+ * D B _ D U P _ F U L L _ P A T H
+ */
 RT_EXPORT extern void db_dup_full_path(struct db_full_path *newp,
 				       const struct db_full_path *oldp);
+
+/**
+ * D B _ E X T E N D _ F U L L _ P A T H
+ *
+ * Extend "pathp" so that it can grow from current fp_len by incr more names.
+ *
+ * This is intended primarily as an internal method.
+ */
 RT_EXPORT extern void db_extend_full_path(struct db_full_path *pathp,
 					  size_t incr);
+
+/**
+ * D B _ A P P E N D _ F U L L _ P A T H
+ */
 RT_EXPORT extern void db_append_full_path(struct db_full_path *dest,
 					  const struct db_full_path *src);
+
+/**
+ * D B _ D U P _ P A T H _ T A I L
+ *
+ * Dup old path from starting index to end.
+ */
 RT_EXPORT extern void db_dup_path_tail(struct db_full_path *newp,
 				       const struct db_full_path *oldp,
 				       off_t start);
+
+
+/**
+ * D B _ P A T H _ T O _ S T R I N G
+ *
+ * Unlike rt_path_str(), this version can be used in parallel.
+ * Caller is responsible for freeing the returned buffer.
+ */
 RT_EXPORT extern char *db_path_to_string(const struct db_full_path *pp);
+
+/**
+ * D B _ P A T H _ T O _ V L S
+ *
+ * Append a string representation of the path onto the vls.  Must have
+ * exactly the same formatting conventions as db_path_to_string().
+ */
 RT_EXPORT extern void db_path_to_vls(struct bu_vls *str,
 				     const struct db_full_path *pp);
+
+/**
+ * D B _ P R _ F U L L _ P A T H
+ */
 RT_EXPORT extern void db_pr_full_path(const char *msg,
 				      const struct db_full_path *pathp);
+
+
+/**
+ * D B _ S T R I N G _ T O _ P A T H
+ *
+ * Reverse the effects of db_path_to_string().
+ *
+ * The db_full_path structure will be initialized.  If it was already
+ * in use, user should call db_free_full_path() first.
+ *
+ * Returns -
+ * -1 One or more components of path did not exist in the directory.
+ * 0 OK
+ */
 RT_EXPORT extern int db_string_to_path(struct db_full_path *pp,
 				       const struct db_i *dbip,
 				       const char *str);
+
+
+/**
+ * D B _ A R G V _ T O _ P A T H
+ *
+ * Treat elements from argv[0] to argv[argc-1] as a path specification.
+ *
+ * The path structure will be fully initialized.  If it was already in
+ * use, user should call db_free_full_path() first.
+ *
+ * Returns -
+ * -1 One or more components of path did not exist in the directory.
+ * 0 OK
+ */
 RT_EXPORT extern int db_argv_to_path(struct db_full_path	*pp,
 				     struct db_i			*dbip,
 				     int				argc,
 				     const char			*const*argv);
+
+
+/**
+ * D B _ F R E E _ F U L L _ P A T H
+ *
+ * Free the contents of the db_full_path structure, but not the
+ * structure itself, which might be automatic.
+ */
 RT_EXPORT extern void db_free_full_path(struct db_full_path *pp);
+
+
+/**
+ * D B _ I D E N T I C A L _ F U L L _ P A T H S
+ *
+ * Returns -
+ * 1 match
+ * 0 different
+ */
 RT_EXPORT extern int db_identical_full_paths(const struct db_full_path *a,
 					     const struct db_full_path *b);
+
+
+/**
+ * D B _ F U L L _ P A T H _ S U B S E T
+ *
+ * Returns -
+ * 1 if 'b' is a proper subset of 'a'
+ * 0 if not.
+ */
 RT_EXPORT extern int db_full_path_subset(const struct db_full_path	*a,
 					 const struct db_full_path	*b,
 					 const int			skip_first);
+
+
+/**
+ * D B _ F U L L _ P A T H _ M A T C H _ T O P
+ *
+ * Returns -
+ * 1 if 'a' matches the top part of 'b'
+ * 0 if not.
+ *
+ * For example, /a/b matches both the top part of /a/b/c and /a/b.
+ */
 RT_EXPORT extern int db_full_path_match_top(const struct db_full_path	*a,
 					    const struct db_full_path	*b);
+
+
+/**
+ * D B _ F U L L _ P A T H _ S E A R C H
+ *
+ * Returns -
+ * 1 'dp' is found on this path
+ * 0 not found
+ */
 RT_EXPORT extern int db_full_path_search(const struct db_full_path *a,
 					 const struct directory *dp);
 
@@ -3515,33 +3689,133 @@ RT_EXPORT extern struct bu_ptbl *db_search_unique_objects(void *searchplan,
 							  struct rt_wdb *wdbp);
 
 /* db_open.c */
+/**
+ * D B _ S Y N C
+ *
+ * Ensure that the on-disk database has been completely written out of
+ * the operating system's cache.
+ */
 RT_EXPORT extern void db_sync(struct db_i	*dbip);
 
 /* open an existing model database */
 RT_EXPORT extern struct db_i *db_open(const char *name,
 				      const char *mode);
+
 /* create a new model database */
+/**
+ * D B _ C R E A T E
+ *
+ * Create a new database containing just a header record, regardless
+ * of whether the database previously existed or not, and open it for
+ * reading and writing.
+ *
+ * This routine also calls db_dirbuild(), so the caller doesn't need
+ * to.
+ *
+ * Returns:
+ * DBI_NULL on error
+ * db_i * on success
+ */
 RT_EXPORT extern struct db_i *db_create(const char *name,
 					int version);
+
 /* close a model database */
+/**
+ * D B _ C L O S E _ C L I E N T
+ *
+ * De-register a client of this database instance, if provided, and
+ * close out the instance.
+ */
 RT_EXPORT extern void db_close_client(struct db_i *dbip,
 				      long *client);
+
+/**
+ * D B _ C L O S E
+ *
+ * Close a database, releasing dynamic memory Wait until last user is
+ * done, though.
+ */
 RT_EXPORT extern void db_close(struct db_i *dbip);
+
+
 /* dump a full copy of a database */
+/**
+ * D B _ D U M P
+ *
+ * Dump a full copy of one database into another.  This is a good way
+ * of committing a ".inmem" database to a ".g" file.  The input is a
+ * database instance, the output is a LIBWDB object, which could be a
+ * disk file or another database instance.
+ *
+ * Returns -
+ * -1 error
+ * 0 success
+ */
 RT_EXPORT extern int db_dump(struct rt_wdb *wdbp,
 			     struct db_i *dbip);
+
+/**
+ * D B _ C L O N E _ D B I
+ *
+ * Obtain an additional instance of this same database.  A new client
+ * is registered at the same time if one is specified.
+ */
 RT_EXPORT extern struct db_i *db_clone_dbi(struct db_i *dbip,
 					   long *client);
-/* db5_alloc.c */
 
+
+/**
+ * Create a v5 database "free" object of the specified size, and place
+ * it at the indicated location in the database.
+ *
+ * There are two interesting cases:
+ * - The free object is "small".  Just write it all at once.
+ * - The free object is "large".  Write header and trailer
+ * separately
+ *
+ * @return 0 OK
+ * @return -1 Fail.  This is a horrible error.
+ */
 RT_EXPORT extern int db5_write_free(struct db_i *dbip,
 				    struct directory *dp,
 				    size_t length);
+
+
+/**
+ * Change the size of a v5 database object.
+ *
+ * If the object is getting smaller, break it into two pieces, and
+ * write out free objects for both.  The caller is expected to
+ * re-write new data on the first one.
+ *
+ * If the object is getting larger, seek a suitable "hole" large
+ * enough to hold it, throwing back any surplus, properly marked.
+ *
+ * If the object is getting larger and there is no suitable "hole" in
+ * the database, extend the file, write a free object in the new
+ * space, and write a free object in the old space.
+ *
+ * There is no point to trying to extend in place, that would require
+ * two searches through the memory map, and doesn't save any disk I/O.
+ *
+ * Returns -
+ * 0 OK
+ * -1 Failure
+ */
 RT_EXPORT extern int db5_realloc(struct db_i *dbip,
 				 struct directory *dp,
 				 struct bu_external *ep);
 
-/* db5_io.c */
+
+
+/**
+ * D B 5 _ E X P O R T _ O B J E C T 3
+ *
+ * A routine for merging together the three optional parts of an
+ * object into the final on-disk format.  Results in extra data
+ * copies, but serves as a starting point for testing.  Any of name,
+ * attrib, and body may be null.
+ */
 RT_EXPORT extern void db5_export_object3(struct bu_external *out,
 					 int			dli,
 					 const char			*name,
@@ -3552,6 +3826,29 @@ RT_EXPORT extern void db5_export_object3(struct bu_external *out,
 					 int			minor,
 					 int			a_zzz,
 					 int			b_zzz);
+
+
+
+/**
+ * R T _ D B _ C V T _ T O _ E X T E R N A L 5
+ *
+ * The attributes are taken from ip->idb_avs
+ *
+ * If present, convert attributes to on-disk format.  This must happen
+ * after exporting the body, in case the ft_export5() method happened
+ * to extend the attribute set.  Combinations are one "solid" which
+ * does this.
+ *
+ * The internal representation is NOT freed, that's the caller's job.
+ *
+ * The 'ext' pointer is accepted in uninitialized form, and an
+ * initialized structure is always returned, so that the caller may
+ * free it even when an error return is given.
+ *
+ * Returns -
+ * 0 OK
+ * -1 FAIL
+ */
 RT_EXPORT extern int rt_db_cvt_to_external5(struct bu_external *ext,
 					    const char *name,
 					    const struct rt_db_internal *ip,
@@ -3560,34 +3857,126 @@ RT_EXPORT extern int rt_db_cvt_to_external5(struct bu_external *ext,
 					    struct resource *resp,
 					    const int major);
 
+
+
+/*
+ * D B _ W R A P _ V 5 _ E X T E R N A L
+ *
+ * Modify name of external object, if necessary.
+ */
 RT_EXPORT extern int db_wrap_v5_external(struct bu_external *ep,
 					 const char *name);
 
+
+
+/**
+ * R T _ D B _ G E T _ I N T E R N A L 5
+ *
+ * Get an object from the database, and convert it into its internal
+ * representation.
+ *
+ * Applications and middleware shouldn't call this directly, they
+ * should use the generic interface "rt_db_get_internal()".
+ *
+ * Returns -
+ * <0 On error
+ * id On success.
+ */
 RT_EXPORT extern int rt_db_get_internal5(struct rt_db_internal	*ip,
 					 const struct directory	*dp,
 					 const struct db_i	*dbip,
 					 const mat_t		mat,
 					 struct resource		*resp);
+
+
+
+/**
+ * R T _ D B _ P U T _ I N T E R N A L 5
+ *
+ * Convert the internal representation of a solid to the external one,
+ * and write it into the database.
+ *
+ * Applications and middleware shouldn't call this directly, they
+ * should use the version-generic interface "rt_db_put_internal()".
+ *
+ * The internal representation is always freed.  (Not the pointer,
+ * just the contents).
+ *
+ * Returns -
+ * <0 error
+ * 0 success
+ */
 RT_EXPORT extern int rt_db_put_internal5(struct directory	*dp,
 					 struct db_i		*dbip,
 					 struct rt_db_internal	*ip,
 					 struct resource		*resp,
 					 const int		major);
 
+
+/**
+ * D B 5 _ M A K E _ F R E E _ O B J E C T _ H D R
+ *
+ * Make only the front (header) portion of a free object.  This is
+ * used when operating on very large contiguous free objects in the
+ * database (e.g. 50 MBytes).
+ */
 RT_EXPORT extern void db5_make_free_object_hdr(struct bu_external *ep,
 					       size_t length);
+
+
+/**
+ * D B 5 _ M A K E _ F R E E _ O B J E C T
+ *
+ * Make a complete, zero-filled, free object.  Note that free objects
+ * can sometimes get quite large.
+ */
 RT_EXPORT extern void db5_make_free_object(struct bu_external *ep,
 					   size_t length);
+
+
+/**
+ * D B 5 _ D E C O D E _ S I G N E D
+ *
+ * Given a variable-width length field in network order (XDR), store
+ * it in *lenp.
+ *
+ * This routine processes signed values.
+ *
+ * Returns -
+ * The number of bytes of input that were decoded.
+ */
 RT_EXPORT extern int db5_decode_signed(size_t			*lenp,
 				       const unsigned char	*cp,
 				       int			format);
 
+/**
+ * D B 5 _ D E C O D E _ L E N G T H
+ *
+ * Given a variable-width length field in network order (XDR), store
+ * it in *lenp.
+ *
+ * This routine processes unsigned values.
+ *
+ * Returns -
+ * The number of bytes of input that were decoded.
+ */
 RT_EXPORT extern size_t db5_decode_length(size_t *lenp,
 					  const unsigned char *cp,
 					  int format);
 
+/**
+ * D B 5 _ S E L E C T _ L E N G T H _ E N C O D I N G
+ *
+ * Given a number to encode, decide which is the smallest encoding
+ * format which will contain it.
+ */
 RT_EXPORT extern int db5_select_length_encoding(size_t len);
 
+
+
+/**
+ * D B 5 _ I M P O R T _ C O L O R _ T A B L E
+ */
 RT_EXPORT extern void db5_import_color_table(char *cp);
 
 /**
@@ -3626,19 +4015,75 @@ RT_EXPORT extern int db5_import_attributes(struct bu_attribute_value_set *avs,
 RT_EXPORT extern void db5_export_attributes(struct bu_external *ap,
 					    const struct bu_attribute_value_set *avs);
 
+
+
+/**
+ * D B 5 _ G E T _ R A W _ I N T E R N A L _ F P
+ *
+ * Returns -
+ * 0 on success
+ * -1 on EOF
+ * -2 on error
+ */
 RT_EXPORT extern int db5_get_raw_internal_fp(struct db5_raw_internal	*rip,
 					     FILE			*fp);
 
+/**
+ * D B 5 _ H E A D E R _ I S _ V A L I D
+ *
+ * Verify that this is a valid header for a BRL-CAD v5 database.
+ *
+ * Returns -
+ * 0 Not valid v5 header
+ * 1 Valid v5 header
+ */
 RT_EXPORT extern int db5_header_is_valid(const unsigned char *hp);
 
 RT_EXPORT extern int db5_fwrite_ident(FILE *,
 				      const char *,
 				      double);
 
+
+
+/**
+ * D B 5 _ P U T _ C O L O R _ T A B L E
+ *
+ * Put the old region-id-color-table into the global object.  A null
+ * attribute is set if the material table is empty.
+ *
+ * Returns -
+ * <0 error
+ * 0 OK
+ */
 RT_EXPORT extern int db5_put_color_table(struct db_i *dbip);
 RT_EXPORT extern int db5_update_ident(struct db_i *dbip,
 				      const char *title,
 				      double local2mm);
+
+/**
+ *
+ * D B _ P U T _ E X T E R N A L 5
+ *
+ * Given that caller already has an external representation of the
+ * database object, update it to have a new name (taken from
+ * dp->d_namep) in that external representation, and write the new
+ * object into the database, obtaining different storage if the size
+ * has changed.
+ *
+ * Changing the name on a v5 object is a relatively expensive
+ * operation.
+ *
+ * Caller is responsible for freeing memory of external
+ * representation, using bu_free_external().
+ *
+ * This routine is used to efficiently support MGED's "cp" and "keep"
+ * commands, which don't need to import and decompress objects just to
+ * rename and copy them.
+ *
+ * Returns -
+ * -1 error
+ * 0 success
+ */
 RT_EXPORT extern int db_put_external5(struct bu_external *ep,
 				      struct directory *dp,
 				      struct db_i *dbip);
@@ -3691,6 +4136,15 @@ RT_EXPORT extern int db5_update_attribute(const char *obj_name,
 RT_EXPORT extern int db5_replace_attributes(struct directory *dp,
 					    struct bu_attribute_value_set *avsp,
 					    struct db_i *dbip);
+
+/** D B _ G E T _ A T T R I B U T E S
+ *
+ * Get attributes for an object pointed to by *dp
+ *
+ * returns:
+ * 0 - all is well
+ * <0 - error
+ */
 RT_EXPORT extern int db5_get_attributes(const struct db_i *dbip,
 					struct bu_attribute_value_set *avs,
 					const struct directory *dp);
@@ -3901,28 +4355,112 @@ RT_EXPORT extern int db_write(struct db_i	*dbip,
 			      const genptr_t	addr,
 			      size_t		count,
 			      off_t		offset);
+
+/**
+ * Add name from dp->d_namep to external representation of solid, and
+ * write it into a file.
+ *
+ * Caller is responsible for freeing memory of external
+ * representation, using bu_free_external().
+ *
+ * The 'name' field of the external representation is modified to
+ * contain the desired name.  The 'ep' parameter cannot be const.
+ *
+ * THIS ROUTINE ONLY SUPPORTS WRITING V4 GEOMETRY.
+ *
+ * Returns -
+ * <0 error
+ * 0 OK
+ *
+ * NOTE: Callers of this should be using wdb_export_external()
+ * instead.
+ */
 RT_EXPORT extern int db_fwrite_external(FILE			*fp,
 					const char		*name,
 					struct bu_external	*ep);
 
 /* malloc & read records */
+					
+/**
+ * Retrieve all records in the database pertaining to an object, and
+ * place them in malloc()'ed storage, which the caller is responsible
+ * for free()'ing.
+ *
+ * This loads the combination into a local record buffer.
+ * This is in external v4 format.
+ *
+ * Returns -
+ * union record * - OK
+ * (union record *)0 - FAILURE
+ */
 RT_EXPORT extern union record *db_getmrec(const struct db_i *,
 					  const struct directory *dp);
 /* get several records from db */
+
+/**
+ * Retrieve 'len' records from the database, "offset" granules into
+ * this entry.
+ *
+ * Returns -
+ * 0 OK
+ * -1 FAILURE
+ */
 RT_EXPORT extern int db_get(const struct db_i *,
 			    const struct directory *dp,
 			    union record *where,
 			    off_t offset,
 			    size_t len);
 /* put several records into db */
+				
+/**
+ * Store 'len' records to the database, "offset" granules into this
+ * entry.
+ *
+ * Returns:
+ * 0 OK
+ * non-0 FAILURE
+ */
 RT_EXPORT extern int db_put(struct db_i *,
 			    const struct directory *dp,
 			    union record *where,
 			    off_t offset, size_t len);
-
+				
+/**
+ * Obtains a object from the database, leaving it in external (on-disk)
+ * format.
+ *
+ * The bu_external structure represented by 'ep' is initialized here,
+ * the caller need not pre-initialize it.  On error, 'ep' is left
+ * un-initialized and need not be freed, to simplify error recovery.
+ * On success, the caller is responsible for calling
+ * bu_free_external(ep);
+ *
+ * Returns -
+ * -1 error
+ * 0 success
+ */
 RT_EXPORT extern int db_get_external(struct bu_external *ep,
 				     const struct directory *dp,
 				     const struct db_i *dbip);
+
+/**
+ * Given that caller already has an external representation of the
+ * database object, update it to have a new name (taken from
+ * dp->d_namep) in that external representation, and write the new
+ * object into the database, obtaining different storage if the size
+ * has changed.
+ *
+ * Caller is responsible for freeing memory of external
+ * representation, using bu_free_external().
+ *
+ * This routine is used to efficiently support MGED's "cp" and "keep"
+ * commands, which don't need to import objects just to rename and
+ * copy them.
+ *
+ * Returns -
+ * <0 error
+ * 0 success
+ */
 RT_EXPORT extern int db_put_external(struct bu_external *ep,
 				     struct directory *dp,
 				     struct db_i *dbip);
@@ -3983,8 +4521,23 @@ RT_EXPORT extern int db_update_ident(struct db_i *dbip,
 RT_EXPORT extern int db_fwrite_ident(FILE *fp,
 				     const char *title,
 				     double local2mm);
+
+/**
+ * Initialize conversion factors given the v4 database unit
+ */
 RT_EXPORT extern void db_conversions(struct db_i *,
 				     int units);
+
+/**
+ * Given a string, return the V4 database code representing the user's
+ * preferred editing units.  The v4 database format does not have many
+ * choices.
+ *
+ * Returns -
+ * -1 Not a legal V4 database code
+ * # The V4 database code number
+ */
+int
 RT_EXPORT extern int db_v4_get_units_code(const char *str);
 
 /* db5_scan.c */
@@ -4069,11 +4622,26 @@ RT_EXPORT extern int rt_comb_import5(struct rt_db_internal *ip, const struct bu_
 RT_EXPORT extern int rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
 
 
-/* db_inmem.c */
+
+/**
+ * "open" an in-memory-only database instance.  this initializes a
+ * dbip for use, creating an inmem dbi_wdbp as the means to add
+ * geometry to the directory (use wdb_export_external()).
+ */
 RT_EXPORT extern struct db_i * db_open_inmem(void);
 
+/**
+ * creates an in-memory-only database.  this is very similar to
+ * db_open_inmem() with the exception that the this routine adds a
+ * default _GLOBAL object.
+ */
 RT_EXPORT extern struct db_i * db_create_inmem(void);
 
+
+/**
+ * Transmogrify an existing directory entry to be an in-memory-only
+ * one, stealing the external representation from 'ext'.
+ */
 RT_EXPORT extern void db_inmem(struct directory	*dp,
 			       struct bu_external	*ext,
 			       int		flags,
@@ -4089,25 +4657,129 @@ RT_EXPORT extern void db_inmem(struct directory	*dp,
  */
 RT_EXPORT extern size_t db_directory_size(const struct db_i *dbip);
 
+/**
+ * D B _ C K _ D I R E C T O R Y
+ *
+ * For debugging, ensure that all the linked-lists for the directory
+ * structure are intact.
+ */
 RT_EXPORT extern void db_ck_directory(const struct db_i *dbip);
 
+/**
+ * D B _ I S _ D I R E C T O R Y _ N O N _ E M P T Y
+ *
+ * Returns -
+ * 0 if the in-memory directory is empty
+ * 1 if the in-memory directory has entries,
+ * which implies that a db_scan() has already been performed.
+ */
 RT_EXPORT extern int db_is_directory_non_empty(const struct db_i	*dbip);
 
+/**
+ * D B _ D I R H A S H
+ *
+ * Returns a hash index for a given string that corresponds with the
+ * head of that string's hash chain.
+ */
 RT_EXPORT extern int db_dirhash(const char *str);
+
+/**
+ * Name -
+ * D B _ D I R C H E C K
+ *
+ * Description -
+ * This routine ensures that ret_name is not already in the
+ * directory. If it is, it tries a fixed number of times to
+ * modify ret_name before giving up. Note - most of the time,
+ * the hash for ret_name is computed once.
+ *
+ * Inputs -
+ * dbip database instance pointer
+ * ret_name the original name
+ * noisy to blather or not
+ *
+ * Outputs -
+ * ret_name the name to use
+ * headp pointer to the first (struct directory *) in the bucket
+ *
+ * Returns -
+ * 0 success
+ * <0 fail
+ */
 RT_EXPORT extern int db_dircheck(struct db_i *dbip,
 				 struct bu_vls *ret_name,
 				 int noisy,
 				 struct directory ***headp);
 /* convert name to directory ptr */
+				 
+/**
+ * D B _ L O O K U P
+ *
+ * This routine takes a name and looks it up in the directory table.
+ * If the name is present, a pointer to the directory struct element
+ * is returned, otherwise NULL is returned.
+ *
+ * If noisy is non-zero, a print occurs, else only the return code
+ * indicates failure.
+ *
+ * Returns -
+ * struct directory if name is found
+ * RT_DIR_NULL on failure
+ */
 RT_EXPORT extern struct directory *db_lookup(const struct db_i *,
 					     const char *name,
 					     int noisy);
 /* lookup directory entries based on attributes */
+
+/**
+ * D B _ L O O K U P _ B Y _ A T T R
+ *
+ * lookup directory entries based on directory flags (dp->d_flags) and
+ * attributes the "dir_flags" arg is a mask for the directory flags
+ * the *"avs" is an attribute value set used to select from the
+ * objects that *pass the flags mask. if "op" is 1, then the object
+ * must have all the *attributes and values that appear in "avs" in
+ * order to be *selected. If "op" is 2, then the object must have at
+ * least one of *the attribute/value pairs from "avs".
+ *
+ * dir_flags are in the form used in struct directory (d_flags)
+ *
+ * for op:
+ * 1 -> all attribute name/value pairs must be present and match
+ * 2 -> at least one of the name/value pairs must be present and match
+ *
+ * returns a ptbl list of selected directory pointers an empty list
+ * means nothing met the requirements a NULL return means something
+ * went wrong.
+ */
 RT_EXPORT extern struct bu_ptbl *db_lookup_by_attr(struct db_i *dbip,
 						   int dir_flags,
 						   struct bu_attribute_value_set *avs,
 						   int op);
 /* add entry to directory */
+						   
+/**
+ * D B _ D I R A D D
+ *
+ * Add an entry to the directory.  Try to make the regular path
+ * through the code as fast as possible, to speed up building the
+ * table of contents.
+ *
+ * dbip is a pointer to a valid/opened database instance
+ *
+ * name is the string name of the object being added
+ *
+ * laddr is the offset into the file to the object
+ *
+ * len is the length of the object, number of db granules used
+ *
+ * flags are defined in raytrace.h (RT_DIR_SOLID, RT_DIR_COMB, RT_DIR_REGION,
+ * RT_DIR_INMEM, etc.) for db version 5, ptr is the minor_type
+ * (non-null pointer to valid unsigned char code)
+ *
+ * an laddr of RT_DIR_PHONY_ADDR means that database storage has not
+ * been allocated yet.
+ */
 RT_EXPORT extern struct directory *db_diradd(struct db_i *,
 					     const char *name,
 					     off_t laddr,
@@ -4124,29 +4796,107 @@ RT_EXPORT extern struct directory *db_diradd5(struct db_i *dbip,
 					      struct bu_attribute_value_set	*avs);
 
 /* delete entry from directory */
+						  
+/**
+ * D B _ D I R D E L E T E
+ *
+ * Given a pointer to a directory entry, remove it from the linked
+ * list, and free the associated memory.
+ *
+ * It is the responsibility of the caller to have released whatever
+ * structures have been hung on the d_use_hd bu_list, first.
+ *
+ * Returns -
+ * 0 on success
+ * non-0 on failure
+ */
 RT_EXPORT extern int db_dirdelete(struct db_i *,
 				  struct directory *dp);
 RT_EXPORT extern int db_fwrite_ident(FILE *,
 				     const char *,
 				     double);
+
+/**
+ * D B _ P R _ D I R
+ *
+ * For debugging, print the entire contents of the database directory.
+ */
 RT_EXPORT extern void db_pr_dir(const struct db_i *dbip);
+
+/**
+ * D B _ R E N A M E
+ *
+ * Change the name string of a directory entry.  Because of the
+ * hashing function, this takes some extra work.
+ *
+ * Returns -
+ * 0 on success
+ * non-0 on failure
+ */
 RT_EXPORT extern int db_rename(struct db_i *,
 			       struct directory *,
 			       const char *newname);
 
-/* db_match.c */
+
+
+/**
+ * D B _ U P D A T E _ N R E F
+ *
+ * Updates the d_nref fields (which count the number of times a given entry
+ * is referenced by a COMBination in the database).
+ *
+ */
 RT_EXPORT extern void db_update_nref(struct db_i *dbip,
 				     struct resource *resp);
 
+
+
+/**
+ * DEPRECATED: Use bu_fnmatch() instead of this function.
+ *
+ * D B _ R E G E X P _ M A T C H
+ *
+ * If string matches pattern, return 1, else return 0
+ *
+ * special characters:
+ *	*	Matches any string including the null string.
+ *	?	Matches any single character.
+ *	[...]	Matches any one of the characters enclosed.
+ *	-	May be used inside brackets to specify range
+ *		(i.e. str[1-58] matches str1, str2, ... str5, str8)
+ *	\	Escapes special characters.
+ */
 DEPRECATED RT_EXPORT extern int db_regexp_match(const char *pattern,
 						const char *string);
+
+
+
+/**
+ * D B _ R E G E X P _ M A T C H _ A L L
+ *
+ * Appends a list of all database matches to the given vls, or the pattern
+ * itself if no matches are found.
+ * Returns the number of matches.
+ */
 RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
 					 struct db_i *dbip,
 					 const char *pattern);
 
-/* db_flags.c */
+/* db_flags.c */			 
+/**
+ * Given the internal form of a database object, return the
+ * appropriate 'flags' word for stashing in the in-memory directory of
+ * objects.
+ */
 RT_EXPORT extern int db_flags_internal(const struct rt_db_internal *intern);
 
+
+/* XXX - should use in db5_diradd() */
+/**
+ * Given a database object in "raw" internal form, return the
+ * appropriate 'flags' word for stashing in the in-memory directory of
+ * objects.
+ */
 RT_EXPORT extern int db_flags_raw_internal(const struct db5_raw_internal *intern);
 
 /* db_alloc.c */
@@ -4188,9 +4938,25 @@ RT_EXPORT extern void db_alloc_directory_block(struct resource *resp);
 RT_EXPORT extern void rt_alloc_seg_block(struct resource *res);
 
 /* db_tree.c */
+
+/**
+ * Duplicate the contents of a db_tree_state structure, including a
+ * private copy of the ts_mater field(s) and the attribute/value set.
+ */
 RT_EXPORT extern void db_dup_db_tree_state(struct db_tree_state *otsp,
 					   const struct db_tree_state *itsp);
+
+/**
+ * Release dynamic fields inside the structure, but not the structure
+ * itself.
+ */
 RT_EXPORT extern void db_free_db_tree_state(struct db_tree_state *tsp);
+
+/**
+ * In most cases, you don't want to use this routine, you want to
+ * struct copy mged_initial_tree_state or rt_initial_tree_state, and
+ * then set ts_dbip in your copy.
+ */
 RT_EXPORT extern void db_init_db_tree_state(struct db_tree_state *tsp,
 					    struct db_i *dbip,
 					    struct resource *resp);
@@ -4200,18 +4966,64 @@ RT_EXPORT extern struct combined_tree_state *db_dup_combined_tree_state(const st
 RT_EXPORT extern void db_free_combined_tree_state(struct combined_tree_state *ctsp);
 RT_EXPORT extern void db_pr_tree_state(const struct db_tree_state *tsp);
 RT_EXPORT extern void db_pr_combined_tree_state(const struct combined_tree_state *ctsp);
+
+/**
+ * Handle inheritance of material property found in combination
+ * record.  Color and the material property have separate inheritance
+ * interlocks.
+ *
+ * Returns -
+ * -1 failure
+ * 0 success
+ * 1 success, this is the top of a new region.
+ */
 RT_EXPORT extern int db_apply_state_from_comb(struct db_tree_state *tsp,
 					      const struct db_full_path *pathp,
 					      const struct rt_comb_internal *comb);
+
+/**
+ * Updates state via *tsp, pushes member's directory entry on *pathp.
+ * (Caller is responsible for popping it).
+ *
+ * Returns -
+ * -1 failure
+ * 0 success, member pushed on path
+ */
 RT_EXPORT extern int db_apply_state_from_memb(struct db_tree_state *tsp,
 					      struct db_full_path *pathp,
 					      const union tree *tp);
+						  
+/**
+ * Returns -
+ * -1 found member, failed to apply state
+ * 0 unable to find member 'cp'
+ * 1 state applied OK
+ */
 RT_EXPORT extern int db_apply_state_from_one_member(struct db_tree_state *tsp,
 						    struct db_full_path *pathp,
 						    const char *cp,
 						    int sofar,
 						    const union tree *tp);
+							
+/**
+ * The search stops on the first match.
+ *
+ * Returns -
+ * tp if found
+ * TREE_NULL if not found in this tree
+ */
 RT_EXPORT extern union tree *db_find_named_leaf(union tree *tp, const char *cp);
+
+/**
+ * The search stops on the first match.
+ *
+ * Returns -
+ * TREE_NULL if not found in this tree
+ * tp if found
+ * *side == 1 if leaf is on lhs.
+ * *side == 2 if leaf is on rhs.
+ *
+ */
 RT_EXPORT extern union tree *db_find_named_leafs_parent(int *side,
 							union tree *tp,
 							const char *cp);
@@ -4219,12 +5031,46 @@ RT_EXPORT extern void db_tree_del_lhs(union tree *tp,
 				      struct resource *resp);
 RT_EXPORT extern void db_tree_del_rhs(union tree *tp,
 				      struct resource *resp);
+
+/**
+ * Given a name presumably referenced in a OP_DB_LEAF node, delete
+ * that node, and the operation node that references it.  Not that
+ * this may not produce an equivalent tree, for example when rewriting
+ * (A - subtree) as (subtree), but that will be up to the caller/user
+ * to adjust.  This routine gets rid of exactly two nodes in the tree:
+ * leaf, and op.  Use some other routine if you wish to kill the
+ * entire rhs below "-" and "intersect" nodes.
+ *
+ * The two nodes deleted will have their memory freed.
+ *
+ * If the tree is a single OP_DB_LEAF node, the leaf is freed and
+ * *tp is set to NULL.
+ *
+ * Returns -
+ * -3 Internal error
+ * -2 Tree is empty
+ * -1 Unable to find OP_DB_LEAF node specified by 'cp'.
+ * 0 OK
+ */
 RT_EXPORT extern int db_tree_del_dbleaf(union tree **tp,
 					const char *cp,
 					struct resource *resp,
 					int nflag);
+
+/**
+ * Multiply on the left every matrix found in a DB_LEAF node in a
+ * tree.
+ */
 RT_EXPORT extern void db_tree_mul_dbleaf(union tree *tp,
 					 const mat_t mat);
+
+/**
+ * This routine traverses a combination (union tree) in LNR order and
+ * calls the provided function for each OP_DB_LEAF node.  Note that
+ * this routine does not go outside this one combination!!!!
+ *
+ * was previously named comb_functree()
+ */
 RT_EXPORT extern void db_tree_funcleaf(struct db_i		*dbip,
 				       struct rt_comb_internal	*comb,
 				       union tree		*comb_tree,
@@ -4233,14 +5079,53 @@ RT_EXPORT extern void db_tree_funcleaf(struct db_i		*dbip,
 				       genptr_t		user_ptr2,
 				       genptr_t		user_ptr3,
 				       genptr_t		user_ptr4);
+
+/**
+ * Starting with possible prior partial path and corresponding
+ * accumulated state, follow the path given by "new_path", updating
+ * *tsp and *total_path with full state information along the way.  In
+ * a better world, there would have been a "combined_tree_state" arg.
+ *
+ * Parameter 'depth' controls how much of 'new_path' is used:
+ *
+ * 0 use all of new_path
+ * >0 use only this many of the first elements of the path
+ * <0 use all but this many path elements.
+ *
+ * A much more complete version of rt_plookup() and pathHmat().  There
+ * is also a TCL interface.
+ *
+ * Returns -
+ * 0 success (plus *tsp is updated)
+ * -1 error (*tsp values are not useful)
+ */
 RT_EXPORT extern int db_follow_path(struct db_tree_state *tsp,
 				    struct db_full_path *total_path,
 				    const struct db_full_path *new_path,
 				    int noisy,
 				    long pdepth);
+					
+/**
+ * Follow the slash-separated path given by "cp", and update *tsp and
+ * *total_path with full state information along the way.
+ *
+ * A much more complete version of rt_plookup().
+ *
+ * Returns -
+ * 0 success (plus *tsp is updated)
+ * -1 error (*tsp values are not useful)
+ */
 RT_EXPORT extern int db_follow_path_for_state(struct db_tree_state *tsp,
 					      struct db_full_path *pathp,
 					      const char *orig_str, int noisy);
+
+/**
+ * Recurse down the tree, finding all the leaves (or finding just all
+ * the regions).
+ *
+ * ts_region_start_func() is called to permit regions to be skipped.
+ * It is not intended to be used for collecting state.
+ */
 RT_EXPORT extern union tree *db_recurse(struct db_tree_state	*tsp,
 					struct db_full_path *pathp,
 					struct combined_tree_state **region_start_statepp,
@@ -4248,13 +5133,47 @@ RT_EXPORT extern union tree *db_recurse(struct db_tree_state	*tsp,
 RT_EXPORT extern union tree *db_dup_subtree(const union tree *tp,
 					    struct resource *resp);
 RT_EXPORT extern void db_ck_tree(const union tree *tp);
+
+
+/**
+ * Release all storage associated with node 'tp', including children
+ * nodes.
+ */
 RT_EXPORT extern void db_free_tree(union tree *tp,
 				   struct resource *resp);
+
+
+/**
+ * Re-balance this node to make it left heavy.  Union operators will
+ * be moved to left side.  when finished "tp" MUST still point to top
+ * node of this subtree.
+ */
 RT_EXPORT extern void db_left_hvy_node(union tree *tp);
+
+
+/**
+ * If there are non-union operations in the tree, above the region
+ * nodes, then rewrite the tree so that the entire tree top is nothing
+ * but union operations, and any non-union operations are clustered
+ * down near the region nodes.
+ */
 RT_EXPORT extern void db_non_union_push(union tree *tp,
 					struct resource *resp);
+					
+
+/**
+ * Return a count of the number of "union tree" nodes below "tp",
+ * including tp.
+ */
 RT_EXPORT extern int db_count_tree_nodes(const union tree *tp,
 					 int count);
+
+
+/**
+ * Returns -
+ * 1 if this tree contains nothing but union operations.
+ * 0 if at least one subtraction or intersection op exists.
+ */
 RT_EXPORT extern int db_is_tree_all_unions(const union tree *tp);
 RT_EXPORT extern int db_count_subtree_regions(const union tree *tp);
 RT_EXPORT extern int db_tally_subtree_regions(union tree	*tp,
@@ -4262,6 +5181,60 @@ RT_EXPORT extern int db_tally_subtree_regions(union tree	*tp,
 					      int		cur,
 					      int		lim,
 					      struct resource *resp);
+						  
+/**
+ * This is the top interface to the "tree walker."
+ *
+ * Parameters:
+ *	rtip		rt_i structure to database (open with rt_dirbuild())
+ *	argc		# of tree-tops named
+ *	argv		names of tree-tops to process
+ *	init_state	Input parameter: initial state of the tree.
+ *			For example:  rt_initial_tree_state,
+ *			and mged_initial_tree_state.
+ *
+ * These parameters are pointers to callback routines.
+ * If NULL, they won't be called.
+ *
+ *	reg_start_func	Called at beginning of each region, before
+ *			visiting any nodes within the region.  Return
+ *			0 if region should be skipped without
+ *			recursing, otherwise non-zero.  DO NOT USE FOR
+ *			OTHER PURPOSES!  For example, can be used to
+ *			quickly skip air regions.
+ *
+ *	reg_end_func    Called after all nodes within a region have been
+ *			recursively processed by leaf_func.  If it
+ *			wants to retain 'curtree' then it may steal
+ *			that pointer and return TREE_NULL.  If it
+ *			wants us to clean up some or all of that tree,
+ *			then it returns a non-null (union tree *)
+ *			pointer, and that tree is safely freed in a
+ *			non-parallel section before we return.
+ *
+ *	leaf_func	Function to process a leaf node.  It is actually
+ *			invoked from db_recurse() from
+ *			_db_walk_subtree().  Returns (union tree *)
+ *			representing the leaf, or TREE_NULL if leaf
+ *			does not exist or has an error.
+ *
+ *
+ * This routine will employ multiple CPUs if asked, but is not
+ * multiply-parallel-recursive.  Call this routine with ncpu > 1 from
+ * serial code only.  When called from within an existing thread, ncpu
+ * must be 1.
+ *
+ * If ncpu > 1, the caller is responsible for making sure that
+ * rt_g.rtg_parallel is non-zero, and that the bu_semaphore_init()
+ * functions has been performed, first.
+ *
+ * Plucks per-cpu resources out of rtip->rti_resources[].  They need
+ * to have been initialized first.
+ *
+ * Returns -
+ * -1 Failure to prepare even a single sub-tree
+ * 0 OK
+ */
 RT_EXPORT extern int db_walk_tree(struct db_i *dbip,
 				  int argc,
 				  const char **argv,
@@ -4280,28 +5253,98 @@ RT_EXPORT extern int db_walk_tree(struct db_i *dbip,
 							    struct rt_db_internal * /*ip*/,
 							    genptr_t client_data),
 				  genptr_t client_data);
+								
+/**
+ * Returns -
+ * 1 OK, path matrix written into 'mat'.
+ * 0 FAIL
+ *
+ * Called in librt/db_tree.c, mged/dodraw.c, and mged/animedit.c
+ */
 RT_EXPORT extern int db_path_to_mat(struct db_i		*dbip,
 				    struct db_full_path	*pathp,
 				    mat_t			mat,		/* result */
 				    int			depth,		/* number of arcs */
 				    struct resource		*resp);
+					
+/**
+ * 'arc' may be a null pointer, signifying an identity matrix.
+ * 'materp' may be a null pointer, signifying that the region has
+ * already been finalized above this point in the tree.
+ */
 RT_EXPORT extern void db_apply_anims(struct db_full_path *pathp,
 				     struct directory *dp,
 				     mat_t stck,
 				     mat_t arc,
 				     struct mater_info *materp);
+					 
+/**
+ * Given the name of a region, return the matrix which maps model
+ * coordinates into "region" coordinates.
+ *
+ * Returns:
+ * 0 OK
+ * <0 Failure
+ */
 RT_EXPORT extern int db_region_mat(mat_t		m,		/* result */
 				   struct db_i	*dbip,
 				   const char	*name,
 				   struct resource *resp);
 
+				   
+/**
+ * XXX given that this routine depends on rtip, it should be called
+ * XXX rt_shader_mat().
+ *
+ * Given a region, return a matrix which maps model coordinates into
+ * region "shader space".  This is a space where points in the model
+ * within the bounding box of the region are mapped into "region"
+ * space (the coordinate system in which the region is defined).  The
+ * area occupied by the region's bounding box (in region coordinates)
+ * are then mapped into the unit cube.  This unit cube defines "shader
+ * space".
+ *
+ * Returns:
+ * 0 OK
+ * <0 Failure
+ */
 RT_EXPORT extern int rt_shader_mat(mat_t			model_to_shader,	/* result */
 				   const struct rt_i	*rtip,
 				   const struct region	*rp,
 				   point_t			p_min,	/* input/output: shader/region min point */
 				   point_t			p_max,	/* input/output: shader/region max point */
 				   struct resource		*resp);
+				   
+/**
+ * Fills a bu_vls with a representation of the given tree appropriate
+ * for processing by Tcl scripts.
+ *
+ * A tree 't' is represented in the following manner:
+ *
+ * t := { l dbobjname { mat } }
+ *	   | { l dbobjname }
+ *	   | { u t1 t2 }
+ * 	   | { n t1 t2 }
+ *	   | { - t1 t2 }
+ *	   | { ^ t1 t2 }
+ *         | { ! t1 }
+ *	   | { G t1 }
+ *	   | { X t1 }
+ *	   | { N }
+ *	   | {}
+ *
+ * where 'dbobjname' is a string containing the name of a database object,
+ *       'mat'       is the matrix preceding a leaf,
+ *       't1', 't2'  are trees (recursively defined).
+ *
+ * Notice that in most cases, this tree will be grossly unbalanced.
+ */
 RT_EXPORT extern int db_tree_list(struct bu_vls *vls, const union tree *tp);
+
+/**
+ * Take a TCL-style string description of a binary tree, as produced
+ * by db_tree_list(), and reconstruct the in-memory form of that tree.
+ */
 RT_EXPORT extern union tree *db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp);
 
 
@@ -4312,20 +5355,63 @@ RT_EXPORT extern union tree *db_tree_parse(struct bu_vls *vls, const char *str, 
  */
 RT_EXPORT extern struct rt_i *rt_dirbuild(const char *filename, char *buf, int len);
 
+/**
+ * Get an object from the database, and convert it into its internal
+ * representation.
+ *
+ * Returns -
+ * <0 On error
+ * id On success.
+ */
 RT_EXPORT extern int rt_db_get_internal(struct rt_db_internal	*ip,
 					const struct directory	*dp,
 					const struct db_i	*dbip,
 					const mat_t		mat,
 					struct resource		*resp);
+
+/**
+ * Convert the internal representation of a solid to the external one,
+ * and write it into the database.  On success only, the internal
+ * representation is freed.
+ *
+ * Returns -
+ * <0 error
+ * 0 success
+ */
 RT_EXPORT extern int rt_db_put_internal(struct directory	*dp,
 					struct db_i		*dbip,
 					struct rt_db_internal	*ip,
 					struct resource		*resp);
+
+/**
+ * Put an object in internal format out onto a file in external
+ * format.  Used by LIBWDB.
+ *
+ * Can't really require a dbip parameter, as many callers won't have one.
+ *
+ * THIS ROUTINE ONLY SUPPORTS WRITING V4 GEOMETRY.
+ *
+ * Returns -
+ * 0 OK
+ * <0 error
+ */
+int
 RT_EXPORT extern int rt_fwrite_internal(FILE *fp,
 					const char *name,
 					const struct rt_db_internal *ip,
 					double conv2mm);
 RT_EXPORT extern void rt_db_free_internal(struct rt_db_internal *ip);
+
+
+
+/**
+ * Convert an object name to a rt_db_internal pointer
+ *
+ * Looks up the named object in the directory of the specified model,
+ * obtaining a directory pointer.  Then gets that object from the
+ * database and constructs its internal representation.  Returns
+ * ID_NULL on error, otherwise returns the type of the object.
+ */
 RT_EXPORT extern int rt_db_lookup_internal(struct db_i *dbip,
 					   const char *obj_name,
 					   struct directory **dpp,
@@ -4339,7 +5425,13 @@ RT_EXPORT extern int rt_db_lookup_internal(struct db_i *dbip,
 RT_EXPORT extern void rt_optim_tree(union tree *tp,
 				    struct resource *resp);
 
-/* db_walk.c */
+/**
+ * This subroutine is called for a no-frills tree-walk, with the
+ * provided subroutines being called at every combination and leaf
+ * (solid) node, respectively.
+ *
+ * This routine is recursive, so no variables may be declared static.
+ */
 RT_EXPORT extern void db_functree(struct db_i *dbip,
 				  struct directory *dp,
 				  void (*comb_func)(struct db_i *,
@@ -6474,15 +7566,39 @@ RT_EXPORT extern long nmg_find_max_index(const struct model *m);
 /* From nmg_rt.c */
 
 /* From dspline.c */
+
+/**
+ * Initialize a spline matrix for a particular spline type.
+ */
 RT_EXPORT extern void rt_dspline_matrix(mat_t m, const char *type,
 					const double	tension,
 					const double	bias);
+
+/**
+ * m		spline matrix (see rt_dspline4_matrix)
+ * a, b, c, d	knot values
+ * alpha:	0..1	interpolation point
+ *
+ * Evaluate a 1-dimensional spline at a point "alpha" on knot values
+ * a, b, c, d.
+ */
 RT_EXPORT extern double rt_dspline4(mat_t m,
 				    double a,
 				    double b,
 				    double c,
 				    double d,
 				    double alpha);
+
+/**
+ * pt		vector to receive the interpolation result
+ * m		spline matrix (see rt_dspline4_matrix)
+ * a, b, c, d	knot values
+ * alpha:	0..1 interpolation point
+ *
+ * Evaluate a spline at a point "alpha" between knot pts b & c
+ * The knots and result are all vectors with "depth" values (length).
+ *
+ */
 RT_EXPORT extern void rt_dspline4v(double *pt,
 				   const mat_t m,
 				   const double *a,
@@ -6491,6 +7607,32 @@ RT_EXPORT extern void rt_dspline4v(double *pt,
 				   const double *d,
 				   const int depth,
 				   const double alpha);
+
+/**
+ * Interpolate n knot vectors over the range 0..1
+ *
+ * "knots" is an array of "n" knot vectors.  Each vector consists of
+ * "depth" values.  They define an "n" dimensional surface which is
+ * evaluated at the single point "alpha".  The evaluated point is
+ * returned in "r"
+ *
+ * Example use:
+ *
+ * double result[MAX_DEPTH], knots[MAX_DEPTH*MAX_KNOTS];
+ * mat_t m;
+ * int knot_count, depth;
+ *
+ * knots = bu_malloc(sizeof(double) * knot_length * knot_count);
+ * result = bu_malloc(sizeof(double) * knot_length);
+ *
+ * rt_dspline4_matrix(m, "Catmull", (double *)NULL, 0.0);
+ *
+ * for (i=0; i < knot_count; i++)
+ *   get a knot(knots, i, knot_length);
+ *
+ * rt_dspline_n(result, m, knots, knot_count, knot_length, alpha);
+ *
+ */
 RT_EXPORT extern void rt_dspline_n(double *r,
 				   const mat_t m,
 				   const double *knots,

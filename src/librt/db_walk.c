@@ -196,14 +196,6 @@ db_functree_subtree(struct db_i *dbip,
     }
 }
 
-
-/**
- * This subroutine is called for a no-frills tree-walk, with the
- * provided subroutines being called at every combination and leaf
- * (solid) node, respectively.
- *
- * This routine is recursive, so no variables may be declared static.
- */
 void
 db_functree(struct db_i *dbip,
 	    struct directory *dp,

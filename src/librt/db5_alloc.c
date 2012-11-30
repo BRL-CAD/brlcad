@@ -36,19 +36,6 @@
 #include "db5.h"
 #include "raytrace.h"
 
-
-/**
- * Create a v5 database "free" object of the specified size, and place
- * it at the indicated location in the database.
- *
- * There are two interesting cases:
- * - The free object is "small".  Just write it all at once.
- * - The free object is "large".  Write header and trailer
- * separately
- *
- * @return 0 OK
- * @return -1 Fail.  This is a horrible error.
- */
 int
 db5_write_free(struct db_i *dbip, struct directory *dp, size_t length)
 {
@@ -105,27 +92,7 @@ db5_write_free(struct db_i *dbip, struct directory *dp, size_t length)
 }
 
 
-/**
- * Change the size of a v5 database object.
- *
- * If the object is getting smaller, break it into two pieces, and
- * write out free objects for both.  The caller is expected to
- * re-write new data on the first one.
- *
- * If the object is getting larger, seek a suitable "hole" large
- * enough to hold it, throwing back any surplus, properly marked.
- *
- * If the object is getting larger and there is no suitable "hole" in
- * the database, extend the file, write a free object in the new
- * space, and write a free object in the old space.
- *
- * There is no point to trying to extend in place, that would require
- * two searches through the memory map, and doesn't save any disk I/O.
- *
- * Returns -
- * 0 OK
- * -1 Failure
- */
+
 int
 db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 {
