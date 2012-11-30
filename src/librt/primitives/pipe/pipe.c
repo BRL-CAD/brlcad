@@ -2186,7 +2186,7 @@ draw_pipe_connect_circular_segs(
     struct pipe_circle arc_circle;
     struct pipe_orientation end_orient;
     point_t bend_center, bend_start, bend_end, pipe_pt, arc_start, arc_end;
-    vect_t bend_v1, bend_norm, center_to_start;
+    vect_t bend_norm, center_to_start;
     vect_t pipe_axis_a, pipe_axis_b, pipe_r, end_pipe_r;
     fastf_t pipe_radius, bend_circle_offset, radian_step, radian;
 
@@ -2194,7 +2194,6 @@ draw_pipe_connect_circular_segs(
 
     /* short names */
     VMOVE(bend_center, bend.bend_circle.center);
-    VMOVE(bend_v1, bend.bend_circle.orient.v1);
     VMOVE(bend_norm, bend.bend_normal);
     VMOVE(bend_start, bend.bend_start);
     VMOVE(bend_end, bend.bend_end);
@@ -2256,13 +2255,12 @@ static void
 draw_pipe_circular_seg(struct bu_list *vhead, struct pipe_segment *seg)
 {
     struct pipe_bend bend;
-    struct wdb_pipept *prevpt, *curpt, *nextpt, startpt, endpt;
+    struct wdb_pipept *prevpt, *curpt, startpt, endpt;
 
     bend = pipe_seg_bend(seg);
 
     curpt = seg->cur;
     prevpt = BU_LIST_PREV(wdb_pipept, &curpt->l);
-    nextpt = BU_LIST_NEXT(wdb_pipept, &curpt->l);
 
     /* draw linear segment to start of bend */
     startpt = *prevpt;
@@ -2297,13 +2295,12 @@ draw_pipe_circular_seg_adaptive(
 {
     int num_segments;
     struct pipe_bend bend;
-    struct wdb_pipept *prevpt, *curpt, *nextpt, startpt, endpt;
+    struct wdb_pipept *prevpt, *curpt, startpt, endpt;
 
     bend = pipe_seg_bend(seg);
 
     curpt = seg->cur;
     prevpt = BU_LIST_PREV(wdb_pipept, &curpt->l);
-    nextpt = BU_LIST_NEXT(wdb_pipept, &curpt->l);
 
     /* draw linear segment to start of bend */
     startpt = *prevpt;
