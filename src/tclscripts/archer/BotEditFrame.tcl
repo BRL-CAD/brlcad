@@ -487,9 +487,20 @@
 ::itcl::body BotEditFrame::buildUpperPanel {} {
     set parent [$this childsite]
 
+    itk_component add botType {
+	::ttk::label $parent.bottype \
+	    -text "Bot:" \
+	    -anchor e
+    } {}
+    itk_component add botName {
+	::ttk::label $parent.botname \
+	    -textvariable [::itcl::scope itk_option(-geometryObject)] \
+	    -anchor w
+    } {}
+
     itk_component add vertTabLF {
 	::ttk::labelframe $parent.vertTabLF \
-	    -text "Bot Vertices" \
+	    -text "Vertices" \
 	    -labelanchor n
     } {}
 
@@ -511,7 +522,7 @@
 
     itk_component add edgeTabLF {
 	::ttk::labelframe $parent.edgeTabLF \
-	    -text "Bot Edges" \
+	    -text "Edges" \
 	    -labelanchor n
     } {}
 
@@ -533,7 +544,7 @@
 
     itk_component add faceTabLF {
 	::ttk::labelframe $parent.faceTabLF \
-	    -text "Bot Faces" \
+	    -text "Faces" \
 	    -labelanchor n
     } {}
 
@@ -563,16 +574,26 @@
     pack $itk_component(faceTab) -expand yes -fill both
 
     set row 0
-    grid $itk_component(vertTabLF) -row $row -sticky nsew
+    grid $itk_component(botType) \
+	-row $row \
+	-column 0 \
+	-sticky nsew
+    grid $itk_component(botName) \
+	-row $row \
+	-column 1 \
+	-columnspan 3 \
+	-sticky nsew
+    incr row
+    grid $itk_component(vertTabLF) -row $row -sticky nsew -columnspan 2
     grid rowconfigure $parent $row -weight 1
     incr row
-    grid $itk_component(edgeTabLF) -row $row -sticky nsew
+    grid $itk_component(edgeTabLF) -row $row -sticky nsew -columnspan 2
     grid rowconfigure $parent $row -weight 1
     incr row
-    grid $itk_component(faceTabLF) -row $row -sticky nsew
+    grid $itk_component(faceTabLF) -row $row -sticky nsew -columnspan 2
     grid rowconfigure $parent $row -weight 1
 
-    grid columnconfigure $parent 0 -weight 1
+    grid columnconfigure $parent 1 -weight 1
 }
 
 
