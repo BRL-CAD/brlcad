@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file libwdb/mater.c
  *
  * Interface for writing region-id-based color tables to the database.
@@ -38,10 +39,7 @@
 #include "wdb.h"
 #include "mater.h"
 
-/**
- * Given that the color table has been built up by successive calls to
- * rt_color_addrec(), write it into the database.
- */
+
 int
 mk_write_color_table(struct rt_wdb *ofp)
 {

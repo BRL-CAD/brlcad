@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file libwdb/cline.c
  *
  * Support for cline solids (kludges from FASTGEN)
@@ -35,6 +36,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
+
 
 int
 mk_cline(

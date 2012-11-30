@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file libwdb/wdb.c
  *
  * Library for writing MGED databases from arbitrary procedures.
@@ -50,12 +51,6 @@
 #include "wdb.h"
 
 
-/**
- * M K _ H A L F
- *
- * Make a halfspace.  Specified by distance from origin, and outward
- * pointing normal vector.
- */
 int
 mk_half(struct rt_wdb *wdbp, const char *name, const fastf_t *norm, fastf_t d)
 {
@@ -70,12 +65,6 @@ mk_half(struct rt_wdb *wdbp, const char *name, const fastf_t *norm, fastf_t d)
 }
 
 
-/**
- * M K _ G R I P
- *
- * Make a grip pseudo solid.  Specified by a center, normal vector,
- * and magnitude.
- */
 int
 mk_grip(
     struct rt_wdb *wdbp,
@@ -96,11 +85,6 @@ mk_grip(
 }
 
 
-/**
- * M K _ R P P
- *
- * Make a right parallelepiped.  Specified by minXYZ, maxXYZ.
- */
 int
 mk_rpp(struct rt_wdb *wdbp, const char *name, const fastf_t *min, const fastf_t *max)
 {
@@ -120,14 +104,6 @@ mk_rpp(struct rt_wdb *wdbp, const char *name, const fastf_t *min, const fastf_t 
 }
 
 
-/**
- * M K _ W E D G E
- *
- * Makes a right angular wedge given a starting vertex located in the,
- * lower left corner, an x and a z direction vector, x, y, and z
- * lengths, and an x length for the top.  The y direction vector is x
- * cross z.
- */
 int
 mk_wedge(struct rt_wdb *wdbp, const char *name, const fastf_t *vert, const fastf_t *xdirv, const fastf_t *zdirv, fastf_t xlen, fastf_t ylen, fastf_t zlen, fastf_t x_top_len)
 {
@@ -255,16 +231,6 @@ mk_arb7(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
 }
 
 
-/**
- * M K _ A R B 8
- *
- * All plates with 4 points must be co-planar.  If there are
- * degeneracies (i.e., all 8 vertices are not distinct), then certain
- * requirements must be met.  If we think of the ARB8 as having a top
- * and a bottom plate, the first four points listed must lie on one
- * plate, and the second four points listed must lie on the other
- * plate.
- */
 int
 mk_arb8(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
 
@@ -284,11 +250,6 @@ mk_arb8(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
 }
 
 
-/**
- * M K _ S P H
- *
- * Make a sphere with the given center point and radius.
- */
 int
 mk_sph(struct rt_wdb *wdbp, const char *name, const fastf_t *center, fastf_t radius)
 {
@@ -305,13 +266,6 @@ mk_sph(struct rt_wdb *wdbp, const char *name, const fastf_t *center, fastf_t rad
 }
 
 
-/**
- * M K _ E L L
- *
- * Make an ellipsoid at the given center point with 3 perp. radius
- * vectors.  The eccentricity of the ellipsoid is controlled by the
- * relative lengths of the three radius vectors.
- */
 int
 mk_ell(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf_t *a, const fastf_t *b, const fastf_t *c)
 {
@@ -328,13 +282,6 @@ mk_ell(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf
 }
 
 
-/**
- * M K _ H Y P
- *
- * Make a hyperbolid at the given center point with a vertex, height
- * vector, A vector, magnitude of the B vector, and neck to base
- * ratio.
- */
 int
 mk_hyp(struct rt_wdb *wdbp, const char *name, const point_t vertex, const vect_t height_vector, const vect_t vectA, fastf_t magB, fastf_t base_neck_ratio)
 {
@@ -385,12 +332,6 @@ mk_hyp(struct rt_wdb *wdbp, const char *name, const point_t vertex, const vect_t
 }
 
 
-/**
- * M K _ T O R
- *
- * Make a torus.  Specify center, normal, r1: distance from center
- * point to center of solid part, r2: radius of solid part.
- */
 int
 mk_tor(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf_t *inorm, double r1, double r2)
 {
@@ -407,11 +348,6 @@ mk_tor(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf
 }
 
 
-/**
- * M K _ R C C
- *
- * Make a Right Circular Cylinder (special case of the TGC).
- */
 int
 mk_rcc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *height, fastf_t radius)
 {
@@ -433,11 +369,6 @@ mk_rcc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t
 }
 
 
-/**
- * M K _ T G C
- *
- * Make a Truncated General Cylinder.
- */
 int
 mk_tgc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *height, const fastf_t *a, const fastf_t *b, const fastf_t *c, const fastf_t *d)
 {
@@ -456,13 +387,6 @@ mk_tgc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t
 }
 
 
-/**
- * M K _ C O N E
- *
- * Makes a right circular cone given the center point of the base
- * circle, a direction vector, a scalar height, and the radii at each
- * end of the cone.
- */
 int
 mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *dirv, fastf_t height, fastf_t rad1, fastf_t rad2)
 {
@@ -494,13 +418,6 @@ mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_
 }
 
 
-/**
- * M K _ T R C _ H
- *
- * Make a truncated right cylinder, with base and height.  Not just
- * called mk_trc() to avoid conflict with a previous routine of that
- * name with different calling sequence.
- */
 int
 mk_trc_h(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *height, fastf_t radbase, fastf_t radtop)
 {
@@ -525,11 +442,6 @@ mk_trc_h(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf
 }
 
 
-/**
- * M K _ T R C _ T O P
- *
- * Convenience wrapper for mk_trc_h().
- */
 int
 mk_trc_top(struct rt_wdb *wdbp, const char *name, const fastf_t *ibase, const fastf_t *itop, fastf_t radbase, fastf_t radtop)
 {
@@ -540,13 +452,6 @@ mk_trc_top(struct rt_wdb *wdbp, const char *name, const fastf_t *ibase, const fa
 }
 
 
-/**
- * M K _ R P C
- *
- * Makes a right parabolic cylinder given the origin, or main vertex,
- * a height vector, a breadth vector (B . H must be 0), and a scalar
- * rectangular half-width (for the top of the rpc).
- */
 int
 mk_rpc(
     struct rt_wdb *wdbp,
@@ -570,15 +475,6 @@ mk_rpc(
 }
 
 
-/**
- * M K _ R H C
- *
- * Makes a right hyperbolic cylinder given the origin, or main vertex,
- * a height vector, a breadth vector (B . H must be 0), a scalar
- * rectangular half-width (for the top of the rpc), and the scalar
- * distance from the tip of the hyperbola to the intersection of the
- * asymptotes.
- */
 int
 mk_rhc(
     struct rt_wdb *wdbp,
@@ -604,13 +500,6 @@ mk_rhc(
 }
 
 
-/**
- * M K _ E P A
- *
- * Makes an elliptical paraboloid given the origin, a height vector H,
- * a unit vector A along the semi-major axis (A . H must equal 0), and
- * the scalar lengths, r1 and r2, of the semi-major and -minor axes.
- */
 int
 mk_epa(
     struct rt_wdb *wdbp,
@@ -636,15 +525,6 @@ mk_epa(
 }
 
 
-/**
- * M K _ E H Y
- *
- * Makes an elliptical hyperboloid given the origin, a height vector
- * H, a unit vector A along the semi-major axis (A . H must equal 0),
- * the scalar lengths, r1 and r2, of the semi-major and -minor axes,
- * and the distance c between the tip of the hyperboloid and the
- * vertex of the asymptotic cone.
- */
 int
 mk_ehy(
     struct rt_wdb *wdbp,
@@ -672,15 +552,6 @@ mk_ehy(
 }
 
 
-/**
- * M K _ E T O
- *
- * Makes an elliptical torus given the origin, a plane normal vector
- * N, a vector C along the semi-major axis of the elliptical
- * cross-section, the scalar lengths r and rd, of the radius of
- * revolution and length of semi-minor axis of the elliptical cross
- * section.
- */
 int
 mk_eto(
     struct rt_wdb *wdbp,
@@ -735,19 +606,6 @@ mk_metaball(
 }
 
 
-/**
- * M K _ B I N U N I F
- *
- * Make a uniform binary data object from an array or a data file.
- * Read 'count' values from 'data'.  If 'data_type' is a file, 'count'
- * may be used to only read a subset of a file's contents.  If 'data'
- * is already an in-memory buffer of memory, 'count' values will be
- * copied (which is count * sizeof(data_type) bytes).
- *
- * Files can use a non-positive 'count' to mean "read the whole file",
- * pre-loaded data, however, must provide a positive 'count' otherwise
- * an empty binunif will be created.
- */
 int
 mk_binunif (
     struct rt_wdb *wdbp,

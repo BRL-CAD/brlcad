@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file libwdb/pipe.c
  *
  * Support for particles and pipes.  Library for writing geometry
@@ -30,6 +31,7 @@
  * Return codes of 0 are OK, -1 signal an error.
  *
  */
+
 
 #include "common.h"
 
@@ -45,13 +47,6 @@
 #include "wdb.h"
 
 
-/**
- * M K _ P A R T I C L E
- *
- * Returns -
- * 0 OK
- * <0 failure
- */
 int
 mk_particle(struct rt_wdb *fp, const char *name, fastf_t *vertex, fastf_t *height, double vradius, double hradius)
 {
@@ -69,16 +64,6 @@ mk_particle(struct rt_wdb *fp, const char *name, fastf_t *vertex, fastf_t *heigh
 }
 
 
-/**
- * M K _ P I P E
- *
- * Note that the linked list of pipe segments headed by 'headp' must
- * be freed by the caller.  mk_pipe_free() can be used.
- *
- * Returns -
- * 0 OK
- * <0 failure
- */
 int
 mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
 {
@@ -99,12 +84,6 @@ mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
 }
 
 
-/**
- * M K _ P I P E _ F R E E
- *
- * Release the storage from a list of pipe segments.  The head is left
- * in initialized state (i.e., forward & back point to head).
- */
 void
 mk_pipe_free(struct bu_list *headp)
 {
@@ -117,12 +96,6 @@ mk_pipe_free(struct bu_list *headp)
 }
 
 
-/**
- * M K _ A D D _ P I P E _ P T
- *
- * Add another pipe segment to the linked list of pipe segments.
- *
- */
 void
 mk_add_pipe_pt(
     struct bu_list *headp,
@@ -145,11 +118,6 @@ mk_add_pipe_pt(
 }
 
 
-/**
- * M K _ P I P E _ I N I T
- *
- * initialize a linked list of pipe segments with the first segment
- */
 void
 mk_pipe_init(struct bu_list *headp)
 {

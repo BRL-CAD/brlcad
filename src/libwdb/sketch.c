@@ -17,7 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libwdb/skt.c
+
+/** @file libwdb/sketch.c
  *
  * Support for sketches
  *

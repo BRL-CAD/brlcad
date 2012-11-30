@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file libwdb/bot.c
  *
  * Support for BOT solid (Bag O'Triangles)

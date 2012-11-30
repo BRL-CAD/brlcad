@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file brep.cpp
  *
  * Library for writing BREP objects into
@@ -38,11 +39,6 @@
 #include "wdb.h"
 
 
-/*
- * M K _ B R E P
- *
- * Create a brep in the geometry file.
- */
 int
 mk_brep(struct rt_wdb* file, const char* name, ON_Brep* brep)
 {

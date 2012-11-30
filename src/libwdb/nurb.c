@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file libwdb/nurb.c
  *
  * Library for writing NURB objects into
@@ -40,12 +41,7 @@
 #include "rtgeom.h"
 #include "wdb.h"
 
-/**
- * M K _ B S P L I N E
- *
- * Output an array of B-spline (NURBS) surfaces which comprise a
- * solid.  The surface is freed when it is written.
- */
+
 int
 mk_bspline(struct rt_wdb *wdbp, const char *name, struct face_g_snurb **surfs)
 {

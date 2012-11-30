@@ -17,6 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+
 /** @addtogroup wdb */
 /** @{ */
 /** @file wdb.h
@@ -29,6 +31,7 @@
  *	Rather than calling fopen(), call wdb_fopen();
  *
  */
+
 
 #ifndef __WDB_H__
 #define __WDB_H__
@@ -59,7 +62,7 @@ __BEGIN_DECLS
  *  Macros for providing function prototypes, regardless of whether
  *  the compiler understands them or not.
  *  It is vital that the argument list given for "args" be enclosed
- *  in parens.
+ *  in parentheses.
  */
 #define WDB_EXTERN(type_and_name, args) extern type_and_name args
 #define WDB_ARGS(args) args
@@ -73,6 +76,7 @@ struct wmember {
     mat_t wm_mat;	/**< @brief  FIXME: Should be a matp_t */
     char *wm_name;
 };
+
 #define WMEMBER_INIT_ZERO { BU_LIST_INIT_ZERO, 0, MAT_INIT_IDN, NULL }
 #define WMEMBER_INIT(x) { BU_LIST_INIT(&((x)->l)); (x)->wm_op = 0; MAT_IDN((x)->wm_mat); (x)->wm_name = NULL; }
 #define WMEMBER_NULL	((struct wmember *)0)
@@ -113,46 +117,176 @@ WDB_EXPORT int mk_id_editunits(
     const char *title,
     double local2mm );
 
+
+/*----------------------------------------------------------------------*/
+
+
+/* libwdb/wdb.c */
+
+/** 
+ * Library for writing MGED databases from arbitrary procedures.
+ * Assumes that some of the structure of such databases are known by
+ * the calling routines.
+ *
+ * It is expected that this library will grow as experience is gained.
+ * Routines for writing every permissible solid do not yet exist.
+ *
+ * Note that routines which are passed point_t or vect_t or mat_t
+ * parameters (which are call-by-address) must be VERY careful to
+ * leave those parameters unmodified (e.g., by scaling), so that the
+ * calling routine is not surprised.
+ *
+ * Return codes of 0 are OK, -1 signal an error.
+ *
+ */
+
+
 /*
  *  Solid conversion routines
  */
-/* libwdb/wdb.c */
+
+/**
+ *
+ * Make a halfspace.  Specified by distance from origin, and outward
+ * pointing normal vector.
+ * 
+ */
 WDB_EXPORT WDB_EXTERN(int mk_half, (struct rt_wdb *fp, const char *name, const vect_t norm, fastf_t d) );
+
+/**
+ *
+ * Make a grip pseudo solid.  Specified by a center, normal vector,
+ * and magnitude.
+ * 
+ */
 WDB_EXPORT int mk_grip(
     struct rt_wdb *wdbp,
     const char *name,
     const point_t center,
     const vect_t normal,
     const fastf_t magnitude );
+    
+/**
+ *
+ * Make a right parallelepiped.  Specified by minXYZ, maxXYZ.
+ * 
+ */
 WDB_EXPORT WDB_EXTERN(int mk_rpp, (struct rt_wdb *fp, const char *name, const point_t min,
 				   const point_t max) );
+				   
+/**
+ *
+ * Makes a right angular wedge given a starting vertex located in the,
+ * lower left corner, an x and a z direction vector, x, y, and z
+ * lengths, and an x length for the top.  The y direction vector is x
+ * cross z.
+ * 
+ */
 WDB_EXPORT WDB_EXTERN(int mk_wedge, (struct rt_wdb *fp, const char *name, const point_t vert,
 				     const vect_t xdirv, const vect_t zdirv,
 				     fastf_t xlen, fastf_t ylen, fastf_t zlen,
 				     fastf_t x_top_len) );
+				     
 WDB_EXPORT WDB_EXTERN(int mk_arb4, (struct rt_wdb *fp, const char *name, const fastf_t *pts4) );
+
 WDB_EXPORT WDB_EXTERN(int mk_arb5, (struct rt_wdb *fp, const char *name, const fastf_t *pts5) );
+
 WDB_EXPORT WDB_EXTERN(int mk_arb6, (struct rt_wdb *fp, const char *name, const fastf_t *pts6) );
+
 WDB_EXPORT WDB_EXTERN(int mk_arb7, (struct rt_wdb *fp, const char *name, const fastf_t *pts7) );
+
+/**
+ *
+ * All plates with 4 points must be co-planar.  If there are
+ * degeneracies (i.e., all 8 vertices are not distinct), then certain
+ * requirements must be met.  If we think of the ARB8 as having a top
+ * and a bottom plate, the first four points listed must lie on one
+ * plate, and the second four points listed must lie on the other
+ * plate.
+ * 
+ */
 WDB_EXPORT WDB_EXTERN(int mk_arb8, (struct rt_wdb *fp, const char *name, const fastf_t *pts8) );
+
+/**
+ *
+ * Make a sphere with the given center point and radius.
+ * 
+ */
 WDB_EXPORT WDB_EXTERN(int mk_sph, (struct rt_wdb *fp, const char *name, const point_t center,
 				   fastf_t radius) );
+				   
+/**
+ * 
+ * Make an ellipsoid at the given center point with 3 perp. radius
+ * vectors.  The eccentricity of the ellipsoid is controlled by the
+ * relative lengths of the three radius vectors.
+ * 
+ */
 WDB_EXPORT WDB_EXTERN(int mk_ell, (struct rt_wdb *fp, const char *name, const point_t center,
 				   const vect_t a, const vect_t b, const vect_t c) );
+				   
+/**
+ * 
+ * Make a torus.  Specify center, normal, r1: distance from center
+ * point to center of solid part, r2: radius of solid part.
+ * 
+ */
 WDB_EXPORT WDB_EXTERN(int mk_tor, (struct rt_wdb *fp, const char *name, const point_t center,
 				   const vect_t inorm, double r1, double r2) );
+				   
+/**
+ *
+ * Make a Right Circular Cylinder (special case of the TGC).
+ * 
+ */
 WDB_EXPORT WDB_EXTERN(int mk_rcc, (struct rt_wdb *fp, const char *name, const point_t base,
 				   const vect_t height, fastf_t radius) );
+				   
+/**
+ *
+ * Make a Truncated General Cylinder.
+ * 
+ */
 WDB_EXPORT WDB_EXTERN(int mk_tgc, (struct rt_wdb *fp, const char *name, const point_t base,
 				   const vect_t height, const vect_t a, const vect_t b,
 				   const vect_t c, const vect_t d) );
+				   
+/**
+ *
+ * Makes a right circular cone given the center point of the base
+ * circle, a direction vector, a scalar height, and the radii at each
+ * end of the cone.
+ * 
+ */
 WDB_EXPORT WDB_EXTERN(int mk_cone, (struct rt_wdb *fp, const char *name, const point_t base,
 				    const vect_t dirv, fastf_t height, fastf_t rad1,
 				    fastf_t rad2) );
+				    
+/**
+ *
+ * Make a truncated right cylinder, with base and height.  Not just
+ * called mk_trc() to avoid conflict with a previous routine of that
+ * name with different calling sequence.
+ * 
+ */
 WDB_EXPORT WDB_EXTERN(int mk_trc_h, (struct rt_wdb *fp, const char *name, const point_t base,
 				     const vect_t height, fastf_t radbase, fastf_t radtop) );
+				     
+/**
+ *
+ * Convenience wrapper for mk_trc_h().
+ * 
+ */
 WDB_EXPORT WDB_EXTERN(int mk_trc_top, (struct rt_wdb *fp, const char *name, const point_t ibase,
 				       const point_t itop, fastf_t radbase, fastf_t radtop) );
+				       
+/**
+ *
+ * Makes a right parabolic cylinder given the origin, or main vertex,
+ * a height vector, a breadth vector (B . H must be 0), and a scalar
+ * rectangular half-width (for the top of the rpc).
+ *
+ */
 WDB_EXPORT int mk_rpc(
     struct rt_wdb *wdbp,
     const char *name,
@@ -160,6 +294,16 @@ WDB_EXPORT int mk_rpc(
     const vect_t height,
     const vect_t breadth,
     double half_w );
+    
+/**
+ *
+ * Makes a right hyperbolic cylinder given the origin, or main vertex,
+ * a height vector, a breadth vector (B . H must be 0), a scalar
+ * rectangular half-width (for the top of the rpc), and the scalar
+ * distance from the tip of the hyperbola to the intersection of the
+ * asymptotes.
+ * 
+ */
 WDB_EXPORT int mk_rhc(
     struct rt_wdb *wdbp,
     const char *name,
@@ -168,6 +312,14 @@ WDB_EXPORT int mk_rhc(
     const vect_t breadth,
     fastf_t	half_w,
     fastf_t asymp );
+    
+/**
+ *
+ * Makes an elliptical paraboloid given the origin, a height vector H,
+ * a unit vector A along the semi-major axis (A . H must equal 0), and
+ * the scalar lengths, r1 and r2, of the semi-major and -minor axes.
+ * 
+ */
 WDB_EXPORT int mk_epa(
     struct rt_wdb *wdbp,
     const char *name,
@@ -176,6 +328,16 @@ WDB_EXPORT int mk_epa(
     const vect_t breadth,
     fastf_t r1,
     fastf_t r2 );
+    
+/**
+ *
+ * Makes an elliptical hyperboloid given the origin, a height vector
+ * H, a unit vector A along the semi-major axis (A . H must equal 0),
+ * the scalar lengths, r1 and r2, of the semi-major and -minor axes,
+ * and the distance c between the tip of the hyperboloid and the
+ * vertex of the asymptotic cone.
+ * 
+ */
 WDB_EXPORT int mk_ehy(
     struct rt_wdb *wdbp,
     const char *name,
@@ -185,6 +347,14 @@ WDB_EXPORT int mk_ehy(
     fastf_t r1,
     fastf_t r2,
     fastf_t c );
+    
+/**
+ *
+ * Make a hyperbolid at the given center point with a vertex, height
+ * vector, A vector, magnitude of the B vector, and neck to base
+ * ratio.
+ * 
+ */
 WDB_EXPORT int mk_hyp(
     struct rt_wdb *wdbp,
     const char *name,
@@ -193,6 +363,16 @@ WDB_EXPORT int mk_hyp(
     const vect_t vectA,
     fastf_t magB,
     fastf_t base_neck_ratio );
+    
+/**
+ *
+ * Makes an elliptical torus given the origin, a plane normal vector
+ * N, a vector C along the semi-major axis of the elliptical
+ * cross-section, the scalar lengths r and rd, of the radius of
+ * revolution and length of semi-minor axis of the elliptical cross
+ * section.
+ * 
+ */
 WDB_EXPORT int mk_eto(
     struct rt_wdb *wdbp,
     const char *name,
@@ -201,6 +381,7 @@ WDB_EXPORT int mk_eto(
     const vect_t smajor,
     fastf_t rrot,
     fastf_t sminor );
+    
 WDB_EXPORT int mk_metaball(
     struct rt_wdb *wdbp,
     const char *name,
@@ -210,12 +391,15 @@ WDB_EXPORT int mk_metaball(
     const fastf_t *verts[5] );	/* X, Y, Z, fldstr, goo/Beta */
 
 WDB_EXPORT WDB_EXTERN(int mk_arbn, (struct rt_wdb *fp, const char *name, size_t neqn, plane_t eqn[]) );
+
 WDB_EXPORT WDB_EXTERN(int mk_ars, (struct rt_wdb *fp, const char *name, size_t ncurves, size_t pts_per_curve, fastf_t *curves[]) );
 
 /**
+ * 
  * Given the appropriate parameters, makes the non-geometric
  * constraint object and writes it to the database using
  * wdb_put_internal.  Only supported on database version 5 or above
+ * 
  */
 WDB_EXPORT WDB_EXTERN(int mk_constraint, (struct rt_wdb *wdbp, const char *name, const char *expr));
 
@@ -262,9 +446,36 @@ typedef enum {
     WDB_BINUNIF_FILE_INT64,
     WDB_BINUNIF_FILE_UINT64
 } wdb_binunif;
+
+
+/**
+ *
+ * Make a uniform binary data object from an array or a data file.
+ * Read 'count' values from 'data'.  If 'data_type' is a file, 'count'
+ * may be used to only read a subset of a file's contents.  If 'data'
+ * is already an in-memory buffer of memory, 'count' values will be
+ * copied (which is count * sizeof(data_type) bytes).
+ *
+ * Files can use a non-positive 'count' to mean "read the whole file",
+ * pre-loaded data, however, must provide a positive 'count' otherwise
+ * an empty binunif will be created.
+ * 
+ */
 WDB_EXPORT WDB_EXTERN(int mk_binunif, (struct rt_wdb *fp, const char *name, const genptr_t data, wdb_binunif data_type, long count) );
 
-/* bot.c */
+
+/*----------------------------------------------------------------------*/
+
+
+/* libwdb/bot.c */
+
+/**
+ * 
+ * Support for BOT solid (Bag O'Triangles)
+ *
+ */
+
+
 WDB_EXPORT int
 mk_bot(
     struct rt_wdb *fp,			/**< database file pointer to write to */
@@ -289,6 +500,7 @@ mk_bot(
 					 * centered about hit point
 					 */
     );
+    
 WDB_EXPORT int
 mk_bot_w_normals(
     struct rt_wdb *fp,			/**< database file pointer to write to */
@@ -320,24 +532,114 @@ mk_bot_w_normals(
 					 */
     );
 
-/* brep.cpp */
+
+/*----------------------------------------------------------------------*/
+
+
+/* libwdb/brep.cpp */
+
+/**
+ *
+ * Library for writing BREP objects into
+ * MGED databases from arbitrary procedures.
+ *
+ */
+
+
+/**
+ *
+ * Create a brep in the geometry file.
+ * 
+ */
 WDB_EXPORT int mk_brep( struct rt_wdb* wdbp, const char* name, ON_Brep* brep );
 
-/* nurb.c */
+
+/*----------------------------------------------------------------------*/
+
+
+/* libwdb/nurb.c */
+
+/** 
+ * 
+ * Library for writing NURB objects into
+ * MGED databases from arbitrary procedures.
+ *
+ */
+
+
+/**
+ *
+ * Output an array of B-spline (NURBS) surfaces which comprise a
+ * solid.  The surface is freed when it is written.
+ * 
+ */
 WDB_EXPORT int mk_bspline( struct rt_wdb *wdbp, const char *name, struct face_g_snurb **surfs );
 
-/* nmg.c */
+
+/*----------------------------------------------------------------------*/
+
+
+/* libwdb/nmg.c */
+
+/** 
+ * 
+ * libwdb support for writing an NMG to disk.
+ *
+ */
+
+
+/**
+ *
+ * The NMG is freed after being written.
+ *
+ * Returns -
+ * <0 error
+ * 0 OK
+ * 
+ */
 WDB_EXPORT int mk_nmg( struct rt_wdb *filep, const char *name, struct model *m );
+
+/**
+ *
+ * For ray-tracing speed, many database conversion routines like to
+ * offer the option of converting NMG objects to bags of triangles
+ * (BoT).  Here is a convenience routine to replace the old routine
+ * write_shell_as_polysolid.  (obsolete since BRL-CAD 6.0)
+ * 
+ */
 WDB_EXPORT int mk_bot_from_nmg( struct rt_wdb *ofp, const char *name, struct shell *s );
 
 
-/* skt.c */
+/*----------------------------------------------------------------------*/
+
+
+/* libwdb/sketch.c */
+
+/**
+ *
+ * Support for sketches
+ *
+ */
+
+
 WDB_EXPORT int mk_sketch(
     struct rt_wdb *fp,
     const char *name,
     const struct rt_sketch_internal *skt );
 
-/* extr.c */
+
+/*----------------------------------------------------------------------*/
+
+
+/* libwdb/extrude.c */
+
+/**
+ *
+ * Support for extrusion solids
+ *
+ */
+
+
 WDB_EXPORT int mk_extrusion(
     struct rt_wdb *fp,
     const char *name,
@@ -348,7 +650,19 @@ WDB_EXPORT int mk_extrusion(
     const vect_t v_vec,
     int keypoint );
 
-/* cline.c */
+
+/*----------------------------------------------------------------------*/
+
+
+/* libwdb/cline.c */
+
+/**
+ *
+ * Support for cline solids (kludges from FASTGEN)
+ *
+ */
+
+
 WDB_EXPORT int mk_cline(
     struct rt_wdb *fp,
     const char *name,
@@ -357,34 +671,112 @@ WDB_EXPORT int mk_cline(
     fastf_t radius,
     fastf_t thickness );
 
-/* pipe.c */
+
+/*----------------------------------------------------------------------*/
+
+
+/* libwdb/pipe.c */
+
+/**
+ *
+ * Support for particles and pipes.  Library for writing geometry
+ * databases from arbitrary procedures.
+ *
+ * Note that routines which are passed point_t or vect_t or mat_t
+ * parameters (which are call-by-address) must be VERY careful to
+ * leave those parameters unmodified (e.g., by scaling), so that the
+ * calling routine is not surprised.
+ *
+ * Return codes of 0 are OK, -1 signal an error.
+ *
+ */
+
+
+/**
+ *
+ * Returns -
+ * 0 OK
+ * <0 failure
+ * 
+ */
 WDB_EXPORT WDB_EXTERN(int mk_particle, (struct rt_wdb *fp, const char *name, point_t vertex,
 					vect_t height, double vradius, double hradius) );
+					
+/**
+ *
+ * Note that the linked list of pipe segments headed by 'headp' must
+ * be freed by the caller.  mk_pipe_free() can be used.
+ *
+ * Returns -
+ * 0 OK
+ * <0 failure
+ * 
+ */
 WDB_EXPORT WDB_EXTERN(int mk_pipe, (struct rt_wdb *fp, const char *name, struct bu_list *headp) );
+
+/**
+ *
+ * Release the storage from a list of pipe segments.  The head is left
+ * in initialized state (i.e., forward & back point to head).
+ */
 WDB_EXPORT void mk_pipe_free( struct bu_list *headp );
+
+/**
+ * 
+ * Add another pipe segment to the linked list of pipe segments.
+ *
+ */
 WDB_EXPORT void mk_add_pipe_pt(
     struct bu_list *headp,
     const point_t coord,
     double od,
     double id,
     double bendradius );
+    
+/**
+ *
+ * initialize a linked list of pipe segments with the first segment
+ * 
+ */
 WDB_EXPORT void mk_pipe_init( struct bu_list *headp );
 
+
 /* strsol primitives */
+
 WDB_EXPORT WDB_EXTERN(int mk_dsp, (struct rt_wdb *fp, const char *name, const char *file,
 				   size_t xdim, size_t ydim, const matp_t mat));
+				   
 WDB_EXPORT WDB_EXTERN(int mk_ebm, (struct rt_wdb *fp, const char *name, const char *file,
 				   size_t xdim, size_t ydim, fastf_t tallness, const matp_t mat));
+				   
 WDB_EXPORT WDB_EXTERN(int mk_vol, (struct rt_wdb *fp, const char *name, const char *file,
 				   size_t xdim, size_t ydim, size_t zdim, size_t lo, size_t hi,
 				   const vect_t cellsize, const matp_t mat));
+				   
 WDB_EXPORT WDB_EXTERN(int mk_submodel, (struct rt_wdb *fp, const char *name, const char *file,
 					const char *treetop, int meth));
 
 
-/* mater.c */
-WDB_EXPORT int mk_write_color_table( struct rt_wdb *ofp );
 
+/*----------------------------------------------------------------------*/
+
+
+/* libwdb/mater.c */
+
+/**
+ *
+ * Interface for writing region-id-based color tables to the database.
+ *
+ */
+
+
+/**
+ * 
+ * Given that the color table has been built up by successive calls to
+ * rt_color_addrec(), write it into the database.
+ * 
+ */
+WDB_EXPORT int mk_write_color_table( struct rt_wdb *ofp );
 
 /*
  *  Combination (region&group) construction routines
@@ -429,8 +821,8 @@ WDB_EXPORT int mk_comb1( struct rt_wdb *fp,
 			 const char *combname,
 			 const char *membname,
 			 int regflag );
-WDB_EXPORT int
-mk_region1(
+			 
+WDB_EXPORT int mk_region1(
     struct rt_wdb *fp,
     const char *combname,
     const char *membname,
@@ -495,6 +887,7 @@ __END_DECLS
 #endif /* __WDB_H__ */
 
 /** @} */
+
 /*
  * Local Variables:
  * mode: C
