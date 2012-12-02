@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fbbw1'>
+<refmeta>
+<refentrytitle>FB-BW</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fb&hyphen;bw</refname>
+<refpurpose>save a framebuffer image in a black and white bw file</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fb-bw</command>    
+    <arg choice='opt'>-hi </arg>
+    <arg choice='opt'>-Fframebuffer </arg>
+    <arg choice='opt'>-X <replaceable>scr_xoff</replaceable></arg>
+    <arg choice='opt'>-Y <replaceable>scr_yoff</replaceable></arg>
+    <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>height</replaceable></arg>
+    <arg choice='opt'><replaceable>file.bw</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Fb-bw</emphasis>
+will take a region of a framebuffer display and save it as a black and
+white
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format file.
+The environment
+variable
+<!-- B elided -->
+<envar>FB_FILE</envar>
+is used to select the display device (see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+If this variable is not set, the default device for your system will
+be used.
+Alternatively, the framebuffer may be explicitly specified
+by using the
+<option>-F</option>
+flag.</para>
+
+<para>By default, the output file will be made size 512x512 pixels.
+Specifying the
+<option>-h</option>
+flag, changes the default to 1024x1024.
+The
+<option>-s</option>
+flag will set both the file height and width to be the given size, while
+<option>-w</option>
+and
+<option>-n</option>
+sets them individually.</para>
+
+<para>A first quadrant coordinate system is used (origin in lower left of
+screen), and the area saved is normally from this origin.  The
+<option>-X</option>
+and
+<option>-Y</option>
+flags can be used to move the origin to an offset position on the screen.
+The
+<option>-i</option>
+flag switches to a fourth quadrant system, both in the storage order as
+well as the origin offset coordinates (i.e. origin is now the upper left
+corner of the screen).</para>
+
+<para>An equal blending of red, green, and blue is done.  For more complicated
+black and white conversion use
+<citerefentry><refentrytitle>fb-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>pix-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fb-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fbbw1'>
+<refmeta>
+<refentrytitle>FB-BW</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fb&hyphen;bw</refname>
+<refpurpose>save a framebuffer image in a black and white bw file</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fb-bw</command>    
+    <arg choice='opt'>-hi </arg>
+    <arg choice='opt'>-Fframebuffer </arg>
+    <arg choice='opt'>-X <replaceable>scr_xoff</replaceable></arg>
+    <arg choice='opt'>-Y <replaceable>scr_yoff</replaceable></arg>
+    <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>height</replaceable></arg>
+    <arg choice='opt'><replaceable>file.bw</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Fb-bw</emphasis>
+will take a region of a framebuffer display and save it as a black and
+white
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format file.
+The environment
+variable
+<!-- B elided -->
+<envar>FB_FILE</envar>
+is used to select the display device (see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+If this variable is not set, the default device for your system will
+be used.
+Alternatively, the framebuffer may be explicitly specified
+by using the
+<option>-F</option>
+flag.</para>
+
+<para>By default, the output file will be made size 512x512 pixels.
+Specifying the
+<option>-h</option>
+flag, changes the default to 1024x1024.
+The
+<option>-s</option>
+flag will set both the file height and width to be the given size, while
+<option>-w</option>
+and
+<option>-n</option>
+sets them individually.</para>
+
+<para>A first quadrant coordinate system is used (origin in lower left of
+screen), and the area saved is normally from this origin.  The
+<option>-X</option>
+and
+<option>-Y</option>
+flags can be used to move the origin to an offset position on the screen.
+The
+<option>-i</option>
+flag switches to a fourth quadrant system, both in the storage order as
+well as the origin offset coordinates (i.e. origin is now the upper left
+corner of the screen).</para>
+
+<para>An equal blending of red, green, and blue is done.  For more complicated
+black and white conversion use
+<citerefentry><refentrytitle>fb-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>pix-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fb-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fbbw1'>
+<refmeta>
+<refentrytitle>FB-BW</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fb&hyphen;bw</refname>
+<refpurpose>save a framebuffer image in a black and white bw file</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fb-bw</command>    
+    <arg choice='opt'>-hi </arg>
+    <arg choice='opt'>-Fframebuffer </arg>
+    <arg choice='opt'>-X <replaceable>scr_xoff</replaceable></arg>
+    <arg choice='opt'>-Y <replaceable>scr_yoff</replaceable></arg>
+    <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>height</replaceable></arg>
+    <arg choice='opt'><replaceable>file.bw</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Fb-bw</emphasis>
+will take a region of a framebuffer display and save it as a black and
+white
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format file.
+The environment
+variable
+<!-- B elided -->
+<envar>FB_FILE</envar>
+is used to select the display device (see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+If this variable is not set, the default device for your system will
+be used.
+Alternatively, the framebuffer may be explicitly specified
+by using the
+<option>-F</option>
+flag.</para>
+
+<para>By default, the output file will be made size 512x512 pixels.
+Specifying the
+<option>-h</option>
+flag, changes the default to 1024x1024.
+The
+<option>-s</option>
+flag will set both the file height and width to be the given size, while
+<option>-w</option>
+and
+<option>-n</option>
+sets them individually.</para>
+
+<para>A first quadrant coordinate system is used (origin in lower left of
+screen), and the area saved is normally from this origin.  The
+<option>-X</option>
+and
+<option>-Y</option>
+flags can be used to move the origin to an offset position on the screen.
+The
+<option>-i</option>
+flag switches to a fourth quadrant system, both in the storage order as
+well as the origin offset coordinates (i.e. origin is now the upper left
+corner of the screen).</para>
+
+<para>An equal blending of red, green, and blue is done.  For more complicated
+black and white conversion use
+<citerefentry><refentrytitle>fb-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>pix-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fb-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

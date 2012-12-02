@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fborle1'>
+<refmeta>
+<refentrytitle>FB-ORLE</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fb&hyphen;orle</refname>
+<refpurpose>save a frame buffer image in old run-length encoded form</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fb-orle</command>    
+    <arg choice='opt'>-CShvw </arg>
+    <arg choice='opt'><arg choice='plain'>-c </arg><arg choice='opt'><replaceable>rgbwBG</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-l </arg><arg choice='plain'><replaceable>x</replaceable></arg><arg choice='plain'><replaceable>y</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-p </arg><arg choice='plain'><replaceable>x</replaceable></arg><arg choice='plain'><replaceable>y</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>file.rle</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>fb-orle</emphasis>
+saves a frame buffer image in a file, using the
+old University of Utah standard (Edition-2)
+Run-Length Encoded (RLE) format.
+This program is provided for compatibility with the old RLE image
+tools, and generally should not be used for saving new images,
+except where compatibility with the old tools is a factor.
+The equivalent new tool is
+<emphasis remap='I'>fb-rle(1)</emphasis>.</para>
+
+<para>The environment
+variable
+<!-- B elided -->
+<envar>FB_FILE</envar>
+is used to select the display device (see
+<emphasis remap='I'>brlcad(1)</emphasis>).
+If this variable is not set, the default device for your system will
+be used.
+If
+<emphasis remap='I'>file.rle</emphasis>
+is not specified, the encoded file is written to standard output.
+<emphasis remap='I'>fb-orle</emphasis>
+attempts to compress flat-colored areas
+as much as possible.
+This means that it is generally reasonable to save an entire
+image, since in RLE format it will not take up much more file space
+than extracting and saving only the
+interesting portion of the image.
+The default action is to encode only data
+pixels and to save the background color separately, so that when the image
+is restored all non-image pixels will be set to the background pixel value
+stored in the RLE header.
+Images saved in this mode may be displayed normally, or in &ldquo;overlay&rdquo;
+mode by the RLE decoder program (see
+<citerefentry><refentrytitle>orle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+Alternatively, the
+<option>-S</option>
+option may be used to RLE encode the background as well (recommended only
+if you don't have a flat background).</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-C</option></term>
+  <listitem>
+<para>Convert (&ldquo;crunch&rdquo;) an image with a non-standard color map so that the
+RLE file created will redisplay with a standard color map.
+Useful to preserve dramatic images created with weird color maps
+so that Gamma correction (for film) can then also be applied.
+This option is recommended when producing images for export to other
+display systems, so that variations in the interpretation of color maps
+between different types of display hardware do
+not affect the displayed image.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-w</option></term>
+  <listitem>
+<para>Convert the color image to black and white, and RLE encode that.
+The red, green, and blue components of each
+pixel are combined via the NTSC transform to get an intensity value (Y) which
+is saved.  A more versatile tool for this is
+<citerefentry><refentrytitle>pix-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-S</option></term>
+  <listitem>
+<para>Save all data in RLE format,
+irrespective of whether it is background or not (&ldquo;straight box save&rdquo;).
+It is not possible to
+restore a file saved with
+<option>-S</option>
+as an overlay.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c</option><replaceable>x</replaceable></term>
+  <listitem>
+<para>Specify a color to use as the &ldquo;background&rdquo;.
+The character
+<emphasis remap='I'>x</emphasis>
+is selected from the set
+<emphasis remap='B'>rgbwBG</emphasis>
+(red, green, blue, white, Black, 18% Grey).
+If this option is not specified, the pixel in the lower left corner
+of the region being saved is used as the background color.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-l</option><replaceable>x y</replaceable></term>
+  <listitem>
+<para>Specify the size of the saved box.
+This is useful if only a portion of the image is to be saved.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option><replaceable>x y</replaceable></term>
+  <listitem>
+<para>Specify the upper left corner of the saved portion
+of the image.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>Verbose mode.
+The program will provide voluminous status information
+on its standard error as it proceeds through encoding the image.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-h</option></term>
+  <listitem>
+<para>&ldquo;hires&rdquo; flag.  Set both the height and width of the framebuffer
+to 1024.  The default is 512x512.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 id='example'><title>EXAMPLE</title>
+<literallayout remap='RS'>
+<emphasis remap='I'>fb-orle &thinsp;-h &thinsp;tank.rle</emphasis>
+</literallayout> <!-- remap='RE' -->
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1986-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fborle1'>
+<refmeta>
+<refentrytitle>FB-ORLE</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fb&hyphen;orle</refname>
+<refpurpose>save a frame buffer image in old run-length encoded form</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fb-orle</command>    
+    <arg choice='opt'>-CShvw </arg>
+    <arg choice='opt'><arg choice='plain'>-c </arg><arg choice='opt'><replaceable>rgbwBG</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-l </arg><arg choice='plain'><replaceable>x</replaceable></arg><arg choice='plain'><replaceable>y</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-p </arg><arg choice='plain'><replaceable>x</replaceable></arg><arg choice='plain'><replaceable>y</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>file.rle</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>fb-orle</emphasis>
+saves a frame buffer image in a file, using the
+old University of Utah standard (Edition-2)
+Run-Length Encoded (RLE) format.
+This program is provided for compatibility with the old RLE image
+tools, and generally should not be used for saving new images,
+except where compatibility with the old tools is a factor.
+The equivalent new tool is
+<emphasis remap='I'>fb-rle(1)</emphasis>.</para>
+
+<para>The environment
+variable
+<!-- B elided -->
+<envar>FB_FILE</envar>
+is used to select the display device (see
+<emphasis remap='I'>brlcad(1)</emphasis>).
+If this variable is not set, the default device for your system will
+be used.
+If
+<emphasis remap='I'>file.rle</emphasis>
+is not specified, the encoded file is written to standard output.
+<emphasis remap='I'>fb-orle</emphasis>
+attempts to compress flat-colored areas
+as much as possible.
+This means that it is generally reasonable to save an entire
+image, since in RLE format it will not take up much more file space
+than extracting and saving only the
+interesting portion of the image.
+The default action is to encode only data
+pixels and to save the background color separately, so that when the image
+is restored all non-image pixels will be set to the background pixel value
+stored in the RLE header.
+Images saved in this mode may be displayed normally, or in &ldquo;overlay&rdquo;
+mode by the RLE decoder program (see
+<citerefentry><refentrytitle>orle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+Alternatively, the
+<option>-S</option>
+option may be used to RLE encode the background as well (recommended only
+if you don't have a flat background).</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-C</option></term>
+  <listitem>
+<para>Convert (&ldquo;crunch&rdquo;) an image with a non-standard color map so that the
+RLE file created will redisplay with a standard color map.
+Useful to preserve dramatic images created with weird color maps
+so that Gamma correction (for film) can then also be applied.
+This option is recommended when producing images for export to other
+display systems, so that variations in the interpretation of color maps
+between different types of display hardware do
+not affect the displayed image.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-w</option></term>
+  <listitem>
+<para>Convert the color image to black and white, and RLE encode that.
+The red, green, and blue components of each
+pixel are combined via the NTSC transform to get an intensity value (Y) which
+is saved.  A more versatile tool for this is
+<citerefentry><refentrytitle>pix-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-S</option></term>
+  <listitem>
+<para>Save all data in RLE format,
+irrespective of whether it is background or not (&ldquo;straight box save&rdquo;).
+It is not possible to
+restore a file saved with
+<option>-S</option>
+as an overlay.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c</option><replaceable>x</replaceable></term>
+  <listitem>
+<para>Specify a color to use as the &ldquo;background&rdquo;.
+The character
+<emphasis remap='I'>x</emphasis>
+is selected from the set
+<emphasis remap='B'>rgbwBG</emphasis>
+(red, green, blue, white, Black, 18% Grey).
+If this option is not specified, the pixel in the lower left corner
+of the region being saved is used as the background color.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-l</option><replaceable>x y</replaceable></term>
+  <listitem>
+<para>Specify the size of the saved box.
+This is useful if only a portion of the image is to be saved.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option><replaceable>x y</replaceable></term>
+  <listitem>
+<para>Specify the upper left corner of the saved portion
+of the image.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>Verbose mode.
+The program will provide voluminous status information
+on its standard error as it proceeds through encoding the image.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-h</option></term>
+  <listitem>
+<para>&ldquo;hires&rdquo; flag.  Set both the height and width of the framebuffer
+to 1024.  The default is 512x512.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 id='example'><title>EXAMPLE</title>
+<literallayout remap='RS'>
+<emphasis remap='I'>fb-orle &thinsp;-h &thinsp;tank.rle</emphasis>
+</literallayout> <!-- remap='RE' -->
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1986-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fborle1'>
+<refmeta>
+<refentrytitle>FB-ORLE</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fb&hyphen;orle</refname>
+<refpurpose>save a frame buffer image in old run-length encoded form</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fb-orle</command>    
+    <arg choice='opt'>-CShvw </arg>
+    <arg choice='opt'><arg choice='plain'>-c </arg><arg choice='opt'><replaceable>rgbwBG</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-l </arg><arg choice='plain'><replaceable>x</replaceable></arg><arg choice='plain'><replaceable>y</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-p </arg><arg choice='plain'><replaceable>x</replaceable></arg><arg choice='plain'><replaceable>y</replaceable></arg></arg>
+    <arg choice='opt'><replaceable>file.rle</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>fb-orle</emphasis>
+saves a frame buffer image in a file, using the
+old University of Utah standard (Edition-2)
+Run-Length Encoded (RLE) format.
+This program is provided for compatibility with the old RLE image
+tools, and generally should not be used for saving new images,
+except where compatibility with the old tools is a factor.
+The equivalent new tool is
+<emphasis remap='I'>fb-rle(1)</emphasis>.</para>
+
+<para>The environment
+variable
+<!-- B elided -->
+<envar>FB_FILE</envar>
+is used to select the display device (see
+<emphasis remap='I'>brlcad(1)</emphasis>).
+If this variable is not set, the default device for your system will
+be used.
+If
+<emphasis remap='I'>file.rle</emphasis>
+is not specified, the encoded file is written to standard output.
+<emphasis remap='I'>fb-orle</emphasis>
+attempts to compress flat-colored areas
+as much as possible.
+This means that it is generally reasonable to save an entire
+image, since in RLE format it will not take up much more file space
+than extracting and saving only the
+interesting portion of the image.
+The default action is to encode only data
+pixels and to save the background color separately, so that when the image
+is restored all non-image pixels will be set to the background pixel value
+stored in the RLE header.
+Images saved in this mode may be displayed normally, or in &ldquo;overlay&rdquo;
+mode by the RLE decoder program (see
+<citerefentry><refentrytitle>orle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+Alternatively, the
+<option>-S</option>
+option may be used to RLE encode the background as well (recommended only
+if you don't have a flat background).</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-C</option></term>
+  <listitem>
+<para>Convert (&ldquo;crunch&rdquo;) an image with a non-standard color map so that the
+RLE file created will redisplay with a standard color map.
+Useful to preserve dramatic images created with weird color maps
+so that Gamma correction (for film) can then also be applied.
+This option is recommended when producing images for export to other
+display systems, so that variations in the interpretation of color maps
+between different types of display hardware do
+not affect the displayed image.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-w</option></term>
+  <listitem>
+<para>Convert the color image to black and white, and RLE encode that.
+The red, green, and blue components of each
+pixel are combined via the NTSC transform to get an intensity value (Y) which
+is saved.  A more versatile tool for this is
+<citerefentry><refentrytitle>pix-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-S</option></term>
+  <listitem>
+<para>Save all data in RLE format,
+irrespective of whether it is background or not (&ldquo;straight box save&rdquo;).
+It is not possible to
+restore a file saved with
+<option>-S</option>
+as an overlay.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c</option><replaceable>x</replaceable></term>
+  <listitem>
+<para>Specify a color to use as the &ldquo;background&rdquo;.
+The character
+<emphasis remap='I'>x</emphasis>
+is selected from the set
+<emphasis remap='B'>rgbwBG</emphasis>
+(red, green, blue, white, Black, 18% Grey).
+If this option is not specified, the pixel in the lower left corner
+of the region being saved is used as the background color.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-l</option><replaceable>x y</replaceable></term>
+  <listitem>
+<para>Specify the size of the saved box.
+This is useful if only a portion of the image is to be saved.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option><replaceable>x y</replaceable></term>
+  <listitem>
+<para>Specify the upper left corner of the saved portion
+of the image.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option></term>
+  <listitem>
+<para>Verbose mode.
+The program will provide voluminous status information
+on its standard error as it proceeds through encoding the image.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-h</option></term>
+  <listitem>
+<para>&ldquo;hires&rdquo; flag.  Set both the height and width of the framebuffer
+to 1024.  The default is 512x512.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 id='example'><title>EXAMPLE</title>
+<literallayout remap='RS'>
+<emphasis remap='I'>fb-orle &thinsp;-h &thinsp;tank.rle</emphasis>
+</literallayout> <!-- remap='RE' -->
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1986-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

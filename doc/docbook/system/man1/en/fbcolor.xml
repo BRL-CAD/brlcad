@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fbcolor1'>
+<refmeta>
+<refentrytitle>FBCOLOR</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fbcolor</refname>
+<refpurpose>interactively pick colors</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fbcolor</command>    
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'><arg choice='plain'>-S <replaceable>screen</replaceable></arg><arg choice='plain'><replaceable>squaresize</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-W <replaceable>screen</replaceable></arg><arg choice='plain'><replaceable>width</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-N <replaceable>screen</replaceable></arg><arg choice='plain'><replaceable>height</replaceable></arg></arg>
+    <sbr/>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Fbcolor</emphasis>
+is an interactive color picking facility.
+It allows you to pick and display colors, by varying parameters in
+either RGB (red, green, blue)
+or HSI (hue, saturation, intensity) space.
+The environment
+variable
+<!-- B elided -->
+<envar>FB_FILE</envar>
+is used to select the display device (see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+If this variable is not set, the default device for your system will
+be used.
+If the
+<option>-h</option>
+option is used,
+1024x1024 resolution is used.
+Alternatively, the
+<option>-SWN</option>
+options can all be used in the normal way to specify the size of
+the screen (see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).</para>
+
+<para><emphasis remap='I'>Fbcolor</emphasis>
+draws a set of color bars in the lower left corner of the display,
+sets the remainder of the display to the current color,
+then starts reading standard in for color editing commands.
+As you change the various parameters which specify
+the color, the color bars grow and shrink to show the relative red, green
+and blue intensities.</para>
+
+<para>At the same time,
+<command>fbcolor</command>
+displays the current RGB and HSI values on your terminal.  This
+allows you to record the RGB or HSI values of the colors you
+select for later use.</para>
+
+<para><emphasis remap='I'>Fbcolor</emphasis>
+recognizes two main sets of commands; those which select which parameter to
+edit, and those which vary the value of the selected parameter.
+``<emphasis remap='B'>r</emphasis>'',
+``<emphasis remap='B'>g</emphasis>'',
+and
+``<emphasis remap='B'>b</emphasis>''
+selects the red, green, or blue color for editing, while
+``<emphasis remap='B'>h</emphasis>'',
+``<emphasis remap='B'>s</emphasis>'',
+and
+``<emphasis remap='B'>i</emphasis>'',
+(or
+``<emphasis remap='B'>v</emphasis>'')
+selects the hue, saturation, or intensity for editing.
+There is one other parameter selection character, the
+``<emphasis remap='B'>/</emphasis>'',
+which steps through the list of color parameters in the order
+given above.</para>
+
+<para>``<emphasis remap='B'>+</emphasis>''
+and
+``<literal>.</literal>''
+both increment the currently selected parameter by one;
+``<emphasis remap='B'>-</emphasis>''
+and
+``<emphasis remap='B'>,</emphasis>''
+both decrement by one, and
+``<emphasis remap='B'>&gt;</emphasis>''
+and
+``<emphasis remap='B'>&lt;</emphasis>''
+increments and decrements by 16.
+The value of each of the parameters
+can range from 0 to 255
+and all parameters wrap in both directions.</para>
+
+<para>A
+``<emphasis remap='B'>?</emphasis>''
+prints a short command summary,
+and typing
+``<emphasis remap='B'>q</emphasis>'',
+``<emphasis remap='B'>Q</emphasis>'',
+``<emphasis remap='B'>&lt;CR&gt;</emphasis>'',
+or
+``<emphasis remap='B'>&lt;LF&gt;</emphasis>''
+exits the program.</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbclear</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbcmap</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fbcolor1'>
+<refmeta>
+<refentrytitle>FBCOLOR</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fbcolor</refname>
+<refpurpose>interactively pick colors</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fbcolor</command>    
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'><arg choice='plain'>-S <replaceable>screen</replaceable></arg><arg choice='plain'><replaceable>squaresize</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-W <replaceable>screen</replaceable></arg><arg choice='plain'><replaceable>width</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-N <replaceable>screen</replaceable></arg><arg choice='plain'><replaceable>height</replaceable></arg></arg>
+    <sbr/>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Fbcolor</emphasis>
+is an interactive color picking facility.
+It allows you to pick and display colors, by varying parameters in
+either RGB (red, green, blue)
+or HSI (hue, saturation, intensity) space.
+The environment
+variable
+<!-- B elided -->
+<envar>FB_FILE</envar>
+is used to select the display device (see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+If this variable is not set, the default device for your system will
+be used.
+If the
+<option>-h</option>
+option is used,
+1024x1024 resolution is used.
+Alternatively, the
+<option>-SWN</option>
+options can all be used in the normal way to specify the size of
+the screen (see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).</para>
+
+<para><emphasis remap='I'>Fbcolor</emphasis>
+draws a set of color bars in the lower left corner of the display,
+sets the remainder of the display to the current color,
+then starts reading standard in for color editing commands.
+As you change the various parameters which specify
+the color, the color bars grow and shrink to show the relative red, green
+and blue intensities.</para>
+
+<para>At the same time,
+<command>fbcolor</command>
+displays the current RGB and HSI values on your terminal.  This
+allows you to record the RGB or HSI values of the colors you
+select for later use.</para>
+
+<para><emphasis remap='I'>Fbcolor</emphasis>
+recognizes two main sets of commands; those which select which parameter to
+edit, and those which vary the value of the selected parameter.
+``<emphasis remap='B'>r</emphasis>'',
+``<emphasis remap='B'>g</emphasis>'',
+and
+``<emphasis remap='B'>b</emphasis>''
+selects the red, green, or blue color for editing, while
+``<emphasis remap='B'>h</emphasis>'',
+``<emphasis remap='B'>s</emphasis>'',
+and
+``<emphasis remap='B'>i</emphasis>'',
+(or
+``<emphasis remap='B'>v</emphasis>'')
+selects the hue, saturation, or intensity for editing.
+There is one other parameter selection character, the
+``<emphasis remap='B'>/</emphasis>'',
+which steps through the list of color parameters in the order
+given above.</para>
+
+<para>``<emphasis remap='B'>+</emphasis>''
+and
+``<literal>.</literal>''
+both increment the currently selected parameter by one;
+``<emphasis remap='B'>-</emphasis>''
+and
+``<emphasis remap='B'>,</emphasis>''
+both decrement by one, and
+``<emphasis remap='B'>&gt;</emphasis>''
+and
+``<emphasis remap='B'>&lt;</emphasis>''
+increments and decrements by 16.
+The value of each of the parameters
+can range from 0 to 255
+and all parameters wrap in both directions.</para>
+
+<para>A
+``<emphasis remap='B'>?</emphasis>''
+prints a short command summary,
+and typing
+``<emphasis remap='B'>q</emphasis>'',
+``<emphasis remap='B'>Q</emphasis>'',
+``<emphasis remap='B'>&lt;CR&gt;</emphasis>'',
+or
+``<emphasis remap='B'>&lt;LF&gt;</emphasis>''
+exits the program.</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbclear</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbcmap</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fbcolor1'>
+<refmeta>
+<refentrytitle>FBCOLOR</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fbcolor</refname>
+<refpurpose>interactively pick colors</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fbcolor</command>    
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'><arg choice='plain'>-S <replaceable>screen</replaceable></arg><arg choice='plain'><replaceable>squaresize</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-W <replaceable>screen</replaceable></arg><arg choice='plain'><replaceable>width</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-N <replaceable>screen</replaceable></arg><arg choice='plain'><replaceable>height</replaceable></arg></arg>
+    <sbr/>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Fbcolor</emphasis>
+is an interactive color picking facility.
+It allows you to pick and display colors, by varying parameters in
+either RGB (red, green, blue)
+or HSI (hue, saturation, intensity) space.
+The environment
+variable
+<!-- B elided -->
+<envar>FB_FILE</envar>
+is used to select the display device (see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+If this variable is not set, the default device for your system will
+be used.
+If the
+<option>-h</option>
+option is used,
+1024x1024 resolution is used.
+Alternatively, the
+<option>-SWN</option>
+options can all be used in the normal way to specify the size of
+the screen (see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).</para>
+
+<para><emphasis remap='I'>Fbcolor</emphasis>
+draws a set of color bars in the lower left corner of the display,
+sets the remainder of the display to the current color,
+then starts reading standard in for color editing commands.
+As you change the various parameters which specify
+the color, the color bars grow and shrink to show the relative red, green
+and blue intensities.</para>
+
+<para>At the same time,
+<command>fbcolor</command>
+displays the current RGB and HSI values on your terminal.  This
+allows you to record the RGB or HSI values of the colors you
+select for later use.</para>
+
+<para><emphasis remap='I'>Fbcolor</emphasis>
+recognizes two main sets of commands; those which select which parameter to
+edit, and those which vary the value of the selected parameter.
+``<emphasis remap='B'>r</emphasis>'',
+``<emphasis remap='B'>g</emphasis>'',
+and
+``<emphasis remap='B'>b</emphasis>''
+selects the red, green, or blue color for editing, while
+``<emphasis remap='B'>h</emphasis>'',
+``<emphasis remap='B'>s</emphasis>'',
+and
+``<emphasis remap='B'>i</emphasis>'',
+(or
+``<emphasis remap='B'>v</emphasis>'')
+selects the hue, saturation, or intensity for editing.
+There is one other parameter selection character, the
+``<emphasis remap='B'>/</emphasis>'',
+which steps through the list of color parameters in the order
+given above.</para>
+
+<para>``<emphasis remap='B'>+</emphasis>''
+and
+``<literal>.</literal>''
+both increment the currently selected parameter by one;
+``<emphasis remap='B'>-</emphasis>''
+and
+``<emphasis remap='B'>,</emphasis>''
+both decrement by one, and
+``<emphasis remap='B'>&gt;</emphasis>''
+and
+``<emphasis remap='B'>&lt;</emphasis>''
+increments and decrements by 16.
+The value of each of the parameters
+can range from 0 to 255
+and all parameters wrap in both directions.</para>
+
+<para>A
+``<emphasis remap='B'>?</emphasis>''
+prints a short command summary,
+and typing
+``<emphasis remap='B'>q</emphasis>'',
+``<emphasis remap='B'>Q</emphasis>'',
+``<emphasis remap='B'>&lt;CR&gt;</emphasis>'',
+or
+``<emphasis remap='B'>&lt;LF&gt;</emphasis>''
+exits the program.</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbclear</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbcmap</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

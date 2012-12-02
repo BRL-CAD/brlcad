@@ -1,0 +1,1485 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='cellfb1'>
+<refmeta>
+<refentrytitle>CELL-FB</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>cell-fb</refname>
+<refpurpose>display cell-by-cell data on a frame buffer</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>cell-fb</command>    
+    <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
+    <arg choice='opt'><replaceable>file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Cell-fb</emphasis>
+reads a stream of cell-by-cell data
+and displays the data, one view at a time, on a frame buffer.
+If
+<emphasis remap='I'>file</emphasis>
+is specified, then
+<command>cell-fb</command>
+tries to read the data from it.
+Otherwise, the standard input is read.</para>
+
+<refsect2 id='options'><title>Options</title>
+<para>The command-line options and their meanings are given below.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-C</option></term>
+  <listitem>
+<para>Interpret the first three fields for each cell as an explicit color
+(see the
+<link linkend="definitions">DEFINITIONS</link>
+section below).
+The default behavior is to interpret a specified field as an indirect
+reference, which, through a color map, corresponds to a color.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-F</option><replaceable>fbfile</replaceable></term>
+  <listitem>
+<para>Write graphics output to
+<emphasis remap='I'>fbfile,</emphasis>
+which may be any UNIX file (or frame-buffer device).
+In the absence of the
+<option>-F</option>
+option,
+if the shell variable
+<emphasis remap='B'>FB_FILE</emphasis>
+is defined,
+its value is used
+(see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+Otherwise, the host's default frame buffer is used
+(see
+<citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3B</manvolnum></citerefentry>).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-N</option><replaceable>scr_height</replaceable></term>
+  <listitem>
+<para>Set screen (frame-buffer) height to
+<emphasis remap='I'>scr_height</emphasis>
+pixels.
+<emphasis remap='I'>Scr_height</emphasis>
+may legally be any integer greater than -2.
+See the discussion of autosizing below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-S</option><replaceable>scr_size</replaceable></term>
+  <listitem>
+<para>Set screen (frame-buffer) width and height to
+<emphasis remap='I'>scr_size</emphasis>
+pixels.
+<emphasis remap='I'>Scr_size</emphasis>
+may legally be any integer greater than -2.
+See the discussion of autosizing below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-W</option><replaceable>scr_width</replaceable></term>
+  <listitem>
+<para>Set screen (frame-buffer) width to
+<emphasis remap='I'>scr_width</emphasis>
+pixels.
+<emphasis remap='I'>Scr_width</emphasis>
+may legally be any integer greater than -2.
+See the discussion of autosizing below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-X</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Set the local debug flag to the hexadecimal value
+<emphasis remap='I'>n.</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-a</option><replaceable>&ldquo;h v&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Do not display the data,
+simply print out the frame-buffer coordinates of the grid-plane point
+(<emphasis remap='I'>h, v</emphasis>).
+This option is useful for outboard manipulation of the
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+data created by
+<emphasis remap='I'>cell-fb.</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-b</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Ignore values not equal to
+<emphasis remap='I'>n.</emphasis>
+All other cell-data values are mapped to the background color.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Assume a cell size of
+<emphasis remap='I'>n</emphasis>
+user units.
+The default cell size is 100 user units.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-d</option><replaceable>&ldquo;m n&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Scale the data values from the interval
+[<emphasis remap='I'>m, n</emphasis>]
+into the unit interval [0, 1].
+The scaling is performed before values are mapped to colors,
+so the
+<option>-i,</option>
+<option>-k,</option>
+and
+<option>-m</option>
+options always deal with the
+discrete values listed in the description below of the
+<option>-k</option>
+option.
+The default domain is [0, 1],
+for which no scaling is necessary.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-e</option></term>
+  <listitem>
+<para>Erase the frame buffer before displaying each view.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-f</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Display field number
+<emphasis remap='I'>n</emphasis>
+of the cell-by-cell data
+(see the
+<link linkend="definitions">DEFINITIONS</link>
+section below).
+By default, field 1 is displayed.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-g</option></term>
+  <listitem>
+<para>Display the grid.
+Causes a 1-pixel spacing between cells in the output.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-h</option></term>
+  <listitem>
+<para>Force high-resolution display (1024&times;1024 pixels).
+See the discussion of autosizing below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-i</option></term>
+  <listitem>
+<para>Round values to the nearest discrete value
+listed in the description of the
+<option>-k</option>
+option below.
+By default, output colors are chosen by interpolation between
+those values.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-k</option></term>
+  <listitem>
+<para>Display the color key.
+This option displays the color mappings for 11 discrete values underneath
+the picture.
+The values represented are, from left to right:
+0.0, 0.1, 0.2, ..., 0.9, and 1.0.
+Given this option
+and snug-fit autosizing for height,
+the frame buffer that
+<command>cell-fb</command>
+opens will be taller to accommodate the key.
+See the discussion of autosizing below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-l</option><replaceable>&ldquo;az el&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Write log information to the standard output.
+When given this option,
+<command>cell-fb</command>
+produces a header comment and one line each reporting
+an azimuth/elevation pair (viz.
+(<emphasis remap='I'>az</emphasis>, <emphasis remap='I'>el</emphasis>)
+) to associate with this view;
+the coordinates (in user units) of
+the lower-left and upper-right corners of the frame buffer;
+and the width and height (in pixels) of the frame buffer.
+This information may be useful in registering other images
+on top of a cell plot.
+If a single view has not been specified,
+this option causes an implicit
+<option>-v</option> 1,
+which may, of course, be overridden explicitly.
+N.B.&mdash;<emphasis remap='I'>Cell-fb</emphasis>
+makes no use whatever of the values
+<emphasis remap='I'>az</emphasis> and <emphasis remap='I'>el</emphasis>,
+it merely writes them to the log.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-m</option><replaceable>&ldquo;n color&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Map cell data value
+<emphasis remap='I'>n</emphasis>
+to
+<emphasis remap='I'>color.</emphasis>
+The value
+<emphasis remap='I'>n</emphasis>
+will be truncated, if necessary, to
+the nearest lower of the discrete values listed in the description of the
+<option>-k</option>
+option above.
+The background color can be indexed by specifying the value 1.1 for
+<emphasis remap='I'>n.</emphasis>
+For the meaning and format of
+<emphasis remap='I'>color,</emphasis>
+see the
+<link linkend="definitions">DEFINITIONS</link>
+section below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-M</option><replaceable>&ldquo;color1 color2&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Define the color map
+to be a ramp between
+<emphasis remap='I'>color1</emphasis> and <emphasis remap='I'>color2.</emphasis>
+This allows frugality with the colors in an image:
+if, for example, cell data is plotted in gray scale,
+then many other colors remain for use in
+text, call outs, and sundry markings on top of the cell data.
+The default color map
+is a typical cold-to-hot, blue-to-red scale,
+excepting that the smallest value in the input domain
+is mapped to white.
+For the meaning and format of
+<emphasis remap='I'>color1</emphasis> and <emphasis remap='I'>color2,</emphasis>
+see the
+<link linkend="definitions">DEFINITIONS</link>
+section below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option><replaceable>&ldquo;h v&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Offset the picture from the lower-left corner of the frame buffer display
+by
+<emphasis remap='I'>h</emphasis>
+pixels horizontally, and
+<emphasis remap='I'>v</emphasis>
+pixels vertically.
+If this option is specified with only one argument,
+then the horizontal and vertical offsets are both set to this value.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s</option><replaceable>&ldquo;w h&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Plot each cell as a rectangle of width
+<emphasis remap='I'>w</emphasis>
+pixels and height
+<emphasis remap='I'>h</emphasis>pixels.
+This option has the effect of scaling the picture independently in the
+horizontal and vertical dimensions.
+The default is 10 pixels per cell in each dimension, not including the
+grid.
+If this option is specified with only one argument,
+then the width and height are both set to this value.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Display only view number
+<emphasis remap='I'>n.</emphasis>
+Views are numbered starting at 1.
+If
+<emphasis remap='I'>n</emphasis> = 0,
+all views are displayed sequentially,
+which is the default behavior.
+The option
+<option>-v</option> 0
+implicitly turns off logging.
+(see the
+<option>-l</option>
+option above).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-x</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Set the
+<citerefentry><refentrytitle>libbu</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+debug flag to the hexadecimal value
+<emphasis remap='I'>n.</emphasis>
+This option is useful primarily in debugging
+memory allocation.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect2>
+</refsect1>
+
+<refsect1 id='hint'><title>HINT</title>
+<para>If multiple views are input,
+the user will be asked between views whether he wants to see the next view.
+While being prompted, the user can save the previous image by using a
+utility such as
+<citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 id='discussion'><title>DISCUSSION</title>
+<para><emphasis remap='I'>Cell-fb</emphasis>
+determines the appropriate width and height of the frame buffer
+independently.
+For each there are three methods.
+If the sizes are provided explicitly, with the
+<option>-N,</option>
+<option>-S,</option>
+or
+<option>-W</option>
+options,
+<command>cell-fb</command>
+will use exactly the specified values.
+Otherwise,
+it performs autosizing for each view.
+<emphasis remap='I'>Cell-fb</emphasis>'s
+original behavior is called loose-fit autosizing.
+In that case, a frame-buffer dimension will be set to 512 pixels
+unless the image will not fit,
+in which case a 1024-pixel dimension is used.
+Loose-fit autosizing may be specified by any of
+<option>-N</option>0,
+<option>-S</option>0,
+or
+<option>-W</option>0.
+The third method is another form of autosizing,
+called snug-fit.
+For this method,
+<command>cell-fb</command>
+computes the minimum measurement required to display the plot,
+given the data and whatever values have been specified for the
+<option>-c,</option>
+<option>-g,</option>
+<option>-k,</option>
+<option>-p,</option>
+and
+<option>-s</option>
+options.
+Snug-fit autosizing is the default method for both width and height
+of the frame buffer,
+and it may be explicitly specified by any of
+<option>-N</option>-1,
+<option>-S</option>-1,
+or
+<option>-W</option>-1.
+Whenever autosizing is performed,
+<command>cell-fb</command>
+prints to the standard error the actual width and height used for each view.</para>
+</refsect1>
+
+<refsect1 id='definitions'><title>DEFINITIONS</title>
+<para>A stream of cell-by-cell data contains one or more views,
+each of which may start with view-header information and contains
+one line of data for each cell in the view.
+Each line of cell data must be in the following format:</para>
+
+  <blockquote remap='RS'>
+<para><emphasis remap='I'>coords fields</emphasis>
+  </para></blockquote> <!-- remap='RE' -->
+
+<para>where
+<emphasis remap='I'>coords</emphasis>
+is two real numbers and
+<emphasis remap='I'>fields</emphasis>
+is one or more real numbers.
+All the numbers on a line of cell data are separated by
+non-empty strings of white space (blanks and tabs)
+and there may be leading white space on the line.
+<emphasis remap='I'>Coords</emphasis>
+are the grid-plane coordinates of the cell,
+which must be spaced consistently with the cell size,
+and
+<emphasis remap='I'>fields</emphasis>
+may have arbitrary significance.
+If the
+<option>-f</option><replaceable>n</replaceable>
+option is specified, then there must be at least
+<emphasis remap='I'>n</emphasis>
+fields of cell data,
+and if the
+<option>-C</option>
+option is specified, then there must be at least three fields of cell data.
+The view-header information may span multiple lines, and the only restriction
+on its format is that it not pass for data.</para>
+
+<para>A color is specified as a triple</para>
+
+  <blockquote remap='RS'>
+<para><emphasis remap='I'>r g b</emphasis>
+  </para></blockquote> <!-- remap='RE' -->
+
+<para>of integers, each between 0 and 255 (inclusive).
+These values represent intensities of red, green, and blue, respectively.</para>
+</refsect1>
+
+<refsect1 id='example'><title>EXAMPLE</title>
+<para>The following invocation will display the cell-by-cell data from
+<emphasis remap='I'>inputs</emphasis>
+on the default frame buffer on the network host
+<emphasis remap='I'>fictitious.brlcad.org</emphasis>.
+It will display all views with the grid turned
+on (space between cells),
+positioned with the left-most cell 20 cells to the right
+of the display origin (lower left),
+and the lowest cell 30 cells above the display origin,
+the color key will appear underneath the
+grid of cells, and the display will be erased before each view is drawn.</para>
+
+<literallayout remap='RS'>
+<synopsis>
+$ &thinsp;<emphasis remap='I'>cell-fb &thinsp;-F &thinsp;fictitious.brlcad.org: &thinsp;-gek &thinsp;-p &thinsp;&ldquo;20 30&rdquo; &thinsp;inputs
+</synopsis>
+</emphasis></literallayout> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtregis</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 id='authors'><title>AUTHORS</title>
+<itemizedlist remap='TP'>
+
+  <listitem><para>Gary S. Moss, BRL/VLD-VMB</para></listitem>
+  <listitem><para>Paul J. Tanenbaum, BRL/VLD-GSB</para></listitem>
+
+
+</itemizedlist>
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1991-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='cellfb1'>
+<refmeta>
+<refentrytitle>CELL-FB</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>cell-fb</refname>
+<refpurpose>display cell-by-cell data on a frame buffer</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>cell-fb</command>    
+    <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
+    <arg choice='opt'><replaceable>file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Cell-fb</emphasis>
+reads a stream of cell-by-cell data
+and displays the data, one view at a time, on a frame buffer.
+If
+<emphasis remap='I'>file</emphasis>
+is specified, then
+<command>cell-fb</command>
+tries to read the data from it.
+Otherwise, the standard input is read.</para>
+
+<refsect2 id='options'><title>Options</title>
+<para>The command-line options and their meanings are given below.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-C</option></term>
+  <listitem>
+<para>Interpret the first three fields for each cell as an explicit color
+(see the
+<link linkend="definitions">DEFINITIONS</link>
+section below).
+The default behavior is to interpret a specified field as an indirect
+reference, which, through a color map, corresponds to a color.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-F</option><replaceable>fbfile</replaceable></term>
+  <listitem>
+<para>Write graphics output to
+<emphasis remap='I'>fbfile,</emphasis>
+which may be any UNIX file (or frame-buffer device).
+In the absence of the
+<option>-F</option>
+option,
+if the shell variable
+<emphasis remap='B'>FB_FILE</emphasis>
+is defined,
+its value is used
+(see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+Otherwise, the host's default frame buffer is used
+(see
+<citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3B</manvolnum></citerefentry>).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-N</option><replaceable>scr_height</replaceable></term>
+  <listitem>
+<para>Set screen (frame-buffer) height to
+<emphasis remap='I'>scr_height</emphasis>
+pixels.
+<emphasis remap='I'>Scr_height</emphasis>
+may legally be any integer greater than -2.
+See the discussion of autosizing below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-S</option><replaceable>scr_size</replaceable></term>
+  <listitem>
+<para>Set screen (frame-buffer) width and height to
+<emphasis remap='I'>scr_size</emphasis>
+pixels.
+<emphasis remap='I'>Scr_size</emphasis>
+may legally be any integer greater than -2.
+See the discussion of autosizing below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-W</option><replaceable>scr_width</replaceable></term>
+  <listitem>
+<para>Set screen (frame-buffer) width to
+<emphasis remap='I'>scr_width</emphasis>
+pixels.
+<emphasis remap='I'>Scr_width</emphasis>
+may legally be any integer greater than -2.
+See the discussion of autosizing below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-X</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Set the local debug flag to the hexadecimal value
+<emphasis remap='I'>n.</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-a</option><replaceable>&ldquo;h v&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Do not display the data,
+simply print out the frame-buffer coordinates of the grid-plane point
+(<emphasis remap='I'>h, v</emphasis>).
+This option is useful for outboard manipulation of the
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+data created by
+<emphasis remap='I'>cell-fb.</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-b</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Ignore values not equal to
+<emphasis remap='I'>n.</emphasis>
+All other cell-data values are mapped to the background color.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Assume a cell size of
+<emphasis remap='I'>n</emphasis>
+user units.
+The default cell size is 100 user units.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-d</option><replaceable>&ldquo;m n&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Scale the data values from the interval
+[<emphasis remap='I'>m, n</emphasis>]
+into the unit interval [0, 1].
+The scaling is performed before values are mapped to colors,
+so the
+<option>-i,</option>
+<option>-k,</option>
+and
+<option>-m</option>
+options always deal with the
+discrete values listed in the description below of the
+<option>-k</option>
+option.
+The default domain is [0, 1],
+for which no scaling is necessary.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-e</option></term>
+  <listitem>
+<para>Erase the frame buffer before displaying each view.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-f</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Display field number
+<emphasis remap='I'>n</emphasis>
+of the cell-by-cell data
+(see the
+<link linkend="definitions">DEFINITIONS</link>
+section below).
+By default, field 1 is displayed.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-g</option></term>
+  <listitem>
+<para>Display the grid.
+Causes a 1-pixel spacing between cells in the output.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-h</option></term>
+  <listitem>
+<para>Force high-resolution display (1024&times;1024 pixels).
+See the discussion of autosizing below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-i</option></term>
+  <listitem>
+<para>Round values to the nearest discrete value
+listed in the description of the
+<option>-k</option>
+option below.
+By default, output colors are chosen by interpolation between
+those values.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-k</option></term>
+  <listitem>
+<para>Display the color key.
+This option displays the color mappings for 11 discrete values underneath
+the picture.
+The values represented are, from left to right:
+0.0, 0.1, 0.2, ..., 0.9, and 1.0.
+Given this option
+and snug-fit autosizing for height,
+the frame buffer that
+<command>cell-fb</command>
+opens will be taller to accommodate the key.
+See the discussion of autosizing below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-l</option><replaceable>&ldquo;az el&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Write log information to the standard output.
+When given this option,
+<command>cell-fb</command>
+produces a header comment and one line each reporting
+an azimuth/elevation pair (viz.
+(<emphasis remap='I'>az</emphasis>, <emphasis remap='I'>el</emphasis>)
+) to associate with this view;
+the coordinates (in user units) of
+the lower-left and upper-right corners of the frame buffer;
+and the width and height (in pixels) of the frame buffer.
+This information may be useful in registering other images
+on top of a cell plot.
+If a single view has not been specified,
+this option causes an implicit
+<option>-v</option> 1,
+which may, of course, be overridden explicitly.
+N.B.&mdash;<emphasis remap='I'>Cell-fb</emphasis>
+makes no use whatever of the values
+<emphasis remap='I'>az</emphasis> and <emphasis remap='I'>el</emphasis>,
+it merely writes them to the log.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-m</option><replaceable>&ldquo;n color&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Map cell data value
+<emphasis remap='I'>n</emphasis>
+to
+<emphasis remap='I'>color.</emphasis>
+The value
+<emphasis remap='I'>n</emphasis>
+will be truncated, if necessary, to
+the nearest lower of the discrete values listed in the description of the
+<option>-k</option>
+option above.
+The background color can be indexed by specifying the value 1.1 for
+<emphasis remap='I'>n.</emphasis>
+For the meaning and format of
+<emphasis remap='I'>color,</emphasis>
+see the
+<link linkend="definitions">DEFINITIONS</link>
+section below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-M</option><replaceable>&ldquo;color1 color2&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Define the color map
+to be a ramp between
+<emphasis remap='I'>color1</emphasis> and <emphasis remap='I'>color2.</emphasis>
+This allows frugality with the colors in an image:
+if, for example, cell data is plotted in gray scale,
+then many other colors remain for use in
+text, call outs, and sundry markings on top of the cell data.
+The default color map
+is a typical cold-to-hot, blue-to-red scale,
+excepting that the smallest value in the input domain
+is mapped to white.
+For the meaning and format of
+<emphasis remap='I'>color1</emphasis> and <emphasis remap='I'>color2,</emphasis>
+see the
+<link linkend="definitions">DEFINITIONS</link>
+section below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option><replaceable>&ldquo;h v&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Offset the picture from the lower-left corner of the frame buffer display
+by
+<emphasis remap='I'>h</emphasis>
+pixels horizontally, and
+<emphasis remap='I'>v</emphasis>
+pixels vertically.
+If this option is specified with only one argument,
+then the horizontal and vertical offsets are both set to this value.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s</option><replaceable>&ldquo;w h&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Plot each cell as a rectangle of width
+<emphasis remap='I'>w</emphasis>
+pixels and height
+<emphasis remap='I'>h</emphasis>pixels.
+This option has the effect of scaling the picture independently in the
+horizontal and vertical dimensions.
+The default is 10 pixels per cell in each dimension, not including the
+grid.
+If this option is specified with only one argument,
+then the width and height are both set to this value.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Display only view number
+<emphasis remap='I'>n.</emphasis>
+Views are numbered starting at 1.
+If
+<emphasis remap='I'>n</emphasis> = 0,
+all views are displayed sequentially,
+which is the default behavior.
+The option
+<option>-v</option> 0
+implicitly turns off logging.
+(see the
+<option>-l</option>
+option above).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-x</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Set the
+<citerefentry><refentrytitle>libbu</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+debug flag to the hexadecimal value
+<emphasis remap='I'>n.</emphasis>
+This option is useful primarily in debugging
+memory allocation.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect2>
+</refsect1>
+
+<refsect1 id='hint'><title>HINT</title>
+<para>If multiple views are input,
+the user will be asked between views whether he wants to see the next view.
+While being prompted, the user can save the previous image by using a
+utility such as
+<citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 id='discussion'><title>DISCUSSION</title>
+<para><emphasis remap='I'>Cell-fb</emphasis>
+determines the appropriate width and height of the frame buffer
+independently.
+For each there are three methods.
+If the sizes are provided explicitly, with the
+<option>-N,</option>
+<option>-S,</option>
+or
+<option>-W</option>
+options,
+<command>cell-fb</command>
+will use exactly the specified values.
+Otherwise,
+it performs autosizing for each view.
+<emphasis remap='I'>Cell-fb</emphasis>'s
+original behavior is called loose-fit autosizing.
+In that case, a frame-buffer dimension will be set to 512 pixels
+unless the image will not fit,
+in which case a 1024-pixel dimension is used.
+Loose-fit autosizing may be specified by any of
+<option>-N</option>0,
+<option>-S</option>0,
+or
+<option>-W</option>0.
+The third method is another form of autosizing,
+called snug-fit.
+For this method,
+<command>cell-fb</command>
+computes the minimum measurement required to display the plot,
+given the data and whatever values have been specified for the
+<option>-c,</option>
+<option>-g,</option>
+<option>-k,</option>
+<option>-p,</option>
+and
+<option>-s</option>
+options.
+Snug-fit autosizing is the default method for both width and height
+of the frame buffer,
+and it may be explicitly specified by any of
+<option>-N</option>-1,
+<option>-S</option>-1,
+or
+<option>-W</option>-1.
+Whenever autosizing is performed,
+<command>cell-fb</command>
+prints to the standard error the actual width and height used for each view.</para>
+</refsect1>
+
+<refsect1 id='definitions'><title>DEFINITIONS</title>
+<para>A stream of cell-by-cell data contains one or more views,
+each of which may start with view-header information and contains
+one line of data for each cell in the view.
+Each line of cell data must be in the following format:</para>
+
+  <blockquote remap='RS'>
+<para><emphasis remap='I'>coords fields</emphasis>
+  </para></blockquote> <!-- remap='RE' -->
+
+<para>where
+<emphasis remap='I'>coords</emphasis>
+is two real numbers and
+<emphasis remap='I'>fields</emphasis>
+is one or more real numbers.
+All the numbers on a line of cell data are separated by
+non-empty strings of white space (blanks and tabs)
+and there may be leading white space on the line.
+<emphasis remap='I'>Coords</emphasis>
+are the grid-plane coordinates of the cell,
+which must be spaced consistently with the cell size,
+and
+<emphasis remap='I'>fields</emphasis>
+may have arbitrary significance.
+If the
+<option>-f</option><replaceable>n</replaceable>
+option is specified, then there must be at least
+<emphasis remap='I'>n</emphasis>
+fields of cell data,
+and if the
+<option>-C</option>
+option is specified, then there must be at least three fields of cell data.
+The view-header information may span multiple lines, and the only restriction
+on its format is that it not pass for data.</para>
+
+<para>A color is specified as a triple</para>
+
+  <blockquote remap='RS'>
+<para><emphasis remap='I'>r g b</emphasis>
+  </para></blockquote> <!-- remap='RE' -->
+
+<para>of integers, each between 0 and 255 (inclusive).
+These values represent intensities of red, green, and blue, respectively.</para>
+</refsect1>
+
+<refsect1 id='example'><title>EXAMPLE</title>
+<para>The following invocation will display the cell-by-cell data from
+<emphasis remap='I'>inputs</emphasis>
+on the default frame buffer on the network host
+<emphasis remap='I'>fictitious.brlcad.org</emphasis>.
+It will display all views with the grid turned
+on (space between cells),
+positioned with the left-most cell 20 cells to the right
+of the display origin (lower left),
+and the lowest cell 30 cells above the display origin,
+the color key will appear underneath the
+grid of cells, and the display will be erased before each view is drawn.</para>
+
+<literallayout remap='RS'>
+<synopsis>
+$ &thinsp;<emphasis remap='I'>cell-fb &thinsp;-F &thinsp;fictitious.brlcad.org: &thinsp;-gek &thinsp;-p &thinsp;&ldquo;20 30&rdquo; &thinsp;inputs
+</synopsis>
+</emphasis></literallayout> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtregis</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 id='authors'><title>AUTHORS</title>
+<itemizedlist remap='TP'>
+
+  <listitem><para>Gary S. Moss, BRL/VLD-VMB</para></listitem>
+  <listitem><para>Paul J. Tanenbaum, BRL/VLD-GSB</para></listitem>
+
+
+</itemizedlist>
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1991-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='cellfb1'>
+<refmeta>
+<refentrytitle>CELL-FB</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>cell-fb</refname>
+<refpurpose>display cell-by-cell data on a frame buffer</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>cell-fb</command>    
+    <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
+    <arg choice='opt'><replaceable>file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Cell-fb</emphasis>
+reads a stream of cell-by-cell data
+and displays the data, one view at a time, on a frame buffer.
+If
+<emphasis remap='I'>file</emphasis>
+is specified, then
+<command>cell-fb</command>
+tries to read the data from it.
+Otherwise, the standard input is read.</para>
+
+<refsect2 id='options'><title>Options</title>
+<para>The command-line options and their meanings are given below.</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-C</option></term>
+  <listitem>
+<para>Interpret the first three fields for each cell as an explicit color
+(see the
+<link linkend="definitions">DEFINITIONS</link>
+section below).
+The default behavior is to interpret a specified field as an indirect
+reference, which, through a color map, corresponds to a color.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-F</option><replaceable>fbfile</replaceable></term>
+  <listitem>
+<para>Write graphics output to
+<emphasis remap='I'>fbfile,</emphasis>
+which may be any UNIX file (or frame-buffer device).
+In the absence of the
+<option>-F</option>
+option,
+if the shell variable
+<emphasis remap='B'>FB_FILE</emphasis>
+is defined,
+its value is used
+(see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+Otherwise, the host's default frame buffer is used
+(see
+<citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3B</manvolnum></citerefentry>).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-N</option><replaceable>scr_height</replaceable></term>
+  <listitem>
+<para>Set screen (frame-buffer) height to
+<emphasis remap='I'>scr_height</emphasis>
+pixels.
+<emphasis remap='I'>Scr_height</emphasis>
+may legally be any integer greater than -2.
+See the discussion of autosizing below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-S</option><replaceable>scr_size</replaceable></term>
+  <listitem>
+<para>Set screen (frame-buffer) width and height to
+<emphasis remap='I'>scr_size</emphasis>
+pixels.
+<emphasis remap='I'>Scr_size</emphasis>
+may legally be any integer greater than -2.
+See the discussion of autosizing below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-W</option><replaceable>scr_width</replaceable></term>
+  <listitem>
+<para>Set screen (frame-buffer) width to
+<emphasis remap='I'>scr_width</emphasis>
+pixels.
+<emphasis remap='I'>Scr_width</emphasis>
+may legally be any integer greater than -2.
+See the discussion of autosizing below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-X</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Set the local debug flag to the hexadecimal value
+<emphasis remap='I'>n.</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-a</option><replaceable>&ldquo;h v&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Do not display the data,
+simply print out the frame-buffer coordinates of the grid-plane point
+(<emphasis remap='I'>h, v</emphasis>).
+This option is useful for outboard manipulation of the
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+data created by
+<emphasis remap='I'>cell-fb.</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-b</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Ignore values not equal to
+<emphasis remap='I'>n.</emphasis>
+All other cell-data values are mapped to the background color.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Assume a cell size of
+<emphasis remap='I'>n</emphasis>
+user units.
+The default cell size is 100 user units.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-d</option><replaceable>&ldquo;m n&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Scale the data values from the interval
+[<emphasis remap='I'>m, n</emphasis>]
+into the unit interval [0, 1].
+The scaling is performed before values are mapped to colors,
+so the
+<option>-i,</option>
+<option>-k,</option>
+and
+<option>-m</option>
+options always deal with the
+discrete values listed in the description below of the
+<option>-k</option>
+option.
+The default domain is [0, 1],
+for which no scaling is necessary.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-e</option></term>
+  <listitem>
+<para>Erase the frame buffer before displaying each view.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-f</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Display field number
+<emphasis remap='I'>n</emphasis>
+of the cell-by-cell data
+(see the
+<link linkend="definitions">DEFINITIONS</link>
+section below).
+By default, field 1 is displayed.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-g</option></term>
+  <listitem>
+<para>Display the grid.
+Causes a 1-pixel spacing between cells in the output.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-h</option></term>
+  <listitem>
+<para>Force high-resolution display (1024&times;1024 pixels).
+See the discussion of autosizing below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-i</option></term>
+  <listitem>
+<para>Round values to the nearest discrete value
+listed in the description of the
+<option>-k</option>
+option below.
+By default, output colors are chosen by interpolation between
+those values.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-k</option></term>
+  <listitem>
+<para>Display the color key.
+This option displays the color mappings for 11 discrete values underneath
+the picture.
+The values represented are, from left to right:
+0.0, 0.1, 0.2, ..., 0.9, and 1.0.
+Given this option
+and snug-fit autosizing for height,
+the frame buffer that
+<command>cell-fb</command>
+opens will be taller to accommodate the key.
+See the discussion of autosizing below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-l</option><replaceable>&ldquo;az el&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Write log information to the standard output.
+When given this option,
+<command>cell-fb</command>
+produces a header comment and one line each reporting
+an azimuth/elevation pair (viz.
+(<emphasis remap='I'>az</emphasis>, <emphasis remap='I'>el</emphasis>)
+) to associate with this view;
+the coordinates (in user units) of
+the lower-left and upper-right corners of the frame buffer;
+and the width and height (in pixels) of the frame buffer.
+This information may be useful in registering other images
+on top of a cell plot.
+If a single view has not been specified,
+this option causes an implicit
+<option>-v</option> 1,
+which may, of course, be overridden explicitly.
+N.B.&mdash;<emphasis remap='I'>Cell-fb</emphasis>
+makes no use whatever of the values
+<emphasis remap='I'>az</emphasis> and <emphasis remap='I'>el</emphasis>,
+it merely writes them to the log.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-m</option><replaceable>&ldquo;n color&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Map cell data value
+<emphasis remap='I'>n</emphasis>
+to
+<emphasis remap='I'>color.</emphasis>
+The value
+<emphasis remap='I'>n</emphasis>
+will be truncated, if necessary, to
+the nearest lower of the discrete values listed in the description of the
+<option>-k</option>
+option above.
+The background color can be indexed by specifying the value 1.1 for
+<emphasis remap='I'>n.</emphasis>
+For the meaning and format of
+<emphasis remap='I'>color,</emphasis>
+see the
+<link linkend="definitions">DEFINITIONS</link>
+section below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-M</option><replaceable>&ldquo;color1 color2&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Define the color map
+to be a ramp between
+<emphasis remap='I'>color1</emphasis> and <emphasis remap='I'>color2.</emphasis>
+This allows frugality with the colors in an image:
+if, for example, cell data is plotted in gray scale,
+then many other colors remain for use in
+text, call outs, and sundry markings on top of the cell data.
+The default color map
+is a typical cold-to-hot, blue-to-red scale,
+excepting that the smallest value in the input domain
+is mapped to white.
+For the meaning and format of
+<emphasis remap='I'>color1</emphasis> and <emphasis remap='I'>color2,</emphasis>
+see the
+<link linkend="definitions">DEFINITIONS</link>
+section below.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p</option><replaceable>&ldquo;h v&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Offset the picture from the lower-left corner of the frame buffer display
+by
+<emphasis remap='I'>h</emphasis>
+pixels horizontally, and
+<emphasis remap='I'>v</emphasis>
+pixels vertically.
+If this option is specified with only one argument,
+then the horizontal and vertical offsets are both set to this value.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s</option><replaceable>&ldquo;w h&rdquo;</replaceable><emphasis remap='B'></emphasis></term>
+  <listitem>
+<para>Plot each cell as a rectangle of width
+<emphasis remap='I'>w</emphasis>
+pixels and height
+<emphasis remap='I'>h</emphasis>pixels.
+This option has the effect of scaling the picture independently in the
+horizontal and vertical dimensions.
+The default is 10 pixels per cell in each dimension, not including the
+grid.
+If this option is specified with only one argument,
+then the width and height are both set to this value.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-v</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Display only view number
+<emphasis remap='I'>n.</emphasis>
+Views are numbered starting at 1.
+If
+<emphasis remap='I'>n</emphasis> = 0,
+all views are displayed sequentially,
+which is the default behavior.
+The option
+<option>-v</option> 0
+implicitly turns off logging.
+(see the
+<option>-l</option>
+option above).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-x</option><replaceable>n</replaceable></term>
+  <listitem>
+<para>Set the
+<citerefentry><refentrytitle>libbu</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+debug flag to the hexadecimal value
+<emphasis remap='I'>n.</emphasis>
+This option is useful primarily in debugging
+memory allocation.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect2>
+</refsect1>
+
+<refsect1 id='hint'><title>HINT</title>
+<para>If multiple views are input,
+the user will be asked between views whether he wants to see the next view.
+While being prompted, the user can save the previous image by using a
+utility such as
+<citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 id='discussion'><title>DISCUSSION</title>
+<para><emphasis remap='I'>Cell-fb</emphasis>
+determines the appropriate width and height of the frame buffer
+independently.
+For each there are three methods.
+If the sizes are provided explicitly, with the
+<option>-N,</option>
+<option>-S,</option>
+or
+<option>-W</option>
+options,
+<command>cell-fb</command>
+will use exactly the specified values.
+Otherwise,
+it performs autosizing for each view.
+<emphasis remap='I'>Cell-fb</emphasis>'s
+original behavior is called loose-fit autosizing.
+In that case, a frame-buffer dimension will be set to 512 pixels
+unless the image will not fit,
+in which case a 1024-pixel dimension is used.
+Loose-fit autosizing may be specified by any of
+<option>-N</option>0,
+<option>-S</option>0,
+or
+<option>-W</option>0.
+The third method is another form of autosizing,
+called snug-fit.
+For this method,
+<command>cell-fb</command>
+computes the minimum measurement required to display the plot,
+given the data and whatever values have been specified for the
+<option>-c,</option>
+<option>-g,</option>
+<option>-k,</option>
+<option>-p,</option>
+and
+<option>-s</option>
+options.
+Snug-fit autosizing is the default method for both width and height
+of the frame buffer,
+and it may be explicitly specified by any of
+<option>-N</option>-1,
+<option>-S</option>-1,
+or
+<option>-W</option>-1.
+Whenever autosizing is performed,
+<command>cell-fb</command>
+prints to the standard error the actual width and height used for each view.</para>
+</refsect1>
+
+<refsect1 id='definitions'><title>DEFINITIONS</title>
+<para>A stream of cell-by-cell data contains one or more views,
+each of which may start with view-header information and contains
+one line of data for each cell in the view.
+Each line of cell data must be in the following format:</para>
+
+  <blockquote remap='RS'>
+<para><emphasis remap='I'>coords fields</emphasis>
+  </para></blockquote> <!-- remap='RE' -->
+
+<para>where
+<emphasis remap='I'>coords</emphasis>
+is two real numbers and
+<emphasis remap='I'>fields</emphasis>
+is one or more real numbers.
+All the numbers on a line of cell data are separated by
+non-empty strings of white space (blanks and tabs)
+and there may be leading white space on the line.
+<emphasis remap='I'>Coords</emphasis>
+are the grid-plane coordinates of the cell,
+which must be spaced consistently with the cell size,
+and
+<emphasis remap='I'>fields</emphasis>
+may have arbitrary significance.
+If the
+<option>-f</option><replaceable>n</replaceable>
+option is specified, then there must be at least
+<emphasis remap='I'>n</emphasis>
+fields of cell data,
+and if the
+<option>-C</option>
+option is specified, then there must be at least three fields of cell data.
+The view-header information may span multiple lines, and the only restriction
+on its format is that it not pass for data.</para>
+
+<para>A color is specified as a triple</para>
+
+  <blockquote remap='RS'>
+<para><emphasis remap='I'>r g b</emphasis>
+  </para></blockquote> <!-- remap='RE' -->
+
+<para>of integers, each between 0 and 255 (inclusive).
+These values represent intensities of red, green, and blue, respectively.</para>
+</refsect1>
+
+<refsect1 id='example'><title>EXAMPLE</title>
+<para>The following invocation will display the cell-by-cell data from
+<emphasis remap='I'>inputs</emphasis>
+on the default frame buffer on the network host
+<emphasis remap='I'>fictitious.brlcad.org</emphasis>.
+It will display all views with the grid turned
+on (space between cells),
+positioned with the left-most cell 20 cells to the right
+of the display origin (lower left),
+and the lowest cell 30 cells above the display origin,
+the color key will appear underneath the
+grid of cells, and the display will be erased before each view is drawn.</para>
+
+<literallayout remap='RS'>
+<synopsis>
+$ &thinsp;<emphasis remap='I'>cell-fb &thinsp;-F &thinsp;fictitious.brlcad.org: &thinsp;-gek &thinsp;-p &thinsp;&ldquo;20 30&rdquo; &thinsp;inputs
+</synopsis>
+</emphasis></literallayout> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtregis</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 id='authors'><title>AUTHORS</title>
+<itemizedlist remap='TP'>
+
+  <listitem><para>Gary S. Moss, BRL/VLD-VMB</para></listitem>
+  <listitem><para>Paul J. Tanenbaum, BRL/VLD-GSB</para></listitem>
+
+
+</itemizedlist>
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1991-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

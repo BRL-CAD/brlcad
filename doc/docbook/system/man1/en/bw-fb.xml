@@ -1,0 +1,462 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='bwfb1'>
+<refmeta>
+<refentrytitle>BW-FB</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>bw&hyphen;fb</refname>
+<refpurpose>display a black and white bw image on a framebuffer</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>bw-fb</command>    
+    <arg choice='opt'>-ahiczRGB </arg>
+    <arg choice='opt'>-F <replaceable>framebuffer</replaceable></arg>
+    <arg choice='opt'>-s <replaceable>squarefilesize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>file_height</replaceable></arg>
+    <arg choice='opt'>-S <replaceable>squarescrsize</replaceable></arg>
+    <arg choice='opt'>-W <replaceable>scr_width</replaceable></arg>
+    <arg choice='opt'>-N <replaceable>scr_height</replaceable></arg>
+    <arg choice='opt'>-x <replaceable>file_xoff</replaceable></arg>
+    <arg choice='opt'>-y <replaceable>file_yoff</replaceable></arg>
+    <arg choice='opt'>-X <replaceable>scr_xoff</replaceable></arg>
+    <arg choice='opt'>-Y <replaceable>src_yoff</replaceable></arg>
+    <arg choice='opt'><replaceable>infile.bw</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Bw-fb</emphasis>
+reads a
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format file
+from standard input if an input file is not given, and displays the
+image on the currently selected framebuffer.
+The environment variable
+<emphasis remap='I'>FB_FILE</emphasis>
+specifies
+the current framebuffer, see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Alternatively, the framebuffer may be explicitly specified
+by using the
+<option>-F</option>
+flag.</para>
+
+<para>By default, the
+<emphasis remap='I'>bw</emphasis>
+file, and the requested framebuffer size, is assumed to be 512x512 pixels.
+Specifying the
+<option>-a</option>
+flag causes the program to attempt to autosize.
+A table of common image sizes is consulted, and if any match
+the size of the input file, then the width and height values
+associated with that size will be used.
+Specifying the
+<option>-h</option>
+flag changes both of these sizes to 1024x1024.</para>
+
+<para>If the
+<option>-i</option>
+flag is specified, the image is output from top to bottom.
+Customarily,
+<emphasis remap='I'>bw</emphasis>
+files are stored bottom to top, so this
+inverts the image.</para>
+
+<para>The
+<option>-c</option>
+flag causes the screen to be cleared before the image is displayed.
+The default behavior is to overwrite the current image
+with the new image without clearing the screen.</para>
+
+<para>The
+<option>-z</option>
+flag will zoom and center on the image being displayed
+to make it fill the display area.</para>
+
+<para>The flags
+<option>-R</option>,<emphasis remap='B'>&nbsp;-G</emphasis>,&nbsp;and<emphasis remap='B'>&nbsp;-B</emphasis>
+select individual color planes into which the image will be loaded.
+One or more can be given.  By default all three colors are written
+with the
+<emphasis remap='I'>bw</emphasis>
+pixel value.</para>
+
+<para>The
+<option>-w&nbsp;</option>file_width
+flag specifies the width of each scanline in the input file, in pixels.
+<option>-W&nbsp;</option>scr_width
+does the same for the display device.</para>
+
+<para>The
+<option>-n&nbsp;</option>file_height
+and
+<option>-N&nbsp;</option>scr_height
+flags specify the height in scanlines of the input file or display device
+respectively.</para>
+
+<para><option>-s&nbsp;</option>squarefilesize
+and
+<option>-S&nbsp;</option>squarescrsize
+set both the height and width to the size given.</para>
+
+<para><option>-x&nbsp;</option>file_xoff,
+<option>-y&nbsp;</option>file_yoff,
+<option>-X&nbsp;</option>scr_xoff,
+and
+<option>-Y&nbsp;</option>scr_yoff
+will offset into the file or onto the screen by the given amounts.
+The coordinate system for these offsets is first quadrant, with
+the origin at the lower left corner of the image.</para>
+</refsect1>
+
+<refsect1 id='format'><title>FORMAT</title>
+<para>A
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file contains sequences of pixels.
+Each pixel is stored as one
+<emphasis remap='B'>unsigned char</emphasis>
+The first pixel in a
+<emphasis remap='I'>bw</emphasis>
+file is the lower left corner of the image.
+The pixels proceed from left-to-right across each scanline,
+with scanlines being written from the bottom to the top of the image.</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>fb-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='bwfb1'>
+<refmeta>
+<refentrytitle>BW-FB</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>bw&hyphen;fb</refname>
+<refpurpose>display a black and white bw image on a framebuffer</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>bw-fb</command>    
+    <arg choice='opt'>-ahiczRGB </arg>
+    <arg choice='opt'>-F <replaceable>framebuffer</replaceable></arg>
+    <arg choice='opt'>-s <replaceable>squarefilesize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>file_height</replaceable></arg>
+    <arg choice='opt'>-S <replaceable>squarescrsize</replaceable></arg>
+    <arg choice='opt'>-W <replaceable>scr_width</replaceable></arg>
+    <arg choice='opt'>-N <replaceable>scr_height</replaceable></arg>
+    <arg choice='opt'>-x <replaceable>file_xoff</replaceable></arg>
+    <arg choice='opt'>-y <replaceable>file_yoff</replaceable></arg>
+    <arg choice='opt'>-X <replaceable>scr_xoff</replaceable></arg>
+    <arg choice='opt'>-Y <replaceable>src_yoff</replaceable></arg>
+    <arg choice='opt'><replaceable>infile.bw</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Bw-fb</emphasis>
+reads a
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format file
+from standard input if an input file is not given, and displays the
+image on the currently selected framebuffer.
+The environment variable
+<emphasis remap='I'>FB_FILE</emphasis>
+specifies
+the current framebuffer, see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Alternatively, the framebuffer may be explicitly specified
+by using the
+<option>-F</option>
+flag.</para>
+
+<para>By default, the
+<emphasis remap='I'>bw</emphasis>
+file, and the requested framebuffer size, is assumed to be 512x512 pixels.
+Specifying the
+<option>-a</option>
+flag causes the program to attempt to autosize.
+A table of common image sizes is consulted, and if any match
+the size of the input file, then the width and height values
+associated with that size will be used.
+Specifying the
+<option>-h</option>
+flag changes both of these sizes to 1024x1024.</para>
+
+<para>If the
+<option>-i</option>
+flag is specified, the image is output from top to bottom.
+Customarily,
+<emphasis remap='I'>bw</emphasis>
+files are stored bottom to top, so this
+inverts the image.</para>
+
+<para>The
+<option>-c</option>
+flag causes the screen to be cleared before the image is displayed.
+The default behavior is to overwrite the current image
+with the new image without clearing the screen.</para>
+
+<para>The
+<option>-z</option>
+flag will zoom and center on the image being displayed
+to make it fill the display area.</para>
+
+<para>The flags
+<option>-R</option>,<emphasis remap='B'>&nbsp;-G</emphasis>,&nbsp;and<emphasis remap='B'>&nbsp;-B</emphasis>
+select individual color planes into which the image will be loaded.
+One or more can be given.  By default all three colors are written
+with the
+<emphasis remap='I'>bw</emphasis>
+pixel value.</para>
+
+<para>The
+<option>-w&nbsp;</option>file_width
+flag specifies the width of each scanline in the input file, in pixels.
+<option>-W&nbsp;</option>scr_width
+does the same for the display device.</para>
+
+<para>The
+<option>-n&nbsp;</option>file_height
+and
+<option>-N&nbsp;</option>scr_height
+flags specify the height in scanlines of the input file or display device
+respectively.</para>
+
+<para><option>-s&nbsp;</option>squarefilesize
+and
+<option>-S&nbsp;</option>squarescrsize
+set both the height and width to the size given.</para>
+
+<para><option>-x&nbsp;</option>file_xoff,
+<option>-y&nbsp;</option>file_yoff,
+<option>-X&nbsp;</option>scr_xoff,
+and
+<option>-Y&nbsp;</option>scr_yoff
+will offset into the file or onto the screen by the given amounts.
+The coordinate system for these offsets is first quadrant, with
+the origin at the lower left corner of the image.</para>
+</refsect1>
+
+<refsect1 id='format'><title>FORMAT</title>
+<para>A
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file contains sequences of pixels.
+Each pixel is stored as one
+<emphasis remap='B'>unsigned char</emphasis>
+The first pixel in a
+<emphasis remap='I'>bw</emphasis>
+file is the lower left corner of the image.
+The pixels proceed from left-to-right across each scanline,
+with scanlines being written from the bottom to the top of the image.</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>fb-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='bwfb1'>
+<refmeta>
+<refentrytitle>BW-FB</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>bw&hyphen;fb</refname>
+<refpurpose>display a black and white bw image on a framebuffer</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>bw-fb</command>    
+    <arg choice='opt'>-ahiczRGB </arg>
+    <arg choice='opt'>-F <replaceable>framebuffer</replaceable></arg>
+    <arg choice='opt'>-s <replaceable>squarefilesize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>file_height</replaceable></arg>
+    <arg choice='opt'>-S <replaceable>squarescrsize</replaceable></arg>
+    <arg choice='opt'>-W <replaceable>scr_width</replaceable></arg>
+    <arg choice='opt'>-N <replaceable>scr_height</replaceable></arg>
+    <arg choice='opt'>-x <replaceable>file_xoff</replaceable></arg>
+    <arg choice='opt'>-y <replaceable>file_yoff</replaceable></arg>
+    <arg choice='opt'>-X <replaceable>scr_xoff</replaceable></arg>
+    <arg choice='opt'>-Y <replaceable>src_yoff</replaceable></arg>
+    <arg choice='opt'><replaceable>infile.bw</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Bw-fb</emphasis>
+reads a
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format file
+from standard input if an input file is not given, and displays the
+image on the currently selected framebuffer.
+The environment variable
+<emphasis remap='I'>FB_FILE</emphasis>
+specifies
+the current framebuffer, see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Alternatively, the framebuffer may be explicitly specified
+by using the
+<option>-F</option>
+flag.</para>
+
+<para>By default, the
+<emphasis remap='I'>bw</emphasis>
+file, and the requested framebuffer size, is assumed to be 512x512 pixels.
+Specifying the
+<option>-a</option>
+flag causes the program to attempt to autosize.
+A table of common image sizes is consulted, and if any match
+the size of the input file, then the width and height values
+associated with that size will be used.
+Specifying the
+<option>-h</option>
+flag changes both of these sizes to 1024x1024.</para>
+
+<para>If the
+<option>-i</option>
+flag is specified, the image is output from top to bottom.
+Customarily,
+<emphasis remap='I'>bw</emphasis>
+files are stored bottom to top, so this
+inverts the image.</para>
+
+<para>The
+<option>-c</option>
+flag causes the screen to be cleared before the image is displayed.
+The default behavior is to overwrite the current image
+with the new image without clearing the screen.</para>
+
+<para>The
+<option>-z</option>
+flag will zoom and center on the image being displayed
+to make it fill the display area.</para>
+
+<para>The flags
+<option>-R</option>,<emphasis remap='B'>&nbsp;-G</emphasis>,&nbsp;and<emphasis remap='B'>&nbsp;-B</emphasis>
+select individual color planes into which the image will be loaded.
+One or more can be given.  By default all three colors are written
+with the
+<emphasis remap='I'>bw</emphasis>
+pixel value.</para>
+
+<para>The
+<option>-w&nbsp;</option>file_width
+flag specifies the width of each scanline in the input file, in pixels.
+<option>-W&nbsp;</option>scr_width
+does the same for the display device.</para>
+
+<para>The
+<option>-n&nbsp;</option>file_height
+and
+<option>-N&nbsp;</option>scr_height
+flags specify the height in scanlines of the input file or display device
+respectively.</para>
+
+<para><option>-s&nbsp;</option>squarefilesize
+and
+<option>-S&nbsp;</option>squarescrsize
+set both the height and width to the size given.</para>
+
+<para><option>-x&nbsp;</option>file_xoff,
+<option>-y&nbsp;</option>file_yoff,
+<option>-X&nbsp;</option>scr_xoff,
+and
+<option>-Y&nbsp;</option>scr_yoff
+will offset into the file or onto the screen by the given amounts.
+The coordinate system for these offsets is first quadrant, with
+the origin at the lower left corner of the image.</para>
+</refsect1>
+
+<refsect1 id='format'><title>FORMAT</title>
+<para>A
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file contains sequences of pixels.
+Each pixel is stored as one
+<emphasis remap='B'>unsigned char</emphasis>
+The first pixel in a
+<emphasis remap='I'>bw</emphasis>
+file is the lower left corner of the image.
+The pixels proceed from left-to-right across each scanline,
+with scanlines being written from the bottom to the top of the image.</para>
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>fb-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

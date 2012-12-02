@@ -1,0 +1,537 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fbfade1'>
+<refmeta>
+<refentrytitle>FBFADE</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fbfade</refname>
+<refpurpose>fade a frame buffer image in or out</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fbfade</command>    
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'><arg choice='plain'>-f </arg><arg choice='plain'><replaceable>input</replaceable></arg><arg choice='plain'><replaceable>image</replaceable></arg><arg choice='plain'><replaceable>name</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-s </arg><arg choice='plain'><replaceable>input</replaceable></arg><arg choice='plain'><replaceable>square</replaceable></arg><arg choice='plain'><replaceable>size</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-w </arg><arg choice='plain'><replaceable>input</replaceable></arg><arg choice='plain'><replaceable>width</replaceable></arg></arg>
+    <sbr/>
+    <arg choice='opt'><arg choice='plain'>-n </arg><arg choice='plain'><replaceable>input</replaceable></arg><arg choice='plain'><replaceable>height</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-S </arg><arg choice='plain'><replaceable>output</replaceable></arg><arg choice='plain'><replaceable>square</replaceable></arg><arg choice='plain'><replaceable>size</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-W </arg><arg choice='plain'><replaceable>output</replaceable></arg><arg choice='plain'><replaceable>width</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-N </arg><arg choice='plain'><replaceable>output</replaceable></arg><arg choice='plain'><replaceable>height</replaceable></arg></arg>
+    <sbr/>
+    <arg choice='opt'><arg choice='opt'>-F </arg><arg choice='plain'><replaceable>output</replaceable></arg><arg choice='plain'><replaceable>frame</replaceable></arg><arg choice='plain'><replaceable>buffer</replaceable></arg><arg choice='plain'><replaceable>name</replaceable></arg></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<!-- .lg 0  IGNORED -->
+<para>&shy;fbfade
+<!-- .lg  IGNORED -->
+gradually displays an image on a frame buffer,
+one randomly chosen pixel at a time.</para>
+
+<refsect2 id='options'><title>Options</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>&shy;-h</term>
+  <listitem>
+<!-- .lg  IGNORED -->
+<para>(&ldquo;high resolution&rdquo;)Assumes 1024 by 1024 pixels for default input image size
+instead of 512 by 512.
+Explicitly specified sizes override the default,
+and if actual input image size is smaller than requested,
+the actual size will be used.
+If output frame buffer size is not specified,
+the revised input size will be requested for output.
+If actual output frame buffer size is greater than requested,
+only the lower-left portion of the frame buffer will be used.
+Actual sizes depend on details of specific frame buffers.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-f <emphasis remap='I'>input image name</emphasis></term>
+  <listitem>
+<para>Inputs the image to be displayed
+from the specified frame buffer or <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry> file,
+instead of using pure background
+(which fades out the image already
+on the output frame buffer).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-s<emphasis remap='P->I'> input square size</emphasis></term>
+  <listitem>
+<para>Specifies input image width and height.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-w<emphasis remap='P->I'> input width</emphasis></term>
+  <listitem>
+<para>Specifies input image width.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-n<emphasis remap='P->I'> input height</emphasis></term>
+  <listitem>
+<para>Specifies input image height.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-S<emphasis remap='P->I'> output square size</emphasis></term>
+  <listitem>
+<para>Specifies output frame buffer width and height.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-W<emphasis remap='P->I'> output width</emphasis></term>
+  <listitem>
+<para>Specifies output frame buffer width.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-N<emphasis remap='P->I'> output height</emphasis></term>
+  <listitem>
+<para>Specifies output frame buffer height.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-F<emphasis remap='P->I'> output frame buffer name</emphasis></term>
+  <listitem>
+<para>Outputs to the specified frame buffer
+instead of the one specified by the
+<!-- .lg 0  IGNORED -->
+&shy;FB_FILE<emphasis remap='P->I'>
+<!-- .lg  IGNORED -->
+environment variable
+(or the default, if
+<!-- .lg 0  IGNORED -->
+&shy;</emphasis>FB_FILE<emphasis remap='P->I'>
+<!-- .lg  IGNORED -->
+is not set).
+If this is the last option specified, the
+<!-- .lg 0  IGNORED -->
+&shy;</emphasis>-F<emphasis remap='P->I'>
+<!-- .lg  IGNORED -->
+is optional.</emphasis></para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect2>
+</refsect1>
+
+<refsect1 id='caveat'><title>CAVEAT</title>
+<!-- .lg 0  IGNORED -->
+<para>&shy;fbfade<emphasis remap='P->I'>
+<!-- .lg  IGNORED -->
+works best in conjunction with a frame buffer having very fast access to pixels.</emphasis></para>
+</refsect1>
+
+<refsect1 id='example'><title>EXAMPLE</title>
+<para>The following shell script can be used to produce a slick &ldquo;slide show&rdquo;:</para>
+  <blockquote remap='RS'>
+<para>fbclear
+<!-- .br -->
+for &thinsp;i &thinsp;in &thinsp;*.pix
+<!-- .br -->
+do	fbfade &thinsp;-f $i
+<!-- .br -->
+	sleep &thinsp;15
+<!-- .br -->
+done
+<!-- .br -->
+fbfade</para></blockquote> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+</refsect1>
+
+<refsect1 id='authors'><title>AUTHORS</title>
+<para>Douglas A. Gwyn, BRL/VLD-VMB
+<!-- .br -->
+Gary S. Moss, BRL/VLD-VMB</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fbfade1'>
+<refmeta>
+<refentrytitle>FBFADE</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fbfade</refname>
+<refpurpose>fade a frame buffer image in or out</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fbfade</command>    
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'><arg choice='plain'>-f </arg><arg choice='plain'><replaceable>input</replaceable></arg><arg choice='plain'><replaceable>image</replaceable></arg><arg choice='plain'><replaceable>name</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-s </arg><arg choice='plain'><replaceable>input</replaceable></arg><arg choice='plain'><replaceable>square</replaceable></arg><arg choice='plain'><replaceable>size</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-w </arg><arg choice='plain'><replaceable>input</replaceable></arg><arg choice='plain'><replaceable>width</replaceable></arg></arg>
+    <sbr/>
+    <arg choice='opt'><arg choice='plain'>-n </arg><arg choice='plain'><replaceable>input</replaceable></arg><arg choice='plain'><replaceable>height</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-S </arg><arg choice='plain'><replaceable>output</replaceable></arg><arg choice='plain'><replaceable>square</replaceable></arg><arg choice='plain'><replaceable>size</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-W </arg><arg choice='plain'><replaceable>output</replaceable></arg><arg choice='plain'><replaceable>width</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-N </arg><arg choice='plain'><replaceable>output</replaceable></arg><arg choice='plain'><replaceable>height</replaceable></arg></arg>
+    <sbr/>
+    <arg choice='opt'><arg choice='opt'>-F </arg><arg choice='plain'><replaceable>output</replaceable></arg><arg choice='plain'><replaceable>frame</replaceable></arg><arg choice='plain'><replaceable>buffer</replaceable></arg><arg choice='plain'><replaceable>name</replaceable></arg></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<!-- .lg 0  IGNORED -->
+<para>&shy;fbfade
+<!-- .lg  IGNORED -->
+gradually displays an image on a frame buffer,
+one randomly chosen pixel at a time.</para>
+
+<refsect2 id='options'><title>Options</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>&shy;-h</term>
+  <listitem>
+<!-- .lg  IGNORED -->
+<para>(&ldquo;high resolution&rdquo;)Assumes 1024 by 1024 pixels for default input image size
+instead of 512 by 512.
+Explicitly specified sizes override the default,
+and if actual input image size is smaller than requested,
+the actual size will be used.
+If output frame buffer size is not specified,
+the revised input size will be requested for output.
+If actual output frame buffer size is greater than requested,
+only the lower-left portion of the frame buffer will be used.
+Actual sizes depend on details of specific frame buffers.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-f <emphasis remap='I'>input image name</emphasis></term>
+  <listitem>
+<para>Inputs the image to be displayed
+from the specified frame buffer or <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry> file,
+instead of using pure background
+(which fades out the image already
+on the output frame buffer).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-s<emphasis remap='P->I'> input square size</emphasis></term>
+  <listitem>
+<para>Specifies input image width and height.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-w<emphasis remap='P->I'> input width</emphasis></term>
+  <listitem>
+<para>Specifies input image width.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-n<emphasis remap='P->I'> input height</emphasis></term>
+  <listitem>
+<para>Specifies input image height.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-S<emphasis remap='P->I'> output square size</emphasis></term>
+  <listitem>
+<para>Specifies output frame buffer width and height.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-W<emphasis remap='P->I'> output width</emphasis></term>
+  <listitem>
+<para>Specifies output frame buffer width.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-N<emphasis remap='P->I'> output height</emphasis></term>
+  <listitem>
+<para>Specifies output frame buffer height.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-F<emphasis remap='P->I'> output frame buffer name</emphasis></term>
+  <listitem>
+<para>Outputs to the specified frame buffer
+instead of the one specified by the
+<!-- .lg 0  IGNORED -->
+&shy;FB_FILE<emphasis remap='P->I'>
+<!-- .lg  IGNORED -->
+environment variable
+(or the default, if
+<!-- .lg 0  IGNORED -->
+&shy;</emphasis>FB_FILE<emphasis remap='P->I'>
+<!-- .lg  IGNORED -->
+is not set).
+If this is the last option specified, the
+<!-- .lg 0  IGNORED -->
+&shy;</emphasis>-F<emphasis remap='P->I'>
+<!-- .lg  IGNORED -->
+is optional.</emphasis></para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect2>
+</refsect1>
+
+<refsect1 id='caveat'><title>CAVEAT</title>
+<!-- .lg 0  IGNORED -->
+<para>&shy;fbfade<emphasis remap='P->I'>
+<!-- .lg  IGNORED -->
+works best in conjunction with a frame buffer having very fast access to pixels.</emphasis></para>
+</refsect1>
+
+<refsect1 id='example'><title>EXAMPLE</title>
+<para>The following shell script can be used to produce a slick &ldquo;slide show&rdquo;:</para>
+  <blockquote remap='RS'>
+<para>fbclear
+<!-- .br -->
+for &thinsp;i &thinsp;in &thinsp;*.pix
+<!-- .br -->
+do	fbfade &thinsp;-f $i
+<!-- .br -->
+	sleep &thinsp;15
+<!-- .br -->
+done
+<!-- .br -->
+fbfade</para></blockquote> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+</refsect1>
+
+<refsect1 id='authors'><title>AUTHORS</title>
+<para>Douglas A. Gwyn, BRL/VLD-VMB
+<!-- .br -->
+Gary S. Moss, BRL/VLD-VMB</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fbfade1'>
+<refmeta>
+<refentrytitle>FBFADE</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fbfade</refname>
+<refpurpose>fade a frame buffer image in or out</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fbfade</command>    
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'><arg choice='plain'>-f </arg><arg choice='plain'><replaceable>input</replaceable></arg><arg choice='plain'><replaceable>image</replaceable></arg><arg choice='plain'><replaceable>name</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-s </arg><arg choice='plain'><replaceable>input</replaceable></arg><arg choice='plain'><replaceable>square</replaceable></arg><arg choice='plain'><replaceable>size</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-w </arg><arg choice='plain'><replaceable>input</replaceable></arg><arg choice='plain'><replaceable>width</replaceable></arg></arg>
+    <sbr/>
+    <arg choice='opt'><arg choice='plain'>-n </arg><arg choice='plain'><replaceable>input</replaceable></arg><arg choice='plain'><replaceable>height</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-S </arg><arg choice='plain'><replaceable>output</replaceable></arg><arg choice='plain'><replaceable>square</replaceable></arg><arg choice='plain'><replaceable>size</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-W </arg><arg choice='plain'><replaceable>output</replaceable></arg><arg choice='plain'><replaceable>width</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-N </arg><arg choice='plain'><replaceable>output</replaceable></arg><arg choice='plain'><replaceable>height</replaceable></arg></arg>
+    <sbr/>
+    <arg choice='opt'><arg choice='opt'>-F </arg><arg choice='plain'><replaceable>output</replaceable></arg><arg choice='plain'><replaceable>frame</replaceable></arg><arg choice='plain'><replaceable>buffer</replaceable></arg><arg choice='plain'><replaceable>name</replaceable></arg></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<!-- .lg 0  IGNORED -->
+<para>&shy;fbfade
+<!-- .lg  IGNORED -->
+gradually displays an image on a frame buffer,
+one randomly chosen pixel at a time.</para>
+
+<refsect2 id='options'><title>Options</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term>&shy;-h</term>
+  <listitem>
+<!-- .lg  IGNORED -->
+<para>(&ldquo;high resolution&rdquo;)Assumes 1024 by 1024 pixels for default input image size
+instead of 512 by 512.
+Explicitly specified sizes override the default,
+and if actual input image size is smaller than requested,
+the actual size will be used.
+If output frame buffer size is not specified,
+the revised input size will be requested for output.
+If actual output frame buffer size is greater than requested,
+only the lower-left portion of the frame buffer will be used.
+Actual sizes depend on details of specific frame buffers.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-f <emphasis remap='I'>input image name</emphasis></term>
+  <listitem>
+<para>Inputs the image to be displayed
+from the specified frame buffer or <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry> file,
+instead of using pure background
+(which fades out the image already
+on the output frame buffer).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-s<emphasis remap='P->I'> input square size</emphasis></term>
+  <listitem>
+<para>Specifies input image width and height.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-w<emphasis remap='P->I'> input width</emphasis></term>
+  <listitem>
+<para>Specifies input image width.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-n<emphasis remap='P->I'> input height</emphasis></term>
+  <listitem>
+<para>Specifies input image height.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-S<emphasis remap='P->I'> output square size</emphasis></term>
+  <listitem>
+<para>Specifies output frame buffer width and height.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-W<emphasis remap='P->I'> output width</emphasis></term>
+  <listitem>
+<para>Specifies output frame buffer width.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-N<emphasis remap='P->I'> output height</emphasis></term>
+  <listitem>
+<para>Specifies output frame buffer height.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term>-F<emphasis remap='P->I'> output frame buffer name</emphasis></term>
+  <listitem>
+<para>Outputs to the specified frame buffer
+instead of the one specified by the
+<!-- .lg 0  IGNORED -->
+&shy;FB_FILE<emphasis remap='P->I'>
+<!-- .lg  IGNORED -->
+environment variable
+(or the default, if
+<!-- .lg 0  IGNORED -->
+&shy;</emphasis>FB_FILE<emphasis remap='P->I'>
+<!-- .lg  IGNORED -->
+is not set).
+If this is the last option specified, the
+<!-- .lg 0  IGNORED -->
+&shy;</emphasis>-F<emphasis remap='P->I'>
+<!-- .lg  IGNORED -->
+is optional.</emphasis></para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect2>
+</refsect1>
+
+<refsect1 id='caveat'><title>CAVEAT</title>
+<!-- .lg 0  IGNORED -->
+<para>&shy;fbfade<emphasis remap='P->I'>
+<!-- .lg  IGNORED -->
+works best in conjunction with a frame buffer having very fast access to pixels.</emphasis></para>
+</refsect1>
+
+<refsect1 id='example'><title>EXAMPLE</title>
+<para>The following shell script can be used to produce a slick &ldquo;slide show&rdquo;:</para>
+  <blockquote remap='RS'>
+<para>fbclear
+<!-- .br -->
+for &thinsp;i &thinsp;in &thinsp;*.pix
+<!-- .br -->
+do	fbfade &thinsp;-f $i
+<!-- .br -->
+	sleep &thinsp;15
+<!-- .br -->
+done
+<!-- .br -->
+fbfade</para></blockquote> <!-- remap='RE' -->
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+</refsect1>
+
+<refsect1 id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+</refsect1>
+
+<refsect1 id='authors'><title>AUTHORS</title>
+<para>Douglas A. Gwyn, BRL/VLD-VMB
+<!-- .br -->
+Gary S. Moss, BRL/VLD-VMB</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

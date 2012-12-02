@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fbframe1'>
+<refmeta>
+<refentrytitle>FBFRAME</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fbframe</refname>
+<refpurpose>place a colored frame around a framebuffer</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fbframe</command>    
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-F <replaceable>framebuffer</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>frame_width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>frame_height</replaceable></arg>
+    <arg choice='opt'>-s <replaceable>squareframesize</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Fbframe</emphasis>
+places a colored frame around the edge pixels of a framebuffer.
+It is mostly for purposes of framebuffer alignment.
+The
+<option>-F</option>
+option can be used to specify the framebuffer.
+If this option is omitted,
+the environment
+variable
+<!-- B elided -->
+<envar>FB_FILE</envar>
+is used to select the display device (see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+If the variable is not set, the default device for your system will
+be used.</para>
+
+<para>The frame starts in the lower left with a red line running to the
+right to the next to last pixel.  Next, a green line from there up to the next
+to top scan line is drawn.  Then blue across the top scan line to the next to
+first column.  Finally a white line down the left edge stopping just
+above the red line.</para>
+
+<para>By default, the dimensions of the frame will be taken from the framebuffer
+used.  Alternatively, one or more of the options
+<option>-h -s -w -n</option>
+may be used to set the dimensions of the frame drawn.</para>
+
+<para>The
+<option>-h</option>
+option sets the frame dimensions to
+1024x1024.
+The options
+<option>-w&nbsp;</option><replaceable>frame_width</replaceable>
+and
+<option>-n&nbsp;</option><replaceable>frame_height</replaceable>
+are used to
+specify the width and height in scanlines of the frame on the framebuffer
+respectively.
+The
+<option>-s&nbsp;</option><replaceable>squareframesize</replaceable>
+option specifies both the height and width of the frame to be drawn.</para>
+
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbgrid</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fbframe1'>
+<refmeta>
+<refentrytitle>FBFRAME</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fbframe</refname>
+<refpurpose>place a colored frame around a framebuffer</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fbframe</command>    
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-F <replaceable>framebuffer</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>frame_width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>frame_height</replaceable></arg>
+    <arg choice='opt'>-s <replaceable>squareframesize</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Fbframe</emphasis>
+places a colored frame around the edge pixels of a framebuffer.
+It is mostly for purposes of framebuffer alignment.
+The
+<option>-F</option>
+option can be used to specify the framebuffer.
+If this option is omitted,
+the environment
+variable
+<!-- B elided -->
+<envar>FB_FILE</envar>
+is used to select the display device (see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+If the variable is not set, the default device for your system will
+be used.</para>
+
+<para>The frame starts in the lower left with a red line running to the
+right to the next to last pixel.  Next, a green line from there up to the next
+to top scan line is drawn.  Then blue across the top scan line to the next to
+first column.  Finally a white line down the left edge stopping just
+above the red line.</para>
+
+<para>By default, the dimensions of the frame will be taken from the framebuffer
+used.  Alternatively, one or more of the options
+<option>-h -s -w -n</option>
+may be used to set the dimensions of the frame drawn.</para>
+
+<para>The
+<option>-h</option>
+option sets the frame dimensions to
+1024x1024.
+The options
+<option>-w&nbsp;</option><replaceable>frame_width</replaceable>
+and
+<option>-n&nbsp;</option><replaceable>frame_height</replaceable>
+are used to
+specify the width and height in scanlines of the frame on the framebuffer
+respectively.
+The
+<option>-s&nbsp;</option><replaceable>squareframesize</replaceable>
+option specifies both the height and width of the frame to be drawn.</para>
+
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbgrid</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fbframe1'>
+<refmeta>
+<refentrytitle>FBFRAME</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fbframe</refname>
+<refpurpose>place a colored frame around a framebuffer</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fbframe</command>    
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-F <replaceable>framebuffer</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>frame_width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>frame_height</replaceable></arg>
+    <arg choice='opt'>-s <replaceable>squareframesize</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Fbframe</emphasis>
+places a colored frame around the edge pixels of a framebuffer.
+It is mostly for purposes of framebuffer alignment.
+The
+<option>-F</option>
+option can be used to specify the framebuffer.
+If this option is omitted,
+the environment
+variable
+<!-- B elided -->
+<envar>FB_FILE</envar>
+is used to select the display device (see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+If the variable is not set, the default device for your system will
+be used.</para>
+
+<para>The frame starts in the lower left with a red line running to the
+right to the next to last pixel.  Next, a green line from there up to the next
+to top scan line is drawn.  Then blue across the top scan line to the next to
+first column.  Finally a white line down the left edge stopping just
+above the red line.</para>
+
+<para>By default, the dimensions of the frame will be taken from the framebuffer
+used.  Alternatively, one or more of the options
+<option>-h -s -w -n</option>
+may be used to set the dimensions of the frame drawn.</para>
+
+<para>The
+<option>-h</option>
+option sets the frame dimensions to
+1024x1024.
+The options
+<option>-w&nbsp;</option><replaceable>frame_width</replaceable>
+and
+<option>-n&nbsp;</option><replaceable>frame_height</replaceable>
+are used to
+specify the width and height in scanlines of the frame on the framebuffer
+respectively.
+The
+<option>-s&nbsp;</option><replaceable>squareframesize</replaceable>
+option specifies both the height and width of the frame to be drawn.</para>
+
+</refsect1>
+
+<refsect1 id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbgrid</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

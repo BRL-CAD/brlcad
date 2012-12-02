@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fbcbars1'>
+<refmeta>
+<refentrytitle>FBCBARS</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fbcbars</refname>
+<refpurpose>display standard color bars on a framebuffer</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fbcbars</command>    
+    <arg choice='opt'>-e </arg>
+    <arg choice='opt'>-f </arg>
+    <arg choice='opt'>-s </arg>
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-F <replaceable>framebuffer</replaceable></arg>
+    <arg choice='opt'>-S <replaceable>squarescrsize</replaceable></arg>
+    <arg choice='opt'>-W <replaceable>scr_width</replaceable></arg>
+    <arg choice='opt'>-N <replaceable>scr_height</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><command>fbcbars</command>
+displays a color bar scale on the currently selected framebuffer.
+The default pattern is the standard SMPTE color bars.</para>
+
+<para>With the
+<option>-f</option>
+flag, FCC/EBU color bars are made.
+The entire screen will contain 8 colors:
+100% white, 75% yellow, 75% cyan, 75% green, 75% magenta, 75% red, 75% blue,
+and black.</para>
+
+<para>By specifying the
+<option>-e</option>
+flag, the standard EIA color bars are displayed,
+arranged horizontally on screen.
+The bottom quarter of the screen will be
+-I, 100% white, Q, black.
+The upper portion of the screen will be
+seven colors at 75% intensity:
+grey, yellow, cyan, green, magenta, red, blue.</para>
+
+<para>By specifying the
+<option>-s</option>
+flag, SMPTE color bars are displayed.  This is the EIA pattern
+with the upper quarter of the bottom quarter of the screen containing
+a reversed and shifted version of the upper pattern, which is very
+useful for aligning color demodulators in monitors.
+Using a dichroic blue filter,
+observe the magenta and cyan bars on the NTSC monitor.
+Adjust the phase of the chroma demodulator until they have visually
+equal intensity.
+At this point, all the other color bars will display the correct chroma.</para>
+
+<para>The environment variable FB_FILE specifies
+the current framebuffer, see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Alternatively, the framebuffer may be explicitly specified
+by using the
+<option>-F</option>
+flag.</para>
+
+<para>Ordinarily, the requested framebuffer size is the device default.
+Specifying the
+<option>-h</option>
+flag changes the size to 1024x1024.</para>
+
+<para>The
+<option>-W&nbsp;</option><replaceable>scr_width</replaceable>
+flag specifies the width of each output scanline, in pixels.</para>
+
+<para>The
+<option>-N&nbsp;</option><replaceable>scr_height</replaceable>
+flag specifies the desired height in scanlines of the display device.</para>
+
+<para><option>-S&nbsp;</option><replaceable>squarescrsize</replaceable>
+set both the height and width to the size given.</para>
+</refsect1>
+
+<refsect1 id='inspirations'><title>INSPIRATIONS</title>
+<para>Mike Pique, University of North Carolina
+<!-- .br -->
+Doris Kochanek, National Film Board of Canada</para>
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>Michael John Muuss</para>
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1988-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fbcbars1'>
+<refmeta>
+<refentrytitle>FBCBARS</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fbcbars</refname>
+<refpurpose>display standard color bars on a framebuffer</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fbcbars</command>    
+    <arg choice='opt'>-e </arg>
+    <arg choice='opt'>-f </arg>
+    <arg choice='opt'>-s </arg>
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-F <replaceable>framebuffer</replaceable></arg>
+    <arg choice='opt'>-S <replaceable>squarescrsize</replaceable></arg>
+    <arg choice='opt'>-W <replaceable>scr_width</replaceable></arg>
+    <arg choice='opt'>-N <replaceable>scr_height</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><command>fbcbars</command>
+displays a color bar scale on the currently selected framebuffer.
+The default pattern is the standard SMPTE color bars.</para>
+
+<para>With the
+<option>-f</option>
+flag, FCC/EBU color bars are made.
+The entire screen will contain 8 colors:
+100% white, 75% yellow, 75% cyan, 75% green, 75% magenta, 75% red, 75% blue,
+and black.</para>
+
+<para>By specifying the
+<option>-e</option>
+flag, the standard EIA color bars are displayed,
+arranged horizontally on screen.
+The bottom quarter of the screen will be
+-I, 100% white, Q, black.
+The upper portion of the screen will be
+seven colors at 75% intensity:
+grey, yellow, cyan, green, magenta, red, blue.</para>
+
+<para>By specifying the
+<option>-s</option>
+flag, SMPTE color bars are displayed.  This is the EIA pattern
+with the upper quarter of the bottom quarter of the screen containing
+a reversed and shifted version of the upper pattern, which is very
+useful for aligning color demodulators in monitors.
+Using a dichroic blue filter,
+observe the magenta and cyan bars on the NTSC monitor.
+Adjust the phase of the chroma demodulator until they have visually
+equal intensity.
+At this point, all the other color bars will display the correct chroma.</para>
+
+<para>The environment variable FB_FILE specifies
+the current framebuffer, see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Alternatively, the framebuffer may be explicitly specified
+by using the
+<option>-F</option>
+flag.</para>
+
+<para>Ordinarily, the requested framebuffer size is the device default.
+Specifying the
+<option>-h</option>
+flag changes the size to 1024x1024.</para>
+
+<para>The
+<option>-W&nbsp;</option><replaceable>scr_width</replaceable>
+flag specifies the width of each output scanline, in pixels.</para>
+
+<para>The
+<option>-N&nbsp;</option><replaceable>scr_height</replaceable>
+flag specifies the desired height in scanlines of the display device.</para>
+
+<para><option>-S&nbsp;</option><replaceable>squarescrsize</replaceable>
+set both the height and width to the size given.</para>
+</refsect1>
+
+<refsect1 id='inspirations'><title>INSPIRATIONS</title>
+<para>Mike Pique, University of North Carolina
+<!-- .br -->
+Doris Kochanek, National Film Board of Canada</para>
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>Michael John Muuss</para>
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1988-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry id='fbcbars1'>
+<refmeta>
+<refentrytitle>FBCBARS</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>fbcbars</refname>
+<refpurpose>display standard color bars on a framebuffer</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>fbcbars</command>    
+    <arg choice='opt'>-e </arg>
+    <arg choice='opt'>-f </arg>
+    <arg choice='opt'>-s </arg>
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'>-F <replaceable>framebuffer</replaceable></arg>
+    <arg choice='opt'>-S <replaceable>squarescrsize</replaceable></arg>
+    <arg choice='opt'>-W <replaceable>scr_width</replaceable></arg>
+    <arg choice='opt'>-N <replaceable>scr_height</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para><command>fbcbars</command>
+displays a color bar scale on the currently selected framebuffer.
+The default pattern is the standard SMPTE color bars.</para>
+
+<para>With the
+<option>-f</option>
+flag, FCC/EBU color bars are made.
+The entire screen will contain 8 colors:
+100% white, 75% yellow, 75% cyan, 75% green, 75% magenta, 75% red, 75% blue,
+and black.</para>
+
+<para>By specifying the
+<option>-e</option>
+flag, the standard EIA color bars are displayed,
+arranged horizontally on screen.
+The bottom quarter of the screen will be
+-I, 100% white, Q, black.
+The upper portion of the screen will be
+seven colors at 75% intensity:
+grey, yellow, cyan, green, magenta, red, blue.</para>
+
+<para>By specifying the
+<option>-s</option>
+flag, SMPTE color bars are displayed.  This is the EIA pattern
+with the upper quarter of the bottom quarter of the screen containing
+a reversed and shifted version of the upper pattern, which is very
+useful for aligning color demodulators in monitors.
+Using a dichroic blue filter,
+observe the magenta and cyan bars on the NTSC monitor.
+Adjust the phase of the chroma demodulator until they have visually
+equal intensity.
+At this point, all the other color bars will display the correct chroma.</para>
+
+<para>The environment variable FB_FILE specifies
+the current framebuffer, see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+Alternatively, the framebuffer may be explicitly specified
+by using the
+<option>-F</option>
+flag.</para>
+
+<para>Ordinarily, the requested framebuffer size is the device default.
+Specifying the
+<option>-h</option>
+flag changes the size to 1024x1024.</para>
+
+<para>The
+<option>-W&nbsp;</option><replaceable>scr_width</replaceable>
+flag specifies the width of each output scanline, in pixels.</para>
+
+<para>The
+<option>-N&nbsp;</option><replaceable>scr_height</replaceable>
+flag specifies the desired height in scanlines of the display device.</para>
+
+<para><option>-S&nbsp;</option><replaceable>squarescrsize</replaceable>
+set both the height and width to the size given.</para>
+</refsect1>
+
+<refsect1 id='inspirations'><title>INSPIRATIONS</title>
+<para>Mike Pique, University of North Carolina
+<!-- .br -->
+Doris Kochanek, National Film Board of Canada</para>
+</refsect1>
+
+<refsect1 id='author'><title>AUTHOR</title>
+<para>Michael John Muuss</para>
+</refsect1>
+
+<refsect1 id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1988-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
