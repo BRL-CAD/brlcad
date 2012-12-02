@@ -26,6 +26,19 @@
  * This header file defines many commonly used 3D vector math macros,
  * and operates on vect_t, point_t, mat_t, and quat_t objects.
  *
+ * @brief matrix representation
+ * 4 x 4 Matrix manipulation functions...
+ *
+ * Matrix array elements have the following positions in the matrix:
+ @code
+ *			|  0  1  2  3 |		| 0 |
+ *	[ 0 1 2 3 ]	|  4  5  6  7 |		| 1 |
+ *			|  8  9 10 11 |		| 2 |
+ *			| 12 13 14 15 |		| 3 |
+ *
+ * preVector (vect_t) Matrix (mat_t) postVector (vect_t)
+ @endcode
+ *
  * Note that while many people in the computer graphics field use
  * post-multiplication with row vectors (i.e., vector * matrix * matrix
  * ...) the BRL-CAD system uses the more traditional representation
