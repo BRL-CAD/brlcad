@@ -185,117 +185,29 @@ set(docbook_man1_EN
   vdeck.xml
   viewpoint-g.xml
   wavelet.xml
-  aliastorle.xml
   anim_script.xml
   anim_sort.xml
   anim_time.xml
   anim_track.xml
   anim_turn.xml
-  applymap.xml
-  avg4.xml
   cad_boundp.xml
   cad_parea.xml
   canonize.xml
   chan_mult.xml
   chan_permute.xml
-  crop.xml
-  cubitorle.xml
-  dataprobe.xml
-  dvirle.xml
-  fant.xml
   fbed.xml
   fbserv.xml
-  fedex.xml
-  fedex_plus.xml
   firpass.xml
   g_diff.xml
   g_lint.xml
-  get4d.xml
-  get_orion.xml
-  getami.xml
-  getap.xml
-  getbob.xml
-  getcx3d.xml
-  getfb.xml
-  getgmr.xml
-  getiris.xml
-  getmac.xml
-  getmex.xml
-  getqcr.xml
-  getren.xml
-  getsun.xml
-  gettaac.xml
-  getx10.xml
-  getx11.xml
-  giftorle.xml
-  graytorle.xml
   halftone.xml
-  into.xml
   ir-X.xml
   irdisp.xml
-  jove.xml
   lgt.xml
-  mcut.xml
-  mergechan.xml
-  mkProbe.xml
-  painttorle.xml
-  pgmtorle.xml
   pictx.xml
-  ppmtorle.xml
-  pyrmask.xml
-  rastorle.xml
-  rawtorle.xml
-  read98721.xml
   remapid.xml
   remrt.xml
-  repos.xml
   reshoot.xml
-  rlatorle.xml
-  rleClock.xml
-  rleaddcom.xml
-  rleaddeof.xml
-  rlebg.xml
-  rlebox.xml
-  rlecat.xml
-  rleccube.xml
-  rlecomp.xml
-  rledither.xml
-  rleflip.xml
-  rlegrid.xml
-  rlehdr.xml
-  rlehisto.xml
-  rleinterp.xml
-  rleldmap.xml
-  rlemandl.xml
-  rlenoise.xml
-  rlepatch.xml
-  rleprint.xml
-  rlequant.xml
-  rlescale.xml
-  rleselect.xml
-  rlesetbg.xml
-  rleskel.xml
-  rlespiff.xml
-  rlesplice.xml
-  rlesplit.xml
-  rlestereo.xml
-  rleswap.xml
-  rletoabA60.xml
-  rletoabA62.xml
-  rletoalias.xml
-  rletoascii.xml
-  rletocgm.xml
-  rletogif.xml
-  rletogray.xml
-  rletopaint.xml
-  rletoppm.xml
-  rletops.xml
-  rletorast.xml
-  rletoraw.xml
-  rletorla.xml
-  rletotarga.xml
-  rletotiff.xml
-  rlezoom.xml
   rt_bot_faces.xml
   rtg3.xml
   rthide.xml
@@ -312,26 +224,12 @@ set(docbook_man1_EN
   scriptsort.xml
   secpass.xml
   shapefact.xml
-  show3.xml
   showshot.xml
   showtherm.xml
-  smush.xml
-  sqlite3.xml
   ssamp-bw.xml
   tabinterp.xml
   tabsub.xml
-  targatorle.xml
-  tclsh.xml
-  template.xml
-  tifftorle.xml
-  to8.xml
-  tobw.xml
   ug-g.xml
-  unexp.xml
-  unslice.xml
-  urt.xml
-  wasatchrle.xml
-  wish.xml
   )
 
 # Some DocBook man pages generate multiple output files, if they
