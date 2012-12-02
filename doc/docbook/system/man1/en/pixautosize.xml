@@ -1,51 +1,48 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
-<!-- lifted from troff+man by doclifter -->
-<refentry id='pixautosize1'>
+<?xml version="1.0" encoding="utf-8"?>
+<refentry xmlns="http://docbook.org/ns/docbook" version="lillet" xml:id="pixautosize1">
 <refmeta>
 <refentrytitle>PIXAUTOSIZE</refentrytitle>
 <manvolnum>1</manvolnum>
-<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class="source">BRL-CAD</refmiscinfo>
 </refmeta>
 <refnamediv>
 <refname>pixautosize</refname>
 <refpurpose>determine if a file size or byte count is a standard image size</refpurpose>
 </refnamediv>
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-<cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+<cmdsynopsis sepchar=" ">
   <command>pixautosize</command>    
-    <arg choice='opt'>-b <replaceable>bytes_per_sample</replaceable></arg>
-    <arg choice='opt'>-f <replaceable>file_name</replaceable></arg>
-    <arg choice='opt'>-l <replaceable>file_length</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-b <replaceable>bytes_per_sample</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-f <replaceable>file_name</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-l <replaceable>file_length</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
-<refsect1 id='description'><title>DESCRIPTION</title>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
 <para><command>pixautosize</command>
-determines if a given file is one of the &ldquo;standard&rdquo; sizes used in the
-BRL-CAD package, <emphasis remap='I'>i.e.</emphasis> one of the sizes recognized by the
+determines if a given file is one of the “standard” sizes used in the
+BRL-CAD package, <emphasis remap="I">i.e.</emphasis> one of the sizes recognized by the
 <option>-a</option>
 option on
 <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 If the dimensions are recognized, it prints a string suitable for use in
 a Bourne shell
 <citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-script to set the variables WIDTH and HEIGHT, <emphasis remap='I'>e.g.</emphasis></para>
+script to set the variables WIDTH and HEIGHT, <emphasis remap="I">e.g.</emphasis></para>
 
 <para>   WIDTH=512; HEIGHT=512</para>
 
 <para>The file name can be specified by using the
-<option>-f&nbsp;</option><replaceable>file_name</replaceable>
+<option>-f </option><replaceable>file_name</replaceable>
 commandline option, or the file length (in bytes) can be
 specified by using the
-<option>-l&nbsp;</option><replaceable>file_length</replaceable>
+<option>-l </option><replaceable>file_length</replaceable>
 commandline option.
 One of these two options must be present.
 In either case, the
-<option>-b&nbsp;</option><replaceable>bytes_per_sample</replaceable>
+<option>-b </option><replaceable>bytes_per_sample</replaceable>
 option can be used to specify the number of bytes which are used
 for each sample (pixel) in the file.
 The default value is three (3), which is appropriate for use
@@ -53,7 +50,7 @@ with
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 files.
 This should be changed to one with
-<option>-b&nbsp;</option><literal>1</literal>
+<option>-b </option><literal>1</literal>
 when processing a
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 file.
@@ -63,9 +60,9 @@ file is 8 (1 channel of 8 byte samples),
 and the value for
 <citerefentry><refentrytitle>dpix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 files is 24 (3 channels of 8 byte samples)</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='examples'><title>EXAMPLES</title>
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
 <para>These two examples both give the result of</para>
 
 <para>   WIDTH=50; HEIGHT=50;</para>
@@ -94,13 +91,13 @@ file by giving the file name:</para>
 
 <para>For a major shell script which uses this program, examine
 <citerefentry><refentrytitle>pixinfo.sh</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
-</refsect1>
+</refsection>
 
-<refsect1 id='see_also'><title>SEE ALSO</title>
+<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
 <para>pixinfo.<citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
-</refsect1>
+</refsection>
 
-<refsect1 id='diagnostics'><title>DIAGNOSTICS</title>
+<refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
 <para>If the file or file_length specified does not match any
 of the standard sizes, one of these messages is printed on standard error:
 <!-- .br -->
@@ -112,21 +109,20 @@ In this case, the string printed on standard output is:</para>
 
 <para>   WIDTH=0; HEIGHT=0</para>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='author'><title>AUTHOR</title>
+<refsection xml:id="author"><info><title>AUTHOR</title></info>
 <para>BRL-CAD Team</para>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='copyright'><title>COPYRIGHT</title>
+<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
 <para>This software is Copyright (c) 1992-2012 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
 <para>Reports of bugs or problems should be submitted via electronic
 mail to &lt;devs@brlcad.org&gt;.</para>
-</refsect1>
+</refsection>
 </refentry>
-

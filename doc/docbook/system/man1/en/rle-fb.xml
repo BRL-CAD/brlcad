@@ -1,36 +1,33 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
-<!-- lifted from troff+man by doclifter -->
-<refentry id='rlefb1'>
+<?xml version="1.0" encoding="utf-8"?>
+<refentry xmlns="http://docbook.org/ns/docbook" version="lillet" xml:id="rlefb1">
 <refmeta>
 <refentrytitle>RLE-FB</refentrytitle>
 <manvolnum>1</manvolnum>
-<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class="source">BRL-CAD</refmiscinfo>
 </refmeta>
 <refnamediv>
-<refname>rle&hyphen;fb</refname>
+<refname>rle-fb</refname>
 <refpurpose>decode run-length encoded image onto a frame buffer</refpurpose>
 </refnamediv>
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-<cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+<cmdsynopsis sepchar=" ">
   <command>rle-fb</command>    
-    <arg choice='opt'>-Ocdh </arg>
-    <arg choice='opt'>-F <replaceable>framebuffer</replaceable></arg>
-    <arg choice='opt'>-C <replaceable>r/g/b</replaceable></arg>
-    <arg choice='opt'>-S <replaceable>squarescrsize</replaceable></arg>
-    <arg choice='opt'>-W <replaceable>scr_width</replaceable></arg>
-    <arg choice='opt'>-N <replaceable>scr_height</replaceable></arg>
-    <arg choice='opt'>-X <replaceable>scr_xoff</replaceable></arg>
-    <arg choice='opt'>-Y <replaceable>scr_yoff</replaceable></arg>
-    <arg choice='opt'><replaceable>file.rle</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-Ocdh </arg>
+    <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-C <replaceable>r/g/b</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-S <replaceable>squarescrsize</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-W <replaceable>scr_width</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-N <replaceable>scr_height</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-X <replaceable>scr_xoff</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-Y <replaceable>scr_yoff</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>file.rle</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
-<refsect1 id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>rle-fb</emphasis>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<para><emphasis remap="I">rle-fb</emphasis>
 decodes a University of Utah
 standard (Edition-3, or "Utah Raster Toolkit")
 Run-Length Encoded (RLE) format file
@@ -39,10 +36,10 @@ Run-Length Encoded (RLE) format file
 or a similar program)
 to a frame buffer.
 If
-<emphasis remap='I'>file.rle</emphasis>
+<emphasis remap="I">file.rle</emphasis>
 is not specified, standard input is read.</para>
 
-<para>Each RLE file contains an <emphasis remap='I'>image rectangle</emphasis>.
+<para>Each RLE file contains an <emphasis remap="I">image rectangle</emphasis>.
 The Utah Raster Toolkit semantics specify that the
 <command>rle-fb</command>
 program is to clip the RLE image rectangle to the screen of the current
@@ -71,8 +68,8 @@ The RLE image rectangle can be repositioned on the screen with the
 and
 <option>-Y</option>
 command line options, as well as by using
-<emphasis remap='I'>repos(1)</emphasis>.</para>
-<variablelist remap='TP'>
+<emphasis remap="I">repos(1)</emphasis>.</para>
+<variablelist remap="TP">
   <varlistentry>
   <term><option>-h</option></term>
   <listitem>
@@ -80,33 +77,33 @@ command line options, as well as by using
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-W&nbsp;</option><replaceable>scr_width</replaceable></term>
+  <term><option>-W </option><replaceable>scr_width</replaceable></term>
   <listitem>
 <para>specifies the desired width of the screen, in pixels.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-N&nbsp;</option><replaceable>scr_height</replaceable></term>
+  <term><option>-N </option><replaceable>scr_height</replaceable></term>
   <listitem>
 <para>specifies the desired height of the screen, in scanlines.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-S&nbsp;</option><replaceable>squarescrsize</replaceable></term>
+  <term><option>-S </option><replaceable>squarescrsize</replaceable></term>
   <listitem>
 <para>sets the screen width and height to the indicated value.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-F&nbsp;</option><replaceable>framebuffer</replaceable></term>
+  <term><option>-F </option><replaceable>framebuffer</replaceable></term>
   <listitem>
 <para>This option specifies which framebuffer the image is to be displayed on.
 If not given, the environment variable
-<acronym></acronym><emphasis remap='B'>FB_FILE</emphasis>
+<acronym/><emphasis remap="B">FB_FILE</emphasis>
 is used to select the display device (see
-<emphasis remap='I'>brlcad(1)</emphasis>).
+<emphasis remap="I">brlcad(1)</emphasis>).
 If
-<acronym></acronym><emphasis remap='B'>FB_FILE</emphasis>
+<acronym/><emphasis remap="B">FB_FILE</emphasis>
 has not been set, the default device for your system will
 be used.</para>
   </listitem>
@@ -114,7 +111,7 @@ be used.</para>
   <varlistentry>
   <term><option>-c</option></term>
   <listitem>
-<para>The &ldquo;crunch colormap&rdquo; option.
+<para>The “crunch colormap” option.
 If the RLE file contains a colormap, rather than loading that colormap
 into the framebuffer and allowing the framebuffer to apply the colormap
 to produce the final image, this option causes the colormap to be applied
@@ -138,7 +135,7 @@ image decoding process, written on standard error.</para>
   <varlistentry>
   <term><option>-O</option></term>
   <listitem>
-<para>Restores the image data in <emphasis remap='I'>overlay</emphasis> mode.
+<para>Restores the image data in <emphasis remap="I">overlay</emphasis> mode.
 Only areas of the original image which were not the background color are
 decoded.  The rest of the image already in the frame buffer is undisturbed.
 That this mode uses twice as many DMAs to the frame buffer as
@@ -150,36 +147,36 @@ and the composite scanline must be written back to the framebuffer.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-C&nbsp;</option><replaceable>r/g/b</replaceable></term>
+  <term><option>-C </option><replaceable>r/g/b</replaceable></term>
   <listitem>
 <para>If the image is not being decoded in overlay mode, the background is
 normally set to the value recorded in the RLE file.
 This option permits
 the user to specify an alternate background color
-as a red/green/blue triple, separated by slashes (&ldquo;/&rdquo;).
+as a red/green/blue triple, separated by slashes (“/”).
 The color intensity in each channel ranges from 0 (dark) to 255 (bright).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-X&nbsp;</option><replaceable>scr_xoff</replaceable></term>
+  <term><option>-X </option><replaceable>scr_xoff</replaceable></term>
   <listitem>
 <para>Specify a screen X offset, which will offset the file onto the screen
 by the given amount.  (i.e.,
-<option>-X&nbsp;</option><literal>10</literal>
+<option>-X </option><literal>10</literal>
 would place (0,0) in the RLE image rectangle at screen coordinate (10,0).
 The offset may be negative or positive.
 The RLE image rectangle will be clipped to the screen, as required.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-Y&nbsp;</option><replaceable>scr_yoff</replaceable></term>
+  <term><option>-Y </option><replaceable>scr_yoff</replaceable></term>
   <listitem>
 <para>Specify a screen Y offset, which will offset the file onto the screen
 by the given amount.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='I'>file.rle</emphasis></term>
+  <term><emphasis remap="I">file.rle</emphasis></term>
   <listitem>
 <para>Name of file to decode, in RLE format.
 If not specified, standard input is used instead.</para>
@@ -189,7 +186,7 @@ If not specified, standard input is used instead.</para>
 
 <para>The run length encoded image format is best used for the long-term
 storage of images, as it uses less disk storage than a
-<emphasis remap='I'>pix(5)</emphasis>
+<emphasis remap="I">pix(5)</emphasis>
 file, at the expense of requiring more processing
 for the encoding and decoding.
 This program is also useful when using the Utah Raster Toolkit
@@ -199,47 +196,47 @@ this program will display their results on a framebuffer.</para>
 <para>Simple compositing of images can be done with the
 <option>-O</option>
 overlay flag on
-<emphasis remap='I'>rle-fb(1)</emphasis>.
+<emphasis remap="I">rle-fb(1)</emphasis>.
 More sophisticated compositing can be achieved using some of the
 other tools.
 For RLE files,
-<emphasis remap='I'>comp(1)</emphasis>,
-<emphasis remap='I'>crop(1)</emphasis>,
-<emphasis remap='I'>repos(1)</emphasis>,
-<emphasis remap='I'>rlepatch(1)</emphasis>,
+<emphasis remap="I">comp(1)</emphasis>,
+<emphasis remap="I">crop(1)</emphasis>,
+<emphasis remap="I">repos(1)</emphasis>,
+<emphasis remap="I">rlepatch(1)</emphasis>,
 and
-<emphasis remap='I'>rlebox(1)</emphasis>
+<emphasis remap="I">rlebox(1)</emphasis>
 can be used.
 For
-<emphasis remap='I'>pix(5)</emphasis>
+<emphasis remap="I">pix(5)</emphasis>
 files,
-<emphasis remap='I'>pixrect(1)</emphasis>,
-<emphasis remap='I'>pixscale(1)</emphasis>,
+<emphasis remap="I">pixrect(1)</emphasis>,
+<emphasis remap="I">pixscale(1)</emphasis>,
 and
-<emphasis remap='I'>pixmerge(1)</emphasis>
+<emphasis remap="I">pixmerge(1)</emphasis>
 are used.</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='examples'><title>EXAMPLES</title>
-  <blockquote remap='RS'>
-<para>&thinsp;rle-fb &thinsp;truck.rle
+<refsection xml:id="examples"><info><title>EXAMPLES</title></info>
+  <blockquote remap="RS">
+<para> rle-fb  truck.rle
 <!-- .br -->
-&thinsp;rle-fb &thinsp;-O &thinsp;text.rle
+ rle-fb  -O  text.rle
 <!-- .br -->
-&thinsp;rle-fb &thinsp;-C 0/255/0 &thinsp;&lt;car.rle
+ rle-fb  -C 0/255/0  &lt;car.rle
   </para></blockquote> <!-- remap='RE' -->
-</refsect1>
+</refsection>
 
-<refsect1 id='diagnostics'><title>DIAGNOSTICS</title>
-<variablelist remap='TP'>
+<refsection xml:id="diagnostics"><info><title>DIAGNOSTICS</title></info>
+<variablelist remap="TP">
   <varlistentry>
-  <term>&ldquo;rle-fb: excess arguments ignored&rdquo;.</term>
+  <term>“rle-fb: excess arguments ignored”.</term>
   <listitem>
 <para>More than one RLE file name was specified.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>&ldquo;rle-fb: Error reading setup information&rdquo;.</term>
+  <term>“rle-fb: Error reading setup information”.</term>
   <listitem>
 <para>The subroutine
 <function>rle_get_setup()</function>
@@ -247,12 +244,12 @@ returned an error code.
 Either the file is not in Edition-2 or Edition-3 RLE format,
 or the file has been damaged or truncated.
 If the file is in Edition-1 RLE format, the
-<emphasis remap='I'>orle-fb(1)</emphasis>
+<emphasis remap="I">orle-fb(1)</emphasis>
 program can be used to display the file.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>&ldquo;rle-fb: Warning: RLE image rectangle entirely off screen&rdquo;</term>
+  <term>“rle-fb: Warning: RLE image rectangle entirely off screen”</term>
   <listitem>
 <para>The combined effects of the RLE image rectangle definition stored in the
 RLE file and any
@@ -266,7 +263,7 @@ This may not have been the intent of the user, so the message is printed.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>&ldquo;rle-fb: correcting for old style colormap&rdquo;.</term>
+  <term>“rle-fb: correcting for old style colormap”.</term>
   <listitem>
 <para>The only change between the Edition-2 and Edition-3 RLE file formats
 that is not upwards compatible is the format of the colormap.
@@ -276,35 +273,34 @@ In order to allow this program to decode images stored in the Edition-2
 format, any colormap which has the upper eight bits all zero in all
 colormap entries is assumed to be an Edition-2 colormap, and is adjusted
 for suitable display.
-While this heuristic may be &ldquo;tricked&rdquo; with an Edition-3 colormap
+While this heuristic may be “tricked” with an Edition-3 colormap
 with degenerate values, the picture would have been very dark,
 and the benefits of full upwards compatibility from Edition-2 format files
 were deemed worth this risk.</para>
   </listitem>
   </varlistentry>
 </variablelist>
-</refsect1>
+</refsection>
 
-<refsect1 id='see_also'><title>SEE ALSO</title>
+<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
 <para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pixrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixmerge</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>comp</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>crop</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>repos</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rlepatch</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rlebox</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='author'><title>AUTHOR</title>
+<refsection xml:id="author"><info><title>AUTHOR</title></info>
 <para>BRL-CAD Team</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='copyright'><title>COPYRIGHT</title>
+<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
 <para>This software is Copyright (c) 1988-2012 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
 <para>Reports of bugs or problems should be submitted via electronic
 mail to &lt;devs@brlcad.org&gt;.</para>
-</refsect1>
+</refsection>
 </refentry>
-

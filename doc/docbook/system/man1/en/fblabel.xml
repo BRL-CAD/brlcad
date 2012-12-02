@@ -1,34 +1,31 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
-<!-- lifted from troff+man by doclifter -->
-<refentry id='fblabel1'>
+<?xml version="1.0" encoding="utf-8"?>
+<refentry xmlns="http://docbook.org/ns/docbook" version="lillet" xml:id="fblabel1">
 <refmeta>
 <refentrytitle>FBLABEL</refentrytitle>
 <manvolnum>1</manvolnum>
-<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class="source">BRL-CAD</refmiscinfo>
 </refmeta>
 <refnamediv>
 <refname>fblabel</refname>
 <refpurpose>display a text string on a framebuffer</refpurpose>
 </refnamediv>
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-<cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+<cmdsynopsis sepchar=" ">
   <command>fblabel</command>    
-    <arg choice='opt'>-hca </arg>
-    <arg choice='opt'>-F <replaceable>framebuffer</replaceable></arg>
-    <arg choice='opt'>-f <replaceable>fontname</replaceable></arg>
-    <arg choice='opt'>-C <replaceable>r/g/b</replaceable></arg>
-    <arg choice='plain'><replaceable>x_position</replaceable></arg>
-    <arg choice='plain'><replaceable>y_position</replaceable></arg>
-    <arg choice='plain'><replaceable>text_string</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-hca </arg>
+    <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-f <replaceable>fontname</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-C <replaceable>r/g/b</replaceable></arg>
+    <arg choice="plain" rep="norepeat"><replaceable>x_position</replaceable></arg>
+    <arg choice="plain" rep="norepeat"><replaceable>y_position</replaceable></arg>
+    <arg choice="plain" rep="norepeat"><replaceable>text_string</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
-<refsect1 id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Fblabel</emphasis>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<para><emphasis remap="I">Fblabel</emphasis>
 writes a text string to
 the image on the currently selected framebuffer.
 The text string will be filtered to the image currently
@@ -71,38 +68,37 @@ The default color is white.</para>
 <option>-f fontname</option>
 flag will change the current default
 font from nonie.r.12 to "/usr/lib/vfont/fontname".</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='fonts'><title>FONTS</title>
-<para><emphasis remap='I'>Fblabel</emphasis>
+<refsection xml:id="fonts"><info><title>FONTS</title></info>
+<para><emphasis remap="I">Fblabel</emphasis>
 expects the Berkley fonts in the directory /usr/lib/vfont.
 The fonts are expected to be in Vax byte order,
 even if that is not the natural byte order of the machine,
 to avoid having to create a font converter.</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='example'><title>EXAMPLE</title>
+<refsection xml:id="example"><info><title>EXAMPLE</title></info>
 <para>fblabel -h -f "oldenglish.14" `fbpoint -h` "Hello"</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='see_also'><title>SEE ALSO</title>
+<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
 <para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbed</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbpoint</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='author'><title>AUTHOR</title>
+<refsection xml:id="author"><info><title>AUTHOR</title></info>
 <para>BRL-CAD Team</para>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='copyright'><title>COPYRIGHT</title>
+<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
 <para>This software is Copyright (c) 1989-2012 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
 <para>Reports of bugs or problems should be submitted via electronic
 mail to &lt;devs@brlcad.org&gt;.</para>
-</refsect1>
+</refsection>
 </refentry>
-

@@ -1,31 +1,28 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
-<!-- lifted from troff+man by doclifter -->
-<refentry id='fbpoint1'>
+<?xml version="1.0" encoding="utf-8"?>
+<refentry xmlns="http://docbook.org/ns/docbook" version="lillet" xml:id="fbpoint1">
 <refmeta>
 <refentrytitle>FBPOINT</refentrytitle>
 <manvolnum>1</manvolnum>
-<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class="source">BRL-CAD</refmiscinfo>
 </refmeta>
 <refnamediv>
 <refname>fbpoint</refname>
 <refpurpose>point at and identify screen coordinates</refpurpose>
 </refnamediv>
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-<cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+<cmdsynopsis sepchar=" ">
   <command>fbpoint</command>    
-    <arg choice='opt'>-h </arg>
-    <arg choice='opt'><arg choice='plain'>-x </arg><arg choice='opt'><replaceable>prefix</replaceable></arg></arg>
-    <arg choice='opt'><arg choice='plain'>-y </arg><arg choice='opt'><replaceable>prefix</replaceable></arg></arg>
-    <arg choice='opt'><arg choice='plain'><replaceable>initx</replaceable></arg><arg choice='plain'><replaceable>inity</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat">-h </arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-x </arg><arg choice="opt" rep="norepeat"><replaceable>prefix</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-y </arg><arg choice="opt" rep="norepeat"><replaceable>prefix</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat"><replaceable>initx</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>inity</replaceable></arg></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
-<refsect1 id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Fbpoint</emphasis>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<para><emphasis remap="I">Fbpoint</emphasis>
 allows you to move a non-destructive cursor around on the display.
 As the cursor is moved around,
 <command>fbpoint</command>
@@ -35,45 +32,45 @@ pixel, on standard error
 <command>fbpoint</command>
 also writes the last set of coordinates pointed to on standard out on exit.
 The starting position is center-screen unless an optional
-<emphasis remap='I'>initx inity</emphasis>
+<emphasis remap="I">initx inity</emphasis>
 is given.</para>
 
 <para>The
-``<emphasis remap='B'>h</emphasis>'',
-``<emphasis remap='B'>j</emphasis>'',
-``<emphasis remap='B'>k</emphasis>'',
+``<emphasis remap="B">h</emphasis>'',
+``<emphasis remap="B">j</emphasis>'',
+``<emphasis remap="B">k</emphasis>'',
 and
-``<emphasis remap='B'>l</emphasis>'',
+``<emphasis remap="B">l</emphasis>'',
 commands step the cursor one pixel left, down, up, or right respectively, and
 the
-``<emphasis remap='B'>H</emphasis>'',
-``<emphasis remap='B'>J</emphasis>'',
-``<emphasis remap='B'>K</emphasis>'',
+``<emphasis remap="B">H</emphasis>'',
+``<emphasis remap="B">J</emphasis>'',
+``<emphasis remap="B">K</emphasis>'',
 and
-``<emphasis remap='B'>L</emphasis>'',
+``<emphasis remap="B">L</emphasis>'',
 commands step the cursor in the corresponding direction in big increments.
 The
-``<emphasis remap='B'>B</emphasis>'',
-``<emphasis remap='B'>N</emphasis>'',
-``<emphasis remap='B'>P</emphasis>''.
+``<emphasis remap="B">B</emphasis>'',
+``<emphasis remap="B">N</emphasis>'',
+``<emphasis remap="B">P</emphasis>''.
 and
-``<emphasis remap='B'>L</emphasis>'',
+``<emphasis remap="B">L</emphasis>'',
 and
-``<emphasis remap='B'>^B</emphasis>'',
+``<emphasis remap="B">^B</emphasis>'',
 (control-B),
-``<emphasis remap='B'>^N</emphasis>'',
-``<emphasis remap='B'>^P</emphasis>'',
+``<emphasis remap="B">^N</emphasis>'',
+``<emphasis remap="B">^P</emphasis>'',
 and
-``<emphasis remap='B'>^F</emphasis>'',
+``<emphasis remap="B">^F</emphasis>'',
 are also little and big (respectively) cursor movement commands.</para>
 
 <para>A
-``<emphasis remap='B'>?</emphasis>''
+``<emphasis remap="B">?</emphasis>''
 prints a short command summary,
 and typing
-``<emphasis remap='B'>q</emphasis>'',
+``<emphasis remap="B">q</emphasis>'',
 or
-``<emphasis remap='B'>Q</emphasis>'',
+``<emphasis remap="B">Q</emphasis>'',
 exits the program.</para>
 
 <para>The
@@ -95,47 +92,46 @@ or
 <option>-y</option>
 flags are given only those coordinates will be written.  In these
 cases an optional
-<emphasis remap='I'>prefix</emphasis>
+<emphasis remap="I">prefix</emphasis>
 can follow the flag which will be appended to the output coordinate.
 This is to facilitate passing the output of this program as
 arguments to another.</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='example'><title>EXAMPLE</title>
+<refsection xml:id="example"><info><title>EXAMPLE</title></info>
 <para><command>fbpoint</command>
 <!-- .br -->
 by itself is used to pick coordinates or pixel values from a display.</para>
 
-<para><emphasis remap='I'>fbscanplot `fbpoint -y`</emphasis>
+<para><emphasis remap="I">fbscanplot `fbpoint -y`</emphasis>
 <!-- .br -->
 allows you to choose the scanline to plot using fbpoint.</para>
 
-<para><emphasis remap='I'>pix-fb `fbpoint -x-X -y-Y` file.pix</emphasis>
+<para><emphasis remap="I">pix-fb `fbpoint -x-X -y-Y` file.pix</emphasis>
 <!-- .br -->
 will allow you to select an x, y screen coordinate and then
 place the lower left corner of the image
-<emphasis remap='I'>file.pix</emphasis>
+<emphasis remap="I">file.pix</emphasis>
 at that location.</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='see_also'><title>SEE ALSO</title>
+<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
 <para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbgrid</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbzoom</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='author'><title>AUTHOR</title>
+<refsection xml:id="author"><info><title>AUTHOR</title></info>
 <para>BRL-CAD Team</para>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='copyright'><title>COPYRIGHT</title>
+<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
 <para>This software is Copyright (c) 1986-2012 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
 <para>Reports of bugs or problems should be submitted via electronic
 mail to &lt;devs@brlcad.org&gt;.</para>
-</refsect1>
+</refsection>
 </refentry>
-

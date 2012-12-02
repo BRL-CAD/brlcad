@@ -1,43 +1,40 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
-<!-- lifted from troff+man by doclifter -->
-<refentry id='fbpng1'>
+<?xml version="1.0" encoding="utf-8"?>
+<refentry xmlns="http://docbook.org/ns/docbook" version="lillet" xml:id="fbpng1">
 <refmeta>
 <refentrytitle>FB-PNG</refentrytitle>
 <manvolnum>1</manvolnum>
-<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class="source">BRL-CAD</refmiscinfo>
 </refmeta>
 <refnamediv>
 <refname>fb-png</refname>
 <refpurpose>save a framebuffer image in a color Portable Network Graphics (PNG) file</refpurpose>
 </refnamediv>
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-<cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+<cmdsynopsis sepchar=" ">
   <command>fb-png</command>    
-    <arg choice='opt'>-hic </arg>
-    <arg choice='opt'>-ggamma </arg>
-    <arg choice='opt'>-Fframebuffer </arg>
-    <arg choice='opt'>-ssquaresize </arg>
-    <arg choice='opt'>-wwidth </arg>
-    <arg choice='opt'>-nheight </arg>
-    <arg choice='opt'><replaceable>file.png</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-hic </arg>
+    <arg choice="opt" rep="norepeat">-ggamma </arg>
+    <arg choice="opt" rep="norepeat">-Fframebuffer </arg>
+    <arg choice="opt" rep="norepeat">-ssquaresize </arg>
+    <arg choice="opt" rep="norepeat">-wwidth </arg>
+    <arg choice="opt" rep="norepeat">-nheight </arg>
+    <arg choice="opt" rep="norepeat"><replaceable>file.png</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
-<refsect1 id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Fb-png</emphasis>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<para><emphasis remap="I">Fb-png</emphasis>
 will take a region of a framebuffer display and save it as a color
-<emphasis remap='I'>png</emphasis>
+<emphasis remap="I">png</emphasis>
 format file.
 The environment
 variable
 <!-- I elided -->
 <envar>FB_FILE</envar>
 is used to select the display device (see
-<emphasis remap='I'>brlcad(1)</emphasis>).
+<emphasis remap="I">brlcad(1)</emphasis>).
 If this variable is not set, the default device for your system will
 be used.
 Alternatively, the framebuffer may be explicitly specified
@@ -46,7 +43,7 @@ by using the
 flag.</para>
 
 <para>By default, the output
-<emphasis remap='I'>png</emphasis>
+<emphasis remap="I">png</emphasis>
 file, and the requested framebuffer size, is assumed to be 512x512 pixels.
 Specifying the
 <option>-h</option>
@@ -70,7 +67,7 @@ corner of the screen).</para>
 <para>The
 <option>-c</option>
 flag specifies that the color map in the frame buffer should
-be applied to the pixel values (&ldquo;crunched&rdquo;) before they are written to the
+be applied to the pixel values (“crunched”) before they are written to the
 output file.</para>
 
 <para>The
@@ -79,25 +76,24 @@ flag sets the specified gamma correction value into the created PNG
 file.  A value of 0.6 is a close approximation of PC display monitors.
 A negative gamma value disables writing a gAMA chunk out entirely (and
 is the default).</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='see_also'><title>SEE ALSO</title>
+<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
 <para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>png-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fb-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
-</refsect1>
+</refsection>
 
-<refsect1 id='author'><title>AUTHOR</title>
+<refsection xml:id="author"><info><title>AUTHOR</title></info>
 <para>John R. Anderson</para>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='copyright'><title>COPYRIGHT</title>
+<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
 <para>This software is Copyright (c) 1998-2012 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
 <para>Reports of bugs or problems should be submitted via electronic
 mail to &lt;devs@brlcad.org&gt;.</para>
-</refsect1>
+</refsection>
 </refentry>
-

@@ -1,39 +1,36 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
-<!-- lifted from troff+man by doclifter -->
-<refentry id='fbscanplot1'>
+<?xml version="1.0" encoding="utf-8"?>
+<refentry xmlns="http://docbook.org/ns/docbook" version="lillet" xml:id="fbscanplot1">
 <refmeta>
 <refentrytitle>FBSCANPLOT</refentrytitle>
 <manvolnum>1</manvolnum>
-<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class="source">BRL-CAD</refmiscinfo>
 </refmeta>
 <refnamediv>
 <refname>fbscanplot</refname>
 <refpurpose>plot the intensities of a framebuffer scanline</refpurpose>
 </refnamediv>
 <!-- body begins here -->
-<refsynopsisdiv id='synopsis'>
-<cmdsynopsis>
+<refsynopsisdiv xml:id="synopsis">
+<cmdsynopsis sepchar=" ">
   <command>fbscanplot</command>    
-    <arg choice='opt'>-h </arg>
-    <arg choice='opt'>-v </arg>
-    <arg choice='opt'>-o </arg>
-    <arg choice='opt'>-c </arg>
-    <arg choice='opt'>-r </arg>
-    <arg choice='opt'>-W <replaceable>scr_width</replaceable></arg>
-    <arg choice='opt'>-F <replaceable>outframebuffer</replaceable></arg>
-    <arg choice='plain'><replaceable>yline</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-h </arg>
+    <arg choice="opt" rep="norepeat">-v </arg>
+    <arg choice="opt" rep="norepeat">-o </arg>
+    <arg choice="opt" rep="norepeat">-c </arg>
+    <arg choice="opt" rep="norepeat">-r </arg>
+    <arg choice="opt" rep="norepeat">-W <replaceable>scr_width</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-F <replaceable>outframebuffer</replaceable></arg>
+    <arg choice="plain" rep="norepeat"><replaceable>yline</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
-<refsect1 id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Fbscanplot</emphasis>
+<refsection xml:id="description"><info><title>DESCRIPTION</title></info>
+<para><emphasis remap="I">Fbscanplot</emphasis>
 will plot the red, green, and blue, pixel intensities of a selected
 scanline of a framebuffer.  The line to be plotted has a first quadrant
 y coordinate of
-<emphasis remap='I'>yline</emphasis>,
+<emphasis remap="I">yline</emphasis>,
 i.e. a value of zero indicates the bottom line of the display.
 The environment
 variable
@@ -44,12 +41,12 @@ is used to select the input display device (see
 If this variable is not set, the default device for your system will
 be used.
 The output will appear on this same device unless a
-<option>-F&nbsp;</option><replaceable>outframebuffer</replaceable>
+<option>-F </option><replaceable>outframebuffer</replaceable>
 flag is given to redirect the output.</para>
 
 <para>If no size if specified the selected device(s) will be opened at its
 default size (usually the full screen).  The flag
-<option>-W&nbsp;</option><replaceable>scr_width</replaceable>
+<option>-W </option><replaceable>scr_width</replaceable>
 can be used to set a screen width (scanline length) other than this
 default.
 The
@@ -89,9 +86,9 @@ well as displayed.</para>
 flag causes the current colormap of the framebuffer to be applied
 to the pixel values ("crunched") before plotting them.
 This allows the effects of the color map to be readily viewed.</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='example'><title>EXAMPLE</title>
+<refsection xml:id="example"><info><title>EXAMPLE</title></info>
 <para><userinput>fbscanplot -r 37</userinput>
 <!-- .br -->
 will plot the intensities of the scanline 37 up from the bottom.
@@ -102,35 +99,34 @@ the selected line.</para>
 <para><userinput>fbscanplot -v -W512 -o `fbpoint -y` &gt; scan.out</userinput>
 <!-- .br -->
 will use
-<emphasis remap='I'>fbpoint</emphasis>
+<emphasis remap="I">fbpoint</emphasis>
 to select a y scanline, then plot 512 pixel values
 in overlay mode.  These values will also be saved in the file
-<emphasis remap='I'>scan.out</emphasis>
+<emphasis remap="I">scan.out</emphasis>
 for closer examination.</para>
 
 <para>A handy C-shell alias is:
 <!-- .br -->
-<emphasis remap='I'>alias fbsp 'fbscanplot -r `fbpoint -y`'</emphasis></para>
-</refsect1>
+<emphasis remap="I">alias fbsp 'fbscanplot -r `fbpoint -y`'</emphasis></para>
+</refsection>
 
-<refsect1 id='see_also'><title>SEE ALSO</title>
+<refsection xml:id="see_also"><info><title>SEE ALSO</title></info>
 <para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbgrid</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbzoom</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='author'><title>AUTHOR</title>
+<refsection xml:id="author"><info><title>AUTHOR</title></info>
 <para>BRL-CAD Team</para>
 
-</refsect1>
+</refsection>
 
-<refsect1 id='copyright'><title>COPYRIGHT</title>
+<refsection xml:id="copyright"><info><title>COPYRIGHT</title></info>
 <para>This software is Copyright (c) 1989-2012 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
-</refsect1>
+</refsection>
 
-<refsect1 id='bug_reports'><title>BUG REPORTS</title>
+<refsection xml:id="bug_reports"><info><title>BUG REPORTS</title></info>
 <para>Reports of bugs or problems should be submitted via electronic
 mail to &lt;devs@brlcad.org&gt;.</para>
-</refsect1>
+</refsection>
 </refentry>
-
