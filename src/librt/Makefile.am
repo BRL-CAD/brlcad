@@ -301,8 +301,6 @@ noinst_HEADERS = \
 	primitives/revolve/revolve.h \
 	primitives/xxx/xxx.h
 
-dist_man_MANS = librt.3
-
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 
 sample_applications_DATA = \
