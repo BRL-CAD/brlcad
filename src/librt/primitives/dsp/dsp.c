@@ -2561,6 +2561,8 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     if (dsp_in_rpp(isect, bbmin, bbmax)) {
 	/* hit rpp */
 	struct hit in_hit, out_hit;
+	VSETALL(in_hit.hit_vpriv, 0.0);
+	VSETALL(out_hit.hit_vpriv, 0.0);
 
 	VJOIN1(minpt, r->r_pt, r->r_min, r->r_dir);
 	VJOIN1(maxpt, r->r_pt, r->r_max, r->r_dir);
