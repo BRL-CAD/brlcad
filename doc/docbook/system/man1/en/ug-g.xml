@@ -89,9 +89,7 @@ module. This may be obtained from Unigraphics.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <literallayout remap='RS'>
-<synopsis>
 $ \fuug-g -o sample.g sample.prt
-</synopsis>
 </literallayout> <!-- remap='RE' -->
 </refsect1>
 
