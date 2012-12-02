@@ -368,19 +368,6 @@ if it is, default is to enable.
 Aliases:  ENABLE_OPENGL
 
 
---- BRLCAD_EXTRADOCS ---
-
-The core option that enables and disables building of BRL-CAD's DocBook
-based documentation (includes manuals and man pages for commands, among
-other things.)  Defaults to ON, but only HTML and MAN formats are enabled
-by default - PDF must be enabled separately by use of this option or one
-of its aliases.  Note that you may set environment variable APACHE_FOP
-to point to your locally installed fop executable file (which on Linux is
-usually a shell script with 0755 permissions).
-
-Aliases:  ENABLE_DOCS, ENABLE_EXTRA_DOCS, ENABLE_DOCBOOK
-
-
 --- BRLCAD_ENABLE_RUNTIME_DEBUG ---
 
 Enables support for application and library debugging facilities.
@@ -416,6 +403,19 @@ discovered by these flags whenever possible rather than disabling strict
 mode.
 
 Aliases:  ENABLE_STRICT, ENABLE_STRICT_COMPILE, ENABLE_STRICT_COMPILE_FLAGS
+
+
+--- BRLCAD_EXTRADOCS ---
+
+The core option that enables and disables building of BRL-CAD's DocBook
+based documentation (includes manuals and man pages for commands, among
+other things.)  Defaults to ON, but only HTML and MAN formats are enabled
+by default - PDF must be enabled separately by use of this option or one
+of its aliases.  Note that you may set environment variable APACHE_FOP
+to point to your locally installed fop executable file (which on Linux is
+usually a shell script with 0755 permissions).
+
+Aliases:  ENABLE_DOCS, ENABLE_EXTRA_DOCS, ENABLE_DOCBOOK
 
 
 --- BRLCAD_REGEX ---
