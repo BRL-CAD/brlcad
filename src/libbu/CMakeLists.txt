@@ -102,12 +102,6 @@ endif("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
 
 add_subdirectory(tests)
 
-set(bu_MAN3
-  htond.3
-  redblack.3
-  )
-ADD_MAN_PAGES(3 bu_MAN3)
-
 set(bu_ignore_files
   rb_internals.h
   uce-dirent.h

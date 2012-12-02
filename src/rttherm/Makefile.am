@@ -36,10 +36,6 @@ AM_CPPFLAGS = \
 
 dist_bin_SCRIPTS = ssampview.tcl
 
-man_MANS = \
-	rttherm.1 \
-	ssamp-bw.1
-
 rttherm_SOURCES = \
 	spectrum.c \
 	viewtherm.c
@@ -66,7 +62,6 @@ pixtest_LDADD = \
 	${OPTICAL}
 
 EXTRA_DIST = \
-	$(man_MANS) \
 	${SSAMPVIEW_EXTRA} \
 	std_day_1km.dat \
 	test.sh \

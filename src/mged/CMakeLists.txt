@@ -153,11 +153,6 @@ else(CMAKE_CONFIGURATION_TYPES)
 endif(CMAKE_CONFIGURATION_TYPES)
 install(PROGRAMS mged.bat DESTINATION bin)
 
-set(mged_MANS
-  cad_boundp.1
-  cad_parea.1
-  )
-ADD_MAN_PAGES(1 mged_MANS)
 set(mged_ignore_files
   bool_rewrite.c
   cmd.h

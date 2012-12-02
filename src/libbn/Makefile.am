@@ -4,8 +4,6 @@ noinst_LTLIBRARIES = libbn_nil.la
 
 noinst_PROGRAMS = bntester
 
-man_MANS = libplot3.3
-
 libbn_nil_la_SOURCES = \
 	anim.c \
 	axis.c \
@@ -52,7 +50,6 @@ AM_CPPFLAGS = ${TCL_CPPFLAGS}
 AM_CFLAGS = ${STRICT_FLAGS}
 
 EXTRA_DIST = \
-	$(man_MANS) \
 	bntester.dat \
 	ulp.c \
 	CMakeLists.txt \

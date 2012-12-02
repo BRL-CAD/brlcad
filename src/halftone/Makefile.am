@@ -17,9 +17,7 @@ halftone_SOURCES = \
 halftone_LDADD = \
 	${RT} ${FB}
 
-man_MANS = halftone.1
-
-EXTRA_DIST = $(man_MANS) CMakeLists.txt
+EXTRA_DIST = CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 

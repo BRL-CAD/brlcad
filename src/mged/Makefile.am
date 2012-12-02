@@ -182,16 +182,11 @@ noinst_HEADERS = \
 	sedit.h \
 	titles.h
 
-man_MANS = \
-	cad_boundp.1 \
-	cad_parea.1
-
 INCLUDES = \
 	${X_CFLAGS} \
 	-I$(top_srcdir)/include
 
 EXTRA_DIST = \
-	$(man_MANS) \
 	bool_rewrite.c \
 	comb_bool_parse.y \
 	comb_bool_scan.l \

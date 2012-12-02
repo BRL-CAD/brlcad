@@ -38,10 +38,7 @@ libwdb_la_LIBADD = \
 	libwdb_nil.la \
 	${WDB_LIBS}
 
-man_MANS = libwdb.3
-
 EXTRA_DIST = \
-	$(man_MANS) \
 	CMakeLists.txt
 
 DEPS = src/librt

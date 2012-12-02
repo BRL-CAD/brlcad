@@ -164,21 +164,6 @@ noinst_HEADERS = \
 	rtuif.h \
 	scanline.h
 
-man_MANS = \
-	reshoot.1 \
-	rt_bot_faces.1 \
-	rtg3.1 \
-	rthide.1 \
-	rtpp.1 \
-	rtrange.1 \
-	rtray.1 \
-	rtregis.1 \
-	rtscale.1 \
-	rtshot.1 \
-	rtwalk.1 \
-	rtweight.1 \
-	rtxray.1
-
 noinst_LIBRARIES = \
 	libremrt.a \
 	librttherm.a
@@ -200,7 +185,6 @@ sample_applications_DATA = rtexample.c
 
 EXTRA_DIST = \
 	$(ALLSRCS) \
-	$(man_MANS) \
 	CMakeLists.txt
 
 DEPENDS = src/librt src/libfb src/liboptical

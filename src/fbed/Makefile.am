@@ -35,9 +35,7 @@ fbed_LDADD = \
 	${CURSOR} \
 	${TERMLIB}
 
-man_MANS = fbed.1
-
-EXTRA_DIST = $(man_MANS) CMakeLists.txt
+EXTRA_DIST = CMakeLists.txt
 
 DEPENDS = src/vfont
 

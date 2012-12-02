@@ -18,12 +18,6 @@ install(PROGRAMS ssampview.tcl DESTINATION ${BIN_DIR})
 
 BRLCAD_ADDEXEC(ssamp-bw ssamp-bw.c libmultispectral)
 
-set(rttherm_MANS
-  rttherm.1
-  ssamp-bw.1
-  )
-ADD_MAN_PAGES(1 rttherm_MANS)
-
 CMAKEFILES(pixtest.c ssampview.tcl std_day_1km.dat test.sh)
 CMAKEFILES(Makefile.am)
 

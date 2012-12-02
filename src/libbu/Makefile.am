@@ -94,12 +94,7 @@ noinst_HEADERS = \
 	rb_internals.h \
 	vls_internals.h
 
-man_MANS = \
-	htond.3 \
-	redblack.3
-
 EXTRA_DIST = \
-	$(man_MANS) \
 	uce-dirent.h \
 	CMakeLists.txt \
 	tests

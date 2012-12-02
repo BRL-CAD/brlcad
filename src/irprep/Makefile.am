@@ -1,12 +1,10 @@
 
 if WITH_X11
 IR_X_BIN=ir-X
-IR_X_MAN=ir-X.1
 IRDISP_BIN=irdisp
-IRDISP_MAN=irdisp.1
 else
-IR_X_EXTRA=ir-X.c ir-X.1
-IRDISP_EXTRA=irdisp.c irdisp.1
+IR_X_EXTRA=ir-X.c
+IRDISP_EXTRA=irdisp.c
 endif
 
 bin_PROGRAMS = \
@@ -53,16 +51,7 @@ secpass_LDADD = ${RT}
 shapefact_SOURCES = shapefact.c
 shapefact_LDADD = ${RT}
 
-man_MANS = \
-	showtherm.1 \
-	firpass.1 \
-	${IRDISP_MAN} \
-	${IR_X_MAN} \
-	secpass.1 \
-	shapefact.1
-
 EXTRA_DIST = \
-	$(man_MANS) \
 	${IRDISP_EXTRA} \
 	${IR_X_EXTRA} \
 	pictx.1 \
