@@ -181,47 +181,7 @@ rle_fb_SOURCES = rle-fb.c
 spm_fb_LDADD = ${FB} ${BN}
 spm_fb_SOURCES = spm-fb.c
 
-man_MANS = \
-	bw-fb.1 \
-	cell-fb.1 \
-	cmap-fb.1 \
-	fb-bw.1 \
-	fb-cmap.1 \
-	fb-fb.1 \
-	fb-orle.1 \
-	fb-pix.1 \
-	fb-png.1 \
-	fb-rle.1 \
-	fbanim.1 \
-	fbcbars.1 \
-	fbclear.1 \
-	fbcmap.1 \
-	fbcmrot.1 \
-	fbcolor.1 \
-	fbfade.1 \
-	fbframe.1 \
-	fbfree.1 \
-	fbgamma.1 \
-	fbgrid.1 \
-	fbhelp.1 \
-	fblabel.1 \
-	fbline.1 \
-	fbpoint.1 \
-	fbscanplot.1 \
-	fbstretch.1 \
-	fbzoom.1 \
-	gif-fb.1 \
-	gif2fb.1 \
-	orle-fb.1 \
-	pix-fb.1 \
-	pixautosize.1 \
-	pl-fb.1 \
-	png-fb.1 \
-	polar-fb.1 \
-	pp-fb.1 \
-	rle-fb.1
-
-EXTRA_DIST = $(man_MANS) CMakeLists.txt
+EXTRA_DIST = CMakeLists.txt
 
 include $(top_srcdir)/misc/Makefile.defs
 

@@ -54,6 +54,43 @@ set(docbook_man1_EN
   tire.xml
   vdeck.xml
   viewpoint-g.xml
+  cmap-fb.xml
+  fbanim.xml
+  fb-bw.xml
+  fbcbars.xml 
+  fbclear.xml
+  fbcmap.xml
+  fbcmrot.xml
+  fbcolor.xml
+  fbfade.xml
+  fb-fb.xml
+  fbframe.xml
+  fbfree.xml
+  fbgamma.xml
+  fbgrid.xml
+  fbhelp.xml
+  fblabel.xml
+  fbline.xml
+  fb-pix.xml
+  fb-png.xml
+  fbpoint.xml
+  fb-rle.xml
+  fbscanplot.xml 
+  fbstretch.xml
+  fbzoom.xml
+  gif2fb.xml
+  gif-fb.xml
+  orle-fb.xml
+  pixautosize.xml
+  pix-fb.xml
+  pl-fb.xml
+  png-fb.xml
+  polar-fb.xml 
+  pp-fb.xml 
+  rle-fb.xml 
+  bw-fb.xml 
+  cell-fb.xml
+  fb-orle.xml
   )
 
 # Some DocBook man pages generate multiple output files, if they
