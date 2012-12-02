@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='hex1'>
+<refmeta>
+<refentrytitle>HEX</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>hex</refname>
+<refpurpose>Hexadecimal and ASCII dump</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>hex</command>    
+    <arg choice='opt'>-o <replaceable>offset</replaceable></arg>
+    <arg choice='opt' rep='repeat'><replaceable>file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Hex</emphasis>
+reads each
+<emphasis remap='I'>file</emphasis>
+in sequence and
+produces a dump on the standard output
+in hexadecimal and ASCII.  If no files are specified on the command
+line,
+<command>hex</command>
+checks to to be sure the standard input is not coming from a terminal
+before dumping from the standard input.</para>
+
+<para>Input is
+dumped 16 bytes at a time.  The program displays the offset
+from the beginning of the file/input
+in hexadecimal, followed by
+the hexadecimal representations for the
+next 16
+bytes of data, and their ASCII character representations.  Non-printing
+characters are displayed as a period (".") in the ASCII section.  Vertical
+bars delimit the ASCII section.</para>
+
+<para>If multiple files are specified on the command line, each file's name is
+printed before its dump.</para>
+
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-o offset</option></term>
+  <listitem>
+<para>start printing at byte position
+<emphasis remap='I'>offset</emphasis>
+instead of at the beginning of the data.
+<emphasis remap='I'>Offset</emphasis>
+is rounded down to a multiple of 16.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para>od</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

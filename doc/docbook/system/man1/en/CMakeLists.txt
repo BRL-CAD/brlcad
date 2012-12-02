@@ -1,97 +1,190 @@
 set(docbook_man1_EN
-  g2asc.xml
-  pix2asc.xml
-  asc2dsp.xml
-  bot_dump.xml
-  bot_shell-vtk.xml
-  bwscale.xml
-  coil.xml
-  comgeom-g.xml
-  conv-vg2g.xml
-  cy-g.xml
-  db.xml
-  dbclean.xml
-  dbupgrade.xml
-  dxf-g.xml
-  g-dxf.xml
-  enf-g.xml
-  euclid-g.xml
-  g-euclid.xml
-  fast4-g.xml
-  g-acad.xml
-  g-egg.xml
-  g-nff.xml
-  g-obj.xml
-  g-shell-rect.xml
-  g-var.xml
-  g-vrml.xml
-  g-x3d.xml
-  gqa.xml
-  g-iges.xml
-  iges-g.xml
-  mged.xml
-  nastran-g.xml
-  nirt.xml
-  asc-nmg.xml
-  g-nmg.xml
-  nmg-bot.xml
-  nmg-rib.xml
-  obj-g.xml
-  patch-g.xml
-  rpatch.xml
-  ply-g.xml
-  poly-bot.xml
-  proe-g.xml
-  rt.xml
-  rtarea.xml
-  rtcheck.xml
-  rtedge.xml
-  rtwizard.xml
-  g-stl.xml
-  stl-g.xml
-  g-tankill.xml
-  tankill-g.xml
-  tire.xml
-  vdeck.xml
-  viewpoint-g.xml
-  cmap-fb.xml
-  fb-cmap.xml
-  fbanim.xml
-  fb-bw.xml
-  fbcbars.xml 
-  fbclear.xml
-  fbcmap.xml
-  fbcmrot.xml
-  fbcolor.xml
-  fbfade.xml
-  fb-fb.xml
-  fbframe.xml
-  fbfree.xml
-  fbgamma.xml
-  fbgrid.xml
-  fbhelp.xml
-  fblabel.xml
-  fbline.xml
-  fb-pix.xml
-  fb-png.xml
-  fbpoint.xml
-  fb-rle.xml
-  fbscanplot.xml 
-  fbstretch.xml
-  fbzoom.xml
-  gif2fb.xml
-  gif-fb.xml
-  orle-fb.xml
-  pixautosize.xml
-  pix-fb.xml
-  pl-fb.xml
-  png-fb.xml
-  polar-fb.xml 
-  pp-fb.xml 
-  rle-fb.xml 
-  bw-fb.xml 
-  cell-fb.xml
-  fb-orle.xml
+ap-pix.xml
+asc-nmg.xml
+asc-pl.xml
+asc2dsp.xml
+azel.xml
+bary.xml
+bot_dump.xml
+bot_shell-vtk.xml
+brlcad.xml
+buffer.xml
+bw-fb.xml
+bw-imp.xml
+bw-pix.xml
+bw-png.xml
+bw-ps.xml
+bw-rle.xml
+bw3-pix.xml
+bwcrop.xml
+bwdiff.xml
+bwfilter.xml
+bwhist.xml
+bwhisteq.xml
+bwmod.xml
+bwrect.xml
+bwrot.xml
+bwscale.xml
+bwshrink.xml
+bwstat.xml
+bwthresh.xml
+cell-fb.xml
+cmap-fb.xml
+coil.xml
+comgeom-g.xml
+conv-vg2g.xml
+cv.xml
+cy-g.xml
+db.xml
+dbclean.xml
+dbcp.xml
+dbupgrade.xml
+decimate.xml
+dpix-pix.xml
+dunncolor.xml
+dunnsnap.xml
+dxf-g.xml
+enf-g.xml
+euclid-g.xml
+fast4-g.xml
+fb-bw.xml
+fb-cmap.xml
+fb-fb.xml
+fb-orle.xml
+fb-pix.xml
+fb-png.xml
+fb-rle.xml
+fbanim.xml
+fbcbars.xml
+fbclear.xml
+fbcmap.xml
+fbcmrot.xml
+fbcolor.xml
+fbfade.xml
+fbframe.xml
+fbfree.xml
+fbgamma.xml
+fbgrid.xml
+fbhelp.xml
+fblabel.xml
+fbline.xml
+fbpoint.xml
+fbscanplot.xml
+fbstretch.xml
+fbzoom.xml
+g-acad.xml
+g-dxf.xml
+g-egg.xml
+g-euclid.xml
+g-iges.xml
+g-nff.xml
+g-nmg.xml
+g-obj.xml
+g-shell-rect.xml
+g-stl.xml
+g-tankill.xml
+g-var.xml
+g-vrml.xml
+g-x3d.xml
+g2asc.xml
+gencolor.xml
+gif-fb.xml
+gif2fb.xml
+gqa.xml
+hex.xml
+iges-g.xml
+imgdims.xml
+loop.xml
+mac-pix.xml
+mged.xml
+morphedit.xml
+nastran-g.xml
+nirt.xml
+nmg-bot.xml
+nmg-rib.xml
+obj-g.xml
+orle-fb.xml
+orle-pix.xml
+patch-g.xml
+pix-alias.xml
+pix-bw.xml
+pix-bw3.xml
+pix-fb.xml
+pix-orle.xml
+pix-png.xml
+pix-ppm.xml
+pix-ps.xml
+pix-rle.xml
+pix-sun.xml
+pix2asc.xml
+pixautosize.xml
+pixbackgnd.xml
+pixbgstrip.xml
+pixblend.xml
+pixborder.xml
+pixbustup.xml
+pixclump.xml
+pixcolors.xml
+pixcut.xml
+pixdiff.xml
+pixdsplit.xml
+pixfade.xml
+pixfilter.xml
+pixhalve.xml
+pixhist.xml
+pixhist3d-pl.xml
+pixhist3d.xml
+pixinterp2x.xml
+pixmatte.xml
+pixmerge.xml
+pixmorph.xml
+pixrect.xml
+pixrot.xml
+pixsaturate.xml
+pixscale.xml
+pixshrink.xml
+pixstat.xml
+pixsubst.xml
+pixtile.xml
+pixuntile.xml
+pl-X.xml
+pl-asc.xml
+pl-fb.xml
+pl-hpgl.xml
+pl-pl.xml
+pl-ps.xml
+pl-tek.xml
+plcolor.xml
+pldebug.xml
+plgetframe.xml
+plline2.xml
+plrot.xml
+ply-g.xml
+png-bw.xml
+png-fb.xml
+png-pix.xml
+png_info.xml
+polar-fb.xml
+poly-bot.xml
+pp-fb.xml
+proe-g.xml
+random.xml
+rle-fb.xml
+rle-pix.xml
+rpatch.xml
+rt.xml
+rtarea.xml
+rtcheck.xml
+rtedge.xml
+rtwizard.xml
+stl-g.xml
+sun-pix.xml
+tankill-g.xml
+terrain.xml
+tire.xml
+vdeck.xml
+viewpoint-g.xml
+wavelet.xml
   )
 
 # Some DocBook man pages generate multiple output files, if they

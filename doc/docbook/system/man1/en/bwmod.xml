@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='bwmod1'>
+<refmeta>
+<refentrytitle>BWMOD</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>bwmod</refname>
+<refpurpose>arithmetically modify pixel values in black and white bw file</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>bwmod</command>    
+    <arg choice='opt'>-c </arg>
+    <arg choice='opt' rep='repeat'><arg choice='plain'>-a <replaceable>add</replaceable></arg><arg choice='plain'>-s <replaceable>sub</replaceable></arg><arg choice='plain'>-m <replaceable>mult</replaceable></arg><arg choice='plain'>-d <replaceable>div</replaceable></arg><arg choice='plain'>-A </arg><arg choice='plain'>-e <replaceable>exp</replaceable></arg><arg choice='plain'>-r <replaceable>root</replaceable></arg></arg>
+    <arg choice='plain'><replaceable>.</replaceable></arg>
+    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'><replaceable>file.bw</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Bwmod</emphasis>
+will perform a series of arithmetic operations on each 8-bit pixel
+of its input/output stream.  This is a
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file format.
+The pixel values range from 0 to 255 and are internally operated on
+in floating point form (unless the
+<option>-c</option>
+option has been specified) so that dynamic range, truncation, and sign,
+are not a problem.  On output they are converted back to 8-bit unsigned
+values clipping to 0 and 255 if necessary.  The number of pixels clipped
+high and low, if any, are reported to standard error on completion.</para>
+
+<para>If the
+<option>-c</option>
+option is specified, then intermediate results are stored as signed characters, though
+The command line arguments remain in floating point
+format.
+This is useful when one wishes to take advantage of wrap-around
+characteristics of binary mathematics.</para>
+
+<para>Any number of operations can be given and they are applied in order.
+The choices are:
+<!-- .br -->
+<option>-a </option><replaceable>val</replaceable>
+to add a value.
+<!-- .br -->
+<option>-s </option><replaceable>val</replaceable>
+to subtract a value.
+<!-- .br -->
+<option>-m </option><replaceable>val</replaceable>
+to multiply by a value.
+<!-- .br -->
+<option>-d </option><replaceable>val</replaceable>
+to divide by a value.
+<!-- .br -->
+<option>-A</option>
+to take to absolute value of each pixel.
+<!-- .br -->
+<option>-e </option><replaceable>val</replaceable>
+to exponentiate, i.e. raise each pixel to the power
+<emphasis remap='I'>val.</emphasis>
+<!-- .br -->
+<option>-r </option><replaceable>val</replaceable>
+to take the
+<emphasis remap='I'>val</emphasis>
+root of each pixel.</para>
+
+<para>All arguments can be floating point values.  Note that this command
+can be applied to color
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+files also,
+but no distinction can be made between color planes.</para>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<para>The command
+<!-- .br -->
+<userinput>bwmod -m-1 -a255 &lt; file.bw &gt; file2.bw</userinput>
+<!-- .br -->
+will produce the negative of a file by first multiplying by minus
+one, and then adding 255 to shift the pixels back into the 0-&gt;255 range.</para>
+
+<para>One can apply a gamma factor to a file as follows:
+<!-- .br -->
+<userinput>bwmod -d255 -r2.2 -m255 &lt; file.bw &gt; file2.bw</userinput>
+<!-- .br -->
+which will first normalize the pixel values, then take the 2.2 root
+of each pixel, and finally scale it back to 0-&gt;255.
+[Note however that applying gammas this way is not recommended since
+a function call per pixel results!]</para>
+
+<para>Suppose you ran bwstat on a file and found min=80, max=210, mean=100.
+If you wish to expand the range of intensities, while still preserving
+the mean, this can be done by:
+<userinput>bwmod -s100 -m1.409 -a100 &lt; file.bw &gt; file2.bw</userinput>
+<!-- .br -->
+Where 1.409 results from (255-100)/(210-100) which is what one would use
+by boost the max value (210) to full scale (255) after subtracting the
+mean (100).  Subtracting and adding 100 make the multiply occur
+"about that point", i.e value less than 100 will get smaller; those
+above, higher.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='brlcad1'>
+<refmeta>
+<refentrytitle>BRLCAD</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>brlcad</refname>
+<refpurpose>BRL-CAD programs for solid modeling, raytracing, graphics, and image processing</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>The BRL-CAD Distribution contains many directories of materials.
+The major categories of programs are:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>mged</emphasis></term>
+  <listitem>
+<para>A multi-device interactive editor for constructing and updating
+combinatorial solid geometry (CSG)
+models.
+See
+<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+and
+<emphasis remap='I'>Understanding the Preparation and Analysis of Solid Models</emphasis>
+by Michael John Muuss (enclosed, in the "paper") directory.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>librt</emphasis></term>
+  <listitem>
+<para>A library of functions suitable for interrogation of a
+CSG solid model, utilizing ray-tracing techniques.
+See
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>rt</emphasis></term>
+  <listitem>
+<para>A ray-tracing lighting model, for rendering pictures of
+<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+CSG models.
+See
+<citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rtpp</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>conv</emphasis></term>
+  <listitem>
+<para>Programs to convert
+<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+format binary files to a portable ASCII form, and back again.
+See
+<citerefentry><refentrytitle>asc2g</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>asc2pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>conv-vg2g</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>g2asc</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pix2asc</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>libpkg</emphasis></term>
+  <listitem>
+<para>A "message-passing" interface layered on top of TCP network links,
+to ease construction of network-distributed applications.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>libfb</emphasis></term>
+  <listitem>
+<para>A generic frame-buffer library which includes
+support for a number of display devices,
+as well as file, network, and debugging interfaces.
+Most programs which use this library have the letters "fb"
+in their names.  To override your system default frame-buffer,
+the environment variable
+<!-- B elided -->
+<envar>FB_FILE</envar>
+can be set.  In addition, some commands also support a
+<option>-F</option>
+<replaceable>framebuffer</replaceable>
+option.
+Note that the disk file format of
+<emphasis remap='I'>libfb</emphasis>
+is that of
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+allowing "framebuffer" files to be later processed by
+any of the "pix" family of programs.
+See
+<citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+etc.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>fbserv</emphasis></term>
+  <listitem>
+<para>TCP-based network server which implements remote frame-buffer services.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>libsysv</emphasis></term>
+  <listitem>
+<para>Some System-V compatibility routines</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>libtermio</emphasis></term>
+  <listitem>
+<para>A library to handle terminal mode setting
+on both Berkeley or SystemV machines.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>libplot3</emphasis></term>
+  <listitem>
+<para>A public-domain version of the UNIX-Plot library
+which differs from that of the standard
+<citerefentry><refentrytitle>libplot</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+by the addition of 3-D primitives, color, floating point
+coordinate routines, and the use of a file pointer parameter.
+See
+<citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>librle</emphasis></term>
+  <listitem>
+<para>A Run-Length-Encoding (RLE) library,
+providing functions
+originally from the University of Utah in a library package.
+Note that the current version of this library reads
+Edition-3 RLE files.
+[Edition-1 and Edition-2 RLE files can be read and written
+with the
+<emphasis remap='B'>liborle</emphasis>
+and
+<emphasis remap='B'>orle</emphasis>
+programs.]
+See
+<citerefentry><refentrytitle>rle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pix-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>librle</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>util</emphasis></term>
+  <listitem>
+<para>A collection of image-handling utilities,
+each constructed as individual tools intended to be used in combination.
+See
+<citerefentry><refentrytitle>ap-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>bw-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>bw-imp</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>bw-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>bw3-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>bwcrop</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>bwdiff</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>bwfilter</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>bwhist</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>bwmod</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>bwrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>bwrot</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>bwscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>bwstat</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>dunncolor</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>dunnsnap</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>fb-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>fb-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>fbanim</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>fbclear</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>fbcmap</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>fbcmrot</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>fbcolor</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>fbframe</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>fbgrid</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>fbpoint</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>fbzoom</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>gencolor</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>loop</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pix-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pix-bw3</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pixbackgnd</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pixbustup</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pixdiff</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pixfilter</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pixhist</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pixhist3d-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pixhist3d</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pixinterp2x</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pixrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pixrot</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pixscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pixstat</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pixtile</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pl-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pp-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>rle-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>wavelet</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>fbed</emphasis></term>
+  <listitem>
+<para>An interactive, termcap-based frame-buffer image editor.
+See
+<citerefentry><refentrytitle>fbed</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>vdeck</emphasis></term>
+  <listitem>
+<para>A program to convert
+<emphasis remap='I'>mged(1)</emphasis>
+models to
+<emphasis remap='I'>gift(1)</emphasis>
+format card deck files.
+See
+<citerefentry><refentrytitle>vdeck</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+
+
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='fb_file'><title>FB_FILE</title>
+<para>Whenever a framebuffer is needed, and the
+<option>-F</option>
+option has not been specified, the environment variable
+<!-- B elided -->
+<envar>FB_FILE</envar>
+is checked for the device to use.  The format of this
+variable is either
+<emphasis remap='I'>[hostname:]</emphasis><filename>/dev/</filename><emphasis remap='I'>device_name[num]</emphasis>
+or
+<emphasis remap='I'>UNIX_path ,</emphasis>
+the pathname of a disk file to be used as a "virtual framebuffer."
+<emphasis remap='I'>Hostname</emphasis>
+is the name of a remote machine if the remote framebuffer interface
+is being used.
+When a local display device is being specified, the
+<emphasis remap='I'>hostname</emphasis>
+should not be specified, for performance reasons; just the
+special string
+<emphasis remap='I'>Device_name</emphasis>
+is used to select a particular type of framebuffer.
+<emphasis remap='I'>Num</emphasis>
+is type dependent and can either mean a display number or select
+some options for that type.
+Note that for security reasons, it is not permitted to access a
+disk file via the remote interface.</para>
+
+<para>If
+<!-- B elided -->
+<envar>FB_FILE</envar>
+is not set, the default for you system will be used.</para>
+
+<para>The use of
+<filename>/dev/</filename>
+before the
+<emphasis remap='I'>device_name</emphasis>
+is simply to distinguish them from filenames.  See the end of the
+<citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+manual page for a list of the device names and the meanings of
+any
+<emphasis remap='I'>num</emphasis>
+parameters they may take, and for a more detailed discussion.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<para>A convention exists for the options used on
+most of the utilities provided.
+Random options are usually lower case.
+Options which could specify either a screen or file size
+are, by convention, lower case for file information,
+and upper case for screen information.
+Here's a list of some of the common options you may encounter:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-h</option></term>
+  <listitem>
+<para>The "high resolution" flag, increasing the default screen and file
+size of 512x512
+to 1024x1024.  Has same effect as
+<option>-s 1024 -S 1024</option>
+but exists as a convenient shorthand held over from the simple days
+when framebuffers where square, and only came in two resolutions.
+This historical usage unfortunately preempts this letter from use
+as a height specifier, forcing that function to relocate under
+protest to
+<option>-n</option>,
+which can be thought of as "number of scanlines", which isn't
+too bad a mnemonic.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-i</option></term>
+  <listitem>
+<para>Inverse flag.  Pretend origin is in upper left corner of screen,
+for that good old-fashioned fourth-quadrant behavior.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-c</option></term>
+  <listitem>
+<para>Various.  Typically means clear the screen first.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-z</option></term>
+  <listitem>
+<para>Various.  Typically means zoom-in on current area of display.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s </option><replaceable>square_file_size</replaceable></term>
+  <listitem>
+<para><emphasis remap='B'>WARNING:</emphasis>
+Behavior is undefined when the
+<option>-s</option>
+flag is used in conjunction with the
+<option>-w </option>or <option>-n</option>
+flags.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-w </option><replaceable>file_width</replaceable></term>
+  <term><option>-n </option><replaceable>file_height</replaceable></term>
+  <term><option>-S </option><replaceable>square_screen_size</replaceable></term>
+  <listitem>
+<para><emphasis remap='B'>WARNING:</emphasis>
+Behavior is undefined when the
+<option>-S</option>
+flag is used in conjunction with the
+<option>-W </option>or <option>-N</option>
+flags.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-W </option><replaceable>screen_width</replaceable></term>
+  <term><option>-N </option><replaceable>screen_height</replaceable></term>
+  <term><option>-x </option><replaceable>file_x_offset</replaceable></term>
+  <term><option>-y </option><replaceable>file_y_offset</replaceable></term>
+  <term><option>-X </option><replaceable>screen_x_offset</replaceable></term>
+  <term><option>-Y </option><replaceable>screen_y_offset</replaceable></term>
+  <term><option>-# </option><replaceable>bytes_per_sample</replaceable></term>
+  <listitem>
+<para>specifies the number of bytes per sample, where the
+flag, where the
+<emphasis remap='B'>#</emphasis>
+character is a literal "pound" or "sharp" sign character,
+typically found over the numeral "3" on ANSI keyboards.
+Several programs (like pixrect)
+can operate on data samples of arbitrary width.
+For example, a
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format file can often be treated like a
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format file with a width of three bytes per sample.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='tape_format'><title>TAPE FORMAT</title>
+<para>When dealing with large collections of images, as might be
+needed for making a movie,
+it frequently becomes desirable to deal with magnetic tapes.
+Some of the early
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+tools contained built-in knowledge of the tape format.
+While this aberrant early design has been corrected
+in favor of using tape-oriented programs such as
+<citerefentry><refentrytitle>dd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+in pipelines with the image tools, our "standard"
+image format remains.</para>
+
+<para>Regardless of image resolution, all tape records are 24k bytes long.
+If an image does not occupy an integral number of tape records,
+the last record is padded out.
+For example, NTSC images in 640x480 format use
+37.5 records per image.
+The
+<citerefentry><refentrytitle>files-tape</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+utility is helpful in performing this function.</para>
+
+<para>The capacity of an average 2400 foot reel of tape at 6250 is 6144 records
+of 24k bytes each.
+For the various combinations of density and image resolution,
+a convention for the number of frames/reel exists:</para>
+
+<para>Density  Resolution  Frames/reel</para>
+
+<para> 6250        1k          48</para>
+
+<para> 6250      640x480      160</para>
+
+<para> 6250       512         192</para>
+
+<para> 1600        1k          12</para>
+
+<para> 1600       512         48</para>
+<!-- B elided -->
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

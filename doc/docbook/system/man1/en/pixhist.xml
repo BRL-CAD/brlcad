@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixhist1'>
+<refmeta>
+<refentrytitle>PIXHIST</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>pixhist</refname>
+<refpurpose>display a histogram of a color pix file on a framebuffer</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pixhist</command>    
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'><replaceable>file.pix</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Pixhist</emphasis>
+displays a histogram of the pixel values of the given
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format file, or, if no file is specified, will read from standard in.
+The environment
+variable
+<!-- B elided -->
+<envar>FB_FILE</envar>
+is used to select the display device (see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).
+If this variable is not set, the default device for your system will
+be used.</para>
+
+<para>The relative frequency is displayed on the x axis scaled so that
+the maximum is full screen.  The value 0 is at the bottom of the
+screen, 255 is at the top.
+All three colors will be drawn on each scan line, and all are scaled
+by the same factor.
+<!-- .br -->
+The output is overlaid on whatever is currently on the display.</para>
+
+<para>The
+<option>-v</option>
+flag will also output the histogram values on the terminal.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixhist3d</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixstat</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>This program assumes it has at least 512 lines in y to work with.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixhalve1'>
+<refmeta>
+<refentrytitle>PIXHALVE</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>pixhalve</refname>
+<refpurpose>halve a color pix file</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pixhalve</command>    
+    <arg choice='opt'>-a </arg>
+    <arg choice='opt'>-s <replaceable>squareinsize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>in_width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>in_height</replaceable></arg>
+    <arg choice='opt'>-h </arg>
+    <arg choice='opt'><replaceable>infile.pix</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>outfile.pix</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Pixhalve</emphasis>
+will take a color
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format file of given dimensions and reduce the resolution of the file
+by one half in each direction using a 5x5 pyramid filter.  If a file name
+is not given, standard input will be used.
+The
+<option>-w</option>
+and
+<option>-n</option>
+flags specify the input file width and number of scan lines in pixels.
+They can both be set to the same value via
+<option>-s.</option>
+Defaults of 512 are assumed for unspecified dimensions.</para>
+
+<para>The
+<option>-h</option>
+flag indicates the input file is
+high resolution (1024x1024).</para>
+
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixcrop</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixinterp2x</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1991-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

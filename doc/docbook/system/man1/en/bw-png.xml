@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='bwpng1'>
+<refmeta>
+<refentrytitle>BW-PNG</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>bw-png</refname>
+<refpurpose>convert a BRL BW(5) format image to a PNG (Portable Network Graphics) format</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>bw-png</command>    
+    <arg choice='opt'>-a </arg>
+    <arg choice='opt'>-ssquaresize </arg>
+    <arg choice='opt'>-wfile_width </arg>
+    <arg choice='opt'>-nfile_height </arg>
+    <arg choice='opt'><replaceable>BRLbwfile</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>PNG_file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>bw-png</command>
+converts a
+<emphasis remap='I'>BRL BW(5)</emphasis>
+format file to a
+<emphasis remap='I'>PNG</emphasis>
+format file on the standard output. The PNG file created will be an Gray scale file with a bit-depth of 8 and a file gamma of 1.0.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-a</option></term>
+  <listitem>
+<para>autosize the input file to determine file image height and width</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-n file_height</option></term>
+  <listitem>
+<para>tells
+<command>bw-png</command>
+that the input is
+<emphasis remap='I'>file_height</emphasis>
+scanlines tall</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s squaresize</option></term>
+  <listitem>
+<para>sets both the width and the height for the input to be
+<emphasis remap='I'>squaresize</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-w file_width</option></term>
+  <listitem>
+<para>tells
+<command>bw-png</command>
+that the input is
+<emphasis remap='I'>file_width</emphasis>
+pixels wide</para>
+
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1998-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

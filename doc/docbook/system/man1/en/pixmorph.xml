@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixmorph1'>
+<refmeta>
+<refentrytitle>PIXMORPH</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>pixmorph</refname>
+<refpurpose>morph two pix(5) images</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pixmorph</command>    
+    <arg choice='opt'>-w <replaceable>width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>height</replaceable></arg>
+    <arg choice='plain'><replaceable>picA.pix</replaceable></arg>
+    <arg choice='plain'><replaceable>picB.pix</replaceable></arg>
+    <arg choice='plain'><replaceable>linesfile</replaceable></arg>
+    <arg choice='plain'><replaceable>warpfrac</replaceable></arg>
+    <arg choice='plain'><replaceable>dissolvefrac</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>out.pix</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>pixmorph</command>
+performs feature-based image metamorphosis between "picA.pix" and "picB.pix".
+The feature correspondences
+are specified in the file "linesfile", which can be created
+using a utility such as
+<emphasis remap='I'>morphedit.tcl</emphasis>
+(see
+<emphasis remap='I'>morphedit(1)).</emphasis></para>
+
+<!-- .br -->
+<para>The output image is computed in the following fashion.
+First, for each pixel in the output image, we choose a set
+<emphasis remap='I'>A</emphasis>
+of pixels
+(and associated weights) from "picA.pix" and another set
+<emphasis remap='I'>B</emphasis>
+of pixels
+from "picB.pix" (how these sets and weights
+are chosen will be described momentarily).
+The pixel values from
+<emphasis remap='I'>A</emphasis>
+are then averaged (using the associated weights)
+to determine the contribution
+<emphasis remap='I'>cA</emphasis>
+from the original image; the contribution
+<emphasis remap='I'>cB</emphasis>
+is computed similarly.  Then, the values
+<emphasis remap='I'>cA</emphasis>
+and
+<emphasis remap='I'>cB</emphasis>
+are interpolated by the value
+<emphasis remap='I'>dissolvefrac</emphasis>
+to compute the final value of the output pixel.</para>
+
+<para>Now, the contribution
+<emphasis remap='I'>cA</emphasis>
+from the original image is intended to be the value from
+<emphasis remap='I'>picA.pix</emphasis>
+that gets "warped to" the location in question.
+It is this computation (more specifically, the computation of
+<emphasis remap='I'>A</emphasis>
+and associated weights)
+that is the heart of the morphing algorithm,
+and is described briefly here.</para>
+
+<para>First, the linesfile is processed.  The linesfile
+is of the form
+<!-- .br -->
+ a b p n
+ lineseg1_initial lineseg1_final
+ lineseg2_initial lineseg2_final
+<!--    .
+   .
+   . -->
+ linesegn_initial linesegn_final
+<!-- .br -->
+where
+<emphasis remap='I'>n</emphasis>
+equals the number of line segments, and
+<emphasis remap='I'>a, b,</emphasis>
+and
+<emphasis remap='I'>p</emphasis>
+are constants that alter the nature of the morph.
+A line segment is represented as a list of four real numbers (and is
+interpreted as a directed line segment.)
+For example,
+<!-- .br -->
+ 0.1 2.0 0.2 2
+ 0.714844 0.560547 0.988281 0.277344 0.347656 0.646484 0.654297 0.896484
+ 0.341797 0.611328 0.757812 0.265625 0.628906 0.519531 0.925781 0.763672
+<!-- .br -->
+is a valid lines file.
+Typically, the pairs
+<emphasis remap='I'>linesegi_initial linesegi_final</emphasis>
+have been placed by the user in the lines file to match up
+particular features of
+<emphasis remap='I'>picA.pix</emphasis>
+and
+<emphasis remap='I'>picB.pix</emphasis>
+(the feature at
+<emphasis remap='I'>linesegi_initial</emphasis>
+in
+<emphasis remap='I'>picA.pix</emphasis>
+corresponds to the feature at
+<emphasis remap='I'>linesegi_final</emphasis>
+in
+<emphasis remap='I'>picB.pix.)</emphasis>
+For instance,
+<emphasis remap='I'>lineseg1_initial</emphasis>
+might be a line segment running down the length of the nose of a person
+displayed in
+<emphasis remap='I'>picA.pix;</emphasis>
+then
+<emphasis remap='I'>lineseg1_final</emphasis>
+would be a line segment running down the length of the nose of the person
+featured in
+<emphasis remap='I'>picB.pix.</emphasis>
+See
+<emphasis remap='I'>morphedit(1)</emphasis>
+for more information about creating a lines file.</para>
+
+<para>Now, for each line segment pair
+<emphasis remap='I'>(s,t),</emphasis>
+we perform the following procedure:
+We interpolate between
+<emphasis remap='I'>s</emphasis>
+and
+<emphasis remap='I'>t</emphasis>
+by factor
+<emphasis remap='I'>warpfrac</emphasis>
+to yield the interpolated line segment
+<emphasis remap='I'>s'.</emphasis>
+From the change in position, scale, and orientation of a line segment from
+its initial position
+<emphasis remap='I'>s</emphasis>
+to its interpolated counterpart
+<emphasis remap='I'>s'</emphasis>
+we may deduce a linear transformation in the image space.
+More specifically, if the line segment
+<emphasis remap='I'>s</emphasis>
+must undergo
+translation, stretching, and rotation
+to yield
+<emphasis remap='I'>s',</emphasis>
+we compute a linear transformation
+<emphasis remap='I'>T</emphasis>
+of the image space that
+performs the same translation, stretching, and rotation.
+(So
+<emphasis remap='I'>T</emphasis>
+applied to
+<emphasis remap='I'>s</emphasis>
+yields
+<emphasis remap='I'>s'.)</emphasis>
+The inverse
+<emphasis remap='I'>T*</emphasis>
+of this transformation maps
+<emphasis remap='I'>s'</emphasis>
+to
+<emphasis remap='I'>s;</emphasis>
+for instance,
+<emphasis remap='I'>T*</emphasis>
+will take an endpoint of
+<emphasis remap='I'>s'</emphasis>
+to the corresponding endpoint of
+<emphasis remap='I'>s,</emphasis>
+and will preserve the relationship of every other point
+to the line segment.
+We apply this inverse
+<emphasis remap='I'>T*</emphasis>
+to the coordinates
+<emphasis remap='I'>(x,y)</emphasis>
+to find an appropriate pixel in the original image.
+Along with this, we compute a weight based on the length of the line segment
+<emphasis remap='I'>s</emphasis>
+along with its distance from
+<emphasis remap='I'>(x,y).</emphasis>
+This weight is equal to
+<!-- .br -->
+       ( (length ** p) / (a + dist) ) ** b
+<!-- .br -->
+(where
+<emphasis remap='I'>**</emphasis>
+denotes exponentiation,
+<emphasis remap='I'>length</emphasis>
+is the length of
+<emphasis remap='I'>s,</emphasis>
+<emphasis remap='I'>dist</emphasis>
+is the distance from
+<emphasis remap='I'>s</emphasis>
+to
+<emphasis remap='I'>(x,y), and</emphasis>
+<emphasis remap='I'>a, b, p</emphasis>
+are constants chosen by the user and stored in the lines file.)</para>
+
+<para>The set
+<emphasis remap='I'>A</emphasis>
+of pixels is then collected by performing these computations for each
+line segment, and the resulting contribution
+<emphasis remap='I'>cA</emphasis>
+is then computed by averaging over
+<emphasis remap='I'>A</emphasis>
+with the appropriate weights.</para>
+
+<!-- .br -->
+<para>In practice,
+<emphasis remap='I'>a</emphasis>
+= 0.1,
+<emphasis remap='I'>b</emphasis>
+= 2.0, and
+<emphasis remap='I'>p</emphasis>
+= 0.2 seems to work well.</para>
+
+<!-- .br -->
+<para>In general, the user will wish to set
+<emphasis remap='I'>warpfrac</emphasis>
+=
+<emphasis remap='I'>dissolvefrac.</emphasis>
+Typically, a morph animation will be produced by computing a sequence
+of images using
+<emphasis remap='I'>pixmorph,</emphasis>
+each with slightly greater
+<emphasis remap='I'>warpfrac</emphasis>
+(and
+<emphasis remap='I'>dissolvefrac)</emphasis>
+(see the example.)
+<!-- .br -->
+For a clearer and more thorough explanation, see
+<!-- .br -->
+ T. Beier and S. Neely.
+ Feature-Based Image Metamorphosis.
+ "SIGGRAPH 1992 Computer Graphics Proceedings (volume 26 number 2)"
+ (Chicago, July 26-31, 1992). pp 35-42.
+<!-- .br -->
+which presents the algorithm used by
+<emphasis remap='I'>pixmorph.</emphasis></para>
+
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-w</option><replaceable> WIDTH</replaceable></term>
+  <listitem>
+<para>Tells
+<command>pixmorph</command>
+that the input images have width WIDTH.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-n</option><replaceable> HEIGHT</replaceable></term>
+  <listitem>
+<para>Tells
+<command>pixmorph</command>
+that the input images have height HEIGHT.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<para>      pixmorph face1.pix face2.pix lf 0.0 0.0 &gt; frame0.pix
+      pixmorph face1.pix face2.pix lf 0.2 0.2 &gt; frame1.pix
+      pixmorph face1.pix face2.pix lf 0.4 0.4 &gt; frame2.pix
+      pixmorph face1.pix face2.pix lf 0.6 0.6 &gt; frame3.pix
+      pixmorph face1.pix face2.pix lf 0.8 0.8 &gt; frame4.pix
+      pixmorph face1.pix face2.pix lf 1.0 1.0 &gt; frame5.pix</para>
+
+<!-- .br -->
+<para>Note that the example above will result in
+<emphasis remap='I'>frame0.pix</emphasis>
+=
+<emphasis remap='I'>face1.pix</emphasis>
+and
+<emphasis remap='I'>frame5.pix</emphasis>
+=
+<emphasis remap='I'>face2.pix.</emphasis></para>
+
+<!-- .br -->
+<para>      pixmorph face1.pix face2.pix lf 0.5 0.0 &gt; out.pix</para>
+
+<!-- .br -->
+<para>Note that in this example,
+<emphasis remap='I'>dissolvefrac</emphasis>
+= 0.
+This will warp
+<emphasis remap='I'>face1.pix</emphasis>
+and
+<emphasis remap='I'>face2.pix</emphasis>
+by the appropriate amount, but will ignore the contributions of
+<emphasis remap='I'>face2.pix</emphasis>
+at the cross-dissolve stage.
+So the final image
+<emphasis remap='I'>out.pix</emphasis>
+will consist entirely of values from
+<emphasis remap='I'>face1.pix</emphasis>
+warped 50% according to the linesfile
+<emphasis remap='I'>lf.</emphasis></para>
+
+<!-- .br -->
+<para>      pixmorph face1.pix face2.pix lf 0.0 0.5 &gt; out.pix</para>
+
+<!-- .br -->
+<para>In this example,
+<emphasis remap='I'>warpfrac</emphasis>
+= 0.
+This will perform a simple 50% cross-dissolve between
+<emphasis remap='I'>face1.pix</emphasis>
+and
+<emphasis remap='I'>face2.pix.</emphasis></para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>morphedit</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1996-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

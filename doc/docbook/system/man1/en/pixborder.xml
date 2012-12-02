@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixborder1'>
+<refmeta>
+<refentrytitle>PIXBORDER</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>pixborder</refname>
+<refpurpose>add a 1-pixel-wide border to regions of a specified color</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pixborder</command>    
+    <arg choice='opt'><arg choice='plain'>-b <replaceable>'R</replaceable></arg><arg choice='plain'><replaceable>G</replaceable></arg><arg choice='plain'><replaceable>B'</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-e <replaceable>'R</replaceable></arg><arg choice='plain'><replaceable>G</replaceable></arg><arg choice='plain'><replaceable>B'</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-i <replaceable>'R</replaceable></arg><arg choice='plain'><replaceable>G</replaceable></arg><arg choice='plain'><replaceable>B'</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-t <replaceable>'R</replaceable></arg><arg choice='plain'><replaceable>G</replaceable></arg><arg choice='plain'><replaceable>B'</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-B <replaceable>'H</replaceable></arg><arg choice='plain'><replaceable>S</replaceable></arg><arg choice='plain'><replaceable>V'</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-E <replaceable>'H</replaceable></arg><arg choice='plain'><replaceable>S</replaceable></arg><arg choice='plain'><replaceable>V'</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-I <replaceable>'H</replaceable></arg><arg choice='plain'><replaceable>S</replaceable></arg><arg choice='plain'><replaceable>V'</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-T <replaceable>'H</replaceable></arg><arg choice='plain'><replaceable>S</replaceable></arg><arg choice='plain'><replaceable>V'</replaceable></arg></arg>
+    <arg choice='opt'>-x <replaceable>left_edge</replaceable></arg>
+    <arg choice='opt'>-y <replaceable>bottom_edge</replaceable></arg>
+    <arg choice='opt'>-X <replaceable>right_edge</replaceable></arg>
+    <arg choice='opt'>-Y <replaceable>top_edge</replaceable></arg>
+    <arg choice='opt'>-ah </arg>
+    <arg choice='opt'>-n <replaceable>file_height</replaceable></arg>
+    <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
+    <arg choice='opt'><replaceable>file.pix</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Pixborder</emphasis>
+reads an input stream of
+<emphasis remap='I'>pix</emphasis>
+data,
+looking for maximal contiguous regions of
+a specified interior color,
+and writes out the
+<emphasis remap='I'>pix</emphasis>
+data
+with all pixels on the boundaries of these regions changed to
+a specified border color.</para>
+
+<para>The way
+<command>pixborder</command>
+decides if a given pixel is on the boundary
+depends on how the user specified the interior and exterior.
+The
+<option>-i</option>
+option causes
+<command>pixborder</command>
+to replace
+the default interior color of 255 255 255 by
+<emphasis remap='I'>R G B</emphasis>,
+while the
+<option>-I</option>
+replaces it by
+<emphasis remap='I'>H S V</emphasis>,
+which are reals,
+with
+<emphasis remap='I'>H</emphasis> in [0, 360)
+and
+<emphasis remap='I'>S</emphasis>, <emphasis remap='I'>V</emphasis> in [0, 1].
+Similarly,
+the
+<option>-e</option> and <option>-E</option>
+options
+replace the default exterior color of 1 1 1.
+If the user specified colors for both or neither
+of the interior and exterior,
+then a pixel is on the boundary provided that
+it has the interior color
+and at least one of its four neighbors
+(left, right, above, and below) has the exterior color.
+If,
+on the other hand,
+the user specified only the interior (exterior) color,
+then a pixel is on the boundary provided that
+it has the interior color (does not have the exterior color)
+and at least one of its neighbors
+does not have the interior color (has the exterior color).</para>
+
+<para>Variability in the interior and exterior colors
+may be accommodated by the
+<option>-t</option> and <option>-T</option>
+options,
+with which one specifies a symmetric tolerance
+for each of the red, green, and blue channels
+or hue, saturation, and value.
+Any color
+within the specified tolerance of the nominal interior (exterior) color
+is treated as though it were the nominal color.</para>
+
+<para>Changes are restricted to a specified rectangular portion of the image,
+which defaults to the entire image.
+The
+<option>-x</option>
+option sets the left edge of that rectangle:
+no pixels to the left of this edge are changed.
+The
+<option>-X</option>, <emphasis remap='B'>y</emphasis>,  and <emphasis remap='B'>Y</emphasis>
+options respectively
+set the right, bottom, and top edges
+in the same manner.</para>
+
+</refsect1>
+
+<refsect1 xml:id='hint'><title>HINT</title>
+<para>To obtain borders more than one pixel wide,
+one can run several copies of
+<command>pixborder</command>
+in a pipeline.
+In doing this
+to get, for instance, a border made up of constant-thickness
+segments of different colors,
+one should produce all the segments of a given layer
+before beginning any segments of the next inner layer.</para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Paul Tanenbaum</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1996-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixppm1'>
+<refmeta>
+<refentrytitle>PIX-PPM</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>pix-ppm</refname>
+<refpurpose>convert a BRL-CAD PIX or BW format image to a PPM format image</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pix-ppm</command>    
+    <arg choice='opt'>-a </arg>
+    <arg choice='opt'>-ssquaresize </arg>
+    <arg choice='opt'>-wfile_width </arg>
+    <arg choice='opt'>-nfile_height </arg>
+    <arg choice='opt'>-#bytes_per_pixel </arg>
+    <arg choice='opt'>-oPPM_file </arg>
+    <arg choice='opt'><replaceable>PIX_file</replaceable></arg>
+    <arg choice='opt'><replaceable>&gt;PPM_file</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>pix-ppm</command>
+converts a
+<emphasis remap='I'>BRL PIX(5)</emphasis>
+format file to a
+<emphasis remap='I'>PPM</emphasis>
+(Portable PixMap) format file on the standard output. The PPM file
+created will be either an RGB file with 3 bytes per pixel (default) or
+a B&amp;W file with 1 byte per pixel</para>
+
+<para>PIX image files do not contain information about their size.  The size
+of the input PIX image file must be specified if the dimensions are
+not the default 512x512 size.</para>
+</refsect1>
+
+<refsect1 xml:id='options'><title>OPTIONS</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><option>-a</option></term>
+  <listitem>
+<para>autosize the input file to determine file image height and width</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s squaresize</option></term>
+  <listitem>
+<para>sets both the width and the height for the input to be
+<emphasis remap='I'>squaresize</emphasis></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-w file_width</option></term>
+  <listitem>
+<para>tells
+<command>pix-ppm</command>
+that the input is
+<emphasis remap='I'>file_width</emphasis>
+pixels wide</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-n file_height</option></term>
+  <listitem>
+<para>tells
+<command>pix-ppm</command>
+that the input is
+<emphasis remap='I'>file_height</emphasis>
+scanlines tall</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-# bytes_per_pixel</option></term>
+  <listitem>
+<para>tells
+<command>pix-ppm</command>
+how many bytes there are per pixel in the input PIX or BW file.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-o PPM_file</option></term>
+  <listitem>
+<para>tells
+<command>pix-ppm</command>
+to write image data to the specified
+<emphasis remap='I'>PPM_file</emphasis>
+output file.  The
+<command>pix-ppm</command>
+command will not write out binary image data directly to a terminal
+device as a safeguard.</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-png</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 2009-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

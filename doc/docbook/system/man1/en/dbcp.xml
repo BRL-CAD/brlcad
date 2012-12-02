@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='dbcp1'>
+<refmeta>
+<refentrytitle>DBCP</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>dbcp</refname>
+<refpurpose>double buffered copy</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>dbcp</command>    
+    <arg choice='opt'>-v </arg>
+    <arg choice='plain'><replaceable>blocksize</replaceable></arg>
+    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'><replaceable>infile</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>outfile</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>dbcp</command>
+is a program for copying data rapidly between devices.</para>
+
+<para>This command is DEPRECATED.  Use 'dd' instead.</para>
+
+<para>While the primary application is to move data between raw devices such as
+tape and disk, it can also be used with pipes.
+No special support is required from the operating system;
+<command>dbcp</command>
+forks into two processes which communicate over a pair of regular pipes
+using a token passing scheme to
+synchronize their reading and writing activities.  They continue
+copying until an end of file or error is detected.
+<command>dbcp</command>
+reads from the standard input and copies to the standard output.
+The argument
+<emphasis remap='I'>blocksize</emphasis>
+specifies the number of 512 byte "blocks" to be
+read or written in each record.</para>
+
+<para>If the
+<option>-v</option>
+flag is given,
+the number of records processed is printed upon exit.</para>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<para>$ <emphasis remap='B'>dbcp 16 &lt; /dev/rdk1a &gt; /dev/rmt0</emphasis>
+<!-- .br -->
+<command>dbcp</command>
+copies the filesystem on dk1a to tape
+with a record size of 8K bytes (16 * 512).
+This allows "streaming" tape drives to operate a peak speed.</para>
+
+<para>$ <emphasis remap='B'>tar cf - . | dbcp 20 &gt; /dev/rmt0</emphasis>
+<!-- .br -->
+The
+<emphasis remap='I'>tar</emphasis>
+process runs independently of the
+<command>dbcp</command>,
+which rapidly copies the data to tape
+with the usual
+<emphasis remap='I'>tar</emphasis>
+tape record size of 10K bytes (20 * 512).</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>cp</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>dd</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>Douglas P. Kingston III (Davis, Polk, and Wardwell,
+Chase Manhattan Building, New York, NY)</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1993-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='cv1'>
+<refmeta>
+<refentrytitle>CV</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>cv</refname>
+<refpurpose>convert binary data files between representation formats</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>cv</command>    
+    <arg choice='plain'><replaceable>in_pat</replaceable></arg>
+    <arg choice='plain'><replaceable>out_pat</replaceable></arg>
+    <arg choice='opt'><arg choice='opt'><replaceable>infile</replaceable></arg><arg choice='plain'><replaceable>outfile</replaceable></arg></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>Convert a binary data file from one representation (format) to another.
+The particular representation desired is expressed as a set of choices
+from the pattern: [h|n][s|u] c|s|i|l|d|8|16|32|64.
+For example, "hui" is host unsigned int, "nl" is network (signed) long.
+The default is NETWORK format.</para>
+
+<para>Host specific format is the native internal number representation used
+inside the computer that
+<command>cv</command>
+is running on.
+There is great variation between vendors in the host-specific formats
+that they use.
+Especially for double-precision floating point,
+DEC, Cray, and IBM have peculiar formats and byte orderings.
+The network-independent byte orderings used within BRL-CAD is
+big-endian (most significant bit first, on the left side of the word),
+twos compliment.
+The network-independent double-precision floating point format used
+within BRL-CAD is 64-bit IEEE 754, transmitted in big-endian order.</para>
+
+<para>Signed or unsigned integer formats can be selected.
+This has no effect on the double-precision format.</para>
+
+<para>"char", "short", "int", "long", and "double" provide their C language
+equivalent on this processor when used in "h" host-specific mode.
+"8", "16", "32", and "64" allow more precise specification of
+datum sizes for "n" network-independent mode.</para>
+
+<para>For example, to change a file of host-specific (machine-specific) signed
+shorts to a file of network-independent 32-bit integers, the input
+format would be "hss", and the output format would be "n32".</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>pix-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>dpix-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+<!-- .br -->
+M. J. Muuss,
+``<emphasis remap='I'>Workstations, Networking, Distributed Graphics, and Parallel Processing</emphasis>``
+in Computer Graphics Techniques:  Theory and Practice,
+edited by D. F. Rogers, R. A. Earnshaw, Springer-Verlag, 1990.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1991-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

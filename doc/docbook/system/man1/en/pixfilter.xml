@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixfilter1'>
+<refmeta>
+<refentrytitle>PIXFILTER</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>pixfilter</refname>
+<refpurpose>apply a 3x3 filter to a color pix file</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pixfilter</command>    
+    <arg choice='opt'>-f <replaceable>type</replaceable></arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'>-d <replaceable>div</replaceable></arg>
+    <arg choice='opt'>-o <replaceable>offset</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>height</replaceable></arg>
+    <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
+    <arg choice='opt'><replaceable>file.pix</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>newfile.pix</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Pixfilter</emphasis>
+applies one of several 3x3 kernel filters to a color
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+format file.
+It will take a file name or else read from standard input.
+The input file size will be assumed to be 512 by 512 pixels
+unless the
+<option>-w</option>,
+and/or
+<option>-n</option>,
+or the
+<option>-s</option>
+flags are used to tell it otherwise.
+By default a low pass filter is used.  The
+<option>-f </option><replaceable>type</replaceable>
+flag can be used to specify a different type of filter.</para>
+
+<para>The
+<emphasis remap='I'>type</emphasis>
+choices include:</para>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='B'>lo</emphasis></term>
+  <listitem>
+<para>low pass, the default.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>hi</emphasis></term>
+  <listitem>
+<para>high pass</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>vg</emphasis></term>
+  <listitem>
+<para>vertical gradient</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>hg</emphasis></term>
+  <listitem>
+<para>horizontal gradient</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>la</emphasis></term>
+  <listitem>
+<para>laplacian</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap='B'>b</emphasis></term>
+  <listitem>
+<para>boxcar low pass</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>Most filters divide the result of the kernel multiplication
+by some value in order to scale it back to a 0-&gt;255 range.
+For example, the boxcar divides by nine.  The
+<option>-d</option>
+flag can be used to change this divisor.
+Some filters also add an offset to their results.  The output of
+a laplacian for example is "centered" about zero, thus it
+adds 128 to the answer to yield a difference from neutral grey.
+The
+<option>-o</option>
+flag can be used to change this offset.</para>
+
+<para>The
+<option>-v</option>
+flag displays the kernel values on standard error.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+</refsect1>
+
+<refsect1 xml:id='bugs'><title>BUGS</title>
+<para>This should allow any 3x3 kernel to be specified.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='plrot1'>
+<refmeta>
+<refentrytitle>PLROT</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>plrot</refname>
+<refpurpose>rotate, translate, or scale a UnixPlot file</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>plrot</command>    
+    <arg choice='opt'><arg choice='plain'>-x# </arg><arg choice='plain'>-y# </arg><arg choice='plain'>-z# </arg></arg>
+    <arg choice='opt'><arg choice='plain'>-X# </arg><arg choice='plain'>-Y# </arg><arg choice='plain'>-Z# </arg></arg>
+    <arg choice='opt'>-s# </arg>
+    <arg choice='opt'><arg choice='plain'>-a# </arg><arg choice='plain'>-e# </arg></arg>
+    <arg choice='opt'>-g# </arg>
+    <arg choice='opt'>-M </arg>
+    <arg choice='opt'>-m# </arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='opt'>-S# </arg>
+    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'><replaceable>unix_plot</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>unix_plot</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Plrot</emphasis>
+will rotate translate or scale a UnixPlot file (see
+<citerefentry><refentrytitle>plot</refentrytitle><manvolnum>5</manvolnum></citerefentry>).
+Any number of the above options can be given.
+Each operation is performed left to right in the order in which they appear
+on the command line,
+and the operations are concatenated.
+It is important to note that rotations are not commutative,
+so the order they are specified in is important.
+Typing the command without any arguments
+gives a useful summary.</para>
+
+<para>The lower case
+<option>-x# -y# -z#</option>
+flags perform a rotation about the X, Y, and Z axis respectively by
+the given number of degrees.  A positive value indicates a right handed
+rotation.  Upper case
+<option>-X# -Y# -Z#</option>
+are translations along these axis in whatever units the plot file is in.
+The
+<option>-s#</option>
+flag applies a scale factor up (&gt; 1) or down (&lt; 1) to the plot.</para>
+
+<para>The
+<option>-a# -e#</option>
+flags are for azimuth and elevation about the center point.
+They are really shorthands for positive Z axis and negative X axis
+rotations respectively, and should be used in the order shown for
+the proper combined effect to occur.  These flags also cause
+the plot to auto-center based on the "space" command
+in the plot file, and the new "space" command will be shrunk to
+fit the rotated plot as tightly as possible.</para>
+
+<para>The
+<option>-M</option>
+flag causes
+the plot to auto-center based on the "space" command
+in the plot file in much the same way that the
+<citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+ray tracer does to a model bounding box.  I.e. a sphere is fit to
+this space and the diameter and center of this sphere are used as
+the center and width of the plot in all three dimensions.  This has
+the advantage of keeping the entire model in view from any angle,
+and is invariant with respect to viewing direction.
+It has the disadvantage that the "space" will be enlarged on every
+cascaded pass through
+<citerefentry><refentrytitle>plrot</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+where the
+<option>-M</option>
+flag is used.</para>
+
+<para>The
+<option>-S#</option>
+flags takes a quoted string of 6 floating point numbers,
+which are immediately output as a "space" command,
+and which override any "space" commands found in the input file
+or which are computed by</para>
+
+<para>The
+<option>-v</option>
+flag signals that verbose mode is requested.
+When set, the initial transformation
+matrix is printed.
+In addition, every time a <emphasis remap='I'>space</emphasis> command is encountered in the
+input file, the old and new bounding RPP is printed.</para>
+
+<para>The
+<option>-m#</option>
+flag takes a quoted string of 16 floating point numbers as its parameter.
+This string is a 4x4 rotation matrix (see h/vmath.h for details).
+Note that when using this flag, do not use
+<option>-a#, -e#,</option>
+or
+<option>-g.</option></para>
+
+<para>UnixPlot is traditionally a first quadrant 2D plotting space with
+X increasing to the right of the plot, and Y increasing up the plot.
+The "front" of a solid model in the BRL-CAD Package is traditionally
+defined by the right handed system of X coming out of the screen
+toward you, Y increasing to the right, and Z increasing up the display
+(elevation above the XY ground plane).  The
+<option>-g</option>
+flag is a convenient shorthand to transform azimuths and elevations
+described in <emphasis remap='B'>gift</emphasis> notation (as degrees off the front or -X view)
+into the UnixPlot coordinate system for display.
+If used, this option should usually
+appear as the last argument, because it acts by modifying the rotation already
+established.
+The
+<option>-g</option>
+command has exactly the same effect as giving
+<option>-z-90 -x-90</option>
+in the same place.</para>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<para>The command</para>
+
+<literallayout remap='.nf'>
+plrot -z30 -x20 &lt; file.plot &gt; file2.plot
+</literallayout> <!-- .fi -->
+
+<para>performs a 30 degree positive rotation about the Z axis (counter
+clockwise as viewed from the top), and then translates by 20
+units
+<emphasis remap='B'>along this rotated axis.</emphasis>
+If the order of these arguments was reversed the effect would not
+be the same.</para>
+
+<para>To view a plot of a model the way one would see it from a
+ray trace command, you could use:</para>
+
+<literallayout remap='.nf'>
+rthide -a35 -e25 -o file.plot
+
+plrot -a35 -e25 -g &lt; file.plot | pl-fb
+</literallayout> <!-- .fi -->
+
+<para>The final
+<option>-g</option>
+converts the <emphasis remap='B'>gift</emphasis> style azimuth and elevations into the
+conventional UnixPlot (screen) X,Y coordinate system.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>pl-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pldebug</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pl-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1988-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

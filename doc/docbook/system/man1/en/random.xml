@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='random1'>
+<refmeta>
+<refentrytitle>RANDOM</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>random</refname>
+<refpurpose>generates a random number between two specified values</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>random</command>    
+    <arg choice='opt'>-s <replaceable>seed</replaceable></arg>
+    <arg choice='opt'><arg choice='plain'>-g </arg><arg choice='opt'>-c <replaceable>center</replaceable></arg></arg>
+    <arg choice='opt'>-u </arg>
+    <arg choice='opt'>-v </arg>
+    <arg choice='plain'><replaceable>low</replaceable></arg>
+    <arg choice='plain'><replaceable>high</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>random</emphasis>
+generates a random number between the two values given.  The number
+can be uniform across the entire range or it can be a gaussian
+distribution around the center of the range (or a named center).</para>
+
+<para>The
+<option>-s</option>
+option specifies what integer seed to use to prime the random number
+generator.
+The
+<option>-u</option>
+option specifies that the random number distribution should be uniform
+across the low-to-high range.
+The
+<option>-g</option>
+option specifies that the random number distribution should be a
+gaussian distribution around a default or named center, specified with
+the
+<option>-c</option>
+option.
+The
+<option>-v</option>
+option specifies verbose diagnostic output.</para>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<literallayout remap='.nf'>
+random 0 100
+random -g 40 2000
+</literallayout> <!-- .fi -->
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 2010-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

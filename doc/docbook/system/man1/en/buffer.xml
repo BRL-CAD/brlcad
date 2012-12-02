@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='buffer1'>
+<refmeta>
+<refentrytitle>BUFFER</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>buffer</refname>
+<refpurpose>buffer data from stdin until EOF, then write to stdout</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>buffer</command>    
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><emphasis remap='I'>Buffer</emphasis>
+is intended to be use as part of a complex pipeline.
+It serves somewhat the same purpose as the Prolog "cut" operator.
+Data from stdin is read and buffered until EOF is detected, and then
+all the buffered data is written to stdout.  An arbitrary amount of
+data may need to be buffered, so a combination of a 1 Mbyte memory buffer
+and a temporary file is used.
+This can be useful when context switching may need to be reduced,
+because of too many processes competing at the same time.
+This can also be useful when processing data from and to the
+same framebuffer with a pipeline, without interfering.</para>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<literallayout remap='.nf'>
+munch | crunch | buffer | grind | package
+
+fb-pix | pixfilter -flo | buffer | pix-fb
+</literallayout> <!-- .fi -->
+
+</refsect1>
+
+<refsect1 xml:id='files'><title>FILES</title>
+<variablelist remap='TP'>
+  <varlistentry>
+  <term><emphasis remap='I'> /usr/tmp/bufferXXXXXX </emphasis></term>
+  <listitem>
+<para>temporary file used to buffer piped data</para>
+
+  </listitem>
+  </varlistentry>
+</variablelist>
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1988-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='wavelet1'>
+<refmeta>
+<refentrytitle>WAVELET</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+</refmeta>
+<refnamediv>
+<refname>wavelet</refname>
+<refpurpose>perform a haar wavelet decomposition/reconstruction</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>wavelet</command>    
+    <arg choice='opt'>-1 </arg>
+    <arg choice='opt'>-2 </arg>
+    <arg choice='opt'>-d </arg>
+    <arg choice='opt'>-r </arg>
+    <arg choice='opt'>-# <replaceable>channels</replaceable></arg>
+    <arg choice='opt'><arg choice='plain'>-t </arg><group choice='opt'><arg choice='plain'><replaceable>c</replaceable></arg><arg choice='plain'><replaceable>d</replaceable></arg><arg choice='plain'><replaceable>f</replaceable></arg><arg choice='plain'><replaceable>i</replaceable></arg><arg choice='plain'><replaceable>l</replaceable></arg><arg choice='plain'><replaceable>s</replaceable></arg></group></arg>
+    <arg choice='opt'>-w <replaceable>width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>scanlines</replaceable></arg>
+    <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
+    <arg choice='opt'>-S <replaceable>square_out_size</replaceable></arg>
+    <arg choice='opt'>-W <replaceable>width_out</replaceable></arg>
+    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'><replaceable>file</replaceable></arg>
+    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'><replaceable>wavelet</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para>The
+<command>wavelet</command>
+command
+will perform Haar wavelet decomposition or reconstruction
+transforms
+on the input dataset.
+The command line options are:</para>
+
+<para><option>-d</option>
+perform decomposition.</para>
+
+<para><option>-r</option>
+perform reconstruction.</para>
+
+<!-- .br -->
+<para><option>-1</option>
+perform a 1-dimensional (horizontal) transform.</para>
+
+<para><option>-2</option>
+perform a 1-dimensional (interleaved horizontal and vertical) transform.</para>
+
+<para><option>-# channels</option>
+Indicates the number of values in each sample point.  For example, to perform
+a transform on a
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file properly, specify "-# 3".  This causes the red, green and blue channels
+to be transformed individually.</para>
+
+<para><option>-t {cdfils}</option>
+specifies the data type of the input, and hence the data type in which the
+wavelet calculations will be performed.
+The letters each stand for the first
+character of the C programming language data type:
+<emphasis remap='B'>c</emphasis>haracter,
+<emphasis remap='B'>d</emphasis>ouble,
+<emphasis remap='B'>f</emphasis>loat,
+<emphasis remap='B'>i</emphasis>nt,
+<emphasis remap='B'>l</emphasis>ong,
+<emphasis remap='B'>s</emphasis>hort.
+Note that if lossless decomposition
+and reconstruction are desired, then data sets should be converted to the next
+larger data type before being processed.</para>
+
+
+<para><option>-w width</option>
+Specify the number of samples per scanline.</para>
+
+<para><option>-n scanline</option>
+Specify the number of scanlines in the dataset</para>
+
+<para><option>-s squaresize</option>
+Specify both width and scanlines simultaneously (square image).</para>
+
+<para><option>-W width_out</option>
+Specifies the width of the output image.  Normally this is 1 for a full
+decomposition/reconstruction.  You may specify a width at which decomposition or reconstruction
+should stop. This number should be a power of 2.  The result will be an
+"average" image of the specified size, with the remainder of the original
+data width converted to "detail" coefficients.  See also: -R</para>
+
+<para><option>-R avg_size</option>
+Resumes a transform that left off with an average image of avg_size.</para>
+
+
+<para><option>-S square_out_size</option>
+This is the same as the
+<option>-W</option>
+option.  It implies the square size for a 2D decomposition limit.</para>
+
+
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<para>The command
+<!-- .br -->
+<userinput>decompose -# 3 &lt; img.pix | pix-fb</userinput>
+<!-- .br -->
+will display the horizontal decomposition of the file img.pix.</para>
+
+<para>The command
+<!-- .br -->
+<userinput>decompose -# 3 -s 1024 -l 64 &lt; img.pix &gt;</userinput>
+<!-- .br -->
+will decompose a 1024x1024 image.  The decomposition will stop when the
+image has been decomposed to 64x64.  The output image will thus have a 64x64
+version of the original in the lower left corner of the image, with detail
+terms in the remainder.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1999-2012 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+
