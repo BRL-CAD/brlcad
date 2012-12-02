@@ -212,9 +212,7 @@ below to scroll up to fill the void.</para>
 can be loaded with any C program:</para>
 
 <literallayout remap='RS'>
-<synopsis>
 $ <emphasis remap='I'>cc program.c -lcursor -ltermlib</emphasis>
-</synopsis>
 </literallayout> <!-- remap='RE' -->
 </refsect1>
 
