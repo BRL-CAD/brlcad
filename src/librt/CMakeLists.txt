@@ -247,7 +247,6 @@ set(LIBRT_SOURCES
 set(librt_ignored_files
   test_dvec.cpp
   columnparse.c
-  librt.3
   librt_private.h
   namegen.c
   test_nurbsfit.cpp
